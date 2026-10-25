@@ -15,7 +15,9 @@ import {
   ANIMATION_WINDOW,
   PLOT_TYPES,
   LAYER_TYPES,
-  FILTER_VIEW_TYPES
+  FILTER_VIEW_TYPES,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY
 } from '@kepler.gl/constants';
 // import {VisState} from '@kepler.gl/schemas';
 import * as ScaleUtils from './data-scale-utils';
@@ -45,7 +47,11 @@ import {generateHashId, toArray, notNullorUndefined, getCentroid} from '@kepler.
 import {DataContainerInterface} from './data-container-interface';
 import {set} from './utils';
 import {timeToUnixMilli, unique} from './data-utils';
-import {updateTimeFilterPlotType, updateRangeFilterPlotType} from './plot';
+import {
+  mergePolygonLayerIndexes,
+  updateTimeFilterPlotType,
+  updateRangeFilterPlotType
+} from './plot';
 import {KeplerTableModel} from './types';
 
 export const durationSecond = 1000;
@@ -66,7 +72,13 @@ export type FilterResult = {
 export type FilterChanged = {
   // eslint-disable-next-line no-unused-vars
   [key in keyof FilterRecord]: {
-    [key: string]: 'added' | 'deleted' | 'name_changed' | 'value_changed' | 'dataId_changed';
+    [key: string]:
+      | 'added'
+      | 'deleted'
+      | 'name_changed'
+      | 'value_changed'
+      | 'dataId_changed'
+      | 'inverted_changed';
   } | null;
 };
 
@@ -85,7 +97,8 @@ export const TimestampStepMap = [
 export const FILTER_UPDATER_PROPS = keyMirror({
   dataId: null,
   name: null,
-  layerId: null
+  layerId: null,
+  endName: null
 });
 
 export const FILTER_COMPONENTS = {
@@ -130,6 +143,101 @@ export const FILTER_ID_LENGTH = 4;
 export const LAYER_FILTERS = [FILTER_TYPES.polygon];
 
 /**
+ * True when a timeRange filter has an end timestamp field for the given dataset.
+ * Features stay visible while the playback window overlaps [start, end].
+ */
+export function isTimeIntervalFilter(filter: Filter, datasetIdx = 0): boolean {
+  return Boolean(
+    filter?.type === FILTER_TYPES.timeRange &&
+      toArray((filter as TimeRangeFilter).endName)[datasetIdx]
+  );
+}
+
+/**
+ * Numeric interval playback uses half-open histogram bins. GPU range filters
+ * are inclusive and use Float32 precision, so exact bin membership must use
+ * the CPU path while this mode is active.
+ */
+export function isNumericIntervalFilter(filter: Filter): boolean {
+  return (
+    filter?.type === FILTER_TYPES.range && filter.animationWindow === ANIMATION_WINDOW.interval
+  );
+}
+
+function isFullTimeDomainValue(filter: TimeRangeFilter): boolean {
+  return (
+    Array.isArray(filter.value) &&
+    Array.isArray(filter.domain) &&
+    filter.value[0] === filter.domain[0] &&
+    filter.value[1] === filter.domain[1]
+  );
+}
+
+/**
+ * Interval overlap: feature [start, end] intersects window [w0, w1].
+ * A null/undefined end means the feature is still active (open-ended).
+ * Inverted intervals (end < start) are treated as invalid and hidden.
+ */
+export function timeWindowOverlapsInterval(
+  start: number | null | undefined,
+  end: number | null | undefined,
+  window: [number, number]
+): boolean {
+  if (!notNullorUndefined(start) || Number.isNaN(start)) {
+    return false;
+  }
+  const featureEnd = notNullorUndefined(end) && !Number.isNaN(end) ? end : Number.POSITIVE_INFINITY;
+  if (featureEnd < start) {
+    return false;
+  }
+  return start <= window[1] && featureEnd >= window[0];
+}
+
+function omitTimeIntervalFields<T extends Filter>(filter: T): T {
+  const {
+    endName: _endName,
+    endFieldIdx: _endFieldIdx,
+    endMappedValue: _endMappedValue,
+    gpuEndChannel: _gpuEndChannel,
+    ...rest
+  } = filter as T & {
+    endName?: unknown;
+    endFieldIdx?: unknown;
+    endMappedValue?: unknown;
+    gpuEndChannel?: unknown;
+  };
+  return rest as T;
+}
+
+function clearTimeFilterEndFieldAtIndex(
+  filter: TimeRangeFilter,
+  filterDatasetIndex: number
+): TimeRangeFilter {
+  const endName = [...toArray(filter.endName)];
+  const endFieldIdx = [...toArray(filter.endFieldIdx)];
+  const endMappedValue = [...toArray(filter.endMappedValue)];
+  const gpuEndChannel: number[] = [...(filter.gpuEndChannel || [])];
+
+  endName[filterDatasetIndex] = null;
+  endFieldIdx[filterDatasetIndex] = null;
+  endMappedValue[filterDatasetIndex] = null;
+  gpuEndChannel[filterDatasetIndex] = undefined as unknown as number;
+
+  const hasAnyEnd = endName.some(Boolean);
+  if (!hasAnyEnd) {
+    return omitTimeIntervalFields(filter);
+  }
+
+  return {
+    ...filter,
+    endName,
+    endFieldIdx,
+    endMappedValue,
+    gpuEndChannel
+  };
+}
+
+/**
  * Generates a filter with a dataset id as dataId
  */
 export function getDefaultFilter({
@@ -155,7 +263,10 @@ export function getDefaultFilter({
  */
 export function shouldApplyFilter(filter: Filter, datasetId: string): boolean {
   const dataIds = toArray(filter.dataId);
-  return dataIds.includes(datasetId) && filter.value !== null;
+  const datasetIndex = dataIds.indexOf(datasetId);
+  const hasSelectedField =
+    filter.type === FILTER_TYPES.polygon || Boolean(toArray(filter.name)[datasetIndex]);
+  return datasetIndex >= 0 && hasSelectedField && filter.value !== null;
 }
 
 /**
@@ -236,7 +347,7 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
   };
 
   const fieldName = initializeFilter.name[filterDatasetIndex];
-  const {filter: updatedFilter, dataset: updatedDataset} = applyFilterFieldName(
+  let {filter: updatedFilter, dataset: updatedDataset} = applyFilterFieldName(
     initializeFilter,
     datasets,
     datasetId,
@@ -247,6 +358,29 @@ export function validateFilter<K extends KeplerTableModel<K, L>, L>(
 
   if (!updatedFilter) {
     return failed;
+  }
+
+  const endName = toArray((filter as TimeRangeFilter).endName)[filterDatasetIndex];
+  if (updatedFilter.type === FILTER_TYPES.timeRange && endName) {
+    const appliedEnd = applyTimeFilterEndFieldName(
+      updatedFilter,
+      {
+        ...datasets,
+        [datasetId]: updatedDataset
+      },
+      datasetId,
+      endName,
+      filterDatasetIndex
+    );
+    if (appliedEnd.filter) {
+      updatedFilter = appliedEnd.filter;
+      updatedDataset = appliedEnd.dataset;
+    } else {
+      updatedFilter = clearTimeFilterEndFieldAtIndex(
+        updatedFilter as TimeRangeFilter,
+        filterDatasetIndex
+      );
+    }
   }
 
   // don't adjust value yet before all datasets are loaded
@@ -278,9 +412,23 @@ export function validateFilterWithData<K extends KeplerTableModel<K, L>, L>(
   filter: ParsedFilter,
   layers: L[]
 ): {filter: Filter; dataset: K} {
-  return filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
-    ? filterValidators[filter.type](datasets[datasetId], filter, layers)
-    : validateFilter(datasets, datasetId, filter);
+  const validated =
+    filter.type && Object.prototype.hasOwnProperty.call(filterValidators, filter.type)
+      ? filterValidators[filter.type](datasets[datasetId], filter, layers)
+      : validateFilter(datasets, datasetId, filter);
+
+  if (validated.filter?.inverted && validated.dataset.disableDataOperation) {
+    return {
+      ...validated,
+      filter: {
+        ...validated.filter,
+        inverted: false,
+        ...(filterTypeUsesGpu(validated.filter.type) ? {gpu: true} : {})
+      }
+    };
+  }
+
+  return validated;
 }
 
 /**
@@ -376,6 +524,25 @@ export function getFilterProps(
   }
 }
 
+/**
+ * Returns whether two field types can share the same filter value and domain.
+ */
+export function areFilterFieldTypesCompatible(
+  fieldType?: string | null,
+  candidateFieldType?: string | null
+): boolean {
+  if (!fieldType || !candidateFieldType) {
+    return false;
+  }
+
+  if (fieldType === candidateFieldType) {
+    return true;
+  }
+
+  const numericFieldTypes: string[] = [ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real];
+  return numericFieldTypes.includes(fieldType) && numericFieldTypes.includes(candidateFieldType);
+}
+
 function hasFiniteLngLat(pos: unknown): pos is number[] {
   if (pos == null || !(Array.isArray(pos) || ArrayBuffer.isView(pos))) {
     return false;
@@ -397,6 +564,25 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+      if (
+        layer.config?.columnMode === 'geoarrow' &&
+        dataContainer
+          .getField?.(layer.config.columns.geoarrow.fieldIdx)
+          ?.metadata?.get(GEOARROW_METADATA_KEY) === GEOARROW_EXTENSIONS.MULTIPOINT
+      ) {
+        return data => {
+          const points = dataContainer.valueAt(data.index, layer.config.columns.geoarrow.fieldIdx);
+          // Match GeoJSON MultiPoint semantics: any valid point retains the whole feature.
+          for (const point of points ?? []) {
+            const coord =
+              typeof point?.get === 'function'
+                ? [point.get(0), point.get(1)]
+                : [point?.x, point?.y];
+            if (hasFiniteLngLat(coord) && isInPolygon(coord, filter.value)) return true;
+          }
+          return false;
+        };
+      }
       if (layer.config?.columnMode === 'geojson' && layer.dataToFeature?.length) {
         return data => {
           const coordinates = layer.dataToFeature[data.index];
@@ -478,6 +664,54 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
 };
 
 /**
+ * Compute the polygon-filtered indexes for each layer on a dataset. Keeping this
+ * independent of KeplerTable lets filter plots work with custom table classes.
+ */
+export function computePolygonFilteredIndexByLayer(
+  filters: Filter[],
+  layers: any[],
+  dataId: string,
+  dataContainer: DataContainerInterface,
+  baseFilteredIndex: number[]
+): Record<string, number[]> {
+  const polygonFilters = filters.filter(
+    filter =>
+      filter.type === FILTER_TYPES.polygon &&
+      filter.dataId.includes(dataId) &&
+      filter.enabled !== false &&
+      isValidFilterValue(filter.type, filter.value)
+  );
+
+  if (!polygonFilters.length) {
+    return {};
+  }
+
+  const result: Record<string, number[]> = {};
+  for (const layer of layers.filter(candidate => candidate.config?.dataId === dataId)) {
+    const applicableFilters = polygonFilters.filter(
+      filter => filter.layerId && filter.layerId.includes(layer.id)
+    );
+
+    if (!applicableFilters.length) {
+      continue;
+    }
+
+    const filterFunctors = applicableFilters.map(filter => {
+      const matches = getPolygonFilterFunctor(layer, filter, dataContainer);
+      return filter.inverted ? (data: {index: number}) => !matches(data) : matches;
+    });
+    const filterContext = {index: -1};
+
+    result[layer.id] = baseFilteredIndex.filter(index => {
+      filterContext.index = index;
+      return filterFunctors.every(fn => fn(filterContext));
+    });
+  }
+
+  return result;
+}
+
+/**
  * Check if a GeoJSON feature filter can be applied to a layer
  */
 export function canApplyFeatureFilter(feature: Feature | null): boolean {
@@ -515,6 +749,22 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
     return defaultFunc;
   }
 
+  const matches = getFilterPredicate(field, dataId, filter, layers, dataContainer, valueAccessor);
+  if (!matches) {
+    return defaultFunc;
+  }
+  // Filter out: hide rows the predicate would have kept.
+  return filter.inverted ? data => !matches(data) : matches;
+}
+
+function getFilterPredicate<L extends {config: {dataId: string | null}; id: string}>(
+  field: Field | null,
+  dataId: string,
+  filter: Filter,
+  layers: L[],
+  dataContainer: DataContainerInterface,
+  valueAccessor: (data: {index: number}) => any
+): filterFunction | null {
   switch (filter.type) {
     case FILTER_TYPES.range:
       return data => isInRange(valueAccessor(data), filter.value);
@@ -524,17 +774,25 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       return data => valueAccessor(data) === filter.value;
     case FILTER_TYPES.timeRange: {
       if (!field) {
-        return defaultFunc;
+        return null;
       }
       const mappedValue = get(field, ['filterProps', 'mappedValue']);
       const accessor = Array.isArray(mappedValue)
         ? data => mappedValue[data.index]
         : data => timeToUnixMilli(valueAccessor(data), field.format);
+
+      const datasetIdx = toArray(filter.dataId).indexOf(dataId);
+      const endMapped = (filter as TimeRangeFilter).endMappedValue?.[datasetIdx];
+      if (isTimeIntervalFilter(filter, datasetIdx) && Array.isArray(endMapped)) {
+        return data =>
+          timeWindowOverlapsInterval(accessor(data), endMapped[data.index], filter.value);
+      }
+
       return data => isInRange(accessor(data), filter.value);
     }
     case FILTER_TYPES.polygon: {
       if (!layers || !layers.length || !filter.layerId) {
-        return defaultFunc;
+        return null;
       }
       const layerFilterFunctions = filter.layerId
         .map(id => layers.find(l => l.id === id))
@@ -544,8 +802,24 @@ export function getFilterFunction<L extends {config: {dataId: string | null}; id
       return data => layerFilterFunctions.every(filterFunc => filterFunc(data));
     }
     default:
-      return defaultFunc;
+      return null;
   }
+}
+
+/**
+ * Range and time filters normally run on the GPU, which can only keep values
+ * inside a range. An inverted filter has to run on the CPU instead.
+ */
+export function filterTypeUsesGpu(type: Filter['type']): boolean {
+  return type === FILTER_TYPES.range || type === FILTER_TYPES.timeRange;
+}
+
+export function disableGpuIfInverted<T extends Filter>(filter: T): T {
+  if (!filter?.inverted || (!filter.gpu && !filter.gpuChannel && !filter.gpuEndChannel)) {
+    return filter;
+  }
+  const {gpuChannel: _gpuChannel, gpuEndChannel: _gpuEndChannel, ...rest} = filter;
+  return {...rest, gpu: false} as T;
 }
 
 export function updateFilterDataId(dataId: string | string[]): FilterBase<LineChart> {
@@ -594,6 +868,64 @@ export function filterDataByFilterTypes(
 }
 
 /**
+ * Histogram bins must not include the filter being plotted. GPU filters are
+ * already absent from filteredIndex. An inverted filter is on the CPU, so
+ * rebuild the index from the other CPU filters.
+ */
+export function getPlotBaseIndexByDataId(
+  datasets: {[id: string]: any},
+  filter: Filter,
+  layers: any[] = []
+): Record<string, number[]> | undefined {
+  if (!filter?.id) {
+    return undefined;
+  }
+
+  const result: Record<string, number[]> = {};
+  toArray(filter.dataId).forEach(dataId => {
+    const dataset = datasets[dataId];
+    const base = dataset ? plotBaseIndexExcludingFilter(dataset, filter) : undefined;
+    if (base) {
+      const filteredIndexByLayer = computePolygonFilteredIndexByLayer(
+        dataset.filterRecord?.fixedDomain || [],
+        layers,
+        dataset.id,
+        dataset.dataContainer,
+        base
+      );
+      result[dataId] = mergePolygonLayerIndexes(base, filteredIndexByLayer);
+    }
+  });
+
+  return Object.keys(result).length ? result : undefined;
+}
+
+function plotBaseIndexExcludingFilter(dataset: any, filter: Filter): number[] | undefined {
+  const cpuFilters = dataset.filterRecord?.cpu;
+  if (!cpuFilters?.some(f => f.id === filter.id)) {
+    return undefined;
+  }
+
+  const others = cpuFilters.filter(f => f.id !== filter.id);
+  if (!others.length) {
+    return dataset.allIndexes || dataset.filteredIndex || [];
+  }
+
+  const filterFuncs = others.reduce((acc: {[id: string]: filterFunction}, f) => {
+    const datasetIndex = toArray(f.dataId).indexOf(dataset.id);
+    const fieldIdx = toArray(f.fieldIdx)[datasetIndex];
+    const field = notNullorUndefined(fieldIdx) ? dataset.fields[fieldIdx] : null;
+    acc[f.id] = getFilterFunction(field, dataset.id, f, [], dataset.dataContainer);
+    return acc;
+  }, {});
+
+  return filterDataByFilterTypes(
+    {dynamicDomainFilters: null, cpuFilters: others, filterFuncs},
+    dataset.dataContainer
+  ).filteredIndex;
+}
+
+/**
  * Get a record of filters based on domain type and gpu / cpu
  */
 export function getFilterRecord(
@@ -621,7 +953,10 @@ export function getFilterRecord(
         : filterRecord.dynamicDomain
       ).push(f);
 
-      (f.gpu && !opt.cpuOnly ? filterRecord.gpu : filterRecord.cpu).push(f);
+      (f.gpu && !opt.cpuOnly && !isNumericIntervalFilter(f)
+        ? filterRecord.gpu
+        : filterRecord.cpu
+      ).push(f);
     }
   });
 
@@ -648,7 +983,7 @@ export function diffFilters(
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'value', 'dataId'].forEach(prop => {
+        ['name', 'endName', 'value', 'dataId', 'inverted'].forEach(prop => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set([record, filter.id], `${prop}_changed`, filterChanged);
           }
@@ -825,10 +1160,16 @@ export function isInRange(val: any, domain: number[]): boolean {
   }
 
   if (Array.isArray(val)) {
-    return domain[0] <= val[0] && val[1] <= domain[1];
+    return (
+      val.length >= 2 &&
+      Number.isFinite(val[0]) &&
+      Number.isFinite(val[1]) &&
+      domain[0] <= val[0] &&
+      val[1] <= domain[1]
+    );
   }
 
-  return val >= domain[0] && val <= domain[1];
+  return Number.isFinite(val) && val >= domain[0] && val <= domain[1];
 }
 
 /**
@@ -935,16 +1276,31 @@ export function getColumnFilterProps<K extends KeplerTableModel<K, L>, L>(
 export function updateFilterPlot<K extends KeplerTableModel<K, any>>(
   datasets: {[id: string]: K},
   filter: Filter,
-  dataId: string | undefined = undefined
+  dataId: string | undefined = undefined,
+  layers: any[] = []
 ) {
   if (dataId) {
     filter = removeFilterPlot(filter, dataId);
   }
 
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(datasets, filter, layers);
+
   if (filter.type === FILTER_TYPES.timeRange) {
-    return updateTimeFilterPlotType(filter as TimeRangeFilter, filter.plotType, datasets);
+    return updateTimeFilterPlotType(
+      filter as TimeRangeFilter,
+      filter.plotType,
+      datasets,
+      dataId,
+      plotBaseIndexByDataId
+    );
   } else if (filter.type === FILTER_TYPES.range) {
-    return updateRangeFilterPlotType(filter as RangeFilter, filter.plotType, datasets);
+    return updateRangeFilterPlotType(
+      filter as RangeFilter,
+      filter.plotType,
+      datasets,
+      dataId,
+      plotBaseIndexByDataId
+    );
   }
   return filter;
 }
@@ -1019,6 +1375,7 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
   let newFilter = {
     ...filter,
     ...filterProps,
+    ...(filterDatasetIndex > 0 && filter.fieldType ? {fieldType: filter.fieldType} : {}),
     name: Object.assign([...toArray(filter.name)], {[filterDatasetIndex]: fieldName}),
     fieldIdx: Object.assign([...toArray(filter.fieldIdx)], {
       [filterDatasetIndex]: fieldIndex
@@ -1027,9 +1384,53 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
 
-  if (mergeDomain) {
-    const domainSteps: (Filter & {step?: number}) | null =
-      mergeFilterDomain(newFilter, datasets) ?? ({} as Filter);
+  if (filter.type === FILTER_TYPES.range && newFilter.type === FILTER_TYPES.range) {
+    newFilter = {...newFilter, view: filter.view};
+  }
+
+  if (filter.type === FILTER_TYPES.timeRange && newFilter.type === FILTER_TYPES.range) {
+    const {
+      timeBins: _timeBins,
+      timezone: _timezone,
+      timeFormat: _timeFormat,
+      defaultTimeFormat: _defaultTimeFormat,
+      syncedWithLayerTimeline: _syncedWithLayerTimeline,
+      syncTimelineMode: _syncTimelineMode,
+      ...numericFilter
+    } = newFilter as TimeRangeFilter;
+    const {
+      interval: _interval,
+      defaultTimeFormat: _plotTimeFormat,
+      ...numericPlotType
+    } = numericFilter.plotType || {};
+    newFilter = {
+      ...numericFilter,
+      isAnimating: false,
+      animationWindow: ANIMATION_WINDOW.free,
+      plotType: numericPlotType,
+      lineChart: undefined
+    };
+  } else if (filter.type === FILTER_TYPES.range && newFilter.type === FILTER_TYPES.timeRange) {
+    const {numericInterval: _numericInterval, ...timePlotType} = newFilter.plotType || {};
+    newFilter = {
+      ...newFilter,
+      bins: undefined,
+      plotType: timePlotType,
+      lineChart: undefined
+    };
+  }
+
+  if (newFilter.type !== FILTER_TYPES.timeRange) {
+    newFilter = omitTimeIntervalFields(newFilter);
+  } else if (toArray(newFilter.endName)[filterDatasetIndex] === fieldName) {
+    newFilter = clearTimeFilterEndFieldAtIndex(newFilter as TimeRangeFilter, filterDatasetIndex);
+  }
+
+  if (mergeDomain || isTimeIntervalFilter(newFilter, filterDatasetIndex)) {
+    const domainSteps: (Filter & {step?: number}) | null = mergeFilterDomain(newFilter, {
+      ...datasets,
+      [datasetId]: dataset
+    });
     if (domainSteps) {
       const {domain, step} = domainSteps;
       newFilter.domain = domain;
@@ -1046,12 +1447,120 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
       ...newFilter,
       value: filter.value
     };
+  } else if (
+    newFilter.type === FILTER_TYPES.timeRange &&
+    toArray(newFilter.endName).some(Boolean) &&
+    newFilter.domain
+  ) {
+    // Selecting a new start field resets the window to the merged start/end domain
+    newFilter = {
+      ...newFilter,
+      value: newFilter.domain
+    };
   }
 
   return {
-    filter: newFilter,
+    filter: disableGpuIfInverted(newFilter),
     dataset
   };
+}
+
+/**
+ * Set or clear the optional end timestamp field on a timeRange filter.
+ * When set, animation uses interval overlap instead of a single timestamp.
+ */
+export function applyTimeFilterEndFieldName<K extends KeplerTableModel<K, L>, L>(
+  filter: Filter,
+  datasets: Record<string, K>,
+  datasetId: string,
+  fieldName: string | null | undefined,
+  filterDatasetIndex = 0
+): {
+  filter: Filter | null;
+  dataset: K;
+} {
+  const dataset = datasets[datasetId];
+  if (!dataset || filter.type !== FILTER_TYPES.timeRange) {
+    return {filter: null, dataset};
+  }
+
+  const timeFilter = filter as TimeRangeFilter;
+
+  if (!fieldName) {
+    const cleared = clearTimeFilterEndFieldAtIndex(timeFilter, filterDatasetIndex);
+    const merged = mergeFilterDomain(cleared, datasets);
+    if (merged?.domain) {
+      const wasFullDomain = isFullTimeDomainValue(timeFilter);
+      return {
+        filter: {
+          ...cleared,
+          domain: merged.domain,
+          step: merged.step ?? cleared.step,
+          value: wasFullDomain
+            ? merged.domain
+            : adjustValueToFilterDomain(timeFilter.value, {
+                ...cleared,
+                domain: merged.domain
+              })
+        },
+        dataset
+      };
+    }
+    return {filter: cleared, dataset};
+  }
+
+  const fieldIndex = dataset.getColumnFieldIdx(fieldName);
+  if (fieldIndex === -1) {
+    return {filter: null, dataset};
+  }
+
+  const field = dataset.fields[fieldIndex];
+  if (field?.type !== ALL_FIELD_TYPES.timestamp) {
+    return {filter: null, dataset};
+  }
+
+  if (toArray(timeFilter.name)[filterDatasetIndex] === fieldName) {
+    return {filter: null, dataset};
+  }
+
+  const filterProps = dataset.getColumnFilterProps(fieldName);
+  if (!filterProps || !('mappedValue' in filterProps)) {
+    return {filter: null, dataset};
+  }
+
+  const wasFullDomain = isFullTimeDomainValue(timeFilter);
+  let newFilter: TimeRangeFilter = {
+    ...timeFilter,
+    endName: Object.assign([...toArray(timeFilter.endName)], {
+      [filterDatasetIndex]: fieldName
+    }),
+    endFieldIdx: Object.assign([...toArray(timeFilter.endFieldIdx)], {
+      [filterDatasetIndex]: fieldIndex
+    }),
+    endMappedValue: Object.assign([...toArray(timeFilter.endMappedValue)], {
+      [filterDatasetIndex]: (filterProps as TimeRangeFieldDomain).mappedValue
+    })
+  };
+
+  const merged = mergeFilterDomain(newFilter, {
+    ...datasets,
+    [datasetId]: dataset
+  });
+  if (merged?.domain) {
+    newFilter = {
+      ...newFilter,
+      domain: merged.domain as [number, number],
+      step: merged.step ?? newFilter.step,
+      value: (wasFullDomain
+        ? merged.domain
+        : adjustValueToFilterDomain(timeFilter.value, {
+            ...newFilter,
+            domain: merged.domain
+          })) as [number, number]
+    };
+  }
+
+  return {filter: newFilter, dataset};
 }
 
 /**
@@ -1067,8 +1576,16 @@ export function mergeFilterDomain(
   }
   filter.dataId.forEach((filterDataId, idx) => {
     const dataset = datasets[filterDataId];
-    const filterProps = dataset.getColumnFilterProps(filter.name[idx]);
-    domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+    const fieldName = filter.name[idx];
+    if (fieldName) {
+      const filterProps = dataset.getColumnFilterProps(fieldName);
+      domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), filterProps);
+    }
+    const endName = toArray((filter as TimeRangeFilter).endName)[idx];
+    if (endName) {
+      const endProps = dataset.getColumnFilterProps(endName);
+      domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), endProps);
+    }
   });
   return domainSteps;
 }
@@ -1089,7 +1606,10 @@ export function mergeFilterDomainStep(
     return filter;
   }
 
-  if ((filter.fieldType && filter.fieldType !== filterProps.fieldType) || !filterProps.domain) {
+  if (
+    (filter.fieldType && !areFilterFieldTypesCompatible(filter.fieldType, filterProps.fieldType)) ||
+    !filterProps.domain
+  ) {
     return filter;
   }
 
@@ -1100,6 +1620,7 @@ export function mergeFilterDomainStep(
   const newFilter = {
     ...filter,
     ...filterProps,
+    ...(filter.fieldType ? {fieldType: filter.fieldType} : {}),
     // use min max as default domain
     domain: [sortedDomain[0], sortedDomain[sortedDomain.length - 1]]
   };
@@ -1125,7 +1646,13 @@ export function mergeFilterDomainStep(
       };
     }
     case ALL_FIELD_TYPES.real:
-    case ALL_FIELD_TYPES.integer:
+    case ALL_FIELD_TYPES.integer: {
+      const steps = [
+        'step' in filter ? filter.step : undefined,
+        'step' in filterProps ? filterProps.step : undefined
+      ].filter((step): step is number => typeof step === 'number');
+      return steps.length ? {...newFilter, step: Math.min(...steps)} : newFilter;
+    }
     default:
       return newFilter;
   }
@@ -1285,7 +1812,7 @@ export function validateFiltersUpdateDatasets<
           domain
         });
 
-        validated.push(updateFilterPlot(datasets, validatedFilter));
+        validated.push(updateFilterPlot(datasets, validatedFilter, undefined, layers));
         updatedDatasets = {
           ...updatedDatasets,
           ...augmentedDatasets

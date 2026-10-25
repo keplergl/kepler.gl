@@ -56,7 +56,8 @@ export type BaseMapLibraryConfig = {
  *
  * - `0` — log every action (no filtering)
  * - `1` — suppress the highest-frequency UI noise:
- *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR
+ *          MOUSE_MOVE, LAYER_HOVER, SET_MAP_BOUNDARY, SET_LOADING_INDICATOR,
+ *          SET_LOADING_PROGRESS
  * - `2` — suppress everything in level 1 plus map/layer update chatter:
  *          LOAD_MAP_STYLES, UPDATE_MAP, LAYER_VISUAL_CHANGE,
  *          ON_MAP_CLICK, FILTER_CHANGE, MAP_LOAD_STARTED
@@ -76,6 +77,39 @@ export type BaseMapLibraryConfig = {
  */
 export type ReduxLogLevel = 0 | 1 | 2;
 
+/** Built-in file formats that can be listed in {@link KeplerApplicationConfig.acceptedFileFormats}. */
+export type KeplerAcceptedFileFormat =
+  | 'csv'
+  | 'tsv'
+  | 'dsv'
+  | 'json'
+  | 'geojson'
+  | 'ndjson'
+  | 'jsonl'
+  | 'geojsonl'
+  | 'ndgeojson'
+  | 'ldgeojson'
+  | 'kml'
+  | 'gpx'
+  | 'tcx'
+  | 'arrow'
+  | 'feather'
+  | 'parquet'
+  | 'shp'
+  | 'shapefile'
+  | 'zip'
+  | 'dbf'
+  | 'shx'
+  | 'prj'
+  | 'cpg'
+  | 'xlsx'
+  | 'xls'
+  | 'xlsm'
+  | 'xlsb'
+  | 'excel'
+  | 'fgb'
+  | 'flatgeobuf';
+
 export type KeplerApplicationConfig = {
   /** Default name of export HTML file, can be overridden by user */
   defaultHtmlName?: string;
@@ -85,6 +119,11 @@ export type KeplerApplicationConfig = {
   defaultExportJsonSettings?: {
     hasData?: boolean;
   };
+  /**
+   * Whether to show editable application name and website controls for exported maps.
+   * Enabled by default.
+   */
+  enableCustomExportBranding?: boolean;
   baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
@@ -128,6 +167,11 @@ export type KeplerApplicationConfig = {
   // WMS layer is under development and not ready for production use. Disabled by default.
   enableWMSLayer?: boolean;
 
+  // Zarr layer config -- Experimental
+  // Enabled by default. Set false to hide Zarr in Add Data and layer type pickers.
+  // Existing Zarr layers in saved maps can still render.
+  enableZarrLayer?: boolean;
+
   // Flow layer config
   enableFlowLayer?: boolean;
 
@@ -141,6 +185,9 @@ export type KeplerApplicationConfig = {
   // GeoHash layer config
   // GeoHash layer is optional. Enabled by default; disable via initApplicationConfig.
   enableGeohashLayer?: boolean;
+
+  // Flow Field (streamlines) layer config
+  enableFlowFieldLayer?: boolean;
 
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
@@ -169,6 +216,20 @@ export type KeplerApplicationConfig = {
   /** Whether to show the map scale bar at the bottom-left of the map. Enabled by default. */
   enableMapScale?: boolean;
 
+  /**
+   * Fit the map to a dataset when the layer type dropdown gives a manually
+   * added layer its first type. The layer already has a dataset (chosen from
+   * Add Layer). Programmatic `layerTypeChange`, saved configs, and later type
+   * changes do not move the map.
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({enableFitBoundsOnManualLayer: false});
+   * ```
+   */
+  enableFitBoundsOnManualLayer?: boolean;
+
   /** Whether to enable the swipe compare mode in split map view. Enabled by default. */
   enableSwipeMode?: boolean;
 
@@ -178,17 +239,116 @@ export type KeplerApplicationConfig = {
   /** Whether to enable the layer groups feature. Enabled by default. */
   enableLayerGroups?: boolean;
 
-  /** Whether to show a map control to toggle between light and dark UI themes. Disabled by default. */
-  enableThemeToggle?: boolean;
+  /**
+   * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
+   * Empty (default): dark theme, no switcher.
+   * One theme: that theme is used, no switcher.
+   * Two or more: first is the default, a map control cycles the list.
+   */
+  themes?: string[];
 
   /** Whether to show column statistics in the data table modal. Enabled by default. */
   enableColumnStats?: boolean;
+
+  /** Group-by, attribute join, and simple spatial join UI on local datasets. Enabled by default. */
+  enableDatasetOps?: boolean;
+
+  /**
+   * Whether to show the charts map-control panel (big number, bar, line,
+   * heatmap, pivot table, tooltip charts, and chart cross-filters).
+   * Enabled by default. Disable with {@link initApplicationConfig}.
+   */
+  enableChartsPanel?: boolean;
+
+  /**
+   * Whether to show the Map info section in Interactions and the on-map
+   * name and description card. Enabled by default.
+   */
+  enableMapInfo?: boolean;
+
+  /** Whether to show the Bookmarks panel in Interactions. Enabled by default. */
+  enableCameraBookmarks?: boolean;
+
+  /** Whether to show the Camera animation panel in Interactions. Enabled by default. */
+  enableCameraTour?: boolean;
+
+  /**
+   * Master switch for power-user JSON editors. When false, every section editor is hidden.
+   * Defaults to true; each section also has its own flag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({
+   *   enableViewportJsonEditor: true,
+   *   enableLayerJsonEditor: false
+   * });
+   * ```
+   */
+  enableJsonEditors?: boolean;
+
+  /** Layer panel `{ }` JSON editor. Enabled by default. */
+  enableLayerJsonEditor?: boolean;
+
+  /** Filter panel `{ }` JSON editor. Enabled by default. */
+  enableFilterJsonEditor?: boolean;
+
+  /** Effect panel `{ }` JSON editor. Enabled by default. */
+  enableEffectJsonEditor?: boolean;
+
+  /**
+   * Viewport JSON editor map-control button. Disabled by default because it adds an extra
+   * map control.
+   */
+  enableViewportJsonEditor?: boolean;
+
+  /** Animation / time-filter playback `{ }` JSON editor. Enabled by default. */
+  enableAnimationJsonEditor?: boolean;
+
+  /** Charts panel `{ }` JSON editor. Enabled by default. */
+  enableChartJsonEditor?: boolean;
 
   /**
    * Show a format dropdown next to the remote dataset URL field (Auto / CSV / GeoJSON / JSON / Arrow / Parquet).
    * Useful for extensionless URLs such as Azure SAS blobs. Disabled by default.
    */
   enableRemoteFileFormatSelector?: boolean;
+
+  /**
+   * Warn in the Add Data list when a dataset has at least this many rows.
+   * `false` shows no warning. The warning waits until the row count is known.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningRows: 1_000_000});
+   * initApplicationConfig({largeDatasetWarningRows: false});
+   * ```
+   */
+  largeDatasetWarningRows?: false | number;
+
+  /**
+   * Warn in the Add Data list when a file is at least this many bytes.
+   * `false` shows no file-size warning. Either this or {@link largeDatasetWarningRows}
+   * can show the same tag.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({largeDatasetWarningBytes: 50 * 1024 * 1024});
+   * initApplicationConfig({largeDatasetWarningBytes: false});
+   * ```
+   */
+  largeDatasetWarningBytes?: false | number;
+
+  /**
+   * File formats Kepler may load from drag-and-drop, the file picker, and remote URLs.
+   * Values are format ids or extensions (`csv`, `geojson`, `kml`, `shp`, `xlsx`, `fgb`, …).
+   * When omitted or `null`, every built-in format is accepted.
+   *
+   * @example
+   * ```
+   * initApplicationConfig({acceptedFileFormats: ['csv', 'geojson', 'parquet']});
+   * ```
+   */
+  acceptedFileFormats?: KeplerAcceptedFileFormat[] | null;
 
   /**
    * Custom SVG icons to be made available in the icon layer.
@@ -254,6 +414,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   defaultExportJsonSettings: {
     hasData: true
   },
+  enableCustomExportBranding: true,
 
   baseMapLibraryConfig: {
     maplibre: {
@@ -280,7 +441,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   table: null,
   database: null,
 
-  useArrowProgressiveLoading: true,
+  useArrowProgressiveLoading: false,
   showReleaseBanner: true,
   useOnFilteredItemsChange: false,
 
@@ -298,6 +459,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   // WMS layer config
   enableWMSLayer: true,
 
+  // Zarr layer config -- experimental, disable via initApplicationConfig
+  enableZarrLayer: true,
+
   // Flow layer config
   enableFlowLayer: true,
 
@@ -309,6 +473,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // GeoHash layer config
   enableGeohashLayer: true,
+
+  // Flow Field layer config
+  enableFlowFieldLayer: true,
 
   showInlineTilesetExamples: true,
 
@@ -326,17 +493,43 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableMapScale: true,
 
+  enableFitBoundsOnManualLayer: true,
+
   enableSwipeMode: true,
 
   enableGlobeView: true,
 
   enableLayerGroups: true,
 
-  enableThemeToggle: false,
+  themes: [],
 
   enableColumnStats: true,
 
+  enableDatasetOps: true,
+
+  enableChartsPanel: true,
+
+  enableMapInfo: true,
+
+  enableCameraBookmarks: true,
+
+  enableCameraTour: true,
+
+  enableJsonEditors: true,
+  enableLayerJsonEditor: true,
+  enableFilterJsonEditor: true,
+  enableEffectJsonEditor: true,
+  enableViewportJsonEditor: false,
+  enableAnimationJsonEditor: true,
+  enableChartJsonEditor: true,
+
   enableRemoteFileFormatSelector: false,
+
+  largeDatasetWarningRows: 500_000,
+
+  largeDatasetWarningBytes: 1024 * 1024 * 1024,
+
+  acceptedFileFormats: null,
 
   customIcons: [],
 

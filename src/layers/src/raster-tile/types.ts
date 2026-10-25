@@ -107,7 +107,7 @@ export type CategoricalColormapOptions = {
 };
 
 export type ExtendedKeplerSTAC = {
-  rasterTileServerUrls?: [];
+  rasterTileServerUrls?: string[];
   /** Optional per-layer override for max retries when fetching raster data */
   rasterServerMaxRetries?: number;
   /** Optional per-layer override for retry delay between attempts (ms) */

@@ -10,7 +10,7 @@ import Layer, {
   VisualChannelDescription,
   VisualChannels
 } from './base-layer';
-import {hexToRgb, aggregate, DataContainerInterface} from '@kepler.gl/utils';
+import {hexToRgb, aggregate, DataContainerInterface, naturalBreaks} from '@kepler.gl/utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
@@ -19,8 +19,16 @@ import {
   AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
   GEOJSON_FIELDS,
-  GEOARROW_METADATA_KEY
+  GEOARROW_METADATA_KEY,
+  SCALE_TYPES
 } from '@kepler.gl/constants';
+import {
+  AggregationCountLabel,
+  defaultAggregationCountLabel,
+  formatPointCount,
+  isPointCountLabel,
+  POINT_COUNT_CHARACTER_SET
+} from './aggregation-count-label';
 import {ColorRange, Field, LayerColumn, Merge} from '@kepler.gl/types';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {DATA_TYPES} from 'type-analyzer';
@@ -240,8 +248,65 @@ export default class AggregationLayer extends Layer {
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {
       ...super.getDefaultLayerConfig(props),
-      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE
+      columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      // Show the point count on each shape. Collision is on so dense grids
+      // hide overlapping numbers. Clearing the label field turns this off.
+      textLabel: [defaultAggregationCountLabel()]
     };
+  }
+
+  getCountLabelProps(opts) {
+    const hasCountLabel = (this.config.textLabel || []).some(textLabel =>
+      isPointCountLabel(textLabel)
+    );
+    if (!hasCountLabel) {
+      return {};
+    }
+    return {
+      renderCountLabels: (data: AggregationCountLabel[]) => this.renderCountLabelLayers(data, opts),
+      // Compared by the deck layer so font, color, and collision changes redraw.
+      countLabelConfig: this.config.textLabel
+    };
+  }
+
+  /**
+   * Draw point-count labels the way extruded GeoJSON does: at the shape's base,
+   * not at the top of the column. renderTextLabelLayer disables the depth test
+   * in flat mode, so the glyphs paint on top of extruded hexes and grids.
+   */
+  renderCountLabelLayers(labelData: AggregationCountLabel[], opts) {
+    const textLabels = (this.config.textLabel || []).map(textLabel =>
+      isPointCountLabel(textLabel)
+        ? {
+            getText: (d: AggregationCountLabel) => formatPointCount(d.count),
+            characterSet: POINT_COUNT_CHARACTER_SET
+          }
+        : {getText: null, characterSet: []}
+    );
+    if (!textLabels.some(textLabel => textLabel.getText)) {
+      return [];
+    }
+
+    const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    return this.renderTextLabelLayer(
+      {
+        getPosition: (d: AggregationCountLabel) => d.position,
+        getPixelOffset: (textLabel: {offset?: [number, number]}) => textLabel.offset || [0, 0],
+        updateTriggers: {},
+        sharedProps: {
+          visible: defaultLayerProps.visible,
+          pickable: false,
+          wrapLongitude: false
+        }
+      },
+      {
+        ...opts,
+        data: {
+          data: labelData,
+          textLabels
+        }
+      }
+    );
   }
 
   getDataUpdateTriggers(dataset: KeplerTable): any {
@@ -336,8 +401,9 @@ export default class AggregationLayer extends Layer {
   updateLayerVisualChannel({dataContainer}, channel) {
     this.validateVisualChannel(channel);
 
-    // When the color scale type changes, recompute colorDomain from stored aggregatedBins.
-    // quantile scale needs the full sorted array of bin values; other scales need [min, max].
+    // When the color scale type or palette size changes, recompute colorDomain from
+    // stored aggregatedBins. Quantile needs the full sorted array; Jenks needs k-1
+    // thresholds from those bins; other scales need [min, max].
     // aggregatedBins is only populated from onSetColorDomain, so restrict to the color channel.
     const visualChannel = this.visualChannels[channel];
     if (channel === 'color' && visualChannel && this.config.aggregatedBins) {
@@ -351,6 +417,13 @@ export default class AggregationLayer extends Layer {
             .filter(Number.isFinite)
             .sort((a, b) => a - b);
           this.updateLayerConfig({[domainKey]: sorted});
+        } else if (scaleType === SCALE_TYPES.jenks) {
+          const values = bins.map(b => b.value).filter(Number.isFinite) as number[];
+          const colorRange = visualChannel.range
+            ? this.config.visConfig[visualChannel.range]
+            : undefined;
+          const k = Array.isArray(colorRange?.colors) ? colorRange.colors.length : 0;
+          this.updateLayerConfig({[domainKey]: naturalBreaks(values, k)});
         } else {
           let min = Infinity;
           let max = -Infinity;
@@ -673,6 +746,7 @@ export default class AggregationLayer extends Layer {
         colorAggregation: this.config.visConfig.colorAggregation,
         colorRange: visConfig.colorRange,
         colorMap: visConfig.colorRange.colorMap,
+        colorScale: this.config.colorScale,
         filterRange: gpuFilter.filterRange,
         ...gpuFilter.filterValueUpdateTriggers
       },
@@ -687,18 +761,19 @@ export default class AggregationLayer extends Layer {
     // deck.gl's aggregation shader maps bin values to a color texture using a
     // simple linear interpolation: (value - domain[0]) / (domain[1] - domain[0]).
     // It only understands 'quantize', 'quantile', 'ordinal', and 'linear'.
-    // kepler.gl's 'custom' scale (d3.scaleThreshold with user-defined break
-    // points) cannot be represented in the shader directly.  Instead, our
-    // ScaleEnhanced*Layer._onAggregationUpdate reclassifies each bin's raw
-    // value into a break index [0 … N-1].  We then tell deck.gl to use
-    // 'quantize' over [0, N-1] so each index maps to the correct color pixel.
+    // kepler.gl's 'custom' and 'jenks' scales (d3.scaleThreshold) cannot be
+    // represented in the shader directly.  Instead, ScaleEnhanced*Layer
+    // reclassifies each bin's raw value into a break index [0 … N-1].  We then
+    // tell deck.gl to use 'quantize' over [0, N-1] so each index maps to the
+    // correct color pixel.
     let colorScaleType = this.config.colorScale as string;
     let customColorDomain: [number, number] | undefined;
-    const isCustomScale = colorScaleType === 'custom';
+    const isCustomScale = colorScaleType === SCALE_TYPES.custom;
+    const isJenksScale = colorScaleType === SCALE_TYPES.jenks;
     const colorMap = isCustomScale ? visConfig.colorRange.colorMap : undefined;
-    if (isCustomScale && colorMap) {
-      colorScaleType = 'quantize';
-      customColorDomain = [0, colorMap.length - 1];
+    if ((isCustomScale && colorMap) || isJenksScale) {
+      colorScaleType = SCALE_TYPES.quantize;
+      customColorDomain = [0, visConfig.colorRange.colors.length - 1];
     }
 
     return {
@@ -709,6 +784,7 @@ export default class AggregationLayer extends Layer {
       colorRange: this.getColorRange(visConfig.colorRange),
       colorMap,
       colorScaleType,
+      jenksScale: isJenksScale,
       ...(customColorDomain ? {colorDomain: customColorDomain} : {}),
       upperPercentile: visConfig.percentile[1],
       lowerPercentile: visConfig.percentile[0],

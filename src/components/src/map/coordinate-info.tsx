@@ -8,8 +8,27 @@ import {StyledLayerName} from './layer-hover-info';
 
 // 6th decimal is worth up to 0.11 m
 // https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude
-const DECIMAL = 6;
+export const MAP_COORDINATE_DECIMAL = 6;
 const DECIMAL_Z = 1;
+
+/**
+ * Format a `[lng, lat]` pair as `"lat, lng"` at map-popover precision.
+ * Returns null when either value is missing or not finite.
+ */
+export function formatMapCoordinate(coordinate: number[] | null | undefined): string | null {
+  if (!coordinate || coordinate.length < 2) {
+    return null;
+  }
+  const lng = Number(coordinate[0]);
+  const lat = Number(coordinate[1]);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+    return null;
+  }
+  return `${preciseRound(lat, MAP_COORDINATE_DECIMAL)}, ${preciseRound(
+    lng,
+    MAP_COORDINATE_DECIMAL
+  )}`;
+}
 
 export interface CoordinateInfoProps {
   coordinate: number[];
@@ -26,8 +45,8 @@ const CoordinateInfoFactory = () => {
       <table>
         <tbody>
           <tr className="row">
-            <td className="row__value">{preciseRound(coordinate[1], DECIMAL)},</td>
-            <td className="row__value">{preciseRound(coordinate[0], DECIMAL)},</td>
+            <td className="row__value">{preciseRound(coordinate[1], MAP_COORDINATE_DECIMAL)},</td>
+            <td className="row__value">{preciseRound(coordinate[0], MAP_COORDINATE_DECIMAL)},</td>
             <td className="row__value">{preciseRound(zoom, DECIMAL_Z)}z</td>
           </tr>
         </tbody>

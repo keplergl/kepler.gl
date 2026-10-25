@@ -16,6 +16,7 @@ export default {
     stroke: 'обводка',
     density: 'плотность',
     height: 'высота',
+    elevationOffset: 'смещение высоты',
     sum: 'сумма',
     pointCount: 'Кол-во точек'
   },
@@ -27,7 +28,8 @@ export default {
     selectValue: 'Выберите A значение',
     enterValue: 'Введите значение',
     empty: 'пустой',
-    selectLayer: 'Выберите слой'
+    selectLayer: 'Выберите слой',
+    endTimeField: 'Выберите время окончания'
   },
   misc: {
     by: '',
@@ -60,7 +62,8 @@ export default {
       alignment: 'Положение',
       addMoreLabel: 'Добавить еще ярлык',
       outlineWidth: 'Ширина контура',
-      outlineColor: 'Цвет контура'
+      outlineColor: 'Цвет контура',
+      collisionEnabled: 'Скрывать пересекающиеся подписи'
     }
   },
   sidebar: {
@@ -121,6 +124,7 @@ export default {
       trip: 'пути',
       s2: 'S2',
       geohash: 'GeoHash',
+      flowfield: 'Flow Field',
       '3d': '3D',
       flow: 'поток',
       vectortile: 'векторный тайл',
@@ -148,6 +152,9 @@ export default {
     radiusRange: 'Диапазон радиуса',
     clusterRadius: 'Радиус кластера в пикселях',
     radiusRangePixels: 'Диапазон радиуса в пикселях',
+    minClusterSize: 'Мин. точек в кластере',
+    minClusterSizeDescription:
+      'Скрывать кластеры, в которых меньше точек, например 2 убирает кластеры из одной точки',
     billboard: 'Режим билборда',
     billboardDescription: 'Ориентировать геометрию на камеру',
     fadeTrail: 'Затухающий след',
@@ -167,6 +174,10 @@ export default {
     sizeScale: 'Шкала размеров',
     worldUnitSize: 'Мировые ед.изм.',
     elevationScale: 'Шкала возвышения',
+    elevationOffset: 'Смещение высоты',
+    elevationOffsetDescription:
+      'Поднимает выдавленные полигоны над землёй (те же единицы, что и высота)',
+    elevationOffsetRange: 'Диапазон смещения высоты',
     enableElevationZoomFactor: 'Использовать коэффициент увеличения по высоте',
     enableElevationZoomFactorDescription:
       'Отрегулируйте высоту / возвышение на основе текущего коэффициента масштабирования',
@@ -188,6 +199,8 @@ export default {
     heightMultiplier: 'Множитель высоты',
     fixedHeight: 'Фиксированная высота',
     fixedHeightDescription: 'Использовать высоту без изменений',
+    fixedElevation: 'Фиксированное смещение',
+    fixedElevationDescription: 'Использовать смещение высоты без изменений',
     allowHover: 'Показать подсказку',
     allowHoverDescription: 'Показать или скрыть подсказку при наведении на элементы слоя',
     flow: {
@@ -240,7 +253,9 @@ export default {
     addAnnotation: 'Добавить',
     type: 'Тип',
     lineWidth: 'Толщина линии',
-    color: 'Цвет'
+    color: 'Цвет',
+    textSide: 'Сторона текста',
+    textPlacement: 'Размещение'
   },
   effectDescription: {
     lightAndShadow:
@@ -290,7 +305,12 @@ export default {
     timeFilterSync: 'Синхронизированные наборы данных',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя',
-    column: 'Столбец'
+    column: 'Столбец',
+    timeIntervalEndField: 'Время окончания',
+    timeIntervalEndFieldHint:
+      'Необязательно. Объекты остаются видимыми, пока окно воспроизведения пересекается с этим интервалом.',
+    timezone: 'Часовой пояс',
+    selectTimezone: 'Выберите часовой пояс отображения'
   },
   datasetTitle: {
     showDataTable: 'Показать таблицу данных ',
@@ -342,6 +362,7 @@ export default {
     selectLocale: 'Выберите регион',
     switchToLightTheme: 'Переключить на светлую тему',
     switchToDarkTheme: 'Переключить на тёмную тему',
+    switchToSpaceTheme: 'Переключить на тему Space',
     showAiAssistantPanel: 'Показать панель AI Assistant',
     hideAiAssistantPanel: 'Скрыть панель AI Assistant',
     hideLayerPanel: 'Скрыть панель слоев',
@@ -354,6 +375,7 @@ export default {
     '3DMap': '3D Карта',
     animationByWindow: 'Перемещение временного окна',
     animationByIncremental: 'Дополнительное временное окно',
+    animationByInterval: 'Шаг по интервалу',
     speed: 'скорость',
     play: 'проиграть',
     pause: 'пауза',
@@ -367,6 +389,8 @@ export default {
     syncTimelineEnd: 'Конец текущего периода фильтра',
     showEffectPanel: 'Показать панель эффектов',
     hideEffectPanel: 'Скрыть панель эффектов',
+    showChartPanel: 'Показать графики',
+    hideChartPanel: 'Скрыть графики',
     showAnnotationPanel: 'Показать аннотации',
     hideAnnotationPanel: 'Скрыть аннотации',
     removeAnnotation: 'Удалить аннотацию',
@@ -377,6 +401,12 @@ export default {
     removeEffect: 'Удалить эффект',
     disableEffect: 'Отключить эффект',
     effectSettings: 'Настройки эффекта',
+    editLayerJson: 'Редактировать JSON слоя',
+    editFilterJson: 'Редактировать JSON фильтра',
+    editEffectJson: 'Редактировать JSON эффекта',
+    editViewportJson: 'Редактировать JSON вида',
+    editAnimationJson: 'Редактировать JSON анимации',
+    editChartJson: 'Редактировать JSON графика',
     timeLayerSync: 'Привязать к временной шкале слоя',
     timeLayerUnsync: 'Отвязать от временной шкалы слоя'
   },
@@ -403,12 +433,15 @@ export default {
     filterLayer: 'Слои фильтров',
     filterLayerDisabled: 'Неполигональные геометрии нельзя использовать для фильтрации',
     copyGeometry: 'Копировать геометрию',
+    extractData: 'Извлечь данные',
+    extractFromLayer: 'из слоя {layerName}',
     editProperties: 'Изменить свойства',
     propertyName: 'Свойство',
     propertyValue: 'Значение',
     removeProperty: 'Удалить свойство',
     polygonFilter: 'Полигональный фильтр',
-    noLayersToFilter: 'Нет слоев для фильтрации'
+    noLayersToFilter: 'Нет слоев для фильтрации',
+    noLayersToExtract: 'Нет слоев для извлечения'
   },
   exportVideoModal: {
     animation: 'Анимация',
@@ -447,7 +480,9 @@ export default {
       resolutionDescription: 'Для печати лучше использовать высокое разрешение',
       resolutionPlaceholder: 'Выберите разрешение...',
       mapLegendTitle: 'Легенда карты',
-      mapLegendAdd: 'Добавить легенду на карту'
+      mapLegendAdd: 'Добавить легенду на карту',
+      chartsTitle: 'Графики',
+      chartsAdd: 'Добавить графики на карту'
     },
     exportVideo: {
       animation: 'Анимация',
@@ -610,13 +645,26 @@ export default {
   header: {
     visibleLayers: 'Видимые слои',
     layerLegend: 'Легенда слоя',
-    annotations: 'Аннотации'
+    annotations: 'Аннотации',
+    charts: 'Графики'
   },
   interactions: {
     tooltip: 'Подсказка',
     brush: 'Кисть',
     coordinate: 'Координаты',
-    geocoder: 'Геокодер'
+    annotation: 'Аннотации',
+    addAnnotation: 'Добавить аннотацию',
+    showAnnotations: 'Показать аннотации',
+    hideAnnotations: 'Скрыть аннотации',
+    copyCoordinate: 'Копировать координаты',
+    coordinateCopied: 'Скопировано',
+    geocoder: 'Геокодер',
+    legend: 'Легенда',
+    legendHint: 'Выберите, какие слои видны в легенде. На карте слои остаются.',
+    legendEmpty: 'Добавьте слой, чтобы выбрать, что видно в легенде.',
+    legendHiddenByGroup: 'Скрыто, потому что группа исключена из легенды',
+    legendHideInvisible: 'Скрывать скрытые слои в легенде',
+    legendAllLayers: 'Все слои'
   },
   layerBlending: {
     title: 'Смешивание слоев',
@@ -701,12 +749,12 @@ export default {
   fileUploader: {
     message: 'Перетащите сюда ваши файлы',
     chromeMessage:
-      '*Пользователь Chrome: ограничьте размер файла до 250 МБ, если нужно загрузить файл большего размера, попробуйте Safari',
+      '*Файлы обрабатываются в браузере. Большие файлы могут исчерпать память; для очень больших наборов данных используйте тайлы (tileset).',
     disclaimer:
       '*kepler.gl - это клиентское приложение без серверной части. Данные живут только на вашем компьютере. ' +
       'Никакая информация или данные карты не отправляются ни на один сервер.',
     configUploadMessage:
-      'Загрузите {fileFormatNames} или сохраненную карту **Json**. Подробнее [**supported file formats**]',
+      'Загрузите поддерживаемый файл или сохраненную карту **Json**. Подробнее [**supported file formats**]',
     browseFiles: 'Просматреть файлы',
     uploading: 'Загрузка',
     downloading: 'Загрузка',

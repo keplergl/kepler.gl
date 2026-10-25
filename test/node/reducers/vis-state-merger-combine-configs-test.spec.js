@@ -20,10 +20,11 @@ const TEST_CASES = [
             ],
             'trip-dataset': [{name: 'vendor', format: null}]
           },
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'absolute'
         },
-        geocoder: {enabled: true},
+        geocoder: {enabled: true, color: [255, 0, 0]},
         brush: {enabled: true, size: 0.5},
         coordinate: {enabled: false}
       },
@@ -33,10 +34,11 @@ const TEST_CASES = [
           fieldsToShow: {
             'trip-dataset': [{name: 'customer', format: null}]
           },
+          timezone: 'UTC',
           compareMode: true,
           compareType: 'relative'
         },
-        geocoder: {enabled: true},
+        geocoder: {enabled: true, color: [0, 128, 255]},
         brush: {enabled: true, size: 2},
         coordinate: {enabled: false}
       },
@@ -44,11 +46,24 @@ const TEST_CASES = [
         tooltip: {
           enabled: true,
           fieldsToShow: {},
+          timezone: 'America/Guayaquil',
           compareMode: true,
           compareType: 'relative'
         },
         geocoder: {enabled: false},
         brush: {enabled: true, size: 3},
+        coordinate: {enabled: false}
+      },
+      {
+        tooltip: {
+          enabled: false,
+          fieldsToShow: {},
+          timezone: null,
+          compareMode: false,
+          compareType: 'relative'
+        },
+        geocoder: {enabled: false},
+        brush: {enabled: false, size: 1},
         coordinate: {enabled: false}
       }
     ],
@@ -66,10 +81,11 @@ const TEST_CASES = [
             {name: 'customer', format: null}
           ]
         },
+        timezone: 'America/Guayaquil',
         compareMode: true,
         compareType: 'relative'
       },
-      geocoder: {enabled: true, limitSearch: false},
+      geocoder: {enabled: true, limitSearch: false, color: [255, 0, 0]},
       brush: {enabled: true, size: 3},
       coordinate: {enabled: false}
     }
@@ -153,6 +169,66 @@ const TEST_CASES = [
     }
   },
   {
+    testMessage: 'interactionConfig (with an explicitly null tooltip timezone)',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        tooltip: {
+          enabled: true,
+          fieldsToShow: {},
+          timezone: null,
+          compareMode: false,
+          compareType: 'absolute'
+        }
+      },
+      {
+        tooltip: {
+          enabled: false,
+          fieldsToShow: {},
+          compareMode: false,
+          compareType: 'absolute'
+        }
+      }
+    ],
+    expected: {
+      tooltip: {
+        enabled: true,
+        fieldsToShow: {},
+        timezone: null,
+        compareMode: false,
+        compareType: 'absolute'
+      }
+    }
+  },
+  {
+    testMessage: 'interactionConfig (legend present only on later configs)',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        tooltip: {enabled: true, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false}
+      },
+      {
+        tooltip: {enabled: false, fieldsToShow: {}, compareMode: false, compareType: 'absolute'},
+        brush: {enabled: false, size: 0.5},
+        coordinate: {enabled: false},
+        legend: {enabled: true, hideInvisibleLayers: true}
+      }
+    ],
+    expected: {
+      tooltip: {
+        enabled: true,
+        fieldsToShow: {},
+        compareMode: false,
+        compareType: 'absolute'
+      },
+      brush: {enabled: false, size: 0.5},
+      coordinate: {enabled: false},
+      legend: {enabled: true, hideInvisibleLayers: true}
+    }
+  },
+  {
     testMessage: 'layerBlending (with a majority of "additive" values)',
     propName: 'layerBlending',
     configsToMerge: ['normal', 'additive', 'additive'],
@@ -183,7 +259,66 @@ const TEST_CASES = [
       {currentTime: 500, speed: 1},
       {currentTime: 100, speed: 5}
     ],
-    expected: {currentTime: 100, speed: 1}
+    expected: {currentTime: 100, speed: 1, timeFormat: null, timezone: null}
+  },
+  {
+    testMessage: 'animationConfig with timezone and time format',
+    propName: 'animationConfig',
+    configsToMerge: [
+      {currentTime: 500, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'},
+      {currentTime: 300, speed: 2, timeFormat: null, timezone: 'UTC'},
+      {currentTime: 100, speed: 5, timeFormat: null, timezone: 'America/Guayaquil'},
+      {currentTime: 200, speed: 3}
+    ],
+    expected: {currentTime: 100, speed: 1, timeFormat: 'L LTS', timezone: 'America/Guayaquil'}
+  },
+  {
+    testMessage:
+      'interactionConfig zoomOpacity concatenates controllers and drops duplicate layer ids',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {
+        zoomOpacity: {
+          enabled: false,
+          controllers: [
+            {
+              id: 'c1',
+              layerIds: ['l1', 'l2'],
+              stops: {appear: 1, full: 3, fade: 8, gone: 12}
+            }
+          ]
+        }
+      },
+      {
+        zoomOpacity: {
+          enabled: true,
+          controllers: [
+            {
+              id: 'c2',
+              layerIds: ['l2', 'l3'],
+              stops: {appear: 4, full: 6, fade: 10, gone: 14}
+            }
+          ]
+        }
+      }
+    ],
+    expected: {
+      zoomOpacity: {
+        enabled: true,
+        controllers: [
+          {
+            id: 'c1',
+            layerIds: ['l1', 'l2'],
+            stops: {appear: 1, full: 3, fade: 8, gone: 12}
+          },
+          {
+            id: 'c2',
+            layerIds: ['l3'],
+            stops: {appear: 4, full: 6, fade: 10, gone: 14}
+          }
+        ]
+      }
+    }
   },
   {
     testMessage: 'editor',

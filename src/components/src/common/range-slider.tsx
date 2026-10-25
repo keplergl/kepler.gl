@@ -71,6 +71,7 @@ interface RangeSliderProps {
 
   timezone?: string | null;
   timeFormat?: string;
+  isTime?: boolean;
   playbackControlWidth?: number;
   lineChart?: LineChart;
   marks?: number[];
@@ -155,6 +156,9 @@ export default function RangeSliderFactory(
     );
 
     _isTimeFilter = () => {
+      if (typeof this.props.isTime === 'boolean') {
+        return this.props.isTime;
+      }
       return typeof this.props.timeFormat === 'string';
     };
 
@@ -282,6 +286,7 @@ export default function RangeSliderFactory(
         step,
         timezone,
         timeFormat,
+        isTime,
         playbackControlWidth,
         setFilterPlot,
         animationWindow,
@@ -334,6 +339,7 @@ export default function RangeSliderFactory(
                   step={step}
                   timezone={timezone}
                   timeFormat={timeFormat}
+                  isTime={isTime}
                   playbackControlWidth={playbackControlWidth}
                   setFilterPlot={setFilterPlot}
                   style={{paddingLeft: commonPadding}}
@@ -358,6 +364,7 @@ export default function RangeSliderFactory(
                       timezone={timezone}
                       domain={displayRange}
                       isEnlarged={this.props.isEnlarged}
+                      isTime={isTime}
                     />
                   </div>
                 ) : null}

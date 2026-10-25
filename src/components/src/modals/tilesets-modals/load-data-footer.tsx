@@ -55,6 +55,11 @@ type ThemeProps = {
   theme: any;
 };
 
+const ButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const LoadDataFooter = ({
   disabled,
   intl,
@@ -67,7 +72,7 @@ const LoadDataFooter = ({
 }: LoadDataFooterProps & WrappedComponentProps & ThemeProps) => {
   return (
     <LoadDataFooterContainer>
-      <div>
+      <ButtonRow>
         {prependText}
         <AddDataButton
           disabled={disabled}
@@ -86,7 +91,7 @@ const LoadDataFooter = ({
               })}
         </AddDataButton>
         {errorText && <ErrorContainer>{errorText}</ErrorContainer>}
-      </div>
+      </ButtonRow>
     </LoadDataFooterContainer>
   );
 };

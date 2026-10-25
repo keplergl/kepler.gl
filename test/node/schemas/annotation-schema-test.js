@@ -21,9 +21,14 @@ const annotationPropsV1 = {
   textWidth: null,
   textHeight: null,
   textVerticalAlign: null,
+  textSide: null,
+  textVerticalPosition: null,
   armLength: null,
   angle: null,
-  radiusInMeters: null
+  radiusInMeters: null,
+  endPoint: null,
+  showCustomText: null,
+  showDistance: null
 };
 
 const schema = new AnnotationsSchema({
@@ -39,13 +44,17 @@ const makePointAnnotation = (overrides = {}) => ({
   autoSizeY: true,
   anchorPoint: [10, 20],
   label: 'Point annotation',
-  editorState: {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
+  editorState: {
+    root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}
+  },
   mapIndex: 0,
   lineColor: '#FF0000',
   lineWidth: 3,
   textWidth: 120,
   textHeight: 40,
   textVerticalAlign: 'bottom',
+  textSide: 'right',
+  textVerticalPosition: 'above',
   armLength: 60,
   angle: -30,
   radiusInMeters: null,
@@ -67,6 +76,8 @@ const makeCircleAnnotation = (overrides = {}) => ({
   textWidth: 0,
   textHeight: 0,
   textVerticalAlign: 'bottom',
+  textSide: 'left',
+  textVerticalPosition: 'below',
   armLength: 50,
   angle: -45,
   radiusInMeters: 5000,
@@ -91,6 +102,27 @@ const makeTextAnnotation = (overrides = {}) => ({
   armLength: null,
   angle: null,
   radiusInMeters: null,
+  ...overrides
+});
+
+const makeRulerAnnotation = (overrides = {}) => ({
+  id: 'ann-ruler-1',
+  kind: AnnotationKind.RULER,
+  isVisible: true,
+  autoSize: true,
+  autoSizeY: true,
+  anchorPoint: [-122.4, 37.8, 20],
+  endPoint: [-122.39, 37.81, 80],
+  label: 'Measured span',
+  editorState: null,
+  mapIndex: 0,
+  lineColor: '#FFFFFF',
+  lineWidth: 2,
+  textWidth: 120,
+  textHeight: 40,
+  textVerticalAlign: 'middle',
+  showCustomText: false,
+  showDistance: true,
   ...overrides
 });
 
@@ -156,12 +188,17 @@ test('#AnnotationsSchema -> load', t => {
 });
 
 test('#AnnotationsSchema -> save/load round-trip', t => {
-  const original = [makePointAnnotation(), makeCircleAnnotation(), makeTextAnnotation()];
+  const original = [
+    makePointAnnotation(),
+    makeCircleAnnotation(),
+    makeTextAnnotation(),
+    makeRulerAnnotation()
+  ];
 
   const saved = schema.save(original);
   const loaded = schema.load(saved.annotations);
 
-  t.equal(loaded.annotations.length, 3, 'should round-trip 3 annotations');
+  t.equal(loaded.annotations.length, 4, 'should round-trip 4 annotations');
 
   // Check point
   t.equal(loaded.annotations[0].id, 'ann-point-1', 'point id round-trips');
@@ -169,6 +206,12 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   t.deepEqual(loaded.annotations[0].anchorPoint, [10, 20], 'point anchorPoint round-trips');
   t.equal(loaded.annotations[0].armLength, 60, 'point armLength round-trips');
   t.equal(loaded.annotations[0].textVerticalAlign, 'bottom', 'point textVerticalAlign round-trips');
+  t.equal(loaded.annotations[0].textSide, 'right', 'point textSide round-trips');
+  t.equal(
+    loaded.annotations[0].textVerticalPosition,
+    'above',
+    'point textVerticalPosition round-trips'
+  );
   t.deepEqual(
     loaded.annotations[0].editorState,
     {root: {children: [], direction: null, format: '', indent: 0, type: 'root', version: 1}},
@@ -178,11 +221,27 @@ test('#AnnotationsSchema -> save/load round-trip', t => {
   // Check circle
   t.equal(loaded.annotations[1].id, 'ann-circle-1', 'circle id round-trips');
   t.equal(loaded.annotations[1].radiusInMeters, 5000, 'circle radiusInMeters round-trips');
+  t.equal(loaded.annotations[1].textSide, 'left', 'circle textSide round-trips');
+  t.equal(
+    loaded.annotations[1].textVerticalPosition,
+    'below',
+    'circle textVerticalPosition round-trips'
+  );
 
   // Check text
   t.equal(loaded.annotations[2].id, 'ann-text-1', 'text id round-trips');
   t.equal(loaded.annotations[2].kind, AnnotationKind.TEXT, 'text kind round-trips');
   t.equal(loaded.annotations[2].textVerticalAlign, 'middle', 'text textVerticalAlign round-trips');
+
+  // Check ruler
+  t.equal(loaded.annotations[3].kind, AnnotationKind.RULER, 'ruler kind round-trips');
+  t.deepEqual(
+    loaded.annotations[3].endPoint,
+    [-122.39, 37.81, 80],
+    'ruler 3D endPoint round-trips'
+  );
+  t.equal(loaded.annotations[3].showCustomText, false, 'custom text checkbox round-trips');
+  t.equal(loaded.annotations[3].showDistance, true, 'distance checkbox round-trips');
 
   t.end();
 });
@@ -210,6 +269,25 @@ test('#AnnotationsSchema -> saves only known properties', t => {
   t.notOk('anotherExtra' in savedAnn, 'should not save extra properties');
   t.ok('id' in savedAnn, 'should save known property: id');
   t.ok('kind' in savedAnn, 'should save known property: kind');
+
+  t.end();
+});
+
+test('#AnnotationsSchema -> 3D anchorPoint round-trips', t => {
+  const original = [makePointAnnotation({anchorPoint: [-122.4, 37.8, 120]})];
+  const saved = schema.save(original);
+  const loaded = schema.load(saved.annotations);
+
+  t.deepEqual(
+    saved.annotations[0].anchorPoint,
+    [-122.4, 37.8, 120],
+    'should save [lng, lat, altitude]'
+  );
+  t.deepEqual(
+    loaded.annotations[0].anchorPoint,
+    [-122.4, 37.8, 120],
+    'should load [lng, lat, altitude]'
+  );
 
   t.end();
 });

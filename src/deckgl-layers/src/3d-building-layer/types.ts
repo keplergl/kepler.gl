@@ -20,6 +20,7 @@ export type ThreeDBuildingLayerProps = {
   mapboxApiAccessToken: string;
   mapboxApiUrl: string;
   threeDBuildingColor: RGBColor;
+  pickable?: boolean;
   updateTriggers: {
     getFillColor: RGBColor;
   };

@@ -498,6 +498,7 @@ export const StyledModalSection = styled.div.attrs(({className}) => ({
   margin-bottom: 32px;
 
   .modal-section-title {
+    display: block;
     font-weight: 500;
   }
   .modal-section-subtitle {
@@ -641,7 +642,8 @@ export const StyledAttribution = styled.div
     }
 
     .basemap-attribution {
-      max-width: ${(props: StyledAttributionProps) => (props.showLogo === false ? '220px' : '140px')};
+      max-width: ${(props: StyledAttributionProps) =>
+        props.showLogo === false ? '220px' : '140px'};
     }
   `};
 `;

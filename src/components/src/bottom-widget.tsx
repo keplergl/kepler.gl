@@ -4,19 +4,25 @@
 import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
-import {FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
+import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
-import {TimeRangeFilter} from '@kepler.gl/types';
+import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import TimeWidgetFactory from './filters/time-widget';
 import {bottomWidgetSelector} from './kepler-gl';
 import FilterAnimationControllerFactory from './filter-animation-controller';
 import LayerAnimationControllerFactory from './layer-animation-controller';
 import AnimationControlFactory from './common/animation-control/animation-control';
+import ZarrAxisAnimationFactory from './zarr-axis-animation';
+import {getZarrVariable, isExplicitZarrAxis} from '@kepler.gl/table';
 import {BaseComponentProps} from './types';
 
 const maxWidth = 1080;
+
+function isChartFilter(filter?: Filter): filter is RangeFilter | TimeRangeFilter {
+  return filter?.type === FILTER_TYPES.timeRange || filter?.type === FILTER_TYPES.range;
+}
 
 export type BottomWidgetContainerProps = BaseComponentProps & {
   $hasPadding?: boolean;
@@ -57,7 +63,8 @@ BottomWidgetFactory.deps = [
   TimeWidgetFactory,
   AnimationControlFactory,
   FilterAnimationControllerFactory,
-  LayerAnimationControllerFactory
+  LayerAnimationControllerFactory,
+  ZarrAxisAnimationFactory
 ];
 
 /* eslint-disable complexity */
@@ -65,7 +72,8 @@ export default function BottomWidgetFactory(
   TimeWidget: ReturnType<typeof TimeWidgetFactory>,
   AnimationControl: ReturnType<typeof AnimationControlFactory>,
   FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
-  LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>
+  LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>,
+  ZarrAxisAnimation: ReturnType<typeof ZarrAxisAnimationFactory>
 ): React.FC<BottomWidgetThemedProps> {
   const LayerAnimationControl = styled(AnimationControl)`
     background-color: ${props => props.theme.sidePanelBg};
@@ -124,6 +132,14 @@ export default function BottomWidgetFactory(
       [animationConfig.domain, animationConfig.currentTime]
     );
 
+    const dimensionLayers = layers.filter(
+      layer =>
+        layer.type === 'zarr' &&
+        layer.config.isVisible &&
+        isExplicitZarrAxis(layer.config.visConfig.zarrAxis) &&
+        layer.config.visConfig.zarrAxis.kind !== 'off'
+    );
+
     // if animation control is showing, hide time display in time slider
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl =
@@ -133,17 +149,18 @@ export default function BottomWidgetFactory(
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
     const filter = useMemo(
-      () => (animatedFilter as TimeRangeFilter) || filters[enlargedFilterIdx],
+      () => animatedFilter || filters[enlargedFilterIdx],
       [animatedFilter, filters, enlargedFilterIdx]
     );
+    const chartFilter = isChartFilter(filter) ? filter : null;
 
     // we merge filter and timeline if filter is synced
     const {filter: enhancedFilter, animationConfig: enhancedAnimationConfig} = useMemo(
       () =>
-        filter?.syncedWithLayerTimeline
-          ? mergeFilterWithTimeline(filter, animationConfig)
-          : {filter, animationConfig},
-      [filter, animationConfig]
+        chartFilter?.type === FILTER_TYPES.timeRange && chartFilter.syncedWithLayerTimeline
+          ? mergeFilterWithTimeline(chartFilter as TimeRangeFilter, animationConfig)
+          : {filter: chartFilter, animationConfig},
+      [chartFilter, animationConfig]
     );
 
     const exportAnimation = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
@@ -169,9 +186,27 @@ export default function BottomWidgetFactory(
         width={Math.min(maxWidth, enlargedFilterWidth)}
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
-        $hasPadding={showAnimationControl || showTimeWidget}
+        $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
         ref={rootRef}
       >
+        {dimensionLayers.map(layer => {
+          const {visConfig, dataId} = layer.config;
+          const variable = getZarrVariable(
+            datasets[dataId ?? '']?.metadata,
+            visConfig.zarrVariable ?? undefined
+          );
+          return variable ? (
+            <ZarrAxisAnimation
+              key={layer.id}
+              variable={variable}
+              config={visConfig.zarrAxis}
+              pins={visConfig.dimensionIndexes}
+              frameIndex={visConfig.zarrFrame}
+              label={layer.config.label}
+              onFrameChange={zarrFrame => visStateActions.layerVisConfigChange(layer, {zarrFrame})}
+            />
+          ) : null;
+        })}
         {!isTimelineLinkedWithFilter ? (
           <LayerAnimationController
             animationConfig={enhancedAnimationConfig}
@@ -204,7 +239,7 @@ export default function BottomWidgetFactory(
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
-                  filter={enhancedFilter as TimeRangeFilter}
+                  filter={enhancedFilter}
                   index={enlargedFilterIdx}
                   datasets={datasets}
                   layers={layers}
@@ -212,6 +247,7 @@ export default function BottomWidgetFactory(
                   showTimeDisplay={showFloatingTimeDisplay}
                   setFilterPlot={visStateActions.setFilterPlot}
                   setFilterAnimationTime={setTimelineValue}
+                  setFilterAnimationTimeConfig={visStateActions.setFilterAnimationTimeConfig}
                   setFilterAnimationWindow={visStateActions.setFilterAnimationWindow}
                   setFilterSyncTimelineMode={visStateActions.setTimeFilterSyncTimelineMode}
                   toggleAnimation={visStateActions.toggleFilterAnimation}

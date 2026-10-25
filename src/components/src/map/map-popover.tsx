@@ -12,7 +12,8 @@ import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
 import {generateHashId, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
-import {Feature, FeatureSelectionContext} from '@kepler.gl/types';
+import {ChartConfig, Feature, FeatureSelectionContext} from '@kepler.gl/types';
+import {Datasets} from '@kepler.gl/table';
 import {
   FloatingPortal,
   flip,
@@ -189,6 +190,8 @@ export type MapPopoverProps = {
     type: string;
     features: Feature[];
   };
+  charts?: ChartConfig[];
+  datasets?: Datasets;
 };
 
 type IntlProps = {
@@ -210,7 +213,9 @@ export default function MapPopoverFactory(
     onClose,
     onSetFeatures,
     setSelectedFeature,
-    featureCollection
+    featureCollection,
+    charts,
+    datasets
   }) => {
     const [horizontalPlacement, setHorizontalPlacement] = useState('start');
     const moveLeft = () => setHorizontalPlacement('end');
@@ -279,6 +284,8 @@ export default function MapPopoverFactory(
               coordinate={coordinate}
               zoom={zoom}
               layerHoverProp={layerHoverProp}
+              charts={charts}
+              datasets={datasets}
             />
           </PopoverContent>
           {layerHoverProp?.layer?.type &&

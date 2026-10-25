@@ -15,6 +15,7 @@ import {
 } from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {naturalBreaks} from '@kepler.gl/utils';
 const {HexagonLayer} = KeplerGlLayers;
 
 const columns = {
@@ -278,12 +279,19 @@ test('#HexagonLayer -> renderLayer', t => {
       assert: (deckLayers, layer) => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_1', 'test_layer_1-cells'],
-          'Should create 2 deck.gl layers'
+          ['test_layer_1', 'test_layer_1-cells', 'test_layer_1-label-pointCount-collision'],
+          'Should create the hexagon layer, cells, and count labels'
         );
 
         const [deckHexLayer, hexCellLayer] = deckLayers;
         const {props} = deckHexLayer;
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-pointCount-collision');
+        t.equal(labelLayer.props.collisionEnabled, true, 'hexagon count labels collide by default');
+        t.equal(labelLayer.props.parameters.depthTest, false, 'labels paint on top of the cells');
+        labelLayer.props.data.forEach(d => {
+          t.equal(labelLayer.props.getPosition(d).length, 2, 'count sits at the cell base');
+          t.equal(labelLayer.props.getText(d), String(d.count), 'label text is the point count');
+        });
 
         const expectedProps = {
           coverage: layer.config.visConfig.coverage,
@@ -466,8 +474,8 @@ test('#HexagonLayer -> renderLayer', t => {
       assert: deckLayers => {
         t.deepEqual(
           deckLayers.map(l => l.id),
-          ['test_layer_1', 'test_layer_1-cells'],
-          'Should create 2 deck.gl layers'
+          ['test_layer_1', 'test_layer_1-cells', 'test_layer_1-label-pointCount-collision'],
+          'Should create the hexagon layer, cells, and count labels'
         );
 
         const [deckHexLayer, hexCellLayer] = deckLayers;
@@ -691,5 +699,103 @@ test('#HexagonLayer -> renderHover', t => {
   ];
 
   testRenderLayerCases(t, HexagonLayer, TEST_CASES);
+  t.end();
+});
+
+test('#HexagonLayer -> extruded count labels stay at the cell base', t => {
+  testRenderLayerCases(t, HexagonLayer, [
+    {
+      name: 'extruded hexagon count labels',
+      layer: {
+        type: 'hexagon',
+        id: 'test_layer_extruded',
+        config: {
+          dataId,
+          label: 'extruded hexes',
+          columns,
+          visConfig: {
+            worldUnitSize: 20,
+            enable3d: true,
+            colorRange: {
+              colors: ['#010101', '#020202', '#030303']
+            }
+          }
+        }
+      },
+      datasets: {
+        [dataId]: {
+          ...preparedDataset,
+          filteredIndex
+        }
+      },
+      renderArgs: {
+        layerCallbacks: {
+          onSetLayerDomain: () => {}
+        }
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(
+          l => l.id === 'test_layer_extruded-label-pointCount-collision'
+        );
+        t.deepEqual(
+          deckLayers.map(l => l.id),
+          [
+            'test_layer_extruded',
+            'test_layer_extruded-cells',
+            'test_layer_extruded-label-pointCount-collision'
+          ],
+          'extruded hexagon still draws count labels'
+        );
+        if (!labelLayer) {
+          return;
+        }
+        t.ok(labelLayer.props.data.length > 0, 'extruded hexagon has counts to draw');
+        // GeoJSON labels sit at the polygon base and disable the depth test so
+        // they draw on top of the extrusion. Count labels follow that.
+        t.equal(labelLayer.props.parameters.depthTest, false, 'labels are not buried in columns');
+        labelLayer.props.data.forEach(d => {
+          t.deepEqual(
+            labelLayer.props.getPosition(d),
+            d.position,
+            'extruded cell label has no elevation'
+          );
+          t.equal(d.position.length, 2, 'label position is lng/lat only');
+        });
+      }
+    }
+  ]);
+  t.end();
+});
+
+test('#HexagonLayer -> updateLayerVisualChannel jenks', t => {
+  const layer = new HexagonLayer({dataId: 'blue'});
+  const binValues = [1, 1, 1, 50, 51, 52, 1000, 1001, 1002];
+  const colors = ['#000000', '#888888', '#ffffff'];
+
+  layer.updateLayerConfig({
+    colorScale: 'jenks',
+    aggregatedBins: Object.fromEntries(binValues.map((value, i) => [i, {i, value, counts: 1}])),
+    visConfig: {
+      ...layer.config.visConfig,
+      colorRange: {
+        ...layer.config.visConfig.colorRange,
+        colors
+      }
+    }
+  });
+
+  layer.updateLayerVisualChannel({}, 'color');
+
+  t.deepEqual(
+    layer.config.colorDomain,
+    naturalBreaks(binValues, colors.length),
+    'Jenks aggregation domain should recompute thresholds from bins when the palette changes'
+  );
+  t.notDeepEqual(
+    layer.config.colorDomain,
+    [1, 1002],
+    'Jenks aggregation domain should not fall back to [min, max]'
+  );
+
   t.end();
 });

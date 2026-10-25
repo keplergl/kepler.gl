@@ -27,14 +27,12 @@ function setRef<T>(ref: React.Ref<T> | React.MutableRefObject<T>, value: T) {
   }
 }
 
-const DeckGLOverlay = forwardRef<Deck, any>(
-  (props: any, ref: ForwardedRef<Deck>) => {
-    const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay({...props, interleaved: true}));
-    overlay.setProps(props);
-    setRef(ref, (overlay as any)._deck);
-    return null;
-  }
-);
+const DeckGLOverlay = forwardRef<Deck, any>((props: any, ref: ForwardedRef<Deck>) => {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay({...props, interleaved: true}));
+  overlay.setProps(props);
+  setRef(ref, (overlay as any)._deck);
+  return null;
+});
 DeckGLOverlay.displayName = 'DeckGLOverlay';
 
 const PreviewContainer = styled.div<{$width: number; $height: number}>`
@@ -100,7 +98,8 @@ export class SwipeExportVideoPreview extends Component<
   rightMapRef: RefObject<MapRef | null> = React.createRef<MapRef | null>();
   leftDeckRef: RefObject<Deck | null> = React.createRef<Deck | null>();
   rightDeckRef: RefObject<Deck | null> = React.createRef<Deck | null>();
-  compositeCanvasRef: RefObject<HTMLCanvasElement | null> = React.createRef<HTMLCanvasElement | null>();
+  compositeCanvasRef: RefObject<HTMLCanvasElement | null> =
+    React.createRef<HTMLCanvasElement | null>();
 
   constructor(props: SwipeExportVideoPreviewProps) {
     super(props);
@@ -146,7 +145,13 @@ export class SwipeExportVideoPreview extends Component<
 
   _getCurrentSwipePercentage(): number {
     const {currentTimeMs, durationMs, swipeStartPct, swipeEndPct, swipeEasing} = this.props;
-    return getSwipePercentageAtTime(currentTimeMs, durationMs, swipeStartPct, swipeEndPct, swipeEasing);
+    return getSwipePercentageAtTime(
+      currentTimeMs,
+      durationMs,
+      swipeStartPct,
+      swipeEndPct,
+      swipeEasing
+    );
   }
 
   _getLeftCanvas(): HTMLCanvasElement | null {
@@ -200,9 +205,13 @@ export class SwipeExportVideoPreview extends Component<
     const leftLoaded = this._areLayersLoaded('left');
     const rightLoaded = this._areLayersLoaded('right');
     const leftTilesReady =
-      this.props.disableBaseMap || !this.leftMapRef.current || this.leftMapRef.current.getMap().areTilesLoaded();
+      this.props.disableBaseMap ||
+      !this.leftMapRef.current ||
+      this.leftMapRef.current.getMap().areTilesLoaded();
     const rightTilesReady =
-      this.props.disableBaseMap || !this.rightMapRef.current || this.rightMapRef.current.getMap().areTilesLoaded();
+      this.props.disableBaseMap ||
+      !this.rightMapRef.current ||
+      this.rightMapRef.current.getMap().areTilesLoaded();
 
     if (leftLoaded && rightLoaded && leftTilesReady && rightTilesReady) {
       this._compositeFrame();
@@ -303,11 +312,9 @@ export class SwipeExportVideoPreview extends Component<
     }
   };
 
-  _renderMapCanvas(
-    side: 'left' | 'right',
-    mapIndex: number
-  ) {
-    const {viewState, adapter, deckProps, mapProps, disableBaseMap, mapboxLayerBeforeId} = this.props;
+  _renderMapCanvas(side: 'left' | 'right', mapIndex: number) {
+    const {viewState, adapter, deckProps, mapProps, disableBaseMap, mapboxLayerBeforeId} =
+      this.props;
     const {width, height} = this._getContainer();
     const keplerLayers = this._createLayers(mapIndex, mapboxLayerBeforeId);
     const mapRef = side === 'left' ? this.leftMapRef : this.rightMapRef;
@@ -341,11 +348,7 @@ export class SwipeExportVideoPreview extends Component<
       );
     }
 
-    const {
-      mapStyle: mapStyleFromProps,
-      mapLib,
-      transformRequest
-    } = (mapProps || {}) as any;
+    const {mapStyle: mapStyleFromProps, mapLib, transformRequest} = (mapProps || {}) as any;
 
     return (
       <MapLayer $width={width} $height={height}>
@@ -363,7 +366,10 @@ export class SwipeExportVideoPreview extends Component<
           <DeckGLOverlay
             ref={deckRef}
             deviceProps={EXPORT_OVERLAY_DEVICE_PROPS}
-            {...adapter.getProps({deck: deck as any, extraProps: {...deckProps, layers: keplerLayers}})}
+            {...adapter.getProps({
+              deck: deck as any,
+              extraProps: {...deckProps, layers: keplerLayers}
+            })}
           />
         </ReactMapGL>
       </MapLayer>

@@ -3,15 +3,17 @@
 
 import test from 'tape';
 import moment from 'moment';
-import {getDistanceScales} from 'viewport-mercator-project';
+import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {scaleQuantize} from 'd3-scale';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import * as arrow from 'apache-arrow';
 
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
+import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {processGeojson} from '@kepler.gl/processors';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {arrowSchemaToFields, processGeojson} from '@kepler.gl/processors';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
 
 import {geoJsonWithStyle, geojsonData} from 'test/fixtures/geojson';
@@ -20,6 +22,8 @@ import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import {
   testCreateCases,
+  testCreateLayerFromConfig,
+  testFormatLayerData,
   testFormatLayerDataCases,
   testRenderLayerCases,
   testUpdateLayer,
@@ -31,6 +35,182 @@ import {
 } from 'test/helpers/layer-utils';
 
 const {PointLayer} = KeplerGlLayers;
+
+['point', 'multipoint'].forEach(geometryType => {
+  [false, true].forEach(gpu => {
+    test(`#PointLayer -> batched Arrow ${geometryType} accessors (${
+      gpu ? 'GPU' : 'CPU'
+    })`, async t => {
+      const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+      const type =
+        geometryType === 'multipoint'
+          ? new arrow.List(new arrow.Field('points', pointType))
+          : pointType;
+      const coordinates =
+        geometryType === 'multipoint'
+          ? [
+              [
+                [
+                  [0, 0],
+                  [1, 1]
+                ],
+                [],
+                [[2, 2]]
+              ],
+              [
+                [
+                  [3, 3],
+                  [4, 4]
+                ],
+                [[5, 5]]
+              ]
+            ]
+          : [
+              [
+                [0, 0],
+                [1, 1],
+                [2, 2]
+              ],
+              [
+                [3, 3],
+                [4, 4]
+              ]
+            ];
+      const values = [
+        [10, 50, 20],
+        [90, 30]
+      ];
+      const batches = coordinates.map((coords, index) => {
+        const built = arrow.vectorFromArray(coords, type);
+        // Use exact-length offsets, as in an Arrow IPC record batch, without
+        // the builder's trailing allocation padding.
+        const geometry =
+          geometryType === 'multipoint'
+            ? arrow.makeVector(
+                arrow.makeData({
+                  type,
+                  length: coords.length,
+                  valueOffsets: built.data[0].valueOffsets.slice(0, coords.length + 1),
+                  child: built.data[0].children[0]
+                })
+              )
+            : built;
+        const table = new arrow.Table({
+          geometry,
+          value: arrow.vectorFromArray(values[index], new arrow.Float64())
+        });
+        table.schema.fields[0].metadata.set('ARROW:extension:name', `geoarrow.${geometryType}`);
+        return table;
+      });
+      const table = batches[0].concat(batches[1]);
+      const dataset = new KeplerTable({info: {id: 'batched'}, color: [0, 0, 0]});
+      await dataset.importData({
+        data: {
+          fields: arrowSchemaToFields(table),
+          cols: batches[0].schema.fields.map((field, index) => batches[0].getChildAt(index))
+        }
+      });
+      // Progressive updates preserve batches; completed imports compact them.
+      await dataset.update({
+        cols: table.schema.fields.map((field, index) => table.getChildAt(index)),
+        arrowTable: table
+      });
+      const layer = new PointLayer({dataId: dataset.id});
+      layer.config.columnMode = 'geoarrow';
+      layer.config.columns.geoarrow = {value: 'geometry', fieldIdx: 0};
+      layer.config.colorField = dataset.fields[1];
+      layer.config.sizeField = dataset.fields[1];
+      layer.config.sizeScale = 'linear';
+      layer.config.visConfig.radiusRange = [10, 90];
+      layer.updateLayerDomain({[dataset.id]: dataset});
+      dataset.filterTable(
+        [
+          {
+            id: 'later-batch',
+            dataId: ['unrelated', dataset.id],
+            name: ['other', 'value'],
+            fieldIdx: [0, 1],
+            type: 'range',
+            value: [80, 100],
+            domain: [10, 90],
+            enabled: true,
+            fixedDomain: true,
+            gpu,
+            gpuChannel: [2, 0]
+          }
+        ],
+        [layer]
+      );
+      const formatted = layer.formatLayerData({[dataset.id]: dataset});
+      const [composite] = layer.renderLayer({
+        data: formatted,
+        dataset,
+        idx: 0,
+        layerInteraction: {},
+        mapState: INITIAL_MAP_STATE,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        visible: true,
+        layerCallbacks: {}
+      });
+      const sublayers = composite.renderLayers();
+      const rowIndices =
+        geometryType === 'multipoint'
+          ? [
+              [0, 0, 2],
+              [3, 3, 4]
+            ]
+          : [
+              [0, 1, 2],
+              [3, 4]
+            ];
+      t.equal(sublayers.length, 2, 'renders both Arrow record batches');
+      sublayers.forEach((sublayer, batchIndex) => {
+        const {props} = sublayer;
+        t.equal(props.data.length, rowIndices[batchIndex].length, 'empty features add no points');
+        rowIndices[batchIndex].forEach((rowIndex, index) => {
+          const context = {index, data: props.data, target: []};
+          const expected = {index: rowIndex};
+          t.equal(
+            props.getRadius(null, context),
+            formatted.getRadius(expected),
+            'radius uses the feature row'
+          );
+          t.deepEqual(
+            props.getFillColor(null, context),
+            formatted.getFillColor(expected),
+            'color uses the feature row'
+          );
+          t.equal(
+            props.getFiltered(null, context),
+            formatted.getFiltered(expected),
+            'CPU mask uses the feature row'
+          );
+          const filterValues = props.getFilterValue(null, context);
+          t.deepEqual(
+            filterValues,
+            formatted.getFilterValue(expected),
+            'GPU values use the feature row'
+          );
+          const [min, max] = dataset.gpuFilter.filterRange[0];
+          const visible =
+            Boolean(props.getFiltered(null, context)) &&
+            filterValues[0] >= min &&
+            filterValues[0] <= max;
+          t.equal(visible, rowIndex === 3, 'only the matching later-batch feature is visible');
+          const picked = composite.getPickingInfo({info: {index}, sourceLayer: sublayer});
+          t.equal(picked.index, rowIndex, 'rendered attributes agree with the picked feature');
+        });
+      });
+      t.equal(
+        sublayers[1].props.getRadius(null, {index: 0, data: sublayers[1].props.data, target: []}),
+        90,
+        'later batch reads 90 rather than the first batch value 10'
+      );
+      t.end();
+    });
+  });
+});
 
 test('#PointLayer -> constructor', t => {
   const TEST_CASES = {
@@ -661,7 +841,8 @@ test('#PointLayer -> renderLayer', t => {
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
-        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+        const pixelRadius =
+          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 
@@ -695,6 +876,115 @@ test('#PointLayer -> renderLayer', t => {
           getFilterValue(layerData.data[0]),
           [Number.MIN_SAFE_INTEGER, 0, 0, 0],
           'Should calculate correct instancePixelOffset'
+        );
+        t.notOk(
+          (deckLayers[1].props.extensions || []).some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should not add CollisionFilterExtension when collision is off'
+        );
+        t.notOk(
+          deckLayers[1].props.collisionEnabled,
+          'Should leave collision filtering disabled by default'
+        );
+      }
+    },
+    {
+      name: 'Point gps point.1 with text labels and collision filtering',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'lat',
+            lng: 'lng',
+            altitude: 'id'
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              },
+              collisionEnabled: true
+            }
+          ]
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types-collision');
+        t.ok(labelLayer, 'Should create a text label layer');
+        t.ok(
+          labelLayer.props.extensions.some(
+            ext => ext.constructor.extensionName === 'CollisionFilterExtension'
+          ),
+          'Should add CollisionFilterExtension to the text label layer'
+        );
+        t.equal(labelLayer.props.collisionEnabled, true, 'Should enable collision filtering');
+        t.equal(
+          labelLayer.props.collisionGroup,
+          'test_layer_1-text-label-0',
+          'Should use a per-label collision group'
+        );
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'Should use CollisionTextLayer so the hit area covers the anchor'
+        );
+        t.equal(labelLayer.props.background, true, 'Should enable a collision background');
+        t.equal(
+          labelLayer.props.collisionShowBackground,
+          false,
+          'Should hide the collision-only background in the color pass'
+        );
+      }
+    },
+    {
+      name: 'Point gps point.1 with text labels, collision filtering and visible background',
+      layer: {
+        config: {
+          dataId,
+          label: 'gps point',
+          columns: {
+            lat: 'lat',
+            lng: 'lng',
+            altitude: 'id'
+          },
+          textLabel: [
+            {
+              field: {
+                name: 'types',
+                type: 'string'
+              },
+              background: true,
+              collisionEnabled: true
+            }
+          ]
+        },
+        type: 'point',
+        id: 'test_layer_1'
+      },
+      datasets: {
+        [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+      },
+      assert: deckLayers => {
+        const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-types-collision');
+        t.ok(labelLayer, 'Should create a text label layer');
+        t.equal(
+          labelLayer.constructor.layerName,
+          'CollisionTextLayer',
+          'Should use CollisionTextLayer so the hit area covers the anchor'
+        );
+        t.equal(labelLayer.props.background, true, 'Should keep the user background enabled');
+        t.equal(
+          labelLayer.props.collisionShowBackground,
+          true,
+          'Should still draw the user background in the color pass'
         );
       }
     },
@@ -747,7 +1037,8 @@ test('#PointLayer -> renderLayer', t => {
 
         const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
-        const pixelRadius = radiusScale * distanceScale.pixelsPerMeter[0];
+        const pixelRadius =
+          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 
@@ -770,6 +1061,181 @@ test('#PointLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, PointLayer, TEST_CASES);
+  t.end();
+});
+
+test('#PointLayer -> renderLayer split map label visibility', t => {
+  const filteredIndex = [0, 2, 4];
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            }
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex})
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapLayers = mapLayers =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        mapLayers
+      },
+      {}
+    );
+
+  const assertVisible = (deckLayers, expected, message) => {
+    const labelLayers = deckLayers.filter(l => String(l.id).includes('-label-'));
+    t.ok(labelLayers.length > 0, `should create text label layers (${message})`);
+    t.equal(deckLayers[0].props.visible, expected, `geometry ${message}`);
+    labelLayers.forEach(l => {
+      t.equal(l.props.visible, expected, `${l.id} ${message}`);
+    });
+  };
+
+  assertVisible(
+    renderWithMapLayers(undefined),
+    true,
+    'should be visible when mapLayers is not set'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: true}),
+    true,
+    'should be visible when the panel entry is true'
+  );
+  assertVisible(
+    renderWithMapLayers({[layer.id]: false}),
+    false,
+    'should be hidden when the panel entry is false'
+  );
+  assertVisible(renderWithMapLayers({}), false, 'should be hidden when the panel entry is missing');
+
+  t.end();
+});
+
+test('#PointLayer -> renderLayer globe mode text labels', t => {
+  const tc = {
+    layer: {
+      config: {
+        dataId,
+        label: 'gps point',
+        columns: {
+          lat: 'lat',
+          lng: 'lng',
+          altitude: 'id'
+        },
+        textLabel: [
+          {
+            field: {
+              name: 'types',
+              type: 'string'
+            },
+            background: true
+          }
+        ]
+      },
+      type: 'point',
+      id: 'test_layer_1'
+    },
+    datasets: {
+      [dataId]: preparedDataset
+    }
+  };
+
+  const layer = testCreateLayerFromConfig(t, tc, {point: PointLayer});
+  const data = testFormatLayerData(t, layer, tc.datasets);
+
+  const renderWithMapState = mapState =>
+    renderDeckGlLayer(
+      {
+        datasets: tc.datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    ).find(l => String(l.id).includes('-label-'));
+
+  const flatLabel = renderWithMapState(INITIAL_MAP_STATE);
+  t.ok(flatLabel, 'should create a text label layer in flat mode');
+  t.equal(
+    flatLabel.props.parameters.depthTest,
+    false,
+    'should not depth-test labels outside globe mode'
+  );
+  t.notOk('cull' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
+  t.notOk(
+    flatLabel.props._subLayerProps.characters,
+    'should not override the glyph sublayer outside globe mode'
+  );
+  t.equal(
+    flatLabel.props._subLayerProps.background.parameters.depthTest,
+    false,
+    'should not depth-test the label background outside globe mode'
+  );
+
+  // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
+  const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
+  t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
+  t.equal(
+    globeLabel.props.parameters.depthTest,
+    true,
+    'should depth-test labels against the globe depth disk'
+  );
+  t.equal(
+    globeLabel.props.parameters.depthMask,
+    false,
+    'should not write depth so labels do not occlude each other'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.characters.type,
+    EnhancedMultiIconLayer,
+    'should render glyphs with the globe back-face culling sublayer'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.type,
+    EnhancedTextBackgroundLayer,
+    'should render the label background with the globe back-face culling sublayer'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.parameters.depthTest,
+    true,
+    'should depth-test the label background against the globe depth disk'
+  );
+  t.equal(
+    globeLabel.props._subLayerProps.background.parameters.depthMask,
+    false,
+    'should not write depth from the label background'
+  );
+
   t.end();
 });
 

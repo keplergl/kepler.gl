@@ -41,6 +41,7 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [GeoHash](./c-types-of-layers/r-geohash.md)
 * [Vector Tile Layer](./c-types-of-layers/m-vector-tile-layer.md)
 * [Raster Tile Layer](./c-types-of-layers/n-raster-tile-layer.md)
+* [Zarr Layer](./c-types-of-layers/s-zarr-layer.md)
 * [WMS Layer](./c-types-of-layers/o-wms-layer.md)
 
 #### [Layer attributes](./d-layer-attributes.md)
@@ -51,6 +52,11 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 
 #### [Draw on Map](./draw-on-map.md)
 
+#### [Annotations and Rulers](./annotations.md)
+* [Create a ruler](./annotations.md#create-a-ruler)
+* [Edit ruler labels](./annotations.md#edit-ruler-labels)
+* [3D placement and distance](./annotations.md#3d-placement-and-distance)
+
 #### [Map styles](./f-map-styles.md#map-styles)
 * [Base map styles](./f-map-styles.md#base-map-styles)
 * [Map layers](./f-map-styles.md#toggle-map-layers)
@@ -60,6 +66,8 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Tooltips](./g-interactions.md#tooltips)
 * [Brushing](./g-interactions.md#brushing)
 * [Display Coordinates](./g-interactions.md#display-coordinates)
+* [Bookmarks](./g-interactions.md#bookmarks)
+* [Fade on Zoom](./g-interactions.md#fade-on-zoom)
 
 #### [Map Settings](./m-map-settings.md)
 * [View maps in 3d](./m-map-settings.md#view-maps-in-3d)
@@ -86,3 +94,5 @@ This guide will teach you how to perform data analysis in Kepler.gl by adding da
 * [Export Video](./k-save-and-export.md#export-video)
 
 #### [FAQ](./i-FAQ.md)
+
+#### [Dataset operations](./dataset-operations.md)

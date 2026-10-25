@@ -2,13 +2,18 @@
 // Copyright contributors to the kepler.gl project
 
 /* eslint-disable max-statements */
-import React from 'react';
+import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
+import 'moment/locale/en-gb';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
-import {setFilterAnimationTimeConfig} from '@kepler.gl/actions';
+import {
+  setFilter,
+  setFilterAnimationTimeConfig,
+  setFilterAnimationWindow
+} from '@kepler.gl/actions';
 import {visStateReducer as reducer, DEFAULT_ANIMATION_CONFIG} from '@kepler.gl/reducers';
 
 import {
@@ -25,8 +30,13 @@ import {
   IconButton,
   SliderHandle,
   Typeahead,
+  ItemSelector,
+  TimezoneSelector,
   appInjector
 } from '@kepler.gl/components';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+
+moment.locale('en');
 
 const TimeWidget = appInjector.get(TimeWidgetFactory);
 const TimeRangeSlider = appInjector.get(TimeRangeSliderFactory);
@@ -57,6 +67,7 @@ const defaultProps = {
   onClose: nop,
   onToggleMinify: nop,
   setFilterPlot: nop,
+  setFilterAnimationTimeConfig: nop,
   setFilterAnimationWindow: nop,
   animationConfig: DEFAULT_ANIMATION_CONFIG
 };
@@ -91,6 +102,7 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
   wrapper.update();
 
   t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
+  t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
 
   // check yAxisFields
   const yAxisFields = wrapper.find(FieldSelector).at(0).props().fields;
@@ -100,6 +112,226 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
     'should only pass real / integer fields to yAxis'
   );
 
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> timezone selector', t => {
+  const setFilterAnimationTimeConfig = sinon.spy();
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} setFilterAnimationTimeConfig={setFilterAnimationTimeConfig} />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should not fail without props');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timezone"]').hostNodes().length,
+    1,
+    'should render timezone field selector'
+  );
+
+  const timezoneSelector = wrapper.find(TimezoneSelector).at(0);
+  t.ok(timezoneSelector.props().timezone == null, 'should default timezone to null (UTC display)');
+
+  timezoneSelector.props().onChange('America/Los_Angeles');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.args[0],
+    [0, {timezone: 'America/Los_Angeles'}],
+    'should call setFilterAnimationTimeConfig with selected timezone'
+  );
+
+  wrapper.setProps({
+    children: (
+      <TimeWidget
+        {...defaultProps}
+        filter={nextState.filters[0]}
+        setFilterAnimationTimeConfig={setFilterAnimationTimeConfig}
+      />
+    )
+  });
+  wrapper.update();
+
+  t.equal(
+    wrapper.find(TimezoneSelector).at(0).props().timezone,
+    'America/New_York',
+    'should show the filter timezone'
+  );
+
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> time format selector', t => {
+  const setFilterAnimationTimeConfig = sinon.spy();
+  const mountTimeWidget = filter => {
+    const mounted = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget
+          {...defaultProps}
+          filter={filter}
+          setFilterAnimationTimeConfig={setFilterAnimationTimeConfig}
+        />
+      </IntlWrapper>
+    );
+    mounted.find(Icons.Gear).at(0).simulate('click');
+    mounted.update();
+    return mounted;
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountTimeWidget(defaultProps.filter);
+  }, 'TimeWidget should not fail without props');
+
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().length,
+    1,
+    'should render time format selector'
+  );
+
+  const getTimeFormatSelector = () =>
+    wrapper.find('[data-testid="time-widget-time-format"]').find(ItemSelector).at(0);
+
+  t.equal(getTimeFormatSelector().length, 1, 'should expose the time format options');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-time-format"]').hostNodes().prop('aria-labelledby'),
+    'time-widget-time-format-label',
+    'should associate the selector with its label'
+  );
+  t.equal(
+    getTimeFormatSelector().prop('searchable'),
+    false,
+    'should use a non-searchable kepler item selector'
+  );
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '12-hour',
+    'should default to 12-hour format'
+  );
+
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.args[0],
+    [0, {timeFormat: 'L HH:mm:ss'}],
+    'should call setFilterAnimationTimeConfig with 24-hour format'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({...defaultProps.filter, timeFormat: 'L HH:mm:ss'});
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '24-hour',
+    'should show the filter time format'
+  );
+  t.equal(
+    wrapper
+      .find(FloatingTimeDisplay)
+      .find('.animation-control__time-display__bottom')
+      .at(0)
+      .find('.time-value')
+      .at(0)
+      .text(),
+    '09/23/2016 05:00:00',
+    'should render time without an AM/PM suffix'
+  );
+
+  getTimeFormatSelector().prop('onChange')('12-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L hh:mm:ss A'}],
+    'should call setFilterAnimationTimeConfig with 12-hour format'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({...defaultProps.filter, timeFormat: 'L hh:mm:ss A'});
+
+  t.equal(
+    wrapper
+      .find(FloatingTimeDisplay)
+      .find('.animation-control__time-display__bottom')
+      .at(0)
+      .find('.time-value')
+      .at(0)
+      .text(),
+    '09/23/2016 05:00:00 AM',
+    'should render time with an AM/PM suffix'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L LTS.SSS'
+  });
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L HH:mm:ss.SSS'}],
+    'should preserve millisecond precision when changing the hour cycle'
+  );
+
+  wrapper.unmount();
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: 'L hmmss A'
+  });
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L Hmmss'}],
+    'should convert a compact time without appending a second time format'
+  );
+
+  wrapper.unmount();
+  const previousLocale = moment.locale();
+  moment.locale('en-gb');
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L LT'
+  });
+
+  t.equal(
+    getTimeFormatSelector().prop('selectedItems'),
+    '24-hour',
+    'should derive the hour cycle from a localized default format'
+  );
+  wrapper.unmount();
+  moment.locale(previousLocale);
+
+  wrapper = mountTimeWidget({
+    ...defaultProps.filter,
+    timeFormat: null,
+    defaultTimeFormat: 'L'
+  });
+
+  t.equal(
+    getTimeFormatSelector().prop('disabled'),
+    undefined,
+    'should keep hour-cycle selection enabled when the effective format has no hour'
+  );
+
+  getTimeFormatSelector().prop('onChange')('24-hour');
+
+  t.deepEqual(
+    setFilterAnimationTimeConfig.lastCall.args,
+    [0, {timeFormat: 'L HH:mm'}],
+    'should add a zero-padded 24-hour time to a date-only format'
+  );
+
+  wrapper.unmount();
   t.end();
 });
 
@@ -191,8 +423,8 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   );
   t.equal(
     wrapper.find('.animation-window-control').at(0).find(IconButton).length,
-    1,
-    'should render 1 animate window options'
+    2,
+    'should render incremental and interval window options'
   );
 
   // select an animation option
@@ -486,6 +718,130 @@ test('Components -> TimeWidget.mount -> timeline zoom reset button', t => {
   t.end();
 });
 
+test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and reset', t => {
+  const setFilterAnimationTime = sinon.spy();
+  const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+  const numericFilter = {
+    ...numericState.filters[0],
+    domain: [0, 0.1],
+    value: [0.02, 0.08]
+  };
+  const rectStub = sinon.stub(HTMLElement.prototype, 'getBoundingClientRect').returns({
+    left: 0,
+    right: 500,
+    top: 0,
+    bottom: 100,
+    width: 500,
+    height: 100,
+    x: 0,
+    y: 0,
+    toJSON: () => ({})
+  });
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget
+        {...defaultProps}
+        filter={numericFilter}
+        setFilterAnimationTime={setFilterAnimationTime}
+      />
+    </IntlWrapper>,
+    {attachTo: document.body}
+  );
+  const timeDisplay = wrapper.find(FloatingTimeDisplay);
+  t.equal(
+    timeDisplay.find('.animation-control__time-display__top').text(),
+    'gps_data.lat',
+    'numeric range badge should identify its column'
+  );
+  t.deepEqual(
+    timeDisplay
+      .find('.animation-control__time-display__bottom')
+      .find('.time-value')
+      .map(n => n.text()),
+    ['0.02', '0.08'],
+    'numeric range badge should keep the selected values below the column name'
+  );
+  const container = wrapper
+    .find('[data-testid="time-widget-timeline-container"]')
+    .hostNodes()
+    .getDOMNode();
+
+  act(() => {
+    container.dispatchEvent(
+      new window.WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 250,
+        ctrlKey: true,
+        deltaY: -100
+      })
+    );
+  });
+  wrapper.update();
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().length,
+    1,
+    'fractional numeric timeline can zoom below a one-unit domain'
+  );
+
+  act(() => {
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().simulate('click');
+  });
+  wrapper.update();
+  t.equal(
+    wrapper.find('[data-testid="time-widget-timeline-reset"]').hostNodes().length,
+    0,
+    'reset restores the full fractional numeric domain'
+  );
+
+  act(() => {
+    container.dispatchEvent(
+      new window.WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 250,
+        deltaY: -100
+      })
+    );
+  });
+  const selectedRange = setFilterAnimationTime.lastCall.args[2];
+  t.ok(selectedRange[1] - selectedRange[0] < 0.06, 'fractional selection can zoom in');
+  t.ok(selectedRange[1] > selectedRange[0], 'fractional selection keeps a positive width');
+
+  wrapper.detach();
+  rectStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> minimized numeric timeline formats numeric bounds', t => {
+  const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+  const numericFilter = {
+    ...numericState.filters[0],
+    domain: [0.02, 0.08],
+    value: [0.02, 0.08],
+    view: FILTER_VIEW_TYPES.minified
+  };
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget {...defaultProps} filter={numericFilter} />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-start').find('span').text(),
+    '0.02',
+    'compact numeric timeline formats its domain start as a number'
+  );
+  t.equal(
+    wrapper.find('.animation-control__time-domain.domain-end').find('span').text(),
+    '0.08',
+    'compact numeric timeline formats its domain end as a number'
+  );
+
+  t.end();
+});
+
 test('Components -> TimeWidget.mount -> timeline container renders', t => {
   const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
 
@@ -559,5 +915,102 @@ test('Components -> TimeWidget.mount -> keyboard panning calls setFilterAnimatio
 
   wrapper.detach();
   clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> group by field', t => {
+  const setFilterPlot = sinon.spy();
+  const filter = {
+    ...defaultProps.filter,
+    yAxis: {name: 'uid', type: 'integer'},
+    plotType: {
+      ...(defaultProps.filter.plotType || {}),
+      type: 'lineChart',
+      aggregation: 'average'
+    }
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} filter={filter} setFilterPlot={setFilterPlot} />
+      </IntlWrapper>,
+      {attachTo: document.body}
+    );
+  }, 'mount TimeWidget should not fail');
+
+  wrapper.find(Icons.Gear).at(0).simulate('click');
+  wrapper.update();
+
+  t.ok(wrapper.find('.time-widget__group-by').length > 0, 'should render group by settings');
+
+  const selectors = wrapper.find(FieldSelector);
+  let groupBySelector = null;
+  for (let i = 0; i < selectors.length; i++) {
+    if (selectors.at(i).props().id === 'time-widget-group-by-field') {
+      groupBySelector = selectors.at(i);
+    }
+  }
+  t.ok(groupBySelector, 'should render a group by field selector');
+
+  const field = groupBySelector.props().fields[0];
+  t.ok(field && field.name, 'group by fields include dataset columns');
+  groupBySelector.props().onSelect(field);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy.fieldName,
+    field.name,
+    'should set the group by field'
+  );
+
+  groupBySelector.props().onSelect(null);
+  t.equal(
+    setFilterPlot.lastCall.args[1].plotType.groupBy,
+    null,
+    'should clear group by when the field is removed'
+  );
+
+  wrapper.detach();
+  t.end();
+});
+
+test('Components -> TimeWidget -> interval window locks the histogram brush to one bin', t => {
+  const filterId = StateWFilters.visState.filters[0].id;
+  const visState = reducer(
+    StateWFilters.visState,
+    setFilterAnimationWindow({id: filterId, animationWindow: 'interval'})
+  );
+  const setFilterAnimationTime = sinon.spy();
+  let wrapper;
+
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <TimeWidget
+          {...defaultProps}
+          datasets={visState.datasets}
+          filter={visState.filters[0]}
+          setFilterAnimationTime={setFilterAnimationTime}
+        />
+      </IntlWrapper>
+    );
+  }, 'TimeWidget should render in interval mode');
+
+  const slider = wrapper.find(RangeSlider);
+  t.equal(slider.length, 1, 'should render the histogram slider');
+  t.equal(slider.first().props().isRanged, false, 'brush should select one bin, not a free range');
+
+  const marks = slider.first().props().marks;
+  t.ok(Array.isArray(marks) && marks.length > 1, 'brush should snap to histogram bin edges');
+
+  slider.first().props().onChange([marks[0], marks[0]]);
+  t.deepEqual(
+    setFilterAnimationTime.lastCall.args[2],
+    [marks[0], marks[1] - 1],
+    'should set the filter to that bin'
+  );
+  t.equal(wrapper.find(Icons.Interval).length, 1, 'playback bar shows Step by Interval');
+
+  wrapper.detach();
   t.end();
 });

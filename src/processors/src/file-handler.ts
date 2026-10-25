@@ -2,11 +2,15 @@
 // Copyright contributors to the kepler.gl project
 
 import {parseInBatches} from '@loaders.gl/core';
-import {JSONLoader, _JSONPath} from '@loaders.gl/json';
-import {CSVLoader} from '@loaders.gl/csv';
-import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {ParquetArrowLoader} from '@loaders.gl/parquet';
 import {Loader} from '@loaders.gl/loader-utils';
+import {getBinaryGeometriesFromArrow, BinaryDataFromGeoArrow} from '@loaders.gl/gis';
+import * as arrow from 'apache-arrow';
+import {
+  hardClone,
+  parseGeoArrowOnWorker,
+  ParseGeoArrowInput,
+  ParseGeoArrowResult
+} from '@loaders.gl/arrow';
 import {
   isPlainObject,
   generateHashIdFromString,
@@ -15,10 +19,22 @@ import {
   isArrowTable
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
-import {DATASET_FORMATS, DatasetType, REMOTE_FILE_EXTENSIONS} from '@kepler.gl/constants';
-import {AddDataToMapPayload, Feature, LoadedMap, ProcessorResult} from '@kepler.gl/types';
+import {
+  DATASET_FORMATS,
+  DatasetType,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  REMOTE_FILE_EXTENSIONS
+} from '@kepler.gl/constants';
+import {
+  AddDataToMapOptions,
+  AddDataToMapPayload,
+  GeoArrowBinaryData,
+  LoadedMap,
+  ProcessorResult
+} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
-import type {FeatureCollection} from 'geojson';
+import type {Feature, FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,
@@ -28,6 +44,13 @@ import {
 } from './data-processor';
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
+import {getKeplerLoaders, isKeplerFileFormatAccepted} from './loader-registry';
+import {
+  createCompanionFetch,
+  getDroppedFileExtension,
+  isZipFileName,
+  unzipShapefileArchive
+} from './shapefile-files';
 
 const BATCH_TYPE = {
   METADATA: 'metadata',
@@ -59,6 +82,27 @@ const JSON_LOADER_OPTIONS = {
   ]
 };
 
+const KML_LOADER_OPTIONS = {
+  shape: 'geojson-table'
+};
+
+const GIS_TABLE_LOADER_OPTIONS = {
+  shape: 'geojson-table'
+};
+
+const WORKER_GEOARROW_ENCODINGS = new Set<string>([
+  GEOARROW_EXTENSIONS.POINT,
+  GEOARROW_EXTENSIONS.LINESTRING,
+  GEOARROW_EXTENSIONS.POLYGON,
+  GEOARROW_EXTENSIONS.MULTIPOINT,
+  GEOARROW_EXTENSIONS.MULTILINESTRING,
+  GEOARROW_EXTENSIONS.MULTIPOLYGON
+]);
+
+const EXCEL_LOADER_OPTIONS = {
+  shape: 'object-row-table'
+};
+
 export type ProcessFileDataContent = {
   data: unknown;
   fileName: string;
@@ -76,14 +120,229 @@ export type ProcessFileDataContent = {
   etag?: string;
   /** HTTP Last-Modified from the remote fetch, used for the next conditional refresh. */
   lastModified?: string;
+  /** Original file size in bytes, kept so a remounted uploader can still warn. */
+  fileSize?: number;
   /**
    * When true, skip Arrow record-batch compaction. Set on intermediate
    * progressive Arrow loads so each batch does not copy the growing table.
    */
   skipArrowCompact?: boolean;
+  /** Build cumulative Arrow snapshots that can be replayed after Add Data confirmation. */
+  prepareProgressiveReplay?: boolean;
 };
 
 export {isArrowTable};
+
+type ParseGeoArrowWorker = (data: ParseGeoArrowInput) => Promise<ParseGeoArrowResult>;
+
+function combineGeoArrowWorkerChunks(parsed: GeoArrowBinaryData): GeoArrowBinaryData | undefined {
+  const combined: GeoArrowBinaryData = {};
+
+  Object.entries(parsed).forEach(([columnIndex, chunks]) => {
+    const ordered = Object.entries(chunks)
+      .map(([chunkIndex, data]) => ({chunkIndex: Number(chunkIndex), data}))
+      .sort((a, b) => a.chunkIndex - b.chunkIndex);
+    if (!ordered.length) {
+      return;
+    }
+
+    const featureTypes = {point: false, line: false, polygon: false};
+    const bounds: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+    const binaryGeometries: any[] = [];
+    const meanCenters: Array<number[] | null> = [];
+    let hasMeanCenters = true;
+
+    ordered.forEach(({data}) => {
+      data.binaryGeometries.forEach(geometry => binaryGeometries.push(geometry));
+      featureTypes.point ||= data.featureTypes.point;
+      featureTypes.line ||= data.featureTypes.line;
+      featureTypes.polygon ||= data.featureTypes.polygon;
+      bounds[0] = Math.min(bounds[0], data.bounds[0]);
+      bounds[1] = Math.min(bounds[1], data.bounds[1]);
+      bounds[2] = Math.max(bounds[2], data.bounds[2]);
+      bounds[3] = Math.max(bounds[3], data.bounds[3]);
+      if (data.meanCenters) {
+        data.meanCenters.forEach(center => meanCenters.push(center));
+      } else {
+        hasMeanCenters = false;
+      }
+    });
+
+    combined[Number(columnIndex)] = {
+      0: {
+        binaryGeometries,
+        featureTypes,
+        bounds,
+        ...(hasMeanCenters ? {meanCenters} : {})
+      }
+    };
+  });
+
+  return Object.keys(combined).length ? combined : undefined;
+}
+
+function geoArrowWorkerChunksThrough(
+  parsed: GeoArrowBinaryData | undefined,
+  lastChunkIndex: number
+): GeoArrowBinaryData | undefined {
+  if (!parsed) {
+    return undefined;
+  }
+
+  const selected: GeoArrowBinaryData = {};
+  Object.entries(parsed).forEach(([columnIndex, chunks]) => {
+    const selectedChunks = Object.fromEntries(
+      Object.entries(chunks).filter(([chunkIndex]) => Number(chunkIndex) <= lastChunkIndex)
+    );
+    if (Object.keys(selectedChunks).length) {
+      selected[Number(columnIndex)] = selectedChunks;
+    }
+  });
+  return Object.keys(selected).length ? selected : undefined;
+}
+
+function createProgressiveArrowData(
+  source: NonNullable<ProcessorResult>,
+  finalData: NonNullable<ProcessorResult>,
+  geoArrowBinaryData?: GeoArrowBinaryData
+): Array<NonNullable<ProcessorResult>> | undefined {
+  const chunks = source.cols?.[0]?.data;
+  if (!Array.isArray(chunks) || chunks.length < 2 || !source.cols) {
+    return undefined;
+  }
+
+  const {geoArrowBinaryData: _sourceCache, ...sourceWithoutCache} = source;
+  const snapshots: Array<NonNullable<ProcessorResult>> = [];
+  let rowCount = 0;
+  // The final snapshot uses the normally processed (and usually compacted)
+  // table. Intermediate snapshots retain record-batch boundaries.
+  for (let chunkIndex = 0; chunkIndex < chunks.length - 1; chunkIndex++) {
+    rowCount += chunks[chunkIndex].length;
+    const cols = source.cols.map(column => column.slice(0, rowCount));
+    const snapshotCache = geoArrowWorkerChunksThrough(geoArrowBinaryData, chunkIndex);
+    snapshots.push({
+      ...sourceWithoutCache,
+      cols,
+      ...(snapshotCache ? {geoArrowBinaryData: snapshotCache} : {})
+    });
+  }
+  snapshots.push(finalData);
+  return snapshots;
+}
+
+/**
+ * Convert native GeoArrow chunks to deck.gl binary features without blocking
+ * the main thread. WKB/WKT remain on the synchronous fallback because the
+ * loaders.gl triangulation worker only supports native GeoArrow encodings.
+ */
+export async function parseGeoArrowBatchesOnWorkers(
+  data: NonNullable<ProcessorResult>,
+  options: {
+    latestOnly?: boolean;
+    parseOnWorker?: ParseGeoArrowWorker;
+    /** Merge per-batch worker output when the final Arrow table was compacted to one chunk. */
+    targetChunkCount?: number;
+  } = {}
+): Promise<GeoArrowBinaryData | undefined> {
+  const parseOnWorker = options.parseOnWorker || parseGeoArrowOnWorker;
+  if (!options.parseOnWorker && typeof globalThis.Worker === 'undefined') {
+    return undefined;
+  }
+
+  const jobs: Array<{
+    columnIndex: number;
+    chunkIndex: number;
+    result: Promise<ParseGeoArrowResult>;
+    fallback: () => BinaryDataFromGeoArrow;
+  }> = [];
+  data.fields.forEach((field, columnIndex) => {
+    const encoding = field.metadata?.get?.(GEOARROW_METADATA_KEY);
+    const geoColumn = data.cols?.[columnIndex];
+    if (!WORKER_GEOARROW_ENCODINGS.has(encoding) || !geoColumn?.data?.length) {
+      return;
+    }
+
+    const chunkIndexes = options.latestOnly
+      ? [geoColumn.data.length - 1]
+      : geoColumn.data.map((_, index) => index);
+    chunkIndexes.forEach(chunkIndex => {
+      const geometryChunk = geoColumn.data[chunkIndex];
+      const chunkCopy = hardClone(geometryChunk, true);
+      const chunkOffset = geoColumn.data
+        .slice(0, chunkIndex)
+        .reduce((offset, chunk) => offset + chunk.length, 0);
+      const chunkType = chunkCopy.type as typeof chunkCopy.type & {listSize?: number};
+      const transferableType = {
+        ...chunkType,
+        typeId: chunkType.typeId,
+        ...(chunkType.listSize !== undefined ? {listSize: chunkType.listSize} : {})
+      } as ParseGeoArrowInput['chunkData']['type'];
+      const sourceData: ParseGeoArrowInput = {
+        operation: 'parse-geoarrow',
+        chunkData: {
+          type: transferableType,
+          offset: chunkCopy.offset,
+          length: chunkCopy.length,
+          nullCount: chunkCopy.nullCount,
+          buffers: chunkCopy.buffers,
+          children: chunkCopy.children,
+          dictionary: chunkCopy.dictionary
+        },
+        chunkIndex,
+        chunkOffset,
+        geometryEncoding: encoding,
+        calculateMeanCenters: true,
+        triangle: true
+      };
+      jobs.push({
+        columnIndex,
+        chunkIndex,
+        result: parseOnWorker(sourceData),
+        fallback: () =>
+          getBinaryGeometriesFromArrow(geoColumn, sourceData.geometryEncoding, {
+            chunkIndex,
+            chunkOffset,
+            calculateMeanCenters: true,
+            triangulate: true
+          })
+      });
+    });
+  });
+
+  if (!jobs.length) {
+    return undefined;
+  }
+
+  const parsed: GeoArrowBinaryData = {};
+  const results = await Promise.allSettled(jobs.map(job => job.result));
+  // A partial cache can look complete after compaction merges surviving chunks
+  // into one. Reparse every selected original batch if acceleration failed.
+  // Using the originals also avoids parsing padding in newly compacted buffers.
+  const useFallback = results.some(
+    result => result.status !== 'fulfilled' || !result.value.binaryDataFromGeoArrow
+  );
+  results.forEach((result, index) => {
+    const {columnIndex, chunkIndex, fallback} = jobs[index];
+    const binaryData = useFallback
+      ? fallback()
+      : result.status === 'fulfilled'
+      ? result.value.binaryDataFromGeoArrow
+      : undefined;
+    if (!binaryData) {
+      return;
+    }
+    parsed[columnIndex] = parsed[columnIndex] || {};
+    parsed[columnIndex][chunkIndex] = binaryData;
+  });
+
+  if (!Object.keys(parsed).length) {
+    return undefined;
+  }
+
+  return options.targetChunkCount === 1 && !options.latestOnly
+    ? combineGeoArrowWorkerChunks(parsed)
+    : parsed;
+}
 
 /**
  * check if data is an ArrowData object, which is an array of RecordBatch
@@ -106,6 +365,105 @@ export function isFeature(json: unknown): json is Feature {
 
 export function isFeatureCollection(json: unknown): json is FeatureCollection {
   return isPlainObject(json) && json.type === 'FeatureCollection' && Boolean(json.features);
+}
+
+export function isGeoJsonFeatureArray(json: unknown): json is Feature[] {
+  return Array.isArray(json) && json.length > 0 && isFeature(json[0]);
+}
+
+/**
+ * Normalize loaders.gl GIS output (Feature arrays, geojson-table, object-row
+ * tables of Features) into a GeoJSON Feature or FeatureCollection Kepler can process.
+ */
+export function getGeoJsonFromLoaderResult(data: unknown): Feature | FeatureCollection | null {
+  if (isGeoJson(data)) {
+    return data;
+  }
+  if (isGeoJsonFeatureArray(data)) {
+    return {type: 'FeatureCollection', features: data};
+  }
+  if (!isPlainObject(data)) {
+    return null;
+  }
+  if (data.shape === 'geojson-table' && Array.isArray(data.features)) {
+    return {type: 'FeatureCollection', features: data.features as Feature[]};
+  }
+  if (data.shape === 'object-row-table' || data.shape === 'row-table') {
+    if (isGeoJsonFeatureArray(data.data)) {
+      return {type: 'FeatureCollection', features: data.data};
+    }
+    // Empty spreadsheet tables stay rows, not empty GeoJSON.
+    return null;
+  }
+  // ShapefileLoader parseInBatches (v3 shape) yields `{data: Feature[]}`,
+  // including empty files as `{data: []}`.
+  if (Array.isArray(data.data) && (data.data.length === 0 || isGeoJsonFeatureArray(data.data))) {
+    return {type: 'FeatureCollection', features: data.data};
+  }
+  return null;
+}
+
+function getBatchRows(batch: {
+  shape?: string;
+  type?: string;
+  features?: unknown;
+  data?: unknown;
+}): unknown[] | null {
+  if (
+    Array.isArray(batch?.features) &&
+    (batch.shape === 'geojson-table' || batch.type === 'FeatureCollection')
+  ) {
+    return batch.features;
+  }
+  const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
+  return Array.isArray(batchData) ? batchData : null;
+}
+
+/**
+ * Reconstruct the loader table/GIS identity from the current batch. Empty
+ * shapefile (`{data: []}`) and spreadsheet (`object-row-table`) batches must
+ * not be flattened to a bare `[]`, which processFileData cannot classify.
+ *
+ * JSON streaming first yields an empty `object-row-table` `partial-result`
+ * (with `jsonpath` / `container`). That is a placeholder, not the dataset.
+ */
+function getAggregatedLoaderResult(
+  batch: {
+    shape?: string;
+    type?: string;
+    header?: unknown;
+    data?: unknown;
+    batchType?: string;
+    jsonpath?: unknown;
+    container?: unknown;
+  },
+  rows: unknown[],
+  current: unknown
+): unknown {
+  if (
+    batch.batchType === BATCH_TYPE.METADATA ||
+    batch.batchType === BATCH_TYPE.PARTIAL_RESULT ||
+    batch.batchType === BATCH_TYPE.FINAL_RESULT ||
+    batch.jsonpath ||
+    batch.container
+  ) {
+    return current;
+  }
+  if (batch.shape === 'geojson-table') {
+    return {type: 'FeatureCollection', features: [...rows]};
+  }
+  // Non-empty CSV/Excel stay a flat row array (existing readBatch contract).
+  if (rows.length > 0) {
+    return current;
+  }
+  if (batch.shape === 'object-row-table' || batch.shape === 'row-table') {
+    return {shape: batch.shape, data: []};
+  }
+  // ShapefileLoader parseInBatches always yields v3 `{header, data: Feature[]}`.
+  if (batch.header != null && Array.isArray(batch.data)) {
+    return {data: []};
+  }
+  return current;
 }
 
 export function isRowObject(json: any): boolean {
@@ -147,7 +505,10 @@ export async function* makeProgressIterator(
 }
 
 // eslint-disable-next-line complexity
-function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): string | undefined {
+export function getPersistedRemoteFormat(
+  keplerFormat?: string,
+  fileName?: string
+): string | undefined {
   if (
     keplerFormat &&
     keplerFormat !== 'auto' &&
@@ -156,10 +517,24 @@ function getPersistedRemoteFormat(keplerFormat?: string, fileName?: string): str
     return keplerFormat;
   }
   const ext = fileName?.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
-  if (ext && Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, ext)) {
+  if (!ext) {
+    return undefined;
+  }
+  if (Object.prototype.hasOwnProperty.call(REMOTE_FILE_EXTENSIONS, ext)) {
     return ext;
   }
-  return undefined;
+  const extensionAliases: Record<string, string> = {
+    jsonl: 'ndjson',
+    ndgeojson: 'geojsonl',
+    ldgeojson: 'geojsonl',
+    xls: 'xlsx',
+    xlsm: 'xlsx',
+    xlsb: 'xlsx',
+    shapefile: 'shp',
+    excel: 'xlsx',
+    flatgeobuf: 'fgb'
+  };
+  return extensionAliases[ext];
 }
 
 export async function* readBatch(
@@ -169,9 +544,10 @@ export async function* readBatch(
   keplerFormat?: string,
   refreshIntervalMs?: number,
   etag?: string,
-  lastModified?: string
+  lastModified?: string,
+  fileSize?: number
 ): AsyncGenerator {
-  let result = null;
+  let result: any = null;
   const batches = <any>[];
   for await (const batch of asyncIterator) {
     // Last batch will have this special type and will provide all the root
@@ -184,6 +560,7 @@ export async function* readBatch(
       // Set the streamed data correctly is Batch json path is set
       // and the path streamed is not the top level object (jsonpath = '$')
       if (batch.jsonpath && batch.jsonpath.length > 1) {
+        const {_JSONPath} = await import('@loaders.gl/json');
         const streamingPath = new _JSONPath(batch.jsonpath);
         streamingPath.setFieldAtPath(result, batches);
       } else if (batch.jsonpath && batch.jsonpath.length === 1) {
@@ -192,10 +569,13 @@ export async function* readBatch(
         result = batches;
       }
     } else {
-      const batchData = isArrowTable(batch.data) ? batch.data.batches : batch.data;
-      for (let i = 0; i < batchData?.length; i++) {
-        batches.push(batchData[i]);
+      const batchRows = getBatchRows(batch);
+      if (batchRows) {
+        for (let i = 0; i < batchRows.length; i++) {
+          batches.push(batchRows[i]);
+        }
       }
+      result = getAggregatedLoaderResult(batch, batches, result);
     }
 
     yield {
@@ -208,6 +588,7 @@ export async function* readBatch(
           }
         : {}),
       fileName,
+      ...(typeof fileSize === 'number' ? {fileSize} : {}),
       // if dataset is CSV, data is set to the raw batches
       data: result ? result : batches,
       ...(sourceUrl ? {sourceUrl} : {}),
@@ -224,23 +605,60 @@ export async function* readBatch(
 export async function readFileInBatches({
   file,
   loaders = [],
-  loadOptions = {}
+  loadOptions = {},
+  companionFiles,
+  fileName
 }: {
   file: File;
-  fileCache: FileCacheItem[];
-  loaders: Loader[];
-  loadOptions: any;
+  fileCache?: FileCacheItem[];
+  loaders?: Loader[];
+  loadOptions?: any;
+  companionFiles?: File[];
+  /** Display/progress name. Kept across zip → shapefile recursion. */
+  fileName?: string;
 }): Promise<AsyncGenerator> {
-  loaders = [JSONLoader, CSVLoader, GeoArrowLoader, ParquetArrowLoader, ...loaders];
+  const displayFileName = fileName || file.name;
+  // Local drops expand mixed zips in the load queue before this runs. A `.zip`
+  // that still arrives here is a shapefile archive (remote URL, or a direct call).
+  if (isZipFileName(file.name) && isKeplerFileFormatAccepted('shp')) {
+    const unzipped = await unzipShapefileArchive(file);
+    const shapefile = unzipped.find(entry => getDroppedFileExtension(entry.name) === 'shp');
+    if (!shapefile) {
+      throw new Error('Zip archive does not contain a shapefile (.shp)');
+    }
+    return readFileInBatches({
+      file: shapefile,
+      loaders,
+      loadOptions,
+      companionFiles: [...unzipped, ...(companionFiles || [])],
+      fileName: displayFileName
+    });
+  }
+
+  loaders = await getKeplerLoaders(file, loaders);
   const hasExtension = /\.[a-z0-9]+$/i.test(file.name);
   const mimeType = !hasExtension && file.type ? file.type : undefined;
+  // Shapefile sidecars are resolved via a custom fetch that cannot be cloned
+  // into a worker. Other formats keep loaders.gl worker parsing.
+  const isShapefile = getDroppedFileExtension(file.name) === 'shp';
+  const companionFetch = isShapefile ? createCompanionFetch(companionFiles) : undefined;
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
     json: JSON_LOADER_OPTIONS,
     parquet: PARQUET_LOADER_OPTIONS,
+    kml: KML_LOADER_OPTIONS,
+    gpx: KML_LOADER_OPTIONS,
+    tcx: KML_LOADER_OPTIONS,
+    shapefile: GIS_TABLE_LOADER_OPTIONS,
+    shp: {_maxDimensions: 2},
+    excel: EXCEL_LOADER_OPTIONS,
+    flatgeobuf: GIS_TABLE_LOADER_OPTIONS,
+    gis: {reproject: true, _targetCrs: 'WGS84'},
     metadata: true,
+    ...(isShapefile ? {worker: false} : {}),
     ...(mimeType ? {mimeType} : {}),
+    ...(companionFetch ? {fetch: companionFetch} : {}),
     ...loadOptions
   };
 
@@ -255,12 +673,13 @@ export async function readFileInBatches({
 
   return readBatch(
     progressIterator,
-    file.name,
+    displayFileName,
     sourceUrl,
     keplerFormat,
     refreshIntervalMs,
     etag,
-    lastModified
+    lastModified,
+    file.size
   );
 }
 
@@ -288,19 +707,29 @@ export async function processFileData({
     processor = processorResult.processor;
   } else {
     // use default processors
+    const geojsonData = getGeoJsonFromLoaderResult(data);
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
     } else if (isKeplerGlMap(data)) {
       format = DATASET_FORMATS.keplergl;
       processor = processKeplerglJSON;
+    } else if (geojsonData) {
+      format = DATASET_FORMATS.geojson;
+      processor = () => processGeojson(geojsonData);
     } else if (isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
       processor = processRowObject;
-    } else if (isGeoJson(data)) {
-      format = DATASET_FORMATS.geojson;
-      processor = processGeojson;
+    } else if (isPlainObject(data)) {
+      const tableRows = data.data;
+      if (
+        (data.shape === 'object-row-table' || data.shape === 'row-table') &&
+        Array.isArray(tableRows)
+      ) {
+        format = DATASET_FORMATS.row;
+        processor = () => processRowObject(tableRows);
+      }
     }
   }
   if (format && processor) {
@@ -315,34 +744,73 @@ export async function processFileData({
       throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }
 
+    let progressiveData: Array<NonNullable<ProcessorResult>> | undefined;
+    if (format === DATASET_FORMATS.arrow && result?.cols) {
+      const latestOnly = Boolean(content.skipArrowCompact);
+      const targetChunkCount = result.cols[0]?.data?.length ?? 0;
+      let workerSource = result;
+
+      // Final file processing compacts Arrow batches to keep the number of deck.gl
+      // sublayers low. Schedule worker jobs from the original batches first so
+      // geometry conversion and triangulation can still run in parallel, then
+      // combine their output to match the single compacted table chunk.
+      if (!latestOnly && Array.isArray(data) && data.length > targetChunkCount) {
+        const sourceTable = new arrow.Table(data as arrow.RecordBatch[]);
+        const cols = [...Array(sourceTable.numCols).keys()].map(i => sourceTable.getChildAt(i));
+        workerSource = {...result, cols};
+      }
+
+      const workerGeoArrowBinaryData = await parseGeoArrowBatchesOnWorkers(workerSource, {
+        latestOnly
+      });
+      const geoArrowBinaryData =
+        targetChunkCount === 1 && !latestOnly && workerGeoArrowBinaryData
+          ? combineGeoArrowWorkerChunks(workerGeoArrowBinaryData)
+          : workerGeoArrowBinaryData;
+      if (geoArrowBinaryData) {
+        result = {...result, geoArrowBinaryData};
+      }
+      if (content.prepareProgressiveReplay && !latestOnly) {
+        progressiveData = createProgressiveArrowData(
+          workerSource,
+          result,
+          workerGeoArrowBinaryData
+        );
+      }
+    }
+
     const sourceUrl = content.sourceUrl;
     const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
+    const fileSize = typeof content.fileSize === 'number' ? content.fileSize : undefined;
+    const metadata = {
+      ...(sourceUrl
+        ? {
+            source: sourceUrl,
+            ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
+            ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
+              ? {refreshIntervalMs: content.refreshIntervalMs}
+              : {}),
+            ...(typeof content.etag === 'string' && content.etag ? {etag: content.etag} : {}),
+            ...(typeof content.lastModified === 'string' && content.lastModified
+              ? {lastModified: content.lastModified}
+              : {}),
+            lastFetchedAt: Date.now()
+          }
+        : {}),
+      ...(fileSize != null ? {size: fileSize} : {})
+    };
     return [
       ...fileCache,
       {
         data: result,
+        ...(progressiveData ? {progressiveData} : {}),
         info: {
           id,
           label: content.fileName,
           format,
           ...(sourceUrl ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
         },
-        ...(sourceUrl
-          ? {
-              metadata: {
-                source: sourceUrl,
-                ...(remoteFormat ? {sourceFormat: remoteFormat} : {}),
-                ...(typeof content.refreshIntervalMs === 'number' && content.refreshIntervalMs > 0
-                  ? {refreshIntervalMs: content.refreshIntervalMs}
-                  : {}),
-                ...(typeof content.etag === 'string' && content.etag ? {etag: content.etag} : {}),
-                ...(typeof content.lastModified === 'string' && content.lastModified
-                  ? {lastModified: content.lastModified}
-                  : {}),
-                lastFetchedAt: Date.now()
-              }
-            }
-          : {})
+        ...(sourceUrl || fileSize != null ? {metadata} : {})
       }
     ];
   } else {
@@ -350,7 +818,29 @@ export async function processFileData({
   }
 }
 
-export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayload[] {
+/**
+ * Expand staged files into cumulative payloads for one redraw per Arrow batch.
+ * Non-progressive files are present only in the first payload.
+ */
+export function fileCacheToProgressiveSteps(fileCache: FileCacheItem[]): FileCacheItem[][] {
+  const numberOfSteps = Math.max(1, ...fileCache.map(file => file.progressiveData?.length || 1));
+
+  return Array.from({length: numberOfSteps}, (_, stepIndex) =>
+    fileCache.flatMap(file => {
+      const {progressiveData, ...fileWithoutProgressiveData} = file;
+      if (!progressiveData) {
+        return stepIndex === 0 ? [fileWithoutProgressiveData] : [];
+      }
+      const data = progressiveData[stepIndex];
+      return data ? [{...fileWithoutProgressiveData, data}] : [];
+    })
+  ).filter(step => step.length);
+}
+
+export function filesToDataPayload(
+  fileCache: FileCacheItem[],
+  options?: AddDataToMapOptions
+): AddDataToMapPayload[] {
   // seperate out files which could be a single datasets. or a keplergl map json
   const collection = fileCache.reduce<{
     datasets: FileCacheItem[];
@@ -363,7 +853,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
         accu.keplerMaps.push({
           ...data,
           options: {
-            centerMap: !(data.config && data.config.mapState)
+            centerMap: !(data.config && data.config.mapState),
+            ...(options || {})
           }
         });
       } else if (DATASET_FORMATS[info?.format]) {
@@ -385,5 +876,8 @@ export function filesToDataPayload(fileCache: FileCacheItem[]): AddDataToMapPayl
 
   // add kepler map first with config
   // add datasets later in one add data call
-  return collection.keplerMaps.concat({datasets: collection.datasets});
+  return collection.keplerMaps.concat({
+    datasets: collection.datasets,
+    ...(options && collection.datasets.length ? {options} : {})
+  });
 }

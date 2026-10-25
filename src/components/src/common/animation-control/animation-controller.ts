@@ -19,6 +19,7 @@ interface AnimationControllerProps<T extends number | number[]> {
   domain: number[] | null;
   value: T;
   baseSpeed?: number;
+  minimumIncrement?: number;
   children?: (
     isAnimating: boolean | undefined,
     startAnimation: () => void,
@@ -115,7 +116,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _resetAnimationByDomain = () => {
-      const {domain, value, animationWindow, updateAnimation} = this.props;
+      const {domain, value, animationWindow, updateAnimation, minimumIncrement} = this.props;
       if (!domain) {
         return;
       }
@@ -124,7 +125,11 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       if (Array.isArray(value)) {
         const windowSize = value[1] - value[0];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          setTimelineValue([value[0], value[0] + 1] as T);
+          const resetEnd =
+            minimumIncrement === undefined
+              ? value[0] + 1
+              : Math.min(domain[1], value[0] + minimumIncrement);
+          setTimelineValue([value[0], resetEnd] as T);
         } else {
           const startValue = domain[0] - windowSize;
           setTimelineValue([startValue, startValue + windowSize] as T);
@@ -200,11 +205,21 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _nextFrameByDomain() {
-      const {domain, value, speed = 1, baseSpeed = 600, animationWindow} = this.props;
+      const {
+        domain,
+        value,
+        speed = 1,
+        baseSpeed = 600,
+        animationWindow,
+        steps,
+        minimumIncrement
+      } = this.props;
       if (!domain) {
         return;
       }
-      const delta = ((domain[1] - domain[0]) / baseSpeed) * speed;
+      const rawDelta = ((domain[1] - domain[0]) / baseSpeed) * speed;
+      const delta =
+        minimumIncrement === undefined ? rawDelta : Math.max(rawDelta, minimumIncrement);
 
       // loop when reaches the end
       // current time is a range
@@ -213,9 +228,32 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
         let value1: number;
         const windowSize = value[1] - value[0];
         if (animationWindow === ANIMATION_WINDOW.incremental) {
-          const lastFrame = value[1] + delta > domain[1];
+          // grow the window to the end of the last bin, not just domain[1]: the
+          // domain ends on the last timestamp, so a window ending there would
+          // select the last scene for a single frame. steps are the bin
+          // thresholds with the last one popped, so the last bin ends one bin
+          // width past the last step.
+          let endOfSweep = domain[1];
+          // Time domains end on their last timestamp while their calendar bin
+          // can extend farther, so retain the existing extrapolation there.
+          // Numeric bins already close on the numeric domain (and can include a
+          // terminal zero-width maximum bin), so never sweep past domain[1].
+          if (minimumIncrement === undefined && Array.isArray(steps) && steps.length > 1) {
+            const endOfLastBin =
+              steps[steps.length - 1] + (steps[steps.length - 1] - steps[steps.length - 2]);
+            if (Number.isFinite(endOfLastBin) && endOfLastBin > endOfSweep) {
+              endOfSweep = endOfLastBin;
+            }
+          }
           value0 = value[0];
-          value1 = lastFrame ? value[0] + 1 : value[1] + delta;
+          // clamp the last step instead of discarding it, and loop back to the
+          // anchor only after the final frame was emitted
+          value1 =
+            value[1] >= endOfSweep
+              ? minimumIncrement === undefined
+                ? value[0] + 1
+                : Math.min(domain[1], value[0] + minimumIncrement)
+              : Math.min(value[1] + delta, endOfSweep);
         } else {
           const lastFrame = value[0] + delta > domain[1];
           const startValue = domain[0] - windowSize;

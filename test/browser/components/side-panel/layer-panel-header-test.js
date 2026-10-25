@@ -39,8 +39,14 @@ test('Components -> LayerPanelHeader.mount -> no prop', t => {
   t.ok(wrapper.find('.layer-panel__header').length, 'should render layer-panel__header');
   t.ok(wrapper.find(DragHandle).length, 'should render drag handle');
   t.ok(wrapper.find('.layer__title__editor').length, 'should render title eidtor');
+  t.ok(wrapper.find('.layer__options-toggle').length, 'should render options menu toggle');
   t.ok(wrapper.find('.layer__visibility-toggle').length, 'should render visibility toggle');
   t.ok(wrapper.find('.layer__enable-config').length, 'should render enable config toggle');
+  t.equal(
+    wrapper.find('.layer-panel__header__actions__hidden').length,
+    0,
+    'should not render hover-only header actions'
+  );
 
   // mount
   const layerAfterErrorProps = {...defaultProps, ...{isValid: false}};

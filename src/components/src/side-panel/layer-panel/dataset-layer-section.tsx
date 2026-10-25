@@ -68,6 +68,8 @@ function DatasetLayerSectionFactory(
     const enableBitmapLayer = getApplicationConfig().enableBitmapLayer;
     const enableA5Layer = getApplicationConfig().enableA5Layer;
     const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
+    const enableFlowFieldLayer = getApplicationConfig().enableFlowFieldLayer;
+    const enableZarrLayer = getApplicationConfig().enableZarrLayer;
 
     const filteredLayerClasses = useMemo(() => {
       let filteredClasses = layerClasses;
@@ -95,6 +97,14 @@ function DatasetLayerSectionFactory(
         const {geohash: _geohash, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableFlowFieldLayer) {
+        const {flowField: _flowField, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
+      if (!enableZarrLayer) {
+        const {zarr: _zarr, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       return filteredClasses as LayerClassesType;
     }, [
       enableRasterTileLayer,
@@ -103,6 +113,8 @@ function DatasetLayerSectionFactory(
       enableBitmapLayer,
       enableA5Layer,
       enableGeohashLayer,
+      enableFlowFieldLayer,
+      enableZarrLayer,
       layerClasses
     ]);
 
@@ -113,9 +125,14 @@ function DatasetLayerSectionFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
+          replaceDataset={uiStateActions.openReplaceDatasetModal}
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
           updateDatasetProps={visStateActions.updateDatasetProps}
+          addGroupBy={visStateActions.addGroupBy}
+          addJoin={visStateActions.addJoin}
+          addSpatialJoin={visStateActions.addSpatialJoin}
+          addSuitability={visStateActions.addSuitability}
         />
         <LayerList
           datasets={datasets}

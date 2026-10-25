@@ -214,3 +214,155 @@ test('Map Popover - render comparison mode with delta column', t => {
 
   t.end();
 });
+
+test('Map Popover - raster tooltip keeps a delta column in comparison mode', t => {
+  const rasterHoverProp = {
+    data: {
+      rasterFeatureData: [
+        {name: 'Longitude', value: '33.738085'},
+        {name: 'Latitude', value: '16.720055'},
+        {name: 'Tile', value: '12/2431/1855'},
+        {name: 'b1', value: '255'},
+        {name: 'b2', value: '178'}
+      ]
+    },
+    layer: {config: {label: 'Africa Farms'}, isAggregated: false},
+    fields: [],
+    fieldsToShow: [],
+    primaryData: {
+      rasterFeatureData: [
+        {name: 'Longitude', value: '33.683164'},
+        {name: 'Latitude', value: '16.714997'},
+        {name: 'b1', value: '131'},
+        {name: 'b2', value: '113'}
+      ]
+    },
+    compareType: COMPARE_TYPES.ABSOLUTE
+  };
+
+  let wrapper;
+  t.doesNotThrow(() => {
+    wrapper = mountWithTheme(
+      <IntlWrapper>
+        <MapPopover {...defaultProps} layerHoverProp={rasterHoverProp} />
+      </IntlWrapper>
+    );
+  }, 'Should render raster tooltip in comparison mode');
+
+  const table = wrapper.find('table').at(0);
+  t.ok(table.hasClass('comparing'), 'Table should use the comparing grid');
+
+  const rows = table.find('.layer-hover-info__row');
+  t.equal(rows.length, 5, 'Should render all raster identify rows');
+  for (let i = 0; i < rows.length; i++) {
+    t.equal(
+      rows.at(i).find('td').length,
+      3,
+      `Row ${i} should have name, value, and delta cells so the grid does not wrap`
+    );
+  }
+  t.equal(rows.at(0).find('.row__name').text(), 'Longitude');
+  t.equal(rows.at(1).find('.row__name').text(), 'Latitude');
+  t.equal(rows.at(3).find('.row__name').text(), 'b1');
+  t.end();
+});
+
+test('Map Popover - aggregation tooltip deduplicates identical visual channel rows', t => {
+  const field = {name: 'fare', type: 'real'};
+  const layer = {
+    isAggregated: true,
+    visualChannels: {color: {}, size: {}},
+    config: {
+      label: 'Hexbin',
+      colorField: field,
+      sizeField: field
+    },
+    getVisualChannelDescription: () => ({measure: 'Average of fare'})
+  };
+  const aggregationHoverProp = {
+    data: {points: [], colorValue: 42, elevationValue: 42},
+    fields: [field],
+    fieldsToShow: [{name: field.name}],
+    layer
+  };
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LayerHoverInfo {...aggregationHoverProp} />
+    </IntlWrapper>
+  );
+  const rows = wrapper.find('.layer-hover-info__row');
+
+  t.equal(rows.length, 2, 'should render total points and one shared aggregation row');
+  t.equal(rows.at(1).find('.row__name').text(), 'Average of fare');
+  t.equal(rows.at(1).find('.row__value').text(), '42');
+  t.end();
+});
+
+test('Map Popover - aggregation tooltip retains rows with different comparison deltas', t => {
+  const field = {name: 'fare', type: 'real'};
+  const layer = {
+    isAggregated: true,
+    visualChannels: {color: {}, size: {}},
+    config: {
+      label: 'Hexbin',
+      colorField: field,
+      sizeField: field
+    },
+    getVisualChannelDescription: () => ({measure: 'Average of fare'})
+  };
+  const aggregationHoverProp = {
+    data: {points: [], colorValue: 42, elevationValue: 42},
+    fields: [field],
+    fieldsToShow: [{name: field.name}],
+    layer,
+    primaryData: {points: [], colorValue: 10, elevationValue: 20},
+    compareType: COMPARE_TYPES.ABSOLUTE
+  };
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LayerHoverInfo {...aggregationHoverProp} />
+    </IntlWrapper>
+  );
+  const rows = wrapper.find('.layer-hover-info__row');
+
+  t.equal(rows.length, 3, 'should render both aggregation rows');
+  t.equal(rows.at(1).find('.row__delta-value').text(), '+32');
+  t.equal(rows.at(2).find('.row__delta-value').text(), '+22');
+  t.end();
+});
+
+test('Map Popover - aggregation tooltip retains rows with different aggregations', t => {
+  const field = {name: 'fare', type: 'real'};
+  const layer = {
+    isAggregated: true,
+    visualChannels: {color: {}, size: {}},
+    config: {
+      label: 'Hexbin',
+      colorField: field,
+      sizeField: field
+    },
+    getVisualChannelDescription: channel => ({
+      measure: channel === 'color' ? 'Average of fare' : 'Sum of fare'
+    })
+  };
+  const aggregationHoverProp = {
+    data: {points: [], colorValue: 42, elevationValue: 42},
+    fields: [field],
+    fieldsToShow: [{name: field.name}],
+    layer
+  };
+
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <LayerHoverInfo {...aggregationHoverProp} />
+    </IntlWrapper>
+  );
+  const rows = wrapper.find('.layer-hover-info__row');
+
+  t.equal(rows.length, 3, 'should render both aggregation rows');
+  t.equal(rows.at(1).find('.row__name').text(), 'Average of fare');
+  t.equal(rows.at(2).find('.row__name').text(), 'Sum of fare');
+  t.end();
+});

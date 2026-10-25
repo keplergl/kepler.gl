@@ -18,6 +18,15 @@ import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actio
 import MapPopoverFactory from './map/map-popover';
 import MapControlFactory from './map/map-control';
 import MapScaleFactory from './map/map-scale';
+import MapCoordinateMenu, {
+  annotationContextMenuItems,
+  coordinateMenuFromClick,
+  contextMenuTargetIsMapOverlay,
+  coordinateMenuHiddenByTooltip,
+  isFeatureActionPanelOpen,
+  isRightDrag,
+  CoordinateMenuState
+} from './map/map-coordinate-menu';
 import {StyledMapContainer} from './common/styled-components';
 import {
   Attribution,
@@ -38,7 +47,8 @@ import {
   LayerBaseConfig,
   VisualChannelDomain,
   EditorLayerUtils,
-  AggregatedBin
+  AggregatedBin,
+  TILE3D_LOAD_ERROR_MESSAGE
 } from '@kepler.gl/layers';
 import {
   AttributionWithStyle,
@@ -74,6 +84,8 @@ import {
 import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
+  EDITOR_LAYER_ID,
+  EDITOR_LAYER_PICKING_RADIUS,
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
   NO_MAP_ID,
@@ -87,6 +99,7 @@ import {
 import {
   getGlobeBaseLayers,
   getGlobeTopLayers,
+  getGlobeDepthDiskLayer,
   getGlobeClearColor,
   getGlobeBasemapAttributions,
   resolveGlobeBasemapProvider,
@@ -104,7 +117,9 @@ import {
   MapStyle,
   areAnyDeckLayersLoading,
   computeDeckLayers,
+  getZoomOpacityAnnotationTargetId,
   getLayerHoverProp,
+  getLayerZoomOpacityFactor,
   LayerHoverProp,
   prepareLayersForDeck,
   prepareLayersToRender,
@@ -112,7 +127,7 @@ import {
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
 
-import LoadingIndicator from './loading-indicator';
+import LoadingIndicator, {aggregateLoadingPercent} from './loading-indicator';
 
 // Debounce the propagation of viewport change and mouse moves to redux store.
 // This is to avoid too many renders of other components when the map is
@@ -226,6 +241,8 @@ export interface MapContainerProps {
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
+  /** Omit basemap/CSS fills while preserving transparent export pixels. */
+  transparentBackground?: boolean;
   // onMapStyleLoaded?: (map: maplibregl.Map | ReturnType<MapRef['getMap']> | null) => void;
   onMapStyleLoaded?: (map: GetMapRef | null) => void;
   onMapRender?: (map: GetMapRef | null) => void;
@@ -308,8 +325,12 @@ export default function MapContainerFactory(
       showBaseMapLibLogo: false,
       // attribution strings collected from the resolved map sources (e.g. CARTO,
       // OpenFreeMap).  Populated after TileJSON resolves.
-      basemapAttributions: [] as string[]
+      basemapAttributions: [] as string[],
+      coordinateMenu: null as CoordinateMenuState | null
     };
+
+    // Right-button press origin, used to ignore rotate/pitch drags.
+    _rightPress: {x: number; y: number} | null = null;
 
     componentDidMount() {
       if (!this._ref.current) {
@@ -331,6 +352,9 @@ export default function MapContainerFactory(
     }
 
     componentDidUpdate(prevProps) {
+      if (this.state.coordinateMenu && this._coordinateMenuSuppressed()) {
+        this.setState({coordinateMenu: null});
+      }
       if (prevProps.mapStyle.styleType !== this.props.mapStyle.styleType) {
         this._removeBasemapAttributionListeners();
         if (this.props.mapStyle.styleType === NO_MAP_ID) {
@@ -432,26 +456,29 @@ export default function MapContainerFactory(
         generateMapboxLayerMethod(layer, layerData, layerOrder, layersToRender)
     );
 
-    // merge in a background-color style if the basemap choice is NO_MAP_ID
-    // used by <StyledMap> inline style prop
-    mapStyleTypeSelector = props => props.mapStyle.styleType;
+    // Paint the configured flat-map background behind the renderer surfaces.
+    // Mapbox and MapLibre clear their WebGL canvases to transparent, so this is
+    // the color exposed beyond the projected map when a pitched view zooms out.
     mapStyleBackgroundColorSelector = props => props.mapStyle.backgroundColor;
     globeModeSelector = props => Boolean(props.mapState?.globe?.enabled);
     globeBackgroundColorSelector = props => props.mapState?.globe?.config?.backgroundColor;
     globeStarsSelector = props => Boolean(props.mapState?.globe?.config?.stars);
+    transparentBackgroundSelector = props => Boolean(props.transparentBackground);
     styleSelector = createSelector(
-      this.mapStyleTypeSelector,
       this.mapStyleBackgroundColorSelector,
       this.globeModeSelector,
       this.globeBackgroundColorSelector,
       this.globeStarsSelector,
-      (styleType, backgroundColor, isGlobeMode, globeBackgroundColor, globeStars) => ({
+      this.transparentBackgroundSelector,
+      (backgroundColor, isGlobeMode, globeBackgroundColor, globeStars, transparentBackground) => ({
         ...MAP_STYLE.container,
-        ...(styleType === NO_MAP_ID ? {backgroundColor: rgbToHex(backgroundColor)} : {}),
+        ...(!transparentBackground && !isGlobeMode && backgroundColor
+          ? {backgroundColor: rgbToHex(backgroundColor)}
+          : {}),
         // In globe mode the deck.gl canvas is transparent (the globe View uses
         // `clearColor: false` to avoid corrupting the picking buffer), so the
         // background around the globe is painted here on the container instead.
-        ...(isGlobeMode
+        ...(!transparentBackground && isGlobeMode
           ? {
               // Fall back to the default globe background when none is configured.
               backgroundColor: rgbToHex(
@@ -473,6 +500,155 @@ export default function MapContainerFactory(
     /* component private functions */
     _onCloseMapPopover = () => {
       this.props.visStateActions.onLayerClick(null);
+    };
+
+    _closeCoordinateMenu = () => {
+      if (this.state.coordinateMenu) {
+        this.setState({coordinateMenu: null});
+      }
+    };
+
+    _onMapPointerDownCapture = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.button === 2) {
+        this._rightPress = {x: event.clientX, y: event.clientY};
+      }
+    };
+
+    /**
+     * A polygon or polygon filter under the cursor owns this right-click.
+     * Its action panel (Filter layers) is anchored at the same pixel.
+     */
+    _rightClickHitsEditorFeature(clientX: number, clientY: number): boolean {
+      const deck = this._deck;
+      const canvas = deck?.canvas || deck?.getCanvas?.();
+      const rect = canvas?.getBoundingClientRect?.();
+      if (!deck?.pickMultipleObjects || !rect) {
+        return false;
+      }
+      try {
+        const picks = deck.pickMultipleObjects({
+          x: clientX - rect.left,
+          y: clientY - rect.top,
+          radius: EDITOR_LAYER_PICKING_RADIUS,
+          layerIds: [EDITOR_LAYER_ID]
+        });
+        return Array.isArray(picks) && picks.some(pick => pick?.object);
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * Copy coordinates stays hidden when this right-click belongs to a tooltip
+     * or to the polygon / filter action panel.
+     */
+    _coordinateMenuSuppressed(clientX?: number, clientY?: number): boolean {
+      const {visState, index} = this.props;
+      return (
+        isFeatureActionPanelOpen(visState.editor, index) ||
+        coordinateMenuHiddenByTooltip(
+          Boolean(visState.interactionConfig.tooltip?.enabled),
+          visState.hoverInfo?.layer?.id
+        ) ||
+        (clientX !== undefined &&
+          clientY !== undefined &&
+          this._rightClickHitsEditorFeature(clientX, clientY))
+      );
+    }
+
+    _annotationMenuItems() {
+      const {readOnly, visState} = this.props;
+      const annotations = visState.annotations ?? [];
+      return annotationContextMenuItems({
+        annotationsEnabled: Boolean(getApplicationConfig().enableAnnotations),
+        readOnly,
+        annotationCount: annotations.length,
+        hiddenAnnotationCount: annotations.filter(annotation => !annotation.isVisible).length
+      });
+    }
+
+    /** Hide and show write each annotation, the same flag the panel eye uses. */
+    _setEachAnnotationVisible(isVisible: boolean) {
+      const {visState, visStateActions} = this.props;
+      for (const annotation of visState.annotations ?? []) {
+        if (annotation.isVisible !== isVisible) {
+          visStateActions.updateAnnotation(annotation.id, {isVisible});
+        }
+      }
+    }
+
+    _onAddAnnotation = () => {
+      const menu = this.state.coordinateMenu;
+      if (!menu) {
+        return;
+      }
+      // A new annotation belongs with the rest of the set, so bring hidden ones back.
+      this._setEachAnnotationVisible(true);
+      const {index, mapControls, uiStateActions, visStateActions} = this.props;
+      if (!mapControls?.annotation?.active) {
+        uiStateActions.toggleMapControl('annotation', Number(index ?? 0));
+      }
+      visStateActions.addAnnotation({
+        anchorPoint: menu.coordinate,
+        mapIndex: index ?? 0
+      });
+      this._closeCoordinateMenu();
+    };
+
+    _onToggleAnnotations = () => {
+      this._setEachAnnotationVisible(!this._annotationMenuItems().annotationsVisible);
+      this._closeCoordinateMenu();
+    };
+
+    /**
+     * Browser context menu stays suppressed. A click (not a right-drag) can
+     * copy "lat, lng", add an annotation, or hide and show annotations.
+     * A feature with tooltips enabled pins the tooltip instead of opening the menu.
+     */
+    _onMapContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      const start = this._rightPress;
+      this._rightPress = null;
+      if (
+        isRightDrag(start, event.clientX, event.clientY) ||
+        contextMenuTargetIsMapOverlay(event.target) ||
+        this._coordinateMenuSuppressed(event.clientX, event.clientY)
+      ) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const {isExport, visState, mapState, index} = this.props;
+      const annotationItems = this._annotationMenuItems();
+      if (
+        isExport ||
+        (!visState.interactionConfig.coordinate.enabled &&
+          !annotationItems.showAddAnnotation &&
+          !annotationItems.showAnnotationToggle)
+      ) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const bounds = this._ref.current?.getBoundingClientRect();
+      if (!bounds) {
+        this._closeCoordinateMenu();
+        return;
+      }
+
+      const internalViewState = this.context?.getInternalViewState(index);
+      const viewport = getViewportFromMapState({
+        ...mapState,
+        ...internalViewState
+      }) as {
+        unproject: (xyz: number[], opts?: {targetZ?: number}) => number[];
+      };
+
+      const coordinateMenu = coordinateMenuFromClick(event.clientX, event.clientY, bounds, point =>
+        viewport.unproject(point, {targetZ: 0})
+      );
+      this.setState({coordinateMenu});
     };
 
     _onLayerHover = (_idx: number, info: PickingInfo<any> | null) => {
@@ -734,8 +910,8 @@ export default function MapContainerFactory(
       const mergedState = {...mapState, ...internalViewState, width, height};
       const vp = getViewportFromMapState(mergedState) as any;
       const viewport = {
-        project: (lngLat: [number, number]) => vp.project(lngLat) as [number, number],
-        unproject: (xy: [number, number]) => vp.unproject(xy) as [number, number],
+        project: (lngLat: ReadonlyArray<number>) => vp.project(lngLat),
+        unproject: (xy: ReadonlyArray<number>) => vp.unproject(xy),
         longitude,
         latitude,
         width,
@@ -745,6 +921,34 @@ export default function MapContainerFactory(
       this._annotationViewportCache = {key, viewport};
       return viewport;
     }
+
+    _pickAnnotationWorldPosition = (xy: [number, number]): number[] | null => {
+      const deck = this._deck;
+      if (!deck || typeof deck.pickObject !== 'function') {
+        return null;
+      }
+      try {
+        const info = deck.pickObject({
+          x: xy[0],
+          y: xy[1],
+          radius: 0,
+          unproject3D: true
+        });
+        const coordinate = info?.coordinate;
+        // Only accept a reconstructed 3D hit. A 2D unproject (no depth) is the
+        // same as the ground-plane fallback in movePoint.
+        if (
+          !Array.isArray(coordinate) ||
+          coordinate.length < 3 ||
+          !Number.isFinite(coordinate[2])
+        ) {
+          return null;
+        }
+        return coordinate;
+      } catch {
+        return null;
+      }
+    };
 
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
@@ -783,6 +987,21 @@ export default function MapContainerFactory(
           })
         );
       }
+    };
+
+    _onTilesetLoadError = (idx: number, kind: 'token' | 'generic' | null) => {
+      const layer = this.props.visState.layers[idx];
+      const id = `tile3d-load-${layer?.id ?? idx}`;
+      if (!kind) {
+        this.props.uiStateActions.removeNotification?.(id);
+        return;
+      }
+      this.props.uiStateActions.addNotification(
+        errorNotification({
+          id,
+          message: TILE3D_LOAD_ERROR_MESSAGE[kind]
+        })
+      );
     };
 
     /* component render functions */
@@ -868,6 +1087,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
           {layerHoverProp && (!layerPinnedProp || compareMode) && (
@@ -882,6 +1103,8 @@ export default function MapContainerFactory(
               setSelectedFeature={this.props.visStateActions.setSelectedFeature}
               // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
               featureCollection={this.featureCollectionSelector(this.props)}
+              charts={this.props.visState.charts}
+              datasets={datasets}
             />
           )}
         </ErrorBoundary>
@@ -1001,6 +1224,7 @@ export default function MapContainerFactory(
           mapboxApiAccessToken,
           mapboxApiUrl,
           layersForDeck,
+          isAnnotationMode: Boolean(mapControls?.annotation?.active) && !this.props.readOnly,
           editorInfo: primaryMap
             ? {
                 editor,
@@ -1024,7 +1248,8 @@ export default function MapContainerFactory(
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           onWMSFeatureInfo: this._onWMSFeatureInfo,
           onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds
+          onFitBounds: this._onFitBounds,
+          onTilesetLoadError: this._onTilesetLoadError
         },
         deckGlProps
       );
@@ -1040,21 +1265,25 @@ export default function MapContainerFactory(
       // In globe mode, prepend globe base layers and append top layers
       const globeBaseLayers =
         isGlobeMode && mapState.globe
-          ? getGlobeBaseLayers({
-              mapboxApiAccessToken: mapboxApiAccessToken || '',
-              globe: mapState.globe,
-              mapStyleType: mapStyle?.styleType,
-              basemapProvider: globeBasemapProvider,
-              // Use the live (internal) latitude so the tile LOD compensation
-              // stays in sync with the deck viewport during a drag; mapState
-              // latitude lags behind while rotating.
-              latitude: internalMapState.latitude,
-              zoom: internalMapState.zoom
-            })
+          ? this.props.transparentBackground
+            ? [getGlobeDepthDiskLayer({fillColor: [0, 0, 0, 0] as any})]
+            : getGlobeBaseLayers({
+                mapboxApiAccessToken: mapboxApiAccessToken || '',
+                globe: mapState.globe,
+                mapStyleType: mapStyle?.styleType,
+                basemapProvider: globeBasemapProvider,
+                // Use the live (internal) latitude so the tile LOD compensation
+                // stays in sync with the deck viewport during a drag; mapState
+                // latitude lags behind while rotating.
+                latitude: internalMapState.latitude,
+                zoom: internalMapState.zoom
+              })
           : [];
       const globeTopLayers =
         isGlobeMode && mapState.globe
-          ? getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
+          ? this.props.transparentBackground
+            ? []
+            : getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
           : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
@@ -1308,7 +1537,19 @@ export default function MapContainerFactory(
     };
 
     _toggleMapControl = panelId => {
-      const {index, uiStateActions} = this.props;
+      const {index, uiStateActions, mapControls, visState, visStateActions} = this.props;
+
+      // Keep Interactions > Legend enabled in sync with the map-control legend button.
+      if (panelId === 'mapLegend') {
+        const nextActive = !mapControls?.mapLegend?.active;
+        const legend = visState.interactionConfig?.legend;
+        if (legend && Boolean(legend.enabled) !== nextActive) {
+          visStateActions.interactionConfigChange({
+            ...legend,
+            enabled: nextActive
+          });
+        }
+      }
 
       uiStateActions.toggleMapControl(panelId, Number(index));
     };
@@ -1361,6 +1602,7 @@ export default function MapContainerFactory(
       const useMapboxAdapter = ResolvedMapComponent === MapboxLegacyMap;
 
       const internalViewState = this.context?.getInternalViewState(index);
+      const annotationZoom = internalViewState?.zoom ?? mapState.zoom;
       const configMaxPitch = mapState.maxPitch ?? getApplicationConfig().maxPitch;
       const effectiveMaxPitch = useMapboxAdapter
         ? Math.min(configMaxPitch, MAPBOX_MAX_PITCH)
@@ -1419,6 +1661,7 @@ export default function MapContainerFactory(
           {showMapControl && (
             <MapControl
               mapState={mapState}
+              cameraBookmarks={visState.cameraBookmarks}
               mapStateActions={mapStateActions}
               datasets={datasets}
               availableLocales={LOCALE_CODES_ARRAY}
@@ -1456,11 +1699,16 @@ export default function MapContainerFactory(
               onConvertEditorFeaturesToLayer={visStateActions.convertEditorFeaturesToLayer}
               onLayerVisConfigChange={visStateActions.layerVisConfigChange}
               onToggleLayerVisibility={this._handleToggleLayerVisibility}
+              hideInvisibleLayers={Boolean(interactionConfig.legend?.config?.hideInvisibleLayers)}
               mapHeight={mapState.height}
               setMapControlSettings={uiStateActions.setMapControlSettings}
+              setMapControlVisibility={uiStateActions.setMapControlVisibility}
               activeSidePanel={activeSidePanel}
               splitMaps={this.props.visState.splitMaps}
               onToggleLayerForMap={visStateActions.toggleLayerForMap}
+              charts={this.props.visState.charts}
+              visStateActions={visStateActions}
+              mapInfo={visState.mapInfo}
             />
           )}
           {isSplitSelector(this.props) && <Droppable containerId={containerId} />}
@@ -1477,6 +1725,7 @@ export default function MapContainerFactory(
             onSetFeatureProperties={visStateActions.setEditorFeatureProperties}
             onSelect={visStateActions.setSelectedFeature}
             onTogglePolygonFilter={visStateActions.setPolygonFilterLayer}
+            onExtractData={layer => visStateActions.extractDataFromFeature({layerId: layer.id})}
             onSetEditorMode={visStateActions.setEditorMode}
             style={{
               pointerEvents: 'all',
@@ -1494,12 +1743,20 @@ export default function MapContainerFactory(
           ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
+            getAnnotationOpacity={annotationId =>
+              getLayerZoomOpacityFactor(
+                getZoomOpacityAnnotationTargetId(annotationId),
+                annotationZoom,
+                interactionConfig
+              )
+            }
             selectedAnnotationId={visState.selectedAnnotationId}
             isEditingAnnotationText={visState.isEditingAnnotationText}
-            isAnnotationMode={Boolean(mapControls?.annotation?.active)}
+            isAnnotationMode={Boolean(mapControls?.annotation?.active) && !this.props.readOnly}
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
+            pickWorldPosition={this._pickAnnotationWorldPosition}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
@@ -1542,6 +1799,15 @@ export default function MapContainerFactory(
               sidePanelWidth={sidePanelWidth}
               hasAttributionLogos={attributionLogos.length > 0}
               hasMapScale={getApplicationConfig().enableMapScale}
+              percent={aggregateLoadingPercent(
+                Object.fromEntries(
+                  Object.entries(visState.loadingProgress || {}).filter(
+                    ([id]) => !visState.loadingProcessing?.[id]
+                  )
+                )
+              )}
+              remoteDatasetCount={Object.keys(visState.loadingProgress || {}).length}
+              processingDatasetCount={Object.keys(visState.loadingProcessing || {}).length}
             />
           ) : null}
           {this.props.primary ? (
@@ -1571,7 +1837,7 @@ export default function MapContainerFactory(
           {!isExport && getApplicationConfig().enableMapScale ? (
             <StyledMapScaleContainer
               $left={
-                primary && activeSidePanel
+                primary && activeSidePanel && !this.props.readOnly
                   ? (sidePanelWidth || 0) + (theme?.sidePanel?.margin?.left ?? 9)
                   : theme?.sidePanel?.margin?.left ?? 9
               }
@@ -1601,11 +1867,34 @@ export default function MapContainerFactory(
         <StyledMap
           ref={this._ref}
           style={this.styleSelector(this.props)}
-          onContextMenu={event => event.preventDefault()}
+          onPointerDownCapture={this._onMapPointerDownCapture}
+          onContextMenu={this._onMapContextMenu}
           $mixBlendMode={visState.overlayBlending}
           $mapLibCssClass={baseMapLibraryConfig.mapLibCssClass}
         >
           {mapContent}
+          {this.state.coordinateMenu &&
+          !this.props.isExport &&
+          !isFeatureActionPanelOpen(visState.editor, this.props.index) &&
+          !coordinateMenuHiddenByTooltip(
+            Boolean(visState.interactionConfig.tooltip?.enabled),
+            visState.hoverInfo?.layer?.id
+          ) ? (
+            <MapCoordinateMenu
+              x={this.state.coordinateMenu.x}
+              y={this.state.coordinateMenu.y}
+              text={
+                visState.interactionConfig.coordinate.enabled
+                  ? this.state.coordinateMenu.text
+                  : null
+              }
+              showCopy={visState.interactionConfig.coordinate.enabled}
+              {...this._annotationMenuItems()}
+              onAddAnnotation={this._onAddAnnotation}
+              onToggleAnnotations={this._onToggleAnnotations}
+              onClose={this._closeCoordinateMenu}
+            />
+          ) : null}
         </StyledMap>
       );
     }

@@ -284,6 +284,75 @@ test('ArrowDataContainer -> update does not collapse record batches', t => {
   t.end();
 });
 
+test('ArrowDataContainer -> worker GeoArrow cache follows progressive chunks', t => {
+  const batchA = arrow.tableFromJSON([{value: 1}]);
+  const batchB = arrow.tableFromJSON([{value: 2}]);
+  const featureTypes = {point: true, line: false, polygon: false};
+  const cachedA = {
+    binaryGeometries: ['a'],
+    bounds: [0, 0, 0, 0],
+    featureTypes,
+    meanCenters: [[0, 0]]
+  };
+  const cachedB = {
+    binaryGeometries: ['b'],
+    bounds: [1, 1, 1, 1],
+    featureTypes,
+    meanCenters: [[1, 1]]
+  };
+  const dc = new ArrowDataContainer({
+    cols: [batchA.getChildAt(0)],
+    fields: [{name: 'value', fieldIdx: 0}],
+    arrowTable: batchA,
+    geoArrowBinaryData: {0: {0: cachedA}}
+  });
+
+  const combined = batchA.concat(batchB);
+  dc.update(combined, {geoArrowBinaryData: {0: {1: cachedB}}});
+
+  t.equal(dc.getGeoArrowBinaryData(0, 0), cachedA, 'should retain the first parsed chunk');
+  t.equal(dc.getGeoArrowBinaryData(0, 1), cachedB, 'should append the new parsed chunk');
+  t.deepEqual(
+    dc.getGeoArrowBinaryData(0).binaryGeometries,
+    ['a', 'b'],
+    'should expose all cached chunks in record-batch order'
+  );
+
+  const compacted = compactArrowTable(combined, 1);
+  const compactedCache = {...cachedA, binaryGeometries: ['all'], meanCenters: [[0.5, 0.5]]};
+  dc.update(compacted, {geoArrowBinaryData: {0: {0: compactedCache}}});
+  t.equal(
+    dc.getGeoArrowBinaryData(0, 0),
+    compactedCache,
+    'compaction should replace cache entries because chunk indexes reset'
+  );
+  t.equal(dc.getGeoArrowBinaryData(0, 1), undefined, 'stale progressive chunks should be removed');
+
+  const largeMeanCenters = Array.from({length: 150000}, (_, index) => [index, index]);
+  const largeCache = {...compactedCache, meanCenters: largeMeanCenters};
+  dc.update(compacted, {geoArrowBinaryData: {0: {0: largeCache}}});
+  let combinedCache;
+  t.doesNotThrow(() => {
+    combinedCache = dc.getGeoArrowBinaryData(0);
+  }, 'large compacted centroid caches should not overflow the call stack');
+  t.equal(
+    combinedCache.meanCenters.length,
+    largeMeanCenters.length,
+    'large compacted centroid caches should keep every center'
+  );
+
+  t.equal(dc.remove([0]), true, 'should remove a row from the cached table');
+  t.equal(dc.valueAt(0, 0), 2, 'should retain only the second row');
+  t.equal(dc.getGeoArrowBinaryData(0), undefined, 'row deletion should discard cached geometry');
+
+  dc.update(batchA, {geoArrowBinaryData: {0: {0: cachedA}}});
+  t.equal(dc.remove([0]), true, 'should remove the final cached row');
+  t.equal(dc.numRows(), 0, 'should leave an empty table');
+  t.equal(dc.getGeoArrowBinaryData(0), undefined, 'empty tables must not retain cached geometry');
+
+  t.end();
+});
+
 function finishArrowVector(builder) {
   const finished = builder.finish();
   if (finished instanceof arrow.Vector) {

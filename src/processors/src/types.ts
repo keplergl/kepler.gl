@@ -3,6 +3,12 @@
 
 export type FileCacheItem = {
   data: any;
+  /**
+   * Cumulative Arrow snapshots replayed after the user confirms Add Data.
+   * Kept outside `data` so the final staged dataset remains available for
+   * validation and row-count display without being added to the map early.
+   */
+  progressiveData?: any[];
   info: {
     id?: string;
     label: string;

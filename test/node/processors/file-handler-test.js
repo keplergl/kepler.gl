@@ -2,15 +2,30 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import {WorkerFarm} from '@loaders.gl/worker-utils';
+import {convertGeoArrowToBinaryFeatureCollection} from '@loaders.gl/gis';
+import {KeplerTable} from '@kepler.gl/table';
+import GeoJsonLayer from '../../../src/layers/src/geojson-layer/geojson-layer';
 import {
   isKeplerGlMap,
   makeProgressIterator,
   filesToDataPayload,
+  fileCacheToProgressiveSteps,
   processFileData,
-  processArrowBatches
+  parseGeoArrowBatchesOnWorkers,
+  remoteDatasetFromUrl,
+  processArrowBatches,
+  getGeoJsonFromLoaderResult,
+  readBatch
 } from '@kepler.gl/processors';
-import {getDatasetRefreshIntervalMs} from '@kepler.gl/constants';
+import {
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  getDatasetRefreshIntervalMs
+} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
+import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
   savedStateV1InteractionCoordinate as keplerglMap,
@@ -164,6 +179,55 @@ test('#file-handler -> filesToDataPayload', t => {
   t.end();
 });
 
+test('#file-handler -> filesToDataPayload autoCreateLayers', t => {
+  const fileCache = [
+    {
+      data: {
+        fields: parsedFields,
+        rows: parsedRows
+      },
+      info: {label: 'rows-data.json', format: 'row'}
+    },
+    {
+      data: {
+        datasets: [],
+        config: keplerglMap.config
+      },
+      info: {label: 'keplergl-map.json', format: 'keplergl'}
+    }
+  ];
+
+  const result = filesToDataPayload(fileCache, {autoCreateLayers: false});
+
+  t.deepEqual(
+    result[0].options,
+    {centerMap: true, autoCreateLayers: false},
+    'should keep kepler map centerMap and forward autoCreateLayers'
+  );
+  t.deepEqual(
+    result[1].options,
+    {autoCreateLayers: false},
+    'should forward autoCreateLayers for dataset files'
+  );
+
+  t.end();
+});
+
+test('#file-handler -> remoteDatasetFromUrl waits for the remote download', t => {
+  const dataset = remoteDatasetFromUrl('https://example.com/quakes.csv?sv=1', 'csv');
+  t.equal(dataset.info.type, 'externally-hosted', 'should be a remote dataset');
+  t.equal(dataset.info.label, 'quakes.csv', 'should name the card from the url');
+  t.deepEqual(dataset.data, {fields: [], rows: []}, 'should not include downloaded rows');
+  t.equal(dataset.metadata.source, 'https://example.com/quakes.csv?sv=1');
+  t.equal(dataset.metadata.sourceFormat, 'csv', 'should keep the selected format');
+
+  const payload = filesToDataPayload([dataset]);
+  t.equal(payload[0].datasets[0].info.type, 'externally-hosted', 'Add Data keeps the remote type');
+  t.deepEqual(payload[0].datasets[0].data, {fields: [], rows: []}, 'Add Data still has no rows');
+
+  t.end();
+});
+
 test('#file-handler -> filesToDataPayload remote metadata', t => {
   const fileCache = [
     {
@@ -204,6 +268,15 @@ test('#file-handler -> processFileData one-shot load does not enable polling', a
   });
   t.equal(local[0].info.type, undefined, 'local files are not marked externally-hosted');
   t.equal(local[0].metadata, undefined, 'local files get no remote refresh metadata');
+  const sized = await processFileData({
+    content: {fileName: 'local.csv', data: rows, fileSize: 50 * 1024 * 1024},
+    fileCache: []
+  });
+  t.equal(
+    sized[0].metadata.size,
+    50 * 1024 * 1024,
+    'local files keep their byte size for a later warning'
+  );
 
   const remote = await processFileData({
     content: {
@@ -348,6 +421,30 @@ test('#file-handler -> processFileData remote ids do not collide on filename', a
   t.end();
 });
 
+test('#file-handler -> convertArrowToSchema uses a single apache-arrow copy', t => {
+  // Parquet loading serializes the Arrow schema via loaders.gl. If kepler.gl
+  // and @loaders.gl/schema-utils resolve different apache-arrow packages, that
+  // switch-on-constructor check throws `arrow type not supported: <Class>`
+  // (minified to e.g. `tL` in exported HTML).
+  const table = new arrow.Table({
+    lat: arrow.vectorFromArray(new Float64Array([37.8])),
+    lng: arrow.vectorFromArray(new Float64Array([-122.4])),
+    name: arrow.vectorFromArray(['alpha'], new arrow.Utf8())
+  });
+
+  let schema;
+  t.doesNotThrow(() => {
+    schema = convertArrowToSchema(table.schema);
+  }, 'schema conversion should not fail with a constructor identity mismatch');
+  t.deepEqual(
+    schema.fields.map(field => field.type),
+    ['float64', 'float64', 'utf8'],
+    'should serialize primitive Arrow types from the shared apache-arrow copy'
+  );
+
+  t.end();
+});
+
 test('#file-handler -> processArrowBatches skip compact for incremental loads', t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
@@ -369,10 +466,653 @@ test('#file-handler -> processArrowBatches skip compact for incremental loads', 
   t.end();
 });
 
+test('#file-handler -> parseGeoArrowBatchesOnWorkers parses the latest chunk', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const batchA = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  const batchB = new arrow.Table({
+    geometry: arrow.vectorFromArray(
+      [
+        [-122.5, 37.9],
+        [-122.6, 38]
+      ],
+      pointType
+    )
+  });
+  batchA.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  batchB.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const combined = batchA.concat(batchB);
+  const processed = processArrowBatches(combined.batches, {compact: false});
+  const calls = [];
+  const binaryDataFromGeoArrow = {
+    binaryGeometries: [{shape: 'binary-feature-collection'}],
+    bounds: [-122.6, 37.9, -122.5, 38],
+    featureTypes: {point: true, line: false, polygon: false},
+    meanCenters: [
+      [-122.5, 37.9],
+      [-122.6, 38]
+    ]
+  };
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    latestOnly: true,
+    parseOnWorker: async input => {
+      calls.push(input);
+      return {chunkIndex: input.chunkIndex, binaryDataFromGeoArrow};
+    }
+  });
+
+  t.equal(calls.length, 1, 'should schedule one worker for the newest chunk');
+  t.equal(calls[0].chunkIndex, 1, 'should parse the second record batch');
+  t.equal(calls[0].chunkOffset, 1, 'should offset global feature ids by earlier row counts');
+  t.equal(
+    calls[0].geometryEncoding,
+    GEOARROW_EXTENSIONS.POINT,
+    'should preserve the native GeoArrow encoding'
+  );
+  t.equal(parsed[0][1], binaryDataFromGeoArrow, 'should cache worker output by column and chunk');
+  t.end();
+});
+
+test('#file-handler -> parseGeoArrowBatchesOnWorkers combines compacted worker chunks', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const batchA = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  const batchB = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.5, 37.9]], pointType)
+  });
+  batchA.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  batchB.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const processed = processArrowBatches(batchA.concat(batchB).batches, {compact: false});
+  const calls = [];
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    targetChunkCount: 1,
+    parseOnWorker: async input => {
+      calls.push(input);
+      const x = input.chunkIndex === 0 ? -122.4 : -122.5;
+      const y = input.chunkIndex === 0 ? 37.8 : 37.9;
+      return {
+        chunkIndex: input.chunkIndex,
+        binaryDataFromGeoArrow: {
+          binaryGeometries: [{chunkIndex: input.chunkIndex}],
+          bounds: [x, y, x, y],
+          featureTypes: {point: true, line: false, polygon: false},
+          meanCenters: [[x, y]]
+        }
+      };
+    }
+  });
+
+  t.equal(calls.length, 2, 'should schedule one worker job per original record batch');
+  t.deepEqual(Object.keys(parsed[0]), ['0'], 'should expose one cache chunk after compaction');
+  t.deepEqual(
+    parsed[0][0].binaryGeometries,
+    [{chunkIndex: 0}, {chunkIndex: 1}],
+    'should retain worker geometry in record-batch order'
+  );
+  t.deepEqual(parsed[0][0].bounds, [-122.5, 37.8, -122.4, 37.9], 'should merge bounds');
+  t.deepEqual(
+    parsed[0][0].meanCenters,
+    [
+      [-122.4, 37.8],
+      [-122.5, 37.9]
+    ],
+    'should merge mean centers'
+  );
+  t.end();
+});
+
+test('#file-handler -> compacted worker cache handles large centroid arrays', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const table = new arrow.Table({
+    geometry: arrow.vectorFromArray([[-122.4, 37.8]], pointType)
+  });
+  table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  const processed = processArrowBatches(table.batches, {compact: false});
+  const largeMeanCenters = Array.from({length: 150000}, () => [-122.4, 37.8]);
+
+  const parsed = await parseGeoArrowBatchesOnWorkers(processed, {
+    targetChunkCount: 1,
+    parseOnWorker: async input => ({
+      chunkIndex: input.chunkIndex,
+      binaryDataFromGeoArrow: {
+        binaryGeometries: [],
+        bounds: [-122.4, 37.8, -122.4, 37.8],
+        featureTypes: {point: true, line: false, polygon: false},
+        meanCenters: largeMeanCenters
+      }
+    })
+  });
+
+  t.equal(
+    parsed[0][0].meanCenters.length,
+    largeMeanCenters.length,
+    'should combine every centroid without spreading them into function arguments'
+  );
+  t.end();
+});
+
+function geoArrowPointBatches(pointBatches = [[[-122.4, 37.8]], [[-122.5, 37.9]]]) {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  let rowIndex = 0;
+  return pointBatches.map(points => {
+    const geometry = arrow.makeData({
+      type: pointType,
+      length: points.length,
+      child: arrow.makeData({type: new arrow.Float64(), data: Float64Array.from(points.flat())})
+    });
+    const row = arrow.makeData({
+      type: new arrow.Int32(),
+      data: Int32Array.from(points.map(() => rowIndex++))
+    });
+    const schema = new arrow.Schema([
+      new arrow.Field('geometry', pointType),
+      new arrow.Field('row', row.type)
+    ]);
+    schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+    return new arrow.RecordBatch(
+      schema,
+      arrow.makeData({
+        type: new arrow.Struct(schema.fields),
+        length: points.length,
+        children: [geometry, row]
+      })
+    );
+  });
+}
+
+// Replace only worker transport; successful jobs use the same converter as the
+// loaders.gl worker. File processing, table import and layer cache reads stay real.
+async function withGeoArrowWorker(parse, run) {
+  const originalWorker = globalThis.Worker;
+  globalThis.Worker = class {};
+  const stub = sinon.stub(WorkerFarm, 'getWorkerFarm').callsFake(() => ({
+    getWorkerPool: () => ({
+      startJob: async () => {
+        let resolve;
+        let reject;
+        const result = new Promise((yes, no) => {
+          resolve = yes;
+          reject = no;
+        });
+        return {
+          result,
+          postMessage: (_type, {input}) => {
+            Promise.resolve()
+              .then(() => parse(input))
+              .then(value => resolve({result: value}), reject);
+          }
+        };
+      }
+    })
+  }));
+  try {
+    await run();
+  } finally {
+    stub.restore();
+    if (originalWorker === undefined) {
+      delete globalThis.Worker;
+    } else {
+      globalThis.Worker = originalWorker;
+    }
+  }
+}
+
+function parseGeoArrowWorkerInput(input) {
+  const {chunkData, chunkIndex, chunkOffset, geometryEncoding} = input;
+  const vector = arrow.makeVector(
+    new arrow.Data(
+      chunkData.type,
+      chunkData.offset,
+      chunkData.length,
+      chunkData.nullCount,
+      chunkData.buffers,
+      chunkData.children,
+      chunkData.dictionary
+    )
+  );
+  return {
+    chunkIndex,
+    binaryDataFromGeoArrow: convertGeoArrowToBinaryFeatureCollection(vector, geometryEncoding, {
+      chunkIndex: 0,
+      chunkOffset,
+      calculateMeanCenters: true,
+      triangle: true
+    })
+  };
+}
+
+async function layerFromFile(file) {
+  const dataset = new KeplerTable({info: file.info, color: [0, 0, 0]});
+  await dataset.importData({data: file.data});
+  const layer = new GeoJsonLayer({dataId: dataset.id});
+  layer.config.columns.geojson = {value: 'geometry', fieldIdx: 0};
+  layer.updateLayerMeta(dataset);
+  return {dataset, layer};
+}
+
+async function assertCompleteGeoArrowLayer(
+  t,
+  file,
+  points = [
+    [-122.4, 37.8],
+    [-122.5, 37.9]
+  ]
+) {
+  const {dataset, layer} = await layerFromFile(file);
+  t.equal(dataset.dataContainer.numRows(), points.length, 'table keeps every row');
+  t.deepEqual(layer.centroids, points, 'centroids retain row order');
+  t.deepEqual(
+    layer.meta.bounds,
+    [
+      Math.min(...points.map(point => point[0])),
+      Math.min(...points.map(point => point[1])),
+      Math.max(...points.map(point => point[0])),
+      Math.max(...points.map(point => point[1]))
+    ],
+    'bounds include every batch'
+  );
+  const featureIds = layer.dataToFeature.flatMap(data =>
+    Array.from(data.points.globalFeatureIds.value)
+  );
+  t.deepEqual(
+    featureIds,
+    points.map((_, index) => index),
+    'geometry retains every feature row id'
+  );
+  t.deepEqual(
+    featureIds.map(index => dataset.dataContainer.valueAt(index, 1)),
+    featureIds,
+    'geometry maps to the matching attribute row'
+  );
+  return {dataset, layer};
+}
+
+for (const failure of ['first', 'last', 'all', 'missing']) {
+  test(`#file-handler -> ${failure} worker failure preserves the complete compacted layer`, async t => {
+    await withGeoArrowWorker(
+      input => {
+        if (failure === 'missing' && input.chunkIndex === 1) {
+          return {chunkIndex: input.chunkIndex, binaryDataFromGeoArrow: null};
+        }
+        if (failure === 'all' || input.chunkIndex === (failure === 'first' ? 0 : 1)) {
+          throw new Error('worker failed');
+        }
+        return parseGeoArrowWorkerInput(input);
+      },
+      async () => {
+        const [file] = await processFileData({
+          content: {
+            fileName: 'points.arrow',
+            data: geoArrowPointBatches(),
+            prepareProgressiveReplay: true
+          },
+          fileCache: []
+        });
+        const {dataset} = await assertCompleteGeoArrowLayer(t, file);
+        t.equal(dataset.dataContainer.numChunks(), 1, 'final table is compacted');
+        await assertCompleteGeoArrowLayer(t, {...file, data: file.progressiveData[0]}, [
+          [-122.4, 37.8]
+        ]);
+      }
+    );
+    t.end();
+  });
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return {promise, resolve, reject};
+}
+
+test('#file-handler -> out-of-order workers retain the successful fast path', async t => {
+  const jobs = [deferred(), deferred()];
+  const started = deferred();
+  const outputs = [];
+  await withGeoArrowWorker(
+    input => {
+      outputs[input.chunkIndex] = parseGeoArrowWorkerInput(input);
+      if (outputs.filter(Boolean).length === 2) started.resolve();
+      return jobs[input.chunkIndex].promise;
+    },
+    async () => {
+      const pending = processFileData({
+        content: {fileName: 'points.arrow', data: geoArrowPointBatches()},
+        fileCache: []
+      });
+      await started.promise;
+      jobs[1].resolve(outputs[1]);
+      jobs[0].resolve(outputs[0]);
+      const [file] = await pending;
+      const {layer} = await assertCompleteGeoArrowLayer(t, file);
+      t.equal(
+        layer.dataToFeature[0],
+        outputs[0].binaryDataFromGeoArrow.binaryGeometries[0],
+        'first batch reuses the worker geometry'
+      );
+      t.equal(
+        layer.dataToFeature[1],
+        outputs[1].binaryDataFromGeoArrow.binaryGeometries[0],
+        'second batch reuses the worker geometry'
+      );
+    }
+  );
+  t.end();
+});
+
+for (const failEmpty of [false, true]) {
+  test(`#file-handler -> ${failEmpty ? 'failed' : 'successful'} empty worker batch`, async t => {
+    const outputs = [];
+    await withGeoArrowWorker(
+      input => {
+        if (failEmpty && input.chunkData.length === 0) throw new Error('empty worker failed');
+        const result = parseGeoArrowWorkerInput(input);
+        outputs[input.chunkIndex] = result;
+        return result;
+      },
+      async () => {
+        const [file] = await processFileData({
+          content: {
+            fileName: 'points.arrow',
+            data: geoArrowPointBatches([[[-122.4, 37.8]], [], [[-122.5, 37.9]]])
+          },
+          fileCache: []
+        });
+        const {layer} = await assertCompleteGeoArrowLayer(t, file);
+        t.equal(
+          layer.dataToFeature[0] === outputs[0].binaryDataFromGeoArrow.binaryGeometries[0],
+          !failEmpty,
+          'only a failed empty batch triggers complete fallback'
+        );
+      }
+    );
+    t.end();
+  });
+}
+
+test('#file-handler -> failed latest worker batch preserves incremental row ids', async t => {
+  await withGeoArrowWorker(
+    () => Promise.reject(new Error('worker failed')),
+    async () => {
+      const [file] = await processFileData({
+        content: {fileName: 'points.arrow', data: geoArrowPointBatches(), skipArrowCompact: true},
+        fileCache: []
+      });
+      const latest = file.data.geoArrowBinaryData[0][1];
+      t.deepEqual(latest.meanCenters, [[-122.5, 37.9]], 'latest batch has its centroid');
+      t.deepEqual(
+        Array.from(latest.binaryGeometries[0].points.globalFeatureIds.value),
+        [1],
+        'fallback keeps the original global row offset'
+      );
+    }
+  );
+  t.end();
+});
+
+test('#file-handler -> geometry errors still reject after worker fallback', async t => {
+  const malformed = arrow.tableFromArrays({geometry: new Int32Array([1])});
+  malformed.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+  await withGeoArrowWorker(
+    () => Promise.reject(new Error('worker failed')),
+    async () => {
+      try {
+        await processFileData({
+          content: {fileName: 'invalid.arrow', data: malformed.batches},
+          fileCache: []
+        });
+        t.fail('invalid geometry must reject instead of returning a partial cache');
+      } catch (error) {
+        t.ok(error instanceof Error, 'synchronous geometry parse errors propagate');
+      }
+    }
+  );
+  t.end();
+});
+
+test('#file-handler -> decode errors after a valid batch still reject', async t => {
+  const error = new Error('Arrow decode failed');
+  async function* batches() {
+    yield {data: geoArrowPointBatches()};
+    throw error;
+  }
+  const iterator = readBatch(batches(), 'broken.arrow');
+  await iterator.next();
+  try {
+    await iterator.next();
+    t.fail('a decode error must not turn into a completed partial file');
+  } catch (caught) {
+    t.equal(caught, error, 'the original decode error propagates');
+  }
+  t.end();
+});
+
+test('#file-handler -> processArrowBatches Int64/Uint64 columns', async t => {
+  const table = arrow.tableFromArrays({
+    hexId: new BigUint64Array([610625465232654335n, 610625465081659391n]),
+    total: new BigInt64Array([29436887n, 40685227n])
+  });
+
+  let result;
+  t.doesNotThrow(() => {
+    result = processArrowBatches(table.batches);
+  }, 'should process Arrow Int64/Uint64 columns without BigInt TypeError');
+
+  t.equal(result.fields[0].name, 'hexId');
+  t.equal(result.fields[0].type, 'integer', 'uint64 columns should stay integer, not h3');
+  t.equal(result.fields[1].name, 'total');
+  t.equal(result.fields[1].type, 'integer', 'int64 counts should stay integer');
+
+  const processed = await processFileData({
+    content: {fileName: 'congo.parquet', data: table.batches},
+    fileCache: []
+  });
+  t.equal(processed.length, 1, 'processFileData should accept uint64 Arrow batches');
+  t.equal(processed[0].data.fields[0].type, 'integer');
+
+  t.end();
+});
+
+test('#file-handler -> processFileData Feature array is geojson', async t => {
+  const features = [
+    {
+      type: 'Feature',
+      properties: {name: 'alpha'},
+      geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+    },
+    {
+      type: 'Feature',
+      properties: {name: 'beta'},
+      geometry: {type: 'Point', coordinates: [-122.5, 37.9]}
+    }
+  ];
+  const processed = await processFileData({
+    content: {fileName: 'places.geojsonl', data: features},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'geojson',
+    'an array of Features should not be treated as rows'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both features');
+  t.end();
+});
+
+test('#file-handler -> shapefile-shaped loader output becomes GeoJSON', async t => {
+  const data = {
+    data: [
+      {
+        type: 'Feature',
+        properties: {name: 'alpha'},
+        geometry: {type: 'Point', coordinates: [-122.4, 37.8]}
+      }
+    ]
+  };
+  t.equal(
+    getGeoJsonFromLoaderResult(data).features.length,
+    1,
+    'should unwrap shapefile Feature arrays'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.shp', data},
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'geojson', 'shapefile output should process as geojson');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the shapefile feature');
+  t.end();
+});
+
+async function readLastAggregatedBatch(iterator, fileName) {
+  const generator = readBatch(iterator, fileName);
+  let last;
+  for await (const batch of generator) {
+    last = batch;
+  }
+  return last;
+}
+
+test('#file-handler -> empty GIS loader output becomes an empty GeoJSON dataset', async t => {
+  const emptyShapefile = await processFileData({
+    content: {fileName: 'empty.shp', data: {data: []}},
+    fileCache: []
+  });
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile output should be geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero features');
+
+  const emptyTable = await processFileData({
+    content: {
+      fileName: 'empty.fgb',
+      data: {shape: 'geojson-table', type: 'FeatureCollection', features: []}
+    },
+    fileCache: []
+  });
+  t.equal(emptyTable[0].info.format, 'geojson', 'empty geojson-table should be geojson');
+  t.equal(emptyTable[0].data.rows.length, 0, 'should keep zero geojson-table features');
+
+  const emptyExcel = await processFileData({
+    content: {fileName: 'empty.xlsx', data: {shape: 'object-row-table', data: []}},
+    fileCache: []
+  });
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet tables should stay rows');
+  t.end();
+});
+
+test('#file-handler -> readBatch does not wrap JSON streaming placeholders', async t => {
+  async function* geojsonStream() {
+    yield {batchType: 'metadata', shape: 'metadata', data: []};
+    yield {
+      shape: 'object-row-table',
+      batchType: 'partial-result',
+      container: {type: 'FeatureCollection', features: []},
+      data: [],
+      jsonpath: '$.features'
+    };
+    yield {
+      data: [
+        {
+          type: 'Feature',
+          properties: {name: 'alpha'},
+          geometry: {type: 'Point', coordinates: [0, 1]}
+        }
+      ],
+      jsonpath: '$.features',
+      length: 1
+    };
+  }
+
+  const generator = readBatch(geojsonStream(), 'places.geojson');
+  await generator.next();
+  const partial = await generator.next();
+  t.equal(partial.value.batchType, 'partial-result', 'should yield the JSON partial-result');
+  t.equal(partial.value.data.length, 0, 'partial-result should keep an empty array');
+  const dataBatch = await generator.next();
+  t.equal(dataBatch.value.data.length, 1, 'data batch should stay a feature array');
+  t.end();
+});
+
+test('#file-handler -> readBatch preserves empty loader identity', async t => {
+  async function* emptyShapefileBatches() {
+    yield {header: {length: 50}, data: []};
+  }
+  const shapefileBatch = await readLastAggregatedBatch(emptyShapefileBatches(), 'empty.shp');
+  const emptyShapefile = await processFileData({content: shapefileBatch, fileCache: []});
+  t.equal(emptyShapefile[0].info.format, 'geojson', 'empty shapefile batches should stay geojson');
+  t.equal(emptyShapefile[0].data.rows.length, 0, 'should keep zero shapefile features');
+
+  async function* emptyExcelBatches() {
+    yield {shape: 'object-row-table', data: []};
+  }
+  const excelBatch = await readLastAggregatedBatch(emptyExcelBatches(), 'empty.xlsx');
+  const emptyExcel = await processFileData({content: excelBatch, fileCache: []});
+  t.equal(emptyExcel[0].info.format, 'row', 'empty spreadsheet batches should stay rows');
+  t.equal(emptyExcel[0].data.rows.length, 0, 'should keep zero spreadsheet rows');
+
+  async function* emptyFlatGeobufBatches() {
+    yield {batchType: 'metadata'};
+    yield {shape: 'geojson-table', type: 'FeatureCollection', features: []};
+  }
+  const fgbBatch = await readLastAggregatedBatch(emptyFlatGeobufBatches(), 'empty.fgb');
+  const emptyFgb = await processFileData({content: fgbBatch, fileCache: []});
+  t.equal(emptyFgb[0].info.format, 'geojson', 'empty FlatGeobuf batches should stay geojson');
+  t.equal(emptyFgb[0].data.rows.length, 0, 'should keep zero FlatGeobuf features');
+  t.end();
+});
+
+test('#file-handler -> object-row-table becomes a row dataset', async t => {
+  const processed = await processFileData({
+    content: {
+      fileName: 'table.xlsx',
+      data: {shape: 'object-row-table', data: [{name: 'alpha', value: 1}]}
+    },
+    fileCache: []
+  });
+  t.equal(processed[0].info.format, 'row', 'Excel-shaped tables should process as rows');
+  t.equal(processed[0].data.rows.length, 1, 'should keep the spreadsheet row');
+  t.end();
+});
+
+test('#file-handler -> rows with type Feature but no geometry stay tables', async t => {
+  const rows = [
+    {type: 'Feature', name: 'alpha', lat: 37.8, lng: -122.4},
+    {type: 'Feature', name: 'beta', lat: 37.9, lng: -122.5}
+  ];
+
+  t.equal(
+    getGeoJsonFromLoaderResult(rows),
+    null,
+    'should not wrap tabular rows as a FeatureCollection'
+  );
+
+  const processed = await processFileData({
+    content: {fileName: 'places.csv', data: rows},
+    fileCache: []
+  });
+
+  t.equal(
+    processed[0].info.format,
+    'row',
+    'a type column equal to Feature should not force geojson'
+  );
+  t.equal(processed[0].data.rows.length, 2, 'should keep both rows');
+  t.end();
+});
+
 test('#file-handler -> processFileData skipArrowCompact', async t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
-  const combined = batchA.concat(batchB);
+  const batchC = arrow.tableFromJSON([{lng: -122.6, lat: 38.0}]);
+  const combined = batchA.concat(batchB).concat(batchC);
 
   const incremental = await processFileData({
     content: {
@@ -400,6 +1140,36 @@ test('#file-handler -> processFileData skipArrowCompact', async t => {
     1,
     'final processFileData should compact Arrow batches'
   );
+
+  const staged = await processFileData({
+    content: {
+      fileName: 'points.arrow',
+      data: combined.batches,
+      prepareProgressiveReplay: true
+    },
+    fileCache: []
+  });
+  t.equal(staged[0].progressiveData.length, 3, 'should keep one replay snapshot per batch');
+  t.deepEqual(
+    staged[0].progressiveData.map(data => data.cols[0].length),
+    [1, 2, 3],
+    'replay snapshots should grow by one batch at a time'
+  );
+  t.deepEqual(
+    staged[0].progressiveData.map(data => data.cols[0].data.length),
+    [1, 2, 1],
+    'only the completed replay snapshot should be compacted'
+  );
+
+  const csv = {
+    data: {fields: [], rows: [[1]]},
+    info: {id: 'csv', label: 'points.csv', format: 'csv'}
+  };
+  const steps = fileCacheToProgressiveSteps([staged[0], csv]);
+  t.equal(steps.length, 3, 'should create one confirmed Add Data update per Arrow batch');
+  t.equal(steps[0].length, 2, 'non-progressive files should be included in the first update');
+  t.equal(steps[1].length, 1, 'later updates should contain only the Arrow dataset');
+  t.notOk(steps[0][0].progressiveData, 'internal replay data should not enter map state');
 
   t.end();
 });

@@ -18,14 +18,16 @@ const DatasetTagWrapper = styled.div`
   color: ${props => props.theme.textColor};
   font-size: 11px;
   letter-spacing: 0.2px;
-  overflow: auto;
-  display: flex;
+  min-width: 0;
+  overflow: hidden;
   align-items: center;
   .dataset-color {
     flex-shrink: 0;
   }
 
   .dataset-name {
+    min-width: 0;
+    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -15,10 +15,196 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## Unreleased
+## [Unreleased]
 
-- feat: `addToDataset` / `removeFromDataset` to append, upsert, and delete rows in place without breaking layers (#176). Row tables and Arrow tables with primitive columns (concat); DuckDB still warns and no-ops until INSERT exists.
-- fix: GeoJSON layer rebuilds features when the table revision or row count changes, not on filter-only updates.
+- feat: support in-place append, upsert, and delete for primitive Arrow tables (#3688). DuckDB row edits remain a warned no-op.
+
+## [3.3.0-alpha.18] - Oct 19 2026
+
+- c7a6399f fix(export): restore annotation and chart panels (#3853)
+- 43923ce2 fix(export): align read-only map scale (#3852)
+- 2bb43c63 fix(layer-panel): isolate layer group actions (#3851)
+- 682a3721 fix(processors): write valid shapefile DBF numbers (#3848)
+- fea21640 fix(processors): preserve GeoPackage altitude values (#3847)
+- d65c8276 fix(processors): preserve integer GeoParquet fields (#3846)
+- 5760dda2 fix(export-map): escape inline data (#3845)
+- 1f139a67 fix(export): preserve config-only JSON exports (#3850)
+- 30196cea feat: restore progressive GeoArrow rendering with web workers (#3844)
+- c2ac0bc2 fix(ui): prevent checkbox ID collisions across map instances (#3843)
+- 63dceb65 feat(filters): enable timeline charts for numeric filters (#3842)
+- f1a4b1bf fix(sqlrooms): mark esm output as modules (#3841)
+- c384e288 fix: synced filter dataset replacement state (#3839)
+- c0d21bbb test(components): assert share map error rendering (#3840)
+- 0043b242 fix(python): send DataFrame datetimes without a UTC offset and NaN/NaT as null (#3838)
+
+## [3.3.0-alpha.17] - Oct 17 2026
+
+- 5db79a29 feat(annotations): support individual fade on zoom (#3836)
+- 2654322c feat(filters): support multiple datasets per filter (#3835)
+- 0ba38a30 feat(data): allow changing column data types (#3834)
+- 31da085e fix(tooltip): deduplicate aggregation rows (#3833)
+- 6a0fd5fd feat(geocoder): make pin color configurable (#3832)
+- 6a83a393 feat(export-map): preserve custom branding and streamline the export UI (#3830)
+- 3e2aba12 feat: add timezone selection for tooltip dates (#3829)
+- 2b7ed1b1 fix: keep multi-select filter dropdown open (#3828)
+- a4d2b0ff feat(image-export): add transparent background exports (#3827)
+- 5dfe59db feat(filters): add 12/24-hour time format selector (#3826)
+- a1370361 fix(filters): refresh time plots after shared filters change (#3825)
+- 8d37071f fix(file-upload): accept uppercase file extensions (#3824)
+- 647f2217 fix(duckdb): infer missing row data column types (#3822)
+- 72da639e chore: complete migration to @math.gl/web-mercator (#3821)
+- 805034ac chore: patch release 3.3.0-alpha.17
+- fecbd4ae chore: policy url update (#3823)
+- c211c822 fix(examples): load required MapLibre CSS (#3820)
+- 101be5fd chore: bump packages with security vulnerabilities (#3819)
+- cfb531d5 feat(layers): add target arrows to Arc and Line layers (#3818)
+- 6a512201 feat(filters): add a filter out option (#3817)
+- dfb3bcfd feat(data-table): show filtered rows and column stats (#3815)
+- 21341841 feat(layers): point count labels and min cluster size for aggregation layers (#3814)
+- ebcf4e86 feat(export-data): add GeoJSON, GeoParquet, Shapefile, GeoPackage, KML, and KMZ (#3811)
+- 0348c577 chore: pin Node 24.21.0 and upgrade gl (#3803)
+- c9f6ecb7 fix(layers): show timestamp text labels as a readable date time (#3810)
+- 228bfacc feat(layers): geojson layer inveert height optional (#3816)
+- a79923dc fix(type-analyzer): Scientific-notation columns now load as real instead of text (#3809)
+- df483b7f fix(ui): move refresh settings to dataset context menu (#3808)
+- ece93742 feat: rename, delete, and filter a column from the data table (#3801)
+- 7f029414 chore: update ai instructions (#3802)
+- de50c0ed fix(data-table): fix black histogram background (#3807)
+- 841cbda2 chore: remove deprecated analytics (#3813)
+- 974f4273 fix(layers): stroke width slider sensitivity (#3812)
+- f999fa69 feat(dataset-ops): suitability analysis (#3799)
+- a2fdfba4 feat: optional map name and description (#3797)
+- 0a2a57fc chore: scale agent work to the size of the change (#3800)
+
+## [3.3.0-alpha.16] - Oct 9 2026
+
+- 87fa5fd9 fix: replace the broken FSQ Places example and show tileset errors (#3796)
+- 2b031d56 feat(layers): fit map when the layer type dropdown sets the first type (#3795)
+- 8d72219c feat: warn on large datasets in Add Data (#3794)
+- 7f30a3fa feat(ui): show layer actions in a context menu (#3793)
+- 5c8f90d4 feat(dataset): load mixed zip files as separate datasets (#3792)
+- e5913951 fix(wms): disable hover by default (#3791)
+- 7f26460a fix: show feedback while large dataset processing blocks the UI (#3790)
+- 7f3f1254 feat: repalce dataset context option (#3789)
+- f7c6a37f feat: add Step by Interval to the playback bar (#3788)
+- bee730e9 chore: more tests for Add Data modal (#3783)
+- 5b118cd5 feat: copy coordinates and annotation actions in the map context menu (#3782)
+- 363e7542 feat(timeline): group line chart series by a field (#3781)
+- 747ca0de feat(interactions): fade layer opacity by zoom (#3780)
+- 7441968c feat(3d): add model gallery, custom models, and GeoJSON input (#3779)
+- 445f7f8a chore(deps): bump jupyterlab from 4.5.10 to 4.5.11 in /bindings/python (#3785)
+- 74648f38 chore(deps): bump tornado from 6.5.8 to 6.5.9 in /bindings/python (#3784)
+- d22dd528 fix(trip-layer): scenegraph filters, one-point animation domain, and UI docs (#3778)
+- 524eee78 chore(examples): upgrade DuckDB vite example to latest (#3777)
+- 14482223 fix(h3): fix fixed height option (#3776)
+- 5eeca8f8 feat: confirm datasets in the Add Data dialog before adding them (#3770)
+- e55768c7 chore(deps): bump soupsieve from 2.8.4 to 2.9 in /bindings/python (#3738)
+- 37d2d846 chore(deps-dev): bump webpack-dev-middleware in /website (#3772)
+- 6ea906ea feat: Interactions Legend section and include-in-legend toggles (#3768)
+- 761e2c3f chore(deps): bump undici from 8.10.0 to 8.11.2 in /examples/node-app (#3769)
+- c8d5d5b8 chore(deps): bump undici in /examples/replace-component (#3771)
+- f5413af4 fix: let the incremental animation window reach the last of the data (#3773)
+- 47f13f1e fix(website): fix scrolling (#3774)
+- ba7c67db feat(raster-tile-layer): picking info (#3767)
+- 58d2a5de feat: json editor for charts (#3763)
+- de195bf5 feat: resize the map legend from the top handle (#3762)
+- f6d2c3ab fix: labels background depth test fix (#3761)
+- 83e63b8a feat: improve 3D tiles API token lifecycle (#3759)
+- e13d11ee fix: keep the video export camera on the same center as the main map (#3758)
+- 4c27c0ba feat: Add GeoJSON elevation offset for floating 3D polygons (#3757)
+- 019a8b34 feat: add a center handle to move bitmap layer bounds (#3756)
+- 39540fd0 feat: dataset operations as an optional base for frequent geometry ops (#3746)
+
+## [3.3.0-alpha.15] - Sep 28 2026
+
+- ac36f69f feat: progress bar when loading remote datasets from a saved map (#3764)
+- d49a5200 fix: titiler.xyz CORS cache breaking COG tiles on demo and HTML export (#3765)
+- af5ded87 feat: add space theme and configurable theme cycle (#3755)
+- 5bc73e37 feat: export map filename; export image filename (#3760)
+
+## [3.3.0-alpha.14] - Sep 25 2026
+
+- 5e3f0794 fix: paint the range brush above the histogram bars (#3753)
+- 7aac1799 fix: keep the animation timezone and time format in saved maps (#3754)
+- e3fecd1d feat: optional charts panel (#3745)
+- c07a1f27 fix: redraw flows when a replaced dataset brings a new flow layer (#3751)
+- 59048d02 feat: add JSON editors for layer, filter, effect, viewport, and animation (#3744)
+- ce25658f fix: keep the parked layers' place when another dataset is replaced (#3750)
+- 4b8e5de0 fix: load Parquet/Arrow Int64 columns without BigInt TypeError (#3749)
+- fed9669a fix: docker image build improvements (#3748)
+
+## [3.3.0-alpha.13] - Sep 20 2026
+
+- 98cbeccf feat: add Shapefile, Excel, and FlatGeobuf support (#3741)
+- 524add9e feat: timezone selector for time filter settings (#3743)
+- e9551a97 feat: extract in-memory rows from a drawn polygon (#3739)
+- 3be42f85 feat: add Jenks natural breaks color scale (#3742)
+- 08b8c4d2 chore: remove leftover names (#3740)
+- 0f4eac59 feat(demo): bump kepler-assistant to 0.0.18 so anthropic works in the browser (#3695)
+- 156bdd38 fix: keep split map panels index-aligned when merging split maps (#3735)
+- 2ecf2cd7 feat(docker): manual GHCR publish for the demo-app image (#3737)
+- 715d5753 feat(docker): runtime config fail-fast, sub-path href, gallery docs (#3736)
+
+## [3.3.0-alpha.12] - Sep 17 2026
+
+- 5ae15302 feat: add experimental Flow Field layer (#3722)
+- ccf6aa45 chore(deps): bump react-router-dom in /examples/demo-app-sqlrooms (#3732)
+- 0b9f576a feat: add SQLRooms integration and a separate experimental demo (#3721)
+- 3c28dfd3 feat: detect extensionless COG URLs in raster tile add-data (#3723)
+- f9a29942 feat(docker): runtime config for demo-app image (#3725)
+- 52a769e2 feat: hide overlapping text labels (#3707)
+- f6e4f636 fix(globe): text labels not occluded for objects on the back side of the globe (#3731)
+- 5cae52f5 fix: keep layer order when replacing datasets back to back (#3728)
+- 9c95180f (igr/globe-label-occlusion) fix(layers): show layer text labels in globe mode (#3730)
+- 698fc230 fix: text labels ignore left/right visibility in split/swipe modes (#3729)
+- 5d71d1c1 feat: snap annotations to 3D surfaces (#3719)
+- ad4abb6f docs: document Incremental Time Window for playback (#3724)
+- e090e7c2 feat: add heatmap and WMS legends to the map legend (#3718)
+
+## [3.3.0-alpha.11] - Sep 10 2026
+
+- 862aa5cb fix(exported-html): include only one copy of arrow (#3717)
+- 34921e2d fix: cancel raster tile requests when deck.gl aborts the tile (#3715)
+- 58265900 feat: add left and below placement for annotation text (#3706)
+- 131f6642 fix: pass the feature to table-mode GPU filter accessors (#3710)
+- 17f2ae12 chore(deps): bump react-router-dom from 6.30.4 to 6.30.6 in /website (#3708)
+- d48bd5c2 fix: prevent long annotation names from stretching the annotations panel (#3705)
+- bcf42616 fix: draw float32 raster tiles (#3704)
+- e29bad01 chore: move filter panel interval message to a tooltip (#3701)
+- 68e844d2 fix: geojson stroke color via config (#3700)
+- 150246a0 feat: optional end time for time filter animation (#3699)
+- 54b620d8 fix: adjust labels in add data to map modal (#3698)
+- c3aeb45b feat: add KML, GPX, TCX, and GeoJSONL loaders (#3697)
+- d37b8a25 chore: remove react-palm, replace with built-in task runtime in @kepler.gl/tasks (#3592)
+
+## [3.3.0-alpha.10] - Sep 3 2026
+
+- 878d9651 chore: live-data example WebSocket host (ws → addToDataset) (#3687)
+- 13226dfb chore: add @kepler.gl/tasks-core as a dual CJS/ESM workspace package (#3691)
+- 4fce8abd feat: add async loaders.gl 4.4 loader registry (#3682)
+- 2ea91170 fix(layers): trip layer color-by-field reads correct row in TABLE mode (#3692)
+- cb94905f chore(deps): bump mistune from 3.3.0 to 3.3.3 in /bindings/python (#3693)
+- f6d66212 chore: patch release 3.3.0-alpha.10
+- 13d230b9 chore(deps): bump tornado from 6.5.7 to 6.5.8 in /bindings/python (#3690)
+- bfb43cd7 chore(deps): bump browserslist from 4.24.4 to 4.28.8 in /website (#3689)
+
+## [3.3.0-alpha.9] - Sep 1 2026
+
+- bcf2be72 feat: addToDataset / removeFromDataset for in-place row edits (#176) (#3684)
+- adab6c25 fix: shadows effect issues with highlighted objects (#3683)
+- 99599585 fix: Light & Shadow layer order shading and top-view occlusion (#3681)
+- 78ab050c fix: Light & Shadow regression in video export (#3680)
+- 4c8c8f7a fix: Light & Shadow day slider max update depth crash (#3679)
+- 08f41de6 fix: Grid and Hexagon layers disappear when Light & Shadow is added (#3677)
+- f6b29bdf feat: an option to show vector tile features with not set attributes (#3676)
+- a734cd8f fix: lag when hovering large GeoJSON polygons (#3675)
+- 790dfe87 fix: export map button not visible (#3674)
+- 55c90ece feat: copy error notifications to clipboard (#3668)
+- 56ac6ff4 fix: set aggregation layers min radius above 0 (#3669)
+- bb1fe5e6 fix: add default format for timestamps / datetime (#3670)
+- 9bc3fea1 chore: move AI assistant out of kepler.gl core package (#3532)
+- c45373a4 feat: reload and poll remotely hosted datasets (#3667)
+- 30b0f648 feat: add GeoHash layer (#3666)
 
 ## [3.3.0-alpha.8] - Aug 26 2026
 

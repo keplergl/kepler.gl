@@ -19,7 +19,9 @@ import {
   createNotification,
   errorNotification,
   calculateExportImageSize,
-  getApplicationConfig
+  getApplicationConfig,
+  getConfiguredThemes,
+  getDefaultUiTheme
 } from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
@@ -110,20 +112,35 @@ const DEFAULT_MAP_LEGEND_CONTROL = {
  * @property mapDraw Default: `{show: true, active: false}`
  * @property mapLocale Default: `{show: true, active: false}`
  * @property mapTheme Default: `{show: true, active: false}`
+ * @property viewportJson Default: `{show: true, active: false}`
+ * @property mapInfo Default: `{show: true, active: true}`. `show` hides the on-map name and description.
  * @public
  */
-export const DEFAULT_MAP_CONTROLS: MapControls = (
-  Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>
-).reduce(
-  (final, current) => ({
-    ...final,
-    [current]:
-      current === MAP_CONTROLS.mapLegend
-        ? DEFAULT_MAP_LEGEND_CONTROL
-        : DEFAULT_MAP_CONTROLS_FEATURES
-  }),
-  {} as MapControls
-);
+export const DEFAULT_MAP_CONTROLS: MapControls = {
+  ...(Object.keys(MAP_CONTROLS) as Array<keyof typeof MAP_CONTROLS>).reduce(
+    (final, current) => ({
+      ...final,
+      [current]:
+        current === MAP_CONTROLS.mapLegend
+          ? DEFAULT_MAP_LEGEND_CONTROL
+          : DEFAULT_MAP_CONTROLS_FEATURES
+    }),
+    {} as MapControls
+  ),
+  // Camera controls are UI preferences; saved camera snapshots remain independent.
+  cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
+  cameraBookmarks: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    show: false,
+    active: true,
+    settings: {position: {x: 60, y: 20, anchorX: 'right', anchorY: 'top'}, contentHeight: -1}
+  },
+  // Open by default so a saved title shows on load. An empty map still hides the card.
+  mapInfo: {
+    ...DEFAULT_MAP_CONTROLS_FEATURES,
+    active: true
+  }
+};
 
 /**
  * Default image export config
@@ -132,6 +149,8 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property ratio Default: `'SCREEN'`,
  * @property resolution Default: `'ONE_X'`,
  * @property legend Default: `false`,
+ * @property charts Default: `false`,
+ * @property transparentBackground Default: `false`,
  * @property mapH Default: 0,
  * @property mapW Default: 0,
  * @property imageSize Default: {zoomOffset: 0, scale: 1, imageW: 0, imageH: 0},
@@ -139,6 +158,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = (
  * @property exporting Default: `false`
  * @property error Default: `false`
  * @property escapeXhtmlForWebpack Default: from application config (auto-detected: `true` for webpack)
+ * @property fileName Default: `''`
  * @public
  */
 export const DEFAULT_EXPORT_IMAGE: ExportImage = {
@@ -146,6 +166,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   ratio: EXPORT_IMG_RATIOS.SCREEN,
   resolution: RESOLUTIONS.ONE_X,
   legend: false,
+  charts: false,
+  transparentBackground: false,
   mapH: 0,
   mapW: 0,
   imageSize: {
@@ -164,7 +186,8 @@ export const DEFAULT_EXPORT_IMAGE: ExportImage = {
   processing: false,
   error: false,
   // whether to apply fix for uglify error in dom-to-image (from application config, auto-detects build tool)
-  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
+  escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack,
+  fileName: ''
 };
 
 export const DEFAULT_LOAD_FILES = {
@@ -219,12 +242,17 @@ export const DEFAULT_EXPORT_JSON: ExportJson = {
  * @property HTML - Default: 'DEFAULT_EXPORT_HTML',
  * @property JSON - Default: 'DEFAULT_EXPORT_JSON',
  * @property format - Default: 'HTML',
+ * @property fileName Default: `''`,
+ * @property includeLayerApiKeys Default: `false`,
  * @public
  */
 export const DEFAULT_EXPORT_MAP: ExportMap = {
   [EXPORT_MAP_FORMATS.HTML]: DEFAULT_EXPORT_HTML,
   [EXPORT_MAP_FORMATS.JSON]: DEFAULT_EXPORT_JSON,
-  format: EXPORT_MAP_FORMATS.HTML
+  format: EXPORT_MAP_FORMATS.HTML,
+  fileName: '',
+  // Private layer tokens stay out of the file unless the user opts in.
+  includeLayerApiKeys: false
 };
 
 /**
@@ -257,6 +285,7 @@ export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
  * @property activeSidePanel Default: `'layer'`
  * @property currentModal Default: `'addData'`
  * @property datasetKeyToRemove Default: `null`
+ * @property datasetToReplaceId Default: `null`
  * @property visibleDropdown Default: `null`
  * @property exportImage Default: [`DEFAULT_EXPORT_IMAGE`](#default_export_image)
  * @property exportData Default: [`DEFAULT_EXPORT_DATA`](#default_export_data)
@@ -275,6 +304,7 @@ export const INITIAL_UI_STATE: UiState = {
   activeSidePanel: DEFAULT_ACTIVE_SIDE_PANEL,
   currentModal: DEFAULT_MODAL,
   datasetKeyToRemove: null,
+  datasetToReplaceId: null,
   visibleDropdown: null,
   // export image modal ui
   exportImage: DEFAULT_EXPORT_IMAGE,
@@ -292,7 +322,7 @@ export const INITIAL_UI_STATE: UiState = {
   loadFiles: DEFAULT_LOAD_FILES,
   // Locale of the UI
   locale: LOCALE_CODES.en,
-  // Theme of the UI (used when enableThemeToggle is on)
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: THEME.dark,
   layerPanelListView: 'list',
   filterPanelListView: 'list',
@@ -309,10 +339,19 @@ export const initUiStateUpdater = (
     type?: (typeof ActionTypes)['INIT'];
     payload: KeplerGlInitPayload;
   }
-): UiState => ({
-  ...state,
-  ...(action.payload || {}).initialUiState
-});
+): UiState => {
+  const initialUiState = (action.payload || {}).initialUiState || {};
+  const themes = getConfiguredThemes();
+  const requested = initialUiState.theme ?? state.theme;
+  const theme =
+    themes.length === 0 ? requested : themes.includes(requested) ? requested : getDefaultUiTheme();
+
+  return {
+    ...state,
+    ...initialUiState,
+    theme
+  };
+};
 
 /**
  * Toggle active side panel
@@ -355,7 +394,10 @@ export const toggleModalUpdater = (
   {payload: id}: UIStateActions.ToggleModalUpdaterAction
 ): UiState => ({
   ...state,
-  currentModal: id
+  currentModal: id,
+  // Add Data and every other modal open leave replace mode.
+  // Replace mode is entered only through openReplaceDatasetModal.
+  datasetToReplaceId: null
 });
 
 /**
@@ -463,7 +505,12 @@ export const setMapControlVisibilityUpdater = (
   state: UiState,
   {payload: {panelId, show}}: UIStateActions.setMapControlVisibilityUpdaterAction
 ): UiState => {
-  if (!state.mapControls?.[panelId]) {
+  const mapControl =
+    state.mapControls?.[panelId] ??
+    (panelId === 'cameraBookmarks' || panelId === 'cameraTour'
+      ? DEFAULT_MAP_CONTROLS[panelId]
+      : undefined);
+  if (!mapControl) {
     return state;
   }
 
@@ -472,7 +519,7 @@ export const setMapControlVisibilityUpdater = (
     mapControls: {
       ...state.mapControls,
       [panelId]: {
-        ...state.mapControls[panelId],
+        ...mapControl,
         show: Boolean(show)
       }
     }
@@ -492,7 +539,10 @@ export const setMapControlSettingsUpdater = (
   state: UiState,
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
-  const mapControl = state.mapControls?.[panelId] as MapControlMapLegend | undefined;
+  const mapControl = (state.mapControls?.[panelId] ??
+    (panelId === 'cameraBookmarks' ? DEFAULT_MAP_CONTROLS.cameraBookmarks : undefined)) as
+    | MapControlMapLegend
+    | undefined;
   if (!mapControl) {
     return state;
   }
@@ -528,7 +578,25 @@ export const openDeleteModalUpdater = (
 });
 
 /**
- * Set `exportImage.legend` to `true` or `false`
+ * Open the add-data modal so the next confirmed upload replaces one dataset.
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload dataset id
+ * @returns nextState
+ * @public
+ */
+export const openReplaceDatasetModalUpdater = (
+  state: UiState,
+  {payload: datasetToReplaceId}: UIStateActions.OpenReplaceDatasetModalUpdaterAction
+): UiState => ({
+  ...state,
+  currentModal: ADD_DATA_ID,
+  datasetToReplaceId
+});
+
+/**
+ * Set `exportImage` options such as `legend` and `charts` to `true` or `false`
  * @memberof uiStateUpdaters
  * @param state `uiState`
  * @returns nextState
@@ -772,6 +840,26 @@ export const setExportMapFormatUpdater = (
 });
 
 /**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateUpdaters
+ * @param state `uiState`
+ * @param action
+ * @param action.payload file name without extension
+ * @returns nextState
+ * @public
+ */
+export const setExportMapFileNameUpdater = (
+  state: UiState,
+  {payload: fileName}: UIStateActions.SetExportMapFileNameUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    fileName
+  }
+});
+
+/**
  * Set the export html map mode
  * @param state - `uiState`
  * @param action
@@ -789,6 +877,42 @@ export const setExportMapHTMLModeUpdater = (
       ...state.exportMap[EXPORT_MAP_FORMATS.HTML],
       mode
     }
+  }
+});
+
+/**
+ * Set application branding overrides for exported maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload application name, website, icon, and/or name color overrides
+ * @return nextState
+ */
+export const setExportMapBrandingUpdater = (
+  state: UiState,
+  {payload}: UIStateActions.SetExportMapBrandingUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    ...payload
+  }
+});
+
+/**
+ * Whether to keep layer access tokens in exported HTML and JSON maps.
+ * @param state - `uiState`
+ * @param action
+ * @param action.payload - include layer API keys
+ * @return nextState
+ */
+export const setExportIncludeLayerApiKeysUpdater = (
+  state: UiState,
+  {payload: includeLayerApiKeys}: UIStateActions.SetExportIncludeLayerApiKeysUpdaterAction
+): UiState => ({
+  ...state,
+  exportMap: {
+    ...state.exportMap,
+    includeLayerApiKeys
   }
 });
 
@@ -1029,6 +1153,65 @@ export const receiveMapConfigUpdater = (
         }
       }
     };
+  }
+
+  if (uiState.mapControls?.chart?.active) {
+    const currentChart = newState.mapControls.chart;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        chart: {
+          show: true,
+          ...currentChart,
+          active: true,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  // Honor an explicit collapsed or hidden state. A missing key keeps the default (shown, open).
+  const savedMapInfo = uiState.mapControls?.mapInfo;
+  const savedMapInfoActive = savedMapInfo?.active;
+  const savedMapInfoShow = savedMapInfo?.show;
+  if (typeof savedMapInfoActive === 'boolean' || typeof savedMapInfoShow === 'boolean') {
+    const currentMapInfo = newState.mapControls.mapInfo;
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        mapInfo: {
+          show: true,
+          active: true,
+          ...currentMapInfo,
+          ...(typeof savedMapInfoShow === 'boolean' ? {show: savedMapInfoShow} : {}),
+          ...(typeof savedMapInfoActive === 'boolean' ? {active: savedMapInfoActive} : {}),
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+
+  const savedBookmarks = uiState.mapControls?.cameraBookmarks;
+  if (typeof savedBookmarks?.show === 'boolean') {
+    newState = {
+      ...newState,
+      mapControls: {
+        ...newState.mapControls,
+        cameraBookmarks: {
+          ...DEFAULT_MAP_CONTROLS.cameraBookmarks!,
+          ...newState.mapControls.cameraBookmarks,
+          show: savedBookmarks.show,
+          activeMapIndex: 0
+        }
+      }
+    };
+  }
+  if (savedBookmarks?.settings) {
+    newState = setMapControlSettingsUpdater(newState, {
+      payload: {panelId: 'cameraBookmarks', settings: savedBookmarks.settings}
+    } as UIStateActions.setMapControlSettingsUpdaterAction);
   }
 
   if (uiState.mapControls?.mapLegend?.settings) {

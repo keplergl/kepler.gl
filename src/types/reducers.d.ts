@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Field, Millisecond} from './types';
+import {Field, Millisecond, RGBColor} from './types';
+import {ColorMap, ColorRange, ColorUI} from './layers';
 import {MapSplitMode, MapViewMode} from '@kepler.gl/constants';
 type MapViewState = {
   latitude: number;
@@ -125,16 +126,43 @@ export interface LineDatum {
   pct: number | null;
 }
 
+export type LineChartSeries = {
+  lines: LineDatum[][];
+  markers: LineDatum[];
+  /** Stroke color for each line segment. Segments from one group share a color. */
+  colors?: string[];
+  /** Series name for each line segment. */
+  names?: string[];
+};
+
+export type LineChartGroupBy = {
+  fieldName: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colors: string[] | null;
+  colorMap?: ColorMap | null;
+};
+
+export type PlotGroupBy = {
+  fieldName?: string;
+  numGroups: number | 'ALL';
+  groupOthers: boolean;
+  colorRange?: ColorRange;
+  colorUI?: ColorUI;
+};
+
 export type LineChart = {
-  series: {x: number; y: number}[];
+  series: {x: number; y: number}[] | LineChartSeries;
   yDomain: number[] | undefined[];
   xDomain: number[];
 
   // Is this a valid part of LineChart?
   aggregation: string;
-  interval: string;
+  interval: string | number | null;
   yAxis: string;
-  bins?: Bins;
+  bins?: Bins | Bin[];
+  /** Cache key for timeline series grouping. Null when the plot is a single series. */
+  groupBy?: LineChartGroupBy | null;
 };
 
 type FilterViewType = 'side' | 'enlarged' | 'minified';
@@ -143,11 +171,17 @@ export type FilterBase<L extends LineChart> = {
   dataId: string[];
   id: string;
   enabled: boolean;
+  /**
+   * When true, rows that match the filter are hidden and the rest are kept.
+   * Undefined is treated as false so older saved maps stay unchanged.
+   */
+  inverted?: boolean;
 
   // time range filter specific
   fixedDomain: boolean;
   view: FilterViewType;
   isAnimating: boolean;
+  animationWindow?: string;
   speed: number;
   showTimeDisplay?: boolean;
 
@@ -168,7 +202,13 @@ export type FilterBase<L extends LineChart> = {
   // gpu filter
   gpu: boolean;
   gpuChannel?: number[];
+  gpuEndChannel?: number[];
   fieldType?: string;
+
+  // Optional end timestamp for duration-based time filters (parallel to name/fieldIdx)
+  endName?: (string | null | undefined)[];
+  endFieldIdx?: (number | null | undefined)[];
+  endMappedValue?: ((number | null)[] | null | undefined)[];
 
   // polygon
   layerId?: string[];
@@ -215,6 +255,14 @@ export type TimeRangeFilter = FilterBase<LineChart> &
     syncTimelineMode: SyncTimelineMode;
     animationWindow: string;
     invertTrendColor: boolean;
+    /**
+     * When set, a feature is visible while the playback window overlaps
+     * [startField, endField] rather than requiring a single timestamp in range.
+     */
+    endName?: (string | null | undefined)[];
+    endFieldIdx?: (number | null | undefined)[];
+    endMappedValue?: ((number | null)[] | null | undefined)[];
+    gpuEndChannel?: number[];
   };
 
 export type PolygonFilter = FilterBase<LineChart> & {
@@ -251,10 +299,14 @@ export interface TimeBins {
 
 export interface PlotType {
   interval: ValueOf<Interval>;
+  numericInterval?: number;
   type: ValueOf<PlotTypes>;
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
   colorsByDataId?: {[dataId: string]: string};
+  /** Categorical series split for the timeline line chart. */
+  groupBy?: PlotGroupBy | null;
+  yAxisAutoRange?: boolean;
 }
 
 export type Feature = {
@@ -329,16 +381,9 @@ export type AnimationConfig = {
   hideControl?: boolean;
 };
 
-export type FilterAnimationConfig = Pick<
-  TimeRangeFilter,
-  | 'dataId'
-  | 'value'
-  | 'animationWindow'
-  | 'speed'
-  | 'syncedWithLayerTimeline'
-  | 'syncTimelineMode'
-  | 'timezone'
->;
+export type FilterAnimationConfig = Pick<Filter, 'dataId' | 'value' | 'speed'> &
+  Required<Pick<Filter, 'animationWindow'>> &
+  Partial<Pick<TimeRangeFilter, 'syncedWithLayerTimeline' | 'syncTimelineMode' | 'timezone'>>;
 
 export type Timeline = {
   domain: [number, number] | null;
@@ -370,6 +415,7 @@ export type TooltipInfo = BaseInteraction & {
     fieldsToShow: {
       [key: string]: TooltipField[];
     };
+    timezone?: string | null;
     compareMode: boolean;
     compareType: CompareType;
   };
@@ -379,6 +425,7 @@ export type Geocoder = BaseInteraction & {
   position: number[] | null;
   config: {
     limitSearch: boolean;
+    color: RGBColor;
   };
 };
 export type Brush = BaseInteraction & {
@@ -391,20 +438,66 @@ export type Coordinate = BaseInteraction & {
   id: 'coordinate';
   position: number[] | null;
 };
+export type AnnotationInteraction = BaseInteraction & {
+  id: 'annotation';
+};
+export type LegendInfo = BaseInteraction & {
+  id: 'legend';
+  config: {
+    hideInvisibleLayers: boolean;
+  };
+};
+/** Zoom stops for a fade envelope. Opacity is 0 outside [appear, gone]. */
+export type ZoomOpacityStops = {
+  /** Zoom where opacity leaves 0. */
+  appear: number;
+  /** Zoom where opacity reaches the layer's full opacity. */
+  full: number;
+  /** Zoom where opacity starts falling. */
+  fade: number;
+  /** Zoom where opacity returns to 0. */
+  gone: number;
+};
+/** Layers and reserved map targets that share one zoom envelope. */
+export type ZoomOpacityController = {
+  id: string;
+  layerIds: string[];
+  stops: ZoomOpacityStops;
+};
+export type ZoomOpacityInteraction = BaseInteraction & {
+  id: 'zoomOpacity';
+  config: {
+    controllers: ZoomOpacityController[];
+  };
+};
 export type InteractionConfig = {
   tooltip: TooltipInfo;
+  legend: LegendInfo;
   geocoder: Geocoder;
   brush: Brush;
   coordinate: Coordinate;
+  annotation: AnnotationInteraction;
+  zoomOpacity: ZoomOpacityInteraction;
 };
 export type MapInfo = {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 };
+/** Options captured when a file load starts and forwarded to `addDataToMap`. */
+export type FileLoadingOptions = {
+  autoCreateLayers?: boolean;
+  /** Parse the files, then wait for an explicit add instead of calling `addDataToMap`. */
+  deferAddToMap?: boolean;
+};
+
 export type FileLoading = {
-  filesToLoad: FileList;
-  onFinish: (payload: any) => any;
+  /** Identifies this load so a delayed finish from an older one can be ignored. */
+  loadId: number;
+  filesToLoad: FileList | File[];
+  companionFiles?: File[];
+  onFinish: (payload: any, options?: FileLoadingOptions) => any;
   fileCache: any[];
+  options?: FileLoadingOptions;
 };
 export type FileLoadingProgress = {
   [key: string]: {
@@ -446,6 +539,10 @@ export declare type ExportImage = {
   ratio: EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
   legend: boolean;
+  /** When true, include the charts panel in the exported image. */
+  charts: boolean;
+  /** When true, omit the basemap and preserve transparent pixels in the exported image. */
+  transparentBackground?: boolean;
   mapH: number;
   mapW: number;
   imageSize: {
@@ -460,6 +557,7 @@ export declare type ExportImage = {
   error: Error | false;
   center: boolean;
   escapeXhtmlForWebpack?: boolean;
+  fileName: string;
 };
 
 export type ExportData = {
@@ -480,6 +578,17 @@ export type ExportMap = {
   HTML: ExportHtml;
   JSON: ExportJson;
   format: 'HTML' | 'JSON';
+  fileName: string;
+  /** When false, dataset access tokens are omitted from exported HTML and JSON. */
+  includeLayerApiKeys: boolean;
+  /** Optional application name override for exported HTML and JSON. */
+  appName?: string;
+  /** Optional application website override for exported HTML and JSON. */
+  appWebsite?: string;
+  /** Optional application icon URL override for exported HTML and JSON. */
+  appIcon?: string;
+  /** Optional application name color override for exported HTML and JSON. */
+  appNameColor?: string;
 };
 
 export type ExportVideo = {
@@ -524,6 +633,9 @@ export type MapControls = {
   mapTheme?: MapControlItem;
   effect?: MapControlItem;
   annotation?: MapControlItem;
+  chart?: MapControlItem;
+  viewportJson?: MapControlItem;
+  mapInfo?: MapControlItem;
   sqlPanel?: MapControlItem;
   aiAssistant?: MapControlItem;
   [key: string]: MapControlItem | MapControlMapLegend | undefined;
@@ -553,6 +665,8 @@ export type UiState = {
   activeSidePanel: string | null;
   currentModal: string | null;
   datasetKeyToRemove: string | null;
+  /** Dataset selected by the dataset-menu Replace action. Cleared when the modal closes. */
+  datasetToReplaceId: string | null;
   visibleDropdown: string | null;
   // export image modal ui
   exportImage: ExportImage;
@@ -570,7 +684,7 @@ export type UiState = {
   loadFiles: LoadFiles;
   // Locale of the UI
   locale: Locale;
-  // Theme of the UI (`light` | `dark`), used when enableThemeToggle is on
+  // Theme of the UI (`light` | `dark` | `space`). First of `themes` is the default when set.
   theme: UiTheme;
   // view layers by list or dataset
   layerPanelListView: PanelListView;

@@ -14,6 +14,8 @@ export type ExportFileOptions = {
   isPublic?: boolean;
   overwrite?: boolean;
   mapIdToOverwrite?: string | null;
+  /** Download name, without extension. Separate from the map title. */
+  fileName?: string;
 };
 export type OnErrorCallBack = (error: Error) => any;
 export type OnSuccessCallBack = (p: {
@@ -43,6 +45,20 @@ export type ProtoDatasetField = {
   id?: string;
   metadata?: Record<string, any>;
 };
+
+export type GeoArrowBinaryData = Record<
+  number,
+  Record<
+    number,
+    {
+      binaryGeometries: any[];
+      bounds: [number, number, number, number];
+      featureTypes: {point: boolean; line: boolean; polygon: boolean};
+      meanCenters?: Array<number[] | null>;
+    }
+  >
+>;
+
 export type ProtoDataset = {
   info: {
     id?: string;
@@ -57,6 +73,10 @@ export type ProtoDataset = {
     rows: any[][];
     cols?: any[];
     arrowTable?: arrow.Table;
+    /** GeoArrow chunks already converted to deck.gl binary features on workers. */
+    geoArrowBinaryData?: GeoArrowBinaryData;
+    /** Existing table in the configured DuckDB database; avoids re-importing its rows. */
+    duckdbTableName?: string;
   };
 
   // table-injected metadata

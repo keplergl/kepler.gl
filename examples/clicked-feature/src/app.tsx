@@ -6,6 +6,7 @@ import {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import {Provider, useDispatch, useSelector} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import KeplerGl from '@kepler.gl/components';
@@ -192,8 +193,7 @@ function ClickedFeatureSidebar() {
       <aside style={sidebarStyle}>
         <h2 style={{margin: '0 0 8px', fontSize: 16}}>Clicked feature</h2>
         <p style={{margin: 0, color: '#c3c9d5'}}>
-          Click a polygon on the map to show its <code>shapeName</code> here,
-          outside Kepler.gl.
+          Click a polygon on the map to show its <code>shapeName</code> here, outside Kepler.gl.
         </p>
       </aside>
     );

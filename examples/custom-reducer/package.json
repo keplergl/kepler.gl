@@ -16,6 +16,10 @@
     "react-redux": "^9.1.0",
     "redux": "^5.0.1"
   },
+  "resolutions": {
+    "fflate@npm:0.7.4": "0.7.5",
+    "source-map-js": "1.2.2"
+  },
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
     "@types/node": "^20",

@@ -12,11 +12,13 @@ import isEqual from 'es-toolkit/compat/isEqual';
 import pick from 'es-toolkit/compat/pick';
 import uniq from 'es-toolkit/compat/uniq';
 import xor from 'es-toolkit/compat/xor';
-import Task, {disableStackCapturing, withTask} from 'react-palm/tasks';
+import Task, {disableStackCapturing, withTask} from '@kepler.gl/tasks';
+import type {TaskDescriptor} from '@kepler.gl/tasks';
 // Tasks
 import {
   DELAY_TASK,
   ACTION_TASK,
+  EXPAND_ZIP_TASK,
   LOAD_FILE_TASK,
   PROCESS_FILE_DATA,
   UNWRAP_TASK
@@ -39,6 +41,7 @@ import {
   loadFilesErr,
   loadFilesSuccess,
   loadNextFile,
+  expandZipArchiveSuccess,
   nextFileBatch,
   setFilter,
   processFileContent,
@@ -50,21 +53,34 @@ import {
   loadColumnStatsError,
   refreshDatasetSuccess,
   refreshDatasetError,
-  refreshDatasetProgress
+  refreshDatasetProgress,
+  setLoadingProgress
 } from '@kepler.gl/actions';
 
 // Utils
 import {
   FILTER_UPDATER_PROPS,
+  normalizeCameraBookmarks,
+  normalizeCameraTour,
   addNewLayersToSplitMap,
   snapToMarks,
   applyFilterFieldName,
+  applyTimeFilterEndFieldName,
   applyFiltersToDatasets,
   arrayInsert,
+  combineSplitMapsByIndex,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
+  areFilterFieldTypesCompatible,
+  disableGpuIfInverted,
+  filterTypeUsesGpu,
+  getPlotBaseIndexByDataId,
   errorNotification,
+  successNotification,
   editorFeaturesToFeatureCollection,
+  extractRowsInsideFeature,
+  isRasterTileExtractLayer,
+  isVectorTileExtractLayer,
   mergeUserFeatureProperties,
   toSketchFeature,
   featureToFilterValue,
@@ -90,6 +106,7 @@ import {
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
 import {
+  ALL_FIELD_TYPES,
   ANIMATION_WINDOW,
   BASE_SPEED,
   COMPARE_TYPES,
@@ -115,16 +132,31 @@ import {
   INITIAL_ANNOTATION_TEXT_HEIGHT,
   INITIAL_ANNOTATION_LINE_WIDTH,
   INITIAL_ANNOTATION_LINE_COLOR,
+  INITIAL_ANNOTATION_RULER_LENGTH_METERS,
+  INITIAL_ANNOTATION_TEXT_SIDE,
+  INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION,
+  ANNOTATION_ANGLE_BY_PLACEMENT,
+  textPlacementFromAngle,
   AnnotationKind,
   DatasetType,
   getDatasetRefreshIntervalMs,
-  getRemoteSourceFormat
+  getRemoteSourceFormat,
+  GEOCODER_DATASET_NAME,
+  GEOCODER_ICON_COLOR,
+  GEOCODER_LAYER_ID
 } from '@kepler.gl/constants';
-import {LAYER_ID_LENGTH, Layer, LayerClasses} from '@kepler.gl/layers';
+import {
+  AGGREGATION_COUNT_LAYER_TYPES,
+  isPointCountLabel,
+  LAYER_ID_LENGTH,
+  Layer,
+  LayerClasses
+} from '@kepler.gl/layers';
 import {
   apply_,
   compose_,
   filterOutById,
+  if_,
   merge_,
   payload_,
   pick_,
@@ -135,6 +167,7 @@ import {isValidMerger, mergeStateFromMergers} from './merger-handler';
 import {
   VIS_STATE_MERGERS,
   createLayerFromConfig,
+  isSavedLayerConfigV1,
   parseLayerConfig,
   serializeFilter,
   serializeLayer,
@@ -143,7 +176,14 @@ import {
 } from './vis-state-merger';
 
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
-import {loadExternallyHostedDataset, processGeojson} from '@kepler.gl/processors';
+import {
+  getFilesToParse,
+  isZipFileName,
+  loadExternallyHostedDataset,
+  processGeojson,
+  type FileCacheItem,
+  ZipArchiveExpansion
+} from '@kepler.gl/processors';
 
 import {
   Filter,
@@ -154,25 +194,41 @@ import {
   Editor,
   Field,
   LayerVisConfig,
+  RangeFilter,
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
-  ProtoDataset
+  ProtoDataset,
+  ChartConfig,
+  LayerChartConfig
 } from '@kepler.gl/types';
 import {Loader} from '@loaders.gl/loader-utils';
+import {addMetersToLngLat} from '@math.gl/web-mercator';
 
 import {
   Datasets,
   KeplerTable,
   FilterProps,
+  buildChangeColumnTypeData,
+  formatColumnTypeConversionError,
   assignGpuChannel,
+  buildDeleteColumnData,
+  buildRenameColumnData,
+  canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
   pinTableColumns,
+  showAllTableColumns,
+  toggleHiddenTableColumn,
   setFilterGpuMode,
   sortDatasetByColumn
 } from '@kepler.gl/table';
-import {findFieldsToShow} from './interaction-utils';
+import {remapChartsForDataset} from './column-edit-reconcile';
+import {
+  findFieldsToShow,
+  getZoomOpacityAnnotationTargetId,
+  removeLayerFromZoomOpacity
+} from './interaction-utils';
 import {
   calculateLayerData,
   findDefaultLayer,
@@ -191,27 +247,44 @@ import {
 import {getPropValueToMerger, hasPropsToMerge} from './merger-handler';
 import {mergeDatasetsByOrder} from './vis-state-merger';
 import {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  addSuitabilityUpdater,
+  executeGroupBy,
+  executeJoin,
+  executeSpatialJoin,
+  executeSuitability,
+  removeDatasetOpUpdater,
+  removeOpsForDatasets,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
+} from './dataset-ops-updaters';
+import {
   fixEffectOrder,
   getAnimatableVisibleLayers,
   getIntervalBasedAnimationLayers,
   mergeTimeDomains,
   adjustValueToAnimationWindow,
   updateTimeFilterPlotType,
+  mergePlotGroupBy,
   getDefaultTimeFormat,
   LayerToFilterTimeInterval,
   TIME_INTERVALS_ORDERED,
   mergeFilterDomain,
   initCustomPaletteByCustomScale,
   collectColumnValues,
-  getColumnStatistics
+  getColumnStatistics,
+  optionalMapText
 } from '@kepler.gl/utils';
 import {createEffect} from '@kepler.gl/effects';
 import {PayloadAction} from '@reduxjs/toolkit';
 
 import {findMapBounds} from './data-utils';
 
-// react-palm
-// disable capture exception for react-palm call to withTask
+// disable stack capture for withTask calls that happen outside strict reducer context
 disableStackCapturing();
 
 /**
@@ -262,8 +335,17 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: true,
     config: {
       fieldsToShow: {},
+      timezone: null,
       compareMode: false,
       compareType: COMPARE_TYPES.ABSOLUTE
+    }
+  },
+  legend: {
+    id: 'legend',
+    label: 'interactions.legend',
+    enabled: false,
+    config: {
+      hideInvisibleLayers: false
     }
   },
   geocoder: {
@@ -272,7 +354,8 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     position: null,
     config: {
-      limitSearch: false
+      limitSearch: false,
+      color: GEOCODER_ICON_COLOR
     }
   },
   brush: {
@@ -281,7 +364,7 @@ export const defaultInteractionConfig: InteractionConfig = {
     enabled: false,
     config: {
       // size is in km
-      size: 0.5
+      size: 2.5
     }
   },
   coordinate: {
@@ -289,6 +372,19 @@ export const defaultInteractionConfig: InteractionConfig = {
     label: 'interactions.coordinate',
     enabled: false,
     position: null
+  },
+  annotation: {
+    id: 'annotation',
+    label: 'interactions.annotation',
+    enabled: false
+  },
+  zoomOpacity: {
+    id: 'zoomOpacity',
+    label: 'interactions.fadeOnZoom',
+    enabled: false,
+    config: {
+      controllers: []
+    }
   }
 };
 
@@ -321,8 +417,8 @@ export const DEFAULT_EDITOR: Editor = {
 export const INITIAL_VIS_STATE: VisState = {
   // map info
   mapInfo: {
-    title: '',
-    description: ''
+    title: undefined,
+    description: undefined
   },
   // layers
   layers: [],
@@ -338,10 +434,21 @@ export const INITIAL_VIS_STATE: VisState = {
   // a collection of multiple dataset
   datasets: {},
   editingDataset: undefined,
+  groupBys: [],
+  joins: [],
+  suitabilities: [],
 
   // effects
   effects: [],
   effectOrder: [],
+
+  // charts (enabled by default; gated by enableChartsPanel)
+  charts: [],
+  chartsToBeMerged: [],
+
+  // camera bookmarks
+  cameraBookmarks: [],
+  cameraTour: null,
 
   // annotations
   annotations: [],
@@ -382,8 +489,11 @@ export const INITIAL_VIS_STATE: VisState = {
 
   fileLoading: false,
   fileLoadingProgress: {},
+  stagedToAdd: null,
   // for loading datasets
   loadingIndicatorValue: 0,
+  loadingProgress: {},
+  loadingProcessing: {},
 
   loaders: [],
   loadOptions: {},
@@ -481,9 +591,12 @@ export function applyLayerConfigUpdater(
   action: VisStateActions.ApplyLayerConfigUpdaterAction
 ): VisState {
   const {oldLayerId, newLayerConfig, layerIndex} = action;
-  const newParsedLayer =
-    // will move visualChannels to the config prop
-    parseLayerConfig(state.schema, newLayerConfig);
+  // Saved configs have a visualChannels sibling; parsed/editor JSON folds those
+  // fields into config. Re-parsing the latter drops colorField and resets the scale.
+  const savedLayerConfig = isSavedLayerConfigV1(newLayerConfig);
+  const newParsedLayer = savedLayerConfig
+    ? parseLayerConfig(state.schema, newLayerConfig)
+    : newLayerConfig;
   const oldLayer = state.layers.find(l => l.id === oldLayerId);
   if (!oldLayer || !newParsedLayer) {
     return state;
@@ -497,7 +610,9 @@ export function applyLayerConfigUpdater(
     return state;
   }
   // Make sure the layer is valid and convert it to Layer
-  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses);
+  const newLayer = validateLayerWithData(dataset, newParsedLayer, state.layerClasses, {
+    keepUnlabeledAggregationTextLabel: savedLayerConfig
+  });
   if (!newLayer) {
     return state;
   }
@@ -774,19 +889,32 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
 
   const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => d);
 
-  const addFields = newFields.filter(f => !currentFields.includes(f.name));
+  const addFields = newFields.filter(
+    (field, index) =>
+      field &&
+      field.name &&
+      !currentFields.includes(field.name) &&
+      newFields.findIndex(other => other && other.name === field.name) === index
+  );
   const deleteFields = currentFields.filter(f => !newFields.find(fd => fd.name === f));
 
   // delete
   newTextLabel = newTextLabel.filter(tl => tl.field && !deleteFields.includes(tl.field.name));
-  newTextLabel = !newTextLabel.length ? [defaultTextLabel] : newTextLabel;
+  // Aggregation defaults already name Point Count. Using that object as the
+  // empty placeholder, then appending the field just picked, inserts the same
+  // label twice. deck.gl then rejects the duplicate collision layer ids.
+  newTextLabel = !newTextLabel.length ? [{...defaultTextLabel, field: null}] : newTextLabel;
 
   // add
   newTextLabel = [
     ...newTextLabel.filter(tl => tl.field),
     ...addFields.map(af => ({
       ...defaultTextLabel,
-      field: af
+      field: af,
+      collisionEnabled: Boolean(
+        textLabel.find(tl => tl.collisionEnabled)?.collisionEnabled ??
+          defaultTextLabel.collisionEnabled
+      )
     }))
   ];
 
@@ -830,11 +958,22 @@ export function layerTextLabelChangeUpdater(
   let newTextLabel = textLabel.slice();
   if (!textLabel[idx] && idx === textLabel.length) {
     // if idx is set to length, add empty text label
-    newTextLabel = [...textLabel, defaultTextLabel];
+    newTextLabel = [
+      ...textLabel,
+      {
+        ...defaultTextLabel,
+        // The slot is empty until a field is picked. Aggregation defaults already
+        // carry Point Count, and copying that field would add a second label.
+        field: null,
+        collisionEnabled: Boolean(textLabel[0]?.collisionEnabled)
+      }
+    ];
   }
 
   if (idx === 'all' && prop === 'fields') {
     newTextLabel = addOrRemoveTextLabels(value, textLabel, defaultTextLabel);
+  } else if (idx === 'all' && prop) {
+    newTextLabel = textLabel.map(tl => ({...tl, [prop]: value}));
   } else {
     newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
   }
@@ -967,6 +1106,36 @@ export function setInitialLayerConfig(layer, datasets, layerClasses): Layer {
     : newLayer;
 }
 /**
+ * Fit the map when the layer type dropdown gives an empty layer its first
+ * type and that layer already points at a dataset. Later type changes,
+ * programmatic `layerTypeChange`, and saved-config applies leave the camera
+ * alone. Gated by `enableFitBoundsOnManualLayer`.
+ */
+function maybeFitManualLayerBounds(
+  state: VisState,
+  oldLayer: Layer,
+  layer: Layer,
+  fitBounds?: boolean
+): VisState {
+  if (
+    !fitBounds ||
+    oldLayer.type ||
+    !layer.config.dataId ||
+    !getApplicationConfig().enableFitBoundsOnManualLayer
+  ) {
+    return state;
+  }
+  const bounds = findMapBounds([layer]);
+  if (!bounds) {
+    return state;
+  }
+  return withTask(
+    state,
+    ACTION_TASK_FIT_BOUNDS().map(() => fitMapBounds(bounds))
+  );
+}
+
+/**
  * Update layer type. Previews layer config will be copied if applicable.
  * @memberof visStateUpdaters
  * @public
@@ -1012,6 +1181,14 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
+      const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
+      if (textLabel.length !== newLayer.config.textLabel.length) {
+        newLayer.updateLayerConfig({
+          textLabel: textLabel.length ? textLabel : [{...DEFAULT_TEXT_LABEL}]
+        });
+      }
+    }
     newLayer.updateLayerDomain(state.datasets);
   }
 
@@ -1055,7 +1232,35 @@ export function layerTypeChangeUpdater(
     layerOrder: replaceLayerEntryInLayerOrder(newState.layerOrder, oldLayer.id, newLayer.id)
   };
 
-  return newState;
+  return maybeFitManualLayerBounds(newState, oldLayer, layer, action.fitBounds);
+}
+
+/**
+ * Bind visual channel fields to the dataset field of the same name.
+ * `addDataToMap` and `layerVisualChannelConfigChange` often pass `{name, type}`
+ * or processor fields whose valueAccessor is not bound to the KeplerTable, which
+ * leaves strokeColorDomain at `[0, 1]` (kepler.gl #3061).
+ */
+function resolveVisualChannelFieldFromDataset(
+  newConfig: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction['newConfig'],
+  dataset: KeplerTable | undefined,
+  visualChannel: Layer['visualChannels'][string] | undefined
+) {
+  if (!dataset || !visualChannel) {
+    return newConfig;
+  }
+  const incoming = newConfig[visualChannel.field];
+  if (!incoming || typeof incoming !== 'object' || !incoming.name) {
+    return newConfig;
+  }
+  const found = dataset.fields.find(fd => fd.name === incoming.name);
+  if (!found) {
+    return newConfig;
+  }
+  return {
+    ...newConfig,
+    [visualChannel.field]: found
+  };
 }
 
 /**
@@ -1068,12 +1273,17 @@ export function layerVisualChannelChangeUpdater(
   state: VisState,
   action: VisStateActions.LayerVisualChannelConfigChangeUpdaterAction
 ): VisState {
-  const {oldLayer, newConfig, newVisConfig, channel} = action;
+  const {oldLayer, newVisConfig, channel} = action;
   if (!oldLayer.config.dataId) {
     return state;
   }
 
   const dataset = state.datasets[oldLayer.config.dataId];
+  const newConfig = resolveVisualChannelFieldFromDataset(
+    action.newConfig,
+    dataset,
+    oldLayer.visualChannels[channel]
+  );
 
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
   let newLayer = oldLayer.updateLayerConfig(newConfig);
@@ -1149,6 +1359,25 @@ export function layerVisConfigChangeUpdater(
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
 
+  // Jenks breaks depend on the number of colors. Recalculate the domain when
+  // the color range of a Jenks channel changes.
+  if (oldLayer.config.dataId) {
+    const dataset = state.datasets[oldLayer.config.dataId];
+    if (dataset) {
+      Object.keys(newLayer.visualChannels).forEach(channelKey => {
+        const channel = newLayer.visualChannels[channelKey];
+        if (
+          channel?.scale &&
+          newLayer.config[channel.scale] === SCALE_TYPES.jenks &&
+          channel.range &&
+          Object.prototype.hasOwnProperty.call(action.newVisConfig, channel.range)
+        ) {
+          newLayer.updateLayerVisualChannel(dataset, channelKey);
+        }
+      });
+    }
+  }
+
   let nextState = state;
 
   // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
@@ -1170,7 +1399,10 @@ export function layerVisConfigChangeUpdater(
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
-    return updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+    const updatedState = updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+    return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
+      ? updateAnimationDomain(updatedState)
+      : updatedState;
   }
 
   return updateStateWithLayerAndData(nextState, {layer: newLayer, idx});
@@ -1230,18 +1462,42 @@ export function setFilterAnimationWindowUpdater<S extends VisState>(
     return state;
   }
 
-  const newFilter = {
-    ...filter,
-    animationWindow
-  };
+  const previousWindow = (filter as TimeRangeFilter).animationWindow;
+  let nextFilter = {...filter, animationWindow} as Filter;
+
+  // Entering or leaving interval playback snaps the window onto histogram bins.
+  if (
+    (filter.type === FILTER_TYPES.timeRange || filter.type === FILTER_TYPES.range) &&
+    (previousWindow === ANIMATION_WINDOW.interval || animationWindow === ANIMATION_WINDOW.interval)
+  ) {
+    const adjusted = adjustValueToAnimationWindow(
+      state,
+      nextFilter as TimeRangeFilter | RangeFilter,
+      getPlotBaseIndexByDataId(state.datasets, nextFilter, state.layers)
+    );
+    if (Array.isArray(adjusted.value) && adjusted.value.every(v => Number.isFinite(v))) {
+      nextFilter = adjusted;
+    }
+  }
+
+  if (filter.type === FILTER_TYPES.range) {
+    const filterIndex = state.filters.indexOf(filter);
+    return setFilterUpdater(
+      state,
+      setFilter(filterIndex, ['animationWindow', 'value'], [animationWindow, nextFilter.value])
+    );
+  }
 
   const newState = {
     ...state,
-    filters: swap_<Filter>(newFilter)(state.filters)
+    filters: swap_<Filter>(nextFilter)(state.filters)
   };
 
-  const newSyncTimelineMode = getSyncAnimationMode(newFilter as TimeRangeFilter);
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return newState;
+  }
 
+  const newSyncTimelineMode = getSyncAnimationMode(nextFilter as TimeRangeFilter);
   return setTimeFilterTimelineModeUpdater(newState, {id, mode: newSyncTimelineMode});
 }
 
@@ -1274,6 +1530,35 @@ export function applyFilterConfigUpdater(
     state,
     setFilter(filterIndex, Object.keys(changed), Object.values(changed))
   );
+}
+
+function updateFilterPlotsAfterFiltering<S extends VisState>(
+  state: S,
+  affectedDatasetIds: string[],
+  updatedFilterIndex?: number
+): S {
+  const filters = state.filters.map((filter, filterIndex) => {
+    if (filterIndex === updatedFilterIndex) {
+      return updateFilterPlot(state.datasets, filter, undefined, state.layers);
+    }
+
+    const shouldRefreshNumericPlot =
+      filter.type === FILTER_TYPES.range &&
+      (!isSideFilter(filter) || filter.plotType?.type === PLOT_TYPES.lineChart);
+    if (filter.type !== FILTER_TYPES.timeRange && !shouldRefreshNumericPlot) {
+      return filter;
+    }
+
+    const sharedDatasetIds = filter.dataId.filter(dataId => affectedDatasetIds.includes(dataId));
+    if (!sharedDatasetIds.length) {
+      return filter;
+    }
+
+    const invalidatedFilter = sharedDatasetIds.reduce(removeFilterPlot, filter);
+    return updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  });
+
+  return set(['filters'], filters, state);
 }
 
 /**
@@ -1336,8 +1621,9 @@ export function setFilterUpdater<S extends VisState>(
   newState = set(['filters', idx], newFilter, newState);
 
   // filter data
+  const affectedDatasetIds = uniq(datasetIdsToFilter);
   const filteredDatasets = applyFiltersToDatasets(
-    uniq(datasetIdsToFilter),
+    affectedDatasetIds,
     newState.datasets,
     newState.filters,
     newState.layers
@@ -1345,10 +1631,9 @@ export function setFilterUpdater<S extends VisState>(
 
   newState = set(['datasets'], filteredDatasets, newState);
 
-  // need to update filterPlot after filter Dataset for plot to update on filtered result
-  const filterWithPLot = updateFilterPlot(newState.datasets, newState.filters[idx]);
-
-  newState = set(['filters', idx], filterWithPLot, newState);
+  // Update plots after filtering so they use the latest filtered indexes.
+  // Other time filters need their cached bins invalidated for shared datasets.
+  newState = updateFilterPlotsAfterFiltering(newState, affectedDatasetIds, idx);
 
   // dataId is an array
   // pass only the dataset we need to update
@@ -1362,9 +1647,91 @@ export function setFilterUpdater<S extends VisState>(
   return newState;
 }
 
-function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets) {
+function _updateFilterDataIdAtValueIndex(filter, valueIndex, value, datasets, filters) {
+  const currentDataId = filter.dataId[valueIndex];
+  if (currentDataId && value && filter.dataId.length > 1) {
+    const fieldName = filter.name[valueIndex];
+    const endFieldName = toArray(filter.endName)[valueIndex];
+    const previousValue = filter.value;
+    const nextDataIds = filter.dataId.slice();
+    nextDataIds[valueIndex] = value;
+
+    let nextFilter = removeFilterPlot(filter, currentDataId);
+    nextFilter = set(['dataId'], nextDataIds, nextFilter);
+
+    for (const prop of ['gpuChannel', 'gpuEndChannel']) {
+      if (Array.isArray(nextFilter[prop])) {
+        const nextChannels = nextFilter[prop].slice();
+        nextChannels[valueIndex] = undefined;
+        nextFilter = set([prop], nextChannels, nextFilter);
+      }
+    }
+
+    const dataset = datasets[value];
+    const field = dataset?.fields.find(candidate => candidate.name === fieldName);
+    const canRebindField =
+      field && (!filter.fieldType || areFilterFieldTypesCompatible(filter.fieldType, field.type));
+    const {filter: reboundFilter} = canRebindField
+      ? applyFilterFieldName(nextFilter, datasets, value, fieldName, valueIndex, {
+          mergeDomain: true
+        })
+      : {filter: null};
+
+    if (reboundFilter) {
+      nextFilter = reboundFilter;
+    } else {
+      const nextNames = nextFilter.name.slice();
+      const nextFieldIdx = nextFilter.fieldIdx.slice();
+      nextNames[valueIndex] = '';
+      nextFieldIdx[valueIndex] = -1;
+      nextFilter = {
+        ...nextFilter,
+        name: nextNames,
+        fieldIdx: nextFieldIdx,
+        gpu: false
+      };
+    }
+
+    if (endFieldName && nextFilter.type === FILTER_TYPES.timeRange) {
+      const {filter: reboundEndFilter} = applyTimeFilterEndFieldName(
+        nextFilter,
+        datasets,
+        value,
+        endFieldName,
+        valueIndex
+      );
+      if (reboundEndFilter) {
+        nextFilter = reboundEndFilter;
+      } else {
+        const {filter: clearedEndFilter} = applyTimeFilterEndFieldName(
+          nextFilter,
+          datasets,
+          value,
+          null,
+          valueIndex
+        );
+        nextFilter = clearedEndFilter || nextFilter;
+      }
+    }
+
+    const domainSteps = mergeFilterDomain(nextFilter, datasets);
+    nextFilter = {
+      ...nextFilter,
+      ...(domainSteps ? {domain: domainSteps.domain, step: domainSteps.step} : {})
+    };
+
+    if (nextFilter.gpu) {
+      nextFilter = assignGpuChannel(setFilterGpuMode(nextFilter, filters), filters);
+    }
+
+    return {
+      ...nextFilter,
+      value: adjustValueToFilterDomain(previousValue, nextFilter)
+    };
+  }
+
   let newFilter = filter;
-  if (filter.dataId[valueIndex]) {
+  if (currentDataId) {
     // if dataId already exist
     newFilter = _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets);
   }
@@ -1388,7 +1755,16 @@ function _removeFilterDataIdAtValueIndex(filter, valueIndex, datasets) {
     filter = removeFilterPlot(filter, dataId);
   }
 
-  for (const prop of ['dataId', 'name', 'fieldIdx', 'gpuChannel']) {
+  for (const prop of [
+    'dataId',
+    'name',
+    'fieldIdx',
+    'gpuChannel',
+    'endName',
+    'endFieldIdx',
+    'endMappedValue',
+    'gpuEndChannel'
+  ]) {
     if (Array.isArray(filter[prop])) {
       const nextVal = filter[prop].slice();
       nextVal.splice(valueIndex, 1);
@@ -1423,7 +1799,13 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
     // 2. Add a new dataset id
     case FILTER_UPDATER_PROPS.dataId: {
       const oldDataId = [...filter.dataId];
-      filter = _updateFilterDataIdAtValueIndex(filter, valueIndex, value, state.datasets);
+      filter = _updateFilterDataIdAtValueIndex(
+        filter,
+        valueIndex,
+        value,
+        state.datasets,
+        state.filters
+      );
       datasetIdsToFilter = uniq([...oldDataId, ...filter.dataId]);
       break;
     }
@@ -1438,7 +1820,7 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         datasetId,
         value,
         valueIndex,
-        {mergeDomain: valueIndex > 0}
+        {mergeDomain: filter.dataId.length > 1}
       );
       if (updatedFilter) {
         filter = updatedFilter;
@@ -1453,6 +1835,49 @@ function _updateFilterProp(state, filter, prop, value, valueIndex, datasetIds?) 
         datasetIdsToFilter = updatedFilter.dataId;
       }
       // only filter the current dataset
+      break;
+    }
+
+    case FILTER_UPDATER_PROPS.endName: {
+      const datasetId = filter.dataId[valueIndex];
+      const {filter: updatedFilter, dataset: newDataset} = applyTimeFilterEndFieldName(
+        filter,
+        state.datasets,
+        datasetId,
+        value,
+        valueIndex
+      );
+      if (updatedFilter) {
+        filter = updatedFilter;
+        filter = setFilterGpuMode(filter, state.filters);
+        filter = filter.gpu
+          ? assignGpuChannel(filter, state.filters)
+          : {...filter, gpuChannel: undefined, gpuEndChannel: undefined};
+        state = set(['datasets', datasetId], newDataset, state);
+        filter = removeFilterPlot(filter, datasetId);
+        datasetIdsToFilter = updatedFilter.dataId;
+      }
+      break;
+    }
+
+    case 'inverted': {
+      const supportsInversion = filter.dataId.every(
+        datasetId => !state.datasets[datasetId]?.disableDataOperation
+      );
+      filter = {
+        ...filter,
+        inverted: supportsInversion && Boolean(value)
+      };
+      if (filter.inverted) {
+        // GPU range tests can only keep values inside the window.
+        filter = disableGpuIfInverted(filter);
+      } else if (filterTypeUsesGpu(filter.type)) {
+        filter = assignGpuChannel(
+          setFilterGpuMode({...filter, gpu: true}, state.filters),
+          state.filters
+        );
+      }
+      datasetIdsToFilter = [...filter.dataId];
       break;
     }
 
@@ -1521,10 +1946,18 @@ export const setFilterPlotUpdater = (
     return state;
   }
   let newFilter = state.filters[idx];
+  const previousNumericInterval = newFilter.plotType?.numericInterval;
 
   for (const prop in newProp) {
     if (prop === 'plotType') {
-      newFilter = pick_('plotType')(merge_(newProp.plotType))(newFilter);
+      let plotTypeUpdate = newProp.plotType;
+      if (plotTypeUpdate && Object.prototype.hasOwnProperty.call(plotTypeUpdate, 'groupBy')) {
+        plotTypeUpdate = {
+          ...plotTypeUpdate,
+          groupBy: mergePlotGroupBy(newFilter.plotType?.groupBy, plotTypeUpdate.groupBy)
+        };
+      }
+      newFilter = pick_('plotType')(merge_(plotTypeUpdate))(newFilter);
     } else if (prop === 'yAxis') {
       const chartType = newProp.yAxis ? PLOT_TYPES.lineChart : PLOT_TYPES.histogram;
 
@@ -1532,12 +1965,36 @@ export const setFilterPlotUpdater = (
     }
   }
 
-  newFilter = updateFilterPlot(state.datasets, newFilter);
+  const numericIntervalChanged =
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.plotType?.numericInterval !== previousNumericInterval;
+  if (numericIntervalChanged) {
+    newFilter = {...(newFilter as RangeFilter), bins: undefined, lineChart: undefined};
+  }
 
-  return {
+  newFilter = updateFilterPlot(state.datasets, newFilter, undefined, state.layers);
+
+  const newState = {
     ...state,
     filters: state.filters.map((f, i) => (i === idx ? newFilter : f))
   };
+
+  if (
+    numericIntervalChanged &&
+    newFilter.type === FILTER_TYPES.range &&
+    newFilter.animationWindow === ANIMATION_WINDOW.interval
+  ) {
+    const adjusted = adjustValueToAnimationWindow(
+      newState,
+      newFilter as RangeFilter,
+      getPlotBaseIndexByDataId(newState.datasets, newFilter, newState.layers)
+    );
+    if (Array.isArray(adjusted.value) && adjusted.value.every(Number.isFinite)) {
+      return setFilterUpdater(newState, {idx, prop: 'value', value: adjusted.value});
+    }
+  }
+
+  return newState;
 };
 
 /**
@@ -1759,21 +2216,29 @@ export const setFilterViewUpdater = (
 ) => {
   const {view, idx} = action;
   const shouldResetOtherFiltersView = view === FILTER_VIEW_TYPES.enlarged;
+  const filters = state.filters.map((f, i) =>
+    i === idx
+      ? {
+          ...f,
+          view
+        }
+      : shouldResetOtherFiltersView
+      ? {
+          ...f,
+          view: FILTER_VIEW_TYPES.side
+        }
+      : f
+  );
+
+  const openedFilter = filters[idx];
+  if (view === FILTER_VIEW_TYPES.enlarged && openedFilter?.type === FILTER_TYPES.range) {
+    const invalidatedFilter = toArray(openedFilter.dataId).reduce(removeFilterPlot, openedFilter);
+    filters[idx] = updateFilterPlot(state.datasets, invalidatedFilter, undefined, state.layers);
+  }
+
   return {
     ...state,
-    filters: state.filters.map((f, i) =>
-      i === idx
-        ? {
-            ...f,
-            view
-          }
-        : shouldResetOtherFiltersView
-        ? {
-            ...f,
-            view: FILTER_VIEW_TYPES.side
-          }
-        : f
-    )
+    filters
   };
 };
 
@@ -1833,6 +2298,7 @@ export const removeFilterUpdater = (
 
   let newState = set(['filters'], newFilters, state);
   newState = set(['datasets'], filteredDatasets, newState);
+  newState = updateFilterPlotsAfterFiltering(newState, dataId);
   newState = set(['editor'], newEditor, newState);
 
   return updateAllLayerDomainData(newState, dataId, undefined);
@@ -1910,6 +2376,9 @@ export function removeLayerUpdater<T extends VisState>(
 
   const {layers, layerData, layerOrder, clicked, hoverInfo} = state;
   const layerToRemove = layers[idx];
+  const interactionConfig = state.interactionConfig
+    ? removeLayerFromZoomOpacity(state.interactionConfig, layerToRemove.id)
+    : state.interactionConfig;
   const newState = {
     ...state,
     layers: filterOutById(layerToRemove.id)(layers),
@@ -1917,11 +2386,19 @@ export function removeLayerUpdater<T extends VisState>(
     layerOrder: removeElementFromLayerOrder(layerOrder, layerToRemove.id),
     clicked: layerToRemove.isLayerHovered(clicked) ? undefined : clicked,
     hoverInfo: layerToRemove.isLayerHovered(hoverInfo) ? undefined : hoverInfo,
-    splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove)
+    splitMaps: removeLayerFromSplitMaps(state.splitMaps, layerToRemove),
+    // Only replace interactionConfig when a controller actually listed this layer.
+    // Partial test states omit it, and adding the key would change that shape.
+    ...(interactionConfig !== state.interactionConfig ? {interactionConfig} : {})
     // TODO: update filters, create helper to remove layer form filter (remove layerid and dataid) if mapped
   };
 
-  return updateAnimationDomain(newState);
+  return updateAnimationDomain(
+    removeChartsAndFilters(
+      newState,
+      chart => isLayerChartConfig(chart) && chart.layerId === layerToRemove.id
+    )
+  );
 }
 
 /**
@@ -2403,10 +2880,195 @@ export const updateEffectUpdater = (
   };
 };
 
+function isLayerChartConfig(chart: ChartConfig): chart is LayerChartConfig {
+  return chart.type === 'layerChart';
+}
+
+function mergeChartConfig(chart: ChartConfig, props: Partial<ChartConfig>): ChartConfig {
+  return {
+    ...chart,
+    ...props,
+    display: {
+      ...chart.display,
+      ...(props.display || {})
+    },
+    chartDisplay: {
+      ...chart.chartDisplay,
+      ...((props as ChartConfig).chartDisplay || {})
+    }
+  } as ChartConfig;
+}
+
+function axisFieldIfPresent<T extends {field?: {name: string} | null; title?: string | null}>(
+  axis: T | undefined,
+  fieldNames: Set<string>
+): T | undefined {
+  if (!axis?.field?.name || fieldNames.has(axis.field.name)) {
+    return axis;
+  }
+  return {...axis, field: null, title: null};
+}
+
+function dropMissingChartFields(
+  chart: ChartConfig,
+  dataset: {fields?: {name: string}[]} | undefined
+): ChartConfig {
+  const fieldNames = new Set((dataset?.fields || []).map(field => field.name));
+  const next = chart as ChartConfig & {
+    xAxis?: {field?: {name: string} | null};
+    yAxis?: {field?: {name: string} | null};
+    axis?: {field?: {name: string} | null};
+    groupBy?: {field?: {name: string} | null};
+    value?: {field?: {name: string} | null};
+  };
+  return mergeChartConfig(chart, {
+    xAxis: axisFieldIfPresent(next.xAxis, fieldNames),
+    yAxis: axisFieldIfPresent(next.yAxis, fieldNames),
+    axis: axisFieldIfPresent(next.axis, fieldNames),
+    groupBy: axisFieldIfPresent(next.groupBy, fieldNames),
+    value: axisFieldIfPresent(next.value, fieldNames)
+  } as Partial<ChartConfig>);
+}
+
+function removeChartsAndFilters<T extends VisState>(
+  state: T,
+  shouldRemove: (chart: ChartConfig) => boolean
+): T {
+  const charts = state.charts || [];
+  const removed = charts.filter(shouldRemove);
+  if (!removed.length) {
+    return state;
+  }
+  const removedIds = new Set(removed.map(chart => chart.id));
+  const filterIds = new Set(
+    removed.flatMap(chart => {
+      const id = chart.crossFilter?.filterId;
+      return id ? [id, `${id}-x`, `${id}-y`] : [];
+    })
+  );
+  let nextState: VisState = {
+    ...state,
+    charts: charts.filter(chart => !removedIds.has(chart.id))
+  };
+  if (filterIds.size) {
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return filterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState as T;
+}
+
+/**
+ * Add a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const addChartUpdater = (
+  state: VisState,
+  {chart}: VisStateActions.AddChartUpdaterAction
+): VisState => {
+  if (!chart?.id) {
+    return state;
+  }
+  if ((state.charts || []).some(existing => existing.id === chart.id)) {
+    return state;
+  }
+  return {
+    ...state,
+    charts: [
+      ...(state.charts || []).map(existing => ({
+        ...existing,
+        display: {
+          ...existing.display,
+          isConfigActive: false,
+          isJsonEditorActive: false
+        }
+      })),
+      {
+        ...chart,
+        display: {
+          ...chart.display,
+          isConfigActive: chart.display?.isConfigActive ?? false
+        }
+      }
+    ]
+  };
+};
+
+/**
+ * Update a chart
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const updateChartUpdater = (
+  state: VisState,
+  {id, props}: VisStateActions.UpdateChartUpdaterAction
+): VisState => {
+  const idx = (state.charts || []).findIndex(chart => chart.id === id);
+  if (idx < 0) {
+    return state;
+  }
+  const prev = state.charts[idx];
+  const dataIdChanged = typeof props.dataId === 'string' && props.dataId !== prev.dataId;
+  const layerIdChanged =
+    isLayerChartConfig(prev) &&
+    typeof (props as LayerChartConfig).layerId === 'string' &&
+    (props as LayerChartConfig).layerId !== prev.layerId;
+  let next = mergeChartConfig(prev, props);
+  if (dataIdChanged || layerIdChanged) {
+    const dataId = next.dataId || undefined;
+    next = dropMissingChartFields(next, dataId ? state.datasets[dataId] : undefined);
+    if (next.crossFilter?.enabled) {
+      next = mergeChartConfig(next, {
+        crossFilter: {...next.crossFilter, enabled: false, value: {}, fieldNames: {}}
+      });
+    }
+  }
+  const charts = [...state.charts];
+  charts[idx] = next;
+  let nextState: VisState = {
+    ...state,
+    charts
+  };
+  const filterId = next.crossFilter?.filterId || prev.crossFilter?.filterId;
+  if (prev.crossFilter?.enabled && !next.crossFilter?.enabled && filterId) {
+    const ownedFilterIds = new Set([filterId, `${filterId}-x`, `${filterId}-y`]);
+    nextState = nextState.filters.reduceRight((accu, filter, idx) => {
+      return ownedFilterIds.has(filter.id) ? removeFilterUpdater(accu, {idx}) : accu;
+    }, nextState);
+  }
+  return nextState;
+};
+
+/**
+ * Remove a chart and any cross-filter it owns
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const removeChartUpdater = (
+  state: VisState,
+  {id}: VisStateActions.RemoveChartUpdaterAction
+): VisState => removeChartsAndFilters(state, chart => chart.id === id);
+
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
+  const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
+  const derivedFromAngle =
+    providedAngle != null ? textPlacementFromAngle(providedAngle) : undefined;
+  const textSide =
+    config?.textSide ??
+    derivedFromAngle?.side ??
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_SIDE);
+  const textVerticalPosition =
+    config?.textVerticalPosition ??
+    derivedFromAngle?.vertical ??
+    (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
+      ? undefined
+      : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
@@ -2415,13 +3077,21 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
     label: config?.label ?? 'New Annotation',
+    ...(config?.editorState ? {editorState: config.editorState} : {}),
     lineColor: config?.lineColor ?? INITIAL_ANNOTATION_LINE_COLOR,
     lineWidth: config?.lineWidth ?? INITIAL_ANNOTATION_LINE_WIDTH,
     textWidth: config?.textWidth ?? INITIAL_ANNOTATION_TEXT_WIDTH,
     textHeight: config?.textHeight ?? INITIAL_ANNOTATION_TEXT_HEIGHT,
     textVerticalAlign: config?.textVerticalAlign ?? ('bottom' as const),
+    ...(textSide ? {textSide} : {}),
+    ...(textVerticalPosition ? {textVerticalPosition} : {}),
     mapIndex: config?.mapIndex
   };
+
+  const defaultAngle =
+    textSide && textVerticalPosition
+      ? ANNOTATION_ANGLE_BY_PLACEMENT[`${textSide}-${textVerticalPosition}`]
+      : INITIAL_ANNOTATION_ANGLE;
 
   switch (kind) {
     case AnnotationKind.POINT:
@@ -2429,23 +3099,43 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         ...base,
         kind: AnnotationKind.POINT,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.ARROW:
       return {
         ...base,
         kind: AnnotationKind.ARROW,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE
+        angle: providedAngle ?? defaultAngle
       };
     case AnnotationKind.CIRCLE:
       return {
         ...base,
         kind: AnnotationKind.CIRCLE,
         armLength: (config as any)?.armLength ?? INITIAL_ANNOTATION_ARM_LENGTH,
-        angle: (config as any)?.angle ?? INITIAL_ANNOTATION_ANGLE,
+        angle: providedAngle ?? defaultAngle,
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
+    case AnnotationKind.RULER: {
+      const anchorPoint = base.anchorPoint;
+      const shifted = addMetersToLngLat(anchorPoint, [
+        INITIAL_ANNOTATION_RULER_LENGTH_METERS,
+        0,
+        0
+      ]);
+      const altitude = anchorPoint[2];
+      const defaultEndPoint =
+        altitude !== undefined && Number.isFinite(altitude)
+          ? ([shifted[0], shifted[1], altitude] as [number, number, number])
+          : ([shifted[0], shifted[1]] as [number, number]);
+      return {
+        ...base,
+        kind: AnnotationKind.RULER,
+        endPoint: (config as any)?.endPoint ?? defaultEndPoint,
+        showCustomText: (config as any)?.showCustomText ?? true,
+        showDistance: (config as any)?.showDistance ?? true
+      };
+    }
     case AnnotationKind.TEXT:
     default:
       return {
@@ -2485,6 +3175,10 @@ export const removeAnnotationUpdater = (
   return {
     ...state,
     annotations: state.annotations.filter(a => a.id !== id),
+    interactionConfig: removeLayerFromZoomOpacity(
+      state.interactionConfig,
+      getZoomOpacityAnnotationTargetId(id)
+    ),
     selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
     isEditingAnnotationText:
       state.selectedAnnotationId === id ? false : state.isEditingAnnotationText
@@ -2580,45 +3274,61 @@ export function removeDatasetUpdater<T extends VisState>(
   state: T,
   action: VisStateActions.RemoveDatasetUpdaterAction
 ): T {
-  // extract dataset key
   const {dataId: datasetKey} = action;
   const {datasets} = state;
 
-  // check if dataset is present
+  if (!datasets[datasetKey]) {
+    return state;
+  }
+
+  // Derived tables are snapshots: keep them when a source dataset is deleted.
+  // Only drop in-progress group-by / join drafts that referenced this dataset.
+  const nextState = removeOpsForDatasets(state, [datasetKey]) as T;
+  return removeSingleDatasetUpdater(nextState, datasetKey);
+}
+
+function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: string): T {
+  const {datasets} = state;
   if (!datasets[datasetKey]) {
     return state;
   }
 
   const {
     layers,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    datasets: {[datasetKey]: dataset, ...newDatasets}
+    datasets: {[datasetKey]: _dataset, ...newDatasets}
   } = state;
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
-  // remove layers and datasets
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
     ...state,
     datasets: newDatasets
   });
 
-  // update filters
   const filters: Filter[] = [];
   for (const filter of newState.filters) {
     const valueIndex = filter.dataId.indexOf(datasetKey);
     if (valueIndex >= 0 && filter.dataId.length > 1) {
-      // only remove one synced dataset from the filter
       filters.push(_removeFilterDataIdAtValueIndex(filter, valueIndex, datasets));
     } else if (valueIndex < 0) {
-      // leave the filter as is
       filters.push(filter);
     }
   }
 
   newState = {...newState, filters};
 
-  return removeDatasetFromInteractionConfig(newState, {dataId: datasetKey});
+  return removeChartsAndFilters(
+    removeDatasetFromInteractionConfig(newState, {dataId: datasetKey}),
+    chart => {
+      if (chart.dataId === datasetKey) {
+        return true;
+      }
+      if (isLayerChartConfig(chart)) {
+        return layersToRemove.includes(chart.layerId);
+      }
+      return false;
+    }
+  );
 }
 
 function removeDatasetFromInteractionConfig(state, {dataId}) {
@@ -2700,6 +3410,16 @@ export const resetMapConfigUpdater = (state: VisState): VisState => ({
   initialState: state.initialState
 });
 
+export const setCameraBookmarksUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraBookmarks>
+): VisState => ({...state, cameraBookmarks: normalizeCameraBookmarks(action.payload)});
+
+export const setCameraTourUpdater = (
+  state: VisState,
+  action: ReturnType<typeof VisStateActions.setCameraTour>
+): VisState => ({...state, cameraTour: normalizeCameraTour(action.payload)});
+
 /**
  * Propagate `visState` reducer with a new configuration. Current config will be override.
  * @memberof visStateUpdaters
@@ -2721,7 +3441,9 @@ export const receiveMapConfigUpdater = (
   const {keepExistingConfig} = options;
 
   // reset config if keepExistingConfig is falsy
-  let mergedState = !keepExistingConfig ? resetMapConfigUpdater(state) : state;
+  let mergedState = !keepExistingConfig
+    ? {...resetMapConfigUpdater(state), cameraBookmarks: [], cameraTour: null}
+    : state;
   for (const merger of state.mergers) {
     if (isValidMerger(merger) && hasPropsToMerge(config.visState, merger.prop)) {
       mergedState = merger.merge(
@@ -2794,7 +3516,17 @@ export function interactionConfigChangeUpdater(
   };
 
   if (config.id === 'geocoder' && !config.enabled) {
-    return removeDatasetUpdater(newState, {dataId: 'geocoder_dataset'});
+    return removeDatasetUpdater(newState, {dataId: GEOCODER_DATASET_NAME});
+  }
+
+  if (config.id === 'geocoder') {
+    const geocoderLayer = newState.layers.find(layer => layer.id === GEOCODER_LAYER_ID);
+    if (geocoderLayer) {
+      return layerConfigChangeUpdater(newState, {
+        oldLayer: geocoderLayer,
+        newConfig: {color: config.config.color ?? GEOCODER_ICON_COLOR}
+      });
+    }
   }
 
   return newState;
@@ -2917,7 +3649,13 @@ function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
   );
 }
 
-async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promise<ProtoDataset> {
+async function hydrateExternallyHostedProtoDataset({
+  arg: dataset,
+  onProgress
+}: {
+  arg: ProtoDataset;
+  onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
+}): Promise<ProtoDataset> {
   if (!needsExternallyHostedHydrate(dataset)) {
     return dataset;
   }
@@ -2925,7 +3663,8 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
     source: dataset.metadata?.source as string,
     format: getRemoteSourceFormat(dataset.metadata),
     size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
-    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0
+    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0,
+    onProgress
   });
   if (!loaded.data) {
     throw new Error(`No data loaded from ${dataset.metadata?.source}`);
@@ -2944,7 +3683,7 @@ async function hydrateExternallyHostedProtoDataset(dataset: ProtoDataset): Promi
   };
 }
 
-const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromise(
+const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   hydrateExternallyHostedProtoDataset,
   'HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK'
 );
@@ -2953,17 +3692,57 @@ const FAIL_CREATE_DATASET_TASK = Task.fromPromise(async (message: string) => {
   throw new Error(message);
 }, 'FAIL_CREATE_DATASET_TASK');
 
+function getDatasetProgressId(dataset: ProtoDataset, index = 0): string {
+  if (typeof dataset.info?.id === 'string' && dataset.info.id) {
+    return dataset.info.id;
+  }
+  if (typeof dataset.metadata?.source === 'string' && dataset.metadata.source) {
+    return dataset.metadata.source;
+  }
+  return `dataset-${index}`;
+}
+
 function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
   if (!needsExternallyHostedHydrate(dataset)) {
     return createNewDataEntry(dataset, datasets);
   }
-  return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK(dataset).chain(hydrated => {
+  const progressId = getDatasetProgressId(dataset);
+  return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
+    arg: dataset,
+    onProgress: progress =>
+      setLoadingProgress(
+        progressId,
+        Math.round((progress?.percent ?? 0) * 100),
+        progress?.phase === 'processing' ? 'processing' : undefined
+      )
+  }).chain(hydrated => {
     const task = createNewDataEntry(hydrated, datasets);
     return (
       task ||
       FAIL_CREATE_DATASET_TASK('Failed to create a new dataset due to data verification errors')
     );
   });
+}
+
+function clearLoadingProgress(state: VisState, ids?: string[]): VisState {
+  const current = state.loadingProgress || {};
+  const processing = state.loadingProcessing || {};
+  if (!Object.keys(current).length && !Object.keys(processing).length) {
+    return state;
+  }
+  if ((state.loadingIndicatorValue || 0) <= 0) {
+    return {...state, loadingProgress: {}, loadingProcessing: {}};
+  }
+  if (!ids?.length) {
+    return state;
+  }
+  const next = {...current};
+  const nextProcessing = {...processing};
+  ids.forEach(id => {
+    delete next[id];
+    delete nextProcessing[id];
+  });
+  return {...state, loadingProgress: next, loadingProcessing: nextProcessing};
 }
 
 function patchDatasetMetadata(dataset: Datasets[string], patch: Record<string, unknown>) {
@@ -3213,10 +3992,48 @@ export function refreshDatasetSuccessUpdater(
     return rebindLayersAndFiltersAfterSchemaChange(state, dataId, datasets);
   }
 
-  return reapplyFiltersAndLayerData({...state, datasets}, dataId);
+  // Rebuild domains from all datasets in a synced filter, keeping its selection
+  // and settings. Revalidating a saved filter would reset its GPU mode.
+  const filters = state.filters.map(filter => {
+    if (!filter.dataId.includes(dataId) || filter.type === FILTER_TYPES.polygon) {
+      return filter;
+    }
+    const domainSteps = mergeFilterDomain(filter, datasets);
+    return domainSteps ? {...filter, domain: domainSteps.domain, step: domainSteps.step} : filter;
+  });
+  const nextState = reapplyFiltersAndLayerData({...state, datasets, filters}, dataId);
+  return {
+    ...nextState,
+    filters: nextState.filters.map(filter =>
+      filter.dataId.includes(dataId)
+        ? updateFilterPlot(
+            nextState.datasets,
+            filter.dataId.reduce(removeFilterPlot, filter),
+            undefined,
+            nextState.layers
+          )
+        : filter
+    )
+  };
 }
 
 function reapplyFiltersAndLayerData(state: VisState, dataId: string): VisState {
+  // Polygon filters read cached geometry. Refresh it before filtering so a
+  // moved feature is tested at its new position, including same-length updates.
+  const needsGeometry = state.layers.some(
+    layer =>
+      layer.config.dataId === dataId &&
+      polygonFilterDependsOnLayerMeta(layer) &&
+      state.filters.some(
+        filter =>
+          filter.type === FILTER_TYPES.polygon &&
+          filter.enabled !== false &&
+          filter.layerId?.includes(layer.id)
+      )
+  );
+  if (needsGeometry) {
+    state = updateAllLayerDomainData(state, [dataId], undefined);
+  }
   const filteredDatasets = applyFiltersToDatasets(
     [dataId],
     state.datasets,
@@ -3377,6 +4194,18 @@ export function refreshDatasetErrorUpdater(
  * @memberof visStateUpdaters
  * @public
  */
+type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
+  progressiveSteps: FileCacheItem[][];
+};
+
+type ProgressiveUpdateVisDataUpdaterAction = VisStateActions.UpdateVisDataUpdaterAction & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
+type ProgressiveCreateNewDatasetSuccessPayload = CreateNewDatasetSuccessPayload & {
+  onFinish?: ProgressiveLoadContinuation;
+};
+
 // eslint-disable-next-line complexity
 export const updateVisDataUpdater = (
   state: VisState,
@@ -3398,13 +4227,20 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
-  const createDatasetTasks: Task[] = [];
-  const notificationTasks: Task[] = [];
+  const readyTasks: TaskDescriptor[] = [];
+  const remoteTasks: TaskDescriptor[] = [];
+  const notificationTasks: TaskDescriptor[] = [];
+  const hydrateProgress: Record<string, number> = {};
 
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
-    const task = createNewDataEntryTask({info, ...rest}, state.datasets);
+    const proto = {info, ...rest};
+    const remote = needsExternallyHostedHydrate(proto);
+    if (remote) {
+      hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
+    }
+    const task = createNewDataEntryTask(proto, state.datasets);
     if (task) {
-      createDatasetTasks.push(task);
+      (remote ? remoteTasks : readyTasks).push(task);
     } else {
       notificationTasks.push(
         ACTION_TASK_ADD_NOTIFICATION().map(() =>
@@ -3419,18 +4255,46 @@ export const updateVisDataUpdater = (
     }
   });
 
-  const datasetsAllSettledTask = createDatasetTasks.length
-    ? Task.allSettled(createDatasetTasks).map(results =>
-        createNewDatasetSuccess({results, addToMapOptions: options})
-      )
-    : null;
+  // Parsed datasets are committed on their own. A remote download in the same
+  // add must not hold them until the URL finishes.
+  const progressIds = Object.keys(hydrateProgress);
+  const batches: Array<{tasks: TaskDescriptor[]; progressIds: string[]}> = [];
+  if (readyTasks.length) {
+    batches.push({tasks: readyTasks, progressIds: []});
+  }
+  if (remoteTasks.length) {
+    batches.push({tasks: remoteTasks, progressIds});
+  }
 
-  if (datasetsAllSettledTask) {
-    updatedState = setLoadingIndicatorUpdater(updatedState, payload_({change: 1, type: ''}));
+  if (batches.length) {
+    updatedState = setLoadingIndicatorUpdater(
+      updatedState,
+      payload_({change: batches.length, type: ''})
+    );
+    if (progressIds.length) {
+      updatedState = {
+        ...updatedState,
+        loadingProgress: {
+          ...updatedState.loadingProgress,
+          ...hydrateProgress
+        }
+      };
+    }
   }
 
   return withTask(updatedState, [
-    ...(datasetsAllSettledTask ? [datasetsAllSettledTask] : []),
+    ...batches.map((batch, batchIndex) =>
+      Task.allSettled(batch.tasks).map(results => {
+        const onFinish = (action as ProgressiveUpdateVisDataUpdaterAction).onFinish;
+        const payload: ProgressiveCreateNewDatasetSuccessPayload = {
+          results,
+          addToMapOptions: options,
+          progressIds: batch.progressIds,
+          ...(onFinish && batchIndex === batches.length - 1 ? {onFinish} : {})
+        };
+        return createNewDatasetSuccess(payload);
+      })
+    ),
     ...notificationTasks
   ]);
 };
@@ -3439,8 +4303,9 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions} = action.payload;
-  const notificationTasks: Task[] = [];
+  const {results, addToMapOptions, progressIds, onFinish} =
+    action.payload as ProgressiveCreateNewDatasetSuccessPayload;
+  const notificationTasks: TaskDescriptor[] = [];
 
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
@@ -3485,8 +4350,16 @@ export const createNewDatasetSuccessUpdater = (
   });
 
   return withTask(
-    setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
-    notificationTasks
+    clearLoadingProgress(
+      setLoadingIndicatorUpdater(updatedState, payload_({change: -1})),
+      progressIds
+    ),
+    [
+      ...notificationTasks,
+      // Match the original Arrow batching cadence: cross an event-loop turn so
+      // React/deck.gl can paint this snapshot before the next table update.
+      ...(onFinish ? [DELAY_TASK(10).map(() => onFinish)] : [])
+    ]
   );
 };
 
@@ -3581,9 +4454,13 @@ function postMergeUpdater(mergedState: VisState, postMergerPayload: PostMergerPa
     newLayers = mergedState.layers.filter(
       l => l.config.dataId && newDataIds.includes(l.config.dataId)
     );
+    // a layer already in a panel was merged from split maps, which decide the panels showing it
+    const layersNotInSplitMaps = newLayers.filter(
+      l => !mergedState.splitMaps.some(sm => l.id in sm.layers)
+    );
     mergedState = {
       ...mergedState,
-      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, newLayers)
+      splitMaps: addNewLayersToSplitMap(mergedState.splitMaps, layersNotInSplitMaps)
     };
   }
 
@@ -3731,13 +4608,20 @@ export function updateDatasetPropsUpdater(
     //  validate props: just color for now
     //  we only allow label, color and meta to be updated
     // const newTable = copyTableAndUpdate(existing, validatedProps);
-    return {
+    const nextState = {
       ...state,
       datasets: {
         ...datasets,
         [dataId]: copyTableAndUpdate(existing, validatedProps)
       }
     };
+    // A tileset access token is read while formatting layer data. Refresh
+    // only when that field changes so other metadata edits (e.g. refresh
+    // interval) do not rebuild every layer on the dataset.
+    if (props.metadata && 'tile3dAccessToken' in props.metadata) {
+      return updateAllLayerDomainData(nextState, dataId);
+    }
+    return nextState;
   }
 
   return state;
@@ -3782,16 +4666,14 @@ function reconcileLayerWithNewSchema(
     }
   });
 
-  // follow renamed text-label fields
+  // follow renamed or re-typed text-label fields
   if (layer.config.textLabel?.length) {
-    const textLabel = layer.config.textLabel.map(tl =>
-      tl.field && renames[tl.field.name]
-        ? {...tl, field: {...tl.field, name: renames[tl.field.name]}}
-        : tl
-    );
-    if (textLabel.some((tl, i) => tl !== layer.config.textLabel[i])) {
-      configPatch.textLabel = textLabel;
-    }
+    configPatch.textLabel = layer.config.textLabel.map(tl => {
+      const name = tl.field?.name;
+      const field =
+        name && newTable.fields.find(candidate => candidate.name === (renames[name] ?? name));
+      return field && (field.name !== name || field.type !== tl.field?.type) ? {...tl, field} : tl;
+    });
   }
 
   // shallow-copy the layer so we never mutate redux state; the copy keeps the
@@ -3810,6 +4692,57 @@ function reconcileLayerWithNewSchema(
   );
 
   return validated && validated.hasAllColumns() ? validated : null;
+}
+
+const FILTER_PLOT_Y_AXIS_TYPES = new Set<string>([ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real]);
+
+function clearTimelineFilterState(filter: Filter): Filter {
+  const {
+    syncedWithLayerTimeline: _syncedWithLayerTimeline,
+    syncTimelineMode: _syncTimelineMode,
+    timeBins: _timeBins,
+    lineChart: _lineChart,
+    timezone: _timezone,
+    invertTrendColor: _invertTrendColor,
+    showTimeDisplay: _showTimeDisplay,
+    ...rest
+  } = filter as TimeRangeFilter;
+
+  return {
+    ...rest,
+    fixedDomain: false,
+    isAnimating: false,
+    animationWindow: ANIMATION_WINDOW.free,
+    yAxis: null,
+    plotType: {type: PLOT_TYPES.histogram}
+  } as Filter;
+}
+
+function reconcileTimelinePlotAfterPrimaryRemoval(
+  filter: Filter,
+  datasets: VisState['datasets']
+): Filter {
+  if (filter.type !== FILTER_TYPES.timeRange) {
+    return filter;
+  }
+
+  const primaryDataset = datasets[filter.dataId[0]];
+  const yAxis = filter.yAxis?.name
+    ? primaryDataset?.fields.find(
+        field => field.name === filter.yAxis?.name && FILTER_PLOT_Y_AXIS_TYPES.has(field.type)
+      ) ?? null
+    : null;
+  const groupByFieldName = filter.plotType?.groupBy?.fieldName;
+  const hasGroupByField = groupByFieldName
+    ? primaryDataset?.fields.some(field => field.name === groupByFieldName)
+    : true;
+  const plotType = {
+    ...filter.plotType,
+    ...(filter.yAxis && !yAxis ? {type: PLOT_TYPES.histogram} : {}),
+    ...(!hasGroupByField ? {groupBy: null} : {})
+  };
+
+  return {...filter, yAxis, plotType, lineChart: undefined};
 }
 
 /**
@@ -3842,7 +4775,9 @@ export function updateDatasetUpdater(
 
   // 1. rebuild the table schema in place (same id/label/color/metadata)
   const newTable = copyTableAndUpdate(existing, {});
+  const [sortedColumn, sortMode] = Object.entries(existing.sortColumn || {})[0] || [];
   newTable.updateSchema(data);
+  newTable.dataRevision = existing.dataRevision + 1;
 
   // The data container is rebuilt unsorted and unfiltered; reset the table's
   // view state that indexes into the old container.
@@ -3850,12 +4785,20 @@ export function updateDatasetUpdater(
   newTable.filterRecordCPU = undefined;
   newTable.sortColumn = undefined;
   newTable.sortOrder = null;
+  const newFieldsByName = new Map(newTable.fields.map(field => [field.name, field]));
   newTable.pinnedColumns = (existing.pinnedColumns || [])
     .map(name => renames[name] ?? name)
-    .filter(name => newTable.getColumnFieldIdx(name) > -1);
+    .filter(name => newFieldsByName.has(name));
+  newTable.hiddenColumns = (existing.hiddenColumns || [])
+    .map(name => renames[name] ?? name)
+    .filter(name => newFieldsByName.has(name));
+  const nextSortedColumn = sortedColumn ? renames[sortedColumn] ?? sortedColumn : null;
+  if (nextSortedColumn && sortMode && newFieldsByName.has(nextSortedColumn)) {
+    sortDatasetByColumn(newTable, nextSortedColumn, sortMode);
+  }
 
-  const newFieldsByName = new Set(newTable.fields.map(f => f.name));
   const newDatasets = {...state.datasets, [dataId]: newTable};
+  const datasetIdsToRefilter = new Set<string>([dataId]);
 
   // 2. reconcile filters
   let newFilters = state.filters
@@ -3865,57 +4808,92 @@ export function updateDatasetUpdater(
         return filter;
       }
 
+      // Polygon filters target layers rather than dataset fields, so a column
+      // type change should not reconcile them against the field list.
+      if (filter.type === FILTER_TYPES.polygon) {
+        return filter;
+      }
+
       const oldName = filter.name[vi];
       const newName = renames[oldName] ?? oldName;
       const fieldIdx = newTable.getColumnFieldIdx(newName);
+      const nextFilterType = fieldIdx === -1 ? null : newTable.getColumnFilterProps(newName)?.type;
 
-      if (fieldIdx === -1) {
-        // column is gone: drop a single-dataset filter, splice it out of a synced one
-        return filter.dataId.length === 1
-          ? null
-          : _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+      if (
+        fieldIdx === -1 ||
+        (filter.dataId.length > 1 && nextFilterType && nextFilterType !== filter.type)
+      ) {
+        // Drop a missing field or detach an incompatible synced member.
+        if (filter.dataId.length === 1) {
+          return null;
+        }
+        filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+        const detachedFilter = _removeFilterDataIdAtValueIndex(filter, vi, newDatasets);
+        return vi === 0
+          ? reconcileTimelinePlotAfterPrimaryRemoval(detachedFilter, newDatasets)
+          : detachedFilter;
       }
 
       // column present (possibly renamed): re-resolve name/fieldIdx/domain
-      const {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
+      let {filter: updated} = applyFilterFieldName(filter, newDatasets, dataId, newName, vi, {
         mergeDomain: vi > 0
       });
       if (!updated) {
         return null;
       }
+      const leavingTimeFilter =
+        filter.type === FILTER_TYPES.timeRange && updated.type !== FILTER_TYPES.timeRange;
 
-      // brush filters carry a second y-axis field; follow a rename there too
-      const yAxis =
-        updated.yAxis?.name &&
-        (renames[updated.yAxis.name]
-          ? {...updated.yAxis, name: renames[updated.yAxis.name]}
-          : newFieldsByName.has(updated.yAxis.name)
-          ? updated.yAxis
-          : null);
+      const oldEndName = toArray((filter as TimeRangeFilter).endName)[vi];
+      if (updated.type === FILTER_TYPES.timeRange && oldEndName) {
+        const endName = renames[oldEndName] ?? oldEndName;
+        updated =
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, endName, vi).filter ??
+          applyTimeFilterEndFieldName(updated, newDatasets, dataId, null, vi).filter ??
+          updated;
+      }
 
-      return {
+      // Time plots only accept numeric y-axis fields. Re-resolve the complete
+      // field so type and fieldIdx also follow a schema change.
+      let yAxis = updated.yAxis;
+      if (vi === 0 && updated.yAxis?.name) {
+        const yAxisName = renames[updated.yAxis.name] ?? updated.yAxis.name;
+        const yAxisField = newFieldsByName.get(yAxisName);
+        yAxis = yAxisField && FILTER_PLOT_Y_AXIS_TYPES.has(yAxisField.type) ? yAxisField : null;
+      }
+
+      let nextFilter = {
         ...updated,
         yAxis,
+        ...(updated.yAxis && !yAxis
+          ? {plotType: {...updated.plotType, type: PLOT_TYPES.histogram}}
+          : {}),
         // clamp the user's previous selection into the new domain instead of
         // resetting it to the full range
         value: adjustValueToFilterDomain(filter.value, updated)
       };
+      if (leavingTimeFilter) {
+        nextFilter = clearTimelineFilterState(nextFilter);
+      } else if (vi === 0 && nextFilter.type === FILTER_TYPES.timeRange) {
+        const groupBy = nextFilter.plotType.groupBy;
+        if (groupBy && renames[groupBy.fieldName]) {
+          nextFilter.plotType = {
+            ...nextFilter.plotType,
+            groupBy: {...groupBy, fieldName: renames[groupBy.fieldName]}
+          };
+        }
+        // Timeline bins can remain identical while y-axis or group-by values
+        // change, so do not reuse the old series cache after a data rebuild.
+        nextFilter = {...nextFilter, lineChart: undefined};
+      }
+      // Keep existing plots; time plots are rebuilt after filtering below.
+      return filter.type === nextFilter.type || nextFilter.type === FILTER_TYPES.timeRange
+        ? nextFilter
+        : updateFilterPlot(newDatasets, nextFilter, dataId, state.layers);
     })
     .filter(Boolean) as Filter[];
 
-  // reassign GPU channels now that the filter list is settled
-  newFilters = newFilters.map(filter =>
-    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
-  );
-
-  // 3. rebuild the table's filter state (gpuFilter / filterRecord / filteredIndex)
-  newTable.filterTable(
-    newFilters,
-    state.layers.filter(l => l.config.dataId === dataId),
-    {}
-  );
-
-  // 4. reconcile layers
+  // 3. reconcile layers
   const layersToRemove: string[] = [];
   const newLayers = state.layers.map(layer => {
     if (layer.config.dataId !== dataId) {
@@ -3928,6 +4906,38 @@ export function updateDatasetUpdater(
     layersToRemove.push(layer.id);
     return layer; // placeholder, dropped via removeLayerUpdater below
   });
+
+  // Polygon filters reference layers, not fields. Preserve them for schema
+  // edits that keep their target layers, but remove invalid targets before
+  // rebuilding filter records when a required layer column was deleted.
+  const removedLayerIds = new Set(layersToRemove);
+  if (removedLayerIds.size) {
+    newFilters = newFilters.flatMap(filter => {
+      if (
+        filter.type !== FILTER_TYPES.polygon ||
+        !filter.layerId?.some(id => removedLayerIds.has(id))
+      ) {
+        return [filter];
+      }
+      filter.dataId.forEach(id => datasetIdsToRefilter.add(id));
+      const layerId = filter.layerId.filter(id => !removedLayerIds.has(id));
+      return layerId.length ? [{...filter, layerId}] : [];
+    });
+  }
+
+  // Reassign GPU channels now that the filter list is settled.
+  newFilters = newFilters.map(filter =>
+    filter.gpu ? assignGpuChannel(setFilterGpuMode(filter, newFilters), newFilters) : filter
+  );
+
+  // 4. rebuild the table's filter state using only layers that will survive
+  const survivingLayers = newLayers.filter(layer => !removedLayerIds.has(layer.id));
+  const filteredDatasets = applyFiltersToDatasets(
+    Array.from(datasetIdsToRefilter),
+    newDatasets,
+    newFilters,
+    survivingLayers
+  );
 
   // 5. reconcile tooltip fieldsToShow
   let interactionConfig = state.interactionConfig;
@@ -3952,19 +4962,111 @@ export function updateDatasetUpdater(
 
   let nextState = {
     ...state,
-    datasets: newDatasets,
+    datasets: filteredDatasets,
     filters: newFilters,
     layers: newLayers,
-    interactionConfig
+    interactionConfig,
+    charts: remapChartsForDataset(state.charts, dataId, renames, newFieldsByName)
   };
 
   // 6. drop layers that lost their required columns
   nextState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), nextState);
 
+  // Filtering and polygon-layer removal can change the rows behind timeline
+  // plots, so rebuild their cached bins/series from the reconciled state.
+  nextState = updateFilterPlotsAfterFiltering(nextState, Array.from(datasetIdsToRefilter));
+
   // 7. recompute layer domains + data for the updated dataset
   nextState = updateAllLayerDomainData(nextState, dataId);
 
   return nextState;
+}
+
+/**
+ * Rename a column's stored identity (`field.name`) and every layer, filter,
+ * tooltip, and chart reference that used the old name.
+ */
+export function renameTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.RenameTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName, newName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildRenameColumnData(dataset, fieldName, newName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
+}
+
+/**
+ * Convert a complete column before committing its new type. A failed value
+ * leaves the table and every reference unchanged.
+ */
+export function changeTableColumnTypeUpdater(
+  state: VisState,
+  action: VisStateActions.ChangeTableColumnTypeUpdaterAction
+): VisState {
+  const {dataId, fieldName, newType} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const result = buildChangeColumnTypeData(dataset, fieldName, newType);
+  if (!result) {
+    return state;
+  }
+  if (result.error) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            id: `column-type-${dataId}-${fieldName}`,
+            message: `Cannot change “${fieldName}” to ${newType}: ${formatColumnTypeConversionError(
+              result.error
+            )}. No values were changed.`
+          })
+        )
+      )
+    );
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: result.payload.data,
+    renames: result.payload.renames
+  });
+}
+
+/**
+ * Drop a column and the layers, filters, and other references that required it.
+ * The last remaining column is kept.
+ */
+export function deleteTableColumnUpdater(
+  state: VisState,
+  action: VisStateActions.DeleteTableColumnUpdaterAction
+): VisState {
+  const {dataId, fieldName} = action;
+  const dataset = state.datasets[dataId];
+  if (!dataset || !canMutateDatasetSchema(dataset)) {
+    return state;
+  }
+  const payload = buildDeleteColumnData(dataset, fieldName);
+  if (!payload) {
+    return state;
+  }
+  return updateDatasetUpdater(state, {
+    dataId,
+    data: payload.data,
+    renames: payload.renames
+  });
 }
 
 /**
@@ -4008,30 +5110,113 @@ export function closeSpecificMapAtIndex<S extends VisState>(
  * @memberof visStateUpdaters
  * @public
  */
+let nextFileLoadId = 1;
+
+function createFileLoadId(): number {
+  const loadId = nextFileLoadId;
+  nextFileLoadId += 1;
+  return loadId;
+}
+
+function finishFileLoad(
+  onFinish: (payload: any, options?: VisStateActions.LoadFilesOptions) => any,
+  fileCache: any[],
+  options: VisStateActions.LoadFilesOptions | undefined,
+  loadId: number
+) {
+  const action = options ? onFinish(fileCache, options) : onFinish(fileCache);
+  return {...action, loadId};
+}
+
 export const loadFilesUpdater = (
   state: VisState,
   action: VisStateActions.LoadFilesUpdaterAction
 ): VisState => {
-  const {files, onFinish = loadFilesSuccess} = action;
+  const {files, onFinish = loadFilesSuccess, options} = action;
   if (!files.length) {
     return state;
   }
 
-  const fileLoadingProgress = Array.from(files).reduce(
+  const companionFiles = Array.from(files);
+  const filesToLoad = getFilesToParse(companionFiles);
+
+  // Another drop while a deferred parse is running must join that load.
+  // Replacing `fileLoading` makes the in-flight file finish against the new
+  // cache and drop the files that were already being parsed.
+  if (state.fileLoading && state.fileLoading.options?.deferAddToMap && options?.deferAddToMap) {
+    return appendDeferredFileLoad(state, {filesToLoad, companionFiles});
+  }
+
+  if (!filesToLoad.length) {
+    return state;
+  }
+
+  // A deferred load is another batch for the same Add Data click. Keep files
+  // already staged, and keep their error cards, instead of starting over.
+  const previousErrors =
+    options?.deferAddToMap && state.fileLoadingProgress
+      ? Object.fromEntries(
+          Object.entries(state.fileLoadingProgress).filter(([, value]) => value?.error)
+        )
+      : {};
+
+  const fileLoadingProgress = filesToLoad.reduce(
     (accu, f, i) => merge_(initialFileLoadingProgress(f, i))(accu),
-    {}
+    previousErrors
   );
 
   const fileLoading = {
+    loadId: createFileLoadId(),
     fileCache: [],
-    filesToLoad: files,
-    onFinish
+    filesToLoad,
+    companionFiles,
+    onFinish,
+    ...(options ? {options} : {})
   };
 
-  const nextState = merge_({fileLoadingProgress, fileLoading})(state);
+  const nextState = merge_({
+    fileLoadingProgress,
+    fileLoading,
+    ...(options?.deferAddToMap ? {} : {stagedToAdd: null})
+  })(state);
 
   return loadNextFileUpdater(nextState);
 };
+
+/**
+ * Add a drop to the deferred load that is already parsing.
+ * The current file keeps its cache; the new files run after it.
+ */
+function appendDeferredFileLoad(
+  state: VisState,
+  {
+    filesToLoad,
+    companionFiles
+  }: {
+    filesToLoad: File[];
+    companionFiles: File[];
+  }
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || (!filesToLoad.length && !companionFiles.length)) {
+    return state;
+  }
+
+  const fileLoadingProgress = filesToLoad.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    state.fileLoadingProgress
+  );
+
+  return {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad: [...Array.from(loading.filesToLoad), ...filesToLoad],
+      companionFiles: [...(loading.companionFiles || []), ...companionFiles]
+    }
+  };
+}
 
 /**
  * Sucessfully loaded one file, move on to the next one
@@ -4046,7 +5231,7 @@ export function loadFileStepSuccessUpdater(
     return state;
   }
   const {fileName, fileCache} = action;
-  const {filesToLoad, onFinish} = state.fileLoading;
+  const loadId = state.fileLoading.loadId;
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {percent: 1, message: 'Done'}
@@ -4055,9 +5240,11 @@ export function loadFileStepSuccessUpdater(
   // save processed file to fileCache
   const stateWithCache = pick_('fileLoading')(merge_({fileCache}))(stateWithProgress);
 
+  // Decide after the pause, and only for this load. A drop during these
+  // 200ms joins the queue; cancel or a newer load makes this continuation stale.
   return withTask(
     stateWithCache,
-    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 }
 
@@ -4068,11 +5255,18 @@ export function loadFileStepSuccessUpdater(
  * @memberof visStateUpdaters
  * @public
  */
-export function loadNextFileUpdater(state: VisState): VisState {
-  if (!state.fileLoading) {
+export function loadNextFileUpdater(state: VisState, action?: {loadId?: number}): VisState {
+  const loadId = action?.loadId;
+  if (!state.fileLoading || (loadId != null && state.fileLoading.loadId !== loadId)) {
     return state;
   }
-  const {filesToLoad} = state.fileLoading;
+  const {filesToLoad, onFinish, fileCache, options, loadId: currentLoadId} = state.fileLoading;
+  if (!filesToLoad.length) {
+    return withTask(
+      state,
+      ACTION_TASK().map(() => finishFileLoad(onFinish, fileCache, options, currentLoadId))
+    );
+  }
   const [file, ...remainingFilesToLoad] = filesToLoad;
 
   // save filesToLoad to state
@@ -4084,34 +5278,160 @@ export function loadNextFileUpdater(state: VisState): VisState {
   });
 
   const {loaders, loadOptions} = state;
+  if (isZipFileName(file.name)) {
+    return withTask(
+      stateWithProgress,
+      EXPAND_ZIP_TASK({file, extensions: datasetExtensionsFromLoaders(loaders)}).bimap(
+        expansion =>
+          expandZipArchiveSuccess({
+            loadId: currentLoadId,
+            archiveName: file.name,
+            expansion
+          }),
+        err => loadFilesErr(file.name, err, currentLoadId)
+      )
+    );
+  }
   return withTask(
     stateWithProgress,
     makeLoadFileTask(
       file,
       nextState.fileLoading && nextState.fileLoading.fileCache,
       loaders,
-      loadOptions
+      loadOptions,
+      nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined,
+      options
     )
   );
 }
 
-export function makeLoadFileTask(file, fileCache, loaders: Loader[] = [], loadOptions = {}) {
-  return LOAD_FILE_TASK({file, fileCache, loaders, loadOptions}).bimap(
+function datasetExtensionsFromLoaders(
+  loaders: Array<{extensions?: readonly string[]}> = []
+): string[] {
+  const extensions: string[] = [];
+  const seen = new Set<string>();
+  for (const loader of loaders) {
+    for (const extension of loader?.extensions || []) {
+      const ext = String(extension).replace(/^\./, '').trim().toLowerCase();
+      if (!ext || ext === 'zip' || seen.has(ext)) {
+        continue;
+      }
+      seen.add(ext);
+      extensions.push(ext);
+    }
+  }
+  return extensions;
+}
+
+function companionFilesForArchive(expansion: ZipArchiveExpansion, existing?: File[]): File[] {
+  const extracted =
+    expansion.kind === 'shapefile'
+      ? [expansion.shapefile, ...expansion.companions]
+      : [...expansion.datasets, ...expansion.companions];
+  return [...extracted, ...(existing || [])];
+}
+
+function withoutFileLoadingProgressEntry(
+  progress: VisState['fileLoadingProgress'],
+  fileName: string
+): VisState['fileLoadingProgress'] {
+  if (!progress || !Object.prototype.hasOwnProperty.call(progress, fileName)) {
+    return progress;
+  }
+  const next = {...progress};
+  delete next[fileName];
+  return next;
+}
+
+/**
+ * Apply an unpacked zip. One shapefile keeps the archive name. Any other
+ * mix is queued as one dataset per supported member.
+ */
+export function expandZipArchiveSuccessUpdater(
+  state: VisState,
+  action: VisStateActions.ExpandZipArchiveSuccessAction
+): VisState {
+  const loading = state.fileLoading;
+  if (!loading || loading.loadId !== action.loadId) {
+    return state;
+  }
+  const {archiveName, expansion} = action;
+  const companionFiles = companionFilesForArchive(expansion, loading.companionFiles);
+
+  if (expansion.kind === 'shapefile') {
+    const nextState = pick_('fileLoading')(merge_({companionFiles}))(state);
+    const {loaders, loadOptions} = state;
+    return withTask(
+      nextState,
+      makeLoadFileTask(
+        expansion.shapefile,
+        nextState.fileLoading && nextState.fileLoading.fileCache,
+        loaders,
+        loadOptions,
+        companionFiles,
+        loading.options,
+        archiveName
+      )
+    );
+  }
+
+  const datasets = expansion.datasets;
+  const filesToLoad = [...datasets, ...Array.from(loading.filesToLoad)];
+  const fileLoadingProgress = datasets.reduce(
+    (accu, file, index) => merge_(initialFileLoadingProgress(file, index))(accu),
+    withoutFileLoadingProgressEntry(state.fileLoadingProgress, archiveName)
+  );
+  const nextState = {
+    ...state,
+    fileLoadingProgress,
+    fileLoading: {
+      ...loading,
+      filesToLoad,
+      companionFiles
+    }
+  };
+  return loadNextFileUpdater(nextState, {loadId: action.loadId});
+}
+
+export function makeLoadFileTask(
+  file,
+  fileCache,
+  loaders: Loader[] = [],
+  loadOptions = {},
+  companionFiles?: File[],
+  addDataOptions?: VisStateActions.LoadFilesOptions,
+  fileName?: string
+) {
+  const displayName = fileName || file.name;
+  return LOAD_FILE_TASK({
+    file,
+    fileCache,
+    loaders,
+    loadOptions,
+    companionFiles,
+    ...(fileName ? {fileName} : {})
+  }).bimap(
     // prettier ignore
     // success
     gen =>
       nextFileBatch({
         gen,
-        fileName: file.name,
+        fileName: displayName,
         onFinish: result =>
           processFileContent({
-            content: result,
+            content: {
+              ...result,
+              ...(addDataOptions?.deferAddToMap && getApplicationConfig().useArrowProgressiveLoading
+                ? {prepareProgressiveReplay: true}
+                : {})
+            },
             fileCache
-          })
+          }),
+        ...(addDataOptions ? {options: addDataOptions} : {})
       }),
 
     // error
-    err => loadFilesErr(file.name, err)
+    err => loadFilesErr(displayName, err)
   );
 }
 
@@ -4161,7 +5481,7 @@ export function parseProgress(prevProgress = {}, progress) {
 export const nextFileBatchUpdater = (
   state: VisState,
   {
-    payload: {gen, fileName, progress, accumulated, onFinish}
+    payload: {gen, fileName, progress, accumulated, onFinish, options}
   }: VisStateActions.NextFileBatchUpdaterAction
 ): VisState => {
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
@@ -4169,8 +5489,11 @@ export const nextFileBatchUpdater = (
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
   });
 
+  const deferAddToMap = Boolean(options?.deferAddToMap);
+
   return withTask(stateWithProgress, [
     ...(getApplicationConfig().useArrowProgressiveLoading &&
+    !deferAddToMap &&
     fileName.endsWith('arrow') &&
     accumulated?.data?.length > 0
       ? [
@@ -4180,7 +5503,7 @@ export const nextFileBatchUpdater = (
             content: {...accumulated, skipArrowCompact: true},
             fileCache: []
           }).bimap(
-            result => loadFilesSuccess(result),
+            result => (options ? loadFilesSuccess(result, options) : loadFilesSuccess(result)),
             err => loadFilesErr(fileName, err)
           )
         ]
@@ -4194,7 +5517,8 @@ export const nextFileBatchUpdater = (
               fileName,
               progress: value.progress,
               accumulated: value,
-              onFinish
+              onFinish,
+              ...(options ? {options} : {})
             });
       },
       err => loadFilesErr(fileName, err)
@@ -4207,26 +5531,38 @@ export const nextFileBatchUpdater = (
  * @memberof visStateUpdaters
  * @public
  */
+/**
+ * Drop files waiting on the Add Data button and abort an in-progress modal load.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export const clearStagedLoadedFilesUpdater = (state: VisState): VisState => ({
+  ...state,
+  fileLoading: false,
+  fileLoadingProgress: {},
+  stagedToAdd: null
+});
+
 export const loadFilesErrUpdater = (
   state: VisState,
-  {error, fileName}: VisStateActions.LoadFilesErrUpdaterAction
+  {error, fileName, loadId: errorLoadId}: VisStateActions.LoadFilesErrUpdaterAction
 ): VisState => {
-  // update ui with error message
-  Console.warn(error);
-  if (!state.fileLoading) {
+  if (!state.fileLoading || (errorLoadId != null && state.fileLoading.loadId !== errorLoadId)) {
     return state;
   }
-  const {filesToLoad, onFinish, fileCache} = state.fileLoading;
+  // update ui with error message
+  Console.warn(error);
+  const loadId = state.fileLoading.loadId;
 
   const nextState = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: {error}
   });
 
-  // kick off next file or finish
+  // Same pause as a successful file. Re-check this load's queue when it ends.
   return withTask(
     nextState,
-    DELAY_TASK(200).map(filesToLoad.length ? loadNextFile : () => onFinish(fileCache))
+    DELAY_TASK(200).map(() => loadNextFile(loadId))
   );
 };
 
@@ -4253,13 +5589,16 @@ export const applyCPUFilterUpdater = (
 export const setMapInfoUpdater = (
   state: VisState,
   action: VisStateActions.SetMapInfoUpdaterAction
-): VisState => ({
-  ...state,
-  mapInfo: {
-    ...state.mapInfo,
-    ...action.info
-  }
-});
+): VisState => {
+  const next = {...state.mapInfo, ...action.info};
+  return {
+    ...state,
+    mapInfo: {
+      title: optionalMapText(next.title),
+      description: optionalMapText(next.description)
+    }
+  };
+};
 /**
  * Helper function to update All layer domain and layer data of state
  */
@@ -4818,6 +6157,36 @@ export function pinTableColumnUpdater(
 }
 
 /**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function toggleTableColumnHiddenUpdater(
+  state: VisState,
+  {dataId, column}: VisStateActions.ToggleTableColumnHiddenUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], toggleHiddenTableColumn(dataset, column), state);
+}
+
+/**
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function showAllTableColumnsUpdater(
+  state: VisState,
+  {dataId}: VisStateActions.ShowAllTableColumnsUpdaterAction
+): VisState {
+  const dataset = state.datasets[dataId];
+  if (!dataset) {
+    return state;
+  }
+  return set(['datasets', dataId], showAllTableColumns(dataset), state);
+}
+
+/**
  * Copy column content as strings
  * @memberof visStateUpdaters
  * @public
@@ -4871,21 +6240,59 @@ export function setColumnDisplayFormatUpdater(
 
   const newDataset = copyTableAndUpdate(dataset, {fields: newFields as Field[]});
   let newState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
+  const textLabelLayerIndexes: number[] = [];
 
-  // update colorField displayFormat
+  // Layer configs retain their own field objects, so keep those copies in sync
+  // with the display format stored on the dataset field.
   newState = {
     ...newState,
-    layers: newState.layers.map(layer =>
-      layer.config?.colorField?.name && layer.config.colorField.name in formats
+    layers: newState.layers.map((layer, layerIndex) => {
+      // Column names are not unique across datasets. Only update layers that
+      // belong to the dataset targeted by this action.
+      if (layer.config.dataId !== dataId) {
+        return layer;
+      }
+
+      const colorField = layer.config?.colorField;
+      const updatedColorField =
+        colorField?.name && colorField.name in formats
+          ? {...colorField, displayFormat: formats[colorField.name]}
+          : null;
+      // Text labels also keep field copies instead of reading dataset.fields at render time.
+      const textLabel = layer.config.textLabel.map(label => {
+        const {field} = label;
+        return field?.name && field.name in formats
+          ? {...label, field: {...field, displayFormat: formats[field.name]}}
+          : label;
+      });
+      const updateTextLabel = textLabel.some(
+        (label, index) => label !== layer.config.textLabel[index]
+      );
+      if (updateTextLabel) {
+        textLabelLayerIndexes.push(layerIndex);
+      }
+
+      return updatedColorField || updateTextLabel
         ? layer.updateLayerConfig({
-            colorField: {
-              ...layer.config.colorField,
-              displayFormat: formats[layer.config.colorField.name]
-            }
+            ...(updatedColorField ? {colorField: updatedColorField} : {}),
+            ...(updateTextLabel ? {textLabel} : {})
           })
-        : layer
-    )
+        : layer;
+    })
   };
+
+  if (textLabelLayerIndexes.length) {
+    // Label accessors and character sets are cached in layerData. Rebuild them
+    // immediately so the new format appears without removing and re-adding the label field.
+    const layers = newState.layers.slice();
+    const layerData = newState.layerData.slice();
+    textLabelLayerIndexes.forEach(layerIndex => {
+      const result = calculateLayerData(layers[layerIndex], newState, layerData[layerIndex]);
+      layers[layerIndex] = result.layer;
+      layerData[layerIndex] = result.layerData;
+    });
+    newState = {...newState, layers, layerData};
+  }
 
   return newState;
 }
@@ -4950,8 +6357,14 @@ export function loadColumnStatsUpdater(
 
   const tasks = fieldsToLoad.map(f =>
     LOAD_COLUMN_STATS_TASK({dataset: newDataset, field: f}).bimap(
-      ({result, filterProps}) => loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps),
-      (error: Error) => loadColumnStatsError(newDataset.id, f.name, error)
+      ({result, filterProps}) =>
+        loadColumnStatsSuccess(newDataset.id, f.name, result, filterProps, {
+          fieldType: f.type
+        }),
+      (error: Error) =>
+        loadColumnStatsError(newDataset.id, f.name, error, {
+          fieldType: f.type
+        })
     )
   );
   const nextState = pick_('datasets')(merge_({[dataId]: newDataset}))(state);
@@ -4966,11 +6379,17 @@ export function loadColumnStatsUpdater(
  */
 export function loadColumnStatsSuccessUpdater(
   state: VisState,
-  {result, filterProps, dataId, fieldName}: VisStateActions.LoadColumnStatsSuccessUpdaterAction
+  {
+    result,
+    filterProps,
+    dataId,
+    fieldName,
+    fieldType
+  }: VisStateActions.LoadColumnStatsSuccessUpdaterAction
 ): VisState {
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
 
@@ -4992,14 +6411,14 @@ export function loadColumnStatsSuccessUpdater(
  */
 export function loadColumnStatsErrorUpdater(
   state: VisState,
-  {error, dataId, fieldName}: VisStateActions.LoadColumnStatsErrorUpdaterAction
+  {error, dataId, fieldName, fieldType}: VisStateActions.LoadColumnStatsErrorUpdaterAction
 ): VisState {
-  Console.error(error);
   const dataset = state.datasets[dataId];
   const field = (dataset?.fields || []).find(f => f.name === fieldName);
-  if (!dataset || !field) {
+  if (!dataset || !field || (fieldType !== undefined && field.type !== fieldType)) {
     return state;
   }
+  Console.error(error);
   const newFields = dataset.fields.map(f =>
     f.name === fieldName ? {...f, isLoadingStats: false} : f
   );
@@ -5076,6 +6495,150 @@ export function convertEditorFeaturesToLayerUpdater(
       info: {
         id: `drawn-geometry-${generateHashId(6)}`,
         label: `Drawn Geometry ${labelId}`
+      },
+      data
+    },
+    options: {
+      keepExistingConfig: true,
+      centerMap: false,
+      autoCreateLayers: true
+    }
+  });
+}
+
+/**
+ * Copy in-memory rows (or loaded vector-tile features) inside the selected
+ * Draw on Map polygon into a new dataset. Raster tiles download a PNG clip and a
+ * GeoJSON sidecar (bbox rectangle + stats) instead of creating a dataset.
+ */
+export function extractDataFromFeatureUpdater(
+  state: VisState,
+  {layerId}: VisStateActions.ExtractDataFromFeatureUpdaterAction
+): VisState {
+  const feature = state.editor.selectedFeature;
+  const layer = state.layers.find(l => l.id === layerId);
+  const dataId = layer?.config.dataId;
+  let dataset = dataId ? state.datasets[dataId] : null;
+
+  if (!layer || !dataset || !dataId) {
+    return state;
+  }
+
+  const isTiledExtract = isVectorTileExtractLayer(layer) || isRasterTileExtractLayer(layer);
+
+  // GPU range/time filters are not reflected in filteredIndex; evaluate them on CPU
+  // the same way export data does, then clip the result to the drawing.
+  if (!isTiledExtract) {
+    state = filterDatasetCPU(state, dataId);
+    dataset = state.datasets[dataId];
+    if (!dataset) {
+      return state;
+    }
+  }
+
+  let extracted;
+  try {
+    extracted = extractRowsInsideFeature({layer, dataset, feature});
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  if (!extracted) {
+    return state;
+  }
+
+  if (!extracted.rowCount) {
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: isRasterTileExtractLayer(layer)
+              ? 'No loaded raster pixels found inside the selected drawing'
+              : isVectorTileExtractLayer(layer)
+              ? 'No loaded vector tile features found inside the selected drawing'
+              : 'No rows found inside the selected drawing',
+            id: 'extract-data-from-feature-empty'
+          })
+        )
+      )
+    );
+  }
+
+  if (isRasterTileExtractLayer(layer)) {
+    const polygon = feature;
+    const download =
+      typeof (layer as any).downloadClip === 'function'
+        ? Promise.resolve((layer as any).downloadClip(polygon))
+        : Promise.resolve({png: false, json: false});
+    return withTask(
+      state,
+      UNWRAP_TASK(download).bimap(
+        (result: {png?: boolean} | null) =>
+          addNotification(
+            result?.png
+              ? successNotification({
+                  message: 'Downloaded raster clip image and stats file',
+                  id: 'extract-raster-clip'
+                })
+              : errorNotification({
+                  message: 'Failed to download raster clip image',
+                  id: 'extract-raster-clip'
+                })
+          ),
+        err =>
+          addNotification(
+            errorNotification({
+              message: `Failed to download raster clip: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+              id: 'extract-raster-clip'
+            })
+          )
+      )
+    );
+  }
+
+  let data;
+  try {
+    data =
+      extracted.kind === 'geojson'
+        ? processGeojson({
+            type: 'FeatureCollection',
+            features: extracted.features
+          })
+        : {fields: extracted.fields, rows: extracted.rows};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return withTask(
+      state,
+      ACTION_TASK_ADD_NOTIFICATION().map(() =>
+        addNotification(
+          errorNotification({
+            message: `Failed to extract data: ${message}`,
+            id: 'extract-data-from-feature'
+          })
+        )
+      )
+    );
+  }
+
+  return updateVisDataUpdater(state, {
+    datasets: {
+      info: {
+        id: `extract-${generateHashId(6)}`,
+        label: `Extracted ${dataset.label}`
       },
       data
     },
@@ -5376,11 +6939,56 @@ export const setLoadingIndicatorUpdater = (
     loadingIndicatorValue = 0;
   }
 
+  const nextValue = Math.max(loadingIndicatorValue + change, 0);
   return {
     ...state,
-    loadingIndicatorValue: Math.max(loadingIndicatorValue + change, 0)
+    loadingIndicatorValue: nextValue,
+    ...(nextValue === 0 &&
+    (Object.keys(state.loadingProgress || {}).length ||
+      Object.keys(state.loadingProcessing || {}).length)
+      ? {loadingProgress: {}, loadingProcessing: {}}
+      : {})
   };
 };
+
+/**
+ * Record download progress for an in-flight remote dataset hydrate.
+ * @memberof visStateUpdaters
+ * @public
+ */
+export function setLoadingProgressUpdater(
+  state: VisState,
+  {id, percent, phase}: VisStateActions.SetLoadingProgressUpdaterAction
+): VisState {
+  if ((state.loadingIndicatorValue || 0) <= 0) {
+    return state;
+  }
+  const nextPercent = Number.isFinite(percent)
+    ? Math.max(0, Math.min(100, Math.round(percent)))
+    : 0;
+  const processing = phase === 'processing';
+  if (
+    state.loadingProgress?.[id] === nextPercent &&
+    Boolean(state.loadingProcessing?.[id]) === processing
+  ) {
+    return state;
+  }
+  return {
+    ...state,
+    loadingProgress: {
+      ...state.loadingProgress,
+      [id]: nextPercent
+    },
+    ...(processing
+      ? {
+          loadingProcessing: {
+            ...state.loadingProcessing,
+            [id]: true
+          }
+        }
+      : {})
+  };
+}
 
 function adjustAnimationConfigWithFilter<S extends VisState>(state: S, filterIdx: number): S {
   const filter = state.filters[filterIdx];
@@ -5425,8 +7033,8 @@ function adjustTimeFilterInterval(state, filter) {
       }
     }, TIME_INTERVALS_ORDERED.length - 1);
     // @ts-ignore
-    const hexTileInterval = TIME_INTERVALS_ORDERED[intervalIndex];
-    interval = LayerToFilterTimeInterval[hexTileInterval];
+    const layerTimeInterval = TIME_INTERVALS_ORDERED[intervalIndex];
+    interval = LayerToFilterTimeInterval[layerTimeInterval];
   }
 
   if (!interval) {
@@ -5436,14 +7044,24 @@ function adjustTimeFilterInterval(state, filter) {
   // adjust filter
   const timeFormat = getDefaultTimeFormat(interval);
   const updatedPlotType = {...filter.plotType, interval, timeFormat};
-  const newFilter = updateTimeFilterPlotType(filter, updatedPlotType, state.datasets);
-  return adjustValueToAnimationWindow(state, newFilter);
+  const plotBaseIndexByDataId = getPlotBaseIndexByDataId(state.datasets, filter, state.layers);
+  const newFilter = updateTimeFilterPlotType(
+    filter,
+    updatedPlotType,
+    state.datasets,
+    undefined,
+    plotBaseIndexByDataId
+  );
+  return adjustValueToAnimationWindow(state, newFilter, plotBaseIndexByDataId);
 }
 
 // Find dataId from a saved visState property:
 // layers, filters, interactions, layerBlending, overlayBlending, splitMaps, animationConfig, editor
 // replace it with another dataId
 function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToReplace: string) {
+  if (value == null) {
+    return null;
+  }
   if (Array.isArray(value)) {
     // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const replaced = value
@@ -5483,12 +7101,10 @@ function defaultReplaceParentDatasetIds(value: any, dataId: string, dataIdToRepl
 // Find datasetIds derived a saved visState Property;
 function findChildDatasetIds(value) {
   if (Array.isArray(value)) {
-    // for layers, filters, call defaultReplaceParentDatasetIds on each item in array
     const childDataIds = value.map(findChildDatasetIds).filter(d => d);
     return childDataIds.length ? childDataIds : null;
   }
 
-  // child data id usually stores in the derived dataset info
   return value?.newDataset?.info.id || null;
 }
 
@@ -5536,37 +7152,81 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
 function replaceDatasetAndDeps<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
+  // The same id means the new table occupies the old slot, so the previous rows have to go.
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
   return compose_<T>([
     apply_(replaceDatasetDepsInState, {dataId, dataIdToUse}),
-    apply_(removeDatasetUpdater, {dataId})
+    if_(deleteOriginalDataset, apply_(removeDatasetUpdater, {dataId}))
   ])(state);
 }
 
 export function prepareStateForDatasetReplace<T extends VisState>(
   state: T,
   dataId: string,
-  dataIdToUse: string
+  dataIdToUse: string,
+  options: {deleteOriginalDataset?: boolean} = {}
 ): T {
   const serializedState = serializeVisState(state, state.schema);
-  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse);
+  const deleteOriginalDataset = options.deleteOriginalDataset !== false || dataId === dataIdToUse;
+  const nextState = replaceDatasetAndDeps(state, dataId, dataIdToUse, {deleteOriginalDataset});
   // make a copy of layerOrder, because layer id will be removed from it by calling removeLayerUpdater
   const preserveLayerOrder = [...state.layerOrder];
 
-  // preserve dataset order
-  nextState.preserveDatasetOrder = Object.keys(state.datasets).map(d =>
-    d === dataId ? dataIdToUse : d
-  );
+  // When the original table stays, the replacement takes its place and the original follows it.
+  nextState.preserveDatasetOrder = Object.keys(state.datasets).flatMap(d => {
+    if (d !== dataId) {
+      return [d];
+    }
+    return deleteOriginalDataset ? [dataIdToUse] : [dataIdToUse, d];
+  });
 
   // preserveLayerOrder
   if (nextState.layerToBeMerged?.length) {
-    // copy split maps to be merged, because it will be reset in remove layer
-    nextState.splitMapsToBeMerged = serializedState?.splitMaps ?? [];
+    // copy split maps to be merged, because it will be reset in remove layer.
+    // Keep the ones of a dataset replaced a moment earlier and not merged back yet:
+    // its layers are no longer in the current split maps.
+    nextState.splitMapsToBeMerged = combineSplitMapsByIndex(
+      state.splitMapsToBeMerged,
+      serializedState?.splitMaps ?? []
+    );
     nextState.layerOrder = [...preserveLayerOrder];
   }
 
   return nextState;
+}
+
+/**
+ * The order to preserve for the items that will be merged back.
+ *
+ * `ids` comes from the serialized state, so it lists everything but the items
+ * another dataset's replacement parked a moment ago: an app refreshing several
+ * datasets in a row prepares the second replacement before the first one's
+ * items have merged back. Writing `ids` as it is would drop those, and
+ * `insertItemBasedOnPreservedOrder` puts an item it cannot place at the front —
+ * so they would come back reversed. Where they belong is what the order written
+ * when they were parked already says, so that order is kept for them.
+ */
+export function preservedOrderWithParked(
+  previousOrder: string[] = [],
+  ids: string[],
+  parked: {id?: string}[]
+): string[] {
+  const parkedIds = parked
+    .map(item => item?.id)
+    .filter((id): id is string => Boolean(id) && !ids.includes(id as string));
+
+  if (!parkedIds.length) {
+    return ids;
+  }
+
+  const known = new Set([...ids, ...parkedIds]);
+  const ordered = (previousOrder || []).filter(id => known.has(id));
+  const rest = [...ids, ...parkedIds].filter(id => !ordered.includes(id));
+
+  return [...ordered, ...rest];
 }
 
 export function replaceDatasetDepsInState<T extends VisState>(
@@ -5587,12 +7247,23 @@ export function replaceDatasetDepsInState<T extends VisState>(
 
       let replacedState = accuState;
       savedProps.forEach((propValue, i) => {
+        // Camera snapshots never reference datasets, even when a dataset ID is "id".
+        if (propValue == null || props[i] === 'cameraBookmarks') {
+          return;
+        }
         const mergerOptions = {
           prop: props[i],
           toMergeProp: toMergeProps[i],
           getChildDatasetIds,
           saveUnmerged
         };
+
+        // What another dataset's replacement parked a moment ago and has not
+        // merged back yet, read before this one parks anything of its own.
+        const parkedElsewhere =
+          mergerOptions.toMergeProp !== undefined
+            ? toArray(replacedState[mergerOptions.toMergeProp] ?? [])
+            : [];
 
         const replacedItem =
           replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
@@ -5601,12 +7272,21 @@ export function replaceDatasetDepsInState<T extends VisState>(
           ? replacePropValueInState(replacedState, replacedItem, mergerOptions)
           : replacedState;
 
+        // Only when this dataset had items of its own to park. The toBeMerged list
+        // can still hold another dataset's items, replaced a moment earlier and
+        // not merged back yet; overwriting the order they were parked with would
+        // merge them back in reverse.
         if (
+          replacedItem &&
           mergerOptions.toMergeProp !== undefined &&
           replacedState[mergerOptions.toMergeProp]?.length &&
           preserveOrder
         ) {
-          replacedState[preserveOrder] = propValue.map(item => item.id);
+          replacedState[preserveOrder] = preservedOrderWithParked(
+            replacedState[preserveOrder],
+            propValue.map(item => item.id),
+            parkedElsewhere
+          );
         }
       });
 
@@ -5637,3 +7317,77 @@ function replacePropValueInState(
   }
   return nextState;
 }
+
+const DATASET_OP_ADD_OPTIONS = {
+  autoCreateLayers: true,
+  centerMap: false,
+  keepExistingConfig: true
+};
+
+function applyDerivedProtoDataset(state: VisState, proto: ProtoDataset): VisState {
+  const resultId = proto.info.id;
+  if (!resultId) {
+    return state;
+  }
+  if (state.datasets[resultId]) {
+    const nextState = updateDatasetUpdater(state, {dataId: resultId, data: proto.data});
+    const existing = nextState.datasets[resultId];
+    if (!existing) {
+      return nextState;
+    }
+    existing.metadata = {
+      ...existing.metadata,
+      ...proto.metadata
+    };
+    existing.label = proto.info.label || existing.label;
+    return nextState;
+  }
+  return updateVisDataUpdater(state, {
+    datasets: proto,
+    options: DATASET_OP_ADD_OPTIONS
+  });
+}
+
+export function runGroupByUpdater(
+  state: VisState,
+  action: VisStateActions.RunGroupByUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeGroupBy(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runSpatialJoinUpdater(
+  state: VisState,
+  action: VisStateActions.RunSpatialJoinUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSpatialJoin(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export function runSuitabilityUpdater(
+  state: VisState,
+  action: VisStateActions.RunSuitabilityUpdaterAction
+): VisState {
+  const {state: nextState, proto} = executeSuitability(state, action);
+  return proto ? applyDerivedProtoDataset(nextState, proto) : nextState;
+}
+
+export {
+  addGroupByUpdater,
+  addJoinUpdater,
+  addSpatialJoinUpdater,
+  addSuitabilityUpdater,
+  removeDatasetOpUpdater,
+  setGroupByConfigUpdater,
+  setJoinConfigUpdater,
+  setSpatialJoinConfigUpdater,
+  setSuitabilityConfigUpdater
+};

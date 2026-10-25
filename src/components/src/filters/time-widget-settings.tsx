@@ -3,6 +3,7 @@
 
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components';
+import moment from 'moment';
 import ItemSelector from '../common/item-selector/item-selector';
 import FieldSelectorFactory from '../common/field-selector';
 import Switch from '../common/switch';
@@ -10,6 +11,9 @@ import {ArrowRight} from '../common/icons';
 import {
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
+  ALL_FIELD_TYPES,
+  DEFAULT_COLOR_UI,
+  DEFAULT_TIME_FORMAT,
   durationMillisecond,
   durationSecond,
   durationMinute,
@@ -19,9 +23,29 @@ import {
   durationMonth,
   durationYear
 } from '@kepler.gl/constants';
-import {TimeRangeFilter, Field} from '@kepler.gl/types';
+import {
+  TimeRangeFilter,
+  RangeFilter,
+  Field,
+  ColorRange,
+  ColorUI,
+  NestedPartial
+} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
-import {getDefaultTimeFormat} from '@kepler.gl/utils';
+import {
+  getDefaultTimeFormat,
+  getNumericPlotInterval,
+  PLOT_NUM_GROUPS_ALL,
+  PLOT_NUM_GROUPS_OPTIONS,
+  DEFAULT_PLOT_NUM_GROUPS,
+  MAX_PLOT_NUM_GROUPS,
+  updateColorRangeByMatchingPalette,
+  updateCustomColorRangeByColorUI
+} from '@kepler.gl/utils';
+import {FormattedMessage} from '@kepler.gl/localization';
+
+import TimezoneSelector from './timezone-selector';
+import ColorSelectorFactory, {ColorSet} from '../side-panel/layer-panel/color-selector';
 
 const MAX_BINS = 2048;
 
@@ -35,6 +59,103 @@ const INTERVAL_UNITS = [
   {id: 'month', label: 'Month', duration: durationMonth},
   {id: 'year', label: 'Year', duration: durationYear}
 ];
+
+const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
+const SELECTOR_WIDTH = '120px';
+
+type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
+
+const FORMAT_TOKENS =
+  /(\[[^[]*\])|(\\.)|(LTS|LT|[Hh]mm(ss)?|[Hh]{1,2}|k{1,2}|mm?|ss?|S{1,9}|[Aa]|.)/g;
+
+function tokenizeTimeFormat(format: string): string[] {
+  const tokens = format.match(FORMAT_TOKENS) || [];
+  return tokens.flatMap(token => {
+    if (token !== 'LT' && token !== 'LTS') {
+      return token;
+    }
+    const localizedFormat = moment.localeData().longDateFormat(token);
+    return localizedFormat?.match(FORMAT_TOKENS) || token;
+  });
+}
+
+function getHourTokenCycle(token: string): HourCycle | null {
+  if (/^(H{1,2}|k{1,2}|Hmm(ss)?)$/.test(token)) {
+    return '24-hour';
+  }
+  if (/^(h{1,2}|hmm(ss)?)$/.test(token)) {
+    return '12-hour';
+  }
+  return null;
+}
+
+function getHourCycle(format: string): HourCycle | null {
+  for (const token of tokenizeTimeFormat(format)) {
+    const hourCycle = getHourTokenCycle(token);
+    if (hourCycle) {
+      return hourCycle;
+    }
+  }
+  return null;
+}
+
+function getLocaleHourCycle(): HourCycle {
+  return getHourCycle(moment.localeData().longDateFormat('LT')) || '24-hour';
+}
+
+function updateHourCycle(format: string, hourCycle: HourCycle): string {
+  const tokens = tokenizeTimeFormat(format);
+  const hourIndexes: number[] = [];
+  const meridiemIndexes: number[] = [];
+
+  tokens.forEach((token, index) => {
+    if (getHourTokenCycle(token)) {
+      hourIndexes.push(index);
+      if (/^[Hh]mm(ss)?$/.test(token)) {
+        tokens[index] = `${hourCycle === '24-hour' ? 'H' : 'h'}${token.slice(1)}`;
+      } else {
+        tokens[index] = hourCycle === '24-hour' ? 'HH' : token.length === 2 ? 'hh' : 'h';
+      }
+    } else if (/^[Aa]$/.test(token)) {
+      meridiemIndexes.push(index);
+    }
+  });
+
+  if (!hourIndexes.length) {
+    return `${format} ${hourCycle === '24-hour' ? 'HH:mm' : 'hh:mm A'}`;
+  }
+
+  if (hourCycle === '24-hour') {
+    meridiemIndexes.forEach(index => {
+      tokens[index] = '';
+      const adjacentIndex = index < hourIndexes[0] ? index + 1 : index - 1;
+      if (/^\s$/.test(tokens[adjacentIndex] || '')) {
+        tokens[adjacentIndex] = '';
+      }
+    });
+    return tokens.join('');
+  }
+
+  if (!meridiemIndexes.length) {
+    const localeTokens = tokenizeTimeFormat(moment.localeData().longDateFormat('LT'));
+    const localeHourIndex = localeTokens.findIndex(token => Boolean(getHourTokenCycle(token)));
+    const localeMeridiemIndex = localeTokens.findIndex(token => /^[Aa]$/.test(token));
+    const meridiemToken = localeMeridiemIndex >= 0 ? localeTokens[localeMeridiemIndex] : 'A';
+
+    if (localeMeridiemIndex >= 0 && localeMeridiemIndex < localeHourIndex) {
+      tokens.splice(hourIndexes[0], 0, meridiemToken, ' ');
+    } else {
+      const lastTimeTokenIndex = tokens.reduce(
+        (lastIndex, token, index) =>
+          index >= hourIndexes[0] && /^(m{1,2}|s{1,2}|S{1,9})$/.test(token) ? index : lastIndex,
+        hourIndexes[hourIndexes.length - 1]
+      );
+      tokens.splice(lastTimeTokenIndex + 1, 0, ' ', meridiemToken);
+    }
+  }
+
+  return tokens.join('');
+}
 
 const SettingsPanel = styled.div`
   display: flex;
@@ -62,6 +183,7 @@ const AxisHeader = styled.div`
 const AxisRow = styled.div`
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   gap: 25px;
 `;
 
@@ -89,7 +211,7 @@ const FieldValue = styled.span`
 `;
 
 const SelectorWrapper = styled.div`
-  width: 120px;
+  width: ${SELECTOR_WIDTH};
 
   .item-selector__dropdown {
     background: ${props => props.theme.secondaryInputBgd};
@@ -114,10 +236,11 @@ const FieldSelectorWrapper = styled.div`
 
 type StepInputProps = {
   $hasError?: boolean;
+  $fullWidth?: boolean;
 };
 
 const StepInput = styled.input<StepInputProps>`
-  width: 48px;
+  width: ${props => (props.$fullWidth ? SELECTOR_WIDTH : '48px')};
   height: 28px;
   padding: 2px 8px;
   font-size: 11px;
@@ -185,10 +308,84 @@ const DisabledBlock = styled.div<DisabledOverlayProps>`
   pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
 `;
 
+const ColorSelectorWrap = styled.div`
+  position: relative;
+  width: 180px;
+
+  .color-selector__dropdown {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 4px);
+    z-index: 10;
+    width: 292px;
+    max-height: 360px;
+  }
+`;
+
+const GROUP_BY_FIELD_TYPES = new Set<string>([
+  ALL_FIELD_TYPES.string,
+  ALL_FIELD_TYPES.boolean,
+  ALL_FIELD_TYPES.integer,
+  ALL_FIELD_TYPES.real,
+  ALL_FIELD_TYPES.date
+]);
+
+const COLOR_RANGE_UI_KEYS = ['reversed', 'steps', 'colorBlindSafe', 'type'] as const;
+
+function shouldUpdateGroupColorRange(next: NestedPartial<ColorUI>, current: ColorUI): boolean {
+  const config = next.colorRangeConfig;
+  if (!config) {
+    return false;
+  }
+  return COLOR_RANGE_UI_KEYS.some(
+    key =>
+      Object.prototype.hasOwnProperty.call(config, key) &&
+      config[key] !== current.colorRangeConfig?.[key]
+  );
+}
+
+function colorRangeFromColorUI(
+  currentRange: ColorRange,
+  colorRangeConfig: ColorUI['colorRangeConfig'],
+  next: NestedPartial<ColorUI>
+): ColorRange {
+  const isCustomReversed =
+    currentRange.category === 'Custom' &&
+    Boolean(next.colorRangeConfig) &&
+    Object.prototype.hasOwnProperty.call(next.colorRangeConfig, 'reversed');
+  if (isCustomReversed) {
+    // The helper reverses colors in place. Copy them so filter state stays unchanged.
+    return updateCustomColorRangeByColorUI(
+      {...currentRange, colors: [...(currentRange.colors || [])]},
+      colorRangeConfig
+    );
+  }
+  const updated = updateColorRangeByMatchingPalette(currentRange, colorRangeConfig);
+  if (updated !== currentRange) {
+    return updated;
+  }
+  const baseColors = currentRange.colors?.length ? currentRange.colors : [];
+  if (!baseColors.length) {
+    return currentRange;
+  }
+  const steps = Math.max(2, colorRangeConfig.steps || baseColors.length);
+  const colors = Array.from({length: steps}, (_, i) => baseColors[i % baseColors.length]);
+  if (colorRangeConfig.reversed) {
+    colors.reverse();
+  }
+  return {
+    ...currentRange,
+    colors,
+    reversed: Boolean(colorRangeConfig.reversed)
+  };
+}
+
 export type TimeWidgetSettingsProps = {
-  filter: TimeRangeFilter;
+  filter: TimeRangeFilter | RangeFilter;
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
+  onTimezoneChange: (timezone: string) => void;
+  onTimeFormatChange: (timeFormat: string) => void;
 };
 
 function parseInterval(intervalId: string | undefined): {step: number; unit: string} {
@@ -200,47 +397,60 @@ function parseInterval(intervalId: string | undefined): {step: number; unit: str
   return {step: 1, unit: 'day'};
 }
 
-TimeWidgetSettingsFactory.deps = [FieldSelectorFactory];
+TimeWidgetSettingsFactory.deps = [FieldSelectorFactory, ColorSelectorFactory];
 
-function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelectorFactory>) {
+function TimeWidgetSettingsFactory(
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>,
+  ColorSelector: ReturnType<typeof ColorSelectorFactory>
+) {
   const TimeWidgetSettings: React.FC<TimeWidgetSettingsProps> = ({
     filter,
     datasets,
-    setFilterPlot
+    setFilterPlot,
+    onTimezoneChange,
+    onTimeFormatChange
   }) => {
+    const isTimeFilter = filter.type === 'timeRange';
     const {plotType} = filter;
-    const currentInterval = plotType?.interval;
+    const currentInterval = isTimeFilter ? plotType?.interval : undefined;
     const currentAggregation = plotType?.aggregation || AGGREGATION_TYPES.average;
 
     const {step: parsedStep, unit: parsedUnit} = useMemo(
       () => parseInterval(currentInterval),
       [currentInterval]
     );
+    const intervalStep = useMemo(
+      () => (isTimeFilter ? parsedStep : getNumericPlotInterval(filter)),
+      [filter, isTimeFilter, parsedStep]
+    );
 
-    const [stepValue, setStepValue] = useState<string>(String(parsedStep));
+    const [stepValue, setStepValue] = useState<string>(String(intervalStep));
     const [unitValue, setUnitValue] = useState<string>(parsedUnit);
 
     useEffect(() => {
-      setStepValue(String(parsedStep));
-    }, [parsedStep]);
+      setStepValue(String(intervalStep));
+    }, [intervalStep]);
 
     useEffect(() => {
       setUnitValue(parsedUnit);
     }, [parsedUnit]);
 
     const effectiveStep = useMemo(() => {
-      const num = parseInt(stepValue, 10);
-      return num > 0 ? num : parsedStep;
-    }, [stepValue, parsedStep]);
+      const num = isTimeFilter ? parseInt(stepValue, 10) : Number(stepValue);
+      return num > 0 ? num : intervalStep;
+    }, [intervalStep, isTimeFilter, stepValue]);
 
     const isIntervalTooSmall = useCallback(
       (step: number, unit: string) => {
         const timeSpan = filter.domain ? filter.domain[1] - filter.domain[0] : 0;
+        if (!isTimeFilter) {
+          return timeSpan / step > MAX_BINS;
+        }
         const unitDuration = INTERVAL_UNITS.find(u => u.id === unit)?.duration || durationDay;
         const count = timeSpan / (step * unitDuration);
         return count > MAX_BINS;
       },
-      [filter.domain]
+      [filter.domain, isTimeFilter]
     );
 
     const intervalTooSmall = useMemo(() => {
@@ -257,43 +467,51 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       [datasets, filter.dataId]
     );
 
+    const groupByFields = useMemo(
+      () =>
+        ((datasets[filter.dataId[0]] || {}).fields || []).filter((f: Field) =>
+          GROUP_BY_FIELD_TYPES.has(f.type)
+        ),
+      [datasets, filter.dataId]
+    );
+
+    const groupBy = filter.plotType?.groupBy;
+
     const applyInterval = useCallback(
       (step: number, unit: string) => {
         if (isIntervalTooSmall(step, unit)) {
           return;
         }
-        const intervalId = `${step}-${unit}`;
-        const defaultTimeFormat = getDefaultTimeFormat(intervalId);
-        setFilterPlot({plotType: {interval: intervalId, defaultTimeFormat}});
+        if (isTimeFilter) {
+          const intervalId = `${step}-${unit}`;
+          const defaultTimeFormat = getDefaultTimeFormat(intervalId);
+          setFilterPlot({plotType: {interval: intervalId, defaultTimeFormat}});
+        } else {
+          setFilterPlot({plotType: {numericInterval: step}});
+        }
       },
-      [setFilterPlot, isIntervalTooSmall]
+      [setFilterPlot, isIntervalTooSmall, isTimeFilter]
     );
 
-    const onStepChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setStepValue(val);
-      },
-      []
-    );
+    const onStepChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setStepValue(val);
+    }, []);
 
     const onStepBlur = useCallback(() => {
-      const num = parseInt(stepValue, 10);
+      const num = isTimeFilter ? parseInt(stepValue, 10) : Number(stepValue);
       if (num > 0) {
         applyInterval(num, unitValue);
       } else {
-        setStepValue(String(parsedStep));
+        setStepValue(String(intervalStep));
       }
-    }, [stepValue, unitValue, parsedStep, applyInterval]);
+    }, [stepValue, unitValue, intervalStep, applyInterval, isTimeFilter]);
 
-    const onStepKeyDown = useCallback(
-      (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-          (e.target as HTMLInputElement).blur();
-        }
-      },
-      []
-    );
+    const onStepKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        (e.target as HTMLInputElement).blur();
+      }
+    }, []);
 
     const onUnitChange = useCallback(
       (value: any) => {
@@ -325,6 +543,61 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       [setFilterPlot, filter.plotType?.yAxisAutoRange]
     );
 
+    const _setGroupByField = useCallback(
+      field =>
+        setFilterPlot({
+          plotType: {groupBy: field ? {fieldName: field.name} : null}
+        }),
+      [setFilterPlot]
+    );
+
+    const _setNumGroups = useCallback(
+      value => {
+        if (value === null || value === undefined) {
+          return;
+        }
+        setFilterPlot({plotType: {groupBy: {numGroups: value}}});
+      },
+      [setFilterPlot]
+    );
+
+    const _toggleGroupOthers = useCallback(
+      () => setFilterPlot({plotType: {groupBy: {groupOthers: !groupBy?.groupOthers}}}),
+      [setFilterPlot, groupBy?.groupOthers]
+    );
+
+    const _setGroupColor = useCallback(
+      colorRange => setFilterPlot({plotType: {groupBy: {colorRange}}}),
+      [setFilterPlot]
+    );
+
+    const _setGroupColorUI = useCallback(
+      (next: NestedPartial<ColorUI>) => {
+        const current = (groupBy?.colorUI || DEFAULT_COLOR_UI) as ColorUI;
+        const merged = {
+          ...current,
+          ...next,
+          colorRangeConfig: {
+            ...current.colorRangeConfig,
+            ...(next.colorRangeConfig || {})
+          }
+        } as ColorUI;
+        const currentRange = groupBy?.colorRange;
+        const colorRange =
+          currentRange && shouldUpdateGroupColorRange(next, current)
+            ? colorRangeFromColorUI(currentRange, merged.colorRangeConfig, next)
+            : undefined;
+        setFilterPlot({
+          plotType: {
+            groupBy: colorRange ? {colorUI: merged, colorRange} : {colorUI: merged}
+          }
+        });
+      },
+      [setFilterPlot, groupBy?.colorUI, groupBy?.colorRange]
+    );
+
+    const displayNumGroups = useCallback((opt: number) => String(opt), []);
+
     const displayUnitOption = useCallback((opt: any) => {
       if (typeof opt === 'string') {
         return INTERVAL_UNITS.find(u => u.id === opt)?.label || opt;
@@ -342,48 +615,105 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
       [aggregationOptions]
     );
 
+    const timeFilter = isTimeFilter ? filter : null;
+    const effectiveTimeFormat =
+      (typeof timeFilter?.timeFormat === 'string'
+        ? timeFilter.timeFormat
+        : timeFilter?.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
+    const selectedTimeFormat = getHourCycle(effectiveTimeFormat) || getLocaleHourCycle();
+
+    const handleTimeFormatChange = useCallback(
+      (value: unknown) => {
+        if (value === '12-hour' || value === '24-hour') {
+          onTimeFormatChange(updateHourCycle(effectiveTimeFormat, value));
+        }
+      },
+      [effectiveTimeFormat, onTimeFormatChange]
+    );
+
     return (
       <SettingsPanel className="time-widget--settings">
         <AxisSection>
-          <AxisHeader><ArrowRight height="10px" />X Axis</AxisHeader>
+          <AxisHeader>
+            <ArrowRight height="10px" />X Axis
+          </AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>
-              <FieldValue>{filter.name}</FieldValue>
+              <FieldValue>
+                {Array.isArray(filter.name) ? filter.name[0] : filter.name}
+                {filter.endName?.[0] ? ` → ${filter.endName[0]}` : ''}
+              </FieldValue>
             </FieldBlock>
             <FieldBlock>
-              <FieldLabel>Interval</FieldLabel>
+              <FieldLabel>{isTimeFilter ? 'Interval' : 'Bin size'}</FieldLabel>
               <IntervalGroup>
                 <StepInput
                   type="number"
-                  min={1}
+                  data-testid={isTimeFilter ? undefined : 'numeric-bin-size'}
+                  min={isTimeFilter ? 1 : filter.step}
+                  step={isTimeFilter ? 1 : 'any'}
                   value={stepValue}
                   onChange={onStepChange}
                   onBlur={onStepBlur}
                   onKeyDown={onStepKeyDown}
                   $hasError={intervalTooSmall}
+                  $fullWidth={!isTimeFilter}
                 />
-            <UnitSelectorWrapper $hasError={intervalTooSmall}>
-              <ItemSelector
-                selectedItems={unitValue}
-                options={INTERVAL_UNITS}
-                multiSelect={false}
-                onChange={onUnitChange}
-                getOptionValue={o => o.id}
-                displayOption={displayUnitOption}
-                placement="top"
-                searchable={false}
-              />
-            </UnitSelectorWrapper>
+                {isTimeFilter ? (
+                  <UnitSelectorWrapper $hasError={intervalTooSmall}>
+                    <ItemSelector
+                      selectedItems={unitValue}
+                      options={INTERVAL_UNITS}
+                      multiSelect={false}
+                      onChange={onUnitChange}
+                      getOptionValue={o => o.id}
+                      displayOption={displayUnitOption}
+                      placement="top"
+                      searchable={false}
+                    />
+                  </UnitSelectorWrapper>
+                ) : null}
               </IntervalGroup>
             </FieldBlock>
+            {isTimeFilter ? (
+              <>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.timezone" />
+                  </FieldLabel>
+                  <TimezoneSelector timezone={filter.timezone} onChange={onTimezoneChange} />
+                </FieldBlock>
+                <FieldBlock>
+                  <FieldLabel id="time-widget-time-format-label">
+                    <FormattedMessage id="filterManager.timeFormat" />
+                  </FieldLabel>
+                  <SelectorWrapper
+                    data-testid="time-widget-time-format"
+                    aria-labelledby="time-widget-time-format-label"
+                  >
+                    <ItemSelector
+                      size="small"
+                      selectedItems={selectedTimeFormat}
+                      options={TIME_FORMAT_OPTIONS}
+                      multiSelect={false}
+                      searchable={false}
+                      placement="top"
+                      onChange={handleTimeFormatChange}
+                    />
+                  </SelectorWrapper>
+                </FieldBlock>
+              </>
+            ) : null}
           </AxisRow>
           {intervalTooSmall ? (
-            <ErrorMessage>Interval is too small</ErrorMessage>
+            <ErrorMessage>{isTimeFilter ? 'Interval' : 'Bin size'} is too small</ErrorMessage>
           ) : null}
         </AxisSection>
         <AxisSection>
-          <AxisHeader><ArrowRight height="10px" />Y Axis</AxisHeader>
+          <AxisHeader>
+            <ArrowRight height="10px" />Y Axis
+          </AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>
@@ -403,7 +733,7 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
             <DisabledBlock $disabled={!filter.yAxis}>
               <FieldBlock>
                 <FieldLabel>Aggregation</FieldLabel>
-                <SelectorWrapper>
+                <SelectorWrapper data-testid="time-widget-aggregation">
                   <ItemSelector
                     selectedItems={currentAggregation}
                     options={aggregationOptions}
@@ -432,6 +762,92 @@ function TimeWidgetSettingsFactory(FieldSelector: ReturnType<typeof FieldSelecto
             </DisabledBlock>
           </AxisRow>
         </AxisSection>
+        {filter.yAxis ? (
+          <AxisSection className="time-widget__group-by">
+            <AxisHeader>
+              <ArrowRight height="10px" />
+              <FormattedMessage id="filterManager.groupBy" />
+            </AxisHeader>
+            <AxisRow>
+              <FieldBlock>
+                <FieldLabel>
+                  <FormattedMessage id="filterManager.groupByField" />
+                </FieldLabel>
+                <FieldSelectorWrapper>
+                  <FieldSelector
+                    fields={groupByFields}
+                    placement="top"
+                    id="time-widget-group-by-field"
+                    value={groupBy?.fieldName || null}
+                    onSelect={_setGroupByField}
+                    erasable
+                    showToken={false}
+                  />
+                </FieldSelectorWrapper>
+              </FieldBlock>
+              <DisabledBlock $disabled={!groupBy?.fieldName}>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.maxGroups" />
+                  </FieldLabel>
+                  <SelectorWrapper>
+                    <ItemSelector
+                      selectedItems={
+                        groupBy?.numGroups === PLOT_NUM_GROUPS_ALL
+                          ? MAX_PLOT_NUM_GROUPS
+                          : groupBy?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS
+                      }
+                      options={PLOT_NUM_GROUPS_OPTIONS}
+                      multiSelect={false}
+                      searchable={false}
+                      onChange={_setNumGroups}
+                      displayOption={displayNumGroups}
+                      getOptionValue={opt => opt}
+                      placement="top"
+                      disabled={!groupBy?.fieldName}
+                    />
+                  </SelectorWrapper>
+                </FieldBlock>
+              </DisabledBlock>
+              <DisabledBlock $disabled={!groupBy?.fieldName}>
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.groupOthers" />
+                  </FieldLabel>
+                  <SwitchBlock>
+                    <Switch
+                      checked={Boolean(groupBy?.groupOthers)}
+                      id={`${filter.id}-group-others`}
+                      onChange={_toggleGroupOthers}
+                      disabled={!groupBy?.fieldName}
+                      secondary
+                    />
+                  </SwitchBlock>
+                </FieldBlock>
+              </DisabledBlock>
+              {groupBy?.fieldName && groupBy.colorRange ? (
+                <FieldBlock>
+                  <FieldLabel>
+                    <FormattedMessage id="filterManager.seriesColors" />
+                  </FieldLabel>
+                  <ColorSelectorWrap>
+                    <ColorSelector
+                      colorSets={[
+                        {
+                          selectedColor: groupBy.colorRange,
+                          isRange: true,
+                          setColor: colorRange => _setGroupColor(colorRange as ColorRange)
+                        } as ColorSet
+                      ]}
+                      colorUI={groupBy.colorUI || DEFAULT_COLOR_UI}
+                      setColorUI={_setGroupColorUI}
+                    />
+                  </ColorSelectorWrap>
+                </FieldBlock>
+              ) : null}
+            </AxisRow>
+          </AxisSection>
+        ) : null}
       </SettingsPanel>
     );
   };

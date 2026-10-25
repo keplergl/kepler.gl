@@ -46,15 +46,18 @@ const ExampleTabs = styled.div`
   gap: 6px;
   margin-top: 6px;
   margin-bottom: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 `;
 
 const ExampleTab = styled.div<{active: boolean}>`
-  padding: 3px 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 3px 6px;
   border-radius: 3px;
   cursor: pointer;
   font-size: 11px;
-  white-space: nowrap;
+  line-height: 1.3;
+  text-align: center;
   background: ${props => (props.active ? props.theme.AZURE400 : 'transparent')};
   color: ${props => (props.active ? props.theme.WHITE : props.theme.AZURE200)};
   border: 1px solid ${props => props.theme.AZURE400};
@@ -78,8 +81,13 @@ const VECTOR_TILE_EXAMPLES = [
   },
   {
     label: 'PMTiles',
-    name: 'FSQ Places',
-    url: 'https://fsq-os-places-us-east-1.s3.us-east-1.amazonaws.com/release/vector-tiles/latest/fsq-os-places.pmtiles'
+    name: 'New Zealand buildings',
+    url: 'https://r2-public.protomaps.com/protomaps-sample-datasets/nz-buildings-v3.pmtiles'
+  },
+  {
+    label: 'PMTiles',
+    name: 'US Zip Codes',
+    url: 'https://r2-public.protomaps.com/protomaps-sample-datasets/cb_2018_us_zcta510_500k.pmtiles'
   },
   {
     label: 'PMTiles',

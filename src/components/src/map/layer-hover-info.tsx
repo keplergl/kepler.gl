@@ -162,6 +162,7 @@ export type EntryInfoRowProps = {
   primaryData?: LayerHoverProp['primaryData'];
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
+  timezone?: LayerHoverProp['timezone'];
   item: TooltipField;
 };
 
@@ -172,7 +173,8 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   data,
   primaryData,
   compareType,
-  currentTime
+  currentTime,
+  timezone
 }) => {
   const fieldIdx = fields.findIndex(f => f.name === item.name);
   if (fieldIdx < 0) {
@@ -204,7 +206,7 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
     }
   }
 
-  const displayValue = getTooltipDisplayValue({item, field, value});
+  const displayValue = getTooltipDisplayValue({item, field, value, timezone});
 
   return (
     <Row
@@ -216,18 +218,65 @@ const EntryInfoRow: React.FC<EntryInfoRowProps> = ({
   );
 };
 
+const FeatureInfoRows: React.FC<{
+  rows: Array<{name: string; value: string}>;
+  primaryRows?: Array<{name: string; value: string}> | null;
+  compareType?: CompareType;
+  isComparing: boolean;
+}> = ({rows, primaryRows, compareType, isComparing}) => {
+  const primaryByName = useMemo(() => {
+    const map = new Map<string, string>();
+    (primaryRows || []).forEach(row => {
+      map.set(row.name, row.value);
+    });
+    return map;
+  }, [primaryRows]);
+
+  return (
+    <tbody>
+      {rows.map(({name, value}, i) => {
+        let deltaValue: string | null = null;
+        if (isComparing) {
+          const primaryValue = primaryByName.get(name);
+          const numericValue = Number(value);
+          const numericPrimary = primaryValue === undefined ? NaN : Number(primaryValue);
+          if (Number.isFinite(numericValue) && Number.isFinite(numericPrimary)) {
+            deltaValue = getTooltipDisplayDeltaValue({
+              field: {type: 'real', name} as Field,
+              value: numericValue,
+              primaryValue: numericPrimary,
+              compareType
+            });
+          }
+        }
+        return (
+          <Row
+            key={`${name}-${i}`}
+            name={name}
+            value={value}
+            deltaValue={deltaValue}
+            isComparing={isComparing}
+          />
+        );
+      })}
+    </tbody>
+  );
+};
+
 const CellInfo = ({
   fieldsToShow,
   data,
   layer,
   primaryData,
-  compareType
+  compareType,
+  timezone
 }: {
   data: AggregationLayerHoverData;
   fieldsToShow: TooltipField[];
   layer: Layer;
   primaryData?: AggregationLayerHoverData | null;
   compareType?: CompareType;
+  timezone?: LayerHoverProp['timezone'];
 }) => {
   const {colorField, sizeField} = layer.config as any;
   const isComparing = Boolean(primaryData);
@@ -235,18 +284,28 @@ const CellInfo = ({
   const colorValue = useMemo(() => {
     if (colorField && layer.visualChannels.color) {
       const item = fieldsToShow.find(field => field.name === colorField.name);
-      return getTooltipDisplayValue({item, field: colorField, value: data.colorValue});
+      return getTooltipDisplayValue({
+        item,
+        field: colorField,
+        value: data.colorValue,
+        timezone
+      });
     }
     return null;
-  }, [fieldsToShow, colorField, layer, data.colorValue]);
+  }, [fieldsToShow, colorField, layer, data.colorValue, timezone]);
 
   const elevationValue = useMemo(() => {
     if (sizeField && layer.visualChannels.size) {
       const item = fieldsToShow.find(field => field.name === sizeField.name);
-      return getTooltipDisplayValue({item, field: sizeField, value: data.elevationValue});
+      return getTooltipDisplayValue({
+        item,
+        field: sizeField,
+        value: data.elevationValue,
+        timezone
+      });
     }
     return null;
-  }, [fieldsToShow, sizeField, layer, data.elevationValue]);
+  }, [fieldsToShow, sizeField, layer, data.elevationValue, timezone]);
 
   const colorDelta = useMemo(() => {
     if (!primaryData || !colorField || !('colorValue' in primaryData)) return null;
@@ -270,36 +329,38 @@ const CellInfo = ({
 
   const aggregatedData = useMemo(() => {
     if (data.aggregatedData && fieldsToShow) {
-      return fieldsToShow.reduce(
-        (acc, field) => {
-          const dataForField = data.aggregatedData?.[field.name];
-          if (dataForField?.measure && field.name !== colorField?.name) {
-            const primaryDataForField = primaryData?.aggregatedData?.[field.name];
-            const deltaValue = primaryDataForField
-              ? getTooltipDisplayDeltaValue({
-                  field: {type: 'real', name: field.name} as Field,
-                  value: dataForField.value != null ? Number(dataForField.value) : null,
-                  primaryValue:
-                    primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
-                  compareType
-                })
-              : null;
-            acc.push({
-              name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
-              value: dataForField.value,
-              deltaValue
-            });
-          }
-          return acc;
-        },
-        [] as {name: string; value?: string; deltaValue: string | null}[]
-      );
+      return fieldsToShow.reduce((acc, field) => {
+        const dataForField = data.aggregatedData?.[field.name];
+        if (dataForField?.measure && field.name !== colorField?.name) {
+          const primaryDataForField = primaryData?.aggregatedData?.[field.name];
+          const deltaValue = primaryDataForField
+            ? getTooltipDisplayDeltaValue({
+                field: {type: 'real', name: field.name} as Field,
+                value: dataForField.value != null ? Number(dataForField.value) : null,
+                primaryValue:
+                  primaryDataForField.value != null ? Number(primaryDataForField.value) : null,
+                compareType
+              })
+            : null;
+          acc.push({
+            name: `${capitalizeFirstLetter(dataForField.measure)} of ${field.name}`,
+            value: dataForField.value,
+            deltaValue
+          });
+        }
+        return acc;
+      }, [] as {name: string; value?: string; deltaValue: string | null}[]);
     }
     return [];
   }, [data.aggregatedData, fieldsToShow, colorField?.name, primaryData, compareType]);
 
   const colorMeasure = layer.getVisualChannelDescription('color').measure;
   const sizeMeasure = layer.getVisualChannelDescription('size').measure;
+  const isSizeMeasureDuplicate =
+    colorField?.name === sizeField?.name &&
+    colorMeasure === sizeMeasure &&
+    colorValue === elevationValue &&
+    colorDelta === elevationDelta;
   return (
     <tbody>
       <Row
@@ -317,7 +378,7 @@ const CellInfo = ({
           isComparing={isComparing}
         />
       ) : null}
-      {sizeField && layer.visualChannels.size && sizeMeasure ? (
+      {sizeField && layer.visualChannels.size && sizeMeasure && !isSizeMeasureDuplicate ? (
         <Row
           name={sizeMeasure}
           key="size"
@@ -350,6 +411,7 @@ const LayerHoverInfoFactory = () => {
     const hasFieldsToShow =
       (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
       (data.wmsFeatureData && data.wmsFeatureData.length > 0) ||
+      (data.rasterFeatureData && data.rasterFeatureData.length > 0) ||
       (props.fieldsToShow && props.fieldsToShow.length > 0);
 
     return (
@@ -360,16 +422,24 @@ const LayerHoverInfoFactory = () => {
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
         <StyledTable className={props.primaryData ? 'comparing' : undefined}>
-          {data.wmsFeatureData ? (
-            <tbody>
-              {data.wmsFeatureData.map(({name, value}, i) => (
-                <Row key={i} name={name} value={value} />
-              ))}
-            </tbody>
+          {data.wmsFeatureData || data.rasterFeatureData ? (
+            <FeatureInfoRows
+              rows={data.wmsFeatureData || data.rasterFeatureData}
+              primaryRows={
+                props.primaryData?.wmsFeatureData || props.primaryData?.rasterFeatureData
+              }
+              compareType={props.compareType}
+              isComparing={Boolean(props.primaryData)}
+            />
           ) : data.fieldValues ? (
             <tbody>
               {data.fieldValues.map(({labelMessage, value}, i) => (
-                <Row key={i} name={intl.formatMessage({id: labelMessage})} value={value} />
+                <Row
+                  key={i}
+                  name={intl.formatMessage({id: labelMessage})}
+                  value={value}
+                  isComparing={Boolean(props.primaryData)}
+                />
               ))}
             </tbody>
           ) : props.layer.isAggregated ? (

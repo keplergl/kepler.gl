@@ -51,32 +51,43 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 
 ## Env
 
-For **developing this repository**, use Node **20.19.3** (see `.nvmrc`): run `nvm install` and `nvm use`. Newer Node versions can make `yarn install` / `yarn bootstrap` try to compile the `gl` dev dependency from source; if that fails, see [Troubleshooting: gl package install](contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
+For **developing this repository**, use Node **24.21.0** (see `.nvmrc`): run `nvm install` and `nvm use`. `yarn install` / `yarn bootstrap` compile the `gl` dev dependency from source on this pin, because `gl@9.0.0-rc.10` does not publish a Node 24 prebuild. If that compile fails, see [Troubleshooting: gl package install](contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
 
-When **using kepler.gl as a dependency** in your own app, use Node 20.19.3 or a supported LTS; older Node versions are not supported or tested.
+When **using kepler.gl as a dependency** in your own app, use Node 20 or a newer supported LTS. Older Node versions are not supported or tested.
 
 ## Install kepler.gl modules
 
 Kepler.gl consists of different modules. Each module can be added to the project like this:
 
 ```sh
-npm install --save @kepler.gl/components
+npm install --save @kepler.gl/components maplibre-gl
 // or
-yarn add @kepler.gl/components
+yarn add @kepler.gl/components maplibre-gl
 ```
 
-kepler.gl is built upon [mapbox][mapbox]. You will need a [Mapbox Access Token][mapbox-token] to use it.
+The default basemaps use MapLibre. Load its stylesheet once in your application entry point:
+
+```js
+import 'maplibre-gl/dist/maplibre-gl.css';
+```
+
+If your application only uses Mapbox-hosted styles, install `mapbox-gl` and load
+`mapbox-gl/dist/mapbox-gl.css` instead. Applications that allow both MapLibre and
+Mapbox styles should load both stylesheets.
 
 If you don't use a module bundler, it's also fine. Kepler.gl npm package includes precompiled production UMD builds in the [umd folder](https://unpkg.com/kepler.gl/umd).
-You can add the script tag to your html file as it follows (latest version of Kepler.gl):
+Load the MapLibre stylesheet and add the script tag to your HTML file as follows
+(latest version of Kepler.gl):
 
 ```html
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^4/dist/maplibre-gl.css" />
 <script src="https://unpkg.com/kepler.gl/umd/keplergl.min.js" />
 ```
 
 or if you would like, you can load a specific version:
 
 ```html
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@^3/dist/maplibre-gl.css" />
 <script src="https://unpkg.com/kepler.gl@3.0.0/umd/keplergl.min.js" />
 ```
 
@@ -84,16 +95,21 @@ or if you would like, you can load a specific version:
 
 Take a look at the [development guide][developers] to develop kepler.gl locally.
 
+The [SQLRooms demo](examples/demo-app-sqlrooms) tests a collapsible application
+shell and modular panel layout using [`@kepler.gl/sqlrooms`](src/sqlrooms). Run
+it with `yarn start:sqlrooms` (port 8083), alongside the original
+[main demo](examples/demo-app) with `yarn start` (port 8080). The website continues
+to serve the original app at `/demo`.
+
 ## Basic Usage
 
 Here are the basic steps to import kepler.gl into your app. You also take a look at the examples folder. Each example in the folder can be installed and run locally.
 
 ### 1. Mount reducer
 
-Kepler.gl uses Redux to manage its internal state, along with [react-palm][react-palm] middleware to handle side effects.
+Kepler.gl uses Redux to manage its internal state, along with a built-in task middleware to handle async side effects.
 
-You need to add `taskMiddleware` of `react-palm` to your store too. We are actively working on a solution where
-`react-palm` will not be required, however it is still a very lightweight side effects management tool that is easier to test than react-thunk.
+You need to add `taskMiddleware` to your store. The easiest way is via `enhanceReduxMiddleware` from `@kepler.gl/reducers`:
 
 ```js
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
@@ -524,7 +540,6 @@ Read more about [addDataToMap](./docs/api-reference/actions/actions.md#adddatato
 [mapbox-token]: https://www.mapbox.com/help/define-access-token/
 [developers]: contributing/DEVELOPERS.md
 [examples]: https://github.com/keplergl/kepler.gl/tree/master/examples
-[react-palm]: https://github.com/btford/react-palm
 [roadmap]: https://github.com/keplergl/kepler.gl/wiki/Kepler.gl-2019-Roadmap
 [stack]: https://stackoverflow.com/questions/tagged/kepler.gl
 [web]: http://www.kepler.gl/

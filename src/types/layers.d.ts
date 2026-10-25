@@ -13,6 +13,8 @@ export type LayerBaseConfig = {
   isConfigActive: boolean;
   highlightColor: RGBColor | RGBAColor;
   hidden: boolean;
+  /** Omit from the map legend when false. Missing or true keeps the layer in the legend. */
+  isIncludedInLegend?: boolean;
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];
@@ -24,6 +26,10 @@ export type LayerBaseConfig = {
   animation: {
     enabled: boolean;
     domain?: [number, number] | null;
+    /** Discrete instants the layer can render, for layers without continuous time. */
+    timeSteps?: number[] | null;
+    startTime?: number | null;
+    duration?: number | null;
   };
 
   // for aggregate layer, aggregatedBins is returned for custom color scale
@@ -33,6 +39,9 @@ export type LayerBaseConfig = {
   heightField?: VisualChannelField;
   heightDomain?: VisualChannelDomain;
   heightScale?: string;
+  elevationOffsetField?: VisualChannelField;
+  elevationOffsetDomain?: VisualChannelDomain;
+  elevationOffsetScale?: string;
 };
 
 /**
@@ -62,11 +71,23 @@ export type EnhancedFieldPair = {
   pair: FieldPair['pair'];
 };
 
+export type ColumnGroup = {
+  key: string;
+  label: string;
+  /** Column keys shown when this group is active (mutually exclusive with other groups). */
+  columns: string[];
+};
+
 export type SupportedColumnMode = {
   key: string;
   label: string;
   requiredColumns: string[];
   optionalColumns?: string[];
+  /**
+   * Optional mutually exclusive column sets rendered as tabs
+   * (e.g. Lat/Lng vs GeoJSON position source).
+   */
+  columnGroups?: ColumnGroup[];
   hasHelp?: boolean;
   verifyField?: (field: Field) => boolean;
 };
@@ -90,6 +111,11 @@ export type LayerHeightConfig = {
   heightDomain: VisualChannelDomain;
   heightScale: VisualChannelScale;
 };
+export type LayerElevationOffsetConfig = {
+  elevationOffsetField: VisualChannelField;
+  elevationOffsetDomain: VisualChannelDomain;
+  elevationOffsetScale: VisualChannelScale;
+};
 export type LayerStrokeColorConfig = {
   strokeColorField: VisualChannelField;
   strokeColorDomain: VisualChannelDomain;
@@ -107,6 +133,8 @@ export type LayerRadiusConfig = {
 };
 export type LayerWeightConfig = {
   weightField: VisualChannelField;
+  weightDomain?: VisualChannelDomain;
+  weightScale?: VisualChannelScale;
 };
 
 export type IndexBy = {
@@ -169,6 +197,8 @@ export type LayerTextLabel = {
   outlineWidth: number;
   outlineColor: RGBAColor;
   backgroundColor: RGBAColor | null;
+  /** Hide labels that overlap other labels of the same field (GPU collision filter). */
+  collisionEnabled?: boolean;
 };
 
 export type ColorRangeConfig = {
@@ -236,6 +266,8 @@ export type VisConfig = {
   ) => boolean;
 
   allowCustomValue?: boolean;
+  /** Checkbox label shown when allowCustomValue is true. Defaults to "custom input". */
+  customInputLabel?: string;
 };
 
 export type VisConfigNumber = VisConfig & {
@@ -290,6 +322,15 @@ export type VisConfigColorRange = VisConfig & {
   defaultValue: ColorRange;
 };
 
+/**
+ * A plain JSON value whose keys are not known until runtime. The layer renders
+ * its own UI for it; the value is saved and restored with the rest of visConfig.
+ */
+export type VisConfigObject = VisConfig & {
+  type: 'object';
+  defaultValue: Record<string, any>;
+};
+
 export type LayerVisConfigTypes =
   | VisConfigBoolean
   | VisConfigNumber
@@ -298,6 +339,7 @@ export type LayerVisConfigTypes =
   | VisConfigColorSelect
   | VisConfigInput
   | VisConfigSelect
+  | VisConfigObject
   | VisConfigObjectSelection;
 
 export type LayerVisConfigSettings = {
@@ -311,6 +353,7 @@ export type LayerVisConfigSettings = {
   radiusRange: VisConfigRange;
   clusterRadius: VisConfigNumber;
   clusterRadiusRange: VisConfigRange;
+  minClusterSize: VisConfigNumber;
   opacity: VisConfigNumber;
   coverage: VisConfigNumber;
   outline: VisConfigBoolean;
@@ -327,6 +370,8 @@ export type LayerVisConfigSettings = {
   angle: VisConfigNumber;
   worldUnitSize: VisConfigNumber;
   elevationScale: VisConfigNumber;
+  elevationOffset: VisConfigNumber;
+  elevationOffsetRange: VisConfigRange;
   enableElevationZoomFactor: VisConfigBoolean;
   elevationRange: VisConfigRange;
   heightRange: VisConfigRange;
@@ -341,6 +386,8 @@ export type LayerVisConfigSettings = {
   heatmapRadius: VisConfigNumber;
   darkBaseMapEnabled: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
+  invertHeight: VisConfigBoolean;
+  fixedElevation: VisConfigBoolean;
   allowHover: VisConfigBoolean;
   showNeighborOnHover: VisConfigBoolean;
   showHighlightColor: VisConfigBoolean;
@@ -438,18 +485,20 @@ export type LayerCallbacks = {
   ) => void;
   onRedrawNeeded?: (idx: number) => void;
   onFitBounds?: (idx: number, bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (idx: number, kind: 'token' | 'generic' | null) => void;
 };
 
 export type BindedLayerCallbacks = {
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;
-  onWMSFeatureInfo?: (
-    featureInfo: Array<{name: string; value: string}> | string | null,
-    coordinate?: [number, number]
-  ) => void;
+  onWMSFeatureInfo?: (props: {
+    featureInfo: Array<{name: string; value: string}> | string | null;
+    coordinate?: [number, number] | null;
+  }) => void;
   onRedrawNeeded?: () => void;
   onFitBounds?: (bounds: [number, number, number, number]) => void;
+  onTilesetLoadError?: (kind: 'token' | 'generic' | null) => void;
 };
 
 export type VisualChannelAggregation = 'colorAggregation' | 'sizeAggregation';
@@ -485,6 +534,8 @@ export type VisualChannel = {
 
   // TODO: define fixed
   fixed?: any;
+  // visConfig key that reverses this channel's scale output (e.g. invertHeight)
+  invert?: string;
 
   supportedFieldTypes?: Array<SupportedFieldTypes>;
 

@@ -3,7 +3,7 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Bounds, Merge, Viewport, ViewportPadding} from '@kepler.gl/types';
+import {Bounds, MapState, Merge, Viewport, ViewportPadding} from '@kepler.gl/types';
 import {MapSplitMode, MapViewMode, GlobeConfig} from '@kepler.gl/constants';
 
 export type TogglePerspectiveUpdaterAction = void;
@@ -80,6 +80,29 @@ export const updateMap: (
   })
 );
 
+export type ApplyMapStateUpdaterAction = {
+  payload: Partial<MapState>;
+  meta?: {mapIndex?: number};
+};
+/**
+ * Apply a partial map state, as used by the viewport JSON editor.
+ * Width and height of the current viewport are preserved.
+ * @memberof mapStateActions
+ * @param mapState - Partial map state from saved JSON
+ * @param mapIndex - Split-map pane to apply camera fields to when viewports are unsynced
+ * @public
+ */
+export const applyMapState: (
+  mapState: Partial<MapState>,
+  mapIndex?: number
+) => Merge<ApplyMapStateUpdaterAction, {type: typeof ActionTypes.APPLY_MAP_STATE}> = createAction(
+  ActionTypes.APPLY_MAP_STATE,
+  (mapState: Partial<MapState>, mapIndex?: number) => ({
+    payload: mapState,
+    meta: {mapIndex}
+  })
+);
+
 export type ToggleSplitMapUpdaterAction = {
   payload: number;
 };
@@ -133,10 +156,10 @@ export type SetMapViewModeUpdaterAction = {payload: {mapViewMode: MapViewMode}};
  */
 export const setMapViewMode: (
   mapViewMode: MapViewMode
-) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> = createAction(
-  ActionTypes.SET_MAP_VIEW_MODE,
-  (mapViewMode: MapViewMode) => ({payload: {mapViewMode}})
-);
+) => Merge<SetMapViewModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_VIEW_MODE}> =
+  createAction(ActionTypes.SET_MAP_VIEW_MODE, (mapViewMode: MapViewMode) => ({
+    payload: {mapViewMode}
+  }));
 
 export type GlobeConfigChangeUpdaterAction = {payload: Partial<GlobeConfig>};
 /**
@@ -166,7 +189,9 @@ export type SetMapSplitModeUpdaterAction = {
 export const setMapSplitMode: (payload: {
   mapSplitMode: MapSplitMode;
 }) => Merge<SetMapSplitModeUpdaterAction, {type: typeof ActionTypes.SET_MAP_SPLIT_MODE}> =
-  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({payload}));
+  createAction(ActionTypes.SET_MAP_SPLIT_MODE, (payload: {mapSplitMode: MapSplitMode}) => ({
+    payload
+  }));
 
 export type SetSwipeComparePercentageUpdaterAction = {
   payload: {
@@ -185,11 +210,9 @@ export const setSwipeComparePercentage: (payload: {
 }) => Merge<
   SetSwipeComparePercentageUpdaterAction,
   {type: typeof ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE}
-> =
-  createAction(
-    ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE,
-    (payload: {percentage: number}) => ({payload})
-  );
+> = createAction(ActionTypes.SET_SWIPE_COMPARE_PERCENTAGE, (payload: {percentage: number}) => ({
+  payload
+}));
 
 /**
  * This declaration is needed to group actions in docs

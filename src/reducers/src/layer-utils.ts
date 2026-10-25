@@ -37,6 +37,7 @@ import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
 import {isFunction, getMapLayersFromSplitMaps, DataRow, isPlainObject} from '@kepler.gl/utils';
 import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
+import {getLayerZoomOpacityFactor} from './interaction-utils';
 
 import {ThreeDBuildingLayer} from '@kepler.gl/deckgl-layers';
 
@@ -65,6 +66,7 @@ export type LayerHoverProp = {
   primaryData?: DataRow | AggregationLayerHoverData | any[] | null;
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
+  timezone?: string | null;
 };
 
 /**
@@ -272,12 +274,65 @@ export function getLayerHoverProp({
         fields,
         fieldsToShow,
         layer,
-        currentTime: animationConfig.currentTime
+        currentTime: animationConfig.currentTime,
+        timezone: interactionConfig.tooltip.config.timezone
       };
     }
   }
 
   return null;
+}
+
+const ZOOM_OPACITY_PROP_KEYS = ['opacity', 'lineOpacity', 'strokeOpacity'];
+
+/** Stroke and outline props replace the parent opacity, so they need the same factor. */
+function scaleZoomOpacitySubLayerProps(
+  subLayerProps: Record<string, any> | undefined,
+  factor: number
+): Record<string, any> | undefined {
+  if (!subLayerProps) {
+    return undefined;
+  }
+  let changed = false;
+  const next: Record<string, any> = {};
+  for (const id of Object.keys(subLayerProps)) {
+    const sublayer = subLayerProps[id];
+    if (!sublayer || typeof sublayer !== 'object') {
+      next[id] = sublayer;
+      continue;
+    }
+    const scaled = {...sublayer};
+    let sublayerChanged = false;
+    for (const key of ZOOM_OPACITY_PROP_KEYS) {
+      if (typeof sublayer[key] === 'number') {
+        scaled[key] = sublayer[key] * factor;
+        sublayerChanged = true;
+      }
+    }
+    next[id] = sublayerChanged ? scaled : sublayer;
+    if (sublayerChanged) {
+      changed = true;
+    }
+  }
+  return changed ? next : undefined;
+}
+
+function applyZoomOpacityToDeckLayer(deckLayer: any, factor: number): any {
+  if (Array.isArray(deckLayer)) {
+    return deckLayer.map(layer => applyZoomOpacityToDeckLayer(layer, factor));
+  }
+  if (!deckLayer || factor === 1 || typeof deckLayer.clone !== 'function') {
+    return deckLayer;
+  }
+  const baseOpacity = deckLayer.props?.opacity;
+  const opacity = (typeof baseOpacity === 'number' ? baseOpacity : 1) * factor;
+  const subLayerProps = scaleZoomOpacitySubLayerProps(deckLayer.props?._subLayerProps, factor);
+  return deckLayer.clone({
+    opacity,
+    // Fully faded layers are not pickable.
+    visible: deckLayer.props?.visible !== false && factor > 0,
+    ...(subLayerProps ? {_subLayerProps: subLayerProps} : {})
+  });
 }
 
 export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}) {
@@ -297,9 +352,11 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   const dataset = datasets[layer.config.dataId];
   const {gpuFilter} = dataset || {};
   const objectHovered = clicked || hoverInfo;
-  const visible = !mapLayers || (mapLayers && mapLayers[layer.id]);
+  // in split mode a layer missing from mapLayers is hidden, so coerce to a boolean
+  // instead of leaking undefined into deck.gl's visible prop
+  const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   // Layer is Layer class
-  return layer.renderLayer({
+  const rendered = layer.renderLayer({
     data,
     gpuFilter,
     idx: layerIndex,
@@ -312,6 +369,8 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     dataset,
     experimentalContext
   });
+  const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
+  return applyZoomOpacityToDeckLayer(rendered, factor);
 }
 
 export function isLayerRenderable(layer: Layer, layerData) {
@@ -384,6 +443,7 @@ export type ComputeDeckLayersProps = {
   mapboxApiAccessToken?: string;
   mapboxApiUrl?: string;
   primaryMap?: boolean;
+  isAnnotationMode?: boolean;
   layersForDeck?: {[key: string]: boolean};
   editorInfo?: {
     editor: Editor;
@@ -430,10 +490,21 @@ function computeDeckLayersFromLayerOrder(
     animationConfig: any;
     mapLayers: any;
     hasShadowEffect: boolean;
+    isAnnotationMode?: boolean;
   },
   layerCallbacks?: any
 ): any[] {
-  const {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect} = renderProps;
+  const {
+    datasets,
+    hoverInfo,
+    clicked,
+    mapState,
+    interactionConfig,
+    animationConfig,
+    mapLayers,
+    hasShadowEffect,
+    isAnnotationMode
+  } = renderProps;
   return layerOrder
     .slice()
     .reverse()
@@ -480,7 +551,8 @@ function computeDeckLayersFromLayerOrder(
           animationConfig,
           mapLayers,
           experimentalContext: {
-            hasShadowEffect
+            hasShadowEffect,
+            isAnnotationMode
           }
         },
         bindedLayerCallbacks
@@ -509,8 +581,15 @@ export function computeDeckLayers(
     splitMaps
   } = visState;
 
-  const {mapIndex, mapboxApiAccessToken, mapboxApiUrl, primaryMap, layersForDeck, editorInfo} =
-    options || {};
+  const {
+    mapIndex,
+    mapboxApiAccessToken,
+    mapboxApiUrl,
+    primaryMap,
+    layersForDeck,
+    editorInfo,
+    isAnnotationMode
+  } = options || {};
 
   let dataLayers: any[] = [];
 
@@ -538,7 +617,17 @@ export function computeDeckLayers(
               layers,
               layerData,
               currentLayersForDeck,
-              {datasets, hoverInfo, clicked, mapState, interactionConfig, animationConfig, mapLayers, hasShadowEffect},
+              {
+                datasets,
+                hoverInfo,
+                clicked,
+                mapState,
+                interactionConfig,
+                animationConfig,
+                mapLayers,
+                hasShadowEffect,
+                isAnnotationMode
+              },
               layerCallbacks
             )
           );
@@ -569,7 +658,8 @@ export function computeDeckLayers(
             animationConfig,
             mapLayers,
             experimentalContext: {
-              hasShadowEffect
+              hasShadowEffect,
+              isAnnotationMode
             }
           },
           bindedLayerCallbacks
@@ -594,6 +684,7 @@ export function computeDeckLayers(
         mapboxApiAccessToken,
         mapboxApiUrl,
         threeDBuildingColor: mapStyle.threeDBuildingColor,
+        pickable: Boolean(isAnnotationMode),
         updateTriggers: {
           getFillColor: mapStyle.threeDBuildingColor
         }
@@ -684,6 +775,60 @@ export function getLayerGroupFromLayerOrder(
     }
   }
   return group;
+}
+
+/**
+ * Groups that contain `entryId`, nearest parent first.
+ * `entryId` may be a layer id or a nested group id.
+ */
+export function getAncestorLayerGroups(layerOrder: LayerOrder, entryId: string): LayerOrderGroup[] {
+  const ancestors: LayerOrderGroup[] = [];
+
+  const visit = (entries: LayerOrder): boolean => {
+    for (const entry of entries) {
+      if (typeof entry === 'string') {
+        if (entry === entryId) {
+          return true;
+        }
+        continue;
+      }
+      if (!isPlainObject(entry)) {
+        continue;
+      }
+      const group = entry as LayerOrderGroup;
+      if (group.id === entryId) {
+        return true;
+      }
+      if (visit(group.layerOrder)) {
+        ancestors.push(group);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  visit(layerOrder);
+  return ancestors;
+}
+
+/**
+ * Whether a layer should be drawn in the map legend.
+ * A layer stays on the map when this is false. Missing flags count as included.
+ * An ancestor group with `isIncludedInLegend: false` hides the layer as well.
+ */
+export function isLayerShownInLegend(
+  layer: {id: string; config: {isIncludedInLegend?: boolean}},
+  layerOrder?: LayerOrder
+): boolean {
+  if (layer.config.isIncludedInLegend === false) {
+    return false;
+  }
+  if (!layerOrder?.length) {
+    return true;
+  }
+  return getAncestorLayerGroups(layerOrder, layer.id).every(
+    group => group.isIncludedInLegend !== false
+  );
 }
 
 /**

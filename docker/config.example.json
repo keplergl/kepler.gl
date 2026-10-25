@@ -1,0 +1,9 @@
+{
+  "credentials": {
+    "MapboxAccessToken": ""
+  },
+  "pageTitle": "kepler.gl demo",
+  "applicationConfig": {
+    "enableThemeToggle": true
+  }
+}

@@ -11,6 +11,229 @@ import {h3IsValid} from './h3-utils';
 
 const H3_ANALYZER_TYPE = 'H3';
 
+// a plain decimal number, optionally in scientific notation: 12, -0.5, .5, 1.5e+10, 2E-4
+const DECIMAL_NUMBER_REGEX = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+const INTEGER_REGEX = /^[+-]?\d+$/;
+
+/**
+ * type-analyzer reports NUMBER for values that pass `!isNaN` but match neither its INT nor
+ * its FLOAT regex, which in practice is mostly scientific notation such as `1.5e+10`. Such a
+ * value is safe to read as a real number unless it is a non decimal literal (`0x1A`, also hex
+ * hashes and addresses) or an integer beyond the safe range (64-bit ids), both of which
+ * parseFloat would misread or round.
+ */
+function isRealNumberSample(value: unknown): boolean {
+  if (!notNullorUndefined(value) || value === '') {
+    return true;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value);
+  }
+  if (typeof value !== 'string' || !DECIMAL_NUMBER_REGEX.test(value)) {
+    return false;
+  }
+  const asNumber = Number(value);
+  return (
+    Number.isFinite(asNumber) && (!INTEGER_REGEX.test(value) || Number.isSafeInteger(asNumber))
+  );
+}
+
+/**
+ * type-analyzer uses `isNaN(value)`, which throws on BigInt
+ * ("Cannot convert a BigInt value to a number"). Arrow/Parquet Int64
+ * columns yield BigInt in JS, so stringify those samples first.
+ */
+function toTypeAnalyzerValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return value;
+}
+
+function isGeoJsonGeometry(value: unknown, depth = 0): boolean {
+  if (!value || typeof value !== 'object' || depth > 32) return false;
+  const geometry = value as Record<string, unknown>;
+  if (geometry.type === 'Feature') return isGeoJsonGeometry(geometry.geometry, depth + 1);
+  if (geometry.type === 'GeometryCollection') {
+    return (
+      Array.isArray(geometry.geometries) &&
+      geometry.geometries.every(child => isGeoJsonGeometry(child, depth + 1))
+    );
+  }
+  const position = (coordinates: unknown): coordinates is number[] =>
+    Array.isArray(coordinates) &&
+    coordinates.length >= 2 &&
+    coordinates.every(coordinate => typeof coordinate === 'number' && Number.isFinite(coordinate));
+  const positions = (coordinates: unknown, minimum: number): coordinates is number[][] =>
+    Array.isArray(coordinates) &&
+    (coordinates.length === 0 || coordinates.length >= minimum) &&
+    coordinates.every(position);
+  const ring = (coordinates: unknown): boolean =>
+    positions(coordinates, 4) &&
+    (coordinates.length === 0 ||
+      (coordinates[0].length === coordinates[coordinates.length - 1].length &&
+        coordinates[0].every(
+          (coordinate, index) => coordinate === coordinates[coordinates.length - 1][index]
+        )));
+  const polygon = (coordinates: unknown): boolean =>
+    Array.isArray(coordinates) && coordinates.every(ring);
+  switch (geometry.type) {
+    case 'Point':
+      return position(geometry.coordinates);
+    case 'MultiPoint':
+      return positions(geometry.coordinates, 1);
+    case 'LineString':
+      return positions(geometry.coordinates, 2);
+    case 'MultiLineString':
+      return (
+        Array.isArray(geometry.coordinates) &&
+        geometry.coordinates.every(line => positions(line, 2))
+      );
+    case 'Polygon':
+      return polygon(geometry.coordinates);
+    case 'MultiPolygon':
+      return Array.isArray(geometry.coordinates) && geometry.coordinates.every(polygon);
+    default:
+      return false;
+  }
+}
+
+/** Validate the complete WKT collection before changing a text column's type. */
+function isWktGeometryCollection(value: string): boolean {
+  let cursor = 0;
+  const consume = (pattern: RegExp): string | undefined => {
+    const match = pattern.exec(value.slice(cursor));
+    if (!match) return undefined;
+    cursor += match[0].length;
+    // Captures exclude leading whitespace; punctuation only needs a truthy result.
+    return match[1] ?? match[0];
+  };
+  const number = DECIMAL_NUMBER_REGEX.source.slice(1, -1);
+  const positionPattern = new RegExp(`^\\s*(${number})\\s+(${number})((?:\\s+${number})*)`, 'i');
+  const group = (read: () => unknown): unknown[] | null => {
+    if (!consume(/^\s*\(/)) return null;
+    const items: unknown[] = [];
+    do {
+      const item = read();
+      if (item == null) return null;
+      items.push(item);
+    } while (consume(/^\s*,/));
+    return consume(/^\s*\)/) ? items : null;
+  };
+  const readGeometry = (depth: number, inheritedDimensions?: number): unknown => {
+    if (depth > 32) return null;
+    const type = consume(
+      /^\s*(GEOMETRYCOLLECTION|MULTIPOLYGON|MULTILINESTRING|MULTIPOINT|POLYGON|LINESTRING|POINT)\b/i
+    )?.toUpperCase();
+    if (!type) return null;
+    const dimension = consume(/^\s+(ZM|Z|M)\b/i)?.toUpperCase();
+    const dimensions = dimension ? (dimension === 'ZM' ? 4 : 3) : inheritedDimensions;
+    if (consume(/^\s*EMPTY\b/i)) return {};
+    if (type === 'GEOMETRYCOLLECTION') {
+      return group(() => readGeometry(depth + 1, dimensions));
+    }
+    const readCoordinates = (level: number): unknown => {
+      if (level > 3) return null;
+      if (/^\s*\(/.test(value.slice(cursor))) return group(() => readCoordinates(level + 1));
+      const match = positionPattern.exec(value.slice(cursor));
+      if (!match) return null;
+      cursor += match[0].length;
+      // Capture common XY positions directly, without splitting/trimming each tuple.
+      const coordinates = [+match[1], +match[2]];
+      for (const coordinate of match[3].match(/\S+/g) || []) coordinates.push(+coordinate);
+      return coordinates.every(Number.isFinite) &&
+        (!dimensions || coordinates.length === dimensions)
+        ? coordinates
+        : null;
+    };
+    let coordinates = group(() => readCoordinates(0));
+    if (!coordinates) return null;
+    if (type === 'POINT') {
+      if (coordinates.length !== 1) return null;
+      coordinates = coordinates[0] as unknown[];
+    } else if (
+      type === 'MULTIPOINT' &&
+      coordinates.every(point => Array.isArray(point) && point.length === 1)
+    ) {
+      coordinates = coordinates.map(point => (point as unknown[])[0]);
+    }
+    const types = {
+      POINT: 'Point',
+      MULTIPOINT: 'MultiPoint',
+      LINESTRING: 'LineString',
+      MULTILINESTRING: 'MultiLineString',
+      POLYGON: 'Polygon',
+      MULTIPOLYGON: 'MultiPolygon'
+    };
+    return isGeoJsonGeometry({type: types[type], coordinates}) ? {} : null;
+  };
+  return readGeometry(0) != null && value.slice(cursor).trim() === '';
+}
+
+function isAdditionalGeometry(value: unknown): boolean {
+  if (typeof value !== 'string') return isGeoJsonGeometry(value);
+  if (/^GEOMETRYCOLLECTION\b/i.test(value)) return isWktGeometryCollection(value);
+  if (!value.startsWith('{')) return false;
+  try {
+    return isGeoJsonGeometry(JSON.parse(value));
+  } catch {
+    return false;
+  }
+}
+
+/** Validate numeric-looking WKB before overriding NUMBER (e.g. account IDs). */
+function isCompleteWkb(value: unknown): boolean {
+  if (typeof value !== 'string' || !isHexWkb(value)) return false;
+  const length = value.length / 2;
+  const uint32 = (offset: number, littleEndian: boolean): number => {
+    if (offset + 4 > length) throw new Error('Truncated WKB');
+    let number = 0;
+    for (let i = 0; i < 4; i++) {
+      const byte = parseInt(value.slice((offset + i) * 2, (offset + i + 1) * 2), 16);
+      number += byte * 256 ** (littleEndian ? i : 3 - i);
+    }
+    return number;
+  };
+  const endOfGeometry = (offset: number, depth: number): number => {
+    if (depth > 32 || offset + 5 > length) throw new Error('Invalid WKB');
+    const order = value.slice(offset * 2, offset * 2 + 2);
+    if (order !== '00' && order !== '01') throw new Error('Invalid WKB byte order');
+    const littleEndian = order === '01';
+    const rawType = uint32(offset + 1, littleEndian);
+    const type = rawType & 0x1fffffff;
+    const dimensions =
+      2 +
+      Number(Boolean(rawType & 0x80000000) || [1, 3].includes(Math.floor(type / 1000))) +
+      Number(Boolean(rawType & 0x40000000) || [2, 3].includes(Math.floor(type / 1000)));
+    const baseType = type % 1000;
+    if (baseType < 1 || baseType > 7 || type >= 4000) throw new Error('Invalid WKB type');
+    let cursor = offset + 5 + (rawType & 0x20000000 ? 4 : 0);
+    if (baseType === 1) return cursor + dimensions * 8;
+    const count = uint32(cursor, littleEndian);
+    cursor += 4;
+    if (baseType === 2) return cursor + count * dimensions * 8;
+    if (count > (length - cursor) / (baseType === 3 ? 4 : 5)) throw new Error('Truncated WKB');
+    for (let i = 0; i < count; i++) {
+      if (baseType === 3) {
+        const points = uint32(cursor, littleEndian);
+        cursor += 4 + points * dimensions * 8;
+      } else {
+        cursor = endOfGeometry(cursor, depth + 1);
+      }
+      if (cursor > length) throw new Error('Truncated WKB');
+    }
+    return cursor;
+  };
+  try {
+    return endOfGeometry(0, 0) === length;
+  } catch {
+    return false;
+  }
+}
+
 export const ACCEPTED_ANALYZER_TYPES = [
   AnalyzerDATA_TYPES.DATE,
   AnalyzerDATA_TYPES.TIME,
@@ -68,7 +291,7 @@ export function getSampleForTypeAnalyze({
         j++;
       } else if (notNullorUndefined(rows[i][isRowObject ? field : fieldIdx])) {
         const value = rows[i][isRowObject ? field : fieldIdx];
-        sample[j][field] = typeof value === 'string' ? value.trim() : value;
+        sample[j][field] = toTypeAnalyzerValue(value);
         j++;
         i++;
       } else {
@@ -116,7 +339,7 @@ export function getSampleForTypeAnalyzeArrow(
         sampleIndex++;
       } else if (notNullorUndefined(getVector(fieldIdx)?.get(rowIndex))) {
         const value = getVector(fieldIdx)?.get(rowIndex);
-        sample[sampleIndex][field] = typeof value === 'string' ? value.trim() : value;
+        sample[sampleIndex][field] = toTypeAnalyzerValue(value);
         sampleIndex++;
         rowIndex++;
       } else {
@@ -230,8 +453,15 @@ export function analyzerTypeToFieldType(aType: string): string {
  */
 export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] {
   // add a check for epoch timestamp
+  const analyzerData = data.map(row => {
+    const next: Record<string, unknown> = {};
+    for (const key of fieldOrder) {
+      next[key] = toTypeAnalyzerValue(row[key]);
+    }
+    return next;
+  });
   const metadata = Analyzer.computeColMeta(
-    data,
+    analyzerData,
     [
       {regex: /.*geojson|all_points/g, dataType: 'GEOMETRY'},
       {regex: /.*census/g, dataType: 'STRING'}
@@ -254,9 +484,13 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
 
     // quick check if first valid string in column is H3
     if (type === AnalyzerDATA_TYPES.STRING) {
-      for (let i = 0, n = data.length; i < n; ++i) {
-        if (notNullorUndefined(data[i][name])) {
-          type = h3IsValid(data[i][name] || '') ? H3_ANALYZER_TYPE : type;
+      for (let i = 0, n = analyzerData.length; i < n; ++i) {
+        const sampleValue = analyzerData[i][name];
+        if (typeof sampleValue === 'string') {
+          type = h3IsValid(sampleValue) ? H3_ANALYZER_TYPE : type;
+          break;
+        }
+        if (notNullorUndefined(sampleValue)) {
           break;
         }
       }
@@ -265,6 +499,35 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // quick check if string is hex wkb
     if (type === AnalyzerDATA_TYPES.STRING) {
       type = data.some(d => isHexWkb(d[name])) ? AnalyzerDATA_TYPES.GEOMETRY : type;
+    }
+
+    // The analyzer treats numeric-only WKB as NUMBER and GeoJSON strings as
+    // OBJECT. Only override these fallback types when every present sample
+    // describes geometry; unrelated objects, text and identifiers stay intact.
+    if (
+      [AnalyzerDATA_TYPES.STRING, AnalyzerDATA_TYPES.NUMBER, AnalyzerDATA_TYPES.OBJECT].includes(
+        type
+      )
+    ) {
+      const samples = analyzerData.map(row => row[field]).filter(notNullorUndefined);
+      if (
+        samples.length &&
+        samples.every(
+          value =>
+            isAdditionalGeometry(value) ||
+            (type === AnalyzerDATA_TYPES.NUMBER && isCompleteWkb(value))
+        )
+      ) {
+        type = AnalyzerDATA_TYPES.GEOMETRY;
+      }
+    }
+
+    // read a column of numbers in scientific notation as real numbers instead of strings
+    if (
+      type === AnalyzerDATA_TYPES.NUMBER &&
+      analyzerData.every(row => isRealNumberSample(row[field]))
+    ) {
+      type = AnalyzerDATA_TYPES.FLOAT;
     }
 
     return {

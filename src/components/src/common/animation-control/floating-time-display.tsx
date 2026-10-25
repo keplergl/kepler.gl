@@ -107,6 +107,8 @@ interface FloatingTimeDisplayProps {
   defaultTimeFormat?: string | null;
   timeFormat?: string | null;
   timezone?: string | null;
+  formatValue?: (value: number) => string;
+  displayLabel?: string | null;
 }
 
 export default function FloatingTimeDisplayFactory() {
@@ -114,10 +116,15 @@ export default function FloatingTimeDisplayFactory() {
     currentTime,
     defaultTimeFormat,
     timeFormat,
-    timezone
+    timezone,
+    formatValue,
+    displayLabel
   }: FloatingTimeDisplayProps) => {
     const {displayDate, displayTime} = useMemo(() => {
       const groupTime = Array.isArray(currentTime) ? currentTime : [currentTime];
+      if (formatValue) {
+        return {displayDate: groupTime.map(formatValue), displayTime: []};
+      }
       const hasUserFormat = typeof timeFormat === 'string';
       const currentFormat = (hasUserFormat ? timeFormat : defaultTimeFormat) || DEFAULT_TIME_FORMAT;
       const dateFunc = datetimeFormatter(timezone);
@@ -146,11 +153,15 @@ export default function FloatingTimeDisplayFactory() {
         },
         {displayDate: [], displayTime: []} as {displayDate: string[]; displayTime: string[]}
       );
-    }, [currentTime, timeFormat, defaultTimeFormat, timezone]);
+    }, [currentTime, timeFormat, defaultTimeFormat, timezone, formatValue]);
 
     const twoGroups = displayDate.length === 2 && displayTime.length === 2;
     const bottomRow = displayTime.length ? displayTime : displayDate.length ? displayDate : null;
-    const topRow = displayDate.length && displayTime.length ? displayDate : null;
+    const topRow = displayLabel
+      ? [displayLabel]
+      : displayDate.length && displayTime.length
+      ? displayDate
+      : null;
 
     return (
       <StyledTimeDisplayWrapper>

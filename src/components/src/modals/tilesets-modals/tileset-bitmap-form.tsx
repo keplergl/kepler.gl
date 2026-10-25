@@ -286,7 +286,9 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
           />
           <DropZoneWrapper>
             {(imageDataUri || imageUrl) && (
-              <ClearButton onClick={onClearImage} title="Clear image">✕</ClearButton>
+              <ClearButton onClick={onClearImage} title="Clear image">
+                ✕
+              </ClearButton>
             )}
             <DropZone
               isDragging={isDragging}

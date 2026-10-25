@@ -16,6 +16,7 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {MapStyle} from '@kepler.gl/reducers';
 import {MapStyleActions, MapStateActions} from '@kepler.gl/actions';
 import {MapState} from '@kepler.gl/types';
+import {BACKGROUND_LAYER_GROUP, BACKGROUND_LAYER_GROUP_SLUG} from '@kepler.gl/constants';
 
 export type MapManagerProps = {
   mapStyle: MapStyle;
@@ -34,7 +35,12 @@ export type MapManagerProps = {
   panelMetadata: PanelMeta;
 } & WrappedComponentProps;
 
-MapManagerFactory.deps = [MapStyleSelectorFactory, LayerGroupSelectorFactory, PanelTitleFactory, GlobeConfigPanelFactory];
+MapManagerFactory.deps = [
+  MapStyleSelectorFactory,
+  LayerGroupSelectorFactory,
+  PanelTitleFactory,
+  GlobeConfigPanelFactory
+];
 
 function MapManagerFactory(
   MapStyleSelector: ReturnType<typeof MapStyleSelectorFactory>,
@@ -54,7 +60,12 @@ function MapManagerFactory(
     const [isSelecting, setIsSelecting] = useState(false);
     const {mapStyleChange, removeCustomMapStyle} = mapStyleActions;
     const currentStyle = mapStyle.mapStyles[mapStyle.styleType] || {};
-    const editableLayers = currentStyle.layerGroups || [];
+    const configuredLayerGroups = currentStyle.layerGroups || [];
+    const editableLayers = configuredLayerGroups.some(
+      ({slug}) => slug === BACKGROUND_LAYER_GROUP_SLUG
+    )
+      ? configuredLayerGroups
+      : [...configuredLayerGroups, BACKGROUND_LAYER_GROUP];
 
     const toggleSelecting = useCallback(() => {
       setIsSelecting(prev => !prev);

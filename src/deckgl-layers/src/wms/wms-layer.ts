@@ -224,11 +224,9 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     // looking from a high latitude — where every meridian and part of the far
     // hemisphere become visible. Compute a fuller visible bounding box instead so
     // the requested WMS image covers everything on screen.
-    const bounds = viewport.resolution
-      ? getGlobeVisibleBounds(viewport)
-      : viewport.getBounds();
+    const bounds = viewport.resolution ? getGlobeVisibleBounds(viewport) : viewport.getBounds();
     const {width, height} = viewport;
-    
+
     // Edge case: when bounds are perfectly symmetric around 0° (both longitude and latitude),
     // it can cause rendering artifacts with EPSG:4326 on the globe.
     // Add asymmetry to avoid this issue.
@@ -240,7 +238,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
         bounds[3] += 0.1;
       }
     }
-    
+
     let {srs} = this.props;
     if (srs === 'auto') {
       // BitmapLayer only supports LNGLAT or CARTESIAN (Web-Mercator)
@@ -297,26 +295,26 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     // However, always allow requests if the new view isn't fully covered by the last image.
     const gl = this.context.gl;
     const isExporting = gl?.getContextAttributes?.()?.preserveDrawingBuffer;
-    
+
     if (isExporting && this.state._lastRequestZoom >= 0) {
       const currentZoom = viewport.zoom;
       const lastZoom = this.state._lastRequestZoom;
       const isZoomingIn = currentZoom > lastZoom;
-      
+
       // Check if the new view is fully covered by the last loaded image
       const lastBbox = this.state.lastRequestParameters?.bbox;
       const currentBbox = requestParams.bbox;
       let fullyContained = false;
-      
+
       if (lastBbox && currentBbox) {
         // New bbox must be fully inside the previous bbox
-        fullyContained = 
-          currentBbox[0] >= lastBbox[0] && 
-          currentBbox[1] >= lastBbox[1] && 
-          currentBbox[2] <= lastBbox[2] && 
+        fullyContained =
+          currentBbox[0] >= lastBbox[0] &&
+          currentBbox[1] >= lastBbox[1] &&
+          currentBbox[2] <= lastBbox[2] &&
           currentBbox[3] <= lastBbox[3];
       }
-      
+
       // Only throttle if:
       // 1. Zooming in (not zooming out or panning at same zoom)
       // 2. Same zoom floor (haven't crossed an integer zoom level)
@@ -402,7 +400,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
     // Is the new bbox fully contained within the previously requested bbox?
     const contained = n[0] >= p[0] && n[1] >= p[1] && n[2] <= p[2] && n[3] <= p[3];
-    
+
     if (!contained) {
       return false;
     }

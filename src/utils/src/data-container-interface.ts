@@ -17,7 +17,7 @@ export interface DataContainerInterface {
    * Updates the data container with new data.
    * @param updateData updated data, e.g. for arrow data container, it's an array of arrow columns or an arrow.Table; for row data container, it's an array of rows.
    */
-  update?(updateData: any[] | arrow.Table): void;
+  update?(updateData: any[] | arrow.Table, options?: Record<string, unknown>): void;
 
   /**
    * Append rows in place. Implemented by row and Arrow containers. DuckDB omits this.

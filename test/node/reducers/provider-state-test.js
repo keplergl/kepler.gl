@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.gl/tasks';
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
 

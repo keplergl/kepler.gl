@@ -1,1 +1,3 @@
+/demo-next /demo-next/index.html 200
+/demo-next/* /demo-next/index.html 200
 /* / 200

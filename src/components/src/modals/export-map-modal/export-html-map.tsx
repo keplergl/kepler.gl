@@ -2,73 +2,44 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {StyledExportSection, StyledType, CheckMark} from '../../common/styled-components';
-import {StyledExportMapNote, StyledWarning, ExportMapLink} from './components';
+import {InputLight, StyledExportSection} from '../../common/styled-components';
 import {
-  EXPORT_HTML_MAP_MODE_OPTIONS,
-  EXPORT_HTML_MAP_DOC,
-  EXPORT_HTML_MAP_MODES_DOC
-} from '@kepler.gl/constants';
+  ExportMapHelp,
+  ExportMapLink,
+  ExportMapNotice,
+  ExportMapSectionTitle,
+  IncludeLayerApiKeysToggle
+} from './components';
+import {EXPORT_HTML_MAP_MODE_OPTIONS, EXPORT_HTML_MAP_DOC} from '@kepler.gl/constants';
 import styled from 'styled-components';
 import {injectIntl} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {IntlShape} from 'react-intl';
 
-import {setUserMapboxAccessToken, setExportHTMLMapMode, ActionHandler} from '@kepler.gl/actions';
+import {
+  setUserMapboxAccessToken,
+  setExportHTMLMapMode,
+  setExportIncludeLayerApiKeys,
+  ActionHandler
+} from '@kepler.gl/actions';
 
 const ExportMapStyledExportSection = styled(StyledExportSection)`
-  margin: 8px 0 12px;
-
-  &.export-map-modal__html-options {
-    margin-top: 20px;
-  }
-
-  .disclaimer {
-    font-size: ${props => props.theme.inputFontSize};
-    color: ${props => props.theme.inputColor};
-    line-height: 1.35;
-    margin-top: 8px;
+  .selection {
+    align-items: flex-start;
+    flex-direction: column;
   }
 `;
 
-interface StyledInputProps {
-  error?: boolean;
-}
-
-const StyledInput = styled.input<StyledInputProps>`
+const StyledInput = styled(InputLight)`
+  max-width: 380px;
   width: 100%;
-  padding: ${props => props.theme.inputPadding};
-  color: ${props => (props.error ? 'red' : props.theme.titleColorLT)};
-  height: ${props => props.theme.inputBoxHeight};
-  outline: 0;
-  font-size: ${props => props.theme.inputFontSize};
-
-  &:active,
-  &:focus,
-  &.focus,
-  &.active {
-    outline: 0;
-  }
-`;
-
-const BigStyledTile = styled(StyledType)`
-  height: unset;
-  width: unset;
-  padding: 6px;
-  img {
-    width: 120px;
-    height: 80px;
-  }
-  p {
-    font-size: 11px;
-    line-height: 1.3;
-    margin: 6px 0 0;
-  }
 `;
 
 type ExportHtmlMapProps = {
   onChangeExportMapHTMLMode: ActionHandler<typeof setExportHTMLMapMode>;
+  onChangeExportIncludeLayerApiKeys: ActionHandler<typeof setExportIncludeLayerApiKeys>;
   onEditUserMapboxAccessToken: ActionHandler<typeof setUserMapboxAccessToken>;
+  includeLayerApiKeys?: boolean;
   options: {
     userMapboxToken?: string;
     mode?: string;
@@ -85,79 +56,104 @@ function ExportHtmlMapFactory(): React.ComponentType<ExportHtmlMapProps> {
     onChangeExportMapHTMLMode = () => {
       return;
     },
+    onChangeExportIncludeLayerApiKeys = () => {
+      return;
+    },
     onEditUserMapboxAccessToken = () => {
       return;
     },
+    includeLayerApiKeys = false,
     options = {},
     intl
-  }) => (
-    <div>
-      <StyledExportMapNote>
-        <FormattedMessage id={'modal.exportMap.html.selection'} />
-      </StyledExportMapNote>
-      <ExportMapStyledExportSection className="export-map-modal__html-options">
-        <div className="description">
-          <div className="title">
-            <FormattedMessage id={'modal.exportMap.html.tokenTitle'} />
+  }) => {
+    const hasCustomToken = Boolean(options.userMapboxToken?.trim());
+
+    return (
+      <div>
+        <IncludeLayerApiKeysToggle
+          id="export-include-layer-api-keys-html"
+          checked={includeLayerApiKeys}
+          onChange={onChangeExportIncludeLayerApiKeys}
+        />
+        <ExportMapStyledExportSection className="export-map-modal__html-options">
+          <div className="description">
+            <label className="title" htmlFor="export-map-mapbox-token">
+              <FormattedMessage id={'modal.exportMap.html.tokenTitle'} />
+            </label>
+            <div className="subtitle">
+              <FormattedMessage id={'modal.exportMap.html.tokenSubtitle'} />
+            </div>
           </div>
-          <div className="subtitle">
-            <FormattedMessage id={'modal.exportMap.html.tokenSubtitle'} />
+          <div className="selection">
+            <StyledInput
+              id="export-map-mapbox-token"
+              aria-describedby="export-map-token-guidance"
+              aria-label={intl.formatMessage({id: 'modal.exportMap.html.tokenTitle'})}
+              onChange={e => onEditUserMapboxAccessToken(e.target.value)}
+              type="text"
+              placeholder={intl.formatMessage({id: 'modal.exportMap.html.tokenPlaceholder'})}
+              value={options.userMapboxToken ?? ''}
+            />
+            <ExportMapNotice id="export-map-token-guidance">
+              <FormattedMessage
+                id={
+                  hasCustomToken
+                    ? 'modal.exportMap.html.tokenEmbeddedNotice'
+                    : 'modal.exportMap.html.tokenSharedNotice'
+                }
+              />{' '}
+              <ExportMapLink href={EXPORT_HTML_MAP_DOC}>
+                <FormattedMessage id={'modal.exportMap.html.tokenUpdate'} />
+              </ExportMapLink>
+            </ExportMapNotice>
           </div>
-        </div>
-        <div className="selection">
-          <StyledInput
-            onChange={e => onEditUserMapboxAccessToken(e.target.value)}
-            type="text"
-            placeholder={intl.formatMessage({id: 'modal.exportMap.html.tokenPlaceholder'})}
-            value={options ? options.userMapboxToken : ''}
-          />
-          <div className="disclaimer">
-            <StyledWarning>
-              <FormattedMessage id={'modal.exportMap.html.tokenMisuseWarning'} />
-            </StyledWarning>
-            <StyledWarning>
-              <FormattedMessage id={'modal.exportMap.html.tokenSecurityWarning'} />
-            </StyledWarning>
-            <FormattedMessage id={'modal.exportMap.html.tokenDisclaimer'} />
-            <ExportMapLink href={EXPORT_HTML_MAP_DOC}>
-              <FormattedMessage id={'modal.exportMap.html.tokenUpdate'} />
-            </ExportMapLink>
+        </ExportMapStyledExportSection>
+        <ExportMapStyledExportSection>
+          <div className="description">
+            <ExportMapSectionTitle>
+              <label htmlFor="export-map-html-mode">
+                <FormattedMessage id={'modal.exportMap.html.modeTitle'} />
+              </label>
+              <ExportMapHelp
+                id="export-map-html-mode-help"
+                label={intl.formatMessage({id: 'modal.exportMap.html.modeHelpLabel'})}
+              >
+                <div>
+                  <strong>
+                    <FormattedMessage id="modal.exportMap.html.read" />:
+                  </strong>{' '}
+                  <FormattedMessage id="modal.exportMap.html.modeReadHelp" />
+                </div>
+                <div>
+                  <strong>
+                    <FormattedMessage id="modal.exportMap.html.edit" />:
+                  </strong>{' '}
+                  <FormattedMessage id="modal.exportMap.html.modeEditHelp" />
+                </div>
+              </ExportMapHelp>
+            </ExportMapSectionTitle>
+            <div className="subtitle">
+              <FormattedMessage id={'modal.exportMap.html.modeSubtitle1'} />
+            </div>
           </div>
-        </div>
-      </ExportMapStyledExportSection>
-      <ExportMapStyledExportSection>
-        <div className="description">
-          <div className="title">
-            <FormattedMessage id={'modal.exportMap.html.modeTitle'} />
-          </div>
-          <div className="subtitle">
-            <FormattedMessage id={'modal.exportMap.html.modeSubtitle1'} />
-            <a href={EXPORT_HTML_MAP_MODES_DOC}>
-              <FormattedMessage id={'modal.exportMap.html.modeSubtitle2'} />
-            </a>
-          </div>
-        </div>
-        <div className="selection">
-          {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode => (
-            <BigStyledTile
-              key={mode.id}
-              selected={options.mode === mode.id}
-              onClick={() => mode.available && onChangeExportMapHTMLMode(mode.id)}
+          <div className="selection">
+            <select
+              id="export-map-html-mode"
+              aria-label={intl.formatMessage({id: 'modal.exportMap.html.modeTitle'})}
+              value={options.mode ?? EXPORT_HTML_MAP_MODE_OPTIONS[0].id}
+              onChange={event => onChangeExportMapHTMLMode(event.target.value)}
             >
-              <img src={mode.url} alt="" />
-              <p>
-                <FormattedMessage
-                  id={'modal.exportMap.html.modeDescription'}
-                  values={{mode: intl.formatMessage({id: mode.label})}}
-                />
-              </p>
-              {options.mode === mode.id && <CheckMark />}
-            </BigStyledTile>
-          ))}
-        </div>
-      </ExportMapStyledExportSection>
-    </div>
-  );
+              {EXPORT_HTML_MAP_MODE_OPTIONS.map(mode => (
+                <option key={mode.id} value={mode.id} disabled={!mode.available}>
+                  {intl.formatMessage({id: mode.label})}
+                </option>
+              ))}
+            </select>
+          </div>
+        </ExportMapStyledExportSection>
+      </div>
+    );
+  };
 
   ExportHtmlMap.displayName = 'ExportHtmlMap';
 

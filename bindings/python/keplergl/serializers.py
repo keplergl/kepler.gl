@@ -90,6 +90,20 @@ def serialize_dataframe(df: pd.DataFrame, name: str, use_arrow: bool = False) ->
 
     columns = df.columns.tolist()
     rows = df.values.tolist()
+    # Jupyter adds the kernel's UTC offset to naive datetimes, which shifts them
+    # in the map, so send datetime columns as ISO strings instead
+    for c, dtype in enumerate(df.dtypes):
+        if pd.api.types.is_datetime64_any_dtype(dtype):
+            # Series.dt.strftime fails on Arrow-backed timestamps, so format each value
+            times = [
+                None if pd.isna(t) else t.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+                for t in df.iloc[:, c]
+            ]
+            for row, time in zip(rows, times):
+                row[c] = time
+    # NaN and NaT are not valid JSON, so send them as null
+    for r, c in zip(*df.isna().to_numpy().nonzero()):
+        rows[r][c] = None
     _debug(f"serialize_dataframe: {len(columns)} columns, {len(rows)} rows")
     _debug(f"  columns: {columns}")
     _debug(f"  first row: {rows[0] if rows else 'empty'}")

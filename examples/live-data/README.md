@@ -17,11 +17,16 @@ update styles. **CSV / Arrow / GeoJSON** each get their own Kepler instance
   from GitHub at runtime (not bundled) onto a GeoJSON layer. Switching back to
   CSV starts a new poll instance.
 
+- **WebSocket** — pauses the poll. The **host app** (not Kepler) opens
+  `ws://localhost:4010/vehicles.ws` and maps each JSON upsert to
+  `addToDataset(..., {upsertBy: 'id'})`. Kepler has no websocket client and
+  still rebuilds layer data on every message.
+
 This bundles local monorepo `src/` (not a published npm package). Host-row
 edits work for in-memory CSV (`RowDataContainer`) and Arrow tables with
 primitive columns. DuckDB tables log a warning and leave the data unchanged
-(INSERT is not implemented yet). Nested, binary, and geoarrow Arrow columns
-are also left unchanged. The **Keyed by id** controls
+(INSERT is not implemented yet). Appending or replacing nested, binary, and GeoArrow columns is unsupported;
+removal still works by slicing existing rows. The **Keyed by id** controls
 exercise `addToDataset(id, rows, {upsertBy: 'id'})` and
 `removeFromDataset(id, {field: 'id', values})`.
 
@@ -88,6 +93,20 @@ run next to `yarn start` on 8080). The CSV server listens at
   **Remove last** drops one. **Insert tracker** adds `track-01`; **Move tracker**
   replaces that row with another building (`upsertBy: 'id'`) — row count stays
   the same, a different footprint appears.
+
+### WebSocket
+
+- Uses CSV rows (switching from Arrow or GeoJSON remounts the CSV table).
+  Orbit **freezes**. The example host connects to
+  `ws://localhost:4010/vehicles.ws` (same process as the CSV server).
+- Server sends `{op: 'upsert', upsertBy: 'id', rows}` every 400ms. Three
+  `ws-01`…`ws-03` points (rings 8–10) complete a loop every **20 seconds**.
+  Row count grows by 3, then stays put while those ids move.
+- Sidebar shows socket status and message count. If the socket drops, the host
+  retries after 1s.
+- This is the [#322](https://github.com/keplergl/kepler.gl/issues/322) *transport*
+  pattern: `ws → addToDataset`. It is **not** a Kepler websocket layer and does
+  **not** skip a full layer-data rebuild.
 
 ## CSV server only (Add Data URL)
 

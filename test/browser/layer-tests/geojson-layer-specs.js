@@ -15,6 +15,8 @@ import {
   testFormatLayerDataCases,
   testRenderLayerCases,
   prepareGeojsonDataset,
+  prepareTripTableDataset,
+  speedFilterDomain0,
   geoFilterDomain0,
   geojsonFilterDomain0
 } from 'test/helpers/layer-utils';
@@ -78,6 +80,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -108,6 +111,11 @@ test('#GeojsonLayer -> formatLayerData', async t => {
           layerData.data.map(layerData.getElevation),
           [defaultElevation, defaultElevation],
           'getElevation should return correct value'
+        );
+        t.deepEqual(
+          layerData.data.map(layerData.getElevationOffset),
+          [0, 0],
+          'getElevationOffset should default to 0'
         );
         t.deepEqual(
           layerData.data.map(layerData.getFillColor),
@@ -203,6 +211,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -322,6 +331,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -429,6 +439,7 @@ test('#GeojsonLayer -> formatLayerData', async t => {
         const expectedDataKeys = [
           'data',
           'getElevation',
+          'getElevationOffset',
           'getFillColor',
           'getFilterValue',
           'getFiltered',
@@ -515,6 +526,58 @@ test('#GeojsonLayer -> formatLayerData', async t => {
   t.end();
 });
 
+test('#GeojsonLayer -> formatLayerData -> table column mode with gpu filter', t => {
+  // The GPU filter reads a layer's values through the accessor the layer hands
+  // it, called as getData(dataContainer, feature, fieldIndex). Table column mode
+  // groups rows by id, so the value of each channel is an array, one entry per
+  // point of the grouped feature.
+  const TEST_CASES = [
+    {
+      name: 'Geojson Table.1',
+      layer: {
+        type: 'geojson',
+        id: 'test_geojson_table_layer',
+        config: {
+          dataId,
+          label: 'gps tracks',
+          columnMode: 'table',
+          columns: {
+            id: 'name',
+            lat: 'location-lat',
+            lng: 'location-lng',
+            altitude: 'location-alt'
+          }
+        }
+      },
+      datasets: {
+        [dataId]: prepareTripTableDataset
+      },
+      assert: result => {
+        const {layerData} = result;
+
+        let filterValues;
+        t.doesNotThrow(() => {
+          filterValues = layerData.data.map(layerData.getFilterValue);
+        }, 'getFilterValue should not throw in table column mode');
+
+        // The first feature groups the 8 rows named Thuub that carry a
+        // coordinate; the row with an empty location is dropped.
+        const round = v => Math.round(v * 100) / 100;
+        const groundSpeeds = [0.22, 0.27, 0.32, 0.46, 0.51, 0.3, 0.33, 0.43];
+
+        t.deepEqual(
+          (filterValues?.[0] ?? []).map(point => round(point[0])),
+          groundSpeeds.map(speed => round(speed - speedFilterDomain0)),
+          'getFilterValue should return one filter value per point of the feature'
+        );
+      }
+    }
+  ];
+
+  testFormatLayerDataCases(t, GeojsonLayer, TEST_CASES);
+  t.end();
+});
+
 test('#GeojsonLayer -> renderLayer', t => {
   const filteredIndex = [0, 2, 4];
   const TEST_CASES = [
@@ -550,6 +613,11 @@ test('#GeojsonLayer -> renderLayer', t => {
           ids,
           'Should render 3 deck layers'
         );
+        t.equal(
+          deckLayers[1].constructor.layerName,
+          'OffsetSolidPolygonLayer',
+          'polygon fill should use OffsetSolidPolygonLayer so elevation offset is applied'
+        );
         // polygon fill attributes;
         const {attributes} = deckLayers[1].state.attributeManager;
         const indices = attributes.indices.value;
@@ -559,7 +627,7 @@ test('#GeojsonLayer -> renderLayer', t => {
 
         const expectedFillLayerProp = {
           extruded: false,
-          elevationScale: 5,
+          elevationScale: 1,
           filled: false,
           wireframe: false,
           opacity: 0.8,

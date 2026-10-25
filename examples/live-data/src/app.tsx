@@ -6,6 +6,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import ReactDOM from 'react-dom/client';
 import {Provider, useDispatch, useSelector} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import KeplerGl from '@kepler.gl/components';
@@ -30,6 +31,7 @@ const DATASET_ID = 'live-vehicles';
 const POINT_LAYER_ID = 'live-orbit-point';
 const GEOJSON_LAYER_ID = 'live-orbit-geojson';
 const LIVE_DATA_URL = process.env.LIVE_DATA_URL || 'http://localhost:4010/vehicles.csv';
+const LIVE_WS_URL = process.env.LIVE_WS_URL || 'ws://localhost:4010/vehicles.ws';
 const REFRESH_INTERVAL_MS = 300;
 const AUTO_INTERVAL_MS = 800;
 const MAX_HOST_ROWS = 20;
@@ -45,7 +47,8 @@ const COS_LAT = Math.cos((SF.lat * Math.PI) / 180);
 const KM_PER_DEG_LAT = 111.32;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
-type LiveMode = 'poll' | 'host';
+type LiveMode = 'poll' | 'host' | 'ws';
+type WsStatus = 'idle' | 'connecting' | 'open' | 'closed' | 'error';
 type TableFormat = 'csv' | 'arrow' | 'geojson';
 
 type KeplerRootState = {
@@ -347,7 +350,7 @@ function buildAddDataToMap(format: TableFormat, mode: LiveMode, buildings?: Buil
     };
   }
 
-  if (mode === 'host') {
+  if (mode === 'host' || mode === 'ws') {
     return {
       datasets: {
         info: {id: DATASET_ID, label: 'Live orbit'},
@@ -435,7 +438,8 @@ function ModeToggle({
       {(
         [
           ['poll', 'Poll URL', true],
-          ['host', 'Host rows', hostEnabled]
+          ['host', 'Host rows', hostEnabled],
+          ['ws', 'WebSocket', hostEnabled]
         ] as const
       ).map(([value, label, enabled]) => (
         <button
@@ -451,7 +455,7 @@ function ModeToggle({
             background: mode === value ? '#6a7485' : 'transparent',
             color: enabled ? '#f7f7f7' : '#6a7485',
             fontWeight: mode === value ? 600 : 400,
-            fontSize: 13
+            fontSize: 12
           }}
         >
           {label}
@@ -558,9 +562,10 @@ function PollSidebar({dataset}: {dataset: LiveDataset | undefined}) {
       ) : null}
       <p style={{margin: '16px 0 0', color: '#c3c9d5'}}>
         Layers panel: dataset refresh is 300ms. Click reload to sample the orbit immediately.
-        Switching to <strong>Host rows</strong> pauses the poll so you can append or delete without
-        the next snapshot wiping your edits. <strong>Arrow</strong> / <strong>GeoJSON</strong> drop
-        this Kepler instance and load a fresh table of that type — they do not convert this CSV.
+        Switching to <strong>Host rows</strong> or <strong>WebSocket</strong> pauses the poll so the
+        next snapshot does not wipe injected rows.
+        <strong>Arrow</strong> / <strong>GeoJSON</strong> drop this Kepler instance and load a fresh
+        table of that type — they do not convert this CSV.
       </p>
     </>
   );
@@ -748,6 +753,72 @@ function HostSidebar({
   );
 }
 
+function WsSidebar({
+  dataset,
+  status,
+  lastAt,
+  messageCount,
+  error
+}: {
+  dataset: LiveDataset | undefined;
+  status: WsStatus;
+  lastAt: number | null;
+  messageCount: number;
+  error: string | null;
+}) {
+  const rows = dataset?.dataContainer?.numRows?.() ?? 0;
+  const ids = rowIds(dataset);
+  const wsIds = ids.filter(id => id.startsWith('ws-'));
+
+  return (
+    <>
+      <p style={{margin: '0 0 12px', color: '#c3c9d5'}}>
+        Kepler.gl has no websocket client. This host opens <code>{LIVE_WS_URL}</code> and maps each
+        JSON message to <code>{"addToDataset(..., {upsertBy: 'id'})"}</code>. Three{' '}
+        <code>ws-*</code> points (rings 8–10) move on a 20s loop. Layer id and style stay put;
+        Kepler still rebuilds layer data on every message.
+      </p>
+      <div style={{display: 'grid', gap: 8, marginBottom: 12}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
+          <span style={{color: '#c3c9d5'}}>socket</span>
+          <span>{status}</span>
+        </div>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
+          <span style={{color: '#c3c9d5'}}>messages</span>
+          <span>{messageCount}</span>
+        </div>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
+          <span style={{color: '#c3c9d5'}}>last upsert</span>
+          <span>{lastAt ? new Date(lastAt).toLocaleTimeString() : '—'}</span>
+        </div>
+        <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
+          <span style={{color: '#c3c9d5'}}>rows</span>
+          <span>
+            {rows} <span style={{color: '#c3c9d5'}}>({wsIds.length} ws)</span>
+          </span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 12,
+            alignItems: 'flex-start'
+          }}
+        >
+          <span style={{color: '#c3c9d5', flexShrink: 0}}>ws ids</span>
+          <span style={{textAlign: 'right', wordBreak: 'break-word'}}>
+            {wsIds.length ? wsIds.join(', ') : '—'}
+          </span>
+        </div>
+      </div>
+      {error ? <p style={{margin: '0 0 12px', color: '#f19c99'}}>{error}</p> : null}
+      <p style={{margin: 0, color: '#c3c9d5'}}>
+        Switch back to <strong>Poll URL</strong> to close the socket and restore the 3 CSV vehicles.
+      </p>
+    </>
+  );
+}
+
 function LiveDataSidebar({
   mode,
   tableFormat,
@@ -769,6 +840,10 @@ function LiveDataSidebar({
   );
   const [autoTrail, setAutoTrail] = useState(false);
   const [keyedNote, setKeyedNote] = useState('');
+  const [wsStatus, setWsStatus] = useState<WsStatus>('idle');
+  const [wsLastAt, setWsLastAt] = useState<number | null>(null);
+  const [wsCount, setWsCount] = useState(0);
+  const [wsError, setWsError] = useState<string | null>(null);
   const hostSeq = useRef(1);
   const trackSeq = useRef(1);
   const datasetRef = useRef(dataset);
@@ -782,6 +857,9 @@ function LiveDataSidebar({
   useEffect(() => {
     setAutoTrail(false);
     setKeyedNote('');
+    setWsCount(0);
+    setWsLastAt(null);
+    setWsError(null);
     hostSeq.current = 1;
     trackSeq.current = 1;
   }, [tableFormat, mode]);
@@ -878,6 +956,67 @@ function LiveDataSidebar({
     return () => window.clearInterval(timer);
   }, [autoTrail, mode, toKepler]);
 
+  useEffect(() => {
+    if (mode !== 'ws') {
+      setWsStatus(current => (current === 'idle' ? current : 'idle'));
+      return undefined;
+    }
+
+    let cancelled = false;
+    let retryTimer: number | undefined;
+    let socket: WebSocket | null = null;
+
+    const connect = () => {
+      if (cancelled) {
+        return;
+      }
+      setWsStatus('connecting');
+      setWsError(null);
+      socket = new WebSocket(LIVE_WS_URL);
+      socket.onopen = () => {
+        if (!cancelled) {
+          setWsStatus('open');
+        }
+      };
+      socket.onmessage = event => {
+        let message: {op?: string; rows?: unknown; upsertBy?: string};
+        try {
+          message = JSON.parse(String(event.data));
+        } catch {
+          return;
+        }
+        if (message.op !== 'upsert' || !message.rows) {
+          return;
+        }
+        toKepler(addToDataset(DATASET_ID, message.rows, {upsertBy: message.upsertBy || 'id'}));
+        setWsCount(count => count + 1);
+        setWsLastAt(Date.now());
+      };
+      socket.onerror = () => {
+        if (!cancelled) {
+          setWsStatus('error');
+          setWsError(`Could not open ${LIVE_WS_URL}`);
+        }
+      };
+      socket.onclose = () => {
+        if (cancelled) {
+          return;
+        }
+        setWsStatus('closed');
+        retryTimer = window.setTimeout(connect, 1000);
+      };
+    };
+
+    connect();
+    return () => {
+      cancelled = true;
+      if (retryTimer) {
+        window.clearTimeout(retryTimer);
+      }
+      socket?.close();
+    };
+  }, [mode, toKepler]);
+
   return (
     <aside style={sidebarStyle}>
       <h2 style={{margin: '0 0 8px', fontSize: 16}}>Live data</h2>
@@ -889,6 +1028,14 @@ function LiveDataSidebar({
       <FormatToggle format={tableFormat} onChange={onFormat} />
       {mode === 'poll' ? (
         <PollSidebar dataset={dataset} />
+      ) : mode === 'ws' ? (
+        <WsSidebar
+          dataset={dataset}
+          status={wsStatus}
+          lastAt={wsLastAt}
+          messageCount={wsCount}
+          error={wsError}
+        />
       ) : (
         <HostSidebar
           dataset={dataset}
@@ -983,15 +1130,19 @@ const App = () => {
         remount('csv', 'poll');
         return;
       }
+      if (next === 'ws' && tableFormat !== 'csv') {
+        remount('csv', 'ws');
+        return;
+      }
       if (tableFormat === 'csv' && pollInstanceRef.current) {
-        setMode('host');
+        setMode(next);
         toKepler(updateDatasetProps(DATASET_ID, {metadata: {refreshIntervalMs: 0}}));
         return;
       }
       if (tableFormat !== 'csv') {
         return;
       }
-      remount('csv', 'host');
+      setMode(next);
     },
     [remount, tableFormat, toKepler]
   );

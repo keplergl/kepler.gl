@@ -2,21 +2,24 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect} from 'react';
+import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
 import {DatasetType, EXPORT_DATA_TYPE_OPTIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Datasets} from '@kepler.gl/table';
 
-import {FileType} from '../common/icons';
 import {
   StyledExportSection,
   StyledFilteredOption,
   StyledModalContent,
-  StyledType,
   CheckMark
 } from '../common/styled-components';
 import {StyledWarning} from './export-map-modal/components';
+
+const CompactExportSection = styled(StyledExportSection)`
+  margin: 12px 0;
+`;
 
 const getDataRowCount = (
   datasets: Datasets,
@@ -59,7 +62,7 @@ export interface ExportDataModalProps {
   onChangeExportDataType: (type: string) => void;
   onChangeExportFiltered: (isFiltered: boolean) => void;
   intl: IntlShape;
-  supportedDataTypes: {
+  supportedDataTypes?: {
     id: string;
     label: string;
     available: boolean;
@@ -90,6 +93,10 @@ const ExportDataModalFactory = () => {
       onChangeExportSelectedDataset(value);
     };
 
+    const onSelectDataType: React.ChangeEventHandler<HTMLSelectElement> = ({target: {value}}) => {
+      onChangeExportDataType(value);
+    };
+
     const exportAllDatasets = selectedDataset ? !datasets[selectedDataset] : true;
     const showTiledDatasetWarning = Object.keys(datasets).some(datasetId => {
       return (
@@ -97,7 +104,8 @@ const ExportDataModalFactory = () => {
           datasets[datasetId].type === DatasetType.RASTER_TILE ||
           datasets[datasetId].type === DatasetType.WMS_TILE ||
           datasets[datasetId].type === DatasetType.TILE_3D ||
-          datasets[datasetId].type === DatasetType.BITMAP) &&
+          datasets[datasetId].type === DatasetType.BITMAP ||
+          datasets[datasetId].type === DatasetType.ZARR) &&
         (selectedDataset === datasetId || exportAllDatasets)
       );
     });
@@ -105,7 +113,7 @@ const ExportDataModalFactory = () => {
     return (
       <StyledModalContent className="export-data-modal">
         <div>
-          <StyledExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
                 <FormattedMessage id={'modal.exportData.datasetTitle'} />
@@ -125,8 +133,8 @@ const ExportDataModalFactory = () => {
                   ))}
               </select>
             </div>
-          </StyledExportSection>
-          <StyledExportSection>
+          </CompactExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
                 <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
@@ -136,22 +144,19 @@ const ExportDataModalFactory = () => {
               </div>
             </div>
             <div className="selection">
-              {supportedDataTypes.map(op => (
-                <StyledType
-                  key={op.id}
-                  selected={dataType === op.id}
-                  onClick={() => op.available && onChangeExportDataType(op.id)}
-                >
-                  <FileType ext={op.label} height="80px" fontSize="11px" />
-                  {dataType === op.id && <CheckMark />}
-                </StyledType>
-              ))}
+              <select className="data-type-select" value={dataType} onChange={onSelectDataType}>
+                {supportedDataTypes.map(op => (
+                  <option key={op.id} value={op.id} disabled={!op.available}>
+                    {op.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          </StyledExportSection>
-          <StyledExportSection>
+          </CompactExportSection>
+          <CompactExportSection>
             <div className="description">
               <div className="title">
-                <FormattedMessage id={'modal.exportData.dataTypeTitle'} />
+                <FormattedMessage id={'modal.exportData.filterDataTitle'} />
               </div>
               <div className="subtitle">
                 <FormattedMessage id={'modal.exportData.filterDataSubtitle'} />
@@ -185,7 +190,7 @@ const ExportDataModalFactory = () => {
                 {filtered && <CheckMark />}
               </StyledFilteredOption>
             </div>
-          </StyledExportSection>
+          </CompactExportSection>
           {showTiledDatasetWarning ? (
             <div className="title">
               <StyledWarning>

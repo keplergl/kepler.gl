@@ -10,6 +10,8 @@ import * as visStateUpdaters from './vis-state-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
+  [ActionTypes.SET_CAMERA_BOOKMARKS]: visStateUpdaters.setCameraBookmarksUpdater,
+  [ActionTypes.SET_CAMERA_TOUR]: visStateUpdaters.setCameraTourUpdater,
   [ActionTypes.ADD_FILTER]: visStateUpdaters.addFilterUpdater,
 
   [ActionTypes.CREATE_OR_UPDATE_FILTER]: visStateUpdaters.createOrUpdateFilterUpdater,
@@ -54,7 +56,11 @@ const actionHandler = {
 
   [ActionTypes.LOAD_FILES_ERR]: visStateUpdaters.loadFilesErrUpdater,
 
+  [ActionTypes.CLEAR_STAGED_LOADED_FILES]: visStateUpdaters.clearStagedLoadedFilesUpdater,
+
   [ActionTypes.LOAD_NEXT_FILE]: visStateUpdaters.loadNextFileUpdater,
+
+  [ActionTypes.EXPAND_ZIP_ARCHIVE_SUCCESS]: visStateUpdaters.expandZipArchiveSuccessUpdater,
 
   [ActionTypes.LOAD_FILE_STEP_SUCCESS]: visStateUpdaters.loadFileStepSuccessUpdater,
 
@@ -141,6 +147,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_DATASET]: visStateUpdaters.updateDatasetUpdater,
 
+  [ActionTypes.RENAME_TABLE_COLUMN]: visStateUpdaters.renameTableColumnUpdater,
+
+  [ActionTypes.CHANGE_TABLE_COLUMN_TYPE]: visStateUpdaters.changeTableColumnTypeUpdater,
+
+  [ActionTypes.DELETE_TABLE_COLUMN]: visStateUpdaters.deleteTableColumnUpdater,
+
   [ActionTypes.SET_FEATURES]: visStateUpdaters.setFeaturesUpdater,
 
   [ActionTypes.SET_EDITOR_FEATURE_PROPERTIES]: visStateUpdaters.setEditorFeaturePropertiesUpdater,
@@ -160,6 +172,8 @@ const actionHandler = {
   [ActionTypes.CONVERT_EDITOR_FEATURES_TO_LAYER]:
     visStateUpdaters.convertEditorFeaturesToLayerUpdater,
 
+  [ActionTypes.EXTRACT_DATA_FROM_FEATURE]: visStateUpdaters.extractDataFromFeatureUpdater,
+
   [ActionTypes.TOGGLE_FILTER_FEATURE]: visStateUpdaters.toggleFilterFeatureUpdater,
 
   [ActionTypes.APPLY_CPU_FILTER]: visStateUpdaters.applyCPUFilterUpdater,
@@ -167,6 +181,10 @@ const actionHandler = {
   [ActionTypes.SORT_TABLE_COLUMN]: visStateUpdaters.sortTableColumnUpdater,
 
   [ActionTypes.PIN_TABLE_COLUMN]: visStateUpdaters.pinTableColumnUpdater,
+
+  [ActionTypes.TOGGLE_TABLE_COLUMN_HIDDEN]: visStateUpdaters.toggleTableColumnHiddenUpdater,
+
+  [ActionTypes.SHOW_ALL_TABLE_COLUMNS]: visStateUpdaters.showAllTableColumnsUpdater,
 
   [ActionTypes.COPY_TABLE_COLUMN]: visStateUpdaters.copyTableColumnUpdater,
 
@@ -202,6 +220,12 @@ const actionHandler = {
 
   [ActionTypes.UPDATE_EFFECT]: visStateUpdaters.updateEffectUpdater,
 
+  [ActionTypes.ADD_CHART]: visStateUpdaters.addChartUpdater,
+
+  [ActionTypes.UPDATE_CHART]: visStateUpdaters.updateChartUpdater,
+
+  [ActionTypes.REMOVE_CHART]: visStateUpdaters.removeChartUpdater,
+
   [ActionTypes.ADD_ANNOTATION]: visStateUpdaters.addAnnotationUpdater,
 
   [ActionTypes.REMOVE_ANNOTATION]: visStateUpdaters.removeAnnotationUpdater,
@@ -214,7 +238,23 @@ const actionHandler = {
 
   [ActionTypes.CREATE_NEW_DATASET_SUCCESS]: visStateUpdaters.createNewDatasetSuccessUpdater,
 
-  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater
+  [ActionTypes.SET_LOADING_INDICATOR]: visStateUpdaters.setLoadingIndicatorUpdater,
+
+  [ActionTypes.SET_LOADING_PROGRESS]: visStateUpdaters.setLoadingProgressUpdater,
+
+  [ActionTypes.ADD_GROUP_BY]: visStateUpdaters.addGroupByUpdater,
+  [ActionTypes.SET_GROUP_BY_CONFIG]: visStateUpdaters.setGroupByConfigUpdater,
+  [ActionTypes.RUN_GROUP_BY]: visStateUpdaters.runGroupByUpdater,
+  [ActionTypes.ADD_JOIN]: visStateUpdaters.addJoinUpdater,
+  [ActionTypes.SET_JOIN_CONFIG]: visStateUpdaters.setJoinConfigUpdater,
+  [ActionTypes.RUN_JOIN]: visStateUpdaters.runJoinUpdater,
+  [ActionTypes.ADD_SPATIAL_JOIN]: visStateUpdaters.addSpatialJoinUpdater,
+  [ActionTypes.SET_SPATIAL_JOIN_CONFIG]: visStateUpdaters.setSpatialJoinConfigUpdater,
+  [ActionTypes.RUN_SPATIAL_JOIN]: visStateUpdaters.runSpatialJoinUpdater,
+  [ActionTypes.ADD_SUITABILITY]: visStateUpdaters.addSuitabilityUpdater,
+  [ActionTypes.SET_SUITABILITY_CONFIG]: visStateUpdaters.setSuitabilityConfigUpdater,
+  [ActionTypes.RUN_SUITABILITY]: visStateUpdaters.runSuitabilityUpdater,
+  [ActionTypes.REMOVE_DATASET_OP]: visStateUpdaters.removeDatasetOpUpdater
 };
 
 // construct vis-state reducer

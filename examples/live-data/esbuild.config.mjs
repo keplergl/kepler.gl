@@ -9,7 +9,7 @@ import process from 'node:process';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 
-import KeplerPackage from '../../package.json' assert {type: 'json'};
+import KeplerPackage from '../../package.json' with {type: 'json'};
 import {startLiveDataServer} from './server.mjs';
 
 const args = process.argv;
@@ -30,7 +30,6 @@ function localKeplerAliases() {
     'react-redux': `${NODE_MODULES_DIR}/react-redux`,
     'styled-components': `${NODE_MODULES_DIR}/styled-components`,
     'react-intl': `${NODE_MODULES_DIR}/react-intl`,
-    'react-palm': `${NODE_MODULES_DIR}/react-palm`,
     'apache-arrow': `${NODE_MODULES_DIR}/apache-arrow`,
     'tiny-warning': path.join(SRC_DIR, 'utils/src/noop.ts')
   };
@@ -65,6 +64,9 @@ const config = {
   define: {
     NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
     'process.env.LIVE_DATA_URL': JSON.stringify(liveDataUrl),
+    'process.env.LIVE_WS_URL': JSON.stringify(
+      process.env.LIVE_WS_URL || `ws://localhost:${dataPort}/vehicles.ws`
+    ),
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
     'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
     'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
@@ -85,7 +87,7 @@ const config = {
       name: 'dedupe-singletons',
       setup(build) {
         build.onResolve(
-          {filter: /^(styled-components|react-palm(\/|$)|react$|react-dom$)/},
+          {filter: /^(styled-components|react$|react-dom$)/},
           async resolveArgs => {
             if (resolveArgs.pluginData?.deduped) return;
             const result = await build.resolve(resolveArgs.path, {

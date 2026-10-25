@@ -287,3 +287,62 @@ test('#FlowLayer -> renderLayer returns empty when no data', t => {
 
   t.end();
 });
+
+function flowRenderOpts(layer, filteredIndex) {
+  layer.updateLayerConfig({
+    columns: {
+      lat0: {value: 'lat', fieldIdx: 1},
+      lng0: {value: 'lng', fieldIdx: 2},
+      lat1: {value: 'lat_1', fieldIdx: 3},
+      lng1: {value: 'lng_1', fieldIdx: 4}
+    },
+    columnMode: 'LAT_LNG'
+  });
+  const dataset = copyTableAndUpdate(preparedDataset, {filteredIndex});
+  layer.updateLayerMeta(dataset);
+  layer.updateLayerDomain({[dataId]: dataset});
+  return {
+    data: layer.formatLayerData({[dataId]: dataset}, {}),
+    gpuFilter: {},
+    objectHovered: null,
+    mapState: {},
+    layerCallbacks: {onLayerHover: () => {}},
+    idx: 0,
+    visible: true
+  };
+}
+
+test('#FlowLayer -> renderLayer when a new layer replaces the old one', t => {
+  // Replacing a dataset builds a new layer with the same id, and deck matches
+  // the new FlowmapLayer to the old one by that id. FlowmapLayer takes up the
+  // new data provider only when `data` changes, so the new layer must not hand
+  // deck a value the old one already did, or the old flows stay on the map.
+  const before = new FlowLayer({id: 'flows', dataId, label: 'before refresh'});
+  const after = new FlowLayer({id: 'flows', dataId, label: 'after refresh'});
+
+  const [oldDeckLayer] = before.renderLayer(flowRenderOpts(before, [0, 1, 3]));
+  const [newDeckLayer] = after.renderLayer(flowRenderOpts(after, [0, 1, 3, 4, 5]));
+
+  t.equal(newDeckLayer.id, oldDeckLayer.id, 'both deck layers should share the id deck matches by');
+  t.notEqual(
+    newDeckLayer.props.data,
+    oldDeckLayer.props.data,
+    'the new layer should pass a data value the old one never passed'
+  );
+
+  t.end();
+});
+
+test('#FlowLayer -> renderLayer keeps its data value while the flows are unchanged', t => {
+  // Each frame of an animation renders again with the same layer data; a new
+  // value every time would make FlowmapLayer rebuild its data on every frame.
+  const layer = new FlowLayer({id: 'flows', dataId, label: 'stable'});
+  const opts = flowRenderOpts(layer, [0, 1, 3]);
+
+  const [first] = layer.renderLayer(opts);
+  const [second] = layer.renderLayer(opts);
+
+  t.equal(second.props.data, first.props.data, 'the data value should not move without new flows');
+
+  t.end();
+});

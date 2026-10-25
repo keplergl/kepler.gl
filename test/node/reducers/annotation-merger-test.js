@@ -96,18 +96,58 @@ test('#mergeAnnotations -> should validate annotation kind', t => {
     makeAnnotation({id: 'point', kind: AnnotationKind.POINT}),
     makeAnnotation({id: 'arrow', kind: AnnotationKind.ARROW}),
     makeAnnotation({id: 'circle', kind: AnnotationKind.CIRCLE}),
+    makeAnnotation({id: 'ruler', kind: AnnotationKind.RULER, endPoint: [1, 1]}),
     makeAnnotation({id: 'invalid', kind: 'HEXAGON'})
   ];
 
   const result = mergeAnnotations(state, annotations);
 
-  t.equal(result.annotations.length, 4, 'should accept 4 valid kinds');
+  t.equal(result.annotations.length, 5, 'should accept 5 valid kinds');
   const ids = result.annotations.map(a => a.id);
   t.ok(ids.includes('text'), 'TEXT is valid');
   t.ok(ids.includes('point'), 'POINT is valid');
   t.ok(ids.includes('arrow'), 'ARROW is valid');
   t.ok(ids.includes('circle'), 'CIRCLE is valid');
+  t.ok(ids.includes('ruler'), 'RULER is valid');
   t.notOk(ids.includes('invalid'), 'HEXAGON is invalid');
+
+  t.end();
+});
+
+test('#mergeAnnotations -> should validate RULER endPoint', t => {
+  const state = makeState();
+  const annotations = [
+    makeAnnotation({id: 'valid-ruler', kind: AnnotationKind.RULER, endPoint: [1, 2, 3]}),
+    makeAnnotation({id: 'missing-end', kind: AnnotationKind.RULER}),
+    makeAnnotation({id: 'bad-end', kind: AnnotationKind.RULER, endPoint: [1, Number.NaN]})
+  ];
+
+  const result = mergeAnnotations(state, annotations);
+
+  t.equal(result.annotations.length, 1, 'only ruler with a finite 2D/3D endpoint should merge');
+  t.equal(result.annotations[0].id, 'valid-ruler', 'valid ruler should be preserved');
+  t.deepEqual(result.annotations[0].endPoint, [1, 2, 3], '3D endpoint should be preserved');
+  t.equal(result.annotations[0].showCustomText, true, 'missing custom text flag should default on');
+  t.equal(result.annotations[0].showDistance, true, 'missing distance flag should default on');
+
+  t.end();
+});
+
+test('#mergeAnnotations -> should not stamp default text placement on legacy annotations', t => {
+  const state = makeState();
+  const annotations = [
+    makeAnnotation({id: 'legacy', angle: 180, textSide: undefined, textVerticalPosition: undefined})
+  ];
+  // omit the new fields the way saved maps without them look
+  delete annotations[0].textSide;
+  delete annotations[0].textVerticalPosition;
+
+  const result = mergeAnnotations(state, annotations);
+
+  t.equal(result.annotations.length, 1, 'should merge the legacy annotation');
+  t.notOk(result.annotations[0].textSide, 'should not default textSide');
+  t.notOk(result.annotations[0].textVerticalPosition, 'should not default textVerticalPosition');
+  t.equal(result.annotations[0].angle, 180, 'should keep saved angle');
 
   t.end();
 });
@@ -122,6 +162,23 @@ test('#mergeAnnotations -> should return same state when all annotations are inv
   const result = mergeAnnotations(state, annotations);
 
   t.equal(result, state, 'should return same state reference when no valid annotations');
+
+  t.end();
+});
+
+test('#mergeAnnotations -> should accept 3D anchorPoint', t => {
+  const state = makeState();
+  const annotations = [
+    makeAnnotation({id: 'xyz', anchorPoint: [-122.4, 37.8, 45]}),
+    makeAnnotation({id: 'too-long', anchorPoint: [1, 2, 3, 4]}),
+    makeAnnotation({id: 'nan-z', anchorPoint: [1, 2, Number.NaN]})
+  ];
+
+  const result = mergeAnnotations(state, annotations);
+
+  t.equal(result.annotations.length, 1, 'should only accept [lng, lat] or [lng, lat, alt]');
+  t.equal(result.annotations[0].id, 'xyz', 'should keep the 3D annotation');
+  t.deepEqual(result.annotations[0].anchorPoint, [-122.4, 37.8, 45], 'should keep altitude');
 
   t.end();
 });

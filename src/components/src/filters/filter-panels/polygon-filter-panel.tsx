@@ -13,6 +13,7 @@ import {StyledFilterPanel} from '../components';
 import get from 'es-toolkit/compat/get';
 import {PolygonFilterPanelComponent} from './types';
 import {KeplerTable} from '@kepler.gl/table';
+import FilterInvertToggle from '../filter-invert-toggle';
 
 PolygonFilterPanelFactory.deps = [
   FilterPanelHeaderFactory,
@@ -50,6 +51,12 @@ function PolygonFilterPanelFactory(
             />
           </FilterPanelHeader>
           <StyledFilterContent className="filter-panel__content">
+            <FilterInvertToggle
+              filter={filter}
+              idx={idx}
+              setFilter={setFilter}
+              isSupported={filterDatasets.every(dataset => !dataset?.disableDataOperation)}
+            />
             <div className="filter-panel__filter">
               <PolygonFilter filter={filter} layers={layers} setLayers={onSetLayers} />
             </div>

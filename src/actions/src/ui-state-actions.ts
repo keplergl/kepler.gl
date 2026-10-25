@@ -196,6 +196,27 @@ export const openDeleteModal: (
     (datasetId: OpenDeleteModalUpdaterAction['payload']) => ({payload: datasetId})
   );
 
+/** OPEN_REPLACE_DATASET_MODAL */
+export type OpenReplaceDatasetModalUpdaterAction = {
+  payload: string;
+};
+/**
+ * Open the add-data modal so the next confirmed upload replaces one dataset.
+ * Layers and filters are remapped onto the new table.
+ * @memberof uiStateActions
+ * @param datasetId - id of the dataset to replace
+ * @public
+ */
+export const openReplaceDatasetModal: (
+  datasetId: OpenReplaceDatasetModalUpdaterAction['payload']
+) => Merge<
+  OpenReplaceDatasetModalUpdaterAction,
+  {type: typeof ActionTypes.OPEN_REPLACE_DATASET_MODAL}
+> = createAction(
+  ActionTypes.OPEN_REPLACE_DATASET_MODAL,
+  (datasetId: OpenReplaceDatasetModalUpdaterAction['payload']) => ({payload: datasetId})
+);
+
 /** ADD_NOTIFICATION */
 export type AddNotificationUpdaterAction = {
   payload: object;
@@ -240,7 +261,7 @@ export type SetExportImageSettingUpdaterAction = {
   payload: Partial<ExportImage>;
 };
 /**
- * Set `exportImage` settings: ratio, resolution, legend
+ * Set `exportImage` settings: ratio, resolution, legend, charts, transparent background
  * @memberof uiStateActions
  * @param newSetting - {ratio: '1x'}
  * @public
@@ -264,6 +285,7 @@ export const startExportingImage: (options?: {
   ratio?: string;
   resolution?: string;
   legend?: string;
+  transparentBackground?: boolean;
   center?: boolean;
 }) => Merge<SetExportImageSettingUpdaterAction, {type: typeof ActionTypes.START_EXPORTING_IMAGE}> =
   createAction(ActionTypes.START_EXPORTING_IMAGE, (payload: any) => ({payload}));
@@ -454,6 +476,66 @@ export const setExportHTMLMapMode: (
     (payload: SetExportHTMLMapModeUpdaterAction['payload']) => ({payload})
   );
 
+/** SET_EXPORT_MAP_BRANDING */
+export type SetExportMapBrandingUpdaterAction = {
+  payload: {
+    appName?: string;
+    appWebsite?: string;
+    appIcon?: string;
+    appNameColor?: string;
+  };
+};
+/**
+ * Set application branding overrides for exported maps
+ * @memberOf uiStateActions
+ * @param payload - application name, website, icon, and/or name color overrides
+ */
+export const setExportMapBranding: (
+  payload: SetExportMapBrandingUpdaterAction['payload']
+) => Merge<SetExportMapBrandingUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_BRANDING}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_BRANDING,
+    (payload: SetExportMapBrandingUpdaterAction['payload']) => ({payload})
+  );
+
+/** SET_EXPORT_MAP_FILE_NAME */
+export type SetExportMapFileNameUpdaterAction = {
+  payload: string;
+};
+/**
+ * Set the filename used when exporting an HTML or JSON map
+ * @memberof uiStateActions
+ * @param fileName - download name without extension
+ * @public
+ */
+export const setExportMapFileName: (
+  fileName: SetExportMapFileNameUpdaterAction['payload']
+) => Merge<SetExportMapFileNameUpdaterAction, {type: typeof ActionTypes.SET_EXPORT_MAP_FILE_NAME}> =
+  createAction(
+    ActionTypes.SET_EXPORT_MAP_FILE_NAME,
+    (payload: SetExportMapFileNameUpdaterAction['payload']) => ({payload})
+  );
+
+/** SET_EXPORT_INCLUDE_LAYER_API_KEYS */
+export type SetExportIncludeLayerApiKeysUpdaterAction = {
+  payload: boolean;
+};
+/**
+ * Whether exported HTML and JSON maps keep access tokens stored on layers.
+ * @memberof uiStateActions
+ * @param includeLayerApiKeys - include layer API keys in the export
+ * @public
+ */
+export const setExportIncludeLayerApiKeys: (
+  includeLayerApiKeys: SetExportIncludeLayerApiKeysUpdaterAction['payload']
+) => Merge<
+  SetExportIncludeLayerApiKeysUpdaterAction,
+  {type: typeof ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS}
+> = createAction(
+  ActionTypes.SET_EXPORT_INCLUDE_LAYER_API_KEYS,
+  (payload: SetExportIncludeLayerApiKeysUpdaterAction['payload']) => ({payload})
+);
+
 /** SET_LOCALE */
 export type SetLocaleUpdaterAction = {
   payload: {locale: string};
@@ -480,7 +562,7 @@ export type SetThemeUpdaterAction = {
   payload: {theme: string};
 };
 /**
- * Set UI `theme` value (`light` or `dark`)
+ * Set UI `theme` value (`light`, `dark`, or `space`)
  * @memberof uiStateActions
  * @param theme - theme of the UI
  * @public

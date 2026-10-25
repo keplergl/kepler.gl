@@ -4,51 +4,204 @@
 import React from 'react';
 import {useIntl} from 'react-intl';
 
-import {InteractionConfig} from '@kepler.gl/types';
-import {VisStateActions} from '@kepler.gl/actions';
+import {
+  Annotation,
+  CameraBookmark,
+  CameraTour,
+  InteractionConfig,
+  LayerOrder,
+  MapInfo,
+  MapState
+} from '@kepler.gl/types';
+import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import CameraBookmarks from './interaction-panel/camera-bookmarks';
+import CameraTourConfig from './interaction-panel/camera-tour-config';
 import {Datasets} from '@kepler.gl/table';
+import {Layer} from '@kepler.gl/layers';
 
 import InteractionPanelFactory from './interaction-panel/interaction-panel';
+import LegendConfigFactory from './interaction-panel/legend-config';
+import MapInfoConfigFactory from './interaction-panel/map-info-config';
+import ZoomOpacityConfigFactory from './interaction-panel/zoom-opacity-config';
 import PanelTitleFactory from './panel-title';
+import {PanelHeaderActionIcon} from './panel-header-action';
 
 import {PanelMeta} from './common/types';
+
+/** Right-hand map when split viewports are independent; otherwise the shared map zoom. */
+function fadeOnZoomMarkerZoom(mapState?: MapState): number | undefined {
+  const rightZoom = mapState?.splitMapViewports?.[1]?.zoom;
+  if (
+    mapState?.isSplit &&
+    !mapState.isViewportSynced &&
+    mapState.splitMapViewports.length > 1 &&
+    Number.isFinite(rightZoom)
+  ) {
+    return rightZoom;
+  }
+  return mapState?.zoom;
+}
 
 type InteractionManagerProps = {
   interactionConfig: InteractionConfig;
   datasets: Datasets;
   visStateActions: typeof VisStateActions;
+  uiStateActions?: typeof UIStateActions;
   panelMetadata: PanelMeta;
+  layers?: readonly Layer[];
+  annotations?: readonly Annotation[];
+  layerOrder?: LayerOrder;
+  mapLegendActive?: boolean;
+  mapInfo?: Partial<MapInfo>;
+  mapInfoShow?: boolean;
+  mapInfoActive?: boolean;
+  mapState?: MapState;
+  cameraBookmarks?: CameraBookmark[];
+  cameraBookmarksEnabled?: boolean;
+  cameraTour?: CameraTour | null;
+  cameraTourEnabled?: boolean;
+  mapStateActions?: typeof MapStateActions;
+  actionIcons?: {
+    settings?: PanelHeaderActionIcon;
+  };
+  interactionConfigIcons?: {
+    [key: string]: React.ElementType;
+  };
 };
 
-InteractionManagerFactory.deps = [InteractionPanelFactory, PanelTitleFactory];
+InteractionManagerFactory.deps = [
+  InteractionPanelFactory,
+  PanelTitleFactory,
+  LegendConfigFactory,
+  ZoomOpacityConfigFactory,
+  MapInfoConfigFactory
+];
 
 function InteractionManagerFactory(
   InteractionPanel: ReturnType<typeof InteractionPanelFactory>,
-  PanelTitle: ReturnType<typeof PanelTitleFactory>
+  PanelTitle: ReturnType<typeof PanelTitleFactory>,
+  LegendConfig: ReturnType<typeof LegendConfigFactory>,
+  ZoomOpacityConfig: ReturnType<typeof ZoomOpacityConfigFactory>,
+  MapInfoConfig: ReturnType<typeof MapInfoConfigFactory>
 ) {
   const InteractionManager: React.FC<InteractionManagerProps> = ({
     interactionConfig,
     datasets,
     visStateActions,
-    panelMetadata
+    uiStateActions,
+    panelMetadata,
+    layers,
+    annotations = [],
+    layerOrder,
+    mapLegendActive,
+    mapInfo,
+    mapInfoShow,
+    mapInfoActive,
+    mapState,
+    cameraBookmarks,
+    cameraBookmarksEnabled,
+    cameraTour,
+    cameraTourEnabled,
+    mapStateActions,
+    actionIcons,
+    interactionConfigIcons
   }) => {
     const {interactionConfigChange: onConfigChange, setColumnDisplayFormat} = visStateActions;
     const intl = useIntl();
+    const {enableCameraBookmarks, enableCameraTour} = getApplicationConfig();
+    const mapInfoPanel = (
+      <MapInfoConfig
+        key="mapInfo"
+        mapInfo={mapInfo}
+        mapInfoShow={mapInfoShow}
+        mapInfoActive={mapInfoActive}
+        visStateActions={visStateActions}
+        uiStateActions={uiStateActions}
+        actionIcons={actionIcons}
+      />
+    );
+
     return (
       <div className="interaction-manager">
         <PanelTitle
           className="interaction-manager-title"
           title={intl.formatMessage({id: panelMetadata.label})}
         />
-        {Object.keys(interactionConfig).map(key => (
-          <InteractionPanel
-            datasets={datasets}
-            config={interactionConfig[key]}
-            key={key}
-            onConfigChange={onConfigChange}
-            setColumnDisplayFormat={setColumnDisplayFormat}
+        {Object.keys(interactionConfig).map(key => {
+          if (key === 'annotation') {
+            return null;
+          }
+          if (key === 'legend') {
+            return layers ? (
+              <LegendConfig
+                key={key}
+                layers={layers}
+                layerOrder={layerOrder}
+                visStateActions={visStateActions}
+                uiStateActions={uiStateActions}
+                legendConfig={interactionConfig.legend}
+                mapLegendActive={mapLegendActive}
+                actionIcons={actionIcons}
+              />
+            ) : null;
+          }
+          if (key === 'zoomOpacity') {
+            return layers ? (
+              <ZoomOpacityConfig
+                key={key}
+                layers={layers}
+                annotations={annotations}
+                zoomOpacityConfig={interactionConfig.zoomOpacity}
+                zoom={fadeOnZoomMarkerZoom(mapState)}
+                visStateActions={visStateActions}
+                actionIcons={actionIcons}
+              />
+            ) : null;
+          }
+          const panel = (
+            <InteractionPanel
+              key={key}
+              datasets={datasets}
+              config={interactionConfig[key]}
+              onConfigChange={onConfigChange}
+              setColumnDisplayFormat={setColumnDisplayFormat}
+              actionIcons={actionIcons}
+              interactionConfigIcons={interactionConfigIcons}
+            />
+          );
+          if (key !== 'geocoder') {
+            return panel;
+          }
+          return (
+            <React.Fragment key="geocoder-and-map-info">
+              {panel}
+              {mapInfoPanel}
+            </React.Fragment>
+          );
+        })}
+        {interactionConfig.geocoder ? null : mapInfoPanel}
+        {enableCameraBookmarks && (
+          <CameraBookmarks
+            bookmarks={cameraBookmarks}
+            enabled={cameraBookmarksEnabled}
+            uiStateActions={uiStateActions}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
           />
-        ))}
+        )}
+        {enableCameraTour && (
+          <CameraTourConfig
+            tour={cameraTour}
+            enabled={cameraTourEnabled}
+            uiStateActions={uiStateActions}
+            bookmarks={cameraBookmarks}
+            mapState={mapState}
+            mapStateActions={mapStateActions}
+            visStateActions={visStateActions}
+          />
+        )}
       </div>
     );
   };

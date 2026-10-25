@@ -8,7 +8,11 @@ import {TileLayer, MVTLayer} from '@deck.gl/geo-layers';
 import type {Globe} from '@kepler.gl/constants';
 import type {RGBColor} from '@kepler.gl/types';
 
-import {getGlobeAtmosphereLayer, getGlobeAtmosphereSkyLayer, getGlobeHugeHaloLayer} from './atmosphere-layer';
+import {
+  getGlobeAtmosphereLayer,
+  getGlobeAtmosphereSkyLayer,
+  getGlobeHugeHaloLayer
+} from './atmosphere-layer';
 import {getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
 import {MVTLabelLayer} from './mvt-label-layer';
 
@@ -322,9 +326,7 @@ const GLOBE_SATELLITE_ZOOM_OFFSET = 0;
 // case it clamps to `minZoom` instead). Without this, zooming out or panning
 // toward the poles (where deck 9's globe controller lowers the effective zoom)
 // makes the whole globe basemap disappear.
-const GLOBE_TILE_EXTENT: [number, number, number, number] = [
-  -180, -85.051129, 180, 85.051129
-];
+const GLOBE_TILE_EXTENT: [number, number, number, number] = [-180, -85.051129, 180, 85.051129];
 
 // Max *native* zoom of each vector tile source. Set this (not an arbitrarily
 // high number) so deck overzooms — i.e. keeps rendering the deepest real tile
@@ -688,5 +690,7 @@ export const getGlobeBaseLayers = ({
 
 export const getGlobeTopLayers = ({globe, zoom}: {globe: Globe; zoom?: number}): Layer[] => {
   const {config} = globe;
-  return [config.atmosphere ? getGlobeAtmosphereLayer({config, zoom}) : null].filter(Boolean) as Layer[];
+  return [config.atmosphere ? getGlobeAtmosphereLayer({config, zoom}) : null].filter(
+    Boolean
+  ) as Layer[];
 };

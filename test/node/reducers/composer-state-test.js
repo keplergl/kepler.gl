@@ -3,20 +3,31 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskWithValues} from 'react-palm/tasks';
+import {drainTasksForTesting, succeedTaskInTest, succeedTaskWithValues} from '@kepler.gl/tasks';
 import test from 'tape';
 
-import {registerEntry} from '@kepler.gl/actions';
-import {processCsvData} from '@kepler.gl/processors';
+import {
+  appendStagedLoadedFiles,
+  confirmReplaceDataset,
+  loadFilesSuccess,
+  registerEntry,
+  stageLoadedFiles,
+  wrapTo
+} from '@kepler.gl/actions';
+import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
 import keplerGlReducer, {
   addDataToMapUpdater,
   replaceDataInMapUpdater,
+  combinedUpdaters,
   fitBoundsUpdater,
   INITIAL_UI_STATE,
   visStateReducer,
   mapStateReducer
 } from '@kepler.gl/reducers';
-import {getTimeBins} from '@kepler.gl/utils';
+import {MapSplitMode} from '@kepler.gl/constants';
+import KeplerGlSchema from '@kepler.gl/schemas';
+import {KeplerTable} from '@kepler.gl/table';
+import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
 import testHexIdData, {
@@ -260,6 +271,89 @@ test('#composerStateReducer - addDataToMapUpdater: mapLegend', t => {
   t.end();
 });
 
+test('#composerStateReducer - addDataToMapUpdater: mapInfo', t => {
+  const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+
+  t.equal(state.uiState.mapControls.mapInfo.active, true, 'map info panel starts open');
+  t.equal(state.visState.mapInfo.title, undefined, 'map title starts unset');
+  t.equal(state.visState.mapInfo.description, undefined, 'map description starts unset');
+
+  const withInfo = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'}
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(withInfo.visState.mapInfo.title, 'Harbor', 'loaded map title is restored');
+  t.equal(
+    withInfo.visState.mapInfo.description,
+    'Ferry routes',
+    'loaded map description is restored'
+  );
+  t.equal(withInfo.uiState.mapControls.mapInfo.active, true, 'panel stays open when title loads');
+
+  const collapsed = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: ''},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {active: false}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(collapsed.visState.mapInfo.title, 'Harbor', 'collapsed map still restores its title');
+  t.equal(collapsed.visState.mapInfo.description, undefined, 'a blank description stays unset');
+  t.equal(
+    collapsed.uiState.mapControls.mapInfo.active,
+    false,
+    'saved collapsed map info panel stays closed'
+  );
+
+  const hidden = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {
+        data: mockRawData,
+        info: {id: 'foo'}
+      },
+      info: {title: 'Harbor', description: 'Ferry routes'},
+      config: {
+        uiState: {
+          mapControls: {
+            mapInfo: {show: false, active: true}
+          }
+        }
+      }
+    }
+  });
+
+  drainTasksForTesting();
+
+  t.equal(hidden.visState.mapInfo.title, 'Harbor', 'a hidden map still restores its title');
+  t.equal(
+    hidden.uiState.mapControls.mapInfo.show,
+    false,
+    'saved hidden map info stays off the map'
+  );
+
+  t.end();
+});
+
 test('#composerStateReducer - addDataToMapUpdater: locale', t => {
   const state = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
 
@@ -380,6 +474,7 @@ test('#composerStateReducer - addDataToMapUpdater: keepExistingConfig', t => {
       tooltip: {
         ...oldInteractionConfig.tooltip,
         config: {
+          timezone: null,
           compareMode: false,
           compareType: 'absolute',
           fieldsToShow: {
@@ -777,6 +872,470 @@ test('#composerStateReducer - replaceDataInMapUpdater: same dataId', t => {
   t.end();
 });
 
+test('#composerStateReducer - dataset replacement preserves data-independent bookmarks', t => {
+  const bookmarks = [
+    {
+      id: 'first',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    },
+    {
+      id: 'second',
+      name: 'Away',
+      camera: {longitude: -20, latitude: 30, zoom: 8, bearing: 0, pitch: 0}
+    }
+  ];
+  for (const [dataId, replacementId] of [
+    ['id', 'id'],
+    ['id', 'replacement'],
+    ['ordinary-dataset', 'id'],
+    ['name', 'name'],
+    ['camera', 'camera'],
+    ['ordinary-dataset', 'ordinary-dataset']
+  ]) {
+    const data = {
+      fields: [{name: 'value', type: 'integer', format: '', analyzerType: 'INT'}],
+      rows: [[1]]
+    };
+    const dataset = new KeplerTable({info: {id: dataId, label: 'Original'}});
+    dataset.importData({data});
+    const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+    const state = {
+      ...initial,
+      visState: {...initial.visState, cameraBookmarks: bookmarks, datasets: {[dataId]: dataset}}
+    };
+    const next = replaceDataInMapUpdater(state, {
+      payload: {
+        datasetToReplaceId: dataId,
+        datasetToUse: {
+          info: {id: replacementId, label: 'Replacement'},
+          data: {...data, rows: [[2], [3]]}
+        },
+        options: {centerMap: false}
+      }
+    });
+    const result = {...next, visState: applyExistingDatasetTasks(visStateReducer, next.visState)};
+    t.equal(
+      result.visState.datasets[replacementId].dataContainer.numRows(),
+      2,
+      `${dataId}: replaces rows`
+    );
+    t.deepEqual(
+      result.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: preserves every saved view`
+    );
+    t.deepEqual(
+      KeplerGlSchema.getConfigToSave(result).config.visState.cameraBookmarks,
+      bookmarks,
+      `${dataId}: subsequent saves retain bookmarks`
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - legacy bookmarks do not opt in or reset an explicit host preference', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
+  ];
+  const config = KeplerGlSchema.getConfigToSave({
+    ...initial,
+    visState: {...initial.visState, cameraBookmarks: bookmarks}
+  });
+  delete config.config.uiState.mapControls.cameraBookmarks; // Legacy files have no preference.
+  const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+  for (const controls of [
+    initial.uiState.mapControls,
+    legacyControls,
+    {...legacyControls, cameraBookmarks: {...cameraBookmarks, show: true}}
+  ]) {
+    const state = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+    const loaded = addDataToMapUpdater(state, {
+      payload: {datasets: [], config, options: {centerMap: false}}
+    });
+    t.deepEqual(loaded.visState.cameraBookmarks, bookmarks, 'restores saved views');
+    t.equal(
+      loaded.uiState.mapControls.cameraBookmarks?.show === true,
+      controls.cameraBookmarks?.show === true,
+      'loading views preserves explicit opt-in and leaves default/missing controls off'
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - project JSON bookmark visibility and layout survive file import', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const bookmarks = [
+    {
+      id: 'home',
+      name: 'Home',
+      camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45}
+    }
+  ];
+  const settings = {
+    position: {x: 42, y: 64, anchorX: 'left', anchorY: 'bottom'},
+    contentHeight: 80
+  };
+  for (const show of [true, false]) {
+    for (const isSplit of [false, true]) {
+      const source = {
+        ...initial,
+        visState: {...initial.visState, cameraBookmarks: bookmarks},
+        mapState: {...initial.mapState, isSplit},
+        uiState: {
+          ...initial.uiState,
+          mapControls: {
+            ...initial.uiState.mapControls,
+            cameraBookmarks: {
+              ...initial.uiState.mapControls.cameraBookmarks,
+              show,
+              settings,
+              activeMapIndex: 1
+            }
+          }
+        }
+      };
+      // This is the same JSON construction and parsing used by project export/import.
+      const json = JSON.parse(exportToJsonString(getMapJSON(source, {hasData: true})));
+      t.deepEqual(
+        json.config.config.uiState.mapControls.cameraBookmarks,
+        {show, settings},
+        'project JSON carries visibility and layout only'
+      );
+      const {cameraBookmarks, ...legacyControls} = initial.uiState.mapControls;
+      for (const controls of [
+        legacyControls,
+        {
+          ...initial.uiState.mapControls,
+          cameraBookmarks: {...cameraBookmarks, show: !show, activeMapIndex: 1}
+        }
+      ]) {
+        const target = {...initial, uiState: {...initial.uiState, mapControls: controls}};
+        const imported = keplerGlReducer(
+          {test: target},
+          wrapTo(
+            'test',
+            loadFilesSuccess(
+              [
+                {
+                  info: {format: 'keplergl', label: 'saved-map.json'},
+                  data: processKeplerglJSON(json)
+                }
+              ],
+              {centerMap: false}
+            )
+          )
+        ).test;
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.show,
+          show,
+          'restores explicit visibility over the target preference'
+        );
+        t.deepEqual(
+          imported.uiState.mapControls.cameraBookmarks.settings,
+          settings,
+          'restores floating panel layout'
+        );
+        t.equal(
+          imported.uiState.mapControls.cameraBookmarks.activeMapIndex,
+          0,
+          'does not restore transient split-map index'
+        );
+        t.deepEqual(imported.visState.cameraBookmarks, bookmarks, 'preserves saved camera data');
+        t.equal(imported.mapState.isSplit, isSplit, 'preserves the saved map mode');
+      }
+    }
+  }
+  const legacyJson = JSON.parse(exportToJsonString(getMapJSON(initial, {hasData: true})));
+  delete legacyJson.config.config.uiState.mapControls.cameraBookmarks;
+  for (const withUiState of [true, false]) {
+    const json = JSON.parse(JSON.stringify(legacyJson));
+    if (!withUiState) delete json.config.config.uiState;
+    const imported = keplerGlReducer(
+      {test: initial},
+      wrapTo(
+        'test',
+        loadFilesSuccess(
+          [{info: {format: 'keplergl', label: 'legacy.json'}, data: processKeplerglJSON(json)}],
+          {centerMap: false}
+        )
+      )
+    ).test;
+    t.equal(
+      imported.uiState.mapControls.cameraBookmarks.show,
+      false,
+      'legacy project defaults off'
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset with no layers before the previous replace merges', t => {
+  const noLayersId = 'dataset_without_layers';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: noLayersId}}
+      ],
+      config: sampleConfig.config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.ok(layerOrder.length > 1, 'should start with more than one layer on the first dataset');
+
+  // Refresh both datasets back to back, the way an app refreshing every query
+  // does: the second replace is prepared before the first one has merged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: noLayersId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: noLayersId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing a dataset that has layers before the previous replace merges', t => {
+  const secondDataId = 'dataset_with_its_own_layer';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  // Two layers on the first dataset and one on the second, which is what an app
+  // drawing a query per dataset ends up with.
+  const configWithBothDatasets = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {
+        ...sampleConfig.config.config.visState,
+        layers: [
+          ...sampleConfig.config.config.visState.layers,
+          {
+            id: 'second_ds_layer',
+            type: 'point',
+            config: {
+              dataId: secondDataId,
+              label: 'second dataset',
+              columns: {lat: 'gps_data.lat', lng: 'gps_data.lng', altitude: null},
+              isVisible: true
+            }
+          }
+        ]
+      }
+    }
+  };
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: secondDataId}}
+      ],
+      config: configWithBothDatasets,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  const layerOrder = oldState.visState.layerOrder;
+  t.equal(layerOrder.length, 3, 'should start with the three layers of the config');
+
+  // Refresh both datasets back to back: the second replace is prepared while the
+  // first one's layers are still parked in layerToBeMerged.
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = replaceDataInMapUpdater(nextState, {
+    payload: {
+      datasetToReplaceId: secondDataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: secondDataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.layerToBeMerged, [], 'should merge every layer back');
+  t.deepEqual(nextState.visState.layerOrder, layerOrder, 'should keep the layer order');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: replacing datasets back to back keeps the split map panels', t => {
+  const noLayersId = 'dataset_without_layers';
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: [
+        {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        {data: processCsvData(testCsvData), info: {id: noLayersId}}
+      ],
+      config: sampleConfig.config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+  const splitMaps = [
+    {layers: {'3zucml7': true, nob639j: false}},
+    {layers: {'3zucml7': false, nob639j: true}}
+  ];
+  t.deepEqual(oldState.visState.splitMaps, splitMaps, 'should start with one layer on each side');
+
+  // Refresh both datasets back to back, several times, the way an app refreshing
+  // every query does.
+  let nextState = oldState;
+  for (let refresh = 0; refresh < 3; refresh++) {
+    nextState = replaceDataInMapUpdater(nextState, {
+      payload: {
+        datasetToReplaceId: sampleConfig.dataId,
+        datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+        options: {autoCreateLayers: false, centerMap: false}
+      }
+    });
+    nextState = replaceDataInMapUpdater(nextState, {
+      payload: {
+        datasetToReplaceId: noLayersId,
+        datasetToUse: {data: processCsvData(testCsvData), info: {id: noLayersId}},
+        options: {autoCreateLayers: false, centerMap: false}
+      }
+    });
+    nextState = {
+      ...nextState,
+      visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+    };
+    drainTasksForTesting();
+
+    t.deepEqual(
+      nextState.visState.splitMaps,
+      splitMaps,
+      `should keep one layer on each side after refresh ${refresh + 1}`
+    );
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater: keeps the right panel of a dual map empty', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  const config = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {...sampleConfig.config.config.visState, splitMaps: []},
+      mapState: {...sampleConfig.config.config.mapState, isSplit: false}
+    }
+  };
+
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      config,
+      options: {autoCreateLayers: false}
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+  drainTasksForTesting();
+
+  // split the map: every layer on the left panel, nothing on the right one
+  oldState = combinedUpdaters.setMapSplitModeUpdater(oldState, {
+    payload: {mapSplitMode: MapSplitMode.DUAL_MAP}
+  });
+  const splitMaps = [{layers: {'3zucml7': true, nob639j: true}}, {layers: {}}];
+  t.deepEqual(oldState.visState.splitMaps, splitMaps, 'should split the map');
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      options: {autoCreateLayers: false, centerMap: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.splitMaps, splitMaps, 'should keep the right panel empty');
+  t.end();
+});
+
+test('#composerStateReducer - addDataToMapUpdater: loads a dual map saved with an empty panel', t => {
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  // saved from DUAL_MAP mode: every layer on the left panel, nothing on the right one
+  const splitMaps = [{layers: {'3zucml7': true, nob639j: true}}, {layers: {}}];
+  const config = {
+    ...sampleConfig.config,
+    config: {
+      ...sampleConfig.config.config,
+      visState: {...sampleConfig.config.config.visState, splitMaps}
+    }
+  };
+
+  let nextState = addDataToMapUpdater(state, {
+    payload: {
+      datasets: {data: processCsvData(testCsvData), info: {id: sampleConfig.dataId}},
+      config,
+      options: {autoCreateLayers: false}
+    }
+  });
+
+  // the dataset is still loading, its layers are waiting to be merged
+  t.deepEqual(
+    nextState.visState.splitMaps,
+    [{layers: {}}, {layers: {}}],
+    'should create both panels while the layers load'
+  );
+  const savedConfig = JSON.parse(JSON.stringify(KeplerGlSchema.getConfigToSave(nextState)));
+  t.doesNotThrow(
+    () => KeplerGlSchema.parseSavedConfig(savedConfig),
+    'should save a config that loads while the layers load'
+  );
+
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.deepEqual(nextState.visState.splitMaps, splitMaps, 'should keep the right panel empty');
+  t.end();
+});
+
 test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & match', t => {
   const oldState = StateWSyncedTimeFilter;
   const dataIdToReplace = 'dataset_to_replace';
@@ -912,5 +1471,297 @@ test('#composerStateReducer - replaceDataInMapUpdater: syncedTimeFilter & no mat
 
   t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
+  t.end();
+});
+
+test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const result = [{info: {label: 'points.csv', format: 'csv'}, data: []}];
+  const loadingState = {
+    ...base,
+    uiState: {
+      ...base.uiState,
+      currentModal: 'addData',
+      loadFiles: {fileLoading: true}
+    },
+    visState: {
+      ...base.visState,
+      fileLoading: {filesToLoad: [], fileCache: [], onFinish: () => null},
+      fileLoadingProgress: {
+        a: {percent: 1, message: 'Done', fileName: 'points.csv', error: null}
+      }
+    }
+  };
+
+  const staged = combinedUpdaters.stageLoadedFilesUpdater(loadingState, stageLoadedFiles(result));
+  t.equal(staged.uiState.currentModal, 'addData', 'should leave the Add Data modal open');
+  t.equal(staged.uiState.loadFiles.fileLoading, false, 'should clear the loading flag');
+  t.equal(staged.visState.fileLoading, false, 'should finish the visState load');
+  t.equal(staged.visState.stagedToAdd[0].info.label, 'points.csv', 'should keep the parsed file');
+  t.equal(staged.visState.datasets, base.visState.datasets, 'should not add datasets yet');
+
+  const closed = {
+    ...loadingState,
+    uiState: {...loadingState.uiState, currentModal: null}
+  };
+  const dropped = combinedUpdaters.stageLoadedFilesUpdater(closed, stageLoadedFiles(result));
+  t.equal(
+    dropped.visState.stagedToAdd,
+    null,
+    'should discard files when the modal is already closed'
+  );
+
+  const withPrevious = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      stagedToAdd: [{info: {label: 'points.csv', format: 'csv'}, data: []}]
+    }
+  };
+  const appended = combinedUpdaters.stageLoadedFilesUpdater(
+    withPrevious,
+    stageLoadedFiles([{info: {label: 'cities.csv', format: 'csv'}, data: []}])
+  );
+  t.deepEqual(
+    appended.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv'],
+    'should append a later file instead of replacing the staged list'
+  );
+
+  const replacedLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: null
+    }
+  };
+  const staleFinish = combinedUpdaters.stageLoadedFilesUpdater(replacedLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(staleFinish, replacedLoad, 'a finish from a canceled load does not replace the new one');
+
+  const canceledLoad = {
+    ...loadingState,
+    visState: {...loadingState.visState, fileLoading: false, stagedToAdd: null}
+  };
+  const afterCancel = combinedUpdaters.stageLoadedFilesUpdater(canceledLoad, {
+    ...stageLoadedFiles(result),
+    loadId: 1
+  });
+  t.equal(afterCancel.visState.fileLoading, false, 'a canceled load stays stopped');
+  t.equal(afterCancel.visState.stagedToAdd, null, 'a canceled load is not restored');
+
+  const remote = {
+    data: {fields: [], rows: []},
+    info: {id: 'remote-1', label: 'quakes.csv', format: 'row', type: 'externally-hosted'},
+    metadata: {source: 'https://example.com/quakes.csv', sourceFormat: 'csv'}
+  };
+  const withRemote = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    appended,
+    appendStagedLoadedFiles([remote])
+  );
+  t.deepEqual(
+    withRemote.visState.stagedToAdd.map(item => item.info.label),
+    ['points.csv', 'cities.csv', 'quakes.csv'],
+    'should add a remote url without replacing staged files'
+  );
+  t.equal(withRemote.visState.fileLoading, false, 'should not start a file load for a remote url');
+  const duplicate = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    withRemote,
+    appendStagedLoadedFiles([remote])
+  );
+  t.equal(duplicate, withRemote, 'should ignore a url that is already staged');
+
+  const closedModal = {
+    ...withRemote,
+    uiState: {...withRemote.uiState, currentModal: null}
+  };
+  const afterClose = combinedUpdaters.appendStagedLoadedFilesUpdater(
+    closedModal,
+    appendStagedLoadedFiles([
+      {
+        ...remote,
+        info: {...remote.info, id: 'remote-2', label: 'cities.csv'},
+        metadata: {source: 'https://example.com/cities.csv'}
+      }
+    ])
+  );
+  t.equal(afterClose, closedModal, 'a remote url is not staged after the modal closes');
+
+  const activeLoad = {
+    ...loadingState,
+    visState: {
+      ...loadingState.visState,
+      fileLoading: {...loadingState.visState.fileLoading, loadId: 2},
+      stagedToAdd: [{info: {label: 'fresh.csv'}}]
+    }
+  };
+  const staleAdd = combinedUpdaters.loadFilesSuccessUpdater(activeLoad, {
+    ...loadFilesSuccess([{info: {label: 'old.csv', format: 'csv'}, data: {fields: [], rows: []}}]),
+    loadId: 1
+  });
+  t.equal(staleAdd, activeLoad, 'a stale add does not replace the current load');
+
+  t.end();
+});
+
+test('#composerStateReducer -> progressive Arrow confirmation queues the next snapshot', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const first = {
+    info: {id: 'progressive-arrow', label: 'progressive.arrow', format: 'arrow'},
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 1)}
+  };
+  const final = {
+    ...first,
+    data: {...mockRawData, rows: mockRawData.rows.slice(0, 2)}
+  };
+  const staged = {
+    ...final,
+    progressiveData: [first.data, final.data]
+  };
+  const afterFirstDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    base,
+    loadFilesSuccess([staged], {autoCreateLayers: false, centerMap: true})
+  );
+
+  const afterFirstCommit = applyExistingDatasetTasks(visStateReducer, afterFirstDispatch.visState);
+  const continuation = drainTasksForTesting().find(task => task.label === 'DELAY_TASK');
+  const nextAction = succeedTaskInTest(continuation, undefined);
+  const afterFinalDispatch = combinedUpdaters.loadFilesSuccessUpdater(
+    {...afterFirstDispatch, visState: afterFirstCommit},
+    nextAction
+  );
+  const [updateTask] = drainTasksForTesting();
+  const finalTable = new KeplerTable({info: final.info});
+  finalTable.importData({data: final.data});
+  const afterFinalCommit = visStateReducer(
+    afterFinalDispatch.visState,
+    succeedTaskWithValues(updateTask, [finalTable])
+  );
+
+  t.equal(afterFirstCommit.datasets['progressive-arrow'].length, 1, 'commits the first snapshot');
+  t.equal(nextAction.result[0].data.rows.length, 2, 'queues the next cumulative snapshot');
+  t.deepEqual(
+    nextAction.progressiveSteps,
+    [],
+    'marks the final step without queueing another snapshot'
+  );
+  t.equal(nextAction.options.centerMap, false, 'does not center subsequent snapshots');
+  t.equal(afterFinalCommit.datasets['progressive-arrow'].length, 2, 'commits the final snapshot');
+  t.equal(drainTasksForTesting().length, 0, 'does not leave another continuation queued');
+  t.end();
+});
+
+test('#composerStateReducer - replaceDataInMapUpdater keeps the original dataset when asked', t => {
+  const dataIdToReplace = 'dataset_to_replace';
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const datasetToUse = {
+    data: processCsvData(dataWithNulls),
+    info: {
+      id: dataIdToReplace,
+      label: 'Replaced'
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {...oldState, visState: applyExistingDatasetTasks(visStateReducer, oldState.visState)};
+
+  let nextState = replaceDataInMapUpdater(oldState, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options: {deleteOriginalDataset: false}
+    }
+  });
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.ok(nextState.visState.datasets[sampleConfig.dataId], 'should keep the original dataset');
+  t.ok(nextState.visState.datasets[dataIdToReplace], 'should add the replacement dataset');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === dataIdToReplace),
+    'should remap layers onto the replacement'
+  );
+  t.ok(
+    nextState.visState.filters.every(filter => filter.dataId.includes(dataIdToReplace)),
+    'should remap filters onto the replacement'
+  );
+
+  t.end();
+});
+
+test('#composerStateReducer - confirmReplaceDatasetUpdater replaces the confirmed upload', t => {
+  const datasets = {
+    data: processCsvData(testCsvData),
+    info: {
+      id: sampleConfig.dataId
+    }
+  };
+  const state = keplerGlReducer({}, registerEntry({id: 'test'})).test;
+  let oldState = addDataToMapUpdater(state, {
+    payload: {
+      datasets,
+      config: sampleConfig.config
+    }
+  });
+  oldState = {
+    ...oldState,
+    visState: applyExistingDatasetTasks(visStateReducer, {
+      ...oldState.visState,
+      stagedToAdd: [
+        {info: {id: 'pending', label: 'pending', format: 'csv'}, data: {fields: [], rows: []}}
+      ]
+    }),
+    uiState: {
+      ...oldState.uiState,
+      datasetToReplaceId: sampleConfig.dataId,
+      currentModal: 'addData'
+    }
+  };
+
+  let nextState = combinedUpdaters.confirmReplaceDatasetUpdater(
+    oldState,
+    confirmReplaceDataset({
+      datasetToReplaceId: sampleConfig.dataId,
+      deleteOriginalDataset: true,
+      result: [
+        {
+          data: processCsvData(dataWithNulls),
+          info: {id: 'uploaded-replacement', label: 'Uploaded', format: 'csv'}
+        }
+      ]
+    })
+  );
+  nextState = {
+    ...nextState,
+    visState: applyExistingDatasetTasks(visStateReducer, nextState.visState)
+  };
+  drainTasksForTesting();
+
+  t.notOk(nextState.visState.datasets[sampleConfig.dataId], 'should drop the original dataset');
+  t.ok(nextState.visState.datasets['uploaded-replacement'], 'should add the uploaded dataset');
+  t.equal(nextState.visState.stagedToAdd, null, 'should clear the staged upload');
+  t.equal(nextState.uiState.datasetToReplaceId, null, 'should clear replace mode');
+  t.equal(nextState.uiState.currentModal, null, 'should close the modal');
+  t.ok(
+    nextState.visState.layers.every(layer => layer.config.dataId === 'uploaded-replacement'),
+    'should remap layers onto the upload'
+  );
+
   t.end();
 });

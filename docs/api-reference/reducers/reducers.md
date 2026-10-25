@@ -21,7 +21,7 @@ to mount it at another address e.g. `foo` you will need to specify it when you m
 ```javascript
 import keplerGlReducer from '@kepler.gl/reducers';
 import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
-import {taskMiddleware} from 'react-palm/tasks';
+import {taskMiddleware} from '@kepler.gl/tasks';
 
 const initialState = {};
 const reducers = combineReducers({

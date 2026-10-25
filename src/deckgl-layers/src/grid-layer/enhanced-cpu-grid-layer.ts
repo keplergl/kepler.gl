@@ -37,7 +37,11 @@ interface GridPickingObject {
 export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   static defaultProps = {
     ...GridLayer.defaultProps,
-    gpuAggregation: false
+    gpuAggregation: false,
+    // Supplied by kepler's AggregationLayer when a point-count label is on.
+    // compare: false so a new callback identity does not re-aggregate.
+    renderCountLabels: {type: 'function', value: null, compare: false, optional: true},
+    countLabelConfig: {type: 'object', value: null, compare: true, optional: true}
   };
 
   // HACK: deck.gl 9's _onAggregationUpdate is private and its onSetColorDomain
@@ -64,7 +68,10 @@ export default class ScaleEnhancedGridLayer extends GridLayer<any> {
   // deck.gl's GridCellLayer positions cells in flat common space, which lands them
   // on the XY plane through the globe center. Swap in a globe-aware subclass that
   // curves cells onto the sphere surface (no-op in 2D/3D mode).
-  getSubLayerClass<T extends Layer>(subLayerId: string, DefaultLayerClass: {new (...args: any[]): T}) {
+  getSubLayerClass<T extends Layer>(
+    subLayerId: string,
+    DefaultLayerClass: {new (...args: any[]): T}
+  ) {
     const resolved = super.getSubLayerClass(subLayerId, DefaultLayerClass);
     if (subLayerId === 'cells') {
       return makeGlobeCellLayerClass(

@@ -2,7 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {visStateReducer as reducer, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {
+  getZoomOpacityAnnotationTargetId,
+  visStateReducer as reducer,
+  INITIAL_VIS_STATE
+} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {AnnotationKind} from '@kepler.gl/constants';
 
@@ -21,6 +25,8 @@ test('#visStateReducer -> ADD_ANNOTATION', t => {
   t.equal(state.annotations[0].kind, AnnotationKind.POINT, 'should default to POINT kind');
   t.equal(state.annotations[0].isVisible, true, 'should be visible by default');
   t.equal(state.annotations[0].label, 'New Annotation', 'should have default label');
+  t.equal(state.annotations[0].textSide, 'right', 'should default text to the right');
+  t.equal(state.annotations[0].textVerticalPosition, 'above', 'should default text above');
   t.equal(state.selectedAnnotationId, state.annotations[0].id, 'should select new annotation');
   t.equal(state.isEditingAnnotationText, true, 'should start editing text');
 
@@ -61,6 +67,11 @@ test('#visStateReducer -> ADD_ANNOTATION with TEXT kind', t => {
   t.equal(state.annotations[0].kind, AnnotationKind.TEXT, 'should create TEXT annotation');
   t.notOk('armLength' in state.annotations[0], 'TEXT should not have armLength');
   t.notOk('angle' in state.annotations[0], 'TEXT should not have angle');
+  t.notOk(state.annotations[0].textSide, 'TEXT should not stamp a default textSide');
+  t.notOk(
+    state.annotations[0].textVerticalPosition,
+    'TEXT should not stamp a default textVerticalPosition'
+  );
 
   t.end();
 });
@@ -81,14 +92,116 @@ test('#visStateReducer -> ADD_ANNOTATION with ARROW kind', t => {
   t.end();
 });
 
+test('#visStateReducer -> ADD_ANNOTATION with RULER kind', t => {
+  const state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'ruler-1',
+      anchorPoint: [0, 0, 25],
+      kind: AnnotationKind.RULER
+    })
+  );
+
+  const ruler = state.annotations[0];
+  t.equal(ruler.kind, AnnotationKind.RULER, 'should create a RULER annotation');
+  t.equal(ruler.endPoint.length, 3, 'default end should keep the start altitude');
+  t.equal(ruler.endPoint[2], 25, 'default endpoints should begin at the same altitude');
+  t.equal(ruler.showCustomText, true, 'custom text should be enabled by default');
+  t.equal(ruler.showDistance, true, 'distance should be enabled by default');
+  t.notOk('armLength' in ruler, 'RULER should not use leader-arm geometry');
+
+  t.end();
+});
+
+test('#visStateReducer -> multiple RULER annotations update independently', t => {
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'ruler-1',
+      kind: AnnotationKind.RULER,
+      anchorPoint: [0, 0],
+      endPoint: [1, 0]
+    })
+  );
+  state = reducer(
+    state,
+    VisStateActions.addAnnotation({
+      id: 'ruler-2',
+      kind: AnnotationKind.RULER,
+      anchorPoint: [10, 10],
+      endPoint: [11, 10]
+    })
+  );
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation('ruler-1', {
+      endPoint: [2, 0],
+      showCustomText: false,
+      showDistance: false
+    })
+  );
+
+  const first = state.annotations.find(annotation => annotation.id === 'ruler-1');
+  const second = state.annotations.find(annotation => annotation.id === 'ruler-2');
+  t.deepEqual(first.endPoint, [2, 0], 'target ruler endpoint should update');
+  t.equal(first.showCustomText, false, 'target custom text can be disabled');
+  t.equal(first.showDistance, false, 'target distance can be disabled simultaneously');
+  t.deepEqual(second.endPoint, [11, 10], 'other ruler endpoint should remain unchanged');
+  t.equal(second.showCustomText, true, 'other ruler text setting should remain unchanged');
+  t.equal(second.showDistance, true, 'other ruler distance setting should remain unchanged');
+
+  t.end();
+});
+
+test('#visStateReducer -> ADD_ANNOTATION derives placement from angle', t => {
+  const state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      anchorPoint: [0, 0],
+      kind: AnnotationKind.POINT,
+      angle: 135
+    })
+  );
+
+  t.equal(state.annotations[0].angle, 135, 'should keep provided angle');
+  t.equal(state.annotations[0].textSide, 'left', 'should derive left from angle 135');
+  t.equal(state.annotations[0].textVerticalPosition, 'below', 'should derive below from angle 135');
+
+  t.end();
+});
+
 test('#visStateReducer -> REMOVE_ANNOTATION', t => {
   let state = reducer(initialState, VisStateActions.addAnnotation({anchorPoint: [0, 0]}));
   const id = state.annotations[0].id;
+  state = {
+    ...state,
+    interactionConfig: {
+      ...state.interactionConfig,
+      zoomOpacity: {
+        ...state.interactionConfig.zoomOpacity,
+        enabled: true,
+        config: {
+          controllers: [
+            {
+              id: 'controller-1',
+              layerIds: [getZoomOpacityAnnotationTargetId(id)],
+              stops: {appear: 1, full: 3, fade: 8, gone: 12}
+            }
+          ]
+        }
+      }
+    }
+  };
 
   state = reducer(state, VisStateActions.removeAnnotation(id));
 
   t.equal(state.annotations.length, 0, 'should remove annotation');
   t.equal(state.selectedAnnotationId, null, 'should deselect removed annotation');
+  t.deepEqual(
+    state.interactionConfig.zoomOpacity.config.controllers[0].layerIds,
+    [],
+    'should remove the annotation from fade-on-zoom controllers'
+  );
 
   t.end();
 });
@@ -145,6 +258,77 @@ test('#visStateReducer -> UPDATE_ANNOTATION with kind change', t => {
 
   t.equal(state.annotations[0].kind, AnnotationKind.CIRCLE, 'should change kind');
   t.ok('radiusInMeters' in state.annotations[0], 'should add CIRCLE-specific properties');
+
+  t.end();
+});
+
+test('#visStateReducer -> UPDATE_ANNOTATION text placement snaps arm angle', t => {
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      anchorPoint: [0, 0],
+      kind: AnnotationKind.POINT
+    })
+  );
+  const id = state.annotations[0].id;
+
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation(id, {
+      textSide: 'left',
+      textVerticalPosition: 'below',
+      angle: 135
+    })
+  );
+
+  t.equal(state.annotations[0].textSide, 'left', 'should set text side');
+  t.equal(state.annotations[0].textVerticalPosition, 'below', 'should set vertical position');
+  t.equal(state.annotations[0].angle, 135, 'should snap arm toward bottom-left');
+
+  t.end();
+});
+
+test('#visStateReducer -> kind changes preserve rich text, including conversions to rulers', t => {
+  const editorState = {
+    root: {
+      children: [
+        {
+          children: [{type: 'text', version: 1, text: 'Formatted label', format: 1}],
+          type: 'paragraph',
+          version: 1,
+          direction: null,
+          format: '',
+          indent: 0
+        }
+      ],
+      type: 'root',
+      version: 1,
+      direction: null,
+      format: '',
+      indent: 0
+    }
+  };
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({id: 'formatted', label: 'Formatted label'})
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('formatted', {editorState}));
+
+  for (const kind of [
+    AnnotationKind.RULER,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.TEXT
+  ]) {
+    state = reducer(state, VisStateActions.updateAnnotation('formatted', {kind}));
+    t.deepEqual(
+      state.annotations[0].editorState,
+      editorState,
+      `${kind} keeps rich-text formatting`
+    );
+    t.equal(state.annotations[0].label, 'Formatted label', `${kind} keeps the plain text label`);
+  }
 
   t.end();
 });

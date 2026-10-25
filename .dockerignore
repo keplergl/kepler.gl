@@ -26,6 +26,12 @@
 .conda
 .netlify
 
+# Secrets must not be baked into publishable images (use runtime /config.json)
+.env
+.env.*
+!.env.template
+docker/config.json
+
 # Not used by the demo-app image
 bindings
 website
@@ -35,7 +41,12 @@ screenshots
 skill
 contributing
 typedoc
-docker
+
+# Compose/docs/Dockerfiles are read by the CLI, not needed inside the build context
+docker/docker-compose.yml
+docker/Dockerfile
+docker/Dockerfile.dev
+docker/README.md
 
 # Other examples (keep demo-app only)
 examples/*

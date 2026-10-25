@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {BitmapLayer as DeckBitmapLayer, PathLayer, ScatterplotLayer} from '@deck.gl/layers';
 import {
-  EditableGeoJsonLayer,
-  ModifyMode,
-  TranslateMode,
-  CompositeMode,
-  GeoJsonEditMode
-} from '@deck.gl-community/editable-layers';
+  BitmapLayer as DeckBitmapLayer,
+  IconLayer,
+  PathLayer,
+  ScatterplotLayer
+} from '@deck.gl/layers';
+import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 
 import Layer from '../base-layer';
 import BitmapLayerIcon from './bitmap-layer-icon';
+import {BITMAP_BOUNDS_EDIT_MODE, BITMAP_MOVE_HANDLE_TYPE} from './bitmap-bounds-edit-mode';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {
   LAYER_VIS_CONFIGS,
@@ -23,10 +23,21 @@ import {
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, VisConfigBoolean} from '@kepler.gl/types';
 
-const EDIT_MODE = new CompositeMode([
-  new TranslateMode() as unknown as GeoJsonEditMode,
-  new ModifyMode() as unknown as GeoJsonEditMode
-]);
+const CORNER_HANDLE_COLOR: [number, number, number, number] = [255, 200, 0, 255];
+const MOVE_HANDLE_COLOR: [number, number, number, number] = [38, 181, 242, 255];
+const MOVE_HANDLE_RADIUS = 10;
+const CORNER_HANDLE_RADIUS = 6;
+
+const MOVE_HANDLE_ICON_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <g fill="#fff" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linejoin="round">
+        <path d="M32 6l8 12h-5v10h-6V18h-5z"/>
+        <path d="M58 32l-12 8v-5H36v-6h10v-5z"/>
+        <path d="M32 58l-8-12h5V36h6v10h5z"/>
+        <path d="M6 32l12-8v5h10v6H18v5z"/>
+      </g>
+    </svg>`
+)}`;
 
 export type BitmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -116,13 +127,13 @@ export type AlignControlPoint = {
 export default class BitmapOverlayLayer extends Layer {
   declare visConfigSettings: BitmapLayerVisConfigSettings;
   private _editFeatureCollection: any = null;
-  private _prevDataBoundsKey: string = '';
+  private _prevDataBoundsKey = '';
   private _onRedrawNeeded: (() => void) | undefined;
   private _rafId: number | undefined;
 
   // Alignment mode state
   alignControlPoints: AlignControlPoint[] = [];
-  alignWaitingForMap: boolean = false;
+  alignWaitingForMap = false;
   private _pendingUV: [number, number] | null = null;
 
   constructor(props: {dataId: string; visConfig?: Record<string, any>} & Record<string, any>) {
@@ -149,10 +160,7 @@ export default class BitmapOverlayLayer extends Layer {
 
   onAlignMapClick(lngLat: [number, number]): void {
     if (!this._pendingUV) return;
-    this.alignControlPoints = [
-      ...this.alignControlPoints,
-      {uv: this._pendingUV, geo: lngLat}
-    ];
+    this.alignControlPoints = [...this.alignControlPoints, {uv: this._pendingUV, geo: lngLat}];
     this._pendingUV = null;
     this.alignWaitingForMap = false;
 
@@ -174,13 +182,25 @@ export default class BitmapOverlayLayer extends Layer {
     // Solve affine: lng = a * u + b, lat = c * v + d
     // From 2+ points, use least squares (for 2 points, exact solution)
     const n = pts.length;
-    let sumU = 0, sumLng = 0, sumUU = 0, sumULng = 0;
-    let sumV = 0, sumLat = 0, sumVV = 0, sumVLat = 0;
+    let sumU = 0,
+      sumLng = 0,
+      sumUU = 0,
+      sumULng = 0;
+    let sumV = 0,
+      sumLat = 0,
+      sumVV = 0,
+      sumVLat = 0;
     for (const p of pts) {
       const [u, v] = p.uv;
       const [lng, lat] = p.geo;
-      sumU += u; sumLng += lng; sumUU += u * u; sumULng += u * lng;
-      sumV += v; sumLat += lat; sumVV += v * v; sumVLat += v * lat;
+      sumU += u;
+      sumLng += lng;
+      sumUU += u * u;
+      sumULng += u * lng;
+      sumV += v;
+      sumLat += lat;
+      sumVV += v * v;
+      sumVLat += v * lat;
     }
 
     // lng = a*u + b (solve for a, b)
@@ -197,10 +217,10 @@ export default class BitmapOverlayLayer extends Layer {
 
     // Bounds: image corners are (0,0), (1,0), (1,1), (0,1)
     // UV origin (0,0) = top-left of image, (1,1) = bottom-right
-    const west = b;         // u=0
-    const east = a + b;     // u=1
-    const north = d;        // v=0 (top of image)
-    const south = c + d;    // v=1 (bottom of image)
+    const west = b; // u=0
+    const east = a + b; // u=1
+    const north = d; // v=0 (top of image)
+    const south = c + d; // v=1 (bottom of image)
 
     this.updateLayerVisConfig({
       boundsWest: Math.min(west, east),
@@ -385,20 +405,14 @@ export default class BitmapOverlayLayer extends Layer {
     }
 
     // Read current bounds from the edit feature collection (source of truth during editing)
-    const editCoords =
-      this._editFeatureCollection?.features?.[0]?.geometry?.coordinates?.[0];
+    const editCoords = this._editFeatureCollection?.features?.[0]?.geometry?.coordinates?.[0];
     let activeBounds: [number, number, number, number];
     if (editCoords && editCoords.length >= 4) {
       // Use all vertices (excluding closing point which duplicates the first)
       const pts = editCoords.slice(0, -1);
       const lngs = pts.map((c: number[]) => c[0]);
       const lats = pts.map((c: number[]) => c[1]);
-      activeBounds = [
-        Math.min(...lngs),
-        Math.min(...lats),
-        Math.max(...lngs),
-        Math.max(...lats)
-      ];
+      activeBounds = [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)];
     } else {
       activeBounds = [west, south, east, north];
     }
@@ -500,7 +514,7 @@ export default class BitmapOverlayLayer extends Layer {
           id: `${this.id}-edit`,
           // @ts-ignore
           data: this._editFeatureCollection,
-          mode: EDIT_MODE,
+          mode: BITMAP_BOUNDS_EDIT_MODE,
           selectedFeatureIndexes: [0],
           pickable: true,
           pickingRadius: 12,
@@ -513,9 +527,16 @@ export default class BitmapOverlayLayer extends Layer {
           getLineColor: [255, 255, 255, 200],
           getLineWidth: 2,
           lineWidthUnits: 'pixels',
-          getEditHandlePointColor: [255, 200, 0, 255],
-          getEditHandlePointRadius: 6,
+          getEditHandlePointColor: (handle: {properties?: {editHandleType?: string}}) =>
+            handle?.properties?.editHandleType === BITMAP_MOVE_HANDLE_TYPE
+              ? MOVE_HANDLE_COLOR
+              : CORNER_HANDLE_COLOR,
+          getEditHandlePointRadius: (handle: {properties?: {editHandleType?: string}}) =>
+            handle?.properties?.editHandleType === BITMAP_MOVE_HANDLE_TYPE
+              ? MOVE_HANDLE_RADIUS
+              : CORNER_HANDLE_RADIUS,
           editHandlePointRadiusUnits: 'pixels',
+          editHandlePointRadiusMaxPixels: 12,
           onEdit: ({updatedData, editType}) => {
             this._editFeatureCollection = updatedData;
 
@@ -527,8 +548,7 @@ export default class BitmapOverlayLayer extends Layer {
             if (isFinal) {
               // Sync sliders on gesture end
               const geom = updatedData?.features?.[0]?.geometry;
-              const coords =
-                geom && 'coordinates' in geom ? (geom as any).coordinates[0] : null;
+              const coords = geom && 'coordinates' in geom ? (geom as any).coordinates[0] : null;
               if (coords && coords.length >= 5) {
                 const pts = coords.slice(0, -1);
                 const lngs = pts.map((c: number[]) => c[0]);
@@ -555,9 +575,28 @@ export default class BitmapOverlayLayer extends Layer {
           }
         })
       );
+
+      const [aW, aS, aE, aN] = activeBounds;
+      layers.push(
+        new IconLayer({
+          id: `${this.id}-move-handle`,
+          data: [{position: [(aW + aE) / 2, (aS + aN) / 2]}],
+          getPosition: (d: {position: [number, number]}) => d.position,
+          getIcon: () => ({
+            url: MOVE_HANDLE_ICON_URL,
+            width: 64,
+            height: 64,
+            anchorX: 32,
+            anchorY: 32
+          }),
+          getSize: 16,
+          sizeUnits: 'pixels',
+          pickable: false,
+          visible
+        })
+      );
     }
 
     return layers;
   }
-
 }

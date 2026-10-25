@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from 'react-palm/tasks';
+import Task, {withTask, drainTasksForTesting, succeedTaskInTest} from '@kepler.gl/tasks';
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import keplerGlReducer, {
@@ -27,9 +27,115 @@ import {SYNC_TIMELINE_MODES} from '@kepler.gl/constants';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
 import {processKeplerglJSON} from '@kepler.gl/processors';
-import {updateVisData, receiveMapConfig, addDataToMap, registerEntry} from '@kepler.gl/actions';
+import {
+  updateVisData,
+  receiveMapConfig,
+  addDataToMap,
+  registerEntry,
+  setCameraBookmarks,
+  setCameraTour,
+  setLayerAnimationTimeConfig
+} from '@kepler.gl/actions';
 
 import {createDataContainer, findById} from '@kepler.gl/utils';
+
+test('#visState camera bookmarks -> replace, merge, validate and reset', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const first = {id: 'first', name: 'First', camera};
+  const second = {id: 'second', name: 'Second', camera};
+  const base = visStateReducer(undefined, setCameraBookmarks([first]));
+  camera.zoom = 99;
+  t.equal(base.cameraBookmarks[0].camera.zoom, 6, 'owns the captured snapshot');
+  const incoming = {
+    visState: {cameraBookmarks: [{...first, name: 'Changed'}, second, second, null]}
+  };
+  const merged = visStateReducer(base, receiveMapConfig(incoming, {keepExistingConfig: true}));
+  t.deepEqual(
+    merged.cameraBookmarks.map(item => item.name),
+    ['First', 'Second'],
+    'keeps existing IDs, appends unique new IDs'
+  );
+  const preserved = visStateReducer(
+    merged,
+    receiveMapConfig({visState: {}}, {keepExistingConfig: true})
+  );
+  t.deepEqual(
+    preserved.cameraBookmarks,
+    merged.cameraBookmarks,
+    'missing additive content preserves bookmarks'
+  );
+  const replaced = visStateReducer(base, receiveMapConfig({visState: {cameraBookmarks: [second]}}));
+  t.deepEqual(replaced.cameraBookmarks, [second], 'normal load replaces bookmarks');
+  const reset = visStateReducer(base, receiveMapConfig({visState: {}}));
+  t.deepEqual(reset.cameraBookmarks, [], 'normal legacy load clears previous bookmarks');
+  const seeded = {...base, initialState: {cameraBookmarks: [first]}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {cameraBookmarks: [second]}}))
+      .cameraBookmarks,
+    [second],
+    'normal load replaces host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraBookmarks,
+    [],
+    'normal legacy load clears host-provided initial bookmarks'
+  );
+  t.deepEqual(
+    visStateReducer(base, setCameraBookmarks([])).cameraBookmarks,
+    [],
+    'supports deleting every bookmark'
+  );
+  t.end();
+});
+
+test('#visState camera tour -> owned snapshots and single-tour config semantics', t => {
+  const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
+  const bookmark = {id: 'first', name: 'First', camera};
+  const stop = {...bookmark, holdDurationMs: 2000, travelDurationMs: 3000};
+  const tour = {stops: [stop]};
+  const base = visStateReducer(undefined, setCameraTour(tour));
+  camera.zoom = 12;
+  t.equal(base.cameraTour.stops[0].camera.zoom, 6, 'copies the snapshot when authoring');
+  const changed = visStateReducer(base, setCameraBookmarks([bookmark]));
+  const deleted = visStateReducer(changed, setCameraBookmarks([]));
+  t.equal(
+    deleted.cameraTour.stops[0].camera.zoom,
+    6,
+    'bookmark changes and deletion leave the tour alone'
+  );
+  const incoming = {visState: {cameraTour: {stops: [{...stop, id: 'new'}]}}};
+  const kept = visStateReducer(base, receiveMapConfig(incoming, {keepExistingConfig: true}));
+  t.deepEqual(kept.cameraTour, base.cameraTour, 'additive import retains an existing tour');
+  const empty = visStateReducer(base, setCameraTour(null));
+  t.equal(empty.cameraTour, null, 'supports removing the tour');
+  t.deepEqual(
+    visStateReducer(empty, receiveMapConfig(incoming, {keepExistingConfig: true})).cameraTour,
+    incoming.visState.cameraTour,
+    'imports when no tour exists'
+  );
+  t.deepEqual(
+    visStateReducer(base, receiveMapConfig(incoming)).cameraTour,
+    incoming.visState.cameraTour,
+    'normal load replaces'
+  );
+  t.equal(
+    visStateReducer(base, receiveMapConfig({visState: {}})).cameraTour,
+    null,
+    'normal legacy load clears'
+  );
+  const seeded = {...base, initialState: {cameraTour: base.cameraTour}};
+  t.deepEqual(
+    visStateReducer(seeded, receiveMapConfig(incoming)).cameraTour,
+    incoming.visState.cameraTour,
+    'normal load replaces a host-provided initial tour'
+  );
+  t.equal(
+    visStateReducer(seeded, receiveMapConfig({visState: {}})).cameraTour,
+    null,
+    'normal legacy load clears a host-provided initial tour'
+  );
+  t.end();
+});
 
 // fixtures
 import {
@@ -79,6 +185,7 @@ import {
   StateWFilesFiltersLayerColor,
   StateWSyncedTimeFilter,
   StateWSplitMaps,
+  StateWTripGeojson,
   testCsvDataId,
   testGeoJsonDataId,
   StateWFiles,
@@ -539,6 +646,22 @@ test('VisStateMerger.v1.split -> mergeLayers -> toEmptyState', t => {
         {tooltip: parsedConfig.visState.interactionConfig.tooltip},
         'Should save interactionConfig to interactionToBeMerged'
       );
+    } else if (key === 'interactionConfig') {
+      t.deepEqual(
+        mergedState.interactionConfig,
+        {
+          ...oldVisState.interactionConfig,
+          brush: {
+            ...oldVisState.interactionConfig.brush,
+            enabled: false,
+            config: {
+              ...oldVisState.interactionConfig.brush.config,
+              size: 0.5
+            }
+          }
+        },
+        'Should merge brush from saved map into interactionConfig'
+      );
     } else {
       t.deepEqual(mergedState[key], oldVisState[key], `Should keep ${key} the same`);
     }
@@ -852,6 +975,7 @@ test('VisStateMerger.v0 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: true,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -993,6 +1117,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               fieldsToShow: {},
               compareMode: false,
               compareType: 'absolute'
@@ -1023,6 +1148,55 @@ test('VisStateMerger.v1 -> mergeInteractions -> toEmptyState', t => {
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, MergedInteractionV1, 'should merge interactionConfig');
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+
+  t.end();
+});
+
+test('VisStateMerger -> mergeInteractions -> tooltip timezone', t => {
+  const initialVisState = cloneDeep(InitialState.visState);
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const oldVisState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {
+          ...tooltip.config,
+          timezone: 'America/New_York'
+        }
+      }
+    }
+  };
+
+  const mergedWithTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      timezone: 'America/Guayaquil',
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithTimezone.interactionConfig.tooltip.config.timezone,
+    'America/Guayaquil',
+    'should hydrate a saved tooltip timezone'
+  );
+
+  const mergedWithoutTimezone = mergeInteractions(oldVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      compareMode: false,
+      compareType: 'absolute'
+    }
+  });
+  t.equal(
+    mergedWithoutTimezone.interactionConfig.tooltip.config.timezone,
+    'America/New_York',
+    'should preserve the current tooltip timezone when an older config omits it'
+  );
 
   t.end();
 });
@@ -1077,6 +1251,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
             ...defaultInteractionConfig.tooltip,
             enabled: false,
             config: {
+              timezone: null,
               compareMode: false,
               compareType: 'absolute',
               fieldsToShow: {
@@ -1161,6 +1336,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1303,6 +1479,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> coordinate', t => {
       ...defaultInteractionConfig.tooltip,
       enabled: false,
       config: {
+        timezone: null,
         compareMode: false,
         compareType: 'absolute',
         fieldsToShow: {
@@ -1519,6 +1696,109 @@ test('VisStateMerger - mergeSplitMaps', t => {
     },
     'should create split maps panel, add current layer to splitMaps and merge split maps'
   );
+
+  const emptySM = [{layers: {}}, {layers: {}}];
+  const testState5 = {
+    layers: [],
+    splitMaps: [],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState5, emptySM),
+    {
+      ...testState5,
+      splitMaps: emptySM,
+      splitMapsToBeMerged: []
+    },
+    'should create split maps panel from split maps without layers'
+  );
+
+  const testState6 = {
+    layers: [{id: 'a', config: {isVisible: true}}],
+    splitMaps: [{layers: {a: true}}, {layers: {a: false}}],
+    splitMapsToBeMerged: []
+  };
+  t.deepEqual(
+    mergeSplitMaps(testState6, emptySM),
+    {
+      ...testState6,
+      splitMapsToBeMerged: []
+    },
+    'should not add panels when merging split maps without layers into a split map'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger - mergeSplitMaps -> keep panels index-aligned', t => {
+  const layerA = {id: 'a', config: {isVisible: true}};
+  const layerB = {id: 'b', config: {isVisible: true}};
+
+  // saved from DUAL_MAP mode: every layer on the left panel, nothing on the right one
+  const dualMap = [{layers: {a: true}}, {layers: {}}];
+  const loading = mergeSplitMaps({layers: [], splitMaps: [], splitMapsToBeMerged: []}, dualMap);
+  t.deepEqual(
+    loading.splitMaps,
+    [{layers: {}}, {layers: {}}],
+    'should create both panels while layer a is not loaded, without a hole on the left'
+  );
+  t.deepEqual(loading.splitMapsToBeMerged, dualMap, 'should wait for layer a in the left panel');
+  t.deepEqual(
+    mergeSplitMaps(
+      {...loading, layers: [layerA], splitMapsToBeMerged: []},
+      loading.splitMapsToBeMerged
+    ).splitMaps,
+    dualMap,
+    'should show layer a only in the left panel once loaded'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {
+        layers: [],
+        splitMaps: [{layers: {}}, {layers: {}}],
+        splitMapsToBeMerged: [{layers: {p: true}}, {layers: {p: false}}]
+      },
+      [{layers: {q: true}}, {layers: {q: false}}]
+    ).splitMapsToBeMerged,
+    [{layers: {p: true, q: true}}, {layers: {p: false, q: false}}],
+    'should add layers waiting to be merged to the panel at the same index'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps(
+      {layers: [layerA], splitMaps: [{layers: {}}, {layers: {}}], splitMapsToBeMerged: []},
+      [{layers: {a: true}}, {layers: {b: true}}]
+    ).splitMapsToBeMerged,
+    [{layers: {}}, {layers: {b: true}}],
+    'should keep layer b waiting in the right panel, without a hole on the left'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {}},
+      {layers: {}}
+    ]).splitMaps,
+    [{layers: {a: true}}, {layers: {a: true}}],
+    'should add current layers to panels created without layers'
+  );
+
+  t.deepEqual(
+    mergeSplitMaps({layers: [layerA, layerB], splitMaps: [], splitMapsToBeMerged: []}, [
+      {layers: {a: true, b: true}},
+      {layers: {b: true}}
+    ]).splitMaps,
+    [{layers: {a: true, b: true}}, {layers: {b: true}}],
+    'should not add a layer of the merged split maps to a panel that does not list it'
+  );
+
+  const config = [{layers: {a: true}}, {layers: {}}];
+  const configBefore = cloneDeep(config);
+  const merged = mergeSplitMaps({layers: [layerA], splitMaps: [], splitMapsToBeMerged: []}, config);
+  const mergedBefore = cloneDeep(merged);
+  mergeSplitMaps(merged, [{layers: {a: false}}, {layers: {a: true}}]);
+  t.deepEqual(merged, mergedBefore, 'should not change the split maps of the previous state');
+  t.deepEqual(config, configBefore, 'should not change the merged split maps');
 
   t.end();
 });
@@ -2084,6 +2364,35 @@ test('VisStateMerger -> load time filter/trip layer synced map', t => {
     visState.animationConfig.currentTime,
     oldState.visState.animationConfig.currentTime,
     'Should have set animationConfig value to filter value[0]'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger -> load trip layer animation timezone and time format', t => {
+  const oldState = cloneDeep(StateWTripGeojson);
+  oldState.visState = visStateReducer(
+    oldState.visState,
+    setLayerAnimationTimeConfig({timezone: 'America/Guayaquil', timeFormat: 'L LTS'})
+  );
+
+  const appStateToSave = SchemaManager.save(oldState);
+  const stateParsed = SchemaManager.load(appStateToSave);
+  const initialVisState = cloneDeep(InitialState).visState;
+
+  const visState = applyActions(visStateReducer, initialVisState, [
+    {action: updateVisData, payload: [stateParsed.datasets, {}, stateParsed.config]}
+  ]);
+
+  t.equal(
+    visState.animationConfig.timezone,
+    'America/Guayaquil',
+    'Should load the saved animation timezone'
+  );
+  t.equal(
+    visState.animationConfig.timeFormat,
+    'L LTS',
+    'Should load the saved animation time format'
   );
 
   t.end();

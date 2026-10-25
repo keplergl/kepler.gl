@@ -4,9 +4,27 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
-import {DEFAULT_TIME_FORMAT, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
-import {clamp, datetimeFormatter} from '@kepler.gl/utils';
-import {BottomWidgetInner, Button, PanelLabel} from '../common/styled-components';
+import {
+  ANIMATION_WINDOW,
+  DEFAULT_TIME_FORMAT,
+  FILTER_TYPES,
+  FILTER_VIEW_TYPES
+} from '@kepler.gl/constants';
+import {
+  clamp,
+  datetimeFormatter,
+  formatNumber,
+  getNumericRangeMinimum,
+  getTimelineFromFilter,
+  intervalBinFromMarks,
+  lineChartSeriesLegend
+} from '@kepler.gl/utils';
+import {
+  BottomWidgetInner,
+  Button,
+  PanelLabel,
+  shouldForwardProp
+} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
@@ -30,6 +48,30 @@ const TimelineSection = styled.div`
 
 const TimelineContainer = styled.div`
   touch-action: none;
+`;
+
+const SeriesLegend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: -8px;
+`;
+
+const SeriesLegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.theme.textColor};
+  font-size: 10px;
+  line-height: 14px;
+`;
+
+const SeriesSwatch = styled.span.withConfig({shouldForwardProp})<{$color: string}>`
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: ${props => props.$color};
+  flex: 0 0 auto;
 `;
 
 const TimelineStatusBar = styled.div`
@@ -83,11 +125,18 @@ function TimeWidgetFactory(
     toggleAnimation,
     exportAnimation,
     setFilterPlot,
+    setFilterAnimationTimeConfig,
     setFilterAnimationWindow,
     animationConfig,
     timeline
   }: TimeWidgetProps) => {
     const [showSettings, setShowSettings] = useState(false);
+    const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
+    const timeFilter = isTimeFilter ? filter : null;
+    const filterTimeline = useMemo(
+      () => timeline || getTimelineFromFilter(filter),
+      [filter, timeline]
+    );
 
     const _updateAnimationSpeed = useCallback(
       speed => updateAnimationSpeed(index, speed),
@@ -114,6 +163,16 @@ function TimeWidgetFactory(
       [index, setFilterPlot]
     );
 
+    const _onTimezoneChange = useCallback(
+      (timezone: string) => setFilterAnimationTimeConfig(index, {timezone}),
+      [index, setFilterAnimationTimeConfig]
+    );
+
+    const _onTimeFormatChange = useCallback(
+      (timeFormat: string) => setFilterAnimationTimeConfig(index, {timeFormat}),
+      [index, setFilterAnimationTimeConfig]
+    );
+
     const _onToggleSettings = useCallback(() => {
       setShowSettings(prev => !prev);
     }, []);
@@ -126,6 +185,13 @@ function TimeWidgetFactory(
     const fullDomain = Array.isArray(timeRangeSlideProps.domain)
       ? (timeRangeSlideProps.domain as [number, number])
       : null;
+    const minimumRangeWidth = useMemo(() => {
+      if (isTimeFilter || !fullDomain) {
+        return 1;
+      }
+      return getNumericRangeMinimum(fullDomain);
+    }, [fullDomain, isTimeFilter]);
+    const rangeEqualityEpsilon = isTimeFilter ? 1 : 0;
 
     const [timelineDomain, setTimelineDomain] = useState<[number, number] | null>(null);
     const timelineContainerRef = useRef<HTMLDivElement | null>(null);
@@ -138,13 +204,13 @@ function TimeWidgetFactory(
         return;
       }
       if (timelineDomain) {
-        const clamped = clampRange(timelineDomain, fullDomain);
-        if (!rangesEqual(clamped, timelineDomain)) {
+        const clamped = clampRange(timelineDomain, fullDomain, minimumRangeWidth);
+        if (!rangesEqual(clamped, timelineDomain, rangeEqualityEpsilon)) {
           setTimelineDomain(clamped);
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fullDomain]);
+    }, [fullDomain, minimumRangeWidth, rangeEqualityEpsilon]);
 
     const sliderDomain = timelineDomain ?? fullDomain ?? undefined;
     const displayedTimelineDomain = sliderDomain ?? null;
@@ -153,33 +219,39 @@ function TimeWidgetFactory(
       if (!timelineDomain || !fullDomain) {
         return false;
       }
-      return !rangesEqual(timelineDomain, fullDomain);
-    }, [timelineDomain, fullDomain]);
+      return !rangesEqual(timelineDomain, fullDomain, rangeEqualityEpsilon);
+    }, [timelineDomain, fullDomain, rangeEqualityEpsilon]);
 
     const timeFormat =
       timeRangeSlideProps.timeFormat ||
-      filter.timeFormat ||
-      filter.defaultTimeFormat ||
+      timeFilter?.timeFormat ||
+      timeFilter?.defaultTimeFormat ||
       DEFAULT_TIME_FORMAT;
     const formatTimestamp = useMemo(() => {
-      const formatter = datetimeFormatter(filter.timezone);
+      const formatter = datetimeFormatter(timeFilter?.timezone);
       return (value: number) => formatter(timeFormat)(value);
-    }, [filter.timezone, timeFormat]);
+    }, [timeFilter?.timezone, timeFormat]);
+    const formatNumeric = useCallback(
+      (value: number) => formatNumber(value, filter.fieldType),
+      [filter.fieldType]
+    );
+    const formatTimelineValue = isTimeFilter ? formatTimestamp : formatNumeric;
 
     const timelineRangeLabel = useMemo(() => {
       if (!displayedTimelineDomain) {
         return '';
       }
-      return `${formatTimestamp(displayedTimelineDomain[0])} – ${formatTimestamp(
+      return `${formatTimelineValue(displayedTimelineDomain[0])} – ${formatTimelineValue(
         displayedTimelineDomain[1]
       )}`;
-    }, [displayedTimelineDomain, formatTimestamp]);
+    }, [displayedTimelineDomain, formatTimelineValue]);
 
     const [filterStart, filterEnd] = filter.value;
 
     const handleWindowZoom = useCallback(
       (factor: number, center: number) => {
-        if (!fullDomain) {
+        // Interval mode keeps the selection on one histogram bin.
+        if (!fullDomain || filter.animationWindow === ANIMATION_WINDOW.interval) {
           return;
         }
         const domainRange: [number, number] = timelineDomain ?? fullDomain;
@@ -191,7 +263,9 @@ function TimeWidgetFactory(
         if (!(windowWidth > 0)) {
           return;
         }
-        const minWidth = Math.max(domainWidth / 100, 1);
+        const minWidth = isTimeFilter
+          ? Math.max(domainWidth / 100, 1)
+          : Math.max(domainWidth / 100, minimumRangeWidth);
         const nextWidth = clamp([minWidth, domainWidth], windowWidth / factor);
         const clampedCenter = clamp(domainRange, center);
         const ratio = clamp(
@@ -200,16 +274,24 @@ function TimeWidgetFactory(
         );
         const nextStart = clampedCenter - ratio * nextWidth;
         const nextEnd = nextStart + nextWidth;
-        const [clampedStart, clampedEnd] = clampWindowToDomain(nextStart, nextEnd, domainRange);
+        const [clampedStart, clampedEnd] = clampWindowToDomain(
+          nextStart,
+          nextEnd,
+          domainRange,
+          minimumRangeWidth
+        );
         if (clampedStart !== filterStart || clampedEnd !== filterEnd) {
           setFilterAnimationTime(index, 'value', [clampedStart, clampedEnd]);
         }
       },
       [
+        filter.animationWindow,
         filterEnd,
         filterStart,
         fullDomain,
         index,
+        isTimeFilter,
+        minimumRangeWidth,
         setFilterAnimationTime,
         timelineDomain
       ]
@@ -226,9 +308,13 @@ function TimeWidgetFactory(
         if (!(fullWidth > 0)) {
           return;
         }
-        const baseWidth = Math.max(domainRange[1] - domainRange[0], 1);
+        const baseWidth = isTimeFilter
+          ? Math.max(domainRange[1] - domainRange[0], 1)
+          : domainRange[1] - domainRange[0];
         const clampedCenter = clamp(domainRange, center);
-        const minWidth = Math.max(fullWidth / 20, 1);
+        const minWidth = isTimeFilter
+          ? Math.max(fullWidth / 20, 1)
+          : Math.max(fullWidth / 20, minimumRangeWidth);
         const nextWidth = clamp([minWidth, fullWidth], baseWidth / factor);
         const ratio = clamp(
           [0, 1],
@@ -248,30 +334,55 @@ function TimeWidgetFactory(
           nextEnd = domainEnd;
           nextStart -= shift;
         }
-        const nextRange: [number, number] = clampRange([nextStart, nextEnd], fullDomain);
-        setTimelineDomain(prev => (rangesEqual(prev, nextRange) ? prev : nextRange));
+        const nextRange: [number, number] = clampRange(
+          [nextStart, nextEnd],
+          fullDomain,
+          minimumRangeWidth
+        );
+        setTimelineDomain(prev =>
+          rangesEqual(prev, nextRange, rangeEqualityEpsilon) ? prev : nextRange
+        );
+
+        // Pinch-zoom only changes the visible domain. The selected bin stays put.
+        if (filter.animationWindow === ANIMATION_WINDOW.interval) {
+          return;
+        }
 
         let windowStart = filterStart;
         let windowEnd = filterEnd;
         const rangeWidth = nextRange[1] - nextRange[0];
         if (rangeWidth < windowEnd - windowStart) {
-          const windowWidth = Math.max(windowEnd - windowStart, 1);
+          const windowWidth = Math.max(windowEnd - windowStart, minimumRangeWidth);
           const windowRatio = clamp([0, 1], (clampedCenter - windowStart) / windowWidth);
           const adjustedStart = clampedCenter - windowRatio * rangeWidth;
           const adjustedEnd = clampedCenter + (1 - windowRatio) * rangeWidth;
-          [windowStart, windowEnd] = clampWindowToDomain(adjustedStart, adjustedEnd, nextRange);
+          [windowStart, windowEnd] = clampWindowToDomain(
+            adjustedStart,
+            adjustedEnd,
+            nextRange,
+            minimumRangeWidth
+          );
         } else {
-          [windowStart, windowEnd] = clampWindowToDomain(windowStart, windowEnd, nextRange);
+          [windowStart, windowEnd] = clampWindowToDomain(
+            windowStart,
+            windowEnd,
+            nextRange,
+            minimumRangeWidth
+          );
         }
         if (windowStart !== filterStart || windowEnd !== filterEnd) {
           setFilterAnimationTime(index, 'value', [windowStart, windowEnd]);
         }
       },
       [
+        filter.animationWindow,
         filterEnd,
         filterStart,
         fullDomain,
         index,
+        isTimeFilter,
+        minimumRangeWidth,
+        rangeEqualityEpsilon,
         setFilterAnimationTime,
         timelineDomain
       ]
@@ -299,8 +410,18 @@ function TimeWidgetFactory(
         if (isMinified || !sliderDomain) {
           return;
         }
-        const isPinch =
-          event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
+        // Overlays such as the animation JSON editor sit inside this container.
+        // Don't steal their scroll / pointer input for timeline zoom.
+        const target = event.target;
+        if (
+          target instanceof Element &&
+          target.closest(
+            'textarea, input, select, [data-testid="json-editor"], .animation-json-editor'
+          )
+        ) {
+          return;
+        }
+        const isPinch = event.ctrlKey || event.metaKey || Math.abs(event.deltaZ || 0) > 0;
         const zoomFn = isPinch ? throttledTimelineZoom : throttledWindowZoom;
         if (!zoomFn) {
           return;
@@ -315,9 +436,7 @@ function TimeWidgetFactory(
 
         const baseStep = isPinch ? 0.02 : 0.08;
         const factor = event.deltaY < 0 ? 1 + baseStep : 1 / (1 + baseStep);
-        const sliderTrack = node.querySelector(
-          '.kg-range-slider__slider'
-        ) as HTMLElement | null;
+        const sliderTrack = node.querySelector('.kg-range-slider__slider') as HTMLElement | null;
         const rect = sliderTrack?.getBoundingClientRect() ?? node.getBoundingClientRect();
         if (!rect || rect.width === 0) {
           return;
@@ -353,11 +472,24 @@ function TimeWidgetFactory(
         if (!domainRange) {
           return;
         }
+        event.preventDefault();
+        if (filter.animationWindow === ANIMATION_WINDOW.interval && fullDomain) {
+          const marks = filterTimeline.marks || [];
+          const currentIdx = marks.indexOf(intervalBinFromMarks(marks, filterStart)[0]);
+          const nextIdx = event.key === 'ArrowRight' ? currentIdx + 1 : currentIdx - 1;
+          if (nextIdx < 0 || nextIdx >= marks.length - 1) {
+            return;
+          }
+          const nextBin = intervalBinFromMarks(marks, marks[nextIdx], isTimeFilter ? 1 : 0);
+          if (nextBin[0] !== filterStart || nextBin[1] !== filterEnd) {
+            setFilterAnimationTime(index, 'value', nextBin);
+          }
+          return;
+        }
         const windowWidth = filterEnd - filterStart;
         if (!(windowWidth > 0)) {
           return;
         }
-        event.preventDefault();
         let nextStart: number;
         let nextEnd: number;
         if (event.key === 'ArrowRight') {
@@ -367,18 +499,41 @@ function TimeWidgetFactory(
           nextStart = filterStart - windowWidth;
           nextEnd = filterStart;
         }
-        [nextStart, nextEnd] = clampWindowToDomain(nextStart, nextEnd, domainRange);
+        [nextStart, nextEnd] = clampWindowToDomain(
+          nextStart,
+          nextEnd,
+          domainRange,
+          minimumRangeWidth
+        );
         if (nextStart !== filterStart || nextEnd !== filterEnd) {
           setFilterAnimationTime(index, 'value', [nextStart, nextEnd]);
         }
       };
       window.addEventListener('keydown', handler);
       return () => window.removeEventListener('keydown', handler);
-    }, [filterEnd, filterStart, fullDomain, index, isMinified, setFilterAnimationTime, timelineDomain]);
+    }, [
+      filter.animationWindow,
+      filter.step,
+      filterEnd,
+      filterStart,
+      fullDomain,
+      index,
+      isMinified,
+      isTimeFilter,
+      minimumRangeWidth,
+      setFilterAnimationTime,
+      filterTimeline.marks,
+      timelineDomain
+    ]);
 
     const handleResetTimeline = useCallback(() => {
       setTimelineDomain(null);
     }, []);
+
+    const seriesLegend = useMemo(
+      () => (isMinified ? [] : lineChartSeriesLegend(filter.lineChart)),
+      [filter.lineChart, isMinified]
+    );
 
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner">
@@ -391,9 +546,25 @@ function TimeWidgetFactory(
           isMinified={isMinified}
         />
         {showSettings && !isMinified ? (
-          <TimeWidgetSettings filter={filter} datasets={datasets} setFilterPlot={_setFilterPlot} />
+          <TimeWidgetSettings
+            filter={filter}
+            datasets={datasets}
+            setFilterPlot={_setFilterPlot}
+            onTimezoneChange={_onTimezoneChange}
+            onTimeFormatChange={_onTimeFormatChange}
+          />
         ) : null}
         <TimelineSection>
+          {seriesLegend.length > 1 ? (
+            <SeriesLegend className="time-widget__series-legend">
+              {seriesLegend.map(item => (
+                <SeriesLegendItem key={item.name}>
+                  <SeriesSwatch $color={item.color} />
+                  {item.name}
+                </SeriesLegendItem>
+              ))}
+            </SeriesLegend>
+          ) : null}
           {timelineZoomed && timelineRangeLabel ? (
             <TimelineStatusBar>
               <PanelLabel>Showing</PanelLabel>
@@ -410,7 +581,10 @@ function TimeWidgetFactory(
               </Button>
             </TimelineStatusBar>
           ) : null}
-          <TimelineContainer ref={timelineContainerRef}>
+          <TimelineContainer
+            ref={timelineContainerRef}
+            data-testid="time-widget-timeline-container"
+          >
             <TimeRangeSlider
               {...timeRangeSlideProps}
               domain={sliderDomain}
@@ -425,16 +599,21 @@ function TimeWidgetFactory(
               setFilterPlot={_setFilterPlot}
               animationConfig={animationConfig}
               isMinified={isMinified}
-              timeline={timeline}
+              timeline={filterTimeline}
+              formatValue={isTimeFilter ? undefined : formatNumeric}
             />
           </TimelineContainer>
         </TimelineSection>
         {showTimeDisplay ? (
           <FloatingTimeDisplay
             currentTime={filter.value}
-            defaultTimeFormat={filter.defaultTimeFormat}
-            timeFormat={filter.timeFormat}
-            timezone={filter.timezone}
+            defaultTimeFormat={timeFilter?.defaultTimeFormat}
+            timeFormat={timeFilter?.timeFormat}
+            timezone={timeFilter?.timezone}
+            formatValue={isTimeFilter ? undefined : formatNumeric}
+            displayLabel={
+              isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
+            }
           />
         ) : null}
       </TimeBottomWidgetInner>

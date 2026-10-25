@@ -9,11 +9,11 @@ import {
   SORT_ORDER,
   ALL_FIELD_TYPES,
   ALTITUDE_FIELDS,
-  SCALE_TYPES,
-  FILTER_TYPES
+  SCALE_TYPES
 } from '@kepler.gl/constants';
 import {
   RGBColor,
+  ColorRange,
   Field,
   FieldPair,
   FieldDomain,
@@ -40,8 +40,7 @@ import {
   getFilterFunction,
   getFilterProps,
   getFilterRecord,
-  getPolygonFilterFunctor,
-  isValidFilterValue,
+  computePolygonFilteredIndexByLayer,
   mergePolygonLayerIndexes,
   getNumericFieldDomain,
   getTimestampFieldDomain,
@@ -49,6 +48,7 @@ import {
   getLogDomain,
   getOrdinalDomain,
   getQuantileDomain,
+  getJenksDomain,
   DataContainerInterface,
   FilterChanged
 } from '@kepler.gl/utils';
@@ -134,65 +134,6 @@ export function maybeToDate(
   return isTime ? timeToUnixMilli(value, format) : value;
 }
 
-/**
- * Compute per-layer filtered indices for polygon filters.
- * Polygon filters are layer-specific: they should only affect the layers listed in filter.layerId.
- * For each layer on this dataset, compute a filtered index that applies only the polygon filters
- * targeting that specific layer. Multiple polygon filters targeting the same layer are ANDed.
- */
-function computePolygonFilteredIndexByLayer(
-  filters: Filter[],
-  layers: Layer[],
-  dataId: string,
-  dataContainer: DataContainerInterface,
-  baseFilteredIndex: number[]
-): Record<string, number[]> {
-  const polygonFilters = filters.filter(
-    f =>
-      f.type === FILTER_TYPES.polygon &&
-      f.dataId.includes(dataId) &&
-      f.enabled !== false &&
-      isValidFilterValue(f.type, f.value)
-  );
-
-  if (!polygonFilters.length) {
-    return {};
-  }
-
-  const layersOnDataset = layers.filter(l => l.config?.dataId === dataId);
-  const result: Record<string, number[]> = {};
-
-  for (const layer of layersOnDataset) {
-    // For each polygon filter, check if this layer is targeted
-    const applicableFilters = polygonFilters.filter(f => f.layerId && f.layerId.includes(layer.id));
-
-    if (!applicableFilters.length) {
-      // This layer is not targeted by any polygon filter - use base index
-      continue;
-    }
-
-    // Build polygon filter functors for this layer
-    const filterFunctors = applicableFilters.map(filter =>
-      getPolygonFilterFunctor(layer, filter, dataContainer)
-    );
-
-    // Filter the base filtered index: a row passes if it passes ALL polygon filters
-    // (each polygon filter already uses this layer's position accessor)
-    const layerFilteredIndex: number[] = [];
-    const filterContext = {index: -1};
-    for (let i = 0; i < baseFilteredIndex.length; i++) {
-      filterContext.index = baseFilteredIndex[i];
-      if (filterFunctors.every(fn => fn(filterContext))) {
-        layerFilteredIndex.push(baseFilteredIndex[i]);
-      }
-    }
-
-    result[layer.id] = layerFilteredIndex;
-  }
-
-  return result;
-}
-
 class KeplerTable<F extends Field = Field> {
   readonly id: string;
 
@@ -229,6 +170,8 @@ class KeplerTable<F extends Field = Field> {
   sortOrder?: number[] | null;
 
   pinnedColumns?: string[];
+  /** Attribute-table columns omitted from data export. */
+  hiddenColumns?: string[];
   supportedFilterTypes?: string[] | null;
   disableDataOperation?: boolean;
 
@@ -314,6 +257,7 @@ class KeplerTable<F extends Field = Field> {
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
       arrowTable: data.arrowTable,
+      geoArrowBinaryData: data.geoArrowBinaryData,
       inputDataFormat
     });
 
@@ -347,8 +291,8 @@ class KeplerTable<F extends Field = Field> {
    */
   async update(data: ProtoDataset['data']) {
     // Arrow/DuckDB incremental loads pass `cols` (and empty `rows`). Row snapshots
-    // for remote refresh pass `rows` only. Keep the column path close to the
-    // pre-refresh update() so filters/gpuFilter are not wiped on a normal load.
+    // for remote refresh pass `rows` only. Preserve the GPU filter configuration
+    // on column updates, but invalidate cached filter results for every snapshot.
     const isRowSnapshot = !data.cols && Array.isArray(data.rows);
 
     if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
@@ -361,7 +305,9 @@ class KeplerTable<F extends Field = Field> {
     const dataContainerData = isRowSnapshot ? data.rows : data.arrowTable ?? data.cols ?? data.rows;
 
     if (typeof this.dataContainer.update === 'function') {
-      this.dataContainer.update(dataContainerData);
+      this.dataContainer.update(dataContainerData, {
+        geoArrowBinaryData: data.geoArrowBinaryData
+      });
     } else if (isRowSnapshot) {
       this.dataContainer = createDataContainer(dataContainerData, {
         fields: data.fields || this.fields,
@@ -377,9 +323,6 @@ class KeplerTable<F extends Field = Field> {
           valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
         };
       }) as F[];
-      this.filterRecord = undefined;
-      this.filterRecordCPU = undefined;
-      this.changedFilters = undefined;
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
     }
 
@@ -387,6 +330,10 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
     this.filteredIndexByLayer = {};
+    this.filteredIdxCPU = undefined;
+    this.filterRecord = undefined;
+    this.filterRecordCPU = undefined;
+    this.changedFilters = undefined;
     this.dataRevision += 1;
 
     return this;
@@ -799,7 +746,11 @@ class KeplerTable<F extends Field = Field> {
   /**
    *  Get the domain of this column based on scale type
    */
-  getColumnLayerDomain(field: F, scaleType: string): number[] | string[] | [number, number] | null {
+  getColumnLayerDomain(
+    field: F,
+    scaleType: string,
+    range?: ColorRange
+  ): number[] | string[] | [number, number] | null {
     const {dataContainer, filteredIndexForDomain} = this;
 
     if (!SCALE_TYPES[scaleType]) {
@@ -821,6 +772,15 @@ class KeplerTable<F extends Field = Field> {
 
       case SCALE_TYPES.quantile:
         return getQuantileDomain(filteredIndexForDomain, indexValueAccessor, sortFunction);
+
+      case SCALE_TYPES.jenks:
+        if (!range?.colors) {
+          Console.error(
+            'the range is either missing or it does not have colors available for Jenks scale domain calculation'
+          );
+          return null;
+        }
+        return getJenksDomain(filteredIndexForDomain, indexValueAccessor, range.colors.length);
 
       case SCALE_TYPES.log:
         return getLogDomain(filteredIndexForDomain, indexValueAccessor);
@@ -1000,6 +960,30 @@ export function pinTableColumns(dataset: KeplerTable<Field>, column: string): Ke
 
   // @ts-ignore
   return copyTableAndUpdate(dataset, {pinnedColumns});
+}
+
+export function toggleHiddenTableColumn(
+  dataset: KeplerTable<Field>,
+  column: string
+): KeplerTable<Field> {
+  const field = dataset.fields.find(item => item.name === column);
+  if (!field) {
+    return dataset;
+  }
+
+  const hidden = dataset.hiddenColumns || [];
+  const hiddenColumns = hidden.includes(field.name)
+    ? hidden.filter(name => name !== field.name)
+    : hidden.concat(field.name);
+
+  return copyTableAndUpdate(dataset, {hiddenColumns});
+}
+
+export function showAllTableColumns(dataset: KeplerTable<Field>): KeplerTable<Field> {
+  if (!dataset.hiddenColumns?.length) {
+    return dataset;
+  }
+  return copyTableAndUpdate(dataset, {hiddenColumns: []});
 }
 
 export function copyTable(original: KeplerTable<Field>): KeplerTable<Field> {

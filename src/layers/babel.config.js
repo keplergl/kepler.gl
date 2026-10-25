@@ -33,9 +33,12 @@ module.exports = function babel(api) {
   const isDebug = api.env('debug');
 
   // ESM build: modules:false preserves import/export so Vite/esbuild can tree-shake.
-  // CJS build (default / test): transforms import/export to require/module.exports.
+  // CJS transforms static imports, but keeps native import() for ESM-only Zarr dependencies.
   const presets = [
-    ['@babel/preset-env', isEsm ? {modules: false} : {}],
+    [
+      '@babel/preset-env',
+      isEsm ? {modules: false} : {exclude: ['@babel/plugin-transform-dynamic-import']}
+    ],
     '@babel/preset-react',
     '@babel/preset-typescript'
   ];

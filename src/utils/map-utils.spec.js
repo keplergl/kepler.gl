@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import WebMercatorViewport from 'viewport-mercator-project';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {TRANSITION_DURATION} from '@kepler.gl/constants';
 import {

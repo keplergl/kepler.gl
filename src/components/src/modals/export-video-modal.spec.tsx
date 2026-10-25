@@ -19,6 +19,16 @@ jest.mock('@hubble.gl/react', () => ({
   KeplerUIContext: MockKeplerUIContext
 }));
 
+// loadHubble imports these containers even for regular export. Keep their WebGL
+// and encoder dependencies out of the modal unit tests and first-render timeout.
+jest.mock('./swipe-export-video-container', () => ({
+  SwipeExportVideoPanelContainer: jest.fn(() => null)
+}));
+
+jest.mock('./globe-export-video-container', () => ({
+  GlobeExportVideoPanelContainer: jest.fn(() => null)
+}));
+
 const mockComputeDeckEffects = jest.fn(() => []);
 
 jest.mock('@kepler.gl/utils', () => {
@@ -55,8 +65,21 @@ jest.mock('./hubble-utils', () => ({
   })),
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
+  scaleToVideoExport: jest.fn((viewState, container) => ({
+    ...viewState,
+    width: container.width,
+    height: container.height
+  })),
+  getVideoExportContainer: jest.fn((exportVideoWidth, resolution) => {
+    const [width, height] = String(resolution || '1280x720')
+      .split('x')
+      .map(Number);
+    return {width: exportVideoWidth, height: exportVideoWidth / (width / height)};
+  }),
   getResolutionSetting: jest.fn(value => {
-    const [width, height] = String(value || '1280x720').split('x').map(Number);
+    const [width, height] = String(value || '1280x720')
+      .split('x')
+      .map(Number);
     return {value, width, height, label: value};
   })
 }));
@@ -147,11 +170,17 @@ describe('ExportVideoModal', () => {
     expect(panelProps.exportVideoWidth).toBeGreaterThanOrEqual(320);
     expect(panelProps.handleClose).toBe(DEFAULT_PROPS.onClose);
     expect(panelProps.initialState).toEqual(DEFAULT_PROPS.exportVideo);
-    expect(panelProps.mapData).toEqual({
-      visState: DEFAULT_PROPS.visState,
-      mapState: DEFAULT_PROPS.mapState,
-      mapStyle: DEFAULT_PROPS.mapStyle
-    });
+    expect(panelProps.mapData.visState).toEqual(DEFAULT_PROPS.visState);
+    expect(panelProps.mapData.mapStyle).toEqual(DEFAULT_PROPS.mapStyle);
+    expect(panelProps.mapData.mapState).toEqual(
+      expect.objectContaining({
+        latitude: DEFAULT_PROPS.mapState.latitude,
+        longitude: DEFAULT_PROPS.mapState.longitude,
+        zoom: DEFAULT_PROPS.mapState.zoom,
+        width: panelProps.exportVideoWidth,
+        height: expect.any(Number)
+      })
+    );
   });
 
   test('passes deckProps from getHubbleDeckGlProps', async () => {

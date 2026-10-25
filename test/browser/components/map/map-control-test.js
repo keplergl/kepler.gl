@@ -26,12 +26,14 @@ import {toggleMapControl} from '@kepler.gl/actions';
 import {keplerGlReducerCore} from '@kepler.gl/reducers';
 
 import {IntlWrapper, mountWithTheme} from '../../../helpers/component-utils';
+import {renderWithTheme as renderWithThemeRTL} from '../../../helpers/rtl-utils';
 import {
   mockKeplerProps,
   mockKeplerPropsWithState,
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
+import {initApplicationConfig} from '@kepler.gl/utils';
 
 const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
@@ -79,7 +81,101 @@ test('MapControlFactory - display all options', t => {
       </MapViewStateContextProvider>
     </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 8, 'Should show 8 action panels');
+  t.equal($.find('.map-control-action').length, 10, 'Should show 10 action panels');
+  t.equal(
+    $.find('.toggle-chart-panel').length,
+    0,
+    'Should not show a charts button on default MapControl'
+  );
+  t.end();
+});
+
+test('MapControlFactory - chart control is not a default action', t => {
+  initApplicationConfig({enableChartsPanel: true});
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true},
+            chart: {show: true, active: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={() => {}}
+          onTogglePerspective={() => {}}
+          onToggleMapControl={() => {}}
+          onSetEditorMode={() => {}}
+          onToggleEditorVisibility={() => {}}
+          onSetLocale={() => {}}
+          charts={[]}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
+  );
+  t.equal(
+    $.find('.toggle-chart-panel').length,
+    0,
+    'Should not show a charts button on default MapControl'
+  );
+  t.equal(
+    $.find('.chart-manager').length,
+    0,
+    'Should not mount a charts panel on default MapControl'
+  );
+  initApplicationConfig({enableChartsPanel: true});
+  t.end();
+});
+
+test('MapControlFactory - viewport JSON control', t => {
+  initApplicationConfig({enableViewportJsonEditor: true});
+  const $ = mountWithTheme(
+    <IntlWrapper>
+      <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+        <MapControl
+          mapControls={{
+            splitMap: {show: true},
+            visibleLayers: {show: true},
+            toggle3d: {show: true},
+            mapLegend: {show: true},
+            mapDraw: {show: true},
+            mapLocale: {show: true},
+            effect: {show: true},
+            viewportJson: {show: true}
+          }}
+          datasets={{}}
+          layers={[]}
+          locale={'en'}
+          layersToRender={{}}
+          dragRotate={true}
+          mapIndex={0}
+          onToggleSplitMap={() => {}}
+          onTogglePerspective={() => {}}
+          onToggleMapControl={() => {}}
+          onSetEditorMode={() => {}}
+          onToggleEditorVisibility={() => {}}
+          onSetLocale={() => {}}
+        />
+      </MapViewStateContextProvider>
+    </IntlWrapper>
+  );
+
+  t.equal(
+    $.find('.viewport-json-editor-controls').hostNodes().length,
+    1,
+    'Should show the viewport JSON control when enabled'
+  );
+  initApplicationConfig({enableViewportJsonEditor: false});
   t.end();
 });
 
@@ -129,7 +225,7 @@ test('MapControlFactory - display options', t => {
     )
   });
 
-  // 6 control buttons as legend is opened automatically in split map mode
+  // legend is opened automatically in split map mode
   t.equal(wrapper.find(MapControlButton).length, 6, 'Should show 6 MapControlButton');
   t.equal(wrapper.find(Split).length, 0, 'Should show 0 split map split button');
   t.equal(wrapper.find(Delete).length, 1, 'Should show 1 split map delete button');
@@ -145,6 +241,40 @@ test('MapControlFactory - display options', t => {
 
   t.equal(wrapper.find(MapControlButton).length, 0, 'Should show 0 MapControlButton');
 
+  t.end();
+});
+
+test('MapContainerFactory - map scale ignores hidden read-only side panel', t => {
+  const getScaleLeft = readOnly => {
+    const props = {
+      ...initialProps,
+      activeSidePanel: 'layer',
+      sidePanelWidth: 300,
+      readOnly,
+      mapStyle: {
+        bottomMapStyle: {layers: [], name: 'foo'},
+        visibleLayerGroups: {}
+      },
+      mapboxApiAccessToken: 'pyx-11'
+    };
+    const store = mockStore({uiState: StateWSplitMaps.uiState});
+    const {container, unmount} = renderWithThemeRTL(
+      <Provider store={store}>
+        <IntlWrapper>
+          <MapViewStateContextProvider mapState={props.mapState}>
+            <MapContainer {...props} />
+          </MapViewStateContextProvider>
+        </IntlWrapper>
+      </Provider>
+    );
+    const scale = container.querySelector('.map-scale');
+    const left = window.getComputedStyle(scale.parentElement).left;
+    unmount();
+    return left;
+  };
+
+  t.equal(getScaleLeft(true), '12px', 'read-only scale uses the map margin');
+  t.equal(getScaleLeft(false), '312px', 'editable scale retains the panel offset');
   t.end();
 });
 
@@ -334,6 +464,100 @@ test('MapControlFactory - show panels', t => {
       'should render correct locale'
     );
   });
+
+  t.end();
+});
+
+test('MapControlFactory - map info panel', t => {
+  const onToggleMapControl = sinon.spy();
+  const base = {
+    datasets: {},
+    layers: [],
+    locale: 'en',
+    layersToRender: {},
+    dragRotate: true,
+    mapIndex: 0,
+    onToggleSplitMap: () => {},
+    onTogglePerspective: () => {},
+    onToggleMapControl,
+    onSetEditorMode: () => {},
+    onToggleEditorVisibility: () => {},
+    onSetLocale: () => {}
+  };
+
+  const mountControl = extra =>
+    mountWithTheme(
+      <IntlWrapper>
+        <MapViewStateContextProvider mapState={{latitude: 0, longitude: 0, zoom: 1}}>
+          <MapControl {...base} {...extra} />
+        </MapViewStateContextProvider>
+      </IntlWrapper>
+    );
+
+  const empty = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {title: '', description: ''}
+  });
+  t.equal(
+    empty.find('.map-info-panel').length,
+    0,
+    'hides the panel when title and description are empty'
+  );
+  t.equal(empty.find('.map-info').length, 0, 'hides the map info button when empty');
+  t.equal(empty.find('textarea').length, 0, 'does not edit map info on the map');
+
+  const shown = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {title: 'Harbor', description: 'See [routes](https://example.com)'}
+  });
+  t.ok(
+    shown.find('[data-testid="map-info-panel"]').hostNodes().length > 0,
+    'shows the panel when a title is set'
+  );
+  t.ok(shown.text().includes('Harbor'), 'renders the map title');
+  t.ok(shown.text().includes('routes'), 'renders the description');
+  t.equal(
+    shown.find('a[href="https://example.com"]').hostNodes().length,
+    1,
+    'renders description links'
+  );
+  t.equal(shown.find('textarea').length, 0, 'imported map info is display only');
+
+  const withImage = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {description: '![pixel](https://tracker.example/pixel.png)'}
+  });
+  t.equal(withImage.find('img').length, 0, 'an imported description does not fetch images');
+  t.ok(withImage.text().includes('pixel'), 'keeps the image alt text as plain text');
+
+  shown.find('button[aria-label="Minimize map info"]').hostNodes().simulate('click');
+  t.equal(onToggleMapControl.callCount, 1, 'closing the panel toggles map info');
+  t.equal(onToggleMapControl.firstCall.args[0], 'mapInfo');
+
+  const collapsed = mountControl({
+    mapControls: {mapInfo: {show: true, active: false}},
+    mapInfo: {title: 'Harbor', description: 'Ferry routes'}
+  });
+  const descriptionOnly = mountControl({
+    mapControls: {mapInfo: {show: true, active: true}},
+    mapInfo: {description: 'Ferry routes'}
+  });
+  t.equal(
+    descriptionOnly.find('.map-info-title').length,
+    0,
+    'a description without a name does not reserve a title row'
+  );
+  t.ok(
+    descriptionOnly.find('.map-info-description--only').hostNodes().length > 0,
+    'a description without a name starts at the top of the card'
+  );
+  t.ok(descriptionOnly.text().includes('Ferry routes'), 'renders a description without a name');
+
+  t.equal(collapsed.find('.map-info-panel').length, 0, 'a collapsed panel hides the card');
+  t.ok(
+    collapsed.find('.map-info').hostNodes().length > 0,
+    'a collapsed panel shows the docs button'
+  );
 
   t.end();
 });

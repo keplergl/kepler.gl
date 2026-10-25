@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import ImageModalContainer, {ImageModalContainerProps} from './image-modal-container';
-import {FlexContainer} from '../common/flex-container';
 import StatusPanel, {UploadAnimation} from './status-panel';
 import {ProviderSelect} from './cloud-components/provider-select';
 import {CloudStorageDisclaimer} from './cloud-components/cloud-storage-disclaimer';
@@ -13,10 +12,8 @@ import {MAP_THUMBNAIL_DIMENSION, MAP_INFO_CHARACTER, dataTestIds} from '@kepler.
 import {
   StyledModalContent,
   InputLight,
-  TextAreaLight,
   StyledExportSection,
-  StyledModalSection,
-  StyledModalInputFootnote
+  StyledModalSection
 } from '../common/styled-components';
 import ImagePreview from '../common/image-preview';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -65,7 +62,6 @@ const StyledCompactExportSection = styled(StyledExportSection)`
 const nop = () => {
   return;
 };
-const TEXT_AREA_LIGHT_STYLE = {resize: 'none'};
 
 type CharacterLimits = {
   title?: number;
@@ -78,6 +74,10 @@ type SaveMapModalProps = {
   isProviderLoading: boolean;
   providerError?: Error;
   characterLimits?: CharacterLimits;
+  fileName?: string;
+  onChangeFileName?: (fileName: string) => void;
+  /** Latest name and description. Applied when the map is saved, not while typing. */
+  onMapInfoDraft?: (info: {title: string; description: string}) => void;
 
   // callbacks
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
@@ -87,7 +87,10 @@ type SaveMapModalProps = {
   onCancel: () => void;
 };
 
-type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> & {
+type MapInfoPanelProps = Pick<
+  SaveMapModalProps,
+  'mapInfo' | 'characterLimits' | 'fileName' | 'onChangeFileName'
+> & {
   onChangeInput: (
     type: string,
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -97,47 +100,54 @@ type MapInfoPanelProps = Pick<SaveMapModalProps, 'mapInfo' | 'characterLimits'> 
 export const MapInfoPanel: React.FC<MapInfoPanelProps> = ({
   mapInfo,
   characterLimits,
+  fileName = '',
+  onChangeFileName,
   onChangeInput
 }) => {
   const {description = '', title = ''} = mapInfo;
   return (
     <div className="selection map-info-panel" data-testid={dataTestIds.providerMapInfoPanel}>
+      <StyledModalSection className="save-map-modal-file-name">
+        <label className="modal-section-title" htmlFor="save-map-file-name">
+          <FormattedMessage id="modal.exportFileName.title" />
+        </label>
+        <div>
+          <InputLight
+            id="save-map-file-name"
+            type="text"
+            value={fileName}
+            onChange={event => onChangeFileName?.(event.target.value)}
+            placeholder="kepler.gl"
+          />
+        </div>
+      </StyledModalSection>
       <StyledModalSection className="save-map-modal-name">
-        <div className="modal-section-title">Name*</div>
+        <label className="modal-section-title" htmlFor="map-title">
+          Name
+        </label>
         <div>
           <InputLight
             id="map-title"
             type="text"
             value={title}
+            maxLength={characterLimits?.title || MAP_INFO_CHARACTER.title}
             onChange={e => onChangeInput('title', e)}
-            placeholder="Type map title"
           />
         </div>
       </StyledModalSection>
-      <StyledModalSection>
-        <FlexContainer className="save-map-modal-description">
-          <div className="modal-section-title">Description</div>
-          <div className="modal-section-subtitle">(optional)</div>
-        </FlexContainer>
+      <StyledModalSection className="save-map-modal-description">
+        <label className="modal-section-title" htmlFor="map-description">
+          Description
+        </label>
         <div>
-          <TextAreaLight
-            rows={3}
+          <InputLight
             id="map-description"
-            style={TEXT_AREA_LIGHT_STYLE as React.CSSProperties}
+            type="text"
             value={description}
+            maxLength={characterLimits?.description || MAP_INFO_CHARACTER.description}
             onChange={e => onChangeInput('description', e)}
-            placeholder="Type map description"
           />
         </div>
-        <StyledModalInputFootnote
-          error={
-            Boolean(characterLimits?.description) &&
-            description.length > Number(characterLimits?.description)
-          }
-        >
-          {description.length}/{characterLimits?.description || MAP_INFO_CHARACTER.description}{' '}
-          characters
-        </StyledModalInputFootnote>
       </StyledModalSection>
     </div>
   );
@@ -173,31 +183,43 @@ function SaveMapModalFactory() {
     cleanupExportImage,
     onSetMapInfo,
     onCancel,
-    onConfirm
+    onConfirm,
+    fileName,
+    onChangeFileName,
+    onMapInfoDraft
   }) => {
     const {provider, cloudProviders} = useCloudListProvider();
+    const [draftTitle, setDraftTitle] = useState(mapInfo.title || '');
+    const [draftDescription, setDraftDescription] = useState(mapInfo.description || '');
 
     const onChangeInput = (
       key: string,
       {target: {value}}: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
     ) => {
-      onSetMapInfo({[key]: value});
+      if (key === 'title') {
+        setDraftTitle(value);
+      } else if (key === 'description') {
+        setDraftDescription(value);
+      }
     };
 
     const confirmButton = useMemo(
       () => ({
         large: true,
-        disabled: Boolean(!(provider && mapInfo.title)),
+        disabled: !provider,
         children: 'modal.button.save'
       }),
-      [provider, mapInfo]
+      [provider]
     );
 
     const confirm = useCallback(() => {
       if (provider) {
+        const info = {title: draftTitle, description: draftDescription};
+        onMapInfoDraft?.(info);
+        onSetMapInfo(info);
         onConfirm(provider);
       }
-    }, [onConfirm, provider]);
+    }, [draftDescription, draftTitle, onConfirm, onMapInfoDraft, onSetMapInfo, provider]);
 
     return (
       <ImageModalContainer
@@ -242,8 +264,10 @@ function SaveMapModalFactory() {
                     </div>
                   ) : (
                     <MapInfoPanel
-                      mapInfo={mapInfo}
+                      mapInfo={{...mapInfo, title: draftTitle, description: draftDescription}}
                       characterLimits={characterLimits}
+                      fileName={fileName}
+                      onChangeFileName={onChangeFileName}
                       onChangeInput={onChangeInput}
                     />
                   )}

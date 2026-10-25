@@ -16,7 +16,14 @@ import {
 } from '@kepler.gl/utils';
 import {MapStateActions, ReceiveMapConfigPayload, ActionTypes} from '@kepler.gl/actions';
 import {MapState, Bounds, Viewport} from '@kepler.gl/types';
-import {MapSplitMode, MapViewMode, DEFAULT_GLOBE_CONFIG, GLOBE_MIN_ZOOM, GLOBE_MAX_ZOOM, GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
+import {
+  MapSplitMode,
+  MapViewMode,
+  DEFAULT_GLOBE_CONFIG,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM,
+  GLOBE_MAX_LATITUDE
+} from '@kepler.gl/constants';
 
 /**
  * Updaters for `mapState` reducer. Can be used in your root reducer to directly modify kepler.gl's state.
@@ -167,6 +174,66 @@ export const updateMapUpdater = (
     // update the mapState with the new array of split viewports
     splitMapViewports
   };
+};
+
+/**
+ * Apply a partial map state from the viewport JSON editor.
+ * Preserves current width/height so saved JSON cannot resize the map container,
+ * including nested split-map viewports. When viewports are unsynced, camera
+ * fields are applied to the opened map pane (`mapIndex`), matching `updateMap`.
+ * @memberof mapStateUpdaters
+ * @public
+ */
+const APPLY_MAP_STATE_VIEWPORT_KEYS: (keyof Viewport)[] = [
+  'latitude',
+  'longitude',
+  'zoom',
+  'pitch',
+  'bearing',
+  'dragRotate',
+  'minZoom',
+  'maxZoom',
+  'maxPitch'
+];
+
+export const applyMapStateUpdater = (
+  state: MapState,
+  action: MapStateActions.ApplyMapStateUpdaterAction
+): MapState => {
+  const next = action.payload || {};
+  const mapIndex = action.meta?.mapIndex ?? 0;
+  const {width, height} = state;
+
+  const nextConfig: Partial<MapState> = {...next};
+  delete nextConfig.width;
+  delete nextConfig.height;
+  if (Array.isArray(next.splitMapViewports)) {
+    nextConfig.splitMapViewports = next.splitMapViewports.map((viewport, i) => ({
+      ...viewport,
+      width: state.splitMapViewports[i]?.width ?? width,
+      height: state.splitMapViewports[i]?.height ?? height
+    }));
+  }
+
+  const mergedState = deepmerge<MapState>(state, nextConfig, {
+    arrayMerge: (_destinationArray, sourceArray) => sourceArray
+  });
+  const applied = validateViewPort({
+    ...mergedState,
+    width,
+    height
+  });
+
+  if (!state.isViewportSynced && state.splitMapViewports.length) {
+    const viewport = pick(next, APPLY_MAP_STATE_VIEWPORT_KEYS);
+    if (Object.keys(viewport).length) {
+      return updateMapUpdater(applied, {
+        payload: {viewport, mapIndex}
+      } as MapStateActions.UpdateMapUpdaterAction);
+    }
+  }
+
+  return applied;
 };
 
 /**
