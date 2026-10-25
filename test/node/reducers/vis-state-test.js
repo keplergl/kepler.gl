@@ -10152,6 +10152,56 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.end();
 });
 
+test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapshots', async t => {
+  drainTasksForTesting();
+  const dataId = 'remote-arrow';
+  const snapshot = values => {
+    const arrowTable = arrow.tableFromArrays({value: new Float64Array(values)});
+    return {
+      fields: [{name: 'value', type: ALL_FIELD_TYPES.real, analyzerType: 'FLOAT'}],
+      rows: [],
+      cols: [arrowTable.getChildAt(0)],
+      arrowTable
+    };
+  };
+  const datasets = await createNewDataEntryMock({
+    info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED},
+    data: snapshot([1, 2, 3]),
+    metadata: {source: 'https://example.com/live.arrow', sourceFormat: 'arrow'}
+  });
+  let state = reducer({...INITIAL_VIS_STATE, datasets}, VisStateActions.addFilter(dataId));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [2, 3]));
+  state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
+  t.deepEqual(state.datasets[dataId].filteredIndex, [0], 'Filter out 2–3 initially keeps only 1');
+  t.equal(state.filters[0].gpu, false, 'inverted filtering runs on the CPU');
+
+  for (const [values, expected] of [
+    [[1, 2, 3], [0]],
+    [[3, 1, 2], [1]],
+    [[2, 1, 3, 4], [1, 3]],
+    [[], []],
+    [[3, 2, 1], [2]],
+    [[2], []]
+  ]) {
+    const loading = reducer(state, VisStateActions.refreshDataset(dataId));
+    const progressed = reducer(loading, VisStateActions.refreshDatasetProgress(dataId, 50));
+    const [task] = drainTasksForTesting();
+    const data = snapshot(values);
+    state = reducer(progressed, succeedTaskInTest(task, {data, notModified: false}));
+    const table = state.datasets[dataId];
+    t.deepEqual(table.filteredIndex, expected, `refresh filters snapshot [${values}]`);
+    t.deepEqual(table.filteredIndexForDomain, expected, 'domain uses the same filtered snapshot');
+    table.filterTableCPU(state.filters, state.layers);
+    t.deepEqual(table.filteredIdxCPU, expected, 'CPU/export evaluation keeps the filtered rows');
+    t.deepEqual(state.filters[0].value, [2, 3], 'refresh preserves the selected range');
+    t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
+    t.equal(state.filters[0].inverted, true, 'refresh preserves Filter out');
+    t.deepEqual(Array.from(data.arrowTable.getChildAt(0)), values, 'source values are unchanged');
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset rebuilds filter domains and preserves selections', async t => {
   drainTasksForTesting();
   const dataId = 'remote-filter';
