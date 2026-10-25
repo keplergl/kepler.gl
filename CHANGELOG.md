@@ -15,6 +15,37 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.19] - Oct 25 2026
+
+- 4b5d4b4d9 fix(arrow): preserve point layers when Arrow refresh returns zero rows (#3882)
+- 593695cbb fix(geoops): parse WKT geometry in spatial joins (#3878)
+- c3758f462 fix(filters): reapply active filters after Arrow refresh (#3877)
+- f5b9ff180 fix(processors): avoid CORS preflights on remote refresh (#3883)
+- f66e4141f fix(filters): retain native GeoArrow MultiPoints in polygon filters (#3881)
+- 627a40c3a fix(filter): fall back to CPU when shared filter GPU channels are full (#3880)
+- a84b97241 fix(arrow): preserve batch offsets for MultiPoint accessors (#3879)
+- 12cc82742 fix(geoops): fix Arrow Int64 Group By arithmetic (#3876)
+- c015a4d53 fix(filters): rebuild filter domains after remote refresh (#3875)
+- 793f7ca9c fix(schemas): preserve Arrow integers and null timestamps when saving (#3874)
+- 1d7ad445a fix(processors): preserve vector export geometry and missing coordinates (#3873)
+- fe8c55c19 feat(layers): experimental Zarr raster layer (#3806)
+- 2294135a4 feat(camera): add basic tour editor and playback (#3861)
+- aa814f77c feat(camera): add deterministic camera tour model (#3860)
+- 07e5a8d89 feat(camera): add saved view bookmarks (#3859)
+- 5a72e13c8 fix(layers): handle WKB GeometryCollection imports (#3870)
+- d60bf45fc fix(processors): detect geometry in custom columns (#3869)
+- fb8750175 fix(layers): rebuild GeoJSON geometry after refresh (#3864)
+- c911330c9 fix(layers): limit automatic GeoJSON layers per dataset (#3867)
+- 6ffc418de fix(processors): recover complete GeoArrow caches after worker failures (#3863)
+- d4587392f chore(deps): bump launch-editor from 2.14.1 to 2.14.2 in /website (#3868)
+- ff3239eb4 fix(table): use full polygon geometry in spatial joins (#3862)
+- 4c148a52b chore(deps): bump follow-redirects from 1.16.0 to 1.16.1 in /website (#3866)
+- 14990a8c9 feat(annotations): add ruler variant (#3858)
+- 1b7de9f9b fix(layers): select default GeoJSON color field (#3857)
+- 2288a22b4 fix(deckgl): guard empty 3d building tiles (#3856)
+- 5a55bc326 feat(export): add icon and name color branding (#3854)
+- 546f1046f fix(components): expose basemap background color (#3855)
+
 ## [3.3.0-alpha.18] - Oct 19 2026
 
 - c7a6399f fix(export): restore annotation and chart panels (#3853)
