@@ -11,6 +11,7 @@ import {
   castDuckDBTypesForKepler,
   setGeoArrowWKBExtension,
   removeUnsupportedExtensions,
+  restoreArrowTable,
   restoreUnsupportedExtensions,
   isGeoArrowPoint,
   isGeoArrowLineString,
@@ -26,6 +27,34 @@ import {
 import {KeplerGlDuckDbTable} from '../../../src/duckdb/src/table/duckdb-table';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+
+test('restoreArrowTable -> numerical names preserve schema, buffers and source metadata', t => {
+  const columns = [arrow.vectorFromArray([37, null]), arrow.vectorFromArray([1000, 2000])];
+  const fields = ['lat', '2020'].map(
+    (name, i) => new arrow.Field(name, columns[i].type, true, new Map([['source', name]]))
+  );
+  const schema = new arrow.Schema(fields, new Map([['source', 'original']]));
+  for (const originalSchema of [undefined, schema]) {
+    const restored = restoreArrowTable(columns, fields, originalSchema);
+    t.deepEqual(
+      restored.schema.fields.map(f => f.name),
+      ['lat', '2020']
+    );
+    t.equal(restored.getChildAt(0).get(0), 37);
+    t.equal(restored.getChildAt(0).get(1), null);
+    t.equal(restored.getChildAt(1).get(0), 1000);
+    t.equal(restored.getChildAt(0).data[0].values.buffer, columns[0].data[0].values.buffer);
+    t.deepEqual(restored.schema.fields[0].metadata, fields[0].metadata);
+    restored.schema.fields[0].metadata.set('changed', 'yes');
+    t.notOk(fields[0].metadata.has('changed'), 'does not mutate the input field');
+    if (originalSchema) {
+      t.deepEqual(restored.schema.metadata, schema.metadata);
+      restored.schema.metadata.set('changed', 'yes');
+      t.notOk(schema.metadata.has('changed'), 'does not mutate the input schema');
+    }
+  }
+  t.end();
+});
 
 // Test getDuckDBColumnTypesMap
 test('duckdb-utils -> getDuckDBColumnTypesMap', t => {
@@ -594,20 +623,31 @@ test('duckdb-utils -> SUPPORTED_DUCKDB_DROP_EXTENSIONS', t => {
 });
 
 test('KeplerGlDuckDbTable -> row edits stay a warned no-op', t => {
-  const table = new KeplerGlDuckDbTable({info: {id: 'duck', label: 'duck'}});
+  const snapshot = arrow.tableFromJSON([{id: 'a', value: 1}]);
+  const table = new KeplerGlDuckDbTable({info: {id: 'duck', label: 'duck'}}).updateSchema({
+    fields: [
+      {name: 'id', type: 'string'},
+      {name: 'value', type: 'real'}
+    ],
+    cols: snapshot.schema.fields.map((_, i) => snapshot.getChildAt(i)),
+    arrowTable: snapshot,
+    rows: []
+  });
   const originalWarn = Console.warn;
   const warnings = [];
   Console.warn = message => warnings.push(String(message));
 
-  t.equal(table.appendRows([[1, 2]]), false, 'appendRows should no-op');
-  t.equal(table.upsertRows([[1, 2]], 'id'), false, 'upsertRows should no-op');
-  t.equal(table.removeRows([0]), false, 'removeRows should no-op');
-  t.equal(table.dataContainer.numRows(), 0, 'should not mutate the empty seed table');
-  t.ok(
-    warnings.some(message => message.includes('DuckDB INSERT')),
-    'should warn that DuckDB INSERT is not implemented'
-  );
-
-  Console.warn = originalWarn;
+  try {
+    t.equal(table.appendRows([['b', 2]]), false, 'appendRows should no-op');
+    t.equal(table.upsertRows([['a', 2]], 'id'), false, 'upsertRows should no-op');
+    t.equal(table.removeRows([0]), false, 'removeRows should no-op');
+    t.deepEqual(table.dataContainer.flattenData(), [['a', 1]], 'snapshot stays unchanged');
+    t.ok(
+      warnings.some(message => message.includes('DuckDB INSERT')),
+      'should warn that DuckDB INSERT is not implemented'
+    );
+  } finally {
+    Console.warn = originalWarn;
+  }
   t.end();
 });

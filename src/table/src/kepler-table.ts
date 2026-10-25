@@ -33,6 +33,7 @@ import {
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
+  ArrowDataContainer,
   DataForm,
   diffFilters,
   filterDataByFilterTypes,
@@ -257,6 +258,7 @@ class KeplerTable<F extends Field = Field> {
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
       arrowTable: data.arrowTable,
+      arrowSchema: data.arrowSchema,
       geoArrowBinaryData: data.geoArrowBinaryData,
       inputDataFormat
     });
@@ -306,7 +308,8 @@ class KeplerTable<F extends Field = Field> {
 
     if (typeof this.dataContainer.update === 'function') {
       this.dataContainer.update(dataContainerData, {
-        geoArrowBinaryData: data.geoArrowBinaryData
+        geoArrowBinaryData: data.geoArrowBinaryData,
+        arrowSchema: data.arrowSchema
       });
     } else if (isRowSnapshot) {
       this.dataContainer = createDataContainer(dataContainerData, {
@@ -341,7 +344,7 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * Append column-ordered rows in place. Accessors stay bound: the container
-   * instance is not replaced. No-op when the container has no `append` (DuckDB).
+   * instance is not replaced. No-op when the container has no `append`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   appendRows(rows: any[][]): boolean {
@@ -372,8 +375,7 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * Replace rows that share `keyField` and append the rest. Last incoming row
-   * wins for a repeated key. No-op when the container has no `append`/`replace`
-   * (DuckDB).
+   * wins for a repeated key. No-op when the container has no `append`/`replace`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   upsertRows(rows: any[][], keyField: string): boolean {
@@ -403,33 +405,35 @@ class KeplerTable<F extends Field = Field> {
     }
 
     const lastByKey = new Map<unknown, any[]>();
-    const keyOrder: unknown[] = [];
     for (const row of rows) {
       const key = row[keyIdx];
-      if (!lastByKey.has(key)) {
-        keyOrder.push(key);
-      }
       lastByKey.set(key, row);
     }
 
+    const replacements = new Map<number, any[]>();
     const toAppend: any[][] = [];
-    for (const key of keyOrder) {
-      const row = lastByKey.get(key);
-      if (!row) {
-        continue;
-      }
+    for (const [key, row] of lastByKey) {
       const existing = keyToIndex.get(key);
       if (existing !== undefined) {
-        if (!this.dataContainer.replace(existing, row)) {
-          return false;
-        }
+        replacements.set(existing, row);
       } else {
         toAppend.push(row);
       }
     }
 
-    if (toAppend.length && !this.dataContainer.append(toAppend)) {
-      return false;
+    if (this.dataContainer instanceof ArrowDataContainer) {
+      if (!this.upsertArrowRows(this.dataContainer, replacements, toAppend)) {
+        return false;
+      }
+    } else {
+      for (const [index, row] of replacements) {
+        if (!this.dataContainer.replace(index, row)) {
+          return false;
+        }
+      }
+      if (toAppend.length && !this.dataContainer.append(toAppend)) {
+        return false;
+      }
     }
 
     const nextIndexes =
@@ -442,9 +446,32 @@ class KeplerTable<F extends Field = Field> {
     return true;
   }
 
+  private upsertArrowRows(
+    container: ArrowDataContainer,
+    replacements: Map<number, any[]>,
+    toAppend: any[][]
+  ): boolean {
+    // Encode the complete result once before touching the live container.
+    // Rebuilding per replacement is quadratic and can leave partial mutations
+    // when a later row fails to encode.
+    const rows = container.flattenData();
+    for (const [index, row] of replacements) {
+      rows[index] = row;
+    }
+    const staged = new ArrowDataContainer({
+      cols: this.fields.map((_, i) => container.getColumn(i).slice(0, 0)),
+      fields: this.fields,
+      arrowSchema: container.getTable().schema
+    });
+    if (!staged.append(rows.concat(toAppend))) {
+      return false;
+    }
+    container.update(staged.getTable());
+    return true;
+  }
+
   /**
-   * Remove rows by index in place. No-op when the container has no `remove`
-   * (DuckDB).
+   * Remove rows by index in place. No-op when the container has no `remove`.
    * @returns false when any index is invalid and the table is unchanged.
    */
   removeRows(indexes: number[]): boolean {

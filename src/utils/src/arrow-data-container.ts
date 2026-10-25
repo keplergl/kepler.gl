@@ -15,11 +15,13 @@ type ArrowDataContainerInput = {
   cols: arrow.Vector[];
   fields?: ProtoDatasetField[];
   arrowTable?: arrow.Table;
+  arrowSchema?: arrow.Schema;
   geoArrowBinaryData?: GeoArrowBinaryData;
 };
 
 type ArrowDataContainerUpdateOptions = {
   geoArrowBinaryData?: GeoArrowBinaryData;
+  arrowSchema?: arrow.Schema;
 };
 
 /**
@@ -70,6 +72,185 @@ export function isArrowVector(data: any): data is arrow.Vector {
 /** Build an Arrow vector while letting Arrow infer the physical type from converted values. */
 export function createArrowVector(values: unknown[]): arrow.Vector {
   return arrow.vectorFromArray(values as any[]);
+}
+
+/** Arrow visitors require local types, including when serializing DuckDB's Arrow data. */
+function localArrowType(
+  type: arrow.DataType,
+  types: Map<arrow.DataType, arrow.DataType>
+): arrow.DataType {
+  if ((type as unknown) instanceof arrow.DataType) return type;
+  const cached = types.get(type);
+  if (cached) return cached;
+  const local = cloneArrowType(type, types);
+  types.set(type, local);
+  return local;
+}
+
+function cloneArrowType(
+  type: arrow.DataType,
+  types: Map<arrow.DataType, arrow.DataType>
+): arrow.DataType {
+  const children = () =>
+    type.children.map(
+      field =>
+        new arrow.Field(
+          field.name,
+          localArrowType(field.type, types),
+          field.nullable,
+          new Map(field.metadata)
+        )
+    );
+  if (arrow.DataType.isNull(type)) return new arrow.Null();
+  if (arrow.DataType.isInt(type)) return new arrow.Int(type.isSigned, type.bitWidth);
+  if (arrow.DataType.isFloat(type)) return new arrow.Float(type.precision);
+  if (arrow.DataType.isBinary(type)) return new arrow.Binary();
+  if (arrow.DataType.isLargeBinary(type)) return new arrow.LargeBinary();
+  if (arrow.DataType.isUtf8(type)) return new arrow.Utf8();
+  if (arrow.DataType.isLargeUtf8(type)) return new arrow.LargeUtf8();
+  if (arrow.DataType.isBool(type)) return new arrow.Bool();
+  if (arrow.DataType.isDecimal(type))
+    return new arrow.Decimal(type.scale, type.precision, type.bitWidth);
+  if (arrow.DataType.isDate(type)) return new arrow.Date_(type.unit);
+  if (arrow.DataType.isTime(type)) return new arrow.Time(type.unit, type.bitWidth);
+  if (arrow.DataType.isTimestamp(type)) return new arrow.Timestamp(type.unit, type.timezone);
+  if (arrow.DataType.isInterval(type)) return new arrow.Interval(type.unit);
+  if (arrow.DataType.isDuration(type)) return new arrow.Duration(type.unit);
+  if (arrow.DataType.isList(type)) return new arrow.List(children()[0]);
+  if (arrow.DataType.isStruct(type)) return new arrow.Struct(children());
+  if (arrow.DataType.isUnion(type)) return new arrow.Union(type.mode, type.typeIds, children());
+  if (arrow.DataType.isFixedSizeBinary(type)) return new arrow.FixedSizeBinary(type.byteWidth);
+  if (arrow.DataType.isFixedSizeList(type))
+    return new arrow.FixedSizeList(type.listSize, children()[0]);
+  if (arrow.DataType.isMap(type))
+    return new arrow.Map_(children()[0] as (typeof type.children)[0], type.keysSorted);
+  if (arrow.DataType.isDictionary(type))
+    return new arrow.Dictionary(
+      localArrowType(type.dictionary, types),
+      localArrowType(type.indices, types) as typeof type.indices,
+      type.id,
+      type.isOrdered
+    );
+  throw new Error(`Unsupported Arrow type: ${type}`);
+}
+
+/** DuckDB can supply Data from a different Arrow build. Wrap it without copying buffers. */
+function localArrowData(
+  data: arrow.Data,
+  types: Map<arrow.DataType, arrow.DataType>,
+  chunks: Map<arrow.Data, arrow.Data>,
+  dictionaries: Map<arrow.Vector, arrow.Vector>
+): arrow.Data {
+  if ((data as unknown) instanceof arrow.Data) return data;
+  const cached = chunks.get(data);
+  if (cached) return cached;
+  const normalize = (child: arrow.Data) => localArrowData(child, types, chunks, dictionaries);
+  let dictionary = data.dictionary && dictionaries.get(data.dictionary);
+  if (data.dictionary && !dictionary) {
+    dictionary = new arrow.Vector(data.dictionary.data.map(normalize));
+    dictionaries.set(data.dictionary, dictionary);
+  }
+  const local = new arrow.Data(
+    localArrowType(data.type, types),
+    data.offset,
+    data.length,
+    data.nullCount,
+    data.buffers,
+    data.children.map(normalize),
+    dictionary
+  );
+  chunks.set(data, local);
+  return local;
+}
+
+/**
+ * Rebuild a table by position, never by object keys: integer-like names must not
+ * reorder columns. Chunk boundaries are aligned with Data slices (buffer views),
+ * without reading cells or copying vectors. Short columns retain Arrow's null
+ * padding behavior. Schema metadata is copied so callers can edit it independently.
+ */
+export function createArrowTable(
+  columns: arrow.Vector[],
+  fields: readonly {
+    name: string;
+    metadata?: Map<string, string> | Record<string, string>;
+    nullable?: boolean;
+  }[],
+  sourceSchema?: arrow.Schema
+): arrow.Table {
+  const types = new Map<arrow.DataType, arrow.DataType>();
+  const chunks = new Map<arrow.Data, arrow.Data>();
+  const dictionaries = new Map<arrow.Vector, arrow.Vector>();
+  const normalizeData = (data: arrow.Data) => localArrowData(data, types, chunks, dictionaries);
+  const length = fields.reduce((max, _, i) => Math.max(max, columns[i].length), 0);
+  const schema = new arrow.Schema(
+    fields.map((field, i) => {
+      const source = sourceSchema?.fields[i];
+      const metadata = source?.metadata ?? field.metadata;
+      return new arrow.Field(
+        field.name,
+        localArrowType(columns[i].type, types),
+        columns[i].length < length || (source?.nullable ?? field.nullable ?? columns[i].nullable),
+        new Map(metadata instanceof Map ? metadata : Object.entries(metadata ?? {}))
+      );
+    }),
+    new Map(sourceSchema?.metadata)
+  );
+  const cursors = fields.map(() => ({chunk: 0, offset: 0}));
+  const batches: arrow.RecordBatch[] = [];
+  let row = 0;
+  // Keep a typed record batch even for empty vectors (including dictionaries).
+  do {
+    let batchLength = length - row;
+    const chunks = fields.map((_, i) => {
+      const cursor = cursors[i];
+      const data = columns[i].data;
+      while (cursor.chunk < data.length && cursor.offset === data[cursor.chunk].length) {
+        cursor.chunk++;
+        cursor.offset = 0;
+      }
+      const chunk = data[cursor.chunk];
+      if (chunk) batchLength = Math.min(batchLength, chunk.length - cursor.offset);
+      return chunk;
+    });
+    const children = fields.map((_, i) => {
+      const chunk = chunks[i];
+      const cursor = cursors[i];
+      if (!chunk) {
+        return columns[i].data[0]?.length === 0 && batchLength === 0
+          ? normalizeData(columns[i].data[0])
+          : arrow.makeData({
+              type: schema.fields[i].type,
+              length: batchLength,
+              nullCount: batchLength,
+              nullBitmap: new Uint8Array(Math.ceil(batchLength / 64) * 8)
+            });
+      }
+      const child =
+        cursor.offset === 0 && batchLength === chunk.length
+          ? chunk
+          : chunk.slice(cursor.offset, batchLength);
+      cursor.offset += batchLength;
+      return normalizeData(child);
+    });
+    const batch = new arrow.RecordBatch(
+      schema,
+      arrow.makeData({
+        type: new arrow.Struct(schema.fields),
+        length: batchLength,
+        nullCount: 0,
+        children
+      })
+    );
+    // Arrow 17 reconciles RecordBatch fields by name even with explicit Data.
+    // Restore positional fields so duplicate names cannot merge types/metadata.
+    schema.fields.forEach((field, i) => {
+      batch.schema.fields[i] = field;
+    });
+    batches.push(batch);
+    row += batchLength;
+  } while (row < length);
+  return new arrow.Table(schema, batches);
 }
 
 /**
@@ -164,25 +345,27 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
   }
 
   try {
-    const columns: Record<string, arrow.Vector> = {};
-    const seenNames = new Map<string, number>();
+    const columns: arrow.Vector[] = [];
+    const types = new Map<arrow.DataType, arrow.DataType>();
     for (let i = 0; i < table.numCols; i++) {
       const field = table.schema.fields[i];
       const column = table.getChildAt(i);
       if (!column) {
-        continue;
+        return table;
       }
-      // Arrow schemas may repeat field names; object keys would drop earlier columns.
-      const seen = seenNames.get(field.name) ?? 0;
-      seenNames.set(field.name, seen + 1);
-      const key = seen === 0 ? field.name : `${field.name}_${seen}`;
-      columns[key] = compactArrowVector(column, column.type || field.type);
+      columns.push(compactArrowVector(column, localArrowType(column.type || field.type, types)));
     }
 
     // Always build a kepler apache-arrow Table. Using `table.constructor` can
     // mix DuckDB's bundled Arrow Table with rebuilt vectors and drop schema
     // metadata (`geo`, ARROW:extension:name) that Kepler needs to create layers.
-    const compacted = tableFromCompactedColumns(table, columns);
+    const compacted = createArrowTable(columns, table.schema.fields, table.schema);
+
+    // Independent builders can split a dictionary shared by multiple columns.
+    // Keep the source if Arrow cannot serialize the rebuilt dictionary IDs.
+    for (const batch of compacted.batches) {
+      batch.dictionaries;
+    }
 
     if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
       return compacted;
@@ -192,52 +375,6 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
   }
 
   return table;
-}
-
-function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema | null): void {
-  if (!from || !to) {
-    return;
-  }
-
-  const fromMeta = from.metadata as Map<string, string> | undefined;
-  const toMeta = to.metadata as Map<string, string> | undefined;
-  if (
-    fromMeta &&
-    toMeta &&
-    typeof fromMeta.forEach === 'function' &&
-    typeof toMeta.set === 'function'
-  ) {
-    fromMeta.forEach((value, key) => {
-      toMeta.set(key, value);
-    });
-  }
-
-  const fromByName = new Map((from.fields || []).map(field => [field.name, field]));
-  (to.fields || []).forEach((toField, index) => {
-    const fromField = from.fields?.[index] || fromByName.get(toField.name);
-    const src = fromField?.metadata as Map<string, string> | undefined;
-    const dst = toField?.metadata as Map<string, string> | undefined;
-    if (!src || !dst || typeof src.forEach !== 'function' || typeof dst.set !== 'function') {
-      return;
-    }
-    src.forEach((value, key) => {
-      dst.set(key, value);
-    });
-  });
-}
-
-function tableFromCompactedColumns(
-  source: arrow.Table,
-  columns: Record<string, arrow.Vector>
-): arrow.Table {
-  let compacted: arrow.Table;
-  try {
-    compacted = new arrow.Table(source.schema, columns);
-  } catch {
-    compacted = new arrow.Table(columns);
-  }
-  copyArrowSchemaMetadata(source.schema, compacted.schema);
-  return compacted;
 }
 
 /**
@@ -343,29 +480,6 @@ function isSupportedArrowRowEditType(type: arrow.DataType): boolean {
   return false;
 }
 
-function arrowFieldGeoArrowExtension(field?: arrow.Field | null): string | undefined {
-  const metadata = field?.metadata as Map<string, string> | Record<string, string> | undefined;
-  if (!metadata) {
-    return undefined;
-  }
-  if (typeof (metadata as Map<string, string>).get === 'function') {
-    return (metadata as Map<string, string>).get(GEOARROW_METADATA_KEY);
-  }
-  return (metadata as Record<string, string>)[GEOARROW_METADATA_KEY];
-}
-
-function concatArrowTables(tables: arrow.Table[]): arrow.Table | null {
-  const nonempty = tables.filter(table => table && table.numRows > 0);
-  if (!nonempty.length) {
-    return tables[0] ?? null;
-  }
-  let next = nonempty[0];
-  for (let i = 1; i < nonempty.length; i++) {
-    next = next.concat(nonempty[i]);
-  }
-  return next;
-}
-
 /**
  * A data container where all data is stored in raw Arrow table
  */
@@ -397,7 +511,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._numRows = this._cols[0]?.length ?? 0;
     this._numChunks = this._cols[0]?.data?.length ?? 0;
     this._geoArrowBinaryData = data.geoArrowBinaryData || {};
-    const table = compactArrowTable(data.arrowTable || this._createTable());
+    const table = compactArrowTable(data.arrowTable || this._createTable(data.arrowSchema));
     this._arrowTable = table;
     if (table.numCols > 0) {
       this._assignTable(table);
@@ -406,14 +520,9 @@ export class ArrowDataContainer implements DataContainerInterface {
 
   /**
    * Restores internal Arrow table from vectors.
-   * TODO: consider using original arrow table, as it could contain extra metadata, not passed to the fields.
    */
-  private _createTable() {
-    const creaOpts = {};
-    this._fields.map((field, index) => {
-      creaOpts[field.name] = this._cols[index];
-    });
-    return new arrow.Table(creaOpts);
+  private _createTable(schema = this._arrowTable?.schema) {
+    return createArrowTable(this._cols, this._fields, schema);
   }
 
   getTable() {
@@ -444,7 +553,7 @@ export class ArrowDataContainer implements DataContainerInterface {
       this._assignTable(updateData);
     } else {
       this._cols = updateData;
-      const table = this._createTable();
+      const table = this._createTable(options.arrowSchema);
       if (table.numCols > 0) {
         this._assignTable(table);
       } else {
@@ -485,8 +594,7 @@ export class ArrowDataContainer implements DataContainerInterface {
       return false;
     }
     try {
-      const next = this._numRows === 0 ? extra : this._arrowTable.concat(extra);
-      this._commitTable(next);
+      this._commitColumns(this._cols.map((column, i) => column.concat(extra.getChildAt(i)!)));
       return true;
     } catch {
       return false;
@@ -506,19 +614,11 @@ export class ArrowDataContainer implements DataContainerInterface {
       return false;
     }
     try {
-      const parts: arrow.Table[] = [];
-      if (index > 0) {
-        parts.push(this._arrowTable.slice(0, index));
-      }
-      parts.push(extra);
-      if (index + 1 < this._numRows) {
-        parts.push(this._arrowTable.slice(index + 1));
-      }
-      const next = concatArrowTables(parts);
-      if (!next) {
-        return false;
-      }
-      this._commitTable(next);
+      this._commitColumns(
+        this._cols.map((column, i) =>
+          column.slice(0, index).concat(extra.getChildAt(i)!, column.slice(index + 1))
+        )
+      );
       return true;
     } catch {
       return false;
@@ -546,37 +646,38 @@ export class ArrowDataContainer implements DataContainerInterface {
     }
 
     if (toRemove.size === numRows) {
-      this._commitTable(this._arrowTable.slice(0, 0));
+      this._commitColumns(this._cols.map(column => column.slice(0, 0)));
       return true;
     }
 
     try {
-      const kept: arrow.Table[] = [];
+      const ranges: [number, number][] = [];
       let start = 0;
       const sorted = [...toRemove].sort((a, b) => a - b);
       for (let i = 0; i < sorted.length; i++) {
         const index = sorted[i];
         if (index > start) {
-          kept.push(this._arrowTable.slice(start, index));
+          ranges.push([start, index]);
         }
         start = index + 1;
       }
       if (start < numRows) {
-        kept.push(this._arrowTable.slice(start));
+        ranges.push([start, numRows]);
       }
-      const next = concatArrowTables(kept);
-      if (!next) {
-        return false;
-      }
-      this._commitTable(next);
+      this._commitColumns(
+        this._cols.map(column =>
+          new arrow.Vector(ranges.flatMap(([begin, end]) => column.slice(begin, end).data))
+        )
+      );
       return true;
     } catch {
       return false;
     }
   }
 
-  private _commitTable(table: arrow.Table): void {
-    this._assignTable(compactArrowTable(table));
+  private _commitColumns(columns: arrow.Vector[]): void {
+    const {schema} = this._arrowTable;
+    this._assignTable(compactArrowTable(createArrowTable(columns, schema.fields, schema)));
     // Row edits change row and chunk offsets used by the worker geometry cache.
     this._geoArrowBinaryData = {};
   }
@@ -588,7 +689,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     }
     for (let i = 0; i < fields.length; i++) {
       const field = fields[i];
-      const extension = arrowFieldGeoArrowExtension(field);
+      const extension = field.metadata.get(GEOARROW_METADATA_KEY);
       if (typeof extension === 'string' && extension.startsWith('geoarrow')) {
         return `column "${field.name}" is geoarrow (${extension})`;
       }
@@ -624,16 +725,12 @@ export class ArrowDataContainer implements DataContainerInterface {
       return null;
     }
 
-    const columns: Record<string, arrow.Vector> = {};
-    const seenNames = new Map<string, number>();
+    const columns: arrow.Vector[] = [];
     for (let i = 0; i < numCols; i++) {
       const field = this._arrowTable.schema.fields[i];
-      const seen = seenNames.get(field.name) ?? 0;
-      seenNames.set(field.name, seen + 1);
-      const key = seen === 0 ? field.name : `${field.name}_${seen}`;
       const values = rows.map(row => row[i]);
       try {
-        columns[key] = arrow.vectorFromArray(values, field.type);
+        columns.push(arrow.vectorFromArray(values, field.type));
       } catch {
         globalConsole.warn(
           `ArrowDataContainer.${method}: could not encode column "${field.name}" as ${field.type}`
@@ -642,14 +739,11 @@ export class ArrowDataContainer implements DataContainerInterface {
       }
     }
 
-    let extra: arrow.Table;
     try {
-      extra = new arrow.Table(this._arrowTable.schema, columns);
+      return createArrowTable(columns, this._arrowTable.schema.fields, this._arrowTable.schema);
     } catch {
-      extra = new arrow.Table(columns);
+      return null;
     }
-    copyArrowSchemaMetadata(this._arrowTable.schema, extra.schema);
-    return extra;
   }
 
   numChunks(): number {

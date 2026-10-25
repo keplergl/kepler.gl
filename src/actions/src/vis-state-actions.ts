@@ -1125,7 +1125,7 @@ export type AddToDatasetOptions = {
   /**
    * Field name used as a unique key. Matching rows are replaced in place;
    * keys that are not in the table are appended. Last incoming row wins when
-   * the same key appears twice. DuckDB tables no-op with a warning. Nested /
+   * the same key appears twice. DuckDB tables no-op with a warning. Nested, binary, and
    * geoarrow Arrow columns also no-op (primitive Arrow columns concat in place).
    */
   upsertBy?: string;

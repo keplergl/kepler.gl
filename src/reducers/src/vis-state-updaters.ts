@@ -4096,7 +4096,7 @@ function normalizeDatasetRows(
 
 /**
  * Append or upsert rows on an existing in-memory row or Arrow dataset. Keeps layers and re-runs filters.
- * DuckDB tables warn and are left unchanged (INSERT not implemented). Nested / geoarrow Arrow columns are rejected.
+ * DuckDB tables warn and are left unchanged (INSERT not implemented). Nested, binary, and geoarrow Arrow columns are rejected.
  * @memberof visStateUpdaters
  * @public
  */

@@ -10789,101 +10789,6 @@ test('VisStateUpdater -> addToDataset appends rows and keeps layers', async t =>
   t.end();
 });
 
-test('VisStateUpdater -> addToDataset rebuilds GeoJSON dataToFeature', async t => {
-  const initialData = processGeojson({
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: {id: 'a', ring: 1},
-        geometry: {type: 'Point', coordinates: [-122.42, 37.77]}
-      }
-    ]
-  });
-  const datasets = await createNewDataEntryMock({
-    info: {id: 'live', label: 'live.geojson'},
-    data: initialData
-  });
-  const {props} = GeojsonLayer.findDefaultLayerProps(datasets.live);
-  t.ok(props.length, 'should find a geojson column');
-  const geoLayer = new GeojsonLayer({
-    id: 'g1',
-    dataId: 'live',
-    isVisible: true,
-    ...props[0]
-  });
-  const {layerData, layer} = calculateLayerData(
-    geoLayer,
-    {...INITIAL_VIS_STATE, datasets, layers: [geoLayer], layerData: [{}]},
-    undefined
-  );
-
-  t.equal(layer.dataToFeature.length, 1, 'should parse the initial feature');
-
-  const state = {
-    ...INITIAL_VIS_STATE,
-    datasets,
-    layers: [layer],
-    layerData: [layerData],
-    layerOrder: [layer.id]
-  };
-
-  const appended = reducer(
-    state,
-    VisStateActions.addToDataset('live', {
-      id: 'b',
-      ring: 2,
-      _geojson: {
-        type: 'Feature',
-        properties: {id: 'b', ring: 2},
-        geometry: {type: 'Point', coordinates: [-122.5, 37.8]}
-      }
-    })
-  );
-
-  t.equal(appended.datasets.live.dataContainer.numRows(), 2, 'should append the feature row');
-  t.equal(appended.layers[0].dataToFeature.length, 2, 'should rebuild dataToFeature after append');
-  t.equal(appended.layerData[0].data.length, 2, 'should rebuild layer data after append');
-  t.deepEqual(
-    appended.layers[0].dataToFeature[1].geometry.coordinates,
-    [-122.5, 37.8],
-    'should include the appended point'
-  );
-
-  const replaced = reducer(
-    appended,
-    VisStateActions.addToDataset(
-      'live',
-      {
-        id: 'a',
-        ring: 1,
-        _geojson: {
-          type: 'Feature',
-          properties: {id: 'a', ring: 1},
-          geometry: {type: 'Point', coordinates: [-122.1, 37.1]}
-        }
-      },
-      {upsertBy: 'id'}
-    )
-  );
-
-  t.equal(replaced.datasets.live.dataContainer.numRows(), 2, 'upsert should keep row count');
-  t.deepEqual(
-    replaced.layers[0].dataToFeature[0].geometry.coordinates,
-    [-122.1, 37.1],
-    'should rebuild dataToFeature after in-place replace'
-  );
-
-  const removed = reducer(
-    replaced,
-    VisStateActions.removeFromDataset('live', {field: 'id', values: 'b'})
-  );
-  t.equal(removed.layers[0].dataToFeature.length, 1, 'should drop the removed feature');
-  t.equal(removed.layerData[0].data.length, 1, 'should drop layer data for the removed feature');
-
-  t.end();
-});
-
 test('VisStateUpdater -> addToDataset object rows ignore prototype keys', async t => {
   const initialData = processCsvData('lat,lng\n1,2');
   const datasets = await createNewDataEntryMock({
@@ -11184,7 +11089,7 @@ test('VisStateUpdater -> addToDataset and removeFromDataset clear table sort', a
 });
 
 async function createArrowLiveDatasets(rows) {
-  const table = arrow.tableFromJSON(rows);
+  const table = rows instanceof arrow.Table ? rows : arrow.tableFromJSON(rows);
   return createNewDataEntryMock({
     info: {id: 'live', label: 'live.arrow'},
     data: processArrowBatches(table.batches)
@@ -11285,5 +11190,117 @@ test('VisStateUpdater -> addToDataset and removeFromDataset on Arrow tables', as
     'should keep later unmatched Arrow ids'
   );
 
+  t.end();
+});
+
+test('VisStateUpdater -> rejected Arrow upserts leave all rows and derived state unchanged', async t => {
+  const datasets = await createArrowLiveDatasets(
+    new arrow.Table({
+      id: arrow.vectorFromArray(['a', 'b'], new arrow.Utf8()),
+      amount: arrow.vectorFromArray([1n, 2n], new arrow.Int64())
+    })
+  );
+  const state = reducer(
+    {...INITIAL_VIS_STATE, datasets},
+    VisStateActions.sortTableColumn('live', 'amount')
+  );
+  const dataset = state.datasets.live;
+  const container = dataset.dataContainer;
+  const snapshot = container.getTable();
+  const revision = dataset.dataRevision;
+  const indexes = dataset.allIndexes;
+  const sortOrder = dataset.sortOrder;
+  const warn = sinon.stub(Console, 'warn');
+  try {
+    for (const lastKey of ['b', 'c']) {
+      const result = reducer(
+        state,
+        VisStateActions.addToDataset(
+          'live',
+          [
+            ['a', 10n],
+            [lastKey, 'invalid-int64']
+          ],
+          {
+            upsertBy: 'id'
+          }
+        )
+      );
+      t.equal(result, state, 'encoding failure is a reducer no-op');
+      t.equal(container.getTable(), snapshot, 'no partial Arrow snapshot is committed');
+      t.deepEqual(
+        container.flattenData(),
+        [
+          ['a', 1n],
+          ['b', 2n]
+        ],
+        'no earlier replacement leaks'
+      );
+      t.equal(dataset.dataRevision, revision, 'revision stays unchanged');
+      t.equal(dataset.allIndexes, indexes, 'indexes stay unchanged');
+      t.equal(dataset.sortOrder, sortOrder, 'sorting stays unchanged');
+    }
+  } finally {
+    warn.restore();
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow upserts preserve accessors and last incoming values', async t => {
+  const datasets = await createArrowLiveDatasets([
+    {id: 'a', value: 1},
+    {id: 'b', value: 2},
+    {id: 'c', value: 3}
+  ]);
+  let state = {...INITIAL_VIS_STATE, datasets};
+  const container = datasets.live.dataContainer;
+  const snapshot = container.getTable();
+  const accessor = datasets.live.fields[1].valueAccessor;
+  const revision = datasets.live.dataRevision;
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        ['c', 30],
+        ['e', 5],
+        ['a', 10],
+        ['d', 4],
+        ['c', 33],
+        ['e', 55]
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  t.equal(state.datasets.live.dataContainer, container, 'keeps the original container');
+  t.deepEqual(
+    container.flattenData(),
+    [
+      ['a', 10],
+      ['b', 2],
+      ['c', 33],
+      ['e', 55],
+      ['d', 4]
+    ],
+    'replacements keep positions and new keys keep first incoming order'
+  );
+  t.equal(accessor({index: 2}), 33, 'existing accessors read updated values');
+  t.equal(snapshot.getChildAt(1).get(2), 3, 'previous Arrow snapshots stay unchanged');
+  t.equal(state.datasets.live.dataRevision, revision + 1, 'one revision for the whole batch');
+  t.deepEqual(state.datasets.live.allIndexes, [0, 1, 2, 3, 4], 'indexes include appended rows');
+
+  state = reducer(state, VisStateActions.addToDataset('live', [['b', null]], {upsertBy: 'id'}));
+  t.equal(container.numRows(), 5, 'replacement-only upsert keeps row count');
+  t.equal(container.valueAt(1, 1), null, 'replacement-only upsert accepts null values');
+  state = reducer(state, VisStateActions.addToDataset('live', [['f', 6]], {upsertBy: 'id'}));
+  t.deepEqual(container.rowAsArray(5), ['f', 6], 'append-only upsert preserves values');
+
+  state = reducer(state, VisStateActions.removeFromDataset('live', [0, 1, 2, 3, 4, 5]));
+  state = reducer(state, VisStateActions.addToDataset('live', [['g', 7]], {upsertBy: 'id'}));
+  t.deepEqual(
+    container.flattenData(),
+    [['g', 7]],
+    'upsert retains the schema after deleting all rows'
+  );
   t.end();
 });

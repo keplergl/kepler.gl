@@ -167,6 +167,7 @@ export * from './map-utils';
 export {
   ArrowDataContainer,
   createArrowVector,
+  createArrowTable,
   compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,
