@@ -315,6 +315,14 @@ class KeplerTable<F extends Field = Field> {
       });
     }
 
+    // Timestamp mappings are indexed by row, so column snapshots must refresh
+    // them too. Rebuild only cached fields; unrequested columns stay lazy.
+    const timestampFieldsToRebuild = isRowSnapshot
+      ? []
+      : this.fields
+          .filter(f => f.type === ALL_FIELD_TYPES.timestamp && f.filterProps)
+          .map(f => f.name);
+
     if (isRowSnapshot) {
       this.fields = this.fields.map((f, i) => {
         const {filterProps: _filterProps, ...rest} = f;
@@ -324,6 +332,14 @@ class KeplerTable<F extends Field = Field> {
         };
       }) as F[];
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    } else if (timestampFieldsToRebuild.length) {
+      this.fields = this.fields.map(f => {
+        if (f.type !== ALL_FIELD_TYPES.timestamp || !f.filterProps) {
+          return f;
+        }
+        const {filterProps: _filterProps, ...rest} = f;
+        return rest;
+      }) as F[];
     }
 
     this.allIndexes = this.dataContainer.getPlainIndex();
@@ -335,6 +351,8 @@ class KeplerTable<F extends Field = Field> {
     this.filterRecordCPU = undefined;
     this.changedFilters = undefined;
     this.dataRevision += 1;
+
+    timestampFieldsToRebuild.forEach(name => this.getColumnFilterProps(name));
 
     return this;
   }

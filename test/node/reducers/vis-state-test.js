@@ -10285,6 +10285,86 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
   t.end();
 });
 
+test('VisStateUpdater -> timestamp refresh updates point filtering and export', async t => {
+  const firstTime = Date.UTC(2024, 1, 1);
+  const lastTime = firstTime + 86400000;
+  const snapshot = (values, rowBacked) => {
+    const source = new arrow.Table({
+      time: arrow.vectorFromArray(
+        values.map(value => new Date(value)),
+        new arrow.TimestampMillisecond('UTC')
+      ),
+      lat: arrow.vectorFromArray(
+        values.map(() => 37.77),
+        new arrow.Float64()
+      ),
+      lng: arrow.vectorFromArray(
+        values.map(() => -122.42),
+        new arrow.Float64()
+      )
+    });
+    const data = processArrowBatches(arrow.tableFromIPC(arrow.tableToIPC(source, 'file')).batches);
+    return rowBacked
+      ? {fields: data.fields, rows: values.map(value => [value, 37.77, -122.42])}
+      : data;
+  };
+
+  for (const rowBacked of [false, true]) {
+    for (const gpu of [false, true]) {
+      drainTasksForTesting();
+      const dataId = 'remote-timestamps';
+      const datasets = await createNewDataEntryMock({
+        info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED},
+        data: snapshot([firstTime, lastTime], rowBacked),
+        metadata: {source: 'https://example.com/time.arrow', sourceFormat: 'arrow'}
+      });
+      const {props} = PointLayer.findDefaultLayerProps(datasets[dataId]);
+      const point = new PointLayer({id: 'timestamp-point', dataId, ...props[0]});
+      let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
+      const initial = calculateLayerData(point, state);
+      state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
+      state = reducer(state, VisStateActions.addFilter(dataId));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
+      state = reducer(
+        state,
+        VisStateActions.setFilter(0, 'value', [firstTime, firstTime + 3600000])
+      );
+      state = reducer(state, VisStateActions.setFilter(0, 'gpu', gpu));
+      const selection = state.filters[0];
+
+      for (const values of [[lastTime, firstTime], [], [lastTime, firstTime]]) {
+        state = reducer(state, VisStateActions.refreshDataset(dataId));
+        state = reducer(state, VisStateActions.refreshDatasetProgress(dataId, 50));
+        const [task] = drainTasksForTesting();
+        state = reducer(
+          state,
+          succeedTaskInTest(task, {data: snapshot(values, rowBacked), notModified: false})
+        );
+        const table = state.datasets[dataId];
+        const expected = values.length ? [1] : [];
+        table.filterTableCPU(state.filters, state.layers);
+        t.deepEqual(table.filteredIdxCPU, expected, 'export uses refreshed timestamp values');
+        const renderIndexes = rowBacked
+          ? state.layerData[0].data.map(datum => datum.index)
+          : table.allIndexes;
+        const visible = renderIndexes.filter(index => {
+          if (!state.layerData[0].getFiltered({index})) return false;
+          const value = state.layerData[0].getFilterValue({index})[0];
+          const [min, max] = table.gpuFilter.filterRange[0];
+          return value >= min && value <= max;
+        });
+        t.deepEqual(visible, expected, 'point rendering uses refreshed timestamp values');
+        t.equal(state.layers[0].isValid, true, 'empty snapshots keep the point layer valid');
+        t.deepEqual(state.filters[0].value, selection.value, 'refresh retains the selected range');
+        t.equal(state.filters[0].id, selection.id, 'refresh retains filter identity');
+        t.equal(state.filters[0].gpu, gpu, 'refresh retains GPU mode');
+        t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
+      }
+    }
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset rebuilds filter domains and preserves selections', async t => {
   drainTasksForTesting();
   const dataId = 'remote-filter';
