@@ -22,6 +22,9 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
+      - name: Validate plugin manifests
+        run: node scripts/validate-plugin-manifests.js
+
       - name: Get Yarn cache directory
         id: yarn-cache-dir
         run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
