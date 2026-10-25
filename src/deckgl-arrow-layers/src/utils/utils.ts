@@ -137,7 +137,7 @@ function wrapAccessorFunction<In, Out>(
   const {index, data} = objectInfo;
   let newIndex = index + batchOffset;
   if (data.invertedGeomOffsets !== undefined) {
-    newIndex = data.invertedGeomOffsets[index];
+    newIndex = data.invertedGeomOffsets[index] + batchOffset;
   }
   const newObjectData = {
     data: data.data,

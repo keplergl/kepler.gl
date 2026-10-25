@@ -3,8 +3,11 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {latLngToCell} from '@kepler.gl/common-utils';
+import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
+import {Response} from 'node-fetch';
 
 import KeplerTable from './kepler-table';
+import {aggregateValues} from './dataset-ops/aggregations';
 import {
   DATASET_OPS_AGGREGATIONS,
   aggregationOptionsForField,
@@ -46,6 +49,20 @@ function makeTable({
   return table;
 }
 
+function makeInt64Data(values: (bigint | null)[], type: Int64 | Uint64 = new Int64()) {
+  const region = vectorFromArray(values.map(value => (value === null ? 'missing' : 'west')));
+  const pop = vectorFromArray(values, type);
+  return {
+    fields: [
+      {name: 'region', type: ALL_FIELD_TYPES.string},
+      {name: 'pop', type: ALL_FIELD_TYPES.integer}
+    ],
+    cols: [region, pop],
+    rows: [],
+    arrowTable: new Table({region, pop})
+  };
+}
+
 const square = (west: number, south: number, east: number, north: number) => ({
   type: 'Feature',
   properties: {},
@@ -64,6 +81,14 @@ const square = (west: number, south: number, east: number, north: number) => ({
 });
 
 describe('dataset-ops engine', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({
       id: 'cities',
@@ -99,6 +124,79 @@ describe('dataset-ops engine', () => {
     const byRegion = Object.fromEntries(result.data.rows.map(row => [row[0], row]));
     expect(byRegion.west).toEqual(['west', 30, 2]);
     expect(byRegion.east).toEqual(['east', 40, 1]);
+  });
+
+  describe.each([new Int64(), new Uint64()])('Arrow %s Group By', arrowType => {
+    test.each([
+      [DATASET_OPS_AGGREGATIONS.sum, 30, 80],
+      [DATASET_OPS_AGGREGATIONS.average, 15, 40],
+      [DATASET_OPS_AGGREGATIONS.median, 15, 40]
+    ] as const)('%s works before and after repeated updates', async (technique, first, next) => {
+      const dataset = new KeplerTable({info: {id: 'int64'}, color: [0, 0, 0]});
+      dataset.updateSchema(makeInt64Data([10n, 20n, null], arrowType));
+      const config = {fieldName: 'region', aggregations: {pop: technique}};
+
+      expect(groupByDataset(dataset, config).data.rows).toEqual([
+        ['west', first],
+        ['missing', null]
+      ]);
+
+      for (let i = 0; i < 2; i++) {
+        const data = makeInt64Data([30n, 50n, null], arrowType);
+        await dataset.update(data);
+        const result = groupByDataset(dataset, config);
+        expect(result.data.rows).toEqual([
+          ['west', next],
+          ['missing', null]
+        ]);
+        expect([0, 1, 2].map(index => dataset.dataContainer.valueAt(index, 1))).toEqual([
+          30n,
+          50n,
+          null
+        ]);
+        expect([0, 1, 2].map(index => data.cols[1].get(index))).toEqual([30n, 50n, null]);
+
+        const reloaded = new KeplerTable({info: result.info, color: [0, 0, 0]});
+        await reloaded.importData({data: result.data});
+        expect(reloaded.dataContainer.valueAt(0, 1)).toBe(next);
+      }
+    });
+  });
+
+  test.each([
+    [DATASET_OPS_AGGREGATIONS.sum, 18014398509481984],
+    [DATASET_OPS_AGGREGATIONS.average, 9007199254740992],
+    [DATASET_OPS_AGGREGATIONS.median, 9007199254740992],
+    [DATASET_OPS_AGGREGATIONS.minimum, 9007199254740992n],
+    [DATASET_OPS_AGGREGATIONS.maximum, 9007199254740993n],
+    [DATASET_OPS_AGGREGATIONS.countUnique, 2],
+    [DATASET_OPS_AGGREGATIONS.count, 2]
+  ] as const)('Int64 %s preserves source precision', (technique, expected) => {
+    const values = [9007199254740992n, 9007199254740993n];
+    const data = makeInt64Data(values);
+    const dataset = new KeplerTable({info: {id: 'int64'}, color: [0, 0, 0]});
+    dataset.updateSchema(data);
+
+    const result = groupByDataset(dataset, {
+      fieldName: 'region',
+      aggregations: {pop: technique}
+    });
+
+    // Arithmetic uses Number precision; extrema and distinct counts retain exact BigInts.
+    expect(result.data.rows).toEqual([['west', expected]]);
+    expect([0, 1].map(index => dataset.dataContainer.valueAt(index, 1))).toEqual(values);
+    expect([0, 1].map(index => data.cols[1].get(index))).toEqual(values);
+  });
+
+  test.each([
+    [DATASET_OPS_AGGREGATIONS.sum, 30, 1],
+    [DATASET_OPS_AGGREGATIONS.average, 15, 0.5],
+    [DATASET_OPS_AGGREGATIONS.median, 15, 0.5]
+  ] as const)('%s handles mixed numbers and missing values', (technique, numeric, boolean) => {
+    expect(aggregateValues([10n, null, 20, undefined], technique)).toBe(numeric);
+    expect(aggregateValues([true, false, null], technique)).toBe(boolean);
+    expect(aggregateValues([], technique)).toBeNull();
+    expect(aggregateValues([null, undefined], technique)).toBeNull();
   });
 
   test('groupByDataset keeps null groups distinct from the string __null__', () => {
@@ -244,7 +342,24 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0]).toEqual(['sf']);
   });
 
-  test('spatialJoinDatasets joins points contained by polygons', () => {
+  test.each([
+    {format: 'GeoJSON', west: square(-10, -10, 10, 10), east: square(20, -10, 40, 10)},
+    {
+      format: 'WKT',
+      west: 'POLYGON ((-10 -10, 10 -10, 10 10, -10 10, -10 -10))',
+      east: 'POLYGON ((20 -10, 40 -10, 40 10, 20 10, 20 -10))'
+    },
+    {
+      format: 'MultiPolygon WKT',
+      west: 'MULTIPOLYGON (((-10 -10, 10 -10, 10 10, -10 10, -10 -10)))',
+      east: 'MULTIPOLYGON (((20 -10, 40 -10, 40 10, 20 10, 20 -10)))'
+    },
+    {
+      format: 'GeoJSON string',
+      west: JSON.stringify(square(-10, -10, 10, 10)),
+      east: JSON.stringify(square(20, -10, 40, 10).geometry)
+    }
+  ])('spatialJoinDatasets joins points contained by $format polygons', ({west, east}) => {
     const polygons = makeTable({
       id: 'polys',
       fields: [
@@ -252,8 +367,8 @@ describe('dataset-ops engine', () => {
         {name: 'geom', type: ALL_FIELD_TYPES.geojson}
       ],
       rows: [
-        ['west', square(-10, -10, 10, 10)],
-        ['east', square(20, -10, 40, 10)]
+        ['west', west],
+        ['east', east]
       ]
     });
     const points = makeTable({
@@ -282,6 +397,9 @@ describe('dataset-ops engine', () => {
     expect(result.data.rows[0][3]).toBe(10);
     expect(result.data.rows[1][2]).toBe(1);
     expect(result.data.rows[1][3]).toBe(5);
+    expect(result.data.rows.map(row => row[1])).toEqual([west, east]);
+    expect(polygons.dataContainer.valueAt(0, 1)).toBe(west);
+    expect(polygons.dataContainer.valueAt(1, 1)).toBe(east);
     expect(result.metadata.derivedDataset.type).toBe('spatialJoin');
   });
 
@@ -608,6 +726,9 @@ describe('dataset-ops engine', () => {
     test.each([
       null,
       'invalid json',
+      '',
+      'POLYGON EMPTY',
+      'POLYGON ((not coordinates))',
       {type: 'Feature', geometry: null, properties: {}},
       {type: 'Polygon', coordinates: []},
       {type: 'Polygon', coordinates: [[]]},

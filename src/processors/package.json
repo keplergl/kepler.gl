@@ -31,6 +31,7 @@
     "@deck.gl-community/editable-layers": "9.3.8",
     "@kepler.gl/common-utils": "3.3.0-alpha.18",
     "@kepler.gl/constants": "3.3.0-alpha.18",
+    "@kepler.gl/layers": "3.3.0-alpha.18",
     "@kepler.gl/schemas": "3.3.0-alpha.18",
     "@kepler.gl/table": "3.3.0-alpha.18",
     "@kepler.gl/types": "3.3.0-alpha.18",

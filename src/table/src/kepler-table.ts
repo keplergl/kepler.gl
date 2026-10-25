@@ -291,8 +291,8 @@ class KeplerTable<F extends Field = Field> {
    */
   async update(data: ProtoDataset['data']) {
     // Arrow/DuckDB incremental loads pass `cols` (and empty `rows`). Row snapshots
-    // for remote refresh pass `rows` only. Keep the column path close to the
-    // pre-refresh update() so filters/gpuFilter are not wiped on a normal load.
+    // for remote refresh pass `rows` only. Preserve the GPU filter configuration
+    // on column updates, but invalidate cached filter results for every snapshot.
     const isRowSnapshot = !data.cols && Array.isArray(data.rows);
 
     if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
@@ -323,9 +323,6 @@ class KeplerTable<F extends Field = Field> {
           valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
         };
       }) as F[];
-      this.filterRecord = undefined;
-      this.filterRecordCPU = undefined;
-      this.changedFilters = undefined;
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
     }
 
@@ -333,6 +330,10 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndex = this.allIndexes;
     this.filteredIndexForDomain = this.allIndexes;
     this.filteredIndexByLayer = {};
+    this.filteredIdxCPU = undefined;
+    this.filterRecord = undefined;
+    this.filterRecordCPU = undefined;
+    this.changedFilters = undefined;
     this.dataRevision += 1;
 
     return this;
