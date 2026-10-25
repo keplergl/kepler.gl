@@ -4,31 +4,25 @@ This is the src code of kepler.gl demo app. You can copy this folder out and run
 
 > The AI assistant (panel, control, reducer) comes from the published
 > **`@openassistant/kepler-assistant`** package (`^0.0.12`), which temporarily
-> vendors the `@kepler.gl/mcp` map surface (this repo's `src/mcp/` module is
-> removed for now). kepler.gl is a **static website**: it only provides the map
-> surface *interface* (`@kepler.gl/mcp`) plus a WebSocket listener — it never
-> runs an MCP server. Any MCP server (kepler-assistant's own, or any harness
-> like Claude Code / Codex driving the map) is **user-provided** and follows the
-> `@kepler.gl/mcp` interface, while the command registry executes on the
-> in-browser map. See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the permanent
-> separation back into a kepler.gl `src/mcp/` module.
+> vendors the `@kepler.gl/mcp` map surface. kepler.gl is a **static website**:
+> it exposes the map surface *interface* (`@kepler.gl/mcp`) and registers those
+> commands with the browser's WebMCP API — it never runs an MCP server.
 
-#### Agent surfaces
+#### Agent surface
 
-The demo exposes the same DuckDB-free `map.*` command catalog through two
-transports (`kepler-mcp-shared.ts` holds the common glue):
+The demo registers the DuckDB-free `map.*` command catalog with the browser's
+native [WebMCP](https://webmachinelearning.github.io/webmcp/) API
+(`kepler-webmcp.tsx`), on `document.modelContext` with a
+`navigator.modelContext` fallback, for harnesses with a built-in browser
+(Chrome's agent, Claude Desktop's browser, ...). Needs Chrome 149+ with the
+WebMCP origin trial or `chrome://flags/#enable-webmcp-testing`; without either
+the surface is inert. Tool names fold `map.load-data` → `map_load_data` (dots
+are common MCP-tool-name poison); the original command id is kept in the
+description and every result string.
 
-- **`kepler-mcp-bridge.tsx`** — WebSocket reverse-connect to a local
-  kepler-mcp-demo process (opt-in via `?mcp=<token>` or the bottom-left chip).
-- **`kepler-webmcp.tsx`** — native [WebMCP](https://webmachinelearning.github.io/webmcp/)
-  registration on `document.modelContext` (fallback `navigator.modelContext`),
-  for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
-  browser, ...). Needs Chrome 149+ with the WebMCP origin trial or
-  `chrome://flags/#enable-webmcp-testing`; when the API is not available the
-  chip shows "webMCP · API unavailable" (the harness status stays visible).
-  Tool names fold `map.load-data` → `map_load_data` (dots are
-  common MCP-tool-name poison); the original command id is kept in the
-  description and every result string.
+`kepler-mcp-shared.ts` builds the catalog and the redux-backed command context.
+Registration is silent — there is no status chip, and failures only reach the
+console.
 
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a

@@ -1,15 +1,13 @@
 /**
- * Shared plumbing for the demo-app's two agent surfaces over the
- * `@kepler.gl/mcp` map.* commands:
+ * Shared plumbing for the demo-app's agent surface over the `@kepler.gl/mcp`
+ * map.* commands:
  *
- *  - `kepler-mcp-bridge.tsx` — WebSocket reverse-connect to a local MCP server
- *    (Claude Code / Codex driving the map without a browser extension)
  *  - `kepler-webmcp.tsx` — native WebMCP registration (`document.modelContext`)
  *    for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
  *    browser, ...)
  *
- * Both surfaces execute commands against the demo's own redux store through
- * the same `buildKeplerContext` and serve the same DuckDB-free catalog.
+ * The surface executes commands against the demo's own redux store through
+ * `buildKeplerContext` and serves the DuckDB-free catalog.
  */
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
 import type {
@@ -187,7 +185,20 @@ function withSkillHint(cmd: ReturnType<typeof getKeplerCommands>[string]) {
   return cmd;
 }
 
-export function toDescriptor(cmd: {id: string; name: string; description?: string; group?: string; keywords?: string[]; metadata?: {readOnly?: boolean; idempotent?: boolean; riskLevel?: string; requiresConfirmation?: boolean}; inputSchema?: any}): ToolDescriptor {
+export function toDescriptor(cmd: {
+  id: string;
+  name: string;
+  description?: string;
+  group?: string;
+  keywords?: string[];
+  metadata?: {
+    readOnly?: boolean;
+    idempotent?: boolean;
+    riskLevel?: string;
+    requiresConfirmation?: boolean;
+  };
+  inputSchema?: any;
+}): ToolDescriptor {
   let inputSchema: Record<string, unknown> = {type: 'object'};
   if (cmd.inputSchema) {
     try {
@@ -195,7 +206,10 @@ export function toDescriptor(cmd: {id: string; name: string; description?: strin
       // bundles for platform 'browser' / format 'iife', where `require` is
       // undefined — a runtime require would throw and silently fall back to
       // {type: 'object'}, losing tool discoverability and validation.
-      inputSchema = (z.toJSONSchema(cmd.inputSchema) ?? {type: 'object'}) as Record<string, unknown>;
+      inputSchema = (z.toJSONSchema(cmd.inputSchema) ?? {type: 'object'}) as Record<
+        string,
+        unknown
+      >;
     } catch {
       inputSchema = {type: 'object'};
     }

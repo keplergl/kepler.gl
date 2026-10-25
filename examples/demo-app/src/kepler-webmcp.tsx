@@ -1,23 +1,23 @@
 /**
- * kepler-webmcp — exposes the same `@kepler.gl/mcp` map.* surface through the
+ * kepler-webmcp — exposes the `@kepler.gl/mcp` map.* surface through the
  * browser's native WebMCP API so harnesses with a built-in browser (Chrome's
  * agent, Claude Desktop's browser, Codex, ...) can discover and call the tools
- * directly — no WebSocket bridge or local helper process needed.
+ * directly — no helper process and no WebSocket.
  *
  * WebMCP is a W3C Web Machine Learning CG draft: the page registers tools
  * (`registerTool`) on an in-page model context and the embedded agent invokes
- * them over the JS heap (webmachinelearning/webmcp). This surface registers
- * the identical DuckDB-free command catalog as `kepler-mcp-bridge.tsx`, so any
- * caller gets the same tools either way — the transport is the only
- * difference.
+ * them over the JS heap (webmachinelearning/webmcp).
  *
  * Feature detection: the interface has shifted between drafts — current spec
  * puts `modelContext` on `document`, earlier Chromium builds on `navigator`
  * (deprecated in Chromium 150). Native support: Chrome 149+ origin trial, or
  * `chrome://flags/#enable-webmcp-testing`. When neither exists this component
- * is inert (hidden chip).
+ * is inert.
+ *
+ * The component renders nothing — the page carries no map-surface status UI.
+ * Registration failures are reported to the console only.
  */
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef} from 'react';
 import {buildCatalog, buildKeplerContext, formatResult, toDescriptor} from './kepler-mcp-shared';
 
 /**
@@ -58,64 +58,27 @@ function webMcpName(commandId: string): string {
   return commandId.replace(/\./g, '_');
 }
 
-type WebMcpStatus = 'idle' | 'registering' | 'registered' | 'error';
-
-export type WebMcpStatusInfo = {
-  available: boolean;
-  status: WebMcpStatus;
-  toolCount: number;
-  error: string | null;
-  enabled: boolean;
-};
-
 type McpWebMcpProps = {
   reduxStore: any;
-  onStatus?: (info: WebMcpStatusInfo) => void;
 };
 
-const ENABLED_KEY = 'kepler-webmcp-enabled';
-
-export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
+export function KeplerWebMcp({reduxStore}: McpWebMcpProps) {
   const modelContext = useMemo(getModelContext, []);
-  const [enabled, setEnabled] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return window.localStorage.getItem(ENABLED_KEY) !== 'false';
-    } catch {
-      // private mode / blocked storage — default to enabled
-      return true;
-    }
-  });
-  const [status, setStatus] = useState<WebMcpStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
-  const [toolCount, setToolCount] = useState(0);
   const controllerRef = useRef<AbortController | null>(null);
 
   const ctx = useMemo(() => buildKeplerContext(reduxStore), [reduxStore]);
   const catalog = useMemo(() => buildCatalog(ctx), [ctx]);
 
-  const setPersistedEnabled = useCallback((value: boolean) => {
-    setEnabled(value);
-    try {
-      window.localStorage.setItem(ENABLED_KEY, String(value));
-    } catch {
-      /* private mode etc. — keep the in-memory toggle */
-    }
-  }, []);
-
   useEffect(() => {
+    // Abort the previous registration before re-registering; aborting the
+    // controller also unregisters its tools (Chrome 153+).
     controllerRef.current?.abort();
     controllerRef.current = null;
-    setStatus('idle');
-    setError(null);
-    setToolCount(0);
 
     if (!modelContext || !catalog.length) return;
-    if (!enabled) return;
 
     const controller = new AbortController();
     controllerRef.current = controller;
-    setStatus('registering');
 
     let cancelled = false; // effect re-run / unmount while registrations are in flight
 
@@ -168,31 +131,28 @@ export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
 
       if (cancelled || controller.signal.aborted) return;
       const rejected = results.filter(r => r.status === 'rejected');
-      if (rejected.length === results.length) {
-        setStatus('error');
-        setError(
-          `registerTool rejected every command (${rejected.length}). Is WebMCP enabled for this page?`
-        );
-        return;
-      }
-      setStatus('registered');
-      setToolCount(results.length - rejected.length);
-      if (rejected.length) {
-        setError(
-          `${rejected.length} of ${results.length} commands failed registration: ${rejected
-            .map(r => (r as PromiseRejectedResult).reason?.message ?? String((r as PromiseRejectedResult).reason))
-            .join('; ')}`
-        );
-      }
+      if (!rejected.length) return;
+
+      // Nothing else reports WebMCP state — surface a failed registration to
+      // whoever is debugging the page rather than failing silently.
+      const reasons = rejected
+        .map(
+          r =>
+            (r as PromiseRejectedResult).reason?.message ??
+            String((r as PromiseRejectedResult).reason)
+        )
+        .join('; ');
+      console.warn(
+        `[kepler.gl webMCP] ${rejected.length} of ${results.length} map tools failed to register: ${reasons}`
+      );
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [catalog, enabled, modelContext]);
+  }, [catalog, modelContext]);
 
-  // Cleanup: aborting the controller unregisters the tools (Chrome 153+;
-  // harmless where the signal option was ignored).
+  // Close the controller on unmount so the tools do not outlive the component.
   useEffect(
     () => () => {
       controllerRef.current?.abort();
@@ -201,53 +161,5 @@ export function KeplerWebMcp({reduxStore, onStatus}: McpWebMcpProps) {
     []
   );
 
-  // Report status up so a parent can render a unified summary chip.
-  useEffect(() => {
-    onStatus?.({available: !!modelContext, status, toolCount, error, enabled});
-  }, [modelContext, status, toolCount, error, enabled, onStatus]);
-
-  const available = !!modelContext;
-  const label = !available
-    ? 'API unavailable'
-    : !enabled
-      ? 'off'
-      : status === 'registered'
-        ? `${toolCount} map tools registered`
-        : status;
-  const dot =
-    !available || status === 'idle' || status === 'error'
-      ? '#fff'
-      : status === 'registered'
-        ? '#8ff29a'
-        : '#ffe27a';
-
-  return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start'}}>
-      <div style={{display: 'flex', alignItems: 'center', gap: 8, color: '#fff'}}>
-        <span style={{width: 8, height: 8, borderRadius: 8, background: dot, flex: 'none'}} />
-        <span>webMCP · {label}</span>
-        {available &&
-          (enabled ? (
-            <button onClick={() => setPersistedEnabled(false)} style={btnStyle}>
-              disable
-            </button>
-          ) : (
-            <button onClick={() => setPersistedEnabled(true)} style={btnStyle}>
-              enable
-            </button>
-          ))}
-      </div>
-      {error && <div style={{color: '#ff9e9e', maxWidth: 420}}>{error}</div>}
-    </div>
-  );
+  return null;
 }
-
-const btnStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,.2)',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 4,
-  padding: '2px 8px',
-  cursor: 'pointer',
-  fontSize: 11
-};

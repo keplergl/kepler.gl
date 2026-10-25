@@ -74,13 +74,15 @@ one, deliberately:
 
 - `@kepler.gl/mcp` (`src/mcp/`) declares `main` and `exports` but no `bin`, so
   there is no stdio entry point to point a client at.
-- The `kepler-mcp-demo` launcher the demo app bridges to is not published as an
-  npm package either.
+- The demo app exposes the same commands through the browser's native WebMCP
+  API, not through an MCP server: it registers them with
+  `document.modelContext` and never listens on a port. That reaches agents with
+  a built-in browser, not Claude Code or the Codex CLI.
 
-So the plugin ships no `.mcp.json` (Claude) and no `mcp.json` (portable), and the
-app skill only takes effect in a host that already exposes the `map.*` commands
-(today: the kepler.gl demo app). Declaring a server that cannot start would make
-the whole plugin look broken.
+So the plugin ships no `.mcp.json` (Claude) and no `mcp.json` (portable). The
+app skill takes effect only in a host that already exposes the `map.*` commands
+(the demo app under WebMCP). Declaring a server that cannot start would make the
+whole plugin look broken.
 
 Once `@kepler.gl/mcp` gains a `bin` entry and is published to npm, add both
 files with the same server, bump the plugin version, and update this section:
