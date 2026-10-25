@@ -3103,6 +3103,65 @@ test('#visStateReducer -> SET_FILTER.dataId falls back to CPU when GPU channels 
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER shares a filter with a dataset whose GPU channels are full', async t => {
+  const createDataset = id =>
+    createNewDataEntryMock({
+      info: {id, label: id},
+      data: {
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+        rows: [[10], [20]]
+      }
+    });
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {...(await createDataset('first')), ...(await createDataset('second'))}
+  };
+
+  state = reducer(state, VisStateActions.addFilter('first'));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [10, 10]));
+  for (let i = 0; i < MAX_GPU_FILTERS; i++) {
+    state = reducer(state, VisStateActions.addFilter('second'));
+    state = reducer(state, VisStateActions.setFilter(i + 1, 'name', 'value'));
+  }
+  t.deepEqual(
+    state.filters.slice(1).map(filter => filter.gpuChannel[0]),
+    [0, 1, 2, 3],
+    'the target dataset has four occupied GPU channels'
+  );
+
+  state = reducer(state, VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+
+  t.equal(state.filters[0].gpu, false, 'falls back to CPU for the whole shared filter');
+  for (const dataId of ['first', 'second']) {
+    const dataset = state.datasets[dataId];
+    const {filterRange, filterValueAccessor} = dataset.gpuFilter;
+    const getFilterValue = filterValueAccessor(dataset.dataContainer)();
+    const visibleRows = dataset.filteredIndex.filter(index =>
+      getFilterValue({index}).every(
+        (value, channel) => value >= filterRange[channel][0] && value <= filterRange[channel][1]
+      )
+    );
+    t.deepEqual(visibleRows, [0], `${dataId}: only row 10 remains visible`);
+    t.ok(
+      dataset.filterRecord.cpu.some(filter => filter.id === state.filters[0].id),
+      `${dataId}: records the shared filter on CPU`
+    );
+    t.deepEqual(dataset.filteredIndex, [0], `${dataId}: updates the cached CPU row indexes`);
+    const cpuDataset = copyTableAndUpdate(dataset).filterTableCPU(state.filters, state.layers);
+    t.deepEqual(visibleRows, cpuDataset.filteredIdxCPU, `${dataId}: matches CPU-only filtering`);
+  }
+
+  state = reducer(state, VisStateActions.setFilter(0, 'value', [20, 20]));
+  t.deepEqual(
+    state.datasets.first.filteredIndex,
+    [1],
+    'updates the original dataset after fallback'
+  );
+  t.deepEqual(state.datasets.second.filteredIndex, [1], 'updates the added dataset after fallback');
+  t.end();
+});
+
 test('#visStateReducer -> SET_FILTER synced', t => {
   const initialState = StateWSyncedTimeFilter.visState;
   const oldFilter = {...initialState.filters[0]};
