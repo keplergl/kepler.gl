@@ -4422,6 +4422,7 @@ __metadata:
     "@deck.gl-community/editable-layers": "npm:9.3.8"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.18"
     "@kepler.gl/constants": "npm:3.3.0-alpha.18"
+    "@kepler.gl/layers": "npm:3.3.0-alpha.18"
     "@kepler.gl/schemas": "npm:3.3.0-alpha.18"
     "@kepler.gl/table": "npm:3.3.0-alpha.18"
     "@kepler.gl/types": "npm:3.3.0-alpha.18"
