@@ -16,7 +16,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
+import {ArrowDataContainer, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -113,13 +113,11 @@ export const propertiesV1 = {
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * 2) Geoarrow binary buffers converted to hex wkb
  * 3) Int64 values outside the safe integer range saved as exact decimal strings
- * @param dataContainer A data container to flatten.
+ * @param dataset The dataset to flatten for saving.
  * @returns Row based data.
  */
-const getAllDataForSaving = (
-  dataContainer: DataContainerInterface,
-  getBigIntColumns?: (rows: any[][]) => readonly (boolean | undefined)[] | undefined
-): any[][] => {
+const getAllDataForSaving = (dataset: KeplerTable): any[][] => {
+  const {dataContainer} = dataset;
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -154,7 +152,7 @@ const getAllDataForSaving = (
       }
     }
   } else {
-    const bigIntColumns = getBigIntColumns?.(allData);
+    const bigIntColumns = dataset.getBigIntExportColumns?.(allData);
     const columns = bigIntColumns?.flatMap((contains, index) =>
       contains === false ? [] : [index]
     );
@@ -243,10 +241,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(
-            dataset.dataContainer,
-            dataset.getBigIntExportColumns?.bind(dataset)
-          ),
+          allData: getAllDataForSaving(dataset),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.
