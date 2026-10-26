@@ -305,16 +305,16 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
   const originalRows = dataset.dataContainer.flattenData();
   const saved = datasetSchema[VERSIONS.v1].save(dataset);
   const expected = [
-    [42, 42],
-    [0, 0],
-    [9007199254740991, '9007199254740992'],
+    ['42', '42'],
+    ['0', '0'],
+    ['9007199254740991', '9007199254740992'],
     ['-9223372036854775808', '18446744073709551615'],
     [null, null]
   ];
   t.deepEqual(
     saved.allData,
     expected,
-    'uses numbers in the safe range and exact decimal strings outside it'
+    'uses exact decimal strings for every value in an unsafe-containing column'
   );
   t.doesNotThrow(() => {
     const reloaded = reloadDataset(saved);
@@ -373,11 +373,11 @@ test('#DatasetSchema -> joined Int64 rows save and reload without changing live 
   });
   const original = proto.data.rows.map(row => [...row]);
   const expected = [
-    ['0', 0, 0],
-    ['1', 10, 10],
-    ['2', 20, 20],
-    ['3', -9007199254740991, '18446744073709551615'],
-    ['4', 9007199254740991, 9007199254740991],
+    ['0', '0', '0'],
+    ['1', '10', '10'],
+    ['2', '20', '20'],
+    ['3', '-9007199254740991', '18446744073709551615'],
+    ['4', '9007199254740991', '9007199254740991'],
     ['5', '-9223372036854775808', '18446744073709551615'],
     ['6', '9007199254740992', '9007199254740992'],
     ['7', '9007199254740993', '9007199254740993'],
@@ -389,11 +389,12 @@ test('#DatasetSchema -> joined Int64 rows save and reload without changing live 
     color: [0, 0, 0]
   }).updateSchema(proto.data);
   const saved = datasetSchema[VERSIONS.v1].save(dataset);
-  t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
+  t.deepEqual(saved.allData, expected, 'unsafe-containing columns contain only strings and nulls');
+  t.deepEqual(datasetSchema.v1.save(source).allData, expected, 'Arrow and derived rows agree');
   t.equal(
     reloadDataset(saved).getValue('signed', 7),
     '9007199254740993',
-    'in-memory saved schema also omits the live BigInt representation'
+    'reload omits the live BigInt representation'
   );
   t.deepEqual(dataset.dataContainer.flattenData(), original, 'live rows are not mutated');
   t.deepEqual(source.dataContainer.flattenData(), original, 'source Arrow values are not mutated');
@@ -412,8 +413,23 @@ test('#DatasetSchema -> joined Int64 rows save and reload without changing live 
     t.equal(
       reloaded.fields[1].valueAccessor({index: 7}),
       '9007199254740993',
-      'accepted unsafe-string numeric limitation unchanged'
+      'unsafe-containing columns reload as strings'
     );
+    t.equal(reloaded.getValue('signed', 1), '10', 'safe cells in the same column are also strings');
+    const props = reloaded.getColumnFilterProps('signed');
+    const filter = {
+      ...props,
+      id: 'range',
+      dataId: [reloaded.id],
+      name: ['signed'],
+      fieldIdx: [1],
+      value: [5, 15],
+      enabled: true,
+      gpu: false
+    };
+    reloaded.filterTable([filter], []);
+    reloaded.filterTableCPU([filter], []);
+    t.deepEqual(reloaded.filteredIdxCPU, [], 'accepted whole-column numeric reload limitation');
     t.deepEqual(
       datasetSchema[VERSIONS.v1].save(reloaded).allData,
       expected,
@@ -431,6 +447,146 @@ test('#DatasetSchema -> joined Int64 rows save and reload without changing live 
       'HTML reload retains exact cells'
     );
   }, 'JSON and HTML exports are valid');
+  t.end();
+});
+
+test('#DatasetSchema -> safe Int64 columns reload as numbers for Arrow and joined rows', t => {
+  for (const type of [new arrow.Int64(), new arrow.Uint64()]) {
+    const values = [type.isSigned ? -9007199254740991n : 0n, 10n, 9007199254740991n, null];
+    const source = arrowDataset({value: arrow.vectorFromArray(values, type)});
+    const proto = joinDatasets(source, source, {
+      leftField: 'value',
+      rightField: 'value',
+      type: 'LEFT',
+      rightColumns: []
+    });
+    const joined = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+    const expected = values.map(value => [value == null ? null : Number(value)]);
+    for (const dataset of [source, joined]) {
+      const saved = datasetSchema.v1.save(dataset);
+      t.deepEqual(saved.allData, expected, 'safe signed/unsigned boundaries stay numeric');
+      const reloaded = reloadDataset(saved);
+      t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'JSON reload is numeric');
+      t.deepEqual(reloaded.getColumnLayerDomain(reloaded.fields[0], 'linear'), [
+        expected[0][0],
+        expected[2][0]
+      ]);
+      const filter = {
+        ...reloaded.getColumnFilterProps('value'),
+        id: 'range',
+        dataId: [reloaded.id],
+        name: ['value'],
+        fieldIdx: [0],
+        value: [5, 15],
+        enabled: true,
+        gpu: false
+      };
+      reloaded.filterTable([filter], []);
+      reloaded.filterTableCPU([filter], []);
+      t.deepEqual(reloaded.filteredIdxCPU, [1], 'safe values still match numeric filters');
+      const html = exportMapToHTML({
+        datasets: [{version: 'v1', data: saved}],
+        config: {version: 'v1', config: {}}
+      });
+      const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
+      t.deepEqual(reloadDataset(embedded[0].data).dataContainer.flattenData(), expected);
+      t.deepEqual(datasetSchema.v1.save(reloaded).allData, expected, 'resave stays numeric');
+      t.deepEqual(
+        dataset.dataContainer.flattenData(),
+        values.map(value => [value]),
+        'source stays exact'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#DatasetSchema -> row BigInt columns choose an encoding independently', t => {
+  const rows = [
+    [null, null, null],
+    [10n, 10n, 10],
+    [20, 9007199254740992n, Number.MAX_SAFE_INTEGER + 1],
+    [-9007199254740991n, -9007199254740992n, 0.5],
+    [30n, 20, 30]
+  ];
+  const dataset = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'safe', type: 'integer', analyzerType: 'INT'},
+      {name: 'unsafe', type: 'real', analyzerType: 'FLOAT'},
+      {name: 'ordinary', type: 'real', analyzerType: 'FLOAT'}
+    ],
+    rows
+  });
+  const expected = [
+    [null, null, null],
+    [10, '10', 10],
+    [20, '9007199254740992', Number.MAX_SAFE_INTEGER + 1],
+    [-9007199254740991, '-9007199254740992', 0.5],
+    [30, '20', 30]
+  ];
+  const saved = datasetSchema.v1.save(dataset);
+  t.deepEqual(saved.allData, expected, 'only unsafe-containing BigInt columns become strings');
+  t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected);
+  t.deepEqual(datasetSchema.v1.save(reloadDataset(saved)).allData, expected);
+  t.equal(rows[1][0], 10n, 'safe raw BigInt is unchanged');
+  t.equal(rows[1][1], 10n, 'safe cell in unsafe column remains BigInt in memory');
+  t.equal(rows[2][0], 20, 'mixed safe Number input is unchanged');
+  t.equal(rows[4][1], 20, 'Number in an unsafe-containing column is unchanged in memory');
+  t.end();
+});
+
+test('#DatasetSchema -> custom Arrow integer output uses the same column encoding', t => {
+  const source = arrowDataset({
+    value: arrow.vectorFromArray([10n, 20n, 9007199254740993n, null], new arrow.Int64())
+  });
+  const originalFlatten = source.dataContainer.flattenData.bind(source.dataContainer);
+  source.dataContainer.flattenData = () => {
+    const rows = originalFlatten();
+    rows[1][0] = 20;
+    return rows;
+  };
+  const saved = datasetSchema.v1.save(source);
+  t.deepEqual(saved.allData, [['10'], ['20'], ['9007199254740993'], [null]]);
+  t.equal(source.dataContainer.valueAt(1, 0), 20n, 'Arrow storage is unchanged');
+  t.equal(source.dataContainer.valueAt(2, 0), 9007199254740993n, 'unsafe source digits are intact');
+  t.end();
+});
+
+test('#DatasetSchema -> empty and all-null Int64 columns remain unchanged', t => {
+  for (const type of [new arrow.Int64(), new arrow.Uint64()]) {
+    for (const values of [[], [null, null]]) {
+      const dataset = arrowDataset({value: arrow.vectorFromArray(values, type)});
+      const expected = values.map(value => [value]);
+      const saved = datasetSchema.v1.save(dataset);
+      t.deepEqual(saved.allData, expected);
+      t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected);
+      t.deepEqual(dataset.dataContainer.flattenData(), expected);
+    }
+  }
+  t.end();
+});
+
+test('#DatasetSchema -> custom numeric output with other values retains per-cell conversion', t => {
+  const date = new Date('2020-01-01T00:00:00Z');
+  const object = {value: 1};
+  const rows = [null, [10n, date], [0.5, object], [9007199254740993n, 'text']];
+  const dataset = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'value', type: 'integer'},
+      {name: 'other', type: 'string'}
+    ],
+    rows: [[9007199254740993n, null]]
+  });
+  dataset.dataContainer.flattenData = () => rows;
+  const saved = datasetSchema.v1.save(dataset);
+  t.deepEqual(saved.allData, [null, [10, date], [0.5, object], ['9007199254740993', 'text']]);
+  t.equal(saved.allData[2], rows[2], 'unaffected custom row is reused');
+  t.equal(rows[1][0], 10n, 'custom output is not mutated');
+  t.equal(
+    dataset.dataContainer.valueAt(0, 0),
+    9007199254740993n,
+    'original storage is not mutated'
+  );
   t.end();
 });
 

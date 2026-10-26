@@ -16,7 +16,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
+import {ArrowDataContainer, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -107,16 +107,35 @@ export const propertiesV1 = {
   disableDataOperation: null
 };
 
+// Only integer columns containing BigInts use a column-wide encoding. Custom
+// columns with strings, fractions or other values keep per-cell conversion.
+function shouldStringifyBigIntColumn(rows: any[][], columnIndex: number): boolean {
+  let hasBigInt = false;
+  let hasUnsafeInteger = false;
+  for (const row of rows) {
+    const value = row?.[columnIndex];
+    if (value == null) continue;
+    if (typeof value === 'bigint') {
+      hasBigInt = true;
+    } else if (!Number.isInteger(value)) {
+      return false;
+    }
+    if (!Number.isSafeInteger(Number(value))) hasUnsafeInteger = true;
+  }
+  return hasBigInt && hasUnsafeInteger;
+}
+
 /**
  * TODO Consider moving this cast to ArrowDataContainer?
  * Prepare a data container for export as part of json / html files.
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * 2) Geoarrow binary buffers converted to hex wkb
- * 3) Int64 values outside the safe integer range saved as exact decimal strings
- * @param dataContainer A data container to flatten.
+ * 3) BigInt integer columns use numbers when all values are safe, otherwise exact strings
+ * @param dataset The dataset to flatten for saving.
  * @returns Row based data.
  */
-const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+const getAllDataForSaving = (dataset: KeplerTable): any[][] => {
+  const {dataContainer, fields} = dataset;
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -136,11 +155,13 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
           row[columnIndex] = value == null ? null : new Date(value).toISOString();
         });
       } else if (arrow.DataType.isInt(column.type) && column.type.bitWidth === 64) {
+        const asString = shouldStringifyBigIntColumn(allData, columnIndex);
         allData.forEach(row => {
           const value = row[columnIndex];
-          if (typeof value === 'bigint') {
+          if (typeof value === 'bigint' || (asString && typeof value === 'number')) {
             const number = Number(value);
-            row[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
+            row[columnIndex] =
+              asString || !Number.isSafeInteger(number) ? value.toString() : number;
           }
         });
       } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
@@ -151,6 +172,11 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
       }
     }
   } else {
+    const stringColumns = (fields || []).map(
+      (field, index) =>
+        (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real) &&
+        shouldStringifyBigIntColumn(allData, index)
+    );
     // Row containers expose their live backing rows. Copy only when conversion
     // is needed, leaving other rows and exact stored values intact.
     let savedData = allData;
@@ -160,11 +186,13 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
       let savedRow = row;
       for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
         const value = row[columnIndex];
-        if (typeof value !== 'bigint') continue;
+        const asString = stringColumns[columnIndex];
+        if (typeof value !== 'bigint' && !(asString && typeof value === 'number')) continue;
         if (savedData === allData) savedData = allData.slice();
         if (savedRow === row) savedRow = savedData[rowIndex] = row.slice();
         const number = Number(value);
-        savedRow[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
+        savedRow[columnIndex] =
+          asString || !Number.isSafeInteger(number) ? value.toString() : number;
       }
     }
     return savedData;
@@ -232,7 +260,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(dataset.dataContainer),
+          allData: getAllDataForSaving(dataset),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.
