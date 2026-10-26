@@ -1,6 +1,6 @@
 [project]
 name = "keplergl"
-version = "0.4.0rc4"
+version = "0.4.0"
 description = "Kepler.gl Jupyter Widget"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -30,6 +30,11 @@ dev = [
 [build-system]
 requires = ["hatchling", "hatch-jupyter-builder>=0.9.0"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+# Included in the sdist even though the repo .gitignore excludes lockfiles,
+# so a wheel built from the sdist resolves the same dependency tree.
+artifacts = ["package-lock.json"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["keplergl"]
