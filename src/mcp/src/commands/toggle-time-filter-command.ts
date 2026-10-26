@@ -1,0 +1,136 @@
+import type {RoomCommand} from './types';
+import {z} from 'zod';
+import {setFilterView} from '@kepler.gl/actions';
+import type {KeplerContext} from './types';
+
+export const toggleTimeFilterCommandId = 'map.toggle-time-filter' as const;
+
+export function getToggleTimeFilterCommand(ctx: KeplerContext): RoomCommand {
+  return {
+    id: toggleTimeFilterCommandId,
+    name: 'Toggle time controller',
+    group: 'Map',
+    description: `Show or hide the enlarged time controller at the bottom of the map.
+
+A time filter must already exist on the map (created via map.add-time-filter).
+
+- action: "show" — enlarge the time controller so it is visible at the bottom of the map.
+- action: "hide" — collapse the time controller back to the side panel.`,
+    metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
+    inputSchema: z.object({
+      action: z
+        .enum(['show', 'hide'])
+        .describe(
+          '"show" enlarges the time controller at the bottom of the map; "hide" collapses it to the side panel.'
+        ),
+      filterIndex: z
+        .number()
+        .optional()
+        .describe(
+          'Index of the time filter to toggle. If omitted, the first time-range filter found is used.'
+        )
+    }) as any,
+    execute: async (_execCtx, input) => {
+      const {action, filterIndex} = (input ?? {}) as {
+        action: 'show' | 'hide';
+        filterIndex?: number;
+      };
+      try {
+        // Runtime guard: the bridge/webMCP call execute directly without zod
+        // parsing, so a missing/invalid action must not silently fall back to
+        // 'side' (which would hide the controller — a surprising mutation).
+        if (action !== 'show' && action !== 'hide') {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: `Invalid action "${String(action)}". Must be "show" or "hide".`,
+            data: {
+              instruction:
+                'Pass action: "show" to enlarge the time controller, or "hide" to collapse it.'
+            }
+          };
+        }
+        // Runtime guard: the bridge/webMCP call execute without zod parsing, so
+        // a string/float filterIndex must not slip through and be dispatched
+        // into setFilterView (breaking reducer logic / toggling the wrong
+        // filter). Reject anything that isn't a non-negative integer.
+        if (filterIndex !== undefined && (!Number.isInteger(filterIndex) || filterIndex < 0)) {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: `Invalid filterIndex "${String(filterIndex)}". Must be a non-negative integer.`,
+            data: {
+              instruction:
+                'Pass filterIndex as a non-negative integer, or omit it to auto-detect the first time filter.'
+            }
+          };
+        }
+
+        const visState = ctx.getVisState();
+        const filters = visState.filters ?? [];
+
+        if (filters.length === 0) {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: 'No filters found on the map. Add a time filter first via map.add-time-filter.',
+            data: {instruction: 'Call map.add-time-filter before map.toggle-time-filter.'}
+          };
+        }
+
+        let targetIdx: number;
+        if (filterIndex === undefined) {
+          const found = filters.findIndex((f: any) => f.type === 'timeRange' || f.type === 'time');
+          // Don't fall back to index 0 when no time filter exists — toggling
+          // the first (non-time) filter would mutate an unrelated filter,
+          // contradicting the "a time filter must already exist" contract.
+          if (found < 0) {
+            return {
+              success: false,
+              commandId: toggleTimeFilterCommandId,
+              error:
+                'No time filter found on the map. Add a time filter first via map.add-time-filter.',
+              data: {instruction: 'Call map.add-time-filter before map.toggle-time-filter.'}
+            };
+          }
+          targetIdx = found;
+        } else {
+          targetIdx = filterIndex;
+        }
+
+        if (targetIdx < 0 || targetIdx >= filters.length) {
+          return {
+            success: false,
+            commandId: toggleTimeFilterCommandId,
+            error: `Filter index ${targetIdx} is out of range. There are ${filters.length} filter(s).`,
+            data: {instruction: `Use a filterIndex between 0 and ${filters.length - 1}.`}
+          };
+        }
+
+        const view = action === 'show' ? 'enlarged' : 'side';
+        ctx.dispatch(setFilterView(targetIdx, view as any));
+
+        return {
+          success: true,
+          commandId: toggleTimeFilterCommandId,
+          data: {
+            details:
+              action === 'show'
+                ? `Time filter at index ${targetIdx} is now enlarged. The time controller is visible at the bottom of the map.`
+                : `Time filter at index ${targetIdx} has been collapsed back to the side panel.`
+          }
+        };
+      } catch (error) {
+        return {
+          success: false,
+          commandId: toggleTimeFilterCommandId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          data: {
+            instruction:
+              'Check that a time filter exists. If the error persists, ask the user to try with different parameters.'
+          }
+        };
+      }
+    }
+  };
+}

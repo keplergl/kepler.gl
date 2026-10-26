@@ -51,6 +51,7 @@ const KEPLER_SRC_ALIASES = Object.fromEntries(
     'duckdb',
     'layers',
     'localization',
+    'mcp',
     'processors',
     'reducers',
     'schemas',
@@ -68,7 +69,10 @@ const getKeplerAliases = () => ({
   // Chart factories live on a package subpath so the main components barrel
   // does not load `@kepler.gl/charts`. The `@kepler.gl/components` alias is a
   // file (index.ts), so this longer key is required.
-  '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts')
+  '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts'),
+  // mcp ships the map-management skill markdown as a subpath export; the
+  // longer key wins over the `@kepler.gl/mcp` src alias above.
+  '@kepler.gl/mcp/skill/kepler/SKILL.md': join(SRC_DIR, 'mcp', 'skill', 'kepler', 'SKILL.md')
 });
 
 /**
@@ -177,6 +181,7 @@ const config = {
   loader: {
     '.js': 'jsx',
     '.css': 'css',
+    '.md': 'text',
     '.ttf': 'file',
     '.woff': 'file',
     '.woff2': 'file'
