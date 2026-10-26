@@ -465,9 +465,11 @@ describe('dataset-ops engine', () => {
     );
   });
 
-  test('derived access keeps adjacent unsafe join keys distinct and raw', () => {
+  test.each([true, false])('numeric access keeps unsafe join keys exact (Arrow: %s)', useArrow => {
+    const values = [9007199254740992n, 9007199254740993n];
+    const data = makeInt64Data(values);
     const source = new KeplerTable({info: {id: 'large'}, color: [0, 0, 0]}).updateSchema(
-      makeInt64Data([9007199254740992n, 9007199254740993n])
+      useArrow ? data : {fields: data.fields, rows: values.map(value => ['west', value])}
     );
     const table = importDerived(
       joinDatasets(source, source, {

@@ -6,7 +6,13 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {findPointFieldPairs, KeplerTable, createNewDataEntry} from '@kepler.gl/table';
+import {
+  findPointFieldPairs,
+  KeplerTable,
+  createNewDataEntry,
+  sortDatasetByColumn
+} from '@kepler.gl/table';
+import {getFieldValueAccessor} from '@kepler.gl/table/kepler-table';
 import {processArrowBatches, processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -448,7 +454,7 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
-test('KeplerTable -> derived numeric access does not coerce strings or unrelated fields', t => {
+test('KeplerTable -> row numeric access only converts actual BigInts', t => {
   const data = {
     fields: [
       {name: 'integer', type: 'integer', analyzerType: 'INT'},
@@ -458,33 +464,111 @@ test('KeplerTable -> derived numeric access does not coerce strings or unrelated
     rows: [
       [10n, 20n, 30n],
       [42, 0.5, 'name'],
-      ['9007199254740993', null, null]
+      ['9007199254740993', null, null],
+      ['12', '', undefined],
+      [null, undefined, false],
+      [NaN, Infinity, 'unchanged']
     ]
   };
-  const ordinary = new KeplerTable({color: [0, 0, 0]}).updateSchema(data);
-  const derived = new KeplerTable({
-    color: [0, 0, 0],
-    metadata: {
-      derivedDataset: {
-        type: 'join',
-        sourceDataIds: [],
-        operationId: 'test'
+  const expectedColumns = [
+    [10, 42, '9007199254740993', '12', null, NaN],
+    [20, 0.5, null, '', undefined, Infinity],
+    [30n, 'name', null, undefined, false, 'unchanged']
+  ];
+  for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
+    const table = new KeplerTable({color: [0, 0, 0], metadata}).updateSchema(data);
+    for (const [column, field] of table.fields.entries()) {
+      const expected = expectedColumns[column];
+      t.deepEqual(
+        data.rows.map((_, index) => field.valueAccessor({index})),
+        expected,
+        `${field.type} indexed access is independent of provenance`
+      );
+      t.deepEqual(data.rows.map(field.valueAccessor), expected, 'materialized rows agree');
+      t.deepEqual(
+        data.rows.map(getFieldValueAccessor(field, column, table.dataContainer)),
+        expected,
+        'exported accessor agrees with the table accessor'
+      );
+    }
+    t.deepEqual(table.dataContainer.flattenData(), data.rows, 'raw storage unchanged');
+  }
+  t.end();
+});
+
+test('KeplerTable -> numeric access survives initially empty rows and row updates', async t => {
+  for (const type of ['integer', 'real']) {
+    const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'value', type}],
+      rows: []
+    });
+    t.deepEqual(table.getColumnFilterProps('value').domain, [0, 1], 'empty domain');
+    t.ok(table.appendRows([[null], [10n], [20n]]), 'appends after binding an empty table');
+    t.deepEqual(table.getColumnFilterProps('value').domain, [10, 20], 'appended BigInt domain');
+    for (const rows of [
+      [[null], [30n], [50n]],
+      [[null], [60n], [80n]]
+    ]) {
+      await table.update({fields: table.fields, rows});
+      t.deepEqual(
+        table.getColumnFilterProps('value').domain,
+        rows.slice(1).map(row => Number(row[0])),
+        'replacement rows use the shared numeric accessor'
+      );
+      t.deepEqual(table.dataContainer.flattenData(), rows, 'replacement storage remains exact');
+    }
+  }
+  t.end();
+});
+
+test('KeplerTable -> shared numeric access preserves exact raw sorting', t => {
+  const rows = [[9007199254740993n], [9007199254740992n], [null]];
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [{name: 'value', type: 'integer'}],
+    rows
+  });
+  t.equal(table.fields[0].valueAccessor({index: 0}), 9007199254740992, 'numeric view can round');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  t.deepEqual(table.sortOrder, [1, 0, 2], 'sorting distinguishes adjacent unsafe integers');
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'sorting leaves exact raw cells intact');
+  t.end();
+});
+
+test('KeplerTable -> Arrow numeric access preserves physical type and timestamp precedence', t => {
+  for (const arrowType of [new arrow.Int64(), new arrow.Uint64()]) {
+    const column = arrow.vectorFromArray([10n, null], arrowType);
+    for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
+      for (const type of ['integer', 'real', 'string']) {
+        const table = new KeplerTable({color: [0, 0, 0], metadata}).updateSchema({
+          fields: [{name: 'value', type}],
+          cols: [column],
+          rows: []
+        });
+        const accessor = table.fields[0].valueAccessor;
+        t.equal(accessor({index: 0}), 10, 'physical Int64 keeps its numeric view');
+        t.equal(accessor({index: 1}), null, 'missing Arrow values remain null');
+        // Physical Arrow conversion also applies to supplied materialized rows,
+        // including its existing string coercion, regardless of provenance.
+        t.deepEqual(
+          [[10n], ['12'], [''], [null], [undefined]].map(accessor),
+          [10, 12, 0, null, undefined],
+          'materialized Arrow rows use the existing physical-type conversion'
+        );
+        const timestampAccessor = getFieldValueAccessor(
+          {type: 'timestamp', format: 'YYYY-MM-DD'},
+          0,
+          table.dataContainer
+        );
+        t.equal(
+          timestampAccessor(['2020-01-01']),
+          Date.UTC(2020, 0, 1),
+          'timestamp takes priority'
+        );
+        t.equal(timestampAccessor({index: 0}), null, 'BigInt is not reinterpreted as a timestamp');
+        t.equal(table.dataContainer.valueAt(0, 0), 10n, 'physical storage remains exact');
       }
     }
-  }).updateSchema(data);
-  t.equal(ordinary.fields[0].valueAccessor({index: 0}), 10n, 'ordinary row accessor unchanged');
-  t.equal(derived.fields[0].valueAccessor({index: 0}), 10, 'derived integer numeric view');
-  t.equal(derived.fields[1].valueAccessor({index: 0}), 20, 'derived real numeric view');
-  t.equal(derived.fields[2].valueAccessor({index: 0}), 30n, 'nonnumeric fields unchanged');
-  t.equal(derived.fields[0].valueAccessor({index: 1}), 42, 'ordinary number unchanged');
-  t.equal(derived.fields[1].valueAccessor({index: 1}), 0.5, 'real unchanged');
-  t.equal(
-    derived.fields[0].valueAccessor({index: 2}),
-    '9007199254740993',
-    'unsafe reload string unchanged'
-  );
-  t.equal(derived.fields[1].valueAccessor({index: 2}), null, 'null unchanged');
-  t.equal(derived.dataContainer.valueAt(0, 0), 10n, 'raw storage unchanged');
+  }
   t.end();
 });
 

@@ -268,12 +268,7 @@ class KeplerTable<F extends Field = Field> {
       displayName: f.displayName || f.name,
       analyzerType: f.analyzerType || ALL_FIELD_TYPES.string,
       format: f.format || '',
-      valueAccessor: getTableFieldValueAccessor(
-        f,
-        i,
-        dataContainer,
-        Boolean(this.metadata?.derivedDataset)
-      )
+      valueAccessor: getFieldValueAccessor(f, i, dataContainer)
     }));
 
     const allIndexes = dataContainer.getPlainIndex();
@@ -334,12 +329,7 @@ class KeplerTable<F extends Field = Field> {
         const {filterProps: _filterProps, ...rest} = f;
         return {
           ...rest,
-          valueAccessor: getTableFieldValueAccessor(
-            f,
-            i,
-            this.dataContainer,
-            Boolean(this.metadata?.derivedDataset)
-          )
+          valueAccessor: getFieldValueAccessor(f, i, this.dataContainer)
         };
       }) as F[];
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
@@ -1035,27 +1025,6 @@ export function copyTableAndUpdate(
   }, copyTable(original));
 }
 
-function getTableFieldValueAccessor(
-  field: {type?: Field['type']; format?: Field['format']},
-  index: number,
-  dataContainer: DataContainerInterface,
-  isDerived: boolean
-) {
-  // Derived rows retain exact integers for joins and saving. Only their numeric
-  // view uses Number precision; saved unsafe decimal strings remain unchanged.
-  // Bind by field type, not sampled values: empty tables may receive BigInts later.
-  if (
-    isDerived &&
-    (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
-  ) {
-    return (row: {index: number} | any[]) => {
-      const value = readFieldValue(index, dataContainer, row);
-      return typeof value === 'bigint' ? Number(value) : value;
-    };
-  }
-  return getFieldValueAccessor(field, index, dataContainer);
-}
-
 function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]): boolean {
   if (current.length !== incoming.length) {
     return false;
@@ -1065,7 +1034,7 @@ function fieldNamesMatch(current: {name: string}[], incoming: {name: string}[]):
 
 /**
  * Arrow Int64/Uint64 columns yield JS BigInt. Detect from the column type once
- * at bind time so other columns keep the existing accessor with no extra checks.
+ * at bind time to preserve the physical column's numeric conversion fast path.
  */
 function isInt64ArrowColumn(dc: DataContainerInterface, fieldIdx: number): boolean {
   const type = (dc.getColumn?.(fieldIdx) as {type?: {bitWidth?: number; isSigned?: boolean}})?.type;
@@ -1086,6 +1055,15 @@ export function getFieldValueAccessor<
     return (d: {index: number} | any[]) => {
       const value = readFieldValue(i, dc, d);
       return value == null ? value : Number(value);
+    };
+  }
+  if (f.type === ALL_FIELD_TYPES.integer || f.type === ALL_FIELD_TYPES.real) {
+    // Row datasets can retain BigInts from Arrow joins or supplied input. Use a
+    // numeric view without changing exact storage or coercing saved decimal strings.
+    // Bind by schema so initially empty tables also handle later BigInt rows.
+    return (d: {index: number} | any[]) => {
+      const value = readFieldValue(i, dc, d);
+      return typeof value === 'bigint' ? Number(value) : value;
     };
   }
   return readFieldValue.bind(null, i, dc);

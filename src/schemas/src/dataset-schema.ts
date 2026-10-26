@@ -116,10 +116,7 @@ export const propertiesV1 = {
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
-const getAllDataForSaving = (
-  dataContainer: DataContainerInterface,
-  isDerived: boolean
-): any[][] => {
+const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -153,12 +150,13 @@ const getAllDataForSaving = (
         });
       }
     }
-  } else if (isDerived) {
+  } else {
     // Row containers expose their live backing rows. Copy only when conversion
-    // is needed, leaving ordinary derived rows and exact stored values intact.
+    // is needed, leaving other rows and exact stored values intact.
     let savedData = allData;
     for (let rowIndex = 0; rowIndex < allData.length; rowIndex++) {
       const row = allData[rowIndex];
+      if (row == null) continue;
       let savedRow = row;
       for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
         const value = row[columnIndex];
@@ -234,10 +232,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(
-            dataset.dataContainer,
-            Boolean(dataset.metadata?.derivedDataset)
-          ),
+          allData: getAllDataForSaving(dataset.dataContainer),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.

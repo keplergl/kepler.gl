@@ -345,7 +345,7 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
   t.end();
 });
 
-test('#DatasetSchema -> derived Int64 rows save and reload exactly without changing live rows', t => {
+test('#DatasetSchema -> ordinary and joined Int64 rows save and reload without changing live rows', t => {
   const values = [
     0n,
     10n,
@@ -371,12 +371,7 @@ test('#DatasetSchema -> derived Int64 rows save and reload exactly without chang
     type: 'LEFT',
     rightColumns: []
   });
-  const dataset = new KeplerTable({
-    info: proto.info,
-    metadata: proto.metadata,
-    color: [0, 0, 0]
-  }).updateSchema(proto.data);
-  const original = dataset.dataContainer.flattenData().map(row => [...row]);
+  const original = proto.data.rows.map(row => [...row]);
   const expected = [
     ['0', 0, 0],
     ['1', 10, 10],
@@ -388,63 +383,100 @@ test('#DatasetSchema -> derived Int64 rows save and reload exactly without chang
     ['7', '9007199254740993', '9007199254740993'],
     ['8', null, null]
   ];
-  const saved = datasetSchema[VERSIONS.v1].save(dataset);
-  t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
-  t.deepEqual(dataset.dataContainer.flattenData(), original, 'live derived rows are not mutated');
-  t.deepEqual(source.dataContainer.flattenData(), original, 'source Arrow values are not mutated');
-  t.doesNotThrow(() => {
-    const json = exportToJsonString({
-      datasets: [{version: 'v1', data: saved}],
-      config: {version: 'v1', config: {}}
-    });
-    const parsed = processKeplerglJSON(JSON.parse(json)).datasets[0];
-    const reloaded = new KeplerTable({
-      info: parsed.info,
-      metadata: parsed.metadata,
+  for (const metadata of [undefined, proto.metadata]) {
+    const dataset = new KeplerTable({
+      info: proto.info,
+      metadata,
       color: [0, 0, 0]
-    }).updateSchema(validateInputData(parsed.data));
-    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'JSON reload retains exact cells');
-    t.equal(
-      reloaded.fields[1].valueAccessor({index: 7}),
-      '9007199254740993',
-      'accepted unsafe-string numeric limitation unchanged'
-    );
+    }).updateSchema(proto.data);
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
+    t.deepEqual(dataset.dataContainer.flattenData(), original, 'live rows are not mutated');
     t.deepEqual(
-      datasetSchema[VERSIONS.v1].save(reloaded).allData,
-      expected,
-      'resave retains exact cells'
+      source.dataContainer.flattenData(),
+      original,
+      'source Arrow values are not mutated'
     );
-    const html = exportMapToHTML({
-      datasets: [{version: 'v1', data: saved}],
-      config: {version: 'v1', config: {}}
-    });
-    const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
-    t.deepEqual(embedded[0].data.allData, expected, 'HTML retains the same exact cells');
-    t.deepEqual(
-      reloadDataset(embedded[0].data).dataContainer.flattenData(),
-      expected,
-      'HTML reload retains exact cells'
-    );
-  }, 'JSON and HTML exports are valid');
+    t.doesNotThrow(() => {
+      const json = exportToJsonString({
+        datasets: [{version: 'v1', data: saved}],
+        config: {version: 'v1', config: {}}
+      });
+      const parsed = processKeplerglJSON(JSON.parse(json)).datasets[0];
+      const reloaded = new KeplerTable({
+        info: parsed.info,
+        metadata: parsed.metadata,
+        color: [0, 0, 0]
+      }).updateSchema(validateInputData(parsed.data));
+      t.deepEqual(
+        reloaded.dataContainer.flattenData(),
+        expected,
+        'JSON reload retains exact cells'
+      );
+      t.equal(
+        reloaded.fields[1].valueAccessor({index: 7}),
+        '9007199254740993',
+        'accepted unsafe-string numeric limitation unchanged'
+      );
+      t.deepEqual(
+        datasetSchema[VERSIONS.v1].save(reloaded).allData,
+        expected,
+        'resave retains exact cells'
+      );
+      const html = exportMapToHTML({
+        datasets: [{version: 'v1', data: saved}],
+        config: {version: 'v1', config: {}}
+      });
+      const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
+      t.deepEqual(embedded[0].data.allData, expected, 'HTML retains the same exact cells');
+      t.deepEqual(
+        reloadDataset(embedded[0].data).dataContainer.flattenData(),
+        expected,
+        'HTML reload retains exact cells'
+      );
+    }, 'JSON and HTML exports are valid');
+  }
   t.end();
 });
 
-test('#DatasetSchema -> derived numeric controls and empty rows remain unchanged', t => {
-  for (const rows of [[], [[null], [null]], [[10], [20], [null]]]) {
-    const dataset = new KeplerTable({
-      color: [0, 0, 0],
-      metadata: {
-        derivedDataset: {
-          type: 'join',
-          sourceDataIds: [],
-          operationId: 'control'
-        }
-      }
-    }).updateSchema({fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}], rows});
-    const saved = datasetSchema[VERSIONS.v1].save(dataset);
-    t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, rows, 'control saves unchanged');
-    t.deepEqual(dataset.dataContainer.flattenData(), rows, 'control source unchanged');
+test('#DatasetSchema -> row numeric controls and empty rows remain unchanged', t => {
+  for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
+    for (const rows of [[], [[null], [null]], [[10], [20], [null]], [[10], null, [], [20]]]) {
+      const dataset = new KeplerTable({
+        color: [0, 0, 0],
+        metadata
+      }).updateSchema({fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}], rows});
+      const saved = datasetSchema[VERSIONS.v1].save(dataset);
+      t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, rows, 'control saves unchanged');
+      t.deepEqual(dataset.dataContainer.flattenData(), rows, 'control source unchanged');
+      t.equal(saved.allData, rows, 'no row copy is needed when there are no BigInts');
+    }
   }
+  t.end();
+});
+
+test('#DatasetSchema -> BigInt normalization copies only affected rows and preserves other cells', t => {
+  const date = new Date('2020-01-01T00:00:00Z');
+  const rows = [null, [10n, date, '9007199254740993'], [20, null, 'unchanged'], null];
+  const dataset = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'value', type: 'integer'},
+      {name: 'date', type: 'date'},
+      {name: 'text', type: 'string'}
+    ],
+    rows
+  });
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.notEqual(saved.allData, rows, 'the outer array is copied for a conversion');
+  t.deepEqual(
+    saved.allData,
+    [null, [10, date, '9007199254740993'], rows[2], null],
+    'only BigInt cells change'
+  );
+  t.notEqual(saved.allData[1], rows[1], 'the affected row is copied');
+  t.equal(saved.allData[2], rows[2], 'the unchanged row is reused');
+  t.equal(saved.allData[1][1], date, 'row dates are not converted by Arrow temporal handling');
+  t.equal(dataset.dataContainer.valueAt(1, 0), 10n, 'live storage remains exact');
   t.end();
 });
 
