@@ -4,17 +4,14 @@
 import {Analyzer, DATA_TYPES as AnalyzerDataTypes} from 'type-analyzer';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
-import {
-  createArrowVector,
-  DataContainerInterface,
-  getRowBigIntColumns,
-  setRowBigIntColumns
-} from '@kepler.gl/utils';
+import {createArrowVector, DataContainerInterface} from '@kepler.gl/utils';
+import {withRowExportMetadata} from '../row-export-metadata';
 import {BIGINT_COLUMN} from './normalize-bigint-columns';
 
 export type ColumnEditDataset = {
   fields: Field[];
   dataContainer: DataContainerInterface;
+  getBigIntExportColumns?: () => readonly (boolean | undefined)[] | undefined;
 };
 
 export type ColumnEditPayload = {
@@ -342,14 +339,11 @@ export function projectDatasetColumns(
     const source = dataContainer.rowAsArray(rowIndex);
     rows[rowIndex] = columns.map(({sourceIndex}) => source[sourceIndex]);
   }
-  const bigIntColumns = getRowBigIntColumns(dataContainer);
-  if (bigIntColumns) {
-    setRowBigIntColumns(
-      rows,
-      columns.map(({sourceIndex}) => bigIntColumns[sourceIndex])
-    );
-  }
-  return {fields, rows};
+  const bigIntColumns = dataset.getBigIntExportColumns?.();
+  return withRowExportMetadata(
+    {fields, rows},
+    bigIntColumns && columns.map(({sourceIndex}) => bigIntColumns[sourceIndex])
+  );
 }
 
 export function buildRenameColumnData(
@@ -469,13 +463,11 @@ export function buildChangeColumnTypeData(
     rows[rowIndex] = row;
   }
 
-  const bigIntColumns = getRowBigIntColumns(dataset.dataContainer);
-  if (bigIntColumns) {
-    setRowBigIntColumns(
-      rows,
-      bigIntColumns.map((contains, index) => (index === fieldIndex ? false : contains))
-    );
-  }
+  const bigIntColumns = dataset.getBigIntExportColumns?.();
+  const data = withRowExportMetadata(
+    {fields, rows},
+    bigIntColumns?.map((contains, index) => (index === fieldIndex ? false : contains))
+  );
 
-  return {payload: {data: {fields, rows}, renames: {}}};
+  return {payload: {data, renames: {}}};
 }

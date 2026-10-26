@@ -3,6 +3,7 @@
 
 import uniq from 'es-toolkit/compat/uniq';
 import KeplerTable, {Datasets} from './kepler-table';
+import {getRowExportMetadata, ROW_EXPORT_METADATA, RowExportData} from './row-export-metadata';
 import {ProtoDataset, RGBColor} from '@kepler.gl/types';
 import Task from '@kepler.gl/tasks-core';
 import type {TaskDescriptor} from '@kepler.gl/tasks-core';
@@ -21,7 +22,8 @@ import {
   hexToRgb,
   validateInputData,
   datasetColorMaker,
-  getApplicationConfig
+  getApplicationConfig,
+  RowDataContainer
 } from '@kepler.gl/utils';
 
 import {load} from '@loaders.gl/core';
@@ -83,9 +85,25 @@ export function createNewDataEntry(
     dataValidator = TableClass.getInputDataValidator();
   }
 
-  const validatedData = dataValidator(data);
+  const usesDefaultValidator = dataValidator === validateInputData;
+  if (!usesDefaultValidator && Array.isArray(data.rows)) {
+    // Custom validators may mutate the input in place, including shared rows.
+    RowDataContainer.invalidateSnapshot(data.rows);
+  }
+  let validatedData = dataValidator(data);
   if (!validatedData) {
     return null;
+  }
+
+  // The built-in validator preserves cells. Custom validators can change even
+  // the same array, so never inherit their input classification.
+  const exportMetadata = usesDefaultValidator ? getRowExportMetadata(data) : undefined;
+  if (exportMetadata && validatedData.rows === data.rows && !validatedData.cols) {
+    (validatedData as RowExportData)[ROW_EXPORT_METADATA] = exportMetadata;
+  } else if (!usesDefaultValidator) {
+    const {[ROW_EXPORT_METADATA]: _exportMetadata, ...unclassifiedData} =
+      validatedData as RowExportData;
+    validatedData = unclassifiedData;
   }
 
   // check if dataset already exists, and update it when loading data by batches incrementally

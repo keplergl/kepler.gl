@@ -16,12 +16,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {
-  ArrowDataContainer,
-  DataContainerInterface,
-  FIELD_DISPLAY_FORMAT,
-  getRowBigIntColumns
-} from '@kepler.gl/utils';
+import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -121,7 +116,10 @@ export const propertiesV1 = {
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
-const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+const getAllDataForSaving = (
+  dataContainer: DataContainerInterface,
+  getBigIntColumns?: (rows: any[][]) => readonly (boolean | undefined)[] | undefined
+): any[][] => {
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -156,7 +154,7 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
       }
     }
   } else {
-    const bigIntColumns = getRowBigIntColumns(allData);
+    const bigIntColumns = getBigIntColumns?.(allData);
     const columns = bigIntColumns?.flatMap((contains, index) =>
       contains === false ? [] : [index]
     );
@@ -245,7 +243,10 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(dataset.dataContainer),
+          allData: getAllDataForSaving(
+            dataset.dataContainer,
+            dataset.getBigIntExportColumns?.bind(dataset)
+          ),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.

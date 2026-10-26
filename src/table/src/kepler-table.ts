@@ -29,6 +29,7 @@ import {
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
 import {BIGINT_COLUMN} from './dataset-ops/normalize-bigint-columns';
+import {getRowExportMetadata, RowExportMetadata} from './row-export-metadata';
 
 import {
   getSortingFunction,
@@ -51,6 +52,7 @@ import {
   getQuantileDomain,
   getJenksDomain,
   DataContainerInterface,
+  RowDataContainer,
   FilterChanged
 } from '@kepler.gl/utils';
 import {generateHashId, notNullorUndefined} from '@kepler.gl/common-utils';
@@ -146,6 +148,7 @@ class KeplerTable<F extends Field = Field> {
   fields: F[] = [];
 
   dataContainer: DataContainerInterface;
+  private rowExportMetadata?: RowExportMetadata & {container: RowDataContainer};
   /**
    * Bumped in {@link update} so layer `dataUpdateTriggers` notice in-place row
    * snapshots (the dataContainer instance stays the same).
@@ -230,6 +233,21 @@ class KeplerTable<F extends Field = Field> {
     this.gpuFilter = getGpuFilterProps([], this.id, [], undefined);
   }
 
+  /** Valid only for this table's unchanged native row snapshot/output. */
+  getBigIntExportColumns(rows?: any[][]): readonly (boolean | undefined)[] | undefined {
+    const hints = this.rowExportMetadata;
+    const container = this.dataContainer;
+    return hints &&
+      container === hints.container &&
+      container.rowAsArray === RowDataContainer.prototype.rowAsArray &&
+      container.flattenData === RowDataContainer.prototype.flattenData &&
+      hints.rows === hints.container._rows &&
+      (rows === undefined || rows === hints.rows) &&
+      hints.revision === RowDataContainer.getSnapshotRevision(hints.rows)
+      ? hints.columns
+      : undefined;
+  }
+
   async importData({data}: {data: ProtoDataset['data']}) {
     this.updateSchema(data);
   }
@@ -274,6 +292,11 @@ class KeplerTable<F extends Field = Field> {
 
     const allIndexes = dataContainer.getPlainIndex();
     this.dataContainer = dataContainer;
+    const exportMetadata = getRowExportMetadata(data);
+    this.rowExportMetadata =
+      exportMetadata && dataContainer instanceof RowDataContainer
+        ? {...exportMetadata, columns: Array.from(exportMetadata.columns), container: dataContainer}
+        : undefined;
     this.allIndexes = allIndexes;
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
@@ -291,6 +314,7 @@ class KeplerTable<F extends Field = Field> {
    * @param data - new data e.g. the arrow data with new batches loaded, or a full row snapshot
    */
   async update(data: ProtoDataset['data']) {
+    this.rowExportMetadata = undefined;
     // Arrow/DuckDB incremental loads pass `cols` (and empty `rows`). Row snapshots
     // for remote refresh pass `rows` only. Preserve the GPU filter configuration
     // on column updates, but invalidate cached filter results for every snapshot.
@@ -505,6 +529,7 @@ class KeplerTable<F extends Field = Field> {
   }
 
   private afterRowMutation(allIndexes: number[]): void {
+    this.rowExportMetadata = undefined;
     const fieldsToRebuild = this.fields.filter(f => f.filterProps).map(f => f.name);
 
     // Drop cached per-row props (mappedValue is indexed by row). Same as a

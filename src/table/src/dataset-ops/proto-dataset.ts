@@ -48,7 +48,7 @@ export function makeResultProtoDataset({
       id,
       label
     },
-    data: {fields: normalizeBigIntColumns(fields, rows), rows},
+    data: normalizeBigIntColumns(fields, rows),
     metadata: {
       derivedDataset: {
         type,
