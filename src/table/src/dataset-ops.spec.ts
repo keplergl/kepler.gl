@@ -135,6 +135,73 @@ describe('dataset-ops engine', () => {
     expect(byRegion.east).toEqual(['east', 40, 1]);
   });
 
+  const december = '12/31/2025 10:00:00';
+  const january = '01/01/2026 10:00:00';
+  const januaryDate = new Date('2026-01-01T10:00:00Z');
+  test.each([
+    ['timestamp', 'M/D/YYYY H:m:s', [januaryDate, december, january], december, januaryDate],
+    [
+      'timestamp',
+      'M/D/YYYY H:m:s',
+      [null, 'invalid', january, december, Infinity],
+      december,
+      january
+    ],
+    ['timestamp', 'M/D/YYYY H:m:s', [null, undefined, 'invalid', NaN, Infinity], null, null],
+    ['timestamp', 'M/D/YYYY H:m:s', [], null, null],
+    [
+      'timestamp',
+      'YYYY-MM-DDTHH:mm:ssZ',
+      ['2026-01-01T00:30:00+02:00', '2025-12-31T23:00:00Z'],
+      '2026-01-01T00:30:00+02:00',
+      '2025-12-31T23:00:00Z'
+    ],
+    [
+      'timestamp',
+      'YYYY-MM-DDTHH:mm:ssZ',
+      ['2026-01-01T00:00:00+01:00', '2025-12-31T23:00:00Z'],
+      '2026-01-01T00:00:00+01:00',
+      '2026-01-01T00:00:00+01:00'
+    ],
+    ['timestamp', 'x', [1767261600, 1767175200], 1767175200, 1767261600],
+    ['date', 'MM/DD/YYYY', ['01/01/2026', '12/31/2025'], '12/31/2025', '01/01/2026'],
+    ['integer', '', [20, null, 10], 10, 20],
+    ['string', '', ['z', null, 'a'], 'a', 'z']
+  ] as const)(
+    'Group By extrema preserve %s values with format %s: %j',
+    (type, format, values, minimum, maximum) => {
+      const dataset = new KeplerTable({info: {id: 'times'}, color: [0, 0, 0]});
+      dataset.updateSchema({
+        fields: [
+          {name: 'group', type: 'string', analyzerType: 'string'},
+          {name: 'value', type, analyzerType: type, format}
+        ],
+        rows: values.map(value => ['west', value])
+      });
+      for (const [technique, expected] of [
+        ['minimum', minimum],
+        ['maximum', maximum]
+      ] as const) {
+        const result = groupByDataset(dataset, {
+          fieldName: 'group',
+          aggregations: {value: technique}
+        });
+        expect(result.data.rows).toEqual(values.length ? [['west', expected]] : []);
+        if (values.length) expect(result.data.rows[0][1]).toBe(expected);
+        if (type === 'timestamp' || type === 'date') {
+          expect(result.data.fields[1]).toMatchObject({type, format});
+          const reloaded = new KeplerTable({info: result.info, color: [0, 0, 0]});
+          reloaded.updateSchema(result.data);
+          expect(reloaded.fields[1].format).toBe(format);
+          if (format === 'x') {
+            expect(reloaded.fields[1].valueAccessor({index: 0})).toBe(Number(expected) * 1000);
+          }
+        }
+      }
+      expect(values.map((_, i) => dataset.dataContainer.valueAt(i, 1))).toEqual(values);
+    }
+  );
+
   describe.each([new Int64(), new Uint64()])('Arrow %s Group By', arrowType => {
     test.each([
       [DATASET_OPS_AGGREGATIONS.sum, 30, 80],

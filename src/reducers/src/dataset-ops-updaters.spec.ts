@@ -171,6 +171,44 @@ describe('dataset ops vis-state', () => {
     expect([0, 1, 2].map(index => arrow.getChild('pop')?.get(index))).toEqual([10n, 20n, null]);
   });
 
+  test.each(['minimum', 'maximum'] as const)(
+    'runGroupBy selects chronological %s from recognized CSV timestamps',
+    technique => {
+      const december = '12/31/2025 10:00:00';
+      const january = '01/01/2026 10:00:00';
+      const data = processCsvData(
+        `group,time\nwest,${december}\nwest,${january}\neast,${january}\neast,${december}\nmissing,`
+      );
+      if (!data) throw new Error('CSV import failed');
+      expect(data.fields[1]).toMatchObject({type: 'timestamp', format: 'M/D/YYYY H:m:s'});
+      const times = makeTable('times', [], []);
+      times.updateSchema(data);
+      let state: VisState = {...INITIAL_VIS_STATE, datasets: {times}};
+      state = reduceVisState(state, VisStateActions.addGroupBy('times'));
+      const op = state.groupBys[0];
+      state = reduceVisState(
+        state,
+        VisStateActions.setGroupByConfig(op.id, {
+          fieldName: 'group',
+          aggregations: {time: technique}
+        })
+      );
+      state = flushCreateTableTasks(reduceVisState(state, VisStateActions.runGroupBy(op.id)));
+      const result = state.datasets[op.resultId];
+      const expected = technique === 'minimum' ? december : january;
+      expect(
+        result.dataContainer.getPlainIndex().map(i => result.dataContainer.rowAsArray(i))
+      ).toEqual([
+        ['west', expected],
+        ['east', expected],
+        ['missing', null]
+      ]);
+      expect(result.fields[1]).toMatchObject({type: 'timestamp', format: data.fields[1].format});
+      expect(times.dataContainer.valueAt(0, 1)).toBe(december);
+      expect(times.dataContainer.valueAt(1, 1)).toBe(january);
+    }
+  );
+
   test('delete parent keeps derived child snapshot', () => {
     const cities = makeTable(
       'cities',

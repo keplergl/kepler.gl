@@ -7,7 +7,7 @@ import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-dat
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
 import {findPointFieldPairs, KeplerTable, createNewDataEntry} from '@kepler.gl/table';
-import {processCsvData} from '@kepler.gl/processors';
+import {processArrowBatches, processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 
@@ -547,6 +547,116 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
   t.deepEqual(table.filteredIndex, [0, 1, 2], 'GPU filtering keeps all rows available to the GPU');
   t.deepEqual(table.filteredIndexForDomain, [1], 'domain filtering uses the refreshed values');
   t.deepEqual(table.filteredIdxCPU, [1], 'CPU evaluation uses the refreshed matching row');
+  t.end();
+});
+
+test('KeplerTable -> Arrow snapshots rebuild cached timestamps and reuse them between filters', async t => {
+  const firstTime = Date.UTC(2024, 1, 1);
+  const lastTime = firstTime + 86400000;
+  const types = [
+    arrow.TimestampSecond,
+    arrow.TimestampMillisecond,
+    arrow.TimestampMicrosecond,
+    arrow.TimestampNanosecond
+  ];
+
+  for (const Timestamp of types) {
+    for (const [shape, timezone] of [
+      [null, null],
+      ['table', 'UTC'],
+      ['duckdb', 'America/New_York']
+    ]) {
+      const snapshot = values => {
+        const vector = offset =>
+          arrow.vectorFromArray(
+            values.map(value => (value === null ? null : new Date(value + offset))),
+            new Timestamp(timezone)
+          );
+        const source = new arrow.Table({
+          time: vector(0),
+          later: vector(3600000),
+          unused: vector(0)
+        });
+        const ipc = arrow.tableFromIPC(arrow.tableToIPC(source, 'file'));
+        const data = processArrowBatches(ipc.batches);
+        return shape === 'table' ? {...data, arrowTable: ipc} : data;
+      };
+
+      for (const gpu of [false, true]) {
+        const table = new KeplerTable({info: {id: 'timestamps'}, color: [0, 0, 0]});
+        await table.importData({data: snapshot([firstTime, lastTime, null])});
+        const filters = ['time', 'later'].map((name, index) => ({
+          ...table.getColumnFilterProps(name),
+          id: name,
+          dataId: [table.id],
+          name: [name],
+          fieldIdx: [index],
+          value: [firstTime + index * 3600000, firstTime + index * 3600000],
+          enabled: true,
+          gpu,
+          gpuChannel: [index]
+        }));
+        table.filterTable(filters, []);
+        table.filterTableCPU(filters, []);
+        t.deepEqual(table.filteredIdxCPU, [0], 'initial timestamp selection');
+
+        const reads = [0, 0, 0];
+        table.fields.forEach((field, index) => {
+          const accessor = field.valueAccessor;
+          field.valueAccessor = datum => {
+            reads[index] += 1;
+            return accessor(datum);
+          };
+        });
+        for (const values of [
+          [lastTime, firstTime, null],
+          [],
+          [null, lastTime, firstTime],
+          [firstTime, lastTime, null, firstTime]
+        ]) {
+          const data = snapshot(values);
+          const oldGpuFilter = table.gpuFilter;
+          reads.fill(0);
+          await table.update(shape === 'duckdb' ? {...data, fields: []} : data);
+          t.equal(table.gpuFilter, oldGpuFilter, 'snapshot retains GPU configuration');
+          t.deepEqual(
+            reads,
+            [values.length, values.length, 0],
+            'only cached timestamps are scanned once'
+          );
+          t.notOk(table.fields[2].filterProps, 'unused timestamp stays lazy');
+          t.deepEqual(
+            table.fields[0].filterProps.mappedValue,
+            values,
+            'mapping follows row order and nulls'
+          );
+          const mapped = table.fields[0].filterProps.mappedValue;
+          table.getColumnFilterProps('time');
+          table.filterTable(filters, []);
+          table.filterTableCPU(filters, []);
+          const expected = values.flatMap((value, index) => (value === firstTime ? [index] : []));
+          t.deepEqual(table.filteredIdxCPU, expected, 'CPU/export filters use current timestamps');
+          const getValue = table.gpuFilter.filterValueAccessor(table.dataContainer)();
+          const visible = table.filteredIndex.filter(index =>
+            getValue({index}).every((value, channel) => {
+              const [min, max] = table.gpuFilter.filterRange[channel];
+              return value >= min && value <= max;
+            })
+          );
+          t.deepEqual(visible, expected, 'render filter attributes select the current rows');
+          reads.fill(0);
+          table.filterTable(filters, []);
+          table.filterTableCPU(filters, []);
+          t.equal(
+            table.fields[0].filterProps.mappedValue,
+            mapped,
+            'filter interactions reuse the mapping'
+          );
+          t.deepEqual(reads, [0, 0, 0], 'unchanged filters do not rescan timestamps');
+        }
+      }
+    }
+  }
   t.end();
 });
 

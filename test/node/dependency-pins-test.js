@@ -27,14 +27,21 @@ const FLOORS = {
   'brace-expansion': {1: '1.1.21', 2: '2.1.7', 5: '5.0.12'},
   compression: {1: '1.8.2'},
   dompurify: {3: '3.4.16'},
-  'fast-uri': {3: '3.1.7'},
+  'fast-uri': {3: '3.1.9'},
   fflate: {0.7: '0.7.5', 0.8: '0.8.3'},
   handlebars: {4: '4.7.10'},
-  'ip-address': {10: '10.7.1'},
+  'ip-address': {10: '10.7.4'},
   'js-yaml': {3: '3.15.2', 4: '4.3.2'},
   'proxy-addr': {2: '2.0.8'},
   'shell-quote': {1: '1.11.0'},
   'source-map-js': {1: '1.2.2'}
+};
+
+// These patches apply to the root build tools. Examples have separate trees.
+const ROOT_FLOORS = {
+  ...FLOORS,
+  'launch-editor': {2: '2.14.2'},
+  undici: {6: '6.29.1'}
 };
 
 function compareVersions(left, right) {
@@ -55,7 +62,7 @@ function releaseLine(version) {
   return major === '0' ? `0.${minor}` : major;
 }
 
-function resolvedVersions(lockText) {
+function resolvedVersions(lockText, floors) {
   const versions = new Map();
   const lines = lockText.split('\n');
 
@@ -87,7 +94,7 @@ function resolvedVersions(lockText) {
     }
 
     names.forEach(name => {
-      if (!FLOORS[name]) {
+      if (!floors[name]) {
         return;
       }
       if (!versions.has(name)) {
@@ -102,16 +109,17 @@ function resolvedVersions(lockText) {
 
 test('lockfiles resolve patched versions of known vulnerable transitive dependencies', t => {
   LOCKFILES.forEach(rel => {
-    const versions = resolvedVersions(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const floors = rel === 'yarn.lock' ? ROOT_FLOORS : FLOORS;
+    const versions = resolvedVersions(fs.readFileSync(path.join(ROOT, rel), 'utf8'), floors);
 
-    Object.keys(FLOORS).forEach(name => {
+    Object.keys(floors).forEach(name => {
       const resolved = versions.get(name);
       if (!resolved) {
         return;
       }
 
       resolved.forEach(version => {
-        const floor = FLOORS[name][releaseLine(version)];
+        const floor = floors[name][releaseLine(version)];
         t.ok(
           floor && compareVersions(version, floor) >= 0,
           `${rel} resolves ${name}@${version}, which must be >= ${

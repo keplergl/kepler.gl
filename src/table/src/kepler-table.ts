@@ -320,6 +320,15 @@ class KeplerTable<F extends Field = Field> {
       });
     }
 
+    // Column snapshots can reorder or replace rows without changing the schema,
+    // invalidating row-indexed timestamp mappings. Collect only already-cached
+    // field names so unused columns stay lazy and refresh scans stay limited.
+    const timestampFieldsToRebuild = isRowSnapshot
+      ? []
+      : this.fields
+          .filter(f => f.type === ALL_FIELD_TYPES.timestamp && f.filterProps)
+          .map(f => f.name);
+
     if (isRowSnapshot) {
       this.fields = this.fields.map((f, i) => {
         const {filterProps: _filterProps, ...rest} = f;
@@ -334,6 +343,17 @@ class KeplerTable<F extends Field = Field> {
         };
       }) as F[];
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    } else if (timestampFieldsToRebuild.length) {
+      // getColumnFilterProps returns existing filterProps without recomputing.
+      // Remove the stale cache so it reads the new snapshot, while preserving
+      // the GPU filter configuration and channels across column updates.
+      this.fields = this.fields.map(f => {
+        if (f.type !== ALL_FIELD_TYPES.timestamp || !f.filterProps) {
+          return f;
+        }
+        const {filterProps: _filterProps, ...rest} = f;
+        return rest;
+      }) as F[];
     }
 
     this.allIndexes = this.dataContainer.getPlainIndex();
@@ -345,6 +365,11 @@ class KeplerTable<F extends Field = Field> {
     this.filterRecordCPU = undefined;
     this.changedFilters = undefined;
     this.dataRevision += 1;
+
+    // Rebuild after row indexes and filter results are reset: CPU/GPU consumers
+    // read mappedValue directly. Caching the new mapping here avoids rescanning
+    // timestamps on later filter interactions.
+    timestampFieldsToRebuild.forEach(name => this.getColumnFilterProps(name));
 
     return this;
   }

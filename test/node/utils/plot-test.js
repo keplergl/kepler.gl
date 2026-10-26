@@ -2,7 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import {TIME_INTERVALS} from '@kepler.gl/constants';
 import {
+  getBinThresholds,
+  getTimeBins,
   histogramFromThreshold,
   histogramFromValues,
   histogramFromTimeIntervals,
@@ -23,6 +27,231 @@ import {
 } from '@kepler.gl/utils';
 
 const values1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+test('Utils -> time thresholds bound allocation before expanding a millisecond domain', t => {
+  const every = TIME_INTERVALS.millisecond.every;
+  const stub = sinon.stub(TIME_INTERVALS.millisecond, 'every').callsFake(step => {
+    const interval = every(step);
+    return {
+      ...interval,
+      range(start, stop) {
+        const requested = Math.ceil((stop - start) / step);
+        if (requested > 2049) {
+          throw new Error(`Intercepted unsafe allocation of ${requested} Dates`);
+        }
+        return interval.range(start, stop);
+      }
+    };
+  });
+  try {
+    const start = Date.UTC(2020, 0, 1);
+    const end = start + 86400000;
+    const thresholds = getBinThresholds('1-millisecond', [start, end]);
+    t.ok(thresholds.length <= 2049, 'should bound the number of bins including endpoint padding');
+    t.equal(thresholds[0], start, 'should keep the full domain start');
+    t.ok(thresholds[thresholds.length - 1] > end, 'should include the maximum in a complete bin');
+    t.equal(
+      histogramFromThreshold(thresholds, [start, end]).reduce((sum, bin) => sum + bin.count, 0),
+      2,
+      'should retain both endpoint rows instead of truncating the domain'
+    );
+  } catch (error) {
+    t.fail(error.message);
+  } finally {
+    stub.restore();
+  }
+  t.end();
+});
+
+test('Utils -> time thresholds preserve safe calendar intervals and reject invalid domains', t => {
+  t.equal(
+    getBinThresholds('1-millisecond', [0, 2047]).length,
+    2049,
+    'should keep exactly 2048 bins'
+  );
+  for (const end of [2048, 3000]) {
+    const thresholds = getBinThresholds('1-millisecond', [0, end]);
+    t.ok(thresholds.length > 1 && thresholds.length <= 2049, 'should coarsen beyond the cap');
+    t.equal(thresholds[0], 0, 'should retain the domain start');
+    t.ok(thresholds[thresholds.length - 1] > end, 'should include the domain maximum');
+    t.equal(
+      histogramFromThreshold(thresholds, [0, end]).reduce((sum, bin) => sum + bin.count, 0),
+      2,
+      'should retain both endpoint rows after fallback'
+    );
+  }
+  const dates = [Date.UTC(2020, 0, 1), Date.UTC(2020, 1, 1), Date.UTC(2020, 2, 1)];
+  t.deepEqual(
+    getBinThresholds('1-month', [dates[0], dates[1] + 1]),
+    dates,
+    'should preserve leap-year calendar boundaries'
+  );
+  t.deepEqual(
+    getBinThresholds('1-month', [dates[0], dates[1]]),
+    dates,
+    'should retain inclusive maximum padding'
+  );
+  for (const interval of [
+    '5-second',
+    '15-minute',
+    '3-hour',
+    '2-day',
+    '2-week',
+    '3-month',
+    '5-year'
+  ]) {
+    const [step, unitName] = interval.split('-');
+    const unit = TIME_INTERVALS[unitName].every(Number(step));
+    const start = Date.UTC(2020, 0, 2, 1, 2, 3);
+    const end = Number(unit.offset(start, 3));
+    const expected = unit.range(unit.floor(start), Number(unit.ceil(end)) + 1).map(Number);
+    if (expected[expected.length - 1] === end) expected.push(Number(unit.offset(end)));
+    t.deepEqual(
+      getBinThresholds(interval, [start, end]),
+      expected,
+      `${interval} should keep calendar alignment`
+    );
+  }
+  t.ok(
+    getBinThresholds('1000000-week', [0, 86400000]).length <= 2049,
+    'should bound large calendar steps'
+  );
+  for (const domain of [[], [NaN, 1], [0, Infinity], [2, 1], [0, 9e15]]) {
+    t.deepEqual(
+      getBinThresholds('1-millisecond', domain),
+      [],
+      'should reject an invalid time domain'
+    );
+  }
+  for (const interval of [undefined, '', '0-day', '-1-day', 'no-such-unit']) {
+    const thresholds = getBinThresholds(interval, [0, 86400000]);
+    t.ok(
+      thresholds.length > 1 && thresholds.length <= 2049,
+      'should safely replace an invalid interval'
+    );
+    t.ok(thresholds[thresholds.length - 1] >= 86400000, 'should cover the full domain');
+  }
+  t.end();
+});
+
+test('Utils -> time thresholds stop before calendar padding overflows Date', t => {
+  const setMonth = Date.prototype.setUTCMonth;
+  let operations = 0;
+  const stub = sinon.stub(Date.prototype, 'setUTCMonth').callsFake(function (...args) {
+    if (++operations > 100) throw new Error('Intercepted unbounded calendar stepping');
+    return setMonth.apply(this, args);
+  });
+  try {
+    const july = Date.UTC(275760, 6, 1);
+    const september = Date.UTC(275760, 8, 1);
+    t.deepEqual(
+      getBinThresholds('2-month', [july, july + 86400000]),
+      [july, september],
+      'should keep finite calendar boundaries near the Date limit'
+    );
+    t.deepEqual(
+      getBinThresholds('2-month', [8640000000000000 - 86400000, 8640000000000000]),
+      [],
+      'should reject unrepresentable upper padding'
+    );
+    const minimum = -8640000000000000;
+    const thresholds = getBinThresholds('2-month', [minimum, minimum + 86400000]);
+    t.equal(
+      thresholds[0],
+      minimum,
+      'should replace unrepresentable lower padding with a finite interval'
+    );
+    t.ok(
+      thresholds.length <= 2049 && thresholds[thresholds.length - 1] > minimum + 86400000,
+      'should bound the fallback and cover the entire domain'
+    );
+  } catch (error) {
+    t.fail(error.message);
+  } finally {
+    stub.restore();
+  }
+  t.end();
+});
+
+test('Utils -> time bins reuse validated boundaries and invalidate changed domains', t => {
+  const mappedValue = [0, 30000, 60000];
+  const dataset = {
+    ...mockGpuPlotDataset(
+      mappedValue.map(value => [value]),
+      []
+    ),
+    getColumnField: () => ({filterProps: {mappedValue}})
+  };
+  const filter = {
+    type: 'timeRange',
+    dataId: ['dsA'],
+    name: ['time'],
+    domain: [0, 30000 * 2047]
+  };
+  const datasets = {dsA: dataset};
+  filter.timeBins = getTimeBins(filter, datasets, '30-second');
+  const cachedBins = filter.timeBins.dsA['30-second'];
+  const marks = getBinThresholds('30-second', filter.domain);
+  const every = sinon.spy(TIME_INTERVALS.second, 'every');
+  try {
+    t.equal(
+      getTimeBins(filter, datasets, '30-second'),
+      filter.timeBins,
+      'should reuse cached bins'
+    );
+    t.deepEqual(getBinThresholds('30-second', filter.domain), marks, 'should reuse matching marks');
+    t.notOk(every.called, 'a validated cache hit should not traverse calendar intervals again');
+    marks.length = 0;
+    t.equal(
+      getBinThresholds('30-second', filter.domain).length,
+      2049,
+      'caller changes to returned marks must not corrupt cached boundaries'
+    );
+
+    const minuteBins = getTimeBins(filter, datasets, '1-minute').dsA['1-minute'];
+    t.notEqual(minuteBins, cachedBins, 'a changed interval should create different bins');
+    t.deepEqual(
+      minuteBins.map(bin => bin.count),
+      [2, 1],
+      'should aggregate with the new interval'
+    );
+
+    filter.domain[0] = 30000;
+    const changed = getTimeBins(filter, datasets, '30-second');
+    t.notEqual(changed.dsA['30-second'], cachedBins, 'should invalidate an in-place domain change');
+    t.deepEqual(
+      changed.dsA['30-second'].flatMap(bin => bin.indexes),
+      [1, 2],
+      'should exclude rows outside the new domain'
+    );
+    const replaced = getTimeBins({...filter, domain: [60000, 90000]}, datasets, '30-second');
+    t.deepEqual(
+      replaced.dsA['30-second'].flatMap(bin => bin.indexes),
+      [2],
+      'should rebuild bins when the domain array is replaced'
+    );
+
+    const growing = {...filter, domain: [0, 1]};
+    growing.timeBins = getTimeBins(growing, datasets, '1-millisecond');
+    growing.domain[1] = 86400000;
+    const coarsened = getTimeBins(growing, datasets, '1-millisecond');
+    t.notOk(coarsened.dsA['1-millisecond'], 'must not reuse unsafe bins after domain growth');
+    t.ok(coarsened.dsA['15-minute'], 'should cache under the effective safe interval');
+    t.equal(
+      coarsened.dsA['15-minute'].reduce((sum, bin) => sum + bin.count, 0),
+      3,
+      'should retain every row after domain growth'
+    );
+    t.deepEqual(
+      getTimeBins({...filter, domain: {}}, datasets, '30-second').dsA['30-second'],
+      [],
+      'should reject a non-array domain without throwing while caching metadata'
+    );
+  } finally {
+    every.restore();
+  }
+  t.end();
+});
 
 test('Utils -> getNumericBinThresholds uses numeric units', t => {
   t.deepEqual(

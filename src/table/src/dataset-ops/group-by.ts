@@ -4,6 +4,7 @@
 import {generateHashId} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {ProtoDataset} from '@kepler.gl/types';
+import {timeToUnixMilli} from '@kepler.gl/utils';
 
 import {aggregateValues, resultFieldType} from './aggregations';
 import {copyFieldAs, makeResultProtoDataset, uniqueColumnName} from './proto-dataset';
@@ -50,20 +51,44 @@ export function groupByDataset(
       throw new Error(`Aggregation field "${fieldName}" was not found`);
     }
     const name = uniqueColumnName(`${fieldName}_${technique}`, usedNames);
+    const isTimeExtremum =
+      (technique === 'minimum' || technique === 'maximum') &&
+      (sourceField.type === ALL_FIELD_TYPES.timestamp || sourceField.type === ALL_FIELD_TYPES.date);
     fields.push({
       name,
+      ...(isTimeExtremum ? {format: sourceField.format} : {}),
       type: resultFieldType(technique, sourceField.type),
       analyzerType:
         technique === 'count' || technique === 'countUnique'
           ? ALL_FIELD_TYPES.integer
           : sourceField.analyzerType || sourceField.type
     });
-    return {sourceField, technique};
+    return {sourceField, technique, isTimeExtremum};
   });
 
   const rows = Array.from(grouped.values()).map(({key, indexes}) => {
     const row: unknown[] = [key];
-    for (const {sourceField, technique} of aggMeta) {
+    for (const {sourceField, technique, isTimeExtremum} of aggMeta) {
+      if (isTimeExtremum) {
+        let selectedValue: unknown = null;
+        let selectedTime: number | null = null;
+        for (const index of indexes) {
+          const value = rowValue(dataset, index, sourceField);
+          const time = timeToUnixMilli(value as string | number | Date, sourceField.format || '');
+          if (
+            time !== null &&
+            Number.isFinite(time) &&
+            (selectedTime === null ||
+              (technique === 'minimum' ? time < selectedTime : time > selectedTime))
+          ) {
+            // Compare normalized instants, preserving the first original value on ties.
+            selectedValue = value;
+            selectedTime = time;
+          }
+        }
+        row.push(selectedValue);
+        continue;
+      }
       const values = indexes.map(index => rowValue(dataset, index, sourceField));
       row.push(aggregateValues(values, technique));
     }
