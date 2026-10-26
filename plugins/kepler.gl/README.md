@@ -66,26 +66,29 @@ cp -R plugins/kepler.gl/skills/keplergl-python ~/.claude/skills/
 cp -R plugins/kepler.gl/skills/kepler-gl-app ~/.agents/skills/
 ```
 
-## MCP server: not wired yet
+## MCP server
 
-`kepler-gl-app` drives a kepler.gl app through its `map.*` commands, and those
-commands reach an agent through an MCP server. This plugin does **not** declare
-one, deliberately:
+`@kepler.gl/mcp` ships a stdio server, `kepler-mcp`. It holds the map tools,
+listens on a loopback WebSocket, and prints a URL carrying a one-time token;
+open that URL and the kepler.gl page connects back, after which tool calls
+execute against the live map. That is how harnesses without WebMCP (Codex
+Desktop, the Codex CLI, Claude Code) reach the map. Agents with a built-in
+browser can instead use the page's WebMCP registration.
 
-- `@kepler.gl/mcp` (`src/mcp/`) declares `main` and `exports` but no `bin`, so
-  there is no stdio entry point to point a client at.
-- The demo app exposes the same commands through the browser's native WebMCP
-  API, not through an MCP server: it registers them with
-  `document.modelContext` and never listens on a port. That reaches agents with
-  a built-in browser, not Claude Code or the Codex CLI.
+The plugin still ships no `.mcp.json` (Claude) and no `mcp.json` (portable),
+because `@kepler.gl/mcp` is not published to npm yet — an `npx` entry would
+404. From a checkout the server runs today:
 
-So the plugin ships no `.mcp.json` (Claude) and no `mcp.json` (portable). The
-app skill takes effect only in a host that already exposes the `map.*` commands
-(the demo app under WebMCP). Declaring a server that cannot start would make the
-whole plugin look broken.
+```bash
+yarn workspace @kepler.gl/mcp build
+node src/mcp/dist/cjs/server/stdio.js --map-url http://localhost:8080
+```
 
-Once `@kepler.gl/mcp` gains a `bin` entry and is published to npm, add both
-files with the same server, bump the plugin version, and update this section:
+Register that command as the `kepler` server in the client, e.g.
+`codex mcp add kepler -- node src/mcp/dist/cjs/server/stdio.js`.
+
+Once the package is published, add both files with the same server, bump the
+plugin version, and update this section:
 
 ```json
 {

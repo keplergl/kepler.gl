@@ -2,16 +2,25 @@
   "name": "@kepler.gl/mcp",
   "author": "Shan He <heshan0131@gmail.com>",
   "version": "3.3.0-alpha.18",
-  "description": "The kepler.gl map surface for AI agents: map.* commands, command contract + JSON Schemas + types, and the kepler map-management skill",
+  "description": "The kepler.gl map surface for AI agents: map.* commands, command contract + JSON Schemas + types, a stdio MCP server that bridges to an open kepler.gl page, and the kepler map-management skill",
   "license": "MIT",
   "main": "dist/cjs/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "kepler-mcp": "dist/cjs/server/stdio.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/esm/server/index.js",
+      "require": "./dist/cjs/server/index.js",
+      "default": "./dist/cjs/server/index.js"
     },
     "./skill/kepler/SKILL.md": "./skill/kepler/SKILL.md",
     "./skill/kepler/skill.yaml": "./skill/kepler/skill.yaml"
@@ -45,8 +54,15 @@
     "@kepler.gl/reducers": "3.3.0-alpha.18",
     "@kepler.gl/table": "3.3.0-alpha.18",
     "@kepler.gl/types": "3.3.0-alpha.18",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "apache-arrow": "^17.0.0",
+    "ws": "^8.22.0",
     "zod": "^4.4.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.1",
+    "@babel/node": "^7.12.1",
+    "@types/ws": "^8.18.2"
   },
   "nyc": {
     "sourceMap": false,

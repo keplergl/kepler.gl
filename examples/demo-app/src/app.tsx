@@ -13,6 +13,7 @@ import {WebMercatorViewport} from '@deck.gl/core';
 import {setMapBoundary} from '@openassistant/kepler-assistant';
 import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {KeplerWebMcp} from './kepler-webmcp';
+import {KeplerMcpBridge} from './kepler-mcp-bridge';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -957,9 +958,11 @@ const App = props => {
                 </>
               )}
             </PanelGroup>
-            {/* Registers the map.* tools on the browser's WebMCP model
-                context. Renders nothing. */}
+            {/* Agent surfaces. Both render nothing: WebMCP registers the tools
+                with the browser; the bridge connects out to a local kepler-mcp
+                server when the page was opened with ?mcp=<token>. */}
             <KeplerWebMcp reduxStore={reduxStore} />
+            <KeplerMcpBridge reduxStore={reduxStore} />
           </div>
         </GlobalStyle>
       </ThemeProvider>

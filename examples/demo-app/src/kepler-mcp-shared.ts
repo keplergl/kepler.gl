@@ -1,13 +1,16 @@
 /**
- * Shared plumbing for the demo-app's agent surface over the `@kepler.gl/mcp`
+ * Shared plumbing for the demo-app's agent surfaces over the `@kepler.gl/mcp`
  * map.* commands:
  *
  *  - `kepler-webmcp.tsx` — native WebMCP registration (`document.modelContext`)
  *    for harnesses with a built-in browser (Chrome's agent, Claude Desktop's
  *    browser, ...)
+ *  - `kepler-mcp-bridge.tsx` — WebSocket reverse-connect for harnesses without
+ *    WebMCP (Codex, Claude Code), opted in with the ?mcp=<token> URL printed by
+ *    the local `kepler-mcp` server
  *
- * The surface executes commands against the demo's own redux store through
- * `buildKeplerContext` and serves the DuckDB-free catalog.
+ * Both surfaces execute commands against the demo's own redux store through
+ * `buildKeplerContext` and serve the same DuckDB-free catalog.
  */
 import {getKeplerCommands, getValuesFromDataset} from '@kepler.gl/mcp';
 import type {
