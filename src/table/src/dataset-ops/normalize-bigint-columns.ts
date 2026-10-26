@@ -3,21 +3,20 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {ProtoDatasetField} from '@kepler.gl/types';
-import {withRowExportMetadata, RowExportData} from '../row-export-metadata';
 
 // Runtime physical representation, preserved by field copies but omitted from
-// saved schemas. Unlike Arrow Int64, JS BigInt storage has no 64-bit limit.
+// saved schemas.
 export const BIGINT_COLUMN = Symbol('bigintColumn');
 
 /** Normalize newly built derived rows, never their source datasets. */
-export function normalizeBigIntColumns(fields: ProtoDatasetField[], rows: any[][]): RowExportData {
-  const bigIntColumns: boolean[] = [];
-  const normalizedFields = fields.map((field, column) => {
-    const containsBigInt = rows.some(row => typeof row[column] === 'bigint');
-    bigIntColumns.push(containsBigInt);
+export function normalizeBigIntColumns(
+  fields: ProtoDatasetField[],
+  rows: any[][]
+): ProtoDatasetField[] {
+  return fields.map((field, column) => {
     if (
       (field.type !== ALL_FIELD_TYPES.integer && field.type !== ALL_FIELD_TYPES.real) ||
-      !containsBigInt
+      !rows.some(row => typeof row[column] === 'bigint')
     ) {
       return field;
     }
@@ -35,5 +34,4 @@ export function normalizeBigIntColumns(fields: ProtoDatasetField[], rows: any[][
     }
     return {...field, [BIGINT_COLUMN]: true};
   });
-  return withRowExportMetadata({fields: normalizedFields, rows}, bigIntColumns);
 }

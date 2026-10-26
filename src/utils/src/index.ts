@@ -176,7 +176,6 @@ export {
   isArrowVector
 } from './arrow-data-container';
 export type {DataContainerInterface} from './data-container-interface';
-export {RowDataContainer} from './row-data-container';
 export {
   DataForm,
   createDataContainer,

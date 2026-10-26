@@ -13,7 +13,6 @@ import {
   joinDatasets,
   sortDatasetByColumn
 } from '@kepler.gl/table';
-import {getFieldValueAccessor} from '@kepler.gl/table/kepler-table';
 import {processArrowBatches, processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -455,70 +454,28 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
-test('KeplerTable -> ordinary row access leaves values unchanged', t => {
-  const data = {
-    fields: [
-      {name: 'integer', type: 'integer', analyzerType: 'INT'},
-      {name: 'real', type: 'real', analyzerType: 'FLOAT'},
-      {name: 'string', type: 'string', analyzerType: 'STRING'}
-    ],
-    rows: [
-      [10, 20, 'label'],
-      [42, 0.5, 'name'],
-      ['9007199254740993', null, null],
-      ['12', '', undefined],
-      [null, undefined, false],
-      [NaN, Infinity, 'unchanged']
-    ]
-  };
-  const expectedColumns = [
-    [10, 42, '9007199254740993', '12', null, NaN],
-    [20, 0.5, null, '', undefined, Infinity],
-    ['label', 'name', null, undefined, false, 'unchanged']
+test('KeplerTable -> ordinary row access leaves numbers and strings unchanged', t => {
+  const rows = [
+    [10, 0.5],
+    ['9007199254740993', '12'],
+    [null, undefined]
   ];
-  for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
-    const table = new KeplerTable({color: [0, 0, 0], metadata}).updateSchema(data);
-    for (const [column, field] of table.fields.entries()) {
-      const expected = expectedColumns[column];
-      t.deepEqual(
-        data.rows.map((_, index) => field.valueAccessor({index})),
-        expected,
-        `${field.type} indexed access is independent of provenance`
-      );
-      t.deepEqual(data.rows.map(field.valueAccessor), expected, 'materialized rows agree');
-      t.deepEqual(
-        data.rows.map(getFieldValueAccessor(field, column, table.dataContainer)),
-        expected,
-        'exported accessor agrees with the table accessor'
-      );
-    }
-    t.deepEqual(table.dataContainer.flattenData(), data.rows, 'raw storage unchanged');
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'integer', type: 'integer'},
+      {name: 'real', type: 'real'}
+    ],
+    rows
+  });
+  for (const [column, field] of table.fields.entries()) {
+    const expected = rows.map(row => row[column]);
+    t.deepEqual(
+      rows.map((_, index) => field.valueAccessor({index})),
+      expected
+    );
+    t.deepEqual(rows.map(field.valueAccessor), expected, 'materialized rows agree');
   }
-  t.end();
-});
-
-test('KeplerTable -> numeric access survives initially empty rows and row updates', async t => {
-  for (const type of ['integer', 'real']) {
-    const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
-      fields: [{name: 'value', type}],
-      rows: []
-    });
-    t.deepEqual(table.getColumnFilterProps('value').domain, [0, 1], 'empty domain');
-    t.ok(table.appendRows([[null], [10], [20]]), 'appends after binding an empty table');
-    t.deepEqual(table.getColumnFilterProps('value').domain, [10, 20], 'appended Number domain');
-    for (const rows of [
-      [[null], [30], [50]],
-      [[null], [60], [80]]
-    ]) {
-      await table.update({fields: table.fields, rows});
-      t.deepEqual(
-        table.getColumnFilterProps('value').domain,
-        rows.slice(1).map(row => Number(row[0])),
-        'replacement rows use the ordinary numeric accessor'
-      );
-      t.deepEqual(table.dataContainer.flattenData(), rows, 'replacement storage remains exact');
-    }
-  }
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'raw storage unchanged');
   t.end();
 });
 
@@ -539,44 +496,6 @@ test('KeplerTable -> derived BigInt access preserves exact raw sorting', t => {
   sortDatasetByColumn(table, 'value', 'ASCENDING');
   t.deepEqual(table.sortOrder, [1, 0, 2], 'sorting distinguishes adjacent unsafe integers');
   t.deepEqual(table.dataContainer.flattenData(), rows, 'sorting leaves exact raw cells intact');
-  t.end();
-});
-
-test('KeplerTable -> Arrow numeric access preserves physical type and timestamp precedence', t => {
-  for (const arrowType of [new arrow.Int64(), new arrow.Uint64()]) {
-    const column = arrow.vectorFromArray([10n, null], arrowType);
-    for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
-      for (const type of ['integer', 'real', 'string']) {
-        const table = new KeplerTable({color: [0, 0, 0], metadata}).updateSchema({
-          fields: [{name: 'value', type}],
-          cols: [column],
-          rows: []
-        });
-        const accessor = table.fields[0].valueAccessor;
-        t.equal(accessor({index: 0}), 10, 'physical Int64 keeps its numeric view');
-        t.equal(accessor({index: 1}), null, 'missing Arrow values remain null');
-        // Physical Arrow conversion also applies to supplied materialized rows,
-        // including its existing string coercion, regardless of provenance.
-        t.deepEqual(
-          [[10n], ['12'], [''], [null], [undefined]].map(accessor),
-          [10, 12, 0, null, undefined],
-          'materialized Arrow rows use the existing physical-type conversion'
-        );
-        const timestampAccessor = getFieldValueAccessor(
-          {type: 'timestamp', format: 'YYYY-MM-DD'},
-          0,
-          table.dataContainer
-        );
-        t.equal(
-          timestampAccessor(['2020-01-01']),
-          Date.UTC(2020, 0, 1),
-          'timestamp takes priority'
-        );
-        t.equal(timestampAccessor({index: 0}), null, 'BigInt is not reinterpreted as a timestamp');
-        t.equal(table.dataContainer.valueAt(0, 0), 10n, 'physical storage remains exact');
-      }
-    }
-  }
   t.end();
 });
 

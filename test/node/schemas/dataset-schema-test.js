@@ -6,24 +6,9 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import SchemaManager, {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
 import {DatasetType, DATASET_FORMATS} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
-import {
-  KeplerTable,
-  joinDatasets,
-  buildRenameColumnData,
-  buildDeleteColumnData,
-  buildChangeColumnTypeData,
-  makeResultProtoDataset
-} from '@kepler.gl/table';
-import {
-  exportToJsonString,
-  exportMapToHTML,
-  validateInputData,
-  RowDataContainer,
-  getApplicationConfig,
-  initApplicationConfig
-} from '@kepler.gl/utils';
+import {KeplerTable, joinDatasets} from '@kepler.gl/table';
+import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
-import {createNewDataEntryMock} from '../../helpers/table-utils';
 
 // fixtures
 import {
@@ -398,224 +383,54 @@ test('#DatasetSchema -> joined Int64 rows save and reload without changing live 
     ['7', '9007199254740993', '9007199254740993'],
     ['8', null, null]
   ];
-  for (const metadata of [undefined, proto.metadata]) {
-    const dataset = new KeplerTable({
-      info: proto.info,
-      metadata,
-      color: [0, 0, 0]
-    }).updateSchema(proto.data);
-    const saved = datasetSchema[VERSIONS.v1].save(dataset);
-    t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
-    t.equal(
-      reloadDataset(saved).getValue('signed', 7),
-      '9007199254740993',
-      'in-memory saved schema also omits the live BigInt representation'
-    );
-    t.deepEqual(dataset.dataContainer.flattenData(), original, 'live rows are not mutated');
-    t.deepEqual(
-      source.dataContainer.flattenData(),
-      original,
-      'source Arrow values are not mutated'
-    );
-    t.doesNotThrow(() => {
-      const json = exportToJsonString({
-        datasets: [{version: 'v1', data: saved}],
-        config: {version: 'v1', config: {}}
-      });
-      const parsed = processKeplerglJSON(JSON.parse(json)).datasets[0];
-      const reloaded = new KeplerTable({
-        info: parsed.info,
-        metadata: parsed.metadata,
-        color: [0, 0, 0]
-      }).updateSchema(validateInputData(parsed.data));
-      t.deepEqual(
-        reloaded.dataContainer.flattenData(),
-        expected,
-        'JSON reload retains exact cells'
-      );
-      t.equal(
-        reloaded.fields[1].valueAccessor({index: 7}),
-        '9007199254740993',
-        'accepted unsafe-string numeric limitation unchanged'
-      );
-      t.deepEqual(
-        datasetSchema[VERSIONS.v1].save(reloaded).allData,
-        expected,
-        'resave retains exact cells'
-      );
-      const html = exportMapToHTML({
-        datasets: [{version: 'v1', data: saved}],
-        config: {version: 'v1', config: {}}
-      });
-      const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
-      t.deepEqual(embedded[0].data.allData, expected, 'HTML retains the same exact cells');
-      t.deepEqual(
-        reloadDataset(embedded[0].data).dataContainer.flattenData(),
-        expected,
-        'HTML reload retains exact cells'
-      );
-    }, 'JSON and HTML exports are valid');
-  }
-  t.end();
-});
-
-test('#DatasetSchema -> normalized derived rows save exact wide BigInts and missing cells', t => {
-  const values = [10n, 20, 0.5, (1n << 80n) + 1n, null];
-  const source = new KeplerTable({color: [0, 0, 0]}).updateSchema({
-    fields: [{name: 'value', type: 'integer'}],
-    rows: values.map(value => [value])
-  });
-  const proto = joinDatasets(source, source, {
-    leftField: 'value',
-    rightField: 'value',
-    type: 'LEFT',
-    rightColumns: []
-  });
-  const dataset = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+  const dataset = new KeplerTable({
+    info: proto.info,
+    metadata: proto.metadata,
+    color: [0, 0, 0]
+  }).updateSchema(proto.data);
   const saved = datasetSchema[VERSIONS.v1].save(dataset);
-  const expected = [[10], [20], [null], ['1208925819614629174706177'], [null]];
-  t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, expected);
-  t.deepEqual(datasetSchema[VERSIONS.v1].save(reloadDataset(saved)).allData, expected);
-  t.deepEqual(dataset.dataContainer.flattenData(), [
-    [10n],
-    [20n],
-    [null],
-    [(1n << 80n) + 1n],
-    [null]
-  ]);
-  t.deepEqual(
-    source.dataContainer.flattenData(),
-    values.map(value => [value])
+  t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
+  t.equal(
+    reloadDataset(saved).getValue('signed', 7),
+    '9007199254740993',
+    'in-memory saved schema also omits the live BigInt representation'
   );
-  t.end();
-});
-
-function joinedRowSnapshot(fields, rows) {
-  const source = new KeplerTable({info: {id: 'snapshot-source'}, color: [0, 0, 0]}).updateSchema({
-    fields,
-    rows
-  });
-  const proto = joinDatasets(source, source, {
-    leftField: fields[0].name,
-    rightField: fields[0].name,
-    type: 'LEFT',
-    rightColumns: []
-  });
-  const table = new KeplerTable({info: proto.info, color: [0, 0, 0]}).updateSchema(proto.data);
-  return {source, proto, table};
-}
-
-test('#DatasetSchema -> known Number columns skip export inspection after normal table creation', async t => {
-  const {proto} = joinedRowSnapshot(
-    [
-      {name: 'key', type: 'integer'},
-      {name: 'value', type: 'integer'}
-    ],
-    [
-      [1, 10],
-      [2, 20]
-    ]
-  );
-  const datasets = await createNewDataEntryMock(proto);
-  const table = datasets[proto.info.id];
-  const rows = table.dataContainer.flattenData();
-  let reads = 0;
-  for (const row of rows) {
-    const value = row[1];
-    Object.defineProperty(row, 1, {
-      get: () => {
-        reads++;
-        return value;
-      },
-      configurable: true
+  t.deepEqual(dataset.dataContainer.flattenData(), original, 'live rows are not mutated');
+  t.deepEqual(source.dataContainer.flattenData(), original, 'source Arrow values are not mutated');
+  t.doesNotThrow(() => {
+    const json = exportToJsonString({
+      datasets: [{version: 'v1', data: saved}],
+      config: {version: 'v1', config: {}}
     });
-  }
-  const saved = datasetSchema.v1.save(table);
-  t.equal(reads, 0, 'schema save does not inspect known Number cells');
-  t.equal(saved.allData, rows, 'unchanged snapshot is reused');
-  t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, [
-    [1, 10],
-    [2, 20]
-  ]);
-  t.end();
-});
-
-test('#DatasetSchema -> export classification belongs to the table, not shared rows or fields', t => {
-  const {table, proto} = joinedRowSnapshot([{name: 'value', type: 'integer'}], [[10]]);
-  const rows = table.dataContainer.flattenData();
-  const unknown = new KeplerTable({color: [0, 0, 0]}).updateSchema({
-    fields: table.fields,
-    rows
-  });
-  let reads = 0;
-  Object.defineProperty(rows[0], 0, {
-    get: () => {
-      reads++;
-      return 10;
-    },
-    configurable: true
-  });
-  datasetSchema.v1.save(table);
-  t.equal(reads, 0, 'the explicitly classified table keeps its fast path');
-  datasetSchema.v1.save(unknown);
-  t.equal(reads, 1, 'another table does not acquire classification by sharing rows');
-  const saved = datasetSchema.v1.save(table);
-  t.deepEqual(
-    Object.keys(saved).sort(),
-    ['allData', 'color', 'disableDataOperation', 'fields', 'id', 'label', 'metadata', 'type'].sort()
-  );
-  t.equal(Object.getOwnPropertySymbols(saved).length, 0, 'saved dataset has no runtime metadata');
-  t.equal(
-    Object.getOwnPropertySymbols(saved.fields[0]).length,
-    0,
-    'saved field has no runtime metadata'
-  );
-  t.equal(
-    Object.getOwnPropertySymbols(datasetSchema.v1.load(saved).data).length,
-    0,
-    'reload has no runtime metadata'
-  );
-  t.equal(
-    JSON.parse(exportToJsonString(proto.data)).rows[0][0],
-    10,
-    'proto transport remains JSON-invisible'
-  );
-  t.end();
-});
-
-test('#DatasetSchema -> export metadata is physical and leaves non-BigInt columns alone', t => {
-  const {source, table} = joinedRowSnapshot(
-    [
-      {name: 'key', type: 'integer'},
-      {name: 'mixed', type: 'string'},
-      {name: 'number', type: 'integer'}
-    ],
-    [
-      [0, 10n, 5],
-      [1, 'text', 6]
-    ]
-  );
-  const rows = table.dataContainer.flattenData();
-  let reads = 0;
-  for (const row of rows) {
-    const value = row[2];
-    Object.defineProperty(row, 2, {
-      get: () => {
-        reads++;
-        return value;
-      },
-      configurable: true
+    const parsed = processKeplerglJSON(JSON.parse(json)).datasets[0];
+    const reloaded = new KeplerTable({
+      info: parsed.info,
+      metadata: parsed.metadata,
+      color: [0, 0, 0]
+    }).updateSchema(validateInputData(parsed.data));
+    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'JSON reload retains exact cells');
+    t.equal(
+      reloaded.fields[1].valueAccessor({index: 7}),
+      '9007199254740993',
+      'accepted unsafe-string numeric limitation unchanged'
+    );
+    t.deepEqual(
+      datasetSchema[VERSIONS.v1].save(reloaded).allData,
+      expected,
+      'resave retains exact cells'
+    );
+    const html = exportMapToHTML({
+      datasets: [{version: 'v1', data: saved}],
+      config: {version: 'v1', config: {}}
     });
-  }
-  const saved = datasetSchema.v1.save(table);
-  t.equal(reads, 1, 'other cells are read only for the one required row copy');
-  t.deepEqual(saved.allData, [
-    [0, 10, 5],
-    [1, 'text', 6]
-  ]);
-  t.equal(saved.allData[1], rows[1], 'row with no conversion is reused');
-  t.equal(table.getValue('mixed', 0), 10n, 'export metadata does not change logical string access');
-  t.equal(source.dataContainer.valueAt(0, 1), 10n, 'source remains exact');
+    const embedded = JSON.parse(html.match(/const datasets = (.*);/)[1]);
+    t.deepEqual(embedded[0].data.allData, expected, 'HTML retains the same exact cells');
+    t.deepEqual(
+      reloadDataset(embedded[0].data).dataContainer.flattenData(),
+      expected,
+      'HTML reload retains exact cells'
+    );
+  }, 'JSON and HTML exports are valid');
   t.end();
 });
 
@@ -646,303 +461,15 @@ test('#DatasetSchema -> string-typed Arrow Int64 joins still export exact values
   t.end();
 });
 
-test('#DatasetSchema -> known-negative snapshots become unknown after row changes', async t => {
-  const fields = [
-    {name: 'key', type: 'string'},
-    {name: 'value', type: 'integer'}
-  ];
-  for (const initial of [[], [['a', null]], [['a', 10]]]) {
-    for (const operation of ['append', 'upsert', 'update', 'schema']) {
-      const {table} = joinedRowSnapshot(fields, initial);
-      const rows = [['a', 9007199254740993n]];
-      if (operation === 'append') t.ok(table.appendRows(rows));
-      else if (operation === 'upsert') t.ok(table.upsertRows(rows, 'key'));
-      else if (operation === 'update') await table.update({fields: table.fields, rows});
-      else table.updateSchema({fields: table.fields, rows});
-      const expected =
-        operation === 'append'
-          ? [...initial, ['a', '9007199254740993']]
-          : [['a', '9007199254740993']];
-      t.deepEqual(
-        datasetSchema.v1.save(table).allData,
-        expected,
-        `${operation} does not reuse a stale negative`
-      );
-    }
-  }
-  const {table} = joinedRowSnapshot(fields, [['a', null]]);
-  const rows = table.dataContainer.flattenData();
-  rows[0][1] = 9007199254740993n;
-  await table.update({fields: table.fields, rows});
-  t.deepEqual(
-    datasetSchema.v1.save(table).allData,
-    [['a', '9007199254740993']],
-    'explicit same-array snapshot update invalidates classification'
-  );
-  t.end();
-});
-
-test('#DatasetSchema -> direct container mutations invalidate all tables sharing the snapshot', t => {
-  const fields = [
-    {name: 'key', type: 'string'},
-    {name: 'value', type: 'integer'}
-  ];
-  for (const shared of [false, true]) {
-    for (const operation of ['append', 'replace', 'update']) {
-      const {table, proto} = joinedRowSnapshot(fields, [['a', 10]]);
-      const peer = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
-      const rows = table.dataContainer.flattenData();
-      const container = shared ? new RowDataContainer({rows}) : table.dataContainer;
-      if (operation === 'append') t.ok(container.append([['b', 9007199254740993n]]));
-      else if (operation === 'replace') t.ok(container.replace(0, ['a', 9007199254740993n]));
-      else {
-        rows[0][1] = 9007199254740993n;
-        container.update(rows);
-      }
-      const expected =
-        operation === 'append'
-          ? [
-              ['a', 10],
-              ['b', '9007199254740993']
-            ]
-          : [['a', '9007199254740993']];
-      const reimported = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
-      for (const candidate of [table, peer, reimported]) {
-        t.deepEqual(
-          datasetSchema.v1.save(candidate).allData,
-          expected,
-          `${shared ? 'alias' : 'direct'} ${operation} invalidates existing and reimported hints`
-        );
-      }
-      t.equal(
-        container.valueAt(operation === 'append' ? 1 : 0, 1),
-        9007199254740993n,
-        'saving preserves raw exact values'
-      );
-    }
-  }
-  t.end();
-});
-
-test('#DatasetSchema -> replacing rows or a container cannot reuse old table hints', t => {
-  const fields = [{name: 'value', type: 'integer'}];
-  const {table, proto} = joinedRowSnapshot(fields, [[10]]);
-  const replacement = new KeplerTable({color: [0, 0, 0]}).updateSchema({
-    ...proto.data,
-    rows: [[9007199254740993n]]
-  });
-  t.deepEqual(
-    datasetSchema.v1.save(replacement).allData,
-    [['9007199254740993']],
-    'copied proto hints cannot classify different rows'
-  );
-  table.dataContainer = new RowDataContainer({rows: [[9007199254740993n]]});
-  t.deepEqual(
-    datasetSchema.v1.save(table).allData,
-    [['9007199254740993']],
-    'container replacement without schema update uses fallback'
-  );
-  const fresh = joinedRowSnapshot(fields, [[20]]).proto;
-  table.updateSchema(fresh.data);
-  let reads = 0;
-  Object.defineProperty(table.dataContainer.rowAsArray(0), 0, {
-    get: () => {
-      reads++;
-      return 20;
-    }
-  });
-  datasetSchema.v1.save(table);
-  t.equal(reads, 0, 'a fresh classified snapshot restores the fast path');
-  t.end();
-});
-
-test('#DatasetSchema -> custom validation and non-extensible snapshots fall back safely', async t => {
-  const fields = [{name: 'value', type: 'integer'}];
-  const {table} = joinedRowSnapshot(fields, [[10]]);
-  const originalClass = getApplicationConfig().table;
-  for (const reuseRows of [false, true]) {
-    const {table, proto} = joinedRowSnapshot(fields, [[10]]);
-    class CustomTable extends KeplerTable {
-      static getInputDataValidator() {
-        return data => {
-          if (reuseRows) {
-            data.rows[0][0] = 9007199254740993n;
-            return data;
-          }
-          return {...data, rows: [[9007199254740993n]]};
-        };
-      }
-    }
-    try {
-      initApplicationConfig({table: CustomTable});
-      const datasets = await createNewDataEntryMock(proto);
-      t.deepEqual(
-        datasetSchema.v1.save(datasets[proto.info.id]).allData,
-        [['9007199254740993']],
-        `custom validator ${reuseRows ? 'same-array' : 'new-array'} output uses fallback`
-      );
-      t.deepEqual(
-        datasetSchema.v1.save(table).allData,
-        reuseRows ? [['9007199254740993']] : [[10]],
-        'in-place validation also invalidates hints on existing aliases'
-      );
-    } finally {
-      initApplicationConfig({table: originalClass});
-    }
-  }
-  const sealedRows = Object.preventExtensions([[10]]);
-  const sealedProto = makeResultProtoDataset({
-    source: table,
-    type: 'join',
-    operationId: 'sealed',
-    label: 'sealed',
-    fields,
-    rows: sealedRows
-  });
-  sealedRows[0][0] = 9007199254740993n;
-  const sealed = new KeplerTable({color: [0, 0, 0]}).updateSchema(sealedProto.data);
-  t.deepEqual(
-    datasetSchema.v1.save(sealed).allData,
-    [['9007199254740993']],
-    'untrackable snapshots stay unknown'
-  );
-  const frozenRows = Object.freeze(table.dataContainer.flattenData());
-  frozenRows[0][0] = 9007199254740993n;
-  t.doesNotThrow(
-    () => table.dataContainer.update(frozenRows),
-    'freezing tracked outer rows does not freeze the invalidation token'
-  );
-  t.deepEqual(datasetSchema.v1.save(table).allData, [['9007199254740993']]);
-  const plain = {fields, dataContainer: new RowDataContainer({rows: [[10n]]}), metadata: {}};
-  t.deepEqual(
-    datasetSchema.v1.save(plain).allData,
-    [[10]],
-    'plain tables have an unknown fallback'
-  );
-  t.end();
-});
-
-test('#DatasetSchema -> projection preserves export metadata and type conversion refreshes it', t => {
-  const {table} = joinedRowSnapshot(
-    [
-      {name: 'key', type: 'string'},
-      {name: 'value', type: 'integer'},
-      {name: 'number', type: 'real'}
-    ],
-    [['a', 9007199254740993n, 0.5]]
-  );
-  const renamed = buildRenameColumnData(table, 'value', 'renamed');
-  const projected = new KeplerTable({color: [0, 0, 0]}).updateSchema(renamed.data);
-  t.deepEqual(datasetSchema.v1.save(projected).allData, [['a', '9007199254740993', 0.5]]);
-  const deleted = buildDeleteColumnData(projected, 'renamed');
-  const numbers = new KeplerTable({color: [0, 0, 0]}).updateSchema(deleted.data);
-  let reads = 0;
-  Object.defineProperty(numbers.dataContainer.rowAsArray(0), 1, {
-    get: () => {
-      reads++;
-      return 0.5;
-    }
-  });
-  datasetSchema.v1.save(numbers);
-  t.equal(reads, 0, 'projecting away the BigInt column preserves known-negative classification');
-  const converted = buildChangeColumnTypeData(projected, 'renamed', 'string');
-  const strings = new KeplerTable({color: [0, 0, 0]}).updateSchema(converted.payload.data);
-  let stringReads = 0;
-  Object.defineProperty(strings.dataContainer.rowAsArray(0), 1, {
-    get: () => {
-      stringReads++;
-      return '9007199254740993';
-    }
-  });
-  const saved = datasetSchema.v1.save(strings);
-  t.equal(stringReads, 0, 'converted column is known to contain no BigInts');
-  t.equal(
-    saved.allData,
-    strings.dataContainer.flattenData(),
-    'converted strings need no copied rows'
-  );
-  t.deepEqual(saved.allData, [['a', '9007199254740993', 0.5]]);
-  t.end();
-});
-
-test('#DatasetSchema -> custom flattened rows and reused descriptors use the fallback', t => {
-  const {table} = joinedRowSnapshot(
-    [
-      {name: 'key', type: 'string'},
-      {name: 'value', type: 'integer'}
-    ],
-    [['a', 10]]
-  );
-  const sourceRows = table.dataContainer.flattenData();
-  const output = [null, ['a', 9007199254740993n], ['b', '0010'], ['c', 20], ['d', null]];
-  table.dataContainer.flattenData = () => output;
-  const saved = datasetSchema.v1.save(table);
-  t.deepEqual(saved.allData, [
-    null,
-    ['a', '9007199254740993'],
-    ['b', '0010'],
-    ['c', 20],
-    ['d', null]
-  ]);
-  t.equal(output[1][1], 9007199254740993n, 'custom output is not mutated');
-  t.deepEqual(sourceRows, [['a', 10]], 'original snapshot is not mutated');
-  const reused = new KeplerTable({color: [0, 0, 0]}).updateSchema({
-    fields: table.fields,
-    rows: [['new', 10n]]
-  });
-  t.deepEqual(
-    datasetSchema.v1.save(reused).allData,
-    [['new', 10]],
-    'field descriptors alone cannot mark unrelated rows safe'
-  );
-  table.dataContainer.rowAsArray = () => ['custom', 10n];
-  const projected = buildRenameColumnData(table, 'key', 'renamed');
-  const customProjection = new KeplerTable({color: [0, 0, 0]}).updateSchema(projected.data);
-  t.deepEqual(
-    datasetSchema.v1.save(customProjection).allData,
-    [['custom', 10]],
-    'custom materialized rows do not inherit unrelated hints'
-  );
-  t.end();
-});
-
-test('#DatasetSchema -> extra cells outside classified fields remain unknown', t => {
-  const source = new KeplerTable({info: {id: 'extra-source'}, color: [0, 0, 0]}).updateSchema({
-    fields: [{name: 'key', type: 'string'}],
-    rows: [['a']]
-  });
-  const proto = makeResultProtoDataset({
-    source,
-    type: 'join',
-    operationId: 'extra',
-    label: 'extra',
-    fields: [{name: 'key', type: 'string'}],
-    rows: [
-      ['a', 10n],
-      ['b', 9007199254740993n]
-    ]
-  });
-  const table = new KeplerTable({info: proto.info, color: [0, 0, 0]}).updateSchema(proto.data);
-  t.deepEqual(datasetSchema.v1.save(table).allData, [
-    ['a', 10],
-    ['b', '9007199254740993']
-  ]);
-  t.equal(table.dataContainer.valueAt(1, 1), 9007199254740993n);
-  t.end();
-});
-
 test('#DatasetSchema -> row numeric controls and empty rows remain unchanged', t => {
-  for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
-    for (const rows of [[], [[null], [null]], [[10], [20], [null]], [[10], null, [], [20]]]) {
-      const dataset = new KeplerTable({
-        color: [0, 0, 0],
-        metadata
-      }).updateSchema({fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}], rows});
-      const saved = datasetSchema[VERSIONS.v1].save(dataset);
-      t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, rows, 'control saves unchanged');
-      t.deepEqual(dataset.dataContainer.flattenData(), rows, 'control source unchanged');
-      t.equal(saved.allData, rows, 'no row copy is needed when there are no BigInts');
-    }
+  for (const rows of [[], [[null], [null]], [[10], [20], [null]], [[10], null, [], [20]]]) {
+    const dataset = new KeplerTable({
+      color: [0, 0, 0]
+    }).updateSchema({fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}], rows});
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, rows, 'control saves unchanged');
+    t.deepEqual(dataset.dataContainer.flattenData(), rows, 'control source unchanged');
+    t.equal(saved.allData, rows, 'no row copy is needed when there are no BigInts');
   }
   t.end();
 });

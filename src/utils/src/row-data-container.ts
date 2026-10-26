@@ -10,11 +10,6 @@ type RowDataContainerInput = {
   fields?: ProtoDatasetField[];
 };
 
-// A revision is shared by containers wrapping the same outer row array. It holds
-// no column metadata; tables keep their own hints and compare this revision.
-const ROW_REVISION = Symbol('rowRevision');
-type RowSnapshot = any[][] & {[ROW_REVISION]?: {value: number}};
-
 /**
  * @param dataContainer
  * @param sharedRow
@@ -44,21 +39,6 @@ export class RowDataContainer implements DataContainerInterface {
   _rows: any[][];
   _numColumns: number;
 
-  /** Invalidate cached hints before supported writes or custom input validation. */
-  static invalidateSnapshot(rows: RowSnapshot): void {
-    const revision = rows[ROW_REVISION];
-    if (revision) revision.value++;
-  }
-
-  /** Track supported mutations, including those made through another container. */
-  static getSnapshotRevision(rows: RowSnapshot): number | undefined {
-    if (!rows[ROW_REVISION] && Object.isExtensible(rows)) {
-      // Keep the token mutable even if the caller later freezes the outer array.
-      Object.defineProperty(rows, ROW_REVISION, {value: {value: 0}});
-    }
-    return rows[ROW_REVISION]?.value;
-  }
-
   constructor(data: RowDataContainerInput) {
     if (!data.rows) {
       throw Error('RowDataContainer: no rows provided');
@@ -79,7 +59,6 @@ export class RowDataContainer implements DataContainerInterface {
     if (!Array.isArray(updateData)) {
       throw Error("RowDataContainer.update: rows object isn't an array");
     }
-    RowDataContainer.invalidateSnapshot(updateData);
     this._rows = updateData;
     this._numColumns = updateData[0]?.length || 0;
   }
@@ -104,7 +83,6 @@ export class RowDataContainer implements DataContainerInterface {
       }
     }
 
-    RowDataContainer.invalidateSnapshot(this._rows);
     this._rows.push(...rows);
     this._numColumns = expected;
     return true;
@@ -120,7 +98,6 @@ export class RowDataContainer implements DataContainerInterface {
     if (!Array.isArray(row) || row.length !== this._numColumns) {
       return false;
     }
-    RowDataContainer.invalidateSnapshot(this._rows);
     this._rows[index] = row;
     return true;
   }

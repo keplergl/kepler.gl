@@ -16,7 +16,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {ArrowDataContainer, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
+import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -113,11 +113,10 @@ export const propertiesV1 = {
  * 1) Arrow tables can store Timestamps as BigInts, so convert numbers to ISOStrings compatible with Kepler.gl's TIMESTAMP.
  * 2) Geoarrow binary buffers converted to hex wkb
  * 3) Int64 values outside the safe integer range saved as exact decimal strings
- * @param dataset The dataset to flatten for saving.
+ * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
-const getAllDataForSaving = (dataset: KeplerTable): any[][] => {
-  const {dataContainer} = dataset;
+const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -152,12 +151,6 @@ const getAllDataForSaving = (dataset: KeplerTable): any[][] => {
       }
     }
   } else {
-    const bigIntColumns = dataset.getBigIntExportColumns?.(allData);
-    const columns = bigIntColumns?.flatMap((contains, index) =>
-      contains === false ? [] : [index]
-    );
-    if (columns?.length === 0) return allData;
-
     // Row containers expose their live backing rows. Copy only when conversion
     // is needed, leaving other rows and exact stored values intact.
     let savedData = allData;
@@ -165,9 +158,7 @@ const getAllDataForSaving = (dataset: KeplerTable): any[][] => {
       const row = allData[rowIndex];
       if (row == null) continue;
       let savedRow = row;
-      const columnCount = columns ? columns.length : row.length;
-      for (let index = 0; index < columnCount; index++) {
-        const columnIndex = columns ? columns[index] : index;
+      for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
         const value = row[columnIndex];
         if (typeof value !== 'bigint') continue;
         if (savedData === allData) savedData = allData.slice();
@@ -241,7 +232,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(dataset),
+          allData: getAllDataForSaving(dataset.dataContainer),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.

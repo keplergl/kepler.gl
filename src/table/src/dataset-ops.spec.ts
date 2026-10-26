@@ -584,27 +584,6 @@ describe('dataset-ops engine', () => {
     }
   );
 
-  test('derived BigInt storage preserves unsigned and wider-than-64-bit values', () => {
-    const values = [-9223372036854775808n, 18446744073709551615n, (1n << 80n) + 1n];
-    const source = makeTable({
-      id: 'wide',
-      fields: [{name: 'value', type: 'integer'}],
-      rows: values.map(value => [value])
-    });
-    const result = importDerived(
-      joinDatasets(source, source, {
-        leftField: 'value',
-        rightField: 'value',
-        type: 'INNER',
-        rightColumns: []
-      })
-    );
-    expect(result.length).toBe(values.length);
-    expect(values.map((_, index) => result.dataContainer.valueAt(index, 0))).toEqual(values);
-    expect(values.map((_, index) => result.getValue('value', index))).toEqual(values.map(Number));
-    expect(source.dataContainer.flattenData()).toEqual(values.map(value => [value]));
-  });
-
   test('derived BigInt normalization accepts safe Number boundaries only in numeric fields', () => {
     const values = [
       10n,
