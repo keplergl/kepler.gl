@@ -10,6 +10,34 @@ type RowDataContainerInput = {
   fields?: ProtoDatasetField[];
 };
 
+// Export hints belong to the exact row snapshot, never just its field descriptors.
+// Missing metadata/entries mean unknown; false means this column was checked.
+const rowBigIntColumns = new WeakMap<any[][], readonly (boolean | undefined)[]>();
+
+export function getRowBigIntColumns(
+  data: any[][] | DataContainerInterface
+): readonly (boolean | undefined)[] | undefined {
+  const rows = Array.isArray(data)
+    ? data
+    : data instanceof RowDataContainer && data.rowAsArray === RowDataContainer.prototype.rowAsArray
+    ? data._rows
+    : null;
+  return rows ? rowBigIntColumns.get(rows) : undefined;
+}
+
+export function setRowBigIntColumns(
+  rows: any[][],
+  columns: readonly (boolean | undefined)[]
+): void {
+  const checkedColumns = Array.from(columns);
+  // A schema can be narrower than its rows. Extra cells remain unknown so export
+  // preserves the existing fallback instead of assuming they contain no BigInts.
+  for (const row of rows) {
+    while (row && checkedColumns.length < row.length) checkedColumns.push(undefined);
+  }
+  rowBigIntColumns.set(rows, checkedColumns);
+}
+
 /**
  * @param dataContainer
  * @param sharedRow
@@ -59,6 +87,7 @@ export class RowDataContainer implements DataContainerInterface {
     if (!Array.isArray(updateData)) {
       throw Error("RowDataContainer.update: rows object isn't an array");
     }
+    rowBigIntColumns.delete(updateData);
     this._rows = updateData;
     this._numColumns = updateData[0]?.length || 0;
   }
@@ -83,6 +112,7 @@ export class RowDataContainer implements DataContainerInterface {
       }
     }
 
+    rowBigIntColumns.delete(this._rows);
     this._rows.push(...rows);
     this._numColumns = expected;
     return true;
@@ -98,6 +128,7 @@ export class RowDataContainer implements DataContainerInterface {
     if (!Array.isArray(row) || row.length !== this._numColumns) {
       return false;
     }
+    rowBigIntColumns.delete(this._rows);
     this._rows[index] = row;
     return true;
   }
