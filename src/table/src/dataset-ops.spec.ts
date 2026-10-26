@@ -491,30 +491,155 @@ describe('dataset-ops engine', () => {
     ).toHaveLength(2);
   });
 
-  test('derived access survives empty/null rows, append and repeated row updates', async () => {
-    const source = makeTable({id: 'empty', fields: [{name: 'pop', type: 'integer'}], rows: []});
-    const table = importDerived(
+  test.each([[], [null, null], [10, 20, null]].map(values => [values]))(
+    'derived numeric columns without BigInts stay unchanged: %j',
+    values => {
+      const rows = values.map((value, index) => [String(index), value]);
+      const source = makeTable({
+        id: 'numeric',
+        fields: [
+          {name: 'id', type: 'string'},
+          {name: 'pop', type: 'integer'}
+        ],
+        rows
+      });
+      const table = importDerived(
+        joinDatasets(source, source, {
+          leftField: 'id',
+          rightField: 'id',
+          type: 'LEFT',
+          rightColumns: []
+        })
+      );
+      expect(table.dataContainer.flattenData()).toEqual(rows);
+      expect(values.map((_, index) => table.getValue('pop', index))).toEqual(values);
+      expect(() => table.getColumnFilterProps('pop')).not.toThrow();
+    }
+  );
+
+  test.each(['integer', 'real'])(
+    'derived %s BigInt columns normalize incompatible cells to null',
+    type => {
+      const values = [
+        null,
+        10n,
+        20,
+        0.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MAX_SAFE_INTEGER + 1,
+        '30',
+        true,
+        undefined,
+        -0,
+        -42
+      ];
+      const expected = [null, 10n, 20n, null, null, null, null, null, null, null, null, 0n, -42n];
+      const geometry = square(0, 0, 1, 1);
+      const rows = values.map((value, index) => [String(index), value, index + 0.5, geometry]);
+      const original = rows.map(row => row.slice());
+      const source = makeTable({
+        id: 'mixed',
+        fields: [
+          {name: 'id', type: 'string'},
+          {name: 'value', type},
+          {name: 'ordinary', type: 'real'},
+          {name: 'geometry', type: 'geojson'}
+        ],
+        rows
+      });
+      const joined = importDerived(
+        joinDatasets(source, source, {
+          leftField: 'id',
+          rightField: 'id',
+          type: 'INNER',
+          rightColumns: ['value']
+        })
+      );
+      expect(joined.length).toBe(values.length);
+      for (const column of [1, 4]) {
+        expect(values.map((_, index) => joined.dataContainer.valueAt(index, column))).toEqual(
+          expected
+        );
+        const field = joined.fields[column];
+        expect(joined.getColumnFilterProps(field.name)?.domain).toEqual([-42, 20]);
+        expect(joined.getColumnLayerDomain(field, 'linear')).toEqual([-42, 20]);
+        expect(expected.map((_, index) => field.valueAccessor({index}))).toEqual(
+          expected.map(value => (value === null ? null : Number(value)))
+        );
+      }
+      expect(joined.dataContainer.valueAt(3, 2)).toBe(3.5);
+      expect(joined.dataContainer.valueAt(3, 3)).toBe(geometry);
+      const grouped = importDerived(
+        groupByDataset(source, {
+          fieldName: 'id',
+          aggregations: {value: 'maximum'}
+        })
+      );
+      expect(grouped.length).toBe(values.length);
+      expect(values.map((_, index) => grouped.dataContainer.valueAt(index, 1))).toEqual(expected);
+      expect(source.dataContainer.flattenData()).toEqual(original);
+      expect(Object.is(source.dataContainer.valueAt(11, 1), -0)).toBe(true);
+    }
+  );
+
+  test('derived BigInt storage preserves unsigned and wider-than-64-bit values', () => {
+    const values = [-9223372036854775808n, 18446744073709551615n, (1n << 80n) + 1n];
+    const source = makeTable({
+      id: 'wide',
+      fields: [{name: 'value', type: 'integer'}],
+      rows: values.map(value => [value])
+    });
+    const result = importDerived(
       joinDatasets(source, source, {
-        leftField: 'pop',
-        rightField: 'pop',
-        type: 'LEFT',
+        leftField: 'value',
+        rightField: 'value',
+        type: 'INNER',
         rightColumns: []
       })
     );
-    expect(table.getColumnFilterProps('pop')?.domain).toEqual([0, 1]);
-    expect(table.appendRows([[null], [10n], [20n]])).toBe(true);
-    expect(table.fields[0].valueAccessor({index: 0})).toBeNull();
-    expect(table.fields[0].valueAccessor({index: 1})).toBe(10);
-    for (const rows of [
-      [[null], [30n], [50n]],
-      [[null], [60n], [80n]]
-    ]) {
-      await table.update({fields: table.fields, rows});
-      expect(table.getColumnFilterProps('pop')?.domain).toEqual(
-        rows.slice(1).map(row => Number(row[0]))
-      );
-      expect(table.dataContainer.flattenData()).toEqual(rows);
-    }
+    expect(result.length).toBe(values.length);
+    expect(values.map((_, index) => result.dataContainer.valueAt(index, 0))).toEqual(values);
+    expect(values.map((_, index) => result.getValue('value', index))).toEqual(values.map(Number));
+    expect(source.dataContainer.flattenData()).toEqual(values.map(value => [value]));
+  });
+
+  test('derived BigInt normalization accepts safe Number boundaries only in numeric fields', () => {
+    const values = [
+      10n,
+      Number.MIN_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER,
+      Number.MIN_SAFE_INTEGER - 1,
+      Number.MAX_SAFE_INTEGER + 1
+    ];
+    const rows = values.map((value, index) => [String(index), value, value]);
+    const source = makeTable({
+      id: 'boundaries',
+      fields: [
+        {name: 'id', type: 'string'},
+        {name: 'value', type: 'integer'},
+        {name: 'text', type: 'string'}
+      ],
+      rows
+    });
+    const result = importDerived(
+      joinDatasets(source, source, {
+        leftField: 'id',
+        rightField: 'id',
+        type: 'INNER',
+        rightColumns: []
+      })
+    );
+    expect(values.map((_, index) => result.dataContainer.valueAt(index, 1))).toEqual([
+      10n,
+      -9007199254740991n,
+      9007199254740991n,
+      null,
+      null
+    ]);
+    expect(values.map((_, index) => result.getValue('text', index))).toEqual(values);
+    expect(source.dataContainer.flattenData()).toEqual(rows);
   });
 
   test('derived Group By and suitability retain exact cells with numeric access', () => {

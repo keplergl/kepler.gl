@@ -28,6 +28,7 @@ import {
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
+import {BIGINT_COLUMN} from './dataset-ops/normalize-bigint-columns';
 
 import {
   getSortingFunction,
@@ -1045,25 +1046,17 @@ export function getFieldValueAccessor<
   F extends {
     type?: Field['type'];
     format?: Field['format'];
+    [BIGINT_COLUMN]?: boolean;
   }
 >(f: F, i: number, dc: DataContainerInterface) {
   if (f.type === ALL_FIELD_TYPES.timestamp) {
     const format = f.format || '';
     return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
   }
-  if (isInt64ArrowColumn(dc, i)) {
+  if (f[BIGINT_COLUMN] || isInt64ArrowColumn(dc, i)) {
     return (d: {index: number} | any[]) => {
       const value = readFieldValue(i, dc, d);
       return value == null ? value : Number(value);
-    };
-  }
-  if (f.type === ALL_FIELD_TYPES.integer || f.type === ALL_FIELD_TYPES.real) {
-    // Row datasets can retain BigInts from Arrow joins or supplied input. Use a
-    // numeric view without changing exact storage or coercing saved decimal strings.
-    // Bind by schema so initially empty tables also handle later BigInt rows.
-    return (d: {index: number} | any[]) => {
-      const value = readFieldValue(i, dc, d);
-      return typeof value === 'bigint' ? Number(value) : value;
     };
   }
   return readFieldValue.bind(null, i, dc);

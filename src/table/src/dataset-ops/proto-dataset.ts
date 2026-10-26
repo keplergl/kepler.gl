@@ -6,6 +6,7 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 import {DatasetOpsTable, DerivedDatasetMetadata} from './types';
+import {normalizeBigIntColumns} from './normalize-bigint-columns';
 
 export function uniqueColumnName(name: string, used: Set<string>): string {
   if (!used.has(name)) {
@@ -47,7 +48,7 @@ export function makeResultProtoDataset({
       id,
       label
     },
-    data: {fields, rows},
+    data: {fields: normalizeBigIntColumns(fields, rows), rows},
     metadata: {
       derivedDataset: {
         type,

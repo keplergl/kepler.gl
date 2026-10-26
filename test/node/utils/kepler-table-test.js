@@ -10,6 +10,7 @@ import {
   findPointFieldPairs,
   KeplerTable,
   createNewDataEntry,
+  joinDatasets,
   sortDatasetByColumn
 } from '@kepler.gl/table';
 import {getFieldValueAccessor} from '@kepler.gl/table/kepler-table';
@@ -454,7 +455,7 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
-test('KeplerTable -> row numeric access only converts actual BigInts', t => {
+test('KeplerTable -> ordinary row access leaves values unchanged', t => {
   const data = {
     fields: [
       {name: 'integer', type: 'integer', analyzerType: 'INT'},
@@ -462,7 +463,7 @@ test('KeplerTable -> row numeric access only converts actual BigInts', t => {
       {name: 'string', type: 'string', analyzerType: 'STRING'}
     ],
     rows: [
-      [10n, 20n, 30n],
+      [10, 20, 'label'],
       [42, 0.5, 'name'],
       ['9007199254740993', null, null],
       ['12', '', undefined],
@@ -473,7 +474,7 @@ test('KeplerTable -> row numeric access only converts actual BigInts', t => {
   const expectedColumns = [
     [10, 42, '9007199254740993', '12', null, NaN],
     [20, 0.5, null, '', undefined, Infinity],
-    [30n, 'name', null, undefined, false, 'unchanged']
+    ['label', 'name', null, undefined, false, 'unchanged']
   ];
   for (const metadata of [undefined, {derivedDataset: {type: 'join'}}]) {
     const table = new KeplerTable({color: [0, 0, 0], metadata}).updateSchema(data);
@@ -503,17 +504,17 @@ test('KeplerTable -> numeric access survives initially empty rows and row update
       rows: []
     });
     t.deepEqual(table.getColumnFilterProps('value').domain, [0, 1], 'empty domain');
-    t.ok(table.appendRows([[null], [10n], [20n]]), 'appends after binding an empty table');
-    t.deepEqual(table.getColumnFilterProps('value').domain, [10, 20], 'appended BigInt domain');
+    t.ok(table.appendRows([[null], [10], [20]]), 'appends after binding an empty table');
+    t.deepEqual(table.getColumnFilterProps('value').domain, [10, 20], 'appended Number domain');
     for (const rows of [
-      [[null], [30n], [50n]],
-      [[null], [60n], [80n]]
+      [[null], [30], [50]],
+      [[null], [60], [80]]
     ]) {
       await table.update({fields: table.fields, rows});
       t.deepEqual(
         table.getColumnFilterProps('value').domain,
         rows.slice(1).map(row => Number(row[0])),
-        'replacement rows use the shared numeric accessor'
+        'replacement rows use the ordinary numeric accessor'
       );
       t.deepEqual(table.dataContainer.flattenData(), rows, 'replacement storage remains exact');
     }
@@ -521,12 +522,19 @@ test('KeplerTable -> numeric access survives initially empty rows and row update
   t.end();
 });
 
-test('KeplerTable -> shared numeric access preserves exact raw sorting', t => {
+test('KeplerTable -> derived BigInt access preserves exact raw sorting', t => {
   const rows = [[9007199254740993n], [9007199254740992n], [null]];
-  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+  const source = new KeplerTable({color: [0, 0, 0]}).updateSchema({
     fields: [{name: 'value', type: 'integer'}],
     rows
   });
+  const proto = joinDatasets(source, source, {
+    leftField: 'value',
+    rightField: 'value',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
   t.equal(table.fields[0].valueAccessor({index: 0}), 9007199254740992, 'numeric view can round');
   sortDatasetByColumn(table, 'value', 'ASCENDING');
   t.deepEqual(table.sortOrder, [1, 0, 2], 'sorting distinguishes adjacent unsafe integers');

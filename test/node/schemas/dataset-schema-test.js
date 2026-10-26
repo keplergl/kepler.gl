@@ -345,7 +345,7 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
   t.end();
 });
 
-test('#DatasetSchema -> ordinary and joined Int64 rows save and reload without changing live rows', t => {
+test('#DatasetSchema -> joined Int64 rows save and reload without changing live rows', t => {
   const values = [
     0n,
     10n,
@@ -391,6 +391,11 @@ test('#DatasetSchema -> ordinary and joined Int64 rows save and reload without c
     }).updateSchema(proto.data);
     const saved = datasetSchema[VERSIONS.v1].save(dataset);
     t.deepEqual(saved.allData, expected, 'safe numbers and exact unsafe decimal strings');
+    t.equal(
+      reloadDataset(saved).getValue('signed', 7),
+      '9007199254740993',
+      'in-memory saved schema also omits the live BigInt representation'
+    );
     t.deepEqual(dataset.dataContainer.flattenData(), original, 'live rows are not mutated');
     t.deepEqual(
       source.dataContainer.flattenData(),
@@ -436,6 +441,37 @@ test('#DatasetSchema -> ordinary and joined Int64 rows save and reload without c
       );
     }, 'JSON and HTML exports are valid');
   }
+  t.end();
+});
+
+test('#DatasetSchema -> normalized derived rows save exact wide BigInts and missing cells', t => {
+  const values = [10n, 20, 0.5, (1n << 80n) + 1n, null];
+  const source = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [{name: 'value', type: 'integer'}],
+    rows: values.map(value => [value])
+  });
+  const proto = joinDatasets(source, source, {
+    leftField: 'value',
+    rightField: 'value',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const dataset = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  const expected = [[10], [20], [null], ['1208925819614629174706177'], [null]];
+  t.deepEqual(JSON.parse(exportToJsonString(saved)).allData, expected);
+  t.deepEqual(datasetSchema[VERSIONS.v1].save(reloadDataset(saved)).allData, expected);
+  t.deepEqual(dataset.dataContainer.flattenData(), [
+    [10n],
+    [20n],
+    [null],
+    [(1n << 80n) + 1n],
+    [null]
+  ]);
+  t.deepEqual(
+    source.dataContainer.flattenData(),
+    values.map(value => [value])
+  );
   t.end();
 });
 
