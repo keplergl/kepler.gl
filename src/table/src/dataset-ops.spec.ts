@@ -18,6 +18,7 @@ import {
   canMutateDatasetSchema,
   isTabularDatasetForOps,
   joinDatasets,
+  makeResultProtoDataset,
   spatialJoinDatasets,
   defaultSuitabilityWeights,
   isSuitabilityWeightField,
@@ -97,6 +98,37 @@ describe('dataset-ops engine', () => {
   afterAll(() => {
     globalThis.Response = originalResponse;
   });
+
+  test.each([undefined, true, false])(
+    'makeResultProtoDataset supports normalizeBigInts=%s without changing source values',
+    normalizeBigInts => {
+      const values = [10n, 20, 0.5, null, 9007199254740993n];
+      const source = makeTable({
+        id: 'source',
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+        rows: values.map(value => [value])
+      });
+      const result = makeResultProtoDataset({
+        source,
+        type: 'join',
+        operationId: 'normalization-option',
+        label: 'result',
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}],
+        rows: values.map(value => [value]),
+        ...(normalizeBigInts === undefined ? {} : {normalizeBigInts})
+      });
+      const enabled = normalizeBigInts !== false;
+      expect(result.data.rows).toEqual(
+        (enabled ? [10n, 20n, null, null, 9007199254740993n] : values).map(value => [value])
+      );
+      const derived = importDerived(result);
+      expect(values.map((_, index) => derived.getValue('value', index))).toEqual(
+        enabled ? [10, 20, null, null, 9007199254740992] : values
+      );
+      expect(source.dataContainer.flattenData()).toEqual(values.map(value => [value]));
+      expect(source.getValue('value', 0)).toBe(10n);
+    }
+  );
 
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({

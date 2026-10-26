@@ -6,7 +6,17 @@ import {ProtoDatasetField} from '@kepler.gl/types';
 
 // Runtime physical representation, preserved by field copies but omitted from
 // saved schemas.
-export const BIGINT_COLUMN = Symbol('bigintColumn');
+const BIGINT_COLUMN = Symbol('bigintColumn');
+
+/** Whether a derived numeric field stores normalized BigInt values. */
+export function isBigIntColumn(field: object): boolean {
+  return (field as {[BIGINT_COLUMN]?: boolean})[BIGINT_COLUMN] === true;
+}
+
+/** Clear the representation marker after an explicit column type conversion. */
+export function clearBigIntColumn(field: object): void {
+  Reflect.deleteProperty(field, BIGINT_COLUMN);
+}
 
 /** Normalize newly built derived rows, never their source datasets. */
 export function normalizeBigIntColumns(

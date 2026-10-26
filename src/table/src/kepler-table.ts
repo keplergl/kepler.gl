@@ -28,7 +28,7 @@ import {
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
-import {BIGINT_COLUMN} from './dataset-ops/normalize-bigint-columns';
+import {isBigIntColumn} from './dataset-ops/normalize-bigint-columns';
 
 import {
   getSortingFunction,
@@ -1046,14 +1046,13 @@ export function getFieldValueAccessor<
   F extends {
     type?: Field['type'];
     format?: Field['format'];
-    [BIGINT_COLUMN]?: boolean;
   }
 >(f: F, i: number, dc: DataContainerInterface) {
   if (f.type === ALL_FIELD_TYPES.timestamp) {
     const format = f.format || '';
     return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
   }
-  if (f[BIGINT_COLUMN] || isInt64ArrowColumn(dc, i)) {
+  if (isBigIntColumn(f) || isInt64ArrowColumn(dc, i)) {
     return (d: {index: number} | any[]) => {
       const value = readFieldValue(i, dc, d);
       return value == null ? value : Number(value);
