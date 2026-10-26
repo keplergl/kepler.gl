@@ -121,6 +121,108 @@ describe('map.add-layer (flow)', () => {
   });
 });
 
+/**
+ * Build a vector-field dataset: lat/lng sample points plus direction columns.
+ * `vector` picks the encoding — u/v components or speed/direction.
+ */
+async function makeVectorTable(vector: 'uv' | 'speedDir') {
+  const table = new KeplerTable({color: [255, 0, 0]} as any);
+  const vectorFields =
+    vector === 'uv'
+      ? [
+          {name: 'u', type: ALL_FIELD_TYPES.real},
+          {name: 'v', type: ALL_FIELD_TYPES.real}
+        ]
+      : [
+          {name: 'wind_speed', type: ALL_FIELD_TYPES.real},
+          {name: 'wind_dir', type: ALL_FIELD_TYPES.real}
+        ];
+  await table.importData({
+    data: {
+      rows: [
+        [37.77, -122.42, 1.5, 0.4],
+        [37.78, -122.45, 2.1, -0.2],
+        [37.74, -122.44, 0.9, 1.1]
+      ],
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        ...vectorFields
+      ]
+    } as any
+  });
+  return table;
+}
+
+describe('map.add-layer (flowField)', () => {
+  it('builds a UV flow field from lat/lng + u/v, with auto-detected columns', async () => {
+    const table = await makeVectorTable('uv');
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'flowField',
+      layerName: 'Wind field'
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    const action = getDispatched();
+    expect(action.config.type).toBe('flowField');
+    expect(action.config.config.columnMode).toBe('UV');
+    expect(action.config.config.columns).toMatchObject({
+      lat: 'lat',
+      lng: 'lng',
+      u: 'u',
+      v: 'v'
+    });
+  });
+
+  it('builds a SPEED_DIR flow field from explicitly named speed/direction columns', async () => {
+    const table = await makeVectorTable('speedDir');
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'flowField',
+      flowField: {
+        mode: 'SPEED_DIR',
+        speedColumn: 'wind_speed',
+        directionColumn: 'wind_dir',
+        colorBySpeed: true
+      }
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    const action = getDispatched();
+    expect(action.config.type).toBe('flowField');
+    expect(action.config.config.columnMode).toBe('SPEED_DIR');
+    expect(action.config.config.columns).toMatchObject({
+      lat: 'lat',
+      lng: 'lng',
+      speed: 'wind_speed',
+      direction: 'wind_dir'
+    });
+    expect(action.config.config.visConfig.colorBySpeed).toBe(true);
+  });
+
+  it('errors clearly when the dataset has no vector columns', async () => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+
+    const cmd = getAddLayerCommand(ctx as any);
+    const result = (await cmd.execute({} as any, {
+      datasetName: table.label,
+      layerType: 'flowField'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/needs a vector/);
+    expect(getDispatched()).toBeNull();
+  });
+});
+
 describe('map.add-layer (colorMap validation)', () => {
   it('finds a unique category that appears only later in a large dataset (full scan)', async () => {
     // 20k rows; the wanted category 'z' exists ONLY at index 10000 — beyond the

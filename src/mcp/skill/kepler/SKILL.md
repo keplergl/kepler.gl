@@ -32,7 +32,7 @@ not this one.
 
 | command                  | purpose                                                        |
 | ------------------------ | -------------------------------------------------------------- |
-| `map.add-layer`          | Add a layer (point, flow, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
+| `map.add-layer`          | Add a layer (point, flow, flowField, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
 | `map.toggle-time-filter` | Show/hide the enlarged time controller at the bottom of the map. |
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
@@ -58,6 +58,7 @@ assistant the dispatcher is the `executeApi` tool with
 - Density without precomputed cells → `grid` or `hexagon` (auto-binned).
 - Pre-aggregated H3 cells → `h3`.
 - Origin→destination flows → `flow` (a dedicated flow layer with locations, clustering and weighted edges; requires two point lat/lng pairs — source + destination). Fall back to `arc` only when you want straight great-circle lines between points. For weighted flows optionally pass the magnitude column as `countColumn`.
+- Vector fields — wind, currents, downhill terrain flow → `flowField`, animated streamlines over one vector per sample point. This is **not** `flow`: `flow` joins an origin pair to a destination pair, `flowField` draws many short lines through a field of vectors.
 
 - Polylines / polygons → `line` / `geojson`. A decoded GEOMETRY `geom`
   column can be rendered directly with `geojson` — do NOT convert it to
@@ -190,6 +191,63 @@ map; the animated layer is the deliverable.
   seconds, multiply by 1000.
 - Densify sparse O-D data (interpolate lon/lat AND timestamp) or trips
   teleport.
+
+### Flow field layer (`layerType: "flowField"`)
+
+Animated streamlines over a vector field — wind, ocean currents, or downhill
+terrain flow. Each row of the dataset is one sample point: a position plus a
+direction. It is not the origin→destination `flow` layer — `flow` joins two
+point pairs, `flowField` draws many short, continuously moving lines through a
+field of vectors.
+
+Pick the mode from the columns the dataset has; `map.add-layer` auto-detects
+them in this order and names them in `flowField.*Column` when they differ:
+
+| `flowField.mode` | Columns | Direction comes from |
+|------------------|---------|----------------------|
+| `UV` (default) | `u`, `v` (+ optional `altitude`) | east/north vector components |
+| `SPEED_DIR` | `speed`, `direction` | speed plus compass direction (from) |
+| `ELEVATION` | `altitude` | the downhill gradient of a height surface |
+
+Position comes from lat/lng columns — auto-detected, or `latitudeColumn` /
+`longitudeColumn` — or from a GeoJSON geometry column when the dataset has one.
+
+Wind encoded as `u`/`v` (no extra parameters needed):
+
+```json
+{
+  "datasetName": "wind_grid",
+  "layerType": "flowField",
+  "layerName": "Wind field",
+  "flowField": {"colorBySpeed": true}
+}
+```
+
+Wind encoded as speed + direction under different column names:
+
+```json
+{
+  "datasetName": "wind_grid",
+  "layerType": "flowField",
+  "layerName": "Wind field",
+  "flowField": {
+    "mode": "SPEED_DIR",
+    "speedColumn": "wind_speed",
+    "directionColumn": "wind_dir"
+  }
+}
+```
+
+- `colorBySpeed: true` colors each streamline by its local speed (using the
+  layer's color range); without it the streamlines use `color`. `colorBy` /
+  `colorMap` do not apply to this layer.
+- Do **not** add `map.add-time-filter` — the flow field animates continuously on
+  its own, like a trip layer.
+- Streamline density (`linesPerScreen`), `strokeWidth`, `trailLength`,
+  `cycleSeconds`, `lineLifetime` and `smoothing` use tuned defaults; they are
+  adjusted in the layer panel, not through `map.add-layer`.
+- A field layer over a very large grid is expensive: one row per sample point is
+  fine, but downsample rasters to roughly 10k–100k points before loading.
 
 ### 3. Split map comparison (`map.split-view`)
 

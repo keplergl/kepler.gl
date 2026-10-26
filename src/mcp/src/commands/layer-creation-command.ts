@@ -1,5 +1,6 @@
 import type {RoomCommand} from './types';
 import {z} from 'zod';
+import {GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {LayerClasses} from '@kepler.gl/layers';
 import type KeplerTable from '@kepler.gl/table';
 import type {Datasets} from '@kepler.gl/table';
@@ -102,6 +103,132 @@ export function guessDefaultLayer(
   // requesting "h3" and getting a point layer) violates the command contract
   // and makes failures hard to diagnose. The caller errors clearly on null.
   return layer || null;
+}
+
+/** Column names the flow field layer resolves when the caller doesn't name them. */
+const FLOW_FIELD_ALTITUDE_COLUMNS = ['altitude', 'alt', 'elevation', 'elev', 'elv', 'height', 'z'];
+const FLOW_FIELD_MODES = ['UV', 'SPEED_DIR', 'ELEVATION'] as const;
+type FlowFieldMode = (typeof FLOW_FIELD_MODES)[number];
+
+type FlowFieldOptions = {
+  mode?: FlowFieldMode;
+  uColumn?: string;
+  vColumn?: string;
+  speedColumn?: string;
+  directionColumn?: string;
+  altitudeColumn?: string;
+  colorBySpeed?: boolean;
+};
+
+/**
+ * Flow Field is a vector/streamline layer: each row is a sample point carrying
+ * a position plus a direction — u/v components, speed/direction, or an altitude
+ * whose downhill gradient supplies the direction. Unlike the origin→destination
+ * `flow` layer it needs no second point pair, and unlike `trip` it animates
+ * itself, so no time filter belongs on it.
+ */
+function buildFlowFieldLayer(
+  dataset: KeplerTable,
+  position: {latitudeColumn?: string; longitudeColumn?: string},
+  options: FlowFieldOptions = {}
+) {
+  const hasColumn = (name?: string) => !!name && dataset.getColumnFieldIdx(name) >= 0;
+  const columnRef = (name: string) => {
+    const fieldIdx = dataset.getColumnFieldIdx(name);
+    if (fieldIdx < 0) {
+      const available = dataset.fields?.map((f: any) => f.name).join(', ') ?? '';
+      throw new Error(
+        `Column "${name}" not found in dataset "${dataset.label}". Available columns: ${available}`
+      );
+    }
+    return {value: name, fieldIdx};
+  };
+
+  // Position: explicit lat/lng, else the dataset's first detected point pair,
+  // else a GeoJSON geometry column (one position per feature).
+  let positionColumns: Record<string, any> | null = null;
+  if (position.latitudeColumn && position.longitudeColumn) {
+    positionColumns = {
+      lat: columnRef(position.latitudeColumn),
+      lng: columnRef(position.longitudeColumn)
+    };
+  } else {
+    const pair = dataset.fieldPairs?.[0]?.pair;
+    if (pair?.lat && pair?.lng) {
+      positionColumns = {lat: pair.lat, lng: pair.lng};
+    } else {
+      const geoField = dataset.fields?.find(
+        (f: any) => f.type === 'geojson' || GEOJSON_FIELDS.geojson.includes(f.name)
+      );
+      if (geoField) {
+        positionColumns = {geojson: {value: geoField.name, fieldIdx: geoField.fieldIdx}};
+      }
+    }
+  }
+  if (!positionColumns) {
+    throw new Error(
+      'A flow field layer needs a position: lat/lng columns (auto-detected, or pass ' +
+        'latitudeColumn/longitudeColumn) or a GeoJSON geometry column.'
+    );
+  }
+
+  const altitudeName =
+    options.altitudeColumn || FLOW_FIELD_ALTITUDE_COLUMNS.find(name => hasColumn(name)) || null;
+
+  const mode: FlowFieldMode | null =
+    options.mode ||
+    (options.uColumn || options.vColumn || (hasColumn('u') && hasColumn('v'))
+      ? 'UV'
+      : options.speedColumn ||
+        options.directionColumn ||
+        (hasColumn('speed') && hasColumn('direction'))
+      ? 'SPEED_DIR'
+      : altitudeName
+      ? 'ELEVATION'
+      : null);
+  if (!mode) {
+    throw new Error(
+      'A flow field layer needs a vector: u/v columns, speed/direction columns, or an ' +
+        'altitude column (pass flowField.uColumn/vColumn/speedColumn/directionColumn/' +
+        'altitudeColumn when the names differ).'
+    );
+  }
+
+  let flowColumns: Record<string, any>;
+  if (mode === 'UV') {
+    flowColumns = {
+      u: columnRef(options.uColumn || 'u'),
+      v: columnRef(options.vColumn || 'v')
+    };
+  } else if (mode === 'SPEED_DIR') {
+    flowColumns = {
+      speed: columnRef(options.speedColumn || 'speed'),
+      direction: columnRef(options.directionColumn || 'direction')
+    };
+  } else {
+    if (!altitudeName) {
+      throw new Error(
+        'A flow field layer in ELEVATION mode needs an altitude column (pass flowField.altitudeColumn).'
+      );
+    }
+    flowColumns = {altitude: columnRef(altitudeName)};
+  }
+
+  // UV and SPEED_DIR may also carry an altitude, which lifts the streamlines.
+  const altitudeColumn =
+    mode === 'ELEVATION' || !altitudeName ? {} : {altitude: columnRef(altitudeName)};
+
+  const layer = new (LayerClasses as any).flowField({
+    isVisible: true,
+    label: 'Flow Field',
+    color: [255, 255, 255],
+    columnMode: mode,
+    columns: {...positionColumns, ...flowColumns, ...altitudeColumn}
+  });
+  if (options.colorBySpeed) {
+    layer.config.visConfig = {...layer.config.visConfig, colorBySpeed: true};
+  }
+  return layer;
 }
 
 function buildLayerConfig(
@@ -258,6 +385,7 @@ IMPORTANT: generated layer names must be unique.
 LAYER TYPES:
 - point: Point markers (requires lat/lng columns)
 - flow: Origin->destination flow map (requires two point lat/lng pairs, auto-detected)
+- flowField: Animated streamlines over a vector field (u/v, speed/direction, or altitude)
 - h3: H3 hexagon cells (requires hexId column)
 - geojson: Polygon/geometry features (uses geometry column, usually auto-detected)
 - hexagon: Hexagonal binning of points
@@ -275,6 +403,21 @@ dataset (source pair + destination pair), which are auto-detected. Prefer 'flow'
 'arc' for O-D flows; 'arc' draws straight great-circle lines without location clustering
 or flow aggregation. To weight the flows by a value column (flow magnitude), pass
 countColumn with the column name — omit it to render all flows at weight 1.
+
+FLOW FIELD (layerType 'flowField'):
+Animated streamlines over a vector field — wind, currents, or downhill flow. It is NOT
+the origin->destination 'flow' layer: 'flow' joins two point pairs, 'flowField' draws
+many short lines through a field of vectors, one row per sample point.
+The direction comes from one of three column sets, auto-detected in this order:
+- u/v components (default mode 'UV'), optionally with an altitude column
+- speed + direction (mode 'SPEED_DIR')
+- altitude only (mode 'ELEVATION'): the downhill gradient gives the direction
+Position is lat/lng (auto-detected, or latitudeColumn/longitudeColumn) or a GeoJSON
+geometry column. When the dataset names the columns differently, pass flowField.mode
+plus flowField.uColumn/vColumn/speedColumn/directionColumn/altitudeColumn.
+Set flowField.colorBySpeed true to color lines by local speed; otherwise simpleColor
+applies. colorBy/colorMap do not apply to this layer. Do NOT add a time filter — the
+flow field animates itself.
 
 BASIC MAP:
 - Use datasetName, latitudeColumn/longitudeColumn (for point maps), and layerType
@@ -311,6 +454,7 @@ For geojson datasets:
       layerType: z.enum([
         'point',
         'flow',
+        'flowField',
         'arc',
         'line',
         'grid',
@@ -322,6 +466,22 @@ For geojson datasets:
         'trip',
         's2'
       ]),
+      flowField: z
+        .object({
+          mode: z.enum(FLOW_FIELD_MODES).optional(),
+          uColumn: z.string().optional(),
+          vColumn: z.string().optional(),
+          speedColumn: z.string().optional(),
+          directionColumn: z.string().optional(),
+          altitudeColumn: z.string().optional(),
+          colorBySpeed: z.boolean().optional()
+        })
+        .optional()
+        .describe(
+          'For layerType "flowField" only: how the vector field is encoded. The mode is ' +
+            'inferred from the columns (u/v, speed/direction, otherwise altitude); the ' +
+            '*Column fields name the columns when they differ from those defaults.'
+        ),
       simpleColor: z
         .string()
         .optional()
@@ -357,6 +517,7 @@ For geojson datasets:
         colorType?: 'breaks' | 'unique';
         colorMap?: Array<{value: string | number | null; color: string}>;
         countColumn?: string;
+        flowField?: FlowFieldOptions;
       };
       const {
         datasetName,
@@ -368,7 +529,8 @@ For geojson datasets:
         colorBy,
         colorType,
         colorMap,
-        countColumn
+        countColumn,
+        flowField
       } = args;
       try {
         // Runtime guard: the bridge/webMCP call execute without zod parsing, so
@@ -378,6 +540,7 @@ For geojson datasets:
         const VALID_LAYER_TYPES = [
           'point',
           'flow',
+          'flowField',
           'arc',
           'line',
           'grid',
@@ -408,7 +571,14 @@ For geojson datasets:
         }
 
         const dataset = datasets[datasetId];
-        let layer = guessDefaultLayer(dataset, layerType, {countColumn});
+        // The flow field layer resolves its own columns (position + vector, in
+        // one of three modes), so it does not go through guessDefaultLayer —
+        // that path only auto-detects the u/v case and would ignore explicit
+        // column names.
+        let layer =
+          layerType === 'flowField'
+            ? buildFlowFieldLayer(dataset, {latitudeColumn, longitudeColumn}, flowField)
+            : guessDefaultLayer(dataset, layerType, {countColumn});
 
         if (!layer) {
           if (layerType === 'point' && latitudeColumn && longitudeColumn) {

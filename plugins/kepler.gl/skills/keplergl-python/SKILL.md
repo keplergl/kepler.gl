@@ -143,6 +143,7 @@ is the classic trap:
 | S2 | `s2` | `s2` |
 | Arc (great-circle origin→destination) | `arc` | `arc` |
 | Flow (weighted origin→destination) | — | `flow` |
+| Flow field (streamlines over a vector field) | — | `flowField` |
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
@@ -155,6 +156,9 @@ is the classic trap:
   another one silently.
 - MCP layer types are validated against an enum, so an unknown string is
   rejected rather than silently guessed.
+- **`flow` is not `flowField`.** `flow` joins an origin point pair to a
+  destination point pair; `flowField` draws animated streamlines through one
+  vector per sample point (wind, currents, downhill terrain).
 <!-- /shared:layer-types -->
 
 In a Python config, `columns` carries the field names each layer type needs
