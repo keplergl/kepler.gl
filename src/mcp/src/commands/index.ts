@@ -1,6 +1,7 @@
 import type {RoomCommand} from './types';
 import type {KeplerContext} from './types';
 import {getBasemapCommand} from './basemap-command';
+import {getViewModeCommand} from './view-mode-command';
 import {getMapBoundaryCommand} from './boundary-command';
 import {getAddLayerCommand} from './layer-creation-command';
 import {getUpdateLayerColorCommand} from './layer-style-command';
@@ -28,6 +29,7 @@ export const KEPLER_COMMAND_OWNER = 'kepler-ai';
 export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomCommand> {
   const commands = [
     getBasemapCommand(ctx),
+    getViewModeCommand(ctx),
     getMapBoundaryCommand(ctx),
     getAddLayerCommand(ctx),
     getUpdateLayerColorCommand(ctx),
@@ -44,6 +46,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
 }
 
 export {getBasemapCommand} from './basemap-command';
+export {getViewModeCommand} from './view-mode-command';
 export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
 export {getUpdateLayerColorCommand} from './layer-style-command';

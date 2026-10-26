@@ -1,6 +1,6 @@
 ---
 name: kepler-gl-app
-description: Create and configure kepler.gl map layers (point, flow, flowField, arc, line, grid, hexagon, geojson, cluster, heatmap, h3, trip, s2) from datasets, animate them over time, compare them side by side, change the basemap, update layer colors, load data from a URL, add columns to existing datasets, and read the current map boundary.
+description: Create and configure kepler.gl map layers (point, flow, flowField, arc, line, grid, hexagon, geojson, cluster, heatmap, h3, trip, s2) from datasets, animate them over time, compare them side by side, change the basemap, switch between the 2D, 3D and globe views, update layer colors, load data from a URL, add columns to existing datasets, and read the current map boundary.
 ---
 
 # Kepler map management
@@ -43,6 +43,7 @@ not this one.
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
+| `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
 | `map.load-data`          | Load data from a URL (no layer — call `map.add-layer`).        |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
@@ -378,6 +379,31 @@ untouched. The new column's values come from exactly ONE of two sources:
 `map.create-table` is NOT for this — it builds a separate NEW dataset and leaves
 the original untouched. Prefer `map.add-column` whenever the user wants the
 change to land in the existing dataset.
+
+### View mode: 2D map, 3D map, or globe (`map.set-view-mode`)
+
+```json
+{ "mode": "globe" }
+```
+
+- `2d` — flat map, no tilt. The default for city- and region-scale data.
+- `3d` — the flat map tilted (pitch 50). For extruded buildings, 3D layers and a
+  more dramatic camera; it is **not** a globe.
+- `globe` — the 3D globe with atmosphere. Use it when the data spans the world
+  (global trips, arcs, lines, points, clusters, hexagons, grids, GeoJSON), so
+  the user sees the whole planet instead of a distorted flat world.
+
+Switching to `globe` clamps zoom into the globe's range; switching back to
+`2d`/`3d` restores the normal range. The camera mode is independent of the
+basemap, so set both when the user asks for a "dark globe" and the like.
+
+- **Keep `flow` and `flowField` layers off the globe.** Neither is supported
+  there yet — flow arrows collapse when seen edge-on, and the flow field's
+  clipping is mercator-only. Create a global flow field on the 2d map; if the
+  user wants a globe view of global movement, use `arc`, `line` or `trip`
+  instead, or tell them the field layer needs the flat map.
+- Do not switch modes unless the user asks for it or the data's global extent
+  makes it clearly better; a map that suddenly becomes a globe is surprising.
 
 ## Rules
 
