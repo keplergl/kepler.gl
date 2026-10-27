@@ -106,6 +106,7 @@ export function joinDatasets(
     label: config.label || `join-dataset-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
-    rows
+    rows,
+    normalizeBigInts: true
   });
 }

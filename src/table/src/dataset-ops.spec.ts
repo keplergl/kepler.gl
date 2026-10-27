@@ -5,6 +5,7 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {latLngToCell} from '@kepler.gl/common-utils';
 import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 import {Response} from 'node-fetch';
+import {ProtoDataset} from '@kepler.gl/types';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -17,6 +18,7 @@ import {
   canMutateDatasetSchema,
   isTabularDatasetForOps,
   joinDatasets,
+  makeResultProtoDataset,
   spatialJoinDatasets,
   defaultSuitabilityWeights,
   isSuitabilityWeightField,
@@ -63,6 +65,14 @@ function makeInt64Data(values: (bigint | null)[], type: Int64 | Uint64 = new Int
   };
 }
 
+function importDerived(result: ProtoDataset) {
+  return new KeplerTable({
+    info: result.info,
+    metadata: result.metadata,
+    color: [0, 0, 0]
+  }).updateSchema(result.data);
+}
+
 const square = (west: number, south: number, east: number, north: number) => ({
   type: 'Feature',
   properties: {},
@@ -88,6 +98,37 @@ describe('dataset-ops engine', () => {
   afterAll(() => {
     globalThis.Response = originalResponse;
   });
+
+  test.each([undefined, true, false])(
+    'makeResultProtoDataset supports normalizeBigInts=%s without changing source values',
+    normalizeBigInts => {
+      const values = [10n, 20, 0.5, null, 9007199254740993n];
+      const source = makeTable({
+        id: 'source',
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer}],
+        rows: values.map(value => [value])
+      });
+      const result = makeResultProtoDataset({
+        source,
+        type: 'join',
+        operationId: 'normalization-option',
+        label: 'result',
+        fields: [{name: 'value', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}],
+        rows: values.map(value => [value]),
+        ...(normalizeBigInts === undefined ? {} : {normalizeBigInts})
+      });
+      const enabled = normalizeBigInts === true;
+      expect(result.data.rows).toEqual(
+        (enabled ? [10n, 20n, null, null, 9007199254740993n] : values).map(value => [value])
+      );
+      const derived = importDerived(result);
+      expect(values.map((_, index) => derived.getValue('value', index))).toEqual(
+        enabled ? [10, 20, null, null, 9007199254740992] : values
+      );
+      expect(source.dataContainer.flattenData()).toEqual(values.map(value => [value]));
+      expect(source.getValue('value', 0)).toBe(10n);
+    }
+  );
 
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({
@@ -407,6 +448,260 @@ describe('dataset-ops engine', () => {
     });
     expect(result.data.fields.map(field => field.name)).toEqual(['city']);
     expect(result.data.rows[0]).toEqual(['sf']);
+  });
+
+  describe.each([new Int64(), new Uint64()])('derived Arrow %s numeric access', arrowType => {
+    test.each(['LEFT', 'INNER', 'FULL'] as const)(
+      '%s join preserves raw values on both sides',
+      type => {
+        const left = new KeplerTable({info: {id: 'left'}, color: [0, 0, 0]}).updateSchema(
+          makeInt64Data([10n, 20n, null], arrowType)
+        );
+        const right = new KeplerTable({
+          info: {id: 'right', label: 'right'},
+          color: [0, 0, 0]
+        }).updateSchema(makeInt64Data([10n, 20n, 30n, null], arrowType));
+        const result = joinDatasets(left, right, {leftField: 'pop', rightField: 'pop', type});
+        const table = importDerived(result);
+        const raw = table.dataContainer.flattenData().map(row => [row[1], row[3]]);
+        expect(raw).toEqual([
+          [10n, 10n],
+          [20n, 20n],
+          ...(type !== 'INNER' ? [[null, null]] : []),
+          ...(type === 'FULL'
+            ? [
+                [null, 30n],
+                [null, null]
+              ]
+            : [])
+        ]);
+        for (const index of [1, 3]) {
+          const field = table.fields[index];
+          expect(table.getColumnFilterProps(field.name)?.domain).toEqual(
+            index === 3 && type === 'FULL' ? [10, 30] : [10, 20]
+          );
+          expect(field.valueAccessor({index: 0})).toBe(10);
+          const accessRow = field.valueAccessor as (row: {index: number} | any[]) => unknown;
+          expect(accessRow(table.dataContainer.rowAsArray(0))).toBe(10);
+          expect(table.getColumnLayerDomain(field, 'linear')).toEqual(
+            index === 3 && type === 'FULL' ? [10, 30] : [10, 20]
+          );
+        }
+        expect(table.dataContainer.flattenData().map(row => [row[1], row[3]])).toEqual(raw);
+        expect([0, 1, 2].map(index => left.dataContainer.valueAt(index, 1))).toEqual([
+          10n,
+          20n,
+          null
+        ]);
+      }
+    );
+  });
+
+  test.each([true, false])('numeric access keeps unsafe join keys exact (Arrow: %s)', useArrow => {
+    const values = [9007199254740992n, 9007199254740993n];
+    const data = makeInt64Data(values);
+    const source = new KeplerTable({info: {id: 'large'}, color: [0, 0, 0]}).updateSchema(
+      useArrow ? data : {fields: data.fields, rows: values.map(value => ['west', value])}
+    );
+    const table = importDerived(
+      joinDatasets(source, source, {
+        leftField: 'pop',
+        rightField: 'pop',
+        type: 'INNER'
+      })
+    );
+    expect(table.dataContainer.numRows()).toBe(2);
+    expect([0, 1].map(index => table.dataContainer.valueAt(index, 1))).toEqual([
+      9007199254740992n,
+      9007199254740993n
+    ]);
+    expect([0, 1].map(index => table.fields[1].valueAccessor({index}))).toEqual([
+      9007199254740992, 9007199254740992
+    ]);
+    expect(
+      joinDatasets(table, source, {leftField: 'pop', rightField: 'pop', type: 'INNER'}).data.rows
+    ).toHaveLength(2);
+  });
+
+  test.each([[], [null, null], [10, 20, null]].map(values => [values]))(
+    'derived numeric columns without BigInts stay unchanged: %j',
+    values => {
+      const rows = values.map((value, index) => [String(index), value]);
+      const source = makeTable({
+        id: 'numeric',
+        fields: [
+          {name: 'id', type: 'string'},
+          {name: 'pop', type: 'integer'}
+        ],
+        rows
+      });
+      const table = importDerived(
+        joinDatasets(source, source, {
+          leftField: 'id',
+          rightField: 'id',
+          type: 'LEFT',
+          rightColumns: []
+        })
+      );
+      expect(table.dataContainer.flattenData()).toEqual(rows);
+      expect(values.map((_, index) => table.getValue('pop', index))).toEqual(values);
+      expect(() => table.getColumnFilterProps('pop')).not.toThrow();
+    }
+  );
+
+  test.each(['integer', 'real'])(
+    'derived %s BigInt columns normalize incompatible cells to null',
+    type => {
+      const values = [
+        null,
+        10n,
+        20,
+        0.5,
+        NaN,
+        Infinity,
+        -Infinity,
+        Number.MAX_SAFE_INTEGER + 1,
+        '30',
+        true,
+        undefined,
+        -0,
+        -42
+      ];
+      const expected = [null, 10n, 20n, null, null, null, null, null, null, null, null, 0n, -42n];
+      const geometry = square(0, 0, 1, 1);
+      const rows = values.map((value, index) => [String(index), value, index + 0.5, geometry]);
+      const original = rows.map(row => row.slice());
+      const source = makeTable({
+        id: 'mixed',
+        fields: [
+          {name: 'id', type: 'string'},
+          {name: 'value', type},
+          {name: 'ordinary', type: 'real'},
+          {name: 'geometry', type: 'geojson'}
+        ],
+        rows
+      });
+      const joined = importDerived(
+        joinDatasets(source, source, {
+          leftField: 'id',
+          rightField: 'id',
+          type: 'INNER',
+          rightColumns: ['value']
+        })
+      );
+      expect(joined.length).toBe(values.length);
+      for (const column of [1, 4]) {
+        expect(values.map((_, index) => joined.dataContainer.valueAt(index, column))).toEqual(
+          expected
+        );
+        const field = joined.fields[column];
+        expect(joined.getColumnFilterProps(field.name)?.domain).toEqual([-42, 20]);
+        expect(joined.getColumnLayerDomain(field, 'linear')).toEqual([-42, 20]);
+        expect(expected.map((_, index) => field.valueAccessor({index}))).toEqual(
+          expected.map(value => (value === null ? null : Number(value)))
+        );
+      }
+      expect(joined.dataContainer.valueAt(3, 2)).toBe(3.5);
+      expect(joined.dataContainer.valueAt(3, 3)).toBe(geometry);
+      const grouped = importDerived(
+        groupByDataset(source, {
+          fieldName: 'id',
+          aggregations: {value: 'maximum'}
+        })
+      );
+      expect(grouped.length).toBe(values.length);
+      expect(values.map((_, index) => grouped.dataContainer.valueAt(index, 1))).toEqual(expected);
+      expect(source.dataContainer.flattenData()).toEqual(original);
+      expect(Object.is(source.dataContainer.valueAt(11, 1), -0)).toBe(true);
+    }
+  );
+
+  test('derived BigInt normalization accepts safe Number boundaries only in numeric fields', () => {
+    const values = [
+      10n,
+      Number.MIN_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER,
+      Number.MIN_SAFE_INTEGER - 1,
+      Number.MAX_SAFE_INTEGER + 1
+    ];
+    const rows = values.map((value, index) => [String(index), value, value]);
+    const source = makeTable({
+      id: 'boundaries',
+      fields: [
+        {name: 'id', type: 'string'},
+        {name: 'value', type: 'integer'},
+        {name: 'text', type: 'string'}
+      ],
+      rows
+    });
+    const result = importDerived(
+      joinDatasets(source, source, {
+        leftField: 'id',
+        rightField: 'id',
+        type: 'INNER',
+        rightColumns: []
+      })
+    );
+    expect(values.map((_, index) => result.dataContainer.valueAt(index, 1))).toEqual([
+      10n,
+      -9007199254740991n,
+      9007199254740991n,
+      null,
+      null
+    ]);
+    expect(values.map((_, index) => result.getValue('text', index))).toEqual(values);
+    expect(source.dataContainer.flattenData()).toEqual(rows);
+  });
+
+  test('derived Group By and suitability retain exact cells with numeric access', () => {
+    const source = new KeplerTable({info: {id: 'source'}, color: [0, 0, 0]}).updateSchema(
+      makeInt64Data([10n, 20n, null])
+    );
+    const results = [
+      groupByDataset(source, {fieldName: 'pop', aggregations: {region: 'count'}}),
+      groupByDataset(source, {fieldName: 'region', aggregations: {pop: 'maximum'}}),
+      suitabilityDataset(source, {weights: {pop: 1}})
+    ];
+    for (const result of results) {
+      const table = importDerived(result);
+      for (const field of table.fields.filter(
+        field => field.type === 'integer' || field.type === 'real'
+      )) {
+        for (let index = 0; index < table.dataContainer.numRows(); index++) {
+          const raw = table.dataContainer.valueAt(index, field.fieldIdx);
+          expect(field.valueAccessor({index})).toBe(typeof raw === 'bigint' ? Number(raw) : raw);
+        }
+        expect(() => table.getColumnFilterProps(field.name)).not.toThrow();
+      }
+      expect(table.dataContainer.flattenData()).toEqual(result.data.rows);
+    }
+    expect(source.dataContainer.valueAt(1, 1)).toBe(20n);
+  });
+
+  test('spatial join copied integers and extrema retain numeric access', () => {
+    const polygons = makeTable({
+      id: 'polygons',
+      fields: [
+        {name: 'geom', type: 'geojson'},
+        {name: 'pop', type: 'integer'}
+      ],
+      rows: [
+        [square(0, 0, 1, 1), 10n],
+        [square(2, 2, 3, 3), 20n]
+      ]
+    });
+    const result = spatialJoinDatasets(polygons, polygons, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'geojson', fieldName: 'geom'},
+      aggregations: {pop: 'maximum'}
+    });
+    const table = importDerived(result);
+    for (const name of ['pop', 'pop_maximum']) {
+      expect(table.getColumnFilterProps(name)?.domain).toEqual([10, 20]);
+      expect(table.getValue(name, 0)).toBe(10);
+      expect(table.dataContainer.valueAt(0, table.getColumnFieldIdx(name))).toBe(10n);
+    }
+    expect(polygons.dataContainer.valueAt(1, 1)).toBe(20n);
   });
 
   test.each([

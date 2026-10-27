@@ -6,6 +6,7 @@ import {generateHashId} from '@kepler.gl/common-utils';
 import {ProtoDataset, ProtoDatasetField} from '@kepler.gl/types';
 
 import {DatasetOpsTable, DerivedDatasetMetadata} from './types';
+import {normalizeBigIntColumns} from './normalize-bigint-columns';
 
 export function uniqueColumnName(name: string, used: Set<string>): string {
   if (!used.has(name)) {
@@ -30,7 +31,8 @@ export function makeResultProtoDataset({
   label,
   resultId,
   fields,
-  rows
+  rows,
+  normalizeBigInts = false
 }: {
   source: DatasetOpsTable;
   extraSources?: DatasetOpsTable[];
@@ -40,6 +42,8 @@ export function makeResultProtoDataset({
   resultId?: string;
   fields: ProtoDatasetField[];
   rows: any[][];
+  /** Opt in to normalizing and marking numeric BigInt columns; defaults to false. */
+  normalizeBigInts?: boolean;
 }): ProtoDataset {
   const id = resultId || generateHashId(6);
   return {
@@ -47,7 +51,7 @@ export function makeResultProtoDataset({
       id,
       label
     },
-    data: {fields, rows},
+    data: {fields: normalizeBigInts ? normalizeBigIntColumns(fields, rows) : fields, rows},
     metadata: {
       derivedDataset: {
         type,

@@ -6,7 +6,13 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {findPointFieldPairs, KeplerTable, createNewDataEntry} from '@kepler.gl/table';
+import {
+  findPointFieldPairs,
+  KeplerTable,
+  createNewDataEntry,
+  joinDatasets,
+  sortDatasetByColumn
+} from '@kepler.gl/table';
 import {processArrowBatches, processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -445,6 +451,51 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.equal(table.fields[0].valueAccessor({index: 1}), 9999);
   t.equal(table.fields[1].valueAccessor({index: 0}), 'a', 'non-Int64 accessors are unchanged');
 
+  t.end();
+});
+
+test('KeplerTable -> ordinary row access leaves numbers and strings unchanged', t => {
+  const rows = [
+    [10, 0.5],
+    ['9007199254740993', '12'],
+    [null, undefined]
+  ];
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'integer', type: 'integer'},
+      {name: 'real', type: 'real'}
+    ],
+    rows
+  });
+  for (const [column, field] of table.fields.entries()) {
+    const expected = rows.map(row => row[column]);
+    t.deepEqual(
+      rows.map((_, index) => field.valueAccessor({index})),
+      expected
+    );
+    t.deepEqual(rows.map(field.valueAccessor), expected, 'materialized rows agree');
+  }
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'raw storage unchanged');
+  t.end();
+});
+
+test('KeplerTable -> derived BigInt access preserves exact raw sorting', t => {
+  const rows = [[9007199254740993n], [9007199254740992n], [null]];
+  const source = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [{name: 'value', type: 'integer'}],
+    rows
+  });
+  const proto = joinDatasets(source, source, {
+    leftField: 'value',
+    rightField: 'value',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+  t.equal(table.fields[0].valueAccessor({index: 0}), 9007199254740992, 'numeric view can round');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  t.deepEqual(table.sortOrder, [1, 0, 2], 'sorting distinguishes adjacent unsafe integers');
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'sorting leaves exact raw cells intact');
   t.end();
 });
 

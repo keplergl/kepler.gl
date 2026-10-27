@@ -102,6 +102,7 @@ export function groupByDataset(
     label: config.label || `group-by-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
-    rows
+    rows,
+    normalizeBigInts: true
   });
 }

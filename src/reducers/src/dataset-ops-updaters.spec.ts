@@ -4,7 +4,10 @@
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
-import {processCsvData} from '@kepler.gl/processors';
+import {processArrowTable, processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
+import {Int64, Table, vectorFromArray} from 'apache-arrow';
+import {ProtoDataset} from '@kepler.gl/types';
+import {exportMapToHTML, exportToJsonString, validateInputData} from '@kepler.gl/utils';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
 import {drainTasksForTesting, succeedTaskWithValues} from '@kepler.gl/tasks';
 import {Response} from 'node-fetch';
@@ -100,6 +103,90 @@ describe('dataset ops vis-state', () => {
     });
     expect(state.datasets[resultId].dataContainer.numRows()).toBe(2);
   });
+
+  test.each([false, true])(
+    'joined BigInts filter and save after source removal (mixed: %s)',
+    mixed => {
+      const arrow = new Table({
+        key: vectorFromArray(['a', 'b', null]),
+        pop: vectorFromArray([10n, 20n, null], new Int64())
+      });
+      const arrowData = processArrowTable({shape: 'arrow-table', data: arrow});
+      if (!arrowData) throw new Error('Invalid Arrow fixture');
+      const left = new KeplerTable({info: {id: 'left'}, color: [0, 0, 0]}).updateSchema(
+        mixed
+          ? {
+              fields: arrowData.fields,
+              rows: [
+                ['a', 10n],
+                ['b', 20],
+                [null, 0.5]
+              ]
+            }
+          : arrowData
+      );
+      const right = makeTable('right', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+      let state: VisState = {...INITIAL_VIS_STATE, datasets: {left, right}};
+      state = reduceVisState(state, VisStateActions.addJoin('left'));
+      const op = state.joins[0];
+      state = reduceVisState(
+        state,
+        VisStateActions.setJoinConfig(op.id, {
+          rightDataId: 'right',
+          leftField: 'key',
+          rightField: 'key',
+          rightColumns: []
+        })
+      );
+      state = flushCreateTableTasks(reduceVisState(state, VisStateActions.runJoin(op.id)));
+      state = reduceVisState(state, VisStateActions.addFilter(op.resultId));
+      state = reduceVisState(state, VisStateActions.setFilter(0, 'name', 'pop'));
+      expect(state.filters[0].domain).toEqual([10, 20]);
+      state = reduceVisState(state, VisStateActions.setFilter(0, 'gpu', false));
+      state = reduceVisState(state, VisStateActions.setFilter(0, 'value', [15, 20]));
+      expect(state.datasets[op.resultId].filteredIndex).toEqual([1]);
+
+      for (const removeSources of [false, true]) {
+        if (removeSources) {
+          state = reduceVisState(state, VisStateActions.removeDataset('left'));
+          state = reduceVisState(state, VisStateActions.removeDataset('right'));
+          expect(Object.keys(state.datasets)).toEqual([op.resultId]);
+        }
+        const saved = SchemaManager.save({visState: state});
+        const json = JSON.parse(exportToJsonString(saved));
+        const embedded = JSON.parse(
+          exportMapToHTML(saved).match(/const datasets = (.*);/)?.[1] || ''
+        );
+        expect(embedded).toEqual(json.datasets);
+        const parsed: ProtoDataset | undefined = processKeplerglJSON(json)?.datasets?.find(
+          dataset => dataset.info.id === op.resultId
+        );
+        if (!parsed) throw new Error('Missing derived dataset after reload');
+        const data = validateInputData(parsed.data);
+        if (!data) throw new Error('Invalid derived dataset after reload');
+        const reloaded = new KeplerTable({
+          info: parsed.info,
+          metadata: parsed.metadata,
+          color: [0, 0, 0]
+        }).updateSchema(data);
+        expect(reloaded.getColumnFilterProps('pop')?.domain).toEqual([10, 20]);
+        expect(reloaded.dataContainer.flattenData()).toEqual([
+          ['a', 10],
+          ['b', 20],
+          [null, null]
+        ]);
+        expect(state.datasets[op.resultId].dataContainer.flattenData()).toEqual([
+          ['a', 10n],
+          ['b', 20n],
+          [null, null]
+        ]);
+      }
+      expect([0, 1, 2].map(index => arrow.getChild('pop')?.get(index))).toEqual([10n, 20n, null]);
+      expect([0, 1, 2].map(index => left.dataContainer.valueAt(index, 1))).toEqual(
+        mixed ? [10n, 20, 0.5] : [10n, 20n, null]
+      );
+    }
+  );
 
   test.each(['minimum', 'maximum'] as const)(
     'runGroupBy selects chronological %s from recognized CSV timestamps',
