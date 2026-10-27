@@ -4,6 +4,10 @@
  * jsdom makes jest resolve `ws` through its `browser` condition, which is a
  * throwing shim with no WebSocketServer; this suite needs the Node build.
  */
+
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import WebSocket from 'ws';
 import {KeplerMcpBridge, toToolName} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';

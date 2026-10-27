@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Generic utility for converting an existing AI SDK tool into a sqlrooms
  * `RoomCommand`. Kept dependency-light (only `zod` + `RoomCommand` type) so it

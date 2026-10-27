@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * kepler-mcp-bridge — lets a local `kepler-mcp` process drive this page.
  *

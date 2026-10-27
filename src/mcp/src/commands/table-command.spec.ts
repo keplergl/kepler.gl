@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getTableCommand} from './table-command';
 import {tableFromArrays} from 'apache-arrow';
 

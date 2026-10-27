@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getAddLayerCommand} from './layer-creation-command';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';

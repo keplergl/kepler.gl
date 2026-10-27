@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getViewModeCommand} from './view-mode-command';
 import {ActionTypes} from '@kepler.gl/actions';
 

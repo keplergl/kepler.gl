@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getSplitViewCommand} from './split-view-command';
 import {ActionTypes} from '@kepler.gl/actions';
 

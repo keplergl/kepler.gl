@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {DEFAULT_MAP_STYLES} from '@kepler.gl/constants';
