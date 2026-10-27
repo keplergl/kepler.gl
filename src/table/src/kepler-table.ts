@@ -258,7 +258,6 @@ class KeplerTable<F extends Field = Field> {
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
       arrowTable: data.arrowTable,
-      arrowSchema: data.arrowSchema,
       geoArrowBinaryData: data.geoArrowBinaryData,
       inputDataFormat
     });
@@ -308,8 +307,7 @@ class KeplerTable<F extends Field = Field> {
 
     if (typeof this.dataContainer.update === 'function') {
       this.dataContainer.update(dataContainerData, {
-        geoArrowBinaryData: data.geoArrowBinaryData,
-        arrowSchema: data.arrowSchema
+        geoArrowBinaryData: data.geoArrowBinaryData
       });
     } else if (isRowSnapshot) {
       this.dataContainer = createDataContainer(dataContainerData, {

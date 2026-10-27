@@ -15,7 +15,7 @@ import {DuckDBDataProtocol} from '@duckdb/duckdb-wasm';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {ProtoDatasetField} from '@kepler.gl/types';
-import {createArrowTable, DatabaseConnection, getApplicationConfig} from '@kepler.gl/utils';
+import {DatabaseConnection, getApplicationConfig} from '@kepler.gl/utils';
 
 export const SUPPORTED_DUCKDB_DROP_EXTENSIONS = ['arrow', 'csv', 'geojson', 'json', 'parquet'];
 
@@ -180,7 +180,18 @@ export const restoreArrowTable = (
   fields: ProtoDatasetField[],
   arrowSchema?: arrow.Schema
 ) => {
-  return createArrowTable(columns, fields, arrowSchema);
+  const creaOpts = {};
+  fields.map((field, index) => {
+    creaOpts[field.name] = columns[index];
+  });
+
+  const ordered = new arrow.Table(creaOpts).select(fields.map(field => field.name));
+  return arrowSchema
+    ? new arrow.Table(
+        arrowSchema,
+        ordered.batches.map(batch => new arrow.RecordBatch(arrowSchema, batch.data))
+      )
+    : ordered;
 };
 
 /**

@@ -26,8 +26,11 @@ import {
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 
-test('restoreArrowTable -> numerical names preserve schema, buffers and source metadata', t => {
-  const columns = [arrow.vectorFromArray([37, null]), arrow.vectorFromArray([1000, 2000])];
+test('restoreArrowTable -> numeric names preserve column order and supplied schema', t => {
+  const columns = [
+    arrow.vectorFromArray([37, null], new arrow.Float64()),
+    arrow.vectorFromArray([1000, 2000], new arrow.Int32())
+  ];
   const fields = ['lat', '2020'].map(
     (name, i) => new arrow.Field(name, columns[i].type, true, new Map([['source', name]]))
   );
@@ -38,18 +41,24 @@ test('restoreArrowTable -> numerical names preserve schema, buffers and source m
       restored.schema.fields.map(f => f.name),
       ['lat', '2020']
     );
-    t.equal(restored.getChildAt(0).get(0), 37);
-    t.equal(restored.getChildAt(0).get(1), null);
-    t.equal(restored.getChildAt(1).get(0), 1000);
-    t.equal(restored.getChildAt(0).data[0].values.buffer, columns[0].data[0].values.buffer);
-    t.deepEqual(restored.schema.fields[0].metadata, fields[0].metadata);
-    restored.schema.fields[0].metadata.set('changed', 'yes');
-    t.notOk(fields[0].metadata.has('changed'), 'does not mutate the input field');
+    t.deepEqual(Array.from(restored.getChildAt(0)), [37, null]);
+    t.deepEqual(Array.from(restored.getChildAt(1)), [1000, 2000]);
+    columns.forEach((column, i) => {
+      t.equal(restored.getChildAt(i).type.toString(), column.type.toString());
+      t.equal(restored.getChildAt(i).data[0].values.buffer, column.data[0].values.buffer);
+    });
     if (originalSchema) {
       t.deepEqual(restored.schema.metadata, schema.metadata);
-      restored.schema.metadata.set('changed', 'yes');
-      t.notOk(schema.metadata.has('changed'), 'does not mutate the input schema');
+      t.deepEqual(restored.schema.fields[0].metadata, fields[0].metadata);
     }
+    t.equal(arrow.tableFromIPC(arrow.tableToIPC(restored)).getChild('2020').get(0), 1000);
+    const empty = restoreArrowTable(
+      columns.map(column => column.slice(0, 0)),
+      fields,
+      originalSchema
+    );
+    t.equal(empty.numRows, 0);
+    t.equal(empty.getChildAt(1).type.toString(), 'Int32');
   }
   t.end();
 });

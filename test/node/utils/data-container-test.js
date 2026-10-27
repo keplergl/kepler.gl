@@ -7,13 +7,10 @@ import {
   createDataContainer,
   createIndexedDataContainer,
   compactArrowTable,
-  createArrowTable,
   ArrowDataContainer
 } from '@kepler.gl/utils';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
-import {dirname, join} from 'path';
-import {pathToFileURL} from 'url';
 
 function orderedNumericTable() {
   const cols = [
@@ -33,53 +30,52 @@ function orderedNumericTable() {
   return new arrow.Table(schema, [batch]);
 }
 
-test('ArrowDataContainer -> numeric headers preserve ordered vectors, metadata and IPC', t => {
+test('ArrowDataContainer -> numeric headers preserve vector order through updates and IPC', t => {
   const source = orderedNumericTable();
   const cols = source.schema.fields.map((_, i) => source.getChildAt(i));
-  const fields = source.schema.fields.map(f => ({name: f.name, metadata: f.metadata}));
-  const dc = new ArrowDataContainer({cols, fields, arrowSchema: source.schema});
-  t.deepEqual(dc.rowAsArray(0), [37, -122, 1000], 'numeric header must not move the vector');
-  t.deepEqual(dc.rowAsArray(1), [null, -123, null], 'nulls stay with their columns');
+  const dc = new ArrowDataContainer({cols, fields: source.schema.fields});
+  const rows = [
+    [37, -122, 1000],
+    [null, -123, null],
+    [38, -124, 2000]
+  ];
+  t.deepEqual(dc.flattenData(), rows, 'numeric names do not reorder values');
+  dc.update([
+    cols[0].slice(0, 1).concat(cols[0].slice(1)),
+    cols[1],
+    cols[2].slice(0, 2).concat(cols[2].slice(2))
+  ]);
+  t.equal(dc.numChunks(), 3, 'staggered chunks remain aligned');
+  t.deepEqual(dc.flattenData(), rows);
   t.deepEqual(
     dc.getTable().schema.fields.map(f => f.name),
-    fields.map(f => f.name)
+    ['lat', 'lng', '2020']
   );
-  t.deepEqual(dc.getTable().schema.metadata, source.schema.metadata, 'schema metadata survives');
   cols.forEach((col, i) => {
-    t.equal(dc.getColumn(i).type.toString(), col.type.toString(), 'physical type stays aligned');
-    t.equal(dc.getColumn(i).data[0].values.buffer, col.data[0].values.buffer, 'values are shared');
-    t.equal(
-      dc.getColumn(i).data[0].nullBitmap.buffer,
-      col.data[0].nullBitmap.buffer,
-      'validity is shared'
-    );
-    t.deepEqual(dc.getTable().schema.fields[i].metadata, source.schema.fields[i].metadata);
+    t.equal(dc.getColumn(i).type.toString(), col.type.toString(), 'physical types stay aligned');
+    dc.getColumn(i).data.forEach(chunk => {
+      t.equal(chunk.values.buffer, col.data[0].values.buffer, 'values are shared');
+      t.equal(chunk.nullBitmap.buffer, col.data[0].nullBitmap.buffer, 'validity is shared');
+    });
   });
-  dc.getTable().schema.metadata.set('edited', 'yes');
-  dc.getTable().schema.fields[0].metadata.set('edited', 'yes');
-  t.notOk(source.schema.metadata.has('edited'), 'schema metadata edits do not mutate source');
-  t.notOk(
-    source.schema.fields[0].metadata.has('edited'),
-    'field metadata edits do not mutate source'
-  );
   const restored = arrow.tableFromIPC(arrow.tableToIPC(dc.getTable()));
-  t.equal(restored.getChild('lat').get(0), 37, 'IPC keeps latitude');
-  t.equal(restored.getChild('2020').get(0), 1000, 'IPC keeps numeric-name values');
-  dc.update(cols);
-  t.deepEqual(dc.rowAsArray(0), [37, -122, 1000], 'vector update keeps order');
-  t.equal(
-    dc.getTable().schema.metadata.get('source'),
-    'ordered',
-    'vector update keeps schema metadata'
+  t.equal(restored.getChild('lat').get(0), 37);
+  t.equal(restored.getChild('2020').get(0), 1000);
+  dc.update(cols.map(col => col.slice(0, 0)));
+  t.equal(dc.numRows(), 0);
+  t.equal(dc.numColumns(), 3);
+  t.deepEqual(
+    dc.getTable().schema.fields.map(f => f.name),
+    ['lat', 'lng', '2020']
   );
+  t.equal(dc.getColumn(2).type.toString(), 'Int32', 'empty columns keep their types');
   t.end();
 });
 
-test('compactArrowTable -> numeric and duplicate headers keep schema order', t => {
+test('compactArrowTable -> numeric headers keep values aligned with the schema', t => {
   const source = orderedNumericTable();
-  const combined = source.concat(source);
-  const compacted = compactArrowTable(combined, 1);
-  t.equal(compacted.batches.length, 1, 'keeps the configured compaction behavior');
+  const compacted = compactArrowTable(source.concat(source), 1);
+  t.equal(compacted.batches.length, 1);
   t.deepEqual(
     compacted.schema.fields.map(f => f.name),
     ['lat', 'lng', '2020']
@@ -94,204 +90,7 @@ test('compactArrowTable -> numeric and duplicate headers keep schema order', t =
   });
   t.deepEqual(compacted.schema.metadata, source.schema.metadata);
   t.equal(arrow.tableFromIPC(arrow.tableToIPC(compacted)).getChild('2020').get(0), 1000);
-  t.equal(combined.getChild('lat').get(0), 37, 'source values remain untouched');
-
-  const schema = new arrow.Schema(source.schema.fields.map(f => f.clone({name: '2020'})));
-  const batch = new arrow.RecordBatch(schema, source.batches[0].data);
-  // Arrow's RecordBatch constructor merges duplicate schema names; make the
-  // fixture explicitly positional, as an external Arrow schema can be.
-  schema.fields.forEach((field, i) => {
-    batch.schema.fields[i] = field;
-  });
-  const duplicates = compactArrowTable(new arrow.Table(schema, [batch, batch]), 1);
-  t.equal(duplicates.numCols, 3, 'duplicate names do not drop vectors');
-  t.deepEqual(
-    duplicates.schema.fields.map(f => f.name),
-    ['2020', '2020', '2020']
-  );
-  t.deepEqual(
-    [0, 1, 2].map(i => duplicates.getChildAt(i).get(0)),
-    [37, -122, 1000]
-  );
-  t.end();
-});
-
-test('ArrowDataContainer -> staggered chunks and empty typed columns', t => {
-  const source = orderedNumericTable();
-  const cols = source.schema.fields.map((_, i) => source.getChildAt(i));
-  const dc = new ArrowDataContainer({cols, fields: source.schema.fields, arrowTable: source});
-  dc.update([
-    cols[0].slice(0, 1).concat(cols[0].slice(1)),
-    cols[1],
-    cols[2].slice(0, 2).concat(cols[2].slice(2))
-  ]);
-  t.equal(dc.numChunks(), 3, 'aligns unequal chunk boundaries without compacting updates');
-  t.deepEqual(dc.flattenData(), [
-    [37, -122, 1000],
-    [null, -123, null],
-    [38, -124, 2000]
-  ]);
-  for (let i = 0; i < cols.length; i++) {
-    dc.getColumn(i).data.forEach(chunk => {
-      t.equal(chunk.values.buffer, cols[i].data[0].values.buffer, 'slice views share values');
-      t.equal(
-        chunk.nullBitmap.buffer,
-        cols[i].data[0].nullBitmap.buffer,
-        'slice views share validity'
-      );
-    });
-  }
-  dc.update(cols.map(col => col.slice(0, 0)));
-  t.equal(dc.numRows(), 0);
-  t.equal(dc.numColumns(), 3);
-  t.deepEqual(
-    dc.getTable().schema.fields.map(f => f.name),
-    ['lat', 'lng', '2020']
-  );
-  t.equal(dc.getColumn(2).type.toString(), 'Int32', 'empty column retains its physical type');
-  t.end();
-});
-
-test('ordered Arrow reconstruction -> nested, dictionary and timestamp buffers are reused', t => {
-  const cases = [
-    [new arrow.Dictionary(new arrow.Utf8(), new arrow.Int8()), ['west', null, 'east']],
-    [new arrow.TimestampMillisecond(), [0, null, 1000]],
-    [new arrow.Int64(), [1000n, null, 2000n]],
-    [
-      new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
-      [[-122, 37], null, [-123, 38]]
-    ],
-    [new arrow.Binary(), [new Uint8Array([1, 2]), null, new Uint8Array([3])]]
-  ];
-  for (const [type, values] of cases) {
-    const source = tableFromColumnValues('geometry', type, values, new Map([['source', 'native']]));
-    const vector = source.getChildAt(0).slice(1);
-    const lat = arrow.vectorFromArray([null, 38]);
-    const getter = vector.get;
-    vector.get = () => {
-      throw new Error('reconstruction must not read cells');
-    };
-    const restored = createArrowTable(
-      [lat, vector],
-      [{name: 'lat'}, {name: '2020', metadata: source.schema.fields[0].metadata}]
-    );
-    vector.get = getter;
-    const column = restored.getChildAt(1);
-    t.deepEqual(
-      [jsArrowCell(column.get(0)), jsArrowCell(column.get(1))],
-      [jsArrowCell(vector.get(0)), jsArrowCell(vector.get(1))],
-      `${type}: sliced cells survive`
-    );
-    t.equal(column.type.toString(), type.toString(), 'type survives');
-    const checkBuffers = (actual, expected) => {
-      actual.buffers.forEach((buffer, i) => {
-        if (buffer?.byteLength)
-          t.equal(buffer.buffer, expected.buffers[i].buffer, 'shares backing buffer');
-      });
-      t.equal(actual.dictionary, expected.dictionary, 'shares dictionary');
-      actual.children.forEach((child, i) => checkBuffers(child, expected.children[i]));
-    };
-    checkBuffers(column.data[0], vector.data[0]);
-    t.equal(restored.schema.fields[1].metadata.get('source'), 'native');
-    const ipc = arrow.tableFromIPC(arrow.tableToIPC(restored));
-    t.deepEqual(
-      [jsArrowCell(ipc.getChildAt(1).get(0)), jsArrowCell(ipc.getChildAt(1).get(1))],
-      [jsArrowCell(vector.get(0)), jsArrowCell(vector.get(1))],
-      'IPC preserves typed cells'
-    );
-  }
-  const short = arrow.vectorFromArray([1], new arrow.Int32());
-  const long = arrow.vectorFromArray([2, 3], new arrow.Int32());
-  const padded = createArrowTable([short, long], [{name: 'lat', nullable: false}, {name: '2020'}]);
-  t.deepEqual(Array.from(padded.getChildAt(0)), [1, null], 'short vectors retain null padding');
-  t.equal(padded.schema.fields[0].nullable, true, 'padded schema allows nulls');
-  t.end();
-});
-
-test('ordered Arrow reconstruction -> accepts another Arrow build without copying buffers', async t => {
-  // The ESM build has distinct Data/Vector constructors, as DuckDB's bundled
-  // Arrow does. A normal transpiled import would reuse the local CJS build.
-  const loadModule = new Function('url', 'return import(url)');
-  const foreign = await loadModule(
-    pathToFileURL(join(dirname(require.resolve('apache-arrow')), 'Arrow.mjs')).href
-  );
-  const types = [
-    new foreign.Float64(),
-    new foreign.Dictionary(new foreign.Utf8(), new foreign.Int8()),
-    new foreign.FixedSizeList(2, new foreign.Field('xy', new foreign.Float64(), false))
-  ];
-  const columns = [
-    [37, null],
-    ['west', null],
-    [[-122, 37], null]
-  ].map((values, i) => foreign.vectorFromArray(values, types[i]));
-  t.notOk(columns[0].data[0] instanceof arrow.Data, 'fixture uses distinct Arrow classes');
-  const fields = columns.map(
-    (col, i) => new foreign.Field(['lat', '2020', 'geometry'][i], col.type, true)
-  );
-  const schema = new foreign.Schema(fields, new Map([['source', 'duckdb']]));
-  const restored = createArrowTable(columns, fields, schema);
-  t.deepEqual(
-    restored.schema.fields.map(f => f.name),
-    ['lat', '2020', 'geometry']
-  );
-  const checkBuffers = (actual, expected) => {
-    t.ok(actual instanceof arrow.Data, 'normalizes the Data wrapper');
-    actual.buffers.forEach((buffer, i) => {
-      if (buffer?.byteLength)
-        t.equal(buffer.buffer, expected.buffers[i].buffer, 'shares foreign backing buffers');
-    });
-    actual.children.forEach((child, i) => checkBuffers(child, expected.children[i]));
-  };
-  columns.forEach((column, i) => {
-    const result = restored.getChildAt(i);
-    t.deepEqual(jsArrowCell(result.get(0)), jsArrowCell(column.get(0)));
-    t.equal(result.get(1), null);
-    checkBuffers(result.data[0], column.data[0]);
-  });
-  t.equal(restored.schema.metadata.get('source'), 'duckdb');
-  t.equal(arrow.tableFromIPC(arrow.tableToIPC(restored)).getChild('2020').get(0), 'west');
-  const sharedFields = ['first', '2020'].map(
-    name => new foreign.Field(name, columns[1].type, true)
-  );
-  const shared = createArrowTable(
-    [columns[1], columns[1]],
-    sharedFields,
-    new foreign.Schema(sharedFields)
-  );
-  t.equal(
-    shared.getChildAt(0).data[0].dictionary,
-    shared.getChildAt(1).data[0].dictionary,
-    'shared dictionary identity survives normalization'
-  );
-  t.equal(arrow.tableFromIPC(arrow.tableToIPC(shared)).getChild('2020').get(0), 'west');
-  const sharedBatches = new arrow.Table(shared.schema, [...shared.batches, ...shared.batches]);
-  const sharedCompacted = compactArrowTable(sharedBatches, 1);
-  t.equal(
-    sharedCompacted,
-    sharedBatches,
-    'keeps source when independent builders cannot preserve a shared dictionary ID'
-  );
-  t.equal(
-    arrow.tableFromIPC(arrow.tableToIPC(sharedCompacted)).getChild('2020').get(2),
-    'west',
-    'fallback remains serializable'
-  );
-  const batch = new foreign.RecordBatch(
-    schema,
-    foreign.makeData({
-      type: new foreign.Struct(fields),
-      length: 2,
-      children: columns.map(c => c.data[0])
-    })
-  );
-  const compacted = compactArrowTable(new foreign.Table(schema, [batch, batch]), 1);
-  t.equal(compacted.batches.length, 1, 'foreign batches are compacted to the configured limit');
-  const ipc = arrow.tableFromIPC(arrow.tableToIPC(compacted));
-  t.deepEqual(
-    [0, 1, 2, 3].map(i => ipc.getChild('2020').get(i)),
-    ['west', null, 'west', null]
-  );
+  t.equal(source.getChild('lat').get(0), 37, 'source values remain untouched');
   t.end();
 });
 

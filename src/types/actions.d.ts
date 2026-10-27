@@ -73,8 +73,6 @@ export type ProtoDataset = {
     rows: any[][];
     cols?: any[];
     arrowTable?: arrow.Table;
-    /** Original ordered Arrow schema, including field and table metadata. */
-    arrowSchema?: arrow.Schema;
     /** GeoArrow chunks already converted to deck.gl binary features on workers. */
     geoArrowBinaryData?: GeoArrowBinaryData;
     /** Existing table in the configured DuckDB database; avoids re-importing its rows. */
