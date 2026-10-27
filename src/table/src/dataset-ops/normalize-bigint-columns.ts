@@ -9,7 +9,7 @@ import {ProtoDatasetField} from '@kepler.gl/types';
 const BIGINT_COLUMN = Symbol('bigintColumn');
 
 /** Whether a derived numeric field stores normalized BigInt values. */
-export function isBigIntColumn(field: object): boolean {
+export function columnContainsBigInts(field: object): boolean {
   return (field as {[BIGINT_COLUMN]?: boolean})[BIGINT_COLUMN] === true;
 }
 

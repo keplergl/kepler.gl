@@ -32,7 +32,7 @@ export function makeResultProtoDataset({
   resultId,
   fields,
   rows,
-  normalizeBigInts = true
+  normalizeBigInts = false
 }: {
   source: DatasetOpsTable;
   extraSources?: DatasetOpsTable[];
@@ -42,7 +42,7 @@ export function makeResultProtoDataset({
   resultId?: string;
   fields: ProtoDatasetField[];
   rows: any[][];
-  /** Normalize and mark numeric BigInt columns; disable to preserve caller-managed rows and fields. */
+  /** Opt in to normalizing and marking numeric BigInt columns; defaults to false. */
   normalizeBigInts?: boolean;
 }): ProtoDataset {
   const id = resultId || generateHashId(6);

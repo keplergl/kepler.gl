@@ -341,6 +341,7 @@ export function spatialJoinDatasets(
     label: config.label || `spatial-join-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
-    rows
+    rows,
+    normalizeBigInts: true
   });
 }

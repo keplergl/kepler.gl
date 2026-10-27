@@ -117,7 +117,7 @@ describe('dataset-ops engine', () => {
         rows: values.map(value => [value]),
         ...(normalizeBigInts === undefined ? {} : {normalizeBigInts})
       });
-      const enabled = normalizeBigInts !== false;
+      const enabled = normalizeBigInts === true;
       expect(result.data.rows).toEqual(
         (enabled ? [10n, 20n, null, null, 9007199254740993n] : values).map(value => [value])
       );
