@@ -1,7 +1,7 @@
 # Live remotely hosted data
 
 Loads a CORS CSV of points orbiting San Francisco as a remotely hosted dataset
-and **polls it every 300 ms**. The right sidebar switches between three host-app
+and **polls it every 300 ms**. The right sidebar switches between four host-app
 update styles:
 
 - **Poll URL** — HTTP snapshot replace (`refreshDataset` /
@@ -15,12 +15,17 @@ update styles:
   `ws://localhost:4010/vehicles.ws` and maps each JSON upsert to
   `addToDataset(..., {upsertBy: 'id'})`. Kepler has no websocket client and
   still rebuilds layer data on every message.
+- **Arrow rows** — pauses polling and opens a separate local Arrow dataset.
+  The same host controls append, upsert and delete through the public actions.
+  Mode changes hide the inactive dataset's layers; Arrow rows and layer/filter
+  settings remain available when you return.
 
 This bundles local monorepo `src/` (not a published npm package). Host-row
-and websocket edits only work for in-memory CSV (`RowDataContainer`), which this
-example uses. Arrow and DuckDB tables log a warning and leave the data unchanged
-(INSERT / concat are not implemented yet). The **Keyed by id** controls
-exercise `addToDataset(id, rows, {upsertBy: 'id'})` and
+and websocket edits use in-memory CSV (`RowDataContainer`); **Arrow rows**
+uses an explicitly typed Arrow table (`ArrowDataContainer`).
+The same actions support primitive Arrow columns; nested, binary, and GeoArrow
+columns cannot be appended or upserted. DuckDB tables remain a warned no-op.
+The **Keyed by id** controls exercise `addToDataset(id, rows, {upsertBy: 'id'})` and
 `removeFromDataset(id, {field: 'id', values})`.
 
 ## Pre-requirements
@@ -76,6 +81,25 @@ run next to `yarn start` on 8080). The CSV server listens at
 - This is the [#322](https://github.com/keplergl/kepler.gl/issues/322) *transport*
   pattern: `ws → addToDataset`. It is **not** a Kepler websocket layer and does
   **not** skip a full layer-data rebuild.
+
+### Arrow rows
+
+- Select **Arrow rows**. It starts with 3 local points and requires no CSV or
+  WebSocket connection. Storage should read **ArrowDataContainer · 1 batch(es)**.
+  The first visit fits the map to include the outer rings used by new points.
+- **Add 1 / Add 5** append rows. **Insert tracker**, then **Move tracker**
+  repeatedly: its coordinates and speed change while the row count stays put.
+  **Remove tracker / Remove veh-01 / Remove last host** delete by id;
+  **Remove last / Remove random** delete by index.
+- Change the **Live Arrow** layer radius/color or add a numeric **speed** filter.
+  Repeat the edits and check that the layer id, styling and filter selection
+  remain. The revision counter advances after each successful edit.
+- **Auto trail** adds every 800ms and keeps at most 20 host points. Switching
+  modes turns it off; returning to Arrow keeps the edited rows without restarting
+  the timer. The original CSV dataset keeps its existing mode behavior.
+- The Arrow table is initialized once. Edit controls never call `addDataToMap`
+  or replace its full snapshot. Sample columns are Utf8, Float64 and Int32;
+  nested/binary/GeoArrow append/upsert is deliberately outside this example.
 
 ## CSV server only (Add Data URL)
 

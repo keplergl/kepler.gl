@@ -34,6 +34,7 @@ import {
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
+  ArrowDataContainer,
   DataForm,
   diffFilters,
   filterDataByFilterTypes,
@@ -109,7 +110,7 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 const FID_KEY = 'name';
 
 const ROW_EDIT_NOT_IMPLEMENTED =
-  'In-place row edits (append, upsert, delete) are not implemented for Arrow/DuckDB tables. DuckDB INSERT and Arrow concat are not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+  'In-place row edits (append, upsert, delete) are not implemented for this table. DuckDB tables omit row edits (no INSERT yet). Use addDataToMap with keepExistingConfig to replace the table.';
 
 function warnRowEditsUnavailable(method: string): void {
   Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
@@ -366,8 +367,8 @@ class KeplerTable<F extends Field = Field> {
   }
 
   /**
-   * Append column-ordered rows in place. No-op for Arrow/DuckDB (no `append`).
-   * Accessors stay bound: the container instance is not replaced.
+   * Append column-ordered rows in place. Accessors stay bound: the container
+   * instance is not replaced. No-op when the container has no `append`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   appendRows(rows: any[][]): boolean {
@@ -398,7 +399,7 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * Replace rows that share `keyField` and append the rest. Last incoming row
-   * wins for a repeated key. No-op for Arrow/DuckDB.
+   * wins for a repeated key. No-op when the container has no `append`/`replace`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   upsertRows(rows: any[][], keyField: string): boolean {
@@ -418,6 +419,16 @@ class KeplerTable<F extends Field = Field> {
       return false;
     }
 
+    // Match Arrow keys after encoding so accepted representations such as an
+    // Int64 decimal string or a Date compare equal to the stored column value.
+    const keys =
+      this.dataContainer instanceof ArrowDataContainer
+        ? this.dataContainer.getRowEditKeys(rows, keyIdx)
+        : rows.map(row => row[keyIdx]);
+    if (!keys) {
+      return false;
+    }
+
     const start = this.dataContainer.numRows();
     const keyToIndex = new Map<unknown, number>();
     for (let i = 0; i < start; i++) {
@@ -428,31 +439,30 @@ class KeplerTable<F extends Field = Field> {
     }
 
     const lastByKey = new Map<unknown, any[]>();
-    const keyOrder: unknown[] = [];
-    for (const row of rows) {
-      const key = row[keyIdx];
-      if (!lastByKey.has(key)) {
-        keyOrder.push(key);
-      }
-      lastByKey.set(key, row);
-    }
+    rows.forEach((row, index) => lastByKey.set(keys[index], row));
 
+    const replacements = new Map<number, any[]>();
     const toAppend: any[][] = [];
-    for (const key of keyOrder) {
-      const row = lastByKey.get(key);
-      if (!row) {
-        continue;
-      }
+    for (const [key, row] of lastByKey) {
       const existing = keyToIndex.get(key);
       if (existing !== undefined) {
-        this.dataContainer.replace(existing, row);
+        replacements.set(existing, row);
       } else {
         toAppend.push(row);
       }
     }
 
-    if (toAppend.length && !this.dataContainer.append(toAppend)) {
-      return false;
+    if (this.dataContainer instanceof ArrowDataContainer) {
+      if (!this.dataContainer.replaceRows(replacements, toAppend)) {
+        return false;
+      }
+    } else {
+      for (const [index, row] of replacements) {
+        this.dataContainer.replace(index, row);
+      }
+      if (toAppend.length && !this.dataContainer.append(toAppend)) {
+        return false;
+      }
     }
 
     const nextIndexes =
@@ -466,7 +476,7 @@ class KeplerTable<F extends Field = Field> {
   }
 
   /**
-   * Remove rows by index in place. No-op for Arrow/DuckDB (no `remove`).
+   * Remove rows by index in place. No-op when the container has no `remove`.
    * @returns false when any index is invalid and the table is unchanged.
    */
   removeRows(indexes: number[]): boolean {

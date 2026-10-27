@@ -15,6 +15,7 @@ import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
   INITIAL_VIS_STATE,
+  INITIAL_MAP_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
   validateLayerWithData,
@@ -11187,9 +11188,9 @@ test('VisStateUpdater -> addToDataset no-ops', async t => {
   t.equal(
     reducer(state, VisStateActions.addToDataset('live', [3, 4])),
     state,
-    'tables without append (Arrow/DuckDB) are a no-op'
+    'tables without append are a no-op'
   );
-  t.ok(warn.called, 'should warn that in-place row edits are not implemented for Arrow/DuckDB');
+  t.ok(warn.called, 'should warn that in-place row edits are not implemented');
   warn.restore();
   t.equal(state.datasets.live.dataContainer.numRows(), 1, 'no-op must not mutate rows');
 
@@ -11294,9 +11295,9 @@ test('VisStateUpdater -> removeFromDataset deletes rows and keeps layers', async
   t.equal(
     reducer(oneIndex, VisStateActions.removeFromDataset('live', 0)),
     oneIndex,
-    'tables without remove (Arrow/DuckDB) are a no-op'
+    'tables without remove are a no-op'
   );
-  t.ok(warn.called, 'should warn that in-place deletes are not implemented for Arrow/DuckDB');
+  t.ok(warn.called, 'should warn that in-place deletes are not implemented');
   warn.restore();
 
   t.end();
@@ -11430,5 +11431,522 @@ test('VisStateUpdater -> addToDataset and removeFromDataset clear table sort', a
   t.equal(removed.datasets.live.sortOrder, null, 'remove should drop sortOrder');
   t.equal(removed.datasets.live.sortColumn, undefined, 'remove should drop sortColumn');
 
+  t.end();
+});
+
+async function createArrowLiveDatasets(rows) {
+  const table = rows instanceof arrow.Table ? rows : arrow.tableFromJSON(rows);
+  return createNewDataEntryMock({
+    info: {id: 'live', label: 'live.arrow'},
+    data: processArrowBatches(table.batches)
+  });
+}
+
+test('VisStateUpdater -> addToDataset and removeFromDataset on Arrow tables', async t => {
+  const datasets = await createArrowLiveDatasets([{lat: 37.77, lng: -122.42}]);
+  t.ok(
+    typeof datasets.live.dataContainer.append === 'function',
+    'Arrow dataset should expose append'
+  );
+
+  const {props} = PointLayer.findDefaultLayerProps(datasets.live);
+  const pointLayer = new PointLayer({
+    id: 'p1',
+    dataId: 'live',
+    isVisible: true,
+    ...props[0]
+  });
+  const {layerData, layer} = calculateLayerData(
+    pointLayer,
+    {...INITIAL_VIS_STATE, datasets, layers: [pointLayer], layerData: [{}]},
+    undefined
+  );
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layerData],
+    layerOrder: [layer.id]
+  };
+
+  const appended = reducer(
+    state,
+    VisStateActions.addToDataset('live', [
+      [10, 20],
+      [30, 40]
+    ])
+  );
+  t.equal(appended.datasets.live.dataContainer.numRows(), 3, 'should append both Arrow rows');
+  t.equal(appended.layers[0].id, 'p1', 'should keep the same layer id');
+  t.equal(
+    appended.layerData[0].data.numRows,
+    3,
+    'should rebuild Arrow layer data with the new row count'
+  );
+  t.notEqual(
+    appended.layerData[0].data,
+    state.layerData[0].data,
+    'should replace the previous Arrow table snapshot'
+  );
+
+  const keyed = await createArrowLiveDatasets([
+    {id: 'a', lat: 1, lng: 2},
+    {id: 'b', lat: 3, lng: 4}
+  ]);
+  const upserted = reducer(
+    {...INITIAL_VIS_STATE, datasets: keyed},
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: 'b', lat: 30, lng: 40},
+        {id: 'c', lat: 5, lng: 6}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.numRows(),
+    3,
+    'should append only the new Arrow key'
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(1, 1),
+    30,
+    'should replace the matching Arrow key'
+  );
+  t.equal(
+    upserted.datasets.live.dataContainer.valueAt(2, 0),
+    'c',
+    'should append the new Arrow key'
+  );
+
+  const removed = reducer(
+    upserted,
+    VisStateActions.removeFromDataset('live', {field: 'id', values: ['b']})
+  );
+  t.equal(removed.datasets.live.dataContainer.numRows(), 2, 'should drop the matching Arrow id');
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(0, 0),
+    'a',
+    'should keep unmatched Arrow ids'
+  );
+  t.equal(
+    removed.datasets.live.dataContainer.valueAt(1, 0),
+    'c',
+    'should keep later unmatched Arrow ids'
+  );
+
+  t.end();
+});
+
+test('VisStateUpdater -> rejected Arrow upserts leave all rows and derived state unchanged', async t => {
+  const datasets = await createArrowLiveDatasets(
+    new arrow.Table({
+      id: arrow.vectorFromArray(['a', 'b'], new arrow.Utf8()),
+      amount: arrow.vectorFromArray([1n, 2n], new arrow.Int64())
+    })
+  );
+  const state = reducer(
+    {...INITIAL_VIS_STATE, datasets},
+    VisStateActions.sortTableColumn('live', 'amount')
+  );
+  const dataset = state.datasets.live;
+  const container = dataset.dataContainer;
+  const snapshot = container.getTable();
+  const revision = dataset.dataRevision;
+  const indexes = dataset.allIndexes;
+  const sortOrder = dataset.sortOrder;
+  const warn = sinon.stub(Console, 'warn');
+  try {
+    for (const lastKey of ['b', 'c']) {
+      const result = reducer(
+        state,
+        VisStateActions.addToDataset(
+          'live',
+          [
+            ['a', 10n],
+            [lastKey, 'invalid-int64']
+          ],
+          {
+            upsertBy: 'id'
+          }
+        )
+      );
+      t.equal(result, state, 'encoding failure is a reducer no-op');
+      t.equal(container.getTable(), snapshot, 'no partial Arrow snapshot is committed');
+      t.deepEqual(
+        container.flattenData(),
+        [
+          ['a', 1n],
+          ['b', 2n]
+        ],
+        'no earlier replacement leaks'
+      );
+      t.equal(dataset.dataRevision, revision, 'revision stays unchanged');
+      t.equal(dataset.allIndexes, indexes, 'indexes stay unchanged');
+      t.equal(dataset.sortOrder, sortOrder, 'sorting stays unchanged');
+    }
+  } finally {
+    warn.restore();
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow upserts preserve accessors and last incoming values', async t => {
+  const datasets = await createArrowLiveDatasets([
+    {id: 'a', value: 1},
+    {id: 'b', value: 2},
+    {id: 'c', value: 3}
+  ]);
+  let state = {...INITIAL_VIS_STATE, datasets};
+  const container = datasets.live.dataContainer;
+  const snapshot = container.getTable();
+  const accessor = datasets.live.fields[1].valueAccessor;
+  const revision = datasets.live.dataRevision;
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        ['c', 30],
+        ['e', 5],
+        ['a', 10],
+        ['d', 4],
+        ['c', 33],
+        ['e', 55]
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  t.equal(state.datasets.live.dataContainer, container, 'keeps the original container');
+  t.deepEqual(
+    container.flattenData(),
+    [
+      ['a', 10],
+      ['b', 2],
+      ['c', 33],
+      ['e', 55],
+      ['d', 4]
+    ],
+    'replacements keep positions and new keys keep first incoming order'
+  );
+  t.equal(accessor({index: 2}), 33, 'existing accessors read updated values');
+  t.equal(snapshot.getChildAt(1).get(2), 3, 'previous Arrow snapshots stay unchanged');
+  t.equal(state.datasets.live.dataRevision, revision + 1, 'one revision for the whole batch');
+  t.deepEqual(state.datasets.live.allIndexes, [0, 1, 2, 3, 4], 'indexes include appended rows');
+
+  state = reducer(state, VisStateActions.addToDataset('live', [['b', null]], {upsertBy: 'id'}));
+  t.equal(container.numRows(), 5, 'replacement-only upsert keeps row count');
+  t.equal(container.valueAt(1, 1), null, 'replacement-only upsert accepts null values');
+  state = reducer(state, VisStateActions.addToDataset('live', [['f', 6]], {upsertBy: 'id'}));
+  t.deepEqual(container.rowAsArray(5), ['f', 6], 'append-only upsert preserves values');
+
+  state = reducer(state, VisStateActions.removeFromDataset('live', [0, 1, 2, 3, 4, 5]));
+  state = reducer(state, VisStateActions.addToDataset('live', [['g', 7]], {upsertBy: 'id'}));
+  t.deepEqual(
+    container.flattenData(),
+    [['g', 7]],
+    'upsert retains the schema after deleting all rows'
+  );
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion preserves list values and IPC', async t => {
+  for (const [type, values] of [
+    [
+      new arrow.Int32(),
+      [
+        [1, null, 3],
+        [4, 5, 6],
+        [7, null, 9]
+      ]
+    ],
+    [
+      new arrow.Float16(),
+      [
+        [1.5, 2.5],
+        [3, 4],
+        [5.5, 6.5]
+      ]
+    ]
+  ]) {
+    for (const structWrapped of [false, true]) {
+      const list = arrow.vectorFromArray(
+        values,
+        new arrow.List(new arrow.Field('item', type, true))
+      );
+      const column = structWrapped
+        ? arrow.makeVector({
+            type: new arrow.Struct([new arrow.Field('items', list.type, true)]),
+            length: values.length,
+            children: list.data
+          })
+        : list;
+      const source = new arrow.Table({
+        id: arrow.vectorFromArray([1, 2, 3], new arrow.Int32()),
+        values: column
+      });
+      const datasets = await createArrowLiveDatasets(source);
+      const state = {...INITIAL_VIS_STATE, datasets};
+      const readValues = table =>
+        Array.from(table.getChildAt(1), value => Array.from(structWrapped ? value.items : value));
+
+      const removed = reducer(
+        state,
+        VisStateActions.removeFromDataset('live', {field: 'id', values: [2]})
+      );
+      const edited = removed.datasets.live.dataContainer.getTable();
+      t.notEqual(removed, state, `${column.type} deletion succeeds`);
+      t.deepEqual(readValues(edited), [values[0], values[2]], 'retained list values are unchanged');
+      t.deepEqual(
+        readValues(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+        [values[0], values[2]],
+        'IPC preserves the retained logical values and nulls'
+      );
+      t.deepEqual(readValues(source), values, 'the original Arrow snapshot stays unchanged');
+    }
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion preserves shared dictionaries and IPC', async t => {
+  const dictionary = arrow.vectorFromArray(['a', 'b', 'c'], new arrow.Utf8());
+  const dictionaryType = new arrow.Dictionary(dictionary.type, new arrow.Int8(), 17);
+  const column = arrow.makeVector({
+    type: new arrow.List(new arrow.Field('item', dictionaryType, true)),
+    valueOffsets: new Int32Array([0, 1, 2, 3]),
+    child: arrow.makeData({
+      type: dictionaryType,
+      data: new Int8Array([0, 1, 2]),
+      dictionary
+    })
+  });
+  const source = new arrow.Table({left: column, right: column});
+  const datasets = await createArrowLiveDatasets(source);
+  const state = {...INITIAL_VIS_STATE, datasets};
+  const removed = reducer(state, VisStateActions.removeFromDataset('live', [1]));
+  const edited = removed.datasets.live.dataContainer.getTable();
+  const readValues = table =>
+    table.schema.fields.map((_, i) => Array.from(table.getChildAt(i), value => Array.from(value)));
+  const expected = [
+    [['a'], ['c']],
+    [['a'], ['c']]
+  ];
+
+  t.notEqual(removed, state, 'deletion succeeds for columns sharing a nested dictionary');
+  t.deepEqual(readValues(edited), expected, 'both columns retain their unmatched values');
+  for (const batch of edited.batches) {
+    t.equal(
+      batch.getChildAt(0).data[0].children[0].dictionary,
+      batch.getChildAt(1).data[0].children[0].dictionary,
+      'the shared dictionary id retains one dictionary'
+    );
+  }
+  t.deepEqual(
+    readValues(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+    expected,
+    'IPC preserves both nested dictionary columns'
+  );
+  t.deepEqual(
+    readValues(source),
+    [
+      [['a'], ['b'], ['c']],
+      [['a'], ['b'], ['c']]
+    ],
+    'the original Arrow snapshot stays unchanged'
+  );
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion keeps exact timestamps and point rendering', async t => {
+  for (const [type, values] of [
+    [
+      new arrow.TimestampNanosecond('UTC'),
+      [1700000000000000123n, 1700000000000000456n, 1700000000000000789n]
+    ],
+    [
+      new arrow.TimestampMicrosecond('UTC'),
+      [1700000000000123n, 1700000000000456n, 1700000000000789n]
+    ]
+  ]) {
+    for (const listWrapped of [false, true]) {
+      const timestamps = arrow.makeVector({type, data: new BigInt64Array(values)});
+      const child = listWrapped
+        ? arrow.makeVector({
+            type: new arrow.List(new arrow.Field('item', type, true)),
+            valueOffsets: new Int32Array([0, 1, 2, 3]),
+            child: timestamps.data[0]
+          })
+        : timestamps;
+      const history = arrow.makeVector({
+        type: new arrow.Struct([new arrow.Field('time', child.type, true)]),
+        length: values.length,
+        children: child.data
+      });
+      const source = new arrow.Table({
+        lat: arrow.vectorFromArray([37, 38, 39], new arrow.Float64()),
+        lng: arrow.vectorFromArray([-122, -123, -124], new arrow.Float64()),
+        history
+      });
+      const datasets = await createArrowLiveDatasets(source);
+      const point = new PointLayer({
+        id: 'points',
+        dataId: 'live',
+        isVisible: true,
+        ...PointLayer.findDefaultLayerProps(datasets.live).props[0]
+      });
+      const initial = {
+        ...INITIAL_VIS_STATE,
+        datasets,
+        layers: [point],
+        layerData: [{}],
+        layerOrder: [point.id]
+      };
+      const {layer, layerData} = calculateLayerData(point, initial, undefined);
+      const state = {...initial, layers: [layer], layerData: [layerData]};
+      const renderPoints = current => {
+        const dataset = current.datasets.live;
+        return current.layers[0]
+          .renderLayer({
+            data: current.layerData[0],
+            dataset,
+            idx: 0,
+            layerInteraction: {},
+            mapState: INITIAL_MAP_STATE,
+            gpuFilter: dataset.gpuFilter,
+            interactionConfig: current.interactionConfig,
+            visible: true,
+            layerCallbacks: {}
+          })[0]
+          .renderLayers();
+      };
+      t.equal(
+        renderPoints(state).reduce((count, rendered) => count + rendered.props.data.length, 0),
+        3,
+        'the original point layer renders all rows'
+      );
+
+      const removed = reducer(state, VisStateActions.removeFromDataset('live', [1]));
+      const edited = removed.datasets.live.dataContainer.getTable();
+      const rawTimestamps = table =>
+        listWrapped
+          ? Array.from(table.getChildAt(2), value => value.time.toArray()[0])
+          : Array.from(
+              new arrow.Vector(table.getChildAt(2).data.map(data => data.children[0])).toArray()
+            );
+      t.notEqual(removed, state, `${history.type} deletion succeeds`);
+      t.equal(edited.numRows, 2, 'only the requested row is deleted');
+      t.deepEqual(
+        rawTimestamps(edited),
+        [values[0], values[2]],
+        'retained timestamp storage is exact'
+      );
+      t.deepEqual(
+        rawTimestamps(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+        [values[0], values[2]],
+        'IPC preserves exact nested timestamp storage'
+      );
+      t.deepEqual(rawTimestamps(source), values, 'the original timestamp snapshot stays unchanged');
+      let rendered;
+      t.doesNotThrow(() => {
+        rendered = renderPoints(removed);
+      }, 'the ordinary lat/lng point layer still renders after deletion');
+      if (rendered) {
+        t.equal(
+          rendered.reduce((count, sublayer) => count + sublayer.props.data.length, 0),
+          2,
+          'the rendered point layer contains both retained rows'
+        );
+      }
+    }
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow Int64 upserts match JSON keys and reject invalid batches', async t => {
+  const largeId = 9007199254740993n;
+  const source = new arrow.Table({
+    id: arrow.vectorFromArray([1n, largeId], new arrow.Int64()),
+    value: arrow.vectorFromArray([1, 2], new arrow.Int32())
+  });
+  const datasets = await createArrowLiveDatasets(source);
+  let state = {...INITIAL_VIS_STATE, datasets};
+  state = reducer(
+    state,
+    VisStateActions.addToDataset('live', [{id: String(largeId), value: 20}], {upsertBy: 'id'})
+  );
+  const container = state.datasets.live.dataContainer;
+  t.deepEqual(
+    container.flattenData(),
+    [
+      [1n, 1],
+      [largeId, 20]
+    ],
+    'a decimal string replaces its exact existing Int64 key without adding a duplicate'
+  );
+
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: '01', value: 11},
+        {id: '2', value: 21},
+        {id: 1n, value: 12},
+        {id: '02', value: 22},
+        {id: '1', value: 13},
+        {id: 2n, value: 23}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  const expected = [
+    [1n, 13],
+    [largeId, 20],
+    [2n, 23]
+  ];
+  t.deepEqual(
+    container.flattenData(),
+    expected,
+    'accepted key representations share last-wins matching'
+  );
+  const restored = arrow.tableFromIPC(arrow.tableToIPC(container.getTable()));
+  t.deepEqual(
+    Array.from(restored.getChildAt(0)),
+    [1n, largeId, 2n],
+    'IPC keeps exact unique Int64 keys'
+  );
+
+  const snapshot = container.getTable();
+  const beforeRejectedRows = container.flattenData();
+  const revision = state.datasets.live.dataRevision;
+  const indexes = state.datasets.live.allIndexes;
+  const warn = sinon.stub(Console, 'warn');
+  try {
+    const rejected = reducer(
+      state,
+      VisStateActions.addToDataset(
+        'live',
+        [
+          {id: String(largeId), value: 30},
+          {id: 'invalid-int64', value: 40}
+        ],
+        {upsertBy: 'id'}
+      )
+    );
+    t.equal(rejected, state, 'an invalid key rejects the entire public-action batch');
+    t.equal(container.getTable(), snapshot, 'a rejected batch retains the Arrow snapshot');
+    t.deepEqual(
+      container.flattenData(),
+      beforeRejectedRows,
+      'a rejected batch cannot leak an earlier replacement'
+    );
+    t.equal(state.datasets.live.dataRevision, revision, 'a rejected batch preserves the revision');
+    t.equal(state.datasets.live.allIndexes, indexes, 'a rejected batch preserves row indexes');
+  } finally {
+    warn.restore();
+  }
+  t.deepEqual(Array.from(source.getChildAt(0)), [1n, largeId], 'source keys remain unchanged');
+  t.deepEqual(Array.from(source.getChildAt(1)), [1, 2], 'source values remain unchanged');
   t.end();
 });

@@ -15,6 +15,10 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [Unreleased]
+
+- feat: support in-place append, upsert, and delete for primitive Arrow tables (#3688). DuckDB row edits remain a warned no-op.
+
 ## [3.3.0-alpha.18] - Oct 19 2026
 
 - c7a6399f fix(export): restore annotation and chart panels (#3853)
