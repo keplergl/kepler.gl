@@ -3,8 +3,7 @@
 
 import * as React from 'react';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import ReactDOM from 'react-dom/client';
-import {Provider, useDispatch, useSelector} from 'react-redux';
+import {Provider, useDispatch, useSelector, useStore} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -13,13 +12,16 @@ import KeplerGl from '@kepler.gl/components';
 import {
   addDataToMap,
   addToDataset,
+  fitBounds,
+  layerConfigChange,
   refreshDataset,
   removeFromDataset,
   updateDatasetProps,
   wrapTo
 } from '@kepler.gl/actions';
 import {DatasetType} from '@kepler.gl/constants';
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {ArrowDataContainer, initApplicationConfig} from '@kepler.gl/utils';
+import {ARROW_DATASET_ID, createArrowDataset} from './arrow-data';
 
 initApplicationConfig({enableAnnotations: false});
 
@@ -39,17 +41,19 @@ const COS_LAT = Math.cos((SF.lat * Math.PI) / 180);
 const KM_PER_DEG_LAT = 111.32;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
-type LiveMode = 'poll' | 'host' | 'ws';
+type LiveMode = 'poll' | 'host' | 'ws' | 'arrow';
 type WsStatus = 'idle' | 'connecting' | 'open' | 'closed' | 'error';
 
 type KeplerRootState = {
   keplerGl: {
     [id: string]: {
       visState: {
+        layers: Parameters<typeof layerConfigChange>[0][];
         datasets: Record<
           string,
           {
             fields?: {name: string}[];
+            dataRevision?: number;
             dataContainer?: {
               numRows: () => number;
               valueAt: (row: number, col: number) => unknown;
@@ -87,12 +91,12 @@ const enhancers = applyMiddleware(...middlewares);
 const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(reducers, {}, composeEnhancers(enhancers));
 
-function fieldValue(dataset: LiveDataset | undefined, name: string) {
+function fieldValue(dataset: LiveDataset | undefined, name: string, row = 0) {
   const col = dataset?.fields?.findIndex(field => field.name === name) ?? -1;
   if (col < 0 || !dataset?.dataContainer?.numRows()) {
     return undefined;
   }
-  return dataset.dataContainer.valueAt(0, col);
+  return dataset.dataContainer.valueAt(row, col);
 }
 
 function columnIndex(dataset: LiveDataset | undefined, name: string) {
@@ -121,7 +125,7 @@ function hostRowIndexes(dataset: LiveDataset | undefined): number[] {
   }, []);
 }
 
-function makeHostVehicle(seq: number, options?: {id?: string; ring?: number}) {
+function makeHostVehicle(seq: number, options?: {id?: string; ring?: number; speed?: number}) {
   const angle = seq * GOLDEN_ANGLE;
   const radiusKm = 5.2 + (seq % 8) * 0.35;
   const lat = SF.lat + (radiusKm / KM_PER_DEG_LAT) * Math.sin(angle);
@@ -131,7 +135,7 @@ function makeHostVehicle(seq: number, options?: {id?: string; ring?: number}) {
     lat,
     lng,
     heading: ((angle * 180) / Math.PI + 360) % 360,
-    speed: 0,
+    speed: options?.speed ?? 0,
     ring: options?.ring ?? 4 + (seq % 3),
     progress: 0,
     orbit_s: 0,
@@ -184,7 +188,8 @@ function ModeToggle({
   return (
     <div
       style={{
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
         marginBottom: 14,
         border: '1px solid #4a5160',
         borderRadius: 6,
@@ -195,13 +200,15 @@ function ModeToggle({
         [
           ['poll', 'Poll URL', true],
           ['host', 'Host rows', hostEnabled],
-          ['ws', 'WebSocket', hostEnabled]
+          ['ws', 'WebSocket', hostEnabled],
+          ['arrow', 'Arrow rows', true]
         ] as const
       ).map(([value, label, enabled]) => (
         <button
           key={value}
           type="button"
           disabled={!enabled}
+          aria-pressed={mode === value}
           onClick={() => onChange(value)}
           style={{
             flex: 1,
@@ -281,6 +288,7 @@ function PollSidebar({dataset}: {dataset: LiveDataset | undefined}) {
 
 function HostSidebar({
   dataset,
+  arrowMode,
   autoTrail,
   keyedNote,
   onAutoTrail,
@@ -293,6 +301,7 @@ function HostSidebar({
   onRemoveLastHostById
 }: {
   dataset: LiveDataset | undefined;
+  arrowMode: boolean;
   autoTrail: boolean;
   keyedNote: string;
   onAutoTrail: (next: boolean) => void;
@@ -311,6 +320,8 @@ function HostSidebar({
   const hasPollVehicle = ids.includes(POLL_VEHICLE_ID);
   const hostIds = ids.filter(id => id.startsWith('host-'));
   const lastHostId = hostIds[hostIds.length - 1];
+  const trackerIndex = ids.indexOf(TRACKER_ID);
+  const container = dataset?.dataContainer;
 
   return (
     <>
@@ -318,6 +329,18 @@ function HostSidebar({
         Polling is off. The host app dispatches <code>addToDataset</code> /{' '}
         <code>removeFromDataset</code> so rows change in place — same layer id and style. Host
         points land on outer rings (4–6) and color by <code>ring</code>.
+      </p>
+      <p style={{margin: '0 0 12px', color: '#c3c9d5'}}>
+        Storage:{' '}
+        <output aria-label="Data storage">
+          {container instanceof ArrowDataContainer
+            ? `ArrowDataContainer · ${container.numChunks()} batch(es)`
+            : container
+            ? 'RowDataContainer'
+            : 'loading'}
+        </output>
+        {' · Revision '}
+        <output aria-label="Dataset revision">{dataset?.dataRevision ?? 0}</output>
       </p>
       <div style={{display: 'grid', gap: 8, marginBottom: 12}}>
         <div style={{display: 'flex', justifyContent: 'space-between', gap: 12}}>
@@ -389,6 +412,16 @@ function HostSidebar({
         {lastHostId ? ` · last host ${lastHostId}` : ''}
       </p>
       {keyedNote ? <p style={{margin: '6px 0 0', color: '#9ad0a8'}}>{keyedNote}</p> : null}
+      {hasTracker ? (
+        <p style={{margin: '6px 0 0', color: '#c3c9d5'}}>
+          <output aria-label="Tracker position and speed">
+            {Number(fieldValue(dataset, 'lat', trackerIndex)).toFixed(5)},{' '}
+            {Number(fieldValue(dataset, 'lng', trackerIndex)).toFixed(5)}
+            {' · speed '}
+            {String(fieldValue(dataset, 'speed', trackerIndex))}
+          </output>
+        </p>
+      ) : null}
       <label
         style={{
           display: 'flex',
@@ -408,8 +441,17 @@ function HostSidebar({
         Auto trail (add every 800ms, keep {MAX_HOST_ROWS} host rows)
       </label>
       <p style={{margin: '16px 0 0', color: '#c3c9d5'}}>
-        Switch back to <strong>Poll URL</strong> to resume HTTP snapshot replace — injected rows
-        disappear on the next fetch.
+        {arrowMode ? (
+          <>
+            This local Arrow dataset keeps its edits when you switch modes. Change its point radius
+            or add a speed filter, then repeat edits to check the settings stay put.
+          </>
+        ) : (
+          <>
+            Switch back to <strong>Poll URL</strong> to resume HTTP snapshot replace — injected rows
+            disappear on the next fetch.
+          </>
+        )}
       </p>
     </>
   );
@@ -481,12 +523,18 @@ function WsSidebar({
   );
 }
 
-function LiveDataSidebar() {
+export function LiveDataSidebar() {
   const dispatch = useDispatch();
-  const dataset = useSelector(
-    (state: KeplerRootState) => state.keplerGl[MAP_ID]?.visState?.datasets?.[DATASET_ID]
+  const reduxStore = useStore<KeplerRootState>();
+  const datasets = useSelector(
+    (state: KeplerRootState) => state.keplerGl[MAP_ID]?.visState?.datasets
   );
   const [mode, setMode] = useState<LiveMode>('poll');
+  const datasetId = mode === 'arrow' ? ARROW_DATASET_ID : DATASET_ID;
+  const dataset = datasets?.[datasetId];
+  const datasetReady = Boolean(dataset);
+  const hasRowDataset = Boolean(datasets?.[DATASET_ID]);
+  const hasArrowDataset = Boolean(datasets?.[ARROW_DATASET_ID]);
   const [autoTrail, setAutoTrail] = useState(false);
   const [keyedNote, setKeyedNote] = useState('');
   const [wsStatus, setWsStatus] = useState<WsStatus>('idle');
@@ -495,17 +543,30 @@ function LiveDataSidebar() {
   const [wsError, setWsError] = useState<string | null>(null);
   const hostSeq = useRef(1);
   const trackSeq = useRef(1);
+  const arrowViewInitialized = useRef(false);
   const datasetRef = useRef(dataset);
   datasetRef.current = dataset;
 
   const toKepler = useCallback(
-    (action: Parameters<typeof wrapTo>[1]) => dispatch(wrapTo(MAP_ID, action)),
+    (action: Parameters<ReturnType<typeof wrapTo>>[0]) => dispatch(wrapTo(MAP_ID, action)),
     [dispatch]
   );
 
   const setLiveMode = useCallback(
     (next: LiveMode) => {
       setMode(next);
+      setKeyedNote('');
+      if (next === 'arrow' && !arrowViewInitialized.current) {
+        toKepler(
+          fitBounds([SF.lng - 0.1, SF.lat - 0.08, SF.lng + 0.1, SF.lat + 0.08], {
+            left: 320,
+            right: 24,
+            top: 24,
+            bottom: 24
+          })
+        );
+        arrowViewInitialized.current = true;
+      }
       if (next === 'poll') {
         setAutoTrail(false);
         setKeyedNote('');
@@ -528,12 +589,29 @@ function LiveDataSidebar() {
     [toKepler]
   );
 
+  useEffect(() => {
+    // Only switch visibility on mode/load transitions, so user styling and
+    // visibility choices stay untouched during edits.
+    const layers = reduxStore.getState().keplerGl[MAP_ID]?.visState.layers || [];
+    layers.forEach(layer => {
+      if (layer.config.dataId !== DATASET_ID && layer.config.dataId !== ARROW_DATASET_ID) return;
+      const isVisible = layer.config.dataId === datasetId;
+      if (layer.config.isVisible !== isVisible) {
+        toKepler(layerConfigChange(layer, {isVisible}));
+      }
+    });
+  }, [datasetId, hasRowDataset, hasArrowDataset, reduxStore, toKepler]);
+
   const addHostRows = useCallback(
     (count: number) => {
-      const rows = Array.from({length: count}, () => makeHostVehicle(hostSeq.current++));
-      toKepler(addToDataset(DATASET_ID, rows));
+      const rows = Array.from({length: count}, () =>
+        makeHostVehicle(hostSeq.current++, {
+          speed: mode === 'arrow' ? 20 + (hostSeq.current % 8) * 5 : undefined
+        })
+      );
+      toKepler(addToDataset(datasetId, rows));
     },
-    [toKepler]
+    [datasetId, mode, toKepler]
   );
 
   const removeLast = useCallback(() => {
@@ -541,38 +619,42 @@ function LiveDataSidebar() {
     if (rows < 1) {
       return;
     }
-    toKepler(removeFromDataset(DATASET_ID, rows - 1));
-  }, [dataset, toKepler]);
+    toKepler(removeFromDataset(datasetId, rows - 1));
+  }, [dataset, datasetId, toKepler]);
 
   const removeRandom = useCallback(() => {
     const rows = dataset?.dataContainer?.numRows?.() ?? 0;
     if (rows < 1) {
       return;
     }
-    toKepler(removeFromDataset(DATASET_ID, Math.floor(Math.random() * rows)));
-  }, [dataset, toKepler]);
+    toKepler(removeFromDataset(datasetId, Math.floor(Math.random() * rows)));
+  }, [dataset, datasetId, toKepler]);
 
   const upsertTracker = useCallback(() => {
     const ids = rowIds(datasetRef.current);
     const existed = ids.includes(TRACKER_ID);
-    const row = makeHostVehicle(trackSeq.current++, {id: TRACKER_ID, ring: 7});
-    toKepler(addToDataset(DATASET_ID, row, {upsertBy: 'id'}));
+    const row = makeHostVehicle(trackSeq.current++, {
+      id: TRACKER_ID,
+      ring: 7,
+      speed: mode === 'arrow' ? 20 + ((trackSeq.current * 7) % 60) : undefined
+    });
+    toKepler(addToDataset(datasetId, row, {upsertBy: 'id'}));
     setKeyedNote(
       existed
         ? `upsert ${TRACKER_ID} (replaced — row count should stay ${ids.length})`
         : `upsert ${TRACKER_ID} (inserted — row count ${ids.length + 1})`
     );
-  }, [toKepler]);
+  }, [datasetId, mode, toKepler]);
 
   const removeByFieldId = useCallback(
     (id: string) => {
       if (!rowIds(datasetRef.current).includes(id)) {
         return;
       }
-      toKepler(removeFromDataset(DATASET_ID, {field: 'id', values: id}));
+      toKepler(removeFromDataset(datasetId, {field: 'id', values: id}));
       setKeyedNote(`removeFromDataset({field: 'id', values: '${id}'})`);
     },
-    [toKepler]
+    [datasetId, toKepler]
   );
 
   const removeLastHostById = useCallback(() => {
@@ -585,18 +667,18 @@ function LiveDataSidebar() {
   }, [removeByFieldId]);
 
   useEffect(() => {
-    if (mode !== 'host' || !autoTrail) {
+    if ((mode !== 'host' && mode !== 'arrow') || !autoTrail || !datasetReady) {
       return undefined;
     }
     const timer = window.setInterval(() => {
       const extras = hostRowIndexes(datasetRef.current);
       if (extras.length >= MAX_HOST_ROWS) {
-        toKepler(removeFromDataset(DATASET_ID, extras[0]));
+        toKepler(removeFromDataset(datasetId, extras[0]));
       }
-      toKepler(addToDataset(DATASET_ID, makeHostVehicle(hostSeq.current++)));
+      addHostRows(1);
     }, AUTO_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [autoTrail, mode, toKepler]);
+  }, [autoTrail, mode, datasetId, datasetReady, addHostRows, toKepler]);
 
   useEffect(() => {
     if (mode !== 'ws') {
@@ -621,13 +703,13 @@ function LiveDataSidebar() {
         }
       };
       socket.onmessage = event => {
-        let message: {op?: string; rows?: unknown; upsertBy?: string};
+        let message: {op?: string; rows?: Parameters<typeof addToDataset>[1]; upsertBy?: string};
         try {
           message = JSON.parse(String(event.data));
         } catch {
           return;
         }
-        if (message.op !== 'upsert' || !message.rows) {
+        if (cancelled || message.op !== 'upsert' || !message.rows) {
           return;
         }
         toKepler(addToDataset(DATASET_ID, message.rows, {upsertBy: message.upsertBy || 'id'}));
@@ -664,7 +746,7 @@ function LiveDataSidebar() {
       <h2 style={{margin: '0 0 8px', fontSize: 16}}>Live data</h2>
       <ModeToggle
         mode={mode}
-        hostEnabled={(dataset?.dataContainer?.numRows?.() ?? 0) > 0}
+        hostEnabled={(datasets?.[DATASET_ID]?.dataContainer?.numRows?.() ?? 0) > 0}
         onChange={setLiveMode}
       />
       {mode === 'poll' ? (
@@ -680,6 +762,7 @@ function LiveDataSidebar() {
       ) : (
         <HostSidebar
           dataset={dataset}
+          arrowMode={mode === 'arrow'}
           autoTrail={autoTrail}
           keyedNote={keyedNote}
           onAutoTrail={setAutoTrail}
@@ -705,19 +788,22 @@ const App = () => {
       wrapTo(
         MAP_ID,
         addDataToMap({
-          datasets: {
-            info: {
-              id: DATASET_ID,
-              label: 'Live orbit',
-              type: DatasetType.EXTERNALLY_HOSTED
+          datasets: [
+            {
+              info: {
+                id: DATASET_ID,
+                label: 'Live orbit',
+                type: DatasetType.EXTERNALLY_HOSTED
+              },
+              data: {fields: [], rows: []},
+              metadata: {
+                source: LIVE_DATA_URL,
+                sourceFormat: 'csv',
+                refreshIntervalMs: REFRESH_INTERVAL_MS
+              }
             },
-            data: {fields: [], rows: []},
-            metadata: {
-              source: LIVE_DATA_URL,
-              sourceFormat: 'csv',
-              refreshIntervalMs: REFRESH_INTERVAL_MS
-            }
-          },
+            createArrowDataset()
+          ],
           options: {
             centerMap: true,
             autoCreateLayers: false,
@@ -734,8 +820,23 @@ const App = () => {
                     config: {
                       dataId: DATASET_ID,
                       label: 'Live orbit',
-                      columns: {lat: 'lat', lng: 'lng', altitude: null},
+                      columns: {lat: 'lat', lng: 'lng'},
                       isVisible: true,
+                      visConfig: {radius: 24, filled: true, opacity: 0.85}
+                    },
+                    visualChannels: {
+                      colorField: {name: 'ring', type: 'integer'},
+                      colorScale: 'quantize'
+                    }
+                  },
+                  {
+                    id: 'live-arrow-point',
+                    type: 'point',
+                    config: {
+                      dataId: ARROW_DATASET_ID,
+                      label: 'Live Arrow',
+                      columns: {lat: 'lat', lng: 'lng'},
+                      isVisible: false,
                       visConfig: {radius: 24, filled: true, opacity: 0.85}
                     },
                     visualChannels: {
@@ -783,6 +884,4 @@ const Root = () => (
   </Provider>
 );
 
-const container = document.getElementById('root');
-const root = ReactDOM.createRoot(container!);
-root.render(<Root />);
+export default Root;
