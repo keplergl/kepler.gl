@@ -1081,3 +1081,101 @@ test('Arrow deletion retains timestamp storage inside nested dictionaries', t =>
   );
   t.end();
 });
+
+test('Arrow deletion reconciles nested dictionary mappings across progressive batches', t => {
+  const batch = values => {
+    const dictionary = arrow.vectorFromArray(values, new arrow.Utf8());
+    const type = new arrow.Dictionary(dictionary.type, new arrow.Int8(), 17);
+    const column = indexes =>
+      arrow.makeVector({
+        type: new arrow.List(new arrow.Field('item', type, true)),
+        valueOffsets: new Int32Array([0, 1, 2, 3]),
+        child: arrow.makeData({type, data: new Int8Array(indexes), dictionary})
+      });
+    return new arrow.Table({left: column([0, 1, 0]), right: column([1, 0, 1])});
+  };
+  const first = batch(['a', 'b']);
+  const source = first.concat(batch(['b', 'a']));
+  const before = arrow.tableToIPC(source);
+  const dc = arrowContainerFromTable(first);
+  dc.update(source);
+  t.ok(dc.remove([1, 4]), 'deletion accepts different dictionaries in progressive batches');
+  const rows = table =>
+    Array.from({length: table.numRows}, (_, index) =>
+      table.schema.fields.map((_, column) => Array.from(table.getChildAt(column).get(index)))
+    );
+  const expected = [
+    [['a'], ['b']],
+    [['a'], ['b']],
+    [['b'], ['a']],
+    [['b'], ['a']]
+  ];
+  t.deepEqual(rows(dc.getTable()), expected, 'retained indexes use the unified dictionary');
+  t.equal(dc.numChunks(), 1, 'edited table has one batch');
+  t.deepEqual(
+    rows(arrow.tableFromIPC(arrow.tableToIPC(dc.getTable()))),
+    expected,
+    'shared dictionary survives IPC despite equivalent distinct source type objects'
+  );
+  t.deepEqual(arrow.tableToIPC(source), before, 'progressive source buffers remain unchanged');
+  t.end();
+});
+
+test('compactArrowTable -> nested timestamp fallback keeps exact source storage', t => {
+  const type = new arrow.TimestampNanosecond();
+  const nested = new arrow.List(new arrow.Field('time', type, true));
+  const raw = [1700000000000000123n, 1700000000000000456n];
+  const batches = raw.map(
+    value =>
+      new arrow.Table({
+        times: arrow.makeVector({
+          type: nested,
+          valueOffsets: new Int32Array([0, 1]),
+          child: arrow.makeData({type, data: new BigInt64Array([value])})
+        })
+      })
+  );
+  const source = batches[0].concat(batches[1]);
+  const compacted = compactArrowTable(source, 1);
+  t.deepEqual(
+    compacted.getChildAt(0).data.flatMap(data => Array.from(data.children[0].values)),
+    raw,
+    'ordinary import compaction must not round nested timestamps through milliseconds'
+  );
+  t.end();
+});
+
+test('Arrow deletion counts only retained nested dictionary entries toward capacity', t => {
+  const batch = prefix => {
+    const dictionary = arrow.vectorFromArray(
+      Array.from({length: 128}, (_, i) => `${prefix}${i}`),
+      new arrow.Utf8()
+    );
+    const type = new arrow.Dictionary(dictionary.type, new arrow.Int8(), 17);
+    const column = arrow.makeVector({
+      type: new arrow.List(new arrow.Field('item', type, true)),
+      valueOffsets: Int32Array.from({length: 129}, (_, i) => i),
+      child: arrow.makeData({
+        type,
+        data: Int8Array.from({length: 128}, (_, i) => i),
+        dictionary
+      })
+    });
+    return new arrow.Table({values: column});
+  };
+  const first = batch('a');
+  const source = first.concat(batch('b'));
+  const original = arrow.tableToIPC(source);
+  const dc = arrowContainerFromTable(first);
+  dc.update(source);
+  const indexes = Array.from({length: 256}, (_, i) => i).filter(i => i !== 0 && i !== 128);
+  t.ok(dc.remove(indexes), 'two retained dictionary values fit Int8 despite deleted entries');
+  const restored = arrow.tableFromIPC(arrow.tableToIPC(dc.getTable()));
+  t.deepEqual(
+    Array.from(restored.getChildAt(0), value => Array.from(value)),
+    [['a0'], ['b0']],
+    'only the retained values survive IPC'
+  );
+  t.deepEqual(arrow.tableToIPC(source), original, 'source dictionaries are unchanged');
+  t.end();
+});

@@ -251,12 +251,17 @@ function tableFromCompactedColumns(
  * Convert an Arrow cell from Vector.get() into a value makeBuilder.append accepts.
  * Nested GeoArrow (FixedSizeList / List) cells are Vectors, not arrays.
  */
-function arrowCellToBuilderValue(value: unknown): unknown {
+function arrowCellToBuilderValue(value: unknown, logicalChildren = false): unknown {
   if (value == null) {
     return null;
   }
   if (ArrayBuffer.isView(value)) {
     return Array.from(value as any);
+  }
+  if (logicalChildren && (value instanceof arrow.StructRow || value instanceof arrow.MapRow)) {
+    return new Map(
+      Array.from(value, ([key, child]) => [key, arrowCellToBuilderValue(child, true)])
+    );
   }
 
   const nested = value as {
@@ -267,8 +272,9 @@ function arrowCellToBuilderValue(value: unknown): unknown {
     isValid?: (index: number) => boolean;
   };
 
-  // Primitive numeric child of a FixedSizeList (lng/lat).
-  if (typeof nested.toArray === 'function' && nested.numChildren === 0) {
+  // Keep ordinary import compaction unchanged. Edited snapshots reinterpret
+  // timestamp storage first, so their children can safely use logical getters.
+  if (!logicalChildren && typeof nested.toArray === 'function' && nested.numChildren === 0) {
     return Array.from(nested.toArray());
   }
 
@@ -276,7 +282,7 @@ function arrowCellToBuilderValue(value: unknown): unknown {
     const out: unknown[] = [];
     for (let i = 0; i < nested.length; i++) {
       const valid = typeof nested.isValid === 'function' ? nested.isValid(i) : true;
-      out.push(valid ? arrowCellToBuilderValue(nested.get(i)) : null);
+      out.push(valid ? arrowCellToBuilderValue(nested.get(i), logicalChildren) : null);
     }
     return out;
   }
@@ -286,9 +292,11 @@ function arrowCellToBuilderValue(value: unknown): unknown {
 
 function compactArrowVector(
   column: arrow.Vector,
-  type: arrow.DataType = column.type
+  type: arrow.DataType = column.type,
+  logicalChildren = false,
+  force = false
 ): arrow.Vector {
-  if (!column || !column.data || column.data.length <= 1) {
+  if (!column || !column.data || (!force && column.data.length <= 1)) {
     return column;
   }
 
@@ -304,7 +312,25 @@ function compactArrowVector(
     }
   }
 
-  const builder = arrow.makeBuilder({type, nullValues: [null]});
+  const builder = arrow.makeBuilder({
+    type,
+    nullValues: [null],
+    ...(logicalChildren && arrow.DataType.isDictionary(type)
+      ? {
+          // Struct/Map cells become Maps for builders; their default string key
+          // is always "[object Map]". Hash their typed contents instead.
+          dictionaryHashFunction: value =>
+            JSON.stringify(value, (_, child) =>
+              child instanceof Map
+                ? Array.from(child)
+                : typeof child === 'bigint' ||
+                  (typeof child === 'number' && !Number.isFinite(child))
+                ? String(child)
+                : child
+            )
+        }
+      : {})
+  });
   const length = column.length;
   for (let i = 0; i < length; i++) {
     const isValid =
@@ -314,7 +340,7 @@ function compactArrowVector(
     // FixedSizeList/List .get() returns nested Vectors. Appending those
     // silently writes NaN (points) or throws (lines/polygons). Plain JS
     // arrays are what makeBuilder expects.
-    builder.append(isValid ? arrowCellToBuilderValue(column.get(i)) : null);
+    builder.append(isValid ? arrowCellToBuilderValue(column.get(i), logicalChildren) : null);
   }
   const finished = builder.finish() as arrow.Vector | {toVector: () => arrow.Vector};
   if (finished instanceof arrow.Vector) {
@@ -353,42 +379,71 @@ function isSupportedArrowRowEditType(type: arrow.DataType): boolean {
 /** Reinterpret timestamp storage for builders without rounding through JS milliseconds. */
 function rowEditStorageType(type: arrow.DataType): arrow.DataType {
   if (arrow.DataType.isTimestamp(type)) return new arrow.Int64();
-  if (arrow.DataType.isDictionary(type)) {
-    return new arrow.Dictionary(
-      rowEditStorageType(type.dictionary),
-      type.indices,
-      type.id,
-      type.isOrdered
-    );
+  if (arrow.DataType.isDictionary(type)) return type.indices;
+  if (type.children?.length) {
+    // Retain the Arrow type's prototype and layout (list size, union mode, etc.).
+    // Field.clone preserves names, nullability and extension metadata.
+    return Object.assign(Object.create(Object.getPrototypeOf(type)), type, {
+      children: type.children.map(field => field.clone({type: rowEditStorageType(field.type)}))
+    });
   }
   return type;
 }
 
-function rowEditStorageVector(column: arrow.Vector, type: arrow.DataType): arrow.Vector {
-  if (column.type === type) return column;
-  return new arrow.Vector(
-    column.data.map(data => {
-      const copy = data.clone(type);
-      if (arrow.DataType.isDictionary(type) && data.dictionary) {
-        copy.dictionary = rowEditStorageVector(data.dictionary, type.dictionary);
+function rowEditStorageVector(
+  column: arrow.Vector,
+  type: arrow.DataType,
+  remapped = new Map<arrow.Data, arrow.Data>(),
+  dictionaries = new Map<number, arrow.Vector>()
+): arrow.Vector {
+  const convert = (original: arrow.Data, nextType: arrow.DataType): arrow.Data => {
+    const data = remapped.get(original) || original;
+    const copy = data.clone(
+      nextType,
+      data.offset,
+      data.length,
+      data.nullCount,
+      data.buffers,
+      data.children.map((child, i) => convert(child, nextType.children[i].type))
+    );
+    if (arrow.DataType.isDictionary(nextType)) {
+      const canonical = dictionaries.get(nextType.id);
+      if (canonical) {
+        // Equivalent field types from different batches need the same object,
+        // even when their DataType instances differ.
+        copy.dictionary = canonical;
+      } else {
+        if (!data.dictionary) throw new Error('Missing Arrow dictionary');
+        copy.dictionary = rowEditStorageVector(
+          data.dictionary,
+          nextType.dictionary,
+          remapped,
+          dictionaries
+        );
       }
-      return copy;
-    })
-  );
+    }
+    return copy;
+  };
+  return new arrow.Vector(column.data.map(data => convert(data, type)));
 }
 
-function containsTimestamp(type: arrow.DataType): boolean {
-  return (
-    arrow.DataType.isTimestamp(type) ||
-    (arrow.DataType.isDictionary(type) && containsTimestamp(type.dictionary)) ||
-    Boolean(type.children?.some(field => containsTimestamp(field.type)))
-  );
+function rowEditDictionaryCapacity(type: arrow.Dictionary): number {
+  return 2 ** (type.indices.bitWidth - (type.indices.isSigned ? 1 : 0));
+}
+
+function collectRowEditDictionaries(data: arrow.Data, groups: Map<number, Set<arrow.Data>>): void {
+  data.children.forEach(child => collectRowEditDictionaries(child, groups));
+  if (!arrow.DataType.isDictionary(data.type) || !data.dictionary) return;
+  // Inner dictionaries must be reconciled before their enclosing dictionary.
+  data.dictionary.data.forEach(child => collectRowEditDictionaries(child, groups));
+  const group = groups.get(data.type.id) || new Set<arrow.Data>();
+  group.add(data);
+  groups.set(data.type.id, group);
 }
 
 function checkRowEditDictionaryCapacity(column: arrow.Vector): void {
   if (!arrow.DataType.isDictionary(column.type)) return;
-  const {indices} = column.type;
-  const capacity = 2 ** (indices.bitWidth - (indices.isSigned ? 1 : 0));
+  const capacity = rowEditDictionaryCapacity(column.type);
   if (column.data.some(data => (data.dictionary?.length || 0) > capacity)) {
     throw new Error('Row edit exceeds the Arrow dictionary index capacity');
   }
@@ -396,65 +451,114 @@ function checkRowEditDictionaryCapacity(column: arrow.Vector): void {
 
 /** Compact only edited snapshots; progressive loading and other rebuilds keep their behavior. */
 function compactRowEditColumns(columns: arrow.Vector[]): arrow.Vector[] {
-  const result = columns.slice();
-  const dictionaries = new Map<number, number[]>();
-  columns.forEach((column, i) => {
-    if (containsTimestamp(column.type) && !isSupportedArrowRowEditType(column.type)) {
-      // Nested builders decode timestamp children into JS milliseconds. Keep
-      // exact slices, as normal compaction does for unsupported builders.
-    } else if (arrow.DataType.isDictionary(column.type)) {
-      const group = dictionaries.get(column.type.id) || [];
-      group.push(i);
-      dictionaries.set(column.type.id, group);
-    } else {
-      const type = rowEditStorageType(column.type);
-      result[i] = rowEditStorageVector(
-        compactArrowVector(rowEditStorageVector(column, type), type),
-        column.type
-      );
-    }
-  });
-  for (const group of dictionaries.values()) {
-    // Put narrow index types first so their entries fit before wider columns
-    // add dictionary values. Build once using the widest group's index type.
-    const capacity = (i: number) => {
-      const {indices} = columns[i].type as arrow.Dictionary;
-      return 2 ** (indices.bitWidth - (indices.isSigned ? 1 : 0));
-    };
-    group.sort((a, b) => capacity(a) - capacity(b));
-    const type = columns[group[group.length - 1]].type as arrow.Dictionary;
+  columns = columns.map(
+    column =>
+      new arrow.Vector(
+        column.data.map(data => {
+          if (!data.children.length) return data;
+          // List/Map slices retain their entire child buffer. Normalize each
+          // retained chunk before merging dictionaries so deleted/null child
+          // entries cannot cause a false index-capacity overflow.
+          const sourceGroups = new Map<number, Set<arrow.Data>>();
+          collectRowEditDictionaries(data, sourceGroups);
+          const sourceDictionaries = new Map<number, arrow.Vector>();
+          sourceGroups.forEach((entries, id) => {
+            const dictionary = entries.values().next().value?.dictionary;
+            if (dictionary) sourceDictionaries.set(id, dictionary);
+          });
+          const type = rowEditStorageType(data.type);
+          const compacted = compactArrowVector(
+            rowEditStorageVector(new arrow.Vector([data]), type),
+            type,
+            true,
+            true
+          );
+          return rowEditStorageVector(compacted, data.type, new Map(), sourceDictionaries).data[0];
+        })
+      )
+  );
+  const groups = new Map<number, Set<arrow.Data>>();
+  columns.forEach(column => column.data.forEach(data => collectRowEditDictionaries(data, groups)));
+  const dictionaries = new Map<number, arrow.Vector>();
+  const remapped = new Map<arrow.Data, arrow.Data>();
+  for (const entries of groups.values()) {
+    // Narrow indexes get the first dictionary entries before wider columns add values.
+    const group = [...entries].sort(
+      (a, b) =>
+        rowEditDictionaryCapacity(a.type as arrow.Dictionary) -
+        rowEditDictionaryCapacity(b.type as arrow.Dictionary)
+    );
+    const type = group[group.length - 1].type as arrow.Dictionary;
     if (
       group.some(
-        i => String((columns[i].type as arrow.Dictionary).dictionary) !== String(type.dictionary)
+        data => String((data.type as arrow.Dictionary).dictionary) !== String(type.dictionary)
       )
     ) {
       throw new Error('Shared Arrow dictionary value types must match');
     }
-    const storageType = rowEditStorageType(type);
-    const combined = new arrow.Vector(
-      group.flatMap(i => rowEditStorageVector(columns[i], storageType).data)
+    const original = group[0].dictionary;
+    if (!original) throw new Error('Missing Arrow dictionary');
+    if (group.every(data => data.dictionary === original)) {
+      // Deletion usually keeps one original mapping. Preserve its exact payload,
+      // including nested timestamps, and only compact the retained indices.
+      dictionaries.set(
+        type.id,
+        rowEditStorageVector(original, original.type, remapped, dictionaries)
+      );
+      continue;
+    }
+    const storageType = new arrow.Dictionary(
+      rowEditStorageType(type.dictionary),
+      type.indices,
+      type.id,
+      type.isOrdered
     );
-    const compacted = compactArrowVector(combined, storageType);
+    const combined = new arrow.Vector(
+      group.flatMap(
+        data =>
+          rowEditStorageVector(new arrow.Vector([data]), storageType, remapped, dictionaries).data
+      )
+    );
+    const compacted = compactArrowVector(combined, storageType, true);
     checkRowEditDictionaryCapacity(compacted);
-    const restored = rowEditStorageVector(compacted, type);
+    const compactedDictionary = compacted.data[0].dictionary;
+    if (!compactedDictionary) throw new Error('Missing compacted Arrow dictionary');
+    const dictionary = rowEditStorageVector(
+      compactedDictionary,
+      type.dictionary,
+      new Map(),
+      dictionaries
+    );
+    dictionaries.set(type.id, dictionary);
     let offset = 0;
-    for (const i of group) {
-      const columnType = columns[i].type as arrow.Dictionary;
-      const data = restored.slice(offset, offset + columns[i].length).data.map(chunk => {
-        for (let index = 0; index < chunk.length; index++) {
-          if (chunk.getValid(index) && Number(chunk.values[index]) >= capacity(i)) {
-            throw new Error('Row edit exceeds the Arrow dictionary index capacity');
-          }
+    for (const originalData of group) {
+      const columnType = originalData.type as arrow.Dictionary;
+      const chunk = compacted.slice(offset, offset + originalData.length).data[0];
+      const capacity = rowEditDictionaryCapacity(columnType);
+      for (let index = 0; index < chunk.length; index++) {
+        if (chunk.getValid(index) && Number(chunk.values[index]) >= capacity) {
+          throw new Error('Row edit exceeds the Arrow dictionary index capacity');
         }
-        const buffers = chunk.buffers;
-        buffers[arrow.BufferType.DATA] = new columnType.indices.ArrayType(chunk.values);
-        return chunk.clone(columnType, chunk.offset, chunk.length, chunk.nullCount, buffers);
-      });
-      result[i] = new arrow.Vector(data);
-      offset += columns[i].length;
+      }
+      const buffers = chunk.buffers;
+      buffers[arrow.BufferType.DATA] = new columnType.indices.ArrayType(chunk.values);
+      const data = chunk.clone(columnType, chunk.offset, chunk.length, chunk.nullCount, buffers);
+      data.dictionary = dictionary;
+      remapped.set(originalData, data);
+      offset += originalData.length;
     }
   }
-  return result;
+  return columns.map(column => {
+    // Builders see raw timestamp units and canonical dictionary indices, even
+    // inside lists/structs. Restore the original types after one-batch compaction.
+    const type = rowEditStorageType(column.type);
+    return rowEditStorageVector(
+      compactArrowVector(rowEditStorageVector(column, type, remapped, dictionaries), type, true),
+      column.type,
+      new Map(),
+      dictionaries
+    );
+  });
 }
 
 /**
@@ -572,6 +676,39 @@ export class ArrowDataContainer implements DataContainerInterface {
 
   replace(index: number, row: any[]): boolean {
     return this.replaceRows(new Map([[index, row]]), []);
+  }
+
+  /** @internal Match upsert keys in the same representation returned by valueAt. */
+  getRowEditKeys(rows: any[][], keyIndex: number): unknown[] | null {
+    const type = this._arrowTable.schema.fields[keyIndex]?.type;
+    if (!type) return null;
+    let valueType = type;
+    while (arrow.DataType.isDictionary(valueType)) valueType = valueType.dictionary;
+    try {
+      if (arrow.DataType.isInt(valueType)) {
+        const bits = valueType.bitWidth;
+        const limit = 1n << BigInt(bits - (valueType.isSigned ? 1 : 0));
+        const min = valueType.isSigned ? -limit : 0n;
+        const max = limit - 1n;
+        for (const row of rows) {
+          const value = row[keyIndex];
+          if (value === null) continue;
+          // Arrow's typed array assignment wraps out-of-range integers. A key
+          // must not silently turn into a different existing row's identity.
+          if (typeof value === 'string' && !value.trim()) return null;
+          const integer = BigInt(bits === 64 ? value : Number(value));
+          if (integer < min || integer > max) return null;
+        }
+      }
+      const keys = arrow.vectorFromArray(
+        rows.map(row => row[keyIndex]),
+        type
+      );
+      checkRowEditDictionaryCapacity(keys);
+      return Array.from(keys);
+    } catch {
+      return null;
+    }
   }
 
   /** @internal Encode a complete edit batch before replacing any live columns. */

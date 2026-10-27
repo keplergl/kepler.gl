@@ -746,7 +746,7 @@ Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
 
 Delete rows from an existing in-memory row or Arrow dataset without restyling layers. The second argument is either row indexes or `{field, values}` to match a column (for example an id).
 
-DuckDB tables warn and leave the table unchanged. Arrow tables retain the kept slices. Nested timestamp columns preserve their exact storage and may retain multiple batches after deletion.
+DuckDB tables warn and leave the table unchanged. Arrow tables compact the retained rows while preserving nested values, exact timestamp storage, and shared dictionaries.
 
 - **ActionTypes**: `ActionTypes.REMOVE_FROM_DATASET`
 - **Updaters**: `visStateUpdaters.removeFromDatasetUpdater`

@@ -760,6 +760,187 @@ test('KeplerTable -> Arrow row edits and snapshots keep timestamp filters curren
   t.end();
 });
 
+test('KeplerTable -> Arrow upserts match and deduplicate encoded Int64 keys', t => {
+  const existingKey = 9007199254740993n;
+  const newKey = existingKey + 1n;
+  const source = new arrow.Table({
+    id: arrow.vectorFromArray([existingKey], new arrow.Int64()),
+    value: arrow.vectorFromArray([10], new arrow.Int32())
+  });
+  const table = new KeplerTable({info: {id: 'encoded-keys'}, color: [0, 0, 0]}).updateSchema(
+    processArrowBatches(source.batches)
+  );
+  const container = table.dataContainer;
+  const snapshot = container.getTable();
+  const accessor = table.fields[1].valueAccessor;
+  const revision = table.dataRevision;
+
+  t.ok(
+    table.upsertRows([[String(existingKey), 20]], 'id'),
+    'accepts the JSON decimal-string representation of an Int64 key'
+  );
+  t.deepEqual(container.flattenData(), [[existingKey, 20]], 'replaces the existing encoded key');
+  t.ok(
+    table.upsertRows(
+      [
+        [String(existingKey), 30],
+        [String(newKey), 40],
+        [existingKey, 50],
+        [newKey, 60]
+      ],
+      'id'
+    ),
+    'accepts equivalent string and BigInt keys in one edit'
+  );
+  t.deepEqual(
+    container.flattenData(),
+    [
+      [existingKey, 50],
+      [newKey, 60]
+    ],
+    'last equivalent key wins for both replacements and appended rows'
+  );
+  t.equal(table.dataContainer, container, 'retains the container');
+  t.equal(accessor({index: 0}), 50, 'the original accessor reads the replacement');
+  t.equal(snapshot.getChild('value').get(0), 10, 'retains the previous Arrow snapshot');
+  t.equal(table.dataRevision, revision + 2, 'increments the revision once per accepted edit');
+
+  const currentSnapshot = container.getTable();
+  const currentIndexes = table.allIndexes;
+  const currentRevision = table.dataRevision;
+  for (const invalidKey of ['invalid-int64', '9223372036854775808', '-9223372036854775809']) {
+    t.notOk(
+      table.upsertRows(
+        [
+          [String(existingKey), 70],
+          [invalidKey, 80]
+        ],
+        'id'
+      ),
+      'an invalid or out-of-range later key rejects the entire edit'
+    );
+    t.equal(container.getTable(), currentSnapshot, 'rejected keys retain the Arrow snapshot');
+    t.equal(table.allIndexes, currentIndexes, 'rejected keys retain the indexes');
+    t.equal(table.dataRevision, currentRevision, 'rejected keys retain the revision');
+    t.equal(accessor({index: 0}), 50, 'no replacement leaks from the rejected edit');
+  }
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts reject invalid integer keys before matching', t => {
+  const uint64Max = (1n << 64n) - 1n;
+  for (const {type, existingKeys, invalidKeys} of [
+    {
+      type: new arrow.Int8(),
+      existingKeys: [-128, 127],
+      invalidKeys: [128, '128', -129, 1.5, NaN, Infinity]
+    },
+    {
+      type: new arrow.Uint64(),
+      existingKeys: [0n, uint64Max],
+      invalidKeys: [uint64Max + 1n, String(uint64Max + 1n), -1n, '-1']
+    }
+  ]) {
+    const source = new arrow.Table({
+      id: arrow.vectorFromArray(existingKeys, type),
+      value: arrow.vectorFromArray([10, 20], new arrow.Int32())
+    });
+    const table = new KeplerTable({info: {id: 'integer-keys'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    t.ok(
+      table.upsertRows([[String(existingKeys[1]), 30]], 'id'),
+      `accepts a numeric string at the ${type} upper boundary`
+    );
+    const expected = [
+      [existingKeys[0], 10],
+      [existingKeys[1], 30]
+    ];
+    t.deepEqual(table.dataContainer.flattenData(), expected, 'matches the stored boundary key');
+    const snapshot = table.dataContainer.getTable();
+    const revision = table.dataRevision;
+    for (const key of invalidKeys) {
+      t.notOk(
+        table.upsertRows(
+          [
+            [existingKeys[0], 40],
+            [key, 50]
+          ],
+          'id'
+        ),
+        `rejects invalid ${type} key ${String(key)} before matching`
+      );
+      t.equal(table.dataContainer.getTable(), snapshot, 'retains the snapshot');
+      t.equal(table.dataRevision, revision, 'retains the revision');
+      t.deepEqual(table.dataContainer.flattenData(), expected, 'does not overwrite any row');
+    }
+  }
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts match encoded Date and timestamp keys', t => {
+  const first = Date.UTC(2024, 0, 1);
+  const next = first + 86400000;
+  for (const type of [new arrow.DateMillisecond(), new arrow.TimestampMillisecond()]) {
+    const source = new arrow.Table({
+      time: arrow.vectorFromArray([first], type),
+      value: arrow.vectorFromArray([1], new arrow.Int32())
+    });
+    const table = new KeplerTable({info: {id: 'date-keys'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    t.ok(
+      table.upsertRows(
+        [
+          [new Date(first), 2],
+          [new Date(next), 3],
+          [next, 4]
+        ],
+        'time'
+      ),
+      `accepts Date keys for ${type}`
+    );
+    t.deepEqual(
+      table.dataContainer.flattenData(),
+      [
+        [first, 2],
+        [next, 4]
+      ],
+      'matches existing keys and deduplicates equivalent Date and millisecond keys'
+    );
+  }
+  t.end();
+});
+
+test('KeplerTable -> row upserts keep distinct number and string keys', t => {
+  const table = new KeplerTable({info: {id: 'row-keys'}, color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'id', type: 'string'},
+      {name: 'value', type: 'integer'}
+    ],
+    rows: [[1, 10]]
+  });
+  t.ok(
+    table.upsertRows(
+      [
+        ['1', 20],
+        [1, 30]
+      ],
+      'id'
+    ),
+    'accepts row keys without encoding'
+  );
+  t.deepEqual(
+    table.dataContainer.flattenData(),
+    [
+      [1, 30],
+      ['1', 20]
+    ],
+    'row containers retain exact key equality'
+  );
+  t.end();
+});
+
 test('KeplerTable -> Arrow upserts preserve untouched raw timestamps and nulls', t => {
   const rawValues = vector =>
     vector.data.flatMap(chunk =>

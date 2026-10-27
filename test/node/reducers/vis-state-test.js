@@ -15,6 +15,7 @@ import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
   INITIAL_VIS_STATE,
+  INITIAL_MAP_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
   validateLayerWithData,
@@ -11647,5 +11648,305 @@ test('VisStateUpdater -> Arrow upserts preserve accessors and last incoming valu
     [['g', 7]],
     'upsert retains the schema after deleting all rows'
   );
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion preserves list values and IPC', async t => {
+  for (const [type, values] of [
+    [
+      new arrow.Int32(),
+      [
+        [1, null, 3],
+        [4, 5, 6],
+        [7, null, 9]
+      ]
+    ],
+    [
+      new arrow.Float16(),
+      [
+        [1.5, 2.5],
+        [3, 4],
+        [5.5, 6.5]
+      ]
+    ]
+  ]) {
+    for (const structWrapped of [false, true]) {
+      const list = arrow.vectorFromArray(
+        values,
+        new arrow.List(new arrow.Field('item', type, true))
+      );
+      const column = structWrapped
+        ? arrow.makeVector({
+            type: new arrow.Struct([new arrow.Field('items', list.type, true)]),
+            length: values.length,
+            children: list.data
+          })
+        : list;
+      const source = new arrow.Table({
+        id: arrow.vectorFromArray([1, 2, 3], new arrow.Int32()),
+        values: column
+      });
+      const datasets = await createArrowLiveDatasets(source);
+      const state = {...INITIAL_VIS_STATE, datasets};
+      const readValues = table =>
+        Array.from(table.getChildAt(1), value => Array.from(structWrapped ? value.items : value));
+
+      const removed = reducer(
+        state,
+        VisStateActions.removeFromDataset('live', {field: 'id', values: [2]})
+      );
+      const edited = removed.datasets.live.dataContainer.getTable();
+      t.notEqual(removed, state, `${column.type} deletion succeeds`);
+      t.deepEqual(readValues(edited), [values[0], values[2]], 'retained list values are unchanged');
+      t.deepEqual(
+        readValues(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+        [values[0], values[2]],
+        'IPC preserves the retained logical values and nulls'
+      );
+      t.deepEqual(readValues(source), values, 'the original Arrow snapshot stays unchanged');
+    }
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion preserves shared dictionaries and IPC', async t => {
+  const dictionary = arrow.vectorFromArray(['a', 'b', 'c'], new arrow.Utf8());
+  const dictionaryType = new arrow.Dictionary(dictionary.type, new arrow.Int8(), 17);
+  const column = arrow.makeVector({
+    type: new arrow.List(new arrow.Field('item', dictionaryType, true)),
+    valueOffsets: new Int32Array([0, 1, 2, 3]),
+    child: arrow.makeData({
+      type: dictionaryType,
+      data: new Int8Array([0, 1, 2]),
+      dictionary
+    })
+  });
+  const source = new arrow.Table({left: column, right: column});
+  const datasets = await createArrowLiveDatasets(source);
+  const state = {...INITIAL_VIS_STATE, datasets};
+  const removed = reducer(state, VisStateActions.removeFromDataset('live', [1]));
+  const edited = removed.datasets.live.dataContainer.getTable();
+  const readValues = table =>
+    table.schema.fields.map((_, i) => Array.from(table.getChildAt(i), value => Array.from(value)));
+  const expected = [
+    [['a'], ['c']],
+    [['a'], ['c']]
+  ];
+
+  t.notEqual(removed, state, 'deletion succeeds for columns sharing a nested dictionary');
+  t.deepEqual(readValues(edited), expected, 'both columns retain their unmatched values');
+  for (const batch of edited.batches) {
+    t.equal(
+      batch.getChildAt(0).data[0].children[0].dictionary,
+      batch.getChildAt(1).data[0].children[0].dictionary,
+      'the shared dictionary id retains one dictionary'
+    );
+  }
+  t.deepEqual(
+    readValues(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+    expected,
+    'IPC preserves both nested dictionary columns'
+  );
+  t.deepEqual(
+    readValues(source),
+    [
+      [['a'], ['b'], ['c']],
+      [['a'], ['b'], ['c']]
+    ],
+    'the original Arrow snapshot stays unchanged'
+  );
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow nested deletion keeps exact timestamps and point rendering', async t => {
+  for (const [type, values] of [
+    [
+      new arrow.TimestampNanosecond('UTC'),
+      [1700000000000000123n, 1700000000000000456n, 1700000000000000789n]
+    ],
+    [
+      new arrow.TimestampMicrosecond('UTC'),
+      [1700000000000123n, 1700000000000456n, 1700000000000789n]
+    ]
+  ]) {
+    for (const listWrapped of [false, true]) {
+      const timestamps = arrow.makeVector({type, data: new BigInt64Array(values)});
+      const child = listWrapped
+        ? arrow.makeVector({
+            type: new arrow.List(new arrow.Field('item', type, true)),
+            valueOffsets: new Int32Array([0, 1, 2, 3]),
+            child: timestamps.data[0]
+          })
+        : timestamps;
+      const history = arrow.makeVector({
+        type: new arrow.Struct([new arrow.Field('time', child.type, true)]),
+        length: values.length,
+        children: child.data
+      });
+      const source = new arrow.Table({
+        lat: arrow.vectorFromArray([37, 38, 39], new arrow.Float64()),
+        lng: arrow.vectorFromArray([-122, -123, -124], new arrow.Float64()),
+        history
+      });
+      const datasets = await createArrowLiveDatasets(source);
+      const point = new PointLayer({
+        id: 'points',
+        dataId: 'live',
+        isVisible: true,
+        ...PointLayer.findDefaultLayerProps(datasets.live).props[0]
+      });
+      const initial = {
+        ...INITIAL_VIS_STATE,
+        datasets,
+        layers: [point],
+        layerData: [{}],
+        layerOrder: [point.id]
+      };
+      const {layer, layerData} = calculateLayerData(point, initial, undefined);
+      const state = {...initial, layers: [layer], layerData: [layerData]};
+      const renderPoints = current => {
+        const dataset = current.datasets.live;
+        return current.layers[0]
+          .renderLayer({
+            data: current.layerData[0],
+            dataset,
+            idx: 0,
+            layerInteraction: {},
+            mapState: INITIAL_MAP_STATE,
+            gpuFilter: dataset.gpuFilter,
+            interactionConfig: current.interactionConfig,
+            visible: true,
+            layerCallbacks: {}
+          })[0]
+          .renderLayers();
+      };
+      t.equal(
+        renderPoints(state).reduce((count, rendered) => count + rendered.props.data.length, 0),
+        3,
+        'the original point layer renders all rows'
+      );
+
+      const removed = reducer(state, VisStateActions.removeFromDataset('live', [1]));
+      const edited = removed.datasets.live.dataContainer.getTable();
+      const rawTimestamps = table =>
+        listWrapped
+          ? Array.from(table.getChildAt(2), value => value.time.toArray()[0])
+          : Array.from(
+              new arrow.Vector(table.getChildAt(2).data.map(data => data.children[0])).toArray()
+            );
+      t.notEqual(removed, state, `${history.type} deletion succeeds`);
+      t.equal(edited.numRows, 2, 'only the requested row is deleted');
+      t.deepEqual(
+        rawTimestamps(edited),
+        [values[0], values[2]],
+        'retained timestamp storage is exact'
+      );
+      t.deepEqual(
+        rawTimestamps(arrow.tableFromIPC(arrow.tableToIPC(edited))),
+        [values[0], values[2]],
+        'IPC preserves exact nested timestamp storage'
+      );
+      t.deepEqual(rawTimestamps(source), values, 'the original timestamp snapshot stays unchanged');
+      let rendered;
+      t.doesNotThrow(() => {
+        rendered = renderPoints(removed);
+      }, 'the ordinary lat/lng point layer still renders after deletion');
+      if (rendered) {
+        t.equal(
+          rendered.reduce((count, sublayer) => count + sublayer.props.data.length, 0),
+          2,
+          'the rendered point layer contains both retained rows'
+        );
+      }
+    }
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> Arrow Int64 upserts match JSON keys and reject invalid batches', async t => {
+  const largeId = 9007199254740993n;
+  const source = new arrow.Table({
+    id: arrow.vectorFromArray([1n, largeId], new arrow.Int64()),
+    value: arrow.vectorFromArray([1, 2], new arrow.Int32())
+  });
+  const datasets = await createArrowLiveDatasets(source);
+  let state = {...INITIAL_VIS_STATE, datasets};
+  state = reducer(
+    state,
+    VisStateActions.addToDataset('live', [{id: String(largeId), value: 20}], {upsertBy: 'id'})
+  );
+  const container = state.datasets.live.dataContainer;
+  t.deepEqual(
+    container.flattenData(),
+    [
+      [1n, 1],
+      [largeId, 20]
+    ],
+    'a decimal string replaces its exact existing Int64 key without adding a duplicate'
+  );
+
+  state = reducer(
+    state,
+    VisStateActions.addToDataset(
+      'live',
+      [
+        {id: '01', value: 11},
+        {id: '2', value: 21},
+        {id: 1n, value: 12},
+        {id: '02', value: 22},
+        {id: '1', value: 13},
+        {id: 2n, value: 23}
+      ],
+      {upsertBy: 'id'}
+    )
+  );
+  const expected = [
+    [1n, 13],
+    [largeId, 20],
+    [2n, 23]
+  ];
+  t.deepEqual(
+    container.flattenData(),
+    expected,
+    'accepted key representations share last-wins matching'
+  );
+  const restored = arrow.tableFromIPC(arrow.tableToIPC(container.getTable()));
+  t.deepEqual(
+    Array.from(restored.getChildAt(0)),
+    [1n, largeId, 2n],
+    'IPC keeps exact unique Int64 keys'
+  );
+
+  const snapshot = container.getTable();
+  const beforeRejectedRows = container.flattenData();
+  const revision = state.datasets.live.dataRevision;
+  const indexes = state.datasets.live.allIndexes;
+  const warn = sinon.stub(Console, 'warn');
+  try {
+    const rejected = reducer(
+      state,
+      VisStateActions.addToDataset(
+        'live',
+        [
+          {id: String(largeId), value: 30},
+          {id: 'invalid-int64', value: 40}
+        ],
+        {upsertBy: 'id'}
+      )
+    );
+    t.equal(rejected, state, 'an invalid key rejects the entire public-action batch');
+    t.equal(container.getTable(), snapshot, 'a rejected batch retains the Arrow snapshot');
+    t.deepEqual(
+      container.flattenData(),
+      beforeRejectedRows,
+      'a rejected batch cannot leak an earlier replacement'
+    );
+    t.equal(state.datasets.live.dataRevision, revision, 'a rejected batch preserves the revision');
+    t.equal(state.datasets.live.allIndexes, indexes, 'a rejected batch preserves row indexes');
+  } finally {
+    warn.restore();
+  }
+  t.deepEqual(Array.from(source.getChildAt(0)), [1n, largeId], 'source keys remain unchanged');
+  t.deepEqual(Array.from(source.getChildAt(1)), [1, 2], 'source values remain unchanged');
   t.end();
 });

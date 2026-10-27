@@ -419,6 +419,16 @@ class KeplerTable<F extends Field = Field> {
       return false;
     }
 
+    // Match Arrow keys after encoding so accepted representations such as an
+    // Int64 decimal string or a Date compare equal to the stored column value.
+    const keys =
+      this.dataContainer instanceof ArrowDataContainer
+        ? this.dataContainer.getRowEditKeys(rows, keyIdx)
+        : rows.map(row => row[keyIdx]);
+    if (!keys) {
+      return false;
+    }
+
     const start = this.dataContainer.numRows();
     const keyToIndex = new Map<unknown, number>();
     for (let i = 0; i < start; i++) {
@@ -429,10 +439,7 @@ class KeplerTable<F extends Field = Field> {
     }
 
     const lastByKey = new Map<unknown, any[]>();
-    for (const row of rows) {
-      const key = row[keyIdx];
-      lastByKey.set(key, row);
-    }
+    rows.forEach((row, index) => lastByKey.set(keys[index], row));
 
     const replacements = new Map<number, any[]>();
     const toAppend: any[][] = [];
