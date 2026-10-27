@@ -665,8 +665,9 @@ export class ArrowDataContainer implements DataContainerInterface {
         ranges.push([start, numRows]);
       }
       this._commitColumns(
-        this._cols.map(column =>
-          new arrow.Vector(ranges.flatMap(([begin, end]) => column.slice(begin, end).data))
+        this._cols.map(
+          column =>
+            new arrow.Vector(ranges.flatMap(([begin, end]) => column.slice(begin, end).data))
         )
       );
       return true;

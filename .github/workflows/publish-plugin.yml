@@ -1,0 +1,80 @@
+name: Publish kepler.gl Plugin
+
+on:
+  push:
+    paths:
+      - 'plugins/kepler.gl/**'
+      - '.claude-plugin/marketplace.json'
+      - '.agents/plugins/marketplace.json'
+      - 'src/mcp/skill/kepler/**'
+      - 'scripts/validate-plugin-manifests.js'
+    tags:
+      - 'plugin-v*'
+  workflow_dispatch:
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Validate manifests and shared skill content
+        run: node scripts/validate-plugin-manifests.js
+
+      - name: Read plugin version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./plugins/kepler.gl/plugin.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # One package per client, each carrying only the manifest that client
+      # reads. Skills and assets are identical in all of them.
+      - name: Build client packages
+        run: |
+          set -euo pipefail
+          build() {
+            name="$1"
+            keep="$2"
+            staging=$(mktemp -d)
+            cp -R plugins/kepler.gl "$staging/kepler-gl"
+            for manifest in .claude-plugin plugin.json .cursor-plugin; do
+              case " $keep " in
+                *" $manifest "*) ;;
+                *) rm -rf "$staging/kepler-gl/$manifest" ;;
+              esac
+            done
+            find "$staging/kepler-gl" -name '.DS_Store' -delete
+            (cd "$staging" && zip -qr "$GITHUB_WORKSPACE/$name.zip" kepler-gl)
+            rm -rf "$staging"
+          }
+          build kepler-gl-claude '.claude-plugin'
+          build kepler-gl-codex 'plugin.json'
+          build kepler-gl-cursor '.cursor-plugin'
+
+          staging=$(mktemp -d)
+          cp -R plugins/kepler.gl "$staging/kepler-gl"
+          (cd "$staging" && zip -qr "$GITHUB_WORKSPACE/kepler-gl-plugin-source.zip" kepler-gl)
+          rm -rf "$staging"
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: kepler-gl-v${{ steps.version.outputs.version }}
+          path: kepler-gl-*.zip
+
+      - name: Attach packages to release
+        if: startsWith(github.ref, 'refs/tags/plugin-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            kepler-gl-claude.zip
+            kepler-gl-codex.zip
+            kepler-gl-cursor.zip
+            kepler-gl-plugin-source.zip

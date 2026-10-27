@@ -31,6 +31,7 @@ import {
   processCsvData,
   processGeojson,
   processArrowBatches,
+  loadExternallyHostedDataset,
   remoteDatasetFromUrl
 } from '@kepler.gl/processors';
 import {
@@ -46,6 +47,7 @@ import {
   getAnimatableVisibleLayers,
   getBinThresholds,
   getFilterBinThresholds,
+  getDefaultTimeFormat,
   getNumericPlotInterval,
   intervalBinFromMarks,
   getDefaultFilter,
@@ -56,6 +58,7 @@ import {
 } from '@kepler.gl/utils';
 import {
   ALL_FIELD_TYPES,
+  TIME_INTERVALS,
   DatasetType,
   EDITOR_MODES,
   LAYER_VIS_CONFIGS,
@@ -10152,6 +10155,117 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.end();
 });
 
+test('VisStateUpdater -> CSV refresh preserves layers and filters through 100, 1, 0 and 100 rows', async t => {
+  const originalFetch = global.fetch;
+  const source = 'https://example.com/live.csv';
+  const populated = `lat,lng,value\n${Array.from(
+    {length: 100},
+    (_, i) => `${37 + i / 1000},${-122 - i / 1000},${i}`
+  ).join('\n')}\n`;
+  let body = populated;
+  global.fetch = async () => new Response(body, {headers: {'content-type': 'text/csv'}});
+  const refresh = async state => {
+    drainTasksForTesting();
+    state = reducer(state, VisStateActions.refreshDataset('remote-csv'));
+    const [task] = drainTasksForTesting();
+    const action = await new Promise(resolve => {
+      task.run((effect, succeed, fail, ctx) => effect(succeed, fail, ctx), resolve, resolve, {
+        onProgress: progress => {
+          state = reducer(state, progress);
+        }
+      });
+    });
+    return reducer(state, action);
+  };
+  try {
+    for (const gpu of [false, true]) {
+      const inverted = !gpu;
+      body = populated;
+      const loaded = await loadExternallyHostedDataset({source, format: 'csv'});
+      const datasets = await createNewDataEntryMock({
+        info: {id: 'remote-csv', type: DatasetType.EXTERNALLY_HOSTED},
+        data: loaded.data,
+        metadata: {source, sourceFormat: 'csv'}
+      });
+      const {props} = PointLayer.findDefaultLayerProps(datasets['remote-csv']);
+      const point = new PointLayer({id: 'csv-point', dataId: 'remote-csv', ...props[0]});
+      point.updateLayerVisConfig({opacity: 0.37, radius: 9});
+      let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
+      const initial = calculateLayerData(point, state);
+      state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
+      const style = {...state.layers[0].config.visConfig};
+      const types = datasets['remote-csv'].fields.map(field => field.type);
+      state = reducer(state, VisStateActions.addFilter('remote-csv'));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+      state = reducer(state, VisStateActions.setFilter(0, 'value', [20, 80]));
+      state = reducer(state, VisStateActions.setFilter(0, 'inverted', inverted));
+      state = reducer(state, VisStateActions.setFilter(0, 'gpu', gpu));
+      const filterId = state.filters[0].id;
+
+      for (const [text, count] of [
+        [`lat,lng,value\n40.5,-125.5,${gpu ? 50 : 10}\n`, 1],
+        ['lat,lng,value\n', 0],
+        [populated, 100]
+      ]) {
+        body = text;
+        state = await refresh(state);
+        const ds = state.datasets['remote-csv'];
+        t.equal(ds.metadata.refreshStatus, 'idle', 'refresh succeeds');
+        t.equal(ds.dataContainer.numRows(), count, 'replaces all rows');
+        t.deepEqual(
+          ds.fields.map(field => field.type),
+          types,
+          'preserves established types'
+        );
+        t.equal(state.layers.length, 1, 'keeps the configured layer');
+        t.equal(state.layers[0].id, 'csv-point', 'keeps layer identity');
+        t.equal(state.layers[0].isValid, true, 'keeps the layer valid');
+        t.deepEqual(state.layers[0].config.visConfig, style, 'keeps user styling');
+        t.equal(state.filters[0].id, filterId, 'keeps filter identity');
+        t.deepEqual(state.filters[0].value, [20, 80], 'keeps selected range');
+        t.equal(state.filters[0].inverted, inverted, 'keeps Filter out');
+        t.equal(state.filters[0].gpu, gpu, 'keeps evaluation mode');
+        ds.filterTableCPU(state.filters, state.layers);
+        const expected = ds.allIndexes.filter(i => {
+          const value = ds.dataContainer.valueAt(i, 2);
+          return inverted ? value < 20 || value > 80 : value >= 20 && value <= 80;
+        });
+        t.deepEqual(ds.filteredIdxCPU, expected, 'export filtering uses the new snapshot');
+        t.equal(
+          state.layerData[0].data.length,
+          gpu ? count : expected.length,
+          'rebuilds layer data'
+        );
+        if (count === 1) {
+          t.deepEqual(
+            state.layerData[0].data[0].position.slice(0, 2),
+            [-125.5, 40.5],
+            'updates coordinates'
+          );
+        }
+      }
+      for (const invalid of ['', 'lat,lng,"value', 'value,lng,lat\n']) {
+        body = invalid;
+        const previous = state.datasets['remote-csv'].dataContainer;
+        const layerData = state.layerData[0];
+        state = await refresh(state);
+        t.equal(
+          state.datasets['remote-csv'].metadata.refreshStatus,
+          'error',
+          'unsupported refresh fails'
+        );
+        t.equal(state.datasets['remote-csv'].dataContainer, previous, 'failure retains the rows');
+        t.equal(state.layerData[0], layerData, 'failure retains rendered data');
+        t.deepEqual(state.filters[0].value, [20, 80], 'failure retains the selection');
+      }
+    }
+  } finally {
+    global.fetch = originalFetch;
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
 test('VisStateUpdater -> refreshDataset keeps Arrow point layers valid through empty snapshots', async t => {
   const snapshot = values => {
     const table = arrow.tableFromArrays({
@@ -10213,7 +10327,11 @@ test('VisStateUpdater -> refreshDataset keeps Arrow point layers valid through e
       const expected = values.flatMap((value, index) =>
         !withFilter || value < 2 || value > 3 ? [index] : []
       );
-      t.deepEqual(state.datasets[dataId].filteredIndex, expected, 'refresh reapplies active filters');
+      t.deepEqual(
+        state.datasets[dataId].filteredIndex,
+        expected,
+        'refresh reapplies active filters'
+      );
       t.deepEqual(
         values.flatMap((_, index) => (state.layerData[0].getFiltered({index}) ? [index] : [])),
         expected,
@@ -10262,7 +10380,10 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
   for (const [values, expected] of [
     [[1, 2, 3], [0]],
     [[3, 1, 2], [1]],
-    [[2, 1, 3, 4], [1, 3]],
+    [
+      [2, 1, 3, 4],
+      [1, 3]
+    ],
     [[], []],
     [[3, 2, 1], [2]],
     [[2], []]
@@ -10281,6 +10402,86 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
     t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
     t.equal(state.filters[0].inverted, true, 'refresh preserves Filter out');
     t.deepEqual(Array.from(data.arrowTable.getChildAt(0)), values, 'source values are unchanged');
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> timestamp refresh updates point filtering and export', async t => {
+  const firstTime = Date.UTC(2024, 1, 1);
+  const lastTime = firstTime + 86400000;
+  const snapshot = (values, rowBacked) => {
+    const source = new arrow.Table({
+      time: arrow.vectorFromArray(
+        values.map(value => new Date(value)),
+        new arrow.TimestampMillisecond('UTC')
+      ),
+      lat: arrow.vectorFromArray(
+        values.map(() => 37.77),
+        new arrow.Float64()
+      ),
+      lng: arrow.vectorFromArray(
+        values.map(() => -122.42),
+        new arrow.Float64()
+      )
+    });
+    const data = processArrowBatches(arrow.tableFromIPC(arrow.tableToIPC(source, 'file')).batches);
+    return rowBacked
+      ? {fields: data.fields, rows: values.map(value => [value, 37.77, -122.42])}
+      : data;
+  };
+
+  for (const rowBacked of [false, true]) {
+    for (const gpu of [false, true]) {
+      drainTasksForTesting();
+      const dataId = 'remote-timestamps';
+      const datasets = await createNewDataEntryMock({
+        info: {id: dataId, type: DatasetType.EXTERNALLY_HOSTED},
+        data: snapshot([firstTime, lastTime], rowBacked),
+        metadata: {source: 'https://example.com/time.arrow', sourceFormat: 'arrow'}
+      });
+      const {props} = PointLayer.findDefaultLayerProps(datasets[dataId]);
+      const point = new PointLayer({id: 'timestamp-point', dataId, ...props[0]});
+      let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
+      const initial = calculateLayerData(point, state);
+      state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
+      state = reducer(state, VisStateActions.addFilter(dataId));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
+      state = reducer(
+        state,
+        VisStateActions.setFilter(0, 'value', [firstTime, firstTime + 3600000])
+      );
+      state = reducer(state, VisStateActions.setFilter(0, 'gpu', gpu));
+      const selection = state.filters[0];
+
+      for (const values of [[lastTime, firstTime], [], [lastTime, firstTime]]) {
+        state = reducer(state, VisStateActions.refreshDataset(dataId));
+        state = reducer(state, VisStateActions.refreshDatasetProgress(dataId, 50));
+        const [task] = drainTasksForTesting();
+        state = reducer(
+          state,
+          succeedTaskInTest(task, {data: snapshot(values, rowBacked), notModified: false})
+        );
+        const table = state.datasets[dataId];
+        const expected = values.length ? [1] : [];
+        table.filterTableCPU(state.filters, state.layers);
+        t.deepEqual(table.filteredIdxCPU, expected, 'export uses refreshed timestamp values');
+        const renderIndexes = rowBacked
+          ? state.layerData[0].data.map(datum => datum.index)
+          : table.allIndexes;
+        const visible = renderIndexes.filter(index => {
+          if (!state.layerData[0].getFiltered({index})) return false;
+          const value = state.layerData[0].getFilterValue({index})[0];
+          const [min, max] = table.gpuFilter.filterRange[0];
+          return value >= min && value <= max;
+        });
+        t.deepEqual(visible, expected, 'point rendering uses refreshed timestamp values');
+        t.equal(state.layers[0].isValid, true, 'empty snapshots keep the point layer valid');
+        t.deepEqual(state.filters[0].value, selection.value, 'refresh retains the selected range');
+        t.equal(state.filters[0].id, selection.id, 'refresh retains filter identity');
+        t.equal(state.filters[0].gpu, gpu, 'refresh retains GPU mode');
+        t.equal(state.filters[0].enabled, true, 'refresh keeps the filter enabled');
+      }
+    }
   }
   t.end();
 });
@@ -10341,6 +10542,150 @@ test('VisStateUpdater -> refreshDataset rebuilds filter domains and preserves se
     const [task] = drainTasksForTesting();
     state = reducer(state, succeedTaskInTest(task, result));
     t.equal(state.filters, filters, 'keeps filters when refresh has no replacement data');
+  }
+  t.end();
+});
+
+test('VisStateUpdater -> refreshDataset bounds timeline bins without changing the selection', async t => {
+  const start = Date.UTC(2020, 0, 1);
+  const end = start + 86400000;
+  // Protect this regression even when run against unfixed code: fail before
+  // D3 can allocate an oversized range, never reproduce the original OOM.
+  const every = TIME_INTERVALS.millisecond.every;
+  const stub = sinon.stub(TIME_INTERVALS.millisecond, 'every').callsFake(step => {
+    const interval = every(step);
+    return {
+      ...interval,
+      range(from, to) {
+        const requested = Math.ceil((to - from) / step);
+        if (requested > 2049)
+          throw new Error(`Intercepted unsafe allocation of ${requested} Dates`);
+        return interval.range(from, to);
+      }
+    };
+  });
+  try {
+    for (const mode of ['auto', 'manual', 'safe', 'end-field']) {
+      const dataId = `timeline-${mode}`;
+      const datasets = await createNewDataEntryMock({
+        info: {id: dataId},
+        data: processCsvData(`start_time,end_time,value
+2020-01-01T00:00:00.000Z,2020-01-01T00:00:00.001Z,10
+2020-01-01T00:00:00.001Z,,20`)
+      });
+      let state = {...INITIAL_VIS_STATE, datasets};
+      state = reducer(state, VisStateActions.addFilter(dataId));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'start_time'));
+      if (mode === 'end-field')
+        state = reducer(state, VisStateActions.setFilter(0, 'endName', 'end_time'));
+      if (mode === 'manual' || mode === 'safe') {
+        state = reducer(
+          state,
+          VisStateActions.setFilterPlot(0, {
+            plotType: {interval: mode === 'safe' ? '1-hour' : '1-millisecond'}
+          })
+        );
+      }
+      state = reducer(state, VisStateActions.setFilter(0, 'gpu', false));
+      state = reducer(state, VisStateActions.setFilter(0, 'value', [start, start + 1]));
+      const yAxis = state.datasets[dataId].fields.find(field => field.name === 'value');
+      state = reducer(state, VisStateActions.setFilterPlot(0, {yAxis}));
+      const previous = state.filters[0];
+      const data = processCsvData(`start_time,end_time,value
+2020-01-01T00:00:00.000Z,2020-01-01T00:00:00.001Z,30
+2020-01-02T00:00:00.000Z,,40`);
+      state = reducer(
+        state,
+        VisStateActions.refreshDatasetSuccess(dataId, {data, notModified: false})
+      );
+      const filter = state.filters[0];
+      const effectiveInterval = mode === 'safe' ? '1-hour' : '15-minute';
+      t.equal(
+        filter.plotType.interval,
+        effectiveInterval,
+        `${mode}: should preserve safe intervals and coarsen unsafe ones`
+      );
+      t.deepEqual(filter.domain, [start, end], `${mode}: should retain the full refreshed domain`);
+      t.deepEqual(filter.value, previous.value, `${mode}: should preserve the selected range`);
+      t.equal(filter.id, previous.id, `${mode}: should preserve filter identity`);
+      t.equal(filter.gpu, false, `${mode}: should preserve CPU filtering`);
+      t.deepEqual(
+        state.datasets[dataId].filteredIndex,
+        [0],
+        `${mode}: should apply the unchanged selection`
+      );
+      t.equal(
+        filter.plotType.aggregation,
+        previous.plotType.aggregation,
+        `${mode}: should preserve aggregation`
+      );
+      t.equal(filter.yAxis.name, 'value', `${mode}: should preserve the Y field`);
+      if (mode !== 'safe') {
+        t.equal(
+          filter.plotType.defaultTimeFormat,
+          getDefaultTimeFormat(effectiveInterval),
+          `${mode}: should update automatic labels`
+        );
+        t.notOk(
+          filter.timeBins[dataId]['1-millisecond'],
+          `${mode}: should remove the obsolete cache`
+        );
+      }
+      const marks = getFilterBinThresholds(filter);
+      const bins = filter.timeBins[dataId][effectiveInterval];
+      t.ok(marks.length <= 2049, `${mode}: should bound playback marks`);
+      t.ok(
+        bins.every(bin => marks.includes(bin.x0) && marks.includes(bin.x1)),
+        `${mode}: should align histogram and playback boundaries`
+      );
+      t.equal(
+        filter.lineChart.interval,
+        effectiveInterval,
+        `${mode}: should use the effective interval for the line chart`
+      );
+      t.deepEqual(
+        filter.lineChart.yDomain,
+        [30, 40],
+        `${mode}: should include both refreshed rows in chart aggregation`
+      );
+      // A saved/API interval that bypasses the UI must be normalized too.
+      state = reducer(
+        state,
+        VisStateActions.setFilterPlot(0, {plotType: {interval: '1-millisecond'}})
+      );
+      t.equal(
+        state.filters[0].plotType.interval,
+        '15-minute',
+        `${mode}: should bound an unsafe API interval`
+      );
+      t.deepEqual(
+        state.filters[0].value,
+        previous.value,
+        `${mode}: API coarsening should not move the selection`
+      );
+      const configured = state.filters[0];
+      state = reducer(
+        state,
+        VisStateActions.applyFilterConfig(configured.id, {
+          ...configured,
+          plotType: {...configured.plotType, interval: '1-millisecond'}
+        })
+      );
+      t.equal(
+        state.filters[0].plotType.interval,
+        '15-minute',
+        `${mode}: should bound an unsafe configured interval`
+      );
+      t.deepEqual(
+        state.filters[0].value,
+        previous.value,
+        `${mode}: configured coarsening should preserve selection`
+      );
+    }
+  } catch (error) {
+    t.fail(error.message);
+  } finally {
+    stub.restore();
   }
   t.end();
 });

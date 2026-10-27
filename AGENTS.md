@@ -71,6 +71,10 @@ Ask first for a public API change, saved-config compatibility, product behavior,
 
 ## Pull requests
 
+After an authorized push, verify it succeeded and confirm the remote commit SHA, then report completion immediately. Do not wait for or poll GitHub checks (including DCO, GitBook, Netlify previews, redirect/header/page checks, and Node.js CI), or start background CI monitors, by default. Monitor checks only when the user explicitly requests it or the task specifically requires their terminal outcome.
+
+Required local tests, type checks, lint, and review must still be completed before publishing. Report pending checks as pending; never claim they passed.
+
 Keep PR descriptions short:
 
 - What changed and why

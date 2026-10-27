@@ -33,15 +33,26 @@ export function getGeoJSON(data, getPosition, filterData) {
 
 const clusterResolver = ({clusterRadius}: {clusterRadius: number}) => `${clusterRadius}`;
 
-const getClusterer = ({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}) =>
-  new Supercluster({
+const getClusterer = ({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}) => {
+  const ownedAccumulators = new WeakSet();
+  return new Supercluster({
     maxZoom: 20,
     radius: clusterRadius,
     reduce: (accumulated, props) => {
-      accumulated.points = [...accumulated.points, ...props.points];
+      // Supercluster shallow-copies a child's properties when starting a parent.
+      // Clone its shared points once per accumulator, then append without copying
+      // the growing prefix. Track object identity so a parent acquires its own array.
+      if (!ownedAccumulators.has(accumulated)) {
+        accumulated.points = accumulated.points.slice();
+        ownedAccumulators.add(accumulated);
+      }
+      for (const point of props.points) {
+        accumulated.points.push(point);
+      }
     },
     map: props => ({points: [props.data]})
   }).load(geoJSON);
+};
 
 export default class ClusterBuilder {
   clusterer: (({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}) => Supercluster) &

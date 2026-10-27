@@ -1,0 +1,24 @@
+{
+  "name": "kepler-gl",
+  "version": "0.1.0",
+  "description": "kepler.gl skills for AI assistants: create standalone HTML maps from Python data with keplergl, and drive a live kepler.gl map with map.* commands (layers, time animation, basemaps).",
+  "author": {
+    "name": "kepler.gl",
+    "url": "https://github.com/keplergl"
+  },
+  "homepage": "https://kepler.gl",
+  "repository": "https://github.com/keplergl/kepler.gl",
+  "license": "MIT",
+  "keywords": [
+    "maps",
+    "geospatial",
+    "visualization",
+    "kepler.gl",
+    "keplergl",
+    "GeoJSON",
+    "DataFrame",
+    "HTML",
+    "mcp"
+  ],
+  "skills": ["./skills/keplergl-python", "./skills/kepler-gl-app"]
+}

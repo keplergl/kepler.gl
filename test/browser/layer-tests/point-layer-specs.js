@@ -10,8 +10,9 @@ import * as arrow from 'apache-arrow';
 
 import {DEFAULT_TEXT_LABEL, PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
+import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {arrowSchemaToFields, processGeojson} from '@kepler.gl/processors';
+import {arrowSchemaToFields, processArrowBatches, processGeojson} from '@kepler.gl/processors';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
 import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
@@ -81,28 +82,16 @@ const {PointLayer} = KeplerGlLayers;
         [90, 30]
       ];
       const batches = coordinates.map((coords, index) => {
-        const built = arrow.vectorFromArray(coords, type);
-        // Use exact-length offsets, as in an Arrow IPC record batch, without
-        // the builder's trailing allocation padding.
-        const geometry =
-          geometryType === 'multipoint'
-            ? arrow.makeVector(
-                arrow.makeData({
-                  type,
-                  length: coords.length,
-                  valueOffsets: built.data[0].valueOffsets.slice(0, coords.length + 1),
-                  child: built.data[0].children[0]
-                })
-              )
-            : built;
         const table = new arrow.Table({
-          geometry,
+          geometry: arrow.vectorFromArray(coords, type),
           value: arrow.vectorFromArray(values[index], new arrow.Float64())
         });
         table.schema.fields[0].metadata.set('ARROW:extension:name', `geoarrow.${geometryType}`);
         return table;
       });
-      const table = batches[0].concat(batches[1]);
+      // IPC buffers can contain alignment padding after the logical offsets.
+      const table = arrow.tableFromIPC(arrow.tableToIPC(batches[0].concat(batches[1]), 'file'));
+      const originalBytes = arrow.tableToIPC(table, 'file');
       const dataset = new KeplerTable({info: {id: 'batched'}, color: [0, 0, 0]});
       await dataset.importData({
         data: {
@@ -207,9 +196,107 @@ const {PointLayer} = KeplerGlLayers;
         90,
         'later batch reads 90 rather than the first batch value 10'
       );
+      const vectorLayer = new GeoArrowScatterplotLayer({
+        id: 'batched-vector-radius',
+        data: table,
+        getPosition: table.getChild('geometry'),
+        getRadius: table.getChild('value')
+      });
+      vectorLayer.renderLayers().forEach((sublayer, batchIndex) => {
+        t.deepEqual(
+          Array.from(sublayer.props.data.attributes.getRadius.value),
+          rowIndices[batchIndex].map(index => values.flat()[index]),
+          'vector radius uses the correct row across unequal batches'
+        );
+      });
+      t.deepEqual(
+        arrow.tableToIPC(table, 'file'),
+        originalBytes,
+        'rendering preserves source data'
+      );
       t.end();
     });
   });
+});
+
+test('#PointLayer -> MultiPoint IPC offset padding and vector attributes', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+  const type = new arrow.List(new arrow.Field('points', pointType));
+  const colorType = new arrow.FixedSizeList(3, new arrow.Field('rgb', new arrow.Uint8()));
+  const cases = [
+    {name: 'two rows', coords: [[[0, 0]], [[1, 1]]]},
+    {name: 'three rows', coords: [[[0, 0]], [[1, 1]], [[2, 2]]]},
+    {name: 'empty first row', coords: [[], [[1, 1]]]},
+    {name: 'empty last row', coords: [[[0, 0]], []]},
+    {name: 'all empty', coords: [[], []]}
+  ];
+  for (const {name, coords} of cases) {
+    const values = coords.map((_, index) => 10 + index * 40);
+    const colors = values.map(value => [value, value + 1, value + 2]);
+    const input = new arrow.Table({
+      geometry: arrow.vectorFromArray(coords, type),
+      value: arrow.vectorFromArray(values, new arrow.Float32()),
+      color: arrow.vectorFromArray(colors, colorType)
+    });
+    input.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.multipoint');
+    const bytes = arrow.tableToIPC(input, 'file');
+    const table = arrow.tableFromIPC(bytes);
+    const originalBytes = bytes.slice();
+    const dataset = new KeplerTable({info: {id: name}, color: [0, 0, 0]});
+    await dataset.importData({data: processArrowBatches(table.batches)});
+    const layer = new PointLayer({dataId: dataset.id, columnMode: 'geoarrow'});
+    layer.config.columns.geoarrow = {value: 'geometry', fieldIdx: 0};
+    layer.config.sizeField = dataset.fields[1];
+    layer.config.sizeScale = 'linear';
+    layer.config.visConfig.radiusRange = [10, values[values.length - 1]];
+    layer.updateLayerDomain({[dataset.id]: dataset});
+    const formatted = layer.formatLayerData({[dataset.id]: dataset});
+    const [composite] = layer.renderLayer({
+      data: formatted,
+      dataset,
+      idx: 0,
+      layerInteraction: {},
+      mapState: INITIAL_MAP_STATE,
+      gpuFilter: dataset.gpuFilter,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      visible: true,
+      layerCallbacks: {}
+    });
+    const [sublayer] = composite.renderLayers();
+    const rowIndices = coords.flatMap((points, index) => points.map(() => index));
+    t.equal(sublayer.props.data.length, rowIndices.length, `${name}: empty rows add no points`);
+    rowIndices.forEach((row, index) => {
+      const context = {index, data: sublayer.props.data, target: []};
+      t.equal(sublayer.props.getRadius(null, context), values[row], `${name}: correct radius`);
+      t.equal(sublayer.props.getFiltered(null, context), 1, `${name}: point remains visible`);
+      t.equal(
+        composite.getPickingInfo({info: {index}, sourceLayer: sublayer}).index,
+        row,
+        `${name}: correct picked row`
+      );
+    });
+    const vectorLayer = new GeoArrowScatterplotLayer({
+      id: `${name}-vectors`,
+      data: table,
+      getPosition: table.getChild('geometry'),
+      getRadius: table.getChild('value'),
+      getFillColor: table.getChild('color')
+    });
+    const [vectorSublayer] = vectorLayer.renderLayers();
+    t.deepEqual(
+      Array.from(vectorSublayer.props.data.attributes.getRadius.value),
+      rowIndices.map(index => values[index]),
+      `${name}: expands numeric Arrow attributes`
+    );
+    t.deepEqual(
+      Array.from(vectorSublayer.props.data.attributes.getFillColor.value),
+      rowIndices.flatMap(index => colors[index]),
+      `${name}: expands vector Arrow attributes`
+    );
+    t.deepEqual(bytes, originalBytes, `${name}: leaves the source IPC buffer unchanged`);
+    t.deepEqual(arrow.tableToIPC(table, 'file'), originalBytes, `${name}: preserves source values`);
+  }
+  t.end();
 });
 
 test('#PointLayer -> constructor', t => {

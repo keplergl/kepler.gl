@@ -4,14 +4,39 @@ This is the src code of kepler.gl demo app. You can copy this folder out and run
 
 > The AI assistant (panel, control, reducer) comes from the published
 > **`@openassistant/kepler-assistant`** package (`^0.0.12`), which temporarily
-> vendors the `@kepler.gl/mcp` map surface (this repo's `src/mcp/` module is
-> removed for now). kepler.gl is a **static website**: it only provides the map
-> surface *interface* (`@kepler.gl/mcp`) plus a WebSocket listener — it never
-> runs an MCP server. Any MCP server (kepler-assistant's own, or any harness
-> like Claude Code / Codex driving the map) is **user-provided** and follows the
-> `@kepler.gl/mcp` interface, while the command registry executes on the
-> in-browser map. See [`docs/NEXT_PLAN.md`](docs/NEXT_PLAN.md) for the permanent
-> separation back into a kepler.gl `src/mcp/` module.
+> vendors the `@kepler.gl/mcp` map surface. kepler.gl is a **static website**:
+> it exposes the map surface *interface* (`@kepler.gl/mcp`) and registers those
+> commands with the browser's WebMCP API — it never runs an MCP server.
+
+#### Agent surfaces
+
+The demo exposes the DuckDB-free `map.*` command catalog to agents two ways.
+Both are silent — there is no status chip — and share
+`kepler-mcp-shared.ts`, which builds the catalog and the redux-backed command
+context.
+
+- **WebMCP** (`kepler-webmcp.tsx`) — registers the tools with the browser's
+  native [WebMCP](https://webmachinelearning.github.io/webmcp/) API
+  (`document.modelContext`, with a `navigator.modelContext` fallback) for
+  harnesses that have a built-in browser with WebMCP enabled: Chrome 149+ with
+  the origin trial, or `chrome://flags/#enable-webmcp-testing`. Without it the
+  surface is inert. Tool names fold `map.load-data` → `map_load_data` (dots are
+  common MCP-tool-name poison); the original command id is kept in the
+  description and every result string.
+- **MCP bridge** (`kepler-mcp-bridge.tsx`) — for harnesses without WebMCP
+  (Codex Desktop, the Codex CLI, Claude Code). Build and run the server that
+  ships with `@kepler.gl/mcp`:
+
+  ```bash
+  yarn workspace @kepler.gl/mcp build
+  node src/mcp/dist/cjs/server/stdio.js --map-url http://localhost:8080
+  ```
+
+  It listens on a loopback WebSocket and prints a URL carrying a one-time
+  token; open that URL and the page connects back. Register the same command as
+  a stdio MCP server in your harness, for example
+  `codex mcp add kepler -- node src/mcp/dist/cjs/server/stdio.js`.
+  Nothing connects unless the page was opened with `?mcp=<token>`.
 
 #### Pre requirement
 - [Node.js ^20.x](http://nodejs.org): We use Node to generate the documentation, run a

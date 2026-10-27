@@ -3764,6 +3764,7 @@ async function refreshExternallyHostedTable({
     size?: number;
     etag?: string;
     lastModified?: string;
+    csvHeader?: string[];
   };
   onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
 }) {
@@ -3817,6 +3818,7 @@ export function refreshDatasetUpdater(
       arg: {
         source: nextDataset.metadata.source as string,
         format: getRemoteSourceFormat(nextDataset.metadata),
+        csvHeader: nextDataset.fields.map(field => field.name),
         size: typeof nextDataset.metadata.size === 'number' ? nextDataset.metadata.size : undefined,
         etag: typeof nextDataset.metadata.etag === 'string' ? nextDataset.metadata.etag : undefined,
         lastModified:
