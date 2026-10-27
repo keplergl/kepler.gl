@@ -259,7 +259,6 @@ class KeplerTable<F extends Field = Field> {
     const dataContainer = createDataContainer(dataContainerData, {
       fields: data.fields,
       arrowTable: data.arrowTable,
-      arrowSchema: data.arrowSchema,
       geoArrowBinaryData: data.geoArrowBinaryData,
       inputDataFormat
     });
@@ -309,8 +308,7 @@ class KeplerTable<F extends Field = Field> {
 
     if (typeof this.dataContainer.update === 'function') {
       this.dataContainer.update(dataContainerData, {
-        geoArrowBinaryData: data.geoArrowBinaryData,
-        arrowSchema: data.arrowSchema
+        geoArrowBinaryData: data.geoArrowBinaryData
       });
     } else if (isRowSnapshot) {
       this.dataContainer = createDataContainer(dataContainerData, {
@@ -448,14 +446,12 @@ class KeplerTable<F extends Field = Field> {
     }
 
     if (this.dataContainer instanceof ArrowDataContainer) {
-      if (!this.upsertArrowRows(this.dataContainer, replacements, toAppend)) {
+      if (!this.dataContainer.replaceRows(replacements, toAppend)) {
         return false;
       }
     } else {
       for (const [index, row] of replacements) {
-        if (!this.dataContainer.replace(index, row)) {
-          return false;
-        }
+        this.dataContainer.replace(index, row);
       }
       if (toAppend.length && !this.dataContainer.append(toAppend)) {
         return false;
@@ -469,30 +465,6 @@ class KeplerTable<F extends Field = Field> {
         ? this.dataContainer.getPlainIndex()
         : this.allIndexes;
     this.afterRowMutation(nextIndexes);
-    return true;
-  }
-
-  private upsertArrowRows(
-    container: ArrowDataContainer,
-    replacements: Map<number, any[]>,
-    toAppend: any[][]
-  ): boolean {
-    // Encode the complete result once before touching the live container.
-    // Rebuilding per replacement is quadratic and can leave partial mutations
-    // when a later row fails to encode.
-    const rows = container.flattenData();
-    for (const [index, row] of replacements) {
-      rows[index] = row;
-    }
-    const staged = new ArrowDataContainer({
-      cols: this.fields.map((_, i) => container.getColumn(i).slice(0, 0)),
-      fields: this.fields,
-      arrowSchema: container.getTable().schema
-    });
-    if (!staged.append(rows.concat(toAppend))) {
-      return false;
-    }
-    container.update(staged.getTable());
     return true;
   }
 

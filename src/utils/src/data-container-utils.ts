@@ -13,7 +13,6 @@ export type DataContainerOptions = {
   inputDataFormat?: string; // one of DataForm
   fields?: ProtoDatasetField[];
   arrowTable?: arrow.Table;
-  arrowSchema?: arrow.Schema;
   geoArrowBinaryData?: GeoArrowBinaryData;
 };
 
@@ -45,7 +44,6 @@ export function createDataContainer(
       cols: data,
       fields: options.fields,
       arrowTable: options.arrowTable,
-      arrowSchema: options.arrowSchema,
       geoArrowBinaryData: options.geoArrowBinaryData
     });
   }

@@ -760,6 +760,108 @@ test('KeplerTable -> Arrow row edits and snapshots keep timestamp filters curren
   t.end();
 });
 
+test('KeplerTable -> Arrow upserts preserve untouched raw timestamps and nulls', t => {
+  const rawValues = vector =>
+    vector.data.flatMap(chunk =>
+      Array.from({length: chunk.length}, (_, index) =>
+        chunk.getValid(index) ? chunk.values[index] : null
+      )
+    );
+
+  for (const [Timestamp, first, unitsPerMillisecond] of [
+    [arrow.TimestampMicrosecond, 9007199254740993n, 1000n],
+    [arrow.TimestampNanosecond, 1700000000000000123n, 1000000n]
+  ]) {
+    const source = new arrow.Table({
+      id: arrow.vectorFromArray(['padding', 'a', 'b', 'c', 'd'], new arrow.Utf8()),
+      time: arrow.makeVector({
+        type: new Timestamp('America/New_York'),
+        data: new BigInt64Array([0n, first, first + 2n, first + 4n, 0n]),
+        nullBitmap: new Uint8Array([0b01111]),
+        nullCount: 1
+      })
+    }).slice(1);
+    const original = [first, first + 2n, first + 4n, null];
+    t.ok(source.getChild('time').data[0].offset > 0, 'fixture uses a nonzero Arrow offset');
+    t.deepEqual(rawValues(source.getChild('time')), original, 'fixture keeps raw timestamp units');
+    const table = new KeplerTable({info: {id: 'raw-timestamps'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    const container = table.dataContainer;
+    const accessor = table.fields[1].valueAccessor;
+    t.ok(
+      table.upsertRows(
+        [
+          ['new-b', 2000],
+          ['a', 1000],
+          ['new-a', 3000],
+          ['a', 4000],
+          ['new-b', 5000]
+        ],
+        'id'
+      ),
+      'mixed replacement and insertion succeeds'
+    );
+    const expected = [
+      4000n * unitsPerMillisecond,
+      first + 2n,
+      first + 4n,
+      null,
+      5000n * unitsPerMillisecond,
+      3000n * unitsPerMillisecond
+    ];
+    t.equal(table.dataContainer, container, 'upsert retains the container');
+    t.equal(accessor({index: 0}), 4000, 'the existing accessor reads the last replacement');
+    t.deepEqual(
+      Array.from(container.getColumn(0)),
+      ['a', 'b', 'c', 'd', 'new-b', 'new-a'],
+      'existing positions and first incoming key order survive repeated keys'
+    );
+    t.deepEqual(
+      rawValues(container.getColumn(1)),
+      expected,
+      'untouched raw timestamps survive upsert'
+    );
+    const restored = arrow.tableFromIPC(arrow.tableToIPC(container.getTable()));
+    t.deepEqual(
+      rawValues(restored.getChild('time')),
+      expected,
+      'IPC preserves raw timestamps and nulls'
+    );
+    t.equal(
+      restored.schema.fields[1].type.timezone,
+      'America/New_York',
+      'IPC preserves the timezone'
+    );
+    t.deepEqual(
+      rawValues(source.getChild('time')),
+      original,
+      'upsert does not mutate the source snapshot'
+    );
+
+    const snapshot = container.getTable();
+    const revision = table.dataRevision;
+    t.notOk(
+      table.upsertRows(
+        [
+          ['a', 6000],
+          ['invalid', 'not-a-timestamp']
+        ],
+        'id'
+      ),
+      'a later invalid timestamp rejects the whole batch'
+    );
+    t.equal(container.getTable(), snapshot, 'a rejected upsert retains the Arrow snapshot');
+    t.equal(table.dataRevision, revision, 'a rejected upsert does not advance the revision');
+    t.deepEqual(
+      rawValues(container.getColumn(1)),
+      expected,
+      'a rejected upsert changes no raw values'
+    );
+  }
+  t.end();
+});
+
 test('KeplerTable -> update DuckDB cols payload keeps fields and gpuFilter', async t => {
   const first = arrow.tableFromArrays({
     lat: [1, 2],

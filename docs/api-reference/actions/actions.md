@@ -530,7 +530,7 @@ Returns **{type: ActionTypes.ADD_LAYER, props: props}**
 
 Append or upsert rows on an existing in-memory row or Arrow dataset without `addDataToMap`. Keeps layer identity and style. Pass `options.upsertBy` to replace rows that share that key and append the rest.
 
-DuckDB tables (no INSERT yet) warn and leave the table unchanged. Arrow tables concat primitive columns in place; nested, binary, and geoarrow columns are rejected. Use `addDataToMap` with `keepExistingConfig` for a full replace.
+DuckDB tables (no INSERT yet) warn and leave the table unchanged. Arrow tables support primitive columns; nested, binary, and geoarrow columns are rejected. Encoding failures and dictionary index overflow reject the whole edit batch. Use `addDataToMap` with `keepExistingConfig` for a full replace.
 
 - **ActionTypes**: `ActionTypes.ADD_TO_DATASET`
 - **Updaters**: `visStateUpdaters.addToDatasetUpdater`
@@ -746,7 +746,7 @@ Returns **{type: ActionTypes.REMOVE_DATASET, key: key}**
 
 Delete rows from an existing in-memory row or Arrow dataset without restyling layers. The second argument is either row indexes or `{field, values}` to match a column (for example an id).
 
-DuckDB tables warn and leave the table unchanged. Arrow tables concat the kept slices in place.
+DuckDB tables warn and leave the table unchanged. Arrow tables retain the kept slices. Nested timestamp columns preserve their exact storage and may retain multiple batches after deletion.
 
 - **ActionTypes**: `ActionTypes.REMOVE_FROM_DATASET`
 - **Updaters**: `visStateUpdaters.removeFromDatasetUpdater`
