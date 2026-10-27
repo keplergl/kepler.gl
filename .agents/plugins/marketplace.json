@@ -1,0 +1,21 @@
+{
+  "name": "kepler-gl",
+  "interface": {
+    "displayName": "kepler.gl"
+  },
+  "plugins": [
+    {
+      "name": "kepler-gl",
+      "source": {
+        "source": "local",
+        "path": "./plugins/kepler.gl"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Data Visualization",
+      "description": "kepler.gl skills for AI assistants: create standalone HTML maps from Python data with keplergl, and drive a live kepler.gl map with map.* commands (layers, time animation, basemaps)."
+    }
+  ]
+}

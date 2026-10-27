@@ -1,11 +1,26 @@
 ---
-name: kepler.gl
+name: keplergl-python
 description: Create interactive map visualizations and export to standalone HTML using the keplergl Python package. Use when the user wants to create maps, visualize geospatial data, plot locations on a map, or generate HTML map files from DataFrames, GeoDataFrames, GeoJSON, or CSV data with coordinates.
 ---
 
 # Create Maps with keplergl
 
 Use the `keplergl` Python package to create standalone, interactive HTML map files from geospatial data. The exported HTML loads kepler.gl from CDN — no JavaScript build or server is needed. The resulting `.html` file can be opened directly in any browser.
+
+## Two surfaces
+
+kepler.gl reaches an AI assistant two ways, and this plugin ships a skill for
+each:
+
+| Surface | What it does | Skill |
+|---------|--------------|-------|
+| `keplergl` Python package | Builds a map from data and exports standalone HTML | this skill (`keplergl-python`) |
+| Live kepler.gl app over `map.*` commands | Mutates a map that is already open in the app | `kepler-gl-app` |
+
+Use this skill when the deliverable is an HTML file or a Python script. Use
+`kepler-gl-app` when the user is looking at a running map and asks you to change
+it. The two are not interchangeable — the same layer can need a different type
+string on each surface (see [Layer Types](#layer-types)).
 
 ## Installation
 
@@ -74,7 +89,29 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 - For numeric color encoding, if the user does not specify a color scale, use `visualChannels.colorScale: 'quantile'`.
 - For numeric color encoding, if the user does not specify a palette, use a vibrant sequential/diverging palette (for example, `colorRange.name: 'Global Warming'`).
 - If the user asks for custom class breaks, compute breakpoints in Python first (for example with `pygeoda`), add a derived classified/bin column to the dataset, and map colors using that derived field.
-- **No `SampleMapPanel` in standalone exports.** The `SampleMapPanel` React component lives in the kepler.gl demo app, not in the UMD bundle used by `save_to_html()`. To show a summary/legend overlay, inject an HTML+CSS `<div>` into the exported file (position it at `right: 56px` or `left: 66px` so it doesn't block map controls). See [Summary Panel Overlay](skill-references/summary-panel.md).
+- **No `SampleMapPanel` in standalone exports.** The `SampleMapPanel` React component lives in the kepler.gl demo app, not in the UMD bundle used by `save_to_html()`. To show a summary/legend overlay, inject an HTML+CSS `<div>` into the exported file (position it at `right: 56px` or `left: 66px` so it doesn't block map controls). See [Summary Panel Overlay](references/summary-panel.md).
+
+## Color Encoding
+
+Numeric fields are colored with `visualChannels.colorScale` (`quantile` when
+the user does not ask for a scale) and a `visConfig.colorRange`. Categorical
+fields use `colorScale: 'ordinal'`.
+
+<!-- shared:palettes -->
+Use these palettes when the user does not specify colors. The hex values work
+unchanged on both surfaces.
+
+- Sequential green: `#ffffcc #c2e699 #78c679 #31a354 #006837 #004529`
+- Sequential red: `#fee5d9 #fcae91 #fb6a4a #de2d26 #a50f15`
+- Categorical (Tableau 10): `#1f77b4 #ff7f0e #2ca02c #d62728 #9467bd #8c564b`
+- Vibrant (the built-in `Global Warming` range): `#5A1846 #900C3F #C70039 #E3611C #F1920E #FFC300`
+
+For continuous data use a sequential or diverging palette; for categorical data
+use distinct hues. Do not reuse one palette for two encodings on the same map.
+<!-- /shared:palettes -->
+
+`colorRange` is an object (`name`, `type`, `category`, `colors`), not a list of
+hex strings — see [Point Map](references/point-map.md) for a complete example.
 
 ## Supported Data Formats
 
@@ -89,19 +126,64 @@ Read or set the map configuration dict. Use `map.config` after customizing in Ju
 
 ## Layer Types
 
-| Layer Type | Config `type` | Typical Data |
-|------------|---------------|--------------|
-| Point | `"point"` | DataFrame with lat/lng columns |
-| Arc | `"arc"` | DataFrame with origin/destination lat/lng |
-| Line | `"line"` | DataFrame with origin/destination lat/lng |
-| Hexbin | `"hexagon"` | DataFrame with lat/lng (aggregated spatially) |
-| Heatmap | `"heatmap"` | DataFrame with lat/lng |
-| H3 Hexagon | `"hexagonId"` | DataFrame with H3 hex ID column |
-| GeoJSON / Polygon | `"geojson"` | GeoJSON or GeoDataFrame with polygon/line geometries |
-| Cluster | `"cluster"` | DataFrame with lat/lng |
-| Icon | `"icon"` | DataFrame with lat/lng |
-| Trip | `"trip"` | GeoJSON with LineString + timestamps |
-| S2 | `"s2"` | DataFrame with S2 token column |
+<!-- shared:layer-types -->
+**Layer types differ between the two surfaces.** A `keplergl` Python `config`
+names the layer in `type`; an MCP `map.add-layer` call names it in `layerType`.
+The same spatial concept often uses a different string, and the H3/hexbin pair
+is the classic trap:
+
+| Concept | Python config `type` | MCP `layerType` |
+|---------|----------------------|-----------------|
+| Point | `point` | `point` |
+| Cluster | `cluster` | `cluster` |
+| Heatmap | `heatmap` | `heatmap` |
+| Hexbin (binned from points) | `hexagon` | `hexagon` |
+| H3 hexagon (precomputed H3 ids) | `hexagonId` | `h3` |
+| Grid (binned from points) | — | `grid` |
+| S2 | `s2` | `s2` |
+| Arc (great-circle origin→destination) | `arc` | `arc` |
+| Flow (weighted origin→destination) | — | `flow` |
+| Flow field (streamlines over a vector field) | — | `flowField` |
+| Line (polylines) | `line` | `line` |
+| GeoJSON / polygon | `geojson` | `geojson` |
+| Trip (path + timestamp animation) | `trip` | `trip` |
+| Icon | `icon` | — |
+
+- **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
+  `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
+  Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
+- `—` means the surface has no layer type for that concept; do not substitute
+  another one silently.
+- MCP layer types are validated against an enum, so an unknown string is
+  rejected rather than silently guessed.
+- **`flow` is not `flowField`.** `flow` joins an origin point pair to a
+  destination point pair; `flowField` draws animated streamlines through one
+  vector per sample point (wind, currents, downhill terrain).
+<!-- /shared:layer-types -->
+
+In a Python config, `columns` carries the field names each layer type needs
+(`hex_id` for `hexagonId`, `geojson: '_geojson'` for `geojson`, …) and
+`visualChannels` carries the field-to-channel mappings (`colorField`,
+`sizeField`, `heightField`, …). The per-layer references below show both.
+
+## Time animation and trips
+
+<!-- shared:trip -->
+Trip layers animate themselves. A trip needs an `id` shared across its
+waypoints, `latitude` / `longitude`, and a `timestamp`.
+
+- **Never attach a separate time filter to a trip layer** — `map.add-time-filter`
+  over MCP, or a `timeRange` filter in a Python config. The trip animation and
+  the filter fight over the same clock.
+- MCP `map.add-layer` expects epoch **milliseconds** in `timestamp`. A Python
+  trip GeoJSON carries the timestamp as the fourth coordinate value,
+  `[lng, lat, altitude, timestamp]` (epoch seconds or milliseconds); convert the
+  same data to milliseconds before handing it to MCP `map.add-layer`.
+- Densify sparse origin→destination data — interpolate longitude, latitude, and
+  timestamp together — or the trips teleport between waypoints.
+<!-- /shared:trip -->
+
+See [Trip Animation Map](references/trip-animation-map.md) for a full config.
 
 ## Config Structure
 
@@ -134,28 +216,55 @@ config = {
 
 ## Basemap Styles
 
-Free (no token needed): `dark-matter`, `positron`, `voyager`, `dark-matter-nolabels`, `positron-nolabels`, `voyager-nolabels`
+<!-- shared:basemaps -->
+Basemap ids are the same on both surfaces, but each surface takes them
+differently. Python sets `config.config.mapStyle.styleType`; MCP calls
+`map.set-basemap` with `{"styleType": ...}`.
 
-Mapbox (require `mapbox_token`): `dark`, `light`, `muted`, `muted_night`
+| `styleType` | Needs a Mapbox token |
+|-------------|:--------------------:|
+| `dark-matter` | no |
+| `positron` | no |
+| `voyager` | no |
+| `no_map` | no |
+| `satellite` | yes |
+| `dark` | yes |
+| `light` | yes |
+| `muted` | yes |
+| `muted_night` | yes |
+
+- Without a Mapbox token only `dark-matter`, `positron`, `voyager`, and
+  `no_map` render.
+- `map.set-basemap` rejects any id outside this table (its schema is an enum).
+  A Python `mapStyle.styleType` is passed straight to kepler.gl, so it also
+  accepts custom styles declared in `mapStyle.mapStyles`.
+- The `dark-matter-nolabels`, `positron-nolabels`, and `voyager-nolabels` ids no
+  longer exist in kepler.gl; hide basemap labels with
+  `mapStyle.visibleLayerGroups.label` instead.
+- If a requested style name is ambiguous, ask the user rather than guessing.
+<!-- /shared:basemaps -->
+
+For the Mapbox styles, pass `mapbox_token=` to `KeplerGl(...)` or to
+`save_to_html(...)`; the token is embedded in the exported HTML.
 
 ## Additional Resources
 
 For detailed per-layer-type examples with full config, see supporting files:
 
-- [Point Map](skill-references/point-map.md) — Scatter plot from lat/lng
-- [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
-- [H3 Hexagon Map](skill-references/h3-hexagon-map.md) — H3 spatial index hexagons
-- [Arc / Line Map](skill-references/arc-line-map.md) — Origin-destination connections
-- [Heatmap](skill-references/heatmap.md) — Density heatmap from points
-- [Hexbin Aggregation Map](skill-references/hexbin-aggregation-map.md) — Spatial binning into hexagons
-- [Trip Animation Map](skill-references/trip-animation-map.md) — Animated trips along paths
-- [Summary Panel Overlay](skill-references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
+- [Point Map](references/point-map.md) — Scatter plot from lat/lng
+- [GeoJSON / Polygon Map](references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
+- [H3 Hexagon Map](references/h3-hexagon-map.md) — H3 spatial index hexagons
+- [Arc / Line Map](references/arc-line-map.md) — Origin-destination connections
+- [Heatmap](references/heatmap.md) — Density heatmap from points
+- [Hexbin Aggregation Map](references/hexbin-aggregation-map.md) — Spatial binning into hexagons
+- [Trip Animation Map](references/trip-animation-map.md) — Animated trips along paths
+- [Summary Panel Overlay](references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
 
 ## Examples
 
 For full config examples per layer type, see:
-- [Point Map](skill-references/point-map.md) — includes quantile color + vibrant palette config
-- [GeoJSON / Polygon Map](skill-references/geojson-polygon-map.md) — includes choropleth config with `visualChannels`
+- [Point Map](references/point-map.md) — includes quantile color + vibrant palette config
+- [GeoJSON / Polygon Map](references/geojson-polygon-map.md) — includes choropleth config with `visualChannels`
 
 ### Quick start (auto-detected layers, no config needed)
 

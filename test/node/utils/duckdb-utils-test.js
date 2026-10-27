@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import * as arrow from 'apache-arrow';
+import Console from 'global/console';
 
 import {
   SUPPORTED_DUCKDB_DROP_EXTENSIONS,
@@ -10,6 +11,7 @@ import {
   castDuckDBTypesForKepler,
   setGeoArrowWKBExtension,
   removeUnsupportedExtensions,
+  restoreArrowTable,
   restoreUnsupportedExtensions,
   isGeoArrowPoint,
   isGeoArrowLineString,
@@ -22,8 +24,46 @@ import {
   sanitizeDuckDBTableName,
   quoteTableName
 } from '../../../src/duckdb/src/table/duckdb-table-utils';
+import {KeplerGlDuckDbTable} from '../../../src/duckdb/src/table/duckdb-table';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+
+test('restoreArrowTable -> numeric names preserve column order and supplied schema', t => {
+  const columns = [
+    arrow.vectorFromArray([37, null], new arrow.Float64()),
+    arrow.vectorFromArray([1000, 2000], new arrow.Int32())
+  ];
+  const fields = ['lat', '2020'].map(
+    (name, i) => new arrow.Field(name, columns[i].type, true, new Map([['source', name]]))
+  );
+  const schema = new arrow.Schema(fields, new Map([['source', 'original']]));
+  for (const originalSchema of [undefined, schema]) {
+    const restored = restoreArrowTable(columns, fields, originalSchema);
+    t.deepEqual(
+      restored.schema.fields.map(f => f.name),
+      ['lat', '2020']
+    );
+    t.deepEqual(Array.from(restored.getChildAt(0)), [37, null]);
+    t.deepEqual(Array.from(restored.getChildAt(1)), [1000, 2000]);
+    columns.forEach((column, i) => {
+      t.equal(restored.getChildAt(i).type.toString(), column.type.toString());
+      t.equal(restored.getChildAt(i).data[0].values.buffer, column.data[0].values.buffer);
+    });
+    if (originalSchema) {
+      t.deepEqual(restored.schema.metadata, schema.metadata);
+      t.deepEqual(restored.schema.fields[0].metadata, fields[0].metadata);
+    }
+    t.equal(arrow.tableFromIPC(arrow.tableToIPC(restored)).getChild('2020').get(0), 1000);
+    const empty = restoreArrowTable(
+      columns.map(column => column.slice(0, 0)),
+      fields,
+      originalSchema
+    );
+    t.equal(empty.numRows, 0);
+    t.equal(empty.getChildAt(1).type.toString(), 'Int32');
+  }
+  t.end();
+});
 
 // Test getDuckDBColumnTypesMap
 test('duckdb-utils -> getDuckDBColumnTypesMap', t => {
@@ -588,5 +628,35 @@ test('duckdb-utils -> SUPPORTED_DUCKDB_DROP_EXTENSIONS', t => {
   t.ok(SUPPORTED_DUCKDB_DROP_EXTENSIONS.includes('arrow'), 'should include arrow');
   t.equal(SUPPORTED_DUCKDB_DROP_EXTENSIONS.length, 5, 'should have 5 supported extensions');
 
+  t.end();
+});
+
+test('KeplerGlDuckDbTable -> row edits stay a warned no-op', t => {
+  const snapshot = arrow.tableFromJSON([{id: 'a', value: 1}]);
+  const table = new KeplerGlDuckDbTable({info: {id: 'duck', label: 'duck'}}).updateSchema({
+    fields: [
+      {name: 'id', type: 'string'},
+      {name: 'value', type: 'real'}
+    ],
+    cols: snapshot.schema.fields.map((_, i) => snapshot.getChildAt(i)),
+    arrowTable: snapshot,
+    rows: []
+  });
+  const originalWarn = Console.warn;
+  const warnings = [];
+  Console.warn = message => warnings.push(String(message));
+
+  try {
+    t.equal(table.appendRows([['b', 2]]), false, 'appendRows should no-op');
+    t.equal(table.upsertRows([['a', 2]], 'id'), false, 'upsertRows should no-op');
+    t.equal(table.removeRows([0]), false, 'removeRows should no-op');
+    t.deepEqual(table.dataContainer.flattenData(), [['a', 1]], 'snapshot stays unchanged');
+    t.ok(
+      warnings.some(message => message.includes('DuckDB INSERT')),
+      'should warn that DuckDB INSERT is not implemented'
+    );
+  } finally {
+    Console.warn = originalWarn;
+  }
   t.end();
 });

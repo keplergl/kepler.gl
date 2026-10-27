@@ -465,12 +465,16 @@ export default class FlowLayer extends Layer {
       const filterChanged =
         this._oldFilterUpdateTriggers === null ||
         diffUpdateTriggers(filterUpdateTriggers, this._oldFilterUpdateTriggers);
-      if (filterChanged || dataChanged) {
+      if (filterChanged || dataChanged || !oldLayerData?.layerData) {
         const indexAccessor = (d: FlowDatum) => d.index;
         const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)(indexAccessor);
         resultingFlows = resultingFlows.filter(getFilterDataFunc(filterRange, getFilterValue));
+      } else {
+        resultingFlows = oldLayerData.layerData.flows;
       }
       this._oldFilterUpdateTriggers = filterUpdateTriggers;
+    } else {
+      this._oldFilterUpdateTriggers = null;
     }
 
     const layerData: FlowLayerData = {

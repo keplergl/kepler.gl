@@ -172,6 +172,7 @@ export function suitabilityDataset(
     label: config.label || `suitability-${config.resultId || generateHashId(6)}`,
     resultId: config.resultId,
     fields,
-    rows
+    rows,
+    normalizeBigInts: true
   });
 }

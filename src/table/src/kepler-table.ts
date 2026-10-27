@@ -28,11 +28,13 @@ import {
 } from '@kepler.gl/types';
 
 import {getGpuFilterProps, getDatasetFieldIndexForFilter} from './gpu-filter-utils';
+import {columnContainsBigInts} from './dataset-ops/normalize-bigint-columns';
 
 import {
   getSortingFunction,
   timeToUnixMilli,
   createDataContainer,
+  ArrowDataContainer,
   DataForm,
   diffFilters,
   filterDataByFilterTypes,
@@ -108,7 +110,7 @@ export type TimeFieldFilterProps = TimeRangeFieldDomain & {
 const FID_KEY = 'name';
 
 const ROW_EDIT_NOT_IMPLEMENTED =
-  'In-place row edits (append, upsert, delete) are not implemented for Arrow/DuckDB tables. DuckDB INSERT and Arrow concat are not supported yet. Use addDataToMap with keepExistingConfig to replace the table.';
+  'In-place row edits (append, upsert, delete) are not implemented for this table. DuckDB tables omit row edits (no INSERT yet). Use addDataToMap with keepExistingConfig to replace the table.';
 
 function warnRowEditsUnavailable(method: string): void {
   Console.warn(`KeplerTable.${method}: ${ROW_EDIT_NOT_IMPLEMENTED}`);
@@ -315,6 +317,15 @@ class KeplerTable<F extends Field = Field> {
       });
     }
 
+    // Column snapshots can reorder or replace rows without changing the schema,
+    // invalidating row-indexed timestamp mappings. Collect only already-cached
+    // field names so unused columns stay lazy and refresh scans stay limited.
+    const timestampFieldsToRebuild = isRowSnapshot
+      ? []
+      : this.fields
+          .filter(f => f.type === ALL_FIELD_TYPES.timestamp && f.filterProps)
+          .map(f => f.name);
+
     if (isRowSnapshot) {
       this.fields = this.fields.map((f, i) => {
         const {filterProps: _filterProps, ...rest} = f;
@@ -324,6 +335,17 @@ class KeplerTable<F extends Field = Field> {
         };
       }) as F[];
       this.gpuFilter = getGpuFilterProps([], this.id, this.fields, undefined);
+    } else if (timestampFieldsToRebuild.length) {
+      // getColumnFilterProps returns existing filterProps without recomputing.
+      // Remove the stale cache so it reads the new snapshot, while preserving
+      // the GPU filter configuration and channels across column updates.
+      this.fields = this.fields.map(f => {
+        if (f.type !== ALL_FIELD_TYPES.timestamp || !f.filterProps) {
+          return f;
+        }
+        const {filterProps: _filterProps, ...rest} = f;
+        return rest;
+      }) as F[];
     }
 
     this.allIndexes = this.dataContainer.getPlainIndex();
@@ -336,12 +358,17 @@ class KeplerTable<F extends Field = Field> {
     this.changedFilters = undefined;
     this.dataRevision += 1;
 
+    // Rebuild after row indexes and filter results are reset: CPU/GPU consumers
+    // read mappedValue directly. Caching the new mapping here avoids rescanning
+    // timestamps on later filter interactions.
+    timestampFieldsToRebuild.forEach(name => this.getColumnFilterProps(name));
+
     return this;
   }
 
   /**
-   * Append column-ordered rows in place. No-op for Arrow/DuckDB (no `append`).
-   * Accessors stay bound: the container instance is not replaced.
+   * Append column-ordered rows in place. Accessors stay bound: the container
+   * instance is not replaced. No-op when the container has no `append`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   appendRows(rows: any[][]): boolean {
@@ -372,7 +399,7 @@ class KeplerTable<F extends Field = Field> {
 
   /**
    * Replace rows that share `keyField` and append the rest. Last incoming row
-   * wins for a repeated key. No-op for Arrow/DuckDB.
+   * wins for a repeated key. No-op when the container has no `append`/`replace`.
    * @returns false when the payload is rejected and the table is unchanged.
    */
   upsertRows(rows: any[][], keyField: string): boolean {
@@ -392,6 +419,16 @@ class KeplerTable<F extends Field = Field> {
       return false;
     }
 
+    // Match Arrow keys after encoding so accepted representations such as an
+    // Int64 decimal string or a Date compare equal to the stored column value.
+    const keys =
+      this.dataContainer instanceof ArrowDataContainer
+        ? this.dataContainer.getRowEditKeys(rows, keyIdx)
+        : rows.map(row => row[keyIdx]);
+    if (!keys) {
+      return false;
+    }
+
     const start = this.dataContainer.numRows();
     const keyToIndex = new Map<unknown, number>();
     for (let i = 0; i < start; i++) {
@@ -402,31 +439,30 @@ class KeplerTable<F extends Field = Field> {
     }
 
     const lastByKey = new Map<unknown, any[]>();
-    const keyOrder: unknown[] = [];
-    for (const row of rows) {
-      const key = row[keyIdx];
-      if (!lastByKey.has(key)) {
-        keyOrder.push(key);
-      }
-      lastByKey.set(key, row);
-    }
+    rows.forEach((row, index) => lastByKey.set(keys[index], row));
 
+    const replacements = new Map<number, any[]>();
     const toAppend: any[][] = [];
-    for (const key of keyOrder) {
-      const row = lastByKey.get(key);
-      if (!row) {
-        continue;
-      }
+    for (const [key, row] of lastByKey) {
       const existing = keyToIndex.get(key);
       if (existing !== undefined) {
-        this.dataContainer.replace(existing, row);
+        replacements.set(existing, row);
       } else {
         toAppend.push(row);
       }
     }
 
-    if (toAppend.length && !this.dataContainer.append(toAppend)) {
-      return false;
+    if (this.dataContainer instanceof ArrowDataContainer) {
+      if (!this.dataContainer.replaceRows(replacements, toAppend)) {
+        return false;
+      }
+    } else {
+      for (const [index, row] of replacements) {
+        this.dataContainer.replace(index, row);
+      }
+      if (toAppend.length && !this.dataContainer.append(toAppend)) {
+        return false;
+      }
     }
 
     const nextIndexes =
@@ -440,7 +476,7 @@ class KeplerTable<F extends Field = Field> {
   }
 
   /**
-   * Remove rows by index in place. No-op for Arrow/DuckDB (no `remove`).
+   * Remove rows by index in place. No-op when the container has no `remove`.
    * @returns false when any index is invalid and the table is unchanged.
    */
   removeRows(indexes: number[]): boolean {
@@ -1026,7 +1062,7 @@ export function getFieldValueAccessor<
     const format = f.format || '';
     return (d: {index: number} | any[]) => timeToUnixMilli(readFieldValue(i, dc, d), format);
   }
-  if (isInt64ArrowColumn(dc, i)) {
+  if (columnContainsBigInts(f) || isInt64ArrowColumn(dc, i)) {
     return (d: {index: number} | any[]) => {
       const value = readFieldValue(i, dc, d);
       return value == null ? value : Number(value);

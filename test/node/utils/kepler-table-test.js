@@ -6,8 +6,14 @@ import moment from 'moment';
 import testData, {numericRangesCsv, testFields} from 'test/fixtures/test-csv-data';
 
 import {preciseRound, getFilterFunction} from '@kepler.gl/utils';
-import {findPointFieldPairs, KeplerTable, createNewDataEntry} from '@kepler.gl/table';
-import {processCsvData} from '@kepler.gl/processors';
+import {
+  findPointFieldPairs,
+  KeplerTable,
+  createNewDataEntry,
+  joinDatasets,
+  sortDatasetByColumn
+} from '@kepler.gl/table';
+import {processArrowBatches, processCsvData} from '@kepler.gl/processors';
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 
@@ -448,6 +454,51 @@ test('KeplerTable -> Int64 field accessor converts BigInt to number', async t =>
   t.end();
 });
 
+test('KeplerTable -> ordinary row access leaves numbers and strings unchanged', t => {
+  const rows = [
+    [10, 0.5],
+    ['9007199254740993', '12'],
+    [null, undefined]
+  ];
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'integer', type: 'integer'},
+      {name: 'real', type: 'real'}
+    ],
+    rows
+  });
+  for (const [column, field] of table.fields.entries()) {
+    const expected = rows.map(row => row[column]);
+    t.deepEqual(
+      rows.map((_, index) => field.valueAccessor({index})),
+      expected
+    );
+    t.deepEqual(rows.map(field.valueAccessor), expected, 'materialized rows agree');
+  }
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'raw storage unchanged');
+  t.end();
+});
+
+test('KeplerTable -> derived BigInt access preserves exact raw sorting', t => {
+  const rows = [[9007199254740993n], [9007199254740992n], [null]];
+  const source = new KeplerTable({color: [0, 0, 0]}).updateSchema({
+    fields: [{name: 'value', type: 'integer'}],
+    rows
+  });
+  const proto = joinDatasets(source, source, {
+    leftField: 'value',
+    rightField: 'value',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+  t.equal(table.fields[0].valueAccessor({index: 0}), 9007199254740992, 'numeric view can round');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  t.deepEqual(table.sortOrder, [1, 0, 2], 'sorting distinguishes adjacent unsafe integers');
+  t.deepEqual(table.dataContainer.flattenData(), rows, 'sorting leaves exact raw cells intact');
+  t.end();
+});
+
 test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => {
   const first = arrow.tableFromArrays({
     lat: [1, 2],
@@ -507,6 +558,488 @@ test('KeplerTable -> update with arrow cols keeps gpu filter state', async t => 
   t.deepEqual(table.filteredIndex, [0, 1, 2], 'GPU filtering keeps all rows available to the GPU');
   t.deepEqual(table.filteredIndexForDomain, [1], 'domain filtering uses the refreshed values');
   t.deepEqual(table.filteredIdxCPU, [1], 'CPU evaluation uses the refreshed matching row');
+  t.end();
+});
+
+test('KeplerTable -> Arrow snapshots rebuild cached timestamps and reuse them between filters', async t => {
+  const firstTime = Date.UTC(2024, 1, 1);
+  const lastTime = firstTime + 86400000;
+  const types = [
+    arrow.TimestampSecond,
+    arrow.TimestampMillisecond,
+    arrow.TimestampMicrosecond,
+    arrow.TimestampNanosecond
+  ];
+
+  for (const Timestamp of types) {
+    for (const [shape, timezone] of [
+      [null, null],
+      ['table', 'UTC'],
+      ['duckdb', 'America/New_York']
+    ]) {
+      const snapshot = values => {
+        const vector = offset =>
+          arrow.vectorFromArray(
+            values.map(value => (value === null ? null : new Date(value + offset))),
+            new Timestamp(timezone)
+          );
+        const source = new arrow.Table({
+          time: vector(0),
+          later: vector(3600000),
+          unused: vector(0)
+        });
+        const ipc = arrow.tableFromIPC(arrow.tableToIPC(source, 'file'));
+        const data = processArrowBatches(ipc.batches);
+        return shape === 'table' ? {...data, arrowTable: ipc} : data;
+      };
+
+      for (const gpu of [false, true]) {
+        const table = new KeplerTable({info: {id: 'timestamps'}, color: [0, 0, 0]});
+        await table.importData({data: snapshot([firstTime, lastTime, null])});
+        const filters = ['time', 'later'].map((name, index) => ({
+          ...table.getColumnFilterProps(name),
+          id: name,
+          dataId: [table.id],
+          name: [name],
+          fieldIdx: [index],
+          value: [firstTime + index * 3600000, firstTime + index * 3600000],
+          enabled: true,
+          gpu,
+          gpuChannel: [index]
+        }));
+        table.filterTable(filters, []);
+        table.filterTableCPU(filters, []);
+        t.deepEqual(table.filteredIdxCPU, [0], 'initial timestamp selection');
+
+        const reads = [0, 0, 0];
+        table.fields.forEach((field, index) => {
+          const accessor = field.valueAccessor;
+          field.valueAccessor = datum => {
+            reads[index] += 1;
+            return accessor(datum);
+          };
+        });
+        for (const values of [
+          [lastTime, firstTime, null],
+          [],
+          [null, lastTime, firstTime],
+          [firstTime, lastTime, null, firstTime]
+        ]) {
+          const data = snapshot(values);
+          const oldGpuFilter = table.gpuFilter;
+          reads.fill(0);
+          await table.update(shape === 'duckdb' ? {...data, fields: []} : data);
+          t.equal(table.gpuFilter, oldGpuFilter, 'snapshot retains GPU configuration');
+          t.deepEqual(
+            reads,
+            [values.length, values.length, 0],
+            'only cached timestamps are scanned once'
+          );
+          t.notOk(table.fields[2].filterProps, 'unused timestamp stays lazy');
+          t.deepEqual(
+            table.fields[0].filterProps.mappedValue,
+            values,
+            'mapping follows row order and nulls'
+          );
+          const mapped = table.fields[0].filterProps.mappedValue;
+          table.getColumnFilterProps('time');
+          table.filterTable(filters, []);
+          table.filterTableCPU(filters, []);
+          const expected = values.flatMap((value, index) => (value === firstTime ? [index] : []));
+          t.deepEqual(table.filteredIdxCPU, expected, 'CPU/export filters use current timestamps');
+          const getValue = table.gpuFilter.filterValueAccessor(table.dataContainer)();
+          const visible = table.filteredIndex.filter(index =>
+            getValue({index}).every((value, channel) => {
+              const [min, max] = table.gpuFilter.filterRange[channel];
+              return value >= min && value <= max;
+            })
+          );
+          t.deepEqual(visible, expected, 'render filter attributes select the current rows');
+          reads.fill(0);
+          table.filterTable(filters, []);
+          table.filterTableCPU(filters, []);
+          t.equal(
+            table.fields[0].filterProps.mappedValue,
+            mapped,
+            'filter interactions reuse the mapping'
+          );
+          t.deepEqual(reads, [0, 0, 0], 'unchanged filters do not rescan timestamps');
+        }
+      }
+    }
+  }
+  t.end();
+});
+
+test('KeplerTable -> Arrow row edits and snapshots keep timestamp filters current', async t => {
+  const firstTime = Date.UTC(2024, 1, 1);
+  const lastTime = firstTime + 86400000;
+  const snapshot = rows => {
+    const source = new arrow.Table({
+      id: arrow.vectorFromArray(
+        rows.map(row => row[0]),
+        new arrow.Utf8()
+      ),
+      time: arrow.vectorFromArray(
+        rows.map(row => row[1]),
+        new arrow.TimestampMillisecond()
+      )
+    });
+    return processArrowBatches(source.batches);
+  };
+  const table = new KeplerTable({info: {id: 'row-edit-timestamps'}, color: [0, 0, 0]});
+  await table.importData({
+    data: snapshot([
+      ['a', firstTime],
+      ['b', lastTime]
+    ])
+  });
+  const container = table.dataContainer;
+  const accessor = table.fields[1].valueAccessor;
+  const filters = [
+    {
+      ...table.getColumnFilterProps('time'),
+      id: 'time',
+      dataId: [table.id],
+      name: ['time'],
+      fieldIdx: [1],
+      value: [firstTime, firstTime],
+      enabled: true,
+      gpu: true,
+      gpuChannel: [0]
+    }
+  ];
+  const check = (values, expected) => {
+    t.equal(table.dataContainer, container, 'container identity survives edits and refresh');
+    t.deepEqual(table.fields[1].filterProps.mappedValue, values, 'timestamp cache follows rows');
+    t.deepEqual(
+      values.map((_, index) => accessor({index})),
+      values,
+      'original accessor stays bound'
+    );
+    table.filterTable(filters, []);
+    table.filterTableCPU(filters, []);
+    t.deepEqual(table.filteredIdxCPU, expected, 'CPU/export filter follows edited timestamps');
+    const getValue = table.gpuFilter.filterValueAccessor(container)();
+    const visible = table.filteredIndex.filter(index =>
+      getValue({index}).every((value, channel) => {
+        const [min, max] = table.gpuFilter.filterRange[channel];
+        return value >= min && value <= max;
+      })
+    );
+    t.deepEqual(visible, expected, 'GPU filter follows edited timestamps');
+  };
+  check([firstTime, lastTime], [0]);
+  t.ok(table.appendRows([['c', firstTime]]), 'append succeeds');
+  check([firstTime, lastTime, firstTime], [0, 2]);
+  t.ok(
+    table.upsertRows(
+      [
+        ['a', lastTime],
+        ['b', firstTime]
+      ],
+      'id'
+    ),
+    'upsert succeeds'
+  );
+  check([lastTime, firstTime, firstTime], [1, 2]);
+  t.ok(table.removeRows([1]), 'delete succeeds');
+  check([lastTime, firstTime], [1]);
+  await table.update(
+    snapshot([
+      ['c', firstTime],
+      ['a', lastTime],
+      ['d', null]
+    ])
+  );
+  check([firstTime, lastTime, null], [0]);
+  t.ok(table.removeRows([0, 1, 2]), 'delete all succeeds');
+  check([], []);
+  t.ok(table.appendRows([['e', firstTime]]), 'append after empty succeeds');
+  check([firstTime], [0]);
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts match and deduplicate encoded Int64 keys', t => {
+  const existingKey = 9007199254740993n;
+  const newKey = existingKey + 1n;
+  const source = new arrow.Table({
+    id: arrow.vectorFromArray([existingKey], new arrow.Int64()),
+    value: arrow.vectorFromArray([10], new arrow.Int32())
+  });
+  const table = new KeplerTable({info: {id: 'encoded-keys'}, color: [0, 0, 0]}).updateSchema(
+    processArrowBatches(source.batches)
+  );
+  const container = table.dataContainer;
+  const snapshot = container.getTable();
+  const accessor = table.fields[1].valueAccessor;
+  const revision = table.dataRevision;
+
+  t.ok(
+    table.upsertRows([[String(existingKey), 20]], 'id'),
+    'accepts the JSON decimal-string representation of an Int64 key'
+  );
+  t.deepEqual(container.flattenData(), [[existingKey, 20]], 'replaces the existing encoded key');
+  t.ok(
+    table.upsertRows(
+      [
+        [String(existingKey), 30],
+        [String(newKey), 40],
+        [existingKey, 50],
+        [newKey, 60]
+      ],
+      'id'
+    ),
+    'accepts equivalent string and BigInt keys in one edit'
+  );
+  t.deepEqual(
+    container.flattenData(),
+    [
+      [existingKey, 50],
+      [newKey, 60]
+    ],
+    'last equivalent key wins for both replacements and appended rows'
+  );
+  t.equal(table.dataContainer, container, 'retains the container');
+  t.equal(accessor({index: 0}), 50, 'the original accessor reads the replacement');
+  t.equal(snapshot.getChild('value').get(0), 10, 'retains the previous Arrow snapshot');
+  t.equal(table.dataRevision, revision + 2, 'increments the revision once per accepted edit');
+
+  const currentSnapshot = container.getTable();
+  const currentIndexes = table.allIndexes;
+  const currentRevision = table.dataRevision;
+  for (const invalidKey of ['invalid-int64', '9223372036854775808', '-9223372036854775809']) {
+    t.notOk(
+      table.upsertRows(
+        [
+          [String(existingKey), 70],
+          [invalidKey, 80]
+        ],
+        'id'
+      ),
+      'an invalid or out-of-range later key rejects the entire edit'
+    );
+    t.equal(container.getTable(), currentSnapshot, 'rejected keys retain the Arrow snapshot');
+    t.equal(table.allIndexes, currentIndexes, 'rejected keys retain the indexes');
+    t.equal(table.dataRevision, currentRevision, 'rejected keys retain the revision');
+    t.equal(accessor({index: 0}), 50, 'no replacement leaks from the rejected edit');
+  }
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts reject invalid integer keys before matching', t => {
+  const uint64Max = (1n << 64n) - 1n;
+  for (const {type, existingKeys, invalidKeys} of [
+    {
+      type: new arrow.Int8(),
+      existingKeys: [-128, 127],
+      invalidKeys: [128, '128', -129, 1.5, NaN, Infinity]
+    },
+    {
+      type: new arrow.Uint64(),
+      existingKeys: [0n, uint64Max],
+      invalidKeys: [uint64Max + 1n, String(uint64Max + 1n), -1n, '-1']
+    }
+  ]) {
+    const source = new arrow.Table({
+      id: arrow.vectorFromArray(existingKeys, type),
+      value: arrow.vectorFromArray([10, 20], new arrow.Int32())
+    });
+    const table = new KeplerTable({info: {id: 'integer-keys'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    t.ok(
+      table.upsertRows([[String(existingKeys[1]), 30]], 'id'),
+      `accepts a numeric string at the ${type} upper boundary`
+    );
+    const expected = [
+      [existingKeys[0], 10],
+      [existingKeys[1], 30]
+    ];
+    t.deepEqual(table.dataContainer.flattenData(), expected, 'matches the stored boundary key');
+    const snapshot = table.dataContainer.getTable();
+    const revision = table.dataRevision;
+    for (const key of invalidKeys) {
+      t.notOk(
+        table.upsertRows(
+          [
+            [existingKeys[0], 40],
+            [key, 50]
+          ],
+          'id'
+        ),
+        `rejects invalid ${type} key ${String(key)} before matching`
+      );
+      t.equal(table.dataContainer.getTable(), snapshot, 'retains the snapshot');
+      t.equal(table.dataRevision, revision, 'retains the revision');
+      t.deepEqual(table.dataContainer.flattenData(), expected, 'does not overwrite any row');
+    }
+  }
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts match encoded Date and timestamp keys', t => {
+  const first = Date.UTC(2024, 0, 1);
+  const next = first + 86400000;
+  for (const type of [new arrow.DateMillisecond(), new arrow.TimestampMillisecond()]) {
+    const source = new arrow.Table({
+      time: arrow.vectorFromArray([first], type),
+      value: arrow.vectorFromArray([1], new arrow.Int32())
+    });
+    const table = new KeplerTable({info: {id: 'date-keys'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    t.ok(
+      table.upsertRows(
+        [
+          [new Date(first), 2],
+          [new Date(next), 3],
+          [next, 4]
+        ],
+        'time'
+      ),
+      `accepts Date keys for ${type}`
+    );
+    t.deepEqual(
+      table.dataContainer.flattenData(),
+      [
+        [first, 2],
+        [next, 4]
+      ],
+      'matches existing keys and deduplicates equivalent Date and millisecond keys'
+    );
+  }
+  t.end();
+});
+
+test('KeplerTable -> row upserts keep distinct number and string keys', t => {
+  const table = new KeplerTable({info: {id: 'row-keys'}, color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'id', type: 'string'},
+      {name: 'value', type: 'integer'}
+    ],
+    rows: [[1, 10]]
+  });
+  t.ok(
+    table.upsertRows(
+      [
+        ['1', 20],
+        [1, 30]
+      ],
+      'id'
+    ),
+    'accepts row keys without encoding'
+  );
+  t.deepEqual(
+    table.dataContainer.flattenData(),
+    [
+      [1, 30],
+      ['1', 20]
+    ],
+    'row containers retain exact key equality'
+  );
+  t.end();
+});
+
+test('KeplerTable -> Arrow upserts preserve untouched raw timestamps and nulls', t => {
+  const rawValues = vector =>
+    vector.data.flatMap(chunk =>
+      Array.from({length: chunk.length}, (_, index) =>
+        chunk.getValid(index) ? chunk.values[index] : null
+      )
+    );
+
+  for (const [Timestamp, first, unitsPerMillisecond] of [
+    [arrow.TimestampMicrosecond, 9007199254740993n, 1000n],
+    [arrow.TimestampNanosecond, 1700000000000000123n, 1000000n]
+  ]) {
+    const source = new arrow.Table({
+      id: arrow.vectorFromArray(['padding', 'a', 'b', 'c', 'd'], new arrow.Utf8()),
+      time: arrow.makeVector({
+        type: new Timestamp('America/New_York'),
+        data: new BigInt64Array([0n, first, first + 2n, first + 4n, 0n]),
+        nullBitmap: new Uint8Array([0b01111]),
+        nullCount: 1
+      })
+    }).slice(1);
+    const original = [first, first + 2n, first + 4n, null];
+    t.ok(source.getChild('time').data[0].offset > 0, 'fixture uses a nonzero Arrow offset');
+    t.deepEqual(rawValues(source.getChild('time')), original, 'fixture keeps raw timestamp units');
+    const table = new KeplerTable({info: {id: 'raw-timestamps'}, color: [0, 0, 0]}).updateSchema(
+      processArrowBatches(source.batches)
+    );
+    const container = table.dataContainer;
+    const accessor = table.fields[1].valueAccessor;
+    t.ok(
+      table.upsertRows(
+        [
+          ['new-b', 2000],
+          ['a', 1000],
+          ['new-a', 3000],
+          ['a', 4000],
+          ['new-b', 5000]
+        ],
+        'id'
+      ),
+      'mixed replacement and insertion succeeds'
+    );
+    const expected = [
+      4000n * unitsPerMillisecond,
+      first + 2n,
+      first + 4n,
+      null,
+      5000n * unitsPerMillisecond,
+      3000n * unitsPerMillisecond
+    ];
+    t.equal(table.dataContainer, container, 'upsert retains the container');
+    t.equal(accessor({index: 0}), 4000, 'the existing accessor reads the last replacement');
+    t.deepEqual(
+      Array.from(container.getColumn(0)),
+      ['a', 'b', 'c', 'd', 'new-b', 'new-a'],
+      'existing positions and first incoming key order survive repeated keys'
+    );
+    t.deepEqual(
+      rawValues(container.getColumn(1)),
+      expected,
+      'untouched raw timestamps survive upsert'
+    );
+    const restored = arrow.tableFromIPC(arrow.tableToIPC(container.getTable()));
+    t.deepEqual(
+      rawValues(restored.getChild('time')),
+      expected,
+      'IPC preserves raw timestamps and nulls'
+    );
+    t.equal(
+      restored.schema.fields[1].type.timezone,
+      'America/New_York',
+      'IPC preserves the timezone'
+    );
+    t.deepEqual(
+      rawValues(source.getChild('time')),
+      original,
+      'upsert does not mutate the source snapshot'
+    );
+
+    const snapshot = container.getTable();
+    const revision = table.dataRevision;
+    t.notOk(
+      table.upsertRows(
+        [
+          ['a', 6000],
+          ['invalid', 'not-a-timestamp']
+        ],
+        'id'
+      ),
+      'a later invalid timestamp rejects the whole batch'
+    );
+    t.equal(container.getTable(), snapshot, 'a rejected upsert retains the Arrow snapshot');
+    t.equal(table.dataRevision, revision, 'a rejected upsert does not advance the revision');
+    t.deepEqual(
+      rawValues(container.getColumn(1)),
+      expected,
+      'a rejected upsert changes no raw values'
+    );
+  }
   t.end();
 });
 

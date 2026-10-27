@@ -150,6 +150,24 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         });
       }
     }
+  } else {
+    // Row containers expose their live backing rows. Copy only when conversion
+    // is needed, leaving other rows and exact stored values intact.
+    let savedData = allData;
+    for (let rowIndex = 0; rowIndex < allData.length; rowIndex++) {
+      const row = allData[rowIndex];
+      if (row == null) continue;
+      let savedRow = row;
+      for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
+        const value = row[columnIndex];
+        if (typeof value !== 'bigint') continue;
+        if (savedData === allData) savedData = allData.slice();
+        if (savedRow === row) savedRow = savedData[rowIndex] = row.slice();
+        const number = Number(value);
+        savedRow[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
+      }
+    }
+    return savedData;
   }
 
   return allData;

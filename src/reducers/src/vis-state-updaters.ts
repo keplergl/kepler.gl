@@ -3764,6 +3764,7 @@ async function refreshExternallyHostedTable({
     size?: number;
     etag?: string;
     lastModified?: string;
+    csvHeader?: string[];
   };
   onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
 }) {
@@ -3817,6 +3818,7 @@ export function refreshDatasetUpdater(
       arg: {
         source: nextDataset.metadata.source as string,
         format: getRemoteSourceFormat(nextDataset.metadata),
+        csvHeader: nextDataset.fields.map(field => field.name),
         size: typeof nextDataset.metadata.size === 'number' ? nextDataset.metadata.size : undefined,
         etag: typeof nextDataset.metadata.etag === 'string' ? nextDataset.metadata.etag : undefined,
         lastModified:
@@ -4095,8 +4097,8 @@ function normalizeDatasetRows(
 }
 
 /**
- * Append or upsert rows on an existing in-memory row dataset. Keeps layers and re-runs filters.
- * Arrow/DuckDB tables warn and are left unchanged (INSERT / concat not implemented).
+ * Append or upsert rows on an existing in-memory row or Arrow dataset. Keeps layers and re-runs filters.
+ * DuckDB tables warn and are left unchanged (INSERT not implemented). Nested, binary, and geoarrow Arrow columns are rejected.
  * @memberof visStateUpdaters
  * @public
  */
@@ -4129,8 +4131,8 @@ export function addToDatasetUpdater(
 }
 
 /**
- * Delete rows by index or by field values from an existing in-memory row dataset.
- * Keeps layers. Arrow/DuckDB tables warn and are left unchanged.
+ * Delete rows by index or by field values from an existing in-memory row or Arrow dataset.
+ * Keeps layers. DuckDB tables warn and are left unchanged.
  * @memberof visStateUpdaters
  * @public
  */

@@ -11,6 +11,14 @@ import {
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
+import {processArrowBatches} from '@kepler.gl/processors';
+import {
+  exportMapToHTML,
+  exportToJsonString,
+  getMapJSON,
+  ArrowDataContainer
+} from '@kepler.gl/utils';
+import * as arrow from 'apache-arrow';
 import {drainTasksForTesting, errorTaskInTest, succeedTaskInTest} from '@kepler.gl/tasks';
 import type {PolygonFilter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
@@ -18,6 +26,101 @@ import visStateReducer from './vis-state';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
 
 const reduceVisState = visStateReducer as (state: VisState, action: unknown) => VisState;
+
+function arrowCities() {
+  const source = new arrow.Table({
+    lat: arrow.vectorFromArray([37, null], new arrow.Float64()),
+    lng: arrow.vectorFromArray([-122, -123], new arrow.Float64()),
+    population: arrow.vectorFromArray([1000, null], new arrow.Int32())
+  });
+  const data = processArrowBatches(source.batches);
+  if (!data) throw new Error('Expected Arrow data');
+  return reduceVisState(
+    withTables(makeTable('cities', data)),
+    VisStateActions.addLayer({
+      id: 'cities-layer',
+      type: 'point',
+      config: {
+        dataId: 'cities',
+        columns: {lat: 'lat', lng: 'lng'},
+        colorField: {name: 'population', type: ALL_FIELD_TYPES.integer}
+      }
+    })
+  );
+}
+
+describe('Arrow column order through edits and saved maps', () => {
+  test.each(['0', '2020', '4294967294', '00', '02020', '-1', '1.0', '1e3', '4294967295'])(
+    'rename to %s preserves descriptor/vector order',
+    name => {
+      const initial = arrowCities();
+      const original = initial.datasets.cities.dataContainer as ArrowDataContainer;
+      const next = reduceVisState(
+        initial,
+        VisStateActions.renameTableColumn('cities', 'population', name)
+      );
+      const table = next.datasets.cities;
+      const dc = table.dataContainer as ArrowDataContainer;
+      expect(table.fields.map(f => f.name)).toEqual(['lat', 'lng', name]);
+      expect(dc.getTable().schema.fields.map(f => f.name)).toEqual(['lat', 'lng', name]);
+      expect(dc.flattenData()).toEqual([
+        [37, -122, 1000],
+        [null, -123, null]
+      ]);
+      expect(table.fields.map(f => f.valueAccessor({index: 0}))).toEqual([37, -122, 1000]);
+      table.fields.forEach((_, i) => {
+        expect(dc.getColumn(i).data[0].values.buffer).toBe(
+          original.getColumn(i).data[0].values.buffer
+        );
+      });
+      expect(initial.datasets.cities.fields[2].name).toBe('population');
+      expect(original.getTable().schema.fields[2].name).toBe('population');
+      expect(original.rowAsArray(0)).toEqual([37, -122, 1000]);
+      const layer = next.layers[0];
+      expect(layer.getPositionAccessor(dc)({index: 0})).toEqual([-122, 37, 0]);
+      layer.formatLayerData(next.datasets);
+      expect(Array.from((layer as any).geoArrowVector.get(0))).toEqual([-122, 37, 0]);
+      expect(layer.config.colorField?.name).toBe(name);
+    }
+  );
+
+  test('JSON, HTML and native IPC reload retain the renamed values and positions', () => {
+    const next = reduceVisState(
+      arrowCities(),
+      VisStateActions.renameTableColumn('cities', 'population', '2020')
+    );
+    const saved = getMapJSON(
+      {visState: next, mapState: {}, mapStyle: {}, uiState: {}},
+      {hasData: true}
+    );
+    const json = JSON.parse(exportToJsonString(saved));
+    const html = exportMapToHTML({...saved, mode: 'READ'});
+    const datasetsMatch = html.match(/const datasets = (.+);/);
+    const configMatch = html.match(/const config = (.+);/);
+    if (!datasetsMatch || !configMatch) throw new Error('Expected embedded map data');
+    const htmlData = JSON.parse(datasetsMatch[1]);
+    const htmlConfig = JSON.parse(configMatch[1]);
+    for (const document of [json, {datasets: htmlData, config: htmlConfig}]) {
+      const loaded = SchemaManager.load(document);
+      const dataset = loaded.datasets?.[0];
+      if (!dataset) throw new Error('Expected reloaded dataset');
+      const table = makeTable('cities', dataset.data);
+      expect(table.fields.map(f => f.name)).toEqual(['lat', 'lng', '2020']);
+      expect(table.dataContainer.rowAsArray(0)).toEqual([37, -122, 1000]);
+      expect(next.layers[0].getPositionAccessor(table.dataContainer)({index: 0})).toEqual([
+        -122, 37, 0
+      ]);
+    }
+    const dc = next.datasets.cities.dataContainer as ArrowDataContainer;
+    const ipc = arrow.tableFromIPC(arrow.tableToIPC(dc.getTable()));
+    const processed = processArrowBatches(ipc.batches);
+    if (!processed) throw new Error('Expected IPC data');
+    const restored = makeTable('cities', processed);
+    expect(restored.dataContainer.rowAsArray(0)).toEqual([37, -122, 1000]);
+    expect(ipc.schema.fields.map(f => f.name)).toEqual(['lat', 'lng', '2020']);
+    expect(ipc.getChild('2020')?.get(0)).toBe(1000);
+  });
+});
 
 function makeTable(id: string, data: Parameters<KeplerTable['updateSchema']>[0]) {
   const table = new KeplerTable({

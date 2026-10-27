@@ -8,8 +8,145 @@ import {
   getExtensionFromUrl,
   getFileNameForRemoteUrl,
   getMimeTypeForFormat,
-  isRemoteDatasetUrl
+  isRemoteDatasetUrl,
+  loadExternallyHostedDataset
 } from '@kepler.gl/processors';
+
+test('#remote-file -> recognizes only the established CSV header', async t => {
+  const originalFetch = global.fetch;
+  const metadata = {
+    source: 'https://example.com/live.csv',
+    csvHeader: ['lat', 'lng', 'value']
+  };
+  try {
+    for (const body of [
+      'lat,lng,value',
+      '\ufeff"lat",lng,"value"\r\n',
+      '\nlat,lng,value\n\n',
+      'lat\tlng\tvalue\n',
+      'lat;lng;value\n',
+      'lat|lng|value\n'
+    ]) {
+      global.fetch = async () => new Response(body, {headers: {etag: 'empty'}});
+      const result = await loadExternallyHostedDataset(metadata);
+      t.deepEqual(result.data, {fields: [], rows: []}, 'clears rows using established types');
+      t.equal(result.notModified, false, 'empty is a new snapshot');
+      t.equal(result.etag, 'empty', 'retains response validators');
+    }
+    const csvHeader = ['la,t', 'ln\ng', 'say "hi"', 'a.*'];
+    global.fetch = async () => new Response('"la,t","ln\ng","say ""hi""",a.*\n');
+    const result = await loadExternallyHostedDataset({...metadata, csvHeader});
+    t.deepEqual(result.data.rows, [], 'recognizes quoted delimiters, newlines and escaped quotes');
+
+    for (const body of [
+      '',
+      '\n \t\r\n',
+      '"lat,lng,value\n',
+      'lat,lng,"value',
+      '"lat"oops,lng,value\n',
+      'lat"oops,lng,value\n',
+      'value,lng,lat\n',
+      'lat,lng\n',
+      'lat,lng,value,new\n'
+    ]) {
+      global.fetch = async () => new Response(body);
+      try {
+        await loadExternallyHostedDataset(metadata);
+        t.fail('blank, malformed or changed headers must not clear the table');
+      } catch (error) {
+        t.ok(error instanceof Error, 'rejects unsupported empty snapshots');
+      }
+    }
+    global.fetch = async () => new Response('lat,lng,value\n');
+    try {
+      await loadExternallyHostedDataset({source: metadata.source});
+      t.fail('initially empty imports must retain their existing error behavior');
+    } catch (error) {
+      t.ok(error instanceof Error, 'requires an established table');
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
+
+test('#remote-file -> header matching cannot reinterpret a column delimiter', async t => {
+  const originalFetch = global.fetch;
+  const source = 'https://example.com/live.csv';
+  const fixtures = [
+    ...[',', '\t', ';', '|'].map(delimiter => [
+      `"a${delimiter}b"\nvalue\n`,
+      `a${delimiter}b\n`,
+      `"a${delimiter}b"\n`
+    ]),
+    ['lat,lng,"a,b,c,d"\n37,-122,1\n38,-123,2\n', 'lat;lng;a,b,c,d\n', 'lat;lng;"a,b,c,d"\n']
+  ];
+  try {
+    for (const [populated, ambiguous, quoted] of fixtures) {
+      let body = populated;
+      global.fetch = async () => new Response(body);
+      const loaded = await loadExternallyHostedDataset({source});
+      const csvHeader = loaded.data.fields.map(field => field.name);
+      body = ambiguous;
+      try {
+        await loadExternallyHostedDataset({source, csvHeader});
+        t.fail('a different delimiter interpretation must not clear existing data');
+      } catch (error) {
+        t.ok(error instanceof Error, 'rejects the ambiguous header');
+      }
+      body = quoted;
+      const result = await loadExternallyHostedDataset({source, csvHeader});
+      t.deepEqual(result.data, {fields: [], rows: []}, 'accepts the quoted established header');
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
+
+test('#remote-file -> header-only refresh uses CSV parsing and imported column order', async t => {
+  const originalFetch = global.fetch;
+  const fixtures = [
+    ['live.csv', 'text/csv', 'lat,lng,a|b', '37,-122,1', ['lat', 'lng', 'a|b']],
+    ['live.csv', 'text/csv', 'lat;lng;a,b', '37;-122;1', ['lat', 'lng', 'a,b']],
+    [
+      'live.tsv',
+      'text/tab-separated-values',
+      'lat\tlng\tvalue',
+      '37\t-122\t1',
+      ['lat', 'lng', 'value']
+    ],
+    ['live.dsv', 'text/dsv', 'lat;lng;value', '37;-122;1', ['lat', 'lng', 'value']],
+    [
+      'live',
+      'text/tab-separated-values',
+      'lat\tlng\tvalue',
+      '37\t-122\t1',
+      ['lat', 'lng', 'value']
+    ],
+    ['live.csv', 'text/csv', '2025,2024,value', '1,2,3', ['2024', '2025', 'value']]
+  ];
+  try {
+    for (const [name, mimeType, header, row, expectedNames] of fixtures) {
+      let body = `${header}\n${row}\n`;
+      global.fetch = async () => new Response(body, {headers: {'content-type': mimeType}});
+      const source = `https://example.com/${name}`;
+      const loaded = await loadExternallyHostedDataset({source});
+      const csvHeader = loaded.data.fields.map(field => field.name);
+      t.deepEqual(csvHeader, expectedNames, 'establishes columns using the normal import path');
+      body = `${header}\n`;
+      try {
+        const result = await loadExternallyHostedDataset({source, csvHeader});
+        t.deepEqual(result.data, {fields: [], rows: []}, 'recognizes the unchanged empty snapshot');
+      } catch (error) {
+        t.fail(`unchanged header-only ${name} rejected: ${error.message}`);
+      }
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
 
 test('#remote-file -> getExtensionFromUrl', t => {
   t.equal(getExtensionFromUrl('https://example.com/data.geojson'), 'geojson');

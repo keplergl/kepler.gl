@@ -5,6 +5,7 @@ import test from 'tape';
 import {
   testCreateCases,
   testFormatLayerDataCases,
+  testRenderDeckLayer,
   preparedDataset,
   prepareGeojsonDataset,
   dataId,
@@ -13,8 +14,17 @@ import {
 import {StateWFiles, testCsvDataId} from 'test/helpers/mock-state';
 import {gpsPointBounds} from 'test/fixtures/test-csv-data';
 
-import {KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {KeplerGlLayers, LayerClasses} from '@kepler.gl/layers';
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {VisStateActions} from '@kepler.gl/actions';
+import {
+  INITIAL_VIS_STATE,
+  INITIAL_MAP_STATE,
+  visStateReducer,
+  validateLayerWithData
+} from '@kepler.gl/reducers';
+import {LayerManager, MapView} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
 const {HeatmapLayer, PointLayer} = KeplerGlLayers;
@@ -613,5 +623,122 @@ test('#HeatmapLayer -> isInPolygon with geojson mode', t => {
   t.notOk(layer.isInPolygon(null, 2, filterPolygon), 'null centroid should return false');
   t.notOk(layer.isInPolygon(null, 99, filterPolygon), 'out-of-bounds index should return false');
 
+  t.end();
+});
+
+test('#Aggregation layers -> reducer filters at the domain minimum', t => {
+  for (const minimum of [0, 100, -20]) {
+    const datasets = {};
+    for (const id of ['first', 'second']) {
+      const table = new KeplerTable({info: {id}, color: [1, 2, 3]});
+      table.importData({
+        data: {
+          fields: ['lat', 'lng', 'value', 'other'].map(name => ({name, type: 'real'})),
+          rows: [0, 10, 20].map(value => [37.75, -122.4, minimum + value, value])
+        }
+      });
+      datasets[id] = table;
+    }
+    const layers = ['heatmap', 'grid', 'hexagon', 'cluster'].map(type =>
+      validateLayerWithData(
+        datasets.first,
+        {type, config: {dataId: 'first', columns, visConfig: {enable3d: true}}},
+        LayerClasses
+      )
+    );
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers,
+      layerData: layers.map(layer => layer.formatLayerData(datasets))
+    };
+    const viewport = new MapView().makeViewport({
+      width: INITIAL_MAP_STATE.width,
+      height: INITIAL_MAP_STATE.height,
+      viewState: INITIAL_MAP_STATE
+    });
+    const managers = layers.map(() => new LayerManager(device, {viewport}));
+    const apply = action => {
+      state = visStateReducer(state, action);
+    };
+    const check = (label, expected) => {
+      state.layers.forEach((layer, i) => {
+        const deckLayers = layer.renderLayer({
+          data: state.layerData[i],
+          gpuFilter: state.datasets[layer.config.dataId].gpuFilter,
+          mapState: INITIAL_MAP_STATE,
+          idx: i,
+          visible: true,
+          layerCallbacks: {onSetLayerDomain: () => {}},
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig
+        });
+        const message = `${layer.type}: ${minimum} ${label}`;
+        if (layer.type === 'heatmap') {
+          t.equal(deckLayers[0].props.data.length, expected, message);
+        } else {
+          const [rendered] = testRenderDeckLayer(t, layer.type, deckLayers, {
+            layerManager: managers[i]
+          });
+          if (layer.type === 'cluster') {
+            const bins = rendered.state.aggregatorState.layerData.data;
+            t.equal(
+              bins.reduce((sum, bin) => sum + bin.points.length, 0),
+              expected,
+              message
+            );
+          } else {
+            const aggregator = rendered.state.aggregator;
+            const counts = [0, 0];
+            for (let j = 0; j < aggregator.binCount; j++) {
+              aggregator.getBin(j).value.forEach((count, channel) => (counts[channel] += count));
+            }
+            t.deepEqual(counts, [expected, expected], message);
+          }
+        }
+      });
+    };
+
+    check('no filter', 3);
+    apply(VisStateActions.addFilter('first'));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [minimum, minimum]));
+    const {gpuFilter, dataContainer, filteredIndex} = state.datasets.first;
+    t.deepEqual(
+      gpuFilter.filterRange,
+      [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      'normalized ranges'
+    );
+    t.deepEqual(
+      filteredIndex.map(index => gpuFilter.filterValueAccessor(dataContainer)()({index})[0]),
+      [0, 10, 20],
+      'GPU filtering retains all CPU rows and offsets values by the domain minimum'
+    );
+    check('minimum selection', 1);
+    apply(VisStateActions.setFilter(0, 'value', [minimum + 10, minimum + 20]));
+    check('ordinary range', 2);
+
+    if (minimum === 100) {
+      apply(VisStateActions.addFilter('first'));
+      apply(VisStateActions.setFilter(1, 'name', 'other'));
+      apply(VisStateActions.setFilter(1, 'value', [0, 0]));
+      check('multiple channels intersect', 0);
+      apply(VisStateActions.setFilter(0, 'value', [minimum, minimum]));
+      check('multiple active zero ranges', 1);
+      apply(VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'value'], 1));
+      check('shared minimum filter', 1);
+      state.layers.forEach(layer => layer.updateLayerConfig({dataId: 'second'}));
+      state.layerData = state.layers.map(layer => layer.formatLayerData(state.datasets));
+      check('shared filter on second dataset', 1);
+      apply(VisStateActions.removeFilter(1));
+    }
+    apply(VisStateActions.removeFilter(0));
+    check('cleared filters', 3);
+    managers.forEach(manager => manager.finalize());
+  }
   t.end();
 });

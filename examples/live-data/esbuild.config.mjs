@@ -57,7 +57,7 @@ const config = {
   },
   absWorkingDir: __dirname,
   loader: {'.js': 'jsx', '.css': 'css'},
-  entryPoints: [path.join(__dirname, 'src/app.tsx')],
+  entryPoints: [path.join(__dirname, 'src/index.tsx')],
   outfile: path.join(DIST_DIR, 'bundle.js'),
   bundle: true,
   alias: localKeplerAliases(),
