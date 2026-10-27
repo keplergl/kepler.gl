@@ -568,8 +568,9 @@ class HeatmapLayer extends Layer {
       ? (d: {position: number[]}) => d.position
       : this.getPositionAccessor(dataContainer);
 
-    const hasFilter = Object.values(gpuFilter.filterRange).some((arr: any) =>
-      arr.some(v => v !== 0)
+    // An active selection at the domain minimum also normalizes to [0, 0].
+    const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+      trigger => trigger !== null
     );
 
     let filteredData = data;

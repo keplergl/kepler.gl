@@ -5,6 +5,7 @@ import {Analyzer, DATA_TYPES as AnalyzerDataTypes} from 'type-analyzer';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
 import {createArrowVector, DataContainerInterface, isArrowTable} from '@kepler.gl/utils';
+import {clearBigIntColumn} from './normalize-bigint-columns';
 
 export type ColumnEditDataset = {
   fields: Field[];
@@ -441,6 +442,9 @@ export function buildChangeColumnTypeData(
       format: state.format
     };
   });
+
+  // Converted cells no longer have the derived column's BigInt representation.
+  clearBigIntColumn(fields[fieldIndex]);
 
   if (typeof dataset.dataContainer.getColumn === 'function') {
     const cols = dataset.fields.map((_, index) => dataset.dataContainer.getColumn?.(index));

@@ -3,7 +3,8 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {createArrowVector} from '@kepler.gl/utils';
-import KeplerTable from '../kepler-table';
+import KeplerTable, {getFieldValueAccessor} from '../kepler-table';
+import {joinDatasets} from './join';
 import {
   buildChangeColumnTypeData,
   buildDeleteColumnData,
@@ -47,6 +48,42 @@ function makeColumnTable(
 }
 
 describe('column edit payloads', () => {
+  test('derived BigInt representation survives projection and clears on type conversion', () => {
+    const source = makeColumnTable([10n, null, 9007199254740993n], ALL_FIELD_TYPES.integer);
+    const proto = joinDatasets(source, source, {
+      leftField: 'value',
+      rightField: 'value',
+      type: 'LEFT',
+      rightColumns: []
+    });
+    const derived = new KeplerTable({color: [0, 0, 0]}).updateSchema(proto.data);
+    const renamed = buildRenameColumnData(derived, 'value', 'renamed');
+    if (!renamed) throw new Error('Missing renamed dataset');
+    const projected = new KeplerTable({color: [0, 0, 0]}).updateSchema(renamed.data);
+    expect(projected.dataContainer.flattenData()).toEqual([[10n], [null], [9007199254740993n]]);
+    expect([0, 1, 2].map(index => projected.getValue('renamed', index))).toEqual([
+      10,
+      null,
+      9007199254740992
+    ]);
+    const timestampAccessor = getFieldValueAccessor(
+      {...projected.fields[0], type: ALL_FIELD_TYPES.timestamp, format: 'YYYY-MM-DD'},
+      0,
+      projected.dataContainer
+    );
+    expect(timestampAccessor(['2020-01-01'])).toBe(Date.UTC(2020, 0, 1));
+    const converted = buildChangeColumnTypeData(projected, 'renamed', ALL_FIELD_TYPES.string);
+    expect(converted?.error).toBeUndefined();
+    if (!converted?.payload) throw new Error('Missing converted dataset');
+    const strings = new KeplerTable({color: [0, 0, 0]}).updateSchema(converted.payload.data);
+    expect([0, 1, 2].map(index => strings.getValue('renamed', index))).toEqual([
+      '10',
+      null,
+      '9007199254740993'
+    ]);
+    expect(derived.dataContainer.flattenData()).toEqual([[10n], [null], [9007199254740993n]]);
+  });
+
   test('rename keeps values and records the old name', () => {
     const payload = buildRenameColumnData(makeTable(), 'region', 'area');
     expect(payload?.renames).toEqual({region: 'area'});

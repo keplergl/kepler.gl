@@ -20,6 +20,7 @@ import {
   readFileInBatches
 } from './file-handler';
 import {FileCacheItem} from './types';
+import {KeplerCSVLoader} from './kepler-csv-loader';
 
 export type KeplerRemoteFile = File & {
   keplerSourceUrl?: string;
@@ -353,6 +354,50 @@ function isTabularProcessorResult(data: unknown): data is NonNullable<ProcessorR
   );
 }
 
+async function matchesCsvHeader(text: string, fields: string[]): Promise<boolean> {
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const blankLines = '(?:[ \\t]*[\\r\\n])*';
+  // Keep exact quote validation: the CSV parser accepts some malformed records.
+  const matchesRecord = (header: string[], strict: boolean) =>
+    [',', '\t', ';', '|'].some(delimiter => {
+      const record = header
+        .map(name => {
+          const quoted = escape(`"${name.replace(/"/g, '""')}"`);
+          const needsQuotes =
+            /["\r\n]/.test(name) || (strict ? /[,\t;|]/.test(name) : name.includes(delimiter));
+          return needsQuotes ? quoted : `(?:${escape(name)}|${quoted})`;
+        })
+        .join(escape(delimiter));
+      return new RegExp(`^\\uFEFF?${blankLines}${record}${blankLines}$`).test(text);
+    });
+  // Quoted names remain unambiguous even when the loader guesses another delimiter.
+  if (fields.some(name => name.trim()) && matchesRecord(fields, true)) return true;
+  // A lone bare name containing delimiters has no separator to disambiguate it.
+  if (fields.length === 1) return false;
+
+  // Reuse the same streaming parser as import, exposing the header as a row.
+  const rows: string[][] = [];
+  for await (const batch of KeplerCSVLoader.parseInBatches!([new TextEncoder().encode(text)], {
+    csv: {
+      shape: 'array-row-table',
+      // @ts-expect-error loaders.gl accepts false but its type only declares 'auto'.
+      header: false
+    }
+  })) {
+    rows.push(...batch.data);
+  }
+  if (rows.length !== 1) return false;
+  const header = rows[0];
+  // processRowObject uses Object.keys, which sorts integer-named columns.
+  const names = Object.keys(Object.fromEntries(header.map(name => [name, null])));
+  return (
+    header.length === fields.length &&
+    names.length === fields.length &&
+    names.every((name, i) => name === fields[i]) &&
+    matchesRecord(header, false)
+  );
+}
+
 /**
  * Fetch, parse, and process a remote file into Kepler dataset data.
  * Used when reloading an `externally-hosted` dataset from a saved map config
@@ -366,6 +411,8 @@ export async function loadExternallyHostedDataset(metadata: {
   lastModified?: string;
   bypassCache?: boolean;
   onProgress?: (progress: RemoteLoadProgress) => void;
+  /** Established CSV columns, supplied only when refreshing an existing table. */
+  csvHeader?: string[];
 }): Promise<LoadExternallyHostedDatasetResult> {
   const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
   const fetched = await fetchRemoteFile(source, {
@@ -404,6 +451,24 @@ export async function loadExternallyHostedDataset(metadata: {
   let content: ProcessFileDataContent | undefined;
   for await (const batch of batches) {
     content = batch as ProcessFileDataContent;
+  }
+  // CSVLoader emits no data batch for a header-only file. Keep its populated
+  // parsing path intact; recognize only a header matching this existing table.
+  if (
+    metadata.csvHeader?.length &&
+    KeplerCSVLoader.extensions.some(extension =>
+      fetched.file!.name.toLowerCase().endsWith(`.${extension}`)
+    ) &&
+    (!content || (Array.isArray(content.data) && !content.data.length)) &&
+    (await matchesCsvHeader(await fetched.file.text(), metadata.csvHeader))
+  ) {
+    return {
+      data: {fields: [], rows: []},
+      notModified: false,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+      size: fetched.size
+    };
   }
   if (!content) {
     throw new Error(`No data loaded from ${source}`);

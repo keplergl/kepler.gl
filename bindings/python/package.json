@@ -20,12 +20,12 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
-    "@kepler.gl/actions": "^3.3.0-alpha.4",
-    "@kepler.gl/components": "^3.3.0-alpha.4",
-    "@kepler.gl/processors": "^3.3.0-alpha.4",
-    "@kepler.gl/reducers": "^3.3.0-alpha.4",
-    "@kepler.gl/schemas": "^3.3.0-alpha.4",
-    "@kepler.gl/styles": "^3.3.0-alpha.4",
+    "@kepler.gl/actions": "^3.3.0-alpha.18",
+    "@kepler.gl/components": "^3.3.0-alpha.18",
+    "@kepler.gl/processors": "^3.3.0-alpha.18",
+    "@kepler.gl/reducers": "^3.3.0-alpha.18",
+    "@kepler.gl/schemas": "^3.3.0-alpha.18",
+    "@kepler.gl/styles": "^3.3.0-alpha.18",
     "apache-arrow": "^21.0.0",
     "assert": "^2.1.0",
     "events": "^3.3.0",
@@ -35,5 +35,24 @@
     "react-redux": "^9.1.0",
     "redux": "^5.0.0",
     "styled-components": "^6.4.3"
+  },
+  "overrides": {
+    "@deck.gl/aggregation-layers": "9.3.11",
+    "@deck.gl/core": "9.3.11",
+    "@deck.gl/extensions": "9.3.11",
+    "@deck.gl/geo-layers": "9.3.11",
+    "@deck.gl/layers": "9.3.11",
+    "@deck.gl/mapbox": "9.3.11",
+    "@deck.gl/mesh-layers": "9.3.11",
+    "@deck.gl/react": "9.3.11",
+    "@deck.gl/widgets": "9.3.11",
+    "@luma.gl/constants": "9.3.6",
+    "@luma.gl/core": "9.3.6",
+    "@luma.gl/effects": "9.3.6",
+    "@luma.gl/engine": "9.3.6",
+    "@luma.gl/gltf": "9.3.6",
+    "@luma.gl/shadertools": "9.3.6",
+    "@luma.gl/webgl": "9.3.6",
+    "@luma.gl/webgpu": "9.3.6"
   }
 }
