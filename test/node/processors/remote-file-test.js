@@ -70,6 +70,44 @@ test('#remote-file -> recognizes only the established CSV header', async t => {
   t.end();
 });
 
+test('#remote-file -> header matching cannot reinterpret a column delimiter', async t => {
+  const originalFetch = global.fetch;
+  const source = 'https://example.com/live.csv';
+  const fixtures = [
+    ...[',', '\t', ';', '|'].map(delimiter => [
+      `"a${delimiter}b"\nvalue\n`,
+      `a${delimiter}b\n`,
+      `"a${delimiter}b"\n`
+    ]),
+    [
+      'lat,lng,"a,b,c,d"\n37,-122,1\n38,-123,2\n',
+      'lat;lng;a,b,c,d\n',
+      'lat;lng;"a,b,c,d"\n'
+    ]
+  ];
+  try {
+    for (const [populated, ambiguous, quoted] of fixtures) {
+      let body = populated;
+      global.fetch = async () => new Response(body);
+      const loaded = await loadExternallyHostedDataset({source});
+      const csvHeader = loaded.data.fields.map(field => field.name);
+      body = ambiguous;
+      try {
+        await loadExternallyHostedDataset({source, csvHeader});
+        t.fail('a different delimiter interpretation must not clear existing data');
+      } catch (error) {
+        t.ok(error instanceof Error, 'rejects the ambiguous header');
+      }
+      body = quoted;
+      const result = await loadExternallyHostedDataset({source, csvHeader});
+      t.deepEqual(result.data, {fields: [], rows: []}, 'accepts the quoted established header');
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
+
 test('#remote-file -> getExtensionFromUrl', t => {
   t.equal(getExtensionFromUrl('https://example.com/data.geojson'), 'geojson');
   t.equal(

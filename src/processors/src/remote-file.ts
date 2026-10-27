@@ -354,7 +354,8 @@ function isTabularProcessorResult(data: unknown): data is NonNullable<ProcessorR
 }
 
 // Recognize the established header, without treating an arbitrary empty parser
-// result as a successful refresh. Each name may be bare or correctly CSV-quoted.
+// result as a successful refresh. Quote names containing any supported delimiter
+// so another candidate cannot reinterpret them as a single field.
 function matchesCsvHeader(text: string, fields: string[]): boolean {
   if (!fields.some(name => name.trim())) return false;
   const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -363,9 +364,7 @@ function matchesCsvHeader(text: string, fields: string[]): boolean {
     const header = fields
       .map(name => {
         const quoted = escape(`"${name.replace(/"/g, '""')}"`);
-        return /["\r\n]/.test(name) || name.includes(delimiter)
-          ? quoted
-          : `(?:${escape(name)}|${quoted})`;
+        return /[",\t;|\r\n]/.test(name) ? quoted : `(?:${escape(name)}|${quoted})`;
       })
       .join(escape(delimiter));
     return new RegExp(`^\\uFEFF?${blankLines}${header}${blankLines}$`).test(text);
