@@ -185,7 +185,13 @@ export const restoreArrowTable = (
     creaOpts[field.name] = columns[index];
   });
 
-  return arrowSchema ? new arrow.Table(arrowSchema, creaOpts) : new arrow.Table(creaOpts);
+  const ordered = new arrow.Table(creaOpts).select(fields.map(field => field.name));
+  return arrowSchema
+    ? new arrow.Table(
+        arrowSchema,
+        ordered.batches.map(batch => new arrow.RecordBatch(arrowSchema, batch.data))
+      )
+    : ordered;
 };
 
 /**

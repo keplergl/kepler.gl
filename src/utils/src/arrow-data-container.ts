@@ -165,6 +165,7 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
 
   try {
     const columns: Record<string, arrow.Vector> = {};
+    const columnNames: string[] = [];
     const seenNames = new Map<string, number>();
     for (let i = 0; i < table.numCols; i++) {
       const field = table.schema.fields[i];
@@ -177,12 +178,13 @@ export function compactArrowTable(table: arrow.Table, maxArrowBatches?: number):
       seenNames.set(field.name, seen + 1);
       const key = seen === 0 ? field.name : `${field.name}_${seen}`;
       columns[key] = compactArrowVector(column, column.type || field.type);
+      columnNames.push(key);
     }
 
     // Always build a kepler apache-arrow Table. Using `table.constructor` can
     // mix DuckDB's bundled Arrow Table with rebuilt vectors and drop schema
     // metadata (`geo`, ARROW:extension:name) that Kepler needs to create layers.
-    const compacted = tableFromCompactedColumns(table, columns);
+    const compacted = tableFromCompactedColumns(table, columns, columnNames);
 
     if (compacted?.batches?.length && compacted.batches.length < table.batches.length) {
       return compacted;
@@ -228,13 +230,18 @@ function copyArrowSchemaMetadata(from?: arrow.Schema | null, to?: arrow.Schema |
 
 function tableFromCompactedColumns(
   source: arrow.Table,
-  columns: Record<string, arrow.Vector>
+  columns: Record<string, arrow.Vector>,
+  columnNames: string[]
 ): arrow.Table {
+  const ordered = new arrow.Table(columns).select(columnNames);
   let compacted: arrow.Table;
   try {
-    compacted = new arrow.Table(source.schema, columns);
+    compacted = new arrow.Table(
+      source.schema,
+      ordered.batches.map(batch => new arrow.RecordBatch(source.schema, batch.data))
+    );
   } catch {
-    compacted = new arrow.Table(columns);
+    compacted = ordered;
   }
   copyArrowSchemaMetadata(source.schema, compacted.schema);
   return compacted;
@@ -366,7 +373,7 @@ export class ArrowDataContainer implements DataContainerInterface {
     this._fields.map((field, index) => {
       creaOpts[field.name] = this._cols[index];
     });
-    return new arrow.Table(creaOpts);
+    return new arrow.Table(creaOpts).select(this._fields.map(field => field.name));
   }
 
   getTable() {

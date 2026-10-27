@@ -10,6 +10,7 @@ import {
   castDuckDBTypesForKepler,
   setGeoArrowWKBExtension,
   removeUnsupportedExtensions,
+  restoreArrowTable,
   restoreUnsupportedExtensions,
   isGeoArrowPoint,
   isGeoArrowLineString,
@@ -24,6 +25,43 @@ import {
 } from '../../../src/duckdb/src/table/duckdb-table-utils';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
+
+test('restoreArrowTable -> numeric names preserve column order and supplied schema', t => {
+  const columns = [
+    arrow.vectorFromArray([37, null], new arrow.Float64()),
+    arrow.vectorFromArray([1000, 2000], new arrow.Int32())
+  ];
+  const fields = ['lat', '2020'].map(
+    (name, i) => new arrow.Field(name, columns[i].type, true, new Map([['source', name]]))
+  );
+  const schema = new arrow.Schema(fields, new Map([['source', 'original']]));
+  for (const originalSchema of [undefined, schema]) {
+    const restored = restoreArrowTable(columns, fields, originalSchema);
+    t.deepEqual(
+      restored.schema.fields.map(f => f.name),
+      ['lat', '2020']
+    );
+    t.deepEqual(Array.from(restored.getChildAt(0)), [37, null]);
+    t.deepEqual(Array.from(restored.getChildAt(1)), [1000, 2000]);
+    columns.forEach((column, i) => {
+      t.equal(restored.getChildAt(i).type.toString(), column.type.toString());
+      t.equal(restored.getChildAt(i).data[0].values.buffer, column.data[0].values.buffer);
+    });
+    if (originalSchema) {
+      t.deepEqual(restored.schema.metadata, schema.metadata);
+      t.deepEqual(restored.schema.fields[0].metadata, fields[0].metadata);
+    }
+    t.equal(arrow.tableFromIPC(arrow.tableToIPC(restored)).getChild('2020').get(0), 1000);
+    const empty = restoreArrowTable(
+      columns.map(column => column.slice(0, 0)),
+      fields,
+      originalSchema
+    );
+    t.equal(empty.numRows, 0);
+    t.equal(empty.getChildAt(1).type.toString(), 'Int32');
+  }
+  t.end();
+});
 
 // Test getDuckDBColumnTypesMap
 test('duckdb-utils -> getDuckDBColumnTypesMap', t => {

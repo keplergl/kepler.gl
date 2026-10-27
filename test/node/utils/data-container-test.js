@@ -12,6 +12,88 @@ import {
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 
+function orderedNumericTable() {
+  const cols = [
+    arrow.vectorFromArray([37, null, 38], new arrow.Float64()),
+    arrow.vectorFromArray([-122, -123, -124], new arrow.Float32()),
+    arrow.vectorFromArray([1000, null, 2000], new arrow.Int32())
+  ];
+  const fields = cols.map(
+    (col, i) =>
+      new arrow.Field(['lat', 'lng', '2020'][i], col.type, true, new Map([['source', String(i)]]))
+  );
+  const schema = new arrow.Schema(fields, new Map([['source', 'ordered']]));
+  const batch = new arrow.RecordBatch(
+    schema,
+    arrow.makeData({type: new arrow.Struct(fields), length: 3, children: cols.map(c => c.data[0])})
+  );
+  return new arrow.Table(schema, [batch]);
+}
+
+test('ArrowDataContainer -> numeric headers preserve vector order through updates and IPC', t => {
+  const source = orderedNumericTable();
+  const cols = source.schema.fields.map((_, i) => source.getChildAt(i));
+  const dc = new ArrowDataContainer({cols, fields: source.schema.fields});
+  const rows = [
+    [37, -122, 1000],
+    [null, -123, null],
+    [38, -124, 2000]
+  ];
+  t.deepEqual(dc.flattenData(), rows, 'numeric names do not reorder values');
+  dc.update([
+    cols[0].slice(0, 1).concat(cols[0].slice(1)),
+    cols[1],
+    cols[2].slice(0, 2).concat(cols[2].slice(2))
+  ]);
+  t.equal(dc.numChunks(), 3, 'staggered chunks remain aligned');
+  t.deepEqual(dc.flattenData(), rows);
+  t.deepEqual(
+    dc.getTable().schema.fields.map(f => f.name),
+    ['lat', 'lng', '2020']
+  );
+  cols.forEach((col, i) => {
+    t.equal(dc.getColumn(i).type.toString(), col.type.toString(), 'physical types stay aligned');
+    dc.getColumn(i).data.forEach(chunk => {
+      t.equal(chunk.values.buffer, col.data[0].values.buffer, 'values are shared');
+      t.equal(chunk.nullBitmap.buffer, col.data[0].nullBitmap.buffer, 'validity is shared');
+    });
+  });
+  const restored = arrow.tableFromIPC(arrow.tableToIPC(dc.getTable()));
+  t.equal(restored.getChild('lat').get(0), 37);
+  t.equal(restored.getChild('2020').get(0), 1000);
+  dc.update(cols.map(col => col.slice(0, 0)));
+  t.equal(dc.numRows(), 0);
+  t.equal(dc.numColumns(), 3);
+  t.deepEqual(
+    dc.getTable().schema.fields.map(f => f.name),
+    ['lat', 'lng', '2020']
+  );
+  t.equal(dc.getColumn(2).type.toString(), 'Int32', 'empty columns keep their types');
+  t.end();
+});
+
+test('compactArrowTable -> numeric headers keep values aligned with the schema', t => {
+  const source = orderedNumericTable();
+  const compacted = compactArrowTable(source.concat(source), 1);
+  t.equal(compacted.batches.length, 1);
+  t.deepEqual(
+    compacted.schema.fields.map(f => f.name),
+    ['lat', 'lng', '2020']
+  );
+  source.schema.fields.forEach((field, i) => {
+    t.deepEqual(Array.from(compacted.getChildAt(i)), [
+      ...source.getChildAt(i),
+      ...source.getChildAt(i)
+    ]);
+    t.equal(compacted.getChildAt(i).type.toString(), field.type.toString());
+    t.deepEqual(compacted.schema.fields[i].metadata, field.metadata);
+  });
+  t.deepEqual(compacted.schema.metadata, source.schema.metadata);
+  t.equal(arrow.tableFromIPC(arrow.tableToIPC(compacted)).getChild('2020').get(0), 1000);
+  t.equal(source.getChild('lat').get(0), 37, 'source values remain untouched');
+  t.end();
+});
+
 const data = [
   [10, 20], // 0
   [30, 40], // 1
