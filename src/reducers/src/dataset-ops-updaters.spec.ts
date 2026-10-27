@@ -5,12 +5,14 @@ import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
 import {
+  arrowSchemaToFields,
   processArrowTable,
   processCsvData,
   processFileData,
   processGeojson,
   processKeplerglJSON
 } from '@kepler.gl/processors';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
 import * as arrow from 'apache-arrow';
 import GeoJsonLayer from '../../layers/src/geojson-layer/geojson-layer';
 import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
@@ -954,6 +956,61 @@ describe('native GeoArrow attribute joins', () => {
       ).toBe(0);
     }
   );
+
+  test.each(['wkb', 'wkt'] as const)(
+    'preserves %s geometry through chained attribute joins',
+    async encoding => {
+      const geometry = {type: 'Point' as const, coordinates: [10, 11]};
+      const value =
+        encoding === 'wkb' ? new Uint8Array(convertGeometryToWKB(geometry)) : 'POINT (10 11)';
+      const original = await nativeSource(
+        'source',
+        `geoarrow.${encoding}`,
+        encoding === 'wkb' ? new arrow.Binary() : new arrow.Utf8(),
+        [value, null],
+        ['a', 'b']
+      );
+      const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+      let left = original;
+      for (let run = 0; run < 2; run++) {
+        const {state, result} = join(left, right, {rightColumns: []});
+        expect(state.joins).toHaveLength(0);
+        expect(
+          datasetToFeatureCollection(result.dataContainer, result.fields).features.map(
+            feature => feature.geometry
+          )
+        ).toEqual([geometry, null]);
+        expect(features(result).map((feature: any) => feature.geometry)).toEqual([geometry]);
+        left = result;
+      }
+      expect(original.dataContainer.valueAt(0, 1)).toEqual(value);
+      expect(original.dataContainer.valueAt(1, 1)).toBeNull();
+    }
+  );
+
+  test('joins unannotated WKB identified as GEOMETRY', () => {
+    const geometry = {type: 'Point' as const, coordinates: [10, 11]};
+    const values = arrow.vectorFromArray(
+      [new Uint8Array(convertGeometryToWKB(geometry)), null],
+      new arrow.Binary()
+    );
+    const keys = arrow.vectorFromArray(['a', 'b']);
+    const input = new arrow.Table({key: keys, geometry: values});
+    const left = new KeplerTable({info: {id: 'source'}, color: [1, 2, 3]}).updateSchema({
+      fields: arrowSchemaToFields(input, {geometry: 'GEOMETRY'}),
+      cols: [keys, values],
+      rows: []
+    });
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+    const {state, result} = join(left, right, {rightColumns: []});
+    expect(state.joins).toHaveLength(0);
+    expect(
+      datasetToFeatureCollection(result.dataContainer, result.fields).features.map(
+        feature => feature.geometry
+      )
+    ).toEqual([geometry, null]);
+    expect(features(result).map((feature: any) => feature.geometry)).toEqual([geometry]);
+  });
 
   test('joins ordinary Arrow attributes after JSON save/reload without changing values', async () => {
     const input = new arrow.Table({

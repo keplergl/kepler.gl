@@ -31,7 +31,7 @@ const NATIVE_COORDINATE_DEPTH: Record<string, number> = {
 function needsGeometryConversion(field: Field): boolean {
   if (field.type !== ALL_FIELD_TYPES.geoarrow) return false;
   const encoding = field.metadata?.get?.(GEOARROW_METADATA_KEY);
-  return encoding !== GEOARROW_EXTENSIONS.WKB && encoding !== 'geoarrow.wkt';
+  return Boolean(encoding) && encoding !== GEOARROW_EXTENSIONS.WKB && encoding !== 'geoarrow.wkt';
 }
 
 function validNativeCoordinates(value: unknown, depth: number): boolean {
