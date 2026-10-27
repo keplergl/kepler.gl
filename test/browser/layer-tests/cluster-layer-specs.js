@@ -3,6 +3,10 @@
 
 import test from 'tape';
 import sinon from 'sinon';
+import Supercluster from 'supercluster';
+import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {DeckGLClusterLayer} from '@kepler.gl/deckgl-layers';
 
 import {
   testCreateCases,
@@ -495,5 +499,87 @@ test('#ClusterLayer -> count labels follow the text label field', t => {
       }
     }
   ]);
+  t.end();
+});
+
+test('#ClusterLayer -> membership survives cached zooms and filtered rebuilds', t => {
+  const points = Object.freeze(
+    Array.from({length: 24}, (_, index) =>
+      Object.freeze({index, value: index + 1, position: [index < 12 ? 0 : 0.0002, 0]})
+    )
+  );
+  const viewport = new WebMercatorViewport({
+    longitude: 0,
+    latitude: 0,
+    zoom: 0,
+    width: 2048,
+    height: 2048
+  });
+  const manager = new LayerManager(device, {viewport});
+  const load = sinon.spy(Supercluster.prototype, 'load');
+  let labels = [];
+  let layer = new DeckGLClusterLayer({
+    id: 'cluster-membership-updates',
+    data: points,
+    getPosition: point => point.position,
+    getColorValue: members => members.reduce((sum, point) => sum + point.value, 0),
+    colorRange: [
+      [0, 0, 0],
+      [255, 255, 255]
+    ],
+    clusterRadius: 40,
+    zoom: 20,
+    width: 2048,
+    height: 2048,
+    renderCountLabels: data => {
+      labels = data;
+      return [];
+    }
+  });
+  const update = (patch, expected, rebuilds) => {
+    const before = load.callCount;
+    layer = layer.clone(patch);
+    manager.setLayers([layer]);
+    const cells = layer.state.aggregatorState.layerData.data;
+    t.equal(load.callCount - before, rebuilds, 'only changed inputs build a cluster index');
+    t.deepEqual(
+      cells.flatMap(cell => cell.points).sort((a, b) => a.index - b.index),
+      expected,
+      'membership contains exactly the retained source rows'
+    );
+    t.equal(
+      labels.reduce((sum, label) => sum + label.count, 0),
+      expected.length,
+      'labels count members'
+    );
+    cells.forEach(cell => {
+      const picked = layer.getPickingInfo({info: {picked: true, index: cell.index}}).object;
+      t.deepEqual(picked.points, cell.points, 'picking returns the ordered cluster members');
+      t.equal(picked.radiusValue, cell.points.length, 'radius uses the member count');
+      t.equal(
+        picked.colorValue,
+        cell.points.reduce((sum, point) => sum + point.value, 0),
+        'color aggregates the same members'
+      );
+    });
+  };
+  try {
+    update({}, points, 1);
+    update({zoom: 4}, points, 0);
+    update(
+      {filterData: point => point.index % 2 === 0, updateTriggers: {filterData: 1}},
+      points.filter(point => point.index % 2 === 0),
+      1
+    );
+    update({filterData: () => false, updateTriggers: {filterData: 2}}, [], 1);
+    update({filterData: null, updateTriggers: {filterData: 3}}, points, 1);
+    update({clusterRadius: 60}, points, 1);
+    update({clusterRadius: 40}, points, 0);
+    update({zoom: 20}, points, 0);
+    update({data: points.slice(0, 8)}, points.slice(0, 8), 1);
+  } finally {
+    load.restore();
+    manager.finalize();
+  }
   t.end();
 });

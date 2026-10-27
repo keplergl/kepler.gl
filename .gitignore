@@ -28,6 +28,7 @@ examples/**/yarn.lock
 yarn-error.log
 */**/package-lock.json
 package-lock.json
+!bindings/python/package-lock.json
 
 .DS_Store
 .idea
