@@ -4,7 +4,19 @@
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
-import {processArrowTable, processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
+import {
+  arrowSchemaToFields,
+  processArrowTable,
+  processCsvData,
+  processFileData,
+  processGeojson,
+  processKeplerglJSON
+} from '@kepler.gl/processors';
+import {convertGeometryToWKB} from '@loaders.gl/gis';
+import * as arrow from 'apache-arrow';
+import GeoJsonLayer from '../../layers/src/geojson-layer/geojson-layer';
+import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
+import {datasetToFeatureCollection} from '../../processors/src/export/dataset-to-geojson';
 import {Int64, Table, vectorFromArray} from 'apache-arrow';
 import {ProtoDataset} from '@kepler.gl/types';
 import {exportMapToHTML, exportToJsonString, validateInputData} from '@kepler.gl/utils';
@@ -556,5 +568,489 @@ describe('suitability vis-state', () => {
       | {derivedDataset?: {type?: string} | null}
       | undefined;
     expect(derivedMeta?.derivedDataset?.type).toBe('suitability');
+  });
+});
+
+describe('native GeoArrow attribute joins', () => {
+  const metadataKey = 'ARROW:extension:name';
+  const point = (x: number) => ({type: 'Point', coordinates: [x, x + 1]});
+  const multi = (x: number) => ({
+    type: 'MultiPoint',
+    coordinates: [
+      [x, x + 1],
+      [x + 2, x + 3]
+    ]
+  });
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
+  const list = (type: arrow.DataType) => new arrow.List(new arrow.Field('item', type, true));
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+  beforeEach(() => {
+    drainTasksForTesting();
+  });
+
+  async function nativeSource(
+    id: string,
+    encoding: string,
+    type: arrow.DataType,
+    coordinates: any[],
+    keys = coordinates.map((_, i) => String(i))
+  ) {
+    const input = new arrow.Table({
+      key: arrow.vectorFromArray(keys),
+      geometry: arrow.vectorFromArray(coordinates, type)
+    });
+    input.schema.fields[1].metadata.set(metadataKey, encoding);
+    const decoded = arrow.tableFromIPC(arrow.tableToIPC(input, 'stream'));
+    const [file] = await processFileData({
+      content: {fileName: `${id}.arrow`, data: decoded.batches},
+      fileCache: []
+    } as any);
+    const dataset = new KeplerTable({info: {id, label: id}, color: [1, 2, 3]});
+    await dataset.importData({data: file.data as any});
+    return dataset;
+  }
+
+  function source(
+    id: string,
+    kind: 'Point' | 'MultiPoint',
+    keys = ['a', 'b'],
+    values: (number | null)[] = [10, 40]
+  ) {
+    return nativeSource(
+      id,
+      `geoarrow.${kind.toLowerCase()}`,
+      kind === 'Point' ? pointType : list(pointType),
+      values.map(x => (x === null ? null : (kind === 'Point' ? point(x) : multi(x)).coordinates)),
+      keys
+    );
+  }
+
+  function join(left: KeplerTable, right: KeplerTable, config: Record<string, any> = {}) {
+    let state: VisState = {...INITIAL_VIS_STATE, datasets: {[left.id]: left, [right.id]: right}};
+    state = reduceVisState(state, VisStateActions.addJoin(left.id));
+    const op = state.joins[0];
+    state = reduceVisState(
+      state,
+      VisStateActions.setJoinConfig(op.id, {
+        rightDataId: right.id,
+        leftField: 'key',
+        rightField: 'key',
+        type: 'LEFT',
+        ...config
+      })
+    );
+    state = reduceVisState(state, VisStateActions.runJoin(op.id));
+    state = flushCreateTableTasks(state);
+    return {state, result: state.datasets[op.resultId], resultId: op.resultId};
+  }
+
+  function features(dataset: KeplerTable, fieldIndex?: number) {
+    const props = GeoJsonLayer.findDefaultLayerProps(dataset).props;
+    expect(props.length).toBeGreaterThan(0);
+    const layer = new GeoJsonLayer({
+      ...props[0],
+      dataId: dataset.id,
+      ...(fieldIndex === undefined
+        ? {}
+        : {columns: {geojson: {value: dataset.fields[fieldIndex].name, fieldIdx: fieldIndex}}})
+    } as any);
+    layer.setInitialLayerConfig(dataset);
+    return (layer.formatLayerData({[dataset.id]: dataset}, {}) as any).data;
+  }
+
+  function rawFingerprint(dataset: KeplerTable) {
+    const column = (dataset.dataContainer as any).getColumn(1);
+    const bytes = (data: any): any => ({
+      type: String(data.type),
+      offset: data.offset,
+      length: data.length,
+      nullCount: data.nullCount,
+      buffers: data.buffers.map((b: any) =>
+        b ? Array.from(new Uint8Array(b.buffer, b.byteOffset, b.byteLength)) : null
+      ),
+      children: data.children.map(bytes)
+    });
+    return {
+      column,
+      chunks: column.data.slice(),
+      content: JSON.stringify(column.data.map(bytes)),
+      metadata: Array.from(dataset.fields[1].metadata!.entries())
+    };
+  }
+
+  function assertUnchanged(dataset: KeplerTable, before: ReturnType<typeof rawFingerprint>) {
+    const after = rawFingerprint(dataset);
+    expect(after.column).toBe(before.column);
+    after.chunks.forEach((chunk: any, i: number) => expect(chunk).toBe(before.chunks[i]));
+    expect(after.content).toBe(before.content);
+    expect(after.metadata).toEqual(before.metadata);
+  }
+
+  function roundtrip(dataset: KeplerTable) {
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const loaded = datasetSchema[VERSIONS.v1].load(JSON.parse(JSON.stringify(saved)));
+    return new KeplerTable({info: {id: `${dataset.id}-reload`}, color: [1, 2, 3]}).updateSchema(
+      loaded.data
+    );
+  }
+
+  test.each(['Point', 'MultiPoint'] as const)(
+    'preserves imported %s geometry through join actions, layer accessors, export and reload',
+    async kind => {
+      const left = await source('native', kind);
+      const before = rawFingerprint(left);
+      const right = makeTable(
+        'lookup',
+        [
+          {name: 'key', type: 'string'},
+          {name: 'value', type: 'real'}
+        ],
+        [
+          ['a', 1],
+          ['b', 2]
+        ]
+      );
+      const expected = [10, 40].map(x => (kind === 'Point' ? point(x) : multi(x)));
+      expect(
+        datasetToFeatureCollection(left.dataContainer, left.fields).features.map(f => f.geometry)
+      ).toEqual(expected);
+      const {result, state} = join(left, right);
+      expect(state.joins).toHaveLength(0);
+      expect(result.dataContainer.constructor.name).toBe('RowDataContainer');
+      expect(result.dataContainer.numRows()).toBe(2);
+      expect(result.fields[1]).toMatchObject({
+        type: 'geojson',
+        analyzerType: 'GEOMETRY_FROM_STRING'
+      });
+      expect(result.fields[1].metadata).toBeUndefined();
+      expect(JSON.parse(result.fields[1].valueAccessor({index: 0}))).toEqual(expected[0]);
+      expect(result.fields[3].valueAccessor({index: 1})).toBe(2);
+      expect(state.layers.filter(layer => layer.config.dataId === result.id)).toHaveLength(1);
+      for (const dataset of [result, roundtrip(result)]) {
+        expect(features(dataset).map((f: any) => f.geometry)).toEqual(expected);
+        expect(
+          datasetToFeatureCollection(dataset.dataContainer, dataset.fields).features.map(
+            f => f.geometry
+          )
+        ).toEqual(expected);
+      }
+      const data = processGeojson({
+        type: 'FeatureCollection',
+        features: expected.map((geometry, i) => ({
+          type: 'Feature',
+          geometry,
+          properties: {key: ['a', 'b'][i]}
+        }))
+      } as any);
+      const control = new KeplerTable({info: {id: 'geojson'}, color: [1, 2, 3]}).updateSchema(
+        data!
+      );
+      expect(features(join(control, right).result).map((f: any) => f.geometry)).toEqual(expected);
+      assertUnchanged(left, before);
+    }
+  );
+
+  test.each(['Point', 'MultiPoint'] as const)(
+    'preserves %s on both sides with duplicates, nulls, unmatched rows and empty joins',
+    async kind => {
+      const left = await source('left', kind, ['a', 'b', 'c', null] as any, [10, null, 40, 70]);
+      const right = await source('right', kind, ['a', 'a', 'd', null] as any, [20, null, 50, 80]);
+      const beforeLeft = rawFingerprint(left);
+      const beforeRight = rawFingerprint(right);
+      for (const [type, expectedRows, leftFeatures, rightFeatures] of [
+        ['LEFT', 5, 4, 1],
+        ['INNER', 2, 2, 1],
+        ['FULL', 7, 4, 3]
+      ] as const) {
+        const {result, state} = join(left, right, {type});
+        expect(state.joins).toHaveLength(0);
+        expect(result.dataContainer.numRows()).toBe(expectedRows);
+        for (const dataset of [result, roundtrip(result)]) {
+          expect(features(dataset, 1)).toHaveLength(leftFeatures);
+          expect(features(dataset, 3)).toHaveLength(rightFeatures);
+        }
+        expect(result.dataContainer.valueAt(1, 3)).toBeNull();
+        if (type !== 'INNER') expect(result.dataContainer.valueAt(2, 1)).toBeNull();
+        if (type === 'FULL') expect(result.dataContainer.valueAt(5, 1)).toBeNull();
+      }
+      const empty = join(left, await source('absent', kind, ['none'], [90]), {
+        type: 'INNER'
+      }).result;
+      expect(empty.dataContainer.numRows()).toBe(0);
+      expect(features(empty, 1)).toEqual([]);
+      assertUnchanged(left, beforeLeft);
+      assertUnchanged(right, beforeRight);
+    }
+  );
+
+  test.each([3, 4])(
+    'preserves precision and all %i native coordinate ordinates',
+    async dimensions => {
+      const coordinates = [-122.41234567890123, 37.81234567890123, 123.4567890123, 99.125].slice(
+        0,
+        dimensions
+      );
+      const type = new arrow.FixedSizeList(
+        dimensions,
+        new arrow.Field('coordinate', new arrow.Float64(), false)
+      );
+      const left = await nativeSource('native', 'geoarrow.point', type, [coordinates]);
+      const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['0']]);
+      const {result} = join(left, right);
+      for (const dataset of [result, roundtrip(result)]) {
+        expect(features(dataset)[0].geometry).toEqual({type: 'Point', coordinates});
+        expect(
+          datasetToFeatureCollection(dataset.dataContainer, dataset.fields).features[0].geometry
+        ).toEqual({type: 'Point', coordinates});
+      }
+    }
+  );
+
+  test('preserves empty native Points separately from null geometry', async () => {
+    const left = await nativeSource('native', 'geoarrow.point', pointType, [
+      [10, 11],
+      [NaN, NaN],
+      null
+    ]);
+    const before = rawFingerprint(left);
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['0'], ['1'], ['2']]);
+    const {result, state} = join(left, right);
+    expect(state.joins).toHaveLength(0);
+    const expected = [point(10), {type: 'Point', coordinates: []}, null];
+    for (const dataset of [result, roundtrip(result)]) {
+      expect(
+        datasetToFeatureCollection(dataset.dataContainer, dataset.fields).features.map(
+          f => f.geometry
+        )
+      ).toEqual(expected);
+      expect(features(dataset).map((f: any) => f.geometry)).toEqual(expected.slice(0, 2));
+    }
+    assertUnchanged(left, before);
+  });
+
+  test.each([
+    [
+      'LineString',
+      1,
+      [
+        [10, 11],
+        [12, 13]
+      ]
+    ],
+    [
+      'Polygon',
+      2,
+      [
+        [
+          [10, 11],
+          [12, 11],
+          [12, 13],
+          [10, 11]
+        ]
+      ]
+    ],
+    [
+      'MultiPoint',
+      1,
+      [
+        [10, 11],
+        [12, 13]
+      ]
+    ],
+    [
+      'MultiLineString',
+      2,
+      [
+        [
+          [10, 11],
+          [12, 13]
+        ]
+      ]
+    ],
+    [
+      'MultiPolygon',
+      3,
+      [
+        [
+          [
+            [10, 11],
+            [12, 11],
+            [12, 13],
+            [10, 11]
+          ]
+        ]
+      ]
+    ]
+  ])('retains %s coordinates and empty geometries', async (kind, depth, coordinates) => {
+    let type: arrow.DataType = pointType;
+    for (let i = 0; i < Number(depth); i++) type = list(type);
+    const left = await nativeSource('native', `geoarrow.${String(kind).toLowerCase()}`, type, [
+      coordinates,
+      [],
+      null
+    ]);
+    const before = rawFingerprint(left);
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['0'], ['1'], ['2']]);
+    const {result, state} = join(left, right);
+    expect(state.joins).toHaveLength(0);
+    const expected = [{type: kind, coordinates}, {type: kind, coordinates: []}, null];
+    for (const dataset of [result, roundtrip(result)]) {
+      expect(
+        datasetToFeatureCollection(dataset.dataContainer, dataset.fields).features.map(
+          f => f.geometry
+        )
+      ).toEqual(expected);
+      expect(features(dataset)[0].geometry).toEqual(expected[0]);
+    }
+    assertUnchanged(left, before);
+  });
+
+  test.each([
+    ['geoarrow.point', pointType, [[10, Infinity]]],
+    ['geoarrow.point', pointType, [[10, NaN]]],
+    [
+      'geoarrow.point',
+      new arrow.Struct([
+        new arrow.Field('x', new arrow.Float64(), false),
+        new arrow.Field('y', new arrow.Float64(), false)
+      ]),
+      [{x: 10, y: 11}]
+    ],
+    [
+      'geoarrow.point',
+      new arrow.FixedSizeList(1, new arrow.Field('x', new arrow.Float64(), false)),
+      [[10]]
+    ],
+    ['geoarrow.multipoint', list(pointType), [[[10, 11], null]]],
+    ['geoarrow.unknown', pointType, [[10, 11]]]
+  ])(
+    'surfaces invalid or unsupported %s instead of creating corrupt output',
+    async (encoding, type, coordinates) => {
+      const left = await nativeSource(
+        'native',
+        encoding as string,
+        type as arrow.DataType,
+        coordinates as any[]
+      );
+      const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['0']]);
+      const before = rawFingerprint(left);
+      const {state, result} = join(left, right);
+      expect(result).toBeUndefined();
+      expect(state.joins[0].error).toMatch(/geometry.*row 1/i);
+      assertUnchanged(left, before);
+      // Omitted geometry and nonmatching INNER rows must not be converted eagerly.
+      expect(join(left, right, {leftColumns: ['key']}).result.dataContainer.rowAsArray(0)).toEqual([
+        '0',
+        '0'
+      ]);
+      expect(
+        join(left, makeTable('absent', [{name: 'key', type: 'string'}], [['absent']]), {
+          type: 'INNER'
+        }).result.dataContainer.numRows()
+      ).toBe(0);
+    }
+  );
+
+  test.each(['wkb', 'wkt'] as const)(
+    'preserves %s geometry through chained attribute joins',
+    async encoding => {
+      const geometry = {type: 'Point' as const, coordinates: [10, 11]};
+      const value =
+        encoding === 'wkb' ? new Uint8Array(convertGeometryToWKB(geometry)) : 'POINT (10 11)';
+      const original = await nativeSource(
+        'source',
+        `geoarrow.${encoding}`,
+        encoding === 'wkb' ? new arrow.Binary() : new arrow.Utf8(),
+        [value, null],
+        ['a', 'b']
+      );
+      const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+      let left = original;
+      for (let run = 0; run < 2; run++) {
+        const {state, result} = join(left, right, {rightColumns: []});
+        expect(state.joins).toHaveLength(0);
+        expect(
+          datasetToFeatureCollection(result.dataContainer, result.fields).features.map(
+            feature => feature.geometry
+          )
+        ).toEqual([geometry, null]);
+        expect(features(result).map((feature: any) => feature.geometry)).toEqual([geometry]);
+        left = result;
+      }
+      expect(original.dataContainer.valueAt(0, 1)).toEqual(value);
+      expect(original.dataContainer.valueAt(1, 1)).toBeNull();
+    }
+  );
+
+  test('joins unannotated WKB identified as GEOMETRY', () => {
+    const geometry = {type: 'Point' as const, coordinates: [10, 11]};
+    const values = arrow.vectorFromArray(
+      [new Uint8Array(convertGeometryToWKB(geometry)), null],
+      new arrow.Binary()
+    );
+    const keys = arrow.vectorFromArray(['a', 'b']);
+    const input = new arrow.Table({key: keys, geometry: values});
+    const left = new KeplerTable({info: {id: 'source'}, color: [1, 2, 3]}).updateSchema({
+      fields: arrowSchemaToFields(input, {geometry: 'GEOMETRY'}),
+      cols: [keys, values],
+      rows: []
+    });
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+    const {state, result} = join(left, right, {rightColumns: []});
+    expect(state.joins).toHaveLength(0);
+    expect(
+      datasetToFeatureCollection(result.dataContainer, result.fields).features.map(
+        feature => feature.geometry
+      )
+    ).toEqual([geometry, null]);
+    expect(features(result).map((feature: any) => feature.geometry)).toEqual([geometry]);
+  });
+
+  test('joins ordinary Arrow attributes after JSON save/reload without changing values', async () => {
+    const input = new arrow.Table({
+      key: arrow.vectorFromArray(['a', 'b']),
+      value: arrow.vectorFromArray([1.25, 2.5])
+    });
+    const [file] = await processFileData({
+      content: {fileName: 'ordinary.arrow', data: input.batches},
+      fileCache: []
+    } as any);
+    const original = new KeplerTable({info: {id: 'ordinary'}, color: [1, 2, 3]}).updateSchema(
+      file.data as any
+    );
+    const restored = roundtrip(original);
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['b']]);
+    expect(join(restored, right).result.dataContainer.flattenData()).toEqual([
+      ['a', 1.25, 'a'],
+      ['b', 2.5, 'b']
+    ]);
+  });
+
+  test('reads geometry once per emitted source row and does not retain a stale cache across joins', async () => {
+    const left = await source('left', 'Point');
+    const right = makeTable('lookup', [{name: 'key', type: 'string'}], [['a'], ['a'], ['a']]);
+    const read = jest.spyOn(left.dataContainer, 'valueAt');
+    const first = join(left, right, {type: 'INNER'}).result;
+    expect(first.dataContainer.numRows()).toBe(3);
+    expect(read.mock.calls.filter(([, fieldIndex]) => fieldIndex === 1)).toEqual([[0, 1]]);
+    read.mockRestore();
+    const replacement = await source('replacement', 'Point', ['a', 'b'], [50, 60]);
+    left.updateSchema({
+      fields: replacement.fields,
+      rows: [],
+      cols: [
+        (replacement.dataContainer as any).getColumn(0),
+        (replacement.dataContainer as any).getColumn(1)
+      ]
+    });
+    const second = join(left, right, {type: 'INNER'}).result;
+    expect(JSON.parse(second.dataContainer.valueAt(0, 1))).toEqual(point(50));
+    expect(JSON.parse(first.dataContainer.valueAt(0, 1))).toEqual(point(10));
   });
 });
