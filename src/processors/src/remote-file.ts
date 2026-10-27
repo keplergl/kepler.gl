@@ -353,6 +353,25 @@ function isTabularProcessorResult(data: unknown): data is NonNullable<ProcessorR
   );
 }
 
+// Recognize the established header, without treating an arbitrary empty parser
+// result as a successful refresh. Each name may be bare or correctly CSV-quoted.
+function matchesCsvHeader(text: string, fields: string[]): boolean {
+  if (!fields.some(name => name.trim())) return false;
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const blankLines = '(?:[ \\t]*[\\r\\n])*';
+  return [',', '\t', ';', '|'].some(delimiter => {
+    const header = fields
+      .map(name => {
+        const quoted = escape(`"${name.replace(/"/g, '""')}"`);
+        return /["\r\n]/.test(name) || name.includes(delimiter)
+          ? quoted
+          : `(?:${escape(name)}|${quoted})`;
+      })
+      .join(escape(delimiter));
+    return new RegExp(`^\\uFEFF?${blankLines}${header}${blankLines}$`).test(text);
+  });
+}
+
 /**
  * Fetch, parse, and process a remote file into Kepler dataset data.
  * Used when reloading an `externally-hosted` dataset from a saved map config
@@ -366,6 +385,8 @@ export async function loadExternallyHostedDataset(metadata: {
   lastModified?: string;
   bypassCache?: boolean;
   onProgress?: (progress: RemoteLoadProgress) => void;
+  /** Established CSV columns, supplied only when refreshing an existing table. */
+  csvHeader?: string[];
 }): Promise<LoadExternallyHostedDatasetResult> {
   const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
   const fetched = await fetchRemoteFile(source, {
@@ -404,6 +425,22 @@ export async function loadExternallyHostedDataset(metadata: {
   let content: ProcessFileDataContent | undefined;
   for await (const batch of batches) {
     content = batch as ProcessFileDataContent;
+  }
+  // CSVLoader emits no data batch for a header-only file. Keep its populated
+  // parsing path intact; recognize only a header matching this existing table.
+  if (
+    metadata.csvHeader?.length &&
+    ['csv', 'tsv', 'dsv'].includes(getPersistedRemoteFormat(format, fetched.file.name) || '') &&
+    (!content || (Array.isArray(content.data) && !content.data.length)) &&
+    matchesCsvHeader(await fetched.file.text(), metadata.csvHeader)
+  ) {
+    return {
+      data: {fields: [], rows: []},
+      notModified: false,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+      size: fetched.size
+    };
   }
   if (!content) {
     throw new Error(`No data loaded from ${source}`);

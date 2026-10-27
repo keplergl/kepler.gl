@@ -38,7 +38,6 @@ import type {Feature, FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,
-  processCsvData,
   processGeojson,
   processKeplerglJSON,
   processRowObject
@@ -433,7 +432,6 @@ function getAggregatedLoaderResult(
     shape?: string;
     type?: string;
     header?: unknown;
-    schema?: any;
     data?: unknown;
     batchType?: string;
     jsonpath?: unknown;
@@ -459,7 +457,7 @@ function getAggregatedLoaderResult(
     return current;
   }
   if (batch.shape === 'object-row-table' || batch.shape === 'row-table') {
-    return {shape: batch.shape, data: [], ...(batch.schema ? {schema: batch.schema} : {})};
+    return {shape: batch.shape, data: []};
   }
   // ShapefileLoader parseInBatches always yields v3 `{header, data: Feature[]}`.
   if (batch.header != null && Array.isArray(batch.data)) {
@@ -730,27 +728,7 @@ export async function processFileData({
         Array.isArray(tableRows)
       ) {
         format = DATASET_FORMATS.row;
-        processor = () => {
-          const schema = data.schema as any;
-          if (
-            !tableRows.length &&
-            schema?.metadata?.['loaders.gl#format'] === 'csv' &&
-            schema.metadata['kepler.gl#csv-header-only'] &&
-            schema.fields?.length
-          ) {
-            const result = processCsvData([
-              schema.fields.map((field: {name: string}) => field.name)
-            ]);
-            if (!result) return result;
-            return {
-              ...result,
-              // Existing field metadata survives saved maps and progress copies,
-              // so a later populated refresh can resolve these provisional types.
-              fields: result.fields.map(field => ({...field, metadata: {csvHeaderOnly: true}}))
-            };
-          }
-          return processRowObject(tableRows);
-        };
+        processor = () => processRowObject(tableRows);
       }
     }
   }

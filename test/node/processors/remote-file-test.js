@@ -8,8 +8,67 @@ import {
   getExtensionFromUrl,
   getFileNameForRemoteUrl,
   getMimeTypeForFormat,
-  isRemoteDatasetUrl
+  isRemoteDatasetUrl,
+  loadExternallyHostedDataset
 } from '@kepler.gl/processors';
+
+test('#remote-file -> recognizes only the established CSV header', async t => {
+  const originalFetch = global.fetch;
+  const metadata = {
+    source: 'https://example.com/live.csv',
+    csvHeader: ['lat', 'lng', 'value']
+  };
+  try {
+    for (const body of [
+      'lat,lng,value',
+      '\ufeff"lat",lng,"value"\r\n',
+      '\nlat,lng,value\n\n',
+      'lat\tlng\tvalue\n',
+      'lat;lng;value\n',
+      'lat|lng|value\n'
+    ]) {
+      global.fetch = async () => new Response(body, {headers: {etag: 'empty'}});
+      const result = await loadExternallyHostedDataset(metadata);
+      t.deepEqual(result.data, {fields: [], rows: []}, 'clears rows using established types');
+      t.equal(result.notModified, false, 'empty is a new snapshot');
+      t.equal(result.etag, 'empty', 'retains response validators');
+    }
+    const csvHeader = ['la,t', 'ln\ng', 'say "hi"', 'a.*'];
+    global.fetch = async () => new Response('"la,t","ln\ng","say ""hi""",a.*\n');
+    const result = await loadExternallyHostedDataset({...metadata, csvHeader});
+    t.deepEqual(result.data.rows, [], 'recognizes quoted delimiters, newlines and escaped quotes');
+
+    for (const body of [
+      '',
+      '\n \t\r\n',
+      '"lat,lng,value\n',
+      'lat,lng,"value',
+      '"lat"oops,lng,value\n',
+      'lat"oops,lng,value\n',
+      'value,lng,lat\n',
+      'lat,lng\n',
+      'lat,lng,value,new\n'
+    ]) {
+      global.fetch = async () => new Response(body);
+      try {
+        await loadExternallyHostedDataset(metadata);
+        t.fail('blank, malformed or changed headers must not clear the table');
+      } catch (error) {
+        t.ok(error instanceof Error, 'rejects unsupported empty snapshots');
+      }
+    }
+    global.fetch = async () => new Response('lat,lng,value\n');
+    try {
+      await loadExternallyHostedDataset({source: metadata.source});
+      t.fail('initially empty imports must retain their existing error behavior');
+    } catch (error) {
+      t.ok(error instanceof Error, 'requires an established table');
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
 
 test('#remote-file -> getExtensionFromUrl', t => {
   t.equal(getExtensionFromUrl('https://example.com/data.geojson'), 'geojson');

@@ -10153,10 +10153,13 @@ test('VisStateUpdater -> refreshDataset', async t => {
   t.end();
 });
 
-test('VisStateUpdater -> remote CSV clears, preserves schema, and repopulates', async t => {
+test('VisStateUpdater -> CSV refresh preserves layers and filters through 100, 1, 0 and 100 rows', async t => {
   const originalFetch = global.fetch;
   const source = 'https://example.com/live.csv';
-  const populated = 'lat,lng,value\n37,-122,1\n38,-123,2\n';
+  const populated = `lat,lng,value\n${Array.from(
+    {length: 100},
+    (_, i) => `${37 + i / 1000},${-122 - i / 1000},${i}`
+  ).join('\n')}\n`;
   let body = populated;
   global.fetch = async () => new Response(body, {headers: {'content-type': 'text/csv'}});
   const refresh = async state => {
@@ -10173,196 +10176,86 @@ test('VisStateUpdater -> remote CSV clears, preserves schema, and repopulates', 
     return reducer(state, action);
   };
   try {
-    const loaded = await loadExternallyHostedDataset({source, format: 'csv'});
-    const datasets = await createNewDataEntryMock({
-      info: {id: 'remote-csv', type: DatasetType.EXTERNALLY_HOSTED},
-      data: loaded.data,
-      metadata: {source, sourceFormat: 'csv'}
-    });
-    const {props} = PointLayer.findDefaultLayerProps(datasets['remote-csv']);
-    const point = new PointLayer({id: 'csv-point', dataId: 'remote-csv', ...props[0]});
-    point.updateLayerVisConfig({opacity: 0.37, radius: 9});
-    let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
-    const initial = calculateLayerData(point, state);
-    state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
-    const style = {...state.layers[0].config.visConfig};
-    state = reducer(state, VisStateActions.addFilter('remote-csv'));
-    state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
-    state = reducer(state, VisStateActions.setFilter(0, 'value', [2, 2]));
-    state = reducer(state, VisStateActions.setFilter(0, 'inverted', true));
-    const gpu = state.filters[0].gpu;
-
-    for (const text of [
-      'lat,lng,value\n',
-      'value,lng,lat\n',
-      'value,lng,lat\n3,-125,40\n1,-126,41\n',
-      'lat,lng,value\n',
-      populated
-    ]) {
-      body = text;
-      const empty = text.trim().split('\n').length === 1;
-      state = await refresh(state);
-      const ds = state.datasets['remote-csv'];
-      t.equal(ds.metadata.refreshStatus, 'idle', 'remote task succeeds');
-      t.equal(ds.dataContainer.numRows(), empty ? 0 : 2, 'replaces the snapshot');
-      t.equal(
-        state.layerData[0].data.length,
-        empty ? 0 : text === populated ? 1 : 2,
-        'render data follows the selected rows'
-      );
-      t.equal(state.layers[0].id, 'csv-point', 'keeps the configured layer');
-      t.equal(state.layers[0].isValid, true, 'keeps layer valid');
-      t.deepEqual(state.layers[0].config.visConfig, style, 'keeps user styling');
-      t.deepEqual(
-        ds.fields.map(f => f.name),
-        text.split('\n')[0].split(','),
-        'uses incoming column order'
-      );
-      t.ok(
-        ds.fields.every(f => f.type === 'integer'),
-        'preserves inferred numeric types'
-      );
-      t.deepEqual(state.filters[0].value, [2, 2], 'keeps selected range through empty domains');
-      t.equal(state.filters[0].inverted, true, 'keeps Filter out');
-      t.equal(state.filters[0].gpu, gpu, 'keeps filter evaluation mode');
-      ds.filterTableCPU(state.filters, state.layers);
-      const valueIndex = ds.fields.findIndex(f => f.name === 'value');
-      const expected = ds.allIndexes.filter(i => ds.dataContainer.valueAt(i, valueIndex) !== 2);
-      t.deepEqual(ds.filteredIdxCPU, expected, 'CPU/export filter uses new rows and indices');
-      t.deepEqual(
-        state.layerData[0].data
-          .filter(row => state.layerData[0].getFiltered(row))
-          .map(row => row.index),
-        expected,
-        'render filter uses new rows and indices'
-      );
-      if (!empty) {
-        t.deepEqual(
-          state.layerData[0].data[0].position.slice(0, 2),
-          text === populated ? [-122, 37] : [-125, 40],
-          'positions follow reordered columns'
-        );
-      }
-    }
-    for (const invalid of [
-      '',
-      '\n \t\n',
-      '"lat,lng,value\n',
-      '"lat"oops,lng,value\n',
-      '"lat";oops,lng,value\n',
-      'lat"oops,lng,value\n'
-    ]) {
-      body = invalid;
-      state = await refresh(state);
-      t.equal(
-        state.datasets['remote-csv'].metadata.refreshStatus,
-        'error',
-        'invalid snapshots are errors'
-      );
-      t.equal(
-        state.datasets['remote-csv'].dataContainer.numRows(),
-        2,
-        'failed refresh retains both records'
-      );
-      t.equal(state.layerData[0].data.length, 1, 'failed refresh retains the selected point');
-      t.deepEqual(
-        state.layerData[0].data[0].position.slice(0, 2),
-        [-122, 37],
-        'failure preserves coordinates'
-      );
-    }
-    body = 'lat,lng,value,new\n';
-    state = await refresh(state);
-    body = 'lat,lng,value,new\n37,-122,8,1\n38,-123,9,2\n';
-    state = await refresh(state);
-    t.deepEqual(
-      state.filters[0].value,
-      [2, 2],
-      'resolving an added field does not clamp another field selection'
-    );
-    t.ok(
-      state.datasets['remote-csv'].fields.every(f => f.type === 'integer'),
-      'infers an added provisional field from real values'
-    );
-    body = 'lat,lng\n';
-    state = await refresh(state);
-    t.deepEqual(
-      state.datasets['remote-csv'].fields.map(f => f.name),
-      ['lat', 'lng'],
-      'removes missing header fields'
-    );
-    t.equal(state.filters.length, 0, 'drops the filter for a removed column');
-    t.equal(state.layers.length, 1, 'keeps the layer when position fields survive');
-    body = 'value\n';
-    state = await refresh(state);
-    t.equal(state.layers.length, 0, 'drops the layer when position fields are removed');
-
-    // A first import has no established types to retain. Its first real values
-    // must replace provisional types even though the column names are unchanged.
-    body = 'lat,lng,value\n';
-    const empty = await loadExternallyHostedDataset({source, format: 'csv'});
-    const initialEmpty = await createNewDataEntryMock({
-      info: {id: 'remote-csv', type: DatasetType.EXTERNALLY_HOSTED},
-      data: empty.data,
-      metadata: {source, sourceFormat: 'csv'}
-    });
-    state = {...INITIAL_VIS_STATE, datasets: initialEmpty};
-    const savedEmpty = SchemaManager.save({visState: state});
-    const loadedEmpty = SchemaManager.load(JSON.parse(JSON.stringify(savedEmpty)));
-    const restoredEmpty = await createNewDataEntryMock(loadedEmpty.datasets[0]);
-    state = {...INITIAL_VIS_STATE, datasets: restoredEmpty};
-    t.ok(
-      state.datasets['remote-csv'].fields.every(f => f.metadata?.csvHeaderOnly),
-      'save/load retains provisional field information'
-    );
-    body = populated;
-    state = await refresh(state);
-    t.ok(
-      state.datasets['remote-csv'].fields.every(f => f.type === 'integer'),
-      'initial-empty types evolve from numeric values'
-    );
-    t.ok(
-      state.datasets['remote-csv'].fields.every(f => !f.metadata?.csvHeaderOnly),
-      'provisional typing is resolved'
-    );
-
-    const geojson = count =>
-      JSON.stringify({
-        type: 'FeatureCollection',
-        features: Array.from({length: count}, (_, index) => ({
-          type: 'Feature',
-          properties: {value: index},
-          geometry: {type: 'Point', coordinates: [-122 - index, 37 + index]}
-        }))
+    for (const gpu of [false, true]) {
+      const inverted = !gpu;
+      body = populated;
+      const loaded = await loadExternallyHostedDataset({source, format: 'csv'});
+      const datasets = await createNewDataEntryMock({
+        info: {id: 'remote-csv', type: DatasetType.EXTERNALLY_HOSTED},
+        data: loaded.data,
+        metadata: {source, sourceFormat: 'csv'}
       });
-    body = geojson(2);
-    const geoSource = source.replace('.csv', '.geojson');
-    const geoData = await loadExternallyHostedDataset({source: geoSource, format: 'geojson'});
-    const geoDatasets = await createNewDataEntryMock({
-      info: {id: 'remote-csv', type: DatasetType.EXTERNALLY_HOSTED},
-      data: geoData.data,
-      metadata: {source: geoSource, sourceFormat: 'geojson'}
-    });
-    const geoProps = GeojsonLayer.findDefaultLayerProps(geoDatasets['remote-csv']);
-    const geo = new GeojsonLayer({id: 'geo-control', dataId: 'remote-csv', ...geoProps.props[0]});
-    geo.setInitialLayerConfig(geoDatasets['remote-csv']);
-    state = {...INITIAL_VIS_STATE, datasets: geoDatasets, layers: [geo], layerData: [{}]};
-    const geoInitial = calculateLayerData(geo, state);
-    state = {...state, layers: [geoInitial.layer], layerData: [geoInitial.layerData]};
-    for (const count of [0, 2]) {
-      body = geojson(count);
-      state = await refresh(state);
-      t.equal(
-        state.datasets['remote-csv'].metadata.refreshStatus,
-        'idle',
-        'GeoJSON control succeeds'
-      );
-      t.equal(
-        state.layerData[0].data.length,
-        count,
-        'GeoJSON renders empty and populated snapshots'
-      );
-      t.equal(state.layers[0].id, 'geo-control', 'GeoJSON preserves its layer');
+      const {props} = PointLayer.findDefaultLayerProps(datasets['remote-csv']);
+      const point = new PointLayer({id: 'csv-point', dataId: 'remote-csv', ...props[0]});
+      point.updateLayerVisConfig({opacity: 0.37, radius: 9});
+      let state = {...INITIAL_VIS_STATE, datasets, layers: [point], layerData: [{}]};
+      const initial = calculateLayerData(point, state);
+      state = {...state, layers: [initial.layer], layerData: [initial.layerData]};
+      const style = {...state.layers[0].config.visConfig};
+      const types = datasets['remote-csv'].fields.map(field => field.type);
+      state = reducer(state, VisStateActions.addFilter('remote-csv'));
+      state = reducer(state, VisStateActions.setFilter(0, 'name', 'value'));
+      state = reducer(state, VisStateActions.setFilter(0, 'value', [20, 80]));
+      state = reducer(state, VisStateActions.setFilter(0, 'inverted', inverted));
+      state = reducer(state, VisStateActions.setFilter(0, 'gpu', gpu));
+      const filterId = state.filters[0].id;
+
+      for (const [text, count] of [
+        [`lat,lng,value\n40.5,-125.5,${gpu ? 50 : 10}\n`, 1],
+        ['lat,lng,value\n', 0],
+        [populated, 100]
+      ]) {
+        body = text;
+        state = await refresh(state);
+        const ds = state.datasets['remote-csv'];
+        t.equal(ds.metadata.refreshStatus, 'idle', 'refresh succeeds');
+        t.equal(ds.dataContainer.numRows(), count, 'replaces all rows');
+        t.deepEqual(
+          ds.fields.map(field => field.type),
+          types,
+          'preserves established types'
+        );
+        t.equal(state.layers.length, 1, 'keeps the configured layer');
+        t.equal(state.layers[0].id, 'csv-point', 'keeps layer identity');
+        t.equal(state.layers[0].isValid, true, 'keeps the layer valid');
+        t.deepEqual(state.layers[0].config.visConfig, style, 'keeps user styling');
+        t.equal(state.filters[0].id, filterId, 'keeps filter identity');
+        t.deepEqual(state.filters[0].value, [20, 80], 'keeps selected range');
+        t.equal(state.filters[0].inverted, inverted, 'keeps Filter out');
+        t.equal(state.filters[0].gpu, gpu, 'keeps evaluation mode');
+        ds.filterTableCPU(state.filters, state.layers);
+        const expected = ds.allIndexes.filter(i => {
+          const value = ds.dataContainer.valueAt(i, 2);
+          return inverted ? value < 20 || value > 80 : value >= 20 && value <= 80;
+        });
+        t.deepEqual(ds.filteredIdxCPU, expected, 'export filtering uses the new snapshot');
+        t.equal(
+          state.layerData[0].data.length,
+          gpu ? count : expected.length,
+          'rebuilds layer data'
+        );
+        if (count === 1) {
+          t.deepEqual(
+            state.layerData[0].data[0].position.slice(0, 2),
+            [-125.5, 40.5],
+            'updates coordinates'
+          );
+        }
+      }
+      for (const invalid of ['', 'lat,lng,"value', 'value,lng,lat\n']) {
+        body = invalid;
+        const previous = state.datasets['remote-csv'].dataContainer;
+        const layerData = state.layerData[0];
+        state = await refresh(state);
+        t.equal(
+          state.datasets['remote-csv'].metadata.refreshStatus,
+          'error',
+          'unsupported refresh fails'
+        );
+        t.equal(state.datasets['remote-csv'].dataContainer, previous, 'failure retains the rows');
+        t.equal(state.layerData[0], layerData, 'failure retains rendered data');
+        t.deepEqual(state.filters[0].value, [20, 80], 'failure retains the selection');
+      }
     }
   } finally {
     global.fetch = originalFetch;
