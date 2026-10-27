@@ -20,6 +20,7 @@ import {
   readFileInBatches
 } from './file-handler';
 import {FileCacheItem} from './types';
+import {KeplerCSVLoader} from './kepler-csv-loader';
 
 export type KeplerRemoteFile = File & {
   keplerSourceUrl?: string;
@@ -353,22 +354,48 @@ function isTabularProcessorResult(data: unknown): data is NonNullable<ProcessorR
   );
 }
 
-// Recognize the established header, without treating an arbitrary empty parser
-// result as a successful refresh. Quote names containing any supported delimiter
-// so another candidate cannot reinterpret them as a single field.
-function matchesCsvHeader(text: string, fields: string[]): boolean {
-  if (!fields.some(name => name.trim())) return false;
+async function matchesCsvHeader(text: string, fields: string[]): Promise<boolean> {
   const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const blankLines = '(?:[ \\t]*[\\r\\n])*';
-  return [',', '\t', ';', '|'].some(delimiter => {
-    const header = fields
-      .map(name => {
-        const quoted = escape(`"${name.replace(/"/g, '""')}"`);
-        return /[",\t;|\r\n]/.test(name) ? quoted : `(?:${escape(name)}|${quoted})`;
-      })
-      .join(escape(delimiter));
-    return new RegExp(`^\\uFEFF?${blankLines}${header}${blankLines}$`).test(text);
-  });
+  // Keep exact quote validation: the CSV parser accepts some malformed records.
+  const matchesRecord = (header: string[], strict: boolean) =>
+    [',', '\t', ';', '|'].some(delimiter => {
+      const record = header
+        .map(name => {
+          const quoted = escape(`"${name.replace(/"/g, '""')}"`);
+          const needsQuotes =
+            /["\r\n]/.test(name) || (strict ? /[,\t;|]/.test(name) : name.includes(delimiter));
+          return needsQuotes ? quoted : `(?:${escape(name)}|${quoted})`;
+        })
+        .join(escape(delimiter));
+      return new RegExp(`^\\uFEFF?${blankLines}${record}${blankLines}$`).test(text);
+    });
+  // Quoted names remain unambiguous even when the loader guesses another delimiter.
+  if (fields.some(name => name.trim()) && matchesRecord(fields, true)) return true;
+  // A lone bare name containing delimiters has no separator to disambiguate it.
+  if (fields.length === 1) return false;
+
+  // Reuse the same streaming parser as import, exposing the header as a row.
+  const rows: string[][] = [];
+  for await (const batch of KeplerCSVLoader.parseInBatches!([new TextEncoder().encode(text)], {
+    csv: {
+      shape: 'array-row-table',
+      // @ts-expect-error loaders.gl accepts false but its type only declares 'auto'.
+      header: false
+    }
+  })) {
+    rows.push(...batch.data);
+  }
+  if (rows.length !== 1) return false;
+  const header = rows[0];
+  // processRowObject uses Object.keys, which sorts integer-named columns.
+  const names = Object.keys(Object.fromEntries(header.map(name => [name, null])));
+  return (
+    header.length === fields.length &&
+    names.length === fields.length &&
+    names.every((name, i) => name === fields[i]) &&
+    matchesRecord(header, false)
+  );
 }
 
 /**
@@ -429,9 +456,11 @@ export async function loadExternallyHostedDataset(metadata: {
   // parsing path intact; recognize only a header matching this existing table.
   if (
     metadata.csvHeader?.length &&
-    ['csv', 'tsv', 'dsv'].includes(getPersistedRemoteFormat(format, fetched.file.name) || '') &&
+    KeplerCSVLoader.extensions.some(extension =>
+      fetched.file!.name.toLowerCase().endsWith(`.${extension}`)
+    ) &&
     (!content || (Array.isArray(content.data) && !content.data.length)) &&
-    matchesCsvHeader(await fetched.file.text(), metadata.csvHeader)
+    (await matchesCsvHeader(await fetched.file.text(), metadata.csvHeader))
   ) {
     return {
       data: {fields: [], rows: []},

@@ -108,6 +108,50 @@ test('#remote-file -> header matching cannot reinterpret a column delimiter', as
   t.end();
 });
 
+test('#remote-file -> header-only refresh uses CSV parsing and imported column order', async t => {
+  const originalFetch = global.fetch;
+  const fixtures = [
+    ['live.csv', 'text/csv', 'lat,lng,a|b', '37,-122,1', ['lat', 'lng', 'a|b']],
+    ['live.csv', 'text/csv', 'lat;lng;a,b', '37;-122;1', ['lat', 'lng', 'a,b']],
+    [
+      'live.tsv',
+      'text/tab-separated-values',
+      'lat\tlng\tvalue',
+      '37\t-122\t1',
+      ['lat', 'lng', 'value']
+    ],
+    ['live.dsv', 'text/dsv', 'lat;lng;value', '37;-122;1', ['lat', 'lng', 'value']],
+    [
+      'live',
+      'text/tab-separated-values',
+      'lat\tlng\tvalue',
+      '37\t-122\t1',
+      ['lat', 'lng', 'value']
+    ],
+    ['live.csv', 'text/csv', '2025,2024,value', '1,2,3', ['2024', '2025', 'value']]
+  ];
+  try {
+    for (const [name, mimeType, header, row, expectedNames] of fixtures) {
+      let body = `${header}\n${row}\n`;
+      global.fetch = async () => new Response(body, {headers: {'content-type': mimeType}});
+      const source = `https://example.com/${name}`;
+      const loaded = await loadExternallyHostedDataset({source});
+      const csvHeader = loaded.data.fields.map(field => field.name);
+      t.deepEqual(csvHeader, expectedNames, 'establishes columns using the normal import path');
+      body = `${header}\n`;
+      try {
+        const result = await loadExternallyHostedDataset({source, csvHeader});
+        t.deepEqual(result.data, {fields: [], rows: []}, 'recognizes the unchanged empty snapshot');
+      } catch (error) {
+        t.fail(`unchanged header-only ${name} rejected: ${error.message}`);
+      }
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
+
 test('#remote-file -> getExtensionFromUrl', t => {
   t.equal(getExtensionFromUrl('https://example.com/data.geojson'), 'geojson');
   t.equal(
