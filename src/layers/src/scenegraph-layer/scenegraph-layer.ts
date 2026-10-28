@@ -271,6 +271,8 @@ export default class ScenegraphLayer extends Layer {
   dataToFeature: any[] = [];
   centroids: Array<number[] | null> = [];
   private _geojsonFieldIdx = -1;
+  private _geojsonDataContainer: DataContainerInterface | null = null;
+  private _geojsonDataRevision: number | undefined;
   private _geojsonBounds: [number, number, number, number] | null = null;
 
   constructor(props) {
@@ -458,7 +460,7 @@ export default class ScenegraphLayer extends Layer {
         geoField?.metadata && typeof (geoField.metadata as Map<string, string>).get === 'function'
           ? (geoField.metadata as Map<string, string>).get(GEOARROW_METADATA_KEY)
           : (geoField?.metadata as Record<string, string> | undefined)?.[GEOARROW_METADATA_KEY];
-      this._buildGeojsonDataToFeature(dataContainer, getFeature, encoding);
+      this._buildGeojsonDataToFeature(dataset, getFeature, encoding);
       this.updateMeta({bounds: this._geojsonBounds});
       return;
     }
@@ -470,18 +472,23 @@ export default class ScenegraphLayer extends Layer {
   }
 
   private _buildGeojsonDataToFeature(
-    dataContainer: DataContainerInterface,
+    dataset: KeplerTable,
     getFeature: (d: {index: number}) => unknown,
     geoArrowEncoding?: string | null
   ) {
+    const {dataContainer, dataRevision} = dataset;
     const fieldIdx = this.config.columns.geojson?.fieldIdx ?? -1;
     if (
       this.dataToFeature.length === dataContainer.numRows() &&
-      this._geojsonFieldIdx === fieldIdx
+      this._geojsonFieldIdx === fieldIdx &&
+      this._geojsonDataContainer === dataContainer &&
+      this._geojsonDataRevision === dataRevision
     ) {
       return;
     }
     this._geojsonFieldIdx = fieldIdx;
+    this._geojsonDataContainer = dataContainer;
+    this._geojsonDataRevision = dataRevision;
     this.dataToFeature = [];
     this.centroids = [];
 

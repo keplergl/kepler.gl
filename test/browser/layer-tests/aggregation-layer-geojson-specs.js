@@ -6,7 +6,9 @@ import test from 'tape';
 import {testFormatLayerDataCases, prepareGeojsonDataset, dataId} from 'test/helpers/layer-utils';
 
 import {KeplerGlLayers} from '@kepler.gl/layers';
-const {GridLayer, HexagonLayer, ClusterLayer} = KeplerGlLayers;
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {tableFromArrays} from 'apache-arrow';
+const {GridLayer, HexagonLayer, ClusterLayer, HeatmapLayer, ScenegraphLayer} = KeplerGlLayers;
 
 const geojsonColumns = {
   geojson: '_geojson'
@@ -497,3 +499,122 @@ test('#AggregationLayer -> isInPolygon with geojson mode', t => {
 
   t.end();
 });
+
+// These layers share the same GeoJSON centroid cache behavior.
+for (const LayerClass of [GridLayer, HexagonLayer, ClusterLayer, HeatmapLayer, ScenegraphLayer]) {
+  for (const storage of ['rows', 'arrow']) {
+    test(`#${LayerClass.name} -> GeoJSON ${storage} refresh invalidates cached geometry`, async t => {
+      const feature = coordinates => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates},
+        properties: {}
+      });
+      const rowsFor = coordinates => [[7, JSON.stringify(feature(coordinates))]];
+      const fields = [
+        {name: 'id', type: 'integer'},
+        {name: 'geometry', type: 'geojson'}
+      ];
+      const payload = rows => {
+        if (storage === 'rows') return {fields, rows};
+        const arrowTable = tableFromArrays({
+          id: rows.map(row => row[0]),
+          geometry: rows.map(row => row[1])
+        });
+        return {
+          fields,
+          rows: [],
+          cols: [arrowTable.getChildAt(0), arrowTable.getChildAt(1)],
+          arrowTable
+        };
+      };
+      const createTable = coordinates =>
+        new KeplerTable({info: {id: 'refresh'}, color: [1, 2, 3]}).updateSchema(
+          payload(rowsFor(coordinates))
+        );
+      const dataset = createTable([1, 2]);
+      const layer = new LayerClass({
+        dataId: dataset.id,
+        columnMode: 'geojson',
+        columns: {geojson: {value: 'geometry', fieldIdx: 1}}
+      });
+      const container = dataset.dataContainer;
+      let layerData = layer.formatLayerData({refresh: dataset}, {});
+      const assertPosition = (coordinates, message) => {
+        t.deepEqual(
+          layerData.data.map(d => layerData.getPosition(d).slice(0, 2)),
+          [coordinates],
+          message
+        );
+        t.deepEqual(
+          layerData.data.map(d => d.index),
+          [0],
+          'preserves source indexes for accessors and picking'
+        );
+        t.deepEqual(layer.centroids, [coordinates], 'updates centroids');
+        t.deepEqual(layer.meta.bounds, [...coordinates, ...coordinates], 'updates bounds');
+      };
+      assertPosition([1, 2], 'renders initial geometry');
+      const oldData = layerData.data;
+      const initialRevision = dataset.dataRevision;
+      await dataset.update(payload(rowsFor([30, 40])));
+      t.equal(dataset.dataContainer, container, 'snapshot retains the container');
+      t.ok(dataset.dataRevision > initialRevision, 'snapshot advances revision');
+      layerData = layer.formatLayerData({refresh: dataset}, layerData);
+      assertPosition([30, 40], 'renders same-length refreshed geometry');
+      t.deepEqual(
+        oldData.map(d => d.position.slice(0, 2)),
+        [[1, 2]],
+        'does not mutate previous rendered data'
+      );
+      t.equal(
+        container.valueAt(0, 1),
+        rowsFor([30, 40])[0][1],
+        'formatting preserves source geometry'
+      );
+
+      const cachedFeatures = layer.dataToFeature;
+      const cachedCentroids = layer.centroids;
+      layer.updateLayerVisConfig({opacity: 0.3});
+      layer.updateLayerMeta(copyTableAndUpdate(dataset, {metadata: {refreshProgress: 50}}));
+      const filtered = copyTableAndUpdate(dataset, {filteredIndex: []});
+      const filteredData = layer.formatLayerData({refresh: filtered}, layerData);
+      t.deepEqual(filteredData.data, [], 'respects CPU-filtered indexes');
+      t.equal(
+        layer.dataToFeature,
+        cachedFeatures,
+        'reuses geometry for style, metadata and filter changes'
+      );
+      t.equal(layer.centroids, cachedCentroids, 'reuses centroids when the source is unchanged');
+      layerData = layer.formatLayerData({refresh: dataset}, filteredData);
+      assertPosition([30, 40], 'restores all geometry when CPU filter is removed');
+
+      const mutationRevision = dataset.dataRevision;
+      t.ok(dataset.upsertRows(rowsFor([50, 60]), 'id'), 'row replacement succeeds');
+      t.equal(dataset.dataContainer, container, 'row edit retains the container');
+      t.ok(dataset.dataRevision > mutationRevision, 'row edit advances revision');
+      layerData = layer.formatLayerData({refresh: dataset}, layerData);
+      assertPosition([50, 60], 'renders same-length row edits');
+
+      const replacement = createTable([70, 80]);
+      replacement.dataRevision = dataset.dataRevision;
+      t.notEqual(replacement.dataContainer, container, 'replacement changes container identity');
+      layerData = layer.formatLayerData({refresh: replacement}, layerData);
+      assertPosition([70, 80], 'renders a new container with the same revision');
+
+      await replacement.update(payload([[7, 'invalid geometry']]));
+      layerData = layer.formatLayerData({refresh: replacement}, layerData);
+      t.deepEqual(layerData.data, [], 'invalid replacement clears rendered geometry');
+      t.deepEqual(layer.centroids, [null], 'invalid replacement clears old centroid');
+      t.equal(layer.meta.bounds, null, 'invalid replacement clears bounds');
+      await replacement.update(payload([]));
+      layerData = layer.formatLayerData({refresh: replacement}, layerData);
+      t.deepEqual(layerData.data, [], 'empty snapshot renders no geometry');
+      t.deepEqual(layer.centroids, [], 'empty snapshot clears centroids');
+      t.equal(layer.meta.bounds, null, 'empty snapshot clears bounds');
+      await replacement.update(payload(rowsFor([10, 20])));
+      layerData = layer.formatLayerData({refresh: replacement}, layerData);
+      assertPosition([10, 20], 'recovers when geometry arrives after an empty snapshot');
+      t.end();
+    });
+  }
+}
