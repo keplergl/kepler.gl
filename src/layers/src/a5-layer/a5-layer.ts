@@ -215,6 +215,7 @@ export default class A5GeometryLayer extends Layer {
       },
       height: {
         property: 'height',
+        fixed: 'fixedHeight',
         field: 'heightField',
         scale: 'heightScale',
         domain: 'heightDomain',

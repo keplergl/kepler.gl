@@ -212,6 +212,7 @@ export default class S2GeometryLayer extends Layer {
       },
       height: {
         property: 'height',
+        fixed: 'fixedHeight',
         field: 'heightField',
         scale: 'heightScale',
         domain: 'heightDomain',
