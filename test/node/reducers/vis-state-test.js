@@ -329,7 +329,7 @@ function autoLayers(dataset, layerClasses = LayerClasses) {
   return addDefaultLayers({...INITIAL_VIS_STATE, layerClasses}, {[dataset.id]: dataset}).newLayers;
 }
 
-test('#visStateReducer -> addDefaultLayers: icons replace only fully covered points', t => {
+test('#visStateReducer -> addDefaultLayers: deduplicates points independently of row values', t => {
   const fields = ['lat', 'lon', 'icon', 'altitude'].map((name, fieldIdx) => ({
     name,
     fieldIdx,
@@ -338,40 +338,35 @@ test('#visStateReducer -> addDefaultLayers: icons replace only fully covered poi
   const fieldPairs = findPointFieldPairs(fields);
   const validRow = [37.77, -122.42, 'place', 0];
   const cases = [
-    {name: 'valid icon', rows: [validRow], expected: ['icon']},
-    {name: 'custom icon name', rows: [[37.77, -122.42, 'custom-icon', 0]], expected: ['icon']},
-    {name: 'empty dataset', rows: [], expected: ['point', 'icon']},
-    {name: 'missing data', rows: [validRow], noData: true, expected: ['point', 'icon']},
-    {name: 'missing icon value', rows: [[37.77, -122.42, null, 0]], expected: ['point', 'icon']},
+    {name: 'valid icon', rows: [validRow]},
+    {name: 'custom icon name', rows: [[37.77, -122.42, 'custom-icon', 0]]},
+    {name: 'empty dataset', rows: []},
+    {name: 'missing data', rows: [validRow], noData: true},
+    {name: 'missing icon value', rows: [[37.77, -122.42, null, 0]]},
     ...[null, undefined, '', '  ', 123, false, {}].map(icon => ({
       name: `incomplete icon coverage: ${String(icon)}`,
-      rows: [validRow, [37.78, -122.43, icon, 0]],
-      expected: ['point', 'icon']
+      rows: [validRow, [37.78, -122.43, icon, 0]]
     })),
     {
-      name: 'filtered-out row still needs its point when filters are cleared',
+      name: 'filtered-out row with a missing icon',
       rows: [validRow, [37.78, -122.43, null, 0]],
-      filteredIndex: [0],
-      expected: ['point', 'icon']
+      filteredIndex: [0]
     },
     {
-      name: 'missing coordinates do not need icon coverage',
-      rows: [validRow, [null, -122.43, null, 0]],
-      expected: ['icon']
+      name: 'missing coordinates',
+      rows: [validRow, [null, -122.43, null, 0]]
     },
     {
-      name: 'invalid altitude does not need icon coverage',
-      rows: [validRow, [37.78, -122.43, null, NaN]],
-      expected: ['icon']
+      name: 'invalid altitude',
+      rows: [validRow, [37.78, -122.43, null, NaN]]
     },
     {
       name: 'no renderable coordinates',
-      rows: [[NaN, -122.43, 'place', 0]],
-      expected: ['point', 'icon']
+      rows: [[NaN, -122.43, 'place', 0]]
     }
   ];
 
-  cases.forEach(({name, rows, noData, filteredIndex, expected}) => {
+  cases.forEach(({name, rows, noData, filteredIndex}) => {
     const dataset = noData
       ? {id: 'icon-precedence', fields, fieldPairs}
       : new KeplerTable({info: {id: 'icon-precedence'}}).updateSchema({fields, rows});
@@ -381,12 +376,10 @@ test('#visStateReducer -> addDefaultLayers: icons replace only fully covered poi
     const layers = autoLayers(dataset);
     t.deepEqual(
       layers.map(layer => layer.type),
-      expected,
+      ['icon'],
       name
     );
-    if (expected.length === 1) {
-      t.ok(layers[0].config.isVisible, `${name}: replacement icon is visible`);
-    }
+    t.ok(layers[0].config.isVisible, `${name}: replacement icon is visible`);
   });
   t.end();
 });
@@ -414,7 +407,7 @@ test('#visStateReducer -> addDefaultLayers: icon precedence preserves other poin
   );
   const points = layers.filter(layer => layer.type === 'point');
   const icons = layers.filter(layer => layer.type === 'icon');
-  t.equal(points.length, 1, 'only the covered coordinate pair loses its automatic point');
+  t.equal(points.length, 1, 'only the matching coordinate pair loses its automatic point');
   t.equal(points[0].config.columns.lat.value, 'two_lat', 'keeps the other coordinate pair');
   t.equal(icons.length, 2, 'preserves both automatically detected icon columns');
   t.ok(
@@ -422,35 +415,6 @@ test('#visStateReducer -> addDefaultLayers: icon precedence preserves other poin
     'both icons remain visible'
   );
 
-  const incompleteRows = [
-    [37.77, -122.42, 38, -123, 'place', null],
-    [37.78, -122.43, 39, -124, null, 'custom-icon']
-  ];
-  dataset.updateSchema({fields, rows: incompleteRows});
-  const incompleteLayers = autoLayers(dataset);
-  t.equal(
-    incompleteLayers.filter(layer => layer.type === 'point').length,
-    2,
-    'retains points when neither icon column covers all coordinate rows'
-  );
-  dataset.updateSchema({
-    fields,
-    rows: [
-      [37.77, -122.42, 38, -123, null, 'place'],
-      [37.78, -122.43, 39, -124, null, 'custom-icon']
-    ]
-  });
-  const coveredLayers = autoLayers(dataset);
-  t.equal(
-    coveredLayers.filter(layer => layer.type === 'point').length,
-    1,
-    'a later icon column can provide complete coverage'
-  );
-  t.equal(
-    coveredLayers.filter(layer => layer.type === 'icon').length,
-    2,
-    'keeps both icon columns'
-  );
   t.end();
 });
 
@@ -534,19 +498,27 @@ test('#visStateReducer -> addDefaultLayers: preserves custom types and canonical
   t.end();
 });
 
-test('#visStateReducer -> addDefaultLayers: matches altitude as well as latitude and longitude', t => {
+test('#visStateReducer -> addDefaultLayers: matches only latitude and longitude field references', t => {
   const dataset = new KeplerTable({info: {id: 'icon-altitude'}}).updateSchema(
-    processCsvData('lat,lon,altitude,other_altitude,icon\n37.77,-122.42,10,20,place')
+    processCsvData(
+      'lat,lon,altitude,other_lat,other_lon,other_altitude,icon\n37.77,-122.42,10,37.77,-122.42,20,place'
+    )
   );
   const pair = dataset.fieldPairs[0];
-  const otherAltitude = {value: 'other_altitude', fieldIdx: 3};
-  dataset.fieldPairs = [pair, {...pair, pair: {...pair.pair, altitude: otherAltitude}}];
+  dataset.fieldPairs = [
+    pair,
+    {...pair, pair: {...pair.pair, altitude: {value: 'other_altitude', fieldIdx: 5}}},
+    {...pair, pair: {...pair.pair, lat: {value: 'other_lat', fieldIdx: 3}}},
+    {...pair, pair: {...pair.pair, lng: {value: 'other_lon', fieldIdx: 4}}}
+  ];
   const points = autoLayers(dataset).filter(layer => layer.type === 'point');
-  t.equal(points.length, 1, 'keeps the point at a different altitude');
-  t.equal(
-    points[0].config.columns.altitude.value,
-    'other_altitude',
-    'matches all three coordinates'
+  t.deepEqual(
+    points.map(layer => [layer.config.columns.lat.value, layer.config.columns.lng.value]),
+    [
+      ['other_lat', 'lon'],
+      ['lat', 'other_lon']
+    ],
+    'ignores altitude and keeps distinct lat/lng fields even when their row values match'
   );
   t.end();
 });

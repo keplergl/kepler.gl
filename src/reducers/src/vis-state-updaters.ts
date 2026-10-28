@@ -5601,61 +5601,20 @@ export const setMapInfoUpdater = (
     }
   };
 };
-/** Prefer icons only when they cover the same points, without changing explicit layer requests. */
-function selectAutoLayers(
-  layers: Layer[],
-  dataset: KeplerTable,
-  layerClasses: VisState['layerClasses']
-) {
-  const {dataContainer} = dataset;
-  // Custom replacements own their defaults and may render rows differently.
-  if (
-    !dataContainer ||
-    layerClasses.point !== LayerClasses.point ||
-    layerClasses.icon !== LayerClasses.icon
-  ) {
-    return layers;
-  }
-
-  const coordinateColumns = ['lat', 'lng', 'altitude'];
+/** Remove automatic Point layers duplicated by Icons using the same dataset and lat/lng fields. */
+function deduplicateAutoLayers(layers: Layer[]) {
   return layers.filter(
     point =>
       Object.getPrototypeOf(point) !== LayerClasses.point.prototype ||
-      !layers.some(icon => {
-        if (
-          Object.getPrototypeOf(icon) !== LayerClasses.icon.prototype ||
-          !icon.config.isVisible ||
-          icon.config.dataId !== point.config.dataId ||
-          coordinateColumns.some(
+      !layers.some(
+        icon =>
+          Object.getPrototypeOf(icon) === LayerClasses.icon.prototype &&
+          icon.config.dataId === point.config.dataId &&
+          ['lat', 'lng'].every(
             column =>
-              (icon.config.columns[column]?.fieldIdx ?? -1) !==
-              (point.config.columns[column]?.fieldIdx ?? -1)
+              icon.config.columns[column]?.fieldIdx === point.config.columns[column]?.fieldIdx
           )
-        ) {
-          return false;
-        }
-
-        const coordinateFields = coordinateColumns
-          .map(column => point.config.columns[column]?.fieldIdx ?? -1)
-          .filter(fieldIdx => fieldIdx > -1);
-        let hasPoint = false;
-        // Include filtered-out rows: clearing a filter must not lose their points.
-        for (let index = 0; index < dataContainer.numRows(); index++) {
-          if (
-            !coordinateFields.every(fieldIdx =>
-              Number.isFinite(dataContainer.valueAt(index, fieldIdx))
-            )
-          ) {
-            continue;
-          }
-          hasPoint = true;
-          const value = dataContainer.valueAt(index, icon.config.columns.icon.fieldIdx);
-          if (typeof value !== 'string' || !value.trim()) {
-            return false;
-          }
-        }
-        return hasPoint;
-      })
+      )
   );
 }
 
@@ -5669,7 +5628,7 @@ export function addDefaultLayers(
   const empty: Layer[] = [];
   const defaultLayers = Object.values(datasets).reduce((accu: Layer[], dataset) => {
     const foundLayers = findDefaultLayer(dataset, state.layerClasses);
-    return accu.concat(selectAutoLayers(foundLayers, dataset, state.layerClasses));
+    return accu.concat(deduplicateAutoLayers(foundLayers));
   }, empty);
 
   return {
