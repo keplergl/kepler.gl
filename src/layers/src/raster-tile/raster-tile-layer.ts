@@ -992,7 +992,7 @@ export default class RasterTileLayer extends KeplerLayer {
         opacity,
 
         updateTriggers: {
-          getTileData: [shouldLoadTerrain]
+          getTileData: [shouldLoadTerrain, tileSource?.data]
         },
         // Props for 3D mode
         ...(shouldLoadTerrain
