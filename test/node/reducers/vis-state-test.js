@@ -27,6 +27,7 @@ import {
   setFilterAnimationWindowUpdater,
   calculateLayerData
 } from '@kepler.gl/reducers';
+import {formatCsv} from '../../../src/reducers/src/export-utils';
 
 import {
   processCsvData,
@@ -44,6 +45,7 @@ import {
 import {copyTableAndUpdate, maybeToDate, KeplerTable} from '@kepler.gl/table';
 import {
   createDataContainer,
+  createIndexedDataContainer,
   applyFilterFieldName,
   getAnimatableVisibleLayers,
   getBinThresholds,
@@ -7309,6 +7311,71 @@ test('#visStateReducer -> APPLY_CPU_FILTER has gpu filter', t => {
     nextState2.datasets[dataId].filteredIdxCPU,
     'should directly copy filter result when filter has not changed'
   );
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.enabled refreshes export rows and color domains', t => {
+  for (const gpu of [true, false]) {
+    const dataId = 'filter-enablement';
+    const rows = [0, 10, 20, 30].map((value, index) => [
+      1 + index,
+      30 + index,
+      value,
+      index === 3 ? 'exclude' : 'keep'
+    ]);
+    const dataset = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+    dataset.importData({
+      data: {
+        fields: ['lat', 'lng', 'value', 'group'].map(name => ({
+          name,
+          type: name === 'group' ? 'string' : 'real'
+        })),
+        rows
+      }
+    });
+    const {props} = PointLayer.findDefaultLayerProps(dataset);
+    const layer = new PointLayer({id: 'filtered-points', dataId, ...props[0]});
+    layer.updateLayerConfig({colorField: dataset.fields[2], colorScale: 'linear'});
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {[dataId]: dataset},
+      layers: [layer],
+      layerData: []
+    };
+    const apply = action => {
+      state = reducer(state, action);
+    };
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    apply(VisStateActions.setFilter(0, 'gpu', gpu));
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(1, 'name', 'group'));
+    apply(VisStateActions.setFilter(1, 'value', ['keep']));
+    t.equal(state.filters[0].gpu, gpu, 'uses the requested filter evaluation mode');
+
+    const check = (label, indexes, domain) => {
+      apply(VisStateActions.applyCPUFilter(dataId));
+      const table = state.datasets[dataId];
+      const exported = createIndexedDataContainer(table.dataContainer, table.filteredIdxCPU);
+      t.equal(
+        formatCsv(exported, table.fields),
+        ['lat,lng,value,group', ...indexes.map(index => rows[index].join(','))].join('\n'),
+        `${gpu ? 'GPU' : 'CPU'}: ${label} exports the matching rows`
+      );
+      t.deepEqual(
+        state.layers[0].config.colorDomain,
+        domain,
+        `${gpu ? 'GPU' : 'CPU'}: ${label} refreshes the color domain`
+      );
+    };
+
+    check('enabled filter populates the caches', [1], [10, 10]);
+    apply(VisStateActions.setFilter(0, 'enabled', false));
+    check('disabled filter preserves the other filter', [0, 1, 2], [0, 20]);
+    apply(VisStateActions.setFilter(0, 'enabled', true));
+    check('re-enabled filter reapplies its saved range', [1], [10, 10]);
+  }
   t.end();
 });
 
