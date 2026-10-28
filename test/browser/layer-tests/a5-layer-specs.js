@@ -12,12 +12,13 @@ import {a5DefaultElevation as defaultElevation, KeplerGlLayers} from '@kepler.gl
 import {getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
 import {getA5Center} from '@kepler.gl/layers';
+import {a5TokenToPolygonGeo} from '../../../src/layers/src/a5-layer/a5-utils';
 
 const {A5GeometryLayer} = KeplerGlLayers;
 
 const dataId = 'a5-test-data';
 const a5Csv = `a5,value,types
-1ae2958000000000,0.5,type_a
+9ca4cf8000000000,0.5,type_a
 1ae2968000000000,1.5,type_b
 1adebc8000000000,2.5,type_a
 1ae2978000000000,3.5,type_c
@@ -107,7 +108,7 @@ test('#A5Geometry -> formatLayerData', t => {
       assert: result => {
         const {layerData, layer} = result;
         const expectedData = [
-          {index: 0, token: '1ae2958000000000'},
+          {index: 0, token: '9ca4cf8000000000'},
           {index: 2, token: '1adebc8000000000'},
           {index: 4, token: '1ae2988000000000'}
         ];
@@ -166,7 +167,7 @@ test('#A5Geometry -> renderLayer', t => {
       datasets: {
         [dataId]: dataset
       },
-      assert: (deckLayers, layer) => {
+      assert: (deckLayers, layer, layerData) => {
         t.equal(layer.type, 'a5', 'should create 1 a5 layer');
         t.equal(deckLayers.length, 4, 'Should create 4 deck.gl layers');
 
@@ -181,6 +182,21 @@ test('#A5Geometry -> renderLayer', t => {
           deckLayers.map(l => l.id),
           expectedLayerIds,
           'should create composite A5 cell layers'
+        );
+
+        const sydneyCell = layerData.data[0];
+        const cellLayer = deckLayers.find(l => l.id === 'test_layer_1-cell');
+        const renderedBoundary = cellLayer.props.getPolygon(sydneyCell);
+        const outline = a5TokenToPolygonGeo(sydneyCell);
+        t.deepEqual(
+          Array.from(renderedBoundary),
+          outline.geometry.coordinates.flat(),
+          'rendered A5 1.0 cell matches the hover outline'
+        );
+        t.ok(
+          Math.abs(renderedBoundary[0] - 151.176) < 0.1 &&
+            Math.abs(renderedBoundary[1] + 33.878) < 0.1,
+          'renders the 1.0 cell in Sydney'
         );
 
         const {props: layerProps} = deckLayers[0];
