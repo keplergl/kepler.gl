@@ -23,7 +23,15 @@ import {
   CUSTOM_SCENEGRAPH_MODEL_ID,
   LEGACY_DEFAULT_SCENEGRAPH_URL
 } from '@kepler.gl/constants';
-import {KeplerGlLayers, toCorsSafeGcsUrl} from '@kepler.gl/layers';
+import {KeplerGlLayers, LayerClasses, toCorsSafeGcsUrl} from '@kepler.gl/layers';
+import {KeplerTable, copyTableAndUpdate, getGpuFilterProps} from '@kepler.gl/table';
+import {VisStateActions} from '@kepler.gl/actions';
+import {
+  INITIAL_VIS_STATE,
+  INITIAL_MAP_STATE,
+  visStateReducer,
+  validateLayerWithData
+} from '@kepler.gl/reducers';
 import SchemaManager, {CURRENT_VERSION} from '@kepler.gl/schemas';
 const {ScenegraphLayer} = KeplerGlLayers;
 const columns = {lat: 'lat', lng: 'lng'};
@@ -94,10 +102,6 @@ test('#ScenegraphLayer -> formatLayerData', t => {
         const expectedLayerData = {
           data: [
             {
-              index: 0,
-              position: [testRows[0][2], testRows[0][1], 0]
-            },
-            {
               index: 4,
               position: [testRows[4][2], testRows[4][1], 0]
             }
@@ -118,19 +122,13 @@ test('#ScenegraphLayer -> formatLayerData', t => {
         );
         t.deepEqual(
           layerData.data.map(layerData.getPosition),
-          [
-            [testRows[0][2], testRows[0][1], 0],
-            [testRows[4][2], testRows[4][1], 0]
-          ],
+          [[testRows[4][2], testRows[4][1], 0]],
           'getPosition should return correct lat lng'
         );
         // getFilterValue
         t.deepEqual(
           layerData.data.map(layerData.getFilterValue),
-          [
-            [Number.MIN_SAFE_INTEGER, 0, 0, 0],
-            [moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]
-          ],
+          [[moment.utc(testRows[4][0]).valueOf() - preparedFilterDomain0, 0, 0, 0]],
           'getFilterValue should return [value, 0, 0, 0]'
         );
         // layerMeta
@@ -388,6 +386,7 @@ test('#ScenegraphLayer -> geojson centroid', t => {
       valueAt: (index, fieldIdx) => rows[index][fieldIdx]
     },
     fields: [{name: 'geom', fieldIdx: 0, type: 'geojson'}],
+    gpuFilter: getGpuFilterProps([], 'geo', []),
     filteredIndex: [0, 1, 2]
   };
 
@@ -398,6 +397,157 @@ test('#ScenegraphLayer -> geojson centroid', t => {
   t.equal(data.length, 2, 'skips features without geometry');
   t.deepEqual(data[0].position, [-122.4, 37.8, 0], 'point features keep their coordinate');
   t.deepEqual(data[1].position, [1, 1, 0], 'lines and polygons use the vertex centroid');
+  t.end();
+});
+
+test('#ScenegraphLayer -> reducer numeric filters without GPU extensions', t => {
+  for (const columnMode of ['points', 'geojson']) {
+    const table = new KeplerTable({info: {id: 'models'}, color: [1, 2, 3]});
+    const rows = [0, 10, 20, 10].map((value, index) => [
+      index === 3 ? null : 1 + index,
+      30 + index,
+      index === 3 ? null : {type: 'Point', coordinates: [30 + index, 1 + index]},
+      value,
+      [20, 0, 10, 10][index],
+      index === 0 ? 'exclude' : 'keep'
+    ]);
+    const originalRows = JSON.stringify(rows);
+    let expectedRows = rows;
+    table.importData({
+      data: {
+        fields: ['lat', 'lng', 'geom', 'value', 'other', 'group'].map(name => ({
+          name,
+          type: name === 'geom' ? 'geojson' : name === 'group' ? 'string' : 'real'
+        })),
+        rows
+      }
+    });
+    const layer = validateLayerWithData(
+      table,
+      {
+        type: '3D',
+        config: {
+          dataId: 'models',
+          columnMode,
+          columns: columnMode === 'geojson' ? {geojson: 'geom'} : columns
+        }
+      },
+      LayerClasses
+    );
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {models: table},
+      layers: [layer],
+      layerData: [layer.formatLayerData({models: table})]
+    };
+    const apply = action => {
+      state = visStateReducer(state, action);
+    };
+    const check = (label, expectedIndexes) => {
+      const currentLayer = state.layers[0];
+      const dataset = state.datasets.models;
+      const [rendered] = currentLayer.renderLayer({
+        data: state.layerData[0],
+        gpuFilter: dataset.gpuFilter,
+        mapState: INITIAL_MAP_STATE,
+        idx: 0,
+        visible: true,
+        layerCallbacks: {},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      });
+      const {data, getPosition, getFilterValue, extensions} = rendered.props;
+      t.deepEqual(extensions, [], `${columnMode}: GPU filtering remains disabled`);
+      t.deepEqual(
+        data.map(d => d.index),
+        expectedIndexes,
+        `${columnMode}: ${label}`
+      );
+      t.deepEqual(
+        data.map(getPosition),
+        expectedIndexes.map(index => [30 + index, 1 + index, 0]),
+        `${columnMode}: positions remain aligned with source rows`
+      );
+      for (const d of data) {
+        t.deepEqual(
+          getFilterValue(d),
+          dataset.gpuFilter.filterValueAccessor(dataset.dataContainer)()({index: d.index}),
+          `${columnMode}: filter accessor uses the original row index`
+        );
+        t.deepEqual(
+          currentLayer.getHoverData(d, dataset.dataContainer, dataset.fields).values(),
+          expectedRows[d.index],
+          `${columnMode}: picking resolves the original row`
+        );
+      }
+    };
+    check('no filter skips invalid positions', [0, 1, 2]);
+    apply(VisStateActions.addFilter('models'));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    t.equal(state.filters[0].gpu, true, 'numeric filter uses GPU configuration');
+    t.deepEqual(state.datasets.models.filteredIndex, [0, 1, 2, 3], 'CPU rows are unchanged');
+    check('numeric range renders only the matching valid model', [1]);
+    apply(VisStateActions.setFilter(0, 'name', 'other'));
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    check('changing fields updates the original row lookup', [2]);
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [0, 0]));
+    check('domain minimum is active', [0]);
+    apply(VisStateActions.addFilter('models'));
+    apply(VisStateActions.setFilter(1, 'name', 'other'));
+    apply(VisStateActions.setFilter(1, 'value', [0, 0]));
+    check('multiple channels intersect to an empty result', []);
+    apply(VisStateActions.setFilter(0, 'value', [0, 20]));
+    check('expanding a range restores rows', [1]);
+    apply(VisStateActions.removeFilter(1));
+    check('removing a channel restores rows', [0, 1, 2]);
+    apply(VisStateActions.addFilter('models'));
+    apply(VisStateActions.setFilter(1, 'name', 'group'));
+    apply(VisStateActions.setFilter(1, 'value', ['keep']));
+    check('CPU category filtering is preserved', [1, 2]);
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    check('CPU and GPU filters intersect', [1]);
+    apply(VisStateActions.removeFilter(0));
+    check('clearing GPU filters keeps CPU selection', [1, 2]);
+    apply(VisStateActions.removeFilter(0));
+    check('clearing all filters restores all valid models', [0, 1, 2]);
+    t.equal(JSON.stringify(rows), originalRows, 'filtering does not mutate source rows');
+    apply(VisStateActions.addFilter('models'));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    const oldContainer = state.datasets.models.dataContainer;
+    const oldRevision = state.datasets.models.dataRevision;
+    expectedRows = rows.map((row, index) => [
+      ...row.slice(0, 3),
+      [10, 20, 0, 10][index],
+      ...row.slice(4)
+    ]);
+    apply(VisStateActions.addToDataset('models', expectedRows, {upsertBy: 'lng'}));
+    t.equal(state.datasets.models.dataContainer, oldContainer, 'row edit keeps the container');
+    t.equal(state.datasets.models.dataContainer.numRows(), 4, 'row count is unchanged');
+    t.ok(state.datasets.models.dataRevision > oldRevision, 'row edit advances the data revision');
+    check('same-size row edits refresh numeric filtering', [0]);
+    apply(VisStateActions.removeFilter(0));
+    state.datasets.models = copyTableAndUpdate(state.datasets.models, {
+      filteredIndexByLayer: {[state.layers[0].id]: [2, 1]}
+    });
+    state.layerData[0] = state.layers[0].formatLayerData(state.datasets, state.layerData[0]);
+    check('layer-specific CPU indexes retain their order', [2, 1]);
+    const cachedData = state.layerData[0].data;
+    t.equal(
+      state.layers[0].formatLayerData(state.datasets, state.layerData[0]).data,
+      cachedData,
+      'unchanged inputs reuse formatted data'
+    );
+    state.datasets.models = copyTableAndUpdate(state.datasets.models, {
+      filteredIndexByLayer: {[state.layers[0].id]: []}
+    });
+    state.layerData[0] = state.layers[0].formatLayerData(state.datasets, state.layerData[0]);
+    check('empty CPU selection stays empty', []);
+    apply(VisStateActions.removeFromDataset('models', [0, 1, 2, 3]));
+    t.equal(state.datasets.models.dataContainer.numRows(), 0, 'dataset is empty');
+    check('empty dataset stays empty', []);
+  }
   t.end();
 });
 

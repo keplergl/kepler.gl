@@ -6,6 +6,7 @@ import {load} from '@loaders.gl/core';
 import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
 
 import Layer, {LayerBaseConfig} from '../base-layer';
+import {getFilterDataFunc} from '../aggregation-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {
@@ -360,12 +361,29 @@ export default class ScenegraphLayer extends Layer {
     const {columnMode} = this.config;
     return {
       ...triggers,
-      getData: {...triggers.getData, columnMode},
+      getData: {
+        ...triggers.getData,
+        columnMode,
+        filterRange: dataset.gpuFilter.filterRange,
+        ...dataset.gpuFilter.filterValueUpdateTriggers
+      },
       getMeta: {...triggers.getMeta, columnMode}
     };
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+    const {gpuFilter, dataContainer} = dataset;
+    // ScenegraphLayer has no DataFilterExtension, so apply its active channels on the CPU.
+    const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+      trigger => trigger !== null
+    );
+    const filterData = getFilterDataFunc(
+      gpuFilter.filterRange,
+      gpuFilter.filterValueAccessor(dataContainer)()
+    );
+    const filteredIndex = hasFilter
+      ? dataset.filteredIndex.filter(index => filterData({index}))
+      : dataset.filteredIndex;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return this._calculateGeojsonDataAttribute(filteredIndex);
     }
