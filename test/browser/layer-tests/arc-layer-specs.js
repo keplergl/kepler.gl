@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import moment from 'moment';
+import * as arrow from 'apache-arrow';
 
 import {
   testCreateCases,
@@ -18,7 +19,8 @@ import testArcData, {arcFromHex, arcFromNeighbor} from 'test/fixtures/test-arc-d
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {cellToLatLng} from 'h3-js';
 
 const {ArcLayer} = KeplerGlLayers;
@@ -28,6 +30,76 @@ const columns = {
   lat1: 'lat_1',
   lng1: 'lng_1'
 };
+
+[2, 3].forEach(dimensions => {
+  test(`#ArcLayer -> GeoArrow ${dimensions}D endpoint bounds across batches`, async t => {
+    const pointType = new arrow.FixedSizeList(
+      dimensions,
+      new arrow.Field('coordinate', new arrow.Float64())
+    );
+    const coordinates = points =>
+      arrow.vectorFromArray(
+        points.map(point => (dimensions === 3 ? [...point, 99] : point)),
+        pointType
+      );
+    const makeTable = (source, target) => {
+      const table = new arrow.Table({source: coordinates(source), target: coordinates(target)});
+      table.schema.fields.forEach(field =>
+        field.metadata.set('ARROW:extension:name', 'geoarrow.point')
+      );
+      return table;
+    };
+    const first = makeTable([[10, 20]], [[30, 40]]);
+    const dataset = new KeplerTable({info: {id: 'arc-geoarrow-bounds'}, color: [0, 0, 0]});
+    await dataset.importData({
+      data: {
+        fields: arrowSchemaToFields(first),
+        cols: first.schema.fields.map((field, index) => first.getChildAt(index))
+      }
+    });
+    const layer = new ArcLayer({dataId: dataset.id, columnMode: 'geoarrow'});
+    layer.config.columns.geoarrow0 = {value: 'source', fieldIdx: 0};
+    layer.config.columns.geoarrow1 = {value: 'target', fieldIdx: 1};
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 0}),
+      [10, 20, 0, 30, 40, 0],
+      'reads longitude and latitude from both point vectors'
+    );
+    t.deepEqual(layer.meta.bounds, [10, 20, 30, 40], 'bounds include the destination');
+
+    const table = first.concat(
+      makeTable(
+        [
+          [0, 5],
+          [12, 22]
+        ],
+        [
+          [50, 60],
+          [null, null]
+        ]
+      )
+    );
+    // Progressive updates preserve batches; completed imports compact them.
+    await dataset.update({
+      cols: table.schema.fields.map((field, index) => table.getChildAt(index)),
+      arrowTable: table
+    });
+    t.equal(dataset.dataContainer.getTable().batches.length, 2, 'uses two Arrow record batches');
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 1}),
+      [0, 5, 0, 50, 60, 0],
+      'reads endpoints from the later batch with a global row index'
+    );
+    t.deepEqual(
+      layer.meta.bounds,
+      [0, 5, 50, 60],
+      'bounds include later destinations and valid zero longitude, excluding null coordinates'
+    );
+    t.end();
+  });
+});
 
 test('#ArcLayer -> constructor', t => {
   const TEST_CASES = {
