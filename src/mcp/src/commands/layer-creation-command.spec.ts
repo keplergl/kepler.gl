@@ -50,6 +50,32 @@ function makeCtx(table: KeplerTable) {
 
 type CommandResult = {success: boolean; error?: string; data?: Record<string, unknown>};
 
+describe('map.add-layer (point)', () => {
+  it('creates an explicitly requested Point even when every row has an icon', async () => {
+    const table = new KeplerTable({color: [255, 0, 0]} as any);
+    await table.importData({
+      data: {
+        rows: [[37.77, -122.42, 'place']],
+        fields: [
+          {name: 'lat', type: ALL_FIELD_TYPES.real},
+          {name: 'lng', type: ALL_FIELD_TYPES.real},
+          {name: 'icon', type: ALL_FIELD_TYPES.string}
+        ]
+      } as any
+    });
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType: 'point'
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    expect(getDispatched()).toMatchObject({
+      config: {type: 'point', config: {columns: {lat: 'lat', lng: 'lng'}}}
+    });
+  });
+});
+
 describe('map.add-layer (flow)', () => {
   it('builds a flow layer from the first two point field pairs, with weighted count', async () => {
     const table = await makeTwoPairTable();
