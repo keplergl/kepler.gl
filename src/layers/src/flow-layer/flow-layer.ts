@@ -453,7 +453,10 @@ export default class FlowLayer extends Layer {
     };
     const accessors = this.getAttributeAccessors({dataContainer});
     const {filterRange} = gpuFilter;
-    const hasFilter = Object.values(filterRange).some(arr => (arr as number[]).some(v => v !== 0));
+    // An active selection at the domain minimum also normalizes to [0, 0].
+    const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+      trigger => trigger !== null
+    );
     let resultingFlows = data || [];
     if (hasFilter) {
       const filterUpdateTriggers = {
