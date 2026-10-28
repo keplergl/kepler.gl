@@ -2116,6 +2116,11 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
             <LayerTypeSelector
               selected={layer.type}
+              selectedOption={
+                layer.type
+                  ? {id: layer.type, label: layer.name || layer.type, icon: layer.layerIcon}
+                  : undefined
+              }
               disabled={disableTypeSelect}
               options={layerTypeOptions}
               // @ts-ignore

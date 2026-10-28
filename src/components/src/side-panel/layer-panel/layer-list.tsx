@@ -5,7 +5,7 @@ import React, {useMemo, useCallback, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
 
-import {Layer, LayerClassesType} from '@kepler.gl/layers';
+import {Layer, LayerClasses, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy, MapState} from '@kepler.gl/types';
@@ -21,7 +21,7 @@ import {CSS} from '@dnd-kit/utilities';
 import LayerPanelFactory from './layer-panel';
 import LayerGroupHeaderFactory from './layer-group-header';
 import {buildLayerOrderHierarchy} from '@kepler.gl/reducers';
-import {dataTestIds} from '@kepler.gl/constants';
+import {dataTestIds, DatasetType} from '@kepler.gl/constants';
 import {SplitMap} from '@kepler.gl/types';
 import {
   SORTABLE_LAYER_TYPE,
@@ -341,19 +341,35 @@ function LayerListFactory(
       return items;
     }, [layerEntriesToShow]);
 
-    const layerTypeOptions = useMemo(
-      () =>
-        Object.keys(layerClasses).map(key => {
-          const layer = new layerClasses[key]({dataId: ''});
-          return {
-            id: key,
-            label: layer.name,
-            icon: layer.layerIcon,
-            requireData: layer.requireData
-          };
-        }),
-      [layerClasses]
-    );
+    const layerTypeOptions = useMemo(() => {
+      const availableDatasets = Object.values(datasets);
+      const hasRegularDataset = availableDatasets.some(
+        dataset =>
+          !dataset.type ||
+          dataset.type === DatasetType.LOCAL ||
+          dataset.type === DatasetType.EXTERNALLY_HOSTED
+      );
+
+      return Object.keys(layerClasses)
+        .map(id => ({id, layer: new layerClasses[id]({dataId: ''})}))
+        .filter(
+          ({id, layer}) =>
+            // Preserve the empty-map menu and custom registered classes.
+            !availableDatasets.length ||
+            layerClasses[id] !== LayerClasses[id] ||
+            (layer.supportedDatasetTypes
+              ? availableDatasets.some(dataset =>
+                  layer.supportedDatasetTypes?.includes(dataset.type || '')
+                )
+              : hasRegularDataset)
+        )
+        .map(({id, layer}) => ({
+          id,
+          label: layer.name,
+          icon: layer.layerIcon,
+          requireData: layer.requireData
+        }));
+    }, [layerClasses, datasets]);
 
     const layerActions = useMemo(
       () => ({
