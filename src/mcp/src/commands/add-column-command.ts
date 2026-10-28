@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {updateDataset} from '@kepler.gl/actions';
@@ -79,7 +82,10 @@ IMPORTANT: this command only ADDS columns. It cannot delete or rename-in-place a
         // would slip through and build `() AS ...` / `"" AS ...` — a confusing
         // DuckDB error instead of an actionable one. Enforce non-empty strings
         // for whichever source is selected.
-        if (copyFromColumn != null && (typeof copyFromColumn !== 'string' || copyFromColumn.length === 0)) {
+        if (
+          copyFromColumn != null &&
+          (typeof copyFromColumn !== 'string' || copyFromColumn.length === 0)
+        ) {
           throw new Error('copyFromColumn must be a non-empty string.');
         }
         if (expression != null && (typeof expression !== 'string' || expression.length === 0)) {

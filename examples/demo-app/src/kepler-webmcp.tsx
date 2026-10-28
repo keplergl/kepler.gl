@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * kepler-webmcp — exposes the `@kepler.gl/mcp` map.* surface through the
  * browser's native WebMCP API so harnesses with a built-in browser (Chrome's

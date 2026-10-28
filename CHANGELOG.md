@@ -15,9 +15,54 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
-## [Unreleased]
+## [3.3.0-alpha.19] - Oct 25 2026
 
-- feat: support in-place append, upsert, and delete for primitive Arrow tables (#3688). DuckDB row edits remain a warned no-op.
+- ab6cbe3f6 feat(arrow): in-place row edits for Arrow tables (#3688)
+- cba3fa06c fix(arrow): Preserve Arrow column order through reconstruction (#3889)
+- af22a5d4b fix(arrow): Preserve native GeoArrow geometry in attribute joins (#3888)
+- 44fc426fa fix(replace) handle header-only remote CSV snapshots (#3891)
+- d184ed169 fix(geoops) fix filtering and saving of derived Int64 datasets (#3885)
+- c28fc49b5 chore(kepler-jupyter): release keplergl 0.4.0 on kepler.gl 3.3.0-alpha.18 (#3672)
+- bf065c4e5 feat(mcp): add experimental @kepler.gl/mcp package and demo-app WebMCP and MCP harness bridge (#3678)
+- d41c7bc30 fix(cluster layer): avoid quadratic membership copies in dense clusters (#3890)
+- 24b285efc fix(table): refresh cached Arrow timestamps (#3886)
+- d88c8d6f6 chore(deps): bump body-parser in /examples/node-app (#3900)
+- a2c14178f chore(deps): bump undici in /examples/replace-component (#3899)
+- 1bc90b816 chore(deps): bump undici from 8.10.0 to 8.12.3 in /examples/open-modal (#3898)
+- a8db71616 fix(geoops): Fix Group By date minimum and maximum (#3893)
+- 1b6967940 chore: patch low-risk transitive security vulnerabilities (#3896)
+- 3960fedde fix(aggregation layers): honor domain-minimum filters in aggregation layers (#3895)
+- aafa90d4f fix(timeline): bound timeline bins when refreshed domains grow (#3887)
+- deb72c381 fix(flow layer): retain Flow filtering across style changes (#3894)
+- 7e56773e8 fix(arrow): ignore MultiPoint offset buffer padding (#3884)
+- 4b5d4b4d9 fix(arrow): preserve point layers when Arrow refresh returns zero rows (#3882)
+- 593695cbb fix(geoops): parse WKT geometry in spatial joins (#3878)
+- c3758f462 fix(filters): reapply active filters after Arrow refresh (#3877)
+- f5b9ff180 fix(processors): avoid CORS preflights on remote refresh (#3883)
+- f66e4141f fix(filters): retain native GeoArrow MultiPoints in polygon filters (#3881)
+- 627a40c3a fix(filter): fall back to CPU when shared filter GPU channels are full (#3880)
+- a84b97241 fix(arrow): preserve batch offsets for MultiPoint accessors (#3879)
+- 12cc82742 fix(geoops): fix Arrow Int64 Group By arithmetic (#3876)
+- c015a4d53 fix(filters): rebuild filter domains after remote refresh (#3875)
+- 793f7ca9c fix(schemas): preserve Arrow integers and null timestamps when saving (#3874)
+- 1d7ad445a fix(processors): preserve vector export geometry and missing coordinates (#3873)
+- fe8c55c19 feat(layers): experimental Zarr raster layer (#3806)
+- 2294135a4 feat(camera): add basic tour editor and playback (#3861)
+- aa814f77c feat(camera): add deterministic camera tour model (#3860)
+- 07e5a8d89 feat(camera): add saved view bookmarks (#3859)
+- 5a72e13c8 fix(layers): handle WKB GeometryCollection imports (#3870)
+- d60bf45fc fix(processors): detect geometry in custom columns (#3869)
+- fb8750175 fix(layers): rebuild GeoJSON geometry after refresh (#3864)
+- c911330c9 fix(layers): limit automatic GeoJSON layers per dataset (#3867)
+- 6ffc418de fix(processors): recover complete GeoArrow caches after worker failures (#3863)
+- d4587392f chore(deps): bump launch-editor from 2.14.1 to 2.14.2 in /website (#3868)
+- ff3239eb4 fix(table): use full polygon geometry in spatial joins (#3862)
+- 4c148a52b chore(deps): bump follow-redirects from 1.16.0 to 1.16.1 in /website (#3866)
+- 14990a8c9 feat(annotations): add ruler variant (#3858)
+- 1b7de9f9b fix(layers): select default GeoJSON color field (#3857)
+- 2288a22b4 fix(deckgl): guard empty 3d building tiles (#3856)
+- 5a55bc326 feat(export): add icon and name color branding (#3854)
+- 546f1046f fix(components): expose basemap background color (#3855)
 
 ## [3.3.0-alpha.18] - Oct 19 2026
 

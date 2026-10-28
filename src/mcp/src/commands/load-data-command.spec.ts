@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getLoadDataCommand} from './load-data-command';
 
 // Mock the processors so the test never touches real file parsing — the

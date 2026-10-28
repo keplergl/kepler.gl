@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {toolToCommand} from './command-wrappers';
 
 type CommandResult = {success: boolean; error?: string; data?: Record<string, unknown>};

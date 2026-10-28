@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getUpdateLayerColorCommand} from './layer-style-command';
 
 // A box-map layer's colorRange, exactly as applyColorConfig builds it: 6

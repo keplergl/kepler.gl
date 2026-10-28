@@ -21,3 +21,6 @@ import './website';
 
 // transitive dependency security pins
 import './dependency-pins-test';
+
+// release license headers preserve Jest environment directives
+import './license-header-test';

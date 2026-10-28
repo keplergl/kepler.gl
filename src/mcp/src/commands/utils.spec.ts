@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {Type} from 'apache-arrow';
 import {
   arrowTableToObjects,
@@ -26,7 +29,7 @@ describe('arrowTableToObjects', () => {
     ]);
   });
 
-  it('handles negative Decimal values (two\'s-complement 128-bit words)', () => {
+  it("handles negative Decimal values (two's-complement 128-bit words)", () => {
     const table = {
       toArray: () => [
         {

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getTableCommand} from './table-command';
 import {tableFromArrays} from 'apache-arrow';
 
@@ -26,8 +29,7 @@ function makeCtx(opts: {datasets?: any; values?: Record<string, unknown[]>} = {}
   };
   const ctx = {
     getVisState: () => ({datasets: opts.datasets ?? {}, layers: []}),
-    getValuesFromDataset: (_dsName: string, varName: string) =>
-      (opts.values ?? {})[varName] ?? [],
+    getValuesFromDataset: (_dsName: string, varName: string) => (opts.values ?? {})[varName] ?? [],
     getConnector: () => db,
     dispatch: (action: any) => {
       dispatched.push(action);
@@ -45,7 +47,10 @@ const dataset = {
   id: 'd1',
   label: 'My Dataset',
   length: 2,
-  fields: [{name: 'a', type: 'integer'}, {name: 'b', type: 'integer'}]
+  fields: [
+    {name: 'a', type: 'integer'},
+    {name: 'b', type: 'integer'}
+  ]
 };
 
 describe('map.create-table', () => {
@@ -117,7 +122,10 @@ describe('map.create-table', () => {
       datasets: {
         d1: {
           ...dataset,
-          fields: [{name: 'a', type: 'integer'}, {name: '_geojson', type: 'object'}]
+          fields: [
+            {name: 'a', type: 'integer'},
+            {name: '_geojson', type: 'object'}
+          ]
         }
       },
       values: {a: [1, 2], _geojson: [geojson, geojson]}

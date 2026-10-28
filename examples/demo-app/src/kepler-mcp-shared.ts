@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Shared plumbing for the demo-app's agent surfaces over the `@kepler.gl/mcp`
  * map.* commands:

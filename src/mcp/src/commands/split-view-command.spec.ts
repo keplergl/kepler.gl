@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getSplitViewCommand} from './split-view-command';
 import {ActionTypes} from '@kepler.gl/actions';
 
@@ -74,9 +77,7 @@ describe('map.split-view', () => {
     })) as CommandResult;
 
     expect(result.success).toBe(true);
-    const toggles = getDispatched().filter(
-      (a: any) => a.type === ActionTypes.TOGGLE_LAYER_FOR_MAP
-    );
+    const toggles = getDispatched().filter((a: any) => a.type === ActionTypes.TOGGLE_LAYER_FOR_MAP);
     // layer_a shown only on map0; layer_b + layer_c shown only on map1
     expect(toggles).toHaveLength(3);
   });

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Ambient declarations for non-code assets the demo-app esbuild bundles.
  * `kepler-mcp-shared.ts` imports the map-management skill markdown as text

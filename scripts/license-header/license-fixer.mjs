@@ -111,6 +111,13 @@ LicenseFixer.prototype.fixContent = function fixContent(file, content) {
         }
     }
 
+    // Jest reads environment pragmas only from the leading docblock.
+    var jestDocblock = content.match(/^\s*(\/\*\*[\s\S]*?\*\/)/);
+    if (jestDocblock && /@jest-environment\b/.test(jestDocblock[1])) {
+        preamble += jestDocblock[1] + '\n\n';
+        content = content.slice(jestDocblock[0].length).trimStart();
+    }
+
     var license = this.getLicenseForFile(file);
     if (license === null) {
         if (!this.silent) {

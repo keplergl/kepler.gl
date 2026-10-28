@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * @kepler.gl/mcp — the kepler.gl map surface.
  *

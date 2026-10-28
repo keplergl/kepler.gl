@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {ActionTypes} from '@kepler.gl/actions';
 
@@ -30,7 +33,10 @@ type CommandResult = {success: boolean; error?: string; data?: Record<string, un
 
 describe('map.toggle-time-filter', () => {
   it('enlarges the first time filter when filterIndex is omitted', async () => {
-    const filters = [{id: 'f0', type: 'timeRange'}, {id: 'f1', type: 'timeRange'}];
+    const filters = [
+      {id: 'f0', type: 'timeRange'},
+      {id: 'f1', type: 'timeRange'}
+    ];
     const {ctx, getDispatched} = makeCtx({filters});
     const cmd = getToggleTimeFilterCommand(ctx as any);
     const result = (await cmd.execute({} as any, {action: 'show'})) as CommandResult;
@@ -43,7 +49,10 @@ describe('map.toggle-time-filter', () => {
   });
 
   it('collapses the requested filter back to the side panel', async () => {
-    const filters = [{id: 'f0', type: 'timeRange'}, {id: 'f1', type: 'timeRange'}];
+    const filters = [
+      {id: 'f0', type: 'timeRange'},
+      {id: 'f1', type: 'timeRange'}
+    ];
     const {ctx, getDispatched} = makeCtx({filters});
     const cmd = getToggleTimeFilterCommand(ctx as any);
     const result = (await cmd.execute({} as any, {
@@ -67,9 +76,9 @@ describe('map.toggle-time-filter', () => {
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/Invalid action/);
     // no setFilterView dispatched
-    expect(
-      getDispatched().filter((a: any) => a.type === ActionTypes.SET_FILTER_VIEW)
-    ).toHaveLength(0);
+    expect(getDispatched().filter((a: any) => a.type === ActionTypes.SET_FILTER_VIEW)).toHaveLength(
+      0
+    );
   });
 
   it('fails fast when no filters exist on the map', async () => {
@@ -123,8 +132,8 @@ describe('map.toggle-time-filter', () => {
       expect(result.error).toMatch(/Invalid filterIndex/);
     }
     // no setFilterView dispatched for any of them
-    expect(
-      getDispatched().filter((a: any) => a.type === ActionTypes.SET_FILTER_VIEW)
-    ).toHaveLength(0);
+    expect(getDispatched().filter((a: any) => a.type === ActionTypes.SET_FILTER_VIEW)).toHaveLength(
+      0
+    );
   });
 });

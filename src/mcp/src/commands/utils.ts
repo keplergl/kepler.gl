@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 /**
  * Pure helpers shared by the map.* commands and the analysis shims. These are
  * dependency-light (apache-arrow only) and free of kepler-app state, so they

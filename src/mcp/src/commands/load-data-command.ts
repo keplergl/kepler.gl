@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 import type {RoomCommand} from './types';
 import {z} from 'zod';
 import {addDataToMap} from '@kepler.gl/actions';
@@ -50,10 +53,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
       'Do NOT create a duplicate dataset (e.g. via map.create-table) just to rename it; ' +
       'name it here with `datasetName` instead, or use the URL-filename dataset as-is. ' +
       'LOCAL FILES: a local file must be served over http(s) — the browser cannot fetch ' +
-      '`file://` paths. To load a file you have on disk: (1) copy it into the demo app\'s ' +
+      "`file://` paths. To load a file you have on disk: (1) copy it into the demo app's " +
       'served directory (e.g. `examples/demo-app/dist/`) and pass `/filename.csv`, or ' +
       '(2) serve it with a CORS-enabled local server (`npx serve --cors -l 8000` in the ' +
-      'file\'s folder) and pass `http://localhost:8000/filename.csv`. ' +
+      "file's folder) and pass `http://localhost:8000/filename.csv`. " +
       'EMBEDDED CONTENT: if you have the file content but cannot serve it (e.g. a remote ' +
       'browser context), pass it as a data URL — `data:text/csv;base64,<base64 content>` ' +
       '(encode with `base64 -i file.csv`). Works for small files (up to ~2MB). ' +
@@ -152,9 +155,7 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         // down so the id stays content-derived (unique per payload) without
         // storing the whole payload in the dataset metadata.
         const sourceUrl =
-          parsedUrl.protocol === 'data:'
-            ? `data:${hashString(parsedUrl.href)}`
-            : parsedUrl.href;
+          parsedUrl.protocol === 'data:' ? `data:${hashString(parsedUrl.href)}` : parsedUrl.href;
         (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = sourceUrl;
 
         const batches = await readFileInBatches({

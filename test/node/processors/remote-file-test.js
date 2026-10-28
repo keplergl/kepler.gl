@@ -79,11 +79,7 @@ test('#remote-file -> header matching cannot reinterpret a column delimiter', as
       `a${delimiter}b\n`,
       `"a${delimiter}b"\n`
     ]),
-    [
-      'lat,lng,"a,b,c,d"\n37,-122,1\n38,-123,2\n',
-      'lat;lng;a,b,c,d\n',
-      'lat;lng;"a,b,c,d"\n'
-    ]
+    ['lat,lng,"a,b,c,d"\n37,-122,1\n38,-123,2\n', 'lat;lng;a,b,c,d\n', 'lat;lng;"a,b,c,d"\n']
   ];
   try {
     for (const [populated, ambiguous, quoted] of fixtures) {
