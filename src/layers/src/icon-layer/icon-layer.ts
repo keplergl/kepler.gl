@@ -9,7 +9,11 @@ import IconLayerIcon from './icon-layer-icon';
 import {ICON_FIELDS, CULL_MODE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import IconInfoModalFactory from './icon-info-modal';
 import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
-import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
+import {
+  assignPointPairToLayerColumn,
+  FindDefaultLayerProps,
+  FindDefaultLayerPropsReturnValue
+} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {default as KeplerTable} from '@kepler.gl/table';
@@ -346,10 +350,10 @@ export default class IconLayer extends Layer {
     return Array.from(iconMap.values());
   }
 
-  static findDefaultLayerProps({
-    fieldPairs = [],
-    fields = []
-  }: KeplerTable): FindDefaultLayerPropsReturnValue {
+  static findDefaultLayerProps(
+    {fieldPairs = [], fields = [], dataContainer, id}: KeplerTable,
+    foundLayers?: (FindDefaultLayerProps & {type: string; dataId?: string})[]
+  ): FindDefaultLayerPropsReturnValue {
     const notFound: FindDefaultLayerPropsReturnValue = {props: []};
     if (!fieldPairs.length || !fields.length) {
       return notFound;
@@ -383,7 +387,47 @@ export default class IconLayer extends Layer {
       isVisible: true
     }));
 
-    return {props};
+    if (!dataContainer || !foundLayers?.length) {
+      return {props};
+    }
+
+    const coordinateColumns = ['lat', 'lng', 'altitude'];
+    const coordinateFields = coordinateColumns
+      .map(column => columns[column].fieldIdx)
+      .filter(fieldIdx => fieldIdx > -1);
+    // Check every row, including filtered-out rows that can become visible later.
+    const coversPoints = iconFields.some(iconField => {
+      let hasPoint = false;
+      for (let index = 0; index < dataContainer.numRows(); index++) {
+        if (
+          !coordinateFields.every(fieldIdx =>
+            Number.isFinite(dataContainer.valueAt(index, fieldIdx))
+          )
+        ) {
+          continue;
+        }
+        hasPoint = true;
+        const icon = dataContainer.valueAt(index, iconField.fieldIdx);
+        if (typeof icon !== 'string' || !icon.trim()) {
+          return false;
+        }
+      }
+      return hasPoint;
+    });
+
+    return {
+      props,
+      foundLayers: coversPoints
+        ? foundLayers.filter(
+            layer =>
+              layer.type !== 'point' ||
+              layer.dataId !== id ||
+              coordinateColumns.some(
+                column => (layer.columns?.[column]?.fieldIdx ?? -1) !== columns[column].fieldIdx
+              )
+          )
+        : foundLayers
+    };
   }
 
   getFilteredItemCount() {
