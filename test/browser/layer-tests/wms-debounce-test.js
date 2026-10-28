@@ -9,7 +9,10 @@
  */
 
 import test from 'tape-catch';
+import {ImageSource} from '@loaders.gl/wms';
 import WMSLayer from '../../../src/deckgl-layers/src/wms/wms-layer';
+
+const {Image} = window;
 
 /**
  * Test 1: Verify debounce behavior changes based on preserveDrawingBuffer
@@ -151,5 +154,197 @@ test('WMSLayer -> isLoaded tracks async loading', t => {
   layer.state.loadCounter = 0;
   t.ok(layer.isLoaded, 'Layer should be loaded when loadCounter returns to 0');
 
+  t.end();
+});
+
+class TestImageSource extends ImageSource {
+  requests = [];
+  metadata = Promise.resolve({layers: []});
+
+  getMetadata() {
+    return this.metadata;
+  }
+
+  getImage(parameters) {
+    return new Promise((resolve, reject) => {
+      this.requests.push({parameters, resolve, reject});
+    });
+  }
+}
+
+const flushRequests = async () => {
+  await new Promise(resolve => setTimeout(resolve, 5));
+};
+
+function createRequestLayer(source, extraProps = {}) {
+  const layer = new WMSLayer({
+    data: source,
+    serviceType: 'wms',
+    layers: ['imagery'],
+    transparent: true,
+    ...extraProps
+  });
+  layer.context = {
+    viewport: {getBounds: () => [-10, -10, 10, 10], width: 800, height: 600, zoom: 2},
+    gl: {getContextAttributes: () => ({preserveDrawingBuffer: true})}
+  };
+  layer.state = {};
+  layer.initializeState();
+  layer.setState = update => Object.assign(layer.state, update);
+  layer.setNeedsRedraw = () => {};
+  layer.getCurrentLayer = () => layer;
+  layer.updateState({props: layer.props, oldProps: {}, changeFlags: {dataChanged: true}});
+  return layer;
+}
+
+function updateRequestLayer(layer, changes) {
+  const oldProps = layer.props;
+  layer.props = layer.clone(changes).props;
+  layer.updateState({
+    props: layer.props,
+    oldProps,
+    changeFlags: {dataChanged: oldProps.data !== layer.props.data}
+  });
+}
+
+test('WMSLayer -> replacing a loaded source requests and renders the new service', async t => {
+  const oldSource = new TestImageSource();
+  const newSource = new TestImageSource();
+  const layer = createRequestLayer(oldSource);
+  await flushRequests();
+  const oldImage = new Image();
+  oldSource.requests[0].resolve(oldImage);
+  await flushRequests();
+  t.equal(layer.renderLayers().props.image, oldImage, 'initial service renders');
+
+  updateRequestLayer(layer, {data: newSource});
+  t.notOk(layer.renderLayers(), 'replacement does not render the previous service');
+  await flushRequests();
+  t.equal(newSource.requests.length, 1, 'same layers and viewport request the new source');
+  const newImage = new Image();
+  newSource.requests[0]?.resolve(newImage);
+  await flushRequests();
+  t.equal(layer.renderLayers()?.props.image, newImage, 'replacement service renders');
+  t.end();
+});
+
+test('WMSLayer -> source replacement invalidates pending images and metadata', async t => {
+  const oldSource = new TestImageSource();
+  const newSource = new TestImageSource();
+  let rejectMetadata;
+  oldSource.metadata = new Promise((_resolve, reject) => {
+    rejectMetadata = reject;
+  });
+  const errors = [];
+  const layer = createRequestLayer(oldSource, {onMetadataLoadError: error => errors.push(error)});
+  await flushRequests();
+  updateRequestLayer(layer, {data: newSource});
+  // Resolve before the replacement debounce fires as well as before its image arrives.
+  oldSource.requests[0].resolve(new Image());
+  rejectMetadata(new Error('old metadata failure'));
+  await flushRequests();
+  t.equal(newSource.requests.length, 1, 'pending old request does not suppress the new source');
+  t.notOk(layer.renderLayers(), 'late old image cannot repopulate the cache');
+  t.deepEqual(errors, [], 'obsolete metadata errors are ignored');
+  await layer.loadImage(layer.context.viewport, 'duplicate viewport');
+  t.equal(newSource.requests.length, 1, 'old completion cannot clear the new pending marker');
+  newSource.requests[0]?.resolve(new Image());
+  await flushRequests();
+  t.equal(layer.state.loadCounter, 0, 'all pending work is accounted for');
+  t.end();
+});
+
+test('WMSLayer -> image properties update without moving the viewport', async t => {
+  const source = new TestImageSource();
+  const layer = createRequestLayer(source);
+  await flushRequests();
+  source.requests[0].resolve(new Image());
+  await flushRequests();
+  // Exercise export throttling at a zoom within the same integer level.
+  layer.context.viewport = {...layer.context.viewport, zoom: 2.25};
+
+  for (const changes of [
+    {transparent: false},
+    {transparent: true},
+    {srs: 'EPSG:4326'},
+    {layers: ['other']},
+    {serviceType: 'auto'}
+  ]) {
+    const previousCount = source.requests.length;
+    updateRequestLayer(layer, changes);
+    await flushRequests();
+    t.equal(source.requests.length, previousCount + 1, `${JSON.stringify(changes)} refetches`);
+    const request = source.requests[source.requests.length - 1];
+    for (const [key, value] of Object.entries(changes)) {
+      if (key !== 'serviceType') {
+        t.deepEqual(request.parameters[key], value, `${key} reaches the source`);
+      }
+    }
+    request.resolve(new Image());
+    await flushRequests();
+  }
+
+  const count = source.requests.length;
+  updateRequestLayer(layer, {opacity: 0.5});
+  await flushRequests();
+  await layer.loadImage(layer.context.viewport, 'same view');
+  await layer.loadImage(
+    {...layer.context.viewport, getBounds: () => [-8, -8, 8, 8]},
+    'covered view'
+  );
+  t.equal(source.requests.length, count, 'opacity and covered view retain the cache');
+  t.end();
+});
+
+test('WMSLayer -> outdated property requests cannot overwrite a cached image', async t => {
+  const source = new TestImageSource();
+  const errors = [];
+  const layer = createRequestLayer(source, {onImageLoadError: (_id, error) => errors.push(error)});
+  await flushRequests();
+  const image = new Image();
+  source.requests[0].resolve(image);
+  await flushRequests();
+  updateRequestLayer(layer, {transparent: false});
+  await flushRequests();
+  // Returning to the cached parameters should still invalidate the pending opaque image.
+  updateRequestLayer(layer, {transparent: true});
+  source.requests[1]?.resolve(new Image());
+  await flushRequests();
+  t.equal(layer.renderLayers().props.image, image, 'outdated opaque image is discarded');
+  t.equal(source.requests.length, 2, 'returning to cached parameters reuses the image');
+
+  updateRequestLayer(layer, {layers: ['pending']});
+  await flushRequests();
+  updateRequestLayer(layer, {layers: []});
+  source.requests[source.requests.length - 1].reject(new Error('obsolete image failure'));
+  await flushRequests();
+  t.deepEqual(errors, [], 'obsolete image errors are ignored');
+  t.equal(layer.state.loadCounter, 0, 'discarded requests finish loading');
+  t.end();
+});
+
+test('WMSLayer -> older completion preserves newer pending request and errors permit retry', async t => {
+  const source = new TestImageSource();
+  const errors = [];
+  const layer = createRequestLayer(source, {onImageLoadError: (_id, error) => errors.push(error)});
+  await flushRequests();
+  const moved = {...layer.context.viewport, getBounds: () => [20, 20, 40, 40]};
+  const nextRequest = layer.loadImage(moved, 'uncovered view');
+  source.requests[0].resolve(new Image());
+  await flushRequests();
+  // Do not await a duplicate until its request has resolved, so baseline failures cannot hang.
+  const duplicateRequest = layer.loadImage(moved, 'same pending view');
+  t.equal(source.requests.length, 2, 'older completion leaves newer request deduplication intact');
+  const error = new Error('current image failure');
+  source.requests[1].reject(error);
+  source.requests[2]?.resolve(new Image());
+  await Promise.all([nextRequest, duplicateRequest]);
+  t.equal(errors[0], error, 'current errors are reported');
+  const previousCount = source.requests.length;
+  const retry = layer.loadImage(moved, 'retry');
+  t.equal(source.requests.length, previousCount + 1, 'failed request is retried');
+  source.requests[source.requests.length - 1].resolve(new Image());
+  await retry;
+  t.equal(layer.state.loadCounter, 0, 'load counter returns to zero');
   t.end();
 });
