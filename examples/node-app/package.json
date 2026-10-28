@@ -26,7 +26,10 @@
   },
   "resolutions": {
     "fflate@npm:0.7.4": "0.7.5",
+    "moment": "2.31.0",
     "proxy-addr": "2.0.8",
-    "source-map-js": "1.2.2"
+    "qs": "6.16.1",
+    "source-map-js": "1.2.2",
+    "undici@npm:^8.4.1": "8.12.3"
   }
 }

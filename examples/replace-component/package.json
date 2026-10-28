@@ -28,6 +28,7 @@
   },
   "resolutions": {
     "fflate@npm:0.7.4": "0.7.5",
+    "moment": "2.31.0",
     "source-map-js": "1.2.2"
   },
   "engines": {

@@ -18,7 +18,9 @@
   },
   "resolutions": {
     "fflate@npm:0.7.4": "0.7.5",
-    "source-map-js": "1.2.2"
+    "moment": "2.31.0",
+    "source-map-js": "1.2.2",
+    "undici@npm:^8.4.1": "8.12.3"
   },
   "devDependencies": {
     "@dotenv-run/esbuild": "^1.5.0",
