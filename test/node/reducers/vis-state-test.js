@@ -18,6 +18,7 @@ import {
   INITIAL_MAP_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
+  addDefaultLayers,
   validateLayerWithData,
   defaultInteractionConfig,
   prepareStateForDatasetReplace,
@@ -40,10 +41,11 @@ import {
 import {
   Layer,
   KeplerGlLayers,
+  LayerClasses,
   COLUMN_MODE_TABLE,
   createPointCountLabelField
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate, maybeToDate, KeplerTable} from '@kepler.gl/table';
+import {copyTableAndUpdate, findPointFieldPairs, maybeToDate, KeplerTable} from '@kepler.gl/table';
 import {
   createDataContainer,
   applyFilterFieldName,
@@ -322,6 +324,240 @@ test('#visStateReducer -> ADD_FILTER', t => {
   t.deepEqual(newReducer.filters[0], expectedReducer.filters[0], 'should add a default filter');
 
   cmpFilters(t, newReducer.filters[1], expectedReducer.filters[1]);
+  t.end();
+});
+
+function autoLayers(dataset, layerClasses = LayerClasses) {
+  return addDefaultLayers({...INITIAL_VIS_STATE, layerClasses}, {[dataset.id]: dataset}).newLayers;
+}
+
+test('#visStateReducer -> addDefaultLayers: deduplicates points independently of row values', t => {
+  const fields = ['lat', 'lon', 'icon', 'altitude'].map((name, fieldIdx) => ({
+    name,
+    fieldIdx,
+    type: name === 'icon' ? 'string' : 'real'
+  }));
+  const fieldPairs = findPointFieldPairs(fields);
+  const validRow = [37.77, -122.42, 'place', 0];
+  const cases = [
+    {name: 'valid icon', rows: [validRow]},
+    {name: 'custom icon name', rows: [[37.77, -122.42, 'custom-icon', 0]]},
+    {name: 'empty dataset', rows: []},
+    {name: 'missing data', rows: [validRow], noData: true},
+    {name: 'missing icon value', rows: [[37.77, -122.42, null, 0]]},
+    ...[null, undefined, '', '  ', 123, false, {}].map(icon => ({
+      name: `incomplete icon coverage: ${String(icon)}`,
+      rows: [validRow, [37.78, -122.43, icon, 0]]
+    })),
+    {
+      name: 'filtered-out row with a missing icon',
+      rows: [validRow, [37.78, -122.43, null, 0]],
+      filteredIndex: [0]
+    },
+    {
+      name: 'missing coordinates',
+      rows: [validRow, [null, -122.43, null, 0]]
+    },
+    {
+      name: 'invalid altitude',
+      rows: [validRow, [37.78, -122.43, null, NaN]]
+    },
+    {
+      name: 'no renderable coordinates',
+      rows: [[NaN, -122.43, 'place', 0]]
+    }
+  ];
+
+  cases.forEach(({name, rows, noData, filteredIndex}) => {
+    const dataset = noData
+      ? {id: 'icon-precedence', fields, fieldPairs}
+      : new KeplerTable({info: {id: 'icon-precedence'}}).updateSchema({fields, rows});
+    if (filteredIndex) {
+      dataset.filteredIndex = filteredIndex;
+    }
+    const layers = autoLayers(dataset);
+    t.deepEqual(
+      layers.map(layer => layer.type),
+      ['icon'],
+      name
+    );
+    t.ok(layers[0].config.isVisible, `${name}: replacement icon is visible`);
+  });
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence preserves other point pairs and icon columns', t => {
+  const fields = ['one_lat', 'one_lon', 'two_lat', 'two_lon', 'icon', 'other_icon'].map(
+    (name, fieldIdx) => ({name, fieldIdx, type: name.includes('icon') ? 'string' : 'real'})
+  );
+  const rows = [[37.77, -122.42, 38, -123, 'place', 'custom-icon']];
+  const dataset = new KeplerTable({info: {id: 'multiple-icon-columns'}}).updateSchema({
+    fields,
+    rows
+  });
+  const layers = autoLayers(dataset);
+  t.deepEqual(
+    layers.map(layer => [layer.type, layer.config.isVisible]),
+    [
+      ['point', true],
+      ['arc', false],
+      ['line', false],
+      ['icon', true],
+      ['icon', true]
+    ],
+    'preserves the remaining candidate order and Arc/Line visibility'
+  );
+  const points = layers.filter(layer => layer.type === 'point');
+  const icons = layers.filter(layer => layer.type === 'icon');
+  t.equal(points.length, 1, 'only the matching coordinate pair loses its automatic point');
+  t.equal(points[0].config.columns.lat.value, 'two_lat', 'keeps the other coordinate pair');
+  t.equal(icons.length, 2, 'preserves both automatically detected icon columns');
+  t.ok(
+    icons.every(layer => layer.config.isVisible),
+    'both icons remain visible'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence preserves explicitly configured layers', t => {
+  const {fields, rows} = processCsvData('lat,lon,icon\n37.77,-122.42,place');
+  const dataset = new KeplerTable({info: {id: 'explicit-icons'}}).updateSchema({fields, rows});
+  const explicitLayers = ['point', 'icon'].map(type =>
+    validateLayerWithData(
+      dataset,
+      {
+        id: `saved-${type}`,
+        type,
+        config: {
+          dataId: dataset.id,
+          label: type,
+          isVisible: true,
+          columns: {lat: 'lat', lng: 'lon', ...(type === 'icon' ? {icon: 'icon'} : {})}
+        }
+      },
+      LayerClasses
+    )
+  );
+  t.deepEqual(
+    explicitLayers.map(layer => layer?.type),
+    ['point', 'icon'],
+    'restores both saved layers'
+  );
+  const {state, newLayers} = addDefaultLayers(
+    {
+      layers: explicitLayers,
+      layerOrder: explicitLayers.map(layer => layer.id),
+      layerClasses: LayerClasses
+    },
+    {[dataset.id]: dataset}
+  );
+  t.equal(state.layers[0], explicitLayers[0], 'keeps the existing point layer');
+  t.equal(state.layers[1], explicitLayers[1], 'keeps the existing icon layer');
+  t.deepEqual(
+    newLayers.map(layer => layer.type),
+    ['icon'],
+    'applies precedence only to new automatic layers'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence is independent of registry order', t => {
+  const dataset = new KeplerTable({info: {id: 'icon-order'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  const {point, icon, ...others} = LayerClasses;
+  for (const layerClasses of [LayerClasses, {icon, point, ...others}]) {
+    t.deepEqual(
+      autoLayers(dataset, layerClasses).map(layer => layer.type),
+      ['icon'],
+      'automatically adds only Icon regardless of detector order'
+    );
+  }
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: preserves custom types and canonical replacements', t => {
+  const dataset = new KeplerTable({info: {id: 'custom-icons'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  class CustomPoint extends PointLayer {}
+  class CustomIcon extends IconLayer {}
+  const cases = [
+    {classes: {...LayerClasses, point: CustomPoint}, expected: [CustomPoint, IconLayer]},
+    {classes: {...LayerClasses, icon: CustomIcon}, expected: [PointLayer, CustomIcon]},
+    {classes: {...LayerClasses, customPoint: CustomPoint}, expected: [IconLayer, CustomPoint]},
+    {classes: {point: PointLayer}, expected: [PointLayer]},
+    {classes: {icon: IconLayer}, expected: [IconLayer]}
+  ];
+  cases.forEach(({classes, expected}) => {
+    t.deepEqual(
+      autoLayers(dataset, classes).map(layer => layer.constructor),
+      expected,
+      'limits precedence to the registered built-in Point and Icon classes'
+    );
+  });
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: matches only latitude and longitude field references', t => {
+  const dataset = new KeplerTable({info: {id: 'icon-altitude'}}).updateSchema(
+    processCsvData(
+      'lat,lon,altitude,other_lat,other_lon,other_altitude,icon\n37.77,-122.42,10,37.77,-122.42,20,place'
+    )
+  );
+  const pair = dataset.fieldPairs[0];
+  dataset.fieldPairs = [
+    pair,
+    {...pair, pair: {...pair.pair, altitude: {value: 'other_altitude', fieldIdx: 5}}},
+    {...pair, pair: {...pair.pair, lat: {value: 'other_lat', fieldIdx: 3}}},
+    {...pair, pair: {...pair.pair, lng: {value: 'other_lon', fieldIdx: 4}}}
+  ];
+  const points = autoLayers(dataset).filter(layer => layer.type === 'point');
+  t.deepEqual(
+    points.map(layer => [layer.config.columns.lat.value, layer.config.columns.lng.value]),
+    [
+      ['other_lat', 'lon'],
+      ['lat', 'other_lon']
+    ],
+    'ignores altitude and keeps distinct lat/lng fields even when their row values match'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: keeps other layer defaults and dataset boundaries', t => {
+  const withIcons = new KeplerTable({info: {id: 'with-icons'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  const withoutIcons = new KeplerTable({info: {id: 'without-icons'}}).updateSchema(
+    processCsvData('lat,lon\n37.77,-122.42')
+  );
+  const {newLayers} = addDefaultLayers(INITIAL_VIS_STATE, {
+    [withIcons.id]: withIcons,
+    [withoutIcons.id]: withoutIcons
+  });
+  t.deepEqual(
+    newLayers.map(layer => [layer.type, layer.config.dataId]),
+    [
+      ['icon', withIcons.id],
+      ['point', withoutIcons.id]
+    ],
+    'an icon in one dataset does not suppress points in another'
+  );
+  const geoTrip = new KeplerTable({info: tripDataInfo}).updateSchema(processGeojson(tripGeojson));
+  t.deepEqual(
+    autoLayers(geoTrip).map(layer => layer.type),
+    ['trip'],
+    'keeps existing Trip over GeoJSON precedence'
+  );
+  const tableTrip = new KeplerTable({info: tripCsvDataInfo}).updateSchema(
+    processCsvData(tripCsvData.replace(',name,', ',id,'))
+  );
+  t.deepEqual(
+    autoLayers(tableTrip).map(layer => layer.type),
+    ['point', 'trip'],
+    'keeps table Trip and Point defaults together'
+  );
   t.end();
 });
 
