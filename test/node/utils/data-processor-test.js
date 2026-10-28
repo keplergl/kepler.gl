@@ -859,6 +859,7 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
   for (const crs of [
     {type: 'name', properties: {name: 'EPSG:3857'}},
     {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::2263'}},
+    {type: 'name', properties: {name: 'urn:ogc:def:crs:OGC:2:27'}},
     {type: 'name', properties: {name: 'unknown-projection'}},
     {type: 'link', properties: {href: 'https://example.com/projected-crs'}}
   ]) {
@@ -889,12 +890,19 @@ test('Processor => processGeojson: preserves supported and undeclared CRS data',
     'WGS 84',
     'CRS84',
     'OGC:CRS84',
+    'CRS84h',
+    'OGC:CRS84h',
     'urn:ogc:def:crs:EPSG::4326',
     'urn:ogc:def:crs:EPSG:6.6:4326',
     'urn:x-ogc:def:crs:EPSG:4326',
     'urn:ogc:def:crs:OGC:1.3:CRS84',
+    'urn:ogc:def:crs:OGC:2:84',
+    'urn:x-ogc:def:crs:OGC:2:84',
+    'urn:ogc:def:crs:OGC:0:CRS84h',
     'http://www.opengis.net/def/crs/EPSG/0/4326',
     'https://www.opengis.net/def/crs/OGC/1.3/CRS84',
+    'http://www.opengis.net/def/crs/OGC/0/CRS84h',
+    'https://www.opengis.net/def/crs/OGC/0/CRS84h',
     'http://www.opengis.net/gml/srs/epsg.xml#4326'
   ];
   const features = [
@@ -902,7 +910,7 @@ test('Processor => processGeojson: preserves supported and undeclared CRS data',
     {
       type: 'Feature',
       properties: {crs: {type: 'name', properties: {name: 'EPSG:3857'}}},
-      geometry: {type: 'Point', coordinates: [181, 20]}
+      geometry: {type: 'Point', coordinates: [181, 20, 100]}
     },
     {type: 'Feature', properties: {}, geometry: {type: 'Polygon', coordinates: []}}
   ];
@@ -912,7 +920,9 @@ test('Processor => processGeojson: preserves supported and undeclared CRS data',
     null,
     ...aliases.map(name => ({type: 'name', properties: {name}})),
     {type: 'link', properties: {href: 'http://www.opengis.net/def/crs/EPSG/0/4326'}},
-    {type: 'link', properties: {href: 'https://www.opengis.net/def/crs/OGC/1.3/CRS84'}}
+    {type: 'link', properties: {href: 'https://www.opengis.net/def/crs/OGC/1.3/CRS84'}},
+    {type: 'link', properties: {href: 'http://www.opengis.net/def/crs/OGC/0/CRS84h'}},
+    {type: 'link', properties: {href: 'https://www.opengis.net/def/crs/OGC/0/CRS84h'}}
   ]) {
     const data = processGeojson({type: 'FeatureCollection', crs, features: cloneDeep(features)});
     t.deepEqual(data.rows, expected.rows, 'CRS recognition must not rewrite or drop geometry');

@@ -311,9 +311,9 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
 }
 
 const WGS84_CRS_NAMES = [
-  /^(?:EPSG:4326|OGC:CRS84|CRS84|WGS ?84)$/i,
-  /^urn:(?:x-)?ogc:def:crs:(?:EPSG:(?:[\d.]*:)?4326|OGC:(?:[\d.]*:)?CRS84)$/i,
-  /^https?:\/\/www\.opengis\.net\/def\/crs\/(?:EPSG\/[\d.]+\/4326|OGC\/[\d.]+\/CRS84)$/i,
+  /^(?:EPSG:4326|OGC:CRS84h?|CRS84h?|WGS ?84)$/i,
+  /^urn:(?:x-)?ogc:def:crs:(?:EPSG:(?:[\d.]*:)?4326|OGC:(?:(?:[\d.]*:)?CRS84h?|2:84))$/i,
+  /^https?:\/\/www\.opengis\.net\/def\/crs\/(?:EPSG\/[\d.]+\/4326|OGC\/[\d.]+\/CRS84h?)$/i,
   /^https?:\/\/www\.opengis\.net\/gml\/srs\/epsg\.xml#4326$/i
 ];
 
