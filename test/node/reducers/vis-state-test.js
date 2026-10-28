@@ -32,6 +32,8 @@ import {
   processCsvData,
   processGeojson,
   processArrowBatches,
+  processFileData,
+  readFileInBatches,
   loadExternallyHostedDataset,
   remoteDatasetFromUrl
 } from '@kepler.gl/processors';
@@ -8103,6 +8105,74 @@ test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS'
     'should ignore an unknown dataset'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial data', async t => {
+  drainTasksForTesting();
+  const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
+  initApplicationConfig({useArrowProgressiveLoading: true});
+  try {
+    const initialState = CloneDeep(InitialState).visState;
+    const feature = {
+      type: 'Feature',
+      properties: {},
+      geometry: {type: 'Point', coordinates: [1000000, 1000000]}
+    };
+    // Put CRS after features so streaming cannot discover it until the final container.
+    const file = new File(
+      [
+        JSON.stringify({
+          type: 'FeatureCollection',
+          features: [feature],
+          crs: {type: 'name', properties: {name: 'EPSG:3857'}}
+        })
+      ],
+      'projected.geojson',
+      {type: 'application/geo+json'}
+    );
+    const nextFile = new File(['lat,lng\n20,10'], 'valid.csv', {type: 'text/csv'});
+    let state = reducer(initialState, VisStateActions.loadFiles([file, nextFile]));
+    const [loadTask] = drainTasksForTesting();
+    const iterator = await readFileInBatches({file, loadOptions: {worker: false}});
+    state = reducer(state, succeedTaskInTest(loadTask, iterator));
+    let [task] = drainTasksForTesting();
+    let streamedRows = false;
+    while (task.type === 'UNWRAP') {
+      const batch = await task.payload;
+      streamedRows ||= Array.isArray(batch.value?.data) && batch.value.data.length > 0;
+      state = reducer(state, succeedTaskInTest(task, batch));
+      t.equal(state.datasets, initialState.datasets, 'streamed GeoJSON never adds partial data');
+      t.deepEqual(state.fileLoading.fileCache, [], 'streamed GeoJSON never enters the file cache');
+      const tasks = drainTasksForTesting();
+      t.equal(tasks.length, 1, 'GeoJSON should not schedule a progressive dataset commit');
+      [task] = tasks;
+    }
+    t.ok(streamedRows, 'exercise feature batches before the final CRS declaration');
+    t.equal(task.type, 'PROCESS_FILE_CONTENT', 'process the completed GeoJSON file');
+    try {
+      await processFileData(task.payload);
+      t.fail('the completed file must reject its unsupported CRS');
+    } catch (error) {
+      t.match(error.message, /WGS84.*EPSG:4326/, 'surface an actionable import error');
+      const warn = sinon.stub(Console, 'warn');
+      try {
+        state = reducer(state, errorTaskInTest(task, error));
+      } finally {
+        warn.restore();
+      }
+      t.equal(state.fileLoadingProgress[file.name].error, error, 'record the file error');
+      t.equal(state.datasets, initialState.datasets, 'failed import preserves existing datasets');
+      t.deepEqual(state.fileLoading.fileCache, [], 'failed import does not leave a partial cache');
+      const [delay] = drainTasksForTesting();
+      state = reducer(state, succeedTaskInTest(delay));
+      const [nextLoad] = drainTasksForTesting();
+      t.equal(nextLoad.payload.file, nextFile, 'continue loading the next file after the error');
+    }
+  } finally {
+    initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
+    drainTasksForTesting();
+  }
   t.end();
 });
 
