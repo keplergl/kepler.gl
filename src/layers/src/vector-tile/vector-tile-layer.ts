@@ -723,7 +723,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
                 // @ts-expect-error props not typed?
                 ...objectHovered.sourceLayer?.props,
                 ...(this.getDefaultHoverLayerProps() as any),
-                visible: true,
+                visible: defaultLayerProps.visible,
                 wrapLongitude: false,
                 data: [hoveredObject],
                 getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
@@ -791,7 +791,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           return new GeoJsonLayer({
             ...(this.getDefaultHoverLayerProps() as any),
             id: `${options.defaultLayerProps.id}-hover-outline-${tileId}`,
-            visible: true,
+            visible: options.defaultLayerProps.visible,
             wrapLongitude: false,
             data: feats,
             getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
