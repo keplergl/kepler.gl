@@ -458,6 +458,17 @@ export default class IconLayer extends Layer {
     this.updateMeta({bounds});
   }
 
+  isLayerHovered(objectInfo): boolean {
+    if (super.isLayerHovered(objectInfo)) return true;
+    const layerId = objectInfo?.layer?.props?.id;
+    // Picks can retain a previous geometry version after custom icons finish loading.
+    return Boolean(
+      objectInfo?.picked &&
+        layerId?.startsWith(`${this.id}_`) &&
+        /^\d+$/.test(layerId.slice(this.id.length + 1))
+    );
+  }
+
   renderLayer(opts) {
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
 
