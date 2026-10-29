@@ -700,7 +700,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               radiusField: this.config.radiusField,
               radiusScale: this.config.radiusScale,
               radiusDomain: this.config.radiusDomain,
-              radiusRange: this.config.radiusRange,
+              radiusRange: visConfig.radiusRange,
               currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },

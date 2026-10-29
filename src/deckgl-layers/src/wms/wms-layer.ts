@@ -74,9 +74,9 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
   declare state: {
     imageSource: ImageSource;
-    image: ImageType;
+    image?: ImageType;
     bounds: [number, number, number, number];
-    lastRequestParameters: {
+    lastRequestParameters?: {
       // TODO: remove bbox once deck.gl is upgraded to ^8.10 with loaders.gl ^4
       bbox: [number, number, number, number];
       boundingBox: [[number, number], [number, number]];
@@ -122,15 +122,25 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
 
   override updateState({changeFlags, props, oldProps}: UpdateParameters<this>): void {
     const {viewport} = this.context;
+    const sourceChanged = changeFlags.dataChanged || props.serviceType !== oldProps.serviceType;
+    const parametersChanged =
+      !deepEqual(props.layers, oldProps.layers, 1) ||
+      props.srs !== oldProps.srs ||
+      props.transparent !== oldProps.transparent;
 
-    // Check if data source has changed
-    if (changeFlags.dataChanged || props.serviceType !== oldProps.serviceType) {
-      this.state.imageSource = this._createImageSource(props);
+    if (sourceChanged || parametersChanged) {
+      // Invalidate pending responses before the replacement request is debounced.
+      this.state.lastRequestId = this.getRequestId();
+      this.state.inFlightRequestParameters = undefined;
+      this.state._lastRequestZoom = -1;
 
-      this._loadMetadata();
-      this.debounce(() => this.loadImage(viewport, 'image source changed'), 0);
-    } else if (!deepEqual(props.layers, oldProps.layers, 1)) {
-      this.debounce(() => this.loadImage(viewport, 'layers changed'), 0);
+      if (sourceChanged) {
+        this.state.imageSource = this._createImageSource(props);
+        this.setState({image: undefined, lastRequestParameters: undefined});
+        this._loadMetadata();
+      }
+
+      this.debounce(() => this.loadImage(viewport, 'image source or parameters changed'), 0);
     } else if (changeFlags.viewportChanged) {
       // Check if preserveDrawingBuffer is enabled (indicates video recording or image export)
       // Use minimal debounce (10ms) during export for responsive frame capture
@@ -143,22 +153,21 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     }
   }
 
-  override renderLayers(): Layer<any> {
+  override renderLayers(): Layer<any> | null {
     const {bounds, image, lastRequestParameters} = this.state;
 
-    return (
-      image &&
-      new BitmapLayer({
-        ...this.getSubLayerProps({id: 'bitmap'}),
-        _imageCoordinateSystem:
-          lastRequestParameters.srs === 'EPSG:4326'
-            ? COORDINATE_SYSTEM.LNGLAT
-            : COORDINATE_SYSTEM.CARTESIAN,
-        bounds,
-        image,
-        pickable: this.props.pickable
-      })
-    );
+    return image
+      ? new BitmapLayer({
+          ...this.getSubLayerProps({id: 'bitmap'}),
+          _imageCoordinateSystem:
+            lastRequestParameters?.srs === 'EPSG:4326'
+              ? COORDINATE_SYSTEM.LNGLAT
+              : COORDINATE_SYSTEM.CARTESIAN,
+          bounds,
+          image,
+          pickable: this.props.pickable
+        })
+      : null;
   }
 
   async getFeatureInfoText(x: number, y: number): Promise<string | null> {
@@ -203,7 +212,9 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
         this.getCurrentLayer()?.props.onMetadataLoad(metadata);
       }
     } catch (error) {
-      this.getCurrentLayer()?.props.onMetadataLoadError(error as Error);
+      if (this.state.imageSource === imageSource) {
+        this.getCurrentLayer()?.props.onMetadataLoadError(error as Error);
+      }
     } finally {
       this.state.loadCounter--;
     }
@@ -351,11 +362,15 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
         });
       }
     } catch (error) {
-      this.context.onError?.(error as Error, this);
-      this.getCurrentLayer()?.props.onImageLoadError(requestId, error as Error);
+      if (this.state.lastRequestId < requestId) {
+        this.context.onError?.(error as Error, this);
+        this.getCurrentLayer()?.props.onImageLoadError(requestId, error as Error);
+      }
     } finally {
-      // Clear in-flight marker when request completes (success or error)
-      this.state.inFlightRequestParameters = undefined;
+      // An older response must not clear a newer request's deduplication marker.
+      if (this.state.inFlightRequestParameters === requestParams) {
+        this.state.inFlightRequestParameters = undefined;
+      }
       this.state.loadCounter--;
       // Trigger a redraw to update the UI loading indicator
       this.setNeedsRedraw();
