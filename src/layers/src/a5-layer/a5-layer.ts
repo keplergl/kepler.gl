@@ -3,6 +3,7 @@
 
 import {A5Layer as DeckA5Layer} from '@deck.gl/geo-layers';
 import {GeoJsonLayer} from '@deck.gl/layers';
+import {cellToBoundary, hexToU64} from 'a5-js';
 import type {Feature} from 'geojson';
 import {
   HIGHLIGH_COLOR_3D,
@@ -84,6 +85,20 @@ export type A5GeometryLayerData = {
   index: number;
   token: string;
 };
+
+// deck.gl still decodes A5 0.x IDs. Use our A5 1.x dependency for the cell
+// geometry as well as centers and hover outlines, including in published packages.
+class A5Layer extends DeckA5Layer<A5GeometryLayerData> {
+  static layerName = 'A5Layer';
+
+  indexToBounds() {
+    return {
+      ...super.indexToBounds(),
+      getPolygon: ({token}: A5GeometryLayerData) =>
+        cellToBoundary(hexToU64(token), {closedRing: true, segments: 'auto'}).flat()
+    };
+  }
+}
 
 const zoomFactorValue = 8;
 const DEFAULT_LINE_SCALE_VALUE = 8;
@@ -356,7 +371,7 @@ export default class A5GeometryLayer extends Layer {
     };
 
     return [
-      new DeckA5Layer({
+      new A5Layer({
         ...defaultLayerProps,
         ...interactionConfig,
         ...data,
