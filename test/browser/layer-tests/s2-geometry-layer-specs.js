@@ -14,7 +14,8 @@ import {
   preparedFilterDomain0
 } from 'test/helpers/layer-utils';
 import {s2DefaultElevation as defaultElevation, KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {copyTableAndUpdate, getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
+import {processCsvData} from '@kepler.gl/processors';
 import {createDataContainer} from '@kepler.gl/utils';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 
@@ -291,6 +292,82 @@ test('#S2Geometry -> renderLayer', t => {
 
   testRenderLayerCases(t, S2GeometryLayer, TEST_CASES);
 
+  t.end();
+});
+
+test('#S2Geometry -> fixed height uses source values', t => {
+  const dataset = new KeplerTable({info: {id: dataId}, color: [255, 0, 0]});
+  dataset.importData({
+    data: processCsvData(`token,height
+8085801c,0
+8085801c,10
+8085801c,20
+8085801c,
+`)
+  });
+  dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+  const datasets = {[dataId]: dataset};
+
+  testFormatLayerDataCases(t, S2GeometryLayer, [
+    {
+      name: 'fixed height',
+      layer: {
+        type: 's2',
+        config: {
+          dataId,
+          columns: {token: 'token'},
+          heightField: {name: 'height', type: 'integer'},
+          visConfig: {
+            enable3d: true,
+            heightRange: [0, 100],
+            elevationScale: 1,
+            enableElevationZoomFactor: false
+          }
+        }
+      },
+      datasets,
+      assert: ({layer, layerData}) => {
+        for (const globe of [false, true]) {
+          let previousTriggers;
+          for (const fixedHeight of [false, true, false]) {
+            layer.updateLayerVisConfig({fixedHeight});
+            const data = layer.formatLayerData(datasets, layerData);
+            const [rendered] = layer.renderLayer({
+              data,
+              idx: 0,
+              mapState: {zoom: 10, globe: {enabled: globe}},
+              gpuFilter: dataset.gpuFilter,
+              interactionConfig: {},
+              visible: true
+            });
+            t.deepEqual(
+              rendered.props.data.map(rendered.props.getElevation),
+              fixedHeight ? [0, 10, 20, 0] : [0, 50, 100, 0],
+              `rendered elevations ${
+                fixedHeight ? 'preserve source values' : 'use height range'
+              } (globe=${globe})`
+            );
+            const triggers = rendered.props.updateTriggers.getElevation;
+            if (previousTriggers) {
+              t.notDeepEqual(
+                triggers,
+                previousTriggers,
+                'toggling fixed height invalidates elevations'
+              );
+            }
+            previousTriggers = triggers;
+          }
+        }
+        layer.updateLayerVisConfig({fixedHeight: true});
+        layer.updateLayerConfig({heightField: null});
+        t.equal(
+          layer.formatLayerData(datasets).getElevation,
+          defaultElevation,
+          'missing height field retains the default elevation'
+        );
+      }
+    }
+  ]);
   t.end();
 });
 
