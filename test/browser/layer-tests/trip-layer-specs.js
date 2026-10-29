@@ -468,6 +468,102 @@ test('#TripLayer -> renderLayer', t => {
   t.end();
 });
 
+test('#TripLayer -> renderLayer model colors preserve trail color shape', t => {
+  const TEST_CASES = [
+    {
+      columnMode: 'table',
+      dataset: prepareTripTableDataset,
+      columns: {
+        id: 'name',
+        lat: 'location-lat',
+        lng: 'location-lng',
+        timestamp: 'timestamp',
+        altitude: 'location-alt'
+      },
+      colorField: {name: 'name', type: 'string'}
+    },
+    {
+      columnMode: 'geojson',
+      dataset: prepareTripGeoDataset,
+      columns: {geojson: '_geojson'},
+      colorField: {name: 'types', type: 'string'}
+    }
+  ].map(({columnMode, dataset, columns, colorField}) => ({
+    name: `Trip model colors: ${columnMode}`,
+    layer: {
+      type: 'trip',
+      id: `trip-model-colors-${columnMode}`,
+      config: {
+        dataId,
+        columnMode,
+        columns,
+        colorField,
+        color: [40, 50, 60],
+        visConfig: {
+          colorRange: {colors: ['#0a141e']},
+          scenegraphEnabled: true,
+          scenegraph: 'custom',
+          scenegraphCustomModelUrl: 'https://example.com/model.glb',
+          scenegraphColorEnabled: true,
+          scenegraphUseTrailColor: true
+        }
+      }
+    },
+    datasets: {[dataId]: dataset},
+    assert: ({layerData, layer}) => {
+      const feature = layerData.data[0];
+      const timestamps = layerData.getTimestamps(feature);
+      const time = (timestamps[0] + timestamps[1]) / 2;
+      // Inspect the public render output without fetching a model or starting WebGL.
+      const renderModel = (data = layerData, currentTime = time) =>
+        layer.renderLayer({
+          data,
+          gpuFilter: dataset.gpuFilter,
+          mapState: {zoom: 10},
+          animationConfig: {domain: layer.animationDomain, currentTime}
+        })[1];
+
+      t.deepEqual(layerData.getColor(feature), [10, 20, 30], 'field encodes one RGB per trip');
+      t.deepEqual(
+        renderModel().props.getColor(feature),
+        [10, 20, 30],
+        `${columnMode} model receives the full field-encoded trail color`
+      );
+
+      if (columnMode === 'table') {
+        const vertexColors = timestamps.map((_, i) => [i, i + 10, i + 20]);
+        const vertexData = {...layerData, getColor: () => vertexColors};
+        t.deepEqual(
+          renderModel(vertexData).props.getColor(feature),
+          vertexColors[1],
+          'per-vertex colors still select the active vertex'
+        );
+        t.deepEqual(
+          renderModel(vertexData, timestamps[0] - 1).props.getColor(feature),
+          [255, 255, 255],
+          'per-vertex colors use the default outside the trip time range'
+        );
+      }
+
+      layer.updateLayerConfig({colorField: null});
+      const fixedData = layer.formatLayerData({[dataId]: dataset}, layerData);
+      t.deepEqual(
+        renderModel(fixedData).props.getColor(feature),
+        [40, 50, 60],
+        'uniform trail color without a field stays unchanged'
+      );
+
+      layer.updateLayerVisConfig({scenegraphUseTrailColor: false, scenegraphColor: [70, 80, 90]});
+      t.deepEqual(renderModel().props.getColor, [70, 80, 90], 'explicit model color is preserved');
+      layer.updateLayerVisConfig({scenegraphColorEnabled: false});
+      t.deepEqual(renderModel().props.getColor, [255, 255, 255], 'disabled model tint uses white');
+    }
+  }));
+
+  testFormatLayerDataCases(t, TripLayer, TEST_CASES);
+  t.end();
+});
+
 test('#TripLayer -> parseTripGeoJsonTimestamp', t => {
   // mix with illegal character
   const dataToFeature1 = cloneDeep(dataToFeature);
