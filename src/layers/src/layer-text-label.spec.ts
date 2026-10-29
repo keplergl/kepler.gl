@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Table, vectorFromArray} from 'apache-arrow';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
@@ -133,6 +134,141 @@ describe('renderTextLabelLayer', () => {
       displayFormat: 'YYYY'
     });
   });
+});
+
+function labelSnapshot(labels: string[], useArrow: boolean) {
+  const fields = [
+    {name: 'latitude', type: ALL_FIELD_TYPES.real},
+    {name: 'longitude', type: ALL_FIELD_TYPES.real},
+    {name: 'label', type: ALL_FIELD_TYPES.string}
+  ];
+  const rows = labels.map((label, index) => [37 + index, -122, label]);
+  if (!useArrow) return {fields, rows};
+  const latitude = vectorFromArray(labels.map((_, index) => 37 + index));
+  const longitude = vectorFromArray(labels.map(() => -122));
+  const label = vectorFromArray(labels);
+  return {
+    fields,
+    rows: [],
+    cols: [latitude, longitude, label],
+    arrowTable: new Table({latitude, longitude, label})
+  };
+}
+
+function makeLabelLayer(table: KeplerTable, field = table.fields[2]) {
+  const layer = new PointLayer({
+    id: 'labels',
+    dataId: table.id,
+    columns: {
+      lat: {value: 'latitude', fieldIdx: 0},
+      lng: {value: 'longitude', fieldIdx: 1}
+    }
+  });
+  layer.updateLayerConfig({textLabel: [{...DEFAULT_TEXT_LABEL, field}]});
+  return layer;
+}
+
+function renderedTextLabel(layer: PointLayer, data) {
+  return layer.renderTextLabelLayer(
+    {getPixelOffset: () => [0, 0], updateTriggers: {}, sharedProps: {}},
+    {data, mapState: {}, visible: true}
+  )[0];
+}
+
+describe.each([false, true])('text label data refresh (Arrow: %s)', useArrow => {
+  const readLabel = (rendered, index = 0) =>
+    useArrow ? rendered.props.getText.get(index) : rendered.props.getText({index});
+
+  test('updates same-container and same-row-count replacement labels and glyphs', async () => {
+    const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(labelSnapshot(['A'], useArrow));
+    const layer = makeLabelLayer(table);
+    const container = table.dataContainer;
+    let data = layer.formatLayerData({[table.id]: table}, null);
+    expect(readLabel(renderedTextLabel(layer, data))).toBe('A');
+
+    await table.update(labelSnapshot(['B'], useArrow));
+    expect(table.dataContainer).toBe(container);
+    data = layer.formatLayerData({[table.id]: table}, data);
+    expect(readLabel(renderedTextLabel(layer, data))).toBe('B');
+    expect(renderedTextLabel(layer, data).props.characterSet).toEqual(['B']);
+
+    table.updateSchema(labelSnapshot(['C'], useArrow));
+    expect(table.dataContainer).not.toBe(container);
+    layer.updateLayerConfig({textLabel: [{...DEFAULT_TEXT_LABEL, field: table.fields[2]}]});
+    data = layer.formatLayerData({[table.id]: table}, data);
+    expect(readLabel(renderedTextLabel(layer, data))).toBe('C');
+    expect(renderedTextLabel(layer, data).props.characterSet).toEqual(['C']);
+  });
+
+  test.each([false, true])(
+    'refreshes glyphs as filters narrow, empty, and clear (per-layer: %s)',
+    perLayer => {
+      const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(
+        labelSnapshot(['A', 'Ω'], useArrow)
+      );
+      const layer = makeLabelLayer(table);
+      let data;
+      for (const [indices, glyphs] of [
+        [[0], ['A']],
+        [[1], ['Ω']],
+        [[], []],
+        [
+          [0, 1],
+          ['A', 'Ω']
+        ]
+      ] as [number[], string[]][]) {
+        if (perLayer) {
+          table.filteredIndexByLayer = indices.length === 2 ? {} : {[layer.id]: indices};
+        } else {
+          table.filteredIndex = indices;
+        }
+        data = layer.formatLayerData({[table.id]: table}, data);
+        expect(renderedTextLabel(layer, data).props.characterSet).toEqual(glyphs);
+        if (useArrow) {
+          expect(data.getFiltered({index: 0})).toBe(indices.includes(0) ? 1 : 0);
+          expect(data.getFiltered({index: 1})).toBe(indices.includes(1) ? 1 : 0);
+        } else {
+          expect(data.data.map(row => row.index)).toEqual(indices);
+        }
+      }
+      expect(readLabel(renderedTextLabel(layer, data), 1)).toBe('Ω');
+    }
+  );
+
+  test('reuses text and glyph caches without rescanning on unrelated styling', () => {
+    const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(
+      labelSnapshot(['A', 'Ω'], useArrow)
+    );
+    const layer = makeLabelLayer(table);
+    const data = layer.formatLayerData({[table.id]: table}, null);
+    const valueAccessor = jest.spyOn(table.fields[2], 'valueAccessor');
+    layer.updateLayerVisConfig({opacity: 0.25});
+    layer.updateLayerConfig({textLabel: [{...layer.config.textLabel[0], color: [0, 255, 0]}]});
+    const unchanged = layer.formatLayerData({[table.id]: table}, data);
+    const previous = renderedTextLabel(layer, data).props;
+    const next = renderedTextLabel(layer, unchanged).props;
+    expect(next.getText).toBe(previous.getText);
+    expect(next.characterSet).toBe(previous.characterSet);
+    expect(valueAccessor).not.toHaveBeenCalled();
+    valueAccessor.mockRestore();
+  });
+});
+
+test('changing timestamp display format rebuilds rendered labels without changing data', async () => {
+  const table = await makeTable();
+  const field = {...table.fields[2], displayFormat: 'YYYY'};
+  const layer = makeLabelLayer(table, field);
+  const data = layer.formatLayerData({[table.id]: table}, null);
+  expect(renderedTextLabel(layer, data).props.getText({index: 0})).toBe('2021');
+  layer.updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field: {...field, displayFormat: 'YYYY/MM'}}]
+  });
+  const updated = layer.formatLayerData({[table.id]: table}, data);
+  expect(renderedTextLabel(layer, updated).props.data).toBe(
+    renderedTextLabel(layer, data).props.data
+  );
+  expect(renderedTextLabel(layer, updated).props.getText({index: 0})).toBe('2021/01');
+  expect(renderedTextLabel(layer, updated).props.characterSet).toContain('/');
 });
 
 test('collision labels preserve shared extensions without mutating another layer', async () => {
