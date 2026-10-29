@@ -23,7 +23,7 @@ export function getS2Center(s2Token): [number, number] | null {
   }
 }
 
-const re = /^[0-9a-z]+$/;
+const re = /^[0-9a-f]+$/;
 
 export function maybeStripQuotes(token: string): string {
   if (token.length >= 2) {
