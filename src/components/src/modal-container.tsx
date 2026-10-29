@@ -6,7 +6,7 @@ import {css} from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import document from 'global/document';
 
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
 import {
   exportData,
   getFileFormatNames,
@@ -310,11 +310,12 @@ export default function ModalContainerFactory(
             ...processedMetadata,
             ...tileset.metadata
           },
-          // Vector tile layer supports GPU filtering for numeric and boolean fields
+          // Numeric/boolean ranges use GPU filtering; vector tiles also support string categories.
           supportedFilterTypes: [
             ALL_FIELD_TYPES.real,
             ALL_FIELD_TYPES.integer,
-            ALL_FIELD_TYPES.boolean
+            ALL_FIELD_TYPES.boolean,
+            ...(tileset.type === DatasetType.VECTOR_TILE ? [ALL_FIELD_TYPES.string] : [])
           ],
           disableDataOperation: true
         },
