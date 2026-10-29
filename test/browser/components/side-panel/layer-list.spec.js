@@ -401,7 +401,7 @@ describe('LayerList dataset-aware layer type picker', () => {
     }
   );
 
-  it.each([undefined, '', DatasetType.LOCAL, DatasetType.EXTERNALLY_HOSTED])(
+  it.each([undefined, '', DatasetType.LOCAL, DatasetType.EXTERNALLY_HOSTED, 'custom-source'])(
     'offers all regular types for a %s dataset even without columns or rows',
     type => {
       const dataset = createDataset(type);
@@ -422,6 +422,14 @@ describe('LayerList dataset-aware layer type picker', () => {
     renderPicker(datasets, {layer});
 
     expect(pickerOptions()).toEqual(Object.keys(LayerClasses).map(layerName));
+  });
+
+  it('offers regular and matching specialized choices for mixed custom datasets', () => {
+    const custom = createDataset('custom-source');
+    const vector = createDataset(DatasetType.VECTOR_TILE);
+    renderPicker({[custom.id]: custom, [vector.id]: vector});
+
+    expect(pickerOptions()).toEqual([...regularNames, layerName('vectorTile')]);
   });
 
   it('updates the open menu as datasets arrive and are removed', () => {
@@ -471,6 +479,10 @@ describe('LayerList dataset-aware layer type picker', () => {
     class CustomLayer extends LayerClasses.point {
       get name() {
         return 'Custom layer';
+      }
+
+      get supportedDatasetTypes() {
+        return [DatasetType.BITMAP];
       }
     }
     const vector = createDataset(DatasetType.VECTOR_TILE);

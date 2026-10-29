@@ -47,6 +47,15 @@ export type LayerListProps = {
 
 export type LayerListFactoryDeps = [typeof LayerPanelFactory, typeof LayerGroupHeaderFactory];
 
+const SPECIALIZED_DATASET_TYPES = new Set<string>([
+  DatasetType.VECTOR_TILE,
+  DatasetType.RASTER_TILE,
+  DatasetType.WMS_TILE,
+  DatasetType.ZARR,
+  DatasetType.BITMAP,
+  DatasetType.TILE_3D
+]);
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -343,11 +352,9 @@ function LayerListFactory(
 
     const layerTypeOptions = useMemo(() => {
       const availableDatasets = Object.values(datasets);
+      // Custom dataset types retain regular layer choices for embedding applications.
       const hasRegularDataset = availableDatasets.some(
-        dataset =>
-          !dataset.type ||
-          dataset.type === DatasetType.LOCAL ||
-          dataset.type === DatasetType.EXTERNALLY_HOSTED
+        dataset => !SPECIALIZED_DATASET_TYPES.has(dataset.type || '')
       );
 
       return Object.keys(layerClasses)

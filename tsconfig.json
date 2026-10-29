@@ -24,7 +24,11 @@
     "baseUrl": ".",
     "paths": {
       // Map all modules to their source
-      "@kepler.gl/*": ["src/*/src"]
+      "@kepler.gl/*": ["src/*/src"],
+      // Lexical 0.48 exposes declarations through exports; keep legacy resolution elsewhere.
+      "lexical": ["node_modules/lexical/dist/index.d.ts"],
+      "@lexical/react/*": ["node_modules/@lexical/react/dist/*.d.ts"],
+      "@lexical/*": ["node_modules/@lexical/*/dist/index.d.ts"]
     }
   },
   "include": ["src"],
