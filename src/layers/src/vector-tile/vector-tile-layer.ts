@@ -530,8 +530,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
   hasHoveredObject(objectInfo) {
     if (super.hasHoveredObject(objectInfo)) {
-      const features = objectInfo?.tile?.content?.features;
-      return features[objectInfo.index];
+      const content = objectInfo?.tile?.content;
+      const features = Array.isArray(content) ? content : content?.features;
+      return features?.[objectInfo.index] ?? null;
     }
     return null;
   }
@@ -699,7 +700,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               radiusField: this.config.radiusField,
               radiusScale: this.config.radiusScale,
               radiusDomain: this.config.radiusDomain,
-              radiusRange: this.config.radiusRange,
+              radiusRange: visConfig.radiusRange,
               currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },

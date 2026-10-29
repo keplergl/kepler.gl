@@ -212,3 +212,79 @@ test('#GeohashGeometry -> findDefaultLayerProps', t => {
   t.equal(props[0].columns.token.value, 'geohash', 'should auto-detect geohash column');
   t.end();
 });
+
+test('#GeohashGeometry -> fixed height uses source values', t => {
+  const dataset = new KeplerTable({info: {id: dataId}, color: [255, 0, 0]});
+  dataset.importData({
+    data: processCsvData(`token,height
+9q8yyk,0
+9q8yyk,10
+9q8yyk,20
+9q8yyk,
+`)
+  });
+  dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+  const datasets = {[dataId]: dataset};
+
+  testFormatLayerDataCases(t, GeohashGeometryLayer, [
+    {
+      name: 'fixed height',
+      layer: {
+        type: 'geohash',
+        config: {
+          dataId,
+          columns: {token: 'token'},
+          heightField: {name: 'height', type: 'integer'},
+          visConfig: {
+            enable3d: true,
+            heightRange: [0, 100],
+            elevationScale: 1,
+            enableElevationZoomFactor: false
+          }
+        }
+      },
+      datasets,
+      assert: ({layer, layerData}) => {
+        for (const globe of [false, true]) {
+          let previousTriggers;
+          for (const fixedHeight of [false, true, false]) {
+            layer.updateLayerVisConfig({fixedHeight});
+            const data = layer.formatLayerData(datasets, layerData);
+            const [rendered] = layer.renderLayer({
+              data,
+              idx: 0,
+              mapState: {zoom: 10, globe: {enabled: globe}},
+              gpuFilter: dataset.gpuFilter,
+              interactionConfig: {},
+              visible: true
+            });
+            t.deepEqual(
+              rendered.props.data.map(rendered.props.getElevation),
+              fixedHeight ? [0, 10, 20, 0] : [0, 50, 100, 0],
+              `rendered elevations ${
+                fixedHeight ? 'preserve source values' : 'use height range'
+              } (globe=${globe})`
+            );
+            const triggers = rendered.props.updateTriggers.getElevation;
+            if (previousTriggers) {
+              t.notDeepEqual(
+                triggers,
+                previousTriggers,
+                'toggling fixed height invalidates elevations'
+              );
+            }
+            previousTriggers = triggers;
+          }
+        }
+        layer.updateLayerVisConfig({fixedHeight: true});
+        layer.updateLayerConfig({heightField: null});
+        t.equal(
+          layer.formatLayerData(datasets).getElevation,
+          defaultElevation,
+          'missing height field retains the default elevation'
+        );
+      }
+    }
+  ]);
+  t.end();
+});

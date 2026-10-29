@@ -220,6 +220,7 @@ export default class GeohashGeometryLayer extends Layer {
       },
       height: {
         property: 'height',
+        fixed: 'fixedHeight',
         field: 'heightField',
         scale: 'heightScale',
         domain: 'heightDomain',

@@ -3,7 +3,7 @@
 
 import TripLayer from './trip-layer';
 import KeplerTable from '@kepler.gl/table';
-import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL, SCALE_TYPES} from '@kepler.gl/constants';
 
 /**
  * Build a small taxi-trip table: 3 trips (2 points each) across 3 companies.
@@ -106,5 +106,43 @@ describe('TripLayer TABLE mode color by field', () => {
     expect(colors[0]).toEqual([0, 168, 107]);
     expect(colors[1]).toEqual([0, 0, 0]);
     expect(colors[2]).toEqual([232, 33, 39]);
+  });
+});
+
+describe('TripLayer text label collision', () => {
+  test('renders moving labels with collision off, on, and off again', async () => {
+    const table = await makeTripTable();
+    const layer = makeTripLayer(table);
+    const field = table.fields[4];
+    let previousData = null;
+
+    for (const collisionEnabled of [false, true, false]) {
+      layer.updateLayerConfig({textLabel: [{...DEFAULT_TEXT_LABEL, field, collisionEnabled}]});
+      const data = layer.formatLayerData({[table.id]: table}, previousData);
+      const domain = layer.config.animation.domain;
+      if (!domain) {
+        throw new Error('Trip data should provide an animation domain');
+      }
+      const [trail, text] = layer.renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState: {zoom: 10, latitude: 37.77, longitude: -122.42},
+        animationConfig: {domain, currentTime: domain[0] + 5000},
+        visible: true,
+        layerCallbacks: {},
+        idx: 0
+      });
+      expect(text.props.getText(data.data[0])).toBe('Uber');
+      expect(text.props.getPosition(data.data[0])[0]).toBeCloseTo(-122.415);
+      expect(text.props.getPosition(data.data[0])[1]).toBeCloseTo(37.775);
+      expect(text.props.extensions).toHaveLength(collisionEnabled ? 1 : 0);
+      expect(text.props.extensions.map(extension => extension.constructor.extensionName)).toEqual(
+        collisionEnabled ? ['CollisionFilterExtension'] : []
+      );
+      expect(trail.props.extensions.map(extension => extension.constructor.extensionName)).toEqual([
+        'DataFilterExtension'
+      ]);
+      previousData = data;
+    }
   });
 });

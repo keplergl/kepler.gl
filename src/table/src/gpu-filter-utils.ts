@@ -310,6 +310,7 @@ function findFilterOnGpuChannel(
   return filters.find(
     f =>
       f.gpu &&
+      f.enabled !== false &&
       !isNumericIntervalFilter(f) &&
       f.dataId.includes(dataId) &&
       f.gpuChannel &&
@@ -325,6 +326,7 @@ function findFilterOnGpuEndChannel(
   return filters.find(
     f =>
       f.gpu &&
+      f.enabled !== false &&
       !isNumericIntervalFilter(f) &&
       f.dataId.includes(dataId) &&
       f.gpuEndChannel &&

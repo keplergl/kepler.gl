@@ -2,6 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
   getEOBands,
@@ -1163,5 +1166,94 @@ test('#RasterTileLayer -> only image blobs are treated as downloadable PNGs', t 
     isDownloadableImageBlob({type: 'image/png', size: 0}),
     'an empty image blob should not download'
   );
+  t.end();
+});
+
+test('#RasterTileLayer -> replacing a PMTiles URL reloads cached tile content', async t => {
+  const layer = new RasterTileLayer({id: 'pmtiles-cache', dataId: 'raster'});
+  layer.updateLayerVisConfig({enableTerrain: false});
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, longitude: 0, latitude: 0, zoom: 2})
+  });
+  const requests = [];
+  const imageA = new Uint8Array([10, 20, 30, 255]);
+  const imageB = new Uint8Array([40, 50, 60, 255]);
+  const format = (url, oldData) => {
+    const data = layer.formatLayerData(
+      {raster: {...MOCK_PMTILES_DATASET, metadata: {...MOCK_PMTILES_METADATA, metadataUrl: url}}},
+      oldData
+    );
+    // Keep the production PMTiles source and cache lifecycle, replacing only archive I/O.
+    data.tileSource.getTileData = async () => {
+      requests.push(url);
+      return url.endsWith('a.pmtiles') ? imageA : imageB;
+    };
+    return data;
+  };
+  const render = async data => {
+    const deckLayer = layer.renderLayer({
+      ...createRenderOpts(data.dataset),
+      data,
+      visible: true
+    })[0];
+    // Exercise TileLayer/Tileset2D on the test device without drawing bitmap sublayers.
+    const rendered = deckLayer.clone({renderSubLayers: () => null});
+    manager.setLayers([rendered]);
+    await Promise.all(rendered.state.tileset.selectedTiles.map(tile => tile.data));
+    return rendered;
+  };
+
+  try {
+    const firstData = format('https://example.com/a.pmtiles');
+    const first = await render(firstData);
+    const tileset = first.state.tileset;
+    const reload = sinon.spy(tileset, 'reloadAll');
+    t.ok(requests.length > 0, 'initial source loads visible tiles');
+    t.equal(tileset.selectedTiles[0].content.image, imageA, 'cache contains the original image');
+    const initialRequests = requests.length;
+
+    const sameSource = await render(firstData);
+    t.equal(sameSource.state.tileset, tileset, 'the same layer keeps its tile cache');
+    t.equal(requests.length, initialRequests, 'an ordinary rerender does not reload tiles');
+
+    layer.updateLayerVisConfig({opacity: 0.4, showTileBorders: true});
+    await render(firstData);
+    t.equal(requests.length, initialRequests, 'style changes do not reload tiles');
+
+    const equivalentData = format('https://example.com/a.pmtiles', firstData);
+    t.notEqual(
+      equivalentData.tileSource,
+      firstData.tileSource,
+      'metadata replacement makes a new source'
+    );
+    await render(equivalentData);
+    t.equal(
+      requests.length,
+      initialRequests,
+      'a replacement source with the same URL keeps cached data'
+    );
+    t.equal(reload.callCount, 0, 'no cache reload was needed for unchanged content');
+
+    const changedData = format('https://example.com/b.pmtiles', equivalentData);
+    const changed = await render(changedData);
+    t.equal(
+      changed.props.tileSource,
+      changedData.tileSource,
+      'render receives the replacement source'
+    );
+    t.equal(changed.state.tileset, tileset, 'replacement reuses the existing tileset');
+    t.equal(reload.callCount, 1, 'changing the source URL reloads the existing cache');
+    t.ok(
+      requests.includes('https://example.com/b.pmtiles'),
+      'visible tiles are requested from the new source'
+    );
+    t.equal(
+      tileset.selectedTiles[0].content.image,
+      imageB,
+      'cached content is replaced by the new image'
+    );
+  } finally {
+    manager.finalize();
+  }
   t.end();
 });

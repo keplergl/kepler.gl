@@ -73,7 +73,7 @@
     "@types/geojson": "^7946.0.8",
     "@types/keymirror": "^0.1.1",
     "@types/styled-components": "^5.1.32",
-    "a5-js": "^0.7.3",
+    "a5-js": "^1.0.0",
     "apache-arrow": ">=15.0.0",
     "buffer": "6.0.3",
     "d3-array": "^2.8.0",

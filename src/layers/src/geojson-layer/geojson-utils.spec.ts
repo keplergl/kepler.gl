@@ -7,15 +7,152 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {ArrowDataContainer} from '@kepler.gl/utils';
 import {processFileData} from '@kepler.gl/processors';
 import * as arrow from 'apache-arrow';
 import GeoJsonLayer from './geojson-layer';
+import GridLayer from '../grid-layer/grid-layer';
+import HexagonLayer from '../hexagon-layer/hexagon-layer';
+import ClusterLayer from '../cluster-layer/cluster-layer';
+import HeatmapLayer from '../heatmap-layer/heatmap-layer';
+import ScenegraphLayer from '../scenegraph-layer/scenegraph-layer';
 import {
   featureToHoverOutline,
+  getAllPositions,
+  getCentroidFromGeometry,
   parseGeoJsonRawFeature,
   getGeojsonFeatureTypes,
   getGeojsonBounds
 } from './geojson-utils';
+
+describe('GeoJSON coordinates', () => {
+  test.each([
+    {coordinates: [null, null]},
+    {coordinates: [null, 20]},
+    {coordinates: [10, null]},
+    {coordinates: [undefined, 20]},
+    {coordinates: [10]},
+    {coordinates: []},
+    {coordinates: null},
+    {coordinates: [NaN, 20]},
+    {coordinates: [10, Infinity]}
+  ])('excludes missing or nonfinite coordinates: $coordinates', ({coordinates}) => {
+    const geometry = {type: 'Point', coordinates};
+    expect(getAllPositions(geometry)).toEqual([]);
+    expect(getCentroidFromGeometry(geometry)).toBeNull();
+  });
+
+  test('keeps zero, numeric strings and typed coordinates when collecting nested positions', () => {
+    const geometry = {
+      type: 'GeometryCollection',
+      geometries: [
+        {type: 'Point', coordinates: [0, 0]},
+        {type: 'Point', coordinates: ['0', '20']},
+        {type: 'Point', coordinates: new Float64Array([10, 0])},
+        {
+          type: 'LineString',
+          coordinates: [
+            [null, null],
+            [10, null],
+            [null, 20],
+            [10, 20]
+          ]
+        }
+      ]
+    };
+    expect(getAllPositions(geometry)).toEqual([
+      [0, 0],
+      [0, 20],
+      [10, 0],
+      [10, 20]
+    ]);
+    expect(getCentroidFromGeometry(geometry)).toEqual([5, 10]);
+  });
+
+  describe.each([
+    {name: 'Grid', LayerClass: GridLayer},
+    {name: 'Hexbin', LayerClass: HexagonLayer},
+    {name: 'Cluster', LayerClass: ClusterLayer},
+    {name: 'Heatmap', LayerClass: HeatmapLayer},
+    {name: '3D', LayerClass: ScenegraphLayer}
+  ])('$name rendering', ({LayerClass}) => {
+    test.each(['rows', 'multi-batch Arrow'])(
+      'excludes missing coordinates and keeps zero coordinates from %s in 2D and globe',
+      async storage => {
+        const coordinates = [
+          [null, null],
+          [null, 20],
+          [10, null],
+          null,
+          [],
+          [10],
+          [0, 0],
+          [0, 20],
+          [10, 0],
+          [10, 20]
+        ];
+        const values = coordinates.map(value =>
+          JSON.stringify({type: 'Point', coordinates: value})
+        );
+        const dataset = new KeplerTable({info: {id: 'coordinates'}, color: [0, 0, 0]}).updateSchema(
+          {
+            fields: [{name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}],
+            rows: storage === 'rows' ? values.map(value => [value]) : [],
+            ...(storage === 'rows'
+              ? {}
+              : {
+                  cols: [arrow.vectorFromArray(values.slice(0, 5), new arrow.Utf8())]
+                })
+          }
+        );
+        if (storage !== 'rows') {
+          const table = new arrow.Table({
+            geometry: arrow.vectorFromArray(values.slice(0, 5), new arrow.Utf8())
+          }).concat(
+            new arrow.Table({
+              geometry: arrow.vectorFromArray(values.slice(5), new arrow.Utf8())
+            })
+          );
+          // Progressive updates retain batches, while completed imports compact them.
+          await dataset.update({
+            fields: dataset.fields,
+            rows: [],
+            cols: [table.getChildAt(0)],
+            arrowTable: table
+          });
+          expect((dataset.dataContainer as ArrowDataContainer).getTable().batches).toHaveLength(2);
+        }
+        const layer: any = new LayerClass({
+          dataId: dataset.id,
+          columnMode: 'geojson',
+          columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+        });
+        const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+        for (const globe of [false, true]) {
+          const [rendered] = layer.renderLayer({
+            data,
+            gpuFilter: dataset.gpuFilter,
+            idx: 0,
+            visible: true,
+            layerCallbacks: {},
+            mapState: {zoom: 4, width: 800, height: 600, globe: {enabled: globe}}
+          });
+          expect(rendered.props.data.map(row => row.index)).toEqual([6, 7, 8, 9]);
+          expect(
+            rendered.props.data.map(row => rendered.props.getPosition(row).slice(0, 2))
+          ).toEqual([
+            [0, 0],
+            [0, 20],
+            [10, 0],
+            [10, 20]
+          ]);
+        }
+        expect(layer.centroids.slice(0, 6)).toEqual([null, null, null, null, null, null]);
+        expect(layer.meta.bounds).toEqual([0, 0, 10, 20]);
+      }
+    );
+  });
+});
 
 // Exercise deck.gl's real data conversion without creating a WebGL context.
 function renderGeojsonFeatures(data: Feature[]) {
