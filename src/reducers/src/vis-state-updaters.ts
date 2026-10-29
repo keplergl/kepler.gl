@@ -5601,6 +5601,23 @@ export const setMapInfoUpdater = (
     }
   };
 };
+/** Remove automatic Point layers duplicated by Icons using the same dataset and lat/lng fields. */
+function deduplicateAutoLayers(layers: Layer[]) {
+  return layers.filter(
+    point =>
+      Object.getPrototypeOf(point) !== LayerClasses.point.prototype ||
+      !layers.some(
+        icon =>
+          Object.getPrototypeOf(icon) === LayerClasses.icon.prototype &&
+          icon.config.dataId === point.config.dataId &&
+          ['lat', 'lng'].every(
+            column =>
+              icon.config.columns[column]?.fieldIdx === point.config.columns[column]?.fieldIdx
+          )
+      )
+  );
+}
+
 /**
  * Helper function to update All layer domain and layer data of state
  */
@@ -5611,7 +5628,7 @@ export function addDefaultLayers(
   const empty: Layer[] = [];
   const defaultLayers = Object.values(datasets).reduce((accu: Layer[], dataset) => {
     const foundLayers = findDefaultLayer(dataset, state.layerClasses);
-    return foundLayers && foundLayers.length ? accu.concat(foundLayers) : accu;
+    return accu.concat(deduplicateAutoLayers(foundLayers));
   }, empty);
 
   return {

@@ -6,6 +6,7 @@ import {load} from '@loaders.gl/core';
 import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
 
 import Layer, {LayerBaseConfig} from '../base-layer';
+import {getFilterDataFunc} from '../aggregation-layer';
 import ScenegraphLayerIcon from './scenegraph-layer-icon';
 import ScenegraphInfoModalFactory from './scenegraph-info-modal';
 import {
@@ -270,6 +271,8 @@ export default class ScenegraphLayer extends Layer {
   dataToFeature: any[] = [];
   centroids: Array<number[] | null> = [];
   private _geojsonFieldIdx = -1;
+  private _geojsonDataContainer: DataContainerInterface | null = null;
+  private _geojsonDataRevision: number | undefined;
   private _geojsonBounds: [number, number, number, number] | null = null;
 
   constructor(props) {
@@ -360,12 +363,29 @@ export default class ScenegraphLayer extends Layer {
     const {columnMode} = this.config;
     return {
       ...triggers,
-      getData: {...triggers.getData, columnMode},
+      getData: {
+        ...triggers.getData,
+        columnMode,
+        filterRange: dataset.gpuFilter.filterRange,
+        ...dataset.gpuFilter.filterValueUpdateTriggers
+      },
       getMeta: {...triggers.getMeta, columnMode}
     };
   }
 
-  calculateDataAttribute({filteredIndex}: KeplerTable, getPosition) {
+  calculateDataAttribute(dataset: KeplerTable, getPosition) {
+    const {gpuFilter, dataContainer} = dataset;
+    // ScenegraphLayer has no DataFilterExtension, so apply its active channels on the CPU.
+    const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+      trigger => trigger !== null
+    );
+    const filterData = getFilterDataFunc(
+      gpuFilter.filterRange,
+      gpuFilter.filterValueAccessor(dataContainer)()
+    );
+    const filteredIndex = hasFilter
+      ? dataset.filteredIndex.filter(index => filterData({index}))
+      : dataset.filteredIndex;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return this._calculateGeojsonDataAttribute(filteredIndex);
     }
@@ -440,7 +460,7 @@ export default class ScenegraphLayer extends Layer {
         geoField?.metadata && typeof (geoField.metadata as Map<string, string>).get === 'function'
           ? (geoField.metadata as Map<string, string>).get(GEOARROW_METADATA_KEY)
           : (geoField?.metadata as Record<string, string> | undefined)?.[GEOARROW_METADATA_KEY];
-      this._buildGeojsonDataToFeature(dataContainer, getFeature, encoding);
+      this._buildGeojsonDataToFeature(dataset, getFeature, encoding);
       this.updateMeta({bounds: this._geojsonBounds});
       return;
     }
@@ -452,18 +472,23 @@ export default class ScenegraphLayer extends Layer {
   }
 
   private _buildGeojsonDataToFeature(
-    dataContainer: DataContainerInterface,
+    dataset: KeplerTable,
     getFeature: (d: {index: number}) => unknown,
     geoArrowEncoding?: string | null
   ) {
+    const {dataContainer, dataRevision} = dataset;
     const fieldIdx = this.config.columns.geojson?.fieldIdx ?? -1;
     if (
       this.dataToFeature.length === dataContainer.numRows() &&
-      this._geojsonFieldIdx === fieldIdx
+      this._geojsonFieldIdx === fieldIdx &&
+      this._geojsonDataContainer === dataContainer &&
+      this._geojsonDataRevision === dataRevision
     ) {
       return;
     }
     this._geojsonFieldIdx = fieldIdx;
+    this._geojsonDataContainer = dataContainer;
+    this._geojsonDataRevision = dataRevision;
     this.dataToFeature = [];
     this.centroids = [];
 

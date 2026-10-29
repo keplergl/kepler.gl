@@ -9,7 +9,7 @@ import Layer, {
   LayerSizeConfig
 } from '../base-layer';
 import {BrushingExtension} from '@deck.gl/extensions';
-import {GeoJsonLayer} from '@deck.gl/layers';
+import {GeoJsonLayer, PolygonLayer} from '@deck.gl/layers';
 import {H3HexagonLayer} from '@deck.gl/geo-layers';
 import type {Feature} from 'geojson';
 import {EnhancedColumnLayer} from '@kepler.gl/deckgl-layers';
@@ -167,6 +167,53 @@ export const HexagonIdVisConfigs: {
 };
 
 const brushingExtension = new BrushingExtension();
+
+// deck.gl's high-precision path only supports uniform coverage. Apply the
+// coverage accessor to its polygon geometry while keeping its renderer selection.
+class H3HexagonLayerWithCoverage extends H3HexagonLayer<
+  HexagonIdLayerData,
+  {getCoverage: number | ((object: HexagonIdLayerData) => number)}
+> {
+  renderLayers() {
+    const layer = super.renderLayers();
+    const {getCoverage} = this.props;
+    if (!(layer instanceof PolygonLayer) || typeof getCoverage !== 'function') {
+      return layer;
+    }
+    const {getPolygon, updateTriggers} = layer.props;
+    if (typeof getPolygon !== 'function') {
+      return layer;
+    }
+
+    return layer.clone({
+      getPolygon: (object, objectInfo) => {
+        const coverage = getCoverage(object);
+        const polygon = getPolygon(object, objectInfo) as Float64Array;
+        if (coverage === 1) {
+          return polygon;
+        }
+        const [lng, lat] = object.centroid;
+        for (let i = 0; i < polygon.length; i += 2) {
+          // Keep dateline-crossing vertices on the same side as the cell center.
+          const delta = polygon[i] - lng;
+          const lngOffset = delta > 180 ? delta - 360 : delta < -180 ? delta + 360 : delta;
+          polygon[i] = lng + lngOffset * coverage;
+          polygon[i + 1] = lat + (polygon[i + 1] - lat) * coverage;
+        }
+        return polygon;
+      },
+      updateTriggers: {
+        ...updateTriggers,
+        // deck.gl compares trigger values shallowly; avoid nesting freshly created objects.
+        getPolygon: {
+          ...updateTriggers.getPolygon,
+          ...this.props.updateTriggers.getCoverage
+        }
+      }
+    });
+  }
+}
+
 export default class HexagonIdLayer extends Layer {
   dataToFeature: {centroids: Centroid[]};
 
@@ -404,6 +451,7 @@ export default class HexagonIdLayer extends Layer {
       getFillColor: updateTriggers.getFillColor,
       getLineColor: updateTriggers.getLineColor,
       getElevation: updateTriggers.getElevation,
+      getCoverage: updateTriggers.getCoverage,
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
@@ -430,7 +478,7 @@ export default class HexagonIdLayer extends Layer {
     };
 
     return [
-      new H3HexagonLayer({
+      new H3HexagonLayerWithCoverage({
         ...defaultLayerProps,
         ...data,
         ...brushingProps,

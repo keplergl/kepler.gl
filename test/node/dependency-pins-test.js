@@ -49,6 +49,14 @@ const ROOT_FLOORS = {
   undici: {6: '6.29.1'}
 };
 
+// These existing legacy copies need parent upgrades. Other versions and
+// lockfile locations must still fail the security checks.
+const LEGACY_EXCEPTIONS = {
+  'yarn.lock': {zod: '3.25.76'},
+  'examples/demo-app/yarn.lock': {undici: '5.29.0'},
+  'examples/demo-app-sqlrooms/yarn.lock': {undici: '5.29.0'}
+};
+
 function compareVersions(left, right) {
   const a = left.split('.').map(part => parseInt(part, 10));
   const b = right.split('.').map(part => parseInt(part, 10));
@@ -65,6 +73,10 @@ function compareVersions(left, right) {
 function releaseLine(version) {
   const [major, minor] = version.split('.');
   return major === '0' ? `0.${minor}` : major;
+}
+
+function isKnownLegacyDependency(rel, name, version) {
+  return LEGACY_EXCEPTIONS[rel]?.[name] === version;
 }
 
 function resolvedVersions(lockText, floors) {
@@ -150,10 +162,7 @@ test('lockfiles keep patched Undici and Zod release lines above their security f
     const versions = resolvedVersions(fs.readFileSync(path.join(ROOT, rel), 'utf8'), floors);
     versions.forEach((resolved, name) => {
       resolved.forEach(version => {
-        if (
-          (name === 'undici' && releaseLine(version) === '5') ||
-          (name === 'zod' && releaseLine(version) === '3')
-        ) {
+        if (isKnownLegacyDependency(rel, name, version)) {
           return;
         }
         const floor = floors[name][releaseLine(version)];
@@ -165,6 +174,31 @@ test('lockfiles keep patched Undici and Zod release lines above their security f
         );
       });
     });
+  });
+
+  t.end();
+});
+
+test('legacy security exceptions require the exact lockfile, dependency, and version', t => {
+  [
+    ['yarn.lock', 'zod', '3.25.76', true],
+    ['examples/demo-app/yarn.lock', 'undici', '5.29.0', true],
+    ['examples/demo-app-sqlrooms/yarn.lock', 'undici', '5.29.0', true],
+    ['yarn.lock', 'zod', '3.25.75', false],
+    ['yarn.lock', 'zod', '3.25.77', false],
+    ['examples/demo-app/yarn.lock', 'undici', '5.0.0', false],
+    ['examples/demo-app-sqlrooms/yarn.lock', 'undici', '5.29.1', false],
+    ['examples/node-app/yarn.lock', 'undici', '5.29.0', false],
+    ['website/yarn.lock', 'undici', '5.29.0', false],
+    ['examples/demo-app/yarn.lock', 'zod', '3.25.76', false],
+    ['examples/demo-app-sqlrooms/yarn.lock', 'zod', '3.25.76', false],
+    ['yarn.lock', 'undici', '5.29.0', false]
+  ].forEach(([rel, name, version, expected]) => {
+    t.equal(
+      isKnownLegacyDependency(rel, name, version),
+      expected,
+      `${rel} ${expected ? 'allows' : 'rejects'} ${name}@${version} as a legacy exception`
+    );
   });
 
   t.end();

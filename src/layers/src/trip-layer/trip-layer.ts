@@ -59,6 +59,7 @@ import {DataContainerInterface} from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {fetchGltf} from '../scenegraph-layer/scenegraph-layer';
+import type {Feature, LineString} from 'geojson';
 
 export type TripLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -608,13 +609,28 @@ export default class TripLayer extends Layer {
     });
   }
 
+  private _getTimestamps(feature: Feature<LineString, {index: number}>) {
+    const {index} = feature.properties;
+    const timestamps = this.dataToTimeStamp[index];
+    const originalFeature = this.dataToFeature[index] as Feature<LineString, {index: number}>;
+    if (this.config.columnMode !== COLUMN_MODE_TABLE || feature === originalFeature) {
+      return timestamps;
+    }
+
+    // Table filtering retains coordinate references but removes vertices from the trip.
+    const retainedCoordinates = new Set(feature.geometry.coordinates);
+    return timestamps?.filter((_, i) =>
+      retainedCoordinates.has(originalFeature.geometry.coordinates[i])
+    );
+  }
+
   // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
   // (dataContainer, feature, fieldIndex). The trip carries its own materialised
   // rows in properties.values, so the data container is not needed here.
   _getColumnModeValueAccessor = (dc, feature) => {
     return field => {
       if (field.fieldIdx === this.config.columns.timestamp?.fieldIdx) {
-        return this.dataToTimeStamp[feature.properties.index];
+        return this._getTimestamps(feature);
       }
       return feature.properties.values.map(v => field.valueAccessor(v));
     };
@@ -680,7 +696,7 @@ export default class TripLayer extends Layer {
       data,
       getFilterValue,
       getPath: d => d.geometry.coordinates,
-      getTimestamps: d => this.dataToTimeStamp[d.properties.index],
+      getTimestamps: d => this._getTimestamps(d),
       textLabels,
       ...accessors
     };
@@ -1029,7 +1045,7 @@ export default class TripLayer extends Layer {
           case COLUMN_MODE_TABLE:
             return feature => {
               const colors = data.getColor(feature);
-              if (this.config.colorField) {
+              if (this.config.colorField && Array.isArray(colors[0])) {
                 const {idx} = this._findDatumForFeatureByTime(
                   feature.properties.index,
                   animationConfig

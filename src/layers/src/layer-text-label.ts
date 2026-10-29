@@ -126,6 +126,7 @@ export const formatTextLabelData = ({
 
     let rebuildArrowTextVector = true;
     if (
+      !triggerChanged?.['getData'] &&
       !triggerChanged?.[`getLabelCharacterSet-${i}`] &&
       oldLayerData &&
       oldLayerData.textLabels &&

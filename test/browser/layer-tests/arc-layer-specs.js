@@ -3,6 +3,7 @@
 
 import test from 'tape';
 import moment from 'moment';
+import * as arrow from 'apache-arrow';
 
 import {
   testCreateCases,
@@ -18,16 +19,163 @@ import testArcData, {arcFromHex, arcFromNeighbor} from 'test/fixtures/test-arc-d
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {cellToLatLng} from 'h3-js';
 
-const {ArcLayer} = KeplerGlLayers;
+const {ArcLayer, LineLayer} = KeplerGlLayers;
 const columns = {
   lat0: 'lat',
   lng0: 'lng',
   lat1: 'lat_1',
   lng1: 'lng_1'
 };
+
+const geoArrowBoundsCases = [ArcLayer, LineLayer].flatMap(LayerClass =>
+  [2, 3, 4].map(dimensions => ({LayerClass, dimensions}))
+);
+
+geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
+  test(`#${LayerClass.name} -> GeoArrow ${dimensions}D endpoint bounds across batches`, async t => {
+    const pointType = new arrow.FixedSizeList(
+      dimensions,
+      new arrow.Field('coordinate', new arrow.Float64())
+    );
+    const coordinates = points =>
+      arrow.vectorFromArray(
+        points.map(point => [...point, 70, 80].slice(0, dimensions)),
+        pointType
+      );
+    const makeTable = (source, target) => {
+      const table = new arrow.Table({source: coordinates(source), target: coordinates(target)});
+      table.schema.fields.forEach(field =>
+        field.metadata.set('ARROW:extension:name', 'geoarrow.point')
+      );
+      return table;
+    };
+    const first = makeTable([[10, 20]], [[30, 40]]);
+    const dataset = new KeplerTable({info: {id: 'arc-geoarrow-bounds'}, color: [0, 0, 0]});
+    await dataset.importData({
+      data: {
+        fields: arrowSchemaToFields(first),
+        cols: first.schema.fields.map((field, index) => first.getChildAt(index))
+      }
+    });
+    const layer = new LayerClass({dataId: dataset.id, columnMode: 'geoarrow'});
+    layer.config.columns.geoarrow0 = {value: 'source', fieldIdx: 0};
+    layer.config.columns.geoarrow1 = {value: 'target', fieldIdx: 1};
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 0}),
+      [10, 20, 0, 30, 40, 0],
+      'reads longitude and latitude from both point vectors'
+    );
+    t.deepEqual(layer.meta.bounds, [10, 20, 30, 40], 'bounds include the destination');
+
+    const table = first.concat(
+      makeTable(
+        [
+          [0, 5],
+          [12, 22]
+        ],
+        [
+          [50, 60],
+          [null, null]
+        ]
+      )
+    );
+    // Progressive updates preserve batches; completed imports compact them.
+    await dataset.update({
+      cols: table.schema.fields.map((field, index) => table.getChildAt(index)),
+      arrowTable: table
+    });
+    t.equal(dataset.dataContainer.getTable().batches.length, 2, 'uses two Arrow record batches');
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 1}),
+      [0, 5, 0, 50, 60, 0],
+      'reads endpoints from the later batch with a global row index'
+    );
+    t.deepEqual(
+      layer.meta.bounds,
+      [0, 5, 50, 60],
+      'bounds include later destinations and valid zero longitude, excluding null coordinates'
+    );
+    t.end();
+  });
+});
+
+[ArcLayer, LineLayer].forEach(LayerClass => {
+  ['geoarrow', 'points'].forEach(columnMode => {
+    test(`#${LayerClass.name} -> ${columnMode} destination coordinate pairs`, async t => {
+      const cases = [
+        {target: [null, 80], bounds: [10, 20, 30, 40]},
+        {target: [150, null], bounds: [10, 20, 30, 40]},
+        {target: [NaN, 80], bounds: [10, 20, 30, 40]},
+        {target: [150, NaN], bounds: [10, 20, 30, 40]},
+        {target: [Infinity, 80], bounds: [10, 20, 30, 40]},
+        {target: [150, Infinity], bounds: [10, 20, 30, 40]},
+        {target: [-Infinity, -80], bounds: [10, 20, 30, 40]},
+        {target: [-150, -Infinity], bounds: [10, 20, 30, 40]},
+        {firstTarget: [150, null], target: [null, 80], bounds: [10, 20, 12, 22]},
+        {target: [0, 45], bounds: [0, 20, 30, 45]},
+        {target: [35, 0], bounds: [10, 0, 35, 40]},
+        {target: [0, 0], bounds: [0, 0, 30, 40]}
+      ];
+      for (const {target, bounds, firstTarget = [30, 40]} of cases) {
+        const pointType = new arrow.FixedSizeList(
+          2,
+          new arrow.Field('coordinate', new arrow.Float64())
+        );
+        const table = new arrow.Table({
+          source: arrow.vectorFromArray(
+            [
+              [10, 20],
+              [12, 22]
+            ],
+            pointType
+          ),
+          target: arrow.vectorFromArray([firstTarget, target], pointType)
+        });
+        table.schema.fields.forEach(field =>
+          field.metadata.set('ARROW:extension:name', 'geoarrow.point')
+        );
+        const numericTable = new arrow.Table({
+          lng0: arrow.vectorFromArray([10, 12], new arrow.Float64()),
+          lat0: arrow.vectorFromArray([20, 22], new arrow.Float64()),
+          lng1: arrow.vectorFromArray([firstTarget[0], target[0]], new arrow.Float64()),
+          lat1: arrow.vectorFromArray([firstTarget[1], target[1]], new arrow.Float64())
+        });
+        const dataset = new KeplerTable({info: {id: 'endpoint-pairs'}, color: [0, 0, 0]});
+        await dataset.importData({
+          data:
+            columnMode === 'geoarrow'
+              ? {
+                  fields: arrowSchemaToFields(table),
+                  cols: table.schema.fields.map((field, index) => table.getChildAt(index))
+                }
+              : {
+                  fields: arrowSchemaToFields(numericTable),
+                  rows: [
+                    [10, 20, ...firstTarget],
+                    [12, 22, ...target]
+                  ]
+                }
+        });
+        const layer = new LayerClass({dataId: dataset.id, columnMode});
+        const names =
+          columnMode === 'geoarrow' ? ['source', 'target'] : ['lng0', 'lat0', 'lng1', 'lat1'];
+        const keys = columnMode === 'geoarrow' ? ['geoarrow0', 'geoarrow1'] : names;
+        keys.forEach((key, fieldIdx) => {
+          layer.config.columns[key] = {value: names[fieldIdx], fieldIdx};
+        });
+        layer.updateLayerMeta(dataset);
+        t.deepEqual(layer.meta.bounds, bounds, `bounds for target [${target.join(', ')}]`);
+      }
+      t.end();
+    });
+  });
+});
 
 test('#ArcLayer -> constructor', t => {
   const TEST_CASES = {

@@ -530,8 +530,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
   hasHoveredObject(objectInfo) {
     if (super.hasHoveredObject(objectInfo)) {
-      const features = objectInfo?.tile?.content?.features;
-      return features[objectInfo.index];
+      const content = objectInfo?.tile?.content;
+      const features = Array.isArray(content) ? content : content?.features;
+      return features?.[objectInfo.index] ?? null;
     }
     return null;
   }
@@ -699,7 +700,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               radiusField: this.config.radiusField,
               radiusScale: this.config.radiusScale,
               radiusDomain: this.config.radiusDomain,
-              radiusRange: this.config.radiusRange,
+              radiusRange: visConfig.radiusRange,
               currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },
@@ -723,7 +724,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
                 // @ts-expect-error props not typed?
                 ...objectHovered.sourceLayer?.props,
                 ...(this.getDefaultHoverLayerProps() as any),
-                visible: true,
+                visible: defaultLayerProps.visible,
                 wrapLongitude: false,
                 data: [hoveredObject],
                 getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,
@@ -791,7 +792,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           return new GeoJsonLayer({
             ...(this.getDefaultHoverLayerProps() as any),
             id: `${options.defaultLayerProps.id}-hover-outline-${tileId}`,
-            visible: true,
+            visible: options.defaultLayerProps.visible,
             wrapLongitude: false,
             data: feats,
             getLineColor: DEFAULT_HIGHLIGHT_STROKE_COLOR,

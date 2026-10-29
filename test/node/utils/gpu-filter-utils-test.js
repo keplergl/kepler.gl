@@ -328,6 +328,35 @@ test('gpuFilterUtils -> getGpuFilterProps unchanged for single-channel filters',
   t.equal(gpu.filterValueUpdateTriggers.gpuFilter_1, null);
   t.equal(Object.prototype.hasOwnProperty.call(filters[0], 'gpuEndChannel'), false);
 
+  const row = {index: 1, value: 6};
+  const activeValues = gpu.filterValueAccessor(null)()(row);
+  filters.forEach((filter, index) => {
+    const channel = filter.gpuChannel[0];
+    const disabledFilters = filters.map((f, i) => (i === index ? {...f, enabled: false} : f));
+    const disabled = getGpuFilterProps(disabledFilters, 'ds', fields, gpu);
+    t.deepEqual(
+      disabled.filterRange,
+      gpu.filterRange.map((range, i) => (i === channel ? [0, 0] : range)),
+      `${filter.type}: disabling leaves the other filter range intact`
+    );
+    t.equal(disabled.filterValueUpdateTriggers[`gpuFilter_${channel}`], null);
+    t.deepEqual(
+      disabled.filterValueAccessor(null)()(row),
+      activeValues.map((value, i) => (i === channel ? 0 : value)),
+      `${filter.type}: the disabled channel passes every row`
+    );
+
+    const reenabled = getGpuFilterProps(
+      disabledFilters.map((f, i) => (i === index ? {...f, enabled: true} : f)),
+      'ds',
+      fields,
+      disabled
+    );
+    t.deepEqual(reenabled.filterRange, gpu.filterRange, `${filter.type}: restores saved ranges`);
+    t.deepEqual(reenabled.filterValueUpdateTriggers, gpu.filterValueUpdateTriggers);
+    t.deepEqual(reenabled.filterValueAccessor(null)()(row), activeValues);
+  });
+
   t.end();
 });
 
@@ -367,6 +396,31 @@ test('gpuFilterUtils -> getGpuFilterProps interval overlap ranges', t => {
     'start trigger uses start field'
   );
   t.equal(gpu.filterValueUpdateTriggers.gpuFilter_1.name, 'end', 'end trigger uses end field');
+
+  const disabled = getGpuFilterProps([{...filters[0], enabled: false}], 'ds', fields, gpu);
+  t.deepEqual(
+    disabled.filterRange,
+    [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    'disabling an interval neutralizes both start and end ranges'
+  );
+  t.equal(disabled.filterValueUpdateTriggers.gpuFilter_0, null);
+  t.equal(disabled.filterValueUpdateTriggers.gpuFilter_1, null);
+  const row = {index: 1};
+  t.deepEqual(disabled.filterValueAccessor(null)()(row), [0, 0, 0, 0]);
+
+  const reenabled = getGpuFilterProps([{...filters[0], enabled: true}], 'ds', fields, disabled);
+  t.deepEqual(reenabled.filterRange, gpu.filterRange, 're-enabling restores the interval window');
+  t.deepEqual(reenabled.filterValueUpdateTriggers, gpu.filterValueUpdateTriggers);
+  t.deepEqual(
+    reenabled.filterValueAccessor(null)()(row),
+    [1000, 3000, 0, 0],
+    're-enabling restores both timestamp accessors'
+  );
 
   t.end();
 });

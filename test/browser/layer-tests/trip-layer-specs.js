@@ -13,6 +13,10 @@ import {
 } from '@kepler.gl/layers';
 
 import {copyTableAndUpdate} from '@kepler.gl/table';
+import {processCsvData} from '@kepler.gl/processors';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
+import {VisStateActions} from '@kepler.gl/actions';
+import {applyActions} from 'test/helpers/mock-state';
 const {TripLayer} = KeplerGlLayers;
 
 import {
@@ -303,6 +307,108 @@ test('#TripLayer -> formatLayerData -> table column mode with gpu filter', t => 
   t.end();
 });
 
+test('#TripLayer -> table vertex filters keep rendered and GPU timestamps aligned', t => {
+  const start = Date.UTC(2024, 0, 1);
+  const csv = `id,lat,lng,timestamp,status
+dropped,9,19,2024-01-01 00:00:00,skip
+retained,13,23,2024-01-01 00:00:30,last
+retained,10,20,2024-01-01 00:00:00,skip
+retained,11,21,2024-01-01 00:00:10,keep
+retained,12,22,2024-01-01 00:00:20,skip
+retained,,,2024-01-01 00:00:40,keep
+retained,14,24,,keep`;
+  let state = applyActions(visStateReducer, INITIAL_VIS_STATE, [
+    {
+      action: VisStateActions.updateVisData,
+      payload: [{info: {id: dataId}, data: processCsvData(csv)}]
+    },
+    {action: VisStateActions.addFilter, payload: [dataId]},
+    {action: VisStateActions.setFilter, payload: [0, 'name', 'timestamp']}
+  ]);
+
+  testFormatLayerDataCases(t, TripLayer, [
+    {
+      name: 'filtered trip timestamps',
+      layer: {
+        type: 'trip',
+        config: {
+          dataId,
+          columnMode: 'table',
+          columns: {id: 'id', lat: 'lat', lng: 'lng', timestamp: 'timestamp'}
+        }
+      },
+      datasets: state.datasets,
+      assert: ({layer, layerData}) => {
+        t.deepEqual(
+          layerData.getTimestamps(layerData.data[1]),
+          [start, start + 10000, start + 20000, start + 30000],
+          'unfiltered timestamps are sorted and omit rows missing coordinates or time'
+        );
+        state = visStateReducer(state, VisStateActions.addFilter(dataId));
+        state = visStateReducer(state, VisStateActions.setFilter(1, 'name', 'status'));
+
+        [
+          {
+            value: ['keep', 'last'],
+            coordinates: [
+              [21, 11],
+              [23, 13]
+            ],
+            times: [10000, 30000]
+          },
+          {value: ['last'], coordinates: [[23, 13]], times: [30000]},
+          {value: ['absent'], coordinates: [], times: []},
+          {
+            value: ['keep', 'last', 'skip'],
+            coordinates: [
+              [20, 10],
+              [21, 11],
+              [22, 12],
+              [23, 13]
+            ],
+            times: [0, 10000, 20000, 30000]
+          }
+        ].forEach(({value, coordinates, times}) => {
+          state = visStateReducer(state, VisStateActions.setFilter(1, 'value', value));
+          layerData = layer.formatLayerData(state.datasets, layerData);
+          const feature = layerData.data.find(d => d.properties.index === 1);
+          t.deepEqual(
+            feature ? layerData.getPath(feature).map(c => c.slice(0, 2)) : [],
+            coordinates,
+            `categorical filter ${value} retains the expected sorted coordinates`
+          );
+          if (!feature) {
+            t.equal(layerData.data.length, 0, 'filtering every vertex leaves no trips');
+            return;
+          }
+          t.deepEqual(
+            layerData.getTimestamps(feature),
+            times.map(time => start + time),
+            `categorical filter ${value} retains the matching normalized timestamps`
+          );
+          t.deepEqual(
+            layerData.getFilterValue(feature).map(vertex => vertex[0]),
+            times,
+            'GPU timestamp values stay aligned with retained vertices'
+          );
+          const [trails] = layer.renderLayer({
+            data: layerData,
+            gpuFilter: state.datasets[dataId].gpuFilter,
+            mapState: INITIAL_MAP_STATE,
+            animationConfig: {domain: [start, start + 40000], currentTime: start + 15000}
+          });
+          t.deepEqual(
+            trails.props.getTimestamps(feature),
+            times,
+            'rendered timestamps retain the same coordinate order after domain subtraction'
+          );
+        });
+      }
+    }
+  ]);
+  t.end();
+});
+
 test('#TripLayer -> renderLayer', t => {
   const filteredIndex = [0, 2, 4];
 
@@ -465,6 +571,102 @@ test('#TripLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, TripLayer, TEST_CASES);
+  t.end();
+});
+
+test('#TripLayer -> renderLayer model colors preserve trail color shape', t => {
+  const TEST_CASES = [
+    {
+      columnMode: 'table',
+      dataset: prepareTripTableDataset,
+      columns: {
+        id: 'name',
+        lat: 'location-lat',
+        lng: 'location-lng',
+        timestamp: 'timestamp',
+        altitude: 'location-alt'
+      },
+      colorField: {name: 'name', type: 'string'}
+    },
+    {
+      columnMode: 'geojson',
+      dataset: prepareTripGeoDataset,
+      columns: {geojson: '_geojson'},
+      colorField: {name: 'types', type: 'string'}
+    }
+  ].map(({columnMode, dataset, columns, colorField}) => ({
+    name: `Trip model colors: ${columnMode}`,
+    layer: {
+      type: 'trip',
+      id: `trip-model-colors-${columnMode}`,
+      config: {
+        dataId,
+        columnMode,
+        columns,
+        colorField,
+        color: [40, 50, 60],
+        visConfig: {
+          colorRange: {colors: ['#0a141e']},
+          scenegraphEnabled: true,
+          scenegraph: 'custom',
+          scenegraphCustomModelUrl: 'https://example.com/model.glb',
+          scenegraphColorEnabled: true,
+          scenegraphUseTrailColor: true
+        }
+      }
+    },
+    datasets: {[dataId]: dataset},
+    assert: ({layerData, layer}) => {
+      const feature = layerData.data[0];
+      const timestamps = layerData.getTimestamps(feature);
+      const time = (timestamps[0] + timestamps[1]) / 2;
+      // Inspect the public render output without fetching a model or starting WebGL.
+      const renderModel = (data = layerData, currentTime = time) =>
+        layer.renderLayer({
+          data,
+          gpuFilter: dataset.gpuFilter,
+          mapState: {zoom: 10},
+          animationConfig: {domain: layer.animationDomain, currentTime}
+        })[1];
+
+      t.deepEqual(layerData.getColor(feature), [10, 20, 30], 'field encodes one RGB per trip');
+      t.deepEqual(
+        renderModel().props.getColor(feature),
+        [10, 20, 30],
+        `${columnMode} model receives the full field-encoded trail color`
+      );
+
+      if (columnMode === 'table') {
+        const vertexColors = timestamps.map((_, i) => [i, i + 10, i + 20]);
+        const vertexData = {...layerData, getColor: () => vertexColors};
+        t.deepEqual(
+          renderModel(vertexData).props.getColor(feature),
+          vertexColors[1],
+          'per-vertex colors still select the active vertex'
+        );
+        t.deepEqual(
+          renderModel(vertexData, timestamps[0] - 1).props.getColor(feature),
+          [255, 255, 255],
+          'per-vertex colors use the default outside the trip time range'
+        );
+      }
+
+      layer.updateLayerConfig({colorField: null});
+      const fixedData = layer.formatLayerData({[dataId]: dataset}, layerData);
+      t.deepEqual(
+        renderModel(fixedData).props.getColor(feature),
+        [40, 50, 60],
+        'uniform trail color without a field stays unchanged'
+      );
+
+      layer.updateLayerVisConfig({scenegraphUseTrailColor: false, scenegraphColor: [70, 80, 90]});
+      t.deepEqual(renderModel().props.getColor, [70, 80, 90], 'explicit model color is preserved');
+      layer.updateLayerVisConfig({scenegraphColorEnabled: false});
+      t.deepEqual(renderModel().props.getColor, [255, 255, 255], 'disabled model tint uses white');
+    }
+  }));
+
+  testFormatLayerDataCases(t, TripLayer, TEST_CASES);
   t.end();
 });
 
