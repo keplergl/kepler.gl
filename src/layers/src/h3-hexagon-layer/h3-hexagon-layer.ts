@@ -204,7 +204,11 @@ class H3HexagonLayerWithCoverage extends H3HexagonLayer<
       },
       updateTriggers: {
         ...updateTriggers,
-        getPolygon: [updateTriggers.getPolygon, this.props.updateTriggers.getCoverage]
+        // deck.gl compares trigger values shallowly; avoid nesting freshly created objects.
+        getPolygon: {
+          ...updateTriggers.getPolygon,
+          ...this.props.updateTriggers.getCoverage
+        }
       }
     });
   }

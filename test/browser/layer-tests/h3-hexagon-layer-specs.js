@@ -535,6 +535,14 @@ test('#H3Layer -> coverage field reaches polygon and column renderers', t => {
           return manager.getLayers()[1];
         };
 
+        const paths = deckLayers[1].state.paths;
+        layer.updateLayerVisConfig({opacity: 0.5});
+        const updatedCells = renderUpdate();
+        t.equal(updatedCells.props.opacity, 0.5, 'opacity updates reach the cell renderer');
+        if (resolution !== 9) {
+          t.equal(updatedCells.state.paths, paths, 'opacity-only updates reuse polygon geometry');
+        }
+
         layer.updateLayerVisConfig({coverageRange: [0, 0.5]});
         assertCoverage(renderUpdate(), [0.125, 0, 0.5, 0]);
 
