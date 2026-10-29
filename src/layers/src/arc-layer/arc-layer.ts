@@ -492,7 +492,7 @@ export default class ArcLayer extends Layer {
     ) {
       tBounds = this.getPointsBounds(dataContainer, d => {
         const pos = getPosition(d);
-        return [pos[3], pos[4]];
+        return Number.isFinite(pos[3]) && Number.isFinite(pos[4]) ? [pos[3], pos[4]] : [];
       });
     } else {
       // when columnMode is neighbors, it reference the same collection of points
