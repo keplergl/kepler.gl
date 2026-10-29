@@ -3,7 +3,11 @@
 
 import test from 'tape';
 import {getA5Center} from '@kepler.gl/layers';
-import {a5TokenToPolygonGeo, normalizeA5Token} from '../../../src/layers/src/a5-layer/a5-utils';
+import {
+  a5TokenToPolygonGeo,
+  normalizeA5Token,
+  validA5Token
+} from '../../../src/layers/src/a5-layer/a5-utils';
 
 test('Utils -> getA5Center', t => {
   const token = '1ae2988000000000';
@@ -21,6 +25,7 @@ test('Utils -> A5 1.0 cell IDs', t => {
   // This Sydney cell has a different ID in 0.x, unlike the SF fixture above.
   const token = '9ca4cf8000000000';
   const center = getA5Center(token);
+  t.ok(validA5Token(token), 'accepts a valid cell');
   t.ok(Math.abs(center[0] - 151.17625731278906) < 1e-8, '1.0 longitude is in Sydney');
   t.ok(Math.abs(center[1] + 33.8782228122596) < 1e-8, '1.0 latitude is in Sydney');
   t.equal(normalizeA5Token('"9CA4CF8000000000"'), token, 'normalizes a quoted hex ID');
@@ -39,7 +44,9 @@ test('Utils -> A5 1.0 cell IDs', t => {
     'boundary surrounds the Sydney cell'
   );
 
-  for (const invalid of ['', 'ZZZZ', '0', undefined]) {
+  for (const invalid of ['', 'ZZZZ', '100', '0', undefined]) {
+    t.notOk(validA5Token(invalid), 'rejects missing, malformed and world cells');
+    t.equal(normalizeA5Token(invalid), null, 'missing or invalid token normalizes to null');
     t.equal(getA5Center(invalid), null, 'missing or invalid center is null');
     t.equal(a5TokenToPolygonGeo({token: invalid}), null, 'missing or invalid boundary is null');
   }

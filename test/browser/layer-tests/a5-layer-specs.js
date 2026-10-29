@@ -23,6 +23,8 @@ const a5Csv = `a5,value,types
 1adebc8000000000,2.5,type_a
 1ae2978000000000,3.5,type_c
 1ae2988000000000,4.5,type_b
+100,5.5,type_a
+0,6.5,type_b
 `;
 
 const {rows, fields} = processCsvData(a5Csv);
@@ -83,7 +85,7 @@ test('#A5Geometry -> constructor', t => {
 });
 
 test('#A5Geometry -> formatLayerData', t => {
-  const filteredIndex = [0, 2, 4];
+  const filteredIndex = [0, 2, 4, 5, 6];
   const dataset = createA5Dataset(filteredIndex);
 
   const TEST_CASES = [
@@ -113,7 +115,7 @@ test('#A5Geometry -> formatLayerData', t => {
           {index: 4, token: '1ae2988000000000'}
         ];
 
-        t.deepEqual(layerData.data, expectedData, 'should format correct a5 layerData');
+        t.deepEqual(layerData.data, expectedData, 'should omit malformed and world cells');
         t.deepEqual(layerData.getFillColor, [2, 3, 4], 'getFillColor should be a constant');
         t.deepEqual(layerData.getElevation, defaultElevation, 'getElevation should be a constant');
 
@@ -145,7 +147,7 @@ test('#A5Geometry -> formatLayerData', t => {
 });
 
 test('#A5Geometry -> renderLayer', t => {
-  const filteredIndex = [0, 2, 4];
+  const filteredIndex = [0, 2, 4, 5, 6];
   const dataset = createA5Dataset(filteredIndex);
 
   const TEST_CASES = [
