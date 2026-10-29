@@ -16,8 +16,10 @@ import {
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers, h3DefaultElevation as defaultElevation} from '@kepler.gl/layers';
 import {getCentroid, idToPolygonGeo} from '@kepler.gl/common-utils';
+import {cellToBoundary, latLngToCell} from 'h3-js';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {copyTableAndUpdate, getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 
 const {H3Layer} = KeplerGlLayers;
 const columns = {
@@ -439,5 +441,121 @@ test('#H3Layer -> idToPolygonGeo', t => {
     'should generate geojson object of hexagon outline (LineString)'
   );
 
+  t.end();
+});
+
+test('#H3Layer -> coverage field reaches polygon and column renderers', t => {
+  const cases = [
+    {resolution: 3, longitude: -122.4},
+    {resolution: 9, longitude: -122.4},
+    {resolution: 3, longitude: 179.9}
+  ].map(({resolution, longitude}) => {
+    const id = latLngToCell(37.75, longitude, resolution);
+    const dataset = new KeplerTable({info: {id: dataId}, color: [255, 0, 0]});
+    dataset.importData({
+      data: {
+        fields: [
+          {name: 'hex_id', type: 'h3'},
+          {name: 'value', type: 'real'}
+        ],
+        // The coverage channel uses a square-root scale.
+        rows: [
+          [id, 0.0625],
+          [id, 0],
+          [id, 1],
+          [id, null]
+        ]
+      }
+    });
+    dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+
+    return {
+      name: `coverage field at resolution ${resolution}, longitude ${longitude}`,
+      layer: {
+        id: `coverage-${resolution}`,
+        type: 'hexagonId',
+        config: {
+          dataId,
+          columns: {hex_id: 'hex_id'},
+          coverageField: {name: 'value', type: 'real'},
+          visConfig: {coverageRange: [0, 1]}
+        }
+      },
+      datasets: {[dataId]: dataset},
+      assert: (deckLayers, layer, layerData) => {
+        const coverage = [0.25, 0, 1, 0];
+        t.deepEqual(layerData.data.map(layerData.getCoverage), coverage, 'field maps to coverage');
+        const assertCoverage = (cells, expected) => {
+          if (resolution === 9) {
+            t.equal(cells.constructor.layerName, 'EnhancedColumnLayer', 'fine cells use columns');
+            const attribute = cells.getAttributeManager().getAttributes().instanceCoverage;
+            t.deepEqual(
+              expected.map(
+                (_, index) =>
+                  attribute.value[attribute.isConstant ? 0 : index] * cells.props.coverage
+              ),
+              expected,
+              'column instances retain per-cell coverage'
+            );
+          } else {
+            t.equal(cells.constructor.layerName, 'PolygonLayer', 'coarse cells use polygons');
+            const boundary = cellToBoundary(id, true).flat();
+            const center = getCentroid({id});
+            // Check the geometry cached for drawing, including after property updates.
+            cells.state.paths.forEach(({path}, index) => {
+              t.ok(
+                path.every((value, i) => {
+                  const delta = value - center[i % 2];
+                  const fullDelta = boundary[i] - center[i % 2];
+                  const actual = i % 2 ? delta : ((delta + 540) % 360) - 180;
+                  const full = i % 2 ? fullDelta : ((fullDelta + 540) % 360) - 180;
+                  return Math.abs(actual - full * expected[index]) < 1e-10;
+                }),
+                `polygon vertices reflect coverage ${expected[index]}`
+              );
+            });
+          }
+        };
+        assertCoverage(deckLayers[1], coverage);
+
+        const manager = deckLayers[0].context.layerManager;
+        const renderUpdate = () => {
+          layerData = layer.formatLayerData({[dataId]: dataset}, layerData);
+          manager.setLayers(
+            layer.renderLayer({
+              data: layerData,
+              idx: 0,
+              gpuFilter: dataset.gpuFilter,
+              mapState: INITIAL_MAP_STATE,
+              interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+              visible: true,
+              layerCallbacks: {}
+            })
+          );
+          return manager.getLayers()[1];
+        };
+
+        const paths = deckLayers[1].state.paths;
+        layer.updateLayerVisConfig({opacity: 0.5});
+        const updatedCells = renderUpdate();
+        t.equal(updatedCells.props.opacity, 0.5, 'opacity updates reach the cell renderer');
+        if (resolution !== 9) {
+          t.equal(updatedCells.state.paths, paths, 'opacity-only updates reuse polygon geometry');
+        }
+
+        layer.updateLayerVisConfig({coverageRange: [0, 0.5]});
+        assertCoverage(renderUpdate(), [0.125, 0, 0.5, 0]);
+
+        layer.updateLayerConfig({coverageField: null});
+        layer.updateLayerVisConfig({coverage: 0.5});
+        assertCoverage(renderUpdate(), [0.5, 0.5, 0.5, 0.5]);
+        layer.updateLayerVisConfig({coverage: 1});
+        assertCoverage(renderUpdate(), [1, 1, 1, 1]);
+        manager.finalize();
+      }
+    };
+  });
+
+  testRenderLayerCases(t, H3Layer, cases);
   t.end();
 });
