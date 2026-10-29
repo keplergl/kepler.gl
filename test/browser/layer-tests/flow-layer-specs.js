@@ -273,6 +273,107 @@ test('#FlowLayer -> styling preserves filters and invalidates changed data', asy
   t.end();
 });
 
+test('#FlowLayer -> reducer filters at the domain minimum', async t => {
+  for (const minimum of [0, 100, -20]) {
+    const data = processCsvData(
+      `lat,lng,lat_1,lng_1,value,other\n1,2,3,4,${minimum + 20},0\n2,3,4,5,${minimum},0\n3,4,5,6,${
+        minimum + 10
+      },10`
+    );
+    const originalRows = data.rows.map(row => row.slice());
+    const datasets = await createNewDataEntryMock({info: {id: dataId}, data});
+    const layer = new FlowLayer({dataId});
+    layer.updateLayerConfig({
+      columns: {
+        lat0: {value: 'lat', fieldIdx: 0},
+        lng0: {value: 'lng', fieldIdx: 1},
+        lat1: {value: 'lat_1', fieldIdx: 2},
+        lng1: {value: 'lng_1', fieldIdx: 3},
+        count: {value: 'value', fieldIdx: 4}
+      }
+    });
+    const initialData = layer.formatLayerData(datasets, {});
+    const originalFlows = initialData.layerData.flows.map(flow => ({...flow}));
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [initialData],
+      layerOrder: [layer.id]
+    };
+    const apply = action => {
+      state = reducer(state, action);
+    };
+    const check = (indexes, message) => {
+      t.deepEqual(
+        state.layerData[0].layerData.flows,
+        indexes.map(index => originalFlows[index]),
+        `${minimum}: ${message} preserves source indexes, locations and magnitudes`
+      );
+    };
+
+    check([0, 1, 2], 'no filter');
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [minimum, minimum]));
+    t.equal(state.filters[0].gpu, true, 'exercises a GPU-configured numeric filter');
+    t.deepEqual(
+      state.datasets[dataId].gpuFilter.filterRange,
+      [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]
+      ],
+      'the active minimum-only range normalizes to zero in every channel'
+    );
+    t.deepEqual(
+      state.datasets[dataId].filteredIndex,
+      [0, 1, 2],
+      'the GPU filter leaves the CPU indexes unchanged'
+    );
+    check([1], 'minimum-only filter');
+    const minimumFlows = state.layerData[0].layerData.flows;
+    apply(VisStateActions.layerVisConfigChange(state.layers[0], {flowLineThicknessScale: 2}));
+    check([1], 'styling retains the minimum-only filter');
+    t.equal(state.layerData[0].layerData.flows, minimumFlows, 'styling reuses filtered flows');
+
+    apply(VisStateActions.setFilter(0, 'value', [minimum + 10, minimum + 20]));
+    check([0, 2], 'ordinary range');
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(1, 'name', 'other'));
+    apply(VisStateActions.setFilter(1, 'value', [0, 0]));
+    check([0], 'multiple channels intersect');
+    apply(VisStateActions.setFilter(0, 'value', [minimum, minimum]));
+    check([1], 'multiple active zero ranges');
+
+    apply(VisStateActions.setFilter(1, 'gpu', false));
+    apply(VisStateActions.setFilter(1, 'value', [10, 10]));
+    t.deepEqual(state.datasets[dataId].filteredIndex, [2], 'CPU filtering retains source indexes');
+    check([], 'CPU and GPU filters can produce no flows');
+    apply(VisStateActions.setFilter(0, 'value', [minimum + 10, minimum + 20]));
+    check([2], 'GPU filtering respects the CPU-filtered indexes');
+    apply(VisStateActions.removeFilter(1));
+    check([0, 2], 'removing the CPU filter restores matching GPU rows in order');
+    apply(VisStateActions.removeFilter(0));
+    check([0, 1, 2], 'clearing filters restores all flows');
+
+    const emptyDataset = copyTableAndUpdate(state.datasets[dataId], {filteredIndex: []});
+    t.deepEqual(
+      state.layers[0].formatLayerData({[dataId]: emptyDataset}, state.layerData[0]).layerData.flows,
+      [],
+      'empty CPU input yields no flows'
+    );
+    t.deepEqual(data.rows, originalRows, 'filtering leaves source rows unchanged');
+    t.deepEqual(
+      initialData.data,
+      originalFlows,
+      'filtering leaves the original flow data unchanged'
+    );
+  }
+  t.end();
+});
+
 test('#FlowLayer -> getHoverData location', t => {
   const layer = new FlowLayer({
     dataId,

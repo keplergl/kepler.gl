@@ -21,6 +21,7 @@ sinonStubPromise(sinon);
 
 import {
   testCreateCases,
+  testCreateLayerFromConfig,
   testFormatLayerDataCases,
   testRenderLayerCases,
   preparedDataset,
@@ -29,7 +30,14 @@ import {
   pointLayerMeta,
   iconGeometry
 } from 'test/helpers/layer-utils';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  layerClickUpdater,
+  layerHoverUpdater,
+  mapClickUpdater,
+  renderDeckGlLayer
+} from '@kepler.gl/reducers';
 import {IntlWrapper} from '../../helpers/component-utils';
 
 const {IconLayer} = KeplerGlLayers;
@@ -638,5 +646,78 @@ test('#IconLayer -> svg icons as constructor props -> renderIconModal', t => {
     'should render alert icon'
   );
 
+  t.end();
+});
+
+test('#IconLayer -> clicked icons stay highlighted after the pointer leaves', t => {
+  const datasets = {[dataId]: preparedDataset};
+  const layer = testCreateLayerFromConfig(t, {
+    layer: {id: 'selected-icon', type: 'icon', config: {dataId, columns}},
+    datasets,
+    afterLayerInitialized: iconLayer => {
+      iconLayer.iconGeometry = iconGeometry;
+    }
+  });
+  const data = layer.formatLayerData(datasets);
+  let state = {...INITIAL_VIS_STATE, datasets};
+  const render = () =>
+    renderDeckGlLayer(
+      {
+        ...state,
+        layer,
+        data,
+        layerIndex: 0,
+        mapState: INITIAL_MAP_STATE
+      },
+      {}
+    );
+  const [rendered] = render();
+  const object = data.data[0];
+  t.ok(object, 'the fixture has a rendered icon');
+  const pick = {picked: true, layer: rendered, object, index: 0};
+
+  state = layerClickUpdater(state, {info: pick});
+  state = layerHoverUpdater(state, {info: {picked: false, object: null}});
+  let overlay = render().find(deckLayer => deckLayer.id.endsWith('-hover'));
+  t.ok(overlay, 'click selection creates an overlay after hover ends');
+  if (overlay) {
+    t.deepEqual(overlay.props.data, [object], 'overlay contains the clicked icon');
+    t.deepEqual(
+      overlay.props.getFillColor,
+      layer.config.highlightColor,
+      'overlay uses the selection color'
+    );
+    t.equal(overlay.props.pickable, false, 'selection overlay does not intercept picks');
+  }
+
+  // Loading custom geometry recreates deck layers while a click still holds the previous pick.
+  layer.iconGeometryVersion++;
+  const afterGeometry = render();
+  t.notEqual(afterGeometry[0].id, rendered.id, 'geometry changes still recreate the icon layer');
+  overlay = afterGeometry.find(deckLayer => deckLayer.id.endsWith('-hover'));
+  t.ok(overlay, 'selection survives an icon geometry refresh');
+
+  state = mapClickUpdater(state, {});
+  t.notOk(
+    render().some(deckLayer => deckLayer.id.endsWith('-hover')),
+    'map click clears selection'
+  );
+  state = layerHoverUpdater(state, {info: {...pick, layer: afterGeometry[0]}});
+  t.ok(
+    render().some(deckLayer => deckLayer.id.endsWith('-hover')),
+    'ordinary hovering still highlights'
+  );
+
+  t.ok(
+    layer.isLayerHovered({...pick, layer: {props: {id: layer.id}}}),
+    'unversioned layer picks remain supported'
+  );
+  for (const id of ['selected-icon-other_0', 'selected-icon_0_0', `${afterGeometry[0].id}-hover`]) {
+    t.notOk(
+      layer.hasHoveredObject({...pick, layer: {props: {id}}}),
+      `${id} does not select this layer`
+    );
+  }
+  t.notOk(layer.hasHoveredObject({...pick, picked: false}), 'unpicked icons do not highlight');
   t.end();
 });

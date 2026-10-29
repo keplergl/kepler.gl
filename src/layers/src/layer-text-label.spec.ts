@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Table, vectorFromArray} from 'apache-arrow';
+import {DataFilterExtension} from '@deck.gl/extensions';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import PointLayer from './point-layer/point-layer';
@@ -268,4 +269,27 @@ test('changing timestamp display format rebuilds rendered labels without changin
   );
   expect(renderedTextLabel(layer, updated).props.getText({index: 0})).toBe('2021/01');
   expect(renderedTextLabel(layer, updated).props.characterSet).toContain('/');
+});
+
+test('collision labels preserve shared extensions without mutating another layer', async () => {
+  const table = await makeTable();
+  const field = table.fields[2];
+  const layer = new PointLayer({id: 'point', dataId: table.id});
+  layer.updateLayerConfig({
+    textLabel: [{...DEFAULT_TEXT_LABEL, field, collisionEnabled: true}]
+  });
+  const extension = new DataFilterExtension();
+  const extensions = Object.freeze([extension]);
+  const [text] = layer.renderTextLabelLayer(
+    {getPixelOffset: () => [0, 0], updateTriggers: {}, sharedProps: {extensions}},
+    {
+      data: {data: [], textLabels: [{getText: () => 'label', characterSet: ['l']}]},
+      mapState: {},
+      visible: true
+    }
+  );
+  expect(extensions).toEqual([extension]);
+  expect(text.props.extensions).toHaveLength(2);
+  expect(text.props.extensions[0]).toBe(extension);
+  expect(text.props.extensions[1].constructor.extensionName).toBe('CollisionFilterExtension');
 });

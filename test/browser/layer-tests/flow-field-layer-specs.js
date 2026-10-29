@@ -8,7 +8,9 @@ import {
   testFormatLayerDataCases,
   testRenderLayerCases
 } from 'test/helpers/layer-utils';
-import {KeplerGlLayers} from '@kepler.gl/layers';
+import {KeplerGlLayers, LayerClasses} from '@kepler.gl/layers';
+import {VisStateActions} from '@kepler.gl/actions';
+import {INITIAL_VIS_STATE, validateLayerWithData, visStateReducer} from '@kepler.gl/reducers';
 import {getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {findPointFieldPairs} from '@kepler.gl/table';
@@ -414,5 +416,142 @@ test('#FlowFieldLayer -> formatLayerData from geojson centroids', t => {
   ];
 
   testFormatLayerDataCases(t, FlowFieldLayer, TEST_CASES);
+  t.end();
+});
+
+test('#FlowFieldLayer -> reducer numeric filters reach every grid mode', t => {
+  const features = Array.from({length: 12}, (_, index) => {
+    const group = Math.floor(index / 4);
+    const latitude = 37 + (index % 2) * 0.5;
+    const longitude = -122 + group * 2 + Math.floor((index % 4) / 2) * 0.5;
+    return {
+      type: 'Feature',
+      geometry: {type: 'Point', coordinates: [longitude, latitude]},
+      properties: {
+        latitude,
+        longitude,
+        u: index + 1,
+        v: 0.5,
+        speed: index + 10,
+        direction: 90,
+        elevation: index + 20,
+        value: 100 + group * 10,
+        other: group,
+        category: index % 2 ? 'drop' : 'keep'
+      }
+    };
+  });
+  const source = JSON.stringify(features);
+  for (const columnMode of ['UV', 'SPEED_DIR', 'ELEVATION']) {
+    for (const geojson of [false, true]) {
+      const dataset = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+      dataset.importData({data: processGeojson({type: 'FeatureCollection', features})});
+      const datasets = {[dataId]: dataset};
+      const layer = validateLayerWithData(
+        dataset,
+        {
+          type: 'flowField',
+          config: {
+            dataId,
+            columnMode,
+            columns: {
+              ...(geojson ? {geojson: '_geojson'} : {lat: 'latitude', lng: 'longitude'}),
+              u: 'u',
+              v: 'v',
+              speed: 'speed',
+              direction: 'direction',
+              altitude: 'elevation'
+            },
+            visConfig: {smoothing: 0}
+          }
+        },
+        LayerClasses
+      );
+      const initial = layer.formatLayerData(datasets);
+      let state = {...INITIAL_VIS_STATE, datasets, layers: [layer], layerData: [initial]};
+      const apply = action => {
+        state = visStateReducer(state, action);
+      };
+      const check = (label, indexes) => {
+        const {data, grid} = state.layerData[0];
+        const message = `${columnMode}/${geojson ? 'GeoJSON' : 'LatLng'} ${label}`;
+        t.deepEqual(
+          data,
+          indexes.map(index => initial.data[index]),
+          `${message}: samples and order`
+        );
+        t.equal(Boolean(grid), indexes.length >= 4, `${message}: grid uses selected samples`);
+        if (grid) {
+          t.deepEqual(
+            [grid.lngs[0], grid.lngs[grid.lngs.length - 1]],
+            [Math.min(...data.map(point => point.lng)), Math.max(...data.map(point => point.lng))],
+            `${message}: excluded positions do not extend the grid`
+          );
+        }
+      };
+      check(
+        'no filter',
+        Array.from({length: 12}, (_, index) => index)
+      );
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(0, 'name', 'value'));
+      apply(VisStateActions.setFilter(0, 'value', [100, 100]));
+      const cpuIndex = state.datasets[dataId].filteredIndex;
+      t.equal(cpuIndex.length, 12, 'numeric GPU filter retains the complete CPU index');
+      t.deepEqual(
+        state.datasets[dataId].gpuFilter.filterRange[0],
+        [0, 0],
+        'minimum normalizes to zero'
+      );
+      check('minimum-only filter', [0, 1, 2, 3]);
+      apply(VisStateActions.setFilter(0, 'value', [110, 120]));
+      t.equal(state.datasets[dataId].filteredIndex, cpuIndex, 'range changes keep the CPU index');
+      check('changed numeric range', [4, 5, 6, 7, 8, 9, 10, 11]);
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(1, 'name', 'other'));
+      apply(VisStateActions.setFilter(1, 'value', [0, 0]));
+      check('multiple channels intersect to empty', []);
+      apply(VisStateActions.setFilter(0, 'value', [100, 100]));
+      check('multiple zero ranges', [0, 1, 2, 3]);
+      apply(VisStateActions.removeFilter(1));
+      apply(VisStateActions.setFilter(0, 'value', [110, 120]));
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(1, 'name', 'category'));
+      apply(VisStateActions.setFilter(1, 'value', ['keep']));
+      t.deepEqual(
+        state.datasets[dataId].filteredIndex,
+        [0, 2, 4, 6, 8, 10],
+        'CPU filter removes rows'
+      );
+      check('CPU and GPU filters intersect', [4, 6, 8, 10]);
+      const filteredDataset = state.datasets[dataId];
+      const reorderedIndex = [10, 4, 8, 6];
+      filteredDataset.filteredIndex = reorderedIndex;
+      const reordered = state.layers[0].formatLayerData(state.datasets);
+      t.deepEqual(
+        reordered.data,
+        [10, 4, 8, 6].map(index => initial.data[index]),
+        'original row indexes and order feed accessors'
+      );
+      t.equal(filteredDataset.filteredIndex, reorderedIndex, 'formatting preserves the CPU index');
+      t.deepEqual(reorderedIndex, [10, 4, 8, 6], 'formatting does not mutate the CPU index');
+      apply(VisStateActions.removeFilter(1));
+      apply(VisStateActions.removeFilter(0));
+      check(
+        'cleared filters',
+        Array.from({length: 12}, (_, index) => index)
+      );
+      t.equal(
+        JSON.stringify(features),
+        source,
+        'filtering does not mutate source geometry or properties'
+      );
+      const empty = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+      empty.importData({data: {fields: dataset.fields, rows: []}});
+      const emptyData = layer.formatLayerData({[dataId]: empty});
+      t.deepEqual(emptyData.data, [], 'empty dataset has no samples');
+      t.equal(emptyData.grid, null, 'empty dataset has no grid');
+    }
+  }
   t.end();
 });

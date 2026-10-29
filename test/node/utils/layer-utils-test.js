@@ -869,6 +869,18 @@ test('layerUtils -> findDefaultLayer:IconLayer', t => {
   t.end();
 });
 
+test('layerUtils -> findDefaultLayer: retains Point and Icon candidates', t => {
+  const dataset = new KeplerTable({info: {id: 'icon-candidates'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  t.deepEqual(
+    findDefaultLayer(dataset, LayerClasses).map(layer => layer.type),
+    ['point', 'icon'],
+    'keeps both candidates available to callers requesting a specific layer type'
+  );
+  t.end();
+});
+
 test('layerUtils -> findDefaultLayer: TripLayer', t => {
   const stateWTrip = StateWTripGeojson;
   t.equal(stateWTrip.visState.layers.length, 1, 'should find one layer');
