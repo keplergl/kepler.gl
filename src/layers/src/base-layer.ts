@@ -1797,7 +1797,7 @@ class Layer implements KeplerLayer {
             },
             ...(collisionEnabled
               ? {
-                  extensions: [...(sharedProps.extensions || []), collisionFilterExtension],
+                  extensions: [...(sharedProps?.extensions || []), collisionFilterExtension],
                   collisionEnabled: true,
                   collisionGroup: `${this.id}-text-label-${i}`,
                   getCollisionPriority: 0,
