@@ -21,6 +21,7 @@ import {default as KeplerTable} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
+import {getFilterDataFunc} from '../aggregation-layer';
 import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowFieldLayerIcon from './flow-field-layer-icon';
@@ -1553,7 +1554,17 @@ export default class FlowFieldLayer extends Layer {
     if (!dataset) {
       return {};
     }
-    const {dataContainer, filteredIndex, fields} = dataset;
+    const {dataContainer, fields, gpuFilter} = dataset;
+    // Numeric GPU filters are not included in the CPU index, but the grid is built on CPU.
+    const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+      trigger => trigger !== null
+    );
+    const filterData = hasFilter
+      ? getFilterDataFunc(gpuFilter.filterRange, gpuFilter.filterValueAccessor(dataContainer)())
+      : null;
+    const filteredIndex = filterData
+      ? dataset.filteredIndex.filter(index => filterData({index}))
+      : dataset.filteredIndex;
     const {lat, lng, geojson, u, v, speed, direction, altitude} = this.config.columns;
     const mode = normalizeColumnMode(this.config.columnMode);
     // Prefer lat/lng when both are set; GeoJSON is the fallback position source.
