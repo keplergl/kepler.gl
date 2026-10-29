@@ -310,6 +310,59 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
   return processCsvData(rows, keys);
 }
 
+const WGS84_CRS_NAMES = [
+  /^(?:EPSG:4326|OGC:CRS84h?|CRS84h?|WGS ?84)$/i,
+  /^urn:(?:x-)?ogc:def:crs:(?:EPSG:(?:[\d.]*:)?4326|OGC:(?:(?:[\d.]*:)?CRS84h?|2:84))$/i,
+  /^https?:\/\/www\.opengis\.net\/def\/crs\/(?:EPSG\/[\d.]+\/4326|OGC\/[\d.]+\/CRS84h?)$/i,
+  /^https?:\/\/www\.opengis\.net\/gml\/srs\/epsg\.xml#4326$/i
+];
+
+function validateGeojsonCrs(rawData: unknown): void {
+  const pending = [rawData];
+  while (pending.length) {
+    const value = pending.pop();
+    if (!isPlainObject(value)) continue;
+
+    const {crs} = value;
+    if (isPlainObject(crs) && isPlainObject(crs.properties)) {
+      const identifier =
+        crs.type === 'name'
+          ? crs.properties.name
+          : crs.type === 'link'
+          ? crs.properties.href
+          : undefined;
+      // Preserve existing handling of absent, null, and malformed declarations.
+      // Recognize known identifiers without fetching linked CRS definitions.
+      if (
+        typeof identifier === 'string' &&
+        identifier.trim() &&
+        !WGS84_CRS_NAMES.some(pattern => pattern.test(identifier.trim()))
+      ) {
+        throw new Error(
+          'Read File Failed: GeoJSON uses an unsupported coordinate reference system. ' +
+            'Convert coordinates to WGS84 (EPSG:4326) before importing.'
+        );
+      }
+    }
+
+    // CRS can be declared on collections, features, or their geometries, but a
+    // feature property named "crs" is ordinary data and must not be inspected.
+    if (value.type === 'Feature') {
+      pending.push(value.geometry);
+    } else {
+      const children =
+        value.type === 'FeatureCollection'
+          ? value.features
+          : value.type === 'GeometryCollection'
+          ? value.geometries
+          : null;
+      if (Array.isArray(children)) {
+        for (const child of children) pending.push(child);
+      }
+    }
+  }
+}
+
 /**
  * Process GeoJSON [`FeatureCollection`](http://wiki.geojson.org/GeoJSON_draft_version_6#FeatureCollection),
  * output a data object with `{fields: [], rows: []}`.
@@ -349,6 +402,7 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
  * }));
  */
 export function processGeojson(rawData: unknown): ProcessorResult {
+  validateGeojsonCrs(rawData);
   const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {

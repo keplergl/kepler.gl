@@ -16,6 +16,8 @@ import {
 import {s2DefaultElevation as defaultElevation, KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate, getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
+import {createDataContainer} from '@kepler.gl/utils';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 
 const {S2GeometryLayer} = KeplerGlLayers;
 
@@ -366,5 +368,75 @@ test('#S2Geometry -> fixed height uses source values', t => {
       }
     }
   ]);
+  t.end();
+});
+
+test('#S2Geometry -> invalid non-hex tokens never reach polygon generation', t => {
+  const valid = ['80858004', "'80858004'", '"8085801c"', '8085801c'];
+  const invalid = ['zz', 'unknown', '8085800g', "'zz'", '"unknown"', '', null, undefined, 80858004];
+  const field = preparedDataset.fields.find(candidate => candidate.name === 's2x');
+  const makeDataset = tokens =>
+    copyTableAndUpdate(preparedDataset, {
+      dataContainer: createDataContainer(
+        tokens.map(token => {
+          const row = [...testRows[0]];
+          row[field.fieldIdx] = token;
+          return row;
+        })
+      ),
+      filteredIndex: tokens.map((_, index) => index)
+    });
+  const formatAndRender = tokens => {
+    const dataset = makeDataset(tokens);
+    const layer = new S2GeometryLayer({id: 's2-token-validation', dataId});
+    layer.updateLayerConfig({columns: {token: {value: field.name, fieldIdx: field.fieldIdx}}});
+    const data = layer.formatLayerData({[dataId]: dataset});
+    const [rendered] = layer.renderLayer({
+      data,
+      gpuFilter: dataset.gpuFilter,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      mapState: INITIAL_MAP_STATE,
+      visible: true
+    });
+    // This invokes deck.gl's actual S2 token-to-polygon conversion, without a WebGL draw.
+    const {getPolygon} = rendered.indexToBounds();
+    const polygons = rendered.props.data.map((row, index) => Array.from(getPolygon(row, {index})));
+    return {layer, data, polygons};
+  };
+
+  const baseline = formatAndRender(valid);
+  t.equal(baseline.polygons.length, valid.length, 'valid and quoted tokens generate polygons');
+  t.deepEqual(
+    baseline.polygons[0],
+    baseline.polygons[1],
+    'single-quoted token preserves its geometry'
+  );
+  t.deepEqual(
+    baseline.polygons[2],
+    baseline.polygons[3],
+    'double-quoted token preserves its geometry'
+  );
+  t.ok(
+    baseline.polygons.every(polygon => polygon.length >= 10 && polygon.every(Number.isFinite)),
+    'valid geometry has finite coordinates'
+  );
+
+  const mixed = formatAndRender([...valid, ...invalid]);
+  t.deepEqual(
+    mixed.data.data.map(row => row.index),
+    [0, 1, 2, 3],
+    'invalid and missing tokens are filtered out'
+  );
+  t.deepEqual(mixed.polygons, baseline.polygons, 'invalid tokens produce no extra polygons');
+  t.deepEqual(
+    mixed.layer.meta.bounds,
+    baseline.layer.meta.bounds,
+    'invalid tokens cannot distort map bounds'
+  );
+
+  const empty = formatAndRender(invalid);
+  t.deepEqual(empty.data.data, [], 'an invalid-only dataset has no renderable cells');
+  t.deepEqual(empty.polygons, [], 'an invalid-only dataset creates no polygons');
+  t.deepEqual(formatAndRender([]).polygons, [], 'an empty dataset creates no polygons');
   t.end();
 });

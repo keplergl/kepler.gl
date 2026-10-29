@@ -983,7 +983,7 @@ export function diffFilters(
         filterChanged = set([record, filter.id], 'added', filterChanged);
       } else {
         // check  what has changed
-        ['name', 'endName', 'value', 'dataId', 'inverted'].forEach(prop => {
+        ['name', 'endName', 'value', 'dataId', 'inverted', 'enabled'].forEach(prop => {
           if (filter[prop] !== oldFilter[prop]) {
             filterChanged = set([record, filter.id], `${prop}_changed`, filterChanged);
           }

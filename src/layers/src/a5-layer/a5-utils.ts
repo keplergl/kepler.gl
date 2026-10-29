@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cellToBoundary, cellToLonLat, getResolution, hexToU64, u64ToHex} from 'a5-js';
+import {cellToBoundary, cellToLonLat, hexToU64, isValidCell, u64ToHex} from 'a5-js';
 import type {Feature, LineString, Polygon} from 'geojson';
 
 const HEX_RE = /^[0-9a-fA-F]+$/;
-const MAX_A5_RESOLUTION = 30;
 
 export function maybeStripQuotes(token: string): string {
   if (token.length >= 2) {
@@ -67,8 +66,7 @@ export function validA5Token(token: unknown): boolean {
   }
 
   try {
-    const resolution = getResolution(cell);
-    return resolution >= 0 && resolution <= MAX_A5_RESOLUTION;
+    return cell !== 0n && isValidCell(cell);
   } catch {
     return false;
   }

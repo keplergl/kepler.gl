@@ -18,6 +18,7 @@ import {
   INITIAL_MAP_STATE,
   DEFAULT_ANIMATION_CONFIG,
   serializeLayer,
+  addDefaultLayers,
   validateLayerWithData,
   defaultInteractionConfig,
   prepareStateForDatasetReplace,
@@ -27,23 +28,28 @@ import {
   setFilterAnimationWindowUpdater,
   calculateLayerData
 } from '@kepler.gl/reducers';
+import {formatCsv} from '../../../src/reducers/src/export-utils';
 
 import {
   processCsvData,
   processGeojson,
   processArrowBatches,
+  processFileData,
+  readFileInBatches,
   loadExternallyHostedDataset,
   remoteDatasetFromUrl
 } from '@kepler.gl/processors';
 import {
   Layer,
   KeplerGlLayers,
+  LayerClasses,
   COLUMN_MODE_TABLE,
   createPointCountLabelField
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate, maybeToDate, KeplerTable} from '@kepler.gl/table';
+import {copyTableAndUpdate, findPointFieldPairs, maybeToDate, KeplerTable} from '@kepler.gl/table';
 import {
   createDataContainer,
+  createIndexedDataContainer,
   applyFilterFieldName,
   getAnimatableVisibleLayers,
   getBinThresholds,
@@ -320,6 +326,240 @@ test('#visStateReducer -> ADD_FILTER', t => {
   t.deepEqual(newReducer.filters[0], expectedReducer.filters[0], 'should add a default filter');
 
   cmpFilters(t, newReducer.filters[1], expectedReducer.filters[1]);
+  t.end();
+});
+
+function autoLayers(dataset, layerClasses = LayerClasses) {
+  return addDefaultLayers({...INITIAL_VIS_STATE, layerClasses}, {[dataset.id]: dataset}).newLayers;
+}
+
+test('#visStateReducer -> addDefaultLayers: deduplicates points independently of row values', t => {
+  const fields = ['lat', 'lon', 'icon', 'altitude'].map((name, fieldIdx) => ({
+    name,
+    fieldIdx,
+    type: name === 'icon' ? 'string' : 'real'
+  }));
+  const fieldPairs = findPointFieldPairs(fields);
+  const validRow = [37.77, -122.42, 'place', 0];
+  const cases = [
+    {name: 'valid icon', rows: [validRow]},
+    {name: 'custom icon name', rows: [[37.77, -122.42, 'custom-icon', 0]]},
+    {name: 'empty dataset', rows: []},
+    {name: 'missing data', rows: [validRow], noData: true},
+    {name: 'missing icon value', rows: [[37.77, -122.42, null, 0]]},
+    ...[null, undefined, '', '  ', 123, false, {}].map(icon => ({
+      name: `incomplete icon coverage: ${String(icon)}`,
+      rows: [validRow, [37.78, -122.43, icon, 0]]
+    })),
+    {
+      name: 'filtered-out row with a missing icon',
+      rows: [validRow, [37.78, -122.43, null, 0]],
+      filteredIndex: [0]
+    },
+    {
+      name: 'missing coordinates',
+      rows: [validRow, [null, -122.43, null, 0]]
+    },
+    {
+      name: 'invalid altitude',
+      rows: [validRow, [37.78, -122.43, null, NaN]]
+    },
+    {
+      name: 'no renderable coordinates',
+      rows: [[NaN, -122.43, 'place', 0]]
+    }
+  ];
+
+  cases.forEach(({name, rows, noData, filteredIndex}) => {
+    const dataset = noData
+      ? {id: 'icon-precedence', fields, fieldPairs}
+      : new KeplerTable({info: {id: 'icon-precedence'}}).updateSchema({fields, rows});
+    if (filteredIndex) {
+      dataset.filteredIndex = filteredIndex;
+    }
+    const layers = autoLayers(dataset);
+    t.deepEqual(
+      layers.map(layer => layer.type),
+      ['icon'],
+      name
+    );
+    t.ok(layers[0].config.isVisible, `${name}: replacement icon is visible`);
+  });
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence preserves other point pairs and icon columns', t => {
+  const fields = ['one_lat', 'one_lon', 'two_lat', 'two_lon', 'icon', 'other_icon'].map(
+    (name, fieldIdx) => ({name, fieldIdx, type: name.includes('icon') ? 'string' : 'real'})
+  );
+  const rows = [[37.77, -122.42, 38, -123, 'place', 'custom-icon']];
+  const dataset = new KeplerTable({info: {id: 'multiple-icon-columns'}}).updateSchema({
+    fields,
+    rows
+  });
+  const layers = autoLayers(dataset);
+  t.deepEqual(
+    layers.map(layer => [layer.type, layer.config.isVisible]),
+    [
+      ['point', true],
+      ['arc', false],
+      ['line', false],
+      ['icon', true],
+      ['icon', true]
+    ],
+    'preserves the remaining candidate order and Arc/Line visibility'
+  );
+  const points = layers.filter(layer => layer.type === 'point');
+  const icons = layers.filter(layer => layer.type === 'icon');
+  t.equal(points.length, 1, 'only the matching coordinate pair loses its automatic point');
+  t.equal(points[0].config.columns.lat.value, 'two_lat', 'keeps the other coordinate pair');
+  t.equal(icons.length, 2, 'preserves both automatically detected icon columns');
+  t.ok(
+    icons.every(layer => layer.config.isVisible),
+    'both icons remain visible'
+  );
+
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence preserves explicitly configured layers', t => {
+  const {fields, rows} = processCsvData('lat,lon,icon\n37.77,-122.42,place');
+  const dataset = new KeplerTable({info: {id: 'explicit-icons'}}).updateSchema({fields, rows});
+  const explicitLayers = ['point', 'icon'].map(type =>
+    validateLayerWithData(
+      dataset,
+      {
+        id: `saved-${type}`,
+        type,
+        config: {
+          dataId: dataset.id,
+          label: type,
+          isVisible: true,
+          columns: {lat: 'lat', lng: 'lon', ...(type === 'icon' ? {icon: 'icon'} : {})}
+        }
+      },
+      LayerClasses
+    )
+  );
+  t.deepEqual(
+    explicitLayers.map(layer => layer?.type),
+    ['point', 'icon'],
+    'restores both saved layers'
+  );
+  const {state, newLayers} = addDefaultLayers(
+    {
+      layers: explicitLayers,
+      layerOrder: explicitLayers.map(layer => layer.id),
+      layerClasses: LayerClasses
+    },
+    {[dataset.id]: dataset}
+  );
+  t.equal(state.layers[0], explicitLayers[0], 'keeps the existing point layer');
+  t.equal(state.layers[1], explicitLayers[1], 'keeps the existing icon layer');
+  t.deepEqual(
+    newLayers.map(layer => layer.type),
+    ['icon'],
+    'applies precedence only to new automatic layers'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: icon precedence is independent of registry order', t => {
+  const dataset = new KeplerTable({info: {id: 'icon-order'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  const {point, icon, ...others} = LayerClasses;
+  for (const layerClasses of [LayerClasses, {icon, point, ...others}]) {
+    t.deepEqual(
+      autoLayers(dataset, layerClasses).map(layer => layer.type),
+      ['icon'],
+      'automatically adds only Icon regardless of detector order'
+    );
+  }
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: preserves custom types and canonical replacements', t => {
+  const dataset = new KeplerTable({info: {id: 'custom-icons'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  class CustomPoint extends PointLayer {}
+  class CustomIcon extends IconLayer {}
+  const cases = [
+    {classes: {...LayerClasses, point: CustomPoint}, expected: [CustomPoint, IconLayer]},
+    {classes: {...LayerClasses, icon: CustomIcon}, expected: [PointLayer, CustomIcon]},
+    {classes: {...LayerClasses, customPoint: CustomPoint}, expected: [IconLayer, CustomPoint]},
+    {classes: {point: PointLayer}, expected: [PointLayer]},
+    {classes: {icon: IconLayer}, expected: [IconLayer]}
+  ];
+  cases.forEach(({classes, expected}) => {
+    t.deepEqual(
+      autoLayers(dataset, classes).map(layer => layer.constructor),
+      expected,
+      'limits precedence to the registered built-in Point and Icon classes'
+    );
+  });
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: matches only latitude and longitude field references', t => {
+  const dataset = new KeplerTable({info: {id: 'icon-altitude'}}).updateSchema(
+    processCsvData(
+      'lat,lon,altitude,other_lat,other_lon,other_altitude,icon\n37.77,-122.42,10,37.77,-122.42,20,place'
+    )
+  );
+  const pair = dataset.fieldPairs[0];
+  dataset.fieldPairs = [
+    pair,
+    {...pair, pair: {...pair.pair, altitude: {value: 'other_altitude', fieldIdx: 5}}},
+    {...pair, pair: {...pair.pair, lat: {value: 'other_lat', fieldIdx: 3}}},
+    {...pair, pair: {...pair.pair, lng: {value: 'other_lon', fieldIdx: 4}}}
+  ];
+  const points = autoLayers(dataset).filter(layer => layer.type === 'point');
+  t.deepEqual(
+    points.map(layer => [layer.config.columns.lat.value, layer.config.columns.lng.value]),
+    [
+      ['other_lat', 'lon'],
+      ['lat', 'other_lon']
+    ],
+    'ignores altitude and keeps distinct lat/lng fields even when their row values match'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> addDefaultLayers: keeps other layer defaults and dataset boundaries', t => {
+  const withIcons = new KeplerTable({info: {id: 'with-icons'}}).updateSchema(
+    processCsvData('lat,lon,icon\n37.77,-122.42,place')
+  );
+  const withoutIcons = new KeplerTable({info: {id: 'without-icons'}}).updateSchema(
+    processCsvData('lat,lon\n37.77,-122.42')
+  );
+  const {newLayers} = addDefaultLayers(INITIAL_VIS_STATE, {
+    [withIcons.id]: withIcons,
+    [withoutIcons.id]: withoutIcons
+  });
+  t.deepEqual(
+    newLayers.map(layer => [layer.type, layer.config.dataId]),
+    [
+      ['icon', withIcons.id],
+      ['point', withoutIcons.id]
+    ],
+    'an icon in one dataset does not suppress points in another'
+  );
+  const geoTrip = new KeplerTable({info: tripDataInfo}).updateSchema(processGeojson(tripGeojson));
+  t.deepEqual(
+    autoLayers(geoTrip).map(layer => layer.type),
+    ['trip'],
+    'keeps existing Trip over GeoJSON precedence'
+  );
+  const tableTrip = new KeplerTable({info: tripCsvDataInfo}).updateSchema(
+    processCsvData(tripCsvData.replace(',name,', ',id,'))
+  );
+  t.deepEqual(
+    autoLayers(tableTrip).map(layer => layer.type),
+    ['point', 'trip'],
+    'keeps table Trip and Point defaults together'
+  );
   t.end();
 });
 
@@ -7312,6 +7552,71 @@ test('#visStateReducer -> APPLY_CPU_FILTER has gpu filter', t => {
   t.end();
 });
 
+test('#visStateReducer -> SET_FILTER.enabled refreshes export rows and color domains', t => {
+  for (const gpu of [true, false]) {
+    const dataId = 'filter-enablement';
+    const rows = [0, 10, 20, 30].map((value, index) => [
+      1 + index,
+      30 + index,
+      value,
+      index === 3 ? 'exclude' : 'keep'
+    ]);
+    const dataset = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+    dataset.importData({
+      data: {
+        fields: ['lat', 'lng', 'value', 'group'].map(name => ({
+          name,
+          type: name === 'group' ? 'string' : 'real'
+        })),
+        rows
+      }
+    });
+    const {props} = PointLayer.findDefaultLayerProps(dataset);
+    const layer = new PointLayer({id: 'filtered-points', dataId, ...props[0]});
+    layer.updateLayerConfig({colorField: dataset.fields[2], colorScale: 'linear'});
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {[dataId]: dataset},
+      layers: [layer],
+      layerData: []
+    };
+    const apply = action => {
+      state = reducer(state, action);
+    };
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [5, 15]));
+    apply(VisStateActions.setFilter(0, 'gpu', gpu));
+    apply(VisStateActions.addFilter(dataId));
+    apply(VisStateActions.setFilter(1, 'name', 'group'));
+    apply(VisStateActions.setFilter(1, 'value', ['keep']));
+    t.equal(state.filters[0].gpu, gpu, 'uses the requested filter evaluation mode');
+
+    const check = (label, indexes, domain) => {
+      apply(VisStateActions.applyCPUFilter(dataId));
+      const table = state.datasets[dataId];
+      const exported = createIndexedDataContainer(table.dataContainer, table.filteredIdxCPU);
+      t.equal(
+        formatCsv(exported, table.fields),
+        ['lat,lng,value,group', ...indexes.map(index => rows[index].join(','))].join('\n'),
+        `${gpu ? 'GPU' : 'CPU'}: ${label} exports the matching rows`
+      );
+      t.deepEqual(
+        state.layers[0].config.colorDomain,
+        domain,
+        `${gpu ? 'GPU' : 'CPU'}: ${label} refreshes the color domain`
+      );
+    };
+
+    check('enabled filter populates the caches', [1], [10, 10]);
+    apply(VisStateActions.setFilter(0, 'enabled', false));
+    check('disabled filter preserves the other filter', [0, 1, 2], [0, 20]);
+    apply(VisStateActions.setFilter(0, 'enabled', true));
+    check('re-enabled filter reapplies its saved range', [1], [10, 10]);
+  }
+  t.end();
+});
+
 test('#visStateReducer -> APPLY_CPU_FILTER has cpu filter', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   // dataset has gpu filter
@@ -8103,6 +8408,74 @@ test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS'
     'should ignore an unknown dataset'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial data', async t => {
+  drainTasksForTesting();
+  const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
+  initApplicationConfig({useArrowProgressiveLoading: true});
+  try {
+    const initialState = CloneDeep(InitialState).visState;
+    const feature = {
+      type: 'Feature',
+      properties: {},
+      geometry: {type: 'Point', coordinates: [1000000, 1000000]}
+    };
+    // Put CRS after features so streaming cannot discover it until the final container.
+    const file = new File(
+      [
+        JSON.stringify({
+          type: 'FeatureCollection',
+          features: [feature],
+          crs: {type: 'name', properties: {name: 'EPSG:3857'}}
+        })
+      ],
+      'projected.geojson',
+      {type: 'application/geo+json'}
+    );
+    const nextFile = new File(['lat,lng\n20,10'], 'valid.csv', {type: 'text/csv'});
+    let state = reducer(initialState, VisStateActions.loadFiles([file, nextFile]));
+    const [loadTask] = drainTasksForTesting();
+    const iterator = await readFileInBatches({file, loadOptions: {worker: false}});
+    state = reducer(state, succeedTaskInTest(loadTask, iterator));
+    let [task] = drainTasksForTesting();
+    let streamedRows = false;
+    while (task.type === 'UNWRAP') {
+      const batch = await task.payload;
+      streamedRows ||= Array.isArray(batch.value?.data) && batch.value.data.length > 0;
+      state = reducer(state, succeedTaskInTest(task, batch));
+      t.equal(state.datasets, initialState.datasets, 'streamed GeoJSON never adds partial data');
+      t.deepEqual(state.fileLoading.fileCache, [], 'streamed GeoJSON never enters the file cache');
+      const tasks = drainTasksForTesting();
+      t.equal(tasks.length, 1, 'GeoJSON should not schedule a progressive dataset commit');
+      [task] = tasks;
+    }
+    t.ok(streamedRows, 'exercise feature batches before the final CRS declaration');
+    t.equal(task.type, 'PROCESS_FILE_CONTENT', 'process the completed GeoJSON file');
+    try {
+      await processFileData(task.payload);
+      t.fail('the completed file must reject its unsupported CRS');
+    } catch (error) {
+      t.match(error.message, /WGS84.*EPSG:4326/, 'surface an actionable import error');
+      const warn = sinon.stub(Console, 'warn');
+      try {
+        state = reducer(state, errorTaskInTest(task, error));
+      } finally {
+        warn.restore();
+      }
+      t.equal(state.fileLoadingProgress[file.name].error, error, 'record the file error');
+      t.equal(state.datasets, initialState.datasets, 'failed import preserves existing datasets');
+      t.deepEqual(state.fileLoading.fileCache, [], 'failed import does not leave a partial cache');
+      const [delay] = drainTasksForTesting();
+      state = reducer(state, succeedTaskInTest(delay));
+      const [nextLoad] = drainTasksForTesting();
+      t.equal(nextLoad.payload.file, nextFile, 'continue loading the next file after the error');
+    }
+  } finally {
+    initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
+    drainTasksForTesting();
+  }
   t.end();
 });
 

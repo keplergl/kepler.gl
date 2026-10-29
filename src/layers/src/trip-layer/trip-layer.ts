@@ -1029,7 +1029,7 @@ export default class TripLayer extends Layer {
           case COLUMN_MODE_TABLE:
             return feature => {
               const colors = data.getColor(feature);
-              if (this.config.colorField) {
+              if (this.config.colorField && Array.isArray(colors[0])) {
                 const {idx} = this._findDatumForFeatureByTime(
                   feature.properties.index,
                   animationConfig
