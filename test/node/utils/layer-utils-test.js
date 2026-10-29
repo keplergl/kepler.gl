@@ -23,8 +23,173 @@ import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
-import {ArrowDataContainer, createDataContainer, findDefaultColorField} from '@kepler.gl/utils';
+import {
+  ArrowDataContainer,
+  createDataContainer,
+  findDefaultColorField,
+  findDefaultColorFieldWithValues
+} from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
+
+const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
+
+async function createDefaultColorDataset(columns, rowCount = 3) {
+  const dataset = new KeplerTable({info: {id: 'default-color'}});
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'},
+        {name: 'a5', type: 'string'},
+        {name: 's2', type: 'string'},
+        {name: 'geohash', type: 'string'},
+        {name: 'h3', type: 'h3'},
+        {name: 'icon', type: 'string'},
+        ...columns.map(({name, type}) => ({name, type}))
+      ],
+      rows: Array.from({length: rowCount}, (_, index) => [
+        37.7 + index / 100,
+        -122.4 + index / 100,
+        '9ca4cf8000000000',
+        '8085809',
+        '9q8yyk',
+        '8928308280fffff',
+        'marker',
+        ...columns.map(({values}) => values[index])
+      ])
+    }
+  });
+  return dataset;
+}
+
+test('layerUtils -> default fill fields prefer varying floats, then integers', async t => {
+  const cases = [
+    {
+      name: 'float before a preferred integer',
+      columns: [
+        {name: 'score', type: 'integer', values: [1, 2, 3]},
+        {name: 'metric', type: 'real', values: [0.5, 0.5, 0.5]},
+        {name: 'depth', type: 'real', values: [1.25, 2.5, 3.75]}
+      ],
+      expected: 'depth',
+      domain: [1.25, 2.5, 3.75]
+    },
+    {
+      name: 'metric preference within floats',
+      columns: [
+        {name: 'depth', type: 'real', values: [1.25, 2.5, 3.75]},
+        {name: 'score', type: 'real', values: [0.25, 0.5, 0.75]}
+      ],
+      expected: 'score',
+      domain: [0.25, 0.5, 0.75]
+    },
+    {
+      name: 'column order within equally ranked floats',
+      columns: [
+        {name: 'depth', type: 'real', values: [1.25, 2.5, 3.75]},
+        {name: 'height', type: 'real', values: [0.25, 0.5, 0.75]}
+      ],
+      expected: 'depth',
+      domain: [1.25, 2.5, 3.75]
+    },
+    {
+      name: 'integer fallback after constant and missing values',
+      columns: [
+        {name: 'score', type: 'real', values: [0.5, null, 0.5]},
+        {name: 'metric', type: 'integer', values: [1, 1, 1]},
+        {name: 'value', type: 'real', values: [null, null, null]},
+        {name: 'count', type: 'integer', values: [1, 2, 3]}
+      ],
+      expected: 'count',
+      domain: [1, 2, 3]
+    },
+    {
+      name: 'no varying eligible numbers',
+      columns: [
+        {name: 'score', type: 'real', values: [0.5, null, 0.5]},
+        {name: 'count', type: 'integer', values: [1, 1, 1]},
+        {name: 'record_id', type: 'integer', values: [1, 2, 3]},
+        {name: 'category', type: 'string', values: ['a', 'b', 'c']}
+      ],
+      expected: null,
+      domain: [0, 1]
+    }
+  ];
+
+  for (const {name, columns, expected, domain} of cases) {
+    const dataset = await createDefaultColorDataset(columns);
+    for (const type of defaultColorLayerTypes) {
+      const layers = findDefaultLayer(dataset, {[type]: LayerClasses[type]});
+      t.equal(layers.length, 1, `${type}: discovers a layer`);
+      const layer = layers[0];
+      t.equal(layer.config.colorField?.name ?? null, expected, `${type}: ${name}`);
+      t.deepEqual(layer.config.colorDomain, domain, `${type}: initializes the color domain`);
+      t.notOk(layer.config.strokeColorField, `${type}: leaves stroke color alone`);
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> empty and single-row layers keep uniform fill', async t => {
+  for (const rowCount of [0, 1]) {
+    const dataset = await createDefaultColorDataset(
+      [{name: 'score', type: 'real', values: [0.5]}],
+      rowCount
+    );
+    for (const type of defaultColorLayerTypes) {
+      const layer = new LayerClasses[type]({dataId: dataset.id});
+      layer.setInitialLayerConfig(dataset);
+      t.equal(layer.config.colorField, null, `${type}: ${rowCount} rows keep uniform fill`);
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> optional default coloring preserves explicit fields and rolls back failures', async t => {
+  for (const failure of ['values', 'domain', 'explicit field']) {
+    const dataset = await createDefaultColorDataset([
+      {name: 'score', type: 'real', values: [0.25, 0.5, 0.75]},
+      {name: 'count', type: 'integer', values: [1, 2, 3]}
+    ]);
+    if (failure === 'values') {
+      dataset.fields.find(field => field.name === 'score').valueAccessor = () => {
+        throw new Error('Cannot read field values');
+      };
+    } else if (failure === 'domain') {
+      dataset.getColumnLayerDomain = () => {
+        throw new Error('Cannot calculate color domain');
+      };
+    }
+    for (const type of defaultColorLayerTypes) {
+      const layer = new LayerClasses[type]({dataId: dataset.id});
+      if (failure === 'explicit field') {
+        layer.updateLayerConfig({colorField: dataset.fields.find(field => field.name === 'count')});
+        layer.updateLayerVisualChannel(dataset, 'color');
+      }
+      const previousConfig = layer.config;
+      t.doesNotThrow(() => layer.setInitialLayerConfig(dataset), `${type}: ${failure}`);
+      t.equal(layer.config, previousConfig, `${type}: keeps previous color settings`);
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> default color query checks domain rows and ignores invalid values', async t => {
+  const dataset = await createDefaultColorDataset([
+    {name: 'score', type: 'real', values: [0.5, 0.5, 1.5]},
+    {name: 'value', type: 'integer', values: [1, 2, 3]}
+  ]);
+  dataset.filteredIndexForDomain = [0, 1];
+  t.equal(findDefaultColorFieldWithValues(dataset)?.name, 'value', 'uses the domain row selection');
+
+  const score = dataset.fields.find(field => field.name === 'score');
+  score.valueAccessor = ({index}) => [NaN, Infinity, -Infinity][index];
+  dataset.filteredIndexForDomain = [0, 1, 2];
+  t.equal(findDefaultColorFieldWithValues(dataset)?.name, 'value', 'skips non-finite numbers');
+  dataset.filteredIndexForDomain = [];
+  t.equal(findDefaultColorFieldWithValues(dataset), null, 'no domain rows means no varying field');
+  t.end();
+});
 
 test('layerUtils -> createGeoArrowPointVector handles empty and nonempty coordinates', t => {
   for (const coordinates of [

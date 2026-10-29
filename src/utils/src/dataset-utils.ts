@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
+import {extent} from 'd3-array';
 import {
   ALL_FIELD_TYPES,
   FIELD_OPTS,
@@ -32,6 +33,7 @@ import {isPlainObject} from './utils';
 import {getFormatter} from './data-utils';
 import {getFormatValue} from './format';
 import {hexToRgb} from './color-utils';
+import type {DataContainerInterface} from './data-container-interface';
 
 // apply a color for each dataset
 // to use as label colors
@@ -128,41 +130,24 @@ const METRIC_DEFAULT_FIELDS = [
   'val'
 ];
 
-/**
- * Choose a field to use as the default color field of a layer.
- *
- * The heuristic is:
- *
- * First, exclude fields that are on the exclusion list and don't
- * have names that suggest they contain metrics. Also exclude
- * field names that are blank.
- *
- * Next, look for a field that is of real type and contains one
- * of the preferred names (in order of the preferred names).
- *
- * Next, look for a field that is of integer type and contains
- * one of the preferred names (in order of the preferred names).
- *
- * Next, look for the first field that is of real type (in order
- * of field index).
- *
- * Next, look for the first field that is of integer type (in
- * order of field index).
- *
- * It's possible no field will be chosen (i.e. because all fields
- * are strings.)
- *
- * @param dataset
- */
-export function findDefaultColorField({
-  fields,
-  fieldPairs = []
-}: {
+type DefaultColorFieldDataset = {
   fields: Field[];
   fieldPairs: FieldPair[];
-}): null | Field {
+};
+
+// Bound the extra column scans used to reject constant default color fields.
+const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
+
+/** Rank floats before integers, then preferred metric names and column order. */
+function getDefaultColorFields(
+  {fields, fieldPairs = []}: DefaultColorFieldDataset,
+  includeIntegers = false
+): Field[] {
   const fieldsWithoutExcluded = fields.filter(field => {
-    if (field.type !== ALL_FIELD_TYPES.real) {
+    if (
+      field.type !== ALL_FIELD_TYPES.real &&
+      !(includeIntegers && field.type === ALL_FIELD_TYPES.integer)
+    ) {
       // Only select numeric fields.
       return false;
     }
@@ -189,7 +174,11 @@ export function findDefaultColorField({
     return !hasExcluded || hasInclusion;
   });
 
-  const sortedFields = fieldsWithoutExcluded.sort((left, right) => {
+  return fieldsWithoutExcluded.sort((left, right) => {
+    if (left.type !== right.type) {
+      return left.type === ALL_FIELD_TYPES.real ? -1 : 1;
+    }
+
     const normalizedLeft = left.name.toLowerCase();
     const normalizedRight = right.name.toLowerCase();
     const leftHasInclusion = METRIC_DEFAULT_FIELDS.findIndex(
@@ -210,26 +199,39 @@ export function findDefaultColorField({
       return leftHasInclusion - rightHasInclusion;
     }
 
-    // Compare based on type
-    if (left.type !== right.type) {
-      if (left.type === ALL_FIELD_TYPES.real) {
-        return -1;
-      }
-      // left is an integer and right is not
-      // and reals come before integers
-      return 1;
-    }
-
-    // Finally, order based on the order in the datasets columns
-    // @ts-expect-error
-    return left.index - right.index;
+    // Stable sort preserves dataset column order for equally ranked fields.
+    return 0;
   });
+}
 
-  if (sortedFields.length) {
-    // There was a best match
-    return sortedFields[0];
+/** Choose an eligible float from metadata, including datasets loaded through tiles. */
+export function findDefaultColorField(dataset: DefaultColorFieldDataset): Field | null {
+  return getDefaultColorFields(dataset)[0] ?? null;
+}
+
+/** Choose a varying numeric column from loaded data, preferring floats to integers. */
+export function findDefaultColorFieldWithValues(
+  dataset: DefaultColorFieldDataset & {
+    dataContainer: DataContainerInterface;
+    filteredIndexForDomain: number[];
   }
-  // No matches
+): Field | null {
+  const rowCount = dataset.dataContainer.numRows();
+  if (!rowCount) {
+    return null;
+  }
+
+  const maxFieldChecks = Math.floor(DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / rowCount);
+  const candidates = getDefaultColorFields(dataset, true).slice(0, maxFieldChecks);
+  for (const field of candidates) {
+    const [min, max] = extent(dataset.filteredIndexForDomain, index => {
+      const value = field.valueAccessor({index});
+      return Number.isFinite(value) ? value : undefined;
+    });
+    if (min !== max) {
+      return field;
+    }
+  }
   return null;
 }
 

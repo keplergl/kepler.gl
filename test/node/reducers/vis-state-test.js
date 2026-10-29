@@ -2312,6 +2312,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   });
   expectedLayer.dataToFeature = expectedDataToFeature;
   expectedLayer.meta = updatedGeoJsonLayer.meta;
+  expectedLayer.updateLayerConfig({colorDomain: [4, 11, 20]});
 
   const expectedLayerData = {
     data: geojsonData.features.map((f, i) => ({
@@ -2329,6 +2330,7 @@ test('#visStateReducer -> UPDATE_VIS_DATA.4.Geojson -> geojson data', t => {
   );
 
   t.equal(initialState.layers.length, 1, 'should find 1 geojson layer');
+  t.equal(initialState.layers[0].config.colorField.name, 'TRIPS', 'selects the varying integer');
   cmpLayers(t, expectedLayer, initialState.layers[0], 'should save dataFeature to geojson layer');
 
   t.deepEqual(

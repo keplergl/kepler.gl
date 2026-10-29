@@ -96,6 +96,7 @@ export {maybeHexToGeo, getPositionFromHexValue} from './position-utils';
 export {
   datasetColorMaker,
   findDefaultColorField,
+  findDefaultColorFieldWithValues,
   getFieldFormatLabels,
   getFormatLabels,
   validateInputData

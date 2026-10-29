@@ -16,6 +16,7 @@ import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
 import type {SvgIcon} from '@kepler.gl/utils';
 import GEOCODER_PLACE_ICON from './geocoder-icon';
+import {applyDefaultColorField} from '../layer-color-utils';
 import {
   ColorRange,
   VisConfigBoolean,
@@ -237,6 +238,11 @@ export default class IconLayer extends Layer {
         defaultValue: 1
       }
     };
+  }
+
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
+    return this;
   }
 
   get layerInfoModal() {

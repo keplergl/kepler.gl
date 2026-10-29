@@ -16,12 +16,8 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {
-  hexToRgb,
-  findDefaultColorField,
-  DataContainerInterface,
-  ArrowDataContainer
-} from '@kepler.gl/utils';
+import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
 import {
@@ -312,19 +308,8 @@ export default class PointLayer extends Layer {
     };
   }
 
-  setInitialLayerConfig(dataset) {
-    if (!dataset.dataContainer.numRows()) {
-      return this;
-    }
-    const defaultColorField = findDefaultColorField(dataset);
-
-    if (defaultColorField) {
-      this.updateLayerConfig({
-        colorField: defaultColorField
-      });
-      this.updateLayerVisualChannel(dataset, 'color');
-    }
-
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
     return this;
   }
 

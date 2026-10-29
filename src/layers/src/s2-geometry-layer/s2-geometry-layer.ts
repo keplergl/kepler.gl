@@ -31,6 +31,7 @@ import {
 import S2LayerIcon from './s2-layer-icon';
 import {getS2Center, validS2Token, maybeStripQuotes} from './s2-utils';
 import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {applyDefaultColorField} from '../layer-color-utils';
 
 export type S2GeometryLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -245,6 +246,11 @@ export default class S2GeometryLayer extends Layer {
         strokeColorRange: DEFAULT_COLOR_UI
       }
     };
+  }
+
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
+    return this;
   }
 
   static findDefaultLayerProps({fields = []}: KeplerTable) {
