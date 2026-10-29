@@ -322,17 +322,40 @@ export default class LineLayer extends ArcLayer {
       highlightColor: this.config.highlightColor
     });
 
+    const useArrowLayer = Boolean(this.geoArrowVector0);
+
+    let experimentalPropOverrides: {
+      data?: arrow.Table;
+      getSourcePosition?: arrow.Vector;
+      getTargetPosition?: arrow.Vector;
+    } = {};
+
+    if (useArrowLayer) {
+      experimentalPropOverrides = {
+        data: dataset.dataContainer.getTable(),
+        getSourcePosition: this.geoArrowVector0,
+        getTargetPosition: this.geoArrowVector1
+      };
+    }
+
     if (globeMode) {
+      const GlobeLineLayerClass = useArrowLayer ? GeoArrowArcLayer : DeckArcLayer;
       const id = `${defaultLayerProps.id}-globe`;
       return [
-        new DeckArcLayer({
+        // @ts-expect-error Arc and GeoArrow Arc have incompatible constructor signatures.
+        new GlobeLineLayerClass({
           ...defaultLayerProps,
           ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
           ...data,
+          ...experimentalPropOverrides,
           ...layerProps,
           id,
           updateTriggers,
-          extensions: [...defaultLayerProps.extensions, brushingExtension],
+          extensions: [
+            ...defaultLayerProps.extensions,
+            brushingExtension,
+            ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
+          ],
           // On a globe a "line" is drawn as a flat ArcLayer: getHeight 0 keeps the
           // geometry on the sphere surface (no raised paraboloid arc, which would
           // otherwise pop up as spikes sticking out perpendicular to the surface).
@@ -369,23 +392,7 @@ export default class LineLayer extends ArcLayer {
       ];
     }
 
-    const useArrowLayer = Boolean(this.geoArrowVector0);
-
-    let LineLayerClass: typeof EnhancedLineLayer | typeof GeoArrowArcLayer = EnhancedLineLayer;
-    let experimentalPropOverrides: {
-      data?: arrow.Table;
-      getSourcePosition?: arrow.Vector;
-      getTargetPosition?: arrow.Vector;
-    } = {};
-
-    if (useArrowLayer) {
-      LineLayerClass = GeoArrowArcLayer;
-      experimentalPropOverrides = {
-        data: dataset.dataContainer.getTable(),
-        getSourcePosition: this.geoArrowVector0,
-        getTargetPosition: this.geoArrowVector1
-      };
-    }
+    const LineLayerClass = useArrowLayer ? GeoArrowArcLayer : EnhancedLineLayer;
 
     return [
       // base layer

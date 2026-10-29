@@ -3,6 +3,10 @@
 
 import test from 'tape';
 import moment from 'moment';
+import * as arrow from 'apache-arrow';
+import {ArcLayer as DeckArcLayer} from '@deck.gl/layers';
+import {GeoArrowArcLayer} from '@kepler.gl/deckgl-arrow-layers';
+import {EnhancedLineLayer, FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 
 import {
   testCreateCases,
@@ -16,8 +20,8 @@ import {
 
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
-import {copyTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {KeplerTable, copyTable, copyTableAndUpdate} from '@kepler.gl/table';
 
 const {LineLayer} = KeplerGlLayers;
 const columns = {
@@ -546,5 +550,157 @@ test('#LineLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, LineLayer, TEST_CASES);
+  t.end();
+});
+
+test('#LineLayer -> Arrow positions, accessors and picking on map and globe', t => {
+  const positions = [
+    [
+      [20, 10, 0],
+      [40, 30, 0]
+    ],
+    [
+      [0, 0, 0],
+      [50, 40, 0]
+    ],
+    [
+      [60, 50, 0],
+      [80, 70, 0]
+    ]
+  ];
+  const pointType = new arrow.FixedSizeList(3, new arrow.Field('xyz', new arrow.Float64()));
+
+  for (const columnMode of ['points', 'geoarrow']) {
+    const chunks = [positions.slice(0, 2), positions.slice(2)].map(rows =>
+      columnMode === 'geoarrow'
+        ? new arrow.Table({
+            source: arrow.vectorFromArray(
+              rows.map(row => row[0]),
+              pointType
+            ),
+            target: arrow.vectorFromArray(
+              rows.map(row => row[1]),
+              pointType
+            ),
+            weight: arrow.vectorFromArray(rows.map(row => positions.indexOf(row) + 1))
+          })
+        : arrow.tableFromArrays({
+            lat0: rows.map(row => row[0][1]),
+            lng0: rows.map(row => row[0][0]),
+            lat1: rows.map(row => row[1][1]),
+            lng1: rows.map(row => row[1][0]),
+            weight: rows.map(row => positions.indexOf(row) + 1)
+          })
+    );
+    const table = new arrow.Table(chunks.flatMap(chunk => chunk.batches));
+    const dataset = new KeplerTable({info: {id: 'arrow-lines'}, color: [0, 0, 0]});
+    dataset.updateSchema({
+      fields: table.schema.fields.map(field => ({name: field.name, type: 'real'})),
+      cols: table.schema.fields.map((field, index) => table.getChildAt(index)),
+      arrowTable: table
+    });
+    if (columnMode === 'geoarrow') {
+      // Progressive loads retain batches until compaction when loading completes.
+      dataset.dataContainer.update(table);
+    }
+    dataset.filteredIndex = [0, 2];
+    const layer = new LineLayer({dataId: dataset.id, columnMode});
+    layer.updateLayerConfig({
+      columns: Object.fromEntries(
+        (columnMode === 'geoarrow'
+          ? [
+              ['geoarrow0', 'source'],
+              ['geoarrow1', 'target']
+            ]
+          : ['lat0', 'lng0', 'lat1', 'lng1'].map(name => [name, name])
+        ).map(([key, name], fieldIdx) => [key, {value: name, fieldIdx}])
+      )
+    });
+    layer.updateLayerConfig({
+      sizeField: dataset.fields[dataset.fields.length - 1],
+      sizeDomain: [1, 3]
+    });
+    layer.updateLayerVisConfig({sizeRange: [2, 6]});
+    const data = layer.formatLayerData({[dataset.id]: dataset});
+    t.equal(data.data.numRows, 3, `${columnMode}: format preserves all Arrow rows`);
+
+    for (const globeEnabled of [false, true]) {
+      const label = `${columnMode}, globe=${globeEnabled}`;
+      const [rendered] = layer.renderLayer({
+        data,
+        dataset,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: globeEnabled}},
+        layerCallbacks: {},
+        visible: true,
+        idx: 0
+      });
+      const actualSource =
+        rendered.props.getSourcePosition instanceof arrow.Vector
+          ? Array.from(rendered.props.getSourcePosition.get(0))
+          : rendered.props.getSourcePosition(data.data.get(0));
+      t.deepEqual(actualSource, positions[0][0], `${label}: valid source reaches renderer`);
+      t.ok(rendered instanceof GeoArrowArcLayer, `${label}: uses Arrow renderer`);
+      if (!(rendered instanceof GeoArrowArcLayer)) {
+        continue;
+      }
+      t.ok(
+        rendered.props.extensions.some(extension => extension instanceof FilterArrowExtension),
+        `${label}: applies Arrow CPU filtering`
+      );
+      const sublayers = rendered.renderLayers();
+      t.equal(sublayers.length, columnMode === 'geoarrow' ? 2 : 1, `${label}: renders every batch`);
+      let offset = 0;
+      sublayers.forEach(sublayer => {
+        t.ok(
+          sublayer instanceof (globeEnabled ? DeckArcLayer : EnhancedLineLayer),
+          `${label}: preserves projection-specific stroke`
+        );
+        if (globeEnabled) {
+          t.equal(sublayer.props.getHeight, 0, 'globe stroke stays on the sphere');
+          t.equal(sublayer.props.parameters.cull, false, 'globe stroke disables backface culling');
+        }
+        const {data: batchData} = sublayer.props;
+        for (let index = 0; index < batchData.length; index++) {
+          const globalIndex = offset + index;
+          for (const [accessor, endpoint] of [
+            ['getSourcePosition', 0],
+            ['getTargetPosition', 1]
+          ]) {
+            const attribute = batchData.attributes[accessor];
+            t.deepEqual(
+              Array.from(
+                attribute.value.slice(index * attribute.size, (index + 1) * attribute.size)
+              ),
+              positions[globalIndex][endpoint],
+              `${label}: ${accessor} at row ${globalIndex}`
+            );
+          }
+          t.equal(
+            sublayer.props.getFiltered(null, {index, data: batchData}),
+            globalIndex === 1 ? 0 : 1,
+            `${label}: filter accessor uses global row ${globalIndex}`
+          );
+          t.equal(
+            sublayer.props.getWidth(null, {index, data: batchData}),
+            (globalIndex + 1) * 2,
+            `${label}: width accessor uses global row ${globalIndex}`
+          );
+          const picked = rendered.getPickingInfo({
+            info: {index, picked: true},
+            sourceLayer: sublayer
+          });
+          t.equal(picked.index, globalIndex, `${label}: picking uses global row ${globalIndex}`);
+          t.deepEqual(
+            layer.getHoverData(picked.object, dataset.dataContainer, dataset.fields, {}, picked),
+            dataset.dataContainer.row(globalIndex),
+            `${label}: hover data matches picked row`
+          );
+        }
+        offset += batchData.length;
+      });
+    }
+  }
   t.end();
 });
