@@ -72,6 +72,71 @@ test('#VectorTileLayer -> getEncodedChannelValue respects hideNulls', t => {
   t.end();
 });
 
+test('#VectorTileLayer -> hover supports feature arrays and collections', t => {
+  const layer = new VectorTileLayer({id: 'vector', dataId: 'test'});
+  const feature = {
+    type: 'Feature',
+    properties: {name: 'Selected'},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  };
+  const basePick = {
+    picked: true,
+    index: 0,
+    object: feature,
+    layer: {props: {id: layer.id}},
+    sourceLayer: {props: {visible: true}}
+  };
+  for (const content of [
+    [feature],
+    {shape: 'geojson-table', type: 'FeatureCollection', features: [feature]},
+    {type: 'FeatureCollection', features: [feature]}
+  ]) {
+    const tile = {index: {x: 0, y: 0, z: 0}, content};
+    const pick = {...basePick, tile};
+    const hovered = layer.hasHoveredObject(pick);
+    t.equal(hovered, feature, 'hover resolves the same original feature');
+    t.deepEqual(
+      layer.getHoverData(hovered, null, [{name: 'name'}, {name: 'missing'}]),
+      ['Selected', null],
+      'tooltip reads selected properties'
+    );
+    const layers = layer.renderLayer({
+      data: {tileSource: {}, tilesetDataUrl: 'test/{z}/{x}/{y}'},
+      mapState: {zoom: 1, latitude: 0, longitude: 0},
+      animationConfig: {},
+      gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+      layerCallbacks: {},
+      visible: true,
+      idx: 0,
+      objectHovered: pick
+    });
+    t.deepEqual(layers[1].props.data, [feature], 'render highlight uses resolved feature');
+    if (Array.isArray(content) || content.shape === 'geojson-table') {
+      t.deepEqual(
+        layer.renderSubLayers({data: content, tile}).props.data,
+        [feature],
+        'the rendered tile and hover agree'
+      );
+    }
+  }
+  for (const pick of [
+    null,
+    {...basePick, picked: false},
+    {...basePick, layer: {props: {id: 'other'}}},
+    basePick,
+    {...basePick, tile: {}},
+    {...basePick, tile: {content: {}}},
+    {...basePick, tile: {content: []}},
+    {...basePick, tile: {content: {features: []}}},
+    {...basePick, tile: {content: [feature]}, index: -1},
+    {...basePick, tile: {content: [feature]}, index: 1},
+    {...basePick, tile: {content: {features: [feature]}}, index: 1}
+  ]) {
+    t.notOk(layer.hasHoveredObject(pick), 'missing or unselected features are graceful');
+  }
+  t.end();
+});
+
 test('#VectorTileLayer -> radius range updates cached point attributes', t => {
   const layer = new VectorTileLayer({id: 'vector-radius', dataId});
   const radiusField = preparedDataset.fields.find(field => field.name === 'trip_distance');

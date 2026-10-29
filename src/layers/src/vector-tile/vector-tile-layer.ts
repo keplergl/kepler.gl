@@ -530,8 +530,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
 
   hasHoveredObject(objectInfo) {
     if (super.hasHoveredObject(objectInfo)) {
-      const features = objectInfo?.tile?.content?.features;
-      return features[objectInfo.index];
+      const content = objectInfo?.tile?.content;
+      const features = Array.isArray(content) ? content : content?.features;
+      return features?.[objectInfo.index] ?? null;
     }
     return null;
   }
