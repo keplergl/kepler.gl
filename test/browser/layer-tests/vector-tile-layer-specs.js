@@ -227,3 +227,57 @@ test('#VectorTileLayer -> radius range updates cached point attributes', t => {
   }
   t.end();
 });
+
+test('#VectorTileLayer -> highlights respect current panel and layer visibility', t => {
+  for (const identified of [false, true]) {
+    const layer = new VectorTileLayer({id: 'vector', dataId: 'test'});
+    const feature = {
+      type: 'Feature',
+      ...(identified ? {id: 'selected'} : {}),
+      properties: {name: 'Selected'},
+      geometry: {type: 'Point', coordinates: [0, 0]}
+    };
+    const tile = {
+      id: '0-0-0',
+      index: {x: 0, y: 0, z: 0},
+      boundingBox: [
+        [-180, -85],
+        [180, 85]
+      ],
+      content: {shape: 'geojson-table', type: 'FeatureCollection', features: [feature]}
+    };
+    layer.tileDataset = {getTiles: () => [tile]};
+    const objectHovered = {
+      picked: true,
+      index: 0,
+      object: feature,
+      tile,
+      layer: {props: {id: layer.id}},
+      // Selection originated in the other, visible split-map panel.
+      sourceLayer: {props: {visible: true}}
+    };
+    for (const [visible, isVisible] of [
+      [true, true],
+      [false, true],
+      [true, false]
+    ]) {
+      layer.updateLayerConfig({isVisible});
+      const layers = layer.renderLayer({
+        data: {tileSource: {}, tilesetDataUrl: 'test/{z}/{x}/{y}'},
+        mapState: {zoom: 1, latitude: 0, longitude: 0},
+        animationConfig: {},
+        gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+        layerCallbacks: {},
+        visible,
+        idx: 0,
+        objectHovered
+      });
+      const expected = visible && isVisible;
+      t.equal(layers.length, 2, `${identified ? 'outline' : 'fallback'} highlight is constructed`);
+      t.equal(layers[0].props.visible, expected, 'tile layer respects visibility');
+      t.equal(layers[1].props.visible, expected, 'highlight respects the current panel visibility');
+      t.deepEqual(layers[1].props.data, [feature], 'highlight keeps selected geometry');
+    }
+  }
+  t.end();
+});
