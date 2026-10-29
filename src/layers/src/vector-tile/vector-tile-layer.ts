@@ -6,7 +6,7 @@ import {FeatureCollection, Feature} from 'geojson';
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
-import {ClipExtension} from '@deck.gl/extensions';
+import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 
@@ -23,14 +23,16 @@ import {
   LAYER_VIS_CONFIGS,
   CULL_MODE,
   NO_VALUE_COLOR,
-  MISSING_VALUE_COLOR
+  MISSING_VALUE_COLOR,
+  FILTER_TYPES
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter,
-  VectorTileMetadata
+  VectorTileMetadata,
+  getDatasetFieldIndexForFilter
 } from '@kepler.gl/table';
 import {
   AnimationConfig,
@@ -45,7 +47,7 @@ import {
   VisConfigBoolean,
   DomainStops
 } from '@kepler.gl/types';
-import {DataContainerInterface} from '@kepler.gl/utils';
+import {DataContainerInterface, getFilterFunction} from '@kepler.gl/utils';
 
 import {MVTLayer as CustomMVTLayer, GlobeClipExtension} from './mvt-layer';
 import VectorTileIcon from './vector-tile-icon';
@@ -115,6 +117,7 @@ type VectorTile = Tile2DHeader<TileContent>;
 type LayerData = CommonLayerData & {
   tilesetDataUrl?: string | null;
   tileSource: MVTTileSource | PMTilesTileSource | null;
+  getFilterCategory?: (feature: Feature) => number;
 };
 
 type VectorTileLayerRenderOptions = Merge<
@@ -521,10 +524,33 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       }
     }
 
+    const categoryPredicates = (dataset.filterRecord?.cpu || []).flatMap(filter => {
+      if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
+        return [];
+      }
+      const field = dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)];
+      if (!field) return [];
+
+      // Tile features live outside the table's row container. Reuse its filter semantics
+      // with a property accessor instead of the table's index-based value accessor.
+      return [
+        getFilterFunction(
+          {...field, valueAccessor: (feature: any) => feature.properties?.[field.name]},
+          dataId,
+          filter,
+          [],
+          dataset.dataContainer
+        ) as (feature: any) => boolean
+      ];
+    });
+
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
       tilesetDataUrl: typeof tilesetDataUrl === 'string' ? getTileUrl(tilesetDataUrl) : null,
-      tileSource
+      tileSource,
+      // A binary category avoids deck.gl's distinct-category limit and preserves
+      // cached feature arrays and picking indexes, alongside all numeric channels.
+      getFilterCategory: feature => (categoryPredicates.every(matches => matches(feature)) ? 1 : 0)
     };
   }
 
@@ -573,6 +599,12 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     this.setLayerDomain = layerCallbacks.onSetLayerDomain;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
+    const getFilterCategory = data.getFilterCategory || (() => 1);
+    // Keep the categorical channel enabled even when no categorical filter is active,
+    // so filters can be added to already initialized tile sublayers.
+    defaultLayerProps.extensions = defaultLayerProps.extensions.map(
+      extension => new DataFilterExtension({...extension.opts, categorySize: 1})
+    );
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
     const transitions = this.config.visConfig.transition
@@ -593,7 +625,9 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const radiusField = this.config.radiusField as KeplerField;
 
     if (data.tileSource) {
-      const hoveredObject = this.hasHoveredObject(objectHovered);
+      const hoveredFeature = this.hasHoveredObject(objectHovered);
+      const hoveredObject =
+        hoveredFeature && getFilterCategory(hoveredFeature) ? hoveredFeature : null;
 
       // Resolve unique id property: use configured uniqueIdField if set, otherwise infer
       let uniqueIdProperty: string | undefined;
@@ -612,6 +646,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         defaultLayerProps,
         visConfig,
         uniqueIdProperty,
+        getFilterCategory,
         // In globe mode use the lng/lat-based GlobeClipExtension for the hover
         // outline (see mvt-layer.ts: the stock common-space clip slices diagonally
         // through the sphere geometry).
@@ -628,6 +663,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           tileSource: data.tileSource,
           getFilterValue: this.getGpuFilterValueAccessor(opts),
           filterRange: gpuFilter.filterRange,
+          getFilterCategory,
+          filterCategories: [1],
           lineWidthUnits: 'pixels',
 
           binary: false,
@@ -648,6 +685,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           pickable: true,
           transitions,
           updateTriggers: {
+            getFilterCategory,
             getFilterValue: {
               ...gpuFilter.filterValueUpdateTriggers,
               currentTime: animation.enabled ? animationConfig.currentTime : null
@@ -755,6 +793,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       visConfig: any;
       uniqueIdProperty?: string;
       isGlobeMode?: boolean;
+      getFilterCategory: (feature: Feature) => number;
     }
   ): DeckLayer[] {
     let perTileOverlays: DeckLayer[] = [];
@@ -777,7 +816,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
             const fid = options.uniqueIdProperty
               ? f.properties?.[options.uniqueIdProperty]
               : (f as any).id;
-            if (fid !== undefined && String(fid) === hoveredId) {
+            if (fid !== undefined && String(fid) === hoveredId && options.getFilterCategory(f)) {
               (byTile[tileId] = byTile[tileId] || []).push(f as Feature);
             }
           }
