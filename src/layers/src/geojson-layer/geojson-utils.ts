@@ -208,6 +208,8 @@ function isLngLat(pos: unknown): pos is number[] {
     Boolean(values) &&
     (Array.isArray(pos) || ArrayBuffer.isView(pos)) &&
     (values as {length: number}).length >= 2 &&
+    values?.[0] !== null &&
+    values?.[1] !== null &&
     Number.isFinite(Number(values?.[0])) &&
     Number.isFinite(Number(values?.[1]))
   );
