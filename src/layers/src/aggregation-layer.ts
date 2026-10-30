@@ -709,14 +709,21 @@ export default class AggregationLayer extends Layer {
       getElevationValue = wrapOrdinalAccessor(getElevationValue);
     }
 
-    // Wrap accessors to filter points within each bin before aggregating.
+    // Mask bins emptied by filtering with NaN: deck.gl skips them in cell
+    // rendering and scale domains. Retained points may legitimately aggregate to 0.
     const getFilteredColorValue =
       filterData && getColorValue
-        ? points => getColorValue(points.filter(filterData))
+        ? points => {
+            const filteredPoints = points.filter(filterData);
+            return filteredPoints.length ? getColorValue(filteredPoints) : NaN;
+          }
         : getColorValue;
     const getFilteredElevationValue =
       filterData && getElevationValue
-        ? points => getElevationValue(points.filter(filterData))
+        ? points => {
+            const filteredPoints = points.filter(filterData);
+            return filteredPoints.length ? getElevationValue(filteredPoints) : NaN;
+          }
         : getElevationValue;
 
     const {data} = this.updateData(datasets, oldLayerData);
