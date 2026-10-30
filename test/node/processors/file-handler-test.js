@@ -515,6 +515,56 @@ test('#file-handler -> parseGeoArrowBatchesOnWorkers parses the latest chunk', a
   t.end();
 });
 
+test('#file-handler -> separated points reach workers and fallback with all coordinates', async t => {
+  const type = new arrow.Struct(
+    ['x', 'y', 'z'].map(name => new arrow.Field(name, new arrow.Float64(), false))
+  );
+  const batches = [
+    [
+      {x: 10, y: 20, z: 5},
+      {x: 30, y: 40, z: 15}
+    ],
+    [{x: 50, y: 60, z: 25}]
+  ].map(points => {
+    const table = new arrow.Table({geometry: arrow.vectorFromArray(points, type)});
+    table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+    return table;
+  });
+  const table = arrow.tableFromIPC(arrow.tableToIPC(batches[0].concat(batches[1]), 'file'));
+  const bytes = arrow.tableToIPC(table, 'file');
+  const processed = processArrowBatches(table.batches, {compact: false});
+  for (const failWorker of [false, true]) {
+    const result = await parseGeoArrowBatchesOnWorkers(processed, {
+      parseOnWorker: async input => {
+        t.equal(input.chunkData.type.listSize, 3, 'worker input has XYZ coordinate size');
+        if (failWorker) throw new Error('worker unavailable');
+        return parseGeoArrowWorkerInput(input);
+      }
+    });
+    const {layer} = await layerFromFile({
+      info: {id: 'separated'},
+      data: {...processed, geoArrowBinaryData: result}
+    });
+    t.deepEqual(
+      layer.dataToFeature.flatMap(data => Array.from(data.points.positions.value)),
+      [10, 20, 5, 30, 40, 15, 50, 60, 25],
+      'worker/cache and fallback retain all axes'
+    );
+    t.deepEqual(
+      layer.meta.bounds,
+      [10, 20, 50, 60],
+      'cached bounds include latitude from every batch'
+    );
+    t.deepEqual(
+      layer.dataToFeature.flatMap(data => Array.from(data.points.globalFeatureIds.value)),
+      [0, 1, 2],
+      'cached feature ids retain unequal batch offsets'
+    );
+  }
+  t.deepEqual(arrow.tableToIPC(table, 'file'), bytes, 'worker preparation preserves source data');
+  t.end();
+});
+
 test('#file-handler -> parseGeoArrowBatchesOnWorkers combines compacted worker chunks', async t => {
   const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
   const batchA = new arrow.Table({

@@ -16,7 +16,8 @@ import {
   generateHashIdFromString,
   getApplicationConfig,
   getError,
-  isArrowTable
+  isArrowTable,
+  convertStructToFixedSizeList
 } from '@kepler.gl/utils';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
@@ -266,7 +267,10 @@ export async function parseGeoArrowBatchesOnWorkers(
       ? [geoColumn.data.length - 1]
       : geoColumn.data.map((_, index) => index);
     chunkIndexes.forEach(chunkIndex => {
-      const geometryChunk = geoColumn.data[chunkIndex];
+      const geometryChunk =
+        encoding === GEOARROW_EXTENSIONS.POINT
+          ? convertStructToFixedSizeList(geoColumn.data[chunkIndex])
+          : geoColumn.data[chunkIndex];
       const chunkCopy = hardClone(geometryChunk, true);
       const chunkOffset = geoColumn.data
         .slice(0, chunkIndex)
@@ -299,12 +303,15 @@ export async function parseGeoArrowBatchesOnWorkers(
         chunkIndex,
         result: parseOnWorker(sourceData),
         fallback: () =>
-          getBinaryGeometriesFromArrow(geoColumn, sourceData.geometryEncoding, {
-            chunkIndex,
-            chunkOffset,
-            calculateMeanCenters: true,
-            triangulate: true
-          })
+          getBinaryGeometriesFromArrow(
+            arrow.makeVector(geometryChunk),
+            sourceData.geometryEncoding,
+            {
+              chunkOffset,
+              calculateMeanCenters: true,
+              triangulate: true
+            }
+          )
       });
     });
   });
