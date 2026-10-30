@@ -4,6 +4,7 @@
 import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
+import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {
   BitmapBoundsEditMode,
@@ -598,5 +599,85 @@ test('#BitmapOverlayLayer -> layer properties', t => {
   t.deepEqual(layer.supportedDatasetTypes, [DatasetType.BITMAP], 'should support bitmap type');
   t.ok(layer.layerIcon, 'should have layer icon');
 
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> aligns control points in the rendered Mercator plane', t => {
+  const cases = [
+    [
+      {uv: [0.25, 0.25], geo: [10, 60]},
+      {uv: [0.75, 0.75], geo: [20, 30]}
+    ],
+    [
+      {uv: [0, 0], geo: [0, 0]},
+      {uv: [1, 1], geo: [20, -70]}
+    ],
+    [
+      {uv: [0, 0], geo: [-30, 80]},
+      {uv: [1, 1], geo: [30, 40]},
+      {
+        uv: [0.5, 0.5],
+        geo: worldToLngLat([
+          lngLatToWorld([0, 0])[0],
+          (lngLatToWorld([0, 80])[1] + lngLatToWorld([0, 40])[1]) / 2
+        ])
+      }
+    ]
+  ];
+  for (const points of cases) {
+    const layer = createBitmapLayer();
+    for (const point of points) {
+      layer.onAlignImageClick(point.uv);
+      layer.onAlignMapClick(point.geo);
+    }
+    const {boundsWest, boundsEast, boundsNorth, boundsSouth} = layer.config.visConfig;
+    t.ok(
+      [boundsWest, boundsEast, boundsNorth, boundsSouth].every(Number.isFinite),
+      'finite bounds'
+    );
+    t.ok(boundsWest < boundsEast && boundsSouth < boundsNorth, 'ordered bounds');
+    t.ok(boundsSouth > -90 && boundsNorth < 90, 'latitude bounds stay valid');
+    const nw = lngLatToWorld([boundsWest, boundsNorth]);
+    const se = lngLatToWorld([boundsEast, boundsSouth]);
+    for (const {uv, geo} of points) {
+      // deck's bitmap interpolates texture coordinates across projected corners.
+      const rendered = worldToLngLat([
+        nw[0] + uv[0] * (se[0] - nw[0]),
+        nw[1] + uv[1] * (se[1] - nw[1])
+      ]);
+      t.ok(Math.abs(rendered[0] - geo[0]) < 1e-8, 'control point longitude matches');
+      t.ok(Math.abs(rendered[1] - geo[1]) < 1e-8, 'control point latitude matches');
+    }
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> ignores degenerate or nonprojectable alignment', t => {
+  for (const points of [
+    [
+      {uv: [0.5, 0.2], geo: [10, 60]},
+      {uv: [0.5, 0.8], geo: [20, 30]}
+    ],
+    [
+      {uv: [0.2, 0.5], geo: [10, 60]},
+      {uv: [0.8, 0.5], geo: [20, 30]}
+    ],
+    [
+      {uv: [0, 0], geo: [10, 90]},
+      {uv: [1, 1], geo: [20, 30]}
+    ],
+    [
+      {uv: [0, 0.499], geo: [10, 80]},
+      {uv: [1, 0.501], geo: [20, 79]}
+    ]
+  ]) {
+    const layer = createBitmapLayer();
+    const before = {...layer.config.visConfig};
+    for (const {uv, geo} of points) {
+      layer.onAlignImageClick(uv);
+      layer.onAlignMapClick(geo);
+    }
+    t.deepEqual(layer.config.visConfig, before, 'preserves bounds when no valid fit exists');
+  }
   t.end();
 });

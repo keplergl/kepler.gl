@@ -8,6 +8,7 @@ import {
   ScatterplotLayer
 } from '@deck.gl/layers';
 import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
+import {lngLatToWorld, worldToLngLat, MAX_LATITUDE} from '@math.gl/web-mercator';
 
 import Layer from '../base-layer';
 import BitmapLayerIcon from './bitmap-layer-icon';
@@ -179,7 +180,8 @@ export default class BitmapOverlayLayer extends Layer {
     const pts = this.alignControlPoints;
     if (pts.length < 2) return;
 
-    // Solve affine: lng = a * u + b, lat = c * v + d
+    // The bitmap interpolates UVs in Mercator space, so fit projected Y, not latitude.
+    // Solve affine: lng = a * u + b, mercatorY = c * v + d
     // From 2+ points, use least squares (for 2 points, exact solution)
     const n = pts.length;
     let sumU = 0,
@@ -187,20 +189,22 @@ export default class BitmapOverlayLayer extends Layer {
       sumUU = 0,
       sumULng = 0;
     let sumV = 0,
-      sumLat = 0,
+      sumY = 0,
       sumVV = 0,
-      sumVLat = 0;
+      sumVY = 0;
     for (const p of pts) {
       const [u, v] = p.uv;
       const [lng, lat] = p.geo;
+      if (![u, v, lng, lat].every(Number.isFinite) || Math.abs(lat) >= 90) return;
+      const y = lngLatToWorld([lng, lat])[1];
       sumU += u;
       sumLng += lng;
       sumUU += u * u;
       sumULng += u * lng;
       sumV += v;
-      sumLat += lat;
+      sumY += y;
       sumVV += v * v;
-      sumVLat += v * lat;
+      sumVY += v * y;
     }
 
     // lng = a*u + b (solve for a, b)
@@ -209,18 +213,25 @@ export default class BitmapOverlayLayer extends Layer {
     const a = (n * sumULng - sumU * sumLng) / detU;
     const b = (sumLng - a * sumU) / n;
 
-    // lat = c*v + d (solve for c, d)
+    // mercatorY = c*v + d (solve for c, d)
     const detV = n * sumVV - sumV * sumV;
     if (Math.abs(detV) < 1e-12) return;
-    const c = (n * sumVLat - sumV * sumLat) / detV;
-    const d = (sumLat - c * sumV) / n;
+    const c = (n * sumVY - sumV * sumY) / detV;
+    const d = (sumY - c * sumV) / n;
 
     // Bounds: image corners are (0,0), (1,0), (1,1), (0,1)
     // UV origin (0,0) = top-left of image, (1,1) = bottom-right
     const west = b; // u=0
     const east = a + b; // u=1
-    const north = d; // v=0 (top of image)
-    const south = c + d; // v=1 (bottom of image)
+    const north = worldToLngLat([0, d])[1]; // v=0 (top of image)
+    const south = worldToLngLat([0, c + d])[1]; // v=1 (bottom of image)
+
+    if (
+      ![west, east, north, south].every(Number.isFinite) ||
+      Math.abs(north) > MAX_LATITUDE ||
+      Math.abs(south) > MAX_LATITUDE
+    )
+      return;
 
     this.updateLayerVisConfig({
       boundsWest: Math.min(west, east),
