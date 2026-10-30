@@ -14,7 +14,7 @@ import SchemaManager from '@kepler.gl/schemas';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
 import React from 'react';
-import {render, within} from '@testing-library/react';
+import {fireEvent, render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {theme} from '@kepler.gl/styles';
@@ -180,9 +180,14 @@ test('omits the unavailable point count from contour tooltips and preserves real
   }
 });
 
-function renderLegend(layer: ContourLayer, isExport = false) {
+function renderLegend(
+  layer: ContourLayer,
+  isExport = false,
+  options: Partial<React.ComponentProps<ReturnType<typeof MapLegendFactory>>> = {}
+) {
   const MapLegend = appInjector.get(MapLegendFactory);
-  const view = render(React.createElement(MapLegend, {layers: [layer], isExport}), {
+  const props = {layers: [layer], isExport, ...options};
+  const view = render(React.createElement(MapLegend, props), {
     wrapper: ({children}) =>
       React.createElement(ThemeProvider, {
         theme,
@@ -191,7 +196,7 @@ function renderLegend(layer: ContourLayer, isExport = false) {
   });
   return {
     ...view,
-    update: () => view.rerender(React.createElement(MapLegend, {layers: [layer], isExport}))
+    update: () => view.rerender(React.createElement(MapLegend, props))
   };
 }
 
@@ -227,7 +232,7 @@ test.each([true, false])(
           data: ordered,
           target: []
         });
-        expect(item.querySelector('.legend--contour-color')).toHaveStyle({
+        expect(item.querySelector('.legend-row-color')).toHaveStyle({
           backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha / 255})`
         });
       });
@@ -251,14 +256,14 @@ test('shows accumulated nested fill colors in the exported legend', async () => 
   expect(items.map(item => item.textContent)).toEqual(['≤ 2', '≤ 4', '≤ 6']);
   // Three, two, then one overlapping regions, each with 20% opacity.
   [124, 92, 51].forEach((alpha, i) => {
-    expect(items[i].querySelector('.legend--contour-color')).toHaveStyle({
+    expect(items[i].querySelector('.legend-row-color')).toHaveStyle({
       backgroundColor: `rgba(36, 218, 211, ${alpha / 255})`
     });
   });
   layer.updateLayerVisConfig({fillOpacity: 0});
   view.update();
   view.getAllByRole('listitem').forEach(item => {
-    expect(item.querySelector('.legend--contour-color')).toHaveStyle({
+    expect(item.querySelector('.legend-row-color')).toHaveStyle({
       backgroundColor: 'rgba(36, 218, 211, 0)'
     });
   });
@@ -267,6 +272,100 @@ test('shows accumulated nested fill colors in the exported legend', async () => 
   view.update();
   expect(view.queryByRole('list')).toBeNull();
 });
+
+test('limits long contour legends to a scrollable channel that can expand independently', async () => {
+  const {layer, datasets} = await setup();
+  const {layer: otherLayer} = await setup();
+  layer.updateLayerVisConfig({minimum: 0.25, maximum: 7.85, levels: 20});
+  layer.formatLayerData(datasets);
+  otherLayer.formatLayerData(datasets);
+  const view = renderLegend(layer, false, {layers: [layer, otherLayer]});
+  const [list, otherList] = view.getAllByRole('list', {name: 'Contour levels'});
+  const [toggle, otherToggle] = view.getAllByRole('button', {name: 'value'});
+  expect(within(list).getAllByRole('listitem')).toHaveLength(20);
+  expect(list).toHaveStyle({overflowY: 'auto'});
+  expect(parseFloat(getComputedStyle(list).maxHeight)).toBeGreaterThan(0);
+  expect(list).toHaveAttribute('tabindex', '0');
+  expect(toggle).toHaveAttribute('aria-controls', list.id);
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  expect(list).toHaveStyle({maxHeight: 'none'});
+  expect(otherToggle).toHaveAttribute('aria-expanded', 'false');
+  expect(parseFloat(getComputedStyle(otherList).maxHeight)).toBeGreaterThan(0);
+
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(parseFloat(getComputedStyle(list).maxHeight)).toBeGreaterThan(0);
+  expect(within(list).getAllByRole('listitem')).toHaveLength(20);
+});
+
+test('edits and resets contour labels by threshold even when levels have the same color', async () => {
+  const {layer, datasets} = await setup();
+  layer.updateLayerVisConfig({stroked: false, fillOpacity: 0});
+  layer.formatLayerData(datasets);
+  const onLayerVisConfigChange = jest.fn((oldLayer, config) => {
+    oldLayer.updateLayerVisConfig(config);
+  });
+  const view = renderLegend(layer, false, {onLayerVisConfigChange});
+  const inputs = () => view.getAllByRole('textbox') as HTMLInputElement[];
+  expect(inputs().map(input => input.value)).toEqual(['≤ 2', '≤ 4', '≤ 6']);
+  fireEvent.change(inputs()[0], {target: {value: 'Low'}});
+  view.update();
+  fireEvent.change(inputs()[1], {target: {value: 'Medium'}});
+  view.update();
+  expect(onLayerVisConfigChange).toHaveBeenCalledTimes(2);
+  expect(inputs().map(input => input.value)).toEqual(['Low', 'Medium', '≤ 6']);
+
+  layer.updateLayerConfig({color: [100, 150, 200]});
+  layer.updateLayerVisConfig({stroked: true, minimum: 4});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(inputs().map(input => input.value)).toEqual(['Medium', '≤ 5', '≤ 6']);
+  layer.updateLayerVisConfig({minimum: 2, below: false});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(inputs().map(input => input.value)).toEqual(['≥ 2', '≥ 4', '≥ 6']);
+  layer.updateLayerVisConfig({below: true});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(inputs().map(input => input.value)).toEqual(['Low', 'Medium', '≤ 6']);
+
+  fireEvent.click(view.getAllByRole('listitem')[0].querySelector('svg')!);
+  view.update();
+  expect(inputs().map(input => input.value)).toEqual(['≤ 2', 'Medium', '≤ 6']);
+  expect(layer.config.visConfig.colorRange.colorLegends).toEqual({
+    [JSON.stringify(['value', true, 4])]: 'Medium'
+  });
+});
+
+test.each([false, true])(
+  'preserves custom labels without editors in read-only legends (export = %s)',
+  async isExport => {
+    const {layer, datasets} = await setup();
+    layer.updateLayerVisConfig({
+      minimum: 0.25,
+      maximum: 7.85,
+      levels: 20,
+      colorRange: {
+        ...layer.config.visConfig.colorRange,
+        colorLegends: {[JSON.stringify(['value', true, 0.25])]: 'Low'}
+      }
+    });
+    layer.formatLayerData(datasets);
+    const onLayerVisConfigChange = jest.fn();
+    const view = renderLegend(layer, isExport, {disableEdit: !isExport, onLayerVisConfigChange});
+    expect(view.queryAllByRole('textbox')).toHaveLength(0);
+    expect(view.getByText('Low')).toBeInTheDocument();
+    expect(view.getAllByRole('listitem')).toHaveLength(20);
+    if (isExport) {
+      expect(view.queryByRole('button', {name: 'value'})).toBeNull();
+      expect(view.getByRole('list')).toHaveStyle({maxHeight: 'none'});
+    }
+    expect(onLayerVisConfigChange).not.toHaveBeenCalled();
+  }
+);
 
 test('keeps legend levels in sync with auto ranges, filters, and invalid or empty data', async () => {
   const {layer, dataset, datasets} = await setup();
@@ -354,7 +453,14 @@ test.each(['grid', 'geojson'])(
   'saves and reloads %s contour settings and columns through the map schema',
   async columnMode => {
     const {layer} = columnMode === 'geojson' ? setupGeojson() : await setup();
-    layer.updateLayerVisConfig({inputMode: 'points', interpolationResolution: 128});
+    layer.updateLayerVisConfig({
+      inputMode: 'points',
+      interpolationResolution: 128,
+      colorRange: {
+        ...layer.config.visConfig.colorRange,
+        colorLegends: {[JSON.stringify(['value', true, 2])]: 'Low'}
+      }
+    });
     const saved = SchemaManager.getConfigToSave({
       ...StateWFiles,
       visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}

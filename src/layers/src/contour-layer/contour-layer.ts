@@ -29,6 +29,8 @@ const numberConfig = (
 
 export const contourVisConfigs = {
   opacity: 'opacity',
+  // Use the standard legend-label storage; contour colors still come from config.color.
+  colorRange: 'colorRange',
   inputMode: {
     type: 'select',
     property: 'inputMode',
@@ -126,7 +128,14 @@ export default class ContourLayer extends Layer {
     ];
   }
   get noneLayerDataAffectingProps() {
-    return [...super.noneLayerDataAffectingProps, 'color', 'fillOpacity', 'filled', 'stroked'];
+    return [
+      ...super.noneLayerDataAffectingProps,
+      'color',
+      'colorRange',
+      'fillOpacity',
+      'filled',
+      'stroked'
+    ];
   }
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
     return {...super.getDefaultLayerConfig(props), color: props.color ?? [36, 218, 211]};

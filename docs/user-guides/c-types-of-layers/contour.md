@@ -69,6 +69,11 @@ The legend lists each generated contour level in ascending value order, with its
 numeric threshold and ≤ or ≥ direction. The swatches use the outline
 shades when outlines are enabled, or the accumulated opacity of nested fills in
 fill-only mode. Each level occupies its own row, with the swatch beside its value.
+The level list scrolls within a 156px height by default; the arrow beside the value
+field expands or contracts this channel independently. Click a label to edit it,
+or use its reset icon to restore the default threshold. Custom labels are saved
+with the map and follow the value field, threshold, and ≤/≥ direction when colors
+or levels change. Exports show the full list without editing controls.
 Long labels show their full value on hover. The legend updates after
 filtering, smoothing, or level changes and clears when no contours are generated.
 
