@@ -494,7 +494,7 @@ const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
 
 const StyledContourLevels = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
   margin-top: 6px;
 

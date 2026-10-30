@@ -66,10 +66,10 @@ Contours keep the same geographic shape and thresholds while panning or zooming.
 Hover shows the value threshold. Settings are saved with the map.
 
 The legend lists each generated contour level in ascending value order, with its
-numeric threshold and ≤ or ≥ direction. Its horizontal swatches use the outline
+numeric threshold and ≤ or ≥ direction. The swatches use the outline
 shades when outlines are enabled, or the accumulated opacity of nested fills in
-fill-only mode. Each swatch sits beside its value on one line; complete entries wrap
-as needed. Long labels show their full value on hover. The legend updates after
+fill-only mode. Each level occupies its own row, with the swatch beside its value.
+Long labels show their full value on hover. The legend updates after
 filtering, smoothing, or level changes and clears when no contours are generated.
 
 ## Prototype limits
