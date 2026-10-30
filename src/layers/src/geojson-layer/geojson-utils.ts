@@ -5,14 +5,14 @@ import {Buffer} from 'buffer';
 import {Feature, Geometry, Position, BBox} from 'geojson';
 import normalize from '@mapbox/geojson-normalize';
 import {bbox} from '@turf/bbox';
-import {ascending, extent} from 'd3-array';
+import {ascending} from 'd3-array';
 import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
 import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, findDefaultColorField, getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -20,15 +20,13 @@ import {KeplerTable} from '@kepler.gl/table';
 import {GeojsonLayerMetaProps, assignPointPairToLayerColumn} from '../layer-utils';
 import {LayerBaseConfig} from '../base-layer';
 import type GeoJsonLayer from './geojson-layer';
+import {applyDefaultColorField} from '../layer-color-utils';
 
 export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
 export type GeojsonPointDataMaps = (number[] | number[][] | null)[];
 
 export const COLUMN_MODE_GEOJSON = 'geojson';
-
-// Bound the extra column scans used to reject constant default color fields.
-const DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT = 1_000_000;
 
 /* eslint-disable */
 // TODO: Re-enable eslint when we upgrade to handle enums and type maps
@@ -80,30 +78,7 @@ export function applyDefaultGeojsonColorField(layer: GeoJsonLayer, dataset: Kepl
       return;
     }
 
-    const rowCount = dataset.dataContainer.numRows();
-    if (!rowCount) {
-      return;
-    }
-
-    let fields = dataset.fields;
-    let defaultColorField = findDefaultColorField(dataset);
-    const maxFieldChecks = Math.floor(DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / rowCount);
-    let fieldsChecked = 0;
-    while (defaultColorField && fieldsChecked < maxFieldChecks) {
-      fieldsChecked++;
-      const {valueAccessor} = defaultColorField;
-      const [min, max] = extent(dataset.filteredIndexForDomain, index => valueAccessor({index}));
-      if (min !== max) {
-        layer.updateLayerConfig({
-          [layer.visualChannels[colorChannel].field]: defaultColorField
-        });
-        layer.updateLayerVisualChannel(dataset, colorChannel);
-        return;
-      }
-
-      fields = fields.filter(field => field !== defaultColorField);
-      defaultColorField = findDefaultColorField({fields, fieldPairs: dataset.fieldPairs});
-    }
+    applyDefaultColorField(layer, dataset, colorChannel);
   } catch {
     // Automatic coloring is optional; discard partially applied settings on failure.
     layer.config = previousConfig;

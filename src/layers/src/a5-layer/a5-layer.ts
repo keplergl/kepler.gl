@@ -34,6 +34,7 @@ import {
 import A5LayerIcon from './a5-layer-icon';
 import {a5TokenToPolygonGeo, getA5Center, normalizeA5Token, validA5Token} from './a5-utils';
 import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {applyDefaultColorField} from '../layer-color-utils';
 
 export type A5GeometryLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -264,6 +265,11 @@ export default class A5GeometryLayer extends Layer {
         strokeColorRange: DEFAULT_COLOR_UI
       }
     };
+  }
+
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
+    return this;
   }
 
   static findDefaultLayerProps({fields = []}: KeplerTable) {

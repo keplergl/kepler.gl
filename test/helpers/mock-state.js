@@ -139,7 +139,17 @@ export function mockStateWithFileUpload() {
     );
   });
 
-  return updatedState;
+  // Saved-map fixtures deliberately use a uniform GeoJSON fill, independent of defaults.
+  return applyActions(keplerGlReducer, updatedState, [
+    {
+      action: VisStateActions.layerVisualChannelConfigChange,
+      payload: [
+        updatedState.visState.layers.find(layer => layer.type === 'geojson'),
+        {colorField: null},
+        'color'
+      ]
+    }
+  ]);
 }
 
 function mockStateWithLayerCustomColorBreaksLegends() {

@@ -20,7 +20,8 @@ import {
   getHexFields,
   Centroid
 } from '@kepler.gl/common-utils';
-import {findDefaultColorField, DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {applyDefaultColorField} from '../layer-color-utils';
 import H3HexagonLayerIcon from './h3-hexagon-layer-icon';
 import {
   ALL_FIELD_TYPES,
@@ -292,19 +293,8 @@ export default class HexagonIdLayer extends Layer {
     };
   }
 
-  setInitialLayerConfig(dataset) {
-    if (!dataset.dataContainer.numRows()) {
-      return this;
-    }
-    const defaultColorField = findDefaultColorField(dataset);
-
-    if (defaultColorField) {
-      this.updateLayerConfig<HexagonIdLayerConfig>({
-        colorField: defaultColorField
-      });
-      this.updateLayerVisualChannel(dataset, 'color');
-    }
-
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
     return this;
   }
 

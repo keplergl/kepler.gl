@@ -152,13 +152,14 @@ describe('GeoJsonLayer default layer discovery', () => {
 });
 
 describe('GeoJsonLayer default color field', () => {
-  test('keeps string and integer-only polygon data uniformly colored', async () => {
+  test('selects an integer fill field when no eligible float exists', async () => {
     const {layer} = await initializeGeoJsonLayer([
       {geometry: polygon(0), properties: {category: 'a', count: 1}},
       {geometry: polygon(1), properties: {category: 'b', count: 2}}
     ]);
 
-    expect(layer.config.colorField).toBeNull();
+    expect(layer.config.colorField?.name).toBe('count');
+    expect(layer.config.colorDomain).toEqual([1, 2]);
     expect(layer.config.strokeColorField).toBeNull();
   });
 
@@ -204,15 +205,31 @@ describe('GeoJsonLayer default color field', () => {
     ['polygon', polygon],
     ['line', line]
   ] as const)(
-    'keeps %s color uniform when all eligible real fields are constant',
+    'keeps %s color uniform when all eligible numeric fields are constant',
     async (_name, geometry) => {
       const {layer} = await initializeGeoJsonLayer([
         {geometry: geometry(0), properties: {score: 0.5, metric: 1.25, count: 1}},
-        {geometry: geometry(1), properties: {score: 0.5, metric: 1.25, count: 2}}
+        {geometry: geometry(1), properties: {score: 0.5, metric: 1.25, count: 1}}
       ]);
 
       expect(layer.config.colorField).toBeNull();
       expect(layer.config.strokeColorField).toBeNull();
+    }
+  );
+
+  test.each([
+    ['point', point, 'colorField'],
+    ['polygon', polygon, 'colorField'],
+    ['line', line, 'strokeColorField']
+  ] as const)(
+    'falls back to an integer after constant floats for %s color',
+    async (_name, geometry, field) => {
+      const {layer} = await initializeGeoJsonLayer([
+        {geometry: geometry(0), properties: {score: 0.5, count: 1}},
+        {geometry: geometry(1), properties: {score: 0.5, count: 2}}
+      ]);
+
+      expect(layer.config[field]?.name).toBe('count');
     }
   );
 
@@ -243,7 +260,9 @@ describe('GeoJsonLayer default color field', () => {
     {rowCount: 250_000, varyingColumn: 3, expected: 'score_3'},
     {rowCount: 250_001, varyingColumn: 3, expected: null},
     {rowCount: 1_000_000, varyingColumn: 0, expected: 'score_0'},
-    {rowCount: 1_000_001, varyingColumn: 0, expected: null}
+    {rowCount: 1_000_000, varyingColumn: 1, expected: null},
+    {rowCount: 1_000_001, varyingColumn: 0, expected: 'score_0'},
+    {rowCount: 1_000_001, varyingColumn: 1, expected: 'score_0'}
   ])(
     'limits candidate checks for $rowCount rows with varying column $varyingColumn',
     async ({rowCount, varyingColumn, expected}) => {

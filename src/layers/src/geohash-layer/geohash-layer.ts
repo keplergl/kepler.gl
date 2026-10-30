@@ -38,6 +38,7 @@ import {
   validGeohash
 } from './geohash-utils';
 import {DataContainerInterface, createDataContainer} from '@kepler.gl/utils';
+import {applyDefaultColorField} from '../layer-color-utils';
 
 export type GeohashLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -254,6 +255,11 @@ export default class GeohashGeometryLayer extends Layer {
         strokeColorRange: DEFAULT_COLOR_UI
       }
     };
+  }
+
+  setInitialLayerConfig(dataset: KeplerTable) {
+    applyDefaultColorField(this, dataset);
+    return this;
   }
 
   static findDefaultLayerProps({fields = []}: KeplerTable) {
