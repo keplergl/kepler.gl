@@ -8,7 +8,7 @@ import {
   ScatterplotLayer
 } from '@deck.gl/layers';
 import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
-import {lngLatToWorld, worldToLngLat, MAX_LATITUDE} from '@math.gl/web-mercator';
+import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 
 import Layer from '../base-layer';
 import BitmapLayerIcon from './bitmap-layer-icon';
@@ -23,6 +23,9 @@ import {
 } from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset, Datasets as KeplerDatasets} from '@kepler.gl/table';
 import {VisConfigNumber, VisConfigBoolean} from '@kepler.gl/types';
+
+// deck.gl's Mercator shader clamps latitudes outside this range.
+const MAX_BITMAP_LATITUDE = 89.9;
 
 const CORNER_HANDLE_COLOR: [number, number, number, number] = [255, 200, 0, 255];
 const MOVE_HANDLE_COLOR: [number, number, number, number] = [38, 181, 242, 255];
@@ -195,7 +198,7 @@ export default class BitmapOverlayLayer extends Layer {
     for (const p of pts) {
       const [u, v] = p.uv;
       const [lng, lat] = p.geo;
-      if (![u, v, lng, lat].every(Number.isFinite) || Math.abs(lat) >= 90) return;
+      if (![u, v, lng, lat].every(Number.isFinite) || Math.abs(lat) > MAX_BITMAP_LATITUDE) return;
       const y = lngLatToWorld([lng, lat])[1];
       sumU += u;
       sumLng += lng;
@@ -228,8 +231,8 @@ export default class BitmapOverlayLayer extends Layer {
 
     if (
       ![west, east, north, south].every(Number.isFinite) ||
-      Math.abs(north) > MAX_LATITUDE ||
-      Math.abs(south) > MAX_LATITUDE
+      Math.abs(north) > MAX_BITMAP_LATITUDE ||
+      Math.abs(south) > MAX_BITMAP_LATITUDE
     )
       return;
 
@@ -429,12 +432,23 @@ export default class BitmapOverlayLayer extends Layer {
     }
 
     const isAligning = visConfig.alignMode;
+    // Saved/imported bounds may include the poles. Match deck's projection clamp
+    // before it computes Mercator texture bounds, without changing the saved bounds.
+    const bitmapBounds: [number, number, number, number] = [
+      activeBounds[0],
+      Math.max(-MAX_BITMAP_LATITUDE, Math.min(MAX_BITMAP_LATITUDE, activeBounds[1])),
+      activeBounds[2],
+      Math.max(-MAX_BITMAP_LATITUDE, Math.min(MAX_BITMAP_LATITUDE, activeBounds[3]))
+    ];
 
     const layers: any[] = [
       new DeckBitmapLayer({
-        id: this.id,
+        // BitmapLayer caches its mesh and texture uniforms across viewport changes.
+        id: `${this.id}${opts.mapState?.globe?.enabled ? '-globe' : ''}`,
         image: imageUrl,
-        bounds: activeBounds,
+        // Keep the texture in the alignment solver's Mercator plane, including on a globe.
+        _imageCoordinateSystem: 'cartesian',
+        bounds: bitmapBounds,
         opacity: visConfig.opacity ?? 1,
         pickable: isAligning,
         visible,
@@ -473,13 +487,14 @@ export default class BitmapOverlayLayer extends Layer {
     // Visualize pending point (waiting for map click)
     if (visConfig.alignMode && this._pendingUV) {
       const [u, v] = this._pendingUV;
-      const [aW, aS, aE, aN] = activeBounds;
-      const pendingLng = aW + u * (aE - aW);
-      const pendingLat = aN + v * (aS - aN);
+      const [aW, aS, aE, aN] = bitmapBounds;
+      const nw = lngLatToWorld([aW, aN]);
+      const se = lngLatToWorld([aE, aS]);
+      const position = worldToLngLat([nw[0] + u * (se[0] - nw[0]), nw[1] + v * (se[1] - nw[1])]);
       layers.push(
         new ScatterplotLayer({
           id: `${this.id}-align-pending`,
-          data: [{position: [pendingLng, pendingLat]}],
+          data: [{position}],
           getPosition: (d: any) => d.position,
           getFillColor: [100, 200, 255, 220],
           getLineColor: [255, 255, 255, 255],

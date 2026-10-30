@@ -4,6 +4,7 @@
 import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
+import {WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
 import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {
@@ -663,7 +664,15 @@ test('#BitmapOverlayLayer -> ignores degenerate or nonprojectable alignment', t 
       {uv: [0.8, 0.5], geo: [20, 30]}
     ],
     [
-      {uv: [0, 0], geo: [10, 90]},
+      {uv: [0, 0], geo: [10, 89.95]},
+      {uv: [1, 1], geo: [20, 30]}
+    ],
+    [
+      {uv: [0, 0], geo: [NaN, 60]},
+      {uv: [1, 1], geo: [20, 30]}
+    ],
+    [
+      {uv: [Infinity, 0], geo: [10, 60]},
       {uv: [1, 1], geo: [20, 30]}
     ],
     [
@@ -678,6 +687,195 @@ test('#BitmapOverlayLayer -> ignores degenerate or nonprojectable alignment', t 
       layer.onAlignMapClick(geo);
     }
     t.deepEqual(layer.config.visConfig, before, 'preserves bounds when no valid fit exists');
+  }
+  t.end();
+});
+
+// Evaluate deck's chosen texture-coordinate conversion at a geographic point.
+// The default mesh is latitude-linear on GlobeViewport and Mercator-linear on WebMercatorViewport.
+function bitmapUVAtLocation(bitmap, viewport, geo) {
+  bitmap.context = {viewport};
+  const {coordinateConversion, bounds} = bitmap._getCoordinateUniforms();
+  let position;
+  let textureBounds;
+  if (coordinateConversion === 1) {
+    position = lngLatToWorld(geo);
+    textureBounds = bounds;
+  } else if (coordinateConversion === -1 || viewport.resolution) {
+    position = geo;
+    textureBounds = coordinateConversion === -1 ? bounds : bitmap.props.bounds;
+  } else {
+    position = lngLatToWorld(geo);
+    textureBounds = [
+      ...lngLatToWorld(bitmap.props.bounds.slice(0, 2)),
+      ...lngLatToWorld(bitmap.props.bounds.slice(2, 4))
+    ];
+  }
+  return [
+    (position[0] - textureBounds[0]) / (textureBounds[2] - textureBounds[0]),
+    (position[1] - textureBounds[3]) / (textureBounds[1] - textureBounds[3])
+  ];
+}
+
+test('#BitmapOverlayLayer -> aligned texture points stay fixed when switching flat and globe', t => {
+  const points = [
+    {uv: [0, 0], geo: [10, 60]},
+    {uv: [1, 0.5], geo: [20, 40]}
+  ];
+  const layer = createBitmapLayer();
+  for (const {uv, geo} of points) {
+    layer.onAlignImageClick(uv);
+    layer.onAlignMapClick(geo);
+  }
+  layer.updateLayerVisConfig({alignMode: true});
+  layer.onAlignImageClick([1, 0.5]);
+  const originalBounds = {...layer.config.visConfig};
+  let previousBitmap;
+  for (const globe of [false, true, false]) {
+    const viewport = new (globe ? GlobeViewport : WebMercatorViewport)({
+      width: 800,
+      height: 600,
+      latitude: 40,
+      longitude: 15,
+      zoom: 3,
+      resolution: 5
+    });
+    const renderedLayers = layer.renderLayer({
+      data: layer.formatLayerData(MOCK_DATASETS),
+      mapState: {globe: {enabled: globe}},
+      visible: true,
+      layerCallbacks: {}
+    });
+    const bitmap = renderedLayers[0];
+    if (previousBitmap) {
+      // deck transfers state by id; viewport changes alone do not update BitmapLayer.
+      bitmap.internalState = {
+        changeFlags: {
+          dataChanged: false,
+          propsChanged: false,
+          updateTriggersChanged: false,
+          viewportChanged: true,
+          stateChanged: false,
+          extensionsChanged: false
+        }
+      };
+      bitmap._diffProps(bitmap.props, previousBitmap.props);
+      t.ok(
+        bitmap.id !== previousBitmap.id ||
+          bitmap.shouldUpdateState({changeFlags: bitmap.internalState.changeFlags}),
+        'projection switch creates a new bitmap or invalidates its cached mesh and uniforms'
+      );
+    }
+    previousBitmap = bitmap;
+    const pending = renderedLayers.find(l => l.id === `${layer.id}-align-pending`);
+    const position = pending.props.getPosition(pending.props.data[0]);
+    t.ok(
+      Math.abs(position[0] - 20) < 1e-8 && Math.abs(position[1] - 40) < 1e-8,
+      'pending marker matches the selected image point'
+    );
+    for (const {uv, geo} of points) {
+      const actual = bitmapUVAtLocation(bitmap, viewport, geo);
+      t.ok(
+        Math.abs(actual[0] - uv[0]) < 1e-8,
+        `longitude maps to image U in ${globe ? 'globe' : 'flat'}`
+      );
+      t.ok(
+        Math.abs(actual[1] - uv[1]) < 1e-8,
+        `latitude maps to image V in ${globe ? 'globe' : 'flat'}`
+      );
+    }
+    t.deepEqual(layer.config.visConfig, originalBounds, 'projection changes preserve saved bounds');
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> accepts finite fits beyond the square Mercator tile boundary', t => {
+  for (const points of [
+    [
+      {uv: [0.25, 0.25], geo: [10, 84]},
+      {uv: [0.75, 0.75], geo: [20, 80]}
+    ],
+    [
+      {uv: [0, 0], geo: [10, 88]},
+      {uv: [1, 1], geo: [20, 86]}
+    ]
+  ]) {
+    const layer = createBitmapLayer();
+    for (const {uv, geo} of points) {
+      layer.onAlignImageClick(uv);
+      layer.onAlignMapClick(geo);
+    }
+    const [bitmap] = layer.renderLayer({
+      data: layer.formatLayerData(MOCK_DATASETS),
+      mapState: {},
+      visible: true,
+      layerCallbacks: {}
+    });
+    const viewport = new WebMercatorViewport({
+      width: 800,
+      height: 600,
+      latitude: 80,
+      longitude: 15,
+      zoom: 3
+    });
+    t.ok(
+      bitmap.props.bounds[3] > 85.051129,
+      'retains renderable northern bounds beyond 85 degrees'
+    );
+    for (const {uv, geo} of points) {
+      const actual = bitmapUVAtLocation(bitmap, viewport, geo);
+      t.ok(
+        Math.abs(actual[0] - uv[0]) < 1e-8 && Math.abs(actual[1] - uv[1]) < 1e-8,
+        'high-latitude control points map to their image location'
+      );
+    }
+    if (points[0].geo[1] === 84)
+      t.ok(
+        Math.abs(bitmap.props.bounds[3] - 85.354501) < 1e-6,
+        'keeps the fitted 85.354501 degree bound'
+      );
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> renders saved polar bounds with finite Mercator texture coordinates', t => {
+  const layer = createBitmapLayer({
+    visConfig: {boundsWest: -180, boundsSouth: -90, boundsEast: 180, boundsNorth: 90}
+  });
+  const savedBounds = {...layer.config.visConfig};
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? GlobeViewport : WebMercatorViewport)({
+      width: 800,
+      height: 600,
+      latitude: 0,
+      longitude: 0,
+      zoom: 1,
+      resolution: 5
+    });
+    const [bitmap] = layer.renderLayer({
+      data: layer.formatLayerData(MOCK_DATASETS),
+      mapState: {globe: {enabled: globe}},
+      visible: true,
+      layerCallbacks: {}
+    });
+    bitmap.context = {viewport};
+    t.ok(
+      bitmap._getCoordinateUniforms().bounds.every(Number.isFinite),
+      'texture bounds are finite at the poles'
+    );
+    for (const latitude of [-89.9, 0, 89.9]) {
+      const uv = bitmapUVAtLocation(bitmap, viewport, [0, latitude]);
+      t.ok(
+        uv.every(value => Number.isFinite(value) && value >= 0 && value <= 1),
+        'polar and equatorial texture coordinates stay within the image'
+      );
+      const expectedV = latitude === 0 ? 0.5 : latitude < 0 ? 1 : 0;
+      t.ok(
+        Math.abs(uv[1] - expectedV) < 1e-8,
+        'the poles map to opposite image edges and the equator to its center'
+      );
+    }
+    t.deepEqual(layer.config.visConfig, savedBounds, 'rendering preserves saved polar bounds');
   }
   t.end();
 });
