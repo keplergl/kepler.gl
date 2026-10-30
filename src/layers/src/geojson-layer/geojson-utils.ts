@@ -12,7 +12,8 @@ import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, getSampleData, timeToUnixMilli} from '@kepler.gl/utils';
+import {containValidTime} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -626,7 +627,7 @@ export function groupColumnsAsGeoJson(
   columns: LayerColumns,
   sortByColumn = 'timestamp'
 ): Feature[] {
-  const groupedById: {[key: string]: CoordsType[]} = {};
+  const groupedById: {[key: string]: CoordsType[]} = Object.create(null);
   const sortByFieldIdx = columns[sortByColumn].fieldIdx;
   const sortByRequired = !columns[sortByColumn].optional;
   for (let index = 0; index < dataContainer.numRows(); index++) {
@@ -661,17 +662,31 @@ export function groupColumnsAsGeoJson(
     }
   }
 
-  const result: Feature[] = Object.entries(groupedById).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ([_, items]: [string, CoordsType[]], index) => ({
+  const groups = Object.values(groupedById);
+  // Match Trip's timestamp parser: infer one format from the first nonempty trip.
+  const sampleTrip = sortByColumn === 'timestamp' && groups.find(items => items.length);
+  const timeFormat = sampleTrip
+    ? containValidTime(sampleTrip.map(item => item[3]) as any)?.format
+    : null;
+
+  const result: Feature[] = groups.map((items, index) => {
+    if (sortByFieldIdx > -1) {
+      // Parse each timestamp once for sorting, retaining the original coordinates and rows.
+      const sortValues = timeFormat
+        ? new Map(items.map(item => [item, timeToUnixMilli(item[3] as number, timeFormat)]))
+        : null;
+      items.sort((a, b) =>
+        ascending(
+          sortValues ? sortValues.get(a) : (a[3] as any),
+          sortValues ? sortValues.get(b) : (b[3] as any)
+        )
+      );
+    }
+    return {
       type: 'Feature' as const,
       geometry: {
         type: 'LineString' as const,
-        // Sort by columns if has sortByField
-        // TODO: items are expected in Position[] format?
-        coordinates: (sortByFieldIdx > -1
-          ? items.sort((a, b) => ascending(a[3] as any, b[3] as any))
-          : items) as Position[]
+        coordinates: items as Position[]
       },
       properties: {
         index,
@@ -679,8 +694,8 @@ export function groupColumnsAsGeoJson(
         // Note: this can cause row materialization in case of non-row based containers
         values: items.map(item => dataContainer.rowAsArray(item.datumIndex))
       }
-    })
-  );
+    };
+  });
   return result;
 }
 
