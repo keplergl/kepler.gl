@@ -1973,10 +1973,31 @@ export default function LayerConfiguratorFactory(
             <VisConfigSwitch {...settings.below} {...visConfiguratorProps} />
             <VisConfigSwitch {...settings.customRange} {...visConfiguratorProps} />
             {config.visConfig.customRange ? (
-              <>
-                <VisConfigSlider {...settings.minimum} {...visConfiguratorProps} />
-                <VisConfigSlider {...settings.maximum} {...visConfiguratorProps} />
-              </>
+              <div className="contour-level-range">
+                <VisConfigSlider
+                  {...settings.minimum}
+                  {...visConfiguratorProps}
+                  property="contourRange"
+                  label={undefined}
+                  isRanged
+                  layer={{
+                    ...layer,
+                    config: {
+                      ...config,
+                      visConfig: {
+                        ...config.visConfig,
+                        contourRange: [config.visConfig.minimum, config.visConfig.maximum]
+                      }
+                    }
+                  }}
+                  onChange={({contourRange}) =>
+                    visConfiguratorProps.onChange({
+                      minimum: contourRange[0],
+                      maximum: contourRange[1]
+                    })
+                  }
+                />
+              </div>
             ) : null}
           </LayerConfigGroup>
           <LayerConfigGroup label="layer.appearance">

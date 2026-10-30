@@ -166,6 +166,85 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   t.end();
 });
 
+test('Components -> LayerConfigurator -> contour custom range uses one two-handle slider', t => {
+  const layer = new LayerClasses.contour({id: 'contour-range', dataId: testCsvDataId});
+  layer.updateLayerVisConfig({customRange: true, minimum: -2, maximum: 8});
+  const onChange = sinon.spy();
+  const {container, unmount} = renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
+    </IntlWrapper>
+  );
+  try {
+    const range = container.querySelector('.contour-level-range');
+    t.equal(range.querySelectorAll('.kg-range-slider__handle').length, 2, 'shows both handles');
+    const [minimum, maximum] = range.querySelectorAll('.kg-range-slider__input');
+    t.equal(minimum.value, '-2', 'shows the saved minimum');
+    t.equal(maximum.value, '8', 'shows the saved maximum');
+    t.ok(onChange.notCalled, 'rendering does not change the saved range');
+
+    fireEvent.change(minimum, {target: {value: '-1.5'}});
+    fireEvent.blur(minimum);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -1.5, maximum: 8},
+      'updates the minimum with its paired maximum'
+    );
+    fireEvent.change(maximum, {target: {value: '6.5'}});
+    fireEvent.blur(maximum);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -2, maximum: 6.5},
+      'updates the maximum with its paired minimum'
+    );
+    t.notOk(
+      'contourRange' in layer.config.visConfig,
+      'does not add a new saved configuration property'
+    );
+  } finally {
+    unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour ranges retain automatic and custom input modes', t => {
+  const layer = new LayerClasses.contour({id: 'contour-range', dataId: testCsvDataId});
+  const onChange = sinon.spy();
+  let view = renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
+    </IntlWrapper>
+  );
+  t.notOk(
+    view.container.querySelector('.contour-level-range'),
+    'hides the slider in automatic mode'
+  );
+  view.unmount();
+  layer.updateLayerVisConfig({customRange: true, minimum: -500, maximum: 2500});
+  view = renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
+    </IntlWrapper>
+  );
+  try {
+    const range = view.container.querySelector('.contour-level-range');
+    const [minimum, maximum] = range.querySelectorAll('input[type="number"]');
+    t.equal(minimum.value, '-500', 'retains an out-of-slider minimum');
+    t.equal(maximum.value, '2500', 'retains an out-of-slider maximum');
+    t.ok(onChange.notCalled, 'opening custom input does not clamp saved values');
+    fireEvent.change(maximum, {target: {value: '3000'}});
+    fireEvent.blur(maximum);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -500, maximum: 3000},
+      'custom input still accepts arbitrary scalar units'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
 test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {
   // mount
   const updateLayerConfigSpy = sinon.spy();
