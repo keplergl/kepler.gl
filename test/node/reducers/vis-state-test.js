@@ -46,7 +46,13 @@ import {
   COLUMN_MODE_TABLE,
   createPointCountLabelField
 } from '@kepler.gl/layers';
-import {copyTableAndUpdate, findPointFieldPairs, maybeToDate, KeplerTable} from '@kepler.gl/table';
+import {
+  copyTableAndUpdate,
+  findPointFieldPairs,
+  maybeToDate,
+  KeplerTable,
+  parseVectorMetadata
+} from '@kepler.gl/table';
 import {
   createDataContainer,
   createIndexedDataContainer,
@@ -3201,6 +3207,87 @@ test('#visStateReducer -> SET_FILTER.dataId replaces synced datasets in place', 
   t.deepEqual(replaceSecond.gpuChannel, [0, 1], 'reallocates a later GPU channel');
   t.deepEqual(replaceSecond.domain, [0, 50], 'rebuilds the domain after replacing a later dataset');
 
+  t.end();
+});
+
+test('#visStateReducer -> SET_FILTER.dataId rebinds vector ranges after category switches', t => {
+  for (const [type, fieldType] of [
+    ['int', ALL_FIELD_TYPES.integer],
+    ['float', ALL_FIELD_TYPES.real],
+    ['bool', ALL_FIELD_TYPES.boolean]
+  ]) {
+    const boolean = fieldType === ALL_FIELD_TYPES.boolean;
+    const name = boolean ? 'active' : 'beds';
+    const makeDataset = (id, offset) => {
+      const table = new KeplerTable({info: {id, type: DatasetType.VECTOR_TILE}, color: [0, 0, 0]});
+      const {fields} = parseVectorMetadata({
+        tilejson: {
+          layers: [
+            {
+              id: 'features',
+              fields: [
+                {name: 'category', type: 'utf8', values: ['clinic', 'hospital', 'pharmacy']},
+                {name, type, min: offset, max: offset + 100}
+              ]
+            }
+          ]
+        }
+      });
+      table.updateSchema({fields, rows: []});
+      return table;
+    };
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {a: makeDataset('a', 0), b: makeDataset('b', 100), c: makeDataset('c', 200)}
+    };
+    state = reducer(state, VisStateActions.addFilter('a'));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'category'));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', name));
+    t.equal(state.filters[0].fieldType, fieldType, `${type}: replaces the categorical field type`);
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'category'));
+    t.equal(state.filters[0].fieldType, ALL_FIELD_TYPES.string, `${type}: switches back to string`);
+    t.deepEqual(state.filters[0].value, [], `${type}: returning to categories starts unselected`);
+    state = reducer(state, VisStateActions.setFilter(0, 'name', name));
+    state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'b', 1));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', name, 1));
+    const value = boolean ? [1, 1] : [50, 150];
+    state = reducer(state, VisStateActions.setFilter(0, 'value', value));
+    state = reducer(state, VisStateActions.setFilter(0, 'dataId', 'c', 1));
+
+    t.deepEqual(state.filters[0].name, [name, name], `${type}: keeps the replacement binding`);
+    t.deepEqual(state.filters[0].fieldIdx, [1, 1], `${type}: keeps both field indexes`);
+    t.equal(state.filters[0].gpu, true, `${type}: keeps GPU filtering enabled`);
+    t.deepEqual(state.filters[0].value, value, `${type}: preserves the selected range`);
+    t.deepEqual(state.filters[0].domain, boolean ? [0, 1] : [0, 300], `${type}: merges domains`);
+
+    const layer = new KeplerGlLayers.VectorTileLayer({dataId: 'a'});
+    const {getFilterCategory} = layer.formatLayerData(
+      state.datasets,
+      undefined,
+      state.animationConfig
+    );
+    const gpuFilter = state.datasets.a.gpuFilter;
+    const getFilterValue = layer.getGpuFilterValueAccessor({
+      gpuFilter,
+      animationConfig: state.animationConfig
+    });
+    const passes = fieldValue => {
+      const feature = {properties: {[name]: fieldValue}};
+      return Boolean(
+        getFilterCategory(feature) &&
+          getFilterValue(feature).every(
+            (v, channel) =>
+              v >= gpuFilter.filterRange[channel][0] && v <= gpuFilter.filterRange[channel][1]
+          )
+      );
+    };
+    t.equal(
+      passes(boolean ? false : 0),
+      false,
+      `${type}: excludes false or beds=0 after replacement`
+    );
+    t.equal(passes(boolean ? true : 75), true, `${type}: retains a matching feature`);
+  }
   t.end();
 });
 

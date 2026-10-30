@@ -530,7 +530,8 @@ export function getFilterProps(
         formatNumberByStep(min, step, 'floor'),
         formatNumberByStep(max, step, 'ceil')
       ];
-      const filterProps: NumericFieldFilterProps = {
+      const filterProps: NumericFieldFilterProps & {fieldType: string} = {
+        fieldType,
         domain,
         value: domain as [number, number],
         type: FILTER_TYPES.range,
@@ -544,7 +545,8 @@ export function getFilterProps(
     case ALL_FIELD_TYPES.boolean: {
       // Represent boolean as numeric range [0,1] to enable GPU filtering for vector tiles
       const domain: [number, number] = [0, 1];
-      const filterProps: NumericFieldFilterProps = {
+      const filterProps: NumericFieldFilterProps & {fieldType: string} = {
+        fieldType,
         domain,
         value: domain,
         type: FILTER_TYPES.range,
@@ -608,11 +610,11 @@ function mergeAttributeDomain(field: KeplerField, attribute: TippecanoeLayerAttr
   switch (field.type) {
     case ALL_FIELD_TYPES.string: {
       const filterProps = field.filterProps as StringFieldFilterProps | undefined;
-      if (filterProps) {
+      if (filterProps && attributeTypeToFieldType(attribute.type).type === ALL_FIELD_TYPES.string) {
         filterProps.domain = uniq([
           ...(filterProps.domain || []),
-          ...((attribute.values || []) as string[])
-        ]);
+          ...(attribute.values || [])
+        ]).filter((value): value is string => typeof value === 'string');
       }
       return;
     }

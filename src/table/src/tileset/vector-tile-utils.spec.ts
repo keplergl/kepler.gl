@@ -140,6 +140,7 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
         type: ALL_FIELD_TYPES.real,
         analyzerType: DATA_TYPES.FLOAT,
         filterProps: {
+          fieldType: ALL_FIELD_TYPES.real,
           domain: [-1, 10],
           value: [-1, 10],
           type: FILTER_TYPES.range,
@@ -196,6 +197,53 @@ test.each([
   }
 );
 
+test.each([
+  ['int', [7]],
+  ['int', ['7']],
+  ['bool', [true]],
+  ['utf8', [7, null, 'clinic']],
+  ['utf8', undefined]
+])('parseMetadata excludes incompatible %s values from string domains', (type, values) => {
+  const metadata = parseMetadata({
+    tilejson: {
+      layers: [
+        {id: 'strings', fields: [{name: 'class', type: 'utf8', values: ['clinic']}]},
+        {id: 'mixed', fields: [{name: 'class', type, values}]},
+        {id: 'later', fields: [{name: 'class', type: 'utf8', values: ['pharmacy', 'clinic']}]}
+      ]
+    }
+  } as any);
+  expect(metadata?.fields[0].filterProps).toMatchObject({
+    domain: ['clinic', 'pharmacy'],
+    value: [],
+    fieldType: ALL_FIELD_TYPES.string,
+    gpu: false
+  });
+});
+
+test.each([
+  ['int', ALL_FIELD_TYPES.integer, [0, 100]],
+  ['bool', ALL_FIELD_TYPES.boolean, [0, 1]]
+])(
+  'parseMetadata retains %s ranges when later fields contain strings',
+  (type, fieldType, domain) => {
+    const metadata = parseMetadata({
+      tilejson: {
+        layers: [
+          {id: 'ranges', fields: [{name: 'value', type, min: 0, max: 100}]},
+          {id: 'strings', fields: [{name: 'value', type: 'utf8', values: ['clinic']}]}
+        ]
+      }
+    } as any);
+    expect(metadata?.fields[0].filterProps).toMatchObject({
+      fieldType,
+      type: FILTER_TYPES.range,
+      gpu: true
+    });
+    expect(metadata?.fields[0].filterProps?.domain?.slice()).toEqual(domain);
+  }
+);
+
 test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, bool)', () => {
   const result = parseMetadata(PMTILES_METADATA_NUMERIC_TYPES, {
     tileUrl: 'https://example.com/numeric_types.pmtiles'
@@ -218,6 +266,7 @@ test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, 
         type: ALL_FIELD_TYPES.real,
         analyzerType: DATA_TYPES.FLOAT,
         filterProps: {
+          fieldType: ALL_FIELD_TYPES.real,
           domain: [0, 100],
           value: [0, 100],
           type: FILTER_TYPES.range,
@@ -233,6 +282,7 @@ test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, 
         type: ALL_FIELD_TYPES.integer,
         analyzerType: DATA_TYPES.INT,
         filterProps: {
+          fieldType: ALL_FIELD_TYPES.integer,
           domain: [1, 999],
           value: [1, 999],
           type: FILTER_TYPES.range,
@@ -248,6 +298,7 @@ test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, 
         type: ALL_FIELD_TYPES.integer,
         analyzerType: DATA_TYPES.INT,
         filterProps: {
+          fieldType: ALL_FIELD_TYPES.integer,
           domain: [0, 1000000],
           value: [0, 1000000],
           type: FILTER_TYPES.range,
@@ -263,6 +314,7 @@ test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, 
         type: ALL_FIELD_TYPES.boolean,
         analyzerType: DATA_TYPES.BOOLEAN,
         filterProps: {
+          fieldType: ALL_FIELD_TYPES.boolean,
           domain: [0, 1],
           value: [0, 1],
           type: FILTER_TYPES.range,
