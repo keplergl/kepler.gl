@@ -305,6 +305,8 @@ export default {
       levels: 'Number of levels',
       below: 'Fill below each level',
       customRange: 'Custom level range',
+      noValueRange:
+        'Select a value column with at least two distinct finite values to use the range slider.',
       minimum: 'Minimum level',
       maximum: 'Maximum level',
       fillOpacity: 'Fill opacity per level',

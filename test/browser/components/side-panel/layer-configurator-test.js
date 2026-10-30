@@ -6,7 +6,10 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, render} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
+import {KeplerTable} from '@kepler.gl/table';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
@@ -166,36 +169,84 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   t.end();
 });
 
-test('Components -> LayerConfigurator -> contour custom range uses one two-handle slider', t => {
-  const layer = new LayerClasses.contour({id: 'contour-range', dataId: testCsvDataId});
+function contourRangeDataset(
+  id = 'contour-range-data',
+  rows = [
+    [-2, 1000],
+    [8, 2000]
+  ],
+  names = ['value', 'other']
+) {
+  return new KeplerTable({info: {id}, color: [0, 0, 0]}).updateSchema({
+    fields: names.map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+    rows
+  });
+}
+
+function contourRangeLayer(dataset) {
+  return new LayerClasses.contour({
+    id: 'contour-range',
+    dataId: dataset.id,
+    columns: {value: {value: 'value', fieldIdx: 0}}
+  });
+}
+
+function renderContourRange(layer, datasets, onChange) {
+  const props = {...defaultProps, layer, datasets, updateLayerVisConfig: onChange};
+  const view = render(<LayerConfigurator {...props} />, {
+    wrapper: ({children}) => (
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>{children}</IntlWrapper>
+      </ThemeProvider>
+    )
+  });
+  return {...view, update: () => view.rerender(<LayerConfigurator {...props} />)};
+}
+
+function dragContourHandle(container, index, percent) {
+  const range = container.querySelector('.contour-level-range');
+  const slider = range.querySelector('.kg-slider');
+  Object.defineProperty(slider, 'offsetWidth', {configurable: true, value: 100});
+  const handles = range.querySelectorAll('.kg-range-slider__handle');
+  fireEvent.mouseDown(handles[index], {clientX: percent});
+  fireEvent.mouseMove(document, {clientX: percent});
+  fireEvent.mouseUp(document);
+}
+
+function contourRangeLabels(container) {
+  return Array.from(container.querySelectorAll('.contour-range-values output'), item =>
+    Number(item.textContent)
+  );
+}
+
+test('Components -> LayerConfigurator -> contour custom range uses one two-handle slider without manual inputs', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
   layer.updateLayerVisConfig({customRange: true, minimum: -2, maximum: 8});
   const onChange = sinon.spy();
-  const {container, unmount} = renderWithTheme(
-    <IntlWrapper>
-      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
-    </IntlWrapper>
-  );
+  const {container, unmount} = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
   try {
     const range = container.querySelector('.contour-level-range');
     t.equal(range.querySelectorAll('.kg-range-slider__handle').length, 2, 'shows both handles');
-    const [minimum, maximum] = range.querySelectorAll('.kg-range-slider__input');
-    t.equal(minimum.value, '-2', 'shows the saved minimum');
-    t.equal(maximum.value, '8', 'shows the saved maximum');
-    t.ok(onChange.notCalled, 'rendering does not change the saved range');
+    t.equal(
+      range.querySelectorAll('input').length,
+      0,
+      'has no manual numeric inputs or custom-input checkbox'
+    );
+    t.deepEqual(contourRangeLabels(container), [-2, 8], 'shows numeric endpoint labels');
+    t.ok(onChange.notCalled, 'rendering a valid saved range does not change it');
 
-    fireEvent.change(minimum, {target: {value: '-1.5'}});
-    fireEvent.blur(minimum);
+    dragContourHandle(container, 0, 25);
     t.deepEqual(
       onChange.lastCall.args[0],
-      {minimum: -1.5, maximum: 8},
-      'updates the minimum with its paired maximum'
+      {minimum: 0.5, maximum: 8},
+      'dragging the lower handle updates the paired thresholds'
     );
-    fireEvent.change(maximum, {target: {value: '6.5'}});
-    fireEvent.blur(maximum);
+    dragContourHandle(container, 1, 85);
     t.deepEqual(
       onChange.lastCall.args[0],
       {minimum: -2, maximum: 6.5},
-      'updates the maximum with its paired minimum'
+      'dragging the upper handle updates the paired thresholds'
     );
     t.notOk(
       'contourRange' in layer.config.visConfig,
@@ -207,42 +258,192 @@ test('Components -> LayerConfigurator -> contour custom range uses one two-handl
   }
 });
 
-test('Components -> LayerConfigurator -> contour ranges retain automatic and custom input modes', t => {
-  const layer = new LayerClasses.contour({id: 'contour-range', dataId: testCsvDataId});
+test('Components -> LayerConfigurator -> contour custom range starts with the column bounds and stays a slider', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
   const onChange = sinon.spy();
-  let view = renderWithTheme(
-    <IntlWrapper>
-      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
-    </IntlWrapper>
-  );
-  t.notOk(
-    view.container.querySelector('.contour-level-range'),
-    'hides the slider in automatic mode'
-  );
-  view.unmount();
-  layer.updateLayerVisConfig({customRange: true, minimum: -500, maximum: 2500});
-  view = renderWithTheme(
-    <IntlWrapper>
-      <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={onChange} />
-    </IntlWrapper>
-  );
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
   try {
-    const range = view.container.querySelector('.contour-level-range');
-    const [minimum, maximum] = range.querySelectorAll('input[type="number"]');
-    t.equal(minimum.value, '-500', 'retains an out-of-slider minimum');
-    t.equal(maximum.value, '2500', 'retains an out-of-slider maximum');
-    t.ok(onChange.notCalled, 'opening custom input does not clamp saved values');
-    fireEvent.change(maximum, {target: {value: '3000'}});
-    fireEvent.blur(maximum);
+    t.notOk(
+      view.container.querySelector('.contour-level-range'),
+      'hides the slider in automatic mode'
+    );
+    fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
     t.deepEqual(
       onChange.lastCall.args[0],
-      {minimum: -500, maximum: 3000},
-      'custom input still accepts arbitrary scalar units'
+      {customRange: true, minimum: -2, maximum: 8},
+      'enabling custom levels starts at the actual column minimum and maximum'
+    );
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.deepEqual(contourRangeLabels(view.container), [-2, 8], 'displays the data-derived range');
+
+    layer.updateLayerVisConfig({minimum: -500, maximum: 2500});
+    view.update();
+    t.equal(
+      view.container.querySelectorAll('.contour-level-range .kg-range-slider__handle').length,
+      2,
+      'saved out-of-domain values do not replace the slider with inputs'
+    );
+    t.equal(
+      view.container.querySelectorAll('.contour-level-range input').length,
+      0,
+      'never falls back to manual fields'
+    );
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -2, maximum: 8},
+      'synchronizes out-of-domain thresholds with the displayed slider'
     );
   } finally {
     view.unmount();
     t.end();
   }
+});
+
+test('Components -> LayerConfigurator -> contour slider bounds follow the full selected column and dataset', t => {
+  const dataset = contourRangeDataset('contour-range-data', [
+    [-2.25, 1000.125],
+    [8.75, 5000.875],
+    [null, null],
+    [NaN, NaN],
+    [Infinity, Infinity],
+    [-Infinity, -Infinity]
+  ]);
+  dataset.filteredIndex = [0];
+  const nextDataset = contourRangeDataset(
+    'contour-range-next',
+    [
+      [10, -0.0042],
+      [20, 0.0048]
+    ],
+    ['other', 'value']
+  );
+  const datasets = {[dataset.id]: dataset, [nextDataset.id]: nextDataset};
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerVisConfig({customRange: true, minimum: -2, maximum: 8});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, datasets, onChange);
+  try {
+    dragContourHandle(view.container, 0, 0);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -2.25, maximum: 8},
+      'uses the exact finite minimum, ignoring null and nonfinite entries'
+    );
+    dragContourHandle(view.container, 1, 100);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -2, maximum: 8.75},
+      'uses the full-column maximum even when filters exclude that row'
+    );
+
+    layer.updateLayerConfig({
+      columns: {...layer.config.columns, value: {value: 'other', fieldIdx: 1}}
+    });
+    view.update();
+    t.deepEqual(
+      contourRangeLabels(view.container),
+      [1000.125, 5000.875],
+      'refreshes to the new column range without manual input'
+    );
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: 1000.125, maximum: 5000.875},
+      'synchronizes thresholds when the old selection is disjoint'
+    );
+    layer.updateLayerVisConfig({minimum: 1500, maximum: 4000});
+    view.update();
+    dragContourHandle(view.container, 1, 100);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: 1500, maximum: 5000.875},
+      'uses both new column bounds when dragging'
+    );
+
+    layer.updateLayerConfig({
+      dataId: nextDataset.id,
+      columns: {...layer.config.columns, value: {value: 'value', fieldIdx: 0}}
+    });
+    view.update();
+    t.deepEqual(
+      contourRangeLabels(view.container),
+      [-0.0042, 0.0048],
+      'resolves the value column by name when a new dataset reorders fields'
+    );
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -0.0042, maximum: 0.0048},
+      'updates stored thresholds to match the new dataset slider'
+    );
+    dragContourHandle(view.container, 1, 70);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: -0.0042, maximum: 0.0021},
+      'scales the slider step for small decimal data'
+    );
+
+    datasets[nextDataset.id] = contourRangeDataset(
+      nextDataset.id,
+      [
+        [0, -10.5],
+        [0, 12.5]
+      ],
+      ['other', 'value']
+    );
+    view.update();
+    t.deepEqual(
+      contourRangeLabels(view.container),
+      [-10.5, 12.5],
+      'refreshes bounds when a dataset is replaced under the same id'
+    );
+    t.equal(
+      view.container.querySelectorAll('.contour-level-range input').length,
+      0,
+      'dataset changes keep the graphical slider'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour slider handles missing, empty, and constant value columns', t => {
+  for (const rows of [[], [[null]], [[NaN], [Infinity], [-Infinity]], [[7]], [[7], [7]]]) {
+    const dataset = contourRangeDataset('contour-invalid-range', rows);
+    const layer = contourRangeLayer(dataset);
+    layer.updateLayerVisConfig({customRange: true});
+    const onChange = sinon.spy();
+    const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+    try {
+      t.equal(
+        view.container.querySelectorAll('.contour-level-range .kg-range-slider__handle').length,
+        0,
+        'does not invent slider bounds without a nonzero finite span'
+      );
+      t.ok(
+        view.container.querySelector('.contour-level-range').textContent.length > 0,
+        'explains why no slider is available'
+      );
+      t.ok(onChange.notCalled, 'preserves saved settings while bounds are unavailable');
+    } finally {
+      view.unmount();
+    }
+  }
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerConfig({
+    columns: {...layer.config.columns, value: {value: 'missing', fieldIdx: 0}}
+  });
+  layer.updateLayerVisConfig({customRange: true});
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, sinon.spy());
+  t.equal(
+    view.container.querySelectorAll('.contour-level-range .kg-range-slider__handle').length,
+    0,
+    'does not use a stale index for a missing column'
+  );
+  view.unmount();
+  t.end();
 });
 
 test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {

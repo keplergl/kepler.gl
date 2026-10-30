@@ -3,9 +3,10 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, useCallback, useRef, useState} from 'react';
+import React, {Component, useCallback, useEffect, useRef, useState} from 'react';
 import {useIntl} from 'react-intl';
 import styled from 'styled-components';
+import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
 import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
@@ -25,6 +26,7 @@ import LayerErrorMessage from './layer-error-message';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
+import RangeSliderFactory from '../../common/range-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
   SCENEGRAPH_3D_MODEL_OPTIONS
@@ -59,7 +61,7 @@ import {
   formatZarrCoordinate
 } from '@kepler.gl/table';
 import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
+import {capitalizeFirstLetter, clamp, getNumericStepSize} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
@@ -126,6 +128,14 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 
   .bitmap-bounds-sliders .kg-range-slider__input {
     width: 80px;
+  }
+
+  .contour-range-values {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: ${props => props.theme.textColor};
+    font-size: ${props => props.theme.sliderInputFontSize};
   }
 `;
 
@@ -431,7 +441,8 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory
+  ScenegraphModelSelectorFactory,
+  RangeSliderFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -449,7 +460,8 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
+  RangeSlider: ReturnType<typeof RangeSliderFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   const AggregationTextLabelPanel: React.FC<
     Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
@@ -460,6 +472,52 @@ export default function LayerConfiguratorFactory(
         {...props}
         fields={[createPointCountLabelField(intl.formatMessage({id: 'property.pointCount'}))]}
       />
+    );
+  };
+
+  const ContourRangeSlider: React.FC<{
+    layer: Layer;
+    range: [number, number];
+    onChange: LayerConfiguratorProps['updateLayerVisConfig'];
+  }> = ({layer, range, onChange}) => {
+    const intl = useIntl();
+    const {minimum, maximum} = layer.config.visConfig;
+    const low = Number.isFinite(minimum) ? clamp(range, minimum) : range[0];
+    const high = Number.isFinite(maximum) ? clamp(range, maximum) : range[1];
+    const [value0, value1] = low < high ? [low, high] : range;
+    useEffect(() => {
+      if (minimum !== value0 || maximum !== value1) {
+        onChange({minimum: value0, maximum: value1});
+      }
+    }, [minimum, maximum, value0, value1, onChange]);
+    return (
+      <SidePanelSection>
+        <RangeSlider
+          range={range}
+          value0={value0}
+          value1={value1}
+          step={getNumericStepSize(range[1] - range[0])}
+          isRanged
+          showInput={false}
+          onChange={([nextMinimum, nextMaximum]) => {
+            if (
+              Number.isFinite(nextMinimum) &&
+              Number.isFinite(nextMaximum) &&
+              nextMinimum < nextMaximum
+            ) {
+              onChange({minimum: nextMinimum, maximum: nextMaximum});
+            }
+          }}
+        />
+        <div className="contour-range-values">
+          <output aria-label={intl.formatMessage({id: 'layerVisConfigs.contour.minimum'})}>
+            {value0}
+          </output>
+          <output aria-label={intl.formatMessage({id: 'layerVisConfigs.contour.maximum'})}>
+            {value1}
+          </output>
+        </div>
+      </SidePanelSection>
     );
   };
 
@@ -1939,8 +1997,33 @@ export default function LayerConfiguratorFactory(
       );
     }
 
-    _renderContourLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+    _contourValueRange = createSelector(
+      (dataContainer: Datasets[string]['dataContainer'] | undefined, _fieldIdx: number) =>
+        dataContainer,
+      (_dataContainer: Datasets[string]['dataContainer'] | undefined, fieldIdx: number) => fieldIdx,
+      (dataContainer, fieldIdx): [number, number] | null => {
+        if (!dataContainer || fieldIdx < 0) return null;
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let index = 0; index < dataContainer.numRows(); index++) {
+          const value = dataContainer.valueAt(index, fieldIdx);
+          if (Number.isFinite(value)) {
+            minimum = Math.min(minimum, value);
+            maximum = Math.max(maximum, value);
+          }
+        }
+        return minimum <= maximum ? [minimum, maximum] : null;
+      }
+    );
+
+    _renderContourLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
       const {visConfigSettings: settings, config} = layer;
+      const valueColumn = config.columns.value.value;
+      const valueRange = this._contourValueRange(
+        dataset?.dataContainer,
+        dataset?.getColumnFieldIdx(valueColumn) ?? -1
+      );
+      const hasValueRange = valueRange && valueRange[0] < valueRange[1];
       const inputModes = [
         {id: 'auto', label: 'Auto'},
         {id: 'grid', label: 'Regular grid'},
@@ -1971,32 +2054,28 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
             <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
             <VisConfigSwitch {...settings.below} {...visConfiguratorProps} />
-            <VisConfigSwitch {...settings.customRange} {...visConfiguratorProps} />
+            <VisConfigSwitch
+              {...settings.customRange}
+              {...visConfiguratorProps}
+              onChange={({customRange}) =>
+                visConfiguratorProps.onChange(
+                  customRange && hasValueRange
+                    ? {customRange, minimum: valueRange[0], maximum: valueRange[1]}
+                    : {customRange}
+                )
+              }
+            />
             {config.visConfig.customRange ? (
               <div className="contour-level-range">
-                <VisConfigSlider
-                  {...settings.minimum}
-                  {...visConfiguratorProps}
-                  property="contourRange"
-                  label={undefined}
-                  isRanged
-                  layer={{
-                    ...layer,
-                    config: {
-                      ...config,
-                      visConfig: {
-                        ...config.visConfig,
-                        contourRange: [config.visConfig.minimum, config.visConfig.maximum]
-                      }
-                    }
-                  }}
-                  onChange={({contourRange}) =>
-                    visConfiguratorProps.onChange({
-                      minimum: contourRange[0],
-                      maximum: contourRange[1]
-                    })
-                  }
-                />
+                {hasValueRange ? (
+                  <ContourRangeSlider
+                    key={JSON.stringify([config.dataId, valueColumn, valueRange])}
+                    {...visConfiguratorProps}
+                    range={valueRange}
+                  />
+                ) : (
+                  <FormattedMessage id="layerVisConfigs.contour.noValueRange" />
+                )}
               </div>
             ) : null}
           </LayerConfigGroup>

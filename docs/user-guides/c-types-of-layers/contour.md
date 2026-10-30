@@ -56,9 +56,14 @@ original units. Both column modes use the following surface settings:
 - **Number of levels**: 2–20 equally spaced thresholds. Automatic levels exclude the
   field's extrema to avoid outlining the entire rectangular extent.
 - **Custom level range**: minimum and maximum thresholds, inclusive, in the original
-  value units, selected with a two-handle range slider and numeric endpoint inputs.
-  Custom input accepts thresholds outside the slider bounds. These controls choose
-  levels; they do not normalize or clamp the data.
+  value units, selected with a two-handle range slider and read-only endpoint labels.
+  Slider bounds use the exact finite minimum and maximum of the selected value
+  column across the dataset and refresh when the dataset or column changes. Nulls
+  and nonfinite values are ignored; empty or constant columns cannot supply a slider range.
+  Enabling custom levels initializes both handles to the column bounds. When data
+  changes, thresholds are kept within the new bounds; a disjoint selection resets
+  to the full range. There is no manual-input fallback. These controls choose levels;
+  they do not normalize or clamp the data.
 - **Fill below each level**: regions where value ≤ threshold. Turn off for value ≥ threshold.
 - **Fill / outline**: enable independently. Each translucent filled region overlaps
   the larger regions below it, so opacity builds toward nested interiors. Outlines
