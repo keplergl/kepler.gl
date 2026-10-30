@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import {format as d3Format} from 'd3-format';
 import {useIntl} from 'react-intl';
-import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
+import ColorLegendFactory, {LegendRowFactory, StyledLegend} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -492,19 +492,8 @@ const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
   );
 };
 
-const StyledContourLevels = styled.div<{$isExpanded: boolean}>`
-  ${props => props.theme.sidePanelScrollBar};
-  max-height: ${props => (props.$isExpanded ? 'none' : '156px')};
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: grid;
-  gap: 2px;
+const StyledContourLevels = styled(StyledLegend)`
   margin-top: 6px;
-
-  .legend--contour-level > div {
-    height: auto;
-    min-height: 15px;
-  }
 `;
 
 const StyledContourExpandToggle = styled(StyledExpandToggle)`
@@ -556,6 +545,7 @@ function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
           <StyledContourLevels
             id={listId}
             $isExpanded={Boolean(isExport || isExpanded)}
+            $disableEdit={!canEdit}
             role="list"
             tabIndex={isExport ? undefined : 0}
             aria-label={intl.formatMessage({id: 'mapLegend.layers.contour.levels'})}

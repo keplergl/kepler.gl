@@ -4,6 +4,7 @@
 import {KeplerTable, getGpuFilterProps} from '@kepler.gl/table';
 import {processCsvData} from '@kepler.gl/processors';
 import ContourLayer from './contour-layer';
+import Layer from '../base-layer';
 import {LayerClasses} from '../index';
 import {
   createContourSamples,
@@ -181,7 +182,7 @@ test('omits the unavailable point count from contour tooltips and preserves real
 });
 
 function renderLegend(
-  layer: ContourLayer,
+  layer: Layer,
   isExport = false,
   options: Partial<React.ComponentProps<ReturnType<typeof MapLegendFactory>>> = {}
 ) {
@@ -301,6 +302,78 @@ test('limits long contour legends to a scrollable channel that can expand indepe
   expect(within(list).getAllByRole('listitem')).toHaveLength(20);
 });
 
+test.each(['point', 'contour'])(
+  '%s legend keeps row and editor heights stable on hover and reveals a working reset control',
+  async layerType => {
+    const fixture = await setup();
+    const layer =
+      layerType === 'contour'
+        ? fixture.layer
+        : new LayerClasses.point({
+            dataId: fixture.dataset.id,
+            columns: fixture.layer.config.columns
+          });
+    if (layerType === 'contour') {
+      fixture.layer.formatLayerData(fixture.datasets);
+    } else {
+      layer.updateLayerConfig({
+        colorField: fixture.dataset.fields[2],
+        colorDomain: [0, 32]
+      });
+    }
+    const view = renderLegend(layer, false, {
+      onLayerVisConfigChange: (oldLayer, config) => oldLayer.updateLayerVisConfig(config)
+    });
+    const editor = view.getAllByRole('textbox')[0] as HTMLInputElement;
+    const defaultLabel = editor.value;
+    const row = editor.parentElement!;
+    expect(within(row).queryByRole('button', {name: 'Reset label'})).toBeNull();
+    fireEvent.change(editor, {target: {value: 'Custom label'}});
+    view.update();
+    const reset = within(row).getByRole('button', {name: 'Reset label'});
+    // JSDOM matches :hover while the document is unfocused. Match the real
+    // compiled CSS against explicit interaction attributes instead.
+    const rules = Array.from(document.styleSheets)
+      .flatMap(sheet => Array.from(sheet.cssRules))
+      .filter(rule => rule.type === CSSRule.STYLE_RULE) as CSSStyleRule[];
+    const styleAt = (element: Element, property: string) =>
+      rules
+        .filter(rule =>
+          element.matches(
+            rule.selectorText
+              .replace(/:hover/g, '[data-legend-hover]')
+              .replace(/:focus-within/g, '[data-legend-focus]')
+          )
+        )
+        .map(rule => rule.style.getPropertyValue(property))
+        .filter(Boolean)
+        .pop();
+    const rowHeight = styleAt(row, 'height');
+    const editorHeight = styleAt(editor, 'height');
+    expect(rowHeight).toBeTruthy();
+    expect(editorHeight).toBeTruthy();
+    expect(styleAt(reset, 'opacity')).toBe('0');
+
+    row.setAttribute('data-legend-hover', '');
+    editor.setAttribute('data-legend-hover', '');
+    expect(styleAt(row, 'height')).toBe(rowHeight);
+    expect(styleAt(editor, 'height')).toBe(editorHeight);
+    expect(styleAt(reset, 'opacity')).toBe('1');
+    expect(styleAt(reset, 'pointer-events')).toBe('auto');
+    row.removeAttribute('data-legend-hover');
+    editor.removeAttribute('data-legend-hover');
+    expect(styleAt(reset, 'opacity')).toBe('0');
+
+    row.setAttribute('data-legend-focus', '');
+    expect(styleAt(reset, 'opacity')).toBe('1');
+    expect(reset).toHaveAttribute('tabindex', '0');
+    fireEvent.keyDown(reset, {key: 'Enter'});
+    view.update();
+    expect(editor.value).toBe(defaultLabel);
+    expect(within(row).queryByRole('button', {name: 'Reset label'})).toBeNull();
+  }
+);
+
 test('edits and resets contour labels by threshold even when levels have the same color', async () => {
   const {layer, datasets} = await setup();
   layer.updateLayerVisConfig({stroked: false, fillOpacity: 0});
@@ -332,7 +405,9 @@ test('edits and resets contour labels by threshold even when levels have the sam
   view.update();
   expect(inputs().map(input => input.value)).toEqual(['Low', 'Medium', '≤ 6']);
 
-  fireEvent.click(view.getAllByRole('listitem')[0].querySelector('svg')!);
+  fireEvent.click(
+    within(view.getAllByRole('listitem')[0]).getByRole('button', {name: 'Reset label'})
+  );
   view.update();
   expect(inputs().map(input => input.value)).toEqual(['≤ 2', 'Medium', '≤ 6']);
   expect(layer.config.visConfig.colorRange.colorLegends).toEqual({
