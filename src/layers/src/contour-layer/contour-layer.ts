@@ -86,11 +86,32 @@ export default class ContourLayer extends Layer {
   get visualChannels() {
     return {};
   }
-  getLegendVisualChannels(): ReturnType<Layer['getLegendVisualChannels']> {
-    // Contours share one color; expose it to the legend without enabling color-by-field.
-    return this.config.visConfig.filled || this.config.visConfig.stroked
-      ? {color: super.visualChannels.color}
-      : {};
+  getContourLegend(): Array<
+    ContourFeature['properties'] & {color: [number, number, number, number]}
+  > {
+    const {filled, stroked} = this.config.visConfig;
+    if (!filled && !stroked) return [];
+    const levels: ContourFeature['properties'][] = this.meta.contourLevels || [];
+    return levels
+      .map(level => ({
+        ...level,
+        color: this.getContourLevelColor(level.rank, levels.length, stroked)
+      }))
+      .sort((a, b) => a.threshold - b.threshold);
+  }
+
+  private getContourLevelColor(
+    rank: number,
+    count: number,
+    outlined: boolean
+  ): [number, number, number, number] {
+    // Fill-only levels build opacity from every enclosing region, using the same
+    // byte-rounded fill alpha as the renderer. Outlines use their per-level alpha.
+    const fillAlpha = Math.round(255 * this.config.visConfig.fillOpacity) / 255;
+    const alpha = outlined
+      ? 0.3 + (0.7 * rank) / Math.max(1, count - 1)
+      : 1 - (1 - fillAlpha) ** (rank + 1);
+    return [...this.config.color, Math.round(255 * alpha)];
   }
   get columnPairs() {
     return this.defaultPointColumnPairs;
@@ -113,6 +134,7 @@ export default class ContourLayer extends Layer {
 
   formatLayerData(datasets: Datasets): {data: ContourFeature[]} {
     this.errorMessage = null;
+    this.updateMeta({contourLevels: []});
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
     if (!dataset || !this.hasAllColumns()) return {data: []};
     const {dataContainer, gpuFilter, filteredIndex} = dataset;
@@ -176,14 +198,14 @@ export default class ContourLayer extends Layer {
           ]
         });
       const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
-      return {
-        data: generateContours(grid, {
-          smoothing,
-          levels,
-          below,
-          domain: customRange ? [minimum, maximum] : undefined
-        })
-      };
+      const data = generateContours(grid, {
+        smoothing,
+        levels,
+        below,
+        domain: customRange ? [minimum, maximum] : undefined
+      });
+      this.updateMeta({contourLevels: data.map(feature => feature.properties)});
+      return {data};
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Unable to generate contours.';
       return {data: []};
@@ -231,12 +253,8 @@ export default class ContourLayer extends Layer {
               id: `${this.id}-outline`,
               filled: false,
               stroked: true,
-              getLineColor: feature => [
-                ...color,
-                Math.round(
-                  255 * (0.3 + (0.7 * feature.properties.rank) / Math.max(1, data.data.length - 1))
-                )
-              ],
+              getLineColor: feature =>
+                this.getContourLevelColor(feature.properties.rank, data.data.length, true),
               getLineWidth: visConfig.thickness,
               lineWidthUnits: 'pixels',
               lineJointRounded: true,

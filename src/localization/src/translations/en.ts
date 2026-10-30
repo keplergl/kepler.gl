@@ -1270,9 +1270,7 @@ ${'```'}
     max: 'Max',
     layers: {
       contour: {
-        singleColor: {
-          color: 'Contour color'
-        }
+        levels: 'Contour levels'
       },
       line: {
         singleColor: {

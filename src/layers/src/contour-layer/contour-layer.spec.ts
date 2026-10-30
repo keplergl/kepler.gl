@@ -14,7 +14,7 @@ import SchemaManager from '@kepler.gl/schemas';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
 import React from 'react';
-import {render} from '@testing-library/react';
+import {render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {theme} from '@kepler.gl/styles';
@@ -138,34 +138,136 @@ test('registers the layer and renders both passes without recomputing on camera 
   });
 });
 
-test('shows the configured contour color in the legend for fills and outlines', async () => {
-  const {layer} = await setup();
+function renderLegend(layer: ContourLayer, isExport = false) {
   const MapLegend = appInjector.get(MapLegendFactory);
-  const {container, rerender} = render(React.createElement(MapLegend, {layers: [layer]}), {
+  const view = render(React.createElement(MapLegend, {layers: [layer], isExport}), {
     wrapper: ({children}) =>
       React.createElement(ThemeProvider, {
         theme,
         children: React.createElement(IntlProvider, {locale: 'en', messages: messages.en, children})
       })
   });
-  const swatches = () => container.querySelectorAll<HTMLElement>('.legend-row-color');
-  expect(swatches()).toHaveLength(1);
-  expect(swatches()[0].style.backgroundColor).toBe('rgb(36, 218, 211)');
+  return {
+    ...view,
+    update: () => view.rerender(React.createElement(MapLegend, {layers: [layer], isExport}))
+  };
+}
 
-  layer.updateLayerConfig({color: [200, 100, 50]});
-  for (const visConfig of [
-    {filled: true, stroked: false},
-    {filled: false, stroked: true}
-  ]) {
-    layer.updateLayerVisConfig(visConfig);
-    rerender(React.createElement(MapLegend, {layers: [layer]}));
-    expect(swatches()).toHaveLength(1);
-    expect(swatches()[0].style.backgroundColor).toBe('rgb(200, 100, 50)');
+test.each([true, false])(
+  'shows each contour threshold and matching outline color (below = %s)',
+  async below => {
+    const {layer, dataset, datasets} = await setup();
+    layer.updateLayerVisConfig({below});
+    const data = layer.formatLayerData(datasets);
+    const view = renderLegend(layer);
+    const items = () =>
+      within(view.getByRole('list', {name: 'Contour levels'})).getAllByRole('listitem');
+    const expected = [2, 4, 6].map(value => `${below ? '≤' : '≥'} ${value}`);
+    expect(items().map(item => item.textContent)).toEqual(expected);
+
+    const checkColors = () => {
+      const passes = layer.renderLayer({
+        data,
+        visible: true,
+        idx: 0,
+        gpuFilter: dataset.gpuFilter,
+        layerCallbacks: {},
+        mapState: {zoom: 10}
+      });
+      const getLineColor = passes[passes.length - 1].props.getLineColor;
+      if (typeof getLineColor !== 'function') throw new Error('Expected per-level outline colors');
+      const ordered = [...data.data].sort(
+        (a, b) => a.properties.threshold - b.properties.threshold
+      );
+      items().forEach((item, i) => {
+        const [r, g, b, alpha = 255] = getLineColor(ordered[i], {
+          index: i,
+          data: ordered,
+          target: []
+        });
+        expect(item.querySelector('.legend--contour-color')).toHaveStyle({
+          backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha / 255})`
+        });
+      });
+    };
+    checkColors();
+
+    layer.updateLayerConfig({color: [200, 100, 50]});
+    layer.updateLayerVisConfig({filled: false, stroked: true});
+    view.update();
+    checkColors();
+    expect(items().map(item => item.textContent)).toEqual(expected);
   }
+);
+
+test('shows accumulated nested fill colors in the exported legend', async () => {
+  const {layer, datasets} = await setup();
+  layer.updateLayerVisConfig({stroked: false, fillOpacity: 0.2});
+  layer.formatLayerData(datasets);
+  const view = renderLegend(layer, true);
+  const items = view.getAllByRole('listitem');
+  expect(items.map(item => item.textContent)).toEqual(['≤ 2', '≤ 4', '≤ 6']);
+  // Three, two, then one overlapping regions, each with 20% opacity.
+  [124, 92, 51].forEach((alpha, i) => {
+    expect(items[i].querySelector('.legend--contour-color')).toHaveStyle({
+      backgroundColor: `rgba(36, 218, 211, ${alpha / 255})`
+    });
+  });
+  layer.updateLayerVisConfig({fillOpacity: 0});
+  view.update();
+  view.getAllByRole('listitem').forEach(item => {
+    expect(item.querySelector('.legend--contour-color')).toHaveStyle({
+      backgroundColor: 'rgba(36, 218, 211, 0)'
+    });
+  });
 
   layer.updateLayerVisConfig({filled: false, stroked: false});
-  rerender(React.createElement(MapLegend, {layers: [layer]}));
-  expect(swatches()).toHaveLength(0);
+  view.update();
+  expect(view.queryByRole('list')).toBeNull();
+});
+
+test('keeps legend levels in sync with auto ranges, filters, and invalid or empty data', async () => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({customRange: false});
+  layer.formatLayerData(datasets);
+  const view = renderLegend(layer);
+  const labels = () => view.queryAllByRole('listitem').map(item => item.textContent);
+  expect(labels()).toEqual(['≤ 8', '≤ 16', '≤ 24']);
+
+  const all = dataset.filteredIndex;
+  dataset.filteredIndex = all.filter(i => dataset.dataContainer.valueAt(i, 2) <= 8);
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(labels()).toEqual(['≤ 2', '≤ 4', '≤ 6']);
+
+  dataset.filteredIndex = all;
+  layer.updateLayerVisConfig({customRange: true, minimum: 0.25, maximum: 7.85, levels: 20});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(labels()).toHaveLength(20);
+  expect(labels()[0]).toBe('≤ 0.25');
+  expect(labels()[19]).toBe('≤ 7.85');
+
+  layer.updateLayerVisConfig({below: false, minimum: 10, maximum: 40, levels: 4});
+  layer.formatLayerData(datasets);
+  view.update();
+  // No geometry exists above 40, so it must not appear as a rendered contour level.
+  expect(labels()).toEqual(['≥ 10', '≥ 20', '≥ 30']);
+
+  layer.updateLayerVisConfig({minimum: 50});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(layer.errorMessage).toMatch(/minimum/);
+  expect(labels()).toEqual([]);
+  layer.updateLayerVisConfig({minimum: 2, maximum: 6});
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(labels()).toHaveLength(4);
+  dataset.filteredIndex = [];
+  layer.formatLayerData(datasets);
+  view.update();
+  expect(labels()).toEqual([]);
+  expect(layer.getContourLegend()).toEqual([]);
 });
 
 test('filtered samples become holes and clearing the filter restores them', async () => {

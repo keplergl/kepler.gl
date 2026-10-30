@@ -65,6 +65,12 @@ original units. Both column modes use the following surface settings:
 Contours keep the same geographic shape and thresholds while panning or zooming.
 Hover shows the value threshold. Settings are saved with the map.
 
+The legend lists each generated contour level in ascending value order, with its
+numeric threshold and ≤ or ≥ direction. Its horizontal swatches use the outline
+shades when outlines are enabled, or the accumulated opacity of nested fills in
+fill-only mode. Labels wrap to keep every level visible. The legend updates after
+filtering, smoothing, or level changes and clears when no contours are generated.
+
 ## Prototype limits
 
 This version supports regional 2D data, native grids up to 512 samples per axis, and

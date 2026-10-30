@@ -10,12 +10,20 @@ import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
+import {
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannelDescription,
+  KeplerGlLayers
+} from '@kepler.gl/layers';
 import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
 import {getFlatLayerOrder, isLayerShownInLegend} from '@kepler.gl/reducers';
+
+type ContourLayer = InstanceType<typeof KeplerGlLayers.ContourLayer>;
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -484,6 +492,64 @@ const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
   );
 };
 
+const StyledContourLevels = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+
+  .legend--contour-level {
+    flex: 1 0 auto;
+    min-width: 44px;
+    max-width: 100%;
+    text-align: center;
+    font-size: 9.5px;
+    color: ${props => props.theme.textColor};
+    overflow-wrap: anywhere;
+  }
+  .legend--contour-color {
+    height: 12px;
+    margin-bottom: 2px;
+  }
+`;
+
+const ContourLegend: React.FC<{layer: ContourLayer}> = ({layer}) => {
+  const intl = useIntl();
+  const levels = layer.getContourLegend();
+  if (!levels.length) return null;
+  return (
+    <div className="legend--layer__item">
+      <VisualChannelMetric name={String(layer.config.columns.value.value)} />
+      <StyledContourLevels
+        role="list"
+        aria-label={intl.formatMessage({id: 'mapLegend.layers.contour.levels'})}
+      >
+        {levels.map(({threshold, below, color}) => {
+          const label = `${below ? '≤' : '≥'} ${intl.formatNumber(threshold, {
+            maximumSignificantDigits: 12
+          })}`;
+          return (
+            <div
+              className="legend--contour-level"
+              key={threshold}
+              role="listitem"
+              title={`${below ? '≤' : '≥'} ${threshold}`}
+            >
+              <div
+                className="legend--contour-color"
+                style={{
+                  backgroundColor: `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`
+                }}
+              />
+              <span>{label}</span>
+            </div>
+          );
+        })}
+      </StyledContourLevels>
+    </div>
+  );
+};
+
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
@@ -508,6 +574,7 @@ export function LayerLegendContentFactory(
     onLayerVisConfigChange,
     actionIcons
   }) => {
+    if (layer.type === 'contour') return <ContourLegend layer={layer as ContourLayer} />;
     const visualChannels = layer.getLegendVisualChannels();
     const legendImageUrl = layer.getLegendImageUrl();
     const channelKeys = Object.values(visualChannels);
