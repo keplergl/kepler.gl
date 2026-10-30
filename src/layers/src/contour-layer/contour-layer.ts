@@ -86,6 +86,12 @@ export default class ContourLayer extends Layer {
   get visualChannels() {
     return {};
   }
+  getLegendVisualChannels(): ReturnType<Layer['getLegendVisualChannels']> {
+    // Contours share one color; expose it to the legend without enabling color-by-field.
+    return this.config.visConfig.filled || this.config.visConfig.stroked
+      ? {color: super.visualChannels.color}
+      : {};
+  }
   get columnPairs() {
     return this.defaultPointColumnPairs;
   }

@@ -13,6 +13,12 @@ import {buildContourGrid, generateContours} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
+import React from 'react';
+import {render} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {IntlProvider} from 'react-intl';
+import {theme} from '@kepler.gl/styles';
+import {appInjector, MapLegendFactory} from '@kepler.gl/components';
 
 test.each(Object.keys(messages))('resolves contour column labels in locale %s', locale => {
   const layer = new ContourLayer({dataId: 'contour-labels'});
@@ -130,6 +136,36 @@ test('registers the layer and renders both passes without recomputing on camera 
   expect(layer.getHoverData(data.data[0])).toEqual({
     aggregatedData: {value: {value: 6, measure: '≤'}}
   });
+});
+
+test('shows the configured contour color in the legend for fills and outlines', async () => {
+  const {layer} = await setup();
+  const MapLegend = appInjector.get(MapLegendFactory);
+  const {container, rerender} = render(React.createElement(MapLegend, {layers: [layer]}), {
+    wrapper: ({children}) =>
+      React.createElement(ThemeProvider, {
+        theme,
+        children: React.createElement(IntlProvider, {locale: 'en', messages: messages.en, children})
+      })
+  });
+  const swatches = () => container.querySelectorAll<HTMLElement>('.legend-row-color');
+  expect(swatches()).toHaveLength(1);
+  expect(swatches()[0].style.backgroundColor).toBe('rgb(36, 218, 211)');
+
+  layer.updateLayerConfig({color: [200, 100, 50]});
+  for (const visConfig of [
+    {filled: true, stroked: false},
+    {filled: false, stroked: true}
+  ]) {
+    layer.updateLayerVisConfig(visConfig);
+    rerender(React.createElement(MapLegend, {layers: [layer]}));
+    expect(swatches()).toHaveLength(1);
+    expect(swatches()[0].style.backgroundColor).toBe('rgb(200, 100, 50)');
+  }
+
+  layer.updateLayerVisConfig({filled: false, stroked: false});
+  rerender(React.createElement(MapLegend, {layers: [layer]}));
+  expect(swatches()).toHaveLength(0);
 });
 
 test('filtered samples become holes and clearing the filter restores them', async () => {

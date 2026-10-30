@@ -1269,6 +1269,11 @@ ${'```'}
     min: 'Min',
     max: 'Max',
     layers: {
+      contour: {
+        singleColor: {
+          color: 'Contour color'
+        }
+      },
       line: {
         singleColor: {
           sourceColor: 'Source',
