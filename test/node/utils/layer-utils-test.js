@@ -145,6 +145,42 @@ test('layerUtils -> empty and single-row layers keep uniform fill', async t => {
   t.end();
 });
 
+test('layerUtils -> large datasets select numeric defaults without reading values', async t => {
+  const cases = [
+    {
+      columns: [
+        {name: 'score', type: 'integer', values: [1, 2, 3]},
+        {name: 'depth', type: 'real', values: [1.25, 2.5, 3.75]},
+        {name: 'metric', type: 'real', values: [0.5, 0.5, 0.5]}
+      ],
+      expected: 'metric'
+    },
+    {
+      columns: [
+        {name: 'record_id', type: 'integer', values: [1, 2, 3]},
+        {name: 'count', type: 'integer', values: [1, 1, 1]}
+      ],
+      expected: 'count'
+    },
+    {
+      columns: [{name: 'record_id', type: 'integer', values: [1, 2, 3]}],
+      expected: null
+    }
+  ];
+
+  for (const {columns, expected} of cases) {
+    const dataset = await createDefaultColorDataset(columns);
+    dataset.dataContainer.numRows = () => 1_000_001;
+    dataset.fields.forEach(field => {
+      field.valueAccessor = () => {
+        throw new Error('Large-dataset color selection must not read row values');
+      };
+    });
+    t.equal(findDefaultColorFieldWithValues(dataset)?.name ?? null, expected);
+  }
+  t.end();
+});
+
 test('layerUtils -> optional default coloring preserves explicit fields and rolls back failures', async t => {
   for (const failure of ['values', 'domain', 'explicit field']) {
     const dataset = await createDefaultColorDataset([

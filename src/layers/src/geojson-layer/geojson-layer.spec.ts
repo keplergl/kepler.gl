@@ -260,7 +260,9 @@ describe('GeoJsonLayer default color field', () => {
     {rowCount: 250_000, varyingColumn: 3, expected: 'score_3'},
     {rowCount: 250_001, varyingColumn: 3, expected: null},
     {rowCount: 1_000_000, varyingColumn: 0, expected: 'score_0'},
-    {rowCount: 1_000_001, varyingColumn: 0, expected: null}
+    {rowCount: 1_000_000, varyingColumn: 1, expected: null},
+    {rowCount: 1_000_001, varyingColumn: 0, expected: 'score_0'},
+    {rowCount: 1_000_001, varyingColumn: 1, expected: 'score_0'}
   ])(
     'limits candidate checks for $rowCount rows with varying column $varyingColumn',
     async ({rowCount, varyingColumn, expected}) => {

@@ -209,7 +209,7 @@ export function findDefaultColorField(dataset: DefaultColorFieldDataset): Field 
   return getDefaultColorFields(dataset)[0] ?? null;
 }
 
-/** Choose a varying numeric column from loaded data, preferring floats to integers. */
+/** Prefer floats to integers, checking for variation only within the scan budget. */
 export function findDefaultColorFieldWithValues(
   dataset: DefaultColorFieldDataset & {
     dataContainer: DataContainerInterface;
@@ -221,9 +221,13 @@ export function findDefaultColorFieldWithValues(
     return null;
   }
 
+  const candidates = getDefaultColorFields(dataset, true);
+  if (rowCount > DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT) {
+    return candidates[0] ?? null;
+  }
+
   const maxFieldChecks = Math.floor(DEFAULT_COLOR_FIELD_VALUE_CHECK_LIMIT / rowCount);
-  const candidates = getDefaultColorFields(dataset, true).slice(0, maxFieldChecks);
-  for (const field of candidates) {
+  for (const field of candidates.slice(0, maxFieldChecks)) {
     const [min, max] = extent(dataset.filteredIndexForDomain, index => {
       const value = field.valueAccessor({index});
       return Number.isFinite(value) ? value : undefined;
