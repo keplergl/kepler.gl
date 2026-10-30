@@ -304,6 +304,7 @@ export default class TripLayer extends Layer {
 
   dataToFeature: GeojsonDataMaps;
   dataToTimeStamp: any[];
+  private _filteredTimestamps = new WeakMap<Feature, number[]>();
   getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
   _layerInfoModal: Record<string, () => JSX.Element>;
 
@@ -613,15 +614,25 @@ export default class TripLayer extends Layer {
     const {index} = feature.properties;
     const timestamps = this.dataToTimeStamp[index];
     const originalFeature = this.dataToFeature[index] as Feature<LineString, {index: number}>;
-    if (this.config.columnMode !== COLUMN_MODE_TABLE || feature === originalFeature) {
+    if (
+      !timestamps ||
+      this.config.columnMode !== COLUMN_MODE_TABLE ||
+      feature === originalFeature
+    ) {
       return timestamps;
     }
 
-    // Table filtering retains coordinate references but removes vertices from the trip.
+    const cached = this._filteredTimestamps.get(feature);
+    if (cached) return cached;
+
+    // Filtering creates new features; cache their timestamps across animation frames.
+    // Coordinate references preserve the ordering of the normalized source timestamps.
     const retainedCoordinates = new Set(feature.geometry.coordinates);
-    return timestamps?.filter((_, i) =>
+    const filteredTimestamps = timestamps.filter((_, i) =>
       retainedCoordinates.has(originalFeature.geometry.coordinates[i])
     );
+    this._filteredTimestamps.set(feature, filteredTimestamps);
+    return filteredTimestamps;
   }
 
   // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
@@ -729,6 +740,7 @@ export default class TripLayer extends Layer {
     const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(this.dataToFeature);
 
     this.dataToTimeStamp = dataToTimeStamp;
+    this._filteredTimestamps = new WeakMap();
     this.updateAnimationDomain(animationDomain);
 
     // get bounds from features
@@ -1026,7 +1038,7 @@ export default class TripLayer extends Layer {
     }
     if (idx > 1) {
       yaw = interpolateAngle(prevYaw ?? 0, nextYaw ?? 0, advancement);
-    } else if (idx > 0) {
+    } else if (idx > 0 || (idx === 0 && yawField && datum)) {
       yaw = nextYaw ?? 0;
     }
     return yaw;

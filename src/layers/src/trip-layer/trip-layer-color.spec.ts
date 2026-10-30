@@ -115,11 +115,11 @@ async function makeFilteredModelTrip() {
   await table.importData({
     data: {
       rows: [
-        ['removed', 0, 50, '2024-01-01 00:00:00', 'Uber', 0],
-        ['trip', 0, 0, '2024-01-01 00:00:00', 'Uber', 0],
-        ['trip', 10, 0, '2024-01-01 00:00:10', 'Lyft', 0],
-        ['trip', 15, 10, '2024-01-01 00:00:15', 'Uber', 0],
-        ['trip', 20, 0, '2024-01-01 00:00:20', 'Waymo', 0]
+        ['removed', 0, 50, '2024-01-01 00:00:00', 'Uber', 0, 45],
+        ['trip', 0, 0, '2024-01-01 00:00:00', 'Uber', 0, 45],
+        ['trip', 10, 0, '2024-01-01 00:00:10', 'Lyft', 0, 30],
+        ['trip', 15, 10, '2024-01-01 00:00:15', 'Uber', 0, 45],
+        ['trip', 20, 0, '2024-01-01 00:00:20', 'Waymo', 0, 60]
       ],
       fields: [
         {name: 'id', type: ALL_FIELD_TYPES.string},
@@ -127,7 +127,8 @@ async function makeFilteredModelTrip() {
         {name: 'longitude', type: ALL_FIELD_TYPES.real},
         {name: 'timestamp', type: ALL_FIELD_TYPES.timestamp},
         {name: 'company', type: ALL_FIELD_TYPES.string},
-        {name: 'altitude', type: ALL_FIELD_TYPES.real}
+        {name: 'altitude', type: ALL_FIELD_TYPES.real},
+        {name: 'heading', type: ALL_FIELD_TYPES.real}
       ]
     } as any
   });
@@ -238,6 +239,89 @@ describe('TripLayer models follow filtered vertices', () => {
       }
     }
   );
+
+  test.each([false, true])(
+    'keeps the configured yaw for a single retained vertex (invert=%s)',
+    async invertYaw => {
+      const {table, layer} = await makeFilteredModelTrip();
+      table.filteredIndex = [4];
+      layer.config.yawField = table.fields[6];
+      layer.updateLayerVisConfig({invertYaw});
+      const data = layer.formatLayerData({[table.id]: table}, null);
+      const [, model, label] = layer.renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState: {zoom: 4, latitude: 0, longitude: 0},
+        animationConfig: {
+          domain: layer.config.animation.domain,
+          currentTime: Date.UTC(2024, 0, 1, 0, 0, 20)
+        }
+      });
+      const feature = data.data[0];
+      const matrix = model.props.getTransformMatrix(feature);
+      expect((Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI).toBeCloseTo(invertYaw ? 150 : 30);
+      expect(model.props.getPosition(feature)).toEqual([0, 20, 0]);
+      expect(label.props.getText(feature)).toBe('Waymo');
+    }
+  );
+
+  test('reuses filtered timestamps across frames and refreshes them after filters or data change', async () => {
+    const {table, layer} = await makeFilteredModelTrip();
+    const start = Date.UTC(2024, 0, 1);
+    table.filteredIndex = [2, 4];
+    let data = layer.formatLayerData({[table.id]: table}, null);
+    let feature = data.data[0];
+    const firstTimes = data.getTimestamps(feature);
+    expect(firstTimes).toEqual([start + 10000, start + 20000]);
+    for (const seconds of [11, 15, 19]) {
+      const [, model, label] = layer.renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState: {zoom: 4, latitude: 0, longitude: 0},
+        animationConfig: {
+          domain: layer.config.animation.domain,
+          currentTime: start + seconds * 1000
+        }
+      });
+      expect(model.props.getPosition(feature)).toEqual([0, seconds, 0]);
+      expect(label.props.getText(feature)).toBe('Waymo');
+      expect(Array.from(model.props.getTransformMatrix(feature)).every(Number.isFinite)).toBe(true);
+      expect(data.getTimestamps(feature)).toBe(firstTimes);
+    }
+
+    table.filteredIndex = [3, 4];
+    data = layer.formatLayerData({[table.id]: table}, data);
+    feature = data.data[0];
+    const nextTimes = data.getTimestamps(feature);
+    expect(nextTimes).toEqual([start + 15000, start + 20000]);
+    expect(nextTimes).not.toBe(firstTimes);
+
+    const rows = Array.from({length: table.dataContainer.numRows()}, (_, i) => [
+      ...table.dataContainer.rowAsArray(i)
+    ]);
+    rows[3][3] = '2024-01-01 00:00:30';
+    rows[4][3] = '2024-01-01 00:00:40';
+    await table.update({rows, fields: table.fields});
+    table.filteredIndex = [3, 4];
+    data = layer.formatLayerData({[table.id]: table}, data);
+    feature = data.data[0];
+    expect(data.getTimestamps(feature)).toEqual([start + 30000, start + 40000]);
+    expect(data.getTimestamps(feature)).not.toBe(nextTimes);
+    const [, model] = layer.renderLayer({
+      data,
+      gpuFilter: table.gpuFilter,
+      mapState: {zoom: 4, latitude: 0, longitude: 0},
+      animationConfig: {domain: layer.config.animation.domain, currentTime: start + 35000}
+    });
+    expect(model.props.getPosition(feature)).toEqual([5, 17.5, 0]);
+
+    table.filteredIndex = [];
+    data = layer.formatLayerData({[table.id]: table}, data);
+    expect(data.data).toEqual([]);
+    table.filteredIndex = [2, 4];
+    data = layer.formatLayerData({[table.id]: table}, data);
+    expect(data.getTimestamps(data.data[0])).toEqual([start + 10000, start + 40000]);
+  });
 });
 
 describe('TripLayer text label collision', () => {
