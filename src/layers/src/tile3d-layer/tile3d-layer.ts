@@ -3,7 +3,8 @@
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
-import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
+import type {Layer as DeckLayer, LayerContext, LayersList} from '@deck.gl/core';
+import {load} from '@loaders.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
@@ -70,9 +71,7 @@ function _checkLightingActive(context: any): boolean {
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
 class KeplerTile3DLayer extends DeckTile3DLayer {
-  private _tilesetLoadId = 0;
-  private _acceptedLoadId = 0;
-  private _acceptedTileset: {destroy?: () => void} | null = null;
+  declare state: DeckTile3DLayer['state'] & {_tilesetLoadId?: number};
 
   shouldUpdateState(params: any): boolean {
     if (super.shouldUpdateState(params)) return true;
@@ -127,51 +126,78 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
     }
   }
 
+  finalizeState(context: LayerContext): void {
+    // Pending work must not reinstall a tileset after the layer is removed.
+    this.state._tilesetLoadId = (this.state._tilesetLoadId ?? 0) + 1;
+    super.finalizeState(context);
+  }
+
   // @ts-ignore override of private method called by deck.gl internals
   private async _loadTileset(tilesetUrl: string) {
-    const loadId = ++this._tilesetLoadId;
-    this.setState({_tilesetLoadFailed: false});
+    // Deck transfers state to replacement instances and retains it on the old
+    // instances for async work. Request ownership must travel with that state.
+    const loadId = (this.state._tilesetLoadId ?? 0) + 1;
+    this.setState({_tilesetLoadId: loadId, _tilesetLoadFailed: false});
+    const isCurrent = () => loadId === this.state._tilesetLoadId;
     const notify = (this.props as {onTilesetError?: (kind: Tile3DLoadErrorKind | null) => void})
       .onTilesetError;
     // Defer so a retry does not dispatch while deck is still updating this layer.
     queueMicrotask(() => {
-      if (loadId === this._tilesetLoadId) notify?.(null);
+      if (isCurrent()) notify?.(null);
     });
     try {
-      const previousTileset = (this.state as any)?.tileset3d;
+      const previousTileset = this.state.tileset3d;
       if (previousTileset) {
-        previousTileset.destroy?.();
-        if (this._acceptedTileset === previousTileset) {
-          this._acceptedTileset = null;
-          this._acceptedLoadId = 0;
-        }
+        previousTileset.destroy();
         this.setState({tileset3d: null, layerMap: {}});
       }
-      // @ts-expect-error _loadTileset is private in DeckTile3DLayer
-      await super._loadTileset(tilesetUrl);
-      const installed = (this.state as any)?.tileset3d;
-      if (loadId !== this._tilesetLoadId) {
-        // A newer token retry started. Drop this tileset so the old key
-        // cannot overwrite the in-flight or already-accepted request.
-        if (installed && installed !== this._acceptedTileset) {
-          installed.destroy?.();
+
+      // Match deck's loader/preload handling, but check ownership before
+      // constructing or installing a tileset and invoking onTilesetLoad.
+      // Calling super._loadTileset would perform those side effects too early.
+      const loadOptions = this.props.loadOptions || {};
+      const loaders = this.props.loaders?.length ? this.props.loaders : this.props.loader;
+      const loader = Array.isArray(loaders) ? loaders[0] : loaders;
+      const {tileset: tilesetOptions, ...remainingLoadOptions} = loadOptions;
+      const options = {loadOptions: {...remainingLoadOptions}, ...tilesetOptions};
+      let actualTilesetUrl = tilesetUrl;
+      if ('preload' in loader && typeof loader.preload === 'function') {
+        const preloadOptions = await loader.preload(tilesetUrl, loadOptions);
+        if (!isCurrent()) return;
+        if (preloadOptions.url) actualTilesetUrl = preloadOptions.url;
+        if (preloadOptions.headers) {
+          options.loadOptions.core = {
+            ...options.loadOptions.core,
+            fetch: {
+              ...options.loadOptions.core?.fetch,
+              headers: preloadOptions.headers
+            }
+          };
         }
-        this.setState({
-          tileset3d: this._acceptedLoadId === this._tilesetLoadId ? this._acceptedTileset : null,
-          layerMap: {}
-        });
-        return;
+        Object.assign(options, preloadOptions);
       }
-      this._acceptedLoadId = loadId;
-      this._acceptedTileset = installed ?? null;
+      const tilesetJson = await load(actualTilesetUrl, loader, options.loadOptions);
+      if (!isCurrent()) return;
+
+      const tileset3d = new Tileset3D(tilesetJson, {
+        // These private deck callbacks maintain its tile cache.
+        // @ts-expect-error _onTileLoad is private in DeckTile3DLayer
+        onTileLoad: this._onTileLoad.bind(this),
+        // @ts-expect-error _onTileUnload is private in DeckTile3DLayer
+        onTileUnload: this._onTileUnload.bind(this),
+        onTileError: this.props.onTileError,
+        onUpdate: () => this.setNeedsUpdate(),
+        ...options
+      });
+      this.setState({tileset3d, layerMap: {}});
+      this._updateTileset(this.state.activeViewports);
+      this.props.onTilesetLoad(tileset3d);
     } catch (error: any) {
-      if (loadId !== this._tilesetLoadId) {
-        return;
-      }
+      if (!isCurrent()) return;
       const kind = tile3dLoadErrorKind(error);
       this.setState({_tilesetLoadFailed: true, tileset3d: null, layerMap: {}});
       queueMicrotask(() => {
-        if (loadId === this._tilesetLoadId) notify?.(kind);
+        if (isCurrent()) notify?.(kind);
       });
       console.error('Tile3DLayer: tileset load error', error);
     }
