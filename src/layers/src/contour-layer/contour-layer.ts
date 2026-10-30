@@ -8,7 +8,7 @@ import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
 import ContourLayerIcon from './contour-layer-icon';
-import {buildScalarGrid, ContourFeature, generateContours, ScalarSample} from './contour-utils';
+import {buildContourGrid, ContourFeature, generateContours, ScalarSample} from './contour-utils';
 
 const numberConfig = (
   property: string,
@@ -28,6 +28,17 @@ const numberConfig = (
 
 export const contourVisConfigs = {
   opacity: 'opacity',
+  inputMode: {
+    type: 'select',
+    property: 'inputMode',
+    defaultValue: 'auto',
+    label: 'layerVisConfigs.contour.inputMode',
+    options: ['auto', 'grid', 'points']
+  },
+  interpolationResolution: {
+    ...numberConfig('interpolationResolution', 192, [32, 256], 16),
+    description: 'layerVisConfigs.contour.interpolationResolutionDescription'
+  },
   levels: numberConfig('levels', 7, [2, 20], 1),
   smoothing: {
     ...numberConfig('smoothing', 1.5, [0, 6], 0.25),
@@ -81,7 +92,7 @@ export default class ContourLayer extends Layer {
     return {lat: 'contour.lat', lng: 'contour.lng', value: 'contour.value'};
   }
   get supportedColumnModes() {
-    return [{key: 'grid', label: 'Scalar grid', requiredColumns: ['lat', 'lng', 'value']}];
+    return [{key: 'grid', label: 'Scalar samples', requiredColumns: ['lat', 'lng', 'value']}];
   }
   get noneLayerDataAffectingProps() {
     return [...super.noneLayerDataAffectingProps, 'color', 'fillOpacity', 'filled', 'stroked'];
@@ -116,7 +127,11 @@ export default class ContourLayer extends Layer {
       });
     }
     try {
-      const grid = buildScalarGrid(samples);
+      const grid = buildContourGrid(
+        samples,
+        this.config.visConfig.inputMode,
+        this.config.visConfig.interpolationResolution
+      );
       if (grid)
         this.updateMeta({
           bounds: [

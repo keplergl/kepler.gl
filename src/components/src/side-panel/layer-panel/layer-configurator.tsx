@@ -1941,6 +1941,11 @@ export default function LayerConfiguratorFactory(
 
     _renderContourLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
       const {visConfigSettings: settings, config} = layer;
+      const inputModes = [
+        {id: 'auto', label: 'Auto'},
+        {id: 'grid', label: 'Regular grid'},
+        {id: 'points', label: 'Scattered points'}
+      ];
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label="layer.color">
@@ -1948,6 +1953,21 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...settings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup label="layerVisConfigs.contour.surface">
+            <PanelLabel>
+              <FormattedMessage id={settings.inputMode.label} />
+            </PanelLabel>
+            <ItemSelector
+              options={inputModes}
+              selectedItems={inputModes.find(mode => mode.id === config.visConfig.inputMode)}
+              displayOption="label"
+              getOptionValue="id"
+              multiSelect={false}
+              searchable={false}
+              onChange={inputMode => visConfiguratorProps.onChange({inputMode})}
+            />
+            {config.visConfig.inputMode !== 'grid' ? (
+              <VisConfigSlider {...settings.interpolationResolution} {...visConfiguratorProps} />
+            ) : null}
             <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
             <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
             <VisConfigSwitch {...settings.below} {...visConfiguratorProps} />

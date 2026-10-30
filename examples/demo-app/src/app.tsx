@@ -675,20 +675,26 @@ const App = props => {
     );
   }, [dispatch]);
 
-  const _loadContourData = useCallback(() => {
-    dispatch(
-      addDataToMap({
-        datasets: [
-          {
-            info: {label: 'Synthetic scalar grid', id: contourDataId},
-            data: processCsvData(createContourCsv())
-          }
-        ],
-        config: contourConfig as ParsedConfig,
-        options: {keepExistingConfig: true}
-      })
-    );
-  }, [dispatch]);
+  const _loadContourData = useCallback(
+    (scattered = false) => {
+      dispatch(
+        addDataToMap({
+          datasets: [
+            {
+              info: {
+                label: scattered ? 'Synthetic scattered samples' : 'Synthetic scalar grid',
+                id: contourDataId
+              },
+              data: processCsvData(createContourCsv(scattered))
+            }
+          ],
+          config: contourConfig as ParsedConfig,
+          options: {keepExistingConfig: true}
+        })
+      );
+    },
+    [dispatch]
+  );
 
   const _loadFlowData = useCallback(() => {
     dispatch(
@@ -864,8 +870,9 @@ const App = props => {
   }, [dispatch]);
 
   const _loadSampleData = useCallback(() => {
-    if (new URLSearchParams(window.location.search).get('sample') === 'contour') {
-      _loadContourData();
+    const sample = new URLSearchParams(window.location.search).get('sample');
+    if (sample === 'contour' || sample === 'contour-scattered') {
+      _loadContourData(sample === 'contour-scattered');
     }
     // _loadPointData();
     // _loadGeojsonData();

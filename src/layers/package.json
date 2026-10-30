@@ -81,6 +81,7 @@
     "d3-format": "^3.1.0",
     "d3-interpolate": "^3.0.1",
     "d3-shape": "^1.2.0",
+    "delaunator": "^5.1.0",
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "keymirror": "^0.1.1",

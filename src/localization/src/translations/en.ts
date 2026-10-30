@@ -295,6 +295,10 @@ export default {
     },
     contour: {
       surface: 'Contours',
+      inputMode: 'Input type',
+      interpolationResolution: 'Interpolation resolution',
+      interpolationResolutionDescription:
+        'Samples along the longer axis of the interpolated surface. Regular grids retain their original resolution.',
       smoothing: 'Smoothing',
       smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
       levels: 'Number of levels',

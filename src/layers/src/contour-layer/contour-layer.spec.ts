@@ -9,7 +9,7 @@ import {
   createContourSamples,
   contourConfig
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
-import {buildScalarGrid, generateContours} from './contour-utils';
+import {buildContourGrid, generateContours} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
@@ -23,14 +23,20 @@ test.each(Object.keys(messages))('resolves contour column labels in locale %s', 
   }
 });
 
-async function setup() {
+async function setup(scatteredRows?: number[][]) {
   const rows = Array.from({length: 81}, (_, i) => {
     const x = i % 9;
     const y = Math.floor(i / 9);
     return `${x},${y},${(x - 4) ** 2 + (y - 4) ** 2}`;
   });
   const dataset = new KeplerTable({info: {id: 'contour-test'}, color: [0, 0, 0]});
-  await dataset.importData({data: processCsvData(`longitude,latitude,value\n${rows.join('\n')}`)!});
+  const data = processCsvData(`longitude,latitude,value\n${rows.join('\n')}`)!;
+  if (scatteredRows) {
+    // Small CSV fixtures may infer integer columns; provide the intended numeric schema.
+    data.fields = data.fields.map(field => ({...field, type: 'real'}));
+    data.rows = scatteredRows;
+  }
+  await dataset.importData({data});
   dataset.gpuFilter = getGpuFilterProps([], dataset.id, dataset.fields);
   const column = name => ({value: name, fieldIdx: dataset.fields.findIndex(f => f.name === name)});
   const layer = new ContourLayer({
@@ -117,6 +123,7 @@ test('applies numeric GPU filters before contouring even at a zero-valued range'
 
 test('saves and reloads contour settings and value columns through the map schema', async () => {
   const {layer} = await setup();
+  layer.updateLayerVisConfig({inputMode: 'points', interpolationResolution: 128});
   const saved = SchemaManager.getConfigToSave({
     ...StateWFiles,
     visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
@@ -130,21 +137,49 @@ test('saves and reloads contour settings and value columns through the map schem
   expect(restored.config.columns.value).toBe('value');
 });
 
-test('sample generates all configured levels with islands and finite closed geometry', () => {
-  const sample = createContourSamples();
-  const {visConfig} = contourConfig.config.visState.layers[0].config;
-  const result = generateContours(buildScalarGrid(sample), {
-    ...visConfig,
-    domain: [visConfig.minimum, visConfig.maximum]
-  });
-  expect(result).toHaveLength(visConfig.levels);
-  expect(result.some(f => f.geometry.coordinates.length > 5)).toBe(true);
-  for (const feature of result) {
-    for (const polygon of feature.geometry.coordinates) {
-      for (const ring of polygon) {
-        expect(ring[0]).toEqual(ring[ring.length - 1]);
-        expect(ring.flat().every(Number.isFinite)).toBe(true);
+test('interpolates scattered data and recomputes its support when samples are filtered', async () => {
+  const {layer, dataset, datasets} = await setup([
+    [0, 0, 3],
+    [2, 0, 7],
+    [0.7, 2, 10.4],
+    [1.1, 0.6, 7]
+  ]);
+  layer.updateLayerVisConfig({minimum: 4, maximum: 8, interpolationResolution: 64});
+  expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+  expect(layer.errorMessage).toBeNull();
+  expect(layer.meta.bounds[3]).toBeCloseTo(2);
+  const all = dataset.filteredIndex;
+  dataset.filteredIndex = [0, 1, 3];
+  expect(layer.formatLayerData(datasets).data.length).toBeGreaterThan(0);
+  expect(layer.meta.bounds[3]).toBeCloseTo(0.6);
+  dataset.filteredIndex = all;
+  layer.updateLayerVisConfig({inputMode: 'grid'});
+  expect(layer.formatLayerData(datasets).data).toEqual([]);
+  expect(layer.errorMessage).toMatch(/regularly spaced/);
+  layer.updateLayerVisConfig({inputMode: 'points'});
+  expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+  expect(layer.errorMessage).toBeNull();
+  expect(layer.meta.bounds[3]).toBeCloseTo(2);
+});
+
+test.each([false, true])(
+  'sample (scattered = %s) generates all levels with islands and finite closed geometry',
+  scattered => {
+    const sample = createContourSamples(scattered);
+    const {visConfig} = contourConfig.config.visState.layers[0].config;
+    const result = generateContours(buildContourGrid(sample), {
+      ...visConfig,
+      domain: [visConfig.minimum, visConfig.maximum]
+    });
+    expect(result).toHaveLength(visConfig.levels);
+    expect(result.some(f => f.geometry.coordinates.length > 5)).toBe(true);
+    for (const feature of result) {
+      for (const polygon of feature.geometry.coordinates) {
+        for (const ring of polygon) {
+          expect(ring[0]).toEqual(ring[ring.length - 1]);
+          expect(ring.flat().every(Number.isFinite)).toBe(true);
+        }
       }
     }
   }
-});
+);

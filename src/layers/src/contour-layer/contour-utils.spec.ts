@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {buildScalarGrid, generateContours, ScalarSample, smoothScalarGrid} from './contour-utils';
+import {
+  buildContourGrid,
+  buildScalarGrid,
+  generateContours,
+  interpolateScalarSamples,
+  ScalarSample,
+  smoothScalarGrid
+} from './contour-utils';
 
 function samples(size: number, value: (x: number, y: number) => number | null): ScalarSample[] {
   return Array.from({length: size * size}, (_, i) => ({
@@ -95,5 +102,103 @@ describe('scalar contours', () => {
     expect(() =>
       generateContours(buildScalarGrid(samples(3, () => 1)), {...options, domain: [5, 2]})
     ).toThrow('minimum');
+  });
+});
+
+describe('scattered scalar interpolation', () => {
+  const plane = (x: number, y: number) => 3 + 2 * x + 3 * y;
+  const scattered = [
+    [0, 0],
+    [2, 0],
+    [0.7, 2],
+    [1.1, 0.6]
+  ].map(([longitude, latitude]) => ({
+    longitude,
+    latitude,
+    value: plane(longitude, latitude)
+  }));
+
+  test('reproduces a linear field and keeps cells outside the sample hull empty', () => {
+    const grid = interpolateScalarSamples(scattered, 64)!;
+    let valid = 0;
+    for (let i = 0; i < grid.values.length; i++) {
+      if (!Number.isFinite(grid.values[i])) continue;
+      valid++;
+      expect(grid.values[i]).toBeCloseTo(
+        plane(
+          grid.longitude + (i % grid.width) * grid.stepLng,
+          grid.latitude + Math.floor(i / grid.width) * grid.stepLat
+        ),
+        10
+      );
+    }
+    expect(valid).toBeGreaterThan(1000);
+    expect(grid.values[0]).toBe(3);
+    expect(grid.values[grid.width - 1]).toBeCloseTo(7);
+    expect(Number.isNaN(grid.values[grid.values.length - 1])).toBe(true);
+    expect(Number.isNaN(smoothScalarGrid(grid, 2)[grid.values.length - 1])).toBe(true);
+  });
+
+  test('auto interpolates irregular positions and generates contours in the input units', () => {
+    const grid = buildContourGrid(scattered, 'auto', 64)!;
+    expect(Math.max(grid.width, grid.height)).toBe(64);
+    expect(
+      generateContours(grid, {...options, domain: [4, 8], smoothing: 1}).map(
+        f => f.properties.threshold
+      )
+    ).toEqual([8, 6, 4]);
+    expect(() => buildContourGrid(scattered, 'grid')).toThrow('regularly spaced');
+  });
+
+  test('auto preserves the original grid and its holes; explicit points mode fills gaps', () => {
+    const input = samples(5, (x, y) => (x === 2 && y === 2 ? null : plane(x, y)));
+    expect(buildContourGrid(input, 'auto', 256)).toEqual(buildScalarGrid(input));
+    const interpolated = buildContourGrid(input, 'points', 33)!;
+    expect(interpolated.width).toBeGreaterThan(5);
+    expect([...interpolated.values].every(Number.isFinite)).toBe(true);
+  });
+
+  test('averages duplicate measurements and ignores missing or invalid samples', () => {
+    const grid = interpolateScalarSamples(
+      [
+        {longitude: 0, latitude: 0, value: 2},
+        {longitude: 0, latitude: 0, value: 6},
+        {longitude: 2, latitude: 0, value: 8},
+        {longitude: 0.7, latitude: 2, value: 10},
+        {longitude: 20, latitude: 20, value: null},
+        {longitude: 20, latitude: 20, value: Infinity},
+        {longitude: NaN, latitude: 0, value: 100}
+      ],
+      32
+    )!;
+    expect(grid.values[0]).toBe(4);
+    expect(grid.longitude + (grid.width - 1) * grid.stepLng).toBeCloseTo(2);
+    expect([...grid.values].filter(Number.isFinite).every(value => value >= 4 && value <= 10)).toBe(
+      true
+    );
+  });
+
+  test('bounds resolution and handles empty, insufficient, collinear and global samples', () => {
+    const grid = interpolateScalarSamples(scattered, 10000)!;
+    expect(Math.max(grid.width, grid.height)).toBe(256);
+    expect(interpolateScalarSamples([])).toBeNull();
+    expect(interpolateScalarSamples(scattered.map(d => ({...d, value: null})))).toBeNull();
+    expect(() => interpolateScalarSamples(scattered.slice(0, 2))).toThrow('non-collinear');
+    expect(() =>
+      interpolateScalarSamples(
+        [0, 1, 2].map(x => ({
+          longitude: x,
+          latitude: 2 * x,
+          value: x
+        }))
+      )
+    ).toThrow('non-collinear');
+    expect(() =>
+      buildContourGrid([
+        {longitude: -179, latitude: 0, value: 1},
+        {longitude: 179, latitude: 0, value: 2},
+        {longitude: 179, latitude: 1, value: 3}
+      ])
+    ).toThrow('antimeridian');
   });
 });

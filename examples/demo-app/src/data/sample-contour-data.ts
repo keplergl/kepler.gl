@@ -3,8 +3,8 @@
 
 export const contourDataId = 'scalar-contour-sample';
 
-/** Synthetic scalar field, not travel time. Deterministic and sampled on a regular grid. */
-export function createContourSamples() {
+/** Deterministic synthetic scalar field, sampled on a grid or at scattered positions. */
+export function createContourSamples(scattered = false) {
   let seed = 42;
   const random = () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -17,10 +17,11 @@ export function createContourSamples() {
     strength: 7 + random() * 21
   }));
   const samples: {longitude: number; latitude: number; value: number}[] = [];
-  for (let row = 0; row <= 200; row++) {
-    for (let col = 0; col <= 200; col++) {
-      const x = col / 100 - 1;
-      const y = row / 100 - 1;
+  const size = scattered ? 65 : 201;
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const x = scattered ? (col + (random() - 0.5) * 0.8) / 32 - 1 : col / 100 - 1;
+      const y = scattered ? (row + (random() - 0.5) * 0.8) / 32 - 1 : row / 100 - 1;
       const warpedX = x + 0.07 * Math.sin(y * 13) + 0.03 * Math.sin(y * 27);
       const warpedY = y + 0.05 * Math.cos(x * 17);
       let surface = 65 * Math.exp(-(warpedX ** 2 / 0.22 + warpedY ** 2 / 0.13));
@@ -40,8 +41,8 @@ export function createContourSamples() {
   return samples;
 }
 
-export function createContourCsv() {
-  return `longitude,latitude,value\n${createContourSamples()
+export function createContourCsv(scattered = false) {
+  return `longitude,latitude,value\n${createContourSamples(scattered)
     .map(d => `${d.longitude},${d.latitude},${d.value}`)
     .join('\n')}`;
 }
