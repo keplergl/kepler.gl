@@ -6,7 +6,7 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, within} from '@testing-library/react';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
@@ -24,6 +24,7 @@ import {
   getLayerDataset
 } from '@kepler.gl/components';
 import {LayerClasses} from '@kepler.gl/layers';
+import {messages} from '@kepler.gl/localization';
 
 import {StateWFiles, StateWTripGeojson, testCsvDataId} from 'test/helpers/mock-state';
 import {
@@ -431,6 +432,88 @@ test('Components -> LayerConfigurator -> getLayerFields', t => {
 
   t.end();
 });
+
+for (const locale of ['en', 'es']) {
+  test(`Components -> Flow Field column labels resolve in ${locale}`, t => {
+    const layer = new LayerClasses.flowField({id: 'flow-field', dataId: testCsvDataId});
+    const fields = ['height', 'wind_speed'].map((name, fieldIdx) => ({
+      name,
+      displayName: name,
+      fieldIdx,
+      type: 'real',
+      format: ''
+    }));
+    layer.updateLayerConfig({columns: layer.assignColumn('altitude', fields[0])});
+    const update = sinon.spy();
+    const {container, unmount} = renderWithTheme(
+      <IntlWrapper locale={locale}>
+        <LayerColumnModeConfig
+          id={layer.id}
+          layer={layer}
+          layerConfig={layer.config}
+          supportedColumnModes={layer.supportedColumnModes}
+          fields={fields}
+          openModal={openModal}
+          updateLayerConfig={update}
+          updateLayerType={updateLayerType}
+        />
+      </IntlWrapper>
+    );
+    const modes = [
+      {key: 'UV', fields: ['flowField.u', 'flowField.v']},
+      {key: 'SPEED_DIR', fields: ['flowField.speed', 'flowField.direction']},
+      {key: 'ELEVATION', fields: []}
+    ];
+    try {
+      const panels = container.querySelectorAll('.layer-column-mode-panel');
+      t.equal(panels.length, modes.length, 'retains all three column modes');
+      modes.forEach((mode, index) => {
+        const panel = panels[index];
+        const labels = () =>
+          Array.from(panel.querySelectorAll('.layer-config__column__name'), element =>
+            element.textContent.replace(/\s*\*$/, '').trim()
+          );
+        const expectedLabels = position =>
+          [...position, ...mode.fields, 'altitude'].map(key => messages[locale][`columns.${key}`]);
+        t.deepEqual(
+          labels(),
+          expectedLabels(['lat', 'lng']),
+          `${mode.key} resolves position and attribute labels from the message catalog`
+        );
+        const altitude = panel.querySelector('.layer-config__column__selector:last-child');
+        t.equal(
+          altitude.querySelector('.layer-config__column__name').textContent.includes('*'),
+          mode.key === 'ELEVATION',
+          'altitude is required only in elevation mode'
+        );
+        t.ok(
+          within(altitude.querySelector('.item-selector__dropdown__value')).getByText('height'),
+          'preserves the selected data column'
+        );
+        fireEvent.click(within(panel).getByRole('checkbox'));
+        t.deepEqual(update.lastCall.args[0], {columnMode: mode.key}, 'selects the existing mode');
+        fireEvent.click(within(panel).getByRole('tab', {name: 'GeoJSON'}));
+        t.deepEqual(
+          labels(),
+          expectedLabels(['geojson']),
+          `${mode.key} resolves labels with GeoJSON positions too`
+        );
+      });
+
+      const speedRow = panels[1].querySelectorAll('.layer-config__column__selector')[1];
+      fireEvent.keyDown(within(speedRow).getByRole('button'), {key: 'Enter', keyCode: 13});
+      fireEvent.click(within(document.body).getByText('wind_speed'));
+      t.deepEqual(
+        update.lastCall.args[0],
+        {columns: layer.assignColumn('speed', fields[1]), columnMode: 'SPEED_DIR'},
+        'selecting a field in another mode preserves other columns and activates that mode'
+      );
+    } finally {
+      unmount();
+      t.end();
+    }
+  });
+}
 
 test('Components -> LayerConfigurator -> getLayerDataset', t => {
   const layer = StateWTripGeojson.visState.layers[0];
