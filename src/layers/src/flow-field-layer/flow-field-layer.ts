@@ -16,7 +16,12 @@ import {WebMercatorViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer, PolygonLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
-import {GEOJSON_FIELDS, GEOARROW_METADATA_KEY, LAYER_TYPES} from '@kepler.gl/constants';
+import {
+  GEOJSON_FIELDS,
+  GEOARROW_METADATA_KEY,
+  LAYER_TYPES,
+  SCALE_TYPES
+} from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
 import {DATA_TYPES} from 'type-analyzer';
@@ -1458,6 +1463,15 @@ export default class FlowFieldLayer extends Layer {
     ];
   }
 
+  getVisualChannelDescription(key: string) {
+    return key === 'color'
+      ? {
+          label: 'property.color',
+          measure: this.config.visConfig.colorBySpeed ? 'tooltip.speed' : undefined
+        }
+      : super.getVisualChannelDescription(key);
+  }
+
   hasAllColumns(): boolean {
     if (!super.hasAllColumns()) {
       return false;
@@ -1547,6 +1561,13 @@ export default class FlowFieldLayer extends Layer {
   }
 
   formatLayerData(datasets: any) {
+    // Streamline colors use the grid speed, not a copied color-by-field channel.
+    // Reset the legend too when the data no longer produces a grid.
+    this.updateLayerConfig({
+      colorField: null,
+      colorScale: SCALE_TYPES.quantize,
+      colorDomain: [0, 1]
+    });
     if (this.config.dataId === null) {
       return {};
     }
@@ -1627,6 +1648,9 @@ export default class FlowFieldLayer extends Layer {
         this.config.visConfig.smoothing,
         this.config.visConfig.gridResolution
       );
+      if (grid) {
+        this.updateLayerConfig({colorDomain: [grid.minSpeed, grid.maxSpeed]});
+      }
       return {data: altPoints, grid};
     }
 
@@ -1678,6 +1702,9 @@ export default class FlowFieldLayer extends Layer {
       this.config.visConfig.smoothing,
       this.config.visConfig.gridResolution
     );
+    if (grid) {
+      this.updateLayerConfig({colorDomain: [grid.minSpeed, grid.maxSpeed]});
+    }
     return {data: points, grid};
   }
 
