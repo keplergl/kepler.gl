@@ -10,6 +10,7 @@ import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
 import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import Switch from '../../common/switch';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -136,6 +137,11 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
     margin-top: 8px;
     color: ${props => props.theme.textColor};
     font-size: ${props => props.theme.sliderInputFontSize};
+  }
+
+  .contour-invert-switch {
+    display: flex;
+    justify-content: space-between;
   }
 `;
 
@@ -2031,60 +2037,104 @@ export default function LayerConfiguratorFactory(
       ];
       return (
         <StyledLayerVisualConfigurator>
-          <LayerConfigGroup label="layer.color">
-            <LayerColorSelector {...layerConfiguratorProps} />
-            <VisConfigSlider {...settings.opacity} {...visConfiguratorProps} />
+          <LayerConfigGroup label="layer.color" collapsible>
+            <VisConfigSwitch {...settings.colorByLevel} {...visConfiguratorProps} />
+            {config.visConfig.colorByLevel ? (
+              <LayerColorRangeSelector
+                {...visConfiguratorProps}
+                onChange={({colorRange}) =>
+                  visConfiguratorProps.onChange({
+                    colorRange: {
+                      ...colorRange,
+                      colorLegends: config.visConfig.colorRange.colorLegends
+                    }
+                  })
+                }
+              />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...settings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
-          <LayerConfigGroup label="layerVisConfigs.contour.surface">
-            <PanelLabel>
-              <FormattedMessage id={settings.inputMode.label} />
-            </PanelLabel>
-            <ItemSelector
-              options={inputModes}
-              selectedItems={inputModes.find(mode => mode.id === config.visConfig.inputMode)}
-              displayOption="label"
-              getOptionValue="id"
-              multiSelect={false}
-              searchable={false}
-              onChange={inputMode => visConfiguratorProps.onChange({inputMode})}
-            />
-            {config.visConfig.inputMode !== 'grid' ? (
-              <VisConfigSlider {...settings.interpolationResolution} {...visConfiguratorProps} />
-            ) : null}
-            <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
+          <LayerConfigGroup
+            label="layerVisConfigs.contour.levelsGroup"
+            collapsible
+            expanded={config.visConfig.customRange}
+          >
             <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
-            <VisConfigSwitch {...settings.below} {...visConfiguratorProps} />
-            <VisConfigSwitch
-              {...settings.customRange}
-              {...visConfiguratorProps}
-              onChange={({customRange}) =>
-                visConfiguratorProps.onChange(
-                  customRange && hasValueRange
-                    ? {customRange, minimum: valueRange[0], maximum: valueRange[1]}
-                    : {customRange}
-                )
-              }
-            />
-            {config.visConfig.customRange ? (
-              <div className="contour-level-range">
-                {hasValueRange ? (
-                  <ContourRangeSlider
-                    key={JSON.stringify([config.dataId, valueColumn, valueRange])}
-                    {...visConfiguratorProps}
-                    range={valueRange}
+            <ConfigGroupCollapsibleContent>
+              <SidePanelSection>
+                <div className="contour-invert-switch">
+                  <PanelLabel htmlFor={`${layer.id}-invert-switch`}>
+                    <FormattedMessage id="layerVisConfigs.contour.invert" />
+                  </PanelLabel>
+                  <Switch
+                    id={`${layer.id}-invert-switch`}
+                    checked={!config.visConfig.below}
+                    onChange={() => visConfiguratorProps.onChange({below: !config.visConfig.below})}
                   />
-                ) : (
-                  <FormattedMessage id="layerVisConfigs.contour.noValueRange" />
-                )}
-              </div>
-            ) : null}
+                </div>
+              </SidePanelSection>
+              <VisConfigSwitch
+                {...settings.customRange}
+                {...visConfiguratorProps}
+                onChange={({customRange}) =>
+                  visConfiguratorProps.onChange(
+                    customRange && hasValueRange
+                      ? {customRange, minimum: valueRange[0], maximum: valueRange[1]}
+                      : {customRange}
+                  )
+                }
+              />
+              {config.visConfig.customRange ? (
+                <div className="contour-level-range">
+                  {hasValueRange ? (
+                    <ContourRangeSlider
+                      key={JSON.stringify([config.dataId, valueColumn, valueRange])}
+                      {...visConfiguratorProps}
+                      range={valueRange}
+                    />
+                  ) : (
+                    <FormattedMessage id="layerVisConfigs.contour.noValueRange" />
+                  )}
+                </div>
+              ) : null}
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
-          <LayerConfigGroup label="layer.appearance">
-            <VisConfigSwitch {...settings.filled} {...visConfiguratorProps} />
+          <LayerConfigGroup label="layerVisConfigs.contour.surface" collapsible>
+            <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <SidePanelSection>
+                <PanelLabel>
+                  <FormattedMessage id={settings.inputMode.label} />
+                </PanelLabel>
+                <ItemSelector
+                  options={inputModes}
+                  selectedItems={inputModes.find(mode => mode.id === config.visConfig.inputMode)}
+                  displayOption="label"
+                  getOptionValue="id"
+                  multiSelect={false}
+                  searchable={false}
+                  onChange={inputMode => visConfiguratorProps.onChange({inputMode})}
+                />
+              </SidePanelSection>
+              {config.visConfig.inputMode !== 'grid' ? (
+                <VisConfigSlider {...settings.interpolationResolution} {...visConfiguratorProps} />
+              ) : null}
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...settings.filled}
+            {...visConfiguratorProps}
+            label="layerVisConfigs.contour.fillGroup"
+          >
             {config.visConfig.filled ? (
               <VisConfigSlider {...settings.fillOpacity} {...visConfiguratorProps} />
             ) : null}
-            <VisConfigSwitch {...settings.stroked} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup {...settings.stroked} {...visConfiguratorProps} label="layer.outline">
             {config.visConfig.stroked ? (
               <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
             ) : null}

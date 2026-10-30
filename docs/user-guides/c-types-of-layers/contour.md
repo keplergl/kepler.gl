@@ -3,6 +3,21 @@
 The Contour layer draws smooth, nested regions and outlines from a numeric scalar field.
 Values can represent any quantity; the layer does not calculate travel time or point density.
 
+## Layer availability
+
+Contour is enabled in layer type pickers by default. To hide it, set the application
+config flag before mounting the map:
+
+```js
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableContourLayer: false});
+```
+
+The demo app also accepts `applicationConfig.enableContourLayer` in its runtime
+`config.json`. Setting the flag to `false` hides Contour from the picker; existing
+Contour layers in saved maps still load and render, as with other optional layer types.
+
 ## Try the sample
 
 Start the demo app with `yarn start` and append `?sample=contour` to its URL. The sample
@@ -47,6 +62,12 @@ original units. Both column modes use the following surface settings:
 
 ## Controls
 
+- **Color by level**: off uses the plain color (the default). Turn on to choose a
+  standard or custom palette, including reversed palettes. Colors run from the
+  lowest to highest generated contour value, independent of Invert. Palette stops
+  are interpolated to the number of levels, so each level has its own sampled color.
+  Both fills and outlines use these colors; translucent nested fills blend where
+  they overlap. Switching modes preserves both the plain color and selected palette.
 - **Input type**: Auto, Regular grid, or Scattered points, as described above.
 - **Interpolation resolution**: 32–256 samples along the longer projected axis
   (default 192). Higher resolution gives finer contour geometry, not more measured
@@ -54,7 +75,9 @@ original units. Both column modes use the following surface settings:
 - **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the input.
   Smoothing changes the scalar field, so use it deliberately for measured quantities.
 - **Number of levels**: 2–20 equally spaced thresholds. Automatic levels exclude the
-  field's extrema to avoid outlining the entire rectangular extent.
+  field's extrema to avoid outlining the entire rectangular extent. Numerically
+  constant surfaces are omitted; roundoff from smoothing or interpolation does not
+  create automatic levels.
 - **Custom level range**: minimum and maximum thresholds, inclusive, in the original
   value units, selected with a two-handle range slider and read-only endpoint labels.
   Slider bounds use the exact finite minimum and maximum of the selected value
@@ -64,7 +87,8 @@ original units. Both column modes use the following surface settings:
   changes, thresholds are kept within the new bounds; a disjoint selection resets
   to the full range. There is no manual-input fallback. These controls choose levels;
   they do not normalize or clamp the data.
-- **Fill below each level**: regions where value ≤ threshold. Turn off for value ≥ threshold.
+- **Invert**: off fills regions where value ≤ threshold (the default). Turn on to
+  fill regions where value ≥ threshold. Existing maps keep their saved direction.
 - **Fill / outline**: enable independently. Each translucent filled region overlaps
   the larger regions below it, so opacity builds toward nested interiors. Outlines
   are rendered afterward, with brighter lines for inner regions.
@@ -74,8 +98,8 @@ Hover shows the value threshold. Settings are saved with the map.
 
 The legend lists each generated contour level in ascending value order, with its
 numeric threshold and ≤ or ≥ direction. The swatches use the outline
-shades when outlines are enabled, or the accumulated opacity of nested fills in
-fill-only mode. Each level occupies its own row, with the swatch beside its value.
+shades when outlines are enabled, or the blended color and accumulated opacity of
+nested fills in fill-only mode. Each level occupies its own row, with the swatch beside its value.
 The level list scrolls within a 156px height by default; the arrow beside the value
 field expands or contracts this channel independently. The list, rows, and label
 editor are shared with point legends. Click a label to edit it; its reset control

@@ -295,7 +295,10 @@ export default {
       maxTopFlowsDisplayNum: 'Max Top Flows'
     },
     contour: {
-      surface: 'Contours',
+      surface: 'Surface',
+      levelsGroup: 'Contour levels',
+      fillGroup: 'Fill',
+      colorByLevel: 'Color by level',
       inputMode: 'Input type',
       interpolationResolution: 'Interpolation resolution',
       interpolationResolutionDescription:
@@ -304,12 +307,13 @@ export default {
       smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
       levels: 'Number of levels',
       below: 'Fill below each level',
+      invert: 'Invert',
       customRange: 'Custom level range',
       noValueRange:
         'Select a value column with at least two distinct finite values to use the range slider.',
       minimum: 'Minimum level',
       maximum: 'Maximum level',
-      fillOpacity: 'Fill opacity per level',
+      fillOpacity: 'Opacity',
       thickness: 'Outline width'
     },
     flowField: {

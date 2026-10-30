@@ -3,8 +3,9 @@
 
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {VisConfigNumber} from '@kepler.gl/types';
+import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {colorMaybeToRGB} from '@kepler.gl/utils';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
 import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
@@ -29,8 +30,13 @@ const numberConfig = (
 
 export const contourVisConfigs = {
   opacity: 'opacity',
-  // Use the standard legend-label storage; contour colors still come from config.color.
   colorRange: 'colorRange',
+  colorByLevel: {
+    type: 'boolean',
+    property: 'colorByLevel',
+    defaultValue: false,
+    label: 'layerVisConfigs.contour.colorByLevel'
+  },
   inputMode: {
     type: 'select',
     property: 'inputMode',
@@ -94,26 +100,81 @@ export default class ContourLayer extends Layer {
     const {filled, stroked} = this.config.visConfig;
     if (!filled && !stroked) return [];
     const levels: ContourFeature['properties'][] = this.meta.contourLevels || [];
+    const colors = this.getContourColors(levels.length);
     return levels
       .map(level => ({
         ...level,
-        color: this.getContourLevelColor(level.rank, levels.length, stroked)
+        color: this.getContourLevelColor(level.rank, colors, stroked)
       }))
       .sort((a, b) => a.threshold - b.threshold);
   }
 
+  private getContourColors(count: number): RGBColor[] {
+    const {color, visConfig} = this.config;
+    const palette =
+      visConfig.colorByLevel && Array.isArray(visConfig.colorRange?.colors)
+        ? visConfig.colorRange.colors
+            .map(colorMaybeToRGB)
+            .filter((value): value is RGBColor => value !== null)
+        : [];
+    return Array.from({length: count}, (_, rank) => {
+      if (!palette.length) return color;
+      // Geometry is ordered outside-in. Keep the palette in low-to-high value order
+      // regardless of the threshold direction, interpolating to the level count.
+      const index = visConfig.below ? count - 1 - rank : rank;
+      const position = (index / Math.max(1, count - 1)) * (palette.length - 1);
+      const start = Math.floor(position);
+      const fraction = position - start;
+      const first = palette[start];
+      const second = palette[Math.min(start + 1, palette.length - 1)];
+      return first.map((value, channel) =>
+        Math.round(value + (second[channel] - value) * fraction)
+      ) as RGBColor;
+    });
+  }
+
   private getContourLevelColor(
     rank: number,
-    count: number,
+    colors: RGBColor[],
     outlined: boolean
   ): [number, number, number, number] {
-    // Fill-only levels build opacity from every enclosing region, using the same
-    // byte-rounded fill alpha as the renderer. Outlines use their per-level alpha.
+    if (outlined) {
+      const alpha = 0.3 + (0.7 * rank) / Math.max(1, colors.length - 1);
+      return [...colors[rank], Math.round(255 * alpha)];
+    }
+    // Fill-only swatches composite every enclosing region in draw order, using
+    // the renderer's byte-rounded alpha, so nested palette colors also match.
     const fillAlpha = Math.round(255 * this.config.visConfig.fillOpacity) / 255;
-    const alpha = outlined
-      ? 0.3 + (0.7 * rank) / Math.max(1, count - 1)
-      : 1 - (1 - fillAlpha) ** (rank + 1);
-    return [...this.config.color, Math.round(255 * alpha)];
+    const alpha = 1 - (1 - fillAlpha) ** (rank + 1);
+    if (!alpha) return [...colors[rank], 0];
+    const blended: RGBColor = [0, 0, 0];
+    for (let index = 0; index <= rank; index++) {
+      for (let channel = 0; channel < 3; channel++) {
+        blended[channel] = colors[index][channel] * fillAlpha + blended[channel] * (1 - fillAlpha);
+      }
+    }
+    return [
+      ...(blended.map(value => Math.round(value / alpha)) as RGBColor),
+      Math.round(255 * alpha)
+    ];
+  }
+
+  updateColorRangeByColorUI(newConfig, previous, prop) {
+    const previousRange = this.config.visConfig.colorRange;
+    super.updateColorRangeByColorUI(newConfig, previous, prop);
+    if (
+      prop === 'colorRange' &&
+      this.config.visConfig.colorRange !== previousRange &&
+      previousRange.colorLegends
+    ) {
+      // Contour labels are keyed by threshold, unlike the standard color-keyed labels.
+      this.updateLayerVisConfig({
+        colorRange: {
+          ...this.config.visConfig.colorRange,
+          colorLegends: previousRange.colorLegends
+        }
+      });
+    }
   }
   get columnPairs() {
     return this.defaultPointColumnPairs;
@@ -132,6 +193,7 @@ export default class ContourLayer extends Layer {
       ...super.noneLayerDataAffectingProps,
       'color',
       'colorRange',
+      'colorByLevel',
       'fillOpacity',
       'filled',
       'stroked'
@@ -191,34 +253,30 @@ export default class ContourLayer extends Layer {
             : null
       });
     }
-    try {
-      const grid = buildContourGrid(
-        samples,
-        this.config.visConfig.inputMode,
-        this.config.visConfig.interpolationResolution
-      );
-      if (grid)
-        this.updateMeta({
-          bounds: [
-            grid.longitude,
-            grid.latitude,
-            grid.longitude + (grid.width - 1) * grid.stepLng,
-            grid.latitude + (grid.height - 1) * grid.stepLat
-          ]
-        });
-      const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
-      const data = generateContours(grid, {
-        smoothing,
-        levels,
-        below,
-        domain: customRange ? [minimum, maximum] : undefined
+    // Let calculateLayerData retain validation errors and manage invalid/recovered state.
+    const grid = buildContourGrid(
+      samples,
+      this.config.visConfig.inputMode,
+      this.config.visConfig.interpolationResolution
+    );
+    if (grid)
+      this.updateMeta({
+        bounds: [
+          grid.longitude,
+          grid.latitude,
+          grid.longitude + (grid.width - 1) * grid.stepLng,
+          grid.latitude + (grid.height - 1) * grid.stepLat
+        ]
       });
-      this.updateMeta({contourLevels: data.map(feature => feature.properties)});
-      return {data};
-    } catch (error) {
-      this.errorMessage = error instanceof Error ? error.message : 'Unable to generate contours.';
-      return {data: []};
-    }
+    const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
+    const data = generateContours(grid, {
+      smoothing,
+      levels,
+      below,
+      domain: customRange ? [minimum, maximum] : undefined
+    });
+    this.updateMeta({contourLevels: data.map(feature => feature.properties)});
+    return {data};
   }
 
   getHoverData(object: ContourFeature | null) {
@@ -232,6 +290,14 @@ export default class ContourLayer extends Layer {
     const {data} = opts;
     if (!data?.data?.length || !this.config.isVisible || opts.visible === false) return [];
     const {color, visConfig} = this.config;
+    const colors = this.getContourColors(data.data.length);
+    const colorTriggers = [
+      color,
+      visConfig.colorByLevel,
+      visConfig.colorRange,
+      visConfig.below,
+      data.data.length
+    ];
     const defaultProps = this.getDefaultDeckLayerProps(opts);
     const shared = {
       ...defaultProps,
@@ -250,8 +316,13 @@ export default class ContourLayer extends Layer {
               id: `${this.id}-fill`,
               filled: true,
               stroked: false,
-              getFillColor: [...color, Math.round(255 * visConfig.fillOpacity)],
-              updateTriggers: {getFillColor: [color, visConfig.fillOpacity]}
+              getFillColor: visConfig.colorByLevel
+                ? feature => [
+                    ...colors[feature.properties.rank],
+                    Math.round(255 * visConfig.fillOpacity)
+                  ]
+                : [...color, Math.round(255 * visConfig.fillOpacity)],
+              updateTriggers: {getFillColor: [...colorTriggers, visConfig.fillOpacity]}
             })
           ]
         : []),
@@ -263,12 +334,12 @@ export default class ContourLayer extends Layer {
               filled: false,
               stroked: true,
               getLineColor: feature =>
-                this.getContourLevelColor(feature.properties.rank, data.data.length, true),
+                this.getContourLevelColor(feature.properties.rank, colors, true),
               getLineWidth: visConfig.thickness,
               lineWidthUnits: 'pixels',
               lineJointRounded: true,
               lineCapRounded: true,
-              updateTriggers: {getLineColor: [color, data.data.length]}
+              updateTriggers: {getLineColor: colorTriggers}
             })
           ]
         : [])

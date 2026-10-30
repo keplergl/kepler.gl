@@ -12,6 +12,7 @@ import {
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
 import {buildContourGrid, generateContours} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
+import {calculateLayerData} from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
 import React from 'react';
@@ -68,6 +69,54 @@ const scatteredSamples = [
   [0.75, 2, 10.5],
   [1.125, 0.625, 7.125]
 ];
+
+function calculateContourLayerData(layer: ContourLayer, datasets) {
+  return calculateLayerData(layer, {
+    datasets,
+    animationConfig: StateWFiles.visState.animationConfig
+  });
+}
+
+test.each([
+  {
+    name: 'irregular grid',
+    scattered: true,
+    invalid: {inputMode: 'grid'},
+    message: /regularly spaced/
+  },
+  {name: 'reversed range', scattered: false, invalid: {minimum: 9, maximum: 3}, message: /minimum/},
+  {name: 'constant range', scattered: false, invalid: {minimum: 4, maximum: 4}, message: /minimum/},
+  {
+    name: 'nonfinite range',
+    scattered: false,
+    invalid: {minimum: NaN, maximum: 8},
+    message: /minimum/
+  }
+])(
+  'retains $name validation errors through layer calculation and recovers',
+  async ({scattered, invalid, message}) => {
+    const {layer, datasets} = await setup(scattered ? scatteredSamples : undefined);
+    layer.updateLayerVisConfig({minimum: 4, maximum: 8, interpolationResolution: 32});
+    expect(calculateContourLayerData(layer, datasets).layerData.data).toHaveLength(3);
+    expect(layer.getContourLegend()).toHaveLength(3);
+    layer.updateLayerVisConfig(invalid);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = calculateContourLayerData(layer, datasets);
+      expect(result.layer.isValid).toBe(false);
+      expect(result.layer.errorMessage).toMatch(message);
+      expect(result.layer.config.isVisible).toBe(false);
+      expect(result.layerData).toEqual({});
+      expect(layer.getContourLegend()).toEqual([]);
+    }
+    layer.updateLayerVisConfig({inputMode: 'auto', minimum: 4, maximum: 8});
+    const recovered = calculateContourLayerData(layer, datasets);
+    expect(recovered.layer.isValid).toBe(true);
+    expect(recovered.layer.errorMessage).toBeNull();
+    expect(recovered.layer.config.isVisible).toBe(true);
+    expect(recovered.layerData.data).toHaveLength(3);
+    expect(layer.getContourLegend()).toHaveLength(3);
+  }
+);
 const pointGeometry = (x: number, y: number) => ({type: 'Point', coordinates: [x, y]});
 const polygonGeometry = (x: number, y: number) => ({
   type: 'Polygon',
@@ -126,6 +175,8 @@ test('registers the layer and renders both passes without recomputing on camera 
   };
   const passes = layer.renderLayer(opts);
   expect(passes).toHaveLength(2);
+  expect(layer.config.visConfig.colorByLevel).toBe(false);
+  expect(passes[0].props.getFillColor).toEqual([36, 218, 211, 19]);
   expect(passes[0].props.data).toBe(data.data);
   expect(passes[1].props.data).toBe(data.data);
   expect(layer.renderLayer({...opts, mapState: {zoom: 15, longitude: 8}})[0].props.data).toBe(
@@ -200,6 +251,159 @@ function renderLegend(
     update: () => view.rerender(React.createElement(MapLegend, props))
   };
 }
+
+function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
+  return layer.renderLayer({
+    data,
+    visible: true,
+    idx: 0,
+    gpuFilter: dataset.gpuFilter,
+    layerCallbacks: {},
+    mapState: {zoom: 10}
+  });
+}
+
+test.each([true, false])(
+  'colors each contour level from low to high values (below = %s)',
+  async below => {
+    const {layer, dataset, datasets} = await setup();
+    layer.updateLayerVisConfig({
+      colorByLevel: true,
+      below,
+      fillOpacity: 0.2,
+      colorRange: {...layer.config.visConfig.colorRange, colors: ['#FF0000', '#00FF00', '#0000FF']}
+    });
+    const data = layer.formatLayerData(datasets);
+    const passes = renderContourPasses(layer, dataset, data);
+    const getFillColor = passes[0].props.getFillColor;
+    const getLineColor = passes[1].props.getLineColor;
+    if (typeof getFillColor !== 'function' || typeof getLineColor !== 'function') {
+      throw new Error('Expected colors for each contour level');
+    }
+    const ordered = [...data.data].sort((a, b) => a.properties.threshold - b.properties.threshold);
+    const view = renderLegend(layer);
+    const items = view.getAllByRole('listitem');
+    [
+      [255, 0, 0],
+      [0, 255, 0],
+      [0, 0, 255]
+    ].forEach((rgb, index) => {
+      const info = {index, data: ordered, target: []};
+      expect(getFillColor(ordered[index], info)).toEqual([...rgb, 51]);
+      const outline = getLineColor(ordered[index], info);
+      expect(outline.slice(0, 3)).toEqual(rgb);
+      expect(layer.getContourLegend()[index].color).toEqual(outline);
+      expect(items[index].querySelector('.legend-row-color')).toHaveStyle({
+        backgroundColor: `rgba(${rgb.join(', ')}, ${(outline[3] ?? 255) / 255})`
+      });
+    });
+
+    layer.updateLayerVisConfig({colorByLevel: false});
+    const plain = renderContourPasses(layer, dataset, data);
+    expect(plain[0].props.getFillColor).toEqual([36, 218, 211, 51]);
+    expect(plain[0].props.data).toBe(data.data);
+    expect(plain[0].props.updateTriggers?.getFillColor).not.toEqual(
+      passes[0].props.updateTriggers?.getFillColor
+    );
+    expect(plain[1].props.updateTriggers?.getLineColor).not.toEqual(
+      passes[1].props.updateTriggers?.getLineColor
+    );
+    expect(
+      layer.getContourLegend().every(level => level.color.slice(0, 3).join() === '36,218,211')
+    ).toBe(true);
+  }
+);
+
+test('interpolates a palette to the level count and reverses it without losing threshold labels', async () => {
+  const {layer, dataset, datasets} = await setup();
+  const colorLegends = {[JSON.stringify(['value', true, 2])]: 'Low'};
+  layer.updateLayerVisConfig({
+    colorByLevel: true,
+    levels: 5,
+    colorRange: {
+      ...layer.config.visConfig.colorRange,
+      category: 'Custom',
+      colors: ['#FFFFFF', '#000000'],
+      colorLegends
+    }
+  });
+  const data = layer.formatLayerData(datasets);
+  const before = renderContourPasses(layer, dataset, data);
+  expect(layer.getContourLegend().map(level => level.color.slice(0, 3))).toEqual(
+    [255, 191, 128, 64, 0].map(value => [value, value, value])
+  );
+  layer.updateLayerColorUI('colorRange', {colorRangeConfig: {reversed: true}});
+  const after = renderContourPasses(layer, dataset, data);
+  expect(layer.getContourLegend().map(level => level.color.slice(0, 3))).toEqual(
+    [0, 64, 128, 191, 255].map(value => [value, value, value])
+  );
+  expect(after[0].props.data).toBe(data.data);
+  expect(after[0].props.updateTriggers?.getFillColor).not.toEqual(
+    before[0].props.updateTriggers?.getFillColor
+  );
+  expect(after[1].props.updateTriggers?.getLineColor).not.toEqual(
+    before[1].props.updateTriggers?.getLineColor
+  );
+  expect(layer.config.visConfig.colorRange.colorLegends).toEqual(colorLegends);
+});
+
+test.each([true, false])(
+  'exports composite palette colors for nested fills (below = %s)',
+  async below => {
+    const {layer, datasets} = await setup();
+    layer.updateLayerVisConfig({
+      colorByLevel: true,
+      below,
+      stroked: false,
+      fillOpacity: 0.2,
+      colorRange: {...layer.config.visConfig.colorRange, colors: ['#FF0000', '#00FF00', '#0000FF']}
+    });
+    layer.formatLayerData(datasets);
+    const expected = below
+      ? [
+          [105, 84, 67, 124],
+          [0, 142, 113, 92],
+          [0, 0, 255, 51]
+        ]
+      : [
+          [255, 0, 0, 51],
+          [113, 142, 0, 92],
+          [67, 84, 105, 124]
+        ];
+    expect(layer.getContourLegend().map(level => level.color)).toEqual(expected);
+    const view = renderLegend(layer, true);
+    view.getAllByRole('listitem').forEach((item, index) => {
+      const [r, g, b, alpha] = expected[index];
+      expect(item.querySelector('.legend-row-color')).toHaveStyle({
+        backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha / 255})`
+      });
+    });
+    layer.updateLayerVisConfig({fillOpacity: 0});
+    expect(
+      layer
+        .getContourLegend()
+        .every(level => level.color.every(Number.isFinite) && level.color[3] === 0)
+    ).toBe(true);
+  }
+);
+
+test.each([undefined, [], ['invalid'], ['#112233']])(
+  'handles a missing, invalid, or single-color palette: %j',
+  async colors => {
+    const {layer, datasets} = await setup();
+    layer.updateLayerVisConfig({
+      colorByLevel: true,
+      colorRange: {...layer.config.visConfig.colorRange, colors}
+    });
+    layer.formatLayerData(datasets);
+    const expected = colors?.[0] === '#112233' ? [17, 34, 51] : layer.config.color;
+    expect(layer.getContourLegend().map(level => level.color.slice(0, 3))).toEqual([
+      expected,
+      expected,
+      expected
+    ]);
+  }
+);
 
 test.each([true, false])(
   'shows each contour threshold and matching outline color (below = %s)',
@@ -471,12 +675,12 @@ test('keeps legend levels in sync with auto ranges, filters, and invalid or empt
   expect(labels()).toEqual(['≥ 10', '≥ 20', '≥ 30']);
 
   layer.updateLayerVisConfig({minimum: 50});
-  layer.formatLayerData(datasets);
+  calculateContourLayerData(layer, datasets);
   view.update();
   expect(layer.errorMessage).toMatch(/minimum/);
   expect(labels()).toEqual([]);
   layer.updateLayerVisConfig({minimum: 2, maximum: 6});
-  layer.formatLayerData(datasets);
+  calculateContourLayerData(layer, datasets);
   view.update();
   expect(labels()).toHaveLength(4);
   dataset.filteredIndex = [];
@@ -500,10 +704,10 @@ test('filtered samples become holes and clearing the filter restores them', asyn
 test('reports invalid settings and recovers after correcting them', async () => {
   const {layer, datasets} = await setup();
   layer.updateLayerVisConfig({minimum: 9, maximum: 3});
-  expect(layer.formatLayerData(datasets).data).toEqual([]);
+  expect(calculateContourLayerData(layer, datasets).layerData).toEqual({});
   expect(layer.errorMessage).toMatch(/minimum/);
   layer.updateLayerVisConfig({minimum: 2, maximum: 6});
-  expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toHaveLength(3);
   expect(layer.errorMessage).toBeNull();
   layer.updateLayerVisConfig({levels: 5});
   expect(layer.formatLayerData(datasets).data.map(f => f.properties.threshold)).toEqual([
@@ -531,8 +735,10 @@ test.each(['grid', 'geojson'])(
     layer.updateLayerVisConfig({
       inputMode: 'points',
       interpolationResolution: 128,
+      colorByLevel: true,
       colorRange: {
         ...layer.config.visConfig.colorRange,
+        colors: ['#FF0000', '#00FF00', '#0000FF'],
         colorLegends: {[JSON.stringify(['value', true, 2])]: 'Low'}
       }
     });
@@ -713,10 +919,10 @@ test('interpolates scattered data and recomputes its support when samples are fi
   expect(layer.meta.bounds[3]).toBeCloseTo(0.6);
   dataset.filteredIndex = all;
   layer.updateLayerVisConfig({inputMode: 'grid'});
-  expect(layer.formatLayerData(datasets).data).toEqual([]);
+  expect(calculateContourLayerData(layer, datasets).layerData).toEqual({});
   expect(layer.errorMessage).toMatch(/regularly spaced/);
   layer.updateLayerVisConfig({inputMode: 'points'});
-  expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toHaveLength(3);
   expect(layer.errorMessage).toBeNull();
   expect(layer.meta.bounds[3]).toBeCloseTo(2);
 });

@@ -288,7 +288,11 @@ export function generateContours(
   if (domain && (!domain.every(Number.isFinite) || domain[0] >= domain[1])) {
     throw new Error('Contour minimum must be less than maximum.');
   }
-  if (!domain && min === max) return [];
+  // Interpolation and normalized smoothing can introduce a few ULPs of variation
+  // in a constant field. Scale the tolerance to the values, without an absolute
+  // floor that would discard meaningful variation in very small scalar units.
+  const roundoff = Math.max(Math.abs(min), Math.abs(max)) * Number.EPSILON * 32;
+  if (!domain && max - min <= roundoff) return [];
   // Auto levels lie inside the range to avoid a rectangle at the field boundary.
   const thresholds = Array.from({length: count}, (_, i) =>
     domain

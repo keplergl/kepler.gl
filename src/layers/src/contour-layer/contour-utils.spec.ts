@@ -56,6 +56,35 @@ describe('scalar contours', () => {
     );
   });
 
+  test.each([0, 10, -12, 1e-20, 1e20])(
+    'does not invent automatic contours in a constant field of %s',
+    value => {
+      for (const holes of [false, true]) {
+        const grid = buildScalarGrid(
+          samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value))
+        );
+        for (const smoothing of [0, 1.5, 6]) {
+          for (const below of [false, true]) {
+            expect(generateContours(grid, {smoothing, levels: 7, below})).toEqual([]);
+          }
+        }
+      }
+    }
+  );
+
+  test.each([
+    [0, 1e-20],
+    [10, 1e-10]
+  ])('preserves real small variations around %s at scale %s', (baseline, scale) => {
+    const grid = buildScalarGrid(samples(9, (x, y) => baseline + scale * (x + y)));
+    const result = generateContours(grid, {smoothing: 1.5, levels: 7, below: true});
+    expect(result).toHaveLength(7);
+    expect(new Set(result.map(feature => feature.properties.threshold)).size).toBe(7);
+    expect(
+      result.flatMap(feature => feature.geometry.coordinates.flat(3)).every(Number.isFinite)
+    ).toBe(true);
+  });
+
   test('keeps missing values as holes after smoothing', () => {
     const grid = buildScalarGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)))!;
     expect(Number.isNaN(smoothScalarGrid(grid, 2)[40])).toBe(true);
@@ -148,6 +177,15 @@ describe('scattered scalar interpolation', () => {
       )
     ).toEqual([8, 6, 4]);
     expect(() => buildContourGrid(scattered, 'grid')).toThrow('regularly spaced');
+  });
+
+  test('does not invent automatic contours when interpolating constant scattered values', () => {
+    const grid = buildContourGrid(
+      scattered.map(sample => ({...sample, value: 10})),
+      'auto',
+      32
+    );
+    expect(generateContours(grid, {smoothing: 1.5, levels: 7, below: true})).toEqual([]);
   });
 
   test('auto preserves the original grid and its holes; explicit points mode fills gaps', () => {

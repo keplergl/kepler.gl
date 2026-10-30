@@ -6,7 +6,7 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {fireEvent, render} from '@testing-library/react';
+import {fireEvent, render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {KeplerTable} from '@kepler.gl/table';
@@ -191,8 +191,8 @@ function contourRangeLayer(dataset) {
   });
 }
 
-function renderContourRange(layer, datasets, onChange) {
-  const props = {...defaultProps, layer, datasets, updateLayerVisConfig: onChange};
+function renderContourRange(layer, datasets, onChange, overrides = {}) {
+  const props = {...defaultProps, layer, datasets, updateLayerVisConfig: onChange, ...overrides};
   const view = render(<LayerConfigurator {...props} />, {
     wrapper: ({children}) => (
       <ThemeProvider theme={theme}>
@@ -200,7 +200,11 @@ function renderContourRange(layer, datasets, onChange) {
       </ThemeProvider>
     )
   });
-  return {...view, update: () => view.rerender(<LayerConfigurator {...props} />)};
+  return {
+    ...view,
+    ...within(view.container),
+    update: () => view.rerender(<LayerConfigurator {...props} />)
+  };
 }
 
 function dragContourHandle(container, index, percent) {
@@ -218,6 +222,249 @@ function contourRangeLabels(container) {
     Number(item.textContent)
   );
 }
+
+function contourConfigGroup(view, label) {
+  return view
+    .getByText(label, {selector: '.layer-config-group__label span'})
+    .closest('.layer-config-group');
+}
+
+function toggleConfigGroup(group) {
+  fireEvent.click(group.querySelector('.layer-config-group__header'));
+}
+
+test('Components -> LayerConfigurator -> contour switches between plain color and the palette picker', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  const plainColor = layer.config.color;
+  const colorLegends = {[JSON.stringify(['value', true, 2])]: 'Low'};
+  layer.updateLayerVisConfig({colorRange: {...layer.config.visConfig.colorRange, colorLegends}});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange, {
+    updateLayerColorUI: (property, config) => layer.updateLayerColorUI(property, config)
+  });
+  try {
+    const group = contourConfigGroup(view, 'Color');
+    const toggle = group.querySelector('#contour-range-colorByLevel-switch');
+    t.notOk(toggle.checked, 'existing maps start in plain-color mode');
+    t.ok(group.querySelector('.color-selector__selector__block'), 'shows the plain color picker');
+    t.notOk(
+      toggle.closest('.layer-config-group__content__collapsible'),
+      'color mode is available without expanding'
+    );
+    fireEvent.click(toggle);
+    t.deepEqual(onChange.lastCall.args[0], {colorByLevel: true}, 'enables color by level');
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.notOk(
+      group.querySelector('.color-selector__selector__block'),
+      'replaces the single-color picker'
+    );
+    t.ok(group.querySelector('.color-range-palette'), 'shows a palette preview');
+
+    fireEvent.click(group.querySelector('.color-selector__selector'));
+    view.update();
+    t.ok(group.querySelector('.color-range-selector'), 'opens the standard palette picker');
+    fireEvent.click(group.querySelector('.color-palette-outer'));
+    const {colorRange} = onChange.lastCall.args[0];
+    t.ok(colorRange.colors.length > 1, 'selecting a palette emits multiple colors');
+    t.deepEqual(
+      colorRange.colorLegends,
+      colorLegends,
+      'palette selection retains threshold labels'
+    );
+    layer.updateLayerVisConfig({colorRange});
+    view.update();
+    fireEvent.click(group.querySelector('#reversed-toggle'));
+    view.update();
+    t.deepEqual(
+      layer.config.visConfig.colorRange.colors,
+      [...colorRange.colors].reverse(),
+      'standard reverse control reverses the palette'
+    );
+    t.deepEqual(
+      layer.config.visConfig.colorRange.colorLegends,
+      colorLegends,
+      'reversing preserves threshold labels'
+    );
+    const savedPalette = layer.config.visConfig.colorRange;
+
+    fireEvent.click(toggle);
+    t.deepEqual(onChange.lastCall.args[0], {colorByLevel: false}, 'returns to plain color');
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.ok(
+      group.querySelector('.color-selector__selector__block'),
+      'restores the plain color picker'
+    );
+    t.deepEqual(layer.config.color, plainColor, 'retains the original plain color');
+    fireEvent.click(toggle);
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.deepEqual(
+      layer.config.visConfig.colorRange,
+      savedPalette,
+      'retains the chosen palette when switching modes'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour groups expand independently without changing settings', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    const groups = ['Color', 'Contour levels', 'Surface'].map(label =>
+      contourConfigGroup(view, label)
+    );
+    t.ok(
+      groups.every(group => group.classList.contains('collapsed')),
+      'details start collapsed'
+    );
+    for (const label of ['Number of levels', 'Smoothing']) {
+      t.notOk(
+        view.getByText(label).closest('.layer-config-group__content__collapsible'),
+        `${label} remains available without expanding a group`
+      );
+    }
+    toggleConfigGroup(groups[1]);
+    t.notOk(groups[1].classList.contains('collapsed'), 'opens the level controls');
+    t.ok(groups[2].classList.contains('collapsed'), 'surface details stay closed');
+    toggleConfigGroup(groups[2]);
+    t.notOk(groups[2].classList.contains('collapsed'), 'opens the surface controls independently');
+    toggleConfigGroup(groups[1]);
+    t.ok(groups[1].classList.contains('collapsed'), 'closes the level controls');
+    t.notOk(groups[2].classList.contains('collapsed'), 'leaves the surface controls open');
+
+    toggleConfigGroup(groups[0]);
+    t.notOk(groups[0].classList.contains('collapsed'), 'opens the color controls');
+    toggleConfigGroup(groups[0]);
+    t.ok(groups[0].classList.contains('collapsed'), 'closes the color controls');
+    t.ok(onChange.notCalled, 'expanding and collapsing groups does not change layer settings');
+
+    layer.updateLayerVisConfig({inputMode: 'grid'});
+    view.update();
+    t.notOk(view.queryByText('Interpolation resolution'), 'grid mode hides interpolation settings');
+    t.notOk(groups[2].classList.contains('collapsed'), 'updating settings keeps the group open');
+    layer.updateLayerVisConfig({inputMode: 'points'});
+    view.update();
+    t.ok(
+      view.queryByText('Interpolation resolution'),
+      'scattered mode exposes interpolation settings'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour invert reverses the saved fill direction', t => {
+  for (const below of [true, false]) {
+    const dataset = contourRangeDataset();
+    const layer = contourRangeLayer(dataset);
+    layer.updateLayerVisConfig({below});
+    const onChange = sinon.spy();
+    const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+    try {
+      toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
+      const toggle = view.getByRole('checkbox', {name: 'Invert'});
+      t.equal(toggle.checked, !below, 'Invert reflects the saved direction without changing it');
+      t.ok(onChange.notCalled, 'loading the control preserves the saved map');
+      fireEvent.click(toggle);
+      t.deepEqual(onChange.lastCall.args[0], {below: !below}, 'updates the existing below setting');
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.equal(toggle.checked, below, 'reflects the inverted direction');
+      fireEvent.click(toggle);
+      t.deepEqual(
+        onChange.lastCall.args[0],
+        {below},
+        'toggling again restores the original direction'
+      );
+      t.notOk('invert' in layer.config.visConfig, 'does not introduce a new saved setting');
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> contour fill and outline groups retain independent settings', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerVisConfig({fillOpacity: 0.12, thickness: 2.5});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    for (const [property, label, controlLabel, savedProperty, savedValue] of [
+      ['filled', 'Fill', 'Opacity', 'fillOpacity', 0.12],
+      ['stroked', 'Outline', 'Outline width', 'thickness', 2.5]
+    ]) {
+      const group = contourConfigGroup(view, label);
+      const controls = within(group);
+      const toggle = group.querySelector('.layer-config-group__header input');
+      t.ok(toggle.checked, `${label} is enabled in its header`);
+      t.notOk(
+        controls.getByText(controlLabel).closest('.layer-config-group__content__collapsible'),
+        `${controlLabel} is available immediately without expanding a group`
+      );
+      const slider = group.querySelector('.kg-slider');
+      Object.defineProperty(slider, 'offsetWidth', {configurable: true, value: 100});
+      fireEvent.mouseDown(group.querySelectorAll('.kg-range-slider__handle')[1], {clientX: 60});
+      fireEvent.mouseMove(document, {clientX: 60});
+      fireEvent.mouseUp(document);
+      t.deepEqual(
+        onChange.lastCall.args[0],
+        {[savedProperty]: property === 'filled' ? 0.18 : 3.2},
+        `${controlLabel} slider edits only its own setting`
+      );
+      t.ok(controls.queryByText(controlLabel), `${label} exposes its control`);
+      fireEvent.click(toggle);
+      t.deepEqual(onChange.lastCall.args[0], {[property]: false}, `disables only ${label}`);
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.notOk(controls.queryByText(controlLabel), `hides the disabled ${label} control`);
+      t.equal(layer.config.visConfig[savedProperty], savedValue, 'preserves the stored setting');
+
+      fireEvent.click(toggle);
+      t.deepEqual(onChange.lastCall.args[0], {[property]: true}, `re-enables only ${label}`);
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.ok(controls.queryByText(controlLabel), `restores the enabled ${label} control`);
+      t.equal(layer.config.visConfig[savedProperty], savedValue, 'restores the previous value');
+    }
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour custom range is revealed on load and survives collapsing', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerVisConfig({customRange: true, minimum: -1, maximum: 6});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    const group = contourConfigGroup(view, 'Contour levels');
+    t.notOk(group.classList.contains('collapsed'), 'reveals the saved custom range on load');
+    toggleConfigGroup(group);
+    t.ok(group.classList.contains('collapsed'), 'allows the custom range to be collapsed');
+    toggleConfigGroup(group);
+    t.notOk(group.classList.contains('collapsed'), 'reveals the custom range again');
+    t.deepEqual(contourRangeLabels(view.container), [-1, 6], 'preserves both slider endpoints');
+    t.ok(onChange.notCalled, 'does not reset saved thresholds while collapsing');
+    dragContourHandle(view.container, 1, 85);
+    t.deepEqual(onChange.lastCall.args[0], {minimum: -1, maximum: 6.5}, 'slider remains editable');
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
 
 test('Components -> LayerConfigurator -> contour custom range uses one two-handle slider without manual inputs', t => {
   const dataset = contourRangeDataset();
@@ -268,6 +515,7 @@ test('Components -> LayerConfigurator -> contour custom range starts with the co
       view.container.querySelector('.contour-level-range'),
       'hides the slider in automatic mode'
     );
+    toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
     fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
     t.deepEqual(
       onChange.lastCall.args[0],
