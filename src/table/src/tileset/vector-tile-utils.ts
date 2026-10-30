@@ -559,7 +559,7 @@ export function getFilterProps(
       // Assume string for all other fields
       const filterProps: StringFieldFilterProps = {
         domain: attribute.values as string[],
-        value: attribute.values as string[],
+        value: [],
         type: FILTER_TYPES.multiSelect,
         gpu: false
       };

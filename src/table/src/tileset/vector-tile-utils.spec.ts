@@ -155,7 +155,7 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
         analyzerType: DATA_TYPES.STRING,
         filterProps: {
           domain: ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'],
-          value: ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'],
+          value: [],
           type: FILTER_TYPES.multiSelect,
           gpu: false
         }

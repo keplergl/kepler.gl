@@ -112,6 +112,11 @@ test('#VectorTileLayer -> categorical filters refresh cached tile attributes', t
     );
     check([category, filter(2, [1, 100])], [0], 'categorical and numeric filters combine');
     check(
+      [{...category, value: []}, filter(2, [1, 100])],
+      [0, 1, 3],
+      'clearing categorical selection preserves numeric filtering on cached tiles'
+    );
+    check(
       [filter(2, [1, 100])],
       [0, 1, 3],
       'removing categorical filter preserves numeric filtering'

@@ -189,6 +189,14 @@ describe('tileset filter eligibility', () => {
       fireEvent.click(screen.getByText('category'));
       view.unmount();
       expect(state.filters[0].type).toBe('multiSelect');
+      expect(state.filters[0].value).toEqual([]);
+      expect(state.filters[0].domain).toEqual(['病院', '診療所']);
+      expect(filteredFeatures(state)).toEqual([0, 1, 2]);
+      setFilter(0, 'value', ['病院']);
+      expect(filteredFeatures(state)).toEqual([0, 2]);
+      setFilter(0, 'value', []);
+      expect(filteredFeatures(state)).toEqual([0, 1, 2]);
+      expect(state.filters[0].domain).toEqual(['病院', '診療所']);
       setFilter(0, 'value', ['病院']);
       expect(filteredFeatures(state)).toEqual([0, 2]);
 
