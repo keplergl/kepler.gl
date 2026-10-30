@@ -1645,10 +1645,10 @@ export default class FlowFieldLayer extends Layer {
       let uu;
       let vv;
       if (speedMode) {
-        const converted = meteorologicalToUV(
-          dataContainer.valueAt(idx, speed.fieldIdx),
-          dataContainer.valueAt(idx, direction.fieldIdx)
-        );
+        const speedValue = dataContainer.valueAt(idx, speed.fieldIdx);
+        const directionValue = dataContainer.valueAt(idx, direction.fieldIdx);
+        if (!Number.isFinite(speedValue) || !Number.isFinite(directionValue)) continue;
+        const converted = meteorologicalToUV(speedValue, directionValue);
         uu = converted.u;
         vv = converted.v;
       } else {
