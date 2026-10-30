@@ -4,11 +4,15 @@
 import test from 'tape-catch';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  setLayerAnimationTimeUpdater
+} from '@kepler.gl/reducers';
 import {preparedDataset, dataId} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {MISSING_VALUE_COLOR, NO_VALUE_COLOR} from '@kepler.gl/constants';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
 import {getFilterProps} from '@kepler.gl/utils';
 
 const {VectorTileLayer} = KeplerGlLayers;
@@ -60,7 +64,7 @@ function categoricalFilterFixture() {
       objectHovered
     });
   };
-  return {layer, features, filter, render};
+  return {layer, table, features, filter, render};
 }
 
 test('#VectorTileLayer -> categorical filters refresh cached tile attributes', t => {
@@ -122,6 +126,151 @@ test('#VectorTileLayer -> categorical filters refresh cached tile attributes', t
       'removing categorical filter preserves numeric filtering'
     );
     check([], [0, 1, 2, 3, 4, 5], 'removing all filters restores cached features');
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> indexed categories refresh cached tiles and hover on timeline changes', t => {
+  const {layer, table, features, filter} = categoricalFilterFixture();
+  const dates = ['2020-01-01', '2021-01-01'];
+  const times = dates.map(Date.parse);
+  const metadata = parseVectorMetadata({
+    tilejson: {
+      layers: [
+        {
+          id: 'features',
+          fields: dates.map((date, index) => ({
+            name: `category|${date}`,
+            type: 'utf8',
+            values: index ? ['病院', '診療所', '歯科診療所'] : ['病院', '診療所']
+          }))
+        }
+      ]
+    }
+  });
+  table.updateSchema({fields: [...metadata.fields, ...table.fields.slice(1)], rows: []});
+  t.deepEqual(
+    table.fields[0].filterProps.domain,
+    ['病院', '診療所', '歯科診療所'],
+    'choices include categories from later timestamps'
+  );
+  features.forEach((feature, index) => {
+    if (!feature.properties) return;
+    const value = feature.properties.category;
+    feature.properties[`category|${dates[0]}`] = value;
+    feature.properties[`category|${dates[1]}`] =
+      index === 2
+        ? '歯科診療所'
+        : value === '病院'
+        ? '診療所'
+        : value === '診療所'
+        ? '病院'
+        : value;
+    delete feature.properties.category;
+  });
+  layer.updateLayerConfig({animation: {...layer.config.animation, enabled: true}});
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets: {[table.id]: table},
+    layers: [layer],
+    layerData: [{}]
+  };
+  const tile = {
+    index: {z: 2},
+    content: {type: 'FeatureCollection', shape: 'geojson-table', features}
+  };
+  const objectHovered = {
+    picked: true,
+    object: features[0],
+    index: 0,
+    tile,
+    layer: {props: {id: layer.id}}
+  };
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+  });
+  const check = (time, filters, expected, message) => {
+    table.filterTable(filters, state.layers);
+    state = setLayerAnimationTimeUpdater(state, {value: time});
+    const currentLayer = state.layers[0];
+    const layers = currentLayer.renderLayer({
+      data: {...state.layerData[0], tileSource: {getTileData: async () => features}},
+      gpuFilter: table.gpuFilter,
+      mapState: INITIAL_MAP_STATE,
+      animationConfig: state.animationConfig,
+      layerCallbacks: {},
+      visible: true,
+      objectHovered
+    });
+    const sublayer = currentLayer.renderSubLayers({
+      ...layers[0].props,
+      id: 'indexed-category-tile',
+      data: features,
+      tile
+    });
+    t.equal(sublayer.props.data, features, 'timeline updates keep cached features');
+    manager.setLayers([sublayer]);
+    const points = manager.getLayers().find(l => l.id.endsWith('-points-circle'));
+    const attributes = points.getAttributeManager().getAttributes();
+    const categories = attributes.filterCategoryValues;
+    const accepted = points.state.categoryMap[0][1];
+    const numericValues = attributes.filterValues.value;
+    const visible = features.flatMap((_, index) =>
+      categories.value[categories.isConstant ? 0 : index] === accepted &&
+      layers[0].props.filterRange.every(
+        ([min, max], channel) =>
+          numericValues[index * 4 + channel] >= min && numericValues[index * 4 + channel] <= max
+      )
+        ? [index]
+        : []
+    );
+    t.deepEqual(visible, expected, message);
+    t.equal(layers.length > 1, expected.includes(0), 'hover agrees with the selected time');
+  };
+  const category = filter(0, ['病院']);
+  const beds = filter(2, [1, 100]);
+  try {
+    check(times[0], [category], [0, 2], 'uses the first indexed property');
+    check(times[1], [category], [1], 'advancing time updates cached category attributes');
+    check(
+      times[1],
+      [filter(0, ['歯科診療所'])],
+      [2],
+      'a category introduced at a later timestamp is selectable'
+    );
+    check(times[0], [category], [0, 2], 'reversing time restores the matching categories');
+    check(
+      times[1],
+      [category, filter(1, ['east']), beds],
+      [1],
+      'indexed, ordinary and numeric filters combine'
+    );
+    check(
+      times[1],
+      [{...category, inverted: true}],
+      [0, 2, 3, 4, 5],
+      'indexed inversion includes missing values'
+    );
+    check(
+      times[1],
+      [{...category, enabled: false}],
+      [0, 1, 2, 3, 4, 5],
+      'disabled indexed filter accepts all'
+    );
+    check(
+      times[1],
+      [{...category, value: [], inverted: true}],
+      [0, 1, 2, 3, 4, 5],
+      'cleared indexed filter accepts all'
+    );
+    check(
+      times[0],
+      [{...category, value: []}, beds],
+      [0, 1, 3],
+      'clearing preserves numeric filtering'
+    );
   } finally {
     manager.finalize();
   }

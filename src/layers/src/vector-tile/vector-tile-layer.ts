@@ -524,18 +524,20 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       }
     }
 
+    const indexKey = this.config.animation.enabled ? animationConfig.currentTime : null;
     const categoryPredicates = (dataset.filterRecord?.cpu || []).flatMap(filter => {
       if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
         return [];
       }
       const field = dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)];
       if (!field) return [];
+      const valueAccessor = this.accessVSFieldValue(field, indexKey);
 
       // Tile features live outside the table's row container. Reuse its filter semantics
-      // with a property accessor instead of the table's index-based value accessor.
+      // with the same time-aware property accessor used by tile styling and numeric filters.
       return [
         getFilterFunction(
-          {...field, valueAccessor: (feature: any) => feature.properties?.[field.name]},
+          {...field, valueAccessor: (feature: any) => valueAccessor(field, feature)},
           dataId,
           filter,
           [],

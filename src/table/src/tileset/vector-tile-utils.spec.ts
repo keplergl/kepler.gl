@@ -103,6 +103,7 @@ test('parseMetadata, metadata from MVTSource and Mapbox URL', () => {
         format: '',
         filterProps: {
           domain: [],
+          fieldType: ALL_FIELD_TYPES.string,
           value: [],
           type: 'multiSelect',
           gpu: false
@@ -155,6 +156,7 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
         analyzerType: DATA_TYPES.STRING,
         filterProps: {
           domain: ['Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'],
+          fieldType: ALL_FIELD_TYPES.string,
           value: [],
           type: FILTER_TYPES.multiSelect,
           gpu: false
@@ -164,6 +166,35 @@ test('parseMetadata, PMTiles from PMTileSource', () => {
     pmtilesType: 'mvt'
   });
 });
+
+test.each([
+  ['category', 'category'],
+  ['category|2020-01-01', 'category|2021-01-01']
+])(
+  'parseMetadata merges categorical choices from %s and %s without selecting them',
+  (first, second) => {
+    const metadata = parseMetadata({
+      tilejson: {
+        layers: [
+          {
+            id: 'features',
+            fields: [
+              {name: first, type: 'utf8', values: ['A']},
+              {name: second, type: 'utf8', values: ['B', 'A']}
+            ]
+          }
+        ]
+      }
+    } as any);
+    expect(metadata?.fields[0].filterProps).toEqual({
+      fieldType: ALL_FIELD_TYPES.string,
+      domain: ['A', 'B'],
+      value: [],
+      type: FILTER_TYPES.multiSelect,
+      gpu: false
+    });
+  }
+);
 
 test('parseMetadata, PMTiles with numeric type aliases (float64, int32, uint64, bool)', () => {
   const result = parseMetadata(PMTILES_METADATA_NUMERIC_TYPES, {

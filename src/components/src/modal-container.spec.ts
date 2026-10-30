@@ -57,7 +57,7 @@ describe('tileset filter eligibility', () => {
         {
           id: 'features',
           fields: [
-            {name: 'category', type: 'utf8', values: ['病院', '診療所']},
+            {name: 'category', type: 'utf8', values: ['歯科診療所', '病院', '診療所']},
             {name: 'beds', type: 'int', min: 0, max: 20},
             {name: 'ratio', type: 'float32', min: 0, max: 1},
             {name: 'active', type: 'boolean', values: [true, false]}
@@ -190,13 +190,13 @@ describe('tileset filter eligibility', () => {
       view.unmount();
       expect(state.filters[0].type).toBe('multiSelect');
       expect(state.filters[0].value).toEqual([]);
-      expect(state.filters[0].domain).toEqual(['病院', '診療所']);
+      expect(state.filters[0].domain).toEqual(['歯科診療所', '病院', '診療所']);
       expect(filteredFeatures(state)).toEqual([0, 1, 2]);
       setFilter(0, 'value', ['病院']);
       expect(filteredFeatures(state)).toEqual([0, 2]);
       setFilter(0, 'value', []);
       expect(filteredFeatures(state)).toEqual([0, 1, 2]);
-      expect(state.filters[0].domain).toEqual(['病院', '診療所']);
+      expect(state.filters[0].domain).toEqual(['歯科診療所', '病院', '診療所']);
       setFilter(0, 'value', ['病院']);
       expect(filteredFeatures(state)).toEqual([0, 2]);
 
@@ -229,6 +229,7 @@ describe('tileset filter eligibility', () => {
         ]
       };
       expect(state.filters[0].value).toEqual(['病院']);
+      expect(state.filters[0].domain).toEqual(['歯科診療所', '病院', '診療所']);
       expect(filteredFeatures(state)).toEqual([0, 2]);
 
       // Rebinding through the same reducer preserves the existing numeric/boolean behavior.
