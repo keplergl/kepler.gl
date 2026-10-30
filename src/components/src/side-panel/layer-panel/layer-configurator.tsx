@@ -1939,6 +1939,40 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderContourLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
+      const {visConfigSettings: settings, config} = layer;
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label="layer.color">
+            <LayerColorSelector {...layerConfiguratorProps} />
+            <VisConfigSlider {...settings.opacity} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.contour.surface">
+            <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
+            <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
+            <VisConfigSwitch {...settings.below} {...visConfiguratorProps} />
+            <VisConfigSwitch {...settings.customRange} {...visConfiguratorProps} />
+            {config.visConfig.customRange ? (
+              <>
+                <VisConfigSlider {...settings.minimum} {...visConfiguratorProps} />
+                <VisConfigSlider {...settings.maximum} {...visConfiguratorProps} />
+              </>
+            ) : null}
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layer.appearance">
+            <VisConfigSwitch {...settings.filled} {...visConfiguratorProps} />
+            {config.visConfig.filled ? (
+              <VisConfigSlider {...settings.fillOpacity} {...visConfiguratorProps} />
+            ) : null}
+            <VisConfigSwitch {...settings.stroked} {...visConfiguratorProps} />
+            {config.visConfig.stroked ? (
+              <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
+            ) : null}
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderFlowFieldLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
       const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
       return (

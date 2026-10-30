@@ -4387,6 +4387,7 @@ __metadata:
     "@turf/center": "npm:^7.2.0"
     "@turf/distance": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
+    "@types/d3-contour": "npm:^3.0.6"
     "@types/geojson": "npm:^7946.0.8"
     "@types/keymirror": "npm:^0.1.1"
     "@types/styled-components": "npm:^5.1.32"
@@ -4394,6 +4395,7 @@ __metadata:
     apache-arrow: "npm:>=15.0.0"
     buffer: "npm:6.0.3"
     d3-array: "npm:^2.8.0"
+    d3-contour: "npm:^3.0.2"
     d3-format: "npm:^3.1.0"
     d3-interpolate: "npm:^3.0.1"
     d3-shape: "npm:^1.2.0"
@@ -10402,6 +10404,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-array@npm:*":
+  version: 3.2.2
+  resolution: "@types/d3-array@npm:3.2.2"
+  checksum: 10c0/6137cb97302f8a4f18ca22c0560c585cfcb823f276b23d89f2c0c005d72697ec13bca671c08e68b4b0cabd622e3f0e91782ee221580d6774074050be96dd7028
+  languageName: node
+  linkType: hard
+
 "@types/d3-array@npm:^2.8.0":
   version: 2.12.7
   resolution: "@types/d3-array@npm:2.12.7"
@@ -10415,6 +10424,16 @@ __metadata:
   dependencies:
     "@types/d3-selection": "npm:*"
   checksum: 10c0/fd6e2ac7657a354f269f6b9c58451ffae9d01b89ccb1eb6367fd36d635d2f1990967215ab498e0c0679ff269429c57fad6a2958b68f4d45bc9f81d81672edc01
+  languageName: node
+  linkType: hard
+
+"@types/d3-contour@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "@types/d3-contour@npm:3.0.6"
+  dependencies:
+    "@types/d3-array": "npm:*"
+    "@types/geojson": "npm:*"
+  checksum: 10c0/e7d83e94719af4576ceb5ac7f277c5806f83ba6c3631744ae391cffc3641f09dfa279470b83053cd0b2acd6784e8749c71141d05bdffa63ca58ffb5b31a0f27c
   languageName: node
   linkType: hard
 
@@ -15529,6 +15548,15 @@ __metadata:
   version: 3.1.0
   resolution: "d3-color@npm:3.1.0"
   checksum: 10c0/a4e20e1115fa696fce041fbe13fbc80dc4c19150fa72027a7c128ade980bc0eeeba4bcf28c9e21f0bce0e0dbfe7ca5869ef67746541dcfda053e4802ad19783c
+  languageName: node
+  linkType: hard
+
+"d3-contour@npm:^3.0.2":
+  version: 3.1.0
+  resolution: "d3-contour@npm:3.1.0"
+  dependencies:
+    d3-array: "npm:2 - 3"
+  checksum: 10c0/4590a5a89a3405a537c4cbcdfbb45fd783732dcfb69a0df60c9ad957d65961e227b71a22b2d19dbb99fc7bd5505053603ba0be9f5469982acf6205815456e77f
   languageName: node
   linkType: hard
 

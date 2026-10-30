@@ -69,6 +69,7 @@ import sampleAnimateTrip, {
 import sampleGpsData from './data/sample-gps-data';
 import sampleRowData, {config as rowDataConfig} from './data/sample-row-data';
 import {sampleFlowData, config as flowDataConfig} from './data/sample-flow-data';
+import {createContourCsv, contourConfig, contourDataId} from './data/sample-contour-data';
 import {processCsvData, processGeojson, processRowObject} from '@kepler.gl/processors';
 
 /* eslint-enable no-unused-vars */
@@ -674,6 +675,21 @@ const App = props => {
     );
   }, [dispatch]);
 
+  const _loadContourData = useCallback(() => {
+    dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {label: 'Synthetic scalar grid', id: contourDataId},
+            data: processCsvData(createContourCsv())
+          }
+        ],
+        config: contourConfig as ParsedConfig,
+        options: {keepExistingConfig: true}
+      })
+    );
+  }, [dispatch]);
+
   const _loadFlowData = useCallback(() => {
     dispatch(
       addDataToMap({
@@ -848,6 +864,9 @@ const App = props => {
   }, [dispatch]);
 
   const _loadSampleData = useCallback(() => {
+    if (new URLSearchParams(window.location.search).get('sample') === 'contour') {
+      _loadContourData();
+    }
     // _loadPointData();
     // _loadGeojsonData();
     // _loadTripGeoJson();
@@ -881,6 +900,7 @@ const App = props => {
     _replaceData,
     _loadVectorTileData,
     _loadFlowData,
+    _loadContourData,
     _loadWmsLayer,
     _loadRasterTileLayer,
     _loadBitmapLayer,

@@ -293,6 +293,18 @@ export default {
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
     },
+    contour: {
+      surface: 'Contours',
+      smoothing: 'Smoothing',
+      smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
+      levels: 'Number of levels',
+      below: 'Fill below each level',
+      customRange: 'Custom level range',
+      minimum: 'Minimum level',
+      maximum: 'Maximum level',
+      fillOpacity: 'Fill opacity per level',
+      thickness: 'Outline width'
+    },
     flowField: {
       streamlines: 'Streamlines',
       animation: 'Animation',
@@ -1145,6 +1157,11 @@ ${'```'}
     },
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
+    },
+    contour: {
+      lat: 'Latitude',
+      lng: 'Longitude',
+      value: 'Value'
     },
     hex_id: 'hex id',
     flow: {
