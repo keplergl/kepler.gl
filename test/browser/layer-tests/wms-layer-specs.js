@@ -482,23 +482,119 @@ test('#WMSLayer -> edge cases and error handling', t => {
   const hoveredObject = invisibleLayer.hasHoveredObject(mockObjectInfo);
   t.ok(hoveredObject, 'should return hovered object even when layer is not visible');
 
-  // Test getWMSFeatureInfo with no deckLayerRef
+  // Test getWMSFeatureInfo with no picked deck layer
   layer['getWMSFeatureInfo'](100, 200)
     .then(result => {
-      t.equal(result, null, 'should return null when no deckLayerRef');
+      t.equal(result, null, 'should return null when no picked deck layer');
     })
     .catch(_error => {
-      t.fail('should not throw error when no deckLayerRef');
+      t.fail('should not throw error when no picked deck layer');
     });
 
-  // Test deckLayerRef storage
-  layer.renderLayer(MOCK_RENDER_OPTS);
-  t.ok(layer['deckLayerRef'], 'should store deckLayerRef after first render');
+  t.end();
+});
 
-  const firstRef = layer['deckLayerRef'];
-  layer.renderLayer(MOCK_RENDER_OPTS);
-  t.ok(layer['deckLayerRef'], 'should have deckLayerRef after second render');
-  t.notEqual(layer['deckLayerRef'], firstRef, 'should update deckLayerRef on new render');
+function deferredFeatureInfo() {
+  let resolve;
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return {promise, resolve, reject};
+}
 
+test('#WMSLayer -> split-map clicks query the picked panel image', async t => {
+  const layer = createWMSLayer({visConfig: {allowHover: true}});
+  const calls = [];
+  const results = [];
+  const opts = {
+    ...MOCK_RENDER_OPTS,
+    visible: true,
+    layerCallbacks: {onWMSFeatureInfo: result => results.push(result)}
+  };
+  const [left] = layer.renderLayer(opts);
+  const [right] = layer.renderLayer({...opts, mapState: {longitude: 60, zoom: 5}});
+  const configurePanel = (deckLayer, bbox, width, response) => {
+    deckLayer.state = {
+      lastRequestParameters: {bbox, width, height: 100, layers: ['test_layer']},
+      imageSource: {
+        getFeatureInfoText: async params => {
+          calls.push(params);
+          return response;
+        }
+      }
+    };
+  };
+  configurePanel(left, [-10, -5, 10, 5], 200, 'left');
+  configurePanel(right, [55, 20, 65, 30], 400, 'right');
+  layer.parseWMSFeatureInfo = value => [{name: 'PANEL', value}];
+  const coordinate = [0, 0];
+  const clickResult = left.props.onClick({
+    layer: left,
+    bitmap: {pixel: [17, 23]},
+    coordinate
+  });
+  t.equal(clickResult, undefined, 'click propagates to the normal selection handler');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  t.deepEqual(calls[0].bbox, [-10, -5, 10, 5], 'uses the left image bounds');
+  t.equal(calls[0].width, 200, 'uses the left image resolution');
+  t.deepEqual([calls[0].x, calls[0].y], [17, 23], 'uses pixels picked from that image');
+  t.deepEqual(results[0].featureInfo, [{name: 'PANEL', value: 'left'}]);
+  t.equal(results[0].coordinate, coordinate, 'preserves the selection coordinate identity');
+
+  const [hiddenRight] = layer.renderLayer({...opts, visible: false});
+  configurePanel(hiddenRight, [100, 20, 110, 30], 600, 'hidden');
+  await layer._onClick(opts.layerCallbacks, {
+    layer: left,
+    bitmap: {pixel: [4, 5]},
+    coordinate: [1, 1]
+  });
+  t.deepEqual(calls[1].bbox, [-10, -5, 10, 5], 'a hidden panel render cannot replace the source');
+  t.end();
+});
+
+test('#WMSLayer -> only the latest click publishes feature info', async t => {
+  for (const staleFailure of [false, true]) {
+    const layer = createWMSLayer({visConfig: {allowHover: true}});
+    const [deckLayer] = layer.renderLayer({...MOCK_RENDER_OPTS, visible: true});
+    const oldRequest = deferredFeatureInfo();
+    const newRequest = deferredFeatureInfo();
+    let requestIndex = 0;
+    deckLayer.state = {
+      lastRequestParameters: {layers: ['test_layer']},
+      imageSource: {
+        getFeatureInfoText: () => [oldRequest.promise, newRequest.promise][requestIndex++]
+      }
+    };
+    layer.parseWMSFeatureInfo = value => [{name: 'RESULT', value}];
+    const results = [];
+    const callbacks = {onWMSFeatureInfo: result => results.push(result)};
+    const oldClick = layer._onClick(callbacks, {
+      layer: deckLayer,
+      bitmap: {pixel: [1, 1]},
+      coordinate: [0, 0]
+    });
+    const newCoordinate = [1, 1];
+    const newClick = layer._onClick(callbacks, {
+      layer: deckLayer,
+      bitmap: {pixel: [2, 2]},
+      coordinate: newCoordinate
+    });
+    newRequest.resolve('new');
+    await newClick;
+    if (staleFailure) oldRequest.reject(new Error('stale request'));
+    else oldRequest.resolve('old');
+    await oldClick;
+    t.equal(results.length, 1, `stale ${staleFailure ? 'failure' : 'success'} does not publish`);
+    t.deepEqual(
+      results[0],
+      {
+        featureInfo: [{name: 'RESULT', value: 'new'}],
+        coordinate: newCoordinate
+      },
+      'keeps the newest successful selection'
+    );
+  }
   t.end();
 });

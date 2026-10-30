@@ -1257,3 +1257,34 @@ test('#RasterTileLayer -> replacing a PMTiles URL reloads cached tile content', 
   }
   t.end();
 });
+
+test('#RasterTileLayer -> only the latest identify click publishes', async t => {
+  const layer = new RasterTileLayer({id: 'identify-race', dataId: 'raster'});
+  const pending = [];
+  layer._fetchTitilerPoint = () => new Promise(resolve => pending.push(resolve));
+  const results = [];
+  const callbacks = {onWMSFeatureInfo: result => results.push(result)};
+  const firstCoordinate = [1, 2];
+  const secondCoordinate = [3, 4];
+  const first = layer._onClickIdentify(callbacks, {coordinate: firstCoordinate});
+  const second = layer._onClickIdentify(callbacks, {coordinate: secondCoordinate});
+  const newRows = [{name: 'BAND', value: '20'}];
+  pending[1](newRows);
+  await second;
+  pending[0]([{name: 'BAND', value: '10'}]);
+  await first;
+  t.equal(results.length, 1, 'older response cannot overwrite a newer selection');
+  t.deepEqual(results[0].featureInfo, newRows, 'keeps the latest sampled band values');
+  t.equal(results[0].coordinate, secondCoordinate, 'keeps the exact picking coordinate identity');
+
+  const third = layer._onClickIdentify(callbacks, {coordinate: [5, 6]});
+  const fourth = layer._onClickIdentify(callbacks, {coordinate: [7, 8]});
+  pending[3](null);
+  await fourth;
+  pending[2]([{name: 'BAND', value: '30'}]);
+  await third;
+  t.equal(results.length, 1, 'a newer failed query still invalidates the older pending result');
+  await layer._onClickIdentify(callbacks, {coordinate: null});
+  t.equal(pending.length, 4, 'invalid coordinates issue no query');
+  t.end();
+});
