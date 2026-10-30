@@ -43,7 +43,7 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
     );
     const coordinates = points =>
       arrow.vectorFromArray(
-        points.map(point => [...point, 70, 80].slice(0, dimensions)),
+        points.map(point => (point === null ? null : [...point, 70, 80].slice(0, dimensions))),
         pointType
       );
     const makeTable = (source, target) => {
@@ -101,6 +101,31 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
       [0, 5, 50, 60],
       'bounds include later destinations and valid zero longitude, excluding null coordinates'
     );
+
+    const nullableTable = table.concat(
+      makeTable([null, [-10, -20], null], [[70, 80], null, null])
+    );
+    await dataset.update({
+      cols: nullableTable.schema.fields.map((field, index) => nullableTable.getChildAt(index)),
+      arrowTable: nullableTable
+    });
+    t.doesNotThrow(
+      () => layer.updateLayerMeta(dataset),
+      'null source, destination, and both endpoint cells do not crash bounds calculation'
+    );
+    t.deepEqual(
+      layer.meta.bounds,
+      [-10, -20, 70, 80],
+      'valid endpoints still contribute when the other endpoint cell is null'
+    );
+
+    const emptyTable = makeTable([null], [null]);
+    await dataset.update({
+      cols: emptyTable.schema.fields.map((field, index) => emptyTable.getChildAt(index)),
+      arrowTable: emptyTable
+    });
+    t.doesNotThrow(() => layer.updateLayerMeta(dataset), 'all-null endpoint cells are accepted');
+    t.equal(layer.meta.bounds, null, 'all-null endpoints have no bounds');
     t.end();
   });
 });
