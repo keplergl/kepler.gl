@@ -5,9 +5,14 @@ import React from 'react';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {bindActionCreators, createStore} from 'redux';
 import {Provider} from 'react-redux';
+import {ThemeProvider} from 'styled-components';
 
-import {fireEvent, screen} from '@testing-library/react';
-import {dataTestIds} from '@kepler.gl/constants';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {dataTestIds, DatasetType} from '@kepler.gl/constants';
+import {Layer, LayerClasses} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
+import {theme} from '@kepler.gl/styles';
+import {messages} from '@kepler.gl/localization';
 import {appInjector, LayerListFactory} from '@kepler.gl/components';
 import {
   VisStateActions,
@@ -20,11 +25,12 @@ import {
 import {processCsvData} from '@kepler.gl/processors';
 import {
   getLayerGroupFromLayerOrder,
+  addLayerUpdater,
   keplerGlReducer as rootReducer,
   keplerGlReducerCore as keplerGlReducer
 } from '@kepler.gl/reducers';
 
-import {renderWithTheme} from '../../../helpers/component-jest-utils';
+import {IntlWrapper, renderWithTheme} from '../../../helpers/component-jest-utils';
 import testLayerData from '../../../fixtures/test-layer-data';
 import {dataId as csvDataId} from '../../../fixtures/test-csv-data';
 import {applyActions} from '../../../helpers/mock-state-utils';
@@ -304,5 +310,198 @@ describe('Components -> SidePanel -> LayerPanel -> LayerList', () => {
     expect(firstMapState.layerOrder).toEqual(firstMapVisState.layerOrder.slice(1));
     expect(firstMapState.layers).toEqual(firstMapVisState.layers);
     expect(store.getState()[secondMapId].visState).toEqual(secondMapVisState);
+  });
+});
+
+describe('LayerList dataset-aware layer type picker', () => {
+  const specializedTypes = [
+    [DatasetType.VECTOR_TILE, 'vectorTile'],
+    [DatasetType.RASTER_TILE, 'rasterTile'],
+    [DatasetType.WMS_TILE, 'wms'],
+    [DatasetType.ZARR, 'zarr'],
+    [DatasetType.BITMAP, 'bitmap'],
+    [DatasetType.TILE_3D, 'tile3d']
+  ];
+  const layerName = type => {
+    const name = new LayerClasses[type]({dataId: ''}).name;
+    return messages.en[`layer.type.${name.toLowerCase()}`] || name;
+  };
+  const regularNames = Object.keys(LayerClasses)
+    .filter(type => !specializedTypes.some(([, layerType]) => layerType === type))
+    .map(layerName);
+
+  function createDataset(type, id = type || 'regular') {
+    return new KeplerTable({info: {id, type, label: id}, color: [10, 20, 30]}).updateSchema({
+      fields: [],
+      rows: []
+    });
+  }
+
+  function pickerOptions() {
+    return Array.from(document.querySelectorAll('.layer-type-selector__item')).map(
+      item => item.textContent
+    );
+  }
+
+  function renderPicker(datasets, options = {}) {
+    // Exercise the same untyped layer created by the Add Layer action.
+    const layer =
+      options.layer ||
+      addLayerUpdater({...InitialState.visState, datasets}, {}).layers.slice(-1)[0];
+    const layerTypeChange = jest.fn();
+    const props = {
+      ...defaultProps,
+      datasets,
+      layerClasses: LayerClasses,
+      layers: [layer],
+      layerOrder: [layer.id],
+      isSortable: false,
+      visStateActions: {...VisStateActions, layerTypeChange},
+      ...options
+    };
+    const store = createStore(state => state, InitialState);
+    const result = render(<LayerList {...props} />, {
+      wrapper: ({children}) => (
+        <Provider store={store}>
+          <ThemeProvider theme={theme}>
+            <IntlWrapper>{children}</IntlWrapper>
+          </ThemeProvider>
+        </Provider>
+      )
+    });
+    const selector = result.container.querySelector('.layer-config__type .item-selector');
+    fireEvent.keyDown(selector, {key: 'Enter'});
+    return {
+      ...result,
+      layer,
+      layerTypeChange,
+      selector,
+      setDatasets: nextDatasets => result.rerender(<LayerList {...props} datasets={nextDatasets} />)
+    };
+  }
+
+  it.each(specializedTypes)('offers only %s for Add Layer', (datasetType, layerType) => {
+    const dataset = createDataset(datasetType);
+    const {layer} = renderPicker({[dataset.id]: dataset});
+
+    expect(layer.type).toBeNull();
+    expect(pickerOptions()).toEqual([layerName(layerType)]);
+  });
+
+  it.each(specializedTypes)(
+    'offers only %s when editing its existing layer',
+    (datasetType, layerType) => {
+      const dataset = createDataset(datasetType);
+      const layer = new LayerClasses[layerType]({dataId: dataset.id, isConfigActive: true});
+      const config = cloneDeep(layer.config);
+      renderPicker({[dataset.id]: dataset}, {layer});
+
+      expect(pickerOptions()).toEqual([layerName(layerType)]);
+      expect(layer.config).toEqual(config);
+    }
+  );
+
+  it.each([undefined, '', DatasetType.LOCAL, DatasetType.EXTERNALLY_HOSTED, 'custom-source'])(
+    'offers all regular types for a %s dataset even without columns or rows',
+    type => {
+      const dataset = createDataset(type);
+      renderPicker({[dataset.id]: dataset});
+
+      expect(pickerOptions()).toEqual(regularNames);
+    }
+  );
+
+  it.each(['regular', 'specialized'])('uses all datasets with %s selected', selected => {
+    const regular = createDataset(DatasetType.LOCAL, 'regular');
+    const specialized = specializedTypes.map(([type]) => createDataset(type));
+    const datasets = Object.fromEntries([regular, ...specialized].map(ds => [ds.id, ds]));
+    const layer = new Layer({
+      dataId: selected === 'regular' ? regular.id : specialized[0].id,
+      isConfigActive: true
+    });
+    renderPicker(datasets, {layer});
+
+    expect(pickerOptions()).toEqual(Object.keys(LayerClasses).map(layerName));
+  });
+
+  it('offers regular and matching specialized choices for mixed custom datasets', () => {
+    const custom = createDataset('custom-source');
+    const vector = createDataset(DatasetType.VECTOR_TILE);
+    renderPicker({[custom.id]: custom, [vector.id]: vector});
+
+    expect(pickerOptions()).toEqual([...regularNames, layerName('vectorTile')]);
+  });
+
+  it('updates the open menu as datasets arrive and are removed', () => {
+    const regular = createDataset(DatasetType.LOCAL);
+    const vector = createDataset(DatasetType.VECTOR_TILE);
+    const bitmap = createDataset(DatasetType.BITMAP);
+    const {setDatasets} = renderPicker({});
+
+    expect(pickerOptions()).toEqual(Object.keys(LayerClasses).map(layerName));
+    setDatasets({[vector.id]: vector});
+    expect(pickerOptions()).toEqual([layerName('vectorTile')]);
+    setDatasets({[vector.id]: vector, [bitmap.id]: bitmap});
+    expect(pickerOptions()).toEqual([layerName('vectorTile'), layerName('bitmap')]);
+    setDatasets({[regular.id]: regular, [vector.id]: vector});
+    expect(pickerOptions()).toEqual([...regularNames, layerName('vectorTile')]);
+    setDatasets({[regular.id]: regular});
+    expect(pickerOptions()).toEqual(regularNames);
+    setDatasets({});
+    expect(pickerOptions()).toEqual(Object.keys(LayerClasses).map(layerName));
+  });
+
+  it('displays an existing incompatible type without offering it in the menu', () => {
+    const dataset = createDataset(DatasetType.VECTOR_TILE);
+    const layer = new LayerClasses.point({dataId: dataset.id, isConfigActive: true});
+    const config = cloneDeep(layer.config);
+    const {selector, layerTypeChange} = renderPicker({[dataset.id]: dataset}, {layer});
+
+    expect(selector).toHaveTextContent(layerName('point'));
+    expect(pickerOptions()).toEqual([layerName('vectorTile')]);
+    expect(layer.config).toEqual(config);
+    expect(layerTypeChange).not.toHaveBeenCalled();
+  });
+
+  it('preserves a manual bitmap layer while offering regular choices', () => {
+    const regular = createDataset(DatasetType.LOCAL);
+    const layer = new LayerClasses.bitmap({dataId: '', isConfigActive: true});
+    layer.updateLayerVisConfig({opacity: 0.4, boundsWest: -5, boundsEast: 5});
+    const config = cloneDeep(layer.config);
+    const {selector} = renderPicker({[regular.id]: regular}, {layer});
+
+    expect(selector).toHaveTextContent(layerName('bitmap'));
+    expect(pickerOptions()).toEqual(regularNames);
+    expect(layer.config).toEqual(config);
+  });
+
+  it('preserves custom registrations and overrides without restoring excluded classes', () => {
+    class CustomLayer extends LayerClasses.point {
+      get name() {
+        return 'Custom layer';
+      }
+
+      get supportedDatasetTypes() {
+        return [DatasetType.BITMAP];
+      }
+    }
+    const vector = createDataset(DatasetType.VECTOR_TILE);
+    const {vectorTile: _vectorTile, ...classes} = LayerClasses;
+    renderPicker(
+      {[vector.id]: vector},
+      {layerClasses: {...classes, custom: CustomLayer, point: CustomLayer}}
+    );
+
+    expect(pickerOptions()).toEqual(['Custom layer', 'Custom layer']);
+  });
+
+  it('dispatches the chosen type from the filtered menu', async () => {
+    const vector = createDataset(DatasetType.VECTOR_TILE);
+    const {layer, layerTypeChange} = renderPicker({[vector.id]: vector});
+    fireEvent.click(document.querySelector('.layer-type-selector__item'));
+
+    await waitFor(() =>
+      expect(layerTypeChange).toHaveBeenCalledWith(layer, 'vectorTile', {fitBounds: true})
+    );
   });
 });

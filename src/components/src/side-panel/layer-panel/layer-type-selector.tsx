@@ -19,6 +19,8 @@ type Option = {
 
 export type LayerTypeSelectorProps = {
   selected: string | null;
+  /** Display an existing layer even when its type is unavailable in the menu. */
+  selectedOption?: LayerTypeOption;
   onSelect: (
     items:
       | readonly (string | number | boolean | object)[]
@@ -51,13 +53,14 @@ function LayerTypeSelectorFactory(
 ) {
   const LayerTypeSelector: React.FC<LayerTypeSelectorProps> = ({
     selected,
+    selectedOption,
     options,
     onSelect,
     disabled
   }) => {
     const selectedItems = useMemo(
-      () => options.find(op => op.id === selected),
-      [options, selected]
+      () => options.find(op => op.id === selected) || selectedOption,
+      [options, selected, selectedOption]
     );
 
     return (
