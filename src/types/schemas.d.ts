@@ -81,6 +81,7 @@ export type SavedLayer = {
     label: string;
     color: RGBColor;
     highlightColor?: RGBColor;
+    uniqueIdField?: string | null;
     columns: {
       [key: string]: string;
     };

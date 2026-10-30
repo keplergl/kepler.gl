@@ -582,6 +582,7 @@ export const layerPropsV1 = {
       label: null,
       color: null,
       highlightColor: null,
+      uniqueIdField: null,
       columns: new ColumnSchemaV1({
         version: VERSIONS.v1,
         key: 'columns'
