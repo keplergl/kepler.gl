@@ -7,6 +7,7 @@ import {VisConfigNumber} from '@kepler.gl/types';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
+import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import ContourLayerIcon from './contour-layer-icon';
 import {buildContourGrid, ContourFeature, generateContours, ScalarSample} from './contour-utils';
 
@@ -92,7 +93,10 @@ export default class ContourLayer extends Layer {
     return {lat: 'contour.lat', lng: 'contour.lng', value: 'contour.value'};
   }
   get supportedColumnModes() {
-    return [{key: 'grid', label: 'Scalar samples', requiredColumns: ['lat', 'lng', 'value']}];
+    return [
+      {key: 'grid', label: 'Scalar samples', requiredColumns: ['lat', 'lng', 'value']},
+      {key: 'geojson', label: 'GeoJSON', requiredColumns: ['geojson', 'value']}
+    ];
   }
   get noneLayerDataAffectingProps() {
     return [...super.noneLayerDataAffectingProps, 'color', 'fillOpacity', 'filled', 'stroked'];
@@ -106,7 +110,11 @@ export default class ContourLayer extends Layer {
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
     if (!dataset || !this.hasAllColumns()) return {data: []};
     const {dataContainer, gpuFilter, filteredIndex} = dataset;
-    const {lat, lng, value} = this.config.columns;
+    const {lat, lng, geojson, value} = this.config.columns;
+    const useGeojson = this.config.columnMode === 'geojson';
+    const geoArrowEncoding = useGeojson
+      ? dataset.fields[geojson.fieldIdx]?.metadata?.get('ARROW:extension:name')
+      : undefined;
     const selected = new Set(filteredIndex);
     const activeFilter =
       gpuFilter &&
@@ -116,10 +124,30 @@ export default class ContourLayer extends Layer {
       : null;
     const samples: ScalarSample[] = [];
     for (let index = 0; index < dataContainer.numRows(); index++) {
+      let position: number[] | null;
+      if (useGeojson) {
+        try {
+          const feature = parseGeoJsonRawFeature(
+            dataContainer.valueAt(index, geojson.fieldIdx),
+            geoArrowEncoding
+          );
+          // Match the representative points used by Grid, Hexbin and Heatmap.
+          position = getCentroidFromGeometry(feature?.geometry);
+        } catch {
+          // A malformed feature must not prevent valid rows from generating contours.
+          continue;
+        }
+      } else {
+        position = [
+          dataContainer.valueAt(index, lng.fieldIdx),
+          dataContainer.valueAt(index, lat.fieldIdx)
+        ];
+      }
+      if (!position) continue;
       // Keep the source lattice even when filters remove an entire row/column.
       samples.push({
-        longitude: dataContainer.valueAt(index, lng.fieldIdx),
-        latitude: dataContainer.valueAt(index, lat.fieldIdx),
+        longitude: position[0],
+        latitude: position[1],
         value:
           selected.has(index) && (!matches || matches({index}))
             ? dataContainer.valueAt(index, value.fieldIdx)

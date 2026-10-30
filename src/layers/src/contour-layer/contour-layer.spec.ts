@@ -55,6 +55,55 @@ async function setup(scatteredRows?: number[][]) {
   return {dataset, layer, datasets: {[dataset.id]: dataset}};
 }
 
+const scatteredSamples = [
+  [0, 0, 3],
+  [2, 0, 7],
+  [0.75, 2, 10.5],
+  [1.125, 0.625, 7.125]
+];
+const pointGeometry = (x: number, y: number) => ({type: 'Point', coordinates: [x, y]});
+const polygonGeometry = (x: number, y: number) => ({
+  type: 'Polygon',
+  // The closing vertex makes the vertex average [x, y], unlike an area centroid.
+  coordinates: [
+    [
+      [x - 1, y - 1],
+      [x + 3, y - 1],
+      [x - 1, y + 3],
+      [x - 1, y - 1]
+    ]
+  ]
+});
+
+function setupGeojson(
+  rows: unknown[][] = scatteredSamples.map(([x, y, value]) => [pointGeometry(x, y), value])
+) {
+  const dataset = new KeplerTable({info: {id: 'contour-geojson'}, color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'},
+      {name: 'value', type: 'real'}
+    ],
+    rows
+  });
+  const layer = new ContourLayer({
+    dataId: dataset.id,
+    columnMode: 'geojson',
+    columns: {
+      geojson: {value: 'geometry', fieldIdx: 0},
+      value: {value: 'value', fieldIdx: 1}
+    }
+  });
+  layer.updateLayerVisConfig({
+    customRange: true,
+    minimum: 4,
+    maximum: 8,
+    levels: 3,
+    smoothing: 0,
+    interpolationResolution: 64
+  });
+  return {layer, dataset, datasets: {[dataset.id]: dataset}};
+}
+
 test('registers the layer and renders both passes without recomputing on camera movement', async () => {
   const {layer, dataset, datasets} = await setup();
   expect(LayerClasses.contour).toBe(ContourLayer);
@@ -121,20 +170,169 @@ test('applies numeric GPU filters before contouring even at a zero-valued range'
   ).toBe(true);
 });
 
-test('saves and reloads contour settings and value columns through the map schema', async () => {
-  const {layer} = await setup();
-  layer.updateLayerVisConfig({inputMode: 'points', interpolationResolution: 128});
-  const saved = SchemaManager.getConfigToSave({
-    ...StateWFiles,
-    visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+test.each(['grid', 'geojson'])(
+  'saves and reloads %s contour settings and columns through the map schema',
+  async columnMode => {
+    const {layer} = columnMode === 'geojson' ? setupGeojson() : await setup();
+    layer.updateLayerVisConfig({inputMode: 'points', interpolationResolution: 128});
+    const saved = SchemaManager.getConfigToSave({
+      ...StateWFiles,
+      visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+    });
+    const parsed = SchemaManager.parseSavedConfig(saved);
+    if (!parsed) throw new Error('Expected the saved contour configuration to parse.');
+    const restored = parsed.visState!.layers![0];
+    expect(restored.type).toBe('contour');
+    expect(restored.config.columnMode).toBe(columnMode);
+    expect(restored.config.visConfig).toEqual(layer.config.visConfig);
+    // Saved configs retain column names; field indices are resolved against the loaded table.
+    expect(restored.config.columns.value).toBe('value');
+    if (columnMode === 'geojson') expect(restored.config.columns.geojson).toBe('geometry');
+  }
+);
+
+describe('GeoJSON scalar inputs', () => {
+  test.each([
+    ['Point', pointGeometry],
+    [
+      'LineString',
+      (x, y) => ({
+        type: 'LineString',
+        coordinates: [
+          [x - 1, y - 1],
+          [x + 1, y + 1]
+        ]
+      })
+    ],
+    ['Polygon', polygonGeometry],
+    [
+      'MultiPoint',
+      (x, y) => ({
+        type: 'MultiPoint',
+        coordinates: [
+          [x - 1, y],
+          [x + 1, y]
+        ]
+      })
+    ],
+    [
+      'MultiLineString',
+      (x, y) => ({
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [x - 1, y - 1],
+            [x + 1, y + 1]
+          ]
+        ]
+      })
+    ],
+    [
+      'MultiPolygon',
+      (x, y) => ({
+        type: 'MultiPolygon',
+        coordinates: [polygonGeometry(x - 1, y).coordinates, polygonGeometry(x + 1, y).coordinates]
+      })
+    ],
+    [
+      'GeometryCollection',
+      (x, y) => ({
+        type: 'GeometryCollection',
+        geometries: [pointGeometry(x - 1, y), pointGeometry(x + 1, y)]
+      })
+    ]
+  ] as const)(
+    'uses %s representative points and the selected scalar column',
+    async (_type, geometry) => {
+      const rows = scatteredSamples.map(([x, y, value], index) => {
+        const shape = geometry(x, y);
+        const feature = {type: 'Feature', geometry: shape, properties: {value: 999}};
+        // Exercise raw geometries, Features and both JSON string forms.
+        return [[shape, feature, JSON.stringify(shape), JSON.stringify(feature)][index], value];
+      });
+      const {layer, datasets} = setupGeojson(rows);
+      const reference = await setup(scatteredSamples);
+      reference.layer.updateLayerVisConfig(layer.config.visConfig);
+      expect(layer.hasAllColumns()).toBe(true);
+      const actual = layer.formatLayerData(datasets);
+      expect(actual.data).toHaveLength(3);
+      expect(actual).toEqual(reference.layer.formatLayerData(reference.datasets));
+      expect(layer.errorMessage).toBeNull();
+    }
+  );
+
+  test('requires geometry and value columns only in GeoJSON mode', () => {
+    const {layer, datasets} = setupGeojson();
+    expect(layer.hasAllColumns()).toBe(true);
+    layer.updateLayerConfig({columnMode: 'grid'});
+    expect(layer.hasAllColumns()).toBe(false);
+    layer.updateLayerConfig({columnMode: 'geojson'});
+    for (const name of ['geojson', 'value']) {
+      const original = layer.config.columns[name];
+      layer.config.columns[name] = {value: null, fieldIdx: -1};
+      expect(layer.hasAllColumns()).toBe(false);
+      expect(layer.formatLayerData(datasets).data).toEqual([]);
+      layer.config.columns[name] = original;
+    }
+    expect(layer.formatLayerData(datasets).data).toHaveLength(3);
   });
-  const parsed = SchemaManager.parseSavedConfig(saved);
-  if (!parsed) throw new Error('Expected the saved contour configuration to parse.');
-  const restored = parsed.visState!.layers![0];
-  expect(restored.type).toBe('contour');
-  expect(restored.config.visConfig).toEqual(layer.config.visConfig);
-  // Saved configs retain column names; field indices are resolved against the loaded table.
-  expect(restored.config.columns.value).toBe('value');
+
+  test('skips invalid geometries without losing valid rows, and handles empty input', () => {
+    const invalid = [
+      null,
+      {},
+      'not geojson',
+      {type: 'Feature', geometry: null},
+      {type: 'Point', coordinates: [null, null]},
+      {type: 'Polygon', coordinates: []},
+      {type: 'GeometryCollection', geometries: {}}
+    ];
+    const valid = scatteredSamples.map(([x, y, value]) => [pointGeometry(x, y), value]);
+    const baseline = setupGeojson(valid);
+    const mixed = setupGeojson([...invalid.map(geometry => [geometry, 100]), ...valid]);
+    expect(mixed.layer.formatLayerData(mixed.datasets)).toEqual(
+      baseline.layer.formatLayerData(baseline.datasets)
+    );
+    expect(mixed.layer.errorMessage).toBeNull();
+    for (const rows of [[], invalid.map(geometry => [geometry, 100])]) {
+      const empty = setupGeojson(rows);
+      expect(empty.layer.formatLayerData(empty.datasets).data).toEqual([]);
+      expect(empty.layer.errorMessage).toBeNull();
+    }
+  });
+
+  test.each(['cpu', 'gpu'])(
+    'applies %s filters before interpolating GeoJSON samples',
+    filterType => {
+      const {layer, dataset, datasets} = setupGeojson();
+      expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+      if (filterType === 'cpu') {
+        dataset.filteredIndex = [0, 1, 3];
+      } else {
+        dataset.gpuFilter = {
+          ...getGpuFilterProps([], dataset.id, dataset.fields),
+          filterValueUpdateTriggers: {test: true},
+          filterRange: [[0, 0]],
+          filterValueAccessor: () => () => d => [d.index === 2 ? 1 : 0]
+        } as any;
+      }
+      expect(layer.formatLayerData(datasets).data.length).toBeGreaterThan(0);
+      expect(layer.meta.bounds[3]).toBeCloseTo(0.625);
+    }
+  );
+
+  test('retains grid holes when GeoJSON points form a regular lattice', () => {
+    const rows = Array.from({length: 81}, (_, i) => {
+      const x = i % 9;
+      const y = Math.floor(i / 9);
+      return [pointGeometry(x, y), i === 40 ? null : 1];
+    });
+    const {layer, datasets} = setupGeojson(rows);
+    layer.updateLayerVisConfig({smoothing: 2});
+    const result = layer.formatLayerData(datasets);
+    expect(result.data).toHaveLength(3);
+    expect(result.data.every(f => f.geometry.coordinates[0].length === 2)).toBe(true);
+  });
 });
 
 test('interpolates scattered data and recomputes its support when samples are filtered', async () => {

@@ -13,9 +13,20 @@ It is synthetic data, not a travel-time map. The generator is in
 
 ## Input
 
-Supply a table with numeric longitude, latitude, and value columns, and select **Contour**
-in the layer selector. Assign all three columns. Duplicate measurements at the same
-position are averaged; values remain in their original units.
+Select **Contour** in the layer selector, then choose a column mode:
+
+- **Scalar samples**: assign numeric longitude, latitude, and value columns.
+- **GeoJSON**: assign a geometry column and a numeric value column. Each row produces
+  one sample at the geometry's representative point, using the same centroid helper
+  as Grid, Hexbin, and Heatmap. Points use their coordinates; lines, polygons, multi-
+  geometries, and geometry collections use the average of their vertices (including
+  closing ring vertices). This is not an area-weighted polygon centroid and can lie
+  outside a concave feature. GeoJSON geometry/Feature objects and JSON strings are
+  accepted. Missing, empty, or malformed geometries are skipped. The selected value
+  column supplies the scalar; polygon boundaries do not clip the resulting contours.
+
+Duplicate measurements at the same position are averaged; values remain in their
+original units. Both column modes use the following surface settings:
 
 - **Auto** (default): preserves supported regular grids, including missing cells. If
   the coordinates cannot form a supported grid, it interpolates scattered points.
