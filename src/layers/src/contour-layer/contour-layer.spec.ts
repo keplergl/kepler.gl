@@ -18,7 +18,7 @@ import {render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {theme} from '@kepler.gl/styles';
-import {appInjector, MapLegendFactory} from '@kepler.gl/components';
+import {appInjector, MapLegendFactory, LayerHoverInfoFactory} from '@kepler.gl/components';
 
 test.each(Object.keys(messages))('resolves contour column labels in locale %s', locale => {
   const layer = new ContourLayer({dataId: 'contour-labels'});
@@ -136,6 +136,48 @@ test('registers the layer and renders both passes without recomputing on camera 
   expect(layer.getHoverData(data.data[0])).toEqual({
     aggregatedData: {value: {value: 6, measure: '≤'}}
   });
+});
+
+test('omits the unavailable point count from contour tooltips and preserves real aggregation counts', async () => {
+  const {layer, dataset, datasets} = await setup();
+  const data = layer.formatLayerData(datasets);
+  const LayerHoverInfo = appInjector.get(LayerHoverInfoFactory);
+  const view = render(
+    React.createElement(LayerHoverInfo, {
+      layer,
+      data: layer.getHoverData(data.data[0]),
+      fields: dataset.fields,
+      fieldsToShow: [{name: 'value', format: null}]
+    }),
+    {
+      wrapper: ({children}) =>
+        React.createElement(ThemeProvider, {
+          theme,
+          children: React.createElement(IntlProvider, {
+            locale: 'en',
+            messages: messages.en,
+            children
+          })
+        })
+    }
+  );
+  expect(view.queryByText(/total points/i)).toBeNull();
+  expect(view.queryByText('undefined')).toBeNull();
+  expect(view.getByText('6')).toBeInTheDocument();
+
+  const gridLayer = new LayerClasses.grid({dataId: dataset.id});
+  for (const points of [[], [{index: 0}, {index: 1}]]) {
+    view.rerender(
+      React.createElement(LayerHoverInfo, {
+        layer: gridLayer,
+        data: {points},
+        fields: [],
+        fieldsToShow: []
+      })
+    );
+    expect(view.getByText(/total points/i)).toBeInTheDocument();
+    expect(view.getByText(String(points.length))).toBeInTheDocument();
+  }
 });
 
 function renderLegend(layer: ContourLayer, isExport = false) {
