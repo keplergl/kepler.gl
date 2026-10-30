@@ -149,6 +149,7 @@ export default {
       cluster: 'cluster',
       icon: 'icon',
       heatmap: 'heatmap',
+      contour: 'contour',
       hexagon: 'hexagon',
       hexagonid: 'H3',
       trip: 'trip',
