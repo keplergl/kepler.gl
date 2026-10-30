@@ -499,17 +499,24 @@ const StyledContourLevels = styled.div`
   margin-top: 6px;
 
   .legend--contour-level {
-    flex: 1 0 auto;
-    min-width: 44px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 1 auto;
+    min-width: 0;
     max-width: 100%;
-    text-align: center;
     font-size: 9.5px;
     color: ${props => props.theme.textColor};
-    overflow-wrap: anywhere;
+  }
+  .legend--contour-level > span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .legend--contour-color {
+    flex: 0 0 12px;
     height: 12px;
-    margin-bottom: 2px;
   }
 `;
 
