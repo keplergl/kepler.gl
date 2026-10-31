@@ -354,7 +354,9 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   protected async _onClick(
     layerCallbacks,
-    {bitmap, coordinate, layer}: BitmapLayerPickingInfo
+    {bitmap, coordinate, layer}: Omit<BitmapLayerPickingInfo, 'bitmap'> & {
+      bitmap?: BitmapLayerPickingInfo['bitmap'];
+    }
   ) {
     const requestId = ++this.featureInfoRequestId;
     if (!bitmap) return null;
