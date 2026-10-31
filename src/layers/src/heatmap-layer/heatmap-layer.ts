@@ -654,7 +654,9 @@ class HeatmapLayer extends Layer {
     const updateTriggers = {
       getPosition: {columns: this.config.columns, columnMode: this.config.columnMode},
       getWeight: {
-        weightField: this.config.weightField
+        weightField: this.config.weightField,
+        weightScale: this.config.weightScale,
+        weightDomain: this.config.weightDomain
       }
     };
 
