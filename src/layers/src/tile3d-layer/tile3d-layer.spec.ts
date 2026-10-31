@@ -77,7 +77,7 @@ function retryWithToken(previous: any) {
 describe('3D tileset request ownership', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
