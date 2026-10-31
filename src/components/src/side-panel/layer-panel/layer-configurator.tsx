@@ -648,6 +648,12 @@ export default function LayerConfiguratorFactory(
         label: key.charAt(0) + key.slice(1).toLowerCase()
       }));
       const selectedAggregation = aggregationOptions.find(({id}) => id === visConfig.aggregation);
+      const displayOptions = ['flat', 'surface'].map(id => ({
+        id,
+        label: <FormattedMessage id={`layerVisConfigs.heatmap.${id}`} />
+      }));
+      const displayLabelId = `${layer.id}-heatmap-display`;
+      const surface = visConfig.heatmapMode === 'surface';
 
       return (
         <StyledLayerVisualConfigurator>
@@ -666,8 +672,38 @@ export default function LayerConfiguratorFactory(
               label={false}
             />
           </LayerConfigGroup>
-          {/* Intensity & Threshold */}
+          {/* Display, Intensity & Threshold */}
           <LayerConfigGroup label={'layer.heatmap'}>
+            <SidePanelSection role="group" aria-labelledby={displayLabelId}>
+              <PanelLabel id={displayLabelId}>
+                <FormattedMessage id="layerVisConfigs.heatmap.displayMode" />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={displayOptions[surface ? 1 : 0]}
+                options={displayOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({heatmapMode: value})}
+              />
+            </SidePanelSection>
+            {surface ? (
+              <>
+                <VisConfigSlider
+                  {...layer.visConfigSettings.surfaceHeight}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.surfaceLighting}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.surfaceContours}
+                  {...visConfiguratorProps}
+                />
+              </>
+            ) : null}
             <VisConfigSlider {...layer.visConfigSettings.intensity} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.threshold} {...visConfiguratorProps} />
           </LayerConfigGroup>

@@ -23,7 +23,10 @@ import {
   visStateReducer,
   validateLayerWithData
 } from '@kepler.gl/reducers';
-import {LayerManager, MapView} from '@deck.gl/core';
+import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
+import {visStateSchemaV1} from '@kepler.gl/schemas';
+import KeplerHeatmapLayer from '../../../src/layers/src/heatmap-layer/deck-heatmap-layer';
+import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/density-surface-mesh';
 import {device} from '@deck.gl/test-utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
@@ -45,6 +48,7 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
+          t.equal(layer.config.visConfig.heatmapMode, 'flat', 'existing maps default to Flat');
           t.ok(
             layer.visConfigSettings.radius.range[0] > 0,
             'heatmap radius should have a positive minimum'
@@ -698,6 +702,9 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
       });
     };
 
+    state.layers
+      .find(layer => layer.type === 'heatmap')
+      .updateLayerVisConfig({heatmapMode: 'surface'});
     check('no filter', 3);
     apply(VisStateActions.addFilter('first'));
     apply(VisStateActions.setFilter(0, 'name', 'value'));
@@ -739,6 +746,167 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
     apply(VisStateActions.removeFilter(0));
     check('cleared filters', 3);
     managers.forEach(manager => manager.finalize());
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface settings survive saving and loading', t => {
+  const layer = validateLayerWithData(
+    preparedDataset,
+    {type: 'heatmap', config: {dataId, columns}},
+    LayerClasses
+  );
+  const surfaceConfig = {
+    heatmapMode: 'surface',
+    surfaceHeight: 2500,
+    surfaceLighting: false,
+    surfaceContours: true
+  };
+  layer.updateLayerVisConfig(surfaceConfig);
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id]
+  }).visState;
+  const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  const restored = validateLayerWithData(preparedDataset, loaded.layers[0], LayerClasses);
+  for (const [key, value] of Object.entries(surfaceConfig)) {
+    t.equal(restored.config.visConfig[key], value, `restores ${key}`);
+  }
+  const data = restored.formatLayerData({[dataId]: preparedDataset});
+  const render = () => restored.renderLayer({data, mapState: INITIAL_MAP_STATE, visible: true})[0];
+  t.ok(render().props.surface, 'selects the surface renderer');
+  t.equal(render().props.surfaceHeight, 2500, 'passes the selected height scale');
+  restored.updateLayerVisConfig({surfaceHeight: Number.NaN});
+  t.equal(render().props.surfaceHeight, 1000, 'invalid height has a finite fallback');
+  restored.updateLayerVisConfig({surfaceHeight: -20});
+  t.equal(render().props.surfaceHeight, 0, 'negative height cannot invert the surface');
+  restored.updateLayerVisConfig({heatmapMode: 'flat'});
+  t.notOk(render().props.surface, 'can return to Flat');
+  t.equal(render().props.data, data.data, 'display changes reuse the filtered data');
+  t.end();
+});
+
+test('#HeatmapLayer -> surface grid follows density geography and world copies', t => {
+  const viewport = new WebMercatorViewport({longitude: 10, latitude: 65, zoom: 5});
+  const bounds = [8, 60, 12, 70];
+  const lower = viewport.projectPosition([8, 60, 0]);
+  const upper = viewport.projectPosition([12, 70, 0]);
+  const commonBounds = [lower[0], lower[1], upper[0], upper[1]];
+  const mesh = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, 10);
+  const shifted = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, 370);
+  t.ok(mesh.positions.length > 12, 'surface has enough vertices to represent interior peaks');
+  t.ok(mesh.positions.length <= 257 * 257 * 3, 'mesh memory is bounded');
+  t.equal(mesh.vertexCount, mesh.indices.length, 'all triangles are drawn');
+  t.ok(
+    mesh.indices.every(i => i < mesh.positions.length / 3),
+    'all indices address valid vertices'
+  );
+  t.deepEqual(shifted.texCoords, mesh.texCoords, 'world wrapping preserves density samples');
+  for (const i of [0, 256, 33024, 66048]) {
+    const position = Array.from(mesh.positions.slice(i * 3, i * 3 + 3));
+    const projected = viewport.projectPosition(position);
+    t.ok(
+      Math.abs(mesh.texCoords[i * 2] - (projected[0] - lower[0]) / (upper[0] - lower[0])) < 1e-6,
+      'longitude matches its density sample'
+    );
+    t.ok(
+      Math.abs(mesh.texCoords[i * 2 + 1] - (projected[1] - lower[1]) / (upper[1] - lower[1])) <
+        1e-6,
+      'latitude matches its density sample'
+    );
+    t.equal(
+      shifted.positions[i * 3] - mesh.positions[i * 3],
+      360,
+      'renders in the nearest world copy'
+    );
+  }
+  const wrappedBounds = [181, 60, 185, 70];
+  const wrappedLower = viewport.projectPosition([181, 60, 0]);
+  const wrappedUpper = viewport.projectPosition([185, 70, 0]);
+  const wrapped = createHeatmapSurfaceMesh(
+    wrappedBounds,
+    [wrappedLower[0], wrappedLower[1], wrappedUpper[0], wrappedUpper[1]],
+    viewport,
+    183
+  );
+  t.ok(wrapped, 'a density texture beyond the antimeridian still renders');
+  t.ok(Math.abs(wrapped.positions[0] - 181) < 1e-6, 'keeps unwrapped texture geography');
+  t.deepEqual(
+    Array.from(wrapped.texCoords.slice(0, 2)),
+    [0, 0],
+    'samples its original density texture'
+  );
+  for (const invalid of [[], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, NaN, 1]]) {
+    t.equal(
+      createHeatmapSurfaceMesh(invalid, commonBounds, viewport),
+      null,
+      'empty or invalid geography produces no surface'
+    );
+  }
+  t.equal(
+    createHeatmapSurfaceMesh(bounds, [0, 0, 0, 0], viewport),
+    null,
+    'invalid density texture bounds produce no surface'
+  );
+  t.end();
+});
+
+test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10, pitch: 45}
+    });
+    const manager = new LayerManager(device, {viewport});
+    let layer = new KeplerHeatmapLayer({
+      id: `heatmap-surface-${globe}`,
+      data: [
+        [-122.42, 37.74],
+        [-122.4, 37.76]
+      ],
+      getPosition: d => d,
+      getWeight: 1,
+      weightsTextureSize: 128,
+      debounceTimeout: 0,
+      globeMode: globe,
+      densityBounds: [-122.42, 37.74, -122.4, 37.76]
+    });
+    try {
+      for (const aggregation of ['SUM', 'MEAN']) {
+        layer = layer.clone({
+          surface: true,
+          surfaceHeight: 1800,
+          surfaceContours: true,
+          aggregation
+        });
+        testRenderDeckLayer(t, 'heatmap surface', [layer], {layerManager: manager});
+        const surface = layer.getSubLayers()[0];
+        t.ok(surface, 'creates the density surface');
+        t.ok(surface.props.mesh.vertexCount > 6, 'draws a tessellated surface');
+        t.equal(surface.props.surfaceHeight, 1800, 'height is available to the GPU renderer');
+        t.equal(
+          surface.props.aggregationMode,
+          aggregation === 'SUM' ? 0 : 1,
+          'uses the heatmap aggregation'
+        );
+        const mesh = surface.props.mesh;
+        layer = layer.clone({surfaceHeight: 2500});
+        testRenderDeckLayer(t, 'rescaled surface', [layer], {layerManager: manager});
+        t.equal(layer.getSubLayers()[0].props.mesh, mesh, 'height edits reuse surface geometry');
+        const weights = layer.state.weightsTexture;
+        layer = layer.clone({surface: false});
+        testRenderDeckLayer(t, 'flat heatmap', [layer], {layerManager: manager});
+        t.equal(layer.state.weightsTexture, weights, 'Flat and Surface share density resources');
+        t.notOk(layer.getSubLayers()[0].props.surfaceHeight, 'Flat does not displace density');
+      }
+      layer = layer.clone({surface: true, data: []});
+      testRenderDeckLayer(t, 'empty heatmap surface', [layer], {layerManager: manager});
+      t.equal(layer.props.data.length, 0, 'supports an empty filtered dataset');
+    } finally {
+      manager.finalize();
+    }
   }
   t.end();
 });

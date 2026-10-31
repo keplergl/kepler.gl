@@ -4,4 +4,16 @@
 
 Heatmap layers describe the intensity of data at geographical points through a colored overlap. The intensity can be weighted by a numerical field.
 
+## 3D Surface
+
+Select **3D Surface** from the heatmap's **Display** menu, then tilt the map to see density as a continuous raised surface. **Flat** remains the default for new and existing maps.
+
+The surface uses the same data, weights, aggregation, radius, color range, intensity, and filters as the flat heatmap. Height represents density, not terrain elevation.
+
+- **Height scale (m)** controls meters per unit of displayed density. Increasing intensity also increases surface height.
+- **Surface shading** adds directional shading to make slopes easier to see.
+- **Surface contours** overlays lines at regular density intervals.
+
+Surface settings are saved with the map and retained when switching back to Flat. Surface mode works on both the flat map and globe.
+
 [Back to table of contents](../README.md)

@@ -6,7 +6,7 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, within} from '@testing-library/react';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
@@ -602,4 +602,62 @@ test('Components -> LayerConfigurator -> zarr variable selector changes the vari
   );
 
   t.end();
+});
+
+test('Components -> LayerConfigurator -> Heatmap display and surface controls', t => {
+  const layer = new KeplerGlLayers.HeatmapLayer({id: 'surface-controls', dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(v => v + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  const selectMode = label => {
+    const selector = within(view.getByRole('group', {name: 'Display'})).getByRole('button');
+    fireEvent.keyDown(selector, {key: 'Enter', keyCode: 13});
+    const options = Array.from(document.querySelectorAll('.list-selector')).find(list =>
+      within(list).queryByText(label)
+    );
+    fireEvent.click(within(options).getByText(label));
+  };
+  try {
+    t.notOk(view.queryByText('Height scale (m)'), 'surface controls are hidden in Flat mode');
+    selectMode('3D Surface');
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {heatmapMode: 'surface'},
+      'selecting Surface updates the layer'
+    );
+    t.ok(view.getByText('Height scale (m)'), 'height is available in Surface mode');
+    const heightInput = Array.from(view.container.querySelectorAll('.kg-range-slider__input')).find(
+      input => input.value === '1000'
+    );
+    fireEvent.change(heightInput, {target: {value: '2500'}});
+    fireEvent.blur(heightInput);
+    t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 2500}, 'height edits update the surface');
+    fireEvent.click(view.container.querySelector('#surface-controls-surfaceLighting-switch'));
+    t.deepEqual(changed.lastCall.args[0], {surfaceLighting: false}, 'shading can be disabled');
+    fireEvent.click(view.container.querySelector('#surface-controls-surfaceContours-switch'));
+    t.deepEqual(changed.lastCall.args[0], {surfaceContours: true}, 'contours can be enabled');
+    selectMode('Flat');
+    t.deepEqual(changed.lastCall.args[0], {heatmapMode: 'flat'}, 'can switch back to Flat');
+    t.notOk(view.queryByText('Height scale (m)'), 'Flat hides surface-only controls');
+    selectMode('3D Surface');
+    t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
+  } finally {
+    view.unmount();
+    t.end();
+  }
 });
