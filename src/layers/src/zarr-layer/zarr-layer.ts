@@ -706,11 +706,25 @@ export default class ZarrLayer extends Layer {
   private _createTileDataLoader() {
     const getTileData = async (
       arr: zarr.Array<zarr.DataType, zarr.Readable>,
-      {sliceSpec, width, height}: {sliceSpec: unknown; width: number; height: number}
+      {
+        sliceSpec,
+        width,
+        height,
+        signal
+      }: {
+        sliceSpec: unknown;
+        width: number;
+        height: number;
+        signal?: AbortSignal;
+      }
     ): Promise<ZarrTileData> => {
+      signal?.throwIfAborted();
       const {nodataValue, needsSampling} = this._tileContext;
       const {get} = await this._loadRuntime();
-      const chunk = await get(arr, sliceSpec as any);
+      signal?.throwIfAborted();
+      const chunk = await get(arr, sliceSpec as any, {signal});
+      // An already-running decoder may finish after cancellation.
+      signal?.throwIfAborted();
       const values = (chunk as {data: ArrayLike<number | bigint>}).data;
       // A callback belongs to one source opening. Even after switching A -> B
       // -> A, an older request must not set the current source's color range.
