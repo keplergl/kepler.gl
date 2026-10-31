@@ -725,7 +725,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       colorTexture,
       colorDomain,
       worldBounds,
-      normalizedCommonBounds
+      normalizedCommonBounds,
+      textureSize
     } = this.state as any;
     const {updateTriggers, intensity, threshold, aggregation} = this.props as any;
 
@@ -763,7 +764,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         typeof longitude === 'number' && Number.isFinite(longitude)
           ? Math.round((longitude - (worldBounds[0] + worldBounds[2]) / 2) / 360)
           : 0;
-      const surfaceKey = `${meshKey}|${normalizedCommonBounds.join(',')}|${worldCopy}`;
+      const surfaceKey = `${meshKey}|${normalizedCommonBounds.join(
+        ','
+      )}|${worldCopy}|${textureSize}`;
       if (this.state.surfaceMeshCache?.key !== surfaceKey) {
         this.state.surfaceMeshCache = {
           key: surfaceKey,
@@ -771,6 +774,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
             worldBounds,
             normalizedCommonBounds,
             densityViewport as WebMercatorViewport,
+            textureSize,
             longitude
           )
         };

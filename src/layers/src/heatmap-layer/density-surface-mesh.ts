@@ -10,13 +10,16 @@ export function createHeatmapSurfaceMesh(
   worldBounds: Bounds,
   commonBounds: Bounds,
   viewport: WebMercatorViewport,
+  textureSize: number,
   longitude?: number
 ) {
   if (
     !worldBounds?.every(Number.isFinite) ||
     !commonBounds?.every(Number.isFinite) ||
     worldBounds.length !== 4 ||
-    commonBounds.length !== 4
+    commonBounds.length !== 4 ||
+    !Number.isSafeInteger(textureSize) ||
+    textureSize < 1
   ) {
     return null;
   }
@@ -34,10 +37,11 @@ export function createHeatmapSurfaceMesh(
   }
 
   // Sampling in Mercator space keeps vertex spacing aligned with the texture,
-  // including high latitudes. A fixed grid bounds memory at every map scale.
+  // including high latitudes. Match the allocated density texture with one
+  // grid cell per texel, so GPU texture limits also determine mesh resolution.
   const lower = viewport.projectPosition([w, s, 0]);
   const upper = viewport.projectPosition([e, n, 0]);
-  const segments = 256;
+  const segments = textureSize;
   const side = segments + 1;
   const positions = new Float64Array(side * side * 3);
   const texCoords = new Float32Array(side * side * 2);

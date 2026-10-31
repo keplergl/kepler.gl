@@ -793,17 +793,32 @@ test('#HeatmapLayer -> surface grid follows density geography and world copies',
   const lower = viewport.projectPosition([8, 60, 0]);
   const upper = viewport.projectPosition([12, 70, 0]);
   const commonBounds = [lower[0], lower[1], upper[0], upper[1]];
-  const mesh = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, 10);
-  const shifted = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, 370);
-  t.ok(mesh.positions.length > 12, 'surface has enough vertices to represent interior peaks');
-  t.ok(mesh.positions.length <= 257 * 257 * 3, 'mesh memory is bounded');
+  const textureSize = 512;
+  const side = textureSize + 1;
+  const mesh = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, textureSize, 10);
+  const shifted = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, textureSize, 370);
+  t.equal(
+    mesh.positions.length,
+    side * side * 3,
+    'surface grid matches the density texture resolution'
+  );
+  t.equal(
+    mesh.vertexCount,
+    textureSize * textureSize * 6,
+    'each density texel has two surface triangles'
+  );
+  for (const size of [128, 256]) {
+    const resized = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, size, 10);
+    t.equal(resized.positions.length, (size + 1) ** 2 * 3, `matches a ${size}-pixel texture`);
+    t.equal(resized.vertexCount, size * size * 6, `triangle count follows a ${size}-pixel texture`);
+  }
   t.equal(mesh.vertexCount, mesh.indices.length, 'all triangles are drawn');
   t.ok(
     mesh.indices.every(i => i < mesh.positions.length / 3),
     'all indices address valid vertices'
   );
   t.deepEqual(shifted.texCoords, mesh.texCoords, 'world wrapping preserves density samples');
-  for (const i of [0, 256, 33024, 66048]) {
+  for (const i of [0, textureSize, (side * side - 1) / 2, side * side - 1]) {
     const position = Array.from(mesh.positions.slice(i * 3, i * 3 + 3));
     const projected = viewport.projectPosition(position);
     t.ok(
@@ -828,6 +843,7 @@ test('#HeatmapLayer -> surface grid follows density geography and world copies',
     wrappedBounds,
     [wrappedLower[0], wrappedLower[1], wrappedUpper[0], wrappedUpper[1]],
     viewport,
+    textureSize,
     183
   );
   t.ok(wrapped, 'a density texture beyond the antimeridian still renders');
@@ -839,16 +855,23 @@ test('#HeatmapLayer -> surface grid follows density geography and world copies',
   );
   for (const invalid of [[], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, NaN, 1]]) {
     t.equal(
-      createHeatmapSurfaceMesh(invalid, commonBounds, viewport),
+      createHeatmapSurfaceMesh(invalid, commonBounds, viewport, textureSize),
       null,
       'empty or invalid geography produces no surface'
     );
   }
   t.equal(
-    createHeatmapSurfaceMesh(bounds, [0, 0, 0, 0], viewport),
+    createHeatmapSurfaceMesh(bounds, [0, 0, 0, 0], viewport, textureSize),
     null,
     'invalid density texture bounds produce no surface'
   );
+  for (const size of [undefined, 0, -1, 1.5, NaN, Infinity]) {
+    t.equal(
+      createHeatmapSurfaceMesh(bounds, commonBounds, viewport, size),
+      null,
+      'missing or invalid texture size produces no surface'
+    );
+  }
   t.end();
 });
 
@@ -884,7 +907,17 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
         testRenderDeckLayer(t, 'heatmap surface', [layer], {layerManager: manager});
         const surface = layer.getSubLayers()[0];
         t.ok(surface, 'creates the density surface');
-        t.ok(surface.props.mesh.vertexCount > 6, 'draws a tessellated surface');
+        const textureSize = layer.state.textureSize;
+        t.equal(
+          surface.props.mesh.positions.length,
+          (textureSize + 1) ** 2 * 3,
+          'renderer matches the allocated density texture resolution'
+        );
+        t.equal(
+          surface.props.mesh.vertexCount,
+          textureSize * textureSize * 6,
+          'renderer uses two triangles per density texel'
+        );
         t.equal(surface.props.surfaceHeight, 1800, 'height is available to the GPU renderer');
         t.equal(
           surface.props.aggregationMode,
