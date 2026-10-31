@@ -29,6 +29,7 @@ import {createEffect} from '@kepler.gl/effects';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
   AGGREGATION_TYPES,
+  LAYER_TYPES,
   DEFAULT_TEXT_LABEL,
   LAYER_BLENDINGS,
   OVERLAY_BLENDINGS,
@@ -1391,7 +1392,11 @@ export function validateLayerWithData(
 
   newLayer.updateLayerConfig({
     visConfig,
-    textLabel
+    textLabel,
+    // Tile properties may be absent from dataset metadata; retain the saved name.
+    ...(type === LAYER_TYPES.vectorTile && typeof savedLayer.config.uniqueIdField === 'string'
+      ? {uniqueIdField: savedLayer.config.uniqueIdField}
+      : {})
   });
 
   // visual channel field is saved to be {name, type}

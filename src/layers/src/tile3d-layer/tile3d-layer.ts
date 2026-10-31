@@ -497,6 +497,8 @@ export default class Tile3DLayer extends Layer {
     _cacheKey?: string;
   } | null = null;
 
+  private _renderedAccessToken?: string;
+  private _tokenRevision = 0;
   private _layerCallbacks: BindedLayerCallbacks | null = null;
   private _hasFittedBounds = false;
   /** Set when the tileset request fails, so the layer panel can explain why nothing drew. */
@@ -731,6 +733,11 @@ export default class Tile3DLayer extends Layer {
       return [];
     }
 
+    if (this._renderedAccessToken !== tile3dAccessToken) {
+      this._renderedAccessToken = tile3dAccessToken;
+      this._tokenRevision++;
+    }
+
     this._layerCallbacks = layerCallbacks || null;
 
     const {visConfig} = this.config;
@@ -748,7 +755,8 @@ export default class Tile3DLayer extends Layer {
 
     return [
       new KeplerTile3DLayer({
-        id: defaultLayerProps.id,
+        // A new ID makes deck finalize the previous layer instead of transferring its state.
+        id: `${defaultLayerProps.id}-${this._tokenRevision}`,
         coordinateSystem: defaultLayerProps.coordinateSystem,
         wrapLongitude: defaultLayerProps.wrapLongitude,
         visible: defaultLayerProps.visible,

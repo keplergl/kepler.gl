@@ -895,6 +895,8 @@ export default class RasterTileLayer extends KeplerLayer {
       visible,
       updateTriggers: {
         getTileData: [
+          // Metadata identity changes when the STAC source is replaced.
+          stac,
           shouldLoadTerrain,
           // Colormap has changed
           colormapId,

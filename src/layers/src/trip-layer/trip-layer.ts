@@ -37,7 +37,11 @@ import {
   applyFiltersToTableColumns
 } from '../geojson-layer/geojson-utils';
 
-import {isTripGeoJsonField, parseTripGeoJsonTimestamp} from './trip-utils';
+import {
+  getAnimationDomainFromTimestamps,
+  isTripGeoJsonField,
+  parseTripGeoJsonTimestamp
+} from './trip-utils';
 import TripInfoModalFactory from './trip-info-modal';
 import {bisectRight} from 'd3-array';
 import {
@@ -714,6 +718,7 @@ export default class TripLayer extends Layer {
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
     let getFeature;
+    let timestamps: ReturnType<typeof parseTripGeoJsonTimestamp>;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       getFeature = this.getPositionAccessor(dataContainer);
       if (getFeature === this.meta.getFeature) {
@@ -721,12 +726,25 @@ export default class TripLayer extends Layer {
         return;
       }
       this.dataToFeature = getGeojsonDataMaps(dataContainer, getFeature);
+      timestamps = parseTripGeoJsonTimestamp(this.dataToFeature);
     } else {
       this.dataContainer = dataContainer;
-      this.dataToFeature = groupColumnsAsGeoJson(dataContainer, this.config.columns, 'timestamp');
+      const dataToTimeStamp: number[][] = [];
+      this.dataToFeature = groupColumnsAsGeoJson(
+        dataContainer,
+        this.config.columns,
+        'timestamp',
+        dataToTimeStamp
+      );
+      timestamps = {
+        dataToTimeStamp,
+        animationDomain: dataToTimeStamp.length
+          ? getAnimationDomainFromTimestamps(dataToTimeStamp)
+          : null
+      };
     }
 
-    const {dataToTimeStamp, animationDomain} = parseTripGeoJsonTimestamp(this.dataToFeature);
+    const {dataToTimeStamp, animationDomain} = timestamps;
 
     this.dataToTimeStamp = dataToTimeStamp;
     this.updateAnimationDomain(animationDomain);

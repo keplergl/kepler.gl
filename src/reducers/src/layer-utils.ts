@@ -187,7 +187,7 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
       return {layer, layerData: {}};
     }
 
-    layerData = layer.formatLayerData(state.datasets, oldLayerData);
+    layerData = layer.formatLayerData(state.datasets, oldLayerData, state.animationConfig);
 
     // At this point the data for the layer is updated without errors
     if (!layer.isValid) {
