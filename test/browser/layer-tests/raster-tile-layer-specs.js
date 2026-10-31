@@ -1313,3 +1313,65 @@ test('#RasterTileLayer -> SAVI uses the soil adjustment multiplier in CPU and sh
   );
   t.end();
 });
+
+test('#RasterTileLayer -> switching STAC datasets with matching bands reloads cached imagery', async t => {
+  const layer = new RasterTileLayer({id: 'stac-cache', dataId: 'raster'});
+  layer.updateLayerVisConfig({enableTerrain: false, preset: 'trueColor'});
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, longitude: 0, latitude: 0, zoom: 2})
+  });
+  const requests = [];
+  const metadata = suffix => ({
+    ...MOCK_STAC_METADATA,
+    id: suffix,
+    assets: Object.fromEntries(
+      Object.entries(MOCK_STAC_METADATA.assets).map(([name, asset]) => [
+        name,
+        {
+          ...asset,
+          href: `https://example.com/${suffix}/${name}.tif`,
+          'raster:bands': [{data_type: 'uint8'}]
+        }
+      ])
+    )
+  });
+  const firstMetadata = metadata('a');
+  const secondMetadata = metadata('b');
+  const imageA = {images: {imageBands: [{data: new Float32Array([0.2]), width: 1, height: 1}]}};
+  const imageB = {images: {imageBands: [{data: new Float32Array([0.8]), width: 1, height: 1}]}};
+  const getTileData = sinon.stub(layer, 'getTileData').callsFake(async ({stac}) => {
+    requests.push(stac);
+    return stac === firstMetadata ? imageA : imageB;
+  });
+  const render = async stac => {
+    const deckLayer = layer.renderLayer(
+      createRenderOpts({...MOCK_STAC_DATASET, metadata: stac})
+    )[0];
+    const rendered = deckLayer.clone({renderSubLayers: () => null});
+    manager.setLayers([rendered]);
+    await Promise.all(rendered.state.tileset.selectedTiles.map(tile => tile.data));
+    return rendered;
+  };
+  try {
+    const first = await render(firstMetadata);
+    const tileset = first.state.tileset;
+    const reload = sinon.spy(tileset, 'reloadAll');
+    t.ok(requests.length > 0, 'initial source requests tiles');
+    t.equal(tileset.selectedTiles[0].content, imageA, 'first source image is cached');
+    const initialRequests = requests.length;
+    await render(firstMetadata);
+    layer.updateLayerVisConfig({opacity: 0.4, showTileBorders: true});
+    await render(firstMetadata);
+    t.equal(requests.length, initialRequests, 'same-source rerenders and style edits reuse tiles');
+    t.equal(reload.callCount, 0, 'same-source cache is not invalidated');
+    const changed = await render(secondMetadata);
+    t.equal(changed.state.tileset, tileset, 'source replacement retains the tileset');
+    t.equal(reload.callCount, 1, 'source replacement invalidates cached tiles');
+    t.ok(requests.includes(secondMetadata), 'new requests use the replacement STAC source');
+    t.equal(tileset.selectedTiles[0].content, imageB, 'new imagery replaces cached imagery');
+  } finally {
+    getTileData.restore();
+    manager.finalize();
+  }
+  t.end();
+});

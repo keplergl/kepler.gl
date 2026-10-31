@@ -24,7 +24,8 @@ import keplerGlReducer, {
   visStateReducer,
   mapStateReducer
 } from '@kepler.gl/reducers';
-import {MapSplitMode} from '@kepler.gl/constants';
+import {DatasetType, MapSplitMode} from '@kepler.gl/constants';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
@@ -966,6 +967,108 @@ test('#composerStateReducer - legacy bookmarks do not opt in or reset an explici
     );
   }
   t.end();
+});
+
+test('#composerStateReducer - vector tile unique ID survives JSON export and import', async t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const dataset = new KeplerTable({
+    info: {id: 'vector-data', type: DatasetType.VECTOR_TILE},
+    color: [1, 2, 3],
+    // No metadata endpoint is needed to restore the saved fields.
+    metadata: {remoteTileFormat: 'mvt', tilesetDataUrl: 'https://example.com/{z}/{x}/{y}.pbf'}
+  });
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'id', type: 'integer'},
+        {name: 'feature_key', type: 'string'}
+      ],
+      rows: []
+    }
+  });
+  const layer = new KeplerGlLayers.VectorTileLayer({id: 'vector-layer', dataId: dataset.id});
+  const source = {
+    ...initial,
+    visState: {
+      ...initial.visState,
+      datasets: {[dataset.id]: dataset},
+      layers: [layer],
+      layerOrder: [layer.id]
+    }
+  };
+
+  try {
+    for (const selection of ['feature_key', null, 'missing_key', undefined]) {
+      layer.updateLayerConfig({uniqueIdField: selection ?? null});
+      for (const hasData of [true, false]) {
+        const json = JSON.parse(exportToJsonString(getMapJSON(source, {hasData})));
+        const savedConfig = hasData ? json.config : json;
+        const savedLayer = savedConfig.config.visState.layers[0];
+        if (selection === undefined) {
+          delete savedLayer.config.uniqueIdField; // Older maps omit the setting entirely.
+        } else {
+          t.equal(savedLayer.config.uniqueIdField, selection, 'JSON preserves the selection');
+        }
+
+        drainTasksForTesting();
+        let imported = hasData
+          ? keplerGlReducer(
+              {test: initial},
+              wrapTo(
+                'test',
+                loadFilesSuccess(
+                  [
+                    {
+                      info: {format: 'keplergl', label: 'vector.json'},
+                      data: processKeplerglJSON(json)
+                    }
+                  ],
+                  {centerMap: false}
+                )
+              )
+            ).test
+          : addDataToMapUpdater(initial, {
+              payload: {
+                config: json,
+                datasets: {
+                  info: {id: dataset.id, type: dataset.type},
+                  metadata: dataset.metadata,
+                  // Config-only imports can reconstruct the same fields in a different order.
+                  data: {fields: [...dataset.fields].reverse(), rows: []}
+                },
+                options: {centerMap: false}
+              }
+            });
+        for (let tasks = drainTasksForTesting(); tasks.length; tasks = drainTasksForTesting()) {
+          for (const task of tasks) {
+            // Execute real dataset reconstruction without loading unrelated basemap styles.
+            if (!task.label.includes('CREATE_TABLE_TASK')) continue;
+            const action = await new Promise((resolve, reject) => {
+              task.run((effect, succeed, fail, ctx) => effect(succeed, fail, ctx), resolve, reject);
+            });
+            imported = keplerGlReducer({test: imported}, wrapTo('test', action)).test;
+          }
+        }
+        const restored = imported.visState.layers.find(item => item.id === layer.id);
+        t.ok(restored, 'restores the vector tile layer');
+        t.equal(
+          restored?.config.uniqueIdField,
+          selection ?? null,
+          `${hasData ? 'full map' : 'config-only'} restores the field name or automatic default`
+        );
+        const fields = imported.visState.datasets[dataset.id].fields;
+        const field = fields.find(item => item.name === 'feature_key');
+        t.notEqual(field, dataset.fields[1], 'reconstructs dataset fields');
+        t.equal(field.fieldIdx, hasData ? 1 : 0, 'selection does not depend on the field index');
+        t.equal(typeof field.valueAccessor, 'function', 'restores the field accessor');
+      }
+    }
+  } catch (error) {
+    t.fail(error.stack || error.message);
+  } finally {
+    drainTasksForTesting();
+    t.end();
+  }
 });
 
 test('#composerStateReducer - project JSON bookmark visibility and layout survive file import', t => {

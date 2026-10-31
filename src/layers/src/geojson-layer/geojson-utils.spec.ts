@@ -7,7 +7,7 @@ import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
-import {ArrowDataContainer} from '@kepler.gl/utils';
+import {ArrowDataContainer, createDataContainer} from '@kepler.gl/utils';
 import {processFileData} from '@kepler.gl/processors';
 import * as arrow from 'apache-arrow';
 import GeoJsonLayer from './geojson-layer';
@@ -22,7 +22,8 @@ import {
   getCentroidFromGeometry,
   parseGeoJsonRawFeature,
   getGeojsonFeatureTypes,
-  getGeojsonBounds
+  getGeojsonBounds,
+  groupColumnsAsGeoJson
 } from './geojson-utils';
 
 describe('GeoJSON coordinates', () => {
@@ -574,5 +575,35 @@ describe('featureToHoverOutline', () => {
 
     expect(featureToHoverOutline(point)).toBe(point);
     expect(featureToHoverOutline(line)).toBe(line);
+  });
+});
+
+describe('table-column GeoJSON grouping', () => {
+  const columns = {
+    id: {value: 'id', fieldIdx: 0},
+    lat: {value: 'lat', fieldIdx: 1},
+    lng: {value: 'lng', fieldIdx: 2},
+    sortBy: {value: 'sequence', fieldIdx: 3, optional: true}
+  };
+
+  test.each([
+    {values: ['12/31/2023', '01/01/2024'], expectedOrder: [1, 0]},
+    {values: [2, 10], expectedOrder: [0, 1]},
+    {values: [0, null], expectedOrder: [0, 1]}
+  ])('retains generic sort semantics for $values', ({values, expectedOrder}) => {
+    const rows = values.map((value, index) => ['id', index, index, value]);
+    const features = groupColumnsAsGeoJson(createDataContainer(rows), columns, 'sortBy');
+    expect(features[0].properties?.values).toEqual(expectedOrder.map(index => rows[index]));
+  });
+
+  test('keeps input order without a sort column and handles empty data', () => {
+    const rows = [
+      ['id', 2, 2],
+      ['id', 1, 1]
+    ];
+    const unsortedColumns = {...columns, sortBy: {value: null, fieldIdx: -1, optional: true}};
+    const features = groupColumnsAsGeoJson(createDataContainer(rows), unsortedColumns, 'sortBy');
+    expect(features[0].properties?.values).toEqual(rows);
+    expect(groupColumnsAsGeoJson(createDataContainer([]), unsortedColumns, 'sortBy')).toEqual([]);
   });
 });
