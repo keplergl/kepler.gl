@@ -226,7 +226,10 @@ export default {
       surfaceHeightDescription:
         'Meters per unit of density. Tilt the map to see the surface. Height represents density, not terrain elevation.',
       surfaceLighting: 'Surface shading',
-      surfaceContours: 'Surface contours'
+      surfaceContours: 'Surface contours',
+      surfaceContourStep: 'Contour step',
+      surfaceContourStepDescription:
+        'Density interval between contour lines. Smaller values show more lines.'
     },
     resolutionRange: 'Resolution range',
     sizeScale: 'Size Scale',

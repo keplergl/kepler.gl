@@ -672,6 +672,30 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...layer.visConfigSettings.intensity} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.threshold} {...visConfiguratorProps} />
           </LayerConfigGroup>
+          {/* Weight */}
+          <LayerConfigGroup label={'layer.weight'}>
+            <ChannelByValueSelector
+              channel={layer.visualChannels.weight}
+              {...layerChannelConfigProps}
+            />
+          </LayerConfigGroup>
+          {/* Aggregation */}
+          <LayerConfigGroup label={'layer.aggregation'}>
+            <SidePanelSection>
+              <PanelLabel>
+                <FormattedMessage id={'layerVisConfigs.weightAggregation'} />
+              </PanelLabel>
+              <ItemSelector
+                selectedItems={selectedAggregation}
+                options={aggregationOptions}
+                displayOption="label"
+                getOptionValue="id"
+                multiSelect={false}
+                searchable={false}
+                onChange={value => visConfiguratorProps.onChange({aggregation: value})}
+              />
+            </SidePanelSection>
+          </LayerConfigGroup>
           {/* 3D Surface */}
           <LayerConfigGroup
             {...visConfiguratorProps}
@@ -696,31 +720,13 @@ export default function LayerConfiguratorFactory(
                 {...layer.visConfigSettings.surfaceContours}
                 {...visConfiguratorProps}
               />
+              {visConfig.surfaceContours ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.surfaceContourStep}
+                  {...visConfiguratorProps}
+                />
+              ) : null}
             </ConfigGroupCollapsibleContent>
-          </LayerConfigGroup>
-          {/* Weight */}
-          <LayerConfigGroup label={'layer.weight'}>
-            <ChannelByValueSelector
-              channel={layer.visualChannels.weight}
-              {...layerChannelConfigProps}
-            />
-          </LayerConfigGroup>
-          {/* Aggregation */}
-          <LayerConfigGroup label={'layer.aggregation'}>
-            <SidePanelSection>
-              <PanelLabel>
-                <FormattedMessage id={'layerVisConfigs.weightAggregation'} />
-              </PanelLabel>
-              <ItemSelector
-                selectedItems={selectedAggregation}
-                options={aggregationOptions}
-                displayOption="label"
-                getOptionValue="id"
-                multiSelect={false}
-                searchable={false}
-                onChange={value => visConfiguratorProps.onChange({aggregation: value})}
-              />
-            </SidePanelSection>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

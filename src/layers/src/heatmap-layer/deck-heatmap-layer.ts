@@ -102,6 +102,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     surfaceHeight: 1000,
     surfaceLighting: true,
     surfaceContours: false,
+    surfaceContourStep: 0.1,
     // [minLng, minLat, maxLng, maxLat] of the data, used to frame the density texture in globe mode
     densityBounds: null
   };
@@ -713,7 +714,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
 
   renderLayers(): any {
     const globe = this._isGlobeHeatmap();
-    const {surface, surfaceHeight, surfaceLighting, surfaceContours} = this.props as any;
+    const {surface, surfaceHeight, surfaceLighting, surfaceContours, surfaceContourStep} = this
+      .props as any;
     if (!globe && !surface) {
       this.state.surfaceMeshCache = undefined;
       return super.renderLayers();
@@ -822,6 +824,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         surfaceHeight: surface ? surfaceHeight : 0,
         surfaceLighting: surface && surfaceLighting,
         surfaceContours: surface && surfaceContours,
+        surfaceContourStep,
         ...(surface
           ? {
               parameters: {
@@ -1023,7 +1026,7 @@ void main(void) {
     linearColor.rgb *= 0.45 + 0.55 * diffuse;
   }
   if (triangle.surfaceContours > 0.5) {
-    float level = vDensity * 10.0;
+    float level = vDensity / max(triangle.surfaceContourStep, 0.0001);
     float distanceToLine = abs(fract(level + 0.5) - 0.5);
     float line = 1.0 - smoothstep(0.5, 1.5, distanceToLine / max(fwidth(level), 0.0001));
     linearColor.rgb = mix(linearColor.rgb, vec3(1.0), line * 0.35);
@@ -1041,6 +1044,7 @@ layout(std140) uniform triangleUniforms {
   float surfaceHeight;
   float surfaceLighting;
   float surfaceContours;
+  float surfaceContourStep;
 } triangle;
 `;
 
@@ -1055,7 +1059,8 @@ const globeTriangleUniforms = {
     threshold: 'f32',
     surfaceHeight: 'f32',
     surfaceLighting: 'f32',
-    surfaceContours: 'f32'
+    surfaceContours: 'f32',
+    surfaceContourStep: 'f32'
   }
 } as any;
 
@@ -1164,7 +1169,8 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
       weightsTexture,
       surfaceHeight,
       surfaceLighting,
-      surfaceContours
+      surfaceContours,
+      surfaceContourStep
     } = this.props;
     if (!model || !weightsTexture || !colorTexture || !maxTexture) {
       return;
@@ -1178,6 +1184,7 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
         surfaceHeight: surfaceHeight || 0,
         surfaceLighting: surfaceLighting ? 1 : 0,
         surfaceContours: surfaceContours ? 1 : 0,
+        surfaceContourStep,
         // Textures are not declared in `uniformTypes`, so they are treated as
         // bindings and bound to the matching sampler uniforms by name.
         colorTexture,

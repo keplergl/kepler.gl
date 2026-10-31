@@ -63,6 +63,7 @@ export type HeatmapLayerVisConfigSettings = {
   surfaceHeight: VisConfigNumber;
   surfaceLighting: VisConfigBoolean;
   surfaceContours: VisConfigBoolean;
+  surfaceContourStep: VisConfigNumber;
 };
 
 export type HeatmapLayerColumnsConfig = {
@@ -88,6 +89,7 @@ export type HeatmapLayerVisConfig = {
   surfaceHeight: number;
   surfaceLighting: boolean;
   surfaceContours: boolean;
+  surfaceContourStep: number;
 };
 
 export type HeatmapLayerVisualChannelConfig = LayerWeightConfig &
@@ -166,6 +168,7 @@ export const heatmapVisConfigs: {
   surfaceHeight: VisConfigNumber;
   surfaceLighting: VisConfigBoolean;
   surfaceContours: VisConfigBoolean;
+  surfaceContourStep: VisConfigNumber;
 } = {
   heatmapMode: {
     type: 'select',
@@ -198,6 +201,16 @@ export const heatmapVisConfigs: {
     label: 'layerVisConfigs.heatmap.surfaceContours',
     property: 'surfaceContours'
   } as VisConfigBoolean,
+  surfaceContourStep: {
+    type: 'number',
+    defaultValue: 0.1,
+    label: 'layerVisConfigs.heatmap.surfaceContourStep',
+    description: 'layerVisConfigs.heatmap.surfaceContourStepDescription',
+    property: 'surfaceContourStep',
+    isRanged: false,
+    range: [0.01, 1],
+    step: 0.01
+  } as VisConfigNumber,
   opacity: 'opacity',
   colorRange: 'colorRange',
   radius: 'heatmapRadius',
@@ -335,7 +348,8 @@ class HeatmapLayer extends Layer {
       'heatmapMode',
       'surfaceHeight',
       'surfaceLighting',
-      'surfaceContours'
+      'surfaceContours',
+      'surfaceContourStep'
     ];
   }
 
@@ -724,6 +738,10 @@ class HeatmapLayer extends Layer {
           : 1000,
         surfaceLighting: visConfig.surfaceLighting !== false,
         surfaceContours: Boolean(visConfig.surfaceContours),
+        surfaceContourStep:
+          Number.isFinite(visConfig.surfaceContourStep) && visConfig.surfaceContourStep > 0
+            ? visConfig.surfaceContourStep
+            : 0.1,
         // globe-mode extensions
         globeMode,
         densityBounds: densityBounds && densityBounds.length === 4 ? densityBounds : null

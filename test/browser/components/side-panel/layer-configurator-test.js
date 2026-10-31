@@ -630,6 +630,8 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
   const content = group.querySelector('.layer-config-group__content');
   const options = content.querySelector('.layer-config-group__content__collapsible');
   try {
+    t.equal(group, group.parentElement.lastElementChild, '3D Surface is the last settings group');
+    t.notOk(view.queryByText('Contour step'), 'contour step is hidden until contours are enabled');
     t.notOk(toggle.checked, '3D Surface is off by default');
     t.equal(layer.config.visConfig.heatmapMode, 'flat', 'default display remains 2D');
     t.ok(group.classList.contains('collapsed'), 'surface group starts collapsed');
@@ -674,12 +676,28 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.deepEqual(changed.lastCall.args[0], {surfaceLighting: false}, 'shading can be disabled');
     fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
     t.deepEqual(changed.lastCall.args[0], {surfaceContours: true}, 'contours can be enabled');
+    t.ok(options.contains(view.getByText('Contour step')), 'contour step is in the surface group');
+    const contourInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
+      input => input.value === '0.1'
+    );
+    fireEvent.change(contourInput, {target: {value: '0.2'}});
+    fireEvent.blur(contourInput);
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {surfaceContourStep: 0.2},
+      'contour step edits update the surface'
+    );
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
+    t.notOk(view.queryByText('Contour step'), 'disabling contours hides their step control');
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
+    t.equal(layer.config.visConfig.surfaceContourStep, 0.2, 'reenabling contours retains the step');
     fireEvent.click(toggle);
     t.notOk(toggle.checked, 'toggle returns to 2D');
     t.deepEqual(changed.lastCall.args[0], {heatmapMode: 'flat'}, 'disabling stores Flat mode');
     t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
     fireEvent.click(toggle);
     t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
+    t.equal(layer.config.visConfig.surfaceContourStep, 0.2, 'switching modes retains contour step');
   } finally {
     view.unmount();
   }

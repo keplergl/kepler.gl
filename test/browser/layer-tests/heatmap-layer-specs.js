@@ -49,6 +49,11 @@ test('#HeatmapLayer -> contructor', t => {
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
           t.equal(layer.config.visConfig.heatmapMode, 'flat', 'existing maps default to Flat');
+          t.equal(
+            layer.config.visConfig.surfaceContourStep,
+            0.1,
+            'default contour spacing is preserved'
+          );
           t.ok(
             layer.visConfigSettings.radius.range[0] > 0,
             'heatmap radius should have a positive minimum'
@@ -760,7 +765,8 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
     heatmapMode: 'surface',
     surfaceHeight: 2500,
     surfaceLighting: false,
-    surfaceContours: true
+    surfaceContours: true,
+    surfaceContourStep: 0.2
   };
   layer.updateLayerVisConfig(surfaceConfig);
   const saved = visStateSchemaV1.save({
@@ -777,6 +783,15 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
   const render = () => restored.renderLayer({data, mapState: INITIAL_MAP_STATE, visible: true})[0];
   t.ok(render().props.surface, 'selects the surface renderer');
   t.equal(render().props.surfaceHeight, 2500, 'passes the selected height scale');
+  t.equal(render().props.surfaceContourStep, 0.2, 'passes the selected contour step');
+  for (const step of [undefined, 0, -0.1, Number.NaN, Infinity]) {
+    restored.updateLayerVisConfig({surfaceContourStep: step});
+    t.equal(
+      render().props.surfaceContourStep,
+      0.1,
+      'missing or invalid contour step has a positive fallback'
+    );
+  }
   restored.updateLayerVisConfig({surfaceHeight: Number.NaN});
   t.equal(render().props.surfaceHeight, 1000, 'invalid height has a finite fallback');
   restored.updateLayerVisConfig({surfaceHeight: -20});
@@ -902,6 +917,7 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
           surface: true,
           surfaceHeight: 1800,
           surfaceContours: true,
+          surfaceContourStep: 0.2,
           aggregation
         });
         testRenderDeckLayer(t, 'heatmap surface', [layer], {layerManager: manager});
@@ -920,14 +936,28 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
         );
         t.equal(surface.props.surfaceHeight, 1800, 'height is available to the GPU renderer');
         t.equal(
+          surface.props.surfaceContourStep,
+          0.2,
+          'contour step is available to the GPU renderer'
+        );
+        t.equal(
           surface.props.aggregationMode,
           aggregation === 'SUM' ? 0 : 1,
           'uses the heatmap aggregation'
         );
         const mesh = surface.props.mesh;
-        layer = layer.clone({surfaceHeight: 2500});
+        layer = layer.clone({surfaceHeight: 2500, surfaceContourStep: 0.05});
         testRenderDeckLayer(t, 'rescaled surface', [layer], {layerManager: manager});
-        t.equal(layer.getSubLayers()[0].props.mesh, mesh, 'height edits reuse surface geometry');
+        t.equal(
+          layer.getSubLayers()[0].props.mesh,
+          mesh,
+          'height and contour edits reuse surface geometry'
+        );
+        t.equal(
+          layer.getSubLayers()[0].props.surfaceContourStep,
+          0.05,
+          'contour spacing can be updated'
+        );
         const weights = layer.state.weightsTexture;
         layer = layer.clone({surface: false});
         testRenderDeckLayer(t, 'flat heatmap', [layer], {layerManager: manager});
