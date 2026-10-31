@@ -29,9 +29,9 @@ const inputCss = css`
     pointer-events: none;
   }
 `;
-const StyledLegend = styled.div<{$disableEdit: boolean; isExpanded?: boolean}>`
+export const StyledLegend = styled.div<{$disableEdit: boolean; $isExpanded?: boolean}>`
   ${props => props.theme.sidePanelScrollBar};
-  ${props => (props.isExpanded ? '' : `max-height: 156px;`)};
+  max-height: ${props => (props.$isExpanded ? 'none' : '156px')};
   box-sizing: border-box;
   width: 100%;
   overflow-y: auto;
@@ -74,6 +74,24 @@ const StyledLegendRow = styled.div`
   align-items: center;
   height: 20px;
   min-width: 0;
+
+  .legend-row-reset {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover .legend-row-reset,
+  &:focus-within .legend-row-reset {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .legend-row-reset {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
 `;
 
 export function ResetColorLabelFactory() {
@@ -102,7 +120,7 @@ const StyleInlineInput = styled(InlineInput)`
   text-overflow: ellipsis;
   white-space: nowrap;
   margin: 0 ${GAP}px;
-  :hover {
+  &:hover {
     height: ${ROW_H}px;
   }
 `;
@@ -204,7 +222,22 @@ export function LegendRowFactory(
         ) : (
           <StyledLabel>{value}</StyledLabel>
         )}
-        {onResetLabel ? <ResetColorLabel onClick={onReset} height="16px" /> : null}
+        {onResetLabel ? (
+          <ResetColorLabel
+            className="legend-row-reset"
+            role="button"
+            aria-label="Reset label"
+            tabIndex={0}
+            onClick={onReset}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onReset();
+              }
+            }}
+            height="16px"
+          />
+        ) : null}
       </StyledLegendRow>
     );
   };
@@ -420,7 +453,7 @@ function ColorLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
       <StyledLegend
         className="styled-color-legend"
         $disableEdit={disableEdit}
-        isExpanded={isExpanded}
+        $isExpanded={isExpanded}
       >
         {legends.map((legend, i) => {
           const endpointLabel =

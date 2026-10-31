@@ -189,6 +189,11 @@ export type KeplerApplicationConfig = {
   // Flow Field (streamlines) layer config
   enableFlowFieldLayer?: boolean;
 
+  // Contour layer config -- Experimental
+  // Enabled by default. Set false to hide Contour in layer type pickers.
+  // Existing Contour layers in saved maps can still render.
+  enableContourLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -476,6 +481,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // Flow Field layer config
   enableFlowFieldLayer: true,
+
+  // Contour layer config -- disable via initApplicationConfig
+  enableContourLayer: true,
 
   showInlineTilesetExamples: true,
 

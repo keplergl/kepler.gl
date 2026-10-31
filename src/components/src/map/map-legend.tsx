@@ -1,21 +1,29 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback, useState, ComponentType} from 'react';
+import React, {FC, useCallback, useId, useState, ComponentType} from 'react';
 import styled from 'styled-components';
 import {rgb} from 'd3-color';
 import {format as d3Format} from 'd3-format';
 import {useIntl} from 'react-intl';
-import ColorLegendFactory, {LegendRowFactory} from '../common/color-legend';
+import ColorLegendFactory, {LegendRowFactory, StyledLegend} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {Layer, LayerBaseConfig, VisualChannel, VisualChannelDescription} from '@kepler.gl/layers';
+import {
+  Layer,
+  LayerBaseConfig,
+  VisualChannel,
+  VisualChannelDescription,
+  KeplerGlLayers
+} from '@kepler.gl/layers';
 import {LayerVisConfig, LayerOrder, MapState, RGBColor} from '@kepler.gl/types';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {ArrowDown, ArrowRight, EyeSeen, EyeUnseen} from '../common/icons';
 import PanelHeaderActionFactory from '../side-panel/panel-header-action';
 import {getFlatLayerOrder, isLayerShownInLegend} from '@kepler.gl/reducers';
+
+type ContourLayer = InstanceType<typeof KeplerGlLayers.ContourLayer>;
 
 interface StyledMapControlLegendProps {
   width?: number;
@@ -484,6 +492,100 @@ const LayerImageLegend: React.FC<{src: string; alt: string}> = ({src, alt}) => {
   );
 };
 
+const StyledContourLevels = styled(StyledLegend)`
+  margin-top: 6px;
+`;
+
+const StyledContourExpandToggle = styled(StyledExpandToggle)`
+  background: none;
+  border: 0;
+  padding: 0;
+`;
+
+ContourLegendFactory.deps = [LegendRowFactory];
+
+function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
+  const ContourLegend: React.FC<
+    Omit<LayerLegendContentProps, 'layer' | 'containerW' | 'mapState'> & {layer: ContourLayer}
+  > = ({layer, isExport, disableEdit, onLayerVisConfigChange, actionIcons}) => {
+    const intl = useIntl();
+    const listId = useId();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const levels = layer.getContourLegend();
+    const field = String(layer.config.columns.value.value);
+    const colorRange = layer.config.visConfig.colorRange;
+    const customLabels = colorRange?.colorLegends || {};
+    const canEdit = !disableEdit && !isExport && Boolean(onLayerVisConfigChange);
+    const ExpandIcon = isExpanded ? actionIcons.expanded : actionIcons.collapsed;
+    const updateLabel = (key: string, label?: string) => {
+      const colorLegends = {...customLabels};
+      if (label === undefined) delete colorLegends[key];
+      else colorLegends[key] = label;
+      onLayerVisConfigChange?.(layer, {colorRange: {...colorRange, colorLegends}});
+    };
+    if (!levels.length) return null;
+    return (
+      <div className="legend--layer__item">
+        <div className="legend--layer_color-schema">
+          <div className="legend--layer_size-title-row">
+            <VisualChannelMetric name={field} />
+            {!isExport ? (
+              <StyledContourExpandToggle
+                as="button"
+                type="button"
+                aria-label={field}
+                aria-expanded={isExpanded}
+                aria-controls={listId}
+                onClick={() => setIsExpanded(expanded => !expanded)}
+              >
+                <ExpandIcon height="16px" />
+              </StyledContourExpandToggle>
+            ) : null}
+          </div>
+          <StyledContourLevels
+            id={listId}
+            $isExpanded={Boolean(isExport || isExpanded)}
+            $disableEdit={!canEdit}
+            role="list"
+            tabIndex={isExport ? undefined : 0}
+            aria-label={intl.formatMessage({id: 'mapLegend.layers.contour.levels'})}
+          >
+            {levels.map(({threshold, below, color}) => {
+              const defaultLabel = `${below ? '≤' : '≥'} ${intl.formatNumber(threshold, {
+                maximumSignificantDigits: 12
+              })}`;
+              // Labels follow the scalar threshold, not a color that can change or repeat.
+              const key = JSON.stringify([field, below, threshold]);
+              const label = customLabels[key] ?? defaultLabel;
+              return (
+                <div
+                  className="legend--contour-level"
+                  key={key}
+                  role="listitem"
+                  title={customLabels[key] ?? `${below ? '≤' : '≥'} ${threshold}`}
+                >
+                  <LegendRow
+                    label={label}
+                    displayLabel
+                    color={`rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`}
+                    onUpdateLabel={canEdit ? (_color, value) => updateLabel(key, value) : undefined}
+                    onResetLabel={
+                      canEdit && customLabels[key] !== undefined
+                        ? () => updateLabel(key)
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            })}
+          </StyledContourLevels>
+        </div>
+      </div>
+    );
+  };
+  return ContourLegend;
+}
+
 export type LayerLegendContentProps = {
   layer: Layer;
   containerW: number;
@@ -494,10 +596,11 @@ export type LayerLegendContentProps = {
   actionIcons: MapLegendIcons;
 };
 
-LayerLegendContentFactory.deps = [LayerColorLegendFactory];
+LayerLegendContentFactory.deps = [LayerColorLegendFactory, ContourLegendFactory];
 
 export function LayerLegendContentFactory(
-  LayerColorLegend: ReturnType<typeof LayerColorLegendFactory>
+  LayerColorLegend: ReturnType<typeof LayerColorLegendFactory>,
+  ContourLegend: ReturnType<typeof ContourLegendFactory>
 ) {
   const LayerLegendContent: React.FC<LayerLegendContentProps> = ({
     layer,
@@ -508,6 +611,17 @@ export function LayerLegendContentFactory(
     onLayerVisConfigChange,
     actionIcons
   }) => {
+    if (layer.type === 'contour') {
+      return (
+        <ContourLegend
+          layer={layer as ContourLayer}
+          isExport={isExport}
+          disableEdit={disableEdit}
+          onLayerVisConfigChange={onLayerVisConfigChange}
+          actionIcons={actionIcons}
+        />
+      );
+    }
     const visualChannels = layer.getLegendVisualChannels();
     const legendImageUrl = layer.getLegendImageUrl();
     const channelKeys = Object.values(visualChannels);

@@ -149,6 +149,7 @@ export default {
       cluster: 'cluster',
       icon: 'icon',
       heatmap: 'heatmap',
+      contour: 'contour',
       hexagon: 'hexagon',
       hexagonid: 'H3',
       trip: 'trip',
@@ -292,6 +293,28 @@ export default {
       lineCurviness: 'Curviness',
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
+    },
+    contour: {
+      surface: 'Surface',
+      levelsGroup: 'Contour levels',
+      fillGroup: 'Fill',
+      colorByLevel: 'Color by level',
+      inputMode: 'Input type',
+      interpolationResolution: 'Interpolation resolution',
+      interpolationResolutionDescription:
+        'Samples along the longer axis of the interpolated surface. Regular grids retain their original resolution.',
+      smoothing: 'Smoothing',
+      smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
+      levels: 'Number of levels',
+      below: 'Fill below each level',
+      invert: 'Invert',
+      customRange: 'Custom level range',
+      noValueRange:
+        'Select a value column with at least two distinct finite values to use the range slider.',
+      minimum: 'Minimum level',
+      maximum: 'Maximum level',
+      fillOpacity: 'Opacity',
+      thickness: 'Outline width'
     },
     flowField: {
       streamlines: 'Streamlines',
@@ -1146,6 +1169,11 @@ ${'```'}
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
     },
+    contour: {
+      lat: 'Latitude',
+      lng: 'Longitude',
+      value: 'Value'
+    },
     hex_id: 'hex id',
     flow: {
       source: {
@@ -1248,6 +1276,9 @@ ${'```'}
     min: 'Min',
     max: 'Max',
     layers: {
+      contour: {
+        levels: 'Contour levels'
+      },
       line: {
         singleColor: {
           sourceColor: 'Source',
