@@ -604,7 +604,7 @@ test('Components -> LayerConfigurator -> zarr variable selector changes the vari
   t.end();
 });
 
-test('Components -> LayerConfigurator -> Heatmap display and surface controls', t => {
+test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group', t => {
   const layer = new KeplerGlLayers.HeatmapLayer({id: 'surface-controls', dataId: testCsvDataId});
   const changed = sinon.spy();
   function Editor() {
@@ -624,40 +624,79 @@ test('Components -> LayerConfigurator -> Heatmap display and surface controls', 
     );
   }
   const view = renderWithTheme(<Editor />);
-  const selectMode = label => {
-    const selector = within(view.getByRole('group', {name: 'Display'})).getByRole('button');
-    fireEvent.keyDown(selector, {key: 'Enter', keyCode: 13});
-    const options = Array.from(document.querySelectorAll('.list-selector')).find(list =>
-      within(list).queryByText(label)
-    );
-    fireEvent.click(within(options).getByText(label));
-  };
+  const group = view.getByText('3D Surface').closest('.layer-config-group');
+  const header = group.querySelector('.layer-config-group__header');
+  const toggle = within(header).getByRole('checkbox');
+  const content = group.querySelector('.layer-config-group__content');
+  const options = content.querySelector('.layer-config-group__content__collapsible');
   try {
-    t.notOk(view.queryByText('Height scale (m)'), 'surface controls are hidden in Flat mode');
-    selectMode('3D Surface');
+    t.notOk(toggle.checked, '3D Surface is off by default');
+    t.equal(layer.config.visConfig.heatmapMode, 'flat', 'default display remains 2D');
+    t.ok(group.classList.contains('collapsed'), 'surface group starts collapsed');
+    t.ok(content.classList.contains('disabled'), 'surface options are disabled while 2D');
+    t.ok(
+      options.contains(view.getByText('Height scale (m)')),
+      'height is inside the collapsible options'
+    );
+    t.ok(
+      options.contains(view.getByText('Surface shading')),
+      'shading is inside the collapsible options'
+    );
+    t.ok(
+      options.contains(view.getByText('Surface contours')),
+      'contours are inside the collapsible options'
+    );
+
+    fireEvent.click(toggle);
+    t.ok(toggle.checked, 'toggle enables 3D Surface');
     t.deepEqual(
       changed.lastCall.args[0],
       {heatmapMode: 'surface'},
-      'selecting Surface updates the layer'
+      'enabling preserves the saved mode format'
     );
-    t.ok(view.getByText('Height scale (m)'), 'height is available in Surface mode');
-    const heightInput = Array.from(view.container.querySelectorAll('.kg-range-slider__input')).find(
+    t.notOk(content.classList.contains('disabled'), 'enabled surface options can be edited');
+    t.notOk(group.classList.contains('collapsed'), 'enabling expands the surface options');
+
+    const calls = changed.callCount;
+    fireEvent.click(header);
+    t.ok(group.classList.contains('collapsed'), 'header can collapse all surface options');
+    t.equal(changed.callCount, calls, 'collapsing does not change the selected display mode');
+    fireEvent.click(header);
+    t.notOk(group.classList.contains('collapsed'), 'header can expand the options again');
+
+    const heightInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
       input => input.value === '1000'
     );
     fireEvent.change(heightInput, {target: {value: '2500'}});
     fireEvent.blur(heightInput);
     t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 2500}, 'height edits update the surface');
-    fireEvent.click(view.container.querySelector('#surface-controls-surfaceLighting-switch'));
+    fireEvent.click(options.querySelector('#surface-controls-surfaceLighting-switch'));
     t.deepEqual(changed.lastCall.args[0], {surfaceLighting: false}, 'shading can be disabled');
-    fireEvent.click(view.container.querySelector('#surface-controls-surfaceContours-switch'));
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
     t.deepEqual(changed.lastCall.args[0], {surfaceContours: true}, 'contours can be enabled');
-    selectMode('Flat');
-    t.deepEqual(changed.lastCall.args[0], {heatmapMode: 'flat'}, 'can switch back to Flat');
-    t.notOk(view.queryByText('Height scale (m)'), 'Flat hides surface-only controls');
-    selectMode('3D Surface');
+    fireEvent.click(toggle);
+    t.notOk(toggle.checked, 'toggle returns to 2D');
+    t.deepEqual(changed.lastCall.args[0], {heatmapMode: 'flat'}, 'disabling stores Flat mode');
+    t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
+    fireEvent.click(toggle);
     t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
   } finally {
     view.unmount();
+  }
+  const restored = renderWithTheme(<Editor />);
+  try {
+    const restoredGroup = restored.getByText('3D Surface').closest('.layer-config-group');
+    t.ok(
+      within(restoredGroup.querySelector('.layer-config-group__header')).getByRole('checkbox')
+        .checked,
+      'saved Surface mode restores an enabled toggle'
+    );
+    t.ok(
+      restoredGroup.classList.contains('collapsed'),
+      'reopened surface settings start collapsed'
+    );
+  } finally {
+    restored.unmount();
     t.end();
   }
 });

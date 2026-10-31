@@ -6,7 +6,7 @@ Heatmap layers describe the intensity of data at geographical points through a c
 
 ## 3D Surface
 
-Select **3D Surface** from the heatmap's **Display** menu, then tilt the map to see density as a continuous raised surface. **Flat** remains the default for new and existing maps.
+Turn on the toggle in the heatmap's separate **3D Surface** group, then tilt the map to see density as a continuous raised surface. The toggle is off by default, keeping the map in 2D. All surface options are in the collapsible group; click its header to expand or collapse them.
 
 The surface uses the same data, weights, aggregation, radius, color range, intensity, and filters as the flat heatmap. Height represents density, not terrain elevation.
 
