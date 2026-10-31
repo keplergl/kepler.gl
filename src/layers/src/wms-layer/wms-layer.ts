@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
+import type {BitmapLayerPickingInfo} from '@deck.gl/layers';
 import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerTable as KeplerDataset, buildWmsGetLegendGraphicUrl} from '@kepler.gl/table';
@@ -351,14 +352,17 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return [deckLayer];
   }
 
-  protected async _onClick(layerCallbacks, {bitmap, coordinate, layer}) {
+  protected async _onClick(
+    layerCallbacks,
+    {bitmap, coordinate, layer}: BitmapLayerPickingInfo
+  ) {
     const requestId = ++this.featureInfoRequestId;
     if (!bitmap) return null;
 
     const x = bitmap.pixel[0];
     const y = bitmap.pixel[1];
     // PickingInfo carries the actual composite layer for the clicked panel.
-    const featureInfo = await this.getWMSFeatureInfo(x, y, layer);
+    const featureInfo = await this.getWMSFeatureInfo(x, y, layer as DeckWMSLayer | null);
 
     if (requestId === this.featureInfoRequestId && layerCallbacks?.onWMSFeatureInfo) {
       layerCallbacks.onWMSFeatureInfo({featureInfo, coordinate});
