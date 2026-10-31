@@ -484,6 +484,13 @@ export default function LayerConfiguratorFactory(
       {layer, visConfiguratorProps, layerChannelConfigProps, layerConfiguratorProps},
       showInteractionControls
     ) {
+      const pulseModeOptions = (layer.visConfigSettings.pulseMode?.options || []).map(mode => ({
+        id: mode,
+        label: <FormattedMessage id={`layerVisConfigs.point.${mode}`} />
+      }));
+      const selectedPulseMode = pulseModeOptions.find(
+        ({id}) => id === layer.config.visConfig.pulseMode
+      );
       return (
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
@@ -588,6 +595,38 @@ export default function LayerConfiguratorFactory(
                 />
                 <VisConfigSwitch
                   {...layer.visConfigSettings.showHighlightColor}
+                  {...visConfiguratorProps}
+                />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+          {layer.type === LAYER_TYPES.point ? (
+            <LayerConfigGroup
+              {...layer.visConfigSettings.pulseEnabled}
+              {...visConfiguratorProps}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <SidePanelSection>
+                  <PanelLabel>
+                    <FormattedMessage id="layerVisConfigs.point.pulseMode" />
+                  </PanelLabel>
+                  <ItemSelector
+                    selectedItems={selectedPulseMode}
+                    options={pulseModeOptions}
+                    displayOption="label"
+                    getOptionValue="id"
+                    multiSelect={false}
+                    searchable={false}
+                    onChange={value => visConfiguratorProps.onChange({pulseMode: value})}
+                  />
+                </SidePanelSection>
+                <VisConfigSlider
+                  {...layer.visConfigSettings.pulseSpeed}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.pulseExpansion}
                   {...visConfiguratorProps}
                 />
               </ConfigGroupCollapsibleContent>

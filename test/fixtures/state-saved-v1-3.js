@@ -403,7 +403,11 @@ mergedLayer0.config = {
     strokeColor: [18, 147, 154],
     allowHover: true,
     showNeighborOnHover: false,
-    showHighlightColor: true
+    showHighlightColor: true,
+    pulseEnabled: false,
+    pulseMode: 'pulse',
+    pulseSpeed: 1,
+    pulseExpansion: 2
   },
   animation: {enabled: false}
 };
