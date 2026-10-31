@@ -3,7 +3,7 @@
 
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
-import type {Layer as DeckLayer, LayerContext, LayersList} from '@deck.gl/core';
+import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
 import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
 import {I3SLoader} from '@loaders.gl/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
@@ -39,8 +39,6 @@ const LEGACY_COORDINATE_SYSTEM_MAP: Record<number, string> = {
 // Lazily created patched sublayer classes (see getSubLayerClass below).
 let _PatchedMeshLayer: any = null;
 let _PatchedScenegraphLayer: any = null;
-// Runtime identity must also change when a logical layer is reconstructed with the same ID.
-let nextTilesetRevision = 0;
 
 /**
  * Returns true when the deck.gl instance has an active LightingEffect with
@@ -71,19 +69,10 @@ function _checkLightingActive(context: any): boolean {
  * See: https://github.com/visgl/deck.gl/issues/8755
  */
 // @ts-expect-error Types have separate declarations of a private property '_loadTileset'.
-class KeplerTile3DLayer extends DeckTile3DLayer<
-  unknown,
-  {
-    isCurrent: () => boolean;
-    onTilesetReady: (tileset: Tileset3D, isCurrent: () => boolean) => void;
-    onTilesetError: (kind: Tile3DLoadErrorKind | null) => void;
-  }
-> {
-  declare state: DeckTile3DLayer['state'] & {_finalized?: boolean; _tilesetLoadFailed?: boolean};
-
-  isCurrent(): boolean {
-    return !this.state._finalized && this.props.isCurrent();
-  }
+class KeplerTile3DLayer extends DeckTile3DLayer {
+  private _tilesetLoadId = 0;
+  private _acceptedLoadId = 0;
+  private _acceptedTileset: {destroy?: () => void} | null = null;
 
   shouldUpdateState(params: any): boolean {
     if (super.shouldUpdateState(params)) return true;
@@ -105,7 +94,20 @@ class KeplerTile3DLayer extends DeckTile3DLayer<
   // and force sublayer re-creation so models revert to their default (unlit)
   // materials.
   updateState(params: any): void {
+    const {props, oldProps} = params;
+    // deck.gl reloads a tileset only when the data URL changes. Cesium keeps
+    // the same URL and puts the API key in loadOptions, so a new key has to
+    // be requested explicitly.
+    const credentialsChanged =
+      Boolean(props?.data) &&
+      props.data === oldProps?.data &&
+      props.loadOptions !== oldProps?.loadOptions;
+
     super.updateState(params);
+
+    if (credentialsChanged) {
+      void this._loadTileset(props.data);
+    }
 
     const lightingActive = _checkLightingActive(this.context);
     const prevLightingActive = (this.state as any)?._lightingWasActive ?? false;
@@ -125,48 +127,53 @@ class KeplerTile3DLayer extends DeckTile3DLayer<
     }
   }
 
-  finalizeState(context: LayerContext): void {
-    // State is shared with older instances after deck rematches the same ID.
-    this.state._finalized = true;
-    this._destroyTileset();
-    super.finalizeState(context);
-  }
-
-  private _destroyTileset(): void {
-    const tileset = this.state.tileset3d;
-    this.state.tileset3d = null;
-    if (tileset) {
-      // I3S can create its root after finalization. Detach now, destroy when ready.
-      const destroy = () => tileset.destroy();
-      void tileset.tilesetInitializationPromise.then(destroy, destroy);
-    }
-  }
-
   // @ts-ignore override of private method called by deck.gl internals
   private async _loadTileset(tilesetUrl: string) {
+    const loadId = ++this._tilesetLoadId;
     this.setState({_tilesetLoadFailed: false});
+    const notify = (this.props as {onTilesetError?: (kind: Tile3DLoadErrorKind | null) => void})
+      .onTilesetError;
+    // Defer so a retry does not dispatch while deck is still updating this layer.
     queueMicrotask(() => {
-      if (this.isCurrent()) this.props.onTilesetError(null);
+      if (loadId === this._tilesetLoadId) notify?.(null);
     });
     try {
-      // Token changes get a fresh deck ID, so deck owns loading and its state.
+      const previousTileset = (this.state as any)?.tileset3d;
+      if (previousTileset) {
+        previousTileset.destroy?.();
+        if (this._acceptedTileset === previousTileset) {
+          this._acceptedTileset = null;
+          this._acceptedLoadId = 0;
+        }
+        this.setState({tileset3d: null, layerMap: {}});
+      }
       // @ts-expect-error _loadTileset is private in DeckTile3DLayer
       await super._loadTileset(tilesetUrl);
-      const tileset = this.state.tileset3d;
-      if (tileset) {
-        await tileset.tilesetInitializationPromise;
-        if (this.isCurrent()) this.props.onTilesetReady(tileset, () => this.isCurrent());
+      const installed = (this.state as any)?.tileset3d;
+      if (loadId !== this._tilesetLoadId) {
+        // A newer token retry started. Drop this tileset so the old key
+        // cannot overwrite the in-flight or already-accepted request.
+        if (installed && installed !== this._acceptedTileset) {
+          installed.destroy?.();
+        }
+        this.setState({
+          tileset3d: this._acceptedLoadId === this._tilesetLoadId ? this._acceptedTileset : null,
+          layerMap: {}
+        });
+        return;
       }
-    } catch (error) {
-      if (!this.isCurrent()) return;
+      this._acceptedLoadId = loadId;
+      this._acceptedTileset = installed ?? null;
+    } catch (error: any) {
+      if (loadId !== this._tilesetLoadId) {
+        return;
+      }
       const kind = tile3dLoadErrorKind(error);
-      this.setState({_tilesetLoadFailed: true, layerMap: {}});
+      this.setState({_tilesetLoadFailed: true, tileset3d: null, layerMap: {}});
       queueMicrotask(() => {
-        if (this.isCurrent()) this.props.onTilesetError(kind);
+        if (loadId === this._tilesetLoadId) notify?.(kind);
       });
       console.error('Tile3DLayer: tileset load error', error);
-    } finally {
-      if (!this.isCurrent() || this.state._tilesetLoadFailed) this._destroyTileset();
     }
   }
 
@@ -178,7 +185,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer<
    */
   // @ts-ignore override of private method
   private _updateTileset(viewports: Record<string, any> | null): void {
-    if (!this.isCurrent() || !viewports) return;
+    if (!viewports) return;
     const {tileset3d} = this.state as any;
     const {timeline} = this.context;
     const viewportsNumber = Object.keys(viewports).length;
@@ -195,12 +202,12 @@ class KeplerTile3DLayer extends DeckTile3DLayer<
       .selectTiles(Object.values(viewports))
       .then((frameNumber: number) => {
         const tilesetChanged = (this.state as any).frameNumber !== frameNumber;
-        if (this.isCurrent() && tilesetChanged) {
+        if (tilesetChanged) {
           this.setState({frameNumber});
         }
       })
       .catch((error: any) => {
-        if (this.isCurrent()) console.error('Tile3DLayer: selectTiles error', error);
+        console.error('Tile3DLayer: selectTiles error', error);
       });
   }
 
@@ -490,7 +497,8 @@ export default class Tile3DLayer extends Layer {
     _cacheKey?: string;
   } | null = null;
 
-  private _tilesetRevision = 0;
+  private _renderedAccessToken?: string;
+  private _tokenRevision = 0;
   private _layerCallbacks: BindedLayerCallbacks | null = null;
   private _hasFittedBounds = false;
   /** Set when the tileset request fails, so the layer panel can explain why nothing drew. */
@@ -626,12 +634,11 @@ export default class Tile3DLayer extends Layer {
       };
     }
 
-    this._tilesetRevision = ++nextTilesetRevision;
     this._cachedDataAndLoader = {...result, _cacheKey: cacheKey};
     return this._cachedDataAndLoader;
   }
 
-  _onTilesetLoad = (tileset3d: Tileset3D, isCurrent: () => boolean = () => true): void => {
+  _onTilesetLoad = (tileset3d: Tileset3D): void => {
     if (this.tilesetLoadError) {
       this.tilesetLoadError = null;
       this._layerCallbacks?.onTilesetLoadError?.(null);
@@ -649,7 +656,6 @@ export default class Tile3DLayer extends Layer {
 
     if (isGoogle) {
       tileset3d.options.onTraversalComplete = selectedTiles => {
-        if (!isCurrent()) return selectedTiles;
         const credits = new Set<string>();
         selectedTiles.forEach((tile: Tile3D) => {
           const {copyright} = (tile as any).content?.gltf?.asset || {};
@@ -727,6 +733,11 @@ export default class Tile3DLayer extends Layer {
       return [];
     }
 
+    if (this._renderedAccessToken !== tile3dAccessToken) {
+      this._renderedAccessToken = tile3dAccessToken;
+      this._tokenRevision++;
+    }
+
     this._layerCallbacks = layerCallbacks || null;
 
     const {visConfig} = this.config;
@@ -742,36 +753,37 @@ export default class Tile3DLayer extends Layer {
       ? [color[0], color[1], color[2], 255]
       : [255, 255, 255, 255];
 
-    const revision = this._tilesetRevision;
-    const deckLayer = new KeplerTile3DLayer({
-      id: `${defaultLayerProps.id}-${revision}`,
-      isCurrent: () => revision === this._tilesetRevision,
-      coordinateSystem: defaultLayerProps.coordinateSystem,
-      wrapLongitude: defaultLayerProps.wrapLongitude,
-      visible: defaultLayerProps.visible,
-      data: tileData,
-      loader,
-      loadOptions,
-      // Keep deck's default onTilesetLoad; notify Kepler only after initialization.
-      onTilesetReady: this._onTilesetLoad,
-      onTilesetError: (kind: Tile3DLoadErrorKind | null) => {
-        const previous = this.tilesetLoadError;
-        this.tilesetLoadError = kind;
-        if (kind || previous) {
-          this._layerCallbacks?.onTilesetLoadError?.(kind);
-        }
-      },
-      onTileLoad: this._onTileLoad,
-      onTileUnload: this._onTileUnload,
-      getPointColor: pointColor,
-      pointSize: visConfig.pointSize ?? 2,
-      // Picking is off by default (no tooltip fields). Enable it while
-      // placing annotations so snap can reconstruct XYZ from mesh depth.
-      pickable: Boolean(opts.experimentalContext?.isAnnotationMode),
-      opacity: visConfig.opacity ?? 1,
-      extensions: EMPTY_EXTENSIONS,
-      parameters: DEPTH_TEST_PARAMS
-    });
-    return [deckLayer];
+    return [
+      new KeplerTile3DLayer({
+        // A new ID makes deck finalize the previous layer instead of transferring its state.
+        id: `${defaultLayerProps.id}-${this._tokenRevision}`,
+        coordinateSystem: defaultLayerProps.coordinateSystem,
+        wrapLongitude: defaultLayerProps.wrapLongitude,
+        visible: defaultLayerProps.visible,
+        data: tileData,
+        loader,
+        loadOptions,
+        onTilesetLoad: this._onTilesetLoad,
+        // Deck forwards this prop; _loadTileset reads it when the tileset request fails.
+        // @ts-expect-error onTilesetError is not part of deck.gl Tile3DLayer props
+        onTilesetError: (kind: Tile3DLoadErrorKind | null) => {
+          const previous = this.tilesetLoadError;
+          this.tilesetLoadError = kind;
+          if (kind || previous) {
+            this._layerCallbacks?.onTilesetLoadError?.(kind);
+          }
+        },
+        onTileLoad: this._onTileLoad,
+        onTileUnload: this._onTileUnload,
+        getPointColor: pointColor,
+        pointSize: visConfig.pointSize ?? 2,
+        // Picking is off by default (no tooltip fields). Enable it while
+        // placing annotations so snap can reconstruct XYZ from mesh depth.
+        pickable: Boolean(opts.experimentalContext?.isAnnotationMode),
+        opacity: visConfig.opacity ?? 1,
+        extensions: EMPTY_EXTENSIONS,
+        parameters: DEPTH_TEST_PARAMS
+      })
+    ];
   }
 }
