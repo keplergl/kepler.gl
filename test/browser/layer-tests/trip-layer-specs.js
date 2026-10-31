@@ -307,23 +307,26 @@ test('#TripLayer -> formatLayerData -> table column mode with gpu filter', t => 
   t.end();
 });
 
-test('#TripLayer -> table vertex filters keep rendered and GPU timestamps aligned', t => {
+test('#TripLayer -> table vertex filters keep coordinates, times, values and colors aligned', t => {
   const start = Date.UTC(2024, 0, 1);
-  const csv = `id,lat,lng,timestamp,status
-dropped,9,19,2024-01-01 00:00:00,skip
-retained,13,23,2024-01-01 00:00:30,last
-retained,10,20,2024-01-01 00:00:00,skip
-retained,11,21,2024-01-01 00:00:10,keep
-retained,12,22,2024-01-01 00:00:20,skip
-retained,,,2024-01-01 00:00:40,keep
-retained,14,24,,keep`;
+  const csv = `id,lat,lng,timestamp,status,speed
+dropped,9,19,2024-01-01 00:00:00,skip,0
+retained,13,23,2024-01-01 00:00:30,last,30
+retained,10,20,2024-01-01 00:00:00,skip,0
+retained,11,21,2024-01-01 00:00:10,keep,10
+retained,12,22,2024-01-01 00:00:20,skip,20
+retained,,,2024-01-01 00:00:40,keep,40
+retained,14,24,,keep,50`;
   let state = applyActions(visStateReducer, INITIAL_VIS_STATE, [
     {
       action: VisStateActions.updateVisData,
       payload: [{info: {id: dataId}, data: processCsvData(csv)}]
     },
     {action: VisStateActions.addFilter, payload: [dataId]},
-    {action: VisStateActions.setFilter, payload: [0, 'name', 'timestamp']}
+    {action: VisStateActions.setFilter, payload: [0, 'name', 'timestamp']},
+    {action: VisStateActions.addFilter, payload: [dataId]},
+    {action: VisStateActions.setFilter, payload: [1, 'name', 'speed']},
+    {action: VisStateActions.setFilter, payload: [1, 'value', [5, 35]]}
   ]);
 
   testFormatLayerDataCases(t, TripLayer, [
@@ -334,7 +337,19 @@ retained,14,24,,keep`;
         config: {
           dataId,
           columnMode: 'table',
-          columns: {id: 'id', lat: 'lat', lng: 'lng', timestamp: 'timestamp'}
+          columns: {id: 'id', lat: 'lat', lng: 'lng', timestamp: 'timestamp'},
+          colorField: {name: 'status', type: 'string'},
+          colorScale: 'customOrdinal',
+          visConfig: {
+            colorRange: {
+              colors: ['#ff0000', '#00ff00', '#0000ff'],
+              colorMap: [
+                ['skip', '#ff0000'],
+                ['keep', '#00ff00'],
+                ['last', '#0000ff']
+              ]
+            }
+          }
         }
       },
       datasets: state.datasets,
@@ -345,7 +360,7 @@ retained,14,24,,keep`;
           'unfiltered timestamps are sorted and omit rows missing coordinates or time'
         );
         state = visStateReducer(state, VisStateActions.addFilter(dataId));
-        state = visStateReducer(state, VisStateActions.setFilter(1, 'name', 'status'));
+        state = visStateReducer(state, VisStateActions.setFilter(2, 'name', 'status'));
 
         [
           {
@@ -369,7 +384,7 @@ retained,14,24,,keep`;
             times: [0, 10000, 20000, 30000]
           }
         ].forEach(({value, coordinates, times}) => {
-          state = visStateReducer(state, VisStateActions.setFilter(1, 'value', value));
+          state = visStateReducer(state, VisStateActions.setFilter(2, 'value', value));
           layerData = layer.formatLayerData(state.datasets, layerData);
           const feature = layerData.data.find(d => d.properties.index === 1);
           t.deepEqual(
@@ -390,6 +405,24 @@ retained,14,24,,keep`;
             layerData.getFilterValue(feature).map(vertex => vertex[0]),
             times,
             'GPU timestamp values stay aligned with retained vertices'
+          );
+          t.deepEqual(
+            feature.properties.values,
+            feature.geometry.coordinates.map(c =>
+              state.datasets[dataId].dataContainer.rowAsArray(c.datumIndex)
+            ),
+            'retained row values match the original row indices of retained vertices'
+          );
+          t.deepEqual(
+            layerData.getFilterValue(feature).map(vertex => vertex[1]),
+            times.map(time => time / 1000),
+            'numeric GPU values stay aligned alongside timestamp and category filters'
+          );
+          const expectedColors = {skip: [255, 0, 0], keep: [0, 255, 0], last: [0, 0, 255]};
+          t.deepEqual(
+            layerData.getColor(feature),
+            expectedColors[feature.geometry.coordinates[0].datum[4]],
+            'trip color comes from the first retained vertex'
           );
           const [trails] = layer.renderLayer({
             data: layerData,

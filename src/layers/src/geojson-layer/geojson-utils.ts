@@ -792,8 +792,7 @@ export function applyFiltersToTableColumns(
         properties: {
           // @ts-expect-error BinaryFeatureCollection
           ...feature.properties,
-          // @ts-expect-error BinaryFeatureCollection
-          values: feature.geometry.coordinates.map(c => dataContainer.rowAsArray(c.datumIndex))
+          values: filteredCoords.map(c => dataContainer.rowAsArray(c.datumIndex))
         }
       });
     }
