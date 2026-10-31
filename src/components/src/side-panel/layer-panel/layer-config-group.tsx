@@ -22,6 +22,8 @@ export type LayerConfigGroupProps = {
   layer?: Layer;
   label: string;
   property?: string;
+  /** Override the toggle state when the stored configuration is not a boolean. */
+  checked?: boolean;
   description?: string;
   collapsible?: boolean;
   expanded?: boolean;
@@ -158,6 +160,7 @@ function LayerConfigGroupFactory(
     label,
     children,
     property,
+    checked,
     layer,
     onChange = nop,
     collapsible = false,
@@ -167,6 +170,7 @@ function LayerConfigGroupFactory(
     IconComponent = VertThreeDots
   }) => {
     const [collapsed, toggleCollapsed] = useState(!expanded);
+    const isChecked = checked ?? Boolean(property && layer?.config.visConfig[property]);
     const onToggleCollapsed = useCallback(() => {
       collapsible && toggleCollapsed(!collapsed);
     }, [collapsed, toggleCollapsed, collapsible]);
@@ -178,9 +182,9 @@ function LayerConfigGroupFactory(
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
-                checked={layer?.config.visConfig[property]}
+                checked={isChecked}
                 id={`${layer?.id}-${property}`}
-                onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}
+                onChange={() => onChange?.({[property]: !isChecked})}
               />
             ) : null}
             {collapsible ? <IconComponent height="18px" /> : null}
@@ -188,7 +192,7 @@ function LayerConfigGroupFactory(
         </StyledConfigGroupHeader>
         <ConfigGroupContent
           className={classnames('layer-config-group__content', {
-            disabled: property && !layer?.config.visConfig[property]
+            disabled: property && !isChecked
           })}
         >
           {children}

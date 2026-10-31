@@ -1394,7 +1394,9 @@ export function validateLayerWithData(
     visConfig,
     textLabel,
     // Tile properties may be absent from dataset metadata; retain the saved name.
-    ...(type === LAYER_TYPES.vectorTile && typeof savedLayer.config.uniqueIdField === 'string'
+    ...(type === LAYER_TYPES.vectorTile &&
+    'uniqueIdField' in savedLayer.config &&
+    typeof savedLayer.config.uniqueIdField === 'string'
       ? {uniqueIdField: savedLayer.config.uniqueIdField}
       : {})
   });
