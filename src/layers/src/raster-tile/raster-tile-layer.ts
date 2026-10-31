@@ -205,7 +205,6 @@ export default class RasterTileLayer extends KeplerLayer {
   /** STAC object used by the last render, for Titiler identify / crop */
   _stac: (CompleteSTACObject & ExtendedKeplerSTAC) | null = null;
   _useSTACSearching = false;
-  private identifyRequestId = 0;
 
   getDataSourceParams: (
     stac: CompleteSTACObject,
@@ -480,7 +479,6 @@ export default class RasterTileLayer extends KeplerLayer {
     layerCallbacks: BindedLayerCallbacks | undefined,
     info: {coordinate?: number[]}
   ): Promise<void> {
-    const requestId = ++this.identifyRequestId;
     const coordinate = info?.coordinate;
     if (!Array.isArray(coordinate) || coordinate.length < 2) {
       return;
@@ -489,12 +487,7 @@ export default class RasterTileLayer extends KeplerLayer {
       coordinate[0],
       coordinate[1]
     );
-    if (
-      requestId === this.identifyRequestId &&
-      rows &&
-      rows.length > 0 &&
-      layerCallbacks?.onWMSFeatureInfo
-    ) {
+    if (rows && rows.length > 0 && layerCallbacks?.onWMSFeatureInfo) {
       layerCallbacks.onWMSFeatureInfo({
         featureInfo: rows,
         // Keep the picking coordinate identity to recognize the current selection.

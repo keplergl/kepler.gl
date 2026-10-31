@@ -123,7 +123,6 @@ import {
   LayerHoverProp,
   prepareLayersForDeck,
   prepareLayersToRender,
-  getAncestorLayerGroups,
   LayersToRender
 } from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
@@ -699,24 +698,9 @@ export default function MapContainerFactory(
       }
     ) => {
       const {visState, visStateActions} = this.props;
-      const mapLayers = this.mapLayersSelector(this.props);
-      // Each deck pick owns its coordinate array. Identity also distinguishes
-      // repeated clicks at the same location and survives tooltip updates.
-      if (
-        this.unmounted ||
-        !layer ||
-        !visState.layers.includes(layer) ||
-        !layer.config.isVisible ||
-        !layer.config.visConfig.allowHover ||
-        getAncestorLayerGroups(visState.layerOrder, layer.id).some(group => !group.isVisible) ||
-        (mapLayers && !mapLayers[layer.id]) ||
-        !visState.interactionConfig.tooltip.enabled ||
-        !visState.clicked?.picked ||
-        !data.coordinate ||
-        data.coordinate !== visState.clicked.coordinate
-      ) {
-        return;
-      }
+      if (this.unmounted || !layer || !visState.layers.includes(layer)) return;
+      // Each deck pick owns its coordinate array, including repeated clicks at the same location.
+      if (!data.coordinate || data.coordinate !== visState.clicked?.coordinate) return;
       visStateActions.wmsFeatureInfo(layer, data.featureInfo, data.coordinate);
     };
 

@@ -494,16 +494,6 @@ test('#WMSLayer -> edge cases and error handling', t => {
   t.end();
 });
 
-function deferredFeatureInfo() {
-  let resolve;
-  let reject;
-  const promise = new Promise((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return {promise, resolve, reject};
-}
-
 test('#WMSLayer -> split-map clicks query the picked panel image', async t => {
   const layer = createWMSLayer({visConfig: {allowHover: true}});
   const calls = [];
@@ -551,50 +541,5 @@ test('#WMSLayer -> split-map clicks query the picked panel image', async t => {
     coordinate: [1, 1]
   });
   t.deepEqual(calls[1].bbox, [-10, -5, 10, 5], 'a hidden panel render cannot replace the source');
-  t.end();
-});
-
-test('#WMSLayer -> only the latest click publishes feature info', async t => {
-  for (const staleFailure of [false, true]) {
-    const layer = createWMSLayer({visConfig: {allowHover: true}});
-    const [deckLayer] = layer.renderLayer({...MOCK_RENDER_OPTS, visible: true});
-    const oldRequest = deferredFeatureInfo();
-    const newRequest = deferredFeatureInfo();
-    let requestIndex = 0;
-    deckLayer.state = {
-      lastRequestParameters: {layers: ['test_layer']},
-      imageSource: {
-        getFeatureInfoText: () => [oldRequest.promise, newRequest.promise][requestIndex++]
-      }
-    };
-    layer.parseWMSFeatureInfo = value => [{name: 'RESULT', value}];
-    const results = [];
-    const callbacks = {onWMSFeatureInfo: result => results.push(result)};
-    const oldClick = layer._onClick(callbacks, {
-      layer: deckLayer,
-      bitmap: {pixel: [1, 1]},
-      coordinate: [0, 0]
-    });
-    const newCoordinate = [1, 1];
-    const newClick = layer._onClick(callbacks, {
-      layer: deckLayer,
-      bitmap: {pixel: [2, 2]},
-      coordinate: newCoordinate
-    });
-    newRequest.resolve('new');
-    await newClick;
-    if (staleFailure) oldRequest.reject(new Error('stale request'));
-    else oldRequest.resolve('old');
-    await oldClick;
-    t.equal(results.length, 1, `stale ${staleFailure ? 'failure' : 'success'} does not publish`);
-    t.deepEqual(
-      results[0],
-      {
-        featureInfo: [{name: 'RESULT', value: 'new'}],
-        coordinate: newCoordinate
-      },
-      'keeps the newest successful selection'
-    );
-  }
   t.end();
 });

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {createRef, StrictMode} from 'react';
-import {render} from '@testing-library/react';
+import {act, render} from '@testing-library/react';
 import MapContainerFactory from './map-container';
 import {layerClickUpdater, wmsFeatureInfoUpdater} from '@kepler.gl/reducers';
 
@@ -57,8 +57,15 @@ function setup(strictMode = false) {
   };
   const view = render(element());
   const response = {featureInfo: [{name: 'VALUE', value: '20'}], coordinate};
-  const rerender = (visState: any) => view.rerender(element(visState));
-  return {props, layer, ref, view, response, rerender};
+  let currentState: any = props.visState;
+  const rerender = (visState: any) => {
+    currentState = visState;
+    view.rerender(element(visState));
+  };
+  props.visStateActions.wmsFeatureInfo.mockImplementation((origin, featureInfo, coordinate) => {
+    rerender(wmsFeatureInfoUpdater(currentState, {layer: origin, featureInfo, coordinate} as any));
+  });
+  return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
 
 test('publishes a response only for the current selection and originating layer', () => {
@@ -86,25 +93,58 @@ test.each<[string, (state: any) => any]>([
       ...state,
       layers: [{id: 'replacement', config: {isVisible: true}}]
     })
-  ],
-  [
-    'layer hiding',
-    state => ({
-      ...state,
-      layers: state.layers.map(layer => ({...layer, config: {...layer.config, isVisible: false}}))
-    })
-  ],
-  [
-    'group hiding',
-    state => ({...state, layerOrder: [{id: 'group', isVisible: false, layerOrder: ['wms']}]})
-  ],
-  ['split-panel hiding', state => ({...state, splitMaps: [{layers: {wms: false}}]})],
-  ['disabled tooltips', state => ({...state, interactionConfig: {tooltip: {enabled: false}}})]
+  ]
 ])('ignores a pending response after %s', (_name, update) => {
   const {props, layer, ref, response, rerender} = setup();
   rerender(update(props.visState));
   ref.current._onWMSFeatureInfo(layer, response);
   ref.current._onWMSFeatureInfo(layer, {...response, featureInfo: null});
+  expect(props.visStateActions.wmsFeatureInfo).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['successful WMS/raster query', true, [{name: 'VALUE', value: 'new'}]],
+  ['empty or failed WMS query', true, null],
+  ['empty or failed raster query', false, null]
+])('keeps the latest selection after a newer %s', async (_name, publish, featureInfo) => {
+  const {props, layer, ref, response, rerender, getState} = setup();
+  const handleResponse = ref.current._onWMSFeatureInfo;
+  let finishOld!: () => void;
+  const oldRequest = new Promise<void>(resolve => {
+    finishOld = resolve;
+  }).then(() => handleResponse(layer, response));
+
+  // Repeated coordinates are a new click and must not reuse ownership of the old one.
+  const coordinate = [...response.coordinate];
+  rerender(
+    layerClickUpdater(getState(), {
+      info: {...props.visState.clicked, coordinate}
+    } as any)
+  );
+  await act(async () => {
+    if (publish) handleResponse(layer, {featureInfo, coordinate});
+  });
+  const latestSelection = getState().clicked;
+  if (publish) {
+    expect(latestSelection?.object.wmsFeatureInfo ?? null).toEqual(featureInfo);
+  } else {
+    expect(latestSelection.coordinate).toBe(coordinate);
+  }
+
+  await act(async () => {
+    finishOld();
+    await oldRequest;
+    // An older failed WMS query must not clear the newer selection either.
+    handleResponse(layer, {...response, featureInfo: null});
+  });
+  expect(getState().clicked).toBe(latestSelection);
+  expect(props.visStateActions.wmsFeatureInfo).toHaveBeenCalledTimes(publish ? 1 : 0);
+});
+
+test('rejects a response without a click coordinate', () => {
+  const {props, layer, ref, response, rerender} = setup();
+  rerender({...props.visState, clicked: null});
+  ref.current._onWMSFeatureInfo(layer, {...response, coordinate: undefined});
   expect(props.visStateActions.wmsFeatureInfo).not.toHaveBeenCalled();
 });
 

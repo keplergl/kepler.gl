@@ -80,8 +80,6 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare config: WMSLayerConfig;
   declare visConfigSettings: WMSLayerVisConfigSettings;
 
-  private featureInfoRequestId = 0;
-
   // Constructor
   constructor(
     props: ConstructorParameters<typeof AbstractTileLayer>[0] & {
@@ -354,11 +352,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
 
   protected async _onClick(
     layerCallbacks,
-    {bitmap, coordinate, layer}: Omit<BitmapLayerPickingInfo, 'bitmap'> & {
+    {
+      bitmap,
+      coordinate,
+      layer
+    }: Omit<BitmapLayerPickingInfo, 'bitmap'> & {
       bitmap?: BitmapLayerPickingInfo['bitmap'];
     }
   ) {
-    const requestId = ++this.featureInfoRequestId;
     if (!bitmap) return null;
 
     const x = bitmap.pixel[0];
@@ -366,7 +367,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     // PickingInfo carries the actual composite layer for the clicked panel.
     const featureInfo = await this.getWMSFeatureInfo(x, y, layer as DeckWMSLayer | null);
 
-    if (requestId === this.featureInfoRequestId && layerCallbacks?.onWMSFeatureInfo) {
+    if (layerCallbacks?.onWMSFeatureInfo) {
       layerCallbacks.onWMSFeatureInfo({featureInfo, coordinate});
     }
 
