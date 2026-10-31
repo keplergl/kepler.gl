@@ -250,6 +250,67 @@ test('#FlowFieldLayer -> formatLayerData from speed/direction', t => {
   t.end();
 });
 
+test('#FlowFieldLayer -> excludes missing wind values before building the grid', t => {
+  const validRows = [
+    [37, -122, 0, 0],
+    [37.5, -122, 10, 0],
+    [37, -121.5, 20, 90],
+    [37.5, -121.5, 30, 180]
+  ];
+  const invalidRows = [
+    [38, -121, null, 90],
+    [38.5, -120.5, 10, null],
+    [39, -120, null, null],
+    [39.5, -119.5, undefined, 90],
+    [40, -119, 10, undefined],
+    [40.5, -118.5, NaN, 90],
+    [41, -118, 10, Infinity]
+  ];
+
+  for (const columnMode of ['SPEED_DIR', 'UV']) {
+    const speedMode = columnMode === 'SPEED_DIR';
+    const parsed = processCsvData(speedMode ? speedDirCsv : flowCsv);
+    const format = inputRows => {
+      const dataset = new KeplerTable({info: {id: dataId}, color: [255, 255, 255]});
+      dataset.importData({data: {fields: parsed.fields, rows: inputRows}});
+      const layer = validateLayerWithData(
+        dataset,
+        {
+          type: 'flowField',
+          config: {
+            dataId,
+            columnMode,
+            columns: {
+              lat: 'latitude',
+              lng: 'longitude',
+              ...(speedMode ? {speed: 'speed', direction: 'direction'} : {u: 'u', v: 'v'})
+            },
+            visConfig: {smoothing: 0}
+          }
+        },
+        LayerClasses
+      );
+      return layer.formatLayerData({[dataId]: dataset});
+    };
+
+    const clean = format(validRows);
+    const mixed = format([...validRows, ...invalidRows]);
+    t.equal(clean.data.length, 4, `${columnMode}: keeps zero and nonzero wind values`);
+    t.equal(Math.hypot(clean.data[0].u, clean.data[0].v), 0, `${columnMode}: keeps calm wind`);
+    if (speedMode) {
+      t.equal(clean.data[1].v, -10, 'zero direction retains wind blowing from north');
+    }
+    t.ok(clean.grid, `${columnMode}: valid values build a grid`);
+    t.deepEqual(mixed.data, clean.data, `${columnMode}: excludes null and nonfinite wind samples`);
+    t.deepEqual(mixed.grid, clean.grid, `${columnMode}: missing values cannot affect the grid`);
+
+    const missing = format(invalidRows);
+    t.deepEqual(missing.data, [], `${columnMode}: all missing values leave no samples`);
+    t.equal(missing.grid, null, `${columnMode}: all missing values leave no grid`);
+  }
+  t.end();
+});
+
 test('#FlowFieldLayer -> renderLayer', t => {
   const dataset = createFlowFieldDataset();
   const TEST_CASES = [
