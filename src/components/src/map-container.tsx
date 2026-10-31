@@ -300,6 +300,7 @@ export default function MapContainerFactory(
     displayName = 'MapContainer';
 
     private anyActiveLayerLoading = false;
+    private unmounted = false;
 
     static contextType = MapViewStateContext;
 
@@ -333,6 +334,7 @@ export default function MapContainerFactory(
     _rightPress: {x: number; y: number} | null = null;
 
     componentDidMount() {
+      this.unmounted = false;
       if (!this._ref.current) {
         return;
       }
@@ -340,6 +342,7 @@ export default function MapContainerFactory(
     }
 
     componentWillUnmount() {
+      this.unmounted = true;
       if (this._map) {
         this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
         this._map.off(MAPBOXGL_RENDER, this._onMapRender);
@@ -688,17 +691,17 @@ export default function MapContainerFactory(
     };
 
     _onWMSFeatureInfo = (
-      idx: number,
+      layer: Layer | undefined,
       data: {
         featureInfo: Array<{name: string; value: string}> | string | null;
         coordinate?: [number, number] | null;
       }
     ) => {
-      this.props.visStateActions.wmsFeatureInfo(
-        this.props.visState.layers[idx],
-        data.featureInfo,
-        data.coordinate
-      );
+      const {visState, visStateActions} = this.props;
+      if (this.unmounted || !layer || !visState.layers.includes(layer)) return;
+      // Each deck pick owns its coordinate array, including repeated clicks at the same location.
+      if (!data.coordinate || data.coordinate !== visState.clicked?.coordinate) return;
+      visStateActions.wmsFeatureInfo(layer, data.featureInfo, data.coordinate);
     };
 
     _handleMapToggleLayer = layerId => {
@@ -1246,7 +1249,9 @@ export default function MapContainerFactory(
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          onWMSFeatureInfo: this._onWMSFeatureInfo,
+          // Capture the originating layer: an async result may arrive after
+          // removal or reordering has put another layer at the same index.
+          onWMSFeatureInfo: (idx, data) => this._onWMSFeatureInfo(visState.layers[idx], data),
           onRedrawNeeded: this._onRedrawNeeded,
           onFitBounds: this._onFitBounds,
           onTilesetLoadError: this._onTilesetLoadError

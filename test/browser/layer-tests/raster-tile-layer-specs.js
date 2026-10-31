@@ -1258,6 +1258,18 @@ test('#RasterTileLayer -> replacing a PMTiles URL reloads cached tile content', 
   t.end();
 });
 
+test('#RasterTileLayer -> identify preserves the picking coordinate for selection ownership', async t => {
+  const layer = new RasterTileLayer({id: 'identify-coordinate', dataId: 'raster'});
+  const rows = [{name: 'BAND', value: '20'}];
+  layer._fetchTitilerPoint = async () => rows;
+  const results = [];
+  const coordinate = [1, 2];
+  await layer._onClickIdentify({onWMSFeatureInfo: result => results.push(result)}, {coordinate});
+  t.equal(results[0].coordinate, coordinate, 'keeps the exact picking coordinate identity');
+  t.deepEqual(results[0].featureInfo, rows, 'publishes the sampled values');
+  t.end();
+});
+
 test('#RasterTileLayer -> SAVI uses the soil adjustment multiplier in CPU and shader arithmetic', t => {
   // Evaluate this scalar GLSL function as JavaScript to check the shipped expression.
   // This is an arithmetic parity test, not a WebGL rendering test.

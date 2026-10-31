@@ -490,7 +490,8 @@ export default class RasterTileLayer extends KeplerLayer {
     if (rows && rows.length > 0 && layerCallbacks?.onWMSFeatureInfo) {
       layerCallbacks.onWMSFeatureInfo({
         featureInfo: rows,
-        coordinate: [coordinate[0], coordinate[1]]
+        // Keep the picking coordinate identity to recognize the current selection.
+        coordinate: coordinate as [number, number]
       });
     }
   }
