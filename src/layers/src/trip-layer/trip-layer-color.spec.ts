@@ -4,6 +4,12 @@
 import TripLayer from './trip-layer';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL, SCALE_TYPES} from '@kepler.gl/constants';
+import {timeToUnixMilli} from '@kepler.gl/utils';
+
+jest.mock('@kepler.gl/utils', () => {
+  const actual = jest.requireActual('@kepler.gl/utils');
+  return {...actual, timeToUnixMilli: jest.fn(actual.timeToUnixMilli)};
+});
 
 /**
  * Build a small taxi-trip table: 3 trips (2 points each) across 3 companies.
@@ -177,9 +183,11 @@ describe('TripLayer TABLE mode grouping', () => {
     ];
     const table = await makeTripTable(rows);
     const layer = makeTripLayer(table);
+    jest.mocked(timeToUnixMilli).mockClear();
     layer.updateLayerMeta(table);
     const feature = layer.dataToFeature[0] as any;
 
+    expect(timeToUnixMilli).toHaveBeenCalledTimes(rows.length);
     expect(layer.dataToTimeStamp[0]).toEqual([expected[0], expected[1], expected[1]]);
     expect(layer.config.animation.domain).toEqual(expected);
     expect(feature.geometry.coordinates.map(coord => coord.slice(0, 2))).toEqual([
@@ -195,6 +203,49 @@ describe('TripLayer TABLE mode grouping', () => {
     expect(feature.properties.values).toEqual([rows[1], rows[0], rows[2]]);
     expect(feature.geometry.coordinates.map(coord => coord.datumIndex)).toEqual([1, 0, 2]);
   });
+
+  test('aligns timestamps with empty and nonempty trips and refreshes them with the data', async () => {
+    const rows = [
+      ['empty', null, 10, '01/01/2024 00:00:00', 'Uber'],
+      ['t1', 20, 10, '01/01/2024 00:00:00', 'Uber'],
+      ['t1', 21, 11, '12/31/2023 23:59:50', 'Lyft'],
+      ['t2', 22, 12, '01/01/2024 00:00:10', 'Waymo']
+    ];
+    const table = await makeTripTable(rows);
+    const layer = makeTripLayer(table);
+    layer.updateLayerMeta(table);
+
+    expect(layer.dataToTimeStamp).toEqual([
+      [],
+      [Date.UTC(2023, 11, 31, 23, 59, 50), Date.UTC(2024, 0, 1)],
+      [Date.UTC(2024, 0, 1, 0, 0, 10)]
+    ]);
+
+    const replacement = await makeTripTable([
+      ['t1', 20, 10, '01/02/2024 00:00:00', 'Uber'],
+      ['t1', 21, 11, '01/01/2024 23:59:50', 'Lyft']
+    ]);
+    layer.updateLayerMeta(replacement);
+    expect(layer.dataToTimeStamp).toEqual([
+      [Date.UTC(2024, 0, 1, 23, 59, 50), Date.UTC(2024, 0, 2)]
+    ]);
+    expect(layer.config.animation.domain).toEqual([
+      Date.UTC(2024, 0, 1, 23, 59, 50),
+      Date.UTC(2024, 0, 2)
+    ]);
+  });
+
+  test.each([{rows: []}, {rows: [['t1', 20, 10, 'not a timestamp', 'Uber']]}])(
+    'keeps animation disabled when timestamps cannot be inferred ($rows)',
+    async ({rows}) => {
+      const table = await makeTripTable(rows);
+      const layer = makeTripLayer(table);
+      layer.updateLayerMeta(table);
+
+      expect(layer.dataToTimeStamp).toEqual([]);
+      expect(layer.config.animation.domain).toBeNull();
+    }
+  );
 
   test.each(['constructor', '__proto__', 'toString'])(
     'groups the valid trip ID %s without consulting inherited object properties',

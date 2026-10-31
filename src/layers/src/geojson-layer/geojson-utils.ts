@@ -625,7 +625,9 @@ type CoordsType = [number, number, number, number | null] & {
 export function groupColumnsAsGeoJson(
   dataContainer: DataContainerInterface,
   columns: LayerColumns,
-  sortByColumn = 'timestamp'
+  sortByColumn = 'timestamp',
+  // Optional output for table-mode Trip animation, aligned with the returned features.
+  dataToTimeStamp?: number[][]
 ): Feature[] {
   const groupedById: {[key: string]: CoordsType[]} = Object.create(null);
   const sortByFieldIdx = columns[sortByColumn].fieldIdx;
@@ -671,16 +673,24 @@ export function groupColumnsAsGeoJson(
 
   const result: Feature[] = groups.map((items, index) => {
     if (sortByFieldIdx > -1) {
-      // Parse each timestamp once for sorting, retaining the original coordinates and rows.
-      const sortValues = timeFormat
-        ? new Map(items.map(item => [item, timeToUnixMilli(item[3] as number, timeFormat)]))
-        : null;
-      items.sort((a, b) =>
-        ascending(
-          sortValues ? sortValues.get(a) : (a[3] as any),
-          sortValues ? sortValues.get(b) : (b[3] as any)
-        )
-      );
+      if (!timeFormat || items.every(item => typeof item[3] === 'number')) {
+        // Numeric timestamps already sort chronologically, without parsing or a sort cache.
+        items.sort((a, b) => ascending(a[3] as any, b[3] as any));
+        if (timeFormat && dataToTimeStamp) {
+          dataToTimeStamp[index] = items.map(item => timeToUnixMilli(item[3] as number, timeFormat)!);
+        }
+      } else {
+        // Parse once, then retain the sorted timestamps for Trip animation.
+        const sorted = items
+          .map(item => ({item, time: timeToUnixMilli(item[3] as number, timeFormat)!}))
+          .sort((a, b) => ascending(a.time, b.time));
+        sorted.forEach(({item}, i) => {
+          items[i] = item;
+        });
+        if (dataToTimeStamp) {
+          dataToTimeStamp[index] = sorted.map(({time}) => time);
+        }
+      }
     }
     return {
       type: 'Feature' as const,
