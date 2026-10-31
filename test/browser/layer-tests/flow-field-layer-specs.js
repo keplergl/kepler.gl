@@ -2,6 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import React from 'react';
+import {render} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
+import {LayerLegendContentFactory, appInjector} from '@kepler.gl/components';
+import {IntlWrapper} from 'test/helpers/component-utils';
 
 import {
   testCreateCases,
@@ -542,6 +548,11 @@ test('#FlowFieldLayer -> reducer numeric filters reach every grid mode', t => {
           `${message}: samples and order`
         );
         t.equal(Boolean(grid), indexes.length >= 4, `${message}: grid uses selected samples`);
+        t.deepEqual(
+          state.layers[0].config.colorDomain,
+          grid ? [grid.minSpeed, grid.maxSpeed] : [0, 1],
+          `${message}: legend speed range follows the filtered grid`
+        );
         if (grid) {
           t.deepEqual(
             [grid.lngs[0], grid.lngs[grid.lngs.length - 1]],
@@ -614,5 +625,156 @@ test('#FlowFieldLayer -> reducer numeric filters reach every grid mode', t => {
       t.equal(emptyData.grid, null, 'empty dataset has no grid');
     }
   }
+  t.end();
+});
+
+test('#FlowFieldLayer -> speed legend follows rendered colors, toggles and grid changes', t => {
+  const dataset = createDatasetFromCsv(`latitude,longitude,u,v
+37.0,-122.0,2.0,0.0
+37.5,-122.0,4.0,0.0
+38.0,-122.0,6.0,0.0
+37.0,-121.5,8.0,0.0
+37.5,-121.5,10.0,0.0
+38.0,-121.5,12.0,0.0
+37.0,-121.0,14.0,0.0
+37.5,-121.0,16.0,0.0
+38.0,-121.0,18.0,0.0
+`);
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      type: 'flowField',
+      config: {
+        dataId,
+        columnMode: 'UV',
+        columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'},
+        color: [12, 34, 56],
+        visConfig: {
+          smoothing: 0,
+          linesPerScreen: 100,
+          colorBySpeed: true,
+          colorRange: {name: 'test', colors: ['#ff0000', '#0000ff']}
+        }
+      }
+    },
+    LayerClasses
+  );
+  const datasets = {[dataId]: dataset};
+  layer.updateLayerConfig({colorField: {name: 'unrelated', type: 'string'}, colorScale: 'ordinal'});
+  const layerData = layer.formatLayerData(datasets);
+  let state = {...INITIAL_VIS_STATE, datasets, layers: [layer], layerData: [layerData]};
+  const LayerLegendContent = appInjector.get(LayerLegendContentFactory);
+  const mapState = {longitude: -121.75, latitude: 37.25, zoom: 8, width: 800, height: 600};
+  const readLegend = currentLayer => {
+    const wrapper = render(
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>
+          <LayerLegendContent layer={currentLayer} containerW={300} isExport />
+        </IntlWrapper>
+      </ThemeProvider>
+    );
+    const result = {
+      measure: wrapper.container.querySelector('.legend--layer_color_field')?.textContent,
+      colors: Array.from(wrapper.container.querySelectorAll('.legend-row-color')).map(
+        element => element.style.backgroundColor
+      ),
+      labels: Array.from(
+        wrapper.container.querySelectorAll('.styled-color-legend .legend-row-color')
+      ).map(element => element.parentElement.textContent)
+    };
+    wrapper.unmount();
+    return result;
+  };
+  const renderLayer = () =>
+    state.layers[0].renderLayer({data: state.layerData[0], mapState, visible: true})[0];
+  const changeStyle = newVisConfig => {
+    state = visStateReducer(
+      state,
+      VisStateActions.layerVisConfigChange(state.layers[0], newVisConfig)
+    );
+  };
+
+  t.deepEqual([layerData.grid.minSpeed, layerData.grid.maxSpeed], [2, 18], 'fixture speed extent');
+  t.deepEqual(
+    readLegend(layer),
+    {
+      measure: 'Speed',
+      colors: ['rgb(255, 0, 0)', 'rgb(0, 0, 255)'],
+      labels: ['2 to 10', '10 to 18']
+    },
+    'speed legend uses the palette and actual grid range'
+  );
+  const colored = renderLayer();
+  t.deepEqual(
+    colored.props.getColor({speed: 2}).slice(0, 3),
+    [255, 0, 0],
+    'minimum renders first band'
+  );
+  t.deepEqual(
+    colored.props.getColor({speed: 18}).slice(0, 3),
+    [0, 0, 255],
+    'maximum renders last band'
+  );
+
+  changeStyle({colorBySpeed: false});
+  t.deepEqual(
+    readLegend(state.layers[0]),
+    {
+      measure: undefined,
+      colors: ['rgb(12, 34, 56)'],
+      labels: []
+    },
+    'turning off speed coloring restores the single-color legend'
+  );
+  t.deepEqual(
+    renderLayer().props.getColor.slice(0, 3),
+    [12, 34, 56],
+    'single-color renderer agrees'
+  );
+
+  changeStyle({colorBySpeed: true, colorRange: {name: 'other', colors: ['#00ff00', '#ffff00']}});
+  t.equal(state.layerData[0], layerData, 'style toggles reuse the existing grid');
+  t.deepEqual(
+    readLegend(state.layers[0]).colors,
+    ['rgb(0, 255, 0)', 'rgb(255, 255, 0)'],
+    'palette change reaches legend'
+  );
+  t.deepEqual(
+    renderLayer().props.getColor({speed: 18}).slice(0, 3),
+    [255, 255, 0],
+    'palette change reaches renderer'
+  );
+
+  const replacement = createDatasetFromCsv(`latitude,longitude,u,v
+37.0,-122.0,10.0,0.0
+37.5,-122.0,12.0,0.0
+38.0,-122.0,14.0,0.0
+37.0,-121.5,16.0,0.0
+37.5,-121.5,18.0,0.0
+38.0,-121.5,20.0,0.0
+37.0,-121.0,22.0,0.0
+37.5,-121.0,24.0,0.0
+38.0,-121.0,26.0,0.0
+`);
+  state.layerData = [state.layers[0].formatLayerData({[dataId]: replacement})];
+  t.deepEqual(
+    readLegend(state.layers[0]).labels,
+    ['10 to 18', '18 to 26'],
+    'new grid updates legend limits'
+  );
+  t.deepEqual(
+    renderLayer().props.getColor({speed: 10}).slice(0, 3),
+    [0, 255, 0],
+    'new minimum still uses the first band'
+  );
+  const empty = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+  empty.importData({data: {fields: replacement.fields, rows: []}});
+  const emptyData = state.layers[0].formatLayerData({[dataId]: empty});
+  t.equal(emptyData.grid, null, 'empty input clears the grid');
+  t.deepEqual(
+    state.layers[0].config.colorDomain,
+    [0, 1],
+    'empty input does not retain the previous speed range'
+  );
   t.end();
 });
