@@ -343,8 +343,8 @@ export function getGeoArrowPointCoords(row: any): [number, number, number] {
 
 /**
  * Builds an arrow vector compatible with ARROW:extension:name geoarrow.point.
- * @param getPosition Position accessor.
- * @param numElements Number of elements in the vector.
+ * @param dataContainer Arrow data whose record-batch boundaries must be preserved.
+ * @param getPosition Position accessor using global row indices.
  * @returns An arrow vector compatible with ARROW:extension:name geoarrow.point.
  */
 export function createGeoArrowPointVector(
@@ -369,17 +369,19 @@ export function createGeoArrowPointVector(
   const fixedSizeListBuilder = new arrow.FixedSizeListBuilder({type: fixedSizeList});
   fixedSizeListBuilder.addChild(floatBuilder);
 
-  // One record batch, not one per source batch: a batch per parquet/DuckDB
-  // chunk would create hundreds of pickable ScatterplotLayers and hit deck.gl's
-  // 255-layer picking cap.
+  // Coordinate chunks must match the table, including during progressive loads.
+  // Completed imports compact the table itself to limit pickable sublayers.
   const indexData = {index: 0};
-  for (let i = 0; i < numElements; ++i) {
-    indexData.index = i;
-    fixedSizeListBuilder.append(getPosition(indexData));
-  }
+  const chunks = dataContainer.getTable().batches.map(batch => {
+    for (let i = 0; i < batch.numRows; ++i) {
+      fixedSizeListBuilder.append(getPosition(indexData));
+      indexData.index++;
+    }
+    return fixedSizeListBuilder.flush();
+  });
 
-  // Flush even for zero rows so Arrow receives typed Data instead of an untyped empty array.
-  return arrow.makeVector([fixedSizeListBuilder.flush()]);
+  // A table without batches still needs typed Data to construct an empty vector.
+  return arrow.makeVector(chunks.length ? chunks : [fixedSizeListBuilder.flush()]);
 }
 
 /**

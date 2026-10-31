@@ -278,6 +278,51 @@ test('layerUtils -> createGeoArrowPointVector handles empty and nonempty coordin
   t.end();
 });
 
+test('layerUtils -> coordinate vectors preserve sliced and empty record batches', t => {
+  for (const dimensions of [2, 3]) {
+    const table = new arrow.Table({
+      row: arrow.vectorFromArray([99, 0, 1, 2, 3, 99], new arrow.Float64())
+    });
+    const empty = new arrow.Table(
+      new arrow.RecordBatch({
+        row: arrow.makeData({type: new arrow.Float64(), data: new Float64Array(0)})
+      })
+    );
+    const batched = new arrow.Table(table.schema, [
+      ...empty.batches,
+      ...table.slice(1, 3).batches,
+      ...empty.batches,
+      ...table.slice(3, 5).batches,
+      ...empty.batches
+    ]);
+    const container = new ArrowDataContainer({
+      cols: [table.getChildAt(0)],
+      fields: [{name: 'row', type: 'real', fieldIdx: 0}]
+    });
+    container.update(batched);
+    const vector = createGeoArrowPointVector(container, ({index}) =>
+      [container.valueAt(index, 0), -index, index + 10].slice(0, dimensions)
+    );
+    t.deepEqual(
+      vector.data.map(chunk => chunk.length),
+      [0, 2, 0, 2, 0],
+      'keeps empty batches'
+    );
+    t.deepEqual(
+      Array.from(vector, point => Array.from(point)),
+      [0, 1, 2, 3].map(index => [index, -index, index + 10].slice(0, dimensions)),
+      'uses global row indices and logical slice offsets for XY and XYZ'
+    );
+  }
+  const empty = new ArrowDataContainer({cols: [], fields: []});
+  const vector = createGeoArrowPointVector(empty, () => {
+    t.fail('must not access a row in a table without batches');
+  });
+  t.equal(vector.length, 0, 'an empty table still produces a typed empty vector');
+  t.ok(arrow.DataType.isFixedSizeList(vector.type), 'empty vector has point storage');
+  t.end();
+});
+
 test('layerUtils -> getGeojsonLayerMetaFromArrow uses worker-prepared data', t => {
   const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false));
   const geoColumn = arrow.vectorFromArray([[-122.4, 37.8]], pointType);
