@@ -199,6 +199,15 @@ export default {
     boundsEast: 'East',
     boundsNorth: 'North',
     pointSize: 'Point Size',
+    point: {
+      pulseRipple: 'Pulse / Ripple',
+      pulseMode: 'Effect',
+      pulse: 'Pulse',
+      ripple: 'Ripple',
+      pulseSpeed: 'Speed (cycles/s)',
+      pulseExpansion: 'Expansion',
+      pulseExpansionDescription: 'Maximum radius as a multiple of the point radius.'
+    },
     coverage: 'Coverage',
     outline: 'Outline',
     colorRange: 'Color range',

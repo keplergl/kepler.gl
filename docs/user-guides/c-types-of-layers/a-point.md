@@ -28,4 +28,15 @@ __Layer Attributes__
  - Font Color
  - Text Anchor
 
+## Pulse / Ripple
+
+Enable **Pulse / Ripple** at the end of the Point layer settings to animate the points. The effect is off by default, with its controls in a collapsed group.
+
+- **Pulse** smoothly grows and shrinks dots, fading them as they expand.
+- **Ripple** draws expanding rings that fade out and repeat.
+- **Speed (cycles/s)** controls the repetition rate, from 0.1 to 3 cycles per second.
+- **Expansion** controls the maximum radius, from 1 to 5 times the point radius.
+
+The effect loops continuously while the layer is visible; it does not require a timestamp field or timeline playback. It uses the point layer's colors, sizes, opacity, filters, and map or billboard orientation. Text labels stay still. Settings are saved with the map and retained when the effect is turned off.
+
 [Back to table of contents](../README.md)

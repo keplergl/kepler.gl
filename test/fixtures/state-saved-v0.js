@@ -1072,7 +1072,11 @@ mergedLayer0.config = {
     radiusRange: [1, 100],
     allowHover: true,
     showNeighborOnHover: false,
-    showHighlightColor: true
+    showHighlightColor: true,
+    pulseEnabled: false,
+    pulseMode: 'pulse',
+    pulseSpeed: 1,
+    pulseExpansion: 2
   }
 };
 
@@ -1224,7 +1228,11 @@ mergedLayer2.config = {
     radiusRange: [1, 854.16],
     allowHover: true,
     showNeighborOnHover: false,
-    showHighlightColor: true
+    showHighlightColor: true,
+    pulseEnabled: false,
+    pulseMode: 'pulse',
+    pulseSpeed: 1,
+    pulseExpansion: 2
   },
   animation: {enabled: false}
 };

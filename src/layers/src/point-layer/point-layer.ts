@@ -20,6 +20,7 @@ import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/u
 import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
+import PulseRippleExtension from './pulse-ripple-extension';
 import {
   DatasetType,
   LAYER_VIS_CONFIGS,
@@ -49,6 +50,7 @@ import {
   VisConfigColorRange,
   VisConfigColorSelect,
   VisConfigNumber,
+  VisConfigSelection,
   VisConfigRange,
   LayerColumn,
   Field,
@@ -66,6 +68,10 @@ export type PointLayerVisConfigSettings = {
   strokeColorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
   filled: VisConfigBoolean;
+  pulseEnabled: VisConfigBoolean;
+  pulseMode: VisConfigSelection;
+  pulseSpeed: VisConfigNumber;
+  pulseExpansion: VisConfigNumber;
 };
 
 export type PointLayerColumnsConfig = {
@@ -88,6 +94,10 @@ export type PointLayerVisConfig = {
   strokeColorRange: ColorRange;
   radiusRange: [number, number];
   filled: boolean;
+  pulseEnabled: boolean;
+  pulseMode: 'pulse' | 'ripple';
+  pulseSpeed: number;
+  pulseExpansion: number;
   billboard: boolean;
   allowHover: boolean;
   showNeighborOnHover: boolean;
@@ -164,6 +174,7 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 const brushingExtension = new BrushingExtension();
 const arrowCPUFilterExtension = new FilterArrowExtension();
+const pulseRippleExtension = new PulseRippleExtension();
 
 function pushPointPosition(data: any[], pos: number[], index: number, neighbors?: number[]) {
   if (pos.every(Number.isFinite)) {
@@ -187,11 +198,47 @@ export const pointVisConfigs: {
   strokeColorRange: 'strokeColorRange';
   radiusRange: 'radiusRange';
   filled: VisConfigBoolean;
+  pulseEnabled: VisConfigBoolean;
+  pulseMode: VisConfigSelection;
+  pulseSpeed: VisConfigNumber;
+  pulseExpansion: VisConfigNumber;
   billboard: 'billboard';
   allowHover: 'allowHover';
   showNeighborOnHover: 'showNeighborOnHover';
   showHighlightColor: 'showHighlightColor';
 } = {
+  pulseEnabled: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.point.pulseRipple',
+    property: 'pulseEnabled'
+  } as VisConfigBoolean,
+  pulseMode: {
+    type: 'select',
+    defaultValue: 'pulse',
+    label: 'layerVisConfigs.point.pulseMode',
+    options: ['pulse', 'ripple'],
+    property: 'pulseMode'
+  } as VisConfigSelection,
+  pulseSpeed: {
+    type: 'number',
+    defaultValue: 1,
+    label: 'layerVisConfigs.point.pulseSpeed',
+    property: 'pulseSpeed',
+    isRanged: false,
+    range: [0.1, 3],
+    step: 0.1
+  } as VisConfigNumber,
+  pulseExpansion: {
+    type: 'number',
+    defaultValue: 2,
+    label: 'layerVisConfigs.point.pulseExpansion',
+    description: 'layerVisConfigs.point.pulseExpansionDescription',
+    property: 'pulseExpansion',
+    isRanged: false,
+    range: [1, 5],
+    step: 0.1
+  } as VisConfigNumber,
   radius: 'radius',
   fixedRadius: 'fixedRadius',
   opacity: 'opacity',
@@ -273,7 +320,14 @@ export default class PointLayer extends Layer {
   }
 
   get noneLayerDataAffectingProps() {
-    return [...super.noneLayerDataAffectingProps, 'radius'];
+    return [
+      ...super.noneLayerDataAffectingProps,
+      'radius',
+      'pulseEnabled',
+      'pulseMode',
+      'pulseSpeed',
+      'pulseExpansion'
+    ];
   }
 
   get visualChannels() {
@@ -511,6 +565,8 @@ export default class PointLayer extends Layer {
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion} = this.config.visConfig;
+    const pulseProps = {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion};
 
     const layerProps = {
       stroked: this.config.visConfig.outline,
@@ -585,7 +641,8 @@ export default class PointLayer extends Layer {
         },
         lineWidthUnits: 'pixels',
         updateTriggers,
-        extensions,
+        ...pulseProps,
+        extensions: [...extensions, ...(pulseEnabled ? [pulseRippleExtension] : [])],
         opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
         pickable: allowHover,
         autoHighlight: false
@@ -596,6 +653,8 @@ export default class PointLayer extends Layer {
             new ScatterplotLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
+              ...pulseProps,
+              ...(pulseEnabled ? {extensions: [pulseRippleExtension]} : {}),
               visible: defaultLayerProps.visible,
               data: [...neighborsData, hoveredObject],
               getLineColor: this.config.visConfig.showHighlightColor

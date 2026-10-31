@@ -2,6 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {LayerManager, MapView, _GlobeView} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {visStateSchemaV1} from '@kepler.gl/schemas';
+import PulseRippleExtension from '../../../src/layers/src/point-layer/pulse-ripple-extension';
 import moment from 'moment';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {scaleQuantize} from 'd3-scale';
@@ -27,6 +31,7 @@ import {
   testFormatLayerData,
   testFormatLayerDataCases,
   testRenderLayerCases,
+  testRenderDeckLayer,
   testUpdateLayer,
   preparedDataset,
   dataId,
@@ -142,7 +147,14 @@ const {PointLayer} = KeplerGlLayers;
         visible: true,
         layerCallbacks: {}
       });
-      const sublayers = composite.renderLayers();
+      const animated = composite.clone({
+        pulseEnabled: true,
+        pulseMode: 'ripple',
+        pulseSpeed: 2,
+        pulseExpansion: 3,
+        extensions: [...composite.props.extensions, new PulseRippleExtension()]
+      });
+      const sublayers = animated.renderLayers();
       const rowIndices =
         geometryType === 'multipoint'
           ? [
@@ -156,6 +168,13 @@ const {PointLayer} = KeplerGlLayers;
       t.equal(sublayers.length, 2, 'renders both Arrow record batches');
       sublayers.forEach((sublayer, batchIndex) => {
         const {props} = sublayer;
+        t.ok(
+          props.extensions.some(extension => extension instanceof PulseRippleExtension),
+          'Arrow batch inherits animation'
+        );
+        t.equal(props.pulseMode, 'ripple', 'Arrow batch inherits effect style');
+        t.equal(props.pulseSpeed, 2, 'Arrow batch inherits speed');
+        t.equal(props.pulseExpansion, 3, 'Arrow batch inherits expansion');
         t.equal(props.data.length, rowIndices[batchIndex].length, 'empty features add no points');
         rowIndices[batchIndex].forEach((rowIndex, index) => {
           const context = {index, data: props.data, target: []};
@@ -311,6 +330,7 @@ test('#PointLayer -> constructor', t => {
         test: layer => {
           t.ok(layer.config.dataId === 'smoothie', 'PointLayer dataId should be correct');
           t.ok(layer.type === 'point', 'type should be point');
+          t.equal(layer.config.visConfig.pulseEnabled, false, 'point animation is off by default');
           t.ok(layer.isAggregated === false, 'PointLayer is not aggregated');
           t.ok(layer.config.label === 'test point layer', 'label should be correct');
           t.deepEqual(
@@ -1749,5 +1769,104 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
   ];
 
   testFormatLayerDataCases(t, PointLayer, TEST_CASES);
+  t.end();
+});
+
+test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
+  const datasets = {[dataId]: copyTableAndUpdate(preparedDataset, {filteredIndex: [0, 2, 4]})};
+  const layer = testCreateLayerFromConfig(
+    t,
+    {
+      layer: {
+        type: 'point',
+        id: 'pulse-point',
+        config: {
+          dataId,
+          columns: {lat: 'lat', lng: 'lng'},
+          textLabel: [{field: {name: 'types', type: 'string'}}]
+        }
+      },
+      datasets
+    },
+    {point: PointLayer}
+  );
+  const data = testFormatLayerData(t, layer, datasets);
+  const render = (globe = false, mapLayers) =>
+    renderDeckGlLayer(
+      {
+        datasets,
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: {...INITIAL_MAP_STATE, globe: {enabled: globe}},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        mapLayers
+      },
+      {}
+    );
+  const hasAnimation = deckLayer =>
+    deckLayer.props.extensions.some(extension => extension instanceof PulseRippleExtension);
+  t.notOk(hasAnimation(render()[0]), 'default points use the unchanged renderer');
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+    });
+    const manager = new LayerManager(device, {viewport});
+    try {
+      for (const pulseMode of ['pulse', 'ripple']) {
+        layer.updateLayerVisConfig({
+          pulseEnabled: true,
+          pulseMode,
+          pulseSpeed: 2,
+          pulseExpansion: 3
+        });
+        const deckLayers = render(globe);
+        testRenderDeckLayer(t, `point ${pulseMode}`, deckLayers, {layerManager: manager});
+        const points = deckLayers[0];
+        t.ok(hasAnimation(points), 'point renderer enables the effect');
+        t.equal(points.props.pulseMode, pulseMode, 'selected effect reaches the renderer');
+        t.equal(points.props.data, data.data, 'animation reuses filtered point data');
+        t.equal(points.props.getRadius, data.getRadius, 'animation preserves radius mapping');
+        t.equal(points.props.getFillColor, data.getFillColor, 'animation preserves color mapping');
+        t.equal(
+          points.props.getFilterValue,
+          data.getFilterValue,
+          'animation preserves GPU filters'
+        );
+        const labels = deckLayers.filter(deckLayer => deckLayer.id.includes('-label-'));
+        t.ok(labels.length, 'text labels remain available');
+        labels.forEach(label => t.notOk(hasAnimation(label), 'labels do not pulse'));
+        t.equal(
+          render(globe, {[layer.id]: false})[0].props.visible,
+          false,
+          'hidden points stay hidden'
+        );
+      }
+      layer.updateLayerVisConfig({pulseEnabled: false});
+      const staticLayers = render(globe);
+      testRenderDeckLayer(t, 'disabled pulse', staticLayers, {layerManager: manager});
+      t.notOk(hasAnimation(staticLayers[0]), 'turning off removes animation from the renderer');
+      t.equal(layer.config.visConfig.pulseExpansion, 3, 'turning off retains effect settings');
+    } finally {
+      manager.finalize();
+    }
+  }
+  layer.updateLayerVisConfig({pulseEnabled: true});
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id]
+  }).visState;
+  const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  const restored = testCreateLayerFromConfig(
+    t,
+    {layer: loaded.layers[0], datasets},
+    {point: PointLayer}
+  );
+  for (const key of ['pulseEnabled', 'pulseMode', 'pulseSpeed', 'pulseExpansion']) {
+    t.equal(restored.config.visConfig[key], layer.config.visConfig[key], `restores ${key}`);
+  }
   t.end();
 });
