@@ -28,7 +28,14 @@ declare module '@deck.gl/core' {
   export {AmbientLight} from '@deck.gl/core/dist/effects/lighting/ambient-light';
   export {default as _SunLight} from '@deck.gl/core/dist/effects/lighting/sun-light';
   export {COORDINATE_SYSTEM, OPERATION, UNIT} from '@deck.gl/core/dist/lib/constants';
-  export {color, picking, project, project32, shadow} from '@deck.gl/core/dist/shaderlib/index';
+  export {
+    color,
+    picking,
+    project,
+    project32,
+    phongMaterial,
+    shadow
+  } from '@deck.gl/core/dist/shaderlib/index';
   export {default as Attribute} from '@deck.gl/core/dist/lib/attribute/attribute';
   export {default as AttributeManager} from '@deck.gl/core/dist/lib/attribute/attribute-manager';
   export {default as Tesselator} from '@deck.gl/core/dist/utils/tesselator';

@@ -1080,7 +1080,7 @@ test('#HeatmapLayer -> surface grid follows density geography and world copies',
   t.end();
 });
 
-test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
+test('#HeatmapLayer -> regular rendering survives surface and effect toggles on map and globe', t => {
   for (const globe of [false, true]) {
     const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
       width: 800,
@@ -1088,6 +1088,16 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
       viewState: {longitude: -122.4, latitude: 37.75, zoom: 10, pitch: 45}
     });
     const manager = new LayerManager(device, {viewport});
+    const effect = new CustomDeckLightingEffect({
+      sunLight: new SunLight({timestamp: Date.UTC(2026, 5, 1, 19), _shadow: true})
+    });
+    const effectContext = {
+      device,
+      deck: {
+        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
+        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+      }
+    };
     let layer = new KeplerHeatmapLayer({
       id: `heatmap-surface-${globe}`,
       data: [
@@ -1096,13 +1106,65 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
       ],
       getPosition: d => d,
       getWeight: 1,
+      intensity: 0.7,
+      threshold: 0.2,
+      opacity: 0.6,
+      radiusPixels: 30,
+      parameters: {depthWriteEnabled: false, depthCompare: 'always'},
       weightsTextureSize: 128,
       debounceTimeout: 0,
       globeMode: globe,
       densityBounds: [-122.42, 37.74, -122.4, 37.76]
     });
     try {
+      t.equal(layer.props.surface, false, 'missing surface settings select the regular heatmap');
       for (const aggregation of ['SUM', 'MEAN']) {
+        layer = layer.clone({aggregation});
+        testRenderDeckLayer(t, 'regular heatmap before effect', [layer], {layerManager: manager});
+        const regular = layer.getSubLayers()[0];
+        const regularVertexCount = regular.state.model.vertexCount;
+        const worldBounds = layer.state.worldBounds;
+        const commonBounds = layer.state.normalizedCommonBounds;
+        const assertRegularRendering = () => {
+          const current = layer.getSubLayers()[0];
+          t.equal(current.constructor, regular.constructor, 'uses the regular renderer');
+          t.equal(current.state.model.vertexCount, regularVertexCount, 'retains regular geometry');
+          t.deepEqual(layer.state.worldBounds, worldBounds, 'retains the density frame');
+          t.deepEqual(
+            layer.state.normalizedCommonBounds,
+            commonBounds,
+            'retains density texture mapping'
+          );
+          for (const property of [
+            'aggregationMode',
+            'intensity',
+            'threshold',
+            'opacity',
+            'colorDomain',
+            'parameters'
+          ]) {
+            t.deepEqual(
+              current.props[property],
+              regular.props[property],
+              `preserves regular ${property}`
+            );
+          }
+          for (const property of ['weightsTexture', 'maxTexture', 'colorTexture']) {
+            t.equal(
+              current.props[property],
+              regular.props[property],
+              `preserves regular ${property}`
+            );
+            t.notOk(current.props[property].destroyed, `${property} is still usable`);
+          }
+          t.notOk(current.props.surfaceHeight, 'regular heatmap has no height displacement');
+          t.notOk(current.props.surfaceLighting, 'regular heatmap has no surface lighting');
+          t.notOk(current.props.surfaceContours, 'regular heatmap has no surface contours');
+        };
+        effect.setup(effectContext);
+        testRenderDeckLayer(t, 'regular heatmap with effect', [layer], {layerManager: manager});
+        assertRegularRendering();
+
         layer = layer.clone({
           surface: true,
           surfaceHeight: 1800,
@@ -1153,11 +1215,20 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
         testRenderDeckLayer(t, 'flat heatmap', [layer], {layerManager: manager});
         t.equal(layer.state.weightsTexture, weights, 'Flat and Surface share density resources');
         t.notOk(layer.getSubLayers()[0].props.surfaceHeight, 'Flat does not displace density');
+        assertRegularRendering();
+        effect.cleanup(effectContext);
+        testRenderDeckLayer(t, 'regular heatmap after removing effect', [layer], {
+          layerManager: manager
+        });
+        assertRegularRendering();
       }
-      layer = layer.clone({surface: true, data: []});
-      testRenderDeckLayer(t, 'empty heatmap surface', [layer], {layerManager: manager});
-      t.equal(layer.props.data.length, 0, 'supports an empty filtered dataset');
+      for (const surface of [false, true]) {
+        layer = layer.clone({surface, data: []});
+        testRenderDeckLayer(t, 'empty filtered heatmap', [layer], {layerManager: manager});
+        t.equal(layer.props.data.length, 0, 'both display modes support an empty filtered dataset');
+      }
     } finally {
+      effect.cleanup(effectContext);
       manager.finalize();
     }
   }
