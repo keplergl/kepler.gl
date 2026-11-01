@@ -38,6 +38,159 @@ const columns = {
   lng: 'lng'
 };
 
+// Exercise deck.gl's attribute lifecycle without allocating GPU textures or drawing.
+class AttributeTestHeatmapLayer extends KeplerHeatmapLayer {
+  updatedAttributes = new Set();
+  _setupResources() {}
+  updateShaders() {}
+  _updateHeatmapState() {}
+  updateAttributes(changedAttributes) {
+    super.updateAttributes(changedAttributes);
+    Object.keys(changedAttributes).forEach(name => this.updatedAttributes.add(name));
+  }
+  renderLayers() {
+    return [];
+  }
+}
+
+test('#HeatmapLayer -> config actions invalidate cached weights only when needed', t => {
+  const table = new KeplerTable({info: {id: 'weights'}, color: [1, 2, 3]});
+  table.importData({
+    data: {
+      fields: ['lat', 'lng', 'value', 'other'].map(name => ({name, type: 'real'})),
+      rows: [
+        [37.75, -122.4, 1, 9],
+        [37.76, -122.41, 4, 4],
+        [37.77, -122.42, 9, 1]
+      ]
+    }
+  });
+  const layer = validateLayerWithData(
+    table,
+    {
+      type: 'heatmap',
+      config: {dataId: 'weights', columns, weightField: table.fields[2], weightScale: 'linear'}
+    },
+    LayerClasses
+  );
+  const datasets = {weights: table};
+  layer.updateLayerDomain(datasets);
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layer.formatLayerData(datasets)]
+  };
+  const viewport = new MapView().makeViewport({
+    width: INITIAL_MAP_STATE.width,
+    height: INITIAL_MAP_STATE.height,
+    viewState: INITIAL_MAP_STATE
+  });
+  const manager = new LayerManager(device, {viewport});
+  const apply = action => {
+    state = visStateReducer(state, action);
+  };
+  const configure = config => apply(VisStateActions.layerConfigChange(state.layers[0], config));
+  const check = (label, expected, weightsChanged, positionsChanged = false) => {
+    const [rendered] = state.layers[0].renderLayer({
+      data: state.layerData[0],
+      gpuFilter: state.datasets.weights.gpuFilter,
+      mapState: INITIAL_MAP_STATE,
+      idx: 0,
+      visible: true,
+      layerCallbacks: {},
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig
+    });
+    const [deckLayer] = testRenderDeckLayer(
+      t,
+      'heatmap attributes',
+      new AttributeTestHeatmapLayer(rendered.props),
+      {layerManager: manager}
+    );
+    const {weights} = deckLayer.getAttributeManager().getAttributes();
+    const actual = weights.isConstant
+      ? rendered.props.data.map(() => weights.value[0])
+      : Array.from(weights.value.slice(0, rendered.props.data.length));
+    t.equal(actual.length, expected.length, `${label}: row count`);
+    actual.forEach((value, i) =>
+      t.ok(Math.abs(value - expected[i]) < 1e-6, `${label}: cached weight ${i}`)
+    );
+    t.equal(
+      deckLayer.updatedAttributes.has('weights'),
+      weightsChanged,
+      `${label}: weight invalidation`
+    );
+    t.equal(
+      deckLayer.updatedAttributes.has('positions'),
+      positionsChanged,
+      `${label}: position invalidation`
+    );
+  };
+  try {
+    check('linear', [0, 3 / 8, 1], true, true);
+    const originalData = state.layerData[0].data;
+    configure({weightScale: 'sqrt'});
+    t.equal(state.layerData[0].data, originalData, 'scale change reuses the data array');
+    t.equal(
+      state.layerData[0].getWeight(originalData[1]),
+      0.5,
+      'configuration action updates the weight accessor'
+    );
+    check('sqrt', [0, 0.5, 1], true);
+    configure({weightScale: 'sqrt'});
+    check('same scale', [0, 0.5, 1], false);
+    apply(VisStateActions.layerVisConfigChange(state.layers[0], {opacity: 0.4}));
+    check('opacity', [0, 0.5, 1], false);
+    configure({weightScale: 'log'});
+    check('log', [0, Math.log(4) / Math.log(9), 1], true);
+    configure({weightScale: 'linear'});
+    check('back to linear', [0, 3 / 8, 1], true);
+    configure({weightDomain: [1, 17]});
+    check('domain', [0, 3 / 16, 0.5], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(
+        state.layers[0],
+        {weightField: table.fields[3]},
+        'weight'
+      )
+    );
+    check('other field', [1, 3 / 8, 0], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(state.layers[0], {weightField: null}, 'weight')
+    );
+    check('cleared field', [1, 1, 1], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(
+        state.layers[0],
+        {weightField: table.fields[2]},
+        'weight'
+      )
+    );
+    check('restored field', [0, 3 / 8, 1], true);
+    apply(VisStateActions.addFilter('weights'));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [4, 9]));
+    const filtered = state.layerData[0];
+    check('filtered data', filtered.data.map(filtered.getWeight), true, true);
+    apply(VisStateActions.removeFilter(0));
+    check('restored data', [0, 3 / 8, 1], true, true);
+    apply(
+      VisStateActions.updateDataset('weights', {
+        fields: ['lat', 'lng', 'value', 'other'].map(name => ({name, type: 'real'})),
+        rows: [
+          [37.75, -122.4, 1, 9],
+          [37.76, -122.41, 5, 4],
+          [37.77, -122.42, 17, 1]
+        ]
+      })
+    );
+    check('replaced data', [0, 0.25, 1], true, true);
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
 test('#HeatmapLayer -> contructor', t => {
   const TEST_CASES = {
     CREATE: [
@@ -700,7 +853,10 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
             const aggregator = rendered.state.aggregator;
             const counts = [0, 0];
             for (let j = 0; j < aggregator.binCount; j++) {
-              aggregator.getBin(j).value.forEach((count, channel) => (counts[channel] += count));
+              aggregator.getBin(j).value.forEach((count, channel) => {
+                // Masked empty bins contribute no retained points to the total.
+                if (!Number.isNaN(count)) counts[channel] += count;
+              });
             }
             t.deepEqual(counts, [expected, expected], message);
           }

@@ -26,6 +26,7 @@ const FLOORS = {
   axios: {1: '1.20.0'},
   'brace-expansion': {1: '1.1.21', 2: '2.1.7', 5: '5.0.12'},
   compression: {1: '1.8.2'},
+  'd3-color': {3: '3.1.0'},
   dompurify: {3: '3.4.17'},
   'fast-uri': {3: '3.1.9'},
   fflate: {0.7: '0.7.5', 0.8: '0.8.3'},
@@ -34,13 +35,19 @@ const FLOORS = {
   'ip-address': {10: '10.7.4'},
   'js-yaml': {3: '3.15.2', 4: '4.3.2'},
   moment: {2: '2.31.0'},
+  'node-fetch': {2: '2.6.7'},
   'postcss-selector-parser': {6: '6.1.5', 7: '7.1.6'},
   'proxy-addr': {2: '2.0.8'},
   qs: {6: '6.16.1'},
   'shell-quote': {1: '1.11.0'},
   'smol-toml': {1: '1.9.0'},
-  'source-map-js': {1: '1.2.2'}
+  'source-map-js': {1: '1.2.2'},
+  thrift: {0.23: '0.23.0'}
 };
+
+// The standalone projects use PostCSS 8. The root still has a legacy
+// PostCSS 7 tree through Stylelint that needs a separate tooling upgrade.
+const STANDALONE_FLOORS = {...FLOORS, postcss: {8: '8.5.23'}};
 
 // These patches apply to the root build tools. Examples have separate trees.
 const ROOT_FLOORS = {
@@ -126,7 +133,7 @@ function resolvedVersions(lockText, floors) {
 
 test('lockfiles resolve patched versions of known vulnerable transitive dependencies', t => {
   LOCKFILES.forEach(rel => {
-    const floors = rel === 'yarn.lock' ? ROOT_FLOORS : FLOORS;
+    const floors = rel === 'yarn.lock' ? ROOT_FLOORS : STANDALONE_FLOORS;
     const versions = resolvedVersions(fs.readFileSync(path.join(ROOT, rel), 'utf8'), floors);
 
     Object.keys(floors).forEach(name => {

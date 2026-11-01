@@ -22,6 +22,7 @@ import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 
 import {
   assignAccessor,
+  convertStructToFixedSizeList,
   extractAccessorsFromProps,
   getGeometryVector,
   invertOffsets
@@ -151,7 +152,7 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
     const layers: ScatterplotLayer<any>[] = [];
     for (let recordBatchIdx = 0; recordBatchIdx < table.batches.length; recordBatchIdx++) {
-      const geometryData = geometryColumn.data[recordBatchIdx];
+      const geometryData = convertStructToFixedSizeList(geometryColumn.data[recordBatchIdx]);
       const flatCoordsData = ga.child.getPointChild(geometryData);
       const flatCoordinateArray = flatCoordsData.values;
 

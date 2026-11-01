@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer, GetPickingInfoParams, LayersList, PickingInfo} from '@deck.gl/core';
+import {
+  CompositeLayer,
+  GetPickingInfoParams,
+  LayersList,
+  PickingInfo,
+  UpdateParameters
+} from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
 import geoViewport from '@mapbox/geo-viewport';
@@ -82,6 +88,10 @@ export const clusterAggregation: AggregationType = {
     {
       key: 'clustering',
       triggers: {
+        viewport: {
+          prop: 'viewport',
+          updateTrigger: 'viewport'
+        },
         clusterRadius: {
           prop: 'clusterRadius'
         },
@@ -185,6 +195,10 @@ export default class ClusterLayer extends CompositeLayer {
     };
   }
 
+  shouldUpdateState(params: UpdateParameters<this>): boolean {
+    return super.shouldUpdateState(params) || params.changeFlags.viewportChanged;
+  }
+
   updateState({
     oldProps,
     props,
@@ -196,7 +210,18 @@ export default class ClusterLayer extends CompositeLayer {
   }) {
     this.setState({
       aggregatorState: (this.state as unknown as ClusterLayerState).cpuAggregator.updateState(
-        {oldProps, props, changeFlags},
+        {
+          oldProps,
+          props,
+          changeFlags: {
+            ...changeFlags,
+            // Refresh the viewport query without rebuilding the GeoJSON or cluster index.
+            updateTriggersChanged: {
+              ...changeFlags.updateTriggersChanged,
+              viewport: changeFlags.viewportChanged
+            }
+          }
+        },
         {
           viewport: this.context.viewport,
           // @ts-expect-error props passed for internal calculation

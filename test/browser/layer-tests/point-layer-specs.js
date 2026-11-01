@@ -13,7 +13,12 @@ import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/de
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {arrowSchemaToFields, processArrowBatches, processGeojson} from '@kepler.gl/processors';
-import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
+import {
+  findDefaultLayer,
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  renderDeckGlLayer
+} from '@kepler.gl/reducers';
 import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
 
@@ -36,6 +41,89 @@ import {
 } from 'test/helpers/layer-utils';
 
 const {PointLayer} = KeplerGlLayers;
+
+test('#PointLayer -> native separated points preserve every coordinate through import', async t => {
+  for (const dimensions of [2, 3]) {
+    for (const separated of [true, false]) {
+      const names = ['x', 'y', 'z'].slice(0, dimensions);
+      const type = separated
+        ? new arrow.Struct(names.map(name => new arrow.Field(name, new arrow.Float64(), false)))
+        : new arrow.FixedSizeList(dimensions, new arrow.Field('coords', new arrow.Float64()));
+      const coordinates = [
+        [10, 20, 5],
+        [30, 40, 15],
+        [50, 60, 25]
+      ].map(p => p.slice(0, dimensions));
+      const batches = [coordinates.slice(0, 2), coordinates.slice(2)].map(points => {
+        const table = new arrow.Table({
+          geometry: arrow.vectorFromArray(
+            separated
+              ? points.map(point => Object.fromEntries(names.map((name, i) => [name, point[i]])))
+              : points,
+            type
+          )
+        });
+        table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+        return table;
+      });
+      const table = arrow.tableFromIPC(arrow.tableToIPC(batches[0].concat(batches[1]), 'file'));
+      const originalBytes = arrow.tableToIPC(table, 'file');
+      const dataset = new KeplerTable({info: {id: 'native-points'}, color: [0, 0, 0]});
+      await dataset.importData({data: processArrowBatches(table.batches)});
+      const [geojson] = findDefaultLayer(dataset, {geojson: KeplerGlLayers.GeojsonLayer});
+      t.ok(geojson, 'native point metadata discovers the default GeoJSON layer');
+      geojson.formatLayerData({[dataset.id]: dataset});
+      t.deepEqual(
+        Array.from(geojson.dataToFeature[0].points.positions.value),
+        coordinates.flat(),
+        'default GeoJSON positions contain every axis'
+      );
+      t.equal(geojson.dataToFeature[0].points.positions.size, dimensions, 'GeoJSON position size');
+      t.deepEqual(
+        geojson.meta.bounds,
+        [10, 20, 50, 60],
+        'GeoJSON bounds use longitude and latitude'
+      );
+
+      // Progressive imports retain unequal record batches, including Arrow slices.
+      const sliced = table.slice(1);
+      await dataset.update({cols: [sliced.getChildAt(0)], arrowTable: sliced});
+      const layer = new PointLayer({dataId: dataset.id, columnMode: 'geoarrow'});
+      layer.config.columns.geoarrow = {value: 'geometry', fieldIdx: 0};
+      const formatted = layer.formatLayerData({[dataset.id]: dataset});
+      const [composite] = layer.renderLayer({
+        data: formatted,
+        dataset,
+        idx: 0,
+        layerInteraction: {},
+        mapState: INITIAL_MAP_STATE,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        visible: true,
+        layerCallbacks: {}
+      });
+      const sublayers = composite.renderLayers();
+      t.equal(sublayers.length, 2, 'Point retains both sliced batches');
+      sublayers.forEach((sublayer, i) => {
+        const position = sublayer.props.data.attributes.getPosition;
+        t.deepEqual(
+          Array.from(position.value),
+          coordinates[i + 1],
+          'Point positions include latitude and altitude'
+        );
+        t.equal(position.size, dimensions, 'Point position size');
+        t.equal(
+          composite.getPickingInfo({info: {index: 0}, sourceLayer: sublayer}).index,
+          i,
+          'picking remains aligned'
+        );
+      });
+      t.deepEqual(layer.meta.bounds, [30, 40, 50, 60], 'Point bounds reflect the slice');
+      t.deepEqual(arrow.tableToIPC(table, 'file'), originalBytes, 'rendering preserves the source');
+    }
+  }
+  t.end();
+});
 
 ['point', 'multipoint'].forEach(geometryType => {
   [false, true].forEach(gpu => {

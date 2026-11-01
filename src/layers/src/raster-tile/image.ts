@@ -391,7 +391,12 @@ async function loadMultiAssetSTAC(requests: AssetRequestData[]): Promise<ImageDa
   const results = await Promise.all(requests.map(request => loadNpyArray(request, true)));
   // The first request includes a mask
   const imageMask = results[0]?.pop() || null;
-  const imageBands = results.flat().filter(band => band !== null) as ImageData['imageBands'];
+  // Every requested asset is required. Keep the failed-load sentinel so getTileData
+  // cannot cache a partial tile with shifted channels or a missing validity mask.
+  if (results.some(bands => !bands?.length)) {
+    return {imageBands: null};
+  }
+  const imageBands = results.flat() as ImageData['imageBands'];
   return {imageBands, imageMask};
 }
 

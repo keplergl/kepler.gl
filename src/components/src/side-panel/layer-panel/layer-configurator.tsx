@@ -3,12 +3,14 @@
 
 /* eslint-disable complexity */
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component, useCallback, useRef, useState} from 'react';
+import React, {Component, useCallback, useEffect, useRef, useState} from 'react';
 import {useIntl} from 'react-intl';
 import styled from 'styled-components';
+import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
 import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import Switch from '../../common/switch';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -25,6 +27,7 @@ import LayerErrorMessage from './layer-error-message';
 import LayerTypeSelectorFactory from './layer-type-selector';
 import TextLabelPanelFactory from './text-label-panel';
 import VisConfigSliderFactory from './vis-config-slider';
+import RangeSliderFactory from '../../common/range-slider';
 import VisConfigSwitchFactory from './vis-config-switch';
 import ScenegraphModelSelectorFactory, {
   SCENEGRAPH_3D_MODEL_OPTIONS
@@ -58,8 +61,8 @@ import {
   isExplicitZarrAxis,
   formatZarrCoordinate
 } from '@kepler.gl/table';
-import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
-import {capitalizeFirstLetter} from '@kepler.gl/utils';
+import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
+import {capitalizeFirstLetter, clamp, getNumericStepSize} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
@@ -126,6 +129,19 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
 
   .bitmap-bounds-sliders .kg-range-slider__input {
     width: 80px;
+  }
+
+  .contour-range-values {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: ${props => props.theme.textColor};
+    font-size: ${props => props.theme.sliderInputFontSize};
+  }
+
+  .contour-invert-switch {
+    display: flex;
+    justify-content: space-between;
   }
 `;
 
@@ -431,7 +447,8 @@ LayerConfiguratorFactory.deps = [
   AggrScaleSelectorFactory,
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
-  ScenegraphModelSelectorFactory
+  ScenegraphModelSelectorFactory,
+  RangeSliderFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -449,7 +466,8 @@ export default function LayerConfiguratorFactory(
   AggrScaleSelector: ReturnType<typeof AggrScaleSelectorFactory>,
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
-  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>
+  ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
+  RangeSlider: ReturnType<typeof RangeSliderFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   const AggregationTextLabelPanel: React.FC<
     Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
@@ -460,6 +478,52 @@ export default function LayerConfiguratorFactory(
         {...props}
         fields={[createPointCountLabelField(intl.formatMessage({id: 'property.pointCount'}))]}
       />
+    );
+  };
+
+  const ContourRangeSlider: React.FC<{
+    layer: Layer;
+    range: [number, number];
+    onChange: LayerConfiguratorProps['updateLayerVisConfig'];
+  }> = ({layer, range, onChange}) => {
+    const intl = useIntl();
+    const {minimum, maximum} = layer.config.visConfig;
+    const low = Number.isFinite(minimum) ? clamp(range, minimum) : range[0];
+    const high = Number.isFinite(maximum) ? clamp(range, maximum) : range[1];
+    const [value0, value1] = low < high ? [low, high] : range;
+    useEffect(() => {
+      if (minimum !== value0 || maximum !== value1) {
+        onChange({minimum: value0, maximum: value1});
+      }
+    }, [minimum, maximum, value0, value1, onChange]);
+    return (
+      <SidePanelSection>
+        <RangeSlider
+          range={range}
+          value0={value0}
+          value1={value1}
+          step={getNumericStepSize(range[1] - range[0])}
+          isRanged
+          showInput={false}
+          onChange={([nextMinimum, nextMaximum]) => {
+            if (
+              Number.isFinite(nextMinimum) &&
+              Number.isFinite(nextMaximum) &&
+              nextMinimum < nextMaximum
+            ) {
+              onChange({minimum: nextMinimum, maximum: nextMaximum});
+            }
+          }}
+        />
+        <div className="contour-range-values">
+          <output aria-label={intl.formatMessage({id: 'layerVisConfigs.contour.minimum'})}>
+            {value0}
+          </output>
+          <output aria-label={intl.formatMessage({id: 'layerVisConfigs.contour.maximum'})}>
+            {value1}
+          </output>
+        </div>
+      </SidePanelSection>
     );
   };
 
@@ -1968,6 +2032,147 @@ export default function LayerConfiguratorFactory(
               })}
             </LayerConfigGroup>
           ) : null}
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
+    _contourValueRange = createSelector(
+      (dataContainer: Datasets[string]['dataContainer'] | undefined) => dataContainer,
+      (_dataContainer, valueAccessor: Field['valueAccessor'] | undefined) => valueAccessor,
+      (_dataContainer, _valueAccessor, dataRevision: number | undefined) => dataRevision,
+      (dataContainer, valueAccessor): [number, number] | null => {
+        if (!dataContainer || !valueAccessor) return null;
+        let minimum = Infinity;
+        let maximum = -Infinity;
+        for (let index = 0; index < dataContainer.numRows(); index++) {
+          const value = valueAccessor({index});
+          if (Number.isFinite(value)) {
+            minimum = Math.min(minimum, value);
+            maximum = Math.max(maximum, value);
+          }
+        }
+        return minimum <= maximum ? [minimum, maximum] : null;
+      }
+    );
+
+    _renderContourLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
+      const {visConfigSettings: settings, config} = layer;
+      const valueColumn = config.columns.value.value;
+      const valueRange = this._contourValueRange(
+        dataset?.dataContainer,
+        dataset?.getColumnField(valueColumn)?.valueAccessor,
+        dataset?.dataRevision
+      );
+      const hasValueRange = valueRange && valueRange[0] < valueRange[1];
+      const inputModes = [
+        {id: 'auto', label: 'Auto'},
+        {id: 'grid', label: 'Regular grid'},
+        {id: 'points', label: 'Scattered points'}
+      ];
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup label="layer.color" collapsible>
+            <VisConfigSwitch {...settings.colorByLevel} {...visConfiguratorProps} />
+            {config.visConfig.colorByLevel ? (
+              <LayerColorRangeSelector
+                {...visConfiguratorProps}
+                onChange={({colorRange}) =>
+                  visConfiguratorProps.onChange({
+                    colorRange: {
+                      ...colorRange,
+                      colorLegends: config.visConfig.colorRange.colorLegends
+                    }
+                  })
+                }
+              />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...settings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            label="layerVisConfigs.contour.levelsGroup"
+            collapsible
+            expanded={config.visConfig.customRange}
+          >
+            <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <SidePanelSection>
+                <div className="contour-invert-switch">
+                  <PanelLabel htmlFor={`${layer.id}-invert-switch`}>
+                    <FormattedMessage id="layerVisConfigs.contour.invert" />
+                  </PanelLabel>
+                  <Switch
+                    id={`${layer.id}-invert-switch`}
+                    checked={!config.visConfig.below}
+                    onChange={() => visConfiguratorProps.onChange({below: !config.visConfig.below})}
+                  />
+                </div>
+              </SidePanelSection>
+              <VisConfigSwitch
+                {...settings.customRange}
+                {...visConfiguratorProps}
+                onChange={({customRange}) =>
+                  visConfiguratorProps.onChange(
+                    customRange && hasValueRange
+                      ? {customRange, minimum: valueRange[0], maximum: valueRange[1]}
+                      : {customRange}
+                  )
+                }
+              />
+              {config.visConfig.customRange ? (
+                <div className="contour-level-range">
+                  {hasValueRange ? (
+                    <ContourRangeSlider
+                      key={JSON.stringify([config.dataId, valueColumn, valueRange])}
+                      {...visConfiguratorProps}
+                      range={valueRange}
+                    />
+                  ) : (
+                    <FormattedMessage id="layerVisConfigs.contour.noValueRange" />
+                  )}
+                </div>
+              ) : null}
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup label="layerVisConfigs.contour.surface" collapsible>
+            <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              <SidePanelSection>
+                <PanelLabel>
+                  <FormattedMessage id={settings.inputMode.label} />
+                </PanelLabel>
+                <ItemSelector
+                  options={inputModes}
+                  selectedItems={inputModes.find(mode => mode.id === config.visConfig.inputMode)}
+                  displayOption="label"
+                  getOptionValue="id"
+                  multiSelect={false}
+                  searchable={false}
+                  onChange={inputMode => visConfiguratorProps.onChange({inputMode})}
+                />
+              </SidePanelSection>
+              {config.visConfig.inputMode !== 'grid' ? (
+                <VisConfigSlider {...settings.interpolationResolution} {...visConfiguratorProps} />
+              ) : null}
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...settings.filled}
+            {...visConfiguratorProps}
+            label="layerVisConfigs.contour.fillGroup"
+          >
+            {config.visConfig.filled ? (
+              <VisConfigSlider {...settings.fillOpacity} {...visConfiguratorProps} />
+            ) : null}
+          </LayerConfigGroup>
+          <LayerConfigGroup {...settings.stroked} {...visConfiguratorProps} label="layer.outline">
+            {config.visConfig.stroked ? (
+              <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
+            ) : null}
+          </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
     }

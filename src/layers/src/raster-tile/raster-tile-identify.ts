@@ -252,11 +252,11 @@ export function computeDerivedValue(
       if (!Number.isFinite(g)) {
         return null;
       }
-      const denominator = (r + g + 0.5) * 1.5;
+      const denominator = r + g + 0.5;
       if (denominator === 0) {
         return null;
       }
-      return {name: derivedLabel || 'SAVI', value: (r - g) / denominator};
+      return {name: derivedLabel || 'SAVI', value: (1.5 * (r - g)) / denominator};
     }
     case BandCombination.ModifiedSoilAdjustedVegetationIndex:
     case 'modifiedSoilAdjustedVegetationIndex': {
