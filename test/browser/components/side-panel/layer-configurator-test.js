@@ -1303,3 +1303,120 @@ test('Components -> LayerConfigurator -> zarr variable selector changes the vari
 
   t.end();
 });
+
+test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group', t => {
+  const layer = new KeplerGlLayers.HeatmapLayer({id: 'surface-controls', dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(v => v + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  const group = view.getByText('3D Surface').closest('.layer-config-group');
+  const header = group.querySelector('.layer-config-group__header');
+  const toggle = within(header).getByRole('checkbox');
+  const content = group.querySelector('.layer-config-group__content');
+  const options = content.querySelector('.layer-config-group__content__collapsible');
+  try {
+    t.equal(group, group.parentElement.lastElementChild, '3D Surface is the last settings group');
+    t.notOk(view.queryByText('Contour step'), 'contour step is hidden until contours are enabled');
+    t.notOk(toggle.checked, '3D Surface is off by default');
+    t.equal(layer.config.visConfig.surfaceEnabled, false, 'default display remains 2D');
+    t.ok(group.classList.contains('collapsed'), 'surface group starts collapsed');
+    t.ok(content.classList.contains('disabled'), 'surface options are disabled while 2D');
+    t.ok(
+      options.contains(view.getByText('Maximum height (m)')),
+      'height is inside the collapsible options'
+    );
+    t.ok(
+      options.contains(view.getByText('Surface shading')),
+      'shading is inside the collapsible options'
+    );
+    t.ok(
+      options.contains(view.getByText('Surface contours')),
+      'contours are inside the collapsible options'
+    );
+
+    fireEvent.click(toggle);
+    t.ok(toggle.checked, 'toggle enables 3D Surface');
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {surfaceEnabled: true},
+      'enabling emits the boolean setting directly'
+    );
+    t.notOk(content.classList.contains('disabled'), 'enabled surface options can be edited');
+    t.notOk(group.classList.contains('collapsed'), 'enabling expands the surface options');
+
+    const calls = changed.callCount;
+    fireEvent.click(header);
+    t.ok(group.classList.contains('collapsed'), 'header can collapse all surface options');
+    t.equal(changed.callCount, calls, 'collapsing does not change the selected display mode');
+    fireEvent.click(header);
+    t.notOk(group.classList.contains('collapsed'), 'header can expand the options again');
+
+    const heightInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
+      input => input.value === '1000'
+    );
+    fireEvent.change(heightInput, {target: {value: '2500'}});
+    fireEvent.blur(heightInput);
+    t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 2500}, 'height edits update the surface');
+    fireEvent.click(options.querySelector('#surface-controls-surfaceLighting-switch'));
+    t.deepEqual(changed.lastCall.args[0], {surfaceLighting: false}, 'shading can be disabled');
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
+    t.deepEqual(changed.lastCall.args[0], {surfaceContours: true}, 'contours can be enabled');
+    t.ok(options.contains(view.getByText('Contour step')), 'contour step is in the surface group');
+    const contourInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
+      input => input.value === '0.1'
+    );
+    for (const step of [0.01, 0.2, 5, 100]) {
+      fireEvent.change(contourInput, {target: {value: String(step)}});
+      fireEvent.blur(contourInput);
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {surfaceContourStep: step},
+        `contour step ${step} can be selected without clamping`
+      );
+    }
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
+    t.notOk(view.queryByText('Contour step'), 'disabling contours hides their step control');
+    fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
+    t.equal(layer.config.visConfig.surfaceContourStep, 100, 'reenabling contours retains the step');
+    fireEvent.click(toggle);
+    t.notOk(toggle.checked, 'toggle returns to 2D');
+    t.deepEqual(changed.lastCall.args[0], {surfaceEnabled: false}, 'disabling stores false');
+    t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
+    fireEvent.click(toggle);
+    t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
+    t.equal(layer.config.visConfig.surfaceContourStep, 100, 'switching modes retains contour step');
+  } finally {
+    view.unmount();
+  }
+  const restored = renderWithTheme(<Editor />);
+  try {
+    const restoredGroup = restored.getByText('3D Surface').closest('.layer-config-group');
+    t.ok(
+      within(restoredGroup.querySelector('.layer-config-group__header')).getByRole('checkbox')
+        .checked,
+      'saved Surface mode restores an enabled toggle'
+    );
+    t.ok(
+      restoredGroup.classList.contains('collapsed'),
+      'reopened surface settings start collapsed'
+    );
+  } finally {
+    restored.unmount();
+    t.end();
+  }
+});

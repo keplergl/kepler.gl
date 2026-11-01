@@ -219,6 +219,17 @@ export default {
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
     weightAggregation: 'Weight Aggregation',
+    heatmap: {
+      surface: '3D Surface',
+      surfaceHeight: 'Maximum height (m)',
+      surfaceHeightDescription:
+        'Maximum surface height in meters, independent of intensity. Tilt the map to see the surface. Height represents density, not terrain elevation.',
+      surfaceLighting: 'Surface shading',
+      surfaceContours: 'Surface contours',
+      surfaceContourStep: 'Contour step',
+      surfaceContourStepDescription:
+        'Density interval between contour lines. Smaller values show more lines.'
+    },
     resolutionRange: 'Resolution range',
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',

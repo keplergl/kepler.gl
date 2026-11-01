@@ -759,6 +759,33 @@ export default function LayerConfiguratorFactory(
               />
             </SidePanelSection>
           </LayerConfigGroup>
+          {/* 3D Surface */}
+          <LayerConfigGroup
+            {...layer.visConfigSettings.surfaceEnabled}
+            {...visConfiguratorProps}
+            collapsible
+          >
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider
+                {...layer.visConfigSettings.surfaceHeight}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.surfaceLighting}
+                {...visConfiguratorProps}
+              />
+              <VisConfigSwitch
+                {...layer.visConfigSettings.surfaceContours}
+                {...visConfiguratorProps}
+              />
+              {visConfig.surfaceContours ? (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.surfaceContourStep}
+                  {...visConfiguratorProps}
+                />
+              ) : null}
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
     }
