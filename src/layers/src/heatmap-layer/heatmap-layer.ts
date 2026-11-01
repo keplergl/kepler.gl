@@ -59,7 +59,7 @@ export type HeatmapLayerVisConfigSettings = {
   intensity: VisConfigNumber;
   threshold: VisConfigNumber;
   aggregation: VisConfigSelection;
-  heatmapMode: VisConfigSelection;
+  surfaceEnabled: VisConfigBoolean;
   surfaceHeight: VisConfigNumber;
   surfaceLighting: VisConfigBoolean;
   surfaceContours: VisConfigBoolean;
@@ -85,7 +85,7 @@ export type HeatmapLayerVisConfig = {
   intensity: number;
   threshold: number;
   aggregation: string;
-  heatmapMode: 'flat' | 'surface';
+  surfaceEnabled: boolean;
   surfaceHeight: number;
   surfaceLighting: boolean;
   surfaceContours: boolean;
@@ -164,19 +164,18 @@ export const heatmapVisConfigs: {
   intensity: VisConfigNumber;
   threshold: VisConfigNumber;
   aggregation: VisConfigSelection;
-  heatmapMode: VisConfigSelection;
+  surfaceEnabled: VisConfigBoolean;
   surfaceHeight: VisConfigNumber;
   surfaceLighting: VisConfigBoolean;
   surfaceContours: VisConfigBoolean;
   surfaceContourStep: VisConfigNumber;
 } = {
-  heatmapMode: {
-    type: 'select',
-    defaultValue: 'flat',
-    label: 'layerVisConfigs.heatmap.displayMode',
-    options: ['flat', 'surface'],
-    property: 'heatmapMode'
-  } as VisConfigSelection,
+  surfaceEnabled: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.heatmap.surface',
+    property: 'surfaceEnabled'
+  } as VisConfigBoolean,
   surfaceHeight: {
     type: 'number',
     defaultValue: 1000,
@@ -345,7 +344,7 @@ class HeatmapLayer extends Layer {
       'intensity',
       'threshold',
       'aggregation',
-      'heatmapMode',
+      'surfaceEnabled',
       'surfaceHeight',
       'surfaceLighting',
       'surfaceContours',
@@ -734,7 +733,7 @@ class HeatmapLayer extends Layer {
         colorRange,
         weightsTextureSize: 512,
         debounceTimeout: 0,
-        surface: visConfig.heatmapMode === 'surface',
+        surface: visConfig.surfaceEnabled,
         surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
           ? Math.max(0, visConfig.surfaceHeight)
           : 1000,

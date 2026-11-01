@@ -202,7 +202,7 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
-          t.equal(layer.config.visConfig.heatmapMode, 'flat', 'existing maps default to Flat');
+          t.equal(layer.config.visConfig.surfaceEnabled, false, 'existing maps default to 2D');
           t.equal(
             layer.config.visConfig.surfaceContourStep,
             0.1,
@@ -866,7 +866,7 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
 
     state.layers
       .find(layer => layer.type === 'heatmap')
-      .updateLayerVisConfig({heatmapMode: 'surface'});
+      .updateLayerVisConfig({surfaceEnabled: true});
     check('no filter', 3);
     apply(VisStateActions.addFilter('first'));
     apply(VisStateActions.setFilter(0, 'name', 'value'));
@@ -918,8 +918,9 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
     {type: 'heatmap', config: {dataId, columns}},
     LayerClasses
   );
+  t.equal(layer.config.visConfig.surfaceEnabled, false, 'a missing surface flag defaults to 2D');
   const surfaceConfig = {
-    heatmapMode: 'surface',
+    surfaceEnabled: true,
     surfaceHeight: 2500,
     surfaceLighting: false,
     surfaceContours: true,
@@ -931,6 +932,12 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
     layers: [layer],
     layerOrder: [layer.id]
   }).visState;
+  t.equal(
+    saved.layers[0].config.visConfig.surfaceEnabled,
+    true,
+    'saves the enabled flag as a boolean'
+  );
+  t.notOk('heatmapMode' in saved.layers[0].config.visConfig, 'does not save the old mode enum');
   const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
   const restored = validateLayerWithData(preparedDataset, loaded.layers[0], LayerClasses);
   for (const [key, value] of Object.entries(surfaceConfig)) {
@@ -953,9 +960,26 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
   t.equal(render().props.surfaceHeight, 1000, 'invalid height has a finite fallback');
   restored.updateLayerVisConfig({surfaceHeight: -20});
   t.equal(render().props.surfaceHeight, 0, 'negative height cannot invert the surface');
-  restored.updateLayerVisConfig({heatmapMode: 'flat'});
-  t.notOk(render().props.surface, 'can return to Flat');
+  restored.updateLayerVisConfig({surfaceEnabled: false});
+  t.equal(render().props.surface, false, 'false selects the 2D renderer');
   t.equal(render().props.data, data.data, 'display changes reuse the filtered data');
+  const disabledSaved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [restored],
+    layerOrder: [restored.id]
+  }).visState;
+  t.equal(
+    disabledSaved.layers[0].config.visConfig.surfaceEnabled,
+    false,
+    'saves the disabled flag as a boolean'
+  );
+  const disabledLoaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(disabledSaved))).visState;
+  t.equal(
+    validateLayerWithData(preparedDataset, disabledLoaded.layers[0], LayerClasses).config.visConfig
+      .surfaceEnabled,
+    false,
+    'restores the disabled flag'
+  );
   t.end();
 });
 

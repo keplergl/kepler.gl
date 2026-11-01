@@ -1333,7 +1333,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.equal(group, group.parentElement.lastElementChild, '3D Surface is the last settings group');
     t.notOk(view.queryByText('Contour step'), 'contour step is hidden until contours are enabled');
     t.notOk(toggle.checked, '3D Surface is off by default');
-    t.equal(layer.config.visConfig.heatmapMode, 'flat', 'default display remains 2D');
+    t.equal(layer.config.visConfig.surfaceEnabled, false, 'default display remains 2D');
     t.ok(group.classList.contains('collapsed'), 'surface group starts collapsed');
     t.ok(content.classList.contains('disabled'), 'surface options are disabled while 2D');
     t.ok(
@@ -1353,8 +1353,8 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.ok(toggle.checked, 'toggle enables 3D Surface');
     t.deepEqual(
       changed.lastCall.args[0],
-      {heatmapMode: 'surface'},
-      'enabling preserves the saved mode format'
+      {surfaceEnabled: true},
+      'enabling emits the boolean setting directly'
     );
     t.notOk(content.classList.contains('disabled'), 'enabled surface options can be edited');
     t.notOk(group.classList.contains('collapsed'), 'enabling expands the surface options');
@@ -1393,7 +1393,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.equal(layer.config.visConfig.surfaceContourStep, 0.2, 'reenabling contours retains the step');
     fireEvent.click(toggle);
     t.notOk(toggle.checked, 'toggle returns to 2D');
-    t.deepEqual(changed.lastCall.args[0], {heatmapMode: 'flat'}, 'disabling stores Flat mode');
+    t.deepEqual(changed.lastCall.args[0], {surfaceEnabled: false}, 'disabling stores false');
     t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
     fireEvent.click(toggle);
     t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');

@@ -712,7 +712,6 @@ export default function LayerConfiguratorFactory(
         label: key.charAt(0) + key.slice(1).toLowerCase()
       }));
       const selectedAggregation = aggregationOptions.find(({id}) => id === visConfig.aggregation);
-      const surface = visConfig.heatmapMode === 'surface';
 
       return (
         <StyledLayerVisualConfigurator>
@@ -762,13 +761,8 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           {/* 3D Surface */}
           <LayerConfigGroup
+            {...layer.visConfigSettings.surfaceEnabled}
             {...visConfiguratorProps}
-            label="layerVisConfigs.heatmap.surface"
-            property="heatmapMode"
-            checked={surface}
-            onChange={({heatmapMode}) =>
-              visConfiguratorProps.onChange({heatmapMode: heatmapMode ? 'surface' : 'flat'})
-            }
             collapsible
           >
             <ConfigGroupCollapsibleContent>

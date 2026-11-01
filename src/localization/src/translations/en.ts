@@ -220,8 +220,6 @@ export default {
     heightAggregation: 'Height Aggregation',
     weightAggregation: 'Weight Aggregation',
     heatmap: {
-      displayMode: 'Display',
-      flat: 'Flat',
       surface: '3D Surface',
       surfaceHeight: 'Height scale (m)',
       surfaceHeightDescription:
