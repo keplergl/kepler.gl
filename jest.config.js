@@ -50,7 +50,7 @@ const config = {
   // - tiny-sdf: https://github.com/visgl/deck.gl/issues/7735
   // - zarrita/@zarrita/@developmentseed: ESM-only, used by the Zarr layer.
   transformIgnorePatterns: [
-    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|@flowmap\\.gl|@math\\.gl|d3-.*|@sqlrooms|@paralleldrive/cuid2|@noble/hashes|kdbush|preact|maplibregl-mapbox-request-transformer|react-date-picker|react-time-picker|react-calendar|react-clock|react-fit|@wojtekmaj\\/date-utils|get-user-locale|make-event-props|update-input-width|detect-element-overflow|memoize|mimic-function|zarrita|@zarrita|numcodecs|@developmentseed))',
+    '/node_modules\\/(?!(.*@mapbox\\/tiny-sdf\\.*|@loaders\\.gl|@deck\\.gl|@deck\\.gl-community|@luma\\.gl|@hubble\\.gl|@flowmap\\.gl|@math\\.gl|d3-.*|delaunator|robust-predicates|@sqlrooms|@paralleldrive/cuid2|@noble/hashes|kdbush|preact|maplibregl-mapbox-request-transformer|react-date-picker|react-time-picker|react-calendar|react-clock|react-fit|@wojtekmaj\\/date-utils|get-user-locale|make-event-props|update-input-width|detect-element-overflow|memoize|mimic-function|zarrita|@zarrita|numcodecs|@developmentseed))',
     '\\.pnp\\.[^\\/]+$'
   ]
 };

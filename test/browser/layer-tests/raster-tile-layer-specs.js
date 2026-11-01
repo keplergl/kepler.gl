@@ -26,7 +26,9 @@ import {
 import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
-import {loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
+import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
+import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
+import * as rasterImages from '../../../src/layers/src/raster-tile/image';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -128,6 +130,113 @@ test('#RasterTileLayer -> tile requests carry the abort signal', async t => {
     'the tile request should carry the abort signal deck.gl provided'
   );
 
+  t.end();
+});
+
+test('#RasterTileLayer -> required raster assets load together', async t => {
+  const bands = [10, 20, 30].map(value => ({data: new Uint8Array([value]), width: 1, height: 1}));
+  const mask = {data: new Uint8Array([255]), width: 1, height: 1};
+  const requests = ['red', 'green', 'blue'].map((url, index) => ({
+    url,
+    rasterServerUrl: '',
+    options: {},
+    useMask: index === 0
+  }));
+  let results = [[bands[0], mask], [bands[1]], [bands[2]]];
+  const loadStub = sinon.stub(rasterGpuUtils, 'loadNpyArray').callsFake(async request => {
+    const result = results[requests.indexOf(request)];
+    return result && [...result];
+  });
+  const requestsStub = sinon.stub(rasterImages, 'getSTACImageRequests').resolves(requests);
+  const layer = new RasterTileLayer({id: 'required-assets', dataId: 'stac-data'});
+  const tileProps = {
+    stac: MOCK_STAC_METADATA,
+    index: {x: 0, y: 0, z: 0},
+    bbox: {west: -180, south: -85, east: 180, north: 85},
+    shouldLoadTerrain: false,
+    colormapId: ''
+  };
+
+  try {
+    const complete = await rasterImages.loadSTACImageData(requests);
+    t.deepEqual(complete.imageBands, bands, 'complete RGB keeps every channel in request order');
+    t.equal(complete.imageMask, mask, 'only the first asset supplies the validity mask');
+    const completeTile = await layer.getTileData(tileProps);
+    t.deepEqual(completeTile.images.imageBands, bands, 'complete RGB yields a usable tile');
+
+    for (const failedIndex of [0, 1, 2]) {
+      for (const missing of [null, []]) {
+        results = [[bands[0], mask], [bands[1]], [bands[2]]];
+        results[failedIndex] = missing;
+        const label = `${requests[failedIndex].url} returns ${
+          missing === null ? 'null' : 'no bands'
+        }`;
+        const incomplete = await rasterImages.loadSTACImageData(requests);
+        t.deepEqual(incomplete, {imageBands: null}, `${label}: no partial channels or mask`);
+        t.equal(await layer.getTileData(tileProps), null, `${label}: no successful tile to cache`);
+      }
+    }
+
+    results = [[mask], [bands[1]], [bands[2]]];
+    t.deepEqual(
+      await rasterImages.loadSTACImageData(requests),
+      {imageBands: null},
+      'a first asset containing only a mask is also incomplete'
+    );
+
+    results = [[bands[0], mask], [bands[1]], [bands[2]]];
+    t.deepEqual(
+      (await layer.getTileData(tileProps)).images.imageBands,
+      bands,
+      'a later complete load recovers all channels'
+    );
+    t.deepEqual(
+      await rasterImages.loadSTACImageData(requests.slice(0, 2)),
+      {imageBands: bands.slice(0, 2), imageMask: mask},
+      'two-asset presets retain their bands and mask'
+    );
+
+    results = [[bands[0], bands[1], bands[2], mask]];
+    requests[0].responseRequiredBandIndices = [2, 0];
+    t.deepEqual(
+      await rasterImages.loadSTACImageData([requests[0]]),
+      {imageBands: [bands[2], bands[0]], imageMask: mask},
+      'single-asset band selection and mask handling are unchanged'
+    );
+    results = [null];
+    requestsStub.resolves([requests[0]]);
+    t.deepEqual(
+      await rasterImages.loadSTACImageData([requests[0]]),
+      {imageBands: null},
+      'a failed single asset keeps the same failure sentinel'
+    );
+    t.equal(await layer.getTileData(tileProps), null, 'a failed single asset yields no tile');
+
+    requestsStub.resolves(requests);
+    for (const error of [
+      new Error('asset failed'),
+      Object.assign(new Error('aborted'), {name: 'AbortError'})
+    ]) {
+      loadStub.callsFake(() => Promise.reject(error));
+      try {
+        await rasterImages.loadSTACImageData(requests);
+        t.fail('a rejected asset must reject the image load');
+      } catch (caught) {
+        t.equal(caught, error, 'image loading preserves the original rejection');
+      }
+      try {
+        const tile = await layer.getTileData(tileProps);
+        t.equal(error.name, 'AbortError', 'only cancellation resolves instead of throwing');
+        t.equal(tile, null, 'cancellation yields no tile');
+      } catch (caught) {
+        t.notEqual(error.name, 'AbortError', 'tile cancellation must resolve without throwing');
+        t.equal(caught, error, 'tile loading preserves a genuine error');
+      }
+    }
+  } finally {
+    loadStub.restore();
+    requestsStub.restore();
+  }
   t.end();
 });
 
@@ -282,6 +391,78 @@ test('#RasterTileLayer -> pixel value tracking', t => {
   t.equal(layer.minViewportPixelValue, 30, 'should handle null data gracefully');
   t.equal(layer.maxViewportPixelValue, 120, 'should handle null data gracefully');
 
+  t.end();
+});
+
+test('#RasterTileLayer -> dynamic coloring keeps finite zero endpoints', t => {
+  const layer = new RasterTileLayer({id: 'dynamic-raster', dataId: 'stac-data'});
+  layer.updateLayerVisConfig({dynamicColor: true, preset: 'singleBand', singleBandName: 'red'});
+  const dataset = {
+    ...MOCK_STAC_DATASET,
+    metadata: {
+      ...MOCK_STAC_METADATA,
+      assets: Object.fromEntries(
+        Object.entries(MOCK_STAC_METADATA.assets).map(([id, asset]) => [
+          id,
+          {
+            ...asset,
+            'raster:bands': [{data_type: 'float32', statistics: {minimum: -100, maximum: 100}}]
+          }
+        ])
+      )
+    }
+  };
+  const tile = (minPixelValue, maxPixelValue) => ({data: {minPixelValue, maxPixelValue}});
+  const cases = [
+    {name: 'zero minimum', tiles: [tile(0, 10), tile(5, 20)], range: [0, 20]},
+    {name: 'zero maximum', tiles: [tile(-10, 0), tile(-5, -2)], range: [-10, 0]},
+    {name: 'negative endpoints', tiles: [tile(-20, -10), tile(-15, -5)], range: [-20, -5]},
+    {name: 'all-zero tiles', tiles: [tile(0, 0), tile(0, 0)], range: [0, 0]},
+    {name: 'normal nonzero endpoints', tiles: [tile(5, 10), tile(8, 20)], range: [5, 20]},
+    {
+      name: 'missing and nonfinite endpoints',
+      tiles: [
+        null,
+        {},
+        {data: null},
+        {data: {}},
+        tile(null, undefined),
+        tile(NaN, NaN),
+        tile(-Infinity, Infinity),
+        tile(0, 10)
+      ],
+      range: [0, 10]
+    },
+    {
+      name: 'independent valid endpoints',
+      tiles: [tile(0, null), tile(undefined, 0)],
+      range: [0, 0]
+    },
+    {name: 'zero tile removed from viewport', tiles: [tile(5, 20)], range: [5, 20]},
+    {name: 'zero tile enters viewport again', tiles: [tile(0, 10), tile(5, 20)], range: [0, 20]},
+    {name: 'all tiles removed', tiles: [], range: [Infinity, -Infinity]},
+    {
+      name: 'only invalid statistics',
+      tiles: [null, {}, {data: {}}, tile(NaN, Infinity), tile(-Infinity, null)],
+      range: [Infinity, -Infinity]
+    }
+  ];
+
+  for (const {name, tiles, range} of cases) {
+    layer.onViewportLoad(tiles);
+    t.deepEqual(
+      [layer.minViewportPixelValue, layer.maxViewportPixelValue],
+      range,
+      `${name}: tracks the current viewport range`
+    );
+    const [rendered] = layer.renderLayer(createRenderOpts(dataset));
+    t.ok(rendered, `${name}: creates the raster TileLayer`);
+    t.deepEqual(
+      [rendered?.props.minPixelValue, rendered?.props.maxPixelValue],
+      range,
+      `${name}: forwards the range for dynamic rendering`
+    );
+  }
   t.end();
 });
 
@@ -868,6 +1049,96 @@ test('#RasterTileLayer -> getDataSourceParams integer band uses the data type ra
   t.end();
 });
 
+test('#RasterTileLayer -> linear stretch normalizes the selected pixel interval', t => {
+  for (const [minPixelValue, maxPixelValue] of [
+    [100, 200],
+    [-100, 100],
+    [0, 200]
+  ]) {
+    for (const linearRescalingFactor of [
+      [0, 1],
+      [0.25, 0.75],
+      [0.1, 0.8]
+    ]) {
+      for (const bandCombination of ['rgb', 'single']) {
+        const {modules, moduleProps} = getModules({
+          images: {},
+          props: {minPixelValue, maxPixelValue, linearRescalingFactor, bandCombination}
+        });
+        t.ok(modules.includes(RasterWebGL.linearRescale), 'uses the linear rescale shader');
+        const {scaler, offset} = RasterWebGL.linearRescale.getUniforms(moduleProps);
+        const range = maxPixelValue - minPixelValue;
+        const low = minPixelValue + linearRescalingFactor[0] * range;
+        const high = minPixelValue + linearRescalingFactor[1] * range;
+        // The shader applies arr * scaler + offset to every RGB channel.
+        const rgb = [low, (low + high) / 2, high].map(value => value * scaler + offset);
+        rgb.forEach((value, channel) => {
+          t.ok(
+            Math.abs(value - [0, 0.5, 1][channel]) < 1e-12,
+            `${bandCombination} ${minPixelValue}:${maxPixelValue} stretch ${linearRescalingFactor}, channel ${channel}`
+          );
+        });
+      }
+    }
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> linear stretch preserves fallback and other rescaling modes', t => {
+  const props = {
+    minPixelValue: 100,
+    maxPixelValue: 200,
+    linearRescalingFactor: [0.25, 0.75],
+    bandCombination: 'rgb'
+  };
+  const getRescale = overrides => {
+    const result = getModules({images: {}, props: {...props, ...overrides}});
+    return {...result, uniforms: RasterWebGL.linearRescale.getUniforms(result.moduleProps)};
+  };
+  for (const overrides of [
+    {maxPixelValue: 100},
+    {linearRescalingFactor: [0.25, 0.25]},
+    {minPixelValue: undefined, maxPixelValue: undefined}
+  ]) {
+    t.deepEqual(
+      getRescale(overrides).uniforms,
+      {scaler: 1, offset: -0.25},
+      'keeps the degenerate-range fallback'
+    );
+  }
+  t.deepEqual(
+    getRescale({minPixelValue: Infinity, maxPixelValue: -Infinity}).uniforms,
+    {scaler: -0, offset: -0.25},
+    'keeps the empty viewport fallback'
+  );
+  const nonlinear = getRescale({nonLinearRescaling: true, gammaContrastFactor: 2});
+  t.deepEqual(nonlinear.uniforms, {scaler: 1 / 200, offset: 0}, 'keeps nonlinear normalization');
+  t.ok(nonlinear.modules.includes(RasterWebGL.gammaContrast), 'keeps gamma contrast');
+  t.equal(nonlinear.moduleProps.gammaContrastValue, 2, 'keeps the gamma factor');
+  t.deepEqual(
+    getRescale({hasCategoricalColorMap: true}).uniforms,
+    {scaler: 1 / 200, offset: 0},
+    'keeps categorical normalization'
+  );
+  t.notOk(
+    getRescale({bandCombination: 'normalizedDifference'}).modules.includes(
+      RasterWebGL.linearRescale
+    ),
+    'does not rescale spectral indices'
+  );
+  t.deepEqual(
+    getModules({images: {}}),
+    {modules: [], moduleProps: {}},
+    'keeps missing-props behavior'
+  );
+  t.deepEqual(
+    getModules({images: {imageRgba: {}}, props}),
+    {modules: [RasterWebGL.rgbaImage], moduleProps: {}},
+    'keeps direct RGBA behavior'
+  );
+  t.end();
+});
+
 test('#RasterTileLayer -> float mask keeps the pixels a float32 mask marks as valid', t => {
   // A tile server writes the mask in the band's own data type, marking valid pixels with that
   // type's maximum: 255 for uint8, 65535 for uint16, and FLT_MAX for float32. The default upper
@@ -1253,6 +1524,136 @@ test('#RasterTileLayer -> replacing a PMTiles URL reloads cached tile content', 
       'cached content is replaced by the new image'
     );
   } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> identify preserves the picking coordinate for selection ownership', async t => {
+  const layer = new RasterTileLayer({id: 'identify-coordinate', dataId: 'raster'});
+  const rows = [{name: 'BAND', value: '20'}];
+  layer._fetchTitilerPoint = async () => rows;
+  const results = [];
+  const coordinate = [1, 2];
+  await layer._onClickIdentify({onWMSFeatureInfo: result => results.push(result)}, {coordinate});
+  t.equal(results[0].coordinate, coordinate, 'keeps the exact picking coordinate identity');
+  t.deepEqual(results[0].featureInfo, rows, 'publishes the sampled values');
+  t.end();
+});
+
+test('#RasterTileLayer -> SAVI uses the soil adjustment multiplier in CPU and shader arithmetic', t => {
+  // Evaluate this scalar GLSL function as JavaScript to check the shipped expression.
+  // This is an arithmetic parity test, not a WebGL rendering test.
+  const body = RasterWebGL.soilAdjustedVegetationIndex.fs.match(/\{([\s\S]*)\}/)[1];
+  const shaderSavi = new Function('image', body.replace(/\bfloat\b/g, 'const'));
+  for (const [nir, red, expected] of [
+    [0.8, 0.2, 0.6],
+    [0.2, 0.8, -0.6],
+    [0.2, 0.2, 0],
+    [0, 0, 0],
+    [0.5, 0, 0.75]
+  ]) {
+    const cpu = computeDerivedValue([nir, red], 'soilAdjustedVegetationIndex');
+    t.equal(cpu.name, 'SAVI', 'derived value retains its label');
+    t.ok(Math.abs(cpu.value - expected) < 1e-10, `CPU SAVI for ${nir}, ${red} is ${expected}`);
+    t.ok(
+      Math.abs(shaderSavi({r: nir, g: red}) - expected) < 1e-10,
+      'GLSL arithmetic matches the reference'
+    );
+  }
+  for (const values of [[NaN, 0.2], [0.8, Infinity], [0.8], [-0.5, 0]]) {
+    t.equal(
+      computeDerivedValue(values, 'soilAdjustedVegetationIndex'),
+      null,
+      'invalid inputs or zero denominator stay unavailable'
+    );
+  }
+  const context = {isPMTiles: false, bandCombination: 'soilAdjustedVegetationIndex'};
+  const sample = {
+    lng: 0,
+    lat: 0,
+    tileIndex: {x: 0, y: 0, z: 0},
+    col: 0,
+    row: 0,
+    bandValues: [0.8, 0.2],
+    bandLabels: ['nir', 'red'],
+    nodata: false
+  };
+  t.ok(
+    formatRasterIdentifyRows(sample, context).some(
+      row => row.name === 'SAVI' && row.value === '0.600000'
+    ),
+    'identify displays the corrected derived value'
+  );
+  const nodataRows = formatRasterIdentifyRows({...sample, nodata: true}, context);
+  t.ok(
+    nodataRows.some(row => row.value === 'NoData'),
+    'masked samples remain NoData'
+  );
+  t.notOk(
+    nodataRows.some(row => row.name === 'SAVI'),
+    'masked samples do not emit a derived value'
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> switching STAC datasets with matching bands reloads cached imagery', async t => {
+  const layer = new RasterTileLayer({id: 'stac-cache', dataId: 'raster'});
+  layer.updateLayerVisConfig({enableTerrain: false, preset: 'trueColor'});
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, longitude: 0, latitude: 0, zoom: 2})
+  });
+  const requests = [];
+  const metadata = suffix => ({
+    ...MOCK_STAC_METADATA,
+    id: suffix,
+    assets: Object.fromEntries(
+      Object.entries(MOCK_STAC_METADATA.assets).map(([name, asset]) => [
+        name,
+        {
+          ...asset,
+          href: `https://example.com/${suffix}/${name}.tif`,
+          'raster:bands': [{data_type: 'uint8'}]
+        }
+      ])
+    )
+  });
+  const firstMetadata = metadata('a');
+  const secondMetadata = metadata('b');
+  const imageA = {images: {imageBands: [{data: new Float32Array([0.2]), width: 1, height: 1}]}};
+  const imageB = {images: {imageBands: [{data: new Float32Array([0.8]), width: 1, height: 1}]}};
+  const getTileData = sinon.stub(layer, 'getTileData').callsFake(async ({stac}) => {
+    requests.push(stac);
+    return stac === firstMetadata ? imageA : imageB;
+  });
+  const render = async stac => {
+    const deckLayer = layer.renderLayer(
+      createRenderOpts({...MOCK_STAC_DATASET, metadata: stac})
+    )[0];
+    const rendered = deckLayer.clone({renderSubLayers: () => null});
+    manager.setLayers([rendered]);
+    await Promise.all(rendered.state.tileset.selectedTiles.map(tile => tile.data));
+    return rendered;
+  };
+  try {
+    const first = await render(firstMetadata);
+    const tileset = first.state.tileset;
+    const reload = sinon.spy(tileset, 'reloadAll');
+    t.ok(requests.length > 0, 'initial source requests tiles');
+    t.equal(tileset.selectedTiles[0].content, imageA, 'first source image is cached');
+    const initialRequests = requests.length;
+    await render(firstMetadata);
+    layer.updateLayerVisConfig({opacity: 0.4, showTileBorders: true});
+    await render(firstMetadata);
+    t.equal(requests.length, initialRequests, 'same-source rerenders and style edits reuse tiles');
+    t.equal(reload.callCount, 0, 'same-source cache is not invalidated');
+    const changed = await render(secondMetadata);
+    t.equal(changed.state.tileset, tileset, 'source replacement retains the tileset');
+    t.equal(reload.callCount, 1, 'source replacement invalidates cached tiles');
+    t.ok(requests.includes(secondMetadata), 'new requests use the replacement STAC source');
+    t.equal(tileset.selectedTiles[0].content, imageB, 'new imagery replaces cached imagery');
+  } finally {
+    getTileData.restore();
     manager.finalize();
   }
   t.end();

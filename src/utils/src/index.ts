@@ -168,6 +168,7 @@ export * from './map-utils';
 export {
   ArrowDataContainer,
   createArrowVector,
+  convertStructToFixedSizeList,
   compactArrowTable,
   arrowDataTypeToAnalyzerDataType,
   arrowDataTypeToFieldType,

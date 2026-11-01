@@ -583,3 +583,56 @@ test('#ClusterLayer -> membership survives cached zooms and filtered rebuilds', 
   }
   t.end();
 });
+
+test('#ClusterLayer -> fixed-zoom pans refresh visible points without rebuilding the index', t => {
+  const points = [{position: [0, 0]}, {position: [60, 0]}, {position: [60, 40]}];
+  const view = {longitude: 0, latitude: 0, zoom: 6, width: 256, height: 256};
+  const manager = new LayerManager(device, {viewport: new WebMercatorViewport(view)});
+  const load = sinon.spy(Supercluster.prototype, 'load');
+  const query = sinon.spy(Supercluster.prototype, 'getClusters');
+  let layer = new DeckGLClusterLayer({
+    id: 'cluster-pan',
+    data: points,
+    getPosition: point => point.position,
+    colorRange: [
+      [0, 0, 0],
+      [255, 255, 255]
+    ],
+    zoom: view.zoom,
+    width: view.width,
+    height: view.height
+  });
+  const members = () => layer.state.aggregatorState.layerData.data.flatMap(cell => cell.points);
+  const move = patch => {
+    Object.assign(view, patch);
+    const viewport = new WebMercatorViewport(view);
+    manager.activateViewport(viewport);
+    layer.activateViewport(viewport);
+    manager.updateLayers();
+  };
+  try {
+    manager.setLayers([layer]);
+    t.deepEqual(members(), [points[0]], 'initial viewport contains the first point');
+    move({longitude: 60});
+    t.deepEqual(members(), [points[1]], 'longitude pan exposes the second point at the same zoom');
+    move({latitude: 40});
+    t.deepEqual(members(), [points[2]], 'latitude pan exposes the third point at the same zoom');
+    const before = query.callCount;
+    move({});
+    layer = layer.clone({opacity: 0.5});
+    manager.setLayers([layer]);
+    t.equal(query.callCount, before, 'unchanged viewport and style-only updates reuse clusters');
+    for (const patch of [{width: 512}, {height: 512}, {zoom: 7}, {bearing: 35}, {pitch: 30}]) {
+      const previousQueries = query.callCount;
+      move(patch);
+      t.ok(query.callCount > previousQueries, 'a changed viewport refreshes the query');
+      t.deepEqual(members(), [points[2]], 'the point at the viewport center remains visible');
+    }
+    t.equal(load.callCount, 1, 'viewport changes reuse the existing Supercluster index');
+  } finally {
+    load.restore();
+    query.restore();
+    manager.finalize();
+  }
+  t.end();
+});

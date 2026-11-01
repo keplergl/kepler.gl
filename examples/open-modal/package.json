@@ -26,8 +26,12 @@
     "typescript": "^5.0.0"
   },
   "resolutions": {
+    "d3-color": "3.1.0",
     "fflate@npm:0.7.4": "0.7.5",
     "moment": "2.31.0",
-    "source-map-js": "1.2.2"
+    "node-fetch": "2.7.0",
+    "postcss": "8.5.26",
+    "source-map-js": "1.2.2",
+    "thrift": "0.23.0"
   }
 }

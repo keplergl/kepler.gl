@@ -2,9 +2,16 @@
 // Copyright contributors to the kepler.gl project
 
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
-import {Layer, WebMercatorViewport, project32, COORDINATE_SYSTEM} from '@deck.gl/core';
+import {
+  Layer,
+  WebMercatorViewport,
+  project32,
+  phongMaterial,
+  COORDINATE_SYSTEM
+} from '@deck.gl/core';
 import {Model} from '@luma.gl/engine';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
+import {createHeatmapSurfaceMesh} from './density-surface-mesh';
 
 /**
  * Custom deck.gl HeatmapLayer subclass that patches GPU shaders
@@ -97,30 +104,36 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     ...DeckGLHeatmapLayer.defaultProps,
     // kepler.gl extensions to support globe mode
     globeMode: false,
+    surface: false,
+    surfaceHeight: 1000,
+    surfaceLighting: true,
+    surfaceContours: false,
+    surfaceContourStep: 0.1,
     // [minLng, minLat, maxLng, maxLat] of the data, used to frame the density texture in globe mode
     densityBounds: null
   };
 
-  // Cached fixed density viewport (keyed by bounds) so we don't rebuild it on
-  // every update/render. Not stored in layer state to avoid setState-in-render.
+  // Viewports can be rebuilt from persistent density bounds on replacement
+  // instances. Cache them locally to avoid rebuilding within an update/render.
   private _densityViewport: WebMercatorViewport | null = null;
   private _densityViewportKey: string | null = null;
+  private _referenceViewport: WebMercatorViewport | null = null;
+  private _referenceViewportKey: string | null = null;
 
   // Cached globe render mesh, so its identity stays stable across frames (only
   // rebuilt when the density bounds or the globe resolution change).
   private _globeMesh: HeatmapMesh | null = null;
   private _globeMeshKey: string | null = null;
-
-  // World bounds [w, s, e, n] the density texture is currently framed to. In
-  // globe mode this is normally the data bounds, but when the camera is zoomed
-  // in far enough that the visible area sits fully inside the data, we frame the
-  // density texture around the *visible* area to improve level-of-detail.
-  private _densityBounds: [number, number, number, number] | null = null;
-  // Quantized key of `_densityBounds`, so small camera moves don't re-frame.
-  private _densityBoundsFrameKey: string | null = null;
-  // Cached reference viewport framing the full data bounds (for radius scaling).
-  private _referenceViewport: WebMercatorViewport | null = null;
-  private _referenceViewportKey: string | null = null;
+  // deck.gl transfers state between replacement instances. Preserve density
+  // framing, mode transitions, and the expensive surface mesh across updates.
+  // Mesh cache writes are direct to avoid scheduling an update while rendering.
+  declare state: DeckGLHeatmapLayer['state'] & {
+    surfaceMeshCache?: {key: string; mesh: HeatmapMesh | null};
+    // Bounds follow the visible area when zoomed inside the data extent.
+    densityBounds?: [number, number, number, number] | null;
+    densityBoundsFrameKey?: string | null;
+    wasGlobeHeatmap?: boolean;
+  };
 
   _createWeightsTransform(shaders: any) {
     if (shaders.fs?.includes('gaussianKDE')) {
@@ -150,12 +163,13 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const result = super.getShaders(shaders);
 
     if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
-      // Max-weights fragment shader: force max value to 1.0
+      // Preserve the SUM maximum in blue for surface heights. Red and green
+      // retain the existing SUM and MEAN color normalization for both modes.
       result.fs = insertBefore(
         result.fs,
         'fs',
         'fragColor.g = outTexture.r / max(1.0, outTexture.a);',
-        'fragColor.r = 1.0;\n  '
+        'fragColor.b = outTexture.r;\n  fragColor.r = 1.0;\n  '
       );
       if (result.modules) {
         result.modules = result.modules.filter((m: any) => (m?.name || m) !== 'layer');
@@ -308,15 +322,15 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   }
 
   /**
-   * Build (and cache) the WebMercator viewport that frames `_densityBounds`.
+   * Build (and cache) the WebMercator viewport that frames the density bounds.
    *
    * This viewport is completely independent of the current globe camera
    * *projection* — it is always a plain WebMercator frame — but the region it
-   * covers (`_densityBounds`) follows the camera for level-of-detail (see
+   * covers follows the camera for level-of-detail (see
    * `_computeDensityBounds`). It drives the offscreen density texture render.
    */
   _getDensityViewport(): WebMercatorViewport | null {
-    const bounds = this._densityBounds || (this.props as any).densityBounds;
+    const bounds = this.state.densityBounds || (this.props as any).densityBounds;
     if (!bounds || bounds.length !== 4) {
       return null;
     }
@@ -391,10 +405,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)].map(v => v.toFixed(4)).join(',');
   }
 
-  // Tracks whether the previous update ran in globe mode, so we can detect the
-  // globe→2D (and 2D→globe) transition and reset stale density framing state.
-  private _wasGlobeHeatmap = false;
-
   updateState(opts: any) {
     const {globeMode, densityBounds} = this.props as any;
 
@@ -408,11 +418,11 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     // in the wrong place (and stays wrong while panning). Clear the cached
     // framing + our globe caches so the 2D path rebuilds from scratch.
     const isGlobeNow = Boolean(globeMode && densityBounds);
-    const leftGlobe = this._wasGlobeHeatmap && !isGlobeNow;
+    const leftGlobe = this.state.wasGlobeHeatmap && !isGlobeNow;
     if (leftGlobe) {
       this._resetGlobeState();
     }
-    this._wasGlobeHeatmap = isGlobeNow;
+    this.state.wasGlobeHeatmap = isGlobeNow;
 
     if (!globeMode || !densityBounds) {
       super.updateState(opts);
@@ -441,9 +451,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const nextBounds = this._computeDensityBounds(globeViewport);
     if (nextBounds) {
       const nextKey = this._densityBoundsKey(nextBounds);
-      if (nextKey !== this._densityBoundsFrameKey) {
-        this._densityBounds = nextBounds;
-        this._densityBoundsFrameKey = nextKey;
+      if (nextKey !== this.state.densityBoundsFrameKey) {
+        this.state.densityBounds = nextBounds;
+        this.state.densityBoundsFrameKey = nextKey;
         // Invalidate the cached mercator viewport so it is rebuilt for the new
         // frame, and force the base layer to recompute its density bounds +
         // regenerate the weightmap (it would otherwise keep the old, coarser
@@ -451,6 +461,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         this._densityViewport = null;
         this._densityViewportKey = null;
         (this.state as any).worldBounds = null;
+        // A display-only update can arrive without a viewport change. Once
+        // bounds are cleared, deck.gl must rebuild them before rendering.
+        opts = {...opts, changeFlags: {...opts.changeFlags, viewportChanged: true}};
       }
     }
 
@@ -518,8 +531,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   _resetGlobeState() {
     this._densityViewport = null;
     this._densityViewportKey = null;
-    this._densityBounds = null;
-    this._densityBoundsFrameKey = null;
+    this.state.densityBounds = null;
+    this.state.densityBoundsFrameKey = null;
     this._referenceViewport = null;
     this._referenceViewportKey = null;
     this._globeMesh = null;
@@ -699,7 +712,11 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   }
 
   renderLayers(): any {
-    if (!this._isGlobeHeatmap()) {
+    const globe = this._isGlobeHeatmap();
+    const {surface, surfaceHeight, surfaceLighting, surfaceContours, surfaceContourStep} = this
+      .props as any;
+    if (!globe && !surface) {
+      this.state.surfaceMeshCache = undefined;
       return super.renderLayers();
     }
 
@@ -709,7 +726,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       colorTexture,
       colorDomain,
       worldBounds,
-      normalizedCommonBounds
+      normalizedCommonBounds,
+      textureSize
     } = this.state as any;
     const {updateTriggers, intensity, threshold, aggregation} = this.props as any;
 
@@ -723,7 +741,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       return null;
     }
 
-    const densityViewport = this._getDensityViewport();
+    const densityViewport = globe ? this._getDensityViewport() : this.context.viewport;
     if (!densityViewport) {
       return null;
     }
@@ -738,16 +756,48 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     // non-linear Web Mercator latitude mapping of the density texture.
     const resolution = this.context.viewport.resolution;
     const meshKey = `${worldBounds.join(',')}|${resolution}`;
-    if (this._globeMeshKey !== meshKey || !this._globeMesh) {
-      this._globeMesh = createGlobeHeatmapMesh(
-        worldBounds as [number, number, number, number],
-        normalizedCommonBounds as [number, number, number, number],
-        densityViewport,
-        resolution
-      );
-      this._globeMeshKey = meshKey;
+    let mesh: HeatmapMesh | null;
+    if (surface) {
+      const longitude = globe
+        ? undefined
+        : (this.context.viewport as WebMercatorViewport).longitude;
+      const worldCopy =
+        typeof longitude === 'number' && Number.isFinite(longitude)
+          ? Math.round((longitude - (worldBounds[0] + worldBounds[2]) / 2) / 360)
+          : 0;
+      const surfaceKey = `${meshKey}|${normalizedCommonBounds.join(
+        ','
+      )}|${worldCopy}|${textureSize}`;
+      if (this.state.surfaceMeshCache?.key !== surfaceKey) {
+        this.state.surfaceMeshCache = {
+          key: surfaceKey,
+          mesh: createHeatmapSurfaceMesh(
+            worldBounds,
+            normalizedCommonBounds,
+            densityViewport as WebMercatorViewport,
+            textureSize,
+            longitude
+          )
+        };
+      }
+      mesh = this.state.surfaceMeshCache.mesh;
+    } else {
+      // Release the denser surface grid when returning to a flat globe heatmap.
+      this.state.surfaceMeshCache = undefined;
+      if (this._globeMeshKey !== meshKey || !this._globeMesh) {
+        this._globeMesh = createGlobeHeatmapMesh(
+          worldBounds as [number, number, number, number],
+          normalizedCommonBounds as [number, number, number, number],
+          densityViewport as WebMercatorViewport,
+          resolution
+        );
+        this._globeMeshKey = meshKey;
+      }
+      mesh = this._globeMesh;
     }
-    const mesh = this._globeMesh;
+    if (!mesh) {
+      return null;
+    }
 
     const GlobeTriangleLayerClass = this.getSubLayerClass(
       'globe-triangle',
@@ -756,7 +806,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
 
     return new GlobeTriangleLayerClass(
       this.getSubLayerProps({
-        id: 'globe-triangle-layer',
+        id: surface ? 'density-surface-layer' : 'globe-triangle-layer',
         updateTriggers
       }),
       {
@@ -769,7 +819,21 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         weightsTexture,
         intensity,
         threshold,
-        colorDomain
+        colorDomain,
+        surfaceHeight: surface ? surfaceHeight : 0,
+        surfaceLighting: surface && surfaceLighting,
+        shadowEnabled: Boolean(surface && surfaceLighting),
+        surfaceContours: surface && surfaceContours,
+        surfaceContourStep,
+        ...(surface
+          ? {
+              parameters: {
+                ...this.props.parameters,
+                depthWriteEnabled: true,
+                depthCompare: 'less-equal'
+              }
+            }
+          : {})
       }
     );
   }
@@ -887,14 +951,17 @@ const globeTriangleVs = `\
 #version 300 es
 #define SHADER_NAME globe-heatmap-triangle-layer-vertex-shader
 uniform sampler2D maxTexture;
+uniform sampler2D weightsTexture;
 in vec3 positions;
 in vec3 positions64Low;
 in vec2 texCoords;
 out vec2 vTexCoords;
 out float vIntensityMin;
 out float vIntensityMax;
+out vec3 vCommonPosition;
+out vec3 vCameraPosition;
+out float vDensity;
 void main(void) {
-  gl_Position = project_position_to_clipspace(positions, positions64Low, vec3(0.0));
   vTexCoords = texCoords;
   vec4 maxTexture = texture(maxTexture, vec2(0.5));
   float maxValue = triangle.aggregationMode < 0.5 ? maxTexture.r : maxTexture.g;
@@ -903,8 +970,33 @@ void main(void) {
     maxValue = triangle.colorDomain[1];
     minValue = triangle.colorDomain[0];
   }
-  vIntensityMax = triangle.intensity / maxValue;
-  vIntensityMin = triangle.intensity / minValue;
+  vIntensityMax = maxValue > 0.0 ? triangle.intensity / maxValue : 0.0;
+  vIntensityMin = minValue > 0.0 ? triangle.intensity / minValue : 0.0;
+  vec4 weights = texture(weightsTexture, texCoords);
+  float weight = weights.r;
+  if (triangle.aggregationMode > 0.5) {
+    weight /= max(1.0, weights.a);
+  }
+  // Contours use density units, independent of color intensity and domain.
+  vDensity = max(0.0, weight);
+  if (isnan(vDensity) || isinf(vDensity)) {
+    vDensity = 0.0;
+  }
+  // Normalize against the actual density maximum, not the color scale.
+  float maxDensity = triangle.aggregationMode < 0.5 ? maxTexture.b : maxTexture.g;
+  float height = maxDensity > 0.0
+    ? clamp(vDensity / maxDensity, 0.0, 1.0) * triangle.surfaceHeight
+    : 0.0;
+  vec3 position = positions;
+  position.z += height;
+  geometry.worldPosition = position;
+  geometry.uv = texCoords;
+  gl_Position = project_position_to_clipspace(position, positions64Low, vec3(0.0), geometry.position);
+  vCommonPosition = geometry.position.xyz;
+  vCameraPosition = project.cameraPosition;
+  if (triangle.surfaceLighting > 0.5) {
+    DECKGL_FILTER_GL_POSITION(gl_Position, geometry);
+  }
 }
 `;
 
@@ -917,11 +1009,18 @@ uniform sampler2D colorTexture;
 in vec2 vTexCoords;
 in float vIntensityMin;
 in float vIntensityMax;
+in vec3 vCommonPosition;
+in vec3 vCameraPosition;
+in float vDensity;
 out vec4 fragColor;
 vec4 getLinearColor(float value) {
   float factor = clamp(value * vIntensityMax, 0., 1.);
   vec4 color = texture(colorTexture, vec2(factor, 0.5));
-  color.a *= min(value * vIntensityMin, 1.0);
+  // A zero threshold gives every positive density full opacity, unless
+  // intensity is zero. Avoid division by zero without flooring valid minima.
+  color.a *= vIntensityMin > 0.0
+    ? min(value * vIntensityMin, 1.0)
+    : (triangle.intensity > 0.0 ? 1.0 : 0.0);
   return color;
 }
 void main(void) {
@@ -935,7 +1034,26 @@ void main(void) {
   }
   vec4 linearColor = getLinearColor(weight);
   linearColor.a *= layer.opacity;
+  if (triangle.surfaceLighting > 0.5) {
+    vec3 normal = cross(dFdx(vCommonPosition), dFdy(vCommonPosition));
+    float normalLength = length(normal);
+    normal = normalLength > 0.0 ? normal / normalLength : vec3(0.0, 0.0, 1.0);
+    normal = gl_FrontFacing ? normal : -normal;
+    linearColor.rgb = lighting_getLightColor(
+      linearColor.rgb, vCameraPosition, vCommonPosition, normal
+    );
+  }
+  if (triangle.surfaceContours > 0.5) {
+    float level = vDensity / max(triangle.surfaceContourStep, 0.0001);
+    float distanceToLine = abs(fract(level + 0.5) - 0.5);
+    float line = 1.0 - smoothstep(0.5, 1.5, distanceToLine / max(fwidth(level), 0.0001));
+    linearColor.rgb = mix(linearColor.rgb, vec3(1.0), line * 0.35);
+  }
   fragColor = linearColor;
+  if (triangle.surfaceLighting > 0.5) {
+    geometry.uv = vTexCoords;
+    DECKGL_FILTER_COLOR(fragColor, geometry);
+  }
 }
 `;
 
@@ -945,6 +1063,10 @@ layout(std140) uniform triangleUniforms {
   vec2 colorDomain;
   float intensity;
   float threshold;
+  float surfaceHeight;
+  float surfaceLighting;
+  float surfaceContours;
+  float surfaceContourStep;
 } triangle;
 `;
 
@@ -956,7 +1078,11 @@ const globeTriangleUniforms = {
     aggregationMode: 'f32',
     colorDomain: 'vec2<f32>',
     intensity: 'f32',
-    threshold: 'f32'
+    threshold: 'f32',
+    surfaceHeight: 'f32',
+    surfaceLighting: 'f32',
+    surfaceContours: 'f32',
+    surfaceContourStep: 'f32'
   }
 } as any;
 
@@ -981,7 +1107,7 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
     return super.getShaders({
       vs: globeTriangleVs,
       fs: globeTriangleFs,
-      modules: [project32, globeTriangleUniforms]
+      modules: [project32, phongMaterial, globeTriangleUniforms]
     });
   }
 
@@ -1049,7 +1175,8 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
       id: this.props.id,
       bufferLayout: this.getAttributeManager()?.getBufferLayouts(),
       topology: 'triangle-list',
-      isInstanced: false
+      isInstanced: false,
+      vertexCount: this.props.mesh?.vertexCount || 0
     });
   }
 
@@ -1062,7 +1189,11 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
       threshold,
       colorTexture,
       maxTexture,
-      weightsTexture
+      weightsTexture,
+      surfaceHeight,
+      surfaceLighting,
+      surfaceContours,
+      surfaceContourStep
     } = this.props;
     if (!model || !weightsTexture || !colorTexture || !maxTexture) {
       return;
@@ -1073,6 +1204,10 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
         colorDomain,
         intensity,
         threshold,
+        surfaceHeight: surfaceHeight || 0,
+        surfaceLighting: surfaceLighting ? 1 : 0,
+        surfaceContours: surfaceContours ? 1 : 0,
+        surfaceContourStep,
         // Textures are not declared in `uniformTypes`, so they are treated as
         // bindings and bound to the matching sampler uniforms by name.
         colorTexture,

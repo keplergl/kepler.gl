@@ -16,7 +16,11 @@ import {
   LayerColumns,
   RGBColor
 } from '@kepler.gl/types';
-import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  DataContainerInterface,
+  ArrowDataContainer,
+  convertStructToFixedSizeList
+} from '@kepler.gl/utils';
 import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
 import {geojsonToBinary} from '@loaders.gl/gis';
@@ -203,7 +207,9 @@ export function getGeojsonLayerMetaFromArrow({
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {
           chunkIndex,
-          chunkOffset: geoColumn.data[0].length * chunkIndex
+          chunkOffset: geoColumn.data
+            .slice(0, chunkIndex)
+            .reduce((offset, chunk) => offset + chunk.length, 0)
         }
       : {}),
     triangulate: true,
@@ -213,6 +219,28 @@ export function getGeojsonLayerMetaFromArrow({
   // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
   if (encoding === GEOARROW_EXTENSIONS.WKB) {
     return getBinaryGeometriesFromWKBArrow(geoColumn, options);
+  }
+
+  if (encoding === GEOARROW_EXTENSIONS.POINT) {
+    const chunks =
+      options.chunkIndex === undefined ? geoColumn.data : [geoColumn.data[options.chunkIndex]];
+    geoColumn = arrow.makeVector(
+      chunks.map(chunk => {
+        const normalized = convertStructToFixedSizeList(chunk);
+        // Interleaved chunks may belong to DuckDB's Arrow runtime. Wrap them
+        // locally for makeVector's instanceof check, retaining their buffers.
+        return new arrow.Data(
+          normalized.type,
+          normalized.offset,
+          normalized.length,
+          normalized.nullCount,
+          normalized.buffers,
+          normalized.children,
+          normalized.dictionary
+        );
+      })
+    );
+    if (options.chunkIndex !== undefined) options.chunkIndex = 0;
   }
 
   // create binary data from arrow data for GeoJsonLayer

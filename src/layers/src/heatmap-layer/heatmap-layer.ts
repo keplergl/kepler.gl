@@ -23,6 +23,7 @@ import {
   ColorRange,
   VisConfigColorRange,
   VisConfigNumber,
+  VisConfigBoolean,
   VisConfigSelection,
   HexColor,
   RGBColor,
@@ -58,6 +59,11 @@ export type HeatmapLayerVisConfigSettings = {
   intensity: VisConfigNumber;
   threshold: VisConfigNumber;
   aggregation: VisConfigSelection;
+  surfaceEnabled: VisConfigBoolean;
+  surfaceHeight: VisConfigNumber;
+  surfaceLighting: VisConfigBoolean;
+  surfaceContours: VisConfigBoolean;
+  surfaceContourStep: VisConfigNumber;
 };
 
 export type HeatmapLayerColumnsConfig = {
@@ -79,6 +85,11 @@ export type HeatmapLayerVisConfig = {
   intensity: number;
   threshold: number;
   aggregation: string;
+  surfaceEnabled: boolean;
+  surfaceHeight: number;
+  surfaceLighting: boolean;
+  surfaceContours: boolean;
+  surfaceContourStep: number;
 };
 
 export type HeatmapLayerVisualChannelConfig = LayerWeightConfig &
@@ -153,7 +164,54 @@ export const heatmapVisConfigs: {
   intensity: VisConfigNumber;
   threshold: VisConfigNumber;
   aggregation: VisConfigSelection;
+  surfaceEnabled: VisConfigBoolean;
+  surfaceHeight: VisConfigNumber;
+  surfaceLighting: VisConfigBoolean;
+  surfaceContours: VisConfigBoolean;
+  surfaceContourStep: VisConfigNumber;
 } = {
+  surfaceEnabled: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.heatmap.surface',
+    property: 'surfaceEnabled'
+  } as VisConfigBoolean,
+  surfaceHeight: {
+    type: 'number',
+    defaultValue: 1000,
+    label: 'layerVisConfigs.heatmap.surfaceHeight',
+    description: 'layerVisConfigs.heatmap.surfaceHeightDescription',
+    property: 'surfaceHeight',
+    isRanged: false,
+    range: [0, 100000],
+    step: 10,
+    focusRange: [0, 5000],
+    focusWeight: 0.7
+  } as VisConfigNumber,
+  surfaceLighting: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.heatmap.surfaceLighting',
+    property: 'surfaceLighting'
+  } as VisConfigBoolean,
+  surfaceContours: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.heatmap.surfaceContours',
+    property: 'surfaceContours'
+  } as VisConfigBoolean,
+  surfaceContourStep: {
+    type: 'number',
+    defaultValue: 0.1,
+    label: 'layerVisConfigs.heatmap.surfaceContourStep',
+    description: 'layerVisConfigs.heatmap.surfaceContourStepDescription',
+    property: 'surfaceContourStep',
+    isRanged: false,
+    range: [0.01, 100],
+    step: 0.01,
+    focusRange: [0.01, 1],
+    focusWeight: 0.5
+  } as VisConfigNumber,
   opacity: 'opacity',
   colorRange: 'colorRange',
   radius: 'heatmapRadius',
@@ -287,7 +345,12 @@ class HeatmapLayer extends Layer {
       'radius',
       'intensity',
       'threshold',
-      'aggregation'
+      'aggregation',
+      'surfaceEnabled',
+      'surfaceHeight',
+      'surfaceLighting',
+      'surfaceContours',
+      'surfaceContourStep'
     ];
   }
 
@@ -654,7 +717,9 @@ class HeatmapLayer extends Layer {
     const updateTriggers = {
       getPosition: {columns: this.config.columns, columnMode: this.config.columnMode},
       getWeight: {
-        weightField: this.config.weightField
+        weightField: this.config.weightField,
+        weightScale: this.config.weightScale,
+        weightDomain: this.config.weightDomain
       }
     };
 
@@ -670,6 +735,16 @@ class HeatmapLayer extends Layer {
         colorRange,
         weightsTextureSize: 512,
         debounceTimeout: 0,
+        surface: visConfig.surfaceEnabled,
+        surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
+          ? Math.max(0, visConfig.surfaceHeight)
+          : 1000,
+        surfaceLighting: visConfig.surfaceLighting !== false,
+        surfaceContours: Boolean(visConfig.surfaceContours),
+        surfaceContourStep:
+          Number.isFinite(visConfig.surfaceContourStep) && visConfig.surfaceContourStep > 0
+            ? visConfig.surfaceContourStep
+            : 0.1,
         // globe-mode extensions
         globeMode,
         densityBounds: densityBounds && densityBounds.length === 4 ? densityBounds : null

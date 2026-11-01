@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import * as zarr from 'zarrita';
 import {
   KeplerGlLayers,
   findNearestTimeIndex,
@@ -1253,5 +1254,126 @@ test('#ZarrLayer -> renderLayer returns nothing before the store opens', t => {
     'should render nothing in the globe view'
   );
 
+  t.end();
+});
+
+test('#ZarrLayer -> rejects cancellation before or during runtime loading', async t => {
+  for (const preAborted of [true, false]) {
+    const layer = new ZarrLayer({dataId: 'zarr-cancellation'});
+    const controller = new AbortController();
+    let runtimeCalls = 0;
+    let getCalls = 0;
+    let releaseRuntime;
+    layer._loadRuntime = async () => {
+      runtimeCalls++;
+      await new Promise(resolve => {
+        releaseRuntime = resolve;
+      });
+      return {
+        get: async () => {
+          getCalls++;
+          return {data: new Float32Array([1, 2])};
+        }
+      };
+    };
+    if (preAborted) controller.abort();
+    const result = layer
+      ._getTileData({}, {sliceSpec: [], width: 2, height: 1, signal: controller.signal})
+      .catch(error => error);
+    controller.abort();
+    releaseRuntime?.();
+    t.equal((await result).name, 'AbortError', 'cancelled request rejects with AbortError');
+    t.equal(runtimeCalls, preAborted ? 0 : 1, 'pre-aborted request skips runtime loading');
+    t.equal(getCalls, 0, 'cancelled request never starts reading chunks');
+    t.equal(layer._sampledRange, null, 'cancelled request does not update sampled range');
+  }
+  t.end();
+});
+
+test('#ZarrLayer -> passes cancellation through zarrita to the FetchStore request', async t => {
+  const memory = new Map();
+  const source = await zarr.create(memory, {
+    shape: [1, 2],
+    chunkShape: [1, 2],
+    dtype: 'float32',
+    codecs: [{name: 'bytes', configuration: {endian: 'little'}}]
+  });
+  await zarr.set(source, null, {data: new Float32Array([1, 2]), shape: [1, 2], stride: [2, 1]});
+  let pending = false;
+  let chunkRequest;
+  let startRequest;
+  let releaseRequest;
+  const started = new Promise(resolve => {
+    startRequest = resolve;
+  });
+  const store = new zarr.FetchStore('https://example.com/', {
+    fetch: async request => {
+      const bytes = memory.get(new URL(request.url).pathname);
+      if (!bytes) return new Response(null, {status: 404});
+      if (!pending || request.url.endsWith('zarr.json')) return new Response(bytes);
+      chunkRequest = request;
+      startRequest();
+      return new Promise((resolve, reject) => {
+        const onAbort = () => reject(request.signal.reason);
+        request.signal.addEventListener('abort', onAbort, {once: true});
+        releaseRequest = () => {
+          request.signal.removeEventListener('abort', onAbort);
+          resolve(new Response(bytes));
+        };
+      });
+    }
+  });
+  const arr = await zarr.open(store, {kind: 'array'});
+  const layer = new ZarrLayer({dataId: 'zarr-cancellation'});
+  layer._loadRuntime = async () => ({get: zarr.get});
+  const options = {sliceSpec: [null, null], width: 2, height: 1};
+  const tile = await layer._getTileData(arr, options);
+  t.deepEqual(Array.from(tile.values), [1, 2], 'normal requests decode values');
+  t.equal(tile.byteLength, 8, 'normal requests preserve byte accounting');
+  pending = true;
+  const controller = new AbortController();
+  const result = layer
+    ._getTileData(arr, {...options, signal: controller.signal})
+    .catch(error => error);
+  await started;
+  controller.abort();
+  t.ok(chunkRequest.signal.aborted, 'the underlying fetch request receives the abort');
+  releaseRequest();
+  t.equal(
+    (await result).name,
+    'AbortError',
+    'in-flight cancellation rejects instead of returning a tile'
+  );
+  t.end();
+});
+
+test('#ZarrLayer -> preserves genuine read errors and rejects late cancelled results', async t => {
+  const layer = new ZarrLayer({dataId: 'zarr-cancellation'});
+  const readError = new Error('chunk read failed');
+  layer._loadRuntime = async () => ({
+    get: async () => {
+      throw readError;
+    }
+  });
+  const options = {sliceSpec: [], width: 2, height: 1};
+  t.equal(
+    await layer._getTileData({}, options).catch(error => error),
+    readError,
+    'genuine errors reach deck unchanged'
+  );
+  const controller = new AbortController();
+  layer._tileContext = {...layer._tileContext, needsSampling: true};
+  layer._loadRuntime = async () => ({
+    get: async () => {
+      // A decoder already running may finish even though the fetch signal was aborted.
+      controller.abort();
+      return {data: new Float32Array([1, 2])};
+    }
+  });
+  const result = await layer
+    ._getTileData({}, {...options, signal: controller.signal})
+    .catch(error => error);
+  t.equal(result.name, 'AbortError', 'late cancelled decode results are rejected');
+  t.equal(layer._sampledRange, null, 'late cancelled results do not update sampled range');
   t.end();
 });

@@ -39,6 +39,18 @@ export type LayerTypeSelectorProps = {
 const StyledLayerTypeSelector = styled.div`
   .item-selector .item-selector__dropdown {
     padding: 4px 10px 4px 10px;
+    height: auto;
+    min-height: ${props => props.theme.inputBoxHeight};
+  }
+
+  .item-selector__dropdown__value .layer-type-selector__item__icon {
+    flex-shrink: 0;
+  }
+
+  .item-selector__dropdown__value .layer-type-selector__item__label {
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 `;
 
