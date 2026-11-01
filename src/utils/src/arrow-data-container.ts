@@ -67,6 +67,58 @@ export function isArrowVector(data: any): data is arrow.Vector {
   );
 }
 
+/**
+ * Normalize native point coordinates for deck.gl and loaders.gl. Interleaved
+ * coordinates are already usable and retain their buffers without copying.
+ */
+export function convertStructToFixedSizeList(coords: arrow.Data): arrow.Data<arrow.FixedSizeList> {
+  if (arrow.DataType.isFixedSizeList(coords.type)) {
+    const pointData = coords as arrow.Data<arrow.FixedSizeList>;
+    const child = pointData.children[0];
+    const length = coords.length * coords.type.listSize;
+    // IPC/compaction can pad the final buffer. Expose only logical coordinates
+    // to loaders.gl, which derives feature counts and bounds from buffer length.
+    return child.values.length === length
+      ? pointData
+      : pointData.clone<arrow.FixedSizeList>(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          [child.slice(0, length)]
+        );
+  }
+  if (!arrow.DataType.isStruct(coords.type)) {
+    throw new Error('Expected GeoArrow point coordinates');
+  }
+
+  const dimensions = coords.children.length;
+  const values = new Float64Array(coords.length * dimensions);
+  for (let i = 0; i < coords.length; i++) {
+    // Arrow slices already slice child values. Parent/child validity bitmaps
+    // retain their own offsets, which getValid accounts for.
+    const valid =
+      coords.getValid(i) &&
+      coords.children.every(child => child.getValid(i) && Number.isFinite(child.values[i]));
+    for (let axis = 0; axis < dimensions; axis++) {
+      // Preserve row alignment while keeping missing/empty points out of bounds
+      // and rendering. Float64 also preserves Float32 input values exactly.
+      values[i * dimensions + axis] = valid ? coords.children[axis].values[i] : NaN;
+    }
+  }
+
+  const floatType = new arrow.Float64();
+  return arrow.makeData({
+    type: new arrow.FixedSizeList(dimensions, new arrow.Field('coords', floatType)),
+    offset: coords.offset,
+    length: coords.length,
+    nullCount: coords.nullCount,
+    nullBitmap: coords.nullBitmap,
+    child: arrow.makeData({type: floatType, length: values.length, data: values})
+  });
+}
+
 /** Build an Arrow vector while letting Arrow infer the physical type from converted values. */
 export function createArrowVector(values: unknown[]): arrow.Vector {
   return arrow.vectorFromArray(values as any[]);
