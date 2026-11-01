@@ -690,7 +690,10 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
             const aggregator = rendered.state.aggregator;
             const counts = [0, 0];
             for (let j = 0; j < aggregator.binCount; j++) {
-              aggregator.getBin(j).value.forEach((count, channel) => (counts[channel] += count));
+              aggregator.getBin(j).value.forEach((count, channel) => {
+                // Masked empty bins contribute no retained points to the total.
+                if (!Number.isNaN(count)) counts[channel] += count;
+              });
             }
             t.deepEqual(counts, [expected, expected], message);
           }
