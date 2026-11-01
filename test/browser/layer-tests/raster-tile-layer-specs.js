@@ -26,7 +26,7 @@ import {
 import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
-import {loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
+import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterImages from '../../../src/layers/src/raster-tile/image';
 
@@ -1046,6 +1046,96 @@ test('#RasterTileLayer -> getDataSourceParams integer band uses the data type ra
   t.ok(params, 'should return data source params for a uint8 band');
   t.equal(params?.minPixelValue, 0, 'should keep the data type minimum');
   t.equal(params?.maxPixelValue, 255, 'should keep the data type maximum');
+  t.end();
+});
+
+test('#RasterTileLayer -> linear stretch normalizes the selected pixel interval', t => {
+  for (const [minPixelValue, maxPixelValue] of [
+    [100, 200],
+    [-100, 100],
+    [0, 200]
+  ]) {
+    for (const linearRescalingFactor of [
+      [0, 1],
+      [0.25, 0.75],
+      [0.1, 0.8]
+    ]) {
+      for (const bandCombination of ['rgb', 'single']) {
+        const {modules, moduleProps} = getModules({
+          images: {},
+          props: {minPixelValue, maxPixelValue, linearRescalingFactor, bandCombination}
+        });
+        t.ok(modules.includes(RasterWebGL.linearRescale), 'uses the linear rescale shader');
+        const {scaler, offset} = RasterWebGL.linearRescale.getUniforms(moduleProps);
+        const range = maxPixelValue - minPixelValue;
+        const low = minPixelValue + linearRescalingFactor[0] * range;
+        const high = minPixelValue + linearRescalingFactor[1] * range;
+        // The shader applies arr * scaler + offset to every RGB channel.
+        const rgb = [low, (low + high) / 2, high].map(value => value * scaler + offset);
+        rgb.forEach((value, channel) => {
+          t.ok(
+            Math.abs(value - [0, 0.5, 1][channel]) < 1e-12,
+            `${bandCombination} ${minPixelValue}:${maxPixelValue} stretch ${linearRescalingFactor}, channel ${channel}`
+          );
+        });
+      }
+    }
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> linear stretch preserves fallback and other rescaling modes', t => {
+  const props = {
+    minPixelValue: 100,
+    maxPixelValue: 200,
+    linearRescalingFactor: [0.25, 0.75],
+    bandCombination: 'rgb'
+  };
+  const getRescale = overrides => {
+    const result = getModules({images: {}, props: {...props, ...overrides}});
+    return {...result, uniforms: RasterWebGL.linearRescale.getUniforms(result.moduleProps)};
+  };
+  for (const overrides of [
+    {maxPixelValue: 100},
+    {linearRescalingFactor: [0.25, 0.25]},
+    {minPixelValue: undefined, maxPixelValue: undefined}
+  ]) {
+    t.deepEqual(
+      getRescale(overrides).uniforms,
+      {scaler: 1, offset: -0.25},
+      'keeps the degenerate-range fallback'
+    );
+  }
+  t.deepEqual(
+    getRescale({minPixelValue: Infinity, maxPixelValue: -Infinity}).uniforms,
+    {scaler: -0, offset: -0.25},
+    'keeps the empty viewport fallback'
+  );
+  const nonlinear = getRescale({nonLinearRescaling: true, gammaContrastFactor: 2});
+  t.deepEqual(nonlinear.uniforms, {scaler: 1 / 200, offset: 0}, 'keeps nonlinear normalization');
+  t.ok(nonlinear.modules.includes(RasterWebGL.gammaContrast), 'keeps gamma contrast');
+  t.equal(nonlinear.moduleProps.gammaContrastValue, 2, 'keeps the gamma factor');
+  t.deepEqual(
+    getRescale({hasCategoricalColorMap: true}).uniforms,
+    {scaler: 1 / 200, offset: 0},
+    'keeps categorical normalization'
+  );
+  t.notOk(
+    getRescale({bandCombination: 'normalizedDifference'}).modules.includes(
+      RasterWebGL.linearRescale
+    ),
+    'does not rescale spectral indices'
+  );
+  t.deepEqual(
+    getModules({images: {}}),
+    {modules: [], moduleProps: {}},
+    'keeps missing-props behavior'
+  );
+  t.deepEqual(
+    getModules({images: {imageRgba: {}}, props}),
+    {modules: [RasterWebGL.rgbaImage], moduleProps: {}},
+    'keeps direct RGBA behavior'
+  );
   t.end();
 });
 
