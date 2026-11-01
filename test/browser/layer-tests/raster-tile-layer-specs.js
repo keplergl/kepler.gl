@@ -394,6 +394,78 @@ test('#RasterTileLayer -> pixel value tracking', t => {
   t.end();
 });
 
+test('#RasterTileLayer -> dynamic coloring keeps finite zero endpoints', t => {
+  const layer = new RasterTileLayer({id: 'dynamic-raster', dataId: 'stac-data'});
+  layer.updateLayerVisConfig({dynamicColor: true, preset: 'singleBand', singleBandName: 'red'});
+  const dataset = {
+    ...MOCK_STAC_DATASET,
+    metadata: {
+      ...MOCK_STAC_METADATA,
+      assets: Object.fromEntries(
+        Object.entries(MOCK_STAC_METADATA.assets).map(([id, asset]) => [
+          id,
+          {
+            ...asset,
+            'raster:bands': [{data_type: 'float32', statistics: {minimum: -100, maximum: 100}}]
+          }
+        ])
+      )
+    }
+  };
+  const tile = (minPixelValue, maxPixelValue) => ({data: {minPixelValue, maxPixelValue}});
+  const cases = [
+    {name: 'zero minimum', tiles: [tile(0, 10), tile(5, 20)], range: [0, 20]},
+    {name: 'zero maximum', tiles: [tile(-10, 0), tile(-5, -2)], range: [-10, 0]},
+    {name: 'negative endpoints', tiles: [tile(-20, -10), tile(-15, -5)], range: [-20, -5]},
+    {name: 'all-zero tiles', tiles: [tile(0, 0), tile(0, 0)], range: [0, 0]},
+    {name: 'normal nonzero endpoints', tiles: [tile(5, 10), tile(8, 20)], range: [5, 20]},
+    {
+      name: 'missing and nonfinite endpoints',
+      tiles: [
+        null,
+        {},
+        {data: null},
+        {data: {}},
+        tile(null, undefined),
+        tile(NaN, NaN),
+        tile(-Infinity, Infinity),
+        tile(0, 10)
+      ],
+      range: [0, 10]
+    },
+    {
+      name: 'independent valid endpoints',
+      tiles: [tile(0, null), tile(undefined, 0)],
+      range: [0, 0]
+    },
+    {name: 'zero tile removed from viewport', tiles: [tile(5, 20)], range: [5, 20]},
+    {name: 'zero tile enters viewport again', tiles: [tile(0, 10), tile(5, 20)], range: [0, 20]},
+    {name: 'all tiles removed', tiles: [], range: [Infinity, -Infinity]},
+    {
+      name: 'only invalid statistics',
+      tiles: [null, {}, {data: {}}, tile(NaN, Infinity), tile(-Infinity, null)],
+      range: [Infinity, -Infinity]
+    }
+  ];
+
+  for (const {name, tiles, range} of cases) {
+    layer.onViewportLoad(tiles);
+    t.deepEqual(
+      [layer.minViewportPixelValue, layer.maxViewportPixelValue],
+      range,
+      `${name}: tracks the current viewport range`
+    );
+    const [rendered] = layer.renderLayer(createRenderOpts(dataset));
+    t.ok(rendered, `${name}: creates the raster TileLayer`);
+    t.deepEqual(
+      [rendered?.props.minPixelValue, rendered?.props.maxPixelValue],
+      range,
+      `${name}: forwards the range for dynamic rendering`
+    );
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> findDefaultLayerProps', t => {
   // Test with raster dataset
   const result = RasterTileLayer.findDefaultLayerProps(MOCK_STAC_DATASET);
