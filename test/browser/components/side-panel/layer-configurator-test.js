@@ -1380,24 +1380,26 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     const contourInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
       input => input.value === '0.1'
     );
-    fireEvent.change(contourInput, {target: {value: '0.2'}});
-    fireEvent.blur(contourInput);
-    t.deepEqual(
-      changed.lastCall.args[0],
-      {surfaceContourStep: 0.2},
-      'contour step edits update the surface'
-    );
+    for (const step of [0.01, 0.2, 5, 100]) {
+      fireEvent.change(contourInput, {target: {value: String(step)}});
+      fireEvent.blur(contourInput);
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {surfaceContourStep: step},
+        `contour step ${step} can be selected without clamping`
+      );
+    }
     fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
     t.notOk(view.queryByText('Contour step'), 'disabling contours hides their step control');
     fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
-    t.equal(layer.config.visConfig.surfaceContourStep, 0.2, 'reenabling contours retains the step');
+    t.equal(layer.config.visConfig.surfaceContourStep, 100, 'reenabling contours retains the step');
     fireEvent.click(toggle);
     t.notOk(toggle.checked, 'toggle returns to 2D');
     t.deepEqual(changed.lastCall.args[0], {surfaceEnabled: false}, 'disabling stores false');
     t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
     fireEvent.click(toggle);
     t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
-    t.equal(layer.config.visConfig.surfaceContourStep, 0.2, 'switching modes retains contour step');
+    t.equal(layer.config.visConfig.surfaceContourStep, 100, 'switching modes retains contour step');
   } finally {
     view.unmount();
   }

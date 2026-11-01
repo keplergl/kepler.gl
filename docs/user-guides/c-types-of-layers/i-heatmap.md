@@ -13,7 +13,7 @@ The surface uses the same data, weights, aggregation, radius, color range, inten
 - **Height scale (m)** controls meters per unit of displayed density. Increasing intensity also increases surface height.
 - **Surface shading** uses scene lighting to make slopes easier to see. With **Light & Shadow** enabled, the surface responds to the sun and ambient-light settings and casts and receives shadows.
 - **Surface contours** overlays lines at regular density intervals.
-- **Contour step** appears when contours are enabled and controls the density interval between lines (default 0.1). Smaller steps show more lines.
+- **Contour step** appears when contours are enabled and controls the density interval between lines, from 0.01 to 100 (default 0.1). Smaller steps show more lines; larger steps reduce clutter when zoomed out. The slider keeps fine control over intervals from 0.01 to 1.
 
 Surface settings are saved with the map and retained when switching back to Flat. Surface mode works on both the flat map and globe.
 

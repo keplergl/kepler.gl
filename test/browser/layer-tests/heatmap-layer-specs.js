@@ -933,7 +933,7 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
     surfaceHeight: 2500,
     surfaceLighting: false,
     surfaceContours: true,
-    surfaceContourStep: 0.2
+    surfaceContourStep: 100
   };
   layer.updateLayerVisConfig(surfaceConfig);
   const saved = visStateSchemaV1.save({
@@ -956,7 +956,11 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
   const render = () => restored.renderLayer({data, mapState: INITIAL_MAP_STATE, visible: true})[0];
   t.ok(render().props.surface, 'selects the surface renderer');
   t.equal(render().props.surfaceHeight, 2500, 'passes the selected height scale');
-  t.equal(render().props.surfaceContourStep, 0.2, 'passes the selected contour step');
+  t.equal(
+    render().props.surfaceContourStep,
+    100,
+    'passes large saved contour steps to the renderer'
+  );
   for (const step of [undefined, 0, -0.1, Number.NaN, Infinity]) {
     restored.updateLayerVisConfig({surfaceContourStep: step});
     t.equal(

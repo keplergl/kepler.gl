@@ -207,8 +207,10 @@ export const heatmapVisConfigs: {
     description: 'layerVisConfigs.heatmap.surfaceContourStepDescription',
     property: 'surfaceContourStep',
     isRanged: false,
-    range: [0.01, 1],
-    step: 0.01
+    range: [0.01, 100],
+    step: 0.01,
+    focusRange: [0.01, 1],
+    focusWeight: 0.5
   } as VisConfigNumber,
   opacity: 'opacity',
   colorRange: 'colorRange',
