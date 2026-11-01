@@ -1182,10 +1182,15 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+
+    // Contour uses scalar thresholds as legend-label keys. When leaving Contour,
+    // retain only color-keyed labels while preserving the palette.
     const colorRange = newLayer.config.visConfig.colorRange;
-    if (oldLayer.type === 'contour' && newType !== 'contour' && colorRange?.colorLegends) {
-      // Contour labels use scalar threshold keys; other layers expect color keys.
-      // Keep the palette and any color labels inherited before entering Contour.
+    if (
+      oldLayer.type === LAYER_TYPES.contour &&
+      newType !== LAYER_TYPES.contour &&
+      colorRange?.colorLegends
+    ) {
       newLayer.updateLayerVisConfig({
         colorRange: {
           ...colorRange,
@@ -1195,6 +1200,7 @@ export function layerTypeChangeUpdater(
         }
       });
     }
+
     if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
       const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
       if (textLabel.length !== newLayer.config.textLabel.length) {
