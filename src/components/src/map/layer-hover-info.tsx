@@ -363,12 +363,14 @@ const CellInfo = ({
     colorDelta === elevationDelta;
   return (
     <tbody>
-      <Row
-        name={'total points'}
-        key="count"
-        value={String(data.points && data.points.length)}
-        isComparing={isComparing}
-      />
+      {Array.isArray(data.points) ? (
+        <Row
+          name={'total points'}
+          key="count"
+          value={String(data.points.length)}
+          isComparing={isComparing}
+        />
+      ) : null}
       {colorField && layer.visualChannels.color && colorMeasure ? (
         <Row
           name={colorMeasure}
