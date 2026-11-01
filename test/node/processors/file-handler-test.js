@@ -25,6 +25,8 @@ import {
   getDatasetRefreshIntervalMs
 } from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
+// The standalone bundle has distinct constructors, like DuckDB's bundled Arrow.
+import * as foreignArrow from 'apache-arrow/Arrow.es2015.min';
 import {convertArrowToSchema} from '@loaders.gl/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
@@ -562,6 +564,85 @@ test('#file-handler -> separated points reach workers and fallback with all coor
     );
   }
   t.deepEqual(arrow.tableToIPC(table, 'file'), bytes, 'worker preparation preserves source data');
+  t.end();
+});
+
+test('#file-handler -> worker fallback accepts points and lines from another Arrow runtime', async t => {
+  const pointType = new foreignArrow.FixedSizeList(
+    2,
+    new foreignArrow.Field('xy', new foreignArrow.Float64())
+  );
+  for (const encoding of [GEOARROW_EXTENSIONS.POINT, GEOARROW_EXTENSIONS.LINESTRING]) {
+    const isPoint = encoding === GEOARROW_EXTENSIONS.POINT;
+    const chunks = [
+      [
+        [10, 20],
+        [30, 40]
+      ],
+      [[50, 60]]
+    ].map(points => {
+      // Exact child/offset lengths keep unrelated IPC padding out of line fixtures.
+      const coordinates = isPoint ? points : points.flatMap(point => [point, point]);
+      const child = foreignArrow
+        .vectorFromArray(coordinates, pointType)
+        .data[0].slice(0, coordinates.length);
+      return isPoint
+        ? child
+        : foreignArrow.makeData({
+            type: new foreignArrow.List(new foreignArrow.Field('vertices', pointType)),
+            length: points.length,
+            valueOffsets: Int32Array.from(points.map((_, i) => i * 2).concat(points.length * 2)),
+            child
+          });
+    });
+    const geoColumn = foreignArrow.makeVector(chunks);
+    const field = {
+      name: 'geometry',
+      type: 'geoarrow',
+      fieldIdx: 0,
+      metadata: new Map([[GEOARROW_METADATA_KEY, encoding]])
+    };
+    const table = new foreignArrow.Table({geometry: geoColumn});
+    const originalBytes = foreignArrow.tableToIPC(table);
+    t.notOk(chunks[0] instanceof arrow.Data, 'fixture uses a separate Arrow runtime');
+
+    for (const latestOnly of [false, true]) {
+      const result = await parseGeoArrowBatchesOnWorkers(
+        {fields: [field], cols: [geoColumn]},
+        {
+          latestOnly,
+          parseOnWorker: async () => {
+            throw new Error('worker unavailable');
+          }
+        }
+      );
+      t.deepEqual(Object.keys(result[0]), latestOnly ? ['1'] : ['0', '1'], 'selected batches');
+      for (const [chunkIndex, binary] of Object.entries(result[0])) {
+        const last = chunkIndex === '1';
+        const points = last
+          ? [[50, 60]]
+          : [
+              [10, 20],
+              [30, 40]
+            ];
+        const rowIds = last ? [2] : [0, 1];
+        const geometry = binary.binaryGeometries[0][isPoint ? 'points' : 'lines'];
+        t.deepEqual(
+          Array.from(geometry.positions.value),
+          (isPoint ? points : points.flatMap(point => [point, point])).flat(),
+          'fallback preserves all coordinates'
+        );
+        t.deepEqual(
+          Array.from(geometry.globalFeatureIds.value),
+          isPoint ? rowIds : rowIds.flatMap(id => [id, id]),
+          'fallback preserves global row ids'
+        );
+        t.deepEqual(binary.bounds, last ? [50, 60, 50, 60] : [10, 20, 30, 40], 'bounds');
+        t.deepEqual(binary.meanCenters, points, 'centroids remain aligned with rows');
+      }
+    }
+    t.deepEqual(foreignArrow.tableToIPC(table), originalBytes, 'fallback preserves source data');
+  }
   t.end();
 });
 

@@ -224,7 +224,22 @@ export function getGeojsonLayerMetaFromArrow({
   if (encoding === GEOARROW_EXTENSIONS.POINT) {
     const chunks =
       options.chunkIndex === undefined ? geoColumn.data : [geoColumn.data[options.chunkIndex]];
-    geoColumn = arrow.makeVector(chunks.map(convertStructToFixedSizeList));
+    geoColumn = arrow.makeVector(
+      chunks.map(chunk => {
+        const normalized = convertStructToFixedSizeList(chunk);
+        // Interleaved chunks may belong to DuckDB's Arrow runtime. Wrap them
+        // locally for makeVector's instanceof check, retaining their buffers.
+        return new arrow.Data(
+          normalized.type,
+          normalized.offset,
+          normalized.length,
+          normalized.nullCount,
+          normalized.buffers,
+          normalized.children,
+          normalized.dictionary
+        );
+      })
+    );
     if (options.chunkIndex !== undefined) options.chunkIndex = 0;
   }
 

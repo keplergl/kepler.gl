@@ -30,6 +30,8 @@ import {
   findDefaultColorFieldWithValues
 } from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
+// The standalone bundle has distinct constructors, like DuckDB's bundled Arrow.
+import * as foreignArrow from 'apache-arrow/Arrow.es2015.min';
 import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src/utils/utils';
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
@@ -419,6 +421,81 @@ test('layerUtils -> incremental separated points retain unequal batch row offset
     'sums preceding unequal batch lengths'
   );
   t.deepEqual(result.centroids, [[70, 80]], 'centroid uses both coordinate axes');
+  t.end();
+});
+
+test('layerUtils -> native points from another Arrow runtime preserve slices and batch ids', t => {
+  const type = new foreignArrow.FixedSizeList(
+    3,
+    new foreignArrow.Field('xyz', new foreignArrow.Float64())
+  );
+  const first = foreignArrow
+    .vectorFromArray(
+      [
+        [-100, -80, -1],
+        [10, 20, 5],
+        [30, 40, 15]
+      ],
+      type
+    )
+    .slice(1);
+  const last = foreignArrow.vectorFromArray([[50, 60, 25]], type);
+  const geoColumn = foreignArrow.makeVector([...first.data, ...last.data]);
+  const geoField = {
+    name: 'geometry',
+    type: 'geoarrow',
+    fieldIdx: 0,
+    metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]])
+  };
+  const table = new foreignArrow.Table({geometry: geoColumn});
+  const originalBytes = foreignArrow.tableToIPC(table);
+  const dataContainer = new ArrowDataContainer({
+    cols: [geoColumn],
+    fields: [geoField],
+    arrowTable: table
+  });
+  t.notOk(geoColumn.data[0] instanceof arrow.Data, 'fixture uses a separate Arrow runtime');
+
+  for (const chunkIndex of [undefined, 1]) {
+    const result = getGeojsonLayerMetaFromArrow({
+      dataContainer,
+      geoColumn,
+      geoField,
+      columnIndex: 0,
+      chunkIndex
+    });
+    const incremental = chunkIndex === 1;
+    t.deepEqual(
+      result.dataToFeature.flatMap(data => Array.from(data.points.positions.value)),
+      incremental ? [50, 60, 25] : [10, 20, 5, 30, 40, 15, 50, 60, 25],
+      'preserves XYZ coordinates and excludes padding and sliced-out rows'
+    );
+    t.deepEqual(
+      result.dataToFeature.flatMap(data => Array.from(data.points.globalFeatureIds.value)),
+      incremental ? [2] : [0, 1, 2],
+      'retains row ids across unequal batches'
+    );
+    t.deepEqual(result.bounds, incremental ? [50, 60, 50, 60] : [10, 20, 50, 60], 'bounds');
+    t.deepEqual(
+      result.centroids,
+      incremental
+        ? [[50, 60]]
+        : [
+            [10, 20],
+            [30, 40],
+            [50, 60]
+          ],
+      'centroids remain aligned with rows'
+    );
+    result.dataToFeature.forEach((data, i) => {
+      t.equal(
+        data.points.positions.value.buffer,
+        geoColumn.data[(chunkIndex || 0) + i].children[0].values.buffer,
+        'interleaved coordinates still share their source buffer'
+      );
+    });
+  }
+  t.deepEqual(foreignArrow.tableToIPC(table), originalBytes, 'does not change the source table');
   t.end();
 });
 

@@ -304,7 +304,19 @@ export async function parseGeoArrowBatchesOnWorkers(
         result: parseOnWorker(sourceData),
         fallback: () =>
           getBinaryGeometriesFromArrow(
-            arrow.makeVector(geometryChunk),
+            // Use the original buffers: the worker copy may be transferred.
+            // A local Data wrapper also accepts chunks from another Arrow runtime.
+            arrow.makeVector(
+              new arrow.Data(
+                geometryChunk.type,
+                geometryChunk.offset,
+                geometryChunk.length,
+                geometryChunk.nullCount,
+                geometryChunk.buffers,
+                geometryChunk.children,
+                geometryChunk.dictionary
+              )
+            ),
             sourceData.geometryEncoding,
             {
               chunkOffset,
