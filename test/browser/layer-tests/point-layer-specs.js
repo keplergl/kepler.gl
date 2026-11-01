@@ -13,7 +13,12 @@ import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/de
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {arrowSchemaToFields, processArrowBatches, processGeojson} from '@kepler.gl/processors';
-import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, renderDeckGlLayer} from '@kepler.gl/reducers';
+import {
+  findDefaultLayer,
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  renderDeckGlLayer
+} from '@kepler.gl/reducers';
 import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
 import {hexToRgb} from '@kepler.gl/utils';
 
