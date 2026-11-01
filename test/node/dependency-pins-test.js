@@ -30,7 +30,7 @@ const FLOORS = {
   dompurify: {3: '3.4.17'},
   'fast-uri': {3: '3.1.9'},
   fflate: {0.7: '0.7.5', 0.8: '0.8.3'},
-  'follow-redirects': {1: '1.16.1'},
+  'follow-redirects': {1: '1.16.2'},
   handlebars: {4: '4.7.10'},
   'ip-address': {10: '10.7.4'},
   'js-yaml': {3: '3.15.2', 4: '4.3.2'},
@@ -47,11 +47,17 @@ const FLOORS = {
 
 // The standalone projects use PostCSS 8. The root still has a legacy
 // PostCSS 7 tree through Stylelint that needs a separate tooling upgrade.
-const STANDALONE_FLOORS = {...FLOORS, postcss: {8: '8.5.23'}};
+const STANDALONE_FLOORS = {
+  ...FLOORS,
+  postcss: {8: '8.5.23'},
+  'react-router-dom': {6: '6.30.6'}
+};
 
 // These patches apply to the root build tools. Examples have separate trees.
 const ROOT_FLOORS = {
   ...FLOORS,
+  // Babel 6 has no patched traversal release; its unused parent must stay removed.
+  'babel-traverse': {},
   'launch-editor': {2: '2.14.2'},
   undici: {6: '6.29.1'}
 };
@@ -154,6 +160,38 @@ test('lockfiles resolve patched versions of known vulnerable transitive dependen
     });
   });
 
+  t.end();
+});
+
+test('Python widget npm lockfile resolves patched dependencies, including nested copies', t => {
+  const rel = 'bindings/python/package-lock.json';
+  const lockfile = JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+  const floors = {
+    'd3-color': FLOORS['d3-color'],
+    fflate: FLOORS.fflate,
+    postcss: STANDALONE_FLOORS.postcss,
+    thrift: FLOORS.thrift
+  };
+  const found = new Set();
+
+  Object.entries(lockfile.packages).forEach(([location, {version}]) => {
+    const name = location.split('node_modules/').pop();
+    if (!floors[name]) {
+      return;
+    }
+    found.add(name);
+    const floor = floors[name][releaseLine(version)];
+    t.ok(
+      floor && compareVersions(version, floor) >= 0,
+      `${rel} ${location} resolves ${version}, which must be >= ${
+        floor || 'a patched release line'
+      }`
+    );
+  });
+
+  Object.keys(floors).forEach(name => {
+    t.ok(found.has(name), `${rel} includes ${name} in the security checks`);
+  });
   t.end();
 });
 
