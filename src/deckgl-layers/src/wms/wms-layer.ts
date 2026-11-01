@@ -26,6 +26,7 @@ export type WMSLayerProps = CompositeLayerProps & _WMSLayerProps;
 
 /** Props added by the TileLayer */
 type _WMSLayerProps = {
+  idx?: number;
   data: string | ImageSource;
   serviceType?: string | 'auto';
   layers?: string[];

@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 
 import {messages} from '@kepler.gl/localization';
+import {parseVectorMetadata} from '@kepler.gl/table';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import MultiSelectFilterFactory from './multi-select-filter';
 
@@ -33,6 +34,33 @@ beforeAll(() => {
 });
 
 describe('MultiSelectFilter', () => {
+  test('searches string categories when other tile layers have same-named numeric fields', async () => {
+    const metadata = parseVectorMetadata({
+      tilejson: {
+        layers: [
+          {id: 'strings', fields: [{name: 'class', type: 'utf8', values: ['clinic']}]},
+          {id: 'numbers', fields: [{name: 'class', type: 'int', values: [7]}]},
+          {id: 'later', fields: [{name: 'class', type: 'utf8', values: ['pharmacy']}]}
+        ]
+      }
+    } as any);
+    const setFilter = jest.fn();
+    const user = userEvent.setup();
+    renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <MultiSelectFilter
+          filter={{id: 'category', ...metadata?.fields[0].filterProps} as any}
+          setFilter={setFilter}
+        />
+      </IntlProvider>
+    );
+    await user.click(screen.getByText('Enter a value'));
+    await user.type(screen.getByPlaceholderText('Search'), 'cli');
+    expect(screen.queryByText('pharmacy')).not.toBeInTheDocument();
+    await user.click(screen.getByText('clinic'));
+    expect(setFilter).toHaveBeenCalledWith(['clinic']);
+  });
+
   test('keeps the search open while selections toggle', async () => {
     const setFilter = jest.fn();
     const user = userEvent.setup();
