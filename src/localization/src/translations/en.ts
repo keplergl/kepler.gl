@@ -1147,6 +1147,12 @@ ${'```'}
       worldUnitSize: 'Hexagon Radius (km)'
     },
     hex_id: 'hex id',
+    flowField: {
+      u: 'U (Eastward)',
+      v: 'V (Northward)',
+      speed: 'Speed',
+      direction: 'Direction (From)'
+    },
     flow: {
       source: {
         lat: 'source lat',

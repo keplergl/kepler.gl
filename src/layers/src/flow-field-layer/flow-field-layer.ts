@@ -124,14 +124,14 @@ const SUPPORTED_COLUMN_MODES = [
 ];
 
 const COLUMN_LABELS = {
-  lat: 'Lat',
-  lng: 'Lng',
-  geojson: 'GeoJSON',
-  u: 'U (Eastward)',
-  v: 'V (Northward)',
-  speed: 'Speed',
-  direction: 'Direction (From)',
-  altitude: 'Altitude'
+  lat: 'lat',
+  lng: 'lng',
+  geojson: 'geojson',
+  u: 'flowField.u',
+  v: 'flowField.v',
+  speed: 'flowField.speed',
+  direction: 'flowField.direction',
+  altitude: 'altitude'
 };
 
 function normalizeColumnMode(mode: string | undefined): string {
