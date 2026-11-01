@@ -27,6 +27,8 @@ import {RasterWebGL} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
+import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
+import * as rasterImages from '../../../src/layers/src/raster-tile/image';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -128,6 +130,113 @@ test('#RasterTileLayer -> tile requests carry the abort signal', async t => {
     'the tile request should carry the abort signal deck.gl provided'
   );
 
+  t.end();
+});
+
+test('#RasterTileLayer -> required raster assets load together', async t => {
+  const bands = [10, 20, 30].map(value => ({data: new Uint8Array([value]), width: 1, height: 1}));
+  const mask = {data: new Uint8Array([255]), width: 1, height: 1};
+  const requests = ['red', 'green', 'blue'].map((url, index) => ({
+    url,
+    rasterServerUrl: '',
+    options: {},
+    useMask: index === 0
+  }));
+  let results = [[bands[0], mask], [bands[1]], [bands[2]]];
+  const loadStub = sinon.stub(rasterGpuUtils, 'loadNpyArray').callsFake(async request => {
+    const result = results[requests.indexOf(request)];
+    return result && [...result];
+  });
+  const requestsStub = sinon.stub(rasterImages, 'getSTACImageRequests').resolves(requests);
+  const layer = new RasterTileLayer({id: 'required-assets', dataId: 'stac-data'});
+  const tileProps = {
+    stac: MOCK_STAC_METADATA,
+    index: {x: 0, y: 0, z: 0},
+    bbox: {west: -180, south: -85, east: 180, north: 85},
+    shouldLoadTerrain: false,
+    colormapId: ''
+  };
+
+  try {
+    const complete = await rasterImages.loadSTACImageData(requests);
+    t.deepEqual(complete.imageBands, bands, 'complete RGB keeps every channel in request order');
+    t.equal(complete.imageMask, mask, 'only the first asset supplies the validity mask');
+    const completeTile = await layer.getTileData(tileProps);
+    t.deepEqual(completeTile.images.imageBands, bands, 'complete RGB yields a usable tile');
+
+    for (const failedIndex of [0, 1, 2]) {
+      for (const missing of [null, []]) {
+        results = [[bands[0], mask], [bands[1]], [bands[2]]];
+        results[failedIndex] = missing;
+        const label = `${requests[failedIndex].url} returns ${
+          missing === null ? 'null' : 'no bands'
+        }`;
+        const incomplete = await rasterImages.loadSTACImageData(requests);
+        t.deepEqual(incomplete, {imageBands: null}, `${label}: no partial channels or mask`);
+        t.equal(await layer.getTileData(tileProps), null, `${label}: no successful tile to cache`);
+      }
+    }
+
+    results = [[mask], [bands[1]], [bands[2]]];
+    t.deepEqual(
+      await rasterImages.loadSTACImageData(requests),
+      {imageBands: null},
+      'a first asset containing only a mask is also incomplete'
+    );
+
+    results = [[bands[0], mask], [bands[1]], [bands[2]]];
+    t.deepEqual(
+      (await layer.getTileData(tileProps)).images.imageBands,
+      bands,
+      'a later complete load recovers all channels'
+    );
+    t.deepEqual(
+      await rasterImages.loadSTACImageData(requests.slice(0, 2)),
+      {imageBands: bands.slice(0, 2), imageMask: mask},
+      'two-asset presets retain their bands and mask'
+    );
+
+    results = [[bands[0], bands[1], bands[2], mask]];
+    requests[0].responseRequiredBandIndices = [2, 0];
+    t.deepEqual(
+      await rasterImages.loadSTACImageData([requests[0]]),
+      {imageBands: [bands[2], bands[0]], imageMask: mask},
+      'single-asset band selection and mask handling are unchanged'
+    );
+    results = [null];
+    requestsStub.resolves([requests[0]]);
+    t.deepEqual(
+      await rasterImages.loadSTACImageData([requests[0]]),
+      {imageBands: null},
+      'a failed single asset keeps the same failure sentinel'
+    );
+    t.equal(await layer.getTileData(tileProps), null, 'a failed single asset yields no tile');
+
+    requestsStub.resolves(requests);
+    for (const error of [
+      new Error('asset failed'),
+      Object.assign(new Error('aborted'), {name: 'AbortError'})
+    ]) {
+      loadStub.callsFake(() => Promise.reject(error));
+      try {
+        await rasterImages.loadSTACImageData(requests);
+        t.fail('a rejected asset must reject the image load');
+      } catch (caught) {
+        t.equal(caught, error, 'image loading preserves the original rejection');
+      }
+      try {
+        const tile = await layer.getTileData(tileProps);
+        t.equal(error.name, 'AbortError', 'only cancellation resolves instead of throwing');
+        t.equal(tile, null, 'cancellation yields no tile');
+      } catch (caught) {
+        t.notEqual(error.name, 'AbortError', 'tile cancellation must resolve without throwing');
+        t.equal(caught, error, 'tile loading preserves a genuine error');
+      }
+    }
+  } finally {
+    loadStub.restore();
+    requestsStub.restore();
+  }
   t.end();
 });
 
