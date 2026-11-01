@@ -265,6 +265,111 @@ describe('TripLayer models follow filtered vertices', () => {
     }
   );
 
+  test.each([
+    [false, false],
+    [false, true],
+    [true, false],
+    [true, true]
+  ])('interpolates configured yaw (filtered=%s, invert=%s)', async (filtered, invertYaw) => {
+    const {table, layer} = await makeFilteredModelTrip();
+    await table.update({
+      fields: table.fields,
+      rows: [
+        ['trip', 0, 0, '2024-01-01 00:00:00', 'Uber', 0, 0],
+        ['trip', 10, 0, '2024-01-01 00:00:10', 'Lyft', 0, 20],
+        ['trip', 20, 0, '2024-01-01 00:00:20', 'Waymo', 0, 80]
+      ]
+    });
+    if (filtered) table.filteredIndex = [1, 2];
+    layer.config.yawField = table.fields[6];
+    layer.updateLayerVisConfig({invertYaw});
+    const data = layer.formatLayerData({[table.id]: table}, null);
+    const feature = data.data[0];
+    const cases = filtered
+      ? [
+          [10, 20],
+          [15, 50],
+          [20, 80]
+        ]
+      : [
+          [0, 0],
+          [5, 10],
+          [10, 20],
+          [15, 50],
+          [20, 80]
+        ];
+
+    for (const [seconds, heading] of cases) {
+      const options = {
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState: {zoom: 4, latitude: 0, longitude: 0},
+        animationConfig: {
+          domain: layer.config.animation.domain,
+          currentTime: Date.UTC(2024, 0, 1) + seconds * 1000
+        }
+      };
+      const [, model, label] = layer.renderLayer(options);
+      const matrix = model.props.getTransformMatrix(feature);
+      const expectedYaw = 90 - (invertYaw ? -heading : heading);
+      expect((Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI).toBeCloseTo(expectedYaw);
+      expect(model.props.getPosition(feature)).toEqual([0, seconds, 0]);
+      expect(label.props.getPosition(feature)).toEqual([0, seconds, 0]);
+
+      // Geometry-derived direction uses the retained path, independently of yaw-field inversion.
+      layer.config.yawField = null;
+      const [, geometricModel] = layer.renderLayer(options);
+      expect(geometricModel.props.getTransformMatrix(feature)[0]).toBeCloseTo(0);
+      layer.config.yawField = table.fields[6];
+    }
+  });
+
+  test.each([
+    [undefined, 80, false],
+    [null, 80, false],
+    [NaN, 80, false],
+    [Infinity, 80, false],
+    [20, null, false],
+    [20, 80, true]
+  ])(
+    'keeps endpoint yaw when the first segment cannot interpolate (%s, %s, duplicate=%s)',
+    async (firstHeading, lastHeading, duplicateTime) => {
+      const {table, layer} = await makeFilteredModelTrip();
+      await table.update({
+        fields: table.fields,
+        rows: [
+          ['trip', 10, 0, '2024-01-01 00:00:10', 'Uber', 0, firstHeading],
+          [
+            'trip',
+            20,
+            0,
+            duplicateTime ? '2024-01-01 00:00:10' : '2024-01-01 00:00:20',
+            'Waymo',
+            0,
+            lastHeading
+          ]
+        ]
+      });
+      layer.config.yawField = table.fields[6];
+      const data = layer.formatLayerData({[table.id]: table}, null);
+      for (const invertYaw of [false, true]) {
+        layer.updateLayerVisConfig({invertYaw});
+        const [, model] = layer.renderLayer({
+          data,
+          gpuFilter: table.gpuFilter,
+          mapState: {zoom: 4, latitude: 0, longitude: 0},
+          animationConfig: {
+            domain: layer.config.animation.domain,
+            currentTime: Date.UTC(2024, 0, 1, 0, 0, duplicateTime ? 10 : 15)
+          }
+        });
+        const matrix = model.props.getTransformMatrix(data.data[0]);
+        const expectedYaw = 90 - (invertYaw ? -1 : 1) * Number(lastHeading);
+        expect((Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI).toBeCloseTo(expectedYaw);
+      }
+    }
+  );
+
   test('reuses filtered timestamps across frames and refreshes them after filters or data change', async () => {
     const {table, layer} = await makeFilteredModelTrip();
     const start = Date.UTC(2024, 0, 1);

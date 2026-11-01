@@ -1036,7 +1036,13 @@ export default class TripLayer extends Layer {
       prevYaw = idx > 1 ? getYawFromSpeedVector(coordinates[idx - 2], coordinates[idx - 1]) : 0;
       nextYaw = getYawFromSpeedVector(coordinates[idx - 1], coordinates[idx]);
     }
-    if (idx > 1) {
+    if (
+      idx > 1 ||
+      (yawField &&
+        Number.isFinite(prevDatum?.[yawField.fieldIdx]) &&
+        Number.isFinite(datum?.[yawField.fieldIdx]) &&
+        Number.isFinite(advancement))
+    ) {
       yaw = interpolateAngle(prevYaw ?? 0, nextYaw ?? 0, advancement);
     } else if (idx > 0 || (idx === 0 && yawField && datum)) {
       yaw = nextYaw ?? 0;
@@ -1089,9 +1095,9 @@ export default class TripLayer extends Layer {
         let coords = coordinates[idx].slice(0, 3);
         const prevCoords = idx > 0 ? coordinates[idx - 1].slice(0, 3) : null;
         const timeDiff = idx > 0 ? timestamps[idx] - timestamps[idx - 1] : 0;
-        const advancement = timeDiff > 0 ? (currentTime - timestamps[idx - 1]) / timeDiff : 0;
+        const advancement = idx > 0 ? (currentTime - timestamps[idx - 1]) / timeDiff : 0;
 
-        if (interpolateCoords && prevCoords) {
+        if (interpolateCoords) {
           coords = interpolateArray(prevCoords, coords)(advancement);
         }
 
