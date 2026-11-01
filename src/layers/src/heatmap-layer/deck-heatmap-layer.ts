@@ -107,22 +107,25 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     densityBounds: null
   };
 
+  // Viewports can be rebuilt from persistent density bounds on replacement
+  // instances. Cache them locally to avoid rebuilding within an update/render.
+  private _densityViewport: WebMercatorViewport | null = null;
+  private _densityViewportKey: string | null = null;
+  private _referenceViewport: WebMercatorViewport | null = null;
+  private _referenceViewportKey: string | null = null;
+
   // Cached globe render mesh, so its identity stays stable across frames (only
   // rebuilt when the density bounds or the globe resolution change).
   private _globeMesh: HeatmapMesh | null = null;
   private _globeMeshKey: string | null = null;
-  // deck.gl transfers state between replacement instances. Keep density
-  // framing here so display-only edits reuse the existing aggregation. Cache
-  // writes are direct to avoid scheduling another update while rendering.
+  // deck.gl transfers state between replacement instances. Preserve density
+  // framing, mode transitions, and the expensive surface mesh across updates.
+  // Mesh cache writes are direct to avoid scheduling an update while rendering.
   declare state: DeckGLHeatmapLayer['state'] & {
     surfaceMeshCache?: {key: string; mesh: HeatmapMesh | null};
-    densityViewport?: WebMercatorViewport | null;
-    densityViewportKey?: string | null;
     // Bounds follow the visible area when zoomed inside the data extent.
     densityBounds?: [number, number, number, number] | null;
     densityBoundsFrameKey?: string | null;
-    referenceViewport?: WebMercatorViewport | null;
-    referenceViewportKey?: string | null;
     wasGlobeHeatmap?: boolean;
   };
 
@@ -326,8 +329,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     }
 
     const cacheKey = bounds.join(',');
-    if (this.state.densityViewportKey === cacheKey && this.state.densityViewport) {
-      return this.state.densityViewport;
+    if (this._densityViewportKey === cacheKey && this._densityViewport) {
+      return this._densityViewport;
     }
 
     const viewport = this._buildMercatorViewport(bounds as [number, number, number, number]);
@@ -335,8 +338,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       return null;
     }
 
-    this.state.densityViewport = viewport;
-    this.state.densityViewportKey = cacheKey;
+    this._densityViewport = viewport;
+    this._densityViewportKey = cacheKey;
     return viewport;
   }
 
@@ -353,12 +356,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       return null;
     }
     const key = dataBounds.join(',');
-    if (this.state.referenceViewportKey === key && this.state.referenceViewport) {
-      return this.state.referenceViewport;
+    if (this._referenceViewportKey === key && this._referenceViewport) {
+      return this._referenceViewport;
     }
     const viewport = this._buildMercatorViewport(dataBounds as [number, number, number, number]);
-    this.state.referenceViewport = viewport;
-    this.state.referenceViewportKey = key;
+    this._referenceViewport = viewport;
+    this._referenceViewportKey = key;
     return viewport;
   }
 
@@ -448,8 +451,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         // frame, and force the base layer to recompute its density bounds +
         // regenerate the weightmap (it would otherwise keep the old, coarser
         // texture because the new visible bounds are contained in the old ones).
-        this.state.densityViewport = null;
-        this.state.densityViewportKey = null;
+        this._densityViewport = null;
+        this._densityViewportKey = null;
         (this.state as any).worldBounds = null;
         // A display-only update can arrive without a viewport change. Once
         // bounds are cleared, deck.gl must rebuild them before rendering.
@@ -519,12 +522,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
    * its viewport-change detection fires, and marks the weight map dirty.
    */
   _resetGlobeState() {
-    this.state.densityViewport = null;
-    this.state.densityViewportKey = null;
+    this._densityViewport = null;
+    this._densityViewportKey = null;
     this.state.densityBounds = null;
     this.state.densityBoundsFrameKey = null;
-    this.state.referenceViewport = null;
-    this.state.referenceViewportKey = null;
+    this._referenceViewport = null;
+    this._referenceViewportKey = null;
     this._globeMesh = null;
     this._globeMeshKey = null;
 

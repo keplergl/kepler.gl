@@ -1194,6 +1194,8 @@ test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
     layer = layer.clone({densityBounds: [-124, 36, -121, 39]});
     testRenderDeckLayer(t, 'changed density frame', [layer], {layerManager: manager});
     t.ok(aggregate.called, 'changing density bounds recomputes density');
+    const boundsBeforeZoom = layer.state.worldBounds;
+    const radiusBeforeZoom = layer._getRadiusScale();
     const callsBeforeZoom = aggregate.callCount;
     manager.activateViewport(
       new _GlobeView().makeViewport({
@@ -1208,9 +1210,42 @@ test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
       aggregate.callCount > callsBeforeZoom,
       'zooming into a different density frame recomputes density'
     );
+    const zoomedBounds = layer.state.worldBounds;
+    const zoomedTextureBounds = layer.state.normalizedCommonBounds;
+    const zoomedRadiusScale = layer._getRadiusScale();
+    const callsAfterZoom = aggregate.callCount;
+    t.ok(zoomedRadiusScale > 1, 'the tighter density frame scales the heatmap radius');
+
+    layer = layer.clone({surfaceLighting: true});
+    testRenderDeckLayer(t, 'display edit after zoom', [layer], {layerManager: manager});
+    t.equal(aggregate.callCount, callsAfterZoom, 'a zoomed display edit reuses aggregation');
+    t.deepEqual(layer.state.worldBounds, zoomedBounds, 'replacement retains the zoomed frame');
+    t.deepEqual(
+      layer.state.normalizedCommonBounds,
+      zoomedTextureBounds,
+      'replacement retains the density texture mapping'
+    );
+    t.equal(
+      layer._getRadiusScale(),
+      zoomedRadiusScale,
+      'rebuilt viewports preserve radius scaling after replacement'
+    );
+
+    // Update the same instance so existing viewport caches must be invalidated.
+    manager.activateViewport(viewport);
+    layer.activateViewport(viewport);
+    testRenderDeckLayer(t, 'zoom out with cached viewports', [layer], {layerManager: manager});
+    t.ok(aggregate.callCount > callsAfterZoom, 'zooming out recomputes density');
+    t.deepEqual(
+      layer.state.worldBounds,
+      boundsBeforeZoom,
+      'zooming out restores the density frame'
+    );
+    t.equal(layer._getRadiusScale(), radiusBeforeZoom, 'zooming out restores radius scaling');
 
     const flatViewport = new MapView().makeViewport({width: 800, height: 600, viewState});
     manager.activateViewport(flatViewport);
+    layer.activateViewport(flatViewport);
     layer = layer.clone({globeMode: false});
     const fresh = new KeplerHeatmapLayer({...props, id: 'fresh-flat-density', globeMode: false});
     testRenderDeckLayer(t, 'globe to map', [layer, fresh], {layerManager: manager});
