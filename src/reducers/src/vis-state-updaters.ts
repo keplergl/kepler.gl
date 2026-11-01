@@ -69,6 +69,7 @@ import {
   applyFiltersToDatasets,
   arrayInsert,
   combineSplitMapsByIndex,
+  colorMaybeToRGB,
   computeSplitMapLayers,
   adjustValueToFilterDomain,
   areFilterFieldTypesCompatible,
@@ -1181,6 +1182,19 @@ export function layerTypeChangeUpdater(
       state.datasets,
       defaultLayerProps
     );
+    const colorRange = newLayer.config.visConfig.colorRange;
+    if (oldLayer.type === 'contour' && newType !== 'contour' && colorRange?.colorLegends) {
+      // Contour labels use scalar threshold keys; other layers expect color keys.
+      // Keep the palette and any color labels inherited before entering Contour.
+      newLayer.updateLayerVisConfig({
+        colorRange: {
+          ...colorRange,
+          colorLegends: Object.fromEntries(
+            Object.entries(colorRange.colorLegends).filter(([color]) => colorMaybeToRGB(color))
+          )
+        }
+      });
+    }
     if (!AGGREGATION_COUNT_LAYER_TYPES.has(newType)) {
       const textLabel = newLayer.config.textLabel.filter(label => !isPointCountLabel(label));
       if (textLabel.length !== newLayer.config.textLabel.length) {

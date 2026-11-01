@@ -234,6 +234,10 @@ export function interpolateScalarSamples(
 /** Separable, normalized Gaussian smoothing. Missing samples remain missing. */
 export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array {
   if (!Number.isFinite(sigma) || sigma <= 0) return grid.values;
+  // A constant field is already smooth. Avoid convolution roundoff changing
+  // membership at an explicit threshold equal to that value; retain no-data cells.
+  const first = grid.values.find(Number.isFinite);
+  if (grid.values.every(value => !Number.isFinite(value) || value === first)) return grid.values;
   const boundedSigma = Math.min(sigma, 6);
   const radius = Math.ceil(boundedSigma * 3);
   const kernel = Array.from({length: radius * 2 + 1}, (_, i) =>

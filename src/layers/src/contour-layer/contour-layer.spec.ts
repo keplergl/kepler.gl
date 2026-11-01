@@ -758,6 +758,49 @@ test('edits and resets contour labels by threshold even when levels have the sam
   });
 });
 
+test.each(['point', 'grid'])(
+  'changing from Contour to %s removes threshold labels while preserving the palette and color labels',
+  async newType => {
+    const {layer, datasets, dataset} = await setup();
+    const data = layer.formatLayerData(datasets);
+    const key = JSON.stringify(['value', true, 6]);
+    const colorRange = {
+      ...layer.config.visConfig.colorRange,
+      colors: ['#FF0000', '#00FF00', '#0000FF'],
+      colorLegends: {[key]: 'Custom contour', '#FF0000': 'Existing color label'}
+    };
+    layer.updateLayerVisConfig({colorRange});
+    const state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [data],
+      layerOrder: [layer.id]
+    };
+    const result = layerTypeChangeUpdater(state, {oldLayer: layer, newType});
+    const converted = result.layers[0];
+    expect(converted.config.visConfig.colorRange).toEqual({
+      ...colorRange,
+      colorLegends: {'#FF0000': 'Existing color label'}
+    });
+    expect(layer.config.visConfig.colorRange).toEqual(colorRange);
+    if (newType === 'point') {
+      converted.updateLayerConfig({colorField: dataset.fields[2]});
+      converted.updateLayerDomain(datasets);
+      const view = renderLegend(converted);
+      expect(view.queryByDisplayValue('Custom contour')).toBeNull();
+      expect(view.getByDisplayValue('Existing color label')).toBeInTheDocument();
+      expect(view.container.querySelectorAll('.legend-row-color')).toHaveLength(3);
+    }
+    const roundTrip = layerTypeChangeUpdater(result, {oldLayer: converted, newType: 'contour'});
+    expect(roundTrip.layers[0].config.visConfig.colorRange).toEqual(
+      converted.config.visConfig.colorRange
+    );
+    const retained = layerTypeChangeUpdater(state, {oldLayer: layer, newType: 'contour'});
+    expect(retained.layers[0].config.visConfig.colorRange).toEqual(colorRange);
+  }
+);
+
 test.each([false, true])(
   'preserves custom labels without editors in read-only legends (export = %s)',
   async isExport => {

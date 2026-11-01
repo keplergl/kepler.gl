@@ -61,7 +61,7 @@ import {
   isExplicitZarrAxis,
   formatZarrCoordinate
 } from '@kepler.gl/table';
-import {ColorUI, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
+import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter, clamp, getNumericStepSize} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
@@ -2004,15 +2004,15 @@ export default function LayerConfiguratorFactory(
     }
 
     _contourValueRange = createSelector(
-      (dataContainer: Datasets[string]['dataContainer'] | undefined, _fieldIdx: number) =>
-        dataContainer,
-      (_dataContainer: Datasets[string]['dataContainer'] | undefined, fieldIdx: number) => fieldIdx,
-      (dataContainer, fieldIdx): [number, number] | null => {
-        if (!dataContainer || fieldIdx < 0) return null;
+      (dataContainer: Datasets[string]['dataContainer'] | undefined) => dataContainer,
+      (_dataContainer, valueAccessor: Field['valueAccessor'] | undefined) => valueAccessor,
+      (_dataContainer, _valueAccessor, dataRevision: number | undefined) => dataRevision,
+      (dataContainer, valueAccessor): [number, number] | null => {
+        if (!dataContainer || !valueAccessor) return null;
         let minimum = Infinity;
         let maximum = -Infinity;
         for (let index = 0; index < dataContainer.numRows(); index++) {
-          const value = dataContainer.valueAt(index, fieldIdx);
+          const value = valueAccessor({index});
           if (Number.isFinite(value)) {
             minimum = Math.min(minimum, value);
             maximum = Math.max(maximum, value);
@@ -2027,7 +2027,8 @@ export default function LayerConfiguratorFactory(
       const valueColumn = config.columns.value.value;
       const valueRange = this._contourValueRange(
         dataset?.dataContainer,
-        dataset?.getColumnFieldIdx(valueColumn) ?? -1
+        dataset?.getColumnField(valueColumn)?.valueAccessor,
+        dataset?.dataRevision
       );
       const hasValueRange = valueRange && valueRange[0] < valueRange[1];
       const inputModes = [

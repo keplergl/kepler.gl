@@ -10,6 +10,7 @@ import {fireEvent, render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {KeplerTable} from '@kepler.gl/table';
+import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {
@@ -650,6 +651,94 @@ test('Components -> LayerConfigurator -> contour slider bounds follow the full s
       view.container.querySelectorAll('.contour-level-range input').length,
       0,
       'dataset changes keep the graphical slider'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> contour slider supports Arrow Int64 and Uint64 ranges', async t => {
+  for (const ArrowType of [Int64, Uint64]) {
+    const dataset = new KeplerTable({info: {id: 'contour-arrow-range'}, color: [0, 0, 0]});
+    const arrowTable = new Table({value: vectorFromArray([10n, 20n, null], new ArrowType())});
+    await dataset.importData({
+      data: {
+        fields: [{name: 'value', type: 'integer', analyzerType: 'INT'}],
+        rows: [],
+        cols: [arrowTable.getChildAt(0)],
+        arrowTable
+      }
+    });
+    const layer = contourRangeLayer(dataset);
+    const onChange = sinon.spy();
+    const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+    try {
+      toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
+      fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
+      t.deepEqual(
+        onChange.lastCall.args[0],
+        {customRange: true, minimum: 10, maximum: 20},
+        'initializes from numeric field accessors and ignores nulls'
+      );
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.deepEqual(contourRangeLabels(view.container), [10, 20], 'shows both Arrow bounds');
+      dragContourHandle(view.container, 0, 50);
+      t.deepEqual(
+        onChange.lastCall.args[0],
+        {minimum: 15, maximum: 20},
+        'Arrow ranges remain adjustable'
+      );
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
+test('Components -> LayerConfigurator -> contour slider refreshes after in-place data changes', async t => {
+  const dataset = contourRangeDataset('contour-refresh-range', [[10], [20]], ['value']);
+  const container = dataset.dataContainer;
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerVisConfig({customRange: true, minimum: 10, maximum: 20});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    t.deepEqual(contourRangeLabels(view.container), [10, 20], 'starts at the original range');
+    await dataset.update({fields: dataset.fields, rows: [[100], [200]]});
+    t.equal(dataset.dataContainer, container, 'snapshot updates keep the container identity');
+    view.update();
+    t.deepEqual(
+      contourRangeLabels(view.container),
+      [100, 200],
+      'refreshes the range after a snapshot'
+    );
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: 100, maximum: 200},
+      'synchronizes disjoint saved thresholds'
+    );
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    t.ok(dataset.appendRows([[300]]), 'appends a value to the same container');
+    view.update();
+    t.deepEqual(
+      contourRangeLabels(view.container),
+      [100, 200],
+      'preserves the selection within expanded bounds'
+    );
+    dragContourHandle(view.container, 1, 100);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: 100, maximum: 300},
+      'allows selecting an appended maximum'
+    );
+    await dataset.update({fields: dataset.fields, rows: [[null], [NaN]]});
+    view.update();
+    t.equal(
+      view.container.querySelectorAll('.contour-level-range .kg-range-slider__handle').length,
+      0,
+      'clears stale bounds when no finite values remain'
     );
   } finally {
     view.unmount();

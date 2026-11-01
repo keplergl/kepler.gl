@@ -85,6 +85,33 @@ describe('scalar contours', () => {
     ).toBe(true);
   });
 
+  test.each([0, 10, -12, 1e-20, 1e20])(
+    'preserves constant values and explicit threshold regions for %s',
+    value => {
+      const span = Math.abs(value) || 1;
+      for (const holes of [false, true]) {
+        const grid = buildScalarGrid(
+          samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value))
+        )!;
+        for (const below of [false, true]) {
+          const settings = {
+            levels: 3,
+            below,
+            domain: [value - span, value + span] as [number, number]
+          };
+          const expected = generateContours(grid, {...settings, smoothing: 0});
+          const atValue = expected.find(feature => feature.properties.threshold === value)!;
+          expect(atValue.geometry.coordinates).toHaveLength(1);
+          expect(atValue.geometry.coordinates[0]).toHaveLength(holes ? 2 : 1);
+          for (const smoothing of [1.5, 6]) {
+            expect(smoothScalarGrid(grid, smoothing)).toEqual(grid.values);
+            expect(generateContours(grid, {...settings, smoothing})).toEqual(expected);
+          }
+        }
+      }
+    }
+  );
+
   test('keeps missing values as holes after smoothing', () => {
     const grid = buildScalarGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)))!;
     expect(Number.isNaN(smoothScalarGrid(grid, 2)[40])).toBe(true);
