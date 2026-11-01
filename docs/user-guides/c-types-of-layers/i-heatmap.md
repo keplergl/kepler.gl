@@ -11,7 +11,7 @@ Turn on the toggle in the **3D Surface** group at the end of the heatmap setting
 The surface uses the same data, weights, aggregation, radius, color range, intensity, and filters as the flat heatmap. Height represents density, not terrain elevation. The surface grid matches the allocated density texture resolution: normally 512 × 512 cells (513 × 513 vertices).
 
 - **Height scale (m)** controls meters per unit of displayed density. Increasing intensity also increases surface height.
-- **Surface shading** adds directional shading to make slopes easier to see.
+- **Surface shading** uses scene lighting to make slopes easier to see. With **Light & Shadow** enabled, the surface responds to the sun and ambient-light settings and casts and receives shadows.
 - **Surface contours** overlays lines at regular density intervals.
 - **Contour step** appears when contours are enabled and controls the density interval between lines (default 0.1). Smaller steps show more lines.
 

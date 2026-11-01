@@ -3,6 +3,7 @@
 
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
 import {Layer, WebMercatorViewport, project32, COORDINATE_SYSTEM} from '@deck.gl/core';
+import {phongMaterial} from '@luma.gl/shadertools';
 import {Model} from '@luma.gl/engine';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
 import {createHeatmapSurfaceMesh} from './density-surface-mesh';
@@ -815,6 +816,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         colorDomain,
         surfaceHeight: surface ? surfaceHeight : 0,
         surfaceLighting: surface && surfaceLighting,
+        shadowEnabled: Boolean(surface && surfaceLighting),
         surfaceContours: surface && surfaceContours,
         surfaceContourStep,
         ...(surface
@@ -951,6 +953,7 @@ out vec2 vTexCoords;
 out float vIntensityMin;
 out float vIntensityMax;
 out vec3 vCommonPosition;
+out vec3 vCameraPosition;
 out float vDensity;
 void main(void) {
   vTexCoords = texCoords;
@@ -974,9 +977,14 @@ void main(void) {
   }
   vec3 position = positions;
   position.z += vDensity * triangle.surfaceHeight;
-  vec4 commonPosition;
-  gl_Position = project_position_to_clipspace(position, positions64Low, vec3(0.0), commonPosition);
-  vCommonPosition = commonPosition.xyz;
+  geometry.worldPosition = position;
+  geometry.uv = texCoords;
+  gl_Position = project_position_to_clipspace(position, positions64Low, vec3(0.0), geometry.position);
+  vCommonPosition = geometry.position.xyz;
+  vCameraPosition = project.cameraPosition;
+  if (triangle.surfaceLighting > 0.5) {
+    DECKGL_FILTER_GL_POSITION(gl_Position, geometry);
+  }
 }
 `;
 
@@ -990,6 +998,7 @@ in vec2 vTexCoords;
 in float vIntensityMin;
 in float vIntensityMax;
 in vec3 vCommonPosition;
+in vec3 vCameraPosition;
 in float vDensity;
 out vec4 fragColor;
 vec4 getLinearColor(float value) {
@@ -1016,10 +1025,11 @@ void main(void) {
   if (triangle.surfaceLighting > 0.5) {
     vec3 normal = cross(dFdx(vCommonPosition), dFdy(vCommonPosition));
     float normalLength = length(normal);
-    float diffuse = normalLength > 0.0
-      ? abs(dot(normal / normalLength, normalize(vec3(-0.4, -0.5, 1.0))))
-      : 1.0;
-    linearColor.rgb *= 0.45 + 0.55 * diffuse;
+    normal = normalLength > 0.0 ? normal / normalLength : vec3(0.0, 0.0, 1.0);
+    normal = gl_FrontFacing ? normal : -normal;
+    linearColor.rgb = lighting_getLightColor(
+      linearColor.rgb, vCameraPosition, vCommonPosition, normal
+    );
   }
   if (triangle.surfaceContours > 0.5) {
     float level = vDensity / max(triangle.surfaceContourStep, 0.0001);
@@ -1028,6 +1038,10 @@ void main(void) {
     linearColor.rgb = mix(linearColor.rgb, vec3(1.0), line * 0.35);
   }
   fragColor = linearColor;
+  if (triangle.surfaceLighting > 0.5) {
+    geometry.uv = vTexCoords;
+    DECKGL_FILTER_COLOR(fragColor, geometry);
+  }
 }
 `;
 
@@ -1081,7 +1095,7 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
     return super.getShaders({
       vs: globeTriangleVs,
       fs: globeTriangleFs,
-      modules: [project32, globeTriangleUniforms]
+      modules: [project32, phongMaterial, globeTriangleUniforms]
     });
   }
 
@@ -1149,7 +1163,8 @@ class GlobeHeatmapTriangleLayer extends Layer<any> {
       id: this.props.id,
       bufferLayout: this.getAttributeManager()?.getBufferLayouts(),
       topology: 'triangle-list',
-      isInstanced: false
+      isInstanced: false,
+      vertexCount: this.props.mesh?.vertexCount || 0
     });
   }
 

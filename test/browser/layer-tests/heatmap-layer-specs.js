@@ -24,10 +24,19 @@ import {
   visStateReducer,
   validateLayerWithData
 } from '@kepler.gl/reducers';
-import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
+import {
+  AmbientLight,
+  LayerManager,
+  MapView,
+  WebMercatorViewport,
+  _GlobeView,
+  _SunLight as SunLight,
+  getShaderAssembler
+} from '@deck.gl/core';
 import {visStateSchemaV1} from '@kepler.gl/schemas';
 import KeplerHeatmapLayer from '../../../src/layers/src/heatmap-layer/deck-heatmap-layer';
 import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/density-surface-mesh';
+import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
@@ -1149,6 +1158,154 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
       testRenderDeckLayer(t, 'empty heatmap surface', [layer], {layerManager: manager});
       t.equal(layer.props.data.length, 0, 'supports an empty filtered dataset');
     } finally {
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t => {
+  getShaderAssembler('glsl');
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10, pitch: 45}
+    });
+    const manager = new LayerManager(device, {viewport});
+    const ambientLight = new AmbientLight({color: [255, 255, 255], intensity: 0.2});
+    const sunLight = new SunLight({
+      timestamp: Date.UTC(2026, 5, 1, 19),
+      intensity: 1,
+      _shadow: true
+    });
+    const effect = new CustomDeckLightingEffect({ambientLight, sunLight});
+    const effectContext = {
+      device,
+      deck: {
+        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
+        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+      }
+    };
+    let layer = new KeplerHeatmapLayer({
+      id: `heatmap-lighting-${globe}`,
+      data: [[-122.4, 37.75]],
+      getPosition: d => d,
+      weightsTextureSize: 128,
+      debounceTimeout: 0,
+      globeMode: globe,
+      densityBounds: [-122.42, 37.74, -122.4, 37.76],
+      surface: true
+    });
+    try {
+      testRenderDeckLayer(t, 'surface before lighting effect', [layer], {layerManager: manager});
+      const mesh = layer.getSubLayers()[0].props.mesh;
+      const initialModel = layer.getSubLayers()[0].state.model;
+      effect.setup(effectContext);
+      // NullDevice leaves framebuffer attachments uninitialized. Populate its
+      // JS texture views so the real shadow pass can run without a GPU.
+      for (const pass of effect.shadowPasses) {
+        if (!pass.fbo.colorAttachments.length) {
+          pass.fbo.autoCreateAttachmentTextures();
+        }
+      }
+      testRenderDeckLayer(t, 'surface with lighting effect', [layer], {layerManager: manager});
+      const surface = layer.getSubLayers()[0];
+      const {model} = surface.state;
+      t.notEqual(model, initialModel, 'adding the effect rebuilds the shader model');
+      t.equal(
+        model.vertexCount,
+        mesh.vertexCount,
+        'the rebuilt model retains all surface triangles'
+      );
+      t.equal(surface.props.mesh, mesh, 'adding lighting reuses the density geometry');
+      const {vs, fs} = surface.getShaders();
+      t.ok(
+        vs.includes('DECKGL_FILTER_GL_POSITION(gl_Position, geometry)'),
+        'displaced geometry uses the shadow projection hook'
+      );
+      t.ok(fs.includes('lighting_getLightColor('), 'surface colors use scene lighting');
+      t.ok(
+        fs.includes('DECKGL_FILTER_COLOR(fragColor, geometry)'),
+        'surface colors use shadow encoding and receiving hooks'
+      );
+      t.ok(
+        model.vs.includes('shadow_setVertexPosition(geometry.position, position)'),
+        'the active Kepler shadow module is assembled'
+      );
+
+      const applyLighting = () => {
+        surface.setShaderModuleProps(effect.getShaderModuleProps(surface, {project: {viewport}}));
+        return model.shaderInputs.getUniformValues();
+      };
+      const initialLighting = applyLighting().lighting;
+      t.deepEqual(
+        initialLighting.ambientColor,
+        [0.2, 0.2, 0.2],
+        'ambient intensity reaches the renderer'
+      );
+      t.equal(initialLighting.directionalLightCount, 1, 'the renderer uses the scene sun');
+      sunLight.timestamp += 6 * 60 * 60 * 1000;
+      sunLight.color = [255, 0, 0];
+      sunLight.intensity = 0.5;
+      ambientLight.intensity = 0.4;
+      const changedLighting = applyLighting().lighting;
+      t.deepEqual(
+        changedLighting.ambientColor,
+        [0.4, 0.4, 0.4],
+        'ambient changes update the renderer'
+      );
+      t.deepEqual(
+        changedLighting.lights[0].color,
+        [0.5, 0, 0],
+        'sun color and intensity update the renderer'
+      );
+      t.notDeepEqual(
+        changedLighting.lights[0].direction,
+        initialLighting.lights[0].direction,
+        'time changes update the sun direction'
+      );
+
+      const draw = sinon.spy(model, 'draw');
+      try {
+        effect.preRender({
+          layers: manager.getLayers(),
+          viewports: [viewport],
+          onViewportActive: manager.activateViewport
+        });
+        t.ok(draw.called, 'the shaded surface draws into the shadow pass');
+        t.equal(
+          model.shaderInputs.getUniformValues().shadow.drawShadowMap,
+          true,
+          'the shadow pass encodes depth'
+        );
+        t.equal(
+          applyLighting().shadow.useShadowMap,
+          true,
+          'the color pass receives the shadow map'
+        );
+      } finally {
+        draw.restore();
+      }
+
+      layer = layer.clone({surfaceLighting: false});
+      testRenderDeckLayer(t, 'unshaded surface', [layer], {layerManager: manager});
+      t.equal(
+        layer.getSubLayers()[0].props.shadowEnabled,
+        false,
+        'disabling shading excludes the surface from shadow casting'
+      );
+      effect.cleanup(effectContext);
+      testRenderDeckLayer(t, 'surface after removing lighting effect', [layer], {
+        layerManager: manager
+      });
+      t.equal(
+        layer.getSubLayers()[0].state.model.vertexCount,
+        mesh.vertexCount,
+        'removing the effect preserves the surface triangles'
+      );
+    } finally {
+      effect.cleanup(effectContext);
       manager.finalize();
     }
   }
