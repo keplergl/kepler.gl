@@ -8,6 +8,7 @@ const forceTranspile = [
   /@flowmap\.gl\//,
   /@math\.gl\//,
   /\/node_modules\/d3-/,
+  /\/node_modules\/(delaunator|robust-predicates)\//,
   /\/node_modules\/kdbush\//,
   // For some reason babel crashes even before trying to transpile this library
   // Instead we force transpile @deck.gl/layers which includes it, and alias to a transpiled version in babel.config.js

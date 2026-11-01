@@ -335,20 +335,20 @@ test('#HexagonLayer -> renderLayer', t => {
 
         // Verify actual attribute array values (deck.gl 9 equivalent of instanceFillColors/instanceElevations)
         // cellData.attributes contain SCALED values (processed through AttributeWithScale),
-        // not raw aggregated weights. For quantize scale with 3 bins [0, 1, 2],
-        // values are mapped to percentile-like range [0, 50, 99].
+        // not raw aggregated weights. Quantile scaling excludes the empty bin
+        // and maps the two retained counts to [0, 99], preserving the NaN mask.
         const colorValues = Array.from(cellData.attributes.getColorValue.value);
         const elevationValues = Array.from(cellData.attributes.getElevationValue.value);
         t.deepEqual(
-          colorValues.slice().sort((a, b) => a - b),
-          [0, 50, 99],
-          'getColorValue typed array should contain scaled values [0, 50, 99] (sorted)'
+          colorValues.slice().sort(),
+          [0, 99, NaN],
+          'scaled color values should mask the empty bin'
         );
         // Elevation uses linear scale (default), so raw values pass through
         t.deepEqual(
-          elevationValues.slice().sort((a, b) => a - b),
-          [0, 1, 2],
-          'getElevationValue typed array should contain raw counts [0, 1, 2] (sorted)'
+          elevationValues.slice().sort(),
+          [1, 2, NaN],
+          'raw elevation counts should mask the empty bin'
         );
 
         // getBin contains [col, row] integer IDs per bin (size=2)
@@ -366,7 +366,7 @@ test('#HexagonLayer -> renderLayer', t => {
 
         // onSetColorDomain fires twice: first the parent's [min, max], then our
         // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
-        // count aggregation: bins have 0, 2, and 1 filtered points
+        // count aggregation: only bins with 2 and 1 filtered points contribute
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const lastIdx = spyLayerCallbacks.args.length - 1;
         const enrichedArg = spyLayerCallbacks.args[lastIdx][0];
@@ -378,7 +378,7 @@ test('#HexagonLayer -> renderLayer', t => {
         // sorted array of per-bin values (not just [min, max]).
         t.deepEqual(
           enrichedArg.domain,
-          [0, 1, 2],
+          [1, 2],
           'enriched domain should be full sorted bin values for quantile scale'
         );
         t.ok(enrichedArg.aggregatedBins, 'enriched call should include aggregatedBins');
@@ -394,10 +394,10 @@ test('#HexagonLayer -> renderLayer', t => {
           );
 
           const colorDomain = aggregator.getResultDomain(0);
-          t.deepEqual(colorDomain, [0, 2], 'color domain should be [0, 2]');
+          t.deepEqual(colorDomain, [1, 2], 'color domain should exclude empty bins');
 
           const elevationDomain = aggregator.getResultDomain(1);
-          t.deepEqual(elevationDomain, [0, 2], 'elevation domain should be [0, 2]');
+          t.deepEqual(elevationDomain, [1, 2], 'elevation domain should exclude empty bins');
 
           // Verify per-bin data
           const binCounts = [];
@@ -417,13 +417,13 @@ test('#HexagonLayer -> renderLayer', t => {
           );
           t.deepEqual(
             binColorValues.slice().sort(),
-            [0, 1, 2],
-            'bin color values (filtered count agg) should be [0, 1, 2] (sorted)'
+            [1, 2, NaN],
+            'bin color counts should mask empty bins'
           );
           t.deepEqual(
             binElevationValues.slice().sort(),
-            [0, 1, 2],
-            'bin elevation values (filtered count agg) should be [0, 1, 2] (sorted)'
+            [1, 2, NaN],
+            'bin elevation counts should mask empty bins'
           );
 
           // Verify raw result arrays
@@ -432,7 +432,7 @@ test('#HexagonLayer -> renderLayer', t => {
           const sortedColorResult = Array.from(
             colorResult.value.slice(0, aggregator.binCount)
           ).sort();
-          t.deepEqual(sortedColorResult, [0, 1, 2], 'color result values should be [0, 1, 2]');
+          t.deepEqual(sortedColorResult, [1, 2, NaN], 'color results should mask empty bins');
         }
       }
     },

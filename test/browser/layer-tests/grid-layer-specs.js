@@ -3,20 +3,30 @@
 
 import test from 'tape';
 import sinon from 'sinon';
+import {LayerManager, MapView} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {KeplerTable} from '@kepler.gl/table';
+import {VisStateActions} from '@kepler.gl/actions';
 
 import {
   testCreateCases,
   testFormatLayerDataCases,
   testRenderLayerCases,
+  testRenderDeckLayer,
   preparedDataset,
   dataId,
   testRows,
   pointLayerMeta
 } from 'test/helpers/layer-utils';
 
-import {pointToPolygonGeo, KeplerGlLayers} from '@kepler.gl/layers';
+import {pointToPolygonGeo, KeplerGlLayers, LayerClasses} from '@kepler.gl/layers';
 const {GridLayer} = KeplerGlLayers;
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE,
+  validateLayerWithData,
+  visStateReducer
+} from '@kepler.gl/reducers';
 
 const columns = {
   lat: 'lat',
@@ -331,20 +341,20 @@ test('#GridLayer -> renderLayer', t => {
 
         // Verify actual attribute array values (deck.gl 9 equivalent of instanceFillColors/instanceElevations)
         // cellData.attributes contain SCALED values (processed through AttributeWithScale),
-        // not raw aggregated weights. For quantize scale with 3 bins [0, 1, 2],
-        // values are mapped to percentile-like range [0, 50, 99].
+        // not raw aggregated weights. Quantile scaling excludes the empty bin
+        // and maps the two retained counts to [0, 99], preserving the NaN mask.
         const colorValues = Array.from(cellData.attributes.getColorValue.value);
         const elevationValues = Array.from(cellData.attributes.getElevationValue.value);
         t.deepEqual(
-          colorValues.slice().sort((a, b) => a - b),
-          [0, 50, 99],
-          'getColorValue typed array should contain scaled values [0, 50, 99] (sorted)'
+          colorValues.slice().sort(),
+          [0, 99, NaN],
+          'scaled color values should mask the empty bin'
         );
         // Elevation uses linear scale (default), so raw values pass through
         t.deepEqual(
-          elevationValues.slice().sort((a, b) => a - b),
-          [0, 1, 2],
-          'getElevationValue typed array should contain raw counts [0, 1, 2] (sorted)'
+          elevationValues.slice().sort(),
+          [1, 2, NaN],
+          'raw elevation counts should mask the empty bin'
         );
 
         // getBin contains [col, row] integer IDs per bin (size=2)
@@ -358,7 +368,7 @@ test('#GridLayer -> renderLayer', t => {
 
         // onSetColorDomain fires twice: first the parent's [min, max], then our
         // enriched {domain, aggregatedBins}.  The last call is the one that sticks.
-        // count aggregation: bins have 0, 2, and 1 filtered points
+        // count aggregation: only bins with 2 and 1 filtered points contribute
         t.ok(spyLayerCallbacks.called, 'should call onSetLayerDomain');
         const lastIdx0 = spyLayerCallbacks.args.length - 1;
         const enrichedArg0 = spyLayerCallbacks.args[lastIdx0][0];
@@ -370,7 +380,7 @@ test('#GridLayer -> renderLayer', t => {
         // sorted array of per-bin values (not just [min, max]).
         t.deepEqual(
           enrichedArg0.domain,
-          [0, 1, 2],
+          [1, 2],
           'enriched domain should be full sorted bin values for quantile scale'
         );
         t.ok(enrichedArg0.aggregatedBins, 'enriched call should include aggregatedBins');
@@ -386,10 +396,10 @@ test('#GridLayer -> renderLayer', t => {
           );
 
           const colorDomain = aggregator.getResultDomain(0);
-          t.deepEqual(colorDomain, [0, 2], 'color domain should be [0, 2]');
+          t.deepEqual(colorDomain, [1, 2], 'color domain should exclude empty bins');
 
           const elevationDomain = aggregator.getResultDomain(1);
-          t.deepEqual(elevationDomain, [0, 2], 'elevation domain should be [0, 2]');
+          t.deepEqual(elevationDomain, [1, 2], 'elevation domain should exclude empty bins');
 
           // Verify per-bin data: collect bins and match by count
           const binCounts = [];
@@ -409,13 +419,13 @@ test('#GridLayer -> renderLayer', t => {
           );
           t.deepEqual(
             binColorValues.slice().sort(),
-            [0, 1, 2],
-            'bin color values (filtered count agg) should be [0, 1, 2] (sorted)'
+            [1, 2, NaN],
+            'bin color counts should mask empty bins'
           );
           t.deepEqual(
             binElevationValues.slice().sort(),
-            [0, 1, 2],
-            'bin elevation values (filtered count agg) should be [0, 1, 2] (sorted)'
+            [1, 2, NaN],
+            'bin elevation counts should mask empty bins'
           );
 
           // Verify raw result arrays
@@ -424,7 +434,7 @@ test('#GridLayer -> renderLayer', t => {
           const sortedColorResult = Array.from(
             colorResult.value.slice(0, aggregator.binCount)
           ).sort();
-          t.deepEqual(sortedColorResult, [0, 1, 2], 'color result values should be [0, 1, 2]');
+          t.deepEqual(sortedColorResult, [1, 2, NaN], 'color results should mask empty bins');
         }
       }
     },
@@ -605,3 +615,179 @@ test('#GridLayer -> pointToPolygonGeo', t => {
   t.deepEqual(polygonGeo, expected, 'should create correct polygonGeo');
   t.end();
 });
+
+// Grid and Hexbin share per-bin filtering, but have separate deck.gl cell layers.
+for (const type of ['grid', 'hexagon']) {
+  test(`#${type} -> numeric filters mask empty cells and exclude them from domains`, t => {
+    const dataset = new KeplerTable({info: {id: dataId}, color: [1, 2, 3]});
+    dataset.importData({
+      data: {
+        fields: [
+          {name: 'lat', type: 'real'},
+          {name: 'lng', type: 'real'},
+          {name: 'value', type: 'integer'},
+          {name: 'weight', type: 'integer'},
+          {name: 'other', type: 'integer'},
+          {name: 'category', type: 'string'}
+        ],
+        rows: [
+          [37, -122, 1, 7, 0, 'keep'],
+          [38, -121, 5, 0, 10, 'keep'],
+          [39, -120, 10, 10, 10, 'drop']
+        ]
+      }
+    });
+    const layer = validateLayerWithData(
+      dataset,
+      {type, config: {dataId, columns, visConfig: {worldUnitSize: 1}}},
+      LayerClasses
+    );
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets: {[dataId]: dataset},
+      layers: [layer],
+      layerData: [layer.formatLayerData({[dataId]: dataset})]
+    };
+    const viewport = new MapView().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: INITIAL_MAP_STATE
+    });
+    const layerManager = new LayerManager(device, {viewport});
+    const onSetLayerDomain = sinon.spy();
+    const apply = action => {
+      state = visStateReducer(state, action);
+    };
+    const sorted = values =>
+      Array.from(values)
+        .filter(Number.isFinite)
+        .sort((a, b) => a - b);
+    const check = (label, expectedColors, expectedElevations = expectedColors) => {
+      const current = state.layers[0];
+      const deckLayers = current.renderLayer({
+        data: state.layerData[0],
+        gpuFilter: state.datasets[dataId].gpuFilter,
+        mapState: INITIAL_MAP_STATE,
+        idx: 0,
+        visible: true,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        layerCallbacks: {onSetLayerDomain}
+      });
+      const [rendered, cells] = testRenderDeckLayer(t, type, deckLayers, {layerManager});
+      const {aggregator} = rendered.state;
+      const attributes = cells.props.data.attributes;
+      // Both deck.gl cell shaders discard NaN instanceColorValues. Assert on the
+      // final scaled attributes, not just the custom aggregation accessors.
+      t.equal(
+        sorted(attributes.getColorValue.value.subarray(0, cells.props.data.length)).length,
+        expectedColors.length,
+        `${label}: only retained bins have drawable color values`
+      );
+      t.equal(
+        sorted(attributes.getElevationValue.value.subarray(0, cells.props.data.length)).length,
+        expectedElevations.length,
+        `${label}: only retained bins have elevation values`
+      );
+      for (const [channel, expected] of [expectedColors, expectedElevations].entries()) {
+        t.deepEqual(
+          sorted(aggregator.getResult(channel).value.subarray(0, aggregator.binCount)),
+          expected,
+          `${label}: channel ${channel} aggregates retained rows`
+        );
+        t.deepEqual(
+          aggregator.getResultDomain(channel),
+          expected.length ? [expected[0], expected[expected.length - 1]] : [Infinity, -Infinity],
+          `${label}: channel ${channel} domain excludes empty bins`
+        );
+      }
+      t.deepEqual(
+        onSetLayerDomain.lastCall.args[0].domain,
+        expectedColors,
+        `${label}: quantile legend domain excludes empty bins`
+      );
+    };
+
+    try {
+      check('unfiltered', [1, 1, 1]);
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(0, 'name', 'value'));
+      apply(VisStateActions.setFilter(0, 'value', [5, 10]));
+      t.equal(state.filters[0].gpu, true, 'numeric filters use GPU mode by default');
+      const cpuIndex = state.datasets[dataId].filteredIndex;
+      const cachedData = state.layerData[0].data;
+      t.deepEqual(cpuIndex, [0, 1, 2], 'GPU filtering leaves all source points for binning');
+      check('range [5, 10]', [1, 1]);
+
+      apply(VisStateActions.setFilter(0, 'gpu', false));
+      check('equivalent CPU filter', [1, 1]);
+      apply(VisStateActions.setFilter(0, 'gpu', true));
+      check('GPU filter restored', [1, 1]);
+      const gpuData = state.layerData[0].data;
+      apply(VisStateActions.setFilter(0, 'value', [1, 1]));
+      t.deepEqual(state.datasets[dataId].gpuFilter.filterRange[0], [0, 0], 'minimum is active');
+      t.equal(state.layerData[0].data, gpuData, 'range updates reuse the binned input data');
+      check('minimum-only range', [1]);
+      apply(VisStateActions.setFilter(0, 'value', [5, 10]));
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(1, 'name', 'other'));
+      apply(VisStateActions.setFilter(1, 'value', [0, 0]));
+      check('all bins excluded by intersecting numeric filters', []);
+      apply(VisStateActions.removeFilter(1));
+      check('removing a filter restores bins', [1, 1]);
+      apply(VisStateActions.layerVisConfigChange(state.layers[0], {opacity: 0.4, enable3d: true}));
+      check('style and extrusion update preserve filtering', [1, 1]);
+
+      const weight = dataset.fields.find(field => field.name === 'weight');
+      for (const channel of ['color', 'size']) {
+        apply(
+          VisStateActions.layerVisualChannelConfigChange(
+            state.layers[0],
+            {[`${channel}Field`]: weight},
+            channel
+          )
+        );
+      }
+      for (const [aggregation, combined] of [
+        ['count', 2],
+        ['sum', 10],
+        ['average', 5],
+        ['minimum', 0],
+        ['maximum', 10]
+      ]) {
+        apply(
+          VisStateActions.layerVisConfigChange(state.layers[0], {
+            colorAggregation: aggregation,
+            sizeAggregation: aggregation
+          })
+        );
+        check(aggregation, aggregation === 'count' ? [1, 1] : [0, 10]);
+        for (const accessor of ['getColorValue', 'getElevationValue']) {
+          t.equal(
+            state.layerData[0][accessor](cachedData),
+            combined,
+            `${accessor}: ${aggregation} filters a partially retained bin before aggregation`
+          );
+        }
+      }
+      // Different aggregation modes must retain their own semantics.
+      apply(
+        VisStateActions.layerVisConfigChange(state.layers[0], {
+          colorAggregation: 'sum',
+          sizeAggregation: 'count'
+        })
+      );
+      check('zero-valued color with count height', [0, 10], [1, 1]);
+      apply(VisStateActions.addFilter(dataId));
+      apply(VisStateActions.setFilter(1, 'name', 'category'));
+      apply(VisStateActions.setFilter(1, 'value', ['keep']));
+      check('mixed CPU and GPU filters retain the zero bin', [0], [1]);
+      apply(VisStateActions.removeFilter(0));
+      check('clearing GPU filter keeps CPU selection', [0, 7], [1, 1]);
+      apply(VisStateActions.removeFilter(0));
+      check('clearing all filters restores every bin', [0, 7, 10], [1, 1, 1]);
+    } finally {
+      layerManager.finalize();
+    }
+    t.end();
+  });
+}

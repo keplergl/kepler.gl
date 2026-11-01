@@ -3,6 +3,11 @@
 
 import React from 'react';
 import test from 'tape';
+import {fireEvent, render} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
+import {LayerClasses} from '@kepler.gl/layers';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 
 import {
   LayerManagerFactory,
@@ -56,6 +61,67 @@ const defaultProps = {
   layerBlending: 'normal',
   overlayBlending: 'normal'
 };
+
+test('Components -> LayerManager -> contour picker follows application config in both list views', t => {
+  const {enableContourLayer} = getApplicationConfig();
+  t.equal(enableContourLayer, true, 'Contour is enabled by default');
+  const dataId = Object.keys(defaultProps.datasets)[0];
+  const layer = new LayerClasses.contour({id: 'optional-contour', dataId});
+  layer.updateLayerConfig({isConfigActive: true});
+  try {
+    for (const panelListView of ['list', 'byDataset']) {
+      initApplicationConfig({enableContourLayer: false});
+      const props = {
+        ...defaultProps,
+        layers: [layer],
+        layerOrder: [layer.id],
+        layerClasses: LayerClasses,
+        panelListView
+      };
+      const view = render(<LayerManager {...props} />, {
+        wrapper: ({children}) => (
+          <ThemeProvider theme={theme}>
+            <IntlWrapper>{children}</IntlWrapper>
+          </ThemeProvider>
+        )
+      });
+      try {
+        const selector = view.container.querySelector('.layer-config__type');
+        t.ok(selector, `${panelListView}: existing Contour layer remains configurable`);
+        t.equal(
+          selector.querySelector('.layer-type-selector__item__label').textContent.toLowerCase(),
+          'contour',
+          'still identifies the saved layer when its type is disabled'
+        );
+        fireEvent.click(selector.querySelector('.item-selector__dropdown'));
+
+        for (const enabled of [false, true, false, undefined]) {
+          initApplicationConfig({enableContourLayer: enabled});
+          view.rerender(<LayerManager {...props} />);
+          const options = Array.from(
+            view.baseElement.querySelectorAll(
+              '.layer-type-selector__item .layer-type-selector__item__label'
+            ),
+            element => element.textContent.toLowerCase()
+          );
+          t.equal(
+            options.includes('contour'),
+            enabled === true,
+            `${panelListView}: Contour is offered only when the flag is true (${enabled})`
+          );
+          t.ok(options.includes('point'), 'regular layer types stay available');
+          t.equal(layer.type, 'contour', 'changing the flag does not replace the saved layer');
+        }
+      } finally {
+        view.unmount();
+        view.container.remove();
+      }
+    }
+  } finally {
+    initApplicationConfig({enableContourLayer});
+  }
+  t.end();
+});
 
 test('Components -> LayerManager -> render -> list view', t => {
   // mount

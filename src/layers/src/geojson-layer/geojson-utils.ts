@@ -12,7 +12,8 @@ import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 import {BinaryFeatureCollection} from '@loaders.gl/schema';
-import {DataContainerInterface, getSampleData} from '@kepler.gl/utils';
+import {DataContainerInterface, getSampleData, timeToUnixMilli} from '@kepler.gl/utils';
+import {containValidTime} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {LayerColumns, ProtoDatasetField} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
@@ -624,9 +625,11 @@ type CoordsType = [number, number, number, number | null] & {
 export function groupColumnsAsGeoJson(
   dataContainer: DataContainerInterface,
   columns: LayerColumns,
-  sortByColumn = 'timestamp'
+  sortByColumn = 'timestamp',
+  // Optional output for table-mode Trip animation, aligned with the returned features.
+  dataToTimeStamp?: number[][]
 ): Feature[] {
-  const groupedById: {[key: string]: CoordsType[]} = {};
+  const groupedById: {[key: string]: CoordsType[]} = Object.create(null);
   const sortByFieldIdx = columns[sortByColumn].fieldIdx;
   const sortByRequired = !columns[sortByColumn].optional;
   for (let index = 0; index < dataContainer.numRows(); index++) {
@@ -661,17 +664,39 @@ export function groupColumnsAsGeoJson(
     }
   }
 
-  const result: Feature[] = Object.entries(groupedById).map(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ([_, items]: [string, CoordsType[]], index) => ({
+  const groups = Object.values(groupedById);
+  // Match Trip's timestamp parser: infer one format from the first nonempty trip.
+  const sampleTrip = sortByColumn === 'timestamp' && groups.find(items => items.length);
+  const timeFormat = sampleTrip
+    ? containValidTime(sampleTrip.map(item => item[3]) as any)?.format
+    : null;
+
+  const result: Feature[] = groups.map((items, index) => {
+    if (sortByFieldIdx > -1) {
+      if (!timeFormat || items.every(item => typeof item[3] === 'number')) {
+        // Numeric timestamps already sort chronologically, without parsing or a sort cache.
+        items.sort((a, b) => ascending(a[3] as any, b[3] as any));
+        if (timeFormat && dataToTimeStamp) {
+          dataToTimeStamp[index] = items.map(item => timeToUnixMilli(item[3] as number, timeFormat)!);
+        }
+      } else {
+        // Parse once, then retain the sorted timestamps for Trip animation.
+        const sorted = items
+          .map(item => ({item, time: timeToUnixMilli(item[3] as number, timeFormat)!}))
+          .sort((a, b) => ascending(a.time, b.time));
+        sorted.forEach(({item}, i) => {
+          items[i] = item;
+        });
+        if (dataToTimeStamp) {
+          dataToTimeStamp[index] = sorted.map(({time}) => time);
+        }
+      }
+    }
+    return {
       type: 'Feature' as const,
       geometry: {
         type: 'LineString' as const,
-        // Sort by columns if has sortByField
-        // TODO: items are expected in Position[] format?
-        coordinates: (sortByFieldIdx > -1
-          ? items.sort((a, b) => ascending(a[3] as any, b[3] as any))
-          : items) as Position[]
+        coordinates: items as Position[]
       },
       properties: {
         index,
@@ -679,8 +704,8 @@ export function groupColumnsAsGeoJson(
         // Note: this can cause row materialization in case of non-row based containers
         values: items.map(item => dataContainer.rowAsArray(item.datumIndex))
       }
-    })
-  );
+    };
+  });
   return result;
 }
 
@@ -767,8 +792,7 @@ export function applyFiltersToTableColumns(
         properties: {
           // @ts-expect-error BinaryFeatureCollection
           ...feature.properties,
-          // @ts-expect-error BinaryFeatureCollection
-          values: feature.geometry.coordinates.map(c => dataContainer.rowAsArray(c.datumIndex))
+          values: filteredCoords.map(c => dataContainer.rowAsArray(c.datumIndex))
         }
       });
     }

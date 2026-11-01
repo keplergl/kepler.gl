@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
+import type {BitmapLayerPickingInfo} from '@deck.gl/layers';
 import {DatasetType, WMSDatasetMetadata, LAYER_TYPES} from '@kepler.gl/constants';
 import {WMSLayer as DeckWMSLayer} from '@kepler.gl/deckgl-layers';
 import {KeplerTable as KeplerDataset, buildWmsGetLegendGraphicUrl} from '@kepler.gl/table';
@@ -78,9 +79,6 @@ export type WMSLayerData = LayerData & {
 export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   declare config: WMSLayerConfig;
   declare visConfigSettings: WMSLayerVisConfigSettings;
-
-  // Store reference to the deck layer for feature info access
-  private deckLayerRef: DeckWMSLayer | null = null;
 
   // Constructor
   constructor(
@@ -341,23 +339,34 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
       visible: defaultLayerProps.visible,
       pickable,
       // @ts-ignore
-      onClick: pickable ? this._onClick.bind(this, layerCallbacks) : null
+      onClick: pickable
+        ? info => {
+            // Let deck propagate the click so the pending selection is recorded.
+            void this._onClick(layerCallbacks, info);
+          }
+        : null
     });
-
-    // Store reference to the deck layer for feature info access
-    this.deckLayerRef = deckLayer;
 
     return [deckLayer];
   }
 
-  protected async _onClick(layerCallbacks, {bitmap, coordinate}) {
+  protected async _onClick(
+    layerCallbacks,
+    {
+      bitmap,
+      coordinate,
+      layer
+    }: Omit<BitmapLayerPickingInfo, 'bitmap'> & {
+      bitmap?: BitmapLayerPickingInfo['bitmap'];
+    }
+  ) {
     if (!bitmap) return null;
 
     const x = bitmap.pixel[0];
     const y = bitmap.pixel[1];
-    const featureInfo = await this.getWMSFeatureInfo(x, y);
+    // PickingInfo carries the actual composite layer for the clicked panel.
+    const featureInfo = await this.getWMSFeatureInfo(x, y, layer as DeckWMSLayer | null);
 
-    // Call the callback to update state with coordinate
     if (layerCallbacks?.onWMSFeatureInfo) {
       layerCallbacks.onWMSFeatureInfo({featureInfo, coordinate});
     }
@@ -368,11 +377,12 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
   // Method to retrieve WMS feature info asynchronously
   protected async getWMSFeatureInfo(
     x: number,
-    y: number
+    y: number,
+    deckLayer?: DeckWMSLayer | null
   ): Promise<Array<{name: string; value: string}> | null> {
     try {
-      if (this.deckLayerRef && typeof this.deckLayerRef.getFeatureInfoText === 'function') {
-        const featureInfoXml = await this.deckLayerRef.getFeatureInfoText(x, y);
+      if (deckLayer && typeof deckLayer.getFeatureInfoText === 'function') {
+        const featureInfoXml = await deckLayer.getFeatureInfoText(x, y);
         if (featureInfoXml) {
           // Parse the XML response to extract attributes
           const parsedAttributes = this.parseWMSFeatureInfo(featureInfoXml);
