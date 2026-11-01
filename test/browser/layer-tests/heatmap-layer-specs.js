@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
 import {
   testCreateCases,
   testFormatLayerDataCases,
@@ -970,6 +971,171 @@ test('#HeatmapLayer -> surface renderer switches modes on map and globe', t => {
     } finally {
       manager.finalize();
     }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
+  const viewState = {longitude: -122.4, latitude: 37.75, zoom: 8};
+  const viewport = new _GlobeView().makeViewport({width: 800, height: 600, viewState});
+  const manager = new LayerManager(device, {viewport});
+  const props = {
+    id: 'globe-density-cache',
+    data: [
+      [-122.42, 37.74],
+      [-122.4, 37.76]
+    ],
+    getPosition: d => d,
+    getWeight: 1,
+    weightsTextureSize: 128,
+    debounceTimeout: 0,
+    globeMode: true,
+    surface: true,
+    densityBounds: [-123, 37, -122, 38]
+  };
+  let layer = new KeplerHeatmapLayer(props);
+  testRenderDeckLayer(t, 'globe density cache', [layer], {layerManager: manager});
+  const aggregate = sinon.spy(KeplerHeatmapLayer.prototype, '_updateWeightmap');
+  try {
+    const weights = layer.state.weightsTexture;
+    for (const change of [
+      {surfaceHeight: 2000},
+      {surfaceLighting: false},
+      {surfaceContours: true},
+      {surfaceContourStep: 0.2},
+      {surface: false},
+      {surface: true}
+    ]) {
+      layer = layer.clone(change);
+      testRenderDeckLayer(t, 'display-only edit', [layer], {layerManager: manager});
+      t.equal(aggregate.callCount, 0, 'display edits do not aggregate the data again');
+      t.equal(layer.state.weightsTexture, weights, 'display edits retain the density texture');
+    }
+    layer = layer.clone({densityBounds: [-124, 36, -121, 39]});
+    testRenderDeckLayer(t, 'changed density frame', [layer], {layerManager: manager});
+    t.ok(aggregate.called, 'changing density bounds recomputes density');
+    const callsBeforeZoom = aggregate.callCount;
+    manager.activateViewport(
+      new _GlobeView().makeViewport({
+        width: 800,
+        height: 600,
+        viewState: {...viewState, zoom: 12}
+      })
+    );
+    layer = layer.clone({surfaceHeight: 3000});
+    testRenderDeckLayer(t, 'zoomed density frame', [layer], {layerManager: manager});
+    t.ok(
+      aggregate.callCount > callsBeforeZoom,
+      'zooming into a different density frame recomputes density'
+    );
+
+    const flatViewport = new MapView().makeViewport({width: 800, height: 600, viewState});
+    manager.activateViewport(flatViewport);
+    layer = layer.clone({globeMode: false});
+    const fresh = new KeplerHeatmapLayer({...props, id: 'fresh-flat-density', globeMode: false});
+    testRenderDeckLayer(t, 'globe to map', [layer, fresh], {layerManager: manager});
+    t.deepEqual(
+      layer.state.worldBounds,
+      fresh.state.worldBounds,
+      'leaving globe restores the live map frame'
+    );
+    t.deepEqual(
+      layer.state.normalizedCommonBounds,
+      fresh.state.normalizedCommonBounds,
+      'leaving globe clears stale texture coordinates'
+    );
+  } finally {
+    aggregate.restore();
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface normalization preserves small positive densities', t => {
+  const viewport = new MapView().makeViewport({
+    width: 800,
+    height: 600,
+    viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+  });
+  const manager = new LayerManager(device, {viewport});
+  const layer = new KeplerHeatmapLayer({
+    id: 'surface-normalization',
+    data: [[-122.4, 37.75]],
+    getPosition: d => d,
+    surface: true,
+    weightsTextureSize: 128,
+    debounceTimeout: 0
+  });
+  try {
+    testRenderDeckLayer(t, 'surface normalization', [layer], {layerManager: manager});
+    const {vs, fs} = layer.getSubLayers()[0].getShaders();
+    // Execute the renderer's JS-compatible scalar GLSL arithmetic in this
+    // headless test, rather than duplicating its normalization in a CPU helper.
+    const normalization = vs.slice(vs.indexOf('float maxValue ='), vs.indexOf('vec4 weights ='));
+    const evaluate = new Function(
+      'triangle',
+      'maxTexture',
+      'max',
+      `
+      let vIntensityMax, vIntensityMin;
+      ${normalization.replace(/\bfloat\b/g, 'let')}
+      return {vIntensityMax, vIntensityMin};
+    `
+    );
+    const alphaExpression = fs.match(/color\.a \*= ([\s\S]*?);/)[1];
+    const alpha = new Function(
+      'value',
+      'vIntensityMin',
+      'triangle',
+      'min',
+      `return ${alphaExpression};`
+    );
+    for (const aggregationMode of [0, 1]) {
+      for (const customDomain of [false, true]) {
+        const maximum = 5e-7;
+        const minimum = 5e-9;
+        const triangle = {
+          aggregationMode,
+          intensity: 1,
+          threshold: minimum / maximum,
+          colorDomain: customDomain ? [minimum, maximum] : [0, 0]
+        };
+        const maxTexture = aggregationMode === 0 ? {r: maximum, g: 1} : {r: 1, g: maximum};
+        const {vIntensityMax, vIntensityMin} = evaluate(triangle, maxTexture, Math.max);
+        t.equal(
+          maximum * vIntensityMax,
+          1,
+          'small positive peaks reach the full color and height scale'
+        );
+        t.equal(
+          alpha(minimum / 2, vIntensityMin, triangle, Math.min),
+          0.5,
+          'small positive minima preserve the opacity ramp'
+        );
+        t.equal(
+          alpha(minimum, vIntensityMin, triangle, Math.min),
+          1,
+          'density at the minimum is fully opaque'
+        );
+      }
+    }
+    const triangle = {aggregationMode: 0, intensity: 1, threshold: 0, colorDomain: [0, 0]};
+    const zero = evaluate(triangle, {r: 0, g: 0}, Math.max);
+    t.equal(zero.vIntensityMax, 0, 'empty density has a finite zero height scale');
+    t.equal(zero.vIntensityMin, 0, 'zero threshold avoids division by zero');
+    t.equal(
+      alpha(5e-10, zero.vIntensityMin, triangle, Math.min),
+      1,
+      'zero threshold keeps positive density opaque'
+    );
+    const disabled = evaluate({...triangle, intensity: 0}, {r: 5e-7, g: 0}, Math.max);
+    t.equal(
+      alpha(5e-10, disabled.vIntensityMin, {...triangle, intensity: 0}, Math.min),
+      0,
+      'zero intensity remains transparent'
+    );
+  } finally {
+    manager.finalize();
   }
   t.end();
 });

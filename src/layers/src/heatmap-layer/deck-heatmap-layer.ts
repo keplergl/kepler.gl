@@ -107,31 +107,24 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     densityBounds: null
   };
 
-  // Cached fixed density viewport (keyed by bounds) so we don't rebuild it on
-  // every update/render. Not stored in layer state to avoid setState-in-render.
-  private _densityViewport: WebMercatorViewport | null = null;
-  private _densityViewportKey: string | null = null;
-
   // Cached globe render mesh, so its identity stays stable across frames (only
   // rebuilt when the density bounds or the globe resolution change).
   private _globeMesh: HeatmapMesh | null = null;
   private _globeMeshKey: string | null = null;
-  // deck.gl transfers state between layer instances, so display-only updates
-  // can reuse the grid and its GPU attributes instead of reallocating them.
+  // deck.gl transfers state between replacement instances. Keep density
+  // framing here so display-only edits reuse the existing aggregation. Cache
+  // writes are direct to avoid scheduling another update while rendering.
   declare state: DeckGLHeatmapLayer['state'] & {
     surfaceMeshCache?: {key: string; mesh: HeatmapMesh | null};
+    densityViewport?: WebMercatorViewport | null;
+    densityViewportKey?: string | null;
+    // Bounds follow the visible area when zoomed inside the data extent.
+    densityBounds?: [number, number, number, number] | null;
+    densityBoundsFrameKey?: string | null;
+    referenceViewport?: WebMercatorViewport | null;
+    referenceViewportKey?: string | null;
+    wasGlobeHeatmap?: boolean;
   };
-
-  // World bounds [w, s, e, n] the density texture is currently framed to. In
-  // globe mode this is normally the data bounds, but when the camera is zoomed
-  // in far enough that the visible area sits fully inside the data, we frame the
-  // density texture around the *visible* area to improve level-of-detail.
-  private _densityBounds: [number, number, number, number] | null = null;
-  // Quantized key of `_densityBounds`, so small camera moves don't re-frame.
-  private _densityBoundsFrameKey: string | null = null;
-  // Cached reference viewport framing the full data bounds (for radius scaling).
-  private _referenceViewport: WebMercatorViewport | null = null;
-  private _referenceViewportKey: string | null = null;
 
   _createWeightsTransform(shaders: any) {
     if (shaders.fs?.includes('gaussianKDE')) {
@@ -319,22 +312,22 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   }
 
   /**
-   * Build (and cache) the WebMercator viewport that frames `_densityBounds`.
+   * Build (and cache) the WebMercator viewport that frames the density bounds.
    *
    * This viewport is completely independent of the current globe camera
    * *projection* — it is always a plain WebMercator frame — but the region it
-   * covers (`_densityBounds`) follows the camera for level-of-detail (see
+   * covers follows the camera for level-of-detail (see
    * `_computeDensityBounds`). It drives the offscreen density texture render.
    */
   _getDensityViewport(): WebMercatorViewport | null {
-    const bounds = this._densityBounds || (this.props as any).densityBounds;
+    const bounds = this.state.densityBounds || (this.props as any).densityBounds;
     if (!bounds || bounds.length !== 4) {
       return null;
     }
 
     const cacheKey = bounds.join(',');
-    if (this._densityViewportKey === cacheKey && this._densityViewport) {
-      return this._densityViewport;
+    if (this.state.densityViewportKey === cacheKey && this.state.densityViewport) {
+      return this.state.densityViewport;
     }
 
     const viewport = this._buildMercatorViewport(bounds as [number, number, number, number]);
@@ -342,8 +335,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       return null;
     }
 
-    this._densityViewport = viewport;
-    this._densityViewportKey = cacheKey;
+    this.state.densityViewport = viewport;
+    this.state.densityViewportKey = cacheKey;
     return viewport;
   }
 
@@ -360,12 +353,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       return null;
     }
     const key = dataBounds.join(',');
-    if (this._referenceViewportKey === key && this._referenceViewport) {
-      return this._referenceViewport;
+    if (this.state.referenceViewportKey === key && this.state.referenceViewport) {
+      return this.state.referenceViewport;
     }
     const viewport = this._buildMercatorViewport(dataBounds as [number, number, number, number]);
-    this._referenceViewport = viewport;
-    this._referenceViewportKey = key;
+    this.state.referenceViewport = viewport;
+    this.state.referenceViewportKey = key;
     return viewport;
   }
 
@@ -402,10 +395,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)].map(v => v.toFixed(4)).join(',');
   }
 
-  // Tracks whether the previous update ran in globe mode, so we can detect the
-  // globe→2D (and 2D→globe) transition and reset stale density framing state.
-  private _wasGlobeHeatmap = false;
-
   updateState(opts: any) {
     const {globeMode, densityBounds} = this.props as any;
 
@@ -419,11 +408,11 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     // in the wrong place (and stays wrong while panning). Clear the cached
     // framing + our globe caches so the 2D path rebuilds from scratch.
     const isGlobeNow = Boolean(globeMode && densityBounds);
-    const leftGlobe = this._wasGlobeHeatmap && !isGlobeNow;
+    const leftGlobe = this.state.wasGlobeHeatmap && !isGlobeNow;
     if (leftGlobe) {
       this._resetGlobeState();
     }
-    this._wasGlobeHeatmap = isGlobeNow;
+    this.state.wasGlobeHeatmap = isGlobeNow;
 
     if (!globeMode || !densityBounds) {
       super.updateState(opts);
@@ -452,15 +441,15 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const nextBounds = this._computeDensityBounds(globeViewport);
     if (nextBounds) {
       const nextKey = this._densityBoundsKey(nextBounds);
-      if (nextKey !== this._densityBoundsFrameKey) {
-        this._densityBounds = nextBounds;
-        this._densityBoundsFrameKey = nextKey;
+      if (nextKey !== this.state.densityBoundsFrameKey) {
+        this.state.densityBounds = nextBounds;
+        this.state.densityBoundsFrameKey = nextKey;
         // Invalidate the cached mercator viewport so it is rebuilt for the new
         // frame, and force the base layer to recompute its density bounds +
         // regenerate the weightmap (it would otherwise keep the old, coarser
         // texture because the new visible bounds are contained in the old ones).
-        this._densityViewport = null;
-        this._densityViewportKey = null;
+        this.state.densityViewport = null;
+        this.state.densityViewportKey = null;
         (this.state as any).worldBounds = null;
         // A display-only update can arrive without a viewport change. Once
         // bounds are cleared, deck.gl must rebuild them before rendering.
@@ -530,12 +519,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
    * its viewport-change detection fires, and marks the weight map dirty.
    */
   _resetGlobeState() {
-    this._densityViewport = null;
-    this._densityViewportKey = null;
-    this._densityBounds = null;
-    this._densityBoundsFrameKey = null;
-    this._referenceViewport = null;
-    this._referenceViewportKey = null;
+    this.state.densityViewport = null;
+    this.state.densityViewportKey = null;
+    this.state.densityBounds = null;
+    this.state.densityBoundsFrameKey = null;
+    this.state.referenceViewport = null;
+    this.state.referenceViewportKey = null;
     this._globeMesh = null;
     this._globeMeshKey = null;
 
@@ -969,8 +958,8 @@ void main(void) {
     maxValue = triangle.colorDomain[1];
     minValue = triangle.colorDomain[0];
   }
-  vIntensityMax = triangle.intensity / max(maxValue, 0.000001);
-  vIntensityMin = triangle.intensity / max(minValue, 0.000001);
+  vIntensityMax = maxValue > 0.0 ? triangle.intensity / maxValue : 0.0;
+  vIntensityMin = minValue > 0.0 ? triangle.intensity / minValue : 0.0;
   vec4 weights = texture(weightsTexture, texCoords);
   float weight = weights.r;
   if (triangle.aggregationMode > 0.5) {
@@ -1003,7 +992,11 @@ out vec4 fragColor;
 vec4 getLinearColor(float value) {
   float factor = clamp(value * vIntensityMax, 0., 1.);
   vec4 color = texture(colorTexture, vec2(factor, 0.5));
-  color.a *= min(value * vIntensityMin, 1.0);
+  // A zero threshold gives every positive density full opacity, unless
+  // intensity is zero. Avoid division by zero without flooring valid minima.
+  color.a *= vIntensityMin > 0.0
+    ? min(value * vIntensityMin, 1.0)
+    : (triangle.intensity > 0.0 ? 1.0 : 0.0);
   return color;
 }
 void main(void) {
