@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {KeplerTable, getGpuFilterProps} from '@kepler.gl/table';
+import {PickingInfo} from '@deck.gl/core';
+import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
 import ContourLayer from './contour-layer';
 import Layer from '../base-layer';
@@ -12,7 +14,12 @@ import {
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
 import {buildContourGrid, generateContours} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
-import {calculateLayerData} from '@kepler.gl/reducers';
+import {
+  calculateLayerData,
+  INITIAL_VIS_STATE,
+  layerTypeChangeUpdater,
+  removeLayerUpdater
+} from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
 import React from 'react';
@@ -186,11 +193,129 @@ test('registers the layer and renders both passes without recomputing on camera 
   layer.updateLayerVisConfig({filled: false});
   expect(layer.renderLayer(opts)).toHaveLength(1);
   expect(layer.getHoverData(data.data[0])).toEqual({
-    aggregatedData: {value: {value: 6, measure: '≤'}}
+    fieldValues: [{labelMessage: 'columns.contour.value', value: 'value ≤ 6'}]
   });
+  expect(layer.getHoverData(null)).toBeNull();
 });
 
-test('omits the unavailable point count from contour tooltips and preserves real aggregation counts', async () => {
+test.each(['fill', 'outline'])('clears %s picks on removal or type changes', async pass => {
+  const {layer, dataset, datasets} = await setup();
+  const data = layer.formatLayerData(datasets);
+  const deckLayer = layer
+    .renderLayer({data, visible: true, idx: 0, gpuFilter: dataset.gpuFilter, mapState: {zoom: 10}})
+    .find(rendered => rendered.id === `${layer.id}-${pass}`)!;
+  const pick: PickingInfo = {
+    picked: true,
+    layer: deckLayer,
+    object: data.data[0],
+    color: null,
+    index: 0,
+    x: 0,
+    y: 0,
+    pixelRatio: 1
+  };
+  const other = new LayerClasses.point({id: `${layer.id}-other`, dataId: dataset.id});
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer, other],
+    layerData: [data, {data: []}],
+    layerOrder: [layer.id, other.id],
+    clicked: pick,
+    hoverInfo: pick
+  };
+  expect(layer.hasHoveredObject(pick)).toBe(data.data[0]);
+  const removed = removeLayerUpdater(state, {id: layer.id});
+  expect(removed.layers).toEqual([other]);
+  expect(removed.clicked).toBeUndefined();
+  expect(removed.hoverInfo).toBeUndefined();
+  const changed = layerTypeChangeUpdater(state, {oldLayer: layer, newType: 'point'});
+  expect(changed.layers[0].type).toBe('point');
+  expect(changed.clicked).toBeUndefined();
+  expect(changed.hoverInfo).toBeUndefined();
+
+  const unrelated = {...pick, layer: deckLayer.clone({id: other.id})};
+  const otherState = {...state, clicked: unrelated, hoverInfo: unrelated};
+  for (const result of [
+    removeLayerUpdater(otherState, {id: layer.id}),
+    layerTypeChangeUpdater(otherState, {oldLayer: layer, newType: 'point'})
+  ]) {
+    expect(result.clicked).toBe(unrelated);
+    expect(result.hoverInfo).toBe(unrelated);
+  }
+  for (const info of [null, undefined, {...pick, picked: false}, unrelated]) {
+    expect(layer.hasHoveredObject(info)).toBeNull();
+  }
+});
+
+describe.each([Int64, Uint64])('Arrow %p contour inputs', ArrowType => {
+  test.each(['value', 'coordinates', 'both', 'geojson'])(
+    'matches numeric contours with 64-bit %s columns, missing values, and filtering',
+    async mode => {
+      const {layer, dataset, datasets} = await setup();
+      const longitudes = Array.from({length: 81}, (_, i) => i % 9);
+      const latitudes = Array.from({length: 81}, (_, i) => Math.floor(i / 9));
+      const values = longitudes.map((x, i) =>
+        i === 40 ? null : (x - 4) ** 2 + (latitudes[i] - 4) ** 2
+      );
+      const arrowVector = (numbers: (number | null)[]) =>
+        vectorFromArray(
+          numbers.map(value => (value === null ? null : BigInt(value))),
+          new ArrowType()
+        );
+      const arrowTable = new Table({
+        longitude:
+          mode === 'coordinates' || mode === 'both'
+            ? arrowVector(longitudes)
+            : vectorFromArray(longitudes),
+        latitude:
+          mode === 'coordinates' || mode === 'both'
+            ? arrowVector(latitudes)
+            : vectorFromArray(latitudes),
+        value: mode === 'coordinates' ? vectorFromArray(values) : arrowVector(values),
+        geometry: vectorFromArray(
+          longitudes.map((x, i) => JSON.stringify(pointGeometry(x, latitudes[i])))
+        )
+      });
+      const arrowDataset = new KeplerTable({info: {id: dataset.id}, color: [0, 0, 0]});
+      await arrowDataset.importData({
+        data: {
+          rows: [],
+          fields: [
+            ...dataset.fields,
+            {name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}
+          ],
+          cols: arrowTable.schema.fields.map((_, i) => arrowTable.getChildAt(i)!),
+          arrowTable
+        }
+      });
+      const numeric = new KeplerTable({info: {id: dataset.id}, color: [0, 0, 0]}).updateSchema({
+        fields: dataset.fields,
+        rows: longitudes.map((x, i) => [x, latitudes[i], values[i]])
+      });
+      numeric.filteredIndex = numeric.filteredIndex.filter(index => index !== 41);
+      arrowDataset.filteredIndex = numeric.filteredIndex;
+      const expected = layer.formatLayerData({...datasets, [dataset.id]: numeric});
+      expect(expected.data).toHaveLength(3);
+      if (mode === 'geojson') {
+        layer.updateLayerConfig({
+          columnMode: 'geojson',
+          columns: {
+            ...layer.config.columns,
+            geojson: {value: 'geometry', fieldIdx: 3}
+          }
+        });
+      }
+      expect(typeof arrowDataset.dataContainer.valueAt(0, mode === 'coordinates' ? 0 : 2)).toBe(
+        'bigint'
+      );
+      expect(arrowDataset.fields[2].valueAccessor({index: 40})).toBeNull();
+      expect(layer.formatLayerData({...datasets, [dataset.id]: arrowDataset})).toEqual(expected);
+    }
+  );
+});
+
+test('shows contour thresholds without selected tooltip fields and preserves real aggregation counts', async () => {
   const {layer, dataset, datasets} = await setup();
   const data = layer.formatLayerData(datasets);
   const LayerHoverInfo = appInjector.get(LayerHoverInfoFactory);
@@ -199,7 +324,7 @@ test('omits the unavailable point count from contour tooltips and preserves real
       layer,
       data: layer.getHoverData(data.data[0]),
       fields: dataset.fields,
-      fieldsToShow: [{name: 'value', format: null}]
+      fieldsToShow: []
     }),
     {
       wrapper: ({children}) =>
@@ -215,7 +340,21 @@ test('omits the unavailable point count from contour tooltips and preserves real
   );
   expect(view.queryByText(/total points/i)).toBeNull();
   expect(view.queryByText('undefined')).toBeNull();
-  expect(view.getByText('6')).toBeInTheDocument();
+  expect(view.getByText('value ≤ 6')).toBeInTheDocument();
+
+  for (const below of [false, true]) {
+    const feature = {...data.data[0], properties: {...data.data[0].properties, below}};
+    view.rerender(
+      React.createElement(LayerHoverInfo, {
+        layer,
+        data: layer.getHoverData(feature),
+        fields: dataset.fields,
+        fieldsToShow: [{name: 'longitude', format: null}]
+      })
+    );
+    expect(view.getByText(`value ${below ? '≤' : '≥'} 6`)).toBeInTheDocument();
+    expect(view.queryByText(/total points/i)).toBeNull();
+  }
 
   const gridLayer = new LayerClasses.grid({dataId: dataset.id});
   for (const points of [[], [{index: 0}, {index: 1}]]) {

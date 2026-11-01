@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {GeoJsonLayer} from '@deck.gl/layers';
+import {PickingInfo} from '@deck.gl/core';
 import {Datasets} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
@@ -238,8 +239,8 @@ export default class ContourLayer extends Layer {
         }
       } else {
         position = [
-          dataContainer.valueAt(index, lng.fieldIdx),
-          dataContainer.valueAt(index, lat.fieldIdx)
+          dataset.fields[lng.fieldIdx].valueAccessor({index}),
+          dataset.fields[lat.fieldIdx].valueAccessor({index})
         ];
       }
       if (!position) continue;
@@ -249,7 +250,7 @@ export default class ContourLayer extends Layer {
         latitude: position[1],
         value:
           selected.has(index) && (!matches || matches({index}))
-            ? dataContainer.valueAt(index, value.fieldIdx)
+            ? dataset.fields[value.fieldIdx].valueAccessor({index})
             : null
       });
     }
@@ -283,7 +284,19 @@ export default class ContourLayer extends Layer {
     if (!object) return null;
     const {threshold, below} = object.properties;
     const field = String(this.config.columns.value.value || 'value');
-    return {aggregatedData: {[field]: {value: threshold, measure: below ? '≤' : '≥'}}};
+    return {
+      fieldValues: [
+        {labelMessage: 'columns.contour.value', value: `${field} ${below ? '≤' : '≥'} ${threshold}`}
+      ]
+    };
+  }
+
+  isLayerHovered(objectInfo: PickingInfo): boolean {
+    const id = objectInfo?.layer?.props?.id;
+    return Boolean(
+      objectInfo?.picked &&
+        (id === this.id || id === `${this.id}-fill` || id === `${this.id}-outline`)
+    );
   }
 
   renderLayer(opts) {
