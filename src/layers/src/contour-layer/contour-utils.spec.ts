@@ -215,6 +215,39 @@ describe('scattered scalar interpolation', () => {
     expect(generateContours(grid, {smoothing: 1.5, levels: 7, below: true})).toEqual([]);
   });
 
+  test.each([0, 1.5])(
+    'preserves constant scattered regions at custom thresholds with smoothing %s',
+    smoothing => {
+      for (const value of [0, 10, -12, 1e-20, 1e20]) {
+        const grid = buildContourGrid(
+          scattered.map(sample => ({...sample, value})),
+          'auto',
+          32
+        )!;
+        const constantGrid = {
+          ...grid,
+          values: Float64Array.from(grid.values, cell => (Number.isFinite(cell) ? value : NaN))
+        };
+        const span = Math.abs(value) || 1;
+        for (const below of [false, true]) {
+          const settings = {
+            levels: 3,
+            below,
+            domain: [value - span, value + span] as [number, number]
+          };
+          const expected = generateContours(constantGrid, {...settings, smoothing: 0});
+          const result = generateContours(grid, {...settings, smoothing});
+          expect(result).toEqual(expected);
+          const atValue = result.find(feature => feature.properties.threshold === value)!;
+          expect(atValue.geometry.coordinates).toHaveLength(1);
+          expect(atValue.geometry.coordinates[0]).toHaveLength(1);
+        }
+        expect(new Set([...grid.values].filter(Number.isFinite))).toEqual(new Set([value]));
+        expect(Number.isNaN(smoothScalarGrid(grid, smoothing)[grid.values.length - 1])).toBe(true);
+      }
+    }
+  );
+
   test('auto preserves the original grid and its holes; explicit points mode fills gaps', () => {
     const input = samples(5, (x, y) => (x === 2 && y === 2 ? null : plane(x, y)));
     expect(buildContourGrid(input, 'auto', 256)).toEqual(buildScalarGrid(input));

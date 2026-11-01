@@ -191,6 +191,11 @@ export function interpolateScalarSamples(
     const ia = triangles[t];
     const ib = triangles[t + 1];
     const ic = triangles[t + 2];
+    // Preserve flat triangles exactly so roundoff cannot split an explicit threshold region.
+    const constantValue =
+      points[ia].value === points[ib].value && points[ia].value === points[ic].value
+        ? points[ia].value
+        : null;
     const ax = coords[2 * ia];
     const ay = coords[2 * ia + 1];
     const bx = coords[2 * ib];
@@ -216,6 +221,7 @@ export function interpolateScalarSamples(
         const wb = Math.max(0, b);
         const wc = Math.max(0, c);
         values[row * width + col] =
+          constantValue ??
           (wa * points[ia].value + wb * points[ib].value + wc * points[ic].value) / (wa + wb + wc);
       }
     }
