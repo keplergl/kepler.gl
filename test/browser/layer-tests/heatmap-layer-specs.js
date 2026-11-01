@@ -953,9 +953,23 @@ test('#HeatmapLayer -> surface settings survive saving and loading', t => {
     t.equal(restored.config.visConfig[key], value, `restores ${key}`);
   }
   const data = restored.formatLayerData({[dataId]: preparedDataset});
-  const render = () => restored.renderLayer({data, mapState: INITIAL_MAP_STATE, visible: true})[0];
+  const render = (zoom = INITIAL_MAP_STATE.zoom) =>
+    restored.renderLayer({data, mapState: {...INITIAL_MAP_STATE, zoom}, visible: true})[0];
   t.ok(render().props.surface, 'selects the surface renderer');
-  t.equal(render().props.surfaceHeight, 2500, 'passes the selected height scale');
+  t.equal(render().props.surfaceHeight, 2500, 'passes the selected maximum height');
+  for (const zoom of [0, 10, 18]) {
+    for (const intensity of [0.1, 2]) {
+      restored.updateLayerVisConfig({intensity});
+      const surface = render(zoom);
+      t.equal(surface.props.surfaceHeight, 2500, 'zoom and intensity preserve maximum height');
+      restored.updateLayerVisConfig({surfaceEnabled: false});
+      const flat = render(zoom);
+      for (const property of ['intensity', 'radiusPixels', 'threshold', 'colorRange']) {
+        t.deepEqual(surface.props[property], flat.props[property], `preserves flat ${property}`);
+      }
+      restored.updateLayerVisConfig({surfaceEnabled: true});
+    }
+  }
   t.equal(
     render().props.surfaceContourStep,
     100,
@@ -1549,11 +1563,7 @@ test('#HeatmapLayer -> surface normalization preserves small positive densities'
         };
         const maxTexture = aggregationMode === 0 ? {r: maximum, g: 1} : {r: 1, g: maximum};
         const {vIntensityMax, vIntensityMin} = evaluate(triangle, maxTexture, Math.max);
-        t.equal(
-          maximum * vIntensityMax,
-          1,
-          'small positive peaks reach the full color and height scale'
-        );
+        t.equal(maximum * vIntensityMax, 1, 'small positive peaks reach the full color scale');
         t.equal(
           alpha(minimum / 2, vIntensityMin, triangle, Math.min),
           0.5,
@@ -1568,7 +1578,7 @@ test('#HeatmapLayer -> surface normalization preserves small positive densities'
     }
     const triangle = {aggregationMode: 0, intensity: 1, threshold: 0, colorDomain: [0, 0]};
     const zero = evaluate(triangle, {r: 0, g: 0}, Math.max);
-    t.equal(zero.vIntensityMax, 0, 'empty density has a finite zero height scale');
+    t.equal(zero.vIntensityMax, 0, 'empty density has a finite zero color scale');
     t.equal(zero.vIntensityMin, 0, 'zero threshold avoids division by zero');
     t.equal(
       alpha(5e-10, zero.vIntensityMin, triangle, Math.min),
@@ -1581,6 +1591,125 @@ test('#HeatmapLayer -> surface normalization preserves small positive densities'
       0,
       'zero intensity remains transparent'
     );
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> maximum surface height is independent of color settings', t => {
+  const viewport = new MapView().makeViewport({
+    width: 800,
+    height: 600,
+    viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+  });
+  const manager = new LayerManager(device, {viewport});
+  const layer = new KeplerHeatmapLayer({
+    id: 'surface-maximum-height',
+    data: [[-122.4, 37.75]],
+    getPosition: d => d,
+    surface: true,
+    weightsTextureSize: 128,
+    debounceTimeout: 0
+  });
+  try {
+    testRenderDeckLayer(t, 'surface maximum height', [layer], {layerManager: manager});
+    // Run the actual max-reduction fragment arithmetic. MAX blending reduces
+    // channels independently; red/green must keep their regular color values.
+    const maxModel = layer.state.maxWeightTransform.model;
+    const maxBody = maxModel.fs.match(/void main\(\)\s*\{([\s\S]*?)\}/)[1];
+    const evaluateMax = new Function(
+      'outTexture',
+      'max',
+      `let fragColor;
+       ${maxBody.replace('fragColor = outTexture;', 'fragColor = {...outTexture};')}
+       return fragColor;`
+    );
+    const texels = [
+      {r: 8, g: 0, b: 0, a: 4},
+      {r: 6, g: 0, b: 0, a: 2},
+      {r: 0, g: 0, b: 0, a: 0}
+    ];
+    const reduced = texels.map(texel => evaluateMax(texel, Math.max));
+    const maxTexture = Object.fromEntries(
+      ['r', 'g', 'b', 'a'].map(channel => [channel, Math.max(...reduced.map(v => v[channel]))])
+    );
+    t.equal(maxTexture.r, 1, 'regular SUM colors retain the fixed maximum of one');
+    t.equal(maxTexture.g, 3, 'regular MEAN colors retain the actual mean maximum');
+    t.equal(maxTexture.b, 8, 'surface retains the actual SUM maximum separately');
+
+    // Like the color-normalization test, execute the renderer's scalar GLSL
+    // because NullDevice does not run shaders. Include the weight aggregation.
+    const {vs} = layer.getSubLayers()[0].getShaders();
+    const heightBody = vs.slice(vs.indexOf('float weight ='), vs.indexOf('vec3 position ='));
+    const evaluateHeight = new Function(
+      'triangle',
+      'maxTexture',
+      'weights',
+      'max',
+      'clamp',
+      'isnan',
+      'isinf',
+      `let vDensity;
+       ${heightBody.replace(/\bfloat\b/g, 'let')}
+       return {height, density: vDensity};`
+    );
+    const height = (triangle, maximum, weights) =>
+      evaluateHeight(
+        triangle,
+        maximum,
+        weights,
+        Math.max,
+        (value, low, high) => Math.min(high, Math.max(low, value)),
+        Number.isNaN,
+        value => Math.abs(value) === Infinity
+      );
+    for (const aggregationMode of [0, 1]) {
+      const peak = aggregationMode === 0 ? texels[0] : texels[1];
+      const maximum = aggregationMode === 0 ? maxTexture.b : maxTexture.g;
+      const settings = {aggregationMode, surfaceHeight: 2500};
+      for (const intensity of [0, 0.1, 1, 20]) {
+        for (const colorDomain of [
+          [0, 0],
+          [0.2, 100]
+        ]) {
+          const triangle = {...settings, intensity, colorDomain, threshold: 0.9};
+          t.equal(height(triangle, maxTexture, peak).height, 2500, 'peak reaches maximum meters');
+          const half = height(triangle, maxTexture, {...peak, r: peak.r / 2});
+          t.equal(half.height, 1250, 'half density retains proportional height');
+          t.equal(half.density, maximum / 2, 'contour density is independent of color settings');
+        }
+      }
+      t.equal(
+        height({...settings, surfaceHeight: 0}, maxTexture, peak).height,
+        0,
+        'zero maximum height flattens the surface'
+      );
+      t.equal(
+        height(settings, maxTexture, {...peak, r: peak.r * 2}).height,
+        2500,
+        'height never exceeds the configured maximum'
+      );
+      for (const density of [5e-9, 5e-7, 100]) {
+        t.equal(
+          height(settings, {r: 1, g: density, b: density}, {r: density, a: 1}).height,
+          2500,
+          'recomputed density maxima retain the same meter height, including tiny densities'
+        );
+      }
+      for (const invalid of [0, -1, NaN, Infinity]) {
+        t.equal(
+          height(settings, maxTexture, {r: invalid, a: 1}).height,
+          0,
+          'empty or invalid density has zero height'
+        );
+        t.equal(
+          height(settings, {r: 1, g: invalid, b: invalid}, peak).height,
+          0,
+          'empty or invalid maximum has zero height'
+        );
+      }
+    }
   } finally {
     manager.finalize();
   }

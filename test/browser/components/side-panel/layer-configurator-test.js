@@ -1337,7 +1337,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.ok(group.classList.contains('collapsed'), 'surface group starts collapsed');
     t.ok(content.classList.contains('disabled'), 'surface options are disabled while 2D');
     t.ok(
-      options.contains(view.getByText('Height scale (m)')),
+      options.contains(view.getByText('Maximum height (m)')),
       'height is inside the collapsible options'
     );
     t.ok(

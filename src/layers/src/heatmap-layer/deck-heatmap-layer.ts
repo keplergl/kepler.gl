@@ -163,12 +163,13 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     const result = super.getShaders(shaders);
 
     if (result.fs?.includes('outTexture.r / max(1.0, outTexture.a)')) {
-      // Max-weights fragment shader: force max value to 1.0
+      // Preserve the SUM maximum in blue for surface heights. Red and green
+      // retain the existing SUM and MEAN color normalization for both modes.
       result.fs = insertBefore(
         result.fs,
         'fs',
         'fragColor.g = outTexture.r / max(1.0, outTexture.a);',
-        'fragColor.r = 1.0;\n  '
+        'fragColor.b = outTexture.r;\n  fragColor.r = 1.0;\n  '
       );
       if (result.modules) {
         result.modules = result.modules.filter((m: any) => (m?.name || m) !== 'layer');
@@ -976,12 +977,18 @@ void main(void) {
   if (triangle.aggregationMode > 0.5) {
     weight /= max(1.0, weights.a);
   }
-  vDensity = max(0.0, weight * vIntensityMax);
+  // Contours use density units, independent of color intensity and domain.
+  vDensity = max(0.0, weight);
   if (isnan(vDensity) || isinf(vDensity)) {
     vDensity = 0.0;
   }
+  // Normalize against the actual density maximum, not the color scale.
+  float maxDensity = triangle.aggregationMode < 0.5 ? maxTexture.b : maxTexture.g;
+  float height = maxDensity > 0.0
+    ? clamp(vDensity / maxDensity, 0.0, 1.0) * triangle.surfaceHeight
+    : 0.0;
   vec3 position = positions;
-  position.z += vDensity * triangle.surfaceHeight;
+  position.z += height;
   geometry.worldPosition = position;
   geometry.uv = texCoords;
   gl_Position = project_position_to_clipspace(position, positions64Low, vec3(0.0), geometry.position);

@@ -221,9 +221,9 @@ export default {
     weightAggregation: 'Weight Aggregation',
     heatmap: {
       surface: '3D Surface',
-      surfaceHeight: 'Height scale (m)',
+      surfaceHeight: 'Maximum height (m)',
       surfaceHeightDescription:
-        'Meters per unit of density. Tilt the map to see the surface. Height represents density, not terrain elevation.',
+        'Maximum surface height in meters, independent of intensity. Tilt the map to see the surface. Height represents density, not terrain elevation.',
       surfaceLighting: 'Surface shading',
       surfaceContours: 'Surface contours',
       surfaceContourStep: 'Contour step',
