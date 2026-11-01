@@ -60,6 +60,14 @@ original units. Both column modes use the following surface settings:
   Filtering boundary points can therefore shrink the surface. No distance cutoff,
   barrier, or uncertainty model is applied across large unsampled gaps.
 
+Polygon filters select source samples before smoothing and contour generation. Scalar
+samples use their longitude/latitude; GeoJSON rows use the representative points described
+above. Filters affect only their selected layers, including when layers share a dataset.
+Regular grids retain rejected samples as holes; scattered inputs interpolate only retained
+samples. Polygon filters do not clip the generated contours, so interpolation may bridge
+excluded areas within the remaining samples' convex hull. Inverting, disabling, or clearing
+the filter follows the same behavior as other layers.
+
 ## Controls
 
 - **Color by level**: off uses the plain color (the default). Turn on to choose a

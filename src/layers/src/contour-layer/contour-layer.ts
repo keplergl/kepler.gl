@@ -3,10 +3,10 @@
 
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {colorMaybeToRGB} from '@kepler.gl/utils';
+import {colorMaybeToRGB, DataContainerInterface} from '@kepler.gl/utils';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
 import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
@@ -204,18 +204,45 @@ export default class ContourLayer extends Layer {
     return {...super.getDefaultLayerConfig(props), color: props.color ?? [36, 218, 211]};
   }
 
+  getPositionAccessor(dataContainer?: DataContainerInterface, dataset?: KeplerTable) {
+    if (!dataContainer || !this.hasAllColumns()) return () => null;
+    const {lat, lng, geojson} = this.config.columns;
+    if (this.config.columnMode === 'geojson') {
+      const geoArrowEncoding = (
+        dataset?.fields[geojson.fieldIdx] ?? dataContainer.getField?.(geojson.fieldIdx)
+      )?.metadata?.get('ARROW:extension:name');
+      return ({index}: {index: number}) => {
+        try {
+          const feature = parseGeoJsonRawFeature(
+            dataContainer.valueAt(index, geojson.fieldIdx),
+            geoArrowEncoding
+          );
+          // Use the same representative point for polygon filtering and contour generation.
+          return getCentroidFromGeometry(feature?.geometry);
+        } catch {
+          return null;
+        }
+      };
+    }
+    return (data: {index: number}) =>
+      [lng, lat].map(({fieldIdx}) => {
+        const value = dataset
+          ? dataset.fields[fieldIdx].valueAccessor(data)
+          : dataContainer.valueAt(data.index, fieldIdx);
+        // Polygon filtering receives only the container, whose Arrow coordinates may be BigInt.
+        return typeof value === 'bigint' ? Number(value) : value;
+      });
+  }
+
   formatLayerData(datasets: Datasets): {data: ContourFeature[]} {
     this.errorMessage = null;
     this.updateMeta({contourLevels: []});
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
     if (!dataset || !this.hasAllColumns()) return {data: []};
-    const {dataContainer, gpuFilter, filteredIndex} = dataset;
-    const {lat, lng, geojson, value} = this.config.columns;
-    const useGeojson = this.config.columnMode === 'geojson';
-    const geoArrowEncoding = useGeojson
-      ? dataset.fields[geojson.fieldIdx]?.metadata?.get('ARROW:extension:name')
-      : undefined;
-    const selected = new Set(filteredIndex);
+    const {dataContainer, gpuFilter, filteredIndex, filteredIndexByLayer} = dataset;
+    const {value} = this.config.columns;
+    const getPosition = this.getPositionAccessor(dataContainer, dataset);
+    const selected = new Set(filteredIndexByLayer?.[this.id] ?? filteredIndex);
     const activeFilter =
       gpuFilter &&
       Object.values(gpuFilter.filterValueUpdateTriggers).some(trigger => trigger !== null);
@@ -224,25 +251,7 @@ export default class ContourLayer extends Layer {
       : null;
     const samples: ScalarSample[] = [];
     for (let index = 0; index < dataContainer.numRows(); index++) {
-      let position: number[] | null;
-      if (useGeojson) {
-        try {
-          const feature = parseGeoJsonRawFeature(
-            dataContainer.valueAt(index, geojson.fieldIdx),
-            geoArrowEncoding
-          );
-          // Match the representative points used by Grid, Hexbin and Heatmap.
-          position = getCentroidFromGeometry(feature?.geometry);
-        } catch {
-          // A malformed feature must not prevent valid rows from generating contours.
-          continue;
-        }
-      } else {
-        position = [
-          dataset.fields[lng.fieldIdx].valueAccessor({index}),
-          dataset.fields[lat.fieldIdx].valueAccessor({index})
-        ];
-      }
+      const position = getPosition({index});
       if (!position) continue;
       // Keep the source lattice even when filters remove an entire row/column.
       samples.push({

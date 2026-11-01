@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {KeplerTable, getGpuFilterProps} from '@kepler.gl/table';
+import {KeplerTable, getGpuFilterProps, assignGpuChannels} from '@kepler.gl/table';
+import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES} from '@kepler.gl/constants';
+import {generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
 import {PickingInfo} from '@deck.gl/core';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
@@ -882,6 +884,189 @@ test('filtered samples become holes and clearing the filter restores them', asyn
   const restored = layer.formatLayerData(datasets);
   expect(restored.data.every(f => f.geometry.coordinates[0].length === 1)).toBe(true);
 });
+
+function contourPolygonFilter(layer: ContourLayer, bounds: number[], inverted = false) {
+  const [west, south, east, north] = bounds;
+  return {
+    ...generatePolygonFilter([layer], {
+      type: 'Feature',
+      id: 'contour-filter-polygon',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [west, south],
+            [east, south],
+            [east, north],
+            [west, north],
+            [west, south]
+          ]
+        ]
+      }
+    }),
+    inverted
+  };
+}
+
+test('polygon filters preserve grid holes, isolate layers, and restore on disable or clear', async () => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({inputMode: 'grid'});
+  const other = new ContourLayer({dataId: dataset.id, columns: layer.config.columns});
+  other.updateLayerVisConfig(layer.config.visConfig);
+  const point = new LayerClasses.point({dataId: dataset.id, columns: layer.config.columns});
+  const layers = [layer, other, point];
+  const original = calculateContourLayerData(layer, datasets).layerData.data;
+  const pointState = {datasets, animationConfig: StateWFiles.visState.animationConfig};
+  const originalPoint = calculateLayerData(point, pointState).layerData.data;
+  expect(originalPoint).toHaveLength(dataset.dataContainer.numRows());
+  const all = dataset.filteredIndex;
+  const filter = contourPolygonFilter(layer, [3.5, 3.5, 4.5, 4.5], true);
+  expect(EDITOR_AVAILABLE_LAYERS).toContain(layer.type);
+
+  dataset.filterTable([filter], layers);
+  expect(dataset.filteredIndex).toEqual(all);
+  expect(dataset.filteredIndexByLayer[layer.id]).toEqual(all.filter(index => index !== 40));
+  const filtered = calculateContourLayerData(layer, datasets).layerData.data;
+  expect(filtered).toHaveLength(3);
+  expect(filtered.every(feature => feature.geometry.coordinates[0].length === 2)).toBe(true);
+  expect(other.formatLayerData(datasets).data).toEqual(original);
+  expect(calculateLayerData(point, pointState).layerData.data).toEqual(originalPoint);
+
+  dataset.filterTable([{...filter, inverted: false}], layers);
+  expect(dataset.filteredIndexByLayer[layer.id]).toEqual([40]);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).not.toEqual(filtered);
+
+  dataset.filterTable([{...filter, enabled: false}], layers);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(original);
+  dataset.filterTable([filter], layers);
+  dataset.filterTable([], layers);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(original);
+
+  dataset.filterTable([contourPolygonFilter(layer, [20, 20, 21, 21])], layers);
+  expect(dataset.filteredIndexByLayer[layer.id]).toEqual([]);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual([]);
+  expect(layer.getContourLegend()).toEqual([]);
+  expect(other.formatLayerData(datasets).data).toEqual(original);
+});
+
+test.each([false, true])('combines polygon filtering with numeric filters (GPU %s)', async gpu => {
+  const {layer, dataset, datasets} = await setup();
+  const polygon = contourPolygonFilter(layer, [3.5, 3.5, 4.5, 4.5], true);
+  const range = {
+    ...getDefaultFilter({dataId: [dataset.id]}),
+    type: FILTER_TYPES.range,
+    name: ['value'],
+    fieldIdx: [2],
+    value: [0, 4],
+    domain: [0, 32],
+    gpu
+  };
+  dataset.filterTable(assignGpuChannels([polygon, range]), [layer]);
+  const grid = buildContourGrid(
+    dataset.dataContainer.mapIndex(({index}) => {
+      const [longitude, latitude, value] = dataset.dataContainer.rowAsArray(index);
+      return {longitude, latitude, value: index !== 40 && value <= 4 ? value : null};
+    })
+  );
+  const expected = generateContours(grid, {smoothing: 0, levels: 3, below: true, domain: [2, 6]});
+  expect(expected.length).toBeGreaterThan(0);
+  expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(expected);
+});
+
+test.each(['grid', 'geojson'])(
+  'polygon filters %s source samples before scattered interpolation and smoothing',
+  async columnMode => {
+    const rows = scatteredSamples.map((row, index) => [
+      row[0],
+      row[1],
+      index === 1 ? 1000 : row[2]
+    ]);
+    const {layer, dataset, datasets} =
+      columnMode === 'geojson'
+        ? setupGeojson([
+            ...rows.map(([x, y, value]) => [polygonGeometry(x, y), value]),
+            [null, 1000],
+            ['invalid geojson', 1000],
+            [{type: 'Point', coordinates: [null, null]}, 1000]
+          ])
+        : await setup(rows);
+    const filter = contourPolygonFilter(layer, [-0.5, -0.5, 1.5, 2.5]);
+    // Apply before the first render, so filtering cannot depend on cached geometry.
+    dataset.filterTable([filter], [layer]);
+    expect(dataset.filteredIndexByLayer[layer.id]).toEqual([0, 2, 3]);
+    for (const inputMode of ['auto', 'points'] as const) {
+      layer.updateLayerVisConfig({
+        inputMode,
+        minimum: 4,
+        maximum: 8,
+        interpolationResolution: 32,
+        smoothing: 1.5
+      });
+      const expectedGrid = buildContourGrid(
+        rows.map(([longitude, latitude, value], index) => ({
+          longitude,
+          latitude,
+          value: index === 1 ? null : value
+        })),
+        inputMode,
+        32
+      );
+      const expected = generateContours(expectedGrid, {
+        smoothing: 1.5,
+        levels: 3,
+        below: true,
+        domain: [4, 8]
+      });
+      expect(expected.length).toBeGreaterThan(0);
+      expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(expected);
+    }
+    dataset.filterTable([contourPolygonFilter(layer, [20, 20, 21, 21])], [layer]);
+    expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual([]);
+    expect(layer.isValid).toBe(true);
+  }
+);
+
+test.each([Int64, Uint64])(
+  'polygon filters Arrow %p coordinates without coercing nulls',
+  async ArrowType => {
+    const reference = await setup([
+      [0, 0, 3],
+      [0, 2, 9],
+      [1, 1, 8]
+    ]);
+    const {layer} = reference;
+    layer.updateLayerVisConfig({
+      inputMode: 'points',
+      minimum: 4,
+      maximum: 8,
+      interpolationResolution: 32
+    });
+    const expected = layer.formatLayerData(reference.datasets).data;
+    const arrowVector = (values: (number | null)[]) =>
+      vectorFromArray(
+        values.map(value => (value === null ? null : BigInt(value))),
+        new ArrowType()
+      );
+    const table = new Table({
+      longitude: arrowVector([0, 2, 0, 1, null]),
+      latitude: arrowVector([0, 0, 2, 1, 1]),
+      value: arrowVector([3, 1000, 9, 8, 1000])
+    });
+    const dataset = new KeplerTable({info: {id: reference.dataset.id}, color: [0, 0, 0]});
+    await dataset.importData({
+      data: {
+        rows: [],
+        fields: reference.dataset.fields,
+        cols: table.schema.fields.map((_, index) => table.getChildAt(index)!),
+        arrowTable: table
+      }
+    });
+    dataset.filterTable([contourPolygonFilter(layer, [-0.5, -0.5, 1.5, 2.5])], [layer]);
+    expect(dataset.filteredIndexByLayer[layer.id]).toEqual([0, 2, 3]);
+    expect(layer.formatLayerData({[dataset.id]: dataset}).data).toEqual(expected);
+  }
+);
 
 test('reports invalid settings and recovers after correcting them', async () => {
   const {layer, datasets} = await setup();
