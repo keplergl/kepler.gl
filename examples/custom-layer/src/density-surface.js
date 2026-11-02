@@ -230,8 +230,17 @@ export function computeDensityGrid(
     const x = clamp(Math.round((lng - gridWest) / dLng), 0, cols - 1);
     const y = clamp(Math.round((gridNorth - lat) / dLat), 0, rows - 1);
     const cellIndex = y * cols + x;
-    const weight = weights && Number.isFinite(weights[i]) ? weights[i] : 1;
-    grid[cellIndex] += weight;
+    if (weights) {
+      const weight = weights[i];
+      // A missing weight is a missing observation: skip it in both the sum
+      // and the count instead of turning it into a weight of 1.
+      if (!Number.isFinite(weight)) {
+        continue;
+      }
+      grid[cellIndex] += weight;
+    } else {
+      grid[cellIndex] += 1;
+    }
     if (counts) {
       counts[cellIndex] += 1;
     }
@@ -246,7 +255,7 @@ export function computeDensityGrid(
   const passes = Math.min(MAX_SMOOTHING_PASSES, Math.max(0, Math.round(smoothing)));
   const smoothed = smoothGrid(grid, cols, rows, passes);
   let minValue = Infinity;
-  let maxValue = 0;
+  let maxValue = -Infinity;
   for (let i = 0; i < smoothed.length; i++) {
     if (smoothed[i] < minValue) {
       minValue = smoothed[i];
@@ -255,8 +264,9 @@ export function computeDensityGrid(
       maxValue = smoothed[i];
     }
   }
-  if (!Number.isFinite(minValue)) {
+  if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
     minValue = 0;
+    maxValue = 0;
   }
 
   return {
@@ -302,9 +312,10 @@ export function computeDensityGrid(
  * }}
  */
 export function buildSurfaceMesh(gridInfo, elevationScale, colorRange) {
-  const {grid, cols, rows, bounds, maxValue, dLng, dLat} = gridInfo;
+  const {grid, cols, rows, bounds, minValue = 0, maxValue, dLng, dLat} = gridInfo;
   const [west, south, east, north] = bounds;
-  const heightScale = maxValue > 0 ? elevationScale / maxValue : 0;
+  const range = maxValue - minValue;
+  const heightScale = range > 0 ? elevationScale / range : 0;
   const vertexCount = cols * rows;
   const positions = new Float32Array(vertexCount * 3);
   const colors = new Float32Array(vertexCount * 3);
@@ -315,24 +326,23 @@ export function buildSurfaceMesh(gridInfo, elevationScale, colorRange) {
     METERS_PER_DEGREE_LAT * Math.max(0.01, Math.cos((centerLat * Math.PI) / 180));
   const dxMeters = Math.max(1, dLng * metersPerDegreeLng);
   const dyMeters = Math.max(1, dLat * METERS_PER_DEGREE_LAT);
-  const max = maxValue > 0 ? maxValue : 1;
 
   for (let y = 0; y < rows; y++) {
     const lat = north - y * dLat;
     for (let x = 0; x < cols; x++) {
       const index = y * cols + x;
       const offset = index * 3;
-      const normalized = clamp(grid[index] / max, 0, 1);
-      const height = grid[index] * heightScale;
+      const normalized = range > 0 ? clamp((grid[index] - minValue) / range, 0, 1) : 0;
+      const height = (grid[index] - minValue) * heightScale;
 
       positions[offset] = west + x * dLng;
       positions[offset + 1] = lat;
       positions[offset + 2] = height;
 
-      const eastHeight = grid[y * cols + Math.min(cols - 1, x + 1)] * heightScale;
-      const westHeight = grid[y * cols + Math.max(0, x - 1)] * heightScale;
-      const northHeight = grid[Math.max(0, y - 1) * cols + x] * heightScale;
-      const southHeight = grid[Math.min(rows - 1, y + 1) * cols + x] * heightScale;
+      const eastHeight = (grid[y * cols + Math.min(cols - 1, x + 1)] - minValue) * heightScale;
+      const westHeight = (grid[y * cols + Math.max(0, x - 1)] - minValue) * heightScale;
+      const northHeight = (grid[Math.max(0, y - 1) * cols + x] - minValue) * heightScale;
+      const southHeight = (grid[Math.min(rows - 1, y + 1) * cols + x] - minValue) * heightScale;
 
       const dzdx = (eastHeight - westHeight) / (2 * dxMeters);
       const dzdy = (northHeight - southHeight) / (2 * dyMeters);
@@ -404,20 +414,21 @@ export function buildSurfaceMesh(gridInfo, elevationScale, colorRange) {
  */
 export function buildContourPaths(gridInfo, elevationScale, contourCount = 8) {
   const {grid, cols, rows, bounds, minValue = 0, maxValue, dLng, dLat} = gridInfo;
-  if (!grid || cols < 2 || rows < 2 || !(maxValue > 0)) {
+  const range = maxValue - minValue;
+  if (!grid || cols < 2 || rows < 2 || !(range > 0)) {
     return [];
   }
 
   const count = Math.max(1, Math.min(30, Math.round(contourCount || 8)));
   const [west, , , north] = bounds;
-  const heightScale = elevationScale / maxValue;
+  const heightScale = range > 0 ? elevationScale / range : 0;
   // Keep the lines just above the triangulated surface to avoid z-fighting.
   const zOffset = Math.max(1, elevationScale * 0.001);
   const paths = [];
 
   for (let levelIndex = 1; levelIndex <= count; levelIndex++) {
-    const level = minValue + ((maxValue - minValue) * levelIndex) / (count + 1);
-    const z = level * heightScale + zOffset;
+    const level = minValue + (range * levelIndex) / (count + 1);
+    const z = (level - minValue) * heightScale + zOffset;
 
     for (let y = 0; y < rows - 1; y++) {
       for (let x = 0; x < cols - 1; x++) {

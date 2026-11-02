@@ -46,6 +46,31 @@ const DEFAULT_SURFACE_COLOR_RANGE = {
   colors: ['#183c6e', '#1e6e8c', '#3c9664', '#96b450', '#d2b46e', '#f5f5f0']
 };
 
+function getGpuFilterPredicate(gpuFilter, dataContainer) {
+  if (!gpuFilter?.filterValueAccessor) {
+    return null;
+  }
+  const hasFilter = Object.values(gpuFilter.filterValueUpdateTriggers || {}).some(
+    trigger => trigger !== null
+  );
+  if (!hasFilter) {
+    return null;
+  }
+  const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
+  return index => {
+    const values = getFilterValue({index});
+    return values.every((value, i) => {
+      const filterRange = gpuFilter.filterRange[i];
+      return (
+        typeof value === 'number' &&
+        Boolean(filterRange) &&
+        value >= filterRange[0] &&
+        value <= filterRange[1]
+      );
+    });
+  };
+}
+
 export const contourVisConfigs = {
   opacity: 'opacity',
   // Radius of each grid cell — smaller values give finer contours with more detail.
@@ -219,12 +244,16 @@ export default class ContourKeplerLayer extends Layer {
       return {};
     }
     const dataset = datasets[this.config.dataId];
-    const {dataContainer, filteredIndex} = dataset;
+    const {dataContainer, filteredIndex, gpuFilter} = dataset;
     const {lat, lng} = this.config.columns;
 
     if (lat.fieldIdx < 0 || lng.fieldIdx < 0) {
       return {};
     }
+
+    // filteredIndex only carries CPU filters; numeric/time filters are
+    // evaluated on the GPU and must be applied here before CPU aggregation.
+    const filterData = getGpuFilterPredicate(gpuFilter, dataContainer);
 
     // ContourLayer consumes {position} objects; the surface mode reuses the
     // raw [lng, lat] pairs for CPU grid aggregation. `indices` keeps the
@@ -234,6 +263,9 @@ export default class ContourKeplerLayer extends Layer {
     const indices = [];
     for (let i = 0; i < filteredIndex.length; i++) {
       const idx = filteredIndex[i];
+      if (filterData && !filterData(idx)) {
+        continue;
+      }
       const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
       const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
       if (Number.isFinite(latVal) && Number.isFinite(lngVal)) {
@@ -272,7 +304,7 @@ export default class ContourKeplerLayer extends Layer {
         const {dataContainer} = data.dataset;
         weights = data.indices.map(idx => {
           const value = dataContainer.valueAt(idx, weightIdx);
-          return Number.isFinite(value) ? value : 1;
+          return Number.isFinite(value) ? value : null;
         });
         aggregation = 'MEAN';
       }
@@ -344,12 +376,13 @@ export default class ContourKeplerLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data} = opts;
+    const {data, visible} = opts;
     if (!data?.data?.length) {
       return [];
     }
 
     const {visConfig, isVisible} = this.config;
+    const layerVisible = visible !== false && isVisible;
     const renderMode = visConfig.renderMode || 'contour';
 
     if (renderMode === 'surface') {
@@ -376,7 +409,7 @@ export default class ContourKeplerLayer extends Layer {
           coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
           material: false,
           opacity: visConfig.opacity,
-          visible: isVisible,
+          visible: layerVisible,
           pickable: false
         })
       ];
@@ -393,7 +426,7 @@ export default class ContourKeplerLayer extends Layer {
               widthMinPixels: 1,
               coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
               opacity: visConfig.opacity,
-              visible: isVisible,
+              visible: layerVisible,
               pickable: false
             })
           );
@@ -421,7 +454,7 @@ export default class ContourKeplerLayer extends Layer {
         contours,
         aggregation: 'SUM',
         opacity: visConfig.opacity,
-        visible: isVisible,
+        visible: layerVisible,
         pickable: true
       })
     ];

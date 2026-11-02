@@ -43,14 +43,23 @@ function createLayer(visConfig = {}) {
   return layer;
 }
 
-function formatData(layer) {
+function formatData(layer, {gpuFilter, rows = ROWS} = {}) {
   return layer.formatLayerData({
     test: {
-      dataContainer: {valueAt: (rowIndex, fieldIdx) => ROWS[rowIndex][fieldIdx]},
-      filteredIndex: ROWS.map((_, index) => index),
-      getColumnFieldIdx: name => (name === 'elevation' ? 2 : -1)
+      dataContainer: {valueAt: (rowIndex, fieldIdx) => rows[rowIndex][fieldIdx]},
+      filteredIndex: rows.map((_, index) => index),
+      getColumnFieldIdx: name => (name === 'elevation' ? 2 : -1),
+      ...(gpuFilter ? {gpuFilter} : {})
     }
   });
+}
+
+function elevationFilter(range) {
+  return {
+    filterRange: [range],
+    filterValueUpdateTriggers: {elevation: {name: 'elevation', domain0: range[0]}},
+    filterValueAccessor: () => () => ({index}) => [ROWS[index][2]]
+  };
 }
 
 describe('custom contour layer', () => {
@@ -87,6 +96,43 @@ describe('custom contour layer', () => {
 
     // Two points share a cell: (10 + 20) / 2 = 15; the third is alone: 30.
     expect(layer._surfaceCache.gridInfo.maxValue).toBeCloseTo(30, 5);
+  });
+
+  test('surface mode applies GPU filter predicates before aggregation', () => {
+    const layer = createLayer({renderMode: 'surface'});
+    const data = formatData(layer, {gpuFilter: elevationFilter([0, 15])});
+
+    expect(data.positions).toHaveLength(1);
+  });
+
+  test('surface mode skips missing weights', () => {
+    const layer = createLayer({
+      renderMode: 'surface',
+      weightColumn: 'elevation',
+      smoothing: 0
+    });
+    const data = formatData(layer, {
+      rows: [
+        [37.8, -122.4, 100],
+        [37.8, -122.4, null]
+      ]
+    });
+    layer.renderLayer({data});
+
+    expect(layer._surfaceCache.gridInfo.maxValue).toBeCloseTo(100, 5);
+  });
+
+  test('surface and contours respect render-time visibility', () => {
+    const layer = createLayer({
+      renderMode: 'surface',
+      showContours: true,
+      contourCount: 4
+    });
+    const data = formatData(layer);
+    const layers = layer.renderLayer({data, visible: false});
+
+    expect(layers).toHaveLength(2);
+    layers.forEach(deckLayer => expect(deckLayer.props.visible).toBe(false));
   });
 
   test('surface mode can render elevation contours with the mesh', () => {

@@ -84,6 +84,50 @@ describe('density surface', () => {
     expect(sumGrid(smoothed.grid)).toBeCloseTo(points.length, 5);
   });
 
+  test('skips missing weights instead of treating them as 1', () => {
+    const points = [
+      [-122.4, 37.8],
+      [-122.4, 37.8],
+      [-122.3, 37.9]
+    ];
+    const grid = computeDensityGrid(points, {
+      cellSizeMeters: 5000,
+      smoothing: 0,
+      weights: [100, null, -10],
+      aggregation: 'MEAN'
+    });
+
+    // The null colocated with 100 is skipped; the cell mean stays 100.
+    expect(grid.maxValue).toBeCloseTo(100, 5);
+    expect(grid.minValue).toBeCloseTo(-10, 5);
+  });
+
+  test('normalizes signed weights across the value range', () => {
+    const points = [
+      [-122.4, 37.8],
+      [-122.3, 37.9]
+    ];
+    const grid = computeDensityGrid(points, {
+      cellSizeMeters: 5000,
+      smoothing: 0,
+      weights: [-30, -10],
+      aggregation: 'MEAN'
+    });
+    const mesh = buildSurfaceMesh(grid, 1000, ['#000000', '#ffffff']);
+
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    forEachPosition(mesh.positions, (lng, lat, z) => {
+      minZ = Math.min(minZ, z);
+      maxZ = Math.max(maxZ, z);
+    });
+
+    expect(minZ).toBeCloseTo(0, 3);
+    expect(maxZ).toBeCloseTo(1000, 3);
+    expect(new Set(Array.from(mesh.colors).map(value => value.toFixed(3))).size).toBeGreaterThan(1);
+    expect(buildContourPaths(grid, 1000, 4).length).toBeGreaterThan(0);
+  });
+
   test('clamps custom smoothing passes to the safe maximum', () => {
     const points = [
       [-122.4, 37.8],
