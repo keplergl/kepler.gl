@@ -689,8 +689,10 @@ export function parseTitilerPointResponse(payload: any): RasterIdentifyRow[] | n
     rows.push({name: 'Latitude', value: Number(payload.coordinates[1]).toFixed(6)});
   }
   for (let i = 0; i < values.length; i++) {
-    const value = Number(values[i]);
-    rows.push({name: names[i] || `Band ${i + 1}`, value: formatRasterValue(value)});
+    rows.push({
+      name: names[i] || `Band ${i + 1}`,
+      value: values[i] === null ? 'NoData' : formatRasterValue(Number(values[i]))
+    });
   }
   return rows;
 }
