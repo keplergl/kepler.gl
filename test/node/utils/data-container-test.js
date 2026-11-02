@@ -168,6 +168,19 @@ test('RowDataContainer.update replaces rows', t => {
   t.end();
 });
 
+test('RowDataContainer.append accepts a large batch without copying existing rows', t => {
+  const first = [0, 10];
+  const rows = [first];
+  const dc = createDataContainer(rows);
+  const incoming = Array.from({length: 200001}, (_, i) => [i + 1, i]);
+  t.doesNotThrow(() => t.ok(dc.append(incoming), 'accepts all rows'), 'no argument limit');
+  t.equal(dc.flattenData(), rows, 'retains the backing array');
+  t.equal(dc.rowAsArray(0), first, 'retains existing row references');
+  t.equal(dc.numRows(), 200002, 'includes every appended row');
+  t.equal(dc.rowAsArray(200001), incoming[200000], 'retains the last incoming row');
+  t.end();
+});
+
 test('RowDataContainer.append and remove', t => {
   const dc = createDataContainer([
     [10, 20],
