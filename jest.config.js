@@ -22,6 +22,10 @@ const config = {
   // the ESM entry points directly; they are transpiled via
   // transformIgnorePatterns below.
   moduleNameMapper: {
+    // Examples install their own deck.gl copy for local runs. Resolve tests
+    // against the repository copy so a test importing an example file and a
+    // @kepler.gl workspace package does not load two deck.gl/luma instances.
+    '^@deck\\.gl/(.*)$': '<rootDir>/node_modules/@deck.gl/$1',
     '^zarrita$': '<rootDir>/node_modules/zarrita/dist/src/index.js',
     '^@zarrita/storage$': '<rootDir>/node_modules/@zarrita/storage/dist/src/index.js',
     '^@zarrita/storage/(.*)$': '<rootDir>/node_modules/@zarrita/storage/dist/src/$1.js',
