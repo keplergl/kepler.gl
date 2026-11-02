@@ -89,6 +89,20 @@ describe('custom contour layer', () => {
     expect(layer._surfaceCache.gridInfo.maxValue).toBeCloseTo(30, 5);
   });
 
+  test('surface mode can render elevation contours with the mesh', () => {
+    const layer = createLayer({
+      renderMode: 'surface',
+      showContours: true,
+      contourCount: 4
+    });
+    const data = formatData(layer);
+    const layers = layer.renderLayer({data});
+
+    expect(layers).toHaveLength(2);
+    expect(layers[1].props.data.length).toBeGreaterThan(0);
+    expect(layers[1].props.getPath(layers[1].props.data[0])).toHaveLength(2);
+  });
+
   test('surface mode passes the color range palette to the mesh builder', () => {
     const colorRange = {colors: ['#000000', '#ffffff']};
     const layer = createLayer({renderMode: 'surface', colorRange});

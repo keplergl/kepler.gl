@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {
+  buildContourPaths,
   buildSurfaceMesh,
   computeDensityGrid,
   MAX_GRID_CELLS,
@@ -166,6 +167,35 @@ describe('density surface', () => {
       expect(grayscale.colors[i]).toBeCloseTo(grayscale.colors[i + 1], 4);
       expect(grayscale.colors[i + 1]).toBeCloseTo(grayscale.colors[i + 2], 4);
     }
+  });
+
+  test('buildContourPaths creates segments raised to the surface height', () => {
+    const points = [
+      [-122.4, 37.8],
+      [-122.4, 37.8],
+      [-122.3, 37.9]
+    ];
+    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0});
+    const paths = buildContourPaths(grid, 1000, 4);
+
+    expect(paths.length).toBeGreaterThan(0);
+    paths.forEach(path => {
+      expect(path).toHaveLength(2);
+      path.forEach(([lng, lat, z]) => {
+        expect(Number.isFinite(lng)).toBe(true);
+        expect(Number.isFinite(lat)).toBe(true);
+        expect(Number.isFinite(z)).toBe(true);
+        expect(z).toBeGreaterThan(0);
+      });
+    });
+
+    const constant = {
+      ...grid,
+      grid: new Float32Array(grid.grid.length).fill(1),
+      minValue: 1,
+      maxValue: 1
+    };
+    expect(buildContourPaths(constant, 1000, 4)).toEqual([]);
   });
 
   test('returns null for empty or invalid input', () => {

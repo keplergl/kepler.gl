@@ -36,12 +36,18 @@ to **Max surface height**; each vertex is colored by the normalized value throug
 and multiplied by a simple northwest hillshade. The mesh is rendered with `SimpleMeshLayer` using
 per-vertex colors.
 
+With **Show elevation contours** enabled, the same grid is run through marching squares and the
+resulting segments are raised to the surface height and drawn with `PathLayer`, so the DEM and
+contour lines render together.
+
 The sample data carries a generated `elevation` column, and the sample layer uses it as **Weight**,
 so the surface color follows elevation. With no weight it is a **density surface** (point count per
 cell). Either way it is an interpolated surface, not a survey-grade elevation DEM.
 
 Controls:
 
+- **Contours** — **Show elevation contours** overlays marching-squares contour
+  lines on the surface; **Contour levels** sets how many levels are drawn.
 - **Color** — color range selector; the default is a DEM-like blue → green → sand → white ramp.
 - **Weight** — `Point count (density)`, or a numeric column aggregated as a per-cell mean.
 - **Max surface height (m)** — normalized height applied to the highest cell.

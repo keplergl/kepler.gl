@@ -12,10 +12,12 @@
 import React from 'react';
 import {ContourLayer as DeckContourLayer} from '@deck.gl/aggregation-layers';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {PathLayer} from '@deck.gl/layers';
 import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {Layer} from '@kepler.gl/layers';
 import {
+  buildContourPaths,
   buildSurfaceMesh,
   computeDensityGrid,
   DEFAULT_ELEVATION_SCALE,
@@ -122,6 +124,23 @@ export const contourVisConfigs = {
   colorRange: {
     ...LAYER_VIS_CONFIGS.colorRange,
     defaultValue: DEFAULT_SURFACE_COLOR_RANGE
+  },
+  showContours: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'Show elevation contours',
+    group: 'surface',
+    property: 'showContours'
+  },
+  contourCount: {
+    type: 'number',
+    defaultValue: 8,
+    label: 'Contour levels',
+    isRanged: false,
+    range: [2, 20],
+    step: 1,
+    group: 'surface',
+    property: 'contourCount'
   }
 };
 
@@ -166,6 +185,8 @@ export default class ContourKeplerLayer extends Layer {
       'weightColumn',
       'smoothing',
       'colorRange',
+      'showContours',
+      'contourCount',
       'lowerThreshold',
       'higherThreshold'
     ];
@@ -271,10 +292,29 @@ export default class ContourKeplerLayer extends Layer {
       gridInfo,
       mesh: null,
       elevationScale: null,
-      paletteKey: null
+      paletteKey: null,
+      contours: null,
+      contourCount: null,
+      contourScale: null
     };
     this._surfaceCache = next;
     return next;
+  }
+
+  _getSurfaceContours(cache) {
+    const {showContours, contourCount, elevationScale: rawElevationScale} = this.config.visConfig;
+    if (!showContours || !cache.gridInfo) {
+      return null;
+    }
+    const elevationScale = rawElevationScale ?? DEFAULT_ELEVATION_SCALE;
+    const count = Math.max(2, Math.min(20, Math.round(contourCount ?? 8)));
+    if (cache.contours && cache.contourCount === count && cache.contourScale === elevationScale) {
+      return cache.contours;
+    }
+    cache.contours = buildContourPaths(cache.gridInfo, elevationScale, count);
+    cache.contourCount = count;
+    cache.contourScale = elevationScale;
+    return cache.contours;
   }
 
   _getSurfaceMesh(cache) {
@@ -322,7 +362,7 @@ export default class ContourKeplerLayer extends Layer {
         return [];
       }
 
-      return [
+      const layers = [
         new SimpleMeshLayer({
           // A distinct id avoids deck.gl updating the contour layer with
           // SimpleMeshLayer props (and vice versa) when the mode changes.
@@ -340,6 +380,27 @@ export default class ContourKeplerLayer extends Layer {
           pickable: false
         })
       ];
+
+      if (visConfig.showContours) {
+        const contours = this._getSurfaceContours(cache);
+        if (contours?.length) {
+          layers.push(
+            new PathLayer({
+              id: `${this.id}-elevation-contours`,
+              data: contours,
+              getPath: path => path,
+              getColor: [255, 110, 30, 230],
+              widthMinPixels: 1,
+              coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+              opacity: visConfig.opacity,
+              visible: isVisible,
+              pickable: false
+            })
+          );
+        }
+      }
+
+      return layers;
     }
 
     // Ensure the two thresholds are ordered correctly.

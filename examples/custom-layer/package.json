@@ -15,6 +15,7 @@
   "dependencies": {
     "@deck.gl/aggregation-layers": "9.3.1",
     "@deck.gl/core": "9.3.1",
+    "@deck.gl/layers": "9.3.1",
     "@deck.gl/mapbox": "9.3.1",
     "@deck.gl/mesh-layers": "9.3.1",
     "@kepler.gl/components": "^3.3.0-alpha.6",

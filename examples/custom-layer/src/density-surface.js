@@ -245,11 +245,18 @@ export function computeDensityGrid(
 
   const passes = Math.min(MAX_SMOOTHING_PASSES, Math.max(0, Math.round(smoothing)));
   const smoothed = smoothGrid(grid, cols, rows, passes);
+  let minValue = Infinity;
   let maxValue = 0;
   for (let i = 0; i < smoothed.length; i++) {
+    if (smoothed[i] < minValue) {
+      minValue = smoothed[i];
+    }
     if (smoothed[i] > maxValue) {
       maxValue = smoothed[i];
     }
+  }
+  if (!Number.isFinite(minValue)) {
+    minValue = 0;
   }
 
   return {
@@ -257,6 +264,7 @@ export function computeDensityGrid(
     cols,
     rows,
     bounds: [gridWest, gridSouth, gridEast, gridNorth],
+    minValue,
     maxValue,
     dLng,
     dLat
@@ -370,4 +378,92 @@ export function buildSurfaceMesh(gridInfo, elevationScale, colorRange) {
     vertexCount,
     triangleCount: indices.length / 3
   };
+}
+
+/**
+ * Marching-squares contour segments for the same grid, elevated to the
+ * surface height so they drape over the DEM instead of lying at z = 0.
+ *
+ * Each path is a two-point segment `[lng, lat, z]`. Segments are kept separate
+ * rather than joined, which keeps the algorithm small and is fine for the
+ * demo-sized grids.
+ *
+ * @param {{
+ *   grid: Float32Array,
+ *   cols: number,
+ *   rows: number,
+ *   bounds: [number, number, number, number],
+ *   minValue: number,
+ *   maxValue: number,
+ *   dLng: number,
+ *   dLat: number
+ * }} gridInfo
+ * @param {number} elevationScale maximum surface height in meters
+ * @param {number} contourCount number of evenly spaced levels
+ * @returns {Array<Array<[number, number, number]>>}
+ */
+export function buildContourPaths(gridInfo, elevationScale, contourCount = 8) {
+  const {grid, cols, rows, bounds, minValue = 0, maxValue, dLng, dLat} = gridInfo;
+  if (!grid || cols < 2 || rows < 2 || !(maxValue > 0)) {
+    return [];
+  }
+
+  const count = Math.max(1, Math.min(30, Math.round(contourCount || 8)));
+  const [west, , , north] = bounds;
+  const heightScale = elevationScale / maxValue;
+  // Keep the lines just above the triangulated surface to avoid z-fighting.
+  const zOffset = Math.max(1, elevationScale * 0.001);
+  const paths = [];
+
+  for (let levelIndex = 1; levelIndex <= count; levelIndex++) {
+    const level = minValue + ((maxValue - minValue) * levelIndex) / (count + 1);
+    const z = level * heightScale + zOffset;
+
+    for (let y = 0; y < rows - 1; y++) {
+      for (let x = 0; x < cols - 1; x++) {
+        const topLeft = grid[y * cols + x];
+        const topRight = grid[y * cols + x + 1];
+        const bottomRight = grid[(y + 1) * cols + x + 1];
+        const bottomLeft = grid[(y + 1) * cols + x];
+
+        const lng0 = west + x * dLng;
+        const lng1 = west + (x + 1) * dLng;
+        const lat0 = north - y * dLat;
+        const lat1 = north - (y + 1) * dLat;
+        const intersections = [];
+
+        const addEdgeIntersection = (v0, v1, from, to) => {
+          if ((v0 < level && v1 >= level) || (v0 >= level && v1 < level)) {
+            const t = v0 === v1 ? 0 : (level - v0) / (v1 - v0);
+            intersections.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
+          }
+        };
+
+        addEdgeIntersection(topLeft, topRight, [lng0, lat0], [lng1, lat0]);
+        addEdgeIntersection(topRight, bottomRight, [lng1, lat0], [lng1, lat1]);
+        addEdgeIntersection(bottomLeft, bottomRight, [lng0, lat1], [lng1, lat1]);
+        addEdgeIntersection(topLeft, bottomLeft, [lng0, lat0], [lng0, lat1]);
+
+        if (intersections.length === 2) {
+          paths.push([
+            [intersections[0][0], intersections[0][1], z],
+            [intersections[1][0], intersections[1][1], z]
+          ]);
+        } else if (intersections.length === 4) {
+          // Saddle case: pair the two crossings in the same way along the
+          // cell edges. This is an approximation, sufficient for a display.
+          paths.push([
+            [intersections[0][0], intersections[0][1], z],
+            [intersections[1][0], intersections[1][1], z]
+          ]);
+          paths.push([
+            [intersections[2][0], intersections[2][1], z],
+            [intersections[3][0], intersections[3][1], z]
+          ]);
+        }
+      }
+    }
+  }
+
+  return paths;
 }

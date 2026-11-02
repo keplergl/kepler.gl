@@ -13,7 +13,8 @@ import KeplerGl, {
   injectComponents,
   ItemSelector,
   LayerColorRangeSelector,
-  LayerConfiguratorFactory
+  LayerConfiguratorFactory,
+  VisConfigSwitch
 } from '@kepler.gl/components';
 import {addDataToMap, setMapViewMode} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
@@ -98,6 +99,17 @@ function CustomLayerConfiguratorFactory(
                   {...layer.visConfigSettings.smoothing}
                   allowCustomValue
                   customInputLabel="Custom passes"
+                  {...visConfiguratorProps}
+                />
+              </LayerConfigGroup>
+              <LayerConfigGroup label="Contours" collapsible>
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.showContours}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.contourCount}
+                  disabled={!layer.config.visConfig.showContours}
                   {...visConfiguratorProps}
                 />
               </LayerConfigGroup>
@@ -273,7 +285,9 @@ const mapConfig = {
               renderMode: 'surface',
               elevationScale: 3000,
               smoothing: 1,
-              weightColumn: 'elevation'
+              weightColumn: 'elevation',
+              showContours: true,
+              contourCount: 8
             }
           }
         }
