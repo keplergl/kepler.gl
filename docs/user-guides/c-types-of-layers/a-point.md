@@ -59,10 +59,10 @@ timestamp until the duration expires. Missing or invalid timestamps produce no e
 
 Event effects use the timeline of an enabled time filter on the same dataset and event
 timestamp field. Selecting an event timestamp does not create a separate layer timeline.
-Add the time filter yourself; when there is one match it drives the effect automatically.
-If several filters match, choose **Playback time filter**. Without a matching filter, ordinary
-points remain visible but the event effect is inactive. Removing or disabling the selected
-filter stops the event effect until a matching filter is available or selected again.
+Add the time filter yourself; the first enabled filter matching that dataset and timestamp
+column drives the effect automatically. The help tooltip beside **Event timestamp** explains
+this requirement. Removing or disabling the filter uses the next enabled match, if available.
+Without a matching filter, ordinary points remain visible but the event effect is inactive.
 
 The end of the filter window is the current time. Pause freezes the effect, scrubbing shows
 its phase at the selected time, and replay plays events again. Duration is measured in data

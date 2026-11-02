@@ -954,7 +954,6 @@ export const expectedSavedLayer1 = {
       pulseExpansion: 2,
       pulseTrigger: 'continuous',
       pulseTimeField: '',
-      pulseFilterId: '',
       pulseDurationMs: 1000
     }
   },
@@ -1010,7 +1009,6 @@ export const expectedLoadedLayer1 = {
       pulseExpansion: 2,
       pulseTrigger: 'continuous',
       pulseTimeField: '',
-      pulseFilterId: '',
       pulseDurationMs: 1000
     },
     colorField: {

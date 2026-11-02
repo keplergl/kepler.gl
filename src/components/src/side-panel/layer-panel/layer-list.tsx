@@ -8,7 +8,7 @@ import classnames from 'classnames';
 import {Layer, LayerClasses, LayerClassesType} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
 import {UIStateActions, VisStateActions, MapStateActions} from '@kepler.gl/actions';
-import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy, MapState, Filter} from '@kepler.gl/types';
+import {LayerOrderGroup, LayerOrder, LayerOrderHierarchy, MapState} from '@kepler.gl/types';
 
 import {useDroppable} from '@dnd-kit/core';
 import {
@@ -34,7 +34,6 @@ import {
 
 export type LayerListProps = {
   datasets: Datasets;
-  filters?: Filter[];
   layers: Layer[];
   layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
@@ -329,7 +328,6 @@ function LayerListFactory(
     const {
       layers,
       datasets,
-      filters,
       layerOrder,
       uiStateActions,
       visStateActions,
@@ -401,13 +399,12 @@ function LayerListFactory(
     const panelProps = useMemo(
       () => ({
         datasets,
-        filters,
         openModal,
         layerTypeOptions,
         splitMap,
         mapState
       }),
-      [datasets, filters, openModal, layerTypeOptions, splitMap, mapState]
+      [datasets, openModal, layerTypeOptions, splitMap, mapState]
     );
 
     return (

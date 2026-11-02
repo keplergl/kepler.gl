@@ -7,11 +7,10 @@ import DatasetLayerSectionFactory from './dataset-layer-section';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, ActionHandler, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
-import {LayerOrder, MapState, Filter} from '@kepler.gl/types';
+import {LayerOrder, MapState} from '@kepler.gl/types';
 
 type DatasetLayerGroupProps = {
   datasets: Datasets;
-  filters?: Filter[];
   layers: Layer[];
   layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
@@ -33,7 +32,6 @@ function DatasetLayerGroupFactory(
   const DatasetLayerGroup: React.FC<DatasetLayerGroupProps> = props => {
     const {
       datasets,
-      filters,
       showDatasetTable,
       layers,
       updateTableColor,
@@ -68,7 +66,6 @@ function DatasetLayerGroupFactory(
             dataset={dlsData.dataset}
             layers={dlsData.datasetLayers as Layer[]}
             datasets={datasets}
-            filters={filters}
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             showDeleteDataset={showDeleteDataset}

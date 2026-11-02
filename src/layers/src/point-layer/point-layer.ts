@@ -85,7 +85,6 @@ export type PointLayerVisConfigSettings = {
   pulseExpansion: VisConfigNumber;
   pulseTrigger: VisConfigSelection;
   pulseTimeField: VisConfigSelection;
-  pulseFilterId: VisConfigSelection;
   pulseDurationMs: VisConfigNumber;
 };
 
@@ -118,7 +117,6 @@ export type PointLayerVisConfig = {
   pulseExpansion: number;
   pulseTrigger: 'continuous' | 'event';
   pulseTimeField: string;
-  pulseFilterId: string;
   pulseDurationMs: number;
   billboard: boolean;
   allowHover: boolean;
@@ -231,7 +229,6 @@ export const pointVisConfigs: {
   pulseExpansion: VisConfigNumber;
   pulseTrigger: VisConfigSelection;
   pulseTimeField: VisConfigSelection;
-  pulseFilterId: VisConfigSelection;
   pulseDurationMs: VisConfigNumber;
   billboard: 'billboard';
   allowHover: 'allowHover';
@@ -251,14 +248,6 @@ export const pointVisConfigs: {
     options: [],
     label: 'layerVisConfigs.point.pulseTimeField',
     property: 'pulseTimeField',
-    group: 'point'
-  } as VisConfigSelection,
-  pulseFilterId: {
-    type: 'select',
-    defaultValue: '',
-    options: [],
-    label: 'layerVisConfigs.point.pulseFilter',
-    property: 'pulseFilterId',
     group: 'point'
   } as VisConfigSelection,
   pulseDurationMs: {
@@ -422,7 +411,6 @@ export default class PointLayer extends Layer {
       'glowEnabled',
       'glowExtent',
       'glowStrength',
-      'pulseFilterId',
       'pulseMode',
       'pulseSpeed',
       'pulseExpansion'
@@ -633,28 +621,18 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  getEventPulseFilters(filters: Filter[] = []): TimeRangeFilter[] {
+  getEventPulseCurrentTime(filters: Filter[] = []): number | null {
     const {dataId, visConfig} = this.config;
-    if (!dataId || !visConfig.pulseTimeField) return [];
-    return filters.filter((filter): filter is TimeRangeFilter => {
-      const datasetIndex = filter.dataId.indexOf(dataId);
+    if (!dataId || !visConfig.pulseTimeField) return null;
+    const filter = filters.find((candidate): candidate is TimeRangeFilter => {
+      const datasetIndex = candidate.dataId.indexOf(dataId);
       return (
-        filter.type === FILTER_TYPES.timeRange &&
-        filter.enabled !== false &&
+        candidate.type === FILTER_TYPES.timeRange &&
+        candidate.enabled !== false &&
         datasetIndex >= 0 &&
-        filter.name[datasetIndex] === visConfig.pulseTimeField
+        candidate.name[datasetIndex] === visConfig.pulseTimeField
       );
     });
-  }
-
-  getEventPulseCurrentTime(filters: Filter[] = []): number | null {
-    const matches = this.getEventPulseFilters(filters);
-    const {pulseFilterId} = this.config.visConfig;
-    const filter = pulseFilterId
-      ? matches.find(candidate => candidate.id === pulseFilterId)
-      : matches.length === 1
-      ? matches[0]
-      : undefined;
     const value = filter?.value;
     return Array.isArray(value) &&
       value.length === 2 &&

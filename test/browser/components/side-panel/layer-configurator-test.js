@@ -1469,17 +1469,13 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
   test(`Components -> LayerConfigurator -> Point Visual -> ${label}`, async t => {
     const layer = new KeplerGlLayers.PointLayer({id: 'visual-controls', dataId: testCsvDataId});
     const changed = sinon.spy();
-    let updateFilters;
     function Editor() {
-      const [filters, setFilters] = React.useState([]);
-      updateFilters = setFilters;
       const [, setVersion] = React.useState(0);
       return (
         <IntlWrapper>
           <LayerConfigurator
             {...defaultProps}
             layer={layer}
-            filters={filters}
             updateLayerVisConfig={value => {
               changed(value);
               layer.updateLayerVisConfig(value);
@@ -1622,61 +1618,13 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
           timeField.name,
           'searching timestamps by name selects the recorded event field'
         );
-        const missingHint =
-          'Add an enabled time filter for the event timestamp to play this effect.';
-        const help = content.querySelector(`[data-for="${layer.id}-pulse-time-filter-help"]`);
-        const tooltip = help.querySelector('[data-id="tooltip"]');
-        t.ok(within(tooltip).queryByText(missingHint), 'missing filter guidance is in the tooltip');
-        t.notOk(within(content).queryByRole('status'), 'missing filter adds no inline message');
-        t.notOk(tooltip.classList.contains('show'), 'filter guidance starts hidden');
-        const match = {
-          id: 'first-time-filter',
-          type: 'timeRange',
-          dataId: [testCsvDataId],
-          name: [timeField.name],
-          enabled: true,
-          value: [0, 1000]
-        };
-        act(() => updateFilters([match]));
-        t.notOk(
-          within(content).queryByText(missingHint),
-          'one matching filter connects automatically'
-        );
-        t.notOk(
-          within(content).queryByText('Playback time filter'),
-          'single match needs no extra choice'
-        );
-        act(() => updateFilters([match, {...match, id: 'second-time-filter'}]));
-        t.ok(
-          within(content).queryByText('Select a time filter to drive this effect.'),
-          'multiple matches require a choice'
-        );
-        fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[3]);
-        fireEvent.click(
-          view.getByText(`Filter 2: ${timeField.name}`, {
-            selector: '.list-selector .list__item__anchor'
-          })
-        );
+        const helpSelector = `[data-for="${layer.id}-pulse-time-filter-help"] [data-id="tooltip"]`;
+        t.ok(content.querySelector(helpSelector), 'event timestamp includes timeline guidance');
+        t.notOk(within(content).queryByRole('status'), 'guidance adds no inline message');
         t.equal(
-          layer.config.visConfig.pulseFilterId,
-          'second-time-filter',
-          'chosen filter is stored in layer settings'
-        );
-        t.notOk(
-          within(content).queryByText('Select a time filter to drive this effect.'),
-          'selection clears ambiguity guidance'
-        );
-        act(() => updateFilters([match]));
-        t.ok(
-          within(content).queryByText('Select a time filter to drive this effect.'),
-          'removing the selected filter asks for a new source'
-        );
-        act(() => updateFilters([]));
-        t.ok(
-          content.querySelector(
-            `[data-for="${layer.id}-pulse-time-filter-help"] [data-id="tooltip"]`
-          ),
-          'removing all filters restores tooltip guidance'
+          content.querySelectorAll('.item-selector__dropdown').length,
+          3,
+          'event controls only offer effect, trigger and timestamp choices'
         );
         fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
         fireEvent.click(
@@ -1689,6 +1637,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
           0.5,
           'returning to continuous preserves its speed'
         );
+        t.notOk(content.querySelector(helpSelector), 'continuous mode needs no timeline guidance');
       }
       fireEvent.click(otherToggle);
       t.equal(

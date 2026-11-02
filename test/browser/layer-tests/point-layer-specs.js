@@ -2680,18 +2680,33 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
     'a synced multi-dataset filter matches the corresponding timestamp field'
   );
   const multiple = [matchingFilter, {...matchingFilter, id: 'second', value: [0, 800]}];
-  t.notOk(render(500, multiple).some(isEvent), 'ambiguous filters require a selection');
-  layer.updateLayerVisConfig({pulseFilterId: 'second'});
   t.equal(
     render(500, multiple).find(isEvent).props.pulseCurrentTime,
+    500,
+    'the first enabled matching filter supplies the window end'
+  );
+  t.equal(
+    render(500, [...multiple].reverse()).find(isEvent).props.pulseCurrentTime,
     800,
-    'selected filter supplies the window end'
+    'filter order determines the playback clock without a selection'
   );
-  t.notOk(
-    render(500, [matchingFilter]).some(isEvent),
-    'removed selected filter does not silently switch clocks'
+  for (const first of [
+    {...matchingFilter, enabled: false},
+    {...matchingFilter, type: 'range'},
+    {...matchingFilter, dataId: ['another-dataset']},
+    {...matchingFilter, name: ['another-field']}
+  ]) {
+    t.equal(
+      render(500, [first, multiple[1]]).find(isEvent).props.pulseCurrentTime,
+      800,
+      'disabled or unrelated filters are skipped'
+    );
+  }
+  t.equal(
+    render(500, multiple.slice(1)).find(isEvent).props.pulseCurrentTime,
+    800,
+    'removing the first filter automatically uses the next matching filter'
   );
-  layer.updateLayerVisConfig({pulseFilterId: 'event-time'});
   t.deepEqual(data.getPulseStartTime({index: 0}), [0, 0, 1], 'epoch zero is a valid event');
   for (const index of [2, 3])
     t.deepEqual(
@@ -2816,14 +2831,21 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
     layerOrder: [layer.id]
   }).visState;
   const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  // Older PR previews may contain a filter selection; it no longer controls playback.
+  loaded.layers[0].config.visConfig.pulseFilterId = 'second';
   const restored = testCreateLayerFromConfig(
     t,
     {layer: loaded.layers[0], datasets},
     {point: PointLayer}
   );
-  for (const key of ['pulseTrigger', 'pulseTimeField', 'pulseFilterId', 'pulseDurationMs']) {
+  for (const key of ['pulseTrigger', 'pulseTimeField', 'pulseDurationMs']) {
     t.equal(restored.config.visConfig[key], layer.config.visConfig[key], `restores ${key}`);
   }
+  t.equal(
+    restored.getEventPulseCurrentTime(multiple),
+    500,
+    'restored settings use the first matching filter despite an obsolete saved selection'
+  );
   const accessor = data.getPulseStartTime;
   data = layer.formatLayerData(datasets, data);
   t.equal(data.getPulseStartTime, accessor, 'unchanged data reuses timestamp attributes');

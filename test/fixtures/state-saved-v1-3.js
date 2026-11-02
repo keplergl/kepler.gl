@@ -413,7 +413,6 @@ mergedLayer0.config = {
     pulseExpansion: 2,
     pulseTrigger: 'continuous',
     pulseTimeField: '',
-    pulseFilterId: '',
     pulseDurationMs: 1000
   },
   animation: {enabled: false}
