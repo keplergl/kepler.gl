@@ -276,6 +276,72 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
   t.end();
 });
 
+test('#ZarrLayer -> pending tiles preserve metadata-refreshed rescale bounds', async t => {
+  for (const rerenderBeforeCompletion of [false, true]) {
+    const variable = {...TEMPERATURE, dataRange: undefined};
+    const dataset = {
+      ...MOCK_ZARR_DATASET,
+      metadata: {...MOCK_ZARR_DATASET.metadata, variables: [variable]}
+    };
+    const layer = new ZarrLayer({dataId: dataset.id});
+    layer.updateLayerMeta(dataset);
+    const runtime = await layer._loadRuntime();
+    let resolveChunk;
+    const chunk = new Promise(resolve => {
+      resolveChunk = resolve;
+    });
+    layer._loadRuntime = async () => ({...runtime, get: () => chunk});
+    layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
+    layer._node = {};
+    const options = {
+      data: {metadata: dataset.metadata, variable},
+      mapState: {},
+      visible: true
+    };
+    const [deckLayer] = layer.renderLayer(options);
+    const pending = deckLayer.props.getTileData(layer._node, {
+      sliceSpec: [],
+      width: 2,
+      height: 1
+    });
+    await Promise.resolve();
+
+    const refreshedVariable = {...variable, dataRange: [250, 320]};
+    const refreshedDataset = {
+      ...dataset,
+      metadata: {...dataset.metadata, variables: [refreshedVariable]}
+    };
+    layer.updateLayerMeta(refreshedDataset);
+    if (rerenderBeforeCompletion) {
+      layer.renderLayer({
+        ...options,
+        data: {metadata: refreshedDataset.metadata, variable: refreshedVariable}
+      });
+    }
+
+    resolveChunk({data: new Float32Array([260, 300])});
+    const tile = await pending;
+    const timing = rerenderBeforeCompletion ? 'after rerender' : 'before rerender';
+    t.deepEqual(layer.config.visConfig.rescale, [250, 320], `${timing}: keeps the metadata range`);
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [250, 320],
+      `${timing}: keeps both configured endpoints reachable`
+    );
+    t.equal(layer.visConfigSettings.rescale.step, 0.7, `${timing}: keeps the refreshed step`);
+    t.deepEqual(Array.from(tile.values), [260, 300], `${timing}: still returns the loaded tile`);
+
+    layer.updateLayerVisConfig({rescale: null});
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [260, 300],
+      `${timing}: reuses loaded samples when automatic mode resumes without advertised bounds`
+    );
+  }
+  t.end();
+});
+
 test('#ZarrLayer -> recolors cached tiles when a later tile supplies the automatic range', async t => {
   const variable = {...TEMPERATURE, dataRange: undefined};
   const dataset = {

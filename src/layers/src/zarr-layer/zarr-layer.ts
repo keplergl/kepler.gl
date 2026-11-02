@@ -732,11 +732,14 @@ export default class ZarrLayer extends Layer {
       if (this._getTileData === getTileData && !this._sampledRange && needsSampling) {
         this._sampledRange = estimateZarrDataRange(values, nodataValue);
         if (this._sampledRange) {
-          this.visConfigSettings.rescale = {
-            ...this.visConfigSettings.rescale,
-            range: this._sampledRange,
-            step: (this._sampledRange[1] - this._sampledRange[0]) / 100
-          };
+          // Metadata or a user choice may end automatic mode while the read is pending.
+          if (!isUsableRange(this.config.visConfig.rescale)) {
+            this.visConfigSettings.rescale = {
+              ...this.visConfigSettings.rescale,
+              range: this._sampledRange,
+              step: (this._sampledRange[1] - this._sampledRange[0]) / 100
+            };
+          }
           // Earlier constant tiles may already be colored with the provisional
           // range. Invalidate their rendered colors without refetching data.
           this._onRedrawNeeded?.();
