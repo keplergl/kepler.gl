@@ -912,6 +912,83 @@ test('KeplerTable -> Arrow upserts match encoded Date and timestamp keys', t => 
   t.end();
 });
 
+test('KeplerTable -> large row upserts commit rows, indexes and cached domains together', t => {
+  const untouched = ['keep', -1];
+  const table = new KeplerTable({info: {id: 'large-upsert'}, color: [0, 0, 0]}).updateSchema({
+    fields: [
+      {name: 'id', type: 'string'},
+      {name: 'value', type: 'integer'}
+    ],
+    rows: [['existing', 0], untouched]
+  });
+  const container = table.dataContainer;
+  const rows = container.flattenData();
+  const revision = table.dataRevision;
+  const accessor = table.fields[1].valueAccessor;
+  table.getColumnFilterProps('value');
+  table.filterTableCPU([], []);
+  table.sortColumn = 'value';
+  table.sortOrder = [1, 0];
+  const incoming = Array.from({length: 200001}, (_, i) => [`new-${i}`, i + 1]);
+  incoming.unshift(['existing', 2]);
+  incoming.push(['existing', 3], ['new-0', 4]);
+
+  t.doesNotThrow(() => t.ok(table.upsertRows(incoming, 'id'), 'accepts the batch'));
+  t.equal(table.dataContainer, container, 'retains the container');
+  t.equal(container.flattenData(), rows, 'retains the backing array');
+  t.equal(container.rowAsArray(1), untouched, 'retains untouched row references');
+  t.equal(container.numRows(), 200003, 'appends each new key once');
+  t.deepEqual(container.rowAsArray(0), ['existing', 3], 'last existing key wins');
+  t.deepEqual(container.rowAsArray(2), ['new-0', 4], 'last new key wins in first-seen order');
+  t.deepEqual(container.rowAsArray(200002), ['new-200000', 200001], 'includes the final row');
+  t.equal(accessor({index: 0}), 3, 'existing accessors read the committed rows');
+  t.equal(table.dataRevision, revision + 1, 'increments revision once');
+  t.equal(table.allIndexes.length, 200003, 'updates the index count');
+  t.equal(table.allIndexes[200002], 200002, 'indexes the final row');
+  t.equal(table.filteredIndex, table.allIndexes, 'resets filtered indexes');
+  t.equal(table.filteredIdxCPU, undefined, 'invalidates cached export filtering');
+  t.equal(table.sortOrder, null, 'invalidates cached sorting');
+  t.deepEqual(table.getColumnFilterProps('value').domain, [-1, 200001], 'refreshes cached domain');
+  t.end();
+});
+
+test('KeplerTable -> rejected row upserts preserve rows and cached state', t => {
+  for (const failure of ['validation', 'append']) {
+    const original = ['existing', 1];
+    const rows = [original];
+    const table = new KeplerTable({info: {id: 'rejected-upsert'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'id', type: 'string'},
+        {name: 'value', type: 'integer'}
+      ],
+      rows
+    });
+    const revision = table.dataRevision;
+    const indexes = table.allIndexes;
+    const props = table.getColumnFilterProps('value');
+    table.filterTableCPU([], []);
+    const filtered = table.filteredIdxCPU;
+    const incoming = [
+      ['existing', 2],
+      ['new', 3]
+    ];
+    if (failure === 'validation') {
+      incoming.push(['invalid-width']);
+      t.equal(table.upsertRows(incoming, 'id'), false, 'rejects a later invalid row');
+    } else {
+      Object.preventExtensions(rows);
+      t.throws(() => table.upsertRows(incoming, 'id'), 'append to a non-extensible array fails');
+    }
+    t.equal(table.dataContainer.rowAsArray(0), original, `${failure} leaves original row intact`);
+    t.equal(table.length, 1, `${failure} leaves row count intact`);
+    t.equal(table.dataRevision, revision, `${failure} leaves revision intact`);
+    t.equal(table.allIndexes, indexes, `${failure} leaves indexes intact`);
+    t.equal(table.filteredIdxCPU, filtered, `${failure} leaves export filtering intact`);
+    t.equal(table.getColumnFilterProps('value'), props, `${failure} leaves cached domain intact`);
+  }
+  t.end();
+});
+
 test('KeplerTable -> row upserts keep distinct number and string keys', t => {
   const table = new KeplerTable({info: {id: 'row-keys'}, color: [0, 0, 0]}).updateSchema({
     fields: [

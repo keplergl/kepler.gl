@@ -28,9 +28,22 @@ __Layer Attributes__
  - Font Color
  - Text Anchor
 
-## Pulse / Ripple
+## Visual
 
-Enable **Pulse / Ripple** at the end of the Point layer settings to animate the points. The effect is off by default, with its controls in a collapsed group.
+Expand **Visual** at the end of the Point layer settings to configure **Glow** and **Pulse / Ripple**. Both effects are off by default and can be enabled independently. Collapsing Visual keeps the current effects active.
+
+### Glow
+
+Enable **Glow** to add a soft halo around each point.
+
+- **Extent** sets the halo radius, from 1 to 5 times the point's displayed radius. At 1, there is no halo.
+- **Strength** sets the halo opacity, from 0 to 1. The halo fades smoothly toward its outer edge.
+
+The halo uses the point's fill color, or its outline color for unfilled points, and follows its radius mapping, opacity, filters, and map or billboard orientation. The ordinary point and its picking area stay unchanged. With **Pulse / Ripple** enabled, the point continues to animate over a static halo. Labels stay still. Glow settings are saved with the map and retained when turned off.
+
+### Pulse / Ripple
+
+Enable **Pulse / Ripple** to animate the points.
 
 - **Pulse** smoothly grows and shrinks dots, fading them as they expand.
 - **Ripple** draws expanding rings that fade out and repeat.

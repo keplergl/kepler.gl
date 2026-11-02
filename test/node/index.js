@@ -22,5 +22,8 @@ import './website';
 // transitive dependency security pins
 import './dependency-pins-test';
 
+// legacy documentation generator compatibility
+import './documentation-test';
+
 // release license headers preserve Jest environment directives
 import './license-header-test';

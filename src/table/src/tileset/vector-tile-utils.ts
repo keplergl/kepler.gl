@@ -429,7 +429,9 @@ function collectAttributes(layers: TippecanoeLayer[] = []): VectorTileField[] {
   // parse indexed attribute, and put index key unidentified back as normal field
   for (const [name, attrs] of Object.entries(indexedAttributes)) {
     const {indexedField, unidentified} = parseIndexedField(name, attrs);
-    fields[indexedField.name] = indexedField;
+    if (indexedField) {
+      fields[indexedField.name] = indexedField;
+    }
     for (const unidentifiedAttr of unidentified) {
       if (unidentifiedAttr.attribute) {
         fields[unidentifiedAttr.attribute] =
@@ -459,7 +461,7 @@ function parseIndexedField(
   attrs: TippecanoeLayerAttribute[]
 ): {
   unidentified: TippecanoeLayerAttribute[];
-  indexedField: VectorTileField;
+  indexedField: VectorTileField | undefined;
 } {
   const unidentified: TippecanoeLayerAttribute[] = [];
   // analyze time format
@@ -497,7 +499,7 @@ function parseIndexedField(
     }
   }
 
-  if (field.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
+  if (field?.indexBy && field.indexBy.type === ALL_FIELD_TYPES.timestamp) {
     field.indexBy.timeDomain = getTimeAnimationDomain(
       Object.keys(field.indexBy.mappedValue).map(Number)
     );

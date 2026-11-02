@@ -185,20 +185,48 @@ function sampleTypedBand(
   return Number.isFinite(value) ? value : null;
 }
 
+type RgbaImage = {data?: ArrayLike<number>; width?: number; height?: number};
+
+// Tile images are immutable. Weak keys release decoded pixels when tiles are evicted.
+const rgbaPixels = new WeakMap<RgbaImage, ArrayLike<number> | null>();
+
+function getRgbaPixels(image: RgbaImage): ArrayLike<number> | null {
+  if (image.data) {
+    return image.data;
+  }
+  if (!rgbaPixels.has(image)) {
+    let data: ArrayLike<number> | null = null;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width || 0;
+      canvas.height = image.height || 0;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(image as CanvasImageSource, 0, 0);
+        data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      }
+    } catch {
+      // Unavailable canvases, invalid images and CORS-tainted pixels are not readable.
+    }
+    rgbaPixels.set(image, data);
+  }
+  return rgbaPixels.get(image) || null;
+}
+
 function sampleRgbaPixel(
-  image: {data?: ArrayLike<number>; width?: number; height?: number} | null,
+  image: RgbaImage | null,
   col: number,
   row: number
 ): [number, number, number, number] | null {
-  if (!image?.data || !image.width || !image.height) {
+  if (!image?.width || !image.height) {
     return null;
   }
   if (col < 0 || row < 0 || col >= image.width || row >= image.height) {
     return null;
   }
   const idx = (row * image.width + col) * 4;
-  const data = image.data;
-  if (idx + 3 >= data.length) {
+  const data = getRgbaPixels(image);
+  if (!data || idx + 3 >= data.length) {
     return null;
   }
   return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
@@ -473,6 +501,8 @@ function isInsidePolygon(
  * Uses the highest-zoom tile at each location (tiles are scanned independently;
  * overlapping parent tiles are skipped when a child of higher zoom exists for that pixel
  * by only using tiles at the maximum zoom present in the intersecting set).
+ * Throws rather than returning partial statistics if the scan limit is exceeded.
+ * The limit includes inspected pixels outside the polygon and NoData pixels.
  */
 export function computeRasterZonalStats(
   tiles: Array<TileLike | null | undefined>,
@@ -513,7 +543,9 @@ export function computeRasterZonalStats(
     for (let row = 0; row < size.height; row++) {
       for (let col = 0; col < size.width; col++) {
         if (scanned >= MAX_ZONAL_PIXELS) {
-          break;
+          throw new Error(
+            'Raster statistics exceeded the 2,000,000-pixel scan limit. Select a smaller area or zoom out.'
+          );
         }
         scanned += 1;
         const [lng, lat] = tilePixelToLngLat(col, row, size.width, size.height, index);
@@ -542,9 +574,6 @@ export function computeRasterZonalStats(
           derivedName = derived.name;
           addStat(derivedAcc, derived.value);
         }
-      }
-      if (scanned >= MAX_ZONAL_PIXELS) {
-        break;
       }
     }
   }
@@ -689,8 +718,10 @@ export function parseTitilerPointResponse(payload: any): RasterIdentifyRow[] | n
     rows.push({name: 'Latitude', value: Number(payload.coordinates[1]).toFixed(6)});
   }
   for (let i = 0; i < values.length; i++) {
-    const value = Number(values[i]);
-    rows.push({name: names[i] || `Band ${i + 1}`, value: formatRasterValue(value)});
+    rows.push({
+      name: names[i] || `Band ${i + 1}`,
+      value: values[i] === null ? 'NoData' : formatRasterValue(Number(values[i]))
+    });
   }
   return rows;
 }

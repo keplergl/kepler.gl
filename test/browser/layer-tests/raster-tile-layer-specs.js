@@ -14,6 +14,7 @@ import {
   filterAvailablePresets,
   getDataSourceParams,
   computeDerivedValue,
+  computeRasterZonalStats,
   formatRasterIdentifyRows,
   lngLatToTileUV,
   mercatorPixelSizeForBbox,
@@ -29,6 +30,7 @@ import {testCreateCases} from 'test/helpers/layer-utils';
 import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterImages from '../../../src/layers/src/raster-tile/image';
+import * as rasterExtract from '../../../src/layers/src/raster-tile/raster-tile-extract';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -1210,6 +1212,94 @@ test('#RasterTileLayer -> identify samples band values at lng/lat', t => {
   t.end();
 });
 
+test('#RasterTileLayer -> PMTiles hover reads decoded browser image pixels', async t => {
+  const layer = new RasterTileLayer({id: 'pmtiles-image-hover', dataId: 'pmtiles'});
+  const image = document.createElement('img');
+  image.width = 2;
+  image.height = 2;
+  const pixels = new Uint8ClampedArray([
+    10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255
+  ]);
+  const drawImage = sinon.spy();
+  const getImageData = sinon.stub().returns({data: pixels});
+  const canvas = sinon.stub(window.HTMLCanvasElement.prototype, 'getContext').returns({
+    drawImage,
+    getImageData
+  });
+  const opts = createRenderOpts(MOCK_PMTILES_DATASET);
+  opts.data.tileSource.getTileData = async () => image;
+  const index = {x: 0, y: 0, z: 0};
+  const bbox = {west: -180, south: -85, east: 180, north: 85};
+  try {
+    const [tileLayer] = layer.renderLayer(opts);
+    const data = await tileLayer.props.getTileData({index, bbox});
+    t.equal(data.image, image, 'the loader keeps the browser image used for rendering');
+    tileLayer.props.onViewportLoad([{index, bbox, data}]);
+    const hover = coordinate => layer.getHoverData(null, null, [], null, {coordinate});
+    t.equal(hover([0, 0]), null, 'hover remains opt-in');
+    t.equal(getImageData.callCount, 0, 'loading does not read pixels');
+    layer.config.visConfig.allowHover = true;
+    t.ok(
+      hover([0, 0]).rasterFeatureData.some(
+        row => row.name === 'RGBA' && row.value === '100, 110, 120, 255'
+      ),
+      'hover reads the bottom-right pixel of a decoded image'
+    );
+    t.ok(
+      hover([-90, 45]).rasterFeatureData.some(
+        row => row.name === 'RGBA' && row.value === '10, 20, 30, 255'
+      ),
+      'another coordinate reads the correct pixel'
+    );
+    t.equal(drawImage.firstCall?.args[0], image, 'readback draws the loaded image');
+    t.equal(getImageData.callCount, 1, 'repeated hover reuses the decoded pixels');
+
+    const replacement = document.createElement('img');
+    replacement.width = replacement.height = 2;
+    getImageData.returns({data: new Uint8ClampedArray(16)});
+    tileLayer.props.onViewportLoad([{index, bbox, data: {image: replacement}}]);
+    t.ok(
+      hover([0, 0]).rasterFeatureData.some(row => row.value === 'NoData'),
+      'transparent pixels remain NoData'
+    );
+    t.equal(getImageData.callCount, 2, 'replacement images get fresh pixels');
+
+    const blocked = document.createElement('img');
+    blocked.width = blocked.height = 2;
+    getImageData.throws(Object.assign(new Error('tainted canvas'), {name: 'SecurityError'}));
+    tileLayer.props.onViewportLoad([{index, bbox, data: {image: blocked}}]);
+    t.equal(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext),
+      null,
+      'security failures do not expose pixels or throw'
+    );
+    t.equal(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext),
+      null,
+      'unreadable tiles remain unavailable'
+    );
+    t.equal(getImageData.callCount, 3, 'unreadable images are not retried on every hover');
+
+    tileLayer.props.onViewportLoad([
+      {index, bbox, data: {image: {data: pixels, width: 2, height: 2}}}
+    ]);
+    t.deepEqual(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext).rgba,
+      [100, 110, 120, 255],
+      'raw buffers still sample without a canvas'
+    );
+    t.equal(getImageData.callCount, 3, 'raw buffers bypass readback');
+    t.equal(
+      sampleRasterTileAtLngLat([], 0, 0, layer._identifyContext),
+      null,
+      'missing tiles remain unavailable'
+    );
+  } finally {
+    canvas.restore();
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   const layer = new RasterTileLayer({id: 'raster-id', dataId: 'stac-data', label: 'Rivers'});
   layer.config.visConfig.allowHover = true;
@@ -1311,6 +1401,104 @@ test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   t.equal(extracted.kind, 'geojson', 'extract should return geojson stats');
   t.equal(extracted.rowCount, 1, 'extract should keep the polygon as one feature');
   t.ok(extracted.features[0].properties.pixel_count > 0, 'extract should count pixels');
+  t.end();
+});
+
+test('#RasterTileLayer -> scan limit never returns partial statistics', async t => {
+  const polygon = {
+    type: 'Feature',
+    properties: {shape: 'Rectangle'},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, -86],
+          [180, -86],
+          [180, 86],
+          [-180, 86],
+          [-180, -86]
+        ]
+      ]
+    }
+  };
+  const context = {isPMTiles: false, bandCombination: 'single', loadAssetIds: ['value']};
+  const band = {width: 2000, height: 1000, data: new Uint8Array(2_000_000).fill(1)};
+  band.data[band.data.length - 1] = 100;
+  const tile = {index: {x: 0, y: 0, z: 0}, data: {images: {imageBands: [band]}}};
+  const exact = computeRasterZonalStats([tile], polygon, context);
+  t.equal(exact.pixelCount, 2_000_000, 'exactly the scan limit is supported');
+  t.equal(exact.bands.value.max, 100, 'the final pixel is included');
+  const extra = {
+    ...tile,
+    data: {images: {imageBands: [{width: 1, height: 1, data: new Uint8Array([200])}]}}
+  };
+  const scanLimit = /2,000,000-pixel scan limit/;
+  t.throws(
+    () => computeRasterZonalStats([tile, extra], polygon, context),
+    scanLimit,
+    'one more pixel in a later tile fails instead of returning truncated totals'
+  );
+  const tinyPolygon = {
+    ...polygon,
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [0.01, 0],
+          [0.01, 0.01],
+          [0, 0.01],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+  t.throws(
+    () => computeRasterZonalStats([tile, extra], tinyPolygon, context),
+    scanLimit,
+    'the work limit counts scanned pixels, including those outside the selection'
+  );
+
+  const layer = new RasterTileLayer({id: 'raster-scan-limit', dataId: 'raster'});
+  layer._identifyContext = context;
+  layer._loadedTiles = [
+    {
+      ...tile,
+      data: {
+        images: {imageBands: [{...band, height: 1001, data: new Uint8Array(2_002_000).fill(1)}]}
+      }
+    }
+  ];
+  t.throws(
+    () => layer.extractInsideFeature(polygon),
+    scanLimit,
+    'extraction also fails when additional pixels are in the same tile'
+  );
+
+  const download = sinon.stub(rasterExtract, 'downloadBlob');
+  const mosaic = sinon.stub(rasterExtract, 'mosaicTilesToPng').resolves(null);
+  try {
+    await layer.downloadClip(polygon);
+    t.fail('oversized clip statistics must reject');
+  } catch (error) {
+    t.ok(scanLimit.test(error.message), 'clip download propagates the actionable limit error');
+  } finally {
+    t.equal(download.callCount, 0, 'no partial statistics file is downloaded');
+    t.equal(mosaic.callCount, 0, 'no clip image work starts after a statistics failure');
+    download.restore();
+    mosaic.restore();
+  }
+
+  layer._loadedTiles = [extra];
+  const ordinary = layer.extractInsideFeature(polygon);
+  t.equal(ordinary.rowCount, 1, 'ordinary selections still extract after a failed attempt');
+  t.equal(ordinary.features[0].properties.pixel_count, 1, 'ordinary counts are unchanged');
+  t.equal(ordinary.features[0].properties.value_max, 200, 'ordinary extrema are unchanged');
+  t.deepEqual(
+    computeRasterZonalStats([], polygon, context),
+    {pixelCount: 0, bands: {}},
+    'empty tiles are unchanged'
+  );
   t.end();
 });
 
@@ -1538,6 +1726,53 @@ test('#RasterTileLayer -> identify preserves the picking coordinate for selectio
   await layer._onClickIdentify({onWMSFeatureInfo: result => results.push(result)}, {coordinate});
   t.equal(results[0].coordinate, coordinate, 'keeps the exact picking coordinate identity');
   t.deepEqual(results[0].featureInfo, rows, 'publishes the sampled values');
+  t.end();
+});
+
+test('#RasterTileLayer -> TiTiler identification distinguishes masked values from zero', async t => {
+  const layer = new RasterTileLayer({id: 'identify-nodata', dataId: 'raster'});
+  layer._stac = {
+    ...MOCK_STAC_METADATA,
+    rasterTileServerUrls: ['https://example.com']
+  };
+  layer._identifyContext = {isPMTiles: false, loadAssetIds: ['red']};
+  const results = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      values: [null, 42, 0, -3.5, '12.5'],
+      band_names: ['masked', 'valid', 'zero', 'negative', 'numeric string']
+    })
+  });
+  try {
+    await layer._onClickIdentify(
+      {onWMSFeatureInfo: result => results.push(result)},
+      {coordinate: [1, 2]}
+    );
+    t.deepEqual(
+      results[0]?.featureInfo,
+      [
+        {name: 'masked', value: 'NoData'},
+        {name: 'valid', value: '42'},
+        {name: 'zero', value: '0'},
+        {name: 'negative', value: '-3.5000'},
+        {name: 'numeric string', value: '12.5000'}
+      ],
+      'the identification callback keeps masked bands distinct from valid measurements'
+    );
+    t.deepEqual(
+      parseTitilerPointResponse({value: [null, 0]}),
+      [
+        {name: 'Band 1', value: 'NoData'},
+        {name: 'Band 2', value: '0'}
+      ],
+      'legacy value payloads and fallback band names also preserve NoData'
+    );
+    t.equal(parseTitilerPointResponse({values: []}), null, 'empty responses remain unavailable');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
   t.end();
 });
 
