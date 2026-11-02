@@ -169,13 +169,13 @@ export class EventPulseRippleExtension extends LayerExtension {
         'vs:DECKGL_FILTER_SIZE': `
           float age = (eventPulse.currentTime.x - instancePulseStartTime.x)
             + (eventPulse.currentTime.y - instancePulseStartTime.y);
-          bool active = eventPulse.currentTime.z > 0.5 && instancePulseStartTime.z > 0.5
+          bool eventActive = eventPulse.currentTime.z > 0.5 && instancePulseStartTime.z > 0.5
             && eventPulse.duration > 0.0 && age >= 0.0 && age < eventPulse.duration;
-          float phase = active ? age / eventPulse.duration : 0.0;
+          float phase = eventActive ? age / eventPulse.duration : 0.0;
           float breath = (1.0 - cos(phase * 6.28318530718)) / 2.0;
           float growth = eventPulse.ripple > 0.5 ? phase : breath;
           size *= 1.0 + (eventPulse.expansion - 1.0) * growth;
-          pulseOpacity = active
+          pulseOpacity = eventActive
             ? (eventPulse.ripple > 0.5 ? pow(1.0 - phase, 2.0) : breath) : 0.0;
         `,
         'fs:DECKGL_FILTER_COLOR': `
