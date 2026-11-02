@@ -1422,194 +1422,165 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
   }
 });
 
-test('Components -> LayerConfigurator -> Point Pulse / Ripple controls', async t => {
-  const layer = new KeplerGlLayers.PointLayer({id: 'pulse-controls', dataId: testCsvDataId});
-  const changed = sinon.spy();
-  function Editor() {
-    const [, setVersion] = React.useState(0);
-    return (
-      <IntlWrapper>
-        <LayerConfigurator
-          {...defaultProps}
-          layer={layer}
-          updateLayerVisConfig={value => {
-            changed(value);
-            layer.updateLayerVisConfig(value);
-            setVersion(version => version + 1);
-          }}
-        />
-      </IntlWrapper>
-    );
+[
+  {
+    label: 'Glow',
+    enabled: 'glowEnabled',
+    other: 'pulseEnabled',
+    values: [
+      ['glowExtent', '2', '3'],
+      ['glowStrength', '0.5', '0.7']
+    ]
+  },
+  {
+    label: 'Pulse / Ripple',
+    enabled: 'pulseEnabled',
+    other: 'glowEnabled',
+    values: [
+      ['pulseSpeed', '1', '0.5'],
+      ['pulseExpansion', '2', '4']
+    ]
   }
-  const view = renderWithTheme(<Editor />);
-  const group = within(view.container).getByText('Pulse / Ripple').closest('.layer-config-group');
-  const header = group.querySelector('.layer-config-group__header');
-  const toggle = within(header).getByRole('checkbox');
-  const content = group.querySelector('.layer-config-group__content');
-  const user = userEvent.setup();
-  const assertControlsSkipped = async message => {
-    toggle.focus();
-    await user.tab();
-    t.notOk(content.contains(document.activeElement), message);
-  };
-  try {
-    t.equal(group, group.parentElement.lastElementChild, 'effect is the last group');
-    t.notOk(toggle.checked, 'effect is off by default');
-    t.ok(group.classList.contains('collapsed'), 'effect controls start collapsed');
-    t.ok(content.classList.contains('disabled'), 'disabled effect controls cannot be edited');
-    await assertControlsSkipped('collapsed disabled controls are skipped by Tab');
-    fireEvent.click(header);
-    await assertControlsSkipped('expanded disabled controls are skipped by Tab');
-    const disabledSelector = content.querySelector('.item-selector');
-    fireEvent.keyDown(disabledSelector, {key: 'Enter'});
-    t.equal(
-      disabledSelector.getAttribute('aria-expanded'),
-      'false',
-      'disabled selector cannot open from the keyboard'
-    );
-    fireEvent.keyDown(disabledSelector, {key: 'Escape'});
-    fireEvent.click(header);
-    fireEvent.click(toggle);
-    t.deepEqual(changed.lastCall.args[0], {pulseEnabled: true}, 'toggle enables the effect');
-    t.notOk(group.classList.contains('collapsed'), 'enabling expands controls');
-    t.notOk(content.classList.contains('disabled'), 'enabled controls can be edited');
-    toggle.focus();
-    await user.tab();
-    const enabledSelector = content.querySelector('.item-selector');
-    t.equal(
-      document.activeElement,
-      enabledSelector,
-      'enabled expanded selector is keyboard reachable'
-    );
-    await user.keyboard('{Enter}');
-    t.equal(
-      enabledSelector.getAttribute('aria-expanded'),
-      'true',
-      'enabled selector opens from the keyboard'
-    );
-    await user.keyboard('{Escape}');
-    fireEvent.click(content.querySelector('.item-selector__dropdown'));
-    fireEvent.click(view.getByText('Ripple'));
-    t.deepEqual(changed.lastCall.args[0], {pulseMode: 'ripple'}, 'effect selector chooses Ripple');
-    const inputs = Array.from(content.querySelectorAll('.kg-range-slider__input'));
-    const speed = inputs.find(input => input.value === '1');
-    const expansion = inputs.find(input => input.value === '2');
-    fireEvent.change(speed, {target: {value: '0.5'}});
-    fireEvent.blur(speed);
-    t.deepEqual(changed.lastCall.args[0], {pulseSpeed: 0.5}, 'speed can be adjusted');
-    fireEvent.change(expansion, {target: {value: '4'}});
-    fireEvent.blur(expansion);
-    t.deepEqual(changed.lastCall.args[0], {pulseExpansion: 4}, 'expansion can be adjusted');
-    const calls = changed.callCount;
-    fireEvent.click(header);
-    t.ok(group.classList.contains('collapsed'), 'header collapses the settings');
-    t.equal(changed.callCount, calls, 'collapse does not turn off animation');
-    await assertControlsSkipped('collapsed enabled controls are skipped by Tab');
-    fireEvent.click(toggle);
-    t.deepEqual(changed.lastCall.args[0], {pulseEnabled: false}, 'toggle disables the effect');
-    fireEvent.click(toggle);
-    t.equal(layer.config.visConfig.pulseMode, 'ripple', 'reenabling retains the style');
-    t.equal(layer.config.visConfig.pulseSpeed, 0.5, 'reenabling retains speed');
-    t.equal(layer.config.visConfig.pulseExpansion, 4, 'reenabling retains expansion');
-  } finally {
-    view.unmount();
-  }
-  const restored = renderWithTheme(<Editor />);
-  try {
-    const restoredGroup = within(restored.container)
-      .getByText('Pulse / Ripple')
-      .closest('.layer-config-group');
-    t.ok(
-      within(restoredGroup.querySelector('.layer-config-group__header')).getByRole('checkbox')
-        .checked,
-      'saved effect restores the enabled toggle'
-    );
-    t.ok(restoredGroup.classList.contains('collapsed'), 'reopened controls start collapsed');
-  } finally {
-    restored.unmount();
-    t.end();
-  }
-});
-
-test('Components -> LayerConfigurator -> Point Glow keyboard controls', async t => {
-  const layer = new KeplerGlLayers.PointLayer({id: 'glow-controls', dataId: testCsvDataId});
-  const changed = sinon.spy();
-  function Editor() {
-    const [, setVersion] = React.useState(0);
-    return (
-      <IntlWrapper>
-        <LayerConfigurator
-          {...defaultProps}
-          layer={layer}
-          updateLayerVisConfig={value => {
-            changed(value);
-            layer.updateLayerVisConfig(value);
-            setVersion(version => version + 1);
-          }}
-        />
-      </IntlWrapper>
-    );
-  }
-  const view = renderWithTheme(<Editor />);
-  const group = within(view.container).getByText('Glow').closest('.layer-config-group');
-  const header = group.querySelector('.layer-config-group__header');
-  const toggle = within(header).getByRole('checkbox');
-  const content = group.querySelector('.layer-config-group__content');
-  const user = userEvent.setup();
-  const assertSkipped = async message => {
-    toggle.focus();
-    await user.tab();
-    t.notOk(content.contains(document.activeElement), message);
-  };
-  try {
-    t.notOk(toggle.checked, 'glow is off by default');
-    t.ok(group.classList.contains('collapsed'), 'glow controls start collapsed');
-    await assertSkipped('collapsed disabled controls are skipped by Tab');
-    fireEvent.click(header);
-    await assertSkipped('expanded disabled controls are skipped by Tab');
-    const inputs = Array.from(content.querySelectorAll('.kg-range-slider__input'));
-    const extent = inputs.find(input => input.value === '2');
-    const strength = inputs.find(input => input.value === '0.5');
-    extent.focus();
-    t.notEqual(document.activeElement, extent, 'disabled extent cannot receive keyboard focus');
-    fireEvent.click(header);
-    fireEvent.click(toggle);
-    t.deepEqual(changed.lastCall.args[0], {glowEnabled: true}, 'toggle enables glow');
-    t.notOk(group.classList.contains('collapsed'), 'enabling expands controls');
-    toggle.focus();
-    await user.tab();
-    t.ok(content.contains(document.activeElement), 'enabled controls are keyboard reachable');
-    extent.focus();
-    await user.clear(extent);
-    await user.type(extent, '3');
-    await user.tab();
-    t.deepEqual(changed.lastCall.args[0], {glowExtent: 3}, 'keyboard adjusts extent');
-    strength.focus();
-    await user.clear(strength);
-    await user.type(strength, '0.7');
-    await user.tab();
-    t.deepEqual(changed.lastCall.args[0], {glowStrength: 0.7}, 'keyboard adjusts strength');
-    const calls = changed.callCount;
-    fireEvent.click(header);
-    t.equal(changed.callCount, calls, 'collapsing does not disable glow');
-    await assertSkipped('collapsed enabled controls are skipped by Tab');
-    fireEvent.click(toggle);
-    t.deepEqual(changed.lastCall.args[0], {glowEnabled: false}, 'toggle disables glow');
-    fireEvent.click(toggle);
-    t.equal(layer.config.visConfig.glowExtent, 3, 'reenabling retains extent');
-    t.equal(layer.config.visConfig.glowStrength, 0.7, 'reenabling retains strength');
-  } finally {
-    view.unmount();
-  }
-  const restored = renderWithTheme(<Editor />);
-  try {
-    const restoredGroup = within(restored.container)
-      .getByText('Glow')
-      .closest('.layer-config-group');
-    t.ok(within(restoredGroup).getByRole('checkbox').checked, 'saved glow restores its toggle');
-    t.ok(restoredGroup.classList.contains('collapsed'), 'restored controls start collapsed');
-  } finally {
-    restored.unmount();
-    t.end();
-  }
+].forEach(({label, enabled, other, values}) => {
+  test(`Components -> LayerConfigurator -> Point Visual -> ${label}`, async t => {
+    const layer = new KeplerGlLayers.PointLayer({id: 'visual-controls', dataId: testCsvDataId});
+    const changed = sinon.spy();
+    function Editor() {
+      const [, setVersion] = React.useState(0);
+      return (
+        <IntlWrapper>
+          <LayerConfigurator
+            {...defaultProps}
+            layer={layer}
+            updateLayerVisConfig={value => {
+              changed(value);
+              layer.updateLayerVisConfig(value);
+              setVersion(version => version + 1);
+            }}
+          />
+        </IntlWrapper>
+      );
+    }
+    const view = renderWithTheme(<Editor />);
+    const group = within(view.container).getByText('Visual').closest('.layer-config-group');
+    const header = group.querySelector('.layer-config-group__header');
+    const content = within(group).getByText(label).closest('fieldset');
+    const toggle = within(content).getByRole('checkbox', {hidden: true});
+    const otherToggle = within(group)
+      .getAllByRole('checkbox', {hidden: true})
+      .find(input => input !== toggle);
+    const user = userEvent.setup();
+    // A focusable marker immediately before the group checks the whole collapsed section.
+    const tabStart = document.createElement('button');
+    group.before(tabStart);
+    const assertCollapsedSkipped = async message => {
+      tabStart.focus();
+      await user.tab();
+      t.notOk(group.contains(document.activeElement), message);
+    };
+    try {
+      t.equal(
+        within(group).getAllByRole('checkbox', {hidden: true}).length,
+        2,
+        'both effects share one group'
+      );
+      t.notOk(group.querySelector('.layer-config-group'), 'effects do not add nested groups');
+      t.notOk(toggle.checked, 'effect is off by default');
+      t.ok(group.classList.contains('collapsed'), 'Visual starts collapsed');
+      t.ok(content.disabled, 'effect settings start disabled');
+      await assertCollapsedSkipped('collapsed toggles and settings are skipped by Tab');
+      fireEvent.click(header);
+      toggle.focus();
+      await user.tab();
+      t.notOk(
+        content.contains(document.activeElement),
+        'expanded disabled settings are skipped by Tab'
+      );
+      const selector = content.querySelector('.item-selector');
+      if (selector) {
+        fireEvent.keyDown(selector, {key: 'Enter'});
+        t.equal(
+          selector.getAttribute('aria-expanded'),
+          'false',
+          'disabled selector cannot open from the keyboard'
+        );
+      }
+      toggle.focus();
+      await user.keyboard(' ');
+      t.deepEqual(changed.lastCall.args[0], {[enabled]: true}, 'keyboard enables the effect');
+      t.notOk(content.disabled, 'enabled settings can be edited');
+      t.equal(layer.config.visConfig[other], false, 'enabling one effect leaves the other off');
+      t.notOk(group.classList.contains('collapsed'), 'toggling an effect keeps Visual open');
+      await user.tab();
+      t.ok(content.contains(document.activeElement), 'enabled settings are keyboard reachable');
+      if (selector) {
+        t.equal(document.activeElement, selector, 'effect selector receives focus');
+        await user.keyboard('{Enter}');
+        t.equal(
+          selector.getAttribute('aria-expanded'),
+          'true',
+          'enabled selector opens from the keyboard'
+        );
+        await user.keyboard('{Escape}');
+        fireEvent.click(content.querySelector('.item-selector__dropdown'));
+        fireEvent.click(view.getByText('Ripple'));
+        t.deepEqual(changed.lastCall.args[0], {pulseMode: 'ripple'}, 'selector chooses Ripple');
+      }
+      for (const [property, initial, next] of values) {
+        const input = Array.from(content.querySelectorAll('.kg-range-slider__input')).find(
+          item => item.value === initial
+        );
+        input.focus();
+        await user.clear(input);
+        await user.type(input, next);
+        await user.tab();
+        t.deepEqual(
+          changed.lastCall.args[0],
+          {[property]: Number(next)},
+          `keyboard adjusts ${property}`
+        );
+      }
+      fireEvent.click(otherToggle);
+      t.equal(
+        layer.config.visConfig[enabled],
+        true,
+        'enabling the other effect preserves this effect'
+      );
+      t.equal(layer.config.visConfig[other], true, 'both effects can be enabled');
+      const calls = changed.callCount;
+      fireEvent.click(header);
+      t.ok(group.classList.contains('collapsed'), 'Visual collapses both sets of controls');
+      t.equal(changed.callCount, calls, 'collapse does not change either effect');
+      await assertCollapsedSkipped('collapsed enabled toggles and settings are skipped by Tab');
+      fireEvent.click(header);
+      fireEvent.click(toggle);
+      t.deepEqual(changed.lastCall.args[0], {[enabled]: false}, 'toggle disables only its effect');
+      t.equal(layer.config.visConfig[other], true, 'other effect remains enabled');
+      t.ok(content.disabled, 'disabled settings cannot be edited');
+      fireEvent.click(toggle);
+      for (const [property, , next] of values) {
+        t.equal(layer.config.visConfig[property], Number(next), `reenabling retains ${property}`);
+      }
+      if (selector)
+        t.equal(layer.config.visConfig.pulseMode, 'ripple', 'reenabling retains Ripple');
+    } finally {
+      view.unmount();
+    }
+    const restored = renderWithTheme(<Editor />);
+    try {
+      const restoredGroup = within(restored.container)
+        .getByText('Visual')
+        .closest('.layer-config-group');
+      t.ok(
+        within(restoredGroup)
+          .getAllByRole('checkbox', {hidden: true})
+          .every(input => input.checked),
+        'saved effects restore both toggles'
+      );
+      t.ok(restoredGroup.classList.contains('collapsed'), 'reopened Visual starts collapsed');
+    } finally {
+      restored.unmount();
+      t.end();
+    }
+  });
 });

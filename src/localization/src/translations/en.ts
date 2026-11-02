@@ -201,6 +201,7 @@ export default {
     boundsNorth: 'North',
     pointSize: 'Point Size',
     point: {
+      visual: 'Visual',
       glow: 'Glow',
       glowExtent: 'Extent',
       glowExtentDescription: 'Halo radius as a multiple of the point radius.',
