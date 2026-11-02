@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
 import React from 'react';
 import {render} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
@@ -16,7 +17,12 @@ import {
 } from 'test/helpers/layer-utils';
 import {KeplerGlLayers, LayerClasses} from '@kepler.gl/layers';
 import {VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_VIS_STATE, validateLayerWithData, visStateReducer} from '@kepler.gl/reducers';
+import {
+  INITIAL_VIS_STATE,
+  computeDeckLayers,
+  validateLayerWithData,
+  visStateReducer
+} from '@kepler.gl/reducers';
 import {getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {findPointFieldPairs} from '@kepler.gl/table';
@@ -355,6 +361,136 @@ test('#FlowFieldLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, FlowFieldLayer, TEST_CASES);
+  t.end();
+});
+
+test('#FlowFieldLayer -> independent split cameras retain their own settled paths', t => {
+  const clock = sinon.useFakeTimers();
+  try {
+    const dataset = createFlowFieldDataset();
+    const createLayer = () =>
+      validateLayerWithData(
+        dataset,
+        {
+          id: 'split-flow',
+          type: 'flowField',
+          config: {
+            dataId,
+            columnMode: 'UV',
+            columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'},
+            visConfig: {linesPerScreen: 100, smoothing: 0}
+          }
+        },
+        LayerClasses
+      );
+    const cameras = [
+      {longitude: -121.8, latitude: 37.25, zoom: 11, width: 800, height: 600},
+      {longitude: -121.2, latitude: 37.75, zoom: 11, width: 800, height: 600}
+    ];
+    const layer = createLayer();
+    let data = layer.formatLayerData({[dataId]: dataset});
+    const expected = cameras.map(mapState => {
+      const single = createLayer();
+      return single.renderLayer({
+        data: single.formatLayerData({[dataId]: dataset}),
+        mapState
+      })[0];
+    });
+    t.ok(
+      expected.every(deckLayer => deckLayer?.props.data.length),
+      'both single maps have paths'
+    );
+    const redraws = [0, 0];
+    const renderMap = (mapIndex, mapState = cameras[mapIndex], grouped = false) =>
+      computeDeckLayers(
+        {
+          visState: {
+            datasets: {[dataId]: dataset},
+            effects: [],
+            layers: [layer],
+            layerOrder: grouped
+              ? [{id: 'group', isVisible: true, layerOrder: [layer.id]}]
+              : [layer.id],
+            layerData: [data],
+            interactionConfig: {},
+            animationConfig: {},
+            splitMaps: []
+          },
+          mapState
+        },
+        {mapIndex},
+        {onRedrawNeeded: () => redraws[mapIndex]++}
+      )[0];
+    for (let pass = 0; pass < 3; pass++) {
+      for (let mapIndex = 0; mapIndex < 2; mapIndex++) {
+        const rendered = renderMap(mapIndex, cameras[mapIndex], pass === 1);
+        t.deepEqual(
+          rendered?.props.clipBounds,
+          expected[mapIndex].props.clipBounds,
+          `pass ${pass}, map ${mapIndex}: clipping follows its own camera`
+        );
+        t.ok(
+          JSON.stringify(rendered?.props.data) === JSON.stringify(expected[mapIndex].props.data),
+          `pass ${pass}, map ${mapIndex}: paths match the same camera rendered alone`
+        );
+      }
+      clock.tick(1000);
+    }
+    t.deepEqual(redraws, [0, 0], 'unchanged cameras do not keep restarting settling');
+
+    const panned = {...cameras[0], longitude: -121.65};
+    renderMap(0, panned);
+    const stationary = renderMap(1);
+    clock.tick(1000);
+    t.deepEqual(redraws, [1, 0], 'panning requests a redraw only for the moving map');
+    t.deepEqual(
+      stationary.props.clipBounds,
+      expected[1].props.clipBounds,
+      'the other map keeps its clipping bounds while panning'
+    );
+    const settled = renderMap(0, panned);
+    t.notDeepEqual(settled.props.clipBounds, expected[0].props.clipBounds, 'the pan settles');
+    t.equal(
+      renderMap(0, panned).props.data[0],
+      settled.props.data[0],
+      'settled redraws reuse the generated paths'
+    );
+
+    const single = createLayer();
+    const singleData = single.formatLayerData({[dataId]: dataset});
+    single.renderLayer({data: singleData, mapState: cameras[0]});
+    single.renderLayer({data: singleData, mapState: panned});
+    clock.tick(1000);
+    t.ok(
+      JSON.stringify(single.renderLayer({data: singleData, mapState: panned})[0].props.data) ===
+        JSON.stringify(settled.props.data),
+      'panning without a map index settles to the same paths'
+    );
+
+    // Closing the split leaves map 0; reopening reuses map 1's index.
+    renderMap(0, panned);
+    const reopened = renderMap(1, {...cameras[1], longitude: -121.35});
+    clock.tick(1000);
+    t.notDeepEqual(
+      renderMap(1, {...cameras[1], longitude: -121.35}).props.clipBounds,
+      reopened.props.clipBounds,
+      'a reopened split settles to its new camera'
+    );
+
+    const beforeReset = [...redraws];
+    renderMap(0, {...panned, latitude: 37.3});
+    data = layer.formatLayerData({[dataId]: dataset});
+    clock.tick(1000);
+    t.deepEqual(redraws, beforeReset, 'replacing the grid cancels obsolete settling callbacks');
+    t.notEqual(renderMap(0).props.data[0], settled.props.data[0], 'new grid rebuilds map 0 paths');
+    t.deepEqual(
+      renderMap(1).props.clipBounds,
+      expected[1].props.clipBounds,
+      'new grid also resets map 1 to its current camera'
+    );
+  } finally {
+    clock.restore();
+  }
   t.end();
 });
 
