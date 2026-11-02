@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import {Input, InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
 import Switch from '../../common/switch';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
@@ -99,7 +99,7 @@ function PulseDurationInput({
   };
 
   return (
-    <InputLight
+    <Input
       id={id}
       type="number"
       min={0.001}
