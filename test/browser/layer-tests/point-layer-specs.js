@@ -5,7 +5,7 @@ import test from 'tape';
 import {LayerManager, MapView, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {ScatterplotLayer} from '@deck.gl/layers';
-import createContext from 'gl';
+import {spawnSync} from 'child_process';
 import {visStateSchemaV1} from '@kepler.gl/schemas';
 import PulseRippleExtension, {
   EventPulseRippleExtension,
@@ -2465,15 +2465,13 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
 });
 
 test('#PointLayer -> ordinary, continuous and event shaders compile and link in WebGL2', t => {
-  const gl = createContext(1, 1, {createWebGL2Context: true});
-  t.ok(gl, 'creates a real WebGL2 compiler context');
   const viewport = new MapView().makeViewport({
     width: 1,
     height: 1,
     viewState: {longitude: 0, latitude: 0, zoom: 1}
   });
-  if (!viewport) throw new Error('Could not create a map viewport');
   const manager = new LayerManager(device, {viewport});
+  const sources = [];
   try {
     for (const extension of [null, new PulseRippleExtension(), new EventPulseRippleExtension()]) {
       const layer = new ScatterplotLayer({
@@ -2483,38 +2481,59 @@ test('#PointLayer -> ordinary, continuous and event shaders compile and link in 
       });
       manager.setLayers([layer]);
       const model = layer.getModels()[0];
-      const program = gl.createProgram();
-      if (!program) throw new Error('Could not create a WebGL program');
-      try {
-        // NullDevice assembles deck.gl's complete shaders; a real GL compiler validates them.
-        for (const [type, source] of [
-          [gl.VERTEX_SHADER, model.vs],
-          [gl.FRAGMENT_SHADER, model.fs]
-        ]) {
-          const shader = gl.createShader(type);
-          if (!shader) throw new Error('Could not create a WebGL shader');
-          try {
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-              throw new Error(gl.getShaderInfoLog(shader) || 'Shader compilation failed');
-            }
-            gl.attachShader(program, shader);
-          } finally {
-            gl.deleteShader(shader);
-          }
-        }
-        gl.linkProgram(program);
-        t.ok(gl.getProgramParameter(program, gl.LINK_STATUS), 'point shaders link successfully');
-      } finally {
-        gl.deleteProgram(program);
-      }
+      sources.push({vs: model.vs, fs: model.fs});
     }
   } finally {
     manager.finalize();
-    gl.getExtension('STACKGL_destroy_context')?.destroy();
-    t.end();
   }
+  // Keep native GL cleanup outside the test process: its Node 24 destructor can abort during GC.
+  // NullDevice assembles deck.gl's complete shaders; this real GL compiler validates them.
+  const result = spawnSync(
+    process.execPath,
+    [
+      '-e',
+      `
+        const sources = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+        const gl = require('gl')(1, 1, {createWebGL2Context: true});
+        if (!gl) throw new Error('Could not create a WebGL2 context');
+        try {
+          for (const {vs, fs} of sources) {
+            const program = gl.createProgram();
+            if (!program) throw new Error('Could not create a WebGL program');
+            try {
+              for (const [type, source] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
+                const shader = gl.createShader(type);
+                if (!shader) throw new Error('Could not create a WebGL shader');
+                try {
+                  gl.shaderSource(shader, source);
+                  gl.compileShader(shader);
+                  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    throw new Error(gl.getShaderInfoLog(shader) || 'Shader compilation failed');
+                  }
+                  gl.attachShader(program, shader);
+                } finally {
+                  gl.deleteShader(shader);
+                }
+              }
+              gl.linkProgram(program);
+              if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                throw new Error(gl.getProgramInfoLog(program) || 'Shader linking failed');
+              }
+            } finally {
+              gl.deleteProgram(program);
+            }
+          }
+          process.stdout.write(String(sources.length));
+        } finally {
+          gl.getExtension('STACKGL_destroy_context').destroy();
+        }
+      `
+    ],
+    {input: JSON.stringify(sources), encoding: 'utf8', timeout: 30000}
+  );
+  t.equal(result.status, 0, result.stderr || 'shader compiler exits successfully');
+  t.equal(result.stdout?.trim(), '3', 'ordinary, continuous and event shaders compile and link');
+  t.end();
 });
 
 test('#PointLayer -> recorded events preserve points, filters and saved settings', async t => {

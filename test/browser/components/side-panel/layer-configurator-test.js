@@ -1462,7 +1462,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     other: 'glowEnabled',
     values: [
       ['pulseSpeed', '1', '0.5'],
-      ['pulseExpansion', '2', '4']
+      ['pulseExpansion', '2', '4.01']
     ]
   }
 ].forEach(({label, enabled, other, values}) => {

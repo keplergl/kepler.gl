@@ -311,7 +311,7 @@ export const pointVisConfigs: {
     property: 'pulseExpansion',
     isRanged: false,
     range: [1, 5],
-    step: 0.1
+    step: 0.01
   } as VisConfigNumber,
   radius: 'radius',
   fixedRadius: 'fixedRadius',
