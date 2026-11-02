@@ -473,6 +473,8 @@ function isInsidePolygon(
  * Uses the highest-zoom tile at each location (tiles are scanned independently;
  * overlapping parent tiles are skipped when a child of higher zoom exists for that pixel
  * by only using tiles at the maximum zoom present in the intersecting set).
+ * Throws rather than returning partial statistics if the scan limit is exceeded.
+ * The limit includes inspected pixels outside the polygon and NoData pixels.
  */
 export function computeRasterZonalStats(
   tiles: Array<TileLike | null | undefined>,
@@ -513,7 +515,9 @@ export function computeRasterZonalStats(
     for (let row = 0; row < size.height; row++) {
       for (let col = 0; col < size.width; col++) {
         if (scanned >= MAX_ZONAL_PIXELS) {
-          break;
+          throw new Error(
+            'Raster statistics exceeded the 2,000,000-pixel scan limit. Select a smaller area or zoom out.'
+          );
         }
         scanned += 1;
         const [lng, lat] = tilePixelToLngLat(col, row, size.width, size.height, index);
@@ -542,9 +546,6 @@ export function computeRasterZonalStats(
           derivedName = derived.name;
           addStat(derivedAcc, derived.value);
         }
-      }
-      if (scanned >= MAX_ZONAL_PIXELS) {
-        break;
       }
     }
   }
