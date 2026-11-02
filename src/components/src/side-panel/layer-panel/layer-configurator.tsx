@@ -145,15 +145,27 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   }
 `;
 
-// Keep this group's keyboard behavior scoped to the optional point effect.
-const PulseRippleControls = styled.fieldset`
+// Keep keyboard behavior scoped to the optional point effects.
+const PointVisualControls = styled(ConfigGroupCollapsibleContent)`
+  .layer-config-group.collapsed & {
+    visibility: hidden;
+  }
+`;
+
+const PointEffectControls = styled.fieldset`
   border: 0;
   margin: 0;
   padding: 0;
   min-width: 0;
 
-  .layer-config-group.collapsed & {
-    visibility: hidden;
+  legend {
+    width: 100%;
+    padding: 0;
+  }
+
+  &:disabled > :not(legend) {
+    opacity: 0.3;
+    pointer-events: none;
   }
 `;
 
@@ -677,13 +689,31 @@ export default function LayerConfiguratorFactory(
             </LayerConfigGroup>
           ) : null}
           {layer.type === LAYER_TYPES.point ? (
-            <LayerConfigGroup
-              {...layer.visConfigSettings.pulseEnabled}
-              {...visConfiguratorProps}
-              collapsible
-            >
-              <ConfigGroupCollapsibleContent>
-                <PulseRippleControls disabled={!layer.config.visConfig.pulseEnabled}>
+            <LayerConfigGroup label="layerVisConfigs.point.visual" collapsible>
+              <PointVisualControls>
+                <PointEffectControls disabled={!layer.config.visConfig.glowEnabled}>
+                  <legend>
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.glowEnabled}
+                      {...visConfiguratorProps}
+                    />
+                  </legend>
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.glowExtent}
+                    {...visConfiguratorProps}
+                  />
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.glowStrength}
+                    {...visConfiguratorProps}
+                  />
+                </PointEffectControls>
+                <PointEffectControls disabled={!layer.config.visConfig.pulseEnabled}>
+                  <legend>
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.pulseEnabled}
+                      {...visConfiguratorProps}
+                    />
+                  </legend>
                   <SidePanelSection>
                     <PanelLabel>
                       <FormattedMessage id="layerVisConfigs.point.pulseMode" />
@@ -707,8 +737,8 @@ export default function LayerConfiguratorFactory(
                     {...layer.visConfigSettings.pulseExpansion}
                     {...visConfiguratorProps}
                   />
-                </PulseRippleControls>
-              </ConfigGroupCollapsibleContent>
+                </PointEffectControls>
+              </PointVisualControls>
             </LayerConfigGroup>
           ) : null}
         </StyledLayerVisualConfigurator>
