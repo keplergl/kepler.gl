@@ -308,6 +308,7 @@ export default class TripLayer extends Layer {
 
   dataToFeature: GeojsonDataMaps;
   dataToTimeStamp: any[];
+  private _filteredTimestamps = new WeakMap<Feature, number[]>();
   getFeature: (columns: TripLayerColumnsConfig) => (dataContainer: DataContainerInterface) => any;
   _layerInfoModal: Record<string, () => JSX.Element>;
 
@@ -556,7 +557,7 @@ export default class TripLayer extends Layer {
       // index for dataContainer is saved to feature.properties
       return dataContainer.row(object.properties.index);
     }
-    return this._findDatumForFeatureByTime(object.properties.index, animationConfig)?.datum;
+    return this._findDatumForFeatureByTime(object, animationConfig)?.datum;
   }
 
   calculateDataAttribute(dataset: KeplerTable) {
@@ -596,7 +597,7 @@ export default class TripLayer extends Layer {
       }
 
       const getText = (f, animationConfig) => {
-        const {datum} = this._findDatumForFeatureByTime(f.properties.index, animationConfig);
+        const {datum} = this._findDatumForFeatureByTime(f, animationConfig);
         return getSingleTextLabelValue({field, format: ''}, datum);
       };
 
@@ -617,15 +618,25 @@ export default class TripLayer extends Layer {
     const {index} = feature.properties;
     const timestamps = this.dataToTimeStamp[index];
     const originalFeature = this.dataToFeature[index] as Feature<LineString, {index: number}>;
-    if (this.config.columnMode !== COLUMN_MODE_TABLE || feature === originalFeature) {
+    if (
+      !timestamps ||
+      this.config.columnMode !== COLUMN_MODE_TABLE ||
+      feature === originalFeature
+    ) {
       return timestamps;
     }
 
-    // Table filtering retains coordinate references but removes vertices from the trip.
+    const cached = this._filteredTimestamps.get(feature);
+    if (cached) return cached;
+
+    // Filtering creates new features; cache their timestamps across animation frames.
+    // Coordinate references preserve the ordering of the normalized source timestamps.
     const retainedCoordinates = new Set(feature.geometry.coordinates);
-    return timestamps?.filter((_, i) =>
+    const filteredTimestamps = timestamps.filter((_, i) =>
       retainedCoordinates.has(originalFeature.geometry.coordinates[i])
     );
+    this._filteredTimestamps.set(feature, filteredTimestamps);
+    return filteredTimestamps;
   }
 
   // Called from gpu-filter-utils.getFilterValueAccessor(), which passes
@@ -747,6 +758,7 @@ export default class TripLayer extends Layer {
     const {dataToTimeStamp, animationDomain} = timestamps;
 
     this.dataToTimeStamp = dataToTimeStamp;
+    this._filteredTimestamps = new WeakMap();
     this.updateAnimationDomain(animationDomain);
 
     // get bounds from features
@@ -851,7 +863,7 @@ export default class TripLayer extends Layer {
 
     const getPixelOffset = getTextOffsetByRadius(10, () => 1, mapState);
     const getPosition = f => {
-      const {coords} = this._findDatumForFeatureByTime(f.properties.index, animationConfig);
+      const {coords} = this._findDatumForFeatureByTime(f, animationConfig);
       if (!coords) {
         return [0, 0, -Number.MAX_VALUE];
       }
@@ -966,10 +978,7 @@ export default class TripLayer extends Layer {
     }
 
     return feature => {
-      const dataForTime = this._findDatumForFeatureByTime(
-        feature.properties.index,
-        animationConfig
-      );
+      const dataForTime = this._findDatumForFeatureByTime(feature, animationConfig);
       const {idx} = dataForTime;
       const {coordinates} = feature.geometry;
       let roll = 0;
@@ -1045,9 +1054,15 @@ export default class TripLayer extends Layer {
       prevYaw = idx > 1 ? getYawFromSpeedVector(coordinates[idx - 2], coordinates[idx - 1]) : 0;
       nextYaw = getYawFromSpeedVector(coordinates[idx - 1], coordinates[idx]);
     }
-    if (idx > 1) {
+    if (
+      idx > 1 ||
+      (yawField &&
+        Number.isFinite(prevDatum?.[yawField.fieldIdx]) &&
+        Number.isFinite(datum?.[yawField.fieldIdx]) &&
+        Number.isFinite(advancement))
+    ) {
       yaw = interpolateAngle(prevYaw ?? 0, nextYaw ?? 0, advancement);
-    } else if (idx > 0) {
+    } else if (idx > 0 || (idx === 0 && yawField && datum)) {
       yaw = nextYaw ?? 0;
     }
     return yaw;
@@ -1064,10 +1079,7 @@ export default class TripLayer extends Layer {
             return feature => {
               const colors = data.getColor(feature);
               if (this.config.colorField && Array.isArray(colors[0])) {
-                const {idx} = this._findDatumForFeatureByTime(
-                  feature.properties.index,
-                  animationConfig
-                );
+                const {idx} = this._findDatumForFeatureByTime(feature, animationConfig);
                 return idx >= 0 ? colors[idx] : SCENEGRAPH_DEFAULT_COLOR;
               }
               return colors;
@@ -1083,18 +1095,16 @@ export default class TripLayer extends Layer {
   }
 
   private _findDatumForFeatureByTime(
-    featureIndex: number,
+    feature,
     animationConfig: AnimationConfig,
     interpolateCoords = true
   ): DatumForFeatureByTime {
     const {currentTime} = animationConfig ?? {};
     if (notNullorUndefined(currentTime)) {
-      const object = this.dataToFeature[featureIndex];
-      const timestamps = this.dataToTimeStamp[featureIndex];
+      const timestamps = this._getTimestamps(feature) ?? [];
       let idx = bisectRight(timestamps, currentTime);
-      // @ts-expect-error type geometry?
-      const coordinates = object?.geometry?.coordinates;
-      if (!coordinates) {
+      const coordinates = feature?.geometry?.coordinates;
+      if (!coordinates?.length || !timestamps.length) {
         return {idx: -1, coords: null, datum: null, prevDatum: null, advancement: 0};
       }
       if (idx >= coordinates.length) idx = coordinates.length - 1;
@@ -1138,8 +1148,8 @@ export default class TripLayer extends Layer {
       keyframes: {startDatum: any; endDatum: any; factor: number};
     }[] = [];
     for (let i = 0; i < this.dataToFeature.length; i++) {
-      const df = this._findDatumForFeatureByTime(i, animationConfig, true);
       const feature = this.dataToFeature[i];
+      const df = this._findDatumForFeatureByTime(feature, animationConfig, true);
       data.push({
         position: df.coords,
         orientation: {

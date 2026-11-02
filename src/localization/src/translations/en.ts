@@ -149,6 +149,7 @@ export default {
       cluster: 'cluster',
       icon: 'icon',
       heatmap: 'heatmap',
+      contour: 'contour',
       hexagon: 'hexagon',
       hexagonid: 'H3',
       trip: 'trip',
@@ -227,6 +228,17 @@ export default {
     colorAggregation: 'Color Aggregation',
     heightAggregation: 'Height Aggregation',
     weightAggregation: 'Weight Aggregation',
+    heatmap: {
+      surface: '3D Surface',
+      surfaceHeight: 'Maximum height (m)',
+      surfaceHeightDescription:
+        'Maximum surface height in meters, independent of intensity. Tilt the map to see the surface. Height represents density, not terrain elevation.',
+      surfaceLighting: 'Surface shading',
+      surfaceContours: 'Surface contours',
+      surfaceContourStep: 'Contour step',
+      surfaceContourStepDescription:
+        'Density interval between contour lines. Smaller values show more lines.'
+    },
     resolutionRange: 'Resolution range',
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
@@ -301,6 +313,28 @@ export default {
       lineCurviness: 'Curviness',
       locationTotalsEnabled: 'Location Totals',
       maxTopFlowsDisplayNum: 'Max Top Flows'
+    },
+    contour: {
+      surface: 'Surface',
+      levelsGroup: 'Contour levels',
+      fillGroup: 'Fill',
+      colorByLevel: 'Color by level',
+      inputMode: 'Input type',
+      interpolationResolution: 'Interpolation resolution',
+      interpolationResolutionDescription:
+        'Samples along the longer axis of the interpolated surface. Regular grids retain their original resolution.',
+      smoothing: 'Smoothing',
+      smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
+      levels: 'Number of levels',
+      below: 'Fill below each level',
+      invert: 'Invert',
+      customRange: 'Custom level range',
+      noValueRange:
+        'Select a value column with at least two distinct finite values to use the range slider.',
+      minimum: 'Minimum level',
+      maximum: 'Maximum level',
+      fillOpacity: 'Opacity',
+      thickness: 'Outline width'
     },
     flowField: {
       streamlines: 'Streamlines',
@@ -1155,7 +1189,18 @@ ${'```'}
     hexagon: {
       worldUnitSize: 'Hexagon Radius (km)'
     },
+    contour: {
+      lat: 'Latitude',
+      lng: 'Longitude',
+      value: 'Value'
+    },
     hex_id: 'hex id',
+    flowField: {
+      u: 'U (Eastward)',
+      v: 'V (Northward)',
+      speed: 'Speed',
+      direction: 'Direction (From)'
+    },
     flow: {
       source: {
         lat: 'source lat',
@@ -1257,6 +1302,9 @@ ${'```'}
     min: 'Min',
     max: 'Max',
     layers: {
+      contour: {
+        levels: 'Contour levels'
+      },
       line: {
         singleColor: {
           sourceColor: 'Source',

@@ -30,6 +30,10 @@ import {
   findDefaultColorFieldWithValues
 } from '@kepler.gl/utils';
 import * as arrow from 'apache-arrow';
+// The standalone bundle has distinct constructors, like DuckDB's bundled Arrow.
+import * as foreignArrow from 'apache-arrow/Arrow.es2015.min';
+import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src/utils/utils';
+import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
 
@@ -275,6 +279,268 @@ test('layerUtils -> createGeoArrowPointVector handles empty and nonempty coordin
       t.equal(accessorCalls, 0, 'does not read a nonexistent row');
     }
   }
+  t.end();
+});
+
+test('layerUtils -> coordinate vectors preserve sliced and empty record batches', t => {
+  for (const dimensions of [2, 3]) {
+    const table = new arrow.Table({
+      row: arrow.vectorFromArray([99, 0, 1, 2, 3, 99], new arrow.Float64())
+    });
+    const empty = new arrow.Table(
+      new arrow.RecordBatch({
+        row: arrow.makeData({type: new arrow.Float64(), data: new Float64Array(0)})
+      })
+    );
+    const batched = new arrow.Table(table.schema, [
+      ...empty.batches,
+      ...table.slice(1, 3).batches,
+      ...empty.batches,
+      ...table.slice(3, 5).batches,
+      ...empty.batches
+    ]);
+    const container = new ArrowDataContainer({
+      cols: [table.getChildAt(0)],
+      fields: [{name: 'row', type: 'real', fieldIdx: 0}]
+    });
+    container.update(batched);
+    const vector = createGeoArrowPointVector(container, ({index}) =>
+      [container.valueAt(index, 0), -index, index + 10].slice(0, dimensions)
+    );
+    t.deepEqual(
+      vector.data.map(chunk => chunk.length),
+      [0, 2, 0, 2, 0],
+      'keeps empty batches'
+    );
+    t.deepEqual(
+      Array.from(vector, point => Array.from(point)),
+      [0, 1, 2, 3].map(index => [index, -index, index + 10].slice(0, dimensions)),
+      'uses global row indices and logical slice offsets for XY and XYZ'
+    );
+  }
+  const empty = new ArrowDataContainer({cols: [], fields: []});
+  const vector = createGeoArrowPointVector(empty, () => {
+    t.fail('must not access a row in a table without batches');
+  });
+  t.equal(vector.length, 0, 'an empty table still produces a typed empty vector');
+  t.ok(arrow.DataType.isFixedSizeList(vector.type), 'empty vector has point storage');
+  t.end();
+});
+
+test('layerUtils -> separated point normalization preserves validity, slices and precision', t => {
+  for (const FloatType of [arrow.Float32, arrow.Float64]) {
+    for (const dimensions of [2, 3]) {
+      const names = ['x', 'y', 'z'].slice(0, dimensions);
+      const type = new arrow.Struct(names.map(name => new arrow.Field(name, new FloatType())));
+      const vector = arrow
+        .vectorFromArray(
+          [
+            {x: -100, y: -80, z: -1},
+            null,
+            {x: 10.123456789, y: 20.123456789, z: 5.123456789},
+            {x: NaN, y: NaN, z: NaN},
+            {x: Infinity, y: 40, z: 1},
+            {x: 50, y: null, z: 1},
+            {x: 30, y: 40, z: 15}
+          ],
+          type
+        )
+        .slice(1);
+      const data = vector.data[0];
+      const normalized = convertStructToFixedSizeList(data);
+      const validPoint = names.map(name => vector.get(1)[name]);
+      const expected = [
+        ...Array(dimensions).fill(NaN),
+        ...validPoint,
+        ...Array(3 * dimensions).fill(NaN),
+        ...names.map(name => vector.get(5)[name])
+      ];
+      t.deepEqual(
+        Array.from(normalized.children[0].values),
+        expected,
+        'all axes retain source precision; missing and nonfinite rows are NaN'
+      );
+      t.equal(arrow.makeVector(normalized).get(0), null, 'slice retains parent null validity');
+      t.deepEqual(
+        Array.from(arrow.makeVector(normalized).get(1)),
+        validPoint,
+        'slice retains valid row values'
+      );
+      t.ok(
+        normalized.children[0].values instanceof Float64Array,
+        'does not narrow coordinate precision'
+      );
+
+      const metadata = new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]]);
+      const geoField = {name: 'geometry', type: 'geoarrow', fieldIdx: 0, metadata};
+      const dataContainer = new ArrowDataContainer({cols: [vector], fields: [geoField]});
+      const meta = getGeojsonLayerMetaFromArrow({
+        dataContainer,
+        geoColumn: vector,
+        geoField,
+        columnIndex: 0
+      });
+      t.deepEqual(
+        Array.from(meta.dataToFeature[0].points.positions.value),
+        expected,
+        'GeoJSON uses normalized rows'
+      );
+      t.deepEqual(
+        meta.bounds,
+        [validPoint[0], validPoint[1], 30, 40],
+        'null and nonfinite rows do not distort bounds'
+      );
+      const table = new arrow.Table({geometry: vector});
+      table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT);
+      const [layer] = new GeoArrowScatterplotLayer({data: table}).renderLayers();
+      t.deepEqual(
+        Array.from(layer.props.data.attributes.getPosition.value),
+        expected,
+        'Point metadata inference uses normalized rows'
+      );
+      t.equal(layer.props.data.length, vector.length, 'invalid rows retain picking alignment');
+    }
+  }
+  const type = new arrow.Struct(['x', 'y'].map(name => new arrow.Field(name, new arrow.Float64())));
+  for (const rows of [[], [null, null]]) {
+    const input = arrow.vectorFromArray(rows, type).data[0];
+    const output = convertStructToFixedSizeList(input);
+    t.equal(output.length, rows.length, 'empty/all-null input keeps its row count');
+    t.equal(output.type.listSize, 2, 'empty/all-null coordinates still have two dimensions');
+    t.ok(
+      Array.from(output.children[0].values).every(Number.isNaN),
+      'missing points never become the origin'
+    );
+  }
+  for (const FloatType of [arrow.Float32, arrow.Float64]) {
+    const type = new arrow.FixedSizeList(2, new arrow.Field('xy', new FloatType()));
+    const input = arrow
+      .vectorFromArray(
+        [
+          [0, 0],
+          [10, 20],
+          [30, 40]
+        ],
+        type
+      )
+      .slice(1).data[0];
+    t.equal(
+      convertStructToFixedSizeList(input),
+      input,
+      'interleaved slices retain the zero-copy fast path'
+    );
+  }
+  t.end();
+});
+
+test('layerUtils -> incremental separated points retain unequal batch row offsets', t => {
+  const type = new arrow.Struct(['x', 'y'].map(name => new arrow.Field(name, new arrow.Float64())));
+  const chunks = [
+    [
+      {x: 10, y: 20},
+      {x: 30, y: 40}
+    ],
+    [{x: 50, y: 60}],
+    [{x: 70, y: 80}]
+  ].map(rows => arrow.vectorFromArray(rows, type).data[0]);
+  const geoColumn = arrow.makeVector(chunks);
+  const metadata = new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]]);
+  const geoField = {name: 'geometry', type: 'geoarrow', fieldIdx: 0, metadata};
+  const dataContainer = new ArrowDataContainer({cols: [geoColumn], fields: [geoField]});
+  const result = getGeojsonLayerMetaFromArrow({
+    dataContainer,
+    geoColumn,
+    geoField,
+    columnIndex: 0,
+    chunkIndex: 2
+  });
+  t.equal(result.dataToFeature.length, 1, 'only converts the requested batch');
+  t.deepEqual(
+    Array.from(result.dataToFeature[0].points.positions.value),
+    [70, 80],
+    'retains the requested coordinates'
+  );
+  t.deepEqual(
+    Array.from(result.dataToFeature[0].points.globalFeatureIds.value),
+    [3],
+    'sums preceding unequal batch lengths'
+  );
+  t.deepEqual(result.centroids, [[70, 80]], 'centroid uses both coordinate axes');
+  t.end();
+});
+
+test('layerUtils -> native points from another Arrow runtime preserve slices and batch ids', t => {
+  const type = new foreignArrow.FixedSizeList(
+    3,
+    new foreignArrow.Field('xyz', new foreignArrow.Float64())
+  );
+  const first = foreignArrow
+    .vectorFromArray(
+      [
+        [-100, -80, -1],
+        [10, 20, 5],
+        [30, 40, 15]
+      ],
+      type
+    )
+    .slice(1);
+  const last = foreignArrow.vectorFromArray([[50, 60, 25]], type);
+  const geoColumn = foreignArrow.makeVector([...first.data, ...last.data]);
+  const geoField = {
+    name: 'geometry',
+    type: 'geoarrow',
+    fieldIdx: 0,
+    metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]])
+  };
+  const table = new foreignArrow.Table({geometry: geoColumn});
+  const originalBytes = foreignArrow.tableToIPC(table);
+  const dataContainer = new ArrowDataContainer({
+    cols: [geoColumn],
+    fields: [geoField],
+    arrowTable: table
+  });
+  t.notOk(geoColumn.data[0] instanceof arrow.Data, 'fixture uses a separate Arrow runtime');
+
+  for (const chunkIndex of [undefined, 1]) {
+    const result = getGeojsonLayerMetaFromArrow({
+      dataContainer,
+      geoColumn,
+      geoField,
+      columnIndex: 0,
+      chunkIndex
+    });
+    const incremental = chunkIndex === 1;
+    t.deepEqual(
+      result.dataToFeature.flatMap(data => Array.from(data.points.positions.value)),
+      incremental ? [50, 60, 25] : [10, 20, 5, 30, 40, 15, 50, 60, 25],
+      'preserves XYZ coordinates and excludes padding and sliced-out rows'
+    );
+    t.deepEqual(
+      result.dataToFeature.flatMap(data => Array.from(data.points.globalFeatureIds.value)),
+      incremental ? [2] : [0, 1, 2],
+      'retains row ids across unequal batches'
+    );
+    t.deepEqual(result.bounds, incremental ? [50, 60, 50, 60] : [10, 20, 50, 60], 'bounds');
+    t.deepEqual(
+      result.centroids,
+      incremental
+        ? [[50, 60]]
+        : [
+            [10, 20],
+            [30, 40],
+            [50, 60]
+          ],
+      'centroids remain aligned with rows'
+    );
+    result.dataToFeature.forEach((data, i) => {
+      t.equal(
+        data.points.positions.value.buffer,
+        geoColumn.data[(chunkIndex || 0) + i].children[0].values.buffer,
+        'interleaved coordinates still share their source buffer'
+      );
+    });
+  }
+  t.deepEqual(foreignArrow.tableToIPC(table), originalBytes, 'does not change the source table');
   t.end();
 });
 

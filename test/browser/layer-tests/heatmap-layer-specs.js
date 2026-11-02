@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
 import {
   testCreateCases,
   testFormatLayerDataCases,
@@ -23,7 +24,19 @@ import {
   visStateReducer,
   validateLayerWithData
 } from '@kepler.gl/reducers';
-import {LayerManager, MapView} from '@deck.gl/core';
+import {
+  AmbientLight,
+  LayerManager,
+  MapView,
+  WebMercatorViewport,
+  _GlobeView,
+  _SunLight as SunLight,
+  getShaderAssembler
+} from '@deck.gl/core';
+import {visStateSchemaV1} from '@kepler.gl/schemas';
+import KeplerHeatmapLayer from '../../../src/layers/src/heatmap-layer/deck-heatmap-layer';
+import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/density-surface-mesh';
+import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
@@ -33,6 +46,159 @@ const columns = {
   lat: 'lat',
   lng: 'lng'
 };
+
+// Exercise deck.gl's attribute lifecycle without allocating GPU textures or drawing.
+class AttributeTestHeatmapLayer extends KeplerHeatmapLayer {
+  updatedAttributes = new Set();
+  _setupResources() {}
+  updateShaders() {}
+  _updateHeatmapState() {}
+  updateAttributes(changedAttributes) {
+    super.updateAttributes(changedAttributes);
+    Object.keys(changedAttributes).forEach(name => this.updatedAttributes.add(name));
+  }
+  renderLayers() {
+    return [];
+  }
+}
+
+test('#HeatmapLayer -> config actions invalidate cached weights only when needed', t => {
+  const table = new KeplerTable({info: {id: 'weights'}, color: [1, 2, 3]});
+  table.importData({
+    data: {
+      fields: ['lat', 'lng', 'value', 'other'].map(name => ({name, type: 'real'})),
+      rows: [
+        [37.75, -122.4, 1, 9],
+        [37.76, -122.41, 4, 4],
+        [37.77, -122.42, 9, 1]
+      ]
+    }
+  });
+  const layer = validateLayerWithData(
+    table,
+    {
+      type: 'heatmap',
+      config: {dataId: 'weights', columns, weightField: table.fields[2], weightScale: 'linear'}
+    },
+    LayerClasses
+  );
+  const datasets = {weights: table};
+  layer.updateLayerDomain(datasets);
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [layer.formatLayerData(datasets)]
+  };
+  const viewport = new MapView().makeViewport({
+    width: INITIAL_MAP_STATE.width,
+    height: INITIAL_MAP_STATE.height,
+    viewState: INITIAL_MAP_STATE
+  });
+  const manager = new LayerManager(device, {viewport});
+  const apply = action => {
+    state = visStateReducer(state, action);
+  };
+  const configure = config => apply(VisStateActions.layerConfigChange(state.layers[0], config));
+  const check = (label, expected, weightsChanged, positionsChanged = false) => {
+    const [rendered] = state.layers[0].renderLayer({
+      data: state.layerData[0],
+      gpuFilter: state.datasets.weights.gpuFilter,
+      mapState: INITIAL_MAP_STATE,
+      idx: 0,
+      visible: true,
+      layerCallbacks: {},
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig
+    });
+    const [deckLayer] = testRenderDeckLayer(
+      t,
+      'heatmap attributes',
+      new AttributeTestHeatmapLayer(rendered.props),
+      {layerManager: manager}
+    );
+    const {weights} = deckLayer.getAttributeManager().getAttributes();
+    const actual = weights.isConstant
+      ? rendered.props.data.map(() => weights.value[0])
+      : Array.from(weights.value.slice(0, rendered.props.data.length));
+    t.equal(actual.length, expected.length, `${label}: row count`);
+    actual.forEach((value, i) =>
+      t.ok(Math.abs(value - expected[i]) < 1e-6, `${label}: cached weight ${i}`)
+    );
+    t.equal(
+      deckLayer.updatedAttributes.has('weights'),
+      weightsChanged,
+      `${label}: weight invalidation`
+    );
+    t.equal(
+      deckLayer.updatedAttributes.has('positions'),
+      positionsChanged,
+      `${label}: position invalidation`
+    );
+  };
+  try {
+    check('linear', [0, 3 / 8, 1], true, true);
+    const originalData = state.layerData[0].data;
+    configure({weightScale: 'sqrt'});
+    t.equal(state.layerData[0].data, originalData, 'scale change reuses the data array');
+    t.equal(
+      state.layerData[0].getWeight(originalData[1]),
+      0.5,
+      'configuration action updates the weight accessor'
+    );
+    check('sqrt', [0, 0.5, 1], true);
+    configure({weightScale: 'sqrt'});
+    check('same scale', [0, 0.5, 1], false);
+    apply(VisStateActions.layerVisConfigChange(state.layers[0], {opacity: 0.4}));
+    check('opacity', [0, 0.5, 1], false);
+    configure({weightScale: 'log'});
+    check('log', [0, Math.log(4) / Math.log(9), 1], true);
+    configure({weightScale: 'linear'});
+    check('back to linear', [0, 3 / 8, 1], true);
+    configure({weightDomain: [1, 17]});
+    check('domain', [0, 3 / 16, 0.5], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(
+        state.layers[0],
+        {weightField: table.fields[3]},
+        'weight'
+      )
+    );
+    check('other field', [1, 3 / 8, 0], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(state.layers[0], {weightField: null}, 'weight')
+    );
+    check('cleared field', [1, 1, 1], true);
+    apply(
+      VisStateActions.layerVisualChannelConfigChange(
+        state.layers[0],
+        {weightField: table.fields[2]},
+        'weight'
+      )
+    );
+    check('restored field', [0, 3 / 8, 1], true);
+    apply(VisStateActions.addFilter('weights'));
+    apply(VisStateActions.setFilter(0, 'name', 'value'));
+    apply(VisStateActions.setFilter(0, 'value', [4, 9]));
+    const filtered = state.layerData[0];
+    check('filtered data', filtered.data.map(filtered.getWeight), true, true);
+    apply(VisStateActions.removeFilter(0));
+    check('restored data', [0, 3 / 8, 1], true, true);
+    apply(
+      VisStateActions.updateDataset('weights', {
+        fields: ['lat', 'lng', 'value', 'other'].map(name => ({name, type: 'real'})),
+        rows: [
+          [37.75, -122.4, 1, 9],
+          [37.76, -122.41, 5, 4],
+          [37.77, -122.42, 17, 1]
+        ]
+      })
+    );
+    check('replaced data', [0, 0.25, 1], true, true);
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
 
 test('#HeatmapLayer -> contructor', t => {
   const TEST_CASES = {
@@ -45,6 +211,12 @@ test('#HeatmapLayer -> contructor', t => {
         },
         test: layer => {
           t.equal(layer.config.visConfig.radius, 20, 'Heatmap default radius should be 20');
+          t.equal(layer.config.visConfig.surfaceEnabled, false, 'existing maps default to 2D');
+          t.equal(
+            layer.config.visConfig.surfaceContourStep,
+            0.1,
+            'default contour spacing is preserved'
+          );
           t.ok(
             layer.visConfigSettings.radius.range[0] > 0,
             'heatmap radius should have a positive minimum'
@@ -690,7 +862,10 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
             const aggregator = rendered.state.aggregator;
             const counts = [0, 0];
             for (let j = 0; j < aggregator.binCount; j++) {
-              aggregator.getBin(j).value.forEach((count, channel) => (counts[channel] += count));
+              aggregator.getBin(j).value.forEach((count, channel) => {
+                // Masked empty bins contribute no retained points to the total.
+                if (!Number.isNaN(count)) counts[channel] += count;
+              });
             }
             t.deepEqual(counts, [expected, expected], message);
           }
@@ -698,6 +873,9 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
       });
     };
 
+    state.layers
+      .find(layer => layer.type === 'heatmap')
+      .updateLayerVisConfig({surfaceEnabled: true});
     check('no filter', 3);
     apply(VisStateActions.addFilter('first'));
     apply(VisStateActions.setFilter(0, 'name', 'value'));
@@ -739,6 +917,801 @@ test('#Aggregation layers -> reducer filters at the domain minimum', t => {
     apply(VisStateActions.removeFilter(0));
     check('cleared filters', 3);
     managers.forEach(manager => manager.finalize());
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface settings survive saving and loading', t => {
+  const layer = validateLayerWithData(
+    preparedDataset,
+    {type: 'heatmap', config: {dataId, columns}},
+    LayerClasses
+  );
+  t.equal(layer.config.visConfig.surfaceEnabled, false, 'a missing surface flag defaults to 2D');
+  const surfaceConfig = {
+    surfaceEnabled: true,
+    surfaceHeight: 2500,
+    surfaceLighting: false,
+    surfaceContours: true,
+    surfaceContourStep: 100
+  };
+  layer.updateLayerVisConfig(surfaceConfig);
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id]
+  }).visState;
+  t.equal(
+    saved.layers[0].config.visConfig.surfaceEnabled,
+    true,
+    'saves the enabled flag as a boolean'
+  );
+  t.notOk('heatmapMode' in saved.layers[0].config.visConfig, 'does not save the old mode enum');
+  const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  const restored = validateLayerWithData(preparedDataset, loaded.layers[0], LayerClasses);
+  for (const [key, value] of Object.entries(surfaceConfig)) {
+    t.equal(restored.config.visConfig[key], value, `restores ${key}`);
+  }
+  const data = restored.formatLayerData({[dataId]: preparedDataset});
+  const render = (zoom = INITIAL_MAP_STATE.zoom) =>
+    restored.renderLayer({data, mapState: {...INITIAL_MAP_STATE, zoom}, visible: true})[0];
+  t.ok(render().props.surface, 'selects the surface renderer');
+  t.equal(render().props.surfaceHeight, 2500, 'passes the selected maximum height');
+  for (const zoom of [0, 10, 18]) {
+    for (const intensity of [0.1, 2]) {
+      restored.updateLayerVisConfig({intensity});
+      const surface = render(zoom);
+      t.equal(surface.props.surfaceHeight, 2500, 'zoom and intensity preserve maximum height');
+      restored.updateLayerVisConfig({surfaceEnabled: false});
+      const flat = render(zoom);
+      for (const property of ['intensity', 'radiusPixels', 'threshold', 'colorRange']) {
+        t.deepEqual(surface.props[property], flat.props[property], `preserves flat ${property}`);
+      }
+      restored.updateLayerVisConfig({surfaceEnabled: true});
+    }
+  }
+  t.equal(
+    render().props.surfaceContourStep,
+    100,
+    'passes large saved contour steps to the renderer'
+  );
+  for (const step of [undefined, 0, -0.1, Number.NaN, Infinity]) {
+    restored.updateLayerVisConfig({surfaceContourStep: step});
+    t.equal(
+      render().props.surfaceContourStep,
+      0.1,
+      'missing or invalid contour step has a positive fallback'
+    );
+  }
+  restored.updateLayerVisConfig({surfaceHeight: Number.NaN});
+  t.equal(render().props.surfaceHeight, 1000, 'invalid height has a finite fallback');
+  restored.updateLayerVisConfig({surfaceHeight: -20});
+  t.equal(render().props.surfaceHeight, 0, 'negative height cannot invert the surface');
+  restored.updateLayerVisConfig({surfaceEnabled: false});
+  t.equal(render().props.surface, false, 'false selects the 2D renderer');
+  t.equal(render().props.data, data.data, 'display changes reuse the filtered data');
+  const disabledSaved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [restored],
+    layerOrder: [restored.id]
+  }).visState;
+  t.equal(
+    disabledSaved.layers[0].config.visConfig.surfaceEnabled,
+    false,
+    'saves the disabled flag as a boolean'
+  );
+  const disabledLoaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(disabledSaved))).visState;
+  t.equal(
+    validateLayerWithData(preparedDataset, disabledLoaded.layers[0], LayerClasses).config.visConfig
+      .surfaceEnabled,
+    false,
+    'restores the disabled flag'
+  );
+  t.end();
+});
+
+test('#HeatmapLayer -> surface grid follows density geography and world copies', t => {
+  const viewport = new WebMercatorViewport({longitude: 10, latitude: 65, zoom: 5});
+  const bounds = [8, 60, 12, 70];
+  const lower = viewport.projectPosition([8, 60, 0]);
+  const upper = viewport.projectPosition([12, 70, 0]);
+  const commonBounds = [lower[0], lower[1], upper[0], upper[1]];
+  const textureSize = 512;
+  const side = textureSize + 1;
+  const mesh = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, textureSize, 10);
+  const shifted = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, textureSize, 370);
+  t.equal(
+    mesh.positions.length,
+    side * side * 3,
+    'surface grid matches the density texture resolution'
+  );
+  t.equal(
+    mesh.vertexCount,
+    textureSize * textureSize * 6,
+    'each density texel has two surface triangles'
+  );
+  for (const size of [128, 256]) {
+    const resized = createHeatmapSurfaceMesh(bounds, commonBounds, viewport, size, 10);
+    t.equal(resized.positions.length, (size + 1) ** 2 * 3, `matches a ${size}-pixel texture`);
+    t.equal(resized.vertexCount, size * size * 6, `triangle count follows a ${size}-pixel texture`);
+  }
+  t.equal(mesh.vertexCount, mesh.indices.length, 'all triangles are drawn');
+  t.ok(
+    mesh.indices.every(i => i < mesh.positions.length / 3),
+    'all indices address valid vertices'
+  );
+  t.deepEqual(shifted.texCoords, mesh.texCoords, 'world wrapping preserves density samples');
+  for (const i of [0, textureSize, (side * side - 1) / 2, side * side - 1]) {
+    const position = Array.from(mesh.positions.slice(i * 3, i * 3 + 3));
+    const projected = viewport.projectPosition(position);
+    t.ok(
+      Math.abs(mesh.texCoords[i * 2] - (projected[0] - lower[0]) / (upper[0] - lower[0])) < 1e-6,
+      'longitude matches its density sample'
+    );
+    t.ok(
+      Math.abs(mesh.texCoords[i * 2 + 1] - (projected[1] - lower[1]) / (upper[1] - lower[1])) <
+        1e-6,
+      'latitude matches its density sample'
+    );
+    t.equal(
+      shifted.positions[i * 3] - mesh.positions[i * 3],
+      360,
+      'renders in the nearest world copy'
+    );
+  }
+  const wrappedBounds = [181, 60, 185, 70];
+  const wrappedLower = viewport.projectPosition([181, 60, 0]);
+  const wrappedUpper = viewport.projectPosition([185, 70, 0]);
+  const wrapped = createHeatmapSurfaceMesh(
+    wrappedBounds,
+    [wrappedLower[0], wrappedLower[1], wrappedUpper[0], wrappedUpper[1]],
+    viewport,
+    textureSize,
+    183
+  );
+  t.ok(wrapped, 'a density texture beyond the antimeridian still renders');
+  t.ok(Math.abs(wrapped.positions[0] - 181) < 1e-6, 'keeps unwrapped texture geography');
+  t.deepEqual(
+    Array.from(wrapped.texCoords.slice(0, 2)),
+    [0, 0],
+    'samples its original density texture'
+  );
+  for (const invalid of [[], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, NaN, 1]]) {
+    t.equal(
+      createHeatmapSurfaceMesh(invalid, commonBounds, viewport, textureSize),
+      null,
+      'empty or invalid geography produces no surface'
+    );
+  }
+  t.equal(
+    createHeatmapSurfaceMesh(bounds, [0, 0, 0, 0], viewport, textureSize),
+    null,
+    'invalid density texture bounds produce no surface'
+  );
+  for (const size of [undefined, 0, -1, 1.5, NaN, Infinity]) {
+    t.equal(
+      createHeatmapSurfaceMesh(bounds, commonBounds, viewport, size),
+      null,
+      'missing or invalid texture size produces no surface'
+    );
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> regular rendering survives surface and effect toggles on map and globe', t => {
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10, pitch: 45}
+    });
+    const manager = new LayerManager(device, {viewport});
+    const effect = new CustomDeckLightingEffect({
+      sunLight: new SunLight({timestamp: Date.UTC(2026, 5, 1, 19), _shadow: true})
+    });
+    const effectContext = {
+      device,
+      deck: {
+        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
+        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+      }
+    };
+    let layer = new KeplerHeatmapLayer({
+      id: `heatmap-surface-${globe}`,
+      data: [
+        [-122.42, 37.74],
+        [-122.4, 37.76]
+      ],
+      getPosition: d => d,
+      getWeight: 1,
+      intensity: 0.7,
+      threshold: 0.2,
+      opacity: 0.6,
+      radiusPixels: 30,
+      parameters: {depthWriteEnabled: false, depthCompare: 'always'},
+      weightsTextureSize: 128,
+      debounceTimeout: 0,
+      globeMode: globe,
+      densityBounds: [-122.42, 37.74, -122.4, 37.76]
+    });
+    try {
+      t.equal(layer.props.surface, false, 'missing surface settings select the regular heatmap');
+      for (const aggregation of ['SUM', 'MEAN']) {
+        layer = layer.clone({aggregation});
+        testRenderDeckLayer(t, 'regular heatmap before effect', [layer], {layerManager: manager});
+        const regular = layer.getSubLayers()[0];
+        const regularVertexCount = regular.state.model.vertexCount;
+        const worldBounds = layer.state.worldBounds;
+        const commonBounds = layer.state.normalizedCommonBounds;
+        const assertRegularRendering = () => {
+          const current = layer.getSubLayers()[0];
+          t.equal(current.constructor, regular.constructor, 'uses the regular renderer');
+          t.equal(current.state.model.vertexCount, regularVertexCount, 'retains regular geometry');
+          t.deepEqual(layer.state.worldBounds, worldBounds, 'retains the density frame');
+          t.deepEqual(
+            layer.state.normalizedCommonBounds,
+            commonBounds,
+            'retains density texture mapping'
+          );
+          for (const property of [
+            'aggregationMode',
+            'intensity',
+            'threshold',
+            'opacity',
+            'colorDomain',
+            'parameters'
+          ]) {
+            t.deepEqual(
+              current.props[property],
+              regular.props[property],
+              `preserves regular ${property}`
+            );
+          }
+          for (const property of ['weightsTexture', 'maxTexture', 'colorTexture']) {
+            t.equal(
+              current.props[property],
+              regular.props[property],
+              `preserves regular ${property}`
+            );
+            t.notOk(current.props[property].destroyed, `${property} is still usable`);
+          }
+          t.notOk(current.props.surfaceHeight, 'regular heatmap has no height displacement');
+          t.notOk(current.props.surfaceLighting, 'regular heatmap has no surface lighting');
+          t.notOk(current.props.surfaceContours, 'regular heatmap has no surface contours');
+        };
+        effect.setup(effectContext);
+        testRenderDeckLayer(t, 'regular heatmap with effect', [layer], {layerManager: manager});
+        assertRegularRendering();
+
+        layer = layer.clone({
+          surface: true,
+          surfaceHeight: 1800,
+          surfaceContours: true,
+          surfaceContourStep: 0.2,
+          aggregation
+        });
+        testRenderDeckLayer(t, 'heatmap surface', [layer], {layerManager: manager});
+        const surface = layer.getSubLayers()[0];
+        t.ok(surface, 'creates the density surface');
+        const textureSize = layer.state.textureSize;
+        t.equal(
+          surface.props.mesh.positions.length,
+          (textureSize + 1) ** 2 * 3,
+          'renderer matches the allocated density texture resolution'
+        );
+        t.equal(
+          surface.props.mesh.vertexCount,
+          textureSize * textureSize * 6,
+          'renderer uses two triangles per density texel'
+        );
+        t.equal(surface.props.surfaceHeight, 1800, 'height is available to the GPU renderer');
+        t.equal(
+          surface.props.surfaceContourStep,
+          0.2,
+          'contour step is available to the GPU renderer'
+        );
+        t.equal(
+          surface.props.aggregationMode,
+          aggregation === 'SUM' ? 0 : 1,
+          'uses the heatmap aggregation'
+        );
+        const mesh = surface.props.mesh;
+        layer = layer.clone({surfaceHeight: 2500, surfaceContourStep: 0.05});
+        testRenderDeckLayer(t, 'rescaled surface', [layer], {layerManager: manager});
+        t.equal(
+          layer.getSubLayers()[0].props.mesh,
+          mesh,
+          'height and contour edits reuse surface geometry'
+        );
+        t.equal(
+          layer.getSubLayers()[0].props.surfaceContourStep,
+          0.05,
+          'contour spacing can be updated'
+        );
+        const weights = layer.state.weightsTexture;
+        layer = layer.clone({surface: false});
+        testRenderDeckLayer(t, 'flat heatmap', [layer], {layerManager: manager});
+        t.equal(layer.state.weightsTexture, weights, 'Flat and Surface share density resources');
+        t.notOk(layer.getSubLayers()[0].props.surfaceHeight, 'Flat does not displace density');
+        assertRegularRendering();
+        effect.cleanup(effectContext);
+        testRenderDeckLayer(t, 'regular heatmap after removing effect', [layer], {
+          layerManager: manager
+        });
+        assertRegularRendering();
+      }
+      for (const surface of [false, true]) {
+        layer = layer.clone({surface, data: []});
+        testRenderDeckLayer(t, 'empty filtered heatmap', [layer], {layerManager: manager});
+        t.equal(layer.props.data.length, 0, 'both display modes support an empty filtered dataset');
+      }
+    } finally {
+      effect.cleanup(effectContext);
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t => {
+  getShaderAssembler('glsl');
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10, pitch: 45}
+    });
+    const manager = new LayerManager(device, {viewport});
+    const ambientLight = new AmbientLight({color: [255, 255, 255], intensity: 0.2});
+    const sunLight = new SunLight({
+      timestamp: Date.UTC(2026, 5, 1, 19),
+      intensity: 1,
+      _shadow: true
+    });
+    const effect = new CustomDeckLightingEffect({ambientLight, sunLight});
+    const effectContext = {
+      device,
+      deck: {
+        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
+        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+      }
+    };
+    let layer = new KeplerHeatmapLayer({
+      id: `heatmap-lighting-${globe}`,
+      data: [[-122.4, 37.75]],
+      getPosition: d => d,
+      weightsTextureSize: 128,
+      debounceTimeout: 0,
+      globeMode: globe,
+      densityBounds: [-122.42, 37.74, -122.4, 37.76],
+      surface: true
+    });
+    try {
+      testRenderDeckLayer(t, 'surface before lighting effect', [layer], {layerManager: manager});
+      const mesh = layer.getSubLayers()[0].props.mesh;
+      const initialModel = layer.getSubLayers()[0].state.model;
+      effect.setup(effectContext);
+      // NullDevice leaves framebuffer attachments uninitialized. Populate its
+      // JS texture views so the real shadow pass can run without a GPU.
+      for (const pass of effect.shadowPasses) {
+        if (!pass.fbo.colorAttachments.length) {
+          pass.fbo.autoCreateAttachmentTextures();
+        }
+      }
+      testRenderDeckLayer(t, 'surface with lighting effect', [layer], {layerManager: manager});
+      const surface = layer.getSubLayers()[0];
+      const {model} = surface.state;
+      t.notEqual(model, initialModel, 'adding the effect rebuilds the shader model');
+      t.equal(
+        model.vertexCount,
+        mesh.vertexCount,
+        'the rebuilt model retains all surface triangles'
+      );
+      t.equal(surface.props.mesh, mesh, 'adding lighting reuses the density geometry');
+      const {vs, fs} = surface.getShaders();
+      t.ok(
+        vs.includes('DECKGL_FILTER_GL_POSITION(gl_Position, geometry)'),
+        'displaced geometry uses the shadow projection hook'
+      );
+      t.ok(fs.includes('lighting_getLightColor('), 'surface colors use scene lighting');
+      t.ok(
+        fs.includes('DECKGL_FILTER_COLOR(fragColor, geometry)'),
+        'surface colors use shadow encoding and receiving hooks'
+      );
+      t.ok(
+        model.vs.includes('shadow_setVertexPosition(geometry.position, position)'),
+        'the active Kepler shadow module is assembled'
+      );
+
+      const applyLighting = () => {
+        surface.setShaderModuleProps(effect.getShaderModuleProps(surface, {project: {viewport}}));
+        return model.shaderInputs.getUniformValues();
+      };
+      const initialLighting = applyLighting().lighting;
+      t.deepEqual(
+        initialLighting.ambientColor,
+        [0.2, 0.2, 0.2],
+        'ambient intensity reaches the renderer'
+      );
+      t.equal(initialLighting.directionalLightCount, 1, 'the renderer uses the scene sun');
+      sunLight.timestamp += 6 * 60 * 60 * 1000;
+      sunLight.color = [255, 0, 0];
+      sunLight.intensity = 0.5;
+      ambientLight.intensity = 0.4;
+      const changedLighting = applyLighting().lighting;
+      t.deepEqual(
+        changedLighting.ambientColor,
+        [0.4, 0.4, 0.4],
+        'ambient changes update the renderer'
+      );
+      t.deepEqual(
+        changedLighting.lights[0].color,
+        [0.5, 0, 0],
+        'sun color and intensity update the renderer'
+      );
+      t.notDeepEqual(
+        changedLighting.lights[0].direction,
+        initialLighting.lights[0].direction,
+        'time changes update the sun direction'
+      );
+
+      const draw = sinon.spy(model, 'draw');
+      try {
+        effect.preRender({
+          layers: manager.getLayers(),
+          viewports: [viewport],
+          onViewportActive: manager.activateViewport
+        });
+        t.ok(draw.called, 'the shaded surface draws into the shadow pass');
+        t.equal(
+          model.shaderInputs.getUniformValues().shadow.drawShadowMap,
+          true,
+          'the shadow pass encodes depth'
+        );
+        t.equal(
+          applyLighting().shadow.useShadowMap,
+          true,
+          'the color pass receives the shadow map'
+        );
+      } finally {
+        draw.restore();
+      }
+
+      layer = layer.clone({surfaceLighting: false});
+      testRenderDeckLayer(t, 'unshaded surface', [layer], {layerManager: manager});
+      t.equal(
+        layer.getSubLayers()[0].props.shadowEnabled,
+        false,
+        'disabling shading excludes the surface from shadow casting'
+      );
+      effect.cleanup(effectContext);
+      testRenderDeckLayer(t, 'surface after removing lighting effect', [layer], {
+        layerManager: manager
+      });
+      t.equal(
+        layer.getSubLayers()[0].state.model.vertexCount,
+        mesh.vertexCount,
+        'removing the effect preserves the surface triangles'
+      );
+    } finally {
+      effect.cleanup(effectContext);
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
+  const viewState = {longitude: -122.4, latitude: 37.75, zoom: 8};
+  const viewport = new _GlobeView().makeViewport({width: 800, height: 600, viewState});
+  const manager = new LayerManager(device, {viewport});
+  const props = {
+    id: 'globe-density-cache',
+    data: [
+      [-122.42, 37.74],
+      [-122.4, 37.76]
+    ],
+    getPosition: d => d,
+    getWeight: 1,
+    weightsTextureSize: 128,
+    debounceTimeout: 0,
+    globeMode: true,
+    surface: true,
+    densityBounds: [-123, 37, -122, 38]
+  };
+  let layer = new KeplerHeatmapLayer(props);
+  testRenderDeckLayer(t, 'globe density cache', [layer], {layerManager: manager});
+  const aggregate = sinon.spy(KeplerHeatmapLayer.prototype, '_updateWeightmap');
+  try {
+    const weights = layer.state.weightsTexture;
+    for (const change of [
+      {surfaceHeight: 2000},
+      {surfaceLighting: false},
+      {surfaceContours: true},
+      {surfaceContourStep: 0.2},
+      {surface: false},
+      {surface: true}
+    ]) {
+      layer = layer.clone(change);
+      testRenderDeckLayer(t, 'display-only edit', [layer], {layerManager: manager});
+      t.equal(aggregate.callCount, 0, 'display edits do not aggregate the data again');
+      t.equal(layer.state.weightsTexture, weights, 'display edits retain the density texture');
+    }
+    layer = layer.clone({densityBounds: [-124, 36, -121, 39]});
+    testRenderDeckLayer(t, 'changed density frame', [layer], {layerManager: manager});
+    t.ok(aggregate.called, 'changing density bounds recomputes density');
+    const boundsBeforeZoom = layer.state.worldBounds;
+    const radiusBeforeZoom = layer._getRadiusScale();
+    const callsBeforeZoom = aggregate.callCount;
+    manager.activateViewport(
+      new _GlobeView().makeViewport({
+        width: 800,
+        height: 600,
+        viewState: {...viewState, zoom: 12}
+      })
+    );
+    layer = layer.clone({surfaceHeight: 3000});
+    testRenderDeckLayer(t, 'zoomed density frame', [layer], {layerManager: manager});
+    t.ok(
+      aggregate.callCount > callsBeforeZoom,
+      'zooming into a different density frame recomputes density'
+    );
+    const zoomedBounds = layer.state.worldBounds;
+    const zoomedTextureBounds = layer.state.normalizedCommonBounds;
+    const zoomedRadiusScale = layer._getRadiusScale();
+    const callsAfterZoom = aggregate.callCount;
+    t.ok(zoomedRadiusScale > 1, 'the tighter density frame scales the heatmap radius');
+
+    layer = layer.clone({surfaceLighting: true});
+    testRenderDeckLayer(t, 'display edit after zoom', [layer], {layerManager: manager});
+    t.equal(aggregate.callCount, callsAfterZoom, 'a zoomed display edit reuses aggregation');
+    t.deepEqual(layer.state.worldBounds, zoomedBounds, 'replacement retains the zoomed frame');
+    t.deepEqual(
+      layer.state.normalizedCommonBounds,
+      zoomedTextureBounds,
+      'replacement retains the density texture mapping'
+    );
+    t.equal(
+      layer._getRadiusScale(),
+      zoomedRadiusScale,
+      'rebuilt viewports preserve radius scaling after replacement'
+    );
+
+    // Update the same instance so existing viewport caches must be invalidated.
+    manager.activateViewport(viewport);
+    layer.activateViewport(viewport);
+    testRenderDeckLayer(t, 'zoom out with cached viewports', [layer], {layerManager: manager});
+    t.ok(aggregate.callCount > callsAfterZoom, 'zooming out recomputes density');
+    t.deepEqual(
+      layer.state.worldBounds,
+      boundsBeforeZoom,
+      'zooming out restores the density frame'
+    );
+    t.equal(layer._getRadiusScale(), radiusBeforeZoom, 'zooming out restores radius scaling');
+
+    const flatViewport = new MapView().makeViewport({width: 800, height: 600, viewState});
+    manager.activateViewport(flatViewport);
+    layer.activateViewport(flatViewport);
+    layer = layer.clone({globeMode: false});
+    const fresh = new KeplerHeatmapLayer({...props, id: 'fresh-flat-density', globeMode: false});
+    testRenderDeckLayer(t, 'globe to map', [layer, fresh], {layerManager: manager});
+    t.deepEqual(
+      layer.state.worldBounds,
+      fresh.state.worldBounds,
+      'leaving globe restores the live map frame'
+    );
+    t.deepEqual(
+      layer.state.normalizedCommonBounds,
+      fresh.state.normalizedCommonBounds,
+      'leaving globe clears stale texture coordinates'
+    );
+  } finally {
+    aggregate.restore();
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> surface normalization preserves small positive densities', t => {
+  const viewport = new MapView().makeViewport({
+    width: 800,
+    height: 600,
+    viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+  });
+  const manager = new LayerManager(device, {viewport});
+  const layer = new KeplerHeatmapLayer({
+    id: 'surface-normalization',
+    data: [[-122.4, 37.75]],
+    getPosition: d => d,
+    surface: true,
+    weightsTextureSize: 128,
+    debounceTimeout: 0
+  });
+  try {
+    testRenderDeckLayer(t, 'surface normalization', [layer], {layerManager: manager});
+    const {vs, fs} = layer.getSubLayers()[0].getShaders();
+    // Execute the renderer's JS-compatible scalar GLSL arithmetic in this
+    // headless test, rather than duplicating its normalization in a CPU helper.
+    const normalization = vs.slice(vs.indexOf('float maxValue ='), vs.indexOf('vec4 weights ='));
+    const evaluate = new Function(
+      'triangle',
+      'maxTexture',
+      'max',
+      `
+      let vIntensityMax, vIntensityMin;
+      ${normalization.replace(/\bfloat\b/g, 'let')}
+      return {vIntensityMax, vIntensityMin};
+    `
+    );
+    const alphaExpression = fs.match(/color\.a \*= ([\s\S]*?);/)[1];
+    const alpha = new Function(
+      'value',
+      'vIntensityMin',
+      'triangle',
+      'min',
+      `return ${alphaExpression};`
+    );
+    for (const aggregationMode of [0, 1]) {
+      for (const customDomain of [false, true]) {
+        const maximum = 5e-7;
+        const minimum = 5e-9;
+        const triangle = {
+          aggregationMode,
+          intensity: 1,
+          threshold: minimum / maximum,
+          colorDomain: customDomain ? [minimum, maximum] : [0, 0]
+        };
+        const maxTexture = aggregationMode === 0 ? {r: maximum, g: 1} : {r: 1, g: maximum};
+        const {vIntensityMax, vIntensityMin} = evaluate(triangle, maxTexture, Math.max);
+        t.equal(maximum * vIntensityMax, 1, 'small positive peaks reach the full color scale');
+        t.equal(
+          alpha(minimum / 2, vIntensityMin, triangle, Math.min),
+          0.5,
+          'small positive minima preserve the opacity ramp'
+        );
+        t.equal(
+          alpha(minimum, vIntensityMin, triangle, Math.min),
+          1,
+          'density at the minimum is fully opaque'
+        );
+      }
+    }
+    const triangle = {aggregationMode: 0, intensity: 1, threshold: 0, colorDomain: [0, 0]};
+    const zero = evaluate(triangle, {r: 0, g: 0}, Math.max);
+    t.equal(zero.vIntensityMax, 0, 'empty density has a finite zero color scale');
+    t.equal(zero.vIntensityMin, 0, 'zero threshold avoids division by zero');
+    t.equal(
+      alpha(5e-10, zero.vIntensityMin, triangle, Math.min),
+      1,
+      'zero threshold keeps positive density opaque'
+    );
+    const disabled = evaluate({...triangle, intensity: 0}, {r: 5e-7, g: 0}, Math.max);
+    t.equal(
+      alpha(5e-10, disabled.vIntensityMin, {...triangle, intensity: 0}, Math.min),
+      0,
+      'zero intensity remains transparent'
+    );
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> maximum surface height is independent of color settings', t => {
+  const viewport = new MapView().makeViewport({
+    width: 800,
+    height: 600,
+    viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+  });
+  const manager = new LayerManager(device, {viewport});
+  const layer = new KeplerHeatmapLayer({
+    id: 'surface-maximum-height',
+    data: [[-122.4, 37.75]],
+    getPosition: d => d,
+    surface: true,
+    weightsTextureSize: 128,
+    debounceTimeout: 0
+  });
+  try {
+    testRenderDeckLayer(t, 'surface maximum height', [layer], {layerManager: manager});
+    // Run the actual max-reduction fragment arithmetic. MAX blending reduces
+    // channels independently; red/green must keep their regular color values.
+    const maxModel = layer.state.maxWeightTransform.model;
+    const maxBody = maxModel.fs.match(/void main\(\)\s*\{([\s\S]*?)\}/)[1];
+    const evaluateMax = new Function(
+      'outTexture',
+      'max',
+      `let fragColor;
+       ${maxBody.replace('fragColor = outTexture;', 'fragColor = {...outTexture};')}
+       return fragColor;`
+    );
+    const texels = [
+      {r: 8, g: 0, b: 0, a: 4},
+      {r: 6, g: 0, b: 0, a: 2},
+      {r: 0, g: 0, b: 0, a: 0}
+    ];
+    const reduced = texels.map(texel => evaluateMax(texel, Math.max));
+    const maxTexture = Object.fromEntries(
+      ['r', 'g', 'b', 'a'].map(channel => [channel, Math.max(...reduced.map(v => v[channel]))])
+    );
+    t.equal(maxTexture.r, 1, 'regular SUM colors retain the fixed maximum of one');
+    t.equal(maxTexture.g, 3, 'regular MEAN colors retain the actual mean maximum');
+    t.equal(maxTexture.b, 8, 'surface retains the actual SUM maximum separately');
+
+    // Like the color-normalization test, execute the renderer's scalar GLSL
+    // because NullDevice does not run shaders. Include the weight aggregation.
+    const {vs} = layer.getSubLayers()[0].getShaders();
+    const heightBody = vs.slice(vs.indexOf('float weight ='), vs.indexOf('vec3 position ='));
+    const evaluateHeight = new Function(
+      'triangle',
+      'maxTexture',
+      'weights',
+      'max',
+      'clamp',
+      'isnan',
+      'isinf',
+      `let vDensity;
+       ${heightBody.replace(/\bfloat\b/g, 'let')}
+       return {height, density: vDensity};`
+    );
+    const height = (triangle, maximum, weights) =>
+      evaluateHeight(
+        triangle,
+        maximum,
+        weights,
+        Math.max,
+        (value, low, high) => Math.min(high, Math.max(low, value)),
+        Number.isNaN,
+        value => Math.abs(value) === Infinity
+      );
+    for (const aggregationMode of [0, 1]) {
+      const peak = aggregationMode === 0 ? texels[0] : texels[1];
+      const maximum = aggregationMode === 0 ? maxTexture.b : maxTexture.g;
+      const settings = {aggregationMode, surfaceHeight: 2500};
+      for (const intensity of [0, 0.1, 1, 20]) {
+        for (const colorDomain of [
+          [0, 0],
+          [0.2, 100]
+        ]) {
+          const triangle = {...settings, intensity, colorDomain, threshold: 0.9};
+          t.equal(height(triangle, maxTexture, peak).height, 2500, 'peak reaches maximum meters');
+          const half = height(triangle, maxTexture, {...peak, r: peak.r / 2});
+          t.equal(half.height, 1250, 'half density retains proportional height');
+          t.equal(half.density, maximum / 2, 'contour density is independent of color settings');
+        }
+      }
+      t.equal(
+        height({...settings, surfaceHeight: 0}, maxTexture, peak).height,
+        0,
+        'zero maximum height flattens the surface'
+      );
+      t.equal(
+        height(settings, maxTexture, {...peak, r: peak.r * 2}).height,
+        2500,
+        'height never exceeds the configured maximum'
+      );
+      for (const density of [5e-9, 5e-7, 100]) {
+        t.equal(
+          height(settings, {r: 1, g: density, b: density}, {r: density, a: 1}).height,
+          2500,
+          'recomputed density maxima retain the same meter height, including tiny densities'
+        );
+      }
+      for (const invalid of [0, -1, NaN, Infinity]) {
+        t.equal(
+          height(settings, maxTexture, {r: invalid, a: 1}).height,
+          0,
+          'empty or invalid density has zero height'
+        );
+        t.equal(
+          height(settings, {r: 1, g: invalid, b: invalid}, peak).height,
+          0,
+          'empty or invalid maximum has zero height'
+        );
+      }
+    }
+  } finally {
+    manager.finalize();
   }
   t.end();
 });

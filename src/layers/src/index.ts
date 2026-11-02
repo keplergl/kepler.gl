@@ -25,6 +25,7 @@ export {
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
+import {default as ContourLayer} from './contour-layer/contour-layer';
 export {MAX_ZOOM_LEVEL} from './heatmap-layer/heatmap-layer';
 import {default as H3Layer} from './h3-hexagon-layer/h3-hexagon-layer';
 export {defaultElevation as h3DefaultElevation} from './h3-hexagon-layer/h3-hexagon-layer';
@@ -145,6 +146,7 @@ export const KeplerGlLayers = {
   ClusterLayer,
   IconLayer,
   HeatmapLayer,
+  ContourLayer,
   H3Layer,
   ScenegraphLayer,
   TripLayer,
@@ -172,6 +174,7 @@ export const LayerClasses = {
   [LAYER_TYPES.cluster]: ClusterLayer,
   [LAYER_TYPES.icon]: IconLayer,
   [LAYER_TYPES.heatmap]: HeatmapLayer,
+  [LAYER_TYPES.contour]: ContourLayer,
   [LAYER_TYPES.hexagonId]: H3Layer,
   [LAYER_TYPES['3D']]: ScenegraphLayer,
   [LAYER_TYPES.trip]: TripLayer,

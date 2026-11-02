@@ -3,6 +3,8 @@
 
 import React from 'react';
 import {fireEvent} from '@testing-library/react';
+import {IntlProvider} from 'react-intl';
+import {messages} from '@kepler.gl/localization';
 
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import PanelHeaderActionFactory from '../panel-header-action';
@@ -62,6 +64,29 @@ function renderHeader(
 function openOptions(container: HTMLElement) {
   fireEvent.click(container.querySelector('.layer__options-toggle svg') as SVGElement);
 }
+
+test.each(Object.keys(messages))('resolves the contour header type in locale %s', locale => {
+  const LayerTitleSection = LayerTitleSectionFactory();
+  const id = 'layer.type.contour';
+  const translation = messages[locale][id];
+  expect(translation).toEqual(expect.any(String));
+  expect(translation).not.toBe(id);
+  const view = renderWithTheme(
+    <IntlProvider locale={locale === 'cn' ? 'zh-CN' : locale} messages={messages[locale]}>
+      <LayerTitleSection
+        layerId="contour-header"
+        layerType="Contour"
+        label="Sample scalar field"
+        onUpdateLayerLabel={noop}
+        onFocus={noop}
+        onBlur={noop}
+      />
+    </IntlProvider>
+  );
+  expect(view.queryByText(id)).toBeNull();
+  expect(view.getByText(translation)).toBeInTheDocument();
+  expect(view.getByRole('textbox')).toHaveValue('Sample scalar field');
+});
 
 describe('LayerPanelHeader options menu', () => {
   test('keeps visibility and settings visible and moves other actions into the menu', () => {

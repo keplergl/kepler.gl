@@ -16,7 +16,11 @@ import {
   LayerColumns,
   RGBColor
 } from '@kepler.gl/types';
-import {DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  DataContainerInterface,
+  ArrowDataContainer,
+  convertStructToFixedSizeList
+} from '@kepler.gl/utils';
 import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
 import {geojsonToBinary} from '@loaders.gl/gis';
@@ -203,7 +207,9 @@ export function getGeojsonLayerMetaFromArrow({
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {
           chunkIndex,
-          chunkOffset: geoColumn.data[0].length * chunkIndex
+          chunkOffset: geoColumn.data
+            .slice(0, chunkIndex)
+            .reduce((offset, chunk) => offset + chunk.length, 0)
         }
       : {}),
     triangulate: true,
@@ -213,6 +219,28 @@ export function getGeojsonLayerMetaFromArrow({
   // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
   if (encoding === GEOARROW_EXTENSIONS.WKB) {
     return getBinaryGeometriesFromWKBArrow(geoColumn, options);
+  }
+
+  if (encoding === GEOARROW_EXTENSIONS.POINT) {
+    const chunks =
+      options.chunkIndex === undefined ? geoColumn.data : [geoColumn.data[options.chunkIndex]];
+    geoColumn = arrow.makeVector(
+      chunks.map(chunk => {
+        const normalized = convertStructToFixedSizeList(chunk);
+        // Interleaved chunks may belong to DuckDB's Arrow runtime. Wrap them
+        // locally for makeVector's instanceof check, retaining their buffers.
+        return new arrow.Data(
+          normalized.type,
+          normalized.offset,
+          normalized.length,
+          normalized.nullCount,
+          normalized.buffers,
+          normalized.children,
+          normalized.dictionary
+        );
+      })
+    );
+    if (options.chunkIndex !== undefined) options.chunkIndex = 0;
   }
 
   // create binary data from arrow data for GeoJsonLayer
@@ -343,8 +371,8 @@ export function getGeoArrowPointCoords(row: any): [number, number, number] {
 
 /**
  * Builds an arrow vector compatible with ARROW:extension:name geoarrow.point.
- * @param getPosition Position accessor.
- * @param numElements Number of elements in the vector.
+ * @param dataContainer Arrow data whose record-batch boundaries must be preserved.
+ * @param getPosition Position accessor using global row indices.
  * @returns An arrow vector compatible with ARROW:extension:name geoarrow.point.
  */
 export function createGeoArrowPointVector(
@@ -369,17 +397,19 @@ export function createGeoArrowPointVector(
   const fixedSizeListBuilder = new arrow.FixedSizeListBuilder({type: fixedSizeList});
   fixedSizeListBuilder.addChild(floatBuilder);
 
-  // One record batch, not one per source batch: a batch per parquet/DuckDB
-  // chunk would create hundreds of pickable ScatterplotLayers and hit deck.gl's
-  // 255-layer picking cap.
+  // Coordinate chunks must match the table, including during progressive loads.
+  // Completed imports compact the table itself to limit pickable sublayers.
   const indexData = {index: 0};
-  for (let i = 0; i < numElements; ++i) {
-    indexData.index = i;
-    fixedSizeListBuilder.append(getPosition(indexData));
-  }
+  const chunks = dataContainer.getTable().batches.map(batch => {
+    for (let i = 0; i < batch.numRows; ++i) {
+      fixedSizeListBuilder.append(getPosition(indexData));
+      indexData.index++;
+    }
+    return fixedSizeListBuilder.flush();
+  });
 
-  // Flush even for zero rows so Arrow receives typed Data instead of an untyped empty array.
-  return arrow.makeVector([fixedSizeListBuilder.flush()]);
+  // A table without batches still needs typed Data to construct an empty vector.
+  return arrow.makeVector(chunks.length ? chunks : [fixedSizeListBuilder.flush()]);
 }
 
 /**

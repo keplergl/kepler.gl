@@ -488,8 +488,11 @@ export function getModules({
       // Divide by local range * global range
       moduleProps.linearRescaleScaler = 1 / (localRange * globalRange);
 
-      // Subtract off the local min
-      moduleProps.linearRescaleOffset = -min;
+      // The shader adds the offset after scaling, so normalize the selected
+      // pixel minimum by the same interval width as the pixel values.
+      const offset = -(minPixelValue + min * globalRange) * moduleProps.linearRescaleScaler;
+      // Preserve the existing shader fallback for missing or degenerate ranges.
+      moduleProps.linearRescaleOffset = Number.isFinite(offset) ? offset : -min;
 
       // Clamp to [0, 1] done automatically?
     } else {

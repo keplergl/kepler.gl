@@ -414,7 +414,7 @@ export function getSingleBandPresetOptions(
  * @returns [minPixelValue, maxPixelValue]
  */
 export function getMinMaxFromTile2DHeaders(tiles: (Tile2DHeader | null)[]): [number, number] {
-  const minValues: (number | null)[] = tiles
+  const minValues: number[] = tiles
     .map((tile: Tile2DHeader | null) => {
       if (!tile || !tile.data) {
         return null;
@@ -422,8 +422,8 @@ export function getMinMaxFromTile2DHeaders(tiles: (Tile2DHeader | null)[]): [num
       const {minPixelValue} = tile.data;
       return minPixelValue;
     })
-    .filter(value => value);
-  const maxValues: (number | null)[] = tiles
+    .filter((value): value is number => Number.isFinite(value));
+  const maxValues: number[] = tiles
     .map((tile: Tile2DHeader | null) => {
       if (!tile || !tile.data) {
         return null;
@@ -431,9 +431,8 @@ export function getMinMaxFromTile2DHeaders(tiles: (Tile2DHeader | null)[]): [num
       const {maxPixelValue} = tile.data;
       return maxPixelValue;
     })
-    .filter(value => value);
-  // We can cast to number[] because we have filtered null values
-  return [Math.min(...(minValues as number[])), Math.max(...(maxValues as number[]))];
+    .filter((value): value is number => Number.isFinite(value));
+  return [Math.min(...minValues), Math.max(...maxValues)];
 }
 
 /**
