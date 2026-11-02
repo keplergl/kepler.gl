@@ -3,7 +3,12 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskInTest, succeedTaskWithValues} from '@kepler.gl/tasks';
+import {
+  drainTasksForTesting,
+  errorTaskInTest,
+  succeedTaskInTest,
+  succeedTaskWithValues
+} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {
@@ -22,12 +27,15 @@ import keplerGlReducer, {
   fitBoundsUpdater,
   INITIAL_UI_STATE,
   visStateReducer,
-  mapStateReducer
+  mapStateReducer,
+  layerConfigChangeUpdater,
+  removeDatasetUpdater,
+  setFilterUpdater
 } from '@kepler.gl/reducers';
 import {DatasetType, MapSplitMode} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import KeplerGlSchema from '@kepler.gl/schemas';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
@@ -816,6 +824,225 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   t.deepEqual(nextState.visState.filterToBeMerged, [], 'should reset filterToBeMerged');
   t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
+  t.end();
+});
+
+test('#composerStateReducer - failed remote replacement retains the current map', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  let original = addDataToMapUpdater(initial, {
+    payload: {
+      datasets: {info: {id: sampleConfig.dataId}, data: processCsvData(testCsvData)},
+      config: sampleConfig.config
+    }
+  });
+  original = {...original, visState: applyExistingDatasetTasks(visStateReducer, original.visState)};
+  drainTasksForTesting();
+  const before = original.visState.schema.getConfigToSave(original);
+  const pending = replaceDataInMapUpdater(original, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {
+        info: {id: 'remote', type: DatasetType.EXTERNALLY_HOSTED},
+        metadata: {source: 'https://example.test/missing.csv', sourceFormat: 'csv'}
+      }
+    }
+  });
+  t.equal(
+    pending.visState.datasets[sampleConfig.dataId],
+    original.visState.datasets[sampleConfig.dataId],
+    'original stays while downloading'
+  );
+  t.equal(pending.visState.layers, original.visState.layers, 'layers stay while downloading');
+  t.equal(pending.visState.filters, original.visState.filters, 'filters stay while downloading');
+  const task = drainTasksForTesting().find(task =>
+    task.label.includes('HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK')
+  );
+  t.ok(task, 'runs the normal remote download task');
+  const failure = errorTaskInTest(task, new Error('Simulated failed download'));
+  const failed = {...pending, visState: visStateReducer(pending.visState, failure)};
+  t.equal(
+    failed.visState.datasets[sampleConfig.dataId],
+    original.visState.datasets[sampleConfig.dataId],
+    'failure retains original table'
+  );
+  t.deepEqual(
+    failed.visState.schema.getConfigToSave(failed),
+    before,
+    'failure retains complete saved map configuration'
+  );
+  t.equal(failed.visState.loadingIndicatorValue, 0, 'failure clears loading');
+  t.deepEqual(failed.visState.loadingProgress, {}, 'failure clears progress');
+  t.ok(drainTasksForTesting().length, 'failure schedules an error notification');
+  t.end();
+});
+
+function replacementTestState() {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const added = addDataToMapUpdater(initial, {
+    payload: {
+      datasets: {info: {id: sampleConfig.dataId}, data: processCsvData(testCsvData)},
+      config: sampleConfig.config
+    }
+  });
+  const state = {...added, visState: applyExistingDatasetTasks(visStateReducer, added.visState)};
+  drainTasksForTesting();
+  return state;
+}
+
+function beginRemoteReplacement(state, id, options = {}) {
+  const datasetToUse = {
+    info: {id, type: DatasetType.EXTERNALLY_HOSTED},
+    metadata: {source: `https://example.test/${id}.csv`, sourceFormat: 'csv'}
+  };
+  const pending = replaceDataInMapUpdater(state, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options
+    }
+  });
+  const task = drainTasksForTesting().find(task =>
+    task.label.includes('HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK')
+  );
+  return {pending, task, datasetToUse};
+}
+
+// Simulate only the network result; run the real table creation/import task.
+function finishRemoteDownload(task, datasetToUse) {
+  let downloaded = false;
+  return new Promise((resolve, reject) =>
+    task.run(
+      (effect, onSuccess, onError) => {
+        if (!downloaded) {
+          downloaded = true;
+          return onSuccess({...datasetToUse, data: processCsvData(dataWithNulls)});
+        }
+        return effect(onSuccess, onError);
+      },
+      resolve,
+      reject
+    )
+  );
+}
+
+test('#composerStateReducer - remote replacement commits fresh data and the latest layer config', async t => {
+  for (const id of [sampleConfig.dataId, 'replacement']) {
+    for (const deleteOriginalDataset of [true, false]) {
+      const original = replacementTestState();
+      const table = original.visState.datasets[sampleConfig.dataId];
+      const originalRows = table.dataContainer.flattenData();
+      const {pending, task, datasetToUse} = beginRemoteReplacement(original, id, {
+        deleteOriginalDataset
+      });
+      let edited = {
+        ...pending,
+        visState: layerConfigChangeUpdater(pending.visState, {
+          oldLayer: pending.visState.layers[0],
+          newConfig: {label: 'Edited while downloading'}
+        })
+      };
+      edited = {
+        ...edited,
+        visState: setFilterUpdater(edited.visState, {
+          idx: 0,
+          prop: 'enabled',
+          value: false
+        })
+      };
+      edited.visState = {
+        ...edited.visState,
+        datasets: {
+          ...edited.visState.datasets,
+          [sampleConfig.dataId]: copyTableAndUpdate(edited.visState.datasets[sampleConfig.dataId], {
+            hiddenColumns: ['trip_distance']
+          })
+        }
+      };
+      const completion = await finishRemoteDownload(task, datasetToUse);
+      t.equal(
+        table.dataContainer.flattenData(),
+        originalRows,
+        'download/import never mutates the live original'
+      );
+      const next = visStateReducer(edited.visState, completion);
+      t.ok(next.datasets[id], 'commits the requested dataset ID');
+      t.notEqual(next.datasets[id], table, 'builds a fresh table even for the same ID');
+      t.equal(
+        next.datasets[id].length,
+        processCsvData(dataWithNulls).rows.length,
+        'commits all downloaded rows'
+      );
+      t.equal(
+        Boolean(next.datasets[sampleConfig.dataId]),
+        id === sampleConfig.dataId || !deleteOriginalDataset,
+        'honors keep-original for distinct IDs'
+      );
+      t.equal(
+        next.layers[0].config.label,
+        'Edited while downloading',
+        'preserves a newer layer edit'
+      );
+      t.ok(
+        next.layers.every(layer => layer.config.dataId === id),
+        'remaps layers'
+      );
+      t.ok(
+        next.filters.every(filter => filter.dataId.includes(id)),
+        'remaps filters'
+      );
+      t.equal(next.filters[0].enabled, false, 'retains a newer filter edit');
+      t.deepEqual(next.splitMaps, original.visState.splitMaps, 'preserves split panel assignments');
+      t.deepEqual(next.pendingDatasetReplacements, {}, 'clears the completed request');
+      drainTasksForTesting();
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - stale remote replacements cannot overwrite newer work', async t => {
+  for (const order of ['older-first', 'newer-first']) {
+    const original = replacementTestState();
+    const first = beginRemoteReplacement(original, 'first');
+    const second = beginRemoteReplacement(first.pending, 'second');
+    const firstDone = await finishRemoteDownload(first.task, first.datasetToUse);
+    const secondDone = await finishRemoteDownload(second.task, second.datasetToUse);
+    let next = second.pending.visState;
+    for (const action of order === 'older-first'
+      ? [firstDone, secondDone]
+      : [secondDone, firstDone]) {
+      next = visStateReducer(next, action);
+    }
+    t.deepEqual(
+      Object.keys(next.datasets),
+      ['second'],
+      `${order}: only the newest request commits`
+    );
+    t.equal(next.loadingIndicatorValue, 0, 'settles both loading counters');
+    t.deepEqual(next.loadingProgress, {}, 'clears all completed progress');
+    drainTasksForTesting();
+  }
+  for (const change of ['remove', 'remove-and-readd', 'edit']) {
+    const original = replacementTestState();
+    const {pending, task, datasetToUse} = beginRemoteReplacement(original, 'stale');
+    let current = pending.visState;
+    if (change.startsWith('remove')) {
+      const removed = current.datasets[sampleConfig.dataId];
+      current = removeDatasetUpdater(current, {dataId: sampleConfig.dataId});
+      if (change === 'remove-and-readd')
+        current = {...current, datasets: {[sampleConfig.dataId]: removed}};
+    } else {
+      current.datasets[sampleConfig.dataId].appendRows([
+        current.datasets[sampleConfig.dataId].dataContainer.rowAsArray(0)
+      ]);
+    }
+    const datasets = current.datasets;
+    const done = await finishRemoteDownload(task, datasetToUse);
+    const next = visStateReducer(current, done);
+    t.equal(next.datasets, datasets, `${change}: does not roll back current datasets`);
+    t.notOk(next.datasets.stale, `${change}: ignores stale completion`);
+    t.equal(next.loadingIndicatorValue, 0, `${change}: clears loading`);
+    drainTasksForTesting();
+  }
   t.end();
 });
 

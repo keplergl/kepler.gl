@@ -3320,9 +3320,12 @@ function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: st
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
+  const pendingDatasetReplacements = {...state.pendingDatasetReplacements};
+  delete pendingDatasetReplacements[datasetKey];
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
     ...state,
-    datasets: newDatasets
+    datasets: newDatasets,
+    ...(state.pendingDatasetReplacements ? {pendingDatasetReplacements} : {})
   });
 
   const filters: Filter[] = [];
@@ -4222,10 +4225,22 @@ type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
 
 type ProgressiveUpdateVisDataUpdaterAction = VisStateActions.UpdateVisDataUpdaterAction & {
   onFinish?: ProgressiveLoadContinuation;
+  replacement?: {datasetToReplaceId: string; deleteOriginalDataset: boolean};
+};
+
+type PendingDatasetReplacement = {
+  datasetToReplaceId: string;
+  deleteOriginalDataset: boolean;
+  requestId: string;
+  originalData: Datasets[string]['dataContainer'];
+  originalRevision: number;
+  targetData: Datasets[string]['dataContainer'] | undefined;
+  targetRevision: number | undefined;
 };
 
 type ProgressiveCreateNewDatasetSuccessPayload = CreateNewDatasetSuccessPayload & {
   onFinish?: ProgressiveLoadContinuation;
+  replacement?: PendingDatasetReplacement;
 };
 
 // eslint-disable-next-line complexity
@@ -4249,6 +4264,18 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
+  const replacementOptions = (action as ProgressiveUpdateVisDataUpdaterAction).replacement;
+  const replacement = replacementOptions
+    ? {
+        ...replacementOptions,
+        requestId: generateHashId(),
+        originalData: state.datasets[replacementOptions.datasetToReplaceId]?.dataContainer,
+        originalRevision: state.datasets[replacementOptions.datasetToReplaceId]?.dataRevision,
+        targetData: state.datasets[datasets[0]?.info?.id || '']?.dataContainer,
+        targetRevision: state.datasets[datasets[0]?.info?.id || '']?.dataRevision
+      }
+    : undefined;
+
   const readyTasks: TaskDescriptor[] = [];
   const remoteTasks: TaskDescriptor[] = [];
   const notificationTasks: TaskDescriptor[] = [];
@@ -4260,7 +4287,12 @@ export const updateVisDataUpdater = (
     if (remote) {
       hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
     }
-    const task = createNewDataEntryTask(proto, state.datasets);
+    // A replacement must build a fresh table, even when the ID is unchanged.
+    // Updating the existing table inside an async task would mutate live state.
+    const sourceDatasets = replacement
+      ? Object.fromEntries(Object.entries(state.datasets).filter(([id]) => id !== info.id))
+      : state.datasets;
+    const task = createNewDataEntryTask(proto, sourceDatasets);
     if (task) {
       (remote ? remoteTasks : readyTasks).push(task);
     } else {
@@ -4293,6 +4325,15 @@ export const updateVisDataUpdater = (
       updatedState,
       payload_({change: batches.length, type: ''})
     );
+    if (replacement) {
+      updatedState = {
+        ...updatedState,
+        pendingDatasetReplacements: {
+          ...updatedState.pendingDatasetReplacements,
+          [replacement.datasetToReplaceId]: replacement.requestId
+        }
+      };
+    }
     if (progressIds.length) {
       updatedState = {
         ...updatedState,
@@ -4312,6 +4353,7 @@ export const updateVisDataUpdater = (
           results,
           addToMapOptions: options,
           progressIds: batch.progressIds,
+          ...(replacement ? {replacement} : {}),
           ...(onFinish && batchIndex === batches.length - 1 ? {onFinish} : {})
         };
         return createNewDatasetSuccess(payload);
@@ -4325,9 +4367,40 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions, progressIds, onFinish} =
+  const {results, addToMapOptions, progressIds, onFinish, replacement} =
     action.payload as ProgressiveCreateNewDatasetSuccessPayload;
   const notificationTasks: TaskDescriptor[] = [];
+
+  if (replacement) {
+    const {datasetToReplaceId, requestId, originalData, targetData} = replacement;
+    const currentRequest = state.pendingDatasetReplacements?.[datasetToReplaceId];
+    const result = results[0];
+    const targetId = result?.status === 'fulfilled' ? result.value.id : undefined;
+    const isCurrent =
+      currentRequest === requestId &&
+      state.datasets[datasetToReplaceId]?.dataContainer === originalData &&
+      state.datasets[datasetToReplaceId]?.dataRevision === replacement.originalRevision &&
+      (!targetId ||
+        (state.datasets[targetId]?.dataContainer === targetData &&
+          state.datasets[targetId]?.dataRevision === replacement.targetRevision));
+    if (currentRequest === requestId) {
+      const pendingDatasetReplacements = {...state.pendingDatasetReplacements};
+      delete pendingDatasetReplacements[datasetToReplaceId];
+      state = {...state, pendingDatasetReplacements};
+    }
+    if (!isCurrent) {
+      // No rollback: a newer request, edit or removal owns the current state.
+      return clearLoadingProgress(
+        setLoadingIndicatorUpdater(state, payload_({change: -1})),
+        currentRequest === requestId ? progressIds : undefined
+      );
+    }
+    if (result?.status === 'fulfilled') {
+      state = prepareStateForDatasetReplace(state, datasetToReplaceId, result.value.id, {
+        deleteOriginalDataset: replacement.deleteOriginalDataset
+      });
+    }
+  }
 
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
