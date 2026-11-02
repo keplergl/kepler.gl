@@ -2,7 +2,6 @@
   "name": "keplergl-jupyter",
   "version": "0.0.0",
   "scripts": {
-    "postinstall": "node scripts/fix-dependencies.mjs",
     "build": "node esbuild.config.mjs",
     "dev": "node esbuild.config.mjs --watch",
     "typecheck": "tsc --noEmit",
@@ -55,9 +54,7 @@
     "@luma.gl/shadertools": "9.3.6",
     "@luma.gl/webgl": "9.3.6",
     "@luma.gl/webgpu": "9.3.6",
-    "d3-color": "3.1.0",
     "fflate@0.7.4": "0.7.5",
-    "postcss": "8.5.26",
-    "thrift": "0.23.0"
+    "postcss": "8.5.26"
   }
 }

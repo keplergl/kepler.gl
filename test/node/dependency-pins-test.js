@@ -167,10 +167,8 @@ test('Python widget npm lockfile resolves patched dependencies, including nested
   const rel = 'bindings/python/package-lock.json';
   const lockfile = JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
   const floors = {
-    'd3-color': FLOORS['d3-color'],
     fflate: FLOORS.fflate,
-    postcss: STANDALONE_FLOORS.postcss,
-    thrift: FLOORS.thrift
+    postcss: STANDALONE_FLOORS.postcss
   };
   const found = new Set();
 
