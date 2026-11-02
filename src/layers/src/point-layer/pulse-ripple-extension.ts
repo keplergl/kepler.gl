@@ -38,7 +38,7 @@ export function getPulseRippleUniforms(props: PulseRippleProps, timeMs: number) 
     ? Math.min(3, Math.max(0.1, props.pulseSpeed as number))
     : 1;
   const expansion = Number.isFinite(props.pulseExpansion)
-    ? Math.min(5, Math.max(1, props.pulseExpansion as number))
+    ? Math.min(50, Math.max(1, props.pulseExpansion as number))
     : 2;
   const phase = Number.isFinite(timeMs) ? ((Math.max(0, timeMs) / 1000) * speed) % 1 : 0;
   if (props.pulseMode === 'ripple') {
@@ -202,7 +202,7 @@ export class EventPulseRippleExtension extends LayerExtension {
           ? (pulseDurationMs as number)
           : 0,
       expansion: Number.isFinite(pulseExpansion)
-        ? Math.min(5, Math.max(1, pulseExpansion as number))
+        ? Math.min(50, Math.max(1, pulseExpansion as number))
         : 2,
       ripple: pulseMode === 'ripple' ? 1 : 0
     };

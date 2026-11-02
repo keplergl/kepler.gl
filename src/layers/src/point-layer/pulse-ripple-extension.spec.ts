@@ -14,7 +14,7 @@ import PulseRippleExtension, {
 describe('Pulse / Ripple animation', () => {
   test('disabled and missing settings leave point rendering unchanged', () => {
     expect(getPulseRippleUniforms({}, 500)).toEqual({radiusScale: 1, opacity: 1, ripple: 0});
-    expect(getPulseRippleUniforms({pulseEnabled: false, pulseExpansion: 5}, 500)).toEqual({
+    expect(getPulseRippleUniforms({pulseEnabled: false, pulseExpansion: 50}, 500)).toEqual({
       radiusScale: 1,
       opacity: 1,
       ripple: 0
@@ -64,7 +64,15 @@ describe('Pulse / Ripple animation', () => {
     ).toEqual({radiusScale: 1, opacity: 0.4, ripple: 0});
     expect(
       getPulseRippleUniforms({pulseEnabled: true, pulseSpeed: 100, pulseExpansion: 100}, 500)
-    ).toEqual({radiusScale: 5, opacity: 0.4, ripple: 0});
+    ).toEqual({radiusScale: 50, opacity: 0.4, ripple: 0});
+  });
+
+  test.each(['pulse', 'ripple'] as const)('%s supports expansion up to 50', pulseMode => {
+    const uniforms = getPulseRippleUniforms(
+      {pulseEnabled: true, pulseMode, pulseExpansion: 50},
+      500
+    );
+    expect(uniforms.radiusScale).toBe(pulseMode === 'pulse' ? 50 : 25.5);
   });
 
   test('updates GPU uniforms and requests redraw only for visible, enabled, nonempty points', () => {
@@ -127,6 +135,23 @@ describe('Recorded event Pulse / Ripple', () => {
     for (const value of [null, undefined, NaN, Infinity, -Infinity]) {
       expect(encodePulseTime(value)).toEqual([0, 0, 0]);
     }
+  });
+
+  test.each([
+    [25, 25],
+    [50, 50],
+    [100, 50]
+  ])('event expansion %s sends %s to the shader', (pulseExpansion, expected) => {
+    const extension = new EventPulseRippleExtension();
+    const setProps = jest.fn();
+    const host = {
+      props: {pulseExpansion},
+      getModels: () => [{shaderInputs: {setProps}}]
+    };
+    extension.draw.call(host as unknown as Layer<EventPulseRippleProps>);
+    expect(setProps).toHaveBeenCalledWith({
+      eventPulse: expect.objectContaining({expansion: expected})
+    });
   });
 
   test('uses only the playhead, including pause, scrubbing and replay; never requests redraw', () => {

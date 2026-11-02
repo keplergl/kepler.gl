@@ -324,7 +324,7 @@ export const pointVisConfigs: {
     description: 'layerVisConfigs.point.pulseExpansionDescription',
     property: 'pulseExpansion',
     isRanged: false,
-    range: [1, 5],
+    range: [1, 50],
     step: 0.01
   } as VisConfigNumber,
   radius: 'radius',
