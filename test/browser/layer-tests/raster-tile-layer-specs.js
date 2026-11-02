@@ -1729,6 +1729,53 @@ test('#RasterTileLayer -> identify preserves the picking coordinate for selectio
   t.end();
 });
 
+test('#RasterTileLayer -> TiTiler identification distinguishes masked values from zero', async t => {
+  const layer = new RasterTileLayer({id: 'identify-nodata', dataId: 'raster'});
+  layer._stac = {
+    ...MOCK_STAC_METADATA,
+    rasterTileServerUrls: ['https://example.com']
+  };
+  layer._identifyContext = {isPMTiles: false, loadAssetIds: ['red']};
+  const results = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      values: [null, 42, 0, -3.5, '12.5'],
+      band_names: ['masked', 'valid', 'zero', 'negative', 'numeric string']
+    })
+  });
+  try {
+    await layer._onClickIdentify(
+      {onWMSFeatureInfo: result => results.push(result)},
+      {coordinate: [1, 2]}
+    );
+    t.deepEqual(
+      results[0]?.featureInfo,
+      [
+        {name: 'masked', value: 'NoData'},
+        {name: 'valid', value: '42'},
+        {name: 'zero', value: '0'},
+        {name: 'negative', value: '-3.5000'},
+        {name: 'numeric string', value: '12.5000'}
+      ],
+      'the identification callback keeps masked bands distinct from valid measurements'
+    );
+    t.deepEqual(
+      parseTitilerPointResponse({value: [null, 0]}),
+      [
+        {name: 'Band 1', value: 'NoData'},
+        {name: 'Band 2', value: '0'}
+      ],
+      'legacy value payloads and fallback band names also preserve NoData'
+    );
+    t.equal(parseTitilerPointResponse({values: []}), null, 'empty responses remain unavailable');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> SAVI uses the soil adjustment multiplier in CPU and shader arithmetic', t => {
   // Evaluate this scalar GLSL function as JavaScript to check the shipped expression.
   // This is an arithmetic parity test, not a WebGL rendering test.
