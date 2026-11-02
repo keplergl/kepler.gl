@@ -21,6 +21,7 @@ import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
 import PulseRippleExtension from './pulse-ripple-extension';
+import PointGlowExtension from './point-glow-extension';
 import {
   DatasetType,
   LAYER_VIS_CONFIGS,
@@ -68,6 +69,9 @@ export type PointLayerVisConfigSettings = {
   strokeColorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
   filled: VisConfigBoolean;
+  glowEnabled: VisConfigBoolean;
+  glowExtent: VisConfigNumber;
+  glowStrength: VisConfigNumber;
   pulseEnabled: VisConfigBoolean;
   pulseMode: VisConfigSelection;
   pulseSpeed: VisConfigNumber;
@@ -94,6 +98,9 @@ export type PointLayerVisConfig = {
   strokeColorRange: ColorRange;
   radiusRange: [number, number];
   filled: boolean;
+  glowEnabled: boolean;
+  glowExtent: number;
+  glowStrength: number;
   pulseEnabled: boolean;
   pulseMode: 'pulse' | 'ripple';
   pulseSpeed: number;
@@ -175,6 +182,7 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 const brushingExtension = new BrushingExtension();
 const arrowCPUFilterExtension = new FilterArrowExtension();
 const pulseRippleExtension = new PulseRippleExtension();
+const pointGlowExtension = new PointGlowExtension();
 
 function pushPointPosition(data: any[], pos: number[], index: number, neighbors?: number[]) {
   if (pos.every(Number.isFinite)) {
@@ -198,6 +206,9 @@ export const pointVisConfigs: {
   strokeColorRange: 'strokeColorRange';
   radiusRange: 'radiusRange';
   filled: VisConfigBoolean;
+  glowEnabled: VisConfigBoolean;
+  glowExtent: VisConfigNumber;
+  glowStrength: VisConfigNumber;
   pulseEnabled: VisConfigBoolean;
   pulseMode: VisConfigSelection;
   pulseSpeed: VisConfigNumber;
@@ -207,6 +218,31 @@ export const pointVisConfigs: {
   showNeighborOnHover: 'showNeighborOnHover';
   showHighlightColor: 'showHighlightColor';
 } = {
+  glowEnabled: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.point.glow',
+    property: 'glowEnabled'
+  } as VisConfigBoolean,
+  glowExtent: {
+    type: 'number',
+    defaultValue: 2,
+    label: 'layerVisConfigs.point.glowExtent',
+    description: 'layerVisConfigs.point.glowExtentDescription',
+    property: 'glowExtent',
+    isRanged: false,
+    range: [1, 5],
+    step: 0.1
+  } as VisConfigNumber,
+  glowStrength: {
+    type: 'number',
+    defaultValue: 0.5,
+    label: 'layerVisConfigs.point.glowStrength',
+    property: 'glowStrength',
+    isRanged: false,
+    range: [0, 1],
+    step: 0.05
+  } as VisConfigNumber,
   pulseEnabled: {
     type: 'boolean',
     defaultValue: false,
@@ -323,6 +359,9 @@ export default class PointLayer extends Layer {
     return [
       ...super.noneLayerDataAffectingProps,
       'radius',
+      'glowEnabled',
+      'glowExtent',
+      'glowStrength',
       'pulseEnabled',
       'pulseMode',
       'pulseSpeed',
@@ -625,31 +664,67 @@ export default class PointLayer extends Layer {
       getPosition = this.geoArrowVector;
     }
 
+    const {glowEnabled, glowExtent, glowStrength} = this.config.visConfig;
+    const withGlow = (point: ScatterplotLayer<any, any> | GeoArrowScatterplotLayer<any>) => {
+      if (!glowEnabled || (!point.props.filled && !point.props.stroked)) {
+        return [point];
+      }
+      const colorAccessor = point.props.filled ? 'getFillColor' : 'getLineColor';
+      return [
+        point.clone({
+          id: `${point.id}-glow`,
+          pickable: false,
+          // Only the core reports counts; removed halos must not leave stale count entries.
+          onFilteredItemsChange: null,
+          filled: true,
+          getFillColor: point.props[colorAccessor],
+          getLineColor: point.props[colorAccessor],
+          updateTriggers: {
+            ...point.props.updateTriggers,
+            getFillColor: point.props.updateTriggers?.[colorAccessor],
+            getLineColor: point.props.updateTriggers?.[colorAccessor]
+          },
+          // A transparent halo must not occlude other points at altitude.
+          parameters: {...point.props.parameters, depthWriteEnabled: false},
+          // Glow stays static even when the ordinary point pulses or ripples.
+          extensions: [
+            ...point.props.extensions.filter(extension => extension !== pulseRippleExtension),
+            pointGlowExtension
+          ],
+          glowExtent,
+          glowStrength
+        }),
+        point
+      ];
+    };
+
     return [
-      // @ts-expect-error
-      new ScatterplotLayerClass({
-        ...defaultLayerProps,
-        ...brushingProps,
-        ...layerProps,
-        ...data,
-        data: deckLayerData,
-        getPosition,
-        parameters: {
-          // circles will be flat on the map when the altitude column is not used
-          depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
-          ...(mapState?.layerParameters ?? {})
-        },
-        lineWidthUnits: 'pixels',
-        updateTriggers,
-        ...pulseProps,
-        extensions: [...extensions, ...(pulseEnabled ? [pulseRippleExtension] : [])],
-        opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
-        pickable: allowHover,
-        autoHighlight: false
-      }),
+      ...withGlow(
+        // @ts-expect-error
+        new ScatterplotLayerClass({
+          ...defaultLayerProps,
+          ...brushingProps,
+          ...layerProps,
+          ...data,
+          data: deckLayerData,
+          getPosition,
+          parameters: {
+            // circles will be flat on the map when the altitude column is not used
+            depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+            ...(mapState?.layerParameters ?? {})
+          },
+          lineWidthUnits: 'pixels',
+          updateTriggers,
+          ...pulseProps,
+          extensions: [...extensions, ...(pulseEnabled ? [pulseRippleExtension] : [])],
+          opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
+          pickable: allowHover,
+          autoHighlight: false
+        })
+      ),
       // hover layer
       ...(hoveredObject
-        ? [
+        ? withGlow(
             new ScatterplotLayer({
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
@@ -666,7 +741,7 @@ export default class PointLayer extends Layer {
               getRadius: data.getRadius,
               getPosition: data.getPosition
             })
-          ]
+          )
         : []),
       // text label layer
       ...this.renderTextLabelLayer(
