@@ -28,6 +28,15 @@ __Layer Attributes__
  - Font Color
  - Text Anchor
 
+## Glow
+
+Enable **Glow** in the Point layer settings to add a soft halo around each point. It is off by default, with its controls in a collapsed group.
+
+- **Extent** sets the halo radius, from 1 to 5 times the point's displayed radius. At 1, there is no halo.
+- **Strength** sets the halo opacity, from 0 to 1. The halo fades smoothly toward its outer edge.
+
+The halo uses the point's fill color, or its outline color for unfilled points, and follows its radius mapping, opacity, filters, and map or billboard orientation. The ordinary point and its picking area stay unchanged. With **Pulse / Ripple** enabled, the point continues to animate over a static halo. Labels stay still. Glow settings are saved with the map and retained when turned off.
+
 ## Pulse / Ripple
 
 Enable **Pulse / Ripple** at the end of the Point layer settings to animate the points. The effect is off by default, with its controls in a collapsed group.

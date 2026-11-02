@@ -145,8 +145,8 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   }
 `;
 
-// Keep this group's keyboard behavior scoped to the optional point effect.
-const PulseRippleControls = styled.fieldset`
+// Keep keyboard behavior scoped to the optional point effects.
+const PointEffectControls = styled.fieldset`
   border: 0;
   margin: 0;
   padding: 0;
@@ -678,12 +678,32 @@ export default function LayerConfiguratorFactory(
           ) : null}
           {layer.type === LAYER_TYPES.point ? (
             <LayerConfigGroup
+              {...layer.visConfigSettings.glowEnabled}
+              {...visConfiguratorProps}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <PointEffectControls disabled={!layer.config.visConfig.glowEnabled}>
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.glowExtent}
+                    {...visConfiguratorProps}
+                  />
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.glowStrength}
+                    {...visConfiguratorProps}
+                  />
+                </PointEffectControls>
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+          {layer.type === LAYER_TYPES.point ? (
+            <LayerConfigGroup
               {...layer.visConfigSettings.pulseEnabled}
               {...visConfiguratorProps}
               collapsible
             >
               <ConfigGroupCollapsibleContent>
-                <PulseRippleControls disabled={!layer.config.visConfig.pulseEnabled}>
+                <PointEffectControls disabled={!layer.config.visConfig.pulseEnabled}>
                   <SidePanelSection>
                     <PanelLabel>
                       <FormattedMessage id="layerVisConfigs.point.pulseMode" />
@@ -707,7 +727,7 @@ export default function LayerConfiguratorFactory(
                     {...layer.visConfigSettings.pulseExpansion}
                     {...visConfiguratorProps}
                   />
-                </PulseRippleControls>
+                </PointEffectControls>
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}

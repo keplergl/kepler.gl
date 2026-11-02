@@ -201,6 +201,10 @@ export default {
     boundsNorth: 'North',
     pointSize: 'Point Size',
     point: {
+      glow: 'Glow',
+      glowExtent: 'Extent',
+      glowExtentDescription: 'Halo radius as a multiple of the point radius.',
+      glowStrength: 'Strength',
       pulseRipple: 'Pulse / Ripple',
       pulseMode: 'Effect',
       pulse: 'Pulse',

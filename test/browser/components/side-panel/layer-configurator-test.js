@@ -1530,3 +1530,86 @@ test('Components -> LayerConfigurator -> Point Pulse / Ripple controls', async t
     t.end();
   }
 });
+
+test('Components -> LayerConfigurator -> Point Glow keyboard controls', async t => {
+  const layer = new KeplerGlLayers.PointLayer({id: 'glow-controls', dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(version => version + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  const group = within(view.container).getByText('Glow').closest('.layer-config-group');
+  const header = group.querySelector('.layer-config-group__header');
+  const toggle = within(header).getByRole('checkbox');
+  const content = group.querySelector('.layer-config-group__content');
+  const user = userEvent.setup();
+  const assertSkipped = async message => {
+    toggle.focus();
+    await user.tab();
+    t.notOk(content.contains(document.activeElement), message);
+  };
+  try {
+    t.notOk(toggle.checked, 'glow is off by default');
+    t.ok(group.classList.contains('collapsed'), 'glow controls start collapsed');
+    await assertSkipped('collapsed disabled controls are skipped by Tab');
+    fireEvent.click(header);
+    await assertSkipped('expanded disabled controls are skipped by Tab');
+    const inputs = Array.from(content.querySelectorAll('.kg-range-slider__input'));
+    const extent = inputs.find(input => input.value === '2');
+    const strength = inputs.find(input => input.value === '0.5');
+    extent.focus();
+    t.notEqual(document.activeElement, extent, 'disabled extent cannot receive keyboard focus');
+    fireEvent.click(header);
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {glowEnabled: true}, 'toggle enables glow');
+    t.notOk(group.classList.contains('collapsed'), 'enabling expands controls');
+    toggle.focus();
+    await user.tab();
+    t.ok(content.contains(document.activeElement), 'enabled controls are keyboard reachable');
+    extent.focus();
+    await user.clear(extent);
+    await user.type(extent, '3');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {glowExtent: 3}, 'keyboard adjusts extent');
+    strength.focus();
+    await user.clear(strength);
+    await user.type(strength, '0.7');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {glowStrength: 0.7}, 'keyboard adjusts strength');
+    const calls = changed.callCount;
+    fireEvent.click(header);
+    t.equal(changed.callCount, calls, 'collapsing does not disable glow');
+    await assertSkipped('collapsed enabled controls are skipped by Tab');
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {glowEnabled: false}, 'toggle disables glow');
+    fireEvent.click(toggle);
+    t.equal(layer.config.visConfig.glowExtent, 3, 'reenabling retains extent');
+    t.equal(layer.config.visConfig.glowStrength, 0.7, 'reenabling retains strength');
+  } finally {
+    view.unmount();
+  }
+  const restored = renderWithTheme(<Editor />);
+  try {
+    const restoredGroup = within(restored.container)
+      .getByText('Glow')
+      .closest('.layer-config-group');
+    t.ok(within(restoredGroup).getByRole('checkbox').checked, 'saved glow restores its toggle');
+    t.ok(restoredGroup.classList.contains('collapsed'), 'restored controls start collapsed');
+  } finally {
+    restored.unmount();
+    t.end();
+  }
+});
