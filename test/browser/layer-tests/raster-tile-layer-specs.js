@@ -1210,6 +1210,94 @@ test('#RasterTileLayer -> identify samples band values at lng/lat', t => {
   t.end();
 });
 
+test('#RasterTileLayer -> PMTiles hover reads decoded browser image pixels', async t => {
+  const layer = new RasterTileLayer({id: 'pmtiles-image-hover', dataId: 'pmtiles'});
+  const image = document.createElement('img');
+  image.width = 2;
+  image.height = 2;
+  const pixels = new Uint8ClampedArray([
+    10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 100, 110, 120, 255
+  ]);
+  const drawImage = sinon.spy();
+  const getImageData = sinon.stub().returns({data: pixels});
+  const canvas = sinon.stub(window.HTMLCanvasElement.prototype, 'getContext').returns({
+    drawImage,
+    getImageData
+  });
+  const opts = createRenderOpts(MOCK_PMTILES_DATASET);
+  opts.data.tileSource.getTileData = async () => image;
+  const index = {x: 0, y: 0, z: 0};
+  const bbox = {west: -180, south: -85, east: 180, north: 85};
+  try {
+    const [tileLayer] = layer.renderLayer(opts);
+    const data = await tileLayer.props.getTileData({index, bbox});
+    t.equal(data.image, image, 'the loader keeps the browser image used for rendering');
+    tileLayer.props.onViewportLoad([{index, bbox, data}]);
+    const hover = coordinate => layer.getHoverData(null, null, [], null, {coordinate});
+    t.equal(hover([0, 0]), null, 'hover remains opt-in');
+    t.equal(getImageData.callCount, 0, 'loading does not read pixels');
+    layer.config.visConfig.allowHover = true;
+    t.ok(
+      hover([0, 0]).rasterFeatureData.some(
+        row => row.name === 'RGBA' && row.value === '100, 110, 120, 255'
+      ),
+      'hover reads the bottom-right pixel of a decoded image'
+    );
+    t.ok(
+      hover([-90, 45]).rasterFeatureData.some(
+        row => row.name === 'RGBA' && row.value === '10, 20, 30, 255'
+      ),
+      'another coordinate reads the correct pixel'
+    );
+    t.equal(drawImage.firstCall?.args[0], image, 'readback draws the loaded image');
+    t.equal(getImageData.callCount, 1, 'repeated hover reuses the decoded pixels');
+
+    const replacement = document.createElement('img');
+    replacement.width = replacement.height = 2;
+    getImageData.returns({data: new Uint8ClampedArray(16)});
+    tileLayer.props.onViewportLoad([{index, bbox, data: {image: replacement}}]);
+    t.ok(
+      hover([0, 0]).rasterFeatureData.some(row => row.value === 'NoData'),
+      'transparent pixels remain NoData'
+    );
+    t.equal(getImageData.callCount, 2, 'replacement images get fresh pixels');
+
+    const blocked = document.createElement('img');
+    blocked.width = blocked.height = 2;
+    getImageData.throws(Object.assign(new Error('tainted canvas'), {name: 'SecurityError'}));
+    tileLayer.props.onViewportLoad([{index, bbox, data: {image: blocked}}]);
+    t.equal(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext),
+      null,
+      'security failures do not expose pixels or throw'
+    );
+    t.equal(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext),
+      null,
+      'unreadable tiles remain unavailable'
+    );
+    t.equal(getImageData.callCount, 3, 'unreadable images are not retried on every hover');
+
+    tileLayer.props.onViewportLoad([
+      {index, bbox, data: {image: {data: pixels, width: 2, height: 2}}}
+    ]);
+    t.deepEqual(
+      sampleRasterTileAtLngLat(layer._loadedTiles, 0, 0, layer._identifyContext).rgba,
+      [100, 110, 120, 255],
+      'raw buffers still sample without a canvas'
+    );
+    t.equal(getImageData.callCount, 3, 'raw buffers bypass readback');
+    t.equal(
+      sampleRasterTileAtLngLat([], 0, 0, layer._identifyContext),
+      null,
+      'missing tiles remain unavailable'
+    );
+  } finally {
+    canvas.restore();
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   const layer = new RasterTileLayer({id: 'raster-id', dataId: 'stac-data', label: 'Rivers'});
   layer.config.visConfig.allowHover = true;
