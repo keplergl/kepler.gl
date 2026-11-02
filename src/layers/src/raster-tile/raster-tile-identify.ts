@@ -185,20 +185,48 @@ function sampleTypedBand(
   return Number.isFinite(value) ? value : null;
 }
 
+type RgbaImage = {data?: ArrayLike<number>; width?: number; height?: number};
+
+// Tile images are immutable. Weak keys release decoded pixels when tiles are evicted.
+const rgbaPixels = new WeakMap<RgbaImage, ArrayLike<number> | null>();
+
+function getRgbaPixels(image: RgbaImage): ArrayLike<number> | null {
+  if (image.data) {
+    return image.data;
+  }
+  if (!rgbaPixels.has(image)) {
+    let data: ArrayLike<number> | null = null;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width || 0;
+      canvas.height = image.height || 0;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(image as CanvasImageSource, 0, 0);
+        data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      }
+    } catch {
+      // Unavailable canvases, invalid images and CORS-tainted pixels are not readable.
+    }
+    rgbaPixels.set(image, data);
+  }
+  return rgbaPixels.get(image) || null;
+}
+
 function sampleRgbaPixel(
-  image: {data?: ArrayLike<number>; width?: number; height?: number} | null,
+  image: RgbaImage | null,
   col: number,
   row: number
 ): [number, number, number, number] | null {
-  if (!image?.data || !image.width || !image.height) {
+  if (!image?.width || !image.height) {
     return null;
   }
   if (col < 0 || row < 0 || col >= image.width || row >= image.height) {
     return null;
   }
   const idx = (row * image.width + col) * 4;
-  const data = image.data;
-  if (idx + 3 >= data.length) {
+  const data = getRgbaPixels(image);
+  if (!data || idx + 3 >= data.length) {
     return null;
   }
   return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
