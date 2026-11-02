@@ -8137,6 +8137,49 @@ test('#visStateReducer -> EXTRACT_DATA_FROM_FEATURE raster awaits clip download'
   t.end();
 });
 
+test('#visStateReducer -> oversized raster statistics show an error before download', t => {
+  drainTasksForTesting();
+  const layer = new KeplerGlLayers.RasterTileLayer({id: 'raster-limit', dataId: 'raster-data'});
+  layer._loadedTiles = [
+    {
+      index: {x: 0, y: 0, z: 0},
+      data: {
+        images: {imageBands: [{width: 2000, height: 1001, data: new Uint8Array(2_002_000).fill(1)}]}
+      }
+    }
+  ];
+  const download = sinon.stub(layer, 'downloadClip').resolves({png: true, json: true});
+  const startState = {
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    datasets: {
+      'raster-data': {id: 'raster-data', fields: [], dataContainer: createDataContainer([])}
+    },
+    editor: {...INITIAL_VIS_STATE.editor, selectedFeature: mockPolygonFeature}
+  };
+  try {
+    const state = reducer(startState, VisStateActions.extractDataFromFeature({layerId: layer.id}));
+    const tasks = drainTasksForTesting();
+    t.equal(tasks.length, 1, 'queues one notification');
+    const notification = succeedTaskInTest(tasks[0], {png: true, json: true});
+    t.equal(notification.payload.type, 'error', 'the user receives an error instead of success');
+    t.ok(
+      notification.payload.message.includes('2,000,000-pixel scan limit'),
+      'the notification explains the scan limit'
+    );
+    t.ok(
+      notification.payload.message.includes('zoom out'),
+      'the notification includes a recovery action'
+    );
+    t.equal(download.callCount, 0, 'no partial clip or statistics download starts');
+    t.equal(state.datasets, startState.datasets, 'no partial dataset is installed');
+  } finally {
+    download.restore();
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
 test('#visStateReducer -> CONVERT_EDITOR_FEATURES_TO_LAYER disabled by config', t => {
   initApplicationConfig({enableDrawOnMapSketches: false});
 

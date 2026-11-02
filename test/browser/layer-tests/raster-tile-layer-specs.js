@@ -14,6 +14,7 @@ import {
   filterAvailablePresets,
   getDataSourceParams,
   computeDerivedValue,
+  computeRasterZonalStats,
   formatRasterIdentifyRows,
   lngLatToTileUV,
   mercatorPixelSizeForBbox,
@@ -29,6 +30,7 @@ import {testCreateCases} from 'test/helpers/layer-utils';
 import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterImages from '../../../src/layers/src/raster-tile/image';
+import * as rasterExtract from '../../../src/layers/src/raster-tile/raster-tile-extract';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -1311,6 +1313,104 @@ test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   t.equal(extracted.kind, 'geojson', 'extract should return geojson stats');
   t.equal(extracted.rowCount, 1, 'extract should keep the polygon as one feature');
   t.ok(extracted.features[0].properties.pixel_count > 0, 'extract should count pixels');
+  t.end();
+});
+
+test('#RasterTileLayer -> scan limit never returns partial statistics', async t => {
+  const polygon = {
+    type: 'Feature',
+    properties: {shape: 'Rectangle'},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, -86],
+          [180, -86],
+          [180, 86],
+          [-180, 86],
+          [-180, -86]
+        ]
+      ]
+    }
+  };
+  const context = {isPMTiles: false, bandCombination: 'single', loadAssetIds: ['value']};
+  const band = {width: 2000, height: 1000, data: new Uint8Array(2_000_000).fill(1)};
+  band.data[band.data.length - 1] = 100;
+  const tile = {index: {x: 0, y: 0, z: 0}, data: {images: {imageBands: [band]}}};
+  const exact = computeRasterZonalStats([tile], polygon, context);
+  t.equal(exact.pixelCount, 2_000_000, 'exactly the scan limit is supported');
+  t.equal(exact.bands.value.max, 100, 'the final pixel is included');
+  const extra = {
+    ...tile,
+    data: {images: {imageBands: [{width: 1, height: 1, data: new Uint8Array([200])}]}}
+  };
+  const scanLimit = /2,000,000-pixel scan limit/;
+  t.throws(
+    () => computeRasterZonalStats([tile, extra], polygon, context),
+    scanLimit,
+    'one more pixel in a later tile fails instead of returning truncated totals'
+  );
+  const tinyPolygon = {
+    ...polygon,
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [0.01, 0],
+          [0.01, 0.01],
+          [0, 0.01],
+          [0, 0]
+        ]
+      ]
+    }
+  };
+  t.throws(
+    () => computeRasterZonalStats([tile, extra], tinyPolygon, context),
+    scanLimit,
+    'the work limit counts scanned pixels, including those outside the selection'
+  );
+
+  const layer = new RasterTileLayer({id: 'raster-scan-limit', dataId: 'raster'});
+  layer._identifyContext = context;
+  layer._loadedTiles = [
+    {
+      ...tile,
+      data: {
+        images: {imageBands: [{...band, height: 1001, data: new Uint8Array(2_002_000).fill(1)}]}
+      }
+    }
+  ];
+  t.throws(
+    () => layer.extractInsideFeature(polygon),
+    scanLimit,
+    'extraction also fails when additional pixels are in the same tile'
+  );
+
+  const download = sinon.stub(rasterExtract, 'downloadBlob');
+  const mosaic = sinon.stub(rasterExtract, 'mosaicTilesToPng').resolves(null);
+  try {
+    await layer.downloadClip(polygon);
+    t.fail('oversized clip statistics must reject');
+  } catch (error) {
+    t.ok(scanLimit.test(error.message), 'clip download propagates the actionable limit error');
+  } finally {
+    t.equal(download.callCount, 0, 'no partial statistics file is downloaded');
+    t.equal(mosaic.callCount, 0, 'no clip image work starts after a statistics failure');
+    download.restore();
+    mosaic.restore();
+  }
+
+  layer._loadedTiles = [extra];
+  const ordinary = layer.extractInsideFeature(polygon);
+  t.equal(ordinary.rowCount, 1, 'ordinary selections still extract after a failed attempt');
+  t.equal(ordinary.features[0].properties.pixel_count, 1, 'ordinary counts are unchanged');
+  t.equal(ordinary.features[0].properties.value_max, 200, 'ordinary extrema are unchanged');
+  t.deepEqual(
+    computeRasterZonalStats([], polygon, context),
+    {pixelCount: 0, bands: {}},
+    'empty tiles are unchanged'
+  );
   t.end();
 });
 
