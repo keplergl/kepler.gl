@@ -944,7 +944,11 @@ export const expectedSavedLayer1 = {
       radiusRange: [0, 50],
       allowHover: true,
       showNeighborOnHover: false,
-      showHighlightColor: true
+      showHighlightColor: true,
+      pulseEnabled: false,
+      pulseMode: 'pulse',
+      pulseSpeed: 1,
+      pulseExpansion: 2
     }
   },
   visualChannels: {
@@ -989,7 +993,11 @@ export const expectedLoadedLayer1 = {
       radiusRange: [0, 50],
       allowHover: true,
       showNeighborOnHover: false,
-      showHighlightColor: true
+      showHighlightColor: true,
+      pulseEnabled: false,
+      pulseMode: 'pulse',
+      pulseSpeed: 1,
+      pulseExpansion: 2
     },
     colorField: {
       name: 'gps_data.types',

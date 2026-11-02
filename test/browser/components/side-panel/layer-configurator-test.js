@@ -7,6 +7,7 @@ import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import {fireEvent, render, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {KeplerTable} from '@kepler.gl/table';
@@ -1415,6 +1416,115 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
       restoredGroup.classList.contains('collapsed'),
       'reopened surface settings start collapsed'
     );
+  } finally {
+    restored.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> Point Pulse / Ripple controls', async t => {
+  const layer = new KeplerGlLayers.PointLayer({id: 'pulse-controls', dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(version => version + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  const group = within(view.container).getByText('Pulse / Ripple').closest('.layer-config-group');
+  const header = group.querySelector('.layer-config-group__header');
+  const toggle = within(header).getByRole('checkbox');
+  const content = group.querySelector('.layer-config-group__content');
+  const user = userEvent.setup();
+  const assertControlsSkipped = async message => {
+    toggle.focus();
+    await user.tab();
+    t.notOk(content.contains(document.activeElement), message);
+  };
+  try {
+    t.equal(group, group.parentElement.lastElementChild, 'effect is the last group');
+    t.notOk(toggle.checked, 'effect is off by default');
+    t.ok(group.classList.contains('collapsed'), 'effect controls start collapsed');
+    t.ok(content.classList.contains('disabled'), 'disabled effect controls cannot be edited');
+    await assertControlsSkipped('collapsed disabled controls are skipped by Tab');
+    fireEvent.click(header);
+    await assertControlsSkipped('expanded disabled controls are skipped by Tab');
+    const disabledSelector = content.querySelector('.item-selector');
+    fireEvent.keyDown(disabledSelector, {key: 'Enter'});
+    t.equal(
+      disabledSelector.getAttribute('aria-expanded'),
+      'false',
+      'disabled selector cannot open from the keyboard'
+    );
+    fireEvent.keyDown(disabledSelector, {key: 'Escape'});
+    fireEvent.click(header);
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {pulseEnabled: true}, 'toggle enables the effect');
+    t.notOk(group.classList.contains('collapsed'), 'enabling expands controls');
+    t.notOk(content.classList.contains('disabled'), 'enabled controls can be edited');
+    toggle.focus();
+    await user.tab();
+    const enabledSelector = content.querySelector('.item-selector');
+    t.equal(
+      document.activeElement,
+      enabledSelector,
+      'enabled expanded selector is keyboard reachable'
+    );
+    await user.keyboard('{Enter}');
+    t.equal(
+      enabledSelector.getAttribute('aria-expanded'),
+      'true',
+      'enabled selector opens from the keyboard'
+    );
+    await user.keyboard('{Escape}');
+    fireEvent.click(content.querySelector('.item-selector__dropdown'));
+    fireEvent.click(view.getByText('Ripple'));
+    t.deepEqual(changed.lastCall.args[0], {pulseMode: 'ripple'}, 'effect selector chooses Ripple');
+    const inputs = Array.from(content.querySelectorAll('.kg-range-slider__input'));
+    const speed = inputs.find(input => input.value === '1');
+    const expansion = inputs.find(input => input.value === '2');
+    fireEvent.change(speed, {target: {value: '0.5'}});
+    fireEvent.blur(speed);
+    t.deepEqual(changed.lastCall.args[0], {pulseSpeed: 0.5}, 'speed can be adjusted');
+    fireEvent.change(expansion, {target: {value: '4'}});
+    fireEvent.blur(expansion);
+    t.deepEqual(changed.lastCall.args[0], {pulseExpansion: 4}, 'expansion can be adjusted');
+    const calls = changed.callCount;
+    fireEvent.click(header);
+    t.ok(group.classList.contains('collapsed'), 'header collapses the settings');
+    t.equal(changed.callCount, calls, 'collapse does not turn off animation');
+    await assertControlsSkipped('collapsed enabled controls are skipped by Tab');
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {pulseEnabled: false}, 'toggle disables the effect');
+    fireEvent.click(toggle);
+    t.equal(layer.config.visConfig.pulseMode, 'ripple', 'reenabling retains the style');
+    t.equal(layer.config.visConfig.pulseSpeed, 0.5, 'reenabling retains speed');
+    t.equal(layer.config.visConfig.pulseExpansion, 4, 'reenabling retains expansion');
+  } finally {
+    view.unmount();
+  }
+  const restored = renderWithTheme(<Editor />);
+  try {
+    const restoredGroup = within(restored.container)
+      .getByText('Pulse / Ripple')
+      .closest('.layer-config-group');
+    t.ok(
+      within(restoredGroup.querySelector('.layer-config-group__header')).getByRole('checkbox')
+        .checked,
+      'saved effect restores the enabled toggle'
+    );
+    t.ok(restoredGroup.classList.contains('collapsed'), 'reopened controls start collapsed');
   } finally {
     restored.unmount();
     t.end();

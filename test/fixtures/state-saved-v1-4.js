@@ -259,7 +259,11 @@ mergedLayer0.config = {
     radiusRange: [0, 50],
     allowHover: true,
     showNeighborOnHover: false,
-    showHighlightColor: true
+    showHighlightColor: true,
+    pulseEnabled: false,
+    pulseMode: 'pulse',
+    pulseSpeed: 1,
+    pulseExpansion: 2
   },
   animation: {enabled: false}
 };
