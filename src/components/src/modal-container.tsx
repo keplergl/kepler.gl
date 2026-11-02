@@ -351,24 +351,46 @@ export default function ModalContainerFactory(
       const {uiState} = this._propsWithMapInfoDraft();
       const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
         uiState.exportMap;
-      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
-        this._propsWithMapInfoDraft(),
-        {
-          ...(uiState.exportMap[format] || {}),
-          includeLayerApiKeys,
-          fileName,
-          appName,
-          appWebsite,
-          appIcon,
-          appNameColor
-        }
-      );
-      this._commitMapInfoDraft();
-      this._closeModal();
+      try {
+        (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
+          this._propsWithMapInfoDraft(),
+          {
+            ...(uiState.exportMap[format] || {}),
+            includeLayerApiKeys,
+            fileName,
+            appName,
+            appWebsite,
+            appIcon,
+            appNameColor
+          }
+        );
+        this._commitMapInfoDraft();
+        this._closeModal();
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        this.props.uiStateActions.addNotification({
+          id: 'EXPORT_MAP_ERROR_ID',
+          type: 'error',
+          topic: 'global',
+          message: `Failed to export map: ${detail}`
+        });
+      }
     };
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
-      const toSave = exportMap(this._propsWithMapInfoDraft());
+      let toSave;
+      try {
+        toSave = exportMap(this._propsWithMapInfoDraft());
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        this.props.uiStateActions.addNotification({
+          id: 'EXPORT_MAP_ERROR_ID',
+          type: 'error',
+          topic: 'global',
+          message: `Failed to export map: ${detail}`
+        });
+        return;
+      }
       this._commitMapInfoDraft();
 
       this.props.providerActions.exportFileToCloud({

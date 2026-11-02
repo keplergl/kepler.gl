@@ -16,7 +16,12 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
+import {
+  ArrowDataContainer,
+  DataContainerInterface,
+  FIELD_DISPLAY_FORMAT,
+  isPlainObject
+} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -107,6 +112,39 @@ export const propertiesV1 = {
   disableDataOperation: null
 };
 
+/** Convert nested Arrow lists/structs and BigInts without changing live values. */
+function getValueForSaving(value: any, ancestors = new Set<object>()): any {
+  if (typeof value === 'bigint') {
+    const number = Number(value);
+    return Number.isSafeInteger(number) ? number : value.toString();
+  }
+  const plain = value instanceof arrow.StructRow ? value.toJSON() : value;
+  const isList = Array.isArray(plain) || plain instanceof arrow.Vector;
+  if (!isList && !isPlainObject(plain)) return value;
+  if (ancestors.has(value)) throw new TypeError('Cannot export circular dataset values');
+  ancestors.add(value);
+  let saved = plain;
+  if (isList) {
+    const items = plain instanceof arrow.Vector ? Array.from(plain) : plain;
+    saved = items;
+    for (let i = 0; i < items.length; i++) {
+      const next = getValueForSaving(items[i], ancestors);
+      if (next === items[i]) continue;
+      if (saved === items) saved = items.slice();
+      saved[i] = next;
+    }
+  } else {
+    for (const key of Object.keys(plain)) {
+      const next = getValueForSaving(plain[key], ancestors);
+      if (next === plain[key]) continue;
+      if (saved === plain) saved = {...plain};
+      saved[key] = next;
+    }
+  }
+  ancestors.delete(value);
+  return saved;
+}
+
 /**
  * TODO Consider moving this cast to ArrowDataContainer?
  * Prepare a data container for export as part of json / html files.
@@ -135,14 +173,6 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
           const value = row[columnIndex];
           row[columnIndex] = value == null ? null : new Date(value).toISOString();
         });
-      } else if (arrow.DataType.isInt(column.type) && column.type.bitWidth === 64) {
-        allData.forEach(row => {
-          const value = row[columnIndex];
-          if (typeof value === 'bigint') {
-            const number = Number(value);
-            row[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
-          }
-        });
       } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
         const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
         allData.forEach(row => {
@@ -150,27 +180,10 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
         });
       }
     }
-  } else {
-    // Row containers expose their live backing rows. Copy only when conversion
-    // is needed, leaving other rows and exact stored values intact.
-    let savedData = allData;
-    for (let rowIndex = 0; rowIndex < allData.length; rowIndex++) {
-      const row = allData[rowIndex];
-      if (row == null) continue;
-      let savedRow = row;
-      for (let columnIndex = 0; columnIndex < row.length; columnIndex++) {
-        const value = row[columnIndex];
-        if (typeof value !== 'bigint') continue;
-        if (savedData === allData) savedData = allData.slice();
-        if (savedRow === row) savedRow = savedData[rowIndex] = row.slice();
-        const number = Number(value);
-        savedRow[columnIndex] = Number.isSafeInteger(number) ? number : value.toString();
-      }
-    }
-    return savedData;
   }
 
-  return allData;
+  // Row containers expose live rows: copy only values that need conversion.
+  return getValueForSaving(allData);
 };
 
 /**

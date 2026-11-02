@@ -345,6 +345,91 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
   t.end();
 });
 
+test('#DatasetSchema -> nested Arrow Int64 values survive a complete JSON backup and reload', t => {
+  const item = new arrow.Struct([
+    new arrow.Field('signed', new arrow.Int64(), true),
+    new arrow.Field('unsigned', new arrow.Uint64(), true)
+  ]);
+  const type = new arrow.Struct([
+    new arrow.Field('items', new arrow.List(new arrow.Field('item', item, true)), true)
+  ]);
+  const values = [
+    {
+      items: [
+        {signed: 42n, unsigned: 9007199254740991n},
+        {signed: -9223372036854775808n, unsigned: 18446744073709551615n},
+        {signed: null, unsigned: 0n},
+        null
+      ]
+    },
+    {items: []},
+    {items: null},
+    null
+  ];
+  const source = new arrow.Table({nested: arrow.vectorFromArray(values, type)});
+  const ipc = arrow.tableFromIPC(arrow.tableToIPC(source, 'file'));
+  const dataset = new KeplerTable({info: {id: 'nested'}, color: [1, 2, 3]}).updateSchema(
+    processArrowTable({shape: 'arrow-table', data: ipc})
+  );
+  const expected = [
+    [
+      {
+        items: [
+          {signed: 42, unsigned: 9007199254740991},
+          {signed: '-9223372036854775808', unsigned: '18446744073709551615'},
+          {signed: null, unsigned: 0},
+          null
+        ]
+      }
+    ],
+    [{items: []}],
+    [{items: null}],
+    [null]
+  ];
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.doesNotThrow(() => {
+    const payload = JSON.parse(
+      exportToJsonString({
+        datasets: [{version: 'v1', data: saved}],
+        config: {version: 'v1', config: {}}
+      })
+    );
+    t.deepEqual(payload.datasets[0].data.allData, expected, 'full backup has exact nested values');
+    const reloaded = reloadDataset(payload.datasets[0].data);
+    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'reload retains nesting and nulls');
+    t.deepEqual(datasetSchema[VERSIONS.v1].save(reloaded).allData, expected, 'resave is stable');
+    const html = exportMapToHTML(payload);
+    t.deepEqual(
+      JSON.parse(html.match(/const datasets = (.*);/)[1]),
+      payload.datasets,
+      'HTML uses the same saved values'
+    );
+  }, 'backup is valid JSON and reloads');
+  t.equal(
+    dataset.dataContainer.valueAt(0, 0).items.get(1).signed,
+    -9223372036854775808n,
+    'live Arrow values are not mutated'
+  );
+  t.equal(
+    ipc.getChild('nested').get(0).items.get(1).unsigned,
+    18446744073709551615n,
+    'source buffers are not mutated'
+  );
+
+  const rows = [[{items: [1n, null, {value: 9007199254740993n}]}]];
+  const rowTable = new KeplerTable({info: {id: 'nested-rows'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows
+  });
+  t.deepEqual(
+    datasetSchema[VERSIONS.v1].save(rowTable).allData,
+    [[{items: [1, null, {value: '9007199254740993'}]}]],
+    'row-backed nested values use the same policy'
+  );
+  t.equal(rows[0][0].items[2].value, 9007199254740993n, 'live row-backed objects are not mutated');
+  t.end();
+});
+
 test('#DatasetSchema -> joined Int64 rows save and reload without changing live rows', t => {
   const values = [
     0n,

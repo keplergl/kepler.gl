@@ -167,13 +167,7 @@ export function exportImage(uiStateExportImage: ExportImage, filename?: string) 
 }
 
 export function exportToJsonString(data) {
-  try {
-    return JSON.stringify(data);
-  } catch (e) {
-    if (e instanceof TypeError) return e.message;
-    // Non-Standard Error Object Property
-    return (e as any).description;
-  }
+  return JSON.stringify(data);
 }
 
 /** Dataset metadata fields that hold a private layer API key. */
