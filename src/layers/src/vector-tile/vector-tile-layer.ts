@@ -419,7 +419,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     // Jenks needs the full value distribution, which tilesets don't provide.
     options = options.filter(scale => scale !== SCALE_TYPES.jenks);
 
-    const channel = this.visualChannels.strokeColor;
+    const channel = this.visualChannels[channelKey];
     const field = this.config[channel.field];
     if (
       !(
@@ -428,7 +428,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         // If we've set the scale to quantile, we need to include it - there's a loading
         // period in which the visConfig isn't set yet, but if we don't return the right
         // scale type we lose it
-        this.config.colorScale === SCALE_TYPES.quantile
+        this.config[channel.scale] === SCALE_TYPES.quantile
       )
     ) {
       options = options.filter(scale => scale !== SCALE_TYPES.quantile);
