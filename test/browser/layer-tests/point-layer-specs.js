@@ -5,7 +5,10 @@ import test from 'tape';
 import {LayerManager, MapView, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {visStateSchemaV1} from '@kepler.gl/schemas';
-import PulseRippleExtension from '../../../src/layers/src/point-layer/pulse-ripple-extension';
+import PulseRippleExtension, {
+  EventPulseRippleExtension,
+  encodePulseTime
+} from '../../../src/layers/src/point-layer/pulse-ripple-extension';
 import moment from 'moment';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {scaleQuantize} from 'd3-scale';
@@ -319,7 +322,11 @@ test('#PointLayer -> native separated points preserve every coordinate through i
       const batches = coordinates.map((coords, index) => {
         const table = new arrow.Table({
           geometry: arrow.vectorFromArray(coords, type),
-          value: arrow.vectorFromArray(values[index], new arrow.Float64())
+          value: arrow.vectorFromArray(values[index], new arrow.Float64()),
+          started: arrow.vectorFromArray(
+            values[index].map(v => v * 1000),
+            new arrow.TimestampMillisecond()
+          )
         });
         table.schema.fields[0].metadata.set('ARROW:extension:name', `geoarrow.${geometryType}`);
         return table;
@@ -448,6 +455,81 @@ test('#PointLayer -> native separated points preserve every coordinate through i
           90,
           'later batch reads 90 rather than the first batch value 10'
         );
+      }
+      layer.updateLayerVisConfig({
+        pulseEnabled: true,
+        pulseTrigger: 'event',
+        pulseTimeField: 'started'
+      });
+      const eventData = layer.formatLayerData({[dataset.id]: dataset}, formatted);
+      const renderEvents = currentTime =>
+        layer.renderLayer({
+          data: eventData,
+          dataset,
+          idx: 0,
+          mapState: INITIAL_MAP_STATE,
+          gpuFilter: dataset.gpuFilter,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          visible: true,
+          layerCallbacks: {},
+          animationConfig: {currentTime}
+        });
+      const eventLayers = renderEvents(90500);
+      const eventComposite = eventLayers.find(l => l.id === `${layer.id}-event-pulse`);
+      t.ok(eventComposite, 'event overlay supports Arrow geometry');
+      eventComposite.renderLayers().forEach((sublayer, batchIndex) => {
+        rowIndices[batchIndex].forEach((rowIndex, index) => {
+          const context = {index, data: sublayer.props.data, target: []};
+          t.deepEqual(
+            sublayer.props.getPulseStartTime(null, context),
+            encodePulseTime(values.flat()[rowIndex] * 1000 - 10000),
+            'event timestamp uses the absolute feature row, including MultiPoint expansion'
+          );
+          t.deepEqual(
+            sublayer.props.getFilterValue(null, context),
+            formatted.getFilterValue({index: rowIndex}),
+            'event overlay preserves GPU filtering across batches'
+          );
+          t.equal(
+            sublayer.props.getFiltered(null, context),
+            formatted.getFiltered({index: rowIndex}),
+            'event overlay preserves CPU filtering across batches'
+          );
+        });
+      });
+      let timestampReads = 0;
+      const getPulseStartTime = eventData.getPulseStartTime;
+      eventData.getPulseStartTime = row => {
+        timestampReads++;
+        return getPulseStartTime(row);
+      };
+      const manager = new LayerManager(device, {
+        viewport: new MapView().makeViewport({
+          width: 400,
+          height: 400,
+          viewState: INITIAL_MAP_STATE
+        })
+      });
+      try {
+        manager.setLayers(renderEvents(90500));
+        t.equal(timestampReads, rowIndices.flat().length, 'initial upload reads expanded points');
+        timestampReads = 0;
+        for (const time of [90600, 90200, 10000]) {
+          manager.setLayers(renderEvents(time));
+          t.equal(timestampReads, 0, 'playback and scrubbing reuse Arrow event attributes');
+        }
+        eventData.getPulseStartTime = row => {
+          timestampReads++;
+          return encodePulseTime(row.index * 2000);
+        };
+        manager.setLayers(renderEvents(10500));
+        t.equal(
+          timestampReads,
+          rowIndices.flat().length,
+          'changing the event accessor uploads fresh attributes across all batches'
+        );
+      } finally {
+        manager.finalize();
       }
       const vectorLayer = new GeoArrowScatterplotLayer({
         id: 'batched-vector-radius',
@@ -2176,6 +2258,269 @@ test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
   );
   for (const key of ['pulseEnabled', 'pulseMode', 'pulseSpeed', 'pulseExpansion']) {
     t.equal(restored.config.visConfig[key], layer.config.visConfig[key], `restores ${key}`);
+  }
+  t.end();
+});
+
+test('#PointLayer -> recorded events preserve points, filters and saved settings', async t => {
+  const dataset = new KeplerTable({info: {id: 'events'}, color: [0, 0, 0]});
+  const fields = [
+    {name: 'lat', type: 'real'},
+    {name: 'lng', type: 'real'},
+    {name: 'started', type: 'timestamp', format: ''}
+  ];
+  await dataset.importData({
+    data: {
+      fields,
+      rows: [
+        [1, 2, 0],
+        [3, 4, 2000],
+        [5, 6, null],
+        [7, 8, NaN]
+      ]
+    }
+  });
+  const layer = new PointLayer({dataId: dataset.id});
+  layer.config.columns.lat = {value: 'lat', fieldIdx: 0};
+  layer.config.columns.lng = {value: 'lng', fieldIdx: 1};
+  layer.updateLayerVisConfig({
+    pulseEnabled: true,
+    pulseTrigger: 'event',
+    pulseTimeField: 'started',
+    pulseDurationMs: 1000
+  });
+  const datasets = {[dataset.id]: dataset};
+  let data = layer.formatLayerData(datasets);
+  const render = time =>
+    layer.renderLayer({
+      data,
+      dataset,
+      idx: 0,
+      mapState: INITIAL_MAP_STATE,
+      gpuFilter: dataset.gpuFilter,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      visible: true,
+      layerCallbacks: {},
+      animationConfig: {currentTime: time}
+    });
+  const isEvent = l => l.props.extensions.some(e => e instanceof EventPulseRippleExtension);
+  t.deepEqual(layer.config.animation.domain, [0, 3000], 'timeline includes the final effect tail');
+  t.deepEqual(data.getPulseStartTime({index: 0}), [0, 0, 1], 'epoch zero is a valid event');
+  for (const index of [2, 3])
+    t.deepEqual(
+      data.getPulseStartTime({index}),
+      [0, 0, 0],
+      'invalid time suppresses only its effect'
+    );
+  for (const time of [null, undefined, NaN, -1, 3000, 4000]) {
+    const layers = render(time);
+    t.notOk(layers.some(isEvent), 'no overlay outside the event domain or without a clock');
+    t.equal(layers[0].props.data.length, 4, 'ordinary points remain');
+  }
+  for (const time of [0, 500, 500, 2500, 0]) {
+    const layers = render(time);
+    t.notOk(
+      layers[0].props.extensions.some(
+        e => e instanceof PulseRippleExtension || e instanceof EventPulseRippleExtension
+      ),
+      'base points stay ordinary'
+    );
+    const overlay = layers.find(isEvent);
+    t.ok(overlay, 'playback, pause, scrubbing and replay derive the overlay from the playhead');
+    t.equal(overlay.props.pulseCurrentTime, time, 'overlay follows recorded time');
+    t.notOk(overlay.props.pickable, 'overlay does not intercept point picking');
+    t.equal(overlay.props.getFilterValue, data.getFilterValue, 'GPU filtering is preserved');
+    t.deepEqual(
+      overlay.props.filterRange,
+      dataset.gpuFilter.filterRange,
+      'filter ranges are unchanged'
+    );
+    t.equal(overlay.props.getRadius, data.getRadius, 'radius mapping is shared');
+    t.equal(overlay.props.getFillColor, data.getFillColor, 'color mapping is shared');
+  }
+  const viewport = new MapView().makeViewport({
+    width: 400,
+    height: 400,
+    viewState: INITIAL_MAP_STATE
+  });
+  const manager = new LayerManager(device, {viewport});
+  try {
+    for (const pulseMode of ['pulse', 'ripple']) {
+      layer.updateLayerVisConfig({pulseMode});
+      testRenderDeckLayer(t, `recorded ${pulseMode}`, render(500), {layerManager: manager});
+    }
+  } finally {
+    manager.finalize();
+  }
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id]
+  }).visState;
+  const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  const restored = testCreateLayerFromConfig(
+    t,
+    {layer: loaded.layers[0], datasets},
+    {point: PointLayer}
+  );
+  for (const key of ['pulseTrigger', 'pulseTimeField', 'pulseDurationMs']) {
+    t.equal(restored.config.visConfig[key], layer.config.visConfig[key], `restores ${key}`);
+  }
+  const accessor = data.getPulseStartTime;
+  data = layer.formatLayerData(datasets, data);
+  t.equal(data.getPulseStartTime, accessor, 'unchanged data reuses timestamp attributes');
+  await dataset.update({fields, rows: [[1, 2, 8000]]});
+  data = layer.formatLayerData(datasets, data);
+  t.deepEqual(
+    layer.config.animation.domain,
+    [8000, 9000],
+    'row replacement refreshes the timeline'
+  );
+  t.notEqual(data.getPulseStartTime, accessor, 'row replacement invalidates cached timestamps');
+  for (const config of [
+    {pulseTimeField: 'missing'},
+    {pulseTimeField: 'lat'},
+    {pulseTimeField: 'started', pulseDurationMs: 0}
+  ]) {
+    layer.updateLayerVisConfig(config);
+    data = layer.formatLayerData(datasets, data);
+    t.notOk(layer.config.animation.enabled, 'invalid configuration disables event animation');
+    t.equal(
+      render(8500)[0].props.data.length,
+      1,
+      'invalid event configuration preserves ordinary points'
+    );
+  }
+  t.end();
+});
+
+test('#PointLayer -> recorded playback only updates the clock', async t => {
+  for (const arrowData of [false, true]) {
+    const fields = [
+      {name: 'lat', type: 'real'},
+      {name: 'lng', type: 'real'},
+      {name: 'time', type: 'timestamp', format: ''}
+    ];
+    const makeData = times => {
+      const rows = times.map((time, index) => [index + 1, index + 2, time]);
+      if (!arrowData) return {fields, rows};
+      const table = new arrow.Table({
+        lat: arrow.vectorFromArray(
+          rows.map(row => row[0]),
+          new arrow.Float64()
+        ),
+        lng: arrow.vectorFromArray(
+          rows.map(row => row[1]),
+          new arrow.Float64()
+        ),
+        time: arrow.vectorFromArray(times, new arrow.TimestampMillisecond())
+      });
+      return processArrowBatches(table.batches, {compact: false});
+    };
+    const dataset = new KeplerTable({info: {id: 'event-clock'}, color: [0, 0, 0]});
+    await dataset.importData({data: makeData([1000, 2000])});
+    const layer = new PointLayer({dataId: dataset.id});
+    layer.config.columns.lat = {value: 'lat', fieldIdx: 0};
+    layer.config.columns.lng = {value: 'lng', fieldIdx: 1};
+    layer.updateLayerVisConfig({pulseEnabled: true, pulseTrigger: 'event', pulseTimeField: 'time'});
+    let data;
+    let reads = 0;
+    const format = () => {
+      data = layer.formatLayerData({[dataset.id]: dataset}, data);
+      const getPulseStartTime = data.getPulseStartTime;
+      data.getPulseStartTime = row => {
+        reads++;
+        return getPulseStartTime(row);
+      };
+    };
+    format();
+    const render = currentTime =>
+      layer.renderLayer({
+        data,
+        dataset,
+        idx: 0,
+        mapState: INITIAL_MAP_STATE,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        visible: true,
+        layerCallbacks: {},
+        animationConfig: {currentTime}
+      });
+    const manager = new LayerManager(device, {
+      viewport: new MapView().makeViewport({
+        width: 400,
+        height: 400,
+        viewState: INITIAL_MAP_STATE
+      })
+    });
+    const label = arrowData ? 'numeric Arrow points' : 'row points';
+    try {
+      manager.setLayers(render(1500));
+      t.equal(reads, 2, `${label}: initial upload reads both timestamps`);
+      reads = 0;
+      for (const time of [1600, 1600, 1200]) {
+        manager.setLayers(render(time));
+        t.equal(reads, 0, `${label}: playback, pause and scrub reuse attributes`);
+      }
+      await dataset.update(makeData([1000, 1500, 2000]));
+      format();
+      manager.setLayers(render(1700));
+      t.equal(reads, 3, `${label}: data replacement uploads new timestamps`);
+      reads = 0;
+      manager.setLayers(render(1800));
+      t.equal(reads, 0, `${label}: replaced data is reused on the next tick`);
+    } finally {
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#PointLayer -> Arrow timestamp units and invalid event data', async t => {
+  const start = Date.UTC(2026, 10, 2);
+  for (const type of [
+    new arrow.TimestampSecond(),
+    new arrow.TimestampMillisecond(),
+    new arrow.TimestampMicrosecond(),
+    new arrow.TimestampNanosecond()
+  ]) {
+    const source = new arrow.Table({
+      time: arrow.vectorFromArray([start, null, start + 2000], type)
+    });
+    const dataset = new KeplerTable({info: {id: 'event-units'}, color: [0, 0, 0]});
+    await dataset.importData({data: processArrowBatches(source.batches, {compact: false})});
+    const layer = new PointLayer({dataId: dataset.id});
+    layer.updateLayerVisConfig({
+      pulseEnabled: true,
+      pulseTrigger: 'event',
+      pulseTimeField: 'time',
+      pulseDurationMs: 500
+    });
+    const data = layer.updateEventAnimation(dataset);
+    t.deepEqual(
+      layer.config.animation.domain,
+      [start, start + 2500],
+      `${type}: normalized milliseconds define the domain`
+    );
+    t.deepEqual(data.getPulseStartTime({index: 0}), [0, 0, 1], `${type}: first event is valid`);
+    t.deepEqual(data.getPulseStartTime({index: 1}), [0, 0, 0], `${type}: null is not epoch zero`);
+    t.deepEqual(
+      data.getPulseStartTime({index: 2}),
+      [2000, 0, 1],
+      `${type}: elapsed milliseconds are preserved`
+    );
+  }
+  const dataset = new KeplerTable({info: {id: 'empty-events'}, color: [0, 0, 0]});
+  const fields = [{name: 'time', type: 'timestamp', format: ''}];
+  const layer = new PointLayer({dataId: dataset.id});
+  layer.updateLayerVisConfig({pulseEnabled: true, pulseTrigger: 'event', pulseTimeField: 'time'});
+  for (const rows of [[], [[null], ['not-a-time'], [Infinity]]]) {
+    await dataset.importData({data: {fields, rows}});
+    layer.updateEventAnimation(dataset);
+    t.notOk(
+      layer.config.animation.enabled,
+      'empty or wholly invalid events do not create a timeline'
+    );
   }
   t.end();
 });

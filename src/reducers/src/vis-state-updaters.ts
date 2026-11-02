@@ -1420,7 +1420,12 @@ export function layerVisConfigChangeUpdater(
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
     const updatedState = updateStateWithLayerAndData(nextState, {layerData, layer, idx});
-    return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
+    return (newLayer.type === 'zarr' &&
+      props.some(p => p === 'zarrAxis' || p === 'zarrVariable')) ||
+      (newLayer.type === 'point' &&
+        props.some(p =>
+          ['pulseEnabled', 'pulseTrigger', 'pulseTimeField', 'pulseDurationMs'].includes(p)
+        ))
       ? updateAnimationDomain(updatedState)
       : updatedState;
   }
@@ -1448,7 +1453,8 @@ export const setLayerAnimationTimeUpdater = <S extends VisState>(
   };
   // update animation config for each layer
   return state.layers.reduce((accu, l) => {
-    if (l.config.animation.enabled && l.type !== 'trip') {
+    // Points and Trips consume the global playhead in renderLayer; their data is static per tick.
+    if (l.config.animation.enabled && l.type !== 'trip' && l.type !== 'point') {
       return layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime});
     }
     return accu;
@@ -4680,6 +4686,11 @@ function reconcileLayerWithNewSchema(
     configPatch.columns = {...layer.config.columns, ...columnsPatch};
   }
 
+  const {pulseTimeField} = layer.config.visConfig;
+  if (layer.type === LAYER_TYPES.point && pulseTimeField && renames[pulseTimeField]) {
+    configPatch.visConfig = {...layer.config.visConfig, pulseTimeField: renames[pulseTimeField]};
+  }
+
   // follow renamed visual-channel fields (colorField, sizeField, ...)
   Object.values(layer.visualChannels).forEach(({field}) => {
     const fieldConfig = layer.config[field];
@@ -5001,7 +5012,7 @@ export function updateDatasetUpdater(
   // 7. recompute layer domains + data for the updated dataset
   nextState = updateAllLayerDomainData(nextState, dataId);
 
-  return nextState;
+  return updateAnimationDomain(nextState);
 }
 
 /**

@@ -1500,6 +1500,62 @@ test('Components -> LayerConfigurator -> Point Pulse / Ripple controls', async t
     fireEvent.change(expansion, {target: {value: '4'}});
     fireEvent.blur(expansion);
     t.deepEqual(changed.lastCall.args[0], {pulseExpansion: 4}, 'expansion can be adjusted');
+    fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
+    fireEvent.click(view.getByText('At event time'));
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {pulseTrigger: 'event'},
+      'trigger selects recorded events'
+    );
+    t.notOk(
+      within(content).queryByText('Speed (cycles/s)'),
+      'recorded events use duration instead of repetition speed'
+    );
+    const duration = within(content).getByLabelText('Duration (timeline seconds)');
+    const beforeEdit = changed.callCount;
+    await user.clear(duration);
+    t.equal(duration.value, '', 'duration can be cleared while editing');
+    await user.type(duration, '0.5');
+    t.equal(duration.value, '0.5', 'fractional duration can be typed from an empty input');
+    t.equal(changed.callCount, beforeEdit, 'draft edits do not update the timeline');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {pulseDurationMs: 500}, 'blur commits a half second');
+    await user.clear(duration);
+    await user.type(duration, '2.5{Enter}');
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {pulseDurationMs: 2500},
+      'Enter commits duration in milliseconds'
+    );
+    const durationChanges = () =>
+      changed.getCalls().filter(call => 'pulseDurationMs' in call.args[0]).length;
+    const beforeInvalid = durationChanges();
+    for (const value of ['', '0', '-1']) {
+      await user.clear(duration);
+      if (value) await user.type(duration, value);
+      await user.tab();
+      t.equal(durationChanges(), beforeInvalid, 'invalid duration is rejected on commit');
+      t.equal(duration.value, '2.5', 'invalid duration restores the saved value');
+    }
+    const timeField = defaultProps.datasets[testCsvDataId].fields.find(f => f.type === 'timestamp');
+    fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[2]);
+    const timestampDropdown = view
+      .getByText(timeField.name, {selector: '.list-selector .list__item__anchor[title]'})
+      .closest('.typeahead');
+    await user.type(within(timestampDropdown).getByRole('textbox'), timeField.name);
+    fireEvent.click(
+      view.getByText(timeField.name, {selector: '.list-selector .list__item__anchor[title]'})
+    );
+    t.equal(
+      layer.config.visConfig.pulseTimeField,
+      timeField.name,
+      'searching timestamps by name selects the recorded event field'
+    );
+    fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
+    fireEvent.click(
+      view.getByText('Continuous', {selector: '.list-selector .list__item__anchor:not(.disabled)'})
+    );
+    t.equal(layer.config.visConfig.pulseSpeed, 0.5, 'returning to continuous preserves its speed');
     const calls = changed.callCount;
     fireEvent.click(header);
     t.ok(group.classList.contains('collapsed'), 'header collapses the settings');

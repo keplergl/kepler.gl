@@ -1076,7 +1076,10 @@ mergedLayer0.config = {
     pulseEnabled: false,
     pulseMode: 'pulse',
     pulseSpeed: 1,
-    pulseExpansion: 2
+    pulseExpansion: 2,
+    pulseTrigger: 'continuous',
+    pulseTimeField: '',
+    pulseDurationMs: 1000
   }
 };
 
@@ -1232,7 +1235,10 @@ mergedLayer2.config = {
     pulseEnabled: false,
     pulseMode: 'pulse',
     pulseSpeed: 1,
-    pulseExpansion: 2
+    pulseExpansion: 2,
+    pulseTrigger: 'continuous',
+    pulseTimeField: '',
+    pulseDurationMs: 1000
   },
   animation: {enabled: false}
 };

@@ -948,7 +948,10 @@ export const expectedSavedLayer1 = {
       pulseEnabled: false,
       pulseMode: 'pulse',
       pulseSpeed: 1,
-      pulseExpansion: 2
+      pulseExpansion: 2,
+      pulseTrigger: 'continuous',
+      pulseTimeField: '',
+      pulseDurationMs: 1000
     }
   },
   visualChannels: {
@@ -997,7 +1000,10 @@ export const expectedLoadedLayer1 = {
       pulseEnabled: false,
       pulseMode: 'pulse',
       pulseSpeed: 1,
-      pulseExpansion: 2
+      pulseExpansion: 2,
+      pulseTrigger: 'continuous',
+      pulseTimeField: '',
+      pulseDurationMs: 1000
     },
     colorField: {
       name: 'gps_data.types',

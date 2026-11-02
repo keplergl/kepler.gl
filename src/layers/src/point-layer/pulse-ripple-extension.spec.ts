@@ -4,7 +4,11 @@
 import {Layer} from '@deck.gl/core';
 import PulseRippleExtension, {
   getPulseRippleUniforms,
-  PulseRippleProps
+  PulseRippleProps,
+  encodePulseTime,
+  isPulseTimeActive,
+  EventPulseRippleExtension,
+  EventPulseRippleProps
 } from './pulse-ripple-extension';
 
 describe('Pulse / Ripple animation', () => {
@@ -85,6 +89,74 @@ describe('Pulse / Ripple animation', () => {
       redraw.mockClear();
       extension.draw.call({...host, ...changes} as unknown as Layer<PulseRippleProps>);
       expect(redraw).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('Recorded event Pulse / Ripple', () => {
+  test('has one half-open event window, including epoch zero, without looping', () => {
+    for (const start of [0, Date.UTC(2026, 10, 2)]) {
+      for (const [offset, active] of [
+        [-1, false],
+        [0, true],
+        [500, true],
+        [999, true],
+        [1000, false],
+        [1500, false],
+        [2000, false]
+      ] as const) {
+        expect(isPulseTimeActive(start + offset, start, 1000)).toBe(active);
+      }
+    }
+    for (const value of [null, undefined, NaN, Infinity]) {
+      expect(isPulseTimeActive(value, 0, 1000)).toBe(false);
+    }
+    for (const duration of [0, -1, NaN, Infinity]) {
+      expect(isPulseTimeActive(0, 0, duration)).toBe(false);
+    }
+  });
+  test('preserves millisecond differences across long datasets and rejects missing times', () => {
+    const start = Date.UTC(2026, 10, 2) - Date.UTC(2000, 0, 1);
+    for (const offset of [0, 1, 499, 500, 999, 1000, 1001]) {
+      const a = encodePulseTime(start).map(Math.fround);
+      const b = encodePulseTime(start + offset).map(Math.fround);
+      const gpuAge = Math.fround(Math.fround(b[0] - a[0]) + Math.fround(b[1] - a[1]));
+      expect(gpuAge).toBe(offset);
+    }
+    expect(encodePulseTime(0)).toEqual([0, 0, 1]);
+    for (const value of [null, undefined, NaN, Infinity, -Infinity]) {
+      expect(encodePulseTime(value)).toEqual([0, 0, 0]);
+    }
+  });
+
+  test('uses only the playhead, including pause, scrubbing and replay; never requests redraw', () => {
+    const extension = new EventPulseRippleExtension();
+    const setProps = jest.fn();
+    const redraw = jest.fn();
+    const host = {
+      props: {pulseCurrentTime: 500, pulseDurationMs: 1000, pulseExpansion: 3, pulseMode: 'ripple'},
+      getModels: () => [{shaderInputs: {setProps}}],
+      setNeedsRedraw: redraw
+    };
+    for (const time of [500, 500, 1200, -1, 0, 500]) {
+      host.props.pulseCurrentTime = time;
+      extension.draw.call(host as unknown as Layer<EventPulseRippleProps>);
+      expect(setProps).toHaveBeenLastCalledWith({
+        eventPulse: {
+          currentTime: encodePulseTime(time),
+          duration: 1000,
+          expansion: 3,
+          ripple: 1
+        }
+      });
+    }
+    expect(redraw).not.toHaveBeenCalled();
+    for (const duration of [0, -1, NaN, Infinity]) {
+      host.props.pulseDurationMs = duration;
+      extension.draw.call(host as unknown as Layer<EventPulseRippleProps>);
+      expect(setProps).toHaveBeenLastCalledWith({
+        eventPulse: expect.objectContaining({duration: 0})
+      });
     }
   });
 });

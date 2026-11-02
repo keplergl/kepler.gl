@@ -206,6 +206,11 @@ export default {
       pulse: 'Pulse',
       ripple: 'Ripple',
       pulseSpeed: 'Speed (cycles/s)',
+      pulseTrigger: 'Trigger',
+      continuous: 'Continuous',
+      event: 'At event time',
+      pulseTimeField: 'Event timestamp',
+      pulseDuration: 'Duration (timeline seconds)',
       pulseExpansion: 'Expansion',
       pulseExpansionDescription: 'Maximum radius as a multiple of the point radius.'
     },

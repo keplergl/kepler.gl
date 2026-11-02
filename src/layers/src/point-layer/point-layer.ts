@@ -20,7 +20,11 @@ import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/u
 import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
-import PulseRippleExtension from './pulse-ripple-extension';
+import PulseRippleExtension, {
+  EventPulseRippleExtension,
+  encodePulseTime,
+  isPulseTimeActive
+} from './pulse-ripple-extension';
 import {
   DatasetType,
   LAYER_VIS_CONFIGS,
@@ -72,6 +76,9 @@ export type PointLayerVisConfigSettings = {
   pulseMode: VisConfigSelection;
   pulseSpeed: VisConfigNumber;
   pulseExpansion: VisConfigNumber;
+  pulseTrigger: VisConfigSelection;
+  pulseTimeField: VisConfigSelection;
+  pulseDurationMs: VisConfigNumber;
 };
 
 export type PointLayerColumnsConfig = {
@@ -98,6 +105,9 @@ export type PointLayerVisConfig = {
   pulseMode: 'pulse' | 'ripple';
   pulseSpeed: number;
   pulseExpansion: number;
+  pulseTrigger: 'continuous' | 'event';
+  pulseTimeField: string;
+  pulseDurationMs: number;
   billboard: boolean;
   allowHover: boolean;
   showNeighborOnHover: boolean;
@@ -175,6 +185,7 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 const brushingExtension = new BrushingExtension();
 const arrowCPUFilterExtension = new FilterArrowExtension();
 const pulseRippleExtension = new PulseRippleExtension();
+const eventPulseRippleExtension = new EventPulseRippleExtension();
 
 function pushPointPosition(data: any[], pos: number[], index: number, neighbors?: number[]) {
   if (pos.every(Number.isFinite)) {
@@ -202,11 +213,38 @@ export const pointVisConfigs: {
   pulseMode: VisConfigSelection;
   pulseSpeed: VisConfigNumber;
   pulseExpansion: VisConfigNumber;
+  pulseTrigger: VisConfigSelection;
+  pulseTimeField: VisConfigSelection;
+  pulseDurationMs: VisConfigNumber;
   billboard: 'billboard';
   allowHover: 'allowHover';
   showNeighborOnHover: 'showNeighborOnHover';
   showHighlightColor: 'showHighlightColor';
 } = {
+  pulseTrigger: {
+    type: 'select',
+    defaultValue: 'continuous',
+    options: ['continuous', 'event'],
+    label: 'layerVisConfigs.point.pulseTrigger',
+    property: 'pulseTrigger'
+  } as VisConfigSelection,
+  pulseTimeField: {
+    type: 'select',
+    defaultValue: '',
+    options: [],
+    label: 'layerVisConfigs.point.pulseTimeField',
+    property: 'pulseTimeField',
+    group: 'point'
+  } as VisConfigSelection,
+  pulseDurationMs: {
+    type: 'number',
+    defaultValue: 1000,
+    label: 'layerVisConfigs.point.pulseDuration',
+    property: 'pulseDurationMs',
+    isRanged: false,
+    range: [1, Number.MAX_SAFE_INTEGER],
+    step: 1
+  } as VisConfigNumber,
   pulseEnabled: {
     type: 'boolean',
     defaultValue: false,
@@ -268,6 +306,14 @@ export default class PointLayer extends Layer {
 
   dataContainer: DataContainerInterface | null = null;
   geoArrowVector: arrow.Vector | undefined = undefined;
+  private pulseTimeCache?: {
+    dataContainer: DataContainerInterface;
+    dataRevision: number;
+    field: Field;
+    origin: number;
+    domain: [number, number] | null;
+    getPulseStartTime: (row: {index: number}) => number[];
+  };
 
   /*
    * CPU filtering an arrow table by values and assembling a partial copy of the raw table is expensive
@@ -323,7 +369,6 @@ export default class PointLayer extends Layer {
     return [
       ...super.noneLayerDataAffectingProps,
       'radius',
-      'pulseEnabled',
       'pulseMode',
       'pulseSpeed',
       'pulseExpansion'
@@ -503,6 +548,7 @@ export default class PointLayer extends Layer {
     const {textLabel} = this.config;
     const {gpuFilter, dataContainer} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
+    const pulseData = this.updateEventAnimation(datasets[this.config.dataId]);
     const getPosition = d => d.position;
 
     // get all distinct characters in the text labels
@@ -527,10 +573,60 @@ export default class PointLayer extends Layer {
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       getFiltered: isFilteredAccessor,
       textLabels,
+      ...pulseData,
       ...accessors
     };
   }
   /* eslint-enable complexity */
+
+  updateEventAnimation(dataset: KeplerTable) {
+    const {pulseEnabled, pulseTrigger, pulseTimeField, pulseDurationMs} = this.config.visConfig;
+    const field = dataset.fields.find(f => f.name === pulseTimeField && f.type === 'timestamp');
+    if (
+      !pulseEnabled ||
+      pulseTrigger !== 'event' ||
+      !field ||
+      !Number.isFinite(pulseDurationMs) ||
+      pulseDurationMs <= 0
+    ) {
+      this.config.animation = {enabled: false};
+      return {};
+    }
+    const {dataContainer, dataRevision} = dataset;
+    let cache = this.pulseTimeCache;
+    if (
+      !cache ||
+      cache.dataContainer !== dataContainer ||
+      cache.dataRevision !== dataRevision ||
+      cache.field !== field
+    ) {
+      let min = Infinity;
+      let max = -Infinity;
+      const times = dataContainer.mapIndex(({index}) => {
+        const value = field.valueAccessor({index});
+        if (!Number.isFinite(value)) return null;
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+        return value as number;
+      });
+      const origin = Number.isFinite(min) ? min : 0;
+      const encoded = times.map(time => encodePulseTime(time === null ? null : time - origin));
+      cache = this.pulseTimeCache = {
+        dataContainer,
+        dataRevision,
+        field,
+        origin,
+        domain: Number.isFinite(min) ? [min, max] : null,
+        getPulseStartTime: ({index}) => encoded[index] || [0, 0, 0]
+      };
+    }
+    const end = cache.domain ? cache.domain[1] + pulseDurationMs : NaN;
+    this.config.animation =
+      cache.domain && Number.isFinite(end)
+        ? {enabled: true, domain: [cache.domain[0], end]}
+        : {enabled: false};
+    return {getPulseStartTime: cache.getPulseStartTime, pulseTimeOrigin: cache.origin};
+  }
 
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
@@ -560,13 +656,27 @@ export default class PointLayer extends Layer {
 
   // eslint-disable-next-line complexity
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset} = opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset, animationConfig} =
+      opts;
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
     const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
-    const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion} = this.config.visConfig;
-    const pulseProps = {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion};
+    const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion, pulseTrigger, pulseDurationMs} =
+      this.config.visConfig;
+    const continuous = pulseEnabled && pulseTrigger !== 'event';
+    const pulseProps = {pulseEnabled: continuous, pulseMode, pulseSpeed, pulseExpansion};
+    const eventDomain = this.config.animation.domain;
+    const showEventOverlay =
+      pulseEnabled &&
+      pulseTrigger === 'event' &&
+      this.config.animation.enabled &&
+      eventDomain &&
+      isPulseTimeActive(
+        animationConfig?.currentTime,
+        eventDomain[0],
+        eventDomain[1] - eventDomain[0]
+      );
 
     const layerProps = {
       stroked: this.config.visConfig.outline,
@@ -642,11 +752,42 @@ export default class PointLayer extends Layer {
         lineWidthUnits: 'pixels',
         updateTriggers,
         ...pulseProps,
-        extensions: [...extensions, ...(pulseEnabled ? [pulseRippleExtension] : [])],
+        extensions: [...extensions, ...(continuous ? [pulseRippleExtension] : [])],
         opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
         pickable: allowHover,
         autoHighlight: false
       }),
+      ...(showEventOverlay
+        ? [
+            // @ts-expect-error Scatterplot and GeoArrow have different data signatures.
+            new ScatterplotLayerClass({
+              ...defaultLayerProps,
+              ...brushingProps,
+              ...layerProps,
+              ...data,
+              id: `${this.id}-event-pulse`,
+              data: deckLayerData,
+              getPosition,
+              // The ordinary point owns hover/picking and text labels.
+              pickable: false,
+              autoHighlight: false,
+              filled: true,
+              stroked: false,
+              pulseMode,
+              pulseExpansion,
+              pulseDurationMs,
+              pulseCurrentTime: Number.isFinite(animationConfig?.currentTime)
+                ? animationConfig.currentTime - data.pulseTimeOrigin
+                : null,
+              extensions: [...extensions, eventPulseRippleExtension],
+              updateTriggers: {...updateTriggers, getPulseStartTime: data.getPulseStartTime},
+              parameters: {
+                depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+                ...(mapState?.layerParameters ?? {})
+              }
+            })
+          ]
+        : []),
       // hover layer
       ...(hoveredObject
         ? [
@@ -654,7 +795,7 @@ export default class PointLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               ...pulseProps,
-              ...(pulseEnabled ? {extensions: [pulseRippleExtension]} : {}),
+              ...(continuous ? {extensions: [pulseRippleExtension]} : {}),
               visible: defaultLayerProps.visible,
               data: [...neighborsData, hoveredObject],
               getLineColor: this.config.visConfig.showHighlightColor

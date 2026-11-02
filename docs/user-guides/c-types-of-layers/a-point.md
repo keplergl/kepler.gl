@@ -39,4 +39,17 @@ Enable **Pulse / Ripple** at the end of the Point layer settings to animate the 
 
 The effect loops continuously while the layer is visible; it does not require a timestamp field or timeline playback. It uses the point layer's colors, sizes, opacity, filters, and map or billboard orientation. Text labels stay still. Settings are saved with the map and retained when the effect is turned off.
 
+Choose **Trigger → At event time** to play one effect for each recorded event. Select an
+**Event timestamp** field and a **Duration (timeline seconds)**. The ordinary point remains
+visible according to the existing filters; a temporary Pulse or Ripple plays from the event
+timestamp until the duration expires. Missing or invalid timestamps produce no effect.
+
+The layer adds its event range, including the final effect's duration, to Kepler's timeline.
+Pause freezes the effect, scrubbing shows the phase at the selected time, and replay plays
+events again. Duration is measured in data time: faster playback shortens the visible effect,
+and seeking or coarse timeline steps can skip short events. To drive it from an animated time
+filter, enable the existing timeline synchronization. Filters still determine visibility and
+can cut an effect short; they are not automatically widened. This mode uses recorded
+timestamps, not the time at which rows arrive. **Continuous** remains the default trigger.
+
 [Back to table of contents](../README.md)

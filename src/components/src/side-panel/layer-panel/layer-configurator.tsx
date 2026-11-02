@@ -76,6 +76,44 @@ const TARGET_ARROW_SHAPE_LABELS: Record<string, string> = {
   stealth: 'Stealth'
 };
 
+function PulseDurationInput({
+  id,
+  durationMs,
+  onChange
+}: {
+  id: string;
+  durationMs: number;
+  onChange: (durationMs: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(durationMs / 1000));
+  useEffect(() => setDraft(String(durationMs / 1000)), [durationMs, id]);
+
+  const commit = () => {
+    const value = Number(draft) * 1000;
+    if (Number.isFinite(value) && value > 0) {
+      setDraft(String(value / 1000));
+      if (value !== durationMs) onChange(value);
+    } else {
+      setDraft(String(durationMs / 1000));
+    }
+  };
+
+  return (
+    <InputLight
+      id={id}
+      type="number"
+      min={0.001}
+      step="any"
+      value={draft}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+      }}
+    />
+  );
+}
+
 type LayerConfiguratorProps = {
   layer: Layer;
   datasets: Datasets;
@@ -567,6 +605,13 @@ export default function LayerConfiguratorFactory(
       const selectedPulseMode = pulseModeOptions.find(
         ({id}) => id === layer.config.visConfig.pulseMode
       );
+      const pulseTriggerOptions = ['continuous', 'event'].map(id => ({
+        id,
+        label: <FormattedMessage id={`layerVisConfigs.point.${id}`} />
+      }));
+      const timestampFields = (visConfiguratorProps.fields || []).filter(
+        f => f.type === 'timestamp'
+      );
       return (
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
@@ -699,10 +744,65 @@ export default function LayerConfiguratorFactory(
                       onChange={value => visConfiguratorProps.onChange({pulseMode: value})}
                     />
                   </SidePanelSection>
-                  <VisConfigSlider
-                    {...layer.visConfigSettings.pulseSpeed}
-                    {...visConfiguratorProps}
-                  />
+                  <SidePanelSection>
+                    <PanelLabel>
+                      <FormattedMessage id="layerVisConfigs.point.pulseTrigger" />
+                    </PanelLabel>
+                    <ItemSelector
+                      selectedItems={pulseTriggerOptions.find(
+                        ({id}) => id === (layer.config.visConfig.pulseTrigger || 'continuous')
+                      )}
+                      options={pulseTriggerOptions}
+                      disabled={!layer.config.visConfig.pulseEnabled}
+                      displayOption="label"
+                      getOptionValue="id"
+                      multiSelect={false}
+                      searchable={false}
+                      onChange={value => visConfiguratorProps.onChange({pulseTrigger: value})}
+                    />
+                  </SidePanelSection>
+                  {layer.config.visConfig.pulseTrigger === 'event' ? (
+                    <>
+                      <SidePanelSection>
+                        <PanelLabel>
+                          <FormattedMessage id="layerVisConfigs.point.pulseTimeField" />
+                        </PanelLabel>
+                        <ItemSelector
+                          selectedItems={
+                            timestampFields.find(
+                              f => f.name === layer.config.visConfig.pulseTimeField
+                            ) || null
+                          }
+                          options={timestampFields}
+                          disabled={!layer.config.visConfig.pulseEnabled}
+                          displayOption="name"
+                          filterOption="name"
+                          getOptionValue="name"
+                          multiSelect={false}
+                          onChange={value =>
+                            visConfiguratorProps.onChange({pulseTimeField: value || ''})
+                          }
+                        />
+                      </SidePanelSection>
+                      <SidePanelSection>
+                        <PanelLabel htmlFor={`${layer.id}-pulse-duration`}>
+                          <FormattedMessage id="layerVisConfigs.point.pulseDuration" />
+                        </PanelLabel>
+                        <PulseDurationInput
+                          id={`${layer.id}-pulse-duration`}
+                          durationMs={layer.config.visConfig.pulseDurationMs}
+                          onChange={duration =>
+                            visConfiguratorProps.onChange({pulseDurationMs: duration})
+                          }
+                        />
+                      </SidePanelSection>
+                    </>
+                  ) : (
+                    <VisConfigSlider
+                      {...layer.visConfigSettings.pulseSpeed}
+                      {...visConfiguratorProps}
+                    />
+                  )}
                   <VisConfigSlider
                     {...layer.visConfigSettings.pulseExpansion}
                     {...visConfiguratorProps}
