@@ -11,7 +11,8 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList
+  LayersList,
+  UpdateParameters
 } from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
 import type {ScatterplotLayerProps} from '@deck.gl/layers';
@@ -117,6 +118,13 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
       props: BatchProps;
     }[];
   };
+
+  updateState(params: UpdateParameters<this>): void {
+    super.updateState(params);
+    if (params.changeFlags.dataChanged || params.changeFlags.updateTriggersChanged) {
+      this.state.batchProps = [];
+    }
+  }
 
   private _getBatchProps(
     batchIndex: number,

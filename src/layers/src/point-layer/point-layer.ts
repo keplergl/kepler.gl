@@ -676,6 +676,7 @@ export default class PointLayer extends Layer {
       !Number.isFinite(pulseDurationMs) ||
       pulseDurationMs <= 0
     ) {
+      this.pulseTimeCache = undefined;
       return {};
     }
     const {dataContainer, dataRevision} = dataset;
@@ -754,7 +755,9 @@ export default class PointLayer extends Layer {
     const eventDomain = data.pulseTimeDomain;
     const pulseCurrentTime =
       pulseEnabled && pulseTrigger === 'event' ? this.getEventPulseCurrentTime(filters) : null;
+    const eventColorAccessor = this.config.visConfig.filled ? 'getFillColor' : 'getLineColor';
     const showEventOverlay =
+      (this.config.visConfig.filled || this.config.visConfig.outline) &&
       pulseEnabled &&
       pulseTrigger === 'event' &&
       eventDomain &&
@@ -886,7 +889,9 @@ export default class PointLayer extends Layer {
               id: `${this.id}-event-pulse`,
               data: deckLayerData,
               getPosition,
-              // The ordinary point owns hover/picking and text labels.
+              // Only the ordinary point reports counts and owns picking and text labels.
+              onFilteredItemsChange: null,
+              getFillColor: data[eventColorAccessor],
               pickable: false,
               autoHighlight: false,
               filled: true,
@@ -897,7 +902,11 @@ export default class PointLayer extends Layer {
               pulseCurrentTime:
                 pulseCurrentTime !== null ? pulseCurrentTime - data.pulseTimeOrigin : null,
               extensions: [...extensions, eventPulseRippleExtension],
-              updateTriggers: {...updateTriggers, getPulseStartTime: data.getPulseStartTime},
+              updateTriggers: {
+                ...updateTriggers,
+                getFillColor: updateTriggers[eventColorAccessor],
+                getPulseStartTime: data.getPulseStartTime
+              },
               parameters: {
                 depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
                 ...(mapState?.layerParameters ?? {})

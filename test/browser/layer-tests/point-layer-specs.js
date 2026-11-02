@@ -523,13 +523,14 @@ test('#PointLayer -> native separated points preserve every coordinate through i
           gpuFilter: dataset.gpuFilter,
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
           visible: true,
-          layerCallbacks: {},
+          layerCallbacks: {onFilteredItemsChange: () => {}},
           filters: [eventTimeFilter(layer, currentTime)]
         });
       const eventLayers = renderEvents(90500);
       const eventComposite = eventLayers.find(l => l.id === `${layer.id}-event-pulse`);
       t.ok(eventComposite, 'event overlay supports Arrow geometry');
       eventComposite.renderLayers().forEach((sublayer, batchIndex) => {
+        t.notOk(sublayer.props.onFilteredItemsChange, 'event Arrow batches do not report counts');
         rowIndices[batchIndex].forEach((rowIndex, index) => {
           const context = {index, data: sublayer.props.data, target: []};
           t.deepEqual(
@@ -684,6 +685,73 @@ test('#PointLayer -> MultiPoint IPC offset padding and vector attributes', async
     t.deepEqual(arrow.tableToIPC(table, 'file'), originalBytes, `${name}: preserves source values`);
   }
   t.end();
+});
+
+test('#PointLayer -> ordinary Arrow MultiPoint vectors honor explicit invalidation', t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+  const geometry = arrow.vectorFromArray(
+    [
+      [
+        [0, 0],
+        [1, 1]
+      ],
+      [[2, 2]]
+    ],
+    new arrow.List(new arrow.Field('points', pointType))
+  );
+  const radius = arrow.vectorFromArray([10, 20], new arrow.Float64());
+  const colors = arrow.vectorFromArray(
+    [
+      [10, 20, 30],
+      [40, 50, 60]
+    ],
+    new arrow.FixedSizeList(3, new arrow.Field('rgb', new arrow.Uint8()))
+  );
+  const table = new arrow.Table({geometry, radius, colors});
+  table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.multipoint');
+  const manager = new LayerManager(device, {
+    viewport: new MapView().makeViewport({width: 400, height: 400, viewState: INITIAL_MAP_STATE})
+  });
+  let layer = new GeoArrowScatterplotLayer({
+    id: 'ordinary-multipoint-vectors',
+    data: table,
+    getPosition: geometry,
+    getRadius: radius,
+    getFillColor: colors
+  });
+  try {
+    manager.setLayers([layer]);
+    const originalData = layer.getSubLayers()[0].props.data;
+    layer = layer.clone({opacity: 0.5});
+    manager.setLayers([layer]);
+    t.equal(layer.getSubLayers()[0].props.data, originalData, 'uniform changes reuse batch data');
+    const updates = [
+      {updateTriggers: {getRadius: 1, getFillColor: 1}},
+      {updateTriggers: {all: 1}},
+      {dataComparator: () => false}
+    ];
+    updates.forEach((props, index) => {
+      const value = 90 + index;
+      radius.set(0, value);
+      colors.set(0, [value, 1, 2]);
+      layer = layer.clone(props);
+      manager.setLayers([layer]);
+      const attributes = layer.getSubLayers()[0].props.data.attributes;
+      t.deepEqual(
+        Array.from(attributes.getRadius.value),
+        [value, value, 20],
+        'accessor, all-accessor and data invalidations refresh expanded radii'
+      );
+      t.deepEqual(
+        Array.from(attributes.getFillColor.value),
+        [value, 1, 2, value, 1, 2, 40, 50, 60],
+        'explicit invalidations refresh expanded colors'
+      );
+    });
+  } finally {
+    manager.finalize();
+    t.end();
+  }
 });
 
 test('#PointLayer -> constructor', t => {
@@ -2574,6 +2642,7 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
   });
   const datasets = {[dataset.id]: dataset};
   let data = layer.formatLayerData(datasets);
+  const reportedCounts = [];
   const render = (time, filters = [eventTimeFilter(layer, time)]) =>
     layer.renderLayer({
       data,
@@ -2583,7 +2652,7 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
       gpuFilter: dataset.gpuFilter,
       interactionConfig: INITIAL_VIS_STATE.interactionConfig,
       visible: true,
-      layerCallbacks: {},
+      layerCallbacks: {onFilteredItemsChange: event => reportedCounts.push(event)},
       filters,
       animationConfig: {currentTime: 500}
     });
@@ -2655,7 +2724,37 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
     );
     t.equal(overlay.props.getRadius, data.getRadius, 'radius mapping is shared');
     t.equal(overlay.props.getFillColor, data.getFillColor, 'color mapping is shared');
+    reportedCounts.length = 0;
+    layers.forEach(item => item.props.onFilteredItemsChange?.({id: item.id, count: 2}));
+    t.deepEqual(reportedCounts, [{id: layer.id, count: 2}], 'only ordinary points report counts');
   }
+  layer.updateLayerConfig({color: [0, 0, 255]});
+  layer.updateLayerVisConfig({filled: false, outline: true, strokeColor: [255, 0, 0]});
+  data = layer.formatLayerData(datasets, data);
+  const outlined = render(500);
+  const outlineCore = outlined.find(item => item.id === layer.id);
+  const outlineEffect = outlined.find(isEvent);
+  t.equal(
+    outlineEffect.props.getFillColor,
+    outlineCore.props.getLineColor,
+    'event uses outline color'
+  );
+  t.deepEqual(
+    outlineEffect.props.updateTriggers.getFillColor,
+    outlineCore.props.updateTriggers.getLineColor,
+    'outline color updates invalidate event colors'
+  );
+  layer.updateLayerVisConfig({strokeColor: [0, 255, 0]});
+  data = layer.formatLayerData(datasets, data);
+  t.deepEqual(
+    render(500).find(isEvent).props.getFillColor,
+    [0, 255, 0],
+    'event follows edited outline color'
+  );
+  layer.updateLayerVisConfig({outline: false});
+  t.notOk(render(500).some(isEvent), 'no event effect when fill and outline are both disabled');
+  layer.updateLayerVisConfig({filled: true});
+  data = layer.formatLayerData(datasets, data);
   const viewport = new MapView().makeViewport({
     width: 400,
     height: 400,
@@ -2733,16 +2832,28 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
   t.deepEqual(data.pulseTimeDomain, [8000, 9000], 'row replacement refreshes the effect lifetime');
   t.notEqual(data.getPulseStartTime, accessor, 'row replacement invalidates cached timestamps');
   for (const config of [
+    {pulseEnabled: false},
+    {pulseTrigger: 'continuous'},
     {pulseTimeField: 'missing'},
     {pulseTimeField: 'lat'},
     {pulseTimeField: 'started', pulseDurationMs: 0}
   ]) {
+    layer.updateLayerVisConfig({
+      pulseEnabled: true,
+      pulseTrigger: 'event',
+      pulseTimeField: 'started',
+      pulseDurationMs: 1000
+    });
+    data = layer.formatLayerData(datasets, data);
+    t.ok(data.getPulseStartTime, 'valid event mode prepares timestamps');
     layer.updateLayerVisConfig(config);
     data = layer.formatLayerData(datasets, data);
     t.notOk(
-      layer.config.animation.enabled,
-      'invalid configuration never registers a layer timeline'
+      layer.pulseTimeCache,
+      'inactive event mode releases cached timestamp and dataset references'
     );
+    t.notOk(data.getPulseStartTime, 'inactive layer data no longer retains the timestamp accessor');
+    t.notOk(layer.config.animation.enabled, 'inactive event mode never registers a layer timeline');
     t.equal(
       render(8500)[0].props.data.length,
       1,
