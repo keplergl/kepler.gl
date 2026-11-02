@@ -145,6 +145,18 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   }
 `;
 
+// Keep this group's keyboard behavior scoped to the optional point effect.
+const PulseRippleControls = styled.fieldset`
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+
+  .layer-config-group.collapsed & {
+    visibility: hidden;
+  }
+`;
+
 const BitmapDropZone = styled.div<{$isDragging: boolean}>`
   border: 2px dashed
     ${props => (props.$isDragging ? props.theme.activeColor : props.theme.borderColor)};
@@ -671,28 +683,31 @@ export default function LayerConfiguratorFactory(
               collapsible
             >
               <ConfigGroupCollapsibleContent>
-                <SidePanelSection>
-                  <PanelLabel>
-                    <FormattedMessage id="layerVisConfigs.point.pulseMode" />
-                  </PanelLabel>
-                  <ItemSelector
-                    selectedItems={selectedPulseMode}
-                    options={pulseModeOptions}
-                    displayOption="label"
-                    getOptionValue="id"
-                    multiSelect={false}
-                    searchable={false}
-                    onChange={value => visConfiguratorProps.onChange({pulseMode: value})}
+                <PulseRippleControls disabled={!layer.config.visConfig.pulseEnabled}>
+                  <SidePanelSection>
+                    <PanelLabel>
+                      <FormattedMessage id="layerVisConfigs.point.pulseMode" />
+                    </PanelLabel>
+                    <ItemSelector
+                      selectedItems={selectedPulseMode}
+                      options={pulseModeOptions}
+                      disabled={!layer.config.visConfig.pulseEnabled}
+                      displayOption="label"
+                      getOptionValue="id"
+                      multiSelect={false}
+                      searchable={false}
+                      onChange={value => visConfiguratorProps.onChange({pulseMode: value})}
+                    />
+                  </SidePanelSection>
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.pulseSpeed}
+                    {...visConfiguratorProps}
                   />
-                </SidePanelSection>
-                <VisConfigSlider
-                  {...layer.visConfigSettings.pulseSpeed}
-                  {...visConfiguratorProps}
-                />
-                <VisConfigSlider
-                  {...layer.visConfigSettings.pulseExpansion}
-                  {...visConfiguratorProps}
-                />
+                  <VisConfigSlider
+                    {...layer.visConfigSettings.pulseExpansion}
+                    {...visConfiguratorProps}
+                  />
+                </PulseRippleControls>
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
