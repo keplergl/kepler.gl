@@ -481,6 +481,35 @@ test('#ZarrLayer -> stale tile requests cannot set another source opening color 
       'B samples its own tiles after A finishes late'
     );
 
+    const pendingBeforeRender = load(await render('a'));
+    await Promise.resolve();
+    layer.updateLayerVisConfig({zarrVariable: 'b'});
+    layer.updateLayerMeta(dataset);
+    pending.shift()({data: new Float64Array([100, 200])});
+    await pendingBeforeRender;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'switching metadata rejects old bounds before the next render'
+    );
+    t.equal(layer.config.visConfig.rescale, null, 'the new variable stays in automatic mode');
+
+    const constantB = await render('b');
+    const pendingConstantB = load(constantB);
+    await Promise.resolve();
+    pending.shift()({data: new Float64Array([1, 1])});
+    const constantTile = await pendingConstantB;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'a constant new-variable tile does not leave old-variable bounds on the controls'
+    );
+    t.deepEqual(
+      renderTileColors(constantB, constantTile.values),
+      [255, 255, 255, 255, 255, 255, 255, 255],
+      'the new variable renders with its own provisional range'
+    );
+
     const secondA = await render('a');
     const staleSecondA = load(secondA);
     await Promise.resolve();

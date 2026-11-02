@@ -521,6 +521,8 @@ export default class ZarrLayer extends Layer {
       (this.meta.zarrUrl !== metadata.url || this.meta.variable !== variable?.path);
     if (variableChanged) {
       this._sampledRange = null;
+      // Reject old-source results even before the next render opens the new node.
+      this._getTileData = this._createTileDataLoader();
     }
 
     const controlRange = dataRange ?? this._sampledRange ?? DEFAULT_RESCALE;
