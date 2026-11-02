@@ -515,19 +515,22 @@ export default class ZarrLayer extends Layer {
     // Dataset-level statistics describe its default variable, not every variable.
     const advertisedRange = variable ? variable.dataRange : metadata.dataRange;
     const dataRange = isUsableRange(advertisedRange) ? advertisedRange : null;
-    this.visConfigSettings.rescale = {
-      ...this.visConfigSettings.rescale,
-      range: dataRange ?? DEFAULT_RESCALE,
-      step: dataRange ? (dataRange[1] - dataRange[0]) / 100 : 0.01
-    };
-
     // `meta.variable` still holds the previous render's variable here.
     const variableChanged =
       this.meta.zarrUrl !== undefined &&
       (this.meta.zarrUrl !== metadata.url || this.meta.variable !== variable?.path);
     if (variableChanged) {
       this._sampledRange = null;
+      // Reject old-source results even before the next render opens the new node.
+      this._getTileData = this._createTileDataLoader();
     }
+
+    const controlRange = dataRange ?? this._sampledRange ?? DEFAULT_RESCALE;
+    this.visConfigSettings.rescale = {
+      ...this.visConfigSettings.rescale,
+      range: controlRange,
+      step: (controlRange[1] - controlRange[0]) / 100
+    };
 
     const current = this.config.visConfig?.rescale;
     const unset = !isUsableRange(current);
@@ -731,6 +734,14 @@ export default class ZarrLayer extends Layer {
       if (this._getTileData === getTileData && !this._sampledRange && needsSampling) {
         this._sampledRange = estimateZarrDataRange(values, nodataValue);
         if (this._sampledRange) {
+          // Metadata or a user choice may end automatic mode while the read is pending.
+          if (!isUsableRange(this.config.visConfig.rescale)) {
+            this.visConfigSettings.rescale = {
+              ...this.visConfigSettings.rescale,
+              range: this._sampledRange,
+              step: (this._sampledRange[1] - this._sampledRange[0]) / 100
+            };
+          }
           // Earlier constant tiles may already be colored with the provisional
           // range. Invalidate their rendered colors without refetching data.
           this._onRedrawNeeded?.();

@@ -241,6 +241,19 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
     });
     const automatic = mode === 'automatic' || mode === 'invalid';
     t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      automatic ? [0.25, 0.75] : mode === 'saved' ? [250, 320] : [0, 1],
+      `${mode}: controls follow the advertised or sampled data range`
+    );
+    layer.updateLayerMeta(dataset);
+    if (automatic) {
+      t.deepEqual(
+        layer.visConfigSettings.rescale.range,
+        [0.25, 0.75],
+        'metadata refresh preserves the sampled control bounds'
+      );
+    }
+    t.deepEqual(
       renderTileColors(deckLayer, tile.values),
       automatic ? [0, 0, 0, 255, 255, 255, 255, 255] : expectedColors,
       `${mode}: uses the configured range or samples only when no usable range exists`
@@ -249,6 +262,81 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
       layer.config.visConfig.rescale,
       automatic ? null : [0, 1],
       `${mode}: keeps range intent`
+    );
+    if (automatic) {
+      layer.updateLayerVisConfig({rescale: [0.3, 0.7]});
+      layer.updateLayerMeta(dataset);
+      t.deepEqual(
+        layer.config.visConfig.rescale,
+        [0.3, 0.7],
+        'keeps a range chosen after sampling'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#ZarrLayer -> pending tiles preserve metadata-refreshed rescale bounds', async t => {
+  for (const rerenderBeforeCompletion of [false, true]) {
+    const variable = {...TEMPERATURE, dataRange: undefined};
+    const dataset = {
+      ...MOCK_ZARR_DATASET,
+      metadata: {...MOCK_ZARR_DATASET.metadata, variables: [variable]}
+    };
+    const layer = new ZarrLayer({dataId: dataset.id});
+    layer.updateLayerMeta(dataset);
+    const runtime = await layer._loadRuntime();
+    let resolveChunk;
+    const chunk = new Promise(resolve => {
+      resolveChunk = resolve;
+    });
+    layer._loadRuntime = async () => ({...runtime, get: () => chunk});
+    layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
+    layer._node = {};
+    const options = {
+      data: {metadata: dataset.metadata, variable},
+      mapState: {},
+      visible: true
+    };
+    const [deckLayer] = layer.renderLayer(options);
+    const pending = deckLayer.props.getTileData(layer._node, {
+      sliceSpec: [],
+      width: 2,
+      height: 1
+    });
+    await Promise.resolve();
+
+    const refreshedVariable = {...variable, dataRange: [250, 320]};
+    const refreshedDataset = {
+      ...dataset,
+      metadata: {...dataset.metadata, variables: [refreshedVariable]}
+    };
+    layer.updateLayerMeta(refreshedDataset);
+    if (rerenderBeforeCompletion) {
+      layer.renderLayer({
+        ...options,
+        data: {metadata: refreshedDataset.metadata, variable: refreshedVariable}
+      });
+    }
+
+    resolveChunk({data: new Float32Array([260, 300])});
+    const tile = await pending;
+    const timing = rerenderBeforeCompletion ? 'after rerender' : 'before rerender';
+    t.deepEqual(layer.config.visConfig.rescale, [250, 320], `${timing}: keeps the metadata range`);
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [250, 320],
+      `${timing}: keeps both configured endpoints reachable`
+    );
+    t.equal(layer.visConfigSettings.rescale.step, 0.7, `${timing}: keeps the refreshed step`);
+    t.deepEqual(Array.from(tile.values), [260, 300], `${timing}: still returns the loaded tile`);
+
+    layer.updateLayerVisConfig({rescale: null});
+    layer.updateLayerMeta(dataset);
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [260, 300],
+      `${timing}: reuses loaded samples when automatic mode resumes without advertised bounds`
     );
   }
   t.end();
@@ -377,14 +465,49 @@ test('#ZarrLayer -> stale tile requests cannot set another source opening color 
     const b = await render('b');
     pending.shift()({data: new Float64Array([100, 200])});
     await staleA;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'a stale source cannot change the current control bounds'
+    );
     const freshB = load(b);
     await Promise.resolve();
     pending.shift()({data: new Float64Array([1, 2])});
     await freshB;
+    t.deepEqual(layer.visConfigSettings.rescale.range, [1, 2], 'B supplies its own control bounds');
     t.deepEqual(
       renderTileColors(b, [1, 2]),
       [0, 0, 0, 255, 255, 255, 255, 255],
       'B samples its own tiles after A finishes late'
+    );
+
+    const pendingBeforeRender = load(await render('a'));
+    await Promise.resolve();
+    layer.updateLayerVisConfig({zarrVariable: 'b'});
+    layer.updateLayerMeta(dataset);
+    pending.shift()({data: new Float64Array([100, 200])});
+    await pendingBeforeRender;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'switching metadata rejects old bounds before the next render'
+    );
+    t.equal(layer.config.visConfig.rescale, null, 'the new variable stays in automatic mode');
+
+    const constantB = await render('b');
+    const pendingConstantB = load(constantB);
+    await Promise.resolve();
+    pending.shift()({data: new Float64Array([1, 1])});
+    const constantTile = await pendingConstantB;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'a constant new-variable tile does not leave old-variable bounds on the controls'
+    );
+    t.deepEqual(
+      renderTileColors(constantB, constantTile.values),
+      [255, 255, 255, 255, 255, 255, 255, 255],
+      'the new variable renders with its own provisional range'
     );
 
     const secondA = await render('a');
@@ -399,10 +522,16 @@ test('#ZarrLayer -> stale tile requests cannot set another source opening color 
     await Promise.resolve();
     pending.shift()({data: new Float64Array([100, 200])});
     await lateInvocation;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'reopening A clears previous bounds and ignores older requests'
+    );
     const freshA = load(thirdA);
     await Promise.resolve();
     pending.shift()({data: new Float64Array([3, 4])});
     await freshA;
+    t.deepEqual(layer.visConfigSettings.rescale.range, [3, 4], 'reopened A supplies fresh bounds');
     t.deepEqual(
       renderTileColors(thirdA, [3, 4]),
       [0, 0, 0, 255, 255, 255, 255, 255],
