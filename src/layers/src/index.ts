@@ -133,6 +133,7 @@ export type {
   VisualChannelDescription
 } from './base-layer';
 export * from './base-layer';
+export * from './surface';
 
 // individual layers
 export const KeplerGlLayers = {

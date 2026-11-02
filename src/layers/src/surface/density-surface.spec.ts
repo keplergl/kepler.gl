@@ -7,11 +7,15 @@ import {
   computeDensityGrid,
   MAX_GRID_CELLS,
   MAX_SMOOTHING_PASSES
-} from '../../examples/custom-layer/src/density-surface';
+} from './density-surface';
 
-const sumGrid = grid => grid.reduce((sum, value) => sum + value, 0);
+const sumGrid = (grid: Float32Array): number =>
+  Array.from(grid).reduce((sum, value) => sum + value, 0);
 
-const forEachPosition = (positions, callback) => {
+const forEachPosition = (
+  positions: Float32Array,
+  callback: (lng: number, lat: number, z: number) => void
+): void => {
   for (let i = 0; i < positions.length; i += 3) {
     callback(positions[i], positions[i + 1], positions[i + 2]);
   }
@@ -19,7 +23,7 @@ const forEachPosition = (positions, callback) => {
 
 describe('density surface', () => {
   test('computeDensityGrid counts points into a north-to-south grid', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
@@ -27,12 +31,12 @@ describe('density surface', () => {
     const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0});
 
     expect(grid).not.toBeNull();
-    expect(grid.cols).toBeGreaterThan(1);
-    expect(grid.rows).toBeGreaterThan(1);
-    expect(sumGrid(grid.grid)).toBeCloseTo(points.length, 5);
-    expect(grid.maxValue).toBe(2);
+    expect(grid!.cols).toBeGreaterThan(1);
+    expect(grid!.rows).toBeGreaterThan(1);
+    expect(sumGrid(grid!.grid)).toBeCloseTo(points.length, 5);
+    expect(grid!.maxValue).toBe(2);
 
-    const [west, south, east, north] = grid.bounds;
+    const [west, south, east, north] = grid!.bounds;
     points.forEach(([lng, lat]) => {
       expect(lng).toBeGreaterThanOrEqual(west);
       expect(lng).toBeLessThanOrEqual(east);
@@ -42,7 +46,7 @@ describe('density surface', () => {
   });
 
   test('weights aggregate per cell with SUM or MEAN', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
@@ -54,7 +58,7 @@ describe('density surface', () => {
       smoothing: 0,
       weights,
       aggregation: 'SUM'
-    });
+    })!;
     expect(sumGrid(sum.grid)).toBeCloseTo(60, 5);
 
     const mean = computeDensityGrid(points, {
@@ -62,7 +66,7 @@ describe('density surface', () => {
       smoothing: 0,
       weights,
       aggregation: 'MEAN'
-    });
+    })!;
     const values = Array.from(mean.grid)
       .filter(value => value > 0)
       .sort((a, b) => a - b);
@@ -71,21 +75,21 @@ describe('density surface', () => {
   });
 
   test('smoothing lowers the peak without losing points', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
     ];
-    const raw = computeDensityGrid(points, {cellSizeMeters: 1000, smoothing: 0});
-    const smoothed = computeDensityGrid(points, {cellSizeMeters: 1000, smoothing: 1});
+    const raw = computeDensityGrid(points, {cellSizeMeters: 1000, smoothing: 0})!;
+    const smoothed = computeDensityGrid(points, {cellSizeMeters: 1000, smoothing: 1})!;
 
     expect(smoothed.maxValue).toBeLessThanOrEqual(raw.maxValue);
     expect(sumGrid(smoothed.grid)).toBeCloseTo(points.length, 5);
   });
 
   test('skips missing weights instead of treating them as 1', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
@@ -95,7 +99,7 @@ describe('density surface', () => {
       smoothing: 0,
       weights: [100, null, -10],
       aggregation: 'MEAN'
-    });
+    })!;
 
     // The null colocated with 100 is skipped; the cell mean stays 100.
     expect(grid.maxValue).toBeCloseTo(100, 5);
@@ -103,7 +107,7 @@ describe('density surface', () => {
   });
 
   test('normalizes signed weights across the value range', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.3, 37.9]
     ];
@@ -112,7 +116,7 @@ describe('density surface', () => {
       smoothing: 0,
       weights: [-30, -10],
       aggregation: 'MEAN'
-    });
+    })!;
     const mesh = buildSurfaceMesh(grid, 1000, ['#000000', '#ffffff']);
 
     let minZ = Infinity;
@@ -124,12 +128,14 @@ describe('density surface', () => {
 
     expect(minZ).toBeCloseTo(0, 3);
     expect(maxZ).toBeCloseTo(1000, 3);
-    expect(new Set(Array.from(mesh.colors).map(value => value.toFixed(3))).size).toBeGreaterThan(1);
+    expect(new Set(Array.from(mesh.colors).map(value => value.toFixed(3))).size).toBeGreaterThan(
+      1
+    );
     expect(buildContourPaths(grid, 1000, 4).length).toBeGreaterThan(0);
   });
 
   test('clamps custom smoothing passes to the safe maximum', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
@@ -140,7 +146,7 @@ describe('density surface', () => {
     });
 
     expect(grid).not.toBeNull();
-    expect(sumGrid(grid.grid)).toBeCloseTo(points.length, 3);
+    expect(sumGrid(grid!.grid)).toBeCloseTo(points.length, 3);
   });
 
   test('caps the grid resolution for a large extent and small cells', () => {
@@ -150,19 +156,19 @@ describe('density surface', () => {
         [180, 85]
       ],
       {cellSizeMeters: 1, smoothing: 0}
-    );
+    )!;
 
     expect(grid.cols * grid.rows).toBeLessThanOrEqual(MAX_GRID_CELLS);
     expect(sumGrid(grid.grid)).toBeCloseTo(2, 5);
   });
 
   test('buildSurfaceMesh builds a north-up colored triangle mesh', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
     ];
-    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0});
+    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0})!;
     const vertexCount = grid.cols * grid.rows;
     const mesh = buildSurfaceMesh(grid, 1000);
 
@@ -192,16 +198,18 @@ describe('density surface', () => {
       expect(channel).toBeLessThanOrEqual(1);
     });
     // The hypsometric ramp + hillshade should produce more than one color.
-    expect(new Set(Array.from(mesh.colors).map(value => value.toFixed(3))).size).toBeGreaterThan(1);
+    expect(new Set(Array.from(mesh.colors).map(value => value.toFixed(3))).size).toBeGreaterThan(
+      1
+    );
   });
 
   test('buildSurfaceMesh colors from the provided color range', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
     ];
-    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0});
+    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0})!;
     const grayscale = buildSurfaceMesh(grid, 1000, ['#000000', '#ffffff']);
     const colored = buildSurfaceMesh(grid, 1000, ['#ff0000', '#00ff00']);
 
@@ -214,12 +222,12 @@ describe('density surface', () => {
   });
 
   test('buildContourPaths creates segments raised to the surface height', () => {
-    const points = [
+    const points: Array<[number, number]> = [
       [-122.4, 37.8],
       [-122.4, 37.8],
       [-122.3, 37.9]
     ];
-    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0});
+    const grid = computeDensityGrid(points, {cellSizeMeters: 5000, smoothing: 0})!;
     const paths = buildContourPaths(grid, 1000, 4);
 
     expect(paths.length).toBeGreaterThan(0);

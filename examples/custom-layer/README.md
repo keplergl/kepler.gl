@@ -24,7 +24,7 @@ open in **3D surface** mode colored by elevation.
 | File                          | Purpose                                                                                                                                       |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/custom-contour-layer.js` | Extends `Layer` from `@kepler.gl/layers` and renders `ContourLayer` or `SimpleMeshLayer`.                                                     |
-| `src/density-surface.js`      | CPU grid aggregation, colored mesh generation, and baked hillshade for the 3D surface mode.                                                   |
+| `src/density-surface.js`      | Bridge to the core `@kepler.gl/layers` surface utilities (`src/layers/src/surface`).                                                           |
 | `src/app.tsx`                 | Registers the custom layer by passing `layerClasses` to `keplerGlReducer.initialState()`. Loads the sample dataset and an initial map config. |
 
 ### 3D surface mode
@@ -97,6 +97,8 @@ configuration, data formatting, and `getPosition`/`getColorValue` accessors for 
 
 - [Node.js >= 20](http://nodejs.org) (Volta pin: 24.21.0)
 - [Yarn 4.4.0](https://yarnpkg.com): See the detailed [installation instructions][yarn-install].
+- Run the example from the repository checkout: the surface helpers are imported from
+  `src/layers/src/surface` so the demo uses the current core implementation.
 
 ## 1. Install Dependencies
 
