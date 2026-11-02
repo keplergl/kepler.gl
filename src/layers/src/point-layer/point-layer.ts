@@ -674,6 +674,8 @@ export default class PointLayer extends Layer {
         point.clone({
           id: `${point.id}-glow`,
           pickable: false,
+          // Only the core reports counts; removed halos must not leave stale count entries.
+          onFilteredItemsChange: null,
           filled: true,
           getFillColor: point.props[colorAccessor],
           getLineColor: point.props[colorAccessor],

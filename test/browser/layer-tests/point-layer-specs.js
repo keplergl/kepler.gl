@@ -22,6 +22,7 @@ import {
   findDefaultLayer,
   INITIAL_MAP_STATE,
   INITIAL_VIS_STATE,
+  layerFilteredItemsChangeUpdater,
   renderDeckGlLayer
 } from '@kepler.gl/reducers';
 import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
@@ -367,6 +368,7 @@ test('#PointLayer -> native separated points preserve every coordinate through i
         [layer]
       );
       const formatted = layer.formatLayerData({[dataset.id]: dataset});
+      const onFilteredItemsChange = () => {};
       const render = () =>
         layer.renderLayer({
           data: formatted,
@@ -377,7 +379,7 @@ test('#PointLayer -> native separated points preserve every coordinate through i
           gpuFilter: dataset.gpuFilter,
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
           visible: true,
-          layerCallbacks: {}
+          layerCallbacks: {onFilteredItemsChange}
         });
       const rowIndices =
         geometryType === 'multipoint'
@@ -427,6 +429,13 @@ test('#PointLayer -> native separated points preserve every coordinate through i
               t.notOk(props.pickable, 'halo batches do not change picking');
               t.equal(props.glowExtent, 3, 'Arrow batch inherits extent');
               t.equal(props.glowStrength, 0.7, 'Arrow batch inherits strength');
+              t.notOk(props.onFilteredItemsChange, 'halo batches do not report data counts');
+            } else {
+              t.equal(
+                props.onFilteredItemsChange,
+                onFilteredItemsChange,
+                'core batches retain count reporting'
+              );
             }
             t.equal(props.pulseMode, 'ripple', 'Arrow batch inherits effect style');
             t.equal(props.pulseSpeed, 2, 'Arrow batch inherits speed');
@@ -2060,6 +2069,16 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
     {point: PointLayer}
   );
   const data = testFormatLayerData(t, layer, datasets);
+  let filteredState = {...INITIAL_VIS_STATE, layers: [layer]};
+  const onFilteredItemsChange = event => {
+    filteredState = layerFilteredItemsChangeUpdater(filteredState, {layer, event});
+  };
+  // Simulate DataFilterExtension notifications in draw order, without requiring a GPU.
+  const reportCounts = (deckLayers, count) => {
+    deckLayers.forEach(deckLayer => {
+      deckLayer.props.onFilteredItemsChange?.({id: deckLayer.id, count});
+    });
+  };
   const render = (globe = false, mapLayers) =>
     renderDeckGlLayer(
       {
@@ -2075,7 +2094,7 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
         hoverInfo: {picked: true, layer: {props: {id: layer.id}}, object: data.data[0], index: 0},
         mapLayers
       },
-      {}
+      {onFilteredItemsChange}
     );
   const hasAnimation = deckLayer =>
     deckLayer.props.extensions.some(extension => extension instanceof PulseRippleExtension);
@@ -2160,6 +2179,14 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
           const core = deckLayers.find(deckLayer => `${deckLayer.id}-glow` === halo.id);
           t.ok(deckLayers.indexOf(halo) < deckLayers.indexOf(core), 'halo is behind its core');
           t.notOk(halo.props.pickable, 'halo does not expand the picking area');
+          t.notOk(halo.props.onFilteredItemsChange, 'halo does not report data counts');
+          if (core.id === layer.id) {
+            t.equal(
+              core.props.onFilteredItemsChange,
+              onFilteredItemsChange,
+              'core keeps count reporting'
+            );
+          }
           t.notOk(halo.props.parameters.depthWriteEnabled, 'halo does not occlude other points');
           t.notOk(hasAnimation(halo), 'halo stays static with either animation mode');
           for (const key of [
@@ -2206,10 +2233,14 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
           )
         );
       };
+      // A saved map can first draw with glow enabled, before any core count is recorded.
+      layer.filteredItemCount = {};
       layer.updateLayerVisConfig({glowEnabled: true, glowExtent: 3, glowStrength: 0.7});
       const glowing = render(globe);
       testRenderDeckLayer(t, 'glowing points', glowing, {layerManager: manager});
       assertGlow(glowing);
+      reportCounts(glowing, 3);
+      t.equal(layer.getFilteredItemCount(), 3, 'initial count is correct with glow enabled');
       t.deepEqual(
         snapshot(glowing),
         baseline,
@@ -2229,6 +2260,12 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
       const disabledGlow = render(globe);
       testRenderDeckLayer(t, 'disabled glow', disabledGlow, {layerManager: manager});
       assertRegular(disabledGlow);
+      reportCounts(disabledGlow, 1);
+      t.equal(
+        layer.getFilteredItemCount(),
+        1,
+        'count updates after glow is removed and GPU filters change'
+      );
       t.equal(disabledGlow.length, regular.length, 'disabled glow removes its renderers');
       t.equal(layer.config.visConfig.glowExtent, 3, 'disabling retains extent');
       t.equal(layer.config.visConfig.glowStrength, 0.7, 'disabling retains strength');
@@ -2276,11 +2313,19 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
         const combined = render(globe);
         testRenderDeckLayer(t, 'glow with animation', combined, {layerManager: manager});
         assertGlow(combined);
+        reportCounts(combined, 2);
+        t.equal(layer.getFilteredItemCount(), 2, 'count updates after glow is reenabled');
         t.deepEqual(snapshot(combined), animatedBaseline, 'glow preserves existing animation');
         layer.updateLayerVisConfig({glowEnabled: false, pulseEnabled: false});
         const staticLayers = render(globe);
         testRenderDeckLayer(t, 'disabled pulse', staticLayers, {layerManager: manager});
         assertRegular(staticLayers);
+        reportCounts(staticLayers, 0);
+        t.equal(
+          layer.getFilteredItemCount(),
+          0,
+          'empty filter results update after glow is disabled again'
+        );
         t.equal(layer.config.visConfig.pulseExpansion, 3, 'turning off retains effect settings');
       }
     } finally {
