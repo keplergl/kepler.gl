@@ -58,7 +58,11 @@ function elevationFilter(range) {
   return {
     filterRange: [range],
     filterValueUpdateTriggers: {elevation: {name: 'elevation', domain0: range[0]}},
-    filterValueAccessor: () => () => ({index}) => [ROWS[index][2]]
+    filterValueAccessor:
+      () =>
+      () =>
+      ({index}) =>
+        [ROWS[index][2]]
   };
 }
 
@@ -139,7 +143,8 @@ describe('custom contour layer', () => {
     const layer = createLayer({
       renderMode: 'surface',
       showContours: true,
-      contourCount: 4
+      contourCount: 4,
+      contourColor: [0, 255, 0]
     });
     const data = formatData(layer);
     const layers = layer.renderLayer({data});
@@ -147,6 +152,7 @@ describe('custom contour layer', () => {
     expect(layers).toHaveLength(2);
     expect(layers[1].props.data.length).toBeGreaterThan(0);
     expect(layers[1].props.getPath(layers[1].props.data[0])).toHaveLength(2);
+    expect(layers[1].props.getColor).toEqual([0, 255, 0, 230]);
   });
 
   test('surface mode passes the color range palette to the mesh builder', () => {

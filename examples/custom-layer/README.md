@@ -47,7 +47,8 @@ cell). Either way it is an interpolated surface, not a survey-grade elevation DE
 Controls:
 
 - **Contours** — **Show elevation contours** overlays marching-squares contour
-  lines on the surface; **Contour levels** sets how many levels are drawn.
+  lines on the surface; **Contour levels** sets how many levels are drawn, and
+  **Contour color** picks their color.
 - **Color** — color range selector; the default is a DEM-like blue → green → sand → white ramp.
 - **Weight** — `Point count (density)`, or a numeric column aggregated as a per-cell mean.
 - **Max surface height (m)** — normalized height applied to the highest cell.

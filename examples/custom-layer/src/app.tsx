@@ -13,6 +13,7 @@ import KeplerGl, {
   injectComponents,
   ItemSelector,
   LayerColorRangeSelector,
+  LayerColorSelector,
   LayerConfiguratorFactory,
   VisConfigSwitch
 } from '@kepler.gl/components';
@@ -111,6 +112,13 @@ function CustomLayerConfiguratorFactory(
                   {...layer.visConfigSettings.contourCount}
                   disabled={!layer.config.visConfig.showContours}
                   {...visConfiguratorProps}
+                />
+              </LayerConfigGroup>
+              <LayerConfigGroup label="Contour color">
+                <LayerColorSelector
+                  {...visConfiguratorProps}
+                  property="contourColor"
+                  selectedColor={layer.config.visConfig.contourColor}
                 />
               </LayerConfigGroup>
               <LayerConfigGroup label="Color">

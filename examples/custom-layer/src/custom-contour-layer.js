@@ -166,6 +166,13 @@ export const contourVisConfigs = {
     step: 1,
     group: 'surface',
     property: 'contourCount'
+  },
+  contourColor: {
+    type: 'color',
+    defaultValue: [255, 110, 30],
+    label: 'Contour color',
+    group: 'surface',
+    property: 'contourColor'
   }
 };
 
@@ -179,6 +186,12 @@ export default class ContourKeplerLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(contourVisConfigs);
+    // LayerColorSelector reads colorUI[property]; give the contour color its
+    // own entry so it does not share state with the layer color.
+    this.config.colorUI = {
+      ...this.config.colorUI,
+      contourColor: {...(this.config.colorUI?.color || {})}
+    };
     // Cached CPU grid + encoded heightmap for the 3D surface mode.
     this._surfaceCache = null;
   }
@@ -212,6 +225,7 @@ export default class ContourKeplerLayer extends Layer {
       'colorRange',
       'showContours',
       'contourCount',
+      'contourColor',
       'lowerThreshold',
       'higherThreshold'
     ];
@@ -417,12 +431,15 @@ export default class ContourKeplerLayer extends Layer {
       if (visConfig.showContours) {
         const contours = this._getSurfaceContours(cache);
         if (contours?.length) {
+          const contourColor = visConfig.contourColor || [255, 110, 30];
+          const contourColorWithAlpha =
+            contourColor.length === 4 ? contourColor : [...contourColor, 230];
           layers.push(
             new PathLayer({
               id: `${this.id}-elevation-contours`,
               data: contours,
               getPath: path => path,
-              getColor: [255, 110, 30, 230],
+              getColor: contourColorWithAlpha,
               widthMinPixels: 1,
               coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
               opacity: visConfig.opacity,
