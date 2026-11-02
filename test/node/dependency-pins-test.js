@@ -58,6 +58,8 @@ const ROOT_FLOORS = {
   ...FLOORS,
   // Babel 6 has no patched traversal release; its unused parent must stay removed.
   'babel-traverse': {},
+  // The retired documentation generator brought in an unmaintained dependency tree.
+  documentation: {},
   'launch-editor': {2: '2.14.2'},
   marked: {4: '4.0.10'},
   undici: {6: '6.29.1'}
