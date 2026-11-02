@@ -1200,19 +1200,31 @@ function mountZarrConfigurator(layer, updateLayerVisConfigSpy) {
   );
 }
 
-test('Components -> LayerConfigurator -> automatic Zarr range remains editable', t => {
+test('Components -> LayerConfigurator -> automatic Zarr range remains editable', async t => {
   const layer = new LayerClasses.zarr({id: 'zarr-layer', dataId: 'zarr_data'});
+  layer.updateLayerMeta(ZARR_DATASET);
+  const variable = ZARR_DATASET.metadata.variables[0];
+  const runtime = await layer._loadRuntime();
+  layer._loadRuntime = async () => ({
+    ...runtime,
+    get: async () => ({data: new Float32Array([250, 320])})
+  });
+  layer._nodeKey = `${ZARR_DATASET.metadata.url}#${variable.path}`;
+  layer._node = {};
   const updateLayerVisConfigSpy = sinon.spy();
-  const {container, unmount} = renderWithTheme(
-    <IntlWrapper>
-      <LayerConfigurator
-        {...defaultProps}
-        layer={layer}
-        datasets={{zarr_data: ZARR_DATASET}}
-        updateLayerVisConfig={updateLayerVisConfigSpy}
-      />
-    </IntlWrapper>
+  const configurator = () => (
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          datasets={{zarr_data: ZARR_DATASET}}
+          updateLayerVisConfig={updateLayerVisConfigSpy}
+        />
+      </IntlWrapper>
+    </ThemeProvider>
   );
+  const {container, unmount, rerender} = render(configurator());
   try {
     const [minimum, maximum] = container.querySelectorAll('.kg-range-slider__input');
     t.equal(minimum.value, '0', 'shows the fallback lower bound while automatic');
@@ -1222,11 +1234,23 @@ test('Components -> LayerConfigurator -> automatic Zarr range remains editable',
       null,
       'displaying fallback bounds does not select them'
     );
-    fireEvent.change(minimum, {target: {value: '0.25'}});
+    const [deckLayer] = layer.renderLayer({
+      data: {metadata: ZARR_DATASET.metadata, variable},
+      mapState: {},
+      visible: true,
+      layerCallbacks: {onRedrawNeeded: () => rerender(configurator())}
+    });
+    await act(async () => {
+      await deckLayer.props.getTileData(layer._node, {sliceSpec: [], width: 2, height: 1});
+    });
+    t.equal(minimum.value, '250', 'shows the sampled lower bound after loading');
+    t.equal(maximum.value, '320', 'shows the sampled upper bound after loading');
+    t.equal(layer.config.visConfig.rescale, null, 'sampling keeps automatic range intent');
+    fireEvent.change(minimum, {target: {value: '264'}});
     fireEvent.blur(minimum);
     t.deepEqual(
       updateLayerVisConfigSpy.lastCall.args[0],
-      {rescale: [0.25, 1]},
+      {rescale: [264, 320]},
       'editing the slider selects an explicit color range'
     );
   } finally {

@@ -241,6 +241,19 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
     });
     const automatic = mode === 'automatic' || mode === 'invalid';
     t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      automatic ? [0.25, 0.75] : mode === 'saved' ? [250, 320] : [0, 1],
+      `${mode}: controls follow the advertised or sampled data range`
+    );
+    layer.updateLayerMeta(dataset);
+    if (automatic) {
+      t.deepEqual(
+        layer.visConfigSettings.rescale.range,
+        [0.25, 0.75],
+        'metadata refresh preserves the sampled control bounds'
+      );
+    }
+    t.deepEqual(
       renderTileColors(deckLayer, tile.values),
       automatic ? [0, 0, 0, 255, 255, 255, 255, 255] : expectedColors,
       `${mode}: uses the configured range or samples only when no usable range exists`
@@ -250,6 +263,15 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
       automatic ? null : [0, 1],
       `${mode}: keeps range intent`
     );
+    if (automatic) {
+      layer.updateLayerVisConfig({rescale: [0.3, 0.7]});
+      layer.updateLayerMeta(dataset);
+      t.deepEqual(
+        layer.config.visConfig.rescale,
+        [0.3, 0.7],
+        'keeps a range chosen after sampling'
+      );
+    }
   }
   t.end();
 });
@@ -377,10 +399,16 @@ test('#ZarrLayer -> stale tile requests cannot set another source opening color 
     const b = await render('b');
     pending.shift()({data: new Float64Array([100, 200])});
     await staleA;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'a stale source cannot change the current control bounds'
+    );
     const freshB = load(b);
     await Promise.resolve();
     pending.shift()({data: new Float64Array([1, 2])});
     await freshB;
+    t.deepEqual(layer.visConfigSettings.rescale.range, [1, 2], 'B supplies its own control bounds');
     t.deepEqual(
       renderTileColors(b, [1, 2]),
       [0, 0, 0, 255, 255, 255, 255, 255],
@@ -399,10 +427,16 @@ test('#ZarrLayer -> stale tile requests cannot set another source opening color 
     await Promise.resolve();
     pending.shift()({data: new Float64Array([100, 200])});
     await lateInvocation;
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [0, 1],
+      'reopening A clears previous bounds and ignores older requests'
+    );
     const freshA = load(thirdA);
     await Promise.resolve();
     pending.shift()({data: new Float64Array([3, 4])});
     await freshA;
+    t.deepEqual(layer.visConfigSettings.rescale.range, [3, 4], 'reopened A supplies fresh bounds');
     t.deepEqual(
       renderTileColors(thirdA, [3, 4]),
       [0, 0, 0, 255, 255, 255, 255, 255],
