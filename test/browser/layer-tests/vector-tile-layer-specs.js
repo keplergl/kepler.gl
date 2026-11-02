@@ -17,6 +17,63 @@ import {getFilterProps} from '@kepler.gl/utils';
 
 const {VectorTileLayer} = KeplerGlLayers;
 
+test('#VectorTileLayer -> quantile options follow the selected channel', t => {
+  const layer = new VectorTileLayer({id: 'quantile-options', dataId: 'tiles'});
+  const field = {name: 'value', type: 'real', filterProps: {domain: [0, 10]}};
+  const quantileField = {
+    ...field,
+    filterProps: {...field.filterProps, domainQuantiles: {quantiles: [[0, 2, 5, 8, 10]], z: [0]}}
+  };
+  layer.config.colorScale = 'quantize';
+  layer.config.strokeColorScale = 'quantize';
+  layer.config.visConfig.dynamicColor = false;
+
+  for (const fill of [null, field, quantileField]) {
+    for (const stroke of [null, field, quantileField]) {
+      layer.config.colorField = fill;
+      layer.config.strokeColorField = stroke;
+      t.equal(
+        layer.getScaleOptions('color').includes('quantile'),
+        fill === quantileField,
+        'fill quantiles depend only on fill metadata'
+      );
+      t.equal(
+        layer.getScaleOptions('strokeColor').includes('quantile'),
+        stroke === quantileField,
+        'stroke quantiles depend only on stroke metadata'
+      );
+    }
+  }
+
+  layer.config.colorField = field;
+  layer.config.strokeColorField = field;
+  for (const channel of ['color', 'strokeColor']) {
+    const other = channel === 'color' ? 'strokeColor' : 'color';
+    layer.config[`${channel}Scale`] = 'quantile';
+    t.ok(
+      layer.getScaleOptions(channel).includes('quantile'),
+      'retains the active scale while loading'
+    );
+    t.notOk(
+      layer.getScaleOptions(other).includes('quantile'),
+      'active scale does not affect the other channel'
+    );
+    layer.config[`${channel}Scale`] = 'quantize';
+  }
+  layer.config.visConfig.dynamicColor = true;
+  for (const channel of ['color', 'strokeColor']) {
+    t.ok(
+      layer.getScaleOptions(channel).includes('quantile'),
+      'dynamic color can calculate quantiles'
+    );
+    t.notOk(
+      layer.getScaleOptions(channel).includes('jenks'),
+      'Jenks remains unavailable for tiles'
+    );
+  }
+  t.end();
+});
+
 function categoricalFilterFixture() {
   const id = 'vector-categories';
   const table = new KeplerTable({info: {id, type: 'vector-tile'}, color: [0, 0, 0]});
