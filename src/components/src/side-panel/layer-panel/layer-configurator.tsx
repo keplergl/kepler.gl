@@ -9,7 +9,14 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
-import {Input, InputLight, PanelLabel, SidePanelSection} from '../../common/styled-components';
+import InfoHelperFactory from '../../common/info-helper';
+import {
+  Input,
+  InputLight,
+  PanelLabel,
+  PanelLabelWrapper,
+  SidePanelSection
+} from '../../common/styled-components';
 import Switch from '../../common/switch';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
@@ -512,7 +519,8 @@ LayerConfiguratorFactory.deps = [
   VectorTileLayerConfiguratorFactory,
   RasterTileLayerConfiguratorFactory,
   ScenegraphModelSelectorFactory,
-  RangeSliderFactory
+  RangeSliderFactory,
+  InfoHelperFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -531,7 +539,8 @@ export default function LayerConfiguratorFactory(
   VectorTileLayerConfigurator: ReturnType<typeof VectorTileLayerConfiguratorFactory>,
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
   ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
-  RangeSlider: ReturnType<typeof RangeSliderFactory>
+  RangeSlider: ReturnType<typeof RangeSliderFactory>,
+  InfoHelper: ReturnType<typeof InfoHelperFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   const AggregationTextLabelPanel: React.FC<
     Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
@@ -816,9 +825,18 @@ export default function LayerConfiguratorFactory(
                   {layer.config.visConfig.pulseTrigger === 'event' ? (
                     <>
                       <SidePanelSection>
-                        <PanelLabel>
-                          <FormattedMessage id="layerVisConfigs.point.pulseTimeField" />
-                        </PanelLabel>
+                        <PanelLabelWrapper>
+                          <PanelLabel>
+                            <FormattedMessage id="layerVisConfigs.point.pulseTimeField" />
+                          </PanelLabel>
+                          {!pulseFilters.length ? (
+                            <InfoHelper
+                              description="layerVisConfigs.point.pulseFilterMissing"
+                              id={`${layer.id}-pulse-time-filter-help`}
+                              width={220}
+                            />
+                          ) : null}
+                        </PanelLabelWrapper>
                         <ItemSelector
                           selectedItems={
                             timestampFields.find(
@@ -839,12 +857,9 @@ export default function LayerConfiguratorFactory(
                           }
                         />
                       </SidePanelSection>
-                      {!pulseFilters.length ? (
-                        <SidePanelSection role="status">
-                          <FormattedMessage id="layerVisConfigs.point.pulseFilterMissing" />
-                        </SidePanelSection>
-                      ) : pulseFilters.length > 1 ||
-                        (layer.config.visConfig.pulseFilterId && !selectedPulseFilter) ? (
+                      {pulseFilters.length > 0 &&
+                      (pulseFilters.length > 1 ||
+                        (layer.config.visConfig.pulseFilterId && !selectedPulseFilter)) ? (
                         <SidePanelSection>
                           <PanelLabel>
                             <FormattedMessage id="layerVisConfigs.point.pulseFilter" />

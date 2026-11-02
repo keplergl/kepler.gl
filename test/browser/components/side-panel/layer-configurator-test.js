@@ -1624,7 +1624,11 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
         );
         const missingHint =
           'Add an enabled time filter for the event timestamp to play this effect.';
-        t.ok(within(content).queryByText(missingHint), 'missing filter guidance is shown');
+        const help = content.querySelector(`[data-for="${layer.id}-pulse-time-filter-help"]`);
+        const tooltip = help.querySelector('[data-id="tooltip"]');
+        t.ok(within(tooltip).queryByText(missingHint), 'missing filter guidance is in the tooltip');
+        t.notOk(within(content).queryByRole('status'), 'missing filter adds no inline message');
+        t.notOk(tooltip.classList.contains('show'), 'filter guidance starts hidden');
         const match = {
           id: 'first-time-filter',
           type: 'timeRange',
@@ -1668,7 +1672,12 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
           'removing the selected filter asks for a new source'
         );
         act(() => updateFilters([]));
-        t.ok(within(content).queryByText(missingHint), 'removing all filters restores guidance');
+        t.ok(
+          content.querySelector(
+            `[data-for="${layer.id}-pulse-time-filter-help"] [data-id="tooltip"]`
+          ),
+          'removing all filters restores tooltip guidance'
+        );
         fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
         fireEvent.click(
           view.getByText('Continuous', {
