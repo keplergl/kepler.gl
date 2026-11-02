@@ -457,11 +457,13 @@ class KeplerTable<F extends Field = Field> {
         return false;
       }
     } else {
-      for (const [index, row] of replacements) {
-        this.dataContainer.replace(index, row);
-      }
+      // Append can reject or throw. Do it before overwriting existing rows so a
+      // failed append leaves those rows and their cached state untouched.
       if (toAppend.length && !this.dataContainer.append(toAppend)) {
         return false;
+      }
+      for (const [index, row] of replacements) {
+        this.dataContainer.replace(index, row);
       }
     }
 

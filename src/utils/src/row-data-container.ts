@@ -83,7 +83,11 @@ export class RowDataContainer implements DataContainerInterface {
       }
     }
 
-    this._rows.push(...rows);
+    // Keep the batch size bounded by iteration, not the engine's argument limit.
+    const count = rows.length;
+    for (let i = 0; i < count; i++) {
+      this._rows.push(rows[i]);
+    }
     this._numColumns = expected;
     return true;
   }
