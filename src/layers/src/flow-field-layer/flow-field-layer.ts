@@ -49,6 +49,18 @@ type FlowGrid = {
   maxSpeed: number;
 };
 
+type FlowViewportState = {
+  streamlines: FlowTrip[];
+  streamlinesKey: string;
+  lineCache: Map<string, FlowTrip | null>;
+  cacheMeta: string;
+  viewSig: string;
+  moving: boolean;
+  settleTimer: ReturnType<typeof setTimeout> | number;
+  clipBounds: number[] | null;
+  onRedrawNeeded?: (() => void) | null;
+};
+
 // Animate currentTime inside deck.gl so we never call kepler's onRedrawNeeded.
 // That callback dispatches updateMap({}) every frame, which MapViewStateContext
 // treats as an external viewport change and snaps pan/zoom back.
@@ -1399,28 +1411,18 @@ function buildDebugGridLayers(
 }
 
 export default class FlowFieldLayer extends Layer {
-  declare _streamlines: FlowTrip[];
-  declare _streamlinesKey: string;
-  declare _lineCache: Map<string, FlowTrip | null>;
-  declare _cacheMeta: string;
-  declare _viewSig: string;
-  declare _moving: boolean;
-  declare _settleTimer: ReturnType<typeof setTimeout> | number;
-  declare _clipBounds: number[] | null;
-  declare _onRedrawNeeded: (() => void) | null | undefined;
+  private _viewportStates = new Map<number, FlowViewportState>();
 
   constructor(props: any) {
     super(props);
     this.registerVisConfig(flowFieldVisConfigs);
-    this._streamlines = [];
-    this._streamlinesKey = '';
-    this._lineCache = new Map();
-    this._cacheMeta = '';
-    this._viewSig = '';
-    this._moving = false;
-    this._settleTimer = 0;
-    this._clipBounds = null;
-    this._onRedrawNeeded = null;
+  }
+
+  private _resetViewportStates(): void {
+    for (const state of this._viewportStates.values()) {
+      clearTimeout(state.settleTimer);
+    }
+    this._viewportStates.clear();
   }
 
   get type(): string {
@@ -1637,12 +1639,7 @@ export default class FlowFieldLayer extends Layer {
         }
         altPoints.push({lat: pos.lat, lng: pos.lng, alt: altVal});
       }
-      this._streamlinesKey = '';
-      this._cacheMeta = '';
-      this._lineCache = new Map();
-      this._clipBounds = null;
-      this._viewSig = '';
-      this._moving = false;
+      this._resetViewportStates();
       const grid = buildGridFromAltitude(
         altPoints,
         this.config.visConfig.smoothing,
@@ -1691,12 +1688,7 @@ export default class FlowFieldLayer extends Layer {
       });
     }
 
-    this._streamlinesKey = '';
-    this._cacheMeta = '';
-    this._lineCache = new Map();
-    this._clipBounds = null;
-    this._viewSig = '';
-    this._moving = false;
+    this._resetViewportStates();
     const grid = buildGrid(
       points,
       this.config.visConfig.smoothing,
@@ -1709,14 +1701,29 @@ export default class FlowFieldLayer extends Layer {
   }
 
   renderLayer(opts: any) {
-    const {data, mapState, layerCallbacks, visible} = opts;
+    const {data, mapState, layerCallbacks, visible, mapIndex = 0} = opts;
     const {visConfig, isVisible, color} = this.config;
     // Honor split-map visibility from renderDeckGlLayer (`visible`), not only config.
     if (!isVisible || visible === false || !data?.grid) {
       return [];
     }
 
-    this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
+    // Map indices are stable across redraws, pans, and split close/reopen.
+    let viewport = this._viewportStates.get(mapIndex);
+    if (!viewport) {
+      viewport = {
+        streamlines: [],
+        streamlinesKey: '',
+        lineCache: new Map(),
+        cacheMeta: '',
+        viewSig: '',
+        moving: false,
+        settleTimer: 0,
+        clipBounds: null
+      };
+      this._viewportStates.set(mapIndex, viewport);
+    }
+    viewport.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
 
     const meta = [
       visConfig.linesPerScreen,
@@ -1725,41 +1732,54 @@ export default class FlowFieldLayer extends Layer {
       visConfig.seamlessLoop ? 1 : 0
     ].join(':');
 
-    if (this._cacheMeta !== meta) {
-      this._lineCache = new Map();
-      this._cacheMeta = meta;
-      this._streamlinesKey = '';
-      this._moving = false;
+    if (viewport.cacheMeta !== meta) {
+      viewport.lineCache = new Map();
+      viewport.cacheMeta = meta;
+      viewport.streamlinesKey = '';
+      viewport.moving = false;
+      clearTimeout(viewport.settleTimer);
+      viewport.settleTimer = 0;
     }
 
     const viewSig = viewSignature(mapState);
-    if (this._viewSig && this._viewSig !== viewSig) {
-      this._moving = true;
-      if (this._settleTimer) {
-        clearTimeout(this._settleTimer);
+    if (viewport.viewSig && viewport.viewSig !== viewSig) {
+      viewport.moving = true;
+      if (viewport.settleTimer) {
+        clearTimeout(viewport.settleTimer);
       }
-      this._settleTimer = setTimeout(() => {
-        this._moving = false;
-        this._streamlinesKey = '';
-        this._onRedrawNeeded?.();
+      viewport.settleTimer = setTimeout(() => {
+        viewport.settleTimer = 0;
+        viewport.moving = false;
+        viewport.streamlinesKey = '';
+        viewport.onRedrawNeeded?.();
       }, SETTLE_MS);
     }
-    this._viewSig = viewSig;
+    viewport.viewSig = viewSig;
 
-    if (!this._moving) {
+    if (!viewport.moving) {
       let seedWindow = streamlineWindow(data.grid, mapState, visConfig);
-      if (this._streamlinesKey !== seedWindow.rangeKey) {
-        this._streamlines = collectStreamlines(data.grid, visConfig, this._lineCache, seedWindow);
-        if (!this._streamlines.length) {
+      if (viewport.streamlinesKey !== seedWindow.rangeKey) {
+        viewport.streamlines = collectStreamlines(
+          data.grid,
+          visConfig,
+          viewport.lineCache,
+          seedWindow
+        );
+        if (!viewport.streamlines.length) {
           seedWindow = streamlineWindow(data.grid, mapState, {...visConfig, zoomResponse: 0});
-          this._streamlines = collectStreamlines(data.grid, visConfig, this._lineCache, seedWindow);
+          viewport.streamlines = collectStreamlines(
+            data.grid,
+            visConfig,
+            viewport.lineCache,
+            seedWindow
+          );
         }
-        this._streamlinesKey = seedWindow.rangeKey;
-        this._clipBounds = seedWindow.clipBounds;
+        viewport.streamlinesKey = seedWindow.rangeKey;
+        viewport.clipBounds = seedWindow.clipBounds;
       }
     }
 
-    const trips = (this._streamlines || []).filter(isValidTrip);
+    const trips = (viewport.streamlines || []).filter(isValidTrip);
     const blendingParameters = mapState?.layerParameters ?? {};
     const elevationMultiplier = Math.max(0, visConfig.elevationMultiplier ?? 1);
     const debugLayers = visConfig.debugGrid
@@ -1777,7 +1797,7 @@ export default class FlowFieldLayer extends Layer {
     const opacity = Math.max(0, Math.min(1, visConfig.opacity ?? 0.85));
     const [r, g, b] = color || [186, 233, 223];
     const view = viewportBounds(mapState);
-    const clipBounds = this._clipBounds || [view.minLng, view.minLat, view.maxLng, view.maxLat];
+    const clipBounds = viewport.clipBounds || [view.minLng, view.minLat, view.maxLng, view.maxLat];
     if (!clipBounds.every(isFiniteNumber)) {
       return debugLayers;
     }

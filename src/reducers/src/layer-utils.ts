@@ -344,6 +344,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     hoverInfo,
     clicked,
     mapState,
+    mapIndex,
     interactionConfig,
     animationConfig,
     mapLayers,
@@ -363,6 +364,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     interactionConfig,
     layerCallbacks,
     mapState,
+    mapIndex,
     animationConfig,
     objectHovered,
     visible,
@@ -486,6 +488,7 @@ function computeDeckLayersFromLayerOrder(
     hoverInfo: any;
     clicked: any;
     mapState: any;
+    mapIndex?: number;
     interactionConfig: any;
     animationConfig: any;
     mapLayers: any;
@@ -499,6 +502,7 @@ function computeDeckLayersFromLayerOrder(
     hoverInfo,
     clicked,
     mapState,
+    mapIndex,
     interactionConfig,
     animationConfig,
     mapLayers,
@@ -547,6 +551,7 @@ function computeDeckLayersFromLayerOrder(
           hoverInfo,
           clicked,
           mapState,
+          mapIndex,
           interactionConfig,
           animationConfig,
           mapLayers,
@@ -622,6 +627,7 @@ export function computeDeckLayers(
                 hoverInfo,
                 clicked,
                 mapState,
+                mapIndex,
                 interactionConfig,
                 animationConfig,
                 mapLayers,
@@ -654,6 +660,7 @@ export function computeDeckLayers(
             hoverInfo,
             clicked,
             mapState,
+            mapIndex,
             interactionConfig,
             animationConfig,
             mapLayers,
