@@ -197,6 +197,59 @@ test.each([
   }
 );
 
+test.each(['air|quality', 'value|'])(
+  'parseMetadata preserves the literal non-date field %s',
+  name => {
+    const metadata = parseMetadata({
+      tilejson: {
+        layers: [{id: 'features', fields: [{name, type: 'int', min: 0, max: 10}]}]
+      }
+    } as any);
+    expect(metadata?.fields).toHaveLength(1);
+    expect(metadata?.fields[0]).toMatchObject({
+      name,
+      id: name,
+      type: ALL_FIELD_TYPES.integer
+    });
+    expect(metadata?.fields[0].filterProps?.domain?.slice()).toEqual([0, 10]);
+    expect(metadata?.fields[0]).not.toHaveProperty('indexBy');
+  }
+);
+
+test('parseMetadata keeps literal pipe fields alongside ordinary and dated fields', () => {
+  const metadata = parseMetadata({
+    tilejson: {
+      layers: [
+        {
+          id: 'features',
+          fields: [
+            {name: 'ordinary', type: 'int', min: 0, max: 10},
+            {name: 'value|', type: 'int', min: 1, max: 2},
+            {name: 'value|quality', type: 'int', min: 3, max: 4},
+            {name: 'value|2020-01-01', type: 'int', min: 5, max: 6},
+            {name: 'value|2021-01-01', type: 'int', min: 7, max: 8}
+          ]
+        }
+      ]
+    }
+  } as any);
+  expect(metadata?.fields.map(field => field.name)).toEqual([
+    'ordinary',
+    'value',
+    'value|',
+    'value|quality'
+  ]);
+  expect(metadata?.fields.find(field => field.name === 'value')).toMatchObject({
+    indexBy: {
+      type: ALL_FIELD_TYPES.date,
+      mappedValue: {
+        [Date.UTC(2020, 0, 1)]: 'value|2020-01-01',
+        [Date.UTC(2021, 0, 1)]: 'value|2021-01-01'
+      }
+    }
+  });
+});
+
 test.each([
   ['int', [7]],
   ['int', ['7']],
