@@ -92,7 +92,7 @@
     "add-licence": "babel-node ./scripts/license-header/bin --license ./FILE-HEADER",
     "prepublishOnly": "yarn workspaces foreach -At run stab && yarn workspaces foreach -At run prepublishOnly && yarn add-licence && yarn build:umd && yarn build:types",
     "docs": "babel-node ./scripts/documentation.js",
-    "typedoc": "typedoc --theme markdown --out typedoc --inputFiles ./src/reducers --inputFiles ./src/actions --excludeExternals --excludeNotExported --excludePrivate",
+    "typedoc": "typedoc --plugin typedoc-plugin-markdown --out typedoc --readme none --excludeExternals --excludePrivate ./src/reducers/src/index.ts ./src/actions/src/index.ts",
     "example-version": "babel-node ./scripts/edit-version.js",
     "prettier-all": "prettier --write '{examples,src}/**/src/**/*.{js,tsx,ts}' 'test/**/*.{js,ts,tsx}'",
     "check-circular-deps": "node ./scripts/check-circular-deps.js",
@@ -124,7 +124,7 @@
     "html-webpack-plugin": "^5.6.3",
     "math.gl": "^4.1.0",
     "monaco-editor": "^0.52.0",
-    "typedoc": "^0.19.2"
+    "typedoc": "^0.28.20"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
@@ -242,7 +242,7 @@
     "tap-spec": "^5.0.0",
     "tape": "^4.9.2",
     "tape-catch": "^1.0.6",
-    "typedoc-plugin-markdown": "^3.0.11",
+    "typedoc-plugin-markdown": "^4.14.1",
     "typescript": "5.6.3",
     "url-loader": "^4.1.1",
     "usehooks-ts": "^3.1.0",
