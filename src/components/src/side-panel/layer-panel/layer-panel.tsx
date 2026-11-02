@@ -15,7 +15,7 @@ import {ActionHandler, MapStateActions, VisStateActions, toggleModal} from '@kep
 import {dataTestIds, GLOBE_SUPPORTED_LAYERS} from '@kepler.gl/constants';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {Datasets} from '@kepler.gl/table';
-import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap} from '@kepler.gl/types';
+import {ColorUI, LayerVisConfig, MapState, NestedPartial, SplitMap, Filter} from '@kepler.gl/types';
 import LayerConfiguratorFactory from './layer-configurator';
 import LayerPanelHeaderFactory from './layer-panel-header';
 import LayerJsonEditorFactory from './layer-json-editor';
@@ -28,6 +28,7 @@ type LayerPanelProps = {
   onTouchStart?: TouchEventHandler;
   layer: Layer;
   datasets: Datasets;
+  filters?: Filter[];
   layerTypeOptions: {
     id: string;
     label: string;
@@ -226,6 +227,7 @@ function LayerPanelFactory(
               <LayerConfigurator
                 layer={layer}
                 datasets={datasets}
+                filters={this.props.filters}
                 layerTypeOptions={layerTypeOptions}
                 openModal={this.props.openModal}
                 updateLayerColorUI={this.updateLayerColorUI}

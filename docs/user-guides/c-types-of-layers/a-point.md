@@ -57,12 +57,18 @@ Choose **Trigger → At event time** to play one effect for each recorded event.
 visible according to the existing filters; a temporary Pulse or Ripple plays from the event
 timestamp until the duration expires. Missing or invalid timestamps produce no effect.
 
-The layer adds its event range, including the final effect's duration, to Kepler's timeline.
-Pause freezes the effect, scrubbing shows the phase at the selected time, and replay plays
-events again. Duration is measured in data time: faster playback shortens the visible effect,
-and seeking or coarse timeline steps can skip short events. To drive it from an animated time
-filter, enable the existing timeline synchronization. Filters still determine visibility and
-can cut an effect short; they are not automatically widened. This mode uses recorded
-timestamps, not the time at which rows arrive. **Continuous** remains the default trigger.
+Event effects use the timeline of an enabled time filter on the same dataset and event
+timestamp field. Selecting an event timestamp does not create a separate layer timeline.
+Add the time filter yourself; when there is one match it drives the effect automatically.
+If several filters match, choose **Playback time filter**. Without a matching filter, ordinary
+points remain visible but the event effect is inactive. Removing or disabling the selected
+filter stops the event effect until a matching filter is available or selected again.
+
+The end of the filter window is the current time. Pause freezes the effect, scrubbing shows
+its phase at the selected time, and replay plays events again. Duration is measured in data
+time: faster playback shortens the visible effect, and coarse timeline steps can skip short
+events. Filters still determine visibility and can cut an effect short; their window and
+domain are not automatically widened, including at the last event. Existing layer-timeline
+synchronization is not required. **Continuous** remains the default trigger.
 
 [Back to table of contents](../README.md)

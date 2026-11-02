@@ -22,7 +22,7 @@ import {LAYER_BLENDINGS, OVERLAY_BLENDINGS, PANEL_VIEW_TOGGLES} from '@kepler.gl
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions, MapStateActions, ActionHandler} from '@kepler.gl/actions';
 import {SidePanelItem} from '../types';
-import {MapState, PanelListView, LayerOrder} from '@kepler.gl/types';
+import {MapState, PanelListView, LayerOrder, Filter} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import PanelHeaderActionFactory from './panel-header-action';
@@ -42,6 +42,7 @@ type OverlayBlendingSelectorProps = {
 
 type LayerManagerProps = {
   datasets: Datasets;
+  filters?: Filter[];
   layers: Layer[];
   layerOrder: LayerOrder;
   layerClasses: LayerClassesType;
@@ -163,6 +164,7 @@ function LayerManagerFactory(
   const LayerManager: React.FC<LayerManagerProps> = ({
     layers,
     datasets,
+    filters,
     intl,
     layerOrder,
     panelListView,
@@ -299,6 +301,7 @@ function LayerManagerFactory(
         <SidePanelSection>
           {isSortByDatasetMode ? (
             <DatasetLayerGroup
+              filters={filters}
               datasets={datasets}
               showDatasetTable={showDatasetTable}
               layers={layers}
@@ -315,6 +318,7 @@ function LayerManagerFactory(
           ) : (
             <LayerList
               layers={layers}
+              filters={filters}
               datasets={datasets}
               layerOrder={layerOrder}
               uiStateActions={uiStateActions}

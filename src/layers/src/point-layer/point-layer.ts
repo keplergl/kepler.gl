@@ -28,6 +28,7 @@ import PulseRippleExtension, {
 import PointGlowExtension from './point-glow-extension';
 import {
   DatasetType,
+  FILTER_TYPES,
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
@@ -59,6 +60,8 @@ import {
   VisConfigRange,
   LayerColumn,
   Field,
+  Filter,
+  TimeRangeFilter,
   AnimationConfig
 } from '@kepler.gl/types';
 
@@ -82,6 +85,7 @@ export type PointLayerVisConfigSettings = {
   pulseExpansion: VisConfigNumber;
   pulseTrigger: VisConfigSelection;
   pulseTimeField: VisConfigSelection;
+  pulseFilterId: VisConfigSelection;
   pulseDurationMs: VisConfigNumber;
 };
 
@@ -114,6 +118,7 @@ export type PointLayerVisConfig = {
   pulseExpansion: number;
   pulseTrigger: 'continuous' | 'event';
   pulseTimeField: string;
+  pulseFilterId: string;
   pulseDurationMs: number;
   billboard: boolean;
   allowHover: boolean;
@@ -226,6 +231,7 @@ export const pointVisConfigs: {
   pulseExpansion: VisConfigNumber;
   pulseTrigger: VisConfigSelection;
   pulseTimeField: VisConfigSelection;
+  pulseFilterId: VisConfigSelection;
   pulseDurationMs: VisConfigNumber;
   billboard: 'billboard';
   allowHover: 'allowHover';
@@ -245,6 +251,14 @@ export const pointVisConfigs: {
     options: [],
     label: 'layerVisConfigs.point.pulseTimeField',
     property: 'pulseTimeField',
+    group: 'point'
+  } as VisConfigSelection,
+  pulseFilterId: {
+    type: 'select',
+    defaultValue: '',
+    options: [],
+    label: 'layerVisConfigs.point.pulseFilter',
+    property: 'pulseFilterId',
     group: 'point'
   } as VisConfigSelection,
   pulseDurationMs: {
@@ -408,6 +422,7 @@ export default class PointLayer extends Layer {
       'glowEnabled',
       'glowExtent',
       'glowStrength',
+      'pulseFilterId',
       'pulseMode',
       'pulseSpeed',
       'pulseExpansion'
@@ -618,7 +633,40 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
+  getEventPulseFilters(filters: Filter[] = []): TimeRangeFilter[] {
+    const {dataId, visConfig} = this.config;
+    if (!dataId || !visConfig.pulseTimeField) return [];
+    return filters.filter((filter): filter is TimeRangeFilter => {
+      const datasetIndex = filter.dataId.indexOf(dataId);
+      return (
+        filter.type === FILTER_TYPES.timeRange &&
+        filter.enabled !== false &&
+        datasetIndex >= 0 &&
+        filter.name[datasetIndex] === visConfig.pulseTimeField
+      );
+    });
+  }
+
+  getEventPulseCurrentTime(filters: Filter[] = []): number | null {
+    const matches = this.getEventPulseFilters(filters);
+    const {pulseFilterId} = this.config.visConfig;
+    const filter = pulseFilterId
+      ? matches.find(candidate => candidate.id === pulseFilterId)
+      : matches.length === 1
+      ? matches[0]
+      : undefined;
+    const value = filter?.value;
+    return Array.isArray(value) &&
+      value.length === 2 &&
+      value.every(Number.isFinite) &&
+      value[1] >= value[0]
+      ? value[1]
+      : null;
+  }
+
   updateEventAnimation(dataset: KeplerTable) {
+    // Event effects follow a user-created filter, never register a layer timeline.
+    this.config.animation = {enabled: false};
     const {pulseEnabled, pulseTrigger, pulseTimeField, pulseDurationMs} = this.config.visConfig;
     const field = dataset.fields.find(f => f.name === pulseTimeField && f.type === 'timestamp');
     if (
@@ -628,7 +676,6 @@ export default class PointLayer extends Layer {
       !Number.isFinite(pulseDurationMs) ||
       pulseDurationMs <= 0
     ) {
-      this.config.animation = {enabled: false};
       return {};
     }
     const {dataContainer, dataRevision} = dataset;
@@ -660,11 +707,11 @@ export default class PointLayer extends Layer {
       };
     }
     const end = cache.domain ? cache.domain[1] + pulseDurationMs : NaN;
-    this.config.animation =
-      cache.domain && Number.isFinite(end)
-        ? {enabled: true, domain: [cache.domain[0], end]}
-        : {enabled: false};
-    return {getPulseStartTime: cache.getPulseStartTime, pulseTimeOrigin: cache.origin};
+    return {
+      getPulseStartTime: cache.getPulseStartTime,
+      pulseTimeOrigin: cache.origin,
+      pulseTimeDomain: cache.domain && Number.isFinite(end) ? [cache.domain[0], end] : null
+    };
   }
 
   updateLayerMeta(dataset: KeplerTable) {
@@ -695,8 +742,7 @@ export default class PointLayer extends Layer {
 
   // eslint-disable-next-line complexity
   renderLayer(opts) {
-    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset, animationConfig} =
-      opts;
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset, filters} = opts;
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
@@ -705,17 +751,14 @@ export default class PointLayer extends Layer {
       this.config.visConfig;
     const continuous = pulseEnabled && pulseTrigger !== 'event';
     const pulseProps = {pulseEnabled: continuous, pulseMode, pulseSpeed, pulseExpansion};
-    const eventDomain = this.config.animation.domain;
+    const eventDomain = data.pulseTimeDomain;
+    const pulseCurrentTime =
+      pulseEnabled && pulseTrigger === 'event' ? this.getEventPulseCurrentTime(filters) : null;
     const showEventOverlay =
       pulseEnabled &&
       pulseTrigger === 'event' &&
-      this.config.animation.enabled &&
       eventDomain &&
-      isPulseTimeActive(
-        animationConfig?.currentTime,
-        eventDomain[0],
-        eventDomain[1] - eventDomain[0]
-      );
+      isPulseTimeActive(pulseCurrentTime, eventDomain[0], eventDomain[1] - eventDomain[0]);
 
     const layerProps = {
       stroked: this.config.visConfig.outline,
@@ -851,9 +894,8 @@ export default class PointLayer extends Layer {
               pulseMode,
               pulseExpansion,
               pulseDurationMs,
-              pulseCurrentTime: Number.isFinite(animationConfig?.currentTime)
-                ? animationConfig.currentTime - data.pulseTimeOrigin
-                : null,
+              pulseCurrentTime:
+                pulseCurrentTime !== null ? pulseCurrentTime - data.pulseTimeOrigin : null,
               extensions: [...extensions, eventPulseRippleExtension],
               updateTriggers: {...updateTriggers, getPulseStartTime: data.getPulseStartTime},
               parameters: {

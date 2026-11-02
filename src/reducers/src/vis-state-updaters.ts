@@ -1420,12 +1420,7 @@ export function layerVisConfigChangeUpdater(
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
     const updatedState = updateStateWithLayerAndData(nextState, {layerData, layer, idx});
-    return (newLayer.type === 'zarr' &&
-      props.some(p => p === 'zarrAxis' || p === 'zarrVariable')) ||
-      (newLayer.type === 'point' &&
-        props.some(p =>
-          ['pulseEnabled', 'pulseTrigger', 'pulseTimeField', 'pulseDurationMs'].includes(p)
-        ))
+    return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
       ? updateAnimationDomain(updatedState)
       : updatedState;
   }
@@ -1453,8 +1448,7 @@ export const setLayerAnimationTimeUpdater = <S extends VisState>(
   };
   // update animation config for each layer
   return state.layers.reduce((accu, l) => {
-    // Points and Trips consume the global playhead in renderLayer; their data is static per tick.
-    if (l.config.animation.enabled && l.type !== 'trip' && l.type !== 'point') {
+    if (l.config.animation.enabled && l.type !== 'trip') {
       return layerAnimationChangeUpdater(accu, {oldLayer: l, prop: 'currentTime', currentTime});
     }
     return accu;
@@ -5012,7 +5006,7 @@ export function updateDatasetUpdater(
   // 7. recompute layer domains + data for the updated dataset
   nextState = updateAllLayerDomainData(nextState, dataId);
 
-  return updateAnimationDomain(nextState);
+  return nextState;
 }
 
 /**

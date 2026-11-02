@@ -10,10 +10,11 @@ import {Layer, LayerClassesType} from '@kepler.gl/layers';
 import {UIStateActions, ActionHandler, VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {KeplerTable, Datasets} from '@kepler.gl/table';
 import {getApplicationConfig} from '@kepler.gl/utils';
-import {LayerOrder, MapState} from '@kepler.gl/types';
+import {LayerOrder, MapState, Filter} from '@kepler.gl/types';
 
 type DatasetLayerSectionProps = {
   datasets: Datasets;
+  filters?: Filter[];
   dataset: KeplerTable;
   layers: Layer[];
   layerOrder: LayerOrder;
@@ -44,6 +45,7 @@ function DatasetLayerSectionFactory(
     const {
       dataset,
       datasets,
+      filters,
       showDatasetTable,
       layers,
       updateTableColor,
@@ -136,6 +138,7 @@ function DatasetLayerSectionFactory(
         />
         <LayerList
           datasets={datasets}
+          filters={filters}
           layerOrder={layerOrder}
           layers={layers}
           layerClasses={filteredLayerClasses}

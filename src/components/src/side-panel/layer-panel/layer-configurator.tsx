@@ -47,6 +47,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   AggregationLayer,
+  KeplerGlLayers,
   Layer,
   LayerBaseConfig,
   VisualChannel,
@@ -61,7 +62,7 @@ import {
   isExplicitZarrAxis,
   formatZarrCoordinate
 } from '@kepler.gl/table';
-import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
+import {ColorUI, Field, Filter, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
 import {capitalizeFirstLetter, clamp, getNumericStepSize} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
@@ -117,6 +118,7 @@ function PulseDurationInput({
 type LayerConfiguratorProps = {
   layer: Layer;
   datasets: Datasets;
+  filters?: Filter[];
   layerTypeOptions: {
     id: string;
     label: string;
@@ -624,6 +626,26 @@ export default function LayerConfiguratorFactory(
       const timestampFields = (visConfiguratorProps.fields || []).filter(
         f => f.type === 'timestamp'
       );
+      const filters = this.props.filters || [];
+      const pulseFilters =
+        layer.type === LAYER_TYPES.point
+          ? (layer as InstanceType<typeof KeplerGlLayers.PointLayer>).getEventPulseFilters(filters)
+          : [];
+      const pulseFilterOptions = pulseFilters.map(filter => ({
+        id: filter.id,
+        label: (
+          <FormattedMessage
+            id="layerVisConfigs.point.pulseFilterOption"
+            values={{
+              index: filters.indexOf(filter) + 1,
+              field: layer.config.visConfig.pulseTimeField
+            }}
+          />
+        )
+      }));
+      const selectedPulseFilter = pulseFilterOptions.find(
+        option => option.id === layer.config.visConfig.pulseFilterId
+      );
       return (
         <StyledLayerVisualConfigurator>
           {/* Fill Color */}
@@ -810,10 +832,42 @@ export default function LayerConfiguratorFactory(
                           getOptionValue="name"
                           multiSelect={false}
                           onChange={value =>
-                            visConfiguratorProps.onChange({pulseTimeField: value || ''})
+                            visConfiguratorProps.onChange({
+                              pulseTimeField: value || '',
+                              pulseFilterId: ''
+                            })
                           }
                         />
                       </SidePanelSection>
+                      {!pulseFilters.length ? (
+                        <SidePanelSection role="status">
+                          <FormattedMessage id="layerVisConfigs.point.pulseFilterMissing" />
+                        </SidePanelSection>
+                      ) : pulseFilters.length > 1 ||
+                        (layer.config.visConfig.pulseFilterId && !selectedPulseFilter) ? (
+                        <SidePanelSection>
+                          <PanelLabel>
+                            <FormattedMessage id="layerVisConfigs.point.pulseFilter" />
+                          </PanelLabel>
+                          <ItemSelector
+                            selectedItems={selectedPulseFilter || null}
+                            options={pulseFilterOptions}
+                            disabled={!layer.config.visConfig.pulseEnabled}
+                            displayOption="label"
+                            getOptionValue="id"
+                            multiSelect={false}
+                            searchable={false}
+                            onChange={value =>
+                              visConfiguratorProps.onChange({pulseFilterId: value || ''})
+                            }
+                          />
+                          {!selectedPulseFilter ? (
+                            <div role="status">
+                              <FormattedMessage id="layerVisConfigs.point.pulseFilterSelect" />
+                            </div>
+                          ) : null}
+                        </SidePanelSection>
+                      ) : null}
                       <SidePanelSection>
                         <PanelLabel htmlFor={`${layer.id}-pulse-duration`}>
                           <FormattedMessage id="layerVisConfigs.point.pulseDuration" />

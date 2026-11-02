@@ -216,6 +216,10 @@ export default {
       event: 'At event time',
       pulseTimeField: 'Event timestamp',
       pulseDuration: 'Duration (timeline seconds)',
+      pulseFilter: 'Playback time filter',
+      pulseFilterOption: 'Filter {index}: {field}',
+      pulseFilterMissing: 'Add an enabled time filter for the event timestamp to play this effect.',
+      pulseFilterSelect: 'Select a time filter to drive this effect.',
       pulseExpansion: 'Expansion',
       pulseExpansionDescription: 'Maximum radius as a multiple of the point radius.'
     },

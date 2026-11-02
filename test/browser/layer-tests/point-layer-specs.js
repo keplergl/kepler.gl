@@ -54,6 +54,15 @@ import {
 
 const {PointLayer} = KeplerGlLayers;
 
+const eventTimeFilter = (layer, time) => ({
+  id: 'event-time',
+  type: 'timeRange',
+  dataId: [layer.config.dataId],
+  name: [layer.config.visConfig.pulseTimeField],
+  enabled: true,
+  value: [time, time]
+});
+
 [PointLayer, KeplerGlLayers.ArcLayer, KeplerGlLayers.LineLayer].forEach(LayerClass => {
   test(`#${LayerClass.name} -> progressive numeric Arrow coordinates render and pick`, async t => {
     const rows = [
@@ -515,7 +524,7 @@ test('#PointLayer -> native separated points preserve every coordinate through i
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
           visible: true,
           layerCallbacks: {},
-          animationConfig: {currentTime}
+          filters: [eventTimeFilter(layer, currentTime)]
         });
       const eventLayers = renderEvents(90500);
       const eventComposite = eventLayers.find(l => l.id === `${layer.id}-event-pulse`);
@@ -2565,7 +2574,7 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
   });
   const datasets = {[dataset.id]: dataset};
   let data = layer.formatLayerData(datasets);
-  const render = time =>
+  const render = (time, filters = [eventTimeFilter(layer, time)]) =>
     layer.renderLayer({
       data,
       dataset,
@@ -2575,10 +2584,45 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
       interactionConfig: INITIAL_VIS_STATE.interactionConfig,
       visible: true,
       layerCallbacks: {},
-      animationConfig: {currentTime: time}
+      filters,
+      animationConfig: {currentTime: 500}
     });
   const isEvent = l => l.props.extensions.some(e => e instanceof EventPulseRippleExtension);
-  t.deepEqual(layer.config.animation.domain, [0, 3000], 'timeline includes the final effect tail');
+  t.notOk(layer.config.animation.enabled, 'event effects do not register a layer timeline');
+  t.deepEqual(data.pulseTimeDomain, [0, 3000], 'effect lifetime includes the final tail');
+  const matchingFilter = eventTimeFilter(layer, 500);
+  for (const filters of [
+    [],
+    [{...matchingFilter, enabled: false}],
+    [{...matchingFilter, type: 'range'}],
+    [{...matchingFilter, dataId: ['another-dataset']}],
+    [{...matchingFilter, name: ['another-field']}],
+    [{...matchingFilter, value: [600, 500]}],
+    [{...matchingFilter, value: [0, Infinity]}],
+    [{...matchingFilter, value: []}]
+  ]) {
+    t.notOk(render(500, filters).some(isEvent), 'missing or invalid filter never uses layer time');
+    t.equal(render(500, filters)[0].props.data.length, 4, 'inactive filter keeps ordinary points');
+  }
+  t.ok(
+    render(500, [
+      {...matchingFilter, dataId: ['other', dataset.id], name: ['other', 'started']}
+    ]).some(isEvent),
+    'a synced multi-dataset filter matches the corresponding timestamp field'
+  );
+  const multiple = [matchingFilter, {...matchingFilter, id: 'second', value: [0, 800]}];
+  t.notOk(render(500, multiple).some(isEvent), 'ambiguous filters require a selection');
+  layer.updateLayerVisConfig({pulseFilterId: 'second'});
+  t.equal(
+    render(500, multiple).find(isEvent).props.pulseCurrentTime,
+    800,
+    'selected filter supplies the window end'
+  );
+  t.notOk(
+    render(500, [matchingFilter]).some(isEvent),
+    'removed selected filter does not silently switch clocks'
+  );
+  layer.updateLayerVisConfig({pulseFilterId: 'event-time'});
   t.deepEqual(data.getPulseStartTime({index: 0}), [0, 0, 1], 'epoch zero is a valid event');
   for (const index of [2, 3])
     t.deepEqual(
@@ -2678,7 +2722,7 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
     {layer: loaded.layers[0], datasets},
     {point: PointLayer}
   );
-  for (const key of ['pulseTrigger', 'pulseTimeField', 'pulseDurationMs']) {
+  for (const key of ['pulseTrigger', 'pulseTimeField', 'pulseFilterId', 'pulseDurationMs']) {
     t.equal(restored.config.visConfig[key], layer.config.visConfig[key], `restores ${key}`);
   }
   const accessor = data.getPulseStartTime;
@@ -2686,11 +2730,7 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
   t.equal(data.getPulseStartTime, accessor, 'unchanged data reuses timestamp attributes');
   await dataset.update({fields, rows: [[1, 2, 8000]]});
   data = layer.formatLayerData(datasets, data);
-  t.deepEqual(
-    layer.config.animation.domain,
-    [8000, 9000],
-    'row replacement refreshes the timeline'
-  );
+  t.deepEqual(data.pulseTimeDomain, [8000, 9000], 'row replacement refreshes the effect lifetime');
   t.notEqual(data.getPulseStartTime, accessor, 'row replacement invalidates cached timestamps');
   for (const config of [
     {pulseTimeField: 'missing'},
@@ -2699,7 +2739,10 @@ test('#PointLayer -> recorded events preserve points, filters and saved settings
   ]) {
     layer.updateLayerVisConfig(config);
     data = layer.formatLayerData(datasets, data);
-    t.notOk(layer.config.animation.enabled, 'invalid configuration disables event animation');
+    t.notOk(
+      layer.config.animation.enabled,
+      'invalid configuration never registers a layer timeline'
+    );
     t.equal(
       render(8500)[0].props.data.length,
       1,
@@ -2759,7 +2802,7 @@ test('#PointLayer -> recorded playback only updates the clock', async t => {
         interactionConfig: INITIAL_VIS_STATE.interactionConfig,
         visible: true,
         layerCallbacks: {},
-        animationConfig: {currentTime}
+        filters: [eventTimeFilter(layer, currentTime)]
       });
     const manager = new LayerManager(device, {
       viewport: new MapView().makeViewport({
@@ -2813,7 +2856,7 @@ test('#PointLayer -> Arrow timestamp units and invalid event data', async t => {
     });
     const data = layer.updateEventAnimation(dataset);
     t.deepEqual(
-      layer.config.animation.domain,
+      data.pulseTimeDomain,
       [start, start + 2500],
       `${type}: normalized milliseconds define the domain`
     );
@@ -2831,11 +2874,8 @@ test('#PointLayer -> Arrow timestamp units and invalid event data', async t => {
   layer.updateLayerVisConfig({pulseEnabled: true, pulseTrigger: 'event', pulseTimeField: 'time'});
   for (const rows of [[], [[null], ['not-a-time'], [Infinity]]]) {
     await dataset.importData({data: {fields, rows}});
-    layer.updateEventAnimation(dataset);
-    t.notOk(
-      layer.config.animation.enabled,
-      'empty or wholly invalid events do not create a timeline'
-    );
+    const data = layer.updateEventAnimation(dataset);
+    t.notOk(data.pulseTimeDomain, 'empty or wholly invalid events do not create a timeline');
   }
   t.end();
 });

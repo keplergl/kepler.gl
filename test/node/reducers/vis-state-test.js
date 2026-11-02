@@ -26,7 +26,8 @@ import {
   setTimeFilterTimelineModeUpdater,
   setFilterAnimationTimeUpdater,
   setFilterAnimationWindowUpdater,
-  calculateLayerData
+  calculateLayerData,
+  computeDeckLayers
 } from '@kepler.gl/reducers';
 import {formatCsv} from '../../../src/reducers/src/export-utils';
 
@@ -12456,7 +12457,7 @@ test('VisStateUpdater -> Arrow Int64 upserts match JSON keys and reject invalid 
   t.end();
 });
 
-test('#visStateReducer -> Point recorded event timeline', async t => {
+test('#visStateReducer -> Point events follow timestamp filters without a layer timeline', async t => {
   const dataset = new KeplerTable({info: {id: 'point-events'}, color: [0, 0, 0]});
   await dataset.importData({
     data: {
@@ -12485,19 +12486,90 @@ test('#visStateReducer -> Point recorded event timeline', async t => {
   const configure = config => {
     state = reducer(state, VisStateActions.layerVisConfigChange(state.layers[0], config));
   };
+  const render = (current = state) =>
+    computeDeckLayers(
+      {visState: current, mapState: INITIAL_MAP_STATE, mapStyle: {}},
+      {primaryMap: false}
+    );
+  const overlay = current => render(current).find(layer => layer.id === `${point.id}-event-pulse`);
   configure({
     pulseEnabled: true,
     pulseTrigger: 'event',
     pulseTimeField: 'time',
     pulseDurationMs: 1000
   });
-  t.deepEqual(
-    state.animationConfig.domain,
-    [1000, 3000],
-    'enabling events registers the timeline and tail'
+  const animationConfig = state.animationConfig;
+  t.equal(animationConfig.domain, null, 'choosing an event timestamp does not create a timeline');
+  t.equal(
+    getAnimatableVisibleLayers(state.layers).length,
+    0,
+    'event points are not standalone animated layers'
   );
-  t.equal(state.animationConfig.currentTime, 1000, 'initial playhead starts at the first event');
-  let replaced = reducer(
+  t.notOk(overlay(), 'no event overlay until a matching time filter exists');
+  t.ok(
+    render().some(layer => layer.id === point.id),
+    'ordinary point layer stays visible'
+  );
+
+  state = reducer(state, VisStateActions.addFilter(dataset.id));
+  state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
+  const accessor = state.layerData[0].getPulseStartTime;
+  for (const time of [1500, 1500, 1800, 1100, 1000]) {
+    state = setFilterAnimationTimeUpdater(state, {idx: 0, prop: 'value', value: [1000, time]});
+    t.equal(
+      overlay().props.pulseCurrentTime,
+      time - 1000,
+      'filter playback, pause, scrub and replay drive event time'
+    );
+    t.equal(
+      state.layerData[0].getPulseStartTime,
+      accessor,
+      'filter ticks reuse cached event attributes'
+    );
+    t.equal(
+      state.animationConfig,
+      animationConfig,
+      'unsynced filter leaves the layer clock unchanged'
+    );
+  }
+  t.notOk(state.filters[0].syncedWithLayerTimeline, 'no timeline synchronization is required');
+  const grouped = {...state, layerOrder: [{id: 'group', isVisible: true, layerOrder: [point.id]}]};
+  t.equal(
+    overlay(grouped).props.pulseCurrentTime,
+    0,
+    'grouped layers receive the filter clock too'
+  );
+  state = setFilterAnimationTimeUpdater(state, {idx: 0, prop: 'value', value: [1200, 1500]});
+  t.deepEqual(state.filters[0].value, [1200, 1500], 'event playback does not widen a short window');
+  const gpu = state.datasets[dataset.id].gpuFilter;
+  const channel = state.filters[0].gpuChannel[0];
+  t.ok(
+    state.layerData[0].getFilterValue({index: 0})[channel] < gpu.filterRange[channel][0],
+    'filter still clips the first point'
+  );
+  configure({pulseDurationMs: 5000});
+  t.equal(
+    state.animationConfig,
+    animationConfig,
+    'duration edits do not create or extend layer time'
+  );
+  t.deepEqual(state.filters[0].value, [1200, 1500], 'duration edits preserve the filter window');
+
+  const renamed = reducer(state, VisStateActions.renameTableColumn(dataset.id, 'time', 'started'));
+  t.equal(
+    renamed.layers[0].config.visConfig.pulseTimeField,
+    'started',
+    'event field follows a rename'
+  );
+  t.ok(overlay(renamed), 'renamed filter still drives the event overlay');
+  t.equal(state.layers[0].config.visConfig.pulseTimeField, 'time', 'rename preserves prior state');
+  const removed = reducer(
+    renamed,
+    VisStateActions.updateDataset(dataset.id, {fields: dataset.fields.slice(0, 2), rows: [[1, 2]]})
+  );
+  t.notOk(overlay(removed), 'removing the event field stops effects');
+  t.equal(removed.layerData[0].data.length, 1, 'ordinary points survive field removal');
+  const replaced = reducer(
     state,
     VisStateActions.updateDataset(dataset.id, {
       fields: dataset.fields,
@@ -12508,84 +12580,50 @@ test('#visStateReducer -> Point recorded event timeline', async t => {
     })
   );
   t.deepEqual(
-    replaced.animationConfig.domain,
-    [10000, 21000],
-    'data replacement refreshes the global timeline including the event tail'
+    replaced.layerData[0].pulseTimeDomain,
+    [10000, 25000],
+    'replacement refreshes event timestamps and duration'
   );
-  t.equal(replaced.animationConfig.currentTime, 10000, 'playhead moves into the new event domain');
-  replaced = reducer(
-    replaced,
+  t.equal(replaced.animationConfig.domain, null, 'replacement does not create a layer timeline');
+  const empty = reducer(
+    state,
     VisStateActions.updateDataset(dataset.id, {fields: dataset.fields, rows: []})
   );
-  t.equal(replaced.animationConfig.domain, null, 'empty replacement clears the global timeline');
-  t.notOk(replaced.animationConfig.isAnimating, 'empty replacement stops playback');
+  t.notOk(overlay(empty), 'empty data has no event overlay');
 
-  const renamed = reducer(state, VisStateActions.renameTableColumn(dataset.id, 'time', 'started'));
-  t.equal(
-    renamed.layers[0].config.visConfig.pulseTimeField,
-    'started',
-    'timestamp selection follows a column rename'
-  );
-  t.ok(renamed.layers[0].config.animation.enabled, 'renaming preserves recorded animation');
-  t.deepEqual(renamed.animationConfig.domain, [1000, 3000], 'renaming preserves the timeline');
-  t.deepEqual(
-    renamed.layerData[0].getPulseStartTime({index: 1}),
-    state.layerData[0].getPulseStartTime({index: 1}),
-    'renamed field still supplies event timestamps'
-  );
-  t.equal(state.layers[0].config.visConfig.pulseTimeField, 'time', 'rename preserves prior state');
-  const removed = reducer(
-    renamed,
-    VisStateActions.updateDataset(dataset.id, {
-      fields: dataset.fields.slice(0, 2),
-      rows: [[1, 2]]
-    })
-  );
-  t.equal(removed.animationConfig.domain, null, 'removing the event field clears the timeline');
-  t.notOk(removed.layers[0].config.animation.enabled, 'removing the event field disables events');
-  t.equal(removed.layerData[0].data.length, 1, 'ordinary points survive event field removal');
-
-  const layerData = state.layerData[0];
-  for (const time of [1500, 1500, 2500, 1100, 1000]) {
-    state = reducer(state, VisStateActions.setLayerAnimationTime(time));
-    t.equal(state.animationConfig.currentTime, time, 'playhead supports pause, scrub and replay');
-    t.equal(state.layerData[0], layerData, 'timeline ticks do not regenerate point attributes');
-  }
-  state = reducer(state, VisStateActions.addFilter(dataset.id));
-  state = reducer(state, VisStateActions.setFilter(0, 'name', 'time'));
-  state = syncTimeFilterWithLayerTimelineUpdater(state, {idx: 0, enable: true});
-  state = setFilterAnimationTimeUpdater(state, {idx: 0, prop: 'value', value: [1200, 1500]});
-  t.equal(
-    state.animationConfig.currentTime,
-    1500,
-    'synchronized time filter drives the event playhead'
-  );
-  t.deepEqual(
-    state.filters[0].value,
-    [1200, 1500],
-    'event playback does not widen a short filter window'
-  );
-  const gpu = state.datasets[dataset.id].gpuFilter;
-  const channel = state.filters[0].gpuChannel[0];
-  const startValue = state.layerData[0].getFilterValue({index: 0})[channel];
+  state = reducer(state, VisStateActions.setFilter(0, 'enabled', false));
+  t.notOk(overlay(), 'disabled filter stops event effects');
+  state = reducer(state, VisStateActions.setFilter(0, 'enabled', true));
+  t.ok(overlay(), 'reenabled filter resumes its current effect phase');
+  state = reducer(state, VisStateActions.removeFilter(0));
+  t.notOk(overlay(), 'removing the filter stops event effects');
   t.ok(
-    startValue < gpu.filterRange[channel][0],
-    'filter clips the first point even during its event cycle'
+    render().some(layer => layer.id === point.id),
+    'removing the filter preserves ordinary points'
   );
-  configure({pulseDurationMs: 5000});
+
+  const trip = new TripLayer({dataId: dataset.id});
+  trip.config.animation = {enabled: true, domain: [0, 9000]};
+  const tripClock = {...animationConfig, domain: [0, 9000], currentTime: 5000};
+  state = {
+    ...state,
+    layers: [...state.layers, trip],
+    layerData: [...state.layerData, {}],
+    animationConfig: tripClock
+  };
+  for (const config of [
+    {pulseDurationMs: 100},
+    {pulseEnabled: false},
+    {pulseTrigger: 'continuous'},
+    {pulseEnabled: true}
+  ]) {
+    configure(config);
+    t.equal(state.animationConfig, tripClock, 'event settings do not change a Trip layer clock');
+  }
   t.deepEqual(
-    state.animationConfig.domain,
-    [1000, 7000],
-    'duration changes refresh the timeline tail'
+    getAnimatableVisibleLayers(state.layers).map(layer => layer.id),
+    [trip.id],
+    'only the Trip layer contributes a standalone timeline'
   );
-  t.deepEqual(state.filters[0].value, [1200, 1500], 'duration edits preserve the filter selection');
-  configure({pulseTimeField: 'missing'});
-  t.equal(state.animationConfig.domain, null, 'missing event field removes the event timeline');
-  configure({pulseTimeField: 'time'});
-  configure({pulseTrigger: 'continuous'});
-  t.equal(state.animationConfig.domain, null, 'continuous effects do not need a timeline');
-  configure({pulseTrigger: 'event'});
-  configure({pulseEnabled: false});
-  t.equal(state.animationConfig.domain, null, 'disabling events removes the event timeline');
   t.end();
 });
