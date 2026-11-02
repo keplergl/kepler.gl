@@ -366,25 +366,18 @@ test('#PointLayer -> native separated points preserve every coordinate through i
         [layer]
       );
       const formatted = layer.formatLayerData({[dataset.id]: dataset});
-      const [composite] = layer.renderLayer({
-        data: formatted,
-        dataset,
-        idx: 0,
-        layerInteraction: {},
-        mapState: INITIAL_MAP_STATE,
-        gpuFilter: dataset.gpuFilter,
-        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
-        visible: true,
-        layerCallbacks: {}
-      });
-      const animated = composite.clone({
-        pulseEnabled: true,
-        pulseMode: 'ripple',
-        pulseSpeed: 2,
-        pulseExpansion: 3,
-        extensions: [...composite.props.extensions, new PulseRippleExtension()]
-      });
-      const sublayers = animated.renderLayers();
+      const render = () =>
+        layer.renderLayer({
+          data: formatted,
+          dataset,
+          idx: 0,
+          layerInteraction: {},
+          mapState: INITIAL_MAP_STATE,
+          gpuFilter: dataset.gpuFilter,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          visible: true,
+          layerCallbacks: {}
+        })[0];
       const rowIndices =
         geometryType === 'multipoint'
           ? [
@@ -395,56 +388,67 @@ test('#PointLayer -> native separated points preserve every coordinate through i
               [0, 1, 2],
               [3, 4]
             ];
-      t.equal(sublayers.length, 2, 'renders both Arrow record batches');
-      sublayers.forEach((sublayer, batchIndex) => {
-        const {props} = sublayer;
-        t.ok(
-          props.extensions.some(extension => extension instanceof PulseRippleExtension),
-          'Arrow batch inherits animation'
-        );
-        t.equal(props.pulseMode, 'ripple', 'Arrow batch inherits effect style');
-        t.equal(props.pulseSpeed, 2, 'Arrow batch inherits speed');
-        t.equal(props.pulseExpansion, 3, 'Arrow batch inherits expansion');
-        t.equal(props.data.length, rowIndices[batchIndex].length, 'empty features add no points');
-        rowIndices[batchIndex].forEach((rowIndex, index) => {
-          const context = {index, data: props.data, target: []};
-          const expected = {index: rowIndex};
-          t.equal(
-            props.getRadius(null, context),
-            formatted.getRadius(expected),
-            'radius uses the feature row'
-          );
-          t.deepEqual(
-            props.getFillColor(null, context),
-            formatted.getFillColor(expected),
-            'color uses the feature row'
-          );
-          t.equal(
-            props.getFiltered(null, context),
-            formatted.getFiltered(expected),
-            'CPU mask uses the feature row'
-          );
-          const filterValues = props.getFilterValue(null, context);
-          t.deepEqual(
-            filterValues,
-            formatted.getFilterValue(expected),
-            'GPU values use the feature row'
-          );
-          const [min, max] = dataset.gpuFilter.filterRange[0];
-          const visible =
-            Boolean(props.getFiltered(null, context)) &&
-            filterValues[0] >= min &&
-            filterValues[0] <= max;
-          t.equal(visible, rowIndex === 3, 'only the matching later-batch feature is visible');
-          const picked = composite.getPickingInfo({info: {index}, sourceLayer: sublayer});
-          t.equal(picked.index, rowIndex, 'rendered attributes agree with the picked feature');
+      for (const pulseEnabled of [false, true, false]) {
+        layer.updateLayerVisConfig({
+          pulseEnabled,
+          pulseMode: 'ripple',
+          pulseSpeed: 2,
+          pulseExpansion: 3
         });
-      });
-      t.equal(
-        sublayers[1].props.getRadius(null, {index: 0, data: sublayers[1].props.data, target: []}),
-        90,
-        'later batch reads 90 rather than the first batch value 10'
-      );
+        const composite = render();
+        const sublayers = composite.renderLayers();
+        t.equal(sublayers.length, 2, 'renders both Arrow record batches');
+        sublayers.forEach((sublayer, batchIndex) => {
+          const {props} = sublayer;
+          t.equal(
+            props.extensions.some(extension => extension instanceof PulseRippleExtension),
+            pulseEnabled,
+            'Arrow batch enables animation only when selected'
+          );
+          t.equal(props.pulseMode, 'ripple', 'Arrow batch inherits effect style');
+          t.equal(props.pulseSpeed, 2, 'Arrow batch inherits speed');
+          t.equal(props.pulseExpansion, 3, 'Arrow batch inherits expansion');
+          t.equal(props.data.length, rowIndices[batchIndex].length, 'empty features add no points');
+          rowIndices[batchIndex].forEach((rowIndex, index) => {
+            const context = {index, data: props.data, target: []};
+            const expected = {index: rowIndex};
+            t.equal(
+              props.getRadius(null, context),
+              formatted.getRadius(expected),
+              'radius uses the feature row'
+            );
+            t.deepEqual(
+              props.getFillColor(null, context),
+              formatted.getFillColor(expected),
+              'color uses the feature row'
+            );
+            t.equal(
+              props.getFiltered(null, context),
+              formatted.getFiltered(expected),
+              'CPU mask uses the feature row'
+            );
+            const filterValues = props.getFilterValue(null, context);
+            t.deepEqual(
+              filterValues,
+              formatted.getFilterValue(expected),
+              'GPU values use the feature row'
+            );
+            const [min, max] = dataset.gpuFilter.filterRange[0];
+            const visible =
+              Boolean(props.getFiltered(null, context)) &&
+              filterValues[0] >= min &&
+              filterValues[0] <= max;
+            t.equal(visible, rowIndex === 3, 'only the matching later-batch feature is visible');
+            const picked = composite.getPickingInfo({info: {index}, sourceLayer: sublayer});
+            t.equal(picked.index, rowIndex, 'rendered attributes agree with the picked feature');
+          });
+        });
+        t.equal(
+          sublayers[1].props.getRadius(null, {index: 0, data: sublayers[1].props.data, target: []}),
+          90,
+          'later batch reads 90 rather than the first batch value 10'
+        );
+      }
       const vectorLayer = new GeoArrowScatterplotLayer({
         id: 'batched-vector-radius',
         data: table,
@@ -2029,7 +2033,11 @@ test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
         layerIndex: 0,
         data,
         mapState: {...INITIAL_MAP_STATE, globe: {enabled: globe}},
-        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        interactionConfig: {
+          ...INITIAL_VIS_STATE.interactionConfig,
+          brush: {...INITIAL_VIS_STATE.interactionConfig.brush, enabled: true}
+        },
+        hoverInfo: {picked: true, layer: {props: {id: layer.id}}, object: data.data[0], index: 0},
         mapLayers
       },
       {}
@@ -2045,6 +2053,66 @@ test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
     });
     const manager = new LayerManager(device, {viewport});
     try {
+      const regular = render(globe);
+      testRenderDeckLayer(t, 'regular point before animation', regular, {layerManager: manager});
+      const snapshot = deckLayers =>
+        deckLayers
+          .filter(deckLayer => deckLayer.id === layer.id || deckLayer.id === `${layer.id}-hovered`)
+          .map(deckLayer => ({
+            id: deckLayer.id,
+            props: Object.fromEntries(
+              [
+                'data',
+                'getPosition',
+                'getRadius',
+                'getFillColor',
+                'getLineColor',
+                'getFilterValue',
+                'filterRange',
+                'brushingEnabled',
+                'brushingRadius',
+                'radiusScale',
+                'radiusMaxPixels',
+                'filled',
+                'stroked',
+                'billboard',
+                'opacity',
+                'pickable',
+                'parameters'
+              ].map(key => [key, deckLayer.props[key]])
+            ),
+            attributes: Object.fromEntries(
+              [
+                'instancePositions',
+                'instanceRadius',
+                'instanceFillColors',
+                'instancePickingColors'
+              ].map(key => [
+                key,
+                deckLayer.getAttributeManager().getAttributes()[key].value?.slice()
+              ])
+            ),
+            vs: deckLayer.state.model.vs,
+            fs: deckLayer.state.model.fs
+          }));
+      const baseline = snapshot(regular);
+      t.equal(baseline.length, 2, 'regular points include the hover renderer');
+      t.ok(regular[0].props.brushingEnabled, 'brushing is active in this regression case');
+      const assertRegular = deckLayers => {
+        t.deepEqual(
+          snapshot(deckLayers),
+          baseline,
+          'restores regular point and hover shaders, attributes and rendering settings'
+        );
+        t.equal(
+          deckLayers[0].getPickingInfo({info: {index: 0}}).object,
+          data.data[0],
+          'regular picking still returns the filtered point'
+        );
+        t.notOk(hasAnimation(deckLayers[0]), 'regular points have no animation extension');
+        t.notOk(hasAnimation(deckLayers[1]), 'regular hover has no animation extension');
+      };
+      assertRegular(regular);
       for (const pulseMode of ['pulse', 'ripple']) {
         layer.updateLayerVisConfig({
           pulseEnabled: true,
@@ -2056,6 +2124,17 @@ test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
         testRenderDeckLayer(t, `point ${pulseMode}`, deckLayers, {layerManager: manager});
         const points = deckLayers[0];
         t.ok(hasAnimation(points), 'point renderer enables the effect');
+        t.ok(hasAnimation(deckLayers[1]), 'hover renderer enables the same effect');
+        t.equal(
+          points.getNumInstances(),
+          regular[0].props.data.length,
+          'all filtered points remain drawable'
+        );
+        t.equal(
+          points.getPickingInfo({info: {index: 0}}).object,
+          data.data[0],
+          'animated picking returns the same filtered point'
+        );
         t.equal(points.props.pulseMode, pulseMode, 'selected effect reaches the renderer');
         t.equal(points.props.data, data.data, 'animation reuses filtered point data');
         t.equal(points.props.getRadius, data.getRadius, 'animation preserves radius mapping');
@@ -2073,12 +2152,12 @@ test('#PointLayer -> Pulse / Ripple rendering and saved settings', t => {
           false,
           'hidden points stay hidden'
         );
+        layer.updateLayerVisConfig({pulseEnabled: false});
+        const staticLayers = render(globe);
+        testRenderDeckLayer(t, 'disabled pulse', staticLayers, {layerManager: manager});
+        assertRegular(staticLayers);
+        t.equal(layer.config.visConfig.pulseExpansion, 3, 'turning off retains effect settings');
       }
-      layer.updateLayerVisConfig({pulseEnabled: false});
-      const staticLayers = render(globe);
-      testRenderDeckLayer(t, 'disabled pulse', staticLayers, {layerManager: manager});
-      t.notOk(hasAnimation(staticLayers[0]), 'turning off removes animation from the renderer');
-      t.equal(layer.config.visConfig.pulseExpansion, 3, 'turning off retains effect settings');
     } finally {
       manager.finalize();
     }
