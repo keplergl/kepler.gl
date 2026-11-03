@@ -31,7 +31,13 @@ export const voronoiVisConfigs = {
   filled: {...LAYER_VIS_CONFIGS.filled, defaultValue: true},
   stroked: {...LAYER_VIS_CONFIGS.stroked, defaultValue: true},
   strokeColor: {...LAYER_VIS_CONFIGS.strokeColor, defaultValue: [30, 35, 45]},
-  thickness: {...LAYER_VIS_CONFIGS.thickness, defaultValue: 0.8, range: [0, 5], step: 0.1},
+  thickness: {
+    ...LAYER_VIS_CONFIGS.thickness,
+    defaultValue: 0.8,
+    range: [0, 5],
+    step: 0.1,
+    allowCustomValue: false
+  },
   boundsPadding: {
     type: 'number',
     property: 'boundsPadding',

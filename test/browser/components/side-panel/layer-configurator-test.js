@@ -1718,6 +1718,16 @@ test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds contro
     t.equal(layer.config.columnMode, 'points', 'can return to latitude/longitude input');
     const fill = editor.getByText('Fill Color').closest('.layer-config-group');
     const stroke = editor.getByText('Stroke Color').closest('.layer-config-group');
+    fireEvent.click(stroke.querySelector('.layer-config-group__header'));
+    t.notOk(
+      stroke.querySelector('[id="property.thickness"]'),
+      'stroke width does not offer a custom-input toggle'
+    );
+    const strokeWidth = stroke.querySelector('.kg-range-slider__input');
+    await user.clear(strokeWidth);
+    await user.type(strokeWidth, '2');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {thickness: 2}, 'stroke width uses the standard slider');
     fireEvent.click(
       within(fill.querySelector('.layer-config-group__header')).getByRole('checkbox', {
         hidden: true
