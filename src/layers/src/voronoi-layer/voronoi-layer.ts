@@ -7,6 +7,7 @@ import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {DataContainerInterface} from '@kepler.gl/utils';
 import Layer from '../base-layer';
+import {getFilterDataFunc} from '../aggregation-layer';
 import {applyDefaultColorField} from '../layer-color-utils';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import VoronoiLayerIcon from './voronoi-layer-icon';
@@ -15,7 +16,6 @@ import {buildVoronoiMosaic, VoronoiCell, VoronoiMosaic, VoronoiSite} from './vor
 type VoronoiLayerData = {
   data: VoronoiCell[];
   mosaic?: VoronoiMosaic;
-  filteredIndex?: number[];
 } & Record<string, any>;
 
 export const voronoiVisConfigs = {
@@ -44,6 +44,8 @@ export default class VoronoiLayer extends Layer {
     dataRevision: number;
     columns: Layer['config']['columns'];
     padding: number;
+    filteredIndex: number[];
+    gpuFilter: KeplerTable['gpuFilter'];
   };
 
   constructor(props) {
@@ -110,6 +112,8 @@ export default class VoronoiLayer extends Layer {
       return {data: []};
     }
     const {dataContainer, dataRevision, gpuFilter} = dataset;
+    const filteredIndex = dataset.filteredIndexByLayer?.[this.id] ?? dataset.filteredIndex;
+    const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
     const {columns, visConfig} = this.config;
     const previous = this.geometryTriggers;
     if (
@@ -117,36 +121,42 @@ export default class VoronoiLayer extends Layer {
       previous?.dataContainer !== dataContainer ||
       previous.dataRevision !== dataRevision ||
       previous.columns !== columns ||
-      previous.padding !== visConfig.boundsPadding
+      previous.padding !== visConfig.boundsPadding ||
+      previous.filteredIndex !== filteredIndex ||
+      previous.gpuFilter !== gpuFilter
     ) {
       const getPosition = this.getPositionAccessor(dataContainer);
       const sites: VoronoiSite[] = [];
       for (let index = 0; index < dataContainer.numRows(); index++) {
         sites.push({index, position: getPosition({index}) as [number, number]});
       }
-      this.mosaic = buildVoronoiMosaic(sites, visConfig.boundsPadding);
+      const visible = new Set(filteredIndex);
+      const hasGpuFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
+        trigger => trigger !== null
+      );
+      const matchesGpuFilter = hasGpuFilter
+        ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
+        : null;
+      this.mosaic = buildVoronoiMosaic(
+        sites,
+        visConfig.boundsPadding,
+        site => visible.has(site.index) && (!matchesGpuFilter || matchesGpuFilter(site))
+      );
       this.geometryTriggers = {
         dataContainer,
         dataRevision,
         columns,
-        padding: visConfig.boundsPadding
+        padding: visConfig.boundsPadding,
+        filteredIndex,
+        gpuFilter
       };
       this.updateMeta({bounds: this.mosaic.bounds});
     }
-    const filteredIndex = dataset.filteredIndexByLayer?.[this.id] ?? dataset.filteredIndex;
-    // CPU filters hide cells but never change the tessellation of neighboring sites.
-    const data =
-      oldLayerData?.mosaic === this.mosaic && oldLayerData.filteredIndex === filteredIndex
-        ? oldLayerData.data
-        : (() => {
-            const visible = new Set(filteredIndex);
-            return this.mosaic!.cells.filter(cell => visible.has(cell.index));
-          })();
+    const data = oldLayerData?.mosaic === this.mosaic ? oldLayerData.data : this.mosaic.cells;
     return {
       data,
       mosaic: this.mosaic,
-      filteredIndex,
-      getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
+      getFilterValue,
       ...this.getAttributeAccessors({dataContainer})
     };
   }

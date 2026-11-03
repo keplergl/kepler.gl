@@ -15,9 +15,12 @@ export type VoronoiMosaic = {
 const MIN_EXTENT = (512 * 1000) / 40075016.68557849;
 
 /** Planar nearest-site cells in Web Mercator, independent of the map viewport. */
-export function buildVoronoiMosaic(sites: VoronoiSite[], paddingPercent: number): VoronoiMosaic {
-  const unique: VoronoiSite[] = [];
-  const seen = new Set<string>();
+export function buildVoronoiMosaic(
+  sites: VoronoiSite[],
+  paddingPercent: number,
+  includeSite: (site: VoronoiSite) => boolean = () => true
+): VoronoiMosaic {
+  const located: VoronoiSite[] = [];
   for (const site of sites) {
     const [lng, lat] = site.position;
     if (
@@ -29,16 +32,12 @@ export function buildVoronoiMosaic(sites: VoronoiSite[], paddingPercent: number)
       continue;
     }
     const longitude = lng === 180 ? -180 : lng;
-    const key = `${longitude},${lat}`;
-    // Coincident sites have no distinct nearest-site region. Keep the first row.
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push({index: site.index, position: [longitude, lat]});
+    located.push({index: site.index, position: [longitude, lat]});
   }
-  if (!unique.length) return {cells: [], bounds: null};
+  if (!located.length) return {cells: [], bounds: null};
 
   // Unwrap across the largest empty longitude gap so dateline neighbors stay neighbors.
-  const longitudes = unique.map(site => site.position[0]).sort((a, b) => a - b);
+  const longitudes = located.map(site => site.position[0]).sort((a, b) => a - b);
   let west = longitudes[0];
   let largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];
   for (let i = 1; i < longitudes.length; i++) {
@@ -48,7 +47,7 @@ export function buildVoronoiMosaic(sites: VoronoiSite[], paddingPercent: number)
       west = longitudes[i];
     }
   }
-  const coordinates = unique.map(({position: [lng, lat]}) =>
+  const coordinates = located.map(({position: [lng, lat]}) =>
     lngLatToWorld([lng < west ? lng + 360 : lng, lat])
   );
   let minX = Infinity;
@@ -82,7 +81,21 @@ export function buildVoronoiMosaic(sites: VoronoiSite[], paddingPercent: number)
     maxX + padX,
     Math.min(512, maxY + padY)
   ];
-  const voronoi = Delaunay.from(coordinates).voronoi(extent);
+  // Keep bounds and longitude unwrapping anchored to the full dataset. Only the
+  // sites participating in the tessellation change when a filter changes.
+  const unique: VoronoiSite[] = [];
+  const activeCoordinates: typeof coordinates = [];
+  const seen = new Set<string>();
+  located.forEach((site, index) => {
+    if (!includeSite(site)) return;
+    const key = site.position.join(',');
+    // Coincident sites share a region, owned by the first remaining row.
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(site);
+    activeCoordinates.push(coordinates[index]);
+  });
+  const voronoi = Delaunay.from(activeCoordinates).voronoi(extent);
   const cells: VoronoiCell[] = [];
   unique.forEach((site, index) => {
     const polygon = voronoi.cellPolygon(index);

@@ -2,12 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import {Table, vectorFromArray, Float64, Int64} from 'apache-arrow';
-import {KeplerTable, copyTableAndUpdate, getGpuFilterProps} from '@kepler.gl/table';
+import {
+  KeplerTable,
+  copyTableAndUpdate,
+  getGpuFilterProps,
+  assignGpuChannels
+} from '@kepler.gl/table';
 import {processArrowBatches} from '@kepler.gl/processors';
-import {getPolygonFilterFunctor} from '@kepler.gl/utils';
-import {EDITOR_AVAILABLE_LAYERS} from '@kepler.gl/constants';
+import {getPolygonFilterFunctor, getDefaultFilter} from '@kepler.gl/utils';
+import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES} from '@kepler.gl/constants';
 import SchemaManager from '@kepler.gl/schemas';
-import {INITIAL_VIS_STATE, layerTypeChangeUpdater} from '@kepler.gl/reducers';
+import {INITIAL_VIS_STATE, layerTypeChangeUpdater, setFilterUpdater} from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {LayerClasses} from '../index';
 import VoronoiLayer from './voronoi-layer';
@@ -78,43 +83,109 @@ test('keeps source row colors and hover data on the generated polygons', async (
   expect(polygon.props.extruded).toBe(false);
 });
 
-test('CPU and per-layer filters hide cells without changing the retained boundaries', async () => {
+test('CPU and per-layer filters rebuild cells within unchanged dataset bounds', async () => {
   const {layer, dataset, datasets} = await setup();
   const original = layer.formatLayerData(datasets);
+  const bounds = layer.meta.bounds;
   for (const table of [
     copyTableAndUpdate(dataset, {filteredIndex: [1, 3]}),
     copyTableAndUpdate(dataset, {filteredIndexByLayer: {[layer.id]: [1, 3]}})
   ]) {
     const filtered = layer.formatLayerData({[dataset.id]: table}, original);
     expect(filtered.data.map(cell => cell.index)).toEqual([1, 3]);
-    expect(filtered.data[0].polygon).toEqual(original.data[1].polygon);
-    expect(filtered.data[1].polygon).toEqual(original.data[3].polygon);
+    expect(filtered.data[0].polygon).not.toEqual(original.data[1].polygon);
+    expect(filtered.data[1].polygon).not.toEqual(original.data[3].polygon);
+    // Both surviving sites are in the east; their cells now also cover the west.
+    for (const cell of filtered.data) {
+      expect(Math.min(...cell.polygon.map(point => point[0]))).toBeCloseTo(bounds[0]);
+      expect(Math.max(...cell.polygon.map(point => point[0]))).toBeCloseTo(bounds[2]);
+    }
+    expect(layer.meta.bounds).toEqual(bounds);
     expect(layer.formatLayerData(datasets, filtered).data).toEqual(original.data);
   }
   const empty = copyTableAndUpdate(dataset, {filteredIndex: []});
   expect(layer.formatLayerData({[dataset.id]: empty}, original).data).toEqual([]);
+  expect(layer.meta.bounds).toEqual(bounds);
+  expect(layer.formatLayerData(datasets).data).toEqual(original.data);
 });
 
-test('passes GPU filter values and ranges through using source row indices', async () => {
+test('GPU numeric filters rebuild cells even when the CPU row indices do not change', async () => {
   const {layer, dataset, datasets} = await setup();
-  dataset.gpuFilter = {
-    ...dataset.gpuFilter,
-    filterRange: [
-      [15, 25],
-      [0, 0],
-      [0, 0],
-      [0, 0]
-    ],
-    filterValueAccessor: () => () => cell => [rows[cell.index][2], 0, 0, 0],
-    filterValueUpdateTriggers: {value: {name: 'value', domain0: 0}}
-  } as typeof dataset.gpuFilter;
-  const data = layer.formatLayerData(datasets);
-  const polygon = render(layer, dataset, data);
-  expect(polygon.props.filterRange).toEqual(dataset.gpuFilter.filterRange);
-  expect(data.data.map(polygon.props.getFilterValue)).toEqual(
-    [10, 20, 30, 40].map(value => [value, 0, 0, 0])
-  );
-  expect(polygon.props.updateTriggers.getFilterValue).toEqual({value: {name: 'value', domain0: 0}});
+  const original = layer.formatLayerData(datasets);
+  const bounds = layer.meta.bounds;
+  const filter = {
+    ...getDefaultFilter({dataId: [dataset.id]}),
+    type: FILTER_TYPES.range,
+    name: ['value'],
+    fieldIdx: [2],
+    domain: [10, 40],
+    value: [20, 20],
+    gpu: true
+  };
+  let previous = original;
+  for (const {value, indices} of [
+    {value: [20, 20], indices: [1]},
+    {value: [10, 10], indices: [0]},
+    {value: [20, 40], indices: [1, 2, 3]},
+    {value: [21, 29], indices: []}
+  ]) {
+    dataset.filterTable(assignGpuChannels([{...filter, value}]), [layer]);
+    expect(dataset.filteredIndex).toEqual([0, 1, 2, 3]);
+    const data = layer.formatLayerData(datasets, previous);
+    expect(data.data.map(cell => cell.index)).toEqual(indices);
+    expect(layer.meta.bounds).toEqual(bounds);
+    if (indices.length === 1) {
+      const polygon = data.data[0].polygon;
+      expect(Math.min(...polygon.map(point => point[0]))).toBeCloseTo(bounds[0]);
+      expect(Math.max(...polygon.map(point => point[0]))).toBeCloseTo(bounds[2]);
+      expect(Math.min(...polygon.map(point => point[1]))).toBeCloseTo(bounds[1]);
+      expect(Math.max(...polygon.map(point => point[1]))).toBeCloseTo(bounds[3]);
+    }
+    const rendered = render(layer, dataset, data);
+    expect(rendered.props.filterRange).toEqual(dataset.gpuFilter.filterRange);
+    expect(data.data.map(rendered.props.getFilterValue)).toEqual(
+      indices.map(index => [rows[index][2] - 10, 0, 0, 0])
+    );
+    previous = data;
+  }
+  dataset.filterTable(assignGpuChannels([{...filter, enabled: false}]), [layer]);
+  expect(layer.formatLayerData(datasets, previous).data).toEqual(original.data);
+});
+
+test('timeline updates rebuild the mosaic and clearing the filter restores all sites', async () => {
+  const {layer, dataset, datasets} = await setup({
+    fields: [...fields, {name: 'time', type: 'timestamp', format: ''}],
+    rows: rows.map((row, i) => [...row, (i + 1) * 1000])
+  });
+  const original = layer.formatLayerData(datasets);
+  const bounds = layer.meta.bounds;
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    filters: [getDefaultFilter({dataId: [dataset.id]})],
+    layers: [layer],
+    layerData: [original],
+    layerOrder: [layer.id]
+  };
+  state = setFilterUpdater(state, {idx: 0, prop: 'name', value: 'time'});
+  expect(state.filters[0].type).toBe(FILTER_TYPES.timeRange);
+  expect(state.filters[0].gpu).toBe(true);
+  for (const {value, indices} of [
+    {value: [1000, 2000], indices: [0, 1]},
+    {value: [3000, 4000], indices: [2, 3]},
+    {value: [2100, 2900], indices: []},
+    {value: [1000, 2000], indices: [0, 1]}
+  ]) {
+    state = setFilterUpdater(state, {idx: 0, prop: 'value', value});
+    expect(state.layers[0].isValid).toBe(true);
+    expect(state.layerData[0].data.map(cell => cell.index)).toEqual(indices);
+    expect(state.layers[0].meta.bounds).toEqual(bounds);
+    if (indices.length) {
+      expect(state.layerData[0].data[0].polygon).not.toEqual(original.data[indices[0]].polygon);
+    }
+  }
+  state = setFilterUpdater(state, {idx: 0, prop: 'enabled', value: false});
+  expect(state.layerData[0].data).toEqual(original.data);
 });
 
 test('polygon filters operate on the source site rather than the cell boundary', async () => {

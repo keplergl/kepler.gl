@@ -24,14 +24,17 @@ than precise geographic distance analysis. It is available in the flat map view.
   side. Padding is measured in the map projection. It clips the otherwise unbounded outer
   cells; it does not change internal nearest-site boundaries.
 
-Cells stay fixed while panning, zooming, or filtering. Filters hide the cells belonging to
-excluded rows, leaving gaps; the remaining cells do not expand to occupy them. Drawn polygon
-filters select source point locations. Changing the input coordinates or padding rebuilds
-the mosaic. Settings are saved with the map.
+Cells stay fixed while panning and zooming. Filters rebuild the mosaic from the remaining
+points, allowing their cells to expand into the areas of excluded points. This includes
+numeric and time filters, as well as drawn polygon filters that select source point
+locations. The outer clipping rectangle stays tied to the full dataset and its padding.
+An empty selection draws no cells; clearing filters restores the original mosaic.
+Changing the input coordinates or padding also rebuilds the mosaic. Settings are saved
+with the map.
 
 Missing, nonfinite, and out-of-range coordinates are skipped. Latitude must be within the
 Web Mercator range, approximately ±85.05°. Coincident locations share one cell, assigned to
-the first row in the dataset. A single point receives a finite display rectangle; a
+the first remaining row in the dataset. A single input point receives a finite display rectangle; a
 collinear set also receives a nonzero display extent.
 
 The first version accepts latitude/longitude columns and renders flat cells. It does not

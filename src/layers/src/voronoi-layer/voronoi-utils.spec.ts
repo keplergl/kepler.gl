@@ -119,3 +119,34 @@ test('keeps neighboring sites together across the antimeridian', () => {
   expect(Math.max(...cells[0].polygon.map(point => point[0]))).toBeCloseTo(180);
   expect(Math.min(...cells[1].polygon.map(point => point[0]))).toBeCloseTo(180);
 });
+
+test('filtered dateline sites retain the full extent and the same longitude unwrapping', () => {
+  const input = sites([
+    [179, 0],
+    [-179, 0]
+  ]);
+  const original = buildVoronoiMosaic(input, 10);
+  const filtered = buildVoronoiMosaic(input, 10, site => site.index === 1);
+  expect(filtered.bounds).toEqual(original.bounds);
+  expect(filtered.cells.map(cell => cell.index)).toEqual([1]);
+  expect(Math.min(...filtered.cells[0].polygon.map(point => point[0]))).toBeCloseTo(
+    original.bounds![0]
+  );
+  expect(Math.max(...filtered.cells[0].polygon.map(point => point[0]))).toBeCloseTo(
+    original.bounds![2]
+  );
+  expect(buildVoronoiMosaic(input, 10, () => false)).toEqual({cells: [], bounds: original.bounds});
+});
+
+test('the first remaining duplicate owns the cell when an earlier duplicate is filtered out', () => {
+  const input = sites([
+    [0, 0],
+    [0, 0],
+    [2, 0]
+  ]);
+  const original = buildVoronoiMosaic(input, 10);
+  const filtered = buildVoronoiMosaic(input, 10, site => site.index !== 0);
+  expect(filtered.cells.map(cell => cell.index)).toEqual([1, 2]);
+  expect(filtered.cells[0].polygon).toEqual(original.cells[0].polygon);
+  expect(filtered.bounds).toEqual(original.bounds);
+});
