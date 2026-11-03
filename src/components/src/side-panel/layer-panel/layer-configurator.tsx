@@ -2251,13 +2251,19 @@ export default function LayerConfiguratorFactory(
     _renderContourLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
       const {visConfigSettings: settings, config} = layer;
       const valueColumn = config.columns.value.value;
-      const valueRange = valueColumn
-        ? this._contourValueRange(
-            dataset?.dataContainer,
-            dataset?.getColumnField(valueColumn)?.valueAccessor,
-            dataset?.dataRevision
-          )
-        : layer.meta.contourDomain;
+      let valueRange = layer.meta.contourDomain;
+      if (valueColumn) {
+        const columnRange = this._contourValueRange(
+          dataset?.dataContainer,
+          dataset?.getColumnField(valueColumn)?.valueAccessor,
+          dataset?.dataRevision
+        );
+        // Empty cells contribute zero, so the surface can extend beyond the raw weights.
+        valueRange =
+          columnRange && valueRange
+            ? [Math.min(columnRange[0], valueRange[0]), Math.max(columnRange[1], valueRange[1])]
+            : columnRange;
+      }
       const hasValueRange = valueRange && valueRange[0] < valueRange[1];
       return (
         <StyledLayerVisualConfigurator>

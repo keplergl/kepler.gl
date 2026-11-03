@@ -676,6 +676,83 @@ test('Components -> LayerConfigurator -> contour custom range starts with the co
   }
 });
 
+test('Components -> LayerConfigurator -> sparse weighted contours retain usable custom thresholds', t => {
+  for (const weights of [
+    [10, 20],
+    [10, 10],
+    [-20, -10]
+  ]) {
+    const dataset = contourRangeDataset(
+      'sparse-contour-range',
+      weights.map((value, index) => [index, index, value]),
+      ['longitude', 'latitude', 'value']
+    );
+    const layer = new LayerClasses.contour({
+      id: 'contour-range',
+      dataId: dataset.id,
+      columns: {
+        lng: {value: 'longitude', fieldIdx: 0},
+        lat: {value: 'latitude', fieldIdx: 1},
+        value: {value: 'value', fieldIdx: 2}
+      }
+    });
+    layer.updateLayerVisConfig({gridResolution: 32});
+    const datasets = {[dataset.id]: dataset};
+    const automatic = layer.formatLayerData(datasets).data;
+    t.ok(automatic.length > 0, 'sparse weighted samples generate automatic contours');
+    const minimum = Math.min(...weights);
+    const maximum = Math.max(...weights);
+    if (minimum > 0) {
+      t.ok(
+        automatic.every(feature => feature.properties.threshold < minimum),
+        'smoothing puts the surface below the raw column minimum'
+      );
+    }
+
+    const onChange = sinon.spy();
+    const view = renderContourRange(layer, datasets, onChange);
+    try {
+      toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
+      fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
+      const range = [Math.min(0, minimum), Math.max(0, maximum)];
+      t.deepEqual(
+        onChange.lastCall.args[0],
+        {customRange: true, minimum: range[0], maximum: range[1]},
+        'custom levels include the empty-cell baseline and raw weights'
+      );
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.ok(layer.formatLayerData(datasets).data.length > 0, 'enabling custom range keeps contours');
+      t.deepEqual(
+        contourRangeLabels(view.container),
+        range,
+        'the slider exposes the surface range'
+      );
+
+      // Narrow the thresholds entirely into the smoothed surface, below the positive raw weights.
+      if (minimum > 0) {
+        dragContourHandle(view.container, 1, 10);
+        layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+        view.update();
+        dragContourHandle(view.container, 0, 5);
+        layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+        view.update();
+        const contours = layer.formatLayerData(datasets).data;
+        t.ok(contours.length > 0, 'both handles can select thresholds that restore peak contours');
+        t.ok(
+          contours.every(
+            feature => feature.properties.threshold > 0 && feature.properties.threshold < minimum
+          ),
+          'restored contours enclose positive peaks below the raw minimum'
+        );
+      }
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
 test('Components -> LayerConfigurator -> contour slider bounds follow the full selected column and dataset', t => {
   const dataset = contourRangeDataset('contour-range-data', [
     [-2.25, 1000.125],

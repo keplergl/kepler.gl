@@ -21,7 +21,8 @@ import {
   calculateLayerData,
   INITIAL_VIS_STATE,
   layerTypeChangeUpdater,
-  removeLayerUpdater
+  removeLayerUpdater,
+  validateLayerWithData
 } from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
@@ -1191,7 +1192,7 @@ test.each(
 )(
   'saves and reloads $columnMode contours (weighted: $weighted, below: $below) through the map schema',
   async ({columnMode, weighted, below}) => {
-    const {layer, datasets} = columnMode === 'geojson' ? setupGeojson() : await setup();
+    const {layer, dataset, datasets} = columnMode === 'geojson' ? setupGeojson() : await setup();
     if (!weighted) {
       layer.updateLayerConfig({
         columns: {...layer.config.columns, value: {value: null, fieldIdx: -1, optional: true}}
@@ -1220,8 +1221,7 @@ test.each(
     // Saved configs retain column names; field indices are resolved against the loaded table.
     expect(restored.config.columns.value).toBe(weighted ? 'value' : undefined);
     if (columnMode === 'geojson') expect(restored.config.columns.geojson).toBe('geometry');
-    const loaded = new ContourLayer({...restored.config, columns: layer.config.columns});
-    loaded.updateLayerVisConfig(restored.config.visConfig);
+    const loaded = validateLayerWithData(dataset, restored, LayerClasses)!;
     expect(loaded.formatLayerData(datasets)).toEqual(layer.formatLayerData(datasets));
   }
 );
@@ -1426,6 +1426,59 @@ test('missing or invalid selected weights do not silently become density', async
   expect(calculateContourLayerData(layer, datasets).layerData).toEqual({});
   expect(layer.errorMessage).toMatch(/numeric contour weight/);
 });
+
+test.each(['grid', 'geojson'])(
+  'loading %s contours preserves a missing saved weight until explicitly cleared',
+  async columnMode => {
+    const {layer, dataset} =
+      columnMode === 'geojson' ? setupGeojson() : await setup(scatteredSamples);
+    layer.updateLayerVisConfig({customRange: false, below: false});
+    const saved = SchemaManager.getConfigToSave({
+      ...StateWFiles,
+      visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+    });
+    const restored = SchemaManager.parseSavedConfig(saved)!.visState!.layers![0];
+    const fields = dataset.fields.slice(0, -1);
+    const missingWeightDataset = new KeplerTable({
+      info: {id: dataset.id},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields,
+      rows: Array.from({length: dataset.dataContainer.numRows()}, (_, index) =>
+        fields.map((_, fieldIdx) => dataset.dataContainer.valueAt(index, fieldIdx))
+      )
+    });
+    const datasets = {[dataset.id]: missingWeightDataset};
+
+    for (const options of [{}, {allowEmptyColumn: true}]) {
+      const loaded = validateLayerWithData(
+        missingWeightDataset,
+        restored,
+        LayerClasses,
+        options
+      ) as ContourLayer;
+      expect(loaded.config.columns.value.value).toBe('value');
+      expect(calculateContourLayerData(loaded, datasets).layerData).toEqual({});
+      expect(loaded.isValid).toBe(false);
+      expect(loaded.errorMessage).toMatch(/numeric contour weight/);
+
+      loaded.updateLayerConfig({
+        columns: {
+          ...loaded.config.columns,
+          value: {...loaded.config.columns.value, value: null, fieldIdx: -1}
+        }
+      });
+      const density = calculateContourLayerData(loaded, datasets);
+      expect(density.layer.isValid).toBe(true);
+      expect(density.layer.errorMessage).toBeNull();
+      expect(density.layerData.data.length).toBeGreaterThan(0);
+      expect(loaded.config.columns.value.value).toBeNull();
+    }
+    expect(() =>
+      validateLayerWithData(missingWeightDataset, restored, LayerClasses, {throwOnError: true})
+    ).toThrow(/invalid columns: value/);
+  }
+);
 
 test.each([false, true])(
   'sample (scattered = %s) generates all levels with islands and finite closed geometry',
