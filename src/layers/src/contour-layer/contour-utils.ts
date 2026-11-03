@@ -65,7 +65,7 @@ function regionalBounds(samples: ScalarSample[]) {
  */
 export function buildContourGrid(
   samples: ScalarSample[],
-  resolution = 192,
+  resolution = 64,
   aggregation: 'MEAN' | 'COUNT' = 'MEAN'
 ): ScalarGrid | null {
   if (!Number.isFinite(resolution) || resolution < 2) {

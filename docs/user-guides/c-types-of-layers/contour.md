@@ -67,7 +67,7 @@ clearing a filter follows the same behavior as other layers.
 Existing contour maps retain their selected value column as the weight and retain their
 style settings. They use the new cell aggregation, so contour geometry and automatic levels
 can change. Saved Input type, Interpolation resolution, and kilometer Cell size settings
-no longer affect the surface; maps without Grid resolution use the default of 192 cells.
+no longer affect the surface; maps without Grid resolution use the default of 64 cells.
 
 ## Controls
 
@@ -80,14 +80,14 @@ no longer affect the surface; maps without Grid resolution use the default of 19
   are interpolated to the number of levels, so each level has its own sampled color.
   Both fills and outlines use these colors; translucent nested fills blend where
   they overlap. Switching modes preserves both the plain color and selected palette.
-- **Grid resolution (max axis)**: 32–256 cells along the longer geographic axis
-  (default 192). Cell size adapts to the data bounds, so small datasets also use the
+- **Grid resolution**: 32–256 cells along the longer geographic axis
+  (default 64). Cell size adapts to the data bounds, so small datasets also use the
   selected resolution. Higher resolution gives smaller cells; lower resolution combines
   more observations. Each axis is capped at 256 cells. Changing the dataset extent or
   filtering boundary points changes physical cell size and can change means/counts.
 - **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the cell means
   or counts. Smoothing changes values, not just the visual outline. Empty cells contribute
-  zero. The default remains 1.5 cells.
+  zero. The default is 3 cells.
 - **Number of levels**: 2–20 equally spaced thresholds. Automatic levels exclude the
   field's extrema to avoid outlining the entire rectangular extent. Numerically
   constant surfaces are omitted; roundoff from smoothing or interpolation does not
@@ -105,7 +105,7 @@ no longer affect the surface; maps without Grid resolution use the default of 19
 - **Fill / outline**: enable independently. Each translucent filled region overlaps
   the larger regions below it, so opacity builds toward nested interiors. Outlines
   are rendered afterward, with brighter lines for inner regions. Fill opacity ranges
-  from 0 to 1, with a default of 0.15.
+  from 0 to 1, with a default of 0.3.
 
 New contours fill regions where value ≥ threshold, enclosing peaks in weights or point
 counts. There is no Invert control. Existing maps retain their explicitly saved fill direction.

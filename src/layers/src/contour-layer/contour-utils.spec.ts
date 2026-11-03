@@ -206,24 +206,27 @@ describe('point aggregation for contours', () => {
     ).toEqual(buildContourGrid(valid, 32, aggregation));
   });
 
-  test.each([32, 192, 256])('fits small and large datasets to a maximum axis of %s', resolution => {
-    const makeGrid = (scale: number) =>
-      buildContourGrid(
-        [point(-0.5 * scale, -0.25 * scale, 10), point(0.5 * scale, 0.25 * scale, 30)],
-        resolution
-      )!;
-    const small = makeGrid(0.00001);
-    const large = makeGrid(1);
-    for (const grid of [small, large]) {
-      expect(Math.max(grid.width, grid.height)).toBe(resolution);
-      expect(grid.height).toBeLessThan(grid.width);
-      expect(grid.stepLng).toBeCloseTo(grid.stepLat, 12);
+  test.each([undefined, 32, 192, 256])(
+    'fits small and large datasets to a maximum axis of %s',
+    resolution => {
+      const makeGrid = (scale: number) =>
+        buildContourGrid(
+          [point(-0.5 * scale, -0.25 * scale, 10), point(0.5 * scale, 0.25 * scale, 30)],
+          resolution
+        )!;
+      const small = makeGrid(0.00001);
+      const large = makeGrid(1);
+      for (const grid of [small, large]) {
+        expect(Math.max(grid.width, grid.height)).toBe(resolution ?? 64);
+        expect(grid.height).toBeLessThan(grid.width);
+        expect(grid.stepLng).toBeCloseTo(grid.stepLat, 12);
+      }
+      expect(small.width).toBe(large.width);
+      expect(small.height).toBe(large.height);
+      expect(small.values).toEqual(large.values);
+      expect(small.stepLng / large.stepLng).toBeCloseTo(0.00001, 12);
     }
-    expect(small.width).toBe(large.width);
-    expect(small.height).toBe(large.height);
-    expect(small.values).toEqual(large.values);
-    expect(small.stepLng / large.stepLng).toBeCloseTo(0.00001, 12);
-  });
+  );
 
   test('keeps cells geographically square at higher latitudes', () => {
     const grid = buildContourGrid([point(0, 59.99, 10), point(0.03, 60.01, 30)], 192)!;

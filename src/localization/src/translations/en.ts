@@ -333,7 +333,7 @@ export default {
       colorByLevel: 'Color by level',
       weightDescription:
         'Average a numeric column within each cell. Leave empty to show point density (point count per cell).',
-      gridResolution: 'Grid resolution (max axis)',
+      gridResolution: 'Grid resolution',
       gridResolutionDescription:
         'Maximum cells along the longer geographic axis. Cell size adapts to the data bounds; the shorter axis scales proportionally.',
       smoothing: 'Smoothing',

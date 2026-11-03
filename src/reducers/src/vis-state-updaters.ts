@@ -1184,6 +1184,20 @@ export function layerTypeChangeUpdater(
       defaultLayerProps
     );
 
+    // Use Contour's palette when the source still has its default; retain customized palettes.
+    if (
+      newType === LAYER_TYPES.contour &&
+      oldLayer.type !== LAYER_TYPES.contour &&
+      isEqual(
+        oldLayer.config.visConfig.colorRange,
+        oldLayer.visConfigSettings.colorRange?.defaultValue
+      )
+    ) {
+      newLayer.updateLayerVisConfig({
+        colorRange: newLayer.visConfigSettings.colorRange.defaultValue
+      });
+    }
+
     // Contour uses scalar thresholds as legend-label keys. When leaving Contour,
     // retain only color-keyed labels while preserving the palette.
     const colorRange = newLayer.config.visConfig.colorRange;

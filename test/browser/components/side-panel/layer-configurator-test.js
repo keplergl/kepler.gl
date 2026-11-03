@@ -335,8 +335,15 @@ test('Components -> LayerConfigurator -> contour switches between plain color an
     fireEvent.click(group.querySelector('.color-selector__selector'));
     view.update();
     t.ok(group.querySelector('.color-range-selector'), 'opens the standard palette picker');
+    const initialPalette = layer.config.visConfig.colorRange;
     fireEvent.click(group.querySelector('.color-palette-outer'));
     const {colorRange} = onChange.lastCall.args[0];
+    t.equal(colorRange.name, initialPalette.name, 'the default palette is first in the picker');
+    t.deepEqual(
+      colorRange.colors,
+      initialPalette.colors,
+      'the default uses the first palette colors'
+    );
     t.ok(colorRange.colors.length > 1, 'selecting a palette emits multiple colors');
     t.deepEqual(
       colorRange.colorLegends,
@@ -418,17 +425,19 @@ test('Components -> LayerConfigurator -> contour groups expand independently wit
 
     t.notOk(groups[2].querySelector('.item-selector'), 'surface has no input-type selector');
     const input = groups[2].querySelector('.kg-range-slider__input');
+    t.equal(input.value, '3', 'smoothing starts at three cells');
     fireEvent.change(input, {target: {value: '2'}});
     fireEvent.blur(input);
     t.deepEqual(onChange.lastCall.args[0], {smoothing: 2}, 'smoothing remains editable');
     const resolutionInput = Array.from(groups[2].querySelectorAll('.kg-range-slider__input')).find(
-      element => element.value === '192'
+      element => element.value === '64'
     );
-    fireEvent.change(resolutionInput, {target: {value: '64'}});
+    t.ok(resolutionInput, 'grid resolution starts at 64 cells');
+    fireEvent.change(resolutionInput, {target: {value: '128'}});
     fireEvent.blur(resolutionInput);
     t.deepEqual(
       onChange.lastCall.args[0],
-      {gridResolution: 64},
+      {gridResolution: 128},
       'maximum axis resolution controls aggregation detail'
     );
     t.notOk(groups[2].classList.contains('collapsed'), 'editing settings keeps the group open');

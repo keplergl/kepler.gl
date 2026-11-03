@@ -209,7 +209,9 @@ test.each([false, true])('new contours enclose peaks by default (weighted: %s)',
   }
   expect(contains(data[data.length - 1], [0.17, 0.01])).toBe(false);
   expect(layer.config.visConfig.colorByLevel).toBe(true);
-  expect(layer.config.visConfig.fillOpacity).toBe(0.15);
+  expect(layer.config.visConfig.gridResolution).toBe(64);
+  expect(layer.config.visConfig.smoothing).toBe(3);
+  expect(layer.config.visConfig.fillOpacity).toBe(0.3);
   expect(layer.config.visConfig.colorRange.name).toBe(KEPLER_COLOR_PALETTES[0].name);
   const {colors} = layer.config.visConfig.colorRange;
   const passes = renderContourPasses(layer, dataset, {data});
@@ -816,6 +818,30 @@ test('edits and resets contour labels by threshold even when levels have the sam
     [JSON.stringify(['value', true, 4])]: 'Medium'
   });
 });
+
+test.each(['point', 'grid'])(
+  'changing a default %s layer to Contour selects the first palette',
+  async type => {
+    const {dataset, datasets, layer: reference} = await setup();
+    const {lat, lng} = reference.config.columns;
+    const layer = new LayerClasses[type]({dataId: dataset.id, columns: {lat, lng}});
+    const state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [{}],
+      layerOrder: [layer.id]
+    };
+    const result = layerTypeChangeUpdater(state, {oldLayer: layer, newType: 'contour'});
+    const converted = result.layers[0];
+    const {colorRange} = converted.config.visConfig;
+    expect(colorRange.name).toBe(KEPLER_COLOR_PALETTES[0].name);
+    expect(colorRange.colors).toEqual(KEPLER_COLOR_PALETTES[0].colors(colorRange.colors.length));
+    expect(converted.config.visConfig.colorByLevel).toBe(true);
+    expect(converted.config.visConfig.gridResolution).toBe(64);
+    expect(converted.config.visConfig.smoothing).toBe(3);
+  }
+);
 
 test.each(['point', 'grid'])(
   'changing from Contour to %s removes threshold labels while preserving the palette and color labels',

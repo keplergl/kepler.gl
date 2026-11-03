@@ -50,15 +50,15 @@ export const contourVisConfigs = {
     label: 'layerVisConfigs.contour.colorByLevel'
   },
   gridResolution: {
-    ...numberConfig('gridResolution', 192, [32, 256], 16),
+    ...numberConfig('gridResolution', 64, [32, 256], 16),
     description: 'layerVisConfigs.contour.gridResolutionDescription'
   },
   levels: numberConfig('levels', 7, [2, 20], 1),
   smoothing: {
-    ...numberConfig('smoothing', 1.5, [0, 6], 0.25),
+    ...numberConfig('smoothing', 3, [0, 6], 0.25),
     description: 'layerVisConfigs.contour.smoothingDescription'
   },
-  fillOpacity: numberConfig('fillOpacity', 0.15, [0, 1], 0.005),
+  fillOpacity: numberConfig('fillOpacity', 0.3, [0, 1], 0.005),
   thickness: numberConfig('thickness', 1.5, [0.5, 5], 0.1),
   filled: {...LAYER_VIS_CONFIGS.filled, defaultValue: true},
   stroked: 'stroked',
