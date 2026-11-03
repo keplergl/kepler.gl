@@ -345,6 +345,162 @@ test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without preci
   t.end();
 });
 
+test('#DatasetSchema -> nested Arrow Int64 values survive a complete JSON backup and reload', t => {
+  const item = new arrow.Struct([
+    new arrow.Field('signed', new arrow.Int64(), true),
+    new arrow.Field('unsigned', new arrow.Uint64(), true)
+  ]);
+  const type = new arrow.Struct([
+    new arrow.Field('items', new arrow.List(new arrow.Field('item', item, true)), true)
+  ]);
+  const values = [
+    {
+      items: [
+        {signed: 42n, unsigned: 9007199254740991n},
+        {signed: -9223372036854775808n, unsigned: 18446744073709551615n},
+        {signed: null, unsigned: 0n},
+        null
+      ]
+    },
+    {items: []},
+    {items: null},
+    null
+  ];
+  const source = new arrow.Table({nested: arrow.vectorFromArray(values, type)});
+  const ipc = arrow.tableFromIPC(arrow.tableToIPC(source, 'file'));
+  const dataset = new KeplerTable({info: {id: 'nested'}, color: [1, 2, 3]}).updateSchema(
+    processArrowTable({shape: 'arrow-table', data: ipc})
+  );
+  const expected = [
+    [
+      {
+        items: [
+          {signed: 42, unsigned: 9007199254740991},
+          {signed: '-9223372036854775808', unsigned: '18446744073709551615'},
+          {signed: null, unsigned: 0},
+          null
+        ]
+      }
+    ],
+    [{items: []}],
+    [{items: null}],
+    [null]
+  ];
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.doesNotThrow(() => {
+    const payload = JSON.parse(
+      exportToJsonString({
+        datasets: [{version: 'v1', data: saved}],
+        config: {version: 'v1', config: {}}
+      })
+    );
+    t.deepEqual(payload.datasets[0].data.allData, expected, 'full backup has exact nested values');
+    const reloaded = reloadDataset(payload.datasets[0].data);
+    t.deepEqual(reloaded.dataContainer.flattenData(), expected, 'reload retains nesting and nulls');
+    t.deepEqual(datasetSchema[VERSIONS.v1].save(reloaded).allData, expected, 'resave is stable');
+    const html = exportMapToHTML(payload);
+    t.deepEqual(
+      JSON.parse(html.match(/const datasets = (.*);/)[1]),
+      payload.datasets,
+      'HTML uses the same saved values'
+    );
+  }, 'backup is valid JSON and reloads');
+  t.equal(
+    dataset.dataContainer.valueAt(0, 0).items.get(1).signed,
+    -9223372036854775808n,
+    'live Arrow values are not mutated'
+  );
+  t.equal(
+    ipc.getChild('nested').get(0).items.get(1).unsigned,
+    18446744073709551615n,
+    'source buffers are not mutated'
+  );
+
+  const rows = [[{items: [1n, null, {value: 9007199254740993n}]}]];
+  const rowTable = new KeplerTable({info: {id: 'nested-rows'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows
+  });
+  t.deepEqual(
+    datasetSchema[VERSIONS.v1].save(rowTable).allData,
+    [[{items: [1, null, {value: '9007199254740993'}]}]],
+    'row-backed nested values use the same policy'
+  );
+  t.equal(rows[0][0].items[2].value, 9007199254740993n, 'live row-backed objects are not mutated');
+  t.end();
+});
+
+test('#DatasetSchema -> nested custom JSON serializers retain their representations', t => {
+  class Identifier {
+    constructor() {
+      this.raw = 9007199254740993n;
+    }
+    toJSON() {
+      return {id: this.raw.toString()};
+    }
+  }
+  class CachedValue {
+    constructor() {
+      this.cache = {owner: this};
+    }
+    toJSON() {
+      return {value: 'valid'};
+    }
+  }
+  const custom = {
+    raw: 42n,
+    toJSON() {
+      return {value: this.raw.toString()};
+    }
+  };
+  custom.cache = custom;
+  const identifier = new Identifier();
+  const cached = new CachedValue();
+  const rows = [[{identifier, cached, custom, ordinary: {value: 42n}}]];
+  const dataset = new KeplerTable({info: {id: 'custom-json'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows
+  });
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  const expected = [
+    [
+      {
+        identifier: {id: '9007199254740993'},
+        cached: {value: 'valid'},
+        custom: {value: '42'},
+        ordinary: {value: 42}
+      }
+    ]
+  ];
+  t.deepEqual(
+    JSON.parse(exportToJsonString(saved)).allData,
+    expected,
+    'preserves class and plain-object serializers while normalizing ordinary nested values'
+  );
+  t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected, 'custom values reload');
+  t.equal(saved.allData[0][0].identifier, identifier, 'retains the custom class instance');
+  t.equal(saved.allData[0][0].cached, cached, 'does not traverse the cyclic internal cache');
+  t.equal(identifier.raw, 9007199254740993n, 'does not change live class data');
+  t.equal(rows[0][0].ordinary.value, 42n, 'does not change ordinary live nested data');
+  t.end();
+});
+
+test('#DatasetSchema -> rejects ordinary circular values without a JSON serializer', t => {
+  const cycle = {};
+  cycle.self = cycle;
+  const dataset = new KeplerTable({info: {id: 'circular'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows: [[cycle]]
+  });
+  t.throws(
+    () => datasetSchema[VERSIONS.v1].save(dataset),
+    /Cannot export circular dataset values/,
+    'still rejects an actual serialization cycle'
+  );
+  t.end();
+});
+
 test('#DatasetSchema -> joined Int64 rows save and reload without changing live rows', t => {
   const values = [
     0n,

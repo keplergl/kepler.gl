@@ -347,28 +347,48 @@ export default function ModalContainerFactory(
       });
     };
 
+    _onExportMapError = (error: unknown) => {
+      const detail = error instanceof Error ? error.message : String(error);
+      this.props.uiStateActions.addNotification({
+        id: 'EXPORT_MAP_ERROR_ID',
+        type: 'error',
+        topic: 'global',
+        message: `Failed to export map: ${detail}`
+      });
+    };
+
     _onExportMap = () => {
       const {uiState} = this._propsWithMapInfoDraft();
       const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
         uiState.exportMap;
-      (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
-        this._propsWithMapInfoDraft(),
-        {
-          ...(uiState.exportMap[format] || {}),
-          includeLayerApiKeys,
-          fileName,
-          appName,
-          appWebsite,
-          appIcon,
-          appNameColor
-        }
-      );
-      this._commitMapInfoDraft();
-      this._closeModal();
+      try {
+        (format === EXPORT_MAP_FORMATS.HTML ? exportHtml : exportJson)(
+          this._propsWithMapInfoDraft(),
+          {
+            ...(uiState.exportMap[format] || {}),
+            includeLayerApiKeys,
+            fileName,
+            appName,
+            appWebsite,
+            appIcon,
+            appNameColor
+          }
+        );
+        this._commitMapInfoDraft();
+        this._closeModal();
+      } catch (error) {
+        this._onExportMapError(error);
+      }
     };
 
     _exportFileToCloud = ({provider, isPublic, overwrite, closeModal}) => {
-      const toSave = exportMap(this._propsWithMapInfoDraft());
+      let toSave;
+      try {
+        toSave = exportMap(this._propsWithMapInfoDraft());
+      } catch (error) {
+        this._onExportMapError(error);
+        return;
+      }
       this._commitMapInfoDraft();
 
       this.props.providerActions.exportFileToCloud({
@@ -677,7 +697,7 @@ export default function ModalContainerFactory(
                 fileName={uiState.exportMap.fileName}
                 onChangeFileName={uiStateActions.setExportMapFileName}
                 onMapInfoDraft={this._onMapInfoDraft}
-                onSetMapInfo={visStateActions.setMapInfo}
+                onSetMapInfo={this._onMapInfoDraft}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 onCancel={this._closeModal}

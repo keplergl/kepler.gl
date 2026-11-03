@@ -12,12 +12,14 @@ import {
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
   FIELD_COLORS,
-  FIELD_TYPE_DISPLAY
+  FIELD_TYPE_DISPLAY,
+  SAVE_MAP_ID
 } from '@kepler.gl/constants';
 import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
   INITIAL_MAP_STATE,
+  INITIAL_UI_STATE,
   INITIAL_VIS_STATE,
   mergeFilters,
   setFilterUpdater
@@ -357,5 +359,139 @@ describe('ExportMapModalStyle', () => {
     expect(getComputedStyle(wrapper).maxWidth).toBe('728px');
 
     unmount();
+  });
+});
+
+describe('map export failures', () => {
+  test('keeps cloud metadata as a draft until schema saving succeeds on retry', () => {
+    const failure = new Error('Cannot export circular dataset values');
+    const save = jest.fn((): object => {
+      throw failure;
+    });
+    const draft = {title: 'Edited title', description: 'Draft'};
+    const exportFileToCloud = jest.fn();
+    const addNotification = jest.fn();
+    const toggleModal = jest.fn();
+    const setMapInfo = jest.fn();
+    const dependencies = ModalContainerFactory.deps.map(() => () => null) as unknown as Parameters<
+      typeof ModalContainerFactory
+    >;
+    dependencies[10] = (({onMapInfoDraft, onSetMapInfo, onConfirm}) =>
+      React.createElement(
+        'button',
+        {
+          onClick: () => {
+            onMapInfoDraft(draft);
+            onSetMapInfo(draft);
+            onConfirm({name: 'test-provider'});
+          }
+        },
+        'Save map'
+      )) as any;
+    dependencies[9] = (({children}) => children) as any;
+    const ModalContainer = ModalContainerFactory(...dependencies);
+    renderWithTheme(
+      React.createElement(ModalContainer, {
+        rootNode: document.body,
+        uiState: {...INITIAL_UI_STATE, currentModal: SAVE_MAP_ID},
+        visState: {
+          ...INITIAL_VIS_STATE,
+          schema: {save}
+        },
+        visStateActions: {setMapInfo},
+        uiStateActions: {toggleModal, addNotification},
+        providerActions: {exportFileToCloud},
+        providerState: {}
+      } as any)
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Save map'}));
+    expect(exportFileToCloud).not.toHaveBeenCalled();
+    expect(toggleModal).not.toHaveBeenCalled();
+    expect(setMapInfo).not.toHaveBeenCalled();
+    expect(addNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        topic: 'global',
+        message: `Failed to export map: ${failure.message}`
+      })
+    );
+    const saved = {datasets: [], config: {version: 'v1', config: {}}, info: draft};
+    save.mockReturnValue(saved);
+    fireEvent.click(screen.getByRole('button', {name: 'Save map'}));
+    expect(save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        visState: expect.objectContaining({mapInfo: expect.objectContaining(draft)})
+      })
+    );
+    expect(setMapInfo).toHaveBeenCalledTimes(1);
+    expect(setMapInfo).toHaveBeenCalledWith(draft);
+    expect(exportFileToCloud).toHaveBeenCalledTimes(1);
+    expect(exportFileToCloud).toHaveBeenCalledWith(
+      expect.objectContaining({mapData: {map: saved, thumbnail: null}, closeModal: true})
+    );
+    expect(addNotification).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps the modal and title draft on failure, then closes after a successful retry', () => {
+    const cycle: any = {};
+    cycle.self = cycle;
+    const save = jest.fn(() => cycle);
+    const addNotification = jest.fn();
+    const toggleModal = jest.fn();
+    const setMapInfo = jest.fn();
+    const download = jest.fn();
+    Object.defineProperty(window.navigator, 'msSaveOrOpenBlob', {
+      configurable: true,
+      value: download
+    });
+    const dependencies = ModalContainerFactory.deps.map(() => () => null) as unknown as Parameters<
+      typeof ModalContainerFactory
+    >;
+    dependencies[6] = (({onMapInfoDraft}) =>
+      React.createElement(
+        'button',
+        {
+          onClick: () => onMapInfoDraft({title: 'Edited title', description: 'Draft'})
+        },
+        'Edit title'
+      )) as any;
+    dependencies[9] = (({onConfirm, children}) =>
+      React.createElement(
+        'div',
+        null,
+        children,
+        React.createElement('button', {onClick: onConfirm}, 'Export map')
+      )) as any;
+    const ModalContainer = ModalContainerFactory(...dependencies);
+    renderWithTheme(
+      React.createElement(ModalContainer, {
+        rootNode: document.body,
+        uiState: {
+          ...INITIAL_UI_STATE,
+          currentModal: EXPORT_MAP_ID,
+          exportMap: {...INITIAL_UI_STATE.exportMap, format: 'json', json: {hasData: true}}
+        },
+        visState: {...INITIAL_VIS_STATE, schema: {getConfigToSave: () => ({}), save}},
+        visStateActions: {setMapInfo},
+        uiStateActions: {toggleModal, addNotification}
+      } as any)
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Edit title'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Export map'}));
+    expect(download).not.toHaveBeenCalled();
+    expect(toggleModal).not.toHaveBeenCalled();
+    expect(setMapInfo).not.toHaveBeenCalled();
+    expect(addNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        topic: 'global',
+        message: expect.stringContaining('Failed to export map:')
+      })
+    );
+    save.mockReturnValue({datasets: [], config: {version: 'v1', config: {}}, info: {}});
+    fireEvent.click(screen.getByRole('button', {name: 'Export map'}));
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(setMapInfo).toHaveBeenCalledWith({title: 'Edited title', description: 'Draft'});
+    expect(toggleModal).toHaveBeenCalledWith(null);
   });
 });

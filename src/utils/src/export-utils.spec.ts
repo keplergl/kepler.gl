@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {exportJson} from './export-utils';
+import {exportJson, exportToJsonString} from './export-utils';
 
 function readJsonBlob(blob: Blob): Promise<unknown> {
   return new Promise((resolve, reject) => {
@@ -74,5 +74,30 @@ describe('exportJson', () => {
         source: 'kepler.gl'
       }
     });
+  });
+});
+
+describe('JSON export failures', () => {
+  test('propagates serialization failures and never downloads an error-only file', () => {
+    const cycle: any = {};
+    cycle.self = cycle;
+    const saveBlob = jest.fn();
+    Object.defineProperty(window.navigator, 'msSaveOrOpenBlob', {
+      configurable: true,
+      value: saveBlob
+    });
+    expect(() => exportToJsonString(cycle)).toThrow(TypeError);
+    expect(() => exportJson({visState: {schema: {save: () => cycle}}}, {hasData: true})).toThrow(
+      TypeError
+    );
+    expect(saveBlob).not.toHaveBeenCalled();
+    const failure = new Error('Cannot read export data');
+    expect(() =>
+      exportToJsonString({
+        toJSON() {
+          throw failure;
+        }
+      })
+    ).toThrow(failure);
   });
 });

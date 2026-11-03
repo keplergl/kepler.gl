@@ -82,7 +82,7 @@ type SaveMapModalProps = {
   // callbacks
   onUpdateImageSetting: ImageModalContainerProps['onUpdateImageSetting'];
   cleanupExportImage: typeof cleanupExportImageAction;
-  onSetMapInfo: typeof setMapInfo;
+  onSetMapInfo: (info: Parameters<typeof setMapInfo>[0]) => void;
   onConfirm: (provider: Provider) => void;
   onCancel: () => void;
 };
