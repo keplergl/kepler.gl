@@ -36,7 +36,8 @@ import {
   AnnotationKind,
   isAnnotationKind,
   INITIAL_ANNOTATION_LINE_COLOR,
-  INITIAL_ANNOTATION_LINE_WIDTH
+  INITIAL_ANNOTATION_LINE_WIDTH,
+  COMPARE_TYPES
 } from '@kepler.gl/constants';
 import {CURRENT_VERSION, VisState, VisStateMergers, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 
@@ -481,6 +482,10 @@ export function mergeLayerOrder<S extends VisState>(
   };
 }
 
+function isCompareType(value: unknown): value is TooltipInfo['config']['compareType'] {
+  return Object.values(COMPARE_TYPES).includes(value as string);
+}
+
 /**
  * Merge interactions with saved config
  *
@@ -526,6 +531,13 @@ export function mergeInteractions<S extends VisState>(
           },
           ...(savedTooltipConfig.timezone !== undefined
             ? {timezone: savedTooltipConfig.timezone}
+            : {}),
+          // saved maps write the compare settings with the tooltip; an older config may omit them
+          ...(typeof savedTooltipConfig.compareMode === 'boolean'
+            ? {compareMode: savedTooltipConfig.compareMode}
+            : {}),
+          ...(isCompareType(savedTooltipConfig.compareType)
+            ? {compareType: savedTooltipConfig.compareType}
             : {})
         };
 
