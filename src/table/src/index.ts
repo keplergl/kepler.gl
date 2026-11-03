@@ -11,7 +11,8 @@ export {
   toggleHiddenTableColumn,
   sortDatasetByColumn,
   copyTable,
-  maybeToDate
+  maybeToDate,
+  getFieldValueAccessor
 } from './kepler-table';
 /* eslint-disable prettier/prettier */
 export type {

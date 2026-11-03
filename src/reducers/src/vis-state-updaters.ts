@@ -218,6 +218,7 @@ import {
   canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
+  getFieldValueAccessor,
   pinTableColumns,
   showAllTableColumns,
   toggleHiddenTableColumn,
@@ -4440,9 +4441,9 @@ export const createNewDatasetSuccessUpdater = (
               'getFileProcessor'
             ]),
             fields: fieldNamesEqual(target.fields, dataset.fields)
-              ? dataset.fields.map((field, index) => ({
+              ? target.fields.map(({filterProps: _filterProps, ...field}, index) => ({
                   ...field,
-                  displayFormat: target.fields[index].displayFormat
+                  valueAccessor: getFieldValueAccessor(field, index, dataset.dataContainer)
                 }))
               : dataset.fields,
             dataRevision: target.dataRevision + 1

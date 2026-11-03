@@ -911,14 +911,14 @@ function beginRemoteReplacement(state, id, options = {}) {
 }
 
 // Simulate only the network result; run the real table creation/import task.
-function finishRemoteDownload(task, datasetToUse) {
+function finishRemoteDownload(task, datasetToUse, data = processCsvData(dataWithNulls)) {
   let downloaded = false;
   return new Promise((resolve, reject) =>
     task.run(
       (effect, onSuccess, onError) => {
         if (!downloaded) {
           downloaded = true;
-          return onSuccess({...datasetToUse, data: processCsvData(dataWithNulls)});
+          return onSuccess({...datasetToUse, data});
         }
         return effect(onSuccess, onError);
       },
@@ -1186,12 +1186,14 @@ test('#composerStateReducer - replacement into an existing target preserves its 
   t.end();
 });
 
-test('#composerStateReducer - existing-target formats follow unchanged column names and order', async t => {
+test('#composerStateReducer - existing-target field settings follow unchanged column names and order', async t => {
   for (const displayFormat of [undefined, '.2f']) {
     for (const reorder of [false, true]) {
       const original = replacementTestState();
       const target = new KeplerTable({info: {id: 'existing'}, color: [1, 2, 3]});
-      await target.importData({data: processCsvData('value,other\n1,10')});
+      await target.importData({data: processCsvData('value,other\n1,10\n2,11')});
+      target.fields[0].displayName = 'Friendly value';
+      target.getColumnFilterProps('value');
       original.visState = {
         ...original.visState,
         datasets: {...original.visState.datasets, existing: target}
@@ -1200,7 +1202,9 @@ test('#composerStateReducer - existing-target formats follow unchanged column na
         original.visState,
         setColumnDisplayFormat(target.id, {value: displayFormat})
       );
-      const data = processCsvData(reorder ? 'other,value\n200,20' : 'value,other\n20,200');
+      const data = processCsvData(
+        reorder ? 'other,value\n200,20\n300,30' : 'value,other\n20,200\n30,300'
+      );
       data.fields = data.fields.map(field => ({...field, displayFormat: '.3f'}));
       const pending = replaceDataInMapUpdater(original, {
         payload: {
@@ -1221,8 +1225,87 @@ test('#composerStateReducer - existing-target formats follow unchanged column na
         'retains the target format only when the column layout is unchanged'
       );
       t.equal(value.valueAccessor({index: 0}), 20, 'accessor reads the incoming rows');
+      t.equal(
+        value.displayName,
+        reorder ? 'value' : 'Friendly value',
+        'preserves the column label'
+      );
+      t.deepEqual(
+        next.datasets.existing.getColumnFilterProps('value').domain,
+        [20, 30],
+        'rebuilds cached domains from the incoming rows'
+      );
       drainTasksForTesting();
     }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - empty existing-target replacements retain timestamp fields and filters', async t => {
+  for (const remote of [false, true]) {
+    const original = replacementTestState();
+    const target = new KeplerTable({info: {id: 'existing'}, color: [1, 2, 3]});
+    await target.importData({data: processCsvData(testCsvData)});
+    original.visState = {
+      ...original.visState,
+      datasets: {...original.visState.datasets, existing: target}
+    };
+    const data = {...processCsvData(dataWithNulls), rows: []};
+    const datasetToUse = remote
+      ? {
+          info: {id: target.id, type: DatasetType.EXTERNALLY_HOSTED},
+          metadata: {source: 'https://example.test/empty.csv', sourceFormat: 'csv'}
+        }
+      : {info: {id: target.id}, data};
+    const pending = replaceDataInMapUpdater(original, {
+      payload: {
+        datasetToReplaceId: sampleConfig.dataId,
+        datasetToUse,
+        options: {centerMap: false}
+      }
+    });
+    const [task] = drainTasksForTesting();
+    const completion = remote
+      ? await finishRemoteDownload(task, datasetToUse, data)
+      : await new Promise((resolve, reject) =>
+          task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+        );
+    const next = visStateReducer(pending.visState, completion);
+    t.equal(next.datasets.existing.length, 0, 'commits the empty replacement');
+    t.deepEqual(
+      next.datasets.existing.fields.map(({name, type, format}) => ({name, type, format})),
+      target.fields.map(({name, type, format}) => ({name, type, format})),
+      'retains the existing field types and timestamp formats'
+    );
+    t.equal(next.filters[0].type, 'timeRange', 'keeps the time filter');
+    const filled = addDataToMapUpdater(
+      {...pending, visState: next},
+      {
+        payload: {
+          datasets: {info: {id: target.id}, data: processCsvData(dataWithNulls)},
+          options: {centerMap: false, keepExistingConfig: true, autoCreateLayers: false}
+        }
+      }
+    );
+    const [refillTask] = drainTasksForTesting();
+    const refilled = visStateReducer(
+      filled.visState,
+      await new Promise((resolve, reject) =>
+        refillTask.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+      )
+    );
+    t.equal(refilled.filters[0].type, 'timeRange', 'keeps the time filter when rows return');
+    t.deepEqual(
+      refilled.datasets.existing.getColumnFilterProps('gps_data.utc_timestamp').domain,
+      [1474071056000, 1474071677000],
+      'rebuilds the timestamp domain from returning rows'
+    );
+    t.equal(
+      refilled.datasets.existing.fields[0].valueAccessor({index: 1}),
+      1474071056000,
+      'timestamp accessor reads and converts the new rows'
+    );
+    drainTasksForTesting();
   }
   t.end();
 });
