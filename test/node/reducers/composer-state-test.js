@@ -16,6 +16,7 @@ import {
   confirmReplaceDataset,
   loadFilesSuccess,
   registerEntry,
+  setColumnDisplayFormat,
   stageLoadedFiles,
   wrapTo
 } from '@kepler.gl/actions';
@@ -1072,6 +1073,10 @@ test('#composerStateReducer - replacement into an existing target preserves its 
           ...original.visState,
           datasets: {...original.visState.datasets, existing: target}
         };
+        original.visState = visStateReducer(
+          original.visState,
+          setColumnDisplayFormat(target.id, {'gps_data.lng': '.1f'})
+        );
         const rows = target.dataContainer.flattenData();
         const datasetToUse = {
           info: {
@@ -1091,7 +1096,11 @@ test('#composerStateReducer - replacement into an existing target preserves its 
           }
         });
         const [task] = drainTasksForTesting();
-        const latestTarget = copyTableAndUpdate(target, {
+        pending.visState = visStateReducer(
+          pending.visState,
+          setColumnDisplayFormat(target.id, {'gps_data.lng': '.2f'})
+        );
+        const latestTarget = copyTableAndUpdate(pending.visState.datasets.existing, {
           label: 'Renamed while loading',
           metadata: {...target.metadata, refreshIntervalMs: 20000}
         });
@@ -1113,6 +1122,11 @@ test('#composerStateReducer - replacement into an existing target preserves its 
         );
         const next = visStateReducer(pending.visState, completion);
         const replaced = next.datasets.existing;
+        t.equal(
+          replaced.fields.find(field => field.name === 'gps_data.lng').displayFormat,
+          '.2f',
+          'keeps the column format edited while loading'
+        );
         t.equal(replaced.label, latestTarget.label, 'keeps the latest target label');
         t.equal(replaced.type, latestTarget.type, 'keeps the remote dataset type');
         t.deepEqual(replaced.color, target.color, 'keeps the target color');
@@ -1167,6 +1181,47 @@ test('#composerStateReducer - replacement into an existing target preserves its 
         );
         t.equal(drainTasksForTesting().length, 1, 'schedules a refresh');
       }
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - existing-target formats follow unchanged column names and order', async t => {
+  for (const displayFormat of [undefined, '.2f']) {
+    for (const reorder of [false, true]) {
+      const original = replacementTestState();
+      const target = new KeplerTable({info: {id: 'existing'}, color: [1, 2, 3]});
+      await target.importData({data: processCsvData('value,other\n1,10')});
+      original.visState = {
+        ...original.visState,
+        datasets: {...original.visState.datasets, existing: target}
+      };
+      original.visState = visStateReducer(
+        original.visState,
+        setColumnDisplayFormat(target.id, {value: displayFormat})
+      );
+      const data = processCsvData(reorder ? 'other,value\n200,20' : 'value,other\n20,200');
+      data.fields = data.fields.map(field => ({...field, displayFormat: '.3f'}));
+      const pending = replaceDataInMapUpdater(original, {
+        payload: {
+          datasetToReplaceId: sampleConfig.dataId,
+          datasetToUse: {info: {id: target.id}, data},
+          options: {centerMap: false}
+        }
+      });
+      const [task] = drainTasksForTesting();
+      const completion = await new Promise((resolve, reject) =>
+        task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+      );
+      const next = visStateReducer(pending.visState, completion);
+      const value = next.datasets.existing.fields.find(field => field.name === 'value');
+      t.equal(
+        value.displayFormat,
+        reorder ? '.3f' : displayFormat,
+        'retains the target format only when the column layout is unchanged'
+      );
+      t.equal(value.valueAccessor({index: 0}), 20, 'accessor reads the incoming rows');
+      drainTasksForTesting();
     }
   }
   t.end();

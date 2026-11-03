@@ -4439,6 +4439,12 @@ export const createNewDatasetSuccessUpdater = (
               'hiddenColumns',
               'getFileProcessor'
             ]),
+            fields: fieldNamesEqual(target.fields, dataset.fields)
+              ? dataset.fields.map((field, index) => ({
+                  ...field,
+                  displayFormat: target.fields[index].displayFormat
+                }))
+              : dataset.fields,
             dataRevision: target.dataRevision + 1
           });
           const [column, mode] = Object.entries(target.sortColumn || {})[0] || [];
