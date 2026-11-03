@@ -4680,6 +4680,11 @@ function reconcileLayerWithNewSchema(
     configPatch.columns = {...layer.config.columns, ...columnsPatch};
   }
 
+  const {pulseTimeField} = layer.config.visConfig;
+  if (layer.type === LAYER_TYPES.point && pulseTimeField && renames[pulseTimeField]) {
+    configPatch.visConfig = {...layer.config.visConfig, pulseTimeField: renames[pulseTimeField]};
+  }
+
   // follow renamed visual-channel fields (colorField, sizeField, ...)
   Object.values(layer.visualChannels).forEach(({field}) => {
     const fieldConfig = layer.config[field];

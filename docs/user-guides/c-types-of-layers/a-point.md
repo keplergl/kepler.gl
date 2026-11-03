@@ -52,4 +52,23 @@ Enable **Pulse / Ripple** to animate the points.
 
 The effect loops continuously while the layer is visible; it does not require a timestamp field or timeline playback. It uses the point layer's colors, sizes, opacity, filters, and map or billboard orientation. Text labels stay still. Settings are saved with the map and retained when the effect is turned off.
 
+Choose **Trigger → At event time** to play one effect for each recorded event. Select an
+**Event timestamp** field and a **Duration (timeline seconds)**. The ordinary point remains
+visible according to the existing filters; a temporary Pulse or Ripple plays from the event
+timestamp until the duration expires. Missing or invalid timestamps produce no effect.
+
+Event effects use the timeline of an enabled time filter on the same dataset and event
+timestamp field. Selecting an event timestamp does not create a separate layer timeline.
+Add the time filter yourself; the first enabled filter matching that dataset and timestamp
+column drives the effect automatically. The help tooltip beside **Event timestamp** explains
+this requirement. Removing or disabling the filter uses the next enabled match, if available.
+Without a matching filter, ordinary points remain visible but the event effect is inactive.
+
+The end of the filter window is the current time. Pause freezes the effect, scrubbing shows
+its phase at the selected time, and replay plays events again. Duration is measured in data
+time: faster playback shortens the visible effect, and coarse timeline steps can skip short
+events. Filters still determine visibility and can cut an effect short; their window and
+domain are not automatically widened, including at the last event. Existing layer-timeline
+synchronization is not required. **Continuous** remains the default trigger.
+
 [Back to table of contents](../README.md)

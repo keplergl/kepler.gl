@@ -1462,7 +1462,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     other: 'glowEnabled',
     values: [
       ['pulseSpeed', '1', '0.5'],
-      ['pulseExpansion', '2', '4']
+      ['pulseExpansion', '2', '49.99']
     ]
   }
 ].forEach(({label, enabled, other, values}) => {
@@ -1563,6 +1563,81 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
           {[property]: Number(next)},
           `keyboard adjusts ${property}`
         );
+      }
+      if (enabled === 'pulseEnabled') {
+        fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
+        fireEvent.click(view.getByText('At event time'));
+        t.deepEqual(
+          changed.lastCall.args[0],
+          {pulseTrigger: 'event'},
+          'trigger selects recorded events'
+        );
+        t.notOk(
+          within(content).queryByText('Speed (cycles/s)'),
+          'recorded events use duration instead of repetition speed'
+        );
+        const duration = within(content).getByLabelText('Duration (timeline seconds)');
+        const beforeEdit = changed.callCount;
+        await user.clear(duration);
+        t.equal(duration.value, '', 'duration can be cleared while editing');
+        await user.type(duration, '0.5');
+        t.equal(duration.value, '0.5', 'fractional duration can be typed from an empty input');
+        t.equal(changed.callCount, beforeEdit, 'draft edits do not update the timeline');
+        await user.tab();
+        t.deepEqual(changed.lastCall.args[0], {pulseDurationMs: 500}, 'blur commits a half second');
+        await user.clear(duration);
+        await user.type(duration, '2.5{Enter}');
+        t.deepEqual(
+          changed.lastCall.args[0],
+          {pulseDurationMs: 2500},
+          'Enter commits duration in milliseconds'
+        );
+        const durationChanges = () =>
+          changed.getCalls().filter(call => 'pulseDurationMs' in call.args[0]).length;
+        const beforeInvalid = durationChanges();
+        for (const value of ['', '0', '-1']) {
+          await user.clear(duration);
+          if (value) await user.type(duration, value);
+          await user.tab();
+          t.equal(durationChanges(), beforeInvalid, 'invalid duration is rejected on commit');
+          t.equal(duration.value, '2.5', 'invalid duration restores the saved value');
+        }
+        const timeField = defaultProps.datasets[testCsvDataId].fields.find(
+          f => f.type === 'timestamp'
+        );
+        fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[2]);
+        const timestampDropdown = view
+          .getByText(timeField.name, {selector: '.list-selector .list__item__anchor[title]'})
+          .closest('.typeahead');
+        await user.type(within(timestampDropdown).getByRole('textbox'), timeField.name);
+        fireEvent.click(
+          view.getByText(timeField.name, {selector: '.list-selector .list__item__anchor[title]'})
+        );
+        t.equal(
+          layer.config.visConfig.pulseTimeField,
+          timeField.name,
+          'searching timestamps by name selects the recorded event field'
+        );
+        const helpSelector = `[data-for="${layer.id}-pulse-time-filter-help"] [data-id="tooltip"]`;
+        t.ok(content.querySelector(helpSelector), 'event timestamp includes timeline guidance');
+        t.notOk(within(content).queryByRole('status'), 'guidance adds no inline message');
+        t.equal(
+          content.querySelectorAll('.item-selector__dropdown').length,
+          3,
+          'event controls only offer effect, trigger and timestamp choices'
+        );
+        fireEvent.click(content.querySelectorAll('.item-selector__dropdown')[1]);
+        fireEvent.click(
+          view.getByText('Continuous', {
+            selector: '.list-selector .list__item__anchor:not(.disabled)'
+          })
+        );
+        t.equal(
+          layer.config.visConfig.pulseSpeed,
+          0.5,
+          'returning to continuous preserves its speed'
+        );
+        t.notOk(content.querySelector(helpSelector), 'continuous mode needs no timeline guidance');
       }
       fireEvent.click(otherToggle);
       t.equal(

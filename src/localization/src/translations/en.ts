@@ -211,6 +211,13 @@ export default {
       pulse: 'Pulse',
       ripple: 'Ripple',
       pulseSpeed: 'Speed (cycles/s)',
+      pulseTrigger: 'Trigger',
+      continuous: 'Continuous',
+      event: 'At event time',
+      pulseTimeField: 'Event timestamp',
+      pulseDuration: 'Duration (timeline seconds)',
+      pulseFilterMissing:
+        'Add an enabled timeline animation filter on the same timestamp column to play this effect.',
       pulseExpansion: 'Expansion',
       pulseExpansionDescription: 'Maximum radius as a multiple of the point radius.'
     },

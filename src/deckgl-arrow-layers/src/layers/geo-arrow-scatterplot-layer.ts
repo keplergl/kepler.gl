@@ -11,7 +11,8 @@ import {
   DefaultProps,
   GetPickingInfoParams,
   Layer,
-  LayersList
+  LayersList,
+  UpdateParameters
 } from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
 import type {ScatterplotLayerProps} from '@deck.gl/layers';
@@ -28,7 +29,13 @@ import {
   invertOffsets
 } from '../utils/utils';
 import {GeoArrowExtraPickingProps, computeChunkOffsets, getPickingInfo} from '../utils/picking';
-import {ColorAccessor, FloatAccessor, GeoArrowPickingInfo, ExtensionProps} from '../types';
+import {
+  ColorAccessor,
+  FloatAccessor,
+  GeoArrowPickingInfo,
+  ExtensionProps,
+  _GeoArrowInternalLayerData
+} from '../types';
 import {assert} from '../utils/utils';
 import {validateAccessors} from '../utils/validate';
 
@@ -95,11 +102,55 @@ const defaultProps: DefaultProps<GeoArrowScatterplotLayerProps> = {
   ...ourDefaultProps
 };
 
+type BatchProps = {data: _GeoArrowInternalLayerData<arrow.RecordBatch>} & Record<string, any>;
+
 export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extends CompositeLayer<
   GeoArrowScatterplotLayerProps & ExtraProps
 > {
   static defaultProps = defaultProps;
   static layerName = 'GeoArrowScatterplotLayer';
+
+  declare state: {
+    batchTable: arrow.Table;
+    batchProps: {
+      geometry: arrow.Data;
+      accessors: Record<string, any>;
+      props: BatchProps;
+    }[];
+  };
+
+  updateState(params: UpdateParameters<this>): void {
+    super.updateState(params);
+    if (params.changeFlags.dataChanged || params.changeFlags.updateTriggersChanged) {
+      this.state.batchProps = [];
+    }
+  }
+
+  private _getBatchProps(
+    batchIndex: number,
+    geometry: arrow.Data,
+    accessors: Record<string, any>,
+    create: () => BatchProps
+  ): BatchProps {
+    // Layer state survives deck.gl's replacement of composite instances. Keep
+    // binary data stable on uniform-only updates so attributes are not rebuilt.
+    if (this.state?.batchTable !== this.props.data) {
+      this.state = {...this.state, batchTable: this.props.data, batchProps: []};
+    }
+    const cached = this.state.batchProps[batchIndex];
+    const keys = Object.keys(accessors);
+    if (
+      cached &&
+      cached.geometry === geometry &&
+      keys.length === Object.keys(cached.accessors).length &&
+      keys.every(key => accessors[key] === cached.accessors[key])
+    ) {
+      return cached.props;
+    }
+    const props = create();
+    this.state.batchProps[batchIndex] = {geometry, accessors, props};
+    return props;
+  }
 
   getPickingInfo(
     params: GetPickingInfoParams & {
@@ -152,52 +203,58 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
     const layers: ScatterplotLayer<any>[] = [];
     for (let recordBatchIdx = 0; recordBatchIdx < table.batches.length; recordBatchIdx++) {
-      const geometryData = convertStructToFixedSizeList(geometryColumn.data[recordBatchIdx]);
-      const flatCoordsData = ga.child.getPointChild(geometryData);
-      const flatCoordinateArray = flatCoordsData.values;
+      const batchProps = this._getBatchProps(
+        recordBatchIdx,
+        geometryColumn.data[recordBatchIdx],
+        accessors,
+        () => {
+          const geometryData = convertStructToFixedSizeList(geometryColumn.data[recordBatchIdx]);
+          const props: BatchProps = {
+            data: {
+              data: table.batches[recordBatchIdx],
+              length: geometryData.length,
+              attributes: {
+                getPosition: {
+                  value: ga.child.getPointChild(geometryData).values,
+                  size: geometryData.type.listSize
+                }
+              }
+            }
+          };
+          for (const [propName, propInput] of Object.entries(accessors)) {
+            assignAccessor({
+              props,
+              propName,
+              propInput,
+              chunkIdx: recordBatchIdx,
+              // @ts-expect-error how to properly retrieve batch offset?
+              batchOffset: geometryColumn._offsets[recordBatchIdx]
+            });
+          }
+          return props;
+        }
+      );
 
-      // @ts-expect-error how to properly retrieve batch offset?
-      const batchOffset = geometryColumn._offsets[recordBatchIdx];
-
-      const props: ScatterplotLayerProps<any> & ExtensionProps = {
+      const props: ScatterplotLayerProps<any> & ExtensionProps & GeoArrowExtraPickingProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
         ...otherProps,
+        ...batchProps,
 
         // used for picking purposes
         recordBatchIdx,
         tableOffsets,
 
-        id: `${this.props.id}-geoarrow-scatterplot-${recordBatchIdx}`,
-        data: {
-          // @ts-expect-error
-          data: table.batches[recordBatchIdx],
-          length: geometryData.length,
-          attributes: {
-            getPosition: {
-              value: flatCoordinateArray,
-              size: geometryData.type.listSize
-            }
-          }
-        }
+        id: `${this.props.id}-geoarrow-scatterplot-${recordBatchIdx}`
       };
-
-      for (const [propName, propInput] of Object.entries(accessors)) {
-        assignAccessor({
-          props,
-          propName,
-          propInput,
-          chunkIdx: recordBatchIdx,
-          batchOffset
-        });
-      }
 
       const layer = new ScatterplotLayer({
         ...this.getSubLayerProps(props),
         // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
-        getFilterValue: props.getFilterValue
+        getFilterValue: props.getFilterValue,
+        ...(props.getPulseStartTime ? {getPulseStartTime: props.getPulseStartTime} : {})
       });
       layers.push(layer);
     }
@@ -223,60 +280,64 @@ export class GeoArrowScatterplotLayer<ExtraProps extends object = object> extend
 
     const layers: ScatterplotLayer[] = [];
     for (let recordBatchIdx = 0; recordBatchIdx < table.batches.length; recordBatchIdx++) {
-      const multiPointData = geometryColumn.data[recordBatchIdx];
-      const pointData = ga.child.getMultiPointChild(multiPointData);
-      // Arrow buffers may include alignment padding after the logical offsets.
-      const geomOffsets = multiPointData.valueOffsets.subarray(0, multiPointData.length + 1);
-      const flatCoordsData = ga.child.getPointChild(pointData);
-      const flatCoordinateArray = flatCoordsData.values;
+      const batchProps = this._getBatchProps(
+        recordBatchIdx,
+        geometryColumn.data[recordBatchIdx],
+        accessors,
+        () => {
+          const multiPointData = geometryColumn.data[recordBatchIdx];
+          const pointData = ga.child.getMultiPointChild(multiPointData);
+          // Arrow buffers may include alignment padding after the logical offsets.
+          const geomOffsets = multiPointData.valueOffsets.subarray(0, multiPointData.length + 1);
+          const props: BatchProps = {
+            data: {
+              data: table.batches[recordBatchIdx],
+              // Used both in picking and for function callbacks.
+              invertedGeomOffsets: invertOffsets(geomOffsets),
+              length: pointData.length,
+              attributes: {
+                getPosition: {
+                  value: ga.child.getPointChild(pointData).values,
+                  size: pointData.type.listSize
+                }
+              }
+            }
+          };
+          for (const [propName, propInput] of Object.entries(accessors)) {
+            assignAccessor({
+              props,
+              propName,
+              propInput,
+              chunkIdx: recordBatchIdx,
+              geomCoordOffsets: geomOffsets,
+              // @ts-expect-error how to properly retrieve batch offset?
+              batchOffset: geometryColumn._offsets[recordBatchIdx]
+            });
+          }
+          return props;
+        }
+      );
 
-      // @ts-expect-error how to properly retrieve batch offset?
-      const batchOffset = geometryColumn._offsets[recordBatchIdx];
-
-      const props: ScatterplotLayerProps & ExtensionProps = {
+      const props: ScatterplotLayerProps & ExtensionProps & GeoArrowExtraPickingProps = {
         // Note: because this is a composite layer and not doing the rendering
         // itself, we still have to pass in our defaultProps
         ...ourDefaultProps,
         ...otherProps,
+        ...batchProps,
 
         // used for picking purposes
         recordBatchIdx,
         tableOffsets,
 
-        id: `${this.props.id}-geoarrow-scatterplot-${recordBatchIdx}`,
-        data: {
-          // @ts-expect-error
-          data: table.batches[recordBatchIdx],
-          // Map from expanded multi-geometry index to original index
-          // Used both in picking and for function callbacks
-          invertedGeomOffsets: invertOffsets(geomOffsets),
-          // Note: this needs to be the length one level down.
-          length: pointData.length,
-          attributes: {
-            getPosition: {
-              value: flatCoordinateArray,
-              size: pointData.type.listSize
-            }
-          }
-        }
+        id: `${this.props.id}-geoarrow-scatterplot-${recordBatchIdx}`
       };
-
-      for (const [propName, propInput] of Object.entries(accessors)) {
-        assignAccessor({
-          props,
-          propName,
-          propInput,
-          chunkIdx: recordBatchIdx,
-          geomCoordOffsets: geomOffsets,
-          batchOffset
-        });
-      }
 
       const layer = new ScatterplotLayer({
         ...this.getSubLayerProps(props),
         // preserve binded accessors, as they are overwriten back by pass-through accessors from extensions
         getFiltered: props.getFiltered,
-        getFilterValue: props.getFilterValue
+        getFilterValue: props.getFilterValue,
+        ...(props.getPulseStartTime ? {getPulseStartTime: props.getPulseStartTime} : {})
       });
       layers.push(layer);
     }

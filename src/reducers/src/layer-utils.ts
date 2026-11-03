@@ -347,6 +347,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapIndex,
     interactionConfig,
     animationConfig,
+    filters,
     mapLayers,
     experimentalContext
   } = props;
@@ -366,6 +367,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapState,
     mapIndex,
     animationConfig,
+    filters,
     objectHovered,
     visible,
     dataset,
@@ -491,6 +493,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex?: number;
     interactionConfig: any;
     animationConfig: any;
+    filters?: VisState['filters'];
     mapLayers: any;
     hasShadowEffect: boolean;
     isAnnotationMode?: boolean;
@@ -505,6 +508,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex,
     interactionConfig,
     animationConfig,
+    filters,
     mapLayers,
     hasShadowEffect,
     isAnnotationMode
@@ -554,6 +558,7 @@ function computeDeckLayersFromLayerOrder(
           mapIndex,
           interactionConfig,
           animationConfig,
+          filters,
           mapLayers,
           experimentalContext: {
             hasShadowEffect,
@@ -583,6 +588,7 @@ export function computeDeckLayers(
     clicked,
     interactionConfig,
     animationConfig,
+    filters,
     splitMaps
   } = visState;
 
@@ -630,6 +636,7 @@ export function computeDeckLayers(
                 mapIndex,
                 interactionConfig,
                 animationConfig,
+                filters,
                 mapLayers,
                 hasShadowEffect,
                 isAnnotationMode
@@ -663,6 +670,7 @@ export function computeDeckLayers(
             mapIndex,
             interactionConfig,
             animationConfig,
+            filters,
             mapLayers,
             experimentalContext: {
               hasShadowEffect,

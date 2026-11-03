@@ -73,6 +73,7 @@ export type NormalAccessor =
   | Accessor<arrow.Table, arrow.Vector<arrow.FixedSizeList<arrow.Float32>>>;
 
 export type ExtensionProps = {
+  getPulseStartTime?: (d: any, objectInfo?: {index: number}) => number[];
   getFiltered?: ({index}: {index: number}) => number;
   getFilterValue?: (d: any, objectInfo?: {index: number}) => (number | number[])[];
 };
