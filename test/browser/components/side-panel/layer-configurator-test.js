@@ -1694,6 +1694,10 @@ test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds contro
         <LayerConfigurator
           {...defaultProps}
           layer={layer}
+          updateLayerConfig={value => {
+            layer.updateLayerConfig(value);
+            setVersion(version => version + 1);
+          }}
           updateLayerVisConfig={value => {
             changed(value);
             layer.updateLayerVisConfig(value);
@@ -1707,6 +1711,11 @@ test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds contro
   const editor = within(view.container);
   const user = userEvent.setup();
   try {
+    fireEvent.click(editor.getByLabelText('GeoJSON Centroids'));
+    t.equal(layer.config.columnMode, 'geojson', 'selects GeoJSON centroid input');
+    t.equal(layer.hasAllColumns(), false, 'requires a geometry column before rendering');
+    fireEvent.click(editor.getByLabelText('Point Columns'));
+    t.equal(layer.config.columnMode, 'points', 'can return to latitude/longitude input');
     const fill = editor.getByText('Fill Color').closest('.layer-config-group');
     const stroke = editor.getByText('Stroke Color').closest('.layer-config-group');
     fireEvent.click(

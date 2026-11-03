@@ -4,10 +4,12 @@
 import {PolygonLayer} from '@deck.gl/layers';
 import type {DataFilterExtensionProps} from '@deck.gl/extensions';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
-import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {GEOARROW_METADATA_KEY, GEOJSON_FIELDS, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {DataContainerInterface} from '@kepler.gl/utils';
+import {DATA_TYPES} from 'type-analyzer';
 import Layer from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
+import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import {applyDefaultColorField} from '../layer-color-utils';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import VoronoiLayerIcon from './voronoi-layer-icon';
@@ -17,6 +19,11 @@ type VoronoiLayerData = {
   data: VoronoiCell[];
   mosaic?: VoronoiMosaic;
 } & Record<string, any>;
+
+const SUPPORTED_COLUMN_MODES = [
+  {key: 'points', label: 'Point Columns', requiredColumns: ['lat', 'lng']},
+  {key: 'geojson', label: 'GeoJSON Centroids', requiredColumns: ['geojson']}
+];
 
 export const voronoiVisConfigs = {
   opacity: 'opacity',
@@ -43,6 +50,7 @@ export default class VoronoiLayer extends Layer {
     dataContainer: DataContainerInterface;
     dataRevision: number;
     columns: Layer['config']['columns'];
+    columnMode: Layer['config']['columnMode'];
     padding: number;
     filteredIndex: number[];
     gpuFilter: KeplerTable['gpuFilter'];
@@ -65,8 +73,8 @@ export default class VoronoiLayer extends Layer {
     return VoronoiLayerIcon;
   }
 
-  get requiredLayerColumns() {
-    return ['lat', 'lng'];
+  get supportedColumnModes() {
+    return SUPPORTED_COLUMN_MODES;
   }
 
   get columnPairs() {
@@ -78,13 +86,37 @@ export default class VoronoiLayer extends Layer {
   }
 
   static findDefaultLayerProps(dataset: KeplerTable) {
+    const geometryColumns = dataset.fields
+      .filter(
+        field =>
+          (field.type === 'geojson' || field.type === 'geoarrow') &&
+          [
+            DATA_TYPES.GEOMETRY,
+            DATA_TYPES.GEOMETRY_FROM_STRING,
+            DATA_TYPES.PAIR_GEOMETRY_FROM_STRING
+          ].includes(field.analyzerType)
+      )
+      .map(field => field.name);
+    const geojsonColumns =
+      this.findDefaultColumnField(
+        {geojson: [...GEOJSON_FIELDS.geojson, ...geometryColumns]},
+        dataset.fields
+      ) || [];
     // Offer column defaults when changing layer type, without creating extra layers on import.
     return {
       props: [],
-      altProps: (dataset.fieldPairs || []).map(pair => ({
-        label: 'Voronoi Mosaic',
-        columns: assignPointPairToLayerColumn(pair, false)
-      }))
+      altProps: [
+        ...(dataset.fieldPairs || []).map(pair => ({
+          label: 'Voronoi Mosaic',
+          columns: assignPointPairToLayerColumn(pair, false),
+          columnMode: 'points'
+        })),
+        ...geojsonColumns.map(columns => ({
+          label: 'Voronoi Mosaic',
+          columns,
+          columnMode: 'geojson'
+        }))
+      ]
     };
   }
 
@@ -95,6 +127,14 @@ export default class VoronoiLayer extends Layer {
 
   getPositionAccessor(dataContainer?: DataContainerInterface) {
     if (!dataContainer || !this.hasAllColumns()) return () => [NaN, NaN];
+    if (this.config.columnMode === 'geojson') {
+      const {fieldIdx} = this.config.columns.geojson;
+      const encoding = dataContainer.getField?.(fieldIdx)?.metadata?.get(GEOARROW_METADATA_KEY);
+      return ({index}: {index: number}) => {
+        const feature = parseGeoJsonRawFeature(dataContainer.valueAt(index, fieldIdx), encoding);
+        return getCentroidFromGeometry(feature?.geometry) || [NaN, NaN];
+      };
+    }
     const {lng, lat} = this.config.columns;
     return ({index}: {index: number}) =>
       [lng, lat].map(({fieldIdx}) => {
@@ -114,13 +154,14 @@ export default class VoronoiLayer extends Layer {
     const {dataContainer, dataRevision, gpuFilter} = dataset;
     const filteredIndex = dataset.filteredIndexByLayer?.[this.id] ?? dataset.filteredIndex;
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
-    const {columns, visConfig} = this.config;
+    const {columns, columnMode, visConfig} = this.config;
     const previous = this.geometryTriggers;
     if (
       !this.mosaic ||
       previous?.dataContainer !== dataContainer ||
       previous.dataRevision !== dataRevision ||
       previous.columns !== columns ||
+      previous.columnMode !== columnMode ||
       previous.padding !== visConfig.boundsPadding ||
       previous.filteredIndex !== filteredIndex ||
       previous.gpuFilter !== gpuFilter
@@ -146,6 +187,7 @@ export default class VoronoiLayer extends Layer {
         dataContainer,
         dataRevision,
         columns,
+        columnMode,
         padding: visConfig.boundsPadding,
         filteredIndex,
         gpuFilter

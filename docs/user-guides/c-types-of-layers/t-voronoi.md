@@ -10,9 +10,12 @@ than precise geographic distance analysis. It is available in the flat map view.
 
 ## Create a mosaic
 
-1. Load a table with numeric latitude and longitude columns. Arrow-backed tables are supported.
+1. Load a table with numeric latitude and longitude columns, or a GeoJSON geometry column.
+   Arrow-backed tables are supported.
 2. Add a layer or change a Point layer's type to **Voronoi Mosaic**.
-3. Choose the latitude and longitude columns.
+3. Choose **Point Columns** and select latitude/longitude, or choose **GeoJSON Centroids**
+   and select the geometry column. Each geometry produces one site: its point coordinate
+   or the average of its vertices, using the same centroid calculation as the Heatmap layer.
 4. Under **Fill Color**, choose an attribute and a color palette. Hover over a cell to see
    the original point's values.
 
@@ -27,7 +30,8 @@ than precise geographic distance analysis. It is available in the flat map view.
 Cells stay fixed while panning and zooming. Filters rebuild the mosaic from the remaining
 points, allowing their cells to expand into the areas of excluded points. This includes
 numeric and time filters, as well as drawn polygon filters that select source point
-locations. The outer clipping rectangle stays tied to the full dataset and its padding.
+locations (centroids in GeoJSON mode). The outer clipping rectangle stays tied to all
+source sites in the full dataset and its padding.
 An empty selection draws no cells; clearing filters restores the original mosaic.
 Changing the input coordinates or padding also rebuilds the mosaic. Settings are saved
 with the map.
@@ -37,7 +41,6 @@ Web Mercator range, approximately ±85.05°. Coincident locations share one cell
 the first remaining row in the dataset. A single input point receives a finite display rectangle; a
 collinear set also receives a nonzero display extent.
 
-The first version accepts latitude/longitude columns and renders flat cells. It does not
-read geometry columns directly or calculate road-network service areas.
+The layer renders flat cells and does not calculate road-network service areas.
 
 [Back to layers](README.md)
