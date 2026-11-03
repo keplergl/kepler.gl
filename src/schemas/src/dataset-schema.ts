@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import pick from 'es-toolkit/compat/pick';
+import isPlainObject from 'es-toolkit/compat/isPlainObject';
 import {console as globalConsole} from 'global/window';
 import * as arrow from 'apache-arrow';
 
@@ -16,12 +17,7 @@ import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
-import {
-  ArrowDataContainer,
-  DataContainerInterface,
-  FIELD_DISPLAY_FORMAT,
-  isPlainObject
-} from '@kepler.gl/utils';
+import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
 export type SavedField = {
   name: string;
@@ -117,6 +113,14 @@ function getValueForSaving(value: any, ancestors = new Set<object>()): any {
   if (typeof value === 'bigint') {
     const number = Number(value);
     return Number.isSafeInteger(number) ? number : value.toString();
+  }
+  // Leave custom JSON representations intact; Arrow wrappers need normalization below.
+  if (
+    typeof value?.toJSON === 'function' &&
+    !(value instanceof arrow.StructRow) &&
+    !(value instanceof arrow.Vector)
+  ) {
+    return value;
   }
   const plain = value instanceof arrow.StructRow ? value.toJSON() : value;
   const isList = Array.isArray(plain) || plain instanceof arrow.Vector;

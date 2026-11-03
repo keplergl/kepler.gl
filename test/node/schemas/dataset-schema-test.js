@@ -430,6 +430,77 @@ test('#DatasetSchema -> nested Arrow Int64 values survive a complete JSON backup
   t.end();
 });
 
+test('#DatasetSchema -> nested custom JSON serializers retain their representations', t => {
+  class Identifier {
+    constructor() {
+      this.raw = 9007199254740993n;
+    }
+    toJSON() {
+      return {id: this.raw.toString()};
+    }
+  }
+  class CachedValue {
+    constructor() {
+      this.cache = {owner: this};
+    }
+    toJSON() {
+      return {value: 'valid'};
+    }
+  }
+  const custom = {
+    raw: 42n,
+    toJSON() {
+      return {value: this.raw.toString()};
+    }
+  };
+  custom.cache = custom;
+  const identifier = new Identifier();
+  const cached = new CachedValue();
+  const rows = [[{identifier, cached, custom, ordinary: {value: 42n}}]];
+  const dataset = new KeplerTable({info: {id: 'custom-json'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows
+  });
+
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  const expected = [
+    [
+      {
+        identifier: {id: '9007199254740993'},
+        cached: {value: 'valid'},
+        custom: {value: '42'},
+        ordinary: {value: 42}
+      }
+    ]
+  ];
+  t.deepEqual(
+    JSON.parse(exportToJsonString(saved)).allData,
+    expected,
+    'preserves class and plain-object serializers while normalizing ordinary nested values'
+  );
+  t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected, 'custom values reload');
+  t.equal(saved.allData[0][0].identifier, identifier, 'retains the custom class instance');
+  t.equal(saved.allData[0][0].cached, cached, 'does not traverse the cyclic internal cache');
+  t.equal(identifier.raw, 9007199254740993n, 'does not change live class data');
+  t.equal(rows[0][0].ordinary.value, 42n, 'does not change ordinary live nested data');
+  t.end();
+});
+
+test('#DatasetSchema -> rejects ordinary circular values without a JSON serializer', t => {
+  const cycle = {};
+  cycle.self = cycle;
+  const dataset = new KeplerTable({info: {id: 'circular'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'nested', type: 'object'}],
+    rows: [[cycle]]
+  });
+  t.throws(
+    () => datasetSchema[VERSIONS.v1].save(dataset),
+    /Cannot export circular dataset values/,
+    'still rejects an actual serialization cycle'
+  );
+  t.end();
+});
+
 test('#DatasetSchema -> joined Int64 rows save and reload without changing live rows', t => {
   const values = [
     0n,

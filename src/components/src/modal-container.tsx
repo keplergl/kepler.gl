@@ -347,6 +347,16 @@ export default function ModalContainerFactory(
       });
     };
 
+    _onExportMapError = (error: unknown) => {
+      const detail = error instanceof Error ? error.message : String(error);
+      this.props.uiStateActions.addNotification({
+        id: 'EXPORT_MAP_ERROR_ID',
+        type: 'error',
+        topic: 'global',
+        message: `Failed to export map: ${detail}`
+      });
+    };
+
     _onExportMap = () => {
       const {uiState} = this._propsWithMapInfoDraft();
       const {format, includeLayerApiKeys, fileName, appName, appWebsite, appIcon, appNameColor} =
@@ -367,13 +377,7 @@ export default function ModalContainerFactory(
         this._commitMapInfoDraft();
         this._closeModal();
       } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error);
-        this.props.uiStateActions.addNotification({
-          id: 'EXPORT_MAP_ERROR_ID',
-          type: 'error',
-          topic: 'global',
-          message: `Failed to export map: ${detail}`
-        });
+        this._onExportMapError(error);
       }
     };
 
@@ -382,13 +386,7 @@ export default function ModalContainerFactory(
       try {
         toSave = exportMap(this._propsWithMapInfoDraft());
       } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error);
-        this.props.uiStateActions.addNotification({
-          id: 'EXPORT_MAP_ERROR_ID',
-          type: 'error',
-          topic: 'global',
-          message: `Failed to export map: ${detail}`
-        });
+        this._onExportMapError(error);
         return;
       }
       this._commitMapInfoDraft();
@@ -699,7 +697,7 @@ export default function ModalContainerFactory(
                 fileName={uiState.exportMap.fileName}
                 onChangeFileName={uiStateActions.setExportMapFileName}
                 onMapInfoDraft={this._onMapInfoDraft}
-                onSetMapInfo={visStateActions.setMapInfo}
+                onSetMapInfo={this._onMapInfoDraft}
                 cleanupExportImage={uiStateActions.cleanupExportImage}
                 onUpdateImageSetting={uiStateActions.setExportImageSetting}
                 onCancel={this._closeModal}

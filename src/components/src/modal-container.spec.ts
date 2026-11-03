@@ -363,8 +363,12 @@ describe('ExportMapModalStyle', () => {
 });
 
 describe('map export failures', () => {
-  test('reports a schema save failure before starting a cloud upload', () => {
+  test('keeps cloud metadata as a draft until schema saving succeeds on retry', () => {
     const failure = new Error('Cannot export circular dataset values');
+    const save = jest.fn((): object => {
+      throw failure;
+    });
+    const draft = {title: 'Edited title', description: 'Draft'};
     const exportFileToCloud = jest.fn();
     const addNotification = jest.fn();
     const toggleModal = jest.fn();
@@ -372,11 +376,15 @@ describe('map export failures', () => {
     const dependencies = ModalContainerFactory.deps.map(() => () => null) as unknown as Parameters<
       typeof ModalContainerFactory
     >;
-    dependencies[10] = (({onConfirm}) =>
+    dependencies[10] = (({onMapInfoDraft, onSetMapInfo, onConfirm}) =>
       React.createElement(
         'button',
         {
-          onClick: () => onConfirm({name: 'test-provider'})
+          onClick: () => {
+            onMapInfoDraft(draft);
+            onSetMapInfo(draft);
+            onConfirm({name: 'test-provider'});
+          }
         },
         'Save map'
       )) as any;
@@ -388,11 +396,7 @@ describe('map export failures', () => {
         uiState: {...INITIAL_UI_STATE, currentModal: SAVE_MAP_ID},
         visState: {
           ...INITIAL_VIS_STATE,
-          schema: {
-            save: () => {
-              throw failure;
-            }
-          }
+          schema: {save}
         },
         visStateActions: {setMapInfo},
         uiStateActions: {toggleModal, addNotification},
@@ -411,6 +415,21 @@ describe('map export failures', () => {
         message: `Failed to export map: ${failure.message}`
       })
     );
+    const saved = {datasets: [], config: {version: 'v1', config: {}}, info: draft};
+    save.mockReturnValue(saved);
+    fireEvent.click(screen.getByRole('button', {name: 'Save map'}));
+    expect(save).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        visState: expect.objectContaining({mapInfo: expect.objectContaining(draft)})
+      })
+    );
+    expect(setMapInfo).toHaveBeenCalledTimes(1);
+    expect(setMapInfo).toHaveBeenCalledWith(draft);
+    expect(exportFileToCloud).toHaveBeenCalledTimes(1);
+    expect(exportFileToCloud).toHaveBeenCalledWith(
+      expect.objectContaining({mapData: {map: saved, thumbnail: null}, closeModal: true})
+    );
+    expect(addNotification).toHaveBeenCalledTimes(1);
   });
 
   test('keeps the modal and title draft on failure, then closes after a successful retry', () => {
