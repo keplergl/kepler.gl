@@ -26,6 +26,7 @@ import {replacePanelHeader} from './factories/panel-header';
 import {CLOUD_PROVIDERS_CONFIGURATION, DEFAULT_FEATURE_FLAGS} from './constants/default-settings';
 import {messages} from './constants/localization';
 import {getRuntimeConfig} from './utils/runtime-config';
+import {CustomLayerConfiguratorFactory} from '../../custom-layer/src/contour-layer-configurator';
 
 import {
   loadRemoteMap,
@@ -44,10 +45,12 @@ import {
 import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
-const KeplerGl = require('@kepler.gl/components').injectComponents([
+const components = require('@kepler.gl/components');
+const KeplerGl = components.injectComponents([
   replaceLoadDataModal(),
   replaceMapControl(),
-  replacePanelHeader()
+  replacePanelHeader(),
+  [components.LayerConfiguratorFactory, CustomLayerConfiguratorFactory]
 ]);
 
 // Sample data

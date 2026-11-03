@@ -71,6 +71,10 @@ The JSON must be publicly readable and return `Access-Control-Allow-Origin`. The
 it, runs it through `loadFiles`, and restores the custom `contour` layer because the layer class is
 registered in this app.
 
+The repository demo app (`examples/demo-app`) also registers this example's contour layer and
+configurator, so the Netlify `/demo` deploy preview can load the same project. That registration is
+demo-only; promoting the layer to `@kepler.gl/layers` would make it a built-in feature.
+
 The Mount Rainier sample project above was built from 600 real elevation samples around Mount
 Rainier (680–4266 m) from the public [Open-Meteo elevation API](https://open-meteo.com/en/docs/elevation-api),
 which serves Copernicus DEM data. It uses `cellRadius = 1 km`, `smoothing = 2`, and 12 contour

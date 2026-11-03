@@ -10,6 +10,8 @@ import {processGeojson, processRowObject, processArrowTable} from '@kepler.gl/pr
 import keplerGlReducer, {combinedUpdaters, uiStateUpdaters} from '@kepler.gl/reducers';
 import KeplerGlSchema from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
+import {LayerClasses} from '@kepler.gl/layers';
+import ContourKeplerLayer from '../../../custom-layer/src/custom-contour-layer';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 // DuckDB / applicationConfig defaults: see utils/runtime-config.js (applied on
@@ -106,7 +108,14 @@ const demoReducer = combineReducers({
     },
     visState: {
       loaders: [], // Add additional loaders.gl loaders here
-      loadOptions: {} // Add additional loaders.gl loader options here
+      loadOptions: {}, // Add additional loaders.gl loader options here
+      // Demo-only registration of the custom contour layer from the
+      // custom-layer example. Move this to @kepler.gl/layers to make it a
+      // built-in layer.
+      layerClasses: {
+        ...LayerClasses,
+        contour: ContourKeplerLayer
+      }
     },
     // Optional custom base maps from /config.json (see docs/custom-map-styles.md option 2)
     ...(runtimeMapStyle
