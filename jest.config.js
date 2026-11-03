@@ -41,7 +41,7 @@ const config = {
         presets: [['@babel/preset-env', {targets: {node: 'current'}}]]
       }
     ],
-    '\\.[jt]sx?$': 'babel-jest'
+    '\\.(?:[jt]sx?|mjs)$': 'babel-jest'
   },
   // Per https://jestjs.io/docs/configuration#transformignorepatterns-arraystring, transformIgnorePatterns ignores
   // node_modules and pnp folders by default so that they are not transpiled

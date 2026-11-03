@@ -863,6 +863,57 @@ export default function LayerConfiguratorFactory(
       );
     }
 
+    _renderVoronoiLayerConfig({
+      layer,
+      visConfiguratorProps,
+      layerConfiguratorProps,
+      layerChannelConfigProps
+    }) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <LayerConfigGroup
+            {...layer.visConfigSettings.filled}
+            {...visConfiguratorProps}
+            label="layer.fillColor"
+            collapsible
+          >
+            <ChannelByValueSelector
+              channel={layer.visualChannels.color}
+              {...layerChannelConfigProps}
+            />
+            {layer.config.colorField ? (
+              <LayerColorRangeSelector {...visConfiguratorProps} />
+            ) : (
+              <LayerColorSelector {...layerConfiguratorProps} />
+            )}
+            <ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            </ConfigGroupCollapsibleContent>
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...layer.visConfigSettings.stroked}
+            {...visConfiguratorProps}
+            label="layer.strokeColor"
+            collapsible
+          >
+            <LayerColorSelector
+              {...visConfiguratorProps}
+              selectedColor={layer.config.visConfig.strokeColor}
+              property="strokeColor"
+            />
+            <VisConfigSlider {...layer.visConfigSettings.thickness} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label="layerVisConfigs.voronoi.bounds"
+            collapsible
+          >
+            <VisConfigSlider {...layer.visConfigSettings.boundsPadding} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderClusterLayerConfig({layer, visConfiguratorProps, layerChannelConfigProps}) {
       return (
         <StyledLayerVisualConfigurator>

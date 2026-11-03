@@ -150,6 +150,7 @@ export default {
       icon: 'icon',
       heatmap: 'heatmap',
       contour: 'contour',
+      voronoi: 'Voronoi Mosaic',
       hexagon: 'hexagon',
       hexagonid: 'H3',
       trip: 'trip',
@@ -175,6 +176,12 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    voronoi: {
+      bounds: 'Cell Bounds',
+      boundsPadding: 'Bounds Padding (%)',
+      boundsPaddingDescription:
+        'Extend the dataset bounds on each side. Cells represent nearest sites in the map projection, not travel-time catchments.'
+    },
     angle: 'Angle',
     strokeWidth: 'Stroke Width (Pixels)',
     strokeWidthRange: 'Stroke Width Range',

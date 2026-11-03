@@ -26,7 +26,7 @@ require('@babel/register')({
     }
   ],
   only: [__dirname],
-  extensions: ['.ts', '.js', '.tsx', '.json']
+  extensions: ['.ts', '.js', '.tsx', '.json', '.mjs']
 });
 
 require('@babel/polyfill');

@@ -1683,3 +1683,58 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     }
   });
 });
+
+test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds controls', async t => {
+  const layer = new KeplerGlLayers.VoronoiLayer({dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(version => version + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  const editor = within(view.container);
+  const user = userEvent.setup();
+  try {
+    const fill = editor.getByText('Fill Color').closest('.layer-config-group');
+    const stroke = editor.getByText('Stroke Color').closest('.layer-config-group');
+    fireEvent.click(
+      within(fill.querySelector('.layer-config-group__header')).getByRole('checkbox', {
+        hidden: true
+      })
+    );
+    t.equal(layer.config.visConfig.filled, false, 'fill can be disabled');
+    t.equal(layer.config.visConfig.stroked, true, 'disabling fill preserves outlines');
+    fireEvent.click(
+      within(stroke.querySelector('.layer-config-group__header')).getByRole('checkbox', {
+        hidden: true
+      })
+    );
+    t.equal(layer.config.visConfig.stroked, false, 'outline can be disabled independently');
+    const bounds = editor.getByText('Cell Bounds').closest('.layer-config-group');
+    fireEvent.click(bounds.querySelector('.layer-config-group__header'));
+    const input = bounds.querySelector('.kg-range-slider__input');
+    await user.clear(input);
+    await user.type(input, '25');
+    await user.tab();
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {boundsPadding: 25},
+      'padding commits through the standard slider'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
