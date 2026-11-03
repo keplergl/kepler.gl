@@ -37,7 +37,7 @@ import keplerGlReducer, {
 import {DatasetType, MapSplitMode} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import KeplerGlSchema from '@kepler.gl/schemas';
-import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {KeplerTable, copyTableAndUpdate, sortDatasetByColumn} from '@kepler.gl/table';
 import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
@@ -1044,6 +1044,130 @@ test('#composerStateReducer - stale remote replacements cannot overwrite newer w
     t.notOk(next.datasets.stale, `${change}: ignores stale completion`);
     t.equal(next.loadingIndicatorValue, 0, `${change}: clears loading`);
     drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replacement into an existing target preserves its latest settings', async t => {
+  for (const remote of [false, true]) {
+    for (const deleteOriginalDataset of [false, true]) {
+      for (const succeeds of [false, true]) {
+        const original = replacementTestState();
+        const target = new KeplerTable({
+          info: {id: 'existing', label: 'Live feed', type: DatasetType.EXTERNALLY_HOSTED},
+          color: [10, 20, 30],
+          metadata: {
+            source: 'https://example.test/feed.csv',
+            sourceFormat: 'csv',
+            refreshIntervalMs: 10000
+          },
+          supportedFilterTypes: ['range'],
+          disableDataOperation: true
+        });
+        await target.importData({data: processCsvData(testCsvData)});
+        target.pinnedColumns = ['gps_data.lng'];
+        target.hiddenColumns = ['gps_data.lat'];
+        sortDatasetByColumn(target, 'gps_data.lng', 'DESCENDING');
+        original.visState = {
+          ...original.visState,
+          datasets: {...original.visState.datasets, existing: target}
+        };
+        const rows = target.dataContainer.flattenData();
+        const datasetToUse = {
+          info: {
+            id: target.id,
+            label: 'Incoming label',
+            ...(remote ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
+          },
+          ...(remote
+            ? {metadata: {source: 'https://example.test/incoming.csv', sourceFormat: 'csv'}}
+            : {data: processCsvData(dataWithNulls)})
+        };
+        const pending = replaceDataInMapUpdater(original, {
+          payload: {
+            datasetToReplaceId: sampleConfig.dataId,
+            datasetToUse,
+            options: {deleteOriginalDataset, centerMap: false}
+          }
+        });
+        const [task] = drainTasksForTesting();
+        const latestTarget = copyTableAndUpdate(target, {
+          label: 'Renamed while loading',
+          metadata: {...target.metadata, refreshIntervalMs: 20000}
+        });
+        pending.visState = {
+          ...pending.visState,
+          datasets: {...pending.visState.datasets, existing: latestTarget}
+        };
+        const completion = !succeeds
+          ? errorTaskInTest(task, new Error('Import failed'))
+          : remote
+          ? await finishRemoteDownload(task, datasetToUse)
+          : await new Promise((resolve, reject) =>
+              task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+            );
+        t.equal(
+          target.dataContainer.flattenData(),
+          rows,
+          'import leaves the live target untouched'
+        );
+        const next = visStateReducer(pending.visState, completion);
+        const replaced = next.datasets.existing;
+        t.equal(replaced.label, latestTarget.label, 'keeps the latest target label');
+        t.equal(replaced.type, latestTarget.type, 'keeps the remote dataset type');
+        t.deepEqual(replaced.color, target.color, 'keeps the target color');
+        t.deepEqual(
+          replaced.metadata,
+          latestTarget.metadata,
+          'keeps source and latest polling settings'
+        );
+        t.deepEqual(replaced.pinnedColumns, target.pinnedColumns, 'keeps pinned columns');
+        t.deepEqual(replaced.hiddenColumns, target.hiddenColumns, 'keeps export exclusions');
+        t.deepEqual(
+          replaced.supportedFilterTypes,
+          target.supportedFilterTypes,
+          'keeps filter restrictions'
+        );
+        t.equal(replaced.disableDataOperation, true, 'keeps the data operation restriction');
+        if (succeeds) {
+          t.equal(
+            replaced.length,
+            processCsvData(dataWithNulls).rows.length,
+            'installs every incoming row'
+          );
+          t.deepEqual(replaced.sortColumn, target.sortColumn, 'keeps the selected sort');
+          t.deepEqual(
+            [...replaced.sortOrder].sort((a, b) => a - b),
+            replaced.allIndexes,
+            'sort indexes cover the new rows'
+          );
+          t.equal(
+            Boolean(next.datasets[sampleConfig.dataId]),
+            !deleteOriginalDataset,
+            'honors original retention'
+          );
+          t.ok(
+            next.layers.every(layer => layer.config.dataId === target.id),
+            'remaps the original layers'
+          );
+        } else {
+          t.equal(replaced, latestTarget, 'failure retains the live target');
+          t.equal(
+            next.datasets[sampleConfig.dataId],
+            original.visState.datasets[sampleConfig.dataId],
+            'failure retains the original'
+          );
+        }
+        drainTasksForTesting();
+        const refreshing = refreshDatasetUpdater(next, {dataId: target.id});
+        t.equal(
+          refreshing.datasets.existing.metadata.refreshStatus,
+          'loading',
+          'target remains refreshable'
+        );
+        t.equal(drainTasksForTesting().length, 1, 'schedules a refresh');
+      }
+    }
   }
   t.end();
 });

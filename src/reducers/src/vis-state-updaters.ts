@@ -4417,16 +4417,39 @@ export const createNewDatasetSuccessUpdater = (
         progressIds
       );
     }
-    if (result?.status === 'fulfilled') {
-      state = prepareStateForDatasetReplace(state, datasetToReplaceId, result.value.id, {
-        deleteOriginalDataset: replacement.deleteOriginalDataset
-      });
-    }
   }
 
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
-      const dataset = result.value;
+      let dataset = result.value;
+      if (replacement) {
+        const target = state.datasets[dataset.id];
+        if (target && target.id !== replacement.datasetToReplaceId) {
+          // Replacing into another loaded table used to update its rows while
+          // retaining its settings. Read them at commit to preserve newer edits.
+          dataset = copyTableAndUpdate(dataset, {
+            ...pick(target, [
+              'label',
+              'type',
+              'color',
+              'metadata',
+              'supportedFilterTypes',
+              'disableDataOperation',
+              'pinnedColumns',
+              'hiddenColumns',
+              'getFileProcessor'
+            ]),
+            dataRevision: target.dataRevision + 1
+          });
+          const [column, mode] = Object.entries(target.sortColumn || {})[0] || [];
+          if (column && mode && dataset.fields.some(field => field.name === column)) {
+            sortDatasetByColumn(dataset, column, mode);
+          }
+        }
+        state = prepareStateForDatasetReplace(state, replacement.datasetToReplaceId, dataset.id, {
+          deleteOriginalDataset: replacement.deleteOriginalDataset
+        });
+      }
       return {...accu, [dataset.id]: dataset};
     } else {
       // show error notification on UI
