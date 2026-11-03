@@ -3,7 +3,12 @@
 
 /* eslint-disable max-statements */
 
-import {drainTasksForTesting, succeedTaskInTest, succeedTaskWithValues} from '@kepler.gl/tasks';
+import {
+  drainTasksForTesting,
+  errorTaskInTest,
+  succeedTaskInTest,
+  succeedTaskWithValues
+} from '@kepler.gl/tasks';
 import test from 'tape';
 
 import {
@@ -11,6 +16,7 @@ import {
   confirmReplaceDataset,
   loadFilesSuccess,
   registerEntry,
+  setColumnDisplayFormat,
   stageLoadedFiles,
   wrapTo
 } from '@kepler.gl/actions';
@@ -22,12 +28,17 @@ import keplerGlReducer, {
   fitBoundsUpdater,
   INITIAL_UI_STATE,
   visStateReducer,
-  mapStateReducer
+  mapStateReducer,
+  layerConfigChangeUpdater,
+  refreshDatasetUpdater,
+  removeDatasetUpdater,
+  setFilterUpdater,
+  setLoadingProgressUpdater
 } from '@kepler.gl/reducers';
 import {DatasetType, MapSplitMode} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import KeplerGlSchema from '@kepler.gl/schemas';
-import {KeplerTable} from '@kepler.gl/table';
+import {KeplerTable, copyTableAndUpdate, sortDatasetByColumn} from '@kepler.gl/table';
 import {getTimeBins, getMapJSON, exportToJsonString} from '@kepler.gl/utils';
 
 import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
@@ -816,6 +827,649 @@ test('#composerStateReducer - replaceDataInMapUpdater', t => {
   t.deepEqual(nextState.visState.filterToBeMerged, [], 'should reset filterToBeMerged');
   t.deepEqual(nextState.visState.interactionToBeMerged, {}, 'should reset interactionToBeMerged');
   t.deepEqual(nextState.visState.splitMapsToBeMerged, [], 'should reset splitMapsToBeMerged');
+  t.end();
+});
+
+test('#composerStateReducer - failed remote replacement retains the current map', t => {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  let original = addDataToMapUpdater(initial, {
+    payload: {
+      datasets: {info: {id: sampleConfig.dataId}, data: processCsvData(testCsvData)},
+      config: sampleConfig.config
+    }
+  });
+  original = {...original, visState: applyExistingDatasetTasks(visStateReducer, original.visState)};
+  drainTasksForTesting();
+  const before = original.visState.schema.getConfigToSave(original);
+  const pending = replaceDataInMapUpdater(original, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse: {
+        info: {id: 'remote', type: DatasetType.EXTERNALLY_HOSTED},
+        metadata: {source: 'https://example.test/missing.csv', sourceFormat: 'csv'}
+      }
+    }
+  });
+  t.equal(
+    pending.visState.datasets[sampleConfig.dataId],
+    original.visState.datasets[sampleConfig.dataId],
+    'original stays while downloading'
+  );
+  t.equal(pending.visState.layers, original.visState.layers, 'layers stay while downloading');
+  t.equal(pending.visState.filters, original.visState.filters, 'filters stay while downloading');
+  const task = drainTasksForTesting().find(task =>
+    task.label.includes('HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK')
+  );
+  t.ok(task, 'runs the normal remote download task');
+  const failure = errorTaskInTest(task, new Error('Simulated failed download'));
+  const failed = {...pending, visState: visStateReducer(pending.visState, failure)};
+  t.equal(
+    failed.visState.datasets[sampleConfig.dataId],
+    original.visState.datasets[sampleConfig.dataId],
+    'failure retains original table'
+  );
+  t.deepEqual(
+    failed.visState.schema.getConfigToSave(failed),
+    before,
+    'failure retains complete saved map configuration'
+  );
+  t.equal(failed.visState.loadingIndicatorValue, 0, 'failure clears loading');
+  t.deepEqual(failed.visState.loadingProgress, {}, 'failure clears progress');
+  t.ok(drainTasksForTesting().length, 'failure schedules an error notification');
+  t.end();
+});
+
+function replacementTestState() {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const added = addDataToMapUpdater(initial, {
+    payload: {
+      datasets: {info: {id: sampleConfig.dataId}, data: processCsvData(testCsvData)},
+      config: sampleConfig.config
+    }
+  });
+  const state = {...added, visState: applyExistingDatasetTasks(visStateReducer, added.visState)};
+  drainTasksForTesting();
+  return state;
+}
+
+function beginRemoteReplacement(state, id, options = {}) {
+  const datasetToUse = {
+    info: {id, type: DatasetType.EXTERNALLY_HOSTED},
+    metadata: {source: `https://example.test/${id}.csv`, sourceFormat: 'csv'}
+  };
+  const pending = replaceDataInMapUpdater(state, {
+    payload: {
+      datasetToReplaceId: sampleConfig.dataId,
+      datasetToUse,
+      options
+    }
+  });
+  const task = drainTasksForTesting().find(task =>
+    task.label.includes('HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK')
+  );
+  return {pending, task, datasetToUse};
+}
+
+// Simulate only the network result; run the real table creation/import task.
+function finishRemoteDownload(task, datasetToUse, data = processCsvData(dataWithNulls)) {
+  let downloaded = false;
+  return new Promise((resolve, reject) =>
+    task.run(
+      (effect, onSuccess, onError) => {
+        if (!downloaded) {
+          downloaded = true;
+          return onSuccess({...datasetToUse, data});
+        }
+        return effect(onSuccess, onError);
+      },
+      resolve,
+      reject
+    )
+  );
+}
+
+test('#composerStateReducer - remote replacement commits fresh data and the latest layer config', async t => {
+  for (const id of [sampleConfig.dataId, 'replacement']) {
+    for (const deleteOriginalDataset of [true, false]) {
+      const original = replacementTestState();
+      const table = original.visState.datasets[sampleConfig.dataId];
+      const originalRows = table.dataContainer.flattenData();
+      const {pending, task, datasetToUse} = beginRemoteReplacement(original, id, {
+        deleteOriginalDataset
+      });
+      let edited = {
+        ...pending,
+        visState: layerConfigChangeUpdater(pending.visState, {
+          oldLayer: pending.visState.layers[0],
+          newConfig: {label: 'Edited while downloading'}
+        })
+      };
+      edited = {
+        ...edited,
+        visState: setFilterUpdater(edited.visState, {
+          idx: 0,
+          prop: 'enabled',
+          value: false
+        })
+      };
+      edited.visState = {
+        ...edited.visState,
+        datasets: {
+          ...edited.visState.datasets,
+          [sampleConfig.dataId]: copyTableAndUpdate(edited.visState.datasets[sampleConfig.dataId], {
+            hiddenColumns: ['trip_distance']
+          })
+        }
+      };
+      const completion = await finishRemoteDownload(task, datasetToUse);
+      t.equal(
+        table.dataContainer.flattenData(),
+        originalRows,
+        'download/import never mutates the live original'
+      );
+      const next = visStateReducer(edited.visState, completion);
+      t.ok(next.datasets[id], 'commits the requested dataset ID');
+      t.notEqual(next.datasets[id], table, 'builds a fresh table even for the same ID');
+      t.equal(
+        next.datasets[id].length,
+        processCsvData(dataWithNulls).rows.length,
+        'commits all downloaded rows'
+      );
+      t.equal(
+        Boolean(next.datasets[sampleConfig.dataId]),
+        id === sampleConfig.dataId || !deleteOriginalDataset,
+        'honors keep-original for distinct IDs'
+      );
+      t.equal(
+        next.layers[0].config.label,
+        'Edited while downloading',
+        'preserves a newer layer edit'
+      );
+      t.ok(
+        next.layers.every(layer => layer.config.dataId === id),
+        'remaps layers'
+      );
+      t.ok(
+        next.filters.every(filter => filter.dataId.includes(id)),
+        'remaps filters'
+      );
+      t.equal(next.filters[0].enabled, false, 'retains a newer filter edit');
+      t.deepEqual(next.splitMaps, original.visState.splitMaps, 'preserves split panel assignments');
+      t.deepEqual(next.pendingDatasetReplacements, {}, 'clears the completed request');
+      drainTasksForTesting();
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - stale remote replacements cannot overwrite newer work', async t => {
+  for (const order of ['older-first', 'newer-first']) {
+    const original = replacementTestState();
+    const first = beginRemoteReplacement(original, 'first');
+    const second = beginRemoteReplacement(first.pending, 'second');
+    const firstDone = await finishRemoteDownload(first.task, first.datasetToUse);
+    const secondDone = await finishRemoteDownload(second.task, second.datasetToUse);
+    let next = second.pending.visState;
+    for (const action of order === 'older-first'
+      ? [firstDone, secondDone]
+      : [secondDone, firstDone]) {
+      next = visStateReducer(next, action);
+    }
+    t.deepEqual(
+      Object.keys(next.datasets),
+      ['second'],
+      `${order}: only the newest request commits`
+    );
+    t.equal(next.loadingIndicatorValue, 0, 'settles both loading counters');
+    t.deepEqual(next.loadingProgress, {}, 'clears all completed progress');
+    drainTasksForTesting();
+  }
+  for (const change of ['remove', 'remove-and-readd', 'edit']) {
+    const original = replacementTestState();
+    const {pending, task, datasetToUse} = beginRemoteReplacement(original, 'stale');
+    let current = pending.visState;
+    if (change.startsWith('remove')) {
+      const removed = current.datasets[sampleConfig.dataId];
+      current = removeDatasetUpdater(current, {dataId: sampleConfig.dataId});
+      if (change === 'remove-and-readd')
+        current = {...current, datasets: {[sampleConfig.dataId]: removed}};
+    } else {
+      current.datasets[sampleConfig.dataId].appendRows([
+        current.datasets[sampleConfig.dataId].dataContainer.rowAsArray(0)
+      ]);
+    }
+    const datasets = current.datasets;
+    const done = await finishRemoteDownload(task, datasetToUse);
+    const next = visStateReducer(current, done);
+    t.equal(next.datasets, datasets, `${change}: does not roll back current datasets`);
+    t.notOk(next.datasets.stale, `${change}: ignores stale completion`);
+    t.equal(next.loadingIndicatorValue, 0, `${change}: clears loading`);
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replacement into an existing target preserves its latest settings', async t => {
+  for (const remote of [false, true]) {
+    for (const deleteOriginalDataset of [false, true]) {
+      for (const succeeds of [false, true]) {
+        const original = replacementTestState();
+        const target = new KeplerTable({
+          info: {id: 'existing', label: 'Live feed', type: DatasetType.EXTERNALLY_HOSTED},
+          color: [10, 20, 30],
+          metadata: {
+            source: 'https://example.test/feed.csv',
+            sourceFormat: 'csv',
+            refreshIntervalMs: 10000
+          },
+          supportedFilterTypes: ['range'],
+          disableDataOperation: true
+        });
+        await target.importData({data: processCsvData(testCsvData)});
+        target.pinnedColumns = ['gps_data.lng'];
+        target.hiddenColumns = ['gps_data.lat'];
+        sortDatasetByColumn(target, 'gps_data.lng', 'DESCENDING');
+        original.visState = {
+          ...original.visState,
+          datasets: {...original.visState.datasets, existing: target}
+        };
+        original.visState = visStateReducer(
+          original.visState,
+          setColumnDisplayFormat(target.id, {'gps_data.lng': '.1f'})
+        );
+        const rows = target.dataContainer.flattenData();
+        const datasetToUse = {
+          info: {
+            id: target.id,
+            label: 'Incoming label',
+            ...(remote ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
+          },
+          ...(remote
+            ? {metadata: {source: 'https://example.test/incoming.csv', sourceFormat: 'csv'}}
+            : {data: processCsvData(dataWithNulls)})
+        };
+        const pending = replaceDataInMapUpdater(original, {
+          payload: {
+            datasetToReplaceId: sampleConfig.dataId,
+            datasetToUse,
+            options: {deleteOriginalDataset, centerMap: false}
+          }
+        });
+        const [task] = drainTasksForTesting();
+        pending.visState = visStateReducer(
+          pending.visState,
+          setColumnDisplayFormat(target.id, {'gps_data.lng': '.2f'})
+        );
+        const latestTarget = copyTableAndUpdate(pending.visState.datasets.existing, {
+          label: 'Renamed while loading',
+          metadata: {...target.metadata, refreshIntervalMs: 20000}
+        });
+        pending.visState = {
+          ...pending.visState,
+          datasets: {...pending.visState.datasets, existing: latestTarget}
+        };
+        const completion = !succeeds
+          ? errorTaskInTest(task, new Error('Import failed'))
+          : remote
+          ? await finishRemoteDownload(task, datasetToUse)
+          : await new Promise((resolve, reject) =>
+              task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+            );
+        t.equal(
+          target.dataContainer.flattenData(),
+          rows,
+          'import leaves the live target untouched'
+        );
+        const next = visStateReducer(pending.visState, completion);
+        const replaced = next.datasets.existing;
+        t.equal(
+          replaced.fields.find(field => field.name === 'gps_data.lng').displayFormat,
+          '.2f',
+          'keeps the column format edited while loading'
+        );
+        t.equal(replaced.label, latestTarget.label, 'keeps the latest target label');
+        t.equal(replaced.type, latestTarget.type, 'keeps the remote dataset type');
+        t.deepEqual(replaced.color, target.color, 'keeps the target color');
+        t.deepEqual(
+          replaced.metadata,
+          latestTarget.metadata,
+          'keeps source and latest polling settings'
+        );
+        t.deepEqual(replaced.pinnedColumns, target.pinnedColumns, 'keeps pinned columns');
+        t.deepEqual(replaced.hiddenColumns, target.hiddenColumns, 'keeps export exclusions');
+        t.deepEqual(
+          replaced.supportedFilterTypes,
+          target.supportedFilterTypes,
+          'keeps filter restrictions'
+        );
+        t.equal(replaced.disableDataOperation, true, 'keeps the data operation restriction');
+        if (succeeds) {
+          t.equal(
+            replaced.length,
+            processCsvData(dataWithNulls).rows.length,
+            'installs every incoming row'
+          );
+          t.deepEqual(replaced.sortColumn, target.sortColumn, 'keeps the selected sort');
+          t.deepEqual(
+            [...replaced.sortOrder].sort((a, b) => a - b),
+            replaced.allIndexes,
+            'sort indexes cover the new rows'
+          );
+          t.equal(
+            Boolean(next.datasets[sampleConfig.dataId]),
+            !deleteOriginalDataset,
+            'honors original retention'
+          );
+          t.ok(
+            next.layers.every(layer => layer.config.dataId === target.id),
+            'remaps the original layers'
+          );
+        } else {
+          t.equal(replaced, latestTarget, 'failure retains the live target');
+          t.equal(
+            next.datasets[sampleConfig.dataId],
+            original.visState.datasets[sampleConfig.dataId],
+            'failure retains the original'
+          );
+        }
+        drainTasksForTesting();
+        const refreshing = refreshDatasetUpdater(next, {dataId: target.id});
+        t.equal(
+          refreshing.datasets.existing.metadata.refreshStatus,
+          'loading',
+          'target remains refreshable'
+        );
+        t.equal(drainTasksForTesting().length, 1, 'schedules a refresh');
+      }
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - existing-target field settings follow unchanged column names and order', async t => {
+  for (const displayFormat of [undefined, '.2f']) {
+    for (const reorder of [false, true]) {
+      const original = replacementTestState();
+      const target = new KeplerTable({info: {id: 'existing'}, color: [1, 2, 3]});
+      await target.importData({data: processCsvData('value,other\n1,10\n2,11')});
+      target.fields[0].displayName = 'Friendly value';
+      target.getColumnFilterProps('value');
+      original.visState = {
+        ...original.visState,
+        datasets: {...original.visState.datasets, existing: target}
+      };
+      original.visState = visStateReducer(
+        original.visState,
+        setColumnDisplayFormat(target.id, {value: displayFormat})
+      );
+      const data = processCsvData(
+        reorder ? 'other,value\n200,20\n300,30' : 'value,other\n20,200\n30,300'
+      );
+      data.fields = data.fields.map(field => ({...field, displayFormat: '.3f'}));
+      const pending = replaceDataInMapUpdater(original, {
+        payload: {
+          datasetToReplaceId: sampleConfig.dataId,
+          datasetToUse: {info: {id: target.id}, data},
+          options: {centerMap: false}
+        }
+      });
+      const [task] = drainTasksForTesting();
+      const completion = await new Promise((resolve, reject) =>
+        task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+      );
+      const next = visStateReducer(pending.visState, completion);
+      const value = next.datasets.existing.fields.find(field => field.name === 'value');
+      t.equal(
+        value.displayFormat,
+        reorder ? '.3f' : displayFormat,
+        'retains the target format only when the column layout is unchanged'
+      );
+      t.equal(value.valueAccessor({index: 0}), 20, 'accessor reads the incoming rows');
+      t.equal(
+        value.displayName,
+        reorder ? 'value' : 'Friendly value',
+        'preserves the column label'
+      );
+      t.deepEqual(
+        next.datasets.existing.getColumnFilterProps('value').domain,
+        [20, 30],
+        'rebuilds cached domains from the incoming rows'
+      );
+      drainTasksForTesting();
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - empty existing-target replacements retain timestamp fields and filters', async t => {
+  for (const remote of [false, true]) {
+    const original = replacementTestState();
+    const target = new KeplerTable({info: {id: 'existing'}, color: [1, 2, 3]});
+    await target.importData({data: processCsvData(testCsvData)});
+    original.visState = {
+      ...original.visState,
+      datasets: {...original.visState.datasets, existing: target}
+    };
+    const data = {...processCsvData(dataWithNulls), rows: []};
+    const datasetToUse = remote
+      ? {
+          info: {id: target.id, type: DatasetType.EXTERNALLY_HOSTED},
+          metadata: {source: 'https://example.test/empty.csv', sourceFormat: 'csv'}
+        }
+      : {info: {id: target.id}, data};
+    const pending = replaceDataInMapUpdater(original, {
+      payload: {
+        datasetToReplaceId: sampleConfig.dataId,
+        datasetToUse,
+        options: {centerMap: false}
+      }
+    });
+    const [task] = drainTasksForTesting();
+    const completion = remote
+      ? await finishRemoteDownload(task, datasetToUse, data)
+      : await new Promise((resolve, reject) =>
+          task.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+        );
+    const next = visStateReducer(pending.visState, completion);
+    t.equal(next.datasets.existing.length, 0, 'commits the empty replacement');
+    t.deepEqual(
+      next.datasets.existing.fields.map(({name, type, format}) => ({name, type, format})),
+      target.fields.map(({name, type, format}) => ({name, type, format})),
+      'retains the existing field types and timestamp formats'
+    );
+    t.equal(next.filters[0].type, 'timeRange', 'keeps the time filter');
+    const filled = addDataToMapUpdater(
+      {...pending, visState: next},
+      {
+        payload: {
+          datasets: {info: {id: target.id}, data: processCsvData(dataWithNulls)},
+          options: {centerMap: false, keepExistingConfig: true, autoCreateLayers: false}
+        }
+      }
+    );
+    const [refillTask] = drainTasksForTesting();
+    const refilled = visStateReducer(
+      filled.visState,
+      await new Promise((resolve, reject) =>
+        refillTask.run((effect, onSuccess, onError) => effect(onSuccess, onError), resolve, reject)
+      )
+    );
+    t.equal(refilled.filters[0].type, 'timeRange', 'keeps the time filter when rows return');
+    t.deepEqual(
+      refilled.datasets.existing.getColumnFilterProps('gps_data.utc_timestamp').domain,
+      [1474071056000, 1474071677000],
+      'rebuilds the timestamp domain from returning rows'
+    );
+    t.equal(
+      refilled.datasets.existing.fields[0].valueAccessor({index: 1}),
+      1474071056000,
+      'timestamp accessor reads and converts the new rows'
+    );
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replacement takes priority over background refresh', async t => {
+  for (const targetId of [sampleConfig.dataId, 'replacement', 'existing-target']) {
+    for (const refreshId of targetId === 'existing-target'
+      ? [sampleConfig.dataId, targetId]
+      : [sampleConfig.dataId]) {
+      for (const succeeds of [true, false]) {
+        let original = replacementTestState();
+        const table = original.visState.datasets[sampleConfig.dataId];
+        const remote = copyTableAndUpdate(table, {
+          type: DatasetType.EXTERNALLY_HOSTED,
+          metadata: {
+            source: 'https://example.test/original.csv',
+            sourceFormat: 'csv',
+            refreshIntervalMs: 1000,
+            etag: 'original-etag'
+          }
+        });
+        original.visState = {
+          ...original.visState,
+          datasets: {
+            [sampleConfig.dataId]: remote,
+            ...(targetId === 'existing-target'
+              ? {[targetId]: copyTableAndUpdate(remote, {id: targetId})}
+              : {})
+          }
+        };
+        original.visState = refreshDatasetUpdater(original.visState, {dataId: refreshId});
+        const refreshTask = drainTasksForTesting()[0];
+        const {pending, task, datasetToUse} = beginRemoteReplacement(original, targetId, {
+          deleteOriginalDataset: false
+        });
+        const rows = original.visState.datasets[refreshId].dataContainer.flattenData();
+        const refreshed = visStateReducer(
+          pending.visState,
+          succeedTaskInTest(refreshTask, {
+            data: processCsvData(dataWithNulls),
+            etag: 'uncommitted-etag'
+          })
+        );
+        t.equal(
+          refreshed.datasets[refreshId].dataContainer.flattenData(),
+          rows,
+          'in-flight poll leaves current rows intact'
+        );
+        t.equal(
+          refreshed.datasets[refreshId].metadata.etag,
+          'original-etag',
+          'does not cache validators for discarded rows'
+        );
+        t.equal(
+          refreshed.datasets[refreshId].metadata.refreshStatus,
+          'idle',
+          'settles the in-flight refresh'
+        );
+        t.equal(
+          refreshDatasetUpdater(refreshed, {dataId: refreshId}),
+          refreshed,
+          'defers new polls while replacing'
+        );
+        t.deepEqual(drainTasksForTesting(), [], 'does not start another refresh');
+
+        const completion = succeeds
+          ? await finishRemoteDownload(task, datasetToUse)
+          : errorTaskInTest(task, new Error('Failed replacement'));
+        const next = visStateReducer(refreshed, completion);
+        if (succeeds) {
+          t.equal(
+            next.datasets[targetId].length,
+            processCsvData(dataWithNulls).rows.length,
+            'commits replacement after an overlapping poll'
+          );
+          t.ok(
+            next.layers.every(layer => layer.config.dataId === targetId),
+            'remaps layers after the poll'
+          );
+        } else {
+          t.equal(
+            next.datasets[refreshId].dataContainer.flattenData(),
+            rows,
+            'failure retains original rows'
+          );
+        }
+        drainTasksForTesting();
+        const resumed = refreshDatasetUpdater(next, {dataId: refreshId});
+        t.equal(
+          resumed.datasets[refreshId].metadata.refreshStatus,
+          'loading',
+          'refresh resumes after replacement settles'
+        );
+        t.equal(drainTasksForTesting().length, 1, 'schedules the resumed refresh');
+      }
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - cancelled replacements clear progress while other downloads continue', async t => {
+  for (const succeeds of [true, false]) {
+    const original = replacementTestState();
+    const {pending, task, datasetToUse} = beginRemoteReplacement(original, 'cancelled');
+    const progressId = Object.keys(pending.visState.loadingProgress)[0];
+    pending.visState = setLoadingProgressUpdater(pending.visState, {
+      id: progressId,
+      percent: 100,
+      phase: 'processing'
+    });
+    const other = addDataToMapUpdater(pending, {
+      payload: {
+        datasets: {...datasetToUse, info: {...datasetToUse.info, id: 'unrelated'}},
+        options: {keepExistingConfig: true}
+      }
+    });
+    drainTasksForTesting();
+    const removed = removeDatasetUpdater(other.visState, {dataId: sampleConfig.dataId});
+    const completion = succeeds
+      ? await finishRemoteDownload(task, datasetToUse)
+      : errorTaskInTest(task, new Error('Cancelled download ended'));
+    const next = visStateReducer(removed, completion);
+    t.equal(next.datasets, removed.datasets, 'does not resurrect the removed dataset');
+    t.equal(next.loadingIndicatorValue, 1, 'only the unrelated download is loading');
+    t.deepEqual(next.loadingProgress, {unrelated: 0}, 'clears the cancelled download progress');
+    t.deepEqual(next.loadingProcessing, {}, 'clears the cancelled processing state');
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - overlapping replacements keep independent progress', async t => {
+  for (const sameTarget of [true, false]) {
+    for (const olderFirst of [true, false]) {
+      const original = replacementTestState();
+      const first = beginRemoteReplacement(original, 'first');
+      const second = beginRemoteReplacement(first.pending, sameTarget ? 'first' : 'second');
+      const firstProgressId = Object.keys(first.pending.visState.loadingProgress)[0];
+      const secondProgressId = Object.keys(second.pending.visState.loadingProgress).find(
+        id => id !== firstProgressId
+      );
+      let current = setLoadingProgressUpdater(second.pending.visState, {
+        id: firstProgressId,
+        percent: 30
+      });
+      current = setLoadingProgressUpdater(current, {id: secondProgressId, percent: 80});
+      const firstDone = await finishRemoteDownload(first.task, first.datasetToUse);
+      const secondDone = await finishRemoteDownload(second.task, second.datasetToUse);
+      current = visStateReducer(current, olderFirst ? firstDone : secondDone);
+      t.deepEqual(
+        Object.values(current.loadingProgress),
+        [olderFirst ? 80 : 30],
+        'only the remaining request contributes progress'
+      );
+      current = visStateReducer(current, olderFirst ? secondDone : firstDone);
+      t.deepEqual(current.loadingProgress, {}, 'clears progress after both requests settle');
+      t.deepEqual(
+        Object.keys(current.datasets),
+        [sameTarget ? 'first' : 'second'],
+        'only the newest replacement commits'
+      );
+      drainTasksForTesting();
+    }
+  }
   t.end();
 });
 

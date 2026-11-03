@@ -12,8 +12,7 @@ import {
   updateVisDataUpdater as visStateUpdateVisDataUpdater,
   setMapInfoUpdater,
   layerTypeChangeUpdater,
-  toggleSplitMapUpdater as visStateToggleSplitMapUpdater,
-  prepareStateForDatasetReplace
+  toggleSplitMapUpdater as visStateToggleSplitMapUpdater
 } from './vis-state-updaters';
 import {
   receiveMapConfigUpdater as stateMapConfigUpdater,
@@ -157,8 +156,13 @@ export const defaultAddDataToMapOptions = {
  */
 export const addDataToMapUpdater = (
   state: KeplerGlState,
-  {payload, onFinish}: {payload: AddDataToMapPayload; onFinish?: ProgressiveLoadContinuation}
+  action: {payload: AddDataToMapPayload; onFinish?: ProgressiveLoadContinuation}
 ): KeplerGlState => {
+  const {payload, onFinish} = action;
+  // Internal context carried only by replaceDataInMapUpdater.
+  const {replacement} = action as typeof action & {
+    replacement?: {datasetToReplaceId: string; deleteOriginalDataset: boolean};
+  };
   const {datasets, config, info} = payload;
 
   const options = {
@@ -210,7 +214,8 @@ export const addDataToMapUpdater = (
         datasets,
         options,
         config: parsedConfig,
-        onFinish
+        onFinish,
+        replacement
       })
     ),
 
@@ -773,22 +778,13 @@ export const replaceDataInMapUpdater = (
   if (!dataIdToUse) {
     return state;
   }
-  // remove dataset and put dependencies in toBeMerged
-  const preparedState = {
-    ...state,
-    visState: prepareStateForDatasetReplace(state.visState, datasetToReplaceId, dataIdToUse, {
-      deleteOriginalDataset
-    })
-  };
-
-  const nextState = addDataToMapUpdater(
-    preparedState,
-    payload_({
+  // Keep the original and its dependencies visible until creation succeeds.
+  const action = {
+    payload: {
       datasets: datasetToUse,
-      // should zoom to new dataset
       options: addDataToMapOptions
-    })
-  );
-
-  return nextState;
+    },
+    replacement: {datasetToReplaceId, deleteOriginalDataset}
+  };
+  return addDataToMapUpdater(state, action);
 };

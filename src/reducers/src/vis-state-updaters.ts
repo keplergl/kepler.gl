@@ -218,6 +218,7 @@ import {
   canMutateDatasetSchema,
   copyTableAndUpdate,
   createNewDataEntry,
+  getFieldValueAccessor,
   pinTableColumns,
   showAllTableColumns,
   toggleHiddenTableColumn,
@@ -3320,9 +3321,12 @@ function removeSingleDatasetUpdater<T extends VisState>(state: T, datasetKey: st
 
   const layersToRemove = layers.filter(l => l.config.dataId === datasetKey).map(l => l.id);
 
+  const pendingDatasetReplacements = {...state.pendingDatasetReplacements};
+  delete pendingDatasetReplacements[datasetKey];
   let newState = layersToRemove.reduce((accu, id) => removeLayerUpdater(accu, {id}), {
     ...state,
-    datasets: newDatasets
+    datasets: newDatasets,
+    ...(state.pendingDatasetReplacements ? {pendingDatasetReplacements} : {})
   });
 
   const filters: Filter[] = [];
@@ -3722,11 +3726,10 @@ function getDatasetProgressId(dataset: ProtoDataset, index = 0): string {
   return `dataset-${index}`;
 }
 
-function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
+function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets, progressId: string) {
   if (!needsExternallyHostedHydrate(dataset)) {
     return createNewDataEntry(dataset, datasets);
   }
-  const progressId = getDatasetProgressId(dataset);
   return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
     arg: dataset,
     onProgress: progress =>
@@ -3798,6 +3801,12 @@ const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
 );
 
+function isDatasetBeingReplaced(state: VisState, dataId: string): boolean {
+  return Object.entries(state.pendingDatasetReplacements || {}).some(
+    ([originalId, {targetId}]) => originalId === dataId || targetId === dataId
+  );
+}
+
 /**
  * Re-fetch an externally hosted dataset and replace its table contents in place.
  * Layers and filters are kept when field names match.
@@ -3816,7 +3825,7 @@ export function refreshDatasetUpdater(
   ) {
     return state;
   }
-  if (dataset.metadata?.refreshStatus === 'loading') {
+  if (dataset.metadata?.refreshStatus === 'loading' || isDatasetBeingReplaced(state, dataId)) {
     return state;
   }
 
@@ -3972,6 +3981,18 @@ export function refreshDatasetSuccessUpdater(
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
+  }
+
+  // A poll started before replacement must settle without invalidating it.
+  // Keep the old validators because this response's rows are not committed.
+  if (isDatasetBeingReplaced(state, dataId)) {
+    return {
+      ...state,
+      datasets: {
+        ...state.datasets,
+        [dataId]: patchDatasetMetadata(dataset, {refreshStatus: 'idle', refreshProgress: undefined})
+      }
+    };
   }
 
   const metadataPatch = {
@@ -4222,10 +4243,22 @@ type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
 
 type ProgressiveUpdateVisDataUpdaterAction = VisStateActions.UpdateVisDataUpdaterAction & {
   onFinish?: ProgressiveLoadContinuation;
+  replacement?: {datasetToReplaceId: string; deleteOriginalDataset: boolean};
+};
+
+type PendingDatasetReplacement = {
+  datasetToReplaceId: string;
+  deleteOriginalDataset: boolean;
+  requestId: string;
+  originalData: Datasets[string]['dataContainer'];
+  originalRevision: number;
+  targetData: Datasets[string]['dataContainer'] | undefined;
+  targetRevision: number | undefined;
 };
 
 type ProgressiveCreateNewDatasetSuccessPayload = CreateNewDatasetSuccessPayload & {
   onFinish?: ProgressiveLoadContinuation;
+  replacement?: PendingDatasetReplacement;
 };
 
 // eslint-disable-next-line complexity
@@ -4249,6 +4282,18 @@ export const updateVisDataUpdater = (
     return updatedState;
   }
 
+  const replacementOptions = (action as ProgressiveUpdateVisDataUpdaterAction).replacement;
+  const replacement = replacementOptions
+    ? {
+        ...replacementOptions,
+        requestId: generateHashId(),
+        originalData: state.datasets[replacementOptions.datasetToReplaceId]?.dataContainer,
+        originalRevision: state.datasets[replacementOptions.datasetToReplaceId]?.dataRevision,
+        targetData: state.datasets[datasets[0]?.info?.id || '']?.dataContainer,
+        targetRevision: state.datasets[datasets[0]?.info?.id || '']?.dataRevision
+      }
+    : undefined;
+
   const readyTasks: TaskDescriptor[] = [];
   const remoteTasks: TaskDescriptor[] = [];
   const notificationTasks: TaskDescriptor[] = [];
@@ -4257,10 +4302,17 @@ export const updateVisDataUpdater = (
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const proto = {info, ...rest};
     const remote = needsExternallyHostedHydrate(proto);
+    const progressId = replacement
+      ? `replacement-${replacement.requestId}`
+      : getDatasetProgressId(proto, datasetIndex);
     if (remote) {
-      hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
+      hydrateProgress[progressId] = 0;
     }
-    const task = createNewDataEntryTask(proto, state.datasets);
+    // A replacement must build a fresh table, even when the ID is unchanged.
+    // Updating the existing table inside an async task would mutate live state.
+    const sourceDatasets = replacement ? {...state.datasets} : state.datasets;
+    if (replacement && info.id) delete sourceDatasets[info.id];
+    const task = createNewDataEntryTask(proto, sourceDatasets, progressId);
     if (task) {
       (remote ? remoteTasks : readyTasks).push(task);
     } else {
@@ -4293,6 +4345,18 @@ export const updateVisDataUpdater = (
       updatedState,
       payload_({change: batches.length, type: ''})
     );
+    if (replacement) {
+      updatedState = {
+        ...updatedState,
+        pendingDatasetReplacements: {
+          ...updatedState.pendingDatasetReplacements,
+          [replacement.datasetToReplaceId]: {
+            requestId: replacement.requestId,
+            targetId: datasets[0].info.id
+          }
+        }
+      };
+    }
     if (progressIds.length) {
       updatedState = {
         ...updatedState,
@@ -4312,6 +4376,7 @@ export const updateVisDataUpdater = (
           results,
           addToMapOptions: options,
           progressIds: batch.progressIds,
+          ...(replacement ? {replacement} : {}),
           ...(onFinish && batchIndex === batches.length - 1 ? {onFinish} : {})
         };
         return createNewDatasetSuccess(payload);
@@ -4325,13 +4390,73 @@ export const createNewDatasetSuccessUpdater = (
   state: VisState,
   action: PayloadAction<CreateNewDatasetSuccessPayload>
 ): VisState => {
-  const {results, addToMapOptions, progressIds, onFinish} =
+  const {results, addToMapOptions, progressIds, onFinish, replacement} =
     action.payload as ProgressiveCreateNewDatasetSuccessPayload;
   const notificationTasks: TaskDescriptor[] = [];
 
+  if (replacement) {
+    const {datasetToReplaceId, requestId, originalData, targetData} = replacement;
+    const currentRequest = state.pendingDatasetReplacements?.[datasetToReplaceId]?.requestId;
+    const result = results[0];
+    const targetId = result?.status === 'fulfilled' ? result.value.id : undefined;
+    const isCurrent =
+      currentRequest === requestId &&
+      state.datasets[datasetToReplaceId]?.dataContainer === originalData &&
+      state.datasets[datasetToReplaceId]?.dataRevision === replacement.originalRevision &&
+      (!targetId ||
+        (state.datasets[targetId]?.dataContainer === targetData &&
+          state.datasets[targetId]?.dataRevision === replacement.targetRevision));
+    if (currentRequest === requestId) {
+      const pendingDatasetReplacements = {...state.pendingDatasetReplacements};
+      delete pendingDatasetReplacements[datasetToReplaceId];
+      state = {...state, pendingDatasetReplacements};
+    }
+    if (!isCurrent) {
+      // No rollback: a newer request, edit or removal owns the current state.
+      return clearLoadingProgress(
+        setLoadingIndicatorUpdater(state, payload_({change: -1})),
+        progressIds
+      );
+    }
+  }
+
   const newDataEntries = results.reduce((accu, result, idx) => {
     if (result.status === 'fulfilled') {
-      const dataset = result.value;
+      let dataset = result.value;
+      if (replacement) {
+        const target = state.datasets[dataset.id];
+        if (target && target.id !== replacement.datasetToReplaceId) {
+          // Replacing into another loaded table used to update its rows while
+          // retaining its settings. Read them at commit to preserve newer edits.
+          dataset = copyTableAndUpdate(dataset, {
+            ...pick(target, [
+              'label',
+              'type',
+              'color',
+              'metadata',
+              'supportedFilterTypes',
+              'disableDataOperation',
+              'pinnedColumns',
+              'hiddenColumns',
+              'getFileProcessor'
+            ]),
+            fields: fieldNamesEqual(target.fields, dataset.fields)
+              ? target.fields.map(({filterProps: _filterProps, ...field}, index) => ({
+                  ...field,
+                  valueAccessor: getFieldValueAccessor(field, index, dataset.dataContainer)
+                }))
+              : dataset.fields,
+            dataRevision: target.dataRevision + 1
+          });
+          const [column, mode] = Object.entries(target.sortColumn || {})[0] || [];
+          if (column && mode && dataset.fields.some(field => field.name === column)) {
+            sortDatasetByColumn(dataset, column, mode);
+          }
+        }
+        state = prepareStateForDatasetReplace(state, replacement.datasetToReplaceId, dataset.id, {
+          deleteOriginalDataset: replacement.deleteOriginalDataset
+        });
+      }
       return {...accu, [dataset.id]: dataset};
     } else {
       // show error notification on UI
