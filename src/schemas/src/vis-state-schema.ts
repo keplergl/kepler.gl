@@ -109,7 +109,7 @@ export interface VisState {
   /** Remote datasets whose download finished and whose parse is still running. */
   loadingProcessing?: Record<string, boolean>;
   /** Latest in-flight replacement for each original dataset; never saved. */
-  pendingDatasetReplacements?: Record<string, string>;
+  pendingDatasetReplacements?: Record<string, {requestId: string; targetId?: string}>;
   loaders: Loader[];
   loadOptions: object;
   initialState?: Partial<VisState>;

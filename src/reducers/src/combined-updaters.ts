@@ -183,8 +183,7 @@ export const addDataToMapUpdater = (
           datasets,
           options,
           config,
-          onFinish,
-          replacement
+          onFinish
         })
       )
     ])(state);

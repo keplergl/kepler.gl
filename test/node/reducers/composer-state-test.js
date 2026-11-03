@@ -29,8 +29,10 @@ import keplerGlReducer, {
   visStateReducer,
   mapStateReducer,
   layerConfigChangeUpdater,
+  refreshDatasetUpdater,
   removeDatasetUpdater,
-  setFilterUpdater
+  setFilterUpdater,
+  setLoadingProgressUpdater
 } from '@kepler.gl/reducers';
 import {DatasetType, MapSplitMode} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
@@ -1042,6 +1044,169 @@ test('#composerStateReducer - stale remote replacements cannot overwrite newer w
     t.notOk(next.datasets.stale, `${change}: ignores stale completion`);
     t.equal(next.loadingIndicatorValue, 0, `${change}: clears loading`);
     drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - replacement takes priority over background refresh', async t => {
+  for (const targetId of [sampleConfig.dataId, 'replacement', 'existing-target']) {
+    for (const refreshId of targetId === 'existing-target'
+      ? [sampleConfig.dataId, targetId]
+      : [sampleConfig.dataId]) {
+      for (const succeeds of [true, false]) {
+        let original = replacementTestState();
+        const table = original.visState.datasets[sampleConfig.dataId];
+        const remote = copyTableAndUpdate(table, {
+          type: DatasetType.EXTERNALLY_HOSTED,
+          metadata: {
+            source: 'https://example.test/original.csv',
+            sourceFormat: 'csv',
+            refreshIntervalMs: 1000,
+            etag: 'original-etag'
+          }
+        });
+        original.visState = {
+          ...original.visState,
+          datasets: {
+            [sampleConfig.dataId]: remote,
+            ...(targetId === 'existing-target'
+              ? {[targetId]: copyTableAndUpdate(remote, {id: targetId})}
+              : {})
+          }
+        };
+        original.visState = refreshDatasetUpdater(original.visState, {dataId: refreshId});
+        const refreshTask = drainTasksForTesting()[0];
+        const {pending, task, datasetToUse} = beginRemoteReplacement(original, targetId, {
+          deleteOriginalDataset: false
+        });
+        const rows = original.visState.datasets[refreshId].dataContainer.flattenData();
+        const refreshed = visStateReducer(
+          pending.visState,
+          succeedTaskInTest(refreshTask, {
+            data: processCsvData(dataWithNulls),
+            etag: 'uncommitted-etag'
+          })
+        );
+        t.equal(
+          refreshed.datasets[refreshId].dataContainer.flattenData(),
+          rows,
+          'in-flight poll leaves current rows intact'
+        );
+        t.equal(
+          refreshed.datasets[refreshId].metadata.etag,
+          'original-etag',
+          'does not cache validators for discarded rows'
+        );
+        t.equal(
+          refreshed.datasets[refreshId].metadata.refreshStatus,
+          'idle',
+          'settles the in-flight refresh'
+        );
+        t.equal(
+          refreshDatasetUpdater(refreshed, {dataId: refreshId}),
+          refreshed,
+          'defers new polls while replacing'
+        );
+        t.deepEqual(drainTasksForTesting(), [], 'does not start another refresh');
+
+        const completion = succeeds
+          ? await finishRemoteDownload(task, datasetToUse)
+          : errorTaskInTest(task, new Error('Failed replacement'));
+        const next = visStateReducer(refreshed, completion);
+        if (succeeds) {
+          t.equal(
+            next.datasets[targetId].length,
+            processCsvData(dataWithNulls).rows.length,
+            'commits replacement after an overlapping poll'
+          );
+          t.ok(
+            next.layers.every(layer => layer.config.dataId === targetId),
+            'remaps layers after the poll'
+          );
+        } else {
+          t.equal(
+            next.datasets[refreshId].dataContainer.flattenData(),
+            rows,
+            'failure retains original rows'
+          );
+        }
+        drainTasksForTesting();
+        const resumed = refreshDatasetUpdater(next, {dataId: refreshId});
+        t.equal(
+          resumed.datasets[refreshId].metadata.refreshStatus,
+          'loading',
+          'refresh resumes after replacement settles'
+        );
+        t.equal(drainTasksForTesting().length, 1, 'schedules the resumed refresh');
+      }
+    }
+  }
+  t.end();
+});
+
+test('#composerStateReducer - cancelled replacements clear progress while other downloads continue', async t => {
+  for (const succeeds of [true, false]) {
+    const original = replacementTestState();
+    const {pending, task, datasetToUse} = beginRemoteReplacement(original, 'cancelled');
+    const progressId = Object.keys(pending.visState.loadingProgress)[0];
+    pending.visState = setLoadingProgressUpdater(pending.visState, {
+      id: progressId,
+      percent: 100,
+      phase: 'processing'
+    });
+    const other = addDataToMapUpdater(pending, {
+      payload: {
+        datasets: {...datasetToUse, info: {...datasetToUse.info, id: 'unrelated'}},
+        options: {keepExistingConfig: true}
+      }
+    });
+    drainTasksForTesting();
+    const removed = removeDatasetUpdater(other.visState, {dataId: sampleConfig.dataId});
+    const completion = succeeds
+      ? await finishRemoteDownload(task, datasetToUse)
+      : errorTaskInTest(task, new Error('Cancelled download ended'));
+    const next = visStateReducer(removed, completion);
+    t.equal(next.datasets, removed.datasets, 'does not resurrect the removed dataset');
+    t.equal(next.loadingIndicatorValue, 1, 'only the unrelated download is loading');
+    t.deepEqual(next.loadingProgress, {unrelated: 0}, 'clears the cancelled download progress');
+    t.deepEqual(next.loadingProcessing, {}, 'clears the cancelled processing state');
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - overlapping replacements keep independent progress', async t => {
+  for (const sameTarget of [true, false]) {
+    for (const olderFirst of [true, false]) {
+      const original = replacementTestState();
+      const first = beginRemoteReplacement(original, 'first');
+      const second = beginRemoteReplacement(first.pending, sameTarget ? 'first' : 'second');
+      const firstProgressId = Object.keys(first.pending.visState.loadingProgress)[0];
+      const secondProgressId = Object.keys(second.pending.visState.loadingProgress).find(
+        id => id !== firstProgressId
+      );
+      let current = setLoadingProgressUpdater(second.pending.visState, {
+        id: firstProgressId,
+        percent: 30
+      });
+      current = setLoadingProgressUpdater(current, {id: secondProgressId, percent: 80});
+      const firstDone = await finishRemoteDownload(first.task, first.datasetToUse);
+      const secondDone = await finishRemoteDownload(second.task, second.datasetToUse);
+      current = visStateReducer(current, olderFirst ? firstDone : secondDone);
+      t.deepEqual(
+        Object.values(current.loadingProgress),
+        [olderFirst ? 80 : 30],
+        'only the remaining request contributes progress'
+      );
+      current = visStateReducer(current, olderFirst ? secondDone : firstDone);
+      t.deepEqual(current.loadingProgress, {}, 'clears progress after both requests settle');
+      t.deepEqual(
+        Object.keys(current.datasets),
+        [sameTarget ? 'first' : 'second'],
+        'only the newest replacement commits'
+      );
+      drainTasksForTesting();
+    }
   }
   t.end();
 });

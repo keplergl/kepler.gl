@@ -3725,11 +3725,10 @@ function getDatasetProgressId(dataset: ProtoDataset, index = 0): string {
   return `dataset-${index}`;
 }
 
-function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets) {
+function createNewDataEntryTask(dataset: ProtoDataset, datasets: Datasets, progressId: string) {
   if (!needsExternallyHostedHydrate(dataset)) {
     return createNewDataEntry(dataset, datasets);
   }
-  const progressId = getDatasetProgressId(dataset);
   return HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK({
     arg: dataset,
     onProgress: progress =>
@@ -3801,6 +3800,12 @@ const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
 );
 
+function isDatasetBeingReplaced(state: VisState, dataId: string): boolean {
+  return Object.entries(state.pendingDatasetReplacements || {}).some(
+    ([originalId, {targetId}]) => originalId === dataId || targetId === dataId
+  );
+}
+
 /**
  * Re-fetch an externally hosted dataset and replace its table contents in place.
  * Layers and filters are kept when field names match.
@@ -3819,7 +3824,7 @@ export function refreshDatasetUpdater(
   ) {
     return state;
   }
-  if (dataset.metadata?.refreshStatus === 'loading') {
+  if (dataset.metadata?.refreshStatus === 'loading' || isDatasetBeingReplaced(state, dataId)) {
     return state;
   }
 
@@ -3975,6 +3980,18 @@ export function refreshDatasetSuccessUpdater(
   const dataset = state.datasets[dataId];
   if (!dataset) {
     return state;
+  }
+
+  // A poll started before replacement must settle without invalidating it.
+  // Keep the old validators because this response's rows are not committed.
+  if (isDatasetBeingReplaced(state, dataId)) {
+    return {
+      ...state,
+      datasets: {
+        ...state.datasets,
+        [dataId]: patchDatasetMetadata(dataset, {refreshStatus: 'idle', refreshProgress: undefined})
+      }
+    };
   }
 
   const metadataPatch = {
@@ -4284,15 +4301,17 @@ export const updateVisDataUpdater = (
   datasets.forEach(({info = {}, ...rest}, datasetIndex) => {
     const proto = {info, ...rest};
     const remote = needsExternallyHostedHydrate(proto);
+    const progressId = replacement
+      ? `replacement-${replacement.requestId}`
+      : getDatasetProgressId(proto, datasetIndex);
     if (remote) {
-      hydrateProgress[getDatasetProgressId(proto, datasetIndex)] = 0;
+      hydrateProgress[progressId] = 0;
     }
     // A replacement must build a fresh table, even when the ID is unchanged.
     // Updating the existing table inside an async task would mutate live state.
-    const sourceDatasets = replacement
-      ? Object.fromEntries(Object.entries(state.datasets).filter(([id]) => id !== info.id))
-      : state.datasets;
-    const task = createNewDataEntryTask(proto, sourceDatasets);
+    const sourceDatasets = replacement ? {...state.datasets} : state.datasets;
+    if (replacement && info.id) delete sourceDatasets[info.id];
+    const task = createNewDataEntryTask(proto, sourceDatasets, progressId);
     if (task) {
       (remote ? remoteTasks : readyTasks).push(task);
     } else {
@@ -4330,7 +4349,10 @@ export const updateVisDataUpdater = (
         ...updatedState,
         pendingDatasetReplacements: {
           ...updatedState.pendingDatasetReplacements,
-          [replacement.datasetToReplaceId]: replacement.requestId
+          [replacement.datasetToReplaceId]: {
+            requestId: replacement.requestId,
+            targetId: datasets[0].info.id
+          }
         }
       };
     }
@@ -4373,7 +4395,7 @@ export const createNewDatasetSuccessUpdater = (
 
   if (replacement) {
     const {datasetToReplaceId, requestId, originalData, targetData} = replacement;
-    const currentRequest = state.pendingDatasetReplacements?.[datasetToReplaceId];
+    const currentRequest = state.pendingDatasetReplacements?.[datasetToReplaceId]?.requestId;
     const result = results[0];
     const targetId = result?.status === 'fulfilled' ? result.value.id : undefined;
     const isCurrent =
@@ -4392,7 +4414,7 @@ export const createNewDatasetSuccessUpdater = (
       // No rollback: a newer request, edit or removal owns the current state.
       return clearLoadingProgress(
         setLoadingIndicatorUpdater(state, payload_({change: -1})),
-        currentRequest === requestId ? progressIds : undefined
+        progressIds
       );
     }
     if (result?.status === 'fulfilled') {
