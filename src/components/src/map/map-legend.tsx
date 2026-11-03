@@ -512,7 +512,8 @@ function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
     const listId = useId();
     const [isExpanded, setIsExpanded] = useState(false);
     const levels = layer.getContourLegend();
-    const field = String(layer.config.columns.value.value);
+    const fieldKey = layer.config.columns.value.value ?? null;
+    const field = fieldKey || intl.formatMessage({id: 'columns.contour.density'});
     const colorRange = layer.config.visConfig.colorRange;
     const customLabels = colorRange?.colorLegends || {};
     const canEdit = !disableEdit && !isExport && Boolean(onLayerVisConfigChange);
@@ -555,7 +556,7 @@ function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
                 maximumSignificantDigits: 12
               })}`;
               // Labels follow the scalar threshold, not a color that can change or repeat.
-              const key = JSON.stringify([field, below, threshold]);
+              const key = JSON.stringify([fieldKey, below, threshold]);
               const label = customLabels[key] ?? defaultLabel;
               return (
                 <div

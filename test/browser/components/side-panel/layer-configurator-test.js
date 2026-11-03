@@ -236,6 +236,68 @@ function toggleConfigGroup(group) {
   fireEvent.click(group.querySelector('.layer-config-group__header'));
 }
 
+test('Components -> LayerConfigurator -> contour weight lives before Color and can switch to density', t => {
+  for (const columnMode of ['grid', 'geojson']) {
+    const dataset = contourRangeDataset();
+    const layer = contourRangeLayer(dataset);
+    layer.updateLayerConfig({columnMode});
+    const originalColumns = layer.config.columns;
+    const onChange = sinon.spy(config => layer.updateLayerConfig(config));
+    const view = renderContourRange(layer, {[dataset.id]: dataset}, sinon.spy(), {
+      updateLayerConfig: onChange
+    });
+    try {
+      const weight = contourConfigGroup(view, 'Weight');
+      const visual = view.container.querySelector('.layer-panel__config__visualC-config');
+      t.equal(weight.parentElement, visual, 'weight is in the main settings');
+      t.equal(
+        weight.nextElementSibling,
+        contourConfigGroup(view, 'Color'),
+        'weight precedes Color'
+      );
+      t.equal(
+        view.queryAllByText('Weight', {selector: '.layer-config-group__label span'}).length,
+        1,
+        'Data Source has no duplicate weight selector'
+      );
+      t.ok(within(weight).getByText('value'), 'retains the saved weight selection');
+      t.ok(
+        weight.querySelector('[data-for="columns.contour.weight"] [data-id="tooltip"]'),
+        'weight includes help for averages and the density fallback'
+      );
+
+      fireEvent.click(weight.querySelector('.item-selector__dropdown'));
+      fireEvent.click(within(document.body).getByText('other', {selector: '.list__item__anchor'}));
+      t.deepEqual(
+        layer.config.columns.value,
+        {...originalColumns.value, value: 'other', fieldIdx: 1},
+        'selecting a weight updates the existing value column'
+      );
+      t.equal(
+        layer.config.columnMode,
+        columnMode,
+        'selecting a weight preserves the position mode'
+      );
+      t.deepEqual(layer.config.columns.lat, originalColumns.lat, 'preserves latitude');
+      t.deepEqual(layer.config.columns.lng, originalColumns.lng, 'preserves longitude');
+      t.deepEqual(layer.config.columns.geojson, originalColumns.geojson, 'preserves geometry');
+      view.update();
+
+      fireEvent.click(weight.querySelector('.data-ex-icons-delete'));
+      t.deepEqual(
+        layer.config.columns.value,
+        {...originalColumns.value, value: null, fieldIdx: -1},
+        'clearing the weight selects point density'
+      );
+      view.update();
+      t.ok(within(weight).getByText('Point count'), 'shows the density fallback');
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
 test('Components -> LayerConfigurator -> contour switches between plain color and the palette picker', t => {
   const dataset = contourRangeDataset();
   const layer = contourRangeLayer(dataset);
@@ -249,7 +311,12 @@ test('Components -> LayerConfigurator -> contour switches between plain color an
   try {
     const group = contourConfigGroup(view, 'Color');
     const toggle = group.querySelector('#contour-range-colorByLevel-switch');
-    t.notOk(toggle.checked, 'existing maps start in plain-color mode');
+    t.ok(toggle.checked, 'new contours enable color by level');
+    t.ok(group.querySelector('.color-range-palette'), 'shows the default palette preview');
+    fireEvent.click(toggle);
+    t.deepEqual(onChange.lastCall.args[0], {colorByLevel: false}, 'allows selecting plain color');
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
     t.ok(group.querySelector('.color-selector__selector__block'), 'shows the plain color picker');
     t.notOk(
       toggle.closest('.layer-config-group__content__collapsible'),
@@ -349,15 +416,58 @@ test('Components -> LayerConfigurator -> contour groups expand independently wit
     t.ok(groups[0].classList.contains('collapsed'), 'closes the color controls');
     t.ok(onChange.notCalled, 'expanding and collapsing groups does not change layer settings');
 
-    layer.updateLayerVisConfig({inputMode: 'grid'});
+    t.notOk(groups[2].querySelector('.item-selector'), 'surface has no input-type selector');
+    const input = groups[2].querySelector('.kg-range-slider__input');
+    fireEvent.change(input, {target: {value: '2'}});
+    fireEvent.blur(input);
+    t.deepEqual(onChange.lastCall.args[0], {smoothing: 2}, 'smoothing remains editable');
+    const resolutionInput = Array.from(groups[2].querySelectorAll('.kg-range-slider__input')).find(
+      element => element.value === '192'
+    );
+    fireEvent.change(resolutionInput, {target: {value: '64'}});
+    fireEvent.blur(resolutionInput);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {gridResolution: 64},
+      'maximum axis resolution controls aggregation detail'
+    );
+    t.notOk(groups[2].classList.contains('collapsed'), 'editing settings keeps the group open');
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> LayerConfigurator -> density custom levels use the cell count range', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  layer.updateLayerConfig({columns: layer.assignColumn('value', null)});
+  layer.updateMeta({contourDomain: [0, 12]});
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
+    fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {customRange: true, minimum: 0, maximum: 12},
+      'initializes thresholds from point counts without a selected column'
+    );
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
     view.update();
-    t.notOk(view.queryByText('Interpolation resolution'), 'grid mode hides interpolation settings');
-    t.notOk(groups[2].classList.contains('collapsed'), 'updating settings keeps the group open');
-    layer.updateLayerVisConfig({inputMode: 'points'});
+    t.deepEqual(contourRangeLabels(view.container), [0, 12], 'shows the count range');
+    dragContourHandle(view.container, 1, 50);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {minimum: 0, maximum: 6},
+      'density thresholds are editable'
+    );
+    layer.updateMeta({contourDomain: null});
     view.update();
-    t.ok(
-      view.queryByText('Interpolation resolution'),
-      'scattered mode exposes interpolation settings'
+    t.equal(
+      view.container.querySelectorAll('.contour-level-range .kg-range-slider__handle').length,
+      0,
+      'clears the range when density has no observations'
     );
   } finally {
     view.unmount();
@@ -365,7 +475,7 @@ test('Components -> LayerConfigurator -> contour groups expand independently wit
   }
 });
 
-test('Components -> LayerConfigurator -> contour invert reverses the saved fill direction', t => {
+test('Components -> LayerConfigurator -> contour settings preserve saved directions without an Invert control', t => {
   for (const below of [true, false]) {
     const dataset = contourRangeDataset();
     const layer = contourRangeLayer(dataset);
@@ -374,21 +484,21 @@ test('Components -> LayerConfigurator -> contour invert reverses the saved fill 
     const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
     try {
       toggleConfigGroup(contourConfigGroup(view, 'Contour levels'));
-      const toggle = view.getByRole('checkbox', {name: 'Invert'});
-      t.equal(toggle.checked, !below, 'Invert reflects the saved direction without changing it');
-      t.ok(onChange.notCalled, 'loading the control preserves the saved map');
-      fireEvent.click(toggle);
-      t.deepEqual(onChange.lastCall.args[0], {below: !below}, 'updates the existing below setting');
-      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
-      view.update();
-      t.equal(toggle.checked, below, 'reflects the inverted direction');
-      fireEvent.click(toggle);
+      t.notOk(view.queryByRole('checkbox', {name: 'Invert'}), 'does not offer an Invert toggle');
+      t.ok(onChange.notCalled, 'loading the controls preserves the saved map');
+      fireEvent.click(view.container.querySelector('#contour-range-customRange-switch'));
       t.deepEqual(
         onChange.lastCall.args[0],
-        {below},
-        'toggling again restores the original direction'
+        {customRange: true, minimum: -2, maximum: 8},
+        'level edits update thresholds without changing direction'
       );
-      t.notOk('invert' in layer.config.visConfig, 'does not introduce a new saved setting');
+      layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+      view.update();
+      t.equal(
+        layer.config.visConfig.below,
+        below,
+        'keeps the saved direction after editing levels'
+      );
     } finally {
       view.unmount();
     }
@@ -422,9 +532,23 @@ test('Components -> LayerConfigurator -> contour fill and outline groups retain 
       fireEvent.mouseUp(document);
       t.deepEqual(
         onChange.lastCall.args[0],
-        {[savedProperty]: property === 'filled' ? 0.18 : 3.2},
+        {[savedProperty]: property === 'filled' ? 0.6 : 3.2},
         `${controlLabel} slider edits only its own setting`
       );
+      if (property === 'filled') {
+        for (const percent of [0, 100]) {
+          fireEvent.mouseDown(group.querySelectorAll('.kg-range-slider__handle')[1], {
+            clientX: percent
+          });
+          fireEvent.mouseMove(document, {clientX: percent});
+          fireEvent.mouseUp(document);
+          t.deepEqual(
+            onChange.lastCall.args[0],
+            {fillOpacity: percent / 100},
+            `fill opacity can reach ${percent}%`
+          );
+        }
+      }
       t.ok(controls.queryByText(controlLabel), `${label} exposes its control`);
       fireEvent.click(toggle);
       t.deepEqual(onChange.lastCall.args[0], {[property]: false}, `disables only ${label}`);

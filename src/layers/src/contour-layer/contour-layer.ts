@@ -5,7 +5,12 @@ import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
-import {LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
+import {
+  colorPaletteToColorRange,
+  DEFAULT_LAYER_COLOR_PALETTE_STEPS,
+  KEPLER_COLOR_PALETTES,
+  LAYER_VIS_CONFIGS
+} from '@kepler.gl/constants';
 import {colorMaybeToRGB, DataContainerInterface} from '@kepler.gl/utils';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -31,37 +36,37 @@ const numberConfig = (
 
 export const contourVisConfigs = {
   opacity: 'opacity',
-  colorRange: 'colorRange',
+  colorRange: {
+    ...LAYER_VIS_CONFIGS.colorRange,
+    defaultValue: colorPaletteToColorRange(KEPLER_COLOR_PALETTES[0], {
+      steps: DEFAULT_LAYER_COLOR_PALETTE_STEPS,
+      reversed: false
+    })
+  },
   colorByLevel: {
     type: 'boolean',
     property: 'colorByLevel',
-    defaultValue: false,
+    defaultValue: true,
     label: 'layerVisConfigs.contour.colorByLevel'
   },
-  inputMode: {
-    type: 'select',
-    property: 'inputMode',
-    defaultValue: 'auto',
-    label: 'layerVisConfigs.contour.inputMode',
-    options: ['auto', 'grid', 'points']
-  },
-  interpolationResolution: {
-    ...numberConfig('interpolationResolution', 192, [32, 256], 16),
-    description: 'layerVisConfigs.contour.interpolationResolutionDescription'
+  gridResolution: {
+    ...numberConfig('gridResolution', 192, [32, 256], 16),
+    description: 'layerVisConfigs.contour.gridResolutionDescription'
   },
   levels: numberConfig('levels', 7, [2, 20], 1),
   smoothing: {
     ...numberConfig('smoothing', 1.5, [0, 6], 0.25),
     description: 'layerVisConfigs.contour.smoothingDescription'
   },
-  fillOpacity: numberConfig('fillOpacity', 0.075, [0, 0.3], 0.005),
+  fillOpacity: numberConfig('fillOpacity', 0.15, [0, 1], 0.005),
   thickness: numberConfig('thickness', 1.5, [0.5, 5], 0.1),
   filled: {...LAYER_VIS_CONFIGS.filled, defaultValue: true},
   stroked: 'stroked',
   below: {
     type: 'boolean',
     property: 'below',
-    defaultValue: true,
+    // Keep the saved setting for older maps; new contours enclose peaks.
+    defaultValue: false,
     label: 'layerVisConfigs.contour.below'
   },
   customRange: {
@@ -181,12 +186,12 @@ export default class ContourLayer extends Layer {
     return this.defaultPointColumnPairs;
   }
   get columnLabels() {
-    return {lat: 'contour.lat', lng: 'contour.lng', value: 'contour.value'};
+    return {lat: 'contour.lat', lng: 'contour.lng', value: 'contour.weight'};
   }
   get supportedColumnModes() {
     return [
-      {key: 'grid', label: 'Scalar samples', requiredColumns: ['lat', 'lng', 'value']},
-      {key: 'geojson', label: 'GeoJSON', requiredColumns: ['geojson', 'value']}
+      {key: 'grid', label: 'Points', requiredColumns: ['lat', 'lng'], optionalColumns: ['value']},
+      {key: 'geojson', label: 'GeoJSON', requiredColumns: ['geojson'], optionalColumns: ['value']}
     ];
   }
   get noneLayerDataAffectingProps() {
@@ -236,11 +241,16 @@ export default class ContourLayer extends Layer {
 
   formatLayerData(datasets: Datasets): {data: ContourFeature[]} {
     this.errorMessage = null;
-    this.updateMeta({contourLevels: []});
+    this.updateMeta({contourLevels: [], contourDomain: null, bounds: undefined});
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
     if (!dataset || !this.hasAllColumns()) return {data: []};
     const {dataContainer, gpuFilter, filteredIndex, filteredIndexByLayer} = dataset;
     const {value} = this.config.columns;
+    const weighted = Boolean(value.value);
+    const weightField = value.value ? dataset.getColumnField(value.value) : null;
+    if (weighted && (!weightField || !['integer', 'real'].includes(weightField.type))) {
+      throw new Error('Select a numeric contour weight column, or clear it to use point density.');
+    }
     const getPosition = this.getPositionAccessor(dataContainer, dataset);
     const selected = new Set(filteredIndexByLayer?.[this.id] ?? filteredIndex);
     const activeFilter =
@@ -250,27 +260,31 @@ export default class ContourLayer extends Layer {
       ? getFilterDataFunc(gpuFilter.filterRange, gpuFilter.filterValueAccessor(dataContainer)())
       : null;
     const samples: ScalarSample[] = [];
-    for (let index = 0; index < dataContainer.numRows(); index++) {
+    for (const index of selected) {
+      if (matches && !matches({index})) continue;
       const position = getPosition({index});
       if (!position) continue;
-      // Keep the source lattice even when filters remove an entire row/column.
       samples.push({
         longitude: position[0],
         latitude: position[1],
-        value:
-          selected.has(index) && (!matches || matches({index}))
-            ? dataset.fields[value.fieldIdx].valueAccessor({index})
-            : null
+        value: weightField ? weightField.valueAccessor({index}) : 1
       });
     }
     // Let calculateLayerData retain validation errors and manage invalid/recovered state.
     const grid = buildContourGrid(
       samples,
-      this.config.visConfig.inputMode,
-      this.config.visConfig.interpolationResolution
+      this.config.visConfig.gridResolution,
+      weighted ? 'MEAN' : 'COUNT'
     );
-    if (grid)
+    if (grid) {
+      let minimum = Infinity;
+      let maximum = -Infinity;
+      for (const value of grid.values) {
+        minimum = Math.min(minimum, value);
+        maximum = Math.max(maximum, value);
+      }
       this.updateMeta({
+        contourDomain: [minimum, maximum],
         bounds: [
           grid.longitude,
           grid.latitude,
@@ -278,6 +292,7 @@ export default class ContourLayer extends Layer {
           grid.latitude + (grid.height - 1) * grid.stepLat
         ]
       });
+    }
     const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
     const data = generateContours(grid, {
       smoothing,
@@ -292,10 +307,15 @@ export default class ContourLayer extends Layer {
   getHoverData(object: ContourFeature | null) {
     if (!object) return null;
     const {threshold, below} = object.properties;
-    const field = String(this.config.columns.value.value || 'value');
+    const field = String(this.config.columns.value.value || 'Point count');
     return {
       fieldValues: [
-        {labelMessage: 'columns.contour.value', value: `${field} ${below ? '≤' : '≥'} ${threshold}`}
+        {
+          labelMessage: this.config.columns.value.value
+            ? 'columns.contour.value'
+            : 'columns.contour.density',
+          value: `${field} ${below ? '≤' : '≥'} ${threshold}`
+        }
       ]
     };
   }

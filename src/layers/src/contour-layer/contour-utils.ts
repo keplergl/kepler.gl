@@ -2,10 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {contours} from 'd3-contour';
-import Delaunator from 'delaunator';
 import {Feature, MultiPolygon} from 'geojson';
 
-/** Scalar measurements. In grid mode, positions are cell centers and nulls remain no-data. */
+/** Point observations; missing weights are skipped when calculating cell means. */
 export type ScalarSample = {longitude: number; latitude: number; value: number | null};
 export type ScalarGrid = {
   width: number;
@@ -27,12 +26,8 @@ export type ContourOptions = {
   domain?: [number, number];
 };
 
-const MAX_AXIS = 512;
-
-export type ContourInputMode = 'auto' | 'grid' | 'points';
-
-// Only grid-layout failures may fall back to interpolation. Geographic errors must surface.
-class ScalarGridLayoutError extends Error {}
+const MAX_GRID_AXIS = 256;
+const METERS_PER_DEGREE_LAT = 111320;
 
 function hasValidPosition(d: ScalarSample): boolean {
   return (
@@ -62,177 +57,66 @@ function regionalBounds(samples: ScalarSample[]) {
   return {west, east, south, north};
 }
 
-function gridAxis(values: number[]): {origin: number; step: number; length: number} {
-  const sorted = [...new Set(values)].sort((a, b) => a - b);
-  if (sorted.length < 2) {
-    throw new ScalarGridLayoutError(
-      'Contours need at least two distinct latitudes and longitudes.'
-    );
-  }
-  // The smallest separation also preserves entirely missing rows/columns.
-  let step = Infinity;
-  for (let i = 1; i < sorted.length; i++) step = Math.min(step, sorted[i] - sorted[i - 1]);
-  const origin = sorted[0];
-  const length = Math.round((sorted[sorted.length - 1] - origin) / step) + 1;
-  if (length > MAX_AXIS) {
-    throw new ScalarGridLayoutError(
-      'Contour grids support up to 512 samples per axis. Use a coarser regular grid.'
-    );
-  }
-  if (
-    sorted.some(
-      value => Math.abs((value - origin) / step - Math.round((value - origin) / step)) > 0.001
-    )
-  ) {
-    throw new ScalarGridLayoutError(
-      'Contours require regularly spaced longitude/latitude samples.'
-    );
-  }
-  return {origin, step, length};
-}
-
-export function buildScalarGrid(samples: ScalarSample[]): ScalarGrid | null {
-  const located = samples.filter(hasValidPosition);
-  if (!located.length) return null;
-  regionalBounds(located);
-  const x = gridAxis(located.map(d => d.longitude));
-  const y = gridAxis(located.map(d => d.latitude));
-  const values = new Float64Array(x.length * y.length).fill(NaN);
-  const counts = new Uint32Array(values.length);
-  for (const d of located) {
-    if (typeof d.value !== 'number' || !Number.isFinite(d.value)) continue;
-    const col = Math.round((d.longitude - x.origin) / x.step);
-    const row = Math.round((d.latitude - y.origin) / y.step);
-    const i = row * x.length + col;
-    // Repeated measurements at a cell represent an average, never density.
-    const count = ++counts[i];
-    values[i] = count === 1 ? d.value : values[i] + (d.value - values[i]) / count;
-  }
-  return {
-    width: x.length,
-    height: y.length,
-    longitude: x.origin,
-    latitude: y.origin,
-    stepLng: x.step,
-    stepLat: y.step,
-    values
-  };
-}
-
-/** Keep supported lattices (including holes) intact; interpolate only when requested/needed. */
+/**
+ * Bin points into the nearest geographic cells, fitting the grid resolution to
+ * the sample bounds.
+ * Empty cells are zero; a weight selects MEAN, otherwise
+ * each point contributes one count. Rows run south to north for contour rendering.
+ */
 export function buildContourGrid(
   samples: ScalarSample[],
-  mode: ContourInputMode = 'auto',
-  resolution = 192
+  resolution = 192,
+  aggregation: 'MEAN' | 'COUNT' = 'MEAN'
 ): ScalarGrid | null {
-  if (mode === 'grid') return buildScalarGrid(samples);
-  if (mode === 'auto') {
-    try {
-      return buildScalarGrid(samples);
-    } catch (error) {
-      if (!(error instanceof ScalarGridLayoutError)) throw error;
-    }
+  if (!Number.isFinite(resolution) || resolution < 2) {
+    throw new Error('Contour grid resolution must be a finite number of at least 2 cells.');
   }
-  return interpolateScalarSamples(samples, resolution);
-}
-
-/** Linear interpolation over Delaunay triangles; never extrapolate beyond the sample hull. */
-export function interpolateScalarSamples(
-  samples: ScalarSample[],
-  resolution = 192
-): ScalarGrid | null {
-  const unique = new Map<string, ScalarSample & {value: number; count: number}>();
-  for (const sample of samples) {
-    if (
-      !hasValidPosition(sample) ||
-      typeof sample.value !== 'number' ||
-      !Number.isFinite(sample.value)
-    )
-      continue;
-    const key = `${sample.longitude},${sample.latitude}`;
-    const point = unique.get(key);
-    if (point) {
-      point.count++;
-      point.value += (sample.value - point.value) / point.count;
-    } else {
-      unique.set(key, {...sample, value: sample.value, count: 1});
-    }
-  }
-  const points = [...unique.values()];
-  if (!points.length) return null;
-  const {west, east, south, north} = regionalBounds(points);
-  const insufficient =
-    'Interpolation needs at least three distinct, non-collinear samples with valid values.';
-  if (points.length < 3 || west === east || south === north) throw new Error(insufficient);
-
-  // Regional equirectangular coordinates correct the longitude/latitude aspect ratio.
-  const scaleX = Math.cos((((south + north) / 2) * Math.PI) / 180);
-  const spanX = (east - west) * scaleX;
-  const spanY = north - south;
+  const located = samples.filter(
+    sample =>
+      hasValidPosition(sample) &&
+      (aggregation === 'COUNT' ||
+        (typeof sample.value === 'number' && Number.isFinite(sample.value)))
+  );
+  if (!located.length) return null;
+  const {west, east, south, north} = regionalBounds(located);
+  const metersPerDegreeLng =
+    METERS_PER_DEGREE_LAT * Math.max(0.01, Math.cos((((south + north) / 2) * Math.PI) / 180));
+  const axis = Math.min(MAX_GRID_AXIS, Math.round(resolution));
+  const spanX = (east - west) * metersPerDegreeLng;
+  const spanY = (north - south) * METERS_PER_DEGREE_LAT;
   const span = Math.max(spanX, spanY);
-  const size = Number.isFinite(resolution)
-    ? Math.max(32, Math.min(256, Math.round(resolution)))
-    : 192;
-  const width = Math.max(2, Math.round(((size - 1) * spanX) / span) + 1);
-  const height = Math.max(2, Math.round(((size - 1) * spanY) / span) + 1);
-  const coords = new Float64Array(points.length * 2);
-  for (let i = 0; i < points.length; i++) {
-    coords[2 * i] = ((points[i].longitude - west) * scaleX) / span;
-    coords[2 * i + 1] = (points[i].latitude - south) / span;
-  }
-  const {triangles} = new Delaunator(coords);
-  if (!triangles.length) throw new Error(insufficient);
-  const values = new Float64Array(width * height).fill(NaN);
-  const stepX = spanX / span / (width - 1);
-  const stepY = spanY / span / (height - 1);
-  const tolerance = 1e-10;
-  // Rasterize each triangle's bounding box, rather than searching every point for every cell.
-  for (let t = 0; t < triangles.length; t += 3) {
-    const ia = triangles[t];
-    const ib = triangles[t + 1];
-    const ic = triangles[t + 2];
-    // Preserve flat triangles exactly so roundoff cannot split an explicit threshold region.
-    const constantValue =
-      points[ia].value === points[ib].value && points[ia].value === points[ic].value
-        ? points[ia].value
-        : null;
-    const ax = coords[2 * ia];
-    const ay = coords[2 * ia + 1];
-    const bx = coords[2 * ib];
-    const by = coords[2 * ib + 1];
-    const cx = coords[2 * ic];
-    const cy = coords[2 * ic + 1];
-    const denominator = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy);
-    if (denominator === 0) continue;
-    const col0 = Math.max(0, Math.ceil(Math.min(ax, bx, cx) / stepX - tolerance));
-    const col1 = Math.min(width - 1, Math.floor(Math.max(ax, bx, cx) / stepX + tolerance));
-    const row0 = Math.max(0, Math.ceil(Math.min(ay, by, cy) / stepY - tolerance));
-    const row1 = Math.min(height - 1, Math.floor(Math.max(ay, by, cy) / stepY + tolerance));
-    for (let row = row0; row <= row1; row++) {
-      for (let col = col0; col <= col1; col++) {
-        const x = col * stepX;
-        const y = row * stepY;
-        const a = ((by - cy) * (x - cx) + (cx - bx) * (y - cy)) / denominator;
-        const b = ((cy - ay) * (x - cx) + (ax - cx) * (y - cy)) / denominator;
-        const c = 1 - a - b;
-        if (a < -tolerance || b < -tolerance || c < -tolerance) continue;
-        // Clamp round-off at triangle edges to keep values within their samples' range.
-        const wa = Math.max(0, a);
-        const wb = Math.max(0, b);
-        const wc = Math.max(0, c);
-        values[row * width + col] =
-          constantValue ??
-          (wa * points[ia].value + wb * points[ib].value + wc * points[ic].value) / (wa + wb + wc);
-      }
-    }
+  // Fit the longer axis to the selected resolution, with square geographic cells.
+  // Coincident points have no extent; use a minimal 2x2 grid with one-meter spacing.
+  const size = span > 0 ? span / (axis - 1) : 1;
+  const stepLng = size / metersPerDegreeLng;
+  const stepLat = size / METERS_PER_DEGREE_LAT;
+  // Clamp roundoff on the longer axis; pad a degenerate shorter axis to two cells.
+  const width = Math.max(2, Math.min(axis, Math.ceil(spanX / size) + 1));
+  const height = Math.max(2, Math.min(axis, Math.ceil(spanY / size) + 1));
+  const values = new Float64Array(width * height);
+  const counts = new Uint32Array(values.length);
+  for (const sample of located) {
+    // Resolve half-cell ties consistently despite roundoff when rescaling an extent.
+    const col = Math.min(width - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
+    const row =
+      height - 1 - Math.min(height - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
+    const index = row * width + col;
+    const count = ++counts[index];
+    // Incremental means avoid accumulating a large sum of weights.
+    values[index] =
+      aggregation === 'COUNT'
+        ? count
+        : count === 1
+        ? sample.value!
+        : values[index] * ((count - 1) / count) + sample.value! / count;
   }
   return {
     width,
     height,
     longitude: west,
-    latitude: south,
-    stepLng: (east - west) / (width - 1),
-    stepLat: (north - south) / (height - 1),
+    latitude: north - (height - 1) * stepLat,
+    stepLng,
+    stepLat,
     values
   };
 }

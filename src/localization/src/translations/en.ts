@@ -331,18 +331,18 @@ export default {
       levelsGroup: 'Contour levels',
       fillGroup: 'Fill',
       colorByLevel: 'Color by level',
-      inputMode: 'Input type',
-      interpolationResolution: 'Interpolation resolution',
-      interpolationResolutionDescription:
-        'Samples along the longer axis of the interpolated surface. Regular grids retain their original resolution.',
+      weightDescription:
+        'Average a numeric column within each cell. Leave empty to show point density (point count per cell).',
+      gridResolution: 'Grid resolution (max axis)',
+      gridResolutionDescription:
+        'Maximum cells along the longer geographic axis. Cell size adapts to the data bounds; the shorter axis scales proportionally.',
       smoothing: 'Smoothing',
-      smoothingDescription: 'Gaussian smoothing in grid cells. Missing values remain empty.',
+      smoothingDescription: 'Gaussian smoothing in grid cells. Empty cells contribute zero.',
       levels: 'Number of levels',
       below: 'Fill below each level',
-      invert: 'Invert',
       customRange: 'Custom level range',
       noValueRange:
-        'Select a value column with at least two distinct finite values to use the range slider.',
+        'The selected weight or point counts must have a nonzero finite range to use the range slider.',
       minimum: 'Minimum level',
       maximum: 'Maximum level',
       fillOpacity: 'Opacity',
@@ -1204,7 +1204,9 @@ ${'```'}
     contour: {
       lat: 'Latitude',
       lng: 'Longitude',
-      value: 'Value'
+      value: 'Value',
+      weight: 'Weight',
+      density: 'Point count'
     },
     hex_id: 'hex id',
     flowField: {

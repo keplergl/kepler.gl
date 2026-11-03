@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import {createSelector} from 'reselect';
 
 import ItemSelector from '../../common/item-selector/item-selector';
+import FieldSelectorFactory from '../../common/field-selector';
 import InfoHelperFactory from '../../common/info-helper';
 import {
   Input,
@@ -17,7 +18,6 @@ import {
   PanelLabelWrapper,
   SidePanelSection
 } from '../../common/styled-components';
-import Switch from '../../common/switch';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
 import AggrScaleSelectorFactory from './aggr-scale-selector';
@@ -182,11 +182,6 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
     margin-top: 8px;
     color: ${props => props.theme.textColor};
     font-size: ${props => props.theme.sliderInputFontSize};
-  }
-
-  .contour-invert-switch {
-    display: flex;
-    justify-content: space-between;
   }
 `;
 
@@ -518,7 +513,8 @@ LayerConfiguratorFactory.deps = [
   RasterTileLayerConfiguratorFactory,
   ScenegraphModelSelectorFactory,
   RangeSliderFactory,
-  InfoHelperFactory
+  InfoHelperFactory,
+  FieldSelectorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -538,7 +534,8 @@ export default function LayerConfiguratorFactory(
   RasterTileLayerConfigurator: ReturnType<typeof RasterTileLayerConfiguratorFactory>,
   ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
-  InfoHelper: ReturnType<typeof InfoHelperFactory>
+  InfoHelper: ReturnType<typeof InfoHelperFactory>,
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   const AggregationTextLabelPanel: React.FC<
     Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
@@ -2254,19 +2251,31 @@ export default function LayerConfiguratorFactory(
     _renderContourLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
       const {visConfigSettings: settings, config} = layer;
       const valueColumn = config.columns.value.value;
-      const valueRange = this._contourValueRange(
-        dataset?.dataContainer,
-        dataset?.getColumnField(valueColumn)?.valueAccessor,
-        dataset?.dataRevision
-      );
+      const valueRange = valueColumn
+        ? this._contourValueRange(
+            dataset?.dataContainer,
+            dataset?.getColumnField(valueColumn)?.valueAccessor,
+            dataset?.dataRevision
+          )
+        : layer.meta.contourDomain;
       const hasValueRange = valueRange && valueRange[0] < valueRange[1];
-      const inputModes = [
-        {id: 'auto', label: 'Auto'},
-        {id: 'grid', label: 'Regular grid'},
-        {id: 'points', label: 'Scattered points'}
-      ];
       return (
         <StyledLayerVisualConfigurator>
+          <LayerConfigGroup
+            label="columns.contour.weight"
+            description="layerVisConfigs.contour.weightDescription"
+          >
+            <FieldSelector
+              fields={layerConfiguratorProps.fields}
+              filterFieldTypes={['integer', 'real']}
+              value={valueColumn}
+              placeholder="columns.contour.density"
+              erasable
+              onSelect={field =>
+                layerConfiguratorProps.onChange({columns: layer.assignColumn('value', field)})
+              }
+            />
+          </LayerConfigGroup>
           <LayerConfigGroup label="layer.color" collapsible>
             <VisConfigSwitch {...settings.colorByLevel} {...visConfiguratorProps} />
             {config.visConfig.colorByLevel ? (
@@ -2295,18 +2304,6 @@ export default function LayerConfiguratorFactory(
           >
             <VisConfigSlider {...settings.levels} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
-              <SidePanelSection>
-                <div className="contour-invert-switch">
-                  <PanelLabel htmlFor={`${layer.id}-invert-switch`}>
-                    <FormattedMessage id="layerVisConfigs.contour.invert" />
-                  </PanelLabel>
-                  <Switch
-                    id={`${layer.id}-invert-switch`}
-                    checked={!config.visConfig.below}
-                    onChange={() => visConfiguratorProps.onChange({below: !config.visConfig.below})}
-                  />
-                </div>
-              </SidePanelSection>
               <VisConfigSwitch
                 {...settings.customRange}
                 {...visConfiguratorProps}
@@ -2336,23 +2333,7 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label="layerVisConfigs.contour.surface" collapsible>
             <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
-              <SidePanelSection>
-                <PanelLabel>
-                  <FormattedMessage id={settings.inputMode.label} />
-                </PanelLabel>
-                <ItemSelector
-                  options={inputModes}
-                  selectedItems={inputModes.find(mode => mode.id === config.visConfig.inputMode)}
-                  displayOption="label"
-                  getOptionValue="id"
-                  multiSelect={false}
-                  searchable={false}
-                  onChange={inputMode => visConfiguratorProps.onChange({inputMode})}
-                />
-              </SidePanelSection>
-              {config.visConfig.inputMode !== 'grid' ? (
-                <VisConfigSlider {...settings.interpolationResolution} {...visConfiguratorProps} />
-              ) : null}
+              <VisConfigSlider {...settings.gridResolution} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
           <LayerConfigGroup
@@ -2528,6 +2509,13 @@ export default function LayerConfiguratorFactory(
         ? datasets[layer.config.dataId]
         : {};
       const {config} = layer;
+      const sourceColumnModes =
+        layer.type === 'contour'
+          ? layer.supportedColumnModes?.map(mode => ({
+              ...mode,
+              optionalColumns: mode.optionalColumns?.filter(key => key !== 'value')
+            })) ?? null
+          : layer.supportedColumnModes;
 
       const visConfiguratorProps = getVisConfiguratorProps(this.props);
       const layerConfiguratorProps = getLayerConfiguratorProps(this.props);
@@ -2570,7 +2558,7 @@ export default function LayerConfiguratorFactory(
               />
               <LayerColumnModeConfig
                 layer={layer}
-                supportedColumnModes={layer.supportedColumnModes}
+                supportedColumnModes={sourceColumnModes}
                 id={layer.id}
                 layerConfig={layer.config}
                 // TODO figure out handler type. String or return type of layer.layerInfoModal ?

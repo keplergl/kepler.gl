@@ -1,7 +1,9 @@
 # Contour layer (prototype)
 
-The Contour layer draws smooth, nested regions and outlines from a numeric scalar field.
-Values can represent any quantity; the layer does not calculate travel time or point density.
+The Contour layer draws smooth, nested regions and outlines from point observations.
+Select a numeric weight column to contour the mean weight in each geographic cell.
+Leave the weight column empty to contour point density (the number of points per cell,
+not points per square kilometer). The layer does not calculate travel time.
 
 ## Layer availability
 
@@ -21,7 +23,7 @@ Contour layers in saved maps still load and render, as with other optional layer
 ## Try the sample
 
 Start the demo app with `yarn start` and append `?sample=contour` to its URL. The sample
-loads an abstract scalar field around Frankfurt with turquoise fills and outlines.
+loads an abstract scalar field around Frankfurt with nested fills and outlines.
 Use `?sample=contour-scattered` for scattered measurements of the same field.
 It is synthetic data, not a travel-time map. The generator is in
 `examples/demo-app/src/data/sample-contour-data.ts`.
@@ -30,58 +32,62 @@ It is synthetic data, not a travel-time map. The generator is in
 
 Select **Contour** in the layer selector, then choose a column mode:
 
-- **Scalar samples**: assign numeric longitude, latitude, and value columns.
-- **GeoJSON**: assign a geometry column and a numeric value column. Each row produces
+- **Points**: assign numeric longitude and latitude columns, and optionally a numeric weight column.
+- **GeoJSON**: assign a geometry column and an optional numeric weight column. Each row produces
   one sample at the geometry's representative point, using the same centroid helper
   as Grid, Hexbin, and Heatmap. Points use their coordinates; lines, polygons, multi-
   geometries, and geometry collections use the average of their vertices (including
   closing ring vertices). This is not an area-weighted polygon centroid and can lie
   outside a concave feature. GeoJSON geometry/Feature objects and JSON strings are
-  accepted. Missing, empty, or malformed geometries are skipped. The selected value
-  column supplies the scalar; polygon boundaries do not clip the resulting contours.
+  accepted. Missing, empty, or malformed geometries are skipped. Polygon boundaries do
+  not clip the resulting contours.
 
-Duplicate measurements at the same position are averaged; values remain in their
-original units. Both column modes use the following surface settings:
+All points use the same aggregation; there is no regular-grid/scattered-points choice.
+Points are assigned to the nearest cell center on a grid anchored at the westernmost
+longitude and northernmost latitude. Cell size is derived from the valid retained samples'
+bounds and the selected maximum axis resolution, correcting longitude spacing at the region's central latitude. The longer
+axis uses the selected number of cells; the shorter axis scales proportionally. Coincident
+points use a 2×2 grid with one-meter spacing because they have no geographic extent.
 
-- **Auto** (default): preserves supported regular grids, including missing cells. If
-  the coordinates cannot form a supported grid, it interpolates scattered points.
-  Quantized scattered coordinates can resemble an incomplete grid; choose
-  **Scattered points** explicitly when those gaps should be interpolated.
-- **Regular grid**: requires regularly spaced coordinates with at least two distinct
-  coordinates per axis. Positions describe sample centers. Blank/nonfinite values,
-  filtered-out samples, and missing cells remain holes, even after smoothing. A
-  completely absent row or column can be inferred when other samples establish spacing.
-- **Scattered points**: requires at least three distinct, non-collinear samples with
-  finite values. Linear interpolation over Delaunay triangles creates a regular
-  surface before smoothing and contour generation. It uses a regional projection
-  with longitude scaled at the samples' central latitude. Cells outside the convex
-  hull of valid samples stay empty. Null/nonfinite values and filtered-out samples
-  are omitted; interpolation can bridge gaps between remaining points inside the hull.
-  Filtering boundary points can therefore shrink the surface. No distance cutoff,
-  barrier, or uncertainty model is applied across large unsampled gaps.
+- **With weights**: each occupied cell contains the arithmetic mean of its finite numeric
+  weights. Null/nonfinite weights are skipped, including in the mean's denominator.
+  Zero and negative weights are valid. If all weights are missing, no contours are drawn.
+- **Without weights**: every valid point contributes one count, including repeated
+  coordinates. Clearing the weight selection switches to this density calculation.
+- **Empty cells**: contain zero and participate in smoothing. This can pull weighted values
+  toward zero in sparse areas. Smoothing zero displays the unsmoothed cell means or counts.
 
-Polygon filters select source samples before smoothing and contour generation. Scalar
-samples use their longitude/latitude; GeoJSON rows use the representative points described
-above. Filters affect only their selected layers, including when layers share a dataset.
-Regular grids retain rejected samples as holes; scattered inputs interpolate only retained
-samples. Polygon filters do not clip the generated contours, so interpolation may bridge
-excluded areas within the remaining samples' convex hull. Inverting, disabling, or clearing
-the filter follows the same behavior as other layers.
+Numeric and polygon filters select observations before aggregation. GeoJSON rows use
+representative points as described above. Filters affect only their selected layers,
+including when layers share a dataset. Removing points changes cell means/counts and may
+change the grid's extent and alignment. Polygon filters do not clip the generated contours;
+smoothing can extend into cells with no retained observations. Inverting, disabling, or
+clearing a filter follows the same behavior as other layers.
+
+Existing contour maps retain their selected value column as the weight and retain their
+style settings. They use the new cell aggregation, so contour geometry and automatic levels
+can change. Saved Input type, Interpolation resolution, and kilometer Cell size settings
+no longer affect the surface; maps without Grid resolution use the default of 192 cells.
 
 ## Controls
 
-- **Color by level**: off uses the plain color (the default). Turn on to choose a
-  standard or custom palette, including reversed palettes. Colors run from the
-  lowest to highest generated contour value, independent of Invert. Palette stops
+- **Weight**: select a numeric column for cell averages, or leave empty for point counts.
+  The tooltip beside the label explains both choices.
+- **Color by level**: enabled by default with the first blue/teal-to-red palette,
+  **Uber Viz Diverging**. Choose a standard or custom palette, including reversed palettes,
+  or turn it off to use a plain color. Colors run from the
+  lowest to highest generated contour value, independent of the saved fill direction. Palette stops
   are interpolated to the number of levels, so each level has its own sampled color.
   Both fills and outlines use these colors; translucent nested fills blend where
   they overlap. Switching modes preserves both the plain color and selected palette.
-- **Input type**: Auto, Regular grid, or Scattered points, as described above.
-- **Interpolation resolution**: 32–256 samples along the longer projected axis
-  (default 192). Higher resolution gives finer contour geometry, not more measured
-  detail. Applies only when interpolating; regular grids keep their native resolution.
-- **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the input.
-  Smoothing changes the scalar field, so use it deliberately for measured quantities.
+- **Grid resolution (max axis)**: 32–256 cells along the longer geographic axis
+  (default 192). Cell size adapts to the data bounds, so small datasets also use the
+  selected resolution. Higher resolution gives smaller cells; lower resolution combines
+  more observations. Each axis is capped at 256 cells. Changing the dataset extent or
+  filtering boundary points changes physical cell size and can change means/counts.
+- **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the cell means
+  or counts. Smoothing changes values, not just the visual outline. Empty cells contribute
+  zero. The default remains 1.5 cells.
 - **Number of levels**: 2–20 equally spaced thresholds. Automatic levels exclude the
   field's extrema to avoid outlining the entire rectangular extent. Numerically
   constant surfaces are omitted; roundoff from smoothing or interpolation does not
@@ -89,17 +95,20 @@ the filter follows the same behavior as other layers.
 - **Custom level range**: minimum and maximum thresholds, inclusive, in the original
   value units, selected with a two-handle range slider and read-only endpoint labels.
   Slider bounds use the exact finite minimum and maximum of the selected value
-  column across the dataset and refresh when the dataset or column changes. Nulls
-  and nonfinite values are ignored; empty or constant columns cannot supply a slider range.
+  column across the dataset and refresh when the dataset or column changes. In density
+  mode the bounds come from the current unsmoothed cell counts. Nulls and nonfinite
+  weights are ignored; empty or constant ranges cannot supply a slider range.
   Enabling custom levels initializes both handles to the column bounds. When data
   changes, thresholds are kept within the new bounds; a disjoint selection resets
   to the full range. There is no manual-input fallback. These controls choose levels;
   they do not normalize or clamp the data.
-- **Invert**: off fills regions where value ≤ threshold (the default). Turn on to
-  fill regions where value ≥ threshold. Existing maps keep their saved direction.
 - **Fill / outline**: enable independently. Each translucent filled region overlaps
   the larger regions below it, so opacity builds toward nested interiors. Outlines
-  are rendered afterward, with brighter lines for inner regions.
+  are rendered afterward, with brighter lines for inner regions. Fill opacity ranges
+  from 0 to 1, with a default of 0.15.
+
+New contours fill regions where value ≥ threshold, enclosing peaks in weights or point
+counts. There is no Invert control. Existing maps retain their explicitly saved fill direction.
 
 Contours keep the same geographic shape and thresholds while panning or zooming.
 Hover shows the value threshold. Settings are saved with the map.
@@ -120,10 +129,8 @@ filtering, smoothing, or level changes and clears when no contours are generated
 
 ## Prototype limits
 
-This version supports regional 2D data, native grids up to 512 samples per axis, and
-scattered-point interpolation onto grids up to 256 samples per axis. It does not support
-globe mode, antimeridian-crossing data, routing, or dedicated contour export.
-Geometry is calculated on the CPU when data or contour
-settings change. Color, opacity, camera movement, and outline width do not regenerate it.
-Smoothing is specified in cells, so its physical footprint depends on grid spacing or
-interpolation resolution. The convex-hull boundary is approximated at grid resolution.
+This version supports regional 2D data and aggregation grids of up to 65,536 cells.
+It does not support globe mode, antimeridian-crossing data, routing, or dedicated contour
+export. Geometry is calculated on the CPU when data or contour settings change.
+Color, opacity, camera movement, and outline width do not regenerate it.
+Smoothing is specified in cells, so its physical footprint depends on cell size.
