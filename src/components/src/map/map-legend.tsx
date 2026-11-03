@@ -611,6 +611,7 @@ export function LayerLegendContentFactory(
     onLayerVisConfigChange,
     actionIcons
   }) => {
+    const intl = useIntl();
     if (layer.type === 'contour') {
       return (
         <ContourLegend
@@ -623,6 +624,10 @@ export function LayerLegendContentFactory(
       );
     }
     const visualChannels = layer.getLegendVisualChannels();
+    const dotDensity =
+      layer.type === 'geojson'
+        ? (layer as InstanceType<typeof KeplerGlLayers.GeojsonLayer>).getDotDensityLegend()
+        : null;
     const legendImageUrl = layer.getLegendImageUrl();
     const channelKeys = Object.values(visualChannels);
     const colorChannels = channelKeys.filter(isColorChannel) as VisualChannel[];
@@ -643,6 +648,27 @@ export function LayerLegendContentFactory(
     }
     return (
       <>
+        {dotDensity ? (
+          <div className="legend--dot-density">
+            <div>
+              <FormattedMessage
+                id="layerVisConfigs.geojson.dotDensityLegend"
+                values={{
+                  value: intl.formatNumber(dotDensity.value, {maximumSignificantDigits: 12}),
+                  field: dotDensity.field
+                }}
+              />
+            </div>
+            <div>
+              <FormattedMessage id="layerVisConfigs.geojson.dotDensityPlacement" />
+            </div>
+            {dotDensity.adjusted ? (
+              <div>
+                <FormattedMessage id="layerVisConfigs.geojson.dotDensityAdjusted" />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {legendImageUrl ? (
           <LayerImageLegend
             key={legendImageUrl}

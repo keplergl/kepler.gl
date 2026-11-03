@@ -4,7 +4,11 @@
 import GeoJsonLayer, {GeoJsonLayerConfig, getTextLabelPosition} from './geojson-layer';
 import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {valueToPosition} from '@kepler.gl/utils';
-import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
+import {KeplerTable, copyTableAndUpdate, assignGpuChannels} from '@kepler.gl/table';
+import {getDefaultFilter} from '@kepler.gl/utils';
+import {FILTER_TYPES} from '@kepler.gl/constants';
+import {validateLayersByDatasets} from '@kepler.gl/reducers';
+import {LayerClasses} from '../index';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
 import {Response} from 'node-fetch';
@@ -12,7 +16,8 @@ import {
   processCsvData,
   processFileData,
   processGeojson,
-  processRowObject
+  processRowObject,
+  processArrowBatches
 } from '@kepler.gl/processors';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
@@ -34,6 +39,219 @@ const polygon = (x: number) => ({
       [x, x]
     ]
   ]
+});
+
+describe('GeoJSON dot-density display', () => {
+  const format = (layer, dataset, previous?) =>
+    layer.formatLayerData({[dataset.id]: dataset}, previous);
+  const render = (layer, dataset, data, extras = {}) =>
+    layer.renderLayer({
+      data,
+      gpuFilter: dataset.gpuFilter,
+      idx: 0,
+      visible: true,
+      mapState: {zoom: 10},
+      interactionConfig: {tooltip: {enabled: true}},
+      ...extras
+    });
+  const setup = async () => {
+    const result = await initializeGeoJsonLayer([
+      {geometry: polygon(0), properties: {population: 20}},
+      {geometry: polygon(1), properties: {population: 40}},
+      {geometry: point(3), properties: {population: 1000}}
+    ]);
+    result.layer.updateLayerVisConfig({dotDensityField: 'population', dotDensityValue: 10});
+    return result;
+  };
+
+  test('off by default, replaces only polygon fill, and restores ordinary geometry when disabled', async () => {
+    const {layer, dataset} = await setup();
+    const original = format(layer, dataset);
+    expect(layer.config.visConfig.dotDensityEnabled).toBe(false);
+    expect(original).not.toHaveProperty('dotDensity');
+    expect(layer.getDotDensityLegend()).toBeNull();
+    const ordinary = render(layer, dataset, original);
+    layer.updateLayerVisConfig({dotDensityEnabled: true});
+    const data = format(layer, dataset, original);
+    expect(data.dotDensity.data).toHaveLength(6);
+    const rendered = render(layer, dataset, data);
+    expect(rendered[0].props.data).toBe(ordinary[0].props.data);
+    expect(rendered[0].props.filled).toBe(true); // Point features keep their existing fill.
+    expect(rendered[0].props._subLayerProps['polygons-fill'].visible).toBe(false);
+    const dots = rendered.find(d => d.id === `${layer.id}-dot-density`);
+    expect(dots.props.radiusUnits).toBe('pixels');
+    for (const dot of data.dotDensity.data) {
+      expect(dots.props.getFillColor(dot)).toEqual(data.getFillColor(dot.feature));
+      const pick = {picked: true, index: 0, object: dot, layer: dots};
+      expect(layer.isLayerHovered(pick)).toBe(true);
+      expect(layer.getHoverData(layer.hasHoveredObject(pick), dataset.dataContainer)).toEqual(
+        dataset.dataContainer.row(dot.index)
+      );
+    }
+    const polygonPick = {picked: true, index: 0, object: data.data[0], layer: rendered[0]};
+    const polygonOutline = layer._getHoverOverlayData(polygonPick);
+    const dotPick = {picked: true, index: 0, object: data.dotDensity.data[2], layer: dots};
+    const dotOutline = layer._getHoverOverlayData(dotPick);
+    expect(dotOutline).not.toEqual(polygonOutline);
+    expect(dotOutline![0].properties!.index).toBe(1);
+    expect(layer._getHoverOverlayData(dotPick)).toBe(dotOutline);
+    layer.updateLayerVisConfig({dotDensityEnabled: false});
+    const restored = format(layer, dataset, data);
+    expect(restored).not.toHaveProperty('dotDensity');
+    expect(render(layer, dataset, restored).map(d => d.id)).toEqual(ordinary.map(d => d.id));
+    const restoredFill = render(layer, dataset, restored)[0].props._subLayerProps['polygons-fill'];
+    const originalFill = ordinary[0].props._subLayerProps['polygons-fill'];
+    expect(restoredFill.visible).toBe(originalFill.visible);
+    expect(restoredFill.type).toBe(originalFill.type);
+    expect(restoredFill.updateTriggers).toEqual(originalFill.updateTriggers);
+    expect(restoredFill.getElevation(restored.data[0])).toBe(
+      originalFill.getElevation(original.data[0])
+    );
+    expect(restoredFill.getElevationOffset(restored.data[0])).toBe(
+      originalFill.getElevationOffset(original.data[0])
+    );
+  });
+
+  test('keeps positions and effective value stable during CPU/GPU filters, pan and styling changes', async () => {
+    const {layer, dataset} = await setup();
+    layer.updateLayerVisConfig({dotDensityEnabled: true});
+    const original = format(layer, dataset);
+    const filteredDataset = copyTableAndUpdate(dataset, {filteredIndex: [1]});
+    const filtered = format(layer, filteredDataset, original);
+    expect(filtered.dotDensity.data).toEqual(original.dotDensity.data.filter(d => d.index === 1));
+    expect(filtered.dotDensity.source).toBe(original.dotDensity.source);
+    const field = dataset.fields.find(f => f.name === 'population')!;
+    dataset.filterTable(
+      assignGpuChannels([
+        {
+          ...getDefaultFilter({dataId: [dataset.id]}),
+          type: FILTER_TYPES.range,
+          gpu: true,
+          name: ['population'],
+          fieldIdx: [field.fieldIdx],
+          domain: [20, 1000],
+          value: [40, 40]
+        }
+      ]),
+      [layer]
+    );
+    const gpu = format(layer, dataset, filtered);
+    expect(gpu.dotDensity.data).toEqual(original.dotDensity.data);
+    const dots = render(layer, dataset, gpu).find(d => d.id === `${layer.id}-dot-density`);
+    expect(gpu.dotDensity.data.map(dots.props.getFilterValue)).toEqual(
+      [0, 0, 20, 20, 20, 20].map(v => [v, 0, 0, 0])
+    );
+    expect(dots.props.filterRange[0]).toEqual([20, 20]);
+    layer.updateLayerVisConfig({opacity: 0.3, dotDensityRadius: 3});
+    const styled = format(layer, dataset, gpu);
+    expect(styled.dotDensity).toBe(gpu.dotDensity);
+    const panned = render(layer, dataset, styled, {mapState: {zoom: 15, longitude: 30}}).find(
+      d => d.id === dots.id
+    );
+    expect(panned.props.data).toBe(dots.props.data);
+    expect(panned.props.opacity).toBe(0.3);
+    expect(panned.props.getRadius).toBe(3);
+    expect(layer.getDotDensityLegend()).toEqual({field: 'population', value: 10, adjusted: false});
+  });
+
+  test('updates quantities, handles missing fields, and only activates on flat polygon fills', async () => {
+    const {layer, dataset} = await setup();
+    layer.updateLayerVisConfig({dotDensityEnabled: true});
+    const original = format(layer, dataset);
+    layer.updateLayerVisConfig({dotDensityValue: 20});
+    expect(format(layer, dataset, original).dotDensity.data).toHaveLength(3);
+    layer.updateLayerVisConfig({dotDensityField: 'missing'});
+    expect(format(layer, dataset).dotDensity.data).toEqual([]);
+    expect(layer.getDotDensityLegend()).toBeNull();
+    layer.updateLayerVisConfig({dotDensityField: 'population', enable3d: true});
+    expect(format(layer, dataset)).not.toHaveProperty('dotDensity');
+    layer.updateLayerVisConfig({enable3d: false, elevationOffset: 50});
+    expect(format(layer, dataset)).not.toHaveProperty('dotDensity');
+    layer.updateLayerVisConfig({elevationOffset: 0, filled: false});
+    expect(format(layer, dataset)).not.toHaveProperty('dotDensity');
+    layer.updateLayerVisConfig({filled: true});
+    const replacement = processGeojson({
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: polygon(5),
+          properties: {population: 200}
+        }
+      ]
+    } as any)!;
+    await dataset.update(replacement);
+    const refreshed = format(layer, dataset, original);
+    expect(refreshed.dotDensity.data).toHaveLength(10);
+    expect(refreshed.dotDensity.data.every(d => d.position[0] >= 5)).toBe(true);
+  });
+
+  test('supports Arrow WKB polygons and Int64 quantities with source-row picking', async () => {
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [polygon(0), polygon(1)].map(g => new Uint8Array(convertGeometryToWKB(g as any))),
+        new arrow.Binary()
+      ),
+      population: arrow.vectorFromArray([20n, 40n], new arrow.Int64())
+    });
+    table.schema.fields[0].metadata.set(GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB);
+    const dataset = new KeplerTable({info: {id: 'density-arrow'}, color: [0, 0, 0]});
+    await dataset.importData({data: processArrowBatches(table.batches)!});
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(dataset);
+    layer.updateLayerVisConfig({
+      dotDensityEnabled: true,
+      dotDensityField: 'population',
+      dotDensityValue: 10
+    });
+    const data = format(layer, dataset);
+    expect(layer.geoArrowMode).toBe(true);
+    expect(data.dotDensity.data).toHaveLength(6);
+    const dots = render(layer, dataset, data).find(d => d.id === `${layer.id}-dot-density`);
+    const picked = layer.hasHoveredObject({
+      picked: true,
+      index: 4,
+      object: data.dotDensity.data[4],
+      layer: dots
+    });
+    expect(layer.getHoverData(picked, dataset.dataContainer)).toEqual(dataset.dataContainer.row(1));
+    const filtered = format(layer, copyTableAndUpdate(dataset, {filteredIndex: [1]}), data);
+    expect(filtered.dotDensity.data.map(d => d.index)).toEqual([1, 1, 1, 1]);
+  });
+
+  test('saved maps restore dot settings and old maps retain the ordinary display', async () => {
+    const {dataset} = await setup();
+    for (const enabled of [undefined, true]) {
+      const {validated, failed} = validateLayersByDatasets({[dataset.id]: dataset}, LayerClasses, [
+        {
+          id: 'saved-density',
+          type: 'geojson',
+          config: {
+            dataId: dataset.id,
+            columns: {geojson: '_geojson'},
+            visConfig: {
+              filled: true,
+              ...(enabled
+                ? {
+                    dotDensityEnabled: true,
+                    dotDensityField: 'population',
+                    dotDensityValue: 10,
+                    dotDensityRadius: 2
+                  }
+                : {})
+            }
+          }
+        } as any
+      ]);
+      expect(failed).toEqual([]);
+      const layer = validated[0] as GeoJsonLayer;
+      expect(layer.config.visConfig.dotDensityEnabled).toBe(Boolean(enabled));
+      expect(Boolean(format(layer, dataset).dotDensity)).toBe(Boolean(enabled));
+    }
+  });
 });
 
 async function initializeGeoJsonLayer(

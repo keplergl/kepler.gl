@@ -20,7 +20,13 @@ import Layer, {
   LayerStrokeColorConfig,
   UpdateTriggers
 } from '../base-layer';
-import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
+import {
+  GeoJsonLayer as DeckGLGeoJsonLayer,
+  GeoJsonLayerProps,
+  ScatterplotLayer
+} from '@deck.gl/layers';
+import type {DataFilterExtensionProps} from '@deck.gl/extensions';
+import {buildDotDensity, DensityDot, DensitySource} from './dot-density';
 import {
   getGeojsonLayerMeta,
   GeojsonDataMaps,
@@ -30,7 +36,8 @@ import {
   applyFiltersToTableColumns,
   fieldIsGeoArrow,
   featureToHoverOutline,
-  applyDefaultGeojsonColorField
+  applyDefaultGeojsonColorField,
+  parseGeoJsonRawFeature
 } from './geojson-utils';
 import {
   getGeojsonLayerMetaFromArrow,
@@ -44,7 +51,8 @@ import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
   LAYER_VIS_CONFIGS,
-  DEFAULT_COLOR_UI
+  DEFAULT_COLOR_UI,
+  GEOARROW_METADATA_KEY
 } from '@kepler.gl/constants';
 import {
   ColorRange,
@@ -53,6 +61,7 @@ import {
   VisConfigColorRange,
   VisConfigRange,
   VisConfigBoolean,
+  VisConfigSelection,
   Merge,
   RGBColor,
   ProtoDatasetField,
@@ -92,7 +101,48 @@ export const geojsonVisConfigs: {
   invertHeight: 'invertHeight';
   fixedElevation: 'fixedElevation';
   allowHover: 'allowHover';
+  dotDensityEnabled: VisConfigBoolean;
+  dotDensityField: VisConfigSelection;
+  dotDensityValue: VisConfigNumber;
+  dotDensityRadius: VisConfigNumber;
 } = {
+  dotDensityEnabled: {
+    type: 'boolean',
+    group: 'geojson',
+    property: 'dotDensityEnabled',
+    defaultValue: false,
+    label: 'layerVisConfigs.geojson.dotDensity'
+  },
+  dotDensityField: {
+    type: 'select',
+    group: 'geojson',
+    property: 'dotDensityField',
+    defaultValue: '',
+    options: [],
+    label: 'layerVisConfigs.geojson.dotDensityField'
+  },
+  dotDensityValue: {
+    type: 'number',
+    group: 'geojson',
+    property: 'dotDensityValue',
+    defaultValue: 100,
+    range: [1, 1000000],
+    step: 1,
+    isRanged: false,
+    allowCustomValue: true,
+    label: 'layerVisConfigs.geojson.dotDensityValue',
+    description: 'layerVisConfigs.geojson.dotDensityValueDescription'
+  },
+  dotDensityRadius: {
+    type: 'number',
+    group: 'geojson',
+    property: 'dotDensityRadius',
+    defaultValue: 1.5,
+    range: [0.5, 5],
+    step: 0.1,
+    isRanged: false,
+    label: 'layerVisConfigs.geojson.dotDensityRadius'
+  },
   opacity: 'opacity',
   strokeOpacity: {
     ...LAYER_VIS_CONFIGS.opacity,
@@ -130,6 +180,10 @@ export const geojsonVisConfigs: {
 };
 
 export type GeoJsonVisConfigSettings = {
+  dotDensityEnabled: VisConfigBoolean;
+  dotDensityField: VisConfigSelection;
+  dotDensityValue: VisConfigNumber;
+  dotDensityRadius: VisConfigNumber;
   opacity: VisConfigNumber;
   strokeOpacity: VisConfigNumber;
   thickness: VisConfigNumber;
@@ -159,6 +213,10 @@ export type GeoJsonLayerColumnsConfig = {
 };
 
 export type GeoJsonLayerVisConfig = {
+  dotDensityEnabled: boolean;
+  dotDensityField: string;
+  dotDensityValue: number;
+  dotDensityRadius: number;
   opacity: number;
   strokeOpacity: number;
   thickness: number;
@@ -321,9 +379,18 @@ export default class GeoJsonLayer extends Layer {
   private _geometryDataRevision: number | undefined;
   private _geometryColumnIndex: number | undefined;
   private _geometryArrowChunks: arrow.Data[] = [];
+  private _dotDensityCache?: {
+    dataContainer: DataContainerInterface;
+    revision: number;
+    geometryIndex: number;
+    quantityIndex: number;
+    value: number;
+    result: ReturnType<typeof buildDotDensity>;
+  };
   // Stable hover overlay data so deck.gl does not re-parse the feature every redraw.
   _hoverOverlayIndex: number | null = null;
   _hoverOverlayData: Feature[] | null = null;
+  private _hoverOverlayLayerId: string | null = null;
 
   _layerInfoModal: {
     [COLUMN_MODE_TABLE]: () => React.JSX.Element;
@@ -540,7 +607,12 @@ export default class GeoJsonLayer extends Layer {
   getHoverData(object, dataContainer) {
     // index of dataContainer is saved to feature.properties
     // for arrow format, `object` is the index of the row returned from deck
-    const index = this.geoArrowMode ? object : object?.properties?.index;
+    const index =
+      this.isDotDensityActive() && object?.properties
+        ? object.properties.index
+        : this.geoArrowMode
+        ? object
+        : object?.properties?.index;
     if (index >= 0) {
       return dataContainer.row(index);
     }
@@ -676,8 +748,98 @@ export default class GeoJsonLayer extends Layer {
       getFiltered: isFilteredAccessor,
       textLabelFiltered: textLabelFilteredAccessor,
       textLabels,
+      ...(this.isDotDensityActive()
+        ? {
+            dotDensity: this.formatDotDensity(
+              datasets[this.config.dataId],
+              oldLayerData?.dotDensity
+            )
+          }
+        : {}),
       ...accessors
     };
+  }
+
+  isDotDensityActive() {
+    return Boolean(
+      this.config.visConfig.dotDensityEnabled &&
+        this.config.visConfig.filled &&
+        this.config.columnMode === COLUMN_MODE_GEOJSON &&
+        this.meta.featureTypes?.polygon &&
+        !this.isExtruded()
+    );
+  }
+
+  getDotDensityLegend() {
+    if (!this.isDotDensityActive() || !this._dotDensityCache) return null;
+    return {
+      field: this.config.visConfig.dotDensityField,
+      value: this._dotDensityCache.result.effectiveValue,
+      adjusted:
+        this._dotDensityCache.result.effectiveValue > this._dotDensityCache.result.requestedValue
+    };
+  }
+
+  private formatDotDensity(dataset: KeplerTable, previous) {
+    const {dataContainer, dataRevision, fields} = dataset;
+    const {dotDensityField, dotDensityValue} = this.config.visConfig;
+    const quantityField = fields.find(
+      f => f.name === dotDensityField && ['integer', 'real'].includes(f.type)
+    );
+    if (!quantityField) {
+      this._dotDensityCache = undefined;
+      return {data: []};
+    }
+    const geometryIndex = this.config.columns.geojson.fieldIdx;
+    const cached = this._dotDensityCache;
+    if (
+      !cached ||
+      cached.dataContainer !== dataContainer ||
+      cached.revision !== dataRevision ||
+      cached.geometryIndex !== geometryIndex ||
+      cached.quantityIndex !== quantityField.fieldIdx ||
+      cached.value !== dotDensityValue
+    ) {
+      const sources: DensitySource[] = [];
+      const encoding = dataContainer
+        .getField?.(geometryIndex)
+        ?.metadata?.get(GEOARROW_METADATA_KEY);
+      for (let index = 0; index < dataContainer.numRows(); index++) {
+        const quantity = quantityField.valueAccessor({index});
+        if (
+          (typeof quantity !== 'number' && typeof quantity !== 'bigint') ||
+          !Number.isFinite(Number(quantity)) ||
+          Number(quantity) <= 0
+        )
+          continue;
+        const feature = parseGeoJsonRawFeature(
+          dataContainer.valueAt(index, geometryIndex),
+          encoding
+        );
+        if (feature)
+          sources.push({
+            index,
+            quantity: Number(quantity),
+            feature: {
+              ...feature,
+              properties: {...feature.properties, index}
+            }
+          });
+      }
+      this._dotDensityCache = {
+        dataContainer,
+        revision: dataRevision,
+        geometryIndex,
+        quantityIndex: quantityField.fieldIdx,
+        value: dotDensityValue,
+        result: buildDotDensity(sources, dotDensityValue)
+      };
+    }
+    const source = this._dotDensityCache!.result;
+    const filteredIndex = dataset.filteredIndexByLayer?.[this.id] ?? dataset.filteredIndex;
+    if (previous?.source === source && previous.filteredIndex === filteredIndex) return previous;
+    const visible = new Set(filteredIndex);
+    return {source, filteredIndex, data: source.dots.filter(dot => visible.has(dot.index))};
   }
 
   isInPolygon(data: DataContainerInterface, index: number, polygon: Feature<Polygon>): boolean {
@@ -843,12 +1005,25 @@ export default class GeoJsonLayer extends Layer {
   }
 
   isLayerHovered(objectInfo: ObjectInfo): boolean {
+    if (
+      this.isDotDensityActive() &&
+      objectInfo?.picked &&
+      objectInfo.layer?.props?.id === `${this.id}-dot-density`
+    )
+      return true;
     return this.geoArrowMode
       ? isLayerHoveredFromArrow(objectInfo, this.id)
       : super.isLayerHovered(objectInfo);
   }
 
   hasHoveredObject(objectInfo: ObjectInfo): Feature | null {
+    if (
+      this.isDotDensityActive() &&
+      objectInfo?.picked &&
+      objectInfo.layer?.props?.id === `${this.id}-dot-density`
+    ) {
+      return (objectInfo.object as unknown as DensityDot)?.feature || null;
+    }
     return this.geoArrowMode
       ? getHoveredObjectFromArrow(
           objectInfo,
@@ -872,14 +1047,21 @@ export default class GeoJsonLayer extends Layer {
     }
 
     const {index} = objectInfo;
-    if (Number.isFinite(index) && this._hoverOverlayData && this._hoverOverlayIndex === index) {
+    if (
+      Number.isFinite(index) &&
+      this._hoverOverlayData &&
+      this._hoverOverlayIndex === index &&
+      this._hoverOverlayLayerId === objectInfo.layer.props.id
+    ) {
       return this._hoverOverlayData;
     }
 
     // Redux may retain a pick from before a refresh. Resolve its row against
     // the current geometry instead of caching the old feature again.
     const hoveredObject =
-      !this.geoArrowMode && this.config.columnMode === COLUMN_MODE_GEOJSON && this.dataContainer
+      objectInfo.layer?.props?.id === `${this.id}-dot-density`
+        ? this.hasHoveredObject(objectInfo)
+        : !this.geoArrowMode && this.config.columnMode === COLUMN_MODE_GEOJSON && this.dataContainer
         ? this.dataToFeature[objectInfo.object?.properties?.index ?? index]
         : this.hasHoveredObject(objectInfo);
     if (!hoveredObject) {
@@ -889,6 +1071,7 @@ export default class GeoJsonLayer extends Layer {
     }
 
     this._hoverOverlayIndex = index;
+    this._hoverOverlayLayerId = objectInfo.layer.props.id;
     this._hoverOverlayData = [featureToHoverOutline(hoveredObject as Feature)];
     return this._hoverOverlayData;
   }
@@ -939,6 +1122,7 @@ export default class GeoJsonLayer extends Layer {
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
     const {visConfig} = this.config;
+    const dotDensityActive = this.isDotDensityActive();
     const offsetActive = this.isElevationOffsetActive();
     const extruded = this.isExtruded();
 
@@ -1000,6 +1184,7 @@ export default class GeoJsonLayer extends Layer {
         extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
         _subLayerProps: {
           'polygons-fill': {
+            ...(dotDensityActive ? {visible: false} : {}),
             type: OffsetSolidPolygonLayer,
             getElevationOffset: wrapElevationOffsetAccessor(props.getElevationOffset),
             getElevation: offsetActive && !visConfig.enable3d ? 0 : props.getElevation,
@@ -1024,6 +1209,29 @@ export default class GeoJsonLayer extends Layer {
 
     return [
       ...deckLayers,
+      ...(dotDensityActive
+        ? [
+            new ScatterplotLayer<DensityDot, DataFilterExtensionProps<DensityDot>>({
+              ...defaultLayerProps,
+              id: `${this.id}-dot-density`,
+              data: dataProps.dotDensity?.data || [],
+              pickable,
+              autoHighlight: false,
+              getPosition: dot => dot.position,
+              getFillColor: dot => props.getFillColor(dot.feature),
+              getFilterValue: dot => props.getFilterValue(dot.feature),
+              filterRange: gpuFilter.filterRange as [number, number][],
+              radiusUnits: 'pixels',
+              getRadius: visConfig.dotDensityRadius,
+              stroked: false,
+              filled: true,
+              updateTriggers: {
+                getFillColor: updateTriggers.getFillColor,
+                getFilterValue: updateTriggers.getFilterValue
+              }
+            })
+          ]
+        : []),
       // hover layer
       ...(hoverOverlayData
         ? [

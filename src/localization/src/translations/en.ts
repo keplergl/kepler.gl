@@ -175,6 +175,19 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    geojson: {
+      dotDensity: 'Dot Density',
+      dotDensityDescription:
+        'Fill flat GeoJSON polygons with dots representing quantities, not exact locations. Turn off 3D and elevation offset to use this mode.',
+      dotDensityField: 'Quantity',
+      dotDensityValue: 'Quantity per dot',
+      dotDensityValueDescription:
+        'Fractional dots are rounded proportionally across polygons. For large datasets, the effective value increases to keep the map responsive; see the legend.',
+      dotDensityRadius: 'Dot radius (pixels)',
+      dotDensityLegend: '1 dot = {value} {field}',
+      dotDensityPlacement: 'Illustrative positions, not exact locations.',
+      dotDensityAdjusted: 'Dot value increased for this dataset.'
+    },
     angle: 'Angle',
     strokeWidth: 'Stroke Width (Pixels)',
     strokeWidthRange: 'Stroke Width Range',

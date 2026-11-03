@@ -10,6 +10,8 @@ import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {ArrowDataContainer, createDataContainer} from '@kepler.gl/utils';
 import {processFileData} from '@kepler.gl/processors';
 import * as arrow from 'apache-arrow';
+import {buildDotDensity} from './dot-density';
+import {booleanPointInPolygon} from '@turf/boolean-point-in-polygon';
 import GeoJsonLayer from './geojson-layer';
 import GridLayer from '../grid-layer/grid-layer';
 import HexagonLayer from '../hexagon-layer/hexagon-layer';
@@ -25,6 +27,159 @@ import {
   getGeojsonBounds,
   groupColumnsAsGeoJson
 } from './geojson-utils';
+
+describe('dot-density placement', () => {
+  const square = (x = 0, size = 10) => [
+    [x, 0],
+    [x + size, 0],
+    [x + size, size],
+    [x, size],
+    [x, 0]
+  ];
+  const source = (geometry, quantity = 1000, index = 0) => ({
+    index,
+    quantity,
+    feature: {type: 'Feature' as const, properties: {index}, geometry}
+  });
+
+  test('places repeatable dots inside concave polygons and outside holes', () => {
+    const polygon = {type: 'Polygon', coordinates: [square(), square(2, 3)]};
+    const concave = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 0],
+          [5, 0],
+          [5, 1],
+          [1, 1],
+          [1, 5],
+          [0, 5],
+          [0, 0]
+        ]
+      ]
+    };
+    for (const geometry of [polygon, concave]) {
+      const sources = [source(geometry)];
+      const result = buildDotDensity(sources, 1);
+      expect(result.dots).toHaveLength(1000);
+      expect(buildDotDensity(sources, 1)).toEqual(result);
+      result.dots.forEach(dot =>
+        expect(booleanPointInPolygon(dot.position, sources[0].feature as any)).toBe(true)
+      );
+      expect(new Set(result.dots.map(dot => dot.position.join(','))).size).toBe(1000);
+    }
+  });
+
+  test('allocates dots across multipart and collection polygons by area', () => {
+    const small = square(0, 1);
+    const large = square(5, 3);
+    for (const geometry of [
+      {type: 'MultiPolygon', coordinates: [[small], [large]]},
+      {
+        type: 'GeometryCollection',
+        geometries: [
+          {type: 'Polygon', coordinates: [small]},
+          {type: 'Polygon', coordinates: [large]},
+          {type: 'Point', coordinates: [30, 30]}
+        ]
+      }
+    ]) {
+      const {dots} = buildDotDensity([source(geometry, 10000)], 1);
+      const smallCount = dots.filter(dot => dot.position[0] < 2).length;
+      expect(smallCount).toBeGreaterThan(850);
+      expect(smallCount).toBeLessThan(1150);
+      expect(dots.every(dot => dot.position[0] <= 8)).toBe(true);
+    }
+  });
+
+  test('rounds cumulative fractional quantities and scales the entire dataset at the limit', () => {
+    const sources = Array.from({length: 100}, (_, i) =>
+      source({type: 'Polygon', coordinates: [square()]}, 0.3, i)
+    );
+    const result = buildDotDensity(sources, 1);
+    expect(result.dots).toHaveLength(30);
+    expect(new Set(result.dots.map(dot => dot.index)).size).toBe(30);
+    const capped = buildDotDensity(
+      [
+        source({type: 'Polygon', coordinates: [square()]}, 200, 0),
+        source({type: 'Polygon', coordinates: [square()]}, 800, 1)
+      ],
+      1,
+      100
+    );
+    expect(capped.effectiveValue).toBe(10);
+    expect(capped.dots.filter(dot => dot.index === 0)).toHaveLength(20);
+    expect(capped.dots.filter(dot => dot.index === 1)).toHaveLength(80);
+  });
+
+  test('handles dateline polygons, invalid geometry, and nonpositive or missing quantities', () => {
+    const {dots} = buildDotDensity(
+      [
+        source(
+          {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [179, -1],
+                [-179, -1],
+                [-179, 1],
+                [179, 1],
+                [179, -1]
+              ]
+            ]
+          },
+          100
+        )
+      ],
+      1
+    );
+    expect(dots).toHaveLength(100);
+    expect(
+      dots.every(dot => Math.abs(dot.position[0]) >= 179 && Math.abs(dot.position[1]) <= 1)
+    ).toBe(true);
+    const geometry = {type: 'Polygon', coordinates: [square()]};
+    expect(
+      buildDotDensity(
+        [0, -5, NaN, Infinity].map(value => source(geometry, value)),
+        1
+      ).dots
+    ).toEqual([]);
+    expect(
+      buildDotDensity(
+        [
+          null,
+          {type: 'Point', coordinates: [0, 0]},
+          {type: 'Polygon', coordinates: []},
+          {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [0, 0],
+                [1, 1],
+                [2, 2]
+              ]
+            ]
+          },
+          {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [NaN, 0],
+                [1, 0],
+                [1, 1]
+              ]
+            ]
+          }
+        ].map(g => source(g)),
+        1
+      ).dots
+    ).toEqual([]);
+    expect(buildDotDensity([], 0)).toEqual({dots: [], effectiveValue: 100, requestedValue: 100});
+    const huge = buildDotDensity([source(geometry, 1e308, 0), source(geometry, 1e308, 1)], 1, 100);
+    expect(huge.dots).toHaveLength(100);
+    expect(Number.isFinite(huge.effectiveValue)).toBe(true);
+  });
+});
 
 describe('GeoJSON coordinates', () => {
   test.each([

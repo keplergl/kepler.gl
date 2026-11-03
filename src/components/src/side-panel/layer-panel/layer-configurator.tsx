@@ -1555,9 +1555,51 @@ export default function LayerConfiguratorFactory(
       const elevationOffsetActive = Boolean(
         layer.config.elevationOffsetField || visConfig.elevationOffset > 0
       );
+      const quantityFields = visConfiguratorProps.fields.filter(f =>
+        ['integer', 'real'].includes(f.type)
+      );
 
       return (
         <StyledLayerVisualConfigurator>
+          {featureTypes.polygon && layer.config.columnMode === COLUMN_MODE_GEOJSON ? (
+            <LayerConfigGroup
+              {...layer.visConfigSettings.dotDensityEnabled}
+              {...visConfiguratorProps}
+              description="layerVisConfigs.geojson.dotDensityDescription"
+              disabled={visConfig.enable3d || elevationOffsetActive || !visConfig.filled}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <SidePanelSection>
+                  <PanelLabel>
+                    <FormattedMessage id="layerVisConfigs.geojson.dotDensityField" />
+                  </PanelLabel>
+                  <ItemSelector
+                    selectedItems={
+                      quantityFields.find(f => f.name === visConfig.dotDensityField) || null
+                    }
+                    options={quantityFields}
+                    disabled={!visConfig.dotDensityEnabled}
+                    displayOption="name"
+                    filterOption="name"
+                    getOptionValue="name"
+                    multiSelect={false}
+                    onChange={value =>
+                      visConfiguratorProps.onChange({dotDensityField: value || ''})
+                    }
+                  />
+                </SidePanelSection>
+                <VisConfigSlider
+                  {...layer.visConfigSettings.dotDensityValue}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.dotDensityRadius}
+                  {...visConfiguratorProps}
+                />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
           {/* Fill Color */}
           {featureTypes.polygon || featureTypes.point ? (
             <LayerConfigGroup

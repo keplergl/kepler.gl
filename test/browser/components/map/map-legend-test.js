@@ -6,6 +6,9 @@ import test from 'tape';
 import {mount} from 'enzyme';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import sinon from 'sinon';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
 
 import {
   MapLegendFactory,
@@ -33,6 +36,50 @@ const LayerColorLegend = appInjector.get(LayerColorLegendFactory);
 const SingleColorLegend = appInjector.get(SingleColorLegendFactory);
 const LegendRow = appInjector.get(LegendRowFactory);
 const ResetColorLabel = appInjector.get(ResetColorLabelFactory);
+
+test('Components -> MapLegend dot-density quantity and adjusted-value explanation', t => {
+  const layer = new KeplerGlLayers.GeojsonLayer({
+    id: 'dot-legend',
+    dataId: 'data',
+    columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+  });
+  const legend = sinon
+    .stub(layer, 'getDotDensityLegend')
+    .returns({field: 'population', value: 1234.56789, adjusted: true});
+  const view = renderWithTheme(
+    <IntlWrapper>
+      <MapLegend layers={[layer]} />
+    </IntlWrapper>
+  );
+  try {
+    const text = view.container.querySelector('.legend--dot-density').textContent;
+    t.ok(
+      text.includes('1 dot = 1,234.56789 population'),
+      'legend shows the effective quantity without rounding it to an integer'
+    );
+    t.ok(
+      text.includes('not exact locations'),
+      'legend distinguishes quantity dots from observed locations'
+    );
+    t.ok(text.includes('increased'), 'legend explains automatic value adjustment');
+    legend.returns(null);
+    view.rerender(
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>
+          <MapLegend layers={[layer]} />
+        </IntlWrapper>
+      </ThemeProvider>
+    );
+    t.notOk(
+      view.container.querySelector('.legend--dot-density'),
+      'ordinary layers do not show dot-density information'
+    );
+  } finally {
+    legend.restore();
+    view.unmount();
+    t.end();
+  }
+});
 
 test('Components -> MapLegend.render', t => {
   t.doesNotThrow(() => {

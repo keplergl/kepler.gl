@@ -4177,6 +4177,7 @@ __metadata:
     "@turf/distance": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
     "@types/d3-contour": "npm:^3.0.6"
+    "@types/earcut": "npm:^2.1.0"
     "@types/geojson": "npm:^7946.0.8"
     "@types/keymirror": "npm:^0.1.1"
     "@types/styled-components": "npm:^5.1.32"
@@ -4189,6 +4190,7 @@ __metadata:
     d3-interpolate: "npm:^3.0.1"
     d3-shape: "npm:^1.2.0"
     delaunator: "npm:^5.1.0"
+    earcut: "npm:^2.2.4"
     es-toolkit: "npm:^1.39.10"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
@@ -10324,6 +10326,13 @@ __metadata:
   version: 0.1.30
   resolution: "@types/detect-indent@npm:0.1.30"
   checksum: 10c0/8186476d60e183eebd1ac6f72e5d6a35d379b0e61c766257f5222a9a1b44ac833ee28ae6f1a2a4fa6c89c10051271929fda2c94dd4db5b0ce73293336fbf47d9
+  languageName: node
+  linkType: hard
+
+"@types/earcut@npm:^2.1.0":
+  version: 2.1.4
+  resolution: "@types/earcut@npm:2.1.4"
+  checksum: 10c0/ab76940f1cc66ac861932f254b8c0344ebdcfed69e356606416d562e17cd112221b08340d52232f73ff1ad08d4dcf9caa5352c73258df4b8a41c9110ba370262
   languageName: node
   linkType: hard
 

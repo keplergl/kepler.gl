@@ -19,5 +19,28 @@ A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/w
 
 To add a polygon layer, your dataset must contain geometry data.
 
+## Dot Density
+
+For a flat GeoJSON polygon fill, enable **Dot Density** and select a numeric **Quantity**
+column, such as population or housing units. Set **Quantity per dot** and **Dot radius**.
+The existing fill-color controls color dots by the source polygon's attributes; outlines
+remain available. Turn off Dot Density to restore the ordinary polygon fill.
+
+The legend states the effective quantity represented by one dot. These dots illustrate
+quantities, **not exact locations**. Positions are deterministic for the same dataset and
+settings and stay fixed during panning, zooming, and filtering. Dots are distributed in
+longitude/latitude coordinates inside polygon parts, excluding holes. Filtering hides a
+polygon's dots without redistributing them into other polygons.
+
+Fractional dot counts use cumulative proportional rounding across the dataset. Missing,
+negative, zero, and nonfinite quantities produce no dots. To keep maps responsive, a layer
+is limited to 250,000 dots: larger totals automatically increase the effective quantity per
+dot across the full dataset. The legend shows that value and explains the adjustment.
+Filtering does not change it.
+
+This mode supports GeoJSON and GeoArrow polygon geometry columns, including multipart
+polygons. It is available for flat fills with 3D and elevation offset disabled; table-column
+geometry mode is unchanged. Points and lines in mixed datasets retain their regular rendering.
+
 
 [Back to table of contents](../README.md)

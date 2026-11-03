@@ -26,7 +26,8 @@ import {
   dropdownListClassList,
   Checkbox,
   getLayerFields,
-  getLayerDataset
+  getLayerDataset,
+  RootContext
 } from '@kepler.gl/components';
 import {LayerClasses} from '@kepler.gl/layers';
 import {messages} from '@kepler.gl/localization';
@@ -51,6 +52,69 @@ const LayerConfigGroup = appInjector.get(LayerConfigGroupFactory);
 const ColumnSelector = appInjector.get(ColumnSelectorFactory);
 const FieldSelector = appInjector.get(FieldSelectorFactory);
 const TextLabelPanel = appInjector.get(TextLabelPanelFactory);
+
+test('Components -> GeoJSON dot-density controls preserve normal fill and choose a numeric quantity', async t => {
+  const layer = new KeplerGlLayers.GeojsonLayer({id: 'density-controls', dataId: testCsvDataId});
+  layer.updateMeta({featureTypes: {polygon: true}});
+  layer.updateLayerVisConfig({filled: true});
+  const fields = defaultProps.datasets[testCsvDataId].fields;
+  const quantity = fields.find(f => ['integer', 'real'].includes(f.type));
+  function Editor() {
+    const [, refresh] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            layer.updateLayerVisConfig(value);
+            refresh(v => v + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const view = renderWithTheme(
+    <RootContext.Provider value={{current: container}}>
+      <Editor />
+    </RootContext.Provider>,
+    {container, baseElement: container}
+  );
+  const user = userEvent.setup();
+  try {
+    const group = view.getByText('Dot Density').closest('.layer-config-group');
+    const toggle = within(group.querySelector('.layer-config-group__header')).getByRole('checkbox');
+    t.notOk(toggle.checked, 'dot density starts off');
+    fireEvent.click(toggle);
+    t.equal(layer.config.visConfig.dotDensityEnabled, true, 'toggle enables the display mode');
+    t.equal(layer.config.visConfig.filled, true, 'enabling keeps the original fill setting');
+    fireEvent.click(group.querySelector('.item-selector__dropdown'));
+    fireEvent.click(view.getByText(quantity.name));
+    t.equal(
+      layer.config.visConfig.dotDensityField,
+      quantity.name,
+      'selects a numeric quantity field'
+    );
+    const value = group.querySelector('.kg-range-slider__input');
+    await user.clear(value);
+    await user.type(value, '500');
+    await user.tab();
+    t.equal(layer.config.visConfig.dotDensityValue, 500, 'commits quantity per dot');
+    fireEvent.click(toggle);
+    t.equal(layer.config.visConfig.dotDensityEnabled, false, 'can restore ordinary polygons');
+    t.equal(
+      layer.config.visConfig.dotDensityField,
+      quantity.name,
+      'retains quantity for reenabling'
+    );
+  } finally {
+    view.unmount();
+    container.remove();
+    t.end();
+  }
+});
 
 // components
 const openModal = () => {};
