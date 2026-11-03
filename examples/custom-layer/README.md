@@ -64,7 +64,7 @@ Opening the app with `?mapUrl=` loads a saved kepler.gl project (datasets + conf
 CORS-enabled URL:
 
 ```
-?mapUrl=https%3A%2F%2Flixun910.github.io%2Fmt-rainier-elevation-v2.json
+?mapUrl=https%3A%2F%2Flixun910.github.io%2Fmt-rainier-elevation-v3.json
 ```
 
 The JSON must be publicly readable and return `Access-Control-Allow-Origin`. The example downloads
@@ -77,8 +77,8 @@ demo-only; promoting the layer to `@kepler.gl/layers` would make it a built-in f
 
 The Mount Rainier sample project above was built from 600 real elevation samples around Mount
 Rainier (680–4266 m) from the public [Open-Meteo elevation API](https://open-meteo.com/en/docs/elevation-api),
-which serves Copernicus DEM data. It uses `cellRadius = 1 km`, `smoothing = 2`, and 12 contour
-levels.
+which serves Copernicus DEM data. It uses `cellRadius = 0.5 km`, `elevationScale = 7300 m`,
+`smoothing = 12`, and 12 contour levels.
 
 ### Registering a custom layer
 
