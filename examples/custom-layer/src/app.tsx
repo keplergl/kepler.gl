@@ -17,7 +17,7 @@ import KeplerGl, {
   LayerConfiguratorFactory,
   VisConfigSwitch
 } from '@kepler.gl/components';
-import {addDataToMap, setMapViewMode} from '@kepler.gl/actions';
+import {addDataToMap, loadFiles, setMapViewMode} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
 import {initApplicationConfig} from '@kepler.gl/utils';
 
@@ -349,16 +349,37 @@ const App = () => {
   const {width, height} = useWindowSize();
 
   useEffect(() => {
-    dispatch(
-      addDataToMap({
-        datasets: sampleData,
-        config: mapConfig,
-        options: {centerMap: false}
+    const loadSample = () => {
+      dispatch(
+        addDataToMap({
+          datasets: sampleData,
+          config: mapConfig,
+          options: {centerMap: false}
+        })
+      );
+      // The saved map state may not carry the newer view-mode field; set it
+      // explicitly so the demo opens with the surface in perspective.
+      dispatch(setMapViewMode('MODE_3D'));
+    };
+
+    const mapUrl = new URLSearchParams(window.location.search).get('mapUrl');
+    if (!mapUrl) {
+      loadSample();
+      return;
+    }
+
+    fetch(mapUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load ${mapUrl}: ${response.status}`);
+        }
+        return response.blob();
       })
-    );
-    // The saved map state may not carry the newer view-mode field; set it
-    // explicitly so the demo opens with the surface in perspective.
-    dispatch(setMapViewMode('MODE_3D'));
+      .then(blob => dispatch(loadFiles([new File([blob], 'map.json')])))
+      .catch(error => {
+        console.error(error);
+        loadSample();
+      });
   }, [dispatch]);
 
   return (

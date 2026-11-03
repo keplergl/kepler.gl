@@ -24,7 +24,7 @@ open in **3D surface** mode colored by elevation.
 | File                          | Purpose                                                                                                                                       |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/custom-contour-layer.js` | Extends `Layer` from `@kepler.gl/layers` and renders `ContourLayer` or `SimpleMeshLayer`.                                                     |
-| `src/density-surface.js`      | Bridge to the core `@kepler.gl/layers` surface utilities (`src/layers/src/surface`).                                                           |
+| `src/density-surface.js`      | Bridge to the core `@kepler.gl/layers` surface utilities (`src/layers/src/surface`).                                                          |
 | `src/app.tsx`                 | Registers the custom layer by passing `layerClasses` to `keplerGlReducer.initialState()`. Loads the sample dataset and an initial map config. |
 
 ### 3D surface mode
@@ -57,6 +57,24 @@ Controls:
 
 Grids are capped at 256×256 cells; a cell radius that would exceed the cap is coarsened so the mesh
 stays small.
+
+### Load a saved map from a URL
+
+Opening the app with `?mapUrl=` loads a saved kepler.gl project (datasets + config) from a
+CORS-enabled URL:
+
+```
+?mapUrl=https%3A%2F%2Flixun910.github.io%2Fmt-rainier-elevation-v2.json
+```
+
+The JSON must be publicly readable and return `Access-Control-Allow-Origin`. The example downloads
+it, runs it through `loadFiles`, and restores the custom `contour` layer because the layer class is
+registered in this app.
+
+The Mount Rainier sample project above was built from 600 real elevation samples around Mount
+Rainier (680–4266 m) from the public [Open-Meteo elevation API](https://open-meteo.com/en/docs/elevation-api),
+which serves Copernicus DEM data. It uses `cellRadius = 1 km`, `smoothing = 2`, and 12 contour
+levels.
 
 ### Registering a custom layer
 
