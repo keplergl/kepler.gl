@@ -194,6 +194,11 @@ export type KeplerApplicationConfig = {
   // Existing Contour layers in saved maps can still render.
   enableContourLayer?: boolean;
 
+  // Voronoi Mosaic layer config
+  // Enabled by default. Set false to hide Voronoi in layer type pickers.
+  // Existing Voronoi layers in saved maps can still render.
+  enableVoronoiLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -484,6 +489,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // Contour layer config -- disable via initApplicationConfig
   enableContourLayer: true,
+
+  // Voronoi Mosaic layer config -- disable via initApplicationConfig
+  enableVoronoiLayer: true,
 
   showInlineTilesetExamples: true,
 

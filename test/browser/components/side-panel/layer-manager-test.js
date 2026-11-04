@@ -62,66 +62,71 @@ const defaultProps = {
   overlayBlending: 'normal'
 };
 
-test('Components -> LayerManager -> contour picker follows application config in both list views', t => {
-  const {enableContourLayer} = getApplicationConfig();
-  t.equal(enableContourLayer, true, 'Contour is enabled by default');
-  const dataId = Object.keys(defaultProps.datasets)[0];
-  const layer = new LayerClasses.contour({id: 'optional-contour', dataId});
-  layer.updateLayerConfig({isConfigActive: true});
-  try {
-    for (const panelListView of ['list', 'byDataset']) {
-      initApplicationConfig({enableContourLayer: false});
-      const props = {
-        ...defaultProps,
-        layers: [layer],
-        layerOrder: [layer.id],
-        layerClasses: LayerClasses,
-        panelListView
-      };
-      const view = render(<LayerManager {...props} />, {
-        wrapper: ({children}) => (
-          <ThemeProvider theme={theme}>
-            <IntlWrapper>{children}</IntlWrapper>
-          </ThemeProvider>
-        )
-      });
-      try {
-        const selector = view.container.querySelector('.layer-config__type');
-        t.ok(selector, `${panelListView}: existing Contour layer remains configurable`);
-        t.equal(
-          selector.querySelector('.layer-type-selector__item__label').textContent.toLowerCase(),
-          'contour',
-          'still identifies the saved layer when its type is disabled'
-        );
-        fireEvent.click(selector.querySelector('.item-selector__dropdown'));
-
-        for (const enabled of [false, true, false, undefined]) {
-          initApplicationConfig({enableContourLayer: enabled});
-          view.rerender(<LayerManager {...props} />);
-          const options = Array.from(
-            view.baseElement.querySelectorAll(
-              '.layer-type-selector__item .layer-type-selector__item__label'
-            ),
-            element => element.textContent.toLowerCase()
-          );
+for (const {type, flag, label} of [
+  {type: 'contour', flag: 'enableContourLayer', label: 'Contour'},
+  {type: 'voronoi', flag: 'enableVoronoiLayer', label: 'Voronoi Mosaic'}
+]) {
+  test(`Components -> LayerManager -> ${type} picker follows application config in both list views`, t => {
+    const originalFlag = getApplicationConfig()[flag];
+    t.equal(originalFlag, true, `${label} is enabled by default`);
+    const dataId = Object.keys(defaultProps.datasets)[0];
+    const layer = new LayerClasses[type]({id: `optional-${type}`, dataId});
+    layer.updateLayerConfig({isConfigActive: true});
+    try {
+      for (const panelListView of ['list', 'byDataset']) {
+        initApplicationConfig({[flag]: false});
+        const props = {
+          ...defaultProps,
+          layers: [layer],
+          layerOrder: [layer.id],
+          layerClasses: LayerClasses,
+          panelListView
+        };
+        const view = render(<LayerManager {...props} />, {
+          wrapper: ({children}) => (
+            <ThemeProvider theme={theme}>
+              <IntlWrapper>{children}</IntlWrapper>
+            </ThemeProvider>
+          )
+        });
+        try {
+          const selector = view.container.querySelector('.layer-config__type');
+          t.ok(selector, `${panelListView}: existing ${label} layer remains configurable`);
           t.equal(
-            options.includes('contour'),
-            enabled === true,
-            `${panelListView}: Contour is offered only when the flag is true (${enabled})`
+            selector.querySelector('.layer-type-selector__item__label').textContent.toLowerCase(),
+            label.toLowerCase(),
+            'still identifies the saved layer when its type is disabled'
           );
-          t.ok(options.includes('point'), 'regular layer types stay available');
-          t.equal(layer.type, 'contour', 'changing the flag does not replace the saved layer');
+          fireEvent.click(selector.querySelector('.item-selector__dropdown'));
+
+          for (const enabled of [false, true, false, undefined]) {
+            initApplicationConfig({[flag]: enabled});
+            view.rerender(<LayerManager {...props} />);
+            const options = Array.from(
+              view.baseElement.querySelectorAll(
+                '.layer-type-selector__item .layer-type-selector__item__label'
+              ),
+              element => element.textContent.toLowerCase()
+            );
+            t.equal(
+              options.includes(label.toLowerCase()),
+              enabled === true,
+              `${panelListView}: ${label} is offered only when the flag is true (${enabled})`
+            );
+            t.ok(options.includes('point'), 'regular layer types stay available');
+            t.equal(layer.type, type, 'changing the flag does not replace the saved layer');
+          }
+        } finally {
+          view.unmount();
+          view.container.remove();
         }
-      } finally {
-        view.unmount();
-        view.container.remove();
       }
+    } finally {
+      initApplicationConfig({[flag]: originalFlag});
     }
-  } finally {
-    initApplicationConfig({enableContourLayer});
-  }
-  t.end();
-});
+    t.end();
+  });
+}
 
 test('Components -> LayerManager -> render -> list view', t => {
   // mount

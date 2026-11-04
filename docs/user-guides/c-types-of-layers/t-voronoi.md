@@ -43,4 +43,17 @@ collinear set also receives a nonzero display extent.
 
 The layer renders flat cells and does not calculate road-network service areas.
 
+## Application configuration
+
+Voronoi Mosaic is enabled by default. Applications embedding kepler.gl can hide it
+from layer type pickers with:
+
+```js
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableVoronoiLayer: false});
+```
+
+Existing Voronoi layers in saved maps remain available for rendering and configuration.
+
 [Back to layers](README.md)

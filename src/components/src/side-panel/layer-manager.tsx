@@ -210,6 +210,7 @@ function LayerManagerFactory(
     const enableGeohashLayer = getApplicationConfig().enableGeohashLayer;
     const enableFlowFieldLayer = getApplicationConfig().enableFlowFieldLayer;
     const enableContourLayer = getApplicationConfig().enableContourLayer;
+    const enableVoronoiLayer = getApplicationConfig().enableVoronoiLayer;
     const enableZarrLayer = getApplicationConfig().enableZarrLayer;
     const enableLayerGroups = getApplicationConfig().enableLayerGroups;
 
@@ -243,6 +244,10 @@ function LayerManagerFactory(
         const {contour: _contour, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableVoronoiLayer) {
+        const {voronoi: _voronoi, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       if (!enableZarrLayer) {
         const {zarr: _zarr, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
@@ -256,6 +261,7 @@ function LayerManagerFactory(
       enableGeohashLayer,
       enableFlowFieldLayer,
       enableContourLayer,
+      enableVoronoiLayer,
       enableZarrLayer,
       layerClasses
     ]);
