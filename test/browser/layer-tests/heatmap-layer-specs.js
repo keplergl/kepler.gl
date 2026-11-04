@@ -1715,3 +1715,53 @@ test('#HeatmapLayer -> maximum surface height is independent of color settings',
   }
   t.end();
 });
+
+test('#HeatmapLayer -> reuse color ramps until palette changes', t => {
+  const layer = new HeatmapLayer({id: 'color-ramp', dataId: 'points'});
+  const data = {data: [], getPosition: () => [0, 0], getWeight: 1};
+  const render = (mapState = INITIAL_MAP_STATE) =>
+    layer.renderLayer({data, mapState, layerCallbacks: {}, visible: true})[0];
+  layer.updateLayerVisConfig({
+    colorRange: {...layer.config.visConfig.colorRange, colors: ['#ff0000', '#00ff00']}
+  });
+  const first = render().props.colorRange;
+  const ramps = new Set();
+  const start = performance.now();
+  for (let i = 0; i < 1000; i++)
+    ramps.add(render({...INITIAL_MAP_STATE, zoom: i / 100}).props.colorRange);
+  t.comment(
+    `1000 heatmap renders: ${ramps.size} color ramps, ${(performance.now() - start).toFixed(2)} ms`
+  );
+  t.equal(ramps.size, 1, 'camera changes retain the color ramp');
+  t.deepEqual(
+    first,
+    [
+      [255, 0, 0],
+      [255, 0, 0],
+      [0, 255, 0],
+      [0, 255, 0]
+    ],
+    'ramp retains endpoint padding'
+  );
+  layer.updateLayerVisConfig({intensity: 2, radius: 40, threshold: 0.4});
+  t.equal(render().props.colorRange, first, 'density settings retain the color ramp');
+  layer.updateLayerVisConfig({
+    colorRange: {...layer.config.visConfig.colorRange, colors: ['#0000ff']}
+  });
+  const changed = render().props.colorRange;
+  t.notEqual(changed, first, 'palette changes replace the ramp');
+  t.deepEqual(
+    changed,
+    [
+      [0, 0, 255],
+      [0, 0, 255],
+      [0, 0, 255]
+    ],
+    'one-color palettes retain padding'
+  );
+  layer.updateLayerVisConfig({colorRange: {...layer.config.visConfig.colorRange, colors: []}});
+  const empty = render().props.colorRange;
+  t.deepEqual(empty, [], 'empty palettes remain empty');
+  t.equal(render().props.colorRange, empty, 'empty palettes are cached too');
+  t.end();
+});
