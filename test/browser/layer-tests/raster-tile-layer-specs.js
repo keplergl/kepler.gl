@@ -1905,9 +1905,22 @@ test('#RasterTileLayer -> categorical class ranges match the colormap texture', 
     'image',
     'colormap',
     'float',
+    'round',
     'vec2',
-    body.replace(/\bfloat\s+/g, 'const ').replace('uv =', 'return')
+    body
+      .replace(/\bfloat\s+/g, 'const ')
+      .replace(/\bdiscard;/g, 'return null;')
+      .replace('uv =', 'return')
   );
+  const getUV = (value, minValue, maxValue, maxPixelValue = 255) =>
+    categoricalUV(
+      // Model the preceding linear rescale's float32 multiplication.
+      {r: Math.fround(Math.fround(value) * Math.fround(1 / maxPixelValue))},
+      {maxPixelValue, categoricalMinValue: minValue, categoricalMaxValue: maxValue},
+      Number,
+      Math.round,
+      (x, y) => [x, y]
+    );
   for (const [minValue, maxValue, values] of [
     [11, 95, [11, 95]],
     [1, 1, [1]],
@@ -1919,12 +1932,7 @@ test('#RasterTileLayer -> categorical class ranges match the colormap texture', 
     const bitmap = generateCategoricalBitmapArray({colorMap, minValue, maxValue});
     t.equal(bitmap.length, 1024, 'keeps a 256-pixel RGBA texture');
     values.forEach((value, index) => {
-      const [u] = categoricalUV(
-        {r: value / 255},
-        {maxPixelValue: 255, categoricalMinValue: minValue, categoricalMaxValue: maxValue},
-        Number,
-        (x, y) => [x, y]
-      );
+      const [u] = getUV(value, minValue, maxValue);
       t.ok(Number.isFinite(u) && u >= 0 && u <= 1, 'the class samples within the texture');
       const pixel = Math.min(255, Math.floor(u * 256));
       t.deepEqual(
@@ -1936,6 +1944,36 @@ test('#RasterTileLayer -> categorical class ranges match the colormap texture', 
     if (maxValue > minValue + 1) {
       t.equal(bitmap[128 * 4 + 3], 0, 'unassigned classes remain transparent');
     }
+    for (const value of [minValue - 1, maxValue + 1]) {
+      t.equal(getUV(value, minValue, maxValue), null, 'out-of-range classes are discarded');
+    }
+  }
+
+  for (const minValue of [0, 11]) {
+    const maxValue = minValue + 128;
+    const classes = Array.from({length: 129}, (_, index) => minValue + index);
+    for (const assigned of [[minValue + 64], classes]) {
+      const colorMap = assigned.map(value => [value, value % 2 ? '#00ff00' : '#ff0000']);
+      const bitmap = generateCategoricalBitmapArray({colorMap, minValue, maxValue});
+      const sampled = classes.map(value => {
+        const [u] = getUV(value, minValue, maxValue);
+        const pixel = Math.min(255, Math.floor(u * 256));
+        return Array.from(bitmap.slice(pixel * 4, pixel * 4 + 4));
+      });
+      t.deepEqual(
+        sampled,
+        classes.map(value =>
+          !assigned.includes(value) ? [0, 0, 0, 0] : value % 2 ? [0, 255, 0, 255] : [255, 0, 0, 255]
+        ),
+        `all 129 classes sample their own color or transparency in ${minValue}:${maxValue}`
+      );
+    }
+  }
+
+  // Signed int8 scaling can recover 9 as 8.999999..., still a valid boundary class.
+  for (const value of [9, 13]) {
+    const uv = getUV(value, 9, 13, 127);
+    t.ok(uv && uv[0] >= 0 && uv[0] <= 1, 'rounding error does not discard a valid endpoint');
   }
   t.end();
 });

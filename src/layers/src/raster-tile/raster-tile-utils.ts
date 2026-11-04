@@ -776,10 +776,11 @@ export function generateCategoricalBitmapArray(
       continue;
     }
     const rgb = hexToRgb(color);
-    const minPixel = Math.max(0, Math.floor((value - minValue) * step));
+    // Include texels whose centers lie within this class interval.
+    const minPixel = Math.max(0, Math.ceil((value - minValue) * step - 0.5));
     const maxPixel = Math.min(
       CATEGORICAL_TEXTURE_WIDTH - 1,
-      Math.floor((value - minValue + 1) * step) - 1
+      Math.ceil((value - minValue + 1) * step - 0.5) - 1
     );
     for (let i = minPixel; i <= maxPixel; i++) {
       data.set([...rgb, CATEGORICAL_TEXTURE_WIDTH - 1], i * 4);

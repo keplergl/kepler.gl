@@ -22,7 +22,11 @@ vec4 colormapApply(sampler2D cmap, vec4 image) {
   vec2 uv;
   if (colormap.hasCategoricalColors == 1) {
     // Sample the center of the same class interval used to build the categorical bitmap.
-    float value = image.r * float(colormap.maxPixelValue);
+    // Recover the integer class without rejecting endpoints due to rescaling roundoff.
+    float value = round(image.r * float(colormap.maxPixelValue));
+    if (value < float(colormap.categoricalMinValue) || value > float(colormap.categoricalMaxValue)) {
+      discard;
+    }
     float count = float(colormap.categoricalMaxValue - colormap.categoricalMinValue + 1);
     uv = vec2((value - float(colormap.categoricalMinValue) + 0.5) / count, 0.5);
   } else {
