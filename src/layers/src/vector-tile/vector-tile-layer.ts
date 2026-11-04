@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {FeatureCollection, Feature} from 'geojson';
+import {createSelector} from 'reselect';
 
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
@@ -71,6 +72,8 @@ import TileDataset from './common-tile/tile-dataset';
 import {isDomainStops, isDomainQuantiles, isIndexedField} from './common-tile/tile-utils';
 
 export {getNumVectorTilesBeingLoaded} from './loading-counter';
+
+const FILTER_CATEGORIES = [1];
 
 export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
@@ -237,6 +240,17 @@ export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): De
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
   declare config: VectorTileLayerConfig;
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
+
+  subLayerPropsSelector = createSelector(
+    visConfig => visConfig.strokeOpacity,
+    (_visConfig, mapState) => mapState?.layerParameters,
+    (strokeOpacity, layerParameters) => ({
+      'polygons-stroke': {opacity: strokeOpacity},
+      'polygons-fill': {
+        parameters: {cullMode: CULL_MODE.BACK, ...layerParameters}
+      }
+    })
+  );
 
   constructor(props: ConstructorParameters<typeof AbstractTileLayer>[0]) {
     super(props);
@@ -667,7 +681,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           getFilterValue: this.getGpuFilterValueAccessor(opts),
           filterRange: gpuFilter.filterRange,
           getFilterCategory,
-          filterCategories: [1],
+          filterCategories: FILTER_CATEGORIES,
           lineWidthUnits: 'pixels',
 
           binary: false,
@@ -744,15 +758,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },
-          _subLayerProps: {
-            'polygons-stroke': {opacity: visConfig.strokeOpacity},
-            'polygons-fill': {
-              parameters: {
-                cullMode: CULL_MODE.BACK,
-                ...(mapState?.layerParameters ?? {})
-              }
-            }
-          },
+          _subLayerProps: this.subLayerPropsSelector(visConfig, mapState),
           loadOptions: {
             mvt: getLoaderOptions().mvt
           }

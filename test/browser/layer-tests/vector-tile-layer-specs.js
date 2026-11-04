@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import sinon from 'sinon';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {
@@ -638,6 +639,71 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
       t.equal(layers[1].props.visible, expected, 'highlight respects the current panel visibility');
       t.deepEqual(layers[1].props.data, [feature], 'highlight keeps selected geometry');
     }
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async t => {
+  const {layer, table, features} = categoricalFilterFixture();
+  const source = {getTileData: async () => features};
+  const data = {
+    ...layer.formatLayerData({[table.id]: table}, undefined, {}),
+    tileSource: source,
+    tilesetDataUrl: 'https://example.com/{z}/{x}/{y}.pbf'
+  };
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+  });
+  const renderSubLayers = sinon.spy(() => null);
+  const render = async (mapState = INITIAL_MAP_STATE) => {
+    const deckLayer = layer
+      .renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState,
+        animationConfig: {},
+        layerCallbacks: {},
+        visible: true
+      })[0]
+      .clone({renderSubLayers});
+    manager.setLayers([deckLayer]);
+    await Promise.all(deckLayer.state.tileset.selectedTiles.map(tile => tile.data));
+    manager.updateLayers();
+    return deckLayer;
+  };
+  try {
+    const first = await render();
+    const tileset = first.state.tileset;
+    const reload = sinon.spy(tileset, 'reloadAll');
+    renderSubLayers.reset();
+    const start = performance.now();
+    for (let i = 0; i < 100; i++) await render({...INITIAL_MAP_STATE});
+    t.comment(
+      `100 unchanged vector renders: ${renderSubLayers.callCount} sublayer builds, ${(
+        performance.now() - start
+      ).toFixed(2)} ms`
+    );
+    t.equal(renderSubLayers.callCount, 0, 'cached sublayers survive unrelated renders');
+    t.equal(reload.callCount, 0, 'no tile reloads');
+    layer.updateLayerVisConfig({strokeOpacity: 0.3});
+    const styled = await render();
+    t.ok(renderSubLayers.callCount > 0, 'stroke opacity rebuilds sublayers');
+    t.equal(
+      styled.props._subLayerProps['polygons-stroke'].opacity,
+      0.3,
+      'new stroke opacity reaches sublayers'
+    );
+    renderSubLayers.reset();
+    const blended = await render({...INITIAL_MAP_STATE, layerParameters: {blend: false}});
+    t.ok(renderSubLayers.callCount > 0, 'blending changes rebuild sublayers');
+    t.equal(
+      blended.props._subLayerProps['polygons-fill'].parameters.blend,
+      false,
+      'new blending parameters reach fills'
+    );
+    t.equal(reload.callCount, 0, 'style changes preserve loaded tile content');
+  } finally {
+    manager.finalize();
   }
   t.end();
 });
