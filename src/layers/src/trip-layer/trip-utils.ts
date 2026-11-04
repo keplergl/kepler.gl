@@ -83,14 +83,20 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
     dataToTimeStamp: [],
     animationDomain: null
   };
-  const sampleTrip = dataToFeature.find(f => f?.geometry?.coordinates?.[0]?.length > 3);
+  const trips = dataToFeature.filter(f => f?.geometry?.coordinates?.[0]?.length > 3);
+  const sampleTrip =
+    trips.find(f => f.geometry.coordinates.some(coord => coord[3] !== 0)) || trips[0];
 
   // if no valid geometry
   if (!sampleTrip) {
     return empty;
   }
 
-  const analyzedType = containValidTime(sampleTrip.geometry.coordinates.map(coord => coord[3]));
+  // Infer units from nonzero timestamps; an all-zero trip is identical in either Unix unit.
+  const sampleTimes = sampleTrip.geometry.coordinates
+    .map(coord => coord[3])
+    .filter(time => time !== 0);
+  const analyzedType = sampleTimes.length ? containValidTime(sampleTimes) : {format: 'X'};
 
   if (!analyzedType) {
     return empty;
@@ -113,7 +119,7 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
 
 function findMinFromSorted(list: number[]) {
   // check if list is null since the default value [] will only be applied when the param is undefined
-  return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) || null;
+  return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) ?? null;
 }
 
 function findMaxFromSorted(list: number[] | null = []) {
