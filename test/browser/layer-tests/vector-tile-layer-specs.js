@@ -2,6 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import sinon from 'sinon';
+import {MVTSource} from '@loaders.gl/mvt';
+import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {
@@ -11,7 +14,7 @@ import {
 } from '@kepler.gl/reducers';
 import {preparedDataset, dataId} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {MISSING_VALUE_COLOR, NO_VALUE_COLOR} from '@kepler.gl/constants';
+import {MISSING_VALUE_COLOR, NO_VALUE_COLOR, RemoteTileFormat} from '@kepler.gl/constants';
 import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
 import {getFilterProps} from '@kepler.gl/utils';
 
@@ -638,6 +641,167 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
       t.equal(layers[1].props.visible, expected, 'highlight respects the current panel visibility');
       t.deepEqual(layers[1].props.data, [feature], 'highlight keeps selected geometry');
     }
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
+  const seed = MVTSource.createDataSource('https://example.com/seed', {
+    core: {
+      loadOptions: {
+        core: {
+          fetch: async () => ({
+            ok: true,
+            text: async () => JSON.stringify({tilejson: '3.0.0', tiles: []})
+          })
+        }
+      }
+    }
+  });
+  await seed.metadata;
+  const mvtMetadata = sinon
+    .stub(Object.getPrototypeOf(seed), 'getMetadata')
+    .callsFake(async () => null);
+  const pmMetadata = sinon
+    .stub(PMTilesTileSource.prototype, 'getMetadata')
+    .callsFake(async () => ({}));
+  const mvtConstruct = sinon.spy(MVTSource, 'createDataSource');
+  const pmConstruct = sinon.spy(PMTilesSource, 'createDataSource');
+  try {
+    for (const format of [RemoteTileFormat.MVT, RemoteTileFormat.PMTILES]) {
+      const {layer, table} = categoricalFilterFixture();
+      const sourceMetadata = {
+        remoteTileFormat: format,
+        tilesetDataUrl:
+          format === RemoteTileFormat.MVT
+            ? 'https://example.com/{z}/{x}/{y}.pbf'
+            : 'https://example.com/a.pmtiles',
+        tilesetMetadataUrl: 'https://example.com/tilejson.json'
+      };
+      const sources = new Set();
+      const caches = new Set();
+      const factory = format === RemoteTileFormat.MVT ? mvtConstruct : pmConstruct;
+      factory.reset();
+      const start = performance.now();
+      let previous;
+      for (let time = 0; time < 100; time++) {
+        table.metadata = {...sourceMetadata};
+        previous = layer.formatLayerData({[table.id]: table}, previous, {currentTime: time});
+        sources.add(previous.tileSource);
+        if (previous.tileSource.pmtiles) caches.add(previous.tileSource.pmtiles.cache);
+      }
+      t.comment(
+        `${format}: 100 formats => ${factory.callCount} source constructions, ${
+          caches.size
+        } archive caches, ${(performance.now() - start).toFixed(2)} ms (metadata I/O stubbed)`
+      );
+      t.equal(factory.callCount, 1, 'unchanged source inputs construct once');
+      t.equal(sources.size, 1, 'playback and equivalent metadata retain source identity');
+      if (format === RemoteTileFormat.PMTILES)
+        t.equal(caches.size, 1, 'PMTiles directory/header cache is retained');
+      if (format === RemoteTileFormat.MVT) {
+        const manager = new LayerManager(device, {
+          viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+        });
+        let requests = 0;
+        const render = async data => {
+          data.tileSource.getTileData = async () => {
+            requests++;
+            return [];
+          };
+          const deck = layer
+            .renderLayer({
+              data,
+              gpuFilter: table.gpuFilter,
+              mapState: INITIAL_MAP_STATE,
+              animationConfig: {},
+              layerCallbacks: {},
+              visible: true
+            })[0]
+            .clone({renderSubLayers: () => null});
+          manager.setLayers([deck]);
+          await Promise.all(deck.state.tileset.selectedTiles.map(tile => tile.data));
+          manager.updateLayers();
+          return deck;
+        };
+        try {
+          const first = await render(previous);
+          const initialRequests = requests;
+          t.ok(initialRequests > 0, 'visible tiles are initially requested');
+          for (let i = 0; i < 10; i++) {
+            const data = layer.formatLayerData({[table.id]: table}, previous, {currentTime: i});
+            await render(data);
+          }
+          t.equal(requests, initialRequests, 'source reuse does not refetch loaded tiles');
+          table.metadata = {
+            ...sourceMetadata,
+            tilesetDataUrl: 'https://example.com/replacement/{z}/{x}/{y}.pbf'
+          };
+          const changed = await render(layer.formatLayerData({[table.id]: table}, previous, {}));
+          t.equal(
+            changed.state.tileset,
+            first.state.tileset,
+            'source replacement retains the tileset'
+          );
+          t.ok(requests > initialRequests, 'changed source URL reloads visible tiles');
+          t.comment(
+            `MVT tile I/O stubs: ${initialRequests} initial calls, 0 additional calls across 10 equivalent formats`
+          );
+        } finally {
+          manager.finalize();
+        }
+        table.metadata = sourceMetadata;
+        previous = layer.formatLayerData({[table.id]: table}, previous, {});
+      }
+      const oldSource = previous.tileSource;
+      table.metadata = {
+        ...sourceMetadata,
+        tilesetMetadataUrl: 'https://example.com/new-metadata.json'
+      };
+      const metadataChanged = layer.formatLayerData({[table.id]: table}, previous, {});
+      t.equal(
+        metadataChanged.tileSource === oldSource,
+        format !== RemoteTileFormat.MVT,
+        'only MVT metadata URL defines a source'
+      );
+      table.metadata = {...sourceMetadata, tilesetDataUrl: 'https://example.com/replacement'};
+      const changed = layer.formatLayerData({[table.id]: table}, metadataChanged, {});
+      t.notEqual(changed.tileSource, metadataChanged.tileSource, 'source URL changes invalidate');
+      table.metadata = {...sourceMetadata, tilesetDataUrl: undefined};
+      t.equal(
+        layer.formatLayerData({[table.id]: table}, changed, {}).tileSource,
+        null,
+        'missing URL clears the source'
+      );
+      table.metadata = sourceMetadata;
+      t.notEqual(
+        layer.formatLayerData({[table.id]: table}, {}, {}).tileSource,
+        oldSource,
+        'restored source gets fresh metadata after removal'
+      );
+      const restored = layer.formatLayerData({[table.id]: table}, {}, {});
+      table.metadata = {
+        ...sourceMetadata,
+        remoteTileFormat:
+          format === RemoteTileFormat.MVT ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT
+      };
+      t.notEqual(
+        layer.formatLayerData({[table.id]: table}, restored, {}).tileSource,
+        restored.tileSource,
+        'format changes invalidate the source'
+      );
+      table.metadata = {};
+      t.equal(
+        layer.formatLayerData({[table.id]: table}, {}, {}).tileSource,
+        null,
+        'unsupported metadata clears the source'
+      );
+    }
+  } finally {
+    mvtMetadata.restore();
+    pmMetadata.restore();
+    mvtConstruct.restore();
+    pmConstruct.restore();
   }
   t.end();
 });

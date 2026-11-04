@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {FeatureCollection, Feature} from 'geojson';
+import {lruMemoize} from 'reselect';
 
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
@@ -237,6 +238,42 @@ export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): De
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
   declare config: VectorTileLayerConfig;
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
+
+  tileSourceSelector = lruMemoize(
+    (
+      _dataId: string,
+      remoteTileFormat: string | undefined,
+      tilesetDataUrl: string | undefined,
+      tilesetMetadataUrl: string | null
+    ): LayerData['tileSource'] => {
+      if (remoteTileFormat === RemoteTileFormat.MVT) {
+        const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
+          const requestData: RequestParameters = {
+            url: input as string,
+            searchParams: new URLSearchParams(),
+            options: init ?? {}
+          };
+
+          return fetch(requestData.url, requestData.options);
+        };
+
+        return tilesetDataUrl
+          ? MVTSource.createDataSource(decodeURIComponent(tilesetDataUrl), {
+              mvt: {
+                metadataUrl: tilesetMetadataUrl,
+                loadOptions: {
+                  core: {fetch: transformFetch}
+                }
+              }
+            })
+          : null;
+      }
+      if (remoteTileFormat === RemoteTileFormat.PMTILES) {
+        return tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
+      }
+      return null;
+    }
+  );
 
   constructor(props: ConstructorParameters<typeof AbstractTileLayer>[0]) {
     super(props);
@@ -489,40 +526,18 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     }
     const dataset = datasets[dataId];
 
-    let tilesetDataUrl: string | undefined;
-    let tileSource: LayerData['tileSource'] = null;
-
-    if (dataset?.type === DatasetType.VECTOR_TILE) {
-      const datasetMetadata = dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata;
-      const remoteTileFormat = datasetMetadata?.remoteTileFormat;
-      if (remoteTileFormat === RemoteTileFormat.MVT) {
-        const transformFetch = async (input: RequestInfo | URL, init?: RequestInit | undefined) => {
-          const requestData: RequestParameters = {
-            url: input as string,
-            searchParams: new URLSearchParams(),
-            options: init ?? {}
-          };
-
-          return fetch(requestData.url, requestData.options);
-        };
-
-        tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
-        tileSource = tilesetDataUrl
-          ? MVTSource.createDataSource(decodeURIComponent(tilesetDataUrl), {
-              mvt: {
-                metadataUrl: datasetMetadata?.tilesetMetadataUrl ?? null,
-                loadOptions: {
-                  core: {fetch: transformFetch}
-                }
-              }
-            })
-          : null;
-      } else if (remoteTileFormat === RemoteTileFormat.PMTILES) {
-        // TODO: to render image pmtiles need to use TileLayer and BitmapLayer (https://github.com/visgl/loaders.gl/blob/master/examples/website/tiles/components/tile-source-layer.ts)
-        tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
-        tileSource = tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
-      }
-    }
+    const datasetMetadata =
+      dataset?.type === DatasetType.VECTOR_TILE
+        ? (dataset.metadata as VectorTileMetadata & VectorTileDatasetMetadata)
+        : undefined;
+    const tilesetDataUrl = datasetMetadata?.tilesetDataUrl;
+    const remoteTileFormat = datasetMetadata?.remoteTileFormat;
+    const tileSource = this.tileSourceSelector(
+      dataId,
+      remoteTileFormat,
+      tilesetDataUrl,
+      remoteTileFormat === RemoteTileFormat.MVT ? datasetMetadata?.tilesetMetadataUrl ?? null : null
+    );
 
     const indexKey = this.config.animation.enabled ? animationConfig.currentTime : null;
     const categoryPredicates = (dataset.filterRecord?.cpu || []).flatMap(filter => {
