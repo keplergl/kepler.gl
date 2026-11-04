@@ -105,8 +105,20 @@ function projectClosestEndpoint(
   return [sx, sy];
 }
 
+/**
+ * The copy of a point on the world nearest the view's centre. The map repeats the world past
+ * ±180°, and a centre that crosses the antimeridian comes back within ±180°: projected as it is,
+ * a point at 178° seen from a centre at -176° lands a whole world away, off screen.
+ */
+function onNearestWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+  const shift = Math.round((viewport.longitude - point[0]) / 360) * 360;
+  if (!shift || !Number.isFinite(shift)) return point;
+  return point.length === 3 ? [point[0] + shift, point[1], point[2]] : [point[0] + shift, point[1]];
+}
+
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
-  const {kind, anchorPoint} = annotation;
+  const {kind} = annotation;
+  const anchorPoint = onNearestWorldCopy(annotation.anchorPoint, viewport);
   const angle = isAnnotationWithArm(annotation) ? degreesToRadians(annotation.angle) : 0;
   const [x, y] = viewport.project(anchorPoint);
 
@@ -289,7 +301,7 @@ function moveCoordinate(
   pickWorldPosition?: PickWorldPosition,
   projectedPoint?: [number, number]
 ): LngLatAltitude {
-  const [px, py] = projectedPoint ?? viewport.project(point);
+  const [px, py] = projectedPoint ?? viewport.project(onNearestWorldCopy(point, viewport));
   const screen: [number, number] = [px + delta.x, py + delta.y];
   const picked = normalizeAnchorPoint(pickWorldPosition?.(screen));
   if (picked) {
