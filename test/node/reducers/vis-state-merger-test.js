@@ -1201,6 +1201,107 @@ test('VisStateMerger -> mergeInteractions -> tooltip timezone', t => {
   t.end();
 });
 
+test('VisStateMerger -> mergeInteractions -> tooltip compare mode', t => {
+  const initialVisState = cloneDeep(InitialState.visState);
+
+  const mergedWithCompare = mergeInteractions(initialVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      compareMode: true,
+      compareType: 'relative'
+    }
+  });
+  t.equal(
+    mergedWithCompare.interactionConfig.tooltip.config.compareMode,
+    true,
+    'should hydrate a saved tooltip compareMode'
+  );
+  t.equal(
+    mergedWithCompare.interactionConfig.tooltip.config.compareType,
+    'relative',
+    'should hydrate a saved tooltip compareType'
+  );
+
+  const mergedWithoutCompare = mergeInteractions(mergedWithCompare, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {}
+    }
+  });
+  t.equal(
+    mergedWithoutCompare.interactionConfig.tooltip.config.compareMode,
+    true,
+    'should preserve the current compareMode when a config omits it'
+  );
+  t.equal(
+    mergedWithoutCompare.interactionConfig.tooltip.config.compareType,
+    'relative',
+    'should preserve the current compareType when a config omits it'
+  );
+
+  const mergedWithInvalidType = mergeInteractions(initialVisState, {
+    tooltip: {
+      enabled: true,
+      fieldsToShow: {},
+      compareMode: true,
+      compareType: 'unknown'
+    }
+  });
+  t.equal(
+    mergedWithInvalidType.interactionConfig.tooltip.config.compareType,
+    'absolute',
+    'should ignore an unknown compareType'
+  );
+
+  t.end();
+});
+
+test('VisStateMerger -> tooltip compare mode survives save and load', t => {
+  const initialVisState = cloneDeep(InitialState.visState);
+  const tooltip = initialVisState.interactionConfig.tooltip;
+  const savedState = {
+    ...initialVisState,
+    interactionConfig: {
+      ...initialVisState.interactionConfig,
+      tooltip: {
+        ...tooltip,
+        config: {...tooltip.config, compareMode: true, compareType: 'relative'}
+      }
+    }
+  };
+
+  const saved = SchemaManager.getConfigToSave({
+    visState: savedState,
+    mapState: InitialState.mapState,
+    mapStyle: InitialState.mapStyle,
+    uiState: InitialState.uiState
+  });
+  t.equal(
+    saved.config.visState.interactionConfig.tooltip.compareMode,
+    true,
+    'saved config should write compareMode'
+  );
+
+  const parsed = SchemaManager.parseSavedConfig(saved);
+  const merged = mergeInteractions(
+    cloneDeep(InitialState.visState),
+    parsed.visState.interactionConfig
+  );
+  t.equal(
+    merged.interactionConfig.tooltip.config.compareMode,
+    true,
+    'loaded map should keep compareMode'
+  );
+  t.equal(
+    merged.interactionConfig.tooltip.config.compareType,
+    'relative',
+    'loaded map should keep compareType'
+  );
+
+  t.end();
+});
+
 test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   const savedConfig = cloneDeep(savedStateV1);
   const oldState = cloneDeep(StateWFilesFiltersLayerColor);
