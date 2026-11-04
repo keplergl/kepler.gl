@@ -479,3 +479,32 @@ describe('getMetaUrl', () => {
     expect(getMetaUrl(input)).toEqual(expected);
   });
 });
+
+test.each(['1970-01-01', '1970-01-01T00:00:00Z'])(
+  'retains the epoch time step indexed by %s',
+  epoch => {
+    const metadata = parseMetadata({
+      tilejson: {
+        layers: [
+          {
+            id: 'features',
+            fields: [
+              {name: `value|${epoch}`, type: 'float64', min: 1, max: 2},
+              {name: 'value|1970-01-02', type: 'float64', min: 3, max: 4}
+            ]
+          }
+        ]
+      }
+    } as any);
+    expect(metadata?.fields).toHaveLength(1);
+    expect(metadata?.fields[0]).toMatchObject({
+      name: 'value',
+      indexBy: {
+        mappedValue: {'0': `value|${epoch}`, '86400000': 'value|1970-01-02'},
+        ...(epoch.includes('T')
+          ? {timeDomain: {domain: [0, 86400000], mappedValue: [0, 86400000]}}
+          : {})
+      }
+    });
+  }
+);

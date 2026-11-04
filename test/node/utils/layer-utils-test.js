@@ -1591,3 +1591,71 @@ test('layerUtils -> reuse bound callbacks with unchanged owners, handlers and in
   t.deepEqual(bindLayerCallbacks(undefined, 0), {}, 'missing callbacks remain empty');
   t.end();
 });
+
+test('layerUtils -> aggregation tooltips evaluate only requested fields', t => {
+  const layer = new KeplerGlLayers.HexagonLayer({id: 'tooltip', dataId: 'wide'});
+  layer.updateLayerVisConfig({colorAggregation: 'sum'});
+  let evaluations = 0;
+  const fields = Array.from({length: 20}, (_, fieldIdx) => ({
+    name: `field-${fieldIdx}`,
+    type: 'real',
+    fieldIdx,
+    valueAccessor: d => {
+      evaluations++;
+      return d.index + fieldIdx;
+    }
+  }));
+  const points = Array.from({length: 1000}, (_, index) => ({index}));
+  const object = {points, colorValue: 3, elevationValue: 4};
+  const requested = [{name: 'field-0'}, {name: 'field-19'}, {name: 'missing'}, {name: 'field-0'}];
+  const args = {
+    animationConfig: {currentTime: 5},
+    interactionConfig: {
+      tooltip: {enabled: true, config: {fieldsToShow: {wide: requested}, timezone: 'UTC'}}
+    },
+    hoverInfo: {picked: true, object, layer: {props: {idx: 0}}},
+    layers: [layer],
+    layersToRender: {[layer.id]: true},
+    datasets: {wide: {fields, dataContainer: {}}}
+  };
+  const start = performance.now();
+  const tooltip = getLayerHoverProp(args);
+  t.comment(
+    `1000 points x 20 fields, 2 requested: ${evaluations} accessor evaluations, ${(
+      performance.now() - start
+    ).toFixed(2)} ms`
+  );
+  t.equal(evaluations, 2000, 'only requested existing columns are evaluated once');
+  t.deepEqual(
+    Object.keys(tooltip.data.aggregatedData),
+    ['field-0', 'field-19'],
+    'tooltip contains requested aggregates'
+  );
+  t.equal(tooltip.data.aggregatedData['field-0'].value, 499500, 'first aggregate is unchanged');
+  t.equal(tooltip.data.aggregatedData['field-19'].value, 518500, 'last aggregate is unchanged');
+  t.equal(tooltip.data.points, points, 'bin points are preserved');
+  t.equal(tooltip.fields, fields, 'full metadata remains available to the tooltip');
+  t.equal(tooltip.fieldsToShow, requested, 'requested order and formatting remain unchanged');
+  evaluations = 0;
+  args.interactionConfig.tooltip.config.fieldsToShow.wide = [];
+  t.deepEqual(
+    getLayerHoverProp(args).data.aggregatedData,
+    {},
+    'empty selection computes no aggregates'
+  );
+  t.equal(evaluations, 0, 'point-count-only tooltip does no field work');
+  delete args.interactionConfig.tooltip.config.fieldsToShow.wide;
+  t.deepEqual(
+    getLayerHoverProp(args).data.aggregatedData,
+    {},
+    'missing field selection computes no aggregates'
+  );
+  const full = layer.getHoverData(object, {}, fields);
+  t.equal(
+    Object.keys(full.aggregatedData).length,
+    20,
+    'direct callers retain full-field aggregation'
+  );
+  t.equal(evaluations, 20000, 'direct callers still evaluate all supplied fields');
+  t.end();
+});

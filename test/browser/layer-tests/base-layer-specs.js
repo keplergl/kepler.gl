@@ -2,7 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
-import {Layer, AggregationLayer} from '@kepler.gl/layers';
+import {Layer, AggregationLayer, KeplerGlLayers} from '@kepler.gl/layers';
+import {_compareProps} from '@deck.gl/core';
+import {tableFromArrays} from 'apache-arrow';
+import {getTextOffsetByRadius} from '../../../src/layers/src/layer-text-label';
 import {KeplerTable} from '@kepler.gl/table';
 
 test('#BaseLayer -> updateLayerDomain', t => {
@@ -207,5 +210,118 @@ test('#BaseLayer -> getAllPossibleColumnPairs', t => {
   t.equal(Layer.getAllPossibleColumnPairs(columnes1).length, 4, 'should find 4 pairs');
   t.equal(Layer.getAllPossibleColumnPairs(columnes2).length, 2, 'should find 4 pairs');
   t.equal(Layer.getAllPossibleColumnPairs(columnes3).length, 1, 'should find 4 pairs');
+  t.end();
+});
+
+test('#BaseLayer -> text offsets invalidate only for their inputs', t => {
+  for (const LayerClass of [
+    KeplerGlLayers.PointLayer,
+    KeplerGlLayers.IconLayer,
+    KeplerGlLayers.GeojsonLayer,
+    KeplerGlLayers.TripLayer,
+    KeplerGlLayers.H3Layer,
+    AggregationLayer
+  ]) {
+    for (const arrow of [false, true]) {
+      const layer = new LayerClass({id: 'text-offset', dataId: 'points'});
+      layer.config.textLabel[0] = {
+        ...layer.config.textLabel[0],
+        field: {name: 'label'},
+        anchor: 'start',
+        alignment: 'bottom',
+        size: 18,
+        collisionEnabled: false
+      };
+      let camera = {latitude: 30, longitude: 0, zoom: 10, zoomOffset: 0};
+      const data = {
+        data: arrow ? tableFromArrays({label: ['x']}) : [{radius: 2}],
+        textLabels: [{getText: () => 'x'}]
+      };
+      let triggers = {
+        getRadius: {sizeField: 'radius'},
+        getPointRadius: {radiusField: 'point-radius'}
+      };
+      const render = () =>
+        layer.renderTextLabelLayer(
+          {
+            getPosition: () => [0, 0],
+            getPixelOffset: getTextOffsetByRadius(
+              layer.getRadiusScaleByZoom(camera),
+              d => d.radius,
+              camera
+            ),
+            updateTriggers: triggers,
+            sharedProps: {}
+          },
+          {data, mapState: camera, visible: true}
+        )[0];
+      const first = render();
+      const differs = next =>
+        _compareProps({
+          oldProps: first.props.updateTriggers.getPixelOffset,
+          newProps: next.props.updateTriggers.getPixelOffset
+        });
+      let invalidations = 0;
+      const start = performance.now();
+      for (let i = 0; i < 100; i++) {
+        camera = {
+          ...camera,
+          longitude: i,
+          bearing: i,
+          pitch: i / 2,
+          width: 800 + i,
+          isDragging: Boolean(i % 2),
+          layerParameters: {blend: true}
+        };
+        if (differs(render())) invalidations++;
+      }
+      t.comment(
+        `${
+          layer.type
+        }, Arrow=${arrow}: ${invalidations}/100 unrelated renders invalidate offsets (${(
+          performance.now() - start
+        ).toFixed(2)} ms)`
+      );
+      t.equal(invalidations, 0, 'unrelated map state does not rebuild label offsets');
+      t.deepEqual(
+        render().props.getPixelOffset({radius: 2}),
+        first.props.getPixelOffset({radius: 2}),
+        'offset values stay unchanged'
+      );
+      for (const [key, value] of [
+        ['latitude', 45],
+        ['zoom', 11],
+        ['scale', 2000],
+        ['zoomOffset', 2]
+      ]) {
+        const previous = camera;
+        camera = {...camera, [key]: value};
+        t.ok(differs(render()), `${key} invalidates offsets`);
+        camera = previous;
+      }
+      for (const [key, value] of [
+        ['size', 30],
+        ['anchor', 'end'],
+        ['alignment', 'top'],
+        ['offset', [4, 5]]
+      ]) {
+        const previous = layer.config.textLabel[0];
+        layer.config.textLabel[0] = {...previous, [key]: value};
+        t.ok(differs(render()), `label ${key} invalidates offsets`);
+        layer.config.textLabel[0] = previous;
+      }
+      for (const key of ['getRadius', 'getPointRadius']) {
+        const previous = triggers;
+        triggers = {
+          ...triggers,
+          [key]: {[key === 'getRadius' ? 'sizeField' : 'radiusField']: 'replacement'}
+        };
+        t.ok(differs(render()), `${key} invalidates offsets`);
+        triggers = previous;
+      }
+      layer.config.visConfig.radius = 42;
+      t.ok(differs(render()), 'radius scale invalidates offsets');
+    }
+  }
   t.end();
 });

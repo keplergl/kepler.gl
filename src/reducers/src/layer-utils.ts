@@ -257,17 +257,21 @@ export function getLayerHoverProp({
         return null;
       }
       const {dataContainer, fields} = datasets[dataId];
+      const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+      const requestedFields = new Set((fieldsToShow || []).map(field => field.name));
+      const hoverFields = layer.isAggregated
+        ? fields.filter(field => requestedFields.has(field.name))
+        : fields;
       const data: DataRow | null = layer.getHoverData(
         object || hoverInfo.index,
         dataContainer,
-        fields,
+        hoverFields,
         animationConfig,
         hoverInfo
       );
       if (!data) {
         return null;
       }
-      const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
 
       return {
         data,

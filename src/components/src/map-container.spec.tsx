@@ -68,6 +68,30 @@ function setup(strictMode = false) {
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
 
+test('reuses callback owners across camera renders without sharing them between maps', () => {
+  const {props, ref} = setup();
+  const callbacks = ref.current.layerCallbacksSelector(props);
+  expect(
+    ref.current.layerCallbacksSelector({...props, mapState: {zoom: 5, longitude: 10}})
+  ).toBe(callbacks);
+  const otherMap = setup();
+  expect(otherMap.ref.current.layerCallbacksSelector(otherMap.props)).not.toBe(callbacks);
+});
+
+test('captures the originating layer snapshot for pending WMS callbacks after reordering', () => {
+  const {props, layer, ref, response, rerender} = setup();
+  const callbacks = ref.current.layerCallbacksSelector(props);
+  const otherLayer = {id: 'other'};
+  rerender({...props.visState, layers: [otherLayer, layer]});
+  const reordered = ref.current.layerCallbacksSelector(ref.current.props);
+  expect(reordered).not.toBe(callbacks);
+  const onFeatureInfo = jest.spyOn(ref.current, '_onWMSFeatureInfo').mockImplementation(() => {});
+  callbacks.onWMSFeatureInfo(0, response);
+  reordered.onWMSFeatureInfo(0, response);
+  expect(onFeatureInfo).toHaveBeenNthCalledWith(1, layer, response);
+  expect(onFeatureInfo).toHaveBeenNthCalledWith(2, otherLayer, response);
+});
+
 test('publishes a response only for the current selection and originating layer', () => {
   const {props, layer, ref, response} = setup();
   ref.current._onWMSFeatureInfo(layer, response);
@@ -95,10 +119,11 @@ test.each<[string, (state: any) => any]>([
     })
   ]
 ])('ignores a pending response after %s', (_name, update) => {
-  const {props, layer, ref, response, rerender} = setup();
+  const {props, ref, response, rerender} = setup();
+  const callbacks = ref.current.layerCallbacksSelector(props);
   rerender(update(props.visState));
-  ref.current._onWMSFeatureInfo(layer, response);
-  ref.current._onWMSFeatureInfo(layer, {...response, featureInfo: null});
+  callbacks.onWMSFeatureInfo(0, response);
+  callbacks.onWMSFeatureInfo(0, {...response, featureInfo: null});
   expect(props.visStateActions.wmsFeatureInfo).not.toHaveBeenCalled();
 });
 
