@@ -564,6 +564,7 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
   switch (layer.type) {
     case LAYER_TYPES.point:
     case LAYER_TYPES.icon:
+    case LAYER_TYPES.voronoi:
       if (
         layer.config?.columnMode === 'geoarrow' &&
         dataContainer

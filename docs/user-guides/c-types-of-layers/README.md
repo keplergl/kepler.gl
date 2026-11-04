@@ -10,6 +10,12 @@ Single feature layers render 1 feature
 
 Point layers draw points for a given event or object based on its location - latitude and longitude.
 
+## Voronoi Mosaic
+
+[Voronoi Mosaic](t-voronoi.md) creates irregular nearest-site cells around point locations.
+Color cells by an attribute to compare stores, stations, sensors, and facilities. Cell
+boundaries follow the point distribution; they do not represent travel-time catchments.
+
 ## Arc
 
 ![Arc layer](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/c-arc-layer.png 'Arc layer')

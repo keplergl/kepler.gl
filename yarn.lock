@@ -4177,6 +4177,7 @@ __metadata:
     "@turf/distance": "npm:^7.2.0"
     "@turf/helpers": "npm:^7.2.0"
     "@types/d3-contour": "npm:^3.0.6"
+    "@types/d3-delaunay": "npm:^6"
     "@types/geojson": "npm:^7946.0.8"
     "@types/keymirror": "npm:^0.1.1"
     "@types/styled-components": "npm:^5.1.32"
@@ -4185,6 +4186,7 @@ __metadata:
     buffer: "npm:6.0.3"
     d3-array: "npm:^2.8.0"
     d3-contour: "npm:^3.0.2"
+    d3-delaunay: "npm:^6"
     d3-format: "npm:^3.1.0"
     d3-interpolate: "npm:^3.0.1"
     d3-shape: "npm:^1.2.0"
@@ -10272,6 +10274,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-delaunay@npm:^6":
+  version: 6.0.4
+  resolution: "@types/d3-delaunay@npm:6.0.4"
+  checksum: 10c0/d154a8864f08c4ea23ecb9bdabcef1c406a25baa8895f0cb08a0ed2799de0d360e597552532ce7086ff0cdffa8f3563f9109d18f0191459d32bb620a36939123
+  languageName: node
+  linkType: hard
+
 "@types/d3-scale@npm:^3.2.2":
   version: 3.3.5
   resolution: "@types/d3-scale@npm:3.3.5"
@@ -15517,6 +15526,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-delaunay@npm:^6":
+  version: 6.0.5
+  resolution: "d3-delaunay@npm:6.0.5"
+  dependencies:
+    delaunator: "npm:5"
+  checksum: 10c0/ee29d7549fcd3c3e7730c324705e8095b115b9e9166f2d24d89304e71e994a4185130bd624af9b6518d0008ff22d32559e75522a0dd19745ca49ad5246ecd7a9
+  languageName: node
+  linkType: hard
+
 "d3-dispatch@npm:1 - 3":
   version: 3.0.1
   resolution: "d3-dispatch@npm:3.0.1"
@@ -16206,7 +16224,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"delaunator@npm:^5.1.0":
+"delaunator@npm:5, delaunator@npm:^5.1.0":
   version: 5.1.0
   resolution: "delaunator@npm:5.1.0"
   dependencies:

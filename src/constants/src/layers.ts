@@ -663,6 +663,7 @@ export const LAYER_TYPES = keyMirror({
   icon: null,
   heatmap: null,
   contour: null,
+  voronoi: null,
   hexagonId: null,
   '3D': null,
   trip: null,
@@ -690,5 +691,6 @@ export const EDITOR_AVAILABLE_LAYERS: string[] = [
   LAYER_TYPES.hexagonId,
   LAYER_TYPES.geojson,
   LAYER_TYPES.heatmap,
-  LAYER_TYPES.contour
+  LAYER_TYPES.contour,
+  LAYER_TYPES.voronoi
 ];

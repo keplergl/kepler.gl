@@ -14,6 +14,7 @@
       * [Add Data to the Map](docs/user-guides/b-kepler-gl-workflow/a-add-data-to-the-map.md)
     * [Layers](docs/user-guides/c-types-of-layers/README.md)
       * [Point](docs/user-guides/c-types-of-layers/a-point.md)
+      * [Voronoi Mosaic](docs/user-guides/c-types-of-layers/t-voronoi.md)
       * [S2 Layer](docs/user-guides/c-types-of-layers/l-s2.md)
       * [A5 Layer](docs/user-guides/c-types-of-layers/q-a5.md)
       * [GeoHash Layer](docs/user-guides/c-types-of-layers/r-geohash.md)
