@@ -7292,6 +7292,21 @@ function findChildDatasetIds(value) {
 }
 
 // moved unmerged layers, filters, interactions
+/**
+ * Remove the layers of a dataset being replaced, to be merged back with the new data.
+ * They come back under the same ids, so the zoom opacity controllers keep listing them:
+ * removeLayerUpdater would drop them, and nothing would add them back.
+ */
+function parkLayers(state, layers) {
+  const stateRemoved = layers.reduce(
+    (accu, layer) => removeLayerUpdater(accu, {id: layer.id}),
+    state
+  );
+  return stateRemoved.interactionConfig !== state.interactionConfig
+    ? {...stateRemoved, interactionConfig: state.interactionConfig}
+    : stateRemoved;
+}
+
 function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged}) {
   // remove prop value from state
   // TODO: should we add remove updater to merger as well?
@@ -7300,7 +7315,7 @@ function moveValueToBeMerged(state, propValues, {prop, toMergeProp, saveUnmerged
   }
   const stateRemoved =
     prop === 'layers'
-      ? propValues.reduce((accu, propValue) => removeLayerUpdater(accu, {id: propValue.id}), state)
+      ? parkLayers(state, propValues)
       : Array.isArray(state[prop])
       ? {
           ...state,

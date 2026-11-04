@@ -4,18 +4,23 @@
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 
-import {VisStateActions} from '@kepler.gl/actions';
-import {
+import {VisStateActions, registerEntry} from '@kepler.gl/actions';
+import {processCsvData} from '@kepler.gl/processors';
+import keplerGlReducer, {
+  addDataToMapUpdater,
   combineZoomOpacityControllers,
   getLayerZoomOpacityFactor,
   getZoomOpacityAnnotationTargetId,
   INITIAL_VIS_STATE,
   mergeInteractions,
   renderDeckGlLayer,
+  replaceDataInMapUpdater,
   visStateReducer,
   zoomOpacityFactor
 } from '@kepler.gl/reducers';
-import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
+import {drainTasksForTesting} from '@kepler.gl/tasks';
+import testCsvData, {sampleConfig, dataWithNulls} from 'test/fixtures/test-csv-data';
+import {applyExistingDatasetTasks, StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
 const stops = {appear: 2, full: 4, fade: 8, gone: 10};
 
@@ -290,4 +295,65 @@ test('visStateReducer -> REMOVE_LAYER drops zoom opacity layer id', t => {
     'still removes the layer'
   );
   t.end();
+});
+
+function stateWithZoomOpacityOnFirstLayer() {
+  const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const added = addDataToMapUpdater(initial, {
+    payload: {
+      datasets: {info: {id: sampleConfig.dataId}, data: processCsvData(testCsvData)},
+      config: sampleConfig.config
+    }
+  });
+  const visState = applyExistingDatasetTasks(visStateReducer, added.visState);
+  drainTasksForTesting();
+  const zoomOpacity = visState.interactionConfig.zoomOpacity;
+  return {
+    ...added,
+    visState: {
+      ...visState,
+      interactionConfig: {
+        ...visState.interactionConfig,
+        zoomOpacity: {
+          ...zoomOpacity,
+          enabled: true,
+          config: {
+            ...zoomOpacity.config,
+            controllers: [{id: 'c1', layerIds: [visState.layers[0].id], stops}]
+          }
+        }
+      }
+    }
+  };
+}
+
+[
+  {label: 'same dataset id', id: sampleConfig.dataId, options: {}},
+  {label: 'new dataset id', id: 'replacement', options: {}},
+  {label: 'original dataset kept', id: 'replacement', options: {deleteOriginalDataset: false}}
+].forEach(({label, id, options}) => {
+  test(`replaceDataInMap keeps zoom opacity layer ids (${label})`, t => {
+    const state = stateWithZoomOpacityOnFirstLayer();
+    const layerId = state.visState.layers[0].id;
+
+    const pending = replaceDataInMapUpdater(state, {
+      payload: {
+        datasetToReplaceId: sampleConfig.dataId,
+        datasetToUse: {info: {id}, data: processCsvData(dataWithNulls)},
+        options
+      }
+    });
+    const visState = applyExistingDatasetTasks(visStateReducer, pending.visState);
+    drainTasksForTesting();
+
+    const layer = visState.layers.find(l => l.id === layerId);
+    t.ok(layer, 'the layer comes back under the same id');
+    t.equal(layer?.config.dataId, id, 'the layer uses the new dataset');
+    t.deepEqual(
+      visState.interactionConfig.zoomOpacity.config.controllers[0].layerIds,
+      [layerId],
+      'the controller still lists the layer'
+    );
+    t.end();
+  });
 });
