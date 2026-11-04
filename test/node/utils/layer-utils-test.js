@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {bindLayerCallbacks} from '../../../src/reducers/src/layer-utils';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {
@@ -1524,5 +1525,69 @@ test('layerUtils -> getLayerOrderFromLayers', t => {
   const layerOrder = getLayerOrderFromLayers(visState.layers);
 
   t.deepEqual(layerOrder, ['point-0', 'geojson-1'], 'Should generate layerOrder correctly');
+  t.end();
+});
+
+test('layerUtils -> reuse bound callbacks with unchanged owners, handlers and indexes', t => {
+  const calls = [];
+  function onLayerHover(idx, value) {
+    calls.push([this, idx, value]);
+  }
+  const owner = {onLayerHover, onSetLayerDomain: onLayerHover};
+  const unique = new Set();
+  const start = performance.now();
+  for (let render = 0; render < 1000; render++) {
+    for (let idx = 0; idx < 20; idx++) {
+      const bound = bindLayerCallbacks(owner, idx);
+      unique.add(bound.onLayerHover);
+      unique.add(bound.onSetLayerDomain);
+    }
+  }
+  t.comment(
+    `20 layers x 1000 renders: ${unique.size} bound functions, ${(
+      performance.now() - start
+    ).toFixed(2)} ms`
+  );
+  t.equal(unique.size, 40, 'unchanged renders and split-map calls reuse bindings');
+  const first = bindLayerCallbacks(owner, 0);
+  const reordered = bindLayerCallbacks(owner, 1);
+  first.onLayerHover('first');
+  reordered.onLayerHover('reordered');
+  t.deepEqual(
+    calls.map(call => call.slice(1)),
+    [
+      [0, 'first'],
+      [1, 'reordered']
+    ],
+    'reordering binds the current index'
+  );
+  t.ok(
+    calls.every(call => call[0] === owner),
+    'callbacks keep their receiver'
+  );
+
+  const otherOwner = {onLayerHover};
+  bindLayerCallbacks(otherOwner, 0).onLayerHover('other map');
+  t.equal(calls[2][0], otherOwner, 'shared methods keep separate ownership');
+  t.notEqual(
+    bindLayerCallbacks(otherOwner, 0).onLayerHover,
+    first.onLayerHover,
+    'different owners do not share callbacks'
+  );
+
+  const replacement = (idx, value) => calls.push(['replacement', idx, value]);
+  owner.onLayerHover = replacement;
+  const changed = bindLayerCallbacks(owner, 0);
+  t.notEqual(changed.onLayerHover, first.onLayerHover, 'replaced handlers invalidate');
+  t.equal(changed.onSetLayerDomain, first.onSetLayerDomain, 'unchanged handlers retain identity');
+  changed.onLayerHover('new');
+  t.deepEqual(calls[3], ['replacement', 0, 'new'], 'replacement is invoked');
+  delete owner.onSetLayerDomain;
+  t.deepEqual(
+    Object.keys(bindLayerCallbacks(owner, 0)),
+    ['onLayerHover'],
+    'removed handlers are not retained'
+  );
+  t.deepEqual(bindLayerCallbacks(undefined, 0), {}, 'missing callbacks remain empty');
   t.end();
 });

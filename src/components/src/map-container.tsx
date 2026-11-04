@@ -419,6 +419,17 @@ export default function MapContainerFactory(
       this.layerDataSelector,
       prepareLayersForDeck
     );
+    layerCallbacksSelector = createSelector(this.layersSelector, layers => ({
+      onLayerHover: this._onLayerHover,
+      onSetLayerDomain: this._onLayerSetDomain,
+      onFilteredItemsChange: this._onLayerFilteredItemsChange,
+      // Capture the originating layer: an async result may arrive after
+      // removal or reordering has put another layer at the same index.
+      onWMSFeatureInfo: (idx, data) => this._onWMSFeatureInfo(layers[idx], data),
+      onRedrawNeeded: this._onRedrawNeeded,
+      onFitBounds: this._onFitBounds,
+      onTilesetLoadError: this._onTilesetLoadError
+    }));
     filtersSelector = props => props.visState.filters;
     polygonFiltersSelector = createSelector(this.filtersSelector, filters =>
       filters.filter(f => f.type === FILTER_TYPES.polygon && f.enabled !== false)
@@ -1245,17 +1256,7 @@ export default function MapContainerFactory(
               }
             : undefined
         },
-        {
-          onLayerHover: this._onLayerHover,
-          onSetLayerDomain: this._onLayerSetDomain,
-          onFilteredItemsChange: this._onLayerFilteredItemsChange,
-          // Capture the originating layer: an async result may arrive after
-          // removal or reordering has put another layer at the same index.
-          onWMSFeatureInfo: (idx, data) => this._onWMSFeatureInfo(visState.layers[idx], data),
-          onRedrawNeeded: this._onRedrawNeeded,
-          onFitBounds: this._onFitBounds,
-          onTilesetLoadError: this._onTilesetLoadError
-        },
+        this.layerCallbacksSelector(this.props),
         deckGlProps
       );
 

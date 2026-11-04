@@ -467,17 +467,39 @@ export type ComputeDeckLayersProps = {
   };
 };
 
+// Owners may share handlers, but the callback receiver and layer index must stay distinct.
+const boundLayerCallbacks = new WeakMap<
+  LayerCallbacks,
+  Map<number, {handlers: LayerCallbacks; bound: BindedLayerCallbacks}>
+>();
+
 export function bindLayerCallbacks(
   layerCallbacks: LayerCallbacks = {},
   idx: number
 ): BindedLayerCallbacks {
-  return Object.keys(layerCallbacks).reduce(
-    (accu, key) => ({
-      ...accu,
-      [key]: val => layerCallbacks[key](idx, val)
-    }),
-    {} as Record<string, (val: unknown) => void>
-  );
+  let byIndex = boundLayerCallbacks.get(layerCallbacks);
+  if (!byIndex) {
+    byIndex = new Map();
+    boundLayerCallbacks.set(layerCallbacks, byIndex);
+  }
+  const previous = byIndex.get(idx);
+  const keys = Object.keys(layerCallbacks);
+  if (
+    previous &&
+    keys.length === Object.keys(previous.handlers).length &&
+    keys.every(key => previous.handlers[key] === layerCallbacks[key])
+  ) {
+    return previous.bound;
+  }
+  const bound = keys.reduce((accu, key) => {
+    accu[key] =
+      previous?.handlers[key] === layerCallbacks[key] && previous?.bound[key]
+        ? previous.bound[key]
+        : val => layerCallbacks[key](idx, val);
+    return accu;
+  }, {} as Record<string, (val: unknown) => void>);
+  byIndex.set(idx, {handlers: {...layerCallbacks}, bound});
+  return bound;
 }
 
 function computeDeckLayersFromLayerOrder(

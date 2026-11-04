@@ -67,5 +67,31 @@ test('MapContainerFactory - display all options', t => {
   instance._onCloseMapPopover();
   t.equal(onLayerClick.called, true, 'Should be calling onLayerClick');
 
+  const callbacks = instance.layerCallbacksSelector(props);
+  t.equal(
+    instance.layerCallbacksSelector({...props, mapState: {...props.mapState}}),
+    callbacks,
+    'camera renders reuse the callback owner'
+  );
+  const onFeatureInfo = sinon.stub(instance, '_onWMSFeatureInfo');
+  const [firstLayer, secondLayer] = props.visState.layers;
+  const reordered = instance.layerCallbacksSelector({
+    ...props,
+    visState: {...props.visState, layers: [secondLayer, firstLayer]}
+  });
+  callbacks.onWMSFeatureInfo(0, 'old request');
+  reordered.onWMSFeatureInfo(0, 'new request');
+  t.equal(
+    onFeatureInfo.firstCall.args[0],
+    firstLayer,
+    'pending WMS replies retain their original layer'
+  );
+  t.equal(
+    onFeatureInfo.secondCall.args[0],
+    secondLayer,
+    'new WMS requests use the reordered layer'
+  );
+  onFeatureInfo.restore();
+
   t.end();
 });
