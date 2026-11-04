@@ -3,7 +3,7 @@
 
 import test from 'tape-catch';
 import sinon from 'sinon';
-import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {
   INITIAL_MAP_STATE,
@@ -14,7 +14,7 @@ import {preparedDataset, dataId} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {MISSING_VALUE_COLOR, NO_VALUE_COLOR} from '@kepler.gl/constants';
 import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
-import {getFilterProps} from '@kepler.gl/utils';
+import {getFilterProps, getLayerBlendingParameters} from '@kepler.gl/utils';
 
 const {VectorTileLayer} = KeplerGlLayers;
 
@@ -645,6 +645,23 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
 
 test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async t => {
   const {layer, table, features} = categoricalFilterFixture();
+  features.push({
+    type: 'Feature',
+    properties: {category: '病院', region: 'east', beds: 10},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  });
+  layer.updateLayerVisConfig({stroked: true});
   const source = {getTileData: async () => features};
   const data = {
     ...layer.formatLayerData({[table.id]: table}, undefined, {}),
@@ -654,7 +671,7 @@ test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async
   const manager = new LayerManager(device, {
     viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
   });
-  const renderSubLayers = sinon.spy(() => null);
+  const renderSubLayers = sinon.spy(props => layer.renderSubLayers(props));
   const render = async (mapState = INITIAL_MAP_STATE) => {
     const deckLayer = layer
       .renderLayer({
@@ -693,6 +710,8 @@ test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async
       0.3,
       'new stroke opacity reaches sublayers'
     );
+    const stroke = manager.getLayers().find(subLayer => subLayer.id.endsWith('-polygons-stroke'));
+    t.equal(stroke.props.opacity, 0.3, 'cached polygon strokes receive the new opacity');
     renderSubLayers.reset();
     const blended = await render({...INITIAL_MAP_STATE, layerParameters: {blend: false}});
     t.ok(renderSubLayers.callCount > 0, 'blending changes rebuild sublayers');
@@ -701,9 +720,154 @@ test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async
       false,
       'new blending parameters reach fills'
     );
+    const fill = manager.getLayers().find(subLayer => subLayer.id.endsWith('-polygons-fill'));
+    t.equal(fill.props.parameters.blend, false, 'cached polygon fills receive blending changes');
+    const additiveState = () => ({
+      ...INITIAL_MAP_STATE,
+      layerParameters: getLayerBlendingParameters('additive')
+    });
+    await render(additiveState());
+    renderSubLayers.reset();
+    for (let i = 0; i < 5; i++) await render(additiveState());
+    t.equal(renderSubLayers.callCount, 0, 'equivalent blending values retain cached sublayers');
+    await render();
+    t.ok(renderSubLayers.callCount > 0, 'removing blending overrides rebuilds sublayers');
+    const unblended = manager.getLayers().find(subLayer => subLayer.id.endsWith('-polygons-fill'));
+    t.equal(unblended.props.parameters.blend, undefined, 'removed blending does not remain cached');
     t.equal(reload.callCount, 0, 'style changes preserve loaded tile content');
   } finally {
     manager.finalize();
   }
+  t.end();
+});
+
+test('#VectorTileLayer -> projection changes invalidate only their panel sublayers', async t => {
+  const {layer, table, features} = categoricalFilterFixture();
+  const data = {
+    ...layer.formatLayerData({[table.id]: table}, undefined, {}),
+    tileSource: {getTileData: async () => features},
+    tilesetDataUrl: 'https://example.com/{z}/{x}/{y}.pbf'
+  };
+  const camera = {zoom: 2, latitude: 0, longitude: 0, pitch: 0, bearing: 0, dragRotate: true};
+  const managers = [0, 1].map(
+    () =>
+      new LayerManager(device, {
+        viewport: new WebMercatorViewport({...camera, width: 128, height: 128})
+      })
+  );
+  const renderSubLayers = managers.map(() => sinon.spy(props => layer.renderSubLayers(props)));
+  const render = async (panel, globe, longitude = 0) => {
+    const mapState = {
+      ...camera,
+      longitude,
+      globe: {enabled: globe},
+      layerParameters: getLayerBlendingParameters(panel === 0 ? 'additive' : 'normal')
+    };
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 128,
+      height: 128,
+      viewState: mapState
+    });
+    const manager = managers[panel];
+    manager.activateViewport(viewport);
+    const deckLayer = layer
+      .renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState,
+        animationConfig: {},
+        layerCallbacks: {},
+        visible: true
+      })[0]
+      .clone({renderSubLayers: renderSubLayers[panel]});
+    manager.setLayers([deckLayer]);
+    // Match deck's draw lifecycle, including each layer's activated viewport.
+    for (const current of manager.getLayers()) current.activateViewport(viewport);
+    manager.updateLayers();
+    await Promise.all(deckLayer.state.tileset.selectedTiles.map(tile => tile.data));
+    manager.updateLayers();
+    return deckLayer;
+  };
+  const checkClip = (deckLayer, expected) => {
+    const tiles = deckLayer.state.tileset.selectedTiles;
+    t.ok(tiles.length > 0, 'the panel has loaded visible tiles');
+    t.ok(
+      tiles.every(tile =>
+        tile.layers?.[0]?.props.extensions.some(
+          extension => extension.constructor.extensionName === expected
+        )
+      ),
+      `all visible tiles use ${expected}`
+    );
+  };
+  try {
+    const flat = await render(0, false);
+    const globe = await render(1, true);
+    checkClip(flat, 'ClipExtension');
+    checkClip(globe, 'GlobeClipExtension');
+    const contents = new Map(flat.state.tileset.selectedTiles.map(tile => [tile.id, tile.content]));
+    const reloads = [flat, globe].map(deckLayer => sinon.spy(deckLayer.state.tileset, 'reloadAll'));
+    renderSubLayers.forEach(spy => spy.reset());
+    for (let i = 0; i < 3; i++) {
+      await render(0, false);
+      await render(1, true);
+    }
+    t.equal(renderSubLayers[0].callCount, 0, 'flat panel retains equivalent blending overrides');
+    t.equal(renderSubLayers[1].callCount, 0, 'globe panel retains its own blending overrides');
+
+    const switched = await render(0, true);
+    checkClip(switched, 'GlobeClipExtension');
+    const retained = switched.state.tileset.selectedTiles.filter(tile => contents.has(tile.id));
+    t.ok(retained.length > 0, 'projection switch keeps previously loaded tiles');
+    t.ok(
+      retained.every(tile => tile.content === contents.get(tile.id)),
+      'tile content is retained'
+    );
+    await render(1, true);
+    t.equal(renderSubLayers[1].callCount, 0, 'switching one panel leaves the other panel cached');
+
+    const restored = await render(0, false);
+    checkClip(restored, 'ClipExtension');
+    const sublayers = new Map(
+      restored.state.tileset.selectedTiles.map(tile => [tile.id, tile.layers[0]])
+    );
+    const panned = await render(0, false, 1);
+    const overlapping = panned.state.tileset.selectedTiles.filter(tile => sublayers.has(tile.id));
+    t.ok(overlapping.length > 0, 'pan retains visible tiles');
+    t.ok(
+      overlapping.every(tile => tile.layers[0] === sublayers.get(tile.id)),
+      'pan preserves existing sublayers'
+    );
+    checkClip(await render(1, false), 'ClipExtension');
+    t.ok(
+      reloads.every(spy => spy.callCount === 0),
+      'projection changes do not reload tile content'
+    );
+  } finally {
+    managers.forEach(manager => manager.finalize());
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> indexed accessors read the epoch time step', t => {
+  const layer = new VectorTileLayer({id: 'epoch', dataId: 'tiles'});
+  const field = {
+    name: 'value',
+    fieldIdx: 0,
+    indexBy: {mappedValue: {0: 'value|1970-01-01', 86400000: 'value|1970-01-02'}}
+  };
+  const properties = {value: 99, 'value|1970-01-01': 0, 'value|1970-01-02': 2};
+  for (const [time, expected] of [
+    [0, 0],
+    [86400000, 2]
+  ]) {
+    const accessor = layer.accessRowValue(field, time);
+    t.equal(accessor(field, {properties}), expected, 'reads the time-indexed feature attribute');
+    t.equal(accessor(field, properties), expected, 'reads the flattened picking attribute');
+  }
+  for (const time of [null, undefined, -1]) {
+    t.equal(layer.accessRowValue(field, time)(field, {properties}), 99, 'keeps fallback access');
+  }
+  t.equal(layer.accessRowValue(null, 0)(null, {}), null, 'handles a missing field');
   t.end();
 });

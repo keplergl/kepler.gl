@@ -755,19 +755,33 @@ export function generateCategoricalBitmapArray(
   categoricalOptions: CategoricalColormapOptions
 ): Uint8Array | null {
   const {colorMap, minValue = 0, maxValue = CATEGORICAL_TEXTURE_WIDTH - 1} = categoricalOptions;
-  if (!colorMap) {
+  if (
+    !colorMap ||
+    !Number.isFinite(minValue) ||
+    !Number.isFinite(maxValue) ||
+    minValue > maxValue
+  ) {
     return null;
   }
   const colorScaleMaxValue = maxValue - minValue;
   const step = CATEGORICAL_TEXTURE_WIDTH / (colorScaleMaxValue + 1);
   const data = new Uint8Array(CATEGORICAL_TEXTURE_WIDTH * 4);
   for (const [value, color] of colorMap) {
-    if (typeof value !== 'number') {
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      value < minValue ||
+      value > maxValue
+    ) {
       continue;
     }
     const rgb = hexToRgb(color);
-    const minPixel = Math.floor(value * step);
-    const maxPixel = Math.floor((value + 1) * step - 1);
+    // Include texels whose centers lie within this class interval.
+    const minPixel = Math.max(0, Math.ceil((value - minValue) * step - 0.5));
+    const maxPixel = Math.min(
+      CATEGORICAL_TEXTURE_WIDTH - 1,
+      Math.ceil((value - minValue + 1) * step - 0.5) - 1
+    );
     for (let i = minPixel; i <= maxPixel; i++) {
       data.set([...rgb, CATEGORICAL_TEXTURE_WIDTH - 1], i * 4);
     }

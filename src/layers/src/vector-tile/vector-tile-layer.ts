@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {FeatureCollection, Feature} from 'geojson';
-import {createSelector} from 'reselect';
+import {createSelector, lruMemoize} from 'reselect';
+import isEqual from 'es-toolkit/compat/isEqual';
 
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
@@ -249,7 +250,12 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       'polygons-fill': {
         parameters: {cullMode: CULL_MODE.BACK, ...layerParameters}
       }
-    })
+    }),
+    {
+      memoize: lruMemoize,
+      // Globe renders supply fresh parameter objects. Retain both split-map values.
+      memoizeOptions: {equalityCheck: isEqual, maxSize: 2}
+    }
   );
 
   constructor(props: ConstructorParameters<typeof AbstractTileLayer>[0]) {
@@ -456,8 +462,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     indexKey?: number | null
   ): (field: KeplerField, datum: Feature) => number | null {
     // if is indexed field
-    if (isIndexedField(field) && indexKey !== null) {
-      const fieldName = indexKey && field?.indexBy?.mappedValue[indexKey];
+    if (isIndexedField(field) && indexKey != null) {
+      const fieldName = field?.indexBy?.mappedValue[indexKey];
       if (fieldName) {
         return (f, datum) => {
           if (datum.properties) {
