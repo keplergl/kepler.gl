@@ -678,6 +678,65 @@ describe('TripLayer timestamps at zero', () => {
     ]);
   });
 
+  test.each([
+    {name: 'null timestamp', missing: [1, 1, 0, null]},
+    {name: 'undefined timestamp', missing: [1, 1, 0, undefined]},
+    {name: 'null coordinate', missing: null},
+    {name: 'undefined coordinate', missing: undefined}
+  ])('ignores a $name when sampling while preserving its timestamp position', ({missing}) => {
+    const feature = coordinates => ({
+      type: 'Feature',
+      properties: {},
+      geometry: {type: 'LineString', coordinates}
+    });
+    const zeroTrip = feature([[0, 0, 0, 0], missing]);
+    const laterTrip = feature([
+      [2, 2, 0, 1565577261],
+      [3, 3, 0, 1565577262]
+    ]);
+    const laterTimes = [1565577261000, 1565577262000];
+
+    expect(parseTripGeoJsonTimestamp([zeroTrip, laterTrip])).toEqual({
+      dataToTimeStamp: [[0, null], laterTimes],
+      animationDomain: [0, laterTimes[1]]
+    });
+    expect(parseTripGeoJsonTimestamp([zeroTrip])).toEqual({
+      dataToTimeStamp: [[0, null]],
+      animationDomain: [0, 0]
+    });
+    expect(
+      parseTripGeoJsonTimestamp([
+        feature([...zeroTrip.geometry.coordinates, ...laterTrip.geometry.coordinates])
+      ])
+    ).toEqual({
+      dataToTimeStamp: [[0, null, ...laterTimes]],
+      animationDomain: [0, laterTimes[1]]
+    });
+  });
+
+  test('does not infer a format from only missing times, but retains a later zero trip', () => {
+    const missingTrip = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [[0, 0, 0, null], null, [1, 1, 0, undefined]]
+      }
+    };
+    expect(parseTripGeoJsonTimestamp([missingTrip])).toEqual({
+      dataToTimeStamp: [],
+      animationDomain: null
+    });
+    const zeroTrip = {
+      ...missingTrip,
+      geometry: {type: 'LineString', coordinates: [[2, 2, 0, 0]]}
+    };
+    expect(parseTripGeoJsonTimestamp([missingTrip, zeroTrip])).toEqual({
+      dataToTimeStamp: [[null, null, null], [0]],
+      animationDomain: [0, 0]
+    });
+  });
+
   test('skips missing and invalid times while retaining zero minima', () => {
     expect(
       getAnimationDomainFromTimestamps([

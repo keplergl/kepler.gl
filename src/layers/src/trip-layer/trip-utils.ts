@@ -77,15 +77,16 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
   dataToTimeStamp: number[][];
   animationDomain: [number, number] | null;
 } {
-  // Analyze type based on coordinates of the 1st lineString
-  // select a sample trip to analyze time format
+  // Prefer a trip with nonzero timestamps that can identify the time format.
   const empty: {dataToTimeStamp: number[][]; animationDomain: null} = {
     dataToTimeStamp: [],
     animationDomain: null
   };
   const trips = dataToFeature.filter(f => f?.geometry?.coordinates?.[0]?.length > 3);
   const sampleTrip =
-    trips.find(f => f.geometry.coordinates.some(coord => coord[3] !== 0)) || trips[0];
+    trips.find(f =>
+      f.geometry.coordinates.some(coord => notNullorUndefined(coord?.[3]) && coord[3] !== 0)
+    ) || trips.find(f => f.geometry.coordinates.some(coord => coord?.[3] === 0));
 
   // if no valid geometry
   if (!sampleTrip) {
@@ -94,8 +95,8 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
 
   // Infer units from nonzero timestamps; an all-zero trip is identical in either Unix unit.
   const sampleTimes = sampleTrip.geometry.coordinates
-    .map(coord => coord[3])
-    .filter(time => time !== 0);
+    .map(coord => coord?.[3])
+    .filter(time => notNullorUndefined(time) && time !== 0);
   const analyzedType = sampleTimes.length ? containValidTime(sampleTimes) : {format: 'X'};
 
   if (!analyzedType) {
