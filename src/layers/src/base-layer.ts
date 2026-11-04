@@ -1815,7 +1815,15 @@ class Layer implements KeplerLayer {
               },
               getPixelOffset: {
                 ...updateTriggers.getRadius,
-                mapState,
+                ...updateTriggers.getPointRadius,
+                latitude: mapState.latitude,
+                zoom: mapState.zoom,
+                zoomOffset: mapState.zoomOffset,
+                scale: mapState.scale,
+                radius: this.config.visConfig.radius,
+                fixedRadius: this.meta.fixedRadius ?? this.config.visConfig.fixedRadius,
+                size: textLabel[i].size,
+                offset: textLabel[i].offset,
                 anchor: textLabel[i].anchor,
                 alignment: textLabel[i].alignment
               },
