@@ -31,6 +31,7 @@ import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-
 import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterImages from '../../../src/layers/src/raster-tile/image';
 import * as rasterExtract from '../../../src/layers/src/raster-tile/raster-tile-extract';
+import {generateCategoricalBitmapArray} from '../../../src/layers/src/raster-tile/raster-tile-utils';
 
 const {RasterTileLayer} = KeplerGlLayers;
 
@@ -1890,6 +1891,82 @@ test('#RasterTileLayer -> switching STAC datasets with matching bands reloads ca
   } finally {
     getTileData.restore();
     manager.finalize();
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> categorical class ranges match the colormap texture', t => {
+  // Evaluate the shipped GLSL arithmetic, then sample the bitmap with nearest filtering.
+  // This checks CPU/shader parity without claiming a GPU rendering test.
+  const body = RasterWebGL.colormap.fs.match(
+    /if \(colormap.hasCategoricalColors == 1\) \{([\s\S]*?)\} else/
+  )[1];
+  const categoricalUV = new Function(
+    'image',
+    'colormap',
+    'float',
+    'vec2',
+    body.replace(/\bfloat\s+/g, 'const ').replace('uv =', 'return')
+  );
+  for (const [minValue, maxValue, values] of [
+    [11, 95, [11, 95]],
+    [1, 1, [1]],
+    [0, 0, [0]],
+    [-5, 5, [-5, 5]],
+    [0, 255, [0, 255]]
+  ]) {
+    const colorMap = values.map((value, index) => [value, index === 0 ? '#ff0000' : '#00ff00']);
+    const bitmap = generateCategoricalBitmapArray({colorMap, minValue, maxValue});
+    t.equal(bitmap.length, 1024, 'keeps a 256-pixel RGBA texture');
+    values.forEach((value, index) => {
+      const [u] = categoricalUV(
+        {r: value / 255},
+        {maxPixelValue: 255, categoricalMinValue: minValue, categoricalMaxValue: maxValue},
+        Number,
+        (x, y) => [x, y]
+      );
+      t.ok(Number.isFinite(u) && u >= 0 && u <= 1, 'the class samples within the texture');
+      const pixel = Math.min(255, Math.floor(u * 256));
+      t.deepEqual(
+        Array.from(bitmap.slice(pixel * 4, pixel * 4 + 4)),
+        index === 0 ? [255, 0, 0, 255] : [0, 255, 0, 255],
+        `class ${value} samples its assigned color in ${minValue}:${maxValue}`
+      );
+    });
+    if (maxValue > minValue + 1) {
+      t.equal(bitmap[128 * 4 + 3], 0, 'unassigned classes remain transparent');
+    }
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> categorical bitmap ignores invalid and out-of-range classes', t => {
+  const bitmap = generateCategoricalBitmapArray({
+    minValue: 11,
+    maxValue: 95,
+    colorMap: [
+      [10, '#ff0000'],
+      [96, '#ff0000'],
+      [NaN, '#ff0000'],
+      [Infinity, '#ff0000'],
+      ['11', '#ff0000']
+    ]
+  });
+  t.ok(
+    bitmap.every(value => value === 0),
+    'unsupported classes leave the bitmap transparent'
+  );
+  t.equal(generateCategoricalBitmapArray({}), null, 'missing colormap stays unavailable');
+  for (const [minValue, maxValue] of [
+    [5, 1],
+    [NaN, 95],
+    [11, Infinity]
+  ]) {
+    t.equal(
+      generateCategoricalBitmapArray({colorMap: [[11, '#ff0000']], minValue, maxValue}),
+      null,
+      'invalid ranges stay unavailable'
+    );
   }
   t.end();
 });

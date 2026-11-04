@@ -21,8 +21,10 @@ uniform colormapUniforms {
 vec4 colormapApply(sampler2D cmap, vec4 image) {
   vec2 uv;
   if (colormap.hasCategoricalColors == 1) {
-    float step = float(colormap.maxPixelValue) / float(colormap.categoricalMaxValue - colormap.categoricalMinValue);
-    uv = vec2(image.r * step, 0.5);
+    // Sample the center of the same class interval used to build the categorical bitmap.
+    float value = image.r * float(colormap.maxPixelValue);
+    float count = float(colormap.categoricalMaxValue - colormap.categoricalMinValue + 1);
+    uv = vec2((value - float(colormap.categoricalMinValue) + 0.5) / count, 0.5);
   } else {
     uv = vec2(0.5 * image.r + 0.5, 0.5);
   }
