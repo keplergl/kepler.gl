@@ -3,6 +3,7 @@
 
 import {UpdateParameters} from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
+import isEqual from 'es-toolkit/compat/isEqual';
 
 import {
   buildRasterFragmentShader,
@@ -28,6 +29,7 @@ const defaultProps = {
 export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   declare state: BitmapLayer<RasterLayerAddedProps>['state'] & {
     images: ImageState;
+    meshResolution?: number;
   };
 
   _redrawScheduled = false;
@@ -151,6 +153,13 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
     };
   }
 
+  shouldUpdateState(params): boolean {
+    return (
+      super.shouldUpdateState(params) ||
+      this.state?.meshResolution !== this.context.viewport.resolution
+    );
+  }
+
   // eslint-disable-next-line complexity
   updateState(params: UpdateParameters<BitmapLayer<RasterLayerAddedProps>>): void {
     const {props, oldProps, changeFlags} = params;
@@ -161,6 +170,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       this.state.model?.destroy?.();
       // @ts-expect-error _getModel is internal to BitmapLayer
       this.state.model = this._getModel(this.context.device || this.context.gl);
+      if (this.state.mesh) this.state.model?.setVertexCount(this.state.mesh.vertexCount);
       this.getAttributeManager()?.invalidateAll();
     }
 
@@ -170,7 +180,12 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
 
     const attributeManager = this.getAttributeManager();
 
-    if (props.bounds !== oldProps.bounds) {
+    const meshResolution = this.context.viewport.resolution;
+    if (
+      !this.state.mesh ||
+      !isEqual(props.bounds, oldProps.bounds) ||
+      meshResolution !== this.state.meshResolution
+    ) {
       const oldMesh = this.state.mesh;
       const mesh = this._createMesh();
       this.state.model?.setVertexCount(mesh.vertexCount);
@@ -179,7 +194,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
           attributeManager?.invalidate(key);
         }
       }
-      this.setState({mesh, ...this._getCoordinateUniforms()});
+      this.setState({mesh, meshResolution, ...this._getCoordinateUniforms()});
     } else if (props._imageCoordinateSystem !== oldProps._imageCoordinateSystem) {
       this.setState(this._getCoordinateUniforms());
     }
