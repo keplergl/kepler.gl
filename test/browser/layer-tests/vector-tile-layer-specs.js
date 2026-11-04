@@ -641,3 +641,26 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
   }
   t.end();
 });
+
+test('#VectorTileLayer -> indexed accessors read the epoch time step', t => {
+  const layer = new VectorTileLayer({id: 'epoch', dataId: 'tiles'});
+  const field = {
+    name: 'value',
+    fieldIdx: 0,
+    indexBy: {mappedValue: {0: 'value|1970-01-01', 86400000: 'value|1970-01-02'}}
+  };
+  const properties = {value: 99, 'value|1970-01-01': 0, 'value|1970-01-02': 2};
+  for (const [time, expected] of [
+    [0, 0],
+    [86400000, 2]
+  ]) {
+    const accessor = layer.accessRowValue(field, time);
+    t.equal(accessor(field, {properties}), expected, 'reads the time-indexed feature attribute');
+    t.equal(accessor(field, properties), expected, 'reads the flattened picking attribute');
+  }
+  for (const time of [null, undefined, -1]) {
+    t.equal(layer.accessRowValue(field, time)(field, {properties}), 99, 'keeps fallback access');
+  }
+  t.equal(layer.accessRowValue(null, 0)(null, {}), null, 'handles a missing field');
+  t.end();
+});

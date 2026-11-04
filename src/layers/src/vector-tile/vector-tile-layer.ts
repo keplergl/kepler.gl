@@ -442,8 +442,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     indexKey?: number | null
   ): (field: KeplerField, datum: Feature) => number | null {
     // if is indexed field
-    if (isIndexedField(field) && indexKey !== null) {
-      const fieldName = indexKey && field?.indexBy?.mappedValue[indexKey];
+    if (isIndexedField(field) && indexKey != null) {
+      const fieldName = field?.indexBy?.mappedValue[indexKey];
       if (fieldName) {
         return (f, datum) => {
           if (datum.properties) {
