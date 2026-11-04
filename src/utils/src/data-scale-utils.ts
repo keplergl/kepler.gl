@@ -618,7 +618,7 @@ export function selectRestCategoricalColorMapByIndex(
   const uniqValueDict = Object.fromEntries(uniqueValues.map(val => [val, false]));
   colorMap.forEach(cm => {
     toArray(cm[0]).forEach(v => {
-      if (v) uniqValueDict[v] = true;
+      if (notNullorUndefined(v)) uniqValueDict[v] = true;
     });
   });
   const rest = Object.keys(uniqValueDict).filter(v => !uniqValueDict[v]);
