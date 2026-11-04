@@ -657,7 +657,7 @@ export function groupColumnsAsGeoJson(
     if (
       Number.isFinite(lon) &&
       Number.isFinite(lat) &&
-      (!sortByRequired || (sortByRequired && sortBy))
+      (!sortByRequired || sortBy || sortBy === 0)
     ) {
       // only push points if lat,lng,and sortby exist
       groupedById[id].push(coords);
@@ -665,10 +665,17 @@ export function groupColumnsAsGeoJson(
   }
 
   const groups = Object.values(groupedById);
-  // Match Trip's timestamp parser: infer one format from the first nonempty trip.
-  const sampleTrip = sortByColumn === 'timestamp' && groups.find(items => items.length);
-  const timeFormat = sampleTrip
-    ? containValidTime(sampleTrip.map(item => item[3]) as any)?.format
+  // Match Trip's timestamp parser: prefer a trip that can identify the time format.
+  const sampleTrip =
+    sortByColumn === 'timestamp' &&
+    (groups.find(items => items.some(item => item[3] !== 0)) ||
+      groups.find(items => items.length));
+  // Zero is valid in both Unix units but cannot identify either format for the analyzer.
+  const sampleTimes = sampleTrip ? sampleTrip.map(item => item[3]).filter(time => time !== 0) : [];
+  const timeFormat = sampleTimes.length
+    ? containValidTime(sampleTimes as any)?.format
+    : sampleTrip
+    ? 'X'
     : null;
 
   const result: Feature[] = groups.map((items, index) => {
