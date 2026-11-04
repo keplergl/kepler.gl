@@ -641,3 +641,127 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
   }
   t.end();
 });
+
+test('#VectorTileLayer -> static category filters retain attributes during playback', t => {
+  const {layer, table, filter, features} = categoricalFilterFixture();
+  layer.updateLayerConfig({animation: {...layer.config.animation, enabled: true}});
+  const selection = filter(0, ['病院']);
+  table.filterTable([selection], [layer]);
+  const datasets = {[table.id]: table};
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+  });
+  const values = [];
+  let evaluations = 0;
+  let firstEvaluations = 0;
+  const tracked = new WeakMap();
+  const track = accessor => {
+    if (!tracked.has(accessor))
+      tracked.set(accessor, feature => {
+        evaluations++;
+        return accessor(feature);
+      });
+    return tracked.get(accessor);
+  };
+  let previous;
+  const start = performance.now();
+  try {
+    for (let time = 1; time <= 100; time++) {
+      table.filterTable([selection, filter(2, [0, time])], [layer]);
+      const data = layer.formatLayerData(datasets, previous, {currentTime: time});
+      const deck = layer.renderLayer({
+        data: {...data, tileSource: {getTileData: async () => features}},
+        gpuFilter: table.gpuFilter,
+        mapState: INITIAL_MAP_STATE,
+        animationConfig: {currentTime: time},
+        layerCallbacks: {},
+        visible: true
+      })[0];
+      const sublayer = layer.renderSubLayers({
+        ...deck.props,
+        getFilterCategory: track(data.getFilterCategory),
+        updateTriggers: {
+          ...deck.props.updateTriggers,
+          getFilterCategory: track(data.getFilterCategory)
+        },
+        id: 'playback-category',
+        data: features,
+        tile: {index: {z: 2}}
+      });
+      manager.setLayers([sublayer]);
+      if (time === 1) firstEvaluations = evaluations;
+      values.push(data.getFilterCategory);
+      previous = data;
+    }
+    t.comment(
+      `100 playback ticks: ${
+        new Set(values).size
+      } category accessors, ${evaluations} category attribute evaluations, ${(
+        performance.now() - start
+      ).toFixed(2)} ms`
+    );
+    t.equal(new Set(values).size, 1, 'static filter predicate is reused');
+    t.ok(firstEvaluations > 0, 'the first tick evaluates category attributes');
+    t.equal(evaluations, firstEvaluations, 'later ticks reuse static category attributes');
+    t.deepEqual(
+      features.map(previous.getFilterCategory),
+      [1, 0, 1, 0, 0, 0],
+      'static selection remains correct'
+    );
+    table.filterTable([{...selection, inverted: true}], [layer]);
+    const inverted = layer.formatLayerData(datasets, previous, {currentTime: 101});
+    t.notEqual(
+      inverted.getFilterCategory,
+      previous.getFilterCategory,
+      'inversion invalidates the predicate'
+    );
+    t.deepEqual(
+      features.map(inverted.getFilterCategory),
+      [0, 1, 0, 1, 1, 1],
+      'inversion preserves missing values'
+    );
+    table.filterTable([], [layer]);
+    const cleared = layer.formatLayerData(datasets, inverted, {currentTime: 102});
+    t.deepEqual(
+      features.map(cleared.getFilterCategory),
+      [1, 1, 1, 1, 1, 1],
+      'removing filters restores all features'
+    );
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> only active indexed category filters depend on time', t => {
+  const {layer, table, filter} = categoricalFilterFixture();
+  layer.updateLayerConfig({animation: {...layer.config.animation, enabled: true}});
+  table.fields = [
+    {...table.fields[0], indexBy: {mappedValue: {1000: 'early', 2000: 'late'}}},
+    ...table.fields.slice(1)
+  ];
+  const selection = filter(0, ['yes']);
+  const feature = {properties: {early: 'yes', late: 'no'}};
+  const at = time =>
+    layer.formatLayerData({[table.id]: table}, undefined, {currentTime: time}).getFilterCategory;
+  table.filterTable([selection], [layer]);
+  const early = at(1000);
+  const late = at(2000);
+  t.notEqual(early, late, 'active indexed selections invalidate on playback');
+  t.equal(early(feature), 1, 'early category matches');
+  t.equal(late(feature), 0, 'late category is rejected');
+  for (const filters of [[{...selection, enabled: false}], [{...selection, value: []}], []]) {
+    table.filterTable(filters, [layer]);
+    t.equal(at(1000), at(2000), 'disabled, cleared and absent filters ignore playback');
+    t.equal(at(2000)(feature), 1, 'inactive selection accepts the feature');
+  }
+  table.fields = [{...table.fields[0], type: 'boolean'}, ...table.fields.slice(1)];
+  table.filterTable([{...selection, type: 'select', value: false}], [layer]);
+  const booleanFeature = {properties: {early: false, late: true}};
+  t.equal(at(1000)(booleanFeature), 1, 'false is an active boolean selection');
+  t.equal(at(2000)(booleanFeature), 0, 'indexed boolean selection follows time');
+  const old = at(2000);
+  table.fields = table.fields.map(field => ({...field}));
+  t.notEqual(at(2000), old, 'replacement field metadata invalidates accessors');
+  t.end();
+});
