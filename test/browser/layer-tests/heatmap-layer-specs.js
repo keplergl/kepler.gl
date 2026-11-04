@@ -1722,7 +1722,11 @@ test('#HeatmapLayer -> reuse color ramps until palette changes', t => {
   const render = (mapState = INITIAL_MAP_STATE) =>
     layer.renderLayer({data, mapState, layerCallbacks: {}, visible: true})[0];
   layer.updateLayerVisConfig({
-    colorRange: {...layer.config.visConfig.colorRange, colors: ['#ff0000', '#00ff00']}
+    colorRange: {
+      ...layer.config.visConfig.colorRange,
+      category: 'Custom',
+      colors: ['#ff0000', '#00ff00']
+    }
   });
   const first = render().props.colorRange;
   const ramps = new Set();
@@ -1745,6 +1749,24 @@ test('#HeatmapLayer -> reuse color ramps until palette changes', t => {
   );
   layer.updateLayerVisConfig({intensity: 2, radius: 40, threshold: 0.4});
   t.equal(render().props.colorRange, first, 'density settings retain the color ramp');
+  const originalColors = layer.config.visConfig.colorRange.colors;
+  layer.updateLayerColorUI('colorRange', {colorRangeConfig: {reversed: true}});
+  const reversed = render().props.colorRange;
+  t.notEqual(reversed, first, 'reversing a custom palette replaces the ramp');
+  t.deepEqual(
+    reversed,
+    [
+      [0, 255, 0],
+      [0, 255, 0],
+      [255, 0, 0],
+      [255, 0, 0]
+    ],
+    'reversing through color UI updates rendered colors'
+  );
+  t.deepEqual(originalColors, ['#ff0000', '#00ff00'], 'reversal preserves the original palette');
+  t.equal(render().props.colorRange, reversed, 'unchanged reversed palettes reuse the ramp');
+  layer.updateLayerColorUI('colorRange', {colorRangeConfig: {reversed: false}});
+  t.deepEqual(render().props.colorRange, first, 'reversing back restores rendered colors');
   layer.updateLayerVisConfig({
     colorRange: {...layer.config.visConfig.colorRange, colors: ['#0000ff']}
   });
