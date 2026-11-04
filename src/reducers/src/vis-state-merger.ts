@@ -1351,6 +1351,14 @@ export function validateLayerWithData(
       options
     );
     if (columns) {
+      if (
+        type === LAYER_TYPES.contour &&
+        savedLayer.config.columns?.value &&
+        !columns.value?.value
+      ) {
+        // Retain unresolved weights so contour validation reports them instead of using density.
+        columns.value = {...columns.value, value: savedLayer.config.columns.value, fieldIdx: -1};
+      }
       newLayer.updateLayerConfig({
         columns: {
           ...newLayer.config.columns,

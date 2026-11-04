@@ -2,11 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import {KeplerTable, getGpuFilterProps, assignGpuChannels} from '@kepler.gl/table';
-import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES} from '@kepler.gl/constants';
-import {generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
+import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, KEPLER_COLOR_PALETTES} from '@kepler.gl/constants';
+import {colorMaybeToRGB, generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
 import {PickingInfo} from '@deck.gl/core';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
+import booleanWithin from '@turf/boolean-within';
 import ContourLayer from './contour-layer';
 import Layer from '../base-layer';
 import {LayerClasses} from '../index';
@@ -20,7 +21,8 @@ import {
   calculateLayerData,
   INITIAL_VIS_STATE,
   layerTypeChangeUpdater,
-  removeLayerUpdater
+  removeLayerUpdater,
+  validateLayerWithData
 } from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {messages} from '@kepler.gl/localization';
@@ -61,10 +63,15 @@ async function setup(scatteredRows?: number[][]) {
     columns: {lat: column('latitude'), lng: column('longitude'), value: column('value')}
   });
   layer.updateLayerVisConfig({
+    // Existing renderer fixtures exercise saved lower-value, plain-color contours explicitly.
+    below: true,
+    colorByLevel: false,
+    fillOpacity: 0.075,
     customRange: true,
     minimum: 2,
     maximum: 6,
     smoothing: 0,
+    gridResolution: scatteredRows ? 3 : 9,
     levels: 3,
     filled: true,
     stroked: true
@@ -88,10 +95,10 @@ function calculateContourLayerData(layer: ContourLayer, datasets) {
 
 test.each([
   {
-    name: 'irregular grid',
+    name: 'invalid grid resolution',
     scattered: true,
-    invalid: {inputMode: 'grid'},
-    message: /regularly spaced/
+    invalid: {gridResolution: 0},
+    message: /grid resolution/
   },
   {name: 'reversed range', scattered: false, invalid: {minimum: 9, maximum: 3}, message: /minimum/},
   {name: 'constant range', scattered: false, invalid: {minimum: 4, maximum: 4}, message: /minimum/},
@@ -105,7 +112,7 @@ test.each([
   'retains $name validation errors through layer calculation and recovers',
   async ({scattered, invalid, message}) => {
     const {layer, datasets} = await setup(scattered ? scatteredSamples : undefined);
-    layer.updateLayerVisConfig({minimum: 4, maximum: 8, interpolationResolution: 32});
+    layer.updateLayerVisConfig({minimum: 4, maximum: 8, gridResolution: 3});
     expect(calculateContourLayerData(layer, datasets).layerData.data).toHaveLength(3);
     expect(layer.getContourLegend()).toHaveLength(3);
     layer.updateLayerVisConfig(invalid);
@@ -117,7 +124,7 @@ test.each([
       expect(result.layerData).toEqual({});
       expect(layer.getContourLegend()).toEqual([]);
     }
-    layer.updateLayerVisConfig({inputMode: 'auto', minimum: 4, maximum: 8});
+    layer.updateLayerVisConfig({gridResolution: 3, minimum: 4, maximum: 8});
     const recovered = calculateContourLayerData(layer, datasets);
     expect(recovered.layer.isValid).toBe(true);
     expect(recovered.layer.errorMessage).toBeNull();
@@ -159,15 +166,67 @@ function setupGeojson(
     }
   });
   layer.updateLayerVisConfig({
+    below: true,
+    colorByLevel: false,
+    fillOpacity: 0.075,
     customRange: true,
     minimum: 4,
     maximum: 8,
     levels: 3,
     smoothing: 0,
-    interpolationResolution: 64
+    gridResolution: 3
   });
   return {layer, dataset, datasets: {[dataset.id]: dataset}};
 }
+
+test.each([false, true])('new contours enclose peaks by default (weighted: %s)', async weighted => {
+  const {
+    layer: reference,
+    dataset,
+    datasets
+  } = await setup([
+    [0, 0, 1],
+    [0.18, 0, 1],
+    [0, 0.18, 1],
+    [0.18, 0.18, 1],
+    // Keep the peak away from a cell boundary; this checks fill direction, not bin placement.
+    ...Array.from({length: 100}, () => [0.08, 0.08, 100])
+  ]);
+  const {lat, lng, value} = reference.config.columns;
+  const layer = new ContourLayer({
+    dataId: dataset.id,
+    columns: {lat, lng, ...(weighted ? {value} : {})}
+  });
+  const {data} = layer.formatLayerData(datasets);
+  expect(data).toHaveLength(layer.config.visConfig.levels);
+  const contains = (feature, coordinates) =>
+    feature.geometry.coordinates.some(polygon =>
+      booleanWithin({type: 'Point', coordinates}, {type: 'Polygon', coordinates: polygon})
+    );
+  for (const feature of data) {
+    expect(feature.properties.below).toBe(false);
+    expect(contains(feature, [0.08, 0.08])).toBe(true);
+  }
+  expect(contains(data[data.length - 1], [0.17, 0.01])).toBe(false);
+  expect(layer.config.visConfig.colorByLevel).toBe(true);
+  expect(layer.config.visConfig.gridResolution).toBe(64);
+  expect(layer.config.visConfig.smoothing).toBe(3);
+  expect(layer.config.visConfig.fillOpacity).toBe(0.3);
+  expect(layer.config.visConfig.colorRange.name).toBe(KEPLER_COLOR_PALETTES[0].name);
+  const {colors} = layer.config.visConfig.colorRange;
+  const passes = renderContourPasses(layer, dataset, {data});
+  const getFillColor = passes[0].props.getFillColor;
+  if (typeof getFillColor !== 'function') throw new Error('Expected colors for each contour level');
+  for (const [index, color] of [
+    [0, colors[0]],
+    [data.length - 1, colors[colors.length - 1]]
+  ] as const) {
+    expect(getFillColor(data[index], {index, data, target: []})).toEqual([
+      ...colorMaybeToRGB(color)!,
+      Math.round(255 * layer.config.visConfig.fillOpacity)
+    ]);
+  }
+});
 
 test('registers the layer and renders both passes without recomputing on camera movement', async () => {
   const {layer, dataset, datasets} = await setup();
@@ -761,6 +820,30 @@ test('edits and resets contour labels by threshold even when levels have the sam
 });
 
 test.each(['point', 'grid'])(
+  'changing a default %s layer to Contour selects the first palette',
+  async type => {
+    const {dataset, datasets, layer: reference} = await setup();
+    const {lat, lng} = reference.config.columns;
+    const layer = new LayerClasses[type]({dataId: dataset.id, columns: {lat, lng}});
+    const state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [{}],
+      layerOrder: [layer.id]
+    };
+    const result = layerTypeChangeUpdater(state, {oldLayer: layer, newType: 'contour'});
+    const converted = result.layers[0];
+    const {colorRange} = converted.config.visConfig;
+    expect(colorRange.name).toBe(KEPLER_COLOR_PALETTES[0].name);
+    expect(colorRange.colors).toEqual(KEPLER_COLOR_PALETTES[0].colors(colorRange.colors.length));
+    expect(converted.config.visConfig.colorByLevel).toBe(true);
+    expect(converted.config.visConfig.gridResolution).toBe(64);
+    expect(converted.config.visConfig.smoothing).toBe(3);
+  }
+);
+
+test.each(['point', 'grid'])(
   'changing from Contour to %s removes threshold labels while preserving the palette and color labels',
   async newType => {
     const {layer, datasets, dataset} = await setup();
@@ -874,15 +957,36 @@ test('keeps legend levels in sync with auto ranges, filters, and invalid or empt
   expect(layer.getContourLegend()).toEqual([]);
 });
 
-test('filtered samples become holes and clearing the filter restores them', async () => {
-  const {layer, dataset, datasets} = await setup();
+test('applies the selected maximum axis resolution when averaging nearby observations', async () => {
+  const {layer, datasets} = await setup([
+    [0, 0, 10],
+    [0.0004, 0.0004, 30],
+    [0.03, 0.03, 8]
+  ]);
+  layer.updateLayerVisConfig({gridResolution: 32});
+  layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  layer.updateLayerVisConfig({gridResolution: 256});
+  layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 30]);
+});
+
+test('filters observations before averaging and restores them when the filter clears', async () => {
+  const {layer, dataset, datasets} = await setup([
+    [0, 0, 10],
+    [0.0001, 0.0001, 30],
+    [0.03, 0.03, 8]
+  ]);
+  layer.updateLayerVisConfig({gridResolution: 32, minimum: 5, maximum: 15, below: false});
   const all = dataset.filteredIndex;
-  dataset.filteredIndex = all.filter(index => index !== 40);
+  const original = layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  dataset.filteredIndex = [0, 2];
   const filtered = layer.formatLayerData(datasets);
-  expect(filtered.data.every(f => f.geometry.coordinates[0].length === 2)).toBe(true);
+  expect(layer.meta.contourDomain).toEqual([0, 10]);
+  expect(filtered.data.map(feature => feature.properties.threshold)).toEqual([5, 10]);
   dataset.filteredIndex = all;
-  const restored = layer.formatLayerData(datasets);
-  expect(restored.data.every(f => f.geometry.coordinates[0].length === 1)).toBe(true);
+  expect(layer.formatLayerData(datasets)).toEqual(original);
 });
 
 function contourPolygonFilter(layer: ContourLayer, bounds: number[], inverted = false) {
@@ -909,9 +1013,15 @@ function contourPolygonFilter(layer: ContourLayer, bounds: number[], inverted = 
   };
 }
 
-test('polygon filters preserve grid holes, isolate layers, and restore on disable or clear', async () => {
-  const {layer, dataset, datasets} = await setup();
-  layer.updateLayerVisConfig({inputMode: 'grid'});
+test('polygon filters exclude observations, isolate layers, and restore on disable or clear', async () => {
+  const {layer, dataset, datasets} = await setup(
+    Array.from({length: 81}, (_, i) => {
+      const x = i % 9;
+      const y = Math.floor(i / 9);
+      return [x, y, i === 40 ? 100 : (x - 4) ** 2 + (y - 4) ** 2];
+    })
+  );
+  layer.updateLayerVisConfig({gridResolution: 9});
   const other = new ContourLayer({dataId: dataset.id, columns: layer.config.columns});
   other.updateLayerVisConfig(layer.config.visConfig);
   const point = new LayerClasses.point({dataId: dataset.id, columns: layer.config.columns});
@@ -929,7 +1039,8 @@ test('polygon filters preserve grid holes, isolate layers, and restore on disabl
   expect(dataset.filteredIndexByLayer[layer.id]).toEqual(all.filter(index => index !== 40));
   const filtered = calculateContourLayerData(layer, datasets).layerData.data;
   expect(filtered).toHaveLength(3);
-  expect(filtered.every(feature => feature.geometry.coordinates[0].length === 2)).toBe(true);
+  expect(original.every(feature => feature.geometry.coordinates[0].length === 2)).toBe(true);
+  expect(filtered.every(feature => feature.geometry.coordinates[0].length === 1)).toBe(true);
   expect(other.formatLayerData(datasets).data).toEqual(original);
   expect(calculateLayerData(point, pointState).layerData.data).toEqual(originalPoint);
 
@@ -967,7 +1078,8 @@ test.each([false, true])('combines polygon filtering with numeric filters (GPU %
     dataset.dataContainer.mapIndex(({index}) => {
       const [longitude, latitude, value] = dataset.dataContainer.rowAsArray(index);
       return {longitude, latitude, value: index !== 40 && value <= 4 ? value : null};
-    })
+    }),
+    layer.config.visConfig.gridResolution
   );
   const expected = generateContours(grid, {smoothing: 0, levels: 3, below: true, domain: [2, 6]});
   expect(expected.length).toBeGreaterThan(0);
@@ -975,7 +1087,7 @@ test.each([false, true])('combines polygon filtering with numeric filters (GPU %
 });
 
 test.each(['grid', 'geojson'])(
-  'polygon filters %s source samples before scattered interpolation and smoothing',
+  'polygon filters %s source samples before aggregation and smoothing',
   async columnMode => {
     const rows = scatteredSamples.map((row, index) => [
       row[0],
@@ -995,32 +1107,25 @@ test.each(['grid', 'geojson'])(
     // Apply before the first render, so filtering cannot depend on cached geometry.
     dataset.filterTable([filter], [layer]);
     expect(dataset.filteredIndexByLayer[layer.id]).toEqual([0, 2, 3]);
-    for (const inputMode of ['auto', 'points'] as const) {
-      layer.updateLayerVisConfig({
-        inputMode,
-        minimum: 4,
-        maximum: 8,
-        interpolationResolution: 32,
-        smoothing: 1.5
-      });
-      const expectedGrid = buildContourGrid(
-        rows.map(([longitude, latitude, value], index) => ({
+    layer.updateLayerVisConfig({minimum: 4, maximum: 8, gridResolution: 3, smoothing: 1.5});
+    const expectedGrid = buildContourGrid(
+      rows
+        .filter((_, index) => index !== 1)
+        .map(([longitude, latitude, value]) => ({
           longitude,
           latitude,
-          value: index === 1 ? null : value
+          value
         })),
-        inputMode,
-        32
-      );
-      const expected = generateContours(expectedGrid, {
-        smoothing: 1.5,
-        levels: 3,
-        below: true,
-        domain: [4, 8]
-      });
-      expect(expected.length).toBeGreaterThan(0);
-      expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(expected);
-    }
+      3
+    );
+    const expected = generateContours(expectedGrid, {
+      smoothing: 1.5,
+      levels: 3,
+      below: true,
+      domain: [4, 8]
+    });
+    expect(expected.length).toBeGreaterThan(0);
+    expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual(expected);
     dataset.filterTable([contourPolygonFilter(layer, [20, 20, 21, 21])], [layer]);
     expect(calculateContourLayerData(layer, datasets).layerData.data).toEqual([]);
     expect(layer.isValid).toBe(true);
@@ -1037,10 +1142,9 @@ test.each([Int64, Uint64])(
     ]);
     const {layer} = reference;
     layer.updateLayerVisConfig({
-      inputMode: 'points',
       minimum: 4,
       maximum: 8,
-      interpolationResolution: 32
+      gridResolution: 3
     });
     const expected = layer.formatLayerData(reference.datasets).data;
     const arrowVector = (values: (number | null)[]) =>
@@ -1082,26 +1186,47 @@ test('reports invalid settings and recovers after correcting them', async () => 
   ]);
 });
 
-test('applies numeric GPU filters before contouring even at a zero-valued range', async () => {
-  const {layer, dataset, datasets} = await setup();
+test('applies numeric GPU filters to density even at a zero-valued range', async () => {
+  const {layer, dataset, datasets} = await setup([
+    [0, 0, 3],
+    [0, 0, 7],
+    [0, 0, 9]
+  ]);
+  layer.updateLayerConfig({columns: {...layer.config.columns, value: {value: null, fieldIdx: -1}}});
+  layer.updateLayerVisConfig({minimum: 1, maximum: 3, below: false});
+  layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 3]);
   dataset.gpuFilter = {
     ...dataset.gpuFilter,
     filterValueUpdateTriggers: {test: true},
     filterRange: [[0, 0]],
-    filterValueAccessor: () => () => d => [d.index === 40 ? 1 : 0]
+    filterValueAccessor: () => () => d => [d.index === 1 ? 1 : 0]
   } as any;
-  expect(
-    layer.formatLayerData(datasets).data.every(f => f.geometry.coordinates[0].length === 2)
-  ).toBe(true);
+  expect(layer.formatLayerData(datasets).data.map(feature => feature.properties.threshold)).toEqual(
+    [1, 2]
+  );
+  expect(layer.meta.contourDomain).toEqual([0, 2]);
 });
 
-test.each(['grid', 'geojson'])(
-  'saves and reloads %s contour settings and columns through the map schema',
-  async columnMode => {
-    const {layer} = columnMode === 'geojson' ? setupGeojson() : await setup();
+test.each(
+  [
+    {columnMode: 'grid', weighted: true},
+    {columnMode: 'grid', weighted: false},
+    {columnMode: 'geojson', weighted: true},
+    {columnMode: 'geojson', weighted: false}
+  ].flatMap(config => [true, false].map(below => ({...config, below})))
+)(
+  'saves and reloads $columnMode contours (weighted: $weighted, below: $below) through the map schema',
+  async ({columnMode, weighted, below}) => {
+    const {layer, dataset, datasets} = columnMode === 'geojson' ? setupGeojson() : await setup();
+    if (!weighted) {
+      layer.updateLayerConfig({
+        columns: {...layer.config.columns, value: {value: null, fieldIdx: -1, optional: true}}
+      });
+    }
     layer.updateLayerVisConfig({
-      inputMode: 'points',
-      interpolationResolution: 128,
+      below,
+      gridResolution: 128,
       colorByLevel: true,
       colorRange: {
         ...layer.config.visConfig.colorRange,
@@ -1120,8 +1245,10 @@ test.each(['grid', 'geojson'])(
     expect(restored.config.columnMode).toBe(columnMode);
     expect(restored.config.visConfig).toEqual(layer.config.visConfig);
     // Saved configs retain column names; field indices are resolved against the loaded table.
-    expect(restored.config.columns.value).toBe('value');
+    expect(restored.config.columns.value).toBe(weighted ? 'value' : undefined);
     if (columnMode === 'geojson') expect(restored.config.columns.geojson).toBe('geometry');
+    const loaded = validateLayerWithData(dataset, restored, LayerClasses)!;
+    expect(loaded.formatLayerData(datasets)).toEqual(layer.formatLayerData(datasets));
   }
 );
 
@@ -1195,13 +1322,13 @@ describe('GeoJSON scalar inputs', () => {
     }
   );
 
-  test('requires geometry and value columns only in GeoJSON mode', () => {
+  test('requires only geometry in GeoJSON mode', () => {
     const {layer, datasets} = setupGeojson();
     expect(layer.hasAllColumns()).toBe(true);
     layer.updateLayerConfig({columnMode: 'grid'});
     expect(layer.hasAllColumns()).toBe(false);
     layer.updateLayerConfig({columnMode: 'geojson'});
-    for (const name of ['geojson', 'value']) {
+    for (const name of ['geojson']) {
       const original = layer.config.columns[name];
       layer.config.columns[name] = {value: null, fieldIdx: -1};
       expect(layer.hasAllColumns()).toBe(false);
@@ -1235,71 +1362,156 @@ describe('GeoJSON scalar inputs', () => {
     }
   });
 
-  test.each(['cpu', 'gpu'])(
-    'applies %s filters before interpolating GeoJSON samples',
-    filterType => {
-      const {layer, dataset, datasets} = setupGeojson();
-      expect(layer.formatLayerData(datasets).data).toHaveLength(3);
-      if (filterType === 'cpu') {
-        dataset.filteredIndex = [0, 1, 3];
-      } else {
-        dataset.gpuFilter = {
-          ...getGpuFilterProps([], dataset.id, dataset.fields),
-          filterValueUpdateTriggers: {test: true},
-          filterRange: [[0, 0]],
-          filterValueAccessor: () => () => d => [d.index === 2 ? 1 : 0]
-        } as any;
-      }
-      expect(layer.formatLayerData(datasets).data.length).toBeGreaterThan(0);
-      expect(layer.meta.bounds[3]).toBeCloseTo(0.625);
+  test.each(['cpu', 'gpu'])('applies %s filters before aggregating GeoJSON samples', filterType => {
+    const {layer, dataset, datasets} = setupGeojson();
+    expect(layer.formatLayerData(datasets).data).toHaveLength(3);
+    if (filterType === 'cpu') {
+      dataset.filteredIndex = [0, 1, 3];
+    } else {
+      dataset.gpuFilter = {
+        ...getGpuFilterProps([], dataset.id, dataset.fields),
+        filterValueUpdateTriggers: {test: true},
+        filterRange: [[0, 0]],
+        filterValueAccessor: () => () => d => [d.index === 2 ? 1 : 0]
+      } as any;
     }
-  );
+    expect(layer.formatLayerData(datasets).data.length).toBeGreaterThan(0);
+    expect(layer.meta.bounds[3]).toBeCloseTo(0.625);
+  });
 
-  test('retains grid holes when GeoJSON points form a regular lattice', () => {
-    const rows = Array.from({length: 81}, (_, i) => {
-      const x = i % 9;
-      const y = Math.floor(i / 9);
-      return [pointGeometry(x, y), i === 40 ? null : 1];
+  test('uses point counts when the GeoJSON weight column is cleared', () => {
+    const {layer, datasets} = setupGeojson([
+      [pointGeometry(0, 0), 10],
+      [pointGeometry(0, 0), 20]
+    ]);
+    layer.updateLayerConfig({
+      columns: {...layer.config.columns, value: {value: null, fieldIdx: -1}}
     });
-    const {layer, datasets} = setupGeojson(rows);
-    layer.updateLayerVisConfig({smoothing: 2});
-    const result = layer.formatLayerData(datasets);
-    expect(result.data).toHaveLength(3);
-    expect(result.data.every(f => f.geometry.coordinates[0].length === 2)).toBe(true);
+    layer.updateLayerVisConfig({minimum: 1, maximum: 2, levels: 2, below: false});
+    expect(layer.hasAllColumns()).toBe(true);
+    expect(
+      layer.formatLayerData(datasets).data.map(feature => feature.properties.threshold)
+    ).toEqual([1, 2]);
+    expect(layer.meta.contourDomain).toEqual([0, 2]);
   });
 });
 
-test('interpolates scattered data and recomputes its support when samples are filtered', async () => {
-  const {layer, dataset, datasets} = await setup([
-    [0, 0, 3],
-    [2, 0, 7],
-    [0.7, 2, 10.4],
-    [1.1, 0.6, 7]
-  ]);
-  layer.updateLayerVisConfig({minimum: 4, maximum: 8, interpolationResolution: 64});
-  expect(layer.formatLayerData(datasets).data).toHaveLength(3);
-  expect(layer.errorMessage).toBeNull();
-  expect(layer.meta.bounds[3]).toBeCloseTo(2);
-  const all = dataset.filteredIndex;
-  dataset.filteredIndex = [0, 1, 3];
-  expect(layer.formatLayerData(datasets).data.length).toBeGreaterThan(0);
-  expect(layer.meta.bounds[3]).toBeCloseTo(0.6);
-  dataset.filteredIndex = all;
-  layer.updateLayerVisConfig({inputMode: 'grid'});
-  expect(calculateContourLayerData(layer, datasets).layerData).toEqual({});
-  expect(layer.errorMessage).toMatch(/regularly spaced/);
-  layer.updateLayerVisConfig({inputMode: 'points'});
-  expect(calculateContourLayerData(layer, datasets).layerData.data).toHaveLength(3);
-  expect(layer.errorMessage).toBeNull();
-  expect(layer.meta.bounds[3]).toBeCloseTo(2);
+test('uses one aggregation path for regular and irregular points regardless of legacy input modes', async () => {
+  const {layer, datasets} = await setup(scatteredSamples);
+  layer.updateLayerVisConfig({minimum: 4, maximum: 8});
+  const expected = layer.formatLayerData(datasets);
+  expect(expected.data).toHaveLength(3);
+  for (const inputMode of ['auto', 'grid', 'points']) {
+    layer.updateLayerVisConfig({inputMode});
+    expect(layer.formatLayerData(datasets)).toEqual(expected);
+  }
 });
+
+test('switches between optional weights and density, including legend and hover values', async () => {
+  const {layer, dataset, datasets} = await setup([
+    [0, 0, 10],
+    [0.0001, 0.0001, 30],
+    [0.03, 0.03, 8]
+  ]);
+  layer.updateLayerVisConfig({gridResolution: 32, minimum: 1, maximum: 2, levels: 2, below: false});
+  layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  const columns = layer.config.columns;
+  layer.updateLayerConfig({
+    columns: {...columns, value: {value: null, fieldIdx: -1, optional: true}}
+  });
+  expect(layer.hasAllColumns()).toBe(true);
+  const data = layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 2]);
+  expect(data.data.map(feature => feature.properties.threshold)).toEqual([1, 2]);
+  expect(layer.getHoverData(data.data[0])?.fieldValues[0]).toEqual({
+    labelMessage: 'columns.contour.density',
+    value: 'Point count ≥ 1'
+  });
+  const view = renderLegend(layer);
+  expect(view.getByRole('button', {name: 'Point count'})).toBeTruthy();
+  expect(view.getAllByRole('listitem').map(item => item.textContent)).toEqual(['≥ 1', '≥ 2']);
+  view.unmount();
+  layer.updateLayerConfig({columns});
+  layer.formatLayerData(datasets);
+  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  dataset.filteredIndex = [];
+  expect(layer.formatLayerData(datasets).data).toEqual([]);
+  expect(layer.meta.contourDomain).toBeNull();
+});
+
+test('missing or invalid selected weights do not silently become density', async () => {
+  const {layer, datasets} = await setup([
+    [0, 0, NaN],
+    [0.03, 0.03, Infinity]
+  ]);
+  expect(layer.formatLayerData(datasets).data).toEqual([]);
+  layer.updateLayerConfig({
+    columns: {...layer.config.columns, value: {value: 'missing', fieldIdx: -1}}
+  });
+  expect(calculateContourLayerData(layer, datasets).layerData).toEqual({});
+  expect(layer.errorMessage).toMatch(/numeric contour weight/);
+});
+
+test.each(['grid', 'geojson'])(
+  'loading %s contours preserves a missing saved weight until explicitly cleared',
+  async columnMode => {
+    const {layer, dataset} =
+      columnMode === 'geojson' ? setupGeojson() : await setup(scatteredSamples);
+    layer.updateLayerVisConfig({customRange: false, below: false});
+    const saved = SchemaManager.getConfigToSave({
+      ...StateWFiles,
+      visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+    });
+    const restored = SchemaManager.parseSavedConfig(saved)!.visState!.layers![0];
+    const fields = dataset.fields.slice(0, -1);
+    const missingWeightDataset = new KeplerTable({
+      info: {id: dataset.id},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields,
+      rows: Array.from({length: dataset.dataContainer.numRows()}, (_, index) =>
+        fields.map((_, fieldIdx) => dataset.dataContainer.valueAt(index, fieldIdx))
+      )
+    });
+    const datasets = {[dataset.id]: missingWeightDataset};
+
+    for (const options of [{}, {allowEmptyColumn: true}]) {
+      const loaded = validateLayerWithData(
+        missingWeightDataset,
+        restored,
+        LayerClasses,
+        options
+      ) as ContourLayer;
+      expect(loaded.config.columns.value.value).toBe('value');
+      expect(calculateContourLayerData(loaded, datasets).layerData).toEqual({});
+      expect(loaded.isValid).toBe(false);
+      expect(loaded.errorMessage).toMatch(/numeric contour weight/);
+
+      loaded.updateLayerConfig({
+        columns: {
+          ...loaded.config.columns,
+          value: {...loaded.config.columns.value, value: null, fieldIdx: -1}
+        }
+      });
+      const density = calculateContourLayerData(loaded, datasets);
+      expect(density.layer.isValid).toBe(true);
+      expect(density.layer.errorMessage).toBeNull();
+      expect(density.layerData.data.length).toBeGreaterThan(0);
+      expect(loaded.config.columns.value.value).toBeNull();
+    }
+    expect(() =>
+      validateLayerWithData(missingWeightDataset, restored, LayerClasses, {throwOnError: true})
+    ).toThrow(/invalid columns: value/);
+  }
+);
 
 test.each([false, true])(
   'sample (scattered = %s) generates all levels with islands and finite closed geometry',
   scattered => {
     const sample = createContourSamples(scattered);
     const {visConfig} = contourConfig.config.visState.layers[0].config;
-    const result = generateContours(buildContourGrid(sample), {
+    const result = generateContours(buildContourGrid(sample, visConfig.gridResolution), {
       ...visConfig,
       domain: [visConfig.minimum, visConfig.maximum]
     });

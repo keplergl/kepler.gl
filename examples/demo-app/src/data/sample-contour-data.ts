@@ -17,11 +17,12 @@ export function createContourSamples(scattered = false) {
     strength: 7 + random() * 21
   }));
   const samples: {longitude: number; latitude: number; value: number}[] = [];
-  const size = scattered ? 65 : 201;
+  // Both layouts need enough observations to populate the aggregation cells.
+  const size = 201;
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      const x = scattered ? (col + (random() - 0.5) * 0.8) / 32 - 1 : col / 100 - 1;
-      const y = scattered ? (row + (random() - 0.5) * 0.8) / 32 - 1 : row / 100 - 1;
+      const x = (col + (scattered ? (random() - 0.5) * 0.8 : 0)) / 100 - 1;
+      const y = (row + (scattered ? (random() - 0.5) * 0.8 : 0)) / 100 - 1;
       const warpedX = x + 0.07 * Math.sin(y * 13) + 0.03 * Math.sin(y * 27);
       const warpedY = y + 0.05 * Math.cos(x * 17);
       let surface = 65 * Math.exp(-(warpedX ** 2 / 0.22 + warpedY ** 2 / 0.13));
@@ -64,6 +65,7 @@ export const contourConfig = {
             visConfig: {
               opacity: 0.85,
               smoothing: 1.5,
+              gridResolution: 192,
               levels: 8,
               below: true,
               customRange: true,

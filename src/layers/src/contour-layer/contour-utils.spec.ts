@@ -3,10 +3,9 @@
 
 import {
   buildContourGrid,
-  buildScalarGrid,
   generateContours,
-  interpolateScalarSamples,
   ScalarSample,
+  ScalarGrid,
   smoothScalarGrid
 } from './contour-utils';
 
@@ -18,11 +17,25 @@ function samples(size: number, value: (x: number, y: number) => number | null): 
   }));
 }
 
+// Contour geometry and smoothing tests use a fixed surface independently of aggregation.
+function testGrid(input: ScalarSample[]): ScalarGrid {
+  const size = Math.sqrt(input.length);
+  return {
+    width: size,
+    height: size,
+    longitude: 0,
+    latitude: 0,
+    stepLng: 1,
+    stepLat: 1,
+    values: Float64Array.from(input, sample => sample.value ?? NaN)
+  };
+}
+
 const options = {smoothing: 0, levels: 3, below: true, domain: [2, 6] as [number, number]};
 
 describe('scalar contours', () => {
   test('traces nested lower-value regions with thresholds in the original units', () => {
-    const grid = buildScalarGrid(samples(9, (x, y) => (x - 4) ** 2 + (y - 4) ** 2));
+    const grid = testGrid(samples(9, (x, y) => (x - 4) ** 2 + (y - 4) ** 2));
     const features = generateContours(grid, options);
     expect(features.map(f => f.properties.threshold)).toEqual([6, 4, 2]);
     const widths = features.map(f => {
@@ -37,20 +50,20 @@ describe('scalar contours', () => {
   });
 
   test('also supports upper-value regions and negative scalar values', () => {
-    const grid = buildScalarGrid(samples(9, (x, y) => -((x - 4) ** 2 + (y - 4) ** 2)));
+    const grid = testGrid(samples(9, (x, y) => -((x - 4) ** 2 + (y - 4) ** 2)));
     const result = generateContours(grid, {...options, below: false, domain: [-6, -2]});
     expect(result.map(f => f.properties.threshold)).toEqual([-6, -4, -2]);
     expect(result.every(f => f.geometry.coordinates.length === 1)).toBe(true);
   });
 
   test('smooths an isolated spike and preserves constant values at boundaries', () => {
-    const spike = buildScalarGrid(samples(9, (x, y) => (x === 4 && y === 4 ? 100 : 0)))!;
+    const spike = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? 100 : 0)))!;
     expect(smoothScalarGrid(spike, 0)).toBe(spike.values);
     const smooth = smoothScalarGrid(spike, 1.5);
     expect(smooth[40]).toBeLessThan(100);
     expect(smooth[40]).toBeGreaterThan(smooth[41]);
     expect(smooth[41]).toBeGreaterThan(0);
-    const constant = buildScalarGrid(samples(9, () => -12))!;
+    const constant = testGrid(samples(9, () => -12))!;
     expect([...smoothScalarGrid(constant, 2)].every(value => Math.abs(value + 12) < 1e-10)).toBe(
       true
     );
@@ -60,9 +73,7 @@ describe('scalar contours', () => {
     'does not invent automatic contours in a constant field of %s',
     value => {
       for (const holes of [false, true]) {
-        const grid = buildScalarGrid(
-          samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value))
-        );
+        const grid = testGrid(samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value)));
         for (const smoothing of [0, 1.5, 6]) {
           for (const below of [false, true]) {
             expect(generateContours(grid, {smoothing, levels: 7, below})).toEqual([]);
@@ -76,7 +87,7 @@ describe('scalar contours', () => {
     [0, 1e-20],
     [10, 1e-10]
   ])('preserves real small variations around %s at scale %s', (baseline, scale) => {
-    const grid = buildScalarGrid(samples(9, (x, y) => baseline + scale * (x + y)));
+    const grid = testGrid(samples(9, (x, y) => baseline + scale * (x + y)));
     const result = generateContours(grid, {smoothing: 1.5, levels: 7, below: true});
     expect(result).toHaveLength(7);
     expect(new Set(result.map(feature => feature.properties.threshold)).size).toBe(7);
@@ -90,9 +101,7 @@ describe('scalar contours', () => {
     value => {
       const span = Math.abs(value) || 1;
       for (const holes of [false, true]) {
-        const grid = buildScalarGrid(
-          samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value))
-        )!;
+        const grid = testGrid(samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value)))!;
         for (const below of [false, true]) {
           const settings = {
             levels: 3,
@@ -113,7 +122,7 @@ describe('scalar contours', () => {
   );
 
   test('keeps missing values as holes after smoothing', () => {
-    const grid = buildScalarGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)))!;
+    const grid = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)))!;
     expect(Number.isNaN(smoothScalarGrid(grid, 2)[40])).toBe(true);
     const result = generateContours(grid, {...options, smoothing: 2});
     expect(result).toHaveLength(3);
@@ -126,177 +135,137 @@ describe('scalar contours', () => {
     ).toBe(true);
   });
 
-  test('retains a missing full column at the original spacing', () => {
-    const input = samples(5, () => 1).filter(d => d.longitude !== 2);
-    const grid = buildScalarGrid(input)!;
-    expect(grid.width).toBe(5);
-    expect(Number.isNaN(grid.values[2])).toBe(true);
-    expect(grid.values[3]).toBe(1);
-  });
-
-  test('averages duplicate measurements without treating them as weights', () => {
-    const grid = buildScalarGrid([
-      ...samples(3, () => 10),
-      {longitude: 1, latitude: 1, value: 30}
-    ])!;
-    expect(grid.values[4]).toBe(20);
-  });
-
-  test('handles empty, nonfinite, constant, and invalid inputs', () => {
-    expect(buildScalarGrid([])).toBeNull();
+  test('handles empty surfaces and invalid custom thresholds', () => {
     expect(generateContours(null, options)).toEqual([]);
-    expect(generateContours(buildScalarGrid(samples(3, () => NaN)), options)).toEqual([]);
-    expect(
-      generateContours(buildScalarGrid(samples(3, () => 4)), {...options, domain: undefined})
-    ).toEqual([]);
-    expect(() => buildScalarGrid([{longitude: 1, latitude: 1, value: 2}])).toThrow('at least two');
+    expect(generateContours(testGrid(samples(3, () => NaN)), options)).toEqual([]);
     expect(() =>
-      buildScalarGrid(
-        samples(3, () => 1).map(d => ({...d, longitude: d.longitude === 2 ? 2.5 : d.longitude}))
-      )
-    ).toThrow('regularly spaced');
-    expect(() =>
-      generateContours(buildScalarGrid(samples(3, () => 1)), {...options, domain: [5, 2]})
+      generateContours(testGrid(samples(3, () => 1)), {...options, domain: [5, 2]})
     ).toThrow('minimum');
   });
 });
 
-describe('scattered scalar interpolation', () => {
-  const plane = (x: number, y: number) => 3 + 2 * x + 3 * y;
-  const scattered = [
-    [0, 0],
-    [2, 0],
-    [0.7, 2],
-    [1.1, 0.6]
-  ].map(([longitude, latitude]) => ({
+describe('point aggregation for contours', () => {
+  const point = (longitude: number, latitude: number, value: number | null): ScalarSample => ({
     longitude,
     latitude,
-    value: plane(longitude, latitude)
-  }));
-
-  test('reproduces a linear field and keeps cells outside the sample hull empty', () => {
-    const grid = interpolateScalarSamples(scattered, 64)!;
-    let valid = 0;
-    for (let i = 0; i < grid.values.length; i++) {
-      if (!Number.isFinite(grid.values[i])) continue;
-      valid++;
-      expect(grid.values[i]).toBeCloseTo(
-        plane(
-          grid.longitude + (i % grid.width) * grid.stepLng,
-          grid.latitude + Math.floor(i / grid.width) * grid.stepLat
-        ),
-        10
-      );
-    }
-    expect(valid).toBeGreaterThan(1000);
-    expect(grid.values[0]).toBe(3);
-    expect(grid.values[grid.width - 1]).toBeCloseTo(7);
-    expect(Number.isNaN(grid.values[grid.values.length - 1])).toBe(true);
-    expect(Number.isNaN(smoothScalarGrid(grid, 2)[grid.values.length - 1])).toBe(true);
+    value
   });
+  const at = (grid: ScalarGrid, longitude: number, latitude: number) =>
+    grid.values[
+      Math.round((latitude - grid.latitude) / grid.stepLat) * grid.width +
+        Math.round((longitude - grid.longitude) / grid.stepLng)
+    ];
 
-  test('auto interpolates irregular positions and generates contours in the input units', () => {
-    const grid = buildContourGrid(scattered, 'auto', 64)!;
-    expect(Math.max(grid.width, grid.height)).toBe(64);
-    expect(
-      generateContours(grid, {...options, domain: [4, 8], smoothing: 1}).map(
-        f => f.properties.threshold
-      )
-    ).toEqual([8, 6, 4]);
-    expect(() => buildContourGrid(scattered, 'grid')).toThrow('regularly spaced');
-  });
-
-  test('does not invent automatic contours when interpolating constant scattered values', () => {
+  test('averages distinct points in the same cell and leaves empty cells at zero', () => {
     const grid = buildContourGrid(
-      scattered.map(sample => ({...sample, value: 10})),
-      'auto',
+      [point(0, 0, 10), point(0.0001, 0.0001, 30), point(0.03, 0.03, -8)],
       32
-    );
-    expect(generateContours(grid, {smoothing: 1.5, levels: 7, below: true})).toEqual([]);
+    )!;
+    expect(at(grid, 0, 0)).toBe(20);
+    expect(at(grid, 0.03, 0.03)).toBe(-8);
+    expect(at(grid, 0.015, 0.015)).toBe(0);
+    expect([...grid.values].filter(value => value !== 0).sort((a, b) => a - b)).toEqual([-8, 20]);
+    expect(generateContours(grid, {...options, below: false, domain: [5, 15]})).toHaveLength(3);
   });
 
-  test.each([0, 1.5])(
-    'preserves constant scattered regions at custom thresholds with smoothing %s',
-    smoothing => {
-      for (const value of [0, 10, -12, 1e-20, 1e20]) {
-        const grid = buildContourGrid(
-          scattered.map(sample => ({...sample, value})),
-          'auto',
-          32
+  test('counts every point when weights are absent, including duplicate positions', () => {
+    const grid = buildContourGrid(
+      [point(0, 0, null), point(0, 0, NaN), point(0.0001, 0.0001, -100), point(0.03, 0.03, 99)],
+      32,
+      'COUNT'
+    )!;
+    expect(at(grid, 0, 0)).toBe(3);
+    expect(at(grid, 0.03, 0.03)).toBe(1);
+    expect([...grid.values].reduce((a, b) => a + b, 0)).toBe(4);
+  });
+
+  test('skips invalid weights without counting them or extending the weighted surface', () => {
+    const valid = [point(0, 0, 0), point(0.0001, 0.0001, -10), point(0.03, 0.03, 4)];
+    const invalid = [point(0, 0, null), point(10, 10, NaN), point(10, 10, Infinity)];
+    const grid = buildContourGrid([...valid, ...invalid], 32)!;
+    expect(grid).toEqual(buildContourGrid(valid, 32));
+    expect(at(grid, 0, 0)).toBe(-5);
+    expect(buildContourGrid(invalid)).toBeNull();
+  });
+
+  test.each(['MEAN', 'COUNT'] as const)('ignores invalid coordinates in %s mode', aggregation => {
+    const valid = [point(0, 0, 4), point(0.03, 0.03, 8)];
+    expect(
+      buildContourGrid(
+        [
+          ...valid,
+          point(NaN, 0, 2),
+          point(0, Infinity, 3),
+          point(181, 0, 4),
+          point(0, 90, 5),
+          {longitude: null, latitude: 0, value: 6} as unknown as ScalarSample
+        ],
+        32,
+        aggregation
+      )
+    ).toEqual(buildContourGrid(valid, 32, aggregation));
+  });
+
+  test.each([undefined, 32, 192, 256])(
+    'fits small and large datasets to a maximum axis of %s',
+    resolution => {
+      const makeGrid = (scale: number) =>
+        buildContourGrid(
+          [point(-0.5 * scale, -0.25 * scale, 10), point(0.5 * scale, 0.25 * scale, 30)],
+          resolution
         )!;
-        const constantGrid = {
-          ...grid,
-          values: Float64Array.from(grid.values, cell => (Number.isFinite(cell) ? value : NaN))
-        };
-        const span = Math.abs(value) || 1;
-        for (const below of [false, true]) {
-          const settings = {
-            levels: 3,
-            below,
-            domain: [value - span, value + span] as [number, number]
-          };
-          const expected = generateContours(constantGrid, {...settings, smoothing: 0});
-          const result = generateContours(grid, {...settings, smoothing});
-          expect(result).toEqual(expected);
-          const atValue = result.find(feature => feature.properties.threshold === value)!;
-          expect(atValue.geometry.coordinates).toHaveLength(1);
-          expect(atValue.geometry.coordinates[0]).toHaveLength(1);
-        }
-        expect(new Set([...grid.values].filter(Number.isFinite))).toEqual(new Set([value]));
-        expect(Number.isNaN(smoothScalarGrid(grid, smoothing)[grid.values.length - 1])).toBe(true);
+      const small = makeGrid(0.00001);
+      const large = makeGrid(1);
+      for (const grid of [small, large]) {
+        expect(Math.max(grid.width, grid.height)).toBe(resolution ?? 64);
+        expect(grid.height).toBeLessThan(grid.width);
+        expect(grid.stepLng).toBeCloseTo(grid.stepLat, 12);
       }
+      expect(small.width).toBe(large.width);
+      expect(small.height).toBe(large.height);
+      expect(small.values).toEqual(large.values);
+      expect(small.stepLng / large.stepLng).toBeCloseTo(0.00001, 12);
     }
   );
 
-  test('auto preserves the original grid and its holes; explicit points mode fills gaps', () => {
-    const input = samples(5, (x, y) => (x === 2 && y === 2 ? null : plane(x, y)));
-    expect(buildContourGrid(input, 'auto', 256)).toEqual(buildScalarGrid(input));
-    const interpolated = buildContourGrid(input, 'points', 33)!;
-    expect(interpolated.width).toBeGreaterThan(5);
-    expect([...interpolated.values].every(Number.isFinite)).toBe(true);
+  test('keeps cells geographically square at higher latitudes', () => {
+    const grid = buildContourGrid([point(0, 59.99, 10), point(0.03, 60.01, 30)], 192)!;
+    expect(grid.height).toBe(192);
+    expect(grid.width).toBeGreaterThan(2);
+    expect(grid.width).toBeLessThan(grid.height);
+    expect(grid.stepLng * Math.cos(Math.PI / 3)).toBeCloseTo(grid.stepLat, 12);
+    expect(grid.longitude + (grid.width - 1) * grid.stepLng).toBeGreaterThanOrEqual(0.03);
+    expect(grid.latitude).toBeLessThanOrEqual(59.99);
+    expect(grid.latitude + (grid.height - 1) * grid.stepLat).toBeCloseTo(60.01);
   });
 
-  test('averages duplicate measurements and ignores missing or invalid samples', () => {
-    const grid = interpolateScalarSamples(
-      [
-        {longitude: 0, latitude: 0, value: 2},
-        {longitude: 0, latitude: 0, value: 6},
-        {longitude: 2, latitude: 0, value: 8},
-        {longitude: 0.7, latitude: 2, value: 10},
-        {longitude: 20, latitude: 20, value: null},
-        {longitude: 20, latitude: 20, value: Infinity},
-        {longitude: NaN, latitude: 0, value: 100}
-      ],
-      32
-    )!;
-    expect(grid.values[0]).toBe(4);
-    expect(grid.longitude + (grid.width - 1) * grid.stepLng).toBeCloseTo(2);
-    expect([...grid.values].filter(Number.isFinite).every(value => value >= 4 && value <= 10)).toBe(
-      true
-    );
+  test('resolution determines which observations are averaged', () => {
+    const input = [point(0, 0, 10), point(0.0004, 0.0004, 30), point(0.03, 0.03, 8)];
+    const fine = buildContourGrid(input, 256)!;
+    const coarse = buildContourGrid(input, 32)!;
+    expect(at(fine, 0, 0)).toBe(10);
+    expect(at(fine, 0.0004, 0.0004)).toBe(30);
+    expect(at(coarse, 0, 0)).toBe(20);
   });
 
-  test('bounds resolution and handles empty, insufficient, collinear and global samples', () => {
-    const grid = interpolateScalarSamples(scattered, 10000)!;
+  test('accepts single points and collinear inputs without triangulation', () => {
+    for (const input of [[point(0, 0, 8)], [point(0, 0, 8), point(0, 0.03, 12)]]) {
+      const grid = buildContourGrid(input, 32)!;
+      expect(grid.width).toBeGreaterThanOrEqual(2);
+      expect(grid.height).toBeGreaterThanOrEqual(2);
+      expect(generateContours(grid, {...options, below: false})).toHaveLength(3);
+    }
+  });
+
+  test('bounds grid allocation and handles empty, invalid settings and global inputs', () => {
+    const grid = buildContourGrid([point(0, 0, 4), point(10, 10, 8)], 100000)!;
     expect(Math.max(grid.width, grid.height)).toBe(256);
-    expect(interpolateScalarSamples([])).toBeNull();
-    expect(interpolateScalarSamples(scattered.map(d => ({...d, value: null})))).toBeNull();
-    expect(() => interpolateScalarSamples(scattered.slice(0, 2))).toThrow('non-collinear');
-    expect(() =>
-      interpolateScalarSamples(
-        [0, 1, 2].map(x => ({
-          longitude: x,
-          latitude: 2 * x,
-          value: x
-        }))
-      )
-    ).toThrow('non-collinear');
-    expect(() =>
-      buildContourGrid([
-        {longitude: -179, latitude: 0, value: 1},
-        {longitude: 179, latitude: 0, value: 2},
-        {longitude: 179, latitude: 1, value: 3}
-      ])
-    ).toThrow('antimeridian');
+    expect(grid.values.length).toBeLessThanOrEqual(256 * 256);
+    expect([...grid.values].every(Number.isFinite)).toBe(true);
+    expect(buildContourGrid([])).toBeNull();
+    for (const resolution of [0, 1, -1, NaN, Infinity]) {
+      expect(() => buildContourGrid([point(0, 0, 1)], resolution)).toThrow('grid resolution');
+    }
+    expect(() => buildContourGrid([point(-179, 0, 1), point(179, 1, 2)])).toThrow('antimeridian');
   });
 });
