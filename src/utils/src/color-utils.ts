@@ -395,7 +395,7 @@ export function updateCustomColorRangeByColorUI(
   colorConfig: ColorRangeConfig
 ): ColorRange {
   const {reversed} = colorConfig;
-  const colors = oldColorRange.colors;
+  const colors = [...oldColorRange.colors];
   // for custom palette, one can only 'reverse' the colors in custom palette.
   colors.reverse();
 
