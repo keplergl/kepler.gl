@@ -10,16 +10,19 @@ export type VoronoiMosaic = {
   cells: VoronoiCell[];
   bounds: [number, number, number, number] | null;
 };
+type Bounds = [number, number, number, number];
+type VoronoiSource = {
+  sites: VoronoiSite[];
+  coordinates: [number, number][];
+  extent: Bounds | null;
+};
+type VoronoiClip = {extent: Bounds | null; bounds: Bounds | null};
 
 // A single site still needs a finite display extent: a 1 km square at the equator.
 const MIN_EXTENT = (512 * 1000) / 40075016.68557849;
 
-/** Planar nearest-site cells in Web Mercator, independent of the map viewport. */
-export function buildVoronoiMosaic(
-  sites: VoronoiSite[],
-  paddingPercent: number,
-  includeSite: (site: VoronoiSite) => boolean = () => true
-): VoronoiMosaic {
+/** Normalize, project and measure the full dataset once, independently of filters. */
+export function prepareVoronoiSites(sites: VoronoiSite[]): VoronoiSource {
   const located: VoronoiSite[] = [];
   for (const site of sites) {
     const [lng, lat] = site.position;
@@ -34,7 +37,7 @@ export function buildVoronoiMosaic(
     const longitude = lng === 180 ? -180 : lng;
     located.push({index: site.index, position: [longitude, lat]});
   }
-  if (!located.length) return {cells: [], bounds: null};
+  if (!located.length) return {sites: [], coordinates: [], extent: null};
 
   // Unwrap across the largest empty longitude gap so dateline neighbors stay neighbors.
   const longitudes = located.map(site => site.position[0]).sort((a, b) => a - b);
@@ -70,6 +73,12 @@ export function buildVoronoiMosaic(
     minY -= span / 2;
     maxY += span / 2;
   }
+  return {sites: located, coordinates, extent: [minX, minY, maxX, maxY]};
+}
+
+export function getVoronoiClip(source: VoronoiSource, paddingPercent: number): VoronoiClip {
+  if (!source.extent) return {extent: null, bounds: null};
+  const [minX, minY, maxX, maxY] = source.extent;
   const padding = Number.isFinite(paddingPercent)
     ? Math.max(0, Math.min(100, paddingPercent)) / 100
     : 0.1;
@@ -81,12 +90,24 @@ export function buildVoronoiMosaic(
     maxX + padX,
     Math.min(512, maxY + padY)
   ];
+  const [westLng, south] = worldToLngLat([extent[0], extent[1]]);
+  const [east, north] = worldToLngLat([extent[2], extent[3]]);
+  return {extent, bounds: [westLng, south, east, north]};
+}
+
+export function tessellateVoronoiMosaic(
+  source: VoronoiSource,
+  clip: VoronoiClip,
+  includeSite: (site: VoronoiSite) => boolean = () => true
+): VoronoiMosaic {
+  if (!clip.extent) return {cells: [], bounds: null};
+  const {sites, coordinates} = source;
   // Keep bounds and longitude unwrapping anchored to the full dataset. Only the
   // sites participating in the tessellation change when a filter changes.
   const unique: VoronoiSite[] = [];
   const activeCoordinates: typeof coordinates = [];
   const seen = new Set<string>();
-  located.forEach((site, index) => {
+  sites.forEach((site, index) => {
     if (!includeSite(site)) return;
     const key = site.position.join(',');
     // Coincident sites share a region, owned by the first remaining row.
@@ -95,7 +116,7 @@ export function buildVoronoiMosaic(
     unique.push(site);
     activeCoordinates.push(coordinates[index]);
   });
-  const voronoi = Delaunay.from(activeCoordinates).voronoi(extent);
+  const voronoi = Delaunay.from(activeCoordinates).voronoi(clip.extent);
   const cells: VoronoiCell[] = [];
   unique.forEach((site, index) => {
     const polygon = voronoi.cellPolygon(index);
@@ -106,7 +127,15 @@ export function buildVoronoiMosaic(
       });
     }
   });
-  const [westLng, south] = worldToLngLat([extent[0], extent[1]]);
-  const [east, north] = worldToLngLat([extent[2], extent[3]]);
-  return {cells, bounds: [westLng, south, east, north]};
+  return {cells, bounds: clip.bounds};
+}
+
+/** Planar nearest-site cells in Web Mercator, independent of the map viewport. */
+export function buildVoronoiMosaic(
+  sites: VoronoiSite[],
+  paddingPercent: number,
+  includeSite: (site: VoronoiSite) => boolean = () => true
+): VoronoiMosaic {
+  const source = prepareVoronoiSites(sites);
+  return tessellateVoronoiMosaic(source, getVoronoiClip(source, paddingPercent), includeSite);
 }

@@ -13,7 +13,14 @@ import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/
 import {applyDefaultColorField} from '../layer-color-utils';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import VoronoiLayerIcon from './voronoi-layer-icon';
-import {buildVoronoiMosaic, VoronoiCell, VoronoiMosaic, VoronoiSite} from './voronoi-utils';
+import {
+  getVoronoiClip,
+  prepareVoronoiSites,
+  tessellateVoronoiMosaic,
+  VoronoiCell,
+  VoronoiMosaic,
+  VoronoiSite
+} from './voronoi-utils';
 
 type VoronoiLayerData = {
   data: VoronoiCell[];
@@ -51,6 +58,8 @@ export const voronoiVisConfigs = {
 };
 
 export default class VoronoiLayer extends Layer {
+  private source?: ReturnType<typeof prepareVoronoiSites>;
+  private clip?: ReturnType<typeof getVoronoiClip>;
   private mosaic?: VoronoiMosaic;
   private geometryTriggers?: {
     dataContainer: DataContainerInterface;
@@ -152,6 +161,8 @@ export default class VoronoiLayer extends Layer {
   formatLayerData(datasets: Datasets, oldLayerData?: VoronoiLayerData): VoronoiLayerData {
     const dataset = this.config.dataId ? datasets[this.config.dataId] : undefined;
     if (!dataset || !this.hasAllColumns()) {
+      this.source = undefined;
+      this.clip = undefined;
       this.mosaic = undefined;
       this.geometryTriggers = undefined;
       this.updateMeta({bounds: null});
@@ -162,21 +173,31 @@ export default class VoronoiLayer extends Layer {
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
     const {columns, columnMode, visConfig} = this.config;
     const previous = this.geometryTriggers;
-    if (
-      !this.mosaic ||
+    const sourceChanged =
+      !this.source ||
       previous?.dataContainer !== dataContainer ||
       previous.dataRevision !== dataRevision ||
       previous.columns !== columns ||
-      previous.columnMode !== columnMode ||
-      previous.padding !== visConfig.boundsPadding ||
-      previous.filteredIndex !== filteredIndex ||
-      previous.gpuFilter !== gpuFilter
-    ) {
+      previous.columnMode !== columnMode;
+    if (sourceChanged) {
       const getPosition = this.getPositionAccessor(dataContainer);
       const sites: VoronoiSite[] = [];
       for (let index = 0; index < dataContainer.numRows(); index++) {
         sites.push({index, position: getPosition({index}) as [number, number]});
       }
+      this.source = prepareVoronoiSites(sites);
+    }
+    const clipChanged =
+      !this.clip || sourceChanged || previous?.padding !== visConfig.boundsPadding;
+    if (clipChanged) {
+      this.clip = getVoronoiClip(this.source!, visConfig.boundsPadding);
+    }
+    if (
+      !this.mosaic ||
+      clipChanged ||
+      previous?.filteredIndex !== filteredIndex ||
+      previous.gpuFilter !== gpuFilter
+    ) {
       const visible = new Set(filteredIndex);
       const hasGpuFilter = Object.values(gpuFilter.filterValueUpdateTriggers).some(
         trigger => trigger !== null
@@ -184,9 +205,9 @@ export default class VoronoiLayer extends Layer {
       const matchesGpuFilter = hasGpuFilter
         ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
         : null;
-      this.mosaic = buildVoronoiMosaic(
-        sites,
-        visConfig.boundsPadding,
+      this.mosaic = tessellateVoronoiMosaic(
+        this.source!,
+        this.clip!,
         site => visible.has(site.index) && (!matchesGpuFilter || matchesGpuFilter(site))
       );
       this.geometryTriggers = {

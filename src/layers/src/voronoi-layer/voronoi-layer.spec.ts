@@ -17,6 +17,9 @@ import {INITIAL_VIS_STATE, layerTypeChangeUpdater, setFilterUpdater} from '@kepl
 import {StateWFiles} from 'test/helpers/mock-state';
 import {LayerClasses} from '../index';
 import VoronoiLayer from './voronoi-layer';
+import * as voronoiUtils from './voronoi-utils';
+
+afterEach(() => jest.restoreAllMocks());
 
 const rows = [
   [-1, -1, 10],
@@ -158,6 +161,8 @@ test('timeline updates rebuild the mosaic and clearing the filter restores all s
     fields: [...fields, {name: 'time', type: 'timestamp', format: ''}],
     rows: rows.map((row, i) => [...row, (i + 1) * 1000])
   });
+  const prepare = jest.spyOn(voronoiUtils, 'prepareVoronoiSites');
+  const clip = jest.spyOn(voronoiUtils, 'getVoronoiClip');
   const original = layer.formatLayerData(datasets);
   const bounds = layer.meta.bounds;
   let state = {
@@ -187,6 +192,8 @@ test('timeline updates rebuild the mosaic and clearing the filter restores all s
   }
   state = setFilterUpdater(state, {idx: 0, prop: 'enabled', value: false});
   expect(state.layerData[0].data).toEqual(original.data);
+  expect(prepare).toHaveBeenCalledTimes(1);
+  expect(clip).toHaveBeenCalledTimes(1);
 });
 
 test('polygon filters operate on the source site rather than the cell boundary', async () => {
@@ -240,6 +247,95 @@ test('reuses geometry for styling and rebuilds for padding, coordinates, and dat
   expect(moved.data).toHaveLength(1);
   expect(moved.data[0].position).toEqual([0, 0]);
 });
+
+test.each(['points', 'geojson'])(
+  'reuses %s source preparation and bounds across CPU/GPU filters and padding changes',
+  async columnMode => {
+    const geometryFields = ['shape', 'alternate'].map(name => ({
+      name,
+      type: 'geojson',
+      analyzerType: DATA_TYPES.GEOMETRY
+    }));
+    const {layer, dataset, datasets} = await setup({
+      fields: [...fields, ...geometryFields],
+      rows: rows.map(([lng, lat, value]) => [
+        lng,
+        lat,
+        value,
+        JSON.stringify({type: 'Point', coordinates: [lng, lat]}),
+        JSON.stringify({type: 'Point', coordinates: [lng + 10, lat]})
+      ])
+    });
+    if (columnMode === 'geojson') {
+      layer.updateLayerConfig({
+        columnMode,
+        columns: layer.assignColumn('geojson', dataset.fields[3])
+      });
+    }
+    const read = jest.spyOn(dataset.dataContainer, 'valueAt');
+    const prepare = jest.spyOn(voronoiUtils, 'prepareVoronoiSites');
+    const clip = jest.spyOn(voronoiUtils, 'getVoronoiClip');
+    const coordinateReads = () =>
+      read.mock.calls.filter(([, field]) =>
+        columnMode === 'geojson' ? field === 3 : field === 0 || field === 1
+      ).length;
+    const original = layer.formatLayerData(datasets);
+    const sourceReads = coordinateReads();
+    expect(sourceReads).toBe(rows.length * (columnMode === 'geojson' ? 1 : 2));
+    const bounds = layer.meta.bounds;
+    let previous = original;
+    for (const indices of [[1, 3], [], [0, 1, 2, 3]]) {
+      const table = copyTableAndUpdate(dataset, {filteredIndexByLayer: {[layer.id]: indices}});
+      const filtered = layer.formatLayerData({[dataset.id]: table}, previous);
+      expect(filtered.data.map(cell => cell.index)).toEqual(indices);
+      expect(layer.meta.bounds).toBe(bounds);
+      previous = filtered;
+    }
+    const filter = {
+      ...getDefaultFilter({dataId: [dataset.id]}),
+      type: FILTER_TYPES.range,
+      name: ['value'],
+      fieldIdx: [2],
+      domain: [10, 40],
+      value: [20, 20],
+      gpu: true
+    };
+    for (const {value, indices} of [
+      {value: [20, 20], indices: [1]},
+      {value: [21, 29], indices: []},
+      {value: [10, 40], indices: [0, 1, 2, 3]}
+    ]) {
+      dataset.filterTable(assignGpuChannels([{...filter, value}]), [layer]);
+      const filtered = layer.formatLayerData(datasets, previous);
+      expect(filtered.data.map(cell => cell.index)).toEqual(indices);
+      expect(layer.meta.bounds).toBe(bounds);
+      previous = filtered;
+    }
+    expect(previous.data).toEqual(original.data);
+    expect(coordinateReads()).toBe(sourceReads);
+    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(clip).toHaveBeenCalledTimes(1);
+
+    layer.updateLayerVisConfig({boundsPadding: 30});
+    const padded = layer.formatLayerData(datasets, previous);
+    expect(padded.data[0].polygon).not.toEqual(original.data[0].polygon);
+    expect(coordinateReads()).toBe(sourceReads);
+    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(clip).toHaveBeenCalledTimes(2);
+
+    layer.updateLayerConfig({
+      columns: layer.assignColumn(
+        columnMode === 'geojson' ? 'geojson' : 'lng',
+        dataset.fields[columnMode === 'geojson' ? 4 : 1]
+      )
+    });
+    const moved = layer.formatLayerData(datasets, padded);
+    expect(moved.data[0].position).toEqual(columnMode === 'geojson' ? [9, -1] : [-1, -1]);
+    expect(moved.data).not.toEqual(padded.data);
+    expect(prepare).toHaveBeenCalledTimes(2);
+    expect(clip).toHaveBeenCalledTimes(3);
+  }
+);
 
 test('missing datasets and columns clear stale cells and recover after reassignment', async () => {
   const {layer, datasets} = await setup();
