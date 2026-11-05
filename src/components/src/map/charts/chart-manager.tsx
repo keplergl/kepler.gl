@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useContext, useMemo, useState} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
@@ -104,8 +104,20 @@ export default function ChartManagerFactory(
     const {intl, children, panelActive = true, isExport = false} = props;
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
-    const visStateFromStore = useSelector(state => selector(state)?.visState);
-    const visState = props.visState ?? visStateFromStore;
+    // Pointer/hover updates replace visState without changing chart inputs.
+    // Filter and playback updates replace datasets, which include the CPU/GPU filters.
+    const {
+      charts: allCharts,
+      datasets: chartDatasets,
+      layers: chartLayers
+    } = useSelector(state => {
+      const visState = props.visState ?? selector(state)?.visState;
+      return {
+        charts: visState?.charts,
+        datasets: visState?.datasets,
+        layers: visState?.layers
+      };
+    }, shallowEqual);
     const visStateActions = useMemo(
       () =>
         props.visStateActions ?? {
@@ -119,13 +131,13 @@ export default function ChartManagerFactory(
     );
 
     const charts = useMemo(() => {
-      const allCharts = visState?.charts ?? [];
+      const availableCharts = allCharts ?? [];
       return panelActive || isExport
-        ? allCharts
-        : allCharts.filter(chart => chart.pinned !== false);
-    }, [visState?.charts, panelActive, isExport]);
-    const datasets = useMemo<Datasets>(() => visState?.datasets ?? {}, [visState?.datasets]);
-    const layers = useMemo(() => visState?.layers ?? [], [visState?.layers]);
+        ? availableCharts
+        : availableCharts.filter(chart => chart.pinned !== false);
+    }, [allCharts, panelActive, isExport]);
+    const datasets = useMemo<Datasets>(() => chartDatasets ?? {}, [chartDatasets]);
+    const layers = useMemo(() => chartLayers ?? [], [chartLayers]);
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
     const onAddChart = useCallback(
