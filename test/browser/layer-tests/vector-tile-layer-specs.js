@@ -648,6 +648,203 @@ test('#VectorTileLayer -> highlights respect current panel and layer visibility'
   t.end();
 });
 
+test('#VectorTileLayer -> repeated hover and pan reuse outline geometry', t => {
+  const layer = new VectorTileLayer({id: 'cached-hover', dataId: 'tiles'});
+  const feature = {
+    type: 'Feature',
+    id: 'selected',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-1, -1],
+          [1, -1],
+          [1, 1],
+          [-1, 1],
+          [-1, -1]
+        ]
+      ]
+    }
+  };
+  let unrelatedReads = 0;
+  const features = [
+    feature,
+    ...Array.from({length: 1000}, () => ({
+      ...feature,
+      get id() {
+        unrelatedReads++;
+        return 'other';
+      }
+    }))
+  ];
+  const tile = {
+    id: '0-0-0',
+    content: features,
+    boundingBox: [
+      [-180, -85],
+      [180, 85]
+    ]
+  };
+  layer.tileDataset.getTiles = () => [tile];
+  const pick = {picked: true, index: 0, object: feature, tile, layer: {props: {id: layer.id}}};
+  const opts = {
+    data: {tileSource: {}, tilesetDataUrl: 'test/{z}/{x}/{y}'},
+    mapState: {zoom: 2, latitude: 0, longitude: 0},
+    animationConfig: {},
+    gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+    layerCallbacks: {},
+    visible: true,
+    objectHovered: pick
+  };
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+  });
+  try {
+    const first = layer.renderLayer(opts)[1];
+    manager.setLayers([first]);
+    const stroke = manager.getLayers().find(l => l.id.endsWith('-polygons-stroke'));
+    const tessellate = sinon.spy(stroke.state.pathTesselator, 'updateGeometry');
+    unrelatedReads = 0;
+    const start = performance.now();
+    let current;
+    for (let i = 0; i < 100; i++) {
+      const longitude = i / 100;
+      manager.activateViewport(
+        new WebMercatorViewport({width: 64, height: 64, zoom: 2, longitude})
+      );
+      current = layer.renderLayer({
+        ...opts,
+        mapState: {...opts.mapState, longitude},
+        objectHovered: {...pick, x: i}
+      })[1];
+      manager.setLayers([current]);
+    }
+    t.comment(
+      `100 hover/pan renders: ${unrelatedReads} unrelated ID reads, ${
+        tessellate.callCount
+      } tessellations, ${(performance.now() - start).toFixed(2)} ms`
+    );
+    t.equal(current.props.data, first.props.data, 'same feature retains its outline data');
+    t.equal(unrelatedReads, 0, 'unchanged content is not rescanned');
+    t.equal(tessellate.callCount, 0, 'pan and repeated picks do not retessellate the outline');
+    layer.updateLayerVisConfig({strokeWidth: 4});
+    const styled = layer.renderLayer({...opts, visible: false})[1];
+    t.equal(styled.props.data, first.props.data, 'style and visibility changes preserve geometry');
+    t.equal(styled.props.getLineWidth, 5, 'stroke width still updates');
+    t.equal(styled.props.visible, false, 'split-panel visibility still updates');
+    const globe = layer.renderLayer({
+      ...opts,
+      mapState: {...opts.mapState, globe: {enabled: true}}
+    })[1];
+    t.equal(globe.props.data, first.props.data, 'projection styling does not rebuild matched data');
+    t.equal(
+      globe.props.extensions[0].constructor.extensionName,
+      'GlobeClipExtension',
+      'projection clip still updates'
+    );
+    t.equal(
+      layer.renderLayer({...opts, objectHovered: null}).length,
+      1,
+      'clearing hover removes the outline'
+    );
+    t.equal(
+      layer.renderLayer({...opts, objectHovered: {...pick, layer: {props: {id: 'another-layer'}}}})
+        .length,
+      1,
+      'picking another layer removes the outline'
+    );
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> outline cache follows content, IDs and filters', t => {
+  const layer = new VectorTileLayer({id: 'cached-fragments', dataId: 'tiles'});
+  const feature = (id, group = 'shared') => ({
+    type: 'Feature',
+    id,
+    properties: {group},
+    geometry: {type: 'Point', coordinates: [0, 0]}
+  });
+  const selected = feature(0);
+  const fragment = feature('0');
+  const other = feature(1, 'other');
+  const firstTile = {id: 'first', content: [selected, other]};
+  const tiles = [firstTile];
+  layer.tileDataset.getTiles = () => tiles;
+  const options = {
+    defaultLayerProps: {id: layer.id, visible: true},
+    visConfig: {strokeWidth: 1},
+    getFilterCategory: () => 1
+  };
+  const render = (hovered = selected, overrides = {}) =>
+    layer._getPerTileOverlays(hovered, {...options, ...overrides});
+  const first = render()[0].props.data;
+  t.deepEqual(first, [selected], 'zero is a valid top-level feature ID');
+  t.equal(render({...selected})[0].props.data, first, 'equivalent picks retain the data');
+  tiles.push({id: 'second', content: {shape: 'geojson-table', features: [fragment]}});
+  const loaded = render();
+  t.equal(loaded.length, 2, 'newly loaded tile adds a matching fragment');
+  t.equal(loaded[0].props.data, first, 'loading a tile retains unchanged tile data');
+  t.deepEqual(
+    loaded[1].props.data,
+    [fragment],
+    'string and numeric IDs retain existing matching semantics'
+  );
+  tiles.pop();
+  t.equal(render().length, 1, 'evicting a tile removes its outline');
+  const replacement = feature(0);
+  firstTile.content = [replacement];
+  const replaced = render()[0].props.data;
+  t.deepEqual(replaced, [replacement], 'same tile header with new content refreshes geometry');
+  t.notEqual(replaced, first, 'replacement content is not stale');
+  tiles[0] = {id: 'first', content: {shape: 'geojson-table', features: [selected, other]}};
+  t.deepEqual(
+    render()[0].props.data,
+    [selected],
+    'same tile ID with a new header refreshes geometry'
+  );
+  t.deepEqual(render(other)[0].props.data, [other], 'changing picked ID changes the outline');
+  t.deepEqual(
+    render(selected, {uniqueIdProperty: 'group'})[0].props.data,
+    [selected],
+    'configured ID field is part of the cache key'
+  );
+  tiles[0].content.features = [selected, fragment];
+  const grouped = render(selected, {uniqueIdProperty: 'group'})[0].props.data;
+  t.deepEqual(grouped, [selected, fragment], 'replacing collection features refreshes matches');
+  const filtered = render(selected, {
+    uniqueIdProperty: 'group',
+    getFilterCategory: f => (f === fragment ? 0 : 1)
+  });
+  t.deepEqual(
+    filtered[0].props.data,
+    [selected],
+    'filter predicate changes remove excluded fragments'
+  );
+  t.equal(
+    render(selected, {getFilterCategory: () => 0}).length,
+    0,
+    'filtering all fragments removes the outline'
+  );
+  t.deepEqual(render()[0].props.data, [selected, fragment], 'removing filters restores fragments');
+  t.equal(render(feature(undefined)).length, 0, 'missing feature ID has no matching outline');
+  t.equal(
+    render(selected, {uniqueIdProperty: 'missing'}).length,
+    0,
+    'missing configured ID has no matching outline'
+  );
+  tiles[0].content = [];
+  t.equal(render().length, 0, 'empty content removes old matches');
+  tiles[0].content = undefined;
+  t.equal(render().length, 0, 'loading content is skipped');
+  tiles.length = 0;
+  t.equal(render().length, 0, 'empty tile set removes old outlines');
+  t.end();
+});
+
 test('#VectorTileLayer -> unchanged renders retain cached tile sublayers', async t => {
   const {layer, table, features} = categoricalFilterFixture();
   features.push({
