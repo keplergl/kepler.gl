@@ -16,6 +16,7 @@ import {
   getThresholdsFromQuantiles,
   getDomainStepsbyZoom,
   getQuantLabelFormat,
+  formatNumber,
   getHistogramDomain,
   getQuantLegends,
   getCategoricalColorMap,
@@ -397,8 +398,9 @@ test('DataScaleUtils -> getQuantLegends preserves string and infinite bounds', t
       scale.scaleType = scaleType;
       [undefined, format].forEach(labelFormat => {
         const value = Number(boundary);
+        // Preserve the shared formatter's handling of SI prefixes on infinite bounds.
         const label =
-          labelFormat && scaleType !== SCALE_TYPES.custom ? labelFormat(value) : String(value);
+          labelFormat && scaleType !== SCALE_TYPES.custom ? labelFormat(value) : formatNumber(value);
         t.deepEqual(
           getQuantLegends(scale, labelFormat).map(({label, inputs}) => ({label, inputs})),
           [
