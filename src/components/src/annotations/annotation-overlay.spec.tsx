@@ -6,11 +6,15 @@ import {act, fireEvent} from '@testing-library/react';
 import {WebMercatorViewport} from '@deck.gl/core';
 
 import {AnnotationKind} from '@kepler.gl/constants';
-import {Annotation, RulerAnnotation} from '@kepler.gl/types';
+import {Annotation, MapState, RulerAnnotation} from '@kepler.gl/types';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {mockKeplerProps} from 'test/helpers/mock-state';
 
 import AnnotationOverlay from './annotation-overlay';
 import {MapViewport} from './annotation-utils';
+import {MapViewStateContextProvider} from '../map-view-state-context';
+import PlotContainerFactory from '../plot-container';
+import {plotContainerSelector} from '../kepler-gl';
 
 const ruler: RulerAnnotation = {
   id: 'ruler-1',
@@ -110,6 +114,127 @@ function setupWorldCopy(annotation: Annotation, longitude: number) {
 }
 
 describe('AnnotationOverlay ruler interactions', () => {
+  test.each([0, 1])('exports the retained copy for map %s after panning', mapIndex => {
+    const annotation = {
+      ...makeLegacyAnnotation(AnnotationKind.POINT),
+      mapIndex,
+      anchorPoint: [178, 0]
+    } as Annotation;
+    const overlayProps = {
+      annotations: [annotation],
+      selectedAnnotationId: null,
+      isEditingAnnotationText: false,
+      isAnnotationMode: false,
+      mapIndex,
+      updateAnnotation: jest.fn(),
+      setSelectedAnnotation: jest.fn()
+    };
+    const ExportMap = ({
+      mapState,
+      index,
+      isExport
+    }: {
+      mapState: MapState;
+      index?: number;
+      isExport?: boolean;
+    }) => {
+      const projected = new WebMercatorViewport(mapState);
+      return (
+        <AnnotationOverlay
+          {...overlayProps}
+          mapIndex={index ?? 0}
+          isExport={isExport}
+          viewport={{
+            ...projected,
+            project: point => projected.project([...point]),
+            unproject: point => projected.unproject([...point])
+          }}
+        />
+      );
+    };
+    const PlotContainer = PlotContainerFactory(
+      ExportMap as unknown as Parameters<typeof PlotContainerFactory>[0],
+      (({children}) => <>{children}</>) as Parameters<typeof PlotContainerFactory>[1]
+    );
+    const plotProps = plotContainerSelector(mockKeplerProps);
+    const tree = (longitude: number, scale?: number, exportLongitude = longitude) => {
+      const mapState = {
+        ...plotProps.mapFields.mapState,
+        longitude,
+        latitude: 0,
+        zoom: 0,
+        pitch: 0,
+        bearing: 0,
+        width: 1000,
+        height: 600
+      };
+      return (
+        <MapViewStateContextProvider mapState={mapState}>
+          <div data-testid="live">
+            <AnnotationOverlay {...overlayProps} viewport={worldViewport(longitude)} />
+          </div>
+          {scale !== undefined ? (
+            <PlotContainer
+              {...plotProps}
+              center={false}
+              splitMaps={mapIndex === 1 ? [{layers: {}}, {layers: {}}] : []}
+              imageSize={{
+                scale,
+                zoomOffset: Math.log2(scale),
+                imageW: 1000 * scale * (mapIndex === 1 ? 2 : 1),
+                imageH: 600 * scale
+              }}
+              mapFields={{
+                ...plotProps.mapFields,
+                mapState: {...mapState, longitude: exportLongitude}
+              }}
+            />
+          ) : null}
+        </MapViewStateContextProvider>
+      );
+    };
+    let setScene: React.Dispatch<React.SetStateAction<React.ReactElement>>;
+    function Harness() {
+      const [scene, updateScene] = React.useState(() => tree(-176));
+      setScene = updateScene;
+      return scene;
+    }
+    const view = renderWithTheme(<Harness />);
+    const renderScene = (longitude: number, scale?: number, exportLongitude = longitude) =>
+      act(() => setScene(tree(longitude, scale, exportLongitude)));
+    renderScene(-172);
+    const livePosition = view
+      .getByTestId('live')
+      .querySelector('[data-annotation-part="shape"]')!
+      .getAttribute('transform');
+    const [x, y] = worldViewport(-172).project([-182, 0]);
+    expect(livePosition).toBe(`translate(${x},${y})`);
+
+    // Even an export crop where the live anchor is off screen must not change
+    // the live selection or seed later exports with a different world copy.
+    renderScene(-172, 1, 172);
+    renderScene(-172);
+    for (const scale of [1, 2]) {
+      renderScene(-172, scale);
+      const exportedPosition = view.container
+        .querySelector('.export-map-instance [data-annotation-part="shape"]')!
+        .getAttribute('transform')!
+        .slice('translate('.length, -1)
+        .split(',')
+        .map(Number);
+      expect(exportedPosition[0]).toBeCloseTo(x * scale);
+      expect(exportedPosition[1]).toBeCloseTo(y * scale);
+      expect(
+        view
+          .getByTestId('live')
+          .querySelector('[data-annotation-part="shape"]')!
+          .getAttribute('transform')
+      ).toBe(livePosition);
+    }
+    expect(annotation.anchorPoint).toEqual([178, 0]);
+    expect(overlayProps.updateAnnotation).not.toHaveBeenCalled();
+  });
+
   test.each([AnnotationKind.POINT, AnnotationKind.RULER])(
     'keeps the rendered %s copy when a pan brings the saved anchor on screen',
     kind => {

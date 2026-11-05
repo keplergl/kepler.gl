@@ -745,8 +745,8 @@ function KeplerGlFactory(
                             {mapContainers}
                           </MapsLayout>
                         </DndContext>
+                        {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       </MapViewStateContextProvider>
-                      {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
                         <GeoCoderPanel

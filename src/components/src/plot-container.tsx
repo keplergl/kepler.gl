@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // libraries
-import React, {useRef, useEffect, useState, useCallback, useMemo} from 'react';
+import React, {useRef, useEffect, useState, useCallback, useMemo, useContext} from 'react';
 import styled from 'styled-components';
 import debounce from 'es-toolkit/compat/debounce';
 import {
@@ -15,7 +15,7 @@ import {
 import {findMapBounds, areAnyDeckLayersLoading} from '@kepler.gl/reducers';
 import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
-import {MapViewStateContextProvider} from './map-view-state-context';
+import {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';
 
 import {EMPTY_MAPBOX_STYLE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
@@ -167,6 +167,7 @@ export default function PlotContainerFactory(
     enableErrorNotification,
     logoComponent
   }: PlotContainerProps) {
+    const {annotationWorldCopies} = useContext(MapViewStateContext);
     const plottingAreaRef = useRef<HTMLDivElement>(null);
     const [plotEffects] = useState<Effect[]>(() =>
       mapFields.visState.effects.map(effect => effect.clone())
@@ -500,7 +501,10 @@ export default function PlotContainerFactory(
     return (
       <StyledPlotContainer className="export-map-instance" $legendZoom={legendZoom}>
         <StyledMapContainer ref={plottingAreaRef} width={size.width} height={size.height}>
-          <MapViewStateContextProvider mapState={newMapState}>
+          <MapViewStateContextProvider
+            mapState={newMapState}
+            annotationWorldCopies={annotationWorldCopies}
+          >
             {mapContainers}
           </MapViewStateContextProvider>
         </StyledMapContainer>

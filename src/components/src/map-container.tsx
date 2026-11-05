@@ -1759,6 +1759,7 @@ export default function MapContainerFactory(
             isEditingAnnotationText={visState.isEditingAnnotationText}
             isAnnotationMode={Boolean(mapControls?.annotation?.active) && !this.props.readOnly}
             mapIndex={index || 0}
+            isExport={this.props.isExport}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
             pickWorldPosition={this._pickAnnotationWorldPosition}

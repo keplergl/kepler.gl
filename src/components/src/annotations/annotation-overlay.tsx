@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback, useLayoutEffect, useMemo} from 'react';
+import React, {FC, useCallback, useContext, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {
   DndContext,
@@ -17,6 +17,7 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {ActionHandler, updateAnnotation, setSelectedAnnotation} from '@kepler.gl/actions';
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
 import AnnotationText from './annotation-text';
+import {MapViewStateContext} from '../map-view-state-context';
 import {
   MapViewport,
   AnnotationWorldCopy,
@@ -72,6 +73,7 @@ export type AnnotationOverlayProps = {
   isEditingAnnotationText: boolean;
   isAnnotationMode: boolean;
   mapIndex: number;
+  isExport?: boolean;
   viewport: MapViewport;
   isGlobeEnabled?: boolean;
   pickWorldPosition?: PickWorldPosition;
@@ -86,12 +88,14 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   isEditingAnnotationText,
   isAnnotationMode,
   mapIndex,
+  isExport = false,
   viewport,
   isGlobeEnabled,
   pickWorldPosition,
   updateAnnotation: onUpdateAnnotation,
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
+  const {annotationWorldCopies} = useContext(MapViewStateContext);
   const annotationsToRender = useMemo(
     () =>
       annotations
@@ -111,29 +115,35 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
     copy?: AnnotationWorldCopy;
   } | null>(null);
   const worldCopiesRef = React.useRef(new Map<string, AnnotationWorldCopy>());
-  const {worldCopies, annotationViewports} = useMemo(() => {
-    const copies = new Map<string, AnnotationWorldCopy>();
-    const viewports = new Map<string, MapViewport>();
+  const worldCopies = new Map<string, AnnotationWorldCopy>();
+  if (!isGlobeEnabled) {
     for (const annotation of annotationsToRender) {
-      const copy = isGlobeEnabled
-        ? undefined
-        : getAnnotationWorldCopy(
+      const exportedCopy = isExport
+        ? annotationWorldCopies?.[mapIndex]?.get(annotation.id)
+        : undefined;
+      worldCopies.set(
+        annotation.id,
+        exportedCopy ??
+          getAnnotationWorldCopy(
             annotation,
             viewport,
             worldCopiesRef.current.get(annotation.id),
             draggedAnnotationRef.current?.annotation.id === annotation.id
-          );
-      if (copy) copies.set(annotation.id, copy);
-      viewports.set(annotation.id, viewportForWorldCopy(viewport, copy));
+          )
+      );
     }
-    return {worldCopies: copies, annotationViewports: viewports};
-  }, [annotationsToRender, viewport, isGlobeEnabled]);
+  }
 
-  // Commit only rendered state, and discard copies for removed/hidden annotations
-  // and globe mode. Each map overlay owns its own transient selection.
-  useLayoutEffect(() => {
+  // Remember the displayed copies for the next pan and for image export.
+  // Export may read this history, but must not replace the live map's selection.
+  useEffect(() => {
     worldCopiesRef.current = worldCopies;
-  }, [worldCopies]);
+    if (isExport || !annotationWorldCopies) return;
+    annotationWorldCopies[mapIndex] = worldCopies;
+    return () => {
+      delete annotationWorldCopies[mapIndex];
+    };
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -163,19 +173,14 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
     []
   );
 
-  const handleDragStart = useCallback(
-    (ev: DragStartEvent) => {
-      const annId = `${ev.active.id}`.split(':')[0];
-      const ann = annotations.find(a => a.id === annId) ?? null;
-      draggedAnnotationRef.current = ann
-        ? {annotation: ann, copy: worldCopiesRef.current.get(annId)}
-        : null;
-      if (ann) {
-        onSetSelectedAnnotation(ann.id, false);
-      }
-    },
-    [annotations, onSetSelectedAnnotation]
-  );
+  const handleDragStart = (ev: DragStartEvent) => {
+    const annId = `${ev.active.id}`.split(':')[0];
+    const ann = annotations.find(a => a.id === annId) ?? null;
+    draggedAnnotationRef.current = ann ? {annotation: ann, copy: worldCopies.get(annId)} : null;
+    if (ann) {
+      onSetSelectedAnnotation(ann.id, false);
+    }
+  };
 
   const handleDragMove = useCallback(
     (ev: DragMoveEvent) => {
@@ -263,7 +268,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
-              viewport={annotationViewports.get(annotation.id)!}
+              viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
             />
@@ -275,7 +280,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
-              viewport={annotationViewports.get(annotation.id)!}
+              viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
               isEditingText={annotation.id === selectedAnnotationId && isEditingAnnotationText}
@@ -298,7 +303,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
                 key={annotation.id}
                 annotation={annotation}
                 opacity={getAnnotationOpacity(annotation.id)}
-                viewport={annotationViewports.get(annotation.id)!}
+                viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
                 isEditing={isAnnotationMode}
                 isSelected={annotation.id === selectedAnnotationId}
               />
