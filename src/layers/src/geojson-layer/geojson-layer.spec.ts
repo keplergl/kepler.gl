@@ -14,7 +14,7 @@ import {
   processGeojson,
   processRowObject
 } from '@kepler.gl/processors';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB, getBinaryGeometriesFromArrow} from '@loaders.gl/gis';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -1273,4 +1273,146 @@ describe('GeoJsonLayer centroid row alignment', () => {
       ]);
     }
   });
+});
+
+describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
+  const lineVector = (coordinates: number[][], offsets: number[]) =>
+    arrow.makeVector(
+      arrow.makeData({
+        type: new arrow.List(
+          new arrow.Field(
+            'vertices',
+            new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
+            false
+          )
+        ),
+        length: offsets.length - 1,
+        valueOffsets: Int32Array.from(offsets),
+        child: arrow.makeData({
+          type: new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
+          length: coordinates.length,
+          child: arrow.makeData({
+            type: new arrow.Float64(),
+            data: Float64Array.from(coordinates.flat())
+          })
+        })
+      })
+    );
+
+  test.each(
+    [GEOARROW_EXTENSIONS.LINESTRING, GEOARROW_EXTENSIONS.POLYGON].flatMap(encoding =>
+      [false, true].map(cached => ({encoding, cached}))
+    )
+  )(
+    'preserves empty $encoding rows across chunks with worker cache=$cached',
+    async ({encoding, cached}) => {
+      const vectorFor = (start?: number): arrow.Vector => {
+        const coordinates =
+          start === undefined
+            ? []
+            : encoding === GEOARROW_EXTENSIONS.LINESTRING
+            ? [
+                [start, start],
+                [start + 2, start + 2]
+              ]
+            : [
+                [start, start],
+                [start + 2, start],
+                [start + 2, start + 2],
+                [start, start + 2],
+                [start, start]
+              ];
+        if (encoding === GEOARROW_EXTENSIONS.LINESTRING) {
+          return lineVector(coordinates, start === undefined ? [0, 0, 0] : [0, 0, 2, 2]);
+        }
+        const rings = lineVector(coordinates, start === undefined ? [0] : [0, 5]);
+        return arrow.makeVector(
+          arrow.makeData({
+            type: new arrow.List(new arrow.Field('rings', rings.type, false)),
+            length: start === undefined ? 2 : 3,
+            valueOffsets: Int32Array.from(start === undefined ? [0, 0, 0] : [0, 0, 1, 1]),
+            child: rings.data[0]
+          })
+        );
+      };
+      const first = vectorFor(10);
+      const empty = vectorFor();
+      const last = vectorFor(30);
+      const vector = first.concat(empty).concat(last);
+      const cache = cached
+        ? Object.fromEntries(
+            [first, empty, last].map((column, index) => [
+              index,
+              getBinaryGeometriesFromArrow(column as any, encoding, {
+                chunkOffset: [0, 3, 5][index],
+                calculateMeanCenters: true,
+                triangulate: true
+              })
+            ])
+          )
+        : undefined;
+      const dataset = new KeplerTable({
+        info: {id: 'native-centroids'},
+        color: [0, 0, 0]
+      }).updateSchema({
+        fields: [
+          {
+            name: 'geometry',
+            type: 'geoarrow',
+            metadata: new Map([[GEOARROW_METADATA_KEY, encoding]])
+          }
+        ],
+        cols: [vector],
+        rows: [],
+        ...(cache ? {geoArrowBinaryData: {0: cache}} : {})
+      });
+      // Keep the same multi-batch layout used by progressive Arrow loading.
+      await dataset.update({
+        fields: dataset.fields,
+        cols: [vector],
+        rows: [],
+        ...(cache ? {geoArrowBinaryData: {0: cache}} : {})
+      });
+      const layer = new GeoJsonLayer({
+        dataId: dataset.id,
+        columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+      });
+      layer.updateLayerMeta(dataset);
+      expect(layer.centroids).toEqual([null, [11, 11], null, null, null, null, [31, 31], null]);
+      const selection = {
+        type: 'Feature',
+        properties: {shape: 'Rectangle', bbox: [29, 29, 33, 33]},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [29, 29],
+              [33, 29],
+              [33, 33],
+              [29, 33],
+              [29, 29]
+            ]
+          ]
+        }
+      };
+      const matches = getPolygonFilterFunctor(layer, {value: selection}, dataset.dataContainer);
+      expect(
+        Array.from({length: 8}, (_, index) => index).filter(index => matches({index}))
+      ).toEqual([6]);
+
+      // Progressive batches must use chunk-local centroid slots before concatenation.
+      for (const [index, column] of [first, first.concat(empty), vector].entries()) {
+        await dataset.update({
+          fields: dataset.fields,
+          rows: [],
+          cols: [column],
+          ...(cache ? {geoArrowBinaryData: {0: {[index]: cache[index]}}} : {})
+        });
+        layer.updateLayerMeta(dataset);
+        expect(layer.centroids).toEqual(
+          [null, [11, 11], null, null, null, null, [31, 31], null].slice(0, column.length)
+        );
+      }
+    }
+  );
 });
