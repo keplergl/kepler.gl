@@ -34,10 +34,18 @@ import {
   registerEntry,
   setCameraBookmarks,
   setCameraTour,
-  setLayerAnimationTimeConfig
+  setLayerAnimationTimeConfig,
+  VisStateActions
 } from '@kepler.gl/actions';
 
-import {createDataContainer, findById} from '@kepler.gl/utils';
+import {
+  createDataContainer,
+  findById,
+  getApplicationConfig,
+  initApplicationConfig
+} from '@kepler.gl/utils';
+import {KeplerTable} from '@kepler.gl/table';
+import {createNewDataEntryMock} from 'test/helpers/table-utils';
 
 test('#visState camera bookmarks -> replace, merge, validate and reset', t => {
   const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
@@ -279,6 +287,79 @@ test('VisStateMerger.v1 -> mergeFilters -> toEmptyState', t => {
 
   // test parsed filters
   cmpFilters(t, expectedMergedFilterV1, stateWData.filters);
+  t.end();
+});
+
+test('VisStateMerger -> preserves boolean selections with a registered custom table', async t => {
+  class ObservedBooleanTable extends KeplerTable {
+    getColumnFilterDomain(field) {
+      return field.type === 'boolean'
+        ? {domain: [...new Set(this.allIndexes.map(index => field.valueAccessor({index})))]}
+        : super.getColumnFilterDomain(field);
+    }
+  }
+
+  const previousTable = getApplicationConfig().table;
+  const dataId = 'boolean-restore';
+  const booleanFields = [{name: 'active', type: 'boolean', analyzerType: 'BOOLEAN'}];
+  const loadState = async values => ({
+    ...visStateReducer(undefined, {type: '@@INIT'}),
+    datasets: await createNewDataEntryMock({
+      info: {id: dataId},
+      data: {fields: booleanFields, rows: values.map(value => [value])}
+    })
+  });
+
+  initApplicationConfig({table: ObservedBooleanTable});
+  try {
+    for (const selected of [false, true]) {
+      let source = await loadState([false, true]);
+      t.ok(source.datasets[dataId] instanceof ObservedBooleanTable, 'uses the registered table');
+      source = visStateReducer(source, VisStateActions.addFilter(dataId));
+      source = visStateReducer(source, VisStateActions.setFilter(0, 'name', 'active'));
+      t.equal(source.filters[0].value, true, 'new boolean filters still default to true');
+      source = visStateReducer(source, VisStateActions.setFilter(0, 'value', selected));
+
+      const saved = JSON.parse(JSON.stringify(visStateSchema.v1.save(source)));
+      t.equal(saved.visState.filters[0].value, selected, 'serializes the explicit selection');
+      const parsed = visStateSchema.v1.load(saved.visState);
+      const target = await loadState([!selected, !selected]);
+      t.deepEqual(
+        target.datasets[dataId].getColumnFilterProps('active').domain,
+        [!selected],
+        'the custom table reports only the observed boolean'
+      );
+      let restored = visStateReducer(target, receiveMapConfig(parsed, {keepExistingConfig: true}));
+      t.equal(restored.filters[0].value, selected, 'restores a selection absent from the domain');
+      t.deepEqual(restored.datasets[dataId].filteredIndex, [], 'does not select opposite rows');
+
+      for (const values of [[], [!selected], [selected], [false, true]]) {
+        restored = visStateReducer(
+          restored,
+          VisStateActions.updateDataset(dataId, {
+            fields: booleanFields,
+            rows: values.map(value => [value])
+          })
+        );
+        t.ok(
+          restored.datasets[dataId] instanceof ObservedBooleanTable,
+          'updates preserve the registered table class'
+        );
+        t.equal(restored.filters[0].value, selected, 'domain changes preserve the selection');
+        t.deepEqual(
+          restored.datasets[dataId].filteredIndex,
+          values.flatMap((value, index) => (value === selected ? [index] : [])),
+          'updated rows are filtered by the original selection'
+        );
+        const roundTrip = visStateSchema.v1.load(
+          JSON.parse(JSON.stringify(visStateSchema.v1.save(restored).visState))
+        );
+        t.equal(roundTrip.visState.filters[0].value, selected, 'updated selection round-trips');
+      }
+    }
+  } finally {
+    initApplicationConfig({table: previousTable});
+  }
   t.end();
 });
 
