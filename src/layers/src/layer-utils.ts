@@ -21,7 +21,11 @@ import {
   ArrowDataContainer,
   convertStructToFixedSizeList
 } from '@kepler.gl/utils';
-import {getBinaryGeometriesFromArrow, BinaryGeometriesFromArrowOptions} from '@loaders.gl/gis';
+import {
+  getBinaryGeometriesFromArrow,
+  BinaryGeometriesFromArrowOptions,
+  BinaryDataFromGeoArrow
+} from '@loaders.gl/gis';
 import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
 import {geojsonToBinary} from '@loaders.gl/gis';
 import {
@@ -175,6 +179,39 @@ function getBinaryGeometriesFromWKBArrow(
   };
 }
 
+/** Restore empty native GeoArrow rows omitted from loaders.gl's compact centers. */
+function alignGeoArrowCentroids(
+  {
+    binaryGeometries,
+    meanCenters
+  }: Pick<BinaryDataFromGeoArrow, 'binaryGeometries'> & {
+    meanCenters?: Array<number[] | null>;
+  },
+  rowCount: number,
+  rowOffset: number
+): Array<number[] | null> | undefined {
+  // The common, fully populated case needs no extra allocation or vertex scan.
+  if (!meanCenters || meanCenters.length === rowCount) return meanCenters;
+
+  const centroids: Array<number[] | null> = new Array(rowCount).fill(null);
+  let centerIndex = 0;
+  for (const batch of binaryGeometries) {
+    // Match the geometry order used by loaders.gl's center calculation.
+    const geometry = [batch.points, batch.lines, batch.polygons].find(
+      part => part && part.positions.value.length > 0
+    );
+    if (!geometry) continue;
+    let previousId: number | undefined;
+    for (const rowId of geometry.globalFeatureIds.value) {
+      if (rowId !== previousId) {
+        centroids[rowId - rowOffset] = meanCenters[centerIndex++];
+        previousId = rowId;
+      }
+    }
+  }
+  return centroids;
+}
+
 export function getGeojsonLayerMetaFromArrow({
   dataContainer,
   geoColumn,
@@ -189,20 +226,6 @@ export function getGeojsonLayerMetaFromArrow({
   chunkIndex?: number;
 }): GeojsonLayerMetaProps {
   const encoding = geoField?.metadata?.get(GEOARROW_METADATA_KEY);
-  const cached =
-    dataContainer instanceof ArrowDataContainer
-      ? dataContainer.getGeoArrowBinaryData(columnIndex, chunkIndex)
-      : undefined;
-  if (cached) {
-    return {
-      dataToFeature: cached.binaryGeometries,
-      featureTypes: cached.featureTypes,
-      bounds: cached.bounds,
-      fixedRadius: false,
-      centroids: cached.meanCenters
-    };
-  }
-
   const options: BinaryGeometriesFromArrowOptions = {
     ...(chunkIndex !== undefined && chunkIndex >= 0
       ? {
@@ -215,6 +238,22 @@ export function getGeojsonLayerMetaFromArrow({
     triangulate: true,
     calculateMeanCenters: true
   };
+
+  const rowCount =
+    options.chunkIndex === undefined ? geoColumn.length : geoColumn.data[options.chunkIndex].length;
+  const cached =
+    dataContainer instanceof ArrowDataContainer
+      ? dataContainer.getGeoArrowBinaryData(columnIndex, chunkIndex)
+      : undefined;
+  if (cached) {
+    return {
+      dataToFeature: cached.binaryGeometries,
+      featureTypes: cached.featureTypes,
+      bounds: cached.bounds,
+      fixedRadius: false,
+      centroids: alignGeoArrowCentroids(cached, rowCount, options.chunkOffset || 0)
+    };
+  }
 
   // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
   if (encoding === GEOARROW_EXTENSIONS.WKB) {
@@ -259,7 +298,11 @@ export function getGeojsonLayerMetaFromArrow({
     featureTypes,
     bounds,
     fixedRadius,
-    centroids: meanCenters
+    centroids: alignGeoArrowCentroids(
+      {binaryGeometries, meanCenters},
+      rowCount,
+      options.chunkOffset || 0
+    )
   };
 }
 

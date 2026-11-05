@@ -3,7 +3,7 @@
 
 import GeoJsonLayer, {GeoJsonLayerConfig, getTextLabelPosition} from './geojson-layer';
 import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
-import {valueToPosition} from '@kepler.gl/utils';
+import {getPolygonFilterFunctor, valueToPosition} from '@kepler.gl/utils';
 import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import * as arrow from 'apache-arrow';
@@ -14,7 +14,7 @@ import {
   processGeojson,
   processRowObject
 } from '@kepler.gl/processors';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB, getBinaryGeometriesFromArrow} from '@loaders.gl/gis';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -732,7 +732,7 @@ describe('GeoJsonLayer source revisions', () => {
       await dataset.update({fields: dataset.fields, rows});
       const data = layer.formatLayerData({refresh: dataset}, initialData) as any;
       expect(data.data).toEqual([]);
-      expect(layer.centroids).toEqual([]);
+      expect(layer.centroids).toEqual(rows.map(() => null));
       expect(layer.meta).not.toMatchObject({bounds: [1, 2, 1, 2]});
     }
   );
@@ -1107,4 +1107,312 @@ describe('GeoJsonLayer inferred geometry fields', () => {
       })?.[0].geometry
     ).toEqual(geometries[1]);
   });
+});
+
+describe('GeoJsonLayer centroid row alignment', () => {
+  const selection = (rectangle: boolean) => ({
+    type: 'Feature',
+    properties: rectangle ? {shape: 'Rectangle', bbox: [9, 9, 13, 13]} : {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [9, 9],
+          [13, 9],
+          [13, 13],
+          [9, 13],
+          [9, 9]
+        ]
+      ]
+    }
+  });
+
+  test('keeps missing and invalid geometry slots without moving later labels or selections', () => {
+    const geometries = [
+      null,
+      point(10),
+      'invalid geometry',
+      {type: 'LineString', coordinates: []},
+      {type: 'Point', coordinates: [Infinity, Infinity]},
+      {type: 'Point', coordinates: null},
+      polygon(12),
+      point(30),
+      point(0)
+    ];
+    const dataset = new KeplerTable({info: {id: 'centroids'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'geometry', type: 'geojson'},
+        {name: 'label', type: 'string'}
+      ],
+      rows: geometries.map((geometry, index) => [geometry, `row ${index}`])
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    expect(layer.centroids).toEqual([
+      null,
+      [10, 10],
+      null,
+      null,
+      null,
+      null,
+      [12.125, 12.125],
+      [30, 30],
+      [0, 0]
+    ]);
+    expect(data.textLabelData.map(row => row.index)).toEqual([1, 6, 7, 8]);
+    expect(data.textLabelData.map(data.getPosition)).toEqual([
+      [10, 10],
+      [12.125, 12.125],
+      [30, 30],
+      [0, 0]
+    ]);
+    for (const rectangle of [false, true]) {
+      const matches = getPolygonFilterFunctor(
+        layer,
+        {value: selection(rectangle)},
+        dataset.dataContainer
+      );
+      expect(geometries.map((_, index) => index).filter(index => matches({index}))).toEqual([1, 6]);
+    }
+  });
+
+  test.each([
+    undefined,
+    {type: 'Feature', geometry: null, properties: {}},
+    {type: 'Point'},
+    {type: 'Point', coordinates: []},
+    {type: 'Point', coordinates: [NaN, 10]},
+    {type: 'Point', coordinates: [10, -Infinity]},
+    {type: 'GeometryCollection', geometries: []}
+  ])('leaves a null slot for absent or unusable geometry (%j)', geometry => {
+    const dataset = new KeplerTable({info: {id: 'invalid-center'}, color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'geometry', type: 'geojson'}],
+      rows: [[point(10)], [geometry], [point(12)]]
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    expect(layer.centroids).toEqual([[10, 10], null, [12, 12]]);
+    expect(data.textLabelData.map(data.getPosition)).toEqual([
+      [10, 10],
+      [12, 12]
+    ]);
+    for (const rectangle of [false, true]) {
+      const matches = getPolygonFilterFunctor(
+        layer,
+        {value: selection(rectangle)},
+        dataset.dataContainer
+      );
+      expect([0, 1, 2].filter(index => matches({index}))).toEqual([0, 2]);
+    }
+  });
+
+  test('selects every valid member of a table group using its center regardless of row or group order', () => {
+    const rows = [
+      [20, 8, 8, 2],
+      [3, 30, 30, 2],
+      [20, 14, 14, 1],
+      [3, 32, 32, 1],
+      [null, 11, 11, 0],
+      [20, null, 11, 3],
+      [99, null, null, 0],
+      [20, NaN, 11, 3],
+      [20, 11, Infinity, 3]
+    ];
+    const dataset = new KeplerTable({info: {id: 'groups'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'id', type: 'integer'},
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'},
+        {name: 'sort', type: 'integer'}
+      ],
+      rows
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columnMode: 'table',
+      columns: {
+        geojson: {value: null, fieldIdx: -1},
+        id: {value: 'id', fieldIdx: 0},
+        lat: {value: 'lat', fieldIdx: 1},
+        lng: {value: 'lng', fieldIdx: 2},
+        sortBy: {value: 'sort', fieldIdx: 3, optional: true}
+      }
+    });
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    expect(layer.centroids).toEqual([
+      [11, 11],
+      [31, 31],
+      [11, 11],
+      [31, 31],
+      null,
+      null,
+      null,
+      null,
+      null
+    ]);
+    expect(data.textLabelData).toEqual([]);
+    for (const rectangle of [false, true]) {
+      const matches = getPolygonFilterFunctor(
+        layer,
+        {value: selection(rectangle)},
+        dataset.dataContainer
+      );
+      dataset.filteredIndex = rows.map((_, index) => index).filter(index => matches({index}));
+      expect(dataset.filteredIndex).toEqual([0, 2]);
+      const filtered = layer.calculateDataAttribute(dataset) as any[];
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].geometry.coordinates.map(c => c.slice(0, 2))).toEqual([
+        [14, 14],
+        [8, 8]
+      ]);
+    }
+  });
+});
+
+describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
+  const lineVector = (coordinates: number[][], offsets: number[]) =>
+    arrow.makeVector(
+      arrow.makeData({
+        type: new arrow.List(
+          new arrow.Field(
+            'vertices',
+            new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
+            false
+          )
+        ),
+        length: offsets.length - 1,
+        valueOffsets: Int32Array.from(offsets),
+        child: arrow.makeData({
+          type: new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64(), false)),
+          length: coordinates.length,
+          child: arrow.makeData({
+            type: new arrow.Float64(),
+            data: Float64Array.from(coordinates.flat())
+          })
+        })
+      })
+    );
+
+  test.each(
+    [GEOARROW_EXTENSIONS.LINESTRING, GEOARROW_EXTENSIONS.POLYGON].flatMap(encoding =>
+      [false, true].map(cached => ({encoding, cached}))
+    )
+  )(
+    'preserves empty $encoding rows across chunks with worker cache=$cached',
+    async ({encoding, cached}) => {
+      const vectorFor = (start?: number): arrow.Vector => {
+        const coordinates =
+          start === undefined
+            ? []
+            : encoding === GEOARROW_EXTENSIONS.LINESTRING
+            ? [
+                [start, start],
+                [start + 2, start + 2]
+              ]
+            : [
+                [start, start],
+                [start + 2, start],
+                [start + 2, start + 2],
+                [start, start + 2],
+                [start, start]
+              ];
+        if (encoding === GEOARROW_EXTENSIONS.LINESTRING) {
+          return lineVector(coordinates, start === undefined ? [0, 0, 0] : [0, 0, 2, 2]);
+        }
+        const rings = lineVector(coordinates, start === undefined ? [0] : [0, 5]);
+        return arrow.makeVector(
+          arrow.makeData({
+            type: new arrow.List(new arrow.Field('rings', rings.type, false)),
+            length: start === undefined ? 2 : 3,
+            valueOffsets: Int32Array.from(start === undefined ? [0, 0, 0] : [0, 0, 1, 1]),
+            child: rings.data[0]
+          })
+        );
+      };
+      const first = vectorFor(10);
+      const empty = vectorFor();
+      const last = vectorFor(30);
+      const vector = first.concat(empty).concat(last);
+      const cache = cached
+        ? Object.fromEntries(
+            [first, empty, last].map((column, index) => [
+              index,
+              getBinaryGeometriesFromArrow(column as any, encoding, {
+                chunkOffset: [0, 3, 5][index],
+                calculateMeanCenters: true,
+                triangulate: true
+              })
+            ])
+          )
+        : undefined;
+      const dataset = new KeplerTable({
+        info: {id: 'native-centroids'},
+        color: [0, 0, 0]
+      }).updateSchema({
+        fields: [
+          {
+            name: 'geometry',
+            type: 'geoarrow',
+            metadata: new Map([[GEOARROW_METADATA_KEY, encoding]])
+          }
+        ],
+        cols: [vector],
+        rows: [],
+        ...(cache ? {geoArrowBinaryData: {0: cache}} : {})
+      });
+      // Keep the same multi-batch layout used by progressive Arrow loading.
+      await dataset.update({
+        fields: dataset.fields,
+        cols: [vector],
+        rows: [],
+        ...(cache ? {geoArrowBinaryData: {0: cache}} : {})
+      });
+      const layer = new GeoJsonLayer({
+        dataId: dataset.id,
+        columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+      });
+      layer.updateLayerMeta(dataset);
+      expect(layer.centroids).toEqual([null, [11, 11], null, null, null, null, [31, 31], null]);
+      const selection = {
+        type: 'Feature',
+        properties: {shape: 'Rectangle', bbox: [29, 29, 33, 33]},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [29, 29],
+              [33, 29],
+              [33, 33],
+              [29, 33],
+              [29, 29]
+            ]
+          ]
+        }
+      };
+      const matches = getPolygonFilterFunctor(layer, {value: selection}, dataset.dataContainer);
+      expect(
+        Array.from({length: 8}, (_, index) => index).filter(index => matches({index}))
+      ).toEqual([6]);
+
+      // Progressive batches must use chunk-local centroid slots before concatenation.
+      for (const [index, column] of [first, first.concat(empty), vector].entries()) {
+        await dataset.update({
+          fields: dataset.fields,
+          rows: [],
+          cols: [column],
+          ...(cache ? {geoArrowBinaryData: {0: {[index]: cache[index]}}} : {})
+        });
+        layer.updateLayerMeta(dataset);
+        expect(layer.centroids).toEqual(
+          [null, [11, 11], null, null, null, null, [31, 31], null].slice(0, column.length)
+        );
+      }
+    }
+  );
 });

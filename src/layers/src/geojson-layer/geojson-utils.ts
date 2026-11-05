@@ -403,16 +403,27 @@ export function getGeojsonLayerMeta({
   // keep a record of what type of geometry the collection has
   const featureTypes = getGeojsonFeatureTypes(dataToFeature);
 
-  const meanCenters: Array<number[] | null> = [];
+  // Consumers use source-row indexes, including table mode's grouped features.
+  const meanCenters: Array<number[] | null> = new Array(dataContainer.numRows()).fill(null);
   for (let i = 0; i < dataToFeature.length; i++) {
     const feature = dataToFeature[i];
-    if (feature) {
-      try {
-        // TODO: use line interpolate to get center of line for LineString
-        const cent = center(feature as AllGeoJSON);
-        meanCenters.push(cent?.geometry?.coordinates ?? null);
-      } catch (e) {
-        meanCenters.push(null);
+    if (!feature) continue;
+
+    let centroid: number[] | null = null;
+    try {
+      // TODO: use line interpolate to get center of line for LineString
+      const coordinates = center(feature as AllGeoJSON).geometry.coordinates;
+      if (coordinates.every(Number.isFinite)) centroid = coordinates;
+    } catch {
+      // Empty or malformed geometry has no usable center.
+    }
+
+    if (config.columnMode === COLUMN_MODE_GEOJSON) {
+      meanCenters[i] = centroid;
+    } else if ('geometry' in feature && feature.geometry?.type === 'LineString') {
+      // Compute once per group and share the center with its valid source rows.
+      for (const coordinate of feature.geometry.coordinates as CoordsType[]) {
+        meanCenters[coordinate.datumIndex] = centroid;
       }
     }
   }
