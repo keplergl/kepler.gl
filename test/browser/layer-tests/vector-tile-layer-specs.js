@@ -998,6 +998,124 @@ test('#VectorTileLayer -> only active indexed category filters depend on time', 
   t.end();
 });
 
+function pmtilesRetryFixture() {
+  const {layer, table} = categoricalFilterFixture();
+  table.metadata = {
+    remoteTileFormat: RemoteTileFormat.PMTILES,
+    tilesetDataUrl: 'https://example.com/retry.pmtiles'
+  };
+
+  // An uncompressed v3 archive with a root pointing to one leaf directory.
+  // The leaf has no tile at z=0, so successful reads return null without decoding MVT.
+  const metadata = new TextEncoder().encode('{"tilejson":"3.0.0","tiles":[]}');
+  const leafOffset = 132 + metadata.length;
+  const archive = new Uint8Array(leafOffset + 5);
+  const header = new DataView(archive.buffer);
+  archive.set(new TextEncoder().encode('PMTiles'));
+  header.setUint8(7, 3);
+  header.setUint32(8, 127, true);
+  header.setUint32(16, 5, true);
+  header.setUint32(24, 132, true);
+  header.setUint32(32, metadata.length, true);
+  header.setUint32(40, leafOffset, true);
+  header.setUint32(48, 5, true);
+  header.setUint8(97, 1);
+  header.setUint8(98, 1);
+  header.setUint8(99, 1);
+  archive.set([1, 0, 0, 5, 1], 127);
+  archive.set(metadata, 132);
+  archive.set([1, 1, 1, 1, 1], leafOffset);
+
+  const readRange = sinon.stub().callsFake(async range => {
+    const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
+    return {
+      status: 206,
+      headers: new Headers(),
+      arrayBuffer: async () => archive.slice(Number(start), Number(end) + 1).buffer
+    };
+  });
+  const fetchStub = sinon
+    .stub(globalThis, 'fetch')
+    .callsFake((_url, options) => readRange(options.headers.get('range')));
+  return {
+    table,
+    readRange,
+    fetchStub,
+    getSource: () => layer.formatLayerData({[table.id]: table}, undefined, {}).tileSource,
+    ranges: {header: 'bytes=0-16383', directory: `bytes=${leafOffset}-${leafOffset + 4}`}
+  };
+}
+
+for (const path of ['header', 'directory']) {
+  test(`#VectorTileLayer -> retries a failed PMTiles ${path} request`, async t => {
+    const {getSource, readRange, fetchStub, ranges} = pmtilesRetryFixture();
+    const error = new Error(`Temporary ${path} failure`);
+    const requests = readRange.withArgs(ranges[path]);
+    requests.onFirstCall().rejects(error);
+    try {
+      const failed = getSource();
+      const result =
+        path === 'header' ? failed.metadata : failed.getTileData({index: {z: 0, x: 0, y: 0}});
+      t.equal(await result.catch(reason => reason), error, 'original error reaches the caller');
+      const retried = getSource();
+      t.notEqual(retried, failed, 'unchanged inputs replace the failed source');
+      t.equal(
+        await retried.getTileData({index: {z: 0, x: 0, y: 0}}),
+        null,
+        'retry completes the archive lookup'
+      );
+      t.equal(requests.callCount, 2, 'retry issues a fresh request for the failed range');
+      t.equal(getSource(), retried, 'successful source remains cached');
+    } finally {
+      fetchStub.restore();
+    }
+    t.end();
+  });
+
+  test(`#VectorTileLayer -> a late PMTiles ${path} failure preserves the replacement`, async t => {
+    const {getSource, table, readRange, fetchStub, ranges} = pmtilesRetryFixture();
+    const error = new Error(`Late ${path} failure`);
+    let reject;
+    let started;
+    const requestStarted = new Promise(resolve => {
+      started = resolve;
+    });
+    readRange
+      .withArgs(ranges[path])
+      .onFirstCall()
+      .callsFake(() => {
+        started();
+        return new Promise((_resolve, rejectRequest) => {
+          reject = rejectRequest;
+        });
+      });
+    try {
+      const old = getSource();
+      const result =
+        path === 'header' ? old.metadata : old.getTileData({index: {z: 0, x: 0, y: 0}});
+      const failure = result.catch(reason => reason);
+      await requestStarted;
+      const metadata = table.metadata;
+      table.metadata = {...metadata, tilesetDataUrl: undefined};
+      t.equal(getSource(), null, 'removing the URL clears the cached source');
+      table.metadata = metadata;
+      const replacement = getSource();
+      t.notEqual(replacement, old, 'restoring the same inputs creates a replacement');
+      t.equal(
+        await replacement.getTileData({index: {z: 0, x: 0, y: 0}}),
+        null,
+        'replacement succeeds while the old request is pending'
+      );
+      reject(error);
+      t.equal(await failure, error, 'old request still reports its failure');
+      t.equal(getSource(), replacement, 'late failure does not evict the replacement');
+    } finally {
+      fetchStub.restore();
+    }
+    t.end();
+  });
+}
+
 test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
   const seed = MVTSource.createDataSource('https://example.com/seed', {
     core: {

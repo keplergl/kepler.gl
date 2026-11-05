@@ -243,6 +243,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   declare config: VectorTileLayerConfig;
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
 
+  private currentTileSource: LayerData['tileSource'] = null;
+
   tileSourceSelector = lruMemoize(
     (
       _dataId: string,
@@ -273,7 +275,24 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           : null;
       }
       if (remoteTileFormat === RemoteTileFormat.PMTILES) {
-        return tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
+        if (!tilesetDataUrl) return null;
+        const source = PMTilesSource.createDataSource(tilesetDataUrl, {});
+        const invalidate = () => {
+          // Failed metadata and archive-directory promises stay cached by PMTiles.
+          // A late failure must not evict a replacement source.
+          if (this.currentTileSource === source) this.tileSourceSelector.clearCache();
+        };
+        source.metadata.catch(invalidate);
+        const getTileData = source.getTileData;
+        source.getTileData = async tile => {
+          try {
+            return await getTileData(tile);
+          } catch (error) {
+            invalidate();
+            throw error;
+          }
+        };
+        return source;
       }
       return null;
     }
@@ -590,6 +609,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       tilesetDataUrl,
       remoteTileFormat === RemoteTileFormat.MVT ? datasetMetadata?.tilesetMetadataUrl ?? null : null
     );
+    this.currentTileSource = tileSource;
 
     const indexKey = this.config.animation.enabled ? animationConfig.currentTime : null;
     const filters = (dataset.filterRecord?.cpu || []).filter(
