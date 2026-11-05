@@ -3,16 +3,21 @@
 
 import test from 'tape-catch';
 import sinon from 'sinon';
+import {MVTSource} from '@loaders.gl/mvt';
+import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {
   INITIAL_MAP_STATE,
   INITIAL_VIS_STATE,
-  setLayerAnimationTimeUpdater
+  setLayerAnimationTimeUpdater,
+  updateVisDataUpdater,
+  createNewDatasetSuccessUpdater
 } from '@kepler.gl/reducers';
+import {drainTasksForTesting} from '@kepler.gl/tasks';
 import {preparedDataset, dataId} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {MISSING_VALUE_COLOR, NO_VALUE_COLOR} from '@kepler.gl/constants';
+import {MISSING_VALUE_COLOR, NO_VALUE_COLOR, RemoteTileFormat} from '@kepler.gl/constants';
 import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
 import {getFilterProps, getLayerBlendingParameters} from '@kepler.gl/utils';
 
@@ -993,5 +998,466 @@ test('#VectorTileLayer -> only active indexed category filters depend on time', 
   const old = at(2000);
   table.fields = table.fields.map(field => ({...field}));
   t.notEqual(at(2000), old, 'replacement field metadata invalidates accessors');
+  t.end();
+});
+
+async function updateTileDataset(layer, table, layerData) {
+  drainTasksForTesting();
+  const state = updateVisDataUpdater(
+    {
+      ...INITIAL_VIS_STATE,
+      datasets: {[table.id]: table},
+      layers: [layer],
+      layerData: [layerData],
+      layerOrder: [layer.id]
+    },
+    {
+      datasets: [{info: {id: table.id}, data: {fields: table.fields, rows: []}}],
+      options: {autoCreateLayers: false, autoCreateTooltips: false}
+    }
+  );
+  const [task] = drainTasksForTesting();
+  const action = await new Promise((resolve, reject) => {
+    task.run((effect, succeed, fail, ctx) => effect(succeed, fail, ctx), resolve, reject);
+  });
+  const updated = createNewDatasetSuccessUpdater(state, action);
+  drainTasksForTesting();
+  return updated;
+}
+
+function pmtilesPointArchive(tileId) {
+  // One MVT point at (0, 0) in layer "a", stored in an uncompressed v3 archive.
+  const feature = [8, 1, 24, 1, 34, 3, 9, 0, 0];
+  const layer = [120, 2, 10, 1, 97, 18, feature.length, ...feature, 40, 128, 32];
+  const tile = new Uint8Array([26, layer.length, ...layer]);
+  const metadata = new TextEncoder().encode('{"tilejson":"3.0.0","tiles":[]}');
+  const tileOffset = 132 + metadata.length;
+  const archive = new Uint8Array(tileOffset + tile.length);
+  const header = new DataView(archive.buffer);
+  archive.set(new TextEncoder().encode('PMTiles'));
+  header.setUint8(7, 3);
+  header.setUint32(8, 127, true);
+  header.setUint32(16, 5, true);
+  header.setUint32(24, 132, true);
+  header.setUint32(32, metadata.length, true);
+  header.setUint32(56, tileOffset, true);
+  header.setUint32(64, tile.length, true);
+  for (const offset of [72, 80, 88]) header.setUint32(offset, 1, true);
+  for (const offset of [97, 98, 99, 101]) header.setUint8(offset, 1);
+  archive.set([1, tileId, 1, tile.length, 1], 127);
+  archive.set(metadata, 132);
+  archive.set(tile, tileOffset);
+  return archive;
+}
+
+test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same URL', async t => {
+  const {layer, table} = categoricalFilterFixture();
+  table.metadata = {
+    remoteTileFormat: RemoteTileFormat.PMTILES,
+    tilesetDataUrl: 'https://example.com/current.pmtiles',
+    minZoom: 0,
+    maxZoom: 1
+  };
+  const archives = [pmtilesPointArchive(0), pmtilesPointArchive(1)];
+  let revision = 0;
+  const requests = [];
+  const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async (_url, options) => {
+    const range = options.headers.get('range');
+    const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
+    requests.push({revision, range});
+    return {
+      status: 206,
+      headers: new Headers({ETag: `"v${revision}"`}),
+      arrayBuffer: async () => archives[revision].slice(Number(start), Number(end) + 1).buffer
+    };
+  });
+  const viewport = zoom =>
+    new WebMercatorViewport({width: 64, height: 64, longitude: -90, latitude: 40, zoom});
+  const manager = new LayerManager(device, {viewport: viewport(0)});
+  const render = async (data, zoom) => {
+    manager.activateViewport(viewport(zoom));
+    const deck = layer
+      .renderLayer({
+        data,
+        gpuFilter: table.gpuFilter,
+        mapState: {...INITIAL_MAP_STATE, zoom},
+        animationConfig: {},
+        layerCallbacks: {},
+        visible: true
+      })[0]
+      .clone({renderSubLayers: () => null});
+    manager.setLayers([deck]);
+    await Promise.all(deck.state.tileset.selectedTiles.map(tile => tile.data));
+    manager.updateLayers();
+    return deck;
+  };
+  try {
+    const first = layer.formatLayerData({[table.id]: table}, undefined, {});
+    const initialDeck = await render(first, 0);
+    t.equal(
+      initialDeck.state.tileset.selectedTiles.find(tile => tile.index.z === 0)?.content?.features
+        ?.length,
+      1,
+      'the initial archive contains a visible feature'
+    );
+    revision = 1;
+    const updated = await updateTileDataset(layer, table, first);
+    t.equal(updated.layers[0], layer, 'the real update path preserves the layer');
+    t.equal(updated.datasets[table.id].dataRevision, 1, 'the dataset revision advances');
+    const second = updated.layerData[0];
+    t.notEqual(second.tileSource, first.tileSource, 'the updated dataset gets a fresh source');
+    const updatedDeck = await render(second, 1);
+    const addedTile = updatedDeck.state.tileset.selectedTiles.find(
+      tile => tile.index.z === 1 && tile.index.x === 0 && tile.index.y === 0
+    );
+    t.equal(addedTile?.content?.features?.length, 1, 'zooming loads the newly available feature');
+    t.equal(
+      requests.filter(request => request.revision === 1 && request.range === 'bytes=0-16383')
+        .length,
+      1,
+      'the update reads the new archive directory'
+    );
+    t.equal(
+      layer.formatLayerData(updated.datasets, second, {currentTime: 1}).tileSource,
+      second.tileSource,
+      'playback reuses the updated source'
+    );
+  } finally {
+    manager.finalize();
+    fetchStub.restore();
+  }
+  t.end();
+});
+
+function pmtilesRetryFixture() {
+  const {layer, table} = categoricalFilterFixture();
+  table.metadata = {
+    remoteTileFormat: RemoteTileFormat.PMTILES,
+    tilesetDataUrl: 'https://example.com/retry.pmtiles'
+  };
+
+  // An uncompressed v3 archive with a root pointing to one leaf directory.
+  // The leaf has no tile at z=0, so successful reads return null without decoding MVT.
+  const metadata = new TextEncoder().encode('{"tilejson":"3.0.0","tiles":[]}');
+  const leafOffset = 132 + metadata.length;
+  const archive = new Uint8Array(leafOffset + 5);
+  const header = new DataView(archive.buffer);
+  archive.set(new TextEncoder().encode('PMTiles'));
+  header.setUint8(7, 3);
+  header.setUint32(8, 127, true);
+  header.setUint32(16, 5, true);
+  header.setUint32(24, 132, true);
+  header.setUint32(32, metadata.length, true);
+  header.setUint32(40, leafOffset, true);
+  header.setUint32(48, 5, true);
+  header.setUint8(97, 1);
+  header.setUint8(98, 1);
+  header.setUint8(99, 1);
+  archive.set([1, 0, 0, 5, 1], 127);
+  archive.set(metadata, 132);
+  archive.set([1, 1, 1, 1, 1], leafOffset);
+
+  const readRange = sinon.stub().callsFake(async range => {
+    const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
+    return {
+      status: 206,
+      headers: new Headers(),
+      arrayBuffer: async () => archive.slice(Number(start), Number(end) + 1).buffer
+    };
+  });
+  const fetchStub = sinon
+    .stub(globalThis, 'fetch')
+    .callsFake((_url, options) => readRange(options.headers.get('range')));
+  return {
+    layer,
+    table,
+    readRange,
+    fetchStub,
+    getSource: () => layer.formatLayerData({[table.id]: table}, undefined, {}).tileSource,
+    ranges: {header: 'bytes=0-16383', directory: `bytes=${leafOffset}-${leafOffset + 4}`}
+  };
+}
+
+for (const path of ['header', 'directory']) {
+  test(`#VectorTileLayer -> retries a failed PMTiles ${path} request`, async t => {
+    const {getSource, readRange, fetchStub, ranges} = pmtilesRetryFixture();
+    const error = new Error(`Temporary ${path} failure`);
+    const requests = readRange.withArgs(ranges[path]);
+    requests.onFirstCall().rejects(error);
+    try {
+      const failed = getSource();
+      const result =
+        path === 'header' ? failed.metadata : failed.getTileData({index: {z: 0, x: 0, y: 0}});
+      t.equal(await result.catch(reason => reason), error, 'original error reaches the caller');
+      const retried = getSource();
+      t.notEqual(retried, failed, 'unchanged inputs replace the failed source');
+      t.equal(
+        await retried.getTileData({index: {z: 0, x: 0, y: 0}}),
+        null,
+        'retry completes the archive lookup'
+      );
+      t.equal(requests.callCount, 2, 'retry issues a fresh request for the failed range');
+      t.equal(getSource(), retried, 'successful source remains cached');
+    } finally {
+      fetchStub.restore();
+    }
+    t.end();
+  });
+
+  test(`#VectorTileLayer -> a late PMTiles ${path} failure preserves the replacement`, async t => {
+    const {getSource, table, readRange, fetchStub, ranges} = pmtilesRetryFixture();
+    const error = new Error(`Late ${path} failure`);
+    let reject;
+    let started;
+    const requestStarted = new Promise(resolve => {
+      started = resolve;
+    });
+    readRange
+      .withArgs(ranges[path])
+      .onFirstCall()
+      .callsFake(() => {
+        started();
+        return new Promise((_resolve, rejectRequest) => {
+          reject = rejectRequest;
+        });
+      });
+    try {
+      const old = getSource();
+      const result =
+        path === 'header' ? old.metadata : old.getTileData({index: {z: 0, x: 0, y: 0}});
+      const failure = result.catch(reason => reason);
+      await requestStarted;
+      const metadata = table.metadata;
+      table.metadata = {...metadata, tilesetDataUrl: undefined};
+      t.equal(getSource(), null, 'removing the URL clears the cached source');
+      table.metadata = metadata;
+      const replacement = getSource();
+      t.notEqual(replacement, old, 'restoring the same inputs creates a replacement');
+      t.equal(
+        await replacement.getTileData({index: {z: 0, x: 0, y: 0}}),
+        null,
+        'replacement succeeds while the old request is pending'
+      );
+      reject(error);
+      t.equal(await failure, error, 'old request still reports its failure');
+      t.equal(getSource(), replacement, 'late failure does not evict the replacement');
+    } finally {
+      fetchStub.restore();
+    }
+    t.end();
+  });
+
+  test(`#VectorTileLayer -> a late PMTiles ${path} failure preserves the new revision`, async t => {
+    const {layer, table, getSource, readRange, fetchStub, ranges} = pmtilesRetryFixture();
+    const error = new Error(`Previous revision ${path} failure`);
+    let reject;
+    let started;
+    const requestStarted = new Promise(resolve => {
+      started = resolve;
+    });
+    readRange
+      .withArgs(ranges[path])
+      .onFirstCall()
+      .callsFake(() => {
+        started();
+        return new Promise((_resolve, rejectRequest) => {
+          reject = rejectRequest;
+        });
+      });
+    try {
+      const old = getSource();
+      const result =
+        path === 'header' ? old.metadata : old.getTileData({index: {z: 0, x: 0, y: 0}});
+      const failure = result.catch(reason => reason);
+      await requestStarted;
+      const updated = await updateTileDataset(layer, table);
+      const replacement = updated.layerData[0].tileSource;
+      t.notEqual(replacement, old, 'the revision changes while the old request is pending');
+      reject(error);
+      t.equal(await failure, error, 'the previous revision still reports its error');
+      t.equal(
+        await replacement.getTileData({index: {z: 0, x: 0, y: 0}}),
+        null,
+        'the new revision completes its archive lookup'
+      );
+      t.equal(getSource(), replacement, 'the late error does not evict the new revision');
+    } finally {
+      fetchStub.restore();
+    }
+    t.end();
+  });
+}
+
+test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
+  const seed = MVTSource.createDataSource('https://example.com/seed', {
+    core: {
+      loadOptions: {
+        core: {
+          fetch: async () => ({
+            ok: true,
+            text: async () => JSON.stringify({tilejson: '3.0.0', tiles: []})
+          })
+        }
+      }
+    }
+  });
+  await seed.metadata;
+  const mvtMetadata = sinon
+    .stub(Object.getPrototypeOf(seed), 'getMetadata')
+    .callsFake(async () => null);
+  const pmMetadata = sinon
+    .stub(PMTilesTileSource.prototype, 'getMetadata')
+    .callsFake(async () => ({}));
+  const mvtConstruct = sinon.spy(MVTSource, 'createDataSource');
+  const pmConstruct = sinon.spy(PMTilesSource, 'createDataSource');
+  try {
+    for (const format of [RemoteTileFormat.MVT, RemoteTileFormat.PMTILES]) {
+      const {layer, table} = categoricalFilterFixture();
+      const sourceMetadata = {
+        remoteTileFormat: format,
+        tilesetDataUrl:
+          format === RemoteTileFormat.MVT
+            ? 'https://example.com/{z}/{x}/{y}.pbf'
+            : 'https://example.com/a.pmtiles',
+        tilesetMetadataUrl: 'https://example.com/tilejson.json'
+      };
+      const sources = new Set();
+      const caches = new Set();
+      const factory = format === RemoteTileFormat.MVT ? mvtConstruct : pmConstruct;
+      factory.reset();
+      const start = performance.now();
+      let previous;
+      for (let time = 0; time < 100; time++) {
+        table.metadata = {...sourceMetadata};
+        layer.updateLayerConfig({color: [time, 0, 0]});
+        previous = layer.formatLayerData({[table.id]: table}, previous, {currentTime: time});
+        sources.add(previous.tileSource);
+        if (previous.tileSource.pmtiles) caches.add(previous.tileSource.pmtiles.cache);
+      }
+      t.comment(
+        `${format}: 100 formats => ${factory.callCount} source constructions, ${
+          caches.size
+        } archive caches, ${(performance.now() - start).toFixed(2)} ms (metadata I/O stubbed)`
+      );
+      t.equal(factory.callCount, 1, 'unchanged source inputs construct once');
+      t.equal(sources.size, 1, 'playback and equivalent metadata retain source identity');
+      if (format === RemoteTileFormat.PMTILES)
+        t.equal(caches.size, 1, 'PMTiles directory/header cache is retained');
+      if (format === RemoteTileFormat.MVT) {
+        const manager = new LayerManager(device, {
+          viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 2})
+        });
+        let requests = 0;
+        const render = async data => {
+          data.tileSource.getTileData = async () => {
+            requests++;
+            return [];
+          };
+          const deck = layer
+            .renderLayer({
+              data,
+              gpuFilter: table.gpuFilter,
+              mapState: INITIAL_MAP_STATE,
+              animationConfig: {},
+              layerCallbacks: {},
+              visible: true
+            })[0]
+            .clone({renderSubLayers: () => null});
+          manager.setLayers([deck]);
+          await Promise.all(deck.state.tileset.selectedTiles.map(tile => tile.data));
+          manager.updateLayers();
+          return deck;
+        };
+        try {
+          const first = await render(previous);
+          const initialRequests = requests;
+          t.ok(initialRequests > 0, 'visible tiles are initially requested');
+          for (let i = 0; i < 10; i++) {
+            const data = layer.formatLayerData({[table.id]: table}, previous, {currentTime: i});
+            await render(data);
+          }
+          t.equal(requests, initialRequests, 'source reuse does not refetch loaded tiles');
+          table.metadata = {
+            ...sourceMetadata,
+            tilesetDataUrl: 'https://example.com/replacement/{z}/{x}/{y}.pbf'
+          };
+          const changed = await render(layer.formatLayerData({[table.id]: table}, previous, {}));
+          t.equal(
+            changed.state.tileset,
+            first.state.tileset,
+            'source replacement retains the tileset'
+          );
+          t.ok(requests > initialRequests, 'changed source URL reloads visible tiles');
+          t.comment(
+            `MVT tile I/O stubs: ${initialRequests} initial calls, 0 additional calls across 10 equivalent formats`
+          );
+        } finally {
+          manager.finalize();
+        }
+        table.metadata = sourceMetadata;
+        previous = layer.formatLayerData({[table.id]: table}, previous, {});
+      }
+      const beforeUpdate = previous.tileSource;
+      const revision = table.dataRevision;
+      const updated = await updateTileDataset(layer, table, previous);
+      previous = updated.layerData[0];
+      t.equal(updated.layers[0], layer, 'same-ID dataset updates preserve the layer');
+      t.equal(table.dataRevision, revision + 1, 'the update task advances the revision');
+      t.notEqual(previous.tileSource, beforeUpdate, 'a new revision invalidates the source');
+      t.equal(
+        layer.formatLayerData(updated.datasets, previous, {currentTime: 200}).tileSource,
+        previous.tileSource,
+        'the new revision is cached across subsequent formats'
+      );
+      const oldSource = previous.tileSource;
+      table.metadata = {
+        ...sourceMetadata,
+        tilesetMetadataUrl: 'https://example.com/new-metadata.json'
+      };
+      const metadataChanged = layer.formatLayerData({[table.id]: table}, previous, {});
+      t.equal(
+        metadataChanged.tileSource === oldSource,
+        format !== RemoteTileFormat.MVT,
+        'only MVT metadata URL defines a source'
+      );
+      table.metadata = {...sourceMetadata, tilesetDataUrl: 'https://example.com/replacement'};
+      const changed = layer.formatLayerData({[table.id]: table}, metadataChanged, {});
+      t.notEqual(changed.tileSource, metadataChanged.tileSource, 'source URL changes invalidate');
+      table.metadata = {...sourceMetadata, tilesetDataUrl: undefined};
+      t.equal(
+        layer.formatLayerData({[table.id]: table}, changed, {}).tileSource,
+        null,
+        'missing URL clears the source'
+      );
+      table.metadata = sourceMetadata;
+      t.notEqual(
+        layer.formatLayerData({[table.id]: table}, {}, {}).tileSource,
+        oldSource,
+        'restored source gets fresh metadata after removal'
+      );
+      const restored = layer.formatLayerData({[table.id]: table}, {}, {});
+      table.metadata = {
+        ...sourceMetadata,
+        remoteTileFormat:
+          format === RemoteTileFormat.MVT ? RemoteTileFormat.PMTILES : RemoteTileFormat.MVT
+      };
+      t.notEqual(
+        layer.formatLayerData({[table.id]: table}, restored, {}).tileSource,
+        restored.tileSource,
+        'format changes invalidate the source'
+      );
+      table.metadata = {};
+      t.equal(
+        layer.formatLayerData({[table.id]: table}, {}, {}).tileSource,
+        null,
+        'unsupported metadata clears the source'
+      );
+    }
+  } finally {
+    mvtMetadata.restore();
+    pmMetadata.restore();
+    mvtConstruct.restore();
+    pmConstruct.restore();
+  }
   t.end();
 });
