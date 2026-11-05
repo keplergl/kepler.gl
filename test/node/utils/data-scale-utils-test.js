@@ -19,6 +19,8 @@ import {
   getHistogramDomain,
   getQuantLegends,
   getCategoricalColorMap,
+  addCategoricalValuesToColorMap,
+  removeCategoricalValueFromColorMap,
   selectRestCategoricalColorMapByIndex
 } from '@kepler.gl/utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
@@ -829,6 +831,125 @@ test('DataScaleUtils -> getCategoricalColorMap -> boundary conditions', t => {
     'should transition correctly from excess colors to matching'
   );
 
+  t.end();
+});
+
+test('DataScaleUtils -> adding categories preserves and deduplicates existing values', t => {
+  for (const category of [0, '0', '', 1]) {
+    for (const existing of [category, [category]]) {
+      const colorMap = [[existing, '#ff0000']];
+      const original = cloneDeep(colorMap);
+      t.deepEqual(
+        addCategoricalValuesToColorMap(colorMap, [2, 2], 0),
+        [[[category, 2], '#ff0000']],
+        'adding a category preserves the existing scalar or array value'
+      );
+      t.deepEqual(
+        addCategoricalValuesToColorMap(colorMap, [category], 0),
+        [[[category], '#ff0000']],
+        'adding the existing category does not duplicate it'
+      );
+      t.deepEqual(
+        addCategoricalValuesToColorMap(colorMap, [], 0),
+        [[[category], '#ff0000']],
+        'an empty selection preserves the existing category'
+      );
+      t.deepEqual(colorMap, original, 'does not mutate the current palette');
+    }
+  }
+  for (const empty of [null, undefined, []]) {
+    t.deepEqual(
+      addCategoricalValuesToColorMap([[empty, '#ff0000']], [0], 0),
+      [[[0], '#ff0000']],
+      'an empty color accepts zero'
+    );
+  }
+  t.end();
+});
+
+test('DataScaleUtils -> moving categories clears their previous color', t => {
+  for (const category of [0, '0', '', 1]) {
+    for (const existing of [category, [category]]) {
+      const colorMap = [
+        [existing, '#ff0000'],
+        [null, '#00ff00'],
+        [[category, 2], '#0000ff']
+      ];
+      const original = cloneDeep(colorMap);
+      const result = addCategoricalValuesToColorMap(colorMap, [category], 1);
+      t.deepEqual(
+        result,
+        [
+          [Array.isArray(existing) ? [] : null, '#ff0000'],
+          [[category], '#00ff00'],
+          [[2], '#0000ff']
+        ],
+        'only the selected color retains the moved category'
+      );
+      t.deepEqual(
+        addCategoricalValuesToColorMap(result, [category], 1),
+        result,
+        'reassigning the same category is idempotent'
+      );
+      t.deepEqual(colorMap, original, 'does not mutate the current palette');
+    }
+  }
+  t.deepEqual(
+    addCategoricalValuesToColorMap(
+      [
+        [0, '#ff0000'],
+        ['0', '#00ff00']
+      ],
+      [0],
+      0
+    ),
+    [
+      [[0], '#ff0000'],
+      ['0', '#00ff00']
+    ],
+    'numeric zero and string zero remain distinct categories'
+  );
+  t.end();
+});
+
+test('DataScaleUtils -> removing categories handles scalar zero and empty colors', t => {
+  for (const category of [0, '0', '', 1]) {
+    for (const existing of [category, [category]]) {
+      const colorMap = [
+        [existing, '#ff0000'],
+        [2, '#00ff00']
+      ];
+      const original = cloneDeep(colorMap);
+      t.deepEqual(
+        removeCategoricalValueFromColorMap(colorMap, 2, 0),
+        [
+          [[category], '#ff0000'],
+          [2, '#00ff00']
+        ],
+        'removing an absent category preserves the existing category'
+      );
+      t.deepEqual(
+        removeCategoricalValueFromColorMap(colorMap, category, 0),
+        [
+          [[], '#ff0000'],
+          [2, '#00ff00']
+        ],
+        'removes the selected category without changing other colors'
+      );
+      t.deepEqual(colorMap, original, 'does not mutate the current palette');
+    }
+  }
+  for (const empty of [null, undefined, []]) {
+    t.deepEqual(
+      removeCategoricalValueFromColorMap([[empty, '#ff0000']], 0, 0),
+      [[Array.isArray(empty) ? [] : null, '#ff0000']],
+      'removing zero from an empty color preserves its empty representation'
+    );
+  }
+  for (const missing of [null, undefined]) {
+    t.equal(addCategoricalValuesToColorMap(missing, [0], 0), missing, 'handles missing palette');
+    t.equal(removeCategoricalValueFromColorMap(missing, 0, 0), missing, 'handles missing palette');
+  }
   t.end();
 });
 

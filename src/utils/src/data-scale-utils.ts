@@ -647,7 +647,7 @@ export function removeCategoricalValueFromColorMap(
   }
   const newColorMap = colorMap.map((cm, i) => {
     if (i === index) {
-      if (!cm[0]) {
+      if (!notNullorUndefined(cm[0])) {
         return [null, cm[1]];
       }
       const currentUniqueValues = toArray(cm[0]);
@@ -674,7 +674,7 @@ export function addCategoricalValuesToColorMap(
 
   const newColorMap = colorMap.map((cm, i) => {
     if (i === index) {
-      if (!cm[0]) {
+      if (!notNullorUndefined(cm[0])) {
         return [items, cm[1]];
       }
       const currentUniqueValues = toArray(cm[0]);
@@ -688,7 +688,7 @@ export function addCategoricalValuesToColorMap(
         v => !items.includes(v)
       );
       return [updatedUniqueValues, cm[1]];
-    } else if (currentUniqueValues && items.includes(currentUniqueValues)) {
+    } else if (notNullorUndefined(currentUniqueValues) && items.includes(currentUniqueValues)) {
       return [null, cm[1]];
     }
 
