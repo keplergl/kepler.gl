@@ -1179,15 +1179,50 @@ describe('GeoJsonLayer centroid row alignment', () => {
     }
   });
 
+  test.each([
+    undefined,
+    {type: 'Feature', geometry: null, properties: {}},
+    {type: 'Point'},
+    {type: 'Point', coordinates: []},
+    {type: 'Point', coordinates: [NaN, 10]},
+    {type: 'Point', coordinates: [10, -Infinity]},
+    {type: 'GeometryCollection', geometries: []}
+  ])('leaves a null slot for absent or unusable geometry (%j)', geometry => {
+    const dataset = new KeplerTable({info: {id: 'invalid-center'}, color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'geometry', type: 'geojson'}],
+      rows: [[point(10)], [geometry], [point(12)]]
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    expect(layer.centroids).toEqual([[10, 10], null, [12, 12]]);
+    expect(data.textLabelData.map(data.getPosition)).toEqual([
+      [10, 10],
+      [12, 12]
+    ]);
+    for (const rectangle of [false, true]) {
+      const matches = getPolygonFilterFunctor(
+        layer,
+        {value: selection(rectangle)},
+        dataset.dataContainer
+      );
+      expect([0, 1, 2].filter(index => matches({index}))).toEqual([0, 2]);
+    }
+  });
+
   test('selects every valid member of a table group using its center regardless of row or group order', () => {
     const rows = [
-      [20, 10, 10, 2],
+      [20, 8, 8, 2],
       [3, 30, 30, 2],
-      [20, 12, 12, 1],
+      [20, 14, 14, 1],
       [3, 32, 32, 1],
       [null, 11, 11, 0],
       [20, null, 11, 3],
-      [99, null, null, 0]
+      [99, null, null, 0],
+      [20, NaN, 11, 3],
+      [20, 11, Infinity, 3]
     ];
     const dataset = new KeplerTable({info: {id: 'groups'}, color: [0, 0, 0]}).updateSchema({
       fields: [
@@ -1210,7 +1245,17 @@ describe('GeoJsonLayer centroid row alignment', () => {
       }
     });
     const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
-    expect(layer.centroids).toEqual([[11, 11], [31, 31], [11, 11], [31, 31], null, null, null]);
+    expect(layer.centroids).toEqual([
+      [11, 11],
+      [31, 31],
+      [11, 11],
+      [31, 31],
+      null,
+      null,
+      null,
+      null,
+      null
+    ]);
     expect(data.textLabelData).toEqual([]);
     for (const rectangle of [false, true]) {
       const matches = getPolygonFilterFunctor(
@@ -1223,8 +1268,8 @@ describe('GeoJsonLayer centroid row alignment', () => {
       const filtered = layer.calculateDataAttribute(dataset) as any[];
       expect(filtered).toHaveLength(1);
       expect(filtered[0].geometry.coordinates.map(c => c.slice(0, 2))).toEqual([
-        [12, 12],
-        [10, 10]
+        [14, 14],
+        [8, 8]
       ]);
     }
   });
