@@ -607,3 +607,23 @@ describe('table-column GeoJSON grouping', () => {
     expect(groupColumnsAsGeoJson(createDataContainer([]), unsortedColumns, 'sortBy')).toEqual([]);
   });
 });
+
+test('required table timestamps retain zero and omit missing values and coordinates', () => {
+  const rows = [
+    ['trip', 1, 2, 10],
+    ['trip', 0, 0, 0],
+    ['trip', 3, 4, null],
+    ['trip', 3, 4, undefined],
+    ['trip', 3, 4, ''],
+    ['trip', 3, 4, NaN],
+    ['trip', NaN, 4, 0],
+    ['trip', 3, Infinity, 0]
+  ];
+  const features = groupColumnsAsGeoJson(createDataContainer(rows), {
+    id: {value: 'id', fieldIdx: 0},
+    lat: {value: 'lat', fieldIdx: 1},
+    lng: {value: 'lng', fieldIdx: 2},
+    timestamp: {value: 'timestamp', fieldIdx: 3}
+  });
+  expect(features[0].properties?.values).toEqual([rows[1], rows[0]]);
+});

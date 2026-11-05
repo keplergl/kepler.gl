@@ -18,7 +18,8 @@ import {
   getQuantLabelFormat,
   getHistogramDomain,
   getQuantLegends,
-  getCategoricalColorMap
+  getCategoricalColorMap,
+  selectRestCategoricalColorMapByIndex
 } from '@kepler.gl/utils';
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 import {SCALE_FUNC, SCALE_TYPES} from '@kepler.gl/constants';
@@ -828,5 +829,49 @@ test('DataScaleUtils -> getCategoricalColorMap -> boundary conditions', t => {
     'should transition correctly from excess colors to matching'
   );
 
+  t.end();
+});
+
+test('DataScaleUtils -> selecting the rest preserves assigned zero categories', t => {
+  for (const zero of [0, [0], '0', ['0']]) {
+    const colorMap = [
+      [zero, '#ff0000'],
+      [1, '#00ff00'],
+      [null, '#0000ff']
+    ];
+    const original = cloneDeep(colorMap);
+    const result = selectRestCategoricalColorMapByIndex(colorMap, 2, [0, 1, 2]);
+    t.deepEqual(
+      result,
+      [
+        [zero, '#ff0000'],
+        [1, '#00ff00'],
+        [['2'], '#0000ff']
+      ],
+      'only unused categories receive the rest color'
+    );
+    t.deepEqual(colorMap, original, 'does not mutate the current palette');
+    t.deepEqual(
+      selectRestCategoricalColorMapByIndex(result, 2, [0, 1, 2]),
+      result,
+      'repeated selection does not duplicate categories'
+    );
+  }
+  t.deepEqual(
+    selectRestCategoricalColorMapByIndex(
+      [
+        [0, '#ff0000'],
+        [null, '#0000ff']
+      ],
+      1,
+      [0]
+    ),
+    [
+      [0, '#ff0000'],
+      [[], '#0000ff']
+    ],
+    'an entirely assigned domain adds no categories'
+  );
+  t.equal(selectRestCategoricalColorMapByIndex(null, 0, [0]), null, 'handles missing color map');
   t.end();
 });

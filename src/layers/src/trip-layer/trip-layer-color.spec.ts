@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import TripLayer from './trip-layer';
+import {getAnimationDomainFromTimestamps, parseTripGeoJsonTimestamp} from './trip-utils';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL, SCALE_TYPES} from '@kepler.gl/constants';
 import {timeToUnixMilli} from '@kepler.gl/utils';
@@ -612,7 +613,140 @@ describe('TripLayer TABLE mode grouping', () => {
       [rows[1], rows[2]],
       [rows[0]],
       [rows[3]],
-      [rows[4]]
+      [rows[10], rows[4]]
     ]);
+  });
+});
+
+describe('TripLayer timestamps at zero', () => {
+  test.each([
+    {times: [0, 1565577261000], expected: [0, 1565577261000]},
+    {times: [0, 1565577261], expected: [0, 1565577261000]},
+    {times: ['1970-01-01', '1970-01-02'], expected: [0, 86400000]},
+    {times: [0], expected: [0, 0]}
+  ])('retains table vertices and animates $times', async ({times, expected}) => {
+    const table = await makeTripTable(
+      times.map((time, index) => ['t1', 37.77 + index / 100, -122.42, time, 'Uber'])
+    );
+    const layer = makeTripLayer(table);
+    const data = layer.formatLayerData({[table.id]: table}, null);
+    expect(data.data).toHaveLength(1);
+    expect(data.data[0].geometry.coordinates).toHaveLength(times.length);
+    expect(layer.config.animation.domain).toEqual(expected);
+    expect(data.getTimestamps(data.data[0])).toEqual(times.length === 1 ? [0] : expected);
+    const layers = layer.renderLayer({
+      data,
+      gpuFilter: table.gpuFilter,
+      mapState: {zoom: 10, latitude: 37.77, longitude: -122.42},
+      animationConfig: {domain: layer.config.animation.domain, currentTime: expected[0]},
+      visible: true,
+      layerCallbacks: {},
+      idx: 0
+    });
+    expect(layers.length).toBeGreaterThan(0);
+  });
+
+  test.each([
+    {times: [0, 1565577261000], expected: [0, 1565577261000]},
+    {times: [0, 1565577261], expected: [0, 1565577261000]},
+    {times: ['1970-01-01', '1970-01-02'], expected: [0, 86400000]}
+  ])('includes GeoJSON trips beginning at $times', ({times, expected}) => {
+    const result = parseTripGeoJsonTimestamp([
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: times.map((time, index) => [index, index, 0, time])
+        }
+      }
+    ]);
+    expect(result.animationDomain).toEqual(expected);
+    expect(result.dataToTimeStamp).toEqual([expected]);
+  });
+
+  test('infers units from a later trip when the first trip contains only zero', async () => {
+    const table = await makeTripTable([
+      ['zero', 0, 0, 0, 'Uber'],
+      ['seconds', 1, 1, 1565577261, 'Uber']
+    ]);
+    const layer = makeTripLayer(table);
+    layer.updateLayerMeta(table);
+    expect(layer.config.animation.domain).toEqual([0, 1565577261000]);
+    expect(parseTripGeoJsonTimestamp(layer.dataToFeature).animationDomain).toEqual([
+      0, 1565577261000
+    ]);
+  });
+
+  test.each([
+    {name: 'null timestamp', missing: [1, 1, 0, null]},
+    {name: 'undefined timestamp', missing: [1, 1, 0, undefined]},
+    {name: 'null coordinate', missing: null},
+    {name: 'undefined coordinate', missing: undefined}
+  ])('ignores a $name when sampling while preserving its timestamp position', ({missing}) => {
+    const feature = coordinates => ({
+      type: 'Feature',
+      properties: {},
+      geometry: {type: 'LineString', coordinates}
+    });
+    const zeroTrip = feature([[0, 0, 0, 0], missing]);
+    const laterTrip = feature([
+      [2, 2, 0, 1565577261],
+      [3, 3, 0, 1565577262]
+    ]);
+    const laterTimes = [1565577261000, 1565577262000];
+
+    expect(parseTripGeoJsonTimestamp([zeroTrip, laterTrip])).toEqual({
+      dataToTimeStamp: [[0, null], laterTimes],
+      animationDomain: [0, laterTimes[1]]
+    });
+    expect(parseTripGeoJsonTimestamp([zeroTrip])).toEqual({
+      dataToTimeStamp: [[0, null]],
+      animationDomain: [0, 0]
+    });
+    expect(
+      parseTripGeoJsonTimestamp([
+        feature([...zeroTrip.geometry.coordinates, ...laterTrip.geometry.coordinates])
+      ])
+    ).toEqual({
+      dataToTimeStamp: [[0, null, ...laterTimes]],
+      animationDomain: [0, laterTimes[1]]
+    });
+  });
+
+  test('does not infer a format from only missing times, but retains a later zero trip', () => {
+    const missingTrip = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [[0, 0, 0, null], null, [1, 1, 0, undefined]]
+      }
+    };
+    expect(parseTripGeoJsonTimestamp([missingTrip])).toEqual({
+      dataToTimeStamp: [],
+      animationDomain: null
+    });
+    const zeroTrip = {
+      ...missingTrip,
+      geometry: {type: 'LineString', coordinates: [[2, 2, 0, 0]]}
+    };
+    expect(parseTripGeoJsonTimestamp([missingTrip, zeroTrip])).toEqual({
+      dataToTimeStamp: [[null, null, null], [0]],
+      animationDomain: [0, 0]
+    });
+  });
+
+  test('skips missing and invalid times while retaining zero minima', () => {
+    expect(
+      getAnimationDomainFromTimestamps([
+        null,
+        [],
+        [NaN, Infinity],
+        [null, undefined, NaN, 0, 10],
+        [20, 30]
+      ] as any)
+    ).toEqual([0, 30]);
+    expect(getAnimationDomainFromTimestamps([[0]])).toEqual([0, 0]);
   });
 });

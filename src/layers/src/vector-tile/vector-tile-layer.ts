@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {FeatureCollection, Feature} from 'geojson';
-import {lruMemoize} from 'reselect';
+import {createSelector, lruMemoize} from 'reselect';
+import isEqual from 'es-toolkit/compat/isEqual';
 
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
@@ -46,7 +47,8 @@ import {
   VisConfigRange,
   VisConfigNumber,
   VisConfigBoolean,
-  DomainStops
+  DomainStops,
+  Filter
 } from '@kepler.gl/types';
 import {DataContainerInterface, getFilterFunction} from '@kepler.gl/utils';
 
@@ -72,6 +74,8 @@ import TileDataset from './common-tile/tile-dataset';
 import {isDomainStops, isDomainQuantiles, isIndexedField} from './common-tile/tile-utils';
 
 export {getNumVectorTilesBeingLoaded} from './loading-counter';
+
+const FILTER_CATEGORIES = [1];
 
 export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
@@ -272,6 +276,54 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         return tilesetDataUrl ? PMTilesSource.createDataSource(tilesetDataUrl, {}) : null;
       }
       return null;
+    }
+  );
+
+  filterCategorySelector = lruMemoize(
+    (
+      dataId: string,
+      fields: KeplerField[],
+      dataContainer: DataContainerInterface,
+      indexKey: number | null,
+      ...filters: Filter[]
+    ) => {
+      const categoryPredicates = filters.flatMap(filter => {
+        if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
+          return [];
+        }
+        const field = fields[getDatasetFieldIndexForFilter(dataId, filter)];
+        if (!field) return [];
+        const valueAccessor = this.accessVSFieldValue(field, indexKey);
+
+        // Tile features live outside the table's row container. Reuse its filter semantics
+        // with the same time-aware property accessor used by tile styling and numeric filters.
+        return [
+          getFilterFunction(
+            {...field, valueAccessor: (feature: any) => valueAccessor(field, feature)},
+            dataId,
+            filter,
+            [],
+            dataContainer
+          ) as (feature: any) => boolean
+        ];
+      });
+      return (feature: Feature) => (categoryPredicates.every(matches => matches(feature)) ? 1 : 0);
+    }
+  );
+
+  subLayerPropsSelector = createSelector(
+    visConfig => visConfig.strokeOpacity,
+    (_visConfig, mapState) => mapState?.layerParameters,
+    (strokeOpacity, layerParameters) => ({
+      'polygons-stroke': {opacity: strokeOpacity},
+      'polygons-fill': {
+        parameters: {cullMode: CULL_MODE.BACK, ...layerParameters}
+      }
+    }),
+    {
+      memoize: lruMemoize,
+      // Globe renders supply fresh parameter objects. Retain both split-map values.
+      memoizeOptions: {equalityCheck: isEqual, maxSize: 2}
     }
   );
 
@@ -479,8 +531,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     indexKey?: number | null
   ): (field: KeplerField, datum: Feature) => number | null {
     // if is indexed field
-    if (isIndexedField(field) && indexKey !== null) {
-      const fieldName = indexKey && field?.indexBy?.mappedValue[indexKey];
+    if (isIndexedField(field) && indexKey != null) {
+      const fieldName = field?.indexBy?.mappedValue[indexKey];
       if (fieldName) {
         return (f, datum) => {
           if (datum.properties) {
@@ -540,26 +592,16 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     );
 
     const indexKey = this.config.animation.enabled ? animationConfig.currentTime : null;
-    const categoryPredicates = (dataset.filterRecord?.cpu || []).flatMap(filter => {
-      if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
-        return [];
-      }
-      const field = dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)];
-      if (!field) return [];
-      const valueAccessor = this.accessVSFieldValue(field, indexKey);
-
-      // Tile features live outside the table's row container. Reuse its filter semantics
-      // with the same time-aware property accessor used by tile styling and numeric filters.
-      return [
-        getFilterFunction(
-          {...field, valueAccessor: (feature: any) => valueAccessor(field, feature)},
-          dataId,
-          filter,
-          [],
-          dataset.dataContainer
-        ) as (feature: any) => boolean
-      ];
-    });
+    const filters = (dataset.filterRecord?.cpu || []).filter(
+      filter => filter.type === FILTER_TYPES.multiSelect || filter.type === FILTER_TYPES.select
+    );
+    const categoryIndexKey = filters.some(
+      filter =>
+        filter.enabled !== false &&
+        isIndexedField(dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)])
+    )
+      ? indexKey
+      : null;
 
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
@@ -567,7 +609,13 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       tileSource,
       // A binary category avoids deck.gl's distinct-category limit and preserves
       // cached feature arrays and picking indexes, alongside all numeric channels.
-      getFilterCategory: feature => (categoryPredicates.every(matches => matches(feature)) ? 1 : 0)
+      getFilterCategory: this.filterCategorySelector(
+        dataId,
+        dataset.fields,
+        dataset.dataContainer,
+        categoryIndexKey,
+        ...filters
+      )
     };
   }
 
@@ -682,7 +730,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           getFilterValue: this.getGpuFilterValueAccessor(opts),
           filterRange: gpuFilter.filterRange,
           getFilterCategory,
-          filterCategories: [1],
+          filterCategories: FILTER_CATEGORIES,
           lineWidthUnits: 'pixels',
 
           binary: false,
@@ -759,15 +807,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               currentTime: isIndexedField(radiusField) ? animationConfig.currentTime : null
             }
           },
-          _subLayerProps: {
-            'polygons-stroke': {opacity: visConfig.strokeOpacity},
-            'polygons-fill': {
-              parameters: {
-                cullMode: CULL_MODE.BACK,
-                ...(mapState?.layerParameters ?? {})
-              }
-            }
-          },
+          _subLayerProps: this.subLayerPropsSelector(visConfig, mapState),
           loadOptions: {
             mvt: getLoaderOptions().mvt
           }
