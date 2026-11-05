@@ -212,7 +212,8 @@ export type KeplerApplicationConfig = {
 
   /**
    * Draw flat-map layers on every visible world copy. Disabled by default because
-   * each copy adds rendering and picking work. Enable with
+   * each copy adds rendering and picking work. With it disabled, layers can be
+   * missing on adjacent world copies across the antimeridian. Enable with
    * `initApplicationConfig({enableMapRepeat: true})`.
    */
   enableMapRepeat?: boolean;

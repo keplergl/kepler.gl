@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent} from '@testing-library/react';
+import {act, fireEvent} from '@testing-library/react';
+import {WebMercatorViewport} from '@deck.gl/core';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation, RulerAnnotation} from '@kepler.gl/types';
@@ -48,7 +49,140 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
 const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
   ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
 
+function worldViewport(longitude: number): MapViewport {
+  const projected = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    latitude: 0,
+    longitude,
+    zoom: 0
+  });
+  return {
+    ...projected,
+    project: point => projected.project([...point]),
+    unproject: point => projected.unproject([...point])
+  };
+}
+
+function setupWorldCopy(annotation: Annotation, longitude: number) {
+  let setLongitude: (longitude: number) => void;
+  let savedAnnotation = annotation;
+  const updateAnnotation = jest.fn();
+  function Harness() {
+    const [currentAnnotation, setAnnotation] = React.useState(annotation);
+    const [currentLongitude, pan] = React.useState(longitude);
+    setLongitude = pan;
+    savedAnnotation = currentAnnotation;
+    const currentViewport = React.useMemo(
+      () => worldViewport(currentLongitude),
+      [currentLongitude]
+    );
+    return (
+      <AnnotationOverlay
+        annotations={[currentAnnotation]}
+        selectedAnnotationId={annotation.id}
+        isEditingAnnotationText={false}
+        isAnnotationMode={true}
+        mapIndex={0}
+        viewport={currentViewport}
+        updateAnnotation={(id, changes) => {
+          updateAnnotation(id, changes);
+          setAnnotation(previous => ({...previous, ...changes} as Annotation));
+        }}
+        setSelectedAnnotation={jest.fn()}
+      />
+    );
+  }
+  const view = renderWithTheme(<Harness />);
+  return {
+    ...view,
+    updateAnnotation,
+    savedAnnotation: () => savedAnnotation,
+    pan: (nextLongitude: number) => act(() => setLongitude(nextLongitude)),
+    position: (part = 'shape') =>
+      view.container
+        .querySelector(`[data-annotation-part="${part}"]`)!
+        .getAttribute('transform')!
+        .slice('translate('.length, -1)
+        .split(',')
+        .map(Number)
+  };
+}
+
 describe('AnnotationOverlay ruler interactions', () => {
+  test.each([AnnotationKind.POINT, AnnotationKind.RULER])(
+    'keeps the rendered %s copy when a pan brings the saved anchor on screen',
+    kind => {
+      const annotation = {...makeLegacyAnnotation(kind), anchorPoint: [178, 0]} as Annotation;
+      const view = setupWorldCopy(annotation, -176);
+      expect(view.position()[0]).toBeCloseTo(worldViewport(-176).project([-182, 0])[0]);
+
+      for (const longitude of [-172, -176, -172]) {
+        view.pan(longitude);
+        expect(view.position()[0]).toBeCloseTo(worldViewport(longitude).project([-182, 0])[0]);
+        if (kind === AnnotationKind.RULER) {
+          expect(view.position('handles')).toEqual(view.position());
+        }
+      }
+      expect(view.savedAnnotation().anchorPoint).toEqual([178, 0]);
+      expect(view.updateAnnotation).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([
+    {anchor: 178, center: 179, normalizedCenter: -179, wrappedAnchor: -182},
+    {anchor: -178, center: -179, normalizedCenter: 179, wrappedAnchor: 182}
+  ])('follows map-center normalization from $center to $normalizedCenter', scenario => {
+    const annotation = {
+      ...makeLegacyAnnotation(AnnotationKind.POINT),
+      anchorPoint: [scenario.anchor, 0]
+    } as Annotation;
+    const view = setupWorldCopy(annotation, scenario.center);
+    view.pan(scenario.normalizedCenter);
+    expect(view.position()[0]).toBeCloseTo(
+      worldViewport(scenario.normalizedCenter).project([scenario.wrappedAnchor, 0])[0]
+    );
+    view.pan(scenario.center);
+    expect(view.position()[0]).toBeCloseTo(
+      worldViewport(scenario.center).project([scenario.anchor, 0])[0]
+    );
+    expect(view.savedAnnotation().anchorPoint).toEqual([scenario.anchor, 0]);
+    expect(view.updateAnnotation).not.toHaveBeenCalled();
+  });
+
+  test.each([AnnotationKind.POINT, AnnotationKind.RULER])(
+    'drags %s from the retained copy after panning and keeps it after release',
+    kind => {
+      const annotation = {
+        ...makeLegacyAnnotation(kind),
+        anchorPoint: [178, 0],
+        endPoint: [-160, 0]
+      } as Annotation;
+      const view = setupWorldCopy(annotation, -176);
+      view.pan(-172);
+      const [x, y] = worldViewport(-172).project([-182, 0]);
+      const part = kind === AnnotationKind.RULER ? 'handles' : 'shape';
+      const handle = view.container.querySelector(
+        `[data-annotation-part="${part}"] [role="button"]`
+      )!;
+      dispatchPointer(handle, 'pointerdown', x, y);
+      dispatchPointer(document, 'pointermove', x + 4, y);
+      for (const deltaX of [20, 30]) {
+        dispatchPointer(document, 'pointermove', x + deltaX, y);
+        expect(view.position()[0]).toBeCloseTo(x + deltaX);
+      }
+      dispatchPointer(document, 'pointerup', x + 30, y);
+      expect(view.position()[0]).toBeCloseTo(x + 30);
+      const movedAnchor = view.savedAnnotation().anchorPoint;
+      expect(movedAnchor[0]).toBeCloseTo(worldViewport(-172).unproject([x + 30, y])[0]);
+      const lastUpdate =
+        view.updateAnnotation.mock.calls[view.updateAnnotation.mock.calls.length - 1];
+      expect(Object.keys(lastUpdate[1])).toEqual(['anchorPoint']);
+      view.pan(-170);
+      expect(view.position()[0]).toBeCloseTo(worldViewport(-170).project(movedAnchor)[0]);
+    }
+  );
+
   test.each([
     AnnotationKind.TEXT,
     AnnotationKind.POINT,

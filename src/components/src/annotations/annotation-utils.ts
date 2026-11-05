@@ -27,6 +27,13 @@ export type MapViewport = {
   width: number;
   height: number;
   zoom: number;
+  /** Transient selected anchor longitude, supplied by the annotation overlay. */
+  annotationAnchorLongitude?: number;
+};
+
+export type AnnotationWorldCopy = {
+  anchorLongitude: number;
+  viewLongitude: number;
 };
 
 /** Screen-space pick that returns a world position, optionally with altitude. */
@@ -105,19 +112,42 @@ function projectClosestEndpoint(
   return [sx, sy];
 }
 
-/**
- * Keep the current world copy while it is visible, including an unwrapped drag
- * position. Always choosing the nearest copy would make a drag jump a world
- * when it crosses the longitude opposite the view's centre. If the point is
- * off screen, try the copy nearest the centre so panning across ±180° still
- * brings annotations into view.
- */
-function onVisibleWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+function isOnScreen(point: LngLatAltitude, viewport: MapViewport): boolean {
   const [x, y] = viewport.project(point);
-  if (x >= 0 && x <= viewport.width && y >= 0 && y <= viewport.height) return point;
-  const shift = Math.round((viewport.longitude - point[0]) / 360) * 360;
+  return x >= 0 && x <= viewport.width && y >= 0 && y <= viewport.height;
+}
+
+function onWorldCopy(point: LngLatAltitude, longitude: number): LngLatAltitude {
+  const shift = Math.round((longitude - point[0]) / 360) * 360;
   if (!shift || !Number.isFinite(shift)) return point;
   return point.length === 3 ? [point[0] + shift, point[1], point[2]] : [point[0] + shift, point[1]];
+}
+
+function onVisibleWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+  if (Number.isFinite(viewport.annotationAnchorLongitude)) {
+    return onWorldCopy(point, viewport.annotationAnchorLongitude!);
+  }
+  return isOnScreen(point, viewport) ? point : onWorldCopy(point, viewport.longitude);
+}
+
+/** Follow the same copy when the map center normalizes from +180 to -180 or back. */
+export function getWorldCopyLongitude(copy: AnnotationWorldCopy, viewport: MapViewport): number {
+  return copy.anchorLongitude + Math.round((viewport.longitude - copy.viewLongitude) / 360) * 360;
+}
+
+/** Select a copy using the last committed view, without changing the saved annotation. */
+export function getAnnotationWorldCopy(
+  annotation: Annotation,
+  viewport: MapViewport,
+  previous?: AnnotationWorldCopy,
+  isDragging = false
+): AnnotationWorldCopy {
+  const anchor = previous
+    ? onWorldCopy(annotation.anchorPoint, getWorldCopyLongitude(previous, viewport))
+    : annotation.anchorPoint;
+  const selected =
+    isDragging || isOnScreen(anchor, viewport) ? anchor : onWorldCopy(anchor, viewport.longitude);
+  return {anchorLongitude: selected[0], viewLongitude: viewport.longitude};
 }
 
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
