@@ -47,7 +47,8 @@ import {
   VisConfigRange,
   VisConfigNumber,
   VisConfigBoolean,
-  DomainStops
+  DomainStops,
+  Filter
 } from '@kepler.gl/types';
 import {DataContainerInterface, getFilterFunction} from '@kepler.gl/utils';
 
@@ -241,6 +242,38 @@ export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): De
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
   declare config: VectorTileLayerConfig;
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
+
+  filterCategorySelector = lruMemoize(
+    (
+      dataId: string,
+      fields: KeplerField[],
+      dataContainer: DataContainerInterface,
+      indexKey: number | null,
+      ...filters: Filter[]
+    ) => {
+      const categoryPredicates = filters.flatMap(filter => {
+        if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
+          return [];
+        }
+        const field = fields[getDatasetFieldIndexForFilter(dataId, filter)];
+        if (!field) return [];
+        const valueAccessor = this.accessVSFieldValue(field, indexKey);
+
+        // Tile features live outside the table's row container. Reuse its filter semantics
+        // with the same time-aware property accessor used by tile styling and numeric filters.
+        return [
+          getFilterFunction(
+            {...field, valueAccessor: (feature: any) => valueAccessor(field, feature)},
+            dataId,
+            filter,
+            [],
+            dataContainer
+          ) as (feature: any) => boolean
+        ];
+      });
+      return (feature: Feature) => (categoryPredicates.every(matches => matches(feature)) ? 1 : 0);
+    }
+  );
 
   subLayerPropsSelector = createSelector(
     visConfig => visConfig.strokeOpacity,
@@ -545,26 +578,16 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     }
 
     const indexKey = this.config.animation.enabled ? animationConfig.currentTime : null;
-    const categoryPredicates = (dataset.filterRecord?.cpu || []).flatMap(filter => {
-      if (filter.type !== FILTER_TYPES.multiSelect && filter.type !== FILTER_TYPES.select) {
-        return [];
-      }
-      const field = dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)];
-      if (!field) return [];
-      const valueAccessor = this.accessVSFieldValue(field, indexKey);
-
-      // Tile features live outside the table's row container. Reuse its filter semantics
-      // with the same time-aware property accessor used by tile styling and numeric filters.
-      return [
-        getFilterFunction(
-          {...field, valueAccessor: (feature: any) => valueAccessor(field, feature)},
-          dataId,
-          filter,
-          [],
-          dataset.dataContainer
-        ) as (feature: any) => boolean
-      ];
-    });
+    const filters = (dataset.filterRecord?.cpu || []).filter(
+      filter => filter.type === FILTER_TYPES.multiSelect || filter.type === FILTER_TYPES.select
+    );
+    const categoryIndexKey = filters.some(
+      filter =>
+        filter.enabled !== false &&
+        isIndexedField(dataset.fields[getDatasetFieldIndexForFilter(dataId, filter)])
+    )
+      ? indexKey
+      : null;
 
     return {
       ...super.formatLayerData(datasets, oldLayerData, animationConfig),
@@ -572,7 +595,13 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       tileSource,
       // A binary category avoids deck.gl's distinct-category limit and preserves
       // cached feature arrays and picking indexes, alongside all numeric channels.
-      getFilterCategory: feature => (categoryPredicates.every(matches => matches(feature)) ? 1 : 0)
+      getFilterCategory: this.filterCategorySelector(
+        dataId,
+        dataset.fields,
+        dataset.dataContainer,
+        categoryIndexKey,
+        ...filters
+      )
     };
   }
 
