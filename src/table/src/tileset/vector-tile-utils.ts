@@ -490,7 +490,7 @@ function parseIndexedField(
         fieldTs = Number(indexKey);
       }
       const epoch = timeToUnixMilli(fieldTs, analyzedType.format);
-      if (epoch) {
+      if (epoch !== null && Number.isFinite(epoch)) {
         field.indexBy.mappedValue[epoch] = fieldName;
       }
     } else {
