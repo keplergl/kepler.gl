@@ -3,11 +3,13 @@
 
 import React from 'react';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
 
 import sinon from 'sinon';
 import {MapView} from '@deck.gl/core';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import test from 'tape';
 import {
   appInjector,
@@ -75,7 +77,11 @@ function renderedDeckProps(mapState = {}) {
   let deckProps = null;
   const props = {
     ...initialProps,
-    mapState: {...initialProps.mapState, ...mapState},
+    mapState: {
+      ...initialProps.mapState,
+      ...mapState,
+      globe: {...initialProps.mapState.globe, ...mapState.globe}
+    },
     deckRenderCallbacks: {
       onDeckRender: allDeckGlProps => {
         deckProps = allDeckGlProps;
@@ -83,7 +89,7 @@ function renderedDeckProps(mapState = {}) {
       }
     }
   };
-  mountWithTheme(
+  const wrapper = renderWithTheme(
     <Provider store={mockStore(initialState)}>
       <IntlWrapper>
         <MapViewStateContextProvider mapState={props.mapState}>
@@ -92,18 +98,32 @@ function renderedDeckProps(mapState = {}) {
       </IntlWrapper>
     </Provider>
   );
+  wrapper.unmount();
   return deckProps;
 }
 
-test('MapContainerFactory - draws layers on every world copy', t => {
+test('MapContainerFactory - world repetition is disabled by default', t => {
   const flat = renderedDeckProps({globe: {enabled: false}});
   t.ok(flat, 'should render the deck overlay');
   t.ok(flat.views instanceof MapView, 'a flat map should use a MapView');
-  t.equal(
-    flat.views.props.repeat,
-    true,
-    'the MapView should repeat the world, as the base map does'
-  );
+  t.equal(flat.views.props.repeat, false, 'the MapView should draw a single world by default');
 
+  t.end();
+});
+
+test('MapContainerFactory - world repetition follows application config', t => {
+  const {enableMapRepeat} = getApplicationConfig();
+  try {
+    for (const enabled of [true, false]) {
+      initApplicationConfig({enableMapRepeat: enabled});
+      const flat = renderedDeckProps({globe: {enabled: false}});
+      t.equal(flat.views.props.repeat, enabled, `repeat should be ${enabled}`);
+      const globe = renderedDeckProps({globe: {enabled: true}});
+      t.notOk(globe.views instanceof MapView, 'the flag should not replace the globe view');
+      t.notOk(globe.views.props.repeat, 'the flag should not enable globe repetition');
+    }
+  } finally {
+    initApplicationConfig({enableMapRepeat});
+  }
   t.end();
 });

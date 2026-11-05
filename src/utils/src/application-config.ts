@@ -210,6 +210,13 @@ export type KeplerApplicationConfig = {
    *  Note: values above 60 may cause rendering artifacts with some basemap tile providers. */
   maxPitch?: number;
 
+  /**
+   * Draw flat-map layers on every visible world copy. Disabled by default because
+   * each copy adds rendering and picking work. Enable with
+   * `initApplicationConfig({enableMapRepeat: true})`.
+   */
+  enableMapRepeat?: boolean;
+
   /** Whether to enable the annotations feature. Enabled by default. */
   enableAnnotations?: boolean;
 
@@ -500,6 +507,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   escapeXhtmlForWebpack: isWebpackBuild(),
 
   maxPitch: 60,
+
+  enableMapRepeat: false,
 
   enableAnnotations: true,
 

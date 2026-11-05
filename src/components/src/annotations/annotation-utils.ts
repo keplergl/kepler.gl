@@ -106,11 +106,15 @@ function projectClosestEndpoint(
 }
 
 /**
- * The copy of a point on the world nearest the view's centre. The map repeats the world past
- * ±180°, and a centre that crosses the antimeridian comes back within ±180°: projected as it is,
- * a point at 178° seen from a centre at -176° lands a whole world away, off screen.
+ * Keep the current world copy while it is visible, including an unwrapped drag
+ * position. Always choosing the nearest copy would make a drag jump a world
+ * when it crosses the longitude opposite the view's centre. If the point is
+ * off screen, try the copy nearest the centre so panning across ±180° still
+ * brings annotations into view.
  */
-function onNearestWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+function onVisibleWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+  const [x, y] = viewport.project(point);
+  if (x >= 0 && x <= viewport.width && y >= 0 && y <= viewport.height) return point;
   const shift = Math.round((viewport.longitude - point[0]) / 360) * 360;
   if (!shift || !Number.isFinite(shift)) return point;
   return point.length === 3 ? [point[0] + shift, point[1], point[2]] : [point[0] + shift, point[1]];
@@ -118,7 +122,7 @@ function onNearestWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLa
 
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
   const {kind} = annotation;
-  const anchorPoint = onNearestWorldCopy(annotation.anchorPoint, viewport);
+  const anchorPoint = onVisibleWorldCopy(annotation.anchorPoint, viewport);
   const angle = isAnnotationWithArm(annotation) ? degreesToRadians(annotation.angle) : 0;
   const [x, y] = viewport.project(anchorPoint);
 
@@ -301,7 +305,7 @@ function moveCoordinate(
   pickWorldPosition?: PickWorldPosition,
   projectedPoint?: [number, number]
 ): LngLatAltitude {
-  const [px, py] = projectedPoint ?? viewport.project(onNearestWorldCopy(point, viewport));
+  const [px, py] = projectedPoint ?? viewport.project(onVisibleWorldCopy(point, viewport));
   const screen: [number, number] = [px + delta.x, py + delta.y];
   const picked = normalizeAnchorPoint(pickWorldPosition?.(screen));
   if (picked) {
@@ -339,7 +343,7 @@ export function moveRulerEndpoint(
     return {
       // The start is the ruler's screen-space origin. Keep its unwrapped
       // longitude so dragging across the dateline stays on the visible world
-      // copy; makeMarker wraps only the second endpoint relative to it.
+      // copy; makeMarker preserves the start while it remains visible.
       anchorPoint: moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition)
     };
   }
@@ -405,10 +409,10 @@ export function resizeCircle(
   viewport: MapViewport
 ): Partial<Annotation> {
   if (annotation.kind !== AnnotationKind.CIRCLE) return {};
-  const {anchorPoint, radiusInMeters} = annotation;
+  const {radiusInMeters} = annotation;
   // Scale by the on-screen radius at the anchor's altitude. Unprojecting onto
   // the ground plane would change radius with pitch even when delta.x is 0.
-  const currentScreenRadius = calcRadius(viewport, anchorPoint, radiusInMeters);
+  const currentScreenRadius = (makeMarker(annotation, viewport) as CircleAnnotationMarker).r;
   if (!(currentScreenRadius > 0)) {
     return {radiusInMeters: Math.max(0, radiusInMeters)};
   }

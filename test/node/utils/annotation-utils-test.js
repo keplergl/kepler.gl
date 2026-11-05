@@ -469,18 +469,21 @@ test('#moveRulerEndpoint -> keeps the start on its visible world copy across the
   t.end();
 });
 
-test('#makeMarker -> projects the anchor on the world copy nearest the centre', t => {
+test('#makeMarker -> brings an off-screen anchor onto the nearest world copy', t => {
   // a centre that crossed the antimeridian from the east, normalized to -176
-  const viewport = {
-    ...mockViewport,
-    project: ([lng, lat]) => [lng, lat],
-    longitude: -176
-  };
+  const viewport = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    latitude: 0,
+    longitude: -176,
+    zoom: 4
+  });
+  const [startX] = viewport.project([-182, 0]);
 
   const point = makeMarker(makePointAnnotation({anchorPoint: [178, 0]}), viewport);
   t.equal(
     point.x,
-    -182,
+    startX,
     'a callout at 178 should be drawn 6 degrees west of the centre, not 354 east'
   );
 
@@ -488,25 +491,39 @@ test('#makeMarker -> projects the anchor on the world copy nearest the centre', 
     makeRulerAnnotation({anchorPoint: [178, 0], endPoint: [-178, 0]}),
     viewport
   );
-  t.equal(ruler.x, -182, 'the ruler start should be on the copy nearest the centre');
-  t.equal(ruler.ex, 4, 'the ruler end should still follow its start');
+  t.equal(ruler.x, startX, 'the ruler start should be on the copy nearest the centre');
+  t.equal(
+    ruler.ex,
+    viewport.project([-178, 0])[0] - startX,
+    'the ruler end should still follow its start'
+  );
 
-  const unwrapped = makeMarker(makePointAnnotation({anchorPoint: [182, 0]}), {
-    ...viewport,
+  const easternViewport = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    latitude: 0,
+    zoom: 4,
     longitude: 176
   });
-  t.equal(unwrapped.x, 182, 'an anchor already on the nearest copy should be left as it is');
+  const unwrapped = makeMarker(makePointAnnotation({anchorPoint: [182, 0]}), easternViewport);
+  t.equal(
+    unwrapped.x,
+    easternViewport.project([182, 0])[0],
+    'an anchor already on the nearest copy should be left as it is'
+  );
 
   t.end();
 });
 
 test('#movePoint -> drags a callout from the world copy it is drawn on', t => {
-  const viewport = {
-    ...mockViewport,
-    project: ([lng, lat]) => [lng, lat],
-    unproject: ([x, y]) => [x, y],
-    longitude: -176
-  };
+  const viewport = new WebMercatorViewport({
+    width: 1000,
+    height: 600,
+    latitude: 0,
+    longitude: -176,
+    zoom: 4
+  });
+  const [x, y] = viewport.project([-182, 0]);
   let pickedScreen;
   const changes = movePoint(
     makePointAnnotation({anchorPoint: [178, 0]}),
@@ -518,13 +535,50 @@ test('#movePoint -> drags a callout from the world copy it is drawn on', t => {
     }
   );
 
-  t.deepEqual(pickedScreen, [-181, 0], 'the drag should start at the callout drawn on screen');
+  t.deepEqual(pickedScreen, [x + 1, y], 'the drag should start at the callout drawn on screen');
   t.deepEqual(
     changes.anchorPoint,
-    [-181, 0],
-    'the callout should move one degree, not jump a world'
+    viewport.unproject([x + 1, y]),
+    'the callout should move one pixel, not jump a world'
   );
 
+  t.end();
+});
+
+test('#movePoint and #moveRulerEndpoint -> keep a visible drag on its world copy', t => {
+  for (const {longitude, anchor, deltaX} of [
+    {longitude: 0, anchor: 179, deltaX: 4},
+    {longitude: 0, anchor: -179, deltaX: -4},
+    {longitude: 90, anchor: -89, deltaX: -4}
+  ]) {
+    const viewport = new WebMercatorViewport({
+      width: 1200,
+      height: 600,
+      latitude: 0,
+      longitude,
+      zoom: 0
+    });
+    for (const annotation of [
+      makePointAnnotation({anchorPoint: [anchor, 0]}),
+      makeRulerAnnotation({anchorPoint: [anchor, 0], endPoint: [anchor + 1, 0]})
+    ]) {
+      const initialMarker = makeMarker(annotation, viewport);
+      let moved = annotation;
+      for (let step = 1; step <= 2; step++) {
+        const delta = {x: deltaX, y: 0};
+        const changes =
+          moved.kind === AnnotationKind.RULER
+            ? moveRulerEndpoint(moved, 'start', delta, viewport)
+            : movePoint(moved, delta, viewport);
+        moved = {...moved, ...changes};
+        const marker = makeMarker(moved, viewport);
+        t.ok(
+          Math.abs(marker.x - (initialMarker.x + step * deltaX)) < 1e-6,
+          `${annotation.kind} drag ${step} should follow the pointer at centre ${longitude}`
+        );
+      }
+    }
+  }
   t.end();
 });
 
@@ -648,6 +702,29 @@ test('#resizeCircle -> scales radius by screen-space handle delta', t => {
   const doubled = resizeCircle(annotation, {x: marker.r, y: 0}, mockViewport);
   t.equal(doubled.radiusInMeters, 2000, 'dragging the handle by one radius should double meters');
 
+  t.end();
+});
+
+test('#resizeCircle -> uses the rendered world copy in a pitched, rotated view', t => {
+  const viewport = new WebMercatorViewport({
+    width: 1200,
+    height: 800,
+    longitude: -176,
+    latitude: 0,
+    zoom: 4,
+    pitch: 50,
+    bearing: 30
+  });
+  const annotation = makeCircleAnnotation({
+    anchorPoint: [178, 0, 80],
+    radiusInMeters: 100000
+  });
+  const marker = makeMarker(annotation, viewport);
+  t.ok(marker.x >= 0 && marker.x <= viewport.width, 'the wrapped circle should be visible');
+  const doubled = resizeCircle(annotation, {x: marker.r, y: 0}, viewport);
+  t.equal(doubled.radiusInMeters, 200000, 'one visible radius of drag should double meters');
+  const halved = resizeCircle(annotation, {x: -marker.r / 2, y: 0}, viewport);
+  t.equal(halved.radiusInMeters, 50000, 'half a visible radius inward should halve meters');
   t.end();
 });
 

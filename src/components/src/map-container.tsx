@@ -1312,10 +1312,7 @@ export default function MapContainerFactory(
             clear: true,
             clearColor: false
           })
-        : // The base map repeats the world past ±180°; draw the layers on every copy in view
-          // too, or the far side of the antimeridian and the copies of a zoomed-out world stay
-          // empty.
-          new MapView({farZMultiplier: 1.2, repeat: true});
+        : new MapView({farZMultiplier: 1.2, repeat: getApplicationConfig().enableMapRepeat});
 
       let allDeckGlProps = {
         ...deckGlProps,
