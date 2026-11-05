@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Layer, LayersList, LayerExtension} from '@deck.gl/core';
+import {Layer, LayersList, LayerExtension, UpdateParameters} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {
   MVTLayer as _MVTLayer,
@@ -103,6 +103,21 @@ export class GlobeClipExtension extends LayerExtension {
 // @ts-expect-error need to patch private methods because of newer loaders.gl
 export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
   static layerName = 'MVTLayer';
+
+  declare state: _MVTLayer<ExtraProps>['state'] & {isGlobeMode?: boolean};
+
+  updateState(params: UpdateParameters<this>): void {
+    const isGlobeMode = Boolean(params.context.viewport.resolution);
+    if (this.state.isGlobeMode !== isGlobeMode) {
+      // Clipping depends on the activated viewport, which can change after props.
+      // Rebuild sublayers while retaining decoded tile content and the tileset.
+      this.state.tileset?.tiles.forEach(tile => {
+        tile.layers = null;
+      });
+      this.setState({isGlobeMode});
+    }
+    super.updateState(params);
+  }
 
   async getTileData(tile: _TileLoadProps): Promise<any> {
     const {getTileData} = this.props;

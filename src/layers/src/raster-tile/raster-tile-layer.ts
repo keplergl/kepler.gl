@@ -89,6 +89,8 @@ import {
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {default as KeplerLayer, LayerBaseConfigPartial} from '../base-layer';
 
+const RASTER_MESH_DATA = [1];
+
 /**
  * Extract attribution from STAC metadata providers array.
  * STAC Items carry providers in properties.providers, Collections at top-level.
@@ -1275,7 +1277,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
   const rasterLayer = terrain
     ? new RasterMeshLayer(props, {
         id: `raster-3d-layer-${props.id}-${idSuffix}`,
-        data: [1],
+        data: RASTER_MESH_DATA,
         mesh: terrain,
         images,
         modules,
@@ -1418,7 +1420,7 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
     ? new RasterMeshLayer(props, {
         id: `raster-3d-layer-${props.id}`,
         // Dummy data
-        data: [1],
+        data: RASTER_MESH_DATA,
         mesh: terrain,
         images,
         modules,

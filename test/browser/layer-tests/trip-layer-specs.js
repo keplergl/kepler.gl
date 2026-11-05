@@ -717,7 +717,11 @@ test('#TripLayer -> parseTripGeoJsonTimestamp', t => {
 
   const result = parseTripGeoJsonTimestamp(dataToFeature1);
 
-  t.deepEqual(result.animationDomain, [1565577261, 1565578836], 'should filter out illugal value');
+  t.deepEqual(
+    result.animationDomain,
+    [0, 1565578836000],
+    'keeps zero, normalizes Unix seconds to milliseconds and filters invalid values'
+  );
   t.end();
 });
 

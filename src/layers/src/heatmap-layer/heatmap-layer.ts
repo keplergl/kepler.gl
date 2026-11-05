@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {createSelector} from 'reselect';
 import KeplerHeatmapLayer from './deck-heatmap-layer';
 import {
   CHANNEL_SCALES,
@@ -298,6 +299,8 @@ function interpolateByZoom(
 class HeatmapLayer extends Layer {
   declare visConfigSettings: HeatmapLayerVisConfigSettings;
   declare config: HeatmapLayerConfig;
+
+  colorRampSelector = createSelector((colors: HexColor[]) => colors, toColorRamp);
 
   dataToFeature: any[] = [];
   centroids: Array<number[] | null> = [];
@@ -703,7 +706,7 @@ class HeatmapLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const {visConfig} = this.config;
-    const colorRange = toColorRamp(visConfig.colorRange.colors);
+    const colorRange = this.colorRampSelector(visConfig.colorRange.colors);
 
     const intensity = interpolateByZoom(
       mapState.zoom,
