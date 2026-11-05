@@ -1523,7 +1523,8 @@ export function ChartPanelContentFactory(
   };
 
   ChartPanelContent.displayName = 'ChartPanelContent';
-  return ChartPanelContent;
+  // Also skip aggregation when the parent rerenders with unchanged chart inputs.
+  return React.memo(ChartPanelContent);
 }
 
 export default ChartPanelContentFactory;
