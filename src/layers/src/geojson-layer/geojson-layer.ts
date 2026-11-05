@@ -625,7 +625,7 @@ export default class GeoJsonLayer extends Layer {
 
     const textLabelData = supportsTextLabels
       ? ((data as GeojsonDataMaps) || [])
-          .filter(d => d && 'properties' in d)
+          .filter(d => d && 'properties' in d && this.centroids[d.properties?.index])
           .map(d => ({index: (d as Feature).properties?.index}))
       : [];
 
