@@ -496,11 +496,31 @@ function isInsidePolygon(
   }
 }
 
+function tileKey({x, y, z}: TileIndex): string {
+  return `${z}/${x}/${y}`;
+}
+
+function coveredPixelRanges(
+  index: TileIndex,
+  {width, height}: {width: number; height: number},
+  children: TileIndex[] = []
+): Array<[number, number, number, number]> {
+  return children.map(child => {
+    const scale = 2 ** (child.z - index.z);
+    // Include pixel centers on the child's west/north edge, but not east/south.
+    const minCol = Math.ceil((child.x / scale - index.x) * width - 0.5);
+    const maxCol = Math.ceil(((child.x + 1) / scale - index.x) * width - 0.5);
+    const minRow = Math.ceil((child.y / scale - index.y) * height - 0.5);
+    const maxRow = Math.ceil(((child.y + 1) / scale - index.y) * height - 0.5);
+    return [minCol, maxCol, minRow, maxRow];
+  });
+}
+
 /**
- * Aggregate currently loaded tile pixels that fall inside a polygon.
- * Uses the highest-zoom tile at each location (tiles are scanned independently;
- * overlapping parent tiles are skipped when a child of higher zoom exists for that pixel
- * by only using tiles at the maximum zoom present in the intersecting set).
+ * Aggregate currently loaded tile pixels whose centers fall inside a polygon.
+ * Higher-zoom tiles replace parent pixel centers within their footprint, including
+ * NoData pixels. Uncovered lower-zoom pixels retain their native resolution;
+ * counts, sums and means are pixel-based, not area-weighted or resampled.
  * Throws rather than returning partial statistics if the scan limit is exceeded.
  * The limit includes inspected pixels outside the polygon and NoData pixels.
  */
@@ -522,8 +542,31 @@ export function computeRasterZonalStats(
     return {pixelCount: 0, bands: {}};
   }
 
-  const maxZoom = Math.max(...liveTiles.map(tile => tile.index?.z ?? 0));
-  const scanTiles = liveTiles.filter(tile => tile.index?.z === maxZoom);
+  const scanTiles = liveTiles.filter(tile => getTilePixelSize(tile));
+  const tileIndices = new Map(
+    scanTiles.map(tile => [tileKey(tile.index as TileIndex), tile.index as TileIndex])
+  );
+  const children = new Map<string, TileIndex[]>();
+  const minZoom = scanTiles.reduce(
+    (zoom, tile) => Math.min(zoom, (tile.index as TileIndex).z),
+    Infinity
+  );
+  for (const index of tileIndices.values()) {
+    let {x, y} = index;
+    // Only the nearest loaded ancestor needs this footprint. More distant ancestors
+    // are already covered by that ancestor, so mask ranges remain disjoint.
+    for (let z = index.z - 1; z >= minZoom; z--) {
+      x = Math.floor(x / 2);
+      y = Math.floor(y / 2);
+      const key = tileKey({x, y, z});
+      if (tileIndices.has(key)) {
+        const descendants = children.get(key) || [];
+        descendants.push(index);
+        children.set(key, descendants);
+        break;
+      }
+    }
+  }
 
   const bandStats: Record<string, RasterBandStats> = {};
   const derivedAcc = emptyStats();
@@ -539,15 +582,38 @@ export function computeRasterZonalStats(
       continue;
     }
 
+    const tilePixels = size.width * size.height;
+    const coveredRanges = coveredPixelRanges(index, size, children.get(tileKey(index)));
+    const coveredPixels = coveredRanges.reduce(
+      (count, [minCol, maxCol, minRow, maxRow]) => count + (maxCol - minCol) * (maxRow - minRow),
+      0
+    );
+    // Fully replaced parents require no pixel scan and must not exhaust its budget.
+    if (coveredPixels === tilePixels) {
+      continue;
+    }
+    if (tilePixels > MAX_ZONAL_PIXELS - scanned) {
+      throw new Error(
+        'Raster statistics exceeded the 2,000,000-pixel scan limit. Select a smaller area or zoom out.'
+      );
+    }
+    scanned += tilePixels;
+    // Allocate only after checking the work limit: at most two million mask bytes.
+    const covered = coveredPixels ? new Uint8Array(tilePixels) : null;
+    for (const [minCol, maxCol, minRow, maxRow] of coveredRanges) {
+      if (!covered || minCol === maxCol) {
+        continue;
+      }
+      for (let row = minRow; row < maxRow; row++) {
+        covered.fill(1, row * size.width + minCol, row * size.width + maxCol);
+      }
+    }
     const sampleContext = context;
     for (let row = 0; row < size.height; row++) {
       for (let col = 0; col < size.width; col++) {
-        if (scanned >= MAX_ZONAL_PIXELS) {
-          throw new Error(
-            'Raster statistics exceeded the 2,000,000-pixel scan limit. Select a smaller area or zoom out.'
-          );
+        if (covered?.[row * size.width + col]) {
+          continue;
         }
-        scanned += 1;
         const [lng, lat] = tilePixelToLngLat(col, row, size.width, size.height, index);
         if (!isInsidePolygon(lng, lat, polygon, bbox, isRectangle)) {
           continue;
