@@ -5,6 +5,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
+import {GL} from '@luma.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
   getEOBands,
@@ -24,7 +25,7 @@ import {
   rasterZonalStatsToSidecar,
   sampleRasterTileAtLngLat
 } from '@kepler.gl/layers';
-import {RasterWebGL} from '@kepler.gl/deckgl-layers';
+import {RasterWebGL, RasterLayer} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
@@ -1892,6 +1893,147 @@ test('#RasterTileLayer -> switching STAC datasets with matching bands reloads ca
     getTileData.restore();
     manager.finalize();
   }
+  t.end();
+});
+
+test('#RasterLayer -> appearance changes reuse geometry and bounds changes rebuild it', t => {
+  const layer = new RasterLayer({id: 'raster-mesh', bounds: [-10, -10, 10, 10]});
+  const invalidate = sinon.spy();
+  const setVertexCount = sinon.spy();
+  layer.context = {viewport: {resolution: undefined}};
+  layer.state = {images: {}, model: {setVertexCount, destroy() {}}};
+  layer.setState = update => Object.assign(layer.state, update);
+  layer.getAttributeManager = () => ({invalidate, invalidateAll() {}});
+  layer.updateImages = () => {};
+  layer._getModel = () => ({setVertexCount, destroy() {}});
+  const createMesh = sinon.spy(layer, '_createMesh');
+  let oldProps = {modules: []};
+  const update = (props, changeFlags = {}) => {
+    layer.props = layer.clone(props).props;
+    layer.updateState({props: layer.props, oldProps, changeFlags});
+    oldProps = layer.props;
+  };
+  update({});
+  const original = layer.state.mesh;
+  createMesh.reset();
+  invalidate.reset();
+  const start = performance.now();
+  for (let i = 0; i < 1000; i++) update({bounds: [-10, -10, 10, 10], opacity: i / 1000});
+  t.comment(
+    `1000 appearance updates: ${createMesh.callCount} mesh builds, ${(
+      performance.now() - start
+    ).toFixed(2)} ms`
+  );
+  t.equal(createMesh.callCount, 0, 'equal bounds reuse geometry');
+  t.equal(layer.state.mesh, original, 'positions and texture coordinates stay cached');
+  t.equal(invalidate.callCount, 0, 'appearance does not invalidate geometry attributes');
+  update({_imageCoordinateSystem: 'lnglat'});
+  t.equal(
+    layer.state.coordinateConversion,
+    -1,
+    'image coordinate changes update conversion uniforms'
+  );
+  t.equal(
+    layer.state.mesh,
+    original,
+    'image coordinates update uniforms without rebuilding geometry'
+  );
+  setVertexCount.reset();
+  update({}, {extensionsChanged: true});
+  t.equal(layer.state.mesh, original, 'shader changes retain geometry');
+  t.deepEqual(
+    setVertexCount.args,
+    [[original.vertexCount]],
+    'replacement models retain the vertex count'
+  );
+  update({bounds: [-11, -10, 10, 10]});
+  t.notEqual(layer.state.mesh, original, 'bounds changes rebuild geometry');
+  const flat = layer.state.mesh;
+  layer.context.viewport.resolution = 2;
+  t.ok(
+    layer.shouldUpdateState({changeFlags: {viewportChanged: true}}),
+    'globe resolution schedules a geometry update'
+  );
+  update({});
+  t.notEqual(layer.state.mesh, flat, 'viewport resolution changes rebuild geometry');
+  const globe = layer.state.mesh;
+  layer.context.viewport.resolution = undefined;
+  update({});
+  t.notEqual(layer.state.mesh, globe, 'returning to flat projection rebuilds geometry');
+  update({_imageCoordinateSystem: 'default'});
+  update({
+    bounds: [
+      [-11, -10],
+      [-11, 10],
+      [10, 10],
+      [10, -10]
+    ]
+  });
+  const polygon = layer.state.mesh;
+  update({
+    bounds: [
+      [-11, -10],
+      [-11, 10],
+      [10, 10],
+      [10, -10]
+    ]
+  });
+  t.equal(layer.state.mesh, polygon, 'equal corner bounds retain geometry');
+  update({
+    bounds: [
+      [-12, -10],
+      [-11, 10],
+      [10, 10],
+      [10, -10]
+    ]
+  });
+  t.notEqual(layer.state.mesh, polygon, 'corner bounds changes rebuild geometry');
+  t.end();
+});
+
+test('#RasterTileLayer -> terrain style edits retain instance data', t => {
+  const layer = new RasterTileLayer({id: 'raster-terrain', dataId: 'raster'});
+  layer.updateLayerVisConfig({preset: 'trueColor'});
+  const dataset = {
+    ...MOCK_STAC_DATASET,
+    metadata: {
+      ...MOCK_STAC_METADATA,
+      assets: Object.fromEntries(
+        Object.entries(MOCK_STAC_METADATA.assets).map(([name, asset]) => [
+          name,
+          {...asset, 'raster:bands': [{data_type: 'uint8'}]}
+        ])
+      )
+    }
+  };
+  const tileLayer = layer.renderLayer(createRenderOpts(dataset))[0];
+  const terrain = {positions: new Float32Array([0, 0, 0])};
+  const data = {
+    terrain,
+    images: {imageBands: [{data: new Float32Array([1]), width: 1, height: 1, format: GL.R32F}]},
+    minPixelValue: 0,
+    maxPixelValue: 1
+  };
+  const props = {
+    ...tileLayer.props,
+    id: 'terrain-tile',
+    tile: {bbox: {west: -10, south: -10, east: 10, north: 10}},
+    data
+  };
+  const [first] = tileLayer.props.renderSubLayers(props);
+  const [styled] = tileLayer.props.renderSubLayers({
+    ...props,
+    opacity: 0.4,
+    gammaContrastFactor: 2
+  });
+  t.equal(styled.props.data, first.props.data, 'appearance changes retain terrain instance data');
+  t.equal(styled.props.mesh, terrain, 'appearance changes retain terrain geometry');
+  const replacement = {positions: new Float32Array([1, 1, 1])};
+  const [changed] = tileLayer.props.renderSubLayers({
+    ...props,
+    data: {...data, terrain: replacement}
+  });
+  t.equal(changed.props.mesh, replacement, 'replacement terrain reaches the mesh layer');
   t.end();
 });
 
