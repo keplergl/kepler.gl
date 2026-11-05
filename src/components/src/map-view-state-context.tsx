@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useEffect, useRef, createContext} from 'react';
+import React, {useState, useEffect, createContext} from 'react';
 import isEqual from 'es-toolkit/compat/isEqual';
 import pick from 'es-toolkit/compat/pick';
 type MapViewState = {
@@ -19,13 +19,10 @@ type MapViewState = {
 import {pickViewportPropsFromMapState} from '@kepler.gl/reducers';
 
 import {MapState} from '@kepler.gl/types';
-import type {AnnotationWorldCopy} from './annotations/annotation-utils';
 
 export type MapViewStateContextType = {
   getInternalViewState: (index?: number) => MapViewState;
   setInternalViewState: (viewState?: MapViewState, index?: number) => void;
-  /** Transient displayed copies, shared with image export but never saved in map state. */
-  annotationWorldCopies?: Map<string, AnnotationWorldCopy>[];
 };
 
 export const MapViewStateContext: React.Context<MapViewStateContextType> = createContext({
@@ -43,15 +40,12 @@ export const MapViewStateContext: React.Context<MapViewStateContextType> = creat
 
 export const MapViewStateContextProvider = ({
   mapState,
-  annotationWorldCopies,
   children
 }: {
   mapState: MapState;
-  annotationWorldCopies?: MapViewStateContextType['annotationWorldCopies'];
   children: React.ReactNode;
 }) => {
   const {isSplit, isViewportSynced} = mapState || {};
-  const localAnnotationWorldCopies = useRef<Map<string, AnnotationWorldCopy>[]>([]);
 
   // Store locally map view states by mapIndex
   const [viewStates, setViewStates] = useState([mapState]);
@@ -84,7 +78,6 @@ export const MapViewStateContextProvider = ({
   }, [mapState]);
 
   const value = {
-    annotationWorldCopies: annotationWorldCopies ?? localAnnotationWorldCopies.current,
     getInternalViewState: (index = 0) => viewStates[index] ?? viewStates[0],
     setInternalViewState: (newViewState, index = 0) => {
       setViewStates(prevViewStates => {

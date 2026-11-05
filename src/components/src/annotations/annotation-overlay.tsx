@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, useCallback, useContext, useEffect, useMemo} from 'react';
+import React, {FC, useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {
   DndContext,
@@ -17,13 +17,9 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {ActionHandler, updateAnnotation, setSelectedAnnotation} from '@kepler.gl/actions';
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
 import AnnotationText from './annotation-text';
-import {MapViewStateContext} from '../map-view-state-context';
 import {
   MapViewport,
-  AnnotationWorldCopy,
   PickWorldPosition,
-  getAnnotationWorldCopy,
-  getWorldCopyLongitude,
   isAnnotationVisibleOnGlobe,
   movePoint,
   moveRulerEndpoint,
@@ -56,16 +52,6 @@ const AnnotationTextContainer = styled.div`
   pointer-events: none;
 `;
 
-function viewportForWorldCopy(viewport: MapViewport, copy?: AnnotationWorldCopy): MapViewport {
-  if (!copy) return viewport;
-  return {
-    ...viewport,
-    project: point => viewport.project(point),
-    unproject: point => viewport.unproject(point),
-    annotationAnchorLongitude: getWorldCopyLongitude(copy, viewport)
-  };
-}
-
 export type AnnotationOverlayProps = {
   annotations: Annotation[];
   getAnnotationOpacity?: (annotationId: string) => number;
@@ -73,7 +59,6 @@ export type AnnotationOverlayProps = {
   isEditingAnnotationText: boolean;
   isAnnotationMode: boolean;
   mapIndex: number;
-  isExport?: boolean;
   viewport: MapViewport;
   isGlobeEnabled?: boolean;
   pickWorldPosition?: PickWorldPosition;
@@ -88,14 +73,12 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   isEditingAnnotationText,
   isAnnotationMode,
   mapIndex,
-  isExport = false,
   viewport,
   isGlobeEnabled,
   pickWorldPosition,
   updateAnnotation: onUpdateAnnotation,
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
-  const {annotationWorldCopies} = useContext(MapViewStateContext);
   const annotationsToRender = useMemo(
     () =>
       annotations
@@ -110,40 +93,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
     [annotations, mapIndex, isGlobeEnabled, viewport]
   );
 
-  const draggedAnnotationRef = React.useRef<{
-    annotation: Annotation;
-    copy?: AnnotationWorldCopy;
-  } | null>(null);
-  const worldCopiesRef = React.useRef(new Map<string, AnnotationWorldCopy>());
-  const worldCopies = new Map<string, AnnotationWorldCopy>();
-  if (!isGlobeEnabled) {
-    for (const annotation of annotationsToRender) {
-      const exportedCopy = isExport
-        ? annotationWorldCopies?.[mapIndex]?.get(annotation.id)
-        : undefined;
-      worldCopies.set(
-        annotation.id,
-        exportedCopy ??
-          getAnnotationWorldCopy(
-            annotation,
-            viewport,
-            worldCopiesRef.current.get(annotation.id),
-            draggedAnnotationRef.current?.annotation.id === annotation.id
-          )
-      );
-    }
-  }
-
-  // Remember the displayed copies for the next pan and for image export.
-  // Export may read this history, but must not replace the live map's selection.
-  useEffect(() => {
-    worldCopiesRef.current = worldCopies;
-    if (isExport || !annotationWorldCopies) return;
-    annotationWorldCopies[mapIndex] = worldCopies;
-    return () => {
-      delete annotationWorldCopies[mapIndex];
-    };
-  });
+  const draggedAnnotationRef = React.useRef<Annotation | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -173,59 +123,47 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
     []
   );
 
-  const handleDragStart = (ev: DragStartEvent) => {
-    const annId = `${ev.active.id}`.split(':')[0];
-    const ann = annotations.find(a => a.id === annId) ?? null;
-    draggedAnnotationRef.current = ann ? {annotation: ann, copy: worldCopies.get(annId)} : null;
-    if (ann) {
-      onSetSelectedAnnotation(ann.id, false);
-    }
-  };
+  const handleDragStart = useCallback(
+    (ev: DragStartEvent) => {
+      const annId = `${ev.active.id}`.split(':')[0];
+      const ann = annotations.find(a => a.id === annId) ?? null;
+      draggedAnnotationRef.current = ann;
+      if (ann) {
+        onSetSelectedAnnotation(ann.id, false);
+      }
+    },
+    [annotations, onSetSelectedAnnotation]
+  );
 
   const handleDragMove = useCallback(
     (ev: DragMoveEvent) => {
       const [annId, handleKind] = `${ev.active.id}`.split(':');
-      const drag = draggedAnnotationRef.current;
-      const draggedAnn = drag?.annotation;
+      const draggedAnn = draggedAnnotationRef.current;
       if (!draggedAnn || draggedAnn.id !== annId) return;
-      // Dnd-kit deltas are cumulative, so retain the copy selected at drag start.
-      const dragViewport = viewportForWorldCopy(viewport, isGlobeEnabled ? undefined : drag?.copy);
 
       let changes: Partial<Annotation> = {};
       switch (handleKind) {
         case 'MOVE_POINT':
-          changes = movePoint(draggedAnn, ev.delta, dragViewport, pickWorldPosition);
+          changes = movePoint(draggedAnn, ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_RULER_START':
-          changes = moveRulerEndpoint(
-            draggedAnn,
-            'start',
-            ev.delta,
-            dragViewport,
-            pickWorldPosition
-          );
+          changes = moveRulerEndpoint(draggedAnn, 'start', ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_RULER_END':
-          changes = moveRulerEndpoint(draggedAnn, 'end', ev.delta, dragViewport, pickWorldPosition);
+          changes = moveRulerEndpoint(draggedAnn, 'end', ev.delta, viewport, pickWorldPosition);
           break;
         case 'MOVE_TEXT':
-          changes = moveText(draggedAnn, ev.delta, dragViewport, pickWorldPosition);
+          changes = moveText(draggedAnn, ev.delta, viewport, pickWorldPosition);
           break;
         case 'RESIZE':
-          changes = resizeCircle(draggedAnn, ev.delta, dragViewport);
+          changes = resizeCircle(draggedAnn, ev.delta, viewport);
           break;
       }
       if (Object.keys(changes).length > 0) {
-        if (changes.anchorPoint && !isGlobeEnabled) {
-          worldCopiesRef.current.set(annId, {
-            anchorLongitude: changes.anchorPoint[0],
-            viewLongitude: viewport.longitude
-          });
-        }
         onUpdateAnnotation(annId, changes);
       }
     },
-    [viewport, isGlobeEnabled, onUpdateAnnotation, pickWorldPosition]
+    [viewport, onUpdateAnnotation, pickWorldPosition]
   );
 
   const handleDragEnd = useCallback((_ev: DragEndEvent) => {
@@ -268,7 +206,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
-              viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
+              viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
             />
@@ -280,7 +218,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
-              viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
+              viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
               isEditingText={annotation.id === selectedAnnotationId && isEditingAnnotationText}
@@ -303,7 +241,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
                 key={annotation.id}
                 annotation={annotation}
                 opacity={getAnnotationOpacity(annotation.id)}
-                viewport={viewportForWorldCopy(viewport, worldCopies.get(annotation.id))}
+                viewport={viewport}
                 isEditing={isAnnotationMode}
                 isSelected={annotation.id === selectedAnnotationId}
               />

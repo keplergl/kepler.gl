@@ -27,13 +27,6 @@ export type MapViewport = {
   width: number;
   height: number;
   zoom: number;
-  /** Transient selected anchor longitude, supplied by the annotation overlay. */
-  annotationAnchorLongitude?: number;
-};
-
-export type AnnotationWorldCopy = {
-  anchorLongitude: number;
-  viewLongitude: number;
 };
 
 /** Screen-space pick that returns a world position, optionally with altitude. */
@@ -112,47 +105,20 @@ function projectClosestEndpoint(
   return [sx, sy];
 }
 
-function isOnScreen(point: LngLatAltitude, viewport: MapViewport): boolean {
-  const [x, y] = viewport.project(point);
-  return x >= 0 && x <= viewport.width && y >= 0 && y <= viewport.height;
-}
-
-function onWorldCopy(point: LngLatAltitude, longitude: number): LngLatAltitude {
-  const shift = Math.round((longitude - point[0]) / 360) * 360;
+/**
+ * The copy of a point on the world nearest the view's centre. The map repeats the world past
+ * ±180°, and a centre that crosses the antimeridian comes back within ±180°: projected as it is,
+ * a point at 178° seen from a centre at -176° lands a whole world away, off screen.
+ */
+function onNearestWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
+  const shift = Math.round((viewport.longitude - point[0]) / 360) * 360;
   if (!shift || !Number.isFinite(shift)) return point;
   return point.length === 3 ? [point[0] + shift, point[1], point[2]] : [point[0] + shift, point[1]];
 }
 
-function onVisibleWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLatAltitude {
-  if (Number.isFinite(viewport.annotationAnchorLongitude)) {
-    return onWorldCopy(point, viewport.annotationAnchorLongitude!);
-  }
-  return isOnScreen(point, viewport) ? point : onWorldCopy(point, viewport.longitude);
-}
-
-/** Follow the same copy when the map center normalizes from +180 to -180 or back. */
-export function getWorldCopyLongitude(copy: AnnotationWorldCopy, viewport: MapViewport): number {
-  return copy.anchorLongitude + Math.round((viewport.longitude - copy.viewLongitude) / 360) * 360;
-}
-
-/** Select a copy using the last committed view, without changing the saved annotation. */
-export function getAnnotationWorldCopy(
-  annotation: Annotation,
-  viewport: MapViewport,
-  previous?: AnnotationWorldCopy,
-  isDragging = false
-): AnnotationWorldCopy {
-  const anchor = previous
-    ? onWorldCopy(annotation.anchorPoint, getWorldCopyLongitude(previous, viewport))
-    : annotation.anchorPoint;
-  const selected =
-    isDragging || isOnScreen(anchor, viewport) ? anchor : onWorldCopy(anchor, viewport.longitude);
-  return {anchorLongitude: selected[0], viewLongitude: viewport.longitude};
-}
-
 export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
   const {kind} = annotation;
-  const anchorPoint = onVisibleWorldCopy(annotation.anchorPoint, viewport);
+  const anchorPoint = onNearestWorldCopy(annotation.anchorPoint, viewport);
   const angle = isAnnotationWithArm(annotation) ? degreesToRadians(annotation.angle) : 0;
   const [x, y] = viewport.project(anchorPoint);
 
@@ -335,7 +301,7 @@ function moveCoordinate(
   pickWorldPosition?: PickWorldPosition,
   projectedPoint?: [number, number]
 ): LngLatAltitude {
-  const [px, py] = projectedPoint ?? viewport.project(onVisibleWorldCopy(point, viewport));
+  const [px, py] = projectedPoint ?? viewport.project(onNearestWorldCopy(point, viewport));
   const screen: [number, number] = [px + delta.x, py + delta.y];
   const picked = normalizeAnchorPoint(pickWorldPosition?.(screen));
   if (picked) {
@@ -373,7 +339,7 @@ export function moveRulerEndpoint(
     return {
       // The start is the ruler's screen-space origin. Keep its unwrapped
       // longitude so dragging across the dateline stays on the visible world
-      // copy; makeMarker preserves the start while it remains visible.
+      // copy; makeMarker wraps only the second endpoint relative to it.
       anchorPoint: moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition)
     };
   }
@@ -439,10 +405,10 @@ export function resizeCircle(
   viewport: MapViewport
 ): Partial<Annotation> {
   if (annotation.kind !== AnnotationKind.CIRCLE) return {};
-  const {radiusInMeters} = annotation;
+  const {anchorPoint, radiusInMeters} = annotation;
   // Scale by the on-screen radius at the anchor's altitude. Unprojecting onto
   // the ground plane would change radius with pitch even when delta.x is 0.
-  const currentScreenRadius = (makeMarker(annotation, viewport) as CircleAnnotationMarker).r;
+  const currentScreenRadius = calcRadius(viewport, anchorPoint, radiusInMeters);
   if (!(currentScreenRadius > 0)) {
     return {radiusInMeters: Math.max(0, radiusInMeters)};
   }
