@@ -1406,6 +1406,196 @@ test('#RasterTileLayer -> hover, picking, and extract from loaded tiles', t => {
   t.end();
 });
 
+test('#RasterTileLayer -> zonal stats retain uncovered lower-zoom pixels', t => {
+  const polygon = {
+    type: 'Feature',
+    properties: {shape: 'Rectangle'},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, -86],
+          [180, -86],
+          [180, 86],
+          [-180, 86],
+          [-180, -86]
+        ]
+      ]
+    }
+  };
+  const context = {isPMTiles: false, bandCombination: 'single', loadAssetIds: ['value']};
+  const parent = {
+    index: {x: 0, y: 0, z: 0},
+    data: {images: {imageBands: [{width: 2, height: 2, data: new Float32Array([100, 2, 3, 4])}]}}
+  };
+  const child = {
+    index: {x: 0, y: 0, z: 1},
+    data: {images: {imageBands: [{width: 2, height: 2, data: new Float32Array([10, 20, 30, 40])}]}}
+  };
+  const stats = computeRasterZonalStats([parent, child], polygon, context);
+  t.equal(stats.pixelCount, 7, 'four child pixels and three uncovered parent pixels are counted');
+  t.deepEqual(
+    stats.bands.value,
+    {count: 7, min: 2, max: 40, sum: 109, mean: 109 / 7},
+    'the covered parent value is excluded from every statistic'
+  );
+  const layer = new RasterTileLayer({id: 'mixed-zoom-stats', dataId: 'raster'});
+  layer._identifyContext = context;
+  layer._loadedTiles = [parent, child];
+  const extracted = layer.extractInsideFeature(polygon);
+  t.equal(
+    extracted.features[0].properties.pixel_count,
+    7,
+    'selection extraction retains fallback coverage'
+  );
+  t.deepEqual(
+    computeRasterZonalStats([child, parent], polygon, context),
+    stats,
+    'tile order does not change the result'
+  );
+  t.deepEqual(
+    computeRasterZonalStats([parent, null, {index: child.index, data: {}}], polygon, context),
+    computeRasterZonalStats([parent], polygon, context),
+    'missing and dimensionless child tiles do not hide available parent pixels'
+  );
+
+  const grandchild = {...child, index: {x: 0, y: 0, z: 2}};
+  const nested = computeRasterZonalStats([grandchild, parent, child], polygon, context);
+  t.deepEqual(
+    nested.bands.value,
+    {count: 10, min: 2, max: 40, sum: 199, mean: 19.9},
+    'three overlapping zoom levels each contribute only their uncovered pixels'
+  );
+  const grid = {
+    ...parent,
+    data: {images: {imageBands: [{width: 4, height: 4, data: new Float32Array(16).fill(1)}]}}
+  };
+  t.equal(
+    computeRasterZonalStats([grid, grandchild], polygon, context).pixelCount,
+    19,
+    'a descendant replaces coverage even when intermediate zoom levels are missing'
+  );
+  const east = {...parent, index: {x: 1, y: 0, z: 1}};
+  t.equal(
+    computeRasterZonalStats([east, grandchild], polygon, context).pixelCount,
+    8,
+    'non-overlapping tiles of different zooms both contribute'
+  );
+  const quadrants = [
+    child,
+    {...child, index: {x: 1, y: 0, z: 1}},
+    {...child, index: {x: 0, y: 1, z: 1}},
+    {...child, index: {x: 1, y: 1, z: 1}}
+  ];
+  t.deepEqual(
+    computeRasterZonalStats([parent, ...quadrants], polygon, context),
+    computeRasterZonalStats(quadrants, polygon, context),
+    'complete finer coverage excludes all parent pixels'
+  );
+  const oddGrid = {
+    ...parent,
+    data: {images: {imageBands: [{width: 3, height: 3, data: new Float32Array(9).fill(1)}]}}
+  };
+  t.equal(
+    computeRasterZonalStats([oddGrid, child], polygon, context).pixelCount,
+    12,
+    'child east/south edges do not mask neighboring parent centers'
+  );
+  t.equal(
+    computeRasterZonalStats([oddGrid, quadrants[3]], polygon, context).pixelCount,
+    9,
+    'child west/north edges include parent centers on the boundary'
+  );
+  const maskedChild = {
+    ...child,
+    data: {
+      images: {
+        ...child.data.images,
+        imageMask: {width: 2, height: 2, data: new Uint8Array([0, 1, 1, 1])}
+      }
+    }
+  };
+  t.deepEqual(
+    computeRasterZonalStats([parent, maskedChild], polygon, context).bands.value,
+    {count: 6, min: 2, max: 40, sum: 99, mean: 16.5},
+    'NoData child pixels stay excluded without reviving the covered parent'
+  );
+  const rgbaChild = {
+    index: child.index,
+    data: {image: {width: 1, height: 1, data: new Uint8Array([10, 20, 30, 0])}}
+  };
+  t.equal(
+    computeRasterZonalStats([parent, rgbaChild], polygon, context).pixelCount,
+    3,
+    'transparent image tiles also mask the covered parent centers'
+  );
+  const holed = {
+    ...polygon,
+    properties: {},
+    geometry: {
+      ...polygon.geometry,
+      coordinates: [
+        ...polygon.geometry.coordinates,
+        [
+          [-180, 0],
+          [0, 0],
+          [0, 86],
+          [-180, 86],
+          [-180, 0]
+        ]
+      ]
+    }
+  };
+  t.deepEqual(
+    computeRasterZonalStats([parent, child], holed, context).bands.value,
+    {count: 3, min: 2, max: 4, sum: 9, mean: 3},
+    'polygon holes exclude finer pixels while uncovered parent pixels remain'
+  );
+  const partial = {
+    ...polygon,
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [1, 1],
+          [179, 1],
+          [179, 84],
+          [1, 84],
+          [1, 1]
+        ]
+      ]
+    }
+  };
+  t.deepEqual(
+    computeRasterZonalStats([parent, child], partial, context).bands.value,
+    {count: 1, min: 2, max: 2, sum: 2, mean: 2},
+    'a partial selection retains only pixel centers inside it'
+  );
+  const twoBands = (tile, values) => ({
+    ...tile,
+    data: {
+      images: {
+        imageBands: values.map(value => ({
+          width: 2,
+          height: 2,
+          data: new Float32Array(4).fill(value)
+        }))
+      }
+    }
+  });
+  const derived = computeRasterZonalStats(
+    [twoBands(parent, [3, 1]), twoBands(child, [2, 2])],
+    polygon,
+    {...context, bandCombination: 'normalizedDifference', loadAssetIds: ['nir', 'red']}
+  );
+  t.deepEqual(
+    derived.derived,
+    {count: 7, min: 0, max: 0.5, sum: 1.5, mean: 1.5 / 7},
+    'derived statistics use the same non-overlapping samples as band statistics'
+  );
+  t.end();
+});
+
 test('#RasterTileLayer -> scan limit never returns partial statistics', async t => {
   const polygon = {
     type: 'Feature',
@@ -1434,6 +1624,17 @@ test('#RasterTileLayer -> scan limit never returns partial statistics', async t 
     ...tile,
     data: {images: {imageBands: [{width: 1, height: 1, data: new Uint8Array([200])}]}}
   };
+  const fineTiles = [
+    {x: 0, y: 0, z: 1},
+    {x: 1, y: 0, z: 1},
+    {x: 0, y: 1, z: 1},
+    {x: 1, y: 1, z: 1}
+  ].map(index => ({...extra, index}));
+  t.equal(
+    computeRasterZonalStats([tile, ...fineTiles], polygon, context).pixelCount,
+    4,
+    'fully replaced parents do not consume the pixel scan budget'
+  );
   const scanLimit = /2,000,000-pixel scan limit/;
   t.throws(
     () => computeRasterZonalStats([tile, extra], polygon, context),
