@@ -1779,7 +1779,9 @@ export default class FlowFieldLayer extends Layer {
       }
     }
 
-    const trips = (viewport.streamlines || []).filter(isValidTrip);
+    // collectStreamlines validates every trip before caching this array. Keep its
+    // identity on redraws so deck.gl does not rebuild unchanged trail attributes.
+    const trips = viewport.streamlines;
     const blendingParameters = mapState?.layerParameters ?? {};
     const elevationMultiplier = Math.max(0, visConfig.elevationMultiplier ?? 1);
     const debugLayers = visConfig.debugGrid

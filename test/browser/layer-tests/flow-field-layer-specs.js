@@ -3,6 +3,9 @@
 
 import test from 'tape';
 import sinon from 'sinon';
+import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {PathLayer} from '@deck.gl/layers';
+import {device} from '@deck.gl/test-utils';
 import React from 'react';
 import {render} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
@@ -361,6 +364,174 @@ test('#FlowFieldLayer -> renderLayer', t => {
   ];
 
   testRenderLayerCases(t, FlowFieldLayer, TEST_CASES);
+  t.end();
+});
+
+test('#FlowFieldLayer -> cached trails avoid buffer updates and retain invalidation', t => {
+  const clock = sinon.useFakeTimers();
+  const dataset = createFlowFieldDataset();
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      id: 'cached-trails',
+      type: 'flowField',
+      config: {
+        dataId,
+        columnMode: 'UV',
+        columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'},
+        visConfig: {linesPerScreen: 100, smoothing: 0, colorBySpeed: true}
+      }
+    },
+    LayerClasses
+  );
+  let data = layer.formatLayerData({[dataId]: dataset});
+  let mapState = {longitude: -121.8, latitude: 37.25, zoom: 11, width: 800, height: 600};
+  const manager = new LayerManager(device, {viewport: new WebMercatorViewport(mapState)});
+  manager.setProps({
+    onError: error => {
+      throw error;
+    }
+  });
+  const render = (extra = {}) => layer.renderLayer({data, mapState, ...extra})[0];
+  const update = deckLayer => {
+    manager.setProps({viewport: new WebMercatorViewport(mapState)});
+    manager.setLayers([deckLayer]);
+    return manager.getLayers()[0];
+  };
+  const spies = [];
+  try {
+    const first = update(render());
+    const trips = first.props.data;
+    t.ok(trips.length > 0, 'fixture generates trails');
+    const attributes = first.getAttributeManager().getAttributes();
+    const names = ['vertexPositions', 'timestamps', 'instanceColors'];
+    names.forEach(name => spies.push(sinon.spy(attributes[name], 'updateBuffer')));
+    const counts = () => spies.map(spy => spy.callCount);
+    const reset = () => spies.forEach(spy => spy.reset());
+
+    for (let i = 0; i < 20; i++) {
+      if (i % 2) mapState = {...mapState, longitude: mapState.longitude + 0.001};
+      const next = render({objectHovered: {index: i}});
+      t.ok(next.props.data === trips, 'hover and moving-camera renders retain the trail array');
+      update(next);
+    }
+    t.deepEqual(
+      counts(),
+      [0, 0, 0],
+      '20 hover/pan updates do not rebuild paths, timestamps or colors'
+    );
+
+    layer.updateLayerVisConfig({opacity: 0.4, colorRange: {colors: ['#ff0000', '#0000ff']}});
+    const colored = update(render());
+    t.equal(colored.props.data, trips, 'color changes keep cached geometry');
+    t.deepEqual(counts(), [0, 0, 1], 'color changes update only the color buffer');
+    t.equal(attributes.instanceColors.value[3], 102, 'updated opacity reaches the color buffer');
+    reset();
+
+    layer.updateLayerVisConfig({cycleSeconds: 7, trailLength: 30, strokeWidth: 2});
+    const styled = update(render());
+    t.equal(styled.props.cycleSeconds, 7, 'animation cycle changes reach the renderer');
+    t.equal(styled.props.trailLength, 0.3, 'trail length changes reach the renderer');
+    t.equal(styled.props.getWidth, 2, 'stroke width changes reach the renderer');
+    t.deepEqual(counts(), [0, 0, 0], 'uniform and width changes do not rebuild trail buffers');
+
+    layer.updateLayerVisConfig({elevationMultiplier: 2});
+    update(render());
+    t.ok(spies[0].calledOnce, 'elevation changes still refresh the path buffer');
+    reset();
+
+    clock.tick(1000);
+    const settled = update(render());
+    t.notEqual(settled.props.data, trips, 'settling a pan collects the new seed window');
+    t.deepEqual(counts(), [1, 1, 1], 'new seed window rebuilds trail buffers');
+    reset();
+
+    let previousTrips = settled.props.data;
+    for (const change of [{seamlessLoop: false}, {lineLifetime: 0.5}, {linesPerScreen: 150}]) {
+      layer.updateLayerVisConfig(change);
+      const regenerated = update(render());
+      t.notEqual(regenerated.props.data, previousTrips, 'path-generation settings rebuild trails');
+      previousTrips = regenerated.props.data;
+    }
+    t.deepEqual(counts(), [3, 3, 3], 'path-generation changes rebuild all trail buffers');
+    reset();
+
+    dataset.filteredIndex = [0, 1, 3, 4];
+    data = layer.formatLayerData({[dataId]: dataset});
+    const filtered = update(render());
+    t.notEqual(filtered.props.data, previousTrips, 'filtered grids replace cached trails');
+    t.ok(filtered.props.data.length > 0, 'filtered fixture retains trails');
+    t.deepEqual(counts(), [1, 1, 1], 'filtered grids rebuild trail buffers');
+    reset();
+
+    const replacement = createDatasetFromCsv(flowCsv.replace(/,1.0,0.5/g, ',2.0,1.0'));
+    data = layer.formatLayerData({[dataId]: replacement});
+    const replaced = update(render());
+    t.notEqual(replaced.props.data, filtered.props.data, 'replacement data rebuilds trails');
+    t.deepEqual(counts(), [1, 1, 1], 'replacement data rebuilds trail buffers');
+
+    dataset.filteredIndex = [];
+    data = layer.formatLayerData({[dataId]: dataset});
+    t.deepEqual(
+      layer.renderLayer({data, mapState}),
+      [],
+      'empty filtered grids render no stale trails'
+    );
+    t.deepEqual(
+      layer.renderLayer({data: {}, mapState}),
+      [],
+      'missing grids render no stale trails'
+    );
+  } finally {
+    spies.forEach(spy => spy.restore());
+    manager.finalize();
+    clock.restore();
+  }
+  t.end();
+});
+
+test('#FlowFieldLayer -> animation updates time without replacing trail data', t => {
+  const dataset = createFlowFieldDataset();
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      id: 'animated-trails',
+      type: 'flowField',
+      config: {
+        dataId,
+        columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'},
+        visConfig: {linesPerScreen: 100, smoothing: 0, seamlessLoop: true, cycleSeconds: 20}
+      }
+    },
+    LayerClasses
+  );
+  const mapState = {longitude: -121.8, latitude: 37.25, zoom: 11, width: 800, height: 600};
+  const data = layer.formatLayerData({[dataId]: dataset});
+  const [trails] = layer.renderLayer({data, mapState});
+  const trips = trails.props.data;
+  const setProps = sinon.spy();
+  const redraw = sinon.stub(trails, 'setNeedsRedraw');
+  const draw = sinon.stub(PathLayer.prototype, 'draw');
+  const now = sinon.stub(performance, 'now');
+  try {
+    trails.state = {model: {shaderInputs: {setProps}}};
+    now.returns(5000);
+    trails.draw({});
+    now.returns(6000);
+    trails.draw({});
+    t.deepEqual(
+      setProps.args.map(([props]) => props.trips.currentTime),
+      [1.25, 1.3],
+      'time uniform advances'
+    );
+    t.equal(trails.props.data, trips, 'animation retains the validated trail data');
+    t.equal(draw.callCount, 2, 'each frame draws the existing paths');
+    t.equal(redraw.callCount, 2, 'each frame requests another deck redraw');
+  } finally {
+    redraw.restore();
+    draw.restore();
+    now.restore();
+  }
   t.end();
 });
 
