@@ -248,6 +248,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   tileSourceSelector = lruMemoize(
     (
       _dataId: string,
+      _dataRevision: number,
       remoteTileFormat: string | undefined,
       tilesetDataUrl: string | undefined,
       tilesetMetadataUrl: string | null
@@ -605,6 +606,8 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const remoteTileFormat = datasetMetadata?.remoteTileFormat;
     const tileSource = this.tileSourceSelector(
       dataId,
+      // Same-ID updates can republish an archive at the same URL.
+      dataset.dataRevision,
       remoteTileFormat,
       tilesetDataUrl,
       remoteTileFormat === RemoteTileFormat.MVT ? datasetMetadata?.tilesetMetadataUrl ?? null : null
