@@ -469,6 +469,65 @@ test('#moveRulerEndpoint -> keeps the start on its visible world copy across the
   t.end();
 });
 
+test('#makeMarker -> projects the anchor on the world copy nearest the centre', t => {
+  // a centre that crossed the antimeridian from the east, normalized to -176
+  const viewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    longitude: -176
+  };
+
+  const point = makeMarker(makePointAnnotation({anchorPoint: [178, 0]}), viewport);
+  t.equal(
+    point.x,
+    -182,
+    'a callout at 178 should be drawn 6 degrees west of the centre, not 354 east'
+  );
+
+  const ruler = makeMarker(
+    makeRulerAnnotation({anchorPoint: [178, 0], endPoint: [-178, 0]}),
+    viewport
+  );
+  t.equal(ruler.x, -182, 'the ruler start should be on the copy nearest the centre');
+  t.equal(ruler.ex, 4, 'the ruler end should still follow its start');
+
+  const unwrapped = makeMarker(makePointAnnotation({anchorPoint: [182, 0]}), {
+    ...viewport,
+    longitude: 176
+  });
+  t.equal(unwrapped.x, 182, 'an anchor already on the nearest copy should be left as it is');
+
+  t.end();
+});
+
+test('#movePoint -> drags a callout from the world copy it is drawn on', t => {
+  const viewport = {
+    ...mockViewport,
+    project: ([lng, lat]) => [lng, lat],
+    unproject: ([x, y]) => [x, y],
+    longitude: -176
+  };
+  let pickedScreen;
+  const changes = movePoint(
+    makePointAnnotation({anchorPoint: [178, 0]}),
+    {x: 1, y: 0},
+    viewport,
+    screen => {
+      pickedScreen = screen;
+      return null;
+    }
+  );
+
+  t.deepEqual(pickedScreen, [-181, 0], 'the drag should start at the callout drawn on screen');
+  t.deepEqual(
+    changes.anchorPoint,
+    [-181, 0],
+    'the callout should move one degree, not jump a world'
+  );
+
+  t.end();
+});
+
 test('#getRulerDistanceLabel -> follows geodesic kilometer measurement convention', t => {
   t.equal(
     getRulerDistanceLabel(makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [1, 0, 80]})),
