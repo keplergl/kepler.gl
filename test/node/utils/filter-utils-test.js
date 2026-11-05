@@ -152,6 +152,27 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
   t.end();
 });
 
+test('filterUtils -> adjustValueToFilterDomain preserves explicit boolean selections', t => {
+  for (const domain of [[true, false], [true], [false], []]) {
+    const filter = {type: FILTER_TYPES.select, domain};
+    for (const value of [true, false]) {
+      t.equal(
+        adjustValueToFilterDomain(value, filter),
+        value,
+        `preserves ${value} with domain ${JSON.stringify(domain)}`
+      );
+    }
+    for (const value of [undefined, null, 0, 'false', []]) {
+      t.equal(
+        adjustValueToFilterDomain(value, filter),
+        true,
+        'missing and invalid boolean selections retain the true default'
+      );
+    }
+  }
+  t.end();
+});
+
 test('filterUtils -> compatible numeric filter field types', t => {
   t.ok(
     areFilterFieldTypesCompatible(ALL_FIELD_TYPES.integer, ALL_FIELD_TYPES.real),

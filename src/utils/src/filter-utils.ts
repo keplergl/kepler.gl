@@ -1005,9 +1005,9 @@ export function diffFilters(
 }
 
 /**
- * Call by parsing filters from URL
- * Check if value of filter within filter domain, if not adjust it to match
- * filter domain
+ * Adjust a saved filter value to the current domain. Preserve explicit boolean
+ * predicates even when their value is absent from the domain, so restoring or
+ * updating a dataset does not select the opposite rows.
  *
  * @returns value - adjusted value to match filter or null to remove filter
  */
@@ -1039,7 +1039,7 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
       return filteredValue.length ? filteredValue : [];
     }
     case FILTER_TYPES.select:
-      return domain.includes(value) ? value : true;
+      return typeof value === 'boolean' || domain.includes(value) ? value : true;
     case FILTER_TYPES.polygon:
       return value;
 
