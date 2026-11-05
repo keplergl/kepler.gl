@@ -116,7 +116,11 @@ export function getTooltipDisplayDeltaValue({
     field.type === ALL_FIELD_TYPES.integer ||
     field.type === ALL_FIELD_TYPES.real
   ) {
-    if (isNumber(primaryValue) && isNumber(value)) {
+    if (
+      isNumber(primaryValue) &&
+      isNumber(value) &&
+      (compareType !== COMPARE_TYPES.RELATIVE || primaryValue !== 0)
+    ) {
       const deltaValue =
         compareType === COMPARE_TYPES.RELATIVE ? value / primaryValue - 1 : value - primaryValue;
       const deltaFormat =
