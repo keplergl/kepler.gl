@@ -16,6 +16,7 @@ import {
   getThresholdsFromQuantiles,
   getDomainStepsbyZoom,
   getQuantLabelFormat,
+  formatNumber,
   getHistogramDomain,
   getQuantLegends,
   getCategoricalColorMap,
@@ -321,6 +322,100 @@ test('DataScaleUtils -> getQuantLegends', t => {
     expectedCustomColorBreaks,
     'should create correct threshold legends from custom breaks'
   );
+  t.end();
+});
+
+test('DataScaleUtils -> getQuantLegends preserves zero boundaries', t => {
+  const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffffff'];
+  const labelFormat = n => n.toFixed(1);
+  [SCALE_TYPES.threshold, SCALE_TYPES.custom, SCALE_TYPES.jenks].forEach(scaleType => {
+    const format = scaleType === SCALE_TYPES.custom ? String : labelFormat;
+    [
+      [0, 2],
+      [-2, 0],
+      [-2, 0, 2]
+    ].forEach(domain => {
+      const range = colors.slice(0, domain.length + 1);
+      const scale = SCALE_FUNC[scaleType]().domain(domain).range(range);
+      scale.scaleType = scaleType;
+
+      const legends = getQuantLegends(scale, labelFormat);
+      const expected = range.map((data, index) => ({
+        data,
+        label:
+          index === 0
+            ? `Less than ${format(domain[0])}`
+            : index === domain.length
+            ? `${format(domain[index - 1])} or more`
+            : `${format(domain[index - 1])} to ${format(domain[index])}`,
+        range: [domain[index - 1], domain[index]],
+        inputs: [domain[index - 1] ?? null, domain[index] ?? null]
+      }));
+
+      t.deepEqual(legends, expected, `${scaleType} preserves zero in domain ${domain}`);
+    });
+
+    [0, -0].forEach(boundary => {
+      const scale = SCALE_FUNC[scaleType]().domain([boundary]).range(colors.slice(0, 2));
+      scale.scaleType = scaleType;
+      t.deepEqual(
+        getQuantLegends(scale).map(({label, inputs}) => ({label, inputs})),
+        [
+          {label: 'Less than 0', inputs: [null, 0]},
+          {label: '0 or more', inputs: [0, null]}
+        ],
+        `${scaleType} formats ${
+          Object.is(boundary, -0) ? 'negative' : 'positive'
+        } zero without a label formatter`
+      );
+    });
+  });
+  t.end();
+});
+
+test('DataScaleUtils -> getQuantLegends handles missing and invalid boundaries', t => {
+  [SCALE_TYPES.threshold, SCALE_TYPES.custom, SCALE_TYPES.jenks].forEach(scaleType => {
+    [null, undefined, NaN, ''].forEach(boundary => {
+      const scale = SCALE_FUNC[scaleType]().domain([boundary]).range(['#ff0000', '#00ff00']);
+      scale.scaleType = scaleType;
+      t.deepEqual(
+        getQuantLegends(scale, d3Format('.1f')).map(({label}) => label),
+        ['Less than no value', 'no value or more'],
+        `${scaleType} treats ${boundary} as an invalid boundary`
+      );
+    });
+
+    const scale = SCALE_FUNC[scaleType]().domain([]).range([]);
+    scale.scaleType = scaleType;
+    t.deepEqual(getQuantLegends(scale), [], `${scaleType} handles an empty scale`);
+  });
+  t.end();
+});
+
+test('DataScaleUtils -> getQuantLegends preserves string and infinite bounds', t => {
+  const format = n => Number(n).toFixed(1);
+  [SCALE_TYPES.threshold, SCALE_TYPES.custom, SCALE_TYPES.jenks].forEach(scaleType => {
+    ['0', '2.5', Infinity, -Infinity].forEach(boundary => {
+      const scale = SCALE_FUNC[scaleType]().domain([boundary]).range(['#ff0000', '#00ff00']);
+      scale.scaleType = scaleType;
+      [undefined, format].forEach(labelFormat => {
+        const value = Number(boundary);
+        // Preserve the shared formatter's handling of SI prefixes on infinite bounds.
+        const label =
+          labelFormat && scaleType !== SCALE_TYPES.custom ? labelFormat(value) : formatNumber(value);
+        t.deepEqual(
+          getQuantLegends(scale, labelFormat).map(({label, inputs}) => ({label, inputs})),
+          [
+            {label: `Less than ${label}`, inputs: [null, value]},
+            {label: `${label} or more`, inputs: [value, null]}
+          ],
+          `${scaleType} preserves ${boundary} with ${
+            labelFormat ? 'injected' : 'default'
+          } formatting`
+        );
+      });
+    });
+  });
   t.end();
 });
 

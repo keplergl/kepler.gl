@@ -244,7 +244,7 @@ function getScaleLabels(
   });
 }
 
-const customScaleLabelFormat = n => (n ? formatNumber(n, 'real') : 'no value');
+const customScaleLabelFormat = n => (n || n === 0 ? formatNumber(n, 'real') : 'no value');
 /**
  * Get linear / quant scale color breaks
  */
@@ -253,7 +253,7 @@ export function getQuantLegends(scale: D3ScaleFunction, labelFormat: LabelFormat
     return [];
   }
   const thresholdLabelFormat = (n, type) =>
-    n && labelFormat ? labelFormat(n) : n ? formatNumber(n, type) : 'no value';
+    n || n === 0 ? (labelFormat ? labelFormat(n) : formatNumber(n, type)) : 'no value';
   const labels =
     scale.scaleType === 'threshold' || scale.scaleType === SCALE_TYPES.jenks
       ? getThresholdLabels(scale, thresholdLabelFormat)
