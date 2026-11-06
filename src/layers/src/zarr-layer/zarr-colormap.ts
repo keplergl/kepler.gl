@@ -115,6 +115,15 @@ export function estimateZarrDataRange(
   values: ArrayLike<number | bigint>,
   nodataValue?: number
 ): [number, number] | null {
+  const extent = getZarrDataExtent(values, nodataValue);
+  return extent && extent[0] < extent[1] ? extent : null;
+}
+
+/** Finite extent of a tile, retaining constant values for cross-tile accumulation. */
+export function getZarrDataExtent(
+  values: ArrayLike<number | bigint>,
+  nodataValue?: number
+): [number, number] | null {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
   for (let i = 0; i < values.length; i++) {
@@ -129,7 +138,7 @@ export function estimateZarrDataRange(
       max = raw;
     }
   }
-  if (min === Number.POSITIVE_INFINITY || min === max) {
+  if (min === Number.POSITIVE_INFINITY) {
     return null;
   }
   return [min, max];

@@ -36,7 +36,7 @@ import {
 import Layer from '../base-layer';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import ZarrLayerIcon from './zarr-layer-icon';
-import {applyZarrColormap, estimateZarrDataRange} from './zarr-colormap';
+import {applyZarrColormap, getZarrDataExtent} from './zarr-colormap';
 
 import {loadZarrRuntime, ZarrRuntime} from './zarr-runtime';
 
@@ -53,7 +53,7 @@ export type ZarrLayerVisConfigSettings = {
 export type ZarrLayerVisConfig = {
   opacity: number;
   colorRange: ColorRange;
-  /** Null means automatic: use advertised statistics or sample the first tile. */
+  /** Null means automatic: use advertised statistics or accumulate loaded tile extents. */
   rescale: [number, number] | null;
   /** Path of the rendered variable. Null falls back to the dataset's default. */
   zarrVariable: string | null;
@@ -297,10 +297,13 @@ export default class ZarrLayer extends Layer {
   }
 
   /**
-   * Rescale fallback derived from the first tile, used when the store does not
-   * advertise a value range. Without it the first tiles render as flat color.
+   * Monotonic extent of loaded tiles for this source/variable. Constant tiles
+   * contribute to the extent, but cannot supply a usable range on their own.
+   * Keep it across slices and pans so the range never contracts as tiles unload.
    */
   private _sampledRange: [number, number] | null = null;
+  /** Coalesce range changes until the next render; decoded tiles stay cached. */
+  private _rangeRedrawPending = false;
 
   /**
    * Inputs the tile callbacks need, held on the instance instead of captured in
@@ -521,11 +524,13 @@ export default class ZarrLayer extends Layer {
       (this.meta.zarrUrl !== metadata.url || this.meta.variable !== variable?.path);
     if (variableChanged) {
       this._sampledRange = null;
+      this._rangeRedrawPending = false;
       // Reject old-source results even before the next render opens the new node.
       this._getTileData = this._createTileDataLoader();
     }
 
-    const controlRange = dataRange ?? this._sampledRange ?? DEFAULT_RESCALE;
+    const controlRange =
+      dataRange ?? (isUsableRange(this._sampledRange) ? this._sampledRange : DEFAULT_RESCALE);
     this.visConfigSettings.rescale = {
       ...this.visConfigSettings.rescale,
       range: controlRange,
@@ -558,6 +563,7 @@ export default class ZarrLayer extends Layer {
     this._node = null;
     this._nodeError = null;
     this._sampledRange = null;
+    this._rangeRedrawPending = false;
     this._getTileData = this._createTileDataLoader();
     // Another variable's tiles are not a usable backdrop for this one.
     this._loadedKey = null;
@@ -624,10 +630,11 @@ export default class ZarrLayer extends Layer {
       colors,
       rescale,
       nodataValue,
-      // Nothing has picked a range, so the first tile has to supply one.
+      // Without advertised or explicit bounds, every loaded tile contributes.
       needsSampling: !isUsableRange(rescale)
     };
     const effectiveRescale = this._effectiveRescale(rescale);
+    this._rangeRedrawPending = false;
 
     this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
     const common = {
@@ -731,20 +738,29 @@ export default class ZarrLayer extends Layer {
       const values = (chunk as {data: ArrayLike<number | bigint>}).data;
       // A callback belongs to one source opening. Even after switching A -> B
       // -> A, an older request must not set the current source's color range.
-      if (this._getTileData === getTileData && !this._sampledRange && needsSampling) {
-        this._sampledRange = estimateZarrDataRange(values, nodataValue);
-        if (this._sampledRange) {
-          // Metadata or a user choice may end automatic mode while the read is pending.
-          if (!isUsableRange(this.config.visConfig.rescale)) {
-            this.visConfigSettings.rescale = {
-              ...this.visConfigSettings.rescale,
-              range: this._sampledRange,
-              step: (this._sampledRange[1] - this._sampledRange[0]) / 100
-            };
+      if (this._getTileData === getTileData && needsSampling) {
+        const extent = getZarrDataExtent(values, nodataValue);
+        if (extent) {
+          const previous = this._sampledRange;
+          const range: [number, number] = previous
+            ? [Math.min(previous[0], extent[0]), Math.max(previous[1], extent[1])]
+            : extent;
+          if (!previous || range[0] !== previous[0] || range[1] !== previous[1]) {
+            this._sampledRange = range;
+            // Metadata or a user choice may end automatic mode while the read is pending.
+            if (isUsableRange(range) && !isUsableRange(this.config.visConfig.rescale)) {
+              this.visConfigSettings.rescale = {
+                ...this.visConfigSettings.rescale,
+                range,
+                step: (range[1] - range[0]) / 100
+              };
+              // Recolor cached tiles together on the next render, without refetching.
+              if (!this._rangeRedrawPending) {
+                this._rangeRedrawPending = true;
+                this._onRedrawNeeded?.();
+              }
+            }
           }
-          // Earlier constant tiles may already be colored with the provisional
-          // range. Invalidate their rendered colors without refetching data.
-          this._onRedrawNeeded?.();
         }
       }
       return {width, height, values, byteLength: getZarrTileByteLength(values, width, height)};
@@ -768,14 +784,11 @@ export default class ZarrLayer extends Layer {
     return {image: new ImageData(image.data, image.width, image.height)};
   };
 
-  /** Prefer the chosen rescale, falling back to what the first tile showed. */
+  /** Prefer the chosen rescale, falling back to the accumulated usable extent. */
   private _effectiveRescale(rescale?: [number, number] | null): [number, number] {
-    if (this._tileContext.needsSampling && this._sampledRange) {
-      return this._sampledRange;
-    }
     if (isUsableRange(rescale)) {
       return rescale;
     }
-    return this._sampledRange ?? DEFAULT_RESCALE;
+    return isUsableRange(this._sampledRange) ? this._sampledRange : DEFAULT_RESCALE;
   }
 }
