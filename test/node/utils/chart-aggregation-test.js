@@ -206,6 +206,168 @@ test('charts -> numeric bins keep distinct keys when compact labels collide', t 
   t.end();
 });
 
+test('charts -> time bins retain every range when display labels collide', t => {
+  const start = Date.UTC(2020, 0, 1);
+  const rows = Array.from({length: 31}, (_, i) => ({time: start + i * 1000, category: 'A'}));
+  const dataset = mockDataset(rows);
+  const timeAxis = {field: {name: 'time', type: 'timestamp'}, aggregation: BinType.timeBin};
+  const categoryAxis = {field: {name: 'category', type: 'string'}, aggregation: BinType.uniqueBin};
+  const valueAxis = {field: null, aggregation: 'count'};
+  const chart = {
+    ...createChart({type: ChartType.barChart, dataset}),
+    xAxis: timeAxis,
+    yAxis: valueAxis,
+    numGroups: 10
+  };
+  const {bins} = computeDatasetChart(chart, dataset);
+  t.equal(bins.length, 10, 'all ten bins survive');
+  t.equal(new Set(bins.map(bin => bin.key)).size, 10, 'each bin has its own identity');
+  t.deepEqual(
+    bins.map(bin => bin.count),
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 4]
+  );
+  t.equal(
+    bins.reduce((total, bin) => total + bin.value, 0),
+    31,
+    'no rows are lost'
+  );
+  t.deepEqual(
+    bins.map(bin => bin.filterValue),
+    bins.map((_, i) => [start + i * 3000, start + (i + 1) * 3000]),
+    'each bin keeps its own original numeric filter range in chronological order'
+  );
+  const label = '2020-01-01 00:00 – 2020-01-01 00:00';
+  t.ok(
+    bins.every(bin => displayBinKey(bin.key) === label),
+    'readable labels are unchanged'
+  );
+  t.equal(bins[9].key, label, 'legacy selected key still identifies the previously retained bin');
+  const identities = bins.map(({key, filterValue}) => ({key, filterValue}));
+  t.deepEqual(
+    JSON.parse(JSON.stringify(identities)),
+    identities,
+    'identities and ranges survive JSON'
+  );
+  t.deepEqual(computeDatasetChart(chart, dataset).bins, bins, 'identities are deterministic');
+  const horizontal = computeDatasetChart(
+    {...chart, type: ChartType.horizontalBar, xAxis: valueAxis, yAxis: timeAxis},
+    dataset
+  );
+  t.deepEqual(horizontal.bins, bins, 'horizontal charts use the same bins');
+  const grouped = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    binAxis: timeAxis,
+    valueAxis,
+    groupByAxis: categoryAxis
+  });
+  t.deepEqual(
+    grouped.map(bin => bin.series[0].count),
+    bins.map(bin => bin.count)
+  );
+  const cells = buildHeatmapCells({
+    dataset,
+    applyFilters: true,
+    xAxis: timeAxis,
+    yAxis: categoryAxis,
+    valueAxis
+  });
+  t.equal(cells.length, 10, 'heatmap keeps every time column');
+  t.deepEqual(
+    cells.map(cell => cell.filterValueX),
+    bins.map(bin => bin.filterValue)
+  );
+  t.deepEqual(
+    cells.map(cell => cell.value),
+    bins.map(bin => bin.value)
+  );
+  const table = buildPivotTable({
+    dataset,
+    applyFilters: true,
+    xAxis: timeAxis,
+    yAxis: categoryAxis,
+    valueAxis
+  });
+  t.deepEqual(
+    table.columnKeys,
+    bins.map(bin => bin.key),
+    'pivot preserves ordered identities'
+  );
+  t.deepEqual(
+    table.columnKeys.map(key => table.values.A[key]),
+    bins.map(bin => bin.count)
+  );
+  t.end();
+});
+
+test('charts -> time range identities handle fine precision, UTC boundaries, and empty input', t => {
+  const timeAxis = {field: {name: 'time', type: 'timestamp'}, aggregation: BinType.timeBin};
+  const cases = [
+    ['epoch zero', 0, 30],
+    ['negative epoch', -30000, -15000],
+    ['across epoch', -15000, 15000],
+    ['fractional millisecond boundaries', 0, 1],
+    ['millisecond boundaries at modern epoch', Date.UTC(2020, 0, 1), Date.UTC(2020, 0, 1) + 1],
+    ['crossing UTC midnight', Date.UTC(2020, 0, 1, 23, 59, 59), Date.UTC(2020, 0, 2, 0, 0, 1)],
+    ['subday bins with date-only labels', Date.UTC(2020, 0, 1), Date.UTC(2020, 0, 16)],
+    [
+      'DST fall back',
+      Date.parse('2020-11-01T01:00:00-04:00'),
+      Date.parse('2020-11-01T01:00:00-05:00')
+    ]
+  ];
+  for (const [name, start, end] of cases) {
+    const dataset = mockDataset([{time: start}, {time: new Date(end)}]);
+    const bins = buildGroupedBins({dataset, applyFilters: true, binAxis: timeAxis, numGroups: 10});
+    t.equal(bins.length, 10, `${name}: all ranges remain`);
+    t.equal(new Set(bins.map(bin => bin.key)).size, 10, `${name}: unique identities`);
+    t.equal(
+      bins.reduce((n, bin) => n + bin.count, 0),
+      2,
+      `${name}: rows are retained`
+    );
+    t.equal(bins[0].filterValue[0], start, `${name}: starts at minimum`);
+    t.equal(bins[9].filterValue[1], end, `${name}: ends at maximum`);
+    t.ok(
+      bins.every((bin, i) => i === 0 || bins[i - 1].filterValue[1] === bin.filterValue[0]),
+      `${name}: adjacent ranges remain ordered`
+    );
+  }
+  for (const rows of [[], [{time: 'invalid'}, {time: new Date(NaN)}]]) {
+    t.deepEqual(
+      buildGroupedBins({dataset: mockDataset(rows), applyFilters: true, binAxis: timeAxis}),
+      []
+    );
+  }
+  const identical = buildGroupedBins({
+    dataset: mockDataset([{time: 0}, {time: 0}]),
+    applyFilters: true,
+    binAxis: timeAxis
+  });
+  t.equal(identical.length, 1, 'equal timestamps still produce one bin');
+  t.equal(identical[0].count, 2);
+  t.deepEqual(identical[0].filterValue, [0, 0]);
+  const unique = buildGroupedBins({
+    dataset: mockDataset([{time: '2020-01-01T00:00:00Z'}, {time: '2020-01-11T00:00:00Z'}]),
+    applyFilters: true,
+    binAxis: timeAxis
+  });
+  t.ok(
+    unique.every(bin => bin.key === displayBinKey(bin.key)),
+    'noncolliding keys are unchanged'
+  );
+  const period = buildTimeSeries({
+    dataset: mockDataset([{time: 0}, {time: 30000}]),
+    indexes: [0, 1],
+    xAxis: timeAxis,
+    interval: 'hour'
+  });
+  t.equal(period.length, 1, 'period grouping is unchanged');
+  t.equal(period[0].key, '1970-01-01 00:00');
+  t.equal(period[0].count, 2);
+  t.end();
+});
+
 test('charts -> heatmap and pivot table', t => {
   const dataset = mockDataset([
     {category: 'A', value: 10, time: new Date('2020-01-01'), id: 'x'},

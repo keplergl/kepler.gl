@@ -277,24 +277,27 @@ function exactBinThresholds(min: number, max: number, numBins: number): number[]
 
 /** Separates lossless numeric-bin identity (`x0`, `x1`) from compact display labels. */
 const NUMERIC_BIN_KEY_SEP = '\u001f';
+const TIME_BIN_KEY_PREFIX = `time${NUMERIC_BIN_KEY_SEP}`;
 
 function numericBinKey(x0: number, x1: number): string {
   return `${x0}${NUMERIC_BIN_KEY_SEP}${x1}`;
 }
 
-/** Display label for a bin key; numeric histogram keys decode to compact ranges. */
+/** Display label for a bin key; histogram identities decode to readable ranges. */
 export function displayBinKey(key: string): string {
-  const text = String(key);
+  const original = String(key);
+  const isTimeBin = original.startsWith(TIME_BIN_KEY_PREFIX);
+  const text = isTimeBin ? original.slice(TIME_BIN_KEY_PREFIX.length) : original;
   const sep = text.indexOf(NUMERIC_BIN_KEY_SEP);
   if (sep < 0) {
-    return text;
+    return original;
   }
   const x0 = Number(text.slice(0, sep));
   const x1 = Number(text.slice(sep + 1));
   if (Number.isFinite(x0) && Number.isFinite(x1)) {
-    return `${formatNumber(x0)} – ${formatNumber(x1)}`;
+    return isTimeBin ? formatTimeBinRange(x0, x1) : `${formatNumber(x0)} – ${formatNumber(x1)}`;
   }
-  return text;
+  return original;
 }
 
 function numericGroupMap(
@@ -454,10 +457,23 @@ function equalWidthTimeBins(
   const bins = hist(points);
   const groups = new Map<string, number[]>();
   const filterValues = new Map<string, Array<string | number | boolean>>();
-  bins.forEach(bin => {
+  const lastBinForLabel = new Map<string, number>();
+  const labels = bins.map((bin, index) => {
+    const label = formatTimeBinRange(bin.x0 ?? min, bin.x1 ?? max);
+    lastBinForLabel.set(label, index);
+    return label;
+  });
+  bins.forEach((bin, index) => {
     const x0 = bin.x0 ?? min;
     const x1 = bin.x1 ?? max;
-    const key = formatTimeBinRange(x0, x1);
+    const label = labels[index];
+    // Display labels can collide below minute/day precision. Keep the old key on
+    // the last bin (the one previously retained) so saved cross-filters still
+    // select that same range; give the other bins lossless range identities.
+    const key =
+      lastBinForLabel.get(label) === index
+        ? label
+        : `${TIME_BIN_KEY_PREFIX}${numericBinKey(x0, x1)}`;
     groups.set(
       key,
       bin.map(d => d.idx)
