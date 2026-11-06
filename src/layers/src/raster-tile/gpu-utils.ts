@@ -540,6 +540,8 @@ export function getModules({
   // Apply colormap
   if (isColormapAllowed(bandCombination) && images.imageColormap) {
     modules.push(colormapModule);
+    // Linear and nonlinear single-band stretches already produce 0..1 values.
+    moduleProps.colormapInputNormalized = bandCombination === 'single';
     moduleProps.minCategoricalBandValue = minCategoricalBandValue;
     moduleProps.maxCategoricalBandValue = maxCategoricalBandValue;
     moduleProps.dataTypeMaxValue = dtypeMaxValue[dataType];

@@ -38,6 +38,8 @@ uniform rasterProcessingUniforms {
   int colormap_categoricalMinValue;
   int colormap_categoricalMaxValue;
   int colormap_maxPixelValue;
+  float colormap_inputScale;
+  float colormap_inputOffset;
 
   // bandFilter
   float bandFilter_min1;
@@ -81,6 +83,8 @@ const ALIAS_DEFINES = `\
 #define colormap_categoricalMinValue_ALIAS rasterProcessing.colormap_categoricalMinValue
 #define colormap_categoricalMaxValue_ALIAS rasterProcessing.colormap_categoricalMaxValue
 #define colormap_maxPixelValue_ALIAS rasterProcessing.colormap_maxPixelValue
+#define colormap_inputScale_ALIAS rasterProcessing.colormap_inputScale
+#define colormap_inputOffset_ALIAS rasterProcessing.colormap_inputOffset
 #define bandFilter_min1_ALIAS rasterProcessing.bandFilter_min1
 #define bandFilter_max1_ALIAS rasterProcessing.bandFilter_max1
 #define bandFilter_min2_ALIAS rasterProcessing.bandFilter_min2
@@ -115,6 +119,8 @@ export const rasterProcessingUniforms = {
     colormap_categoricalMinValue: 'i32',
     colormap_categoricalMaxValue: 'i32',
     colormap_maxPixelValue: 'i32',
+    colormap_inputScale: 'f32',
+    colormap_inputOffset: 'f32',
     bandFilter_min1: 'f32',
     bandFilter_max1: 'f32',
     bandFilter_min2: 'f32',
@@ -154,7 +160,9 @@ export const UNIFORM_NAME_MAP: Record<string, Record<string, string>> = {
     hasCategoricalColors: 'colormap_hasCategoricalColors',
     categoricalMinValue: 'colormap_categoricalMinValue',
     categoricalMaxValue: 'colormap_categoricalMaxValue',
-    maxPixelValue: 'colormap_maxPixelValue'
+    maxPixelValue: 'colormap_maxPixelValue',
+    inputScale: 'colormap_inputScale',
+    inputOffset: 'colormap_inputOffset'
   },
   bandFilter: {
     min1: 'bandFilter_min1',
