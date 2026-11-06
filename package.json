@@ -83,7 +83,7 @@
     "start:web": "yarn install-and-start website start",
     "start:https": "yarn install-and-start examples/demo-app start-local-https",
     "start:e2e": "yarn install-and-start examples/demo-app start-local-e2e",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts'",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx'",
     "build:umd": "node ./esbuild/umd-esbuild.config.mjs",
     "build:types": "tsc --project tsconfig.production.json",
     "analyze": "yarn analyze:bundle",

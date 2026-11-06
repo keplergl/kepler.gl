@@ -25,5 +25,5 @@
     "baseUrl": "./src"
   },
   "include": ["src"],
-  "exclude": ["**/*.spec.*"]
+  "exclude": ["**/*.spec.*", "**/*.test.*"]
 }
