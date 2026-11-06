@@ -346,6 +346,40 @@ function strokeRecords(layer: ArrowHost, formattedData: {data?: unknown}): Strok
   return records;
 }
 
+// Data identity already controls deck.gl's attribute invalidation. Cache this
+// scan under the same identity, rather than scanning every stroke on each pan.
+const groundDirectionLengths = new WeakMap<StrokeRecord[], number>();
+
+function minimumGroundDirectionLength(data: StrokeRecord[], viewport: Viewport): number {
+  const cached = groundDirectionLengths.get(data);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let minimum = Infinity;
+  for (const {sourcePosition, targetPosition} of data) {
+    const source = asLngLatZ(sourcePosition);
+    const target = asLngLatZ(targetPosition);
+    if (source[2] !== 0 || target[2] !== 0 || ![...source, ...target].every(Number.isFinite)) {
+      minimum = 0;
+      break;
+    }
+    const [from, to] = shortestPathEndpoints(source, target).map(position =>
+      viewport.projectFlat(position)
+    );
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+    if (!Number.isFinite(length)) {
+      minimum = 0;
+      break;
+    }
+    // Coincident endpoints always return angle 0, independently of the view.
+    if (length > 0) {
+      minimum = Math.min(minimum, length);
+    }
+  }
+  groundDirectionLengths.set(data, minimum);
+  return minimum;
+}
+
 function hoverRecord(
   layer: ArrowHost,
   formattedData: {data?: unknown},
@@ -451,6 +485,17 @@ export function createTargetArrowLayer({
   const scale = Number.isFinite(elevationScale) ? elevationScale : 1;
   const brush = interactionConfig?.brush;
   const color = highlight ? highlightColor || getColor : getColor;
+  // On the untilted Mercator ground plane, pan/zoom/resize only translate and
+  // uniformly scale directions. Raised arcs and elevated endpoints still have
+  // perspective, so retain their viewport triggers. Tiny segments also retain
+  // them: screenAngle's 0.001-pixel fallback can change when zooming. A one-pixel
+  // margin keeps this fast path well away from that numerical cutoff.
+  const stableGroundDirection =
+    !mapState.globe?.enabled &&
+    !greatCircle &&
+    height === 0 &&
+    (mapState.pitch ?? 0) === 0 &&
+    minimumGroundDirectionLength(data, viewport) * 2 ** (mapState.zoom ?? 0) > 1;
 
   return new ArrowHeadLayer({
     id: `${layer.id}-arrow-head-${shape}${highlight ? '-hovered' : ''}`,
@@ -512,13 +557,15 @@ export function createTargetArrowLayer({
         }),
     updateTriggers: {
       getAngle: [
-        mapState.longitude,
-        mapState.latitude,
-        mapState.zoom,
+        stableGroundDirection,
+        Boolean(mapState.globe?.enabled),
+        stableGroundDirection ? null : mapState.longitude,
+        stableGroundDirection ? null : mapState.latitude,
+        stableGroundDirection ? null : mapState.zoom,
         mapState.pitch,
         mapState.bearing,
-        mapState.width,
-        mapState.height,
+        stableGroundDirection ? null : mapState.width,
+        stableGroundDirection ? null : mapState.height,
         greatCircle,
         height,
         scale

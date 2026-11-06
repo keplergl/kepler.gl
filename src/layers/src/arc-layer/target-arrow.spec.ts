@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MapView} from '@deck.gl/core';
+import {AttributeManager, Layer, MapView} from '@deck.gl/core';
 import {worldToPixels} from '@math.gl/web-mercator';
 
 import {KeplerGlobeView} from '@kepler.gl/deckgl-layers';
@@ -197,5 +197,195 @@ describe('createTargetArrowLayer', () => {
     expect(props.brushingTarget).toBe('source_target');
     expect(props.getSourcePosition(record)).toEqual(sourcePosition);
     expect(props.getTargetPosition(record)).toEqual(targetPosition);
+  });
+});
+
+// Exercise deck.gl's real prop diff, accessor iteration, typed angle attribute,
+// and buffer-write requests. Only the GPU device is replaced for Jest.
+function angleAttributeUpdates() {
+  const write = jest.fn();
+  const device: any = {
+    type: 'webgl',
+    createBuffer: ({byteLength, ...props}) => ({
+      byteLength,
+      props,
+      write,
+      delete: jest.fn(),
+      destroy: jest.fn()
+    })
+  };
+  const manager = new AttributeManager(device);
+  manager.addInstanced({instanceAngles: {size: 1, accessor: 'getAngle', defaultValue: 0}});
+  let previous: any;
+  return (arrow: any) => {
+    write.mockClear();
+    const context: any = {
+      props: arrow.props,
+      internalState: {},
+      invalidateAttribute: (trigger: string) => manager.invalidate(trigger),
+      setChangeFlags(flags) {
+        this.internalState.changeFlags = flags;
+      }
+    };
+    (Layer.prototype as any)._diffProps.call(context, arrow.props, previous?.props || {});
+    if (context.internalState.changeFlags.dataChanged) {
+      manager.invalidateAll();
+    }
+    const getAngle = jest.fn(arrow.props.getAngle);
+    const data = arrow.props.data;
+    manager.update({
+      data,
+      numInstances: data.length,
+      props: {getAngle},
+      transitions: {},
+      buffers: {},
+      context: {}
+    });
+    const angles = Array.from(manager.getAttributes().instanceAngles.value || []).slice(
+      0,
+      data.length
+    );
+    // Buffer values must agree with a fresh computation for the current view,
+    // whether or not this update rebuilt them.
+    expect(angles).toEqual(data.map(record => Math.fround(arrow.props.getAngle(record))));
+    previous = arrow;
+    return {calls: getAngle.mock.calls.length, writes: write.mock.calls.length, angles};
+  };
+}
+
+describe('target arrow angle attribute updates', () => {
+  const data = [
+    {index: 0, sourcePosition: [-122.5, 37.7, 0], targetPosition: [-122.3, 37.9, 0]},
+    {index: 1, sourcePosition: [170, 10, 0], targetPosition: [-170, 15, 0]},
+    {index: 2, sourcePosition: [-170, 15, 0], targetPosition: [170, 10, 0]},
+    {index: 3, sourcePosition: [0, 0, 0], targetPosition: [0, 0, 0]}
+  ];
+
+  test('keeps ground line angles on pan, zoom and resize, including antimeridian crossings', () => {
+    const host = makeArrowHost();
+    const update = angleAttributeUpdates();
+    const render = (view = {}) =>
+      update(createArrowLayer(host, {formattedData: {data}, mapState: {...mapState, ...view}}));
+
+    expect(render()).toMatchObject({calls: data.length, writes: 1});
+    expect(render({longitude: 179, latitude: -20})).toMatchObject({calls: 0, writes: 0});
+    expect(render({longitude: -179, latitude: 50, zoom: 12})).toMatchObject({calls: 0, writes: 0});
+    expect(render({width: 1600, height: 600})).toMatchObject({calls: 0, writes: 0});
+    expect(render({bearing: 45})).toMatchObject({calls: data.length, writes: 1});
+    expect(render({bearing: 45, zoom: 8})).toMatchObject({calls: 0, writes: 0});
+  });
+
+  test.each([
+    ['pitched ground lines', {pitch: 40}, 0, data],
+    ['raised arcs', {}, 1, data],
+    ['unequal elevations', {}, 0, [{...data[0], targetPosition: [-122.3, 37.9, 1000]}]],
+    [
+      'equal elevations at different latitudes',
+      {},
+      0,
+      [{...data[0], sourcePosition: [-122.5, 37.7, 1000], targetPosition: [-122.3, 37.9, 1000]}]
+    ],
+    ['globe lines', {globe: {enabled: true}}, 0, data],
+    ['globe arcs', {globe: {enabled: true}}, 1, data]
+  ])('keeps viewport updates for %s', (_name, view, height, records) => {
+    const host = makeArrowHost();
+    const update = angleAttributeUpdates();
+    for (const overrides of [{}, {longitude: -122.3}, {zoom: 11}, {width: 1000, height: 700}]) {
+      const result = update(
+        createArrowLayer(host, {
+          formattedData: {data: records},
+          mapState: {...mapState, ...view, ...overrides},
+          greatCircle: Boolean((view as any).globe?.enabled),
+          height
+        })
+      );
+      expect(result).toMatchObject({calls: records.length, writes: 1});
+    }
+  });
+
+  test('refreshes on pitch, projection, height and elevation-scale transitions', () => {
+    const host = makeArrowHost();
+    const update = angleAttributeUpdates();
+    for (const overrides of [
+      {},
+      {mapState: {...mapState, pitch: 30}},
+      {},
+      {mapState: {...mapState, globe: {enabled: true}}},
+      {},
+      {greatCircle: true},
+      {height: 1},
+      {elevationScale: 2},
+      {}
+    ]) {
+      expect(update(createArrowLayer(host, {formattedData: {data}, ...overrides}))).toMatchObject({
+        calls: data.length,
+        writes: 1
+      });
+    }
+  });
+
+  test('preserves the tiny-segment fallback when zooming in and out of the fast path', () => {
+    const host = makeArrowHost();
+    const records = [{...data[0], sourcePosition: [0, 0, 0], targetPosition: [0.0000005, 0, 0]}];
+    const update = angleAttributeUpdates();
+    const render = (zoom: number) =>
+      update(
+        createArrowLayer(host, {
+          formattedData: {data: records},
+          mapState: {...mapState, longitude: 0, latitude: 0, zoom}
+        })
+      );
+    expect(render(10)).toMatchObject({calls: 1, writes: 1, angles: [0]});
+    expect(render(11)).toMatchObject({calls: 1, writes: 1, angles: [90]});
+    expect(render(22)).toMatchObject({calls: 1, writes: 1, angles: [90]});
+    expect(render(23)).toMatchObject({calls: 0, writes: 0, angles: [90]});
+    expect(render(10)).toMatchObject({calls: 1, writes: 1, angles: [0]});
+  });
+
+  test.each([
+    ['mixed tiny and regular segments', [0, 0, 0], [0.0000005, 0, 0]],
+    ['clamped polar coordinates', [0, 89.95, 0], [0.0000005, 89.96, 0]]
+  ])('keeps zoom updates for %s', (_name, sourcePosition, targetPosition) => {
+    const host = makeArrowHost();
+    const records = [data[0], {index: 4, sourcePosition, targetPosition}];
+    const update = angleAttributeUpdates();
+    for (const zoom of [10, 11, 10]) {
+      expect(
+        update(
+          createArrowLayer(host, {
+            formattedData: {data: records},
+            mapState: {...mapState, longitude: 0, latitude: 0, zoom}
+          })
+        )
+      ).toMatchObject({calls: records.length, writes: 1});
+    }
+  });
+
+  test('refreshes replaced row data and changed GeoArrow endpoints and filtered records', () => {
+    const host = makeArrowHost({
+      geoArrowVector0: {length: 2, get: index => data[index].sourcePosition},
+      geoArrowVector1: {length: 2, get: index => data[index].targetPosition}
+    });
+    const update = angleAttributeUpdates();
+    expect(update(createArrowLayer(host))).toMatchObject({calls: 2, writes: 1});
+    expect(update(createArrowLayer(host, {mapState: {...mapState, zoom: 11}}))).toMatchObject({
+      calls: 0,
+      writes: 0
+    });
+    host.geoArrowVector1 = {length: 2, get: () => [-122.1, 37.5, 0]};
+    expect(update(createArrowLayer(host))).toMatchObject({calls: 2, writes: 1});
+    host.geoArrowVector0 = {length: 2, get: () => [-123, 37, 100]};
+    expect(update(createArrowLayer(host))).toMatchObject({calls: 2, writes: 1});
+    host.filteredIndex = [0, 1];
+    host.filteredIndexTrigger = {};
+    expect(update(createArrowLayer(host))).toMatchObject({calls: 1, writes: 1});
+    expect(update(createArrowLayer(host, {formattedData: {data}}))).toMatchObject({
+      calls: data.length,
+      writes: 1
+    });
+    expect(update(createArrowLayer(host, {formattedData: {data: [...data]}}))).toMatchObject({
+      calls: data.length,
+      writes: 1
+    });
   });
 });
