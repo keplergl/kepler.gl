@@ -755,11 +755,12 @@ export default class PointLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
+    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers();
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...visualChannelUpdateTriggers
     };
 
     const useArrowLayer = Boolean(this.geoArrowVector);
@@ -787,22 +788,12 @@ export default class PointLayer extends Layer {
       // Arrow picking synthesizes a new object on each render. Compare its row and
       // coordinates instead of that object's identity. Positions are geographic;
       // pan/zoom only changes projection and radiusScale, not neighbor geometry.
+      // Filters preserve neighbor membership; styling uses updateTriggers below.
       const dependencies = [
-        dataset,
         dataset.dataContainer,
         dataset.dataRevision,
-        dataset.filteredIndex,
-        dataset.filteredIndexByLayer?.[this.id],
-        gpuFilter,
-        gpuFilter.filterRange,
-        gpuFilter.filterValueUpdateTriggers,
-        data,
-        this.config,
-        this.config.visConfig,
         this.config.columns,
         this.config.columnMode,
-        this.geoArrowVector,
-        useArrowLayer ? null : hoveredObject,
         hoveredObject.index,
         ...(hoveredObject.position || [])
       ];
@@ -955,7 +946,16 @@ export default class PointLayer extends Layer {
                 ? this.config.highlightColor
                 : data.getFillColor,
               getRadius: data.getRadius,
-              getPosition: data.getPosition
+              getPosition: data.getPosition,
+              updateTriggers: {
+                getFillColor: this.config.visConfig.showHighlightColor
+                  ? [this.config.highlightColor]
+                  : {...visualChannelUpdateTriggers.getFillColor, accessor: data.getFillColor},
+                getLineColor: this.config.visConfig.showHighlightColor
+                  ? [this.config.highlightColor]
+                  : {...visualChannelUpdateTriggers.getLineColor, accessor: data.getLineColor},
+                getRadius: {...visualChannelUpdateTriggers.getRadius, accessor: data.getRadius}
+              }
             })
           )
         : []),
