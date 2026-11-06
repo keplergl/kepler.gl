@@ -25,5 +25,5 @@
     "baseUrl": "./src"
   },
   "include": ["src", "../styles/src/styled.d.ts"],
-  "exclude": ["**/*.spec.*"]
+  "exclude": ["**/*.spec.*", "**/*.test.*"]
 }
