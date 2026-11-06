@@ -340,6 +340,42 @@ function autoLayers(dataset, layerClasses = LayerClasses) {
   return addDefaultLayers({...INITIAL_VIS_STATE, layerClasses}, {[dataset.id]: dataset}).newLayers;
 }
 
+test('#visStateReducer -> addDefaultLayers: requires a complete icon token in the column name', t => {
+  const cases = [
+    {column: 'peak_temp_c', values: [37.4, 36.2], expectedType: 'point'},
+    {column: 'region_n', values: ['north', 'south'], expectedType: 'point'},
+    {column: 'city  name', values: ['Chennai', 'Nagapattinam'], expectedType: 'point'},
+    ...['icon', 'event_icon', 'name.icon'].map(column => ({
+      column,
+      values: ['place', 'place'],
+      expectedType: 'icon'
+    }))
+  ];
+
+  cases.forEach(({column, values, expectedType}) => {
+    const dataset = new KeplerTable({info: {id: 'icon-column-detection'}}).updateSchema(
+      processCsvData(
+        `latitude,longitude,${column}\n13.0827,80.2707,${values[0]}\n10.7656,79.8424,${values[1]}`
+      )
+    );
+    const layers = autoLayers(dataset);
+
+    t.deepEqual(
+      layers.map(layer => layer.type),
+      [expectedType],
+      `${column}: selects only the expected layer type`
+    );
+    t.ok(layers[0].config.isVisible, `${column}: default layer is visible`);
+    t.equal(
+      layers[0].formatLayerData({[dataset.id]: dataset}).data.length,
+      2,
+      `${column}: preserves both drawable rows`
+    );
+  });
+
+  t.end();
+});
+
 test('#visStateReducer -> addDefaultLayers: deduplicates points independently of row values', t => {
   const fields = ['lat', 'lon', 'icon', 'altitude'].map((name, fieldIdx) => ({
     name,
