@@ -256,6 +256,58 @@ test('charts -> time series and hover indexes', t => {
   t.end();
 });
 
+test('charts -> calendar dates use UTC days without shifting timestamp instants', t => {
+  const values = [
+    '09/17/2016',
+    '9/17/2016',
+    '2016/9/17',
+    '2016-09-17',
+    new Date('2016-09-17T00:00:00Z'),
+    Date.UTC(2016, 8, 17),
+    '2016-09-17T00:00:00+03:00',
+    '2016-09-17T23:00:00-04:00',
+    null,
+    undefined,
+    '',
+    'invalid',
+    '02/30/2016',
+    '2016-02-30',
+    '13/17/2016'
+  ];
+  const dataset = mockDataset(values.map(time => ({time, value: 1})));
+  const options = {
+    dataset,
+    indexes: dataset.allIndexes,
+    xAxis: {field: {name: 'time', type: 'date'}, aggregation: BinType.timeBin},
+    yAxis: {field: {name: 'value', type: 'real'}, aggregation: 'sum'},
+    interval: 'day'
+  };
+  const bins = buildTimeSeries(options);
+  t.deepEqual(
+    bins.map(bin => [bin.key, bin.value]),
+    [
+      ['2016-09-16', 1],
+      ['2016-09-17', 6],
+      ['2016-09-18', 1]
+    ]
+  );
+  t.deepEqual(bins[1].filterValue, [Date.UTC(2016, 8, 17), Date.UTC(2016, 8, 18)]);
+  const grouped = buildGroupedBins({
+    dataset: mockDataset([
+      {time: '09/17/2016', value: 1},
+      {time: '09/19/2016', value: 1}
+    ]),
+    numGroups: 2,
+    applyFilters: true,
+    binAxis: {...options.xAxis, interval: 'day'},
+    valueAxis: options.yAxis
+  });
+  t.equal(grouped.length, 2, 'uses the requested two time bins');
+  t.equal(grouped[0].filterValue[0], Date.UTC(2016, 8, 17));
+  t.equal(grouped[grouped.length - 1].filterValue[1], Date.UTC(2016, 8, 19));
+  t.end();
+});
+
 test('charts -> extra aggregations', t => {
   const dataset = mockDataset([
     {category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'},

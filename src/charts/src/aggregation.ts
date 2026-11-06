@@ -467,6 +467,34 @@ function equalWidthTimeBins(
   return {groups, filterValues};
 }
 
+// Date-only strings describe calendar days, not local-midnight instants.
+// Parse the numeric date forms independently of the host timezone; timestamps
+// (including explicit offsets), Date objects and epoch numbers retain their instant.
+function chartTimeValue(raw: unknown): number {
+  if (raw === null || raw === undefined || raw === '') {
+    return NaN;
+  }
+  if (typeof raw === 'string') {
+    const value = raw.trim();
+    const yearFirst = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(value);
+    const monthFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+    const parts = yearFirst || monthFirst;
+    if (parts) {
+      const year = Number(parts[yearFirst ? 1 : 3]);
+      const month = Number(parts[yearFirst ? 2 : 1]) - 1;
+      const day = Number(parts[yearFirst ? 3 : 2]);
+      const date = new Date(0);
+      date.setUTCFullYear(year, month, day);
+      return date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month &&
+        date.getUTCDate() === day
+        ? date.getTime()
+        : NaN;
+    }
+  }
+  return raw instanceof Date ? raw.getTime() : new Date(raw as string | number).getTime();
+}
+
 function timeGroupMap(
   indexes: number[],
   dataset: ChartableDataset,
@@ -477,8 +505,7 @@ function timeGroupMap(
   const points = indexes
     .map(idx => {
       const raw = dataset.getValue(fieldName, idx);
-      const date = raw instanceof Date ? raw : new Date(raw);
-      const t = date.getTime();
+      const t = chartTimeValue(raw);
       return Number.isNaN(t) ? null : {idx, t};
     })
     .filter((d): d is {idx: number; t: number} => d !== null);
