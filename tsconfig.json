@@ -30,8 +30,6 @@
   "include": ["src"],
 
   "exclude": [
-    "src/deckgl-layers/cluster-layer",
-
     // build files
     "src/**/dist/**",
     "node_modules"

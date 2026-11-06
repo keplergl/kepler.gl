@@ -4,8 +4,6 @@
   "version": "3.3.0-alpha.19",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "./types.d.ts",
   "keywords": [
     "babel",
     "es6",
