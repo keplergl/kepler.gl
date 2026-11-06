@@ -226,7 +226,12 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
       layer.updateLayerMeta(dataset);
     }
     const runtime = await layer._loadRuntime();
-    layer._loadRuntime = async () => ({...runtime, get: async () => ({data: values})});
+    layer._loadRuntime = async () => ({
+      ...runtime,
+      get: async (_arr, selection) => ({
+        data: selection.length ? new Float32Array([-100, 100]) : values
+      })
+    });
     layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
     layer._node = {};
     const [deckLayer] = layer.renderLayer({
@@ -272,6 +277,34 @@ test('#ZarrLayer -> advertised and explicit 0-1 ranges are not sampled', async t
         'keeps a range chosen after sampling'
       );
     }
+    const explicitRange = layer.config.visConfig.rescale;
+    const controlBounds = layer.visConfigSettings.rescale.range;
+    const [explicitLayer] = layer.renderLayer({
+      data: {metadata: dataset.metadata, variable},
+      mapState: {},
+      visible: true
+    });
+    const wideTile = await explicitLayer.props.getTileData(layer._node, {
+      sliceSpec: [null],
+      width: 2,
+      height: 1
+    });
+    t.deepEqual(
+      layer.config.visConfig.rescale,
+      explicitRange,
+      `${mode}: later extrema cannot change explicit bounds`
+    );
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      controlBounds,
+      `${mode}: later extrema leave explicit control bounds alone`
+    );
+    t.deepEqual(
+      renderTileColors(explicitLayer, wideTile.values),
+      [0, 0, 0, 255, 255, 255, 255, 255],
+      `${mode}: intentionally clamps to explicit bounds`
+    );
+    if (!automatic) t.equal(layer._sampledRange, null, `${mode}: skips automatic sampling`);
   }
   t.end();
 });
@@ -354,7 +387,11 @@ test('#ZarrLayer -> recolors cached tiles when a later tile supplies the automat
   });
   layer.updateLayerMeta(dataset);
   const runtime = await layer._loadRuntime();
-  const chunks = [new Float32Array([-10, -10]), new Float32Array([-20, 0])];
+  const chunks = [
+    new Float32Array([-10, -10]),
+    new Float32Array([-20, 0]),
+    new Float32Array([-40, 40])
+  ];
   layer._loadRuntime = async () => ({...runtime, get: async () => ({data: chunks.shift()})});
   layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
   layer._node = {};
@@ -395,6 +432,124 @@ test('#ZarrLayer -> recolors cached tiles when a later tile supplies the automat
     updated.props.updateTriggers.renderTile,
     'subsequent renders keep the color cache stable'
   );
+  const wider = await load();
+  const expanded = render();
+  t.deepEqual(layer.visConfigSettings.rescale.range, [-40, 40], 'later tiles widen both bounds');
+  t.equal(layer.visConfigSettings.rescale.step, 0.8, 'slider step follows the expanded range');
+  t.equal(layer.config.visConfig.rescale, null, 'sampling keeps automatic mode');
+  t.notDeepEqual(
+    expanded.props.updateTriggers.renderTile,
+    updated.props.updateTriggers.renderTile,
+    'expanded range invalidates cached colors'
+  );
+  t.deepEqual(
+    renderTileColors(expanded, first.values),
+    [96, 96, 96, 255, 96, 96, 96, 255],
+    'cached first tile is recolored against the expanded range'
+  );
+  t.deepEqual(
+    renderTileColors(expanded, wider.values),
+    [0, 0, 0, 255, 255, 255, 255, 255],
+    'later tile uses the same expanded range'
+  );
+  t.equal(expanded.id, initial.id, 'expanding the range retains the decoded tile cache');
+  t.equal(expanded.props.getTileData, initial.props.getTileData, 'expansion does not refetch');
+  t.equal(redraws, 2, 'only each actual expansion requests a redraw');
+  t.end();
+});
+
+test('#ZarrLayer -> automatic range is independent of concurrent tile completion order', async t => {
+  for (const order of [
+    [0, 1, 2],
+    [2, 1, 0],
+    [1, 2, 0]
+  ]) {
+    const variable = {...TEMPERATURE, dataRange: undefined};
+    const dataset = {
+      ...MOCK_ZARR_DATASET,
+      metadata: {...MOCK_ZARR_DATASET.metadata, variables: [variable]}
+    };
+    const layer = new ZarrLayer({dataId: dataset.id});
+    layer.updateLayerMeta(dataset);
+    const runtime = await layer._loadRuntime();
+    const pending = [];
+    const values = [
+      new Float64Array([400, 400]),
+      new Float64Array([-9999, NaN, 10, 20]),
+      new Float64Array([-5, Infinity, 100, 200])
+    ];
+    layer._loadRuntime = async () => ({
+      ...runtime,
+      get: (_arr, index) =>
+        new Promise(resolve => {
+          pending[index] = resolve;
+        })
+    });
+    layer._nodeKey = `${dataset.metadata.url}#${variable.path}`;
+    layer._node = {};
+    let redraws = 0;
+    const render = () =>
+      layer.renderLayer({
+        data: {metadata: dataset.metadata, variable},
+        mapState: {},
+        visible: true,
+        layerCallbacks: {onRedrawNeeded: () => redraws++}
+      })[0];
+    const deckLayer = render();
+    const requests = values.map((value, index) =>
+      deckLayer.props.getTileData(layer._node, {
+        sliceSpec: index,
+        width: value.length,
+        height: 1
+      })
+    );
+    await Promise.resolve();
+    for (const index of order) {
+      pending[index]({data: values[index]});
+      await requests[index];
+    }
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [-5, 400],
+      `${order}: unions finite data, including constant tiles`
+    );
+    t.equal(redraws, 1, 'concurrent range expansions request only one pending redraw');
+    const expanded = render();
+    const previousRedraws = redraws;
+    layer._loadRuntime = async () => ({
+      ...runtime,
+      get: async () => ({data: new Float32Array([10, 20])})
+    });
+    await deckLayer.props.getTileData(layer._node, {sliceSpec: [], width: 2, height: 1});
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [-5, 400],
+      'narrower tiles do not shrink bounds'
+    );
+    t.equal(redraws, previousRedraws, 'unchanged extrema do not request recoloring');
+    layer._loadRuntime = async () => ({
+      ...runtime,
+      get: async () => ({data: new Float64Array([NaN, Infinity, -Infinity, -9999])})
+    });
+    await deckLayer.props.getTileData(layer._node, {sliceSpec: [], width: 4, height: 1});
+    t.deepEqual(
+      layer.visConfigSettings.rescale.range,
+      [-5, 400],
+      'all invalid tiles preserve the accumulated range'
+    );
+    t.equal(redraws, previousRedraws, 'all invalid tiles do not request recoloring');
+    t.deepEqual(
+      render().props.updateTriggers.renderTile,
+      expanded.props.updateTriggers.renderTile,
+      'unchanged extrema preserve color cache'
+    );
+    layer.updateLayerVisConfig({dimensionIndexes: {band: 2}});
+    t.deepEqual(
+      render().props.updateTriggers.renderTile,
+      expanded.props.updateTriggers.renderTile,
+      'another slice preserves the variable range'
+    );
+  }
   t.end();
 });
 

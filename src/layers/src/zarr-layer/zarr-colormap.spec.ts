@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {applyZarrColormap, estimateZarrDataRange} from './zarr-colormap';
+import {applyZarrColormap, estimateZarrDataRange, getZarrDataExtent} from './zarr-colormap';
 
 const BLACK_TO_WHITE = ['#000000', '#ffffff'];
 
@@ -126,5 +126,22 @@ describe('estimateZarrDataRange', () => {
 
   it('returns null for a constant chunk so the caller can keep its own range', () => {
     expect(estimateZarrDataRange([5, 5, 5])).toBeNull();
+  });
+});
+
+describe('getZarrDataExtent', () => {
+  it('retains constant valid values for accumulation without changing the range estimator', () => {
+    expect(getZarrDataExtent([5, 5])).toEqual([5, 5]);
+    expect(estimateZarrDataRange([5, 5])).toBeNull();
+  });
+
+  it('ignores empty, nodata and non-finite chunks', () => {
+    expect(getZarrDataExtent([])).toBeNull();
+    expect(getZarrDataExtent([NaN, Infinity, -Infinity, -9999], -9999)).toBeNull();
+    expect(getZarrDataExtent([NaN, Infinity, -9999, 4, 8], -9999)).toEqual([4, 8]);
+  });
+
+  it('includes constant BigInt tiles while excluding their fill value', () => {
+    expect(getZarrDataExtent(new BigInt64Array([-9999n, 5n, 5n]), -9999)).toEqual([5, 5]);
   });
 });
