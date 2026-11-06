@@ -3,12 +3,15 @@
 
 import {Feature, Geometry} from 'geojson';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {Response} from 'node-fetch';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable, copyTableAndUpdate} from '@kepler.gl/table';
 import {ArrowDataContainer, createDataContainer} from '@kepler.gl/utils';
-import {processFileData} from '@kepler.gl/processors';
+import {processFileData, processRowObject} from '@kepler.gl/processors';
+import coordinateOrderMap from 'test/fixtures/line-array-coordinate-order.json';
+import {datasetSchema, LoadedMap} from '@kepler.gl/schemas';
 import * as arrow from 'apache-arrow';
 import GeoJsonLayer from './geojson-layer';
 import GridLayer from '../grid-layer/grid-layer';
@@ -626,4 +629,169 @@ test('required table timestamps retain zero and omit missing values and coordina
     timestamp: {value: 'timestamp', fieldIdx: 3}
   });
   expect(features[0].properties?.values).toEqual([rows[1], rows[0]]);
+});
+
+describe('bare coordinate array order', () => {
+  const originalResponse = globalThis.Response;
+  beforeAll(() => {
+    globalThis.Response = Response as any;
+  });
+  afterAll(() => {
+    globalThis.Response = originalResponse;
+  });
+  const coordinates = [
+    [-74, 40],
+    [-73, 41]
+  ];
+  const fields = [{name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY', format: ''}];
+  const renderDataset = async (data, id = 'line-order') => {
+    const dataset = new KeplerTable({info: {id}, color: [0, 0, 0]});
+    await dataset.importData({data});
+    const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
+    expect(props).toHaveLength(1);
+    const layer = new GeoJsonLayer({...props[0], dataId: dataset.id});
+    layer.setInitialLayerConfig(dataset);
+    const formatted = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    return {dataset, layer, rendered: renderGeojsonFeatures(formatted.data)};
+  };
+
+  test.each([
+    {name: '2D', positions: coordinates},
+    {
+      name: 'elevation',
+      positions: [
+        [-74, 40, 100],
+        [-73, 41, 200]
+      ]
+    },
+    {
+      name: 'extra dimensions',
+      positions: [
+        [-74, 40, 100, 0],
+        [-73, 41, 200, 1000]
+      ]
+    },
+    {
+      name: 'zero coordinates',
+      positions: [
+        [0, 0],
+        [10, 0]
+      ]
+    },
+    {
+      name: 'numeric strings',
+      positions: [
+        ['-74', '40'],
+        ['-73', '41']
+      ]
+    }
+  ])('preserves $name positions for bare points and lines', ({positions}) => {
+    const original = JSON.stringify(positions);
+    positions.forEach(Object.freeze);
+    Object.freeze(positions);
+    expect(parseGeoJsonRawFeature(positions)?.geometry).toEqual({
+      type: 'LineString',
+      coordinates: positions
+    });
+    for (const position of positions) {
+      expect(parseGeoJsonRawFeature(position)?.geometry).toEqual({
+        type: 'Point',
+        coordinates: position
+      });
+    }
+    expect(JSON.stringify(positions)).toBe(original);
+  });
+
+  test.each([null, undefined, [], [1], [null, null], [NaN, 1], [1, Infinity], ['bad', 1]])(
+    'continues to ignore unsupported or invalid coordinate arrays (%j)',
+    value => {
+      expect(parseGeoJsonRawFeature(value)).toBeNull();
+    }
+  );
+
+  test('imports, renders and saves longitude-latitude lines without changing their vertices', async () => {
+    const positions = [
+      [-74, 40, 100],
+      [-73, 41, 200]
+    ];
+    positions.forEach(Object.freeze);
+    Object.freeze(positions);
+    const {dataset, layer, rendered} = await renderDataset({fields, rows: [[positions]]});
+    expect(rendered.lineFeatures?.[0].geometry.coordinates).toEqual(positions);
+    expect(layer.meta).toMatchObject({bounds: [-74, 40, -73, 41]});
+    expect(layer.centroids).toEqual([[-73.5, 40.5]]);
+    const saved = JSON.parse(JSON.stringify(datasetSchema.v1.save(dataset)));
+    expect(saved.allData).toEqual([[positions]]);
+    const loaded = datasetSchema.v1.load(saved);
+    const reloaded = await renderDataset(loaded.data);
+    expect(reloaded.rendered.lineFeatures?.[0].geometry.coordinates).toEqual(positions);
+    expect(reloaded.layer.meta).toMatchObject({bounds: [-74, 40, -73, 41]});
+    expect(positions).toEqual([
+      [-74, 40, 100],
+      [-73, 41, 200]
+    ]);
+  });
+
+  test('loads the review dataset through the saved-map file processor', async () => {
+    const original = JSON.stringify(coordinateOrderMap);
+    const [file] = await processFileData({
+      content: {fileName: 'line-array-coordinate-order.json', data: coordinateOrderMap},
+      fileCache: []
+    } as any);
+    const imported = (file.data as LoadedMap).datasets;
+    expect(imported).toHaveLength(1);
+    const {dataset, rendered} = await renderDataset(imported![0].data, imported![0].info.id);
+    expect(dataset.dataContainer.numRows()).toBe(5);
+    expect(rendered.pointFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
+      [-74, 40]
+    ]);
+    expect(rendered.lineFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
+      coordinates,
+      [
+        [40, -74],
+        [41, -73]
+      ],
+      coordinates,
+      [
+        [-74, 40, 100],
+        [-73, 41, 200]
+      ]
+    ]);
+    // A legacy latitude-first array is now longitude-first too. No silent heuristic/migration.
+    expect(dataset.dataContainer.valueAt(2, 1)).toEqual([
+      [40, -74],
+      [41, -73]
+    ]);
+    expect(JSON.stringify(coordinateOrderMap)).toBe(original);
+  });
+
+  test.each([
+    ['GeoJSON object', {type: 'LineString', coordinates}],
+    ['GeoJSON string', JSON.stringify({type: 'LineString', coordinates})],
+    ['WKT', 'LINESTRING (-74 40, -73 41)'],
+    ['WKB', new Uint8Array(convertGeometryToWKB({type: 'LineString', coordinates}))]
+  ])('keeps longitude-latitude lines from %s unchanged', async (_name, value) => {
+    const {rendered, layer} = await renderDataset({fields, rows: [[value]]});
+    expect(rendered.lineFeatures?.[0].geometry.coordinates).toEqual(coordinates);
+    expect(layer.meta).toMatchObject({bounds: [-74, 40, -73, 41]});
+  });
+
+  test('keeps native GeoArrow line coordinate order unchanged', () => {
+    expect(parseGeoJsonRawFeature(coordinates, GEOARROW_EXTENSIONS.LINESTRING)?.geometry).toEqual({
+      type: 'LineString',
+      coordinates
+    });
+  });
+
+  test('handles a large line without dropping vertices or their extra dimensions', () => {
+    const positions = Array.from({length: 100000}, (_, index) => [-74 + index / 100000, 40, index]);
+    const geometry = parseGeoJsonRawFeature(positions)?.geometry;
+    expect(geometry).toEqual({type: 'LineString', coordinates: positions});
+  });
+
+  test('leaves automatic row-object inference of bare lines unchanged', () => {
+    const processed = processRowObject([{geometry: coordinates}]);
+    expect(processed?.fields[0]).toMatchObject({type: 'array', analyzerType: 'ARRAY'});
+    expect(processed?.rows).toEqual([[coordinates]]);
+  });
 });
