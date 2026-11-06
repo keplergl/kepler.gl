@@ -29,6 +29,7 @@ import {RasterWebGL, RasterLayer} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
+import {applyModuleUniforms} from '../../../src/deckgl-layers/src/raster/util';
 import * as rasterGpuUtils from '../../../src/layers/src/raster-tile/gpu-utils';
 import * as rasterImages from '../../../src/layers/src/raster-tile/image';
 import * as rasterExtract from '../../../src/layers/src/raster-tile/raster-tile-extract';
@@ -2503,6 +2504,104 @@ test('#RasterTileLayer -> terrain style edits retain instance data', t => {
     data: {...data, terrain: replacement}
   });
   t.equal(changed.props.mesh, replacement, 'replacement terrain reaches the mesh layer');
+  t.end();
+});
+
+test('#RasterTileLayer -> continuous colormaps use the full normalized single-band range', t => {
+  // Evaluate the shipped continuous lookup, including the uniforms selected by the pipeline.
+  // Texture sampling uses the same nearest filtering and clamp-to-edge as the renderer.
+  const body = RasterWebGL.colormap.fs.match(/} else {([\s\S]*?)\n {2}}/)[1];
+  const lookup = new Function('image', 'colormap', 'vec2', body.replace('uv =', 'return'));
+  const bitmap = new Uint8Array(256 * 4);
+  for (let i = 0; i < 256; i++) bitmap.set([i, 255 - i, i, 255], i * 4);
+  const imageColormap = {};
+  const props = {
+    bandCombination: 'single',
+    linearRescalingFactor: [0, 1]
+  };
+  const sample = (value, uniforms) => {
+    const [u] = lookup({r: value}, uniforms, (x, y) => [x, y]);
+    const pixel = Math.max(0, Math.min(255, Math.floor(u * 256)));
+    return Array.from(bitmap.slice(pixel * 4, pixel * 4 + 4));
+  };
+  const expected = [
+    [0, 255, 0, 255],
+    [128, 127, 128, 255],
+    [255, 0, 255, 255]
+  ];
+  for (const [dataType, minPixelValue, maxPixelValue] of [
+    ['uint8', 0, 255],
+    ['int16', -100, 100],
+    ['float32', -2.5, 7.5],
+    ['float64', 100, 200]
+  ]) {
+    for (const linearRescalingFactor of [
+      [0, 1],
+      [0.25, 0.75]
+    ]) {
+      const {modules, moduleProps} = getModules({
+        images: {imageColormap},
+        props: {...props, dataType, minPixelValue, maxPixelValue, linearRescalingFactor}
+      });
+      t.ok(modules.includes(RasterWebGL.colormap), 'uses the continuous colormap');
+      const {scaler, offset} = RasterWebGL.linearRescale.getUniforms(moduleProps);
+      const uniforms = RasterWebGL.colormap.getUniforms({...moduleProps, imageColormap});
+      const shaderInputs = {moduleUniforms: {}, moduleBindings: {}};
+      applyModuleUniforms(shaderInputs, modules, {...moduleProps, imageColormap});
+      t.equal(
+        shaderInputs.moduleUniforms.rasterProcessing.colormap_inputScale,
+        1,
+        'the shared processing block receives the normalized scale'
+      );
+      t.equal(
+        shaderInputs.moduleUniforms.rasterProcessing.colormap_inputOffset,
+        0,
+        'the shared processing block receives the normalized offset'
+      );
+      const span = maxPixelValue - minPixelValue;
+      const low = minPixelValue + linearRescalingFactor[0] * span;
+      const high = minPixelValue + linearRescalingFactor[1] * span;
+      t.deepEqual(
+        [low, (low + high) / 2, high].map(value => sample(value * scaler + offset, uniforms)),
+        expected,
+        `${dataType} ${linearRescalingFactor}: min/mid/max use the full palette`
+      );
+      t.deepEqual(sample(-1, uniforms), expected[0], 'below-range values clamp to the first color');
+      t.deepEqual(sample(2, uniforms), expected[2], 'above-range values clamp to the last color');
+    }
+  }
+  const nonlinear = getModules({
+    images: {imageColormap},
+    props: {...props, nonLinearRescaling: true, maxPixelValue: 255}
+  });
+  const nonlinearUniforms = RasterWebGL.colormap.getUniforms({
+    ...nonlinear.moduleProps,
+    imageColormap
+  });
+  t.deepEqual(
+    [0, 0.5, 1].map(value => sample(value, nonlinearUniforms)),
+    expected,
+    'nonlinear single-band output also uses the full 0..1 palette'
+  );
+  for (const bandCombination of [
+    'normalizedDifference',
+    'enhancedVegetationIndex',
+    'soilAdjustedVegetationIndex',
+    'modifiedSoilAdjustedVegetationIndex'
+  ]) {
+    const {moduleProps} = getModules({images: {imageColormap}, props: {bandCombination}});
+    const uniforms = RasterWebGL.colormap.getUniforms({...moduleProps, imageColormap});
+    t.deepEqual(
+      [-1, 0, 1].map(value => sample(value, uniforms)),
+      expected,
+      `${bandCombination} preserves its signed input domain`
+    );
+  }
+  t.deepEqual(
+    [-1, 0, 1].map(value => sample(value, RasterWebGL.colormap.getUniforms({imageColormap}))),
+    expected,
+    'direct shader users retain the existing signed domain by default'
+  );
   t.end();
 });
 
