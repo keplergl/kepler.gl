@@ -480,7 +480,22 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     // will ignore the field. In this case, we will simply assign the field type to STRING
     // since dropping the column in the RowData could be expensive
     let type = fieldMeta?.type || 'STRING';
-    const format = fieldMeta?.format || '';
+    let format = fieldMeta?.format || '';
+
+    // type-analyzer's unanchored year-first regex matches a prefix of US dates
+    // (e.g. 09/17/20 in 09/17/2016). Correct only whole, consistently month-first
+    // date samples; do not reinterpret mixed formats or timestamp columns.
+    if (type === AnalyzerDATA_TYPES.DATE && format === 'YYYY/M/D') {
+      const samples = analyzerData.map(row => row[field]).filter(notNullorUndefined);
+      if (
+        samples.length &&
+        samples.every(
+          value => typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)
+        )
+      ) {
+        format = 'M/D/YYYY';
+      }
+    }
 
     // quick check if first valid string in column is H3
     if (type === AnalyzerDATA_TYPES.STRING) {
