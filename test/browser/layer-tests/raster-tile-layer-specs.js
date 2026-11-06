@@ -2260,6 +2260,25 @@ test('#RasterTileLayer -> spectral indices discard undefined values and preserve
       ]
     },
     {
+      bandCombination: 'enhancedVegetationIndex',
+      module: RasterWebGL.enhancedVegetationIndex,
+      values: [
+        // The fourth entry is the blue band. Cover 0/0 and both signs of infinity.
+        [0, 0, null, 2 / 15],
+        [0.125, 0.125, null, 0.25],
+        [0.5, 0.375, null, 0.5],
+        [0.5, 1, null, 1],
+        [0, 0, 0, 0],
+        [0.5, 0.5, 0, 0.25],
+        [0.5, 0.25, 0.625 / 2.25, 0.1],
+        [0.25, 0.5, -0.625 / 3.5, 0.1],
+        [0.5, 0, -5 / 9, 0.5],
+        // Tiny nonzero denominators are valid, even if the result exceeds the colormap.
+        [0.5, 0.375, (2.5 * 0.125) / 2 ** -20, (3.75 - 2 ** -20) / 7.5],
+        [0.5, 0.375, (-2.5 * 0.125) / 2 ** -20, (3.75 + 2 ** -20) / 7.5]
+      ]
+    },
+    {
       bandCombination: 'modifiedSoilAdjustedVegetationIndex',
       module: RasterWebGL.modifiedSoilAdjustedVegetationIndex,
       values: [
@@ -2285,10 +2304,10 @@ test('#RasterTileLayer -> spectral indices discard undefined values and preserve
       'discarded',
       body.replace(/\bfloat\b/g, 'const').replace(/\bdiscard;/g, 'return discarded;')
     );
-    for (const [r, g, expected] of values) {
+    for (const [r, g, expected, b] of values) {
       const sqrt = sinon.spy(Math.sqrt);
-      const result = evaluate({r, g}, sqrt, discarded);
-      const derived = computeDerivedValue([r, g], bandCombination);
+      const result = evaluate({r, g, b}, sqrt, discarded);
+      const derived = computeDerivedValue([r, g, b], bandCombination);
       if (expected === null) {
         t.equal(result, discarded, `${bandCombination} discards undefined values for ${r}, ${g}`);
         t.equal(derived, null, 'matches the unavailable hover value');
