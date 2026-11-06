@@ -1815,6 +1815,209 @@ test('#RasterTileLayer -> non-rectangular polygon export uses lon/lat bbox recta
   t.end();
 });
 
+test('#RasterTileLayer -> raw clip uses one range per band across tiles', async t => {
+  const polygon = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-180, 0],
+          [180, 0],
+          [180, 85],
+          [-180, 85],
+          [-180, 0]
+        ]
+      ]
+    }
+  };
+  const context = {isPMTiles: false, bandCombination: 'single'};
+  const makeTile = (x, values, mask) => ({
+    index: {x, y: 0, z: 1},
+    data: {
+      images: {
+        imageBands: values.map(data => ({width: 3, height: 1, data: new Float32Array(data)})),
+        imageMask: mask ? {data: new Uint8Array(mask), width: 3, height: 1} : undefined
+      }
+    }
+  });
+  const pixels = [];
+  const draws = [];
+  let rejectedSource;
+  const createElement = sinon.stub(document, 'createElement').callsFake(() => ({
+    getContext: () => ({
+      putImageData: image => pixels.push(Array.from(image.data)),
+      drawImage: source => {
+        if (source === rejectedSource) {
+          throw new Error('Not a drawable image');
+        }
+        draws.push(source);
+      }
+    }),
+    toBlob: callback => callback(new Blob(['png'], {type: 'image/png'}))
+  }));
+  const imageDataDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'ImageData');
+  if (!globalThis.ImageData) {
+    globalThis.ImageData = class {
+      constructor(width, height) {
+        this.data = new Uint8ClampedArray(width * height * 4);
+      }
+    };
+  }
+  try {
+    const left = makeTile(0, [[0, 50, 100]]);
+    const right = makeTile(1, [[50, 100, 150]]);
+    const blob = await rasterExtract.mosaicTilesToPng([left, right], polygon, context);
+    t.ok(isDownloadableImageBlob(blob), 'the raw fallback still produces a PNG');
+    t.deepEqual(pixels[0], [0, 0, 0, 255, 85, 85, 85, 255, 170, 170, 170, 255]);
+    t.deepEqual(pixels[1], [85, 85, 85, 255, 170, 170, 170, 255, 255, 255, 255, 255]);
+    t.deepEqual(pixels[0].slice(4, 8), pixels[1].slice(0, 4), 'equal values have equal brightness');
+
+    pixels.length = 0;
+    await rasterExtract.mosaicTilesToPng([right, left], polygon, context);
+    t.deepEqual(
+      pixels[0].slice(0, 4),
+      pixels[1].slice(4, 8),
+      'tile order does not change the range'
+    );
+
+    pixels.length = 0;
+    const outside = {...makeTile(0, [[-10000, 10000, 10000]]), index: {x: 0, y: 1, z: 1}};
+    const parent = {...outside, index: {x: 0, y: 0, z: 0}};
+    await rasterExtract.mosaicTilesToPng(
+      [makeTile(0, [[-9999, 50, 100]], [0, 1, 1]), right, outside, parent],
+      polygon,
+      context
+    );
+    t.equal(pixels.length, 2, 'only tiles drawn into the clip are converted');
+    t.deepEqual(pixels[0].slice(4), [0, 0, 0, 255, 128, 128, 128, 255]);
+    t.equal(pixels[0][3], 0, 'nodata pixels stay transparent');
+    t.deepEqual(
+      pixels[1],
+      [0, 0, 0, 255, 128, 128, 128, 255, 255, 255, 255, 255],
+      'masked values, off-clip tiles and other zooms do not distort the range'
+    );
+
+    pixels.length = 0;
+    await rasterExtract.mosaicTilesToPng(
+      [
+        makeTile(0, [
+          [-10, 0, 10],
+          [100, 200, 300],
+          [0, 0.5, 1],
+          [10000, 20000, 30000]
+        ]),
+        makeTile(1, [
+          [0, 10, 20],
+          [200, 300, 400],
+          [0.5, 1, 1.5],
+          [0, 0, 0]
+        ])
+      ],
+      polygon,
+      {...context, bandCombination: 'rgb'}
+    );
+    t.deepEqual(
+      pixels[0].slice(4, 8),
+      [85, 85, 85, 255],
+      'each of the first three bands has its own shared range'
+    );
+    t.deepEqual(
+      pixels[0].slice(4, 8),
+      pixels[1].slice(0, 4),
+      'negative and fractional multiband values match'
+    );
+
+    pixels.length = 0;
+    await rasterExtract.mosaicTilesToPng(
+      [makeTile(0, [[NaN, Infinity, -Infinity]]), makeTile(1, [[42, 42, 42]])],
+      polygon,
+      context
+    );
+    t.deepEqual(
+      pixels[1],
+      [42, 42, 42, 255, 42, 42, 42, 255, 42, 42, 42, 255],
+      'nonfinite values are ignored and constant bands retain their byte fallback'
+    );
+
+    pixels.length = 0;
+    await rasterExtract.mosaicTilesToPng(
+      [makeTile(0, [[-9999, -9999, -9999]], [0, 0, 0]), makeTile(1, [[10, 20, 30]])],
+      polygon,
+      context
+    );
+    t.deepEqual(
+      pixels[1],
+      [0, 0, 0, 255, 128, 128, 128, 255, 255, 255, 255, 255],
+      'a fully masked tile does not change the valid tile range'
+    );
+    t.ok(
+      [3, 7, 11].every(index => pixels[0][index] === 0),
+      'fully masked tiles stay transparent'
+    );
+
+    pixels.length = 0;
+    const missing = makeTile(0, [[0, 50, 100], []]);
+    delete missing.data.images.imageBands[1].data;
+    await rasterExtract.mosaicTilesToPng(
+      [
+        missing,
+        makeTile(1, [
+          [50, 100, 150],
+          [1, 2, 3]
+        ])
+      ],
+      polygon,
+      context
+    );
+    t.deepEqual(pixels[0].slice(4, 8), [85, 0, 0, 255], 'a missing band remains black');
+    t.deepEqual(
+      pixels[1].slice(4, 8),
+      [170, 128, 0, 255],
+      'two-band output retains its empty blue channel'
+    );
+
+    pixels.length = 0;
+    rejectedSource = {width: 3, height: 1};
+    const rawImage = makeTile(0, [[0, 50, 100]]);
+    rawImage.data.images.imageRgba = {data: rejectedSource};
+    await rasterExtract.mosaicTilesToPng([rawImage, right], polygon, context);
+    t.deepEqual(
+      pixels[0].slice(4, 8),
+      pixels[1].slice(0, 4),
+      'undrawable RGBA sources use the same raw fallback range'
+    );
+
+    pixels.length = 0;
+    draws.length = 0;
+    const rgba = {width: 3, height: 1};
+    const styled = makeTile(0, [[0, 50, 100]]);
+    styled.data.images.imageRgba = {data: rgba};
+    Object.defineProperty(styled.data.images.imageBands[0], 'data', {
+      get() {
+        throw new Error('Styled exports must not scan raw bands');
+      }
+    });
+    await rasterExtract.mosaicTilesToPng([styled], polygon, context);
+    t.equal(pixels.length, 0, 'styled images are not rescaled');
+    t.equal(draws[0], rgba, 'the original styled image is drawn directly');
+    t.equal(
+      await rasterExtract.mosaicTilesToPng([], polygon, context),
+      null,
+      'empty exports remain empty'
+    );
+  } finally {
+    createElement.restore();
+    if (imageDataDescriptor) {
+      Object.defineProperty(globalThis, 'ImageData', imageDataDescriptor);
+    } else {
+      delete globalThis.ImageData;
+    }
+    t.end();
+  }
+});
+
 test('#RasterTileLayer -> only image blobs are treated as downloadable PNGs', t => {
   t.ok(
     isDownloadableImageBlob({type: 'image/png', size: 12}),
