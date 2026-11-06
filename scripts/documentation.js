@@ -3,10 +3,9 @@
 
 import documentation from 'documentation';
 import fs from 'fs';
-import {resolve, join} from 'path';
+import {resolve, join, basename, extname, dirname} from 'path';
 import {logSuccess, logProgress, logOk, logStep, logError} from './log';
 import remark from 'remark';
-import toc from 'remark-toc';
 import unified from 'unified';
 import markdown from 'remark-parse';
 import actionTableMaker from './action-table-maker';
@@ -38,14 +37,14 @@ const TREE = {
       children: [
         {
           input: [
-            '../constants/action-types.js',
-            'actions.js',
-            'action-wrapper.js',
-            'vis-state-actions.js',
-            'ui-state-actions.js',
-            'map-state-actions.js',
-            'map-style-actions.js',
-            'identity-actions.js'
+            'src/action-types.ts',
+            'src/actions.ts',
+            'src/action-wrapper.ts',
+            'src/vis-state-actions.ts',
+            'src/ui-state-actions.ts',
+            'src/map-state-actions.ts',
+            'src/map-style-actions.ts',
+            'src/identity-actions.ts'
           ],
           output: 'actions.md',
           config: {shallow: true}
@@ -55,21 +54,21 @@ const TREE = {
     {
       path: 'reducers',
       children: [
-        {input: ['root.js', 'core.js'], output: 'reducers.md', config: {shallow: true}},
-        {input: 'combined-updaters.js', output: 'combine.md', config: {shallow: true}},
-        {input: 'vis-state-updaters.js', output: 'vis-state.md', config: {shallow: true}},
-        {input: 'map-state-updaters.js', output: 'map-state.md', config: {shallow: true}},
-        {input: 'map-style-updaters.js', output: 'map-style.md', config: {shallow: true}},
-        {input: 'ui-state-updaters.js', output: 'ui-state.md', config: {shallow: true}}
+        {input: ['src/root.ts', 'src/core.ts'], output: 'reducers.md', config: {shallow: true}},
+        {input: 'src/combined-updaters.ts', output: 'combine.md', config: {shallow: true}},
+        {input: 'src/vis-state-updaters.ts', output: 'vis-state.md', config: {shallow: true}},
+        {input: 'src/map-state-updaters.ts', output: 'map-state.md', config: {shallow: true}},
+        {input: 'src/map-style-updaters.ts', output: 'map-style.md', config: {shallow: true}},
+        {input: 'src/ui-state-updaters.ts', output: 'ui-state.md', config: {shallow: true}}
       ]
     },
     {
       path: 'processors',
-      children: [{input: 'data-processor.js', output: 'processors.md', config: {shallow: true}}]
+      children: [{input: 'src/data-processor.ts', output: 'processors.md', config: {shallow: true}}]
     },
     {
       path: 'cloud-providers',
-      children: [{input: 'provider.js', output: 'cloud-provider.md', config: {shallow: true}}]
+      children: [{input: 'src/provider.ts', output: 'cloud-provider.md', config: {shallow: true}}]
     }
   ]
 };
@@ -77,9 +76,7 @@ const TREE = {
 function _overrideHeading(nodes) {
   const contents = ['Examples', 'Parameters'];
   const mdContents = contents.map(text => {
-    return unified()
-      .use(markdown)
-      .parse(`__${text}__`);
+    return unified().use(markdown).parse(`__${text}__`);
   });
 
   return nodes.map(node => {
@@ -116,15 +113,16 @@ function _appendActionTypesAndUpdatersToActions(node, actionMap) {
   const updaterList = updaters
     .map(
       ({updater, name, path}) =>
-        `[${BT}${updater}.${name}${BT}](../reducers/${path.split('/')[2].replace('.js', '')}.md#${(
-          updater + name
-        ).toLowerCase()})`
+        `[${BT}${updater}.${name}${BT}](../reducers/${basename(
+          path,
+          extname(path)
+        )}.md#${name.toLowerCase()})`
     )
     .join(', ');
 
   const mdContent = `
   * __ActionTypes__: [${BT}ActionTypes.${actionType}${BT}](#actiontypes)
-  * __Updaters__: ${updaterList}
+  ${updaterList ? `* __Updaters__: ${updaterList}` : ''}
   `;
 
   return _appendListToDescription(node, mdContent);
@@ -159,9 +157,7 @@ function _appendActionToUpdaters(node, actionMap) {
 }
 
 function _appendListToDescription(node, mdContent) {
-  const tree = unified()
-    .use(markdown)
-    .parse(mdContent);
+  const tree = unified().use(markdown).parse(mdContent);
 
   if (typeof node.description === 'object') {
     node.description.children = (node.description.children || []).concat(tree.children);
@@ -225,91 +221,99 @@ function _cleanUpTOCChildren(node) {
   };
 }
 
-function buildChildDoc(inputPath, outputPath, actionMap, config) {
-  return documentation
-    .build(inputPath, {...INPUT_CONFIG, ...config})
-    .then(res => {
-      // res is an array of parsed comments with inferred properties
-      // and more: everything you need to build documentation or
-      // any other kind of code data.
-      let processed = res;
+function buildChildDoc({inputPaths, outputPath, comments}, actionMap) {
+  let processed = comments;
+  if (outputPath.includes('actions.md')) {
+    processed = comments.map(node => _appendActionTypesAndUpdatersToActions(node, actionMap));
+  } else if (inputPaths.some(p => p.includes('reducers'))) {
+    processed = comments.map(node => _appendActionToUpdaters(node, actionMap));
+  }
 
-      if (outputPath.includes('actions.md')) {
-        // add action type and updater links to action
-        processed = res.map(node => _appendActionTypesAndUpdatersToActions(node, actionMap));
-      } else if (inputPath.some(p => p.includes('reducers'))) {
-        // add action type and updater links to action
-        processed = res.map(node => _appendActionToUpdaters(node, actionMap));
-      }
-
-      return documentation.formats.remark(processed, OUT_CONFIG);
-    })
-    .then(output => {
-      // output is a string of remark json
-      const ast = JSON.parse(output);
-
-      ast.children = _overrideHeading(ast.children);
-      if (ast.children.length < 3) {
-        logError(inputPath, 'has less than 3 children');
-      }
-      const tableOfContent = _cleanUpTOCChildren(ast.children[2]);
-      ast.children[2] = tableOfContent;
-
-      const mdOutput = remark().stringify(ast);
-      fs.writeFileSync(outputPath, mdOutput);
-      logOk(`   ✓ build docs ${inputPath} -> ${outputPath}`);
-    })
-    .catch(err => {
-      logError(err);
-    });
+  return documentation.formats.remark(processed, OUT_CONFIG).then(output => {
+    const ast = JSON.parse(output);
+    ast.children = _overrideHeading(ast.children);
+    if (ast.children[2]) {
+      ast.children[2] = _cleanUpTOCChildren(ast.children[2]);
+    }
+    ast.children = ast.children.filter(Boolean);
+    const mdOutput = remark().stringify(ast);
+    fs.mkdirSync(dirname(outputPath), {recursive: true});
+    fs.writeFileSync(outputPath, mdOutput);
+    logOk(`   ✓ build docs ${inputPaths} -> ${outputPath}`);
+  });
 }
 
-function buildMdDocs(nodePath, node, actionMap, allTasks) {
+// Only cross-link symbols that are actually included in the public API pages.
+function documentedNames(comments) {
+  return comments.flatMap(node => [node.name, ...documentedNames(node.members?.static || [])]);
+}
+
+function buildMdDocs(nodePath, node, allTasks) {
   const {path, children} = node;
   const joinPath = nodePath ? `${nodePath}/${path}` : path;
 
   children.forEach(child => {
     if (!child.children) {
       const {input, output, config} = child;
-      const inputPaths = (Array.isArray(input) ? input : [input]).reduce((accu, inp) => {
+      const inputPaths = (Array.isArray(input) ? input : [input]).map(inp => {
         const inputPath = join(PATHS.src, joinPath, inp);
-
-        if (fs.existsSync(inputPath)) {
-          // Do something
-          accu.push(inputPath);
-        } else {
-          logError(`[Error] ${inputPath} doesn't exist!`);
+        if (!fs.existsSync(inputPath)) {
+          throw new Error(`${inputPath} doesn't exist!`);
         }
-
-        return accu;
-      }, []);
-
-      if (!inputPaths.length) {
-        return;
-      }
+        return inputPath;
+      });
       const outputPath = join(PATHS.api, joinPath, output);
 
-      allTasks.push(buildChildDoc(inputPaths, outputPath, actionMap, config));
+      allTasks.push({inputPaths, outputPath, config});
     } else {
-      buildMdDocs(joinPath, child, actionMap, allTasks);
+      buildMdDocs(joinPath, child, allTasks);
     }
   });
 
   return allTasks;
 }
 
-function buildDocs() {
+async function buildDocs() {
   logProgress('\n================= Start Building API Documentation =================\n');
 
   logStep('   ## 1. Gathering action and updater mapping');
   const actionMap = actionTableMaker();
 
   logStep('   ## 2. Build Markdown files from jsDoc');
-  const allTasks = buildMdDocs(null, TREE, actionMap, []);
+  const allTasks = buildMdDocs(null, TREE, []);
+  const pages = await Promise.all(
+    allTasks.map(async page => ({
+      ...page,
+      comments: await documentation.build(page.inputPaths, {...INPUT_CONFIG, ...page.config})
+    }))
+  );
+  const symbols = new Map(
+    pages.map(page => [page.outputPath, new Set(documentedNames(page.comments))])
+  );
+  const publicActions = symbols.get(join(PATHS.api, 'actions/actions.md'));
+  const publicActionMap = Object.fromEntries(
+    Object.entries(actionMap)
+      .filter(([name]) => publicActions.has(name))
+      .map(([name, action]) => [
+        name,
+        {
+          ...action,
+          updaters: action.updaters.filter(updater =>
+            symbols
+              .get(
+                join(PATHS.api, 'reducers', `${basename(updater.path, extname(updater.path))}.md`)
+              )
+              ?.has(updater.name)
+          )
+        }
+      ])
+  );
 
-  Promise.all(allTasks).then(() => {
-    logSuccess('\n================= Building API Documentation Success! =================\n');
-  });
+  await Promise.all(pages.map(page => buildChildDoc(page, publicActionMap)));
+  logSuccess('\n================= Building API Documentation Success! =================\n');
 }
 
-buildDocs();
+buildDocs().catch(err => {
+  logError(err);
+  process.exitCode = 1;
+});

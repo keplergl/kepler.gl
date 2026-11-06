@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import fs from 'fs';
-import {resolve, join} from 'path';
+import {join} from 'path';
 import traverse from '@babel/traverse';
 import * as parser from '@babel/parser';
 import {walkSync} from './ast-helper';
@@ -10,10 +10,10 @@ import {walkSync} from './ast-helper';
 const SRC_DIR = './src';
 const entries = [
   // action to type mapping
-  join(SRC_DIR, 'actions'),
+  join(SRC_DIR, 'actions/src'),
 
   // type to updater mapping
-  join(SRC_DIR, 'reducers')
+  join(SRC_DIR, 'reducers/src')
 ];
 
 /**
@@ -30,6 +30,9 @@ export function buildActionTable() {
   });
 
   return Object.keys(actionTypeMap).reduce((accu, type) => {
+    if (!actionTypeMap[type].action) {
+      return accu;
+    }
     accu[actionTypeMap[type].action.name] = {
       ...actionTypeMap[type].action,
       updaters: actionTypeMap[type].updaters,
@@ -51,7 +54,6 @@ function createActionNode(actionType) {
  * @param {string} filePath
  */
 function addActionHandler(path, actionMap, filePath) {
-
   const {init} = path.node;
 
   if (init && Array.isArray(init.properties)) {
@@ -68,7 +70,7 @@ function addActionHandler(path, actionMap, filePath) {
           path: filePath
         });
       }
-    })
+    });
   }
 }
 
@@ -79,17 +81,18 @@ function addActionHandler(path, actionMap, filePath) {
  * @param {*} filePath
  */
 function addActionCreator(path, actionMap, filePath) {
-
   const {node, parentPath} = path;
   if (node.arguments.length && parentPath.node && parentPath.node.id) {
-
     const action = parentPath.node.id.name;
     const firstArg = node.arguments[0];
     const actionType = firstArg.property ? firstArg.property.name : firstArg.name;
 
-    const {loc} = parentPath.node
+    const {loc} = parentPath.node;
     actionMap[actionType] = actionMap[actionType] || createActionNode(actionType);
-    actionMap[actionType].action = {name: action, path: `${filePath}#L${loc.start.line}-L${loc.end.line}`};
+    actionMap[actionType].action = {
+      name: action,
+      path: `${filePath}#L${loc.start.line}-L${loc.end.line}`
+    };
   }
 }
 
@@ -97,14 +100,25 @@ function addActionDeclaration(path, actionMap, filePath) {
   const {node} = path;
 
   const action = node.id.name;
-  const returnStatement = node.body.body[0];
-
-  const returnValue = returnStatement.argument.properties[0].value;
+  const returnStatement = node.body.body.find(
+    statement =>
+      statement.type === 'ReturnStatement' && statement.argument?.type === 'ObjectExpression'
+  );
+  const typeProperty = returnStatement?.argument.properties.find(
+    property => property.key?.name === 'type'
+  );
+  if (!typeProperty) {
+    return;
+  }
+  const returnValue = typeProperty.value;
   const actionType = returnValue.property ? returnValue.property.name : returnValue.name;
   const {loc} = path.node;
 
   actionMap[actionType] = actionMap[actionType] || createActionNode(actionType);
-  actionMap[actionType].action = {name: action, path: `${filePath}#L${loc.start.line}-L${loc.end.line}`};
+  actionMap[actionType].action = {
+    name: action,
+    path: `${filePath}#L${loc.start.line}-L${loc.end.line}`
+  };
 }
 
 function traverseTree(filePath, actionMap = {}) {
@@ -112,7 +126,7 @@ function traverseTree(filePath, actionMap = {}) {
 
   const ast = parser.parse(content, {
     sourceType: 'module',
-    plugins: ['exportNamespaceFrom', 'exportDefaultFrom']
+    plugins: ['typescript', 'exportNamespaceFrom', 'exportDefaultFrom']
   });
 
   traverse(ast, {
@@ -122,7 +136,7 @@ function traverseTree(filePath, actionMap = {}) {
         addActionHandler(path, actionMap, filePath);
       }
     },
-    CallExpression(path)  {
+    CallExpression(path) {
       /**
        * If action is declared with createAction
        * export const togglePerspective = createAction(
@@ -141,18 +155,17 @@ function traverseTree(filePath, actionMap = {}) {
        *  return {type: ActionTypes.LAYER_CONFIG_CHANGE};
        * }
        */
-      if (filePath.endsWith('actions.js')) {
+      if (filePath.endsWith('actions.ts')) {
         const {leadingComments} = path.parentPath.node;
         if (
-          Array.isArray(leadingComments) && leadingComments[0] && leadingComments[0].value.includes('@public')
+          Array.isArray(leadingComments) &&
+          leadingComments[0] &&
+          leadingComments[0].value.includes('@public')
         ) {
           addActionDeclaration(path, actionMap, filePath);
         }
-
       }
-
     }
-
   });
 
   return actionMap;

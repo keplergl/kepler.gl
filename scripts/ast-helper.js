@@ -11,16 +11,16 @@ export function walkSync(dir, fileList = []) {
   directories.forEach(dirPath => {
     const files = fs.readdirSync(dirPath);
 
-    files.forEach((file) => {
+    files.forEach(file => {
       const path = join(dirPath, file);
 
       if (fs.statSync(path).isDirectory()) {
         fileList = walkSync(path, fileList);
-      } else if (path.endsWith('.js')){
+      } else if (/\.[jt]s$/.test(path) && !/(?:\.d|\.spec|\.test)\.ts$/.test(path)) {
         fileList.push(path);
       }
     });
   });
 
   return fileList;
-};
+}
