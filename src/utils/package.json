@@ -38,7 +38,7 @@
     "@mapbox/geo-viewport": "^0.4.1",
     "@math.gl/web-mercator": "^4.1.0",
     "@turf/boolean-intersects": "^7.2.0",
-    "@turf/boolean-within": "^7.2.0",
+    "@turf/boolean-point-in-polygon": "^7.2.0",
     "@turf/helpers": "^7.2.0",
     "@types/d3-array": "^2.8.0",
     "@types/keymirror": "^0.1.1",
