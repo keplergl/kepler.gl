@@ -208,6 +208,108 @@ test('interactionUtil -> getTooltipDisplayDeltaValue', t => {
   t.end();
 });
 
+test('interactionUtil -> getTooltipDisplayDeltaValue -> zero and invalid comparisons', t => {
+  ['integer', 'real'].forEach(type => {
+    const field = {name: 'value', type};
+
+    [0, -0].forEach(primaryValue => {
+      [10, -10, 0].forEach(value => {
+        t.equal(
+          getTooltipDisplayDeltaValue({
+            field,
+            primaryValue,
+            value,
+            compareType: COMPARE_TYPES.RELATIVE
+          }),
+          TOOLTIP_MINUS_SIGN,
+          `${type}: relative comparison of ${value} against zero is unavailable`
+        );
+      });
+    });
+
+    const validCases = [
+      {primaryValue: 0, value: 10, compareType: COMPARE_TYPES.ABSOLUTE, output: '+10'},
+      {
+        primaryValue: 0,
+        value: -10,
+        compareType: COMPARE_TYPES.ABSOLUTE,
+        output: `${TOOLTIP_MINUS_SIGN}10`
+      },
+      {primaryValue: 0, value: 0, compareType: COMPARE_TYPES.ABSOLUTE, output: '+0'},
+      {primaryValue: 0, value: 10, compareType: undefined, output: '+10'},
+      {
+        primaryValue: 10,
+        value: 0,
+        compareType: COMPARE_TYPES.RELATIVE,
+        output: `${TOOLTIP_MINUS_SIGN}100.00%`
+      },
+      {
+        primaryValue: -10,
+        value: 0,
+        compareType: COMPARE_TYPES.RELATIVE,
+        output: `${TOOLTIP_MINUS_SIGN}100.00%`
+      },
+      {
+        primaryValue: -10,
+        value: -5,
+        compareType: COMPARE_TYPES.RELATIVE,
+        output: `${TOOLTIP_MINUS_SIGN}50.00%`
+      },
+      {primaryValue: -10, value: -20, compareType: COMPARE_TYPES.RELATIVE, output: '+100.00%'},
+      {primaryValue: 10, value: 15, compareType: COMPARE_TYPES.RELATIVE, output: '+50.00%'},
+      {primaryValue: 10, value: 10, compareType: COMPARE_TYPES.RELATIVE, output: '+0.00%'}
+    ];
+    validCases.forEach(({output, ...input}) => {
+      t.equal(
+        getTooltipDisplayDeltaValue({field, ...input}),
+        output,
+        `${type}: preserves ${input.compareType || 'default'} comparison of ${
+          input.value
+        } against ${input.primaryValue}`
+      );
+    });
+
+    [null, undefined, NaN, Infinity, -Infinity, '0'].forEach(invalid => {
+      [COMPARE_TYPES.RELATIVE, COMPARE_TYPES.ABSOLUTE].forEach(compareType => {
+        t.equal(
+          getTooltipDisplayDeltaValue({field, primaryValue: invalid, value: 10, compareType}),
+          TOOLTIP_MINUS_SIGN,
+          `${type}: ${compareType} comparison with invalid baseline ${invalid} is unavailable`
+        );
+        t.equal(
+          getTooltipDisplayDeltaValue({field, primaryValue: 10, value: invalid, compareType}),
+          TOOLTIP_MINUS_SIGN,
+          `${type}: ${compareType} comparison with invalid value ${invalid} is unavailable`
+        );
+      });
+    });
+
+    t.equal(
+      getTooltipDisplayDeltaValue({
+        field: {...field, displayFormat: '.2f'},
+        primaryValue: 0,
+        value: 10,
+        compareType: COMPARE_TYPES.ABSOLUTE
+      }),
+      '+10.00',
+      `${type}: absolute comparison against zero preserves the field display format`
+    );
+  });
+
+  t.equal(
+    getTooltipDisplayDeltaValue({
+      field: {name: 'value', type: 'string'},
+      primaryValue: 0,
+      value: 10,
+      compareType: COMPARE_TYPES.RELATIVE
+    }),
+    null,
+    'nonnumeric fields still have no comparison'
+  );
+
+  t.end();
+});
+
 test('interactionUtil -> getTooltipDisplayValue', t => {
   const tooltipConfig = StateWTooltipFormat.visState.interactionConfig.tooltip.config;
   const dataset = StateWTooltipFormat.visState.datasets[testGeoJsonDataId];
