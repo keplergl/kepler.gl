@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer, CompositeLayerProps, Layer, Position} from '@deck.gl/core';
+import {Accessor, CompositeLayer, CompositeLayerProps, Layer, Position} from '@deck.gl/core';
 
 import {RGBColor, RGBAColor} from '@kepler.gl/types';
 import ScatterplotIconLayer from './scatterplot-icon-layer';
@@ -24,6 +24,7 @@ export interface SvgIconLayerProps extends CompositeLayerProps {
   getIconGeometry: (i: string) => number[];
   getIcon: (d: {icon: string}) => string;
   getPosition: (d: any) => Position;
+  getAngle?: Accessor<any, number>;
   getRadius: ((d: any) => number) | number;
   getFillColor: RGBColor | RGBAColor;
 }

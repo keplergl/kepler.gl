@@ -33,6 +33,7 @@ export type IconLayerColumnsConfig = {
   lng: LayerColumn;
   altitude: LayerColumn;
   icon: LayerColumn;
+  angle?: LayerColumn;
 };
 
 type IconGeometry = object | null;
@@ -80,7 +81,20 @@ export const iconAccessor =
     dc.valueAt(d.index, icon.fieldIdx);
 
 export const iconRequiredColumns: ['lat', 'lng', 'icon'] = ['lat', 'lng', 'icon'];
-export const iconOptionalColumns: ['altitude'] = ['altitude'];
+export const iconOptionalColumns: ['altitude', 'angle'] = ['altitude', 'angle'];
+
+/** Raw degrees, counter-clockwise. Do not scale angles by the dataset domain. */
+export const iconAngleAccessor =
+  ({angle}: IconLayerColumnsConfig) =>
+  (dc: DataContainerInterface) => {
+    if (!angle || angle.fieldIdx < 0) return 0;
+    return (d: {index: number}) => {
+      const value = dc.valueAt(d.index, angle.fieldIdx);
+      // Arrow integer columns can return bigint. Reduce before converting to avoid precision loss.
+      const degrees = typeof value === 'bigint' ? Number(value % BigInt(360)) : value;
+      return Number.isFinite(degrees) ? degrees % 360 : 0;
+    };
+  };
 
 export const pointVisConfigs: {
   radius: 'radius';
@@ -452,6 +466,7 @@ export default class IconLayer extends Layer {
     return {
       data,
       getPosition,
+      getAngle: iconAngleAccessor(this.config.columns)(dataContainer),
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       textLabels,
       ...accessors
@@ -491,6 +506,7 @@ export default class IconLayer extends Layer {
 
     const updateTriggers = {
       getPosition: this.config.columns,
+      getAngle: this.config.columns.angle,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       ...this.getVisualChannelUpdateTriggers()
     };
@@ -566,6 +582,8 @@ export default class IconLayer extends Layer {
               parameters,
               getPosition: data.getPosition,
               getRadius: data.getRadius,
+              getAngle: data.getAngle,
+              updateTriggers,
               getFillColor: this.config.highlightColor,
               getIconGeometry
             })

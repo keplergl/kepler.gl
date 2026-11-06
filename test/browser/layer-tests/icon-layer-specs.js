@@ -2,6 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import * as arrow from 'apache-arrow';
+import {LayerManager, MapView} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {visStateSchemaV1} from '@kepler.gl/schemas';
+import {iconAngleAccessor} from '../../../src/layers/src/icon-layer/icon-layer';
 import React from 'react';
 import {mount} from 'enzyme';
 import Window from 'global/window';
@@ -10,7 +15,12 @@ import sinonStubPromise from 'sinon-stub-promise';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
+import {
+  getApplicationConfig,
+  initApplicationConfig,
+  createDataContainer,
+  DataForm
+} from '@kepler.gl/utils';
 import {
   DEFAULT_TEXT_LABEL,
   GEOCODER_LAYER_ID,
@@ -24,6 +34,7 @@ import {
   testCreateLayerFromConfig,
   testFormatLayerDataCases,
   testRenderLayerCases,
+  testRenderDeckLayer,
   preparedDataset,
   dataId,
   testRows,
@@ -273,7 +284,8 @@ test('#IconLayer -> formatLayerData', t => {
           getFilterValue: () => {},
           getFillColor: () => {},
           getRadius: () => {},
-          getPosition: () => {}
+          getPosition: () => {},
+          getAngle: 0
         };
         t.deepEqual(
           Object.keys(layerData).sort(),
@@ -719,5 +731,188 @@ test('#IconLayer -> clicked icons stay highlighted after the pointer leaves', t 
     );
   }
   t.notOk(layer.hasHoveredObject({...pick, picked: false}), 'unpicked icons do not highlight');
+  t.end();
+});
+
+test('#IconLayer -> raw angle values and invalid values', t => {
+  const layer = new IconLayer({dataId});
+  const values = [0, 90, -90, 450, null, undefined, NaN, Infinity, -Infinity, '90', false];
+  const rows = createDataContainer(values.map(value => [value]));
+  t.equal(
+    iconAngleAccessor(layer.config.columns)(rows),
+    0,
+    'legacy maps have constant zero rotation'
+  );
+  t.equal(layer.config.columns.angle.optional, true, 'the angle column is optional');
+  layer.updateLayerConfig({
+    columns: {...layer.config.columns, angle: {value: 'angle', fieldIdx: 0}}
+  });
+  const accessor = iconAngleAccessor(layer.config.columns)(rows);
+  t.deepEqual(
+    values.map((_, index) => accessor({index})),
+    [0, 90, -90, 90, 0, 0, 0, 0, 0, 0, 0],
+    'angles are degrees without domain scaling and invalid values stay unrotated'
+  );
+
+  const floats = arrow
+    .vectorFromArray([0, 90], new arrow.Float64())
+    .concat(arrow.vectorFromArray([-90, null, NaN, Infinity], new arrow.Float64()));
+  const arrowRows = createDataContainer([floats], {inputDataFormat: DataForm.COLS_ARRAY});
+  const arrowAccessor = iconAngleAccessor(layer.config.columns)(arrowRows);
+  t.deepEqual(
+    [0, 1, 2, 3, 4, 5].map(index => arrowAccessor({index})),
+    [0, 90, -90, 0, 0, 0],
+    'Arrow values, including later record batches and nulls, retain row alignment'
+  );
+  const large = BigInt('9007199254740993');
+  const integers = createDataContainer(
+    [arrow.vectorFromArray([BigInt(-90), large, null], new arrow.Int64())],
+    {inputDataFormat: DataForm.COLS_ARRAY}
+  );
+  const integerAccessor = iconAngleAccessor(layer.config.columns)(integers);
+  t.deepEqual(
+    [0, 1, 2].map(index => integerAccessor({index})),
+    [-90, Number(large % BigInt(360)), 0],
+    'Arrow int64 angles are reduced before lossy conversion to number'
+  );
+  t.end();
+});
+
+test('#IconLayer -> angle persistence and field changes', t => {
+  const datasets = {[dataId]: preparedDataset};
+  const layer = testCreateLayerFromConfig(t, {
+    layer: {
+      id: 'angled-icon',
+      type: 'icon',
+      config: {dataId, columns: {...columns, angle: 'trip_distance'}}
+    },
+    datasets
+  });
+  const data = layer.formatLayerData(datasets);
+  t.equal(data.getAngle(data.data[0]), testRows[0][9], 'the chosen column is used directly');
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id]
+  });
+  const savedLayer = saved.visState.layers[0];
+  t.equal(savedLayer.config.columns.angle, 'trip_distance', 'the selected column is saved by name');
+  const restored = testCreateLayerFromConfig(t, {layer: savedLayer, datasets});
+  t.equal(
+    restored.formatLayerData(datasets).getAngle(data.data[0]),
+    testRows[0][9],
+    'saved angles restore'
+  );
+
+  layer.updateLayerConfig({columns: layer.assignColumn('angle', preparedDataset.fields[7])});
+  let next = layer.formatLayerData(datasets, data);
+  t.equal(next.getAngle(next.data[0]), testRows[0][7], 'switching angle columns takes effect');
+  layer.updateLayerConfig({columns: layer.assignColumn('angle', null)});
+  next = layer.formatLayerData(datasets, next);
+  t.equal(next.getAngle, 0, 'clearing the column restores zero rotation');
+
+  // A data revision must invalidate the per-instance angle buffer even if the field stays selected.
+  layer.updateLayerConfig({columns: layer.assignColumn('angle', preparedDataset.fields[9])});
+  const updatedRows = testRows.map(row => row.slice());
+  updatedRows[0][9] = -45;
+  const updatedDataset = copyTableAndUpdate(preparedDataset, {
+    dataContainer: createDataContainer(updatedRows),
+    dataRevision: preparedDataset.dataRevision + 1
+  });
+  next = layer.formatLayerData({[dataId]: updatedDataset}, data);
+  t.notEqual(next.data, data.data, 'data changes rebuild the instance rows');
+  t.equal(next.getAngle(next.data[0]), -45, 'updated data uses the new angle');
+  t.end();
+});
+
+test('#IconLayer -> GPU angle attributes, centered geometry and highlighted icons', t => {
+  const datasets = {[dataId]: preparedDataset};
+  const layer = testCreateLayerFromConfig(t, {
+    layer: {
+      id: 'rotated-icon',
+      type: 'icon',
+      config: {dataId, columns: {...columns, angle: 'trip_distance'}}
+    },
+    datasets
+  });
+  // Deliberately off-center triangle: rotating around the origin would move its center.
+  const geometry = [1, 2, 0, 3, 2, 0, 1, 4, 0];
+  layer.iconGeometry = Object.fromEntries(
+    testRows.filter(row => row[10]).map(row => [row[10], geometry])
+  );
+  const data = layer.formatLayerData(datasets);
+  const viewport = new MapView().makeViewport({
+    width: 800,
+    height: 600,
+    viewState: {...INITIAL_MAP_STATE, bearing: 45, pitch: 30}
+  });
+  const manager = new LayerManager(device, {viewport});
+  const render = objectHovered =>
+    layer.renderLayer({
+      data,
+      idx: 0,
+      layerInteraction: {},
+      mapState: {...INITIAL_MAP_STATE, bearing: 45, pitch: 30},
+      gpuFilter: preparedDataset.gpuFilter,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      visible: true,
+      layerCallbacks: {},
+      objectHovered
+    });
+  try {
+    for (const billboard of [false, true]) {
+      layer.updateLayerVisConfig({billboard, fixedRadius: billboard});
+      const [base] = render();
+      const pick = {picked: true, layer: base, object: data.data[0], index: 0};
+      const deckLayers = render(pick);
+      t.equal(
+        deckLayers[1].props.getAngle(data.data[0]),
+        data.getAngle(data.data[0]),
+        'hover/click overlay uses the same angle accessor'
+      );
+      const initialized = testRenderDeckLayer(t, 'rotated icon', deckLayers, {
+        layerManager: manager
+      });
+      const meshes = initialized.filter(
+        deckLayer => deckLayer.constructor.layerName === 'ScatterplotIconLayer'
+      );
+      t.ok(meshes.length, 'real icon sublayers are initialized');
+      for (const mesh of meshes) {
+        t.deepEqual(
+          Array.from(
+            mesh
+              .getAttributeManager()
+              .getAttributes()
+              .instanceAngles.value.slice(0, mesh.props.data.length)
+          ),
+          Array.from(new Float32Array(mesh.props.data.map(data.getAngle))),
+          'each icon group and highlight uploads its row angles to the GPU attribute'
+        );
+        t.deepEqual(
+          mesh.state.model.shaderInputs.getUniformValues().globeMode.iconCenter,
+          [2, 3],
+          'asymmetric mesh rotation uses its bounding-box center'
+        );
+        t.equal(mesh.props.billboard, billboard, 'rotation retains the selected projection mode');
+      }
+      // Reuse the same grouped rows to check deck.gl accessor invalidation, independently of data changes.
+      const changed = deckLayers[0].clone({
+        getAngle: () => -90,
+        updateTriggers: {...deckLayers[0].props.updateTriggers, getAngle: 'replacement'}
+      });
+      const refreshed = testRenderDeckLayer(t, 'updated icon', [changed], {layerManager: manager});
+      for (const mesh of refreshed.filter(
+        deckLayer => deckLayer.constructor.layerName === 'ScatterplotIconLayer'
+      )) {
+        t.equal(
+          mesh.getAttributeManager().getAttributes().instanceAngles.value[0],
+          -90,
+          'angle trigger refreshes unchanged grouped rows'
+        );
+      }
+    }
+  } finally {
+    manager.finalize();
+  }
   t.end();
 });
