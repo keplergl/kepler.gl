@@ -19,11 +19,16 @@ import testArcData, {arcFromHex, arcFromNeighbor} from 'test/fixtures/test-arc-d
 import {StateWArcNeighbors} from 'test/helpers/mock-state';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {copyTableAndUpdate, KeplerTable, assignGpuChannels} from '@kepler.gl/table';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {cellToLatLng} from 'h3-js';
-import {convertStructToFixedSizeList} from '@kepler.gl/utils';
-import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {
+  convertStructToFixedSizeList,
+  generatePolygonFilter,
+  getDefaultFilter,
+  getPolygonFilterFunctor
+} from '@kepler.gl/utils';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, setFilterUpdater} from '@kepler.gl/reducers';
 
 const {ArcLayer, LineLayer} = KeplerGlLayers;
 const columns = {
@@ -872,4 +877,219 @@ test('#ArcLayer -> renderLayer', t => {
 
   testRenderLayerCases(t, ArcLayer, TEST_CASES);
   t.end();
+});
+
+[ArcLayer, LineLayer].forEach(LayerClass => {
+  test(`#${LayerClass.name} -> polygon filters neighbor source rows`, async t => {
+    const dataset = new KeplerTable({info: {id: 'neighbor-polygon'}, color: [0, 0, 0]});
+    await dataset.importData({
+      data: {
+        fields: [
+          {name: 'lng', type: 'real'},
+          {name: 'lat', type: 'real'},
+          {name: 'neighbors', type: 'array'},
+          {name: 'value', type: 'integer'}
+        ],
+        rows: [
+          [0, 0, [1, 2, 3], 10],
+          [0.5, 0.5, [0], 20],
+          [5, 5, [0], 30],
+          [null, 0, [0], 40],
+          [0, 0, [], 50]
+        ]
+      }
+    });
+    const layer = new LayerClass({
+      dataId: dataset.id,
+      columnMode: 'neighbors',
+      columns: {
+        lng: {value: 'lng', fieldIdx: 0},
+        lat: {value: 'lat', fieldIdx: 1},
+        neighbors: {value: 'neighbors', fieldIdx: 2}
+      }
+    });
+    const other = new LayerClass({...layer.config});
+    const layers = [layer, other];
+    const polygon = generatePolygonFilter([layer], {
+      type: 'Feature',
+      id: 'neighbor-boundary',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-1, -1],
+            [1, -1],
+            [1, 1],
+            [-1, 1],
+            [-1, -1]
+          ]
+        ]
+      }
+    });
+    dataset.filterTable([], layers);
+    const datasets = {[dataset.id]: dataset};
+    const original = layer.formatLayerData(datasets);
+    const splitMaps = [
+      {id: 'left', layers: {[layer.id]: true}},
+      {id: 'right', layers: {[other.id]: true}}
+    ];
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers,
+      layerData: [original, other.formatLayerData(datasets)],
+      layerOrder: layers.map(l => l.id),
+      splitMaps,
+      filters: [{...polygon, enabled: false}]
+    };
+    state = setFilterUpdater(state, {idx: 0, prop: 'enabled', value: true});
+    t.deepEqual(
+      state.datasets[dataset.id].filteredIndexByLayer[layer.id],
+      [0, 1, 4],
+      'keeps inside sources, including one with no neighbors'
+    );
+    const data = state.layerData[0];
+    t.deepEqual(
+      data.data.map(d => d.index),
+      [0, 0, 1],
+      'keeps all valid outgoing links of inside sources'
+    );
+    t.deepEqual(
+      data.data[1]?.targetPosition,
+      [5, 5, 0],
+      'retains outside targets, as other source-row filters do'
+    );
+    t.deepEqual(
+      state.layerData[1].data,
+      original.data,
+      'does not filter an untargeted sibling layer'
+    );
+    t.deepEqual(state.splitMaps, splitMaps, 'preserves split-map layer selection');
+    const render = visible =>
+      layer.renderLayer({
+        data,
+        dataset: state.datasets[dataset.id],
+        gpuFilter: state.datasets[dataset.id].gpuFilter,
+        interactionConfig: state.interactionConfig,
+        mapState: INITIAL_MAP_STATE,
+        visible,
+        idx: 0
+      })[0];
+    t.equal(render(true).props.data, data.data, 'renders the filtered links');
+    t.equal(render(false).props.visible, false, 'respects split-map visibility');
+    if (data.data.length) {
+      t.deepEqual(
+        layer.getHoverData(data.data[1], dataset.dataContainer),
+        dataset.dataContainer.row(0),
+        'picking resolves the source row, not the target'
+      );
+    }
+    state = setFilterUpdater(state, {idx: 0, prop: 'inverted', value: true});
+    t.deepEqual(
+      state.layerData[0].data.map(d => d.index),
+      [2],
+      'inversion retains valid outside-source links'
+    );
+    state = setFilterUpdater(state, {idx: 0, prop: 'enabled', value: false});
+    t.deepEqual(state.layerData[0].data, original.data, 'disabling restores links');
+    dataset.filterTable([], layers);
+    t.deepEqual(layer.formatLayerData(datasets).data, original.data, 'clearing restores links');
+
+    for (const gpu of [false, true]) {
+      const range = {
+        ...getDefaultFilter({dataId: [dataset.id]}),
+        type: 'range',
+        name: ['value'],
+        fieldIdx: [3],
+        value: [0, 15],
+        domain: [0, 50],
+        gpu
+      };
+      const filters = assignGpuChannels([polygon, range]);
+      dataset.filterTable(filters, layers);
+      const filtered = layer.formatLayerData(datasets);
+      const visibleLinks = gpu
+        ? filtered.data.filter(d => filtered.getFilterValue(d)[0] <= 15)
+        : filtered.data;
+      t.deepEqual(
+        visibleLinks.map(d => d.index),
+        [0, 0],
+        `combines source polygon and ${gpu ? 'GPU' : 'CPU'} numeric filtering`
+      );
+      dataset.filterTableCPU(filters, layers);
+      t.deepEqual(dataset.filteredIdxCPU, [0], 'CPU export uses the same filtered source row');
+    }
+    t.end();
+  });
+
+  test(`#${LayerClass.name} -> polygon source filtering with Arrow and invalid coordinates`, async t => {
+    const table = new arrow.Table({
+      lng: arrow.vectorFromArray([0, 5, null, NaN, Infinity], new arrow.Float64()),
+      lat: arrow.vectorFromArray([0, 5, 0, 0, 0], new arrow.Float64())
+    });
+    const dataset = new KeplerTable({info: {id: 'neighbor-arrow-polygon'}, color: [0, 0, 0]});
+    await dataset.importData({
+      data: {
+        fields: arrowSchemaToFields(table),
+        cols: table.schema.fields.map((field, index) => table.getChildAt(index))
+      }
+    });
+    const layer = new LayerClass({
+      dataId: dataset.id,
+      columnMode: 'neighbors',
+      columns: {lng: {value: 'lng', fieldIdx: 0}, lat: {value: 'lat', fieldIdx: 1}}
+    });
+    const filter = {
+      value: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-1, -1],
+              [1, -1],
+              [1, 1],
+              [-1, 1],
+              [-1, -1]
+            ]
+          ]
+        }
+      }
+    };
+    const matches = getPolygonFilterFunctor(layer, filter, dataset.dataContainer);
+    t.deepEqual(
+      [0, 1, 2, 3, 4].map(index => matches({index})),
+      [true, false, false, false, false],
+      'tests Arrow source coordinates without accepting null, NaN or infinity'
+    );
+    for (const columnMode of ['points', 'geoarrow']) {
+      const bothEndpoints = getPolygonFilterFunctor(
+        {
+          type: layer.type,
+          config: {columnMode},
+          getPositionAccessor: () => d => d.position
+        },
+        filter,
+        null
+      );
+      t.equal(
+        bothEndpoints({position: [0, 0, 0, 0.5, 0.5, 0]}),
+        true,
+        `${columnMode} keeps both endpoints inside`
+      );
+      t.equal(
+        bothEndpoints({position: [0, 0, 0, 5, 5, 0]}),
+        false,
+        `${columnMode} still rejects an outside target`
+      );
+      t.equal(
+        bothEndpoints({position: [0, 0, 0]}),
+        false,
+        `${columnMode} still rejects a missing target`
+      );
+    }
+    t.end();
+  });
 });
