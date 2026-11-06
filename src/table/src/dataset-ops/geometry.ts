@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {cellToParent, h3GetResolution, h3IsValid, latLngToCell} from '@kepler.gl/common-utils';
-import {isInPolygon} from '@kepler.gl/utils';
+import {booleanWithin} from '@turf/boolean-within';
 import {parseSync} from '@loaders.gl/core';
 import {WKTLoader} from '@loaders.gl/wkt';
 import type {Feature, Geometry, Position} from 'geojson';
@@ -175,7 +175,8 @@ export function isPolygonFeature(feature: Feature | null): boolean {
 }
 
 export function polygonContainsPoint(polygon: Feature, lngLat: [number, number]): boolean {
-  return isInPolygon(lngLat, polygon);
+  // Spatial joins use strict within semantics, unlike inclusive polygon filters.
+  return booleanWithin({type: 'Point', coordinates: lngLat}, polygon);
 }
 
 export function h3ContainsPoint(h3Index: unknown, lngLat: [number, number]): boolean {

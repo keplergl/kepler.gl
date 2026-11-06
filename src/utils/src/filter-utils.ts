@@ -6,7 +6,7 @@ import get from 'es-toolkit/compat/get';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {ascending, extent} from 'd3-array';
 
-import {booleanWithin} from '@turf/boolean-within';
+import {booleanPointInPolygon} from '@turf/boolean-point-in-polygon';
 import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {
@@ -1175,16 +1175,16 @@ export function isInRange(val: any, domain: number[]): boolean {
 }
 
 /**
- * Determines whether a point is within the provided polygon
+ * Determines whether a point is inside or on the boundary of the provided polygon
  *
- * @param point as input search [lat, lng]
+ * @param point as input search [lng, lat]
  * @param polygon Points must be within these (Multi)Polygon(s)
  * @return {boolean}
  */
 export function isInPolygon(point: number[], polygon: any): boolean {
   // turfPoint requires a plain array; Arrow accessors can return typed arrays
   const lngLat = Array.isArray(point) ? point : [Number(point[0]), Number(point[1])];
-  return booleanWithin(turfPoint(lngLat), polygon);
+  return booleanPointInPolygon(turfPoint(lngLat), polygon, {ignoreBoundary: false});
 }
 export function getTimeWidgetTitleFormatter(domain: [number, number]): string | null {
   if (!isValidTimeDomain(domain)) {

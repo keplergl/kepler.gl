@@ -741,6 +741,76 @@ test('filterUtils -> mergeFilterWithTimeline', t => {
   t.end();
 });
 
+test('filterUtils -> polygon filters include boundaries', t => {
+  const ring = [
+    [0, 0],
+    [2, 0],
+    [2, 2],
+    [0, 2],
+    [0, 0]
+  ];
+  const polygon = {type: 'Polygon', coordinates: [ring]};
+  const feature = {type: 'Feature', properties: {}, geometry: polygon};
+  [
+    [1, 0],
+    [2, 1],
+    [1, 2],
+    [0, 1],
+    [0, 0],
+    [2, 2],
+    [1, 1]
+  ].forEach(point => {
+    t.equal(isInPolygon(point, polygon), true, `includes ${point}`);
+    t.equal(isInPolygon(point, feature), true, `includes feature point ${point}`);
+  });
+  t.equal(isInPolygon([1, -Number.EPSILON], polygon), false, 'no boundary tolerance outside');
+  t.equal(isInPolygon(new Float64Array([1, 0]), polygon), true, 'typed array on edge');
+
+  const hole = [
+    [0.5, 0.5],
+    [0.5, 1.5],
+    [1.5, 1.5],
+    [1.5, 0.5],
+    [0.5, 0.5]
+  ];
+  const holed = {type: 'Polygon', coordinates: [ring, hole]};
+  t.equal(isInPolygon([1, 1], holed), false, 'hole interior stays excluded');
+  t.equal(isInPolygon([0.5, 1], holed), true, 'hole edge is polygon boundary');
+  t.equal(isInPolygon([0.5, 0.5], holed), true, 'hole vertex is polygon boundary');
+  t.equal(isInPolygon([0.25, 1], holed), true, 'polygon interior stays included');
+
+  const multiPolygon = {
+    type: 'MultiPolygon',
+    coordinates: [[ring, hole], [ring.map(([x, y]) => [x + 4, y])]]
+  };
+  t.equal(isInPolygon([1, 1], multiPolygon), false, 'multipolygon hole stays excluded');
+  t.equal(isInPolygon([5, 0], multiPolygon), true, 'second polygon edge included');
+  t.equal(isInPolygon([6, 2], multiPolygon), true, 'second polygon vertex included');
+  t.equal(isInPolygon([5, 1], multiPolygon), true, 'second polygon interior included');
+  t.equal(isInPolygon([3, 1], multiPolygon), false, 'gap between polygons excluded');
+
+  ['point', 'grid', 'hexagon', 'cluster'].forEach(type => {
+    const fn = getPolygonFilterFunctor(
+      {type, getPositionAccessor: () => d => d.position},
+      {value: feature},
+      null
+    );
+    t.equal(fn({position: [1, 0]}), true, `${type} keeps edge`);
+    t.equal(fn({position: [3, 0]}), false, `${type} excludes outside`);
+  });
+  ['arc', 'line'].forEach(type => {
+    const fn = getPolygonFilterFunctor(
+      {type, getPositionAccessor: () => d => d.position},
+      {value: feature},
+      null
+    );
+    t.equal(fn({position: [1, 0, 0, 2, 2, 0]}), true, `${type} keeps boundary endpoints`);
+    t.equal(fn({position: [1, 0, 0, 3, 1, 0]}), false, `${type} requires destination inside`);
+    t.equal(fn({position: [3, 1, 0, 1, 0, 0]}), false, `${type} requires source inside`);
+  });
+  t.end();
+});
+
 test('filterUtils -> getPolygonFilterFunctor -> point layer with dataToFeature (GeoJSON column mode)', t => {
   const squarePolygon = {
     type: 'Feature',
