@@ -2035,6 +2035,71 @@ test('#RasterTileLayer -> SAVI uses the soil adjustment multiplier in CPU and sh
   t.end();
 });
 
+test('#RasterTileLayer -> spectral indices discard undefined values and preserve valid boundaries', t => {
+  // Execute the shipped scalar GLSL, translating discard into a distinct result.
+  // This tests arithmetic and fragment rejection, not GPU rendering or precision.
+  const discarded = Symbol('discarded fragment');
+  const cases = [
+    {
+      bandCombination: 'normalizedDifference',
+      module: RasterWebGL.normalizedDifference,
+      values: [
+        [0, 0, null],
+        [1, -1, null],
+        [-1, 1, null],
+        [0.8, 0.2, 0.6],
+        [0.2, 0.8, -0.6],
+        [0.5, 0.5, 0],
+        [0, 1, -1],
+        [1, 0, 1],
+        [-2, -1, 1 / 3],
+        [1e-6, 2e-6, -1 / 3]
+      ]
+    },
+    {
+      bandCombination: 'modifiedSoilAdjustedVegetationIndex',
+      module: RasterWebGL.modifiedSoilAdjustedVegetationIndex,
+      values: [
+        [0.5, -0.125, null],
+        [0, -1, null],
+        [0.5, 0, 1],
+        [0.5, 0.000001, (2 - Math.sqrt(0.000008)) / 2],
+        [0, 0, 0],
+        [0.5, 0.5, 0],
+        [1, 0, 1],
+        [0, 1, -1],
+        [0.8, 0.2, (2.6 - Math.sqrt(1.96)) / 2]
+      ]
+    }
+  ];
+  for (const {bandCombination, module, values} of cases) {
+    const {modules} = getModules({images: {}, props: {bandCombination}});
+    t.ok(modules.includes(module), `${bandCombination} selects the guarded shader`);
+    const body = module.fs.match(/\{([\s\S]*)\}/)[1];
+    const evaluate = new Function(
+      'image',
+      'sqrt',
+      'discarded',
+      body.replace(/\bfloat\b/g, 'const').replace(/\bdiscard;/g, 'return discarded;')
+    );
+    for (const [r, g, expected] of values) {
+      const sqrt = sinon.spy(Math.sqrt);
+      const result = evaluate({r, g}, sqrt, discarded);
+      const derived = computeDerivedValue([r, g], bandCombination);
+      if (expected === null) {
+        t.equal(result, discarded, `${bandCombination} discards undefined values for ${r}, ${g}`);
+        t.equal(derived, null, 'matches the unavailable hover value');
+        t.equal(sqrt.callCount, 0, 'does not evaluate an invalid square root');
+      } else {
+        t.ok(typeof result === 'number' && Number.isFinite(result), 'keeps a finite fragment');
+        t.ok(Math.abs(result - expected) < 1e-10, 'keeps the valid index value');
+        t.ok(derived && Math.abs(result - derived.value) < 1e-10, 'matches the hover value');
+      }
+    }
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> switching STAC datasets with matching bands reloads cached imagery', async t => {
   const layer = new RasterTileLayer({id: 'stac-cache', dataId: 'raster'});
   layer.updateLayerVisConfig({enableTerrain: false, preset: 'trueColor'});

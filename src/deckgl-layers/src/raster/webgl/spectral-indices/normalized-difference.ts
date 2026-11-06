@@ -6,7 +6,10 @@ import {ShaderModule} from '../types';
 // Calculate standard normalized difference
 const fs = `\
 float normalized_difference_calc(vec4 image) {
-  return ((image.r - image.g) / (image.r + image.g));
+  float denominator = image.r + image.g;
+  // Match hover NoData handling before division and colormap lookup.
+  if (denominator == 0.) discard;
+  return (image.r - image.g) / denominator;
 }
 `;
 

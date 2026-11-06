@@ -16,6 +16,8 @@ float modified_soil_adjusted_vegetation_index_calc(vec4 image) {
   float band4 = image.g;
 
   float to_sqrt = ((2. * band5 + 1.) * (2. * band5 + 1.)) - (8. * (band5 - band4));
+  // A negative radicand is NoData; zero is a valid boundary value.
+  if (to_sqrt < 0.) discard;
   return ((2. * band5) + 1. - sqrt(to_sqrt)) / 2.;
 }
 `;
