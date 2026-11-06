@@ -83,18 +83,31 @@ function scaleBandToByte(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(255, Math.round(((value - min) / (max - min)) * 255)));
 }
 
-function getBandMinMax(data: TypedArray): [number, number] {
-  let min = Infinity;
-  let max = -Infinity;
-  for (let i = 0; i < data.length; i++) {
-    const value = data[i];
-    if (!Number.isFinite(value)) {
+function getMosaicBandRanges(tiles: TileLike[]): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  for (const tile of tiles) {
+    const bands = tile.data?.images?.imageBands;
+    if (!Array.isArray(bands)) {
       continue;
     }
-    min = Math.min(min, value);
-    max = Math.max(max, value);
+    const mask = tile.data?.images?.imageMask?.data as TypedArray | undefined;
+    for (let c = 0; c < Math.min(3, bands.length); c++) {
+      const range = (ranges[c] ||= [Infinity, -Infinity]);
+      const data = bands[c]?.data as TypedArray | undefined;
+      if (!data) {
+        continue;
+      }
+      for (let i = 0; i < data.length; i++) {
+        const value = data[i];
+        if (!Number.isFinite(value) || (mask?.[i] !== undefined && mask[i] < 1)) {
+          continue;
+        }
+        range[0] = Math.min(range[0], value);
+        range[1] = Math.max(range[1], value);
+      }
+    }
   }
-  return [min === Infinity ? 0 : min, max === -Infinity ? 1 : max];
+  return ranges.map(([min, max]) => [min === Infinity ? 0 : min, max === -Infinity ? 1 : max]);
 }
 
 function drawTileOntoCanvas(
@@ -108,7 +121,8 @@ function drawTileOntoCanvas(
     width: number;
     height: number;
     z: number;
-  }
+  },
+  getBandRanges: () => Array<[number, number]>
 ): void {
   const index = tile.index;
   const size = getTilePixelSize(tile);
@@ -147,7 +161,7 @@ function drawTileOntoCanvas(
   }
 
   const imageData = new ImageData(size.width, size.height);
-  const ranges = bands.map(band => (band?.data ? getBandMinMax(band.data) : [0, 1]));
+  const ranges = getBandRanges();
   const channelCount = Math.min(3, bands.length);
   for (let i = 0; i < size.width * size.height; i++) {
     const dest = i * 4;
@@ -235,8 +249,23 @@ export async function mosaicTilesToPng(
   }
 
   const canvasBounds = {minX, minY, maxX, maxY, width, height, z};
-  for (let i = 0; i < zoomTiles.length; i++) {
-    drawTileOntoCanvas(ctx, zoomTiles[i], canvasBounds);
+  const clipTiles = zoomTiles.filter(tile => {
+    const {index} = tile;
+    return (
+      index &&
+      getTilePixelSize(tile) &&
+      index.x / n < maxX &&
+      (index.x + 1) / n > minX &&
+      index.y / n < maxY &&
+      (index.y + 1) / n > minY
+    );
+  });
+  // Use one range per channel for the whole clip, without retaining extra pixel buffers.
+  // Defer the scan so styled RGBA exports keep their direct-draw path.
+  let bandRanges: Array<[number, number]> | undefined;
+  const getBandRanges = () => (bandRanges ||= getMosaicBandRanges(clipTiles));
+  for (let i = 0; i < clipTiles.length; i++) {
+    drawTileOntoCanvas(ctx, clipTiles[i], canvasBounds, getBandRanges);
   }
 
   return canvasToPng(canvas);
