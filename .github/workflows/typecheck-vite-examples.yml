@@ -46,7 +46,11 @@ jobs:
 
       - name: Install and typecheck
         working-directory: examples/${{ matrix.example }}
+        env:
+          # These standalone examples intentionally resolve published packages without
+          # committed lockfiles. Yarn otherwise rejects the new lockfile in CI.
+          YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
         run: |
           touch yarn.lock
-          yarn install
-          yarn tsc -b --pretty false
+          corepack yarn install
+          corepack yarn tsc -b --pretty false
