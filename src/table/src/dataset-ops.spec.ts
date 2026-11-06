@@ -2,10 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {latLngToCell} from '@kepler.gl/common-utils';
+import {getFieldsFromData, latLngToCell} from '@kepler.gl/common-utils';
 import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 import {Response} from 'node-fetch';
 import {ProtoDataset} from '@kepler.gl/types';
+import {timeToUnixMilli} from '@kepler.gl/utils';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -129,6 +130,34 @@ describe('dataset-ops engine', () => {
       expect(source.getValue('value', 0)).toBe(10n);
     }
   );
+
+  test('Group By extrema use inferred US dates and preserve them on reload', () => {
+    const values = ['09/17/2016', '12/31/2016', '01/02/2017'];
+    const fields = getFieldsFromData(values.map(value => ({group: 'west', value})), [
+      'group',
+      'value'
+    ]);
+    const dataset = new KeplerTable({info: {id: 'us-dates'}, color: [0, 0, 0]});
+    dataset.updateSchema({fields, rows: values.map(value => ['west', value])});
+    expect(dataset.fields[1].format).toBe('M/D/YYYY');
+    // Time filters and extrema share this UTC conversion, regardless of host timezone.
+    expect(values.map(value => timeToUnixMilli(value, fields[1].format))).toEqual([
+      Date.UTC(2016, 8, 17),
+      Date.UTC(2016, 11, 31),
+      Date.UTC(2017, 0, 2)
+    ]);
+    for (const [technique, expected] of [
+      ['minimum', '09/17/2016'],
+      ['maximum', '01/02/2017']
+    ] as const) {
+      const result = groupByDataset(dataset, {
+        fieldName: 'group',
+        aggregations: {value: technique}
+      });
+      expect(result.data.rows).toEqual([['west', expected]]);
+      expect(importDerived(result).fields[1].format).toBe('M/D/YYYY');
+    }
+  });
 
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({

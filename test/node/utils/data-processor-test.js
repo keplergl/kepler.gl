@@ -1484,3 +1484,20 @@ test('Processor -> processKeplerglJSON replaces display info', t => {
   );
   t.end();
 });
+
+
+test('Processor -> getFieldsFromData uses complete slash-date samples', t => {
+  for (const [values, format] of [
+    [['09/17/2016', '12/31/2016', '01/02/2017'], 'M/D/YYYY'],
+    [['1/2/2017', ' 09/17/2016 ', null, undefined], 'M/D/YYYY'],
+    [['01/02/2017', '02/03/2017'], 'M/D/YYYY'],
+    [['2016/9/17', '2017/1/2'], 'YYYY/M/D'],
+    [['2016/9/17', '01/02/2017'], 'YYYY/M/D'],
+    [['2016-9-17', '2017-1-2'], 'YYYY-M-D']
+  ]) {
+    const [field] = getFieldsFromData(values.map(date => ({date})), ['date']);
+    t.equal(field.format, format, `format for ${JSON.stringify(values)}`);
+    t.equal(field.type, 'date', 'preserves date type');
+  }
+  t.end();
+});
