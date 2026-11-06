@@ -366,7 +366,7 @@ export default class IconLayer extends Layer {
         .replace(/[_,.]+/g, ' ')
         .trim()
         .split(' ')
-        .some(seg => ICON_FIELDS.icon.some(t => t.includes(seg)))
+        .some(seg => ICON_FIELDS.icon.includes(seg))
     );
 
     if (!iconFields.length) {
