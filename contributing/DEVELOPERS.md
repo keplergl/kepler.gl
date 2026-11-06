@@ -407,6 +407,8 @@ yarn bump-version <new-version>
 
 This updates `"version"` and all `@kepler.gl/*` cross-references in every `src/*/package.json` and in the root `package.json`.
 
+Use this workflow for patch releases as well. Do not use `npm version` in the private root package: it does not update the workspace packages or their cross-references. Version preparation does not commit, tag, or push; review the changes in a PR before creating the release.
+
 2. Update **CHANGELOG.md** with the latest commit changes. Print commits with `git log --pretty=oneline --abbrev-commit`
 3. Create a new PR for review.
 4. Once the PR is reviewed and merged, pull the latest changes locally.
