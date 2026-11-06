@@ -345,6 +345,11 @@ export default class PointLayer extends Layer {
 
   dataContainer: DataContainerInterface | null = null;
   geoArrowVector: arrow.Vector | undefined = undefined;
+  // Keep only the current hover, not a growing cache of visited points.
+  private neighborHoverCache?: {
+    dependencies: unknown[];
+    data: ReturnType<typeof getNeighbors>;
+  };
   private pulseTimeCache?: {
     dataContainer: DataContainerInterface;
     dataRevision: number;
@@ -750,11 +755,12 @@ export default class PointLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
+    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers();
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...visualChannelUpdateTriggers
     };
 
     const useArrowLayer = Boolean(this.geoArrowVector);
@@ -777,15 +783,46 @@ export default class PointLayer extends Layer {
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);
     const {showNeighborOnHover, allowHover} = this.config.visConfig;
-    let neighborsData: ReturnType<typeof getNeighbors> = [];
-    if (allowHover && showNeighborOnHover && hoveredObject) {
-      // find neighbors
-      neighborsData = getNeighbors(
-        this.config.columns.neighbors,
+    let hoverData: ReturnType<typeof getNeighbors>;
+    if (allowHover && showNeighborOnHover && hoveredObject && defaultLayerProps.visible) {
+      // Arrow picking synthesizes a new object on each render. Compare its row and
+      // coordinates instead of that object's identity. Positions are geographic;
+      // pan/zoom only changes projection and radiusScale, not neighbor geometry.
+      // Filters preserve neighbor membership; styling uses updateTriggers below.
+      const dependencies = [
         dataset.dataContainer,
+        dataset.dataRevision,
+        this.config.columns,
+        this.config.columnMode,
         hoveredObject.index,
-        this.getPositionAccessor(dataset.dataContainer)
-      );
+        ...(hoveredObject.position || [])
+      ];
+      if (
+        !this.neighborHoverCache ||
+        dependencies.length !== this.neighborHoverCache.dependencies.length ||
+        dependencies.some((value, index) => value !== this.neighborHoverCache?.dependencies[index])
+      ) {
+        this.neighborHoverCache = {
+          dependencies,
+          data: [
+            ...getNeighbors(
+              this.config.columns.neighbors,
+              dataset.dataContainer,
+              hoveredObject.index,
+              this.getPositionAccessor(dataset.dataContainer)
+            ),
+            hoveredObject
+          ]
+        };
+      }
+      hoverData = this.neighborHoverCache.data;
+    } else {
+      // Split maps share this layer. A hidden pane must not evict the visible
+      // pane's cache; source/config changes are checked when it renders again.
+      if (!allowHover || !showNeighborOnHover || !hoveredObject || !this.config.isVisible) {
+        this.neighborHoverCache = undefined;
+      }
+      hoverData = hoveredObject ? [hoveredObject] : [];
     }
 
     let ScatterplotLayerClass: typeof ScatterplotLayer | typeof GeoArrowScatterplotLayer =
@@ -901,7 +938,7 @@ export default class PointLayer extends Layer {
               ...pulseProps,
               ...(continuous ? {extensions: [pulseRippleExtension]} : {}),
               visible: defaultLayerProps.visible,
-              data: [...neighborsData, hoveredObject],
+              data: hoverData,
               getLineColor: this.config.visConfig.showHighlightColor
                 ? this.config.highlightColor
                 : data.getLineColor,
@@ -909,7 +946,16 @@ export default class PointLayer extends Layer {
                 ? this.config.highlightColor
                 : data.getFillColor,
               getRadius: data.getRadius,
-              getPosition: data.getPosition
+              getPosition: data.getPosition,
+              updateTriggers: {
+                getFillColor: this.config.visConfig.showHighlightColor
+                  ? [this.config.highlightColor]
+                  : {...visualChannelUpdateTriggers.getFillColor, accessor: data.getFillColor},
+                getLineColor: this.config.visConfig.showHighlightColor
+                  ? [this.config.highlightColor]
+                  : {...visualChannelUpdateTriggers.getLineColor, accessor: data.getLineColor},
+                getRadius: {...visualChannelUpdateTriggers.getRadius, accessor: data.getRadius}
+              }
             })
           )
         : []),

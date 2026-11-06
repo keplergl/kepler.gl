@@ -3012,3 +3012,394 @@ test('#PointLayer -> Arrow timestamp units and invalid event data', async t => {
   }
   t.end();
 });
+
+test('#PointLayer -> neighbor hover reuses deck attributes and invalidates safely', async t => {
+  for (const useArrow of [false, true]) {
+    let rows = [
+      [10, 20, [1, 2], 5],
+      [30, 40, [0], 15],
+      [50, 60, [], 25]
+    ];
+    const fields = [
+      {name: 'lng', type: 'real'},
+      {name: 'lat', type: 'real'},
+      {name: 'neighbors', type: 'array'},
+      {name: 'altitude', type: 'real'}
+    ];
+    const input = () =>
+      useArrow
+        ? processArrowBatches(
+            new arrow.Table({
+              lng: arrow.vectorFromArray(
+                rows.map(row => row[0]),
+                new arrow.Float64()
+              ),
+              lat: arrow.vectorFromArray(
+                rows.map(row => row[1]),
+                new arrow.Float64()
+              ),
+              neighbors: arrow.vectorFromArray(
+                rows.map(row => row[2]),
+                new arrow.List(new arrow.Field('item', new arrow.Int32()))
+              ),
+              altitude: arrow.vectorFromArray(
+                rows.map(row => row[3]),
+                new arrow.Float64()
+              )
+            }).batches
+          )
+        : {fields, rows};
+    let dataset = new KeplerTable({info: {id: 'neighbor-hover'}, color: [0, 0, 0]});
+    await dataset.importData({data: input()});
+    const layer = new PointLayer({id: 'neighbor-hover-point', dataId: dataset.id});
+    layer.updateLayerConfig({
+      columns: Object.fromEntries(
+        fields.map((field, fieldIdx) => [field.name, {value: field.name, fieldIdx}])
+      )
+    });
+    t.equal(
+      layer.config.visConfig.showNeighborOnHover,
+      false,
+      'neighbor highlighting remains opt-in'
+    );
+    layer.updateLayerVisConfig({
+      showNeighborOnHover: true,
+      allowHover: true,
+      showHighlightColor: false
+    });
+    let data = layer.formatLayerData({[dataset.id]: dataset});
+    let hoveredIndex = 0;
+    let visible = true;
+    let picked = true;
+    let mapState = {...INITIAL_MAP_STATE};
+    const render = (paneVisible = visible, mapIndex = 0) =>
+      layer.renderLayer({
+        data,
+        dataset,
+        gpuFilter: dataset.gpuFilter,
+        idx: 0,
+        mapIndex,
+        visible: paneVisible,
+        mapState,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        layerCallbacks: {},
+        objectHovered: {
+          picked,
+          index: hoveredIndex,
+          x: mapState.longitude,
+          y: mapState.latitude,
+          layer: {props: {id: useArrow ? `${layer.id}-0` : layer.id}},
+          object: useArrow ? undefined : data.data.find(point => point.index === hoveredIndex)
+        }
+      });
+    const hover = deckLayers =>
+      deckLayers.find(deckLayer => deckLayer.id === `${layer.id}-hovered`);
+    let neighborReads = 0;
+    const countNeighborReads = () => {
+      const container = dataset.dataContainer;
+      const read = container.valueAt.bind(container);
+      container.valueAt = (index, fieldIdx) => {
+        if (fieldIdx === 2) neighborReads++;
+        return read(index, fieldIdx);
+      };
+    };
+    countNeighborReads();
+    const viewport = new MapView().makeViewport({width: 800, height: 600, viewState: mapState});
+    const manager = new LayerManager(device, {viewport});
+    try {
+      let rendered = render();
+      testRenderDeckLayer(t, 'neighbor hover', rendered, {layerManager: manager});
+      const initial = hover(rendered);
+      t.deepEqual(
+        initial.props.data.map(point => point.index),
+        [1, 2, 0],
+        'neighbors precede the hovered source row'
+      );
+      t.equal(initial.props.pickable, false, 'overlay cannot steal picking');
+      const attrs = initial.getAttributeManager().getAttributes();
+      let attributeUpdates = 0;
+      let positionUpdates = 0;
+      for (const name of [
+        'instancePositions',
+        'instanceRadius',
+        'instanceFillColors',
+        'instanceLineColors'
+      ]) {
+        const attribute = attrs[name];
+        const update = attribute.updateBuffer.bind(attribute);
+        attribute.updateBuffer = options => {
+          const changed = update(options);
+          if (changed) {
+            attributeUpdates++;
+            if (name === 'instancePositions') positionUpdates++;
+          }
+          return changed;
+        };
+      }
+      neighborReads = 0;
+      const arrays = new Set();
+      for (let frame = 0; frame < 120; frame++) {
+        mapState = {
+          ...mapState,
+          longitude: mapState.longitude + 0.001,
+          latitude: mapState.latitude + 0.001
+        };
+        manager.activateViewport(
+          new MapView().makeViewport({width: 800, height: 600, viewState: mapState})
+        );
+        rendered = render();
+        arrays.add(hover(rendered).props.data);
+        manager.setLayers(rendered);
+        // Split maps share the Kepler layer; the hidden pane must not evict
+        // the visible pane's unchanged hover geometry.
+        render(false, 1);
+      }
+      t.comment(
+        `${
+          useArrow ? 'Arrow' : 'rows'
+        }: 120 pan/pointer updates: ${neighborReads} neighbor reads, ${
+          arrays.size
+        } overlay arrays, ${attributeUpdates} attribute buffer updates`
+      );
+      t.equal(
+        neighborReads,
+        0,
+        'pan and same-point pointer updates do not look up neighbors again'
+      );
+      t.equal(arrays.size, 1, 'pan and pointer updates reuse one bounded overlay array');
+      t.equal(
+        hover(rendered).props.data,
+        initial.props.data,
+        'overlay data identity remains stable'
+      );
+      t.equal(attributeUpdates, 0, 'deck does not rewrite unchanged hover attributes');
+
+      const beforeZoom = hover(rendered);
+      mapState = {...mapState, zoom: mapState.zoom + 1};
+      rendered = render();
+      manager.setLayers(rendered);
+      t.notEqual(
+        hover(rendered).props.radiusScale,
+        beforeZoom.props.radiusScale,
+        'zoom still updates point radius scale'
+      );
+      t.deepEqual(
+        hover(rendered).props.data,
+        beforeZoom.props.data,
+        'zoom leaves geographic neighbor positions intact'
+      );
+
+      const assertRefreshed = (before, message) => {
+        rendered = render();
+        manager.setLayers(rendered);
+        t.notEqual(hover(rendered).props.data, before, message);
+        return hover(rendered).props.data;
+      };
+      const assertGeometryReused = (before, message) => {
+        const reads = neighborReads;
+        const updates = positionUpdates;
+        rendered = render();
+        manager.setLayers(rendered);
+        t.equal(hover(rendered).props.data, before, message);
+        t.equal(neighborReads, reads, 'unchanged geometry does not read neighbors again');
+        t.equal(positionUpdates, updates, 'unchanged geometry does not rewrite positions');
+      };
+      const firstColor = name =>
+        Array.from(hover(rendered).getAttributeManager().getAttributes()[name].value.slice(0, 4));
+      let previous = hover(rendered).props.data;
+      hoveredIndex = 1;
+      previous = assertRefreshed(previous, 'picking another source row replaces the cache');
+      t.deepEqual(
+        previous.map(point => point.index),
+        [0, 1],
+        'new point has its own neighbors'
+      );
+      hoveredIndex = 0;
+      previous = assertRefreshed(
+        previous,
+        'returning to an old point rebuilds rather than retaining hover history'
+      );
+      hoveredIndex = 2;
+      previous = assertRefreshed(previous, 'an empty neighbor list replaces the previous point');
+      t.deepEqual(
+        previous.map(point => point.index),
+        [2],
+        'empty neighbors still highlight the picked point'
+      );
+      hoveredIndex = 0;
+      previous = assertRefreshed(previous, 'moving back replaces the empty-neighbor hover');
+      layer.updateLayerVisConfig({allowHover: false});
+      rendered = render();
+      t.deepEqual(
+        hover(rendered).props.data.map(point => point.index),
+        [0],
+        'disabling hover skips neighbor lookup'
+      );
+      layer.updateLayerVisConfig({allowHover: true});
+      previous = assertRefreshed(previous, 're-enabling hover refreshes the cache');
+      data = {
+        ...data,
+        getRadius: point => point.index + 10,
+        getFillColor: point => [point.index + 20, 30, 40, 255],
+        getLineColor: point => [50, point.index + 60, 70, 255]
+      };
+      assertGeometryReused(previous, 'new visual-channel accessors reuse hover geometry');
+      t.equal(
+        hover(rendered).getAttributeManager().getAttributes().instanceRadius.value[0],
+        11,
+        'new size accessor updates the neighbor radius buffer'
+      );
+      t.deepEqual(
+        firstColor('instanceFillColors'),
+        [21, 30, 40, 255],
+        'new color accessor updates the neighbor color buffer'
+      );
+      t.deepEqual(
+        firstColor('instanceLineColors'),
+        [50, 61, 70, 255],
+        'new stroke accessor updates the neighbor stroke buffer'
+      );
+      data = {
+        ...data,
+        getRadius: () => layer.config.visConfig.radiusRange[1],
+        getFillColor: () => layer.config.color,
+        getLineColor: () => layer.config.visConfig.strokeColor || layer.config.color
+      };
+      assertGeometryReused(previous, 'config-dependent accessors reuse hover geometry');
+      layer.updateLayerConfig({color: [80, 90, 100]});
+      layer.updateLayerVisConfig({strokeColor: [110, 120, 130], radiusRange: [0, 30]});
+      assertGeometryReused(previous, 'style changes with stable accessors reuse hover geometry');
+      t.equal(
+        hover(rendered).getAttributeManager().getAttributes().instanceRadius.value[0],
+        30,
+        'radius-range trigger refreshes the buffer with the same accessor'
+      );
+      t.deepEqual(
+        firstColor('instanceFillColors'),
+        [80, 90, 100, 255],
+        'fill trigger updates color'
+      );
+      t.deepEqual(
+        firstColor('instanceLineColors'),
+        [110, 120, 130, 255],
+        'stroke trigger updates color'
+      );
+      layer.updateLayerVisConfig({showHighlightColor: true});
+      assertGeometryReused(previous, 'enabling highlight color reuses hover geometry');
+      layer.updateLayerConfig({highlightColor: [140, 150, 160, 255]});
+      assertGeometryReused(previous, 'changing highlight color reuses hover geometry');
+      for (const name of ['instanceFillColors', 'instanceLineColors']) {
+        // deck stores constant colors as normalized floats instead of per-row bytes.
+        t.deepEqual(
+          firstColor(name),
+          Array.from(new Float32Array([140 / 255, 150 / 255, 160 / 255, 1])),
+          'highlight color reaches the buffer'
+        );
+      }
+      layer.updateLayerVisConfig({showHighlightColor: false});
+      assertGeometryReused(previous, 'disabling highlight color reuses hover geometry');
+      t.deepEqual(
+        firstColor('instanceFillColors'),
+        [80, 90, 100, 255],
+        'fill accessor is restored'
+      );
+      t.deepEqual(
+        firstColor('instanceLineColors'),
+        [110, 120, 130, 255],
+        'stroke accessor is restored'
+      );
+      layer.updateLayerConfig({sizeField: dataset.fields[3]});
+      layer.updateLayerVisConfig({fixedRadius: true});
+      assertGeometryReused(previous, 'switching to meter-based sizing reuses hover geometry');
+      t.equal(hover(rendered).props.radiusScale, 1, 'fixed radius still uses meters');
+      mapState = {...mapState, zoom: mapState.zoom + 1};
+      rendered = render();
+      t.equal(hover(rendered).props.radiusScale, 1, 'zoom does not scale fixed meter radius');
+      t.equal(
+        hover(rendered).props.data,
+        previous,
+        'zoom reuses geographic positions in meter mode'
+      );
+      dataset = copyTableAndUpdate(dataset, {filteredIndex: [0, 1]});
+      data = layer.formatLayerData({[dataset.id]: dataset}, data);
+      assertGeometryReused(previous, 'CPU filter changes reuse hover geometry');
+      dataset.gpuFilter = {...dataset.gpuFilter, filterRange: [[1, 2]]};
+      assertGeometryReused(previous, 'GPU filter changes reuse hover geometry');
+      // The overlay intentionally retains the existing unfiltered-neighbor behavior.
+      t.deepEqual(
+        previous.map(point => point.index),
+        [1, 2, 0],
+        'filtering does not silently change neighbor membership'
+      );
+
+      layer.updateLayerVisConfig({showNeighborOnHover: false});
+      rendered = render();
+      manager.setLayers(rendered);
+      t.deepEqual(
+        hover(rendered).props.data.map(point => point.index),
+        [0],
+        'disabled neighbors keep ordinary hover'
+      );
+      layer.updateLayerVisConfig({showNeighborOnHover: true});
+      previous = assertRefreshed(previous, 're-enabling neighbors starts a fresh cache');
+      visible = false;
+      rendered = render();
+      t.equal(hover(rendered).props.visible, false, 'split-map visibility still hides the overlay');
+      visible = true;
+      rendered = render();
+      t.equal(
+        hover(rendered).props.data,
+        previous,
+        'pane visibility does not discard shared hover geometry'
+      );
+      layer.updateLayerConfig({isVisible: false});
+      t.equal(hover(render()).props.visible, false, 'global visibility hides the overlay');
+      layer.updateLayerConfig({isVisible: true});
+      previous = assertRefreshed(previous, 'showing a globally hidden layer refreshes the cache');
+      picked = false;
+      t.notOk(hover(render()), 'pointer exit removes the overlay');
+      picked = true;
+      previous = assertRefreshed(
+        previous,
+        'pointer re-entry does not retain a previous hover session'
+      );
+
+      const container = dataset.dataContainer;
+      rows = [
+        [10, 20, [2], 5],
+        [31, 41, [0], 16],
+        [51, 61, [], 26]
+      ];
+      await dataset.update(input());
+      t.equal(dataset.dataContainer, container, 'snapshot update keeps the same data container');
+      data = layer.formatLayerData({[dataset.id]: dataset}, data);
+      previous = assertRefreshed(previous, 'in-place dataset revision refreshes hover geometry');
+      t.deepEqual(
+        previous.map(point => point.position),
+        [
+          [51, 61, 26],
+          [10, 20, 5]
+        ],
+        'updated neighbor membership, coordinates and altitude reach the overlay'
+      );
+      const oldDataset = dataset;
+      dataset = new KeplerTable({info: {id: oldDataset.id}, color: [0, 0, 0]});
+      await dataset.importData({data: input()});
+      data = layer.formatLayerData({[dataset.id]: dataset}, data);
+      previous = assertRefreshed(previous, 'same-id dataset replacement refreshes the cache');
+      layer.updateLayerConfig({
+        columns: {...layer.config.columns, neighbors: {value: null, fieldIdx: -1}}
+      });
+      data = layer.formatLayerData({[dataset.id]: dataset}, data);
+      previous = assertRefreshed(previous, 'neighbor-column changes invalidate the cache');
+      t.deepEqual(
+        previous.map(point => point.index),
+        [0],
+        'missing neighbor column leaves only the hovered point'
+      );
+    } finally {
+      manager.finalize();
+    }
+  }
+  t.end();
+});
