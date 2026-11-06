@@ -395,9 +395,9 @@ export function getGeojsonLayerMeta({
 
   // get bounds from features
   const bounds = getGeojsonBounds(dataToFeature);
-  // if any of the feature has properties.radius set to be true
+  // Explicit feature radii, including zero, are in fixed map units.
   const fixedRadius = Boolean(
-    dataToFeature.find(d => d && 'properties' in d && d.properties?.radius)
+    dataToFeature.find(d => d && 'properties' in d && d.properties?.radius != null)
   );
 
   // keep a record of what type of geometry the collection has

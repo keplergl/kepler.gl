@@ -750,3 +750,63 @@ describe('TripLayer timestamps at zero', () => {
     expect(getAnimationDomainFromTimestamps([[0]])).toEqual([0, 0]);
   });
 });
+
+describe('TripLayer GeoJSON stroke styles', () => {
+  test('preserves zero width in rendered trips and gives mapped fields precedence', async () => {
+    const table = new KeplerTable({info: {id: 'trip-width'}, color: [0, 0, 0]});
+    await table.importData({
+      data: {
+        fields: [{name: 'geometry', type: ALL_FIELD_TYPES.geojson, analyzerType: 'GEOMETRY'}],
+        rows: [0, 12, null, undefined].map(lineWidth => [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [0, 0, 0, 1565578213],
+                [1, 1, 0, 1565578217]
+              ]
+            },
+            properties: {lineWidth}
+          }
+        ])
+      } as any
+    });
+    const layer = new TripLayer({
+      dataId: table.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(table);
+    const data = layer.formatLayerData({[table.id]: table}, null);
+    const animationDomain = layer.config.animation.domain;
+    if (!animationDomain) throw new Error('Expected trip animation domain');
+    const [rendered] = layer.renderLayer({
+      data,
+      gpuFilter: table.gpuFilter,
+      idx: 0,
+      visible: true,
+      layerCallbacks: {},
+      mapState: {zoom: 4, latitude: 0, longitude: 0},
+      animationConfig: {
+        domain: animationDomain,
+        currentTime: animationDomain[0]
+      }
+    });
+    expect(rendered.props.data.map(rendered.props.getWidth)).toEqual([0, 12, 1, 1]);
+
+    layer.updateLayerConfig({
+      sizeField: {name: 'size', type: 'real', valueAccessor: d => d.value} as any,
+      sizeDomain: [0, 10],
+      sizeScale: 'linear'
+    });
+    layer.updateLayerVisConfig({sizeRange: [0, 10]});
+    const {getWidth} = layer.getAttributeAccessors({
+      dataAccessor: () => d => d,
+      dataContainer: {} as any
+    });
+    expect([0, 5, null].map(value => getWidth({value, properties: {lineWidth: 12}}))).toEqual([
+      0, 5, 0
+    ]);
+    expect(getWidth({value: 5, properties: {lineWidth: 0}})).toBe(5);
+  });
+});

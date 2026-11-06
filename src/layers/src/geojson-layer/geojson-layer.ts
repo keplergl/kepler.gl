@@ -425,7 +425,7 @@ export default class GeoJsonLayer extends Layer {
         accessor: 'getLineWidth',
         condition: config => config.visConfig.stroked,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+        getAttributeValue: () => d => d.properties.lineWidth ?? defaultLineWidth
       },
       height: {
         property: 'height',
@@ -440,7 +440,7 @@ export default class GeoJsonLayer extends Layer {
         accessor: 'getElevation',
         condition: config => config.visConfig.enable3d,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.elevation || defaultElevation
+        getAttributeValue: () => d => d.properties.elevation ?? defaultElevation
       },
       elevationOffset: {
         property: 'elevationOffset',
@@ -472,7 +472,7 @@ export default class GeoJsonLayer extends Layer {
         channelScaleType: CHANNEL_SCALES.radius,
         accessor: 'getPointRadius',
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.radius || defaultRadius
+        getAttributeValue: () => d => d.properties.radius ?? defaultRadius
       }
     };
   }
