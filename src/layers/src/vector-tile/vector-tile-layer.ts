@@ -76,6 +76,7 @@ import {isDomainStops, isDomainQuantiles, isIndexedField} from './common-tile/ti
 export {getNumVectorTilesBeingLoaded} from './loading-counter';
 
 const FILTER_CATEGORIES = [1];
+const NO_CATEGORY_FILTER = () => 1;
 
 export const DEFAULT_HIGHLIGHT_FILL_COLOR = [252, 242, 26, 150];
 export const DEFAULT_HIGHLIGHT_STROKE_COLOR = [252, 242, 26, 255];
@@ -244,6 +245,18 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
   declare visConfigSettings: VectorTileLayerVisConfigSettings;
 
   private currentTileSource: LayerData['tileSource'] = null;
+
+  // Cache only the last selection per feature array. Weak keys release evicted
+  // tile content; replacing a tile's content automatically invalidates its entry.
+  private hoverOutlineCache = new WeakMap<
+    Feature[],
+    {
+      hoveredId: string;
+      uniqueIdProperty?: string;
+      getFilterCategory: (feature: Feature) => number;
+      matches: Feature[];
+    }
+  >();
 
   tileSourceSelector = lruMemoize(
     (
@@ -688,7 +701,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     this.setLayerDomain = layerCallbacks.onSetLayerDomain;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
-    const getFilterCategory = data.getFilterCategory || (() => 1);
+    const getFilterCategory = data.getFilterCategory || NO_CATEGORY_FILTER;
     // Keep the categorical channel enabled even when no categorical filter is active,
     // so filters can be added to already initialized tile sublayers.
     defaultLayerProps.extensions = defaultLayerProps.extensions.map(
@@ -893,14 +906,28 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
           const features = content?.shape === 'geojson-table' ? content.features : content;
           if (!Array.isArray(features)) continue;
           const tileId = (tile as any).id;
-          for (const f of features) {
-            const fid = options.uniqueIdProperty
-              ? f.properties?.[options.uniqueIdProperty]
-              : (f as any).id;
-            if (fid !== undefined && String(fid) === hoveredId && options.getFilterCategory(f)) {
-              (byTile[tileId] = byTile[tileId] || []).push(f as Feature);
-            }
+          let cached = this.hoverOutlineCache.get(features);
+          if (
+            !cached ||
+            cached.hoveredId !== hoveredId ||
+            cached.uniqueIdProperty !== options.uniqueIdProperty ||
+            cached.getFilterCategory !== options.getFilterCategory
+          ) {
+            const matches = features.filter(f => {
+              const fid = options.uniqueIdProperty
+                ? f.properties?.[options.uniqueIdProperty]
+                : f.id;
+              return fid !== undefined && String(fid) === hoveredId && options.getFilterCategory(f);
+            });
+            cached = {
+              hoveredId,
+              uniqueIdProperty: options.uniqueIdProperty,
+              getFilterCategory: options.getFilterCategory,
+              matches
+            };
+            this.hoverOutlineCache.set(features, cached);
           }
+          if (cached.matches.length) byTile[tileId] = cached.matches;
         }
 
         perTileOverlays = Object.entries(byTile).map(([tileId, feats]) => {
