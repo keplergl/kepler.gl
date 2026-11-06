@@ -19,6 +19,8 @@ float enhanced_vegetation_index_calc(vec4 image) {
 
   float numerator = band5 - band4;
   float denominator = band5 + (6. * band4) - (7.5 * band2) + 1.;
+  // Match hover NoData handling before division and colormap lookup.
+  if (denominator == 0.) discard;
   return 2.5 * (numerator / denominator);
 }
 `;
