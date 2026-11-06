@@ -22,6 +22,8 @@ import {KeplerGlLayers} from '@kepler.gl/layers';
 import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
 import {arrowSchemaToFields} from '@kepler.gl/processors';
 import {cellToLatLng} from 'h3-js';
+import {convertStructToFixedSizeList} from '@kepler.gl/utils';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 
 const {ArcLayer, LineLayer} = KeplerGlLayers;
 const columns = {
@@ -67,7 +69,7 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
     layer.updateLayerMeta(dataset);
     t.deepEqual(
       layer.getPositionAccessor(dataset.dataContainer)({index: 0}),
-      [10, 20, 0, 30, 40, 0],
+      [10, 20, dimensions > 2 ? 70 : 0, 30, 40, dimensions > 2 ? 70 : 0],
       'reads longitude and latitude from both point vectors'
     );
     t.deepEqual(layer.meta.bounds, [10, 20, 30, 40], 'bounds include the destination');
@@ -93,7 +95,7 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
     layer.updateLayerMeta(dataset);
     t.deepEqual(
       layer.getPositionAccessor(dataset.dataContainer)({index: 1}),
-      [0, 5, 0, 50, 60, 0],
+      [0, 5, dimensions > 2 ? 70 : 0, 50, 60, dimensions > 2 ? 70 : 0],
       'reads endpoints from the later batch with a global row index'
     );
     t.deepEqual(
@@ -102,9 +104,7 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
       'bounds include later destinations and valid zero longitude, excluding null coordinates'
     );
 
-    const nullableTable = table.concat(
-      makeTable([null, [-10, -20], null], [[70, 80], null, null])
-    );
+    const nullableTable = table.concat(makeTable([null, [-10, -20], null], [[70, 80], null, null]));
     await dataset.update({
       cols: nullableTable.schema.fields.map((field, index) => nullableTable.getChildAt(index)),
       arrowTable: nullableTable
@@ -119,6 +119,19 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
       'valid endpoints still contribute when the other endpoint cell is null'
     );
 
+    const missingHeightTable = makeTable([[10, 20, null]], [[30, 40, null]]);
+    await dataset.update({
+      cols: missingHeightTable.schema.fields.map((field, index) =>
+        missingHeightTable.getChildAt(index)
+      ),
+      arrowTable: missingHeightTable
+    });
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 0}),
+      [10, 20, 0, 30, 40, 0],
+      'null elevation falls back to ground level for both endpoints'
+    );
+
     const emptyTable = makeTable([null], [null]);
     await dataset.update({
       cols: emptyTable.schema.fields.map((field, index) => emptyTable.getChildAt(index)),
@@ -126,7 +139,130 @@ geoArrowBoundsCases.forEach(({LayerClass, dimensions}) => {
     });
     t.doesNotThrow(() => layer.updateLayerMeta(dataset), 'all-null endpoint cells are accepted');
     t.equal(layer.meta.bounds, null, 'all-null endpoints have no bounds');
+    t.deepEqual(
+      layer.getPositionAccessor(dataset.dataContainer)({index: 0}),
+      [undefined, undefined, 0, undefined, undefined, 0],
+      'null endpoints retain invalid XY coordinates and zero fallback elevation'
+    );
     t.end();
+  });
+});
+
+[ArcLayer, LineLayer].forEach(LayerClass => {
+  ['interleaved', 'normalized separated'].forEach(layout => {
+    test(`#${LayerClass.name} -> ${layout} GeoArrow elevation survives slices and refresh`, async t => {
+      const pointType = new arrow.FixedSizeList(3, new arrow.Field('xyz', new arrow.Float64()));
+      const separatedType = new arrow.Struct(
+        ['x', 'y', 'z'].map(name => new arrow.Field(name, new arrow.Float64()))
+      );
+      const coordinates = points => {
+        // Slice away a sentinel so parent offsets and child buffer views are nonzero.
+        const padded = [[99, 88, 999], ...points];
+        if (layout === 'interleaved') {
+          return arrow.vectorFromArray(padded, pointType).slice(1);
+        }
+        // Arc/line renderers consume interleaved points. Exercise the existing
+        // separated-coordinate normalization rather than assuming StructRow.get.
+        const separated = arrow
+          .vectorFromArray(
+            padded.map(([x, y, z]) => ({x, y, z})),
+            separatedType
+          )
+          .slice(1);
+        return new arrow.Vector(separated.data.map(convertStructToFixedSizeList));
+      };
+      const makeTable = rows => {
+        const table = new arrow.Table({
+          source: coordinates(rows.map(row => row[0])),
+          target: coordinates(rows.map(row => row[1]))
+        });
+        table.schema.fields.forEach(field =>
+          field.metadata.set('ARROW:extension:name', 'geoarrow.point')
+        );
+        return table;
+      };
+      const dataset = new KeplerTable({info: {id: 'elevated-endpoints'}, color: [0, 0, 0]});
+      const layer = new LayerClass({dataId: dataset.id, columnMode: 'geoarrow'});
+      layer.config.columns.geoarrow0 = {value: 'source', fieldIdx: 0};
+      layer.config.columns.geoarrow1 = {value: 'target', fieldIdx: 1};
+      let previousData;
+      for (const elevation of [120, 550]) {
+        const positions = [
+          [
+            [10, 20, elevation],
+            [30, 40, elevation * 2]
+          ],
+          [
+            [11, 21, 0],
+            [31, 41, -20]
+          ],
+          [
+            [12, 22, -45],
+            [32, 42, 0]
+          ]
+        ];
+        const table = makeTable(positions.slice(0, 2)).concat(makeTable(positions.slice(2)));
+        const cols = table.schema.fields.map((field, index) => table.getChildAt(index));
+        if (!previousData) {
+          await dataset.importData({data: {fields: arrowSchemaToFields(table), cols}});
+        }
+        await dataset.update({cols, arrowTable: table});
+        dataset.filteredIndex = elevation === 120 ? [0, 2] : [1, 2];
+        const data = layer.formatLayerData({[dataset.id]: dataset}, previousData);
+        previousData = data;
+        positions.forEach((endpoints, index) => {
+          const expected = endpoints.flat();
+          t.deepEqual(
+            layer.getPositionAccessor(dataset.dataContainer)({index}),
+            expected,
+            `accessor retains positive, zero and negative elevation at row ${index}`
+          );
+        });
+        for (const enabled of [false, true]) {
+          const [rendered] = layer.renderLayer({
+            data,
+            dataset,
+            gpuFilter: dataset.gpuFilter,
+            interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+            mapState: {...INITIAL_MAP_STATE, globe: {enabled}},
+            layerCallbacks: {},
+            visible: true,
+            idx: 0
+          });
+          const sublayers = rendered.renderLayers();
+          t.equal(sublayers.length, 2, 'renderer preserves both batches');
+          let offset = 0;
+          sublayers.forEach((sublayer, batchIndex) => {
+            const batchData = sublayer.props.data;
+            ['getSourcePosition', 'getTargetPosition'].forEach((accessor, endpoint) => {
+              const attribute = batchData.attributes[accessor];
+              t.equal(attribute.size, 3, 'renderer retains the coordinate stride');
+              t.equal(
+                attribute.value,
+                cols[endpoint].data[batchIndex].children[0].values,
+                'renderer reuses the coordinate buffer without copying'
+              );
+              for (let index = 0; index < batchData.length; index++) {
+                t.deepEqual(
+                  Array.from(attribute.value.slice(index * 3, (index + 1) * 3)),
+                  positions[offset + index][endpoint],
+                  `globe=${enabled}: renderer retains elevation after slicing and refresh`
+                );
+              }
+            });
+            for (let index = 0; index < batchData.length; index++) {
+              t.equal(
+                sublayer.props.getFiltered(null, {index, data: batchData}),
+                Number(dataset.filteredIndex.includes(offset + index)),
+                'filtering still addresses global rows across batches'
+              );
+            }
+            offset += batchData.length;
+          });
+        }
+      }
+      t.end();
+    });
   });
 });
 

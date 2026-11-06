@@ -167,7 +167,14 @@ export const arcPosAccessor =
         return d => {
           const start = dc.valueAt(d.index, geoarrow0.fieldIdx);
           const end = dc.valueAt(d.index, geoarrow1.fieldIdx);
-          return [start?.get(0), start?.get(1), 0, end?.get(0), end?.get(1), 0];
+          return [
+            start?.get(0),
+            start?.get(1),
+            start?.get(2) ?? 0,
+            end?.get(0),
+            end?.get(1),
+            end?.get(2) ?? 0
+          ];
         };
       case COLUMN_MODE_NEIGHBORS:
         return d => {
