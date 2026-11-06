@@ -838,6 +838,54 @@ test('Processor => processGeojson', t => {
   t.end();
 });
 
+test('Processor => processGeojson: reserved property cannot replace the feature', t => {
+  const values = ['user value', null, 42, {type: 'Point', coordinates: [0, 0]}];
+  values.forEach(value => {
+    const features = [
+      {
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [-122, 37]},
+        properties: {name: 'first', _geojson: value}
+      },
+      {
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [-123, 38]},
+        properties: {name: 'second', count: 2}
+      },
+      {
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [-124, 39]},
+        properties: null
+      }
+    ];
+    const {fields, rows} = processGeojson({type: 'FeatureCollection', features});
+
+    t.deepEqual(
+      fields.map(field => field.name),
+      ['_geojson', 'name', 'count'],
+      'preserves the geometry column and property order'
+    );
+    t.equal(fields[0].type, ALL_FIELD_TYPES.geojson, 'detects the geometry field');
+    t.deepEqual(
+      rows.map(row => row[0].geometry),
+      features.map(feature => feature.geometry),
+      'preserves every feature geometry'
+    );
+    t.deepEqual(rows[0][0].properties._geojson, value, 'preserves the original nested property');
+    t.deepEqual(
+      rows.map(row => row.slice(1)),
+      [
+        ['first', null],
+        ['second', 2],
+        [null, null]
+      ],
+      'continues to normalize missing properties'
+    );
+    t.equal(rows[0][0].properties.count, null, 'fills missing nested properties');
+  });
+  t.end();
+});
+
 test('Processor => processGeojson: with style property', t => {
   const {fields, rows} = processGeojson(cloneDeep(geoJsonWithStyle));
 
