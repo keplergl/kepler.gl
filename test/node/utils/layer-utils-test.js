@@ -6,6 +6,7 @@ import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {
   createGeoArrowPointVector,
+  getNeighbors,
   getGeojsonLayerMetaFromArrow,
   LayerClasses,
   KeplerGlLayers
@@ -1592,5 +1593,33 @@ test('layerUtils -> aggregation tooltips evaluate only requested fields', t => {
     'direct callers retain full-field aggregation'
   );
   t.equal(evaluations, 20000, 'direct callers still evaluate all supplied fields');
+  t.end();
+});
+
+test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbors', t => {
+  const neighborsField = {fieldIdx: 0};
+  const cases = [
+    {name: 'null cell', value: null, indices: []},
+    {name: 'undefined cell', value: undefined, indices: []},
+    {name: 'empty array', value: [], indices: []},
+    {name: 'non-array cell', value: 'invalid', indices: []},
+    {name: 'array cell', value: [2, 0], indices: [2, 0]},
+    {name: 'Arrow vector', value: arrow.vectorFromArray([2, 0], new arrow.Int32()), indices: [2, 0]}
+  ];
+
+  for (const {name, value, indices} of cases) {
+    const calls = [];
+    const getPosition = ({index}) => {
+      calls.push(index);
+      return [index, index + 1];
+    };
+    const dataContainer = createDataContainer([[value]]);
+    t.deepEqual(
+      getNeighbors(neighborsField, dataContainer, 0, getPosition),
+      indices.map(index => ({index, position: [index, index + 1]})),
+      `${name} returns the expected neighbors`
+    );
+    t.deepEqual(calls, indices, `${name} only resolves valid neighbor positions`);
+  }
   t.end();
 });

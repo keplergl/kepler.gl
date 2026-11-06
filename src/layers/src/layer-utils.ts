@@ -499,7 +499,7 @@ export function getNeighbors(
 
   let neighborIndices = dataContainer.valueAt(index, neighborsField.fieldIdx);
   // In case of arrow column with an array of indices.
-  if (neighborIndices.toArray) {
+  if (neighborIndices?.toArray) {
     neighborIndices = Array.from(neighborIndices.toArray());
   }
   if (!Array.isArray(neighborIndices)) return [];
