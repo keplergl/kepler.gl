@@ -1185,6 +1185,7 @@ ${'```'}
     id: 'id',
     timestamp: 'time',
     icon: 'icon',
+    angle: 'angle (degrees)',
     geojson: 'geojson',
     geoarrow: 'geoarrow',
     geoarrow0: 'geoarrow source',

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {Accessor, DefaultProps} from '@deck.gl/core';
 import {ScatterplotLayer, ScatterplotLayerProps} from '@deck.gl/layers';
 import {Geometry, Model} from '@luma.gl/engine';
 import {TOPOLOGY} from '@kepler.gl/constants';
@@ -11,10 +12,12 @@ const globeModeUniforms = {
   name: 'globeMode',
   vs: `uniform globeModeUniforms {
   float globeModeMod;
+  vec2 iconCenter;
 } globeModeProps;
 `,
   uniformTypes: {
-    globeModeMod: 'f32'
+    globeModeMod: 'f32',
+    iconCenter: 'vec2<f32>'
   }
 };
 
@@ -37,9 +40,22 @@ void main(void) {
 
 export interface ScatterplotIconLayerProps extends ScatterplotLayerProps<any> {
   iconGeometry: number[];
+  /** Counter-clockwise rotation in degrees around the mesh's bounding-box center. */
+  getAngle?: Accessor<any, number>;
 }
 
 export default class ScatterplotIconLayer extends ScatterplotLayer<any, ScatterplotIconLayerProps> {
+  static defaultProps: DefaultProps<ScatterplotIconLayerProps> = {
+    getAngle: {type: 'accessor', value: 0}
+  };
+
+  initializeState() {
+    super.initializeState();
+    this.getAttributeManager()!.addInstanced({
+      instanceAngles: {size: 1, accessor: 'getAngle', defaultValue: 0}
+    });
+  }
+
   getShaders() {
     const shaders = super.getShaders();
     return {
@@ -47,6 +63,19 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
       fs: iconFragmentShader,
       modules: [...(shaders.modules || []), globeModeUniforms],
       inject: {
+        'vs:#decl': 'in float instanceAngles;',
+        'vs:#main-start': `
+          // Shadow the vertex input locally so all ScatterplotLayer projection paths
+          // (billboard, map-aligned, picking and globe) use the same rotated mesh.
+          vec3 iconPosition = positions;
+          vec3 positions = iconPosition;
+          if (instanceAngles != 0.0) {
+            float angle = radians(instanceAngles);
+            float c = cos(angle);
+            float s = sin(angle);
+            positions.xy = mat2(c, s, -s, c) * (iconPosition.xy - globeModeProps.iconCenter)
+              + globeModeProps.iconCenter;
+          }`,
         'vs:DECKGL_FILTER_SIZE': `
           size.xy *= globeModeProps.globeModeMod;`
       }
@@ -69,7 +98,23 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
     const {iconGeometry} = this.props;
     const positions = iconGeometry ? new Float32Array(iconGeometry) : new Float32Array(DEFAULT_POS);
 
-    return new Model(this.context.device, {
+    // Compute once per mesh, not once per row or frame. Keeping the center in place
+    // also preserves the position of asymmetric/custom icons at zero rotation.
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i + 2 < positions.length; i += 3) {
+      minX = Math.min(minX, positions[i]);
+      minY = Math.min(minY, positions[i + 1]);
+      maxX = Math.max(maxX, positions[i]);
+      maxY = Math.max(maxY, positions[i + 1]);
+    }
+    const iconCenter = Number.isFinite(minX + minY + maxX + maxY)
+      ? [(minX + maxX) / 2, (minY + maxY) / 2]
+      : [0, 0];
+
+    const model = new Model(this.context.device, {
       ...this.getShaders(),
       id: this.props.id,
       bufferLayout: this.getAttributeManager()!.getBufferLayouts(),
@@ -81,6 +126,8 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
       }),
       isInstanced: true
     });
+    model.shaderInputs.setProps({globeMode: {iconCenter}});
+    return model;
   }
 }
 
