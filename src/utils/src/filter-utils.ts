@@ -617,6 +617,14 @@ export const getPolygonFilterFunctor = (layer, filter, dataContainer) => {
       };
     case LAYER_TYPES.arc:
     case LAYER_TYPES.line:
+      if (layer.config?.columnMode === 'neighbors') {
+        // Neighbor links are expanded from retained source rows, like other row filters.
+        // Their position accessor returns only the source, not a second endpoint.
+        return data => {
+          const pos = getPosition(data);
+          return hasFiniteLngLat(pos) && isInPolygon(pos, filter.value);
+        };
+      }
       return data => {
         const pos = getPosition(data);
         return (
