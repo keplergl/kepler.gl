@@ -400,13 +400,115 @@ test('#ScenegraphLayer -> geojson centroid', t => {
   t.end();
 });
 
+test('#ScenegraphLayer -> geojson point altitude', t => {
+  const point = coordinates => ({type: 'Point', coordinates});
+  const line = {
+    type: 'LineString',
+    coordinates: [
+      [0, 0, 100],
+      [2, 2, 300]
+    ]
+  };
+  const polygon = {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [0, 0, 100],
+        [2, 0, 200],
+        [2, 2, 300],
+        [0, 2, 400],
+        [0, 0, 100]
+      ]
+    ]
+  };
+  const cases = [
+    ['3D point', point([-122.4, 37.8, 125]), [-122.4, 37.8, 125]],
+    ['below sea level', point([1, 2, -50]), [1, 2, -50]],
+    ['zero altitude', point([1, 2, 0]), [1, 2, 0]],
+    ['2D point', point([1, 2]), [1, 2, 0]],
+    ...[null, NaN, Infinity, -Infinity, '100'].map(altitude => [
+      `invalid altitude ${altitude}`,
+      point([1, 2, altitude]),
+      [1, 2, 0]
+    ]),
+    ['feature', {type: 'Feature', properties: {}, geometry: point([1, 2, 75])}, [1, 2, 75]],
+    ['JSON string', JSON.stringify(point([1, 2, 85])), [1, 2, 85]],
+    ['coordinate array', [1, 2, 95], [1, 2, 95]],
+    ['line keeps its ground-level centroid', line, [1, 1, 0]],
+    ['multipoint keeps its ground-level centroid', {...line, type: 'MultiPoint'}, [1, 1, 0]],
+    ['polygon keeps its ground-level centroid', polygon, [0.8, 0.8, 0]],
+    [
+      'multiline keeps its ground-level centroid',
+      {type: 'MultiLineString', coordinates: [line.coordinates]},
+      [1, 1, 0]
+    ],
+    [
+      'multipolygon keeps its ground-level centroid',
+      {type: 'MultiPolygon', coordinates: [polygon.coordinates]},
+      [0.8, 0.8, 0]
+    ],
+    [
+      'collection keeps its ground-level centroid',
+      {type: 'GeometryCollection', geometries: [point([0, 0, 100]), point([2, 2, 300])]},
+      [1, 1, 0]
+    ],
+    ['missing geometry', null, null],
+    ['invalid longitude', point([NaN, 2, 100]), null],
+    ['empty coordinate', point([]), null]
+  ];
+  const rows = cases.map(([, geometry]) => [geometry]);
+  const layer = new ScenegraphLayer({
+    dataId: 'geo',
+    columnMode: 'geojson',
+    columns: {geojson: {value: 'geom', fieldIdx: 0}}
+  });
+  const dataset = {
+    dataRevision: 0,
+    dataContainer: {
+      numRows: () => rows.length,
+      valueAt: (index, fieldIdx) => rows[index][fieldIdx]
+    },
+    fields: [{name: 'geom', fieldIdx: 0, type: 'geojson'}],
+    gpuFilter: getGpuFilterProps([], 'geo', []),
+    filteredIndex: rows.map((_, index) => index)
+  };
+  layer.updateLayerMeta(dataset);
+  const data = layer.calculateDataAttribute(dataset, () => null);
+  cases.forEach(([label, , expected], index) => {
+    const model = data.find(d => d.index === index);
+    if (expected) {
+      t.deepEqual(model?.position, expected, label);
+    } else {
+      t.notOk(model, label);
+    }
+  });
+  t.deepEqual(rows[0][0].coordinates, [-122.4, 37.8, 125], 'source coordinates are unchanged');
+  t.deepEqual(layer.meta.bounds, [-122.4, 0, 2, 37.8], 'altitude does not affect map bounds');
+
+  const cachedFeatures = layer.dataToFeature;
+  const cachedCentroids = layer.centroids;
+  layer.updateLayerMeta(dataset);
+  t.equal(layer.dataToFeature, cachedFeatures, 'unchanged data reuses parsed features');
+  t.equal(layer.centroids, cachedCentroids, 'unchanged data reuses computed centroids');
+
+  rows[0] = [point([-122.4, 37.8, 250])];
+  dataset.dataRevision++;
+  layer.updateLayerMeta(dataset);
+  t.deepEqual(
+    layer.calculateDataAttribute(dataset, () => null)[0].position,
+    [-122.4, 37.8, 250],
+    'same-size edits refresh altitude'
+  );
+  t.end();
+});
+
 test('#ScenegraphLayer -> reducer numeric filters without GPU extensions', t => {
   for (const columnMode of ['points', 'geojson']) {
     const table = new KeplerTable({info: {id: 'models'}, color: [1, 2, 3]});
     const rows = [0, 10, 20, 10].map((value, index) => [
       index === 3 ? null : 1 + index,
       30 + index,
-      index === 3 ? null : {type: 'Point', coordinates: [30 + index, 1 + index]},
+      index === 3 ? null : {type: 'Point', coordinates: [30 + index, 1 + index, 100 + index]},
       value,
       [20, 0, 10, 10][index],
       index === 0 ? 'exclude' : 'keep'
@@ -464,7 +566,11 @@ test('#ScenegraphLayer -> reducer numeric filters without GPU extensions', t => 
       );
       t.deepEqual(
         data.map(getPosition),
-        expectedIndexes.map(index => [30 + index, 1 + index, 0]),
+        expectedIndexes.map(index => [
+          30 + index,
+          1 + index,
+          columnMode === 'geojson' ? 100 + index : 0
+        ]),
         `${columnMode}: positions remain aligned with source rows`
       );
       for (const d of data) {
