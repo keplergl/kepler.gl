@@ -12,16 +12,73 @@ When you load a dataset with `lat`/`lng` columns you can:
 2. Select **Contour** from the layer type dropdown.
 3. Map the `lat` and `lng` columns.
 4. The `ContourLayer` renders isoband contour lines over dense point clusters — similar to topographic contour maps.
+5. Switch **Render mode** to **3D surface** to rebuild the aggregate grid on the CPU and render it
+   as an elevation-colored terrain mesh with `SimpleMeshLayer`.
 
-The example ships with 500 synthetic points clustered over three Bay Area hot-spots so the
-contour rendering is immediately visible.
+The example ships with 500 synthetic points clustered over three Bay Area hot-spots. Each point
+carries a generated `elevation` value from a smooth synthetic terrain, so the sample map config can
+open in **3D surface** mode colored by elevation.
 
 ## How it works
 
-| File | Purpose |
-|------|---------|
-| `src/custom-contour-layer.js` | Extends `AggregationLayer` from `@kepler.gl/layers` and renders `ContourLayer` from `@deck.gl/aggregation-layers`. |
-| `src/app.tsx` | Registers the custom layer by passing `layerClasses` to `keplerGlReducer.initialState()`. Loads the sample dataset and an initial map config. |
+| File                          | Purpose                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/custom-contour-layer.js` | Extends `Layer` from `@kepler.gl/layers` and renders `ContourLayer` or `SimpleMeshLayer`.                                                     |
+| `src/density-surface.js`      | Bridge to the core `@kepler.gl/layers` surface utilities (`src/layers/src/surface`).                                                          |
+| `src/app.tsx`                 | Registers the custom layer by passing `layerClasses` to `keplerGlReducer.initialState()`. Loads the sample dataset and an initial map config. |
+
+### 3D surface mode
+
+`ContourLayer` aggregates points on the GPU and only exposes contour geometry, so its internal grid
+cannot be reused. The surface mode instead bins the original points into a regular lng/lat grid
+(`cellRadius` km per cell), optionally smooths it, and builds a triangle mesh. Heights are normalized
+to **Max surface height**; each vertex is colored by the normalized value through a hypsometric ramp
+and multiplied by a simple northwest hillshade. The mesh is rendered with `SimpleMeshLayer` using
+per-vertex colors.
+
+With **Show elevation contours** enabled, the same grid is run through marching squares and the
+resulting segments are raised to the surface height and drawn with `PathLayer`, so the DEM and
+contour lines render together.
+
+The sample data carries a generated `elevation` column, and the sample layer uses it as **Weight**,
+so the surface color follows elevation. With no weight it is a **density surface** (point count per
+cell). Either way it is an interpolated surface, not a survey-grade elevation DEM.
+
+Controls:
+
+- **Contours** — **Show elevation contours** overlays marching-squares contour
+  lines on the surface; **Contour levels** sets how many levels are drawn, and
+  **Contour color** picks their color.
+- **Color** — color range selector; the default is a DEM-like blue → green → sand → white ramp.
+- **Weight** — `Point count (density)`, or a numeric column aggregated as a per-cell mean.
+- **Max surface height (m)** — normalized height applied to the highest cell.
+- **Smoothing** — number of 3×3 box-blur passes; the slider goes to 20 and the
+  **Custom passes** checkbox allows a typed value (internally capped at 100).
+
+Grids are capped at 256×256 cells; a cell radius that would exceed the cap is coarsened so the mesh
+stays small.
+
+### Load a saved map from a URL
+
+Opening the app with `?mapUrl=` loads a saved kepler.gl project (datasets + config) from a
+CORS-enabled URL:
+
+```
+?mapUrl=https%3A%2F%2Flixun910.github.io%2Fmt-rainier-elevation-v3.json
+```
+
+The JSON must be publicly readable and return `Access-Control-Allow-Origin`. The example downloads
+it, runs it through `loadFiles`, and restores the custom `contour` layer because the layer class is
+registered in this app.
+
+The repository demo app (`examples/demo-app`) also registers this example's contour layer and
+configurator, so the Netlify `/demo` deploy preview can load the same project. That registration is
+demo-only; promoting the layer to `@kepler.gl/layers` would make it a built-in feature.
+
+The Mount Rainier sample project above was built from 600 real elevation samples around Mount
+Rainier (680–4266 m) from the public [Open-Meteo elevation API](https://open-meteo.com/en/docs/elevation-api),
+which serves Copernicus DEM data. It uses `cellRadius = 0.5 km`, `elevationScale = 7300 m`,
+`smoothing = 12`, and 12 contour levels.
 
 ### Registering a custom layer
 
@@ -33,8 +90,8 @@ import ContourKeplerLayer from './custom-contour-layer';
 const customizedKeplerGlReducer = keplerGlReducer.initialState({
   visState: {
     layerClasses: {
-      ...LayerClasses,          // keep all built-in layer types
-      contour: ContourKeplerLayer  // add the new type under key 'contour'
+      ...LayerClasses, // keep all built-in layer types
+      contour: ContourKeplerLayer // add the new type under key 'contour'
     }
   }
 });
@@ -48,20 +105,22 @@ uses that key to look up the class when creating or restoring layers.
 A custom layer must extend `Layer` (or a subclass like `AggregationLayer`) and implement at
 minimum:
 
-| Member | Required | Description |
-|--------|----------|-------------|
-| `get type()` | ✓ | Unique string identifier, must match the key used in `layerClasses`. |
-| `get name()` | ✓ | Human-readable label shown in the UI. |
-| `get layerIcon()` | recommended | React component rendered as the layer type icon. |
-| `renderLayer(opts)` | ✓ | Returns an array of deck.gl layer instances. |
+| Member              | Required    | Description                                                          |
+| ------------------- | ----------- | -------------------------------------------------------------------- |
+| `get type()`        | ✓           | Unique string identifier, must match the key used in `layerClasses`. |
+| `get name()`        | ✓           | Human-readable label shown in the UI.                                |
+| `get layerIcon()`   | recommended | React component rendered as the layer type icon.                     |
+| `renderLayer(opts)` | ✓           | Returns an array of deck.gl layer instances.                         |
 
 For aggregation layers (point → grid → color) extend `AggregationLayer`. It handles column
 configuration, data formatting, and `getPosition`/`getColorValue` accessors for you.
 
 ## Pre-requirements
 
-- [Node.js ^20.x](http://nodejs.org)
+- [Node.js >= 20](http://nodejs.org) (Volta pin: 24.21.0)
 - [Yarn 4.4.0](https://yarnpkg.com): See the detailed [installation instructions][yarn-install].
+- Run the example from the repository checkout: the surface helpers are imported from
+  `src/layers/src/surface` so the demo uses the current core implementation.
 
 ## 1. Install Dependencies
 
