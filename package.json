@@ -253,6 +253,7 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "documentation/@babel/parser": "7.29.7",
     "@babel/core@npm:7.12.3": "7.29.7",
     "@duckdb/duckdb-wasm": "1.32.0",
     "@deck.gl/aggregation-layers": "9.3.1",

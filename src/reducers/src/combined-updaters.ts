@@ -130,6 +130,20 @@ export const defaultAddDataToMapOptions = {
 };
 
 /**
+ * @typedef {Object} Dataset
+ * @memberof combinedUpdaters
+ * @property info -info of a dataset
+ * @property info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
+ * @property info.label - A display name of this dataset
+ * @property data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
+ * @property data.fields - ***required** Array of fields,
+ * @property data.fields.name - ***required** Name of the field,
+ * @property data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
+ *
+ * @public
+ */
+
+/**
  * Combine data and full configuration update in a single action
  *
  * @memberof combinedUpdaters
@@ -142,16 +156,6 @@ export const defaultAddDataToMapOptions = {
  * @param [action.payload.config] map config
  * @param [action.payload.info] map info contains title and description
  * @returns nextState
- *
- * @typedef {Object} Dataset
- * @property info -info of a dataset
- * @property info.id - id of this dataset. If config is defined, `id` should matches the `dataId` in config.
- * @property info.label - A display name of this dataset
- * @property data - ***required** The data object, in a tabular format with 2 properties `fields` and `rows`
- * @property data.fields - ***required** Array of fields,
- * @property data.fields.name - ***required** Name of the field,
- * @property data.rows - ***required** Array of rows, in a tabular format with `fields` and `rows`
- *
  * @public
  */
 export const addDataToMapUpdater = (
