@@ -425,7 +425,7 @@ export default class GeoJsonLayer extends Layer {
         accessor: 'getLineWidth',
         condition: config => config.visConfig.stroked,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+        getAttributeValue: () => d => d.properties.lineWidth ?? defaultLineWidth
       },
       height: {
         property: 'height',
@@ -440,7 +440,7 @@ export default class GeoJsonLayer extends Layer {
         accessor: 'getElevation',
         condition: config => config.visConfig.enable3d,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.elevation || defaultElevation
+        getAttributeValue: () => d => d.properties.elevation ?? defaultElevation
       },
       elevationOffset: {
         property: 'elevationOffset',
@@ -472,7 +472,7 @@ export default class GeoJsonLayer extends Layer {
         channelScaleType: CHANNEL_SCALES.radius,
         accessor: 'getPointRadius',
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.radius || defaultRadius
+        getAttributeValue: () => d => d.properties.radius ?? defaultRadius
       }
     };
   }
@@ -934,7 +934,10 @@ export default class GeoJsonLayer extends Layer {
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
-    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const radiusScale = this.getRadiusScaleByZoom(
+      mapState,
+      this.config.radiusField ? false : fixedRadius
+    );
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 

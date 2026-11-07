@@ -15,6 +15,7 @@ import {
   processRowObject
 } from '@kepler.gl/processors';
 import {convertGeometryToWKB, getBinaryGeometriesFromArrow} from '@loaders.gl/gis';
+import {datasetSchema} from '@kepler.gl/schemas';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -1415,4 +1416,152 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
       }
     }
   );
+});
+
+describe('GeoJsonLayer numeric feature styles', () => {
+  test.each([
+    ['lineWidth', 'getLineWidth', 'size', 1],
+    ['elevation', 'getElevation', 'height', 500],
+    ['radius', 'getPointRadius', 'radius', 1]
+  ] as const)(
+    'preserves zero %s and mapped-field precedence',
+    (property, accessor, channel, fallback) => {
+      const layer = new GeoJsonLayer({id: 'zero-style'});
+      const getValue = layer.getAttributeAccessors({dataContainer: {} as any})[accessor];
+      expect(
+        [0, 12, null, undefined].map(value => getValue({properties: {[property]: value}}))
+      ).toEqual([0, 12, fallback, fallback]);
+      expect(getValue({properties: {}})).toBe(fallback);
+
+      const {field, domain, scale, range} = layer.visualChannels[channel];
+      layer.updateLayerConfig({
+        [field]: {name: 'size', type: 'real', valueAccessor: d => d.value},
+        [domain]: [0, 10],
+        [scale]: 'linear'
+      });
+      layer.updateLayerVisConfig({[range]: [0, 10]});
+      const mapped = layer.getAttributeAccessors({
+        dataAccessor: () => d => d,
+        dataContainer: {} as any
+      })[accessor];
+      expect([0, 5, null].map(value => mapped({value, properties: {[property]: 12}}))).toEqual([
+        0, 5, 0
+      ]);
+      expect(mapped({value: 5, properties: {[property]: 0}})).toBe(5);
+    }
+  );
+
+  const render = (layer, dataset, data, zoom) =>
+    layer.renderLayer({
+      data,
+      gpuFilter: dataset.gpuFilter,
+      idx: 0,
+      visible: true,
+      layerCallbacks: {},
+      interactionConfig: {tooltip: {enabled: false}},
+      mapState: {zoom, width: 800, height: 600}
+    })[0];
+
+  test.each([
+    [[0, 0], true],
+    [[null, 0], true],
+    [[0, 12], true],
+    [[null, undefined], false]
+  ] as const)('sets radius units for %j across zoom levels', async (radii, fixed) => {
+    const {layer, dataset} = await initializeGeoJsonLayer(
+      radii.map((radius, i) => ({
+        geometry: point(i),
+        properties: {radius}
+      }))
+    );
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    expect(layer.meta.fixedRadius).toBe(fixed);
+    const near = render(layer, dataset, data, 12);
+    const far = render(layer, dataset, data, 4);
+    expect(near.props.data.map(near.props.getPointRadius)).toEqual(
+      radii.map(radius => radius ?? 1)
+    );
+    if (fixed) {
+      expect(near.props.pointRadiusScale).toBe(1);
+      expect(far.props.pointRadiusScale).toBe(1);
+    } else {
+      expect(near.props.pointRadiusScale).not.toBe(far.props.pointRadiusScale);
+    }
+  });
+
+  test.each([
+    [0, 0],
+    [0, null],
+    [null, undefined],
+    [0, 12]
+  ])('keeps mapped radii zoom-compensated with feature radii %s and %s', async (first, second) => {
+    const {layer, dataset} = await initializeGeoJsonLayer(
+      [first, second].map((radius, i) => ({
+        geometry: point(i),
+        properties: {radius, size: i + 1}
+      }))
+    );
+    const {field, domain, scale, range} = layer.visualChannels.radius;
+    layer.updateLayerConfig({
+      [field]: dataset.fields.find(field => field.name === 'size')!,
+      [domain]: [1, 2],
+      [scale]: 'linear'
+    });
+    layer.updateLayerVisConfig({[range]: [5, 10]});
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    const near = render(layer, dataset, data, 12);
+    const far = render(layer, dataset, data, 4);
+
+    expect(near.props.data.map(near.props.getPointRadius)).toEqual([5, 10]);
+    expect(far.props.data.map(far.props.getPointRadius)).toEqual([5, 10]);
+    expect(far.props.pointRadiusScale).toBe(near.props.pointRadiusScale * 2 ** 8);
+
+    layer.updateLayerConfig({[field]: null});
+    const unmapped = layer.formatLayerData({[dataset.id]: dataset}, data);
+    const restored = render(layer, dataset, unmapped, 4);
+    expect(restored.props.data.map(restored.props.getPointRadius)).toEqual([
+      first ?? 1,
+      second ?? 1
+    ]);
+    if (first != null || second != null) {
+      expect(restored.props.pointRadiusScale).toBe(1);
+    }
+  });
+
+  test('retains zero styles through data save/load and same-length refresh', async () => {
+    const {dataset, layer} = await initializeGeoJsonLayer(
+      [point, polygon, line].map(geometry => ({
+        geometry: geometry(0),
+        properties: {radius: 0, elevation: 0, lineWidth: 0}
+      }))
+    );
+    const saved = JSON.parse(JSON.stringify(datasetSchema.v1.save(dataset)));
+    const loaded = datasetSchema.v1.load(saved);
+    const restored = new KeplerTable({info: loaded.info, color: dataset.color});
+    await restored.importData({data: loaded.data});
+    layer.updateLayerVisConfig({enable3d: true, stroked: true});
+    const data = layer.formatLayerData({[restored.id]: restored}, {});
+    const rendered = render(layer, restored, data, 4);
+    expect(rendered.props.extruded).toBe(true);
+    for (const accessor of ['getPointRadius', 'getElevation', 'getLineWidth']) {
+      expect(rendered.props.data.map(rendered.props[accessor])).toEqual([0, 0, 0]);
+    }
+    expect(rendered.props.pointRadiusScale).toBe(1);
+    const geometry = layer.dataToFeature;
+    layer.updateLayerVisConfig({opacity: 0.5});
+    layer.formatLayerData({[restored.id]: restored}, data);
+    expect(layer.dataToFeature).toBe(geometry);
+
+    const rows = restored.dataContainer.flattenData().map(row => row.slice());
+    const geometryIndex = layer.config.columns.geojson.fieldIdx;
+    rows.forEach(row => {
+      row[geometryIndex] = {...row[geometryIndex], properties: {}};
+    });
+    await restored.update({fields: restored.fields, rows});
+    const refreshed = layer.formatLayerData({[restored.id]: restored}, data) as any;
+    expect(layer.meta.fixedRadius).toBe(false);
+    expect(refreshed.data.map(refreshed.getPointRadius)).toEqual([1, 1, 1]);
+    expect(refreshed.data.map(refreshed.getElevation)).toEqual([500, 500, 500]);
+    expect(refreshed.data.map(refreshed.getLineWidth)).toEqual([1, 1, 1]);
+  });
 });

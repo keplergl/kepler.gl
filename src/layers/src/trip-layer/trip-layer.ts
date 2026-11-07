@@ -374,7 +374,7 @@ export default class TripLayer extends Layer {
         accessor: 'getWidth',
         condition: config => config.visConfig.stroked,
         nullValue: 0,
-        getAttributeValue: () => d => d.properties.lineWidth || defaultLineWidth
+        getAttributeValue: () => d => d.properties.lineWidth ?? defaultLineWidth
       },
       adjustRoll: {
         fixed: 'fixedRoll',
