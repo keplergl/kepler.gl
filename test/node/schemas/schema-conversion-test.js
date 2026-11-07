@@ -3,7 +3,7 @@
 
 import test from 'tape';
 
-import SchemaManager from '@kepler.gl/schemas';
+import SchemaManager, {Schema, KeplerGLSchemaClass} from '@kepler.gl/schemas';
 import {cmpParsedAppConfigs} from 'test/helpers/comparison-utils';
 import {logStep} from '../../../scripts/log';
 
@@ -67,5 +67,154 @@ test('#appSchema -> Convert Saved Configs', t => {
     });
   });
 
+  t.end();
+});
+
+test('#Schema -> select properties without defaulting or cloning opaque values', t => {
+  const cell = {toJSON: () => 'custom cell'};
+  const rows = [[cell]];
+  const schema = new Schema({
+    key: 'config',
+    properties: {
+      missing: null,
+      explicitUndefined: null,
+      nullable: null,
+      rows: null,
+      nested: new Schema({key: 'nested', properties: {enabled: null}})
+    }
+  });
+  const input = {
+    explicitUndefined: undefined,
+    nullable: null,
+    rows,
+    nested: {enabled: false, transient: true},
+    transient: true
+  };
+  for (const operation of ['save', 'load']) {
+    t.deepEqual(schema[operation]({}), {config: {}}, `${operation}: empty stays empty`);
+    const {config} = schema[operation](input);
+    t.deepEqual(
+      config,
+      {explicitUndefined: undefined, nullable: null, rows, nested: {enabled: false}},
+      `${operation}: only declared and present properties survive`
+    );
+    t.ok('explicitUndefined' in config, `${operation}: retains explicit undefined`);
+    t.notOk('missing' in config, `${operation}: does not invent missing properties`);
+    t.equal(config.rows, rows, `${operation}: retains dataset row references`);
+    t.equal(config.rows[0][0], cell, `${operation}: retains custom JSON serializers`);
+    t.equal(input.nested.transient, true, `${operation}: does not mutate input`);
+    t.throws(() => schema[operation](null), `${operation}: rejects a null property container`);
+  }
+  t.end();
+});
+
+test('#Schema -> custom hooks retain parents, order and accumulated output', t => {
+  class CustomSchema extends Schema {
+    save(value, parents, accumulated) {
+      return {
+        combined: [...accumulated.combined, value, parents[0].transient, parents[1].transient]
+      };
+    }
+    load(...args) {
+      return this.save(...args);
+    }
+  }
+  const input = {nested: {first: ['start'], second: 'end', transient: 'child'}, transient: 'root'};
+  const schema = new Schema({
+    key: 'config',
+    properties: {
+      nested: new Schema({
+        key: 'nested',
+        properties: {
+          first: new Schema({key: 'combined'}),
+          second: new CustomSchema()
+        }
+      })
+    }
+  });
+  for (const operation of ['save', 'load']) {
+    t.deepEqual(
+      schema[operation](input),
+      {config: {nested: {combined: ['start', 'end', 'root', 'child']}}},
+      `${operation}: hooks can rename fields and use original parents and earlier output`
+    );
+    const passthrough = new Schema({key: 'value'});
+    for (const value of [undefined, null, input, []]) {
+      t.equal(
+        passthrough[operation](value).value,
+        value,
+        `${operation}: opaque values pass through`
+      );
+    }
+  }
+  t.end();
+});
+
+test('#Schema -> property declarations remain extensible after use', t => {
+  const properties = {first: null};
+  const schema = new Schema({key: 'config', properties});
+  const input = {first: 1, second: 2};
+  t.deepEqual(schema.save(input), {config: {first: 1}}, 'uses initial declaration');
+  properties.second = null;
+  delete properties.first;
+  t.deepEqual(schema.save(input), {config: {second: 2}}, 'observes changed declaration keys');
+  properties.second = new Schema({key: 'renamed'});
+  t.deepEqual(schema.load(input), {config: {renamed: 2}}, 'observes replaced child schemas');
+  schema.properties = {first: null};
+  t.deepEqual(schema.load(input), {config: {first: 1}}, 'observes replaced declarations');
+  t.end();
+});
+
+test('#appSchema -> partial saved configs keep their existing values', t => {
+  for (const version of ['v0', 'v1']) {
+    t.deepEqual(SchemaManager.parseSavedConfig({version, config: {}}), {}, `${version}: empty map`);
+    t.deepEqual(
+      SchemaManager.parseSavedConfig({
+        version,
+        config: {mapState: {longitude: 540, zoom: null, transient: true}, unknownReducer: {}}
+      }),
+      {mapState: {longitude: 540, zoom: null}},
+      `${version}: no coercion, range restriction or new defaults`
+    );
+  }
+  const customLayer = {
+    id: 'custom',
+    type: 'custom-layer',
+    config: {dataId: 'data', visConfig: {extension: {enabled: true}}},
+    visualChannels: {customField: {name: 'value', type: 'real'}, customScale: 'custom-scale'}
+  };
+  t.deepEqual(
+    SchemaManager.parseSavedConfig({version: 'v1', config: {visState: {layers: [customLayer]}}}),
+    {
+      visState: {
+        layers: [
+          {
+            id: customLayer.id,
+            type: customLayer.type,
+            config: {
+              ...customLayer.config,
+              ...customLayer.visualChannels
+            }
+          }
+        ]
+      }
+    },
+    'custom layer types, visConfig and visual channels survive loading'
+  );
+  t.end();
+});
+
+test('#appSchema -> custom reducer and composed schema hooks still run', t => {
+  const customSchema = new Schema({key: 'custom', properties: {value: null}});
+  const manager = new KeplerGLSchemaClass({
+    reducers: {custom: {v1: customSchema}},
+    composedReducerSchema: {
+      save: state => ({custom: {value: state.custom.value + 1, transient: true}}),
+      load: config => ({custom: {value: config.custom.value - 1, transient: true}})
+    }
+  });
+  const saved = manager.getConfigToSave({custom: {value: 10}});
+  t.deepEqual(saved, {version: 'v1', config: {custom: {value: 11}}}, 'composes before saving');
+  t.deepEqual(manager.parseSavedConfig(saved), {custom: {value: 10}}, 'composes before loading');
   t.end();
 });
