@@ -11,6 +11,9 @@ import {createEffect} from '@kepler.gl/effects';
 import {
   POSTPROCESSING_EFFECTS,
   LIGHT_AND_SHADOW_EFFECT,
+  LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  FILTER_TYPES,
+  FILTER_VIEW_TYPES,
   DISTANCE_FOG_TYPE,
   DEFAULT_POST_PROCESSING_EFFECT_TYPE
 } from '@kepler.gl/constants';
@@ -54,6 +57,104 @@ test('effectUtils -> computeDeckEffects', t => {
   });
   t.equal(deckEffects[0].shadowColor[3], 0.5, 'shadows should be enabled');
   t.equal(deckEffects[0].directionalLights[0].intensity, 1, 'directional light should be enabled');
+
+  t.end();
+});
+
+test('effectUtils -> animation sunlight timestamp precedence', t => {
+  const filterTimestamp = 1689415852635;
+  const enlargedFilter = {
+    type: FILTER_TYPES.timeRange,
+    view: FILTER_VIEW_TYPES.enlarged,
+    value: [filterTimestamp, filterTimestamp + 1000]
+  };
+  const syncedFilter = {
+    ...enlargedFilter,
+    view: FILTER_VIEW_TYPES.side,
+    syncedWithLayerTimeline: true
+  };
+  const testCases = [
+    {name: 'zero precedes enlarged filter', currentTime: 0, filters: [enlargedFilter], expected: 0},
+    {name: 'zero precedes synced filter', currentTime: 0, filters: [syncedFilter], expected: 0},
+    {
+      name: 'nonzero animation time precedes filter',
+      currentTime: 1689383452635,
+      filters: [enlargedFilter],
+      expected: 1689383452635
+    },
+    {
+      name: 'negative animation time precedes filter',
+      currentTime: -1,
+      filters: [syncedFilter],
+      expected: -1
+    },
+    {
+      name: 'null uses enlarged filter',
+      currentTime: null,
+      filters: [enlargedFilter],
+      expected: filterTimestamp
+    },
+    {
+      name: 'undefined uses synced filter',
+      currentTime: undefined,
+      filters: [syncedFilter],
+      expected: filterTimestamp
+    },
+    {
+      name: 'NaN retains filter fallback',
+      currentTime: NaN,
+      filters: [enlargedFilter],
+      expected: filterTimestamp
+    },
+    {
+      name: 'missing animation and filter default to zero',
+      currentTime: null,
+      filters: [],
+      expected: 0
+    },
+    {
+      name: 'zero filter start is retained',
+      currentTime: null,
+      filters: [{...enlargedFilter, value: [0, filterTimestamp]}],
+      expected: 0
+    },
+    {
+      name: 'missing filter value defaults to zero',
+      currentTime: null,
+      filters: [{...enlargedFilter, value: undefined}],
+      expected: 0
+    },
+    {
+      name: 'unselected time filter is ignored',
+      currentTime: undefined,
+      filters: [{...enlargedFilter, view: FILTER_VIEW_TYPES.side}],
+      expected: 0
+    }
+  ];
+
+  for (const {name, currentTime, filters, expected} of testCases) {
+    const effect = createEffect({
+      id: 'animation-sunlight',
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation}
+    });
+    const [deckEffect] = computeDeckEffects({
+      visState: {
+        effects: [effect],
+        effectOrder: [effect.id],
+        animationConfig: {currentTime},
+        filters
+      },
+      mapState: {latitude: 51.033105, longitude: 0.348512},
+      isExport: true
+    });
+
+    t.equal(deckEffect.directionalLights[0].timestamp, expected, name);
+    if (currentTime === 0) {
+      t.equal(deckEffect.outputUniformShadow, true, `${name}: uses nighttime at the epoch`);
+      t.equal(deckEffect.directionalLights[0].intensity, 0, `${name}: disables sunlight`);
+    }
+  }
 
   t.end();
 });
