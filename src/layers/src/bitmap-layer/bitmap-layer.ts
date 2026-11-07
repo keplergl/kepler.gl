@@ -248,9 +248,12 @@ export default class BitmapOverlayLayer extends Layer {
     const north = worldToLngLat([0, d])[1]; // v=0 (top of image)
     const south = worldToLngLat([0, c + d])[1]; // v=1 (bottom of image)
 
+    // Closely spaced image points can extrapolate across multiple worlds.
+    // Allow floating-point roundoff for valid full-world fits.
     if (
       ![west, east, north, south].every(Number.isFinite) ||
       east <= west ||
+      east - west > 360 + 1e-8 ||
       Math.abs(north) > MAX_BITMAP_LATITUDE ||
       Math.abs(south) > MAX_BITMAP_LATITUDE
     )

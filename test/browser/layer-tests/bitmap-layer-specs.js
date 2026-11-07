@@ -825,6 +825,52 @@ test('#BitmapOverlayLayer -> ignores degenerate or nonprojectable alignment', t 
   t.end();
 });
 
+test('#BitmapOverlayLayer -> rejects alignment fits that extrapolate across multiple worlds', t => {
+  const cases = [
+    // Reproduces a fit from West -35500 to East 17084 after longitude unwrapping.
+    [
+      {uv: [(10 + 35500) / 52584, 0], geo: [10, 10]},
+      {uv: [(369 + 35500) / 52584, 1], geo: [9, -10]}
+    ],
+    [
+      {uv: [0.5, 0], geo: [10, 10]},
+      {uv: [0.5001, 1], geo: [11, -10]}
+    ],
+    [
+      {uv: [0, 0], geo: [10, 10]},
+      {uv: [1, 1], geo: [730, -10]}
+    ]
+  ];
+  for (const points of cases) {
+    for (const reverse of [false, true]) {
+      const layer = createBitmapLayer({
+        visConfig: {boundsWest: 170, boundsEast: 190, boundsSouth: -10, boundsNorth: 10}
+      });
+      const before = {...layer.config.visConfig};
+      const data = layer.formatLayerData(MOCK_DATASETS);
+      for (const {uv, geo} of reverse ? [...points].reverse() : points) {
+        layer.onAlignImageClick(uv);
+        layer.onAlignMapClick(geo);
+      }
+      t.deepEqual(
+        layer.config.visConfig,
+        before,
+        'invalid extrapolation preserves the previous fit'
+      );
+      for (const globe of [false, true]) {
+        const [bitmap] = layer.renderLayer({
+          data,
+          mapState: {globe: {enabled: globe}},
+          visible: true,
+          layerCallbacks: {}
+        });
+        t.deepEqual(bitmap.props.bounds, [170, -10, 190, 10], 'rendering retains the narrow image');
+      }
+    }
+  }
+  t.end();
+});
+
 // Evaluate deck's chosen texture-coordinate conversion at a geographic point.
 // The default mesh is latitude-linear on GlobeViewport and Mercator-linear on WebMercatorViewport.
 function bitmapUVAtLocation(bitmap, viewport, geo) {
@@ -858,6 +904,7 @@ test('#BitmapOverlayLayer -> aligns eastward across the dateline without shorten
     {longitudes: [-170, 170], expected: [-170, 170]},
     {longitudes: [-180, 180], expected: [-180, 180]},
     {longitudes: [180, -180], expected: [180, 540]},
+    {longitudes: [-144, 144], u: [0.1, 0.9], expected: [-180, 180]},
     {longitudes: [170, -170], u: [0.25, 0.75], expected: [160, 200]}
   ];
   for (const {longitudes, u = [0, 1], expected} of cases) {
