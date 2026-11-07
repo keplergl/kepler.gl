@@ -1113,7 +1113,10 @@ export default class TripLayer extends Layer {
         let coords = coordinates[idx].slice(0, 3);
         const prevCoords = idx > 0 ? coordinates[idx - 1].slice(0, 3) : null;
         const timeDiff = idx > 0 ? timestamps[idx] - timestamps[idx - 1] : 0;
-        const advancement = idx > 0 ? (currentTime - timestamps[idx - 1]) / timeDiff : 0;
+        // Clamping bisectRight at the last vertex can select a zero-duration segment.
+        // Use its endpoint instead of dividing 0/0.
+        const advancement =
+          idx > 0 ? (timeDiff === 0 ? 1 : (currentTime - timestamps[idx - 1]) / timeDiff) : 0;
 
         if (interpolateCoords) {
           coords = interpolateArray(prevCoords, coords)(advancement);
