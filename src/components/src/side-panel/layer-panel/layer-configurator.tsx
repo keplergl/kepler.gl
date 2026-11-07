@@ -596,6 +596,8 @@ export default function LayerConfiguratorFactory(
   };
 
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
+    private bitmapLongitudeRange: {layerId: string; range: [number, number]} | null = null;
+
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props, true);
     }
@@ -2098,11 +2100,17 @@ export default function LayerConfiguratorFactory(
         layer.config.visConfig.boundsEast
       ].filter(Number.isFinite);
       // Dateline alignment and resizing keep longitudes in the image's world copy.
-      // Include those values so the sliders do not fall back to custom inputs.
+      // Grow the range for new bounds, but keep it from shrinking mid-drag and
+      // changing the pointer-to-longitude mapping. Reset when switching layers.
+      const previousRange =
+        this.bitmapLongitudeRange && this.bitmapLongitudeRange.layerId === layer.id
+          ? this.bitmapLongitudeRange.range
+          : [-180, 180];
       const longitudeRange: [number, number] = [
-        Math.min(-180, ...longitudes.map(value => Math.floor(value / 180) * 180)),
-        Math.max(180, ...longitudes.map(value => Math.ceil(value / 180) * 180))
+        Math.min(previousRange[0], ...longitudes.map(value => Math.floor(value / 180) * 180)),
+        Math.max(previousRange[1], ...longitudes.map(value => Math.ceil(value / 180) * 180))
       ];
+      this.bitmapLongitudeRange = {layerId: layer.id, range: longitudeRange};
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.imageSource'} collapsible>

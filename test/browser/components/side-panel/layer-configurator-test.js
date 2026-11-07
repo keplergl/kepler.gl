@@ -227,6 +227,70 @@ test('Components -> LayerConfigurator -> bitmap bounds keep sliders across the d
   t.end();
 });
 
+test('Components -> LayerConfigurator -> bitmap slider drags stay continuous across world boundaries', t => {
+  for (const {west, east, index, start, positions, expected} of [
+    {west: -181, east: -170, index: 0, start: 179, positions: [180, 181], expected: [-180, -179]},
+    {west: 170, east: 181, index: 1, start: 361, positions: [360, 359], expected: [180, 179]}
+  ]) {
+    const dataset = new KeplerTable({info: {id: 'bitmap-drag'}, color: [0, 0, 0]});
+    const layer = new LayerClasses.bitmap({id: 'bitmap-drag', dataId: dataset.id});
+    layer.updateLayerVisConfig({
+      boundsWest: west,
+      boundsEast: east,
+      boundsSouth: -10,
+      boundsNorth: 10
+    });
+    const changes = [];
+    const Editor = () => {
+      const [, redraw] = React.useState(0);
+      return (
+        <IntlWrapper>
+          <LayerConfigurator
+            {...defaultProps}
+            layer={layer}
+            datasets={{[dataset.id]: dataset}}
+            updateLayerVisConfig={change => {
+              changes.push(change);
+              layer.updateLayerVisConfig(change);
+              redraw(version => version + 1);
+            }}
+          />
+        </IntlWrapper>
+      );
+    };
+    const view = renderWithTheme(<Editor />);
+    try {
+      const slider = view.container.querySelectorAll('.bitmap-bounds-sliders .kg-slider')[index];
+      Object.defineProperty(slider, 'offsetWidth', {configurable: true, value: 540});
+      const handle = slider.querySelectorAll('.kg-range-slider__handle')[1];
+      fireEvent.mouseDown(handle, {clientX: start});
+      for (const clientX of positions) {
+        fireEvent.mouseMove(document, {clientX});
+      }
+      fireEvent.mouseUp(document);
+      const property = index === 0 ? 'boundsWest' : 'boundsEast';
+      t.deepEqual(
+        changes,
+        expected.map(value => ({[property]: value})),
+        'consecutive pointer movements remain one degree apart after rerendering'
+      );
+      t.equal(
+        layer.config.visConfig[property],
+        expected[1],
+        'release retains the final drag value'
+      );
+      t.equal(
+        layer.config.visConfig[index === 0 ? 'boundsEast' : 'boundsWest'],
+        index === 0 ? east : west,
+        'dragging one bound leaves the opposite bound unchanged'
+      );
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
 function contourRangeDataset(
   id = 'contour-range-data',
   rows = [
