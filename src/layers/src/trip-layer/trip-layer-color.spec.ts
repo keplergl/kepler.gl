@@ -377,6 +377,123 @@ describe('TripLayer models follow filtered vertices', () => {
     }
   );
 
+  test.each([
+    {
+      times: [0, 10, 20],
+      frames: [
+        [0, 0],
+        [5, 5],
+        [10, 10],
+        [15, 15],
+        [20, 20]
+      ]
+    },
+    {
+      times: [0, 0, 10],
+      frames: [
+        [0, 10],
+        [5, 15],
+        [10, 20]
+      ]
+    },
+    {
+      times: [0, 10, 10, 20],
+      frames: [
+        [0, 0],
+        [5, 5],
+        [10, 20],
+        [15, 25],
+        [20, 30]
+      ]
+    },
+    {
+      times: [0, 10, 10],
+      frames: [
+        [0, 0],
+        [5, 5],
+        [10, 20]
+      ]
+    },
+    {
+      times: [0, 10, 10],
+      stationary: true,
+      frames: [
+        [0, 0],
+        [5, 0],
+        [10, 0]
+      ]
+    },
+    {times: [10, 10, 10], frames: [[10, 20]]},
+    {times: [10, 10], frames: [[10, 10]]},
+    {times: [10], frames: [[10, 0]]},
+    {
+      times: [0, 10, 10, 20],
+      filteredIndex: [0, 1, 2],
+      frames: [
+        [0, 0],
+        [5, 5],
+        [10, 20]
+      ]
+    }
+  ])(
+    'keeps positions and headings finite through repeated times ($times)',
+    async ({times, frames, filteredIndex, stationary}) => {
+      const {table, layer} = await makeFilteredModelTrip();
+      await table.update({
+        fields: table.fields,
+        rows: times.map((seconds, index) => [
+          'trip',
+          stationary ? 0 : index * 10,
+          0,
+          new Date(Date.UTC(2024, 0, 1) + seconds * 1000).toISOString(),
+          `point-${index}`,
+          0,
+          stationary ? 0 : index * 10
+        ])
+      });
+      if (filteredIndex) table.filteredIndex = filteredIndex;
+      layer.config.yawField = table.fields[6];
+      const data = layer.formatLayerData({[table.id]: table}, null);
+      const feature = data.data[0];
+      const timestamps = data.getTimestamps(feature);
+      const renderAt = seconds =>
+        layer.renderLayer({
+          data,
+          gpuFilter: table.gpuFilter,
+          mapState: {zoom: 4, latitude: 0, longitude: 0},
+          animationConfig: {
+            domain: layer.config.animation.domain,
+            currentTime: Date.UTC(2024, 0, 1) + seconds * 1000
+          }
+        });
+
+      // Seeking backward and replaying the last frame must keep the same endpoint.
+      for (const [seconds, position] of [...frames, ...frames.slice().reverse()]) {
+        const [, model, label] = renderAt(seconds);
+        expect(model.props.getPosition(feature)).toEqual([0, position, 0]);
+        expect(label.props.getPosition(feature)).toEqual([0, position, 0]);
+        const matrix = model.props.getTransformMatrix(feature);
+        expect(Array.from(matrix).every(Number.isFinite)).toBe(true);
+        expect((Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI).toBeCloseTo(90 - position);
+        expect(data.getTimestamps(feature)).toBe(timestamps);
+      }
+
+      const lastIndex = (filteredIndex ?? times.map((_, index) => index)).slice(-1)[0];
+      layer.config.rollField = table.fields[6];
+      layer.config.pitchField = table.fields[6];
+      const [, lastModel, lastLabel] = renderAt(times[lastIndex]);
+      expect(Array.from(lastModel.props.getTransformMatrix(feature)).every(Number.isFinite)).toBe(
+        true
+      );
+      expect(lastLabel.props.getText(feature)).toBe(`point-${lastIndex}`);
+      for (const seconds of [times[0] - 1, times[lastIndex] + 1]) {
+        const [, model, label] = renderAt(seconds);
+        expect(model.props.getPosition(feature)).toEqual([0, 0, -Number.MAX_VALUE]);
+        expect(label.props.getPosition(feature)).toEqual([0, 0, -Number.MAX_VALUE]);
+      }
+    }
+  );
+
   test('reuses filtered timestamps across frames and refreshes them after filters or data change', async () => {
     const {table, layer} = await makeFilteredModelTrip();
     const start = Date.UTC(2024, 0, 1);
