@@ -12,7 +12,14 @@ import {
   KeplerGlLayers
 } from '@kepler.gl/layers';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
-import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
+import {
+  findDefaultLayer,
+  findMapBounds,
+  fitBoundsUpdater,
+  INITIAL_MAP_STATE,
+  getLayerHoverProp,
+  getLayerOrderFromLayers
+} from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -1621,5 +1628,100 @@ test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbo
     );
     t.deepEqual(calls, indices, `${name} only resolves valid neighbor positions`);
   }
+  t.end();
+});
+
+test('layerUtils -> point camera extent fits the dateline without narrowing global data', async t => {
+  const makeTable = async rows => {
+    const dataset = new KeplerTable({info: {id: 'camera-points'}});
+    await dataset.importData({
+      data: {
+        fields: [
+          {name: 'lng', type: 'real'},
+          {name: 'lat', type: 'real'}
+        ],
+        rows
+      }
+    });
+    return dataset;
+  };
+  const dataset = await makeTable([
+    [179, -1],
+    [-179, 1]
+  ]);
+  const [layer] = findDefaultLayer(dataset, {point: PointLayer});
+  const getPositionAccessor = layer.getPositionAccessor;
+  let reads = 0;
+  layer.getPositionAccessor = container => {
+    const accessor = getPositionAccessor(container);
+    return (...args) => {
+      reads++;
+      return accessor(...args);
+    };
+  };
+  layer.updateLayerMeta(dataset);
+  t.deepEqual(layer.meta.bounds, [-179, -1, 179, 1], 'geographic bounds are unchanged');
+  t.deepEqual(
+    layer.meta.cameraBounds,
+    [179, -1, -179, 1],
+    'camera bounds describe the compact arc'
+  );
+  t.equal(reads, 2, 'reuses the geographic bounds coordinate reads');
+  const fitted = fitBoundsUpdater(
+    {...INITIAL_MAP_STATE, width: 800, height: 600},
+    {payload: findMapBounds([layer])}
+  );
+  t.equal(Math.abs(fitted.longitude), 180, 'actual point-to-camera pipeline centers the dateline');
+  t.ok(fitted.zoom > 7, 'actual pipeline fits the nearby points');
+
+  const global = await makeTable([
+    [-179, -1],
+    [-90, 0],
+    [0, 0],
+    [90, 0],
+    [179, 1]
+  ]);
+  layer.updateLayerMeta(global);
+  t.deepEqual(layer.meta.cameraBounds, layer.meta.bounds, 'refresh removes the old wrapped extent');
+  t.deepEqual(findMapBounds([layer]), [-179, -1, 179, 1], 'world-spanning data remains wide');
+
+  const invalid = await makeTable([
+    [179, -1],
+    [-179, 1],
+    [null, null]
+  ]);
+  layer.updateLayerMeta(invalid);
+  t.deepEqual(
+    layer.meta.cameraBounds,
+    [179, -1, -179, 1],
+    'nonrenderable rows do not change the camera extent'
+  );
+
+  const [custom] = findDefaultLayer(global, {point: PointLayer});
+  custom.getPositionAccessor =
+    container =>
+    ({index}) =>
+      index === 2 ? new Float64Array([0, 0]) : container.rowAsArray(index);
+  custom.updateLayerMeta(global);
+  t.equal(custom.meta.cameraBounds, null, 'custom position representations opt out conservatively');
+
+  const rows = Array.from({length: 10000}, () => [179, 0]);
+  rows[1] = [0, 0]; // This row is outside the existing every-other-row sample.
+  const large = await makeTable(rows);
+  reads = 0;
+  layer.updateLayerMeta(large);
+  t.equal(layer.meta.cameraBounds, null, 'sampling opts out of dateline inference');
+  t.equal(reads, 5000, 'large datasets retain their existing coordinate-read budget');
+  const opposite = {meta: {bounds: [-179, 0, -179, 0], cameraBounds: [-179, 0, -179, 0]}};
+  t.deepEqual(
+    findMapBounds([layer, opposite]),
+    [-179, 0, 179, 0],
+    'does not hide an unsampled Greenwich outlier when layers combine'
+  );
+
+  const empty = await makeTable([]);
+  layer.updateLayerMeta(empty);
+  t.equal(layer.meta.bounds, null, 'empty data clears geographic bounds');
+  t.equal(layer.meta.cameraBounds, null, 'empty data clears camera bounds');
   t.end();
 });

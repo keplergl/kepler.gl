@@ -5,6 +5,7 @@ import test from 'tape';
 
 import {
   clamp,
+  getWrappedCameraBounds,
   getRoundingDecimalFromStep,
   preciseRound,
   normalizeSliderValue,
@@ -15,7 +16,7 @@ import {
   formatNumber,
   roundToFour
 } from '@kepler.gl/utils';
-import {processLayerBounds} from '@kepler.gl/reducers';
+import {processLayerBounds, findMapBounds} from '@kepler.gl/reducers';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 
 test('dataUtils -> clamp', t => {
@@ -311,5 +312,105 @@ test('dataUtils -> validateBounds', t => {
     t.deepEqual(output, tc.output, tc.message);
   });
 
+  t.end();
+});
+
+test('dataUtils -> compact camera bounds preserve continuous extents', t => {
+  const cases = [
+    {
+      bounds: [
+        [179, -1, 179, -1],
+        [-179, 1, -179, 1]
+      ],
+      expected: [179, -1, -179, 1]
+    },
+    {
+      bounds: [
+        [170, -2, 175, 2],
+        [-175, -3, -170, 3]
+      ],
+      expected: [170, -3, -170, 3]
+    },
+    {
+      bounds: [
+        [179, -1, -179, 1],
+        [170, -2, 175, 2]
+      ],
+      expected: [170, -2, -179, 2]
+    },
+    {
+      bounds: [
+        [180, -1, 180, -1],
+        [-180, 1, -180, 1]
+      ],
+      expected: [180, -1, -180, 1]
+    },
+    {bounds: [[-179, -1, 179, 1]], expected: null},
+    {bounds: [[-180, -90, 180, 90]], expected: null},
+    {
+      bounds: [
+        [179, -1, -179, 1],
+        [0, 0, 0, 0]
+      ],
+      expected: null
+    },
+    {
+      bounds: [
+        [90, -1, 100, 1],
+        [-100, -1, -90, 1]
+      ],
+      expected: null
+    },
+    {bounds: [[-123, 37, -122, 38]], expected: null},
+    {bounds: [[179, -1, 181, 1]], expected: null},
+    {bounds: [], expected: null}
+  ];
+  for (const {bounds, expected} of cases) {
+    t.deepEqual(getWrappedCameraBounds(bounds), expected, JSON.stringify(bounds));
+    t.deepEqual(
+      getWrappedCameraBounds([...bounds].reverse()),
+      expected,
+      'independent of layer order'
+    );
+  }
+  t.end();
+});
+
+test('dataUtils -> camera fitting keeps geographic and sampled bounds conservative', t => {
+  const dateline = {meta: {bounds: [-179, -1, 179, 1], cameraBounds: [179, -1, -179, 1]}};
+  t.deepEqual(findMapBounds([dateline]), [179, -1, -179, 1], 'uses explicit point camera extent');
+  t.deepEqual(dateline.meta.bounds, [-179, -1, 179, 1], 'does not mutate geographic extent');
+  t.deepEqual(
+    findMapBounds([
+      {meta: {bounds: [179, -1, 179, -1], cameraBounds: [179, -1, 179, -1]}},
+      {meta: {bounds: [-179, 1, -179, 1], cameraBounds: [-179, 1, -179, 1]}}
+    ]),
+    [179, -1, -179, 1],
+    'combines point layers across the dateline'
+  );
+  t.deepEqual(
+    findMapBounds([dateline, {meta: {bounds: [-170, -2, 170, 2]}}]),
+    [-179, -2, 179, 2],
+    'a genuinely wide polygon keeps its entire interval'
+  );
+  t.deepEqual(
+    findMapBounds([dateline, {meta: {bounds: [-180, -2, 180, 2]}}]),
+    [-180, -2, 180, 2],
+    'a world extent or dateline-cut multipolygon is not collapsed'
+  );
+  t.deepEqual(
+    findMapBounds([
+      {meta: {bounds: [179, -1, 179, 1], cameraBounds: null}},
+      {meta: {bounds: [-179, -1, -179, 1], cameraBounds: [-179, -1, -179, 1]}}
+    ]),
+    [-179, -1, 179, 1],
+    'a sampled layer cannot establish an empty gap between layers'
+  );
+  t.deepEqual(
+    findMapBounds([{meta: {bounds: [170, -1, 175, 1]}}, {meta: {bounds: [-175, -1, -170, 1]}}]),
+    [-175, -1, 175, 1],
+    'layers without point camera metadata keep the original contract'
+  );
+  t.equal(findMapBounds([]), null, 'no layers has no bounds');
   t.end();
 });

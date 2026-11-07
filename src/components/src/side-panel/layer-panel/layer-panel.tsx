@@ -141,7 +141,7 @@ function LayerPanelFactory(
 
     _zoomToLayer: MouseEventHandler = e => {
       e?.stopPropagation();
-      const bounds = this.props.layer?.meta?.bounds;
+      const bounds = this.props.layer?.meta?.cameraBounds || this.props.layer?.meta?.bounds;
       bounds && this.props.zoomToLayer(bounds);
     };
 

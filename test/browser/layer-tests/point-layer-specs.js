@@ -910,7 +910,11 @@ test('#PointLayer -> formatLayerData', t => {
           'textLabels getText should have correct text'
         );
         // layerMeta
-        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct point layer meta');
+        t.deepEqual(
+          layer.meta,
+          {...pointLayerMeta, cameraBounds: pointLayerMeta.bounds},
+          'should format geographic and camera point bounds'
+        );
       }
     },
     {
@@ -987,7 +991,11 @@ test('#PointLayer -> formatLayerData', t => {
           'getPosition should return correct lat lng'
         );
         // layerMeta
-        t.deepEqual(layer.meta, pointLayerMeta, 'should format correct layerMeta');
+        t.deepEqual(
+          layer.meta,
+          {...pointLayerMeta, cameraBounds: pointLayerMeta.bounds},
+          'should retain ordinary geographic and camera bounds'
+        );
         // getFillColor
         t.deepEqual(
           layerData.getFillColor(layerData.data[0]),

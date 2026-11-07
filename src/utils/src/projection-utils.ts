@@ -6,7 +6,7 @@ import geoViewport from '@mapbox/geo-viewport';
 import {WebMercatorViewport} from '@math.gl/web-mercator';
 import Console from 'global/console';
 
-import type {ViewportPadding} from '@kepler.gl/types';
+import type {Bounds, ViewportPadding} from '@kepler.gl/types';
 
 export const MAPBOX_TILE_SIZE = 512;
 
@@ -18,7 +18,7 @@ function isLng(num) {
 }
 
 /**
- * bounds should be [minLng, minLat, maxLng, maxLat]
+ * bounds should be [west, south, east, north]
  * @param {*} bounds
  */
 export function validateBounds(bounds) {
@@ -33,6 +33,48 @@ export function validateBounds(bounds) {
     return bounds;
   }
   return null;
+}
+
+/**
+ * A compact camera extent crossing the dateline, or null if the supplied extents
+ * cannot fit within that hemisphere. Ordinary extents cover their entire
+ * interval, not just their endpoints: a wide polygon must never be shortened.
+ * West > east explicitly denotes a dateline crossing; geographic bounds stay
+ * unchanged. Deliberately retain the existing view for spans of 180° or more.
+ */
+export function getWrappedCameraBounds(bounds: Iterable<Bounds>): Bounds | null {
+  let west = 180;
+  let east = -180;
+  let south = 90;
+  let north = -90;
+  let hasWest = false;
+  let hasEast = false;
+
+  for (const bound of bounds) {
+    if (!validateBounds(bound)) return null;
+    const [w, s, e, n] = bound;
+    if (w <= e) {
+      // A continuous interval containing Greenwich cannot fit in a compact
+      // dateline-centered view, even if its endpoints are close on the globe.
+      if (w <= 0 && e >= 0) return null;
+      if (w > 0) {
+        west = Math.min(west, w);
+        hasWest = true;
+      } else {
+        east = Math.max(east, e);
+        hasEast = true;
+      }
+    } else {
+      if (w <= 0 || e >= 0) return null;
+      west = Math.min(west, w);
+      east = Math.max(east, e);
+      hasWest = hasEast = true;
+    }
+    south = Math.min(south, s);
+    north = Math.max(north, n);
+  }
+
+  return hasWest && hasEast && east + 360 - west < 180 ? [west, south, east, north] : null;
 }
 
 function normalizeViewportPadding(padding?: ViewportPadding | null): {
@@ -58,6 +100,7 @@ function normalizeViewportPadding(padding?: ViewportPadding | null): {
     : null;
 }
 
+/** Fit an explicit west > east extent across the dateline; never shorten an ordinary extent. */
 export function getCenterAndZoomFromBounds(
   bounds,
   {
@@ -77,17 +120,21 @@ export function getCenterAndZoomFromBounds(
   }
 
   const normalizedPadding = normalizeViewportPadding(padding);
-  if (normalizedPadding) {
+  const crossesDateline = validBounds[0] > validBounds[2];
+  if (normalizedPadding || crossesDateline) {
     try {
       const viewport = new WebMercatorViewport({width, height, zoom: 0}).fitBounds(
         [
           [validBounds[0], validBounds[1]],
-          [validBounds[2], validBounds[3]]
+          [validBounds[2] + (crossesDateline ? 360 : 0), validBounds[3]]
         ],
-        {padding: normalizedPadding}
+        {padding: normalizedPadding || 0, ...(!normalizedPadding ? {maxZoom: 20} : {})}
       );
       let zoom = viewport.zoom;
-      const center = [viewport.longitude, viewport.latitude];
+      const longitude = crossesDateline
+        ? ((((viewport.longitude + 180) % 360) + 360) % 360) - 180
+        : viewport.longitude;
+      const center = [longitude, viewport.latitude];
 
       // NOTE: this logic is used in deck.gl normalizeViewportProps
       // This is required in order to prevent projection matrix mismatch between basemap and layers
@@ -99,7 +146,9 @@ export function getCenterAndZoomFromBounds(
 
       return {zoom, center};
     } catch (err) {
-      Console.warn('failed to fit map bounds with padding', err);
+      Console.warn('failed to fit map bounds', err);
+      // The legacy fallback cannot fit reversed longitude bounds.
+      if (crossesDateline) return null;
     }
   }
 

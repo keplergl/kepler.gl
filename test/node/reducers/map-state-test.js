@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {
   updateMap,
@@ -1069,5 +1070,66 @@ test('#mapStateReducer -> GLOBE_CONFIG_CHANGE: merges partial config', t => {
   // changing config must not toggle globe enabled state
   t.equal(updated.globe.enabled, true, 'should not change globe enabled flag');
 
+  t.end();
+});
+
+test('#mapStateReducer -> FIT_BOUNDS across the dateline', t => {
+  const bounds = [179, -1, -179, 1];
+  const state = {...INITIAL_MAP_STATE, width: 800, height: 600};
+  const fitted = reducer(state, fitBounds(bounds));
+  t.equal(Math.abs(fitted.longitude), 180, 'centers the dateline');
+  t.ok(fitted.zoom > 7 && fitted.zoom < 8, 'fits the two-degree extent');
+  t.ok(Number.isFinite(fitted.latitude), 'latitude remains finite');
+  t.deepEqual(bounds, [179, -1, -179, 1], 'does not mutate the supplied bounds');
+  t.equal(
+    reducer(state, fitBounds(bounds, 1000)),
+    state,
+    'impossible padding cannot fall back to Greenwich'
+  );
+
+  const padded = reducer(state, fitBounds(bounds, {left: 200, right: 40, top: 40, bottom: 40}));
+  t.ok(padded.zoom < fitted.zoom, 'padding reserves screen space');
+  const viewport = new WebMercatorViewport({
+    ...padded,
+    longitude: padded.longitude < 0 ? padded.longitude + 360 : padded.longitude
+  });
+  for (const point of [
+    [179, -1],
+    [181, 1]
+  ]) {
+    const [x, y] = viewport.project(point);
+    t.ok(
+      x >= 200 - 1e-6 && x <= 760 + 1e-6 && y >= 40 - 1e-6 && y <= 560 + 1e-6,
+      'wrapped points fit inside padding'
+    );
+  }
+
+  const globe = reducer(
+    {...state, globe: {...DEFAULT_GLOBE_CONFIG, enabled: true}},
+    fitBounds(bounds)
+  );
+  t.equal(Math.abs(globe.longitude), 180, 'globe uses the same dateline center');
+  t.ok(globe.zoom >= GLOBE_MIN_ZOOM && globe.zoom <= GLOBE_MAX_ZOOM, 'retains globe zoom limits');
+  const split = reducer(
+    {...state, splitMapViewports: [{...state}, {...state}], isViewportSynced: false},
+    fitBounds(bounds)
+  );
+  t.ok(
+    split.splitMapViewports.every(
+      view => Math.abs(view.longitude) === 180 && view.zoom === split.zoom
+    ),
+    'updates both unsynced viewports'
+  );
+
+  const saved = {longitude: 145, latitude: 20, zoom: 6};
+  const restoreAction = receiveMapConfig({mapState: saved}, {centerMap: false});
+  const restored = reducer(state, {...restoreAction, payload: {...restoreAction.payload, bounds}});
+  t.equal(restored.longitude, saved.longitude, 'saved view is not automatically refitted');
+  t.equal(restored.zoom, saved.zoom, 'saved zoom is preserved');
+  const recentered = reducer(state, {
+    ...restoreAction,
+    payload: {...restoreAction.payload, bounds, options: {centerMap: true}}
+  });
+  t.equal(Math.abs(recentered.longitude), 180, 'explicit centerMap opts into the dateline fit');
   t.end();
 });
