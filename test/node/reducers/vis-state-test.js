@@ -27,7 +27,8 @@ import {
   setFilterAnimationTimeUpdater,
   setFilterAnimationWindowUpdater,
   calculateLayerData,
-  computeDeckLayers
+  computeDeckLayers,
+  updateAnimationDomain
 } from '@kepler.gl/reducers';
 import {formatCsv} from '../../../src/reducers/src/export-utils';
 
@@ -5433,6 +5434,55 @@ test('#visStateReducer -> SPLIT_MAP: REMOVE_LAYER. set animation domain', t => {
     },
     'remove last animation layer and set animation config to default'
   );
+
+  t.end();
+});
+
+test('#visStateReducer -> updateAnimationDomain sorts numeric time steps', t => {
+  const cases = [
+    {
+      name: 'different digit counts and overlapping layers',
+      inputs: [
+        [12, 2, 1, 0],
+        [11, 10, 2]
+      ],
+      expected: [0, 1, 2, 10, 11, 12]
+    },
+    {
+      name: 'timestamps crossing September 2001',
+      inputs: [
+        [999999999999, 1000000000000],
+        [1000000000001, 999999999999]
+      ],
+      expected: [999999999999, 1000000000000, 1000000000001]
+    },
+    {
+      name: 'negative and fractional values',
+      inputs: [
+        [-2, -10, 0.5],
+        [-0.5, 0, 0.5]
+      ],
+      expected: [-10, -2, -0.5, 0, 0.5]
+    },
+    {name: 'missing or empty time steps', inputs: [undefined, []], expected: null}
+  ];
+
+  cases.forEach(({name, inputs, expected}) => {
+    const domain = expected ? [expected[0], expected[expected.length - 1]] : [0, 12];
+    const state = {
+      layers: inputs.map(timeSteps => ({
+        config: {isVisible: true, animation: {enabled: true, domain, timeSteps}}
+      })),
+      animationConfig: {...DEFAULT_ANIMATION_CONFIG, currentTime: domain[0]}
+    };
+    const originalInputs = CloneDeep(inputs);
+    const {animationConfig} = updateAnimationDomain(state);
+
+    t.deepEqual(animationConfig.timeSteps, expected, `${name}: unique ascending steps`);
+    t.deepEqual(inputs, originalInputs, `${name}: source steps are unchanged`);
+    t.deepEqual(animationConfig.domain, domain, `${name}: domain is unchanged`);
+    t.equal(animationConfig.currentTime, domain[0], `${name}: current time is unchanged`);
+  });
 
   t.end();
 });

@@ -5912,7 +5912,7 @@ export function updateAnimationDomain<S extends VisState>(state: S): S {
       accu.push(...(layer.config.animation.timeSteps || []));
       return accu;
     }, [])
-  ).sort();
+  ).sort((a, b) => a - b);
 
   mergedTimeSteps = mergedTimeSteps.length ? mergedTimeSteps : null;
 
