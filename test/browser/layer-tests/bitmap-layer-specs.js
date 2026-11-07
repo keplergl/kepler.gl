@@ -4,6 +4,7 @@
 import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
+import {visStateSchema, CURRENT_VERSION} from '@kepler.gl/schemas';
 import {WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
 import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 import {testCreateCases} from 'test/helpers/layer-utils';
@@ -656,6 +657,10 @@ test('#BitmapOverlayLayer -> aligns control points in the rendered Mercator plan
 test('#BitmapOverlayLayer -> ignores degenerate or nonprojectable alignment', t => {
   for (const points of [
     [
+      {uv: [0, 0], geo: [10, 60]},
+      {uv: [1, 1], geo: [10, 30]}
+    ],
+    [
       {uv: [0.5, 0.2], geo: [10, 60]},
       {uv: [0.5, 0.8], geo: [20, 30]}
     ],
@@ -716,6 +721,167 @@ function bitmapUVAtLocation(bitmap, viewport, geo) {
     (position[1] - textureBounds[3]) / (textureBounds[1] - textureBounds[3])
   ];
 }
+
+test('#BitmapOverlayLayer -> aligns eastward across the dateline without shortening wide images', t => {
+  const cases = [
+    {longitudes: [170, -170], expected: [170, 190]},
+    {longitudes: [170, 190], expected: [170, 190]},
+    {longitudes: [-170, 170], expected: [-170, 170]},
+    {longitudes: [-180, 180], expected: [-180, 180]},
+    {longitudes: [180, -180], expected: [180, 540]},
+    {longitudes: [170, -170], u: [0.25, 0.75], expected: [160, 200]}
+  ];
+  for (const {longitudes, u = [0, 1], expected} of cases) {
+    for (const reverse of [false, true]) {
+      const layer = createBitmapLayer();
+      // Rendering must use the fitted bounds even if formatted data is cached.
+      const data = layer.formatLayerData(MOCK_DATASETS);
+      const points = [
+        {uv: [u[0], 0], geo: [longitudes[0], 10]},
+        {uv: [u[1], 1], geo: [longitudes[1], -10]}
+      ];
+      for (const {uv, geo} of reverse ? [...points].reverse() : points) {
+        layer.onAlignImageClick(uv);
+        layer.onAlignMapClick(geo);
+      }
+      const {boundsWest, boundsEast} = layer.config.visConfig;
+      t.ok(
+        Math.abs(boundsWest - expected[0]) < 1e-8 && Math.abs(boundsEast - expected[1]) < 1e-8,
+        `${longitudes} fits the eastward interval regardless of click order`
+      );
+      const saved = visStateSchema[CURRENT_VERSION].save({
+        layers: [layer],
+        layerOrder: [layer.id]
+      });
+      const loaded = visStateSchema[CURRENT_VERSION].load(
+        JSON.parse(JSON.stringify(saved.visState))
+      );
+      const restored = createBitmapLayer();
+      restored.config = restored.copyLayerConfig(restored.config, loaded.visState.layers[0].config);
+      t.deepEqual(
+        restored.config.visConfig,
+        layer.config.visConfig,
+        'save/load retains fitted bounds'
+      );
+
+      layer.updateLayerVisConfig({alignMode: true});
+      layer.onAlignImageClick([0.5, 0.5]);
+      for (const globe of [false, true]) {
+        const viewport = new (globe ? GlobeViewport : WebMercatorViewport)({
+          width: 800,
+          height: 600,
+          latitude: 0,
+          longitude: 180,
+          zoom: 2,
+          resolution: 5
+        });
+        for (const candidate of [layer, restored]) {
+          const deckLayers = candidate.renderLayer({
+            data,
+            mapState: {globe: {enabled: globe}},
+            visible: true,
+            layerCallbacks: {}
+          });
+          const bitmap = deckLayers[0];
+          t.ok(
+            Math.abs(
+              bitmap.props.bounds[2] - bitmap.props.bounds[0] - (expected[1] - expected[0])
+            ) < 1e-8,
+            'live and restored renderers preserve the fitted span'
+          );
+          for (const {uv, geo} of points) {
+            const longitude = expected[0] + uv[0] * (expected[1] - expected[0]);
+            const actual = bitmapUVAtLocation(bitmap, viewport, [longitude, geo[1]]);
+            t.ok(
+              Math.abs(actual[0] - uv[0]) < 1e-8 && Math.abs(actual[1] - uv[1]) < 1e-8,
+              'control points map to the same texture coordinates in flat and globe'
+            );
+          }
+          const mesh = bitmap._createMesh();
+          const meshLongitudes = Array.from(mesh.positions).filter((_, i) => i % 3 === 0);
+          t.ok(
+            Math.abs(Math.min(...meshLongitudes) - expected[0]) < 1e-8 &&
+              Math.abs(Math.max(...meshLongitudes) - expected[1]) < 1e-8,
+            'deck mesh uses unwrapped corners'
+          );
+          const pending = deckLayers.find(l => l.id === `${candidate.id}-align-pending`);
+          if (candidate === layer) {
+            const markers = deckLayers.find(l => l.id === `${candidate.id}-align-pts`);
+            for (const point of markers.props.data) {
+              const position = markers.props.getPosition(point);
+              t.ok(
+                Math.abs(position[0] - (expected[0] + point.uv[0] * (expected[1] - expected[0]))) <
+                  1e-8,
+                'map-click markers use the same world copy as the image'
+              );
+            }
+            const position = pending.props.getPosition(pending.props.data[0]);
+            t.ok(
+              Math.abs(position[0] - (expected[0] + expected[1]) / 2) < 1e-8,
+              'pending marker follows the same longitude interval'
+            );
+          }
+        }
+      }
+    }
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> unwraps intermediate alignment points without accumulating worlds', t => {
+  for (const reverse of [false, true]) {
+    const layer = createBitmapLayer();
+    const points = [
+      {uv: [0, 0], geo: [170, 10]},
+      {uv: [1, 1], geo: [-170, -10]},
+      {uv: [0.5, 0.5], geo: [-179.9, 0]},
+      {uv: [0.5, 0.5], geo: [180, 0]},
+      {uv: [0.5001, 0.5], geo: [179.99, 0]}
+    ];
+    const ordered = reverse ? [...points].reverse() : points;
+    for (const {uv, geo} of ordered) {
+      layer.onAlignImageClick(uv);
+      layer.onAlignMapClick(geo);
+    }
+    t.deepEqual(layer.alignControlPoints, ordered, 'does not mutate clicked coordinates or order');
+    t.ok(
+      Math.abs(layer.config.visConfig.boundsWest - 170) < 0.1,
+      'west stays near the intended fit'
+    );
+    t.ok(
+      Math.abs(layer.config.visConfig.boundsEast - 190) < 0.1,
+      'east stays near the intended fit'
+    );
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> leaves legacy saved longitude bounds unchanged', t => {
+  for (const [west, east] of [
+    [-170, 170],
+    [170, -170]
+  ]) {
+    const layer = createBitmapLayer({
+      visConfig: {boundsWest: west, boundsSouth: -10, boundsEast: east, boundsNorth: 10}
+    });
+    const saved = visStateSchema[CURRENT_VERSION].save({layers: [layer], layerOrder: [layer.id]});
+    const loaded = visStateSchema[CURRENT_VERSION].load(JSON.parse(JSON.stringify(saved.visState)));
+    const restored = createBitmapLayer();
+    restored.config = restored.copyLayerConfig(restored.config, loaded.visState.layers[0].config);
+    const before = {...restored.config.visConfig};
+    const [bitmap] = restored.renderLayer({
+      data: restored.formatLayerData(MOCK_DATASETS),
+      mapState: {},
+      visible: true,
+      layerCallbacks: {}
+    });
+    t.equal(restored.config.visConfig.boundsWest, west, 'saved west is not migrated');
+    t.equal(restored.config.visConfig.boundsEast, east, 'saved east is not migrated');
+    t.deepEqual(bitmap.props.bounds, [-170, -10, 170, 10], 'legacy rendering stays unchanged');
+    t.deepEqual(restored.config.visConfig, before, 'rendering does not rewrite the config');
+  }
+  t.end();
+});
 
 test('#BitmapOverlayLayer -> aligned texture points stay fixed when switching flat and globe', t => {
   const points = [
