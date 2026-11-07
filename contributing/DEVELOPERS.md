@@ -162,51 +162,56 @@ npm run start:deck-src
 
 ## Running Tests
 
-- We write node and browser tests with [Tape][tape], [Enzyme][enzyme], [jsDom](https://www.npmjs.com/package/jsdom) and [@probe.gl/test-util](https://uber-web.github.io/probe.gl/docs/modules/test-utils/browser-driver), and lint with [ESLint][eslint]. Make sure to run test before submitting your PR. To run all of the tests once
+Run commands from the repository root on Node >= 20 (the Volta pin matches CI).
+The test suite combines [Jest](https://jestjs.io/) with [Tape][tape]:
+
+- Jest discovers `*.spec.ts` and `*.spec.tsx` beside the source in `src/`, plus
+  `*.spec.js` under `src/` and `test/`. Use [Testing Library](https://testing-library.com/)
+  for new React component tests.
+- Tape tests live under `test/node/` and `test/browser/`. Import each new `*-test.js`
+  file in the nearest `index.js`; an unimported file will not run. Browser Tape
+  tests normally run in [jsdom](https://www.npmjs.com/package/jsdom).
 
 ```bash
+# Jest, then Tape in Node and jsdom (does not run lint or headless browser tests)
 yarn test
-```
 
-- Yarn test runs lint and 3 tests in different env. To run them separately
+# Run one Jest suite while iterating
+yarn test-jest --runTestsByPath src/layers/src/layer-text-label.spec.ts --watchAll=false
 
-```bash
-# lint
-yarn lint
-
-# node tests
+# Run each harness separately
+yarn test-jest --watchAll=false
 yarn test-node
-
-# jsdom tests
 yarn test-browser
 
-# headless browser tests, uses probe.gl to run browser tests with puppeteer
-yarn test-headless
+# Tape in Node and jsdom without tap-spec formatting (does not run Jest)
+yarn test-fast
+
+# Typecheck plus Jest
+yarn agent:check
+
+# Required local verification: circular dependencies, typecheck, Jest, Tape and SQLRooms
+yarn agent:verify
 ```
 
-- Here are some handy scripts / tricks for debugging tests
+ESLint is separate from `yarn test`. `yarn lint:check` typechecks and runs ESLint
+without changing files. `yarn lint` also applies fixes, so it can rewrite unrelated
+files. CI currently uses ESLint with `--fix` because of existing formatting issues.
+The Jest lint override covers the discovered spec extensions; some rules remain
+warnings while existing test patterns are reviewed. Do not commit focused `.only`
+tests after debugging.
 
-1. add `.only` to errored tests to only run 1 test at a time
-
-```js
-test.only('MapContainerFactory', t => {
-  // tests
-}
-```
-
-2. run all tests in chromium browser. This runs node, browser and headless browser tests in chromium browser and logs the output, you can step through the code with chrome developer tools
+The browser-driver commands are separate, optional checks:
 
 ```bash
+# Headless Chromium via Puppeteer and probe.gl
+yarn test-headless
+
+# Open Chromium to debug the browser suites with developer tools
 yarn test-browser-drive
 ```
 
-3. Fast tests, runs node and browser tests without tap-spec output
-
-```bash
-yarn test-fast
-```
-
-To generate a coverage report
+To generate and merge Tape and Jest coverage reports:
 
 ```bash
 yarn cover
@@ -214,19 +219,14 @@ yarn cover
 
 ## Test React components
 
-Enzyme is no longer supported therefore we are now transitioning to [testing library](https://testing-library.com/).
+Write new component tests with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
+and Jest. Testing Library dependencies are already installed. Enzyme is no longer
+supported or installed; do not introduce new Enzyme tests. Existing Tape suites
+remain part of the test run and should not be removed as part of a component test
+migration.
 
-We have introduced an eslint rule to deprecate the usage of enzyme so if you attempt to create new tests using enzyme
-it will throw an error when running lint.
-
-In order to create new tests cases please take advantage of [Testing Library](https://testing-library.com/).
-All necessary dependencies are already installed, you can start testing your React components by following this
-[doc](https://testing-library.com/docs/react-testing-library/intro);
-
-### Migrating enzyme to React testing library
-
-If you are interested in migrating enzyme tests to RTL (react testing library) feel free to check
-the [official migration guidelines](https://testing-library.com/docs/react-testing-library/migrate-from-enzyme/)
+For older test examples, see the
+[Enzyme migration guide](https://testing-library.com/docs/react-testing-library/migrate-from-enzyme/).
 
 ## Coding Rules
 
@@ -461,7 +461,6 @@ For both scenarios, changes will be propagated from one system to the other and 
 [demo-app]: http://kepler.gl/#/demo
 [documentationjs]: https://documentation.js.org/
 [eslint]: https://eslint.org/
-[enzyme]: https://airbnb.io/enzyme/
 [git-revert]: https://git-scm.com/docs/git-revert
 [git-setup]: https://help.github.com/articles/set-up-git
 [github]: https://github.com/keplergl/kepler.gl

@@ -69,6 +69,26 @@ module.exports = {
       plugins: ['jest'],
       extends: ['plugin:jest/recommended'],
       rules: {'jest/prefer-expect-assertions': 'off'}
+    },
+    {
+      // Match the remaining Jest testMatch patterns without changing the rules
+      // for the JavaScript specs covered above. Tape uses *-test.js.
+      files: ['src/**/*.spec.{js,ts,tsx}', 'test/**/*.spec.js'],
+      excludedFiles: ['src/**/src/**/*.spec.js'],
+      plugins: ['jest'],
+      extends: ['plugin:jest/recommended'],
+      rules: {
+        'jest/prefer-expect-assertions': 'off',
+        // Existing suites use conditional checks, dynamic titles, exported fixtures,
+        // setup assertions and promises awaited later. Surface these for review
+        // without blocking CI or rewriting unrelated tests during this rollout.
+        'jest/no-conditional-expect': 'warn',
+        'jest/no-identical-title': 'warn',
+        'jest/no-export': 'warn',
+        'jest/no-standalone-expect': 'warn',
+        'jest/valid-expect': 'warn',
+        'jest/valid-title': 'warn'
+      }
     }
   ],
   settings: {
