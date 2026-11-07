@@ -8,10 +8,16 @@ import {createStore} from 'redux';
 import {ThemeProvider} from 'styled-components';
 import {createIntl, IntlProvider} from 'react-intl';
 
-import {computeChart, createBigNumberChart} from '@kepler.gl/charts';
+import {
+  ChartType,
+  computeChart,
+  createBarChart,
+  createBigNumberChart,
+  createHeatmapChart
+} from '@kepler.gl/charts';
 import {VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_VIS_STATE, visStateReducer, visStateUpdaters} from '@kepler.gl/reducers';
-import {VisState} from '@kepler.gl/schemas';
+import {ChartsSchema, chartPropsV1, VisState} from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
@@ -238,5 +244,130 @@ describe('ChartManager reactivity', () => {
     expect(getByText('3')).toBeInTheDocument();
     dispatch({type: 'replace', visState: {...store.getState().visState, datasets: {}}});
     expect(getByText('Select a dataset to plot this chart.')).toBeInTheDocument();
+  });
+});
+
+describe('time chart bin selection', () => {
+  const start = Date.UTC(2020, 0, 1);
+  const schema = new ChartsSchema({version: 'v1', properties: chartPropsV1});
+
+  test('heatmap labels decode both time axes while selections keep distinct ranges', () => {
+    const yStart = Date.UTC(2020, 0, 2);
+    const dataset = new KeplerTable({info: {id: 'd1'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'xTime', type: 'timestamp'},
+        {name: 'yTime', type: 'timestamp'}
+      ] as any,
+      rows: Array.from({length: 31}, (_, i) => [start + i * 1000, yStart + i * 1000])
+    });
+    const heatmap = createHeatmapChart({
+      id: 'time-heatmap',
+      dataId: 'd1',
+      pinned: true,
+      numGroups: 2,
+      xAxis: {field: {name: 'xTime', type: 'timestamp'}, aggregation: 'timeBin'},
+      yAxis: {field: {name: 'yTime', type: 'timestamp'}, aggregation: 'timeBin'}
+    });
+    const {getByRole, store} = renderManager({
+      ...INITIAL_VIS_STATE,
+      datasets: {d1: dataset},
+      charts: [heatmap]
+    });
+    const xLabel = '2020-01-01 00:00 – 2020-01-01 00:00';
+    const yLabel = '2020-01-02 00:00 – 2020-01-02 00:00';
+    const first = getByRole('button', {name: `${xLabel} / ${yLabel}: 15`});
+    expect(first).toHaveAttribute('title', `${xLabel} / ${yLabel}: 15`);
+    fireEvent.keyDown(first, {key: 'Enter'});
+    let state = store.getState().visState;
+    expect(first).toHaveAttribute('aria-pressed', 'true');
+    expect(state.filters.map(filter => filter.value)).toEqual([
+      [start, start + 15000],
+      [yStart, yStart + 15000]
+    ]);
+    expect(state.charts[0].crossFilter?.value?.x).not.toBe(`${xLabel}|${yLabel}`);
+
+    const last = getByRole('button', {name: `${xLabel} / ${yLabel}: 16`});
+    expect(last).toHaveAttribute('title', `${xLabel} / ${yLabel}: 16`);
+    fireEvent.click(last);
+    state = store.getState().visState;
+    expect(first).not.toHaveAttribute('aria-pressed');
+    expect(last).toHaveAttribute('aria-pressed', 'true');
+    expect(state.filters.map(filter => filter.value)).toEqual([
+      [start + 15000, start + 30000],
+      [yStart + 15000, yStart + 30000]
+    ]);
+    expect(state.charts[0].crossFilter?.value?.x).toBe(`${xLabel}|${yLabel}`);
+    fireEvent.click(last);
+    expect(store.getState().visState.filters).toHaveLength(0);
+  });
+
+  function makeTimeState(horizontal: boolean): VisState {
+    const dataset = new KeplerTable({info: {id: 'd1'}, color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'time', type: 'timestamp'}] as any,
+      rows: Array.from({length: 31}, (_, i) => [start + i * 1000])
+    });
+    const timeAxis = {field: {name: 'time', type: 'timestamp'}, aggregation: 'timeBin'} as const;
+    const valueAxis = {field: null, aggregation: 'count'} as const;
+    const bar = createBarChart({
+      id: 'time-bars',
+      dataId: 'd1',
+      pinned: true,
+      xAxis: horizontal ? valueAxis : timeAxis,
+      yAxis: horizontal ? timeAxis : valueAxis
+    });
+    return {
+      ...INITIAL_VIS_STATE,
+      datasets: {d1: dataset},
+      charts: [
+        {...bar, type: horizontal ? ChartType.horizontalBar : ChartType.barChart},
+        createBigNumberChart({id: 'count', dataId: 'd1', pinned: true})
+      ]
+    };
+  }
+
+  test.each([false, true])('selects and restores distinct ranges (horizontal=%s)', horizontal => {
+    const {container, store, dispatch, getByText} = renderManager(makeTimeState(horizontal));
+    const bars = () =>
+      Array.from(
+        container.querySelectorAll(
+          '.bar-chart [role="button"], .horizontal-bar-chart [role="button"]'
+        )
+      );
+    expect(bars()).toHaveLength(10);
+    expect(getByText('31')).toBeInTheDocument();
+    fireEvent.click(bars()[0]);
+    let state = store.getState().visState;
+    expect(state.filters[0].value).toEqual([start, start + 3000]);
+    const firstKey = state.charts[0].crossFilter?.value?.x;
+    expect(bars().filter(bar => bar.getAttribute('aria-pressed') === 'true')).toEqual([bars()[0]]);
+    expect(bars()).toHaveLength(10);
+    // Existing range filters include both endpoints; changing that is a separate issue.
+    expect(lastChartValue()).toBe(4);
+
+    fireEvent.click(bars()[1]);
+    state = store.getState().visState;
+    expect(state.filters).toHaveLength(1);
+    expect(state.filters[0].value).toEqual([start + 3000, start + 6000]);
+    expect(state.charts[0].crossFilter?.value?.x).not.toEqual(firstKey);
+    expect(bars().filter(bar => bar.getAttribute('aria-pressed') === 'true')).toEqual([bars()[1]]);
+
+    const saved = JSON.parse(JSON.stringify(schema.save(state.charts)));
+    const loaded = schema.load(saved.charts).charts;
+    expect(loaded[0].crossFilter).toEqual(state.charts[0].crossFilter);
+    dispatch({type: 'replace', visState: {...state, charts: loaded}});
+    expect(bars()[1]).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(bars()[1]);
+    expect(store.getState().visState.filters).toHaveLength(0);
+    expect(getByText('31')).toBeInTheDocument();
+
+    fireEvent.click(bars()[9]);
+    state = store.getState().visState;
+    expect(state.charts[0].crossFilter?.value?.x).toBe('2020-01-01 00:00 – 2020-01-01 00:00');
+    expect(state.filters[0].value).toEqual([start + 27000, start + 30000]);
+    const legacy = schema.load(JSON.parse(JSON.stringify(schema.save(state.charts))).charts).charts;
+    dispatch({type: 'replace', visState: {...state, charts: legacy}});
+    expect(bars()[9]).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(bars()[9]);
+    expect(store.getState().visState.filters).toHaveLength(0);
   });
 });

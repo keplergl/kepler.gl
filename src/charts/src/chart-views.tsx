@@ -1036,6 +1036,7 @@ export function HeatmapView({
               const cell = lookup.get(cellKey);
               const value = cell?.value ?? 0;
               const label = formatNumber(value);
+              const cellLabel = `${displayBinKey(x)} / ${displayBinKey(y)}: ${label}`;
               const isSelected = selectedKey === cellKey;
               const isHovered = hovered?.x === x && hovered?.y === y;
               const activate = onSelect
@@ -1057,9 +1058,9 @@ export function HeatmapView({
                   $selected={isSelected}
                   role={activate ? 'button' : undefined}
                   tabIndex={activate ? 0 : undefined}
-                  aria-label={`${x} / ${y}: ${label}`}
+                  aria-label={cellLabel}
                   aria-pressed={isSelected || undefined}
-                  title={`${x} / ${y}: ${label}`}
+                  title={cellLabel}
                   onMouseEnter={() => setHovered({x, y})}
                   onClick={activate}
                   onKeyDown={event => onActivateKey(event, activate)}
