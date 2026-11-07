@@ -9,7 +9,8 @@ import {
   MAX_LONGITUDE,
   MIN_LONGITUDE,
   validateLongitude,
-  validateLatitude
+  validateLatitude,
+  getWrappedCameraBounds
 } from '@kepler.gl/utils';
 
 /**
@@ -41,9 +42,10 @@ export function processLayerBounds(layerBounds: Bounds[]): Bounds {
 }
 
 /**
- * return center of map from given points
+ * Return camera-fitting bounds for layers, or null when none have bounds.
+ * A compact, fully known point extent can have west > east across the dateline.
+ * Geographic layer.meta.bounds and processLayerBounds retain their contract.
  * @param layers
- * @returns coordinates of map center, empty if not found
  */
 export function findMapBounds(layers: Layer[]): Bounds | null {
   // find bounds in formatted layerData
@@ -58,6 +60,22 @@ export function findMapBounds(layers: Layer[]): Bounds | null {
   if (availableLayerBounds.length === 0) {
     return null;
   }
-  // merge bounds in each layer
-  return processLayerBounds(availableLayerBounds);
+  const geographicBounds = processLayerBounds(availableLayerBounds);
+  // Point layers supply a complete coordinate or authoritative metadata extent.
+  // Other geometry retains its entire geographic interval when combining it
+  // with points. Keep processLayerBounds and layer.meta.bounds unchanged.
+  const cameraBounds = layers
+    .filter(layer => layer.meta?.bounds)
+    .map(layer => layer.meta.cameraBounds || layer.meta.bounds);
+  const hasCameraBounds = layers.some(layer => layer.meta?.cameraBounds);
+  // An explicit null opts out: this point layer was sampled, so even a narrow
+  // sampled interval must not be used to infer a gap across multiple layers.
+  const hasIncompleteBounds = layers.some(
+    layer => layer.meta?.bounds && layer.meta.cameraBounds === null
+  );
+  const wrapped =
+    hasCameraBounds && !hasIncompleteBounds ? getWrappedCameraBounds(cameraBounds) : null;
+  return wrapped
+    ? [wrapped[0], geographicBounds[1], wrapped[2], geographicBounds[3]]
+    : geographicBounds;
 }

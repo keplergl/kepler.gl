@@ -16,7 +16,12 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  DataContainerInterface,
+  ArrowDataContainer,
+  getWrappedCameraBounds
+} from '@kepler.gl/utils';
 import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
@@ -49,6 +54,7 @@ import {
 } from '../layer-utils';
 import {getGeojsonPointDataMaps, GeojsonPointDataMaps} from '../geojson-layer/geojson-utils';
 import {
+  Bounds,
   ColorRange,
   Merge,
   RGBColor,
@@ -698,9 +704,46 @@ export default class PointLayer extends Layer {
     };
   }
 
+  private getPointBoundsMetadata(dataContainer: DataContainerInterface) {
+    const getPosition = this.getPositionAccessor(dataContainer);
+    // Match the existing bounds sample budget. A sample cannot establish that
+    // the gap around Greenwich is empty, so never narrow sampled data.
+    const complete = dataContainer.numRows() <= 5000;
+    const pointBounds: Bounds[] = [];
+    let positionsRead = 0;
+    let supportedPositions = true;
+    const bounds = this.getPointsBounds(
+      dataContainer,
+      complete
+        ? (row, container) => {
+            const point = getPosition(row, container);
+            positionsRead++;
+            if (!Array.isArray(point)) {
+              // A custom accessor may return another position representation.
+              // Do not infer an empty gap from coordinates we did not inspect.
+              supportedPositions = false;
+            } else if (Number.isFinite(point[0]) && Number.isFinite(point[1])) {
+              if (Math.abs(point[0]) > 180 || Math.abs(point[1]) > 90) supportedPositions = false;
+              pointBounds.push([point[0], point[1], point[0], point[1]]);
+            }
+            return point;
+          }
+        : getPosition
+    );
+    return {
+      bounds,
+      cameraBounds:
+        complete && supportedPositions && positionsRead === dataContainer.numRows()
+          ? getWrappedCameraBounds(pointBounds) || bounds
+          : null
+    };
+  }
+
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
     this.dataContainer = dataContainer;
+    // Clear any previous camera extent when the column mode or data changes.
+    this.updateMeta({cameraBounds: null});
 
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor();
@@ -711,16 +754,13 @@ export default class PointLayer extends Layer {
         dataContainer as ArrowDataContainer
       );
       if (boundsFromMetadata) {
-        this.updateMeta({bounds: boundsFromMetadata});
+        // Metadata is a geographic extent, not a list of point positions.
+        this.updateMeta({bounds: boundsFromMetadata, cameraBounds: boundsFromMetadata});
       } else {
-        const getPosition = this.getPositionAccessor(dataContainer);
-        const bounds = this.getPointsBounds(dataContainer, getPosition);
-        this.updateMeta({bounds});
+        this.updateMeta(this.getPointBoundsMetadata(dataContainer));
       }
     } else {
-      const getPosition = this.getPositionAccessor(dataContainer);
-      const bounds = this.getPointsBounds(dataContainer, getPosition);
-      this.updateMeta({bounds});
+      this.updateMeta(this.getPointBoundsMetadata(dataContainer));
     }
   }
 
