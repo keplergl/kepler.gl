@@ -8,7 +8,13 @@ import {createStore} from 'redux';
 import {ThemeProvider} from 'styled-components';
 import {createIntl, IntlProvider} from 'react-intl';
 
-import {ChartType, computeChart, createBarChart, createBigNumberChart} from '@kepler.gl/charts';
+import {
+  ChartType,
+  computeChart,
+  createBarChart,
+  createBigNumberChart,
+  createHeatmapChart
+} from '@kepler.gl/charts';
 import {VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_VIS_STATE, visStateReducer, visStateUpdaters} from '@kepler.gl/reducers';
 import {ChartsSchema, chartPropsV1, VisState} from '@kepler.gl/schemas';
@@ -244,6 +250,56 @@ describe('ChartManager reactivity', () => {
 describe('time chart bin selection', () => {
   const start = Date.UTC(2020, 0, 1);
   const schema = new ChartsSchema({version: 'v1', properties: chartPropsV1});
+
+  test('heatmap labels decode both time axes while selections keep distinct ranges', () => {
+    const yStart = Date.UTC(2020, 0, 2);
+    const dataset = new KeplerTable({info: {id: 'd1'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'xTime', type: 'timestamp'},
+        {name: 'yTime', type: 'timestamp'}
+      ] as any,
+      rows: Array.from({length: 31}, (_, i) => [start + i * 1000, yStart + i * 1000])
+    });
+    const heatmap = createHeatmapChart({
+      id: 'time-heatmap',
+      dataId: 'd1',
+      pinned: true,
+      numGroups: 2,
+      xAxis: {field: {name: 'xTime', type: 'timestamp'}, aggregation: 'timeBin'},
+      yAxis: {field: {name: 'yTime', type: 'timestamp'}, aggregation: 'timeBin'}
+    });
+    const {getByRole, store} = renderManager({
+      ...INITIAL_VIS_STATE,
+      datasets: {d1: dataset},
+      charts: [heatmap]
+    });
+    const xLabel = '2020-01-01 00:00 – 2020-01-01 00:00';
+    const yLabel = '2020-01-02 00:00 – 2020-01-02 00:00';
+    const first = getByRole('button', {name: `${xLabel} / ${yLabel}: 15`});
+    expect(first).toHaveAttribute('title', `${xLabel} / ${yLabel}: 15`);
+    fireEvent.keyDown(first, {key: 'Enter'});
+    let state = store.getState().visState;
+    expect(first).toHaveAttribute('aria-pressed', 'true');
+    expect(state.filters.map(filter => filter.value)).toEqual([
+      [start, start + 15000],
+      [yStart, yStart + 15000]
+    ]);
+    expect(state.charts[0].crossFilter?.value?.x).not.toBe(`${xLabel}|${yLabel}`);
+
+    const last = getByRole('button', {name: `${xLabel} / ${yLabel}: 16`});
+    expect(last).toHaveAttribute('title', `${xLabel} / ${yLabel}: 16`);
+    fireEvent.click(last);
+    state = store.getState().visState;
+    expect(first).not.toHaveAttribute('aria-pressed');
+    expect(last).toHaveAttribute('aria-pressed', 'true');
+    expect(state.filters.map(filter => filter.value)).toEqual([
+      [start + 15000, start + 30000],
+      [yStart + 15000, yStart + 30000]
+    ]);
+    expect(state.charts[0].crossFilter?.value?.x).toBe(`${xLabel}|${yLabel}`);
+    fireEvent.click(last);
+    expect(store.getState().visState.filters).toHaveLength(0);
+  });
 
   function makeTimeState(horizontal: boolean): VisState {
     const dataset = new KeplerTable({info: {id: 'd1'}, color: [0, 0, 0]}).updateSchema({
