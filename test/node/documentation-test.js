@@ -65,7 +65,7 @@ export const ${symbol} = (value: number): number => value;
  * Action types.
  * @public
  */
-export const ActionTypes = {FIXTURE: 'FIXTURE'};
+export const ActionTypes = {FIXTURE: 'FIXTURE', COMBINED: 'COMBINED'};
 `
     );
     write(
@@ -77,6 +77,13 @@ export const ActionTypes = {FIXTURE: 'FIXTURE'};
 export function fixtureAction(value: number) {
   const payload = value;
   return {payload, type: ActionTypes.FIXTURE};
+}
+/**
+ * Update combined fixture state.
+ * @public
+ */
+export function combinedFixtureAction() {
+  return {type: ActionTypes.COMBINED};
 }
 /** @public */
 export function notAnAction(): void {}
@@ -93,6 +100,21 @@ export function notAnAction(): void {}
  */
 export function fixtureUpdater(state: FixtureState): FixtureState { return state; }
 `
+    );
+    write(
+      'reducers/src/combined-updaters.ts',
+      `/**
+ * Update combined fixture state.
+ * @public
+ */
+export function combinedFixtureUpdater(state: object): object { return state; }
+`
+    );
+    write(
+      'reducers/src/composers.ts',
+      `export const actionHandler = {
+      [ActionTypes.COMBINED]: combinedUpdaters.combinedFixtureUpdater
+    };`
     );
     write(
       'reducers/src/vis-state.ts',
@@ -132,6 +154,14 @@ export function fixtureUpdater(state: FixtureState): FixtureState { return state
     t.ok(
       read('reducers/vis-state.md').includes('../actions/actions.md#fixtureaction'),
       'preserves updater-to-action links'
+    );
+    t.ok(
+      actions.includes('../reducers/combine.md#combinedfixtureupdater'),
+      'links combined handlers to their configured output page'
+    );
+    t.ok(
+      read('reducers/combine.md').includes('../actions/actions.md#combinedfixtureaction'),
+      'preserves combined updater-to-action links'
     );
     t.ok(
       read('processors/processors.md').includes('fixture_processors_data_processor(2);'),
@@ -201,6 +231,14 @@ test('documentation generator regenerates all API pages from the actual checkout
     t.ok(
       (pages['reducers/vis-state.md'] || '').includes('../actions/actions.md#addfilter'),
       'links the updater back to the action'
+    );
+    t.ok(
+      actions.includes('../reducers/combine.md#adddatatomapupdater'),
+      'links addDataToMap to its combined updater'
+    );
+    t.ok(
+      (pages['reducers/combine.md'] || '').includes('../actions/actions.md#adddatatomap'),
+      'links the combined updater back to addDataToMap'
     );
     t.ok(
       (pages['processors/processors.md'] || '').includes(

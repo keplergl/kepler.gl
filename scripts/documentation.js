@@ -3,7 +3,7 @@
 
 import documentation from 'documentation';
 import fs from 'fs';
-import {resolve, join, basename, extname, dirname} from 'path';
+import {resolve, join, basename, dirname} from 'path';
 import {logSuccess, logProgress, logOk, logStep, logError} from './log';
 import remark from 'remark';
 import unified from 'unified';
@@ -55,11 +55,36 @@ const TREE = {
       path: 'reducers',
       children: [
         {input: ['src/root.ts', 'src/core.ts'], output: 'reducers.md', config: {shallow: true}},
-        {input: 'src/combined-updaters.ts', output: 'combine.md', config: {shallow: true}},
-        {input: 'src/vis-state-updaters.ts', output: 'vis-state.md', config: {shallow: true}},
-        {input: 'src/map-state-updaters.ts', output: 'map-state.md', config: {shallow: true}},
-        {input: 'src/map-style-updaters.ts', output: 'map-style.md', config: {shallow: true}},
-        {input: 'src/ui-state-updaters.ts', output: 'ui-state.md', config: {shallow: true}}
+        {
+          input: 'src/combined-updaters.ts',
+          handler: 'src/composers.ts',
+          output: 'combine.md',
+          config: {shallow: true}
+        },
+        {
+          input: 'src/vis-state-updaters.ts',
+          handler: 'src/vis-state.ts',
+          output: 'vis-state.md',
+          config: {shallow: true}
+        },
+        {
+          input: 'src/map-state-updaters.ts',
+          handler: 'src/map-state.ts',
+          output: 'map-state.md',
+          config: {shallow: true}
+        },
+        {
+          input: 'src/map-style-updaters.ts',
+          handler: 'src/map-style.ts',
+          output: 'map-style.md',
+          config: {shallow: true}
+        },
+        {
+          input: 'src/ui-state-updaters.ts',
+          handler: 'src/ui-state.ts',
+          output: 'ui-state.md',
+          config: {shallow: true}
+        }
       ]
     },
     {
@@ -112,11 +137,8 @@ function _appendActionTypesAndUpdatersToActions(node, actionMap) {
   const {actionType, updaters} = actionMap[action];
   const updaterList = updaters
     .map(
-      ({updater, name, path}) =>
-        `[${BT}${updater}.${name}${BT}](../reducers/${basename(
-          path,
-          extname(path)
-        )}.md#${name.toLowerCase()})`
+      ({updater, name, outputPath}) =>
+        `[${BT}${updater}.${name}${BT}](../reducers/${basename(outputPath)}#${name.toLowerCase()})`
     )
     .join(', ');
 
@@ -254,7 +276,7 @@ function buildMdDocs(nodePath, node, allTasks) {
 
   children.forEach(child => {
     if (!child.children) {
-      const {input, output, config} = child;
+      const {input, handler, output, config} = child;
       const inputPaths = (Array.isArray(input) ? input : [input]).map(inp => {
         const inputPath = join(PATHS.src, joinPath, inp);
         if (!fs.existsSync(inputPath)) {
@@ -263,8 +285,9 @@ function buildMdDocs(nodePath, node, allTasks) {
         return inputPath;
       });
       const outputPath = join(PATHS.api, joinPath, output);
+      const handlerPath = handler && join(PATHS.src, joinPath, handler);
 
-      allTasks.push({inputPaths, outputPath, config});
+      allTasks.push({inputPaths, handlerPath, outputPath, config});
     } else {
       buildMdDocs(joinPath, child, allTasks);
     }
@@ -290,6 +313,9 @@ async function buildDocs() {
   const symbols = new Map(
     pages.map(page => [page.outputPath, new Set(documentedNames(page.comments))])
   );
+  const updaterPages = new Map(
+    pages.filter(page => page.handlerPath).map(page => [page.handlerPath, page.outputPath])
+  );
   const publicActions = symbols.get(join(PATHS.api, 'actions/actions.md'));
   const publicActionMap = Object.fromEntries(
     Object.entries(actionMap)
@@ -298,13 +324,9 @@ async function buildDocs() {
         name,
         {
           ...action,
-          updaters: action.updaters.filter(updater =>
-            symbols
-              .get(
-                join(PATHS.api, 'reducers', `${basename(updater.path, extname(updater.path))}.md`)
-              )
-              ?.has(updater.name)
-          )
+          updaters: action.updaters
+            .map(updater => ({...updater, outputPath: updaterPages.get(resolve(updater.path))}))
+            .filter(updater => symbols.get(updater.outputPath)?.has(updater.name))
         }
       ])
   );
