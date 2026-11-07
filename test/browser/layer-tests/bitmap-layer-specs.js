@@ -440,6 +440,85 @@ test('#BitmapOverlayLayer -> dragging the center handle translates the rectangle
   t.end();
 });
 
+test('#BitmapOverlayLayer -> resizing across the dateline keeps the corner in the same world', t => {
+  const cases = [
+    {west: -190, east: -179.5, corner: 1, target: 179.5, expected: [-190, -180.5]},
+    {west: 179.5, east: 190, corner: 0, target: -179.5, expected: [180.5, 190]},
+    {west: 170, east: 190, corner: 2, target: -169.5, expected: [170, 190.5]},
+    {west: -170, east: 170, corner: 3, target: -171, expected: [-171, 170]}
+  ];
+
+  for (const {west, east, corner, target, expected} of cases) {
+    const layer = createBitmapLayer({
+      visConfig: {
+        boundsWest: west,
+        boundsEast: east,
+        boundsSouth: -10,
+        boundsNorth: 10,
+        editBounds: true
+      }
+    });
+    const opts = {
+      data: layer.formatLayerData(MOCK_DATASETS),
+      mapState: {globe: {enabled: true}},
+      visible: true,
+      layerCallbacks: {}
+    };
+    const editable = layer.renderLayer(opts).find(l => l.id === `${layer.id}-edit`);
+    const mode = new BitmapBoundsEditMode();
+    const start = editable.props.data.features[0].geometry.coordinates[0][corner];
+    const cornerPick = {
+      isGuide: true,
+      object: {
+        type: 'Feature',
+        properties: {
+          guideType: 'editHandle',
+          editHandleType: 'existing',
+          featureIndex: 0,
+          positionIndexes: [0, corner]
+        },
+        geometry: {type: 'Point', coordinates: start}
+      }
+    };
+    const props = {
+      data: editable.props.data,
+      selectedIndexes: [0],
+      modeConfig: {lockRectangles: true},
+      lastPointerMoveEvent: null,
+      onEdit: action => {
+        editable.props.onEdit(action);
+        props.data = action.updatedData;
+      },
+      onUpdateCursor: () => {}
+    };
+    const event = {
+      picks: [cornerPick],
+      pointerDownPicks: [cornerPick],
+      mapCoords: start,
+      pointerDownMapCoords: start,
+      cancelPan: () => {}
+    };
+    mode.handleStartDragging(event, props);
+    for (const handler of ['handleDragging', 'handleStopDragging']) {
+      mode[handler]({...event, mapCoords: [target, start[1]]}, props);
+      for (const globe of [false, true]) {
+        const [bitmap] = layer.renderLayer({...opts, mapState: {globe: {enabled: globe}}});
+        t.deepEqual(
+          bitmap.props.bounds,
+          [expected[0], -10, expected[1], 10],
+          `${handler}: ${west}/${east} resizes continuously in ${globe ? 'globe' : 'flat'} view`
+        );
+      }
+    }
+    t.deepEqual(
+      [layer.config.visConfig.boundsWest, layer.config.visConfig.boundsEast],
+      expected,
+      'released corner persists the same longitude interval'
+    );
+  }
+  t.end();
+});
+
 test('#BitmapOverlayLayer -> dragging the bitmap body does not translate', t => {
   const mode = new BitmapBoundsEditMode();
   const data = {
