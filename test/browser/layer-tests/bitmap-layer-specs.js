@@ -5,7 +5,8 @@ import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {DatasetType} from '@kepler.gl/constants';
 import {visStateSchema, CURRENT_VERSION} from '@kepler.gl/schemas';
-import {WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
+import {LayerManager, WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {
@@ -300,6 +301,55 @@ test('#BitmapOverlayLayer -> renderLayer with editBounds', t => {
   const moveHandleLayer = deckLayers.find(l => l.id === `${layer.id}-move-handle`);
   t.ok(moveHandleLayer, 'should render a center move-handle icon');
 
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> edit handles follow the surface in pitched and globe views', t => {
+  for (const globe of [false, true]) {
+    const layer = createBitmapLayer({
+      visConfig: {
+        boundsWest: -122.52,
+        boundsSouth: 37.7,
+        boundsEast: -122.35,
+        boundsNorth: 37.82,
+        editBounds: true
+      }
+    });
+    const viewport = new (globe ? GlobeViewport : WebMercatorViewport)({
+      width: 800,
+      height: 600,
+      longitude: -122.435,
+      latitude: 37.76,
+      zoom: 10,
+      pitch: 60
+    });
+    const manager = new LayerManager(device, {
+      viewport,
+      deck: {eventManager: {on: () => {}, off: () => {}}}
+    });
+    manager.setProps({onError: error => t.error(error, 'edit handles initialize')});
+    const layers = layer.renderLayer({
+      data: layer.formatLayerData(MOCK_DATASETS),
+      mapState: {pitch: 60, globe: {enabled: globe}},
+      layerCallbacks: {},
+      visible: true
+    });
+    const editable = layers.find(l => l.id === `${layer.id}-edit`);
+    const icon = layers.find(l => l.id === `${layer.id}-move-handle`);
+    try {
+      manager.setLayers([editable, icon]);
+      const circles = manager.getLayers().find(l => l.id.endsWith('-guides-points-circle'));
+      t.ok(circles, 'renders the interactive handle circles');
+      t.equal(circles.props.data.length, 5, 'renders four corners and the center handle');
+      t.equal(circles.props.billboard, false, 'handle circles align with the bitmap surface');
+      t.equal(circles.props.pickable, true, 'surface-aligned handles remain draggable');
+      t.equal(icon.props.billboard, false, 'center icon follows the same surface as its circle');
+      t.notEqual(circles.props.parameters.depthCompare, 'always', 'handles retain depth testing');
+      t.notEqual(icon.props.parameters.depthCompare, 'always', 'center icon retains depth testing');
+    } finally {
+      manager.finalize();
+    }
+  }
   t.end();
 });
 

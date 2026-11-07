@@ -569,6 +569,9 @@ export default class BitmapOverlayLayer extends Layer {
           selectedFeatureIndexes: [0],
           pickable: true,
           pickingRadius: 12,
+          // Keep the handles on the bitmap surface instead of intersecting it
+          // as camera-facing billboards in pitched and globe views.
+          billboard: false,
           visible,
           modeConfig: {
             lockRectangles: true
@@ -642,6 +645,7 @@ export default class BitmapOverlayLayer extends Layer {
           }),
           getSize: 16,
           sizeUnits: 'pixels',
+          billboard: false,
           pickable: false,
           visible
         })
