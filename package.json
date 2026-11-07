@@ -364,11 +364,15 @@
   "nyc": {
     "sourceMap": false,
     "instrument": false,
+    "include": [
+      "src/*/src/**/*.{js,jsx,ts,tsx}"
+    ],
     "exclude": [
-      "test/**/*.js",
-      "src/tasks",
-      "src/templates",
-      "src/styles"
+      "**/*.{spec,test}.{js,jsx,ts,tsx}",
+      "**/*.d.ts",
+      "src/tasks/**",
+      "src/templates/**",
+      "src/styles/**"
     ]
   },
   "maintainers": [
