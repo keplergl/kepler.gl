@@ -165,6 +165,71 @@ test('#Schema -> property declarations remain extensible after use', t => {
   t.end();
 });
 
+test('#Schema -> child hooks can update, add and remove later siblings', t => {
+  class MutatingSchema extends Schema {
+    save(value, parents) {
+      const parent = parents[parents.length - 1];
+      parent.second = 11;
+      parent.added = 'created';
+      delete parent.removed;
+      return {[this.key]: value};
+    }
+    load(...args) {
+      return this.save(...args);
+    }
+  }
+  const schema = new Schema({
+    key: 'config',
+    properties: {
+      first: new MutatingSchema({key: 'first'}),
+      second: new Schema({key: 'second'}),
+      added: null,
+      removed: null,
+      derived: null
+    }
+  });
+  for (const operation of ['save', 'load']) {
+    const input = {
+      first: true,
+      second: 0,
+      removed: 'old',
+      get derived() {
+        return this.second * 2;
+      }
+    };
+    t.deepEqual(
+      schema[operation](input),
+      {config: {first: true, second: 11, added: 'created', derived: 22}},
+      `${operation}: reads sibling presence and values after earlier hooks run`
+    );
+  }
+  t.end();
+});
+
+test('#Schema -> retains legacy container handling', t => {
+  const schema = new Schema({key: 'config', properties: {value: null}});
+  const emptySchema = new Schema({key: 'config', properties: {}});
+  for (const operation of ['save', 'load']) {
+    for (const input of [[], () => {}]) {
+      t.deepEqual(schema[operation](input), {config: {}}, `${operation}: no declared properties`);
+      input.value = 7;
+      t.deepEqual(
+        schema[operation](input),
+        {config: {value: 7}},
+        `${operation}: reads declared properties on array and function containers`
+      );
+    }
+    for (const input of [null, undefined]) {
+      t.deepEqual(
+        emptySchema[operation](input),
+        {config: {}},
+        `${operation}: an empty declaration does not inspect the input`
+      );
+    }
+  }
+  t.end();
+});
+
 test('#appSchema -> partial saved configs keep their existing values', t => {
   for (const version of ['v0', 'v1']) {
     t.deepEqual(SchemaManager.parseSavedConfig({version, config: {}}), {}, `${version}: empty map`);

@@ -81,21 +81,25 @@ export default class Schema {
       return {[this.key]: node};
     }
 
-    // Zod selects declared properties and preserves absent vs explicitly undefined
-    // values. Leaves remain opaque: layers, metadata and custom extensions own
-    // their validation, and dataset cells must retain their JSON serializers.
-    const selected = getPropertySchema(properties).parse(node);
+    // Read each property only when its turn is reached: earlier child hooks can
+    // update, add or remove later siblings on the original node. Parsing values
+    // separately also retains legacy array/function container handling.
+    const {shape} = getPropertySchema(properties);
     const internal = `_${operation}`;
     return {
-      [this.key]: Object.keys(selected).reduce((accu, key) => {
+      [this.key]: Object.keys(shape).reduce((accu, key) => {
+        if (!(key in node)) {
+          return accu;
+        }
         const property = properties[key];
+        // Legacy string[] declarations are handled by subclass overrides.
+        if (property && !property[operation]) {
+          return accu;
+        }
+        const value = shape[key].parse(node[key]);
         return {
           ...accu,
-          ...(property
-            ? property[operation]
-              ? property[internal](selected[key], [...parents, node], accu)
-              : {}
-            : {[key]: selected[key]})
+          ...(property ? property[internal](value, [...parents, node], accu) : {[key]: value})
         };
       }, {})
     };
