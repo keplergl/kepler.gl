@@ -39,7 +39,8 @@
     "apache-arrow": ">=15.0.0",
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
-    "keymirror": "^0.1.1"
+    "keymirror": "^0.1.1",
+    "zod": "^4.4.0"
   },
   "nyc": {
     "sourceMap": false,
