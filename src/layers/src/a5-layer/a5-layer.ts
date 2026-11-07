@@ -92,7 +92,7 @@ export type A5GeometryLayerData = {
 class A5Layer extends DeckA5Layer<A5GeometryLayerData> {
   static layerName = 'A5Layer';
 
-  indexToBounds() {
+  indexToBounds(): ReturnType<DeckA5Layer<A5GeometryLayerData>['indexToBounds']> {
     return {
       ...super.indexToBounds(),
       getPolygon: ({token}: A5GeometryLayerData) =>
