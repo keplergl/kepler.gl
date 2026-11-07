@@ -2,32 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {console as Console} from 'global/window';
-import {z} from 'zod';
 
 import {CURRENT_VERSION} from './versions';
-
-const propertyValueSchema = z.unknown().optional();
-const propertySchemas = new WeakMap<
-  object,
-  {keys: string[]; schema: z.ZodObject<Record<string, typeof propertyValueSchema>>}
->();
-
-/** Compile the legacy property declarations without narrowing saved-map values. */
-function getPropertySchema(properties: object) {
-  const keys = Object.keys(properties);
-  const cached = propertySchemas.get(properties);
-  if (
-    cached &&
-    cached.keys.length === keys.length &&
-    cached.keys.every((key, index) => key === keys[index])
-  ) {
-    return cached.schema;
-  }
-
-  const schema = z.object(Object.fromEntries(keys.map(key => [key, propertyValueSchema])));
-  propertySchemas.set(properties, {keys, schema});
-  return schema;
-}
 
 export default class Schema {
   version: string;
@@ -76,32 +52,27 @@ export default class Schema {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _getPropertyValueFromSchema(operation, node: any, parents: object[] = [], accumulator) {
-    const properties = this.properties;
-    if (!properties) {
-      return {[this.key]: node};
-    }
-
-    // Read each property only when its turn is reached: earlier child hooks can
-    // update, add or remove later siblings on the original node. Parsing values
-    // separately also retains legacy array/function container handling.
-    const {shape} = getPropertySchema(properties);
     const internal = `_${operation}`;
     return {
-      [this.key]: Object.keys(shape).reduce((accu, key) => {
-        if (!(key in node)) {
-          return accu;
-        }
-        const property = properties[key];
-        // Legacy string[] declarations are handled by subclass overrides.
-        if (property && !property[operation]) {
-          return accu;
-        }
-        const value = shape[key].parse(node[key]);
-        return {
-          ...accu,
-          ...(property ? property[internal](value, [...parents, node], accu) : {[key]: value})
-        };
-      }, {})
+      [this.key]: this.properties
+        ? Object.keys(this.properties).reduce((accu, key) => {
+            return {
+              ...accu,
+              ...(key in node
+                ? // @ts-expect-error
+                  this.properties[key]
+                  ? // if it's another schema
+                    // @ts-expect-error
+                    this.properties[key][operation]
+                    ? // call save or load
+                      // @ts-expect-error
+                      this.properties[key][internal](node[key], [...parents, node], accu)
+                    : {}
+                  : {[key]: node[key]}
+                : {})
+            };
+          }, {})
+        : node
     };
   }
 

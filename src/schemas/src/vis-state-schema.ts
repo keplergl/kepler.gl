@@ -15,6 +15,19 @@ import {
 } from '@kepler.gl/utils';
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import Schema from './schema';
+import {schemaProperties} from './schema-properties';
+import {FieldSchema as FieldDefinition} from './zod-schemas/common';
+import {LayerFieldsSchema, BaseLayerConfigSchema} from './zod-schemas/layers';
+import {FilterFieldsSchema} from './zod-schemas/filter';
+import {EffectFieldsSchema} from './zod-schemas/effect';
+import {InteractionConfigSchema as InteractionDefinition} from './zod-schemas/interaction-config';
+import {
+  VisStateSchema as VisStateDefinition,
+  AnimationConfigSchema,
+  EditorSchema,
+  ChartSchema as ChartDefinition,
+  AnnotationSchema as AnnotationDefinition
+} from './zod-schemas/vis-state';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {
   AddDataToMapOptions,
@@ -572,40 +585,18 @@ class VisConfigSchemaV1 extends Schema {
   }
 }
 
-export const layerPropsV1 = {
-  id: null,
-  type: null,
+export const layerPropsV1 = schemaProperties(LayerFieldsSchema, {
   config: new Schema({
     version: VERSIONS.v1,
     key: 'config',
-    properties: {
-      dataId: null,
-      columnMode: null,
-      label: null,
-      color: null,
-      highlightColor: null,
-      uniqueIdField: null,
-      columns: new ColumnSchemaV1({
-        version: VERSIONS.v1,
-        key: 'columns'
-      }),
-      isVisible: null,
-      isIncludedInLegend: null,
-      visConfig: new VisConfigSchemaV1({
-        version: VERSIONS.v1
-      }),
-      hidden: null,
-      textLabel: new TextLabelSchemaV1({
-        version: VERSIONS.v1,
-        key: 'textLabel'
-      })
-    }
+    properties: schemaProperties(BaseLayerConfigSchema, {
+      columns: new ColumnSchemaV1({version: VERSIONS.v1, key: 'columns'}),
+      visConfig: new VisConfigSchemaV1({version: VERSIONS.v1}),
+      textLabel: new TextLabelSchemaV1({version: VERSIONS.v1, key: 'textLabel'})
+    })
   }),
-  visualChannels: new VisualChannelSchemaV1({
-    version: VERSIONS.v1,
-    key: 'visualChannels'
-  })
-};
+  visualChannels: new VisualChannelSchemaV1({version: VERSIONS.v1, key: 'visualChannels'})
+});
 
 export class LayerSchemaV0 extends Schema {
   key = 'layers';
@@ -722,15 +713,7 @@ class InteractionSchemaV0 extends Schema {
   }
 }
 
-const interactionPropsV1 = [
-  'tooltip',
-  'legend',
-  'brush',
-  'geocoder',
-  'coordinate',
-  'annotation',
-  'zoomOpacity'
-];
+const interactionPropsV1 = Object.keys(InteractionDefinition.shape);
 
 export class InteractionSchemaV1 extends Schema {
   key = 'interactionConfig';
@@ -857,34 +840,9 @@ export class PlotTypeSchema extends Schema {
   }
 }
 
-export const effectPropsV1 = {
-  id: null,
-  type: null,
-  isEnabled: null,
-  parameters: null
-};
+export const effectPropsV1 = schemaProperties(EffectFieldsSchema);
 
-export const chartPropsV1 = {
-  id: null,
-  title: null,
-  type: null,
-  dataId: null,
-  applyFilters: null,
-  pinned: null,
-  display: null,
-  crossFilter: null,
-  xAxis: null,
-  yAxis: null,
-  groupBy: null,
-  value: null,
-  axis: null,
-  numGroups: null,
-  groupOthers: null,
-  colorBy: null,
-  chartDisplay: null,
-  layerId: null,
-  layerChartType: null
-};
+export const chartPropsV1 = schemaProperties(ChartDefinition);
 
 export class ChartsSchema extends Schema {
   key = 'charts';
@@ -963,30 +921,7 @@ export class EffectsSchema extends Schema {
   }
 }
 
-const annotationPropsV1 = {
-  id: null,
-  kind: null,
-  isVisible: null,
-  autoSize: null,
-  autoSizeY: null,
-  anchorPoint: null,
-  label: null,
-  editorState: null,
-  mapIndex: null,
-  lineColor: null,
-  lineWidth: null,
-  textWidth: null,
-  textHeight: null,
-  textVerticalAlign: null,
-  textSide: null,
-  textVerticalPosition: null,
-  armLength: null,
-  angle: null,
-  radiusInMeters: null,
-  endPoint: null,
-  showCustomText: null,
-  showDistance: null
-};
+const annotationPropsV1 = schemaProperties(AnnotationDefinition);
 
 export class AnnotationsSchema extends Schema {
   key = 'annotations';
@@ -1008,40 +943,14 @@ export class AnnotationsSchema extends Schema {
   }
 }
 
-export const filterPropsV1 = {
-  ...filterPropsV0,
-  plotType: new PlotTypeSchema({
-    version: VERSIONS.v1
-  }),
-  animationWindow: null,
+export const filterPropsV1 = schemaProperties(FilterFieldsSchema, {
+  plotType: new PlotTypeSchema({version: VERSIONS.v1}),
   yAxis: new DimensionFieldSchema({
     version: VERSIONS.v1,
     key: 'yAxis',
-    properties: {
-      name: null,
-      type: null
-    }
-  }),
-  // this replaced enlarged
-  view: null,
-
-  // polygon filter properties
-  layerId: null,
-  speed: null,
-
-  // layer timeline
-  syncedWithLayerTimeline: null,
-  syncTimelineMode: null,
-
-  enabled: null,
-  inverted: null,
-
-  invertTrendColor: null,
-  timezone: null,
-
-  // Optional end timestamp for duration-based time animation (#3198)
-  endName: null
-};
+    properties: schemaProperties(FieldDefinition)
+  })
+});
 
 export const propertiesV0 = {
   filters: new FilterSchemaV0({
@@ -1086,7 +995,7 @@ class CameraTourSchema extends Schema {
   }
 }
 
-export const propertiesV1 = {
+export const propertiesV1 = schemaProperties(VisStateDefinition, {
   cameraTour: new CameraTourSchema(),
   cameraBookmarks: new CameraBookmarksSchema(),
   filters: new FilterSchemaV0({
@@ -1113,36 +1022,23 @@ export const propertiesV1 = {
     version: VERSIONS.v1,
     properties: interactionPropsV1
   }),
-  layerBlending: null,
-  overlayBlending: null,
   splitMaps: new SplitMapsSchema({
     key: 'splitMaps',
     version: VERSIONS.v1
   }),
   animationConfig: new Schema({
     version: VERSIONS.v1,
-    properties: {
-      currentTime: null,
-      speed: null,
-      timeFormat: null,
-      timezone: null
-    },
+    properties: schemaProperties(AnimationConfigSchema),
     key: 'animationConfig'
   }),
   editor: new Schema({
     version: VERSIONS.v1,
-    properties: {
-      features: null,
-      visible: null
-    },
+    properties: schemaProperties(EditorSchema),
     key: 'editor'
-  }),
-  layerOrder: null,
-  groupBys: null,
-  joins: null
+  })
   // suitabilities is intentionally absent: the op config is ephemeral and only the
   // derived dataset is persisted. A `null` entry here would write it to saved maps.
-};
+});
 
 export class VisStateSchemaV1 extends Schema {
   save(node: VisState, parents: any[] = [], accumulator?: any): {visState: SavedVisState} {

@@ -3,62 +3,57 @@
 
 import {VERSIONS} from './versions';
 import Schema from './schema';
+import {schemaProperties} from './schema-properties';
+import {
+  UiStateSchema,
+  MapControlsSchema,
+  MapLegendSchema,
+  ChartControlSchema,
+  CameraBookmarksControlSchema,
+  MapInfoControlSchema,
+  PanelSettingsSchema
+} from './zod-schemas/ui-state';
 
-export const propertiesV1 = {
+export const propertiesV1 = schemaProperties(UiStateSchema, {
   mapControls: new Schema({
     version: VERSIONS.v1,
-    properties: {
+    key: 'mapControls',
+    properties: schemaProperties(MapControlsSchema, {
       mapLegend: new Schema({
         version: VERSIONS.v1,
-        properties: {
-          active: null,
+        key: 'mapLegend',
+        properties: schemaProperties(MapLegendSchema, {
           settings: new Schema({
             version: VERSIONS.v1,
-            properties: {
-              position: null,
-              contentHeight: null
-            },
-            key: 'settings'
+            key: 'settings',
+            properties: schemaProperties(PanelSettingsSchema)
           })
-        },
-        key: 'mapLegend'
+        })
       }),
       chart: new Schema({
         version: VERSIONS.v1,
-        properties: {
-          active: null
-        },
-        key: 'chart'
+        key: 'chart',
+        properties: schemaProperties(ChartControlSchema)
       }),
       cameraBookmarks: new Schema({
         version: VERSIONS.v1,
-        properties: {
-          show: null,
+        key: 'cameraBookmarks',
+        properties: schemaProperties(CameraBookmarksControlSchema, {
           settings: new Schema({
             version: VERSIONS.v1,
-            properties: {
-              position: null,
-              contentHeight: null
-            },
-            key: 'settings'
+            key: 'settings',
+            properties: schemaProperties(PanelSettingsSchema)
           })
-        },
-        key: 'cameraBookmarks'
+        })
       }),
       mapInfo: new Schema({
         version: VERSIONS.v1,
-        properties: {
-          active: null,
-          show: null
-        },
-        key: 'mapInfo'
+        key: 'mapInfo',
+        properties: schemaProperties(MapInfoControlSchema)
       })
-    },
-    key: 'mapControls'
-  }),
-  locale: null,
-  theme: null
-};
+    })
+  })
+});
 
 const uiStateSchema = {
   [VERSIONS.v0]: new Schema({
