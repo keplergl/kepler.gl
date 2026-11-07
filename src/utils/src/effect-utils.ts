@@ -256,8 +256,10 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
       timestamp = Date.now();
       if (sunLight) sunLight.timestamp = timestamp;
     } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
-      timestamp = visState.animationConfig.currentTime ?? 0;
-      if (!timestamp) {
+      const {currentTime} = visState.animationConfig;
+      timestamp = currentTime ?? 0;
+      // Zero is a valid animation time, not a reason to fall back to a filter.
+      if (!timestamp && currentTime !== 0) {
         const filter = visState.filters.find(
           filter =>
             filter.type === FILTER_TYPES.timeRange &&
