@@ -27,7 +27,7 @@ import {
 } from '@kepler.gl/components';
 import {StateWFilters, StateWTripGeojson} from 'test/helpers/mock-state';
 
-import {visStateReducer as reducer} from '@kepler.gl/reducers';
+import {visStateReducer as reducer, updateAnimationDomain} from '@kepler.gl/reducers';
 
 const AnimationControl = appInjector.get(AnimationControlFactory);
 const PlaybackControls = appInjector.get(PlaybackControlsFactory);
@@ -203,6 +203,43 @@ test('Components -> AnimationControl -> time display -> custom timezone and time
     0,
     'should render 0 bottom row'
   );
+
+  t.end();
+});
+
+test('Components -> AnimationController -> visits every merged time step before looping', t => {
+  const AnimationController = AnimationControllerFactory();
+  const cases = [
+    Array.from({length: 13}, (_, i) => i),
+    [999999999999, 1000000000000, 1000000000001]
+  ];
+
+  cases.forEach(expected => {
+    const domain = [expected[0], expected[expected.length - 1]];
+    const {animationConfig} = updateAnimationDomain({
+      layers: [
+        {
+          config: {
+            isVisible: true,
+            animation: {enabled: true, domain, timeSteps: expected}
+          }
+        }
+      ],
+      animationConfig: {currentTime: domain[0]}
+    });
+    const visited = [domain[0]];
+    for (let i = 0; i < expected.length; i++) {
+      const [nextValue] = new AnimationController({
+        domain,
+        value: visited[visited.length - 1],
+        steps: animationConfig.timeSteps,
+        setTimelineValue: () => {}
+      })._nextFrameByTimeStep();
+      visited.push(nextValue);
+    }
+
+    t.deepEqual(visited, [...expected, expected[0]], 'visits all steps in order, then loops');
+  });
 
   t.end();
 });
