@@ -54,6 +54,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   AggregationLayer,
+  BitmapOverlayLayer,
   Layer,
   LayerBaseConfig,
   VisualChannel,
@@ -595,9 +596,61 @@ export default function LayerConfiguratorFactory(
     );
   };
 
-  class LayerConfigurator extends Component<LayerConfiguratorProps> {
-    private bitmapLongitudeRange: {layerId: string; range: [number, number]} | null = null;
+  const BitmapBoundsSliders: React.FC<{
+    layer: BitmapOverlayLayer;
+    onChange: LayerConfiguratorProps['updateLayerVisConfig'];
+  }> = ({layer, onChange}) => {
+    const [longitudeRange, setLongitudeRange] = useState<[number, number]>([-180, 180]);
+    const longitudes = [
+      layer.config.visConfig.boundsWest,
+      layer.config.visConfig.boundsEast
+    ].filter(Number.isFinite);
+    const minimum = Math.min(
+      longitudeRange[0],
+      ...longitudes.map(value => Math.floor(value / 180) * 180)
+    );
+    const maximum = Math.max(
+      longitudeRange[1],
+      ...longitudes.map(value => Math.ceil(value / 180) * 180)
+    );
 
+    // Remember expanded bounds in this control so map edits can grow the range
+    // without shrinking it and changing the pointer mapping during slider drags.
+    useEffect(() => {
+      if (minimum !== longitudeRange[0] || maximum !== longitudeRange[1]) {
+        setLongitudeRange([minimum, maximum]);
+      }
+    }, [minimum, maximum, longitudeRange]);
+
+    return (
+      <div className="bitmap-bounds-sliders">
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsWest}
+          layer={layer}
+          onChange={onChange}
+          range={[minimum, maximum]}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsEast}
+          layer={layer}
+          onChange={onChange}
+          range={[minimum, maximum]}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsSouth}
+          layer={layer}
+          onChange={onChange}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsNorth}
+          layer={layer}
+          onChange={onChange}
+        />
+      </div>
+    );
+  };
+
+  class LayerConfigurator extends Component<LayerConfiguratorProps> {
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props, true);
     }
@@ -2095,22 +2148,6 @@ export default function LayerConfiguratorFactory(
     }
 
     _renderBitmapLayerConfig({layer, dataset, visConfiguratorProps}) {
-      const longitudes = [
-        layer.config.visConfig.boundsWest,
-        layer.config.visConfig.boundsEast
-      ].filter(Number.isFinite);
-      // Dateline alignment and resizing keep longitudes in the image's world copy.
-      // Grow the range for new bounds, but keep it from shrinking mid-drag and
-      // changing the pointer-to-longitude mapping. Reset when switching layers.
-      const previousRange =
-        this.bitmapLongitudeRange && this.bitmapLongitudeRange.layerId === layer.id
-          ? this.bitmapLongitudeRange.range
-          : [-180, 180];
-      const longitudeRange: [number, number] = [
-        Math.min(previousRange[0], ...longitudes.map(value => Math.floor(value / 180) * 180)),
-        Math.max(previousRange[1], ...longitudes.map(value => Math.ceil(value / 180) * 180))
-      ];
-      this.bitmapLongitudeRange = {layerId: layer.id, range: longitudeRange};
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.imageSource'} collapsible>
@@ -2121,20 +2158,11 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.bounds'} collapsible>
             <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />
-            <div className="bitmap-bounds-sliders">
-              <VisConfigSlider
-                {...layer.visConfigSettings.boundsWest}
-                {...visConfiguratorProps}
-                range={longitudeRange}
-              />
-              <VisConfigSlider
-                {...layer.visConfigSettings.boundsEast}
-                {...visConfiguratorProps}
-                range={longitudeRange}
-              />
-              <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
-            </div>
+            <BitmapBoundsSliders
+              key={layer.id}
+              layer={layer}
+              onChange={visConfiguratorProps.onChange}
+            />
             <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.alignment'} collapsible>
