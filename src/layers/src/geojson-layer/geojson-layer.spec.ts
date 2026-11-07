@@ -1489,6 +1489,45 @@ describe('GeoJsonLayer numeric feature styles', () => {
     }
   });
 
+  test.each([
+    [0, 0],
+    [0, null],
+    [null, undefined],
+    [0, 12]
+  ])('keeps mapped radii zoom-compensated with feature radii %s and %s', async (first, second) => {
+    const {layer, dataset} = await initializeGeoJsonLayer(
+      [first, second].map((radius, i) => ({
+        geometry: point(i),
+        properties: {radius, size: i + 1}
+      }))
+    );
+    const {field, domain, scale, range} = layer.visualChannels.radius;
+    layer.updateLayerConfig({
+      [field]: dataset.fields.find(field => field.name === 'size')!,
+      [domain]: [1, 2],
+      [scale]: 'linear'
+    });
+    layer.updateLayerVisConfig({[range]: [5, 10]});
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    const near = render(layer, dataset, data, 12);
+    const far = render(layer, dataset, data, 4);
+
+    expect(near.props.data.map(near.props.getPointRadius)).toEqual([5, 10]);
+    expect(far.props.data.map(far.props.getPointRadius)).toEqual([5, 10]);
+    expect(far.props.pointRadiusScale).toBe(near.props.pointRadiusScale * 2 ** 8);
+
+    layer.updateLayerConfig({[field]: null});
+    const unmapped = layer.formatLayerData({[dataset.id]: dataset}, data);
+    const restored = render(layer, dataset, unmapped, 4);
+    expect(restored.props.data.map(restored.props.getPointRadius)).toEqual([
+      first ?? 1,
+      second ?? 1
+    ]);
+    if (first != null || second != null) {
+      expect(restored.props.pointRadiusScale).toBe(1);
+    }
+  });
+
   test('retains zero styles through data save/load and same-length refresh', async () => {
     const {dataset, layer} = await initializeGeoJsonLayer(
       [point, polygon, line].map(geometry => ({

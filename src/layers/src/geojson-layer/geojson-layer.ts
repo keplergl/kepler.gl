@@ -934,7 +934,10 @@ export default class GeoJsonLayer extends Layer {
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
-    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const radiusScale = this.getRadiusScaleByZoom(
+      mapState,
+      this.config.radiusField ? false : fixedRadius
+    );
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
