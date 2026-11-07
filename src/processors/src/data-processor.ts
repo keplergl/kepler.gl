@@ -416,11 +416,14 @@ export function processGeojson(rawData: unknown): ProcessorResult {
   for (let i = 0; i < normalizedGeojson.features.length; i++) {
     const f = normalizedGeojson.features[i];
     if (f.geometry) {
-      allDataRows.push({
-        // add feature to _geojson field
+      const row = {
+        // Reserve the first field for geometry to preserve existing field indices.
         _geojson: f,
         ...(f.properties || {})
-      });
+      };
+      // A property with the reserved name must not replace the feature.
+      row._geojson = f;
+      allDataRows.push(row);
     }
   }
   // get all the field
