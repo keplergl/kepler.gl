@@ -172,6 +172,61 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   t.end();
 });
 
+test('Components -> LayerConfigurator -> bitmap bounds keep sliders across the dateline', t => {
+  for (const [west, east] of [
+    [-180.5, -170],
+    [170, 190],
+    [-550, -530],
+    [-170, 170]
+  ]) {
+    const dataset = new KeplerTable({info: {id: 'bitmap-bounds'}, color: [0, 0, 0]});
+    const layer = new LayerClasses.bitmap({id: 'bitmap-bounds', dataId: dataset.id});
+    layer.updateLayerVisConfig({
+      boundsWest: west,
+      boundsEast: east,
+      boundsSouth: -10,
+      boundsNorth: 10
+    });
+    const changed = sinon.spy();
+    const view = renderWithTheme(
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          datasets={{[dataset.id]: dataset}}
+          updateLayerVisConfig={changed}
+        />
+      </IntlWrapper>
+    );
+    try {
+      const bounds = view.container.querySelector('.bitmap-bounds-sliders');
+      const inputs = bounds.querySelectorAll('.kg-range-slider__input');
+      t.equal(bounds.querySelectorAll('.kg-slider').length, 4, 'all bounds have sliders');
+      t.deepEqual(
+        Array.from(inputs, input => Number(input.value)),
+        [west, east, -10, 10],
+        'all four slider inputs preserve the saved bounds, including unwrapped longitudes'
+      );
+      t.ok(changed.notCalled, 'opening the configurator does not rewrite the saved bounds');
+      for (const [index, property, value] of [
+        [0, 'boundsWest', west - 0.25],
+        [1, 'boundsEast', east + 0.25]
+      ]) {
+        fireEvent.change(inputs[index], {target: {value: String(value)}});
+        fireEvent.blur(inputs[index]);
+        t.deepEqual(
+          changed.lastCall.args[0],
+          {[property]: value},
+          'edits retain the longitude world'
+        );
+      }
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
 function contourRangeDataset(
   id = 'contour-range-data',
   rows = [

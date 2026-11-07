@@ -2093,6 +2093,16 @@ export default function LayerConfiguratorFactory(
     }
 
     _renderBitmapLayerConfig({layer, dataset, visConfiguratorProps}) {
+      const longitudes = [
+        layer.config.visConfig.boundsWest,
+        layer.config.visConfig.boundsEast
+      ].filter(Number.isFinite);
+      // Dateline alignment and resizing keep longitudes in the image's world copy.
+      // Include those values so the sliders do not fall back to custom inputs.
+      const longitudeRange: [number, number] = [
+        Math.min(-180, ...longitudes.map(value => Math.floor(value / 180) * 180)),
+        Math.max(180, ...longitudes.map(value => Math.ceil(value / 180) * 180))
+      ];
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label={'layer.imageSource'} collapsible>
@@ -2104,8 +2114,16 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup label={'layer.bounds'} collapsible>
             <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />
             <div className="bitmap-bounds-sliders">
-              <VisConfigSlider {...layer.visConfigSettings.boundsWest} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.boundsEast} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.boundsWest}
+                {...visConfiguratorProps}
+                range={longitudeRange}
+              />
+              <VisConfigSlider
+                {...layer.visConfigSettings.boundsEast}
+                {...visConfiguratorProps}
+                range={longitudeRange}
+              />
               <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
               <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
             </div>
