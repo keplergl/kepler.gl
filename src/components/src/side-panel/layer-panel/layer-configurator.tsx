@@ -54,6 +54,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   AggregationLayer,
+  BitmapOverlayLayer,
   Layer,
   LayerBaseConfig,
   VisualChannel,
@@ -592,6 +593,60 @@ export default function LayerConfiguratorFactory(
           </output>
         </div>
       </SidePanelSection>
+    );
+  };
+
+  const BitmapBoundsSliders: React.FC<{
+    layer: BitmapOverlayLayer;
+    onChange: LayerConfiguratorProps['updateLayerVisConfig'];
+  }> = ({layer, onChange}) => {
+    const [longitudeRange, setLongitudeRange] = useState<[number, number]>([-180, 180]);
+    const longitudes = [
+      layer.config.visConfig.boundsWest,
+      layer.config.visConfig.boundsEast
+    ].filter(Number.isFinite);
+    const minimum = Math.min(
+      longitudeRange[0],
+      ...longitudes.map(value => Math.floor(value / 180) * 180)
+    );
+    const maximum = Math.max(
+      longitudeRange[1],
+      ...longitudes.map(value => Math.ceil(value / 180) * 180)
+    );
+
+    // Remember expanded bounds in this control so map edits can grow the range
+    // without shrinking it and changing the pointer mapping during slider drags.
+    useEffect(() => {
+      if (minimum !== longitudeRange[0] || maximum !== longitudeRange[1]) {
+        setLongitudeRange([minimum, maximum]);
+      }
+    }, [minimum, maximum, longitudeRange]);
+
+    return (
+      <div className="bitmap-bounds-sliders">
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsWest}
+          layer={layer}
+          onChange={onChange}
+          range={[minimum, maximum]}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsEast}
+          layer={layer}
+          onChange={onChange}
+          range={[minimum, maximum]}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsSouth}
+          layer={layer}
+          onChange={onChange}
+        />
+        <VisConfigSlider
+          {...layer.visConfigSettings.boundsNorth}
+          layer={layer}
+          onChange={onChange}
+        />
+      </div>
     );
   };
 
@@ -2103,12 +2158,11 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.bounds'} collapsible>
             <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />
-            <div className="bitmap-bounds-sliders">
-              <VisConfigSlider {...layer.visConfigSettings.boundsWest} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.boundsEast} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.boundsSouth} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.boundsNorth} {...visConfiguratorProps} />
-            </div>
+            <BitmapBoundsSliders
+              key={layer.id}
+              layer={layer}
+              onChange={visConfiguratorProps.onChange}
+            />
             <VisConfigSwitch {...layer.visConfigSettings.showBounds} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.alignment'} collapsible>

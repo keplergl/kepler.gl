@@ -80,6 +80,20 @@ class BitmapModifyMode extends ModifyMode {
     }
     super.handleStopDragging(event, props);
   }
+
+  _dragEditHandle(editType, props, editHandle, event) {
+    const {featureIndex, positionIndexes} = editHandle.properties;
+    const ring = props.data.features[featureIndex].geometry.coordinates[positionIndexes[0]];
+    const previousLng = ring[positionIndexes[1]][0];
+    const [lng, ...rest] = event.mapCoords;
+
+    // Globe picking wraps at +/-180. Keep each drag update beside the current
+    // corner, including mouse release, without shortening wide image bounds.
+    super._dragEditHandle(editType, props, editHandle, {
+      ...event,
+      mapCoords: [lng + 360 * Math.round((previousLng - lng) / 360), ...rest]
+    });
+  }
 }
 
 /**

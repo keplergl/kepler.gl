@@ -183,6 +183,22 @@ export default class BitmapOverlayLayer extends Layer {
     const pts = this.alignControlPoints;
     if (pts.length < 2) return;
 
+    // Image U increases eastward. Anchor the longitude branch to the outermost
+    // image points, not click order or the shortest arc: -170 -> 170 remains a
+    // 340-degree image, while 170 -> -170 becomes 170 -> 190.
+    let left = pts[0];
+    let right = pts[0];
+    for (const p of pts) {
+      if (![...p.uv, ...p.geo].every(Number.isFinite) || Math.abs(p.geo[1]) > MAX_BITMAP_LATITUDE)
+        return;
+      if (p.uv[0] < left.uv[0]) left = p;
+      if (p.uv[0] > right.uv[0]) right = p;
+    }
+    const uSpan = right.uv[0] - left.uv[0];
+    if (!uSpan) return;
+    const rawLngSpan = right.geo[0] - left.geo[0];
+    const lngSpan = rawLngSpan < 0 ? (rawLngSpan % 360) + 360 : rawLngSpan;
+
     // The bitmap interpolates UVs in Mercator space, so fit projected Y, not latitude.
     // Solve affine: lng = a * u + b, mercatorY = c * v + d
     // From 2+ points, use least squares (for 2 points, exact solution)
@@ -197,8 +213,11 @@ export default class BitmapOverlayLayer extends Layer {
       sumVY = 0;
     for (const p of pts) {
       const [u, v] = p.uv;
-      const [lng, lat] = p.geo;
-      if (![u, v, lng, lat].every(Number.isFinite) || Math.abs(lat) > MAX_BITMAP_LATITUDE) return;
+      const [rawLng, lat] = p.geo;
+      // Use the same world copy as the endpoint fit. Unlike sequential wrapping,
+      // this tolerates repeated U values and small inaccuracies in map clicks.
+      const expectedLng = left.geo[0] + ((u - left.uv[0]) / uSpan) * lngSpan;
+      const lng = rawLng + 360 * Math.round((expectedLng - rawLng) / 360);
       const y = lngLatToWorld([lng, lat])[1];
       sumU += u;
       sumLng += lng;
@@ -229,16 +248,20 @@ export default class BitmapOverlayLayer extends Layer {
     const north = worldToLngLat([0, d])[1]; // v=0 (top of image)
     const south = worldToLngLat([0, c + d])[1]; // v=1 (bottom of image)
 
+    // Closely spaced image points can extrapolate across multiple worlds.
+    // Allow floating-point roundoff for valid full-world fits.
     if (
       ![west, east, north, south].every(Number.isFinite) ||
+      east <= west ||
+      east - west > 360 + 1e-8 ||
       Math.abs(north) > MAX_BITMAP_LATITUDE ||
       Math.abs(south) > MAX_BITMAP_LATITUDE
     )
       return;
 
     this.updateLayerVisConfig({
-      boundsWest: Math.min(west, east),
-      boundsEast: Math.max(west, east),
+      boundsWest: west,
+      boundsEast: east,
       boundsSouth: Math.min(south, north),
       boundsNorth: Math.max(south, north)
     });
@@ -471,14 +494,19 @@ export default class BitmapOverlayLayer extends Layer {
         new ScatterplotLayer({
           id: `${this.id}-align-pts`,
           data: this.alignControlPoints,
-          getPosition: (d: AlignControlPoint) => d.geo,
+          getPosition: (d: AlignControlPoint) => {
+            // Keep map-click markers beside the image in flat view as well as globe.
+            const expectedLng = bitmapBounds[0] + d.uv[0] * (bitmapBounds[2] - bitmapBounds[0]);
+            const worldOffset = 360 * Math.round((expectedLng - d.geo[0]) / 360);
+            return [d.geo[0] + worldOffset, d.geo[1]];
+          },
           getFillColor: [255, 100, 100, 220],
           getRadius: 6,
           radiusUnits: 'pixels',
           pickable: false,
           visible,
           updateTriggers: {
-            getPosition: this.alignControlPoints.length
+            getPosition: [this.alignControlPoints.length, bitmapBounds[0], bitmapBounds[2]]
           }
         })
       );
@@ -544,6 +572,9 @@ export default class BitmapOverlayLayer extends Layer {
           selectedFeatureIndexes: [0],
           pickable: true,
           pickingRadius: 12,
+          // Keep the handles on the bitmap surface instead of intersecting it
+          // as camera-facing billboards in pitched and globe views.
+          billboard: false,
           visible,
           modeConfig: {
             lockRectangles: true
@@ -617,6 +648,7 @@ export default class BitmapOverlayLayer extends Layer {
           }),
           getSize: 16,
           sizeUnits: 'pixels',
+          billboard: false,
           pickable: false,
           visible
         })

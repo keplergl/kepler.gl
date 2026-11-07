@@ -200,7 +200,7 @@ export default {
     opacity: 'Opacity',
     imageUrl: 'Image URL',
     showBounds: 'Show Bounds',
-    editBounds: 'Drag corners to resize, center to move',
+    editBounds: 'Move / resize image',
     alignMode: 'Align to map',
     boundsWest: 'West',
     boundsSouth: 'South',
