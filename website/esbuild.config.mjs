@@ -58,7 +58,7 @@ function buildTailwind({watch}) {
 const RESOLVE_LOCAL_ALIASES = {
   react: `${NODE_MODULES_DIR}/react`,
   'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-  'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
+  'react-redux': `${NODE_MODULES_DIR}/react-redux`,
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
   'react-router-dom': `${WEBSITE_NODE_MODULES_DIR}/react-router-dom`,

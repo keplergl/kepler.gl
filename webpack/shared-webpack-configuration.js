@@ -11,7 +11,7 @@ const NODE_MODULES_DIR = resolve(__dirname, '../node_modules');
 const resolveAlias = {
   react: `${NODE_MODULES_DIR}/react`,
   'react-dom': `${NODE_MODULES_DIR}/react-dom`,
-  'react-redux': `${NODE_MODULES_DIR}/react-redux/lib`,
+  'react-redux': `${NODE_MODULES_DIR}/react-redux`,
   'styled-components': `${NODE_MODULES_DIR}/styled-components`,
   'react-intl': `${NODE_MODULES_DIR}/react-intl`,
   // Suppress useless warnings from react-date-picker's dep
