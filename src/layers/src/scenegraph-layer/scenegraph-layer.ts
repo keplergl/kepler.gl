@@ -410,21 +410,20 @@ export default class ScenegraphLayer extends Layer {
 
   /**
    * Place one model per GeoJSON feature at its centroid.
-   * Points use their coordinate; lines and polygons use the vertex average.
+   * Points preserve their altitude; other geometries use the ground-level vertex average.
    */
   private _calculateGeojsonDataAttribute(filteredIndex: number[]) {
     const data: ScenegraphLayerData[] = [];
 
     for (let i = 0; i < filteredIndex.length; i++) {
       const index = filteredIndex[i];
+      const geometry = this.dataToFeature[index]?.geometry;
       const centroid =
-        this.centroids[index] ||
-        (this.dataToFeature[index]?.geometry
-          ? getCentroidFromGeometry(this.dataToFeature[index].geometry)
-          : null);
+        this.centroids[index] || (geometry ? getCentroidFromGeometry(geometry) : null);
       if (centroid && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
+        const altitude = geometry?.type === 'Point' ? geometry.coordinates?.[2] : undefined;
         data.push({
-          position: [centroid[0], centroid[1], 0],
+          position: [centroid[0], centroid[1], Number.isFinite(altitude) ? altitude : 0],
           index
         });
       }
