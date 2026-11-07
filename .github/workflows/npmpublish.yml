@@ -17,7 +17,7 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
-      - run: yarn install --immutable && yarn bootstrap
+      - run: yarn install --immutable && yarn bootstrap:prepare
         env:
           HUSKY: 0
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true

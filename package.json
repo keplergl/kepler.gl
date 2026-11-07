@@ -43,7 +43,8 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install --immutable && yarn fix-dependencies && yarn workspaces foreach -At run stab",
+    "bootstrap": "yarn install --immutable && yarn bootstrap:prepare",
+    "bootstrap:prepare": "yarn fix-dependencies && yarn workspaces foreach -At run stab",
     "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
     "install:sqlrooms": "cd examples/demo-app-sqlrooms && yarn install --immutable",
     "install:web": "yarn install:example && yarn install:sqlrooms && cd website && yarn",

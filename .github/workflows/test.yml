@@ -41,7 +41,7 @@ jobs:
         run: sudo apt-get install xvfb
 
       - name: Install Dependencies
-        run: yarn install --immutable && yarn bootstrap
+        run: yarn install --immutable && yarn bootstrap:prepare
         env:
           HUSKY: 0
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
