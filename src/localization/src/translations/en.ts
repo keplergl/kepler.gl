@@ -335,6 +335,12 @@ export default {
     },
     contour: {
       surface: 'Surface',
+      enable3d: '3D surface',
+      enable3dDescription:
+        'Drape the existing contour fills and outlines over the smoothed surface.',
+      elevationScale: 'Elevation multiplier',
+      elevationScaleDescription:
+        'At 1×, the smoothed minimum-to-maximum relief is 10% of the grid’s longest dimension. Thresholds remain in the original data units.',
       levelsGroup: 'Contour levels',
       fillGroup: 'Fill',
       colorByLevel: 'Color by level',

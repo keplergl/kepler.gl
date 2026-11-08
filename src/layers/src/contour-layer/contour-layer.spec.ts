@@ -463,6 +463,61 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
   });
 }
 
+test.each([false, true])(
+  '3D drapes the same smoothed contours, colors and hover values (below: %s)',
+  async below => {
+    const {layer, dataset, datasets} = await setup();
+    layer.updateLayerVisConfig({below, smoothing: 1.5, colorByLevel: true});
+    const data = layer.formatLayerData(datasets);
+    const flat = renderContourPasses(layer, dataset, data);
+    const legend = layer.getContourLegend();
+    expect(layer.config.visConfig.enable3d).toBe(false);
+    layer.updateLayerVisConfig({enable3d: true, elevationScale: 2});
+    const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
+    expect(depth.props.pickable).toBe(false);
+    expect(depth.props.parameters).toMatchObject({colorMask: 0, depthMask: true});
+    expect(fill.props.parameters).toMatchObject({depthMask: false});
+    expect(fill.props.modelMatrix?.[10]).toBe(2);
+    expect(outline.props.modelMatrix?.[10]).toBe(2);
+    const raised = fill.props.data as typeof data.data;
+    expect(raised.map(f => f.properties)).toEqual(data.data.map(f => f.properties));
+    expect(raised.flatMap(f => f.geometry.coordinates.flat(2)).some(p => p[2] > 0)).toBe(true);
+    for (const [index, pass] of [fill, outline].entries()) {
+      const property = index ? 'getLineColor' : 'getFillColor';
+      const getColor = pass.props[property];
+      const getFlatColor = flat[index].props[property];
+      if (typeof getColor !== 'function' || typeof getFlatColor !== 'function') {
+        throw new Error('Expected colors for each contour level');
+      }
+      data.data.forEach((feature, i) => {
+        const info = {index: i, data: data.data, target: []};
+        expect(getColor(feature, info)).toEqual(getFlatColor(feature, info));
+        const object = (pass.props.data as typeof data.data)[i];
+        expect(layer.getHoverData(object)).toEqual(layer.getHoverData(feature));
+        expect(layer.isLayerHovered({picked: true, layer: pass} as unknown as PickingInfo)).toBe(
+          true
+        );
+      });
+    }
+    expect(layer.getContourLegend()).toEqual(legend);
+    layer.updateLayerVisConfig({elevationScale: 0});
+    const flattened = renderContourPasses(layer, dataset, data);
+    expect(flattened[0].props.data).toBe(depth.props.data);
+    expect(flattened[1].props.data).toBe(fill.props.data);
+    expect(flattened[1].props.modelMatrix?.[10]).toBe(0);
+    layer.updateLayerVisConfig({filled: false});
+    expect(renderContourPasses(layer, dataset, data).map(pass => pass.id)).toEqual([
+      `${layer.id}-outline`
+    ]);
+    layer.updateLayerVisConfig({stroked: false});
+    expect(renderContourPasses(layer, dataset, data)).toEqual([]);
+    layer.updateLayerVisConfig({filled: true, stroked: true, enable3d: false});
+    const restored = renderContourPasses(layer, dataset, data);
+    expect(restored[0].props.data).toBe(data.data);
+    expect(restored[1].props.data).toBe(data.data);
+  }
+);
+
 test.each([true, false])(
   'colors each contour level from low to high values (below = %s)',
   async below => {
@@ -1227,6 +1282,8 @@ test.each(
     layer.updateLayerVisConfig({
       below,
       gridResolution: 128,
+      enable3d: true,
+      elevationScale: 2.5,
       colorByLevel: true,
       colorRange: {
         ...layer.config.visConfig.colorRange,

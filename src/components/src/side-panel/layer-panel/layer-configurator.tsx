@@ -2442,6 +2442,10 @@ export default function LayerConfiguratorFactory(
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
           <LayerConfigGroup label="layerVisConfigs.contour.surface" collapsible>
+            <VisConfigSwitch {...settings.enable3d} {...visConfiguratorProps} />
+            {config.visConfig.enable3d ? (
+              <VisConfigSlider {...settings.elevationScale} {...visConfiguratorProps} />
+            ) : null}
             <VisConfigSlider {...settings.smoothing} {...visConfiguratorProps} />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...settings.gridResolution} {...visConfiguratorProps} />

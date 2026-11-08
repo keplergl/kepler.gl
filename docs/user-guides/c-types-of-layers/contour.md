@@ -88,6 +88,15 @@ no longer affect the surface; maps without Grid resolution use the default of 64
 - **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the cell means
   or counts. Smoothing changes values, not just the visual outline. Empty cells contribute
   zero. The default is 3 cells.
+- **3D surface**: drape the existing fills and outlines over that same smoothed grid.
+  Contour boundaries, levels, colors, legends, and tooltip values are shared with 2D.
+  Tilt the map to see the relief. Fill and Outline remain independently configurable.
+  This is off by default, including when opening maps saved without this setting.
+- **Elevation multiplier**: scales only the surface height. At 1×, the smoothed
+  minimum-to-maximum range spans 10% of the grid's longest geographic dimension,
+  with its minimum at ground level. This works for signed weights and point counts;
+  it does not interpret values as meters. Zero flattens the surface. The chosen
+  multiplier is retained when switching back to 2D and when saving the map.
 - **Number of levels**: 2–20 equally spaced thresholds. Automatic levels exclude the
   field's extrema to avoid outlining the entire rectangular extent. Numerically
   constant surfaces are omitted; roundoff from smoothing or interpolation does not
