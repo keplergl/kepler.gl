@@ -6,8 +6,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import {execFileSync, spawnSync} from 'child_process';
 import {transformSync} from '@babel/core';
-import {execFileSync} from 'child_process';
 import ts from 'typescript';
 
 import {exportMapToHTML} from '../../src/utils/src/export-map-html';
@@ -69,6 +69,76 @@ test.each(packages)('%s excludes tests from declaration inputs', workspace => {
   } finally {
     fs.rmSync(directory, {recursive: true, force: true});
   }
+});
+
+// Run the actual root command and install-and-start helper, replacing only the
+// package manager/build tools so this checks environment inheritance offline.
+describe('root scripts preserve caller Node options', () => {
+  const scripts = require('../../package.json').scripts;
+  const commands = [
+    'install:example',
+    'start',
+    'start:sqlrooms',
+    'start:deck',
+    'start:deck-src',
+    'start:loaders-src',
+    'build'
+  ];
+
+  test.each(commands)('%s leaves unset and existing NODE_OPTIONS unchanged', name => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-script-env-'));
+    const bin = path.join(directory, 'bin');
+    fs.mkdirSync(bin);
+    const probe = `#!${process.execPath}
+const {spawnSync} = require('child_process');
+if (process.argv[2] === 'install-and-start') {
+  const result = spawnSync(process.execPath, [
+    ${JSON.stringify(path.join(root, 'scripts/install-and-start.js'))},
+    ...process.argv.slice(3)
+  ], {stdio: 'inherit'});
+  process.exit(result.status ?? 1);
+}
+console.log(JSON.stringify({nodeOptions: process.env.NODE_OPTIONS ?? null}));
+`;
+    for (const tool of ['yarn', 'rm', 'babel']) {
+      fs.writeFileSync(path.join(bin, tool), probe, {mode: 0o755});
+    }
+    for (const example of ['demo-app', 'demo-app-sqlrooms']) {
+      fs.mkdirSync(path.join(directory, 'examples', example), {recursive: true});
+    }
+    try {
+      for (const installed of [false, true]) {
+        if (installed) {
+          for (const example of ['demo-app', 'demo-app-sqlrooms']) {
+            fs.mkdirSync(path.join(directory, 'examples', example, 'node_modules'));
+          }
+        }
+        for (const nodeOptions of [undefined, '--preserve-symlinks --trace-warnings']) {
+          const env = {...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}`};
+          delete env.NODE_OPTIONS;
+          if (nodeOptions !== undefined) env.NODE_OPTIONS = nodeOptions;
+          const result = spawnSync(scripts[name], {
+            cwd: directory,
+            shell: true,
+            env,
+            encoding: 'utf8',
+            timeout: 10000
+          });
+          expect({status: result.status, stderr: result.stderr}).toEqual({status: 0, stderr: ''});
+          const output = result.stdout
+            .trim()
+            .split('\n')
+            .map(line => JSON.parse(line));
+          expect(output.length).toBeGreaterThan(0);
+          for (const received of output) {
+            expect(received).toEqual({nodeOptions: nodeOptions ?? null});
+          }
+        }
+      }
+    } finally {
+      fs.rmSync(directory, {recursive: true, force: true});
+    }
+  });
 });
 
 // Standalone maps access these exports through the KeplerGl UMD global. Link
