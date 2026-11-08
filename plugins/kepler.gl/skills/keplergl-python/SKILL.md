@@ -30,12 +30,9 @@ pip install keplergl
 
 Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
-That Python version requirement does not guarantee support for every feature
-in the current JavaScript app. Before using Bookmarks, Fade on Zoom, camera
-tours, Contour, Zarr, Voronoi Mosaic, point effects, or 3D heatmaps, read
-[Recent map features](references/recent-features.md) for runtime requirements,
-saved-config fields, and UI workflows. Check the export's JavaScript bundle;
-do not assume installing a skill upgrades the renderer.
+The Python version requirement does not guarantee that its JavaScript renderer
+supports every config option. Check the bundle used by the installed exporter
+before choosing layer types or camera controls.
 
 ## Instructions
 
@@ -80,6 +77,14 @@ do not assume installing a skill upgrades the renderer.
 | `json_encoder` | callable | str | Fallback encoder for non-JSON-native values in GeoDataFrames |
 | `app_name` | str | None | App name override for export title/header |
 | `theme` | str | None | Theme override for export (`"light"`, `"dark"`, `"base"`, or `""`) |
+
+The exporter currently pins the JavaScript CDN bundle to `3.3.0-alpha.18`.
+Check the installed exporter and the exported HTML's script URL before using
+features from another version. A config can describe a layer that its renderer
+does not support. `save_to_html()` has no public `kepler_gl_version` argument;
+use a compatible exporter/runtime. Installing this skill does not upgrade the
+bundle. Use `center_map=False` to preserve a deliberately composed initial
+camera instead of fitting to the data.
 
 ### `.config`
 
@@ -186,6 +191,24 @@ In a Python config, `columns` carries the field names each layer type needs
 `visualChannels` carries the field-to-channel mappings (`colorField`,
 `sizeField`, `heightField`, …). The per-layer references below show both.
 
+### Contour
+
+Use `type: 'contour'` for scalar levels or point counts. See
+[Contour Map](references/contour-map.md) for coordinate/weight selection,
+aggregation, smoothing, thresholds, and regional 2D limits.
+
+### Zarr
+
+Use `type: 'zarr'` with a remote tileset descriptor, not a DataFrame of raster
+cells. See [Zarr Layer](references/zarr-layer.md) for importing a store,
+selecting variables and dimensions, timeline controls, and export requirements.
+
+### Voronoi Mosaic
+
+Use `type: 'voronoi'` for nearest-site cells. See
+[Voronoi Mosaic](references/voronoi-map.md) for point/geometry columns, bounds,
+filtering, and flat-map constraints.
+
 ## Time animation and trips
 
 <!-- shared:trip -->
@@ -204,6 +227,28 @@ waypoints, `latitude` / `longitude`, and a `timestamp`.
 <!-- /shared:trip -->
 
 See [Trip Animation Map](references/trip-animation-map.md) for a full config.
+
+### Camera tours
+
+For a fly-through between places, use **Interactions → Camera animation**.
+**Add stop** captures the current view, or offers a saved bookmark when one
+exists. Rename and reorder stops, use **Pick current location** to update a
+stop, set hold/travel durations, then enable playback and use Play/Pause or the
+time scrubber. Stops copied from bookmarks own their camera snapshots; later
+bookmark edits do not update them.
+
+`config.visState.cameraTour` contains a `stops` array. Each stop has `id`,
+`name`, `camera` (the same five fields as a bookmark), `holdDurationMs`, and
+`travelDurationMs`. The UI shows seconds; saved durations are milliseconds.
+Travel is to the next stop and the final stop's travel duration is ignored.
+Use finite, nonnegative durations. Playback ends at the last stop; Play at the
+end restarts it. Manual map navigation pauses playback. Tour stops persist,
+but playback position/state is transient. Tours require a single Mercator map.
+
+A camera tour moves the view, not dataset features. For vehicles moving along
+timestamped paths use a Trip layer. For events appearing over time use a time
+filter; for points pulsing in place use the Point layer's Pulse / Ripple
+controls. Do not create a time filter merely to move the camera.
 
 ## Config Structure
 
@@ -233,6 +278,70 @@ config = {
     }
 }
 ```
+
+### Bookmarks
+
+1. In **Interactions → Bookmarks**, compose a view and choose **Add Bookmark**.
+2. Rename or reorder bookmarks; **Update view** replaces the saved camera.
+3. Enable the **Bookmarks** switch for **Go to** and the floating panel.
+   Disabling the switch hides the panel without deleting the saved views.
+
+Bookmarks store longitude, latitude, zoom, bearing, and pitch, independently
+of datasets. They do not restore layers or filters. Editing/navigation require
+a single Mercator map (2D or tilted 3D), not globe or split-map mode.
+
+Saved config stores an array at `config.visState.cameraBookmarks`:
+
+```json
+[
+  {
+    "id": "view-downtown",
+    "name": "Downtown",
+    "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}
+  }
+]
+```
+
+The switch is a separate UI preference; importing bookmarks does not turn it
+on. When exporting a deliberately composed initial camera from Python, use
+`center_map=False` so automatic fitting does not replace that initial view.
+
+### Fade on Zoom
+
+In **Interactions → Fade on zoom**, add a controller, select its layers and/or
+annotations, set the four zoom handles, and enable the switch. Each target can
+belong to only one controller. The fade multiplies normal opacity and does not
+make a hidden layer visible.
+
+The handles are **Appear**, **Full start**, **Full end**, and **Disappear**,
+corresponding to saved keys `appear`, `full`, `fade`, and `gone`. Keep them
+ordered within zoom 0–24. For `[2, 4, 8, 10]`, opacity is zero at/below 2,
+half at 3, full from 4 through 8, half at 9, and zero at/above 10. Coincident
+inner/outer handles make an immediate transition; all four equal means always
+invisible.
+
+Example value of `config.visState.interactionConfig.zoomOpacity` (replace
+`observations-layer` with an existing layer ID):
+
+```json
+{
+  "id": "zoomOpacity",
+  "enabled": true,
+  "config": {
+    "controllers": [
+      {
+        "id": "fade-observations",
+        "layerIds": ["observations-layer"],
+        "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}
+      }
+    ]
+  }
+}
+```
+
+For annotations, select targets in the UI or preserve their exported target
+IDs; do not substitute annotation names for IDs. Disabling the effect preserves
+controllers. Controllers and enabled state are saved with the map.
 
 ## Basemap Styles
 
@@ -271,15 +380,17 @@ For the Mapbox styles, pass `mapbox_token=` to `KeplerGl(...)` or to
 
 For detailed per-layer-type examples with full config, see supporting files:
 
-- [Point Map](references/point-map.md) — Scatter plot from lat/lng
+- [Point Map](references/point-map.md) — Scatter plot from lat/lng, Glow, and Pulse / Ripple
 - [GeoJSON / Polygon Map](references/geojson-polygon-map.md) — Polygons, lines from GeoJSON or GeoDataFrame
 - [H3 Hexagon Map](references/h3-hexagon-map.md) — H3 spatial index hexagons
 - [Arc / Line Map](references/arc-line-map.md) — Origin-destination connections
-- [Heatmap](references/heatmap.md) — Density heatmap from points
+- [Heatmap](references/heatmap.md) — Density heatmap from points and 3D Surface controls
 - [Hexbin Aggregation Map](references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](references/trip-animation-map.md) — Animated trips along paths
+- [Contour Map](references/contour-map.md) — Scalar levels and point-count contours
+- [Zarr Layer](references/zarr-layer.md) — Remote raster variables, dimensions, and timeline axes
+- [Voronoi Mosaic](references/voronoi-map.md) — Nearest-site cells and bounds
 - [Summary Panel Overlay](references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
-- [Recent Map Features](references/recent-features.md) — Bookmarks, Fade on Zoom, camera tours, Contour, Zarr, Voronoi Mosaic, point effects, and 3D heatmaps; check renderer support before exporting
 
 ## Examples
 

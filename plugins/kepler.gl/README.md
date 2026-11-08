@@ -22,7 +22,7 @@ plugins/kepler.gl/
 ├── .cursor-plugin/plugin.json   Cursor manifest
 ├── skills/
 │   ├── keplergl-python/         SKILL.md + references/
-│   └── kepler-gl-app/           SKILL.md + references/
+│   └── kepler-gl-app/           SKILL.md
 ├── assets/                      icon-small.svg, icon-large.svg
 └── README.md
 ```
@@ -131,12 +131,10 @@ demo app, so it stays the source of truth. The plugin's
 and followed by a cross-surface appendix. Edit the source, then re-copy the body
 — the validator checks that the plugin copy still starts with it.
 
-The companion `references/recent-features.md` in `src/mcp/skill/kepler/` covers
-Bookmarks, Fade on Zoom, camera tours, Contour, Zarr, Voronoi Mosaic, point
-effects, and 3D heatmaps. Copy it into both plugin skills' `references/`
-directories when editing it, so each installed skill remains self-contained.
-These workflows distinguish UI/config features from the smaller MCP command
-schema; documenting a feature does not add an MCP command for it.
+Layer, camera, and interaction workflows live alongside the corresponding
+instructions in the app skill. Python layer details belong in their per-layer
+references. Keep the supported MCP command schema distinct from UI/config
+capabilities when updating either skill.
 
 Skill metadata lives in the `SKILL.md` frontmatter only. `skill.yaml` stays in
 `src/mcp/skill/kepler/` because the npm package exports it, but it is not copied
