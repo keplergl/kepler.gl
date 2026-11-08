@@ -482,18 +482,29 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
     let type = fieldMeta?.type || 'STRING';
     let format = fieldMeta?.format || '';
 
-    // type-analyzer's unanchored year-first regex matches a prefix of US dates
-    // (e.g. 09/17/20 in 09/17/2016). Correct only whole, consistently month-first
-    // date samples; do not reinterpret mixed formats or timestamp columns.
-    if (type === AnalyzerDATA_TYPES.DATE && format === 'YYYY/M/D') {
+    // type-analyzer's unanchored year-first regex matches a prefix of slash dates
+    // (e.g. 09/17/20 in 09/17/2016). Correct only complete date samples. Keep the
+    // month-first default unless every sample is a valid day-first date and at
+    // least one day exceeds 12; ambiguous or conflicting samples cannot decide.
+    if (type === AnalyzerDATA_TYPES.DATE && ['YYYY/M/D', 'M/D/YYYY'].includes(format)) {
       const samples = analyzerData.map(row => row[field]).filter(notNullorUndefined);
       if (
         samples.length &&
-        samples.every(
-          value => typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)
-        )
+        samples.every(value => typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value))
       ) {
-        format = 'M/D/YYYY';
+        let hasDayFirstEvidence = false;
+        const allDayFirst = samples.every(value => {
+          const [day, month, year] = String(value).split('/').map(Number);
+          const date = new Date(0);
+          date.setUTCFullYear(year, month - 1, day);
+          hasDayFirstEvidence ||= day > 12;
+          return (
+            date.getUTCFullYear() === year &&
+            date.getUTCMonth() === month - 1 &&
+            date.getUTCDate() === day
+          );
+        });
+        format = allDayFirst && hasDayFirstEvidence ? 'D/M/YYYY' : 'M/D/YYYY';
       }
     }
 

@@ -1,7 +1,7 @@
+/** @jest-environment node */
+
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
-
-/** @jest-environment node */
 
 import {execFileSync} from 'child_process';
 import fs from 'fs';

@@ -2,6 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import {timeToUnixMilli} from '@kepler.gl/utils';
+import {processCsvData} from '@kepler.gl/processors';
+import {KeplerTable} from '@kepler.gl/table';
 
 import {
   ChartType,
@@ -470,6 +473,100 @@ test('charts -> calendar dates use UTC days without shifting timestamp instants'
   t.end();
 });
 
+test('charts -> zone-less year-first timestamps use UTC instants', t => {
+  const cases = [
+    ['2016-09-17 00:00:00', Date.UTC(2016, 8, 17)],
+    ['2016-9-7 1:2:3', Date.UTC(2016, 8, 7, 1, 2, 3)],
+    ['2016/9/17 0:0:0', Date.UTC(2016, 8, 17)],
+    ['2016-09-17T00:00', Date.UTC(2016, 8, 17)],
+    ['2016-09-17T12:34:56.123456', Date.UTC(2016, 8, 17, 12, 34, 56, 123)],
+    [' 2016-09-17 12:34:56.1 ', Date.UTC(2016, 8, 17, 12, 34, 56, 100)],
+    ['2016-02-29 00:00:00', Date.UTC(2016, 1, 29)],
+    ['2016-09-17T24:00:00', Date.UTC(2016, 8, 18)],
+    ['2020-03-08 02:30:00', Date.UTC(2020, 2, 8, 2, 30)],
+    ['2020-11-01 01:30:00', Date.UTC(2020, 10, 1, 1, 30)],
+    ['0099-01-01 00:00:00', Date.parse('0099-01-01T00:00:00Z')],
+    ['2016-09-17T00:00:00Z', Date.UTC(2016, 8, 17)],
+    ['2016-09-17T00:00:00+03:00', Date.UTC(2016, 8, 16, 21)],
+    ['2016-09-17T23:00:00-04:00', Date.UTC(2016, 8, 18, 3)],
+    [new Date('2016-09-17T00:00:00Z'), Date.UTC(2016, 8, 17)],
+    [0, 0],
+    [-1000, -1000]
+  ];
+  const timeAxis = {field: {name: 'time', type: 'timestamp'}, aggregation: BinType.timeBin};
+  for (const [time, expected] of cases) {
+    const dataset = mockDataset([{time}]);
+    const bins = buildGroupedBins({dataset, applyFilters: true, binAxis: timeAxis});
+    t.equal(bins.length, 1, `${time}: row is retained`);
+    t.deepEqual(bins[0]?.filterValue, [expected, expected], `${time}: expected instant`);
+  }
+  const value = '2016-09-17 00:00:00';
+  const expected = timeToUnixMilli(value, 'YYYY-M-D H:m:s');
+  const dataset = mockDataset([{time: value}]);
+  const bins = buildTimeSeries({
+    dataset,
+    indexes: dataset.allIndexes,
+    xAxis: timeAxis,
+    interval: 'day'
+  });
+  t.equal(bins[0].key, '2016-09-17', 'calendar day agrees with the field parser');
+  t.deepEqual(bins[0].filterValue, [expected, expected + 86400000]);
+  t.end();
+});
+
+test('charts -> zone-less timestamps reject invalid calendars and clocks', t => {
+  const values = [
+    '2016-02-30 00:00:00',
+    '2015-02-29T12:00:00',
+    '2016-13-01 00:00:00',
+    '2016-00-01 00:00:00',
+    '2016-01-00 00:00:00',
+    '2016-09-17 25:00:00',
+    '2016-09-17 00:60:00',
+    '2016-09-17 00:00:60',
+    '2016-09-17T24:00:01',
+    '2016-09-17T24:00:00.1',
+    null,
+    undefined,
+    '',
+    ' '
+  ];
+  const dataset = mockDataset(values.map(time => ({time})));
+  t.deepEqual(
+    buildTimeSeries({
+      dataset,
+      indexes: dataset.allIndexes,
+      xAxis: {field: {name: 'time', type: 'timestamp'}, aggregation: BinType.timeBin},
+      interval: 'day'
+    }),
+    []
+  );
+  t.end();
+});
+
+test('charts -> zone-less time bins retain UTC range identities for saved selections', t => {
+  const times = ['2016-09-17 00:00:00', '2016-09-17 00:00:30', '2016-09-17 00:01:00'];
+  const dataset = mockDataset(times.map(time => ({time})));
+  const utcDataset = mockDataset(times.map(time => ({time: time.replace(' ', 'T') + 'Z'})));
+  const chart = createChart({type: ChartType.barChart, dataset});
+  chart.xAxis = {
+    field: {name: 'time', type: 'timestamp'},
+    aggregation: BinType.timeBin,
+    numBins: 10
+  };
+  const utcBins = computeDatasetChart(chart, utcDataset).bins;
+  chart.crossFilter = {
+    enabled: true,
+    fieldNames: {x: 'time'},
+    value: {x: utcBins[0].key}
+  };
+  const restored = JSON.parse(JSON.stringify(chart));
+  const bins = computeDatasetChart(restored, dataset).bins;
+  t.deepEqual(bins, utcBins, 'keys, membership, and filter ranges agree with explicit UTC');
+  t.equal(bins[0].key, restored.crossFilter.value.x, 'saved UTC selection keeps its identity');
+  t.end();
+});
+
 test('charts -> extra aggregations', t => {
   const dataset = mockDataset([
     {category: 'A', value: 10, time: new Date('2020-01-01'), id: '1'},
@@ -592,5 +689,79 @@ test('charts -> stale line-chart field does not emit bins', t => {
   const view = computeDatasetChart(chart, dataset);
   t.equal(view.kind, 'line');
   t.deepEqual(view.bins, []);
+  t.end();
+});
+
+test('charts -> imported day-first dates retain rows and calendar-day filters', t => {
+  const data = processCsvData('date,value\n17/09/2016,1\n05/06/2016,2\n18/09/2016,3');
+  const table = new KeplerTable({info: {id: 'day-first'}, color: [0, 0, 0]});
+  table.updateSchema(data);
+  const dataset = toChartableDataset(table);
+  const options = {
+    dataset,
+    indexes: dataset.allIndexes,
+    xAxis: {field: {name: 'date', type: 'date'}, aggregation: BinType.timeBin},
+    yAxis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum'},
+    interval: 'day'
+  };
+  t.equal(dataset.fields[0].format, 'D/M/YYYY');
+  const bins = buildTimeSeries(options);
+  t.deepEqual(
+    bins.map(bin => [bin.key, bin.value, bin.count]),
+    [
+      ['2016-06-05', 2, 1],
+      ['2016-09-17', 1, 1],
+      ['2016-09-18', 3, 1]
+    ]
+  );
+  t.deepEqual(bins[0].filterValue, [Date.UTC(2016, 5, 5), Date.UTC(2016, 5, 6)]);
+  const grouped = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    numGroups: 2,
+    binAxis: options.xAxis,
+    valueAxis: options.yAxis
+  });
+  t.equal(
+    grouped.reduce((count, bin) => count + bin.count, 0),
+    3,
+    'all rows reach time bins'
+  );
+  t.equal(
+    grouped.reduce((sum, bin) => sum + bin.value, 0),
+    6
+  );
+  t.end();
+});
+
+test('charts -> slash dates follow declared format and preserve the month-first default', t => {
+  for (const format of ['D/M/YYYY', 'DD/MM/YYYY', 'M/D/YYYY', undefined]) {
+    const dataset = mockDataset([
+      {time: '05/06/2016'},
+      {time: '17/09/2016'},
+      {time: '31/02/2016'},
+      {time: null},
+      {time: ''}
+    ]);
+    dataset.fields.find(field => field.name === 'time').format = format;
+    const bins = buildTimeSeries({
+      dataset,
+      indexes: dataset.allIndexes,
+      xAxis: {field: {name: 'time', type: 'date'}, aggregation: BinType.timeBin},
+      yAxis: {aggregation: 'count'},
+      interval: 'day'
+    });
+    const dayFirst = format?.startsWith('D');
+    t.deepEqual(
+      bins.map(bin => [bin.key, bin.count]),
+      dayFirst
+        ? [
+            ['2016-06-05', 1],
+            ['2016-09-17', 1]
+          ]
+        : [['2016-05-06', 1]],
+      `respects ${format || 'missing format'}, skipping invalid values`
+    );
+  }
   t.end();
 });
