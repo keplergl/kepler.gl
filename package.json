@@ -180,7 +180,6 @@
     "crypto-browserify": "^3.12.1",
     "css-loader": "5.2.7",
     "documentation": "^13.2.5",
-    "dts-bundle-webpack": "^1.0.2",
     "es-toolkit": "^1.39.10",
     "esbuild": "^0.25.0",
     "esbuild-plugin-replace": "^1.4.0",

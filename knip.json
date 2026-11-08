@@ -8,8 +8,7 @@
   "ignore": [
     "bindings/**",
     "website/**",
-    "examples/**",
-    "scripts/ts-smoosh/tests/**"
+    "examples/**"
   ],
   "ignoreWorkspaces": ["src/types"],
   "workspaces": {
