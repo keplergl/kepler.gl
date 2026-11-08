@@ -484,14 +484,44 @@ function equalWidthTimeBins(
 }
 
 // Date-only strings describe calendar days, not local-midnight instants.
-// Parse the numeric date forms independently of the host timezone; timestamps
-// (including explicit offsets), Date objects and epoch numbers retain their instant.
+// Parse numeric dates and zone-less year-first timestamps in UTC, like time filters.
+// Explicit offsets, Date objects and epoch numbers retain their instant.
 function chartTimeValue(raw: unknown): number {
   if (raw === null || raw === undefined || raw === '') {
     return NaN;
   }
   if (typeof raw === 'string') {
     const value = raw.trim();
+    const timestamp =
+      /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2})(?:\.(\d+))?)?$/.exec(
+        value
+      );
+    if (timestamp) {
+      const [, y, m, d, h, min, sec = '0', fraction = '0'] = timestamp;
+      const year = Number(y);
+      const month = Number(m) - 1;
+      const day = Number(d);
+      const hour = Number(h);
+      const minute = Number(min);
+      const second = Number(sec);
+      const millisecond = Number(fraction.slice(0, 3).padEnd(3, '0'));
+      const date = new Date(0);
+      date.setUTCFullYear(year, month, day);
+      if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month ||
+        date.getUTCDate() !== day ||
+        hour > 24 ||
+        minute > 59 ||
+        second > 59 ||
+        (hour === 24 && (minute !== 0 || second !== 0 || Number(fraction) !== 0))
+      ) {
+        return NaN;
+      }
+      // ISO 24:00 denotes the following midnight. Fractions retain millisecond precision.
+      date.setUTCHours(hour, minute, second, millisecond);
+      return date.getTime();
+    }
     const yearFirst = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(value);
     const monthFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
     const parts = yearFirst || monthFirst;
