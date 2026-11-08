@@ -27,3 +27,6 @@ import './documentation-test';
 
 // release license headers preserve Jest environment directives
 import './license-header-test';
+
+// example release references
+import './edit-version-test';

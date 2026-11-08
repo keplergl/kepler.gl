@@ -22,6 +22,24 @@ Then start the dev server:
 yarn start
 ```
 
+## Updating release references
+
+From the repository root, `yarn example-version` updates existing Kepler dependency
+versions in the example manifests and the UMD client's CDN URL to the root
+`package.json` version. It does not add dependencies to source-only examples,
+change local package references, install packages, or regenerate lockfiles.
+
+Run this separately from `yarn bump-version`: the npm release workflow publishes
+`src/*` workspaces, not the private root `kepler.gl` package. Before using the helper,
+verify that the target scoped packages **and** the legacy `kepler.gl` UMD bundle are
+available. After updating, run `yarn install` in each changed standalone example
+and review its manifest and lockfile together before committing. The root install
+does not update these standalone lockfiles.
+
+Older Kepler versions may remain in the dependency tree when another package,
+such as `@openassistant/kepler-assistant`, depends on them. Updating direct example
+dependencies does not override those transitive requirements.
+
 ## Examples
 
 - ### [Get Started][get-started]
