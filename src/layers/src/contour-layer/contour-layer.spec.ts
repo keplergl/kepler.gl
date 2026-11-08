@@ -499,10 +499,16 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(model).toBeDefined();
     expect(model).not.toBe(flatModel);
     // Check the assembled shaders, including the material module and picking hooks.
+    const normals = surface.getAttributeManager()!.getAttributes().contourNormals
+      .value as Float32Array;
+    expect(normals.length).toBeGreaterThan(0);
+    expect(Array.from(normals.slice(0, 3))).not.toEqual(Array.from(normals.slice(3, 6)));
+    expect(model.vs).toContain('in vec3 contourNormals;');
+    expect(model.vs).toContain('vSurfaceNormal = normalize(project_normal(surfaceNormal));');
     expect(model.vs).toContain('vCommonPosition = geometry.position.xyz;');
     expect(model.vs).not.toContain('lighting_getLightColor(');
-    expect(model.fs).toContain('cross(dFdx(vCommonPosition), dFdy(vCommonPosition))');
-    expect(model.fs).toContain('normalLength > 0.0');
+    expect(model.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
+    expect(model.fs).not.toContain('dFdx(');
     expect(model.fs).toContain('phongMaterialUniforms');
     expect(model.fs).not.toContain('gouraudMaterialUniforms');
     expect(model.fs).toContain('fragColor.rgb = lighting_getLightColor(');
@@ -546,7 +552,7 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     const restoredModel = (restoredSurface[1].getSubLayers()[0] as ContourSurfaceLayer).state
       .topModel!;
     expect(restoredModel).not.toBe(restoredFlatModel);
-    expect(restoredModel.fs).toContain('dFdx(vCommonPosition)');
+    expect(restoredModel.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
     expect(onError).not.toHaveBeenCalled();
   } finally {
     manager.finalize();

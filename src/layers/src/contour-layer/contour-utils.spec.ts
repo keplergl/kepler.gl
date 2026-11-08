@@ -105,8 +105,20 @@ describe('contour surface', () => {
     });
   });
 
+  test('samples normalized field-gradient normals at draped vertices', () => {
+    const grid = testGrid(samples(5, (x, y) => x * x + y));
+    const contours = generateContours(grid, {...options, domain: [1, 12]});
+    const surface = buildContourSurface(grid, contours);
+    const normal = surface.getNormal([2, 2]);
+    const physical = [normal[0] * 111320, normal[1] * 111320, normal[2]];
+    expect(Math.hypot(...physical)).toBeCloseTo(1);
+    expect(physical[0]).toBeLessThan(0);
+    expect(physical[1]).toBeLessThan(0);
+    expect(physical[2]).toBeGreaterThan(0);
+  });
+
   test('handles empty, missing and constant surfaces', () => {
-    expect(buildContourSurface(null, [])).toEqual({fills: [], outlines: []});
+    expect(buildContourSurface(null, [])).toMatchObject({fills: [], outlines: []});
     const constant = testGrid(samples(3, () => -5));
     const contours = generateContours(constant, {...options, domain: [-6, -4]});
     const surface = buildContourSurface(constant, contours);
@@ -114,7 +126,7 @@ describe('contour surface', () => {
     expect(surface.fills.flatMap(f => f.geometry.coordinates.flat(2)).every(p => p[2] === 0)).toBe(
       true
     );
-    expect(buildContourSurface(testGrid(samples(3, () => NaN)), contours)).toEqual({
+    expect(buildContourSurface(testGrid(samples(3, () => NaN)), contours)).toMatchObject({
       fills: [],
       outlines: []
     });

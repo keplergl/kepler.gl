@@ -6,7 +6,12 @@ import {ContourFeature, ScalarGrid} from './contour-utils';
 
 /** Drape the existing contours over one common, piecewise planar height field. */
 export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFeature[]) {
-  const empty = {fills: [] as ContourFeature[], outlines: [] as ContourFeature[]};
+  const flatNormal = (): [number, number, number] => [0, 0, 1];
+  const empty = {
+    fills: [] as ContourFeature[],
+    outlines: [] as ContourFeature[],
+    getNormal: flatNormal
+  };
   if (!grid || !contours.length) return empty;
   let minimum = Infinity;
   let maximum = -Infinity;
@@ -50,7 +55,7 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
     (longitude - grid.longitude) / grid.stepLng,
     (lat - grid.latitude) / grid.stepLat
   ];
-  const toSurface = (x: number, y: number): number[] => {
+  const heightAt = (x: number, y: number): number => {
     const clampedX = Math.max(0, Math.min(grid.width - 1, x));
     const clampedY = Math.max(0, Math.min(grid.height - 1, y));
     const col = Math.min(grid.width - 2, Math.floor(clampedX));
@@ -63,15 +68,40 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
     const d = heights[(row + 1) * grid.width + col + 1];
     // The diagonal alternates with cell parity, matching the rotated grid cuts
     // below. Every overlapping fill and outline uses these same triangle planes.
-    const height =
-      (col + row) % 2 === 0
-        ? fx >= fy
-          ? a + (b - a) * fx + (d - b) * fy
-          : a + (d - c) * fx + (c - a) * fy
-        : fx + fy <= 1
-        ? a + (b - a) * fx + (c - a) * fy
-        : d + (c - d) * (1 - fx) + (b - d) * (1 - fy);
+    return (col + row) % 2 === 0
+      ? fx >= fy
+        ? a + (b - a) * fx + (d - b) * fy
+        : a + (d - c) * fx + (c - a) * fy
+      : fx + fy <= 1
+      ? a + (b - a) * fx + (c - a) * fy
+      : d + (c - d) * (1 - fx) + (b - d) * (1 - fy);
+  };
+  const toSurface = (x: number, y: number): number[] => {
+    const height = heightAt(x, y);
     return [grid.longitude + x * grid.stepLng, grid.latitude + y * grid.stepLat, height];
+  };
+  // Use the field gradient around every tessellated vertex, rather than a
+  // triangle derivative. This keeps lighting smooth across contour cuts.
+  const getNormal = ([longitude, latitude]: number[]): [number, number, number] => {
+    const x = (longitude - grid.longitude) / grid.stepLng;
+    const y = (latitude - grid.latitude) / grid.stepLat;
+    const delta = 0.5;
+    const metersPerLongitude = 111320 * Math.cos((latitude * Math.PI) / 180);
+    const metersPerLatitude = 111320;
+    const slopeLongitude =
+      (heightAt(x + delta, y) - heightAt(x - delta, y)) /
+      (2 * delta * grid.stepLng * metersPerLongitude);
+    const slopeLatitude =
+      (heightAt(x, y + delta) - heightAt(x, y - delta)) /
+      (2 * delta * grid.stepLat * metersPerLatitude);
+    const length = Math.hypot(slopeLongitude, slopeLatitude, 1);
+    // SolidPolygonLayer expects lng/lat offset normals. The vertex shader
+    // projects and normalizes this physical-space normal before interpolation.
+    return [
+      -slopeLongitude / (metersPerLongitude * length),
+      -slopeLatitude / (metersPerLatitude * length),
+      1 / length
+    ];
   };
   const fromDiagonal = (positions: Readonly<ArrayLike<number>>) => {
     const result: number[][] = [];
@@ -140,5 +170,5 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
       )
     }
   }));
-  return {fills, outlines};
+  return {fills, outlines, getNormal};
 }

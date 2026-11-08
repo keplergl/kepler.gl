@@ -429,7 +429,12 @@ export default class ContourLayer extends Layer {
               ...(surface
                 ? {
                     getPolygonOffset: () => [0, 0],
-                    _subLayerProps: {'polygons-fill': {type: ContourSurfaceLayer}}
+                    _subLayerProps: {
+                      'polygons-fill': {
+                        type: ContourSurfaceLayer,
+                        getSurfaceNormal: surface.getNormal
+                      }
+                    }
                   }
                 : {}),
               filled: true,
