@@ -3,6 +3,7 @@
 
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
+import {GL} from '@luma.gl/constants';
 import {Matrix4} from '@math.gl/core';
 import {createSelector} from 'reselect';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
@@ -405,7 +406,12 @@ export default class ContourLayer extends Layer {
               pickable: false,
               getFillColor: [0, 0, 0, 255],
               getPolygonOffset: () => [1, 1],
-              parameters: {...defaultProps.parameters, depthMask: true, colorMask: 0}
+              parameters: {
+                ...defaultProps.parameters,
+                depthMask: true,
+                // Per-layer WebGL masks require RGBA booleans, not a render-pass bitmask.
+                [GL.COLOR_WRITEMASK]: [false, false, false, false]
+              }
             })
           ]
         : []),
