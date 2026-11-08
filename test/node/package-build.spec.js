@@ -7,7 +7,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import {transformSync} from '@babel/core';
+import {execFileSync} from 'child_process';
 import ts from 'typescript';
+
+import {exportMapToHTML} from '../../src/utils/src/export-map-html';
+import {EXPORT_HTML_MAP_MODES} from '../../src/constants/src';
 
 const root = path.resolve(__dirname, '../..');
 const packages = ['.', ...require('../../package.json').workspaces].filter(workspace =>
@@ -65,4 +69,57 @@ test.each(packages)('%s excludes tests from declaration inputs', workspace => {
   } finally {
     fs.rmSync(directory, {recursive: true, force: true});
   }
+});
+
+// Standalone maps access these exports through the KeplerGl UMD global. Link
+// their actual bootstrap dependencies against the JS barrel: neither tsc nor
+// tests that import the scoped packages detect a missing root re-export.
+test('UMD entrypoint provides the exports used by standalone HTML maps', () => {
+  const requiredExports = new Set();
+  for (const mode of [EXPORT_HTML_MAP_MODES.READ, EXPORT_HTML_MAP_MODES.EDIT]) {
+    const html = exportMapToHTML({datasets: [], config: {version: 'v1', config: {}}, mode});
+    const bootstrap = html.match(/<script type="text\/kepler-bootstrap">([\s\S]*?)<\/script>/)?.[1];
+    expect(bootstrap).toBeDefined();
+    const source = ts.createSourceFile('bootstrap.js', bootstrap, ts.ScriptTarget.Latest, true);
+    const visit = node => {
+      if (
+        ts.isPropertyAccessExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        ['KeplerGl', 'keplerGl'].includes(node.expression.text)
+      ) {
+        requiredExports.add(node.name.text);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+  expect(requiredExports.has('keplerGlReducer')).toBe(true);
+  expect(requiredExports.has('ChartManagerFactory')).toBe(true);
+
+  // esbuild needs Node's native typed arrays, not Jest's VM-realm globals.
+  execFileSync(
+    process.execPath,
+    [
+      '-e',
+      "require('esbuild').buildSync(JSON.parse(process.argv[1]));",
+      JSON.stringify({
+        stdin: {
+          contents: `export {${[...requiredExports].sort().join(', ')}} from './src/index.js';`,
+          resolveDir: root
+        },
+        bundle: true,
+        write: false,
+        platform: 'browser',
+        format: 'esm',
+        // Check real workspace exports without bundling unrelated third-party
+        // dependencies or evaluating WebGL/DOM code in the Node test process.
+        packages: 'external',
+        tsconfig: path.join(root, 'tsconfig.json'),
+        // Match the optional charts entrypoint used by the production UMD build.
+        alias: {'@kepler.gl/components/charts': path.join(root, 'src/components/src/charts.ts')},
+        logLevel: 'silent'
+      })
+    ],
+    {cwd: root, stdio: 'pipe', timeout: 30000}
+  );
 });
