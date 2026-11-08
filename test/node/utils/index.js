@@ -14,6 +14,7 @@ import './data-scale-utils-test';
 import './interaction-utils-test';
 import './mapbox-gl-style-editor-test';
 import './mapbox-utils-test';
+import './map-info-utils-test';
 import './notifications-utils-test';
 import './aggregation-test';
 import './aggregation-utils-test';
