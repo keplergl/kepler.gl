@@ -50,7 +50,8 @@ context.
 Go to the root directory and install the dependencies using yarn:
 
 ```sh
-yarn bootstrap
+yarn install --immutable
+yarn bootstrap:prepare
 ```
 
 If install fails while building the `gl` package, use Node 24.21.0 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
