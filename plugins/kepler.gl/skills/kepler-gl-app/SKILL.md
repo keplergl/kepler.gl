@@ -1,6 +1,6 @@
 ---
 name: kepler-gl-app
-description: Create and configure kepler.gl map layers (point, flow, flowField, arc, line, grid, hexagon, geojson, cluster, heatmap, h3, trip, s2) from datasets, animate them over time, compare them side by side, change the basemap, switch between the 2D, 3D and globe views, update layer colors, load data from a URL, add columns to existing datasets, and read the current map boundary.
+description: Configure a live kepler.gl map through its available map commands, UI, or saved config. Use for layers, colors, time animation, basemaps, split views, Bookmarks, Fade on Zoom, camera tours, Contour, Zarr, and Voronoi Mosaic. Check the connected host's capabilities before using features outside the MCP command schema.
 ---
 
 # Kepler map management
@@ -10,6 +10,12 @@ time, compare them side by side, change the basemap, update layer colors,
 load data from a URL, add columns to existing datasets, and read the current
 map boundary. These are direct map-mutation operations on the kepler.gl map
 surface.
+
+For Bookmarks, Fade on Zoom, camera/location animation, Contour, Zarr,
+Voronoi Mosaic, point effects, or 3D heatmaps, read
+[Recent map features](references/recent-features.md). It covers UI workflows,
+saved-config fields, runtime requirements, and which operations the current
+MCP commands cannot perform.
 
 ## When to use
 
@@ -27,6 +33,9 @@ compare layers side by side. Examples:
 - "Change a column's type (e.g. make NOSOUTH a string)"
 - "Rename a column on the existing dataset"
 - "What's the current map boundary/extent?"
+- "Save this view as a bookmark and animate a tour between locations"
+- "Fade these layers or annotations as I zoom"
+- "Show contours, a Zarr forecast, or a Voronoi mosaic"
 
 Do NOT use this skill for analysis beyond map mutation — spatial statistics,
 spatial filtering, colocation, boundary fetching, or charts. Those belong to
@@ -57,6 +66,15 @@ envelope is described in your host's tool listing. In the kepler.gl demo
 assistant the dispatcher is the `executeApi` tool with
 `apiName: "executeCommand"` and `args: { commandId, input }`.
 
+Use the connected host's tool listing and input schemas as the authority.
+The stdio bridge exposes names such as `map_add-layer`, while dispatchers use
+`map.add-layer`. A feature in the layer picker is not necessarily supported by
+`map.add-layer`. In particular, it does not accept `contour`, `zarr`, or
+`voronoi`, and there are no built-in bookmark, camera-tour, or zoom-fade
+commands. Use a host's supported UI/config workflow for those features; if
+none is available, explain the steps and the limitation instead of claiming
+the map was changed.
+
 ## Picking a layer type
 
 - Individual locations → `point` (`cluster` for zoom-out density, `heatmap`
@@ -71,6 +89,29 @@ assistant the dispatcher is the `executeApi` tool with
   lat/lon columns or build an intermediate table. For geojson datasets use
   geometryColumn `"_geojson"`.
 - Time-animated movement → `trip`.
+
+### Recent features through UI/config
+
+Some hosts return only this skill text. For those hosts, these are the UI
+entry points; the linked reference above supplies saved-config details when
+the skill files are accessible. None of these controls is an extra
+`map.add-layer` parameter.
+
+| Request | Workflow and key constraint |
+|---------|-----------------------------|
+| Bookmarks | **Interactions → Bookmarks → Add Bookmark** captures the camera; enable Bookmarks to navigate. Saves views, not layers/filters. Single Mercator map only. |
+| Fade on Zoom | **Interactions → Fade on zoom → Add controller**, select layers/annotations, set Appear / Full start / Full end / Disappear, then enable. Multiplies existing opacity; each target belongs to one controller. |
+| Location/camera animation | **Interactions → Camera animation → Add stop**, capture a view or copy a bookmark, set hold/travel times, then play or scrub. Single Mercator map only; does not animate data or require a time filter. |
+| Contour | Select **Contour**, choose coordinates/geometry and optional Weight. Weighted cells use means; unweighted cells use point counts. Adjust resolution, smoothing, and levels. Regional 2D only; not travel-time contours. |
+| Zarr | **Add Data → Tilesets → Zarr**, load store metadata, add tileset, select variable/pinned dimensions and timeline axis. Requires a reachable CORS-enabled store; exports retain the remote source, not the raster data. |
+| Voronoi Mosaic | Select **Voronoi Mosaic**, choose point columns/GeoJSON centroids, color by an attribute, and set bounds padding. Flat-map nearest-site cells, not road catchments. |
+| Point animation/glow | **Point → Visual** offers Glow and Pulse / Ripple. Continuous pulses need no time filter; **At event time** needs an enabled filter matching the dataset and event timestamp. |
+| 3D heatmap | Enable **Heatmap → 3D Surface** and tilt the map. Height is density, not terrain; surface contours are distinct from a Contour layer. |
+
+Check runtime support: `3.3.0-alpha.19` includes Bookmarks, tours, zoom fades,
+and initial Zarr support. Contour, Voronoi, point effects, and 3D heatmaps need
+a build containing later changes. Python exports currently pin an older
+`3.3.0-alpha.18` bundle; installing this skill alone does not update it.
 
 ## Color configuration
 
@@ -464,21 +505,34 @@ is the classic trap:
 | Heatmap | `heatmap` | `heatmap` |
 | Hexbin (binned from points) | `hexagon` | `hexagon` |
 | H3 hexagon (precomputed H3 ids) | `hexagonId` | `h3` |
-| Grid (binned from points) | — | `grid` |
+| Grid (binned from points) | `grid` | `grid` |
 | S2 | `s2` | `s2` |
 | Arc (great-circle origin→destination) | `arc` | `arc` |
-| Flow (weighted origin→destination) | — | `flow` |
-| Flow field (streamlines over a vector field) | — | `flowField` |
+| Flow (weighted origin→destination) | `flow` | `flow` |
+| Flow field (streamlines over a vector field) | `flowField` | `flowField` |
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
 | Icon | `icon` | — |
+| Contour (scalar levels or point counts) | `contour` | — |
+| Voronoi Mosaic (nearest-site cells) | `voronoi` | — |
+| Zarr (remote multidimensional raster) | `zarr` | — |
+| A5 / Geohash cells | `a5` / `geohash` | — |
+| Vector / raster tiles | `vectorTile` / `rasterTile` | — |
+| WMS | `wms` | — |
+| 3D tiles | `tile3d` | — |
+| 3D models | `3D` | — |
+| Image overlay | `bitmap` | — |
 
 - **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
   `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
   Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
-- `—` means the surface has no layer type for that concept; do not substitute
-  another one silently.
+- Config types describe the current JavaScript renderer. A Python export needs
+  a bundle that implements that type; these are not all available in the
+  minimum Python version's default bundle. Tilesets also require their source
+  descriptors, not just a layer `type` and a DataFrame.
+- `—` means the current MCP command does not expose that concept, even if the
+  app's UI/config supports it. Do not substitute another layer silently.
 - MCP layer types are validated against an enum, so an unknown string is
   rejected rather than silently guessed.
 - **`flow` is not `flowField`.** `flow` joins an origin point pair to a

@@ -30,6 +30,13 @@ pip install keplergl
 
 Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
+That Python version requirement does not guarantee support for every feature
+in the current JavaScript app. Before using Bookmarks, Fade on Zoom, camera
+tours, Contour, Zarr, Voronoi Mosaic, point effects, or 3D heatmaps, read
+[Recent map features](references/recent-features.md) for runtime requirements,
+saved-config fields, and UI workflows. Check the export's JavaScript bundle;
+do not assume installing a skill upgrades the renderer.
+
 ## Instructions
 
 1. Import `KeplerGl` from `keplergl`
@@ -139,21 +146,34 @@ is the classic trap:
 | Heatmap | `heatmap` | `heatmap` |
 | Hexbin (binned from points) | `hexagon` | `hexagon` |
 | H3 hexagon (precomputed H3 ids) | `hexagonId` | `h3` |
-| Grid (binned from points) | — | `grid` |
+| Grid (binned from points) | `grid` | `grid` |
 | S2 | `s2` | `s2` |
 | Arc (great-circle origin→destination) | `arc` | `arc` |
-| Flow (weighted origin→destination) | — | `flow` |
-| Flow field (streamlines over a vector field) | — | `flowField` |
+| Flow (weighted origin→destination) | `flow` | `flow` |
+| Flow field (streamlines over a vector field) | `flowField` | `flowField` |
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
 | Icon | `icon` | — |
+| Contour (scalar levels or point counts) | `contour` | — |
+| Voronoi Mosaic (nearest-site cells) | `voronoi` | — |
+| Zarr (remote multidimensional raster) | `zarr` | — |
+| A5 / Geohash cells | `a5` / `geohash` | — |
+| Vector / raster tiles | `vectorTile` / `rasterTile` | — |
+| WMS | `wms` | — |
+| 3D tiles | `tile3d` | — |
+| 3D models | `3D` | — |
+| Image overlay | `bitmap` | — |
 
 - **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
   `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
   Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
-- `—` means the surface has no layer type for that concept; do not substitute
-  another one silently.
+- Config types describe the current JavaScript renderer. A Python export needs
+  a bundle that implements that type; these are not all available in the
+  minimum Python version's default bundle. Tilesets also require their source
+  descriptors, not just a layer `type` and a DataFrame.
+- `—` means the current MCP command does not expose that concept, even if the
+  app's UI/config supports it. Do not substitute another layer silently.
 - MCP layer types are validated against an enum, so an unknown string is
   rejected rather than silently guessed.
 - **`flow` is not `flowField`.** `flow` joins an origin point pair to a
@@ -259,6 +279,7 @@ For detailed per-layer-type examples with full config, see supporting files:
 - [Hexbin Aggregation Map](references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](references/trip-animation-map.md) — Animated trips along paths
 - [Summary Panel Overlay](references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
+- [Recent Map Features](references/recent-features.md) — Bookmarks, Fade on Zoom, camera tours, Contour, Zarr, Voronoi Mosaic, point effects, and 3D heatmaps; check renderer support before exporting
 
 ## Examples
 

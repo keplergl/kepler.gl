@@ -6,6 +6,12 @@ load data from a URL, add columns to existing datasets, and read the current
 map boundary. These are direct map-mutation operations on the kepler.gl map
 surface.
 
+For Bookmarks, Fade on Zoom, camera/location animation, Contour, Zarr,
+Voronoi Mosaic, point effects, or 3D heatmaps, read
+[Recent map features](references/recent-features.md). It covers UI workflows,
+saved-config fields, runtime requirements, and which operations the current
+MCP commands cannot perform.
+
 ## When to use
 
 Use this skill when the user wants to create or reconfigure map layers, change
@@ -22,6 +28,9 @@ compare layers side by side. Examples:
 - "Change a column's type (e.g. make NOSOUTH a string)"
 - "Rename a column on the existing dataset"
 - "What's the current map boundary/extent?"
+- "Save this view as a bookmark and animate a tour between locations"
+- "Fade these layers or annotations as I zoom"
+- "Show contours, a Zarr forecast, or a Voronoi mosaic"
 
 Do NOT use this skill for analysis beyond map mutation — spatial statistics,
 spatial filtering, colocation, boundary fetching, or charts. Those belong to
@@ -52,6 +61,15 @@ envelope is described in your host's tool listing. In the kepler.gl demo
 assistant the dispatcher is the `executeApi` tool with
 `apiName: "executeCommand"` and `args: { commandId, input }`.
 
+Use the connected host's tool listing and input schemas as the authority.
+The stdio bridge exposes names such as `map_add-layer`, while dispatchers use
+`map.add-layer`. A feature in the layer picker is not necessarily supported by
+`map.add-layer`. In particular, it does not accept `contour`, `zarr`, or
+`voronoi`, and there are no built-in bookmark, camera-tour, or zoom-fade
+commands. Use a host's supported UI/config workflow for those features; if
+none is available, explain the steps and the limitation instead of claiming
+the map was changed.
+
 ## Picking a layer type
 
 - Individual locations → `point` (`cluster` for zoom-out density, `heatmap`
@@ -66,6 +84,29 @@ assistant the dispatcher is the `executeApi` tool with
   lat/lon columns or build an intermediate table. For geojson datasets use
   geometryColumn `"_geojson"`.
 - Time-animated movement → `trip`.
+
+### Recent features through UI/config
+
+Some hosts return only this skill text. For those hosts, these are the UI
+entry points; the linked reference above supplies saved-config details when
+the skill files are accessible. None of these controls is an extra
+`map.add-layer` parameter.
+
+| Request | Workflow and key constraint |
+|---------|-----------------------------|
+| Bookmarks | **Interactions → Bookmarks → Add Bookmark** captures the camera; enable Bookmarks to navigate. Saves views, not layers/filters. Single Mercator map only. |
+| Fade on Zoom | **Interactions → Fade on zoom → Add controller**, select layers/annotations, set Appear / Full start / Full end / Disappear, then enable. Multiplies existing opacity; each target belongs to one controller. |
+| Location/camera animation | **Interactions → Camera animation → Add stop**, capture a view or copy a bookmark, set hold/travel times, then play or scrub. Single Mercator map only; does not animate data or require a time filter. |
+| Contour | Select **Contour**, choose coordinates/geometry and optional Weight. Weighted cells use means; unweighted cells use point counts. Adjust resolution, smoothing, and levels. Regional 2D only; not travel-time contours. |
+| Zarr | **Add Data → Tilesets → Zarr**, load store metadata, add tileset, select variable/pinned dimensions and timeline axis. Requires a reachable CORS-enabled store; exports retain the remote source, not the raster data. |
+| Voronoi Mosaic | Select **Voronoi Mosaic**, choose point columns/GeoJSON centroids, color by an attribute, and set bounds padding. Flat-map nearest-site cells, not road catchments. |
+| Point animation/glow | **Point → Visual** offers Glow and Pulse / Ripple. Continuous pulses need no time filter; **At event time** needs an enabled filter matching the dataset and event timestamp. |
+| 3D heatmap | Enable **Heatmap → 3D Surface** and tilt the map. Height is density, not terrain; surface contours are distinct from a Contour layer. |
+
+Check runtime support: `3.3.0-alpha.19` includes Bookmarks, tours, zoom fades,
+and initial Zarr support. Contour, Voronoi, point effects, and 3D heatmaps need
+a build containing later changes. Python exports currently pin an older
+`3.3.0-alpha.18` bundle; installing this skill alone does not update it.
 
 ## Color configuration
 
