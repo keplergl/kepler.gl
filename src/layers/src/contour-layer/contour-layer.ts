@@ -28,6 +28,7 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
+import ContourSurfaceLayer from './deck-contour-surface-layer';
 
 type ContourLayerData = {data: ContourFeature[]; grid?: ScalarGrid | null};
 
@@ -421,7 +422,12 @@ export default class ContourLayer extends Layer {
               ...shared,
               id: `${this.id}-fill`,
               data: surface ? surface.fills : data.data,
-              ...(surface ? {getPolygonOffset: () => [0, 0]} : {}),
+              ...(surface
+                ? {
+                    getPolygonOffset: () => [0, 0],
+                    _subLayerProps: {'polygons-fill': {type: ContourSurfaceLayer}}
+                  }
+                : {}),
               filled: true,
               stroked: false,
               getFillColor: visConfig.colorByLevel

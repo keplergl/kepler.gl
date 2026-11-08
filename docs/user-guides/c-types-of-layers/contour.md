@@ -91,6 +91,8 @@ no longer affect the surface; maps without Grid resolution use the default of 64
 - **3D surface**: drape the existing fills and outlines over that same smoothed grid.
   Contour boundaries, levels, colors, legends, and tooltip values are shared with 2D.
   Tilt the map to see the relief. Fill and Outline remain independently configurable.
+  Surface fills use slope normals and the scene's lighting; palette colors remain
+  the base colors, while outlines and the legend retain their original colors.
   This is off by default, including when opening maps saved without this setting.
 - **Elevation multiplier**: scales only the surface height. At 1×, the smoothed
   minimum-to-maximum range spans 10% of the grid's longest geographic dimension,
