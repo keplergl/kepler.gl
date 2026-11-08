@@ -357,6 +357,11 @@ function openURL(url) {
 }
 
 (async () => {
+  // Keep the HTML entry point in source control outside the generated output.
+  // Both builds and dev sessions must work after dist has been removed.
+  fs.mkdirSync('dist', {recursive: true});
+  fs.copyFileSync(join(__dirname, 'index.html'), 'dist/index.html');
+
   // local dev
 
   const modules = ['@deck.gl', '@loaders.gl', '@luma.gl', '@probe.gl'];

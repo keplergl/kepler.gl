@@ -16,31 +16,35 @@ The spatial data analysis tools are powered by [Geoda](https://geodacenter.githu
 
 #### [Rate Mapping](./rate-mapping.md)
 
-#### [Exploratory Data Analysis](./exploratory-data-analysis.md)
+## Tutorial Roadmap
 
-- [Univariate and Bivariate Analysis](./univariate-and-bivariate-analysis.md)
-- [Multivariate Analysis](./multivariate-analysis.md)
+The following topics are part of the tutorial outline. Chapters for these topics are not yet available in this repository.
 
-#### [Contiguity-Based Spatial Weights](./contiguity-based-spatial-weights.md)
+#### Exploratory Data Analysis
 
-#### [Distance-Based Spatial Weights](./distance-based-spatial-weights.md)
+- Univariate and Bivariate Analysis
+- Multivariate Analysis
 
-#### [Global Spatial Autocorrelation](./global-spatial-autocorrelation.md)
+#### Contiguity-Based Spatial Weights
 
-- [Moran Scatter Plot](./moran-scatter-plot.md)
+#### Distance-Based Spatial Weights
+
+#### Global Spatial Autocorrelation
+
+- Moran Scatter Plot
 - Correlogram
 - Bivariate, Differential and Empirical Bayes
 
-#### [Local Spatial Autocorrelation](./local-spatial-autocorrelation.md)
+#### Local Spatial Autocorrelation
 
-- [LISA and Local Moran](./local-moran-i.md)
+- LISA and Local Moran
 - Other Local Spatial Autocorrelation
 - Multivariate Local Spatial Autocorrelation
 - LISA for Discrete Variables
 
-#### [Spatial Regression](./spatial-regression.md)
+#### Spatial Regression
 
-- [Ordinary Least Squares Regression](./ordinary-least-squares-regression.md)
-- [Regression Diagnostics](./regression-diagnostics.md)
-- [Spatial Lag Model](./spatial-lag-model.md)
-- [Spatial Error Model](./spatial-error-model.md)
+- Ordinary Least Squares Regression
+- Regression Diagnostics
+- Spatial Lag Model
+- Spatial Error Model

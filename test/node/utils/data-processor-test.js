@@ -32,6 +32,7 @@ import {
   processCsvData,
   processGeojson,
   processKeplerglJSON,
+  processKeplerglDataset,
   processRowObject,
   detectDelimiter
 } from '@kepler.gl/processors';
@@ -1533,19 +1534,68 @@ test('Processor -> processKeplerglJSON replaces display info', t => {
   t.end();
 });
 
-
 test('Processor -> getFieldsFromData uses complete slash-date samples', t => {
   for (const [values, format] of [
     [['09/17/2016', '12/31/2016', '01/02/2017'], 'M/D/YYYY'],
     [['1/2/2017', ' 09/17/2016 ', null, undefined], 'M/D/YYYY'],
     [['01/02/2017', '02/03/2017'], 'M/D/YYYY'],
+    [['17/09/2016', '05/06/2016'], 'D/M/YYYY'],
+    [['5/6/2016', '17/9/2016'], 'D/M/YYYY'],
+    [['05/06/2016', ' 17/09/2016 ', null, undefined], 'D/M/YYYY'],
+    [['29/02/2016', '1/2/2016'], 'D/M/YYYY'],
+    [['17/09/2016', '09/17/2016'], 'M/D/YYYY'],
+    [['09/17/2016', '17/09/2016'], 'M/D/YYYY'],
+    [['31/02/2016', '05/06/2016'], 'M/D/YYYY'],
+    [['29/02/2017', '05/06/2017'], 'M/D/YYYY'],
+    [['17/00/2016', '05/06/2016'], 'M/D/YYYY'],
+    [['00/09/2016', '17/09/2016'], 'M/D/YYYY'],
     [['2016/9/17', '2017/1/2'], 'YYYY/M/D'],
     [['2016/9/17', '01/02/2017'], 'YYYY/M/D'],
     [['2016-9-17', '2017-1-2'], 'YYYY-M-D']
   ]) {
-    const [field] = getFieldsFromData(values.map(date => ({date})), ['date']);
+    const [field] = getFieldsFromData(
+      values.map(date => ({date})),
+      ['date']
+    );
     t.equal(field.format, format, `format for ${JSON.stringify(values)}`);
     t.equal(field.type, 'date', 'preserves date type');
+  }
+  t.end();
+});
+
+test('Processor -> slash-date inference retains the existing sample boundary', t => {
+  for (const [position, expected] of [
+    [49, 'D/M/YYYY'],
+    [50, 'M/D/YYYY']
+  ]) {
+    const values = Array(51).fill('05/06/2016');
+    values[position] = '17/09/2016';
+    const {fields, rows} = processRowObject(values.map(date => ({date})));
+    t.equal(fields[0].format, expected, `day-first evidence at sample position ${position}`);
+    t.deepEqual(
+      rows,
+      values.map(value => [value]),
+      'does not rewrite source values'
+    );
+  }
+  t.end();
+});
+
+test('Processor -> saved slash-date formats are not reinterpreted', t => {
+  for (const format of ['M/D/YYYY', 'D/M/YYYY']) {
+    const saved = {
+      version: 'v1',
+      data: {
+        id: 'dates',
+        label: 'Dates',
+        color: [0, 0, 0],
+        fields: [{name: 'date', type: 'date', analyzerType: 'DATE', format}],
+        allData: [['17/09/2016'], ['05/06/2016']]
+      }
+    };
+    const loaded = processKeplerglDataset(saved);
+    t.deepEqual(loaded.data.fields, saved.data.fields, `preserves saved ${format}`);
+    t.deepEqual(loaded.data.rows, saved.data.allData, 'preserves saved values');
   }
   t.end();
 });
