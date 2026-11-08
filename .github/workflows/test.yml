@@ -89,7 +89,10 @@ jobs:
         run: xvfb-run --auto-servernum yarn cover
 
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Preserve the legacy action's single merged-report input.
+          file: coverage/lcov.info
+          coverage-reporter-version: v0.6.22
