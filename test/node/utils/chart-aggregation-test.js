@@ -3,6 +3,8 @@
 
 import test from 'tape-catch';
 import {timeToUnixMilli} from '@kepler.gl/utils';
+import {processCsvData} from '@kepler.gl/processors';
+import {KeplerTable} from '@kepler.gl/table';
 
 import {
   ChartType,
@@ -687,5 +689,79 @@ test('charts -> stale line-chart field does not emit bins', t => {
   const view = computeDatasetChart(chart, dataset);
   t.equal(view.kind, 'line');
   t.deepEqual(view.bins, []);
+  t.end();
+});
+
+test('charts -> imported day-first dates retain rows and calendar-day filters', t => {
+  const data = processCsvData('date,value\n17/09/2016,1\n05/06/2016,2\n18/09/2016,3');
+  const table = new KeplerTable({info: {id: 'day-first'}, color: [0, 0, 0]});
+  table.updateSchema(data);
+  const dataset = toChartableDataset(table);
+  const options = {
+    dataset,
+    indexes: dataset.allIndexes,
+    xAxis: {field: {name: 'date', type: 'date'}, aggregation: BinType.timeBin},
+    yAxis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum'},
+    interval: 'day'
+  };
+  t.equal(dataset.fields[0].format, 'D/M/YYYY');
+  const bins = buildTimeSeries(options);
+  t.deepEqual(
+    bins.map(bin => [bin.key, bin.value, bin.count]),
+    [
+      ['2016-06-05', 2, 1],
+      ['2016-09-17', 1, 1],
+      ['2016-09-18', 3, 1]
+    ]
+  );
+  t.deepEqual(bins[0].filterValue, [Date.UTC(2016, 5, 5), Date.UTC(2016, 5, 6)]);
+  const grouped = buildGroupedBins({
+    dataset,
+    applyFilters: true,
+    numGroups: 2,
+    binAxis: options.xAxis,
+    valueAxis: options.yAxis
+  });
+  t.equal(
+    grouped.reduce((count, bin) => count + bin.count, 0),
+    3,
+    'all rows reach time bins'
+  );
+  t.equal(
+    grouped.reduce((sum, bin) => sum + bin.value, 0),
+    6
+  );
+  t.end();
+});
+
+test('charts -> slash dates follow declared format and preserve the month-first default', t => {
+  for (const format of ['D/M/YYYY', 'DD/MM/YYYY', 'M/D/YYYY', undefined]) {
+    const dataset = mockDataset([
+      {time: '05/06/2016'},
+      {time: '17/09/2016'},
+      {time: '31/02/2016'},
+      {time: null},
+      {time: ''}
+    ]);
+    dataset.fields.find(field => field.name === 'time').format = format;
+    const bins = buildTimeSeries({
+      dataset,
+      indexes: dataset.allIndexes,
+      xAxis: {field: {name: 'time', type: 'date'}, aggregation: BinType.timeBin},
+      yAxis: {aggregation: 'count'},
+      interval: 'day'
+    });
+    const dayFirst = format?.startsWith('D');
+    t.deepEqual(
+      bins.map(bin => [bin.key, bin.count]),
+      dayFirst
+        ? [
+            ['2016-06-05', 1],
+            ['2016-09-17', 1]
+          ]
+        : [['2016-05-06', 1]],
+      `respects ${format || 'missing format'}, skipping invalid values`
+    );
+  }
   t.end();
 });

@@ -486,7 +486,7 @@ function equalWidthTimeBins(
 // Date-only strings describe calendar days, not local-midnight instants.
 // Parse numeric dates and zone-less year-first timestamps in UTC, like time filters.
 // Explicit offsets, Date objects and epoch numbers retain their instant.
-function chartTimeValue(raw: unknown): number {
+function chartTimeValue(raw: unknown, format?: string): number {
   if (raw === null || raw === undefined || raw === '') {
     return NaN;
   }
@@ -523,12 +523,13 @@ function chartTimeValue(raw: unknown): number {
       return date.getTime();
     }
     const yearFirst = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/.exec(value);
-    const monthFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
-    const parts = yearFirst || monthFirst;
+    const slashDate = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+    const parts = yearFirst || slashDate;
     if (parts) {
       const year = Number(parts[yearFirst ? 1 : 3]);
-      const month = Number(parts[yearFirst ? 2 : 1]) - 1;
-      const day = Number(parts[yearFirst ? 3 : 2]);
+      const dayFirst = format === 'D/M/YYYY' || format === 'DD/MM/YYYY';
+      const month = Number(parts[yearFirst || dayFirst ? 2 : 1]) - 1;
+      const day = Number(parts[yearFirst ? 3 : dayFirst ? 1 : 2]);
       const date = new Date(0);
       date.setUTCFullYear(year, month, day);
       return date.getUTCFullYear() === year &&
@@ -548,10 +549,11 @@ function timeGroupMap(
   interval?: string,
   numBins = 0
 ): {groups: Map<string, number[]>; filterValues: Map<string, Array<string | number | boolean>>} {
+  const format = dataset.fields.find(field => field.name === fieldName)?.format;
   const points = indexes
     .map(idx => {
       const raw = dataset.getValue(fieldName, idx);
-      const t = chartTimeValue(raw);
+      const t = chartTimeValue(raw, format);
       return Number.isNaN(t) ? null : {idx, t};
     })
     .filter((d): d is {idx: number; t: number} => d !== null);

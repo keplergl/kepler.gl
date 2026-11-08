@@ -22,7 +22,13 @@ export type ChartableDataset = {
   color?: [number, number, number];
   allIndexes: number[];
   filteredIndex: number[];
-  fields: Array<{name: string; displayName?: string; type: string; fieldIdx?: number}>;
+  fields: Array<{
+    name: string;
+    displayName?: string;
+    type: string;
+    fieldIdx?: number;
+    format?: string;
+  }>;
   getValue: (fieldName: string, rowIdx: number) => any;
 };
 
