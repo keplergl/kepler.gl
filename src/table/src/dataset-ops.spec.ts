@@ -131,33 +131,46 @@ describe('dataset-ops engine', () => {
     }
   );
 
-  test('Group By extrema use inferred US dates and preserve them on reload', () => {
-    const values = ['09/17/2016', '12/31/2016', '01/02/2017'];
-    const fields = getFieldsFromData(values.map(value => ({group: 'west', value})), [
-      'group',
-      'value'
-    ]);
-    const dataset = new KeplerTable({info: {id: 'us-dates'}, color: [0, 0, 0]});
-    dataset.updateSchema({fields, rows: values.map(value => ['west', value])});
-    expect(dataset.fields[1].format).toBe('M/D/YYYY');
-    // Time filters and extrema share this UTC conversion, regardless of host timezone.
-    expect(values.map(value => timeToUnixMilli(value, fields[1].format))).toEqual([
-      Date.UTC(2016, 8, 17),
-      Date.UTC(2016, 11, 31),
-      Date.UTC(2017, 0, 2)
-    ]);
-    for (const [technique, expected] of [
-      ['minimum', '09/17/2016'],
-      ['maximum', '01/02/2017']
-    ] as const) {
-      const result = groupByDataset(dataset, {
-        fieldName: 'group',
-        aggregations: {value: technique}
-      });
-      expect(result.data.rows).toEqual([['west', expected]]);
-      expect(importDerived(result).fields[1].format).toBe('M/D/YYYY');
+  test.each([
+    {
+      values: ['09/17/2016', '12/31/2016', '01/02/2017'],
+      format: 'M/D/YYYY',
+      times: [Date.UTC(2016, 8, 17), Date.UTC(2016, 11, 31), Date.UTC(2017, 0, 2)],
+      minimum: '09/17/2016',
+      maximum: '01/02/2017'
+    },
+    {
+      values: ['17/09/2016', '05/06/2016', '02/01/2016'],
+      format: 'D/M/YYYY',
+      times: [Date.UTC(2016, 8, 17), Date.UTC(2016, 5, 5), Date.UTC(2016, 0, 2)],
+      minimum: '02/01/2016',
+      maximum: '17/09/2016'
     }
-  });
+  ])(
+    'Group By extrema use inferred $format dates and preserve them on reload',
+    ({values, format, times, minimum, maximum}) => {
+      const fields = getFieldsFromData(
+        values.map(value => ({group: 'west', value})),
+        ['group', 'value']
+      );
+      const dataset = new KeplerTable({info: {id: 'dates'}, color: [0, 0, 0]});
+      dataset.updateSchema({fields, rows: values.map(value => ['west', value])});
+      expect(dataset.fields[1].format).toBe(format);
+      // Time filters and extrema share this UTC conversion, regardless of host timezone.
+      expect(values.map(value => timeToUnixMilli(value, fields[1].format))).toEqual(times);
+      for (const [technique, expected] of [
+        ['minimum', minimum],
+        ['maximum', maximum]
+      ] as const) {
+        const result = groupByDataset(dataset, {
+          fieldName: 'group',
+          aggregations: {value: technique}
+        });
+        expect(result.data.rows).toEqual([['west', expected]]);
+        expect(importDerived(result).fields[1].format).toBe(format);
+      }
+    }
+  );
 
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({
