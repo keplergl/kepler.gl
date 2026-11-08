@@ -66,3 +66,27 @@ test.each(packages)('%s excludes tests from declaration inputs', workspace => {
     fs.rmSync(directory, {recursive: true, force: true});
   }
 });
+
+// Published packages must keep original-source debugging without embedding the
+// base64 map in every JavaScript file. Babel CLI writes the returned map beside
+// the output, and the existing dist allowlists include both files.
+test.each(packages.filter(workspace => workspace !== '.'))(
+  '%s preserves original sources in separate CJS/ESM maps',
+  workspace => {
+    const {build} = require(path.join(root, workspace, 'package.json')).scripts;
+    const commands = build.split(' && ').filter(command => /\bbabel src/.test(command));
+    const source = 'export const value: number = 1;';
+    for (const command of commands) {
+      const sourceMaps = command.match(/--source-maps (\w+)/)?.[1];
+      const result = transformSync(source, {
+        cwd: path.join(root, workspace),
+        filename: path.join(root, workspace, 'src', 'example.ts'),
+        envName: command.includes('BABEL_ENV=esm') ? 'esm' : 'production',
+        sourceMaps: sourceMaps === 'true' ? true : sourceMaps
+      });
+      expect(result.code).not.toContain('sourceMappingURL=data:');
+      expect(result.map?.sourcesContent).toEqual([source]);
+      expect(result.map?.mappings.length).toBeGreaterThan(0);
+    }
+  }
+);
