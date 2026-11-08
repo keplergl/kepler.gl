@@ -87,6 +87,8 @@ export type PresetOption = {
     bandIndex?: number;
   };
   bandOverrides?: Record<string, string> | null;
+  /** Opt in to continuous single-band min/max stretching. */
+  useBandStatistics?: boolean;
 };
 
 export type DataSourceParams = AssetRequestInfo & {
@@ -164,6 +166,7 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     linearRescaling: boolean;
     linearRescalingFactor: [number, number];
     nonLinearRescaling: boolean;
+    useBandStatistics?: boolean;
     minPixelValue: number;
     maxPixelValue: number;
     bandCombination: BandCombination;

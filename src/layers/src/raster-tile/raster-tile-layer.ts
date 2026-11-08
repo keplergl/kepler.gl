@@ -162,6 +162,7 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   startDate: VisConfigInput;
   endDate: VisConfigInput;
   dynamicColor: VisConfigBoolean;
+  useBandStatistics: VisConfigBoolean;
   colormapId: VisConfigSelection;
   colorRange: VisConfigColorRange;
   linearRescalingFactor: VisConfigRange;
@@ -218,6 +219,8 @@ export default class RasterTileLayer extends KeplerLayer {
   constructor(props) {
     super(props);
     this.registerVisConfig(rasterVisConfigs);
+    // Generated defaults opt in, while old/programmatic configs omit this setting.
+    this.config.visConfig.useBandStatistics = props.visConfig?.useBandStatistics === true;
 
     // No two STAC ids may be the same within a single collection, though it's conceivably possible
     // across multiple STAC collections there could be an id collision. Note: STAC Collection
@@ -226,7 +229,9 @@ export default class RasterTileLayer extends KeplerLayer {
     const resolver = (stac: CompleteSTACObject, preset: string, presetOptions: PresetOption) =>
       `${stac.id}-${stac.collection}-${preset}-${presetOptions.singleBand?.assetId}-${
         presetOptions.singleBand?.bandIndex
-      }-${JSON.stringify(presetOptions.bandOverrides || null)}`;
+      }-${JSON.stringify(presetOptions.bandOverrides || null)}-${Boolean(
+        presetOptions.useBandStatistics
+      )}`;
     this.getDataSourceParams = memoize(
       (stac, preset, presetOptions) => getDataSourceParams(stac, preset, presetOptions),
       resolver
@@ -243,7 +248,9 @@ export default class RasterTileLayer extends KeplerLayer {
     const newLayerProp = {
       dataId: dataset.id,
       label: dataset.label,
-      isVisible: true
+      isVisible: true,
+      // Only newly generated layers opt in; restoring an old map keeps its stretch.
+      visConfig: {useBandStatistics: true}
     };
 
     return {props: [newLayerProp]};
@@ -797,6 +804,8 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const {bandCombination} = PRESET_OPTIONS[preset];
 
+    const useBandStatistics =
+      visConfig.useBandStatistics && bandCombination === 'single' && !categoricalColorMap;
     const singleBand = getSingleBandPresetOptions(stac, singleBandName);
     let parsedOverrides: Record<string, string> | null = null;
     if (bandOverrides && typeof bandOverrides === 'string') {
@@ -810,7 +819,8 @@ export default class RasterTileLayer extends KeplerLayer {
     }
     const dataSourceParams: DataSourceParams | null = this.getDataSourceParams(stac, preset, {
       singleBand,
-      bandOverrides: parsedOverrides
+      bandOverrides: parsedOverrides,
+      useBandStatistics
     });
 
     if (!dataSourceParams) {
@@ -921,6 +931,7 @@ export default class RasterTileLayer extends KeplerLayer {
       linearRescaling,
       linearRescalingFactor,
       nonLinearRescaling,
+      useBandStatistics,
       minPixelValue,
       maxPixelValue,
       gammaContrastFactor,

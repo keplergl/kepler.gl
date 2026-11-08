@@ -244,7 +244,9 @@ function isDataSourceColorRangeAvailable(
   let minPixelValue: number | null = null;
   let maxPixelValue: number | null = null;
   const dataSourceParams: DataSourceParams | null = layer.getDataSourceParams(stac, preset, {
-    singleBand: singleBandPresetOptions
+    singleBand: singleBandPresetOptions,
+    useBandStatistics:
+      layer.config.visConfig.useBandStatistics && !layer.config.visConfig.colorRange.colorMap
   });
   if (dataSourceParams) {
     minPixelValue = dataSourceParams.minPixelValue;
@@ -661,6 +663,12 @@ function RasterTileLayerConfiguratorFactory(
         {/* Rescaling */}
         {rescalingAllowed && (
           <LayerConfigGroup {...visConfiguratorProps} label="Rescaling">
+            {bandCombination === 'single' && (
+              <VisConfigSwitch
+                {...visConfiguratorProps}
+                {...layer.visConfigSettings.useBandStatistics}
+              />
+            )}
             <VisConfigSwitch
               {...visConfiguratorProps}
               {...layer.visConfigSettings.dynamicColor}

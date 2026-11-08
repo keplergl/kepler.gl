@@ -146,10 +146,26 @@ export function getDataType(
 function getPixelRange(
   stac: CompleteSTACObject,
   dtype: DataTypeOfTheBand | null,
-  [minRasterStatsValue, maxRasterStatsValue]: [number | undefined, number | undefined]
+  [minRasterStatsValue, maxRasterStatsValue]: [number | undefined, number | undefined],
+  useBandStatistics = false
 ): [number, number] | null {
   if (!dtype) {
     return null;
+  }
+
+  if (useBandStatistics) {
+    // Metadata is optional and may contain invalid or degenerate ranges. A constant
+    // range is valid; the continuous stretch maps it to the middle of the palette.
+    const min = minRasterStatsValue ?? NaN;
+    const max = maxRasterStatsValue ?? NaN;
+    if (Number.isFinite(min) && Number.isFinite(max) && min <= max) {
+      return [min, max];
+    }
+    const typeMax = dtypeMaxValue[dtype];
+    if (typeMax === null || !Number.isFinite(typeMax)) {
+      return null;
+    }
+    return [dtype.startsWith('int') ? -typeMax - 1 : 0, typeMax];
   }
 
   // TODO: might not always be desired to leave min pixel value at 0
@@ -472,7 +488,12 @@ export function getDataSourceParams(
     presetId,
     presetOptions?.singleBand
   );
-  const pixelRange = getPixelRange(stac, dtype, [minRasterStatsValue, maxRasterStatsValue]);
+  const pixelRange = getPixelRange(
+    stac,
+    dtype,
+    [minRasterStatsValue, maxRasterStatsValue],
+    bandCombination === BandCombination.Single && presetOptions?.useBandStatistics
+  );
 
   if (!pixelRange || !dtype) {
     return null;

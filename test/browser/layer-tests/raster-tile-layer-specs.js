@@ -27,6 +27,7 @@ import {
 } from '@kepler.gl/layers';
 import {RasterWebGL, RasterLayer} from '@kepler.gl/deckgl-layers';
 import {parseRasterMetadata} from '@kepler.gl/table';
+import {layerPropsV1} from '../../../src/schemas/src/vis-state-schema';
 import {testCreateCases} from 'test/helpers/layer-utils';
 import {getModules, loadNpyArray} from '../../../src/layers/src/raster-tile/gpu-utils';
 import {applyModuleUniforms} from '../../../src/deckgl-layers/src/raster/util';
@@ -1107,22 +1108,26 @@ test('#RasterTileLayer -> linear stretch preserves fallback and other rescaling 
   ]) {
     t.deepEqual(
       getRescale(overrides).uniforms,
-      {scaler: 1, offset: -0.25},
+      {scaler: 1, offset: -0.25, clampOutput: 0},
       'keeps the degenerate-range fallback'
     );
   }
   t.deepEqual(
     getRescale({minPixelValue: Infinity, maxPixelValue: -Infinity}).uniforms,
-    {scaler: -0, offset: -0.25},
+    {scaler: -0, offset: -0.25, clampOutput: 0},
     'keeps the empty viewport fallback'
   );
   const nonlinear = getRescale({nonLinearRescaling: true, gammaContrastFactor: 2});
-  t.deepEqual(nonlinear.uniforms, {scaler: 1 / 200, offset: 0}, 'keeps nonlinear normalization');
+  t.deepEqual(
+    nonlinear.uniforms,
+    {scaler: 1 / 200, offset: 0, clampOutput: 0},
+    'keeps nonlinear normalization'
+  );
   t.ok(nonlinear.modules.includes(RasterWebGL.gammaContrast), 'keeps gamma contrast');
   t.equal(nonlinear.moduleProps.gammaContrastValue, 2, 'keeps the gamma factor');
   t.deepEqual(
     getRescale({hasCategoricalColorMap: true}).uniforms,
-    {scaler: 1 / 200, offset: 0},
+    {scaler: 1 / 200, offset: 0, clampOutput: 0},
     'keeps categorical normalization'
   );
   t.notOk(
@@ -2735,5 +2740,227 @@ test('#RasterTileLayer -> categorical bitmap ignores invalid and out-of-range cl
       'invalid ranges stay unavailable'
     );
   }
+  t.end();
+});
+
+// A fresh layer per source avoids the source-ID keyed metadata cache crossing fixtures.
+function createContinuousRaster(dataType, statistics, coreBands = false) {
+  const band = {name: 'band', data_type: dataType, statistics};
+  const metadata = {
+    ...MOCK_STAC_FLOAT32_METADATA,
+    assets: {
+      data: {
+        href: 'https://example.com/band.tif',
+        type: 'image/tiff; application=geotiff',
+        ...(coreBands ? {bands: [band]} : {'eo:bands': [{name: 'band'}], 'raster:bands': [band]})
+      }
+    }
+  };
+  const dataset = {...MOCK_STAC_DATASET, id: 'continuous-data', metadata};
+  const layer = new RasterTileLayer(RasterTileLayer.findDefaultLayerProps(dataset).props[0]);
+  layer.updateLayerVisConfig({preset: 'singleBand', singleBandName: 'band'});
+  const render = () => layer.renderLayer(createRenderOpts(dataset))[0];
+  const pipeline = () => {
+    const rendered = render();
+    const images = {imageColormap: {}};
+    const {modules, moduleProps} = getModules({images, props: rendered.props});
+    return {
+      modules,
+      moduleProps,
+      props: rendered.props,
+      rescale: RasterWebGL.linearRescale.getUniforms(moduleProps),
+      colormap: RasterWebGL.colormap.getUniforms({...moduleProps, ...images})
+    };
+  };
+  return {layer, dataset, render, pipeline};
+}
+
+test('#RasterTileLayer -> new single-band layers normalize valid metadata statistics', t => {
+  for (const coreBands of [false, true]) {
+    for (const [dataType, minimum, maximum] of [
+      ['uint16', 0, 10000],
+      ['uint16', 5000, 10000],
+      ['int16', -100, 100],
+      ['float32', -0.2, 0.92],
+      ['uint16', 0, 0],
+      ['int16', -20, -20]
+    ]) {
+      const {layer, pipeline} = createContinuousRaster(dataType, {minimum, maximum}, coreBands);
+      for (const nonLinearRescaling of [false, true]) {
+        layer.updateLayerVisConfig({nonLinearRescaling});
+        const {props, rescale, colormap, modules, moduleProps} = pipeline();
+        t.deepEqual(
+          [props.minPixelValue, props.maxPixelValue],
+          [minimum, maximum],
+          'uses metadata range'
+        );
+        t.equal(colormap.hasCategoricalColors, 0, 'statistics do not imply categorical colors');
+        t.equal(colormap.inputScale, 1, 'continuous output uses the full palette');
+        t.equal(rescale.clampOutput, 1, 'clamps before any nonlinear contrast');
+        const normalize = value =>
+          Math.max(0, Math.min(1, value * rescale.scaler + rescale.offset));
+        const expected = minimum === maximum ? [0.5, 0.5, 0.5] : [0, 0.5, 1];
+        [minimum, (minimum + maximum) / 2, maximum].forEach((value, index) => {
+          t.ok(
+            Math.abs(normalize(value) - expected[index]) < 1e-6,
+            `${dataType}: normalizes endpoint/midpoint`
+          );
+        });
+        const shaderInputs = {moduleUniforms: {}, moduleBindings: {}};
+        applyModuleUniforms(shaderInputs, modules, {...moduleProps, imageColormap: {}});
+        t.equal(
+          shaderInputs.moduleUniforms.rasterProcessing.linear_rescale_clampOutput,
+          1,
+          'shared shader block receives clamp'
+        );
+      }
+    }
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> metadata stretch falls back safely and remains global', t => {
+  for (const statistics of [
+    undefined,
+    {},
+    {minimum: 1},
+    {minimum: 100, maximum: 0},
+    {minimum: NaN, maximum: 100},
+    {minimum: 0, maximum: Infinity}
+  ]) {
+    for (const [dataType, range] of [
+      ['uint16', [0, 65535]],
+      ['int16', [-32768, 32767]]
+    ]) {
+      const {props, colormap} = createContinuousRaster(dataType, statistics).pipeline();
+      t.deepEqual(
+        [props.minPixelValue, props.maxPixelValue],
+        range,
+        'invalid/missing statistics use the representable range'
+      );
+      t.equal(
+        colormap.hasCategoricalColors,
+        0,
+        'invalid statistics do not activate categorical rejection'
+      );
+    }
+  }
+  const {layer, pipeline} = createContinuousRaster('uint16', {minimum: 5000, maximum: 10000});
+  layer.updateLayerVisConfig({nonLinearRescaling: false, linearRescalingFactor: [0, 0.2]});
+  for (const tiles of [
+    [{data: {minPixelValue: 0, maxPixelValue: 65535}}],
+    [
+      {data: {minPixelValue: 5000, maxPixelValue: 6000}},
+      {data: {minPixelValue: 9000, maxPixelValue: 10000}}
+    ]
+  ]) {
+    layer.onViewportLoad(tiles);
+    const {props, rescale, colormap} = pipeline();
+    t.deepEqual(
+      [props.minPixelValue, props.maxPixelValue],
+      [5000, 10000],
+      'global statistics are independent of loaded tiles and nodata extrema'
+    );
+    t.equal(
+      colormap.hasCategoricalColors,
+      0,
+      'adjusting the stretch cannot discard valid pixels as missing categories'
+    );
+    t.equal(5000 * rescale.scaler + rescale.offset, 0, 'selected minimum maps to first color');
+    t.equal(6000 * rescale.scaler + rescale.offset, 1, 'selected maximum maps to last color');
+  }
+  layer.updateLayerVisConfig({dynamicColor: true});
+  layer.onViewportLoad([{data: {minPixelValue: 5500, maxPixelValue: 7000}}]);
+  const dynamic = pipeline();
+  t.deepEqual(
+    [dynamic.props.minPixelValue, dynamic.props.maxPixelValue],
+    [5500, 7000],
+    'explicit dynamic color still uses viewport range'
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> preserve saved stretches and isolate the opt-in mode', t => {
+  const {layer, dataset, pipeline} = createContinuousRaster('uint16', {
+    minimum: 5000,
+    maximum: 10000
+  });
+  layer.updateLayerVisConfig({nonLinearRescaling: false, linearRescalingFactor: [0.1, 0.2]});
+  const schema = layerPropsV1.config;
+  const saved = schema.save(layer.config).config;
+  const restored = new RasterTileLayer({dataId: dataset.id});
+  restored.updateLayerVisConfig(saved.visConfig);
+  t.equal(restored.config.visConfig.useBandStatistics, true, 'new maps persist their opt-in');
+  t.deepEqual(
+    restored.config.visConfig.linearRescalingFactor,
+    [0.1, 0.2],
+    'saved normalized controls round trip unchanged'
+  );
+  const oldVisConfig = {...saved.visConfig};
+  delete oldVisConfig.useBandStatistics;
+  const legacy = new RasterTileLayer({dataId: dataset.id});
+  legacy.updateLayerVisConfig(oldVisConfig);
+  const [legacyRender] = legacy.renderLayer(createRenderOpts(dataset));
+  t.equal(
+    legacy.config.visConfig.useBandStatistics,
+    false,
+    'old saved/programmatic configurations keep the legacy mode'
+  );
+  t.deepEqual(
+    [legacyRender.props.minPixelValue, legacyRender.props.maxPixelValue],
+    [0, 65535],
+    'old normalized controls retain their pixel domain'
+  );
+  for (const enabled of [false, true, false, true]) {
+    layer.updateLayerVisConfig({useBandStatistics: enabled});
+    const current = pipeline();
+    t.deepEqual(
+      [current.props.minPixelValue, current.props.maxPixelValue],
+      enabled ? [5000, 10000] : [0, 65535],
+      'repeated toggles invalidate the cached range'
+    );
+    t.equal(current.rescale.clampOutput, enabled ? 1 : 0, 'disabling resets the clamp uniform');
+  }
+  const images = {imageColormap: {}};
+  const baseProps = {...pipeline().props, useBandStatistics: false};
+  for (const overrides of [
+    {bandCombination: 'rgb'},
+    {bandCombination: 'normalizedDifference'},
+    {bandCombination: 'enhancedVegetationIndex'},
+    {bandCombination: 'soilAdjustedVegetationIndex'},
+    {bandCombination: 'modifiedSoilAdjustedVegetationIndex'},
+    {hasCategoricalColorMap: true}
+  ]) {
+    t.deepEqual(
+      getModules({images, props: {...baseProps, ...overrides, useBandStatistics: true}}),
+      getModules({images, props: {...baseProps, ...overrides}}),
+      'RGB, spectral-index and explicit categorical pipelines do not change'
+    );
+  }
+  layer.updateLayerVisConfig({
+    colorRange: {
+      ...layer.config.visConfig.colorRange,
+      colorMap: [
+        [5000, '#000000'],
+        [10000, '#ffffff']
+      ]
+    }
+  });
+  const categorical = pipeline();
+  t.equal(
+    categorical.props.useBandStatistics,
+    false,
+    'explicit categorical maps do not use the new data domain'
+  );
+  t.deepEqual(
+    [categorical.props.minPixelValue, categorical.props.maxPixelValue],
+    [0, 65535],
+    'categorical class recovery keeps its original domain'
+  );
+  t.equal(
+    categorical.colormap.hasCategoricalColors,
+    1,
+    'explicit categorical maps retain categorical lookup'
+  );
   t.end();
 });

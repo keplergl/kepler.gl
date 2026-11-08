@@ -452,7 +452,8 @@ export function getModules({
     dataType,
     minCategoricalBandValue,
     maxCategoricalBandValue,
-    hasCategoricalColorMap
+    hasCategoricalColorMap,
+    useBandStatistics
   } = props;
 
   if (Array.isArray(images.imageBands) && images.imageBands.length > 0) {
@@ -472,13 +473,26 @@ export function getModules({
   }
 
   const globalRange = maxPixelValue - minPixelValue;
+  const continuousStretch =
+    useBandStatistics && bandCombination === 'single' && !hasCategoricalColorMap;
   // Fix rescaling if we are sure that dataset is categorical
   if (hasCategoricalColorMap) {
     modules.push(linearRescale);
     moduleProps.linearRescaleScaler = 1 / maxPixelValue;
     moduleProps.linearRescaleOffset = 0;
   } else if (isRescalingAllowed(bandCombination)) {
-    if (!nonLinearRescaling) {
+    if (continuousStretch) {
+      const [min, max] = nonLinearRescaling ? [0, 1] : linearRescalingFactor;
+      const range = (max - min) * globalRange;
+      const scaler = Number.isFinite(range) && range > 0 ? 1 / range : 0;
+      const offset = -(minPixelValue + min * globalRange) * scaler;
+      modules.push(linearRescale);
+      moduleProps.linearRescaleScaler = Number.isFinite(scaler) ? scaler : 0;
+      moduleProps.linearRescaleOffset = scaler && Number.isFinite(offset) ? offset : 0.5;
+      // Clamp before gamma: pixels outside reported statistics must not feed
+      // negative values to pow(), or disappear through categorical rejection.
+      moduleProps.linearRescaleClamp = true;
+    } else if (!nonLinearRescaling) {
       const [min, max] = linearRescalingFactor;
       const localRange = max - min;
 
@@ -499,7 +513,9 @@ export function getModules({
       modules.push(linearRescale);
       moduleProps.linearRescaleScaler = 1 / maxPixelValue;
       moduleProps.linearRescaleOffset = 0;
+    }
 
+    if (nonLinearRescaling) {
       modules.push(gammaContrast);
       moduleProps.gammaContrastValue = gammaContrastFactor;
 
@@ -542,8 +558,9 @@ export function getModules({
     modules.push(colormapModule);
     // Linear and nonlinear single-band stretches already produce 0..1 values.
     moduleProps.colormapInputNormalized = bandCombination === 'single';
-    moduleProps.minCategoricalBandValue = minCategoricalBandValue;
-    moduleProps.maxCategoricalBandValue = maxCategoricalBandValue;
+    // Statistics describe a continuous domain, not an implicit categorical map.
+    moduleProps.minCategoricalBandValue = continuousStretch ? undefined : minCategoricalBandValue;
+    moduleProps.maxCategoricalBandValue = continuousStretch ? undefined : maxCategoricalBandValue;
     moduleProps.dataTypeMaxValue = dtypeMaxValue[dataType];
     moduleProps.maxPixelValue = maxPixelValue;
   }

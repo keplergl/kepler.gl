@@ -632,6 +632,14 @@ export const rasterVisConfigs = {
     label: 'End Date',
     property: 'endDate'
   } as VisConfigInput,
+  useBandStatistics: {
+    type: 'boolean',
+    // Missing settings in saved/programmatic maps retain the legacy stretch.
+    defaultValue: false,
+    label: 'Use Band Statistics',
+    property: 'useBandStatistics',
+    description: 'Normalize continuous single-band data using its reported minimum and maximum'
+  } as VisConfigBoolean,
   dynamicColor: {
     type: 'boolean',
     defaultValue: false,
