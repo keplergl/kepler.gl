@@ -475,7 +475,6 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
 
 test('3D contour fills derive slope normals and respond to scene lighting after height changes', async () => {
   const {layer, dataset, datasets} = await setup();
-  layer.updateLayerVisConfig({enable3d: true});
   const data = layer.formatLayerData(datasets);
   const viewport = new WebMercatorViewport({width: 800, height: 600, zoom: 10, pitch: 45});
   const onError = jest.fn();
@@ -485,6 +484,10 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
   const directionalLight = new SunLight({timestamp: Date.UTC(2026, 5, 1, 12), intensity: 1});
   const effect = new LightingEffect({ambientLight, directionalLight});
   try {
+    const initialFlat = renderContourPasses(layer, dataset, data);
+    manager.setLayers(initialFlat);
+    const flatModel = (initialFlat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel;
+    layer.updateLayerVisConfig({enable3d: true});
     const passes = renderContourPasses(layer, dataset, data);
     manager.setLayers(passes);
     const surface = passes[1].getSubLayers()[0] as ContourSurfaceLayer;
@@ -494,6 +497,7 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(passes[2].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
     const model = surface.state.topModel!;
     expect(model).toBeDefined();
+    expect(model).not.toBe(flatModel);
     // Check the assembled shaders, including the material module and picking hooks.
     expect(model.vs).toContain('vCommonPosition = geometry.position.xyz;');
     expect(model.vs).not.toContain('lighting_getLightColor(');
@@ -501,6 +505,7 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(model.fs).toContain('normalLength > 0.0');
     expect(model.fs).toContain('phongMaterialUniforms');
     expect(model.fs).not.toContain('gouraudMaterialUniforms');
+    expect(model.fs).toContain('fragColor.rgb = lighting_getLightColor(');
     expect(model.fs.indexOf('fragColor.rgb = lighting_getLightColor(')).toBeLessThan(
       model.fs.lastIndexOf('DECKGL_FILTER_COLOR(fragColor, geometry)')
     );
@@ -532,6 +537,16 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     const flat = renderContourPasses(layer, dataset, data);
     manager.setLayers(flat);
     expect(flat[0].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
+    const restoredFlatModel = (flat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel!;
+    expect(restoredFlatModel).not.toBe(model);
+    expect(restoredFlatModel.fs).not.toContain('dFdx(vCommonPosition)');
+    layer.updateLayerVisConfig({enable3d: true});
+    const restoredSurface = renderContourPasses(layer, dataset, data);
+    manager.setLayers(restoredSurface);
+    const restoredModel = (restoredSurface[1].getSubLayers()[0] as ContourSurfaceLayer).state
+      .topModel!;
+    expect(restoredModel).not.toBe(restoredFlatModel);
+    expect(restoredModel.fs).toContain('dFdx(vCommonPosition)');
     expect(onError).not.toHaveBeenCalled();
   } finally {
     manager.finalize();

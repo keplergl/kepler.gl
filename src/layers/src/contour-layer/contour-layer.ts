@@ -362,7 +362,10 @@ export default class ContourLayer extends Layer {
     const id = objectInfo?.layer?.props?.id;
     return Boolean(
       objectInfo?.picked &&
-        (id === this.id || id === `${this.id}-fill` || id === `${this.id}-outline`)
+        (id === this.id ||
+          id === `${this.id}-fill` ||
+          id === `${this.id}-surface-fill` ||
+          id === `${this.id}-outline`)
     );
   }
 
@@ -420,7 +423,8 @@ export default class ContourLayer extends Layer {
         ? [
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
-              id: `${this.id}-fill`,
+              // Separate IDs prevent deck.gl from reusing the unlit 2D GPU model in 3D.
+              id: surface ? `${this.id}-surface-fill` : `${this.id}-fill`,
               data: surface ? surface.fills : data.data,
               ...(surface
                 ? {
