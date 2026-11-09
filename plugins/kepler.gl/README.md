@@ -75,17 +75,9 @@ execute against the live map. That is how harnesses without WebMCP (Codex
 Desktop, the Codex CLI, Claude Code) reach the map. Agents with a built-in
 browser can instead use the page's WebMCP registration.
 
-`@kepler.gl/mcp` is published on npm (`3.3.0-alpha.19` as of 2026-11-08).
-The plugin does not yet include `.mcp.json` (Claude) or `mcp.json` (portable),
-so register the server manually, for example:
-
-```bash
-codex mcp add kepler -- npx -y @kepler.gl/mcp@3.3.0-alpha.19 --map-url http://localhost:8080
-```
-
-The map URL must serve a compatible app with the MCP bridge enabled; installing
-the server does not start the map app or upgrade its JavaScript bundle. For
-the latest commands and instructions from a checkout:
+The plugin still ships no `.mcp.json` (Claude) and no `mcp.json` (portable),
+because `@kepler.gl/mcp` is not published to npm yet — an `npx` entry would
+404. From a checkout the server runs today:
 
 ```bash
 yarn workspace @kepler.gl/mcp build
@@ -95,13 +87,13 @@ node src/mcp/dist/cjs/server/stdio.js --map-url http://localhost:8080
 Register that command as the `kepler` server in the client, e.g.
 `codex mcp add kepler -- node src/mcp/dist/cjs/server/stdio.js`.
 
-If adding automatic MCP registration in a future plugin release, add both
-files with the same published server version and bump the plugin version:
+Once the package is published, add both files with the same server, bump the
+plugin version, and update this section:
 
 ```json
 {
   "mcpServers": {
-    "kepler": {"command": "npx", "args": ["-y", "@kepler.gl/mcp@3.3.0-alpha.19"]}
+    "kepler": {"command": "npx", "args": ["-y", "@kepler.gl/mcp"]}
   }
 }
 ```
@@ -131,11 +123,6 @@ demo app, so it stays the source of truth. The plugin's
 and followed by a cross-surface appendix. Edit the source, then re-copy the body
 — the validator checks that the plugin copy still starts with it.
 
-Layer, camera, and interaction workflows live alongside the corresponding
-instructions in the app skill. Python layer details belong in their per-layer
-references. Keep the supported MCP command schema distinct from UI/config
-capabilities when updating either skill.
-
 Skill metadata lives in the `SKILL.md` frontmatter only. `skill.yaml` stays in
 `src/mcp/skill/kepler/` because the npm package exports it, but it is not copied
 here: no plugin client reads it, and a second metadata file in the same folder
@@ -162,20 +149,6 @@ Where the Claude CLI is available, `claude plugin validate plugins/kepler.gl
 are the authoritative checks for the Claude side.
 
 ## Release
-
-Instruction changes can be merged and installed from the repository without
-first publishing kepler.gl. Plugin packages have their own `plugin-v*` tags.
-An npm release is needed to deliver updated files bundled in `@kepler.gl/mcp`
-to registry users.
-
-Runtime availability is separate: `3.3.0-alpha.19` includes Bookmarks, camera
-tours, Fade on Zoom, and the initial Zarr layer. Contour, Voronoi Mosaic,
-Point Glow/Pulse/Ripple, and the heatmap 3D Surface were added afterward, so
-package consumers need a newer aligned kepler.gl release for those features.
-The Python HTML exporter currently pins `3.3.0-alpha.18`; it needs a compatible
-published UMD bundle and an updated exporter pin before its default exports
-can use the newer features. This documentation update does not change versions
-or publish packages.
 
 Versions are tracked in all three manifests and must match. To publish:
 

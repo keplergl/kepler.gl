@@ -1,4 +1,4 @@
 id: kepler
 version: 0.2.0
 name: Kepler map management
-description: Configure a live kepler.gl map through its available map commands, UI, or saved config. Use for layers, colors, time animation, basemaps, split views, Bookmarks, Fade on Zoom, camera tours, Contour, Zarr, and Voronoi Mosaic. Check the connected host's capabilities before using features outside the MCP command schema.
+description: Create and configure kepler.gl map layers (point, flow, flowField, arc, line, grid, hexagon, geojson, cluster, heatmap, h3, trip, s2) from datasets, animate them over time, compare them side by side, change the basemap, switch between the 2D, 3D and globe views, update layer colors, load data from a URL, add columns to existing datasets, and read the current map boundary.
