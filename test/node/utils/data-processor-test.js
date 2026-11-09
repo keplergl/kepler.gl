@@ -919,12 +919,67 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
       {...feature, crs},
       {...feature, geometry: {...geometry, crs}},
       {type: 'FeatureCollection', features: [{...feature, crs}]},
-      {type: 'GeometryCollection', geometries: [{...geometry, crs}]}
+      {type: 'GeometryCollection', geometries: [{...geometry, crs}]},
+      ...['EPSG:6668', 'EPSG:4612'].map(name => ({
+        type: 'FeatureCollection',
+        crs: {type: 'name', properties: {name}},
+        features: [{...feature, geometry: {...geometry, crs}}]
+      }))
     ]) {
       t.throws(
         () => processGeojson(input),
         /WGS84.*EPSG:4326/,
         'unsupported CRS should explain the required coordinate system'
+      );
+    }
+  }
+  t.end();
+});
+
+test('Processor => processGeojson: preserves JGD2011 and JGD2000 geographic coordinates', t => {
+  const coordinates = [141.35, 43.06, 100];
+  const geometry = {type: 'Point', coordinates};
+  const feature = {type: 'Feature', properties: {name: 'Sapporo'}, geometry};
+  for (const code of [6668, 4612]) {
+    const urls = [
+      `http://www.opengis.net/def/crs/EPSG/0/${code}`,
+      `https://www.opengis.net/def/crs/EPSG/0/${code}`,
+      `http://www.opengis.net/gml/srs/epsg.xml#${code}`
+    ];
+    const names = [
+      `EPSG:${code}`,
+      ` epsg:${code} `,
+      `urn:ogc:def:crs:EPSG::${code}`,
+      `urn:ogc:def:crs:EPSG:6.6:${code}`,
+      `urn:x-ogc:def:crs:EPSG:${code}`,
+      ...urls
+    ];
+    for (const crs of [
+      ...names.map(name => ({type: 'name', properties: {name}})),
+      ...urls.map(href => ({type: 'link', properties: {href}}))
+    ]) {
+      for (const input of [
+        {type: 'FeatureCollection', crs, features: [feature]},
+        {...feature, crs},
+        {...feature, geometry: {...geometry, crs}},
+        {type: 'FeatureCollection', features: [{...feature, crs}]},
+        {type: 'GeometryCollection', geometries: [{...geometry, crs}]}
+      ]) {
+        const data = processGeojson(cloneDeep(input));
+        t.equal(data.rows.length, 1, `EPSG:${code} should load its geometry`);
+        const loadedGeometry = data.rows[0][0].geometry;
+        t.deepEqual(
+          input.type === 'GeometryCollection'
+            ? loadedGeometry.geometries[0].coordinates
+            : loadedGeometry.coordinates,
+          coordinates,
+          `EPSG:${code} should preserve longitude, latitude, and altitude`
+        );
+      }
+      t.deepEqual(
+        processGeojson({type: 'FeatureCollection', crs, features: []}).rows,
+        [],
+        `EPSG:${code} should allow empty collections`
       );
     }
   }

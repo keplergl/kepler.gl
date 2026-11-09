@@ -310,11 +310,13 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
   return processCsvData(rows, keys);
 }
 
-const WGS84_CRS_NAMES = [
-  /^(?:EPSG:4326|OGC:CRS84h?|CRS84h?|WGS ?84)$/i,
-  /^urn:(?:x-)?ogc:def:crs:(?:EPSG:(?:[\d.]*:)?4326|OGC:(?:(?:[\d.]*:)?CRS84h?|2:84))$/i,
-  /^https?:\/\/www\.opengis\.net\/def\/crs\/(?:EPSG\/[\d.]+\/4326|OGC\/[\d.]+\/CRS84h?)$/i,
-  /^https?:\/\/www\.opengis\.net\/gml\/srs\/epsg\.xml#4326$/i
+// Accept JGD2011 (6668) and JGD2000 (4612) geographic coordinates unchanged
+// for visualization, alongside WGS84. Other CRS identifiers still require conversion.
+const SUPPORTED_GEOJSON_CRS_NAMES = [
+  /^(?:EPSG:(?:4326|6668|4612)|OGC:CRS84h?|CRS84h?|WGS ?84)$/i,
+  /^urn:(?:x-)?ogc:def:crs:(?:EPSG:(?:[\d.]*:)?(?:4326|6668|4612)|OGC:(?:(?:[\d.]*:)?CRS84h?|2:84))$/i,
+  /^https?:\/\/www\.opengis\.net\/def\/crs\/(?:EPSG\/[\d.]+\/(?:4326|6668|4612)|OGC\/[\d.]+\/CRS84h?)$/i,
+  /^https?:\/\/www\.opengis\.net\/gml\/srs\/epsg\.xml#(?:4326|6668|4612)$/i
 ];
 
 function validateGeojsonCrs(rawData: unknown): void {
@@ -336,7 +338,7 @@ function validateGeojsonCrs(rawData: unknown): void {
       if (
         typeof identifier === 'string' &&
         identifier.trim() &&
-        !WGS84_CRS_NAMES.some(pattern => pattern.test(identifier.trim()))
+        !SUPPORTED_GEOJSON_CRS_NAMES.some(pattern => pattern.test(identifier.trim()))
       ) {
         throw new Error(
           'Read File Failed: GeoJSON uses an unsupported coordinate reference system. ' +
