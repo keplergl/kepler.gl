@@ -56,12 +56,13 @@ out vec3 vSurfaceNormal;`
       'contour surface projected position',
       'DECKGL_FILTER_GL_POSITION(gl_Position, geometry);',
       `float elevationScale = abs(project.modelMatrix[2][2]);
-  // Offset normals use degrees for x/y and meters for z. This projection does
-  // not apply the model matrix, so apply its inverse vertical scale once.
+  // Apply the inverse vertical scale once before interpolating the normals.
   vec3 surfaceNormal = elevationScale > 0.0
     ? vec3(contourNormals.xy, contourNormals.z / elevationScale)
     : vec3(0.0, 0.0, 1.0);
-  vSurfaceNormal = normalize(project_offset_normal(surfaceNormal));
+  vSurfaceNormal = project.coordinateSystem == COORDINATE_SYSTEM_CARTESIAN
+    ? normalize(surfaceNormal)
+    : normalize(project_offset_normal(surfaceNormal));
   vCommonPosition = geometry.position.xyz;
   vCameraPosition = project.cameraPosition;
   `

@@ -6,6 +6,7 @@ import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, KEPLER_COLOR_PALETTES} from '@kep
 import {colorMaybeToRGB, generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
 import {
   PickingInfo,
+  COORDINATE_SYSTEM,
   AmbientLight,
   _SunLight as SunLight,
   LayerManager,
@@ -14,7 +15,7 @@ import {
 } from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {setGLParameters} from '@luma.gl/webgl';
-import {getDistanceScales} from '@math.gl/web-mercator';
+import {lngLatToWorld} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
 import booleanWithin from '@turf/boolean-within';
@@ -276,11 +277,12 @@ test.each([
   ['fill', '-polygons-fill'],
   ['outline', ''],
   ['outline', '-polygons-stroke'],
+  ['outline-surface', '-polygons-stroke'],
   ['surface-fill', ''],
   ['surface-fill', '-polygons-fill']
 ])('clears %s%s picks on removal or type changes', async (pass, sublayer) => {
   const {layer, dataset, datasets} = await setup();
-  layer.updateLayerVisConfig({enable3d: pass === 'surface-fill'});
+  layer.updateLayerVisConfig({enable3d: pass.includes('surface')});
   const data = layer.formatLayerData(datasets);
   const deckLayer = layer
     .renderLayer({data, visible: true, idx: 0, gpuFilter: dataset.gpuFilter, mapState: {zoom: 10}})
@@ -501,37 +503,30 @@ test.each([0, 60])('projects contour normals perpendicular to slopes at latitude
   };
   const surface = buildContourSurface(
     grid,
-    generateContours(grid, {smoothing: 0, levels: 2, below: true, domain: [0, 9]})
+    generateContours(grid, {smoothing: 0, levels: 2, below: true, domain: [0, 9]}),
+    true
   );
-  const position = [0.02, latitude];
+  const [west, south] = lngLatToWorld([0, latitude - 0.02]);
+  const [east, north] = lngLatToWorld([0.04, latitude + 0.02]);
+  const dx = (east - west) / 4;
+  const dy = (north - south) / 4;
+  const position = [west + 2 * dx, south + 2 * dy];
   const normal = surface.getNormal(position);
-  const {unitsPerDegree, unitsPerMeter} = getDistanceScales({longitude: position[0], latitude});
   const vertices = surface.fills[0].geometry.coordinates.flat(2);
   const height = (x: number, y: number) =>
     vertices.find(point => Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9)![2];
-  const dzdx = (height(0.03, latitude) - height(0.01, latitude)) / 0.02;
-  const dzdy = (height(0.02, latitude + 0.01) - height(0.02, latitude - 0.01)) / 0.02;
+  const [x, y] = position;
+  const dzdx = (height(x + dx, y) - height(x - dx, y)) / (2 * dx);
+  const dzdy = (height(x, y + dy) - height(x, y - dy)) / (2 * dy);
   const normalize = (vector: number[]) => vector.map(value => value / Math.hypot(...vector));
   for (const elevationScale of [1, 3, 0]) {
-    // Evaluate project_offset_normal's lng/lat branch with deck.gl's scales.
-    // The shader assembly test below also checks this helper and scale are used.
+    // Common-space normals only need inverse scaling, as in the vertex shader.
     const projected = normalize(
-      elevationScale
-        ? [
-            normal[0] * unitsPerDegree[0],
-            normal[1] * unitsPerDegree[1],
-            (normal[2] * unitsPerMeter[2]) / elevationScale
-          ]
-        : [0, 0, 1]
+      elevationScale ? [normal[0], normal[1], normal[2] / elevationScale] : [0, 0, 1]
     );
     // Independently derive the normal from the draped geometry's common-space tangents.
-    const expected = normalize([
-      (-dzdx * unitsPerMeter[2] * elevationScale) / unitsPerDegree[0],
-      (-dzdy * unitsPerMeter[2] * elevationScale) / unitsPerDegree[1],
-      1
-    ]);
-    // The surface uses 111320 m/degree, a close approximation to deck.gl's earth radius.
-    projected.forEach((value, i) => expect(value).toBeCloseTo(expected[i], 2));
+    const expected = normalize([-dzdx * elevationScale, -dzdy * elevationScale, 1]);
+    projected.forEach((value, i) => expect(value).toBeCloseTo(expected[i], 8));
   }
 });
 
@@ -566,7 +561,11 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(normals.length).toBeGreaterThan(0);
     expect(Array.from(normals.slice(0, 3))).not.toEqual(Array.from(normals.slice(3, 6)));
     expect(model.vs).toContain('in vec3 contourNormals;');
-    expect(model.vs).toContain('vSurfaceNormal = normalize(project_offset_normal(surfaceNormal));');
+    expect(model.vs).toContain(
+      'vSurfaceNormal = project.coordinateSystem == COORDINATE_SYSTEM_CARTESIAN'
+    );
+    expect(model.vs).toContain('? normalize(surfaceNormal)');
+    expect(model.vs).toContain(': normalize(project_offset_normal(surfaceNormal));');
     expect(model.vs).toContain('vec3(contourNormals.xy, contourNormals.z / elevationScale)');
     expect(model.vs).toContain('vCommonPosition = geometry.position.xyz;');
     expect(model.vs).not.toContain('lighting_getLightColor(');
@@ -616,6 +615,18 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
       .topModel!;
     expect(restoredModel).not.toBe(restoredFlatModel);
     expect(restoredModel.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
+    const globe = layer.renderLayer({
+      data,
+      visible: true,
+      idx: 0,
+      gpuFilter: dataset.gpuFilter,
+      mapState: {zoom: 10, globe: {enabled: true}}
+    });
+    manager.setLayers(globe);
+    expect(globe[1].props.coordinateSystem).toBe(COORDINATE_SYSTEM.LNGLAT);
+    expect(globe[1].id).not.toBe(restoredSurface[1].id);
+    expect(globe[2].id).not.toBe(restoredSurface[2].id);
+    manager.setLayers(renderContourPasses(layer, dataset, data));
     expect(onError).not.toHaveBeenCalled();
   } finally {
     manager.finalize();
@@ -633,6 +644,10 @@ test.each([false, true])(
     expect(layer.config.visConfig.enable3d).toBe(false);
     layer.updateLayerVisConfig({enable3d: true, elevationScale: 2});
     const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
+    for (const pass of [depth, fill, outline]) {
+      expect(pass.props.coordinateSystem).toBe(COORDINATE_SYSTEM.CARTESIAN);
+      expect(pass.props.wrapLongitude).toBe(false);
+    }
     expect(depth.props.pickable).toBe(false);
     const gl = {enable: jest.fn(), depthMask: jest.fn(), colorMask: jest.fn()};
     const applyDepthParameters = pass =>
@@ -675,7 +690,7 @@ test.each([false, true])(
     expect(flattened[1].props.modelMatrix?.[10]).toBe(0);
     layer.updateLayerVisConfig({filled: false});
     expect(renderContourPasses(layer, dataset, data).map(pass => pass.id)).toEqual([
-      `${layer.id}-outline`
+      `${layer.id}-outline-surface`
     ]);
     layer.updateLayerVisConfig({stroked: false});
     expect(renderContourPasses(layer, dataset, data)).toEqual([]);
