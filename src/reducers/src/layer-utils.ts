@@ -361,24 +361,32 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // in split mode a layer missing from mapLayers is hidden, so coerce to a boolean
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
-  // Layer is Layer class
-  const rendered = layer.renderLayer({
-    data,
-    gpuFilter,
-    idx: layerIndex,
-    interactionConfig,
-    layerCallbacks,
-    mapState,
-    mapIndex,
-    animationConfig,
-    filters,
-    objectHovered,
-    visible,
-    dataset,
-    experimentalContext
-  });
-  const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
-  return applyZoomOpacityToDeckLayer(rendered, factor);
+  try {
+    // Layer is Layer class
+    const rendered = layer.renderLayer({
+      data,
+      gpuFilter,
+      idx: layerIndex,
+      interactionConfig,
+      layerCallbacks,
+      mapState,
+      mapIndex,
+      animationConfig,
+      filters,
+      objectHovered,
+      visible,
+      dataset,
+      experimentalContext
+    });
+    const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
+    return applyZoomOpacityToDeckLayer(rendered, factor);
+  } catch (error) {
+    // A synchronous renderer failure must not escape into React and unmount
+    // the map. Keep the imported data and let the other layers render.
+    Console.error(error);
+    layerCallbacks.onLayerError?.(error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
 }
 
 export function isLayerRenderable(layer: Layer, layerData) {

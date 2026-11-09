@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import Console from 'global/console';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {
@@ -12,7 +14,12 @@ import {
   KeplerGlLayers
 } from '@kepler.gl/layers';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
-import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
+import {
+  findDefaultLayer,
+  getLayerHoverProp,
+  getLayerOrderFromLayers,
+  computeDeckLayers
+} from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -37,6 +44,78 @@ import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
+
+test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
+  const error = new Error('Cannot render geometry');
+  const log = sinon.stub(Console, 'error');
+  const onLayerError = sinon.spy();
+  const data = {data: [{position: [10, 20]}]};
+  const dataset = {label: 'Survey', rows: [[10, 20]]};
+  const healthy = {id: 'healthy-overlay'};
+  let fail = true;
+  const layers = [
+    {
+      id: 'broken',
+      config: {dataId: 'survey'},
+      renderLayer: () => {
+        if (fail) throw error;
+        return {id: 'recovered-overlay'};
+      }
+    },
+    {id: 'healthy', config: {dataId: 'survey'}, renderLayer: () => healthy}
+  ];
+  const visState = {
+    datasets: {survey: dataset},
+    layers,
+    layerData: [data, data],
+    effects: [],
+    splitMaps: [],
+    interactionConfig: {},
+    animationConfig: {}
+  };
+  const options = {primaryMap: false, layersForDeck: {broken: true, healthy: true}};
+  try {
+    for (const layerOrder of [
+      ['healthy', 'broken'],
+      [{id: 'group', isVisible: true, layerOrder: ['healthy', 'broken']}]
+    ]) {
+      let rendered;
+      t.doesNotThrow(() => {
+        rendered = computeDeckLayers(
+          {visState: {...visState, layerOrder}, mapState: {zoom: 1}},
+          options,
+          {onLayerError}
+        );
+      }, 'contains a render exception for flat and grouped layers');
+      t.deepEqual(rendered, [healthy], 'renders the healthy layer after the failing layer');
+    }
+    t.ok(log.calledWith(error), 'reports the rendering failure');
+    t.deepEqual(
+      onLayerError.args,
+      [
+        [0, error],
+        [0, error]
+      ],
+      'forwards each failure and its layer index for notification'
+    );
+    t.equal(visState.datasets.survey, dataset, 'keeps the dataset available for inspection');
+    t.equal(visState.layerData[0], data, 'does not discard imported layer data');
+    fail = false;
+    t.deepEqual(
+      computeDeckLayers(
+        {visState: {...visState, layerOrder: ['healthy', 'broken']}, mapState: {zoom: 1}},
+        options,
+        {onLayerError}
+      ),
+      [{id: 'recovered-overlay'}, healthy],
+      'renders the layer again when its renderer recovers'
+    );
+    t.equal(onLayerError.callCount, 2, 'recovery does not report another error');
+  } finally {
+    log.restore();
+  }
+  t.end();
+});
 
 async function createDefaultColorDataset(columns, rowCount = 3) {
   const dataset = new KeplerTable({info: {id: 'default-color'}});

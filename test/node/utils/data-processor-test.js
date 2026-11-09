@@ -904,12 +904,15 @@ test('Processor => processGeojson:invalid geojson', t => {
   t.end();
 });
 
-test('Processor => processGeojson: rejects explicit unsupported CRS declarations', t => {
+test('Processor => processGeojson: CRS declarations do not block or transform imports', t => {
   for (const crs of [
+    {type: 'name', properties: {name: 'EPSG:6668'}},
+    {type: 'name', properties: {name: 'EPSG:4612'}},
     {type: 'name', properties: {name: 'EPSG:3857'}},
     {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::2263'}},
     {type: 'name', properties: {name: 'urn:ogc:def:crs:OGC:2:27'}},
     {type: 'name', properties: {name: 'unknown-projection'}},
+    {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}},
     {type: 'link', properties: {href: 'https://example.com/projected-crs'}}
   ]) {
     const geometry = {type: 'Point', coordinates: [1000000, 1000000]};
@@ -921,10 +924,14 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
       {type: 'FeatureCollection', features: [{...feature, crs}]},
       {type: 'GeometryCollection', geometries: [{...geometry, crs}]}
     ]) {
-      t.throws(
-        () => processGeojson(input),
-        /WGS84.*EPSG:4326/,
-        'unsupported CRS should explain the required coordinate system'
+      const result = processGeojson(input);
+      t.equal(result.rows.length, 1, 'imports the feature regardless of its CRS label');
+      t.deepEqual(
+        result.rows[0][0].geometry,
+        input.type === 'GeometryCollection'
+          ? input
+          : input.features?.[0].geometry || input.geometry,
+        'retains original coordinates and nested CRS metadata'
       );
     }
   }
@@ -933,6 +940,9 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
 
 test('Processor => processGeojson: preserves supported and undeclared CRS data', t => {
   const aliases = [
+    'EPSG:6668',
+    'EPSG:4612',
+    'unknown-projection',
     'EPSG:4326',
     'epsg:4326',
     'WGS84',
@@ -963,6 +973,11 @@ test('Processor => processGeojson: preserves supported and undeclared CRS data',
     },
     {type: 'Feature', properties: {}, geometry: {type: 'Polygon', coordinates: []}}
   ];
+  features.push({
+    type: 'Feature',
+    properties: {},
+    geometry: {type: 'Point', coordinates: [null, 20]}
+  });
   const expected = processGeojson({type: 'FeatureCollection', features: cloneDeep(features)});
   for (const crs of [
     undefined,

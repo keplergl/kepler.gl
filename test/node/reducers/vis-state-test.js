@@ -8630,7 +8630,7 @@ test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS'
   t.end();
 });
 
-test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial data', async t => {
+test('#visStateReducer -> streamed GeoJSON with a CRS stages without blocking the next file', async t => {
   drainTasksForTesting();
   const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
   initApplicationConfig({useArrowProgressiveLoading: true});
@@ -8672,25 +8672,23 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
     }
     t.ok(streamedRows, 'exercise feature batches before the final CRS declaration');
     t.equal(task.type, 'PROCESS_FILE_CONTENT', 'process the completed GeoJSON file');
-    try {
-      await processFileData(task.payload);
-      t.fail('the completed file must reject its unsupported CRS');
-    } catch (error) {
-      t.match(error.message, /WGS84.*EPSG:4326/, 'surface an actionable import error');
-      const warn = sinon.stub(Console, 'warn');
-      try {
-        state = reducer(state, errorTaskInTest(task, error));
-      } finally {
-        warn.restore();
-      }
-      t.equal(state.fileLoadingProgress[file.name].error, error, 'record the file error');
-      t.equal(state.datasets, initialState.datasets, 'failed import preserves existing datasets');
-      t.deepEqual(state.fileLoading.fileCache, [], 'failed import does not leave a partial cache');
-      const [delay] = drainTasksForTesting();
-      state = reducer(state, succeedTaskInTest(delay));
-      const [nextLoad] = drainTasksForTesting();
-      t.equal(nextLoad.payload.file, nextFile, 'continue loading the next file after the error');
-    }
+    const cache = await processFileData(task.payload);
+    t.deepEqual(
+      cache[0].data.rows[0][0].geometry,
+      feature.geometry,
+      'retains original coordinates'
+    );
+    state = reducer(state, succeedTaskInTest(task, cache));
+    t.notOk(
+      state.fileLoadingProgress[file.name].error,
+      'CRS declaration does not cause an import error'
+    );
+    t.equal(state.datasets, initialState.datasets, 'staging preserves existing datasets');
+    t.equal(state.fileLoading.fileCache.length, 1, 'stages the complete dataset');
+    const [delay] = drainTasksForTesting();
+    state = reducer(state, succeedTaskInTest(delay));
+    const [nextLoad] = drainTasksForTesting();
+    t.equal(nextLoad.payload.file, nextFile, 'continues loading the next file');
   } finally {
     initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
     drainTasksForTesting();

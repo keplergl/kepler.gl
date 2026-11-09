@@ -47,7 +47,8 @@ function setup(strictMode = false) {
       splitMaps: [],
       interactionConfig: {tooltip: {enabled: true}, coordinate: {enabled: false}}
     },
-    visStateActions: {wmsFeatureInfo: jest.fn()},
+    visStateActions: {wmsFeatureInfo: jest.fn(), layerSetIsValid: jest.fn()},
+    uiStateActions: {addNotification: jest.fn()},
     index: 0
   };
   const ref = createRef<any>();
@@ -67,6 +68,64 @@ function setup(strictMode = false) {
   });
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
+
+describe('layer-render error notifications', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  test('defers a red notification, throttles duplicates, and disables the originating layer', () => {
+    const {props, layer, ref, rerender, getState} = setup();
+    const error = new Error('Cannot render geometry');
+    ref.current._onLayerError(0, error);
+    ref.current._onLayerError(0, error);
+    expect(props.uiStateActions.addNotification).not.toHaveBeenCalled();
+    expect(props.visStateActions.layerSetIsValid).not.toHaveBeenCalled();
+    // Moving the layer before reporting must not change the error's owner.
+    rerender({...getState(), layers: [{...layer, id: 'other'}, layer]});
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    expect(props.uiStateActions.addNotification).toHaveBeenCalledTimes(1);
+    const notification = props.uiStateActions.addNotification.mock.calls[0][0];
+    expect(notification.type).toBe('error');
+    expect(notification.message).toContain(error.message);
+    expect(notification.message).toContain(layer.id);
+    expect(props.visStateActions.layerSetIsValid).toHaveBeenCalledTimes(1);
+    expect(props.visStateActions.layerSetIsValid).toHaveBeenCalledWith(layer, false);
+  });
+
+  test.each(['removed', 'replaced', 'unmounted'])(
+    'ignores a deferred error after the layer is %s',
+    change => {
+      const {props, layer, ref, view, rerender, getState} = setup();
+      ref.current._onLayerError(0, new Error('Cannot render geometry'));
+      if (change === 'unmounted') {
+        view.unmount();
+      } else {
+        rerender({...getState(), layers: change === 'removed' ? [] : [{...layer}]});
+      }
+      act(() => {
+        jest.runOnlyPendingTimers();
+      });
+      expect(props.uiStateActions.addNotification).not.toHaveBeenCalled();
+      expect(props.visStateActions.layerSetIsValid).not.toHaveBeenCalled();
+    }
+  );
+
+  test('existing deck.gl errors still notify and disable the top-level layer', () => {
+    const {props, layer, ref} = setup();
+    const deckLayer = {id: layer.id, props: {id: layer.id}};
+    const error = new Error('GPU error');
+    ref.current._onDeckError(error, {id: 'sublayer', parent: deckLayer});
+    expect(props.visStateActions.layerSetIsValid).toHaveBeenCalledWith(deckLayer, false);
+    expect(props.uiStateActions.addNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        message: expect.stringContaining(error.message)
+      })
+    );
+  });
+});
 
 test('publishes a response only for the current selection and originating layer', () => {
   const {props, layer, ref, response} = setup();
