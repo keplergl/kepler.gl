@@ -363,9 +363,10 @@ export default class ContourLayer extends Layer {
     return Boolean(
       objectInfo?.picked &&
         (id === this.id ||
-          id === `${this.id}-fill` ||
-          id === `${this.id}-surface-fill` ||
-          id === `${this.id}-outline`)
+          ['fill', 'surface-fill', 'outline'].some(pass => {
+            const passId = `${this.id}-${pass}`;
+            return id === passId || id?.startsWith(`${passId}-`);
+          }))
     );
   }
 

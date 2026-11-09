@@ -117,6 +117,32 @@ describe('contour surface', () => {
     expect(physical[2]).toBeGreaterThan(0);
   });
 
+  test.each([
+    ['tiny', (value: number) => value * 1e-310],
+    ['subnormal', (value: number) => value * Number.MIN_VALUE],
+    ['overflowing signed range', (value: number) => (value - 1) * Number.MAX_VALUE]
+  ])('preserves finite relief with %s units beside missing data', (_label, convert) => {
+    const grid = testGrid(samples(3, (x, y) => (x === 1 && y === 1 ? null : x)));
+    const contours = generateContours(grid, {...options, domain: [0, 2]});
+    const reference = buildContourSurface(grid, contours);
+    const converted = buildContourSurface(
+      {...grid, values: Float64Array.from(grid.values, convert)},
+      contours
+    );
+    for (const pass of ['fills', 'outlines'] as const) {
+      const expected = reference[pass].flatMap(feature => feature.geometry.coordinates.flat(2));
+      const actual = converted[pass].flatMap(feature => feature.geometry.coordinates.flat(2));
+      expect(actual.length).toBeGreaterThan(0);
+      expect(actual).toHaveLength(expected.length);
+      expect(actual.flat().every(Number.isFinite)).toBe(true);
+      expect(Math.max(...actual.map(point => point[2]))).toBeGreaterThan(0);
+      actual.forEach((point, i) => {
+        point.forEach((value, channel) => expect(value).toBeCloseTo(expected[i][channel]));
+        expect(converted.getNormal(point).every(Number.isFinite)).toBe(true);
+      });
+    }
+  });
+
   test('handles empty, missing and constant surfaces', () => {
     expect(buildContourSurface(null, [])).toMatchObject({fills: [], outlines: []});
     const constant = testGrid(samples(3, () => -5));

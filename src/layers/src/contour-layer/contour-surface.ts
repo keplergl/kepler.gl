@@ -28,9 +28,18 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
       (grid.width - 1) * grid.stepLng * Math.cos((latitude * Math.PI) / 180),
       (grid.height - 1) * grid.stepLat
     ) * 111320;
-  const scale = maximum > minimum ? (span * 0.1) / (maximum - minimum) : 0;
+  const range = maximum - minimum;
+  const toHeight = (value: number) => {
+    if (range === 0) return 0;
+    // Normalize before applying relief so tiny units cannot overflow a scale.
+    // Halve opposite-sign extremes before subtracting if their range overflows.
+    const fraction = Number.isFinite(range)
+      ? (value - minimum) / range
+      : (value / 2 - minimum / 2) / (maximum / 2 - minimum / 2);
+    return fraction * (span * 0.1);
+  };
   const heights = Float64Array.from(grid.values, value =>
-    Number.isFinite(value) ? (value - minimum) * scale : NaN
+    Number.isFinite(value) ? toHeight(value) : NaN
   );
   // Only geometry already present in the 2D contours is draped. Supply finite
   // heights beside no-data boundaries without filling their holes.
@@ -44,7 +53,7 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
       for (let x = Math.max(0, col - 1); x <= Math.min(grid.width - 1, col + 1); x++) {
         const value = grid.values[y * grid.width + x];
         if (Number.isFinite(value)) {
-          sum += (value - minimum) * scale;
+          sum += toHeight(value);
           count++;
         }
       }

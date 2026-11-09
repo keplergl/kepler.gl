@@ -14,11 +14,13 @@ import {
 } from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {setGLParameters} from '@luma.gl/webgl';
+import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
 import booleanWithin from '@turf/boolean-within';
 import ContourLayer from './contour-layer';
 import ContourSurfaceLayer from './deck-contour-surface-layer';
+import {buildContourSurface} from './contour-surface';
 import Layer from '../base-layer';
 import {LayerClasses} from '../index';
 import {
@@ -269,15 +271,23 @@ test('registers the layer and renders both passes without recomputing on camera 
   expect(layer.getHoverData(null)).toBeNull();
 });
 
-test.each(['fill', 'outline'])('clears %s picks on removal or type changes', async pass => {
+test.each([
+  ['fill', ''],
+  ['fill', '-polygons-fill'],
+  ['outline', ''],
+  ['outline', '-polygons-stroke'],
+  ['surface-fill', ''],
+  ['surface-fill', '-polygons-fill']
+])('clears %s%s picks on removal or type changes', async (pass, sublayer) => {
   const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({enable3d: pass === 'surface-fill'});
   const data = layer.formatLayerData(datasets);
   const deckLayer = layer
     .renderLayer({data, visible: true, idx: 0, gpuFilter: dataset.gpuFilter, mapState: {zoom: 10}})
     .find(rendered => rendered.id === `${layer.id}-${pass}`)!;
   const pick: PickingInfo = {
     picked: true,
-    layer: deckLayer,
+    layer: deckLayer.clone({id: `${deckLayer.id}${sublayer}`}),
     object: data.data[0],
     color: null,
     index: 0,
@@ -314,7 +324,13 @@ test.each(['fill', 'outline'])('clears %s picks on removal or type changes', asy
     expect(result.clicked).toBe(unrelated);
     expect(result.hoverInfo).toBe(unrelated);
   }
-  for (const info of [null, undefined, {...pick, picked: false}, unrelated]) {
+  for (const info of [
+    null,
+    undefined,
+    {...pick, picked: false},
+    {...pick, layer: null},
+    unrelated
+  ]) {
     expect(layer.hasHoveredObject(info)).toBeNull();
   }
 });
@@ -473,6 +489,52 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
   });
 }
 
+test.each([0, 60])('projects contour normals perpendicular to slopes at latitude %s', latitude => {
+  const grid = {
+    width: 5,
+    height: 5,
+    longitude: 0,
+    latitude: latitude - 0.02,
+    stepLng: 0.01,
+    stepLat: 0.01,
+    values: Float64Array.from({length: 25}, (_, i) => (i % 5) + Math.floor(i / 5))
+  };
+  const surface = buildContourSurface(
+    grid,
+    generateContours(grid, {smoothing: 0, levels: 2, below: true, domain: [0, 9]})
+  );
+  const position = [0.02, latitude];
+  const normal = surface.getNormal(position);
+  const {unitsPerDegree, unitsPerMeter} = getDistanceScales({longitude: position[0], latitude});
+  const vertices = surface.fills[0].geometry.coordinates.flat(2);
+  const height = (x: number, y: number) =>
+    vertices.find(point => Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9)![2];
+  const dzdx = (height(0.03, latitude) - height(0.01, latitude)) / 0.02;
+  const dzdy = (height(0.02, latitude + 0.01) - height(0.02, latitude - 0.01)) / 0.02;
+  const normalize = (vector: number[]) => vector.map(value => value / Math.hypot(...vector));
+  for (const elevationScale of [1, 3, 0]) {
+    // Evaluate project_offset_normal's lng/lat branch with deck.gl's scales.
+    // The shader assembly test below also checks this helper and scale are used.
+    const projected = normalize(
+      elevationScale
+        ? [
+            normal[0] * unitsPerDegree[0],
+            normal[1] * unitsPerDegree[1],
+            (normal[2] * unitsPerMeter[2]) / elevationScale
+          ]
+        : [0, 0, 1]
+    );
+    // Independently derive the normal from the draped geometry's common-space tangents.
+    const expected = normalize([
+      (-dzdx * unitsPerMeter[2] * elevationScale) / unitsPerDegree[0],
+      (-dzdy * unitsPerMeter[2] * elevationScale) / unitsPerDegree[1],
+      1
+    ]);
+    // The surface uses 111320 m/degree, a close approximation to deck.gl's earth radius.
+    projected.forEach((value, i) => expect(value).toBeCloseTo(expected[i], 2));
+  }
+});
+
 test('3D contour fills derive slope normals and respond to scene lighting after height changes', async () => {
   const {layer, dataset, datasets} = await setup();
   const data = layer.formatLayerData(datasets);
@@ -504,7 +566,8 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(normals.length).toBeGreaterThan(0);
     expect(Array.from(normals.slice(0, 3))).not.toEqual(Array.from(normals.slice(3, 6)));
     expect(model.vs).toContain('in vec3 contourNormals;');
-    expect(model.vs).toContain('vSurfaceNormal = normalize(project_normal(surfaceNormal));');
+    expect(model.vs).toContain('vSurfaceNormal = normalize(project_offset_normal(surfaceNormal));');
+    expect(model.vs).toContain('vec3(contourNormals.xy, contourNormals.z / elevationScale)');
     expect(model.vs).toContain('vCommonPosition = geometry.position.xyz;');
     expect(model.vs).not.toContain('lighting_getLightColor(');
     expect(model.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
