@@ -483,12 +483,14 @@ export function getModules({
   } else if (isRescalingAllowed(bandCombination)) {
     if (continuousStretch) {
       const [min, max] = nonLinearRescaling ? [0, 1] : linearRescalingFactor;
-      const range = (max - min) * globalRange;
-      const scaler = Number.isFinite(range) && range > 0 ? 1 / range : 0;
-      const offset = -(minPixelValue + min * globalRange) * scaler;
+      const localRange = max - min;
+      const scaler = 1 / (localRange * globalRange);
+      const hasRange = Number.isFinite(scaler) && scaler > 0;
       modules.push(linearRescale);
-      moduleProps.linearRescaleScaler = Number.isFinite(scaler) ? scaler : 0;
-      moduleProps.linearRescaleOffset = scaler && Number.isFinite(offset) ? offset : 0.5;
+      // Subtract the band minimum before scaling to preserve narrow Float32 ranges.
+      moduleProps.linearRescaleInputMin = hasRange ? minPixelValue : 0;
+      moduleProps.linearRescaleScaler = hasRange ? scaler : 0;
+      moduleProps.linearRescaleOffset = hasRange ? -min / localRange : 0.5;
       // Clamp before gamma: pixels outside reported statistics must not feed
       // negative values to pow(), or disappear through categorical rejection.
       moduleProps.linearRescaleClamp = true;

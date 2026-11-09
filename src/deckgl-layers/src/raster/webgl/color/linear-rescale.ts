@@ -7,6 +7,7 @@ const fs = `\
 uniform linear_rescaleUniforms {
   float scaler;
   float offset;
+  float inputMin;
   int clampOutput;
 } linear_rescale;
 
@@ -20,10 +21,16 @@ function getUniforms(
   opts: {
     linearRescaleScaler?: number;
     linearRescaleOffset?: number;
+    linearRescaleInputMin?: number;
     linearRescaleClamp?: boolean;
   } = {}
 ): GetUniformsOutput {
-  const {linearRescaleScaler, linearRescaleOffset, linearRescaleClamp = false} = opts;
+  const {
+    linearRescaleScaler,
+    linearRescaleOffset,
+    linearRescaleInputMin = 0,
+    linearRescaleClamp = false
+  } = opts;
 
   if (!Number.isFinite(linearRescaleScaler) && !Number.isFinite(linearRescaleOffset)) {
     return null;
@@ -32,6 +39,7 @@ function getUniforms(
   return {
     scaler: Number.isFinite(linearRescaleScaler) ? linearRescaleScaler : 1,
     offset: Number.isFinite(linearRescaleOffset) ? linearRescaleOffset : 0,
+    inputMin: linearRescaleInputMin,
     clampOutput: linearRescaleClamp ? 1 : 0
   };
 }
@@ -42,12 +50,13 @@ export const linearRescale: ShaderModule = {
   uniformTypes: {
     scaler: 'f32',
     offset: 'f32',
+    inputMin: 'f32',
     clampOutput: 'i32'
   },
   getUniforms,
   inject: {
     'fs:DECKGL_MUTATE_COLOR': `
-    image = linear_rescale_fn(image, linear_rescale.scaler, linear_rescale.offset);
+    image = linear_rescale_fn(image - linear_rescale.inputMin, linear_rescale.scaler, linear_rescale.offset);
     if (linear_rescale.clampOutput == 1) {
       image = clamp(image, 0.0, 1.0);
     }

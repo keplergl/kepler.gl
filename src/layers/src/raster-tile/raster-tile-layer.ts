@@ -820,7 +820,7 @@ export default class RasterTileLayer extends KeplerLayer {
     const dataSourceParams: DataSourceParams | null = this.getDataSourceParams(stac, preset, {
       singleBand,
       bandOverrides: parsedOverrides,
-      useBandStatistics
+      useBandStatistics: useBandStatistics && !dynamicColor
     });
 
     if (!dataSourceParams) {

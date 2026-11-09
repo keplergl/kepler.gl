@@ -1108,26 +1108,26 @@ test('#RasterTileLayer -> linear stretch preserves fallback and other rescaling 
   ]) {
     t.deepEqual(
       getRescale(overrides).uniforms,
-      {scaler: 1, offset: -0.25, clampOutput: 0},
+      {scaler: 1, offset: -0.25, inputMin: 0, clampOutput: 0},
       'keeps the degenerate-range fallback'
     );
   }
   t.deepEqual(
     getRescale({minPixelValue: Infinity, maxPixelValue: -Infinity}).uniforms,
-    {scaler: -0, offset: -0.25, clampOutput: 0},
+    {scaler: -0, offset: -0.25, inputMin: 0, clampOutput: 0},
     'keeps the empty viewport fallback'
   );
   const nonlinear = getRescale({nonLinearRescaling: true, gammaContrastFactor: 2});
   t.deepEqual(
     nonlinear.uniforms,
-    {scaler: 1 / 200, offset: 0, clampOutput: 0},
+    {scaler: 1 / 200, offset: 0, inputMin: 0, clampOutput: 0},
     'keeps nonlinear normalization'
   );
   t.ok(nonlinear.modules.includes(RasterWebGL.gammaContrast), 'keeps gamma contrast');
   t.equal(nonlinear.moduleProps.gammaContrastValue, 2, 'keeps the gamma factor');
   t.deepEqual(
     getRescale({hasCategoricalColorMap: true}).uniforms,
-    {scaler: 1 / 200, offset: 0, clampOutput: 0},
+    {scaler: 1 / 200, offset: 0, inputMin: 0, clampOutput: 0},
     'keeps categorical normalization'
   );
   t.notOk(
@@ -2775,6 +2775,13 @@ function createContinuousRaster(dataType, statistics, coreBands = false) {
   return {layer, dataset, render, pipeline};
 }
 
+function normalizeRasterPixel(value, {scaler, offset, inputMin = 0}) {
+  // Match the shader's Float32 pixels, uniforms and arithmetic.
+  const f32 = Math.fround;
+  const scaled = f32(f32(f32(value) - f32(inputMin)) * f32(scaler));
+  return Math.max(0, Math.min(1, f32(scaled + f32(offset))));
+}
+
 test('#RasterTileLayer -> new single-band layers normalize valid metadata statistics', t => {
   for (const coreBands of [false, true]) {
     for (const [dataType, minimum, maximum] of [
@@ -2797,12 +2804,10 @@ test('#RasterTileLayer -> new single-band layers normalize valid metadata statis
         t.equal(colormap.hasCategoricalColors, 0, 'statistics do not imply categorical colors');
         t.equal(colormap.inputScale, 1, 'continuous output uses the full palette');
         t.equal(rescale.clampOutput, 1, 'clamps before any nonlinear contrast');
-        const normalize = value =>
-          Math.max(0, Math.min(1, value * rescale.scaler + rescale.offset));
         const expected = minimum === maximum ? [0.5, 0.5, 0.5] : [0, 0.5, 1];
         [minimum, (minimum + maximum) / 2, maximum].forEach((value, index) => {
           t.ok(
-            Math.abs(normalize(value) - expected[index]) < 1e-6,
+            Math.abs(normalizeRasterPixel(value, rescale) - expected[index]) < 1e-6,
             `${dataType}: normalizes endpoint/midpoint`
           );
         });
@@ -2815,6 +2820,30 @@ test('#RasterTileLayer -> new single-band layers normalize valid metadata statis
         );
       }
     }
+  }
+  t.end();
+});
+
+test('#RasterTileLayer -> a narrow Float32 range uses the full palette', t => {
+  const {layer, pipeline} = createContinuousRaster('float32', {
+    minimum: 100000,
+    maximum: 100000.0234375
+  });
+  layer.updateLayerVisConfig({nonLinearRescaling: false, linearRescalingFactor: [0, 1]});
+  const {modules, moduleProps} = pipeline();
+  const shaderInputs = {moduleUniforms: {}, moduleBindings: {}};
+  applyModuleUniforms(shaderInputs, modules, moduleProps);
+  const {
+    linear_rescale_scaler: scaler,
+    linear_rescale_offset: offset,
+    linear_rescale_inputMin: inputMin
+  } = shaderInputs.moduleUniforms.rasterProcessing;
+  for (let i = 0; i <= 3; i++) {
+    const value = 100000 + i / 128;
+    t.ok(
+      Math.abs(normalizeRasterPixel(value, {scaler, offset, inputMin}) - i / 3) < 1e-6,
+      `pixel ${value} maps to palette position ${i}/3`
+    );
   }
   t.end();
 });
@@ -2846,7 +2875,7 @@ test('#RasterTileLayer -> metadata stretch falls back safely and remains global'
     }
   }
   const {layer, pipeline} = createContinuousRaster('uint16', {minimum: 5000, maximum: 10000});
-  layer.updateLayerVisConfig({nonLinearRescaling: false, linearRescalingFactor: [0, 0.2]});
+  layer.updateLayerVisConfig({nonLinearRescaling: false, linearRescalingFactor: [0.1, 0.3]});
   for (const tiles of [
     [{data: {minPixelValue: 0, maxPixelValue: 65535}}],
     [
@@ -2866,8 +2895,8 @@ test('#RasterTileLayer -> metadata stretch falls back safely and remains global'
       0,
       'adjusting the stretch cannot discard valid pixels as missing categories'
     );
-    t.equal(5000 * rescale.scaler + rescale.offset, 0, 'selected minimum maps to first color');
-    t.equal(6000 * rescale.scaler + rescale.offset, 1, 'selected maximum maps to last color');
+    t.equal(normalizeRasterPixel(5500, rescale), 0, 'selected minimum maps to first color');
+    t.equal(normalizeRasterPixel(6500, rescale), 1, 'selected maximum maps to last color');
   }
   layer.updateLayerVisConfig({dynamicColor: true});
   layer.onViewportLoad([{data: {minPixelValue: 5500, maxPixelValue: 7000}}]);
@@ -2877,6 +2906,21 @@ test('#RasterTileLayer -> metadata stretch falls back safely and remains global'
     [5500, 7000],
     'explicit dynamic color still uses viewport range'
   );
+  t.end();
+});
+
+test('#RasterTileLayer -> Dynamic Color renders float bands with reversed statistics', t => {
+  const {layer, render} = createContinuousRaster('float32', {minimum: 100, maximum: 0});
+  layer.updateLayerVisConfig({dynamicColor: true});
+  t.ok(render(), 'tile loading can start before viewport extrema are available');
+  layer.onViewportLoad([{data: {minPixelValue: 10, maxPixelValue: 50}}]);
+  const rendered = render();
+  t.deepEqual(
+    [rendered?.props.minPixelValue, rendered?.props.maxPixelValue],
+    [10, 50],
+    'uses the loaded viewport range'
+  );
+  t.equal(rendered?.props.useBandStatistics, true, 'keeps the continuous stretch');
   t.end();
 });
 
@@ -2920,6 +2964,7 @@ test('#RasterTileLayer -> preserve saved stretches and isolate the opt-in mode',
       'repeated toggles invalidate the cached range'
     );
     t.equal(current.rescale.clampOutput, enabled ? 1 : 0, 'disabling resets the clamp uniform');
+    t.equal(current.rescale.inputMin, enabled ? 5000 : 0, 'disabling resets the input minimum');
   }
   const images = {imageColormap: {}};
   const baseProps = {...pipeline().props, useBandStatistics: false};
