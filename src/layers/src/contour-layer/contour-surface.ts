@@ -85,8 +85,10 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
       ? a + (b - a) * fx + (c - a) * fy
       : d + (c - d) * (1 - fx) + (b - d) * (1 - fy);
   };
+  let minimumVisibleHeight = Infinity;
   const toSurface = (x: number, y: number): number[] => {
     const height = heightAt(x, y);
+    minimumVisibleHeight = Math.min(minimumVisibleHeight, height);
     return [grid.longitude + x * grid.stepLng, grid.latitude + y * grid.stepLat, height];
   };
   // Use the field gradient around every tessellated vertex, rather than a
@@ -179,5 +181,21 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
       )
     }
   }));
+  // The grid minimum can be outside the selected contours. Ground the visible
+  // surface with one shared offset, preserving its relief, planes and normals.
+  if (Number.isFinite(minimumVisibleHeight) && minimumVisibleHeight !== 0) {
+    for (const feature of [...fills, ...outlines]) {
+      for (const polygon of feature.geometry.coordinates) {
+        for (const ring of polygon) {
+          for (let i = 0; i < ring.length; i++) {
+            const point = ring[i];
+            // Closed fill rings share their first and last vertex. Replace each
+            // entry so that the shared vertex is not shifted twice.
+            ring[i] = [point[0], point[1], point[2] - minimumVisibleHeight];
+          }
+        }
+      }
+    }
+  }
   return {fills, outlines, getNormal};
 }

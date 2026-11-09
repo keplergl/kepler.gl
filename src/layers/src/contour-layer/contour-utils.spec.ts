@@ -88,7 +88,9 @@ describe('contour surface', () => {
     const grid = testGrid(samples(9, (x, y) => 4 - (x - 4) ** 2 - (y - 4) ** 2));
     const contours = generateContours(grid, {...options, below: false, domain: [-8, 0]});
     const surface = buildContourSurface(grid, contours);
-    const peakHeight = 8 * 111320 * 0.1;
+    // Only values from -8 upward are visible; preserve their share of the full
+    // -28..4 relief while placing the lowest visible contour at ground level.
+    const peakHeight = 8 * 111320 * 0.1 * (12 / 32);
     for (const feature of surface.fills) {
       const peak = feature.geometry.coordinates.flat(2).find(p => p[0] === 4 && p[1] === 4);
       expect(peak?.[2]).toBeCloseTo(peakHeight);
@@ -103,6 +105,29 @@ describe('contour surface', () => {
         point.forEach((value, channel) => expect(actual[channel]).toBeCloseTo(value));
       });
     });
+  });
+
+  test.each([
+    ['automatic', undefined, 2],
+    ['custom', [4, 6] as [number, number], 4]
+  ] as const)('anchors the first visible %s contour at zero', (_label, domain, firstLevel) => {
+    const grid = testGrid(samples(9, x => x));
+    const contours = generateContours(grid, {...options, below: false, domain});
+    const surface = buildContourSurface(grid, contours);
+    const reliefPerLevel = 111320 * 0.1;
+    for (const pass of [surface.fills, surface.outlines]) {
+      const vertices = pass.flatMap(feature => feature.geometry.coordinates.flat(2));
+      expect(Math.min(...vertices.map(point => point[2]))).toBe(0);
+      const ground = pass[0].geometry.coordinates.flat(2).filter(point => point[0] === firstLevel);
+      expect(ground.length).toBeGreaterThan(0);
+      ground.forEach(point => expect(point[2]).toBeCloseTo(0, 8));
+      const nextLevel = contours[1].properties.threshold;
+      const raised = pass[1].geometry.coordinates.flat(2).filter(point => point[0] === nextLevel);
+      expect(raised.length).toBeGreaterThan(0);
+      raised.forEach(point =>
+        expect(point[2]).toBeCloseTo((nextLevel - firstLevel) * reliefPerLevel, 8)
+      );
+    }
   });
 
   test('samples normalized field-gradient normals at draped vertices', () => {
