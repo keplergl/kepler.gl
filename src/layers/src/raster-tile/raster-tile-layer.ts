@@ -162,6 +162,7 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   startDate: VisConfigInput;
   endDate: VisConfigInput;
   dynamicColor: VisConfigBoolean;
+  useBandStatistics: VisConfigBoolean;
   colormapId: VisConfigSelection;
   colorRange: VisConfigColorRange;
   linearRescalingFactor: VisConfigRange;
@@ -218,19 +219,25 @@ export default class RasterTileLayer extends KeplerLayer {
   constructor(props) {
     super(props);
     this.registerVisConfig(rasterVisConfigs);
+    // Generated defaults opt in, while old/programmatic configs omit this setting.
+    this.config.visConfig.useBandStatistics = props.visConfig?.useBandStatistics === true;
 
-    // No two STAC ids may be the same within a single collection, though it's conceivably possible
-    // across multiple STAC collections there could be an id collision. Note: STAC Collection
-    // objects don't have a `collection` key; STAC Item objects have a `collection` key (which
-    // matches the collection's `id`).
-    const resolver = (stac: CompleteSTACObject, preset: string, presetOptions: PresetOption) =>
-      `${stac.id}-${stac.collection}-${preset}-${presetOptions.singleBand?.assetId}-${
-        presetOptions.singleBand?.bandIndex
-      }-${JSON.stringify(presetOptions.bandOverrides || null)}`;
-    this.getDataSourceParams = memoize(
-      (stac, preset, presetOptions) => getDataSourceParams(stac, preset, presetOptions),
-      resolver
+    let cachedSource: CompleteSTACObject | undefined;
+    const getCachedParams = memoize(
+      getDataSourceParams,
+      (_stac, preset, options) =>
+        `${preset}-${options?.singleBand?.assetId}-${
+          options?.singleBand?.bandIndex
+        }-${JSON.stringify(options?.bandOverrides || null)}-${Boolean(options?.useBandStatistics)}`
     );
+    this.getDataSourceParams = (stac, preset, options) => {
+      // A refreshed or replacement source can reuse the same STAC IDs.
+      if (stac !== cachedSource) {
+        getCachedParams.cache.clear?.();
+        cachedSource = stac;
+      }
+      return getCachedParams(stac, preset, options);
+    };
 
     this.meta = {zRange: null};
   }
@@ -243,7 +250,9 @@ export default class RasterTileLayer extends KeplerLayer {
     const newLayerProp = {
       dataId: dataset.id,
       label: dataset.label,
-      isVisible: true
+      isVisible: true,
+      // Only newly generated layers opt in; restoring an old map keeps its stretch.
+      visConfig: {useBandStatistics: true}
     };
 
     return {props: [newLayerProp]};
@@ -797,6 +806,8 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const {bandCombination} = PRESET_OPTIONS[preset];
 
+    const useBandStatistics =
+      visConfig.useBandStatistics && bandCombination === 'single' && !categoricalColorMap;
     const singleBand = getSingleBandPresetOptions(stac, singleBandName);
     let parsedOverrides: Record<string, string> | null = null;
     if (bandOverrides && typeof bandOverrides === 'string') {
@@ -810,7 +821,8 @@ export default class RasterTileLayer extends KeplerLayer {
     }
     const dataSourceParams: DataSourceParams | null = this.getDataSourceParams(stac, preset, {
       singleBand,
-      bandOverrides: parsedOverrides
+      bandOverrides: parsedOverrides,
+      useBandStatistics
     });
 
     if (!dataSourceParams) {
@@ -831,6 +843,7 @@ export default class RasterTileLayer extends KeplerLayer {
       maxCategoricalBandValue
     } = dataSourceParams;
 
+    const needsViewportRange = useBandStatistics && !Number.isFinite(dsMinPixelValue);
     const minPixelValue =
       !dynamicColor && Number.isFinite(dsMinPixelValue)
         ? dsMinPixelValue
@@ -877,7 +890,16 @@ export default class RasterTileLayer extends KeplerLayer {
       tileSize: 512 / devicePixelRatio,
       zoomOffset: visConfig.zoomOffset || 0,
       getTileData: (args: any) => this.getTileData({...args, ...getTileDataCustomProps}),
-      onViewportLoad: this.onViewportLoad.bind(this),
+      onViewportLoad: tiles => {
+        this.onViewportLoad(tiles);
+        if (
+          needsViewportRange &&
+          (minPixelValue !== this.minViewportPixelValue ||
+            maxPixelValue !== this.maxViewportPixelValue)
+        ) {
+          this.onRedrawNeeded?.();
+        }
+      },
       onClick: pickable
         ? info => {
             void this._onClickIdentify(layerCallbacks, info);
@@ -921,6 +943,7 @@ export default class RasterTileLayer extends KeplerLayer {
       linearRescaling,
       linearRescalingFactor,
       nonLinearRescaling,
+      useBandStatistics,
       minPixelValue,
       maxPixelValue,
       gammaContrastFactor,

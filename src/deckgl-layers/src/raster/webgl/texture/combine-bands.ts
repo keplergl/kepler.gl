@@ -34,6 +34,7 @@ const fs2 = `\
 precision mediump float;
 precision mediump int;
 precision mediump usampler2D;
+precision mediump isampler2D;
 
 #ifdef SAMPLER_TYPE
   uniform SAMPLER_TYPE bitmapTextureR;

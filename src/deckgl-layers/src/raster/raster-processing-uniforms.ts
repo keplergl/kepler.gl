@@ -22,6 +22,9 @@ uniform rasterProcessingUniforms {
   // linear_rescale
   float linear_rescale_scaler;
   float linear_rescale_offset;
+  float linear_rescale_inputMin;
+  float linear_rescale_inputScale;
+  int linear_rescale_clampOutput;
 
   // gamma_contrast
   float gamma_contrast_gamma1;
@@ -73,6 +76,9 @@ uniform rasterProcessingUniforms {
 const ALIAS_DEFINES = `\
 #define linear_rescale_scaler_ALIAS rasterProcessing.linear_rescale_scaler
 #define linear_rescale_offset_ALIAS rasterProcessing.linear_rescale_offset
+#define linear_rescale_inputMin_ALIAS rasterProcessing.linear_rescale_inputMin
+#define linear_rescale_inputScale_ALIAS rasterProcessing.linear_rescale_inputScale
+#define linear_rescale_clampOutput_ALIAS rasterProcessing.linear_rescale_clampOutput
 #define gamma_contrast_gamma1_ALIAS rasterProcessing.gamma_contrast_gamma1
 #define gamma_contrast_gamma2_ALIAS rasterProcessing.gamma_contrast_gamma2
 #define gamma_contrast_gamma3_ALIAS rasterProcessing.gamma_contrast_gamma3
@@ -109,6 +115,9 @@ export const rasterProcessingUniforms = {
   uniformTypes: {
     linear_rescale_scaler: 'f32',
     linear_rescale_offset: 'f32',
+    linear_rescale_inputMin: 'f32',
+    linear_rescale_inputScale: 'f32',
+    linear_rescale_clampOutput: 'i32',
     gamma_contrast_gamma1: 'f32',
     gamma_contrast_gamma2: 'f32',
     gamma_contrast_gamma3: 'f32',
@@ -144,7 +153,10 @@ export const rasterProcessingUniforms = {
 export const UNIFORM_NAME_MAP: Record<string, Record<string, string>> = {
   linear_rescale: {
     scaler: 'linear_rescale_scaler',
-    offset: 'linear_rescale_offset'
+    offset: 'linear_rescale_offset',
+    inputMin: 'linear_rescale_inputMin',
+    inputScale: 'linear_rescale_inputScale',
+    clampOutput: 'linear_rescale_clampOutput'
   },
   gamma_contrast: {
     gamma1: 'gamma_contrast_gamma1',

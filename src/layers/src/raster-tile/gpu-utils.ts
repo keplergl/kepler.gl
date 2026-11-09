@@ -452,7 +452,8 @@ export function getModules({
     dataType,
     minCategoricalBandValue,
     maxCategoricalBandValue,
-    hasCategoricalColorMap
+    hasCategoricalColorMap,
+    useBandStatistics
   } = props;
 
   if (Array.isArray(images.imageBands) && images.imageBands.length > 0) {
@@ -472,13 +473,33 @@ export function getModules({
   }
 
   const globalRange = maxPixelValue - minPixelValue;
+  const continuousStretch =
+    useBandStatistics && bandCombination === 'single' && !hasCategoricalColorMap;
   // Fix rescaling if we are sure that dataset is categorical
   if (hasCategoricalColorMap) {
     modules.push(linearRescale);
     moduleProps.linearRescaleScaler = 1 / maxPixelValue;
     moduleProps.linearRescaleOffset = 0;
   } else if (isRescalingAllowed(bandCombination)) {
-    if (!nonLinearRescaling) {
+    if (continuousStretch) {
+      const [min, max] = nonLinearRescaling ? [0, 1] : linearRescalingFactor;
+      const localRange = max - min;
+      // A power-of-two reduction keeps wide spans and their reciprocals in Float32's normal range.
+      const inputScale = globalRange > 2 ** 126 ? 1 / 16 : 1;
+      const inputMin = Math.fround(minPixelValue * inputScale);
+      // Match the shader's subtraction so rounding doesn't turn an endpoint into an outlier.
+      const span = Math.fround(Math.fround(maxPixelValue * inputScale) - inputMin);
+      const scaler = Math.fround(1 / (localRange * span));
+      const hasRange = Number.isFinite(scaler) && scaler > 0;
+      modules.push(linearRescale);
+      // Subtract the band minimum before scaling to preserve narrow Float32 ranges.
+      moduleProps.linearRescaleInputScale = inputScale;
+      moduleProps.linearRescaleInputMin = hasRange ? inputMin : 0;
+      moduleProps.linearRescaleScaler = hasRange ? scaler : 0;
+      moduleProps.linearRescaleOffset = hasRange ? -min / localRange : 0.5;
+      // Gamma needs clamped inputs. Linear filtering needs the full rescaled range.
+      moduleProps.linearRescaleClamp = nonLinearRescaling;
+    } else if (!nonLinearRescaling) {
       const [min, max] = linearRescalingFactor;
       const localRange = max - min;
 
@@ -499,7 +520,9 @@ export function getModules({
       modules.push(linearRescale);
       moduleProps.linearRescaleScaler = 1 / maxPixelValue;
       moduleProps.linearRescaleOffset = 0;
+    }
 
+    if (nonLinearRescaling) {
       modules.push(gammaContrast);
       moduleProps.gammaContrastValue = gammaContrastFactor;
 
@@ -542,8 +565,9 @@ export function getModules({
     modules.push(colormapModule);
     // Linear and nonlinear single-band stretches already produce 0..1 values.
     moduleProps.colormapInputNormalized = bandCombination === 'single';
-    moduleProps.minCategoricalBandValue = minCategoricalBandValue;
-    moduleProps.maxCategoricalBandValue = maxCategoricalBandValue;
+    // Statistics describe a continuous domain, not an implicit categorical map.
+    moduleProps.minCategoricalBandValue = continuousStretch ? undefined : minCategoricalBandValue;
+    moduleProps.maxCategoricalBandValue = continuousStretch ? undefined : maxCategoricalBandValue;
     moduleProps.dataTypeMaxValue = dtypeMaxValue[dataType];
     moduleProps.maxPixelValue = maxPixelValue;
   }
