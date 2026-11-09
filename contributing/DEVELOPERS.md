@@ -96,9 +96,9 @@ Install dependencies with Yarn
 yarn dlx puppeteer
 
 
-# Install JavaScript dependencies:
-yarn install
-yarn bootstrap
+# Install JavaScript dependencies, then prepare compatibility patches and workspace entries:
+yarn install --immutable
+yarn bootstrap:prepare
 
 # Setup Mapbox access token locally
 export MapboxAccessToken=<MapboxAccessToken>
@@ -114,6 +114,10 @@ export FoursquareUserMapsURL=<FoursquareUserMapsURL>
 # Start the kepler.gl demo app
 yarn start
 ```
+
+After the first install, `yarn bootstrap` can reinstall dependencies and run the same preparation.
+The initial `yarn install` is required because Yarn 4 cannot run project scripts before its
+`node_modules` state exists.
 
 An demo app will be served at `http://localhost:8080/`
 

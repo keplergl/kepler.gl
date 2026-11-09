@@ -1,7 +1,7 @@
 {
   "name": "@kepler.gl/tasks",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.19",
+  "version": "3.3.0-alpha.20",
   "description": "kepler.gl constants used by kepler.gl components, actions and reducers",
   "license": "MIT",
   "main": "dist/cjs/index.js",
@@ -19,7 +19,7 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx'",
+    "build": "rm -fr dist && babel src --out-dir dist/cjs --source-maps true --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx' && BABEL_ENV=esm babel src --out-dir dist/esm --source-maps true --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx'",
     "build:types": "tsc --project ./tsconfig.production.json",
     "prepublishOnly": "babel-node ../../scripts/license-header/bin --license ../../FILE-HEADER && yarn build && yarn build:types",
     "stab": "mkdir -p dist/cjs dist/esm && touch dist/cjs/index.js dist/esm/index.js"
@@ -28,8 +28,8 @@
     "dist"
   ],
   "dependencies": {
-    "@kepler.gl/processors": "3.3.0-alpha.19",
-    "@kepler.gl/tasks-core": "3.3.0-alpha.19"
+    "@kepler.gl/processors": "3.3.0-alpha.20",
+    "@kepler.gl/tasks-core": "3.3.0-alpha.20"
   },
   "nyc": {
     "sourceMap": false,

@@ -50,7 +50,8 @@ context.
 Go to the root directory and install the dependencies using yarn:
 
 ```sh
-yarn bootstrap
+yarn install --immutable
+yarn bootstrap:prepare
 ```
 
 If install fails while building the `gl` package, use Node 24.21.0 from the repo root `.nvmrc` (`nvm install` / `nvm use`), or see [Troubleshooting: gl package install](../../contributing/DEVELOPERS.md#troubleshooting-gl-package-install).
@@ -92,6 +93,8 @@ yarn start:local
 ```
 
 #### Optional: runtime `/config.json`
+
+The HTML entry point is `index.html`; both `yarn build` and `yarn start` copy it to `dist/index.html`. Edit the source file rather than the generated copy.
 
 After a production build (`yarn build`), you can override tokens and demo-app settings without rebuilding by placing a `config.json` next to `dist/index.html` (i.e. `examples/demo-app/dist/config.json`). The app fetches origin-root `/config.json` so SPA routes like `/demo/:id` still find it. To read the config from another location, set `window.__KEPLER_CONFIG_HREF__` (Docker: `KEPLER_CONFIG_HREF`) before `bundle.js` loads, or add a `<base href>` and `config.json` resolves against that base. Neither option hosts the app at a browser-visible sub-path — assets and router routes are root-absolute (see `docker/README.md`). Copy `docker/config.example.json` as a starter; see `docker/config.full-example.json` and `docker/README.md` for the full schema, Compose mounts, and `KEPLER_*` env overrides. `mapConfigUrl` only replaces the `samples.json` catalogue — sample rows still need absolute data/config URLs (see `docker/samples.example.json`). `ASSETS_URL` is the gallery tab thumbnail CDN and is not runtime-configurable.
 

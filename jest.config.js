@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+const {nyc} = require('./package.json');
+
 /** @type {import('jest').Config} */
 const config = {
-  collectCoverageFrom: ['<rootDir>/src/**/*.{js|ts|tsx}', '!<rootDir>/src/**/*.spec.js'],
+  // Match the scope used by Babel's Istanbul plugin for Tape coverage.
+  collectCoverageFrom: [...nyc.include, ...nyc.exclude.map(pattern => `!${pattern}`)],
   coverageDirectory: './jest-coverage',
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],

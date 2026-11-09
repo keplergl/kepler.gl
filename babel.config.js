@@ -65,9 +65,6 @@ const getPlugins = isTest => {
 };
 
 const ENV = {
-  test: {
-    plugins: ['istanbul']
-  },
   debug: {
     sourceMaps: 'inline',
     retainLines: true
@@ -76,11 +73,18 @@ const ENV = {
 
 module.exports = function babel(api) {
   const isTest = api.env('test'); // Check if running in test mode
-  api.cache(true);
+  const isJest = api.caller(caller => caller?.name === 'babel-jest');
 
   return {
     presets: PRESETS,
     plugins: getPlugins(isTest),
-    env: ENV
+    env: {
+      ...ENV,
+      test: {
+        // Jest adds Istanbul itself when coverage is requested. Register it
+        // here only for Tape to avoid duplicate plugins and counting specs.
+        plugins: isJest ? [] : ['istanbul']
+      }
+    }
   };
 };

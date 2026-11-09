@@ -1,7 +1,7 @@
 {
   "name": "kepler.gl",
   "author": "Shan He <shan@uber.com>",
-  "version": "3.3.0-alpha.19",
+  "version": "3.3.0-alpha.20",
   "description": "kepler.gl is a webgl based application to visualize large scale location data in the browser",
   "license": "MIT",
   "keywords": [
@@ -43,8 +43,9 @@
     "url": "https://github.com/keplergl/kepler.gl.git"
   },
   "scripts": {
-    "bootstrap": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true git submodule update --init --recursive && yarn install --immutable && yarn fix-dependencies && yarn workspaces foreach -At run stab",
-    "install:example": "cd examples/demo-app && NODE_OPTIONS=--openssl-legacy-provider yarn",
+    "bootstrap": "yarn install --immutable && yarn bootstrap:prepare",
+    "bootstrap:prepare": "yarn fix-dependencies && yarn workspaces foreach -At run stab",
+    "install:example": "cd examples/demo-app && yarn",
     "install:sqlrooms": "cd examples/demo-app-sqlrooms && yarn install --immutable",
     "install:web": "yarn install:example && yarn install:sqlrooms && cd website && yarn",
     "install-and-start": "node ./scripts/install-and-start",
@@ -65,11 +66,11 @@
     "cover-jest": "jest --coverage --reporter=lcov --watchAll=false",
     "cover-merge": "istanbul-merge --out=coverage/coverage-all.json tape-coverage/coverage-final.json jest-coverage/coverage-final.json",
     "cover-report": "nyc report -t coverage --report-dir coverage --reporter=json --reporter=lcov",
-    "start": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local",
-    "start:sqlrooms": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app-sqlrooms start:local",
-    "start:deck": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-deck",
-    "start:deck-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-deck-src",
-    "start:loaders-src": "NODE_OPTIONS=--openssl-legacy-provider yarn install-and-start examples/demo-app start:local-loaders-src",
+    "start": "yarn install-and-start examples/demo-app start:local",
+    "start:sqlrooms": "yarn install-and-start examples/demo-app-sqlrooms start:local",
+    "start:deck": "yarn install-and-start examples/demo-app start:local-deck",
+    "start:deck-src": "yarn install-and-start examples/demo-app start:local-deck-src",
+    "start:loaders-src": "yarn install-and-start examples/demo-app start:local-loaders-src",
     "start:open-modal": "yarn install-and-start examples/open-modal start-local",
     "start:custom-reducer": "yarn install-and-start examples/custom-reducer start-local",
     "start:replace-component": "yarn install-and-start examples/replace-component start:local",
@@ -81,7 +82,7 @@
     "start:web": "yarn install-and-start website start",
     "start:https": "yarn install-and-start examples/demo-app start-local-https",
     "start:e2e": "yarn install-and-start examples/demo-app start-local-e2e",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx'",
+    "build": "rm -fr dist && babel src/{actions,components,reducers,cloud-providers,localization,tasks} --out-dir dist --source-maps inline --extensions '.ts,.tsx,.js,.jsx' --ignore '**/*.d.ts,**/*.spec.ts,**/*.spec.tsx,**/*.spec.js,**/*.spec.jsx,**/*.test.ts,**/*.test.tsx,**/*.test.js,**/*.test.jsx'",
     "build:umd": "node ./esbuild/umd-esbuild.config.mjs",
     "build:types": "tsc --project tsconfig.production.json",
     "analyze": "yarn analyze:bundle",
@@ -115,7 +116,7 @@
   ],
   "dependencies": {
     "@deck.gl/mapbox": "^9.3.1",
-    "@kepler.gl/components": "3.3.0-alpha.19",
+    "@kepler.gl/components": "3.3.0-alpha.20",
     "@loaders.gl/polyfills": "^4.4.1",
     "@types/mapbox__geo-viewport": "^0.4.1",
     "html-webpack-plugin": "^5.6.3",
@@ -179,7 +180,6 @@
     "crypto-browserify": "^3.12.1",
     "css-loader": "5.2.7",
     "documentation": "^13.2.5",
-    "dts-bundle-webpack": "^1.0.2",
     "es-toolkit": "^1.39.10",
     "esbuild": "^0.25.0",
     "esbuild-plugin-replace": "^1.4.0",
@@ -364,11 +364,15 @@
   "nyc": {
     "sourceMap": false,
     "instrument": false,
+    "include": [
+      "src/*/src/**/*.{js,jsx,ts,tsx}"
+    ],
     "exclude": [
-      "test/**/*.js",
-      "src/tasks",
-      "src/templates",
-      "src/styles"
+      "**/*.{spec,test}.{js,jsx,ts,tsx}",
+      "**/*.d.ts",
+      "src/tasks/**",
+      "src/templates/**",
+      "src/styles/**"
     ]
   },
   "maintainers": [
