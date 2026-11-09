@@ -48,6 +48,7 @@ const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'ic
 test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
   const error = new Error('Cannot render geometry');
   const log = sinon.stub(Console, 'error');
+  const onLayerError = sinon.spy();
   const data = {data: [{position: [10, 20]}]};
   const dataset = {label: 'Survey', rows: [[10, 20]]};
   const healthy = {id: 'healthy-overlay'};
@@ -82,23 +83,34 @@ test('layerUtils -> a render failure leaves other layers and datasets usable', t
       t.doesNotThrow(() => {
         rendered = computeDeckLayers(
           {visState: {...visState, layerOrder}, mapState: {zoom: 1}},
-          options
+          options,
+          {onLayerError}
         );
       }, 'contains a render exception for flat and grouped layers');
       t.deepEqual(rendered, [healthy], 'renders the healthy layer after the failing layer');
     }
     t.ok(log.calledWith(error), 'reports the rendering failure');
+    t.deepEqual(
+      onLayerError.args,
+      [
+        [0, error],
+        [0, error]
+      ],
+      'forwards each failure and its layer index for notification'
+    );
     t.equal(visState.datasets.survey, dataset, 'keeps the dataset available for inspection');
     t.equal(visState.layerData[0], data, 'does not discard imported layer data');
     fail = false;
     t.deepEqual(
       computeDeckLayers(
         {visState: {...visState, layerOrder: ['healthy', 'broken']}, mapState: {zoom: 1}},
-        options
+        options,
+        {onLayerError}
       ),
       [{id: 'recovered-overlay'}, healthy],
       'renders the layer again when its renderer recovers'
     );
+    t.equal(onLayerError.callCount, 2, 'recovery does not report another error');
   } finally {
     log.restore();
   }

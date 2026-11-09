@@ -467,6 +467,7 @@ export type LayerTextConfig = {
 };
 
 export type LayerCallbacks = {
+  onLayerError?: (idx: number, error: Error) => void;
   onLayerHover?: (idx: number, value: any) => void;
   onSetLayerDomain?: (idx: number, value: any) => void;
   onFilteredItemsChange?: (
@@ -489,6 +490,7 @@ export type LayerCallbacks = {
 };
 
 export type BindedLayerCallbacks = {
+  onLayerError?: (error: Error) => void;
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;

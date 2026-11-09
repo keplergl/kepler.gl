@@ -384,6 +384,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     // A synchronous renderer failure must not escape into React and unmount
     // the map. Keep the imported data and let the other layers render.
     Console.error(error);
+    layerCallbacks.onLayerError?.(error instanceof Error ? error : new Error(String(error)));
     return [];
   }
 }

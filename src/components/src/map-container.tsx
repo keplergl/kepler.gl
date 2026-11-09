@@ -953,6 +953,16 @@ export default function MapContainerFactory(
       }
     };
 
+    _onLayerError = (idx: number, error: Error) => {
+      const layer = this.props.visState.layers[idx];
+      // Layer construction runs during React render. Report afterward, retaining
+      // the originating layer so a removal/replacement cannot disable another one.
+      setTimeout(() => {
+        if (this.unmounted || !layer || !this.props.visState.layers.includes(layer)) return;
+        this._onDeckError(error, layer);
+      }, 0);
+    };
+
     _onDeckError = (error, layer) => {
       const errorMessage = error?.message || 'unknown-error';
       const layerMessage = layer?.id ? ` in ${layer.id} layer` : '';
@@ -974,7 +984,7 @@ export default function MapContainerFactory(
           while (topMostLayer.parent) {
             topMostLayer = topMostLayer.parent;
           }
-          if (topMostLayer.props?.id) {
+          if (topMostLayer.id) {
             visStateActions.layerSetIsValid(topMostLayer, false);
             extraLayerMessage = 'The layer has been disabled and highlighted.';
           }
@@ -1246,6 +1256,7 @@ export default function MapContainerFactory(
             : undefined
         },
         {
+          onLayerError: this._onLayerError,
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
