@@ -8,6 +8,7 @@ import {
   ScalarGrid,
   smoothScalarGrid
 } from './contour-utils';
+import {buildContourSurface} from './contour-surface';
 
 function samples(size: number, value: (x: number, y: number) => number | null): ScalarSample[] {
   return Array.from({length: size * size}, (_, i) => ({
@@ -32,6 +33,156 @@ function testGrid(input: ScalarSample[]): ScalarGrid {
 }
 
 const options = {smoothing: 0, levels: 3, below: true, domain: [2, 6] as [number, number]};
+
+describe('contour surface', () => {
+  const area = (coordinates: number[][][][]) =>
+    coordinates.reduce(
+      (total, polygon) =>
+        total +
+        polygon.reduce((sum, ring, index) => {
+          const signed =
+            ring.reduce((value, point, i) => {
+              const next = ring[(i + 1) % ring.length];
+              return value + point[0] * next[1] - next[0] * point[1];
+            }, 0) / 2;
+          return sum + Math.abs(signed) * (index ? -1 : 1);
+        }, 0),
+      0
+    );
+
+  test.each([true, false])('preserves the 2D footprint, holes and levels (below: %s)', below => {
+    const grid = testGrid(
+      samples(9, (x, y) => (x === 4 && y === 4 ? null : (x - 4) ** 2 + (y - 4) ** 2))
+    );
+    const contours = generateContours(grid, {...options, below});
+    const original = JSON.stringify(contours);
+    const surface = buildContourSurface(grid, contours);
+    expect(surface.fills).toHaveLength(contours.length);
+    surface.fills.forEach((feature, index) => {
+      expect(feature.properties).toEqual(contours[index].properties);
+      expect(area(feature.geometry.coordinates)).toBeCloseTo(
+        area(contours[index].geometry.coordinates),
+        8
+      );
+      expect(feature.geometry.coordinates.flat(3).every(Number.isFinite)).toBe(true);
+      const outline = surface.outlines[index];
+      expect(outline.properties).toEqual(contours[index].properties);
+      contours[index].geometry.coordinates.forEach((polygon, p) =>
+        polygon.forEach((ring, r) => {
+          const draped = outline.geometry.coordinates[p][r];
+          for (const point of ring) {
+            expect(
+              draped.some(
+                vertex =>
+                  Math.abs(vertex[0] - point[0]) < 1e-9 && Math.abs(vertex[1] - point[1]) < 1e-9
+              )
+            ).toBe(true);
+          }
+        })
+      );
+    });
+    expect(JSON.stringify(contours)).toBe(original);
+  });
+
+  test('retains interior peaks and scales signed values to map-relative relief', () => {
+    const grid = testGrid(samples(9, (x, y) => 4 - (x - 4) ** 2 - (y - 4) ** 2));
+    const contours = generateContours(grid, {...options, below: false, domain: [-8, 0]});
+    const surface = buildContourSurface(grid, contours);
+    // Only values from -8 upward are visible; preserve their share of the full
+    // -28..4 relief while placing the lowest visible contour at ground level.
+    const peakHeight = 8 * 111320 * 0.1 * (12 / 32);
+    for (const feature of surface.fills) {
+      const peak = feature.geometry.coordinates.flat(2).find(p => p[0] === 4 && p[1] === 4);
+      expect(peak?.[2]).toBeCloseTo(peakHeight);
+      expect(new Set(feature.geometry.coordinates.flat(2).map(p => p[2])).size).toBeGreaterThan(3);
+    }
+    // Changing only the numeric units must not change the relief or footprint.
+    const convertedGrid = {...grid, values: Float64Array.from(grid.values, v => v * 100 + 20)};
+    const converted = buildContourSurface(convertedGrid, contours);
+    surface.fills.forEach((feature, index) => {
+      feature.geometry.coordinates.flat(2).forEach((point, i) => {
+        const actual = converted.fills[index].geometry.coordinates.flat(2)[i];
+        point.forEach((value, channel) => expect(actual[channel]).toBeCloseTo(value));
+      });
+    });
+  });
+
+  test.each([
+    ['automatic', undefined, 2],
+    ['custom', [4, 6] as [number, number], 4]
+  ] as const)('anchors the first visible %s contour at zero', (_label, domain, firstLevel) => {
+    const grid = testGrid(samples(9, x => x));
+    const contours = generateContours(grid, {...options, below: false, domain});
+    const surface = buildContourSurface(grid, contours);
+    const reliefPerLevel = 111320 * 0.1;
+    for (const pass of [surface.fills, surface.outlines]) {
+      const vertices = pass.flatMap(feature => feature.geometry.coordinates.flat(2));
+      expect(Math.min(...vertices.map(point => point[2]))).toBe(0);
+      const ground = pass[0].geometry.coordinates.flat(2).filter(point => point[0] === firstLevel);
+      expect(ground.length).toBeGreaterThan(0);
+      ground.forEach(point => expect(point[2]).toBeCloseTo(0, 8));
+      const nextLevel = contours[1].properties.threshold;
+      const raised = pass[1].geometry.coordinates.flat(2).filter(point => point[0] === nextLevel);
+      expect(raised.length).toBeGreaterThan(0);
+      raised.forEach(point =>
+        expect(point[2]).toBeCloseTo((nextLevel - firstLevel) * reliefPerLevel, 8)
+      );
+    }
+  });
+
+  test('samples normalized field-gradient normals at draped vertices', () => {
+    const grid = testGrid(samples(5, (x, y) => x * x + y));
+    const contours = generateContours(grid, {...options, domain: [1, 12]});
+    const surface = buildContourSurface(grid, contours);
+    const normal = surface.getNormal([2, 2]);
+    const physical = [normal[0] * 111320, normal[1] * 111320, normal[2]];
+    expect(Math.hypot(...physical)).toBeCloseTo(1);
+    expect(physical[0]).toBeLessThan(0);
+    expect(physical[1]).toBeLessThan(0);
+    expect(physical[2]).toBeGreaterThan(0);
+  });
+
+  test.each([
+    ['tiny', (value: number) => value * 1e-310],
+    ['subnormal', (value: number) => value * Number.MIN_VALUE],
+    ['overflowing signed range', (value: number) => (value - 1) * Number.MAX_VALUE]
+  ])('preserves finite relief with %s units beside missing data', (_label, convert) => {
+    const grid = testGrid(samples(3, (x, y) => (x === 1 && y === 1 ? null : x)));
+    const contours = generateContours(grid, {...options, domain: [0, 2]});
+    const reference = buildContourSurface(grid, contours);
+    const converted = buildContourSurface(
+      {...grid, values: Float64Array.from(grid.values, convert)},
+      contours
+    );
+    for (const pass of ['fills', 'outlines'] as const) {
+      const expected = reference[pass].flatMap(feature => feature.geometry.coordinates.flat(2));
+      const actual = converted[pass].flatMap(feature => feature.geometry.coordinates.flat(2));
+      expect(actual.length).toBeGreaterThan(0);
+      expect(actual).toHaveLength(expected.length);
+      expect(actual.flat().every(Number.isFinite)).toBe(true);
+      expect(Math.max(...actual.map(point => point[2]))).toBeGreaterThan(0);
+      actual.forEach((point, i) => {
+        point.forEach((value, channel) => expect(value).toBeCloseTo(expected[i][channel]));
+        expect(converted.getNormal(point).every(Number.isFinite)).toBe(true);
+      });
+    }
+  });
+
+  test('handles empty, missing and constant surfaces', () => {
+    expect(buildContourSurface(null, [])).toMatchObject({fills: [], outlines: []});
+    const constant = testGrid(samples(3, () => -5));
+    const contours = generateContours(constant, {...options, domain: [-6, -4]});
+    const surface = buildContourSurface(constant, contours);
+    expect(surface.fills.length).toBeGreaterThan(0);
+    expect(surface.fills.flatMap(f => f.geometry.coordinates.flat(2)).every(p => p[2] === 0)).toBe(
+      true
+    );
+    expect(buildContourSurface(testGrid(samples(3, () => NaN)), contours)).toMatchObject({
+      fills: [],
+      outlines: []
+    });
+  });
+});
 
 describe('scalar contours', () => {
   test('traces nested lower-value regions with thresholds in the original units', () => {

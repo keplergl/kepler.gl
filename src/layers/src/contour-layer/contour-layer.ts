@@ -3,6 +3,9 @@
 
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
+import {GL} from '@luma.gl/constants';
+import {Matrix4} from '@math.gl/core';
+import {createSelector} from 'reselect';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
 import {
@@ -16,7 +19,18 @@ import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
 import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import ContourLayerIcon from './contour-layer-icon';
-import {buildContourGrid, ContourFeature, generateContours, ScalarSample} from './contour-utils';
+import {
+  buildContourGrid,
+  ContourFeature,
+  generateContours,
+  ScalarGrid,
+  ScalarSample,
+  smoothScalarGrid
+} from './contour-utils';
+import {buildContourSurface} from './contour-surface';
+import ContourSurfaceLayer from './deck-contour-surface-layer';
+
+type ContourLayerData = {data: ContourFeature[]; grid?: ScalarGrid | null};
 
 const numberConfig = (
   property: string,
@@ -60,6 +74,20 @@ export const contourVisConfigs = {
   },
   fillOpacity: numberConfig('fillOpacity', 0.3, [0, 1], 0.005),
   thickness: numberConfig('thickness', 1.5, [0.5, 5], 0.1),
+  enable3d: {
+    ...LAYER_VIS_CONFIGS.enable3d,
+    label: 'layerVisConfigs.contour.enable3d',
+    description: 'layerVisConfigs.contour.enable3dDescription'
+  },
+  elevationScale: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    allowCustomValue: false,
+    defaultValue: 1,
+    range: [0, 10],
+    step: 0.1,
+    label: 'layerVisConfigs.contour.elevationScale',
+    description: 'layerVisConfigs.contour.elevationScaleDescription'
+  },
   filled: {...LAYER_VIS_CONFIGS.filled, defaultValue: true},
   stroked: 'stroked',
   below: {
@@ -80,6 +108,14 @@ export const contourVisConfigs = {
 };
 
 export default class ContourLayer extends Layer {
+  private getSurface = createSelector(
+    (data: ContourLayerData) => data,
+    data => {
+      const surface = buildContourSurface(data.grid || null, data.data);
+      return {...surface, depth: surface.fills.slice(0, 1)};
+    }
+  );
+
   constructor(props) {
     super(props);
     this.registerVisConfig(contourVisConfigs);
@@ -202,7 +238,9 @@ export default class ContourLayer extends Layer {
       'colorByLevel',
       'fillOpacity',
       'filled',
-      'stroked'
+      'stroked',
+      'enable3d',
+      'elevationScale'
     ];
   }
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
@@ -239,7 +277,7 @@ export default class ContourLayer extends Layer {
       });
   }
 
-  formatLayerData(datasets: Datasets): {data: ContourFeature[]} {
+  formatLayerData(datasets: Datasets): ContourLayerData {
     this.errorMessage = null;
     this.updateMeta({contourLevels: [], contourDomain: null, bounds: undefined});
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
@@ -294,14 +332,15 @@ export default class ContourLayer extends Layer {
       });
     }
     const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
-    const data = generateContours(grid, {
-      smoothing,
+    const smoothedGrid = grid && {...grid, values: smoothScalarGrid(grid, smoothing)};
+    const data = generateContours(smoothedGrid, {
+      smoothing: 0,
       levels,
       below,
       domain: customRange ? [minimum, maximum] : undefined
     });
     this.updateMeta({contourLevels: data.map(feature => feature.properties)});
-    return {data};
+    return {data, grid: smoothedGrid};
   }
 
   getHoverData(object: ContourFeature | null) {
@@ -324,7 +363,11 @@ export default class ContourLayer extends Layer {
     const id = objectInfo?.layer?.props?.id;
     return Boolean(
       objectInfo?.picked &&
-        (id === this.id || id === `${this.id}-fill` || id === `${this.id}-outline`)
+        (id === this.id ||
+          ['fill', 'surface-fill', 'outline'].some(pass => {
+            const passId = `${this.id}-${pass}`;
+            return id === passId || id?.startsWith(`${passId}-`);
+          }))
     );
   }
 
@@ -332,6 +375,10 @@ export default class ContourLayer extends Layer {
     const {data} = opts;
     if (!data?.data?.length || !this.config.isVisible || opts.visible === false) return [];
     const {color, visConfig} = this.config;
+    const surface = visConfig.enable3d ? this.getSurface(data) : null;
+    const elevationScale = Number.isFinite(visConfig.elevationScale)
+      ? Math.max(0, visConfig.elevationScale)
+      : 1;
     const colors = this.getContourColors(data.data.length);
     const colorTriggers = [
       color,
@@ -345,17 +392,53 @@ export default class ContourLayer extends Layer {
       ...defaultProps,
       data: data.data,
       extensions: [],
-      // Both passes are coplanar; render fills first and outlines above all fills.
+      // Composite nested fills on the same surface, then draw their outlines.
       parameters: {...defaultProps.parameters, depthMask: false},
       autoHighlight: false,
-      extruded: false
+      extruded: false,
+      ...(surface ? {modelMatrix: new Matrix4().scale([1, 1, elevationScale])} : {})
     };
     return [
+      // Resolve the visible surface before compositing the same translucent,
+      // nested fills as 2D. This prevents the back of a hill showing through it.
+      ...(surface && visConfig.filled && visConfig.fillOpacity > 0
+        ? [
+            new GeoJsonLayer<ContourFeature['properties']>({
+              ...shared,
+              id: `${this.id}-surface-depth`,
+              data: surface.depth,
+              filled: true,
+              stroked: false,
+              pickable: false,
+              getFillColor: [0, 0, 0, 255],
+              getPolygonOffset: () => [1, 1],
+              parameters: {
+                ...defaultProps.parameters,
+                depthMask: true,
+                // Per-layer WebGL masks require RGBA booleans, not a render-pass bitmask.
+                [GL.COLOR_WRITEMASK]: [false, false, false, false]
+              }
+            })
+          ]
+        : []),
       ...(visConfig.filled
         ? [
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
-              id: `${this.id}-fill`,
+              // Separate IDs prevent deck.gl from reusing the unlit 2D GPU model in 3D.
+              id: surface ? `${this.id}-surface-fill` : `${this.id}-fill`,
+              data: surface ? surface.fills : data.data,
+              ...(surface
+                ? {
+                    getPolygonOffset: () => [0, 0],
+                    _subLayerProps: {
+                      'polygons-fill': {
+                        type: ContourSurfaceLayer,
+                        getSurfaceNormal: surface.getNormal
+                      }
+                    }
+                  }
+                : {}),
               filled: true,
               stroked: false,
               getFillColor: visConfig.colorByLevel
@@ -373,6 +456,8 @@ export default class ContourLayer extends Layer {
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
               id: `${this.id}-outline`,
+              data: surface ? surface.outlines : data.data,
+              ...(surface ? {getPolygonOffset: () => [-1, -1]} : {}),
               filled: false,
               stroked: true,
               getLineColor: feature =>

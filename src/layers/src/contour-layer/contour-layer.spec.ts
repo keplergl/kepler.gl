@@ -4,11 +4,23 @@
 import {KeplerTable, getGpuFilterProps, assignGpuChannels} from '@kepler.gl/table';
 import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, KEPLER_COLOR_PALETTES} from '@kepler.gl/constants';
 import {colorMaybeToRGB, generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
-import {PickingInfo} from '@deck.gl/core';
+import {
+  PickingInfo,
+  AmbientLight,
+  _SunLight as SunLight,
+  LayerManager,
+  LightingEffect,
+  WebMercatorViewport
+} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {setGLParameters} from '@luma.gl/webgl';
+import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
 import booleanWithin from '@turf/boolean-within';
 import ContourLayer from './contour-layer';
+import ContourSurfaceLayer from './deck-contour-surface-layer';
+import {buildContourSurface} from './contour-surface';
 import Layer from '../base-layer';
 import {LayerClasses} from '../index';
 import {
@@ -259,15 +271,23 @@ test('registers the layer and renders both passes without recomputing on camera 
   expect(layer.getHoverData(null)).toBeNull();
 });
 
-test.each(['fill', 'outline'])('clears %s picks on removal or type changes', async pass => {
+test.each([
+  ['fill', ''],
+  ['fill', '-polygons-fill'],
+  ['outline', ''],
+  ['outline', '-polygons-stroke'],
+  ['surface-fill', ''],
+  ['surface-fill', '-polygons-fill']
+])('clears %s%s picks on removal or type changes', async (pass, sublayer) => {
   const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({enable3d: pass === 'surface-fill'});
   const data = layer.formatLayerData(datasets);
   const deckLayer = layer
     .renderLayer({data, visible: true, idx: 0, gpuFilter: dataset.gpuFilter, mapState: {zoom: 10}})
     .find(rendered => rendered.id === `${layer.id}-${pass}`)!;
   const pick: PickingInfo = {
     picked: true,
-    layer: deckLayer,
+    layer: deckLayer.clone({id: `${deckLayer.id}${sublayer}`}),
     object: data.data[0],
     color: null,
     index: 0,
@@ -304,7 +324,13 @@ test.each(['fill', 'outline'])('clears %s picks on removal or type changes', asy
     expect(result.clicked).toBe(unrelated);
     expect(result.hoverInfo).toBe(unrelated);
   }
-  for (const info of [null, undefined, {...pick, picked: false}, unrelated]) {
+  for (const info of [
+    null,
+    undefined,
+    {...pick, picked: false},
+    {...pick, layer: null},
+    unrelated
+  ]) {
     expect(layer.hasHoveredObject(info)).toBeNull();
   }
 });
@@ -462,6 +488,203 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
     mapState: {zoom: 10}
   });
 }
+
+test.each([0, 60])('projects contour normals perpendicular to slopes at latitude %s', latitude => {
+  const grid = {
+    width: 5,
+    height: 5,
+    longitude: 0,
+    latitude: latitude - 0.02,
+    stepLng: 0.01,
+    stepLat: 0.01,
+    values: Float64Array.from({length: 25}, (_, i) => (i % 5) + Math.floor(i / 5))
+  };
+  const surface = buildContourSurface(
+    grid,
+    generateContours(grid, {smoothing: 0, levels: 2, below: true, domain: [0, 9]})
+  );
+  const position = [0.02, latitude];
+  const normal = surface.getNormal(position);
+  const {unitsPerDegree, unitsPerMeter} = getDistanceScales({longitude: position[0], latitude});
+  const vertices = surface.fills[0].geometry.coordinates.flat(2);
+  const height = (x: number, y: number) =>
+    vertices.find(point => Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9)![2];
+  const dzdx = (height(0.03, latitude) - height(0.01, latitude)) / 0.02;
+  const dzdy = (height(0.02, latitude + 0.01) - height(0.02, latitude - 0.01)) / 0.02;
+  const normalize = (vector: number[]) => vector.map(value => value / Math.hypot(...vector));
+  for (const elevationScale of [1, 3, 0]) {
+    // Evaluate project_offset_normal's lng/lat branch with deck.gl's scales.
+    // The shader assembly test below also checks this helper and scale are used.
+    const projected = normalize(
+      elevationScale
+        ? [
+            normal[0] * unitsPerDegree[0],
+            normal[1] * unitsPerDegree[1],
+            (normal[2] * unitsPerMeter[2]) / elevationScale
+          ]
+        : [0, 0, 1]
+    );
+    // Independently derive the normal from the draped geometry's common-space tangents.
+    const expected = normalize([
+      (-dzdx * unitsPerMeter[2] * elevationScale) / unitsPerDegree[0],
+      (-dzdy * unitsPerMeter[2] * elevationScale) / unitsPerDegree[1],
+      1
+    ]);
+    // The surface uses 111320 m/degree, a close approximation to deck.gl's earth radius.
+    projected.forEach((value, i) => expect(value).toBeCloseTo(expected[i], 2));
+  }
+});
+
+test('3D contour fills derive slope normals and respond to scene lighting after height changes', async () => {
+  const {layer, dataset, datasets} = await setup();
+  const data = layer.formatLayerData(datasets);
+  const viewport = new WebMercatorViewport({width: 800, height: 600, zoom: 10, pitch: 45});
+  const onError = jest.fn();
+  const manager = new LayerManager(device, {viewport});
+  manager.setProps({onError});
+  const ambientLight = new AmbientLight({intensity: 0.2});
+  const directionalLight = new SunLight({timestamp: Date.UTC(2026, 5, 1, 12), intensity: 1});
+  const effect = new LightingEffect({ambientLight, directionalLight});
+  try {
+    const initialFlat = renderContourPasses(layer, dataset, data);
+    manager.setLayers(initialFlat);
+    const flatModel = (initialFlat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel;
+    layer.updateLayerVisConfig({enable3d: true});
+    const passes = renderContourPasses(layer, dataset, data);
+    manager.setLayers(passes);
+    const surface = passes[1].getSubLayers()[0] as ContourSurfaceLayer;
+    expect(surface).toBeInstanceOf(ContourSurfaceLayer);
+    expect(surface.props.extruded).toBe(false);
+    expect(passes[0].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
+    expect(passes[2].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
+    const model = surface.state.topModel!;
+    expect(model).toBeDefined();
+    expect(model).not.toBe(flatModel);
+    // Check the assembled shaders, including the material module and picking hooks.
+    const normals = surface.getAttributeManager()!.getAttributes().contourNormals
+      .value as Float32Array;
+    expect(normals.length).toBeGreaterThan(0);
+    expect(Array.from(normals.slice(0, 3))).not.toEqual(Array.from(normals.slice(3, 6)));
+    expect(model.vs).toContain('in vec3 contourNormals;');
+    expect(model.vs).toContain('vSurfaceNormal = normalize(project_offset_normal(surfaceNormal));');
+    expect(model.vs).toContain('vec3(contourNormals.xy, contourNormals.z / elevationScale)');
+    expect(model.vs).toContain('vCommonPosition = geometry.position.xyz;');
+    expect(model.vs).not.toContain('lighting_getLightColor(');
+    expect(model.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
+    expect(model.fs).not.toContain('dFdx(');
+    expect(model.fs).toContain('phongMaterialUniforms');
+    expect(model.fs).not.toContain('gouraudMaterialUniforms');
+    expect(model.fs).toContain('fragColor.rgb = lighting_getLightColor(');
+    expect(model.fs.indexOf('fragColor.rgb = lighting_getLightColor(')).toBeLessThan(
+      model.fs.lastIndexOf('DECKGL_FILTER_COLOR(fragColor, geometry)')
+    );
+    const applyLighting = () => {
+      surface.setShaderModuleProps(effect.getShaderModuleProps(surface, {project: {viewport}}));
+      const {lighting, phongMaterial} = model.shaderInputs.getUniformValues();
+      if (!lighting || !phongMaterial) throw new Error('Expected surface lighting uniforms');
+      return {lighting, phongMaterial};
+    };
+    const initial = applyLighting();
+    expect(initial.phongMaterial.unlit).toBe(false);
+    expect(initial.lighting.ambientColor).toEqual([0.2, 0.2, 0.2]);
+    expect(initial.lighting.directionalLightCount).toBe(1);
+    const initialDirection = [...initial.lighting.lights[0].direction];
+    ambientLight.intensity = 0.4;
+    directionalLight.timestamp = Date.UTC(2026, 5, 1, 18);
+    const updated = applyLighting();
+    expect(updated.lighting.ambientColor).toEqual([0.4, 0.4, 0.4]);
+    expect(updated.lighting.lights[0].direction).not.toEqual(initialDirection);
+    for (const elevationScale of [3, 0]) {
+      layer.updateLayerVisConfig({elevationScale});
+      const scaled = renderContourPasses(layer, dataset, data);
+      manager.setLayers(scaled);
+      const scaledSurface = scaled[1].getSubLayers()[0] as ContourSurfaceLayer;
+      expect(scaledSurface.state.topModel).toBe(model);
+      expect(scaledSurface.props.modelMatrix?.[10]).toBe(elevationScale);
+    }
+    layer.updateLayerVisConfig({enable3d: false});
+    const flat = renderContourPasses(layer, dataset, data);
+    manager.setLayers(flat);
+    expect(flat[0].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
+    const restoredFlatModel = (flat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel!;
+    expect(restoredFlatModel).not.toBe(model);
+    expect(restoredFlatModel.fs).not.toContain('dFdx(vCommonPosition)');
+    layer.updateLayerVisConfig({enable3d: true});
+    const restoredSurface = renderContourPasses(layer, dataset, data);
+    manager.setLayers(restoredSurface);
+    const restoredModel = (restoredSurface[1].getSubLayers()[0] as ContourSurfaceLayer).state
+      .topModel!;
+    expect(restoredModel).not.toBe(restoredFlatModel);
+    expect(restoredModel.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
+    expect(onError).not.toHaveBeenCalled();
+  } finally {
+    manager.finalize();
+  }
+});
+
+test.each([false, true])(
+  '3D drapes the same smoothed contours, colors and hover values (below: %s)',
+  async below => {
+    const {layer, dataset, datasets} = await setup();
+    layer.updateLayerVisConfig({below, smoothing: 1.5, colorByLevel: true});
+    const data = layer.formatLayerData(datasets);
+    const flat = renderContourPasses(layer, dataset, data);
+    const legend = layer.getContourLegend();
+    expect(layer.config.visConfig.enable3d).toBe(false);
+    layer.updateLayerVisConfig({enable3d: true, elevationScale: 2});
+    const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
+    expect(depth.props.pickable).toBe(false);
+    const gl = {enable: jest.fn(), depthMask: jest.fn(), colorMask: jest.fn()};
+    const applyDepthParameters = pass =>
+      setGLParameters(gl as unknown as WebGL2RenderingContext, pass.props.parameters);
+    // Exercise the actual WebGL parameter setter: a numeric render-pass mask
+    // is not valid for per-layer parameters and throws before drawing.
+    expect(() => applyDepthParameters(depth)).not.toThrow();
+    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
+    expect(gl.depthMask).toHaveBeenLastCalledWith(true);
+    expect(fill.props.parameters).toMatchObject({depthMask: false});
+    expect(fill.props.modelMatrix?.[10]).toBe(2);
+    expect(outline.props.modelMatrix?.[10]).toBe(2);
+    const raised = fill.props.data as typeof data.data;
+    expect(raised.map(f => f.properties)).toEqual(data.data.map(f => f.properties));
+    expect(raised.flatMap(f => f.geometry.coordinates.flat(2)).some(p => p[2] > 0)).toBe(true);
+    for (const [index, pass] of [fill, outline].entries()) {
+      const property = index ? 'getLineColor' : 'getFillColor';
+      const getColor = pass.props[property];
+      const getFlatColor = flat[index].props[property];
+      if (typeof getColor !== 'function' || typeof getFlatColor !== 'function') {
+        throw new Error('Expected colors for each contour level');
+      }
+      data.data.forEach((feature, i) => {
+        const info = {index: i, data: data.data, target: []};
+        expect(getColor(feature, info)).toEqual(getFlatColor(feature, info));
+        const object = (pass.props.data as typeof data.data)[i];
+        expect(layer.getHoverData(object)).toEqual(layer.getHoverData(feature));
+        expect(layer.isLayerHovered({picked: true, layer: pass} as unknown as PickingInfo)).toBe(
+          true
+        );
+      });
+    }
+    expect(layer.getContourLegend()).toEqual(legend);
+    layer.updateLayerVisConfig({elevationScale: 0});
+    const flattened = renderContourPasses(layer, dataset, data);
+    expect(() => applyDepthParameters(flattened[0])).not.toThrow();
+    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
+    expect(flattened[0].props.data).toBe(depth.props.data);
+    expect(flattened[1].props.data).toBe(fill.props.data);
+    expect(flattened[1].props.modelMatrix?.[10]).toBe(0);
+    layer.updateLayerVisConfig({filled: false});
+    expect(renderContourPasses(layer, dataset, data).map(pass => pass.id)).toEqual([
+      `${layer.id}-outline`
+    ]);
+    layer.updateLayerVisConfig({stroked: false});
+    expect(renderContourPasses(layer, dataset, data)).toEqual([]);
+    layer.updateLayerVisConfig({filled: true, stroked: true, enable3d: false});
+    const restored = renderContourPasses(layer, dataset, data);
+    expect(restored[0].props.data).toBe(data.data);
+    expect(restored[1].props.data).toBe(data.data);
+  }
+);
 
 test.each([true, false])(
   'colors each contour level from low to high values (below = %s)',
@@ -1227,6 +1450,8 @@ test.each(
     layer.updateLayerVisConfig({
       below,
       gridResolution: 128,
+      enable3d: true,
+      elevationScale: 2.5,
       colorByLevel: true,
       colorRange: {
         ...layer.config.visConfig.colorRange,

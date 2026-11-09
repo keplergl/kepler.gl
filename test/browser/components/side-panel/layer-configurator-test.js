@@ -566,6 +566,64 @@ test('Components -> LayerConfigurator -> contour groups expand independently wit
   }
 });
 
+test('Components -> LayerConfigurator -> contour 3D switch and multiplier preserve the 2D style', t => {
+  const dataset = contourRangeDataset();
+  const layer = contourRangeLayer(dataset);
+  const original = {...layer.config.visConfig};
+  const onChange = sinon.spy();
+  const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
+  try {
+    const group = contourConfigGroup(view, 'Surface');
+    const smoothing = group.querySelector('.kg-range-slider__input');
+    const toggle = view.container.querySelector('#contour-range-enable3d-switch');
+    t.ok(
+      smoothing.compareDocumentPosition(toggle) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+      'smoothing comes before the 3D switch in reading order'
+    );
+    t.notOk(toggle.checked, 'existing contours start flat');
+    t.notOk(view.queryByText('Elevation multiplier'), 'height control is hidden in 2D');
+    fireEvent.click(toggle);
+    t.deepEqual(onChange.lastCall.args[0], {enable3d: true}, 'enables the surface');
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    const multiplier = group.querySelectorAll('.kg-range-slider__input')[1];
+    t.notOk(
+      group.querySelector('[id="property.elevationScale"]'),
+      'elevation multiplier has no custom-input toggle'
+    );
+    t.ok(
+      toggle.compareDocumentPosition(multiplier) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+      'the elevation multiplier follows the 3D switch'
+    );
+    t.equal(multiplier.value, '1', 'relief starts at 1x');
+    fireEvent.change(multiplier, {target: {value: '2.5'}});
+    fireEvent.blur(multiplier);
+    t.deepEqual(onChange.lastCall.args[0], {elevationScale: 2.5}, 'changes only height');
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    fireEvent.click(toggle);
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.notOk(view.queryByText('Elevation multiplier'), 'returns to 2D');
+    t.deepEqual(
+      layer.config.visConfig,
+      {...original, elevationScale: 2.5},
+      'retains style and multiplier'
+    );
+    fireEvent.click(toggle);
+    layer.updateLayerVisConfig(onChange.lastCall.args[0]);
+    view.update();
+    t.equal(
+      group.querySelectorAll('.kg-range-slider__input')[1].value,
+      '2.5',
+      'restores the chosen multiplier'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
 test('Components -> LayerConfigurator -> density custom levels use the cell count range', t => {
   const dataset = contourRangeDataset();
   const layer = contourRangeLayer(dataset);
