@@ -73,7 +73,7 @@ export type LayerHoverProp = {
  * Find default layers from fields
  */
 export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClassesType): Layer[] {
-  if (!dataset) {
+  if (!dataset || dataset.metadata?.geojsonCrsWarning) {
     return [];
   }
 
@@ -184,6 +184,13 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     }
 
     if (!layer.type || !layer.hasAllColumns() || !layer.config.dataId) {
+      return {layer, layerData: {}};
+    }
+
+    const crsWarning = state.datasets[layer.config.dataId]?.metadata?.geojsonCrsWarning;
+    if (crsWarning) {
+      layer.isValid = false;
+      layer.errorMessage = crsWarning;
       return {layer, layerData: {}};
     }
 
@@ -356,6 +363,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     experimentalContext
   } = props;
   const dataset = datasets[layer.config.dataId];
+  if (dataset?.metadata?.geojsonCrsWarning) return [];
   const {gpuFilter} = dataset || {};
   const objectHovered = clicked || hoverInfo;
   // in split mode a layer missing from mapLayers is hidden, so coerce to a boolean

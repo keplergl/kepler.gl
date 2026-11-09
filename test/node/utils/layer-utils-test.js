@@ -12,7 +12,14 @@ import {
   KeplerGlLayers
 } from '@kepler.gl/layers';
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
-import {findDefaultLayer, getLayerHoverProp, getLayerOrderFromLayers} from '@kepler.gl/reducers';
+import {
+  findDefaultLayer,
+  getLayerHoverProp,
+  getLayerOrderFromLayers,
+  calculateLayerData,
+  renderDeckGlLayer
+} from '@kepler.gl/reducers';
+import {datasetSchema} from '@kepler.gl/schemas';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -23,7 +30,7 @@ import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
-import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
+import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
 import {
   ArrowDataContainer,
   createDataContainer,
@@ -37,6 +44,85 @@ import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
+
+test('layerUtils -> unsupported CRS stays inspectable and cannot reach map layers after reload', async t => {
+  const input = {
+    type: 'Feature',
+    crs: {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}},
+    // Even attributes named lat/lng must not produce a default point layer.
+    properties: {name: 'geocentric', lat: 20, lng: 10},
+    geometry: {type: 'Point', coordinates: [6378137, 0, 0]}
+  };
+  const initial = (
+    await createNewDataEntryMock({info: {id: 'table-only'}, data: processGeojson(input)})
+  )['table-only'];
+  const saved = datasetSchema.v1.save(initial);
+  const restored = (await createNewDataEntryMock(datasetSchema.v1.load(saved)))['table-only'];
+  for (const dataset of [initial, restored]) {
+    t.deepEqual(
+      dataset.dataContainer.valueAt(0, 0).geometry,
+      input.geometry,
+      'table retains original geometry'
+    );
+    t.equal(dataset.dataContainer.valueAt(0, 1), 'geocentric', 'table retains attributes');
+    t.notOk(dataset.disableDataOperation, 'table inspection remains enabled');
+    t.ok(dataset.metadata.geojsonCrsWarning, 'warning survives a saved-map round trip');
+    t.deepEqual(findDefaultLayer(dataset, LayerClasses), [], 'does not auto-create any layer');
+    for (const LayerClass of [GeojsonLayer, PointLayer]) {
+      const {props} = LayerClass.findDefaultLayerProps(dataset);
+      const layer = new LayerClass({...props[0], dataId: dataset.id});
+      layer.setInitialLayerConfig(dataset);
+      t.ok(layer.hasAllColumns(), 'exercises a fully configured layer');
+      // Simulate a manually configured or saved layer, including stale data.
+      layer.formatLayerData = () => {
+        throw new Error('raw coordinates reached a layer');
+      };
+      layer.renderLayer = () => {
+        throw new Error('raw coordinates reached deck.gl');
+      };
+      const {layerData} = calculateLayerData(
+        layer,
+        {datasets: {[dataset.id]: dataset}, animationConfig: {}},
+        {data: [input]}
+      );
+      t.deepEqual(layerData, {}, 'clears stale layer data without formatting coordinates');
+      t.equal(
+        layer.errorMessage,
+        dataset.metadata.geojsonCrsWarning,
+        'layer explains the map restriction'
+      );
+      t.deepEqual(
+        renderDeckGlLayer({layer, datasets: {[dataset.id]: dataset}, data: {data: [input]}}, {}),
+        [],
+        'does not render even with cached data'
+      );
+    }
+  }
+  const update = data =>
+    new Promise((resolve, reject) => {
+      createNewDataEntry({info: {id: initial.id}, data}, {[initial.id]: initial}).run(
+        (effect, succeed, fail) => effect(succeed, fail),
+        resolve,
+        reject
+      );
+    });
+  const supported = processGeojson({
+    ...input,
+    crs: undefined,
+    geometry: {type: 'Point', coordinates: [10, 20]}
+  });
+  await update(supported);
+  t.notOk(
+    initial.metadata.geojsonCrsWarning,
+    'supported replacement of the same dataset clears the restriction'
+  );
+  await update(processGeojson(input));
+  t.ok(
+    initial.metadata.geojsonCrsWarning,
+    'unsupported replacement of the same dataset restores the restriction'
+  );
+  t.end();
+});
 
 async function createDefaultColorDataset(columns, rowCount = 3) {
   const dataset = new KeplerTable({info: {id: 'default-color'}});

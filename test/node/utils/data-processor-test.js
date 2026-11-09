@@ -905,7 +905,7 @@ test('Processor => processGeojson:invalid geojson', t => {
   t.end();
 });
 
-test('Processor => processGeojson: rejects explicit unsupported CRS declarations', t => {
+test('Processor => processGeojson: retains known unsupported CRS, rejects unknown projected data', t => {
   for (const crs of [
     {type: 'name', properties: {name: '+proj=unavailable +datum=WGS84'}},
     {
@@ -930,11 +930,21 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
         features: [{...feature, geometry: {...geometry, crs}}]
       }))
     ]) {
-      t.throws(
-        () => processGeojson(input),
-        /WGS84.*EPSG:4326/,
-        'unsupported CRS should explain the required coordinate system'
-      );
+      if (crs.properties.name?.startsWith('+proj=')) {
+        const result = processGeojson(input);
+        t.match(
+          result.metadata.geojsonCrsWarning,
+          /table inspection only/,
+          'marks table-only data'
+        );
+        t.equal(result.rows.length, 1, 'retains nested unsupported geometry for inspection');
+      } else {
+        t.throws(
+          () => processGeojson(input),
+          /WGS84.*EPSG:4326/,
+          'unknown projected data cannot be interpreted as longitude/latitude'
+        );
+      }
     }
   }
   t.end();
@@ -1119,7 +1129,7 @@ test('Processor => processGeojson: unknown CRS requires per-declaration confirma
   t.end();
 });
 
-test('Processor => processGeojson: known unavailable transformations cannot be overridden', t => {
+test('Processor => processGeojson: known unavailable transformations remain table-only', t => {
   for (const name of [
     '+proj=unavailable +datum=WGS84',
     '+datum=WGS84 +proj=unavailable',
@@ -1132,16 +1142,15 @@ test('Processor => processGeojson: known unavailable transformations cannot be o
       properties: {},
       geometry: {type: 'Point', coordinates: [1, 2, 3]}
     };
-    try {
-      processGeojson(input, {assumeLongitudeLatitude: [name]});
-      t.fail('known unavailable transformation must fail');
-    } catch (error) {
-      t.notOk(error instanceof UnknownGeojsonCrsError, 'known projection errors offer no override');
+    for (const options of [undefined, {assumeLongitudeLatitude: [name]}]) {
+      const result = processGeojson(input, options);
+      t.deepEqual(result.rows[0][0], input, 'preserves original geometry, properties and CRS');
       t.match(
-        error.message,
-        /Convert coordinates to WGS84/,
-        'conversion failure remains actionable'
+        result.metadata.geojsonCrsWarning,
+        /cannot be displayed on the map.*Convert coordinates to WGS84/,
+        'known transformation stays table-only even with longitude/latitude approval'
       );
+      t.ok(result.metadata.geojsonCrsWarning.includes(name), 'warning identifies the CRS');
     }
   }
   const input = {
@@ -1154,6 +1163,41 @@ test('Processor => processGeojson: known unavailable transformations cannot be o
     Math.abs(processGeojson(input).rows[0][0].geometry.coordinates[0] - 3) < 1e-8,
     'supported inline definitions are transformed'
   );
+  t.end();
+});
+
+test('Processor => processGeojson: table-only import preserves the whole source without mutation', t => {
+  const crs = {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}};
+  const input = {
+    type: 'FeatureCollection',
+    crs: {type: 'name', properties: {name: 'EPSG:3857'}},
+    features: [
+      {
+        type: 'Feature',
+        properties: {first: 'projected'},
+        geometry: {type: 'Point', coordinates: [111319.49079327357, 0]}
+      },
+      {
+        type: 'Feature',
+        crs,
+        properties: {second: 'geocentric'},
+        geometry: {type: 'Point', coordinates: [6378137, 0, 0]}
+      },
+      {type: 'Feature', properties: {name: 'no geometry'}, geometry: null}
+    ]
+  };
+  const original = cloneDeep(input);
+  const result = processGeojson(input);
+  t.equal(result.rows.length, 3, 'keeps property-only features for table inspection');
+  t.deepEqual(
+    result.rows.map(row => row[0].geometry),
+    original.features.map(f => f.geometry),
+    'never mixes reprojected and original coordinates'
+  );
+  t.deepEqual(input, original, 'filling missing table properties does not mutate the source');
+  const empty = processGeojson({type: 'FeatureCollection', crs, features: []});
+  t.deepEqual(empty.rows, [], 'empty unsupported dataset remains inspectable');
+  t.ok(empty.metadata.geojsonCrsWarning, 'empty dataset still explains the unsupported CRS');
   t.end();
 });
 

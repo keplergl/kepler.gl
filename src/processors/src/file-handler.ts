@@ -838,6 +838,9 @@ export async function processFileData({
     const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
     const fileSize = typeof content.fileSize === 'number' ? content.fileSize : undefined;
     const metadata = {
+      ...(result?.metadata?.geojsonCrsWarning
+        ? {geojsonCrsWarning: result.metadata.geojsonCrsWarning}
+        : {}),
       ...(sourceUrl
         ? {
             source: sourceUrl,
@@ -865,7 +868,7 @@ export async function processFileData({
           format,
           ...(sourceUrl ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
         },
-        ...(sourceUrl || fileSize != null ? {metadata} : {})
+        ...(Object.keys(metadata).length ? {metadata} : {})
       }
     ];
   } else {

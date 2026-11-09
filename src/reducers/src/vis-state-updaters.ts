@@ -4021,6 +4021,9 @@ export function refreshDatasetSuccessUpdater(
     // ETag or a later 304 can skip a body we no longer have.
     etag: result.etag,
     lastModified: result.lastModified,
+    ...(!result.notModified && result.data
+      ? {geojsonCrsWarning: result.data.metadata?.geojsonCrsWarning}
+      : {}),
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 

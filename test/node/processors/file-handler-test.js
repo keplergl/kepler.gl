@@ -320,6 +320,44 @@ test('#file-handler -> unknown GeoJSON CRS requires an explicit per-file retry',
   t.end();
 });
 
+test('#file-handler -> unsupported GeoJSON imports with a table-only warning', async t => {
+  const input = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {name: 'geocentric'},
+        geometry: {type: 'Point', coordinates: [6378137, 0, 0]}
+      }
+    ],
+    crs: {type: 'name', properties: {name: '+proj=geocent +datum=WGS84 +units=m'}}
+  };
+  const file = new File([JSON.stringify(input)], 'geocentric.geojson', {
+    type: 'application/geo+json'
+  });
+  let content;
+  for await (const batch of await readFileInBatches({file, loadOptions: {worker: false}})) {
+    content = batch;
+  }
+  for (const sourceUrl of [undefined, 'https://example.com/geocentric.geojson']) {
+    const [dataset] = await processFileData({content: {...content, sourceUrl}, fileCache: []});
+    t.deepEqual(
+      dataset.data.rows[0][0].geometry,
+      input.features[0].geometry,
+      'preserves raw coordinates'
+    );
+    t.equal(dataset.data.rows[0][1], 'geocentric', 'preserves attributes');
+    t.equal(
+      dataset.metadata.geojsonCrsWarning,
+      dataset.data.metadata.geojsonCrsWarning,
+      'staged local and remote datasets retain the warning'
+    );
+    t.equal(dataset.metadata.source, sourceUrl, 'preserves remote source metadata');
+    t.notOk('sourceFile' in dataset, 'file bytes are not stored in the dataset');
+  }
+  t.end();
+});
+
 test('#file-handler -> processFileData one-shot load does not enable polling', async t => {
   const rows = [{lat: 1, lng: 2}];
   const local = await processFileData({

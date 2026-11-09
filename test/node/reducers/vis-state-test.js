@@ -8702,29 +8702,75 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
     }
     t.ok(streamedRows, 'exercise feature batches before the final CRS declaration');
     t.equal(task.type, 'PROCESS_FILE_CONTENT', 'process the completed GeoJSON file');
-    try {
-      await processFileData(task.payload);
-      t.fail('the completed file must reject its unsupported CRS');
-    } catch (error) {
-      t.match(error.message, /WGS84.*EPSG:4326/, 'surface an actionable import error');
-      const warn = sinon.stub(Console, 'warn');
-      try {
-        state = reducer(state, errorTaskInTest(task, error));
-      } finally {
-        warn.restore();
-      }
-      t.equal(state.fileLoadingProgress[file.name].error, error, 'record the file error');
-      t.equal(state.datasets, initialState.datasets, 'failed import preserves existing datasets');
-      t.deepEqual(state.fileLoading.fileCache, [], 'failed import does not leave a partial cache');
-      const [delay] = drainTasksForTesting();
-      state = reducer(state, succeedTaskInTest(delay));
-      const [nextLoad] = drainTasksForTesting();
-      t.equal(nextLoad.payload.file, nextFile, 'continue loading the next file after the error');
-    }
+    const cache = await processFileData(task.payload);
+    t.match(
+      cache[0].metadata.geojsonCrsWarning,
+      /table inspection only/,
+      'completed file is marked table-only'
+    );
+    t.deepEqual(
+      cache[0].data.rows[0][0].geometry,
+      feature.geometry,
+      'retains raw geometry for the table'
+    );
+    state = reducer(state, succeedTaskInTest(task, cache));
+    t.notOk(state.fileLoadingProgress[file.name].error, 'table-only import succeeds');
+    t.equal(state.datasets, initialState.datasets, 'staging preserves existing datasets');
+    t.equal(state.fileLoading.fileCache.length, 1, 'stages only the completed dataset');
+    const [delay] = drainTasksForTesting();
+    state = reducer(state, succeedTaskInTest(delay));
+    const [nextLoad] = drainTasksForTesting();
+    t.equal(nextLoad.payload.file, nextFile, 'continues loading the next file');
   } finally {
     initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
     drainTasksForTesting();
   }
+  t.end();
+});
+
+test('#visStateReducer -> refresh changes CRS restrictions only with replacement data', async t => {
+  const input = {
+    type: 'Feature',
+    properties: {name: 'survey'},
+    geometry: {type: 'Point', coordinates: [10, 20]}
+  };
+  const supported = processGeojson(input);
+  const unsupported = processGeojson({
+    ...input,
+    crs: {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}}
+  });
+  const dataId = 'crs-refresh';
+  const datasets = await createNewDataEntryMock({info: {id: dataId}, data: supported});
+  let state = {...INITIAL_VIS_STATE, datasets};
+  const {props} = GeojsonLayer.findDefaultLayerProps(datasets[dataId]);
+  const layer = new GeojsonLayer({...props[0], dataId});
+  layer.setInitialLayerConfig(datasets[dataId]);
+  state = {...state, layers: [layer], layerData: [calculateLayerData(layer, state).layerData]};
+  t.ok(layer.shouldRenderLayer(state.layerData[0]), 'starts with a renderable layer');
+  state = reducer(
+    state,
+    VisStateActions.refreshDatasetSuccess(dataId, {data: unsupported, notModified: false})
+  );
+  t.equal(
+    state.datasets[dataId].metadata.geojsonCrsWarning,
+    unsupported.metadata.geojsonCrsWarning,
+    'new unsupported source sets warning'
+  );
+  t.deepEqual(state.layerData[0], {}, 'refresh removes previously renderable layer data');
+  state = reducer(state, VisStateActions.refreshDatasetSuccess(dataId, {notModified: true}));
+  t.ok(state.datasets[dataId].metadata.geojsonCrsWarning, '304 retains the restriction');
+  state = reducer(
+    state,
+    VisStateActions.refreshDatasetSuccess(dataId, {data: supported, notModified: false})
+  );
+  t.notOk(
+    state.datasets[dataId].metadata.geojsonCrsWarning,
+    'supported replacement clears the warning'
+  );
+  t.ok(
+    state.layers[0].shouldRenderLayer(state.layerData[0]),
+    'supported replacement can render again'
+  );
   t.end();
 });
 

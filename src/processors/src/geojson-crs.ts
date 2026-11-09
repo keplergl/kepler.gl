@@ -35,6 +35,17 @@ export class UnknownGeojsonCrsError extends Error {
   }
 }
 
+export class UnsupportedGeojsonCrsError extends Error {
+  constructor(identifier: string, reason = 'The required transformation is not supported.') {
+    super(
+      `GeoJSON coordinate reference system "${identifier}" cannot be converted. ${reason} ` +
+        'Imported for table inspection only; this dataset cannot be displayed on the map. ' +
+        'Convert coordinates to WGS84 (EPSG:4326) and reimport to display it.'
+    );
+    this.name = 'UnsupportedGeojsonCrsError';
+  }
+}
+
 function unsupportedCrs(identifier: string): Error {
   return new Error(
     `Read File Failed: GeoJSON coordinate reference system "${identifier}" cannot be converted. ` +
@@ -80,20 +91,26 @@ function resolveCrs(identifier: string): Crs {
       new proj4.Proj(definition);
     // Horizontal GeoJSON import cannot supply vertical coordinates or datum
     // grids. Do not silently fall back when a known transformation needs them.
+    if (source.projName === 'geocent' || /^(?:COMPD_CS|COMPOUNDCRS)\s*\[/i.test(name)) {
+      throw new UnsupportedGeojsonCrsError(
+        identifier,
+        'Geocentric and compound coordinate transformations are not supported.'
+      );
+    }
     if (
-      source.projName === 'geocent' ||
-      /^(?:COMPD_CS|COMPOUNDCRS)\s*\[/i.test(name) ||
-      (source.nadgrids &&
-        source.nadgrids.split(',').some(grid => !['null', '@null'].includes(grid)))
+      source.nadgrids &&
+      source.nadgrids.split(',').some(grid => !['null', '@null'].includes(grid))
     ) {
-      throw unsupportedCrs(identifier);
+      throw new UnsupportedGeojsonCrsError(identifier, 'Required datum grids are unavailable.');
     }
     const projection = proj4(source, 'EPSG:4326');
     return {identifier, project: position => projection.forward(position)};
-  } catch {
+  } catch (error) {
     // A definition was found, so this is an unsupported transformation, not an
     // unknown label that the user may override.
-    throw unsupportedCrs(identifier);
+    throw error instanceof UnsupportedGeojsonCrsError
+      ? error
+      : new UnsupportedGeojsonCrsError(identifier);
   }
 }
 
@@ -134,14 +151,14 @@ export function normalizeGeojsonCrs(rawData: unknown, options: GeojsonCrsOptions
     try {
       projected = crs.project([x, y]);
     } catch {
-      throw unsupportedCrs(crs.identifier);
+      throw new UnsupportedGeojsonCrsError(crs.identifier, 'Coordinate conversion failed.');
     }
     if (
       !Number.isFinite(projected[0]) ||
       !Number.isFinite(projected[1]) ||
       Math.abs(projected[1]) > 90
     ) {
-      throw unsupportedCrs(crs.identifier);
+      throw new UnsupportedGeojsonCrsError(crs.identifier, 'Coordinate conversion failed.');
     }
     // Reproject horizontal coordinates only; preserve altitude and measures.
     return [...projected.slice(0, 2), ...value.slice(2)];
