@@ -580,11 +580,11 @@ is the classic trap:
 | Heatmap | `heatmap` | `heatmap` |
 | Hexbin (binned from points) | `hexagon` | `hexagon` |
 | H3 hexagon (precomputed H3 ids) | `hexagonId` | `h3` |
-| Grid (binned from points) | — | `grid` |
+| Grid (binned from points) | `grid` | `grid` |
 | S2 | `s2` | `s2` |
 | Arc (great-circle origin→destination) | `arc` | `arc` |
-| Flow (weighted origin→destination) | — | `flow` |
-| Flow field (streamlines over a vector field) | — | `flowField` |
+| Flow (weighted origin→destination) | `flow` | `flow` |
+| Flow field (streamlines over a vector field) | `flowField` | `flowField` |
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
