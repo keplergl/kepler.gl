@@ -159,9 +159,9 @@ is the classic trap:
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
 | Icon | `icon` | — |
-| Contour (scalar levels or point counts) | `contour` | — |
-| Voronoi Mosaic (nearest-site cells) | `voronoi` | — |
-| Zarr (remote multidimensional raster) | `zarr` | — |
+| Contour (scalar levels or point counts) | `contour` | `contour` |
+| Voronoi Mosaic (nearest-site cells) | `voronoi` | `voronoi` |
+| Zarr (remote multidimensional raster) | `zarr` | `zarr` |
 | A5 / Geohash cells | `a5` / `geohash` | — |
 | Vector / raster tiles | `vectorTile` / `rasterTile` | — |
 | WMS | `wms` | — |

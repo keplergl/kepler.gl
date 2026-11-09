@@ -53,6 +53,10 @@ not this one.
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
 | `map.get-dataset-context` | List all loaded datasets with their fields and layer configurations. |
 | `map.get-boundary`       | Read the current map view's bounding box.                      |
+| `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
+| `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
+| `map.camera-tour`        | Get/set location-animation stops or seek the camera along the tour. |
+| `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
 
 Every command takes a `commandId` (one of the table above) and an `input`
 object. Issue commands through your host's map-command dispatcher — the exact
@@ -60,14 +64,10 @@ envelope is described in your host's tool listing. In the kepler.gl demo
 assistant the dispatcher is the `executeApi` tool with
 `apiName: "executeCommand"` and `args: { commandId, input }`.
 
-Use the connected host's tool listing and input schemas as the authority.
-The stdio bridge exposes names such as `map_add-layer`, while dispatchers use
-`map.add-layer`. A feature in the layer picker is not necessarily supported by
-`map.add-layer`. In particular, it does not accept `contour`, `zarr`, or
-`voronoi`, and there are no built-in bookmark, camera-tour, or zoom-fade
-commands. Use a host's supported UI/config workflow for those features; if
-none is available, explain the steps and the limitation instead of claiming
-the map was changed.
+`map.add-layer` also accepts `contour`, `voronoi`, and `zarr`, with their
+options described below. The stdio bridge replaces the namespace dot with
+an underscore: for example, `map.camera-bookmarks` becomes
+`map_camera-bookmarks`. Dispatchers use the dotted command IDs.
 
 When editing saved config, merge into the existing `config.visState` and
 preserve unrelated layers, filters, and interactions. Layer definitions use
@@ -89,9 +89,9 @@ supports the requested feature. Installing a skill does not upgrade the app.
   lat/lon columns or build an intermediate table. For geojson datasets use
   geometryColumn `"_geojson"`.
 - Time-animated movement → `trip`.
-- Scalar levels or point-count contours → `contour` through the layer picker/config.
-- Nearest-site cells → `voronoi` through the layer picker/config.
-- Multidimensional raster slices → `zarr` through Add Data → Tilesets.
+- Scalar levels or point-count contours → `contour` with optional `contour.weightColumn`.
+- Nearest-site cells → `voronoi` with optional `voronoi.boundsPadding`.
+- Multidimensional raster slices → `map.load-zarr`, then a `zarr` layer.
 
 ## Color configuration
 
@@ -305,6 +305,24 @@ Wind encoded as speed + direction under different column names:
 
 ### Contour layer (`type: "contour"`, prototype)
 
+Call `map.add-layer` with numeric coordinate columns (or `geometryColumn`):
+
+```json
+{
+  "datasetName": "observations",
+  "layerType": "contour",
+  "latitudeColumn": "lat",
+  "longitudeColumn": "lng",
+  "contour": {"weightColumn": "temperature", "levels": 7, "smoothing": 3}
+}
+```
+
+Omit `weightColumn` for point counts. Omit position columns to use the first
+detected coordinate pair or geometry field. The `contour` options also accept
+`gridResolution`, `filled`, `stroked`, `colorByLevel`, and `fillOpacity`.
+Use `colorByLevel: false` with `simpleColor` for a single color; tabular
+`colorBy`, `colorType`, and `colorMap` do not apply to contour surfaces.
+
 Select **Contour** in the layer picker. Choose numeric latitude/longitude
 columns, or GeoJSON representative points, then optionally select **Weight**.
 With a weight, occupied cells contain the mean of finite values; without it,
@@ -327,6 +345,36 @@ true. It does not disable rendering saved contour layers.
 
 ### Zarr layer (`type: "zarr"`, experimental)
 
+Call `map.load-zarr` with `{"url": "https://example.org/forecast.zarr",
+"datasetName": "Forecast"}` using the actual store URL. Its result includes
+`datasetId`, variable paths, and non-spatial dimension names/sizes. Then call
+`map.add-layer` with the returned dataset ID:
+
+```json
+{
+  "datasetName": "<returned datasetId>",
+  "layerType": "zarr",
+  "zarr": {
+    "variable": "temperature",
+    "dimensionIndexes": {"level": 0},
+    "axis": {"kind": "dimension", "dimension": "time"},
+    "frame": 0,
+    "rescale": [250, 310],
+    "opacity": 0.8
+  }
+}
+```
+
+Use variable paths and dimensions returned by the loader, and a rescale range
+in the variable's units. `axis` also accepts `{"kind": "auto"}`,
+`{"kind": "off"}`, or `{"kind": "forecast", "referenceTime": "run",
+"leadTime": "lead"}` for compatible forecast dimensions. `frame` requires an
+explicit dimension/forecast axis. Dimension indexes and frames are zero-based.
+Omit `zarr` options to use the store's default variable and automatic time axis.
+Zarr uses a raster palette and `rescale`, not tabular `colorBy`/`colorMap`.
+
+The equivalent UI workflow is:
+
 1. Open **Add Data → Tilesets → Zarr** and enter a public store URL.
 2. Wait for metadata, then choose **Add Tileset**.
 3. Select the variable and pinned dimensions in the layer panel; adjust its
@@ -337,8 +385,9 @@ true. It does not disable rendering saved contour layers.
 
 Use the Zarr axis controls rather than `map.add-time-filter` on an invented
 table column. `map.load-data` is not the Zarr tileset-import workflow. The
-store must allow browser requests through CORS. Metadata loading in Add Data
-times out after 30 seconds; changing the URL or closing the modal cancels it.
+store must allow browser requests through CORS. Changing the URL or closing
+the Add Data modal cancels its metadata load; tool cancellation also stops
+`map.load-zarr` before it adds the dataset.
 
 JSON/HTML exports retain the store URL, default variable, attribution, and
 layer settings (selected variable, axis, frame, pinned dimensions, colors).
@@ -348,6 +397,13 @@ full variable metadata in a Python DataFrame. `enableZarrLayer` defaults to
 true and controls the adding UI, not rendering saved layers.
 
 ### Voronoi Mosaic layer (`type: "voronoi"`)
+
+Call `map.add-layer` with `layerType: "voronoi"`, a dataset name, optional
+`latitudeColumn`/`longitudeColumn` or `geometryColumn`, and
+`voronoi: {"boundsPadding": 10}`. Without explicit columns, the first detected
+coordinate pair or geometry field is used. Standard `colorBy`/`colorMap`
+options color cells by their source attributes. `voronoi` also accepts
+`filled`, `stroked`, and `opacity`.
 
 Choose **Voronoi Mosaic**, then **Point Columns** (latitude/longitude) or
 **GeoJSON Centroids** (geometry). Color by a source attribute and adjust
@@ -522,6 +578,19 @@ basemap, so set both when the user asks for a "dark globe" and the like.
 
 ### Bookmarks
 
+Save the current view with `map.camera-bookmarks`:
+
+```json
+{"action": "save", "id": "view-downtown", "name": "Downtown", "showControl": true}
+```
+
+Use `{"action": "list"}`, `{"action": "go-to", "id": "view-downtown"}`,
+or `{"action": "remove", "id": "view-downtown"}`. Saving an existing ID
+updates it in place and preserves all other bookmarks. Pass an explicit
+`camera` snapshot to save coordinates without first moving the map.
+Current-view capture and navigation use the host's `getMapState` accessor,
+which is wired into the demo's MCP and WebMCP surfaces. Go-to moves immediately.
+
 1. In **Interactions → Bookmarks**, compose a view and choose **Add Bookmark**.
 2. Rename or reorder bookmarks; **Update view** replaces the saved camera.
 3. Enable the **Bookmarks** switch for **Go to** and the floating panel.
@@ -548,6 +617,25 @@ on.
 
 ### Camera tours
 
+Use `map.camera-tour` with `action: "set"` and ordered `stops`:
+
+```json
+{
+  "action": "set",
+  "stops": [
+    {"id": "start", "name": "Downtown", "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}, "holdDurationMs": 1000, "travelDurationMs": 3000},
+    {"id": "end", "name": "Harbor", "camera": {"longitude": -122.39, "latitude": 37.8, "zoom": 13, "bearing": 20, "pitch": 45}, "holdDurationMs": 1000, "travelDurationMs": 0}
+  ]
+}
+```
+
+`{"action": "get"}` returns the tour and total duration. To inspect its camera
+at a time, use `{"action": "seek", "elapsedMs": 2500}`; this applies the same
+interpolation as playback and clamps at the end. `{"action": "set", "stops": []}`
+clears the tour. Set replaces the complete ordered stop list; get it first
+when extending an existing tour. Play/Pause remains in the camera-animation
+panel; set and seek do not start playback.
+
 For a fly-through between places, use **Interactions → Camera animation**.
 **Add stop** captures the current view, or offers a saved bookmark when one
 exists. Rename and reorder stops, use **Pick current location** to update a
@@ -569,6 +657,23 @@ filter; for points pulsing in place use the Point layer's Pulse / Ripple
 controls. Do not create a time filter merely to move the camera.
 
 ### Fade on Zoom
+
+Call `map.set-zoom-fade` with existing layer IDs (returned by `map.add-layer`
+or listed by `map.get-dataset-context`):
+
+```json
+{
+  "enabled": true,
+  "controllers": [
+    {"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}
+  ]
+}
+```
+
+For annotations, pass their real IDs in a controller's `annotationIds` array;
+the command converts them to saved fade targets. Controllers replace the
+complete fade list. Omit `controllers` to only toggle the effect, or pass `[]`
+to clear it. Other interactions and layer opacity settings are preserved.
 
 In **Interactions → Fade on zoom**, add a controller, select its layers and/or
 annotations, set the four zoom handles, and enable the switch. Each target can
@@ -673,9 +778,9 @@ is the classic trap:
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
 | Icon | `icon` | — |
-| Contour (scalar levels or point counts) | `contour` | — |
-| Voronoi Mosaic (nearest-site cells) | `voronoi` | — |
-| Zarr (remote multidimensional raster) | `zarr` | — |
+| Contour (scalar levels or point counts) | `contour` | `contour` |
+| Voronoi Mosaic (nearest-site cells) | `voronoi` | `voronoi` |
+| Zarr (remote multidimensional raster) | `zarr` | `zarr` |
 | A5 / Geohash cells | `a5` / `geohash` | — |
 | Vector / raster tiles | `vectorTile` / `rasterTile` | — |
 | WMS | `wms` | — |
