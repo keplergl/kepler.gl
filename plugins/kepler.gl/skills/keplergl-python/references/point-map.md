@@ -103,17 +103,8 @@ map_1.save_to_html(file_name='point_map_styled.html')
 
 ## Glow and Pulse / Ripple
 
-- **Point → Visual → Glow** adds a static halo. **Pulse / Ripple** animates
-  points in place; continuous mode needs no timestamp or time filter. Both
-  are off by default and can be enabled independently.
-- For **Trigger → At event time**, select an **Event timestamp** and a
-  **Duration (timeline seconds)**, and add/enable a time filter for the same
-  dataset and timestamp field. The first matching enabled filter drives the
-  effect. Without it, ordinary points remain but the event effect is inactive.
-  Missing timestamps produce no effect. The filter window's end is the current
-  time; pausing freezes effects and scrubbing/replay updates them. Filters can
-  cut effects short; coarse time steps can skip short events.
-
-These controls require a compatible JavaScript bundle. Preserve their saved
-layer settings when exporting; see the export-version guidance in
-[the Python skill](../SKILL.md).
+Use **Point → Visual** for Glow (a static halo) or Pulse / Ripple (animation
+in place). Continuous mode needs no time filter. **At event time** requires an
+Event timestamp and an enabled time filter on the same dataset/field; duration
+uses timeline seconds, and missing timestamps produce no effect. Preserve
+these visual settings from a compatible renderer when exporting.

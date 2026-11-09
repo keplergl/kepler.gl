@@ -94,12 +94,7 @@ map_1.save_to_html(file_name='heatmap_styled.html')
 
 ## 3D Surface
 
-**Heatmap → 3D Surface** raises density into a continuous surface. Enable
-it and tilt the map; **Maximum height (m)** controls height, while shading
-and surface contours are optional. Height represents density, not terrain.
-It uses the existing weights/filters and works on the map and globe.
-Surface contours are a heatmap option, distinct from the Contour layer.
-
-These controls require a compatible JavaScript bundle. Preserve their saved
-layer settings when exporting; see the export-version guidance in
-[the Python skill](../SKILL.md).
+Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
+surface. Height represents density, not terrain; its optional contours are
+separate from the Contour layer. Preserve these visual settings from a
+compatible renderer when exporting.

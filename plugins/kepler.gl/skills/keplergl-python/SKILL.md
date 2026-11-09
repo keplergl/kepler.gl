@@ -30,10 +30,6 @@ pip install keplergl
 
 Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serialization API and the examples in this skill will not work. Requirements: Python >= 3.9. Dependencies (`pandas`, `geopandas`, `shapely`) are installed automatically.
 
-The Python version requirement does not guarantee that its JavaScript renderer
-supports every config option. Check the bundle used by the installed exporter
-before choosing layer types or camera controls.
-
 ## Instructions
 
 1. Import `KeplerGl` from `keplergl`
@@ -78,12 +74,9 @@ before choosing layer types or camera controls.
 | `app_name` | str | None | App name override for export title/header |
 | `theme` | str | None | Theme override for export (`"light"`, `"dark"`, `"base"`, or `""`) |
 
-Check the installed exporter and the exported HTML's script URL before using
-features from another version. A config can describe a layer that its renderer
-does not support. `save_to_html()` has no public `kepler_gl_version` argument;
-use a compatible exporter/runtime. Installing this skill does not upgrade the
-bundle. Use `center_map=False` to preserve a deliberately composed initial
-camera instead of fitting to the data.
+Check the exported HTML's script URL: its JavaScript bundle must support the
+configured layers/controls. `save_to_html()` has no `kepler_gl_version`
+argument. Use `center_map=False` to preserve a composed initial camera.
 
 ### `.config`
 
@@ -172,10 +165,8 @@ is the classic trap:
 - **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
   `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
   Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
-- Config types describe the current JavaScript renderer. A Python export needs
-  a bundle that implements that type; these are not all available in the
-  minimum Python version's default bundle. Tilesets also require their source
-  descriptors, not just a layer `type` and a DataFrame.
+- Config support depends on the JavaScript bundle. Remote tilesets also need
+  source descriptors, not just a layer `type` and a DataFrame.
 - `—` means the surface has no layer type for that concept; do not substitute
   another one silently.
 - MCP layer types are validated against an enum, so an unknown string is
@@ -189,24 +180,6 @@ In a Python config, `columns` carries the field names each layer type needs
 (`hex_id` for `hexagonId`, `geojson: '_geojson'` for `geojson`, …) and
 `visualChannels` carries the field-to-channel mappings (`colorField`,
 `sizeField`, `heightField`, …). The per-layer references below show both.
-
-### Contour
-
-Use `type: 'contour'` for scalar levels or point counts. See
-[Contour Map](references/contour-map.md) for coordinate/weight selection,
-aggregation, smoothing, thresholds, and regional 2D limits.
-
-### Zarr
-
-Use `type: 'zarr'` with a remote tileset descriptor, not a DataFrame of raster
-cells. See [Zarr Layer](references/zarr-layer.md) for importing a store,
-selecting variables and dimensions, timeline controls, and export requirements.
-
-### Voronoi Mosaic
-
-Use `type: 'voronoi'` for nearest-site cells. See
-[Voronoi Mosaic](references/voronoi-map.md) for point/geometry columns, bounds,
-filtering, and flat-map constraints.
 
 ## Time animation and trips
 
@@ -229,25 +202,12 @@ See [Trip Animation Map](references/trip-animation-map.md) for a full config.
 
 ### Camera tours
 
-For a fly-through between places, use **Interactions → Camera animation**.
-**Add stop** captures the current view, or offers a saved bookmark when one
-exists. Rename and reorder stops, use **Pick current location** to update a
-stop, set hold/travel durations, then enable playback and use Play/Pause or the
-time scrubber. Stops copied from bookmarks own their camera snapshots; later
-bookmark edits do not update them.
-
-`config.visState.cameraTour` contains a `stops` array. Each stop has `id`,
-`name`, `camera` (the same five fields as a bookmark), `holdDurationMs`, and
-`travelDurationMs`. The UI shows seconds; saved durations are milliseconds.
-Travel is to the next stop and the final stop's travel duration is ignored.
-Use finite, nonnegative durations. Playback ends at the last stop; Play at the
-end restarts it. Manual map navigation pauses playback. Tour stops persist,
-but playback position/state is transient. Tours require a single Mercator map.
-
-A camera tour moves the view, not dataset features. For vehicles moving along
-timestamped paths use a Trip layer. For events appearing over time use a time
-filter; for points pulsing in place use the Point layer's Pulse / Ripple
-controls. Do not create a time filter merely to move the camera.
+Set `config.visState.cameraTour` to `{"stops": [...]}`. Each stop contains
+`id`, `name`, `camera` (longitude, latitude, zoom, bearing, pitch),
+`holdDurationMs`, and `travelDurationMs`. Use nonnegative milliseconds; hold
+precedes travel to the next stop, and the last travel duration is ignored.
+Play/Pause is in **Interactions → Camera animation**. Tours require a single
+Mercator map and move the view, not dataset features; no time filter is needed.
 
 ## Config Structure
 
@@ -280,67 +240,27 @@ config = {
 
 ### Bookmarks
 
-1. In **Interactions → Bookmarks**, compose a view and choose **Add Bookmark**.
-2. Rename or reorder bookmarks; **Update view** replaces the saved camera.
-3. Enable the **Bookmarks** switch for **Go to** and the floating panel.
-   Disabling the switch hides the panel without deleting the saved views.
-
-Bookmarks store longitude, latitude, zoom, bearing, and pitch, independently
-of datasets. They do not restore layers or filters. Editing/navigation require
-a single Mercator map (2D or tilted 3D), not globe or split-map mode.
-
-Saved config stores an array at `config.visState.cameraBookmarks`:
+Set `config.visState.cameraBookmarks` to an array of saved views:
 
 ```json
-[
-  {
-    "id": "view-downtown",
-    "name": "Downtown",
-    "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}
-  }
-]
+[{"id": "downtown", "name": "Downtown", "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}}]
 ```
 
-The switch is a separate UI preference; importing bookmarks does not turn it
-on. When exporting a deliberately composed initial camera from Python, use
-`center_map=False` so automatic fitting does not replace that initial view.
+Bookmarks restore the camera, not layers or filters. Enable the Bookmarks
+switch in Interactions for navigation; importing them does not enable the
+control. Navigation requires a single Mercator map.
 
 ### Fade on Zoom
 
-In **Interactions → Fade on zoom**, add a controller, select its layers and/or
-annotations, set the four zoom handles, and enable the switch. Each target can
-belong to only one controller. The fade multiplies normal opacity and does not
-make a hidden layer visible.
-
-The handles are **Appear**, **Full start**, **Full end**, and **Disappear**,
-corresponding to saved keys `appear`, `full`, `fade`, and `gone`. Keep them
-ordered within zoom 0–24. For `[2, 4, 8, 10]`, opacity is zero at/below 2,
-half at 3, full from 4 through 8, half at 9, and zero at/above 10. Coincident
-inner/outer handles make an immediate transition; all four equal means always
-invisible.
-
-Example value of `config.visState.interactionConfig.zoomOpacity` (replace
-`observations-layer` with an existing layer ID):
+Set `config.visState.interactionConfig.zoomOpacity`, using existing layer IDs:
 
 ```json
-{
-  "id": "zoomOpacity",
-  "enabled": true,
-  "config": {
-    "controllers": [
-      {
-        "id": "fade-observations",
-        "layerIds": ["observations-layer"],
-        "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}
-      }
-    ]
-  }
-}
+{"id": "zoomOpacity", "enabled": true, "config": {"controllers": [{"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}]}}
 ```
 
-For annotations, select targets in the UI or preserve their exported target
-IDs; do not substitute annotation names for IDs. Disabling the effect preserves
-controllers. Controllers and enabled state are saved with the map.
+Keep `0 <= appear <= full <= fade <= gone <= 24`; each target belongs to one
+controller. For annotations, preserve exported target IDs. Fades multiply
+normal opacity; disabling them preserves the controllers.
 
 ## Basemap Styles
 

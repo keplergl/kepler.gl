@@ -64,12 +64,6 @@ options described below. The stdio bridge replaces the namespace dot with
 an underscore: for example, `map.camera-bookmarks` becomes
 `map_camera-bookmarks`. Dispatchers use the dotted command IDs.
 
-When editing saved config, merge into the existing `config.visState` and
-preserve unrelated layers, filters, and interactions. Layer definitions use
-`{id, type, config, visualChannels}`; `type` is not MCP's `layerType`.
-Use real dataset and layer IDs, and check that the running JavaScript bundle
-supports the requested feature. Installing a skill does not upgrade the app.
-
 ## Picking a layer type
 
 - Individual locations → `point` (`cluster` for zoom-out density, `heatmap`
@@ -175,30 +169,18 @@ fields — see "Time animation" below for the follow-up.
 
 ### Point Glow and Pulse / Ripple
 
-- **Point → Visual → Glow** adds a static halo. **Pulse / Ripple** animates
-  points in place; continuous mode needs no timestamp or time filter. Both
-  are off by default and can be enabled independently.
-- For **Trigger → At event time**, select an **Event timestamp** and a
-  **Duration (timeline seconds)**, and add/enable a time filter for the same
-  dataset and timestamp field. The first matching enabled filter drives the
-  effect. Without it, ordinary points remain but the event effect is inactive.
-  Missing timestamps produce no effect. The filter window's end is the current
-  time; pausing freezes effects and scrubbing/replay updates them. Filters can
-  cut effects short; coarse time steps can skip short events.
-
-These visual options require the Point layer panel or a supported config
-editor. Standard MCP can create the Point layer and its event time filter.
+Use **Point → Visual** for Glow (a static halo) or Pulse / Ripple (animation
+in place). Continuous mode needs no time filter. **At event time** requires an
+Event timestamp and an enabled time filter on the same dataset/field; duration
+uses timeline seconds, and missing timestamps produce no effect. MCP creates
+the Point layer and time filter; enable the visual effects in the layer panel.
 
 ### Heatmap 3D Surface
 
-**Heatmap → 3D Surface** raises density into a continuous surface. Enable
-it and tilt the map; **Maximum height (m)** controls height, while shading
-and surface contours are optional. Height represents density, not terrain.
-It uses the existing weights/filters and works on the map and globe.
-Surface contours are a heatmap option, distinct from the Contour layer.
-
-Standard MCP can create the Heatmap layer; enable these options in the layer
-panel or through a supported config editor.
+Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
+surface. Height represents density, not terrain; its optional contours are
+separate from the Contour layer. MCP creates the Heatmap layer; enable the
+surface, height, and shading options in the layer panel.
 
 ### 2. Time animation (NON-trip layers)
 
@@ -298,128 +280,52 @@ Wind encoded as speed + direction under different column names:
 - A field layer over a very large grid is expensive: one row per sample point is
   fine, but downsample rasters to roughly 10k–100k points before loading.
 
-### Contour layer (`type: "contour"`, prototype)
+### Contour layer (`layerType: "contour"`)
 
-Call `map.add-layer` with numeric coordinate columns (or `geometryColumn`):
+Use numeric `latitudeColumn`/`longitudeColumn` or `geometryColumn`; omit them
+to use detected columns. For example, call `map.add-layer` with:
+
+```json
+{"datasetName": "observations", "layerType": "contour", "contour": {"weightColumn": "temperature", "levels": 7}}
+```
+
+Omit `weightColumn` for point counts; weighted cells average finite values.
+`colorByLevel` colors thresholds; set it false with `simpleColor` for one color.
+Tabular `colorBy`/`colorMap` do not apply. Use regional 2D data: globe and
+antimeridian-crossing contours are unsupported. These are not travel-time isochrones.
+
+### Zarr layer (`layerType: "zarr"`)
+
+1. Call `map.load-zarr` with `url` (the HTTP(S) store URL) and `datasetName`.
+   Read its returned dataset ID, variable paths, and dimension names/sizes.
+2. Call `map.add-layer` using that dataset ID, for example:
 
 ```json
 {
-  "datasetName": "observations",
-  "layerType": "contour",
-  "latitudeColumn": "lat",
-  "longitudeColumn": "lng",
-  "contour": {"weightColumn": "temperature", "levels": 7, "smoothing": 3}
+  "datasetName": "<returned datasetId>", "layerType": "zarr",
+  "zarr": {"variable": "temperature", "dimensionIndexes": {"level": 0},
+    "axis": {"kind": "dimension", "dimension": "time"}, "frame": 0, "rescale": [250, 310]}
 }
 ```
 
-Omit `weightColumn` for point counts. Omit position columns to use the first
-detected coordinate pair or geometry field. The `contour` options also accept
-`gridResolution`, `filled`, `stroked`, `colorByLevel`, and `fillOpacity`.
-Use `colorByLevel: false` with `simpleColor` for a single color; tabular
-`colorBy`, `colorType`, and `colorMap` do not apply to contour surfaces.
+Use actual metadata names and a rescale range in the variable's units. Indexes
+are zero-based; `frame` requires an explicit dimension/forecast axis. Use this
+axis rather than a table time filter. The store must allow browser access
+(CORS); exports retain its URL and settings, not the remote raster data.
 
-Select **Contour** in the layer picker. Choose numeric latitude/longitude
-columns, or GeoJSON representative points, then optionally select **Weight**.
-With a weight, occupied cells contain the mean of finite values; without it,
-they contain point counts. Null/nonfinite weights are skipped; zero and
-negative weights are valid. Empty cells contain zero and affect smoothing.
+### Voronoi Mosaic layer (`layerType: "voronoi"`)
 
-For saved config, point columns are `config.columns.lat`, `lng`, and optional
-`value` (the Weight field). In GeoJSON mode use `geojson`. Layer appearance
-lives in `config.visConfig`: `gridResolution` (32–256, default 64), `smoothing`
-(default 3 grid cells), `levels` (2–20), `colorByLevel`, `filled`, `stroked`,
-and `fillOpacity`. A custom threshold range uses `customRange`, `minimum`, and
-`maximum`. Use thresholds in the data's units; smoothing changes values as
-well as outlines.
-
-Contours show scalar levels or point density, not travel-time isochrones.
-Filters select samples before aggregation; polygons do not clip contour
-boundaries. Use regional 2D data: globe and antimeridian-crossing data are not
-supported. `enableContourLayer` controls picker visibility and defaults to
-true. It does not disable rendering saved contour layers.
-
-### Zarr layer (`type: "zarr"`, experimental)
-
-Call `map.load-zarr` with `{"url": "https://example.org/forecast.zarr",
-"datasetName": "Forecast"}` using the actual store URL. Its result includes
-`datasetId`, variable paths, and non-spatial dimension names/sizes. Then call
-`map.add-layer` with the returned dataset ID:
-
-```json
-{
-  "datasetName": "<returned datasetId>",
-  "layerType": "zarr",
-  "zarr": {
-    "variable": "temperature",
-    "dimensionIndexes": {"level": 0},
-    "axis": {"kind": "dimension", "dimension": "time"},
-    "frame": 0,
-    "rescale": [250, 310],
-    "opacity": 0.8
-  }
-}
-```
-
-Use variable paths and dimensions returned by the loader, and a rescale range
-in the variable's units. `axis` also accepts `{"kind": "auto"}`,
-`{"kind": "off"}`, or `{"kind": "forecast", "referenceTime": "run",
-"leadTime": "lead"}` for compatible forecast dimensions. `frame` requires an
-explicit dimension/forecast axis. Dimension indexes and frames are zero-based.
-Omit `zarr` options to use the store's default variable and automatic time axis.
-Zarr uses a raster palette and `rescale`, not tabular `colorBy`/`colorMap`.
-
-The equivalent UI workflow is:
-
-1. Open **Add Data → Tilesets → Zarr** and enter a public store URL.
-2. Wait for metadata, then choose **Add Tileset**.
-3. Select the variable and pinned dimensions in the layer panel; adjust its
-   color range and opacity.
-4. Select a timeline axis to step through a dimension. Numeric/categorical
-   coordinates work; recognized time coordinates can use the shared timeline.
-   Forecast reference time and lead time can combine into valid time.
-
-Use the Zarr axis controls rather than `map.add-time-filter` on an invented
-table column. `map.load-data` is not the Zarr tileset-import workflow. The
-store must allow browser requests through CORS. Changing the URL or closing
-the Add Data modal cancels its metadata load; tool cancellation also stops
-`map.load-zarr` before it adds the dataset.
-
-JSON/HTML exports retain the store URL, default variable, attribution, and
-layer settings (selected variable, axis, frame, pinned dimensions, colors).
-They do not embed the remote raster data; metadata is fetched again on load.
-Preserve an exported tileset descriptor instead of fabricating CSV rows or
-full variable metadata in a Python DataFrame. `enableZarrLayer` defaults to
-true and controls the adding UI, not rendering saved layers.
-
-### Voronoi Mosaic layer (`type: "voronoi"`)
-
-Call `map.add-layer` with `layerType: "voronoi"`, a dataset name, optional
+Call `map.add-layer` with `layerType: "voronoi"`, optional
 `latitudeColumn`/`longitudeColumn` or `geometryColumn`, and
-`voronoi: {"boundsPadding": 10}`. Without explicit columns, the first detected
-coordinate pair or geometry field is used. Standard `colorBy`/`colorMap`
-options color cells by their source attributes. `voronoi` also accepts
-`filled`, `stroked`, and `opacity`.
-
-Choose **Voronoi Mosaic**, then **Point Columns** (latitude/longitude) or
-**GeoJSON Centroids** (geometry). Color by a source attribute and adjust
-**Cell Bounds → Bounds Padding (%)**. Each cell belongs to the nearest input
-site in Web Mercator, not the nearest site by road travel time. Use the flat
-map for regional exploration.
-
-Filters rebuild cells from the retained sites, while the outer bounds remain
-tied to the full dataset and padding. Coincident sites share a cell assigned
-to the first retained row; invalid coordinates are skipped. In saved configs,
-use `lat`/`lng` or `geojson` columns and `visConfig.boundsPadding`.
-`enableVoronoiLayer` defaults to true and controls picker visibility.
+`voronoi: {"boundsPadding": 10}`. Standard color options map source attributes
+to cells. Cells represent nearest sites in Web Mercator, not road travel time;
+use regional flat-map data. Filters rebuild cells from retained sites.
 
 ### Tile, cell, model, and image layers
 
-Use the layer picker/config for A5 (`a5`), Geohash (`geohash`), icons (`icon`),
-3D models (`3D`), and image overlays (`bitmap`). Use **Add Data → Tilesets** for
-vector tiles (`vectorTile`), raster tiles (`rasterTile`), WMS (`wms`), and
-3D tiles (`tile3d`). Keep exported source descriptors and their remote URLs;
-do not treat these sources as ordinary point tables. A 3D model layer (`3D`)
-is different from a 3D tileset (`tile3d`).
+Use the layer picker for A5, Geohash, icons, 3D models, and image overlays;
+use **Add Data → Tilesets** for vector/raster tiles, WMS, and 3D tiles.
+Preserve exported source descriptors and URLs for remote layers.
 
 ### 3. Split map comparison (`map.split-view`)
 
@@ -571,139 +477,44 @@ basemap, so set both when the user asks for a "dark globe" and the like.
 - Do not switch modes unless the user asks for it or the data's global extent
   makes it clearly better; a map that suddenly becomes a globe is surprising.
 
-### Bookmarks
+### Bookmarks (`map.camera-bookmarks`)
 
-Save the current view with `map.camera-bookmarks`:
-
-```json
-{"action": "save", "id": "view-downtown", "name": "Downtown", "showControl": true}
-```
-
-Use `{"action": "list"}`, `{"action": "go-to", "id": "view-downtown"}`,
-or `{"action": "remove", "id": "view-downtown"}`. Saving an existing ID
-updates it in place and preserves all other bookmarks. Pass an explicit
-`camera` snapshot to save coordinates without first moving the map.
-Current-view capture and navigation use the host's `getMapState` accessor,
-which is wired into the demo's MCP and WebMCP surfaces. Go-to moves immediately.
-
-1. In **Interactions → Bookmarks**, compose a view and choose **Add Bookmark**.
-2. Rename or reorder bookmarks; **Update view** replaces the saved camera.
-3. Enable the **Bookmarks** switch for **Go to** and the floating panel.
-   Disabling the switch hides the panel without deleting the saved views.
-
-Bookmarks store longitude, latitude, zoom, bearing, and pitch, independently
-of datasets. They do not restore layers or filters. Editing/navigation require
-a single Mercator map (2D or tilted 3D), not globe or split-map mode.
-
-Saved config stores an array at `config.visState.cameraBookmarks`:
+Save the current view with:
 
 ```json
-[
-  {
-    "id": "view-downtown",
-    "name": "Downtown",
-    "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}
-  }
-]
+{"action": "save", "id": "downtown", "name": "Downtown", "showControl": true}
 ```
 
-The switch is a separate UI preference; importing bookmarks does not turn it
-on.
+Use `action: "list"`, or `"go-to"`/`"remove"` with the bookmark ID. Saving an
+existing ID updates it in place. Supply `camera` to save explicit longitude,
+latitude, zoom, bearing, and pitch. Bookmarks restore only the camera;
+navigation requires a single Mercator map.
 
-### Camera tours
+### Camera tours (`map.camera-tour`)
 
-Use `map.camera-tour` with `action: "set"` and ordered `stops`:
+Use `action: "set"` with ordered `stops`, each containing `id`, `name`,
+`camera` (longitude, latitude, zoom, bearing, pitch), `holdDurationMs`, and
+`travelDurationMs`. Durations are nonnegative milliseconds; hold precedes
+travel to the next stop, and the last travel duration is ignored.
+
+Use `action: "get"` before extending a tour: set replaces all stops, and `[]`
+clears it. `action: "seek"` with `elapsedMs` moves the camera along the tour;
+Play/Pause remains in **Interactions → Camera animation**. Tours require a
+single Mercator map and animate the view, not dataset features; do not add a
+time filter for camera movement.
+
+### Fade on Zoom (`map.set-zoom-fade`)
+
+Use existing layer IDs from `map.add-layer` or `map.get-dataset-context`:
 
 ```json
-{
-  "action": "set",
-  "stops": [
-    {"id": "start", "name": "Downtown", "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}, "holdDurationMs": 1000, "travelDurationMs": 3000},
-    {"id": "end", "name": "Harbor", "camera": {"longitude": -122.39, "latitude": 37.8, "zoom": 13, "bearing": 20, "pitch": 45}, "holdDurationMs": 1000, "travelDurationMs": 0}
-  ]
-}
+{"enabled": true, "controllers": [{"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}]}
 ```
 
-`{"action": "get"}` returns the tour and total duration. To inspect its camera
-at a time, use `{"action": "seek", "elapsedMs": 2500}`; this applies the same
-interpolation as playback and clamps at the end. `{"action": "set", "stops": []}`
-clears the tour. Set replaces the complete ordered stop list; get it first
-when extending an existing tour. Play/Pause remains in the camera-animation
-panel; set and seek do not start playback.
-
-For a fly-through between places, use **Interactions → Camera animation**.
-**Add stop** captures the current view, or offers a saved bookmark when one
-exists. Rename and reorder stops, use **Pick current location** to update a
-stop, set hold/travel durations, then enable playback and use Play/Pause or the
-time scrubber. Stops copied from bookmarks own their camera snapshots; later
-bookmark edits do not update them.
-
-`config.visState.cameraTour` contains a `stops` array. Each stop has `id`,
-`name`, `camera` (the same five fields as a bookmark), `holdDurationMs`, and
-`travelDurationMs`. The UI shows seconds; saved durations are milliseconds.
-Travel is to the next stop and the final stop's travel duration is ignored.
-Use finite, nonnegative durations. Playback ends at the last stop; Play at the
-end restarts it. Manual map navigation pauses playback. Tour stops persist,
-but playback position/state is transient. Tours require a single Mercator map.
-
-A camera tour moves the view, not dataset features. For vehicles moving along
-timestamped paths use a Trip layer. For events appearing over time use a time
-filter; for points pulsing in place use the Point layer's Pulse / Ripple
-controls. Do not create a time filter merely to move the camera.
-
-### Fade on Zoom
-
-Call `map.set-zoom-fade` with existing layer IDs (returned by `map.add-layer`
-or listed by `map.get-dataset-context`):
-
-```json
-{
-  "enabled": true,
-  "controllers": [
-    {"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}
-  ]
-}
-```
-
-For annotations, pass their real IDs in a controller's `annotationIds` array;
-the command converts them to saved fade targets. Controllers replace the
-complete fade list. Omit `controllers` to only toggle the effect, or pass `[]`
-to clear it. Other interactions and layer opacity settings are preserved.
-
-In **Interactions → Fade on zoom**, add a controller, select its layers and/or
-annotations, set the four zoom handles, and enable the switch. Each target can
-belong to only one controller. The fade multiplies normal opacity and does not
-make a hidden layer visible.
-
-The handles are **Appear**, **Full start**, **Full end**, and **Disappear**,
-corresponding to saved keys `appear`, `full`, `fade`, and `gone`. Keep them
-ordered within zoom 0–24. For `[2, 4, 8, 10]`, opacity is zero at/below 2,
-half at 3, full from 4 through 8, half at 9, and zero at/above 10. Coincident
-inner/outer handles make an immediate transition; all four equal means always
-invisible.
-
-Example value of `config.visState.interactionConfig.zoomOpacity` (replace
-`observations-layer` with an existing layer ID):
-
-```json
-{
-  "id": "zoomOpacity",
-  "enabled": true,
-  "config": {
-    "controllers": [
-      {
-        "id": "fade-observations",
-        "layerIds": ["observations-layer"],
-        "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}
-      }
-    ]
-  }
-}
-```
-
-For annotations, select targets in the UI or preserve their exported target
-IDs; do not substitute annotation names for IDs. Disabling the effect preserves
-controllers. Controllers and enabled state are saved with the map.
+Keep `0 <= appear <= full <= fade <= gone <= 24`. Each layer/annotation belongs
+to one controller; pass annotation IDs in `annotationIds`. Controllers replace
+the complete list; omit them to only toggle, or pass `[]` to clear. The fade
+multiplies normal opacity and does not make hidden layers visible.
 
 ## Rules
 
