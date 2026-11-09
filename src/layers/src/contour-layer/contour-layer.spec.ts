@@ -530,6 +530,74 @@ test.each([0, 60])('projects contour normals perpendicular to slopes at latitude
   }
 });
 
+test('draws all contour passes without rescaling their common-space heights', () => {
+  const grid = {
+    width: 3,
+    height: 3,
+    longitude: 8,
+    latitude: 50,
+    stepLng: 0.01,
+    stepLat: 0.01,
+    values: Float64Array.from([0, 1, 2, 1, 2, 3, 2, 3, 4])
+  };
+  const contours = generateContours(grid, {smoothing: 0, levels: 2, below: true, domain: [0, 5]});
+  const layer = new ContourLayer({id: 'contour-gpu-projection'});
+  layer.updateLayerVisConfig({enable3d: true, filled: true, stroked: true});
+  const data = {data: contours, grid};
+  for (const zoom of [10, 15]) {
+    const viewport = new WebMercatorViewport({longitude: 8.01, latitude: 50.01, zoom, pitch: 45});
+    const manager = new LayerManager(device, {viewport});
+    const onError = jest.fn();
+    manager.setProps({onError});
+    const renderPass = manager.context.device.beginRenderPass({});
+    manager.context.renderPass = renderPass;
+    try {
+      for (const elevationScale of [0, 1, 3]) {
+        layer.updateLayerVisConfig({elevationScale});
+        const passes = layer.renderLayer({data, visible: true, idx: 0, mapState: {zoom}});
+        manager.setLayers(passes);
+        for (const pass of manager.getLayers().filter(item => !item.isComposite)) {
+          pass._drawLayer({
+            renderPass,
+            shaderModuleProps: {
+              project: {
+                viewport,
+                coordinateSystem: pass.props.coordinateSystem,
+                modelMatrix: pass.props.modelMatrix
+              }
+            },
+            uniforms: {},
+            parameters: {}
+          });
+          for (const model of pass.getModels()) {
+            const project = model.shaderInputs.getUniformValues().project!;
+            expect(project.commonUnitsPerWorldUnit).toEqual([1, 1, 1]);
+            expect(project.commonUnitsPerWorldUnit2).toEqual([0, 0, 0]);
+          }
+        }
+        const surface = passes[1].getSubLayers()[0] as ContourSurfaceLayer;
+        const model = surface.state.topModel!;
+        const positions = surface.state.polygonTesselator.get('positions')!;
+        const normals = surface.getAttributeManager()!.getAttributes().contourNormals.value!;
+        // Pick a raised, sloping vertex, away from the flat minimum.
+        const index = Array.from({length: positions.length / 3}, (_, i) => i * 3).find(
+          i => positions[i + 2] > 0 && Math.hypot(normals[i], normals[i + 1]) > 0.01
+        )!;
+        expect(index).toBeDefined();
+        const project = model.shaderInputs.getUniformValues().project!;
+        const height = positions[index + 2] * elevationScale;
+        const projectedHeight = height * Number(project.commonUnitsPerWorldUnit[2]);
+        expect(projectedHeight).toBeCloseTo(height, 8);
+        if (elevationScale) expect(projectedHeight).toBeGreaterThan(0);
+      }
+      expect(onError).not.toHaveBeenCalled();
+    } finally {
+      renderPass.end();
+      manager.finalize();
+    }
+  }
+});
+
 test('3D contour fills derive slope normals and respond to scene lighting after height changes', async () => {
   const {layer, dataset, datasets} = await setup();
   const data = layer.formatLayerData(datasets);

@@ -28,7 +28,9 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
-import ContourSurfaceLayer from './deck-contour-surface-layer';
+import ContourSurfaceLayer, {ContourProjectionExtension} from './deck-contour-surface-layer';
+
+const contourProjectionExtension = new ContourProjectionExtension();
 
 type ContourLayerData = {data: ContourFeature[]; grid?: ScalarGrid | null};
 
@@ -394,7 +396,7 @@ export default class ContourLayer extends Layer {
     const shared = {
       ...defaultProps,
       data: data.data,
-      extensions: [],
+      extensions: surface && projectToMercator ? [contourProjectionExtension] : [],
       // Composite nested fills on the same surface, then draw their outlines.
       parameters: {...defaultProps.parameters, depthMask: false},
       autoHighlight: false,

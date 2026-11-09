@@ -2,8 +2,25 @@
 // Copyright contributors to the kepler.gl project
 
 import {SolidPolygonLayer} from '@deck.gl/layers';
-import {phongMaterial} from '@deck.gl/core';
+import {Layer, LayerExtension, phongMaterial} from '@deck.gl/core';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
+
+/** All three passes receive positions already expressed in common map units. */
+export class ContourProjectionExtension extends LayerExtension {
+  static extensionName = 'ContourProjectionExtension';
+
+  draw(this: Layer): void {
+    for (const model of this.getModels()) {
+      const project = model.shaderInputs.getUniformValues().project;
+      if (project) {
+        // Cartesian projection still treats Z as meters by default. Override
+        // the draw's uniforms so it neither rescales nor warps our shared mesh.
+        project.commonUnitsPerWorldUnit = [1, 1, 1];
+        project.commonUnitsPerWorldUnit2 = [0, 0, 0];
+      }
+    }
+  }
+}
 
 /** Light the draped surface without extruding its polygons into columns. */
 export default class ContourSurfaceLayer extends SolidPolygonLayer {
