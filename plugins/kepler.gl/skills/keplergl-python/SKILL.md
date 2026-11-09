@@ -74,6 +74,10 @@ Requires `keplergl >= 0.4.0`. Earlier versions use a different widget/serializat
 | `app_name` | str | None | App name override for export title/header |
 | `theme` | str | None | Theme override for export (`"light"`, `"dark"`, `"base"`, or `""`) |
 
+Check the exported HTML's script URL: its JavaScript bundle must support the
+configured layers/controls. `save_to_html()` has no `kepler_gl_version`
+argument. Use `center_map=False` to preserve a composed initial camera.
+
 ### `.config`
 
 Read or set the map configuration dict. Use `map.config` after customizing in Jupyter UI, then save and reuse.
@@ -139,19 +143,30 @@ is the classic trap:
 | Heatmap | `heatmap` | `heatmap` |
 | Hexbin (binned from points) | `hexagon` | `hexagon` |
 | H3 hexagon (precomputed H3 ids) | `hexagonId` | `h3` |
-| Grid (binned from points) | — | `grid` |
+| Grid (binned from points) | `grid` | `grid` |
 | S2 | `s2` | `s2` |
 | Arc (great-circle origin→destination) | `arc` | `arc` |
-| Flow (weighted origin→destination) | — | `flow` |
-| Flow field (streamlines over a vector field) | — | `flowField` |
+| Flow (weighted origin→destination) | `flow` | `flow` |
+| Flow field (streamlines over a vector field) | `flowField` | `flowField` |
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
 | Icon | `icon` | — |
+| Contour (scalar levels or point counts) | `contour` | `contour` |
+| Voronoi Mosaic (nearest-site cells) | `voronoi` | `voronoi` |
+| Zarr (remote multidimensional raster) | `zarr` | `zarr` |
+| A5 / Geohash cells | `a5` / `geohash` | — |
+| Vector / raster tiles | `vectorTile` / `rasterTile` | — |
+| WMS | `wms` | — |
+| 3D tiles | `tile3d` | — |
+| 3D models | `3D` | — |
+| Image overlay | `bitmap` | — |
 
 - **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
   `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
   Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
+- Config support depends on the JavaScript bundle. Remote tilesets also need
+  source descriptors, not just a layer `type` and a DataFrame.
 - `—` means the surface has no layer type for that concept; do not substitute
   another one silently.
 - MCP layer types are validated against an enum, so an unknown string is
@@ -185,6 +200,15 @@ waypoints, `latitude` / `longitude`, and a `timestamp`.
 
 See [Trip Animation Map](references/trip-animation-map.md) for a full config.
 
+### Camera tours
+
+Set `config.visState.cameraTour` to `{"stops": [...]}`. Each stop contains
+`id`, `name`, `camera` (longitude, latitude, zoom, bearing, pitch),
+`holdDurationMs`, and `travelDurationMs`. Use nonnegative milliseconds; hold
+precedes travel to the next stop, and the last travel duration is ignored.
+Play/Pause is in **Interactions → Camera animation**. Tours require a single
+Mercator map and move the view, not dataset features; no time filter is needed.
+
 ## Config Structure
 
 ```python
@@ -213,6 +237,30 @@ config = {
     }
 }
 ```
+
+### Bookmarks
+
+Set `config.visState.cameraBookmarks` to an array of saved views:
+
+```json
+[{"id": "downtown", "name": "Downtown", "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}}]
+```
+
+Bookmarks restore the camera, not layers or filters. Enable the Bookmarks
+switch in Interactions for navigation; importing them does not enable the
+control. Navigation requires a single Mercator map.
+
+### Fade on Zoom
+
+Set `config.visState.interactionConfig.zoomOpacity`, using existing layer IDs:
+
+```json
+{"enabled": true, "controllers": [{"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}]}
+```
+
+Keep `0 <= appear <= full <= fade <= gone <= 24`; each target belongs to one
+controller. For annotations, preserve exported target IDs. Fades multiply
+normal opacity; disabling them preserves the controllers.
 
 ## Basemap Styles
 
@@ -258,6 +306,9 @@ For detailed per-layer-type examples with full config, see supporting files:
 - [Heatmap](references/heatmap.md) — Density heatmap from points
 - [Hexbin Aggregation Map](references/hexbin-aggregation-map.md) — Spatial binning into hexagons
 - [Trip Animation Map](references/trip-animation-map.md) — Animated trips along paths
+- [Contour Map](references/contour-map.md) — Scalar levels and point-count contours
+- [Zarr Layer](references/zarr-layer.md) — Remote raster variables, dimensions, and timeline axes
+- [Voronoi Mosaic](references/voronoi-map.md) — Nearest-site cells and bounds
 - [Summary Panel Overlay](references/summary-panel.md) — Inject a SampleMapPanel-style info overlay into the exported HTML (for LISA/cluster counts, model summaries, custom legends)
 
 ## Examples

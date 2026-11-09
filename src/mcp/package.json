@@ -54,6 +54,7 @@
     "@kepler.gl/reducers": "3.3.0-alpha.20",
     "@kepler.gl/table": "3.3.0-alpha.20",
     "@kepler.gl/types": "3.3.0-alpha.20",
+    "@kepler.gl/utils": "3.3.0-alpha.20",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "apache-arrow": "^17.0.0",
     "ws": "^8.22.0",

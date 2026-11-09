@@ -3,7 +3,8 @@
 
 import {getAddLayerCommand} from './layer-creation-command';
 import KeplerTable from '@kepler.gl/table';
-import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
+import {INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
 
 /**
  * Build a plain JS dataset with two point lat/lng pairs (origin + destination)
@@ -49,6 +50,177 @@ function makeCtx(table: KeplerTable) {
 }
 
 type CommandResult = {success: boolean; error?: string; data?: Record<string, unknown>};
+
+describe('map.add-layer (surface layers)', () => {
+  it('creates weighted contours from explicit coordinates instead of the first detected pair', async () => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType: 'contour',
+      latitudeColumn: 'dest_lat',
+      longitudeColumn: 'dest_lng',
+      contour: {weightColumn: 'count', levels: 9, smoothing: 2}
+    })) as CommandResult;
+    expect(result.success).toBe(true);
+    expect(getDispatched().config).toMatchObject({
+      type: 'contour',
+      config: {
+        columnMode: 'grid',
+        columns: {lat: 'dest_lat', lng: 'dest_lng', value: 'count'},
+        visConfig: {levels: 9, smoothing: 2}
+      }
+    });
+    expect(result.data?.layerId).toBe(getDispatched().config.id);
+    const state = visStateReducer(
+      {...INITIAL_VIS_STATE, datasets: {[table.id]: table}},
+      getDispatched()
+    );
+    expect(state.layers).toHaveLength(1);
+    expect(state.layers[0].type).toBe('contour');
+    expect(state.layers[0].config.columns.value.value).toBe('count');
+    expect(state.layers[0].config.visConfig.levels).toBe(9);
+  });
+
+  it.each(['contour', 'voronoi'])('creates %s from detected coordinates', async layerType => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType,
+      voronoi: {boundsPadding: 25}
+    })) as CommandResult;
+    expect(result.success).toBe(true);
+    expect(getDispatched().config.config.columns).toMatchObject({
+      lat: 'origin_lat',
+      lng: 'origin_lng'
+    });
+    if (layerType === 'contour') expect(getDispatched().config.config.columns.value).toBeNull();
+    else expect(getDispatched().config.config.visConfig.boundsPadding).toBe(25);
+  });
+
+  it.each(['contour', 'voronoi'])('creates %s from an explicit geometry field', async layerType => {
+    const table = new KeplerTable({color: [255, 0, 0]} as any);
+    await table.importData({
+      data: {
+        fields: [{name: '_geojson', type: ALL_FIELD_TYPES.geojson}],
+        rows: [
+          [{type: 'Feature', geometry: {type: 'Point', coordinates: [-122, 37]}, properties: {}}]
+        ]
+      } as any
+    });
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType,
+      geometryColumn: '_geojson'
+    })) as CommandResult;
+    expect(result.success).toBe(true);
+    expect(getDispatched().config.config).toMatchObject({
+      columnMode: 'geojson',
+      columns: {geojson: '_geojson'}
+    });
+  });
+
+  it.each([
+    {layerType: 'contour', latitudeColumn: 'origin_lat'},
+    {layerType: 'voronoi', latitudeColumn: 'missing', longitudeColumn: 'origin_lng'},
+    {layerType: 'contour', contour: {weightColumn: 'missing'}},
+    {layerType: 'contour', contour: {levels: 100}},
+    {layerType: 'voronoi', geometryColumn: 'count'},
+    {layerType: 'contour', colorBy: 'count'},
+    {layerType: 'zarr'}
+  ])('rejects invalid surface input without mutation: %j', async options => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      ...options
+    })) as CommandResult;
+    expect(result.success).toBe(false);
+    expect(getDispatched()).toBeNull();
+  });
+
+  async function makeZarrTable() {
+    const table = new KeplerTable({color: [255, 0, 0], info: {type: DatasetType.ZARR}} as any);
+    const band = {name: 'band', size: 3};
+    table.metadata = {
+      url: 'https://example.com/data.zarr',
+      axes: ['band', 'y', 'x'],
+      xAxisIndex: 2,
+      yAxisIndex: 1,
+      nonSpatialDims: [band],
+      levels: [],
+      variables: [
+        {
+          path: 'temperature',
+          name: 'temperature',
+          displayName: 'temperature',
+          shape: [3, 2, 2],
+          chunks: [1, 2, 2],
+          dtype: 'float32',
+          nonSpatialDims: [band],
+          dataRange: [250, 310]
+        }
+      ]
+    };
+    return table;
+  }
+
+  it('selects a Zarr variable, dimension axis/frame and raster range', async () => {
+    const table = await makeZarrTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType: 'zarr',
+      zarr: {
+        variable: 'temperature',
+        axis: {kind: 'dimension', dimension: 'band'},
+        frame: 2,
+        rescale: [260, 300]
+      }
+    })) as CommandResult;
+    expect(result.success).toBe(true);
+    expect(getDispatched().config.config.visConfig).toMatchObject({
+      zarrVariable: 'temperature',
+      zarrAxis: {kind: 'dimension', dimension: 'band'},
+      zarrFrame: 2,
+      rescale: [260, 300]
+    });
+  });
+
+  it('preserves automatic rescaling when store metadata has a constant range', async () => {
+    const table = await makeZarrTable();
+    table.metadata.variables[0].dataRange = [5, 5];
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType: 'zarr'
+    })) as CommandResult;
+    expect(result).toMatchObject({success: true});
+    expect(getDispatched().config.config.visConfig.rescale).toBeNull();
+  });
+
+  it.each([
+    {variable: 'missing'},
+    {dimensionIndexes: {band: 3}},
+    {dimensionIndexes: {missing: 0}},
+    {axis: {kind: 'dimension', dimension: 'missing'}},
+    {axis: {kind: 'dimension', dimension: 'band'}, frame: 3},
+    {frame: 0},
+    {rescale: [300, 260]}
+  ])('rejects invalid Zarr selection without mutation: %j', async zarr => {
+    const table = await makeZarrTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.label,
+      layerType: 'zarr',
+      zarr
+    })) as CommandResult;
+    expect(result.success).toBe(false);
+    expect(getDispatched()).toBeNull();
+  });
+});
 
 describe('map.add-layer (point)', () => {
   it('creates an explicitly requested Point even when every row has an icon', async () => {

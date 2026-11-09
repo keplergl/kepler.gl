@@ -91,3 +91,10 @@ map_1.save_to_html(file_name='heatmap_styled.html')
 | `visConfig.intensity` | Heat intensity multiplier |
 | `visConfig.opacity` | 0.0 to 1.0 |
 | `visualChannels.weightField` | Column to use as weight (optional) |
+
+## 3D Surface
+
+Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
+surface. Height represents density, not terrain; its optional contours are
+separate from the Contour layer. Preserve these visual settings from a
+compatible renderer when exporting.

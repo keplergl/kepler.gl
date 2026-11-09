@@ -100,3 +100,11 @@ map_1.save_to_html(file_name='point_map_styled.html')
 | `visualChannels.colorField` | Column to map to color |
 | `visualChannels.sizeField` | Column to map to point size |
 | `visualChannels.colorScale` | Common options: `'quantile'`, `'quantize'`, `'ordinal'` (and `'custom'` for color channels in supported contexts) |
+
+## Glow and Pulse / Ripple
+
+Use **Point → Visual** for Glow (a static halo) or Pulse / Ripple (animation
+in place). Continuous mode needs no time filter. **At event time** requires an
+Event timestamp and an enabled time filter on the same dataset/field; duration
+uses timeline seconds, and missing timestamps produce no effect. Preserve
+these visual settings from a compatible renderer when exporting.

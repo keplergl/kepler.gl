@@ -16,6 +16,9 @@ import {getAddTimeFilterCommand} from './time-filter-command';
 import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
+import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+import {getZoomFadeCommand} from './zoom-fade-command';
+import {getLoadZarrCommand} from './load-zarr-command';
 
 /**
  * Owner string under which all kepler-ai commands are registered in the
@@ -37,6 +40,10 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getAddLayerCommand(ctx),
     getUpdateLayerColorCommand(ctx),
     getLoadDataCommand(ctx),
+    getLoadZarrCommand(ctx),
+    getCameraBookmarksCommand(ctx),
+    getCameraTourCommand(ctx),
+    getZoomFadeCommand(ctx),
     getSaveDataCommand(ctx),
     getTableCommand(ctx),
     getAddColumnCommand(ctx),
@@ -54,6 +61,9 @@ export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
 export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
+export {getLoadZarrCommand} from './load-zarr-command';
+export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+export {getZoomFadeCommand} from './zoom-fade-command';
 export {getSaveDataCommand} from './save-data-command';
 export {getTableCommand} from './table-command';
 export {getAddColumnCommand} from './add-column-command';

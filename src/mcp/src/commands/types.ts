@@ -5,6 +5,7 @@ import type {Table as ArrowTable} from 'apache-arrow';
 import type {ZodType} from 'zod';
 import type {Datasets} from '@kepler.gl/table';
 import type {KeplerDispatch} from './utils';
+import type {MapState} from '@kepler.gl/types';
 
 /**
  * Structural subset of `@sqlrooms/room-store`'s `RoomCommand` — enough for the
@@ -123,6 +124,8 @@ export type KeplerStateAccessors = {
  */
 export type KeplerContext = {
   getVisState: () => VisState;
+  /** Current viewport for bookmark capture/navigation and camera-tour seeking. */
+  getMapState?: () => MapState | undefined;
   getMapBoundary: () =>
     | {
         nw: [number, number];

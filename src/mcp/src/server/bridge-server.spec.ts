@@ -64,6 +64,26 @@ describe('kepler-mcp bridge server', () => {
     expect(JSON.stringify(addLayer?.inputSchema)).toContain('flowField');
   });
 
+  it('advertises surface layers and camera/fade/import command schemas', () => {
+    const tools = bridge.getTools();
+    const schema = tools.find(tool => tool.name === toToolName('map.add-layer'))
+      ?.inputSchema as any;
+    expect(schema.properties.layerType.enum).toEqual(
+      expect.arrayContaining(['contour', 'voronoi', 'zarr'])
+    );
+    for (const [id, field] of [
+      ['map.load-zarr', 'datasetName'],
+      ['map.camera-bookmarks', 'camera'],
+      ['map.camera-tour', 'holdDurationMs'],
+      ['map.set-zoom-fade', 'controllers']
+    ]) {
+      const tool = tools.find(item => item.name === toToolName(id));
+      expect(tool).toBeDefined();
+      expect(tool?.inputSchema.type).toBe('object');
+      expect(JSON.stringify(tool?.inputSchema)).toContain(field);
+    }
+  });
+
   it('rejects a connection with the wrong token', async () => {
     const socket = connect(started.port, 'not-the-token');
     const code = await new Promise<number>((resolve, reject) => {

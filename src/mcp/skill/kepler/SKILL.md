@@ -22,6 +22,9 @@ compare layers side by side. Examples:
 - "Change a column's type (e.g. make NOSOUTH a string)"
 - "Rename a column on the existing dataset"
 - "What's the current map boundary/extent?"
+- "Save this view as a bookmark and animate a tour between locations"
+- "Fade these layers or annotations as I zoom"
+- "Show contours, a Zarr forecast, or a Voronoi mosaic"
 
 Do NOT use this skill for analysis beyond map mutation — spatial statistics,
 spatial filtering, colocation, boundary fetching, or charts. Those belong to
@@ -45,12 +48,21 @@ not this one.
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
 | `map.get-dataset-context` | List all loaded datasets with their fields and layer configurations. |
 | `map.get-boundary`       | Read the current map view's bounding box.                      |
+| `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
+| `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
+| `map.camera-tour`        | Get/set location-animation stops or seek the camera along the tour. |
+| `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
 
 Every command takes a `commandId` (one of the table above) and an `input`
 object. Issue commands through your host's map-command dispatcher — the exact
 envelope is described in your host's tool listing. In the kepler.gl demo
 assistant the dispatcher is the `executeApi` tool with
 `apiName: "executeCommand"` and `args: { commandId, input }`.
+
+`map.add-layer` also accepts `contour`, `voronoi`, and `zarr`, with their
+options described below. The stdio bridge replaces the namespace dot with
+an underscore: for example, `map.camera-bookmarks` becomes
+`map_camera-bookmarks`. Dispatchers use the dotted command IDs.
 
 ## Picking a layer type
 
@@ -66,6 +78,9 @@ assistant the dispatcher is the `executeApi` tool with
   lat/lon columns or build an intermediate table. For geojson datasets use
   geometryColumn `"_geojson"`.
 - Time-animated movement → `trip`.
+- Scalar levels or point-count contours → `contour` with optional `contour.weightColumn`.
+- Nearest-site cells → `voronoi` with optional `voronoi.boundsPadding`.
+- Multidimensional raster slices → `map.load-zarr`, then a `zarr` layer.
 
 ## Color configuration
 
@@ -151,6 +166,21 @@ H3 layer:
 
 `map.add-layer` returns `dateTimeColumns` when the dataset has TIMESTAMP/DATE
 fields — see "Time animation" below for the follow-up.
+
+### Point Glow and Pulse / Ripple
+
+Use **Point → Visual** for Glow (a static halo) or Pulse / Ripple (animation
+in place). Continuous mode needs no time filter. **At event time** requires an
+Event timestamp and an enabled time filter on the same dataset/field; duration
+uses timeline seconds, and missing timestamps produce no effect. MCP creates
+the Point layer and time filter; enable the visual effects in the layer panel.
+
+### Heatmap 3D Surface
+
+Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
+surface. Height represents density, not terrain; its optional contours are
+separate from the Contour layer. MCP creates the Heatmap layer; enable the
+surface, height, and shading options in the layer panel.
 
 ### 2. Time animation (NON-trip layers)
 
@@ -249,6 +279,53 @@ Wind encoded as speed + direction under different column names:
   adjusted in the layer panel, not through `map.add-layer`.
 - A field layer over a very large grid is expensive: one row per sample point is
   fine, but downsample rasters to roughly 10k–100k points before loading.
+
+### Contour layer (`layerType: "contour"`)
+
+Use numeric `latitudeColumn`/`longitudeColumn` or `geometryColumn`; omit them
+to use detected columns. For example, call `map.add-layer` with:
+
+```json
+{"datasetName": "observations", "layerType": "contour", "contour": {"weightColumn": "temperature", "levels": 7}}
+```
+
+Omit `weightColumn` for point counts; weighted cells average finite values.
+`colorByLevel` colors thresholds; set it false with `simpleColor` for one color.
+Tabular `colorBy`/`colorMap` do not apply. Use regional 2D data: globe and
+antimeridian-crossing contours are unsupported. These are not travel-time isochrones.
+
+### Zarr layer (`layerType: "zarr"`)
+
+1. Call `map.load-zarr` with `url` (the HTTP(S) store URL) and `datasetName`.
+   Read its returned dataset ID, variable paths, and dimension names/sizes.
+2. Call `map.add-layer` using that dataset ID, for example:
+
+```json
+{
+  "datasetName": "<returned datasetId>", "layerType": "zarr",
+  "zarr": {"variable": "temperature", "dimensionIndexes": {"level": 0},
+    "axis": {"kind": "dimension", "dimension": "time"}, "frame": 0, "rescale": [250, 310]}
+}
+```
+
+Use actual metadata names and a rescale range in the variable's units. Indexes
+are zero-based; `frame` requires an explicit dimension/forecast axis. Use this
+axis rather than a table time filter. The store must allow browser access
+(CORS); exports retain its URL and settings, not the remote raster data.
+
+### Voronoi Mosaic layer (`layerType: "voronoi"`)
+
+Call `map.add-layer` with `layerType: "voronoi"`, optional
+`latitudeColumn`/`longitudeColumn` or `geometryColumn`, and
+`voronoi: {"boundsPadding": 10}`. Standard color options map source attributes
+to cells. Cells represent nearest sites in Web Mercator, not road travel time;
+use regional flat-map data. Filters rebuild cells from retained sites.
+
+### Tile, cell, model, and image layers
+
+Use the layer picker for A5, Geohash, icons, 3D models, and image overlays;
+use **Add Data → Tilesets** for vector/raster tiles, WMS, and 3D tiles.
+Preserve exported source descriptors and URLs for remote layers.
 
 ### 3. Split map comparison (`map.split-view`)
 
@@ -399,6 +476,45 @@ basemap, so set both when the user asks for a "dark globe" and the like.
   instead, or tell them the field layer needs the flat map.
 - Do not switch modes unless the user asks for it or the data's global extent
   makes it clearly better; a map that suddenly becomes a globe is surprising.
+
+### Bookmarks (`map.camera-bookmarks`)
+
+Save the current view with:
+
+```json
+{"action": "save", "id": "downtown", "name": "Downtown", "showControl": true}
+```
+
+Use `action: "list"`, or `"go-to"`/`"remove"` with the bookmark ID. Saving an
+existing ID updates it in place. Supply `camera` to save explicit longitude,
+latitude, zoom, bearing, and pitch. Bookmarks restore only the camera;
+navigation requires a single Mercator map.
+
+### Camera tours (`map.camera-tour`)
+
+Use `action: "set"` with ordered `stops`, each containing `id`, `name`,
+`camera` (longitude, latitude, zoom, bearing, pitch), `holdDurationMs`, and
+`travelDurationMs`. Durations are nonnegative milliseconds; hold precedes
+travel to the next stop, and the last travel duration is ignored.
+
+Use `action: "get"` before extending a tour: set replaces all stops, and `[]`
+clears it. `action: "seek"` with `elapsedMs` moves the camera along the tour;
+Play/Pause remains in **Interactions → Camera animation**. Tours require a
+single Mercator map and animate the view, not dataset features; do not add a
+time filter for camera movement.
+
+### Fade on Zoom (`map.set-zoom-fade`)
+
+Use existing layer IDs from `map.add-layer` or `map.get-dataset-context`:
+
+```json
+{"enabled": true, "controllers": [{"id": "detail", "layerIds": ["observations-layer"], "stops": {"appear": 2, "full": 4, "fade": 8, "gone": 10}}]}
+```
+
+Keep `0 <= appear <= full <= fade <= gone <= 24`. Each layer/annotation belongs
+to one controller; pass annotation IDs in `annotationIds`. Controllers replace
+the complete list; omit them to only toggle, or pass `[]` to clear. The fade
+multiplies normal opacity and does not make hidden layers visible.
 
 ## Rules
 

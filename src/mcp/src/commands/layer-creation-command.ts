@@ -10,6 +10,13 @@ import type {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
+import {
+  buildSurfaceLayer,
+  buildZarrLayer,
+  contourOptions,
+  voronoiOptions,
+  zarrOptions
+} from './surface-layer-options';
 
 /**
  * Unique layer id. Date.now()-based ids can collide when multiple layers are
@@ -398,6 +405,9 @@ LAYER TYPES:
 - grid: Grid binning
 - trip: Animated trip (flights, deliveries, vessels)
 - s2: S2 geometry cells
+- contour: Density contours or a scalar surface (lat/lng or geometry; optional contour.weightColumn)
+- voronoi: Nearest-site mosaic (lat/lng or geometry centroids; voronoi.boundsPadding)
+- zarr: Raster variable from a Zarr dataset imported with map.load-zarr (zarr.variable, dimensionIndexes, axis, frame, rescale)
 
 FLOW MAPS (layerType 'flow'):
 For origin->destination flows use layerType 'flow' — a dedicated flow layer that draws
@@ -450,6 +460,10 @@ For geojson datasets:
         .describe('The name (label) or id of the dataset. Prefer the label when known.'),
       latitudeColumn: z.string().optional(),
       longitudeColumn: z.string().optional(),
+      geometryColumn: z.string().optional().describe('Geometry field for contour or voronoi.'),
+      contour: contourOptions.optional(),
+      voronoi: voronoiOptions.optional(),
+      zarr: zarrOptions.optional(),
       layerName: z
         .string()
         .optional()
@@ -467,7 +481,10 @@ For geojson datasets:
         'heatmap',
         'h3',
         'trip',
-        's2'
+        's2',
+        'contour',
+        'voronoi',
+        'zarr'
       ]),
       flowField: z
         .object({
@@ -521,6 +538,10 @@ For geojson datasets:
         colorMap?: Array<{value: string | number | null; color: string}>;
         countColumn?: string;
         flowField?: FlowFieldOptions;
+        geometryColumn?: string;
+        contour?: z.infer<typeof contourOptions>;
+        voronoi?: z.infer<typeof voronoiOptions>;
+        zarr?: z.infer<typeof zarrOptions>;
       };
       const {
         datasetName,
@@ -553,7 +574,10 @@ For geojson datasets:
           'heatmap',
           'h3',
           'trip',
-          's2'
+          's2',
+          'contour',
+          'voronoi',
+          'zarr'
         ];
         if (!layerType || !VALID_LAYER_TYPES.includes(layerType)) {
           throw new Error(
@@ -579,7 +603,11 @@ For geojson datasets:
         // that path only auto-detects the u/v case and would ignore explicit
         // column names.
         let layer =
-          layerType === 'flowField'
+          layerType === 'contour' || layerType === 'voronoi'
+            ? buildSurfaceLayer(dataset, layerType, args)
+            : layerType === 'zarr'
+            ? buildZarrLayer(dataset, args.zarr)
+            : layerType === 'flowField'
             ? buildFlowFieldLayer(dataset, {latitudeColumn, longitudeColumn}, flowField)
             : guessDefaultLayer(dataset, layerType, {countColumn});
 
@@ -620,6 +648,11 @@ For geojson datasets:
         }
 
         const newLayer = buildLayerConfig(layer, datasetId, layerName, datasetName, layerType);
+        if (['contour', 'zarr'].includes(layerType) && (colorBy || colorMap || colorType)) {
+          throw new Error(
+            `${layerType} colors its scalar surface; colorBy/colorMap/colorType do not apply.`
+          );
+        }
         applyColorConfig(newLayer, dataset, {simpleColor, colorBy, colorType, colorMap});
 
         ctx.dispatch(addLayerAction(newLayer, datasetId));
@@ -643,6 +676,7 @@ For geojson datasets:
           success: true,
           commandId: addLayerCommandId,
           data: {
+            layerId: newLayer.id,
             details: `Map layer ${newLayer.id} has been added to the map.`,
             dateTimeColumns: hasTemporalFields ? temporalFields : undefined,
             dateTimeHint: hasTemporalFields
