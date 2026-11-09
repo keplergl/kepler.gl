@@ -484,17 +484,18 @@ export function getModules({
     if (continuousStretch) {
       const [min, max] = nonLinearRescaling ? [0, 1] : linearRescalingFactor;
       const localRange = max - min;
-      // A finite JavaScript number can still overflow the Float32 uniform.
-      const scaler = Math.fround(1 / (localRange * globalRange));
+      // A power-of-two reduction keeps wide Float32 spans and their reciprocals representable.
+      const inputScale = Math.fround(globalRange) === Infinity ? 1 / 16 : 1;
+      const scaler = Math.fround(1 / (localRange * globalRange * inputScale));
       const hasRange = Number.isFinite(scaler) && scaler > 0;
       modules.push(linearRescale);
       // Subtract the band minimum before scaling to preserve narrow Float32 ranges.
-      moduleProps.linearRescaleInputMin = hasRange ? minPixelValue : 0;
+      moduleProps.linearRescaleInputScale = inputScale;
+      moduleProps.linearRescaleInputMin = hasRange ? minPixelValue * inputScale : 0;
       moduleProps.linearRescaleScaler = hasRange ? scaler : 0;
       moduleProps.linearRescaleOffset = hasRange ? -min / localRange : 0.5;
-      // Clamp before gamma: pixels outside reported statistics must not feed
-      // negative values to pow(), or disappear through categorical rejection.
-      moduleProps.linearRescaleClamp = true;
+      // Gamma needs clamped inputs. Linear filtering needs the full rescaled range.
+      moduleProps.linearRescaleClamp = nonLinearRescaling;
     } else if (!nonLinearRescaling) {
       const [min, max] = linearRescalingFactor;
       const localRange = max - min;
