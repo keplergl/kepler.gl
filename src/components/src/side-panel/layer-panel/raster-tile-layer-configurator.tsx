@@ -16,7 +16,6 @@ import {
   isSearchableStac,
   CompleteSTACObject,
   GetTileDataCustomProps,
-  DataSourceParams,
   PresetOption,
   RasterTileLayer,
   CATEGORICAL_COLORMAP_ID,
@@ -241,18 +240,15 @@ function isDataSourceColorRangeAvailable(
   preset: string,
   singleBandPresetOptions: PresetOption['singleBand']
 ): boolean {
-  let minPixelValue: number | null = null;
-  let maxPixelValue: number | null = null;
-  const dataSourceParams: DataSourceParams | null = layer.getDataSourceParams(stac, preset, {
+  const dataSourceParams = layer.getDataSourceParams(stac, preset, {
     singleBand: singleBandPresetOptions,
     useBandStatistics:
       layer.config.visConfig.useBandStatistics && !layer.config.visConfig.colorRange.colorMap
   });
-  if (dataSourceParams) {
-    minPixelValue = dataSourceParams.minPixelValue;
-    maxPixelValue = dataSourceParams.maxPixelValue;
-  }
-  return minPixelValue !== null && maxPixelValue !== null;
+  return (
+    Number.isFinite(dataSourceParams?.minPixelValue) &&
+    Number.isFinite(dataSourceParams?.maxPixelValue)
+  );
 }
 
 /**

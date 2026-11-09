@@ -2743,7 +2743,6 @@ test('#RasterTileLayer -> categorical bitmap ignores invalid and out-of-range cl
   t.end();
 });
 
-// A fresh layer per source avoids the source-ID keyed metadata cache crossing fixtures.
 function createContinuousRaster(dataType, statistics, coreBands = false) {
   const band = {name: 'band', data_type: dataType, statistics};
   const metadata = {
@@ -2759,7 +2758,8 @@ function createContinuousRaster(dataType, statistics, coreBands = false) {
   const dataset = {...MOCK_STAC_DATASET, id: 'continuous-data', metadata};
   const layer = new RasterTileLayer(RasterTileLayer.findDefaultLayerProps(dataset).props[0]);
   layer.updateLayerVisConfig({preset: 'singleBand', singleBandName: 'band'});
-  const render = () => layer.renderLayer(createRenderOpts(dataset))[0];
+  const render = (source = dataset, layerCallbacks) =>
+    layer.renderLayer({...createRenderOpts(source), layerCallbacks})[0];
   const pipeline = () => {
     const rendered = render();
     const images = {imageColormap: {}};
@@ -2848,6 +2848,16 @@ test('#RasterTileLayer -> a narrow Float32 range uses the full palette', t => {
   t.end();
 });
 
+test('#RasterTileLayer -> Float32 scaler overflow uses a finite midpoint', t => {
+  const minimum = Math.fround(1e-35);
+  const maximum = Math.fround(1.000001e-35);
+  const {pipeline} = createContinuousRaster('float32', {minimum, maximum});
+  const {rescale} = pipeline();
+  t.equal(normalizeRasterPixel(minimum, rescale), 0.5, 'minimum does not produce NaN');
+  t.equal(normalizeRasterPixel(maximum, rescale), 0.5, 'maximum uses the same fallback');
+  t.end();
+});
+
 test('#RasterTileLayer -> metadata stretch falls back safely and remains global', t => {
   for (const statistics of [
     undefined,
@@ -2909,18 +2919,50 @@ test('#RasterTileLayer -> metadata stretch falls back safely and remains global'
   t.end();
 });
 
-test('#RasterTileLayer -> Dynamic Color renders float bands with reversed statistics', t => {
-  const {layer, render} = createContinuousRaster('float32', {minimum: 100, maximum: 0});
-  layer.updateLayerVisConfig({dynamicColor: true});
-  t.ok(render(), 'tile loading can start before viewport extrema are available');
-  layer.onViewportLoad([{data: {minPixelValue: 10, maxPixelValue: 50}}]);
-  const rendered = render();
+test('#RasterTileLayer -> replacing a STAC source with the same ID refreshes statistics', t => {
+  const {dataset, render} = createContinuousRaster('uint16', {minimum: 100, maximum: 200});
+  const {dataset: replacement} = createContinuousRaster('uint16', {
+    minimum: 1000,
+    maximum: 2000
+  });
+  const before = render(dataset);
+  const after = render(replacement);
   t.deepEqual(
-    [rendered?.props.minPixelValue, rendered?.props.maxPixelValue],
-    [10, 50],
-    'uses the loaded viewport range'
+    [before.props.minPixelValue, before.props.maxPixelValue],
+    [100, 200],
+    'initial range'
   );
-  t.equal(rendered?.props.useBandStatistics, true, 'keeps the continuous stretch');
+  t.deepEqual(
+    [after.props.minPixelValue, after.props.maxPixelValue],
+    [1000, 2000],
+    'uses the replacement metadata'
+  );
+  t.end();
+});
+
+test('#RasterTileLayer -> float bands with unusable statistics load and use the viewport range', t => {
+  for (const statistics of [undefined, {minimum: 100, maximum: 0}]) {
+    for (const dynamicColor of [false, true]) {
+      const {layer, render} = createContinuousRaster('float32', statistics);
+      const onRedrawNeeded = sinon.spy();
+      const callbacks = {onRedrawNeeded};
+      const tiles = [{data: {minPixelValue: 10, maxPixelValue: 50}}];
+      layer.updateLayerVisConfig({dynamicColor});
+      const initial = render(undefined, callbacks);
+      t.ok(initial, 'tile loading can start before viewport extrema are available');
+      initial?.props.onViewportLoad(tiles);
+      t.ok(onRedrawNeeded.calledOnce, 'redraws when the viewport range arrives');
+      const rendered = render(undefined, callbacks);
+      t.deepEqual(
+        [rendered?.props.minPixelValue, rendered?.props.maxPixelValue],
+        [10, 50],
+        'uses the loaded viewport range'
+      );
+      t.equal(rendered?.props.useBandStatistics, true, 'keeps the continuous stretch');
+      rendered?.props.onViewportLoad(tiles);
+      t.ok(onRedrawNeeded.calledOnce, 'reuses the range without requesting another redraw');
+    }
+  }
   t.end();
 });
 

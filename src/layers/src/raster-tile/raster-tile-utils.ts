@@ -163,7 +163,8 @@ function getPixelRange(
     }
     const typeMax = dtypeMaxValue[dtype];
     if (typeMax === null || !Number.isFinite(typeMax)) {
-      return null;
+      // Keep tile loading available. The renderer can use the loaded viewport range.
+      return [NaN, NaN];
     }
     return [dtype.startsWith('int') ? -typeMax - 1 : 0, typeMax];
   }
