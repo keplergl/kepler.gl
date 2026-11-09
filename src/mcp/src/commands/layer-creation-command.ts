@@ -3,13 +3,14 @@
 
 import type {RoomCommand} from './types';
 import {z} from 'zod';
-import {GEOJSON_FIELDS} from '@kepler.gl/constants';
+import {DatasetType, GEOJSON_FIELDS} from '@kepler.gl/constants';
 import {LayerClasses} from '@kepler.gl/layers';
 import type KeplerTable from '@kepler.gl/table';
 import type {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
+import {validateLayerOptions} from './layer-options-command';
 import {
   buildSurfaceLayer,
   buildZarrLayer,
@@ -113,6 +114,97 @@ export function guessDefaultLayer(
   // requesting "h3" and getting a point layer) violates the command contract
   // and makes failures hard to diagnose. The caller errors clearly on null.
   return layer || null;
+}
+
+const additionalLayerTypes = [
+  'a5',
+  'geohash',
+  'icon',
+  '3D',
+  'bitmap',
+  'vectorTile',
+  'rasterTile',
+  'wms',
+  'tile3d'
+] as const;
+const explicitColumns = z.record(z.string(), z.string().min(1));
+
+function buildAdditionalLayer(
+  dataset: KeplerTable,
+  type: string,
+  input: {
+    columns?: Record<string, string>;
+    latitudeColumn?: string;
+    longitudeColumn?: string;
+    geometryColumn?: string;
+  }
+) {
+  const datasetTypes = {
+    bitmap: DatasetType.BITMAP,
+    vectorTile: DatasetType.VECTOR_TILE,
+    rasterTile: DatasetType.RASTER_TILE,
+    wms: DatasetType.WMS_TILE,
+    tile3d: DatasetType.TILE_3D
+  };
+  if (datasetTypes[type] && dataset.type !== datasetTypes[type]) {
+    throw new Error(`${type} requires a matching dataset imported with map.load-tileset.`);
+  }
+  const LayerClass = LayerClasses[type];
+  const defaults = LayerClass.findDefaultLayerProps(dataset);
+  const props = defaults.props?.[0] ?? defaults.altProps?.[0] ?? {};
+  const names = explicitColumns.parse(input.columns === undefined ? {} : input.columns);
+  if (Boolean(input.latitudeColumn) !== Boolean(input.longitudeColumn)) {
+    throw new Error('Provide both latitudeColumn and longitudeColumn.');
+  }
+  if (input.geometryColumn && input.latitudeColumn)
+    throw new Error('Choose geometry or latitude/longitude columns.');
+  const isPositionLayer = ['icon', '3D'].includes(type);
+  if (isPositionLayer) {
+    if (input.latitudeColumn && input.longitudeColumn) {
+      names.lat = input.latitudeColumn;
+      names.lng = input.longitudeColumn;
+    } else if (!input.geometryColumn && !names.geojson) {
+      const pair = dataset.fieldPairs?.[0]?.pair;
+      if (pair) {
+        names.lat ??= pair.lat.value;
+        names.lng ??= pair.lng.value;
+      }
+    }
+    if (input.geometryColumn) names.geojson = input.geometryColumn;
+  }
+  const columnMode =
+    type === '3D'
+      ? names.geojson
+        ? 'geojson'
+        : names.lat
+        ? 'points'
+        : props.columnMode
+      : props.columnMode;
+  const layer = new LayerClass({...props, dataId: dataset.id, ...(columnMode ? {columnMode} : {})});
+  const allowed = Object.keys(layer.config.columns);
+  for (const [key, name] of Object.entries(names)) {
+    if (!allowed.includes(key))
+      throw new Error(`Unsupported ${type} column "${key}". Expected: ${allowed.join(', ')}.`);
+    const fieldIdx = dataset.getColumnFieldIdx(name);
+    const field = dataset.fields[fieldIdx];
+    if (!field) throw new Error(`Column "${name}" not found.`);
+    if (
+      ['lat', 'lng', 'altitude', 'angle'].includes(key) &&
+      !['real', 'integer'].includes(field.type)
+    ) {
+      throw new Error(`Column "${name}" must be numeric.`);
+    }
+    if (key === 'geojson' && !['geojson', 'geoarrow'].includes(field.type))
+      throw new Error(`Column "${name}" must be geometry.`);
+    layer.config.columns[key] = {value: name, fieldIdx};
+  }
+  const required =
+    layer.supportedColumnModes?.find(mode => mode.key === layer.config.columnMode)
+      ?.requiredColumns ?? layer.requiredLayerColumns;
+  for (const key of required) {
+    if (!layer.config.columns[key]?.value) throw new Error(`${type} requires columns.${key}.`);
+  }
+  return layer;
 }
 
 /** Column names the flow field layer resolves when the caller doesn't name them. */
@@ -405,6 +497,10 @@ LAYER TYPES:
 - grid: Grid binning
 - trip: Animated trip (flights, deliveries, vessels)
 - s2: S2 geometry cells
+- a5/geohash: Indexed cells (columns.token)
+- icon: Markers with named icons (columns.lat/lng/icon)
+- 3D: glTF models at points or geometry centroids (columns, options.scenegraph)
+- bitmap/vectorTile/rasterTile/wms/tile3d: Matching datasets imported with map.load-tileset
 - contour: Density contours or a scalar surface (lat/lng or geometry; optional contour.weightColumn)
 - voronoi: Nearest-site mosaic (lat/lng or geometry centroids; voronoi.boundsPadding)
 - zarr: Raster variable from a Zarr dataset imported with map.load-zarr (zarr.variable, dimensionIndexes, axis, frame, rescale)
@@ -461,6 +557,17 @@ For geojson datasets:
       latitudeColumn: z.string().optional(),
       longitudeColumn: z.string().optional(),
       geometryColumn: z.string().optional().describe('Geometry field for contour or voronoi.'),
+      columns: explicitColumns
+        .optional()
+        .describe(
+          'Explicit mappings for a5/geohash (token), icon (lat/lng/icon), or 3D (lat/lng/altitude or geojson).'
+        ),
+      options: z
+        .record(z.string(), z.union([z.number().finite(), z.boolean(), z.string()]))
+        .optional()
+        .describe(
+          'Initial visual settings; inspect map.get-layer-options to discover editable keys.'
+        ),
       contour: contourOptions.optional(),
       voronoi: voronoiOptions.optional(),
       zarr: zarrOptions.optional(),
@@ -484,7 +591,8 @@ For geojson datasets:
         's2',
         'contour',
         'voronoi',
-        'zarr'
+        'zarr',
+        ...additionalLayerTypes
       ]),
       flowField: z
         .object({
@@ -528,6 +636,8 @@ For geojson datasets:
     execute: async (_execCtx, input) => {
       const args = (input ?? {}) as {
         datasetName: string;
+        columns?: Record<string, string>;
+        options?: Record<string, number | boolean | string>;
         layerName?: string;
         latitudeColumn?: string;
         longitudeColumn?: string;
@@ -577,7 +687,8 @@ For geojson datasets:
           's2',
           'contour',
           'voronoi',
-          'zarr'
+          'zarr',
+          ...additionalLayerTypes
         ];
         if (!layerType || !VALID_LAYER_TYPES.includes(layerType)) {
           throw new Error(
@@ -602,14 +713,15 @@ For geojson datasets:
         // one of three modes), so it does not go through guessDefaultLayer —
         // that path only auto-detects the u/v case and would ignore explicit
         // column names.
-        let layer =
-          layerType === 'contour' || layerType === 'voronoi'
-            ? buildSurfaceLayer(dataset, layerType, args)
-            : layerType === 'zarr'
-            ? buildZarrLayer(dataset, args.zarr)
-            : layerType === 'flowField'
-            ? buildFlowFieldLayer(dataset, {latitudeColumn, longitudeColumn}, flowField)
-            : guessDefaultLayer(dataset, layerType, {countColumn});
+        let layer = additionalLayerTypes.includes(layerType as any)
+          ? buildAdditionalLayer(dataset, layerType, args)
+          : layerType === 'contour' || layerType === 'voronoi'
+          ? buildSurfaceLayer(dataset, layerType, args)
+          : layerType === 'zarr'
+          ? buildZarrLayer(dataset, args.zarr)
+          : layerType === 'flowField'
+          ? buildFlowFieldLayer(dataset, {latitudeColumn, longitudeColumn}, flowField)
+          : guessDefaultLayer(dataset, layerType, {countColumn});
 
         if (!layer) {
           if (layerType === 'point' && latitudeColumn && longitudeColumn) {
@@ -626,19 +738,15 @@ For geojson datasets:
                 `Column "${missing}" not found in dataset "${datasetName}". Available columns: ${available}`
               );
             }
-            layer = {
+            layer = new LayerClasses.point({
               id: uniqueLayerId(),
-              type: 'point',
-              config: {
-                dataId: datasetId,
-                label: layerName || `${datasetName}-${layerType}`,
-                columns: {
-                  lat: {value: latitudeColumn, fieldIdx: latIdx},
-                  lng: {value: longitudeColumn, fieldIdx: lngIdx}
-                },
-                visConfig: {}
+              dataId: datasetId,
+              label: layerName || `${datasetName}-${layerType}`,
+              columns: {
+                lat: {value: latitudeColumn, fieldIdx: latIdx},
+                lng: {value: longitudeColumn, fieldIdx: lngIdx}
               }
-            } as any;
+            });
           }
         }
         if (!layer) {
@@ -647,6 +755,12 @@ For geojson datasets:
           );
         }
 
+        if (args.options !== undefined) {
+          layer.config.visConfig = {
+            ...layer.config.visConfig,
+            ...validateLayerOptions(layer, dataset, args.options)
+          };
+        }
         const newLayer = buildLayerConfig(layer, datasetId, layerName, datasetName, layerType);
         if (['contour', 'zarr'].includes(layerType) && (colorBy || colorMap || colorType)) {
           throw new Error(

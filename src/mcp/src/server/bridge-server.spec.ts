@@ -69,10 +69,26 @@ describe('kepler-mcp bridge server', () => {
     const schema = tools.find(tool => tool.name === toToolName('map.add-layer'))
       ?.inputSchema as any;
     expect(schema.properties.layerType.enum).toEqual(
-      expect.arrayContaining(['contour', 'voronoi', 'zarr'])
+      expect.arrayContaining([
+        'contour',
+        'voronoi',
+        'zarr',
+        'a5',
+        'geohash',
+        'icon',
+        '3D',
+        'bitmap',
+        'vectorTile',
+        'rasterTile',
+        'wms',
+        'tile3d'
+      ])
     );
     for (const [id, field] of [
       ['map.load-zarr', 'datasetName'],
+      ['map.load-tileset', 'metadataUrl'],
+      ['map.get-layer-options', 'layerId'],
+      ['map.set-layer-options', 'options'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
       ['map.set-zoom-fade', 'controllers']

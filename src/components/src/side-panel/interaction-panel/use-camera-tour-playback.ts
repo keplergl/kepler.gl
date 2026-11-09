@@ -16,6 +16,7 @@ export default function useCameraTourPlayback(
   const root = useContext(RootContext);
   const duration = useMemo(() => getCameraTourDuration(tour), [tour]);
   const [elapsed, setElapsed] = useState(0);
+  const elapsedRef = useRef(0);
   const [playing, setPlaying] = useState(false);
   const frame = useRef<number | null>(null);
   const running = useRef(false);
@@ -30,6 +31,7 @@ export default function useCameraTourPlayback(
   const apply = useCallback(
     (time: number, camera = evaluateCameraTour(tour, time)) => {
       if (camera && updateMap) updateMap({...camera, transitionDuration: 0});
+      elapsedRef.current = time;
       setElapsed(time);
     },
     [tour, updateMap]
@@ -46,7 +48,7 @@ export default function useCameraTourPlayback(
   const play = useCallback(() => {
     if (!enabled || !updateMap || duration <= 0) return;
     pause();
-    const start = elapsed >= duration ? 0 : elapsed;
+    const start = elapsedRef.current >= duration ? 0 : elapsedRef.current;
     const origin = performance.now() - start;
     running.current = true;
     setPlaying(true);
@@ -59,10 +61,11 @@ export default function useCameraTourPlayback(
       else if (running.current) frame.current = window.requestAnimationFrame(tick);
     };
     frame.current = window.requestAnimationFrame(tick);
-  }, [enabled, updateMap, duration, pause, elapsed, apply]);
+  }, [enabled, updateMap, duration, pause, apply]);
 
   useEffect(() => {
     pause();
+    elapsedRef.current = 0;
     setElapsed(0);
   }, [tour, pause]);
 

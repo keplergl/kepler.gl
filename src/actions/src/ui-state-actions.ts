@@ -3,7 +3,12 @@
 
 import {createAction} from '@reduxjs/toolkit';
 import {default as ActionTypes} from './action-types';
-import {Merge, ExportImage, ExportVideo} from '@kepler.gl/types';
+import {Merge, ExportImage, ExportVideo, CameraTourPlaybackRequest} from '@kepler.gl/types';
+
+/** Control the shared camera-tour player independently of the side panel. */
+export const controlCameraTour = createAction<CameraTourPlaybackRequest>(
+  ActionTypes.CONTROL_CAMERA_TOUR
+);
 
 /** TOGGLE_SIDE_PANEL */
 export type ToggleSidePanelUpdaterAction = {

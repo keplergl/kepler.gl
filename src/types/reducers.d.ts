@@ -660,7 +660,13 @@ export type UiTheme = string;
 
 export type PanelListView = string;
 
+/** Transient playback requests; never serialized with the saved map. */
+export type CameraTourPlaybackRequest =
+  | {action: 'play' | 'pause'}
+  | {action: 'seek'; elapsedMs: number};
+
 export type UiState = {
+  cameraTourPlaybackRequest?: CameraTourPlaybackRequest & {sequence: number};
   readOnly: boolean;
   activeSidePanel: string | null;
   currentModal: string | null;

@@ -39,6 +39,8 @@ not this one.
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
 | `map.toggle-time-filter` | Show/hide the enlarged time controller at the bottom of the map. |
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
+| `map.get-layer-options` | Inspect editable visual settings, values, ranges and choices. |
+| `map.set-layer-options` | Patch visual settings or Zarr variable/dimension/axis selections. |
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
@@ -48,9 +50,10 @@ not this one.
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
 | `map.get-dataset-context` | List all loaded datasets with their fields and layer configurations. |
 | `map.get-boundary`       | Read the current map view's bounding box.                      |
+| `map.load-tileset`       | Import vector/raster tiles, WMS, 3D tiles or a bitmap (then call `map.add-layer`). |
 | `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
 | `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
-| `map.camera-tour`        | Get/set location-animation stops or seek the camera along the tour. |
+| `map.camera-tour`        | Get/set location-animation stops, seek, play or pause. |
 | `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
 
 Every command takes a `commandId` (one of the table above) and an `input`
@@ -169,18 +172,21 @@ fields — see "Time animation" below for the follow-up.
 
 ### Point Glow and Pulse / Ripple
 
-Use **Point → Visual** for Glow (a static halo) or Pulse / Ripple (animation
-in place). Continuous mode needs no time filter. **At event time** requires an
-Event timestamp and an enabled time filter on the same dataset/field; duration
-uses timeline seconds, and missing timestamps produce no effect. MCP creates
-the Point layer and time filter; enable the visual effects in the layer panel.
+Use `map.set-layer-options` with `layerId` and `options`, for example
+`{"glowEnabled": true, "pulseEnabled": true, "pulseMode": "ripple"}`.
+Continuous mode needs no time filter. Event pulses use `pulseTrigger: "event"`,
+`pulseTimeField`, and `pulseDurationMs`, plus an enabled time filter on that
+same dataset/field. Missing timestamps produce no effect. Discover settings
+and ranges with `map.get-layer-options`; `map.add-layer.options` accepts the
+same visual settings when creating a layer.
 
 ### Heatmap 3D Surface
 
-Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
-surface. Height represents density, not terrain; its optional contours are
-separate from the Contour layer. MCP creates the Heatmap layer; enable the
-surface, height, and shading options in the layer panel.
+Set `options: {"surfaceEnabled": true, "surfaceHeight": 1000}` with
+`map.set-layer-options` and use `map.set-view-mode` to tilt the map.
+`surfaceLighting`, `surfaceContours`, and `surfaceContourStep` control shading
+and contours. Height represents density, not terrain; these contours are
+separate from the Contour layer.
 
 ### 2. Time animation (NON-trip layers)
 
@@ -276,7 +282,7 @@ Wind encoded as speed + direction under different column names:
   its own, like a trip layer.
 - Streamline density (`linesPerScreen`), `strokeWidth`, `trailLength`,
   `cycleSeconds`, `lineLifetime` and `smoothing` use tuned defaults; they are
-  adjusted in the layer panel, not through `map.add-layer`.
+  editable through `map.set-layer-options` (or `map.add-layer.options`).
 - A field layer over a very large grid is expensive: one row per sample point is
   fine, but downsample rasters to roughly 10k–100k points before loading.
 
@@ -310,7 +316,9 @@ antimeridian-crossing contours are unsupported. These are not travel-time isochr
 
 Use actual metadata names and a rescale range in the variable's units. Indexes
 are zero-based; `frame` requires an explicit dimension/forecast axis. Use this
-axis rather than a table time filter. The store must allow browser access
+axis rather than a table time filter. To revise a layer, use
+`map.set-layer-options` with its `layerId` and the same `zarr` options.
+The store must allow browser access
 (CORS); exports retain its URL and settings, not the remote raster data.
 
 ### Voronoi Mosaic layer (`layerType: "voronoi"`)
@@ -323,9 +331,18 @@ use regional flat-map data. Filters rebuild cells from retained sites.
 
 ### Tile, cell, model, and image layers
 
-Use the layer picker for A5, Geohash, icons, 3D models, and image overlays;
-use **Add Data → Tilesets** for vector/raster tiles, WMS, and 3D tiles.
-Preserve exported source descriptors and URLs for remote layers.
+Use `map.add-layer` with `layerType: "a5"` or `"geohash"` and
+`columns: {"token": "cell_column"}`. Icons use `"icon"` with `lat`, `lng`,
+and `icon` column mappings. Models use `"3D"` with `lat`/`lng` (optional
+`altitude`) or `geojson`, and `options.scenegraph` for a glTF/GLB URL.
+
+For remote layers, call `map.load-tileset` with `datasetName`, `type`, and
+`url`, then `map.add-layer` with the returned `datasetId` and `layerType`.
+Types are `vectorTile` (MVT/PMTiles), `rasterTile` (STAC/PMTiles), `wms`,
+`tile3d` (tileset JSON), and `bitmap` (also requires `[west,south,east,north]`
+`bounds`). Vector tiles optionally take `metadataUrl`; STAC rasters can take
+`rasterTileServerUrls`. For WMS, select a returned service-layer name using
+`map.set-layer-options.wmsLayer`. Preserve source URLs when exporting.
 
 ### 3. Split map comparison (`map.split-view`)
 
@@ -488,7 +505,8 @@ Save the current view with:
 Use `action: "list"`, or `"go-to"`/`"remove"` with the bookmark ID. Saving an
 existing ID updates it in place. Supply `camera` to save explicit longitude,
 latitude, zoom, bearing, and pitch. Bookmarks restore only the camera;
-navigation requires a single Mercator map.
+navigation requires a single Mercator map. Use `action: "show-control"` with
+`showControl` to change control visibility without resaving bookmarks.
 
 ### Camera tours (`map.camera-tour`)
 
@@ -498,10 +516,11 @@ Use `action: "set"` with ordered `stops`, each containing `id`, `name`,
 travel to the next stop, and the last travel duration is ignored.
 
 Use `action: "get"` before extending a tour: set replaces all stops, and `[]`
-clears it. `action: "seek"` with `elapsedMs` moves the camera along the tour;
-Play/Pause remains in **Interactions → Camera animation**. Tours require a
-single Mercator map and animate the view, not dataset features; do not add a
-time filter for camera movement.
+clears it. `action: "seek"` with `elapsedMs` pauses and moves along the tour.
+`action: "play"` resumes (or restarts at the end); `"pause"` stops the clock.
+Playback works with the side panel closed and pauses on manual navigation.
+Tours require a single Mercator map and animate the view, not dataset
+features; do not add a time filter for camera movement.
 
 ### Fade on Zoom (`map.set-zoom-fade`)
 
