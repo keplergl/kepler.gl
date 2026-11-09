@@ -484,14 +484,17 @@ export function getModules({
     if (continuousStretch) {
       const [min, max] = nonLinearRescaling ? [0, 1] : linearRescalingFactor;
       const localRange = max - min;
-      // A power-of-two reduction keeps wide Float32 spans and their reciprocals representable.
-      const inputScale = Math.fround(globalRange) === Infinity ? 1 / 16 : 1;
-      const scaler = Math.fround(1 / (localRange * globalRange * inputScale));
+      // A power-of-two reduction keeps wide spans and their reciprocals in Float32's normal range.
+      const inputScale = globalRange > 2 ** 126 ? 1 / 16 : 1;
+      const inputMin = Math.fround(minPixelValue * inputScale);
+      // Match the shader's subtraction so rounding doesn't turn an endpoint into an outlier.
+      const span = Math.fround(Math.fround(maxPixelValue * inputScale) - inputMin);
+      const scaler = Math.fround(1 / (localRange * span));
       const hasRange = Number.isFinite(scaler) && scaler > 0;
       modules.push(linearRescale);
       // Subtract the band minimum before scaling to preserve narrow Float32 ranges.
       moduleProps.linearRescaleInputScale = inputScale;
-      moduleProps.linearRescaleInputMin = hasRange ? minPixelValue * inputScale : 0;
+      moduleProps.linearRescaleInputMin = hasRange ? inputMin : 0;
       moduleProps.linearRescaleScaler = hasRange ? scaler : 0;
       moduleProps.linearRescaleOffset = hasRange ? -min / localRange : 0.5;
       // Gamma needs clamped inputs. Linear filtering needs the full rescaled range.

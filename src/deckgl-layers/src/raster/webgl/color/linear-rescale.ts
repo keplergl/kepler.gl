@@ -67,6 +67,9 @@ export const linearRescale: ShaderModule = {
       linear_rescale.offset
     );
     if (linear_rescale.clampOutput == 1) {
+      #ifdef MODULE_BANDFILTER
+      if (bandFilterRejectsClippedValue(image.r)) discard;
+      #endif
       image = clamp(image, 0.0, 1.0);
     }
     `

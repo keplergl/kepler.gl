@@ -14,6 +14,12 @@ uniform bandFilterUniforms {
   float min4;
   float max4;
 } bandFilter;
+
+// Nonlinear contrast works on [0, 1]. Check the outliers it would clamp to an endpoint.
+bool bandFilterRejectsClippedValue(float value) {
+  return (value < 0.0 && value < bandFilter.min1) ||
+         (value > 1.0 && value > bandFilter.max1);
+}
 `;
 
 // You can't pass JS' -Infinity or Infinity to a shader as a uniform

@@ -2890,6 +2890,68 @@ test('#RasterTileLayer -> linear filtering rejects pixels outside the selected s
   t.end();
 });
 
+test('#RasterTileLayer -> nonlinear filtering rejects outliers and keeps in-range gamma', t => {
+  const {linearRescale, filter, gammaContrast} = RasterWebGL;
+  const rejectClipped = new Function(
+    'value',
+    'bandFilter',
+    filter.fs.match(/bool bandFilterRejectsClippedValue\(float value\) \{([^}]+)\}/)[1]
+  );
+  const filterShader = filter.inject['fs:DECKGL_MUTATE_COLOR'].replace(
+    /\bdiscard;/g,
+    'return false;'
+  );
+  const filterColor = new Function('image', 'bandFilter', `${filterShader} return true;`);
+  const rescaleShader = linearRescale.inject['fs:DECKGL_MUTATE_COLOR'];
+  const rejectIndex = rescaleShader.indexOf('bandFilterRejectsClippedValue(image.r)');
+  t.ok(
+    rejectIndex >= 0 && rejectIndex < rescaleShader.indexOf('image = clamp'),
+    'the outlier test sees the unclamped value'
+  );
+
+  for (const {minimum = 0, maximum = 100, filterRange, pixels, expected} of [
+    {
+      filterRange: [0, 1],
+      pixels: [-25, 0, 100, 125],
+      expected: [false, true, true, false]
+    },
+    {
+      filterRange: [-1, 1],
+      pixels: [-125, -25, 125],
+      expected: [false, true, false]
+    },
+    {
+      filterRange: [0.4, 0.6],
+      pixels: [9, 25, 49],
+      expected: [false, true, false]
+    },
+    {
+      minimum: Math.fround(-1 / 137),
+      maximum: Math.fround(25 / 113),
+      filterRange: [0, 1],
+      pixels: [Math.fround(-1 / 137), Math.fround(25 / 113)],
+      expected: [true, true]
+    }
+  ]) {
+    const {layer, pipeline} = createContinuousRaster('float32', {minimum, maximum});
+    layer.updateLayerVisConfig({filterEnabled: true, filterRange, gammaContrastFactor: 2});
+    const raster = pipeline();
+    const rescale = getSharedRescaleUniforms(raster);
+    const bounds = filter.getUniforms(raster.moduleProps);
+    const {gamma1} = gammaContrast.getUniforms(raster.moduleProps);
+    const visible = pixels.map(value => {
+      const unclamped = normalizeRasterPixel(value, {...rescale, clampOutput: 0});
+      if (rescale.clampOutput && rejectClipped(unclamped, bounds)) {
+        return false;
+      }
+      const r = Math.pow(normalizeRasterPixel(value, rescale), 1 / gamma1);
+      return filterColor({r, g: r, b: r, a: r}, bounds);
+    });
+    t.deepEqual(visible, expected, `correct pixels pass the filter [${filterRange}]`);
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> Float32 scaler overflow uses a finite midpoint', t => {
   const minimum = Math.fround(1e-35);
   const maximum = Math.fround(1.000001e-35);
