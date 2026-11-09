@@ -2,8 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 export * from './data-processor';
-export {UnknownGeojsonCrsError} from './geojson-crs';
-export type {GeojsonCrsOptions} from './geojson-crs';
 export * from './file-handler';
 export * from './remote-file';
 export * from './types';

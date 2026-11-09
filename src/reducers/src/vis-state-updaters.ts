@@ -54,8 +54,7 @@ import {
   refreshDatasetSuccess,
   refreshDatasetError,
   refreshDatasetProgress,
-  setLoadingProgress,
-  toggleModal
+  setLoadingProgress
 } from '@kepler.gl/actions';
 
 // Utils
@@ -109,7 +108,6 @@ import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
 import {
   ALL_FIELD_TYPES,
-  ADD_DATA_ID,
   ANIMATION_WINDOW,
   BASE_SPEED,
   COMPARE_TYPES,
@@ -184,7 +182,6 @@ import {
   isZipFileName,
   loadExternallyHostedDataset,
   processGeojson,
-  UnknownGeojsonCrsError,
   type FileCacheItem,
   ZipArchiveExpansion
 } from '@kepler.gl/processors';
@@ -4021,9 +4018,6 @@ export function refreshDatasetSuccessUpdater(
     // ETag or a later 304 can skip a body we no longer have.
     etag: result.etag,
     lastModified: result.lastModified,
-    ...(!result.notModified && result.data
-      ? {geojsonCrsWarning: result.data.metadata?.geojsonCrsWarning}
-      : {}),
     ...(typeof result.size === 'number' ? {size: result.size} : {})
   };
 
@@ -4479,15 +4473,6 @@ export const createNewDatasetSuccessUpdater = (
       }
       return {...accu, [dataset.id]: dataset};
     } else {
-      if (result.reason instanceof UnknownGeojsonCrsError && result.reason.file) {
-        const fileName = result.reason.file.name;
-        state = updateFileLoadingProgressUpdater(state, {
-          fileName,
-          progress: {fileName, percent: 1, error: result.reason}
-        });
-        notificationTasks.push(ACTION_TASK().map(() => toggleModal(ADD_DATA_ID)));
-        return accu;
-      }
       // show error notification on UI
       notificationTasks.push(
         ACTION_TASK().map(() =>

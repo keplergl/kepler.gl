@@ -4264,8 +4264,6 @@ __metadata:
     apache-arrow: "npm:>=15.0.0"
     d3-dsv: "npm:^2.0.0"
     parquet-wasm: "npm:0.6.1"
-    proj4: "npm:^2.20.8"
-    proj4js-definitions: "npm:0.1.0"
     sql.js: "npm:1.13.0"
     type-analyzer: "npm:0.4.0"
   languageName: unknown
@@ -27276,13 +27274,6 @@ __metadata:
     mgrs: "npm:1.0.0"
     wkt-parser: "npm:^1.3.3"
   checksum: 10c0/0a6f5f87137aa4297f02a95fab41f2cf5d39924f0e9800999be90e901b2d77a0b4fcab44a0c664839f4828c5a433fe81ec4c270a8fce62728f980ab4c8becdd4
-  languageName: node
-  linkType: hard
-
-"proj4js-definitions@npm:0.1.0":
-  version: 0.1.0
-  resolution: "proj4js-definitions@npm:0.1.0"
-  checksum: 10c0/ef0976f45074b87be0f98012462ad4002935defef0e4689740017d4c6fa2388346fe9235ba48d8c5b37004c0a30debcbec827e364a296bee906e08f91168b394
   languageName: node
   linkType: hard
 

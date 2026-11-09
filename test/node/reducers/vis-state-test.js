@@ -11,7 +11,7 @@ import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';
-import {VisStateActions, MapStateActions, ActionTypes} from '@kepler.gl/actions';
+import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
   INITIAL_VIS_STATE,
@@ -38,7 +38,6 @@ import {
   processArrowBatches,
   processFileData,
   readFileInBatches,
-  UnknownGeojsonCrsError,
   loadExternallyHostedDataset,
   remoteDatasetFromUrl
 } from '@kepler.gl/processors';
@@ -8631,36 +8630,7 @@ test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS'
   t.end();
 });
 
-test('#visStateReducer -> remote unknown CRS returns to file confirmation without adding data', t => {
-  drainTasksForTesting();
-  const initialState = CloneDeep(InitialState).visState;
-  const error = new UnknownGeojsonCrsError(['local-survey']);
-  error.file = new File(['{}'], 'remote.geojson', {type: 'application/geo+json'});
-  const state = reducer(
-    initialState,
-    VisStateActions.createNewDatasetSuccess({
-      results: [{status: 'rejected', reason: error}],
-      addToMapOptions: {},
-      progressIds: []
-    })
-  );
-  t.equal(
-    state.fileLoadingProgress['remote.geojson'].error,
-    error,
-    'retains the confirmation error and file bytes'
-  );
-  t.deepEqual(state.datasets, initialState.datasets, 'does not commit unconfirmed remote data');
-  const tasks = drainTasksForTesting();
-  t.equal(tasks.length, 1, 'schedules the confirmation dialog');
-  t.deepEqual(
-    succeedTaskInTest(tasks[0]),
-    {type: ActionTypes.TOGGLE_MODAL, payload: 'addData'},
-    'opens the uploader for explicit confirmation'
-  );
-  t.end();
-});
-
-test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial data', async t => {
+test('#visStateReducer -> streamed GeoJSON with a CRS stages without blocking the next file', async t => {
   drainTasksForTesting();
   const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
   initApplicationConfig({useArrowProgressiveLoading: true});
@@ -8677,7 +8647,7 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
         JSON.stringify({
           type: 'FeatureCollection',
           features: [feature],
-          crs: {type: 'name', properties: {name: '+proj=unavailable +datum=WGS84'}}
+          crs: {type: 'name', properties: {name: 'EPSG:3857'}}
         })
       ],
       'projected.geojson',
@@ -8703,20 +8673,18 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
     t.ok(streamedRows, 'exercise feature batches before the final CRS declaration');
     t.equal(task.type, 'PROCESS_FILE_CONTENT', 'process the completed GeoJSON file');
     const cache = await processFileData(task.payload);
-    t.match(
-      cache[0].metadata.geojsonCrsWarning,
-      /table inspection only/,
-      'completed file is marked table-only'
-    );
     t.deepEqual(
       cache[0].data.rows[0][0].geometry,
       feature.geometry,
-      'retains raw geometry for the table'
+      'retains original coordinates'
     );
     state = reducer(state, succeedTaskInTest(task, cache));
-    t.notOk(state.fileLoadingProgress[file.name].error, 'table-only import succeeds');
+    t.notOk(
+      state.fileLoadingProgress[file.name].error,
+      'CRS declaration does not cause an import error'
+    );
     t.equal(state.datasets, initialState.datasets, 'staging preserves existing datasets');
-    t.equal(state.fileLoading.fileCache.length, 1, 'stages only the completed dataset');
+    t.equal(state.fileLoading.fileCache.length, 1, 'stages the complete dataset');
     const [delay] = drainTasksForTesting();
     state = reducer(state, succeedTaskInTest(delay));
     const [nextLoad] = drainTasksForTesting();
@@ -8725,52 +8693,6 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
     initApplicationConfig({useArrowProgressiveLoading: previousProgressiveLoading});
     drainTasksForTesting();
   }
-  t.end();
-});
-
-test('#visStateReducer -> refresh changes CRS restrictions only with replacement data', async t => {
-  const input = {
-    type: 'Feature',
-    properties: {name: 'survey'},
-    geometry: {type: 'Point', coordinates: [10, 20]}
-  };
-  const supported = processGeojson(input);
-  const unsupported = processGeojson({
-    ...input,
-    crs: {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}}
-  });
-  const dataId = 'crs-refresh';
-  const datasets = await createNewDataEntryMock({info: {id: dataId}, data: supported});
-  let state = {...INITIAL_VIS_STATE, datasets};
-  const {props} = GeojsonLayer.findDefaultLayerProps(datasets[dataId]);
-  const layer = new GeojsonLayer({...props[0], dataId});
-  layer.setInitialLayerConfig(datasets[dataId]);
-  state = {...state, layers: [layer], layerData: [calculateLayerData(layer, state).layerData]};
-  t.ok(layer.shouldRenderLayer(state.layerData[0]), 'starts with a renderable layer');
-  state = reducer(
-    state,
-    VisStateActions.refreshDatasetSuccess(dataId, {data: unsupported, notModified: false})
-  );
-  t.equal(
-    state.datasets[dataId].metadata.geojsonCrsWarning,
-    unsupported.metadata.geojsonCrsWarning,
-    'new unsupported source sets warning'
-  );
-  t.deepEqual(state.layerData[0], {}, 'refresh removes previously renderable layer data');
-  state = reducer(state, VisStateActions.refreshDatasetSuccess(dataId, {notModified: true}));
-  t.ok(state.datasets[dataId].metadata.geojsonCrsWarning, '304 retains the restriction');
-  state = reducer(
-    state,
-    VisStateActions.refreshDatasetSuccess(dataId, {data: supported, notModified: false})
-  );
-  t.notOk(
-    state.datasets[dataId].metadata.geojsonCrsWarning,
-    'supported replacement clears the warning'
-  );
-  t.ok(
-    state.layers[0].shouldRenderLayer(state.layerData[0]),
-    'supported replacement can render again'
-  );
   t.end();
 });
 

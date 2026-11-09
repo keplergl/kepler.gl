@@ -96,7 +96,6 @@ type MiniDataset = {
   type?: string;
   metadata?: {
     refreshError?: string;
-    geojsonCrsWarning?: string;
     derivedDataset?: unknown;
   };
 };
@@ -156,18 +155,6 @@ const RefreshErrorIcon = ({id, message}: {id: string; message: string}) => (
         {message}
       </span>
     </Tooltip>
-  </StyledRefreshError>
-);
-
-const CrsWarningIcon = ({message}: {message: string}) => (
-  <StyledRefreshError
-    className="dataset-crs-warning"
-    role="img"
-    aria-label={message}
-    title={message}
-    tabIndex={0}
-  >
-    <WarningSign height="14px" />
   </StyledRefreshError>
 );
 
@@ -246,9 +233,6 @@ export default function DatasetTitleFactory(
               onClickSquare={_handleClick}
             />
             {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
-            {dataset.metadata?.geojsonCrsWarning ? (
-              <CrsWarningIcon message={dataset.metadata.geojsonCrsWarning} />
-            ) : null}
           </DatasetTitleHeader>
           <Portaled
             isOpened={displayColorPicker !== false}

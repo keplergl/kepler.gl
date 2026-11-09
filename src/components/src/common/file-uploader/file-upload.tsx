@@ -16,12 +16,7 @@ import {FileLoading, FileLoadingProgress} from '@kepler.gl/types';
 
 import {GUIDES_FILE_FORMAT_DOC} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {
-  getAcceptedRemoteFileFormats,
-  isRemoteDatasetUrl,
-  UnknownGeojsonCrsError,
-  createGeojsonCrsRetryFile
-} from '@kepler.gl/processors';
+import {getAcceptedRemoteFileFormats, isRemoteDatasetUrl} from '@kepler.gl/processors';
 import {media} from '@kepler.gl/styles';
 import {getApplicationConfig, getError} from '@kepler.gl/utils';
 import Markdown from 'markdown-to-jsx';
@@ -594,13 +589,6 @@ function FileUploadFactory() {
           isError: true,
           isSuccess: false
         });
-      });
-      uploadItems.forEach(item => {
-        const error = progress[item.name]?.error;
-        if (error instanceof UnknownGeojsonCrsError && error.file) {
-          item.onConfirmCrs = () => this.props.onFileUpload([createGeojsonCrsRetryFile(error)]);
-          item.confirmCrsDisabled = Boolean(fileLoading);
-        }
       });
       return (
         <StyledFileUpload className="file-uploader" ref={this.frame}>

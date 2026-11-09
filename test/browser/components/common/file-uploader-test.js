@@ -4,80 +4,10 @@
 import React from 'react';
 import test from 'tape';
 import sinon from 'sinon';
-import {fireEvent} from '@testing-library/react';
-import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
 
 import {FileUpload, FileDrop, UploadButton} from '@kepler.gl/components';
 import {initApplicationConfig} from '@kepler.gl/utils';
-import {UnknownGeojsonCrsError} from '@kepler.gl/processors';
-
-test('Components -> FileUploader requires explicit unknown-CRS confirmation', t => {
-  const error = new UnknownGeojsonCrsError(['local-survey']);
-  error.file = new File(['{}'], 'survey.geojson', {type: 'application/geo+json'});
-  const onFileUpload = sinon.spy();
-  const props = {
-    onFileUpload,
-    fileLoading: false,
-    fileLoadingProgress: {'survey.geojson': {fileName: 'survey.geojson', error, percent: 1}}
-  };
-  const {getByRole, unmount} = renderWithTheme(
-    <IntlWrapper>
-      <FileUpload {...props} />
-    </IntlWrapper>
-  );
-  t.ok(
-    getByRole('alert').textContent.includes('incorrect'),
-    'explains the risk of an incorrect location'
-  );
-  const button = getByRole('button', {name: 'Load as longitude/latitude'});
-  t.notOk(onFileUpload.called, 'rendering the warning does not approve or retry the file');
-  fireEvent.click(button);
-  t.equal(onFileUpload.callCount, 1, 'one explicit click retries exactly one file');
-  const [retry] = onFileUpload.firstCall.args[0];
-  t.equal(retry.name, 'survey.geojson', 'retry keeps the file identity');
-  t.deepEqual(
-    retry.keplerGeojsonCrsOptions.assumeLongitudeLatitude,
-    ['local-survey'],
-    'approval is restricted to the displayed unknown CRS'
-  );
-  t.equal(error.file.keplerGeojsonCrsOptions, undefined, 'does not mutate the original file');
-  unmount();
-  const loading = renderWithTheme(
-    <IntlWrapper>
-      <FileUpload {...props} fileLoading={{filesToLoad: [], fileCache: []}} />
-    </IntlWrapper>
-  );
-  t.ok(
-    loading.getByRole('button', {name: 'Load as longitude/latitude'}).disabled,
-    'disables duplicate retry while loading'
-  );
-  loading.unmount();
-  t.end();
-});
-
-test('Components -> FileUploader offers no override for unsupported projected data', t => {
-  const {queryByRole, unmount} = renderWithTheme(
-    <IntlWrapper>
-      <FileUpload
-        fileLoading={false}
-        fileLoadingProgress={{
-          'projected.geojson': {
-            fileName: 'projected.geojson',
-            error: new Error('Convert coordinates to WGS84'),
-            percent: 1
-          }
-        }}
-      />
-    </IntlWrapper>
-  );
-  t.notOk(
-    queryByRole('button', {name: 'Load as longitude/latitude'}),
-    'known projection failures cannot be confirmed as longitude/latitude'
-  );
-  unmount();
-  t.end();
-});
 
 test('Components -> FileUploader.render', t => {
   let wrapper;

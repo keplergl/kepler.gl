@@ -77,8 +77,6 @@ export type ProtoDataset = {
     geoArrowBinaryData?: GeoArrowBinaryData;
     /** Existing table in the configured DuckDB database; avoids re-importing its rows. */
     duckdbTableName?: string;
-    /** Processor metadata retained when importing a table-only GeoJSON dataset. */
-    metadata?: {geojsonCrsWarning?: string};
   };
 
   // table-injected metadata

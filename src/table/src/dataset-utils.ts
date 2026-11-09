@@ -93,11 +93,7 @@ export function createNewDataEntry(
     // get keplerTable from datasets
     const keplerTable = datasets[info.id];
     // update the data in keplerTable
-    return UPDATE_TABLE_TASK({
-      table: keplerTable,
-      data: validatedData,
-      geojsonCrsWarning: data.metadata?.geojsonCrsWarning ?? opts.metadata?.geojsonCrsWarning
-    });
+    return UPDATE_TABLE_TASK({table: keplerTable, data: validatedData});
   }
 
   info = info || {};
@@ -106,21 +102,13 @@ export function createNewDataEntry(
   return CREATE_TABLE_TASK({
     info,
     color,
-    opts: data.metadata?.geojsonCrsWarning
-      ? {
-          ...opts,
-          metadata: {...opts.metadata, geojsonCrsWarning: data.metadata.geojsonCrsWarning}
-        }
-      : opts,
+    opts,
     data: data.arrowTable ? {...validatedData, arrowTable: data.arrowTable} : validatedData
   });
 }
 
-async function updateTable({table, data, geojsonCrsWarning}) {
+async function updateTable({table, data}) {
   const updated = await table.update(data); // Assuming `table` has an `update` method
-  if (updated.metadata.geojsonCrsWarning || geojsonCrsWarning) {
-    updated.metadata = {...updated.metadata, geojsonCrsWarning};
-  }
   return updated;
 }
 

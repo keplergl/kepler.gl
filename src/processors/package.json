@@ -55,8 +55,6 @@
     "apache-arrow": ">=15.0.0",
     "d3-dsv": "^2.0.0",
     "parquet-wasm": "0.6.1",
-    "proj4": "^2.20.8",
-    "proj4js-definitions": "0.1.0",
     "sql.js": "1.13.0",
     "type-analyzer": "0.4.0"
   },

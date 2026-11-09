@@ -2,8 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import * as arrow from 'apache-arrow';
-import {normalizeGeojsonCrs, GeojsonCrsOptions, UnsupportedGeojsonCrsError} from './geojson-crs';
-import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
@@ -350,19 +348,8 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
  *  }
  * }));
  */
-export function processGeojson(rawData: unknown, options?: GeojsonCrsOptions): ProcessorResult {
-  let normalized;
-  let geojsonCrsWarning: string | undefined;
-  try {
-    normalized = normalizeGeojsonCrs(rawData, options);
-  } catch (error) {
-    if (!(error instanceof UnsupportedGeojsonCrsError)) throw error;
-    geojsonCrsWarning = error.message;
-    // Keep the entire original dataset, never a mixture of transformed and raw
-    // coordinates. Work on a copy because field normalization fills properties.
-    normalized = cloneDeep(rawData);
-  }
-  const normalizedGeojson = normalize(normalized);
+export function processGeojson(rawData: unknown): ProcessorResult {
+  const normalizedGeojson = normalize(rawData);
 
   if (!normalizedGeojson || !Array.isArray(normalizedGeojson.features)) {
     throw new Error(
@@ -374,7 +361,7 @@ export function processGeojson(rawData: unknown, options?: GeojsonCrsOptions): P
   const allDataRows: Array<{_geojson: Feature} & keyof Feature> = [];
   for (let i = 0; i < normalizedGeojson.features.length; i++) {
     const f = normalizedGeojson.features[i];
-    if (f.geometry || geojsonCrsWarning) {
+    if (f.geometry) {
       const row = {
         // Reserve the first field for geometry to preserve existing field indices.
         _geojson: f,
@@ -407,10 +394,7 @@ export function processGeojson(rawData: unknown, options?: GeojsonCrsOptions): P
     });
   });
 
-  const result = processRowObject(allDataRows);
-  return result && geojsonCrsWarning
-    ? {...result, metadata: {...result.metadata, geojsonCrsWarning}}
-    : result;
+  return processRowObject(allDataRows);
 }
 
 /**

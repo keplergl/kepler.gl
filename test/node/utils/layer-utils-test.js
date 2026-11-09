@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import sinon from 'sinon';
+import Console from 'global/console';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import {
@@ -16,10 +18,8 @@ import {
   findDefaultLayer,
   getLayerHoverProp,
   getLayerOrderFromLayers,
-  calculateLayerData,
-  renderDeckGlLayer
+  computeDeckLayers
 } from '@kepler.gl/reducers';
-import {datasetSchema} from '@kepler.gl/schemas';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
@@ -30,7 +30,7 @@ import {getNextColorMakerValue} from 'test/helpers/layer-utils';
 import {createNewDataEntryMock} from 'test/helpers/table-utils';
 import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojson';
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
-import {KeplerTable, findPointFieldPairs, createNewDataEntry} from '@kepler.gl/table';
+import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
 import {
   ArrowDataContainer,
   createDataContainer,
@@ -45,82 +45,63 @@ import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
 
-test('layerUtils -> unsupported CRS stays inspectable and cannot reach map layers after reload', async t => {
-  const input = {
-    type: 'Feature',
-    crs: {type: 'name', properties: {name: '+proj=geocent +datum=WGS84'}},
-    // Even attributes named lat/lng must not produce a default point layer.
-    properties: {name: 'geocentric', lat: 20, lng: 10},
-    geometry: {type: 'Point', coordinates: [6378137, 0, 0]}
+test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
+  const error = new Error('Cannot render geometry');
+  const log = sinon.stub(Console, 'error');
+  const data = {data: [{position: [10, 20]}]};
+  const dataset = {label: 'Survey', rows: [[10, 20]]};
+  const healthy = {id: 'healthy-overlay'};
+  let fail = true;
+  const layers = [
+    {
+      id: 'broken',
+      config: {dataId: 'survey'},
+      renderLayer: () => {
+        if (fail) throw error;
+        return {id: 'recovered-overlay'};
+      }
+    },
+    {id: 'healthy', config: {dataId: 'survey'}, renderLayer: () => healthy}
+  ];
+  const visState = {
+    datasets: {survey: dataset},
+    layers,
+    layerData: [data, data],
+    effects: [],
+    splitMaps: [],
+    interactionConfig: {},
+    animationConfig: {}
   };
-  const initial = (
-    await createNewDataEntryMock({info: {id: 'table-only'}, data: processGeojson(input)})
-  )['table-only'];
-  const saved = datasetSchema.v1.save(initial);
-  const restored = (await createNewDataEntryMock(datasetSchema.v1.load(saved)))['table-only'];
-  for (const dataset of [initial, restored]) {
-    t.deepEqual(
-      dataset.dataContainer.valueAt(0, 0).geometry,
-      input.geometry,
-      'table retains original geometry'
-    );
-    t.equal(dataset.dataContainer.valueAt(0, 1), 'geocentric', 'table retains attributes');
-    t.notOk(dataset.disableDataOperation, 'table inspection remains enabled');
-    t.ok(dataset.metadata.geojsonCrsWarning, 'warning survives a saved-map round trip');
-    t.deepEqual(findDefaultLayer(dataset, LayerClasses), [], 'does not auto-create any layer');
-    for (const LayerClass of [GeojsonLayer, PointLayer]) {
-      const {props} = LayerClass.findDefaultLayerProps(dataset);
-      const layer = new LayerClass({...props[0], dataId: dataset.id});
-      layer.setInitialLayerConfig(dataset);
-      t.ok(layer.hasAllColumns(), 'exercises a fully configured layer');
-      // Simulate a manually configured or saved layer, including stale data.
-      layer.formatLayerData = () => {
-        throw new Error('raw coordinates reached a layer');
-      };
-      layer.renderLayer = () => {
-        throw new Error('raw coordinates reached deck.gl');
-      };
-      const {layerData} = calculateLayerData(
-        layer,
-        {datasets: {[dataset.id]: dataset}, animationConfig: {}},
-        {data: [input]}
-      );
-      t.deepEqual(layerData, {}, 'clears stale layer data without formatting coordinates');
-      t.equal(
-        layer.errorMessage,
-        dataset.metadata.geojsonCrsWarning,
-        'layer explains the map restriction'
-      );
-      t.deepEqual(
-        renderDeckGlLayer({layer, datasets: {[dataset.id]: dataset}, data: {data: [input]}}, {}),
-        [],
-        'does not render even with cached data'
-      );
+  const options = {primaryMap: false, layersForDeck: {broken: true, healthy: true}};
+  try {
+    for (const layerOrder of [
+      ['healthy', 'broken'],
+      [{id: 'group', isVisible: true, layerOrder: ['healthy', 'broken']}]
+    ]) {
+      let rendered;
+      t.doesNotThrow(() => {
+        rendered = computeDeckLayers(
+          {visState: {...visState, layerOrder}, mapState: {zoom: 1}},
+          options
+        );
+      }, 'contains a render exception for flat and grouped layers');
+      t.deepEqual(rendered, [healthy], 'renders the healthy layer after the failing layer');
     }
+    t.ok(log.calledWith(error), 'reports the rendering failure');
+    t.equal(visState.datasets.survey, dataset, 'keeps the dataset available for inspection');
+    t.equal(visState.layerData[0], data, 'does not discard imported layer data');
+    fail = false;
+    t.deepEqual(
+      computeDeckLayers(
+        {visState: {...visState, layerOrder: ['healthy', 'broken']}, mapState: {zoom: 1}},
+        options
+      ),
+      [{id: 'recovered-overlay'}, healthy],
+      'renders the layer again when its renderer recovers'
+    );
+  } finally {
+    log.restore();
   }
-  const update = data =>
-    new Promise((resolve, reject) => {
-      createNewDataEntry({info: {id: initial.id}, data}, {[initial.id]: initial}).run(
-        (effect, succeed, fail) => effect(succeed, fail),
-        resolve,
-        reject
-      );
-    });
-  const supported = processGeojson({
-    ...input,
-    crs: undefined,
-    geometry: {type: 'Point', coordinates: [10, 20]}
-  });
-  await update(supported);
-  t.notOk(
-    initial.metadata.geojsonCrsWarning,
-    'supported replacement of the same dataset clears the restriction'
-  );
-  await update(processGeojson(input));
-  t.ok(
-    initial.metadata.geojsonCrsWarning,
-    'unsupported replacement of the same dataset restores the restriction'
-  );
   t.end();
 });
 

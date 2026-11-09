@@ -45,7 +45,6 @@ import {
 } from './data-processor';
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
-import {GeojsonCrsOptions, UnknownGeojsonCrsError} from './geojson-crs';
 import {getKeplerLoaders, isKeplerFileFormatAccepted} from './loader-registry';
 import {
   createCompanionFetch,
@@ -107,9 +106,6 @@ const EXCEL_LOADER_OPTIONS = {
 
 export type ProcessFileDataContent = {
   data: unknown;
-  /** Original bytes, retained only while processing or awaiting CRS confirmation. */
-  sourceFile?: File;
-  geojsonCrsOptions?: GeojsonCrsOptions;
   fileName: string;
   length?: number;
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
@@ -137,23 +133,6 @@ export type ProcessFileDataContent = {
 };
 
 export {isArrowTable};
-
-type GeojsonImportFile = File & {keplerGeojsonCrsOptions?: GeojsonCrsOptions};
-
-/** Create a per-file retry only after the user explicitly confirms the unknown CRS. */
-export function createGeojsonCrsRetryFile(error: UnknownGeojsonCrsError): File {
-  if (!(error instanceof UnknownGeojsonCrsError) || !error.file) {
-    throw new Error('No GeoJSON file is awaiting coordinate reference system confirmation.');
-  }
-  const file = error.file;
-  return Object.assign(
-    new File([file], file.name, {type: file.type, lastModified: file.lastModified}),
-    file,
-    {
-      keplerGeojsonCrsOptions: {assumeLongitudeLatitude: error.identifiers}
-    }
-  );
-}
 
 type ParseGeoArrowWorker = (data: ParseGeoArrowInput) => Promise<ParseGeoArrowResult>;
 
@@ -586,7 +565,7 @@ export async function* readBatch(
   etag?: string,
   lastModified?: string,
   fileSize?: number
-): AsyncGenerator<ProcessFileDataContent> {
+): AsyncGenerator {
   let result: any = null;
   const batches = <any>[];
   for await (const batch of asyncIterator) {
@@ -711,7 +690,7 @@ export async function readFileInBatches({
   const etag = (file as File & {keplerEtag?: string}).keplerEtag;
   const lastModified = (file as File & {keplerLastModified?: string}).keplerLastModified;
 
-  const batches = readBatch(
+  return readBatch(
     progressIterator,
     displayFileName,
     sourceUrl,
@@ -721,17 +700,6 @@ export async function readFileInBatches({
     lastModified,
     file.size
   );
-  return (async function* () {
-    for await (const batch of batches) {
-      yield getGeoJsonFromLoaderResult(batch.data)
-        ? {
-            ...batch,
-            sourceFile: file,
-            geojsonCrsOptions: (file as GeojsonImportFile).keplerGeojsonCrsOptions
-          }
-        : batch;
-    }
-  })();
 }
 
 export async function processFileData({
@@ -767,7 +735,7 @@ export async function processFileData({
       processor = processKeplerglJSON;
     } else if (geojsonData) {
       format = DATASET_FORMATS.geojson;
-      processor = () => processGeojson(geojsonData, content.geojsonCrsOptions);
+      processor = () => processGeojson(geojsonData);
     } else if (isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
@@ -792,10 +760,6 @@ export async function processFileData({
           ? await processArrowBatches(data as any, {compact: false})
           : await processor(data);
     } catch (error) {
-      if (error instanceof UnknownGeojsonCrsError) {
-        error.file = content.sourceFile;
-        throw error;
-      }
       throw new Error(`Can not process uploaded file, ${getError(error as Error)}`);
     }
 
@@ -838,9 +802,6 @@ export async function processFileData({
     const remoteFormat = getPersistedRemoteFormat(content.keplerFormat, content.fileName);
     const fileSize = typeof content.fileSize === 'number' ? content.fileSize : undefined;
     const metadata = {
-      ...(result?.metadata?.geojsonCrsWarning
-        ? {geojsonCrsWarning: result.metadata.geojsonCrsWarning}
-        : {}),
       ...(sourceUrl
         ? {
             source: sourceUrl,
@@ -868,7 +829,7 @@ export async function processFileData({
           format,
           ...(sourceUrl ? {type: DatasetType.EXTERNALLY_HOSTED} : {})
         },
-        ...(Object.keys(metadata).length ? {metadata} : {})
+        ...(sourceUrl || fileSize != null ? {metadata} : {})
       }
     ];
   } else {

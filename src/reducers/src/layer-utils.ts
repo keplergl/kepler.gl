@@ -73,7 +73,7 @@ export type LayerHoverProp = {
  * Find default layers from fields
  */
 export function findDefaultLayer(dataset: KeplerTable, layerClasses: LayerClassesType): Layer[] {
-  if (!dataset || dataset.metadata?.geojsonCrsWarning) {
+  if (!dataset) {
     return [];
   }
 
@@ -184,13 +184,6 @@ export function calculateLayerData<S extends MinVisStateForLayerData>(
     }
 
     if (!layer.type || !layer.hasAllColumns() || !layer.config.dataId) {
-      return {layer, layerData: {}};
-    }
-
-    const crsWarning = state.datasets[layer.config.dataId]?.metadata?.geojsonCrsWarning;
-    if (crsWarning) {
-      layer.isValid = false;
-      layer.errorMessage = crsWarning;
       return {layer, layerData: {}};
     }
 
@@ -363,30 +356,36 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     experimentalContext
   } = props;
   const dataset = datasets[layer.config.dataId];
-  if (dataset?.metadata?.geojsonCrsWarning) return [];
   const {gpuFilter} = dataset || {};
   const objectHovered = clicked || hoverInfo;
   // in split mode a layer missing from mapLayers is hidden, so coerce to a boolean
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
-  // Layer is Layer class
-  const rendered = layer.renderLayer({
-    data,
-    gpuFilter,
-    idx: layerIndex,
-    interactionConfig,
-    layerCallbacks,
-    mapState,
-    mapIndex,
-    animationConfig,
-    filters,
-    objectHovered,
-    visible,
-    dataset,
-    experimentalContext
-  });
-  const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
-  return applyZoomOpacityToDeckLayer(rendered, factor);
+  try {
+    // Layer is Layer class
+    const rendered = layer.renderLayer({
+      data,
+      gpuFilter,
+      idx: layerIndex,
+      interactionConfig,
+      layerCallbacks,
+      mapState,
+      mapIndex,
+      animationConfig,
+      filters,
+      objectHovered,
+      visible,
+      dataset,
+      experimentalContext
+    });
+    const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
+    return applyZoomOpacityToDeckLayer(rendered, factor);
+  } catch (error) {
+    // A synchronous renderer failure must not escape into React and unmount
+    // the map. Keep the imported data and let the other layers render.
+    Console.error(error);
+    return [];
+  }
 }
 
 export function isLayerRenderable(layer: Layer, layerData) {
