@@ -2,25 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import {SolidPolygonLayer} from '@deck.gl/layers';
-import {Layer, LayerExtension, phongMaterial} from '@deck.gl/core';
+import {phongMaterial} from '@deck.gl/core';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
-
-/** All three passes receive positions already expressed in common map units. */
-export class ContourProjectionExtension extends LayerExtension {
-  static extensionName = 'ContourProjectionExtension';
-
-  draw(this: Layer): void {
-    for (const model of this.getModels()) {
-      const project = model.shaderInputs.getUniformValues().project;
-      if (project) {
-        // Cartesian projection still treats Z as meters by default. Override
-        // the draw's uniforms so it neither rescales nor warps our shared mesh.
-        project.commonUnitsPerWorldUnit = [1, 1, 1];
-        project.commonUnitsPerWorldUnit2 = [0, 0, 0];
-      }
-    }
-  }
-}
 
 /** Light the draped surface without extruding its polygons into columns. */
 export default class ContourSurfaceLayer extends SolidPolygonLayer {
@@ -73,13 +56,12 @@ out vec3 vSurfaceNormal;`
       'contour surface projected position',
       'DECKGL_FILTER_GL_POSITION(gl_Position, geometry);',
       `float elevationScale = abs(project.modelMatrix[2][2]);
-  // Apply the inverse vertical scale once before interpolating the normals.
+  // Offset normals use degrees for x/y and meters for z. This projection does
+  // not apply the model matrix, so apply its inverse vertical scale once.
   vec3 surfaceNormal = elevationScale > 0.0
     ? vec3(contourNormals.xy, contourNormals.z / elevationScale)
     : vec3(0.0, 0.0, 1.0);
-  vSurfaceNormal = project.coordinateSystem == COORDINATE_SYSTEM_CARTESIAN
-    ? normalize(surfaceNormal)
-    : normalize(project_offset_normal(surfaceNormal));
+  vSurfaceNormal = normalize(project_offset_normal(surfaceNormal));
   vCommonPosition = geometry.position.xyz;
   vCameraPosition = project.cameraPosition;
   `

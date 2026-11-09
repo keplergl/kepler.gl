@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {GeoJsonLayer} from '@deck.gl/layers';
-import {COORDINATE_SYSTEM, PickingInfo} from '@deck.gl/core';
+import {PickingInfo} from '@deck.gl/core';
 import {GL} from '@luma.gl/constants';
 import {Matrix4} from '@math.gl/core';
 import {createSelector} from 'reselect';
@@ -28,9 +28,7 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
-import ContourSurfaceLayer, {ContourProjectionExtension} from './deck-contour-surface-layer';
-
-const contourProjectionExtension = new ContourProjectionExtension();
+import ContourSurfaceLayer from './deck-contour-surface-layer';
 
 type ContourLayerData = {data: ContourFeature[]; grid?: ScalarGrid | null};
 
@@ -112,9 +110,8 @@ export const contourVisConfigs = {
 export default class ContourLayer extends Layer {
   private getSurface = createSelector(
     (data: ContourLayerData) => data,
-    (_data: ContourLayerData, projectToMercator: boolean) => projectToMercator,
-    (data, projectToMercator) => {
-      const surface = buildContourSurface(data.grid || null, data.data, projectToMercator);
+    data => {
+      const surface = buildContourSurface(data.grid || null, data.data);
       return {...surface, depth: surface.fills.slice(0, 1)};
     }
   );
@@ -367,7 +364,7 @@ export default class ContourLayer extends Layer {
     return Boolean(
       objectInfo?.picked &&
         (id === this.id ||
-          ['fill', 'surface-fill', 'surface-globe-fill', 'outline'].some(pass => {
+          ['fill', 'surface-fill', 'outline'].some(pass => {
             const passId = `${this.id}-${pass}`;
             return id === passId || id?.startsWith(`${passId}-`);
           }))
@@ -378,9 +375,7 @@ export default class ContourLayer extends Layer {
     const {data} = opts;
     if (!data?.data?.length || !this.config.isVisible || opts.visible === false) return [];
     const {color, visConfig} = this.config;
-    const projectToMercator = !opts.mapState?.globe?.enabled;
-    const surface = visConfig.enable3d ? this.getSurface(data, projectToMercator) : null;
-    const surfaceId = projectToMercator ? 'surface' : 'surface-globe';
+    const surface = visConfig.enable3d ? this.getSurface(data) : null;
     const elevationScale = Number.isFinite(visConfig.elevationScale)
       ? Math.max(0, visConfig.elevationScale)
       : 1;
@@ -396,19 +391,12 @@ export default class ContourLayer extends Layer {
     const shared = {
       ...defaultProps,
       data: data.data,
-      extensions: surface && projectToMercator ? [contourProjectionExtension] : [],
+      extensions: [],
       // Composite nested fills on the same surface, then draw their outlines.
       parameters: {...defaultProps.parameters, depthMask: false},
       autoHighlight: false,
       extruded: false,
-      ...(surface
-        ? {
-            modelMatrix: new Matrix4().scale([1, 1, elevationScale]),
-            ...(projectToMercator
-              ? {coordinateSystem: COORDINATE_SYSTEM.CARTESIAN, wrapLongitude: false}
-              : {})
-          }
-        : {})
+      ...(surface ? {modelMatrix: new Matrix4().scale([1, 1, elevationScale])} : {})
     };
     return [
       // Resolve the visible surface before compositing the same translucent,
@@ -417,7 +405,7 @@ export default class ContourLayer extends Layer {
         ? [
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
-              id: `${this.id}-${surfaceId}-depth`,
+              id: `${this.id}-surface-depth`,
               data: surface.depth,
               filled: true,
               stroked: false,
@@ -438,7 +426,7 @@ export default class ContourLayer extends Layer {
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
               // Separate IDs prevent deck.gl from reusing the unlit 2D GPU model in 3D.
-              id: surface ? `${this.id}-${surfaceId}-fill` : `${this.id}-fill`,
+              id: surface ? `${this.id}-surface-fill` : `${this.id}-fill`,
               data: surface ? surface.fills : data.data,
               ...(surface
                 ? {
@@ -467,8 +455,7 @@ export default class ContourLayer extends Layer {
         ? [
             new GeoJsonLayer<ContourFeature['properties']>({
               ...shared,
-              // Tesselators retain their projection callback across updates.
-              id: surface ? `${this.id}-outline-${surfaceId}` : `${this.id}-outline`,
+              id: `${this.id}-outline`,
               data: surface ? surface.outlines : data.data,
               ...(surface ? {getPolygonOffset: () => [-1, -1]} : {}),
               filled: false,

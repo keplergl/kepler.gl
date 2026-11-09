@@ -2,15 +2,10 @@
 // Copyright contributors to the kepler.gl project
 
 import {cutPolygonByGrid, cutPolylineByGrid} from '@math.gl/polygon';
-import {lngLatToWorld, worldToLngLat, unitsPerMeter} from '@math.gl/web-mercator';
 import {ContourFeature, ScalarGrid} from './contour-utils';
 
 /** Drape the existing contours over one common, piecewise planar height field. */
-export function buildContourSurface(
-  grid: ScalarGrid | null,
-  contours: ContourFeature[],
-  projectToMercator = false
-) {
+export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFeature[]) {
   const flatNormal = (): [number, number, number] => [0, 0, 1];
   const empty = {
     fills: [] as ContourFeature[],
@@ -43,7 +38,7 @@ export function buildContourSurface(
       : (value / 2 - minimum / 2) / (maximum / 2 - minimum / 2);
     return fraction * (span * 0.1);
   };
-  let heights = Float64Array.from(grid.values, value =>
+  const heights = Float64Array.from(grid.values, value =>
     Number.isFinite(value) ? toHeight(value) : NaN
   );
   // Only geometry already present in the 2D contours is draped. Supply finite
@@ -65,41 +60,10 @@ export function buildContourSurface(
     }
     heights[index] = count ? sum / count : 0;
   }
-  const origin = projectToMercator
-    ? lngLatToWorld([grid.longitude, grid.latitude])
-    : [grid.longitude, grid.latitude];
-  const end = projectToMercator
-    ? lngLatToWorld([
-        grid.longitude + (grid.width - 1) * grid.stepLng,
-        grid.latitude + (grid.height - 1) * grid.stepLat
-      ])
-    : [
-        grid.longitude + (grid.width - 1) * grid.stepLng,
-        grid.latitude + (grid.height - 1) * grid.stepLat
-      ];
-  const stepX = (end[0] - origin[0]) / (grid.width - 1);
-  const stepY = (end[1] - origin[1]) / (grid.height - 1);
-  if (projectToMercator) {
-    // Resample the same field onto a regular Mercator grid before cutting it.
-    // Projecting already-cut lng/lat polygons warps their planes differently,
-    // so the depth pass can clip triangular patches out of overlapping fills.
-    const sourceHeights = heights;
-    heights = Float64Array.from(sourceHeights, (_, index) => {
-      const col = index % grid.width;
-      const row = Math.floor(index / grid.width);
-      const lat = worldToLngLat([origin[0], origin[1] + row * stepY])[1];
-      const sourceY = Math.max(0, Math.min(grid.height - 1, (lat - grid.latitude) / grid.stepLat));
-      const lowerRow = Math.min(grid.height - 2, Math.floor(sourceY));
-      const fraction = sourceY - lowerRow;
-      const lower = sourceHeights[lowerRow * grid.width + col];
-      const upper = sourceHeights[(lowerRow + 1) * grid.width + col];
-      return (lower + (upper - lower) * fraction) * unitsPerMeter(lat);
-    });
-  }
-  const toGrid = (position: number[]) => {
-    const [x, y] = projectToMercator ? lngLatToWorld(position) : position;
-    return [(x - origin[0]) / stepX, (y - origin[1]) / stepY];
-  };
+  const toGrid = ([longitude, lat]: number[]) => [
+    (longitude - grid.longitude) / grid.stepLng,
+    (lat - grid.latitude) / grid.stepLat
+  ];
   const heightAt = (x: number, y: number): number => {
     const clampedX = Math.max(0, Math.min(grid.width - 1, x));
     const clampedY = Math.max(0, Math.min(grid.height - 1, y));
@@ -123,25 +87,25 @@ export function buildContourSurface(
   };
   const toSurface = (x: number, y: number): number[] => {
     const height = heightAt(x, y);
-    return [origin[0] + x * stepX, origin[1] + y * stepY, height];
+    return [grid.longitude + x * grid.stepLng, grid.latitude + y * grid.stepLat, height];
   };
   // Use the field gradient around every tessellated vertex, rather than a
   // triangle derivative. This keeps lighting smooth across contour cuts.
   const getNormal = ([longitude, latitude]: number[]): [number, number, number] => {
-    const x = (longitude - origin[0]) / stepX;
-    const y = (latitude - origin[1]) / stepY;
+    const x = (longitude - grid.longitude) / grid.stepLng;
+    const y = (latitude - grid.latitude) / grid.stepLat;
     const delta = 0.5;
-    const metersPerLongitude = projectToMercator
-      ? 1
-      : 111320 * Math.cos((latitude * Math.PI) / 180);
-    const metersPerLatitude = projectToMercator ? 1 : 111320;
+    const metersPerLongitude = 111320 * Math.cos((latitude * Math.PI) / 180);
+    const metersPerLatitude = 111320;
     const slopeLongitude =
-      (heightAt(x + delta, y) - heightAt(x - delta, y)) / (2 * delta * stepX * metersPerLongitude);
+      (heightAt(x + delta, y) - heightAt(x - delta, y)) /
+      (2 * delta * grid.stepLng * metersPerLongitude);
     const slopeLatitude =
-      (heightAt(x, y + delta) - heightAt(x, y - delta)) / (2 * delta * stepY * metersPerLatitude);
+      (heightAt(x, y + delta) - heightAt(x, y - delta)) /
+      (2 * delta * grid.stepLat * metersPerLatitude);
     const length = Math.hypot(slopeLongitude, slopeLatitude, 1);
-    // Mercator normals are already in common space. The geographic fallback
-    // uses lng/lat offset normals for SolidPolygonLayer's projection helper.
+    // SolidPolygonLayer expects lng/lat offset normals. The vertex shader
+    // projects and normalizes this physical-space normal before interpolation.
     return [
       -slopeLongitude / (metersPerLongitude * length),
       -slopeLatitude / (metersPerLatitude * length),

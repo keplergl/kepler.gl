@@ -9,8 +9,6 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
-import {earcut} from '@math.gl/polygon';
-import {lngLatToWorld} from '@math.gl/web-mercator';
 
 function samples(size: number, value: (x: number, y: number) => number | null): ScalarSample[] {
   return Array.from({length: size * size}, (_, i) => ({
@@ -117,62 +115,6 @@ describe('contour surface', () => {
     expect(physical[0]).toBeLessThan(0);
     expect(physical[1]).toBeLessThan(0);
     expect(physical[2]).toBeGreaterThan(0);
-  });
-
-  test.each([0, 60])('keeps projected contour bands on the depth mesh at latitude %s', latitude => {
-    const grid = {
-      ...testGrid(samples(5, (x, y) => (x - 2) ** 2 + (y - 2) ** 2)),
-      longitude: 8,
-      latitude,
-      stepLng: 0.1,
-      stepLat: 0.1
-    };
-    const contours = generateContours(grid, {...options, domain: [1, 6]});
-    const surface = buildContourSurface(grid, contours, true);
-    const triangles = feature =>
-      feature.geometry.coordinates.flatMap(polygon => {
-        const vertices = polygon.flat();
-        const holes: number[] = [];
-        let count = 0;
-        polygon.forEach((ring, i) => {
-          if (i) holes.push(count);
-          count += ring.length;
-        });
-        const indices = earcut(vertices.flat(), holes, 3);
-        return Array.from({length: indices.length / 3}, (_, i) =>
-          indices.slice(i * 3, i * 3 + 3).map(index => vertices[index])
-        );
-      });
-    const depthTriangles = triangles(surface.fills[0]);
-    const depthAt = ([x, y]: number[]) => {
-      for (const [a, b, c] of depthTriangles) {
-        const denominator = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
-        const u = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / denominator;
-        const v = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / denominator;
-        const w = 1 - u - v;
-        if (Math.min(u, v, w) >= -1e-8) return u * a[2] + v * b[2] + w * c[2];
-      }
-      return undefined;
-    };
-    surface.fills.forEach((feature, index) => {
-      const projectedFootprint = contours[index].geometry.coordinates.map(polygon =>
-        polygon.map(ring => ring.map(lngLatToWorld))
-      );
-      expect(area(feature.geometry.coordinates)).toBeCloseTo(area(projectedFootprint), 9);
-      const fillTriangles = triangles(feature);
-      expect(fillTriangles.length).toBeGreaterThan(0);
-      for (const triangle of fillTriangles) {
-        const center = [0, 1, 2].map(axis => triangle.reduce((sum, p) => sum + p[axis], 0) / 3);
-        expect(depthAt(center)).toBeCloseTo(center[2], 10);
-        expect(Math.hypot(...surface.getNormal(center))).toBeCloseTo(1);
-      }
-      for (const ring of surface.outlines[index].geometry.coordinates.flat()) {
-        for (let i = 1; i < ring.length; i++) {
-          const middle = ring[i].map((value, axis) => (value + ring[i - 1][axis]) / 2);
-          expect(depthAt(middle)).toBeCloseTo(middle[2], 10);
-        }
-      }
-    });
   });
 
   test.each([
