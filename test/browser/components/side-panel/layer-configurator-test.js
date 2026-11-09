@@ -573,15 +573,28 @@ test('Components -> LayerConfigurator -> contour 3D switch and multiplier preser
   const onChange = sinon.spy();
   const view = renderContourRange(layer, {[dataset.id]: dataset}, onChange);
   try {
+    const group = contourConfigGroup(view, 'Surface');
+    const smoothing = group.querySelector('.kg-range-slider__input');
     const toggle = view.container.querySelector('#contour-range-enable3d-switch');
+    t.ok(
+      smoothing.compareDocumentPosition(toggle) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+      'smoothing comes before the 3D switch in reading order'
+    );
     t.notOk(toggle.checked, 'existing contours start flat');
     t.notOk(view.queryByText('Elevation multiplier'), 'height control is hidden in 2D');
     fireEvent.click(toggle);
     t.deepEqual(onChange.lastCall.args[0], {enable3d: true}, 'enables the surface');
     layer.updateLayerVisConfig(onChange.lastCall.args[0]);
     view.update();
-    const group = contourConfigGroup(view, 'Surface');
-    const multiplier = group.querySelector('.kg-range-slider__input');
+    const multiplier = group.querySelectorAll('.kg-range-slider__input')[1];
+    t.notOk(
+      group.querySelector('[id="property.elevationScale"]'),
+      'elevation multiplier has no custom-input toggle'
+    );
+    t.ok(
+      toggle.compareDocumentPosition(multiplier) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+      'the elevation multiplier follows the 3D switch'
+    );
     t.equal(multiplier.value, '1', 'relief starts at 1x');
     fireEvent.change(multiplier, {target: {value: '2.5'}});
     fireEvent.blur(multiplier);
@@ -601,7 +614,7 @@ test('Components -> LayerConfigurator -> contour 3D switch and multiplier preser
     layer.updateLayerVisConfig(onChange.lastCall.args[0]);
     view.update();
     t.equal(
-      group.querySelector('.kg-range-slider__input').value,
+      group.querySelectorAll('.kg-range-slider__input')[1].value,
       '2.5',
       'restores the chosen multiplier'
     );

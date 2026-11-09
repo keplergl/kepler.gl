@@ -81,6 +81,7 @@ export const contourVisConfigs = {
   },
   elevationScale: {
     ...LAYER_VIS_CONFIGS.elevationScale,
+    allowCustomValue: false,
     defaultValue: 1,
     range: [0, 10],
     step: 0.1,
