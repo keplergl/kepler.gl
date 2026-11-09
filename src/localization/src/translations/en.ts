@@ -1289,6 +1289,9 @@ ${'```'}
     loading: 'Loading...',
     unableToLoad: 'Unable to load file',
     unsupported: 'Unsupported file type or format',
+    unknownCrsWarning:
+      'This coordinate system is unknown. Continue only if the coordinates are longitude and latitude in degrees; otherwise locations may be incorrect.',
+    loadAsLongitudeLatitude: 'Load as longitude/latitude',
     urlPlaceholder: 'Enter your dataset URL',
     fetch: 'Fetch',
     addUrl: 'Add',

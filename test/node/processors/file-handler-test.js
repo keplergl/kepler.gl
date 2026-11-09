@@ -13,6 +13,9 @@ import {
   filesToDataPayload,
   fileCacheToProgressiveSteps,
   processFileData,
+  readFileInBatches,
+  createGeojsonCrsRetryFile,
+  UnknownGeojsonCrsError,
   parseGeoArrowBatchesOnWorkers,
   remoteDatasetFromUrl,
   processArrowBatches,
@@ -259,6 +262,61 @@ test('#file-handler -> filesToDataPayload remote metadata', t => {
     'should pass remote source metadata'
   );
 
+  t.end();
+});
+
+test('#file-handler -> unknown GeoJSON CRS requires an explicit per-file retry', async t => {
+  const input = {
+    type: 'FeatureCollection',
+    features: [
+      {type: 'Feature', properties: {}, geometry: {type: 'Point', coordinates: [10, 20, 30]}}
+    ],
+    crs: {type: 'name', properties: {name: 'local-survey'}}
+  };
+  const file = new File([JSON.stringify(input)], 'unknown.geojson', {type: 'application/geo+json'});
+  async function read(fileToRead) {
+    let content;
+    for await (const batch of await readFileInBatches({
+      file: fileToRead,
+      loadOptions: {worker: false}
+    })) {
+      content = batch;
+    }
+    return content;
+  }
+  const content = await read(file);
+  let error;
+  try {
+    await processFileData({content, fileCache: []});
+    t.fail('unconfirmed unknown CRS must not create a dataset');
+  } catch (caught) {
+    error = caught;
+    t.ok(
+      error instanceof UnknownGeojsonCrsError,
+      'file processing preserves the confirmation error'
+    );
+    t.equal(error.file, file, 'retains the original file for a retry');
+  }
+  const retry = createGeojsonCrsRetryFile(error);
+  const existing = {info: {id: 'existing'}, data: {fields: [], rows: []}};
+  const result = await processFileData({content: await read(retry), fileCache: [existing]});
+  t.equal(result[0], existing, 'retry preserves other staged datasets');
+  t.deepEqual(
+    result[1].data.rows[0][0].geometry.coordinates,
+    [10, 20, 30],
+    'confirmed file preserves coordinates'
+  );
+  t.equal(file.keplerGeojsonCrsOptions, undefined, 'original file does not inherit approval');
+  t.notOk(
+    'geojsonCrsOptions' in (result[1].metadata || {}),
+    'approval is not stored in map metadata'
+  );
+  t.notOk('sourceFile' in result[1], 'original file bytes are not stored in the dataset');
+  t.throws(
+    () => createGeojsonCrsRetryFile(new Error('unsupported projected CRS')),
+    /No GeoJSON file/,
+    'unsupported projection errors cannot be retried as longitude/latitude'
+  );
   t.end();
 });
 

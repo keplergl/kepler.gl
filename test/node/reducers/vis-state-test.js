@@ -11,7 +11,7 @@ import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import SchemaManager from '@kepler.gl/schemas';
-import {VisStateActions, MapStateActions} from '@kepler.gl/actions';
+import {VisStateActions, MapStateActions, ActionTypes} from '@kepler.gl/actions';
 import {
   visStateReducer as reducer,
   INITIAL_VIS_STATE,
@@ -38,6 +38,7 @@ import {
   processArrowBatches,
   processFileData,
   readFileInBatches,
+  UnknownGeojsonCrsError,
   loadExternallyHostedDataset,
   remoteDatasetFromUrl
 } from '@kepler.gl/processors';
@@ -8630,6 +8631,35 @@ test('#visStateReducer -> TOGGLE_TABLE_COLUMN_HIDDEN and SHOW_ALL_TABLE_COLUMNS'
   t.end();
 });
 
+test('#visStateReducer -> remote unknown CRS returns to file confirmation without adding data', t => {
+  drainTasksForTesting();
+  const initialState = CloneDeep(InitialState).visState;
+  const error = new UnknownGeojsonCrsError(['local-survey']);
+  error.file = new File(['{}'], 'remote.geojson', {type: 'application/geo+json'});
+  const state = reducer(
+    initialState,
+    VisStateActions.createNewDatasetSuccess({
+      results: [{status: 'rejected', reason: error}],
+      addToMapOptions: {},
+      progressIds: []
+    })
+  );
+  t.equal(
+    state.fileLoadingProgress['remote.geojson'].error,
+    error,
+    'retains the confirmation error and file bytes'
+  );
+  t.deepEqual(state.datasets, initialState.datasets, 'does not commit unconfirmed remote data');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'schedules the confirmation dialog');
+  t.deepEqual(
+    succeedTaskInTest(tasks[0]),
+    {type: ActionTypes.TOGGLE_MODAL, payload: 'addData'},
+    'opens the uploader for explicit confirmation'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial data', async t => {
   drainTasksForTesting();
   const previousProgressiveLoading = getApplicationConfig().useArrowProgressiveLoading;
@@ -8647,7 +8677,7 @@ test('#visStateReducer -> unsupported streamed GeoJSON CRS never commits partial
         JSON.stringify({
           type: 'FeatureCollection',
           features: [feature],
-          crs: {type: 'name', properties: {name: 'EPSG:3857'}}
+          crs: {type: 'name', properties: {name: '+proj=unavailable +datum=WGS84'}}
         })
       ],
       'projected.geojson',

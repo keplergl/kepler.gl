@@ -34,7 +34,8 @@ import {
   processKeplerglJSON,
   processKeplerglDataset,
   processRowObject,
-  detectDelimiter
+  detectDelimiter,
+  UnknownGeojsonCrsError
 } from '@kepler.gl/processors';
 
 import {validateInputData, createDataContainer} from '@kepler.gl/utils';
@@ -906,8 +907,11 @@ test('Processor => processGeojson:invalid geojson', t => {
 
 test('Processor => processGeojson: rejects explicit unsupported CRS declarations', t => {
   for (const crs of [
-    {type: 'name', properties: {name: 'EPSG:3857'}},
-    {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::2263'}},
+    {type: 'name', properties: {name: '+proj=unavailable +datum=WGS84'}},
+    {
+      type: 'name',
+      properties: {name: '+proj=utm +zone=31 +ellps=clrk66 +nadgrids=missing.gsb +units=m'}
+    },
     {type: 'name', properties: {name: 'urn:ogc:def:crs:OGC:2:27'}},
     {type: 'name', properties: {name: 'unknown-projection'}},
     {type: 'link', properties: {href: 'https://example.com/projected-crs'}}
@@ -936,11 +940,11 @@ test('Processor => processGeojson: rejects explicit unsupported CRS declarations
   t.end();
 });
 
-test('Processor => processGeojson: preserves JGD2011 and JGD2000 geographic coordinates', t => {
+test('Processor => processGeojson: loads Japanese, European and North American geographic CRSs', t => {
   const coordinates = [141.35, 43.06, 100];
   const geometry = {type: 'Point', coordinates};
   const feature = {type: 'Feature', properties: {name: 'Sapporo'}, geometry};
-  for (const code of [6668, 4612]) {
+  for (const code of [6668, 4612, 4258, 4269]) {
     const urls = [
       `http://www.opengis.net/def/crs/EPSG/0/${code}`,
       `https://www.opengis.net/def/crs/EPSG/0/${code}`,
@@ -968,13 +972,13 @@ test('Processor => processGeojson: preserves JGD2011 and JGD2000 geographic coor
         const data = processGeojson(cloneDeep(input));
         t.equal(data.rows.length, 1, `EPSG:${code} should load its geometry`);
         const loadedGeometry = data.rows[0][0].geometry;
-        t.deepEqual(
+        const actual =
           input.type === 'GeometryCollection'
             ? loadedGeometry.geometries[0].coordinates
-            : loadedGeometry.coordinates,
-          coordinates,
-          `EPSG:${code} should preserve longitude, latitude, and altitude`
-        );
+            : loadedGeometry.coordinates;
+        t.ok(Math.abs(actual[0] - coordinates[0]) < 1e-8, `EPSG:${code} longitude`);
+        t.ok(Math.abs(actual[1] - coordinates[1]) < 1e-8, `EPSG:${code} latitude`);
+        t.equal(actual[2], coordinates[2], `EPSG:${code} preserves altitude`);
       }
       t.deepEqual(
         processGeojson({type: 'FeatureCollection', crs, features: []}).rows,
@@ -983,6 +987,189 @@ test('Processor => processGeojson: preserves JGD2011 and JGD2000 geographic coor
       );
     }
   }
+  t.end();
+});
+
+test('Processor => processGeojson: reprojects inherited and overridden CRS definitions', t => {
+  const projected = [111319.49079327357, 111325.1428663851, 25, 8];
+  const input = {
+    type: 'FeatureCollection',
+    crs: {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::3857'}},
+    bbox: [0, 0, 111320, 111326],
+    features: [
+      {
+        type: 'Feature',
+        properties: {crs: 'ordinary data'},
+        geometry: {
+          type: 'GeometryCollection',
+          geometries: [
+            {type: 'Point', coordinates: projected, bbox: [0, 0, 111320, 111326]},
+            {type: 'MultiLineString', coordinates: [[projected, projected]]},
+            {type: 'Polygon', coordinates: []}
+          ]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Point',
+          coordinates: [500000, 0],
+          crs: {type: 'name', properties: {name: 'EPSG:32631'}}
+        }
+      },
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Point',
+          coordinates: [10, 20],
+          crs: {type: 'name', properties: {name: 'EPSG:4326'}}
+        }
+      },
+      {type: 'Feature', properties: {}, geometry: null}
+    ]
+  };
+  const original = cloneDeep(input);
+  const {rows} = processGeojson(input);
+  t.equal(rows.length, 3, 'null geometry remains excluded');
+  const geometries = rows[0][0].geometry.geometries;
+  for (const coordinates of [geometries[0].coordinates, geometries[1].coordinates[0][1]]) {
+    t.ok(Math.abs(coordinates[0] - 1) < 1e-8, 'Mercator longitude becomes one degree');
+    t.ok(Math.abs(coordinates[1] - 1) < 1e-8, 'Mercator latitude becomes one degree');
+    t.deepEqual(coordinates.slice(2), [25, 8], 'altitude and measure remain unchanged');
+  }
+  t.notOk('bbox' in geometries[0], 'projected bounds are discarded');
+  t.deepEqual(geometries[2].coordinates, [], 'empty geometry remains empty');
+  t.ok(
+    Math.abs(rows[1][0].geometry.coordinates[0] - 3) < 1e-8,
+    'nested UTM overrides parent Mercator'
+  );
+  t.equal(rows[1][0].geometry.coordinates[1], 0, 'UTM equator remains zero');
+  t.notOk('crs' in rows[1][0].geometry, 'output no longer declares projected coordinates');
+  t.deepEqual(rows[2][0].geometry.coordinates, [10, 20], 'nested WGS84 overrides parent Mercator');
+  t.equal(
+    rows[0][0].properties.crs,
+    'ordinary data',
+    'feature properties are not CRS declarations'
+  );
+  t.deepEqual(input, original, 'processing does not reproject the source in place');
+  const again = processGeojson({type: 'FeatureCollection', features: rows.map(row => row[0])});
+  t.deepEqual(
+    again.rows.map(row => row[0].geometry),
+    rows.map(row => row[0].geometry),
+    'reimport does not transform coordinates twice'
+  );
+  t.end();
+});
+
+test('Processor => processGeojson: unknown CRS requires per-declaration confirmation', t => {
+  const point = {type: 'Point', coordinates: [141.35, 43.06, 100]};
+  const input = {
+    type: 'FeatureCollection',
+    crs: {type: 'name', properties: {name: 'local-survey'}},
+    features: [{type: 'Feature', properties: {}, geometry: point}]
+  };
+  const original = cloneDeep(input);
+  try {
+    processGeojson(input);
+    t.fail('unknown CRS must require confirmation');
+  } catch (error) {
+    t.ok(error instanceof UnknownGeojsonCrsError, 'unknown CRS requests explicit confirmation');
+    t.deepEqual(error.identifiers, ['local-survey'], 'identifies the declaration needing approval');
+  }
+  t.deepEqual(input, original, 'failed import leaves source untouched');
+  const options = {assumeLongitudeLatitude: ['local-survey']};
+  t.deepEqual(
+    processGeojson(input, options).rows[0][0].geometry,
+    point,
+    'confirmation preserves longitude, latitude and altitude'
+  );
+  const nested = cloneDeep(input);
+  nested.features[0].geometry.crs = {
+    type: 'link',
+    properties: {href: 'https://example.com/another-crs'}
+  };
+  t.throws(
+    () => processGeojson(nested, options),
+    UnknownGeojsonCrsError,
+    'approval does not apply to a different nested CRS'
+  );
+  for (const coordinates of [
+    [1e6, 1e6],
+    [10, 91],
+    [Infinity, 0],
+    [null, 20]
+  ]) {
+    const invalid = {
+      ...input,
+      features: [{...input.features[0], geometry: {...point, coordinates}}]
+    };
+    t.throws(
+      () => processGeojson(invalid, options),
+      /Convert coordinates to WGS84/,
+      'confirmation cannot load invalid longitude/latitude coordinates'
+    );
+  }
+  t.deepEqual(
+    processGeojson({...input, features: []}, options).rows,
+    [],
+    'confirmed empty collections remain valid'
+  );
+  t.end();
+});
+
+test('Processor => processGeojson: known unavailable transformations cannot be overridden', t => {
+  for (const name of [
+    '+proj=unavailable +datum=WGS84',
+    '+datum=WGS84 +proj=unavailable',
+    '+proj=utm +zone=31 +ellps=clrk66 +nadgrids=missing.gsb +units=m',
+    '+proj=geocent +datum=WGS84'
+  ]) {
+    const input = {
+      type: 'Feature',
+      crs: {type: 'name', properties: {name}},
+      properties: {},
+      geometry: {type: 'Point', coordinates: [1, 2, 3]}
+    };
+    try {
+      processGeojson(input, {assumeLongitudeLatitude: [name]});
+      t.fail('known unavailable transformation must fail');
+    } catch (error) {
+      t.notOk(error instanceof UnknownGeojsonCrsError, 'known projection errors offer no override');
+      t.match(
+        error.message,
+        /Convert coordinates to WGS84/,
+        'conversion failure remains actionable'
+      );
+    }
+  }
+  const input = {
+    type: 'Feature',
+    properties: {},
+    crs: {type: 'name', properties: {name: '+proj=utm +zone=31 +datum=WGS84 +units=m'}},
+    geometry: {type: 'Point', coordinates: [500000, 0]}
+  };
+  t.ok(
+    Math.abs(processGeojson(input).rows[0][0].geometry.coordinates[0] - 3) < 1e-8,
+    'supported inline definitions are transformed'
+  );
+  t.end();
+});
+
+test('Processor => processGeojson: WGS84 bounds and legacy invalid coordinates retain their handling', t => {
+  const geometry = {type: 'Point', coordinates: [null, 20], bbox: [-10, -20, 10, 20]};
+  const input = {
+    type: 'Feature',
+    properties: {},
+    geometry,
+    crs: {type: 'name', properties: {name: 'EPSG:4326'}}
+  };
+  t.deepEqual(
+    processGeojson(input).rows[0][0].geometry,
+    geometry,
+    'identity CRS does not alter geometry or bounds'
+  );
   t.end();
 });
 

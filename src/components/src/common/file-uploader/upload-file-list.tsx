@@ -8,6 +8,7 @@ import styled, {keyframes} from 'styled-components';
 import {media} from '@kepler.gl/styles';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import Checkbox from '../checkbox';
+import {Button} from '../styled-components';
 import {FileType, WarningSign} from '../icons';
 import TippyTooltip from '../tippy-tooltip';
 
@@ -118,6 +119,8 @@ export type UploadFileListItem = {
   selected?: boolean;
   selectionLabel?: string;
   onToggle?: () => void;
+  onConfirmCrs?: () => void;
+  confirmCrsDisabled?: boolean;
 };
 
 type UploadFileListProps = {
@@ -294,6 +297,17 @@ const CardStatus = styled.div<{$isError?: boolean}>`
   color: ${props => (props.$isError ? props.theme.errorColor : props.theme.subtextColorLT)};
 `;
 
+const CrsConfirmation = styled.div`
+  padding: 0 12px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${props => props.theme.textColorLT};
+
+  p {
+    margin: 0 0 8px;
+  }
+`;
+
 // Transform-only so the compositor can keep it moving while parsing blocks the main thread.
 const spin = keyframes`
   to {
@@ -379,6 +393,19 @@ const UploadFileList: FC<UploadFileListProps> = ({title, items}) => {
               </CardCheck>
             ) : null}
           </CardBody>
+          {item.onConfirmCrs ? (
+            <CrsConfirmation>
+              <p role="alert">{intl.formatMessage({id: 'fileUploader.unknownCrsWarning'})}</p>
+              <Button
+                type="button"
+                small
+                disabled={item.confirmCrsDisabled}
+                onClick={item.onConfirmCrs}
+              >
+                {intl.formatMessage({id: 'fileUploader.loadAsLongitudeLatitude'})}
+              </Button>
+            </CrsConfirmation>
+          ) : null}
         </Card>
       ))}
     </List>
