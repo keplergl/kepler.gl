@@ -174,10 +174,21 @@ test('keeps the hint and add action localized with wrapping for longer labels', 
   expect(commit).toHaveBeenCalledWith([expect.objectContaining({camera})]);
 });
 
-test('keeps unsupported split-map editing unavailable', () => {
-  setup(initial, {...INITIAL_MAP_STATE, isSplit: true});
-  expect(screen.getByText('Use a single 2D or 3D map to edit camera views.')).toBeInTheDocument();
-  expect(screen.queryByRole('button', {name: 'Add Bookmark'})).toBeNull();
+test.each([
+  {...INITIAL_MAP_STATE, ...camera, isSplit: true},
+  {...INITIAL_MAP_STATE, ...camera, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
+])('supports capture and navigation in split/globe views', mapState => {
+  const {commit, updateMap} = setup(initial, mapState);
+  fireEvent.click(screen.getByRole('button', {name: 'Add Bookmark'}));
+  expect(commit.mock.lastCall[0][1].camera).toEqual(camera);
+  fireEvent.click(screen.getAllByRole('button', {name: 'Go to'})[0]);
+  expect(updateMap).toHaveBeenCalledWith(
+    expect.objectContaining({
+      ...camera,
+      ...(mapState.globe?.enabled ? {pitch: 0, bearing: 0, transitionDuration: 0} : {})
+    })
+  );
+  expect(initial[0].camera).toEqual(camera);
 });
 
 test('captures and updates the live camera when Redux has not caught up', () => {

@@ -26,8 +26,12 @@ export default function CameraTourPlaybackProvider({
   request?: UiState['cameraTourPlaybackRequest'];
   children: React.ReactNode;
 }) {
-  const supported = !mapState.isSplit && !mapState.globe?.enabled;
-  const playback = useCameraTourPlayback(tour, updateMap, supported && enabled);
+  const playback = useCameraTourPlayback(
+    tour,
+    updateMap,
+    enabled,
+    Boolean(mapState.globe?.enabled)
+  );
   const consumed = useRef<typeof request>(undefined);
   useEffect(() => {
     if (!request || consumed.current === request) return;

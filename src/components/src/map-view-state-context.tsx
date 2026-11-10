@@ -48,7 +48,11 @@ export const MapViewStateContextProvider = ({
   const {isSplit, isViewportSynced} = mapState || {};
 
   // Store locally map view states by mapIndex
-  const [viewStates, setViewStates] = useState([mapState]);
+  const [viewStates, setViewStates] = useState(
+    isSplit && !isViewportSynced && mapState.splitMapViewports?.length
+      ? (mapState.splitMapViewports as MapState[])
+      : [mapState]
+  );
 
   // Detect and apply outside viewport changes
   // (e.g. from geocoder or when switching to 3d mode)

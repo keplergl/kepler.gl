@@ -700,8 +700,6 @@ test('bookmark copy, navigation and close do not activate title dragging', () =>
 
 test.each([
   {isExport: true},
-  {mapState: {...INITIAL_MAP_STATE, isSplit: true}},
-  {mapState: {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}},
   {bookmarks: []},
   {mapControls: {cameraBookmarks: {show: false, active: true}}},
   {mapControls: INITIAL_UI_STATE.mapControls},
@@ -826,4 +824,31 @@ test('mounts the floating panel inside its map root after the initial ref attach
   expect(screen.getByTestId('map-root')).toContainElement(
     screen.getByRole('button', {name: 'Home'})
   );
+});
+
+test('split bookmark controls navigate their own pane without a shared floating portal', () => {
+  const {updateMap} = setup({mapState: {...INITIAL_MAP_STATE, isSplit: true}, mapIndex: 1});
+  fireEvent.click(screen.getByRole('button', {name: bookmarks[0].name}));
+  expect(updateMap).toHaveBeenCalledWith(expect.objectContaining(bookmarks[0].camera), 1);
+});
+
+test('globe bookmark controls use a valid globe camera without changing the saved snapshot', () => {
+  const saved = {
+    ...bookmarks[0],
+    camera: {...bookmarks[0].camera, zoom: 22, pitch: 70, bearing: 85}
+  };
+  const {updateMap} = setup({
+    bookmarks: [saved],
+    mapState: {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
+  });
+  fireEvent.click(screen.getByRole('button', {name: saved.name}));
+  expect(updateMap).toHaveBeenCalledWith(
+    expect.objectContaining({
+      zoom: 16 + Math.log2(Math.cos((saved.camera.latitude * Math.PI) / 180)),
+      pitch: 0,
+      bearing: 0,
+      transitionDuration: 0
+    })
+  );
+  expect(saved.camera.zoom).toBe(22);
 });

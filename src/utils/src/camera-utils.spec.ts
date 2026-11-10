@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
+import {getCameraSnapshot, normalizeCameraBookmarks, cameraForMap} from './camera-utils';
 import {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
+import {GLOBE_MAX_LATITUDE, GLOBE_MIN_ZOOM, GLOBE_MAX_ZOOM} from '@kepler.gl/constants';
 import {CameraTour} from '@kepler.gl/types';
 
 const camera = {longitude: 179, latitude: 40, zoom: 4, bearing: 350, pitch: 45};
@@ -133,5 +134,25 @@ describe('camera tour evaluation', () => {
     ).toBeNull();
     expect(getCameraTourDuration(null)).toBe(0);
     expect(evaluateCameraTour({stops: []}, 100)).toBeNull();
+  });
+});
+
+describe('camera projection adaptation', () => {
+  test('preserves flat camera values and leaves the saved snapshot untouched on globe', () => {
+    expect(cameraForMap(camera)).toBe(camera);
+    expect(cameraForMap(camera, true)).toEqual({...camera, pitch: 0, bearing: 0});
+    expect(camera.pitch).toBe(45);
+    expect(camera.bearing).toBe(350);
+  });
+  test.each([-90, 90])('constrains polar views and latitude-adjusted zoom at %s', latitude => {
+    const limit = Math.sign(latitude) * GLOBE_MAX_LATITUDE;
+    const adjustment = Math.log2(Math.cos((limit * Math.PI) / 180));
+    expect(cameraForMap({...camera, latitude, zoom: -100}, true)).toMatchObject({
+      latitude: limit,
+      zoom: GLOBE_MIN_ZOOM + adjustment
+    });
+    expect(cameraForMap({...camera, latitude, zoom: 100}, true).zoom).toBe(
+      GLOBE_MAX_ZOOM + adjustment
+    );
   });
 });

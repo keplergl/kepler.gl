@@ -10,6 +10,7 @@ import {
   updateMap
 } from '@kepler.gl/actions';
 import {
+  cameraForMap,
   evaluateCameraTour,
   getCameraSnapshot,
   getCameraTourDuration,
@@ -41,9 +42,7 @@ const bookmarksSchema = z.object({
 function assertNavigable(ctx: KeplerContext) {
   const state = ctx.getMapState?.();
   if (!state) throw new Error('The host must supply getMapState to navigate the camera.');
-  if (state.isSplit || state.globe?.enabled) {
-    throw new Error('Camera navigation requires a single Mercator map.');
-  }
+  return state;
 }
 
 export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
@@ -55,7 +54,7 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
     description:
       'List, save, remove, navigate to camera bookmarks, or show-control without resaving. Save upserts by id, preserving other ' +
       'bookmarks and their order. Omit camera to capture the current view; pass showControl true ' +
-      'to display the map bookmark control. Go-to moves immediately in a single Mercator map.',
+      'to display the map bookmark control. Go-to moves immediately; split views target the primary pane and respect viewport sync/zoom lock.',
     metadata: {readOnly: false, riskLevel: 'low'},
     inputSchema: bookmarksSchema,
     execute: (_execution, input) => {
@@ -70,7 +69,12 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
           ctx.dispatch(setMapControlVisibility('cameraBookmarks', args.showControl));
         } else if (args.action === 'save') {
           if (args.name === undefined) throw new Error('name is required to save a bookmark.');
-          const camera = args.camera ?? getCameraSnapshot(ctx.getMapState?.());
+          const state = ctx.getMapState?.();
+          const camera =
+            args.camera ??
+            getCameraSnapshot(
+              state?.isSplit && !state.isViewportSynced ? state.splitMapViewports?.[0] : state
+            );
           if (!camera)
             throw new Error('Provide camera or a host getMapState accessor to capture the view.');
           const bookmark = {id: args.id!, name: args.name, camera};
@@ -88,9 +92,14 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
             next = bookmarks.filter(b => b.id !== args.id);
             ctx.dispatch(setCameraBookmarks(next));
           } else {
-            assertNavigable(ctx);
+            const state = assertNavigable(ctx);
             ctx.dispatch(controlCameraTour({action: 'pause'}));
-            ctx.dispatch(updateMap({...bookmark.camera, transitionDuration: 0}));
+            ctx.dispatch(
+              updateMap({
+                ...cameraForMap(bookmark.camera, Boolean(state.globe?.enabled)),
+                transitionDuration: 0
+              })
+            );
           }
         }
         return {success: true, commandId: id, data: {bookmarks: next}};
@@ -134,7 +143,7 @@ export function getCameraTourCommand(ctx: KeplerContext): RoomCommand {
       'Get or replace the saved location-animation tour, seek to elapsedMs, play or pause. ' +
       'Each stop holds before travelling to the next; the last travel duration is unused. ' +
       'Play resumes the shared player even with the side panel closed; manual camera navigation pauses it. ' +
-      'Seek pauses and moves immediately. Playback requires a single Mercator map.',
+      'Seek pauses and moves immediately. Split views target the primary pane and respect viewport sync/zoom lock; globe cameras use globe constraints.',
     metadata: {readOnly: false, riskLevel: 'low'},
     inputSchema: tourSchema,
     execute: (_execution, input) => {
@@ -161,12 +170,17 @@ export function getCameraTourCommand(ctx: KeplerContext): RoomCommand {
         } else if (args.action === 'seek') {
           if (args.elapsedMs === undefined)
             throw new Error('elapsedMs is required to seek a tour.');
-          assertNavigable(ctx);
+          const state = assertNavigable(ctx);
           const camera = evaluateCameraTour(tour, args.elapsedMs);
           if (!camera) throw new Error('Create a camera tour before seeking.');
           ctx.dispatch(setMapControlVisibility('cameraTour', true));
           ctx.dispatch(controlCameraTour({action: 'seek', elapsedMs: args.elapsedMs}));
-          ctx.dispatch(updateMap({...camera, transitionDuration: 0}));
+          ctx.dispatch(
+            updateMap({
+              ...cameraForMap(camera, Boolean(state.globe?.enabled)),
+              transitionDuration: 0
+            })
+          );
         }
         return {
           success: true,

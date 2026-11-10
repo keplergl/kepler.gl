@@ -520,12 +520,19 @@ test('zero-duration tours disable playback but can jump to their evaluated camer
 test.each([
   {...INITIAL_MAP_STATE, isSplit: true},
   {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
-])('unsupported map modes do not expose tour editing or playback', mapState => {
-  setup(tour, {mapState, bookmarks: [{id: 'saved', name: 'Saved view', camera}]});
-  expect(screen.getByText('Use a single 2D or 3D map to edit camera views.')).toBeInTheDocument();
-  expect(screen.queryByRole('button', {name: 'Play'})).toBeNull();
-  expect(screen.queryByRole('button', {name: 'Add stop'})).toBeNull();
-  expect(screen.queryByRole('menu')).toBeNull();
+])('supports tour editing and playback in split/globe modes', mapState => {
+  const {updateMap} = setup(tour, {
+    mapState,
+    bookmarks: [{id: 'saved', name: 'Saved view', camera}]
+  });
+  expect(screen.getByRole('button', {name: 'Play'})).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  expect(updateMap).toHaveBeenLastCalledWith({
+    ...camera,
+    ...(mapState.globe?.enabled ? {pitch: 0, bearing: 0} : {}),
+    transitionDuration: 0
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
 });
 
 test('navigating to a saved bookmark pauses the tour before the next frame', () => {
@@ -1032,7 +1039,7 @@ test('programmatic playback runs with the panel closed and shares pause/seek sta
   expect(callbacks.size).toBe(0);
 });
 
-test('the shared player cancels pending frames on gestures, unsupported view modes and unmount', () => {
+test('the shared player cancels gestures and unmount, and continues when entering split mode', () => {
   const player = setupSharedPlayer();
   player.request({action: 'play'});
   fireEvent.pointerDown(screen.getByRole('button', {name: 'Map gesture'}));
@@ -1040,7 +1047,7 @@ test('the shared player cancels pending frames on gestures, unsupported view mod
   player.request({action: 'play'});
   expect(callbacks.size).toBe(1);
   player.split();
-  expect(callbacks.size).toBe(0);
+  expect(callbacks.size).toBe(1);
   player.unmount();
   expect(callbacks.size).toBe(0);
 });
