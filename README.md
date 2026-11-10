@@ -43,11 +43,23 @@ Kepler.gl is also a React component that uses [Redux](https://redux.js.org/) to 
 - [Get Started][get-started]
 - [App User Guide][user-guide]
 - [Jupyter Widget User Guide][user-guide-jupyter]
+- [AI assistants and MCP](#ai-assistants-and-mcp)
 - [Documentation][docs]
 - [Stack Overflow][stack]
 - [Contribution Guidelines][contributing]
 - [Api Reference][api-reference]
 - [Roadmap][roadmap]
+
+## AI assistants and MCP
+
+Use Codex, Claude Code, or another MCP client to control a live kepler.gl map:
+load data, configure layers, apply filters, manage bookmarks, and play camera
+tours. The client connects through a local MCP bridge to an open map tab.
+
+Follow the [MCP setup guide](plugins/kepler.gl/README.md#mcp-server) for a local
+checkout, including Codex configuration and connecting the browser. You can also
+[install the kepler.gl skills](plugins/kepler.gl/README.md#install) for guidance
+on working with the app or creating maps with the Python package.
 
 ## Env
 

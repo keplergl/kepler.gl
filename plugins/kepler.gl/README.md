@@ -75,17 +75,62 @@ execute against the live map. That is how harnesses without WebMCP (Codex
 Desktop, the Codex CLI, Claude Code) reach the map. Agents with a built-in
 browser can instead use the page's WebMCP registration.
 
-The plugin still ships no `.mcp.json` (Claude) and no `mcp.json` (portable),
-because `@kepler.gl/mcp` is not published to npm yet — an `npx` entry would
-404. From a checkout the server runs today:
+The plugin installs skills; register the MCP server separately. It currently
+ships no `.mcp.json` (Claude) or `mcp.json` (portable). The checkout setup below
+does not require publishing a new kepler.gl version.
 
-```bash
-yarn workspace @kepler.gl/mcp build
-node src/mcp/dist/cjs/server/stdio.js --map-url http://localhost:8080
-```
+### Connect Codex to a local map
 
-Register that command as the `kepler` server in the client, e.g.
-`codex mcp add kepler -- node src/mcp/dist/cjs/server/stdio.js`.
+1. Use the repository's [Node version](../../README.md#env), then prepare and
+   start the demo from the repository root. Skip bootstrap if the checkout is
+   already prepared, and keep the app running in this terminal:
+
+   ```bash
+   yarn bootstrap
+   yarn start
+   ```
+
+2. Add the following to `~/.codex/config.toml`. Replace
+   `/absolute/path/to/kepler.gl` with your checkout's absolute path. If the demo
+   runs on another port, update `--map-url` too:
+
+   ```toml
+   [mcp_servers.kepler]
+   command = "node"
+   cwd = "/absolute/path/to/kepler.gl"
+   args = [
+     "-r", "./babel-register.js",
+     "./src/mcp/src/server/stdio.ts",
+     "--map-url", "http://localhost:8080"
+   ]
+   env = { BABEL_ENV = "test" }
+   startup_timeout_sec = 30
+   ```
+
+   This development launcher reads the workspace sources directly. `BABEL_ENV=test`
+   selects the repository's Babel preset and source aliases; it does not run tests.
+   Building only `@kepler.gl/mcp` leaves its workspace dependencies unbuilt, so
+   running its compiled server alone can fail in a development checkout.
+
+   Codex starts the bridge process. Other stdio MCP clients can use the same
+   command, arguments, working directory, and environment. See the
+   [Codex MCP documentation](https://developers.openai.com/codex/mcp/) for client
+   configuration options.
+
+3. Restart the server in Codex's MCP settings (or restart the Codex CLI), then
+   open [http://127.0.0.1:8765/](http://127.0.0.1:8765/) in your browser. The bridge
+   redirects to the demo with its connection token. Keep that map tab open.
+   Reopen this link after restarting the bridge, which generates a new token.
+
+4. Load a dataset in the map and ask Codex, for example: "Use the kepler MCP
+   server to inspect the loaded datasets and layers," then "Make the points
+   blue and increase their size."
+
+If a tool reports that no map is connected, reopen the bridge link and check
+that the demo is running at the configured `--map-url`. If port 8765 is already
+in use, stop the other bridge process before restarting this one.
+
+### Packaged server
 
 Once the package is published, add both files with the same server, bump the
 plugin version, and update this section:
