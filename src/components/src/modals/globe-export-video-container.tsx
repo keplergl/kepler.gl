@@ -164,13 +164,13 @@ export class GlobeExportVideoPanelContainer extends Component<
       mediaType: 'webm',
       cameraPreset: 'None',
       fileName: '',
-      resolution: '1280x720',
       durationMs: 1000,
       rendering: false,
       previewing: false,
       saving: false,
       currentTimeMs: 0,
-      ...(initialState || {})
+      ...(initialState || {}),
+      resolution: initialState?.resolution ?? '1280x720'
     };
 
     const viewState = scaleToVideoExport(mapState, this._getContainer(settings.resolution));
