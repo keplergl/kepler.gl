@@ -5,6 +5,7 @@ import './base-layer-specs';
 import './arc-layer-specs';
 import './bitmap-layer-specs';
 import './cluster-layer-specs';
+import './donut-layer-specs';
 import './geojson-layer-specs';
 import './grid-layer-specs';
 import './h3-hexagon-layer-specs';

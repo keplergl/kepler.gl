@@ -77,8 +77,18 @@ const StyledMapPopover = styled.div`
   .map-popover__layer-info > table {
     grid-template-columns: auto auto;
   }
-  .map-popover__layer-info > table.comparing {
+  .map-popover__layer-info > table.comparing,
+  .map-popover__layer-info > table.donut {
     grid-template-columns: auto auto auto;
+  }
+
+  .map-popover__layer-info > table.donut {
+    td[colspan='2'] {
+      grid-column: span 2;
+    }
+    td[colspan='3'] {
+      grid-column: 1 / -1;
+    }
   }
 
   tbody,

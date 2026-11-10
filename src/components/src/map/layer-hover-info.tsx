@@ -20,6 +20,7 @@ import {
 import {useIntl} from 'react-intl';
 import {VisState} from '@kepler.gl/schemas';
 import {capitalizeFirstLetter} from '@kepler.gl/utils';
+import {DonutTooltip} from './donut-layer-info';
 
 export const StyledLayerName = styled(CenterFlexbox)`
   color: ${props => props.theme.textColorHl};
@@ -411,6 +412,7 @@ const LayerHoverInfoFactory = () => {
     }
 
     const hasFieldsToShow =
+      data.donut ||
       (data.fieldValues && Object.keys(data.fieldValues).length > 0) ||
       (data.wmsFeatureData && data.wmsFeatureData.length > 0) ||
       (data.rasterFeatureData && data.rasterFeatureData.length > 0) ||
@@ -423,8 +425,10 @@ const LayerHoverInfoFactory = () => {
           {props.layer.config.label}
         </StyledLayerName>
         {hasFieldsToShow && <StyledDivider />}
-        <StyledTable className={props.primaryData ? 'comparing' : undefined}>
-          {data.wmsFeatureData || data.rasterFeatureData ? (
+        <StyledTable className={data.donut ? 'donut' : props.primaryData ? 'comparing' : undefined}>
+          {data.donut ? (
+            <DonutTooltip composition={data.donut} />
+          ) : data.wmsFeatureData || data.rasterFeatureData ? (
             <FeatureInfoRows
               rows={data.wmsFeatureData || data.rasterFeatureData}
               primaryRows={

@@ -147,6 +147,7 @@ export default {
       polygon: 'polygon',
       geojson: 'geojson',
       cluster: 'cluster',
+      donut: 'Donut',
       icon: 'icon',
       heatmap: 'heatmap',
       contour: 'contour',
@@ -176,6 +177,28 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    donut: {
+      composition: 'Composition',
+      description:
+        'Choose 1–6 nonnegative numeric fields representing comparable parts of a whole. One field fills the ring with its color; multiple fields show shares of their total. Missing values count as zero. Invalid values are ignored and counted in the tooltip. Zero totals are hidden.',
+      addField: 'Add numeric field',
+      missingFields:
+        'A selected field is missing or is no longer numeric. Choose a replacement field.',
+      color: 'Color for {field}',
+      label: 'Label for {field}',
+      remove: 'Remove {field}',
+      showTotal: 'Show total in center',
+      total: 'Total of selected fields',
+      pointCount: 'Points',
+      cluster: 'Cluster',
+      aggregationDescription:
+        'Combine nearby points as you zoom out. Selected fields are summed before calculating shares. Filters apply before grouping. Missing values count as zero. Invalid values are ignored per field and counted in the tooltip. Groups with zero totals are hidden.',
+      empty: 'Total is zero; no composition to display.',
+      missing: 'A selected field is unavailable; shares and total cannot be calculated.',
+      ignoredValues:
+        '{count, plural, one {# invalid value ignored.} other {# invalid values ignored.}}',
+      invalid: 'Values exceed the supported numeric range; shares and total are unavailable.'
+    },
     voronoi: {
       bounds: 'Cell Bounds',
       boundsPadding: 'Bounds Padding (%)',

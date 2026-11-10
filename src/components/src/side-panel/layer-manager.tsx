@@ -211,6 +211,7 @@ function LayerManagerFactory(
     const enableFlowFieldLayer = getApplicationConfig().enableFlowFieldLayer;
     const enableContourLayer = getApplicationConfig().enableContourLayer;
     const enableVoronoiLayer = getApplicationConfig().enableVoronoiLayer;
+    const enableDonutLayer = getApplicationConfig().enableDonutLayer;
     const enableZarrLayer = getApplicationConfig().enableZarrLayer;
     const enableLayerGroups = getApplicationConfig().enableLayerGroups;
 
@@ -248,6 +249,10 @@ function LayerManagerFactory(
         const {voronoi: _voronoi, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
       }
+      if (!enableDonutLayer) {
+        const {donut: _donut, ...rest} = filteredClasses;
+        filteredClasses = rest as LayerClassesType;
+      }
       if (!enableZarrLayer) {
         const {zarr: _zarr, ...rest} = filteredClasses;
         filteredClasses = rest as LayerClassesType;
@@ -262,6 +267,7 @@ function LayerManagerFactory(
       enableFlowFieldLayer,
       enableContourLayer,
       enableVoronoiLayer,
+      enableDonutLayer,
       enableZarrLayer,
       layerClasses
     ]);

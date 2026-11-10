@@ -8,10 +8,12 @@ import {format as d3Format} from 'd3-format';
 import {useIntl} from 'react-intl';
 import ColorLegendFactory, {LegendRowFactory, StyledLegend} from '../common/color-legend';
 import RadiusLegend from '../common/radius-legend';
+import {DonutLegend} from './donut-layer-info';
 import {CHANNEL_SCALES, DIMENSIONS} from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {
   Layer,
+  DonutLayer,
   LayerBaseConfig,
   VisualChannel,
   VisualChannelDescription,
@@ -612,6 +614,14 @@ export function LayerLegendContentFactory(
     onLayerVisConfigChange,
     actionIcons
   }) => {
+    if (layer.type === 'donut') {
+      return (
+        <DonutLegend
+          layer={layer as DonutLayer}
+          width={containerW - 2 * DIMENSIONS.mapControl.padding}
+        />
+      );
+    }
     if (layer.type === 'contour') {
       return (
         <ContourLegend

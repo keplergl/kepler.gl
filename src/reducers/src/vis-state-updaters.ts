@@ -1434,7 +1434,17 @@ export function layerVisConfigChangeUpdater(
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
-    const updatedState = updateStateWithLayerAndData(nextState, {layerData, layer, idx});
+    // Donut picks cache aggregate values in category order. Discard them when
+    // composition data changes, but retain them for label/color-only edits.
+    const interactionState =
+      newLayer.type === 'donut' && oldLayerData?.data !== layerData?.data
+        ? {
+            ...nextState,
+            clicked: layer.isLayerHovered(nextState.clicked) ? undefined : nextState.clicked,
+            hoverInfo: layer.isLayerHovered(nextState.hoverInfo) ? undefined : nextState.hoverInfo
+          }
+        : nextState;
+    const updatedState = updateStateWithLayerAndData(interactionState, {layerData, layer, idx});
     return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
       ? updateAnimationDomain(updatedState)
       : updatedState;
