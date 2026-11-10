@@ -188,6 +188,23 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
   }
 `;
 
+const ContourOutlineColorRow = styled(SidePanelSection)`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(${props => props.theme.inputBoxHeight}, auto);
+  align-items: center;
+  column-gap: 8px;
+
+  > .side-panel-section,
+  > .side-panel-section > .color-selector {
+    display: contents;
+  }
+
+  .color-selector__dropdown {
+    grid-column: 1 / -1;
+  }
+`;
+
 // Keep keyboard behavior scoped to the optional point effects.
 const PointVisualControls = styled(ConfigGroupCollapsibleContent)`
   .layer-config-group.collapsed & {
@@ -2475,7 +2492,7 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           <LayerConfigGroup {...settings.stroked} {...visConfiguratorProps} label="layer.outline">
             <div inert={!config.visConfig.stroked}>
-              <SidePanelSection>
+              <ContourOutlineColorRow>
                 <Switch
                   id={`${layer.id}-contourColor-switch`}
                   checked={Boolean(contourColor)}
@@ -2486,14 +2503,14 @@ export default function LayerConfiguratorFactory(
                     })
                   }
                 />
-              </SidePanelSection>
-              {contourColor ? (
-                <LayerColorSelector
-                  {...visConfiguratorProps}
-                  property="contourColor"
-                  selectedColor={contourColor}
-                />
-              ) : null}
+                {contourColor ? (
+                  <LayerColorSelector
+                    {...visConfiguratorProps}
+                    property="contourColor"
+                    selectedColor={contourColor}
+                  />
+                ) : null}
+              </ContourOutlineColorRow>
               <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
             </div>
           </LayerConfigGroup>
