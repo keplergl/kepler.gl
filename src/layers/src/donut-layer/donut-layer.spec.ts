@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Float64, Int64, Table, vectorFromArray} from 'apache-arrow';
+import Supercluster from 'supercluster';
 import {
   KeplerTable,
   copyTableAndUpdate,
@@ -9,7 +10,7 @@ import {
   assignGpuChannels
 } from '@kepler.gl/table';
 import {processArrowBatches} from '@kepler.gl/processors';
-import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES} from '@kepler.gl/constants';
+import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, MAX_GPU_FILTERS} from '@kepler.gl/constants';
 import {getDefaultFilter, getPolygonFilterFunctor} from '@kepler.gl/utils';
 import SchemaManager from '@kepler.gl/schemas';
 import {INITIAL_VIS_STATE, layerTypeChangeUpdater} from '@kepler.gl/reducers';
@@ -447,6 +448,73 @@ const nearbyRows = [
   [30.51, 50.45, 90, 10],
   [30.52, 50.45, 1, 9]
 ];
+
+test('presentation edits reuse the cluster index while updating radii, totals, labels and colors', async () => {
+  const {layer, dataset, datasets} = await setup({fields, rows: nearbyRows});
+  const load = jest.spyOn(Supercluster.prototype, 'load');
+  try {
+    let data = layer.formatLayerData(datasets);
+    const originalGroups = render(layer, dataset, data, 4)[0].props.data;
+    expect(load).toHaveBeenCalledTimes(1);
+    const renamed = [{...categories[0], label: 'Transit'}, categories[1]];
+    const recolored = [{...renamed[0], color: [1, 2, 3]}, renamed[1]];
+    for (const change of [
+      {radius: 40},
+      {showTotal: true},
+      {composition: {categories: renamed}},
+      {composition: {categories: recolored}}
+    ]) {
+      layer.updateLayerVisConfig(change);
+      data = layer.formatLayerData(datasets, data);
+      expect(render(layer, dataset, data, 4)[0].props.data).toBe(originalGroups);
+      expect(load).toHaveBeenCalledTimes(1);
+    }
+    const [rings, labels] = render(layer, dataset, data, 4);
+    expect(rings.props.getRadius(originalGroups[0])).toBe(40);
+    expect(labels.props.getText(originalGroups[0])).toBe('110');
+    expect(rings.props.donutColors).toEqual([[1, 2, 3], categories[1].color]);
+    expect(
+      layer.getHoverData(originalGroups[0], dataset.dataContainer, dataset.fields)?.donut.categories
+    ).toEqual(recolored);
+  } finally {
+    load.mockRestore();
+  }
+});
+
+test('cached filter accessors refresh when the factory or data container changes', async () => {
+  const {layer, dataset, datasets} = await setup({fields, rows: nearbyRows});
+  const factory =
+    (fieldIndex: number) =>
+    (dc: KeplerTable['dataContainer']) =>
+    () =>
+    ({index}: {index: number}) =>
+      Array.from({length: MAX_GPU_FILTERS}, (_, channel) =>
+        channel === 0 ? dc.valueAt(index, fieldIndex) : 0
+      );
+  dataset.gpuFilter = {
+    filterRange: Array.from({length: MAX_GPU_FILTERS}, () => [0, 10]),
+    filterValueUpdateTriggers: {gpuFilter_0: {name: 'bus', domain0: 0}},
+    filterValueAccessor: factory(2)
+  };
+  let data = layer.formatLayerData(datasets);
+  expect(render(layer, dataset, data, 4)[0].props.data[0].total).toBe(10);
+
+  // Keep all other inputs stable to verify a new accessor factory takes effect.
+  dataset.gpuFilter = {...dataset.gpuFilter, filterValueAccessor: factory(3)};
+  data = layer.formatLayerData(datasets, data);
+  expect(render(layer, dataset, data, 4)[0].props.data[0].total).toBe(110);
+
+  const replacement = await setup({
+    fields,
+    rows: [[30.51, 50.45, 1, 99], nearbyRows[1]]
+  });
+  replacement.dataset.gpuFilter = dataset.gpuFilter;
+  data = layer.formatLayerData(replacement.datasets, data);
+  expect(render(layer, replacement.dataset, data, 4)[0].props.data[0]).toMatchObject({
+    total: 10,
+    pointCount: 1
+  });
+});
 
 test.each(['none', 'grid'])(
   'restores legacy %s settings as clusters while preserving custom radii',

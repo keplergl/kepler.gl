@@ -115,7 +115,12 @@ export default function DonutLayerConfiguratorFactory(
 ) {
   return function DonutLayerConfigurator({layer, fields, onChange}: Props) {
     const intl = useIntl();
-    const categories = layer.getCategories();
+    const configuredCategories = layer.config.visConfig.composition?.categories;
+    const categories = layer.getCategories().map(category => {
+      // Keep draft labels verbatim; legends and tooltips use getCategories()'s fallback.
+      const label = configuredCategories.find(item => item?.field === category.field)?.label;
+      return typeof label === 'string' ? {...category, label} : category;
+    });
     const setCategories = (next: DonutCategory[]) => onChange({composition: {categories: next}});
     const changeCategory = (index: number, change: Partial<DonutCategory>) =>
       setCategories(

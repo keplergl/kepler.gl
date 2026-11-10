@@ -26,6 +26,15 @@ const getUnfilteredValue = () => unfilteredValues;
 const totalFormatter = new Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 1});
 
 export default class DonutLayer extends Layer {
+  private filterAccessor = createSelector(
+    [
+      (factory: GpuFilter['filterValueAccessor']) => factory,
+      (_factory: GpuFilter['filterValueAccessor'], dataContainer: DataContainerInterface) =>
+        dataContainer
+    ],
+    (factory, dataContainer) => factory(dataContainer)()
+  );
+
   private aggregationSource = createSelector(
     [
       (data: DonutLayerData, _gpuFilter: GpuFilter) => data.data,
@@ -159,10 +168,12 @@ export default class DonutLayer extends Layer {
 
   getDataUpdateTriggers(dataset: KeplerTable) {
     const triggers = super.getDataUpdateTriggers(dataset);
+    // Labels and colors do not affect composition values or cluster membership.
+    const compositionFields = JSON.stringify(this.getCategories().map(category => category.field));
     for (const key of ['getData', 'getMeta']) {
       triggers[key] = {
         ...triggers[key],
-        composition: this.config.visConfig.composition,
+        compositionFields,
         fields: dataset.fields
       };
     }
@@ -220,7 +231,10 @@ export default class DonutLayer extends Layer {
     const {data} = this.updateData(datasets, oldLayerData);
     return {
       data: data || [],
-      getFilterValue: dataset.gpuFilter.filterValueAccessor(dataset.dataContainer)()
+      getFilterValue: this.filterAccessor(
+        dataset.gpuFilter.filterValueAccessor,
+        dataset.dataContainer
+      )
     };
   }
 

@@ -87,6 +87,61 @@ test('selects numeric categories, retains colors when removing a field and edits
   expect(onChange.mock.lastCall[0].composition.categories[0].color).toEqual(DONUT_COLORS[1]);
 });
 
+test.each(['', '   '])(
+  'keeps a %p label editable while legend and tooltip use the field name',
+  blank => {
+    const onChange = jest.fn();
+    function Editor() {
+      const [config, setConfig] = useState({composition: {categories}});
+      const layer = new DonutLayer({dataId: 'test'});
+      layer.updateLayerVisConfig(config);
+      return (
+        <>
+          <Configurator
+            layer={layer}
+            fields={fields}
+            onChange={next => {
+              onChange(next);
+              setConfig({...config, ...next});
+            }}
+          />
+          <div data-testid="legend">
+            <DonutLegend layer={layer} width={240} />
+          </div>
+          <div data-testid="tooltip">
+            <HoverInfo
+              layer={layer}
+              fieldsToShow={[]}
+              data={{
+                donut: {
+                  categories: layer.getCategories(),
+                  values: [30, 70],
+                  shares: [0.3, 0.7],
+                  total: 100,
+                  status: 'valid'
+                }
+              }}
+            />
+          </div>
+        </>
+      );
+    }
+    renderUI(<Editor />);
+    const label = screen.getByLabelText('Label for bus');
+    fireEvent.change(label, {target: {value: blank}});
+    expect(label).toHaveValue(blank);
+    expect(within(screen.getByTestId('legend')).getByText('bus')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tooltip')).getByText('bus')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Label for car'), {target: {value: 'Driving'}});
+    expect(label).toHaveValue(blank);
+    expect(onChange.mock.lastCall[0].composition.categories[0].label).toBe(blank);
+    fireEvent.change(label, {target: {value: 'Transit'}});
+    expect(label).toHaveValue('Transit');
+    expect(within(screen.getByTestId('legend')).getByText('Transit')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tooltip')).getByText('Transit')).toBeInTheDocument();
+  }
+);
+
 test('limits selection to six categories and reports a missing saved field', () => {
   const layer = new DonutLayer({dataId: 'test'});
   layer.updateLayerVisConfig({
