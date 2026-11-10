@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useCallback, useEffect, useRef} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
+import {Edit, Settings} from '../../common/icons';
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import RangeSliderFactory from '../../common/range-slider';
 import InfoHelperFactory from '../../common/info-helper';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {KeyEvent} from '@kepler.gl/constants';
-import {Checkbox} from '../..';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {isInRange, clamp, createSliderScale} from '@kepler.gl/utils';
 
@@ -17,12 +17,18 @@ type LazyInputProps = {
   value: string | [string, string];
   name: string;
   onChange: (n: string | [string, string], v?: string | [string, string]) => void;
+  autoFocus?: boolean;
+  disabled?: boolean;
+  ariaLabel?: string;
 };
 
 type CustomInputProps = {
   value: string | [string, string];
   isRanged: boolean;
   onChangeCustomInput: (v: [string, string]) => void;
+  autoFocus: boolean;
+  disabled?: boolean;
+  ariaLabel: string;
 };
 
 type VisConfigSliderProps = {
@@ -37,18 +43,11 @@ type VisConfigSliderProps = {
   disabled?: boolean;
   inputTheme?: string;
   allowCustomValue?: boolean;
-  /** i18n id or plain label for the custom-value checkbox. Defaults to "custom input". */
+  /** i18n id or plain label for the custom-value edit button. */
   customInputLabel?: string;
   focusRange?: [number, number];
   focusWeight?: number;
 };
-
-const InputWrapper = styled.div`
-  display: flex;
-  line-height: 12px;
-  margin-bottom: 12px;
-  width: 100%;
-`;
 
 const LabelRow = styled.div`
   display: flex;
@@ -57,54 +56,93 @@ const LabelRow = styled.div`
 
 const CustomInputWrapper = styled.div`
   display: flex;
+  gap: 8px;
 `;
 
 const CustomInputLabel = styled.label`
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
   color: ${props => props.theme.textColor};
-  font-weight: 500;
-  letter-spacing: 0.2px;
   font-size: ${props => props.theme.layerConfigGroupLabelLabelFontSize};
-  padding-right: 15px;
-
-  &:last-child {
-    margin-left: auto;
-    padding: 0;
-  }
 `;
 
 const RangeInput = styled.input`
   ${props => props.theme.input};
   font-size: ${props => props.theme.sliderInputFontSize};
-  width: ${props => props.theme.customRangeInputWidth}px;
-  overflow: auto;
-  height: 20px;
-  margin-top: 5px;
+  width: 100%;
+  min-width: 0;
+  height: ${props => props.theme.sliderInputHeight}px;
 `;
 
-const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
+const ModeButton = styled.button<{$custom: boolean}>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  height: ${props => props.theme.sliderInputHeight}px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${props => props.theme.labelColor};
+  cursor: pointer;
+  opacity: ${props => (props.$custom ? 1 : 0)};
+
+  &:hover,
+  &:focus-visible {
+    color: ${props => props.theme.textColorHl};
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
+
+  &:disabled {
+    visibility: hidden;
+  }
+`;
+
+const SliderRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &:hover ${ModeButton} {
+    opacity: 1;
+  }
+`;
+
+const ValueReadout = styled.span<{$isRanged: boolean}>`
+  width: ${props => props.theme.sliderInputWidth * (props.$isRanged ? 1.5 : 1)}px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: ${props => props.theme.textColor};
+  font-size: ${props => props.theme.sliderInputFontSize};
+`;
+
+const LazyInput: React.FC<LazyInputProps> = ({
+  value,
+  onChange,
+  name,
+  autoFocus,
+  disabled,
+  ariaLabel
+}) => {
   const [stateValue, setValue] = useState(value);
-  const inputRef = useRef(null);
   useEffect(() => {
     setValue(value);
   }, [value]);
-
-  const onKeyDown = useCallback(
-    e => {
-      switch (e.keyCode) {
-        case KeyEvent.DOM_VK_ENTER:
-        case KeyEvent.DOM_VK_RETURN:
-          onChange(name, stateValue);
-          if (inputRef !== null) {
-            // @ts-ignore
-            inputRef?.current.blur();
-          }
-          break;
-        default:
-          break;
-      }
-    },
-    [onChange, name, stateValue]
-  );
 
   const _onChange = useCallback(e => setValue(e.target.value), [setValue]);
   const onBlur = useCallback(() => onChange(name, stateValue), [onChange, name, stateValue]);
@@ -112,17 +150,30 @@ const LazyInput: React.FC<LazyInputProps> = ({value, onChange, name}) => {
   return (
     <RangeInput
       type="number"
-      ref={inputRef}
+      autoFocus={autoFocus}
+      disabled={disabled}
+      aria-label={ariaLabel}
       value={stateValue}
       onChange={_onChange}
       onBlur={onBlur}
-      onKeyDown={onKeyDown}
-      id={name}
+      onKeyDown={event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
     />
   );
 };
 
-const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCustomInput}) => {
+const CustomInput: React.FC<CustomInputProps> = ({
+  isRanged,
+  value,
+  onChangeCustomInput,
+  autoFocus,
+  disabled,
+  ariaLabel
+}) => {
   const onChangeInput = useCallback(
     (name, v) => {
       const prevValue = isRanged ? (name === 'value1' ? value[0] : value[1]) : value;
@@ -141,20 +192,36 @@ const CustomInput: React.FC<CustomInputProps> = ({isRanged, value, onChangeCusto
   return (
     <CustomInputWrapper>
       {isRanged ? (
-        <InputWrapper>
+        <>
           <CustomInputLabel>
-            min
-            <LazyInput name="value0" value={value[0]} onChange={onChangeInput} />
+            <FormattedMessage id="mapLegend.min" />
+            <LazyInput
+              name="value0"
+              value={value[0]}
+              onChange={onChangeInput}
+              autoFocus={autoFocus}
+              disabled={disabled}
+            />
           </CustomInputLabel>
           <CustomInputLabel>
-            max
-            <LazyInput name="value1" value={value[1]} onChange={onChangeInput} />
+            <FormattedMessage id="mapLegend.max" />
+            <LazyInput
+              name="value1"
+              value={value[1]}
+              onChange={onChangeInput}
+              disabled={disabled}
+            />
           </CustomInputLabel>
-        </InputWrapper>
+        </>
       ) : (
-        <InputWrapper>
-          <LazyInput name="value" value={value} onChange={onChangeInput} />
-        </InputWrapper>
+        <LazyInput
+          name="value"
+          value={value}
+          onChange={onChangeInput}
+          autoFocus={autoFocus}
+          disabled={disabled}
+          ariaLabel={ariaLabel}
+        />
       )}
     </CustomInputWrapper>
   );
@@ -182,34 +249,38 @@ export default function VisConfigSliderFactory(
     focusRange,
     focusWeight
   }) => {
+    const intl = useIntl();
     const value = config.visConfig[property];
-    const [custom, setCustom] = useState(false || !isInRange(value, range));
+    const [mode, setMode] = useState<'slider' | 'editing' | 'saved'>(() =>
+      isInRange(value, range) ? 'slider' : 'saved'
+    );
+    const custom = mode !== 'slider';
     const scaleConfig = createSliderScale(focusRange, focusWeight);
+    const labelId = typeof label === 'function' ? label(config) : label || `property.${property}`;
+    const displayedValue = Array.isArray(value) ? value.join(' – ') : String(value);
+    const modeLabel = custom
+      ? intl.formatMessage({id: 'layerVisConfigs.useSlider', defaultMessage: 'Use slider'})
+      : intl.formatMessage({
+          id: customInputLabel || 'layerVisConfigs.enterCustomValue',
+          defaultMessage: customInputLabel || 'Enter custom value'
+        });
 
-    const onChangeCheckbox = useCallback(() => {
+    const toggleMode = () => {
       if (custom) {
-        // we are swithcing from custom to not custom
-        // adjust value to range
         const adjustedValue = isRanged
           ? [clamp(range, value[0]), clamp(range, value[1])]
           : clamp(range, value);
         onChange({[property]: adjustedValue});
       }
-      setCustom(!custom);
-    }, [onChange, property, isRanged, value, range, custom, setCustom]);
+      setMode(custom ? 'slider' : 'editing');
+    };
 
     return (
       <SidePanelSection disabled={Boolean(disabled)}>
         {label ? (
           <LabelRow>
             <PanelLabel>
-              {typeof label === 'string' ? (
-                <FormattedMessage id={label} />
-              ) : typeof label === 'function' ? (
-                <FormattedMessage id={label(config)} />
-              ) : (
-                <FormattedMessage id={`property.${property}`} />
-              )}
+              <FormattedMessage id={labelId} />
             </PanelLabel>
             {description ? (
               <InfoHelper description={description} id={`${id}-${property}-description`} />
@@ -217,34 +288,47 @@ export default function VisConfigSliderFactory(
           </LabelRow>
         ) : null}
 
-        {allowCustomValue ? (
-          <InputWrapper>
-            <CustomInputLabel>
-              {customInputLabel ? <FormattedMessage id={customInputLabel} /> : 'custom input'}
-            </CustomInputLabel>
-            <Checkbox id={`property.${property}`} checked={custom} onChange={onChangeCheckbox} />
-          </InputWrapper>
-        ) : null}
-
-        {!custom ? (
-          <RangeSlider
-            range={range}
-            value0={isRanged ? value[0] : range[0]}
-            value1={isRanged ? value[1] : value}
-            step={step}
-            isRanged={Boolean(isRanged)}
-            onChange={v => onChange({[property]: isRanged ? v : v[1]})}
-            inputTheme={inputTheme}
-            showInput
-            scaleConfig={scaleConfig}
-          />
-        ) : (
-          <CustomInput
-            isRanged={isRanged}
-            value={value}
-            onChangeCustomInput={v => onChange({[property]: v})}
-          />
-        )}
+        <SliderRow>
+          {custom ? (
+            <CustomInput
+              isRanged={isRanged}
+              value={value}
+              onChangeCustomInput={v => onChange({[property]: v})}
+              autoFocus={mode === 'editing'}
+              disabled={disabled}
+              ariaLabel={intl.formatMessage({id: labelId, defaultMessage: property})}
+            />
+          ) : (
+            <RangeSlider
+              range={range}
+              value0={isRanged ? value[0] : range[0]}
+              value1={isRanged ? value[1] : value}
+              step={step}
+              isRanged={Boolean(isRanged)}
+              onChange={v => onChange({[property]: isRanged ? v : v[1]})}
+              inputTheme={inputTheme}
+              showInput={!allowCustomValue}
+              scaleConfig={scaleConfig}
+            />
+          )}
+          {allowCustomValue && !custom ? (
+            <ValueReadout $isRanged={isRanged} title={displayedValue}>
+              {displayedValue}
+            </ValueReadout>
+          ) : null}
+          {allowCustomValue ? (
+            <ModeButton
+              $custom={custom}
+              type="button"
+              title={modeLabel}
+              aria-label={modeLabel}
+              disabled={disabled}
+              onClick={toggleMode}
+            >
+              {custom ? <Settings height="16px" aria-hidden="true" /> : <Edit aria-hidden="true" />}
+            </ModeButton>
+          ) : null}
+        </SliderRow>
       </SidePanelSection>
     );
   };

@@ -25,6 +25,7 @@ import {
   appInjector,
   dropdownListClassList,
   Checkbox,
+  VisConfigSlider,
   getLayerFields,
   getLayerDataset
 } from '@kepler.gl/components';
@@ -170,6 +171,92 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   );
 
   t.end();
+});
+
+function renderPointRadiusSlider(property, initialValue) {
+  const changed = sinon.spy();
+  function Editor() {
+    const [value, setValue] = React.useState(initialValue);
+    const layer = new LayerClasses.point({id: 'point-radius'});
+    layer.updateLayerVisConfig({[property]: value});
+    return (
+      <VisConfigSlider
+        {...layer.visConfigSettings[property]}
+        layer={layer}
+        onChange={next => {
+          changed(next);
+          setValue(next[property]);
+        }}
+      />
+    );
+  }
+  const view = renderWithTheme(
+    <IntlWrapper>
+      <Editor />
+    </IntlWrapper>
+  );
+  return {view, changed};
+}
+
+test('Components -> VisConfigSlider -> edits a single custom radius using the keyboard', async t => {
+  const {view, changed} = renderPointRadiusSlider('radius', 10);
+  const slider = within(view.container);
+  const user = userEvent.setup();
+  try {
+    t.ok(slider.getByText('10'), 'shows the slider value before editing');
+    t.notOk(slider.queryByRole('spinbutton'), 'manual input starts closed');
+    const edit = slider.getByRole('button', {name: 'Enter custom value'});
+    edit.focus();
+    t.equal(document.activeElement, edit, 'the edit button is keyboard reachable');
+    await user.keyboard('{Enter}');
+    const input = slider.getByRole('spinbutton', {name: 'Radius'});
+    t.equal(document.activeElement, input, 'opening the editor focuses the value');
+    t.equal(input.value, '10', 'the editor starts with the current radius');
+    t.ok(changed.notCalled, 'opening the editor keeps the value');
+    await user.clear(input);
+    await user.type(input, '125');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {radius: 125}, 'accepts values outside the slider range');
+    await user.keyboard('{Enter}');
+    t.deepEqual(changed.lastCall.args[0], {radius: 100}, 'clamps on return to the slider');
+    t.notOk(slider.queryByRole('spinbutton'), 'manual input closes');
+    t.ok(slider.getByText('100'), 'shows the clamped slider value');
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> VisConfigSlider -> reopens saved custom ranges and edits both bounds', async t => {
+  const {view, changed} = renderPointRadiusSlider('radiusRange', [10, 600]);
+  const slider = within(view.container);
+  const user = userEvent.setup();
+  try {
+    t.equal(
+      slider.getByRole('spinbutton', {name: 'Max'}).value,
+      '600',
+      'loads the saved custom bound'
+    );
+    t.ok(changed.notCalled, 'loading does not clamp a saved range');
+    await user.click(slider.getByRole('button', {name: 'Use slider'}));
+    t.deepEqual(changed.lastCall.args[0], {radiusRange: [10, 500]}, 'clamps the upper bound');
+    t.notOk(slider.queryByRole('spinbutton'), 'both inputs close with the editor');
+    await user.click(slider.getByRole('button', {name: 'Enter custom value'}));
+    const min = slider.getByRole('spinbutton', {name: 'Min'});
+    const max = slider.getByRole('spinbutton', {name: 'Max'});
+    t.equal(min.value, '10', 'reopens with the current lower bound');
+    t.equal(max.value, '500', 'reopens with the current upper bound');
+    await user.clear(min);
+    await user.type(min, '5.5{Enter}');
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {radiusRange: [5.5, 500]},
+      'Enter commits the lower bound'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
 });
 
 test('Components -> LayerConfigurator -> bitmap bounds keep sliders across the dateline', t => {

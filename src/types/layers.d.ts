@@ -266,7 +266,7 @@ export type VisConfig = {
   ) => boolean;
 
   allowCustomValue?: boolean;
-  /** Checkbox label shown when allowCustomValue is true. Defaults to "custom input". */
+  /** Label for the custom-value edit button when allowCustomValue is true. */
   customInputLabel?: string;
 };
 

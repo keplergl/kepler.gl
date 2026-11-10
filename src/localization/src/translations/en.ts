@@ -209,6 +209,8 @@ export default {
     strokeWidth: 'Stroke Width (Pixels)',
     strokeWidthRange: 'Stroke Width Range',
     radius: 'Radius',
+    enterCustomValue: 'Enter custom value',
+    useSlider: 'Use slider',
     fixedRadius: 'Fixed Radius to meter',
     fixedRadiusDescription: 'Map radius to absolute radius in meters, e.g. 5 to 5 meters',
     radiusRange: 'Radius Range',
