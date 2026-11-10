@@ -12,8 +12,13 @@ import {
 import {processArrowBatches} from '@kepler.gl/processors';
 import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, MAX_GPU_FILTERS} from '@kepler.gl/constants';
 import {getDefaultFilter, getPolygonFilterFunctor} from '@kepler.gl/utils';
-import SchemaManager from '@kepler.gl/schemas';
-import {INITIAL_VIS_STATE, layerTypeChangeUpdater} from '@kepler.gl/reducers';
+import SchemaManager, {VisState} from '@kepler.gl/schemas';
+import {
+  INITIAL_VIS_STATE,
+  getLayerHoverProp,
+  layerTypeChangeUpdater,
+  layerVisConfigChangeUpdater
+} from '@kepler.gl/reducers';
 import {StateWFiles} from 'test/helpers/mock-state';
 import {LayerClasses} from '../index';
 import DonutLayer from './donut-layer';
@@ -448,6 +453,94 @@ const nearbyRows = [
   [30.51, 50.45, 90, 10],
   [30.52, 50.45, 1, 9]
 ];
+
+async function setupPinnedDonut() {
+  const {layer, dataset, datasets} = await setup({
+    fields: [...fields, {name: 'bike', type: 'real'}],
+    rows: [
+      [30.51, 50.45, 30, 70, 5],
+      [30.52, 50.45, 10, 90, 15]
+    ]
+  });
+  const data = layer.formatLayerData(datasets);
+  const [rings] = render(layer, dataset, data, 4);
+  const clicked = {picked: true, index: 0, object: rings.props.data[0], layer: rings};
+  const state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [layer],
+    layerData: [data],
+    layerOrder: [layer.id],
+    clicked,
+    hoverInfo: clicked
+  };
+  const hover = current =>
+    getLayerHoverProp({
+      ...current,
+      hoverInfo: current.clicked,
+      layersToRender: {[layer.id]: true}
+    });
+  return {layer, dataset, state, hover};
+}
+
+test.each([
+  ['removing', [categories[1]], [160]],
+  ['adding', [...categories, {field: 'bike'}], [40, 160, 20]],
+  ['reordering', [...categories].reverse(), [160, 40]],
+  ['clearing', [], []]
+])('%s composition fields clears stale pinned and hover tooltips', async (_, selected, values) => {
+  const {layer, dataset, state, hover} = await setupPinnedDonut();
+  expect(hover(state)?.data).toMatchObject({
+    donut: {values: [40, 160], shares: [0.2, 0.8], total: 200}
+  });
+  const next = layerVisConfigChangeUpdater(state, {
+    oldLayer: layer,
+    newVisConfig: {composition: {categories: selected}}
+  });
+  expect(next.clicked).toBeUndefined();
+  expect(next.hoverInfo).toBeUndefined();
+  expect(hover(next)).toBeNull();
+
+  const [rings] = render(next.layers[0], dataset, next.layerData[0], 4);
+  if (values.length) {
+    const repinned = hover({
+      ...next,
+      clicked: {...state.clicked, layer: rings, object: rings.props.data[0]}
+    });
+    expect(repinned?.data).toMatchObject({donut: {values}});
+  } else {
+    expect(rings.props.data).toEqual([]);
+  }
+});
+
+test('presentation edits preserve pinned tooltips with current labels and colors', async () => {
+  const {layer, state, hover} = await setupPinnedDonut();
+  const renamed = [{...categories[0], label: 'Transit', color: [1, 2, 3]}, categories[1]];
+  let next: VisState = state;
+  for (const newVisConfig of [
+    {composition: {categories: renamed}},
+    {radius: 40},
+    {showTotal: true}
+  ]) {
+    next = layerVisConfigChangeUpdater(next, {oldLayer: layer, newVisConfig});
+    expect(next.clicked).toBe(state.clicked);
+    expect(next.hoverInfo).toBe(state.hoverInfo);
+    expect(hover(next)?.data).toMatchObject({
+      donut: {categories: renamed, values: [40, 160], shares: [0.2, 0.8], total: 200}
+    });
+  }
+});
+
+test('composition edits preserve picks belonging to another layer', async () => {
+  const {layer, state} = await setupPinnedDonut();
+  const otherPick = {...state.clicked, layer: {props: {id: 'other-layer', idx: 1}}};
+  const next = layerVisConfigChangeUpdater(
+    {...state, clicked: otherPick, hoverInfo: otherPick},
+    {oldLayer: layer, newVisConfig: {composition: {categories: [categories[1]]}}}
+  );
+  expect(next.clicked).toBe(otherPick);
+  expect(next.hoverInfo).toBe(otherPick);
+});
 
 test('presentation edits reuse the cluster index while updating radii, totals, labels and colors', async () => {
   const {layer, dataset, datasets} = await setup({fields, rows: nearbyRows});
