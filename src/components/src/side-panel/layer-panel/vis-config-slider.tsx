@@ -11,7 +11,7 @@ import RangeSliderFactory from '../../common/range-slider';
 import InfoHelperFactory from '../../common/info-helper';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {isInRange, clamp, createSliderScale} from '@kepler.gl/utils';
+import {isInRange, clamp, createSliderScale, getRoundingDecimalFromStep} from '@kepler.gl/utils';
 
 type LazyInputProps = {
   value: string | [string, string];
@@ -77,32 +77,47 @@ const RangeInput = styled.input`
   height: ${props => props.theme.sliderInputHeight}px;
 `;
 
-const ModeButton = styled.button<{$custom: boolean}>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 18px;
+const ModeButton = styled.button<{$valueWidth?: number}>`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center end;
+  flex: 0 0 auto;
+  width: ${props => (props.$valueWidth ? `${props.$valueWidth}ch` : '18px')};
+  min-width: 18px;
   height: ${props => props.theme.sliderInputHeight}px;
   padding: 0;
   border: 0;
   background: transparent;
   color: ${props => props.theme.labelColor};
+  font-family: inherit;
+  font-size: calc(${props => props.theme.sliderInputFontSize} * 0.9);
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  opacity: ${props => (props.$custom ? 1 : 0)};
 
   &:hover,
   &:focus-visible {
     color: ${props => props.theme.textColorHl};
-    opacity: 1;
-  }
-
-  @media (hover: none) {
-    opacity: 1;
   }
 
   &:disabled {
-    visibility: hidden;
+    cursor: default;
   }
+`;
+
+const ValueReadout = styled.span`
+  grid-area: 1 / 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: ${props => props.theme.textColor};
+  visibility: var(--slider-value-visibility, visible);
+`;
+
+const Pencil = styled.span`
+  grid-area: 1 / 1;
+  display: flex;
+  visibility: var(--slider-pencil-visibility, hidden);
 `;
 
 const SliderRow = styled.div`
@@ -115,22 +130,31 @@ const SliderRow = styled.div`
     min-width: 0;
   }
 
-  &:hover ${ModeButton} {
-    opacity: 1;
+  ${ModeButton}:focus-visible {
+    --slider-value-visibility: hidden;
+    --slider-pencil-visibility: visible;
+  }
+
+  @media (hover: hover) {
+    &:hover:not(:has(.kg-range-slider__handle--active, .kg-range-slider__bar--active))
+      ${ModeButton}:enabled {
+      --slider-value-visibility: hidden;
+      --slider-pencil-visibility: visible;
+    }
   }
 `;
 
-const ValueReadout = styled.span<{$isRanged: boolean}>`
-  width: ${props => (props.$isRanged ? '14ch' : '8ch')};
-  flex-shrink: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-  color: ${props => props.theme.textColor};
-  font-size: calc(${props => props.theme.sliderInputFontSize} * 0.9);
-  font-variant-numeric: tabular-nums;
-`;
+function getValueWidth(range: [number, number], step: number, isRanged: boolean) {
+  // Use the bounds and step so the track stays the same width as values change.
+  const decimals = getRoundingDecimalFromStep(step);
+  const fractionWidth = decimals ? decimals + 1 : 0;
+  const width = Math.max(
+    ...range.map(bound =>
+      Math.max(String(bound).length, String(Math.trunc(bound)).length + fractionWidth)
+    )
+  );
+  return isRanged ? Math.min(2 * width + 2, 14) : Math.min(width, 8);
+}
 
 const LazyInput: React.FC<LazyInputProps> = ({
   value,
@@ -312,21 +336,26 @@ export default function VisConfigSliderFactory(
               scaleConfig={scaleConfig}
             />
           )}
-          {allowCustomValue && !custom ? (
-            <ValueReadout $isRanged={isRanged} title={displayedValue}>
-              {displayedValue}
-            </ValueReadout>
-          ) : null}
           {allowCustomValue ? (
             <ModeButton
-              $custom={custom}
+              $valueWidth={custom ? undefined : getValueWidth(range, step ?? 1, isRanged)}
               type="button"
-              title={modeLabel}
+              title={custom ? modeLabel : `${modeLabel} (${displayedValue})`}
               aria-label={modeLabel}
+              aria-description={custom ? undefined : displayedValue}
               disabled={disabled}
               onClick={toggleMode}
             >
-              {custom ? <Settings height="16px" aria-hidden="true" /> : <Edit aria-hidden="true" />}
+              {custom ? (
+                <Settings height="16px" aria-hidden="true" />
+              ) : (
+                <>
+                  <ValueReadout>{displayedValue}</ValueReadout>
+                  <Pencil>
+                    <Edit aria-hidden="true" />
+                  </Pencil>
+                </>
+              )}
             </ModeButton>
           ) : null}
         </SliderRow>

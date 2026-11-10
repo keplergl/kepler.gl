@@ -220,7 +220,12 @@ test('Components -> VisConfigSlider -> edits a single custom radius using the ke
     await user.keyboard('{Enter}');
     t.deepEqual(changed.lastCall.args[0], {radius: 100}, 'clamps on return to the slider');
     t.notOk(slider.queryByRole('spinbutton'), 'manual input closes');
-    t.ok(slider.getByText('100'), 'shows the clamped slider value');
+    await user.click(slider.getByText('100'));
+    t.equal(
+      slider.getByRole('spinbutton', {name: 'Radius'}).value,
+      '100',
+      'clicking the displayed value opens the editor with the clamped value'
+    );
   } finally {
     view.unmount();
     t.end();
