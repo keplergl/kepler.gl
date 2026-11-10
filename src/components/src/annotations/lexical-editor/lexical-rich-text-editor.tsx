@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {FC, ReactNode, useCallback, useEffect, useMemo} from 'react';
+import React, {FC, ReactNode, useCallback, useEffect, useMemo, useRef} from 'react';
 import styled from 'styled-components';
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
@@ -97,6 +97,66 @@ const Container = styled.div<ContainerProps>`
   }
 `;
 
+/**
+ * Applies `editorState` changes that happen after mount.
+ *
+ * Lexical only reads `editorState` from `initialConfig` (see the "Only use
+ * initial values" memo below). Annotation text is also edited outside this
+ * editor — the annotation panel and the agent update `visState.annotations`
+ * directly — and the overlay is keyed by annotation id, so the composer is not
+ * remounted. Without this, an external update (e.g. a new text color) is not
+ * visible until the map is closed and reopened.
+ */
+const EditorStateSync: FC<{
+  editorState?: SerializedEditorState;
+  initialText?: string;
+}> = ({editorState, initialText}) => {
+  const [editor] = useLexicalComposerContext();
+  const lastExternalStateKey = useRef<string | null>(
+    editorState ? JSON.stringify(editorState) : null
+  );
+
+  useEffect(() => {
+    const currentText = () => editor.getEditorState().read(() => $getRoot().getTextContent());
+
+    if (!editorState) {
+      // The external state was cleared (e.g. a plain label replaced rich text).
+      // Reset even when the text is unchanged, so stale inline colors/styles go.
+      // An omitted initialText means an empty annotation, not "leave it alone".
+      const hadExternalState = lastExternalStateKey.current !== null;
+      lastExternalStateKey.current = null;
+      const fallbackText = initialText ?? '';
+      if (hadExternalState || currentText() !== fallbackText) {
+        editor.update(() => {
+          const root = $getRoot();
+          root.getChildren().forEach(child => child.remove());
+          root.append($createParagraphNode().append($createTextNode(fallbackText)));
+        });
+      }
+      return;
+    }
+
+    const nextKey = JSON.stringify(editorState);
+    if (nextKey === lastExternalStateKey.current) {
+      return;
+    }
+
+    // The editor produced this state itself (its onChange write-back); applying
+    // it would reset the cursor/selection mid-edit.
+    if (nextKey === JSON.stringify(editor.getEditorState().toJSON())) {
+      lastExternalStateKey.current = nextKey;
+      return;
+    }
+
+    lastExternalStateKey.current = nextKey;
+    // Reuse the guarded helper: parse/set failures must not escape the effect
+    // and take down the surrounding annotation UI.
+    updateEditorState(editor, editorState);
+  }, [editor, editorState, initialText]);
+
+  return null;
+};
+
 const LexicalEditorInner: FC<LexicalRichTextEditorProps> = ({isEditable, onChange}) => {
   const [editor] = useLexicalComposerContext();
 
@@ -162,6 +222,7 @@ export const LexicalRichTextEditor: FC<LexicalRichTextEditorProps> = props => {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
+      <EditorStateSync editorState={editorState} initialText={initialText} />
       <Container className="editor-container" $width={width} $height={height}>
         {children}
         <LexicalEditorInner {...props} />
