@@ -80,7 +80,7 @@ argument. Use `center_map=False` to preserve a composed initial camera.
 
 ### `.config`
 
-Read or set the map configuration dict. Use `map.config` after customizing in Jupyter UI, then save and reuse.
+Read or assign the map configuration dict with `map.config`, then save and reuse.
 
 ## Key Rules
 
@@ -151,24 +151,22 @@ is the classic trap:
 | Line (polylines) | `line` | `line` |
 | GeoJSON / polygon | `geojson` | `geojson` |
 | Trip (path + timestamp animation) | `trip` | `trip` |
-| Icon | `icon` | — |
+| Icon | `icon` | `icon` |
 | Contour (scalar levels or point counts) | `contour` | `contour` |
 | Voronoi Mosaic (nearest-site cells) | `voronoi` | `voronoi` |
 | Zarr (remote multidimensional raster) | `zarr` | `zarr` |
-| A5 / Geohash cells | `a5` / `geohash` | — |
-| Vector / raster tiles | `vectorTile` / `rasterTile` | — |
-| WMS | `wms` | — |
-| 3D tiles | `tile3d` | — |
-| 3D models | `3D` | — |
-| Image overlay | `bitmap` | — |
+| A5 / Geohash cells | `a5` / `geohash` | `a5` / `geohash` |
+| Vector / raster tiles | `vectorTile` / `rasterTile` | `vectorTile` / `rasterTile` |
+| WMS | `wms` | `wms` |
+| 3D tiles | `tile3d` | `tile3d` |
+| 3D models | `3D` | `3D` |
+| Image overlay | `bitmap` | `bitmap` |
 
 - **`hexagonId` is not `hexagon`.** In a Python config, `hexagonId` is H3 and
   `hexagon` is hexbin. Over MCP, H3 is `h3` and `hexagon` is still hexbin.
   Writing `hexagon` for H3 ids gives an empty or wrong layer on both surfaces.
 - Config support depends on the JavaScript bundle. Remote tilesets also need
   source descriptors, not just a layer `type` and a DataFrame.
-- `—` means the surface has no layer type for that concept; do not substitute
-  another one silently.
 - MCP layer types are validated against an enum, so an unknown string is
   rejected rather than silently guessed.
 - **`flow` is not `flowField`.** `flow` joins an origin point pair to a
@@ -206,8 +204,10 @@ Set `config.visState.cameraTour` to `{"stops": [...]}`. Each stop contains
 `id`, `name`, `camera` (longitude, latitude, zoom, bearing, pitch),
 `holdDurationMs`, and `travelDurationMs`. Use nonnegative milliseconds; hold
 precedes travel to the next stop, and the last travel duration is ignored.
-Play/Pause is in **Interactions → Camera animation**. Tours require a single
-Mercator map and move the view, not dataset features; no time filter is needed.
+Python config stores the stops. On a connected MCP map, use `map.camera-tour`
+with `action: "play"`, `"pause"`, or `"seek"` (`elapsedMs`) for live playback.
+Tours require a single Mercator map and move the view, not dataset features;
+no time filter is needed.
 
 ## Config Structure
 
@@ -246,9 +246,11 @@ Set `config.visState.cameraBookmarks` to an array of saved views:
 [{"id": "downtown", "name": "Downtown", "camera": {"longitude": -122.4, "latitude": 37.78, "zoom": 12, "bearing": 0, "pitch": 45}}]
 ```
 
-Bookmarks restore the camera, not layers or filters. Enable the Bookmarks
-switch in Interactions for navigation; importing them does not enable the
-control. Navigation requires a single Mercator map.
+Bookmarks restore the camera, not layers or filters. To navigate in Python,
+copy a bookmark's `camera` into `config.mapState` and reassign `map.config`.
+On a connected MCP map, use `map.camera-bookmarks` with `action: "go-to"`,
+or `"show-control"` and `showControl` to change visibility. Navigation
+requires a single Mercator map.
 
 ### Fade on Zoom
 

@@ -17,6 +17,7 @@ import {getCameraSnapshot, normalizeCameraTour} from '@kepler.gl/utils';
 import {Button, Input, InlineInput, PanelContent, PanelLabel} from '../../common/styled-components';
 import {MapViewStateContext} from '../../map-view-state-context';
 import useCameraTourPlayback from './use-camera-tour-playback';
+import {CameraTourPlaybackContext} from './camera-tour-playback-provider';
 import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
 import {Play, Pause, Reset, Add, LocationMarker, Replace, Delete, Copy} from '../../common/icons';
 import {
@@ -537,7 +538,13 @@ export default function CameraTourConfig({
   const {getInternalViewState} = useContext(MapViewStateContext);
   const readCamera = () => getCameraSnapshot(getInternalViewState()) || getCameraSnapshot(mapState);
   const supported = Boolean(mapState && !mapState.isSplit && !mapState.globe?.enabled);
-  const playback = useCameraTourPlayback(tour, mapStateActions?.updateMap, supported && enabled);
+  const sharedPlayback = useContext(CameraTourPlaybackContext);
+  const localPlayback = useCameraTourPlayback(
+    tour,
+    mapStateActions?.updateMap,
+    !sharedPlayback && supported && enabled
+  );
+  const playback = sharedPlayback ?? localPlayback;
   const stops = tour?.stops || [];
   const selected = stops.find(stop => stop.id === selectedId) || stops[0];
   const selectedIndex = selected ? stops.indexOf(selected) : -1;

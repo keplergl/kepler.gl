@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useReducer} from 'react';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_UI_STATE} from '@kepler.gl/reducers';
+import {INITIAL_MAP_STATE, INITIAL_UI_STATE, uiStateReducer} from '@kepler.gl/reducers';
 import {CameraBookmark, CameraTour} from '@kepler.gl/types';
 import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import {MapViewStateContext} from '../../map-view-state-context';
 import {RootContext} from '../../context';
 import CameraTourConfig from './camera-tour-config';
+import CameraTourPlaybackProvider from './camera-tour-playback-provider';
 import CameraBookmarks from './camera-bookmarks';
 import CameraBookmarkControl from '../../map/camera-bookmark-control';
 
@@ -935,3 +936,129 @@ test.each([
     });
   }
 );
+
+function setupSharedPlayer() {
+  const updateMap = jest.fn();
+  let dispatch: React.Dispatch<any>;
+  let setPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  let setSplit: React.Dispatch<React.SetStateAction<boolean>>;
+  let setTour: React.Dispatch<React.SetStateAction<CameraTour>>;
+  function Harness() {
+    const root = useRef<HTMLDivElement>(null);
+    const [ui, updateUi] = useReducer(uiStateReducer, INITIAL_UI_STATE);
+    const [panelOpen, updatePanel] = useState(false);
+    const [split, updateSplit] = useState(false);
+    const [currentTour, updateTour] = useState(tour);
+    setTour = updateTour;
+    dispatch = updateUi;
+    setPanelOpen = updatePanel;
+    setSplit = updateSplit;
+    const mapState = {...INITIAL_MAP_STATE, ...camera, isSplit: split};
+    return (
+      <RootContext.Provider value={root}>
+        <div ref={root}>
+          <CameraTourPlaybackProvider
+            tour={currentTour}
+            mapState={mapState}
+            updateMap={updateMap}
+            enabled={Boolean(ui.mapControls.cameraTour?.show)}
+            request={ui.cameraTourPlaybackRequest}
+          >
+            <div className="maps">
+              <button>Map gesture</button>
+            </div>
+            {panelOpen && (
+              <CameraTourConfig
+                tour={currentTour}
+                enabled={Boolean(ui.mapControls.cameraTour?.show)}
+                mapState={mapState}
+                mapStateActions={{...MapStateActions, updateMap}}
+                visStateActions={VisStateActions}
+                uiStateActions={UIStateActions}
+              />
+            )}
+          </CameraTourPlaybackProvider>
+        </div>
+      </RootContext.Provider>
+    );
+  }
+  const rendered = renderWithTheme(
+    <IntlWrapper>
+      <Harness />
+    </IntlWrapper>
+  );
+  return {
+    ...rendered,
+    updateMap,
+    request: (request: Parameters<typeof UIStateActions.controlCameraTour>[0]) =>
+      act(() => {
+        dispatch(UIStateActions.setMapControlVisibility('cameraTour', true));
+        dispatch(UIStateActions.controlCameraTour(request));
+      }),
+    openPanel: () => act(() => setPanelOpen(true)),
+    split: () => act(() => setSplit(true)),
+    replaceAndPlay: (value: CameraTour) =>
+      act(() => {
+        setTour(value);
+        dispatch(UIStateActions.controlCameraTour({action: 'play'}));
+      })
+  };
+}
+
+test('programmatic playback runs with the panel closed and shares pause/seek state with its controls', () => {
+  const player = setupSharedPlayer();
+  player.request({action: 'play'});
+  frame(1500);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 1500),
+    transitionDuration: 0
+  });
+  player.openPanel();
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('1.5 s');
+  expect(callbacks.size).toBe(1);
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
+  expect(callbacks.size).toBe(0);
+  player.request({action: 'seek', elapsedMs: 2500});
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('2.5 s');
+  player.request({action: 'play'});
+  frame(500);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 3000),
+    transitionDuration: 0
+  });
+  player.request({action: 'pause'});
+  expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+  expect(callbacks.size).toBe(0);
+});
+
+test('the shared player cancels pending frames on gestures, unsupported view modes and unmount', () => {
+  const player = setupSharedPlayer();
+  player.request({action: 'play'});
+  fireEvent.pointerDown(screen.getByRole('button', {name: 'Map gesture'}));
+  expect(callbacks.size).toBe(0);
+  player.request({action: 'play'});
+  expect(callbacks.size).toBe(1);
+  player.split();
+  expect(callbacks.size).toBe(0);
+  player.unmount();
+  expect(callbacks.size).toBe(0);
+});
+
+test('replacing a tour and requesting play together starts from the new beginning', () => {
+  const player = setupSharedPlayer();
+  player.request({action: 'play'});
+  frame(2000);
+  const replacement = {
+    stops: [{...tour.stops[0], camera: {...camera, longitude: 80}, holdDurationMs: 5000}]
+  };
+  player.replaceAndPlay(replacement);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...replacement.stops[0].camera,
+    transitionDuration: 0
+  });
+  player.openPanel();
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0 s');
+  expect(callbacks.size).toBe(1);
+});

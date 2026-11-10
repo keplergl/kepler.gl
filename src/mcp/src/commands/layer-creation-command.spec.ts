@@ -477,3 +477,142 @@ describe('map.add-layer (colorMap validation)', () => {
     expect(getDispatched()).toBeNull();
   });
 });
+
+describe('map.add-layer (additional layers)', () => {
+  it.each(['a5', 'geohash', 'icon', '3D'])(
+    'creates %s with explicit field mappings',
+    async layerType => {
+      const table = new KeplerTable({info: {id: 'extra', label: 'Extra'}} as any);
+      await table.importData({
+        data: {
+          fields: [
+            {name: 'y', type: ALL_FIELD_TYPES.real},
+            {name: 'x', type: ALL_FIELD_TYPES.real},
+            {name: 'cell', type: ALL_FIELD_TYPES.string},
+            {name: 'symbol', type: ALL_FIELD_TYPES.string}
+          ],
+          rows: [[37, -122, layerType === 'a5' ? '8100000000000000' : '9q8yy', 'marker']]
+        } as any
+      });
+      const {ctx, getDispatched} = makeCtx(table);
+      const columns = ['a5', 'geohash'].includes(layerType)
+        ? {token: 'cell'}
+        : {...{lat: 'y', lng: 'x'}, ...(layerType === 'icon' ? {icon: 'symbol'} : {})};
+      const result = (await getAddLayerCommand(ctx as any).execute({} as any, {
+        datasetName: table.id,
+        layerType,
+        columns,
+        ...(layerType === '3D' ? {options: {scenegraph: 'https://example.com/tree.glb'}} : {})
+      })) as CommandResult;
+      expect(result).toMatchObject({success: true});
+      expect(getDispatched().config).toMatchObject({type: layerType, config: {columns}});
+    }
+  );
+
+  it.each([
+    [
+      'bitmap',
+      DatasetType.BITMAP,
+      {imageUrl: 'https://example.com/image.png', bounds: [-10, -10, 10, 10]}
+    ],
+    ['vectorTile', DatasetType.VECTOR_TILE, {}],
+    ['rasterTile', DatasetType.RASTER_TILE, {}],
+    ['wms', DatasetType.WMS_TILE, {layers: [{name: 'roads'}]}],
+    ['tile3d', DatasetType.TILE_3D, {}]
+  ])('creates %s from the matching remote dataset', async (layerType, type, metadata) => {
+    const table = new KeplerTable({info: {id: 'remote', type}, metadata} as any);
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {datasetName: table.id, layerType})
+    ).toMatchObject({success: true});
+    expect(getDispatched().config.type).toBe(layerType);
+  });
+
+  it.each([
+    {layerType: 'bitmap'},
+    {layerType: '3D', columns: {lat: 'missing', lng: 'dest_lng'}},
+    {layerType: '3D', columns: {lat: 'origin_lat', lng: 'origin_lng', invalid: 'count'}},
+    {layerType: 'icon'},
+    {layerType: 'a5', columns: {}},
+    {layerType: 'point', options: {glowExtent: 500}}
+  ])('rejects missing, mismatched or invalid inputs: %j', async args => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {datasetName: table.id, ...args})
+    ).toMatchObject({success: false});
+    expect(getDispatched()).toBeNull();
+  });
+});
+
+it('applies point effects when explicit coordinate names require a new layer instance', async () => {
+  const table = new KeplerTable({info: {id: 'coordinates', label: 'Coordinates'}} as any);
+  await table.importData({
+    data: {
+      fields: [
+        {name: 'y', type: ALL_FIELD_TYPES.real},
+        {name: 'x', type: ALL_FIELD_TYPES.real}
+      ],
+      rows: [[37, -122]]
+    } as any
+  });
+  const {ctx, getDispatched} = makeCtx(table);
+  expect(
+    await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.id,
+      layerType: 'point',
+      latitudeColumn: 'y',
+      longitudeColumn: 'x',
+      options: {glowEnabled: true}
+    })
+  ).toMatchObject({success: true});
+  expect(getDispatched().config.config.visConfig.glowEnabled).toBe(true);
+});
+
+it.each(['Feature', 'Collection'])(
+  'initializes the raster band/preset and STAC search for a %s',
+  async type => {
+    const metadata = {
+      type,
+      stac_version: '1.1.0',
+      [type === 'Collection' ? 'item_assets' : 'assets']: {
+        temperature: {
+          href: 'https://example.com/temperature.tif',
+          type: 'image/tiff; application=geotiff',
+          bands: [{name: 'temperature', data_type: 'float32'}]
+        }
+      }
+    };
+    const table = new KeplerTable({
+      info: {id: 'raster', type: DatasetType.RASTER_TILE},
+      metadata
+    } as any);
+    await table.importData({data: {fields: [], rows: []}});
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {
+        datasetName: table.id,
+        layerType: 'rasterTile'
+      })
+    ).toMatchObject({success: true});
+    expect(getDispatched().config.config.visConfig).toMatchObject({
+      singleBandName: 'temperature',
+      preset: 'singleBand',
+      useSTACSearching: type === 'Collection'
+    });
+  }
+);
+
+it('rejects date-only event pulse fields during layer creation', async () => {
+  const table = await makeTwoPairTable();
+  table.fields.push({name: 'date', type: ALL_FIELD_TYPES.date} as any);
+  const {ctx, getDispatched} = makeCtx(table);
+  expect(
+    await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.id,
+      layerType: 'point',
+      options: {pulseTrigger: 'event', pulseTimeField: 'date'}
+    })
+  ).toMatchObject({success: false, error: expect.stringContaining('timestamp field')});
+  expect(getDispatched()).toBeNull();
+});

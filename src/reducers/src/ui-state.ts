@@ -10,6 +10,7 @@ import * as uiStateUpdaters from './ui-state-updaters';
  * It is used to generate documentation
  */
 const actionHandler = {
+  [ActionTypes.CONTROL_CAMERA_TOUR]: uiStateUpdaters.controlCameraTourUpdater,
   [ActionTypes.INIT]: uiStateUpdaters.initUiStateUpdater,
   [ActionTypes.TOGGLE_SIDE_PANEL]: uiStateUpdaters.toggleSidePanelUpdater,
   [ActionTypes.TOGGLE_MODAL]: uiStateUpdaters.toggleModalUpdater,

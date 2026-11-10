@@ -63,6 +63,7 @@ import EffectManagerFactory from './effects/effect-manager';
 import DndContextFactory from './dnd-context';
 import {CloudListProvider} from './hooks/use-cloud-list-provider';
 import RemoteDatasetRefreshController from './remote-dataset-refresh-controller';
+import CameraTourPlaybackProvider from './side-panel/interaction-panel/camera-tour-playback-provider';
 
 import {
   filterObjectByPredicate,
@@ -731,21 +732,29 @@ function KeplerGlFactory(
                         datasets={visState.datasets}
                         refreshDataset={this.props.visStateActions.refreshDataset}
                       />
-                      <MapViewStateContextProvider mapState={this.props.mapState}>
-                        <DndContext visState={visState}>
-                          {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                          <MapsLayout
-                            provideViewState={false}
-                            className="maps"
-                            mapState={this.props.mapState}
-                            onSetSwipeComparePercentage={
-                              this.props.mapStateActions.setSwipeComparePercentage
-                            }
-                          >
-                            {mapContainers}
-                          </MapsLayout>
-                        </DndContext>
-                      </MapViewStateContextProvider>
+                      <CameraTourPlaybackProvider
+                        tour={visState.cameraTour}
+                        mapState={this.props.mapState}
+                        updateMap={this.props.mapStateActions.updateMap}
+                        enabled={Boolean(uiState.mapControls.cameraTour?.show)}
+                        request={uiState.cameraTourPlaybackRequest}
+                      >
+                        <MapViewStateContextProvider mapState={this.props.mapState}>
+                          <DndContext visState={visState}>
+                            {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                            <MapsLayout
+                              provideViewState={false}
+                              className="maps"
+                              mapState={this.props.mapState}
+                              onSetSwipeComparePercentage={
+                                this.props.mapStateActions.setSwipeComparePercentage
+                              }
+                            >
+                              {mapContainers}
+                            </MapsLayout>
+                          </DndContext>
+                        </MapViewStateContextProvider>
+                      </CameraTourPlaybackProvider>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (

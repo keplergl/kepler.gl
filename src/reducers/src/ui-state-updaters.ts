@@ -330,6 +330,17 @@ export const INITIAL_UI_STATE: UiState = {
 };
 
 /* Updaters */
+export const controlCameraTourUpdater = (
+  state: UiState,
+  action: ReturnType<typeof UIStateActions.controlCameraTour>
+): UiState => ({
+  ...state,
+  cameraTourPlaybackRequest: {
+    ...action.payload,
+    sequence: (state.cameraTourPlaybackRequest?.sequence ?? 0) + 1
+  }
+});
+
 /**
  * @memberof uiStateUpdaters
  */

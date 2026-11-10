@@ -94,7 +94,7 @@ map_1.save_to_html(file_name='heatmap_styled.html')
 
 ## 3D Surface
 
-Enable **Heatmap → 3D Surface** and tilt the map to raise density into a
-surface. Height represents density, not terrain; its optional contours are
-separate from the Contour layer. Preserve these visual settings from a
-compatible renderer when exporting.
+Set `visConfig.surfaceEnabled: True`, `surfaceHeight: 1000`, and a nonzero
+`mapState.pitch`. `surfaceLighting`, `surfaceContours`, and `surfaceContourStep`
+control shading and contours. Height represents density, not terrain; these
+contours are separate from the Contour layer.

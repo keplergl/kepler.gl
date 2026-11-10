@@ -4222,6 +4222,7 @@ __metadata:
     "@kepler.gl/table": "npm:3.3.0-alpha.20"
     "@kepler.gl/types": "npm:3.3.0-alpha.20"
     "@kepler.gl/utils": "npm:3.3.0-alpha.20"
+    "@loaders.gl/pmtiles": "npm:^4.4.1"
     "@modelcontextprotocol/sdk": "npm:^1.32.2"
     "@types/ws": "npm:^8.18.2"
     apache-arrow: "npm:^17.0.0"

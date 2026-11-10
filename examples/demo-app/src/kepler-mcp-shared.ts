@@ -45,6 +45,8 @@ const SKILL_REQUIRED = new Set([
   'map.split-view',
   'map.load-data',
   'map.load-zarr',
+  'map.load-tileset',
+  'map.set-layer-options',
   'map.camera-bookmarks',
   'map.camera-tour',
   'map.set-zoom-fade',

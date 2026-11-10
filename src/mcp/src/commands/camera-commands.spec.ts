@@ -144,3 +144,42 @@ describe('camera commands', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+
+it('shows or hides the bookmark control without resaving bookmarks', async () => {
+  const {ctx, getUiState} = makeContext();
+  const command = getCameraBookmarksCommand(ctx);
+  expect((await execute(command, {action: 'show-control', showControl: true})).success).toBe(true);
+  expect(getUiState().mapControls.cameraBookmarks?.show).toBe(true);
+  expect(ctx.getVisState().cameraBookmarks).toEqual([]);
+  await execute(command, {action: 'show-control', showControl: false});
+  expect(getUiState().mapControls.cameraBookmarks?.show).toBe(false);
+});
+
+it('plays and pauses through the shared player and stops it when navigating to a bookmark', async () => {
+  const {ctx, getUiState} = makeContext();
+  const command = getCameraTourCommand(ctx);
+  await execute(command, {action: 'set', stops: [stop]});
+  expect((await execute(command, {action: 'play'})).success).toBe(true);
+  expect(getUiState().mapControls.cameraTour?.show).toBe(true);
+  expect(getUiState().cameraTourPlaybackRequest).toMatchObject({action: 'play'});
+  const firstSequence = getUiState().cameraTourPlaybackRequest!.sequence;
+  await execute(command, {action: 'pause'});
+  expect(getUiState().cameraTourPlaybackRequest).toEqual({
+    action: 'pause',
+    sequence: firstSequence + 1
+  });
+  await execute(command, {action: 'play'});
+  const bookmarks = getCameraBookmarksCommand(ctx);
+  await execute(bookmarks, {action: 'save', id: 'saved', name: 'Saved'});
+  await execute(bookmarks, {action: 'go-to', id: 'saved'});
+  expect(getUiState().cameraTourPlaybackRequest?.action).toBe('pause');
+});
+
+it.each([{}, {isSplit: true}, {globe: {enabled: true}}])(
+  'rejects play without a playable tour or supported map: %j',
+  async mode => {
+    const {ctx, dispatch} = makeContext(mode);
+    expect((await execute(getCameraTourCommand(ctx), {action: 'play'})).success).toBe(false);
+    expect(dispatch).not.toHaveBeenCalled();
+  }
+);

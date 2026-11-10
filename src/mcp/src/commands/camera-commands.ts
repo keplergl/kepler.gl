@@ -3,6 +3,7 @@
 
 import {z} from 'zod';
 import {
+  controlCameraTour,
   setCameraBookmarks,
   setCameraTour,
   setMapControlVisibility,
@@ -27,11 +28,14 @@ const cameraSchema = z.object({
 const identifier = z.string().trim().min(1);
 const duration = z.number().min(0).max(Number.MAX_SAFE_INTEGER);
 const bookmarksSchema = z.object({
-  action: z.enum(['list', 'save', 'remove', 'go-to']),
+  action: z.enum(['list', 'save', 'remove', 'go-to', 'show-control']),
   id: identifier.optional().describe('Required for save, remove, and go-to.'),
   name: z.string().optional().describe('Required for save.'),
   camera: cameraSchema.optional().describe('For save: omit to capture the current camera.'),
-  showControl: z.boolean().optional().describe('For save: show/hide the bookmark control.')
+  showControl: z
+    .boolean()
+    .optional()
+    .describe('For save or show-control: show/hide the bookmark control.')
 });
 
 function assertNavigable(ctx: KeplerContext) {
@@ -49,7 +53,7 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
     name: 'Manage camera bookmarks',
     group: 'Map',
     description:
-      'List, save, remove, or navigate to camera bookmarks. Save upserts by id, preserving other ' +
+      'List, save, remove, navigate to camera bookmarks, or show-control without resaving. Save upserts by id, preserving other ' +
       'bookmarks and their order. Omit camera to capture the current view; pass showControl true ' +
       'to display the map bookmark control. Go-to moves immediately in a single Mercator map.',
     metadata: {readOnly: false, riskLevel: 'low'},
@@ -57,11 +61,14 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
     execute: (_execution, input) => {
       try {
         const args = bookmarksSchema.parse(input);
-        if (args.action !== 'list' && !args.id)
+        if (!['list', 'show-control'].includes(args.action) && !args.id)
           throw new Error('id is required for this bookmark action.');
         const bookmarks: CameraBookmark[] = ctx.getVisState().cameraBookmarks ?? [];
         let next = bookmarks;
-        if (args.action === 'save') {
+        if (args.action === 'show-control') {
+          if (args.showControl === undefined) throw new Error('showControl is required.');
+          ctx.dispatch(setMapControlVisibility('cameraBookmarks', args.showControl));
+        } else if (args.action === 'save') {
           if (args.name === undefined) throw new Error('name is required to save a bookmark.');
           const camera = args.camera ?? getCameraSnapshot(ctx.getMapState?.());
           if (!camera)
@@ -82,6 +89,7 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
             ctx.dispatch(setCameraBookmarks(next));
           } else {
             assertNavigable(ctx);
+            ctx.dispatch(controlCameraTour({action: 'pause'}));
             ctx.dispatch(updateMap({...bookmark.camera, transitionDuration: 0}));
           }
         }
@@ -98,7 +106,7 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
 }
 
 const tourSchema = z.object({
-  action: z.enum(['get', 'set', 'seek']),
+  action: z.enum(['get', 'set', 'seek', 'play', 'pause']),
   elapsedMs: duration.optional().describe('Required for seek.'),
   stops: z
     .array(
@@ -123,10 +131,10 @@ export function getCameraTourCommand(ctx: KeplerContext): RoomCommand {
     name: 'Configure camera tour',
     group: 'Map',
     description:
-      'Get or replace the saved location-animation tour, or seek its camera to elapsedMs. ' +
+      'Get or replace the saved location-animation tour, seek to elapsedMs, play or pause. ' +
       'Each stop holds before travelling to the next; the last travel duration is unused. ' +
-      'Set stores the tour for playback in Interactions → Location animation. Seek moves the ' +
-      'camera immediately using the same interpolation as playback; it does not start a clock.',
+      'Play resumes the shared player even with the side panel closed; manual camera navigation pauses it. ' +
+      'Seek pauses and moves immediately. Playback requires a single Mercator map.',
     metadata: {readOnly: false, riskLevel: 'low'},
     inputSchema: tourSchema,
     execute: (_execution, input) => {
@@ -142,12 +150,22 @@ export function getCameraTourCommand(ctx: KeplerContext): RoomCommand {
             );
           }
           ctx.dispatch(setCameraTour(tour));
+        } else if (args.action === 'play') {
+          assertNavigable(ctx);
+          if (getCameraTourDuration(tour) <= 0)
+            throw new Error('Create a tour with positive duration before playing.');
+          ctx.dispatch(setMapControlVisibility('cameraTour', true));
+          ctx.dispatch(controlCameraTour({action: 'play'}));
+        } else if (args.action === 'pause') {
+          ctx.dispatch(controlCameraTour({action: 'pause'}));
         } else if (args.action === 'seek') {
           if (args.elapsedMs === undefined)
             throw new Error('elapsedMs is required to seek a tour.');
           assertNavigable(ctx);
           const camera = evaluateCameraTour(tour, args.elapsedMs);
           if (!camera) throw new Error('Create a camera tour before seeking.');
+          ctx.dispatch(setMapControlVisibility('cameraTour', true));
+          ctx.dispatch(controlCameraTour({action: 'seek', elapsedMs: args.elapsedMs}));
           ctx.dispatch(updateMap({...camera, transitionDuration: 0}));
         }
         return {
