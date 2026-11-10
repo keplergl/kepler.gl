@@ -208,13 +208,13 @@ describe('scalar contours', () => {
   });
 
   test('smooths an isolated spike and preserves constant values at boundaries', () => {
-    const spike = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? 100 : 0)))!;
+    const spike = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? 100 : 0)));
     expect(smoothScalarGrid(spike, 0)).toBe(spike.values);
     const smooth = smoothScalarGrid(spike, 1.5);
     expect(smooth[40]).toBeLessThan(100);
     expect(smooth[40]).toBeGreaterThan(smooth[41]);
     expect(smooth[41]).toBeGreaterThan(0);
-    const constant = testGrid(samples(9, () => -12))!;
+    const constant = testGrid(samples(9, () => -12));
     expect([...smoothScalarGrid(constant, 2)].every(value => Math.abs(value + 12) < 1e-10)).toBe(
       true
     );
@@ -252,7 +252,7 @@ describe('scalar contours', () => {
     value => {
       const span = Math.abs(value) || 1;
       for (const holes of [false, true]) {
-        const grid = testGrid(samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value)))!;
+        const grid = testGrid(samples(9, (x, y) => (holes && x === 4 && y === 4 ? null : value)));
         for (const below of [false, true]) {
           const settings = {
             levels: 3,
@@ -273,7 +273,7 @@ describe('scalar contours', () => {
   );
 
   test('keeps missing values as holes after smoothing', () => {
-    const grid = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)))!;
+    const grid = testGrid(samples(9, (x, y) => (x === 4 && y === 4 ? null : 1)));
     expect(Number.isNaN(smoothScalarGrid(grid, 2)[40])).toBe(true);
     const result = generateContours(grid, {...options, smoothing: 2});
     expect(result).toHaveLength(3);

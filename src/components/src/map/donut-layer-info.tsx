@@ -70,7 +70,7 @@ export function DonutTooltip({
           <td className="row__value">
             {composition.values[index] === null
               ? '—'
-              : intl.formatNumber(composition.values[index]!)}
+              : intl.formatNumber(composition.values[index])}
           </td>
           <td className="row__value">
             {composition.status === 'valid'
