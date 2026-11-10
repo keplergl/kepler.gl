@@ -64,7 +64,8 @@ const defaultProps = {
 
 for (const {type, flag, label} of [
   {type: 'contour', flag: 'enableContourLayer', label: 'Contour'},
-  {type: 'voronoi', flag: 'enableVoronoiLayer', label: 'Voronoi Mosaic'}
+  {type: 'voronoi', flag: 'enableVoronoiLayer', label: 'Voronoi Mosaic'},
+  {type: 'donut', flag: 'enableDonutLayer', label: 'Donut'}
 ]) {
   test(`Components -> LayerManager -> ${type} picker follows application config in both list views`, t => {
     const originalFlag = getApplicationConfig()[flag];

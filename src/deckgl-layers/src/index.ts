@@ -4,6 +4,10 @@
 export {default as ThreeDBuildingLayer} from './3d-building-layer/3d-building-layer';
 
 export {default as DeckGLClusterLayer} from './cluster-layer/cluster-layer';
+export {
+  default as ClusterBuilder,
+  getGeoJSON as getClusterGeoJSON
+} from './layer-utils/cluster-utils';
 
 export {default as EnhancedColumnLayer} from './column-layer/enhanced-column-layer';
 export {

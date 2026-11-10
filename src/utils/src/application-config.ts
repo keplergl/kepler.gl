@@ -199,6 +199,11 @@ export type KeplerApplicationConfig = {
   // Existing Voronoi layers in saved maps can still render.
   enableVoronoiLayer?: boolean;
 
+  // Donut layer config
+  // Enabled by default. Set false to hide Donut in layer type pickers.
+  // Existing Donut layers in saved maps can still render.
+  enableDonutLayer?: boolean;
+
   /** Whether to show example URLs in tileset setup forms (vector tile, raster tile, WMS, 3D tile) */
   showInlineTilesetExamples?: boolean;
 
@@ -500,6 +505,9 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   // Voronoi Mosaic layer config -- disable via initApplicationConfig
   enableVoronoiLayer: true,
+
+  // Donut layer config -- disable via initApplicationConfig
+  enableDonutLayer: true,
 
   showInlineTilesetExamples: true,
 

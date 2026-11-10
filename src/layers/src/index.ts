@@ -23,6 +23,10 @@ export {
   COLUMN_MODE_TABLE
 } from './geojson-layer/geojson-layer';
 import {default as ClusterLayer} from './cluster-layer/cluster-layer';
+import DonutLayer from './donut-layer/donut-layer';
+export {default as DonutLayer} from './donut-layer/donut-layer';
+export {DONUT_COLORS, DONUT_NEUTRAL_COLOR, getDonutCategories} from './donut-layer/donut-utils';
+export type {DonutCategory, DonutComposition} from './donut-layer/donut-utils';
 import {default as IconLayer} from './icon-layer/icon-layer';
 import {default as HeatmapLayer} from './heatmap-layer/heatmap-layer';
 import {default as ContourLayer} from './contour-layer/contour-layer';
@@ -146,6 +150,7 @@ export const KeplerGlLayers = {
   HexagonLayer,
   GeojsonLayer,
   ClusterLayer,
+  DonutLayer,
   IconLayer,
   HeatmapLayer,
   ContourLayer,
@@ -175,6 +180,7 @@ export const LayerClasses = {
   [LAYER_TYPES.hexagon]: HexagonLayer,
   [LAYER_TYPES.geojson]: GeojsonLayer,
   [LAYER_TYPES.cluster]: ClusterLayer,
+  [LAYER_TYPES.donut]: DonutLayer,
   [LAYER_TYPES.icon]: IconLayer,
   [LAYER_TYPES.heatmap]: HeatmapLayer,
   [LAYER_TYPES.contour]: ContourLayer,

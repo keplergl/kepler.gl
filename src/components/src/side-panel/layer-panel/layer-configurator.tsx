@@ -44,6 +44,7 @@ import RasterTileLayerConfiguratorFactory from './raster-tile-layer-configurator
 import VectorTileLayerConfiguratorFactory from './vector-tile-layer-configurator';
 import LayerApiKeyInput from './layer-api-key-input';
 import ZarrAxisSelector from './zarr-axis-selector';
+import DonutLayerConfiguratorFactory from './donut-layer-configurator';
 
 import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
@@ -515,7 +516,8 @@ LayerConfiguratorFactory.deps = [
   ScenegraphModelSelectorFactory,
   RangeSliderFactory,
   InfoHelperFactory,
-  FieldSelectorFactory
+  FieldSelectorFactory,
+  DonutLayerConfiguratorFactory
 ];
 
 export default function LayerConfiguratorFactory(
@@ -536,7 +538,8 @@ export default function LayerConfiguratorFactory(
   ScenegraphModelSelector: ReturnType<typeof ScenegraphModelSelectorFactory>,
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
   InfoHelper: ReturnType<typeof InfoHelperFactory>,
-  FieldSelector: ReturnType<typeof FieldSelectorFactory>
+  FieldSelector: ReturnType<typeof FieldSelectorFactory>,
+  DonutLayerConfigurator: ReturnType<typeof DonutLayerConfiguratorFactory>
 ): React.ComponentType<LayerConfiguratorProps> {
   const AggregationTextLabelPanel: React.FC<
     Omit<React.ComponentProps<typeof TextLabelPanel>, 'fields'>
@@ -651,6 +654,14 @@ export default function LayerConfiguratorFactory(
   };
 
   class LayerConfigurator extends Component<LayerConfiguratorProps> {
+    _renderDonutLayerConfig({visConfiguratorProps}) {
+      return (
+        <StyledLayerVisualConfigurator>
+          <DonutLayerConfigurator {...visConfiguratorProps} />
+        </StyledLayerVisualConfigurator>
+      );
+    }
+
     _renderPointLayerConfig(props) {
       return this._renderScatterplotLayerConfig(props, true);
     }
