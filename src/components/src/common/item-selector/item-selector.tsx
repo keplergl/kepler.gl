@@ -87,6 +87,8 @@ export type ItemSelectorProps<Option> = {
   showArrow?: boolean;
   searchOptions?: (value: any, opt: Option) => any;
   searchable?: boolean;
+  /** Minimum input length for adding a value outside the suggestions. */
+  allowCustomValues?: number;
   displayOption?: string | ((opt: Option) => string);
   getOptionValue?: string | ((opt: Option) => any);
   filterOption?: string | ((opt: Option) => boolean);
@@ -321,6 +323,7 @@ class ItemSelectorUnmemoized extends Component<
                 listAnchor: 'list__item__anchor'
               }}
               options={this.props.options}
+              allowCustomValues={this.props.allowCustomValues}
               filterOption={this.props.filterOption}
               fixedOptions={this.props.fixedOptions}
               placeholder={

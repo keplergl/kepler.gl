@@ -364,7 +364,7 @@ class Typeahead extends Component<TypeaheadProps, TypeaheadState> {
   };
 
   _onEnter = event => {
-    const selection = this.getSelection();
+    const selection = this.getSelection() ?? this._getCustomValue();
     if (!selection) {
       this.props.onKeyDown?.(event);
     }

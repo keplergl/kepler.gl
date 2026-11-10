@@ -25,6 +25,7 @@ import {
   timeWindowOverlapsInterval,
   applyTimeFilterEndFieldName,
   validateFilterWithData,
+  validateFiltersUpdateDatasets,
   disableGpuIfInverted,
   getPlotBaseIndexByDataId,
   areFilterFieldTypesCompatible,
@@ -1447,5 +1448,53 @@ test('filterUtils -> diffFilters notices inverted', t => {
     'toggling filter out should recompute CPU filters'
   );
 
+  t.end();
+});
+
+test('filterUtils -> restoring tile filters preserves categories absent from metadata', t => {
+  for (const type of ['vector-tile', undefined]) {
+    for (const domain of [[], ['known']]) {
+      const dataset = new KeplerTable({info: {id: 'ds', type}, color: [0, 0, 0]});
+      dataset.updateSchema({fields: [{name: 'category', type: 'string'}], rows: []});
+      dataset.fields[0].filterProps = {
+        fieldType: 'string',
+        type: FILTER_TYPES.multiSelect,
+        domain,
+        value: [],
+        gpu: false
+      };
+      const saved = {
+        ...getDefaultFilter({dataId: ['ds']}),
+        name: ['category'],
+        type: FILTER_TYPES.multiSelect,
+        value: ['007 café'],
+        inverted: true
+      };
+      const {validated, failed} = validateFiltersUpdateDatasets(
+        {datasets: {ds: dataset}, layers: [], isMergingDatasets: {}},
+        [saved]
+      );
+      t.equal(failed.length, 0, 'filter restores');
+      t.deepEqual(
+        validated[0].value,
+        type ? ['007 café'] : [],
+        'only tile filters keep values outside metadata'
+      );
+      t.deepEqual(dataset.fields[0].filterProps.domain, domain, 'metadata is not mutated');
+      t.equal(validated[0].inverted, true, 'inversion preserved');
+      if (type) {
+        const predicate = getFilterFunction(
+          {valueAccessor: row => row.value},
+          'ds',
+          {...validated[0], inverted: false},
+          [],
+          null
+        );
+        t.equal(predicate({value: '007 café'}), true, 'matches the exact absent category');
+        t.equal(predicate({value: 'known'}), false, 'rejects other categories');
+        t.equal(predicate({value: null}), false, 'does not coerce missing categories');
+      }
+    }
+  }
   t.end();
 });
