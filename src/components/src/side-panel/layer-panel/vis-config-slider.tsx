@@ -77,12 +77,12 @@ const RangeInput = styled.input`
   height: ${props => props.theme.sliderInputHeight}px;
 `;
 
-const ModeButton = styled.button<{$custom: boolean}>`
+const ModeButton = styled.button`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
   flex: 0 0 auto;
-  width: ${props => (props.$custom ? '18px' : '55px')};
+  width: 55px;
   height: ${props => props.theme.sliderInputHeight}px;
   padding: 0;
   border: 0;
@@ -325,7 +325,6 @@ export default function VisConfigSliderFactory(
           )}
           {allowCustomValue ? (
             <ModeButton
-              $custom={custom}
               type="button"
               title={custom ? modeLabel : `${modeLabel} (${displayedValue})`}
               aria-label={modeLabel}
