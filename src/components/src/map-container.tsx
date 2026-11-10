@@ -38,6 +38,7 @@ import {
 import EditorFactory from './editor/editor';
 import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
+import {getCameraTourPathLayers} from './map/camera-tour-path';
 
 // utils
 import {
@@ -1301,9 +1302,16 @@ export default function MapContainerFactory(
             ? []
             : getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
           : [];
+      const cameraPathLayers =
+        !this.props.isExport &&
+        getApplicationConfig().enableCameraTour &&
+        mapControls.cameraTour?.show !== false &&
+        mapControls.cameraTourPath?.show
+          ? getCameraTourPathLayers(visState.cameraTour)
+          : [];
       const finalDeckGlLayers = isGlobeMode
-        ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
-        : deckGlLayers;
+        ? [...globeBaseLayers, ...deckGlLayers, ...cameraPathLayers, ...globeTopLayers]
+        : [...deckGlLayers, ...cameraPathLayers];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()

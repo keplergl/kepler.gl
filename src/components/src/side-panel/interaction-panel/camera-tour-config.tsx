@@ -37,6 +37,7 @@ import {restrictToHorizontalAxis} from '@dnd-kit/modifiers';
 import PanelHeaderActionFactory from '../panel-header-action';
 import {Hint} from './zoom-opacity-config';
 import Portaled from '../../common/portaled';
+import Switch from '../../common/switch';
 import {ContextMenu} from '../../common/context-menu';
 
 const PanelHeaderAction = PanelHeaderActionFactory();
@@ -510,6 +511,7 @@ function DraggableStopMarker({
 export type CameraTourConfigProps = {
   tour?: CameraTour | null;
   enabled?: boolean;
+  pathVisible?: boolean;
   uiStateActions?: typeof UIStateActions;
   bookmarks?: CameraBookmark[];
   mapState?: MapState;
@@ -520,6 +522,7 @@ export type CameraTourConfigProps = {
 export default function CameraTourConfig({
   tour,
   enabled = true,
+  pathVisible = false,
   uiStateActions,
   bookmarks = [],
   mapState,
@@ -715,6 +718,15 @@ export default function CameraTourConfig({
           ) : (
             <>
               <Hint>{message('animationHint', 'Animate the map between saved views.')}</Hint>
+              <Switch
+                id={`${panelId}-show-path`}
+                label={message('showAnimationPath', 'Show animation path')}
+                checked={pathVisible}
+                disabled={!uiStateActions}
+                onChange={() =>
+                  uiStateActions?.setMapControlVisibility('cameraTourPath', !pathVisible)
+                }
+              />
               <Actions>
                 <AddStopAnchor>
                   <Button

@@ -15,6 +15,7 @@ import CameraTourConfig from './camera-tour-config';
 import CameraTourPlaybackProvider from './camera-tour-playback-provider';
 import CameraBookmarks from './camera-bookmarks';
 import CameraBookmarkControl from '../../map/camera-bookmark-control';
+import {getCameraTourPathLayers} from '../../map/camera-tour-path';
 
 const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
 const tour: CameraTour = {
@@ -1061,4 +1062,40 @@ test('replacing a tour and requesting play together starts from the new beginnin
   fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
   expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0 s');
   expect(callbacks.size).toBe(1);
+});
+
+test('path display is opt-in and does not edit the saved tour', () => {
+  const {toggle, commit} = setup();
+  const control = screen.getByRole('checkbox', {name: 'Show animation path'});
+  expect(control).not.toBeChecked();
+  fireEvent.click(control);
+  expect(toggle).toHaveBeenCalledWith('cameraTourPath', true);
+  expect(commit).not.toHaveBeenCalled();
+});
+
+test('path geometry follows stop order and reuses data during navigation', () => {
+  const layers = getCameraTourPathLayers(tour);
+  expect(layers).toHaveLength(3);
+  expect(getCameraTourPathLayers(tour)[0].props.data).toBe(layers[0].props.data);
+  expect(getCameraTourPathLayers(tour)[0]).not.toBe(layers[0]);
+  expect(layers[0].props.data).toEqual([
+    {
+      path: [
+        [10, 20],
+        [50, 20]
+      ]
+    }
+  ]);
+  expect(layers[2].props.data).toEqual([
+    {position: [10, 20], label: '1. Home'},
+    {position: [50, 20], label: '2. Work'}
+  ]);
+  expect(layers.every(layer => layer.props.pickable === false)).toBe(true);
+  const reordered = getCameraTourPathLayers({stops: [...tour.stops].reverse()});
+  expect(reordered[2].props.data).toEqual([
+    {position: [50, 20], label: '1. Work'},
+    {position: [10, 20], label: '2. Home'}
+  ]);
+  expect(getCameraTourPathLayers(null)).toEqual([]);
+  expect(getCameraTourPathLayers({stops: []})).toEqual([]);
 });

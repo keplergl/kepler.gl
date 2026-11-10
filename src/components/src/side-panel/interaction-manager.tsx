@@ -61,6 +61,7 @@ type InteractionManagerProps = {
   cameraBookmarksEnabled?: boolean;
   cameraTour?: CameraTour | null;
   cameraTourEnabled?: boolean;
+  cameraTourPathVisible?: boolean;
   mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
@@ -103,6 +104,7 @@ function InteractionManagerFactory(
     cameraBookmarksEnabled,
     cameraTour,
     cameraTourEnabled,
+    cameraTourPathVisible,
     mapStateActions,
     actionIcons,
     interactionConfigIcons
@@ -195,6 +197,7 @@ function InteractionManagerFactory(
           <CameraTourConfig
             tour={cameraTour}
             enabled={cameraTourEnabled}
+            pathVisible={cameraTourPathVisible}
             uiStateActions={uiStateActions}
             bookmarks={cameraBookmarks}
             mapState={mapState}

@@ -129,6 +129,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
   ),
   // Camera controls are UI preferences; saved camera snapshots remain independent.
   cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
+  cameraTourPath: {...DEFAULT_MAP_CONTROLS_FEATURES, show: false},
   cameraBookmarks: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
     show: false,
@@ -518,7 +519,7 @@ export const setMapControlVisibilityUpdater = (
 ): UiState => {
   const mapControl =
     state.mapControls?.[panelId] ??
-    (panelId === 'cameraBookmarks' || panelId === 'cameraTour'
+    (panelId === 'cameraBookmarks' || panelId === 'cameraTour' || panelId === 'cameraTourPath'
       ? DEFAULT_MAP_CONTROLS[panelId]
       : undefined);
   if (!mapControl) {
