@@ -81,7 +81,7 @@ const ModeButton = styled.button<{$custom: boolean}>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 24px;
+  flex: 0 0 18px;
   height: ${props => props.theme.sliderInputHeight}px;
   padding: 0;
   border: 0;
@@ -108,7 +108,7 @@ const ModeButton = styled.button<{$custom: boolean}>`
 const SliderRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
 
   > :first-child {
     flex: 1;
@@ -121,14 +121,15 @@ const SliderRow = styled.div`
 `;
 
 const ValueReadout = styled.span<{$isRanged: boolean}>`
-  width: ${props => props.theme.sliderInputWidth * (props.$isRanged ? 1.5 : 1)}px;
+  width: ${props => (props.$isRanged ? '14ch' : '8ch')};
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
   color: ${props => props.theme.textColor};
-  font-size: ${props => props.theme.sliderInputFontSize};
+  font-size: calc(${props => props.theme.sliderInputFontSize} * 0.9);
+  font-variant-numeric: tabular-nums;
 `;
 
 const LazyInput: React.FC<LazyInputProps> = ({
