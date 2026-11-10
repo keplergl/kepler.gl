@@ -11,7 +11,7 @@ import RangeSliderFactory from '../../common/range-slider';
 import InfoHelperFactory from '../../common/info-helper';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
-import {isInRange, clamp, createSliderScale, getRoundingDecimalFromStep} from '@kepler.gl/utils';
+import {isInRange, clamp, createSliderScale} from '@kepler.gl/utils';
 
 type LazyInputProps = {
   value: string | [string, string];
@@ -77,13 +77,12 @@ const RangeInput = styled.input`
   height: ${props => props.theme.sliderInputHeight}px;
 `;
 
-const ModeButton = styled.button<{$valueWidth?: number}>`
+const ModeButton = styled.button<{$custom: boolean}>`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   place-items: center;
   flex: 0 0 auto;
-  width: ${props => (props.$valueWidth ? `${props.$valueWidth}ch` : '18px')};
-  min-width: 18px;
+  width: ${props => (props.$custom ? '18px' : '55px')};
   height: ${props => props.theme.sliderInputHeight}px;
   padding: 0;
   border: 0;
@@ -143,18 +142,6 @@ const SliderRow = styled.div`
     }
   }
 `;
-
-function getValueWidth(range: [number, number], step: number, isRanged: boolean) {
-  // Use the bounds and step so the track stays the same width as values change.
-  const decimals = getRoundingDecimalFromStep(step);
-  const fractionWidth = decimals ? decimals + 1 : 0;
-  const width = Math.max(
-    ...range.map(bound =>
-      Math.max(String(bound).length, String(Math.trunc(bound)).length + fractionWidth)
-    )
-  );
-  return isRanged ? Math.min(2 * width + 2, 14) : Math.min(width, 8);
-}
 
 const LazyInput: React.FC<LazyInputProps> = ({
   value,
@@ -338,7 +325,7 @@ export default function VisConfigSliderFactory(
           )}
           {allowCustomValue ? (
             <ModeButton
-              $valueWidth={custom ? undefined : getValueWidth(range, step ?? 1, isRanged)}
+              $custom={custom}
               type="button"
               title={custom ? modeLabel : `${modeLabel} (${displayedValue})`}
               aria-label={modeLabel}
