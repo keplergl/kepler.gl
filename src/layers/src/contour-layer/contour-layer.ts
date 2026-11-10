@@ -331,6 +331,7 @@ export default class ContourLayer extends Layer {
       let minimum = Infinity;
       let maximum = -Infinity;
       for (const value of grid.values) {
+        if (!Number.isFinite(value)) continue;
         minimum = Math.min(minimum, value);
         maximum = Math.max(maximum, value);
       }

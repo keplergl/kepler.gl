@@ -60,7 +60,7 @@ function regionalBounds(samples: ScalarSample[]) {
 /**
  * Bin points into the nearest geographic cells, fitting the grid resolution to
  * the sample bounds.
- * Empty cells are zero; a weight selects MEAN, otherwise
+ * Empty cells are missing for MEAN and zero for COUNT; a weight selects MEAN, otherwise
  * each point contributes one count. Rows run south to north for contour rendering.
  */
 export function buildContourGrid(
@@ -94,6 +94,7 @@ export function buildContourGrid(
   const width = Math.max(2, Math.min(axis, Math.ceil(spanX / size) + 1));
   const height = Math.max(2, Math.min(axis, Math.ceil(spanY / size) + 1));
   const values = new Float64Array(width * height);
+  if (aggregation === 'MEAN') values.fill(NaN);
   const counts = new Uint32Array(values.length);
   for (const sample of located) {
     // Resolve half-cell ties consistently despite roundoff when rescaling an extent.

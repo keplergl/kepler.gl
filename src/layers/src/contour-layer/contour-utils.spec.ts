@@ -307,16 +307,32 @@ describe('point aggregation for contours', () => {
         Math.round((longitude - grid.longitude) / grid.stepLng)
     ];
 
-  test('averages distinct points in the same cell and leaves empty cells at zero', () => {
+  test('averages distinct points in the same cell and leaves empty weighted cells missing', () => {
     const grid = buildContourGrid(
       [point(0, 0, 10), point(0.0001, 0.0001, 30), point(0.03, 0.03, -8)],
       32
     )!;
     expect(at(grid, 0, 0)).toBe(20);
     expect(at(grid, 0.03, 0.03)).toBe(-8);
-    expect(at(grid, 0.015, 0.015)).toBe(0);
-    expect([...grid.values].filter(value => value !== 0).sort((a, b) => a - b)).toEqual([-8, 20]);
+    expect(at(grid, 0.015, 0.015)).toBeNaN();
+    expect([...grid.values].filter(Number.isFinite).sort((a, b) => a - b)).toEqual([-8, 20]);
     expect(generateContours(grid, {...options, below: false, domain: [5, 15]})).toHaveLength(3);
+  });
+
+  test.each([0, 5, -5])('preserves constant weights of %s beside empty cells', value => {
+    const grid = buildContourGrid([point(0, 0, value), point(0.03, 0.03, value)], 32)!;
+    expect(at(grid, 0, 0)).toBe(value);
+    expect(at(grid, 0.015, 0.015)).toBeNaN();
+    expect([...smoothScalarGrid(grid, 3)].filter(Number.isFinite)).toEqual([value, value]);
+    expect(generateContours(grid, {smoothing: 3, levels: 7, below: false})).toEqual([]);
+    expect(
+      generateContours(grid, {
+        smoothing: 3,
+        levels: 3,
+        below: false,
+        domain: [value - 1, value + 1]
+      }).map(feature => feature.properties.threshold)
+    ).toEqual([value - 1, value]);
   });
 
   test('counts every point when weights are absent, including duplicate positions', () => {
@@ -327,6 +343,7 @@ describe('point aggregation for contours', () => {
     )!;
     expect(at(grid, 0, 0)).toBe(3);
     expect(at(grid, 0.03, 0.03)).toBe(1);
+    expect(at(grid, 0.015, 0.015)).toBe(0);
     expect([...grid.values].reduce((a, b) => a + b, 0)).toBe(4);
   });
 
@@ -404,7 +421,10 @@ describe('point aggregation for contours', () => {
       const grid = buildContourGrid(input, 32)!;
       expect(grid.width).toBeGreaterThanOrEqual(2);
       expect(grid.height).toBeGreaterThanOrEqual(2);
-      expect(generateContours(grid, {...options, below: false})).toHaveLength(3);
+      expect(generateContours(grid, {...options, below: false, domain: undefined})).toHaveLength(
+        input.length === 1 ? 0 : 3
+      );
+      expect(generateContours(grid, {...options, below: false, domain: [2, 6]})).toHaveLength(3);
     }
   });
 
@@ -412,7 +432,7 @@ describe('point aggregation for contours', () => {
     const grid = buildContourGrid([point(0, 0, 4), point(10, 10, 8)], 100000)!;
     expect(Math.max(grid.width, grid.height)).toBe(256);
     expect(grid.values.length).toBeLessThanOrEqual(256 * 256);
-    expect([...grid.values].every(Number.isFinite)).toBe(true);
+    expect([...grid.values].filter(Number.isFinite).sort((a, b) => a - b)).toEqual([4, 8]);
     expect(buildContourGrid([])).toBeNull();
     for (const resolution of [0, 1, -1, NaN, Infinity]) {
       expect(() => buildContourGrid([point(0, 0, 1)], resolution)).toThrow('grid resolution');

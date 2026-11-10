@@ -1287,10 +1287,10 @@ test('applies the selected maximum axis resolution when averaging nearby observa
   ]);
   layer.updateLayerVisConfig({gridResolution: 32});
   layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  expect(layer.meta.contourDomain).toEqual([8, 20]);
   layer.updateLayerVisConfig({gridResolution: 256});
   layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 30]);
+  expect(layer.meta.contourDomain).toEqual([8, 30]);
 });
 
 test('filters observations before averaging and restores them when the filter clears', async () => {
@@ -1302,14 +1302,66 @@ test('filters observations before averaging and restores them when the filter cl
   layer.updateLayerVisConfig({gridResolution: 32, minimum: 5, maximum: 15, below: false});
   const all = dataset.filteredIndex;
   const original = layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  expect(layer.meta.contourDomain).toEqual([8, 20]);
   dataset.filteredIndex = [0, 2];
   const filtered = layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 10]);
+  expect(layer.meta.contourDomain).toEqual([8, 10]);
   expect(filtered.data.map(feature => feature.properties.threshold)).toEqual([5, 10]);
   dataset.filteredIndex = all;
   expect(layer.formatLayerData(datasets)).toEqual(original);
 });
+
+test.each([false, true])(
+  'keeps automatic weighted thresholds and hover values within the retained range (GPU %s)',
+  async gpu => {
+    const {layer, dataset, datasets} = await setup([
+      [0, 0, 0],
+      [0, 0.03, 5],
+      [0.03, 0, 7],
+      [0.03, 0.03, 10]
+    ]);
+    layer.updateLayerVisConfig({
+      customRange: false,
+      gridResolution: 64,
+      smoothing: 3,
+      levels: 7,
+      below: false
+    });
+    const original = layer.formatLayerData(datasets);
+    const range = {
+      ...getDefaultFilter({dataId: [dataset.id]}),
+      type: FILTER_TYPES.range,
+      name: ['value'],
+      fieldIdx: [2],
+      value: [5, 10],
+      domain: [0, 10],
+      gpu
+    };
+    dataset.filterTable(assignGpuChannels([range]), [layer]);
+    const filtered = layer.formatLayerData(datasets);
+    expect(layer.meta.contourDomain).toEqual([5, 10]);
+    expect(filtered.data).toHaveLength(7);
+    expect(filtered.data).not.toEqual(original.data);
+    for (const feature of filtered.data) {
+      expect(feature.properties.threshold).toBeGreaterThanOrEqual(5);
+      expect(feature.properties.threshold).toBeLessThanOrEqual(10);
+      expect(layer.getHoverData(feature)?.fieldValues[0].value).toBe(
+        `value ≥ ${feature.properties.threshold}`
+      );
+    }
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual(
+      filtered.data.map(feature => feature.properties.threshold)
+    );
+
+    dataset.filterTable(assignGpuChannels([{...range, value: [6, 6]}]), [layer]);
+    expect(layer.formatLayerData(datasets).data).toEqual([]);
+    expect(layer.meta.contourDomain).toBeNull();
+    expect(layer.getContourLegend()).toEqual([]);
+
+    dataset.filterTable([], [layer]);
+    expect(layer.formatLayerData(datasets)).toEqual(original);
+  }
+);
 
 function contourPolygonFilter(layer: ContourLayer, bounds: number[], inverted = false) {
   const [west, south, east, north] = bounds;
@@ -1362,7 +1414,7 @@ test('polygon filters exclude observations, isolate layers, and restore on disab
   const filtered = calculateContourLayerData(layer, datasets).layerData.data;
   expect(filtered).toHaveLength(3);
   expect(original.every(feature => feature.geometry.coordinates[0].length === 2)).toBe(true);
-  expect(filtered.every(feature => feature.geometry.coordinates[0].length === 1)).toBe(true);
+  expect(filtered.every(feature => feature.geometry.coordinates[0].length === 2)).toBe(true);
   expect(other.formatLayerData(datasets).data).toEqual(original);
   expect(calculateLayerData(point, pointState).layerData.data).toEqual(originalPoint);
 
@@ -1741,7 +1793,7 @@ test('switches between optional weights and density, including legend and hover 
   ]);
   layer.updateLayerVisConfig({gridResolution: 32, minimum: 1, maximum: 2, levels: 2, below: false});
   layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  expect(layer.meta.contourDomain).toEqual([8, 20]);
   const columns = layer.config.columns;
   layer.updateLayerConfig({
     columns: {...columns, value: {value: null, fieldIdx: -1, optional: true}}
@@ -1760,7 +1812,7 @@ test('switches between optional weights and density, including legend and hover 
   view.unmount();
   layer.updateLayerConfig({columns});
   layer.formatLayerData(datasets);
-  expect(layer.meta.contourDomain).toEqual([0, 20]);
+  expect(layer.meta.contourDomain).toEqual([8, 20]);
   dataset.filteredIndex = [];
   expect(layer.formatLayerData(datasets).data).toEqual([]);
   expect(layer.meta.contourDomain).toBeNull();
