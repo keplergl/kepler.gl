@@ -242,7 +242,7 @@ it('reports table creation failures instead of successful imports', async () => 
   const importData = jest
     .spyOn(KeplerTable.prototype, 'importData')
     .mockRejectedValueOnce(new Error('Table creation failed'));
-  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
   try {
     expect(await execute()).toMatchObject({
       success: false,
