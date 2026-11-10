@@ -11,6 +11,7 @@ import {createSelector} from 'reselect';
 import ItemSelector from '../../common/item-selector/item-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 import InfoHelperFactory from '../../common/info-helper';
+import Switch from '../../common/switch';
 import {
   Input,
   InputLight,
@@ -71,7 +72,7 @@ import {
   formatZarrCoordinate
 } from '@kepler.gl/table';
 import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
-import {capitalizeFirstLetter, clamp, getNumericStepSize} from '@kepler.gl/utils';
+import {capitalizeFirstLetter, clamp, colorMaybeToRGB, getNumericStepSize} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
@@ -184,6 +185,23 @@ const StyledLayerVisualConfigurator = styled.div.attrs({
     margin-top: 8px;
     color: ${props => props.theme.textColor};
     font-size: ${props => props.theme.sliderInputFontSize};
+  }
+`;
+
+const ContourOutlineColorRow = styled(SidePanelSection)`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(${props => props.theme.inputBoxHeight}, auto);
+  align-items: center;
+  column-gap: 8px;
+
+  > .side-panel-section,
+  > .side-panel-section > .color-selector {
+    display: contents;
+  }
+
+  .color-selector__dropdown {
+    grid-column: 1 / -1;
   }
 `;
 
@@ -2366,6 +2384,7 @@ export default function LayerConfiguratorFactory(
 
     _renderContourLayerConfig({layer, dataset, visConfiguratorProps, layerConfiguratorProps}) {
       const {visConfigSettings: settings, config} = layer;
+      const contourColor = colorMaybeToRGB(config.visConfig.contourColor);
       const valueColumn = config.columns.value.value;
       let valueRange = layer.meta.contourDomain;
       if (valueColumn) {
@@ -2467,14 +2486,33 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layerVisConfigs.contour.fillGroup"
           >
-            {config.visConfig.filled ? (
+            <div inert={!config.visConfig.filled}>
               <VisConfigSlider {...settings.fillOpacity} {...visConfiguratorProps} />
-            ) : null}
+            </div>
           </LayerConfigGroup>
           <LayerConfigGroup {...settings.stroked} {...visConfiguratorProps} label="layer.outline">
-            {config.visConfig.stroked ? (
+            <div inert={!config.visConfig.stroked}>
+              <ContourOutlineColorRow>
+                <Switch
+                  id={`${layer.id}-contourColor-switch`}
+                  checked={Boolean(contourColor)}
+                  label={<FormattedMessage id={settings.contourColor.label} />}
+                  onChange={event =>
+                    visConfiguratorProps.onChange({
+                      contourColor: event.target.checked ? config.color : null
+                    })
+                  }
+                />
+                {contourColor ? (
+                  <LayerColorSelector
+                    {...visConfiguratorProps}
+                    property="contourColor"
+                    selectedColor={contourColor}
+                  />
+                ) : null}
+              </ContourOutlineColorRow>
               <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
-            ) : null}
+            </div>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );

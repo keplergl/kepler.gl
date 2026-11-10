@@ -370,6 +370,7 @@ export default {
       levelsGroup: 'Contour levels',
       fillGroup: 'Fill',
       colorByLevel: 'Color by level',
+      customOutlineColor: 'Custom outline color',
       weightDescription:
         'Average a numeric column within each cell. Leave empty to show point density (point count per cell).',
       gridResolution: 'Grid resolution',

@@ -43,7 +43,12 @@ import {fireEvent, render, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import {theme} from '@kepler.gl/styles';
-import {appInjector, MapLegendFactory, LayerHoverInfoFactory} from '@kepler.gl/components';
+import {
+  appInjector,
+  LayerConfiguratorFactory,
+  MapLegendFactory,
+  LayerHoverInfoFactory
+} from '@kepler.gl/components';
 
 test.each(Object.keys(messages))('resolves contour column labels in locale %s', locale => {
   const layer = new ContourLayer({dataId: 'contour-labels'});
@@ -736,6 +741,100 @@ test.each([true, false])(
     ).toBe(true);
   }
 );
+
+test.each([false, true])('colors outlines independently of fills (3D: %s)', async enable3d => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({
+    enable3d,
+    colorByLevel: true,
+    colorRange: {...layer.config.visConfig.colorRange, colors: ['#FF0000', '#00FF00', '#0000FF']}
+  });
+  const data = layer.formatLayerData(datasets);
+  const readColors = () => {
+    const [fill, outline] = renderContourPasses(layer, dataset, data).slice(-2);
+    const {getFillColor} = fill.props;
+    const {getLineColor} = outline.props;
+    if (typeof getFillColor !== 'function' || typeof getLineColor !== 'function') {
+      throw new Error('Expected colors for each contour level');
+    }
+    const ordered = [...data.data].sort((a, b) => a.properties.threshold - b.properties.threshold);
+    const colors = ordered.map((feature, index) => {
+      const info = {index, data: ordered, target: []};
+      return {fill: getFillColor(feature, info), outline: getLineColor(feature, info)};
+    });
+    expect(layer.getContourLegend().map(level => level.color)).toEqual(
+      colors.map(color => color.outline)
+    );
+    return colors;
+  };
+
+  const inherited = readColors();
+  layer.updateLayerVisConfig({contourColor: [18, 52, 86]});
+  expect(readColors()).toEqual(
+    inherited.map(({fill, outline}) => ({fill, outline: [18, 52, 86, outline[3]]}))
+  );
+  layer.updateLayerVisConfig({contourColor: null});
+  expect(readColors()).toEqual(inherited);
+});
+
+test('selects and retains a custom color when Contour outlines are turned off and on', async () => {
+  const {layer, datasets} = await setup();
+  const Configurator: ReturnType<typeof LayerConfiguratorFactory> =
+    appInjector.get(LayerConfiguratorFactory);
+  function Editor() {
+    const [, refresh] = React.useReducer(value => value + 1, 0);
+    return React.createElement(Configurator, {
+      layer,
+      datasets,
+      layerTypeOptions: [],
+      openModal: jest.fn(),
+      updateLayerConfig: jest.fn(),
+      updateLayerType: jest.fn(),
+      updateLayerVisConfig: config => {
+        layer.updateLayerVisConfig(config);
+        refresh();
+      },
+      updateLayerVisualChannelConfig: jest.fn(),
+      updateLayerColorUI: (property, config) => {
+        layer.updateLayerColorUI(property, config);
+        refresh();
+      },
+      updateLayerTextLabel: jest.fn()
+    });
+  }
+  const view = render(React.createElement(Editor), {
+    wrapper: ({children}) =>
+      React.createElement(ThemeProvider, {
+        theme,
+        children: React.createElement(IntlProvider, {locale: 'en', messages: messages.en, children})
+      })
+  });
+  const toggle = view.getByRole('checkbox', {name: 'Custom outline color'});
+  expect(toggle).not.toBeChecked();
+  fireEvent.click(toggle);
+  expect(toggle).toBeChecked();
+  const outline = toggle.closest('.layer-config-group') as HTMLElement;
+  const picker = outline.querySelector('.color-selector__selector')!;
+  fireEvent.click(picker);
+  fireEvent.click(within(outline).getByText('Color Picker'));
+  fireEvent.change(within(outline).getByLabelText(/hex/i), {target: {value: '123456'}});
+  expect(layer.config.visConfig.contourColor).toEqual([18, 52, 86]);
+  expect(layer.config.color).toEqual([36, 218, 211]);
+  fireEvent.click(picker);
+
+  const header = outline.querySelector<HTMLElement>('.layer-config-group__header')!;
+  const visibilityToggle = within(header).getByRole('checkbox');
+  fireEvent.click(visibilityToggle);
+  expect(picker).toBeVisible();
+  expect(picker.closest('[inert]')).toBeInTheDocument();
+  fireEvent.click(visibilityToggle);
+  expect(picker.closest('[inert]')).toBeNull();
+  expect(layer.config.visConfig.contourColor).toEqual([18, 52, 86]);
+
+  fireEvent.click(toggle);
+  expect(layer.config.visConfig.contourColor).toBeNull();
+  expect(picker).not.toBeInTheDocument();
+});
 
 test('interpolates a palette to the level count and reverses it without losing threshold labels', async () => {
   const {layer, dataset, datasets} = await setup();
@@ -1453,6 +1552,7 @@ test.each(
       enable3d: true,
       elevationScale: 2.5,
       colorByLevel: true,
+      contourColor: [18, 52, 86],
       colorRange: {
         ...layer.config.visConfig.colorRange,
         colors: ['#FF0000', '#00FF00', '#0000FF'],
@@ -1473,6 +1573,7 @@ test.each(
     expect(restored.config.columns.value).toBe(weighted ? 'value' : undefined);
     if (columnMode === 'geojson') expect(restored.config.columns.geojson).toBe('geometry');
     const loaded = validateLayerWithData(dataset, restored, LayerClasses)!;
+    expect(loaded.config.visConfig.contourColor).toEqual([18, 52, 86]);
     expect(loaded.formatLayerData(datasets)).toEqual(layer.formatLayerData(datasets));
   }
 );

@@ -995,19 +995,20 @@ test('Components -> LayerConfigurator -> contour fill and outline groups retain 
           );
         }
       }
-      t.ok(controls.queryByText(controlLabel), `${label} exposes its control`);
+      const control = controls.getByText(controlLabel);
       fireEvent.click(toggle);
       t.deepEqual(onChange.lastCall.args[0], {[property]: false}, `disables only ${label}`);
       layer.updateLayerVisConfig(onChange.lastCall.args[0]);
       view.update();
-      t.notOk(controls.queryByText(controlLabel), `hides the disabled ${label} control`);
+      t.equal(controls.getByText(controlLabel), control, `keeps the ${label} control visible`);
+      t.ok(control.closest('[inert]'), `makes the disabled ${label} control inactive`);
       t.equal(layer.config.visConfig[savedProperty], savedValue, 'preserves the stored setting');
 
       fireEvent.click(toggle);
       t.deepEqual(onChange.lastCall.args[0], {[property]: true}, `re-enables only ${label}`);
       layer.updateLayerVisConfig(onChange.lastCall.args[0]);
       view.update();
-      t.ok(controls.queryByText(controlLabel), `restores the enabled ${label} control`);
+      t.notOk(control.closest('[inert]'), `restores interaction with the ${label} control`);
       t.equal(layer.config.visConfig[savedProperty], savedValue, 'restores the previous value');
     }
   } finally {
