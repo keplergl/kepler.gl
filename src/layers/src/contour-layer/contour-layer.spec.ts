@@ -777,7 +777,7 @@ test.each([false, true])('colors outlines independently of fills (3D: %s)', asyn
   expect(readColors()).toEqual(inherited);
 });
 
-test('selects and resets an independent outline color from the Contour layer panel', async () => {
+test('selects and retains a custom color when Contour outlines are turned off and on', async () => {
   const {layer, datasets} = await setup();
   const Configurator: ReturnType<typeof LayerConfiguratorFactory> =
     appInjector.get(LayerConfiguratorFactory);
@@ -820,6 +820,17 @@ test('selects and resets an independent outline color from the Contour layer pan
   fireEvent.change(within(outline).getByLabelText(/hex/i), {target: {value: '123456'}});
   expect(layer.config.visConfig.contourColor).toEqual([18, 52, 86]);
   expect(layer.config.color).toEqual([36, 218, 211]);
+  fireEvent.click(picker);
+
+  const header = outline.querySelector<HTMLElement>('.layer-config-group__header')!;
+  const visibilityToggle = within(header).getByRole('checkbox');
+  fireEvent.click(visibilityToggle);
+  expect(picker).toBeVisible();
+  expect(picker.closest('[inert]')).toBeInTheDocument();
+  fireEvent.click(visibilityToggle);
+  expect(picker.closest('[inert]')).toBeNull();
+  expect(layer.config.visConfig.contourColor).toEqual([18, 52, 86]);
+
   fireEvent.click(toggle);
   expect(layer.config.visConfig.contourColor).toBeNull();
   expect(picker).not.toBeInTheDocument();

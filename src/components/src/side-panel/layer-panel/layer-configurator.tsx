@@ -2469,35 +2469,33 @@ export default function LayerConfiguratorFactory(
             {...visConfiguratorProps}
             label="layerVisConfigs.contour.fillGroup"
           >
-            {config.visConfig.filled ? (
+            <div inert={!config.visConfig.filled}>
               <VisConfigSlider {...settings.fillOpacity} {...visConfiguratorProps} />
-            ) : null}
+            </div>
           </LayerConfigGroup>
           <LayerConfigGroup {...settings.stroked} {...visConfiguratorProps} label="layer.outline">
-            {config.visConfig.stroked ? (
-              <>
-                <SidePanelSection>
-                  <Switch
-                    id={`${layer.id}-contourColor-switch`}
-                    checked={Boolean(contourColor)}
-                    label={<FormattedMessage id={settings.contourColor.label} />}
-                    onChange={event =>
-                      visConfiguratorProps.onChange({
-                        contourColor: event.target.checked ? config.color : null
-                      })
-                    }
-                  />
-                </SidePanelSection>
-                {contourColor ? (
-                  <LayerColorSelector
-                    {...visConfiguratorProps}
-                    property="contourColor"
-                    selectedColor={contourColor}
-                  />
-                ) : null}
-                <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
-              </>
-            ) : null}
+            <div inert={!config.visConfig.stroked}>
+              <SidePanelSection>
+                <Switch
+                  id={`${layer.id}-contourColor-switch`}
+                  checked={Boolean(contourColor)}
+                  label={<FormattedMessage id={settings.contourColor.label} />}
+                  onChange={event =>
+                    visConfiguratorProps.onChange({
+                      contourColor: event.target.checked ? config.color : null
+                    })
+                  }
+                />
+              </SidePanelSection>
+              {contourColor ? (
+                <LayerColorSelector
+                  {...visConfiguratorProps}
+                  property="contourColor"
+                  selectedColor={contourColor}
+                />
+              ) : null}
+              <VisConfigSlider {...settings.thickness} {...visConfiguratorProps} />
+            </div>
           </LayerConfigGroup>
         </StyledLayerVisualConfigurator>
       );
