@@ -25,6 +25,7 @@ import {
   appInjector,
   dropdownListClassList,
   Checkbox,
+  VisConfigSlider,
   getLayerFields,
   getLayerDataset
 } from '@kepler.gl/components';
@@ -169,6 +170,265 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
     'should render the localized Point Count field name'
   );
 
+  t.end();
+});
+
+function renderVisConfigSlider(property, initialValue, {layerType = 'point', ...sliderProps} = {}) {
+  const changed = sinon.spy();
+  function Editor() {
+    const [value, setValue] = React.useState(initialValue);
+    const layer = new LayerClasses[layerType]({id: 'slider-regression'});
+    layer.updateLayerVisConfig({[property]: value});
+    return (
+      <VisConfigSlider
+        {...layer.visConfigSettings[property]}
+        {...sliderProps}
+        layer={layer}
+        onChange={next => {
+          changed(next);
+          setValue(next[property]);
+        }}
+      />
+    );
+  }
+  const view = renderWithTheme(
+    <IntlWrapper>
+      <Editor />
+    </IntlWrapper>
+  );
+  return {view, changed};
+}
+
+test('Components -> VisConfigSlider -> edits a single custom radius using the keyboard', async t => {
+  const {view, changed} = renderVisConfigSlider('radius', 10);
+  const slider = within(view.container);
+  const user = userEvent.setup();
+  try {
+    t.ok(slider.getByText('10'), 'shows the slider value before editing');
+    t.notOk(slider.queryByRole('spinbutton'), 'manual input starts closed');
+    const edit = slider.getByRole('button', {name: 'Enter custom value for Radius'});
+    edit.focus();
+    t.equal(document.activeElement, edit, 'the edit button is keyboard reachable');
+    await user.keyboard('{Enter}');
+    const input = slider.getByRole('spinbutton', {name: 'Radius'});
+    t.equal(document.activeElement, input, 'opening the editor focuses the value');
+    t.equal(input.value, '10', 'the editor starts with the current radius');
+    t.ok(
+      slider.getByRole('button', {name: 'Use slider for Radius'}),
+      'return action names the setting'
+    );
+    t.ok(changed.notCalled, 'opening the editor keeps the value');
+    await user.clear(input);
+    await user.type(input, '125');
+    await user.tab();
+    t.deepEqual(changed.lastCall.args[0], {radius: 125}, 'accepts values outside the slider range');
+    await user.keyboard('{Enter}');
+    t.deepEqual(changed.lastCall.args[0], {radius: 100}, 'clamps on return to the slider');
+    t.notOk(slider.queryByRole('spinbutton'), 'manual input closes');
+    await user.click(slider.getByText('100'));
+    t.equal(
+      slider.getByRole('spinbutton', {name: 'Radius'}).value,
+      '100',
+      'clicking the displayed value opens the editor with the clamped value'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> VisConfigSlider -> reopens saved custom ranges and edits both bounds', async t => {
+  const {view, changed} = renderVisConfigSlider('radiusRange', [10, 600]);
+  const slider = within(view.container);
+  const user = userEvent.setup();
+  try {
+    t.equal(
+      slider.getByRole('spinbutton', {name: 'Max'}).value,
+      '600',
+      'loads the saved custom bound'
+    );
+    t.ok(changed.notCalled, 'loading does not clamp a saved range');
+    t.notOk(
+      slider.getAllByRole('spinbutton').includes(document.activeElement),
+      'loading a saved custom range does not move keyboard focus'
+    );
+    await user.click(slider.getByRole('button', {name: 'Use slider for Radius Range'}));
+    t.deepEqual(changed.lastCall.args[0], {radiusRange: [10, 500]}, 'clamps the upper bound');
+    t.notOk(slider.queryByRole('spinbutton'), 'both inputs close with the editor');
+    await user.click(slider.getByRole('button', {name: 'Enter custom value for Radius Range'}));
+    const min = slider.getByRole('spinbutton', {name: 'Min'});
+    const max = slider.getByRole('spinbutton', {name: 'Max'});
+    t.equal(min.value, '10', 'reopens with the current lower bound');
+    t.equal(max.value, '500', 'reopens with the current upper bound');
+    await user.clear(min);
+    await user.type(min, '5.5{Enter}');
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {radiusRange: [5.5, 500]},
+      'Enter commits the lower bound'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> VisConfigSlider -> names actions by the localized setting with hidden labels', t => {
+  const layer = new LayerClasses.point({id: 'named-slider-actions'});
+  const onChange = sinon.spy();
+  const view = renderWithTheme(
+    <IntlWrapper locale="es">
+      <VisConfigSlider
+        {...layer.visConfigSettings.radius}
+        layer={layer}
+        label={false}
+        onChange={onChange}
+      />
+      <VisConfigSlider
+        {...layer.visConfigSettings.radiusRange}
+        layer={layer}
+        label={() => 'layerVisConfigs.radiusRange'}
+        onChange={onChange}
+      />
+    </IntlWrapper>
+  );
+  const sliders = within(view.container);
+  try {
+    const editRadius = sliders.getByRole('button', {name: 'Enter custom value for Radio'});
+    const editRange = sliders.getByRole('button', {name: 'Enter custom value for Rango de radio'});
+    t.notEqual(editRadius, editRange, 'each setting has a distinct localized accessible name');
+    t.notOk(sliders.queryByText('Radio'), 'a hidden visual label still names the action');
+    fireEvent.click(editRadius);
+    t.ok(
+      sliders.getByRole('button', {name: 'Use slider for Radio'}),
+      'return action names the radius'
+    );
+    fireEvent.click(editRange);
+    t.ok(
+      sliders.getByRole('button', {name: 'Use slider for Rango de radio'}),
+      'return action uses the functional setting label'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> VisConfigSlider -> returning directly from an input commits its latest value', async t => {
+  const user = userEvent.setup();
+  for (const [property, initialValue, inputIndex, entered, expected] of [
+    ['radius', 10, 0, '23.4', 23.4],
+    ['radiusRange', [10, 100], 1, '600', [10, 500]]
+  ]) {
+    const {view, changed} = renderVisConfigSlider(property, initialValue);
+    const slider = within(view.container);
+    try {
+      await user.click(slider.getByRole('button', {name: /^Enter custom value for /}));
+      const input = slider.getAllByRole('spinbutton')[inputIndex];
+      await user.clear(input);
+      await user.type(input, entered);
+      await user.click(slider.getByRole('button', {name: /^Use slider for /}));
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {[property]: expected},
+        `${property} commits the draft before clamping and switching modes`
+      );
+      t.notOk(slider.queryByRole('spinbutton'), 'returns to the graphical slider');
+      await user.click(slider.getByRole('button', {name: /^Enter custom value for /}));
+      t.equal(
+        slider.getAllByRole('spinbutton')[inputIndex].value,
+        String(Array.isArray(expected) ? expected[inputIndex] : expected),
+        'reopening preserves the committed value'
+      );
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
+test('Components -> VisConfigSlider -> dragging preserves scalar, range, and focused-scale values', t => {
+  for (const [property, initialValue, handleIndex, clientX, expected] of [
+    ['radius', 10, 1, 23.4, 23.4],
+    ['radiusRange', [10, 100], 0, 10, [50, 100]],
+    ['radiusRange', [10, 100], 1, 50, [10, 250]],
+    ['thickness', 0.25, 1, 10, 0.5]
+  ]) {
+    const {view, changed} = renderVisConfigSlider(property, initialValue);
+    try {
+      const track = view.container.querySelector('.kg-slider');
+      Object.defineProperty(track, 'offsetWidth', {configurable: true, value: 100});
+      const handle = view.container.querySelectorAll('.kg-range-slider__handle')[handleIndex];
+      fireEvent.mouseDown(handle, {clientX});
+      fireEvent.mouseMove(document, {clientX});
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {[property]: expected},
+        `${property} retains its step and scale while dragging handle ${handleIndex}`
+      );
+      t.equal(
+        within(view.container).getByRole('button', {name: /^Enter custom value for /}).textContent,
+        Array.isArray(expected) ? expected.join(' – ') : String(expected),
+        'the readout updates during dragging'
+      );
+    } finally {
+      fireEvent.mouseUp(document);
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
+test('Components -> VisConfigSlider -> bounded controls retain their numeric inputs and limits', t => {
+  for (const [layerType, property, initialValue, edits] of [
+    ['point', 'opacity', 0.5, [[0, '1.5', 1]]],
+    [
+      'grid',
+      'percentile',
+      [10, 80],
+      [
+        [0, '-12', [0, 80]],
+        [1, '125', [0, 100]]
+      ]
+    ]
+  ]) {
+    const {view, changed} = renderVisConfigSlider(property, initialValue, {layerType});
+    const slider = within(view.container);
+    try {
+      t.notOk(slider.queryByRole('button'), `${property} has no custom-mode action`);
+      const inputs = slider.getAllByRole('spinbutton');
+      t.equal(inputs.length, Array.isArray(initialValue) ? 2 : 1, 'keeps the numeric inputs');
+      for (const [index, entered, expected] of edits) {
+        fireEvent.change(inputs[index], {target: {value: entered}});
+        fireEvent.blur(inputs[index]);
+        t.deepEqual(changed.lastCall.args[0], {[property]: expected}, 'keeps edits within bounds');
+      }
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
+
+test('Components -> VisConfigSlider -> disabled custom controls cannot change mode or value', async t => {
+  const user = userEvent.setup({pointerEventsCheck: 0});
+  for (const initialValue of [10, 125]) {
+    const {view, changed} = renderVisConfigSlider('radius', initialValue, {disabled: true});
+    const slider = within(view.container);
+    try {
+      const button = slider.getByRole('button');
+      t.ok(button.disabled, 'the mode action is disabled');
+      await user.click(button);
+      const input = slider.queryByRole('spinbutton');
+      t.equal(Boolean(input), initialValue === 125, 'clicking does not change mode');
+      if (input) {
+        t.ok(input.disabled, 'a saved custom input is disabled');
+      }
+      t.ok(changed.notCalled, 'disabled controls preserve the saved value');
+    } finally {
+      view.unmount();
+    }
+  }
   t.end();
 });
 
