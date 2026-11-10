@@ -4,6 +4,7 @@
 import React, {ChangeEvent, useMemo, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 import {SwipeEasing} from './swipe-composite-utils';
+import {CAMERA_TOUR_PRESET} from './camera-tour-export';
 
 import Slider from '../common/slider/slider';
 import ItemSelector from '../common/item-selector/item-selector';
@@ -130,6 +131,7 @@ export type SwipeExportSettingsProps = {
   resolution: string;
   fileName: string;
   cameraPreset: string;
+  hasCameraTour?: boolean;
   frameRate: number;
   onChangeDuration: (value: number) => void;
   onChangeMediaType: (value: string) => void;
@@ -206,6 +208,7 @@ const displayOption = (o: any) => o.label;
 const AnimationTab: React.FC<{
   durationMs: number;
   cameraPreset: string;
+  hasCameraTour?: boolean;
   swipeStartPct: number;
   swipeEndPct: number;
   swipeEasing: SwipeEasing;
@@ -219,6 +222,7 @@ const AnimationTab: React.FC<{
 }> = ({
   durationMs,
   cameraPreset,
+  hasCameraTour,
   swipeStartPct,
   swipeEndPct,
   swipeEasing,
@@ -243,7 +247,7 @@ const AnimationTab: React.FC<{
             value1={durationMs}
             step={100}
             minValue={100}
-            maxValue={10000}
+            maxValue={Math.max(10000, durationMs)}
             onSlider1Change={(v: number) => {
               if (!disabled) onChangeDuration(v);
             }}
@@ -255,7 +259,7 @@ const AnimationTab: React.FC<{
       <StyledLabelCell>Camera</StyledLabelCell>
       <LightItemSelector
         selectedItems={cameraPreset}
-        options={CAMERA_PRESETS}
+        options={hasCameraTour ? [...CAMERA_PRESETS, CAMERA_TOUR_PRESET] : CAMERA_PRESETS}
         multiSelect={false}
         searchable={false}
         onChange={onChangeCameraPreset}
@@ -410,6 +414,7 @@ const SwipeExportSettings: React.FC<SwipeExportSettingsProps> = ({
   resolution,
   fileName,
   cameraPreset,
+  hasCameraTour,
   frameRate,
   onChangeDuration,
   onChangeMediaType,
@@ -448,6 +453,7 @@ const SwipeExportSettings: React.FC<SwipeExportSettingsProps> = ({
         <AnimationTab
           durationMs={durationMs}
           cameraPreset={cameraPreset}
+          hasCameraTour={hasCameraTour}
           swipeStartPct={swipeStartPct}
           swipeEndPct={swipeEndPct}
           swipeEasing={swipeEasing}

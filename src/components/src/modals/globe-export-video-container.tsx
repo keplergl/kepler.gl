@@ -20,6 +20,12 @@ import type {DeckProps, MapViewState} from '@deck.gl/core';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
+import {getCameraTourDuration} from '@kepler.gl/utils';
+import {
+  CAMERA_TOUR_PRESET,
+  getCameraTourExportKeyframes,
+  resolveCameraTourExportFrame
+} from './camera-tour-export';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
 import {
@@ -244,6 +250,13 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getCameraKeyframes() {
     const {viewState, cameraPreset, durationMs} = this.state;
+    const tourFrames = getCameraTourExportKeyframes(
+      this.props.mapData.visState.cameraTour,
+      cameraPreset,
+      durationMs,
+      this.getCanvasSize()
+    );
+    if (tourFrames) return tourFrames;
     const {longitude, latitude, zoom, pitch, bearing} = viewState!;
     const {width, height} = this.getCanvasSize();
     return {
@@ -305,7 +318,14 @@ export class GlobeExportVideoPanelContainer extends Component<
   }
 
   setViewState = (viewState: MapViewState) => {
-    this.setState({viewState});
+    this.setState({
+      viewState: resolveCameraTourExportFrame(
+        viewState,
+        this.props.mapData.visState.cameraTour,
+        this.state.viewState,
+        Boolean(this.props.mapData.mapState.globe?.enabled)
+      )
+    });
   };
 
   /** CSS background color (area the globe doesn't cover), from globe config. */
@@ -331,7 +351,13 @@ export class GlobeExportVideoPanelContainer extends Component<
   }
 
   setMediaType = (mediaType: string) => this.setStateAndNotify({mediaType});
-  setCameraPreset = (cameraPreset: string) => this.setStateAndNotify({cameraPreset});
+  setCameraPreset = (cameraPreset: string) => {
+    const duration = getCameraTourDuration(this.props.mapData.visState.cameraTour);
+    this.setStateAndNotify({
+      cameraPreset,
+      ...(cameraPreset === CAMERA_TOUR_PRESET && duration > 0 ? {durationMs: duration} : {})
+    });
+  };
   setFileName = (fileName: string) => this.setStateAndNotify({fileName});
   setResolution = (resolution: string) => this.setStateAndNotify({resolution});
   setDuration = (durationMs: number) => this.setStateAndNotify({durationMs});
@@ -560,6 +586,7 @@ export class GlobeExportVideoPanelContainer extends Component<
             resolution={resolution}
             fileName={fileName}
             cameraPreset={cameraPreset}
+            hasCameraTour={getCameraTourDuration(this.props.mapData.visState.cameraTour) > 0}
             frameRate={timecode.framerate}
             onChangeDuration={this.setDuration}
             onChangeMediaType={this.setMediaType}

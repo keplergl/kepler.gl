@@ -15,7 +15,16 @@ const mockExportVideoPanelContainer = jest.fn(() => (
 const MockKeplerUIContext = React.createContext(null);
 
 jest.mock('@hubble.gl/react', () => ({
-  ExportVideoPanelContainer: props => mockExportVideoPanelContainer(props),
+  ExportVideoPanelContainer: class extends require('react').Component {
+    static contextType = MockKeplerUIContext;
+    state = {viewState: {}};
+    setViewState(viewState) {
+      this.setState({viewState});
+    }
+    render() {
+      return mockExportVideoPanelContainer(this.props, this.context);
+    }
+  },
   KeplerUIContext: MockKeplerUIContext
 }));
 
@@ -154,13 +163,13 @@ describe('ExportVideoModal', () => {
 
   test('provides KeplerUI context with expected components', async () => {
     await renderAndWaitForPanel();
-    expect(mockExportVideoPanelContainer).toHaveBeenCalledTimes(1);
+    expect(mockExportVideoPanelContainer).toHaveBeenCalled();
   });
 
   test('passes correct props to ExportVideoPanelContainer', async () => {
     await renderAndWaitForPanel();
 
-    expect(mockExportVideoPanelContainer).toHaveBeenCalledTimes(1);
+    expect(mockExportVideoPanelContainer).toHaveBeenCalled();
     const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
 
     expect(panelProps.header).toBe(false);
@@ -181,6 +190,27 @@ describe('ExportVideoModal', () => {
         height: expect.any(Number)
       })
     );
+  });
+
+  test('offers authored animation only for a playable tour and keeps saved cameras unchanged', async () => {
+    const camera = {longitude: 12, latitude: 30, zoom: 5, bearing: 0, pitch: 0};
+    const cameraTour = {
+      stops: [{id: 'a', name: 'A', camera, holdDurationMs: 15000, travelDurationMs: 0}]
+    };
+    await renderAndWaitForPanel({
+      ...DEFAULT_PROPS,
+      visState: {...DEFAULT_PROPS.visState, cameraTour}
+    });
+    const [props, ui] = mockExportVideoPanelContainer.mock.calls[0];
+    expect(ui.ItemSelector({options: ['None', 'Orbit (90º)']}).props.options).toContain(
+      'Create Animation'
+    );
+    expect(ui.ItemSelector({options: ['gif', 'webm']}).props.options).not.toContain(
+      'Create Animation'
+    );
+    expect(ui.Slider({maxValue: 10000, value1: 15000}).props.maxValue).toBe(15000);
+    expect(props.mapData.visState.cameraTour.stops[0].camera).toEqual(camera);
+    expect(cameraTour.stops[0].camera).toBe(camera);
   });
 
   test('passes deckProps from getHubbleDeckGlProps', async () => {
@@ -500,5 +530,92 @@ describe('ExportVideoModal', () => {
       unmount();
       expect(window.devicePixelRatio).toBe(originalDpr);
     });
+  });
+});
+
+// Authored tours use the same evaluator in live playback and recorded frames.
+describe('Create Animation video export', () => {
+  const {
+    getCameraTourExportKeyframes,
+    resolveCameraTourExportFrame,
+    withCameraTourExport,
+    CAMERA_TOUR_PRESET
+  } = require('./camera-tour-export');
+  const {CameraKeyframes} = require('@hubble.gl/core');
+  const camera = {longitude: 179, latitude: 0, zoom: 4, bearing: 350, pitch: 30};
+  const tour = {
+    stops: [
+      {id: 'a', name: 'Start', camera, holdDurationMs: 1000, travelDurationMs: 2000},
+      {
+        id: 'b',
+        name: 'End',
+        camera: {...camera, longitude: -179, bearing: 10},
+        holdDurationMs: 1000,
+        travelDurationMs: 0
+      }
+    ]
+  };
+  test('export clock scales duration and preserves holds and shortest rotations', () => {
+    const spec = getCameraTourExportKeyframes(tour, CAMERA_TOUR_PRESET, 8000, {
+      width: 800,
+      height: 600
+    });
+    const keyframes = new CameraKeyframes(spec);
+    const at = time => {
+      keyframes.setTime(time);
+      return resolveCameraTourExportFrame(keyframes.getFrame(), tour, {width: 800});
+    };
+    expect(at(0)).toMatchObject(camera);
+    expect(at(1000)).toMatchObject(camera);
+    expect(at(4000)).toMatchObject({longitude: 180, bearing: 360, width: 800});
+    expect(at(8000)).toMatchObject(tour.stops[1].camera);
+    expect(at(4000)).not.toHaveProperty('cameraTourTime');
+  });
+  test('globe export adapts evaluated frames without changing saved cameras', () => {
+    const globe = resolveCameraTourExportFrame({cameraTourTime: 2000}, tour, {width: 800}, true);
+    expect(globe).toMatchObject({longitude: 180, latitude: 0, bearing: 0, pitch: 0, width: 800});
+    expect(tour.stops[0].camera).toEqual(camera);
+  });
+  test('ordinary presets and manual view updates are unchanged', () => {
+    expect(
+      getCameraTourExportKeyframes(tour, 'Orbit (90º)', 5000, {width: 800, height: 600})
+    ).toBeNull();
+    expect(
+      getCameraTourExportKeyframes(null, CAMERA_TOUR_PRESET, 5000, {width: 800, height: 600})
+    ).toBeNull();
+    expect(resolveCameraTourExportFrame(camera, tour)).toBe(camera);
+  });
+  test('regular Hubble adapter defaults to authored duration and evaluates cut boundaries', () => {
+    class Base {
+      constructor() {
+        this.props = {mapData: {visState: {cameraTour: tour}}};
+        this.state = {viewState: {width: 800}, durationMs: 5000, cameraPreset: 'None'};
+      }
+      setStateAndNotify(update) {
+        Object.assign(this.state, update);
+      }
+      getCanvasSize() {
+        return {width: 800, height: 600};
+      }
+      getCameraKeyframes() {
+        return 'ordinary';
+      }
+      setViewState(viewState) {
+        this.state.viewState = viewState;
+      }
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    expect(instance.getCameraKeyframes()).toBe('ordinary');
+    instance.setCameraPreset(CAMERA_TOUR_PRESET);
+    expect(instance.state.durationMs).toBe(4000);
+    expect(instance.getCameraKeyframes().timings).toEqual([0, 4000]);
+    instance.props.mapData.visState.cameraTour = {
+      stops: [{...tour.stops[0], travelDurationMs: 0}, tour.stops[1]]
+    };
+    instance.setViewState({cameraTourTime: 1000});
+    expect(instance.state.viewState).toMatchObject({...tour.stops[1].camera, width: 800});
+    instance.setCameraPreset('Zoom In');
+    expect(instance.getCameraKeyframes()).toBe('ordinary');
   });
 });
