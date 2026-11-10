@@ -80,7 +80,7 @@ const RangeInput = styled.input`
 const ModeButton = styled.button<{$valueWidth?: number}>`
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  place-items: center end;
+  place-items: center;
   flex: 0 0 auto;
   width: ${props => (props.$valueWidth ? `${props.$valueWidth}ch` : '18px')};
   min-width: 18px;
@@ -90,7 +90,7 @@ const ModeButton = styled.button<{$valueWidth?: number}>`
   background: transparent;
   color: ${props => props.theme.labelColor};
   font-family: inherit;
-  font-size: calc(${props => props.theme.sliderInputFontSize} * 0.9);
+  font-size: calc(${props => props.theme.sliderInputFontSize} * 0.9 - 1px);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 
@@ -136,8 +136,8 @@ const SliderRow = styled.div`
   }
 
   @media (hover: hover) {
-    &:hover:not(:has(.kg-range-slider__handle--active, .kg-range-slider__bar--active))
-      ${ModeButton}:enabled {
+    &:not(:has(.kg-range-slider__handle--active, .kg-range-slider__bar--active))
+      ${ModeButton}:enabled:hover {
       --slider-value-visibility: hidden;
       --slider-pencil-visibility: visible;
     }
