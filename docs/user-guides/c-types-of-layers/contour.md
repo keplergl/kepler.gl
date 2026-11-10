@@ -54,16 +54,22 @@ points use a 2×2 grid with one-meter spacing because they have no geographic ex
   Zero and negative weights are valid. If all weights are missing, no contours are drawn.
 - **Without weights**: every valid point contributes one count, including repeated
   coordinates. Clearing the weight selection switches to this density calculation.
-- **Empty cells**: are missing when using weights and do not contribute to smoothing.
-  In density mode they contain zero and participate in smoothing. Smoothing zero displays
-  the unsmoothed cell means or counts.
+- **Empty cells**: contain zero and participate in smoothing. This can pull weighted values
+  toward zero in sparse areas. Smoothing zero displays the unsmoothed cell means or counts.
 
 Numeric and polygon filters select observations before aggregation. GeoJSON rows use
 representative points as described above. Filters affect only their selected layers,
 including when layers share a dataset. Removing points changes cell means/counts and may
 change the grid's extent and alignment. Polygon filters do not clip the generated contours;
-smoothing in density mode can extend into cells with no retained observations. Inverting,
-disabling, or clearing a filter follows the same behavior as other layers.
+smoothing can extend into cells with no retained observations. Inverting, disabling, or
+clearing a filter follows the same behavior as other layers.
+
+After filtering weighted observations, automatic tooltip and legend levels use the
+retained weights' minimum-to-maximum range as a relative display scale. This keeps
+the labels within the remaining data range without changing the smoothed surface
+or its contour boundaries. These display values differ from the zero-filled,
+smoothed field's thresholds. Custom level ranges still display their explicit
+thresholds, and point density still displays smoothed counts.
 
 Existing contour maps retain their selected value column as the weight and retain their
 style settings. They use the new cell aggregation, so contour geometry and automatic levels
@@ -87,8 +93,8 @@ no longer affect the surface; maps without Grid resolution use the default of 64
   more observations. Each axis is capped at 256 cells. Changing the dataset extent or
   filtering boundary points changes physical cell size and can change means/counts.
 - **Smoothing**: Gaussian standard deviation in grid cells; zero preserves the cell means
-  or counts. Smoothing changes values, not just the visual outline. Empty cells remain
-  missing with weights and contribute zero in density mode. The default is 3 cells.
+  or counts. Smoothing changes values, not just the visual outline. Empty cells contribute
+  zero. The default is 3 cells.
 - **3D surface**: drape the existing fills and outlines over that same smoothed grid.
   Contour boundaries, levels, colors, legends, and tooltip values are shared with 2D.
   Tilt the map to see the relief. Fill and Outline remain independently configurable.

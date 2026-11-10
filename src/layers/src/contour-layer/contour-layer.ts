@@ -152,9 +152,18 @@ export default class ContourLayer extends Layer {
     return levels
       .map(level => ({
         ...level,
+        threshold: this.getContourLabelThreshold(level),
         color: this.getContourLevelColor(level.rank, colors, stroked)
       }))
       .sort((a, b) => a.threshold - b.threshold);
+  }
+
+  private getContourLabelThreshold(level: ContourFeature['properties']): number {
+    const domain: [number, number] | null = this.meta.contourLabelDomain;
+    const count = this.meta.contourLevels?.length || 0;
+    if (!domain || !count) return level.threshold;
+    const fraction = (level.below ? count - level.rank : level.rank + 1) / (count + 1);
+    return domain[0] * (1 - fraction) + domain[1] * fraction;
   }
 
   private getContourColors(count: number): RGBColor[] {
@@ -292,7 +301,12 @@ export default class ContourLayer extends Layer {
 
   formatLayerData(datasets: Datasets): ContourLayerData {
     this.errorMessage = null;
-    this.updateMeta({contourLevels: [], contourDomain: null, bounds: undefined});
+    this.updateMeta({
+      contourLevels: [],
+      contourDomain: null,
+      contourLabelDomain: null,
+      bounds: undefined
+    });
     const dataset = this.config.dataId ? datasets[this.config.dataId] : null;
     if (!dataset || !this.hasAllColumns()) return {data: []};
     const {dataContainer, gpuFilter, filteredIndex, filteredIndexByLayer} = dataset;
@@ -304,6 +318,9 @@ export default class ContourLayer extends Layer {
     }
     const getPosition = this.getPositionAccessor(dataContainer, dataset);
     const selected = new Set(filteredIndexByLayer?.[this.id] ?? filteredIndex);
+    let hasFilteredRows = selected.size < dataContainer.numRows();
+    let minimumWeight = Infinity;
+    let maximumWeight = -Infinity;
     const activeFilter =
       gpuFilter &&
       Object.values(gpuFilter.filterValueUpdateTriggers).some(trigger => trigger !== null);
@@ -312,14 +329,28 @@ export default class ContourLayer extends Layer {
       : null;
     const samples: ScalarSample[] = [];
     for (const index of selected) {
-      if (matches && !matches({index})) continue;
+      if (matches && !matches({index})) {
+        hasFilteredRows = true;
+        continue;
+      }
       const position = getPosition({index});
       if (!position) continue;
+      const weight = weightField ? weightField.valueAccessor({index}) : 1;
       samples.push({
         longitude: position[0],
         latitude: position[1],
-        value: weightField ? weightField.valueAccessor({index}) : 1
+        value: weight
       });
+      if (
+        Number.isFinite(weight) &&
+        Number.isFinite(position[0]) &&
+        Number.isFinite(position[1]) &&
+        Math.abs(position[0]) <= 180 &&
+        Math.abs(position[1]) < 90
+      ) {
+        minimumWeight = Math.min(minimumWeight, weight);
+        maximumWeight = Math.max(maximumWeight, weight);
+      }
     }
     // Let calculateLayerData retain validation errors and manage invalid/recovered state.
     const grid = buildContourGrid(
@@ -331,7 +362,6 @@ export default class ContourLayer extends Layer {
       let minimum = Infinity;
       let maximum = -Infinity;
       for (const value of grid.values) {
-        if (!Number.isFinite(value)) continue;
         minimum = Math.min(minimum, value);
         maximum = Math.max(maximum, value);
       }
@@ -353,13 +383,22 @@ export default class ContourLayer extends Layer {
       below,
       domain: customRange ? [minimum, maximum] : undefined
     });
-    this.updateMeta({contourLevels: data.map(feature => feature.properties)});
+    this.updateMeta({
+      contourLevels: data.map(feature => feature.properties),
+      // Keep the zero-filled surface intact. Filtered automatic weighted labels
+      // use the retained observations' range as a relative display scale.
+      contourLabelDomain:
+        weighted && hasFilteredRows && !customRange && Number.isFinite(minimumWeight)
+          ? [minimumWeight, maximumWeight]
+          : null
+    });
     return {data, grid: smoothedGrid};
   }
 
   getHoverData(object: ContourFeature | null) {
     if (!object) return null;
-    const {threshold, below} = object.properties;
+    const {below} = object.properties;
+    const threshold = this.getContourLabelThreshold(object.properties);
     const field = String(this.config.columns.value.value || 'Point count');
     return {
       fieldValues: [
