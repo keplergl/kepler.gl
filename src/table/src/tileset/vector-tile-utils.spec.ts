@@ -12,8 +12,8 @@ import {
   MVT_METADATA
 } from '../../../../test/fixtures/tile-metadata';
 
-describe('getTileUrl', () => {
-  [
+describe('getTileUrl templates', () => {
+  test.each([
     {name: 'empty string', input: '', expected: null},
     {name: 'invalid URL', input: '/foo/bar/baz.mvt', expected: null},
     {
@@ -41,15 +41,13 @@ describe('getTileUrl', () => {
       input: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt?access_token=sk.fobar.baz',
       expected: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt?access_token=sk.fobar.baz'
     }
-  ].forEach(({name, input, expected}) => {
-    test(name, () => {
-      expect(getTileUrl(input)).toBe(expected);
-    });
+  ])('$name', ({input, expected}) => {
+    expect(getTileUrl(input)).toBe(expected);
   });
 });
 
-describe('getMetaUrl', () => {
-  [
+describe('getMetaUrl templates', () => {
+  test.each([
     {name: 'empty string', input: '', expected: null},
     {name: 'invalid URL', input: '/foo/bar/baz.mvt', expected: null},
     {
@@ -79,10 +77,8 @@ describe('getMetaUrl', () => {
       expected:
         'https://api.mapbox.com/v4/spam.json?style=mapbox://styles/user/styleId@00&access_token=pk.xxx.zzz'
     }
-  ].forEach(({name, input, expected}) => {
-    test(name, () => {
-      expect(getMetaUrl(input)).toBe(expected);
-    });
+  ])('$name', ({input, expected}) => {
+    expect(getMetaUrl(input)).toBe(expected);
   });
 });
 
@@ -422,15 +418,13 @@ test('parseMetadata, empty input', () => {
 });
 
 describe('parseMetadata, bad cases', () => {
-  [
+  test.each([
     {name: 'empty string', input: '', expected: null},
     {name: 'null', input: null, expected: null},
     {name: 'undefined', input: undefined, expected: null},
     {name: 'string', input: 'spam', expected: null}
-  ].forEach(({name, input, expected}) => {
-    test(name, () => {
-      expect(parseMetadata(input as any)).toBe(expected);
-    });
+  ])('$name', ({input, expected}) => {
+    expect(parseMetadata(input as any)).toBe(expected);
   });
 });
 

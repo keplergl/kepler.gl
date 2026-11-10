@@ -275,11 +275,7 @@ const BG_COLOR_PRESETS = [
   {color: '#FFFFFF', label: 'White'}
 ];
 
-export const LexicalToolbar: FC<LexicalToolbarProps> = ({
-  isEditingText,
-  textVerticalAlign,
-  onChangeTextVerticalAlign
-}) => {
+export const LexicalToolbar: FC<LexicalToolbarProps> = ({isEditingText}) => {
   const [editor] = useLexicalComposerContext();
   const {fontSize, fontFamily, fontColor, bgColor, handleChangeStyle} = useLexicalTextStyle({
     editor,

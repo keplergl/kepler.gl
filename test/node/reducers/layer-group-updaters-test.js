@@ -5,13 +5,7 @@ import test from 'tape-catch';
 import CloneDeep from 'es-toolkit/compat/cloneDeep';
 
 import {VisStateActions} from '@kepler.gl/actions';
-import {
-  visStateReducer as reducer,
-  INITIAL_VIS_STATE,
-  getFlatLayerOrder,
-  getLayerGroupFromLayerOrder,
-  findParentGroupForLayer
-} from '@kepler.gl/reducers';
+import {visStateReducer as reducer, getLayerGroupFromLayerOrder} from '@kepler.gl/reducers';
 
 import {StateWFilesFiltersLayerColor} from 'test/helpers/mock-state';
 
@@ -307,9 +301,6 @@ test('#visStateReducer -> REMOVE_LAYER_FROM_LAYER_GROUP -> removes layer from gr
 
 test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to root', t => {
   const state = createStateWithLayers();
-  const layer0Id = state.layers[0].id;
-  const layer2Id = state.layers[2].id;
-
   // Assume layerOrder is [layer2, layer0, layer1] (default from mock)
   const firstEntry = state.layerOrder[0];
   const lastEntry = state.layerOrder[state.layerOrder.length - 1];
@@ -380,7 +371,6 @@ test('#visStateReducer -> SWAP_LAYER_ORDER_ENTRIES -> root to group', t => {
 
 test('#visStateReducer -> DUPLICATE_LAYER -> layer inside group', t => {
   const state = createStateWithGroup();
-  const layer0Id = state.layers[0].id;
 
   const nextState = reducer(state, VisStateActions.duplicateLayer(0));
 

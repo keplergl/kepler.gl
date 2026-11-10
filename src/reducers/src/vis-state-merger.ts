@@ -413,7 +413,7 @@ export function insertLayerAtRightOrder(
 export function mergeLayerOrder<S extends VisState>(
   state: S,
   savedLayerOrder?: any[],
-  fromConfig?: boolean
+  _fromConfig?: boolean
 ): S {
   if (!savedLayerOrder || !Array.isArray(savedLayerOrder) || savedLayerOrder.length === 0) {
     return state;

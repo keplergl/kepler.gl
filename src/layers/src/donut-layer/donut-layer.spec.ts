@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import {Float64, Int64, Table, vectorFromArray} from 'apache-arrow';
 import Supercluster from 'supercluster';
 import {
@@ -215,14 +216,13 @@ test('CPU, polygon and GPU filtering preserve original indices, category colors 
   ]) {
     const table = copyTableAndUpdate(dataset, patch);
     const data = layer.formatLayerData({[dataset.id]: table}, original);
-    expect(data.data.map(point => point.index)).toEqual(
-      'filteredIndex' in patch ? patch.filteredIndex : [1]
-    );
+    const expectedIndices = patch.filteredIndex ?? [1];
+    expect(data.data.map(point => point.index)).toEqual(expectedIndices);
     const [ring] = render(layer, table, data);
     expect(ring.props.donutColors).toEqual(categories.map(category => category.color));
-    if (data.data.length) {
-      expect(ring.props.getRadius(data.data[0])).toBe(25);
-    }
+    expect(data.data.map(point => ring.props.getRadius(point))).toEqual(
+      expectedIndices.map(() => 25)
+    );
   }
   const filter = {
     ...getDefaultFilter({dataId: [dataset.id]}),
@@ -411,7 +411,7 @@ test('rejects invalid coordinates and reads Arrow numeric fields', async () => {
     bus: vectorFromArray([30n], new Int64()),
     car: vectorFromArray([70], new Float64())
   });
-  const arrow = await setup(processArrowBatches(table.batches)!);
+  const arrow = await setup(requireValue(processArrowBatches(table.batches)));
   expect(arrow.layer.formatLayerData(arrow.datasets).data[0]).toMatchObject({
     position: [1, 2],
     shares: [0.3, 0.7]
@@ -433,9 +433,9 @@ test('saves categories and sizing settings and switches to the layer using exist
       layerOrder: [layer.id]
     }
   });
-  const parsed = SchemaManager.parseSavedConfig(saved)!;
-  expect(parsed.visState!.layers![0].type).toBe('donut');
-  expect(parsed.visState!.layers![0].config.visConfig).toEqual(layer.config.visConfig);
+  const parsed = requireValue(SchemaManager.parseSavedConfig(saved));
+  expect(requireValue(parsed.visState?.layers)[0].type).toBe('donut');
+  expect(requireValue(parsed.visState?.layers)[0].config.visConfig).toEqual(layer.config.visConfig);
   const state = {
     ...INITIAL_VIS_STATE,
     datasets,
@@ -502,15 +502,12 @@ test.each([
   expect(hover(next)).toBeNull();
 
   const [rings] = render(next.layers[0], dataset, next.layerData[0], 4);
-  if (values.length) {
-    const repinned = hover({
-      ...next,
-      clicked: {...state.clicked, layer: rings, object: rings.props.data[0]}
-    });
-    expect(repinned?.data).toMatchObject({donut: {values}});
-  } else {
-    expect(rings.props.data).toEqual([]);
-  }
+  const repinned = rings.props.data.length
+    ? hover({...next, clicked: {...state.clicked, layer: rings, object: rings.props.data[0]}})
+    : null;
+  const expectedData = expect.objectContaining({donut: expect.objectContaining({values})});
+  expect(repinned?.data ?? null).toEqual(values.length ? expectedData : null);
+  expect(rings.props.data.length > 0).toBe(values.length > 0);
 });
 
 test('presentation edits preserve pinned tooltips with current labels and colors', async () => {

@@ -349,7 +349,7 @@ export default class TripLayer extends Layer {
     return this.defaultPointColumnPairs;
   }
 
-  accessVSFieldValue(field, indexKey) {
+  accessVSFieldValue(_field, _indexKey) {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       return defaultGetFieldValue;
     }
@@ -580,7 +580,7 @@ export default class TripLayer extends Layer {
   }
 
   private _formatTableColumnModeTextLabelData(textLabel: LayerTextLabel[], fields) {
-    return textLabel.map((tl, i) => {
+    return textLabel.map(tl => {
       if (!tl.field) {
         return {
           getText: null,
@@ -667,10 +667,10 @@ export default class TripLayer extends Layer {
         valueAccessor = (dc: DataContainerInterface, f, fieldIndex: number) => {
           return fields[fieldIndex].valueAccessor({index: f.properties.index});
         };
-        const textLabelAccessor = tl => dc => {
+        const textLabelAccessor = tl => () => {
           const {field} = tl;
           if (!field) {
-            return f => '';
+            return () => '';
           }
           return f => getSingleTextLabelValue({field, format: ''}, {index: f.properties.index});
         };
@@ -697,7 +697,7 @@ export default class TripLayer extends Layer {
     // read field values from the first row of the trip (properties.values) instead.
     let dataAccessor;
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
-      dataAccessor = dc => d => ({index: d.properties.index});
+      dataAccessor = () => d => ({index: d.properties.index});
     } else {
       dataAccessor = () => d => d.properties.values[0];
     }
@@ -729,7 +729,10 @@ export default class TripLayer extends Layer {
   updateLayerMeta(dataset: KeplerTable) {
     const {dataContainer} = dataset;
     let getFeature;
-    let timestamps: ReturnType<typeof parseTripGeoJsonTimestamp>;
+    let timestamps: {
+      dataToTimeStamp: (number | null)[][];
+      animationDomain: [number, number] | null;
+    };
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       getFeature = this.getPositionAccessor(dataContainer);
       if (getFeature === this.meta.getFeature) {
@@ -740,7 +743,7 @@ export default class TripLayer extends Layer {
       timestamps = parseTripGeoJsonTimestamp(this.dataToFeature);
     } else {
       this.dataContainer = dataContainer;
-      const dataToTimeStamp: number[][] = [];
+      const dataToTimeStamp: (number | null)[][] = [];
       this.dataToFeature = groupColumnsAsGeoJson(
         dataContainer,
         this.config.columns,

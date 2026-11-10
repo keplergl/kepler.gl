@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback} from 'react';
 import {updateEffect} from '@kepler.gl/actions';
 import {visStateLens} from '@kepler.gl/reducers';
 import {VisState} from '@kepler.gl/schemas';
@@ -32,10 +32,8 @@ function EffectJsonEditorFactory() {
     updateEffect: updateEffectAction,
     onClose
   }) => {
-    const jsonText = useMemo(
-      () => (visState?.schema ? effectToJson(effect, visState.schema) : '{}'),
-      [effect, effect.id, effect.type, effect.isEnabled, effect.parameters, visState?.schema]
-    );
+    // Effect instances are updated in place, so read their current properties on render.
+    const jsonText = visState?.schema ? effectToJson(effect, visState.schema) : '{}';
     const debouncedJsonText = useDebounce(jsonText, 300);
 
     const handleApply = useCallback(

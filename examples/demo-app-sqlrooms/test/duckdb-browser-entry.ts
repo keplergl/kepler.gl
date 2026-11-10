@@ -56,7 +56,12 @@ export async function run() {
   const tools = assistantStore.getState().ai.tools as ReturnType<typeof createDefaultAiTools> &
     ReturnType<typeof createAssistantSkillTools>;
   const options = {toolCallId: 'test-query', messages: []};
-  const query = await tools.query.execute!(
+  check(tools.query.execute, 'Query tool is missing execute');
+  check(tools.query.toModelOutput, 'Query tool is missing toModelOutput');
+  check(tools.list_tables.execute, 'List tables tool is missing execute');
+  check(tools.execute_command.execute, 'Command tool is missing execute');
+  check(tools.discoverSkill.execute, 'Discover skill tool is missing execute');
+  const query = await tools.query.execute(
     {type: 'query', sqlQuery: 'SELECT * FROM source', reasoning: 'Preview source'},
     options
   );
@@ -69,9 +74,9 @@ export async function run() {
     sqlQuery: "SELECT repeat('x', 5000) AS geometry",
     reasoning: 'Preview a large value'
   };
-  const largeResult = await tools.query.execute!(largeInput, options);
+  const largeResult = await tools.query.execute(largeInput, options);
   check('success' in largeResult && largeResult.success, 'Large-value query failed');
-  const modelPreview = await tools.query.toModelOutput!({
+  const modelPreview = await tools.query.toModelOutput({
     toolCallId: 'test-preview',
     input: largeInput,
     output: largeResult
@@ -80,7 +85,7 @@ export async function run() {
     modelPreview.type === 'text' && modelPreview.value.length < 1200,
     'Geometry preview exceeded the model context budget'
   );
-  const rejectedWrite = await tools.query.execute!(
+  const rejectedWrite = await tools.query.execute(
     {type: 'query', sqlQuery: 'DROP TABLE source', reasoning: 'Test read-only query'},
     options
   );
@@ -88,7 +93,7 @@ export async function run() {
     'success' in rejectedWrite && !rejectedWrite.success,
     'Chat query unexpectedly allowed writes'
   );
-  const listed = await tools.list_tables.execute!({pattern: 'source', includeViews: true}, options);
+  const listed = await tools.list_tables.execute({pattern: 'source', includeViews: true}, options);
   // The 0.29.0 JS wraps this result in llmResult; its declarations still describe the flat result.
   check('llmResult' in listed, 'Missing table discovery result');
   const tableList = listed.llmResult as {success: boolean; tables: unknown[]};
@@ -100,7 +105,7 @@ export async function run() {
     "SELECT count(*) FROM duckdb_tables() WHERE starts_with(table_name, 'tbl_')"
   );
   check(
-    Number(tablesBefore.getChildAt(0)!.get(0)) === 0,
+    Number(tablesBefore.getChildAt(0)?.get(0)) === 0,
     'Plain AI query copied data into a legacy table'
   );
 
@@ -110,7 +115,7 @@ export async function run() {
   };
   const reduxStore = createStore((state = {}) => state);
   const disconnectMap = connectAssistantToMap(assistantStore, {reduxStore, stateAccessors});
-  const boundary = await tools.execute_command.execute!(
+  const boundary = await tools.execute_command.execute(
     {commandId: 'map.get-boundary', input: {}, confirmed: false},
     options
   );
@@ -118,7 +123,7 @@ export async function run() {
     'success' in boundary && boundary.success,
     'Standard command tool cannot access Kepler viewport'
   );
-  const chart = await tools.execute_command.execute!(
+  const chart = await tools.execute_command.execute(
     {
       commandId: 'chart.histogram',
       input: {datasetName: 'source', variableName: 'i'},
@@ -141,7 +146,7 @@ export async function run() {
         })
     }
   }));
-  const discovered = await tools.discoverSkill.execute!(
+  const discovered = await tools.discoverSkill.execute(
     {query: 'charts', reasoning: 'Find chart skill'},
     options
   );
@@ -221,7 +226,9 @@ export async function run() {
     assistantStore.getState().aiSettings.config.providers.openai.apiKey === 'test-only-key',
     'Closing assistant lost provider settings'
   );
-  const persisted = JSON.parse(localStorage.getItem('kepler-sqlrooms-ai-assistant-state')!);
+  const storedAssistant = localStorage.getItem('kepler-sqlrooms-ai-assistant-state');
+  check(storedAssistant, 'SQLRooms assistant state was not persisted');
+  const persisted = JSON.parse(storedAssistant);
   check(
     persisted.state.ai.sessions.some((s: {id: string}) => s.id === sessionId),
     'SQLRooms assistant state was not persisted'
@@ -240,8 +247,10 @@ export async function run() {
   await table.importData({data: {fields: [], rows: [], duckdbTableName: result.tableName}});
   check(table.length === 2500, 'Map must include all rows');
   const after = await connector.query('SELECT count(*) AS n FROM duckdb_tables()');
+  const beforeCount = before.getChildAt(0);
+  const afterCount = after.getChildAt(0);
   check(
-    before.getChildAt(0)!.get(0) === after.getChildAt(0)!.get(0),
+    beforeCount && afterCount && beforeCount.get(0) === afterCount.get(0),
     'Map re-imported the existing table'
   );
   const originalConnect = adapter.connect.bind(adapter);
@@ -301,7 +310,7 @@ export async function run() {
   const remaining = await connector.query(
     "SELECT count(*) FROM duckdb_tables() WHERE starts_with(table_name, '__sqlrooms_kepler_result_')"
   );
-  check(Number(remaining.getChildAt(0)!.get(0)) === 0, 'Unretained snapshots leaked');
+  check(Number(remaining.getChildAt(0)?.get(0)) === 0, 'Unretained snapshots leaked');
   disconnectMap();
   await assistantStore.getState().room.destroy();
   check(

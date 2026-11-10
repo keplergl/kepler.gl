@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import {KeplerTable, getGpuFilterProps, assignGpuChannels} from '@kepler.gl/table';
 import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, KEPLER_COLOR_PALETTES} from '@kepler.gl/constants';
 import {colorMaybeToRGB, generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
@@ -61,7 +62,7 @@ async function setup(scatteredRows?: number[][]) {
     return `${x},${y},${(x - 4) ** 2 + (y - 4) ** 2}`;
   });
   const dataset = new KeplerTable({info: {id: 'contour-test'}, color: [0, 0, 0]});
-  const data = processCsvData(`longitude,latitude,value\n${rows.join('\n')}`)!;
+  const data = requireValue(processCsvData(`longitude,latitude,value\n${rows.join('\n')}`));
   if (scatteredRows) {
     // Small CSV fixtures may infer integer columns; provide the intended numeric schema.
     data.fields = data.fields.map(field => ({...field, type: 'real'}));
@@ -234,7 +235,7 @@ test.each([false, true])('new contours enclose peaks by default (weighted: %s)',
     [data.length - 1, colors[colors.length - 1]]
   ] as const) {
     expect(getFillColor(data[index], {index, data, target: []})).toEqual([
-      ...colorMaybeToRGB(color)!,
+      ...requireValue(colorMaybeToRGB(color)),
       Math.round(255 * layer.config.visConfig.fillOpacity)
     ]);
   }
@@ -282,9 +283,17 @@ test.each([
   const {layer, dataset, datasets} = await setup();
   layer.updateLayerVisConfig({enable3d: pass === 'surface-fill'});
   const data = layer.formatLayerData(datasets);
-  const deckLayer = layer
-    .renderLayer({data, visible: true, idx: 0, gpuFilter: dataset.gpuFilter, mapState: {zoom: 10}})
-    .find(rendered => rendered.id === `${layer.id}-${pass}`)!;
+  const deckLayer = requireValue(
+    layer
+      .renderLayer({
+        data,
+        visible: true,
+        idx: 0,
+        gpuFilter: dataset.gpuFilter,
+        mapState: {zoom: 10}
+      })
+      .find(rendered => rendered.id === `${layer.id}-${pass}`)
+  );
   const pick: PickingInfo = {
     picked: true,
     layer: deckLayer.clone({id: `${deckLayer.id}${sublayer}`}),
@@ -372,7 +381,7 @@ describe.each([Int64, Uint64])('Arrow %p contour inputs', ArrowType => {
             ...dataset.fields,
             {name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}
           ],
-          cols: arrowTable.schema.fields.map((_, i) => arrowTable.getChildAt(i)!),
+          cols: arrowTable.schema.fields.map((_, i) => requireValue(arrowTable.getChildAt(i))),
           arrowTable
         }
       });
@@ -508,7 +517,9 @@ test.each([0, 60])('projects contour normals perpendicular to slopes at latitude
   const {unitsPerDegree, unitsPerMeter} = getDistanceScales({longitude: position[0], latitude});
   const vertices = surface.fills[0].geometry.coordinates.flat(2);
   const height = (x: number, y: number) =>
-    vertices.find(point => Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9)![2];
+    requireValue(
+      vertices.find(point => Math.abs(point[0] - x) < 1e-9 && Math.abs(point[1] - y) < 1e-9)
+    )[2];
   const dzdx = (height(0.03, latitude) - height(0.01, latitude)) / 0.02;
   const dzdy = (height(0.02, latitude + 0.01) - height(0.02, latitude - 0.01)) / 0.02;
   const normalize = (vector: number[]) => vector.map(value => value / Math.hypot(...vector));
@@ -557,11 +568,11 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     expect(surface.props.extruded).toBe(false);
     expect(passes[0].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
     expect(passes[2].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
-    const model = surface.state.topModel!;
+    const model = requireValue(surface.state.topModel);
     expect(model).toBeDefined();
     expect(model).not.toBe(flatModel);
     // Check the assembled shaders, including the material module and picking hooks.
-    const normals = surface.getAttributeManager()!.getAttributes().contourNormals
+    const normals = requireValue(surface.getAttributeManager()).getAttributes().contourNormals
       .value as Float32Array;
     expect(normals.length).toBeGreaterThan(0);
     expect(Array.from(normals.slice(0, 3))).not.toEqual(Array.from(normals.slice(3, 6)));
@@ -606,14 +617,17 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
     const flat = renderContourPasses(layer, dataset, data);
     manager.setLayers(flat);
     expect(flat[0].getSubLayers()[0]).not.toBeInstanceOf(ContourSurfaceLayer);
-    const restoredFlatModel = (flat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel!;
+    const restoredFlatModel = requireValue(
+      (flat[0].getSubLayers()[0] as ContourSurfaceLayer).state.topModel
+    );
     expect(restoredFlatModel).not.toBe(model);
     expect(restoredFlatModel.fs).not.toContain('dFdx(vCommonPosition)');
     layer.updateLayerVisConfig({enable3d: true});
     const restoredSurface = renderContourPasses(layer, dataset, data);
     manager.setLayers(restoredSurface);
-    const restoredModel = (restoredSurface[1].getSubLayers()[0] as ContourSurfaceLayer).state
-      .topModel!;
+    const restoredModel = requireValue(
+      (restoredSurface[1].getSubLayers()[0] as ContourSurfaceLayer).state.topModel
+    );
     expect(restoredModel).not.toBe(restoredFlatModel);
     expect(restoredModel.fs).toContain('vec3 normal = normalize(vSurfaceNormal);');
     expect(onError).not.toHaveBeenCalled();
@@ -953,7 +967,7 @@ test.each(['point', 'contour'])(
     });
     const editor = view.getAllByRole('textbox')[0] as HTMLInputElement;
     const defaultLabel = editor.value;
-    const row = editor.parentElement!;
+    const row = requireValue(editor.parentElement);
     expect(within(row).queryByRole('button', {name: 'Reset label'})).toBeNull();
     fireEvent.change(editor, {target: {value: 'Custom label'}});
     view.update();
@@ -1092,14 +1106,17 @@ test.each(['point', 'grid'])(
       colorLegends: {'#FF0000': 'Existing color label'}
     });
     expect(layer.config.visConfig.colorRange).toEqual(colorRange);
+    let view: ReturnType<typeof renderLegend> | null = null;
     if (newType === 'point') {
       converted.updateLayerConfig({colorField: dataset.fields[2]});
       converted.updateLayerDomain(datasets);
-      const view = renderLegend(converted);
-      expect(view.queryByDisplayValue('Custom contour')).toBeNull();
-      expect(view.getByDisplayValue('Existing color label')).toBeInTheDocument();
-      expect(view.container.querySelectorAll('.legend-row-color')).toHaveLength(3);
+      view = renderLegend(converted);
     }
+    expect(view?.queryByDisplayValue('Custom contour') ?? null).toBeNull();
+    expect(Boolean(view?.queryByDisplayValue('Existing color label'))).toBe(newType === 'point');
+    expect(view?.container.querySelectorAll('.legend-row-color').length ?? 0).toBe(
+      newType === 'point' ? 3 : 0
+    );
     const roundTrip = layerTypeChangeUpdater(result, {oldLayer: converted, newType: 'contour'});
     expect(roundTrip.layers[0].config.visConfig.colorRange).toEqual(
       converted.config.visConfig.colorRange
@@ -1128,10 +1145,11 @@ test.each([false, true])(
     expect(view.queryAllByRole('textbox')).toHaveLength(0);
     expect(view.getByText('Low')).toBeInTheDocument();
     expect(view.getAllByRole('listitem')).toHaveLength(20);
-    if (isExport) {
-      expect(view.queryByRole('button', {name: 'value'})).toBeNull();
-      expect(view.getByRole('list')).toHaveStyle({maxHeight: 'none'});
-    }
+    const exportLegend = isExport ? view.getByRole('list') : null;
+    expect(exportLegend ? view.queryByRole('button', {name: 'value'}) : null).toBeNull();
+    expect(exportLegend ? getComputedStyle(exportLegend).maxHeight : null).toBe(
+      isExport ? 'none' : null
+    );
     expect(onLayerVisConfigChange).not.toHaveBeenCalled();
   }
 );
@@ -1385,7 +1403,7 @@ test.each([Int64, Uint64])(
       data: {
         rows: [],
         fields: reference.dataset.fields,
-        cols: table.schema.fields.map((_, index) => table.getChildAt(index)!),
+        cols: table.schema.fields.map((_, index) => requireValue(table.getChildAt(index))),
         arrowTable: table
       }
     });
@@ -1465,14 +1483,14 @@ test.each(
     });
     const parsed = SchemaManager.parseSavedConfig(saved);
     if (!parsed) throw new Error('Expected the saved contour configuration to parse.');
-    const restored = parsed.visState!.layers![0];
+    const restored = requireValue(parsed.visState?.layers)[0];
     expect(restored.type).toBe('contour');
     expect(restored.config.columnMode).toBe(columnMode);
     expect(restored.config.visConfig).toEqual(layer.config.visConfig);
     // Saved configs retain column names; field indices are resolved against the loaded table.
     expect(restored.config.columns.value).toBe(weighted ? 'value' : undefined);
-    if (columnMode === 'geojson') expect(restored.config.columns.geojson).toBe('geometry');
-    const loaded = validateLayerWithData(dataset, restored, LayerClasses)!;
+    expect(restored.config.columns.geojson).toBe(columnMode === 'geojson' ? 'geometry' : undefined);
+    const loaded = requireValue(validateLayerWithData(dataset, restored, LayerClasses));
     expect(loaded.formatLayerData(datasets)).toEqual(layer.formatLayerData(datasets));
   }
 );
@@ -1688,7 +1706,7 @@ test.each(['grid', 'geojson'])(
       ...StateWFiles,
       visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
     });
-    const restored = SchemaManager.parseSavedConfig(saved)!.visState!.layers![0];
+    const restored = requireValue(SchemaManager.parseSavedConfig(saved)?.visState?.layers)[0];
     const fields = dataset.fields.slice(0, -1);
     const missingWeightDataset = new KeplerTable({
       info: {id: dataset.id},

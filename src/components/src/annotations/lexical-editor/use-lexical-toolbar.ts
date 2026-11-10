@@ -40,7 +40,6 @@ export type UseLexicalTextFormatReturn = {
 };
 
 export const useLexicalTextFormat = ({
-  isEditingText,
   editor
 }: UseLexicalToolbarProps): UseLexicalTextFormatReturn => {
   const [isBold, setIsBold] = useState(false);
@@ -114,7 +113,6 @@ export type UseLexicalTextStyleReturn = {
 
 export const useLexicalTextStyle = ({
   editor,
-  isEditingText,
   defaultSettings
 }: {
   editor: LexicalEditor;
@@ -253,7 +251,6 @@ export type UseInsertLexicalLinkReturn = {
 };
 
 export const useInsertLexicalLink = ({
-  isEditingText,
   editor
 }: UseLexicalToolbarProps): UseInsertLexicalLinkReturn => {
   const [isLink, setIsLink] = useState(false);

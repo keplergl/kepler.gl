@@ -198,11 +198,10 @@ describe('Zarr metadata', () => {
     });
     const controller = new AbortController();
     const pending = getZarrMetadata(url, {signal: controller.signal, onProgress});
-    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
     await downloading;
     const count = onProgress.mock.calls.length;
     controller.abort();
-    await rejected;
+    await expect(pending).rejects.toMatchObject({name: 'AbortError'});
     expect(cancel).toHaveBeenCalled();
     expect(onProgress).toHaveBeenCalledTimes(count);
   });
@@ -292,14 +291,13 @@ describe('Zarr metadata', () => {
     });
     const onProgress = jest.fn();
     const pending = getZarrMetadata(url, {signal: controller.signal, onProgress});
-    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
     await coordinatesRequested;
     expect(onProgress.mock.calls[onProgress.mock.calls.length - 1][0]).toMatchObject({
       phase: 'connecting',
       loadedBytes: new TextEncoder().encode(JSON.stringify(consolidated)).length
     });
     controller.abort();
-    await rejected;
+    await expect(pending).rejects.toMatchObject({name: 'AbortError'});
   });
 
   it.each([
@@ -431,20 +429,21 @@ describe('Zarr metadata', () => {
       started = resolve;
     });
     const controller = new AbortController();
+    let requestSignal: AbortSignal | null | undefined;
     fetchMock.mockImplementation((request: Request, options?: RequestInit) => {
       if (request.url.endsWith(path)) {
-        expect(options?.signal).toBe(controller.signal);
+        requestSignal = options?.signal;
         started();
         return pendingUntilAbort(controller.signal);
       }
       return Promise.resolve(serve(request));
     });
     const pending = getZarrMetadata(url, {signal: controller.signal});
-    const rejected = expect(pending).rejects.toMatchObject({name: 'AbortError'});
     await requestStarted;
+    expect(requestSignal).toBe(controller.signal);
     const requestCount = fetchMock.mock.calls.length;
     controller.abort();
-    await rejected;
+    await expect(pending).rejects.toMatchObject({name: 'AbortError'});
     expect(fetchMock).toHaveBeenCalledTimes(requestCount);
 
     fetchMock.mockImplementation((request: Request) => Promise.resolve(serve(request)));
@@ -461,10 +460,9 @@ describe('Zarr metadata', () => {
         : Promise.resolve(serve(request))
     );
     const preview = getZarrMetadata(url, {signal: controller.signal});
-    const rejected = expect(preview).rejects.toMatchObject({name: 'AbortError'});
     const layerStore = await openZarrStore(url);
     controller.abort();
-    await rejected;
+    await expect(preview).rejects.toMatchObject({name: 'AbortError'});
 
     expect(await openZarrStore(url)).toBe(layerStore);
     const chunk = await layerStore.get('/month/0');

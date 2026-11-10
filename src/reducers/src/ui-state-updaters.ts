@@ -97,6 +97,13 @@ const DEFAULT_MAP_CONTROLS_FEATURES: MapControlItem = {
   activeMapIndex: 0
 };
 
+const DEFAULT_CAMERA_BOOKMARK_CONTROL: MapControlMapLegend = {
+  ...DEFAULT_MAP_CONTROLS_FEATURES,
+  show: false,
+  active: true,
+  settings: {position: {x: 60, y: 20, anchorX: 'right', anchorY: 'top'}, contentHeight: -1}
+};
+
 const DEFAULT_MAP_LEGEND_CONTROL = {
   ...DEFAULT_MAP_CONTROLS_FEATURES,
   disableEdit: false
@@ -129,12 +136,7 @@ export const DEFAULT_MAP_CONTROLS: MapControls = {
   ),
   // Camera controls are UI preferences; saved camera snapshots remain independent.
   cameraTour: {...DEFAULT_MAP_CONTROLS_FEATURES},
-  cameraBookmarks: {
-    ...DEFAULT_MAP_CONTROLS_FEATURES,
-    show: false,
-    active: true,
-    settings: {position: {x: 60, y: 20, anchorX: 'right', anchorY: 'top'}, contentHeight: -1}
-  },
+  cameraBookmarks: DEFAULT_CAMERA_BOOKMARK_CONTROL,
   // Open by default so a saved title shows on load. An empty map still hides the card.
   mapInfo: {
     ...DEFAULT_MAP_CONTROLS_FEATURES,
@@ -1211,7 +1213,7 @@ export const receiveMapConfigUpdater = (
       mapControls: {
         ...newState.mapControls,
         cameraBookmarks: {
-          ...DEFAULT_MAP_CONTROLS.cameraBookmarks!,
+          ...DEFAULT_CAMERA_BOOKMARK_CONTROL,
           ...newState.mapControls.cameraBookmarks,
           show: savedBookmarks.show,
           activeMapIndex: 0

@@ -10,7 +10,7 @@ import {
   getViewportFromMapState
 } from '@kepler.gl/utils';
 
-export const INITIAL_MAP_STATE = {
+const INITIAL_MAP_STATE = {
   pitch: 0,
   bearing: 0,
   latitude: 40,

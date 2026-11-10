@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useContext, useId, useLayoutEffect, useRef, useState} from 'react';
+import React, {useContext, useId, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import {
@@ -545,7 +545,7 @@ export default function CameraTourConfig({
     !sharedPlayback && supported && enabled
   );
   const playback = sharedPlayback ?? localPlayback;
-  const stops = tour?.stops || [];
+  const stops = useMemo(() => tour?.stops ?? [], [tour?.stops]);
   const selected = stops.find(stop => stop.id === selectedId) || stops[0];
   const selectedIndex = selected ? stops.indexOf(selected) : -1;
   const markerRefs = useRef(new Map<string, HTMLButtonElement>());

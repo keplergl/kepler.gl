@@ -95,8 +95,9 @@ describe('map.add-layer (surface layers)', () => {
       lat: 'origin_lat',
       lng: 'origin_lng'
     });
-    if (layerType === 'contour') expect(getDispatched().config.config.columns.value).toBeNull();
-    else expect(getDispatched().config.config.visConfig.boundsPadding).toBe(25);
+    expect(getDispatched().config.config).toMatchObject(
+      layerType === 'contour' ? {columns: {value: null}} : {visConfig: {boundsPadding: 25}}
+    );
   });
 
   it.each(['contour', 'voronoi'])('creates %s from an explicit geometry field', async layerType => {

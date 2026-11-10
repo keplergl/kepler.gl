@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import GeoJsonLayer, {GeoJsonLayerConfig, getTextLabelPosition} from './geojson-layer';
 import {ALL_FIELD_TYPES, LAYER_VIS_CONFIGS} from '@kepler.gl/constants';
 import {getPolygonFilterFunctor, valueToPosition} from '@kepler.gl/utils';
@@ -304,7 +305,7 @@ describe('GeoJsonLayer default color field', () => {
         layer.updateLayerVisConfig({filled: false, stroked: false});
 
         if (failure === 'field values') {
-          const field = dataset.fields.find(candidate => candidate.name === 'score')!;
+          const field = requireValue(dataset.fields.find(candidate => candidate.name === 'score'));
           jest.spyOn(field, 'valueAccessor').mockImplementation(() => {
             throw new Error('Cannot read field values');
           });
@@ -952,10 +953,12 @@ describe('GeoJsonLayer inferred geometry fields', () => {
   test.each(cases)(
     'imports $name from a custom column and keeps styling/filter cache reuse',
     async ({value}) => {
-      const data = processRowObject([
-        {shape: value, score: 0.25},
-        {shape: value, score: 0.75}
-      ])!;
+      const data = requireValue(
+        processRowObject([
+          {shape: value, score: 0.25},
+          {shape: value, score: 0.75}
+        ])
+      );
       const dataset = new KeplerTable({info: {id: 'inferred'}, color: [0, 0, 0]});
       await dataset.importData({data});
       const {props} = GeoJsonLayer.findDefaultLayerProps(dataset);
@@ -991,7 +994,7 @@ describe('GeoJsonLayer inferred geometry fields', () => {
     'GEOMETRYCOLLECTION (',
     'GEOMETRYCOLLECTION (ordinary text)'
   ])('does not create a geometry layer for malformed custom-column values (%s)', async value => {
-    const data = processRowObject([{shape: value}])!;
+    const data = requireValue(processRowObject([{shape: value}]));
     const dataset = new KeplerTable({info: {id: 'invalid-geometry'}, color: [0, 0, 0]});
     await dataset.importData({data});
     expect(GeoJsonLayer.findDefaultLayerProps(dataset).props).toHaveLength(0);
@@ -1481,12 +1484,10 @@ describe('GeoJsonLayer numeric feature styles', () => {
     expect(near.props.data.map(near.props.getPointRadius)).toEqual(
       radii.map(radius => radius ?? 1)
     );
-    if (fixed) {
-      expect(near.props.pointRadiusScale).toBe(1);
-      expect(far.props.pointRadiusScale).toBe(1);
-    } else {
-      expect(near.props.pointRadiusScale).not.toBe(far.props.pointRadiusScale);
-    }
+    const nearScale = near.props.pointRadiusScale;
+    const farScale = far.props.pointRadiusScale;
+    expect(farScale).toBe(fixed ? 1 : nearScale * 2 ** 8);
+    expect(nearScale === 1 && farScale === 1).toBe(fixed);
   });
 
   test.each([
@@ -1503,7 +1504,7 @@ describe('GeoJsonLayer numeric feature styles', () => {
     );
     const {field, domain, scale, range} = layer.visualChannels.radius;
     layer.updateLayerConfig({
-      [field]: dataset.fields.find(field => field.name === 'size')!,
+      [field]: requireValue(dataset.fields.find(field => field.name === 'size')),
       [domain]: [1, 2],
       [scale]: 'linear'
     });
@@ -1523,9 +1524,10 @@ describe('GeoJsonLayer numeric feature styles', () => {
       first ?? 1,
       second ?? 1
     ]);
-    if (first != null || second != null) {
-      expect(restored.props.pointRadiusScale).toBe(1);
-    }
+    const restoredNear = render(layer, dataset, unmapped, 12);
+    expect(restored.props.pointRadiusScale).toBe(
+      first != null || second != null ? 1 : restoredNear.props.pointRadiusScale * 2 ** 8
+    );
   });
 
   test('retains zero styles through data save/load and same-length refresh', async () => {

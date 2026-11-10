@@ -112,7 +112,6 @@ function AddMapStyleModalFactory() {
     inputStyle,
     loadCustomMapStyle: loadCustomMapStyleAction,
     mapboxApiAccessToken,
-    mapboxApiUrl,
     transformRequest: customTransformRequest,
     mapState,
     intl

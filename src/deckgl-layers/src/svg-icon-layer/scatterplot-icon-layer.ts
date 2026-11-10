@@ -51,7 +51,11 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
 
   initializeState() {
     super.initializeState();
-    this.getAttributeManager()!.addInstanced({
+    const attributeManager = this.getAttributeManager();
+    if (!attributeManager) {
+      throw new Error('Missing layer attribute manager.');
+    }
+    attributeManager.addInstanced({
       instanceAngles: {size: 1, accessor: 'getAngle', defaultValue: 0}
     });
   }
@@ -114,10 +118,14 @@ export default class ScatterplotIconLayer extends ScatterplotLayer<any, Scatterp
       ? [(minX + maxX) / 2, (minY + maxY) / 2]
       : [0, 0];
 
+    const attributeManager = this.getAttributeManager();
+    if (!attributeManager) {
+      throw new Error('Missing layer attribute manager.');
+    }
     const model = new Model(this.context.device, {
       ...this.getShaders(),
       id: this.props.id,
-      bufferLayout: this.getAttributeManager()!.getBufferLayouts(),
+      bufferLayout: attributeManager.getBufferLayouts(),
       geometry: new Geometry({
         topology: iconGeometry ? TOPOLOGY.TRIANGLE_LIST : TOPOLOGY.TRIANGLE_STRIP,
         attributes: {

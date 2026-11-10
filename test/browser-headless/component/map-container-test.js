@@ -12,7 +12,6 @@ import test from 'tape';
 import {
   appInjector,
   MapContainerFactory,
-  MapControlFactory,
   MapPopoverFactory,
   mapFieldsSelector,
   MapViewStateContextProvider
@@ -27,7 +26,6 @@ import {mockKeplerProps, expectedLayerHoverProp} from '../../helpers/mock-state'
 
 const MapContainer = appInjector.get(MapContainerFactory);
 const MapPopover = appInjector.get(MapPopoverFactory);
-const MapControl = appInjector.get(MapControlFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
 const initialState = {mapState: {latitude: 0, longitude: 0}};

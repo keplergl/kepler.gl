@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import {Feature, Geometry} from 'geojson';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
@@ -121,8 +122,12 @@ describe('GeoJSON coordinates', () => {
             cols: [table.getChildAt(0)],
             arrowTable: table
           });
-          expect((dataset.dataContainer as ArrowDataContainer).getTable().batches).toHaveLength(2);
         }
+        const batchCount =
+          dataset.dataContainer instanceof ArrowDataContainer
+            ? dataset.dataContainer.getTable().batches.length
+            : 0;
+        expect(batchCount).toBe(storage === 'rows' ? 0 : 2);
         const layer: any = new LayerClass({
           dataId: dataset.id,
           columnMode: 'geojson',
@@ -334,9 +339,8 @@ describe('WKB GeometryCollection', () => {
       expect(layer.centroids).toHaveLength(2);
       expect(layer.meta).toMatchObject({bounds: [1, 2, 50, 60]});
       expect(layer.meta.featureTypes).toMatchObject({point: true, line: true});
-      if (layer.geoArrowMode) {
-        expect(
-          [
+      const renderedIndices = layer.geoArrowMode
+        ? [
             ...new Set(
               data.data.flatMap(batch =>
                 ['points', 'lines', 'polygons'].flatMap(type =>
@@ -345,21 +349,27 @@ describe('WKB GeometryCollection', () => {
               )
             )
           ].sort()
-        ).toEqual([0, 1]);
-      } else {
-        expect(data.data.map(feature => feature.properties.index)).toEqual([0, 1]);
-        const rendered = renderGeojsonFeatures(data.data);
-        expect(rendered.pointFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
-          [1, 2],
-          [50, 60]
-        ]);
-        expect(rendered.lineFeatures?.map(feature => feature.geometry.coordinates)).toEqual([
-          [
-            [3, 4],
-            [5, 6]
-          ]
-        ]);
-      }
+        : data.data.map(feature => feature.properties.index);
+      expect(renderedIndices).toEqual([0, 1]);
+      const rendered = layer.geoArrowMode ? null : renderGeojsonFeatures(data.data);
+      expect(rendered?.pointFeatures?.map(feature => feature.geometry.coordinates)).toEqual(
+        layer.geoArrowMode
+          ? undefined
+          : [
+              [1, 2],
+              [50, 60]
+            ]
+      );
+      expect(rendered?.lineFeatures?.map(feature => feature.geometry.coordinates)).toEqual(
+        layer.geoArrowMode
+          ? undefined
+          : [
+              [
+                [3, 4],
+                [5, 6]
+              ]
+            ]
+      );
       const hover = {
         picked: true,
         index: 0,
@@ -383,14 +393,14 @@ describe('WKB GeometryCollection', () => {
           ]
         }
       });
-      const renderedOverlay = renderGeojsonFeatures(overlay!);
+      const renderedOverlay = renderGeojsonFeatures(requireValue(overlay));
       expect(renderedOverlay.pointFeatures).toHaveLength(1);
       expect(renderedOverlay.lineFeatures).toHaveLength(1);
-      if (layer.geoArrowMode)
-        expect(layer.hasHoveredObject(hover)?.properties).toMatchObject({
-          label: 'collection',
-          index: 0
-        });
+      const hoveredProperties = layer.geoArrowMode
+        ? layer.hasHoveredObject(hover)?.properties
+        : null;
+      const collectionProperties = expect.objectContaining({label: 'collection', index: 0});
+      expect(hoveredProperties).toEqual(layer.geoArrowMode ? collectionProperties : null);
       const parsed = layer.dataToFeature;
       layer.updateLayerVisConfig({opacity: 0.37});
       const updated = layer.formatLayerData(
@@ -399,10 +409,10 @@ describe('WKB GeometryCollection', () => {
       ) as any;
       expect(layer.dataToFeature).toBe(parsed);
       expect(layer.config.visConfig.opacity).toBe(0.37);
-      if (layer.geoArrowMode) {
-        expect(updated.getFiltered({properties: {index: 0}})).toBe(0);
-        expect(updated.getFiltered({properties: {index: 1}})).toBe(1);
-      } else expect(updated.data.map(feature => feature.properties.index)).toEqual([1]);
+      const filtered = layer.geoArrowMode
+        ? [0, 1].map(index => updated.getFiltered({properties: {index}}))
+        : updated.data.map(feature => feature.properties.index);
+      expect(filtered).toEqual(layer.geoArrowMode ? [0, 1] : [1]);
     }
   );
 

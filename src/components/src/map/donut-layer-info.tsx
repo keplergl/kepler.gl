@@ -61,27 +61,26 @@ export function DonutTooltip({
           </td>
         </tr>
       ) : null}
-      {composition.categories.map((category, index) => (
-        <tr key={category.field}>
-          <td className="row__name">
-            <Swatch color={category.color} />
-            {category.label}
-          </td>
-          <td className="row__value">
-            {composition.values[index] === null
-              ? '—'
-              : intl.formatNumber(composition.values[index]!)}
-          </td>
-          <td className="row__value">
-            {composition.status === 'valid'
-              ? intl.formatNumber(composition.shares[index], {
-                  style: 'percent',
-                  maximumFractionDigits: 1
-                })
-              : '—'}
-          </td>
-        </tr>
-      ))}
+      {composition.categories.map((category, index) => {
+        const value = composition.values[index];
+        return (
+          <tr key={category.field}>
+            <td className="row__name">
+              <Swatch color={category.color} />
+              {category.label}
+            </td>
+            <td className="row__value">{value === null ? '—' : intl.formatNumber(value)}</td>
+            <td className="row__value">
+              {composition.status === 'valid'
+                ? intl.formatNumber(composition.shares[index], {
+                    style: 'percent',
+                    maximumFractionDigits: 1
+                  })
+                : '—'}
+            </td>
+          </tr>
+        );
+      })}
       <tr>
         <td className="row__name">
           <FormattedMessage id="layerVisConfigs.donut.total" />

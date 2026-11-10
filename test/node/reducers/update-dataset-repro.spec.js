@@ -111,7 +111,9 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
         }
       })
     );
+  });
 
+  test('loads a valid GeoJSON layer for the dataset', () => {
     expect(Object.keys(state.visState.datasets)).toContain('nyc');
     expect(state.visState.layers.length).toBe(1);
     expect(state.visState.layers[0].isValidToSave()).toBe(true);
@@ -166,7 +168,7 @@ describe('updateDataset with DuckDB round-tripped _geojson (Struct)', () => {
     // 1. fields: arrowSchemaToFields, but existing columns keep their ORIGINAL descriptors
     const originalFields = dataset.fields;
     const originalByName = new Map(originalFields.map(f => [f.name, f]));
-    const fields = arrowSchemaToFields(arrowResult).map((f, i) => {
+    const fields = arrowSchemaToFields(arrowResult).map(f => {
       const orig = originalByName.get(f.name);
       return orig
         ? {...f, type: orig.type, analyzerType: orig.analyzerType, format: orig.format || ''}

@@ -184,11 +184,8 @@ test.each([
     if (publish) handleResponse(layer, {featureInfo, coordinate});
   });
   const latestSelection = getState().clicked;
-  if (publish) {
-    expect(latestSelection?.object.wmsFeatureInfo ?? null).toEqual(featureInfo);
-  } else {
-    expect(latestSelection.coordinate).toBe(coordinate);
-  }
+  expect(latestSelection?.object?.wmsFeatureInfo ?? null).toEqual(featureInfo);
+  expect(latestSelection?.coordinate).toBe(publish && !featureInfo ? undefined : coordinate);
 
   await act(async () => {
     finishOld();

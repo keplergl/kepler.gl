@@ -109,7 +109,7 @@ function EffectManagerFactory(
       [dispatch, props.visStateActions]
     );
 
-    const effects = visState?.effects ?? [];
+    const effects = useMemo(() => visState?.effects ?? [], [visState?.effects]);
     const effectOrder = visState?.effectOrder ?? [];
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);

@@ -129,11 +129,10 @@ describe('useLegendPosition', () => {
     const callsWithContentHeight = onChangeSettings.mock.calls.filter(
       call => call[0].contentHeight !== undefined
     );
-    if (callsWithContentHeight.length > 0) {
-      expect(
-        callsWithContentHeight[callsWithContentHeight.length - 1][0].contentHeight
-      ).toBeLessThanOrEqual(526);
-    }
+    expect(callsWithContentHeight.length).toBeGreaterThan(0);
+    expect(
+      callsWithContentHeight[callsWithContentHeight.length - 1][0].contentHeight
+    ).toBeLessThanOrEqual(526);
   });
 
   describe.each(['top', 'bottom'])('%s-edge minimum', edge => {

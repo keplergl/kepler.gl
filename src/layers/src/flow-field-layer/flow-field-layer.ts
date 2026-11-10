@@ -23,7 +23,7 @@ import {
   SCALE_TYPES
 } from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
+import {Field, LayerColumns} from '@kepler.gl/types';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -1498,9 +1498,9 @@ export default class FlowFieldLayer extends Layer {
     const {fields = [], label} = dataset;
     // Auto-create only for explicit `u` / `v` (not aliases) plus lat/lng or GeoJSON.
     // Speed/direction and elevation modes stay manual.
-    const uField = findNamedField(fields, DEFAULT_U_FIELD_NAMES);
-    const vField = findNamedField(fields, DEFAULT_V_FIELD_NAMES);
-    if (!uField || !vField) {
+    const u = fieldToColumn(findNamedField(fields, DEFAULT_U_FIELD_NAMES), fields);
+    const v = fieldToColumn(findNamedField(fields, DEFAULT_V_FIELD_NAMES), fields);
+    if (!u || !v) {
       return {props: [], foundLayers};
     }
 
@@ -1510,7 +1510,7 @@ export default class FlowFieldLayer extends Layer {
       fields
     );
     const geoColumn = foundGeojson?.[0]?.geojson || null;
-    const positionColumns = latLng
+    const positionColumns: LayerColumns | null = latLng
       ? {lat: latLng.lat, lng: latLng.lng}
       : geoColumn
       ? {geojson: geoColumn}
@@ -1525,8 +1525,8 @@ export default class FlowFieldLayer extends Layer {
     const altColumn = latLng?.altitude || fieldToColumn(altField, fields);
     const defaultColor: [number, number, number] = [255, 255, 255];
     const uvColumns = {
-      u: fieldToColumn(uField, fields)!,
-      v: fieldToColumn(vField, fields)!,
+      u,
+      v,
       ...(altColumn ? {altitude: altColumn} : {})
     };
 
@@ -1536,9 +1536,7 @@ export default class FlowFieldLayer extends Layer {
         color: defaultColor,
         isVisible: true,
         columnMode: FlowFieldColumnMode.UV,
-        columns: latLng
-          ? {lat: latLng.lat, lng: latLng.lng, ...uvColumns}
-          : {geojson: geoColumn!, ...uvColumns}
+        columns: {...positionColumns, ...uvColumns}
       }
     ];
 

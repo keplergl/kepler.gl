@@ -647,8 +647,8 @@ test('Utils -> histogramFromTimeIntervals', t => {
     histogramFromTimeIntervals(
       thresholds,
       [0],
-      idx => 10,
-      idx => 10
+      () => 10,
+      () => 10
     ),
     [{count: 1, indexes: [0], x0: 10, x1: 20}],
     'an instant at a bin boundary should land in the following bin'

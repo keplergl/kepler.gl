@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import {Table, vectorFromArray, Float64, Int64} from 'apache-arrow';
 import {
   KeplerTable,
@@ -138,13 +139,13 @@ test('GPU numeric filters rebuild cells even when the CPU row indices do not cha
     const data = layer.formatLayerData(datasets, previous);
     expect(data.data.map(cell => cell.index)).toEqual(indices);
     expect(layer.meta.bounds).toEqual(bounds);
-    if (indices.length === 1) {
-      const polygon = data.data[0].polygon;
-      expect(Math.min(...polygon.map(point => point[0]))).toBeCloseTo(bounds[0]);
-      expect(Math.max(...polygon.map(point => point[0]))).toBeCloseTo(bounds[2]);
-      expect(Math.min(...polygon.map(point => point[1]))).toBeCloseTo(bounds[1]);
-      expect(Math.max(...polygon.map(point => point[1]))).toBeCloseTo(bounds[3]);
-    }
+    const singleCell = data.data.length === 1 ? data.data[0].polygon : null;
+    const x = singleCell?.map(point => point[0]) ?? [];
+    const y = singleCell?.map(point => point[1]) ?? [];
+    const expectedBounds = bounds.map(value => expect.closeTo(value));
+    expect(
+      singleCell ? [Math.min(...x), Math.min(...y), Math.max(...x), Math.max(...y)] : null
+    ).toEqual(indices.length === 1 ? expectedBounds : null);
     const rendered = render(layer, dataset, data);
     expect(rendered.props.filterRange).toEqual(dataset.gpuFilter.filterRange);
     expect(data.data.map(rendered.props.getFilterValue)).toEqual(
@@ -186,9 +187,8 @@ test('timeline updates rebuild the mosaic and clearing the filter restores all s
     expect(state.layers[0].isValid).toBe(true);
     expect(state.layerData[0].data.map(cell => cell.index)).toEqual(indices);
     expect(state.layers[0].meta.bounds).toEqual(bounds);
-    if (indices.length) {
-      expect(state.layerData[0].data[0].polygon).not.toEqual(original.data[indices[0]].polygon);
-    }
+    const unchangedCell = state.layerData[0].data[0];
+    expect(unchangedCell?.polygon).not.toEqual(original.data[indices[0]]?.polygon ?? null);
   }
   state = setFilterUpdater(state, {idx: 0, prop: 'enabled', value: false});
   expect(state.layerData[0].data).toEqual(original.data);
@@ -508,7 +508,7 @@ test('switching input modes rebuilds cells and GeoJSON settings survive layer ty
     ...StateWFiles,
     visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
   });
-  const config = SchemaManager.parseSavedConfig(saved)!.visState!.layers![0].config;
+  const config = requireValue(SchemaManager.parseSavedConfig(saved)?.visState?.layers)[0].config;
   expect(config.columnMode).toBe('geojson');
   expect(config.columns.geojson).toBe('shape');
   const state = {
@@ -541,7 +541,7 @@ test.each([new Float64(), new Int64()])(
       latitude: vectorFromArray([-1, -1, 1, 1], new Float64()),
       value: vectorFromArray([10, 20, 30, 40], new Float64())
     });
-    const {layer, datasets} = await setup(processArrowBatches(table.batches)!);
+    const {layer, datasets} = await setup(requireValue(processArrowBatches(table.batches)));
     expect(layer.formatLayerData(datasets).data.map(cell => cell.position)).toEqual(
       rows.map(row => row.slice(0, 2))
     );
@@ -555,9 +555,9 @@ test('saves Voronoi settings and switches between point and Voronoi without chan
     ...StateWFiles,
     visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
   });
-  const parsed = SchemaManager.parseSavedConfig(saved)!;
-  expect(parsed.visState!.layers![0].type).toBe('voronoi');
-  expect(parsed.visState!.layers![0].config.visConfig).toEqual(layer.config.visConfig);
+  const parsed = requireValue(SchemaManager.parseSavedConfig(saved));
+  expect(requireValue(parsed.visState?.layers)[0].type).toBe('voronoi');
+  expect(requireValue(parsed.visState?.layers)[0].config.visConfig).toEqual(layer.config.visConfig);
   const state = {
     ...INITIAL_VIS_STATE,
     datasets,

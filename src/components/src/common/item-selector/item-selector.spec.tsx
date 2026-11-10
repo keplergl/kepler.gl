@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../../test/helpers/require-value';
 import React from 'react';
 import {fireEvent, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -67,15 +68,15 @@ describe('ItemSelector', () => {
         />
       </IntlProvider>
     );
-    const selector = screen.getByText('Alpha').closest('.item-selector')!;
+    const selector = requireValue(screen.getByText('Alpha').closest('.item-selector'));
 
     await user.tab();
     expect(selector).toHaveFocus();
     await user.keyboard('{Enter}');
     expect(screen.getByText('Beta')).toBeInTheDocument();
-    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown', keyCode: 40});
-    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown', keyCode: 40});
-    fireEvent.keyDown(document.activeElement!, {key: 'Enter', keyCode: 13});
+    fireEvent.keyDown(requireValue(document.activeElement), {key: 'ArrowDown', keyCode: 40});
+    fireEvent.keyDown(requireValue(document.activeElement), {key: 'ArrowDown', keyCode: 40});
+    fireEvent.keyDown(requireValue(document.activeElement), {key: 'Enter', keyCode: 13});
 
     expect(onChange).toHaveBeenCalledWith('Beta');
     expect(selector).toHaveFocus();

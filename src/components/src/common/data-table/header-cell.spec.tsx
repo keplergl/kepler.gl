@@ -223,12 +223,12 @@ describe('column header menu', () => {
       openMenu(container);
       expect(readValue).not.toHaveBeenCalled();
       expect(screen.getByText('Copy Column')).toBeTruthy();
-      if (enabled) {
-        fireEvent.click(screen.getByText('Change Data Type'));
-        expect(readValue).toHaveBeenCalled();
-      } else {
-        expect(screen.queryByText('Change Data Type')).toBeNull();
+      const changeType = screen.queryByText('Change Data Type');
+      expect(Boolean(changeType)).toBe(enabled);
+      if (changeType) {
+        fireEvent.click(changeType);
       }
+      expect(readValue.mock.calls.length > 0).toBe(enabled);
     }
   );
 
@@ -250,10 +250,11 @@ describe('column header menu', () => {
     openMenu(container);
     fireEvent.click(screen.getByText('Change Data Type'));
     omitted.forEach(label => expect(screen.queryByText(label)).toBeNull());
-    if (!omitted.includes('Timestamp')) expect(screen.getByText('Timestamp')).toBeTruthy();
+    expect(Boolean(screen.queryByText('Timestamp'))).toBe(!omitted.includes('Timestamp'));
     fireEvent.click(screen.getByText('String'));
-    if (type === 'string') expect(changeTableColumnType).not.toHaveBeenCalled();
-    else expect(changeTableColumnType).toHaveBeenCalledWith('region', 'string');
+    expect(changeTableColumnType.mock.calls).toEqual(
+      type === 'string' ? [] : [['region', 'string']]
+    );
   });
 
   test('hides type changes for field types outside the initial scope', () => {

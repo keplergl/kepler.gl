@@ -66,18 +66,18 @@ type SwipeExportVideoPanelContainerProps = {
 };
 
 type SwipeExportVideoPanelContainerState = {
-  adapter?: DeckAdapter;
+  adapter: DeckAdapter;
   durationMs: number;
   mediaType: string;
   cameraPreset: string;
   fileName: string;
   resolution: string;
-  viewState?: MapViewState;
+  viewState: MapViewState;
   rendering: boolean;
   previewing: boolean;
   saving: boolean;
   currentTimeMs: number;
-  memo?: {viewState: MapViewState};
+  memo: {viewState: MapViewState};
 };
 
 const PanelBody = styled.div<{$exportVideoWidth: number}>`
@@ -154,7 +154,7 @@ export class SwipeExportVideoPanelContainer extends Component<
       glContext
     } = props;
 
-    this.state = {
+    const settings = {
       mediaType: 'webm',
       cameraPreset: 'None',
       fileName: '',
@@ -167,9 +167,9 @@ export class SwipeExportVideoPanelContainer extends Component<
       ...(initialState || {})
     };
 
-    const viewState = scaleToVideoExport(mapState, this._getContainer());
+    const viewState = scaleToVideoExport(mapState, this._getContainer(settings.resolution));
     this.state = {
-      ...this.state,
+      ...settings,
       viewState,
       memo: {viewState},
       adapter: new DeckAdapter({glContext})
@@ -187,7 +187,7 @@ export class SwipeExportVideoPanelContainer extends Component<
       onFilterFrameUpdate,
       getTimeRangeFilterKeyframes
     });
-    this.state.adapter!.animationManager.attachAnimation(animation);
+    this.state.adapter.animationManager.attachAnimation(animation);
   }
 
   componentWillUnmount() {
@@ -203,14 +203,13 @@ export class SwipeExportVideoPanelContainer extends Component<
     return fileName || defaultFileName;
   }
 
-  getCanvasSize() {
-    const {resolution} = this.state;
+  getCanvasSize(resolution = this.state.resolution) {
     const {width, height} = getResolutionSetting(resolution);
     return {width, height};
   }
 
-  _getContainer() {
-    const {width, height} = this.getCanvasSize();
+  _getContainer(resolution?: string) {
+    const {width, height} = this.getCanvasSize(resolution);
     const {exportVideoWidth} = this.props;
     const aspectRatio = width / height;
     return {height: exportVideoWidth / aspectRatio, width: exportVideoWidth};
@@ -238,13 +237,13 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getCameraKeyframes() {
     const {viewState, cameraPreset, durationMs} = this.state;
-    const {longitude, latitude, zoom, pitch, bearing} = viewState!;
+    const {longitude, latitude, zoom, pitch, bearing} = viewState;
     const {width, height} = this.getCanvasSize();
     return {
       timings: [0, durationMs],
       keyframes: [
         {longitude, latitude, zoom, pitch, bearing},
-        parseSetCameraType(cameraPreset, viewState!)
+        parseSetCameraType(cameraPreset, viewState)
       ],
       easings: [easeInOut],
       width,
@@ -339,10 +338,10 @@ export class SwipeExportVideoPanelContainer extends Component<
     this.setState({
       previewing: true,
       currentTimeMs: 0,
-      memo: {viewState: {...this.state.viewState!}}
+      memo: {viewState: {...this.state.viewState}}
     });
 
-    adapter!.animationManager.setKeyframes('kepler', {
+    adapter.animationManager.setKeyframes('kepler', {
       ...this.getFilterKeyframes(),
       ...this.getTripKeyframes(),
       cameraKeyframe: this.getCameraKeyframes()
@@ -353,8 +352,8 @@ export class SwipeExportVideoPanelContainer extends Component<
       const elapsed = performance.now() - startTime;
       const currentTimeMs = Math.min(elapsed, durationMs);
 
-      adapter!.animationManager.timeline.setTime(currentTimeMs);
-      adapter!.animationManager.draw();
+      adapter.animationManager.timeline.setTime(currentTimeMs);
+      adapter.animationManager.draw();
 
       this.setState({currentTimeMs});
 
@@ -362,7 +361,7 @@ export class SwipeExportVideoPanelContainer extends Component<
         this.setState({
           previewing: false,
           currentTimeMs: 0,
-          viewState: {...this.state.memo!.viewState}
+          viewState: {...this.state.memo.viewState}
         });
         return;
       }
@@ -388,10 +387,10 @@ export class SwipeExportVideoPanelContainer extends Component<
       rendering: true,
       saving: false,
       currentTimeMs: 0,
-      memo: {viewState: {...this.state.viewState!}}
+      memo: {viewState: {...this.state.viewState}}
     });
 
-    adapter!.animationManager.setKeyframes('kepler', {
+    adapter.animationManager.setKeyframes('kepler', {
       ...this.getFilterKeyframes(),
       ...this.getTripKeyframes(),
       cameraKeyframe: this.getCameraKeyframes()
@@ -409,8 +408,8 @@ export class SwipeExportVideoPanelContainer extends Component<
     const captureNextFrame = () => {
       if (!this.state.rendering || this.activeEncoder !== encoder) return;
 
-      adapter!.animationManager.timeline.setTime(timeMs);
-      adapter!.animationManager.draw();
+      adapter.animationManager.timeline.setTime(timeMs);
+      adapter.animationManager.draw();
       this.setState({currentTimeMs: timeMs});
 
       // Allow 3 frames for state update → preview re-render → composite
@@ -472,7 +471,7 @@ export class SwipeExportVideoPanelContainer extends Component<
                       rendering: false,
                       saving: false,
                       currentTimeMs: 0,
-                      viewState: {...this.state.memo!.viewState}
+                      viewState: {...this.state.memo.viewState}
                     });
                   });
                 } else {
@@ -549,11 +548,11 @@ export class SwipeExportVideoPanelContainer extends Component<
           <SwipeExportVideoPreview
             ref={this.previewRef}
             mapData={mapData}
-            adapter={adapter!}
+            adapter={adapter}
             setViewState={this.setViewState}
             exportVideoWidth={exportVideoWidth}
             resolution={[canvasSize.width, canvasSize.height]}
-            viewState={viewState!}
+            viewState={viewState}
             rendering={rendering}
             saving={saving}
             durationMs={durationMs}

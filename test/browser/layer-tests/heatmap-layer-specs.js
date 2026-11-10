@@ -586,7 +586,7 @@ test('#HeatmapLayer -> geojson mode handles Point, LineString, Polygon geometrie
 
   const mockDataContainer = {
     numRows: () => mockFeatures.length,
-    valueAt: (index, fieldIdx) => JSON.stringify(mockFeatures[index])
+    valueAt: index => JSON.stringify(mockFeatures[index])
   };
 
   layer.config.columns = {

@@ -14,5 +14,8 @@ const Root = () => (
 );
 
 const container = document.getElementById('root');
-const root = ReactDOM.createRoot(container!);
+if (!container) {
+  throw new Error('Missing root element.');
+}
+const root = ReactDOM.createRoot(container);
 root.render(<Root />);

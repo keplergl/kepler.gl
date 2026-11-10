@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../test/helpers/require-value';
 import {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
 import {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 import {CameraTour} from '@kepler.gl/types';
@@ -76,7 +77,7 @@ describe('camera tour evaluation', () => {
     evaluateCameraTour(tour, 10);
     expect(evaluateCameraTour(tour, 1234.5)).toEqual(expected);
     expect(JSON.stringify(tour)).toBe(before);
-    const result = evaluateCameraTour(tour, 0)!;
+    const result = requireValue(evaluateCameraTour(tour, 0));
     result.zoom = 99;
     expect(tour.stops[0].camera.zoom).toBe(4);
   });

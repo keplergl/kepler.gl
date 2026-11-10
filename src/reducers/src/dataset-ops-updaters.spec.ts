@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../test/helpers/require-value';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {VisStateActions} from '@kepler.gl/actions';
 import {KeplerTable} from '@kepler.gl/table';
@@ -162,8 +163,10 @@ describe('dataset ops vis-state', () => {
         if (removeSources) {
           state = reduceVisState(state, VisStateActions.removeDataset('left'));
           state = reduceVisState(state, VisStateActions.removeDataset('right'));
-          expect(Object.keys(state.datasets)).toEqual([op.resultId]);
         }
+        expect(Object.keys(state.datasets).sort()).toEqual(
+          (removeSources ? [op.resultId] : ['left', 'right', op.resultId]).sort()
+        );
         const saved = SchemaManager.save({visState: state});
         const json = JSON.parse(exportToJsonString(saved));
         const embedded = JSON.parse(
@@ -680,7 +683,7 @@ describe('native GeoArrow attribute joins', () => {
       column,
       chunks: column.data.slice(),
       content: JSON.stringify(column.data.map(bytes)),
-      metadata: Array.from(dataset.fields[1].metadata!.entries())
+      metadata: Array.from(requireValue(dataset.fields[1].metadata).entries())
     };
   }
 
@@ -749,7 +752,7 @@ describe('native GeoArrow attribute joins', () => {
         }))
       } as any);
       const control = new KeplerTable({info: {id: 'geojson'}, color: [1, 2, 3]}).updateSchema(
-        data!
+        requireValue(data)
       );
       expect(features(join(control, right).result).map((f: any) => f.geometry)).toEqual(expected);
       assertUnchanged(left, before);
@@ -763,10 +766,29 @@ describe('native GeoArrow attribute joins', () => {
       const right = await source('right', kind, ['a', 'a', 'd', null] as any, [20, null, 50, 80]);
       const beforeLeft = rawFingerprint(left);
       const beforeRight = rawFingerprint(right);
-      for (const [type, expectedRows, leftFeatures, rightFeatures] of [
-        ['LEFT', 5, 4, 1],
-        ['INNER', 2, 2, 1],
-        ['FULL', 7, 4, 3]
+      for (const [type, expectedRows, leftFeatures, rightFeatures, nullCells] of [
+        [
+          'LEFT',
+          5,
+          4,
+          1,
+          [
+            [1, 3],
+            [2, 1]
+          ]
+        ],
+        ['INNER', 2, 2, 1, [[1, 3]]],
+        [
+          'FULL',
+          7,
+          4,
+          3,
+          [
+            [1, 3],
+            [2, 1],
+            [5, 1]
+          ]
+        ]
       ] as const) {
         const {result, state} = join(left, right, {type});
         expect(state.joins).toHaveLength(0);
@@ -775,9 +797,9 @@ describe('native GeoArrow attribute joins', () => {
           expect(features(dataset, 1)).toHaveLength(leftFeatures);
           expect(features(dataset, 3)).toHaveLength(rightFeatures);
         }
-        expect(result.dataContainer.valueAt(1, 3)).toBeNull();
-        if (type !== 'INNER') expect(result.dataContainer.valueAt(2, 1)).toBeNull();
-        if (type === 'FULL') expect(result.dataContainer.valueAt(5, 1)).toBeNull();
+        for (const [row, col] of nullCells) {
+          expect(result.dataContainer.valueAt(row, col)).toBeNull();
+        }
       }
       const empty = join(left, await source('absent', kind, ['none'], [90]), {
         type: 'INNER'

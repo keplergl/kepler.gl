@@ -146,11 +146,9 @@ export default function DatasetInfoFactory() {
       : String(matchingOption ? matchingOption.value : 0);
 
     useEffect(() => {
-      const ms = getDatasetRefreshIntervalMs(dataset.metadata);
-      const custom = ms > 0 && !isPresetDatasetRefreshInterval(ms);
-      setCustomMode(custom);
-      setCustomSeconds(formatCustomRefreshSeconds(ms || DATASET_REFRESH_DEFAULT_CUSTOM_MS));
-    }, [dataset.id, dataset.metadata?.refreshIntervalMs]);
+      setCustomMode(isCustomInterval);
+      setCustomSeconds(formatCustomRefreshSeconds(intervalMs || DATASET_REFRESH_DEFAULT_CUSTOM_MS));
+    }, [dataset.id, intervalMs, isCustomInterval]);
 
     const spinning = dataset.metadata?.refreshStatus === 'loading';
     const progress =

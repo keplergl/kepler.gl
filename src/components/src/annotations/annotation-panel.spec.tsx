@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import React from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
@@ -233,7 +234,7 @@ describe('AnnotationManager line width slider', () => {
     [120, 10]
   ])('drags to %s and applies the nearest valid width %s', (clientX, width) => {
     const {store, slider} = renderSlider();
-    const track = slider.querySelector('.kg-slider')!;
+    const track = requireValue(slider.querySelector('.kg-slider'));
     Object.defineProperty(track, 'offsetWidth', {configurable: true, value: 90});
     const handle = slider.querySelectorAll('.kg-range-slider__handle')[1];
 
@@ -346,7 +347,7 @@ describe('AnnotationManager selectors', () => {
       );
 
       fireEvent.click(screen.getByText(current));
-      fireEvent.keyDown(document.activeElement!, {key: 'Enter', keyCode: 13});
+      fireEvent.keyDown(requireValue(document.activeElement), {key: 'Enter', keyCode: 13});
 
       expect(store.getActions()).toEqual([]);
       expect(screen.getByText(current)).toBeInTheDocument();

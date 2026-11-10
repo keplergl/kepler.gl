@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {requireValue} from '../../../../test/helpers/require-value';
 import {lngLatToWorld} from '@math.gl/web-mercator';
 import {buildVoronoiMosaic, VoronoiSite} from './voronoi-utils';
 
@@ -53,8 +54,8 @@ test.each(
 )('produces finite nonzero cells for $coordinates', ({coordinates}) => {
   const {cells, bounds} = buildVoronoiMosaic(sites(coordinates), 0);
   expect(cells).toHaveLength(coordinates.length);
-  expect(bounds![2]).toBeGreaterThan(bounds![0]);
-  expect(bounds![3]).toBeGreaterThan(bounds![1]);
+  expect(requireValue(bounds)[2]).toBeGreaterThan(requireValue(bounds)[0]);
+  expect(requireValue(bounds)[3]).toBeGreaterThan(requireValue(bounds)[1]);
   cells.forEach(cell => {
     expect(cell.polygon.length).toBeGreaterThanOrEqual(4);
     expect(cell.polygon.flat().every(Number.isFinite)).toBe(true);
@@ -91,16 +92,16 @@ test('clips cells to padded dataset bounds without moving their internal bisecto
   ]);
   const tight = buildVoronoiMosaic(input, 0);
   const padded = buildVoronoiMosaic(input, 25);
-  expect(tight.bounds![0]).toBeCloseTo(-1);
-  expect(tight.bounds![2]).toBeCloseTo(1);
-  expect(padded.bounds![0]).toBeCloseTo(-1.5);
-  expect(padded.bounds![2]).toBeCloseTo(1.5);
+  expect(requireValue(tight.bounds)[0]).toBeCloseTo(-1);
+  expect(requireValue(tight.bounds)[2]).toBeCloseTo(1);
+  expect(requireValue(padded.bounds)[0]).toBeCloseTo(-1.5);
+  expect(requireValue(padded.bounds)[2]).toBeCloseTo(1.5);
   for (const cell of padded.cells) {
     for (const [lng, lat] of cell.polygon) {
-      expect(lng).toBeGreaterThanOrEqual(padded.bounds![0] - 1e-8);
-      expect(lng).toBeLessThanOrEqual(padded.bounds![2] + 1e-8);
-      expect(lat).toBeGreaterThanOrEqual(padded.bounds![1] - 1e-8);
-      expect(lat).toBeLessThanOrEqual(padded.bounds![3] + 1e-8);
+      expect(lng).toBeGreaterThanOrEqual(requireValue(padded.bounds)[0] - 1e-8);
+      expect(lng).toBeLessThanOrEqual(requireValue(padded.bounds)[2] + 1e-8);
+      expect(lat).toBeGreaterThanOrEqual(requireValue(padded.bounds)[1] - 1e-8);
+      expect(lat).toBeLessThanOrEqual(requireValue(padded.bounds)[3] + 1e-8);
     }
   }
 });
@@ -114,8 +115,8 @@ test('keeps neighboring sites together across the antimeridian', () => {
     0
   );
   expect(cells).toHaveLength(2);
-  expect(bounds![0]).toBeCloseTo(179);
-  expect(bounds![2]).toBeCloseTo(181);
+  expect(requireValue(bounds)[0]).toBeCloseTo(179);
+  expect(requireValue(bounds)[2]).toBeCloseTo(181);
   expect(Math.max(...cells[0].polygon.map(point => point[0]))).toBeCloseTo(180);
   expect(Math.min(...cells[1].polygon.map(point => point[0]))).toBeCloseTo(180);
 });
@@ -130,10 +131,10 @@ test('filtered dateline sites retain the full extent and the same longitude unwr
   expect(filtered.bounds).toEqual(original.bounds);
   expect(filtered.cells.map(cell => cell.index)).toEqual([1]);
   expect(Math.min(...filtered.cells[0].polygon.map(point => point[0]))).toBeCloseTo(
-    original.bounds![0]
+    requireValue(original.bounds)[0]
   );
   expect(Math.max(...filtered.cells[0].polygon.map(point => point[0]))).toBeCloseTo(
-    original.bounds![2]
+    requireValue(original.bounds)[2]
   );
   expect(buildVoronoiMosaic(input, 10, () => false)).toEqual({cells: [], bounds: original.bounds});
 });
