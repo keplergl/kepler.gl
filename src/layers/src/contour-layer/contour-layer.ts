@@ -10,6 +10,7 @@ import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';
 import {
   colorPaletteToColorRange,
+  DEFAULT_COLOR_UI,
   DEFAULT_LAYER_COLOR_PALETTE_STEPS,
   KEPLER_COLOR_PALETTES,
   LAYER_VIS_CONFIGS
@@ -62,6 +63,11 @@ export const contourVisConfigs = {
     property: 'colorByLevel',
     defaultValue: true,
     label: 'layerVisConfigs.contour.colorByLevel'
+  },
+  contourColor: {
+    ...LAYER_VIS_CONFIGS.strokeColor,
+    property: 'contourColor',
+    label: 'layerVisConfigs.contour.customOutlineColor'
   },
   gridResolution: {
     ...numberConfig('gridResolution', 64, [32, 256], 16),
@@ -181,8 +187,9 @@ export default class ContourLayer extends Layer {
     outlined: boolean
   ): [number, number, number, number] {
     if (outlined) {
+      const color = colorMaybeToRGB(this.config.visConfig.contourColor) ?? colors[rank];
       const alpha = 0.3 + (0.7 * rank) / Math.max(1, colors.length - 1);
-      return [...colors[rank], Math.round(255 * alpha)];
+      return [...color, Math.round(255 * alpha)];
     }
     // Fill-only swatches composite every enclosing region in draw order, using
     // the renderer's byte-rounded alpha, so nested palette colors also match.
@@ -236,6 +243,7 @@ export default class ContourLayer extends Layer {
       'color',
       'colorRange',
       'colorByLevel',
+      'contourColor',
       'fillOpacity',
       'filled',
       'stroked',
@@ -244,7 +252,12 @@ export default class ContourLayer extends Layer {
     ];
   }
   getDefaultLayerConfig(props: LayerBaseConfigPartial) {
-    return {...super.getDefaultLayerConfig(props), color: props.color ?? [36, 218, 211]};
+    const config = super.getDefaultLayerConfig(props);
+    return {
+      ...config,
+      color: props.color ?? [36, 218, 211],
+      colorUI: {...config.colorUI, contourColor: DEFAULT_COLOR_UI}
+    };
   }
 
   getPositionAccessor(dataContainer?: DataContainerInterface, dataset?: KeplerTable) {
@@ -466,7 +479,7 @@ export default class ContourLayer extends Layer {
               lineWidthUnits: 'pixels',
               lineJointRounded: true,
               lineCapRounded: true,
-              updateTriggers: {getLineColor: colorTriggers}
+              updateTriggers: {getLineColor: [...colorTriggers, visConfig.contourColor]}
             })
           ]
         : [])
