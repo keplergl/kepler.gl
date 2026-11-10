@@ -205,13 +205,17 @@ test('Components -> VisConfigSlider -> edits a single custom radius using the ke
   try {
     t.ok(slider.getByText('10'), 'shows the slider value before editing');
     t.notOk(slider.queryByRole('spinbutton'), 'manual input starts closed');
-    const edit = slider.getByRole('button', {name: 'Enter custom value'});
+    const edit = slider.getByRole('button', {name: 'Enter custom value for Radius'});
     edit.focus();
     t.equal(document.activeElement, edit, 'the edit button is keyboard reachable');
     await user.keyboard('{Enter}');
     const input = slider.getByRole('spinbutton', {name: 'Radius'});
     t.equal(document.activeElement, input, 'opening the editor focuses the value');
     t.equal(input.value, '10', 'the editor starts with the current radius');
+    t.ok(
+      slider.getByRole('button', {name: 'Use slider for Radius'}),
+      'return action names the setting'
+    );
     t.ok(changed.notCalled, 'opening the editor keeps the value');
     await user.clear(input);
     await user.type(input, '125');
@@ -243,10 +247,10 @@ test('Components -> VisConfigSlider -> reopens saved custom ranges and edits bot
       'loads the saved custom bound'
     );
     t.ok(changed.notCalled, 'loading does not clamp a saved range');
-    await user.click(slider.getByRole('button', {name: 'Use slider'}));
+    await user.click(slider.getByRole('button', {name: 'Use slider for Radius Range'}));
     t.deepEqual(changed.lastCall.args[0], {radiusRange: [10, 500]}, 'clamps the upper bound');
     t.notOk(slider.queryByRole('spinbutton'), 'both inputs close with the editor');
-    await user.click(slider.getByRole('button', {name: 'Enter custom value'}));
+    await user.click(slider.getByRole('button', {name: 'Enter custom value for Radius Range'}));
     const min = slider.getByRole('spinbutton', {name: 'Min'});
     const max = slider.getByRole('spinbutton', {name: 'Max'});
     t.equal(min.value, '10', 'reopens with the current lower bound');
@@ -257,6 +261,47 @@ test('Components -> VisConfigSlider -> reopens saved custom ranges and edits bot
       changed.lastCall.args[0],
       {radiusRange: [5.5, 500]},
       'Enter commits the lower bound'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
+test('Components -> VisConfigSlider -> names actions by the localized setting with hidden labels', t => {
+  const layer = new LayerClasses.point({id: 'named-slider-actions'});
+  const onChange = sinon.spy();
+  const view = renderWithTheme(
+    <IntlWrapper locale="es">
+      <VisConfigSlider
+        {...layer.visConfigSettings.radius}
+        layer={layer}
+        label={false}
+        onChange={onChange}
+      />
+      <VisConfigSlider
+        {...layer.visConfigSettings.radiusRange}
+        layer={layer}
+        label={() => 'layerVisConfigs.radiusRange'}
+        onChange={onChange}
+      />
+    </IntlWrapper>
+  );
+  const sliders = within(view.container);
+  try {
+    const editRadius = sliders.getByRole('button', {name: 'Enter custom value for Radio'});
+    const editRange = sliders.getByRole('button', {name: 'Enter custom value for Rango de radio'});
+    t.notEqual(editRadius, editRange, 'each setting has a distinct localized accessible name');
+    t.notOk(sliders.queryByText('Radio'), 'a hidden visual label still names the action');
+    fireEvent.click(editRadius);
+    t.ok(
+      sliders.getByRole('button', {name: 'Use slider for Radio'}),
+      'return action names the radius'
+    );
+    fireEvent.click(editRange);
+    t.ok(
+      sliders.getByRole('button', {name: 'Use slider for Rango de radio'}),
+      'return action uses the functional setting label'
     );
   } finally {
     view.unmount();

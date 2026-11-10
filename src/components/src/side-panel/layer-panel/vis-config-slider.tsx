@@ -246,7 +246,7 @@ export default function VisConfigSliderFactory(
   InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
   const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
-    layer: {id, config},
+    layer: {id, config, visConfigSettings},
     property,
     label,
     description,
@@ -268,7 +268,15 @@ export default function VisConfigSliderFactory(
     );
     const custom = mode !== 'slider';
     const scaleConfig = createSliderScale(focusRange, focusWeight);
-    const labelId = typeof label === 'function' ? label(config) : label || `property.${property}`;
+    const settingLabel = label || visConfigSettings[property]?.label;
+    const labelId =
+      typeof settingLabel === 'function'
+        ? settingLabel(config)
+        : settingLabel || `property.${property}`;
+    const settingName = intl.formatMessage({
+      id: labelId,
+      defaultMessage: settingLabel ? labelId : property
+    });
     const displayedValue = Array.isArray(value) ? value.join(' – ') : String(value);
     const modeLabel = custom
       ? intl.formatMessage({id: 'layerVisConfigs.useSlider', defaultMessage: 'Use slider'})
@@ -276,6 +284,10 @@ export default function VisConfigSliderFactory(
           id: customInputLabel || 'layerVisConfigs.enterCustomValue',
           defaultMessage: customInputLabel || 'Enter custom value'
         });
+    const accessibleModeLabel = intl.formatMessage(
+      {id: 'layerVisConfigs.sliderAction', defaultMessage: '{action} for {setting}'},
+      {action: modeLabel, setting: settingName}
+    );
 
     const toggleMode = () => {
       if (custom) {
@@ -308,7 +320,7 @@ export default function VisConfigSliderFactory(
               onChangeCustomInput={v => onChange({[property]: v})}
               autoFocus={mode === 'editing'}
               disabled={disabled}
-              ariaLabel={intl.formatMessage({id: labelId, defaultMessage: property})}
+              ariaLabel={settingName}
             />
           ) : (
             <RangeSlider
@@ -327,7 +339,7 @@ export default function VisConfigSliderFactory(
             <ModeButton
               type="button"
               title={custom ? modeLabel : `${modeLabel} (${displayedValue})`}
-              aria-label={modeLabel}
+              aria-label={accessibleModeLabel}
               aria-description={custom ? undefined : displayedValue}
               disabled={disabled}
               onClick={toggleMode}
