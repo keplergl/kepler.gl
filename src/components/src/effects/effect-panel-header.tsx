@@ -213,6 +213,7 @@ export function EffectPanelHeaderActionSectionFactory(
       onRemoveEffect,
       onToggleEnableConfig,
       onToggleJsonEditor,
+      isJsonEditorActive,
       showJsonEditor,
       actionItems,
       actionIcons = defaultActionIcons
@@ -259,6 +260,7 @@ export function EffectPanelHeaderActionSectionFactory(
         actionIcons,
         isEnabled,
         isConfigActive,
+        isJsonEditorActive,
         showJsonEditor,
         onRemoveEffect,
         onToggleEnabled,

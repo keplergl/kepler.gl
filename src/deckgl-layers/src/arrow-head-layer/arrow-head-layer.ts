@@ -86,11 +86,7 @@ export default class ArrowHeadLayer extends ScatterplotIconLayer {
   initializeState() {
     // Add the angle before the scatterplot model is built so the buffer layout
     // includes it on the first compile.
-    const attributeManager = this.getAttributeManager();
-    if (!attributeManager) {
-      throw new Error('Missing layer attribute manager.');
-    }
-    attributeManager.addInstanced({
+    this.getAttributeManager()!.addInstanced({
       instanceAngles: {
         size: 1,
         transition: true,

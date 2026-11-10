@@ -3,6 +3,7 @@
 
 /* eslint-disable max-statements */
 import React from 'react';
+import {mount} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
 import configureStore from 'redux-mock-store';

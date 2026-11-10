@@ -377,10 +377,7 @@ async function matchesCsvHeader(text: string, fields: string[]): Promise<boolean
 
   // Reuse the same streaming parser as import, exposing the header as a row.
   const rows: string[][] = [];
-  if (!KeplerCSVLoader.parseInBatches) {
-    throw new Error('KeplerCSVLoader: CSV loader does not support parseInBatches');
-  }
-  for await (const batch of KeplerCSVLoader.parseInBatches([new TextEncoder().encode(text)], {
+  for await (const batch of KeplerCSVLoader.parseInBatches!([new TextEncoder().encode(text)], {
     csv: {
       shape: 'array-row-table',
       // @ts-expect-error loaders.gl accepts false but its type only declares 'auto'.
@@ -425,8 +422,7 @@ export async function loadExternallyHostedDataset(metadata: {
     bypassCache,
     onProgress
   });
-  const {file} = fetched;
-  if (fetched.notModified || !file) {
+  if (fetched.notModified || !fetched.file) {
     return {
       data: null,
       notModified: true,
@@ -437,7 +433,7 @@ export async function loadExternallyHostedDataset(metadata: {
   }
 
   onProgress?.({
-    loaded: fetched.size ?? file.size,
+    loaded: fetched.size ?? fetched.file.size,
     ...(typeof fetched.size === 'number' ? {total: fetched.size} : {}),
     percent: 1,
     phase: 'processing'
@@ -446,7 +442,7 @@ export async function loadExternallyHostedDataset(metadata: {
   await waitForNextPaint();
 
   const batches = await readFileInBatches({
-    file,
+    file: fetched.file,
     fileCache: [],
     loaders: [],
     loadOptions: {}
@@ -461,10 +457,10 @@ export async function loadExternallyHostedDataset(metadata: {
   if (
     metadata.csvHeader?.length &&
     KeplerCSVLoader.extensions.some(extension =>
-      file.name.toLowerCase().endsWith(`.${extension}`)
+      fetched.file!.name.toLowerCase().endsWith(`.${extension}`)
     ) &&
     (!content || (Array.isArray(content.data) && !content.data.length)) &&
-    (await matchesCsvHeader(await file.text(), metadata.csvHeader))
+    (await matchesCsvHeader(await fetched.file.text(), metadata.csvHeader))
   ) {
     return {
       data: {fields: [], rows: []},

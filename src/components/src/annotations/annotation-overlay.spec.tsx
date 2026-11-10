@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import React from 'react';
 import {fireEvent} from '@testing-library/react';
 
@@ -69,10 +68,8 @@ describe('AnnotationOverlay ruler interactions', () => {
         setSelectedAnnotation={jest.fn()}
       />
     );
-    const anchor = requireValue(
-      container.querySelector('[data-annotation-part="shape"] [role="button"]')
-    );
-    const text = requireValue(container.querySelector('[data-annotation-part="text"]'));
+    const anchor = container.querySelector('[data-annotation-part="shape"] [role="button"]')!;
+    const text = container.querySelector('[data-annotation-part="text"]')!;
 
     for (const handle of [anchor, text]) {
       updateAnnotation.mockClear();
@@ -84,27 +81,15 @@ describe('AnnotationOverlay ruler interactions', () => {
       expect(updateAnnotation).toHaveBeenCalled();
       const [id, changes] = updateAnnotation.mock.calls[updateAnnotation.mock.calls.length - 1];
       expect(id).toBe('legacy-1');
-      const movesAnchor = handle === anchor || kind === AnnotationKind.TEXT;
-      const result = movesAnchor
-        ? changes
-        : {
-            hasAnchor: 'anchorPoint' in changes,
-            rotatesUp: changes.angle < 0,
-            extendsArm: changes.armLength > 20,
-            textSide: changes.textSide,
-            textVerticalPosition: changes.textVerticalPosition
-          };
-      expect(result).toEqual(
-        movesAnchor
-          ? {anchorPoint: [2, 1]}
-          : {
-              hasAnchor: false,
-              rotatesUp: true,
-              extendsArm: true,
-              textSide: 'right',
-              textVerticalPosition: 'above'
-            }
-      );
+      if (handle === anchor || kind === AnnotationKind.TEXT) {
+        expect(changes).toEqual({anchorPoint: [2, 1]});
+      } else {
+        expect(changes).not.toHaveProperty('anchorPoint');
+        expect(changes.angle).toBeLessThan(0);
+        expect(changes.armLength).toBeGreaterThan(20);
+        expect(changes.textSide).toBe('right');
+        expect(changes.textVerticalPosition).toBe('above');
+      }
     }
   });
 

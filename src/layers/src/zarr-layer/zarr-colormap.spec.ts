@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import {applyZarrColormap, estimateZarrDataRange, getZarrDataExtent} from './zarr-colormap';
 
 const BLACK_TO_WHITE = ['#000000', '#ffffff'];
@@ -99,7 +98,7 @@ describe('applyZarrColormap', () => {
     const range = estimateZarrDataRange(values, nodataValue);
     expect(range).toEqual([4, 8]);
     const {data} = applyZarrColormap(values, 3, 1, {
-      rescale: requireValue(range),
+      rescale: range!,
       colors: BLACK_TO_WHITE,
       nodataValue
     });

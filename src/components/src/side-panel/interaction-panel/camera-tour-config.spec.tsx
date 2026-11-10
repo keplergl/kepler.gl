@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../../test/helpers/require-value';
 import React, {useRef, useState, useReducer} from 'react';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -520,7 +519,7 @@ test('zero-duration tours disable playback but can jump to their evaluated camer
 
 test.each([
   {...INITIAL_MAP_STATE, isSplit: true},
-  {...INITIAL_MAP_STATE, globe: {...requireValue(INITIAL_MAP_STATE.globe), enabled: true}}
+  {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
 ])('unsupported map modes do not expose tour editing or playback', mapState => {
   setup(tour, {mapState, bookmarks: [{id: 'saved', name: 'Saved view', camera}]});
   expect(screen.getByText('Use a single 2D or 3D map to edit camera views.')).toBeInTheDocument();
@@ -712,15 +711,9 @@ test('pointer reorder preserves the selected stop and its durations without navi
   fireEvent.pointerMove(document, {clientX: 144, clientY: 20});
   await waitFor(() => expect(work).toHaveAttribute('data-dragging', 'true'));
   expect(callbacks.size).toBe(0);
-  const positions = [
-    requireValue(home.parentElement).style.left,
-    requireValue(work.parentElement).style.left
-  ];
+  const positions = [home.parentElement!.style.left, work.parentElement!.style.left];
   fireEvent.pointerMove(document, {clientX: 50, clientY: 20});
-  expect([
-    requireValue(home.parentElement).style.left,
-    requireValue(work.parentElement).style.left
-  ]).toEqual(positions);
+  expect([home.parentElement!.style.left, work.parentElement!.style.left]).toEqual(positions);
   fireEvent.pointerUp(document, {clientX: 50, clientY: 20});
   fireEvent.click(work); // The post-drag click must not select or navigate.
   await waitFor(() => expect(commit).toHaveBeenCalledWith({stops: [tour.stops[1], tour.stops[0]]}));

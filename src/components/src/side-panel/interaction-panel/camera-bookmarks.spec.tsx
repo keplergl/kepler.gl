@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../../test/helpers/require-value';
 import React, {useState} from 'react';
 import {fireEvent, screen, waitFor, within} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
@@ -332,7 +331,7 @@ test('multiple maps have independent switch and content identifiers', () => {
   const switches = screen.getAllByRole('checkbox', {name: 'Enable bookmarks'});
   expect(switches[0].id).not.toBe(switches[1].id);
   switches.forEach(toggle => expect(toggle).not.toBeChecked());
-  fireEvent.click(requireValue(switches[1].closest('label')));
+  fireEvent.click(switches[1].closest('label')!);
   expect(toggles[0]).not.toHaveBeenCalled();
   expect(toggles[1]).toHaveBeenCalledWith('cameraBookmarks', true);
   const headers = screen.getAllByRole('button', {name: 'Bookmarks'});
@@ -341,9 +340,7 @@ test('multiple maps have independent switch and content identifiers', () => {
     headers[1].getAttribute('aria-controls')
   );
   headers.forEach(header =>
-    expect(
-      document.getElementById(requireValue(header.getAttribute('aria-controls')))
-    ).toBeInTheDocument()
+    expect(document.getElementById(header.getAttribute('aria-controls')!)).toBeInTheDocument()
   );
 });
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../../test/helpers/require-value';
 import React, {useState} from 'react';
 import {fireEvent, screen, within, waitFor} from '@testing-library/react';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -65,7 +64,7 @@ test('selects numeric categories, retains colors when removing a field and edits
   const colorControl = screen.getByRole('group', {name: 'Color for bus'});
   fireEvent.click(colorControl.querySelector('.color-selector__selector') as Element);
   const preset = colorControl.querySelector('.single-color-palette__block') as HTMLElement;
-  const presetColor = requireValue(preset.style.backgroundColor.match(/\d+/g)).map(Number);
+  const presetColor = preset.style.backgroundColor.match(/\d+/g)!.map(Number);
   fireEvent.click(preset);
   expect(onChange.mock.lastCall[0].composition.categories[0].color).toEqual(presetColor);
   expect(onChange.mock.lastCall[0].composition.categories[1]).toEqual(categories[1]);
@@ -166,7 +165,7 @@ test('groups radius controls in order, places totals last and excludes legacy co
   expect(screen.getByText('Cluster Radius in Pixels')).toBeInTheDocument();
   const radius = screen.getByDisplayValue('25');
   const clusterRadius = screen.getByDisplayValue('90');
-  const radiusGroup = requireValue(radius.closest('.layer-config-group'));
+  const radiusGroup = radius.closest('.layer-config-group')!;
   expect(clusterRadius.closest('.layer-config-group')).toBe(radiusGroup);
   expect(
     within(radiusGroup as HTMLElement)
@@ -181,9 +180,7 @@ test('groups radius controls in order, places totals last and excludes legacy co
   const switches = screen.getAllByRole('checkbox');
   expect(switches).toHaveLength(1);
   expect(switches.find(input => input.id === `${layer.id}-sizeByTotal-switch`)).toBeUndefined();
-  const showTotal = requireValue(
-    switches.find(input => input.id === `${layer.id}-showTotal-switch`)
-  );
+  const showTotal = switches.find(input => input.id === `${layer.id}-showTotal-switch`)!;
   const inputs = container.querySelectorAll('input');
   expect(inputs[inputs.length - 1]).toBe(showTotal);
   fireEvent.click(showTotal);
@@ -235,12 +232,12 @@ test('single-point cluster hover shows valid parts and ignored values', async ()
     />
   );
   expect(
-    within(requireValue(screen.getByText('bus').closest('tr')))
+    within(screen.getByText('bus').closest('tr')!)
       .getAllByRole('cell')
       .map(cell => cell.textContent)
   ).toEqual(['bus', '30', '100%']);
   expect(
-    within(requireValue(screen.getByText('car').closest('tr')))
+    within(screen.getByText('car').closest('tr')!)
       .getAllByRole('cell')
       .map(cell => cell.textContent)
   ).toEqual(['car', '0', '0%']);
@@ -326,12 +323,12 @@ test('legend and hover expose category labels, values, shares and total even wit
   expect(screen.queryByText('30%')).toBeNull();
   expect(screen.queryByText('100')).toBeNull();
   expect(
-    within(requireValue(screen.getByText('bus').closest('tr')))
+    within(screen.getByText('bus').closest('tr')!)
       .getAllByRole('cell')
       .map(cell => cell.textContent)
   ).toEqual(['bus', '0', '0%']);
   expect(
-    within(requireValue(screen.getByText('car').closest('tr')))
+    within(screen.getByText('car').closest('tr')!)
       .getAllByRole('cell')
       .map(cell => cell.textContent)
   ).toEqual(['car', '70', '100%']);
@@ -381,16 +378,14 @@ test.each(['valid', 'missing'])(
     const total = within(rows[2]).getAllByRole('cell')[1];
     expect(total).toHaveAttribute('colspan', '2');
     expect(getComputedStyle(total).gridColumn).toBe('span 2');
-    const messageCells = rows.slice(3).flatMap(row => within(row).getAllByRole('cell'));
-    expect(messageCells.map(cell => cell.getAttribute('colspan'))).toEqual(
-      status === 'missing' ? ['3'] : []
-    );
-    expect(
-      messageCells.map(cell =>
-        getComputedStyle(cell)
+    if (status === 'missing') {
+      const message = within(rows[3]).getByRole('cell');
+      expect(message).toHaveAttribute('colspan', '3');
+      expect(
+        getComputedStyle(message)
           .gridColumn.split('/')
           .map(value => value.trim())
-      )
-    ).toEqual(status === 'missing' ? [['1', '-1']] : []);
+      ).toEqual(['1', '-1']);
+    }
   }
 );

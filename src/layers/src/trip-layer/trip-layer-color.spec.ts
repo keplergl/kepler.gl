@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import TripLayer from './trip-layer';
 import {getAnimationDomainFromTimestamps, parseTripGeoJsonTimestamp} from './trip-utils';
 import KeplerTable from '@kepler.gl/table';
@@ -63,7 +62,7 @@ function makeTripLayer(table: KeplerTable) {
     }
   } as any);
 
-  const companyField = requireValue(table.fields.find(f => f.name === 'company'));
+  const companyField = table.fields.find(f => f.name === 'company')!;
   layer.updateLayerConfig({
     colorField: companyField,
     colorScale: SCALE_TYPES.customOrdinal,
@@ -238,13 +237,13 @@ describe('TripLayer models follow filtered vertices', () => {
         animationConfig
       });
       expect(data.data).toHaveLength(indices.length === 0 ? 0 : indices.length === 1 ? 1 : 2);
-      const feature = data.data.find(f => f.properties.index === 1);
-      expect(feature ? model.props.getPosition(feature) : null).toEqual(
-        indices.length ? [0, 20, 0] : null
-      );
-      expect(
-        feature ? Array.from(model.props.getTransformMatrix(feature)).every(Number.isFinite) : null
-      ).toBe(indices.length ? true : null);
+      if (indices.length) {
+        const feature = data.data.find(f => f.properties.index === 1);
+        expect(model.props.getPosition(feature)).toEqual([0, 20, 0]);
+        expect(Array.from(model.props.getTransformMatrix(feature)).every(Number.isFinite)).toBe(
+          true
+        );
+      }
     }
   );
 

@@ -69,6 +69,8 @@ const speedDirCsv = `latitude,longitude,speed,direction
 38.0,-121.0,5,0
 `;
 
+const {rows, fields} = processCsvData(flowCsv);
+
 function createDatasetFromCsv(csv, id = dataId) {
   const parsed = processCsvData(csv);
   const dataset = new KeplerTable({

@@ -547,7 +547,7 @@ test('charts -> zone-less timestamps reject invalid calendars and clocks', t => 
 test('charts -> zone-less time bins retain UTC range identities for saved selections', t => {
   const times = ['2016-09-17 00:00:00', '2016-09-17 00:00:30', '2016-09-17 00:01:00'];
   const dataset = mockDataset(times.map(time => ({time})));
-  const utcDataset = mockDataset(times.map(time => ({time: `${time.replace(' ', 'T')}Z`})));
+  const utcDataset = mockDataset(times.map(time => ({time: time.replace(' ', 'T') + 'Z'})));
   const chart = createChart({type: ChartType.barChart, dataset});
   chart.xAxis = {
     field: {name: 'time', type: 'timestamp'},

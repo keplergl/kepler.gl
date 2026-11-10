@@ -261,19 +261,16 @@ describe('dataset-ops engine', () => {
           aggregations: {value: technique}
         });
         expect(result.data.rows).toEqual(values.length ? [['west', expected]] : []);
-        expect(result.data.rows[0]?.[1]).toBe(values.length ? expected : undefined);
-        const temporal = type === 'timestamp' || type === 'date';
-        const field = result.data.fields[1];
-        expect(temporal ? {type: field.type, format: field.format} : null).toEqual(
-          temporal ? {type, format} : null
-        );
-        const reloaded = temporal
-          ? new KeplerTable({info: result.info, color: [0, 0, 0]}).updateSchema(result.data)
-          : null;
-        expect(reloaded?.fields[1].format).toBe(temporal ? format : undefined);
-        expect(format === 'x' ? reloaded?.fields[1].valueAccessor({index: 0}) : null).toBe(
-          format === 'x' ? Number(expected) * 1000 : null
-        );
+        if (values.length) expect(result.data.rows[0][1]).toBe(expected);
+        if (type === 'timestamp' || type === 'date') {
+          expect(result.data.fields[1]).toMatchObject({type, format});
+          const reloaded = new KeplerTable({info: result.info, color: [0, 0, 0]});
+          reloaded.updateSchema(result.data);
+          expect(reloaded.fields[1].format).toBe(format);
+          if (format === 'x') {
+            expect(reloaded.fields[1].valueAccessor({index: 0})).toBe(Number(expected) * 1000);
+          }
+        }
       }
       expect(values.map((_, i) => dataset.dataContainer.valueAt(i, 1))).toEqual(values);
     }

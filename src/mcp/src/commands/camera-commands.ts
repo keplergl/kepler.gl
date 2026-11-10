@@ -61,38 +61,36 @@ export function getCameraBookmarksCommand(ctx: KeplerContext): RoomCommand {
     execute: (_execution, input) => {
       try {
         const args = bookmarksSchema.parse(input);
+        if (!['list', 'show-control'].includes(args.action) && !args.id)
+          throw new Error('id is required for this bookmark action.');
         const bookmarks: CameraBookmark[] = ctx.getVisState().cameraBookmarks ?? [];
         let next = bookmarks;
         if (args.action === 'show-control') {
           if (args.showControl === undefined) throw new Error('showControl is required.');
           ctx.dispatch(setMapControlVisibility('cameraBookmarks', args.showControl));
+        } else if (args.action === 'save') {
+          if (args.name === undefined) throw new Error('name is required to save a bookmark.');
+          const camera = args.camera ?? getCameraSnapshot(ctx.getMapState?.());
+          if (!camera)
+            throw new Error('Provide camera or a host getMapState accessor to capture the view.');
+          const bookmark = {id: args.id!, name: args.name, camera};
+          next = bookmarks.some(b => b.id === args.id)
+            ? bookmarks.map(b => (b.id === args.id ? bookmark : b))
+            : [...bookmarks, bookmark];
+          ctx.dispatch(setCameraBookmarks(next));
+          if (args.showControl !== undefined) {
+            ctx.dispatch(setMapControlVisibility('cameraBookmarks', args.showControl));
+          }
         } else if (args.action !== 'list') {
-          const bookmarkId = args.id;
-          if (!bookmarkId) throw new Error('id is required for this bookmark action.');
-          if (args.action === 'save') {
-            if (args.name === undefined) throw new Error('name is required to save a bookmark.');
-            const camera = args.camera ?? getCameraSnapshot(ctx.getMapState?.());
-            if (!camera)
-              throw new Error('Provide camera or a host getMapState accessor to capture the view.');
-            const bookmark = {id: bookmarkId, name: args.name, camera};
-            next = bookmarks.some(b => b.id === bookmarkId)
-              ? bookmarks.map(b => (b.id === bookmarkId ? bookmark : b))
-              : [...bookmarks, bookmark];
+          const bookmark = bookmarks.find(b => b.id === args.id);
+          if (!bookmark) throw new Error(`Bookmark "${args.id}" not found.`);
+          if (args.action === 'remove') {
+            next = bookmarks.filter(b => b.id !== args.id);
             ctx.dispatch(setCameraBookmarks(next));
-            if (args.showControl !== undefined) {
-              ctx.dispatch(setMapControlVisibility('cameraBookmarks', args.showControl));
-            }
           } else {
-            const bookmark = bookmarks.find(b => b.id === bookmarkId);
-            if (!bookmark) throw new Error(`Bookmark "${bookmarkId}" not found.`);
-            if (args.action === 'remove') {
-              next = bookmarks.filter(b => b.id !== bookmarkId);
-              ctx.dispatch(setCameraBookmarks(next));
-            } else {
-              assertNavigable(ctx);
-              ctx.dispatch(controlCameraTour({action: 'pause'}));
-              ctx.dispatch(updateMap({...bookmark.camera, transitionDuration: 0}));
-            }
+            assertNavigable(ctx);
+            ctx.dispatch(controlCameraTour({action: 'pause'}));
+            ctx.dispatch(updateMap({...bookmark.camera, transitionDuration: 0}));
           }
         }
         return {success: true, commandId: id, data: {bookmarks: next}};

@@ -150,7 +150,7 @@ const StyledVerticalResizeHandle = styled(PanelResizeHandle)`
   }
 `;
 
-const App = () => {
+const App = props => {
   const [showBanner, toggleShowBanner] = useState(false);
   const {id, provider} = useParams();
   const [searchParams] = useSearchParams();

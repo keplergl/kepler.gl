@@ -45,6 +45,17 @@ const feature0Centroid = computeCentroid([
   ]
 ]);
 
+// feature1 polygon centroid
+const feature1Centroid = computeCentroid([
+  [
+    [-122.39249932896719, 37.793768814133983],
+    [-122.391890260341384, 37.794278544568918],
+    [-122.391666728649753, 37.794132425256194],
+    [-122.391723034266192, 37.79410061945832],
+    [-122.39249932896719, 37.793768814133983]
+  ]
+]);
+
 test('#AggregationLayer (Grid) -> constructor with geojson column mode', t => {
   const layer = new GridLayer({
     dataId: 'test',
@@ -377,7 +388,7 @@ test('#AggregationLayer -> geojson mode handles Point, LineString, Polygon geome
 
   const mockDataContainer = {
     numRows: () => mockFeatures.length,
-    valueAt: index => JSON.stringify(mockFeatures[index])
+    valueAt: (index, fieldIdx) => JSON.stringify(mockFeatures[index])
   };
 
   // Manually invoke _buildGeojsonDataToFeature through the public API

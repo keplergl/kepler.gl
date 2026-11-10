@@ -638,7 +638,7 @@ export function groupColumnsAsGeoJson(
   columns: LayerColumns,
   sortByColumn = 'timestamp',
   // Optional output for table-mode Trip animation, aligned with the returned features.
-  dataToTimeStamp?: (number | null)[][]
+  dataToTimeStamp?: number[][]
 ): Feature[] {
   const groupedById: {[key: string]: CoordsType[]} = Object.create(null);
   const sortByFieldIdx = columns[sortByColumn].fieldIdx;
@@ -679,7 +679,8 @@ export function groupColumnsAsGeoJson(
   // Match Trip's timestamp parser: prefer a trip that can identify the time format.
   const sampleTrip =
     sortByColumn === 'timestamp' &&
-    (groups.find(items => items.some(item => item[3] !== 0)) || groups.find(items => items.length));
+    (groups.find(items => items.some(item => item[3] !== 0)) ||
+      groups.find(items => items.length));
   // Zero is valid in both Unix units but cannot identify either format for the analyzer.
   const sampleTimes = sampleTrip ? sampleTrip.map(item => item[3]).filter(time => time !== 0) : [];
   const timeFormat = sampleTimes.length
@@ -694,18 +695,13 @@ export function groupColumnsAsGeoJson(
         // Numeric timestamps already sort chronologically, without parsing or a sort cache.
         items.sort((a, b) => ascending(a[3] as any, b[3] as any));
         if (timeFormat && dataToTimeStamp) {
-          dataToTimeStamp[index] = items.map(item =>
-            item[3] == null ? null : timeToUnixMilli(item[3], timeFormat)
-          );
+          dataToTimeStamp[index] = items.map(item => timeToUnixMilli(item[3] as number, timeFormat)!);
         }
       } else {
         // Parse once, then retain the sorted timestamps for Trip animation.
         const sorted = items
-          .map(item => ({
-            item,
-            time: item[3] == null ? null : timeToUnixMilli(item[3], timeFormat)
-          }))
-          .sort((a, b) => ascending(a.time ?? NaN, b.time ?? NaN));
+          .map(item => ({item, time: timeToUnixMilli(item[3] as number, timeFormat)!}))
+          .sort((a, b) => ascending(a.time, b.time));
         sorted.forEach(({item}, i) => {
           items[i] = item;
         });

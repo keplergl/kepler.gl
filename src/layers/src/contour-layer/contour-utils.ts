@@ -102,14 +102,13 @@ export function buildContourGrid(
       height - 1 - Math.min(height - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
     const index = row * width + col;
     const count = ++counts[index];
-    const value = sample.value ?? 0;
     // Incremental means avoid accumulating a large sum of weights.
     values[index] =
       aggregation === 'COUNT'
         ? count
         : count === 1
-        ? value
-        : values[index] * ((count - 1) / count) + value / count;
+        ? sample.value!
+        : values[index] * ((count - 1) / count) + sample.value! / count;
   }
   return {
     width,

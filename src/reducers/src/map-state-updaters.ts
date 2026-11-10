@@ -305,7 +305,7 @@ export const togglePerspectiveUpdater = (state: MapState): MapState => {
     },
     dragRotate: !state.dragRotate,
     mapViewMode: state.dragRotate ? MapViewMode.MODE_2D : MapViewMode.MODE_3D,
-    globe: {config: DEFAULT_GLOBE_CONFIG, ...state.globe, enabled: false},
+    globe: {...state.globe!, enabled: false},
     // Leaving globe mode: drop globe-only zoom bounds so the flat map (and
     // consumers of mapState such as video export) aren't left clamped. When
     // globe was never on, keep whatever min/maxZoom the app configured.
@@ -346,7 +346,7 @@ export const setMapViewModeUpdater = (
     case MapViewMode.MODE_2D:
       nextState = {
         ...state,
-        globe: {config: DEFAULT_GLOBE_CONFIG, ...state.globe, enabled: false},
+        globe: {...state.globe!, enabled: false},
         pitch: 0,
         bearing: 0,
         dragRotate: false,
@@ -360,7 +360,7 @@ export const setMapViewModeUpdater = (
     case MapViewMode.MODE_3D:
       nextState = {
         ...state,
-        globe: {config: DEFAULT_GLOBE_CONFIG, ...state.globe, enabled: false},
+        globe: {...state.globe!, enabled: false},
         pitch: 50,
         bearing: 24,
         dragRotate: true,
@@ -371,7 +371,7 @@ export const setMapViewModeUpdater = (
     case MapViewMode.MODE_GLOBE:
       nextState = {
         ...state,
-        globe: {config: DEFAULT_GLOBE_CONFIG, ...state.globe, enabled: true},
+        globe: {...state.globe!, enabled: true},
         dragRotate: true,
         pitch: 0,
         bearing: 0,
@@ -412,10 +412,9 @@ export const globeConfigChangeUpdater = (
   return {
     ...state,
     globe: {
-      enabled: false,
-      ...state.globe,
+      ...state.globe!,
       config: {
-        ...(state.globe?.config ?? DEFAULT_GLOBE_CONFIG),
+        ...state.globe!.config,
         ...action.payload
       }
     }

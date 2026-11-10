@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 import {Feature} from '@deck.gl-community/editable-layers';
@@ -134,13 +134,9 @@ export default function FeaturePropertiesEditor({
   const intl = useIntl();
   const [rows, setRows] = useState<PropertyRow[]>(() => rowsFromFeature(selectedFeature));
 
-  const selectedId = useRef(selectedFeature?.id);
   useEffect(() => {
-    if (selectedId.current !== selectedFeature?.id) {
-      selectedId.current = selectedFeature?.id;
-      setRows(rowsFromFeature(selectedFeature));
-    }
-  }, [selectedFeature]);
+    setRows(rowsFromFeature(selectedFeature));
+  }, [selectedFeature?.id]);
 
   const commitRows = useCallback(
     (nextRows: PropertyRow[]) => {

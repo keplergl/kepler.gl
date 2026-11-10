@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import {
   visStateReducer,
   mapStateReducer,
@@ -163,7 +162,7 @@ it('plays and pauses through the shared player and stops it when navigating to a
   expect((await execute(command, {action: 'play'})).success).toBe(true);
   expect(getUiState().mapControls.cameraTour?.show).toBe(true);
   expect(getUiState().cameraTourPlaybackRequest).toMatchObject({action: 'play'});
-  const firstSequence = requireValue(getUiState().cameraTourPlaybackRequest).sequence;
+  const firstSequence = getUiState().cameraTourPlaybackRequest!.sequence;
   await execute(command, {action: 'pause'});
   expect(getUiState().cameraTourPlaybackRequest).toEqual({
     action: 'pause',

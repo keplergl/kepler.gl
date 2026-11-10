@@ -84,7 +84,6 @@ const TooltipImage: React.FC<{src: string}> = ({src}) => {
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    const image = imgRef.current;
     return () => {
       // Revoke blob URLs to free memory
       if (src && (src.startsWith('blob:') || src.startsWith('data:'))) {
@@ -95,8 +94,8 @@ const TooltipImage: React.FC<{src: string}> = ({src}) => {
         }
       }
       // Clear the image src to release the decoded image from memory
-      if (image?.getAttribute('src') === src) {
-        image.removeAttribute('src');
+      if (imgRef.current) {
+        imgRef.current.src = '';
       }
     };
   }, [src]);

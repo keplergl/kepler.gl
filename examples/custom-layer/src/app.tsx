@@ -9,7 +9,7 @@ import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
-import {injectComponents, LayerConfiguratorFactory} from '@kepler.gl/components';
+import KeplerGl, {injectComponents, LayerConfiguratorFactory} from '@kepler.gl/components';
 import {addDataToMap} from '@kepler.gl/actions';
 import {LayerClasses} from '@kepler.gl/layers';
 import {initApplicationConfig} from '@kepler.gl/utils';
@@ -239,8 +239,5 @@ const Root = () => (
 );
 
 const container = document.getElementById('root');
-if (!container) {
-  throw new Error('Missing root element.');
-}
-const root = ReactDOM.createRoot(container);
+const root = ReactDOM.createRoot(container!);
 root.render(<Root />);

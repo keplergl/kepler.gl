@@ -173,30 +173,25 @@ export default class VoronoiLayer extends Layer {
     const getFilterValue = gpuFilter.filterValueAccessor(dataContainer)();
     const {columns, columnMode, visConfig} = this.config;
     const previous = this.geometryTriggers;
-    const previousSource = this.source;
     const sourceChanged =
-      !previousSource ||
+      !this.source ||
       previous?.dataContainer !== dataContainer ||
       previous.dataRevision !== dataRevision ||
       previous.columns !== columns ||
       previous.columnMode !== columnMode;
-    let source;
     if (sourceChanged) {
       const getPosition = this.getPositionAccessor(dataContainer);
       const sites: VoronoiSite[] = [];
       for (let index = 0; index < dataContainer.numRows(); index++) {
         sites.push({index, position: getPosition({index}) as [number, number]});
       }
-      source = prepareVoronoiSites(sites);
-      this.source = source;
-    } else {
-      source = previousSource;
+      this.source = prepareVoronoiSites(sites);
     }
-    const previousClip = this.clip;
     const clipChanged =
-      !previousClip || sourceChanged || previous?.padding !== visConfig.boundsPadding;
-    const clip = clipChanged ? getVoronoiClip(source, visConfig.boundsPadding) : previousClip;
-    this.clip = clip;
+      !this.clip || sourceChanged || previous?.padding !== visConfig.boundsPadding;
+    if (clipChanged) {
+      this.clip = getVoronoiClip(this.source!, visConfig.boundsPadding);
+    }
     if (
       !this.mosaic ||
       clipChanged ||
@@ -211,8 +206,8 @@ export default class VoronoiLayer extends Layer {
         ? getFilterDataFunc(gpuFilter.filterRange, getFilterValue)
         : null;
       this.mosaic = tessellateVoronoiMosaic(
-        source,
-        clip,
+        this.source!,
+        this.clip!,
         site => visible.has(site.index) && (!matchesGpuFilter || matchesGpuFilter(site))
       );
       this.geometryTriggers = {

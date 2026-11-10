@@ -12,8 +12,8 @@ import {
   MVT_METADATA
 } from '../../../../test/fixtures/tile-metadata';
 
-describe('getTileUrl templates', () => {
-  test.each([
+describe('getTileUrl', () => {
+  [
     {name: 'empty string', input: '', expected: null},
     {name: 'invalid URL', input: '/foo/bar/baz.mvt', expected: null},
     {
@@ -41,13 +41,15 @@ describe('getTileUrl templates', () => {
       input: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt?access_token=sk.fobar.baz',
       expected: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt?access_token=sk.fobar.baz'
     }
-  ])('$name', ({input, expected}) => {
-    expect(getTileUrl(input)).toBe(expected);
+  ].forEach(({name, input, expected}) => {
+    test(name, () => {
+      expect(getTileUrl(input)).toBe(expected);
+    });
   });
 });
 
-describe('getMetaUrl templates', () => {
-  test.each([
+describe('getMetaUrl', () => {
+  [
     {name: 'empty string', input: '', expected: null},
     {name: 'invalid URL', input: '/foo/bar/baz.mvt', expected: null},
     {
@@ -77,8 +79,10 @@ describe('getMetaUrl templates', () => {
       expected:
         'https://api.mapbox.com/v4/spam.json?style=mapbox://styles/user/styleId@00&access_token=pk.xxx.zzz'
     }
-  ])('$name', ({input, expected}) => {
-    expect(getMetaUrl(input)).toBe(expected);
+  ].forEach(({name, input, expected}) => {
+    test(name, () => {
+      expect(getMetaUrl(input)).toBe(expected);
+    });
   });
 });
 
@@ -418,13 +422,15 @@ test('parseMetadata, empty input', () => {
 });
 
 describe('parseMetadata, bad cases', () => {
-  test.each([
+  [
     {name: 'empty string', input: '', expected: null},
     {name: 'null', input: null, expected: null},
     {name: 'undefined', input: undefined, expected: null},
     {name: 'string', input: 'spam', expected: null}
-  ])('$name', ({input, expected}) => {
-    expect(parseMetadata(input as any)).toBe(expected);
+  ].forEach(({name, input, expected}) => {
+    test(name, () => {
+      expect(parseMetadata(input as any)).toBe(expected);
+    });
   });
 });
 

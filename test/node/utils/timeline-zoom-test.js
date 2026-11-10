@@ -112,6 +112,7 @@ test('Timeline Zoom Utils -> window zoom logic', t => {
 
   // simulate zoom in (factor > 1)
   const factor = 1.08;
+  const center = 300;
   const windowWidth = filterEnd - filterStart;
   const domainWidth = fullDomain[1] - fullDomain[0];
   const minWidth = Math.max(domainWidth / 100, 1);

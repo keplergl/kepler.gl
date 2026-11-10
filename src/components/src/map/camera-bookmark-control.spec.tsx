@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import React from 'react';
 import {fireEvent, screen, within, waitFor} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
@@ -361,13 +360,12 @@ test.each([INITIAL_UI_STATE.mapControls, legacyMapControls, enabledMapControls])
       </IntlWrapper>
     );
     const toggle = screen.getByRole('checkbox', {name: 'Enable bookmarks'});
-    const initiallyEnabled = initialControls.cameraBookmarks?.show === true;
-    expect((toggle as HTMLInputElement).checked).toBe(initiallyEnabled);
-    expect(Boolean(screen.queryByRole('navigation', {name: 'Bookmarks'}))).toBe(initiallyEnabled);
-    if (!initiallyEnabled) {
+    if (initialControls.cameraBookmarks?.show !== true) {
+      expect(toggle).not.toBeChecked();
+      expect(screen.queryByRole('navigation', {name: 'Bookmarks'})).toBeNull();
       fireEvent.click(toggle);
+      expect(visibility).toHaveBeenLastCalledWith('cameraBookmarks', true);
     }
-    expect(visibility.mock.calls).toEqual(initiallyEnabled ? [] : [['cameraBookmarks', true]]);
     const panel = screen.getByRole('navigation', {name: 'Bookmarks'}).closest('.map-control-panel');
     const close = panel?.querySelector('.map-control__panel-header .close-map-control-item');
     expect(close).toBeInTheDocument();
@@ -703,12 +701,7 @@ test('bookmark copy, navigation and close do not activate title dragging', () =>
 test.each([
   {isExport: true},
   {mapState: {...INITIAL_MAP_STATE, isSplit: true}},
-  {
-    mapState: {
-      ...INITIAL_MAP_STATE,
-      globe: {...requireValue(INITIAL_MAP_STATE.globe), enabled: true}
-    }
-  },
+  {mapState: {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}},
   {bookmarks: []},
   {mapControls: {cameraBookmarks: {show: false, active: true}}},
   {mapControls: INITIAL_UI_STATE.mapControls},

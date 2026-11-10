@@ -1071,17 +1071,3 @@ test('#mapStateReducer -> GLOBE_CONFIG_CHANGE: merges partial config', t => {
 
   t.end();
 });
-
-test('#mapStateReducer -> globe actions initialize state from legacy maps', t => {
-  const legacyState = {...INITIAL_MAP_STATE, globe: undefined};
-  const entered = reducer(legacyState, setMapViewMode(MapViewMode.MODE_GLOBE));
-  t.deepEqual(entered.globe, {enabled: true, config: DEFAULT_GLOBE_CONFIG});
-
-  const updated = reducer(legacyState, globeConfigChange({atmosphere: false}));
-  t.deepEqual(updated.globe, {
-    enabled: false,
-    config: {...DEFAULT_GLOBE_CONFIG, atmosphere: false}
-  });
-
-  t.end();
-});

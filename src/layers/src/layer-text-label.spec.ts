@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../test/helpers/require-value';
 import {Table, vectorFromArray} from 'apache-arrow';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import KeplerTable from '@kepler.gl/table';
@@ -108,7 +107,7 @@ describe('getSingleTextLabelValue', () => {
 describe('renderTextLabelLayer', () => {
   test('includes the display format in the deck.gl text update trigger', async () => {
     const table = await makeTable();
-    const field = {...requireValue(findField(table, 'time')), displayFormat: 'YYYY'};
+    const field = {...findField(table, 'time')!, displayFormat: 'YYYY'};
     const layer = new PointLayer({id: 'point', dataId: 'data'});
     layer.updateLayerConfig({
       textLabel: [{...DEFAULT_TEXT_LABEL, field}]
@@ -225,13 +224,12 @@ describe.each([false, true])('text label data refresh (Arrow: %s)', useArrow => 
         }
         data = layer.formatLayerData({[table.id]: table}, data);
         expect(renderedTextLabel(layer, data).props.characterSet).toEqual(glyphs);
-        const visibleIndices = useArrow
-          ? [0, 1].filter(index => data.getFiltered({index}) === 1)
-          : data.data.map(row => row.index);
-        expect(visibleIndices).toEqual(indices);
-        expect(useArrow ? [0, 1].map(index => data.getFiltered({index})) : null).toEqual(
-          useArrow ? [0, 1].map(index => Number(indices.includes(index))) : null
-        );
+        if (useArrow) {
+          expect(data.getFiltered({index: 0})).toBe(indices.includes(0) ? 1 : 0);
+          expect(data.getFiltered({index: 1})).toBe(indices.includes(1) ? 1 : 0);
+        } else {
+          expect(data.data.map(row => row.index)).toEqual(indices);
+        }
       }
       expect(readLabel(renderedTextLabel(layer, data), 1)).toBe('Ω');
     }

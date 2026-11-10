@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {requireValue} from '../../../../test/helpers/require-value';
 import {
   buildContourGrid,
   generateContours,
@@ -261,9 +260,7 @@ describe('scalar contours', () => {
             domain: [value - span, value + span] as [number, number]
           };
           const expected = generateContours(grid, {...settings, smoothing: 0});
-          const atValue = requireValue(
-            expected.find(feature => feature.properties.threshold === value)
-          );
+          const atValue = expected.find(feature => feature.properties.threshold === value)!;
           expect(atValue.geometry.coordinates).toHaveLength(1);
           expect(atValue.geometry.coordinates[0]).toHaveLength(holes ? 2 : 1);
           for (const smoothing of [1.5, 6]) {
@@ -311,9 +308,10 @@ describe('point aggregation for contours', () => {
     ];
 
   test('averages distinct points in the same cell and leaves empty cells at zero', () => {
-    const grid = requireValue(
-      buildContourGrid([point(0, 0, 10), point(0.0001, 0.0001, 30), point(0.03, 0.03, -8)], 32)
-    );
+    const grid = buildContourGrid(
+      [point(0, 0, 10), point(0.0001, 0.0001, 30), point(0.03, 0.03, -8)],
+      32
+    )!;
     expect(at(grid, 0, 0)).toBe(20);
     expect(at(grid, 0.03, 0.03)).toBe(-8);
     expect(at(grid, 0.015, 0.015)).toBe(0);
@@ -322,13 +320,11 @@ describe('point aggregation for contours', () => {
   });
 
   test('counts every point when weights are absent, including duplicate positions', () => {
-    const grid = requireValue(
-      buildContourGrid(
-        [point(0, 0, null), point(0, 0, NaN), point(0.0001, 0.0001, -100), point(0.03, 0.03, 99)],
-        32,
-        'COUNT'
-      )
-    );
+    const grid = buildContourGrid(
+      [point(0, 0, null), point(0, 0, NaN), point(0.0001, 0.0001, -100), point(0.03, 0.03, 99)],
+      32,
+      'COUNT'
+    )!;
     expect(at(grid, 0, 0)).toBe(3);
     expect(at(grid, 0.03, 0.03)).toBe(1);
     expect([...grid.values].reduce((a, b) => a + b, 0)).toBe(4);
@@ -337,7 +333,7 @@ describe('point aggregation for contours', () => {
   test('skips invalid weights without counting them or extending the weighted surface', () => {
     const valid = [point(0, 0, 0), point(0.0001, 0.0001, -10), point(0.03, 0.03, 4)];
     const invalid = [point(0, 0, null), point(10, 10, NaN), point(10, 10, Infinity)];
-    const grid = requireValue(buildContourGrid([...valid, ...invalid], 32));
+    const grid = buildContourGrid([...valid, ...invalid], 32)!;
     expect(grid).toEqual(buildContourGrid(valid, 32));
     expect(at(grid, 0, 0)).toBe(-5);
     expect(buildContourGrid(invalid)).toBeNull();
@@ -365,12 +361,10 @@ describe('point aggregation for contours', () => {
     'fits small and large datasets to a maximum axis of %s',
     resolution => {
       const makeGrid = (scale: number) =>
-        requireValue(
-          buildContourGrid(
-            [point(-0.5 * scale, -0.25 * scale, 10), point(0.5 * scale, 0.25 * scale, 30)],
-            resolution
-          )
-        );
+        buildContourGrid(
+          [point(-0.5 * scale, -0.25 * scale, 10), point(0.5 * scale, 0.25 * scale, 30)],
+          resolution
+        )!;
       const small = makeGrid(0.00001);
       const large = makeGrid(1);
       for (const grid of [small, large]) {
@@ -386,7 +380,7 @@ describe('point aggregation for contours', () => {
   );
 
   test('keeps cells geographically square at higher latitudes', () => {
-    const grid = requireValue(buildContourGrid([point(0, 59.99, 10), point(0.03, 60.01, 30)], 192));
+    const grid = buildContourGrid([point(0, 59.99, 10), point(0.03, 60.01, 30)], 192)!;
     expect(grid.height).toBe(192);
     expect(grid.width).toBeGreaterThan(2);
     expect(grid.width).toBeLessThan(grid.height);
@@ -398,8 +392,8 @@ describe('point aggregation for contours', () => {
 
   test('resolution determines which observations are averaged', () => {
     const input = [point(0, 0, 10), point(0.0004, 0.0004, 30), point(0.03, 0.03, 8)];
-    const fine = requireValue(buildContourGrid(input, 256));
-    const coarse = requireValue(buildContourGrid(input, 32));
+    const fine = buildContourGrid(input, 256)!;
+    const coarse = buildContourGrid(input, 32)!;
     expect(at(fine, 0, 0)).toBe(10);
     expect(at(fine, 0.0004, 0.0004)).toBe(30);
     expect(at(coarse, 0, 0)).toBe(20);
@@ -407,7 +401,7 @@ describe('point aggregation for contours', () => {
 
   test('accepts single points and collinear inputs without triangulation', () => {
     for (const input of [[point(0, 0, 8)], [point(0, 0, 8), point(0, 0.03, 12)]]) {
-      const grid = requireValue(buildContourGrid(input, 32));
+      const grid = buildContourGrid(input, 32)!;
       expect(grid.width).toBeGreaterThanOrEqual(2);
       expect(grid.height).toBeGreaterThanOrEqual(2);
       expect(generateContours(grid, {...options, below: false})).toHaveLength(3);
@@ -415,7 +409,7 @@ describe('point aggregation for contours', () => {
   });
 
   test('bounds grid allocation and handles empty, invalid settings and global inputs', () => {
-    const grid = requireValue(buildContourGrid([point(0, 0, 4), point(10, 10, 8)], 100000));
+    const grid = buildContourGrid([point(0, 0, 4), point(10, 10, 8)], 100000)!;
     expect(Math.max(grid.width, grid.height)).toBe(256);
     expect(grid.values.length).toBeLessThanOrEqual(256 * 256);
     expect([...grid.values].every(Number.isFinite)).toBe(true);

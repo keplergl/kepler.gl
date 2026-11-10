@@ -103,12 +103,8 @@ it.each([
     ],
     options: {autoCreateLayers: false}
   });
-  expect(result.data.layers).toEqual(
-    type === 'wms' ? [{name: 'roads', title: 'Roads'}] : undefined
-  );
-  expect(payload.datasets[0].metadata).toMatchObject(
-    type === 'bitmap' ? {bounds: [-10, -10, 10, 10]} : {}
-  );
+  if (type === 'wms') expect(result.data.layers).toEqual([{name: 'roads', title: 'Roads'}]);
+  if (type === 'bitmap') expect(payload.datasets[0].metadata.bounds).toEqual([-10, -10, 10, 10]);
 });
 
 it('validates 3D Tiles metadata before dispatch', async () => {
@@ -203,9 +199,7 @@ function setupReducer() {
 
 it('waits for asynchronous registration before an immediate add-layer call', async () => {
   const {ctx, execute} = setupReducer();
-  let finishMetadata: (response: any) => void = () => {
-    throw new Error('Metadata request did not start.');
-  };
+  let finishMetadata: (response: any) => void;
   let metadataStarted: () => void;
   const started = new Promise<void>(resolve => {
     metadataStarted = resolve;
@@ -227,7 +221,7 @@ it('waits for asynchronous registration before an immediate add-layer call', asy
   await started;
   expect(completed).toBe(false);
   expect(Object.keys(ctx.getVisState().datasets)).toHaveLength(0);
-  finishMetadata({ok: true, json: async () => stac});
+  finishMetadata!({ok: true, json: async () => stac});
   const result = await pending;
   expect(result).toMatchObject({success: true});
   expect(ctx.getVisState().datasets[result.data.datasetId]).toBeDefined();
@@ -263,9 +257,7 @@ it('reports table creation failures instead of successful imports', async () => 
 it('returns cancellation while table creation is pending and handles its eventual completion', async () => {
   const {execute} = setupReducer();
   const controller = new AbortController();
-  let finishImport: () => void = () => {
-    throw new Error('Dataset import did not start.');
-  };
+  let finishImport: () => void;
   let importStarted: () => void;
   const started = new Promise<void>(resolve => {
     importStarted = resolve;
@@ -285,7 +277,7 @@ it('returns cancellation while table creation is pending and handles its eventua
       success: false,
       error: expect.stringContaining('cancelled')
     });
-    finishImport();
+    finishImport!();
     await new Promise(resolve => setTimeout(resolve, 0));
   } finally {
     importData.mockRestore();

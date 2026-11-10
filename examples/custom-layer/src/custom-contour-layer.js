@@ -140,7 +140,7 @@ export default class ContourKeplerLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const {data} = opts;
+    const {data, mapState} = opts;
     if (!data?.data?.length) {
       return [];
     }

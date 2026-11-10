@@ -4,7 +4,7 @@
 import * as React from 'react';
 import {useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
-import {Provider} from 'react-redux';
+import {Provider, useDispatch} from 'react-redux';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -45,6 +45,7 @@ function useWindowSize() {
 }
 
 const App = () => {
+  const dispatch = useDispatch();
   const {width, height} = useWindowSize();
 
   return (
@@ -64,8 +65,5 @@ const Root = () => (
 );
 
 const container = document.getElementById('root');
-if (!container) {
-  throw new Error('Missing root element.');
-}
-const root = ReactDOM.createRoot(container);
+const root = ReactDOM.createRoot(container!);
 root.render(<Root />);

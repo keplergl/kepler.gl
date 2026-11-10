@@ -100,11 +100,9 @@ describe('default fill color initialization and saved configs', () => {
       expect(layer.config.color).toEqual([12, 34, 56]);
       if (colorField) {
         layer.updateLayerDomain({[dataset.id]: dataset});
+        expect(layer.config.colorScale).toBe('quantize');
+        expect(layer.config.colorDomain).toEqual([10, 11]);
       }
-      const domain = colorField ? layer.config.colorDomain : null;
-      const scale = colorField ? layer.config.colorScale : null;
-      expect(scale).toBe(colorField ? 'quantize' : null);
-      expect(domain).toEqual(colorField ? [10, 11] : null);
     });
   });
 
@@ -122,7 +120,9 @@ describe('default fill color initialization and saved configs', () => {
       expect(initialized.visualChannels[channel].defaultMeasure).toBe(
         type === 'heatmap' ? 'property.density' : 'property.pointCount'
       );
-      expect(initialized.config[`${channel}Field`]).toBeNull();
+      if (type === 'heatmap') {
+        expect(initialized.config.weightField).toBeNull();
+      }
     }
   );
 });

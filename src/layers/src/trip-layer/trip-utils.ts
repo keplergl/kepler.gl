@@ -118,12 +118,12 @@ export function parseTripGeoJsonTimestamp(dataToFeature: any[]): {
   return {dataToTimeStamp, animationDomain};
 }
 
-function findMinFromSorted(list: (number | null)[] | null) {
+function findMinFromSorted(list: number[]) {
   // check if list is null since the default value [] will only be applied when the param is undefined
   return list?.find(d => notNullorUndefined(d) && Number.isFinite(d)) ?? null;
 }
 
-function findMaxFromSorted(list: (number | null)[] | null = []) {
+function findMaxFromSorted(list: number[] | null = []) {
   // Default [] only applies for undefined. Invalid trips are passed as null.
   if (!list) {
     return null;
@@ -138,9 +138,7 @@ function findMaxFromSorted(list: (number | null)[] | null = []) {
   return null;
 }
 
-export function getAnimationDomainFromTimestamps(
-  dataToTimeStamp: ((number | null)[] | null)[] = []
-) {
+export function getAnimationDomainFromTimestamps(dataToTimeStamp: number[][] = []) {
   return dataToTimeStamp.reduce(
     (accu: [number, number], tss) => {
       const tsMin = findMinFromSorted(tss);

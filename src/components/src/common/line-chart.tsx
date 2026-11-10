@@ -403,17 +403,16 @@ function LineChartFactory() {
             </clipPath>
           </defs>
           <g clipPath={`url(#${clipId})`}>
-            {yScale &&
-              gridLines.map((tick, i) => (
-                <line
-                  key={i}
-                  className="line-chart__grid-line"
-                  x1={0}
-                  x2={width}
-                  y1={yScale(tick)}
-                  y2={yScale(tick)}
-                />
-              ))}
+            {gridLines.map((tick, i) => (
+              <line
+                key={i}
+                className="line-chart__grid-line"
+                x1={0}
+                x2={width}
+                y1={yScale!(tick)}
+                y2={yScale!(tick)}
+              />
+            ))}
             {lineMarks.paths.map(mark => (
               <path
                 key={mark.key}
@@ -442,13 +441,12 @@ function LineChartFactory() {
               )}
           </g>
           {isEnlarged &&
-            yScale &&
             yAxisTicks.map((tick, i) => (
               <text
                 key={i}
                 className="line-chart__axis-tick"
                 x={-4}
-                y={yScale(tick)}
+                y={yScale!(tick)}
                 textAnchor="end"
                 dominantBaseline="middle"
               >
@@ -457,7 +455,7 @@ function LineChartFactory() {
             ))}
           {brushComponent}
         </svg>
-        {hoveredDP && enableChartHover && !brushing && hintPosition ? (
+        {clampedHoveredDP && enableChartHover && !brushing && hintPosition ? (
           <div
             ref={hintRef}
             style={{
@@ -469,7 +467,7 @@ function LineChartFactory() {
               visibility: hintSize.height ? 'visible' : 'hidden'
             }}
           >
-            <HintContent {...hoveredDP} format={hintFormatter} />
+            <HintContent {...hoveredDP!} format={hintFormatter} />
           </div>
         ) : null}
       </LineChartWrapper>
