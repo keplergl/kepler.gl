@@ -204,7 +204,9 @@ function buildAdditionalLayer(
   for (const key of required) {
     if (!layer.config.columns[key]?.value) throw new Error(`${type} requires columns.${key}.`);
   }
-  return layer;
+  return typeof layer.setInitialLayerConfig === 'function' && dataset.dataContainer
+    ? layer.setInitialLayerConfig(dataset)
+    : layer;
 }
 
 /** Column names the flow field layer resolves when the caller doesn't name them. */

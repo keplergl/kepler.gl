@@ -568,3 +568,51 @@ it('applies point effects when explicit coordinate names require a new layer ins
   ).toMatchObject({success: true});
   expect(getDispatched().config.config.visConfig.glowEnabled).toBe(true);
 });
+
+it.each(['Feature', 'Collection'])(
+  'initializes the raster band/preset and STAC search for a %s',
+  async type => {
+    const metadata = {
+      type,
+      stac_version: '1.1.0',
+      [type === 'Collection' ? 'item_assets' : 'assets']: {
+        temperature: {
+          href: 'https://example.com/temperature.tif',
+          type: 'image/tiff; application=geotiff',
+          bands: [{name: 'temperature', data_type: 'float32'}]
+        }
+      }
+    };
+    const table = new KeplerTable({
+      info: {id: 'raster', type: DatasetType.RASTER_TILE},
+      metadata
+    } as any);
+    await table.importData({data: {fields: [], rows: []}});
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {
+        datasetName: table.id,
+        layerType: 'rasterTile'
+      })
+    ).toMatchObject({success: true});
+    expect(getDispatched().config.config.visConfig).toMatchObject({
+      singleBandName: 'temperature',
+      preset: 'singleBand',
+      useSTACSearching: type === 'Collection'
+    });
+  }
+);
+
+it('rejects date-only event pulse fields during layer creation', async () => {
+  const table = await makeTwoPairTable();
+  table.fields.push({name: 'date', type: ALL_FIELD_TYPES.date} as any);
+  const {ctx, getDispatched} = makeCtx(table);
+  expect(
+    await getAddLayerCommand(ctx as any).execute({} as any, {
+      datasetName: table.id,
+      layerType: 'point',
+      options: {pulseTrigger: 'event', pulseTimeField: 'date'}
+    })
+  ).toMatchObject({success: false, error: expect.stringContaining('timestamp field')});
+  expect(getDispatched()).toBeNull();
+});

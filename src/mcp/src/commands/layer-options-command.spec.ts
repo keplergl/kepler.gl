@@ -137,3 +137,37 @@ it('updates Zarr dimensions and axes, resets incompatible selections on variable
     opacity: 0.5
   });
 });
+
+it('only accepts timestamp fields for event pulses', async () => {
+  const {dataset, set, dispatch, state} = setup();
+  dataset.fields.push(
+    {name: 'date', type: 'date'} as any,
+    {name: 'time', type: 'timestamp'} as any
+  );
+  expect(await set({layerId: 'layer', options: {pulseTimeField: 'date'}})).toMatchObject({
+    success: false,
+    error: expect.stringContaining('timestamp field')
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(await set({layerId: 'layer', options: {pulseTimeField: 'time'}})).toMatchObject({
+    success: true
+  });
+  expect(state().layers[0].config.visConfig.pulseTimeField).toBe('time');
+});
+
+it('preserves automatic Zarr stretching while updating selections and opacity', async () => {
+  const {set, state} = setup('zarr', {
+    url: 'https://example.com/data.zarr',
+    variables: [{path: 'temperature', nonSpatialDims: [{name: 'band', size: 3}]}]
+  });
+  expect(state().layers[0].config.visConfig.rescale).toBeNull();
+  for (const zarr of [
+    {dimensionIndexes: {band: 1}},
+    {axis: {kind: 'dimension', dimension: 'band'}, frame: 2},
+    {opacity: 0.5}
+  ]) {
+    expect(await set({layerId: 'layer', zarr})).toMatchObject({success: true});
+    expect(state().layers[0].config.visConfig.rescale).toBeNull();
+  }
+  expect(state().layers[0].config.visConfig).toMatchObject({zarrFrame: 2, opacity: 0.5});
+});

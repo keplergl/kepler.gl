@@ -41,7 +41,9 @@ const inputSchema = z.object({
     .array(httpUrl)
     .min(1)
     .optional()
-    .describe('TiTiler servers for STAC rasters; defaults to the host configuration.'),
+    .describe(
+      'TiTiler servers for STAC rasters; required unless the host configures them. PMTiles does not need a server.'
+    ),
   bounds: z
     .tuple([
       z.number().finite(),
@@ -71,6 +73,13 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
         };
         checkCancelled();
         const pmtiles = new URL(args.url).pathname.toLowerCase().endsWith('.pmtiles');
+        const app = getApplicationConfig();
+        const rasterTileServerUrls = args.rasterTileServerUrls ?? app.rasterServerUrls;
+        if (args.type === 'rasterTile' && !pmtiles && !rasterTileServerUrls?.length) {
+          throw new Error(
+            'STAC imports require rasterTileServerUrls or host rasterServerUrls (TiTiler).'
+          );
+        }
         let metadata: any;
         if (args.type === 'bitmap') {
           if (
@@ -139,11 +148,10 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
             if (parsed instanceof Error) throw parsed;
           }
           if (!parsed) throw new Error('Failed to read raster metadata.');
-          const app = getApplicationConfig();
           metadata = {
             ...parsed,
             metadataUrl: args.url,
-            rasterTileServerUrls: args.rasterTileServerUrls ?? app.rasterServerUrls,
+            rasterTileServerUrls,
             rasterServerUseLatestTitiler: app.rasterServerUseLatestTitiler,
             rasterServerSupportsElevation: app.rasterServerSupportsElevation,
             rasterServerMaxRetries: app.rasterServerMaxRetries,
@@ -161,30 +169,58 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
           bitmap: DatasetType.BITMAP
         };
         const datasetId = `tileset_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        ctx.dispatch(
-          addDataToMap({
-            datasets: [
-              {
-                info: {
-                  id: datasetId,
-                  label: args.datasetName,
-                  type: types[args.type],
-                  format: 'rows'
-                },
-                data: {fields: metadata.fields ?? [], rows: []},
-                metadata,
-                supportedFilterTypes: [
-                  ALL_FIELD_TYPES.real,
-                  ALL_FIELD_TYPES.integer,
-                  ALL_FIELD_TYPES.boolean,
-                  ...(args.type === 'vectorTile' ? [ALL_FIELD_TYPES.string] : [])
-                ],
-                disableDataOperation: true
+        await new Promise<void>((resolve, reject) => {
+          const onAbort = () =>
+            reject(
+              new Error('Tileset import cancelled; pending table creation may still complete.')
+            );
+          const finish = () => {
+            try {
+              checkCancelled();
+              if (!ctx.getVisState().datasets[datasetId]) {
+                throw new Error(
+                  'Dataset registration failed. The host must return the task middleware completion promise from dispatch.'
+                );
               }
-            ],
-            options: {autoCreateLayers: false, centerMap: false}
-          })
-        );
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          execution.signal?.addEventListener('abort', onAbort, {once: true});
+          // The task middleware resolves only after its reducer continuations commit.
+          // Check the dataset too: table-creation failures become error notifications.
+          Promise.resolve()
+            .then(() => {
+              checkCancelled();
+              return ctx.dispatch(
+                addDataToMap({
+                  datasets: [
+                    {
+                      info: {
+                        id: datasetId,
+                        label: args.datasetName,
+                        type: types[args.type],
+                        format: 'rows'
+                      },
+                      data: {fields: metadata.fields ?? [], rows: []},
+                      metadata,
+                      supportedFilterTypes: [
+                        ALL_FIELD_TYPES.real,
+                        ALL_FIELD_TYPES.integer,
+                        ALL_FIELD_TYPES.boolean,
+                        ...(args.type === 'vectorTile' ? [ALL_FIELD_TYPES.string] : [])
+                      ],
+                      disableDataOperation: true
+                    }
+                  ],
+                  options: {autoCreateLayers: false, centerMap: false}
+                })
+              );
+            })
+            .then(finish, reject)
+            .finally(() => execution.signal?.removeEventListener('abort', onAbort));
+        });
         return {
           success: true,
           commandId: id,

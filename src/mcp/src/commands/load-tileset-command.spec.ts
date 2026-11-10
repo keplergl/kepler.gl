@@ -2,10 +2,21 @@
 // Copyright contributors to the kepler.gl project
 
 import {PMTilesSource} from '@loaders.gl/pmtiles';
-import {getMVTMetadata, getWMSCapabilities, getFieldsFromTile} from '@kepler.gl/table';
+import {KeplerTable, getMVTMetadata, getWMSCapabilities, getFieldsFromTile} from '@kepler.gl/table';
 import {DatasetType} from '@kepler.gl/constants';
 import {getLoadTilesetCommand} from './load-tileset-command';
-import type {KeplerContext, RoomCommandResult} from './types';
+import {getAddLayerCommand} from './layer-creation-command';
+import {createStore, applyMiddleware} from 'redux';
+import {taskMiddleware} from '@kepler.gl/tasks';
+import {keplerGlReducer} from '@kepler.gl/reducers';
+import {registerEntry, wrapTo} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
+
+jest.mock('@kepler.gl/utils', () => {
+  const actual = jest.requireActual('@kepler.gl/utils');
+  return {...actual, getApplicationConfig: jest.fn(actual.getApplicationConfig)};
+});
+import type {KeplerContext, RoomCommandResult, VisState} from './types';
 
 jest.mock('@kepler.gl/table', () => ({
   ...jest.requireActual('@kepler.gl/table'),
@@ -19,8 +30,14 @@ jest.mock('@loaders.gl/pmtiles', () => ({
 }));
 
 function setup() {
-  const dispatch = jest.fn();
-  const command = getLoadTilesetCommand({dispatch} as unknown as KeplerContext);
+  const datasets = {};
+  const dispatch = jest.fn(async action => {
+    for (const dataset of action.payload.datasets) datasets[dataset.info.id] = dataset;
+  });
+  const command = getLoadTilesetCommand({
+    dispatch,
+    getVisState: () => ({datasets})
+  } as unknown as KeplerContext);
   return {
     dispatch,
     execute: async (input: unknown, signal?: AbortSignal) =>
@@ -30,11 +47,15 @@ function setup() {
 const stac = {
   type: 'Feature',
   stac_version: '1.1.0',
-  assets: {image: {href: 'https://example.com/image.tif', bands: [{name: 'red'}]}}
+  assets: {
+    image: {href: 'https://example.com/image.tif', bands: [{name: 'red', data_type: 'float32'}]}
+  }
 };
 const originalFetch = global.fetch;
+const appConfig = getApplicationConfig();
 beforeEach(() => {
   jest.clearAllMocks();
+  (getApplicationConfig as jest.Mock).mockReturnValue({...appConfig, rasterServerUrls: []});
   global.fetch = jest.fn().mockResolvedValue({ok: true, json: async () => stac});
   (getMVTMetadata as jest.Mock).mockResolvedValue({
     layers: [{id: 'roads', fields: [{name: 'speed', type: 'number'}]}]
@@ -115,7 +136,12 @@ it.each([
 
 it('rejects failed metadata and cancellation without importing', async () => {
   const {execute, dispatch} = setup();
-  const args = {datasetName: 'Data', type: 'rasterTile', url: 'https://example.com/data'};
+  const args = {
+    datasetName: 'Data',
+    type: 'rasterTile',
+    url: 'https://example.com/data',
+    rasterTileServerUrls: ['https://example.com/titiler']
+  };
   (global.fetch as jest.Mock).mockResolvedValueOnce({ok: false, status: 404});
   expect(await execute(args)).toMatchObject({
     success: false,
@@ -131,4 +157,129 @@ it('rejects failed metadata and cancellation without importing', async () => {
     error: expect.stringContaining('cancelled')
   });
   expect(dispatch).not.toHaveBeenCalled();
+});
+
+it('requires a TiTiler server for STAC and accepts the host default', async () => {
+  const {execute, dispatch} = setup();
+  const args = {datasetName: 'STAC', type: 'rasterTile', url: 'https://example.com/data'};
+  expect(await execute(args)).toMatchObject({
+    success: false,
+    error: expect.stringContaining('rasterTileServerUrls')
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(global.fetch).not.toHaveBeenCalled();
+  (getApplicationConfig as jest.Mock).mockReturnValue({
+    ...appConfig,
+    rasterServerUrls: ['https://example.com/titiler']
+  });
+  expect(await execute(args)).toMatchObject({success: true});
+  expect(dispatch.mock.calls[0][0].payload.datasets[0].metadata.rasterTileServerUrls).toEqual([
+    'https://example.com/titiler'
+  ]);
+});
+
+function setupReducer() {
+  const store = createStore(keplerGlReducer, applyMiddleware(taskMiddleware));
+  store.dispatch(registerEntry({id: 'map'}));
+  const ctx = {
+    getVisState: () => (store.getState() as {map: {visState: VisState}}).map.visState,
+    dispatch: action => store.dispatch(wrapTo('map', action))
+  } as unknown as KeplerContext;
+  return {
+    ctx,
+    execute: async (signal?: AbortSignal) =>
+      (await getLoadTilesetCommand(ctx).execute({signal} as any, {
+        datasetName: 'STAC',
+        type: 'rasterTile',
+        url: 'https://example.com/data',
+        rasterTileServerUrls: ['https://example.com/titiler']
+      })) as RoomCommandResult<any>
+  };
+}
+
+it('waits for asynchronous registration before an immediate add-layer call', async () => {
+  const {ctx, execute} = setupReducer();
+  let finishMetadata: (response: any) => void;
+  let metadataStarted: () => void;
+  const started = new Promise<void>(resolve => {
+    metadataStarted = resolve;
+  });
+  (global.fetch as jest.Mock)
+    .mockResolvedValueOnce({ok: true, json: async () => stac})
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finishMetadata = resolve;
+          metadataStarted();
+        })
+    );
+  let completed = false;
+  const pending = execute().then(result => {
+    completed = true;
+    return result;
+  });
+  await started;
+  expect(completed).toBe(false);
+  expect(Object.keys(ctx.getVisState().datasets)).toHaveLength(0);
+  finishMetadata!({ok: true, json: async () => stac});
+  const result = await pending;
+  expect(result).toMatchObject({success: true});
+  expect(ctx.getVisState().datasets[result.data.datasetId]).toBeDefined();
+  expect(
+    await getAddLayerCommand(ctx).execute({} as any, {
+      datasetName: result.data.datasetId,
+      layerType: 'rasterTile'
+    })
+  ).toMatchObject({success: true});
+  expect(ctx.getVisState().layers[0].config.visConfig).toMatchObject({
+    preset: 'singleBand',
+    singleBandName: 'red'
+  });
+});
+
+it('reports table creation failures instead of successful imports', async () => {
+  const {execute} = setupReducer();
+  const importData = jest
+    .spyOn(KeplerTable.prototype, 'importData')
+    .mockRejectedValueOnce(new Error('Table creation failed'));
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    expect(await execute()).toMatchObject({
+      success: false,
+      error: expect.stringContaining('Dataset registration failed')
+    });
+  } finally {
+    importData.mockRestore();
+    log.mockRestore();
+  }
+});
+
+it('returns cancellation while table creation is pending and handles its eventual completion', async () => {
+  const {execute} = setupReducer();
+  const controller = new AbortController();
+  let finishImport: () => void;
+  let importStarted: () => void;
+  const started = new Promise<void>(resolve => {
+    importStarted = resolve;
+  });
+  const importData = jest.spyOn(KeplerTable.prototype, 'importData').mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        finishImport = () => resolve(undefined as any);
+        importStarted();
+      })
+  );
+  try {
+    const pending = execute(controller.signal);
+    await started;
+    controller.abort();
+    expect(await pending).toMatchObject({
+      success: false,
+      error: expect.stringContaining('cancelled')
+    });
+    finishImport!();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  } finally {
+    importData.mockRestore();
+  }
 });

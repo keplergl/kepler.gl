@@ -60,11 +60,9 @@ export function validateLayerOptions(
     if (
       key === 'pulseTimeField' &&
       value &&
-      !dataset.fields.some(
-        field => field.name === value && ['timestamp', 'date'].includes(field.type)
-      )
+      !dataset.fields.some(field => field.name === value && field.type === 'timestamp')
     )
-      throw new Error('pulseTimeField must name a timestamp or date field in this dataset.');
+      throw new Error('pulseTimeField must name a timestamp field in this dataset.');
   }
   return options;
 }
@@ -177,7 +175,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
                   ...(!args.zarr.axis && !args.zarr.dimensionIndexes && previous.zarrFrame > 0
                     ? {frame: previous.zarrFrame}
                     : {}),
-                  rescale: previous.rescale
+                  rescale: previous.rescale ?? undefined
                 }
               : {}),
             ...args.zarr

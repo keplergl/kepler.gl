@@ -340,8 +340,8 @@ For remote layers, call `map.load-tileset` with `datasetName`, `type`, and
 `url`, then `map.add-layer` with the returned `datasetId` and `layerType`.
 Types are `vectorTile` (MVT/PMTiles), `rasterTile` (STAC/PMTiles), `wms`,
 `tile3d` (tileset JSON), and `bitmap` (also requires `[west,south,east,north]`
-`bounds`). Vector tiles optionally take `metadataUrl`; STAC rasters can take
-`rasterTileServerUrls`. For WMS, select a returned service-layer name using
+`bounds`). Vector tiles optionally take `metadataUrl`; STAC rasters require
+`rasterTileServerUrls` unless the host configures a TiTiler server. For WMS, select a returned service-layer name using
 `map.set-layer-options.wmsLayer`. Preserve source URLs when exporting.
 
 ### 3. Split map comparison (`map.split-view`)
