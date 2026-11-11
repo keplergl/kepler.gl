@@ -568,6 +568,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     }
 
     const isActive = rendering || previewing;
+    const cameraTourDurationMs = getCameraTourDuration(mapData.visState.cameraTour);
 
     return (
       <div className="export-video-panel">
@@ -599,7 +600,8 @@ export class SwipeExportVideoPanelContainer extends Component<
             resolution={resolution}
             fileName={fileName}
             cameraPreset={cameraPreset}
-            hasCameraTour={getCameraTourDuration(this.props.mapData.visState.cameraTour) > 0}
+            hasCameraTour={cameraTourDurationMs > 0}
+            cameraTourDurationMs={cameraTourDurationMs}
             frameRate={timecode.framerate}
             onChangeDuration={this.setDuration}
             onChangeMediaType={this.setMediaType}

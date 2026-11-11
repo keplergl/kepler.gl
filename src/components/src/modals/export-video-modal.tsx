@@ -516,7 +516,8 @@ const ExportVideoModalFactory = () => {
     );
 
     const animatableFilters = useMemo(() => getAnimatableFilters(keplerState), [keplerState]);
-    const hasCameraTour = getCameraTourDuration(visState.cameraTour) > 0;
+    const cameraTourDurationMs = getCameraTourDuration(visState.cameraTour);
+    const hasCameraTour = cameraTourDurationMs > 0;
     const keplerUI = useMemo(
       () => ({
         ...KEPLER_UI,
@@ -533,11 +534,15 @@ const ExportVideoModalFactory = () => {
         Slider: (props: any) => (
           <LightSlider
             {...props}
-            maxValue={props.maxValue === 10000 ? Math.max(10000, props.value1) : props.maxValue}
+            maxValue={
+              props.maxValue === 10000
+                ? Math.max(10000, cameraTourDurationMs, props.value1)
+                : props.maxValue
+            }
           />
         )
       }),
-      [hasCameraTour]
+      [hasCameraTour, cameraTourDurationMs]
     );
 
     if (!hubble) {

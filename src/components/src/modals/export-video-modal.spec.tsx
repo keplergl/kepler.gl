@@ -5,7 +5,7 @@
 import React from 'react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
-import {render, waitFor} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 
@@ -36,6 +36,29 @@ jest.mock('./swipe-export-video-container', () => ({
 
 jest.mock('./globe-export-video-container', () => ({
   GlobeExportVideoPanelContainer: jest.fn(() => null)
+}));
+
+jest.mock('./swipe-export-video-preview', () => ({
+  SwipeExportVideoPreview: jest.fn(() => null)
+}));
+
+jest.mock('./globe-export-video-preview', () => ({
+  GlobeExportVideoPreview: jest.fn(() => null)
+}));
+
+// Exercise the settings' controlled range without pointer geometry in JSDOM.
+jest.mock('../common/slider/slider', () => ({
+  __esModule: true,
+  default: ({value1, minValue, maxValue, step, onSlider1Change}) => (
+    <input
+      type="range"
+      value={value1}
+      min={minValue}
+      max={maxValue}
+      step={step}
+      onChange={event => onSlider1Change(Number(event.target.value))}
+    />
+  )
 }));
 
 const mockComputeDeckEffects = jest.fn(() => []);
@@ -97,13 +120,15 @@ import ExportVideoModalFactory from './export-video-modal';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 
 function renderWithThemeLocal(component) {
-  return render(
-    <ThemeProvider theme={theme}>
-      <IntlProvider locale="en" messages={messages}>
-        {component}
-      </IntlProvider>
-    </ThemeProvider>
-  );
+  return render(component, {
+    wrapper: ({children}) => (
+      <ThemeProvider theme={theme}>
+        <IntlProvider locale="en" messages={messages.en}>
+          {children}
+        </IntlProvider>
+      </ThemeProvider>
+    )
+  });
 }
 
 const ExportVideoModal = ExportVideoModalFactory();
@@ -618,4 +643,73 @@ describe('Create Animation video export', () => {
     instance.setCameraPreset('Zoom In');
     expect(instance.getCameraKeyframes()).toBe('ordinary');
   });
+});
+
+describe('authored export duration range', () => {
+  const camera = {longitude: 12, latitude: 30, zoom: 5, bearing: 0, pitch: 0};
+  const makeTour = duration => ({
+    stops: [{id: 'a', name: 'A', camera, holdDurationMs: duration, travelDurationMs: 0}]
+  });
+
+  test('regular export retains the authored maximum after shortening and updates it with the tour', async () => {
+    const props = {
+      ...DEFAULT_PROPS,
+      visState: {...DEFAULT_PROPS.visState, cameraTour: makeTour(20000)}
+    };
+    const {rerender} = await renderAndWaitForPanel(props);
+    let ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    expect(ui.Slider({maxValue: 10000, value1: 20000}).props.maxValue).toBe(20000);
+    expect(ui.Slider({maxValue: 10000, value1: 15000}).props.maxValue).toBe(20000);
+    expect(ui.Slider({maxValue: 100, value1: 50}).props.maxValue).toBe(100);
+    rerender(
+      <ExportVideoModal {...props} visState={{...props.visState, cameraTour: makeTour(30000)}} />
+    );
+    ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    expect(ui.Slider({maxValue: 10000, value1: 15000}).props.maxValue).toBe(30000);
+  });
+
+  test.each([
+    ['globe', jest.requireActual('./globe-export-video-container').GlobeExportVideoPanelContainer],
+    ['swipe', jest.requireActual('./swipe-export-video-container').SwipeExportVideoPanelContainer]
+  ])(
+    '%s export can restore a shortened authored duration without reselecting the preset',
+    (mode, Container) => {
+      const onSettingsChange = jest.fn();
+      const props = {
+        initialState: {durationMs: 20000, cameraPreset: 'Create Animation'},
+        mapData: {
+          mapState: {...DEFAULT_PROPS.mapState, globe: {enabled: mode === 'globe'}},
+          visState: {...DEFAULT_PROPS.visState, animationConfig: {}, cameraTour: makeTour(20000)}
+        },
+        exportVideoWidth: 480,
+        mapProps: {},
+        swipeStartPct: 0,
+        swipeEndPct: 100,
+        swipeEasing: 'linear',
+        onSettingsChange
+      };
+      const {rerender} = renderWithThemeLocal(<Container {...props} />);
+      const slider = screen.getAllByRole('slider')[0];
+      expect(slider).toHaveAttribute('max', '20000');
+      fireEvent.change(slider, {target: {value: '15000'}});
+      expect(onSettingsChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({durationMs: 15000})
+      );
+      expect(slider).toHaveAttribute('max', '20000');
+      fireEvent.change(slider, {target: {value: '20000'}});
+      expect(onSettingsChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({durationMs: 20000})
+      );
+      rerender(
+        <Container
+          {...props}
+          mapData={{
+            ...props.mapData,
+            visState: {...props.mapData.visState, cameraTour: makeTour(30000)}
+          }}
+        />
+      );
+      expect(slider).toHaveAttribute('max', '30000');
+    }
+  );
 });
