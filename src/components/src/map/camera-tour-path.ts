@@ -31,7 +31,7 @@ export function getCameraTourPathLayers(tour?: CameraTour | null) {
       getPath: d => d.path,
       getColor: [27, 190, 220, 230],
       widthUnits: 'pixels',
-      getWidth: 3,
+      getWidth: 1.5,
       wrapLongitude: true,
       pickable: false
     }),

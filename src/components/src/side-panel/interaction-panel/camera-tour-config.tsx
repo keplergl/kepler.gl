@@ -261,6 +261,9 @@ const Timeline = styled.div`
   gap: 4px;
   margin-top: 8px;
 `;
+const PathToggle = styled.div`
+  margin-top: 12px;
+`;
 const Scrubber = styled.input<{$progress: number}>`
   appearance: none;
   min-width: 24px;
@@ -723,15 +726,6 @@ export default function CameraTourConfig({
           ) : (
             <>
               <Hint>{message('animationHint', 'Animate the map between saved views.')}</Hint>
-              <Switch
-                id={`${panelId}-show-path`}
-                label={message('showAnimationPath', 'Show animation path')}
-                checked={pathVisible}
-                disabled={!uiStateActions}
-                onChange={() =>
-                  uiStateActions?.setMapControlVisibility('cameraTourPath', !pathVisible)
-                }
-              />
               <Actions>
                 <AddStopAnchor>
                   <Button
@@ -991,6 +985,17 @@ export default function CameraTourConfig({
                   </Timeline>
                 </>
               )}
+              <PathToggle>
+                <Switch
+                  id={`${panelId}-show-path`}
+                  label={message('showAnimationPath', 'Show animation path')}
+                  checked={pathVisible}
+                  disabled={!uiStateActions}
+                  onChange={() =>
+                    uiStateActions?.setMapControlVisibility('cameraTourPath', !pathVisible)
+                  }
+                />
+              </PathToggle>
             </>
           )}
         </PanelContent>

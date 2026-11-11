@@ -1077,14 +1077,28 @@ test('replacing a tour and requesting play together starts from the new beginnin
   expect(callbacks.size).toBe(1);
 });
 
-test('path display is opt-in and does not edit the saved tour', () => {
-  const {toggle, commit} = setup();
-  const control = screen.getByRole('checkbox', {name: 'Show animation path'});
-  expect(control).not.toBeChecked();
-  fireEvent.click(control);
-  expect(toggle).toHaveBeenCalledWith('cameraTourPath', true);
-  expect(commit).not.toHaveBeenCalled();
-});
+test.each([
+  {name: 'populated', tour},
+  {name: 'empty', tour: {stops: []}},
+  {name: 'missing', tour: null}
+])(
+  'path display follows the editor controls and remains opt-in for a $name tour',
+  async ({tour: initial}) => {
+    const user = userEvent.setup();
+    const {toggle, commit} = setup(initial);
+    const control = screen.getByRole('checkbox', {name: 'Show animation path'});
+    expect(control).not.toBeChecked();
+    const previousControl =
+      screen.queryByRole('slider', {name: 'Camera tour time'}) ||
+      screen.getByRole('button', {name: 'Add stop'});
+    previousControl.focus();
+    await user.tab();
+    expect(control).toHaveFocus();
+    await user.keyboard('[Space]');
+    expect(toggle).toHaveBeenCalledWith('cameraTourPath', true);
+    expect(commit).not.toHaveBeenCalled();
+  }
+);
 
 test('path geometry follows stop order and reuses data during navigation', () => {
   const layers = getCameraTourPathLayers(tour);
