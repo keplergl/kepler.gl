@@ -38,6 +38,8 @@ import {
   scaleToVideoExport
 } from './hubble-utils';
 import {useFogHeightAnimation} from './fog-height-animation';
+import {getCameraTourDuration} from '@kepler.gl/utils';
+import {CAMERA_TOUR_PRESET, withCameraTourExport} from './camera-tour-export';
 
 type SwipeContainerType = React.ComponentType<any>;
 
@@ -56,7 +58,10 @@ function loadHubble(): Promise<HubbleModule> {
   if (_hubblePromise) return _hubblePromise;
   _hubblePromise = import('@hubble.gl/react').then(
     async mod => {
-      _hubbleModule = mod as unknown as HubbleModule;
+      _hubbleModule = {
+        ...mod,
+        ExportVideoPanelContainer: withCameraTourExport(mod.ExportVideoPanelContainer)
+      } as unknown as HubbleModule;
       try {
         const swipeMod = await import('./swipe-export-video-container');
         _swipeContainer = swipeMod.SwipeExportVideoPanelContainer;
@@ -279,9 +284,14 @@ const ExportVideoModalFactory = () => {
       return Math.max(320, Math.min(540, modalInnerW - HUBBLE_PANEL_OVERHEAD));
     }, [containerW]);
 
-    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
-      ...exportVideo
-    });
+    const cameraTourDurationMs = getCameraTourDuration(visState.cameraTour);
+    const hasCameraTour = cameraTourDurationMs > 0;
+    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
+      ...exportVideo,
+      ...(hasCameraTour
+        ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs}
+        : {})
+    }));
 
     const keplerState = useMemo(() => {
       // Hubble (and our globe/swipe containers) run scaleToVideoExport on
@@ -293,6 +303,21 @@ const ExportVideoModalFactory = () => {
         exportVideoWidth,
         videoConfiguration.resolution || ''
       );
+      const exportVisState = visState.cameraTour
+        ? {
+            ...visState,
+            cameraTour: {
+              ...visState.cameraTour,
+              stops: visState.cameraTour.stops.map(stop => ({
+                ...stop,
+                camera: {
+                  ...stop.camera,
+                  zoom: scaleToVideoExport({...mapState, ...stop.camera}, container).zoom
+                }
+              }))
+            }
+          }
+        : visState;
       const exportMapState = {
         ...mapState,
         ...scaleToVideoExport(mapState, container)
@@ -320,7 +345,7 @@ const ExportVideoModalFactory = () => {
             JSON.stringify(bgStyle)
           )}`;
           return {
-            visState,
+            visState: exportVisState,
             mapState: exportMapState,
             mapStyle: {
               ...mapStyle,
@@ -332,7 +357,7 @@ const ExportVideoModalFactory = () => {
           };
         }
       }
-      return {visState, mapState: exportMapState, mapStyle};
+      return {visState: exportVisState, mapState: exportMapState, mapStyle};
     }, [visState, mapState, mapStyle, exportVideoWidth, videoConfiguration.resolution]);
 
     const onUpdateMap = useCallback(
@@ -496,6 +521,32 @@ const ExportVideoModalFactory = () => {
     );
 
     const animatableFilters = useMemo(() => getAnimatableFilters(keplerState), [keplerState]);
+    const keplerUI = useMemo(
+      () => ({
+        ...KEPLER_UI,
+        ItemSelector: (props: any) => (
+          <LightItemSelector
+            {...props}
+            options={
+              hasCameraTour && props.options?.includes('Orbit (90º)')
+                ? [...props.options, CAMERA_TOUR_PRESET]
+                : props.options
+            }
+          />
+        ),
+        Slider: (props: any) => (
+          <LightSlider
+            {...props}
+            maxValue={
+              props.maxValue === 10000
+                ? Math.max(10000, cameraTourDurationMs, props.value1)
+                : props.maxValue
+            }
+          />
+        )
+      }),
+      [hasCameraTour, cameraTourDurationMs]
+    );
 
     if (!hubble) {
       return (
@@ -524,7 +575,7 @@ const ExportVideoModalFactory = () => {
     const GlobeContainer = _globeContainer;
 
     return (
-      <KeplerUIContext.Provider value={KEPLER_UI}>
+      <KeplerUIContext.Provider value={keplerUI}>
         <StyledExportVideoModalContent className="export-video-modal">
           {isSwipeMode && SwipeContainer ? (
             <SwipeContainer
