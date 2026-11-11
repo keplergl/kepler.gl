@@ -52,8 +52,7 @@ export function getCameraTourPathLayers(
       getFillColor: [27, 190, 220],
       getLineColor: [255, 255, 255],
       pickable: Boolean(dragHandlers),
-      // Stop handles own their interactions, not dataset hover/click selection.
-      onHover: dragHandlers ? () => true : undefined,
+      // Handle stop clicks, but let hover reach the map's tooltip lifecycle.
       onClick: dragHandlers ? () => true : undefined,
       ...dragHandlers
     }),

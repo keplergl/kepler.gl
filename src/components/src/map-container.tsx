@@ -1139,6 +1139,14 @@ export default function MapContainerFactory(
       info: PickingInfo<{id: string}>,
       event: {rightButton?: boolean; stopPropagation: () => void}
     ) => {
+      // Let the root click handler finish an active bitmap alignment first.
+      if (
+        this.props.visState.layers.some(
+          (layer: any) =>
+            layer.type === 'bitmap' && layer.alignWaitingForMap && layer.config.isVisible
+        )
+      )
+        return false;
       const stop = this.props.visState.cameraTour?.stops.find(item => item.id === info.object?.id);
       if (!event.rightButton && this._canEditCameraTourPath() && stop) {
         this.props.uiStateActions.setMapControlSettings('cameraTour', {

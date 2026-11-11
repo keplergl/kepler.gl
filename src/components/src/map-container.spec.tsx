@@ -3,6 +3,8 @@
 
 import React, {createRef, StrictMode} from 'react';
 import {act, render} from '@testing-library/react';
+import {Deck} from '@deck.gl/core';
+import {ScatterplotLayer} from '@deck.gl/layers';
 import MapContainerFactory from './map-container';
 import {
   INITIAL_MAP_STATE,
@@ -63,8 +65,9 @@ describe('camera tour path dragging', () => {
       mapStyle: INITIAL_MAP_STYLE,
       mapControls: {...INITIAL_UI_STATE.mapControls, cameraTourPath: {show: true}},
       visState: {...INITIAL_VIS_STATE, cameraTour: tour},
-      visStateActions: {setCameraTour: commit},
+      visStateActions: {setCameraTour: commit, onLayerHover: jest.fn()},
       uiStateActions: {setMapControlSettings: jest.fn(), toggleSidePanel: jest.fn()},
+      mapStateActions: {updateMap: jest.fn()},
       generateDeckGLLayers: () => []
     };
     const ref = createRef<any>();
@@ -76,14 +79,15 @@ describe('camera tour path dragging', () => {
     commit.mockImplementation(cameraTour => {
       update({visState: {...props.visState, cameraTour}});
     });
+    const deckProps = (isInteractive = true) =>
+      ref.current._renderDeckOverlay([], {primaryMap: index === 0, isInteractive}).props.children
+        .props;
     const layers = (isInteractive = true) =>
-      ref.current
-        ._renderDeckOverlay([], {primaryMap: index === 0, isInteractive})
-        .props.children.props.layers.filter(layer => layer.id.startsWith('camera-tour-path-'));
+      deckProps(isInteractive).layers.filter(layer => layer.id.startsWith('camera-tour-path-'));
     const handles = () => layers()[1].props;
     const event = {rightButton: false, stopPropagation: jest.fn()};
     const picked = {object: {id: 'home'}, coordinate: [10, 20]};
-    return {commit, update, layers, handles, event, picked, props: () => props};
+    return {commit, update, deckProps, layers, handles, event, picked, props: () => props};
   }
 
   test.each([0, 1])(
@@ -151,6 +155,83 @@ describe('camera tour path dragging', () => {
     expect(props().uiStateActions.toggleSidePanel).not.toHaveBeenCalled();
   });
 
+  test.each([0, 1])('bitmap alignment takes priority over stop selection in map %s', index => {
+    const {deckProps, update, props, picked, event, commit} = setupPath(index);
+    const align = jest.fn();
+    const bitmap = {
+      id: 'image',
+      type: 'bitmap',
+      alignWaitingForMap: true,
+      config: {isVisible: true},
+      onAlignMapClick: align
+    };
+    update({visState: {...props().visState, layers: [bitmap]}});
+    const clickPoint = () => {
+      const rendered = deckProps();
+      const deck = {
+        layerManager: {},
+        widgetManager: {onEvent: jest.fn()},
+        props: rendered
+      };
+      (Deck.prototype as any)._dispatchPickingEvent.call(
+        deck,
+        {...picked, layer: rendered.layers.find(layer => layer.id === 'camera-tour-path-stops')},
+        {...event, type: 'click', srcEvent: {button: 0}}
+      );
+    };
+    clickPoint();
+    expect(align).toHaveBeenCalledWith(picked.coordinate);
+    expect(props().mapStateActions.updateMap).toHaveBeenCalledWith({}, index);
+    expect(props().uiStateActions.setMapControlSettings).not.toHaveBeenCalled();
+    expect(props().uiStateActions.toggleSidePanel).not.toHaveBeenCalled();
+    expect(commit).not.toHaveBeenCalled();
+    update({visState: {...props().visState, layers: [{...bitmap, alignWaitingForMap: false}]}});
+    clickPoint();
+    expect(align).toHaveBeenCalledTimes(1);
+    expect(props().uiStateActions.setMapControlSettings).toHaveBeenCalledWith('cameraTour', {
+      selection: {stopId: 'home'}
+    });
+    expect(props().uiStateActions.toggleSidePanel).toHaveBeenCalledWith('interaction');
+  });
+
+  test('point hover clears the previous dataset hover and continues through leave and reentry', () => {
+    jest.useFakeTimers();
+    try {
+      const {deckProps, layers, props} = setupPath();
+      const dataLayer = new ScatterplotLayer({id: 'dataset', data: [], pickable: true});
+      const pointLayer = layers()[1];
+      const dataHover = {layer: dataLayer, picked: true, object: {name: 'old feature'}};
+      const dataLeave = {layer: dataLayer, picked: false, object: null};
+      const pointHover = {layer: pointLayer, picked: true, object: {id: 'home'}};
+      const pointLeave = {layer: pointLayer, picked: false, object: null};
+      const deck = {
+        cursorState: {},
+        widgetManager: {onHover: jest.fn()},
+        props: deckProps()
+      };
+      const hover = (result: unknown[]) => {
+        act(() => {
+          (Deck.prototype as any)._applyHoverCallbacks.call(
+            deck,
+            {result, emptyInfo: {picked: false}},
+            {}
+          );
+          jest.runOnlyPendingTimers();
+        });
+      };
+      hover([dataHover]);
+      expect(props().visStateActions.onLayerHover).toHaveBeenLastCalledWith(dataHover, 0);
+      hover([dataLeave, pointHover]);
+      expect(props().visStateActions.onLayerHover).toHaveBeenLastCalledWith(pointHover, 0);
+      hover([pointLeave]);
+      expect(props().visStateActions.onLayerHover).toHaveBeenLastCalledWith(pointLeave, 0);
+      hover([dataHover]);
+      expect(props().visStateActions.onLayerHover).toHaveBeenLastCalledWith(dataHover, 0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('uses the stop ID and latest authored settings after reordering during a drag', () => {
     const {commit, update, handles, picked, event, props} = setupPath();
     handles().onDragStart(picked, event);
@@ -214,11 +295,10 @@ describe('camera tour path dragging', () => {
     }
   );
 
-  test('keeps noninteractive maps passive and handles stop hover/click without selecting data', () => {
+  test('keeps noninteractive maps passive and handles stop clicks without selecting data', () => {
     const {layers, handles, picked, event, commit} = setupPath();
     expect(layers(false).every(layer => !layer.props.pickable)).toBe(true);
     expect(layers(false)[1].props.onDragStart).toBeNull();
-    expect(handles().onHover(picked, event)).toBe(true);
     expect(handles().onClick(picked, event)).toBe(true);
     expect(commit).not.toHaveBeenCalled();
   });

@@ -565,11 +565,13 @@ export default function CameraTourConfig({
   useLayoutEffect(() => {
     if (!selection || consumedSelection.current === selection) return;
     consumedSelection.current = selection;
+    // A selection is a one-shot request, including across editor remounts.
+    uiStateActions?.setMapControlSettings('cameraTour', {selection: undefined});
     if (!stops.some(stop => stop.id === selection.stopId)) return;
     playback.pause();
     setSelectedId(selection.stopId);
     setOpen(true);
-  }, [selection, stops, playback.pause]);
+  }, [selection, stops, playback.pause, uiStateActions]);
   const markerRefs = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   const closeSourceMenu = () => {

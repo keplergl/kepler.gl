@@ -992,7 +992,17 @@ function setupSharedPlayer() {
                 mapState={mapState}
                 mapStateActions={{...MapStateActions, updateMap}}
                 visStateActions={VisStateActions}
-                uiStateActions={UIStateActions}
+                uiStateActions={{
+                  ...UIStateActions,
+                  setMapControlSettings: Object.assign(
+                    (panelId: string, settings: Record<string, unknown>) => {
+                      const action = UIStateActions.setMapControlSettings(panelId, settings);
+                      dispatch(action);
+                      return action;
+                    },
+                    UIStateActions.setMapControlSettings
+                  )
+                }}
               />
             )}
           </CameraTourPlaybackProvider>
@@ -1014,6 +1024,7 @@ function setupSharedPlayer() {
         dispatch(UIStateActions.controlCameraTour(request));
       }),
     openPanel: () => act(() => setPanelOpen(true)),
+    closePanel: () => act(() => setPanelOpen(false)),
     selectStop: (stopId: string) =>
       act(() => {
         dispatch(UIStateActions.setMapControlSettings('cameraTour', {selection: {stopId}}));
@@ -1064,6 +1075,33 @@ test('ignores a selection request for a stop that no longer exists', () => {
     'aria-expanded',
     'false'
   );
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
+
+test('a handled map selection does not interrupt playback when Interactions remounts', () => {
+  const player = setupSharedPlayer();
+  player.selectStop('work');
+  player.openPanel();
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(500);
+  player.closePanel();
+  expect(callbacks.size).toBe(1);
+  player.openPanel();
+  expect(callbacks.size).toBe(1);
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  expect(screen.getByRole('button', {name: 'Pause'})).toBeInTheDocument();
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0.5 s');
+  player.updateMap.mockClear();
+  frame(1500);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 1500),
+    transitionDuration: 0
+  });
+  player.updateMap.mockClear();
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(callbacks.size).toBe(0);
   expect(player.updateMap).not.toHaveBeenCalled();
 });
 
