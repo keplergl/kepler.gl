@@ -373,6 +373,45 @@ test('edits hold and travel in seconds and rejects invalid or unsafe total durat
   expect(commit).not.toHaveBeenCalled();
 });
 
+test.each(['Hold (s)', 'Travel to next (s)'])(
+  'allows clearing and retyping %s without saving invalid timing',
+  async name => {
+    const {commit} = setup();
+    const user = userEvent.setup();
+    const input = screen.getByRole('spinbutton', {name});
+    await user.clear(input);
+    expect(input).toHaveValue(null);
+    expect(commit).not.toHaveBeenCalled();
+    await user.type(input, '5');
+    expect(input).toHaveValue(5);
+    await user.tab();
+    expect(input).toHaveValue(5);
+    expect(commit.mock.lastCall[0].stops[0]).toMatchObject(
+      name === 'Hold (s)' ? {holdDurationMs: 5000} : {travelDurationMs: 5000}
+    );
+
+    commit.mockClear();
+    await user.clear(input);
+    await user.tab();
+    expect(input).toHaveValue(5);
+    expect(commit).not.toHaveBeenCalled();
+    fireEvent.change(input, {target: {value: '-1'}});
+    fireEvent.blur(input);
+    expect(input).toHaveValue(5);
+    expect(commit).not.toHaveBeenCalled();
+  }
+);
+
+test('discarded timing text does not follow selection or hide external updates', () => {
+  setup();
+  const input = screen.getByRole('spinbutton', {name: 'Hold (s)'});
+  fireEvent.change(input, {target: {value: ''}});
+  fireEvent.click(screen.getByRole('button', {name: 'Stop 2: Work'}));
+  expect(screen.getByRole('spinbutton', {name: 'Hold (s)'})).toHaveValue(1);
+  fireEvent.click(screen.getByRole('button', {name: 'Stop 1: Home'}));
+  expect(screen.getByRole('spinbutton', {name: 'Hold (s)'})).toHaveValue(1);
+});
+
 test('scrubbing and playback evaluate the same camera at the same timestamp', () => {
   const {updateMap} = setup();
   fireEvent.change(screen.getByRole('slider', {name: 'Camera tour time'}), {

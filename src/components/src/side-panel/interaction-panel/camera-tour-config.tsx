@@ -40,6 +40,26 @@ import Portaled from '../../common/portaled';
 import Switch from '../../common/switch';
 import {ContextMenu} from '../../common/context-menu';
 
+// Keep transient text local so clearing or typing a decimal never writes an
+// invalid duration to the saved tour. Blur restores the last accepted value.
+const TimingInput = React.forwardRef<HTMLInputElement, React.ComponentProps<typeof Input>>(
+  function TimingInput({value, onChange, ...props}, ref) {
+    const [draft, setDraft] = useState<string | null>(null);
+    return (
+      <Input
+        {...props}
+        ref={ref}
+        value={draft ?? value}
+        onChange={event => {
+          setDraft(event.target.value);
+          onChange?.(event);
+        }}
+        onBlur={() => setDraft(null)}
+      />
+    );
+  }
+);
+
 const PanelHeaderAction = PanelHeaderActionFactory();
 const TRACK_MODIFIERS = [restrictToHorizontalAxis];
 
@@ -926,7 +946,8 @@ export default function CameraTourConfig({
                             {key === 'holdDurationMs'
                               ? message('hold', 'Hold (s)')
                               : message('travel', 'Travel to next (s)')}
-                            <Input
+                            <TimingInput
+                              key={selected.id}
                               id={`${panelId}-${key}`}
                               ref={node => {
                                 if (node) timingInputs.current[key] = node;
