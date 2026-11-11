@@ -96,7 +96,6 @@ function VectorTileLayerConfiguratorFactory(
           {...layer.visConfigSettings.stroked}
           {...visConfiguratorProps}
           label="layer.strokeColor"
-          collapsible
         >
           <ChannelByValueSelector
             {...layerChannelConfigProps}
@@ -115,9 +114,7 @@ function VectorTileLayerConfiguratorFactory(
               property="strokeColor"
             />
           )}
-          <ConfigGroupCollapsibleContent>
-            <VisConfigSlider {...layer.visConfigSettings.strokeOpacity} {...visConfiguratorProps} />
-          </ConfigGroupCollapsibleContent>
+          <VisConfigSlider {...layer.visConfigSettings.strokeOpacity} {...visConfiguratorProps} />
         </LayerConfigGroup>
 
         {/* Stroke Width */}

@@ -720,7 +720,6 @@ export default function LayerConfiguratorFactory(
           <LayerConfigGroup
             {...(layer.visConfigSettings.filled || {label: 'layer.color'})}
             {...visConfiguratorProps}
-            collapsible
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -732,9 +731,7 @@ export default function LayerConfiguratorFactory(
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
 
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* outline color */}
@@ -956,7 +953,6 @@ export default function LayerConfiguratorFactory(
             {...layer.visConfigSettings.filled}
             {...visConfiguratorProps}
             label="layer.fillColor"
-            collapsible
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -967,9 +963,7 @@ export default function LayerConfiguratorFactory(
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup
             {...layer.visConfigSettings.stroked}
@@ -1014,8 +1008,8 @@ export default function LayerConfiguratorFactory(
                   channel={layer.visualChannels.color}
                 />
               ) : null}
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Cluster Radius */}
@@ -1050,11 +1044,9 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          <LayerConfigGroup label={'layer.color'}>
             <LayerColorRangeSelector {...visConfiguratorProps} />
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
           {/* Radius */}
           <LayerConfigGroup label={'layer.radius'}>
@@ -1167,8 +1159,8 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
               ) : null}
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Cell size */}
@@ -1253,7 +1245,6 @@ export default function LayerConfiguratorFactory(
             {...layer.visConfigSettings.filled}
             {...visConfiguratorProps}
             label={'layer.fillColor'}
-            collapsible
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -1264,13 +1255,11 @@ export default function LayerConfiguratorFactory(
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider
-                {...layer.visConfigSettings.opacity}
-                {...visConfiguratorProps}
-                disabled={!layer.config.visConfig.filled}
-              />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider
+              {...layer.visConfigSettings.opacity}
+              {...visConfiguratorProps}
+              disabled={!layer.config.visConfig.filled}
+            />
           </LayerConfigGroup>
 
           {/* Outline */}
@@ -1292,12 +1281,12 @@ export default function LayerConfiguratorFactory(
                 property="strokeColor"
               />
             )}
+            <VisConfigSlider
+              {...layer.visConfigSettings.strokeOpacity}
+              {...visConfiguratorProps}
+              disabled={!layer.config.visConfig.outline}
+            />
             <ConfigGroupCollapsibleContent>
-              <VisConfigSlider
-                {...layer.visConfigSettings.strokeOpacity}
-                {...visConfiguratorProps}
-                disabled={!layer.config.visConfig.outline}
-              />
               <VisConfigSlider
                 {...layer.visConfigSettings.thickness}
                 {...visConfiguratorProps}
@@ -1392,7 +1381,7 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          <LayerConfigGroup label={'layer.color'}>
             <ChannelByValueSelector
               channel={layer.visualChannels.sourceColor}
               {...layerChannelConfigProps}
@@ -1407,9 +1396,7 @@ export default function LayerConfiguratorFactory(
                 onChangeVisConfig={visConfiguratorProps.onChange}
               />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* thickness */}
@@ -1497,7 +1484,7 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          <LayerConfigGroup label={'layer.color'}>
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
               {...layerChannelConfigProps}
@@ -1507,9 +1494,7 @@ export default function LayerConfiguratorFactory(
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Stroke Width */}
@@ -1696,7 +1681,6 @@ export default function LayerConfiguratorFactory(
               {...layer.visConfigSettings.filled}
               {...visConfiguratorProps}
               label="layer.fillColor"
-              collapsible
             >
               <ChannelByValueSelector
                 channel={layer.visualChannels.color}
@@ -1707,9 +1691,7 @@ export default function LayerConfiguratorFactory(
               ) : (
                 <LayerColorSelector {...layerConfiguratorProps} />
               )}
-              <ConfigGroupCollapsibleContent>
-                <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-              </ConfigGroupCollapsibleContent>
+              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
             </LayerConfigGroup>
           ) : null}
 
@@ -1718,7 +1700,6 @@ export default function LayerConfiguratorFactory(
             {...layer.visConfigSettings.stroked}
             {...visConfiguratorProps}
             label="layer.strokeColor"
-            collapsible
             disabled={Boolean(featureTypes.polygon && elevationOffsetActive)}
           >
             <ChannelByValueSelector
@@ -1734,12 +1715,7 @@ export default function LayerConfiguratorFactory(
                 property="strokeColor"
               />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider
-                {...layer.visConfigSettings.strokeOpacity}
-                {...visConfiguratorProps}
-              />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.strokeOpacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Stroke Width */}
@@ -1934,7 +1910,6 @@ export default function LayerConfiguratorFactory(
             {...layer.visConfigSettings.filled}
             {...visConfiguratorProps}
             label="layer.fillColor"
-            collapsible
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -1945,9 +1920,7 @@ export default function LayerConfiguratorFactory(
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Stroke */}
@@ -2056,7 +2029,6 @@ export default function LayerConfiguratorFactory(
             {...layer.visConfigSettings.filled}
             {...visConfiguratorProps}
             label="layer.fillColor"
-            collapsible
           >
             <ChannelByValueSelector
               channel={layer.visualChannels.color}
@@ -2067,9 +2039,7 @@ export default function LayerConfiguratorFactory(
             ) : (
               <LayerColorSelector {...layerConfiguratorProps} />
             )}
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
 
           {/* Stroke */}
@@ -2582,15 +2552,13 @@ export default function LayerConfiguratorFactory(
 
       return (
         <StyledLayerVisualConfigurator>
-          <LayerConfigGroup label={'layer.color'} collapsible>
+          <LayerConfigGroup label={'layer.color'}>
             <LayerColorRangeSelector {...visConfiguratorProps} property="colorRange" />
             <VisConfigSwitch
               {...layer.visConfigSettings.darkBaseMapEnabled}
               {...visConfiguratorProps}
             />
-            <ConfigGroupCollapsibleContent>
-              <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            </ConfigGroupCollapsibleContent>
+            <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
           </LayerConfigGroup>
           <LayerConfigGroup
             {...visConfiguratorProps}
