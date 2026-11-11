@@ -87,6 +87,29 @@ export function getStarsBackgroundImage(): string {
   return cachedDataUrl;
 }
 
+type StarCamera = {longitude?: number; latitude?: number; zoom?: number};
+
+/** Decorative parallax, not a physical sky. Keep zoom subtle and longitude periodic. */
+function starLayout(camera: StarCamera, width: number, height: number) {
+  const finite = (value: number | undefined) => (Number.isFinite(value) ? value! : 0);
+  const zoomScale = 1 + 0.15 * Math.tanh(finite(camera.zoom) / 6);
+  // Relative sizing keeps the preview and encoded frame identical at different resolutions.
+  const size = (width / 2) * zoomScale;
+  const longitude = ((finite(camera.longitude) % 360) + 360) % 360;
+  const latitude = Math.max(-90, Math.min(90, finite(camera.latitude)));
+  return {
+    size,
+    x: (width / 2) * (1 - zoomScale) - (longitude / 360) * size,
+    y: (height / 2) * (1 - zoomScale) + (latitude / 180) * size
+  };
+}
+
+/** CSS and canvas capture share the same cached tile and camera transform. */
+export function getStarsBackgroundStyle(camera: StarCamera, width: number, height: number) {
+  const {size, x, y} = starLayout(camera, width, height);
+  return {backgroundSize: `${size}px ${size}px`, backgroundPosition: `${x}px ${y}px`};
+}
+
 /**
  * Tile the star-field onto a 2D canvas (e.g. video-export frame capture).
  * Stars are drawn with alpha so the caller should fill the background color first.
@@ -94,12 +117,23 @@ export function getStarsBackgroundImage(): string {
 export function drawStarsBackground(
   ctx: CanvasRenderingContext2D,
   width: number,
-  height: number
+  height: number,
+  camera?: StarCamera
 ): void {
   const tile = getStarsTileCanvas();
   if (!tile || width <= 0 || height <= 0) return;
   const pattern = ctx.createPattern(tile, 'repeat');
   if (!pattern) return;
   ctx.fillStyle = pattern;
-  ctx.fillRect(0, 0, width, height);
+  if (!camera) {
+    ctx.fillRect(0, 0, width, height);
+    return;
+  }
+  const {size, x, y} = starLayout(camera, width, height);
+  const scale = size / STAR_CANVAS_SIZE;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.fillRect(-x / scale, -y / scale, width / scale, height / scale);
+  ctx.restore();
 }

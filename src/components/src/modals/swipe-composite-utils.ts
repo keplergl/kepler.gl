@@ -89,7 +89,8 @@ export function compositeSwipeFrame(
   percentage: number,
   showDivider = true,
   backgroundColor?: string,
-  showStars?: boolean
+  showStars?: boolean,
+  starCamera?: {longitude?: number; latitude?: number; zoom?: number}
 ): void {
   const ctx = outputCanvas.getContext('2d');
   if (!ctx) return;
@@ -112,7 +113,7 @@ export function compositeSwipeFrame(
   // Stars are a CSS background on the live globe map, so they must be tiled
   // onto the composite canvas or they won't appear in preview or export.
   if (showStars) {
-    drawStarsBackground(ctx, w, h);
+    drawStarsBackground(ctx, w, h, starCamera);
   }
 
   // Draw right (background) canvas fully

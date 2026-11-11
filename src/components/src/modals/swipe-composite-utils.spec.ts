@@ -51,11 +51,11 @@ describe('compositeSwipeFrame', () => {
     const right = mockCanvas(10, 10, ctx as unknown as CanvasRenderingContext2D);
     const output = mockCanvas(100, 50, ctx as unknown as CanvasRenderingContext2D);
 
-    compositeSwipeFrame(left, right, output, 50, false, 'rgb(1, 2, 3)', true);
+    compositeSwipeFrame(left, right, output, 50, false, 'rgb(1, 2, 3)', true, {longitude: 40, zoom: 2});
 
     expect(ctx.fillStyle).toBe('rgb(1, 2, 3)');
     expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, 100, 50);
-    expect(drawStarsBackground).toHaveBeenCalledWith(ctx, 100, 50);
+    expect(drawStarsBackground).toHaveBeenCalledWith(ctx, 100, 50, {longitude: 40, zoom: 2});
     expect(ctx.fillRect.mock.invocationCallOrder[0]).toBeLessThan(
       (drawStarsBackground as jest.Mock).mock.invocationCallOrder[0]
     );

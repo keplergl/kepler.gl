@@ -193,7 +193,8 @@ export class SwipeExportVideoPreview extends Component<
       percentage,
       true,
       this.props.backgroundColor,
-      showStars
+      showStars,
+      this.props.viewState
     );
   }
 

@@ -42,4 +42,4 @@ export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
 export {default as EnhancedTextBackgroundLayer} from './enhanced-text-background-layer';
 export {KeplerGlobeView} from './globe-view';
-export {getStarsBackgroundImage, drawStarsBackground} from './globe-stars-layer';
+export {getStarsBackgroundImage, getStarsBackgroundStyle, drawStarsBackground} from './globe-stars-layer';
