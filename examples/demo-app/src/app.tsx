@@ -40,7 +40,7 @@ import {
   toggleMapControl,
   toggleModal
 } from '@kepler.gl/actions';
-import {CLOUD_PROVIDERS, handleAuthCallback} from './cloud-providers';
+import {CLOUD_PROVIDERS} from './cloud-providers';
 import {Panel, PanelGroup, PanelResizeHandle} from 'react-resizable-panels';
 
 const KeplerGl = injectComponents([
@@ -190,7 +190,12 @@ const App = props => {
 
   // Handle OAuth callback on /auth route
   useEffect(() => {
-    handleAuthCallback(location, window.opener, window.location.origin);
+    if (location.pathname === '/auth' && window.opener) {
+      const {getCloudProvider, DEFAULT_CLOUD_PROVIDER} = require('./cloud-providers');
+      const authProvider = getCloudProvider(DEFAULT_CLOUD_PROVIDER);
+      const token = authProvider.getAccessTokenFromLocation(location);
+      window.opener.postMessage({token}, window.location.origin);
+    }
   }, [location]);
 
   useEffect(() => {

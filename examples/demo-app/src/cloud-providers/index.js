@@ -48,15 +48,3 @@ export function getCloudProvider(providerName) {
   }
   return cloudProvider;
 }
-
-// /auth is the legacy Dropbox callback. Other providers use their own popup flows.
-export function handleAuthCallback(location, opener, origin) {
-  if (location.pathname !== '/auth' || !opener) {
-    return;
-  }
-  const authProvider = CLOUD_PROVIDERS.find(provider => provider.name === DEFAULT_CLOUD_PROVIDER);
-  if (authProvider) {
-    const token = authProvider.getAccessTokenFromLocation(location);
-    opener.postMessage({token}, origin);
-  }
-}
