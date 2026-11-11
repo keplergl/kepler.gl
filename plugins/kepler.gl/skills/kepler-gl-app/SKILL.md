@@ -562,6 +562,20 @@ multiplies normal opacity and does not make hidden layers visible.
   map. If the user refers to a layer by name rather than id, use the layer
   name to find the matching layer id from the dataset context.
 
+## Loading and readiness checks
+
+- Do not infer basemap loading from generic `Loading...` text or a progress
+  bar's dimensions. The loading indicator is shared across data and layer
+  operations and remains mounted while visually hidden.
+- A successful `map.set-basemap` changes the selected style; it does not
+  establish that all basemap tiles have finished loading.
+- Investigate loading only when it blocks the requested result or the user
+  asks. If using the UI, check actual visibility and identify the source of
+  the loading state before attributing it to the basemap. If that source
+  cannot be established, report the uncertainty rather than claiming the
+  basemap is still loading.
+- Do not change basemaps merely to clear an unverified loading signal.
+
 ## Before your final message
 
 - If you created a layer, confirm the layer type, name, and (if any) the
