@@ -312,8 +312,8 @@ test('PlotContainer -> transparent globe keeps only the depth occluder', t => {
   const map = wrapper.find('MapContainer').instance();
   const layersForDeck = map.layersForDeckSelector(map.props);
   const deckWrapper = map._renderDeckOverlay(layersForDeck, {primaryMap: true});
-  const globeSystemLayerIds = deckWrapper.props.children.props.layers
-    .map(layer => layer.id)
+  const globeSystemLayerIds = React.Children.toArray(deckWrapper.props.children)[0]
+    .props.layers.map(layer => layer.id)
     .filter(id => id.startsWith('globe-'));
 
   t.deepEqual(

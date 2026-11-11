@@ -80,22 +80,81 @@ describe('camera tour path dragging', () => {
       update({visState: {...props.visState, cameraTour}});
     });
     const deckProps = (isInteractive = true) =>
-      ref.current._renderDeckOverlay([], {primaryMap: index === 0, isInteractive}).props.children
-        .props;
+      (
+        React.Children.toArray(
+          ref.current._renderDeckOverlay([], {primaryMap: index === 0, isInteractive}).props
+            .children
+        )[0] as React.ReactElement<any>
+      ).props;
     const layers = (isInteractive = true) =>
       deckProps(isInteractive).layers.filter(layer => layer.id.startsWith('camera-tour-path-'));
     const handles = () => layers()[1].props;
     const event = {rightButton: false, stopPropagation: jest.fn()};
     const picked = {object: {id: 'home'}, coordinate: [10, 20]};
-    return {commit, update, deckProps, layers, handles, event, picked, props: () => props};
+    return {commit, update, deckProps, layers, handles, event, picked, ref, props: () => props};
   }
+
+  test.each([0, 1])(
+    'edits selected stop zoom in pane %s without changing other camera fields',
+    index => {
+      const {commit, handles, event, picked, ref, update, props} = setupPath(index);
+      act(() => {
+        act(() => {
+          handles().onClick(picked, event);
+        });
+      });
+      act(() => {
+        ref.current._onCameraTourZoomChange(7.5);
+      });
+      expect(commit).toHaveBeenLastCalledWith({
+        ...tour,
+        stops: [{...tour.stops[0], camera: {...camera, zoom: 7.5}}, tour.stops[1]]
+      });
+      expect(props().mapStateActions.updateMap).not.toHaveBeenCalled();
+      commit.mockClear();
+      act(() => {
+        ref.current._onCameraTourZoomChange(NaN);
+      });
+      expect(commit).not.toHaveBeenCalled();
+      update({readOnly: true});
+      act(() => {
+        ref.current._onCameraTourZoomChange(8);
+      });
+      expect(commit).not.toHaveBeenCalled();
+    }
+  );
+
+  test('renders the zoom editor outside deck gestures and hides it for passive or removed stops', () => {
+    const {ref, handles, picked, event, update, props} = setupPath();
+    const control = (isInteractive = true) =>
+      React.Children.toArray(
+        ref.current._renderDeckOverlay([], {primaryMap: true, isInteractive}).props.children
+      )[1] as React.ReactElement<any> | undefined;
+    expect(control()).toBeUndefined();
+    act(() => {
+      handles().onClick(picked, event);
+    });
+    expect(control()?.props.stop.id).toBe('home');
+    expect(control(false)).toBeUndefined();
+    act(() => {
+      control()?.props.onClose();
+    });
+    expect(control()).toBeUndefined();
+    act(() => {
+      handles().onClick(picked, event);
+    });
+    update({visState: {...props().visState, cameraTour: {stops: [tour.stops[1]]}}});
+    expect(control()).toBeUndefined();
+  });
 
   test.each([0, 1])(
     'drags a stop in map %s and redraws the path without changing other settings',
     index => {
       const {commit, layers, handles, picked, event} = setupPath(index);
       expect(layers().map(layer => layer.props.pickable)).toEqual([false, true, false]);
-      expect(handles().onDragStart(picked, event)).toBe(true);
+      act(() => {
+        expect(handles().onDragStart(picked, event)).toBe(true);
+      });
       expect(event.stopPropagation).toHaveBeenCalledTimes(1);
       expect(commit).not.toHaveBeenCalled();
       act(() => {
@@ -134,13 +193,17 @@ describe('camera tour path dragging', () => {
       const {handles, event, props, commit} = setupPath(index);
       const actions = props().uiStateActions;
       const picked = {object: {id: 'work'}, index: 0};
-      expect(handles().onClick(picked, event)).toBe(true);
+      act(() => {
+        expect(handles().onClick(picked, event)).toBe(true);
+      });
       expect(actions.setMapControlSettings).toHaveBeenLastCalledWith('cameraTour', {
         selection: {stopId: 'work'}
       });
       expect(actions.toggleSidePanel).toHaveBeenLastCalledWith('interaction');
       const firstRequest = actions.setMapControlSettings.mock.lastCall[1].selection;
-      handles().onClick(picked, event);
+      act(() => {
+        handles().onClick(picked, event);
+      });
       expect(actions.setMapControlSettings.mock.lastCall[1].selection).not.toBe(firstRequest);
       expect(commit).not.toHaveBeenCalled();
     }
@@ -179,14 +242,14 @@ describe('camera tour path dragging', () => {
         {...event, type: 'click', srcEvent: {button: 0}}
       );
     };
-    clickPoint();
+    act(clickPoint);
     expect(align).toHaveBeenCalledWith(picked.coordinate);
     expect(props().mapStateActions.updateMap).toHaveBeenCalledWith({}, index);
     expect(props().uiStateActions.setMapControlSettings).not.toHaveBeenCalled();
     expect(props().uiStateActions.toggleSidePanel).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
     update({visState: {...props().visState, layers: [{...bitmap, alignWaitingForMap: false}]}});
-    clickPoint();
+    act(clickPoint);
     expect(align).toHaveBeenCalledTimes(1);
     expect(props().uiStateActions.setMapControlSettings).toHaveBeenCalledWith('cameraTour', {
       selection: {stopId: 'home'}
@@ -234,7 +297,9 @@ describe('camera tour path dragging', () => {
 
   test('uses the stop ID and latest authored settings after reordering during a drag', () => {
     const {commit, update, handles, picked, event, props} = setupPath();
-    handles().onDragStart(picked, event);
+    act(() => {
+      handles().onDragStart(picked, event);
+    });
     const edited = {...tour.stops[0], name: 'Renamed', camera: {...camera, zoom: 8}};
     update({visState: {...props().visState, cameraTour: {stops: [tour.stops[1], edited]}}});
     act(() => {
@@ -249,7 +314,9 @@ describe('camera tour path dragging', () => {
     'ignores invalid drag coordinates %j',
     coordinate => {
       const {commit, handles, picked, event} = setupPath();
-      handles().onDragStart(picked, event);
+      act(() => {
+        handles().onDragStart(picked, event);
+      });
       expect(handles().onDrag({...picked, coordinate}, event)).toBe(true);
       expect(handles().onDragEnd({...picked, coordinate}, event)).toBe(true);
       expect(commit).not.toHaveBeenCalled();
@@ -262,7 +329,9 @@ describe('camera tour path dragging', () => {
     expect(handles().onDragStart(picked, {...event, rightButton: true})).toBe(false);
     expect(handles().onDragEnd({...picked, coordinate: [30, 40]}, event)).toBe(false);
     expect(event.stopPropagation).not.toHaveBeenCalled();
-    handles().onDragStart(picked, event);
+    act(() => {
+      handles().onDragStart(picked, event);
+    });
     handles().onDragEnd(picked, event);
     expect(commit).not.toHaveBeenCalled();
   });
@@ -272,7 +341,9 @@ describe('camera tour path dragging', () => {
     state => {
       const {commit, update, layers, handles, picked, event, props} = setupPath();
       const callbacks = handles();
-      callbacks.onDragStart(picked, event);
+      act(() => {
+        callbacks.onDragStart(picked, event);
+      });
       const {mapControls, visState} = props();
       update(
         state === 'hidden'
@@ -299,7 +370,9 @@ describe('camera tour path dragging', () => {
     const {layers, handles, picked, event, commit} = setupPath();
     expect(layers(false).every(layer => !layer.props.pickable)).toBe(true);
     expect(layers(false)[1].props.onDragStart).toBeNull();
-    expect(handles().onClick(picked, event)).toBe(true);
+    act(() => {
+      expect(handles().onClick(picked, event)).toBe(true);
+    });
     expect(commit).not.toHaveBeenCalled();
   });
 });
