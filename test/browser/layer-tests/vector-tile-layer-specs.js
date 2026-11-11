@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import {tileLayerBoundsLayer} from '../../../src/layers/src/vector-tile/vector-tile-layer';
 import sinon from 'sinon';
 import {MVTSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
@@ -1656,5 +1657,85 @@ test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs'
     mvtConstruct.restore();
     pmConstruct.restore();
   }
+  t.end();
+});
+
+test('#VectorTileLayer -> optional metadata bounds without tile requests', t => {
+  const layer = new VectorTileLayer({id: 'extent', dataId: 'tiles'});
+  const getTileData = sinon.spy();
+  const opts = {
+    data: {
+      tileSource: {getTileData},
+      tilesetDataUrl: 'test/{z}/{x}/{y}',
+      bounds: [170, -10, -170, 10],
+      minZoom: 8,
+      maxZoom: 14
+    },
+    mapState: {zoom: 1, latitude: 0, longitude: 0},
+    animationConfig: {},
+    gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+    layerCallbacks: {},
+    visible: true,
+    idx: 0,
+    objectHovered: null
+  };
+  t.equal(layer.renderLayer(opts).length, 1, 'existing configs do not display a helper');
+  layer.updateLayerVisConfig({showBounds: true});
+  const outline = layer.renderLayer(opts)[1];
+  t.ok(outline, 'helper appears even below archive minimum zoom');
+  t.equal(outline.props.pickable, false, 'helper cannot interfere with feature picking');
+  t.equal(outline.props.wrapLongitude, true, 'flat maps split dateline-crossing edges');
+  t.deepEqual(
+    outline.props.data[0].path,
+    [
+      [170, -10],
+      [190, -10],
+      [190, 10],
+      [170, 10],
+      [170, -10]
+    ],
+    'dateline bounds follow the short interval'
+  );
+  t.ok(
+    outline.props.dataComparator(outline.props.data, layer.renderLayer(opts)[1].props.data),
+    'pan/hover preserves path attributes'
+  );
+  t.equal(
+    layer.renderLayer({...opts, visible: false})[1].props.visible,
+    false,
+    'split-panel visibility is preserved'
+  );
+  t.equal(
+    layer.renderLayer({...opts, mapState: {...opts.mapState, zoom: 20}}).length,
+    2,
+    'helper remains available above maximum zoom'
+  );
+  t.equal(getTileData.callCount, 0, 'helper never probes tile contents');
+  for (const bounds of [
+    undefined,
+    [],
+    [NaN, 0, 10, 20],
+    [0, 20, 10, 10],
+    [0, -91, 10, 20],
+    [181, 0, 10, 20],
+    [10, 0, 10, 20]
+  ]) {
+    t.deepEqual(
+      tileLayerBoundsLayer('invalid', {bounds}),
+      [],
+      'missing/invalid/degenerate extents have no outline'
+    );
+  }
+  const world = tileLayerBoundsLayer('world', {bounds: [-180, -90, 180, 90]})[0].props.data[0].path;
+  t.ok(
+    world.some(([lng]) => lng === 0),
+    'world extent includes intermediate longitudes instead of collapsing at the seam'
+  );
+  layer.updateLayerVisConfig({showBounds: false});
+  t.equal(
+    layer.renderLayer(opts).length,
+    1,
+    'helper can be disabled without altering tile rendering'
+  );
   t.end();
 });

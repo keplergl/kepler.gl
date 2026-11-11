@@ -90,6 +90,12 @@ export default {
     }
   },
   layer: {
+    showTilesetBounds: 'Show tileset bounds',
+    tilesetExtent: 'Tileset extent',
+    tilesetBoundsDescription:
+      'Metadata extent only. Tiles may be empty within these bounds or at some zoom levels; filters do not change this outline.',
+    tilesetZoomRange: 'Archive zoom levels: {min}–{max}',
+    tilesetBoundsUnavailable: 'Bounds are unavailable in this tileset’s metadata.',
     required: 'Required*',
     columnModesSeparator: 'Or',
     radius: 'Radius',

@@ -174,6 +174,14 @@ export const vectorTileVisConfigs = {
     step: 0.01
   } as VisConfigRange,
 
+  showBounds: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layer.showTilesetBounds',
+    property: 'showBounds',
+    description: 'layer.tilesetBoundsDescription'
+  } as VisConfigBoolean,
+
   hideNulls: {
     type: 'boolean',
     defaultValue: false,
@@ -208,36 +216,59 @@ export type VectorTileLayerVisConfigSettings = Merge<
     sizeRange: VisConfigRange;
     strokeWidth: VisConfigNumber;
     hideNulls: VisConfigBoolean;
+    showBounds: VisConfigBoolean;
   }
 >;
 
-export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): DeckLayer[] {
-  const {bounds} = props;
-  if (bounds?.length !== 4) return [];
-
-  const data = [
-    {
-      path: [
-        [bounds[0], bounds[1]],
-        [bounds[2], bounds[1]],
-        [bounds[2], bounds[3]],
-        [bounds[0], bounds[3]],
-        [bounds[0], bounds[1]]
-      ]
-    }
+/** Metadata describes the archive extent, not occupied tiles or filtered features. */
+export function tileLayerBoundsLayer(
+  id: string,
+  props: {bounds?: number[]; visible?: boolean}
+): DeckLayer[] {
+  const {bounds, visible = true} = props;
+  if (
+    !bounds ||
+    bounds.length !== 4 ||
+    !bounds.every(Number.isFinite) ||
+    Math.abs(bounds[0]) > 180 ||
+    Math.abs(bounds[2]) > 180 ||
+    Math.abs(bounds[1]) > 90 ||
+    Math.abs(bounds[3]) > 90 ||
+    bounds[1] >= bounds[3]
+  )
+    return [];
+  const [west, south, rawEast, north] = bounds;
+  const east = rawEast < west ? rawEast + 360 : rawEast;
+  if (west === east) return [];
+  // Intermediate vertices retain wide/world extents on globe projections too.
+  const segments = Math.ceil((east - west) / 90);
+  const longitudes = Array.from(
+    {length: segments + 1},
+    (_, i) => west + ((east - west) * i) / segments
+  );
+  const path = [
+    ...longitudes.map(lng => [lng, south]),
+    ...longitudes
+      .slice()
+      .reverse()
+      .map(lng => [lng, north]),
+    [west, south]
   ];
-
-  const layer = new PathLayer({
-    id: `${id}-vector-tile-bounds`,
-    data,
-    getPath: d => d.path,
-    getColor: [128, 128, 128, 255],
-    getWidth: 1,
-    widthUnits: 'pixels',
-    pickable: false
-  });
-
-  return [layer];
+  return [
+    new PathLayer({
+      id: `${id}-vector-tile-bounds`,
+      data: [{path}],
+      // A pan/hover creates new layer props, but must not rewrite unchanged geometry.
+      dataComparator: isEqual,
+      getPath: d => d.path,
+      getColor: [128, 128, 128, 255],
+      getWidth: 2,
+      widthUnits: 'pixels',
+      wrapLongitude: true,
+      visible,
+      pickable: false
+    })
+  ];
 }
 
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
@@ -867,8 +898,13 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               })
             ]
           : []),
-        ...perTileOverlays
-        // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
+        ...perTileOverlays,
+        ...(visConfig.showBounds
+          ? tileLayerBoundsLayer(defaultLayerProps.id, {
+              bounds: data.bounds,
+              visible: defaultLayerProps.visible
+            })
+          : [])
       ];
 
       return layers;

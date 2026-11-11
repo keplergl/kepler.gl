@@ -4,6 +4,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
 import {VectorTileLayer} from '@kepler.gl/layers';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
@@ -53,12 +54,48 @@ function VectorTileLayerConfiguratorFactory(
 ): React.FC<Props> {
   const VectorTileLayerConfigurator = ({
     layer,
+    dataset,
     visConfiguratorProps,
     layerChannelConfigProps,
     layerConfiguratorProps
   }: Props) => {
+    const metadata = dataset?.metadata as
+      | {bounds?: number[]; minZoom?: number; maxZoom?: number}
+      | undefined;
+    const {minZoom, maxZoom} = metadata || {};
+    const hasZoomRange =
+      typeof minZoom === 'number' &&
+      typeof maxZoom === 'number' &&
+      Number.isInteger(minZoom) &&
+      Number.isInteger(maxZoom) &&
+      minZoom >= 0 &&
+      maxZoom >= minZoom &&
+      maxZoom <= 30;
     return (
       <StyledLayerConfigurator>
+        <LayerConfigGroup {...visConfiguratorProps} label="layer.tilesetExtent">
+          <VisConfigSwitch
+            {...visConfiguratorProps}
+            {...layer.visConfigSettings.showBounds}
+            description={undefined}
+          />
+          <small>
+            <FormattedMessage id="layer.tilesetBoundsDescription" />
+            {hasZoomRange ? (
+              <div>
+                <FormattedMessage
+                  id="layer.tilesetZoomRange"
+                  values={{min: minZoom, max: maxZoom}}
+                />
+              </div>
+            ) : null}
+            {!metadata?.bounds ? (
+              <div>
+                <FormattedMessage id="layer.tilesetBoundsUnavailable" />
+              </div>
+            ) : null}
+          </small>
+        </LayerConfigGroup>
         {/* Fill Color */}
         <LayerConfigGroup
           {...visConfiguratorProps}
