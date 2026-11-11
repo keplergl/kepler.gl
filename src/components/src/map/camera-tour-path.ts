@@ -53,6 +53,9 @@ export function getCameraTourPathLayers(tour?: CameraTour | null) {
       data,
       getPosition: d => d.position,
       getText: d => d.label,
+      characterSet: 'auto',
+      // Globe mode enables culling globally, but glyph quads must stay visible.
+      parameters: {cull: false},
       getSize: 12,
       getPixelOffset: [10, -12],
       getTextAnchor: 'start',

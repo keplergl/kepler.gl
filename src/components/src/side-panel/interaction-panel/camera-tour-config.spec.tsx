@@ -1099,3 +1099,19 @@ test('path geometry follows stop order and reuses data during navigation', () =>
   expect(getCameraTourPathLayers(null)).toEqual([]);
   expect(getCameraTourPathLayers({stops: []})).toEqual([]);
 });
+
+test('path labels include authored Unicode names in their font atlas', () => {
+  const names = ['München', '東京', 'Київ 🌍'];
+  const layers = getCameraTourPathLayers({
+    stops: names.map((name, index) => ({...tour.stops[0], id: String(index), name}))
+  });
+  expect(layers[2].props).toMatchObject({
+    characterSet: 'auto',
+    data: names.map((name, index) => ({position: [10, 20], label: `${index + 1}. ${name}`}))
+  });
+});
+
+test('path labels override globe backface culling without disabling depth testing', () => {
+  const layers = getCameraTourPathLayers(tour);
+  expect(layers[2].props.parameters).toEqual({cull: false});
+});
