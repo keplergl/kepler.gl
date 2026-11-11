@@ -38,6 +38,7 @@ import KeplerHeatmapLayer from '../../../src/layers/src/heatmap-layer/deck-heatm
 import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/density-surface-mesh';
 import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
+import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
 const {HeatmapLayer, PointLayer} = KeplerGlLayers;
@@ -1401,86 +1402,102 @@ test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t =
   t.end();
 });
 
-test('#HeatmapLayer -> desktop pans reuse density until the cached frame is exhausted', t => {
+test('#HeatmapLayer -> diagnostic freezes aggregation after the first non-empty frame', t => {
   const source = [
     [-122.42, 37.74],
     [-122.4, 37.76]
   ];
-  for (const width of [800, 1024, 1400, 2000, 2048]) {
-    const heatmap = new HeatmapLayer({id: `pan-cache-${width}`});
+  for (const globe of [false, true]) {
+    const heatmap = new HeatmapLayer({id: `one-shot-${globe}`});
     heatmap.updateMeta({bounds: [-123, 37, -122, 38]});
-    let data = {data: source, getPosition: d => d, getWeight: 1};
+    let data = {data: [], getPosition: d => d, getWeight: 1};
     let mapState = {
       ...INITIAL_MAP_STATE,
-      width,
+      width: 1400,
       height: 800,
       longitude: -122.4,
       latitude: 37.75,
-      zoom: 10
+      zoom: 10,
+      globe: {...INITIAL_MAP_STATE.globe, enabled: globe}
     };
-    const manager = new LayerManager(device, {viewport: new WebMercatorViewport(mapState)});
+    const makeViewport = () =>
+      new (globe ? _GlobeView : MapView)().makeViewport({
+        width: mapState.width,
+        height: mapState.height,
+        viewState: mapState
+      });
+    const manager = new LayerManager(device, {viewport: makeViewport()});
     const render = () => {
-      const viewport = new WebMercatorViewport(mapState);
+      const viewport = makeViewport();
       manager.activateViewport(viewport);
       manager.setLayers(
         heatmap.renderLayer({data, mapState, idx: 0, visible: true, layerCallbacks: {}})
       );
-      // Match the draw pass: manager.activateViewport alone does not invalidate layers.
+      // Match the draw pass, including replacement instances and viewport activation.
       for (const layer of manager.getLayers()) layer.activateViewport(viewport);
       manager.updateLayers();
       return manager.getLayers()[0];
     };
-    const aggregate = sinon.spy(KeplerHeatmapLayer.prototype, '_updateWeightmap');
+    const aggregate = sinon.spy(DeckGLHeatmapLayer.prototype, '_updateWeightmap');
     try {
-      const first = render();
-      const weights = first.state.weightsTexture;
-      const transform = first.state.weightsTransform;
-      const positions = first.getAttributeManager().getAttributes().positions.value;
-      aggregate.reset();
-      for (let i = 0; i < 30; i++) render();
-      t.equal(aggregate.callCount, 0, `${width}px: stationary redraws retain density`);
-      let current;
-      // Half a screen pixel per frame stays inside the 24px margin at 2000px wide.
-      const panStep = 180 / (512 * 2 ** mapState.zoom);
-      for (let i = 0; i < 30; i++) {
-        mapState = {...mapState, longitude: mapState.longitude + panStep};
-        current = render();
-      }
-      if (width < 2048) {
-        t.equal(aggregate.callCount, 0, `${width}px: small pans retain density`);
-      }
-      t.equal(current.state.weightsTexture, weights, 'pans do not allocate density textures');
-      t.equal(current.state.weightsTransform, transform, 'pans do not rebuild the transform');
-      t.equal(
-        current.getAttributeManager().getAttributes().positions.value,
-        positions,
-        'pans retain point attributes'
-      );
-      aggregate.reset();
-      mapState = {...mapState, longitude: mapState.longitude + 10};
       render();
-      t.ok(aggregate.called, `${width}px: leaving the cached frame refreshes density`);
-      aggregate.reset();
-      mapState = {...mapState, zoom: mapState.zoom + 0.25};
-      render();
-      t.ok(aggregate.called, 'zoom still refreshes density for its changed radius');
-      aggregate.reset();
-      const oldColor = manager.getLayers()[0].state.colorTexture;
-      heatmap.updateLayerVisConfig({
-        colorRange: {...heatmap.config.visConfig.colorRange, colors: ['#000000', '#ffffff']}
-      });
-      current = render();
-      t.notEqual(current.state.colorTexture, oldColor, 'palette edits update the color texture');
-      t.equal(aggregate.callCount, 0, 'palette edits retain density');
-      data = {...data, data: []};
-      current = render();
-      t.ok(aggregate.called, 'filtering to an empty dataset refreshes density');
-      t.equal(current.props.data.length, 0, 'filtered points are removed');
-      aggregate.reset();
+      t.equal(aggregate.callCount, 0, 'empty loading frames do not consume the snapshot');
       data = {...data, data: source};
-      current = render();
-      t.ok(aggregate.called, 'clearing the filter refreshes density');
-      t.equal(current.props.data.length, source.length, 'clearing the filter restores points');
+      const first = render();
+      t.equal(first.props.weightsTextureSize, 512, 'restores the 512 texture for the experiment');
+      t.equal(aggregate.callCount, 1, 'the first non-empty frame aggregates once');
+      const weights = first.state.weightsTexture;
+      const maxWeights = first.state.maxWeightsTexture;
+      const transform = first.state.weightsTransform;
+      const worldBounds = first.state.worldBounds;
+      const commonBounds = first.state.normalizedCommonBounds;
+      const positions = first.getAttributeManager().getAttributes().positions.value;
+      const runAggregation = sinon.spy(Object.getPrototypeOf(transform), 'run');
+      const checkFrozen = label => {
+        const current = render();
+        t.equal(aggregate.callCount, 1, `${label}: no second aggregation`);
+        t.equal(current.state.weightsTexture, weights, `${label}: retains density texture`);
+        t.equal(current.state.maxWeightsTexture, maxWeights, `${label}: retains maximum texture`);
+        t.equal(current.state.weightsTransform, transform, `${label}: retains transform`);
+        t.equal(current.state.worldBounds, worldBounds, `${label}: retains geographic frame`);
+        t.equal(current.state.normalizedCommonBounds, commonBounds, `${label}: retains UV frame`);
+        t.equal(
+          current.getAttributeManager().getAttributes().positions.value,
+          positions,
+          `${label}: retains point attributes`
+        );
+        t.notOk(current.state.updateTimer, `${label}: does not schedule delayed aggregation`);
+        t.equal(
+          current.getSubLayers()[0].props.weightsTexture,
+          weights,
+          `${label}: draws cached texture`
+        );
+        return current;
+      };
+      for (let i = 0; i < 30; i++) render();
+      checkFrozen('stationary redraws');
+      for (let i = 0; i < 30; i++) {
+        mapState = {...mapState, longitude: mapState.longitude + 0.001};
+        render();
+      }
+      checkFrozen('small pans');
+      mapState = {...mapState, longitude: mapState.longitude + 10};
+      checkFrozen('pan outside initial bounds');
+      mapState = {...mapState, zoom: mapState.zoom + 0.25};
+      checkFrozen('zoom');
+      heatmap.updateLayerVisConfig({radius: 50});
+      checkFrozen('radius edit');
+      data = {...data, data: []};
+      checkFrozen('filter to empty');
+      data = {...data, data: source, getWeight: 2};
+      const current = checkFrozen('restore data with new weights');
+      current._updateWeightmap();
+      t.equal(aggregate.callCount, 1, 'direct updates cannot bypass the freeze');
+      t.equal(runAggregation.callCount, 0, 'no additional density or max-weight GPU passes');
+      runAggregation.restore();
+      manager.setLayers([]);
+      render();
+      t.equal(aggregate.callCount, 2, 'recreating the layer takes a fresh snapshot');
     } finally {
       aggregate.restore();
       manager.finalize();

@@ -104,6 +104,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     ...DeckGLHeatmapLayer.defaultProps,
     // kepler.gl extensions to support globe mode
     globeMode: false,
+    // Temporary diagnostic, enabled by the kepler layer for PR #4086.
+    debugFreezeAggregation: false,
     surface: false,
     surfaceHeight: 1000,
     surfaceLighting: true,
@@ -129,6 +131,8 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   // Mesh cache writes are direct to avoid scheduling an update while rendering.
   declare state: DeckGLHeatmapLayer['state'] & {
     surfaceMeshCache?: {key: string; mesh: HeatmapMesh | null};
+    // State (not an instance field) survives deck.gl layer replacement.
+    debugAggregationComplete?: boolean;
     // Bounds follow the visible area when zoomed inside the data extent.
     densityBounds?: [number, number, number, number] | null;
     densityBoundsFrameKey?: string | null;
@@ -406,6 +410,16 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   }
 
   updateState(opts: any) {
+    if ((this.props as any).debugFreezeAggregation && this.state.debugAggregationComplete) {
+      // Diagnostic only: retain the initial texture AND its geographic mapping.
+      // Do not update attributes, reframe bounds, recreate transforms, or schedule
+      // a zoom debounce. Data/filter/radius changes intentionally stay stale.
+      clearTimeout(this.state.updateTimer);
+      this.state.updateTimer = null;
+      this.state.isWeightMapDirty = false;
+      return;
+    }
+
     const {globeMode, densityBounds} = this.props as any;
 
     // Detect a transition out of globe mode. In globe mode we frame the density
@@ -558,27 +572,35 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
    * the frame changes. Only applies in globe mode; otherwise defers to super.
    */
   _updateWeightmap() {
-    if (!this._isGlobeHeatmap()) {
-      super._updateWeightmap();
+    const {debugFreezeAggregation} = this.props as any;
+    if (
+      debugFreezeAggregation &&
+      (this.state.debugAggregationComplete || this.getNumInstances() === 0)
+    ) {
+      // Wait for non-empty data before taking the diagnostic snapshot. Keep a
+      // guard here too so a direct call cannot run either GPU aggregation pass.
+      this.state.isWeightMapDirty = false;
       return;
     }
 
-    const radiusScale = this._getRadiusScale();
+    const radiusScale = this._isGlobeHeatmap() ? this._getRadiusScale() : 1;
     if (radiusScale === 1) {
       super._updateWeightmap();
-      return;
+    } else {
+      const originalProps = this.props;
+      const scaledRadius = Math.max(1, (originalProps as any).radiusPixels * radiusScale);
+      // Shallow-override radiusPixels without mutating the (possibly frozen) props.
+      this.props = Object.create(originalProps, {
+        radiusPixels: {value: scaledRadius, enumerable: true}
+      });
+      try {
+        super._updateWeightmap();
+      } finally {
+        this.props = originalProps;
+      }
     }
-
-    const originalProps = this.props;
-    const scaledRadius = Math.max(1, (originalProps as any).radiusPixels * radiusScale);
-    // Shallow-override radiusPixels without mutating the (possibly frozen) props.
-    this.props = Object.create(originalProps, {
-      radiusPixels: {value: scaledRadius, enumerable: true}
-    });
-    try {
-      super._updateWeightmap();
-    } finally {
-      this.props = originalProps;
+    if (debugFreezeAggregation) {
+      this.state.debugAggregationComplete = true;
     }
   }
 

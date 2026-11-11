@@ -736,9 +736,10 @@ class HeatmapLayer extends Layer {
         threshold: visConfig.threshold,
         updateTriggers,
         colorRange,
-        // deck.gl pads the cached bounds to at least twice this size in pixels.
-        // 512 leaves no horizontal pan margin on common desktop viewports.
-        weightsTextureSize: 1024,
+        weightsTextureSize: 512,
+        // TEMPORARY PR #4086 diagnostic: aggregate once, then only draw the
+        // cached density. Reload/recreate the layer to apply data or radius edits.
+        debugFreezeAggregation: true,
         debounceTimeout: 0,
         surface: visConfig.surfaceEnabled,
         surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
