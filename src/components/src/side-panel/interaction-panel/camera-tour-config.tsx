@@ -515,6 +515,7 @@ export type CameraTourConfigProps = {
   tour?: CameraTour | null;
   enabled?: boolean;
   pathVisible?: boolean;
+  selection?: {stopId: string};
   uiStateActions?: typeof UIStateActions;
   bookmarks?: CameraBookmark[];
   mapState?: MapState;
@@ -526,6 +527,7 @@ export default function CameraTourConfig({
   tour,
   enabled = true,
   pathVisible = false,
+  selection,
   uiStateActions,
   bookmarks = [],
   mapState,
@@ -559,6 +561,15 @@ export default function CameraTourConfig({
   const stops = tour?.stops || [];
   const selected = stops.find(stop => stop.id === selectedId) || stops[0];
   const selectedIndex = selected ? stops.indexOf(selected) : -1;
+  const consumedSelection = useRef<typeof selection>(undefined);
+  useLayoutEffect(() => {
+    if (!selection || consumedSelection.current === selection) return;
+    consumedSelection.current = selection;
+    if (!stops.some(stop => stop.id === selection.stopId)) return;
+    playback.pause();
+    setSelectedId(selection.stopId);
+    setOpen(true);
+  }, [selection, stops, playback.pause]);
   const markerRefs = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   const closeSourceMenu = () => {

@@ -16,7 +16,7 @@ import {
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import CameraBookmarks from './interaction-panel/camera-bookmarks';
-import CameraTourConfig from './interaction-panel/camera-tour-config';
+import CameraTourConfig, {CameraTourConfigProps} from './interaction-panel/camera-tour-config';
 import {Datasets} from '@kepler.gl/table';
 import {Layer} from '@kepler.gl/layers';
 
@@ -62,6 +62,7 @@ type InteractionManagerProps = {
   cameraTour?: CameraTour | null;
   cameraTourEnabled?: boolean;
   cameraTourPathVisible?: boolean;
+  cameraTourSelection?: CameraTourConfigProps['selection'];
   mapStateActions?: typeof MapStateActions;
   actionIcons?: {
     settings?: PanelHeaderActionIcon;
@@ -105,6 +106,7 @@ function InteractionManagerFactory(
     cameraTour,
     cameraTourEnabled,
     cameraTourPathVisible,
+    cameraTourSelection,
     mapStateActions,
     actionIcons,
     interactionConfigIcons
@@ -198,6 +200,7 @@ function InteractionManagerFactory(
             tour={cameraTour}
             enabled={cameraTourEnabled}
             pathVisible={cameraTourPathVisible}
+            selection={cameraTourSelection}
             uiStateActions={uiStateActions}
             bookmarks={cameraBookmarks}
             mapState={mapState}

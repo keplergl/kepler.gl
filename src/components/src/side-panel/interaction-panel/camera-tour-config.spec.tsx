@@ -17,7 +17,7 @@ import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import {MapViewStateContext} from '../../map-view-state-context';
 import {RootContext} from '../../context';
-import CameraTourConfig from './camera-tour-config';
+import CameraTourConfig, {CameraTourConfigProps} from './camera-tour-config';
 import CameraTourPlaybackProvider from './camera-tour-playback-provider';
 import CameraBookmarks from './camera-bookmarks';
 import CameraBookmarkControl from '../../map/camera-bookmark-control';
@@ -968,6 +968,9 @@ function setupSharedPlayer() {
     setPanelOpen = updatePanel;
     setSplit = updateSplit;
     const mapState = {...INITIAL_MAP_STATE, ...camera, isSplit: split};
+    const cameraTourControl = ui.mapControls.cameraTour as typeof ui.mapControls.cameraTour & {
+      settings?: {selection?: CameraTourConfigProps['selection']};
+    };
     return (
       <RootContext.Provider value={root}>
         <div ref={root}>
@@ -985,6 +988,7 @@ function setupSharedPlayer() {
               <CameraTourConfig
                 tour={currentTour}
                 enabled={Boolean(ui.mapControls.cameraTour?.show)}
+                selection={cameraTourControl?.settings?.selection}
                 mapState={mapState}
                 mapStateActions={{...MapStateActions, updateMap}}
                 visStateActions={VisStateActions}
@@ -1010,6 +1014,10 @@ function setupSharedPlayer() {
         dispatch(UIStateActions.controlCameraTour(request));
       }),
     openPanel: () => act(() => setPanelOpen(true)),
+    selectStop: (stopId: string) =>
+      act(() => {
+        dispatch(UIStateActions.setMapControlSettings('cameraTour', {selection: {stopId}}));
+      }),
     split: () => act(() => setSplit(true)),
     replaceAndPlay: (value: CameraTour) =>
       act(() => {
@@ -1018,6 +1026,46 @@ function setupSharedPlayer() {
       })
   };
 }
+
+test('map selection opens the stop editor, pauses playback, and can select the same point again', () => {
+  const player = setupSharedPlayer();
+  player.request({action: 'play'});
+  frame(1500);
+  player.updateMap.mockClear();
+  player.selectStop('work');
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'true'
+  );
+  expect(screen.getByRole('button', {name: 'Stop 2: Work'})).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+  expect(callbacks.size).toBe(0);
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('1.5 s');
+  fireEvent.click(screen.getByRole('button', {name: 'Stop 1: Home'}));
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Home');
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
+
+test('ignores a selection request for a stop that no longer exists', () => {
+  const player = setupSharedPlayer();
+  player.selectStop('removed');
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
 
 test('programmatic playback runs with the panel closed and shares pause/seek state with its controls', () => {
   const player = setupSharedPlayer();

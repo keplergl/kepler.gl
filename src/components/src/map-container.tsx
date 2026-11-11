@@ -1135,6 +1135,20 @@ export default function MapContainerFactory(
 
     _cameraTourDraggedStopId: string | null = null;
 
+    _onCameraTourPathClick = (
+      info: PickingInfo<{id: string}>,
+      event: {rightButton?: boolean; stopPropagation: () => void}
+    ) => {
+      const stop = this.props.visState.cameraTour?.stops.find(item => item.id === info.object?.id);
+      if (!event.rightButton && this._canEditCameraTourPath() && stop) {
+        this.props.uiStateActions.setMapControlSettings('cameraTour', {
+          selection: {stopId: stop.id}
+        });
+        this.props.uiStateActions.toggleSidePanel('interaction');
+      }
+      return true;
+    };
+
     _canEditCameraTourPath = () =>
       !this.unmounted &&
       !this.props.readOnly &&
@@ -1371,6 +1385,7 @@ export default function MapContainerFactory(
               visState.cameraTour,
               isInteractive && this._canEditCameraTourPath()
                 ? {
+                    onClick: this._onCameraTourPathClick,
                     onDragStart: this._onCameraTourPathDragStart,
                     onDrag: this._onCameraTourPathDrag,
                     onDragEnd: this._onCameraTourPathDragEnd

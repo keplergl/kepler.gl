@@ -64,6 +64,7 @@ describe('camera tour path dragging', () => {
       mapControls: {...INITIAL_UI_STATE.mapControls, cameraTourPath: {show: true}},
       visState: {...INITIAL_VIS_STATE, cameraTour: tour},
       visStateActions: {setCameraTour: commit},
+      uiStateActions: {setMapControlSettings: jest.fn(), toggleSidePanel: jest.fn()},
       generateDeckGLLayers: () => []
     };
     const ref = createRef<any>();
@@ -123,6 +124,33 @@ describe('camera tour path dragging', () => {
     }
   );
 
+  test.each([0, 1])(
+    'clicking a stop in map %s opens its editor without changing the tour',
+    index => {
+      const {handles, event, props, commit} = setupPath(index);
+      const actions = props().uiStateActions;
+      const picked = {object: {id: 'work'}, index: 0};
+      expect(handles().onClick(picked, event)).toBe(true);
+      expect(actions.setMapControlSettings).toHaveBeenLastCalledWith('cameraTour', {
+        selection: {stopId: 'work'}
+      });
+      expect(actions.toggleSidePanel).toHaveBeenLastCalledWith('interaction');
+      const firstRequest = actions.setMapControlSettings.mock.lastCall[1].selection;
+      handles().onClick(picked, event);
+      expect(actions.setMapControlSettings.mock.lastCall[1].selection).not.toBe(firstRequest);
+      expect(commit).not.toHaveBeenCalled();
+    }
+  );
+
+  test('ignores missing stops and right-button clicks', () => {
+    const {handles, event, picked, props} = setupPath();
+    handles().onClick({object: {id: 'removed'}}, event);
+    handles().onClick({object: undefined}, event);
+    handles().onClick(picked, {...event, rightButton: true});
+    expect(props().uiStateActions.setMapControlSettings).not.toHaveBeenCalled();
+    expect(props().uiStateActions.toggleSidePanel).not.toHaveBeenCalled();
+  });
+
   test('uses the stop ID and latest authored settings after reordering during a drag', () => {
     const {commit, update, handles, picked, event, props} = setupPath();
     handles().onDragStart(picked, event);
@@ -179,7 +207,10 @@ describe('camera tour path dragging', () => {
       expect(layers().every(layer => !layer.props.pickable)).toBe(true);
       callbacks.onDrag({...picked, coordinate: [30, 40]}, event);
       callbacks.onDragEnd({...picked, coordinate: [31, 41]}, event);
+      callbacks.onClick(picked, event);
       expect(commit).not.toHaveBeenCalled();
+      expect(props().uiStateActions.setMapControlSettings).not.toHaveBeenCalled();
+      expect(props().uiStateActions.toggleSidePanel).not.toHaveBeenCalled();
     }
   );
 

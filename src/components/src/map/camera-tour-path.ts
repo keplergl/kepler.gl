@@ -22,7 +22,7 @@ function createPathData(tour: CameraTour) {
 
 export function getCameraTourPathLayers(
   tour?: CameraTour | null,
-  dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd'>
+  dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onClick'>
 ) {
   if (!tour) return [];
   if (!cache.has(tour)) cache.set(tour, createPathData(tour));
