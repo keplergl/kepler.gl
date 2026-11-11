@@ -1,0 +1,80 @@
+{
+  "datasets": [
+    {
+      "version": "v1",
+      "data": {
+        "id": "line-array-coordinate-order",
+        "label": "Line array coordinate order: before and after",
+        "color": [18, 147, 154],
+        "fields": [
+          {
+            "name": "case",
+            "type": "string",
+            "format": "",
+            "analyzerType": "STRING"
+          },
+          {
+            "name": "geometry",
+            "type": "geojson",
+            "format": "",
+            "analyzerType": "GEOMETRY"
+          }
+        ],
+        "allData": [
+          ["bare point lng,lat", [-74, 40]],
+          [
+            "bare line lng,lat",
+            [
+              [-74, 40],
+              [-73, 41]
+            ]
+          ],
+          [
+            "legacy bare line lat,lng",
+            [
+              [40, -74],
+              [41, -73]
+            ]
+          ],
+          [
+            "GeoJSON line lng,lat: unchanged on both versions",
+            {
+              "type": "LineString",
+              "coordinates": [
+                [-74, 40],
+                [-73, 41]
+              ]
+            }
+          ],
+          [
+            "bare line lng,lat,altitude",
+            [
+              [-74, 40, 100],
+              [-73, 41, 200]
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "config": {
+    "version": "v1",
+    "config": {
+      "mapState": {
+        "latitude": 0,
+        "longitude": -15,
+        "zoom": 1,
+        "pitch": 0,
+        "bearing": 0,
+        "dragRotate": false,
+        "isSplit": false
+      }
+    }
+  },
+  "info": {
+    "app": "kepler.gl",
+    "created_at": "2026-11-06T00:00:00Z",
+    "title": "Bare line coordinate order compatibility review",
+    "description": "Load this same map before and after the fix. Longitude-first bare lines now match the point and explicit GeoJSON line. The legacy latitude-first bare line intentionally moves; convert it to a longitude-first GeoJSON LineString to preserve its old location."
+  }
+}

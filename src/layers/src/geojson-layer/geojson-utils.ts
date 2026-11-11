@@ -339,7 +339,7 @@ export function parseGeoJsonRawFeature(
     }
   }
 
-  // Coordinate arrays: Point [lng, lat] or LineString [[lat, lng], ...]
+  // Coordinate arrays use [lng, lat, ...] for both Point and LineString.
   // Must run before `typeof === 'object'` because arrays are objects.
   if (Array.isArray(rawFeature)) {
     if (isLngLat(rawFeature)) {
@@ -350,11 +350,11 @@ export function parseGeoJsonRawFeature(
       };
     }
     if (Array.isArray(rawFeature[0])) {
-      // Support GeoJson LineString as an array of points stored as [lat, lng]
+      // Preserve vertex order and extra dimensions, as for Point and GeoJSON objects.
       return {
         type: 'Feature',
         geometry: {
-          coordinates: rawFeature.map((pts: number[]) => [pts[1], pts[0]]),
+          coordinates: rawFeature,
           type: 'LineString'
         },
         properties
