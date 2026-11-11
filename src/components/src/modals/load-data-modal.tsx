@@ -22,7 +22,6 @@ import AutoCreateLayersCheckbox from './auto-create-layers-checkbox';
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
 import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
-import {isTest} from '@kepler.gl/utils';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -210,8 +209,7 @@ const noop = () => {
 };
 const getDefaultMethod = <T,>(methods: T[] = []) =>
   // Try sample data modal by default for DuckDB preview
-  // Note: In tests only 3 loading methods are available
-  Array.isArray(methods) ? get(methods, [isTest() && methods.length > 4 ? 4 : 0]) : null;
+  Array.isArray(methods) ? get(methods, [methods.length > 4 ? 4 : 0]) : null;
 export interface LoadingMethod {
   id: string;
   label: string;

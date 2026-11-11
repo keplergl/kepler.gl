@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
@@ -76,32 +76,42 @@ test('Components -> LoadDataModal -> custom loading method', t => {
   t.end();
 });
 
-test('Components -> LoadDataModal -> DuckDB demo sample shortcut', t => {
-  const Upload = () => <div className="duckdb-demo-upload" />;
-  const Sample = ({enableLoadDataModal}) => (
-    <button className="duckdb-demo-add-data" onClick={enableLoadDataModal}>
-      Add data
-    </button>
-  );
-  const Placeholder = () => <div />;
-  const loadingMethods = [
-    {id: 'upload', label: 'modal.loadData.upload', elementType: Upload},
-    {id: 'tileset', label: 'modal.loadData.tileset', elementType: Placeholder},
-    {id: 'remote', label: 'modal.loadData.upload', elementType: Placeholder},
-    {id: 'storage', label: 'modal.loadData.storage', elementType: Placeholder},
-    {id: 'sample', label: 'modal.loadData.upload', elementType: Sample}
-  ];
-  const wrapper = mountWithTheme(
-    <IntlWrapper>
-      <LoadDataModal loadingMethods={loadingMethods} />
-    </IntlWrapper>
-  );
+for (const environment of ['test', 'production']) {
+  test(`Components -> LoadDataModal -> DuckDB demo sample shortcut (${environment})`, t => {
+    const Upload = () => <div className="duckdb-demo-upload" />;
+    const Sample = ({enableLoadDataModal}) => (
+      <button className="duckdb-demo-add-data" onClick={enableLoadDataModal}>
+        Add data
+      </button>
+    );
+    const Placeholder = () => <div />;
+    const loadingMethods = [
+      {id: 'upload', label: 'modal.loadData.upload', elementType: Upload},
+      {id: 'tileset', label: 'modal.loadData.tileset', elementType: Placeholder},
+      {id: 'remote', label: 'modal.loadData.upload', elementType: Placeholder},
+      {id: 'storage', label: 'modal.loadData.storage', elementType: Placeholder},
+      {id: 'sample', label: 'modal.loadData.upload', elementType: Sample}
+    ];
+    const previousEnvironment = process.env.NODE_ENV;
+    process.env.NODE_ENV = environment;
+    let wrapper;
+    try {
+      wrapper = mountWithTheme(
+        <IntlWrapper>
+          <LoadDataModal loadingMethods={loadingMethods} />
+        </IntlWrapper>
+      );
 
-  t.equal(wrapper.find(Sample).length, 1, 'should show the sample gallery by default');
-  wrapper.find('.duckdb-demo-add-data').first().simulate('click');
-  t.equal(wrapper.find(Upload).length, 1, 'sample gallery shortcut should open file upload');
-  t.end();
-});
+      t.equal(wrapper.find(Sample).length, 1, 'should show the sample gallery by default');
+      wrapper.find('.duckdb-demo-add-data').first().simulate('click');
+      t.equal(wrapper.find(Upload).length, 1, 'sample gallery shortcut should open file upload');
+    } finally {
+      process.env.NODE_ENV = previousEnvironment;
+      act(() => wrapper?.unmount());
+    }
+    t.end();
+  });
+}
 
 test('Components -> LoadDataModal -> auto create layers', t => {
   const onFileUpload = sinon.spy();
