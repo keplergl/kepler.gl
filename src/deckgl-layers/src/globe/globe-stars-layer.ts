@@ -99,8 +99,8 @@ function starLayout(camera: StarCamera, width: number, height: number) {
   const latitude = Math.max(-90, Math.min(90, finite(camera.latitude)));
   return {
     size,
-    x: (width / 2) * (1 - zoomScale) - (longitude / 360) * size,
-    y: (height / 2) * (1 - zoomScale) + (latitude / 180) * size
+    x: (width / 2) * (1 - zoomScale) + (longitude / 360) * size,
+    y: (height / 2) * (1 - zoomScale) - (latitude / 180) * size
   };
 }
 

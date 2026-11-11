@@ -73,6 +73,19 @@ test('decorative motion responds to camera and wraps longitude without enlarging
   );
 });
 
+test('stars move right as longitude increases and up as latitude increases', () => {
+  const position = (longitude: number, latitude: number) =>
+    getStarsBackgroundStyle({longitude, latitude, zoom: 0}, 1000, 600)
+      .backgroundPosition.split(' ')
+      .map(parseFloat);
+
+  expect(position(0, 0)).toEqual([0, 0]);
+  expect(position(90, 0)).toEqual([128, 0]);
+  expect(position(-90, 0)).toEqual([384, 0]); // Equivalent to -128px on the repeating tile.
+  expect(position(0, 45)).toEqual([0, -128]);
+  expect(position(0, -45)).toEqual([0, 128]);
+});
+
 test('a scaled export preview matches the encoded star size and position', () => {
   const camera = {longitude: -179, latitude: 40, zoom: 4};
   const output = getStarsBackgroundStyle(camera, 1920, 1080);
