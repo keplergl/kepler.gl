@@ -853,7 +853,7 @@ test('globe bookmark controls use a valid globe camera without changing the save
       zoom: 16 + Math.log2(Math.cos((saved.camera.latitude * Math.PI) / 180)),
       pitch: 0,
       bearing: 0,
-      transitionDuration: 0
+      transitionDuration: 1000
     })
   );
   expect(saved.camera.zoom).toBe(22);
@@ -881,7 +881,7 @@ test('navigates a bookmark in its independent globe pane without clamping to fla
     ...saved.camera,
     pitch: 0,
     bearing: 0,
-    transitionDuration: 0
+    transitionDuration: 1000
   });
   expect(saved.camera).toEqual({...camera, latitude: 60, zoom: 1.1});
 });

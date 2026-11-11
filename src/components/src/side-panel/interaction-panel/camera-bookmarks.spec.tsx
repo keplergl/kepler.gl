@@ -185,7 +185,7 @@ test.each([
   expect(updateMap).toHaveBeenCalledWith(
     expect.objectContaining({
       ...camera,
-      ...(mapState.globe?.enabled ? {pitch: 0, bearing: 0, transitionDuration: 0} : {})
+      ...(mapState.globe?.enabled ? {pitch: 0, bearing: 0, transitionDuration: 1000} : {})
     })
   );
   expect(initial[0].camera).toEqual(camera);
