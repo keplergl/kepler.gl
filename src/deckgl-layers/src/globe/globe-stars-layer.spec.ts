@@ -55,20 +55,31 @@ describe('globe-stars-layer', () => {
   });
 });
 
-test('decorative motion responds to camera, wraps longitude, and scales with output resolution', () => {
+test('decorative motion responds to camera and wraps longitude without enlarging stars', () => {
   const camera = {longitude: 179, latitude: 30, zoom: 4};
   const style = getStarsBackgroundStyle(camera, 1000, 600);
   expect(getStarsBackgroundStyle({...camera, longitude: -181}, 1000, 600)).toEqual(style);
   expect(getStarsBackgroundStyle({...camera, longitude: 180}, 1000, 600)).not.toEqual(style);
   expect(getStarsBackgroundStyle({...camera, latitude: 40}, 1000, 600)).not.toEqual(style);
   expect(getStarsBackgroundStyle({...camera, zoom: 8}, 1000, 600)).not.toEqual(style);
-  const doubled = getStarsBackgroundStyle(camera, 2000, 1200);
-  expect(parseFloat(doubled.backgroundSize)).toBe(2 * parseFloat(style.backgroundSize));
-  expect(doubled.backgroundPosition.split(' ').map(parseFloat)).toEqual(
-    style.backgroundPosition.split(' ').map(value => parseFloat(value) * 2)
-  );
-  expect(parseFloat(getStarsBackgroundStyle({zoom: 1000}, 1000, 600).backgroundSize)).toBe(575);
+  // Resizing the viewport must not enlarge individual stars (master uses a 512px tile).
+  for (const width of [640, 1024, 1440, 1920, 3840]) {
+    expect(getStarsBackgroundStyle(camera, width, 600).backgroundSize).toBe(style.backgroundSize);
+    expect(parseFloat(getStarsBackgroundStyle({zoom: 0}, width, 600).backgroundSize)).toBe(512);
+  }
+  expect(parseFloat(getStarsBackgroundStyle({zoom: 1000}, 1000, 600).backgroundSize)).toBeCloseTo(588.8);
   expect(getStarsBackgroundStyle({zoom: NaN, longitude: Infinity}, 1000, 600)).toEqual(
     getStarsBackgroundStyle({}, 1000, 600)
+  );
+});
+
+test('a scaled export preview matches the encoded star size and position', () => {
+  const camera = {longitude: -179, latitude: 40, zoom: 4};
+  const output = getStarsBackgroundStyle(camera, 1920, 1080);
+  const preview = getStarsBackgroundStyle(camera, 480, 270, 0.25);
+  expect(getStarsBackgroundStyle(camera, 1920, 1080, 0)).toEqual(output);
+  expect(parseFloat(preview.backgroundSize)).toBe(parseFloat(output.backgroundSize) / 4);
+  expect(preview.backgroundPosition.split(' ').map(parseFloat)).toEqual(
+    output.backgroundPosition.split(' ').map(value => parseFloat(value) / 4)
   );
 });

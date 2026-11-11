@@ -129,7 +129,11 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
         $height={height}
         $background={backgroundColor}
         $starsImage={starsImage}
-        style={starsImage ? getStarsBackgroundStyle(viewState, width, height) : undefined}
+        style={
+          starsImage
+            ? getStarsBackgroundStyle(viewState, width, height, width / resolution[0])
+            : undefined
+        }
       >
         <DeckGL
           ref={ref => {

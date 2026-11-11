@@ -93,8 +93,8 @@ type StarCamera = {longitude?: number; latitude?: number; zoom?: number};
 function starLayout(camera: StarCamera, width: number, height: number) {
   const finite = (value: number | undefined) => (Number.isFinite(value) ? value! : 0);
   const zoomScale = 1 + 0.15 * Math.tanh(finite(camera.zoom) / 6);
-  // Relative sizing keeps the preview and encoded frame identical at different resolutions.
-  const size = (width / 2) * zoomScale;
+  // Preserve the original pixel-sized stars regardless of viewport width or DPR.
+  const size = STAR_CANVAS_SIZE * zoomScale;
   const longitude = ((finite(camera.longitude) % 360) + 360) % 360;
   const latitude = Math.max(-90, Math.min(90, finite(camera.latitude)));
   return {
@@ -105,9 +105,19 @@ function starLayout(camera: StarCamera, width: number, height: number) {
 }
 
 /** CSS and canvas capture share the same cached tile and camera transform. */
-export function getStarsBackgroundStyle(camera: StarCamera, width: number, height: number) {
-  const {size, x, y} = starLayout(camera, width, height);
-  return {backgroundSize: `${size}px ${size}px`, backgroundPosition: `${x}px ${y}px`};
+export function getStarsBackgroundStyle(
+  camera: StarCamera,
+  width: number,
+  height: number,
+  displayScale = 1
+) {
+  // Export previews display a smaller copy of the encoded frame, not a larger star tile.
+  const scale = Number.isFinite(displayScale) && displayScale > 0 ? displayScale : 1;
+  const {size, x, y} = starLayout(camera, width / scale, height / scale);
+  return {
+    backgroundSize: `${size * scale}px ${size * scale}px`,
+    backgroundPosition: `${x * scale}px ${y * scale}px`
+  };
 }
 
 /**
