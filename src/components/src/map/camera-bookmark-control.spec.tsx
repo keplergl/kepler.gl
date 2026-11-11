@@ -6,7 +6,13 @@ import {fireEvent, screen, within, waitFor} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
 import {ThemeProvider} from 'styled-components';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_UI_STATE, uiStateUpdaters} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_UI_STATE,
+  mapStateUpdaters,
+  uiStateUpdaters
+} from '@kepler.gl/reducers';
+import {MapViewMode} from '@kepler.gl/constants';
 import {theme} from '@kepler.gl/styles';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import CameraBookmarkControl from './camera-bookmark-control';
@@ -700,8 +706,6 @@ test('bookmark copy, navigation and close do not activate title dragging', () =>
 
 test.each([
   {isExport: true},
-  {mapState: {...INITIAL_MAP_STATE, isSplit: true}},
-  {mapState: {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}},
   {bookmarks: []},
   {mapControls: {cameraBookmarks: {show: false, active: true}}},
   {mapControls: INITIAL_UI_STATE.mapControls},
@@ -826,4 +830,58 @@ test('mounts the floating panel inside its map root after the initial ref attach
   expect(screen.getByTestId('map-root')).toContainElement(
     screen.getByRole('button', {name: 'Home'})
   );
+});
+
+test('split bookmark controls navigate their own pane without a shared floating portal', () => {
+  const {updateMap} = setup({mapState: {...INITIAL_MAP_STATE, isSplit: true}, mapIndex: 1});
+  fireEvent.click(screen.getByRole('button', {name: bookmarks[0].name}));
+  expect(updateMap).toHaveBeenCalledWith(expect.objectContaining(bookmarks[0].camera), 1);
+});
+
+test('globe bookmark controls use a valid globe camera without changing the saved snapshot', () => {
+  const saved = {
+    ...bookmarks[0],
+    camera: {...bookmarks[0].camera, zoom: 22, pitch: 70, bearing: 85}
+  };
+  const {updateMap} = setup({
+    bookmarks: [saved],
+    mapState: {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
+  });
+  fireEvent.click(screen.getByRole('button', {name: saved.name}));
+  expect(updateMap).toHaveBeenCalledWith(
+    expect.objectContaining({
+      zoom: 16 + Math.log2(Math.cos((saved.camera.latitude * Math.PI) / 180)),
+      pitch: 0,
+      bearing: 0,
+      transitionDuration: 0
+    })
+  );
+  expect(saved.camera.zoom).toBe(22);
+});
+
+test('navigates a bookmark in its independent globe pane without clamping to flat zoom', () => {
+  let state = mapStateUpdaters.setMapViewModeUpdater(
+    INITIAL_MAP_STATE,
+    MapStateActions.setMapViewMode(MapViewMode.MODE_GLOBE)
+  );
+  state = mapStateUpdaters.toggleSplitMapUpdater(state);
+  state = mapStateUpdaters.toggleSplitMapViewportUpdater(
+    state,
+    MapStateActions.toggleSplitMapViewport({isViewportSynced: false})
+  );
+  const other = state.splitMapViewports[0];
+  const saved = {...bookmarks[0], camera: {...camera, latitude: 60, zoom: 1.1}};
+  const {updateMap} = setup({bookmarks: [saved], mapState: state, mapIndex: 1});
+  updateMap.mockImplementation((viewport, mapIndex) => {
+    state = mapStateUpdaters.updateMapUpdater(state, MapStateActions.updateMap(viewport, mapIndex));
+  });
+  fireEvent.click(screen.getByRole('button', {name: saved.name}));
+  expect(state.splitMapViewports[0]).toEqual(other);
+  expect(state.splitMapViewports[1]).toMatchObject({
+    ...saved.camera,
+    pitch: 0,
+    bearing: 0,
+    transitionDuration: 0
+  });
+  expect(saved.camera).toEqual({...camera, latitude: 60, zoom: 1.1});
 });

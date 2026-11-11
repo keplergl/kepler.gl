@@ -268,9 +268,13 @@ export default function CameraBookmarks({
   const intl = useIntl();
   const message = (key: string, fallback: string) =>
     intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
-  const supported = mapState && !mapState.isSplit && !mapState.globe?.enabled;
+  const supported = mapState;
   const {getInternalViewState} = useContext(MapViewStateContext);
-  const readCamera = () => getCameraSnapshot(getInternalViewState()) || getCameraSnapshot(mapState);
+  const readCamera = () =>
+    getCameraSnapshot(getInternalViewState(0)) ||
+    getCameraSnapshot(
+      mapState?.isSplit && !mapState.isViewportSynced ? mapState.splitMapViewports?.[0] : mapState
+    );
   const commit = visStateActions.setCameraBookmarks;
   const sensors = useSensors(
     useSensor(PointerSensor, {activationConstraint: {distance: 4}}),
@@ -296,7 +300,7 @@ export default function CameraBookmarks({
       {open && (
         <PanelContent id={`${panelId}-content`}>
           {!supported ? (
-            <p>{message('singleMap', 'Use a single 2D or 3D map to edit camera views.')}</p>
+            <p>{message('mapUnavailable', 'Load a map to edit camera views.')}</p>
           ) : (
             <>
               <Hint>{message('bookmarksHint', 'Save views to revisit later.')}</Hint>
@@ -352,7 +356,7 @@ export default function CameraBookmarks({
                         canCapture={Boolean(readCamera())}
                         onChange={commit}
                         onNavigate={item =>
-                          mapStateActions?.updateMap(cameraTransition(item.camera))
+                          mapStateActions?.updateMap(cameraTransition(item.camera, mapState))
                         }
                         onCopy={coordinates => {
                           const copied = coordinates && copy(coordinates);

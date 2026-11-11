@@ -116,6 +116,7 @@ const Status = styled.div`
 export default function CameraBookmarkControl({
   bookmarks = [],
   mapState,
+  mapIndex = 0,
   mapStateActions,
   mapControls,
   setMapControlSettings,
@@ -125,6 +126,7 @@ export default function CameraBookmarkControl({
 }: {
   bookmarks?: CameraBookmark[];
   mapState?: MapState;
+  mapIndex?: number;
   mapStateActions?: typeof MapStateActions;
   mapControls?: MapControls;
   setMapControlSettings?: typeof UIStateActions.setMapControlSettings;
@@ -147,8 +149,6 @@ export default function CameraBookmarkControl({
     !mapState ||
     !mapStateActions ||
     isExport ||
-    mapState.isSplit ||
-    mapState.globe?.enabled ||
     mapControls?.cameraBookmarks?.show !== true
   )
     return null;
@@ -177,7 +177,11 @@ export default function CameraBookmarkControl({
               <NavigateButton
                 type="button"
                 title={name}
-                onClick={() => mapStateActions.updateMap(cameraTransition(bookmark.camera))}
+                onClick={() => {
+                  const viewport = cameraTransition(bookmark.camera, mapState);
+                  if (mapState.isSplit) mapStateActions.updateMap(viewport, mapIndex);
+                  else mapStateActions.updateMap(viewport);
+                }}
               >
                 <LocationMarker height="16px" aria-hidden="true" />
                 <span>{name}</span>
@@ -205,7 +209,8 @@ export default function CameraBookmarkControl({
     </MapControlPanel>
   );
 
-  if (!setMapControlSettings || hasPortableWidth(breakPointValues)) return panel;
+  if (mapState.isSplit || !setMapControlSettings || hasPortableWidth(breakPointValues))
+    return panel;
   return createPortal(
     <DraggableLegend
       controlId="cameraBookmarks"

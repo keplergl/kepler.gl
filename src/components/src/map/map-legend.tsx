@@ -553,7 +553,7 @@ function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
             tabIndex={isExport ? undefined : 0}
             aria-label={intl.formatMessage({id: 'mapLegend.layers.contour.levels'})}
           >
-            {levels.map(({threshold, below, color}) => {
+            {levels.map(({threshold, below, color, rank}) => {
               const defaultLabel = `${below ? '≤' : '≥'} ${intl.formatNumber(threshold, {
                 maximumSignificantDigits: 12
               })}`;
@@ -563,7 +563,7 @@ function ContourLegendFactory(LegendRow: ReturnType<typeof LegendRowFactory>) {
               return (
                 <div
                   className="legend--contour-level"
-                  key={key}
+                  key={`${key}-${rank}`}
                   role="listitem"
                   title={customLabels[key] ?? `${below ? '≤' : '≥'} ${threshold}`}
                 >

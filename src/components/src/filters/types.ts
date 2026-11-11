@@ -61,6 +61,7 @@ export type SingleSelectFilterProps = {
 };
 
 export type MultiSelectFilterProps = {
+  allowCustomValues?: boolean;
   filter: MultiSelectFilter;
   setFilter: (
     v: ReadonlyArray<string | number | boolean | object> | string | number | boolean | object | null

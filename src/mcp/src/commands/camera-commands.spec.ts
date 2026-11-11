@@ -9,6 +9,8 @@ import {
   INITIAL_MAP_STATE,
   INITIAL_UI_STATE
 } from '@kepler.gl/reducers';
+import {setMapViewMode, toggleSplitMap, toggleSplitMapViewport} from '@kepler.gl/actions';
+import {MapViewMode} from '@kepler.gl/constants';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
 
@@ -69,14 +71,17 @@ describe('camera commands', () => {
   });
 
   it.each([{isSplit: true}, {globe: {enabled: true}}])(
-    'rejects unsupported navigation modes: %j',
+    'navigates in split and globe modes: %j',
     async mode => {
       const {ctx, dispatch} = makeContext(mode);
       const command = getCameraBookmarksCommand(ctx);
       await execute(command, {action: 'save', id: 'b', name: 'B', camera});
       dispatch.mockClear();
-      expect((await execute(command, {action: 'go-to', id: 'b'})).success).toBe(false);
-      expect(dispatch).not.toHaveBeenCalled();
+      expect((await execute(command, {action: 'go-to', id: 'b'})).success).toBe(true);
+      expect(ctx.getMapState?.()).toMatchObject({
+        ...camera,
+        ...('globe' in mode ? {pitch: 0} : {})
+      });
     }
   );
 
@@ -176,10 +181,76 @@ it('plays and pauses through the shared player and stops it when navigating to a
 });
 
 it.each([{}, {isSplit: true}, {globe: {enabled: true}}])(
-  'rejects play without a playable tour or supported map: %j',
+  'rejects play without a playable tour: %j',
   async mode => {
     const {ctx, dispatch} = makeContext(mode);
     expect((await execute(getCameraTourCommand(ctx), {action: 'play'})).success).toBe(false);
     expect(dispatch).not.toHaveBeenCalled();
+  }
+);
+
+it.each([false, true])(
+  'captures and seeks the primary split pane (zoom lock %s)',
+  async isZoomLocked => {
+    const other = {...camera, longitude: 50, zoom: 5};
+    const {ctx} = makeContext({
+      isSplit: true,
+      isViewportSynced: false,
+      isZoomLocked,
+      ...other,
+      splitMapViewports: [camera, other]
+    });
+    const bookmarks = getCameraBookmarksCommand(ctx);
+    await execute(bookmarks, {action: 'save', id: 'primary', name: 'Primary'});
+    expect(ctx.getVisState().cameraBookmarks?.[0].camera).toEqual(camera);
+    const tour = getCameraTourCommand(ctx);
+    await execute(tour, {action: 'set', stops: [stop]});
+    expect((await execute(tour, {action: 'seek', elapsedMs: 0})).success).toBe(true);
+    expect(ctx.getMapState?.()?.splitMapViewports).toMatchObject([
+      camera,
+      {...other, zoom: isZoomLocked ? camera.zoom : other.zoom}
+    ]);
+    expect((await execute(tour, {action: 'play'})).success).toBe(true);
+  }
+);
+
+it('seeks and plays a globe tour without mutating its saved camera', async () => {
+  const {ctx} = makeContext({globe: {enabled: true}});
+  const tour = getCameraTourCommand(ctx);
+  await execute(tour, {action: 'set', stops: [stop]});
+  expect((await execute(tour, {action: 'seek', elapsedMs: 0})).success).toBe(true);
+  expect(ctx.getMapState?.()).toMatchObject({...camera, pitch: 0});
+  expect(ctx.getVisState().cameraTour?.stops[0].camera).toEqual(camera);
+  expect((await execute(tour, {action: 'play'})).success).toBe(true);
+});
+
+it.each([false, true])(
+  'navigates bookmarks and seeks tours in independent globe panes (zoom lock %s)',
+  async isZoomLocked => {
+    const {ctx, dispatch} = makeContext();
+    dispatch(setMapViewMode(MapViewMode.MODE_GLOBE));
+    dispatch(toggleSplitMap(0));
+    dispatch(toggleSplitMapViewport({isViewportSynced: false}));
+    if (isZoomLocked) dispatch(toggleSplitMapViewport({isZoomLocked: true}));
+    const other = ctx.getMapState!()!.splitMapViewports[1];
+    const target = {...camera, latitude: 60, zoom: 1.1};
+    const bookmarks = getCameraBookmarksCommand(ctx);
+    await execute(bookmarks, {action: 'save', id: 'globe', name: 'Globe', camera: target});
+    expect((await execute(bookmarks, {action: 'go-to', id: 'globe'})).success).toBe(true);
+    expect(ctx.getMapState!()!.splitMapViewports).toMatchObject([
+      {...target, pitch: 0, bearing: 0},
+      {...other, zoom: isZoomLocked ? target.zoom : other.zoom}
+    ]);
+    expect(ctx.getVisState().cameraBookmarks![0].camera).toEqual(target);
+
+    const tour = getCameraTourCommand(ctx);
+    const tourCamera = {...target, longitude: 50, zoom: 1.25};
+    await execute(tour, {action: 'set', stops: [{...stop, camera: tourCamera}]});
+    expect((await execute(tour, {action: 'seek', elapsedMs: 0})).success).toBe(true);
+    expect(ctx.getMapState!()!.splitMapViewports).toMatchObject([
+      {...tourCamera, pitch: 0, bearing: 0},
+      {...other, zoom: isZoomLocked ? tourCamera.zoom : other.zoom}
+    ]);
+    expect(ctx.getVisState().cameraTour!.stops[0].camera).toEqual(tourCamera);
   }
 );

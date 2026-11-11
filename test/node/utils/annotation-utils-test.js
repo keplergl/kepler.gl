@@ -318,7 +318,7 @@ test('#makeMarker -> RULER keeps the nearest longitude wrap under perspective', 
   t.end();
 });
 
-test('#getAnnotationTextBoxStyle -> RULER centers text on the projected midpoint', t => {
+test('#getAnnotationTextBoxStyle -> RULER follows the projected line above its midpoint', t => {
   const style = getAnnotationTextBoxStyle(
     makeRulerAnnotation({anchorPoint: [0, 0, 10], endPoint: [2, 0, 30]}),
     mockViewport
@@ -326,7 +326,12 @@ test('#getAnnotationTextBoxStyle -> RULER centers text on the projected midpoint
 
   t.equal(style.left, 510, 'midpoint x should account for both endpoints');
   t.equal(style.top, 280, 'midpoint y should account for both endpoint altitudes');
-  t.equal(style.transform, 'translate(-50%, -50%)', 'text should be centered on midpoint');
+  t.equal(style.transformOrigin, '50% 100%', 'label rotates around its midpoint-facing edge');
+  t.equal(
+    style.transform,
+    'translate(-50%, -100%) rotate(-45deg) translateY(-5px)',
+    'text should follow the projected line with a gap above the stroke'
+  );
   t.notOk(style.borderTop, 'ruler text should not draw an annotation leader border');
 
   t.end();

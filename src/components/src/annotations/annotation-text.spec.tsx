@@ -67,7 +67,24 @@ describe('AnnotationText ruler labels', () => {
     expect(container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
       left: '505px',
       top: '300px',
-      transform: 'translate(-50%, -50%)'
+      transform: 'translate(-50%, -100%) rotate(0deg) translateY(-5px)',
+      transformOrigin: '50% 100%'
+    });
+  });
+
+  test.each([
+    [[1, 1], -45],
+    [[-1, -1], -45],
+    [[1, -1], 45],
+    [[-1, 1], 45],
+    [[0, 1], -90],
+    [[0, -1], -90],
+    [[0, 0], 0]
+  ])('keeps the label upright above projected ruler endpoint %j', (endPoint, angle) => {
+    const {container} = renderRulerText(makeRuler({endPoint} as Partial<Annotation>));
+    expect(container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+      transformOrigin: '50% 100%',
+      transform: `translate(-50%, -100%) rotate(${angle}deg) translateY(-5px)`
     });
   });
 

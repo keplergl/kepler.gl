@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // UTILS
-export {getCameraSnapshot, normalizeCameraBookmarks} from './camera-utils';
+export {getCameraSnapshot, normalizeCameraBookmarks, cameraForMap} from './camera-utils';
 export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 
 export {

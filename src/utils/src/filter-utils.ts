@@ -11,6 +11,7 @@ import {point as turfPoint} from '@turf/helpers';
 import {Decimal} from 'decimal.js';
 import {
   ALL_FIELD_TYPES,
+  DatasetType,
   FILTER_TYPES,
   ANIMATION_WINDOW,
   PLOT_TYPES,
@@ -1816,6 +1817,20 @@ export function validateFiltersUpdateDatasets<
             ...animatableLayers.map(l => l.config.animation.domain || [0, 0]),
             validatedFilter.domain
           ]);
+        }
+
+        // Tile metadata only lists suggestions, not every value present in remote tiles.
+        // Preserve explicit string selections without scanning or downloading tile data.
+        if (
+          validatedFilter.type === FILTER_TYPES.multiSelect &&
+          datasetIds.some(id => datasets[id]?.type === DatasetType.VECTOR_TILE) &&
+          Array.isArray(filterToValidate.value)
+        ) {
+          domain = unique([
+            ...(domain || []),
+            ...filterToValidate.value.filter(value => typeof value === 'string')
+          ]);
+          validatedFilter.domain = domain;
         }
 
         validatedFilter.value = adjustValueToFilterDomain(filterToValidate.value, {

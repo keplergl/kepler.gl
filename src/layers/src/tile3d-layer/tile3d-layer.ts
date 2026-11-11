@@ -722,6 +722,16 @@ export default class Tile3DLayer extends Layer {
     }
   };
 
+  // Keep this custom prop stable: deck.gl invalidates every cached tile
+  // sublayer whenever an untyped callback prop changes identity.
+  _onTilesetError = (kind: Tile3DLoadErrorKind | null): void => {
+    const previous = this.tilesetLoadError;
+    this.tilesetLoadError = kind;
+    if (kind || previous) {
+      this._layerCallbacks?.onTilesetLoadError?.(kind);
+    }
+  };
+
   _onTileUnload = (_tile: Tile3D): void => {
     /* noop */
   };
@@ -766,13 +776,7 @@ export default class Tile3DLayer extends Layer {
         onTilesetLoad: this._onTilesetLoad,
         // Deck forwards this prop; _loadTileset reads it when the tileset request fails.
         // @ts-expect-error onTilesetError is not part of deck.gl Tile3DLayer props
-        onTilesetError: (kind: Tile3DLoadErrorKind | null) => {
-          const previous = this.tilesetLoadError;
-          this.tilesetLoadError = kind;
-          if (kind || previous) {
-            this._layerCallbacks?.onTilesetLoadError?.(kind);
-          }
-        },
+        onTilesetError: this._onTilesetError,
         onTileLoad: this._onTileLoad,
         onTileUnload: this._onTileUnload,
         getPointColor: pointColor,

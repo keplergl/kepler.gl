@@ -81,3 +81,64 @@ describe('3D tile token reset', () => {
     expect(previous.state.tileset3d).toBeNull();
   });
 });
+
+describe('3D tile camera updates', () => {
+  function diff(previous: any, next: any) {
+    const setChangeFlags = jest.spyOn(next, 'setChangeFlags').mockImplementation(() => undefined);
+    next._diffProps(next.props, previous.props);
+    return setChangeFlags.mock.calls[0][0] as any;
+  }
+
+  test('keeps cached tile sublayers valid during camera and hover renders', () => {
+    const layer = new Tile3DLayer({id: 'tiles', dataId: 'tiles'});
+    const previous: any = render(layer);
+    const next: any = render(layer, 'token-A', {
+      mapState: {latitude: 20, longitude: 30, zoom: 10},
+      objectHovered: {index: 1}
+    });
+    const flags = diff(previous, next);
+    expect(flags.propsChanged).toBe(false);
+    expect(flags.dataChanged).toBe(false);
+    expect(flags.extensionsChanged).toBe(false);
+
+    next.initializeState();
+    next.context = {};
+    const cached = {layer: {}, needsUpdate: false};
+    next.state.layerMap = {tile: cached};
+    next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
+    expect(cached.needsUpdate).toBe(false);
+  });
+
+  test('uses the latest callbacks while keeping the error handler stable', () => {
+    const layer = new Tile3DLayer({id: 'tiles', dataId: 'tiles'});
+    const oldCallback = jest.fn();
+    const newCallback = jest.fn();
+    const previous: any = render(layer, 'token-A', {
+      layerCallbacks: {onTilesetLoadError: oldCallback}
+    });
+    const next: any = render(layer, 'token-A', {
+      layerCallbacks: {onTilesetLoadError: newCallback}
+    });
+    expect(next.props.onTilesetError).toBe(previous.props.onTilesetError);
+    next.props.onTilesetError('token');
+    expect(newCallback).toHaveBeenCalledWith('token');
+    expect(oldCallback).not.toHaveBeenCalled();
+    next.props.onTilesetError(null);
+    expect(newCallback).toHaveBeenLastCalledWith(null);
+  });
+
+  test('still invalidates cached tiles for style changes', () => {
+    const layer = new Tile3DLayer({id: 'tiles', dataId: 'tiles'});
+    const previous: any = render(layer);
+    layer.updateLayerVisConfig({opacity: 0.5});
+    const next: any = render(layer);
+    const flags = diff(previous, next);
+    expect(flags.propsChanged).toBeTruthy();
+    next.initializeState();
+    next.context = {};
+    const cached = {layer: {}, needsUpdate: false};
+    next.state.layerMap = {tile: cached};
+    next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
+    expect(cached.needsUpdate).toBe(true);
+  });
+});

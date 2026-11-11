@@ -4,14 +4,15 @@
 import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {CameraSnapshot, CameraTour} from '@kepler.gl/types';
 import {MapStateActions} from '@kepler.gl/actions';
-import {evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
+import {evaluateCameraTour, getCameraTourDuration, cameraForMap} from '@kepler.gl/utils';
 import {RootContext} from '../../context';
 
 /** Local playback state, separate from the saved tour and data/filter animation. */
 export default function useCameraTourPlayback(
   tour: CameraTour | null | undefined,
   updateMap: typeof MapStateActions.updateMap | undefined,
-  enabled: boolean
+  enabled: boolean,
+  globe = false
 ) {
   const root = useContext(RootContext);
   const duration = useMemo(() => getCameraTourDuration(tour), [tour]);
@@ -30,11 +31,11 @@ export default function useCameraTourPlayback(
 
   const apply = useCallback(
     (time: number, camera = evaluateCameraTour(tour, time)) => {
-      if (camera && updateMap) updateMap({...camera, transitionDuration: 0});
+      if (camera && updateMap) updateMap({...cameraForMap(camera, globe), transitionDuration: 0});
       elapsedRef.current = time;
       setElapsed(time);
     },
-    [tour, updateMap]
+    [tour, updateMap, globe]
   );
 
   const seek = useCallback(
@@ -70,8 +71,8 @@ export default function useCameraTourPlayback(
   }, [tour, pause]);
 
   useEffect(() => {
-    if (!enabled) pause();
-  }, [enabled, pause]);
+    pause();
+  }, [enabled, globe, pause]);
 
   useEffect(
     () => () => {

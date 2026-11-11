@@ -5,7 +5,13 @@ import React, {useRef, useState, useReducer} from 'react';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_UI_STATE, uiStateReducer} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_UI_STATE,
+  mapStateUpdaters,
+  uiStateReducer
+} from '@kepler.gl/reducers';
+import {MapViewMode} from '@kepler.gl/constants';
 import {CameraBookmark, CameraTour} from '@kepler.gl/types';
 import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
@@ -521,12 +527,19 @@ test('zero-duration tours disable playback but can jump to their evaluated camer
 test.each([
   {...INITIAL_MAP_STATE, isSplit: true},
   {...INITIAL_MAP_STATE, globe: {...INITIAL_MAP_STATE.globe!, enabled: true}}
-])('unsupported map modes do not expose tour editing or playback', mapState => {
-  setup(tour, {mapState, bookmarks: [{id: 'saved', name: 'Saved view', camera}]});
-  expect(screen.getByText('Use a single 2D or 3D map to edit camera views.')).toBeInTheDocument();
-  expect(screen.queryByRole('button', {name: 'Play'})).toBeNull();
-  expect(screen.queryByRole('button', {name: 'Add stop'})).toBeNull();
-  expect(screen.queryByRole('menu')).toBeNull();
+])('supports tour editing and playback in split/globe modes', mapState => {
+  const {updateMap} = setup(tour, {
+    mapState,
+    bookmarks: [{id: 'saved', name: 'Saved view', camera}]
+  });
+  expect(screen.getByRole('button', {name: 'Play'})).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  expect(updateMap).toHaveBeenLastCalledWith({
+    ...camera,
+    ...(mapState.globe?.enabled ? {pitch: 0, bearing: 0} : {}),
+    transitionDuration: 0
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
 });
 
 test('navigating to a saved bookmark pauses the tour before the next frame', () => {
@@ -1033,7 +1046,7 @@ test('programmatic playback runs with the panel closed and shares pause/seek sta
   expect(callbacks.size).toBe(0);
 });
 
-test('the shared player cancels pending frames on gestures, unsupported view modes and unmount', () => {
+test('the shared player cancels gestures and unmount, and continues when entering split mode', () => {
   const player = setupSharedPlayer();
   player.request({action: 'play'});
   fireEvent.pointerDown(screen.getByRole('button', {name: 'Map gesture'}));
@@ -1041,7 +1054,7 @@ test('the shared player cancels pending frames on gestures, unsupported view mod
   player.request({action: 'play'});
   expect(callbacks.size).toBe(1);
   player.split();
-  expect(callbacks.size).toBe(0);
+  expect(callbacks.size).toBe(1);
   player.unmount();
   expect(callbacks.size).toBe(0);
 });
@@ -1114,4 +1127,34 @@ test('path labels include authored Unicode names in their font atlas', () => {
 test('path labels override globe backface culling without disabling depth testing', () => {
   const layers = getCameraTourPathLayers(tour);
   expect(layers[2].props.parameters).toEqual({cull: false});
+});
+
+test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {
+  let state = mapStateUpdaters.setMapViewModeUpdater(
+    INITIAL_MAP_STATE,
+    MapStateActions.setMapViewMode(MapViewMode.MODE_GLOBE)
+  );
+  state = mapStateUpdaters.toggleSplitMapUpdater(state);
+  state = mapStateUpdaters.toggleSplitMapViewportUpdater(
+    state,
+    MapStateActions.toggleSplitMapViewport({isViewportSynced: false})
+  );
+  const other = state.splitMapViewports[1];
+  const target = {...camera, latitude: 60, zoom: 1.1};
+  const globeTour = {stops: [{...tour.stops[0], camera: target}]};
+  const {updateMap} = setup(globeTour, {mapState: state});
+  updateMap.mockImplementation(viewport => {
+    state = mapStateUpdaters.updateMapUpdater(state, MapStateActions.updateMap(viewport));
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(500);
+  expect(state.splitMapViewports[0]).toMatchObject({
+    ...target,
+    pitch: 0,
+    bearing: 0,
+    transitionDuration: 0
+  });
+  expect(state.splitMapViewports[1]).toEqual(other);
+  expect(globeTour.stops[0].camera).toEqual(target);
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
 });
