@@ -38,6 +38,7 @@ import {
 import EditorFactory from './editor/editor';
 import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
+import {getCameraTourPathLayers} from './map/camera-tour-path';
 
 // utils
 import {
@@ -75,6 +76,7 @@ import {
   rgbToHex,
   computeDeckEffects,
   getApplicationConfig,
+  getCameraSnapshot,
   GetMapRef,
   getLayerBlendingParameters,
   patchDeckRendererForPostProcessing
@@ -1131,6 +1133,87 @@ export default function MapContainerFactory(
       return screenCoord && {x: screenCoord[0], y: screenCoord[1]};
     }
 
+    _cameraTourDraggedStopId: string | null = null;
+
+    _onCameraTourPathClick = (
+      info: PickingInfo<{id: string}>,
+      event: {rightButton?: boolean; stopPropagation: () => void}
+    ) => {
+      // Let the root click handler finish an active bitmap alignment first.
+      if (
+        this.props.visState.layers.some(
+          (layer: any) =>
+            layer.type === 'bitmap' && layer.alignWaitingForMap && layer.config.isVisible
+        )
+      )
+        return false;
+      const stop = this.props.visState.cameraTour?.stops.find(item => item.id === info.object?.id);
+      if (!event.rightButton && this._canEditCameraTourPath() && stop) {
+        this.props.uiStateActions.setMapControlSettings('cameraTour', {
+          selection: {stopId: stop.id}
+        });
+        this.props.uiStateActions.toggleSidePanel('interaction');
+      }
+      return true;
+    };
+
+    _canEditCameraTourPath = () =>
+      !this.unmounted &&
+      !this.props.readOnly &&
+      !this.props.isExport &&
+      getApplicationConfig().enableCameraTour &&
+      this.props.mapControls.cameraTour?.show !== false &&
+      Boolean(this.props.mapControls.cameraTourPath?.show);
+
+    _onCameraTourPathDragStart = (
+      info: PickingInfo<{id: string}>,
+      event: {rightButton?: boolean; stopPropagation: () => void}
+    ) => {
+      this._cameraTourDraggedStopId = null;
+      if (
+        event.rightButton ||
+        !this._canEditCameraTourPath() ||
+        !this.props.visState.cameraTour?.stops.some(stop => stop.id === info.object?.id)
+      )
+        return false;
+      this._cameraTourDraggedStopId = info.object!.id;
+      // Consume the gesture before deck's controller can start panning the map.
+      event.stopPropagation();
+      return true;
+    };
+
+    _onCameraTourPathDrag = (info: PickingInfo, event: {stopPropagation: () => void}) => {
+      if (!this._cameraTourDraggedStopId) return false;
+      event.stopPropagation();
+      const tour = this.props.visState.cameraTour;
+      const stop = tour?.stops.find(item => item.id === this._cameraTourDraggedStopId);
+      if (!this._canEditCameraTourPath() || !tour || !stop) {
+        this._cameraTourDraggedStopId = null;
+        return true;
+      }
+      const camera = getCameraSnapshot({
+        ...stop.camera,
+        longitude: info.coordinate?.[0],
+        latitude: info.coordinate?.[1]
+      });
+      if (
+        camera &&
+        (camera.longitude !== stop.camera.longitude || camera.latitude !== stop.camera.latitude)
+      ) {
+        this.props.visStateActions.setCameraTour({
+          ...tour,
+          stops: tour.stops.map(item => (item.id === stop.id ? {...item, camera} : item))
+        });
+      }
+      return true;
+    };
+
+    _onCameraTourPathDragEnd = (info: PickingInfo, event: {stopPropagation: () => void}) => {
+      const handled = this._onCameraTourPathDrag(info, event);
+      this._cameraTourDraggedStopId = null;
+      return handled;
+    };
+
     _renderDeckOverlay(
       layersForDeck,
       options: {primaryMap: boolean; isInteractive?: boolean; children?: React.ReactNode} = {
@@ -1301,9 +1384,26 @@ export default function MapContainerFactory(
             ? []
             : getGlobeTopLayers({globe: mapState.globe, zoom: internalMapState.zoom})
           : [];
+      const cameraPathLayers =
+        !this.props.isExport &&
+        getApplicationConfig().enableCameraTour &&
+        mapControls.cameraTour?.show !== false &&
+        mapControls.cameraTourPath?.show
+          ? getCameraTourPathLayers(
+              visState.cameraTour,
+              isInteractive && this._canEditCameraTourPath()
+                ? {
+                    onClick: this._onCameraTourPathClick,
+                    onDragStart: this._onCameraTourPathDragStart,
+                    onDrag: this._onCameraTourPathDrag,
+                    onDragEnd: this._onCameraTourPathDragEnd
+                  }
+                : undefined
+            )
+          : [];
       const finalDeckGlLayers = isGlobeMode
-        ? [...globeBaseLayers, ...deckGlLayers, ...globeTopLayers]
-        : deckGlLayers;
+        ? [...globeBaseLayers, ...deckGlLayers, ...cameraPathLayers, ...globeTopLayers]
+        : [...deckGlLayers, ...cameraPathLayers];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
