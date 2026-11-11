@@ -19,7 +19,7 @@ import {MapViewStateContext} from '../../map-view-state-context';
 import useCameraTourPlayback from './use-camera-tour-playback';
 import {CameraTourPlaybackContext} from './camera-tour-playback-provider';
 import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
-import {Play, Pause, Reset, Add, LocationMarker, Replace, Delete, Copy} from '../../common/icons';
+import {Play, Pause, Reset, Add, LocationMarker, Replace, Trash, Copy} from '../../common/icons';
 import {
   DndContext,
   PointerSensor,
@@ -700,7 +700,7 @@ export default function CameraTourConfig({
         {
           key: 'delete',
           label: message('delete', 'Delete'),
-          Icon: Delete,
+          Icon: Trash,
           onClick: () => {
             const next = stops.filter(stop => stop.id !== selected.id);
             if (commit(next)) {
