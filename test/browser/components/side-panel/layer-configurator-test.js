@@ -2405,3 +2405,59 @@ test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds contro
     t.end();
   }
 });
+
+test('Components -> LayerConfigurator -> opacity remains accessible with advanced color settings collapsed', t => {
+  for (const type of [
+    'point',
+    'icon',
+    'voronoi',
+    'cluster',
+    'heatmap',
+    'grid',
+    'hexagon',
+    'hexagonId',
+    'arc',
+    'line',
+    'trip',
+    'geojson',
+    's2',
+    'geohash',
+    'a5',
+    'flow'
+  ]) {
+    const layer = new LayerClasses[type]({dataId: testCsvDataId});
+    const changed = sinon.spy();
+    const view = renderWithTheme(
+      <IntlWrapper>
+        <LayerConfigurator {...defaultProps} layer={layer} updateLayerVisConfig={changed} />
+      </IntlWrapper>
+    );
+    try {
+      const labels = within(view.container).getAllByText(/^(Fill )?Opacity$/);
+      t.equal(labels.length, 1, `${type}: opacity is not duplicated`);
+      const label = labels[0];
+      t.notOk(
+        label.closest('.layer-config-group__content__collapsible'),
+        `${type}: opacity is outside hidden advanced content`
+      );
+      const group = label.closest('.layer-config-group');
+      const input = label.parentElement.parentElement.querySelector('.kg-range-slider__input');
+      t.ok(input, `${type}: opacity retains its editable slider`);
+      fireEvent.change(input, {target: {value: '0.4'}});
+      fireEvent.blur(input);
+      t.ok(
+        changed.calledWith({[type === 'geojson' ? 'strokeOpacity' : 'opacity']: 0.4}),
+        `${type}: editing uses the existing opacity config`
+      );
+      fireEvent.click(group.querySelector('.layer-config-group__header'));
+      fireEvent.click(group.querySelector('.layer-config-group__header'));
+      t.notOk(
+        label.closest('.layer-config-group__content__collapsible'),
+        `${type}: remains accessible after toggling advanced settings`
+      );
+    } finally {
+      view.unmount();
+    }
+  }
+  t.end();
+});
