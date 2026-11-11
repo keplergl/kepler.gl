@@ -5,7 +5,13 @@ import React, {useRef, useState, useReducer} from 'react';
 import {act, fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_UI_STATE, uiStateReducer} from '@kepler.gl/reducers';
+import {
+  INITIAL_MAP_STATE,
+  INITIAL_UI_STATE,
+  mapStateUpdaters,
+  uiStateReducer
+} from '@kepler.gl/reducers';
+import {MapViewMode} from '@kepler.gl/constants';
 import {CameraBookmark, CameraTour} from '@kepler.gl/types';
 import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
@@ -1068,4 +1074,34 @@ test('replacing a tour and requesting play together starts from the new beginnin
   fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
   expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0 s');
   expect(callbacks.size).toBe(1);
+});
+
+test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {
+  let state = mapStateUpdaters.setMapViewModeUpdater(
+    INITIAL_MAP_STATE,
+    MapStateActions.setMapViewMode(MapViewMode.MODE_GLOBE)
+  );
+  state = mapStateUpdaters.toggleSplitMapUpdater(state);
+  state = mapStateUpdaters.toggleSplitMapViewportUpdater(
+    state,
+    MapStateActions.toggleSplitMapViewport({isViewportSynced: false})
+  );
+  const other = state.splitMapViewports[1];
+  const target = {...camera, latitude: 60, zoom: 1.1};
+  const globeTour = {stops: [{...tour.stops[0], camera: target}]};
+  const {updateMap} = setup(globeTour, {mapState: state});
+  updateMap.mockImplementation(viewport => {
+    state = mapStateUpdaters.updateMapUpdater(state, MapStateActions.updateMap(viewport));
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(500);
+  expect(state.splitMapViewports[0]).toMatchObject({
+    ...target,
+    pitch: 0,
+    bearing: 0,
+    transitionDuration: 0
+  });
+  expect(state.splitMapViewports[1]).toEqual(other);
+  expect(globeTour.stops[0].camera).toEqual(target);
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
 });

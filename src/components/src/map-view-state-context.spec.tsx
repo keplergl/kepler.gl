@@ -3,7 +3,7 @@
 
 import React, {useContext} from 'react';
 import {fireEvent, render, screen} from '@testing-library/react';
-import {updateMap} from '@kepler.gl/actions';
+import {toggleSplitMapViewport, updateMap} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE, mapStateUpdaters} from '@kepler.gl/reducers';
 import {MapState} from '@kepler.gl/types';
 import {cameraTransition} from './camera-navigation';
@@ -105,3 +105,35 @@ test.each([false, true])(
     });
   }
 );
+
+test.each([0, 1])('resyncs both panes after the last interaction in pane %s', mapIndex => {
+  const left = {...camera, width: 400, height: 600};
+  const right = {...left, longitude: 100, zoom: 9};
+  let state: MapState = {
+    ...INITIAL_MAP_STATE,
+    ...[left, right][mapIndex],
+    isSplit: true,
+    isViewportSynced: false,
+    splitMapViewports: [left, right]
+  };
+  const read = jest.fn();
+  function Consumer() {
+    const {getInternalViewState} = useContext(MapViewStateContext);
+    read([getInternalViewState(0), getInternalViewState(1)]);
+    return null;
+  }
+  const tree = () => (
+    <MapViewStateContextProvider mapState={state}>
+      <Consumer />
+    </MapViewStateContextProvider>
+  );
+  const {rerender} = render(tree());
+  expect(read.mock.lastCall[0]).toEqual([left, right]);
+  state = mapStateUpdaters.toggleSplitMapViewportUpdater(
+    state,
+    toggleSplitMapViewport({isViewportSynced: true})
+  );
+  rerender(tree());
+  expect(read.mock.lastCall[0][0]).toMatchObject([left, right][mapIndex]);
+  expect(read.mock.lastCall[0][1]).toBe(read.mock.lastCall[0][0]);
+});

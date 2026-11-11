@@ -9,6 +9,8 @@ import {
   INITIAL_MAP_STATE,
   INITIAL_UI_STATE
 } from '@kepler.gl/reducers';
+import {setMapViewMode, toggleSplitMap, toggleSplitMapViewport} from '@kepler.gl/actions';
+import {MapViewMode} from '@kepler.gl/constants';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
 
@@ -221,3 +223,34 @@ it('seeks and plays a globe tour without mutating its saved camera', async () =>
   expect(ctx.getVisState().cameraTour?.stops[0].camera).toEqual(camera);
   expect((await execute(tour, {action: 'play'})).success).toBe(true);
 });
+
+it.each([false, true])(
+  'navigates bookmarks and seeks tours in independent globe panes (zoom lock %s)',
+  async isZoomLocked => {
+    const {ctx, dispatch} = makeContext();
+    dispatch(setMapViewMode(MapViewMode.MODE_GLOBE));
+    dispatch(toggleSplitMap(0));
+    dispatch(toggleSplitMapViewport({isViewportSynced: false}));
+    if (isZoomLocked) dispatch(toggleSplitMapViewport({isZoomLocked: true}));
+    const other = ctx.getMapState!()!.splitMapViewports[1];
+    const target = {...camera, latitude: 60, zoom: 1.1};
+    const bookmarks = getCameraBookmarksCommand(ctx);
+    await execute(bookmarks, {action: 'save', id: 'globe', name: 'Globe', camera: target});
+    expect((await execute(bookmarks, {action: 'go-to', id: 'globe'})).success).toBe(true);
+    expect(ctx.getMapState!()!.splitMapViewports).toMatchObject([
+      {...target, pitch: 0, bearing: 0},
+      {...other, zoom: isZoomLocked ? target.zoom : other.zoom}
+    ]);
+    expect(ctx.getVisState().cameraBookmarks![0].camera).toEqual(target);
+
+    const tour = getCameraTourCommand(ctx);
+    const tourCamera = {...target, longitude: 50, zoom: 1.25};
+    await execute(tour, {action: 'set', stops: [{...stop, camera: tourCamera}]});
+    expect((await execute(tour, {action: 'seek', elapsedMs: 0})).success).toBe(true);
+    expect(ctx.getMapState!()!.splitMapViewports).toMatchObject([
+      {...tourCamera, pitch: 0, bearing: 0},
+      {...other, zoom: isZoomLocked ? tourCamera.zoom : other.zoom}
+    ]);
+    expect(ctx.getVisState().cameraTour!.stops[0].camera).toEqual(tourCamera);
+  }
+);

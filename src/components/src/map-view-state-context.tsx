@@ -66,7 +66,8 @@ export const MapViewStateContextProvider = ({
       if (mapState.splitMapViewports?.some((s, i) => hasChanged(s, viewStates[i]))) {
         setViewStates(mapState.splitMapViewports as MapState[]);
       }
-    } else if (hasChanged(primaryState, mapState)) {
+    } else if (viewStates.length !== 1 || hasChanged(primaryState, mapState)) {
+      // Leaving independent split mode must also discard a stale secondary camera.
       // External navigation carries transient deck.gl options that the viewport picker omits.
       // Keep them for rendering, but exclude them from equality above so live-view echoes
       // do not restart an animation.
