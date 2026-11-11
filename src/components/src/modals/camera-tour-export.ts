@@ -5,7 +5,7 @@ import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 
-export const CAMERA_TOUR_PRESET = 'Create Animation';
+export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
 /** Drive the authored evaluator with Hubble's linear export clock, rather than
  * approximating holds, cuts and shortest rotations with fly-to keyframes. */

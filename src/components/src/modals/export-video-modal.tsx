@@ -284,9 +284,14 @@ const ExportVideoModalFactory = () => {
       return Math.max(320, Math.min(540, modalInnerW - HUBBLE_PANEL_OVERHEAD));
     }, [containerW]);
 
-    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>({
-      ...exportVideo
-    });
+    const cameraTourDurationMs = getCameraTourDuration(visState.cameraTour);
+    const hasCameraTour = cameraTourDurationMs > 0;
+    const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
+      ...exportVideo,
+      ...(hasCameraTour
+        ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs}
+        : {})
+    }));
 
     const keplerState = useMemo(() => {
       // Hubble (and our globe/swipe containers) run scaleToVideoExport on
@@ -516,8 +521,6 @@ const ExportVideoModalFactory = () => {
     );
 
     const animatableFilters = useMemo(() => getAnimatableFilters(keplerState), [keplerState]);
-    const cameraTourDurationMs = getCameraTourDuration(visState.cameraTour);
-    const hasCameraTour = cameraTourDurationMs > 0;
     const keplerUI = useMemo(
       () => ({
         ...KEPLER_UI,
