@@ -1374,6 +1374,79 @@ export function layerVisualChannelChangeUpdater(
   return updateStateWithLayerAndData(updatedState, {layerData, layer, idx});
 }
 
+function updateJenksDomainsForVisConfig(
+  state: VisState,
+  layer: Layer,
+  dataId: Layer['config']['dataId'],
+  newVisConfig: VisStateActions.LayerVisConfigChangeUpdaterAction['newVisConfig']
+): void {
+  // Jenks breaks depend on the number of colors. Recalculate the domain when
+  // the color range of a Jenks channel changes.
+  if (dataId) {
+    const dataset = state.datasets[dataId];
+    if (dataset) {
+      Object.keys(layer.visualChannels).forEach(channelKey => {
+        const channel = layer.visualChannels[channelKey];
+        if (
+          channel?.scale &&
+          layer.config[channel.scale] === SCALE_TYPES.jenks &&
+          channel.range &&
+          Object.prototype.hasOwnProperty.call(newVisConfig, channel.range)
+        ) {
+          layer.updateLayerVisualChannel(dataset, channelKey);
+        }
+      });
+    }
+  }
+}
+
+function updateBitmapEditingForVisConfig(
+  state: VisState,
+  layer: Layer,
+  idx: number,
+  newVisConfig: VisStateActions.LayerVisConfigChangeUpdaterAction['newVisConfig']
+): VisState {
+  // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
+  // turn it off for all other bitmap layers
+  if (layer.type === 'bitmap' && newVisConfig.editBounds === true) {
+    return {
+      ...state,
+      layers: state.layers.map((l, i) => {
+        if (i !== idx && l.type === 'bitmap' && l.config.visConfig.editBounds) {
+          return l.updateLayerConfig({
+            visConfig: {...l.config.visConfig, editBounds: false}
+          });
+        }
+        return l;
+      })
+    };
+  }
+
+  return state;
+}
+
+function clearChangedDonutInteractions(
+  state: VisState,
+  layer: Layer,
+  layerType: Layer['type'],
+  dataChanged: boolean
+): VisState {
+  // Donut picks cache aggregate values in category order. Retain them for
+  // label/color-only edits, but discard them when composition data changes.
+  if (layerType !== 'donut' || !dataChanged) return state;
+  return {
+    ...state,
+    clicked: layer.isLayerHovered(state.clicked) ? undefined : state.clicked,
+    hoverInfo: layer.isLayerHovered(state.hoverInfo) ? undefined : state.hoverInfo
+  };
+}
+
+function updateZarrAnimationForVisConfig(state: VisState, layer: Layer, props: string[]): VisState {
+  return layer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
+    ? updateAnimationDomain(state)
+    : state;
+}
+
 /**
  * Update layer `visConfig`
  * @memberof visStateUpdaters
@@ -1394,60 +1467,20 @@ export function layerVisConfigChangeUpdater(
 
   const newLayer = oldLayer.updateLayerConfig({visConfig: newVisConfig});
 
-  // Jenks breaks depend on the number of colors. Recalculate the domain when
-  // the color range of a Jenks channel changes.
-  if (oldLayer.config.dataId) {
-    const dataset = state.datasets[oldLayer.config.dataId];
-    if (dataset) {
-      Object.keys(newLayer.visualChannels).forEach(channelKey => {
-        const channel = newLayer.visualChannels[channelKey];
-        if (
-          channel?.scale &&
-          newLayer.config[channel.scale] === SCALE_TYPES.jenks &&
-          channel.range &&
-          Object.prototype.hasOwnProperty.call(action.newVisConfig, channel.range)
-        ) {
-          newLayer.updateLayerVisualChannel(dataset, channelKey);
-        }
-      });
-    }
-  }
-
-  let nextState = state;
-
-  // Exclusive bitmap editing: when editBounds is turned on for one bitmap layer,
-  // turn it off for all other bitmap layers
-  if (newLayer.type === 'bitmap' && action.newVisConfig.editBounds === true) {
-    nextState = {
-      ...nextState,
-      layers: nextState.layers.map((l, i) => {
-        if (i !== idx && l.type === 'bitmap' && l.config.visConfig.editBounds) {
-          return l.updateLayerConfig({
-            visConfig: {...l.config.visConfig, editBounds: false}
-          });
-        }
-        return l;
-      })
-    };
-  }
+  updateJenksDomainsForVisConfig(state, newLayer, oldLayer.config.dataId, action.newVisConfig);
+  const nextState = updateBitmapEditingForVisConfig(state, newLayer, idx, action.newVisConfig);
 
   if (newLayer.shouldCalculateLayerData(props)) {
     const oldLayerData = nextState.layerData[idx];
     const {layerData, layer} = calculateLayerData(newLayer, nextState, oldLayerData);
-    // Donut picks cache aggregate values in category order. Discard them when
-    // composition data changes, but retain them for label/color-only edits.
-    const interactionState =
-      newLayer.type === 'donut' && oldLayerData?.data !== layerData?.data
-        ? {
-            ...nextState,
-            clicked: layer.isLayerHovered(nextState.clicked) ? undefined : nextState.clicked,
-            hoverInfo: layer.isLayerHovered(nextState.hoverInfo) ? undefined : nextState.hoverInfo
-          }
-        : nextState;
+    const interactionState = clearChangedDonutInteractions(
+      nextState,
+      layer,
+      newLayer.type,
+      oldLayerData?.data !== layerData?.data
+    );
     const updatedState = updateStateWithLayerAndData(interactionState, {layerData, layer, idx});
-    return newLayer.type === 'zarr' && props.some(p => p === 'zarrAxis' || p === 'zarrVariable')
-      ? updateAnimationDomain(updatedState)
-      : updatedState;
+    return updateZarrAnimationForVisConfig(updatedState, newLayer, props);
   }
 
   return updateStateWithLayerAndData(nextState, {layer: newLayer, idx});
