@@ -131,14 +131,15 @@ export const updateMapUpdater = (
     // expected typing is (MapState, Viewport) -> MapState.
     // this could be a potential bug as we treat Viewport and MapState as equal seemingly
     // @ts-expect-error Type 'Viewport' is missing the following properties from type 'MapState': isSplit, isViewportSynced, isZoomLocked, splitMapViewports
-    return updateViewport(state, viewport);
+    return updateViewport(state, viewport, Boolean(state.globe?.enabled));
   }
 
   let otherViewportMapIndex = -1;
   const splitMapViewports = state.splitMapViewports.map((currentViewport, i) => {
     if (i === mapIndex) {
       // update the matching viewport with the newViewport info in the action payload
-      return updateViewport(currentViewport, viewport);
+      // Split viewports contain camera fields only; projection belongs to the root state.
+      return updateViewport(currentViewport, viewport, Boolean(state.globe?.enabled));
     }
 
     otherViewportMapIndex = i;
@@ -760,7 +761,11 @@ const definedProps = obj =>
     {}
   );
 
-function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): Viewport {
+function updateViewport(
+  originalViewport: Viewport,
+  viewportUpdates: Viewport,
+  isGlobe: boolean
+): Viewport {
   let newViewport = {
     ...originalViewport,
     ...(definedProps(viewportUpdates) || {})
@@ -773,8 +778,6 @@ function updateViewport(originalViewport: Viewport, viewportUpdates: Viewport): 
   // the globe further out, but this clamp snaps zoom back to `minZoom` when the
   // interaction's inertia transition ends. Apply the same adjustment in globe
   // mode so Redux stays consistent with the controller and there's no snap-back.
-  const isGlobe = (newViewport as any).globe?.enabled;
-
   if (isGlobe) {
     // Keep the camera target within a latitude band around the equator so the
     // stored viewport can't be centered on the poles (matches the globe

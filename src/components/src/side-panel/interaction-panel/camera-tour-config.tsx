@@ -536,13 +536,18 @@ export default function CameraTourConfig({
   const seconds = (time: number) =>
     `${intl.formatNumber(time / 1000, {maximumFractionDigits: 2})} s`;
   const {getInternalViewState} = useContext(MapViewStateContext);
-  const readCamera = () => getCameraSnapshot(getInternalViewState()) || getCameraSnapshot(mapState);
-  const supported = Boolean(mapState && !mapState.isSplit && !mapState.globe?.enabled);
+  const readCamera = () =>
+    getCameraSnapshot(getInternalViewState(0)) ||
+    getCameraSnapshot(
+      mapState?.isSplit && !mapState.isViewportSynced ? mapState.splitMapViewports?.[0] : mapState
+    );
+  const supported = Boolean(mapState);
   const sharedPlayback = useContext(CameraTourPlaybackContext);
   const localPlayback = useCameraTourPlayback(
     tour,
     mapStateActions?.updateMap,
-    !sharedPlayback && supported && enabled
+    !sharedPlayback && supported && enabled,
+    Boolean(mapState?.globe?.enabled)
   );
   const playback = sharedPlayback ?? localPlayback;
   const stops = tour?.stops || [];
@@ -711,7 +716,7 @@ export default function CameraTourConfig({
       {open && (
         <PanelContent id={`${panelId}-content`}>
           {!supported ? (
-            <p>{message('singleMap', 'Use a single 2D or 3D map to edit camera views.')}</p>
+            <p>{message('mapUnavailable', 'Load a map to edit camera views.')}</p>
           ) : (
             <>
               <Hint>{message('animationHint', 'Animate the map between saved views.')}</Hint>

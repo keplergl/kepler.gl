@@ -182,6 +182,7 @@ function MapControlFactory(
     return (
       <StyledMapControl className="map-control" $top={top}>
         <CameraBookmarkControl
+          mapIndex={mapIndex}
           bookmarks={restProps.cameraBookmarks}
           mapControls={restProps.mapControls}
           setMapControlSettings={restProps.setMapControlSettings}
