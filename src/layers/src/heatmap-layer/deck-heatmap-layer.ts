@@ -775,7 +775,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
             worldBounds,
             normalizedCommonBounds,
             densityViewport as WebMercatorViewport,
-            textureSize,
+            // A larger density texture should not quadruple Surface geometry.
+            // Preserve the previous 512-cell grid budget, including on the globe.
+            Math.min(textureSize, 512),
             longitude
           )
         };

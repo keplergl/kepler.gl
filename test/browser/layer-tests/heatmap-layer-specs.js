@@ -1401,6 +1401,136 @@ test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t =
   t.end();
 });
 
+test('#HeatmapLayer -> desktop pans reuse density until the cached frame is exhausted', t => {
+  const source = [
+    [-122.42, 37.74],
+    [-122.4, 37.76]
+  ];
+  for (const width of [800, 1024, 1400, 2000, 2048]) {
+    const heatmap = new HeatmapLayer({id: `pan-cache-${width}`});
+    heatmap.updateMeta({bounds: [-123, 37, -122, 38]});
+    let data = {data: source, getPosition: d => d, getWeight: 1};
+    let mapState = {
+      ...INITIAL_MAP_STATE,
+      width,
+      height: 800,
+      longitude: -122.4,
+      latitude: 37.75,
+      zoom: 10
+    };
+    const manager = new LayerManager(device, {viewport: new WebMercatorViewport(mapState)});
+    const render = () => {
+      const viewport = new WebMercatorViewport(mapState);
+      manager.activateViewport(viewport);
+      manager.setLayers(
+        heatmap.renderLayer({data, mapState, idx: 0, visible: true, layerCallbacks: {}})
+      );
+      // Match the draw pass: manager.activateViewport alone does not invalidate layers.
+      for (const layer of manager.getLayers()) layer.activateViewport(viewport);
+      manager.updateLayers();
+      return manager.getLayers()[0];
+    };
+    const aggregate = sinon.spy(KeplerHeatmapLayer.prototype, '_updateWeightmap');
+    try {
+      const first = render();
+      const weights = first.state.weightsTexture;
+      const transform = first.state.weightsTransform;
+      const positions = first.getAttributeManager().getAttributes().positions.value;
+      aggregate.reset();
+      for (let i = 0; i < 30; i++) render();
+      t.equal(aggregate.callCount, 0, `${width}px: stationary redraws retain density`);
+      let current;
+      // Half a screen pixel per frame stays inside the 24px margin at 2000px wide.
+      const panStep = 180 / (512 * 2 ** mapState.zoom);
+      for (let i = 0; i < 30; i++) {
+        mapState = {...mapState, longitude: mapState.longitude + panStep};
+        current = render();
+      }
+      if (width < 2048) {
+        t.equal(aggregate.callCount, 0, `${width}px: small pans retain density`);
+      }
+      t.equal(current.state.weightsTexture, weights, 'pans do not allocate density textures');
+      t.equal(current.state.weightsTransform, transform, 'pans do not rebuild the transform');
+      t.equal(
+        current.getAttributeManager().getAttributes().positions.value,
+        positions,
+        'pans retain point attributes'
+      );
+      aggregate.reset();
+      mapState = {...mapState, longitude: mapState.longitude + 10};
+      render();
+      t.ok(aggregate.called, `${width}px: leaving the cached frame refreshes density`);
+      aggregate.reset();
+      mapState = {...mapState, zoom: mapState.zoom + 0.25};
+      render();
+      t.ok(aggregate.called, 'zoom still refreshes density for its changed radius');
+      aggregate.reset();
+      const oldColor = manager.getLayers()[0].state.colorTexture;
+      heatmap.updateLayerVisConfig({
+        colorRange: {...heatmap.config.visConfig.colorRange, colors: ['#000000', '#ffffff']}
+      });
+      current = render();
+      t.notEqual(current.state.colorTexture, oldColor, 'palette edits update the color texture');
+      t.equal(aggregate.callCount, 0, 'palette edits retain density');
+      data = {...data, data: []};
+      current = render();
+      t.ok(aggregate.called, 'filtering to an empty dataset refreshes density');
+      t.equal(current.props.data.length, 0, 'filtered points are removed');
+      aggregate.reset();
+      data = {...data, data: source};
+      current = render();
+      t.ok(aggregate.called, 'clearing the filter refreshes density');
+      t.equal(current.props.data.length, source.length, 'clearing the filter restores points');
+    } finally {
+      aggregate.restore();
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> larger density textures preserve Surface geometry cost', t => {
+  for (const globe of [false, true]) {
+    const viewport = new (globe ? _GlobeView : MapView)().makeViewport({
+      width: 1400,
+      height: 800,
+      viewState: {longitude: -122.4, latitude: 37.75, zoom: 10}
+    });
+    const manager = new LayerManager(device, {viewport});
+    let layer = new KeplerHeatmapLayer({
+      id: `surface-mesh-cap-${globe}`,
+      data: [[-122.4, 37.75]],
+      getPosition: d => d,
+      weightsTextureSize: 1024,
+      globeMode: globe,
+      densityBounds: [-123, 37, -122, 38],
+      surface: true
+    });
+    try {
+      testRenderDeckLayer(t, 'bounded surface mesh', [layer], {layerManager: manager});
+      const mesh = layer.getSubLayers()[0].props.mesh;
+      const resolution = Math.min(layer.state.textureSize, 512);
+      t.equal(mesh.positions.length, (resolution + 1) ** 2 * 3, 'keeps the existing vertex budget');
+      t.equal(mesh.vertexCount, resolution ** 2 * 6, 'keeps the existing triangle budget');
+      const weights = layer.state.weightsTexture;
+      layer = layer.clone({surface: false});
+      testRenderDeckLayer(t, 'flat after bounded surface', [layer], {layerManager: manager});
+      t.equal(layer.state.weightsTexture, weights, 'switching to flat retains density resources');
+      layer = layer.clone({surface: true});
+      testRenderDeckLayer(t, 'bounded surface restored', [layer], {layerManager: manager});
+      t.equal(
+        layer.getSubLayers()[0].props.mesh.vertexCount,
+        mesh.vertexCount,
+        'restores bounded geometry'
+      );
+      t.equal(layer.state.weightsTexture, weights, 'switching back retains density resources');
+    } finally {
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
 test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
   const viewState = {longitude: -122.4, latitude: 37.75, zoom: 8};
   const viewport = new _GlobeView().makeViewport({width: 800, height: 600, viewState});
