@@ -64,6 +64,13 @@ change the grid's extent and alignment. Polygon filters do not clip the generate
 smoothing can extend into cells with no retained observations. Inverting, disabling, or
 clearing a filter follows the same behavior as other layers.
 
+After filtering weighted observations, automatic tooltip and legend levels use the
+retained weights' minimum-to-maximum range as a relative display scale. This keeps
+the labels within the remaining data range without changing the smoothed surface
+or its contour boundaries. These display values differ from the zero-filled,
+smoothed field's thresholds. Custom level ranges still display their explicit
+thresholds, and point density still displays smoothed counts.
+
 Existing contour maps retain their selected value column as the weight and retain their
 style settings. They use the new cell aggregation, so contour geometry and automatic levels
 can change. Saved Input type, Interpolation resolution, and kilometer Cell size settings

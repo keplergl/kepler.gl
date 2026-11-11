@@ -4,6 +4,7 @@
 import React, {useCallback} from 'react';
 import MultiSelectFilterFactory from '../multi-select-filter';
 import {MultiSelectFilter} from '@kepler.gl/types';
+import {DatasetType} from '@kepler.gl/constants';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
 import {FilterPanelComponent} from './types';
 
@@ -29,7 +30,13 @@ function MultiSelectFilterPanelFactory(
           >
             {filter.type && (
               <div className="filter-panel__filter">
-                <MultiSelectFilterComponent filter={filter} setFilter={onSetFilter} />
+                <MultiSelectFilterComponent
+                  filter={filter}
+                  setFilter={onSetFilter}
+                  allowCustomValues={filter.dataId.some(
+                    id => datasets[id]?.type === DatasetType.VECTOR_TILE
+                  )}
+                />
               </div>
             )}
           </FieldPanelWithFieldSelect>

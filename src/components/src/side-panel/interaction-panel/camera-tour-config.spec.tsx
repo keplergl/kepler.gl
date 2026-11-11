@@ -17,10 +17,11 @@ import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import {MapViewStateContext} from '../../map-view-state-context';
 import {RootContext} from '../../context';
-import CameraTourConfig from './camera-tour-config';
+import CameraTourConfig, {CameraTourConfigProps} from './camera-tour-config';
 import CameraTourPlaybackProvider from './camera-tour-playback-provider';
 import CameraBookmarks from './camera-bookmarks';
 import CameraBookmarkControl from '../../map/camera-bookmark-control';
+import {getCameraTourPathLayers} from '../../map/camera-tour-path';
 
 const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
 const tour: CameraTour = {
@@ -967,6 +968,9 @@ function setupSharedPlayer() {
     setPanelOpen = updatePanel;
     setSplit = updateSplit;
     const mapState = {...INITIAL_MAP_STATE, ...camera, isSplit: split};
+    const cameraTourControl = ui.mapControls.cameraTour as typeof ui.mapControls.cameraTour & {
+      settings?: {selection?: CameraTourConfigProps['selection']};
+    };
     return (
       <RootContext.Provider value={root}>
         <div ref={root}>
@@ -984,10 +988,21 @@ function setupSharedPlayer() {
               <CameraTourConfig
                 tour={currentTour}
                 enabled={Boolean(ui.mapControls.cameraTour?.show)}
+                selection={cameraTourControl?.settings?.selection}
                 mapState={mapState}
                 mapStateActions={{...MapStateActions, updateMap}}
                 visStateActions={VisStateActions}
-                uiStateActions={UIStateActions}
+                uiStateActions={{
+                  ...UIStateActions,
+                  setMapControlSettings: Object.assign(
+                    (panelId: string, settings: Record<string, unknown>) => {
+                      const action = UIStateActions.setMapControlSettings(panelId, settings);
+                      dispatch(action);
+                      return action;
+                    },
+                    UIStateActions.setMapControlSettings
+                  )
+                }}
               />
             )}
           </CameraTourPlaybackProvider>
@@ -1009,6 +1024,11 @@ function setupSharedPlayer() {
         dispatch(UIStateActions.controlCameraTour(request));
       }),
     openPanel: () => act(() => setPanelOpen(true)),
+    closePanel: () => act(() => setPanelOpen(false)),
+    selectStop: (stopId: string) =>
+      act(() => {
+        dispatch(UIStateActions.setMapControlSettings('cameraTour', {selection: {stopId}}));
+      }),
     split: () => act(() => setSplit(true)),
     replaceAndPlay: (value: CameraTour) =>
       act(() => {
@@ -1017,6 +1037,73 @@ function setupSharedPlayer() {
       })
   };
 }
+
+test('map selection opens the stop editor, pauses playback, and can select the same point again', () => {
+  const player = setupSharedPlayer();
+  player.request({action: 'play'});
+  frame(1500);
+  player.updateMap.mockClear();
+  player.selectStop('work');
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'true'
+  );
+  expect(screen.getByRole('button', {name: 'Stop 2: Work'})).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+  expect(callbacks.size).toBe(0);
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('1.5 s');
+  fireEvent.click(screen.getByRole('button', {name: 'Stop 1: Home'}));
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Home');
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
+
+test('ignores a selection request for a stop that no longer exists', () => {
+  const player = setupSharedPlayer();
+  player.selectStop('removed');
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
+
+test('a handled map selection does not interrupt playback when Interactions remounts', () => {
+  const player = setupSharedPlayer();
+  player.selectStop('work');
+  player.openPanel();
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(500);
+  player.closePanel();
+  expect(callbacks.size).toBe(1);
+  player.openPanel();
+  expect(callbacks.size).toBe(1);
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  expect(screen.getByRole('button', {name: 'Pause'})).toBeInTheDocument();
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0.5 s');
+  player.updateMap.mockClear();
+  frame(1500);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 1500),
+    transitionDuration: 0
+  });
+  player.updateMap.mockClear();
+  player.selectStop('work');
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(callbacks.size).toBe(0);
+  expect(player.updateMap).not.toHaveBeenCalled();
+});
 
 test('programmatic playback runs with the panel closed and shares pause/seek state with its controls', () => {
   const player = setupSharedPlayer();
@@ -1074,6 +1161,72 @@ test('replacing a tour and requesting play together starts from the new beginnin
   fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
   expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('0 s');
   expect(callbacks.size).toBe(1);
+});
+
+test.each([
+  {name: 'populated', tour},
+  {name: 'empty', tour: {stops: []}},
+  {name: 'missing', tour: null}
+])(
+  'path display follows the editor controls and remains opt-in for a $name tour',
+  async ({tour: initial}) => {
+    const user = userEvent.setup();
+    const {toggle, commit} = setup(initial);
+    const control = screen.getByRole('checkbox', {name: 'Show animation path'});
+    expect(control).not.toBeChecked();
+    const previousControl =
+      screen.queryByRole('slider', {name: 'Camera tour time'}) ||
+      screen.getByRole('button', {name: 'Add stop'});
+    previousControl.focus();
+    await user.tab();
+    expect(control).toHaveFocus();
+    await user.keyboard('[Space]');
+    expect(toggle).toHaveBeenCalledWith('cameraTourPath', true);
+    expect(commit).not.toHaveBeenCalled();
+  }
+);
+
+test('path geometry follows stop order and reuses data during navigation', () => {
+  const layers = getCameraTourPathLayers(tour);
+  expect(layers).toHaveLength(3);
+  expect(getCameraTourPathLayers(tour)[0].props.data).toBe(layers[0].props.data);
+  expect(getCameraTourPathLayers(tour)[0]).not.toBe(layers[0]);
+  expect(layers[0].props.data).toEqual([
+    {
+      path: [
+        [10, 20],
+        [50, 20]
+      ]
+    }
+  ]);
+  expect(layers[2].props.data).toEqual([
+    {id: 'home', position: [10, 20], label: '1. Home'},
+    {id: 'work', position: [50, 20], label: '2. Work'}
+  ]);
+  expect(layers.every(layer => layer.props.pickable === false)).toBe(true);
+  const reordered = getCameraTourPathLayers({stops: [...tour.stops].reverse()});
+  expect(reordered[2].props.data).toEqual([
+    {id: 'work', position: [50, 20], label: '1. Work'},
+    {id: 'home', position: [10, 20], label: '2. Home'}
+  ]);
+  expect(getCameraTourPathLayers(null)).toEqual([]);
+  expect(getCameraTourPathLayers({stops: []})).toEqual([]);
+});
+
+test('path labels include authored Unicode names in their font atlas', () => {
+  const names = ['München', '東京', 'Київ 🌍'];
+  const layers = getCameraTourPathLayers({
+    stops: names.map((name, index) => ({...tour.stops[0], id: String(index), name}))
+  });
+  expect(layers[2].props).toMatchObject({
+    characterSet: 'auto',
+    data: names.map((name, index) => ({position: [10, 20], label: `${index + 1}. ${name}`}))
+  });
+});
+
+test('path labels override globe backface culling without disabling depth testing', () => {
+  const layers = getCameraTourPathLayers(tour);
+  expect(layers[2].props.parameters).toEqual({cull: false});
 });
 
 test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {

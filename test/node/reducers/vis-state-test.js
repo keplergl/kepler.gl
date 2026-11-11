@@ -508,6 +508,56 @@ test('#visStateReducer -> addDefaultLayers: icon precedence preserves explicitly
   t.end();
 });
 
+test('#visStateReducer -> addDefaultLayers: Flow Field replaces only matching automatic points', t => {
+  const dataset = new KeplerTable({info: {id: 'wind'}}).updateSchema(
+    processCsvData('lat,lon,u,v\n37.77,-122.42,2,3')
+  );
+  const {point, flowField, ...others} = LayerClasses;
+  for (const classes of [LayerClasses, {flowField, point, ...others}]) {
+    t.deepEqual(
+      autoLayers(dataset, classes).map(layer => layer.type),
+      ['flowField'],
+      'prefers Flow Field regardless of detector order'
+    );
+  }
+  t.deepEqual(
+    autoLayers(dataset, {point}).map(layer => layer.type),
+    ['point'],
+    'retains points if Flow Field is unavailable'
+  );
+  class CustomFlow extends flowField {}
+  t.deepEqual(
+    autoLayers(dataset, {point, flowField: CustomFlow}).map(layer => layer.type),
+    ['point', 'flowField'],
+    'does not apply precedence to custom replacements'
+  );
+  const noVectors = new KeplerTable({info: {id: 'plain'}}).updateSchema(
+    processCsvData('lat,lon,u\n37.77,-122.42,2')
+  );
+  t.deepEqual(
+    autoLayers(noVectors).map(layer => layer.type),
+    ['point'],
+    'keeps points when vector components are incomplete'
+  );
+  const pairs = new KeplerTable({info: {id: 'pairs'}}).updateSchema(
+    processCsvData('lat,lon,other_lat,other_lon,u,v\n37.77,-122.42,38,-123,2,3')
+  );
+  t.deepEqual(
+    autoLayers(pairs)
+      .filter(layer => layer.type === 'point')
+      .map(layer => layer.config.columns.lat.value),
+    ['other_lat'],
+    'keeps unrelated coordinate pairs'
+  );
+  const explicit = new point({dataId: dataset.id});
+  const {state} = addDefaultLayers(
+    {...INITIAL_VIS_STATE, layers: [explicit], layerOrder: [explicit.id]},
+    {[dataset.id]: dataset}
+  );
+  t.equal(state.layers[0], explicit, 'does not remove an existing explicit point layer');
+  t.end();
+});
+
 test('#visStateReducer -> addDefaultLayers: icon precedence is independent of registry order', t => {
   const dataset = new KeplerTable({info: {id: 'icon-order'}}).updateSchema(
     processCsvData('lat,lon,icon\n37.77,-122.42,place')

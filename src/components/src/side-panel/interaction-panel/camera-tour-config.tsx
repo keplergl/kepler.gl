@@ -37,6 +37,7 @@ import {restrictToHorizontalAxis} from '@dnd-kit/modifiers';
 import PanelHeaderActionFactory from '../panel-header-action';
 import {Hint} from './zoom-opacity-config';
 import Portaled from '../../common/portaled';
+import Switch from '../../common/switch';
 import {ContextMenu} from '../../common/context-menu';
 
 const PanelHeaderAction = PanelHeaderActionFactory();
@@ -259,6 +260,9 @@ const Timeline = styled.div`
   align-items: center;
   gap: 4px;
   margin-top: 8px;
+`;
+const PathToggle = styled.div`
+  margin-top: 12px;
 `;
 const Scrubber = styled.input<{$progress: number}>`
   appearance: none;
@@ -510,6 +514,8 @@ function DraggableStopMarker({
 export type CameraTourConfigProps = {
   tour?: CameraTour | null;
   enabled?: boolean;
+  pathVisible?: boolean;
+  selection?: {stopId: string};
   uiStateActions?: typeof UIStateActions;
   bookmarks?: CameraBookmark[];
   mapState?: MapState;
@@ -520,6 +526,8 @@ export type CameraTourConfigProps = {
 export default function CameraTourConfig({
   tour,
   enabled = true,
+  pathVisible = false,
+  selection,
   uiStateActions,
   bookmarks = [],
   mapState,
@@ -553,6 +561,17 @@ export default function CameraTourConfig({
   const stops = tour?.stops || [];
   const selected = stops.find(stop => stop.id === selectedId) || stops[0];
   const selectedIndex = selected ? stops.indexOf(selected) : -1;
+  const consumedSelection = useRef<typeof selection>(undefined);
+  useLayoutEffect(() => {
+    if (!selection || consumedSelection.current === selection) return;
+    consumedSelection.current = selection;
+    // A selection is a one-shot request, including across editor remounts.
+    uiStateActions?.setMapControlSettings('cameraTour', {selection: undefined});
+    if (!stops.some(stop => stop.id === selection.stopId)) return;
+    playback.pause();
+    setSelectedId(selection.stopId);
+    setOpen(true);
+  }, [selection, stops, playback.pause, uiStateActions]);
   const markerRefs = useRef(new Map<string, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement>(null);
   const closeSourceMenu = () => {
@@ -979,6 +998,17 @@ export default function CameraTourConfig({
                   </Timeline>
                 </>
               )}
+              <PathToggle>
+                <Switch
+                  id={`${panelId}-show-path`}
+                  label={message('showAnimationPath', 'Show animation path')}
+                  checked={pathVisible}
+                  disabled={!uiStateActions}
+                  onChange={() =>
+                    uiStateActions?.setMapControlVisibility('cameraTourPath', !pathVisible)
+                  }
+                />
+              </PathToggle>
             </>
           )}
         </PanelContent>

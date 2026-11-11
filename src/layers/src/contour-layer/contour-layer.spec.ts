@@ -1311,6 +1311,160 @@ test('filters observations before averaging and restores them when the filter cl
   expect(layer.formatLayerData(datasets)).toEqual(original);
 });
 
+test.each([false, true])(
+  'preserves the continuous weighted surface when filtering observations (GPU %s)',
+  async gpu => {
+    const rows = [
+      [0, 0, 0],
+      [0.015, 0.015, 4.5],
+      [0, 0.03, 5],
+      [0.03, 0, 7],
+      [0.03, 0.03, 10]
+    ];
+    const {layer, dataset, datasets} = await setup(rows);
+    layer.updateLayerVisConfig({
+      customRange: false,
+      gridResolution: 64,
+      smoothing: 3,
+      levels: 7,
+      below: false
+    });
+    const original = layer.formatLayerData(datasets);
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual(
+      original.data.map(feature => feature.properties.threshold)
+    );
+    expect(layer.getHoverData(original.data[0])?.fieldValues[0].value).toBe(
+      `value ≥ ${original.data[0].properties.threshold}`
+    );
+    const view = renderLegend(layer);
+    const filter = {
+      ...getDefaultFilter({dataId: [dataset.id]}),
+      type: FILTER_TYPES.range,
+      name: ['value'],
+      fieldIdx: [2],
+      value: [5, 10],
+      domain: [0, 10],
+      gpu
+    };
+    dataset.filterTable(assignGpuChannels([filter]), [layer]);
+    const filtered = layer.formatLayerData(datasets);
+    const grid = buildContourGrid(
+      rows
+        .filter(([, , value]) => value >= 5)
+        .map(([longitude, latitude, value]) => ({longitude, latitude, value})),
+      64
+    )!;
+    expect(grid.values.every(Number.isFinite)).toBe(true);
+    expect(grid.values.some(value => value === 0)).toBe(true);
+    expect(filtered.data).toEqual(generateContours(grid, {smoothing: 3, levels: 7, below: false}));
+    expect(filtered.data).toHaveLength(7);
+    expect(filtered.data.map(feature => feature.geometry)).not.toEqual(
+      original.data.map(feature => feature.geometry)
+    );
+    expect(filtered.grid?.values.every(Number.isFinite)).toBe(true);
+    const expectedLabels = [5.625, 6.25, 6.875, 7.5, 8.125, 8.75, 9.375];
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual(expectedLabels);
+    filtered.data.forEach((feature, rank) => {
+      expect(layer.getHoverData(feature)?.fieldValues[0].value).toBe(
+        `value ≥ ${expectedLabels[rank]}`
+      );
+    });
+    view.update();
+    expect(view.getAllByRole('listitem').map(item => item.textContent)).toEqual(
+      expectedLabels.map(value => `≥ ${value}`)
+    );
+
+    dataset.filterTable(assignGpuChannels([{...filter, value: [6, 6]}]), [layer]);
+    expect(layer.formatLayerData(datasets).data).toEqual([]);
+    expect(layer.getContourLegend()).toEqual([]);
+
+    dataset.filterTable([], [layer]);
+    expect(layer.formatLayerData(datasets)).toEqual(original);
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual(
+      original.data.map(feature => feature.properties.threshold)
+    );
+  }
+);
+
+test.each([true, false])(
+  'orders filtered weighted display values correctly (below %s)',
+  async below => {
+    const {layer, dataset, datasets} = await setup([
+      [0, 0, 0],
+      [0, 0.03, 5],
+      [0.03, 0, 7],
+      [0.03, 0.03, 10]
+    ]);
+    layer.updateLayerVisConfig({customRange: false, levels: 3, smoothing: 3, below});
+    dataset.filteredIndex = [1, 2, 3];
+    const data = layer.formatLayerData(datasets);
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual([6.25, 7.5, 8.75]);
+    const expected = below ? [8.75, 7.5, 6.25] : [6.25, 7.5, 8.75];
+    data.data.forEach((feature, rank) => {
+      expect(layer.getHoverData(feature)?.fieldValues[0].value).toBe(
+        `value ${below ? '≤' : '≥'} ${expected[rank]}`
+      );
+    });
+  }
+);
+
+test.each([5, -5])(
+  'shows constant retained weights of %s without inventing lower values',
+  async value => {
+    const {layer, dataset, datasets} = await setup([
+      [0, 0, value - 1],
+      [0, 0.03, value],
+      [0.03, 0, value],
+      [0.03, 0.03, value]
+    ]);
+    layer.updateLayerVisConfig({customRange: false, levels: 3, smoothing: 3});
+    dataset.filteredIndex = [1, 2, 3];
+    const data = layer.formatLayerData(datasets);
+    expect(data.data).toHaveLength(3);
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual([value, value, value]);
+    const view = renderLegend(layer);
+    expect(view.getAllByRole('listitem').map(item => item.textContent)).toEqual(
+      Array(3).fill(`≤ ${value}`)
+    );
+  }
+);
+
+test.each(['custom', 'density'])(
+  'keeps %s labels on their scalar thresholds when filtering',
+  async mode => {
+    const {layer, dataset, datasets} = await setup([
+      [0, 0, 0],
+      [0, 0.03, 5],
+      [0.03, 0, 7],
+      [0.03, 0.03, 10]
+    ]);
+    if (mode === 'density') {
+      layer.updateLayerConfig({
+        columns: {...layer.config.columns, value: {value: null, fieldIdx: -1, optional: true}}
+      });
+    }
+    layer.updateLayerVisConfig({
+      customRange: mode === 'custom',
+      minimum: 1,
+      maximum: 3,
+      smoothing: 0,
+      below: false
+    });
+    dataset.filteredIndex = [1, 2, 3];
+    const data = layer.formatLayerData(datasets);
+    expect(data.data.length).toBeGreaterThan(0);
+    expect(layer.getContourLegend().map(level => level.threshold)).toEqual(
+      data.data.map(feature => feature.properties.threshold)
+    );
+    const field = mode === 'density' ? 'Point count' : 'value';
+    data.data.forEach(feature => {
+      expect(layer.getHoverData(feature)?.fieldValues[0].value).toBe(
+        `${field} ≥ ${feature.properties.threshold}`
+      );
+    });
+  }
+);
+
 function contourPolygonFilter(layer: ContourLayer, bounds: number[], inverted = false) {
   const [west, south, east, north] = bounds;
   return {

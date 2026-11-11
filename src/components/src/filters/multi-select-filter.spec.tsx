@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useState} from 'react';
-import {screen} from '@testing-library/react';
+import {fireEvent, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 
@@ -107,4 +107,81 @@ describe('MultiSelectFilter', () => {
     expect(screen.getByTitle('Alpha').closest('.list__item')).not.toHaveClass('selected');
     expect(screen.getByTitle('Beta').closest('.list__item')).toHaveClass('selected');
   });
+});
+
+test.each([
+  ['click', ['known']],
+  ['enter', []]
+])('adds exact custom categories by %s and allows deselection', async (method, domain) => {
+  const user = userEvent.setup();
+  const setFilter = jest.fn();
+  const StatefulFilter = () => {
+    const [value, setValue] = useState<ReadonlyArray<string>>([]);
+    return (
+      <MultiSelectFilter
+        allowCustomValues
+        filter={{id: 'tile', domain, value} as any}
+        setFilter={next => {
+          setFilter(next);
+          setValue(next as string[]);
+        }}
+      />
+    );
+  };
+  renderWithTheme(
+    <IntlProvider locale="en" messages={messages.en}>
+      <StatefulFilter />
+    </IntlProvider>
+  );
+  await user.click(screen.getByText('Enter a value'));
+  await user.type(screen.getByPlaceholderText('Search'), '007 café');
+  if (method === 'enter') {
+    fireEvent.keyDown(screen.getByPlaceholderText('Search'), {key: 'Enter', keyCode: 13});
+  } else {
+    await user.click(screen.getByTitle('007 café'));
+  }
+  expect(setFilter).toHaveBeenLastCalledWith(['007 café']);
+  const option = screen.getByTitle('007 café').closest('.list__item');
+  expect(option).toHaveClass('selected');
+  await user.click(option as HTMLElement);
+  expect(setFilter).toHaveBeenLastCalledWith([]);
+});
+
+test('ordinary filters remain limited to domain suggestions', async () => {
+  const user = userEvent.setup();
+  const setFilter = jest.fn();
+  renderWithTheme(
+    <IntlProvider locale="en" messages={messages.en}>
+      <MultiSelectFilter
+        filter={{id: 'local', domain: ['known'], value: []} as any}
+        setFilter={setFilter}
+      />
+    </IntlProvider>
+  );
+  await user.click(screen.getByText('Enter a value'));
+  await user.type(screen.getByPlaceholderText('Search'), 'unknown');
+  fireEvent.keyDown(screen.getByPlaceholderText('Search'), {key: 'Enter', keyCode: 13});
+  expect(screen.queryByTitle('unknown')).not.toBeInTheDocument();
+  expect(setFilter).not.toHaveBeenCalled();
+});
+
+test('keyboard navigation can choose a metadata suggestion below the custom value', async () => {
+  const user = userEvent.setup();
+  const setFilter = jest.fn();
+  renderWithTheme(
+    <IntlProvider locale="en" messages={messages.en}>
+      <MultiSelectFilter
+        allowCustomValues
+        filter={{id: 'tile', domain: ['known'], value: []} as any}
+        setFilter={setFilter}
+      />
+    </IntlProvider>
+  );
+  await user.click(screen.getByText('Enter a value'));
+  const input = screen.getByPlaceholderText('Search');
+  await user.type(input, 'kn');
+  fireEvent.keyDown(input, {key: 'ArrowDown', keyCode: 40});
+  fireEvent.keyDown(input, {key: 'ArrowDown', keyCode: 40});
+  fireEvent.keyDown(input, {key: 'Enter', keyCode: 13});
+  expect(setFilter).toHaveBeenLastCalledWith(['known']);
 });

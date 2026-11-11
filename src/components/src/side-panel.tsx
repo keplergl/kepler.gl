@@ -24,6 +24,7 @@ import PanelToggleFactory from './side-panel/panel-toggle';
 import LayerManagerFactory from './side-panel/layer-manager';
 import FilterManagerFactory from './side-panel/filter-manager';
 import InteractionManagerFactory from './side-panel/interaction-manager';
+import type {CameraTourConfigProps} from './side-panel/interaction-panel/camera-tour-config';
 import MapManagerFactory from './side-panel/map-manager';
 import CustomPanelsFactory from './side-panel/custom-panel';
 import DatasetOpsPanelsFactory, {
@@ -145,6 +146,10 @@ export default function SidePanelFactory(
     } = props;
     const {openDeleteModal, toggleModal, toggleSidePanel} = uiStateActions;
     const {activeSidePanel} = uiState;
+    const cameraTourControl = uiState.mapControls
+      ?.cameraTour as typeof uiState.mapControls.cameraTour & {
+      settings?: {selection?: CameraTourConfigProps['selection']};
+    };
     const {setMapInfo, showDatasetTable, updateTableColor} = visStateActions;
     const {hasShare, hasStorage} = availableProviders;
 
@@ -266,6 +271,8 @@ export default function SidePanelFactory(
                     mapLegendActive={Boolean(uiState.mapControls?.mapLegend?.active)}
                     mapInfo={mapInfo}
                     cameraTourEnabled={uiState.mapControls?.cameraTour?.show !== false}
+                    cameraTourPathVisible={Boolean(uiState.mapControls?.cameraTourPath?.show)}
+                    cameraTourSelection={cameraTourControl?.settings?.selection}
                     cameraBookmarksEnabled={uiState.mapControls?.cameraBookmarks?.show === true}
                     mapInfoShow={uiState.mapControls?.mapInfo?.show !== false}
                     mapInfoActive={uiState.mapControls?.mapInfo?.active !== false}
