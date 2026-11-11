@@ -23,6 +23,7 @@ import Layer, {
 import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
   getGeojsonLayerMeta,
+  getPolygonPositionCount,
   GeojsonDataMaps,
   DeckGlGeoTypes,
   detectTableColumns,
@@ -290,6 +291,10 @@ export function getTextLabelPosition(
 
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
+// A conservative initial-render budget, not a device-specific FPS guarantee.
+// At this size, outlines alone allocate tens of MB of path geometry. Users can
+// still enable strokes explicitly; saved configurations do not use this default.
+const DEFAULT_POLYGON_STROKE_POSITION_LIMIT = 1000000;
 
 export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
@@ -824,7 +829,10 @@ export default class GeoJsonLayer extends Layer {
       // set both fill and stroke to true
       return this.updateLayerVisConfig({
         filled: true,
-        stroked: dataContainer.numRows() < DEFAULT_POLYGON_STROKE_LIMIT,
+        stroked:
+          dataContainer.numRows() < DEFAULT_POLYGON_STROKE_LIMIT &&
+          getPolygonPositionCount(this.dataToFeature, DEFAULT_POLYGON_STROKE_POSITION_LIMIT) <
+            DEFAULT_POLYGON_STROKE_POSITION_LIMIT,
         strokeColor: colorMaker.next().value
       });
     } else if (featureTypes && featureTypes.point) {

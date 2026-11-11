@@ -329,3 +329,57 @@ describe('geojson strokeColor programmatic config', () => {
     ]);
   });
 });
+
+describe('saved polygon stroke choice', () => {
+  test.each([true, false])(
+    'preserves stroked=%s beyond the initial geometry budget',
+    async stroked => {
+      const dataset = new KeplerTable({info: {id: 'detailed-polygon'}});
+      await dataset.importData({
+        data: processGeojson({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [0, 0],
+                    [1, 0],
+                    [0, 1],
+                    [0, 0]
+                  ]
+                ]
+              }
+            }
+          ]
+        })
+      });
+      const savedLayer = {
+        id: 'saved-polygon',
+        type: 'geojson',
+        config: {
+          dataId: dataset.id,
+          columns: {geojson: '_geojson'},
+          visConfig: {stroked, filled: true}
+        }
+      };
+      const layer = validateLayerWithData(dataset, savedLayer, INITIAL_VIS_STATE.layerClasses);
+      layer.updateLayerMeta(dataset);
+      layer.dataToFeature = [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [new Array(1000000)]
+          }
+        }
+      ];
+      layer.updateLayerMeta(dataset);
+      expect(layer.config.visConfig.stroked).toBe(stroked);
+    }
+  );
+});
