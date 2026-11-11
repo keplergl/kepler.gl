@@ -31,7 +31,7 @@ import {CSS} from '@dnd-kit/utilities';
 import {DND_MODIFIERS} from '../../common/dnd-layer-items';
 import {DragHandle} from '../layer-panel/layer-panel-header';
 import PanelHeaderActionFactory from '../panel-header-action';
-import {LocationMarker, Replace, Delete, MapPin, VertDots, Copy, Add} from '../../common/icons';
+import {LocationMarker, Replace, Trash, MapPin, VertDots, Copy, Add} from '../../common/icons';
 import CameraPanelHeader, {CameraPanel, CameraIconButton} from './camera-panel-header';
 import {cameraTransition} from '../../camera-navigation';
 import {MapViewStateContext} from '../../map-view-state-context';
@@ -181,7 +181,7 @@ function SortableBookmark({
     {
       key: 'delete',
       label: message('delete', 'Delete'),
-      Icon: Delete,
+      Icon: Trash,
       onClick: () => onChange(bookmarks.filter(item => item.id !== bookmark.id))
     }
   ];
