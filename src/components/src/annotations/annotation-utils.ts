@@ -184,6 +184,7 @@ export type AnnotationTextBoxStyle = {
   borderTop?: string;
   borderBottom?: string;
   transform?: string;
+  transformOrigin?: string;
 };
 
 export function getAnnotationTextBoxStyle(
@@ -191,7 +192,8 @@ export function getAnnotationTextBoxStyle(
   viewport: MapViewport
 ): AnnotationTextBoxStyle {
   const {textWidth, lineColor, lineWidth, autoSize, kind} = annotation;
-  const {x, y, tx, ty} = makeMarker(annotation, viewport);
+  const marker = makeMarker(annotation, viewport);
+  const {x, y, tx, ty} = marker;
   const {side, vertical} = getTextPlacement(annotation);
   const px = x + tx;
   const py = y + ty;
@@ -200,7 +202,14 @@ export function getAnnotationTextBoxStyle(
   if (kind === AnnotationKind.RULER) {
     style.left = px;
     style.top = py;
-    style.transform = 'translate(-50%, -50%)';
+    const {ex, ey} = marker as RulerAnnotationMarker;
+    // Follow the projected line (including map bearing/pitch), but never turn
+    // the label upside down when the endpoints are reversed.
+    const angle = (Math.atan2(ey, ex) * 180) / Math.PI;
+    const uprightAngle = angle >= 90 ? angle - 180 : angle < -90 ? angle + 180 : angle;
+    const gap = Math.max(0, lineWidth) / 2 + 4;
+    style.transformOrigin = '50% 100%';
+    style.transform = `translate(-50%, -100%) rotate(${uprightAngle}deg) translateY(-${gap}px)`;
     return style;
   }
 
