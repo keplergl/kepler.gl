@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useContext} from 'react';
+import {LinearInterpolator} from '@deck.gl/core';
 import {fireEvent, render, screen} from '@testing-library/react';
 import {toggleSplitMapViewport, updateMap} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE, mapStateUpdaters} from '@kepler.gl/reducers';
@@ -136,4 +137,26 @@ test.each([0, 1])('resyncs both panes after the last interaction in pane %s', ma
   rerender(tree());
   expect(read.mock.lastCall[0][0]).toMatchObject([left, right][mapIndex]);
   expect(read.mock.lastCall[0][1]).toBe(read.mock.lastCall[0][0]);
+});
+
+test('globe bookmarks animate with finite geographic frames near the poles', () => {
+  const target = {...camera, latitude: 89, longitude: -179};
+  const viewport = cameraTransition(target, {
+    ...INITIAL_MAP_STATE,
+    globe: {...INITIAL_MAP_STATE.globe!, enabled: true}
+  });
+  expect(viewport.transitionDuration).toBe(1000);
+  expect(viewport.transitionInterpolator).toBeInstanceOf(LinearInterpolator);
+  expect(viewport).toMatchObject({latitude: 75, pitch: 0, bearing: 0});
+  const interpolator = viewport.transitionInterpolator!;
+  // The globe controller adjusts -179 to 181 for shortest-path dateline travel.
+  const {start, end} = interpolator.initializeProps(
+    {...viewport, longitude: 179, latitude: 74},
+    {...viewport, longitude: 181}
+  );
+  const frame = interpolator.interpolateProps(start, end, 0.5);
+  expect(frame.longitude).toBe(180);
+  expect(frame.latitude).toBe(74.5);
+  expect(Object.values(frame).every(Number.isFinite)).toBe(true);
+  expect(target).toEqual({...camera, latitude: 89, longitude: -179});
 });

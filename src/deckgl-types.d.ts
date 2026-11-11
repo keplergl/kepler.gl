@@ -22,6 +22,7 @@ declare module '@deck.gl/core' {
   export {default as WebMercatorViewport} from '@deck.gl/core/dist/viewports/web-mercator-viewport';
   export {default as MapView} from '@deck.gl/core/dist/views/map-view';
   export {default as View} from '@deck.gl/core/dist/views/view';
+  export {default as LinearInterpolator} from '@deck.gl/core/dist/transitions/linear-interpolator';
   export {default as FlyToInterpolator} from '@deck.gl/core/dist/transitions/fly-to-interpolator';
   export {default as PostProcessEffect} from '@deck.gl/core/dist/effects/post-process-effect';
   export {default as LightingEffect} from '@deck.gl/core/dist/effects/lighting/lighting-effect';
