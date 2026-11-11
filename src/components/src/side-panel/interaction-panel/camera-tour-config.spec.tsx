@@ -1114,14 +1114,14 @@ test('path geometry follows stop order and reuses data during navigation', () =>
     }
   ]);
   expect(layers[2].props.data).toEqual([
-    {position: [10, 20], label: '1. Home'},
-    {position: [50, 20], label: '2. Work'}
+    {id: 'home', position: [10, 20], label: '1. Home'},
+    {id: 'work', position: [50, 20], label: '2. Work'}
   ]);
   expect(layers.every(layer => layer.props.pickable === false)).toBe(true);
   const reordered = getCameraTourPathLayers({stops: [...tour.stops].reverse()});
   expect(reordered[2].props.data).toEqual([
-    {position: [50, 20], label: '1. Work'},
-    {position: [10, 20], label: '2. Home'}
+    {id: 'work', position: [50, 20], label: '1. Work'},
+    {id: 'home', position: [10, 20], label: '2. Home'}
   ]);
   expect(getCameraTourPathLayers(null)).toEqual([]);
   expect(getCameraTourPathLayers({stops: []})).toEqual([]);

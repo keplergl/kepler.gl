@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {PathLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
+import type {ScatterplotLayerProps} from '@deck.gl/layers';
 import type {CameraTour} from '@kepler.gl/types';
 import {normalizeCameraTour} from '@kepler.gl/utils';
 
@@ -12,13 +13,17 @@ function createPathData(tour: CameraTour) {
   const stops = normalizeCameraTour(tour)?.stops || [];
   if (!stops.length) return null;
   const data = stops.map((stop, index) => ({
+    id: stop.id,
     position: [stop.camera.longitude, stop.camera.latitude] as [number, number],
     label: `${index + 1}. ${stop.name}`
   }));
   return {data, path: [{path: data.map(stop => stop.position)}]};
 }
 
-export function getCameraTourPathLayers(tour?: CameraTour | null) {
+export function getCameraTourPathLayers(
+  tour?: CameraTour | null,
+  dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd'>
+) {
   if (!tour) return [];
   if (!cache.has(tour)) cache.set(tour, createPathData(tour));
   const cached = cache.get(tour);
@@ -46,7 +51,11 @@ export function getCameraTourPathLayers(tour?: CameraTour | null) {
       getLineWidth: 2,
       getFillColor: [27, 190, 220],
       getLineColor: [255, 255, 255],
-      pickable: false
+      pickable: Boolean(dragHandlers),
+      // Stop handles own their interactions, not dataset hover/click selection.
+      onHover: dragHandlers ? () => true : undefined,
+      onClick: dragHandlers ? () => true : undefined,
+      ...dragHandlers
     }),
     new TextLayer({
       id: 'camera-tour-path-labels',
