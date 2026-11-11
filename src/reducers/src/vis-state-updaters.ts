@@ -5775,18 +5775,21 @@ export const setMapInfoUpdater = (
     }
   };
 };
-/** Remove automatic Point layers duplicated by Icons using the same dataset and lat/lng fields. */
+/** Remove automatic Points duplicated by specialized layers using the same lat/lng fields. */
 function deduplicateAutoLayers(layers: Layer[]) {
   return layers.filter(
     point =>
       Object.getPrototypeOf(point) !== LayerClasses.point.prototype ||
       !layers.some(
-        icon =>
-          Object.getPrototypeOf(icon) === LayerClasses.icon.prototype &&
-          icon.config.dataId === point.config.dataId &&
+        specialized =>
+          (Object.getPrototypeOf(specialized) === LayerClasses.icon.prototype ||
+            Object.getPrototypeOf(specialized) === LayerClasses.flowField.prototype) &&
+          specialized.config.dataId === point.config.dataId &&
           ['lat', 'lng'].every(
             column =>
-              icon.config.columns[column]?.fieldIdx === point.config.columns[column]?.fieldIdx
+              specialized.config.columns[column]?.fieldIdx >= 0 &&
+              specialized.config.columns[column]?.fieldIdx ===
+                point.config.columns[column]?.fieldIdx
           )
       )
   );
