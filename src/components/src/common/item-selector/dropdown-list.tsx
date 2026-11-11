@@ -62,6 +62,7 @@ interface DropdownListProps {
   allowCustomValues?: number;
   customClasses?: {listHeader?: string; listItem?: string; results?: string};
   customValues?: any[];
+  customValue?: string | null;
   customListItemComponent?: ElementType;
   customListHeaderComponent?: ElementType;
   selectionIndex?: number;
@@ -206,7 +207,10 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
       return <div />;
     }
 
-    const valueOffset = Array.isArray(fixedOptions) ? fixedOptions.length : 0;
+    const hasCustomValue = allowCustomValues > 0 && this.props.customValue != null;
+    const customOffset = hasCustomValue ? 1 : 0;
+    const fixedOffset = Array.isArray(fixedOptions) ? fixedOptions.length : 0;
+    const valueOffset = fixedOffset + customOffset;
 
     // onMouseDown works around #205; onClick handles non-pointer activation.
     return (
@@ -220,14 +224,26 @@ export default class DropdownList extends Component<DropdownListProps, DropdownL
           </div>
         ) : null}
 
-        {valueOffset > 0 ? (
+        {hasCustomValue ? (
+          <div
+            className={classNames(classList.listItem, this.props.customClasses?.listItem, {
+              hover: this.props.selectionIndex === 0
+            })}
+            onMouseDown={e => this._onClick(this.props.customValue, e)}
+            onClick={e => this._onClick(this.props.customValue, e)}
+          >
+            <CustomListItemComponent value={this.props.customValue} displayOption={display} />
+          </div>
+        ) : null}
+
+        {fixedOffset > 0 ? (
           <div className={classList.listSection}>
             {fixedOptions?.map((value, i) => (
               <div
                 className={classNames(
                   classList.listItem,
                   {
-                    hover: this.props.selectionIndex === i,
+                    hover: this.props.selectionIndex === i + customOffset,
                     [classList.listItemFixed]: true
                   },
                   this.props.customClasses?.listItem
