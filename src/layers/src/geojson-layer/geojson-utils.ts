@@ -27,6 +27,50 @@ export type GetFeature = (d: any) => Feature;
 export type GeojsonDataMaps = (Feature | BinaryFeatureCollection | null)[];
 export type GeojsonPointDataMaps = (number[] | number[][] | null)[];
 
+/**
+ * Count polygon outline positions in already-parsed geometry, stopping at the
+ * budget. Ring lengths include holes and closing positions. No coordinate
+ * values are visited, and no sampling can miss a single detailed outlier.
+ */
+export function getPolygonPositionCount(features: GeojsonDataMaps, limit = Infinity): number {
+  let count = 0;
+  const addPolygon = (rings: Position[][]) => {
+    if (!Array.isArray(rings)) return;
+    for (const ring of rings) {
+      count += Array.isArray(ring) ? ring.length : 0;
+      if (count >= limit) break;
+    }
+  };
+  const addGeometry = (geometry: Geometry | null) => {
+    if (!geometry || count >= limit) return;
+    if (geometry.type === 'Polygon') {
+      addPolygon(geometry.coordinates);
+    } else if (geometry.type === 'MultiPolygon' && Array.isArray(geometry.coordinates)) {
+      for (const polygon of geometry.coordinates) {
+        addPolygon(polygon);
+        if (count >= limit) break;
+      }
+    } else if (geometry.type === 'GeometryCollection' && Array.isArray(geometry.geometries)) {
+      for (const child of geometry.geometries) {
+        addGeometry(child);
+        if (count >= limit) break;
+      }
+    }
+  };
+  for (const feature of features) {
+    if (!feature) continue;
+    if ('geometry' in feature) {
+      addGeometry(feature.geometry);
+    } else if ('polygons' in feature && feature.polygons) {
+      // GeoArrow/WKB chunks already contain packed positions; size is 2 or 3.
+      const positions = feature.polygons.positions;
+      count += positions.value.length / positions.size;
+    }
+    if (count >= limit) break;
+  }
+  return count;
+}
+
 export const COLUMN_MODE_GEOJSON = 'geojson';
 
 /* eslint-disable */

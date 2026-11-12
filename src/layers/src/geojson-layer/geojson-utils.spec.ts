@@ -19,6 +19,7 @@ import ScenegraphLayer from '../scenegraph-layer/scenegraph-layer';
 import {
   featureToHoverOutline,
   getAllPositions,
+  getPolygonPositionCount,
   getCentroidFromGeometry,
   parseGeoJsonRawFeature,
   getGeojsonFeatureTypes,
@@ -626,4 +627,57 @@ test('required table timestamps retain zero and omit missing values and coordina
     timestamp: {value: 'timestamp', fieldIdx: 3}
   });
   expect(features[0].properties?.values).toEqual([rows[1], rows[0]]);
+});
+
+describe('polygon outline position budget', () => {
+  const feature = geometry => ({type: 'Feature', properties: {}, geometry});
+  const ring = n => Array.from({length: n}, () => [0, 0]);
+
+  test('counts holes, multipolygons, collections and late outliers, not point or line vertices', () => {
+    expect(
+      getPolygonPositionCount([
+        null,
+        feature({type: 'Point', coordinates: [1, 2]}),
+        feature({type: 'LineString', coordinates: ring(20)}),
+        feature({type: 'Polygon', coordinates: [ring(5), ring(4)]}),
+        feature({
+          type: 'GeometryCollection',
+          geometries: [
+            {type: 'MultiPolygon', coordinates: [[ring(7)], [ring(8)]]},
+            {type: 'Polygon', coordinates: [ring(1000)]}
+          ]
+        })
+      ] as any)
+    ).toBe(1024);
+    expect(getPolygonPositionCount([])).toBe(0);
+  });
+
+  test('counts binary chunks using coordinate size, including 3D polygons', () => {
+    expect(
+      getPolygonPositionCount([
+        {polygons: {positions: {value: new Float64Array(30), size: 3}}},
+        {polygons: {positions: {value: new Float64Array(8), size: 2}}}
+      ] as any)
+    ).toBe(14);
+  });
+
+  test('uses ring lengths and stops once the budget is reached', () => {
+    const positions = new Proxy(new Array(1000000), {
+      get(target, key) {
+        if (key !== 'length') throw new Error('Must not visit coordinates');
+        return target.length;
+      }
+    });
+    const later = {
+      get geometry() {
+        throw new Error('Must stop at budget');
+      }
+    };
+    expect(
+      getPolygonPositionCount(
+        [feature({type: 'Polygon', coordinates: [positions]}), later] as any,
+        1000000
+      )
+    ).toBe(1000000);
+  });
 });
