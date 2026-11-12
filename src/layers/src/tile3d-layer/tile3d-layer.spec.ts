@@ -145,8 +145,8 @@ describe('3D tile camera updates', () => {
   });
 });
 
-// Model.draw submits every uniform block on every frame. The luma.gl patch
-// must keep static tile materials on the GPU while camera uniforms change.
+// Model.draw submits every uniform block on every frame. Keep static tile
+// materials on the GPU while camera uniforms change.
 describe('3D tile uniform uploads', () => {
   function createUniformStore() {
     const materialBuffer = {write: jest.fn(), destroy: jest.fn()};

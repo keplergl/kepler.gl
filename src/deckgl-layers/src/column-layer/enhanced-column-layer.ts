@@ -23,8 +23,8 @@ function addInstanceCoverage(vs: string) {
   const addDecl = editShader(
     vs,
     'hexagon cell vs add instance 1',
-    'in vec3 instancePickingColors;',
-    `in vec3 instancePickingColors;
+    'in float instanceElevations;',
+    `in float instanceElevations;
      in float instanceCoverage;`
   );
 
@@ -90,8 +90,9 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       angle
     } = this.props;
     const fillModel = this.state.fillModel;
+    const strokeModel = this.state.strokeModel;
     const wireframeModel = this.state.wireframeModel;
-    const {fillVertexCount, edgeDistance} = this.state;
+    const {edgeDistance} = this.state;
 
     const globeMode = (this.context.viewport as any).resolution ? 1.0 : 0.0;
 
@@ -119,26 +120,19 @@ class EnhancedColumnLayer extends ColumnLayer<any, EnhancedColumnLayerProps> {
       wireframeModel.draw(this.context.renderPass);
     }
     if (filled && fillModel) {
-      fillModel.setVertexCount(fillVertexCount);
       fillModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: false},
         globeMode: {globeMode}
       });
       fillModel.draw(this.context.renderPass);
     }
-    if (!extruded && stroked && fillModel) {
-      fillModel.setVertexCount((fillVertexCount * 2) / 3);
-      fillModel.shaderInputs.setProps({
+    if (!extruded && stroked && strokeModel) {
+      strokeModel.shaderInputs.setProps({
         column: {...columnProps, isStroke: true},
         layer: {opacity: strokeOpacity ?? this.props.opacity},
         globeMode: {globeMode}
       });
-      fillModel.draw(this.context.renderPass);
-      // Restore original vertex count and opacity so subsequent passes are unaffected
-      fillModel.setVertexCount(fillVertexCount);
-      fillModel.shaderInputs.setProps({
-        layer: {opacity: this.props.opacity}
-      });
+      strokeModel.draw(this.context.renderPass);
     }
   }
 }

@@ -42,6 +42,7 @@ package-lock.json
 npm-debug.log
 lerna-debug.log
 .history/
+.yarn
 .npmrc
 
 .pnp.*

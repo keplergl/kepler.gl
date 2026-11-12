@@ -49,7 +49,11 @@ test('#DonutLayer -> GPU attributes coexist with filtering and picking', t => {
       [1, 1, 1],
       'remaining boundaries close the ring'
     );
-    t.ok(attributes.instancePickingColors.value, 'source record remains pickable');
+    t.equal(
+      layer.getPickingInfo({info: {index: 0}}).object,
+      layer.props.data[0],
+      'picking returns the source record with donut and filter extensions'
+    );
     t.deepEqual(errors, [], 'layer initializes alongside the data filter');
   } finally {
     manager.finalize();
