@@ -1483,7 +1483,7 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
         'does not upload point attributes'
       );
       t.equal(
-        Boolean(current.state.panUpdateTimer),
+        Boolean(current.state.updateTimer),
         width > 1024,
         'only cache misses schedule a refresh'
       );
@@ -1498,7 +1498,7 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
         'one refresh after settling, none for a cache hit'
       );
       current = manager.getLayers()[0];
-      t.notOk(current.state.panUpdateTimer, 'settled timer is cleared');
+      t.notOk(current.state.updateTimer, 'settled timer is cleared');
       if (width > 1024) {
         t.equal(
           current.state.aggregationViewport.longitude,
@@ -1515,7 +1515,7 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
       pan(1);
       mapState = {...mapState, longitude: returnLongitude};
       current = render();
-      t.notOk(current.state.panUpdateTimer, 'returning inside the cache cancels pending work');
+      t.notOk(current.state.updateTimer, 'returning inside the cache cancels pending work');
       clock.tick(150);
       manager.updateLayers();
       t.equal(aggregate.callCount, settledCalls, 'returning inside the cache needs no refresh');
@@ -1538,11 +1538,11 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
       const immediate = (label, change) => {
         const before = aggregate.callCount;
         current = pan(1);
-        t.ok(current.state.panUpdateTimer, `${label}: starts with pending pan work`);
+        t.ok(current.state.updateTimer, `${label}: starts with pending pan work`);
         change();
         current = render();
         t.equal(aggregate.callCount, before + 1, `${label}: refreshes immediately`);
-        t.notOk(current.state.panUpdateTimer, `${label}: cancels stale pan work`);
+        t.notOk(current.state.updateTimer, `${label}: cancels stale pan work`);
         clock.tick(200);
         manager.updateLayers();
         t.equal(aggregate.callCount, before + 1, `${label}: no duplicate delayed refresh`);
@@ -1583,7 +1583,7 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
 
       const beforeRemoval = aggregate.callCount;
       current = pan(1);
-      t.ok(current.state.panUpdateTimer, 'has pending work before removal');
+      t.ok(current.state.updateTimer, 'has pending work before removal');
       manager.setLayers([]);
       clock.tick(200);
       manager.updateLayers();
@@ -1614,7 +1614,7 @@ test('#HeatmapLayer -> waiting flat quads do not stretch cached edge pixels', t 
       props: {densityBounds: [-124, 36, -121, 39]},
       context: {viewport},
       state: {
-        panUpdateTimer: 1,
+        updateTimer: 1,
         normalizedCommonBounds: [lower[0], lower[1], upper[0], upper[1]],
         triPositionBuffer: {
           write: value => {
