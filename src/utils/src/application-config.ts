@@ -133,8 +133,6 @@ export type KeplerApplicationConfig = {
 
   // Disable progressive loading for arrow files
   useArrowProgressiveLoading?: boolean;
-  /** @deprecated The demo release banner has been removed. This option has no effect. */
-  showReleaseBanner?: boolean;
   // Use the onFilteredItemsChange callback for DataFilterExtension.
   // Enabling this option may cause performance issues when dealing with a large number of layers or sublayers,
   // especially if large Arrow files are split into relatively small batches (should be fixed in the future).
@@ -465,7 +463,6 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   database: null,
 
   useArrowProgressiveLoading: false,
-  showReleaseBanner: false,
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
