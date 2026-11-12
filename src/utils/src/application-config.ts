@@ -133,7 +133,7 @@ export type KeplerApplicationConfig = {
 
   // Disable progressive loading for arrow files
   useArrowProgressiveLoading?: boolean;
-  // Show built-in banner associated with the current version of Kepler.gl
+  /** @deprecated The demo release banner has been removed. This option has no effect. */
   showReleaseBanner?: boolean;
   // Use the onFilteredItemsChange callback for DataFilterExtension.
   // Enabling this option may cause performance issues when dealing with a large number of layers or sublayers,
@@ -465,7 +465,6 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   database: null,
 
   useArrowProgressiveLoading: false,
-  showReleaseBanner: true,
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
