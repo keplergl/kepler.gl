@@ -465,6 +465,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   database: null,
 
   useArrowProgressiveLoading: false,
+  showReleaseBanner: false,
   useOnFilteredItemsChange: false,
 
   // Raster Tile layer config
