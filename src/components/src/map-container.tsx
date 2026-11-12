@@ -39,6 +39,7 @@ import EditorFactory from './editor/editor';
 import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
 import {getCameraTourPathLayers} from './map/camera-tour-path';
+import CameraTourZoomControl from './map/camera-tour-zoom-control';
 
 // utils
 import {
@@ -330,7 +331,8 @@ export default function MapContainerFactory(
       // attribution strings collected from the resolved map sources (e.g. CARTO,
       // OpenFreeMap).  Populated after TileJSON resolves.
       basemapAttributions: [] as string[],
-      coordinateMenu: null as CoordinateMenuState | null
+      coordinateMenu: null as CoordinateMenuState | null,
+      cameraTourZoomStopId: null as string | null
     };
 
     // Right-button press origin, used to ignore rotate/pitch drags.
@@ -1150,6 +1152,7 @@ export default function MapContainerFactory(
         return false;
       const stop = this.props.visState.cameraTour?.stops.find(item => item.id === info.object?.id);
       if (!event.rightButton && this._canEditCameraTourPath() && stop) {
+        this.setState({cameraTourZoomStopId: stop.id});
         this.props.uiStateActions.setMapControlSettings('cameraTour', {
           selection: {stopId: stop.id}
         });
@@ -1178,6 +1181,7 @@ export default function MapContainerFactory(
       )
         return false;
       this._cameraTourDraggedStopId = info.object!.id;
+      this.setState({cameraTourZoomStopId: info.object!.id});
       // Consume the gesture before deck's controller can start panning the map.
       event.stopPropagation();
       return true;
@@ -1207,6 +1211,25 @@ export default function MapContainerFactory(
         });
       }
       return true;
+    };
+
+    _onCameraTourZoomChange = (zoom: number) => {
+      const tour = this.props.visState.cameraTour;
+      const stop = tour?.stops.find(item => item.id === this.state.cameraTourZoomStopId);
+      if (
+        !this._canEditCameraTourPath() ||
+        !tour ||
+        !stop ||
+        !Number.isFinite(zoom) ||
+        zoom === stop.camera.zoom
+      )
+        return;
+      this.props.visStateActions.setCameraTour({
+        ...tour,
+        stops: tour.stops.map(item =>
+          item.id === stop.id ? {...item, camera: {...item.camera, zoom}} : item
+        )
+      });
     };
 
     _onCameraTourPathDragEnd = (info: PickingInfo, event: {stopPropagation: () => void}) => {
@@ -1552,6 +1575,27 @@ export default function MapContainerFactory(
           >
             {children}
           </DeckGL>
+          {isInteractive &&
+            this._canEditCameraTourPath() &&
+            (() => {
+              const stop = visState.cameraTour?.stops.find(
+                item => item.id === this.state.cameraTourZoomStopId
+              );
+              return stop ? (
+                <CameraTourZoomControl
+                  stop={stop}
+                  // The helper's legacy return type contains only map-state fields.
+                  viewport={
+                    viewport as React.ComponentProps<typeof CameraTourZoomControl>['viewport']
+                  }
+                  globe={Boolean(isGlobeMode)}
+                  minZoom={mapState.minZoom}
+                  maxZoom={mapState.maxZoom}
+                  onChange={this._onCameraTourZoomChange}
+                  onClose={() => this.setState({cameraTourZoomStopId: null})}
+                />
+              ) : null;
+            })()}
         </div>
       );
     }
