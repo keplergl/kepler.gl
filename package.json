@@ -288,7 +288,7 @@
     "@loaders.gl/zip": "4.4.1",
     "apache-arrow": "17.0.0",
     "@luma.gl/constants": "9.3.2",
-    "@luma.gl/core": "9.3.2",
+    "@luma.gl/core": "patch:@luma.gl/core@npm%3A9.3.2#~/.yarn/patches/@luma.gl-core-npm-9.3.2-92193b9ee3.patch",
     "@luma.gl/effects": "9.3.2",
     "@luma.gl/engine": "9.3.2",
     "@luma.gl/shadertools": "9.3.2",
