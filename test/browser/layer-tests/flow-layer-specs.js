@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
+import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 
 import {testCreateCases, dataId, preparedDataset} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
@@ -540,5 +542,110 @@ test('#FlowLayer -> renderLayer keeps its data value while the flows are unchang
 
   t.equal(second.props.data, first.props.data, 'the data value should not move without new flows');
 
+  t.end();
+});
+
+test('#FlowLayer -> picking colors reach every flow renderer and location circles', async t => {
+  const layer = new FlowLayer({id: 'flow-picking', dataId});
+  const locations = [
+    {id: 0, lon: 0, lat: 0, name: 'A'},
+    {id: 1, lon: 1, lat: 1, name: 'B'},
+    {id: 2, lon: 2, lat: 2, name: 'C'}
+  ];
+  const flows = [
+    {index: 0, sourceId: 0, targetId: 1, count: 10},
+    {index: 1, sourceId: 1, targetId: 2, count: 20},
+    {index: 2, sourceId: 2, targetId: 0, count: 30}
+  ];
+  const clusterLevels = [{zoom: 0, nodes: locations}];
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
+  });
+  manager.setProps({onError: error => t.fail(error.message)});
+  const render = async (flowData, globe) => {
+    const [composite] = layer.renderLayer({
+      data: {layerData: {locations, flows: flowData, clusterLevels}},
+      gpuFilter: {},
+      objectHovered: null,
+      mapState: {globe: {enabled: globe}},
+      layerCallbacks: {onLayerHover: () => {}},
+      idx: 0,
+      visible: true
+    });
+    manager.setLayers([composite]);
+    // LocalFlowmapDataProvider delivers its binary attributes in a microtask.
+    await Promise.resolve();
+    manager.updateLayers();
+    return composite;
+  };
+
+  try {
+    for (const mode of ['straight', 'curved', 'animated-straight']) {
+      layer.updateLayerVisConfig({
+        flowLinesRenderingMode: mode,
+        flowClusteringEnabled: false,
+        flowAdaptiveScalesEnabled: false
+      });
+      for (const globe of [false, true]) {
+        // Exercise growth, shrinking to empty, and repopulation after filtering.
+        for (const flowData of [flows.slice(0, 2), flows, [], flows.slice(1)]) {
+          const composite = await render(flowData, globe);
+          const sublayers = composite.getSubLayers();
+          t.equal(sublayers.length, 2, `${mode}: renders flow lines and circles`);
+          for (const sublayer of sublayers) {
+            const isCircle = sublayer.id.endsWith('-circles');
+            const count = sublayer.getNumInstances();
+            const expectedCount = isCircle && flowData.length ? locations.length : flowData.length;
+            t.equal(count, expectedCount, 'renders current data');
+            const attribute = sublayer.getAttributeManager().getAttributes().instancePickingColors;
+            t.ok(attribute, `${sublayer.id}: supplies the picking input consumed by its shader`);
+            if (!attribute || !count) continue;
+
+            const buffer = attribute.getBuffer();
+            t.ok(buffer, 'uploads picking colors to a buffer');
+            t.ok(
+              sublayer
+                .getModels()
+                .every(model =>
+                  model.bufferLayout.some(layout => layout.name === 'instancePickingColors')
+                ),
+              'includes the picking attribute in the model buffer layout'
+            );
+            const bytes = await buffer.readAsync(0, count * 4);
+            const indexes = Array.from({length: count}, (_, i) =>
+              sublayer.decodePickingColor(bytes.subarray(i * 4, i * 4 + 3))
+            );
+            t.deepEqual(
+              indexes,
+              Array.from({length: count}, (_, i) => i),
+              'every rendered instance has a distinct, non-background picking color'
+            );
+            if (!isCircle) {
+              const pickedFlows = await Promise.all(
+                indexes.map(index => composite.props.dataProvider.getFlowByIndex(index))
+              );
+              t.deepEqual(
+                pickedFlows.map(({origin, dest, count}) => [origin, dest, count]).sort(),
+                flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
+                'decoded picking indexes identify the current flow endpoints and magnitudes'
+              );
+              t.equal(sublayer.props.parameters.depthTest, globe, 'preserves globe depth handling');
+            } else {
+              const pickedLocations = await Promise.all(
+                indexes.map(index => composite.props.dataProvider.getLocationByIndex(index))
+              );
+              t.deepEqual(
+                pickedLocations.map(location => location.id).sort(),
+                locations.map(location => location.id).sort(),
+                'decoded picking indexes identify the current locations'
+              );
+            }
+          }
+        }
+      }
+    }
+  } finally {
+    manager.finalize();
+  }
   t.end();
 });

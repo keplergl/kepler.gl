@@ -2,6 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import Tile3DLayer from './tile3d-layer';
+import {UniformStore} from '@luma.gl/core';
+import type {Device} from '@luma.gl/core/dist/adapter/device';
 
 const URL = 'https://assets.ion.cesium.com/57588/tileset.json';
 
@@ -140,5 +142,74 @@ describe('3D tile camera updates', () => {
     next.state.layerMap = {tile: cached};
     next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
     expect(cached.needsUpdate).toBe(true);
+  });
+});
+
+// Model.draw submits every uniform block on every frame. Keep static tile
+// materials on the GPU while camera uniforms change.
+describe('3D tile uniform uploads', () => {
+  function createUniformStore() {
+    const materialBuffer = {write: jest.fn(), destroy: jest.fn()};
+    const cameraBuffer = {write: jest.fn(), destroy: jest.fn()};
+    const device = {
+      type: 'webgl',
+      createBuffer: jest.fn().mockReturnValueOnce(materialBuffer).mockReturnValueOnce(cameraBuffer)
+    } as unknown as Device;
+    const store = new UniformStore(device, {
+      material: {uniformTypes: {opacity: 'f32', color: 'vec4<f32>'}},
+      camera: {uniformTypes: {position: 'vec3<f32>'}}
+    });
+    store.getManagedUniformBuffer('material');
+    store.getManagedUniformBuffer('camera');
+    store.setUniforms({
+      material: {opacity: 1, color: [1, 1, 1, 1]},
+      camera: {position: [0, 0, 0]}
+    });
+    expect(materialBuffer.write).toHaveBeenCalledTimes(1);
+    expect(cameraBuffer.write).toHaveBeenCalledTimes(1);
+    materialBuffer.write.mockClear();
+    cameraBuffer.write.mockClear();
+    return {store, materialBuffer, cameraBuffer};
+  }
+
+  test('does not upload unchanged scalar or array uniforms, including empty updates', () => {
+    const {store, materialBuffer, cameraBuffer} = createUniformStore();
+    store.setUniforms({
+      material: {opacity: 1, color: new Float32Array([1, 1, 1, 1])},
+      camera: {position: [0, 0, 0]}
+    });
+    store.setUniforms({});
+    store.setUniforms({material: {}});
+
+    expect(materialBuffer.write).not.toHaveBeenCalled();
+    expect(cameraBuffer.write).not.toHaveBeenCalled();
+    store.destroy();
+  });
+
+  test('uploads camera changes without reuploading static material blocks', () => {
+    const {store, materialBuffer, cameraBuffer} = createUniformStore();
+    for (const longitude of [1, 2, 3]) {
+      store.setUniforms({
+        material: {opacity: 1, color: [1, 1, 1, 1]},
+        camera: {position: [longitude, 0, 0]}
+      });
+    }
+
+    expect(cameraBuffer.write).toHaveBeenCalledTimes(3);
+    expect(materialBuffer.write).not.toHaveBeenCalled();
+    store.destroy();
+  });
+
+  test('still uploads material edits and in-place array changes', () => {
+    const {store, materialBuffer, cameraBuffer} = createUniformStore();
+    const color = new Float32Array([1, 0, 0, 1]);
+    store.setUniforms({material: {opacity: 0.5, color}});
+    expect(materialBuffer.write).toHaveBeenCalledTimes(1);
+
+    color[1] = 0.5;
+    store.setUniforms({material: {color}});
+    expect(materialBuffer.write).toHaveBeenCalledTimes(2);
+    expect(cameraBuffer.write).not.toHaveBeenCalled();
+    store.destroy();
   });
 });

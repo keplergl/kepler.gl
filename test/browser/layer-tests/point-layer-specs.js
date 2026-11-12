@@ -2301,15 +2301,14 @@ test('#PointLayer -> Glow and Pulse / Ripple rendering and saved settings', t =>
               ].map(key => [key, deckLayer.props[key]])
             ),
             attributes: Object.fromEntries(
-              [
-                'instancePositions',
-                'instanceRadius',
-                'instanceFillColors',
-                'instancePickingColors'
-              ].map(key => [
+              ['instancePositions', 'instanceRadius', 'instanceFillColors'].map(key => [
                 key,
                 deckLayer.getAttributeManager().getAttributes()[key].value?.slice()
               ])
+            ),
+            pickedObjects: Array.from(
+              {length: deckLayer.getNumInstances()},
+              (_, index) => deckLayer.getPickingInfo({info: {index}}).object
             ),
             vs: deckLayer.state.model.vs,
             fs: deckLayer.state.model.fs

@@ -38,10 +38,10 @@
     "threads": "^1.7.0"
   },
   "peerDependencies": {
-    "@deck.gl/aggregation-layers": "^9.3.1",
-    "@deck.gl/core": "^9.3.1",
-    "@deck.gl/geo-layers": "^9.3.1",
-    "@deck.gl/layers": "^9.3.1"
+    "@deck.gl/aggregation-layers": "^9.4.1",
+    "@deck.gl/core": "^9.4.1",
+    "@deck.gl/geo-layers": "^9.4.1",
+    "@deck.gl/layers": "^9.4.1"
   },
   "nyc": {
     "sourceMap": false,

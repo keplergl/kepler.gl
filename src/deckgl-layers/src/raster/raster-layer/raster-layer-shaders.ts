@@ -47,7 +47,7 @@ export const rasterUniforms = {
  * _hookFunctions when a new Deck instance is created (e.g. during image export).
  */
 export function ensureRasterHooksRegistered(): void {
-  const assembler = ShaderAssembler.getDefaultShaderAssembler();
+  const assembler = ShaderAssembler.getDefaultShaderAssembler('glsl');
   // @ts-expect-error _hookFunctions is private in ShaderAssembler
   const existingHooks = assembler._hookFunctions || [];
   const hookNames = existingHooks.map(h => (typeof h === 'string' ? h : h.hook));

@@ -29,8 +29,10 @@ import {getFilterDataFunc} from '../aggregation-layer';
 import {diffUpdateTriggers} from '../layer-update';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowLayerIcon from './flow-layer-icon';
+import FlowPickingExtension from './flow-picking-extension';
 
 const MAX_CLUSTER_ZOOM_LEVEL = 20;
+const flowPickingExtensions = [new FlowPickingExtension()];
 
 export type LocationDatum = {
   id: number;
@@ -542,32 +544,29 @@ export default class FlowLayer extends Layer {
     // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
     const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
     const blendingParameters = opts.mapState?.layerParameters ?? {};
-    const globeSubLayerProps = isGlobeMode
-      ? (() => {
-          const depthParams = {
-            parameters: {
-              cull: false,
-              depthTest: true,
-              depthCompare: 'less-equal',
-              cullMode: 'none',
-              ...blendingParameters
-            }
-          };
-          return {
-            _subLayerProps: {
-              'flow-lines': depthParams,
-              'curved-flow-lines': depthParams,
-              'animated-flow-lines': depthParams,
-              'flow-highlight': depthParams
-            }
-          };
-        })()
+    const globeDepthProps = isGlobeMode
+      ? {
+          parameters: {
+            cull: false,
+            depthTest: true,
+            depthCompare: 'less-equal',
+            cullMode: 'none',
+            ...blendingParameters
+          }
+        }
       : {};
+    const flowLineProps = {extensions: flowPickingExtensions, ...globeDepthProps};
 
     return [
       new FlowmapLayer<LocationDatum, FlowDatum>({
         ...cleanProps,
-        ...globeSubLayerProps,
+        _subLayerProps: {
+          'flow-lines': flowLineProps,
+          'curved-flow-lines': flowLineProps,
+          'animated-flow-lines': flowLineProps,
+          circles: {extensions: flowPickingExtensions},
+          'flow-highlight': globeDepthProps
+        },
         dataProvider: this._dataProvider,
         data: this._dataVersion as any,
         ...flowmapDataAccessors,

@@ -28,13 +28,13 @@
     "dist"
   ],
   "dependencies": {
-    "@deck.gl/core": "^9.3.1",
+    "@deck.gl/core": "^9.4.1",
     "@kepler.gl/common-utils": "3.3.0-alpha.20",
     "@kepler.gl/constants": "3.3.0-alpha.20",
     "@kepler.gl/types": "3.3.0-alpha.20",
-    "@loaders.gl/gis": "^4.4.1",
-    "@luma.gl/constants": "^9.3.2",
-    "@luma.gl/core": "^9.3.2",
+    "@loaders.gl/gis": "^4.4.5",
+    "@luma.gl/constants": "^9.4.2",
+    "@luma.gl/core": "^9.4.2",
     "@mapbox/geo-viewport": "^0.4.1",
     "@math.gl/web-mercator": "^4.1.0",
     "@turf/boolean-intersects": "^7.2.0",
