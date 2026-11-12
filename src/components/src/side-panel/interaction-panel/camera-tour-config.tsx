@@ -343,7 +343,8 @@ const TimeReadout = styled.div<{$elapsedWidth: number}>`
   flex-shrink: 0;
   output:first-child {
     display: inline-block;
-    min-width: ${props => props.$elapsedWidth}ch;
+    // Keep the scrubber width independent of the current time text.
+    width: ${props => props.$elapsedWidth}ch;
     text-align: right;
   }
 `;
