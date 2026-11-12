@@ -76,9 +76,13 @@ const Control = styled.div`
     left: 4px;
     width: 24px;
     height: 24px;
-    padding: 0;
+    box-sizing: border-box;
+    padding: 4px;
+    font-size: 12px;
+    line-height: 16px;
     color: inherit;
     background: ${props => props.theme.panelBackground || '#18202a'};
+    background-clip: content-box;
     border: 0;
     border-radius: 50%;
     cursor: pointer;
