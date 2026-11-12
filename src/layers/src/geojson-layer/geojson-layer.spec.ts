@@ -1567,14 +1567,14 @@ describe('GeoJsonLayer numeric feature styles', () => {
 });
 
 describe('GeoJsonLayer complex polygon stroke defaults', () => {
-  test.each([999999, 1000000])(
+  test.each([99999, 100000, 100001])(
     'uses the initial position budget at %i positions',
     async positions => {
       const {dataset, layer} = await initializeGeoJsonLayer([
         {geometry: polygon(0), properties: {}}
       ]);
       // Geometry is parsed before defaults. A sparse ring tests the budget without
-      // allocating or visiting a million coordinates in an initialization test.
+      // allocating or visiting 100,000 coordinates in an initialization test.
       layer.dataToFeature = [
         {
           type: 'Feature',
@@ -1587,7 +1587,7 @@ describe('GeoJsonLayer complex polygon stroke defaults', () => {
       ];
       layer.setInitialLayerConfig(dataset);
       expect(layer.config.visConfig.filled).toBe(true);
-      expect(layer.config.visConfig.stroked).toBe(positions < 1000000);
+      expect(layer.config.visConfig.stroked).toBe(positions < 100000);
       // Updating geometry metadata must not override an explicit user toggle.
       layer.updateLayerVisConfig({stroked: true});
       layer.updateLayerMeta(dataset);

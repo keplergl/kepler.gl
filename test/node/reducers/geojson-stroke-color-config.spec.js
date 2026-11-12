@@ -332,7 +332,7 @@ describe('geojson strokeColor programmatic config', () => {
 
 describe('saved polygon stroke choice', () => {
   test.each([true, false])(
-    'preserves stroked=%s beyond the initial geometry budget',
+    'preserves stroked=%s at the initial geometry budget',
     async stroked => {
       const dataset = new KeplerTable({info: {id: 'detailed-polygon'}});
       await dataset.importData({
@@ -374,7 +374,7 @@ describe('saved polygon stroke choice', () => {
           properties: {},
           geometry: {
             type: 'Polygon',
-            coordinates: [new Array(1000000)]
+            coordinates: [new Array(100000)]
           }
         }
       ];

@@ -292,9 +292,9 @@ export function getTextLabelPosition(
 // don't use strokes by default for datasets with large number of polygons
 const DEFAULT_POLYGON_STROKE_LIMIT = 100000;
 // A conservative initial-render budget, not a device-specific FPS guarantee.
-// At this size, outlines alone allocate tens of MB of path geometry. Users can
-// still enable strokes explicitly; saved configurations do not use this default.
-const DEFAULT_POLYGON_STROKE_POSITION_LIMIT = 1000000;
+// Users can still enable strokes explicitly; saved configurations do not use
+// this default.
+const DEFAULT_POLYGON_STROKE_POSITION_LIMIT = 100000;
 
 export const COLUMN_MODE_TABLE = 'table';
 const SUPPORTED_COLUMN_MODES = [
