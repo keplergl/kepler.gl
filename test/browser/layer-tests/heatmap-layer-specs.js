@@ -1414,6 +1414,7 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
       [-122.4, 37.76]
     ];
     let data = {data: source, getPosition: d => d, getWeight: 1};
+    const gpuFilter = {filterRange: [0, 1]};
     let mapState = {
       ...INITIAL_MAP_STATE,
       width,
@@ -1430,7 +1431,15 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
       // state to replacements, so a zoom and its props are observed together.
       for (const layer of manager.getLayers()) layer.activateViewport(viewport);
       manager.setLayers(
-        heatmap.renderLayer({data, mapState, idx: 0, visible: true, layerCallbacks: {}})
+        heatmap.renderLayer({
+          data,
+          gpuFilter,
+          mapState,
+          idx: 0,
+          visible: true,
+          // The map renderer creates this callback again on every render.
+          layerCallbacks: {onFilteredItemsChange: () => {}}
+        })
       );
       for (const layer of manager.getLayers()) layer.activateViewport(viewport);
       manager.updateLayers();
@@ -1451,6 +1460,13 @@ test('#HeatmapLayer -> pans refresh once after settling without delaying real ed
       const bounds = first.state.worldBounds;
       const textureBounds = first.state.normalizedCommonBounds;
       const positions = first.getAttributeManager().getAttributes().positions.value;
+      render();
+      t.equal(aggregate.callCount, 1, 'callback changes without camera movement reuse density');
+      t.equal(
+        manager.getLayers()[0].state.weightsTransform,
+        transform,
+        'callback changes do not rebuild aggregation transforms'
+      );
       for (let i = 0; i < 30; i++) {
         clock.tick(16);
         pan(0.001);
