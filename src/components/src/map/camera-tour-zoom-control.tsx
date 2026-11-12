@@ -144,7 +144,7 @@ export default function CameraTourZoomControl({
   const progress = maxZoom > minZoom ? (zoom - minZoom) / (maxZoom - minZoom) : 0;
   const handleY = BOTTOM - progress * TRACK_HEIGHT;
   const halfWidth = MIN_HALF_WIDTH + progress * (MAX_HALF_WIDTH - MIN_HALF_WIDTH);
-  const left = clamp(x + 12, 4, viewport.width - WIDTH - 4);
+  const left = clamp(x - WIDTH - 12, 4, viewport.width - WIDTH - 4);
   const top = clamp(y - HEIGHT / 2, 28, viewport.height - HEIGHT - 24);
   const change = (value: number) => {
     if (Number.isFinite(value)) onChange(clamp(Math.round(value * 10) / 10, minZoom, maxZoom));

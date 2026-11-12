@@ -28,7 +28,7 @@ function preparePointerControl(slider: HTMLElement) {
     setPointerCapture: jest.fn(),
     hasPointerCapture: jest.fn(() => true),
     releasePointerCapture: jest.fn(),
-    getBoundingClientRect: () => ({left: 412, top: 252, width: 32, height: 96})
+    getBoundingClientRect: () => ({left: 356, top: 252, width: 32, height: 96})
   });
 }
 
@@ -36,13 +36,30 @@ function pointer(slider: HTMLElement, type: string, progress: number, pointerId 
   const event = new MouseEvent(type, {
     bubbles: true,
     cancelable: true,
-    clientX: 428,
+    clientX: 372,
     clientY: 252 + 84 - progress * 72,
     button
   });
   Object.defineProperty(event, 'pointerId', {value: pointerId});
   fireEvent(slider, event);
 }
+
+test('places the zoom control left of the point to leave its label clear', () => {
+  render(
+    <CameraTourZoomControl
+      stop={stop}
+      viewport={viewport}
+      globe={false}
+      onChange={jest.fn()}
+      onClose={jest.fn()}
+    />
+  );
+  const control = screen.getByRole('group', {name: 'Zoom for Home'});
+  const slider = screen.getByRole('slider');
+  const [pointX] = viewport.project([stop.camera.longitude, stop.camera.latitude]);
+  const controlRight = parseFloat(control.style.left) + Number(slider.getAttribute('width'));
+  expect(controlRight).toBeLessThan(pointX);
+});
 
 test('exposes zoom on an accessible vertical bar and edits with the keyboard without map gestures', () => {
   const onChange = jest.fn();
