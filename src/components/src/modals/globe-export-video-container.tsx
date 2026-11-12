@@ -483,7 +483,7 @@ export class GlobeExportVideoPanelContainer extends Component<
               offCtx.fillStyle = this.getBackgroundColor();
               offCtx.fillRect(0, 0, width, height);
               if (this.areStarsEnabled()) {
-                drawStarsBackground(offCtx, width, height);
+                drawStarsBackground(offCtx, width, height, this.state.viewState!);
               }
               offCtx.drawImage(deckCanvas, 0, 0, width, height);
             }

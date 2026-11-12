@@ -6,6 +6,7 @@ import DeckGL from '@deck.gl/react';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import styled from 'styled-components';
 
+import {getStarsBackgroundStyle} from '@kepler.gl/deckgl-layers';
 import {DeckAdapter} from '@hubble.gl/core';
 import {EXPORT_DECK_DEVICE_PROPS, getGlobeExportLayers} from './hubble-utils';
 
@@ -128,6 +129,11 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
         $height={height}
         $background={backgroundColor}
         $starsImage={starsImage}
+        style={
+          starsImage
+            ? getStarsBackgroundStyle(viewState, width, height, width / resolution[0])
+            : undefined
+        }
       >
         <DeckGL
           ref={ref => {

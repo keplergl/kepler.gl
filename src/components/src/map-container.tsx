@@ -106,6 +106,7 @@ import {
   getGlobeBasemapAttributions,
   resolveGlobeBasemapProvider,
   getStarsBackgroundImage,
+  getStarsBackgroundStyle,
   KeplerGlobeView
 } from '@kepler.gl/deckgl-layers';
 
@@ -1979,10 +1980,27 @@ export default function MapContainerFactory(
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
       const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
 
+      let containerStyle = this.styleSelector(this.props);
+      if (
+        !this.props.transparentBackground &&
+        this.props.mapState.globe?.enabled &&
+        this.props.mapState.globe.config.stars
+      ) {
+        const camera = this.context?.getInternalViewState(this.props.index) || this.props.mapState;
+        containerStyle = {
+          ...containerStyle,
+          ...getStarsBackgroundStyle(
+            camera,
+            this.props.mapState.width,
+            this.props.mapState.height
+          )
+        };
+      }
+
       return (
         <StyledMap
           ref={this._ref}
-          style={this.styleSelector(this.props)}
+          style={containerStyle}
           onPointerDownCapture={this._onMapPointerDownCapture}
           onContextMenu={this._onMapContextMenu}
           $mixBlendMode={visState.overlayBlending}
