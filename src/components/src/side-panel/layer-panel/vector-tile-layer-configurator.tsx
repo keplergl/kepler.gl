@@ -4,8 +4,10 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import styled from 'styled-components';
+import {FormattedMessage} from 'react-intl';
 
 import {VectorTileLayer} from '@kepler.gl/layers';
+import {RemoteTileFormat} from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
@@ -53,10 +55,14 @@ function VectorTileLayerConfiguratorFactory(
 ): React.FC<Props> {
   const VectorTileLayerConfigurator = ({
     layer,
+    dataset,
     visConfiguratorProps,
     layerChannelConfigProps,
     layerConfiguratorProps
   }: Props) => {
+    const metadata = dataset?.metadata as
+      | {bounds?: number[]; remoteTileFormat?: string}
+      | undefined;
     return (
       <StyledLayerConfigurator>
         {/* Fill Color */}
@@ -199,6 +205,27 @@ function VectorTileLayerConfiguratorFactory(
             placeholder={'placeholder.selectField'}
             erasable
           />
+        </LayerConfigGroup>
+
+        <LayerConfigGroup {...visConfiguratorProps} label="layer.debug" collapsible>
+          <ConfigGroupCollapsibleContent>
+            <VisConfigSwitch
+              {...visConfiguratorProps}
+              {...layer.visConfigSettings.showBounds}
+              description={
+                metadata?.remoteTileFormat === RemoteTileFormat.PMTILES
+                  ? 'layer.pmtilesBoundsDescription'
+                  : 'layer.tilesetBoundsDescription'
+              }
+            />
+            <small>
+              {!metadata?.bounds ? (
+                <div>
+                  <FormattedMessage id="layer.tilesetBoundsUnavailable" />
+                </div>
+              ) : null}
+            </small>
+          </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
       </StyledLayerConfigurator>
     );

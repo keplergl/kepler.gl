@@ -53,6 +53,7 @@ import {
 import {DataContainerInterface, getFilterFunction} from '@kepler.gl/utils';
 
 import {MVTLayer as CustomMVTLayer, GlobeClipExtension} from './mvt-layer';
+import {getBoundsTileZoom, getPMTilesBounds, getPMTilesMinZoom} from './pmtiles-bounds';
 import VectorTileIcon from './vector-tile-icon';
 import {
   default as KeplerLayer,
@@ -174,6 +175,14 @@ export const vectorTileVisConfigs = {
     step: 0.01
   } as VisConfigRange,
 
+  showBounds: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layer.showTilesetBounds',
+    property: 'showBounds',
+    description: 'layer.tilesetBoundsDescription'
+  } as VisConfigBoolean,
+
   hideNulls: {
     type: 'boolean',
     defaultValue: false,
@@ -208,36 +217,99 @@ export type VectorTileLayerVisConfigSettings = Merge<
     sizeRange: VisConfigRange;
     strokeWidth: VisConfigNumber;
     hideNulls: VisConfigBoolean;
+    showBounds: VisConfigBoolean;
   }
 >;
 
-export function tileLayerBoundsLayer(id: string, props: {bounds?: number[]}): DeckLayer[] {
-  const {bounds} = props;
-  if (bounds?.length !== 4) return [];
-
-  const data = [
-    {
-      path: [
-        [bounds[0], bounds[1]],
-        [bounds[2], bounds[1]],
-        [bounds[2], bounds[3]],
-        [bounds[0], bounds[3]],
-        [bounds[0], bounds[1]]
-      ]
-    }
+/** Gray metadata extent, plus bounded index-only PMTiles coverage. */
+export function tileLayerBoundsLayer(
+  id: string,
+  props: {
+    bounds?: number[];
+    visible?: boolean;
+    tileSource?: LayerData['tileSource'];
+    minZoom?: number;
+    maxZoom?: number;
+    zoom?: number;
+  }
+): DeckLayer[] {
+  const {bounds, visible = true} = props;
+  if (
+    !bounds ||
+    bounds.length !== 4 ||
+    !bounds.every(Number.isFinite) ||
+    Math.abs(bounds[0]) > 180 ||
+    Math.abs(bounds[2]) > 180 ||
+    Math.abs(bounds[1]) > 90 ||
+    Math.abs(bounds[3]) > 90 ||
+    bounds[1] >= bounds[3]
+  )
+    return [];
+  const path = boundsToPath(bounds);
+  if (!path.length) return [];
+  const layers: DeckLayer[] = [
+    new PathLayer({
+      id: `${id}-vector-tile-bounds`,
+      data: [{path}],
+      // A pan/hover creates new layer props, but must not rewrite unchanged geometry.
+      dataComparator: isEqual,
+      getPath: d => d.path,
+      getColor: [128, 128, 128, 255],
+      getWidth: 1,
+      widthUnits: 'pixels',
+      wrapLongitude: true,
+      visible,
+      pickable: false
+    })
   ];
+  if (visible && props.tileSource instanceof PMTilesTileSource) {
+    const search = getPMTilesBounds(props.tileSource, bounds, props.minZoom!, props.maxZoom!);
+    layers.push(
+      new PathLayer<number[]>({
+        // A new source/search must not retain the old archive's outlines while loading.
+        id: `${id}-occupied-tile-bounds-${search.id}`,
+        data: search.data,
+        dataComparator: isEqual,
+        getPath: boundsToPath,
+        // Read the index zoom when async data arrives, so a zoomed-in map never
+        // flashes opaque boxes while the index is still loading.
+        getColor: () => {
+          const opacity =
+            search.minZoom === null
+              ? 0
+              : Math.max(0, Math.min(1, search.minZoom - (props.zoom ?? 0)));
+          return [0, 187, 255, Math.round(255 * opacity)];
+        },
+        updateTriggers: {getColor: props.zoom},
+        getWidth: 1,
+        widthUnits: 'pixels',
+        wrapLongitude: true,
+        visible,
+        pickable: false
+      })
+    );
+  }
+  return layers;
+}
 
-  const layer = new PathLayer({
-    id: `${id}-vector-tile-bounds`,
-    data,
-    getPath: d => d.path,
-    getColor: [128, 128, 128, 255],
-    getWidth: 1,
-    widthUnits: 'pixels',
-    pickable: false
-  });
-
-  return [layer];
+function boundsToPath(bounds: number[]): [number, number][] {
+  const [west, south, rawEast, north] = bounds;
+  const east = rawEast < west ? rawEast + 360 : rawEast;
+  if (west === east) return [];
+  // Intermediate vertices retain wide/world extents on globe projections too.
+  const segments = Math.ceil((east - west) / 90);
+  const longitudes = Array.from(
+    {length: segments + 1},
+    (_, i) => west + ((east - west) * i) / segments
+  );
+  return [
+    ...longitudes.map((lng): [number, number] => [lng, south]),
+    ...longitudes
+      .slice()
+      .reverse()
+      .map((lng): [number, number] => [lng, north]),
+    [west, south]
+  ];
 }
 
 export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Feature[]> {
@@ -364,9 +436,67 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     super(props);
     this.registerVisConfig(vectorTileVisConfigs);
     this.tileDataset = this.initTileDataset();
+    this.hasExplicitBoundsSetting = typeof props.visConfig?.showBounds === 'boolean';
   }
 
   meta = {};
+  private hasExplicitBoundsSetting = false;
+  private boundsDefault: {dataId: string; requested: boolean} | null = null;
+
+  setInitialLayerConfig(dataset: KeplerDataset): this {
+    super.setInitialLayerConfig(dataset);
+    if (
+      !this.hasExplicitBoundsSetting &&
+      (dataset.metadata as VectorTileDatasetMetadata)?.remoteTileFormat === RemoteTileFormat.PMTILES
+    ) {
+      this.boundsDefault = {dataId: dataset.id, requested: false};
+    }
+    return this;
+  }
+
+  updateLayerVisConfig(newVisConfig) {
+    if (typeof newVisConfig.showBounds === 'boolean') {
+      this.hasExplicitBoundsSetting = true;
+      this.boundsDefault = null;
+    }
+    return super.updateLayerVisConfig(newVisConfig);
+  }
+
+  updateLayerConfig(newConfig: Partial<LayerBaseConfig> & Partial<LayerColorConfig>): this {
+    if (
+      typeof newConfig.visConfig?.showBounds === 'boolean' ||
+      (newConfig.dataId !== undefined && newConfig.dataId !== this.config.dataId)
+    ) {
+      this.boundsDefault = null;
+    }
+    if (typeof newConfig.visConfig?.showBounds === 'boolean') this.hasExplicitBoundsSetting = true;
+    super.updateLayerConfig(newConfig);
+    return this;
+  }
+
+  private initializeBoundsDefault({data, mapState, layerCallbacks}: VectorTileLayerRenderOptions) {
+    const pending = this.boundsDefault;
+    const source = data.tileSource;
+    const apply = layerCallbacks.onLayerVisConfigChange;
+    if (
+      !pending ||
+      pending.requested ||
+      pending.dataId !== this.config.dataId ||
+      !(source instanceof PMTilesTileSource) ||
+      !apply
+    ) {
+      return;
+    }
+    const boundsZoom = getBoundsTileZoom(data.bounds, mapState.width, mapState.height);
+    if (boundsZoom === null) return;
+    pending.requested = true;
+    void getPMTilesMinZoom(source).then(minZoom => {
+      // A manual choice, saved config, or source replacement owns the setting now.
+      if (this.boundsDefault !== pending || this.currentTileSource !== source) return;
+      this.boundsDefault = null;
+      if (minZoom !== null && minZoom > boundsZoom) apply({showBounds: true});
+    });
+  }
 
   static findDefaultLayerProps(dataset: KeplerDataset): FindDefaultLayerPropsReturnValue {
     if (dataset.type !== DatasetType.VECTOR_TILE) {
@@ -699,6 +829,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     const {animation, visConfig} = this.config;
 
     this.setLayerDomain = layerCallbacks.onSetLayerDomain;
+    this.initializeBoundsDefault(opts);
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const getFilterCategory = data.getFilterCategory || NO_CATEGORY_FILTER;
@@ -867,8 +998,17 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
               })
             ]
           : []),
-        ...perTileOverlays
-        // ...tileLayerBoundsLayer(defaultLayerProps.id, data),
+        ...perTileOverlays,
+        ...(visConfig.showBounds
+          ? tileLayerBoundsLayer(defaultLayerProps.id, {
+              bounds: data.bounds,
+              visible: defaultLayerProps.visible,
+              tileSource: data.tileSource,
+              minZoom: data.minZoom,
+              maxZoom: data.maxZoom,
+              zoom: mapState.zoom
+            })
+          : [])
       ];
 
       return layers;

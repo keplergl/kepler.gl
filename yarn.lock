@@ -4186,6 +4186,7 @@ __metadata:
     keymirror: "npm:^0.1.1"
     long: "npm:^4.0.0"
     markdown-to-jsx: "npm:^7.7.6"
+    pmtiles: "npm:^3.0.4"
     prop-types: "npm:^15.6.0"
     react: "npm:^19.0.0"
     react-intl: "npm:^7.0.0"
