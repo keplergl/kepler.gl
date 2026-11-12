@@ -1332,6 +1332,30 @@ test('Processor -> validateInputData', t => {
         ]
       },
       msg: 'should reassign field type'
+    },
+    {
+      input: {
+        rows: [],
+        fields: [{type: ALL_FIELD_TYPES.real, format: '', name: 'taro'}]
+      },
+      expected: {
+        rows: [],
+        fields: [
+          {type: ALL_FIELD_TYPES.real, format: '', name: 'taro', analyzerType: ALL_FIELD_TYPES.real}
+        ]
+      },
+      msg: 'should keep a valid field type when there are no rows to analyze'
+    },
+    {
+      input: {
+        rows: [],
+        fields: [{type: 'hello', format: '', name: 'taro'}]
+      },
+      expected: {
+        rows: [],
+        fields: [{type: ALL_FIELD_TYPES.string, format: '', name: 'taro', analyzerType: 'STRING'}]
+      },
+      msg: 'should reassign an unknown field type to string when there are no rows to analyze'
     }
   ];
 

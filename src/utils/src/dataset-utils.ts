@@ -321,12 +321,13 @@ export function validateInputData(data: ProtoDataset['data']): ProcessorResult {
       });
   const fieldOrder = fields.map(f => f.name);
   const meta = getFieldsFromData(sampleData, fieldOrder);
-  const updatedFields = fields.map((f, i) => ({
-    ...f,
-    type: meta[i].type,
-    format: meta[i].format,
-    analyzerType: meta[i].analyzerType
-  }));
+  // without rows every field is analyzed as a string: keep a valid declared type instead
+  const keepDeclaredType = sampleData.length === 0;
+  const updatedFields = fields.map((f, i) =>
+    keepDeclaredType && ALL_FIELD_TYPES[f.type]
+      ? {...f, format: f.format || '', analyzerType: f.analyzerType || f.type}
+      : {...f, type: meta[i].type, format: meta[i].format, analyzerType: meta[i].analyzerType}
+  );
 
   return {
     fields: updatedFields,
