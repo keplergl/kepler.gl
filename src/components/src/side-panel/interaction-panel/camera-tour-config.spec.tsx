@@ -432,6 +432,30 @@ test('scrubbing and playback evaluate the same camera at the same timestamp', ()
   expect(callbacks.size).toBe(0);
 });
 
+test('reserves a fixed elapsed-time width while scrubbing through fractional seconds', () => {
+  setup({
+    stops: [{...tour.stops[0], holdDurationMs: 1000000, travelDurationMs: 0}]
+  });
+  const elapsed = screen.getByLabelText('Elapsed time');
+  const slider = screen.getByRole('slider', {name: 'Camera tour time'});
+  const reservedWidth = getComputedStyle(elapsed).width;
+  // A minimum width still lets intrinsic text width take space from the slider.
+  expect(reservedWidth).toMatch(/^\d+ch$/);
+  for (const [value, text] of [
+    [0, '0 s'],
+    [10, '0.01 s'],
+    [9990, '9.99 s'],
+    [10000, '10 s'],
+    [999990, '999.99 s'],
+    [1000000, '1,000 s']
+  ] as const) {
+    fireEvent.change(slider, {target: {value: String(value)}});
+    expect(elapsed).toHaveTextContent(text);
+    expect(getComputedStyle(elapsed).width).toBe(reservedWidth);
+    expect(slider).toHaveValue(String(value));
+  }
+});
+
 test('resumes elapsed time, finishes exactly at the end, and replays from the beginning', () => {
   const {updateMap} = setup();
   fireEvent.change(screen.getByRole('slider'), {target: {value: '1500'}});
