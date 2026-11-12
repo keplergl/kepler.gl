@@ -1095,6 +1095,7 @@ export default function LayerConfiguratorFactory(
               <VisConfigSlider
                 {...layer.visConfigSettings.surfaceHeight}
                 {...visConfiguratorProps}
+                allowCustomValue
               />
               <VisConfigSwitch
                 {...layer.visConfigSettings.surfaceLighting}

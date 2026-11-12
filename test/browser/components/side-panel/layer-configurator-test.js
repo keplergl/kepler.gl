@@ -2039,12 +2039,26 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     fireEvent.click(header);
     t.notOk(group.classList.contains('collapsed'), 'header can expand the options again');
 
-    const heightInput = Array.from(options.querySelectorAll('.kg-range-slider__input')).find(
-      input => input.value === '1000'
+    fireEvent.click(
+      within(options).getByRole('button', {name: 'Enter custom value for Maximum height (m)'})
     );
-    fireEvent.change(heightInput, {target: {value: '2500'}});
-    fireEvent.blur(heightInput);
-    t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 2500}, 'height edits update the surface');
+    const heightInput = within(options).getByRole('spinbutton', {name: 'Maximum height (m)'});
+    t.equal(heightInput.value, '1000', 'custom input starts with the current surface height');
+    for (const height of [2500, 125000]) {
+      fireEvent.change(heightInput, {target: {value: String(height)}});
+      fireEvent.blur(heightInput);
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {surfaceHeight: height},
+        'custom heights update the surface, including values beyond the slider range'
+      );
+    }
+    fireEvent.click(within(options).getByRole('button', {name: 'Use slider for Maximum height (m)'}));
+    t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 100000}, 'returning clamps to slider range');
+    t.notOk(
+      within(options).queryByRole('spinbutton', {name: 'Maximum height (m)'}),
+      'returning closes the custom height input'
+    );
     fireEvent.click(options.querySelector('#surface-controls-surfaceLighting-switch'));
     t.deepEqual(changed.lastCall.args[0], {surfaceLighting: false}, 'shading can be disabled');
     fireEvent.click(options.querySelector('#surface-controls-surfaceContours-switch'));
@@ -2071,7 +2085,7 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.deepEqual(changed.lastCall.args[0], {surfaceEnabled: false}, 'disabling stores false');
     t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
     fireEvent.click(toggle);
-    t.equal(layer.config.visConfig.surfaceHeight, 2500, 'switching modes retains surface settings');
+    t.equal(layer.config.visConfig.surfaceHeight, 100000, 'switching modes retains surface settings');
     t.equal(layer.config.visConfig.surfaceContourStep, 100, 'switching modes retains contour step');
   } finally {
     view.unmount();

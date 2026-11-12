@@ -672,7 +672,9 @@ class HeatmapLayer extends Layer {
   }
 
   getDefaultDeckLayerProps(opts) {
-    const baseProp = super.getDefaultDeckLayerProps(opts);
+    // Filtering happens on the CPU. Unused GPU-filter callbacks can change on
+    // every render and incorrectly invalidate deck.gl's density aggregation.
+    const baseProp = super.getDefaultDeckLayerProps({...opts, gpuFilter: undefined});
     return {
       ...baseProp,
       // gpu data filtering via DataFilterExtension is not supported in aggregation layers
@@ -737,7 +739,8 @@ class HeatmapLayer extends Layer {
         updateTriggers,
         colorRange,
         weightsTextureSize: 512,
-        debounceTimeout: 0,
+        // Reuse the density texture while panning and refresh after settling.
+        debounceTimeout: 150,
         surface: visConfig.surfaceEnabled,
         surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
           ? Math.max(0, visConfig.surfaceHeight)

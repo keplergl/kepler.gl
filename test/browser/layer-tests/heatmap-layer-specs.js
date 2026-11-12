@@ -38,6 +38,7 @@ import KeplerHeatmapLayer from '../../../src/layers/src/heatmap-layer/deck-heatm
 import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/density-surface-mesh';
 import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
+import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 
 const {HeatmapLayer, PointLayer} = KeplerGlLayers;
@@ -1395,6 +1396,316 @@ test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t =
       );
     } finally {
       effect.cleanup(effectContext);
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> pans refresh once after settling without delaying real edits', t => {
+  for (const width of [800, 1400, 2560]) {
+    const clock = sinon.useFakeTimers();
+    const heatmap = new HeatmapLayer({id: `pan-wait-${width}`});
+    heatmap.updateMeta({bounds: [-123, 37, -122, 38]});
+    // Keep radiusPixels constant across zoom, exercising native zoom invalidation too.
+    heatmap.updateLayerVisConfig({radius: 2});
+    const source = [
+      [-122.42, 37.74],
+      [-122.4, 37.76]
+    ];
+    let data = {data: source, getPosition: d => d, getWeight: 1};
+    const gpuFilter = {filterRange: [0, 1]};
+    let mapState = {
+      ...INITIAL_MAP_STATE,
+      width,
+      height: 800,
+      longitude: -122.4,
+      latitude: 37.75,
+      zoom: 10
+    };
+    const manager = new LayerManager(device, {viewport: new WebMercatorViewport(mapState)});
+    const render = () => {
+      const viewport = new WebMercatorViewport(mapState);
+      manager.activateViewport(viewport);
+      // Activate the new camera on existing layers before transferring their
+      // state to replacements, so a zoom and its props are observed together.
+      for (const layer of manager.getLayers()) layer.activateViewport(viewport);
+      manager.setLayers(
+        heatmap.renderLayer({
+          data,
+          gpuFilter,
+          mapState,
+          idx: 0,
+          visible: true,
+          // The map renderer creates this callback again on every render.
+          layerCallbacks: {onFilteredItemsChange: () => {}}
+        })
+      );
+      for (const layer of manager.getLayers()) layer.activateViewport(viewport);
+      manager.updateLayers();
+      return manager.getLayers()[0];
+    };
+    const pan = distance => {
+      mapState = {...mapState, longitude: mapState.longitude + distance};
+      return render();
+    };
+    const aggregate = sinon.spy(DeckGLHeatmapLayer.prototype, '_updateWeightmap');
+    try {
+      const first = render();
+      t.equal(first.props.weightsTextureSize, 512, 'keeps the original texture size');
+      t.equal(first.props.debounceTimeout, 150, 'waits 150ms after pan movement');
+      t.equal(aggregate.callCount, 1, 'initial density renders immediately');
+      const weights = first.state.weightsTexture;
+      const transform = first.state.weightsTransform;
+      const bounds = first.state.worldBounds;
+      const textureBounds = first.state.normalizedCommonBounds;
+      const positions = first.getAttributeManager().getAttributes().positions.value;
+      render();
+      t.equal(aggregate.callCount, 1, 'callback changes without camera movement reuse density');
+      t.equal(
+        manager.getLayers()[0].state.weightsTransform,
+        transform,
+        'callback changes do not rebuild aggregation transforms'
+      );
+      for (let i = 0; i < 30; i++) {
+        clock.tick(16);
+        pan(0.001);
+      }
+      let current = manager.getLayers()[0];
+      t.equal(aggregate.callCount, 1, `${width}px: 30 pan frames run no GPU aggregation`);
+      t.equal(current.state.worldBounds, bounds, 'keeps the cached geographic frame during pan');
+      t.equal(current.state.normalizedCommonBounds, textureBounds, 'keeps the texture mapping');
+      t.equal(current.state.weightsTexture, weights, 'reuses density storage');
+      t.equal(current.state.weightsTransform, transform, 'does not rebuild aggregation transforms');
+      t.equal(
+        current.getAttributeManager().getAttributes().positions.value,
+        positions,
+        'does not upload point attributes'
+      );
+      t.equal(
+        Boolean(current.state.updateTimer),
+        width > 1024,
+        'only cache misses schedule a refresh'
+      );
+      clock.tick(149);
+      manager.updateLayers();
+      t.equal(aggregate.callCount, 1, 'does not refresh before the quiet period ends');
+      clock.tick(1);
+      manager.updateLayers();
+      t.equal(
+        aggregate.callCount,
+        width > 1024 ? 2 : 1,
+        'one refresh after settling, none for a cache hit'
+      );
+      current = manager.getLayers()[0];
+      t.notOk(current.state.updateTimer, 'settled timer is cleared');
+      if (width > 1024) {
+        t.equal(
+          current.state.aggregationViewport.longitude,
+          mapState.longitude,
+          'refresh uses the latest replacement viewport'
+        );
+      }
+      const settledCalls = aggregate.callCount;
+      clock.tick(500);
+      manager.updateLayers();
+      t.equal(aggregate.callCount, settledCalls, 'settled refresh does not loop');
+
+      const returnLongitude = mapState.longitude;
+      pan(1);
+      mapState = {...mapState, longitude: returnLongitude};
+      current = render();
+      t.notOk(current.state.updateTimer, 'returning inside the cache cancels pending work');
+      clock.tick(150);
+      manager.updateLayers();
+      t.equal(aggregate.callCount, settledCalls, 'returning inside the cache needs no refresh');
+
+      pan(1);
+      clock.tick(150); // Fires the timer, but deck.gl has not redrawn yet.
+      pan(1);
+      t.equal(aggregate.callCount, settledCalls, 'new movement supersedes a ready timer');
+      clock.tick(149);
+      manager.updateLayers();
+      t.equal(aggregate.callCount, settledCalls, 'resumed movement gets a new quiet period');
+      clock.tick(1);
+      manager.updateLayers();
+      t.equal(
+        aggregate.callCount,
+        settledCalls + 1,
+        'resumed pan refreshes once at its latest position'
+      );
+
+      const immediate = (label, change) => {
+        const before = aggregate.callCount;
+        current = pan(1);
+        t.ok(current.state.updateTimer, `${label}: starts with pending pan work`);
+        change();
+        current = render();
+        t.equal(aggregate.callCount, before + 1, `${label}: refreshes immediately`);
+        t.notOk(current.state.updateTimer, `${label}: cancels stale pan work`);
+        clock.tick(200);
+        manager.updateLayers();
+        t.equal(aggregate.callCount, before + 1, `${label}: no duplicate delayed refresh`);
+      };
+      immediate('zoom with unchanged radius', () => {
+        mapState = {...mapState, zoom: mapState.zoom + 0.25};
+      });
+      immediate('radius edit', () => heatmap.updateLayerVisConfig({radius: 50}));
+      immediate('filter to empty', () => {
+        data = {...data, data: []};
+      });
+      immediate('restore filtered points', () => {
+        data = {...data, data: source};
+      });
+      immediate('weight edit', () => {
+        data = {...data, getWeight: 2};
+      });
+      immediate('resize', () => {
+        mapState = {...mapState, width: width + 500};
+      });
+
+      const beforePalette = aggregate.callCount;
+      current = pan(1);
+      const oldColor = current.state.colorTexture;
+      heatmap.updateLayerVisConfig({
+        colorRange: {...heatmap.config.visConfig.colorRange, colors: ['#000000', '#ffffff']}
+      });
+      current = render();
+      t.notEqual(current.state.colorTexture, oldColor, 'palette changes are visible while waiting');
+      t.equal(aggregate.callCount, beforePalette, 'palette changes do not aggregate');
+      clock.tick(150);
+      manager.updateLayers();
+      t.equal(
+        aggregate.callCount,
+        beforePalette + 1,
+        'palette edit preserves the pending pan refresh'
+      );
+
+      const beforeRemoval = aggregate.callCount;
+      current = pan(1);
+      t.ok(current.state.updateTimer, 'has pending work before removal');
+      manager.setLayers([]);
+      clock.tick(200);
+      manager.updateLayers();
+      t.equal(aggregate.callCount, beforeRemoval, 'removing the layer cancels pending work');
+    } finally {
+      aggregate.restore();
+      manager.finalize();
+      clock.restore();
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> waiting flat quads do not stretch cached edge pixels', t => {
+  for (const longitude of [-122.5, 237.5]) {
+    const viewport = new WebMercatorViewport({
+      width: 1400,
+      height: 800,
+      longitude,
+      latitude: 37.5,
+      zoom: 10
+    });
+    const lower = viewport.projectPosition([-123, 37]);
+    const upper = viewport.projectPosition([-122, 38]);
+    let positions;
+    let texCoords;
+    const layer = {
+      props: {densityBounds: [-124, 36, -121, 39]},
+      context: {viewport},
+      state: {
+        updateTimer: 1,
+        normalizedCommonBounds: [lower[0], lower[1], upper[0], upper[1]],
+        triPositionBuffer: {
+          write: value => {
+            positions = value;
+          }
+        },
+        triTexCoordBuffer: {
+          write: value => {
+            texCoords = value;
+          }
+        }
+      },
+      _isGlobeHeatmap: () => false,
+      _dataQuadCorners: KeplerHeatmapLayer.prototype._dataQuadCorners
+    };
+    KeplerHeatmapLayer.prototype._updateTextureRenderingBounds.call(layer);
+    t.ok(
+      Array.from(texCoords).every(value => value >= -1e-6 && value <= 1 + 1e-6),
+      'UVs stay within the cached texture instead of sampling clamped edges'
+    );
+    const shift = longitude > 180 ? 360 : 0;
+    for (let i = 0; i < positions.length; i += 3) {
+      t.ok(
+        positions[i] >= -123 + shift && positions[i] <= -122 + shift,
+        'quad stays inside the cached longitude footprint in the nearest world copy'
+      );
+      t.ok(
+        positions[i + 1] >= 37 && positions[i + 1] <= 38,
+        'quad stays inside the cached latitude footprint'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#HeatmapLayer -> globe pans do not invalidate an unchanged density viewport', t => {
+  for (const width of [800, 2560]) {
+    const heatmap = new HeatmapLayer({id: `globe-pan-${width}`});
+    heatmap.updateMeta({bounds: [-170, -70, 170, 70]});
+    let data = {data: [[-122.4, 37.75]], getPosition: d => d, getWeight: 1};
+    let mapState = {
+      ...INITIAL_MAP_STATE,
+      width,
+      height: 800,
+      longitude: -122.4,
+      latitude: 37.75,
+      zoom: 10,
+      globe: {enabled: true}
+    };
+    const makeViewport = () =>
+      new _GlobeView().makeViewport({width, height: 800, viewState: mapState});
+    const manager = new LayerManager(device, {viewport: makeViewport()});
+    const render = () => {
+      const viewport = makeViewport();
+      manager.activateViewport(viewport);
+      // Activate the new camera on existing layers before transferring their
+      // state to replacements, so a zoom and its props are observed together.
+      for (const layer of manager.getLayers()) layer.activateViewport(viewport);
+      manager.setLayers(
+        heatmap.renderLayer({data, mapState, idx: 0, visible: true, layerCallbacks: {}})
+      );
+      for (const layer of manager.getLayers()) layer.activateViewport(viewport);
+      manager.updateLayers();
+      return manager.getLayers()[0];
+    };
+    const aggregate = sinon.spy(DeckGLHeatmapLayer.prototype, '_updateWeightmap');
+    try {
+      let layer = render();
+      const frame = layer.state.densityBoundsFrameKey;
+      const bounds = layer.state.worldBounds;
+      t.equal(aggregate.callCount, 1, 'initial globe density renders immediately');
+      for (let i = 0; i < 30; i++) {
+        mapState = {...mapState, longitude: mapState.longitude + 0.001};
+        layer = render();
+      }
+      t.equal(
+        layer.state.densityBoundsFrameKey,
+        frame,
+        'small pans retain the fixed Mercator frame'
+      );
+      t.equal(layer.state.worldBounds, bounds, 'floating-point containment does not reframe it');
+      t.equal(aggregate.callCount, 1, 'no redundant aggregation for the live camera changes');
+      data = {...data, getWeight: 2};
+      render();
+      t.equal(aggregate.callCount, 2, 'globe weight edits remain immediate');
+      mapState = {...mapState, zoom: mapState.zoom + 1};
+      layer = render();
+      t.equal(aggregate.callCount, 3, 'zoom and a real density-frame change still aggregate');
+      t.notEqual(layer.state.densityBoundsFrameKey, frame, 'zoom selects a new density frame');
+    } finally {
+      aggregate.restore();
       manager.finalize();
     }
   }
