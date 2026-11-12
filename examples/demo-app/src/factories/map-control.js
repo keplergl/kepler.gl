@@ -25,7 +25,7 @@ try {
 }
 import {AiAssistantControlFactory} from '@openassistant/kepler-assistant';
 
-import {BannerMapPanel, SampleMapPanel} from '../components/map-control/map-control';
+import {SampleMapPanel} from '../components/map-control/map-control';
 import SqlPanelControlFactory from '../components/map-control/sql-panel-control';
 
 const StyledMapControlPanel = styled.div`
@@ -122,7 +122,6 @@ function CustomMapControlFactory(
     return (
       <StyledMapControlOverlay top={props.top} rightPanelVisible={rightPanelVisible}>
         <StyledMapControlPanel>
-          {<BannerMapPanel {...props} />}
           {!props.isExport && props.currentSample ? <SampleMapPanel {...props} /> : null}
           <MapControl {...props} top={0} actionComponents={actionComponents} />
         </StyledMapControlPanel>

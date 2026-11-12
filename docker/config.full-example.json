@@ -58,7 +58,6 @@
     "cdnUrl": "https://studio-public-data.foursquare.com/statics/keplergl",
 
     "useArrowProgressiveLoading": true,
-    "showReleaseBanner": true,
     "useOnFilteredItemsChange": false,
     "escapeXhtmlForWebpack": true,
     "maxPitch": 60,
