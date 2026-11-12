@@ -13,6 +13,8 @@ import WebsitePackage from '../package.json' with {type: 'json'};
 const require = createRequire(import.meta.url);
 
 const args = process.argv;
+const isProduction = args.includes('--build') || args.includes('--production');
+const nodeEnv = isProduction ? 'production' : 'development';
 const LIB_DIR = '../';
 const NODE_MODULES_DIR = join(LIB_DIR, 'node_modules');
 const WEBSITE_NODE_MODULES_DIR = './node_modules';
@@ -107,7 +109,8 @@ const config = {
   outfile: 'dist/bundle.js',
   bundle: true,
   define: {
-    NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
+    NODE_ENV: JSON.stringify(nodeEnv),
+    'process.env.NODE_ENV': JSON.stringify(nodeEnv),
     'process.env.MapboxAccessToken': JSON.stringify(process.env.MapboxAccessToken || ''),
     'process.env.DropboxClientId': JSON.stringify(process.env.DropboxClientId || ''),
     'process.env.MapboxExportToken': JSON.stringify(process.env.MapboxExportToken || ''),
@@ -198,7 +201,7 @@ function validateEnvVariable(variable, instruction) {
 }
 
 (async () => {
-  if (args.includes('--build')) {
+  if (isProduction) {
     // Validate environment variables before production build
     const ENV_VARIABLES_WITH_INSTRUCTIONS = {
       MapboxAccessToken: 'Get your Mapbox token at https://www.mapbox.com/help/how-access-tokens-work/',
@@ -215,7 +218,9 @@ function validateEnvVariable(variable, instruction) {
     Object.entries(ENV_VARIABLES_WITH_INSTRUCTIONS).forEach(([variable, instruction]) => {
       validateEnvVariable(variable, instruction);
     });
+  }
 
+  if (args.includes('--build')) {
     // Compile the SQLRooms/Tailwind stylesheet before bundling so
     // dist/tailwind.css exists alongside the JS bundle.
     buildTailwind({watch: false});
@@ -240,8 +245,8 @@ function validateEnvVariable(variable, instruction) {
     await esbuild
       .context({
         ...config,
-        minify: false,
-        sourcemap: true,
+        minify: isProduction,
+        sourcemap: !isProduction,
         alias: RESOLVE_LOCAL_ALIASES,
         banner: {
           js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`
