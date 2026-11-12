@@ -129,10 +129,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   // Mesh cache writes are direct to avoid scheduling an update while rendering.
   declare state: DeckGLHeatmapLayer['state'] & {
     surfaceMeshCache?: {key: string; mesh: HeatmapMesh | null};
-    // Pending work and its density viewport survive replacement instances.
-    panUpdateTimer?: ReturnType<typeof setTimeout> | null;
-    panUpdateReady?: boolean;
-    aggregationViewport?: WebMercatorViewport;
     // Bounds follow the visible area when zoomed inside the data extent.
     densityBounds?: [number, number, number, number] | null;
     densityBoundsFrameKey?: string | null;
@@ -409,94 +405,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     return [q(w, stepX), q(s, stepY), q(e, stepX), q(n, stepY)].map(v => v.toFixed(4)).join(',');
   }
 
-  /** Keep the cached texture during pans; refresh once the camera settles. */
-  _updateHeatmapState(opts: any) {
-    const flushPan = this.state.panUpdateReady && !opts.changeFlags.viewportChanged;
-    this.state.panUpdateReady = false;
-    if (flushPan) {
-      opts = {...opts, changeFlags: {...opts.changeFlags, viewportChanged: true}};
-    }
-    const changes = this._getChangeFlags(opts);
-    const globe = this._isGlobeHeatmap();
-    const viewport = this.context.viewport as WebMercatorViewport;
-    const previous = this.state.aggregationViewport;
-    const panOnly =
-      previous &&
-      (['zoom', 'pitch', 'bearing', 'width', 'height', 'altitude'] as const).every(
-        key => viewport[key] === previous[key]
-      );
-
-    if (changes.dataChanged || changes.viewportZoomChanged || globe || !panOnly) {
-      this._cancelPanUpdate();
-    } else if (!flushPan && changes.viewportChanged && this.state.worldBounds) {
-      const [west, south, east, north] = this.state.worldBounds;
-      // Ignore sub-centimeter projection roundoff at the cached boundary.
-      const epsilon = 1e-7;
-      const inside = [
-        [0, 0],
-        [viewport.width, 0],
-        [0, viewport.height],
-        [viewport.width, viewport.height]
-      ].every(point => {
-        // Match deck.gl's float32 viewport corners before comparing with the
-        // frame it built; raw doubles can sit just outside that same frame.
-        const [lng, lat] = viewport.unproject(point).map(Math.fround);
-        return (
-          lng >= west - epsilon &&
-          lng <= east + epsilon &&
-          lat >= south - epsilon &&
-          lat <= north + epsilon
-        );
-      });
-      if (inside) {
-        this._cancelPanUpdate();
-      } else if (this.props.debounceTimeout > 0) {
-        this._cancelPanUpdate();
-        this.state.panUpdateTimer = setTimeout(() => {
-          // The timer can outlive the instance that scheduled it. Let deck.gl
-          // update the latest layer using its own last activated viewport,
-          // rather than a stale instance or another split view's context.
-          const layer = this.getCurrentLayer() as KeplerHeatmapLayer | null;
-          if (layer) {
-            layer.state.panUpdateTimer = null;
-            layer.state.panUpdateReady = true;
-            layer.setNeedsUpdate();
-          }
-        }, this.props.debounceTimeout);
-      } else {
-        super._updateHeatmapState(opts);
-        return;
-      }
-      // Keep the old density frame/UV mapping, but still update drawing and
-      // display props (including palette edits) through the normal lifecycle.
-      this._updateTextureRenderingBounds();
-      opts = {...opts, changeFlags: {...opts.changeFlags, viewportChanged: false}};
-    }
-    super._updateHeatmapState(opts);
-  }
-
-  private _cancelPanUpdate() {
-    if (this.state.panUpdateTimer) {
-      clearTimeout(this.state.panUpdateTimer);
-    }
-    this.state.panUpdateTimer = null;
-    this.state.panUpdateReady = false;
-  }
-
-  // Only pans wait. Zoom changes pixel radius/resolution and must refresh now.
-  _debouncedUpdateWeightmap() {
-    clearTimeout(this.state.updateTimer);
-    this.state.updateTimer = null;
-    this._updateBounds(true);
-    this._updateTextureRenderingBounds();
-    this.state.isWeightMapDirty = true;
-  }
-
-  finalizeState(context: any) {
-    this._cancelPanUpdate();
-    super.finalizeState(context);
-  }
-
   updateState(opts: any) {
     const {globeMode, densityBounds} = this.props as any;
 
@@ -541,11 +449,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     // visible area) for level-of-detail. Do this BEFORE swapping the viewport.
     const globeViewport = opts.context?.viewport || this.context.viewport;
     const nextBounds = this._computeDensityBounds(globeViewport);
-    let densityFrameChanged = !this.state.worldBounds;
     if (nextBounds) {
       const nextKey = this._densityBoundsKey(nextBounds);
       if (nextKey !== this.state.densityBoundsFrameKey) {
-        densityFrameChanged = true;
         this.state.densityBounds = nextBounds;
         this.state.densityBoundsFrameKey = nextKey;
         // Invalidate the cached mercator viewport so it is rebuilt for the new
@@ -555,6 +461,9 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         this._densityViewport = null;
         this._densityViewportKey = null;
         (this.state as any).worldBounds = null;
+        // A display-only update can arrive without a viewport change. Once
+        // bounds are cleared, deck.gl must rebuild them before rendering.
+        opts = {...opts, changeFlags: {...opts.changeFlags, viewportChanged: true}};
       }
     }
 
@@ -579,14 +488,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
       super.updateState(opts);
       return;
     }
-
-    // The GPU aggregation sees this fixed Mercator viewport, not the live
-    // globe camera. Forwarding every camera move can repeatedly fail native
-    // bounds containment on floating-point roundoff and aggregate needlessly.
-    opts = {
-      ...opts,
-      changeFlags: {...opts.changeFlags, viewportChanged: densityFrameChanged}
-    };
 
     const internalState = this.internalState as any;
     const originalContextViewport = this.context.viewport;
@@ -659,14 +560,12 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
   _updateWeightmap() {
     if (!this._isGlobeHeatmap()) {
       super._updateWeightmap();
-      this.state.aggregationViewport = this.context.viewport as WebMercatorViewport;
       return;
     }
 
     const radiusScale = this._getRadiusScale();
     if (radiusScale === 1) {
       super._updateWeightmap();
-      this.state.aggregationViewport = this.context.viewport as WebMercatorViewport;
       return;
     }
 
@@ -678,7 +577,6 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     });
     try {
       super._updateWeightmap();
-      this.state.aggregationViewport = this.context.viewport as WebMercatorViewport;
     } finally {
       this.props = originalProps;
     }
@@ -717,22 +615,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
     // heatmap renders at one stable basemap location like every other layer,
     // regardless of zoom or how far the camera has panned.
     if (densityBounds && densityBounds.length === 4) {
-      let corners = this._dataQuadCorners(densityBounds);
-      if (corners && this.state.panUpdateTimer) {
-        // The sampler clamps outside [0, 1]. While waiting for fresh density,
-        // clip the quad to the cached footprint instead of stretching edge
-        // texels across newly exposed areas. Projection keeps latitude mapping
-        // correct and the existing world-copy handling below still applies.
-        const [xMin, yMin, xMax, yMax] = normalizedCommonBounds;
-        corners = corners.map(point => {
-          const common = viewport.projectPosition(point);
-          return viewport.unprojectPosition([
-            Math.max(xMin, Math.min(xMax, common[0])),
-            Math.max(yMin, Math.min(yMax, common[1])),
-            0
-          ]);
-        });
-      }
+      const corners = this._dataQuadCorners(densityBounds);
       if (corners) {
         // Pin the quad to the world copy nearest the camera so it stays on
         // screen as the user pans across world copies — the same visual result

@@ -739,8 +739,7 @@ class HeatmapLayer extends Layer {
         updateTriggers,
         colorRange,
         weightsTextureSize: 512,
-        // Reuse the density texture while panning and refresh after settling.
-        debounceTimeout: 150,
+        debounceTimeout: 0,
         surface: visConfig.surfaceEnabled,
         surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
           ? Math.max(0, visConfig.surfaceHeight)
