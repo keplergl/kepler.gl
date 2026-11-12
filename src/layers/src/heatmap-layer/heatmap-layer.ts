@@ -737,10 +737,8 @@ class HeatmapLayer extends Layer {
         updateTriggers,
         colorRange,
         weightsTextureSize: 512,
-        // TEMPORARY PR #4086 diagnostic: aggregate once, then only draw the
-        // cached density. Reload/recreate the layer to apply data or radius edits.
-        debugFreezeAggregation: true,
-        debounceTimeout: 0,
+        // Reuse the density texture while panning and refresh after settling.
+        debounceTimeout: 150,
         surface: visConfig.surfaceEnabled,
         surfaceHeight: Number.isFinite(visConfig.surfaceHeight)
           ? Math.max(0, visConfig.surfaceHeight)
