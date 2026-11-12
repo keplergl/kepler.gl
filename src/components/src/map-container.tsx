@@ -684,6 +684,12 @@ export default function MapContainerFactory(
       mapStateActions.updateMap({}, index);
     };
 
+    _onLayerVisConfigChange = (layer: Layer, config: Partial<LayerBaseConfig['visConfig']>) => {
+      if (!this.unmounted && this.props.visState.layers.includes(layer)) {
+        this.props.visStateActions.layerVisConfigChange(layer, config);
+      }
+    };
+
     _onFitBounds = (_idx: number, bounds: [number, number, number, number]) => {
       this.props.mapStateActions.fitBounds(bounds);
     };
@@ -1342,6 +1348,8 @@ export default function MapContainerFactory(
           onLayerError: this._onLayerError,
           onLayerHover: this._onLayerHover,
           onSetLayerDomain: this._onLayerSetDomain,
+          onLayerVisConfigChange: (idx, config) =>
+            this._onLayerVisConfigChange(visState.layers[idx], config),
           onFilteredItemsChange: this._onLayerFilteredItemsChange,
           // Capture the originating layer: an async result may arrive after
           // removal or reordering has put another layer at the same index.

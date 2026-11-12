@@ -319,7 +319,11 @@ function setup(strictMode = false) {
       splitMaps: [],
       interactionConfig: {tooltip: {enabled: true}, coordinate: {enabled: false}}
     },
-    visStateActions: {wmsFeatureInfo: jest.fn(), layerSetIsValid: jest.fn()},
+    visStateActions: {
+      wmsFeatureInfo: jest.fn(),
+      layerSetIsValid: jest.fn(),
+      layerVisConfigChange: jest.fn()
+    },
     uiStateActions: {addNotification: jest.fn()},
     index: 0
   };
@@ -340,6 +344,25 @@ function setup(strictMode = false) {
   });
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
+
+test('applies async layer defaults to their originating layer after reordering', () => {
+  const {props, layer, ref, rerender, getState} = setup();
+  rerender({...getState(), layers: [{...layer, id: 'other'}, layer]});
+  ref.current._onLayerVisConfigChange(layer, {showBounds: true});
+  expect(props.visStateActions.layerVisConfigChange).toHaveBeenCalledWith(layer, {showBounds: true});
+});
+
+test.each(['removed', 'replaced', 'unmounted'])(
+  'ignores async defaults after the layer is %s',
+  change => {
+    const {props, layer, ref, view, rerender, getState} = setup();
+    const apply = ref.current._onLayerVisConfigChange;
+    if (change === 'unmounted') view.unmount();
+    else rerender({...getState(), layers: change === 'removed' ? [] : [{...layer}]});
+    apply(layer, {showBounds: true});
+    expect(props.visStateActions.layerVisConfigChange).not.toHaveBeenCalled();
+  }
+);
 
 describe('layer-render error notifications', () => {
   beforeEach(() => jest.useFakeTimers());

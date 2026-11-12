@@ -470,6 +470,7 @@ export type LayerCallbacks = {
   onLayerError?: (idx: number, error: Error) => void;
   onLayerHover?: (idx: number, value: any) => void;
   onSetLayerDomain?: (idx: number, value: any) => void;
+  onLayerVisConfigChange?: (idx: number, value: Partial<LayerVisConfig>) => void;
   onFilteredItemsChange?: (
     idx: number,
     event: {
@@ -493,6 +494,7 @@ export type BindedLayerCallbacks = {
   onLayerError?: (error: Error) => void;
   onLayerHover?: (value: any) => void;
   onSetLayerDomain?: (value: any) => void;
+  onLayerVisConfigChange?: (value: Partial<LayerVisConfig>) => void;
   onFilteredItemsChange?: (event: {id: string; count: number}) => void;
   onWMSFeatureInfo?: (props: {
     featureInfo: Array<{name: string; value: string}> | string | null;

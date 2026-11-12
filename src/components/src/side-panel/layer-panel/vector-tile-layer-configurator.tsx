@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import {FormattedMessage} from 'react-intl';
 
 import {VectorTileLayer} from '@kepler.gl/layers';
+import {RemoteTileFormat} from '@kepler.gl/constants';
 import {KeplerTable as KeplerDataset} from '@kepler.gl/table';
 
 import SourceDataSelectorFactory from '../common/source-data-selector';
@@ -60,42 +61,10 @@ function VectorTileLayerConfiguratorFactory(
     layerConfiguratorProps
   }: Props) => {
     const metadata = dataset?.metadata as
-      | {bounds?: number[]; minZoom?: number; maxZoom?: number}
+      | {bounds?: number[]; remoteTileFormat?: string}
       | undefined;
-    const {minZoom, maxZoom} = metadata || {};
-    const hasZoomRange =
-      typeof minZoom === 'number' &&
-      typeof maxZoom === 'number' &&
-      Number.isInteger(minZoom) &&
-      Number.isInteger(maxZoom) &&
-      minZoom >= 0 &&
-      maxZoom >= minZoom &&
-      maxZoom <= 30;
     return (
       <StyledLayerConfigurator>
-        <LayerConfigGroup {...visConfiguratorProps} label="layer.tilesetExtent">
-          <VisConfigSwitch
-            {...visConfiguratorProps}
-            {...layer.visConfigSettings.showBounds}
-            description={undefined}
-          />
-          <small>
-            <FormattedMessage id="layer.tilesetBoundsDescription" />
-            {hasZoomRange ? (
-              <div>
-                <FormattedMessage
-                  id="layer.tilesetZoomRange"
-                  values={{min: minZoom, max: maxZoom}}
-                />
-              </div>
-            ) : null}
-            {!metadata?.bounds ? (
-              <div>
-                <FormattedMessage id="layer.tilesetBoundsUnavailable" />
-              </div>
-            ) : null}
-          </small>
-        </LayerConfigGroup>
         {/* Fill Color */}
         <LayerConfigGroup
           {...visConfiguratorProps}
@@ -239,6 +208,27 @@ function VectorTileLayerConfiguratorFactory(
             placeholder={'placeholder.selectField'}
             erasable
           />
+        </LayerConfigGroup>
+
+        <LayerConfigGroup {...visConfiguratorProps} label="layer.debug" collapsible>
+          <ConfigGroupCollapsibleContent>
+            <VisConfigSwitch
+              {...visConfiguratorProps}
+              {...layer.visConfigSettings.showBounds}
+              description={
+                metadata?.remoteTileFormat === RemoteTileFormat.PMTILES
+                  ? 'layer.pmtilesBoundsDescription'
+                  : 'layer.tilesetBoundsDescription'
+              }
+            />
+            <small>
+              {!metadata?.bounds ? (
+                <div>
+                  <FormattedMessage id="layer.tilesetBoundsUnavailable" />
+                </div>
+              ) : null}
+            </small>
+          </ConfigGroupCollapsibleContent>
         </LayerConfigGroup>
       </StyledLayerConfigurator>
     );

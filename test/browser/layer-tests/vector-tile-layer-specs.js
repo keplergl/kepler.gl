@@ -3,9 +3,15 @@
 
 import test from 'tape-catch';
 import {tileLayerBoundsLayer} from '../../../src/layers/src/vector-tile/vector-tile-layer';
+import {
+  getBoundsTileZoom,
+  getPMTilesBounds,
+  getPMTilesMinZoom
+} from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
 import {MVTSource} from '@loaders.gl/mvt';
 import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
+import {zxyToTileId} from 'pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {
@@ -13,7 +19,9 @@ import {
   INITIAL_VIS_STATE,
   setLayerAnimationTimeUpdater,
   updateVisDataUpdater,
-  createNewDatasetSuccessUpdater
+  createNewDatasetSuccessUpdater,
+  findDefaultLayer,
+  setInitialLayerConfig
 } from '@kepler.gl/reducers';
 import {drainTasksForTesting} from '@kepler.gl/tasks';
 import {preparedDataset, dataId} from 'test/helpers/layer-utils';
@@ -1736,6 +1744,613 @@ test('#VectorTileLayer -> optional metadata bounds without tile requests', t => 
     layer.renderLayer(opts).length,
     1,
     'helper can be disabled without altering tile rendering'
+  );
+  t.end();
+});
+
+function indexedBoundsSource(
+  entries,
+  getTileData = async () => {
+    throw new Error('Coverage must not fetch tile contents');
+  }
+) {
+  const source = Object.create(PMTilesTileSource.prototype);
+  source.getTileData = sinon.spy(getTileData);
+  const sorted = entries.slice().sort((a, b) => a.tileId - b.tileId);
+  source.pmtiles = {
+    source: {},
+    getHeader: sinon.spy(async () => ({
+      specVersion: 3,
+      rootDirectoryOffset: 127,
+      rootDirectoryLength: 32,
+      leafDirectoryOffset: 512
+    })),
+    cache: {
+      getDirectory: sinon.spy(async (_source, offset) => {
+        if (offset === 127) {
+          return [
+            ...(sorted.length
+              ? [{tileId: sorted[0].tileId, offset: 0, length: 64, runLength: 0}]
+              : []),
+            {tileId: zxyToTileId(14, 0, 0), offset: 64, length: 64, runLength: 0}
+          ];
+        }
+        if (offset === 512) return sorted;
+        throw new Error('unrelated directory must not be read');
+      })
+    }
+  };
+  return source;
+}
+
+function storedBoundsEntry(z, x, y, runLength = 1) {
+  return {tileId: zxyToTileId(z, x, y), offset: 0, length: 1, runLength};
+}
+
+const BOUNDS_WORLD = [-180, -85.0511287798066, 180, 85.0511287798066];
+
+test('#VectorTileLayer -> PMTiles minimum zoom reads only the first index branch', async t => {
+  const source = indexedBoundsSource([storedBoundsEntry(9, 454, 201), storedBoundsEntry(12, 1, 1)]);
+  t.equal(await getPMTilesMinZoom(source), 9, 'uses the first stored zoom, independent of the header');
+  t.equal(source.pmtiles.cache.getDirectory.callCount, 2, 'reads only root and first leaf');
+  t.equal(await getPMTilesMinZoom(source), 9, 'reuses the result');
+  t.equal(source.pmtiles.cache.getDirectory.callCount, 2, 'cached result requires no directory reads');
+  t.equal(source.getTileData.callCount, 0, 'never requests tile content');
+  const empty = indexedBoundsSource([]);
+  empty.pmtiles.cache.getDirectory = async () => [];
+  t.equal(await getPMTilesMinZoom(empty), null, 'empty archive has no minimum');
+  const failed = indexedBoundsSource([]);
+  failed.pmtiles.getHeader = async () => {
+    throw new Error('offline');
+  };
+  t.equal(await getPMTilesMinZoom(failed), null, 'failed index is optional');
+  const oversized = indexedBoundsSource([]);
+  oversized.pmtiles.getHeader = async () => ({specVersion: 3, rootDirectoryLength: 262145});
+  t.equal(await getPMTilesMinZoom(oversized), null, 'caps compressed index bytes');
+  t.equal(oversized.pmtiles.cache.getDirectory.callCount, 0, 'does not fetch an oversized directory');
+  const cyclic = indexedBoundsSource([]);
+  cyclic.pmtiles.cache.getDirectory = sinon.spy(async () => [
+    {tileId: 0, offset: 0, length: 32, runLength: 0}
+  ]);
+  t.equal(await getPMTilesMinZoom(cyclic), null, 'caps directory depth');
+  t.equal(cyclic.pmtiles.cache.getDirectory.callCount, 4, 'at most four small directory reads');
+  t.end();
+});
+
+test('#VectorTileLayer -> extent tile zoom handles viewport size and wrapped bounds', t => {
+  t.equal(getBoundsTileZoom(BOUNDS_WORLD, 512, 512), 0, 'world extent fits at zoom zero');
+  t.equal(getBoundsTileZoom(BOUNDS_WORLD, 1024, 1024), 1, 'larger viewport fits at a higher zoom');
+  t.equal(
+    getBoundsTileZoom([170, -10, -170, 10], 800, 600),
+    getBoundsTileZoom([-10, -10, 10, 10], 800, 600),
+    'dateline extents use their short span'
+  );
+  for (const bounds of [undefined, [], [NaN, 0, 1, 1], [0, 10, 10, 0], [0, 0, 0, 10]]) {
+    t.equal(getBoundsTileZoom(bounds, 800, 600), null, 'invalid extent does not enable the helper');
+  }
+  t.equal(getBoundsTileZoom(BOUNDS_WORLD, 0, 0), null, 'waits for a sized viewport');
+  t.equal(getBoundsTileZoom([0, 86, 10, 90], 512, 512), null, 'ignores extents beyond tile latitudes');
+  t.end();
+});
+
+test('#VectorTileLayer -> new PMTiles layers default bounds only below stored zooms', async t => {
+  const table = new KeplerTable({info: {id: 'default-bounds', type: 'vector-tile'}, color: [0, 0, 0]});
+  table.updateSchema({fields: [], rows: []});
+  table.metadata = {
+    remoteTileFormat: RemoteTileFormat.PMTILES,
+    tilesetDataUrl: 'https://example.com/coverage.pmtiles',
+    tilesetMetadataUrl: 'https://example.com/coverage.pmtiles',
+    bounds: BOUNDS_WORLD,
+    minZoom: 0,
+    maxZoom: 15
+  };
+  const datasets = {[table.id]: table};
+  const construct = sinon.stub(PMTilesSource, 'createDataSource');
+  const create = (source, manual = false, initialize = true) => {
+    const tileFetch = source.getTileData;
+    source.metadata = Promise.resolve({});
+    construct.returns(source);
+    const layer = initialize
+      ? manual
+        ? setInitialLayerConfig(
+            new VectorTileLayer({dataId: table.id}),
+            datasets,
+            INITIAL_VIS_STATE.layerClasses
+          )
+        : findDefaultLayer(table, INITIAL_VIS_STATE.layerClasses)[0]
+      : new VectorTileLayer({dataId: table.id});
+    const apply = sinon.spy(config => layer.updateLayerVisConfig(config));
+    const data = layer.formatLayerData(datasets, undefined, {});
+    const opts = {
+      data,
+      mapState: {...INITIAL_MAP_STATE, width: 512, height: 512},
+      animationConfig: {},
+      gpuFilter: table.gpuFilter,
+      layerCallbacks: {onLayerVisConfigChange: apply},
+      visible: true
+    };
+    return {layer, opts, apply, tileFetch};
+  };
+  const settle = async source => {
+    await getPMTilesMinZoom(source);
+    await Promise.resolve();
+  };
+  try {
+    for (const manual of [false, true]) {
+      for (const zoom of [0, 3]) {
+        const source = indexedBoundsSource([storedBoundsEntry(zoom, 0, 0)]);
+        const {layer, opts, apply, tileFetch} = create(source, manual);
+        layer.renderLayer(opts);
+        await settle(source);
+        t.equal(
+          layer.config.visConfig.showBounds,
+          zoom > 0,
+          `${manual ? 'manual' : 'Add Tileset'} default uses the stored zoom`
+        );
+        t.equal(apply.callCount, zoom > 0 ? 1 : 0, 'updates only when enabling the default');
+        t.equal(tileFetch.callCount, 0, 'default decision never fetches tile content');
+        layer.updateLayerVisConfig({showBounds: false});
+        layer.renderLayer(opts);
+        await settle(source);
+        t.equal(
+          layer.config.visConfig.showBounds,
+          false,
+          'manual disable stays disabled on subsequent renders'
+        );
+      }
+    }
+    for (const zoom of [0, 1]) {
+      const source = indexedBoundsSource([storedBoundsEntry(zoom, 0, 0)]);
+      const {layer, opts, apply} = create(source);
+      layer.renderLayer({...opts, mapState: {...opts.mapState, width: 1024, height: 1024}});
+      await settle(source);
+      t.equal(apply.callCount, 0, 'stored coverage at or below the fitted zoom leaves bounds off');
+    }
+    for (const cancel of ['manual', 'saved', 'source']) {
+      const source = indexedBoundsSource([storedBoundsEntry(3, 0, 0)]);
+      const {layer, opts, apply} = create(source);
+      layer.renderLayer(opts);
+      if (cancel === 'manual') layer.updateLayerVisConfig({showBounds: false});
+      if (cancel === 'saved') {
+        layer.updateLayerConfig({visConfig: {...layer.config.visConfig, showBounds: false}});
+      }
+      if (cancel === 'source') {
+        table.dataRevision++;
+        const replacement = indexedBoundsSource([]);
+        replacement.metadata = Promise.resolve({});
+        construct.returns(replacement);
+        layer.formatLayerData(datasets, opts.data, {});
+      }
+      await settle(source);
+      t.equal(apply.callCount, 0, `${cancel} change cancels a late automatic default`);
+    }
+    const source = indexedBoundsSource([storedBoundsEntry(9, 454, 201)]);
+    const {layer, opts, apply} = create(source, false, false);
+    layer.renderLayer(opts);
+    t.equal(source.pmtiles.getHeader.callCount, 0, 'restored layers do not evaluate a new default');
+    t.equal(apply.callCount, 0, 'restored off setting stays off');
+    layer.updateLayerVisConfig({showBounds: true});
+    t.equal(layer.renderLayer(opts).length, 3, 'restored on setting remains enabled');
+    const empty = indexedBoundsSource([]);
+    empty.pmtiles.cache.getDirectory = async () => [];
+    const emptyLayer = create(empty);
+    emptyLayer.layer.renderLayer(emptyLayer.opts);
+    await settle(empty);
+    t.equal(emptyLayer.layer.config.visConfig.showBounds, false, 'empty archive stays off');
+    const failed = indexedBoundsSource([]);
+    failed.pmtiles.getHeader = async () => {
+      throw new Error('offline');
+    };
+    const failedLayer = create(failed);
+    failedLayer.layer.renderLayer(failedLayer.opts);
+    await settle(failed);
+    t.equal(failedLayer.layer.config.visConfig.showBounds, false, 'index failure stays off');
+    const mvt = indexedBoundsSource([storedBoundsEntry(3, 0, 0)]);
+    const mvtLayer = create(mvt, false, false);
+    mvtLayer.layer.setInitialLayerConfig({
+      ...table,
+      metadata: {...table.metadata, remoteTileFormat: RemoteTileFormat.MVT}
+    });
+    mvtLayer.layer.renderLayer(mvtLayer.opts);
+    t.equal(mvt.pmtiles.getHeader.callCount, 0, 'ordinary vector tiles keep the helper off');
+  } finally {
+    construct.restore();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles bounds show cached index coverage below missing parents', async t => {
+  const source = indexedBoundsSource([storedBoundsEntry(2, 1, 1)]);
+  const layer = new VectorTileLayer({id: 'occupied', dataId: 'tiles'});
+  const opts = {
+    data: {tileSource: source, bounds: BOUNDS_WORLD, minZoom: 0, maxZoom: 8},
+    mapState: {zoom: 0, latitude: 0, longitude: 0},
+    animationConfig: {},
+    gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+    layerCallbacks: {},
+    visible: true,
+    idx: 0,
+    objectHovered: null
+  };
+  layer.renderLayer(opts);
+  t.equal(source.pmtiles.getHeader.callCount, 0, 'disabled helper does not search the index');
+  layer.updateLayerVisConfig({showBounds: true});
+  layer.renderLayer({...opts, visible: false});
+  t.equal(source.pmtiles.getHeader.callCount, 0, 'hidden split panel does not search the index');
+  const outlines = layer.renderLayer(opts).slice(1);
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 0})
+  });
+  try {
+    manager.setLayers(outlines);
+    const search = getPMTilesBounds(source, BOUNDS_WORLD, 0, 8);
+    const bounds = await search.data;
+    manager.updateLayers();
+    t.equal(source.getTileData.callCount, 0, 'coverage never fetches tile contents');
+    t.equal(bounds.length, 1, 'only the stored child tile is outlined');
+    t.deepEqual(bounds[0].slice(0, 3), [-90, 0, 0], 'outline locates the stored child');
+    t.ok(Math.abs(bounds[0][3] - 66.51326044311186) < 1e-9, 'outline uses tile latitude');
+    const coverage = manager.getLayers().find(item => item.id.includes('occupied-tile-bounds'));
+    t.deepEqual(
+      coverage.props.data,
+      bounds,
+      'async index lookup updates the displayed outline without a pan'
+    );
+    t.equal(coverage.props.pickable, false, 'coverage does not intercept feature picking');
+    t.equal(coverage.props.getPath(bounds[0]).length, 5, 'stored tile is a closed rectangle');
+    const directoryReads = source.pmtiles.cache.getDirectory.callCount;
+    layer.renderLayer(opts);
+    layer.updateLayerVisConfig({showBounds: false});
+    layer.renderLayer(opts);
+    layer.updateLayerVisConfig({showBounds: true});
+    layer.renderLayer(opts);
+    t.equal(
+      getPMTilesBounds(source, [...BOUNDS_WORLD], 0, 8),
+      search,
+      'reuses coverage across renders and toggles'
+    );
+    t.equal(
+      source.pmtiles.cache.getDirectory.callCount,
+      directoryReads,
+      'cached coverage does not reread the index'
+    );
+    t.equal(source.getTileData.callCount, 0, 'rendering and toggling never probe tile contents');
+    const replacement = indexedBoundsSource([]);
+    const nextOutlines = tileLayerBoundsLayer('occupied', {
+      bounds: BOUNDS_WORLD,
+      tileSource: replacement,
+      minZoom: 0,
+      maxZoom: 8
+    });
+    manager.setLayers(nextOutlines);
+    t.notEqual(
+      nextOutlines[1].id,
+      outlines[1].id,
+      'source replacement discards stale outline state'
+    );
+    t.deepEqual(
+      nextOutlines[1].props.data,
+      [],
+      'old archive locations are absent while replacement loads'
+    );
+    await getPMTilesBounds(replacement, BOUNDS_WORLD, 0, 8).data;
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles coverage fades before its first stored zoom and returns on zoom out', async t => {
+  // The header starts at z0, the index at z2, and displayed coverage can come from z4.
+  const source = indexedBoundsSource([storedBoundsEntry(2, 1, 1), storedBoundsEntry(4, 4, 4)]);
+  const layer = new VectorTileLayer({id: 'fading-bounds', dataId: 'tiles'});
+  layer.updateLayerVisConfig({showBounds: true});
+  const render = zoom =>
+    layer.renderLayer({
+      data: {tileSource: source, bounds: BOUNDS_WORLD, minZoom: 0, maxZoom: 8},
+      mapState: {...INITIAL_MAP_STATE, zoom},
+      animationConfig: {},
+      gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+      layerCallbacks: {},
+      visible: true
+    }).slice(1);
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 8})
+  });
+  const alpha = () =>
+    manager.getLayers().find(item => item.id.includes('occupied-tile-bounds'))
+      .getAttributeManager().getAttributes().instanceColors.value[3];
+  try {
+    manager.setLayers(render(8));
+    const search = getPMTilesBounds(source, BOUNDS_WORLD, 0, 8);
+    await search.data;
+    manager.updateLayers();
+    t.equal(alpha(), 0, 'loading the index while zoomed in never flashes visible boxes');
+    const directoryReads = source.pmtiles.cache.getDirectory.callCount;
+    for (const [zoom, expectedAlpha] of [
+      [0, 255],
+      [1, 255],
+      [1.25, 191],
+      [1.5, 128],
+      [1.75, 64],
+      [2, 0],
+      [8, 0],
+      [1.5, 128],
+      [1, 255]
+    ]) {
+      manager.setLayers(render(zoom));
+      manager.updateLayers();
+      t.equal(alpha(), expectedAlpha, `coverage alpha follows map zoom ${zoom}`);
+    }
+    t.equal(layer.config.visConfig.showBounds, true, 'zooming preserves the bounds toggle');
+    t.equal(source.pmtiles.cache.getDirectory.callCount, directoryReads, 'zooming reuses the index');
+    t.equal(source.getTileData.callCount, 0, 'fading never fetches tile contents');
+    layer.updateLayerVisConfig({showBounds: false});
+    t.deepEqual(render(1), [], 'manually disabled bounds stay off when zooming out');
+  } finally {
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles index coverage respects search depth and archive maximum zoom', async t => {
+  const bounds = [10, 10, 11, 11];
+  const source = indexedBoundsSource([storedBoundsEntry(2, 0, 0), storedBoundsEntry(6, 33, 30)]);
+  t.deepEqual(
+    await getPMTilesBounds(source, bounds, 2, 10).data,
+    [bounds],
+    'finds stored coverage four levels below missing parents'
+  );
+  t.deepEqual(
+    await getPMTilesBounds(source, bounds, 2, 5).data,
+    [],
+    'does not search beyond archive maximum zoom'
+  );
+  const deeper = indexedBoundsSource([storedBoundsEntry(2, 0, 0), storedBoundsEntry(7, 67, 60)]);
+  t.deepEqual(
+    await getPMTilesBounds(deeper, bounds, 2, 10).data,
+    [],
+    'does not search a fifth level below minimum zoom'
+  );
+  t.equal(
+    source.getTileData.callCount + deeper.getTileData.callCount,
+    0,
+    'depth searches only use the index'
+  );
+  const gap = indexedBoundsSource([storedBoundsEntry(9, 270, 241)]);
+  t.equal(
+    (await getPMTilesBounds(gap, bounds, 0, 15).data).length,
+    1,
+    'skips empty declared zoom levels and starts coverage at the first stored zoom'
+  );
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles index coverage handles missing, invalid, and unsupported inputs', async t => {
+  const empty = indexedBoundsSource([]);
+  t.deepEqual(
+    await getPMTilesBounds(empty, BOUNDS_WORLD, 0, 1).data,
+    [],
+    'no stored tiles means no blue outline'
+  );
+  t.equal(empty.getTileData.callCount, 0, 'an empty index does not trigger tile probes');
+  const invalid = indexedBoundsSource([storedBoundsEntry(0, 0, 0)]);
+  for (const [min, max] of [
+    [undefined, 4],
+    [0, undefined],
+    [-1, 2],
+    [0.5, 2],
+    [3, 2],
+    [0, 27]
+  ]) {
+    t.deepEqual(
+      await getPMTilesBounds(invalid, BOUNDS_WORLD, min, max).data,
+      [],
+      'invalid zoom ranges do not search'
+    );
+  }
+  t.equal(invalid.pmtiles.getHeader.callCount, 0, 'invalid ranges do not read the archive');
+  const legacy = indexedBoundsSource([storedBoundsEntry(0, 0, 0)]);
+  legacy.pmtiles.getHeader = async () => ({specVersion: 2});
+  t.deepEqual(
+    await getPMTilesBounds(legacy, BOUNDS_WORLD, 0, 4).data,
+    [],
+    'unsupported directories fall back to the gray metadata outline'
+  );
+  t.equal(
+    legacy.pmtiles.cache.getDirectory.callCount,
+    0,
+    'does not interpret a legacy directory as v3'
+  );
+  legacy.pmtiles = undefined;
+  t.deepEqual(
+    await getPMTilesBounds(legacy, BOUNDS_WORLD, 1, 4).data,
+    [],
+    'a missing index falls back to metadata'
+  );
+  t.equal(
+    legacy.getTileData.callCount,
+    0,
+    'unsupported or missing indexes never fall back to tile contents'
+  );
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles stored coverage stays inside metadata bounds', async t => {
+  const source = indexedBoundsSource([storedBoundsEntry(0, 0, 0), storedBoundsEntry(2, 1, 1)]);
+  const bounds = [-50, 40, -40, 50];
+  t.deepEqual(
+    await getPMTilesBounds(source, bounds, 0, 0).data,
+    [bounds],
+    'a stored world tile is clipped to the smaller dataset extent'
+  );
+  t.deepEqual(
+    await getPMTilesBounds(source, bounds, 0, 2).data,
+    [bounds],
+    'a deeper stored tile cannot expand the dataset extent'
+  );
+  t.deepEqual(
+    await getPMTilesBounds(source, [170, -10, -170, 10], 0, 0).data,
+    [
+      [170, -10, 180, 10],
+      [-180, -10, -170, 10]
+    ],
+    'a world tile intersecting a wrapped extent produces two clipped outlines'
+  );
+  t.deepEqual(
+    await getPMTilesBounds(source, [-90, 0, 0, 10], 2, 2).data,
+    [[-90, 0, 0, 10]],
+    'tile-aligned edges do not add zero-area outlines'
+  );
+  const dateline = indexedBoundsSource(
+    [
+      [2, 0, 1],
+      [2, 0, 2],
+      [2, 3, 1],
+      [2, 3, 2]
+    ].map(index => storedBoundsEntry(...index))
+  );
+  t.deepEqual(
+    await getPMTilesBounds(dateline, [170, -10, -170, 10], 0, 2).data,
+    [
+      [-180, 0, -170, 10],
+      [-180, -10, -170, 0],
+      [170, 0, 180, 10],
+      [170, -10, 180, 0]
+    ],
+    'stored tiles are clipped to both metadata bounds at the dateline'
+  );
+  t.equal(
+    source.getTileData.callCount + dateline.getTileData.callCount,
+    0,
+    'clipped coverage needs no tile contents'
+  );
+  t.end();
+});
+
+test('#VectorTileLayer -> sparse PMTiles bounds display stored tiles without checking geometry', async t => {
+  // This archive starts at z9, where its bounds span 1,710 possible positions.
+  const bounds = [122.9446988, 24.0609646, 153.9807774, 45.4871212];
+  const stored = [
+    [9, 454, 201],
+    [9, 450, 200],
+    [9, 455, 201],
+    [9, 0, 0]
+  ];
+  const source = indexedBoundsSource(
+    stored.map(index => storedBoundsEntry(...index)),
+    async () => []
+  );
+  const result = await getPMTilesBounds(source, bounds, 9, 15).data;
+  t.equal(result.length, 3, 'outlines stored tiles even when their payloads would be empty');
+  t.equal(source.getTileData.callCount, 0, 'does not request any payload to decide coverage');
+  t.ok(
+    result.every(
+      ([west, south, east, north]) =>
+        west >= bounds[0] && south >= bounds[1] && east <= bounds[2] && north <= bounds[3]
+    ),
+    'indexed locations remain clipped to metadata bounds'
+  );
+  t.ok(
+    source.pmtiles.cache.getDirectory.getCalls().every(call => [127, 512].includes(call.args[1])),
+    'does not read directories beyond the search zoom range'
+  );
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles index expands stored runs without tile requests', async t => {
+  const run = indexedBoundsSource([storedBoundsEntry(1, 0, 0, 4)]);
+  const bounds = [-180, -80, 180, 80];
+  t.deepEqual(
+    await getPMTilesBounds(run, bounds, 1, 1).data,
+    [
+      [-180, 0, 0, 80],
+      [-180, -80, 0, 0],
+      [0, 0, 180, 80],
+      [0, -80, 180, 0]
+    ],
+    'the four addressed tiles form four quadrants within the metadata bounds'
+  );
+  t.equal(run.getTileData.callCount, 0, 'run expansion never downloads its shared tile payload');
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles coverage keeps small top levels when deeper levels exceed the limit', async t => {
+  const source = indexedBoundsSource([0, 1, 2, 3, 4].map(z => storedBoundsEntry(z, 0, 0, 4 ** z)));
+  t.equal(
+    (await getPMTilesBounds(source, BOUNDS_WORLD, 0, 8).data).length,
+    64,
+    'keeps z3 coverage when z4 would exceed the total 256-tile budget'
+  );
+  t.equal(
+    source.getTileData.callCount,
+    0,
+    'dense coverage does not trigger thousands of tile requests'
+  );
+  const failed = indexedBoundsSource([]);
+  failed.pmtiles.cache.getDirectory = async (_source, offset) => {
+    if (offset === 127)
+      return [storedBoundsEntry(0, 0, 0), {...storedBoundsEntry(1, 0, 0), runLength: 0}];
+    throw new Error('leaf directory failed');
+  };
+  t.equal(
+    (await getPMTilesBounds(failed, BOUNDS_WORLD, 0, 4).data).length,
+    1,
+    'retains coarser coverage when a deeper directory fails'
+  );
+  t.equal(failed.getTileData.callCount, 0, 'directory failure does not fall back to tile probes');
+  t.end();
+});
+
+test('#VectorTileLayer -> PMTiles index coverage keeps tile and directory limits', async t => {
+  const entry = storedBoundsEntry(9, 0, 0);
+  const dense = indexedBoundsSource([{...entry, runLength: 100000}]);
+  t.deepEqual(
+    await getPMTilesBounds(dense, BOUNDS_WORLD, 9, 9).data,
+    [],
+    'oversized indexed levels fall back to metadata'
+  );
+  t.equal(dense.getTileData.callCount, 0, 'oversized indexes do not trigger tile requests');
+  const wide = indexedBoundsSource([entry]);
+  wide.pmtiles.cache.getDirectory = sinon.spy(async (_source, offset) =>
+    offset === 127
+      ? Array.from({length: 20}, (_, i) => ({
+          ...entry,
+          tileId: entry.tileId + i,
+          offset: i,
+          runLength: 0
+        }))
+      : [{...entry, tileId: entry.tileId + offset - 512}]
+  );
+  t.deepEqual(
+    await getPMTilesBounds(wide, BOUNDS_WORLD, 9, 9).data,
+    [],
+    'incomplete directory scans do not claim coverage'
+  );
+  t.equal(wide.pmtiles.cache.getDirectory.callCount, 16, 'caps directory reads across the search');
+  t.equal(wide.getTileData.callCount, 0, 'an incomplete index scan does not trigger tile requests');
+  const large = indexedBoundsSource([entry]);
+  large.pmtiles.cache.getDirectory = sinon.spy(async () => [
+    {...entry, length: 256 * 1024, runLength: 0}
+  ]);
+  t.deepEqual(
+    await getPMTilesBounds(large, BOUNDS_WORLD, 9, 9).data,
+    [],
+    'oversized directory reads fall back to metadata'
+  );
+  t.equal(
+    large.pmtiles.cache.getDirectory.callCount,
+    1,
+    'caps directory bytes before requesting the leaf'
+  );
+  const failed = indexedBoundsSource([entry]);
+  failed.pmtiles.cache.getDirectory = async () => {
+    throw new Error('index request failed');
+  };
+  t.deepEqual(
+    await getPMTilesBounds(failed, BOUNDS_WORLD, 9, 9).data,
+    [],
+    'index failures leave the metadata helper usable'
   );
   t.end();
 });
