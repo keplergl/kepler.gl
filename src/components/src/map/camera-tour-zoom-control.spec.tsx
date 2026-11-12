@@ -28,23 +28,23 @@ function preparePointerControl(slider: HTMLElement) {
     setPointerCapture: jest.fn(),
     hasPointerCapture: jest.fn(() => true),
     releasePointerCapture: jest.fn(),
-    getBoundingClientRect: () => ({left: 352, top: 252, width: 96, height: 96})
+    getBoundingClientRect: () => ({left: 412, top: 252, width: 32, height: 96})
   });
 }
 
-function pointer(slider: HTMLElement, type: string, angle: number, pointerId = 1, button = 0) {
+function pointer(slider: HTMLElement, type: string, progress: number, pointerId = 1, button = 0) {
   const event = new MouseEvent(type, {
     bubbles: true,
     cancelable: true,
-    clientX: Math.round(400 + 36 * Math.cos((angle * Math.PI) / 180)),
-    clientY: Math.round(300 + 36 * Math.sin((angle * Math.PI) / 180)),
+    clientX: 428,
+    clientY: 252 + 84 - progress * 72,
     button
   });
   Object.defineProperty(event, 'pointerId', {value: pointerId});
   fireEvent(slider, event);
 }
 
-test('exposes zoom on an accessible arc and edits with the keyboard without map gestures', () => {
+test('exposes zoom on an accessible vertical bar and edits with the keyboard without map gestures', () => {
   const onChange = jest.fn();
   const onClose = jest.fn();
   const mapGesture = jest.fn();
@@ -70,6 +70,7 @@ test('exposes zoom on an accessible arc and edits with the keyboard without map 
     </div>
   );
   const slider = screen.getByRole('slider', {name: 'Zoom for Home'});
+  expect(slider).toHaveAttribute('aria-orientation', 'vertical');
   expect(slider).toHaveAttribute('aria-valuenow', '6');
   expect(slider).toHaveAttribute('aria-valuetext', 'Zoom 6.0');
   expect(screen.getByText('Zoom 6.0')).toBeVisible();
@@ -88,9 +89,9 @@ test('exposes zoom on an accessible arc and edits with the keyboard without map 
     expect(onChange).toHaveBeenLastCalledWith(value);
   }
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 270);
-  pointer(slider, 'pointermove', 280);
-  pointer(slider, 'pointerup', 280);
+  pointer(slider, 'pointerdown', 0.5);
+  pointer(slider, 'pointermove', 0.6);
+  pointer(slider, 'pointerup', 0.6);
   fireEvent.mouseDown(slider);
   fireEvent.touchStart(slider);
   fireEvent.click(slider);
@@ -103,7 +104,7 @@ test('exposes zoom on an accessible arc and edits with the keyboard without map 
   expect(mapGesture).not.toHaveBeenCalled();
 });
 
-test('clicks and drags the arc, captures the pointer, and clamps across the gap', () => {
+test('increases zoom when dragged upward, captures the pointer, and clamps beyond both ends', () => {
   const onChange = jest.fn();
   render(
     <CameraTourZoomControl
@@ -116,25 +117,25 @@ test('clicks and drags the arc, captures the pointer, and clamps across the gap'
   );
   const slider = screen.getByRole('slider');
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 270);
+  pointer(slider, 'pointerdown', 0.5);
   expect(onChange).toHaveBeenLastCalledWith(12);
   expect(slider).toHaveFocus();
   expect(slider.setPointerCapture).toHaveBeenCalledWith(1);
-  pointer(slider, 'pointermove', 360);
+  pointer(slider, 'pointermove', 5 / 6);
   expect(onChange).toHaveBeenLastCalledWith(20);
-  pointer(slider, 'pointermove', 405);
+  pointer(slider, 'pointermove', 1);
   expect(onChange).toHaveBeenLastCalledWith(24);
-  pointer(slider, 'pointermove', 460);
+  pointer(slider, 'pointermove', 1.5);
   expect(onChange).toHaveBeenLastCalledWith(24);
-  pointer(slider, 'pointerup', 460);
+  pointer(slider, 'pointerup', 1.5);
   expect(slider.releasePointerCapture).toHaveBeenCalledWith(1);
   onChange.mockClear();
-  pointer(slider, 'pointermove', 270);
+  pointer(slider, 'pointermove', 0.5);
   expect(onChange).not.toHaveBeenCalled();
 
-  pointer(slider, 'pointerdown', 135);
+  pointer(slider, 'pointerdown', 0);
   expect(onChange).toHaveBeenLastCalledWith(0);
-  pointer(slider, 'pointermove', 80);
+  pointer(slider, 'pointermove', -0.5);
   expect(onChange).toHaveBeenLastCalledWith(0);
 });
 
@@ -151,15 +152,15 @@ test('ignores other pointers and stops dragging after cancellation or lost captu
   );
   const slider = screen.getByRole('slider');
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 270, 1, 2);
+  pointer(slider, 'pointerdown', 0.5, 1, 2);
   expect(onChange).not.toHaveBeenCalled();
   for (const endEvent of ['pointercancel', 'lostpointercapture']) {
-    pointer(slider, 'pointerdown', 270);
+    pointer(slider, 'pointerdown', 0.5);
     onChange.mockClear();
-    pointer(slider, 'pointerdown', 360, 2);
-    pointer(slider, 'pointermove', 360, 2);
+    pointer(slider, 'pointerdown', 5 / 6, 2);
+    pointer(slider, 'pointermove', 5 / 6, 2);
     pointer(slider, endEvent, 270);
-    pointer(slider, 'pointermove', 360);
+    pointer(slider, 'pointermove', 5 / 6);
     expect(onChange).not.toHaveBeenCalled();
   }
 });
@@ -190,7 +191,7 @@ test('clamps keyboard adjustments to configured limits and reflects updated zoom
   expect(onChange).toHaveBeenLastCalledWith(6.1);
   rerender(<CameraTourZoomControl {...props} minZoom={6} maxZoom={6} />);
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 270);
+  pointer(slider, 'pointerdown', 0.5);
   expect(onChange).toHaveBeenLastCalledWith(6);
 });
 
@@ -220,7 +221,7 @@ test('follows wrapped flat-map coordinates and hides offscreen stops', () => {
   const {rerender} = render(<CameraTourZoomControl {...props} />);
   let slider = screen.getByRole('slider');
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 270);
+  pointer(slider, 'pointerdown', 0.5);
   expect(props.onChange).toHaveBeenLastCalledWith(12);
   rerender(
     <CameraTourZoomControl {...props} stop={{...stop, camera: {...stop.camera, longitude: 160}}} />
@@ -229,6 +230,6 @@ test('follows wrapped flat-map coordinates and hides offscreen stops', () => {
   rerender(<CameraTourZoomControl {...props} />);
   slider = screen.getByRole('slider');
   preparePointerControl(slider);
-  pointer(slider, 'pointerdown', 360);
+  pointer(slider, 'pointerdown', 5 / 6);
   expect(props.onChange).toHaveBeenLastCalledWith(20);
 });

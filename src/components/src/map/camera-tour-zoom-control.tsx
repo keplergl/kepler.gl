@@ -7,26 +7,24 @@ import type {Viewport} from '@deck.gl/core';
 import type {CameraTourStop} from '@kepler.gl/types';
 import {cameraForMap} from '@kepler.gl/utils';
 
-const SIZE = 96;
-const CENTER = SIZE / 2;
-const RADIUS = 36;
-const START_ANGLE = 135;
-const SWEEP = 270;
-const ARC_LENGTH = (SWEEP / 180) * Math.PI * RADIUS;
+const WIDTH = 32;
+const HEIGHT = 96;
+const CENTER = WIDTH / 2;
+const TOP = 12;
+const BOTTOM = HEIGHT - 12;
+const TRACK_HEIGHT = BOTTOM - TOP;
+const MIN_HALF_WIDTH = 2;
+const MAX_HALF_WIDTH = 8;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const pointOnArc = (angle: number) => [
-  CENTER + RADIUS * Math.cos((angle * Math.PI) / 180),
-  CENTER + RADIUS * Math.sin((angle * Math.PI) / 180)
-];
-const start = pointOnArc(START_ANGLE);
-const end = pointOnArc(START_ANGLE + SWEEP);
-const ARC_PATH = `M ${start[0]} ${start[1]} A ${RADIUS} ${RADIUS} 0 1 1 ${end[0]} ${end[1]}`;
+const barShape = (top: number, halfWidth: number) =>
+  `${CENTER - halfWidth},${top} ${CENTER + halfWidth},${top} ` +
+  `${CENTER + MIN_HALF_WIDTH},${BOTTOM} ${CENTER - MIN_HALF_WIDTH},${BOTTOM}`;
 
 const Control = styled.div`
   position: absolute;
   z-index: 2;
-  width: ${SIZE}px;
-  height: ${SIZE}px;
+  width: ${WIDTH}px;
+  height: ${HEIGHT}px;
   color: ${props => props.theme.textColor || '#fff'};
   pointer-events: none;
   font-size: 12px;
@@ -37,31 +35,32 @@ const Control = styled.div`
     touch-action: none;
     outline: none;
   }
-  .zoom-arc-hit-area {
-    pointer-events: stroke;
+  .zoom-bar-hit-area {
+    pointer-events: all;
     cursor: grab;
   }
-  .zoom-arc-track {
+  .zoom-bar-track {
+    fill: ${props => props.theme.panelBackground || '#18202a'};
     stroke: ${props => props.theme.panelBackground || '#18202a'};
   }
-  .zoom-arc-value {
-    stroke: ${props => props.theme.activeColor || '#1fbad6'};
+  .zoom-bar-value {
+    fill: ${props => props.theme.activeColor || '#1fbad6'};
   }
-  .zoom-arc-handle {
+  .zoom-bar-handle {
     pointer-events: all;
     cursor: grab;
     fill: ${props => props.theme.activeColor || '#1fbad6'};
     stroke: ${props => props.theme.panelBackground || '#18202a'};
   }
-  svg:active .zoom-arc-handle,
-  svg:active .zoom-arc-hit-area {
+  svg:active .zoom-bar-handle,
+  svg:active .zoom-bar-hit-area {
     cursor: grabbing;
   }
-  svg:focus-visible .zoom-arc-handle {
+  svg:focus-visible .zoom-bar-handle {
     stroke: ${props => props.theme.textColor || '#fff'};
     stroke-width: 3px;
   }
-  .zoom-arc-label {
+  .zoom-bar-label {
     position: absolute;
     transform: translateX(-50%);
     padding: 3px 6px;
@@ -73,6 +72,8 @@ const Control = styled.div`
   }
   button {
     position: absolute;
+    top: -24px;
+    left: 4px;
     width: 24px;
     height: 24px;
     padding: 0;
@@ -104,7 +105,7 @@ export default function CameraTourZoomControl({
   onChange: (zoom: number) => void;
   onClose: () => void;
 }) {
-  const drag = useRef<{pointerId: number; angle: number; previousAngle: number} | null>(null);
+  const drag = useRef<number | null>(null);
   const {camera} = stop;
   const longitude = globe
     ? camera.longitude
@@ -141,24 +142,22 @@ export default function CameraTourZoomControl({
   }
   const zoom = clamp(camera.zoom, minZoom, maxZoom);
   const progress = maxZoom > minZoom ? (zoom - minZoom) / (maxZoom - minZoom) : 0;
-  const [handleX, handleY] = pointOnArc(START_ANGLE + progress * SWEEP);
+  const handleY = BOTTOM - progress * TRACK_HEIGHT;
+  const halfWidth = MIN_HALF_WIDTH + progress * (MAX_HALF_WIDTH - MIN_HALF_WIDTH);
+  const left = clamp(x + 12, 4, viewport.width - WIDTH - 4);
+  const top = clamp(y - HEIGHT / 2, 28, viewport.height - HEIGHT - 24);
   const change = (value: number) => {
     if (Number.isFinite(value)) onChange(clamp(Math.round(value * 10) / 10, minZoom, maxZoom));
   };
-  const pointerAngle = (event: React.PointerEvent<SVGSVGElement>) => {
+  const changeFromPointer = (event: React.PointerEvent<SVGSVGElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
-    return (
-      (Math.atan2(
-        event.clientY - bounds.top - bounds.height / 2,
-        event.clientX - bounds.left - bounds.width / 2
-      ) *
-        180) /
-      Math.PI
-    );
+    if (bounds.height <= 0) return;
+    const pointerY = ((event.clientY - bounds.top) / bounds.height) * HEIGHT;
+    const value = clamp((BOTTOM - pointerY) / TRACK_HEIGHT, 0, 1);
+    change(minZoom + value * (maxZoom - minZoom));
   };
-  const changeAngle = (angle: number) => change(minZoom + (angle / SWEEP) * (maxZoom - minZoom));
   const endDrag = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (drag.current?.pointerId !== event.pointerId) return;
+    if (drag.current !== event.pointerId) return;
     drag.current = null;
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -168,7 +167,7 @@ export default function CameraTourZoomControl({
     <Control
       role="group"
       aria-label={`Zoom for ${stop.name}`}
-      style={{left: x - CENTER, top: y - CENTER}}
+      style={{left, top}}
       onPointerDown={stopEvent}
       onPointerMove={stopEvent}
       onPointerUp={stopEvent}
@@ -183,10 +182,11 @@ export default function CameraTourZoomControl({
       }}
     >
       <svg
-        width={SIZE}
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        width={WIDTH}
+        height={HEIGHT}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="slider"
+        aria-orientation="vertical"
         tabIndex={0}
         aria-label={`Zoom for ${stop.name}`}
         aria-valuemin={minZoom}
@@ -210,25 +210,15 @@ export default function CameraTourZoomControl({
           }
         }}
         onPointerDown={event => {
-          if (event.button !== 0 || event.isPrimary === false || drag.current) return;
+          if (event.button !== 0 || event.isPrimary === false || drag.current !== null) return;
           event.preventDefault();
           event.currentTarget.focus();
           event.currentTarget.setPointerCapture(event.pointerId);
-          const previousAngle = pointerAngle(event);
-          const offset = (previousAngle - START_ANGLE + 360) % 360;
-          const angle = offset > SWEEP ? (offset > (SWEEP + 360) / 2 ? 0 : SWEEP) : offset;
-          drag.current = {pointerId: event.pointerId, previousAngle, angle};
-          changeAngle(angle);
+          drag.current = event.pointerId;
+          changeFromPointer(event);
         }}
         onPointerMove={event => {
-          const active = drag.current;
-          if (!active || active.pointerId !== event.pointerId) return;
-          const angle = pointerAngle(event);
-          // Unwrap the angle so dragging through the gap clamps instead of jumping to the other end.
-          const delta = ((angle - active.previousAngle + 540) % 360) - 180;
-          active.angle = clamp(active.angle + delta, 0, SWEEP);
-          active.previousAngle = angle;
-          changeAngle(active.angle);
+          if (drag.current === event.pointerId) changeFromPointer(event);
         }}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
@@ -236,49 +226,27 @@ export default function CameraTourZoomControl({
           drag.current = null;
         }}
       >
-        <title>Drag the arc to adjust zoom, or use the arrow keys</title>
-        <path
-          className="zoom-arc-track"
-          d={ARC_PATH}
-          fill="none"
-          strokeWidth={8}
-          strokeLinecap="round"
+        <title>Drag up to zoom in or down to zoom out, or use the arrow keys</title>
+        <polygon
+          className="zoom-bar-track"
+          points={barShape(TOP, MAX_HALF_WIDTH)}
+          strokeWidth={4}
+          strokeLinejoin="round"
         />
-        <path
-          className="zoom-arc-value"
-          d={ARC_PATH}
-          fill="none"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeDasharray={`${progress * ARC_LENGTH} ${ARC_LENGTH}`}
-        />
-        <path
-          className="zoom-arc-hit-area"
-          d={ARC_PATH}
-          fill="none"
-          stroke="transparent"
-          strokeWidth={20}
-        />
-        <circle className="zoom-arc-handle" cx={handleX} cy={handleY} r={6} strokeWidth={2} />
+        <polygon className="zoom-bar-value" points={barShape(handleY, halfWidth)} />
+        <rect className="zoom-bar-hit-area" width={WIDTH} height={HEIGHT} fill="transparent" />
+        <circle className="zoom-bar-handle" cx={CENTER} cy={handleY} r={6} strokeWidth={2} />
       </svg>
       <span
-        className="zoom-arc-label"
+        className="zoom-bar-label"
         style={{
-          left: clamp(x, 40, viewport.width - 40) - x + CENTER,
-          top: clamp(y + 30, 4, viewport.height - 24) - y + CENTER
+          left: clamp(left + CENTER, 40, viewport.width - 40) - left,
+          top: HEIGHT
         }}
       >
         Zoom {zoom.toFixed(1)}
       </span>
-      <button
-        type="button"
-        aria-label="Close zoom control"
-        style={{
-          left: clamp(x + 26, 4, viewport.width - 28) - x + CENTER,
-          top: clamp(y - 50, 4, viewport.height - 28) - y + CENTER
-        }}
-        onClick={onClose}
-      >
+      <button type="button" aria-label="Close zoom control" onClick={onClose}>
         ×
       </button>
     </Control>
