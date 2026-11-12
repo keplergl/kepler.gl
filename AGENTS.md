@@ -9,7 +9,7 @@ For a localized change (a bug fix, a default, a guard, copy, types, or a single 
 1. Read the code you will edit and the nearest test.
 2. Make the change.
 3. If the change has observable behavior, add or update a test for that behavior and run that test while iterating.
-4. Run `yarn agent:verify` once at the end, then stop.
+4. Choose final checks using the risk-based guidance in Testing below, then stop.
 
 Do not search the whole repo, read unrelated packages, re-run a check that already passed, or run `yarn agent:verify` after every edit.
 
@@ -18,11 +18,11 @@ After 4 attempts at the same failure, stop and ask what to do next. Count a repe
 ## Definition of done
 
 1. The requested behavior is implemented.
-2. Observable behavior has a test. A change with no observable behavior needs none.
-3. `yarn agent:verify` passed on the final state.
+2. Meaningful observable behavior has a test, subject to the exceptions in Testing below.
+3. The checks appropriate to the change passed on the final state; skipped checks and the reason are reported.
 4. No unrelated files changed, and existing conventions followed.
 
-Report each command you ran as `PASS`, `FAILED`, or `NOT RUN`. Never claim a command passed if it failed, and never claim a task is complete if the final `yarn agent:verify` fails.
+Report each command you ran as `PASS`, `FAILED`, or `NOT RUN`. Never claim a command passed if it failed, and never claim a task is complete if a required check fails.
 
 If a check fails, make the smallest change that addresses it. Each repeat of that failure counts toward the 4-attempt limit. Stop when the next edit would reach files the failure does not point at, replace a working approach, or clean up unrelated code; then report the failure and what you changed. Confirm a seemingly pre-existing failure against the base branch if practical, and call it out in the PR.
 
@@ -36,7 +36,7 @@ After the behavior is implemented, add or update a test when that behavior can b
 
 Do not add tests that merely freeze incidental UI copy, typography, dimensions, or styling. Tests should protect meaningful behavior, accessibility contracts, state transitions, or actual regressions; meaningful UI and accessibility tests remain appropriate.
 
-Skip the test when nothing observable changed (types, comments, copy, build config) or the change cannot be tested. Say which one in the PR.
+Skip a new behavior test for comments, documentation, incidental copy or styling with no meaningful behavior change, or when the change cannot be tested. Explain why in the PR. Type and build-config changes still need checks appropriate to their impact.
 
 - Extend the nearest existing test file before adding a new one.
 
@@ -49,13 +49,17 @@ Run from the repo root on Node >= 20 (Volta pin 24.21.0, same as Node.js CI).
 
 - Targeted test: the default loop while iterating.
 - `yarn agent:check`: `tsc --noEmit` plus Jest (`--watchAll=false`). Use it when the edit can affect types or several suites.
-- `yarn agent:verify`: the blocking Node.js CI gates (`check-circular-deps`, `agent:check`, `test-fast`, `test:sqlrooms`). Run once at the end. A failure counts toward the 4-attempt limit.
+- `yarn agent:verify`: the blocking Node.js CI gates (`check-circular-deps`, `agent:check`, `test-fast`, `test:sqlrooms`). Run once at the end for broader or higher-risk changes, or when explicitly requested. A failure counts toward the 4-attempt limit.
+
+Choose checks by impact, not just diff size. For small, low-risk changes such as a label, color, documentation edit, or isolated fix with well-understood effects, use the smallest relevant check (for example, diff/format review or the affected test). Do not run time-consuming repo-wide suites by default for these changes. Run broader verification for shared logic, public APIs, saved configs, dependencies/build behavior, or changes with uncertain effects. A one-line change can still be high risk. State which checks were skipped and why; do not skip a relevant check solely to save time.
 
 CI runs the same Jest and Tape tests as `xvfb-run yarn cover`. There is no coverage threshold, so `agent:verify` skips coverage and is much faster.
 
 Leave `yarn lint` and `yarn lint:check` out. CI lints with `eslint --fix` because check-only mode fails on existing Prettier issues, and `yarn lint` rewrites those issues into the working tree.
 
 ## UI changes
+
+Before implementing UI, inspect the same or closest existing UI in kepler.gl. Reuse its components, styling, and interaction patterns rather than inventing a new control or using an unstyled native/system control. Use kepler.gl components unless the user explicitly asks for a custom component. Keep this search focused on the relevant UI; if no suitable component exists, explain the gap and ask before introducing a new one.
 
 A unit test is the evidence for UI behavior. Do not start the demo app, drive the browser, or take screenshots unless the task explicitly asks for that. Accessibility snapshots are forbidden unless the task explicitly asks for a snapshot.
 
