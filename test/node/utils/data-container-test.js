@@ -302,6 +302,122 @@ test('IndexedDataContainer', t => {
   t.end();
 });
 
+test('IndexedDataContainer preserves reordered rows across iterators and nested views', t => {
+  const parent = createDataContainer(data);
+  const dc = createIndexedDataContainer(parent, [5, 0, 3, 0]);
+  const expected = [data[5], data[0], data[3], data[0]];
+
+  t.deepEqual(dc.flattenData(), expected, 'flattening preserves selection order and duplicates');
+  t.deepEqual(
+    Array.from(dc.rows(), row => row.values()),
+    expected,
+    'row iterator remaps rows'
+  );
+  t.deepEqual(Array.from(dc.column(1)), [130, 20, 90, 20], 'column iterator remaps values');
+  t.deepEqual(dc.getPlainIndex(), [0, 1, 2, 3], 'plain indexes address the view');
+
+  const nested = createIndexedDataContainer(dc, [2, 0]);
+  t.deepEqual(nested.flattenData(), [data[3], data[5]], 'nested selection composes mappings');
+  t.deepEqual(
+    nested.mapIndex(({index}, container) => [index, container.rowAsArray(index)]),
+    [
+      [2, data[3]],
+      [0, data[5]]
+    ],
+    'mapIndex pairs each immediate-parent index with its matching container'
+  );
+  t.deepEqual(parent.flattenData(), data, 'reading a selection leaves the parent unchanged');
+  t.end();
+});
+
+test('IndexedDataContainer range callbacks distinguish local and parent indexes', t => {
+  const parent = createDataContainer(data);
+  const dc = createIndexedDataContainer(parent, [5, 0, 3, 1]);
+  for (const sharedRow of [false, true]) {
+    t.deepEqual(
+      dc.map((row, index) => [index, row.valueAt(1)], sharedRow, {start: 1, end: 3}),
+      [
+        [1, 20],
+        [2, 90]
+      ],
+      'map uses local indexes and an exclusive end with or without a shared row'
+    );
+  }
+  t.deepEqual(
+    dc.mapIndex(({index}, container) => [index, container.valueAt(index, 1)], {start: 1, end: 3}),
+    [
+      [0, 20],
+      [3, 90]
+    ],
+    'mapIndex uses parent indexes with the same local range'
+  );
+  t.deepEqual(
+    dc.map((row, index) => [index, row.valueAt(1)], false, {start: 2, end: 99}),
+    [
+      [2, 90],
+      [3, 40]
+    ],
+    'map caps the end at the view length'
+  );
+  t.deepEqual(
+    dc.mapIndex(({index}) => index, {start: 2, end: 99}),
+    [3, 1],
+    'mapIndex caps the end at the view length'
+  );
+  for (const range of [{start: 2, end: 2}, {start: 4}, {end: 0}]) {
+    const unexpected = () => t.fail('empty ranges must not invoke callbacks');
+    t.deepEqual(dc.map(unexpected, false, range), [], 'empty map range');
+    t.deepEqual(dc.mapIndex(unexpected, range), [], 'empty mapIndex range');
+  }
+  t.end();
+});
+
+test('IndexedDataContainer find and reduce use selection order and local indexes', t => {
+  const dc = createIndexedDataContainer(createDataContainer(data), [5, 0, 3, 0]);
+  for (const sharedRow of [false, true]) {
+    const visited = [];
+    const found = dc.find((row, index) => {
+      visited.push(index);
+      return row.valueAt(0) === 10;
+    }, sharedRow);
+    t.deepEqual(found.values(), data[0], 'find returns the first matching selected row');
+    t.deepEqual(visited, [0, 1], 'find stops after the first match and exposes local indexes');
+    t.equal(
+      dc.find(row => row.valueAt(0) === -1, sharedRow),
+      undefined,
+      'no match is undefined'
+    );
+    t.deepEqual(
+      dc.reduce((acc, row, index) => acc.concat([[index, row.valueAt(0)]]), [], sharedRow),
+      [
+        [0, 120],
+        [1, 10],
+        [2, 80],
+        [3, 10]
+      ],
+      'reduce visits selected rows in order, including duplicate parent rows'
+    );
+  }
+  t.end();
+});
+
+test('IndexedDataContainer empty selection retains columns without reading parent rows', t => {
+  const dc = createIndexedDataContainer(createDataContainer(data), []);
+  const unexpected = () => t.fail('empty selection must not invoke callbacks');
+  const initial = {total: 0};
+  t.equal(dc.numRows(), 0, 'selection contains no rows');
+  t.equal(dc.numColumns(), 2, 'parent column count is retained');
+  t.deepEqual(dc.getPlainIndex(), [], 'no local indexes');
+  t.deepEqual(dc.flattenData(), [], 'no exported rows');
+  t.deepEqual(Array.from(dc.rows()), [], 'no iterated rows');
+  t.deepEqual(Array.from(dc.column(1)), [], 'no iterated values');
+  t.deepEqual(dc.map(unexpected), [], 'map is empty');
+  t.deepEqual(dc.mapIndex(unexpected), [], 'mapIndex is empty');
+  t.equal(dc.find(unexpected), undefined, 'find has no match');
+  t.equal(dc.reduce(unexpected, initial), initial, 'reduce returns the original initial value');
+  t.end();
+});
+
 test('ArrowDataContainer -> compactArrowTable collapses record batches over the limit', t => {
   const batchA = arrow.tableFromJSON([{lng: -122.4, lat: 37.8}]);
   const batchB = arrow.tableFromJSON([{lng: -122.5, lat: 37.9}]);
