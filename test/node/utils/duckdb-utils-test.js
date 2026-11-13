@@ -7,6 +7,7 @@ import Console from 'global/console';
 
 import {
   SUPPORTED_DUCKDB_DROP_EXTENSIONS,
+  getDuckDBColumnTypes,
   getDuckDBColumnTypesMap,
   castDuckDBTypesForKepler,
   setGeoArrowWKBExtension,
@@ -62,6 +63,100 @@ test('restoreArrowTable -> numeric names preserve column order and supplied sche
     t.equal(empty.numRows, 0);
     t.equal(empty.getChildAt(1).type.toString(), 'Int32');
   }
+  t.end();
+});
+
+test('duckdb-utils -> column types prefer PRAGMA and read columns by name', async t => {
+  const queries = [];
+  // PRAGMA has additional columns, and its name/type fields need not be first.
+  const result = arrow.tableFromArrays({
+    cid: [0, 1, 2],
+    type: ['BIGINT', 'GEOMETRY', 'VARCHAR[]'],
+    name: ['id', 'shape', 'tags'],
+    notnull: [true, false, false]
+  });
+  const connection = {
+    query: async sql => {
+      queries.push(sql);
+      return result;
+    }
+  };
+
+  t.deepEqual(await getDuckDBColumnTypes(connection, 'trip "data"'), [
+    {name: 'id', type: 'BIGINT'},
+    {name: 'shape', type: 'GEOMETRY'},
+    {name: 'tags', type: 'VARCHAR[]'}
+  ]);
+  t.deepEqual(
+    queries,
+    ['PRAGMA table_info("trip ""data""")'],
+    'quotes identifiers and avoids DESCRIBE'
+  );
+  t.end();
+});
+
+test('duckdb-utils -> empty PRAGMA schema does not trigger fallback', async t => {
+  const queries = [];
+  const result = arrow.tableFromArrays({name: ['id'], type: ['INTEGER']}).slice(0, 0);
+  const connection = {
+    query: async sql => {
+      queries.push(sql);
+      return result;
+    }
+  };
+
+  t.deepEqual(await getDuckDBColumnTypes(connection, 'empty'), []);
+  t.deepEqual(queries, ['PRAGMA table_info("empty")']);
+  t.end();
+});
+
+test('duckdb-utils -> DESCRIBE recovers from PRAGMA failure', async t => {
+  const queries = [];
+  const result = arrow.tableFromArrays({
+    column_name: ['value', 'created_at'],
+    column_type: ['DECIMAL(18,3)', 'TIMESTAMP'],
+    null: ['YES', 'NO']
+  });
+  const connection = {
+    query: async sql => {
+      queries.push(sql);
+      if (queries.length === 1) throw new Error('PRAGMA unavailable');
+      return result;
+    }
+  };
+
+  t.deepEqual(await getDuckDBColumnTypes(connection, '"analytics"."events"'), [
+    {name: 'value', type: 'DECIMAL(18,3)'},
+    {name: 'created_at', type: 'TIMESTAMP'}
+  ]);
+  t.deepEqual(queries, [
+    'PRAGMA table_info("analytics"."events")',
+    'DESCRIBE "analytics"."events"'
+  ]);
+  t.end();
+});
+
+test('duckdb-utils -> failed schema queries retain both causes', async t => {
+  const queries = [];
+  const primaryError = new Error('PRAGMA failed');
+  const fallbackError = new Error('DESCRIBE failed');
+  const connection = {
+    query: async sql => {
+      queries.push(sql);
+      throw queries.length === 1 ? primaryError : fallbackError;
+    }
+  };
+
+  try {
+    await getDuckDBColumnTypes(connection, 'missing');
+    t.fail('should reject when neither query succeeds');
+  } catch (error) {
+    t.ok(error instanceof Error);
+    t.ok(error.message.includes('missing'), 'error identifies the requested table');
+    t.equal(error.cause.primaryError, primaryError, 'preserves original PRAGMA failure');
+    t.equal(error.cause.fallbackError, fallbackError, 'preserves original DESCRIBE failure');
+  }
+  t.deepEqual(queries, ['PRAGMA table_info("missing")', 'DESCRIBE "missing"']);
   t.end();
 });
 
