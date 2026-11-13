@@ -7,6 +7,7 @@ import Console from 'global/console';
 import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
+import {createDataSourceSync} from '@loaders.gl/core';
 import {MVTSourceLoader, TileJSON} from '@loaders.gl/tiles/mvt';
 import {PMTilesSourceLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
@@ -749,13 +750,13 @@ export const getFieldsFromTile = async ({
 
       const tileSource =
         remoteTileFormat === RemoteTileFormat.MVT
-          ? MVTSourceLoader.createDataSourceSync(decodeURIComponent(tilesetUrl), {
+          ? createDataSourceSync(decodeURIComponent(tilesetUrl), MVTSourceLoader, {
               mvt: {
                 metadataUrl: decodeURIComponent(metadataUrl),
                 shape: 'geojson-table'
               }
             })
-          : PMTilesSourceLoader.createDataSourceSync(tilesetUrl, {pmtiles: {shape: 'geojson-table'}});
+          : createDataSourceSync(tilesetUrl, PMTilesSourceLoader, {pmtiles: {shape: 'geojson-table'}});
       const tile = await tileSource.getTileData({index: tileIndices} as any);
       const updatedFields = tileToFields(tile).map(f => {
         return {

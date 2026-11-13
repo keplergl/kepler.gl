@@ -36,6 +36,7 @@
     "@kepler.gl/constants": "3.3.0-alpha.21",
     "@kepler.gl/types": "3.3.0-alpha.21",
     "@kepler.gl/utils": "3.3.0-alpha.21",
+    "@loaders.gl/core": "5.0.0-beta.8",
     "@loaders.gl/ogc": "5.0.0-beta.8",
     "@luma.gl/core": "10.0.0-alpha.14",
     "@luma.gl/engine": "10.0.0-alpha.14",

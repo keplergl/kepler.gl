@@ -9,6 +9,7 @@ import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
 import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
+import {createDataSourceSync} from '@loaders.gl/core';
 import {MVTSourceLoader, MVTTileSource} from '@loaders.gl/tiles/mvt';
 import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 
@@ -350,7 +351,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         };
 
         return tilesetDataUrl
-          ? MVTSourceLoader.createDataSourceSync(decodeURIComponent(tilesetDataUrl), {
+          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTSourceLoader, {
               mvt: {
                 metadataUrl: tilesetMetadataUrl,
                 shape: 'geojson-table'
@@ -361,7 +362,15 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       }
       if (remoteTileFormat === RemoteTileFormat.PMTILES) {
         if (!tilesetDataUrl) return null;
-        const source = PMTilesSourceLoader.createDataSourceSync(tilesetDataUrl, {pmtiles: {shape: 'geojson-table'}});
+        const source = createDataSourceSync(tilesetDataUrl, PMTilesSourceLoader, {
+          pmtiles: {shape: 'geojson-table'},
+          core: {
+            // Preserve rejection so a failed archive lookup invalidates this source.
+            onError: error => {
+              if (error.message !== 'Empty tile response') throw error;
+            }
+          }
+        });
         const invalidate = () => {
           // Failed metadata and archive-directory promises stay cached by PMTiles.
           // A late failure must not evict a replacement source.

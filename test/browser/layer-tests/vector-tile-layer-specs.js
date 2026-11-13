@@ -9,6 +9,7 @@ import {
   getPMTilesMinZoom
 } from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
+import {createDataSourceSync} from '@loaders.gl/core';
 import {MVTSourceLoader} from '@loaders.gl/tiles/mvt';
 import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {zxyToTileId} from 'pmtiles';
@@ -1269,19 +1270,15 @@ test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same
   const requests = [];
   const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async (_url, options) => {
     const range = new Headers(options.headers).get('range');
-    const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
     requests.push({revision, range});
-    return {
-      status: 206,
-      headers: new Headers({ETag: `"v${revision}"`}),
-      arrayBuffer: async () => archives[revision].slice(Number(start), Number(end) + 1).buffer
-    };
+    return pmtilesRangeResponse(archives[revision], range, {ETag: `"v${revision}"`});
   });
   const viewport = zoom =>
     new WebMercatorViewport({width: 64, height: 64, longitude: -90, latitude: 40, zoom});
   const manager = new LayerManager(device, {viewport: viewport(0)});
   const render = async (data, zoom) => {
-    manager.activateViewport(viewport(zoom));
+    const currentViewport = viewport(zoom);
+    manager.activateViewport(currentViewport);
     const deck = layer
       .renderLayer({
         data,
@@ -1293,6 +1290,8 @@ test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same
       })[0]
       .clone({renderSubLayers: () => null});
     manager.setLayers([deck]);
+    deck.activateViewport(currentViewport);
+    manager.updateLayers();
     await Promise.all(deck.state.tileset.selectedTiles.map(tile => tile.data));
     manager.updateLayers();
     return deck;
@@ -1318,7 +1317,7 @@ test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same
     );
     t.equal(addedTile?.content?.features?.length, 1, 'zooming loads the newly available feature');
     t.equal(
-      requests.filter(request => request.revision === 1 && request.range === 'bytes=0-16383')
+      requests.filter(request => request.revision === 1 && request.range.startsWith('bytes=0-'))
         .length,
       1,
       'the update reads the new archive directory'
@@ -1334,6 +1333,19 @@ test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same
   }
   t.end();
 });
+
+function pmtilesRangeResponse(archive, range, headers = {}) {
+  const [, start, end] = range.match(/bytes=(\d+)-(\d+)/).map(Number);
+  const lastByte = Math.min(end, archive.byteLength - 1);
+  return {
+    status: 206,
+    headers: new Headers({
+      ...headers,
+      'Content-Range': `bytes ${start}-${lastByte}/${archive.byteLength}`
+    }),
+    arrayBuffer: async () => archive.slice(start, lastByte + 1).buffer
+  };
+}
 
 function pmtilesRetryFixture() {
   const {layer, table} = categoricalFilterFixture();
@@ -1363,17 +1375,13 @@ function pmtilesRetryFixture() {
   archive.set(metadata, 132);
   archive.set([1, 1, 1, 1, 1], leafOffset);
 
-  const readRange = sinon.stub().callsFake(async range => {
-    const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
-    return {
-      status: 206,
-      headers: new Headers(),
-      arrayBuffer: async () => archive.slice(Number(start), Number(end) + 1).buffer
-    };
-  });
+  const readRange = sinon.stub().callsFake(async range => pmtilesRangeResponse(archive, range));
   const fetchStub = sinon
     .stub(globalThis, 'fetch')
-    .callsFake((_url, options) => readRange(new Headers(options.headers).get('range')));
+    .callsFake((_url, options) => {
+      const range = new Headers(options.headers).get('range');
+      return readRange(range.startsWith('bytes=0-') ? 'bytes=0-16383' : range);
+    });
   return {
     layer,
     table,
@@ -1495,16 +1503,13 @@ for (const path of ['header', 'directory']) {
 }
 
 test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
-  const seed = MVTSourceLoader.createDataSourceSync('https://example.com/seed', {
+  const seed = createDataSourceSync('https://example.com/seed', MVTSourceLoader, {
+    mvt: {metadataUrl: null},
     core: {
-      loadOptions: {
-        core: {
-          fetch: async () => ({
-            ok: true,
-            text: async () => JSON.stringify({tilejson: '3.0.0', tiles: []})
-          })
-        }
-      }
+      fetch: async () => ({
+        ok: true,
+        text: async () => JSON.stringify({tilejson: '3.0.0', tiles: []})
+      })
     }
   });
   await seed.metadata;
