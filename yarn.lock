@@ -4330,6 +4330,7 @@ __metadata:
     es-toolkit: "npm:^1.39.10"
     global: "npm:^4.3.0"
     keymirror: "npm:^0.1.1"
+    zod: "npm:^4.4.0"
   languageName: unknown
   linkType: soft
 
