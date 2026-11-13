@@ -881,7 +881,8 @@ export default class PointLayer extends Layer {
           getPosition,
           parameters: {
             // circles will be flat on the map when the altitude column is not used
-            depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+            depthCompare:
+              (this.config.columns.altitude?.fieldIdx as number) > -1 ? 'less-equal' : 'always',
             ...(mapState?.layerParameters ?? {})
           },
           lineWidthUnits: 'pixels',
@@ -923,7 +924,8 @@ export default class PointLayer extends Layer {
                 getPulseStartTime: data.getPulseStartTime
               },
               parameters: {
-                depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+                depthCompare:
+                  (this.config.columns.altitude?.fieldIdx as number) > -1 ? 'less-equal' : 'always',
                 ...(mapState?.layerParameters ?? {})
               }
             })

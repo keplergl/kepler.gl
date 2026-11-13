@@ -39,7 +39,7 @@ import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/de
 import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 
 const {HeatmapLayer, PointLayer} = KeplerGlLayers;
 

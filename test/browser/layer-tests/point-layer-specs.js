@@ -1745,7 +1745,7 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
     'should not depth-test the label background outside globe mode'
   );
 
-  // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
+  // globe mode sets a global `cullMode: 'back'`, which would otherwise discard the glyph quads
   const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
   t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
   t.equal(

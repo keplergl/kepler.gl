@@ -5,7 +5,7 @@
     "checkJs": false,
     "jsx": "react",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "declaration": true,
     "emitDeclarationOnly": true,
     "noImplicitAny": false,

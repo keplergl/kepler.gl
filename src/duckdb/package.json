@@ -52,7 +52,7 @@
     "@kepler.gl/utils": "3.3.0-alpha.21",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-collapsible": "^1.1.0",
-    "apache-arrow": ">=15.0.0",
+    "apache-arrow": ">=17.0.0",
     "es-toolkit": "^1.39.10",
     "monaco-editor": "^0.52.0",
     "react-resizable-panels": "^2.1.7"

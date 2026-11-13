@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {Loader} from '@loaders.gl/loader-utils';
+import type {Loader} from '@loaders.gl/core/loader-utils';
 import {REMOTE_FILE_FORMATS, type RemoteFileFormat} from '@kepler.gl/constants';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
@@ -46,14 +46,14 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     id: 'json',
     extensions: ['json', 'geojson'],
     mimeTypes: ['application/json', 'application/geo+json'],
-    load: async () => (await import('@loaders.gl/json')).JSONLoader
+    load: async () => (await import('@loaders.gl/tables/json')).JSONLoader
   },
   {
     id: 'ndjson',
     extensions: NDJSON_EXTENSIONS,
     mimeTypes: NDJSON_MIME_TYPES,
     load: async () => {
-      const {NDJSONLoader} = await import('@loaders.gl/json');
+      const {NDJSONLoader} = await import('@loaders.gl/tables/json');
       return {
         ...NDJSONLoader,
         extensions: NDJSON_EXTENSIONS,
@@ -65,38 +65,38 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     id: 'kml',
     extensions: ['kml'],
     mimeTypes: ['application/vnd.google-earth.kml+xml'],
-    load: async () => (await import('@loaders.gl/kml')).KMLLoader
+    load: async () => (await import('@loaders.gl/geospatial/kml')).KMLLoader
   },
   {
     id: 'gpx',
     extensions: ['gpx'],
     mimeTypes: ['application/gpx+xml'],
-    load: async () => (await import('@loaders.gl/kml')).GPXLoader
+    load: async () => (await import('@loaders.gl/geospatial/kml')).GPXLoader
   },
   {
     id: 'tcx',
     extensions: ['tcx'],
     mimeTypes: ['application/vnd.garmin.tcx+xml'],
-    load: async () => (await import('@loaders.gl/kml')).TCXLoader
+    load: async () => (await import('@loaders.gl/geospatial/kml')).TCXLoader
   },
   {
     id: 'arrow',
     extensions: ['arrow', 'feather'],
     mimeTypes: ['application/vnd.apache.arrow.file', 'application/vnd.apache.arrow.stream'],
-    load: async () => (await import('@loaders.gl/arrow')).GeoArrowLoader
+    load: async () => (await import('@loaders.gl/tables/arrow')).GeoArrowLoader
   },
   {
     id: 'parquet',
     extensions: ['parquet'],
     mimeTypes: ['application/vnd.apache.parquet'],
-    load: async () => (await import('@loaders.gl/parquet')).ParquetArrowLoader
+    load: async () => (await import('@loaders.gl/tables/parquet')).ParquetLoader
   },
   {
     id: 'shapefile',
     extensions: ['shp'],
     mimeTypes: ['application/x-esri-shapefile', 'application/shp'],
     load: async () => {
-      const {ShapefileLoader} = await import('@loaders.gl/shapefile');
+      const {ShapefileLoader} = await import('@loaders.gl/geospatial/shapefile');
       // loaders.gl SHP magic also matches .shx sidecar files
       const loader = {...ShapefileLoader};
       delete (loader as {tests?: unknown}).tests;
@@ -119,7 +119,7 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     extensions: ['fgb'],
     mimeTypes: FLATGEOBUF_MIME_TYPES,
     load: async () => {
-      const {FlatGeobufLoader} = await import('@loaders.gl/flatgeobuf');
+      const {FlatGeobufLoader} = await import('@loaders.gl/geospatial/flatgeobuf');
       // loaders.gl 4.4.1 advertises application/octet-stream, which selectLoader
       // matches before magic bytes.
       return {...FlatGeobufLoader, mimeTypes: FLATGEOBUF_MIME_TYPES};

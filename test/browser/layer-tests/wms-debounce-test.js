@@ -9,7 +9,7 @@
  */
 
 import test from 'tape-catch';
-import {ImageSource} from '@loaders.gl/wms';
+import {ImageSource} from '@loaders.gl/ogc/wms';
 import WMSLayer from '../../../src/deckgl-layers/src/wms/wms-layer';
 
 const {Image} = window;

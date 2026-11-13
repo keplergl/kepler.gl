@@ -7,8 +7,8 @@ import Console from 'global/console';
 import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {MVTSource, TileJSON} from '@loaders.gl/mvt';
-import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {MVTSourceLoader, TileJSON} from '@loaders.gl/tiles/mvt';
+import {PMTilesSourceLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {
   analyzerTypeToFieldType,
@@ -248,7 +248,7 @@ function getMetaUrlTippecanoe(tileUrl) {
 }
 
 /**
- * Special parsing for metadata returned by MVTSource and PMTilesSource.
+ * Special parsing for metadata returned by MVTSourceLoader and PMTilesSourceLoader.
  * @param metadata Tileset metadata parsed by a DataSouce
  * @returns Metadata in Kepler-friendly format.
  */
@@ -287,7 +287,7 @@ function parseMetadataTippecanoeFromDataSource(
     Array.isArray(metadata.boundingBox) ? metadata.boundingBox.flat() : ''
   );
 
-  // PMTileSource has centerZoom and center [lon, lat], MVTSource - [lon, lat, zoom]
+  // PMTileSource has centerZoom and center [lon, lat], MVTSourceLoader - [lon, lat, zoom]
   const center =
     pmTileMetadata.centerZoom !== undefined && Array.isArray(metadata.center)
       ? [...metadata.center, pmTileMetadata.centerZoom]
@@ -749,12 +749,13 @@ export const getFieldsFromTile = async ({
 
       const tileSource =
         remoteTileFormat === RemoteTileFormat.MVT
-          ? MVTSource.createDataSource(decodeURIComponent(tilesetUrl), {
+          ? MVTSourceLoader.createDataSourceSync(decodeURIComponent(tilesetUrl), {
               mvt: {
-                metadataUrl: decodeURIComponent(metadataUrl)
+                metadataUrl: decodeURIComponent(metadataUrl),
+                shape: 'geojson-table'
               }
             })
-          : PMTilesSource.createDataSource(tilesetUrl, {});
+          : PMTilesSourceLoader.createDataSourceSync(tilesetUrl, {pmtiles: {shape: 'geojson-table'}});
       const tile = await tileSource.getTileData({index: tileIndices} as any);
       const updatedFields = tileToFields(tile).map(f => {
         return {

@@ -380,7 +380,6 @@ async function matchesCsvHeader(text: string, fields: string[]): Promise<boolean
   for await (const batch of KeplerCSVLoader.parseInBatches!([new TextEncoder().encode(text)], {
     csv: {
       shape: 'array-row-table',
-      // @ts-expect-error loaders.gl accepts false but its type only declares 'auto'.
       header: false
     }
   })) {

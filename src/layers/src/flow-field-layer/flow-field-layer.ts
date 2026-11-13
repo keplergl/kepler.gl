@@ -1392,7 +1392,7 @@ function buildDebugGridLayers(
       widthUnits: 'pixels',
       pickable: false,
       wrapLongitude: false,
-      parameters: {depthTest: false, ...blendingParameters}
+      parameters: {depthCompare: 'always', ...blendingParameters}
     }),
     new PolygonLayer({
       id: `${layerId}-debug-filled`,
@@ -1405,7 +1405,7 @@ function buildDebugGridLayers(
       filled: true,
       pickable: false,
       wrapLongitude: false,
-      parameters: {depthTest: false, ...blendingParameters}
+      parameters: {depthCompare: 'always', ...blendingParameters}
     })
   ];
 }
@@ -1844,7 +1844,10 @@ export default class FlowFieldLayer extends Layer {
         // which can throw during attribute update (reading undefined[0]).
         wrapLongitude: false,
         parameters: {
-          depthTest: Boolean(mapState.dragRotate) || (hasAltitude && elevationMultiplier > 0),
+          depthCompare:
+            Boolean(mapState.dragRotate) || (hasAltitude && elevationMultiplier > 0)
+              ? 'less-equal'
+              : 'always',
           ...blendingParameters
         },
         extensions: [clipExtension],

@@ -45,7 +45,11 @@ describe('globe basemap adapter', () => {
       'transportation'
     ]);
     expect(mapbox.props.loadOptions.mvt.layers).toEqual(['place_label', 'admin', 'water', 'road']);
-    expect(carto.props.parameters).toMatchObject({depthTest: true, depthMask: false, cull: false});
+    expect(carto.props.parameters).toMatchObject({
+      depthCompare: 'less-equal',
+      depthWriteEnabled: false,
+      cullMode: 'none'
+    });
   });
 
   test('compensates tile detail for latitude without allowing non-finite offsets', () => {

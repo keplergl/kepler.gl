@@ -918,7 +918,7 @@ export default class GeoJsonLayer extends Layer {
       ...props,
       parameters: {
         ...props.parameters,
-        depthMask: true
+        depthWriteEnabled: true
       }
     };
   }

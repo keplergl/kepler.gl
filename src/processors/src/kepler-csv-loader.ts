@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {LoaderContext, LoaderWithParser} from '@loaders.gl/loader-utils';
-import type {CSVLoaderOptions} from '@loaders.gl/csv';
+import type {LoaderContext, LoaderWithParser} from '@loaders.gl/core/loader-utils';
+import type {CSVLoaderOptions} from '@loaders.gl/tables/csv';
 
 const KEPLER_CSV_OPTIONS: CSVLoaderOptions = {
   csv: {
@@ -16,8 +16,8 @@ type KeplerCSVLoaderType = LoaderWithParser<any, any, CSVLoaderOptions>;
 let csvLoaderPromise: Promise<KeplerCSVLoaderType> | null = null;
 
 async function getCSVLoader(): Promise<KeplerCSVLoaderType> {
-  csvLoaderPromise ||= import('@loaders.gl/csv').then(
-    module => module.CSVLoader as KeplerCSVLoaderType
+  csvLoaderPromise ||= import('@loaders.gl/tables/csv').then(
+    module => module.CSVLoader.preload()
   );
   return csvLoaderPromise;
 }

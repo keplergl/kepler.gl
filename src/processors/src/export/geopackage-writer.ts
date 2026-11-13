@@ -3,7 +3,7 @@
 
 // Adapted from GeoLibre (https://github.com/opengeos/GeoLibre), MIT License.
 
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 import type {FeatureCollection, Geometry, Position} from 'geojson';
 import type {Database, SqlJsStatic} from 'sql.js';
 

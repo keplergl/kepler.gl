@@ -1463,7 +1463,9 @@ export default function MapContainerFactory(
         views,
         layers: finalDeckGlLayers,
         effects,
-        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode
+          ? {cullMode: 'back'}
+          : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -2041,11 +2043,7 @@ export default function MapContainerFactory(
         const camera = this.context?.getInternalViewState(this.props.index) || this.props.mapState;
         containerStyle = {
           ...containerStyle,
-          ...getStarsBackgroundStyle(
-            camera,
-            this.props.mapState.width,
-            this.props.mapState.height
-          )
+          ...getStarsBackgroundStyle(camera, this.props.mapState.width, this.props.mapState.height)
         };
       }
 

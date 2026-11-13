@@ -9,8 +9,8 @@ import {
   getPMTilesMinZoom
 } from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
-import {MVTSource} from '@loaders.gl/mvt';
-import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
+import {MVTSourceLoader} from '@loaders.gl/tiles/mvt';
+import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {zxyToTileId} from 'pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
@@ -1495,7 +1495,7 @@ for (const path of ['header', 'directory']) {
 }
 
 test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
-  const seed = MVTSource.createDataSource('https://example.com/seed', {
+  const seed = MVTSourceLoader.createDataSourceSync('https://example.com/seed', {
     core: {
       loadOptions: {
         core: {
@@ -1514,8 +1514,8 @@ test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs'
   const pmMetadata = sinon
     .stub(PMTilesTileSource.prototype, 'getMetadata')
     .callsFake(async () => ({}));
-  const mvtConstruct = sinon.spy(MVTSource, 'createDataSource');
-  const pmConstruct = sinon.spy(PMTilesSource, 'createDataSource');
+  const mvtConstruct = sinon.spy(MVTSourceLoader, 'createDataSourceSync');
+  const pmConstruct = sinon.spy(PMTilesSourceLoader, 'createDataSourceSync');
   try {
     for (const format of [RemoteTileFormat.MVT, RemoteTileFormat.PMTILES]) {
       const {layer, table} = categoricalFilterFixture();
@@ -1791,10 +1791,18 @@ const BOUNDS_WORLD = [-180, -85.0511287798066, 180, 85.0511287798066];
 
 test('#VectorTileLayer -> PMTiles minimum zoom reads only the first index branch', async t => {
   const source = indexedBoundsSource([storedBoundsEntry(9, 454, 201), storedBoundsEntry(12, 1, 1)]);
-  t.equal(await getPMTilesMinZoom(source), 9, 'uses the first stored zoom, independent of the header');
+  t.equal(
+    await getPMTilesMinZoom(source),
+    9,
+    'uses the first stored zoom, independent of the header'
+  );
   t.equal(source.pmtiles.cache.getDirectory.callCount, 2, 'reads only root and first leaf');
   t.equal(await getPMTilesMinZoom(source), 9, 'reuses the result');
-  t.equal(source.pmtiles.cache.getDirectory.callCount, 2, 'cached result requires no directory reads');
+  t.equal(
+    source.pmtiles.cache.getDirectory.callCount,
+    2,
+    'cached result requires no directory reads'
+  );
   t.equal(source.getTileData.callCount, 0, 'never requests tile content');
   const empty = indexedBoundsSource([]);
   empty.pmtiles.cache.getDirectory = async () => [];
@@ -1807,7 +1815,11 @@ test('#VectorTileLayer -> PMTiles minimum zoom reads only the first index branch
   const oversized = indexedBoundsSource([]);
   oversized.pmtiles.getHeader = async () => ({specVersion: 3, rootDirectoryLength: 262145});
   t.equal(await getPMTilesMinZoom(oversized), null, 'caps compressed index bytes');
-  t.equal(oversized.pmtiles.cache.getDirectory.callCount, 0, 'does not fetch an oversized directory');
+  t.equal(
+    oversized.pmtiles.cache.getDirectory.callCount,
+    0,
+    'does not fetch an oversized directory'
+  );
   const cyclic = indexedBoundsSource([]);
   cyclic.pmtiles.cache.getDirectory = sinon.spy(async () => [
     {tileId: 0, offset: 0, length: 32, runLength: 0}
@@ -1829,12 +1841,19 @@ test('#VectorTileLayer -> extent tile zoom handles viewport size and wrapped bou
     t.equal(getBoundsTileZoom(bounds, 800, 600), null, 'invalid extent does not enable the helper');
   }
   t.equal(getBoundsTileZoom(BOUNDS_WORLD, 0, 0), null, 'waits for a sized viewport');
-  t.equal(getBoundsTileZoom([0, 86, 10, 90], 512, 512), null, 'ignores extents beyond tile latitudes');
+  t.equal(
+    getBoundsTileZoom([0, 86, 10, 90], 512, 512),
+    null,
+    'ignores extents beyond tile latitudes'
+  );
   t.end();
 });
 
 test('#VectorTileLayer -> new PMTiles layers default bounds only below stored zooms', async t => {
-  const table = new KeplerTable({info: {id: 'default-bounds', type: 'vector-tile'}, color: [0, 0, 0]});
+  const table = new KeplerTable({
+    info: {id: 'default-bounds', type: 'vector-tile'},
+    color: [0, 0, 0]
+  });
   table.updateSchema({fields: [], rows: []});
   table.metadata = {
     remoteTileFormat: RemoteTileFormat.PMTILES,
@@ -1845,7 +1864,7 @@ test('#VectorTileLayer -> new PMTiles layers default bounds only below stored zo
     maxZoom: 15
   };
   const datasets = {[table.id]: table};
-  const construct = sinon.stub(PMTilesSource, 'createDataSource');
+  const construct = sinon.stub(PMTilesSourceLoader, 'createDataSourceSync');
   const create = (source, manual = false, initialize = true) => {
     const tileFetch = source.getTileData;
     source.metadata = Promise.resolve({});
@@ -2046,20 +2065,25 @@ test('#VectorTileLayer -> PMTiles coverage fades before its first stored zoom an
   const layer = new VectorTileLayer({id: 'fading-bounds', dataId: 'tiles'});
   layer.updateLayerVisConfig({showBounds: true});
   const render = zoom =>
-    layer.renderLayer({
-      data: {tileSource: source, bounds: BOUNDS_WORLD, minZoom: 0, maxZoom: 8},
-      mapState: {...INITIAL_MAP_STATE, zoom},
-      animationConfig: {},
-      gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
-      layerCallbacks: {},
-      visible: true
-    }).slice(1);
+    layer
+      .renderLayer({
+        data: {tileSource: source, bounds: BOUNDS_WORLD, minZoom: 0, maxZoom: 8},
+        mapState: {...INITIAL_MAP_STATE, zoom},
+        animationConfig: {},
+        gpuFilter: {filterRange: [], filterValueAccessor: () => () => () => []},
+        layerCallbacks: {},
+        visible: true
+      })
+      .slice(1);
   const manager = new LayerManager(device, {
     viewport: new WebMercatorViewport({width: 64, height: 64, zoom: 8})
   });
   const alpha = () =>
-    manager.getLayers().find(item => item.id.includes('occupied-tile-bounds'))
-      .getAttributeManager().getAttributes().instanceColors.value[3];
+    manager
+      .getLayers()
+      .find(item => item.id.includes('occupied-tile-bounds'))
+      .getAttributeManager()
+      .getAttributes().instanceColors.value[3];
   try {
     manager.setLayers(render(8));
     const search = getPMTilesBounds(source, BOUNDS_WORLD, 0, 8);
@@ -2083,7 +2107,11 @@ test('#VectorTileLayer -> PMTiles coverage fades before its first stored zoom an
       t.equal(alpha(), expectedAlpha, `coverage alpha follows map zoom ${zoom}`);
     }
     t.equal(layer.config.visConfig.showBounds, true, 'zooming preserves the bounds toggle');
-    t.equal(source.pmtiles.cache.getDirectory.callCount, directoryReads, 'zooming reuses the index');
+    t.equal(
+      source.pmtiles.cache.getDirectory.callCount,
+      directoryReads,
+      'zooming reuses the index'
+    );
     t.equal(source.getTileData.callCount, 0, 'fading never fetches tile contents');
     layer.updateLayerVisConfig({showBounds: false});
     t.deepEqual(render(1), [], 'manually disabled bounds stay off when zooming out');

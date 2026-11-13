@@ -4,7 +4,7 @@
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import type {Field} from '@kepler.gl/types';
 import type {DataContainerInterface} from '@kepler.gl/utils';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 import * as arrow from 'apache-arrow';
 import type {FeatureCollection, Geometry} from 'geojson';
 

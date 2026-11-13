@@ -2,14 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
-import {
-  DefaultProps,
-  Layer,
-  WebMercatorViewport,
-  project32,
-  phongMaterial,
-  COORDINATE_SYSTEM
-} from '@deck.gl/core';
+import {DefaultProps, Layer, WebMercatorViewport, project32, phongMaterial} from '@deck.gl/core';
 import {Model} from '@luma.gl/engine';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
 import {createHeatmapSurfaceMesh} from './density-surface-mesh';
@@ -906,7 +899,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         updateTriggers
       }),
       {
-        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+        coordinateSystem: 'lnglat',
         data: {length: 1},
         mesh,
         maxTexture: maxWeightsTexture,

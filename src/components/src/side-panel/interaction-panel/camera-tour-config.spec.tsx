@@ -1289,7 +1289,7 @@ test('path labels include authored Unicode names in their font atlas', () => {
 
 test('path labels override globe backface culling without disabling depth testing', () => {
   const layers = getCameraTourPathLayers(tour);
-  expect(layers[2].props.parameters).toEqual({cull: false});
+  expect(layers[2].props.parameters).toEqual({cullMode: 'none'});
 });
 
 test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // @ts-ignore GL resolution depends on moduleResolution setting
-import {GL} from '@luma.gl/constants';
+import {GL} from '@luma.gl/core/webgl-constants';
 import isEqual from 'es-toolkit/compat/isEqual';
 
 import {FILTER_MODE, ADDRESS_MODE, TEXTURE_FORMAT} from '@kepler.gl/constants';

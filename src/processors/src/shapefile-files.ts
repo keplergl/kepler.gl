@@ -68,7 +68,7 @@ function fileNameFromArchivePath(path: string): string {
  * are skipped.
  */
 async function listTopLevelZipFiles(zipFile: File): Promise<File[]> {
-  const {ZipLoader} = await import('@loaders.gl/zip');
+  const {ZipLoader} = await import('@loaders.gl/archives/zip');
   const zipData = await zipFile.arrayBuffer();
   const archive = (await parse(zipData, ZipLoader, {worker: false})) as Record<string, ArrayBuffer>;
   const files: File[] = [];

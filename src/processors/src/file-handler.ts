@@ -2,15 +2,17 @@
 // Copyright contributors to the kepler.gl project
 
 import {parseInBatches} from '@loaders.gl/core';
-import {Loader} from '@loaders.gl/loader-utils';
-import {getBinaryGeometriesFromArrow, BinaryDataFromGeoArrow} from '@loaders.gl/gis';
+import {Loader} from '@loaders.gl/core/loader-utils';
+import {
+  convertGeoArrowToBinaryFeatureCollection,
+  BinaryDataFromGeoArrow
+} from '@loaders.gl/core/geoarrow';
 import * as arrow from 'apache-arrow';
 import {
-  hardClone,
   parseGeoArrowOnWorker,
   ParseGeoArrowInput,
   ParseGeoArrowResult
-} from '@loaders.gl/arrow';
+} from '@loaders.gl/tables/arrow';
 import {
   isPlainObject,
   generateHashIdFromString,
@@ -271,11 +273,10 @@ export async function parseGeoArrowBatchesOnWorkers(
         encoding === GEOARROW_EXTENSIONS.POINT
           ? convertStructToFixedSizeList(geoColumn.data[chunkIndex])
           : geoColumn.data[chunkIndex];
-      const chunkCopy = hardClone(geometryChunk, true);
       const chunkOffset = geoColumn.data
         .slice(0, chunkIndex)
         .reduce((offset, chunk) => offset + chunk.length, 0);
-      const chunkType = chunkCopy.type as typeof chunkCopy.type & {listSize?: number};
+      const chunkType = geometryChunk.type as typeof geometryChunk.type & {listSize?: number};
       const transferableType = {
         ...chunkType,
         typeId: chunkType.typeId,
@@ -283,15 +284,15 @@ export async function parseGeoArrowBatchesOnWorkers(
       } as ParseGeoArrowInput['chunkData']['type'];
       const sourceData: ParseGeoArrowInput = {
         operation: 'parse-geoarrow',
-        chunkData: {
+        chunkData: structuredClone({
           type: transferableType,
-          offset: chunkCopy.offset,
-          length: chunkCopy.length,
-          nullCount: chunkCopy.nullCount,
-          buffers: chunkCopy.buffers,
-          children: chunkCopy.children,
-          dictionary: chunkCopy.dictionary
-        },
+          offset: geometryChunk.offset,
+          length: geometryChunk.length,
+          nullCount: geometryChunk.nullCount,
+          buffers: geometryChunk.buffers,
+          children: geometryChunk.children,
+          dictionary: geometryChunk.dictionary
+        }),
         chunkIndex,
         chunkOffset,
         geometryEncoding: encoding,
@@ -303,7 +304,7 @@ export async function parseGeoArrowBatchesOnWorkers(
         chunkIndex,
         result: parseOnWorker(sourceData),
         fallback: () =>
-          getBinaryGeometriesFromArrow(
+          convertGeoArrowToBinaryFeatureCollection(
             // Use the original buffers: the worker copy may be transferred.
             // A local Data wrapper also accepts chunks from another Arrow runtime.
             arrow.makeVector(
@@ -579,7 +580,7 @@ export async function* readBatch(
       // Set the streamed data correctly is Batch json path is set
       // and the path streamed is not the top level object (jsonpath = '$')
       if (batch.jsonpath && batch.jsonpath.length > 1) {
-        const {_JSONPath} = await import('@loaders.gl/json');
+        const {_JSONPath} = await import('@loaders.gl/tables/json');
         const streamingPath = new _JSONPath(batch.jsonpath);
         streamingPath.setFieldAtPath(result, batches);
       } else if (batch.jsonpath && batch.jsonpath.length === 1) {

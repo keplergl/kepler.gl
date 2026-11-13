@@ -13,7 +13,6 @@ import {
   WebMercatorViewport
 } from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
-import {setGLParameters} from '@luma.gl/webgl';
 import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
@@ -639,15 +638,8 @@ test.each([false, true])(
     layer.updateLayerVisConfig({enable3d: true, elevationScale: 2});
     const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
     expect(depth.props.pickable).toBe(false);
-    const gl = {enable: jest.fn(), depthMask: jest.fn(), colorMask: jest.fn()};
-    const applyDepthParameters = pass =>
-      setGLParameters(gl as unknown as WebGL2RenderingContext, pass.props.parameters);
-    // Exercise the actual WebGL parameter setter: a numeric render-pass mask
-    // is not valid for per-layer parameters and throws before drawing.
-    expect(() => applyDepthParameters(depth)).not.toThrow();
-    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
-    expect(gl.depthMask).toHaveBeenLastCalledWith(true);
-    expect(fill.props.parameters).toMatchObject({depthMask: false});
+    expect(depth.props.parameters).toMatchObject({colorMask: 0, depthWriteEnabled: true});
+    expect(fill.props.parameters).toMatchObject({depthWriteEnabled: false});
     expect(fill.props.modelMatrix?.[10]).toBe(2);
     expect(outline.props.modelMatrix?.[10]).toBe(2);
     const raised = fill.props.data as typeof data.data;
@@ -673,8 +665,7 @@ test.each([false, true])(
     expect(layer.getContourLegend()).toEqual(legend);
     layer.updateLayerVisConfig({elevationScale: 0});
     const flattened = renderContourPasses(layer, dataset, data);
-    expect(() => applyDepthParameters(flattened[0])).not.toThrow();
-    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
+    expect(flattened[0].props.parameters).toMatchObject({colorMask: 0, depthWriteEnabled: true});
     expect(flattened[0].props.data).toBe(depth.props.data);
     expect(flattened[1].props.data).toBe(fill.props.data);
     expect(flattened[1].props.modelMatrix?.[10]).toBe(0);

@@ -285,7 +285,7 @@ export default class ClusterLayer extends CompositeLayer {
       highlightColor,
       updateTriggers,
       parameters: {
-        depthMask: false
+        depthWriteEnabled: false
       },
       ...accessors
     });

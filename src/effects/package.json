@@ -28,15 +28,14 @@
     "dist"
   ],
   "dependencies": {
-    "@deck.gl/core": "^9.4.1",
+    "@deck.gl/core": "10.0.0-alpha.1",
     "@kepler.gl/common-utils": "3.3.0-alpha.21",
     "@kepler.gl/constants": "3.3.0-alpha.21",
     "@kepler.gl/types": "3.3.0-alpha.21",
     "@kepler.gl/utils": "3.3.0-alpha.21",
-    "@luma.gl/core": "^9.4.2",
-    "@luma.gl/effects": "^9.4.2",
-    "@luma.gl/engine": "^9.4.2",
-    "@luma.gl/shadertools": "^9.4.2",
+    "@luma.gl/core": "10.0.0-alpha.14",
+    "@luma.gl/engine": "10.0.0-alpha.14",
+    "@luma.gl/shaders": "10.0.0-alpha.14",
     "moment-timezone": "^0.5.35",
     "suncalc": "^1.9.0"
   },

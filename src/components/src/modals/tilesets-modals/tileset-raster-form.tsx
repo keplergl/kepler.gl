@@ -4,7 +4,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
 
-import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {isCOGUrl, isPMTilesUrl, validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, RasterTileType, PMTilesType} from '@kepler.gl/constants';

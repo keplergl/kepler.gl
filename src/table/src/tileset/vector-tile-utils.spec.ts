@@ -86,7 +86,7 @@ describe('getMetaUrl', () => {
   });
 });
 
-test('parseMetadata, metadata from MVTSource and Mapbox URL', () => {
+test('parseMetadata, metadata from MVTSourceLoader and Mapbox URL', () => {
   expect(
     parseMetadata(MVT_METADATA, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})
   ).toEqual({

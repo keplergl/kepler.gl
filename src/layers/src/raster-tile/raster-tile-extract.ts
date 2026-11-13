@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import type {Feature, Polygon} from 'geojson';
-import type {TypedArray} from '@loaders.gl/loader-utils';
+import type {TypedArray} from '@loaders.gl/core/loader-utils';
 
 import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 

@@ -12,8 +12,8 @@ import {
   VectorTileDatasetMetadata,
   REMOTE_TILE
 } from '@kepler.gl/constants';
-import {TileJSON} from '@loaders.gl/mvt';
-import {PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {TileJSON} from '@loaders.gl/tiles/mvt';
+import {PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 import {getMetaUrl, parseVectorMetadata, VectorTileMetadata} from '@kepler.gl/table';
 import {Merge} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';

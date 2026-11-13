@@ -3,8 +3,8 @@
 
 import test from 'tape';
 import sinon from 'sinon';
-import {WorkerFarm} from '@loaders.gl/worker-utils';
-import {convertGeoArrowToBinaryFeatureCollection} from '@loaders.gl/gis';
+import {WorkerFarm} from '@loaders.gl/core/worker-utils';
+import {convertGeoArrowToBinaryFeatureCollection} from '@loaders.gl/core/geoarrow';
 import {KeplerTable} from '@kepler.gl/table';
 import GeoJsonLayer from '../../../src/layers/src/geojson-layer/geojson-layer';
 import {
@@ -27,7 +27,7 @@ import {
 import * as arrow from 'apache-arrow';
 // The standalone bundle has distinct constructors, like DuckDB's bundled Arrow.
 import * as foreignArrow from 'apache-arrow/Arrow.es2015.min';
-import {convertArrowToSchema} from '@loaders.gl/schema-utils';
+import {convertArrowToSchema} from '@loaders.gl/core/schema-utils';
 import {parsedFields, parsedRows} from 'test/fixtures/row-object';
 import {
   savedStateV1InteractionCoordinate as keplerglMap,

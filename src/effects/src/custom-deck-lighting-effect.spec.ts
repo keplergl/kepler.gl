@@ -4,22 +4,18 @@
 import {
   alignExportShadowPass,
   patchShadowPassDepth,
-  shadowMapHoverFixModule
+  shadowMapHoverFixPlugin
 } from './custom-deck-lighting-effect';
 
-describe('shadowMapHoverFixModule', () => {
+describe('shadowMapHoverFixPlugin', () => {
   test('re-encodes shadow map depth after picking highlight', () => {
-    const inject = (
-      shadowMapHoverFixModule as {
-        inject: Record<string, {order: number; injection: string}>;
-      }
-    ).inject['fs:DECKGL_FILTER_COLOR'];
+    const inject = shadowMapHoverFixPlugin.injections[0];
 
     // deck.gl picking blends highlightColor at order 99, which would overwrite
     // encoded shadow depth for the hovered object.
     expect(inject.order).toBeGreaterThan(99);
-    expect(inject.injection).toContain('shadow.drawShadowMap');
-    expect(inject.injection).toContain('shadow_filterShadowColor');
+    expect(inject.glsl).toContain('shadow.drawShadowMap');
+    expect(inject.glsl).toContain('shadow_filterShadowColor');
   });
 });
 
@@ -27,8 +23,8 @@ describe('patchShadowPassDepth', () => {
   test('forces WebGL depth writes and disables polygon offset', () => {
     const pass = {
       getLayerParameters: (_layer: unknown, _layerIndex: number, _viewport: unknown) => ({
-        depthTest: true,
-        depthMask: false,
+        depthCompare: 'less-equal',
+        depthWriteEnabled: false,
         blend: true
       })
     };
@@ -36,8 +32,8 @@ describe('patchShadowPassDepth', () => {
     patchShadowPassDepth(pass);
 
     expect(pass.getLayerParameters({}, 0, null)).toMatchObject({
-      depthTest: true,
-      depthMask: true,
+      depthCompare: 'less-equal',
+      depthWriteEnabled: true,
       polygonOffsetFill: false,
       polygonOffset: [0, 0]
     });

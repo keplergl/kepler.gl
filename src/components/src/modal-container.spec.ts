@@ -3,7 +3,7 @@
 
 import React from 'react';
 import {fireEvent, screen} from '@testing-library/react';
-import {PMTilesSource} from '@loaders.gl/pmtiles';
+import {PMTilesSourceLoader} from '@loaders.gl/tiles/pmtiles';
 
 import {
   ADD_DATA_ID,
@@ -157,7 +157,7 @@ describe('tileset filter eligibility', () => {
   }
 
   test('imports, selects and renders string filters, including after save/reload', async () => {
-    const source = jest.spyOn(PMTilesSource, 'createDataSource').mockReturnValue({
+    const source = jest.spyOn(PMTilesSourceLoader, 'createDataSourceSync').mockReturnValue({
       metadata: Promise.resolve(metadata),
       getTileData: async () => features
     } as any);

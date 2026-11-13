@@ -23,7 +23,7 @@ export type PickInfo<DataT = any> = {
   x: number;
   y: number;
   pixel?: [number, number];
-  coordinate?: number[];
+  coordinate?: number[] | null;
   color?: Uint8Array | null;
   pixelRatio?: number;
 };

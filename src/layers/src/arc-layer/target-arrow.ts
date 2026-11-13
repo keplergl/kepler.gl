@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, MapView, Viewport} from '@deck.gl/core';
+import {MapView, Viewport} from '@deck.gl/core';
 import {BrushingExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {worldToPixels} from '@math.gl/web-mercator';
 
@@ -500,16 +500,16 @@ export function createTargetArrowLayer({
   return new ArrowHeadLayer({
     id: `${layer.id}-arrow-head-${shape}${highlight ? '-hovered' : ''}`,
     data,
-    coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    coordinateSystem: 'lnglat',
     pickable: false,
     wrapLongitude: true,
     visible: defaultLayerProps.visible,
     hidden: defaultLayerProps.hidden,
     opacity: highlight ? 1 : visConfig.opacity,
     parameters: {
-      depthTest: true,
-      depthMask: false,
-      cull: false,
+      depthCompare: 'less-equal',
+      depthWriteEnabled: false,
+      cullMode: 'none',
       ...(mapState.layerParameters || {})
     },
     billboard: true,
