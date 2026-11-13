@@ -6,13 +6,30 @@ import {drainTasksForTesting, succeedTaskInTest, errorTaskInTest} from '@kepler.
 import sinon from 'sinon';
 import {default as Console} from 'global/console';
 
-import {ActionTypes, exportFileToCloud, resetProviderStatus} from '@kepler.gl/actions';
+import {
+  ActionTypes,
+  exportFileToCloud,
+  exportFileSuccess,
+  exportFileError,
+  loadCloudMap,
+  loadCloudMapSuccess,
+  postSaveLoadSuccess,
+  resetProviderStatus
+} from '@kepler.gl/actions';
 import {
   providerReducer as reducer,
   providerStateReducerFactory,
   INITIAL_PROVIDER_STATE
 } from '@kepler.gl/reducers';
 import MockProvider from 'test/helpers/mock-provider';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
+import {FILE_CONFLICT_MSG} from '@kepler.gl/cloud-providers';
+import {OVERWRITE_MAP_ID} from '@kepler.gl/constants';
+
+const runProviderTask = task =>
+  new Promise((resolve, reject) => {
+    task.run((effect, success, error) => effect(success, error), resolve, reject);
+  });
 
 test('#providerStateReducer', t => {
   t.deepEqual(
@@ -330,5 +347,246 @@ test('#providerStateReducer -> RESET_PROVIDER_STATUS', t => {
     'Should resetProviderStatus'
   );
 
+  t.end();
+});
+
+test('#providerStateReducer -> private saves retain identity while public shares do not replace it', t => {
+  drainTasksForTesting();
+  const provider = new MockProvider();
+  const state = {...INITIAL_PROVIDER_STATE, mapSaved: 'old-provider', savedMapId: 'old-id'};
+  const response = {info: {id: 'new-id'}, url: 'https://example.com/map'};
+  const shared = reducer(state, exportFileSuccess({provider, response, options: {isPublic: true}}));
+  t.equal(shared.mapSaved, 'old-provider', 'public sharing preserves the private save provider');
+  t.equal(shared.savedMapId, 'old-id', 'public sharing preserves the private save id');
+  t.equal(shared.successInfo, response, 'sharing still exposes the response');
+  const saved = reducer(state, exportFileSuccess({provider, response}));
+  t.equal(saved.mapSaved, provider.name, 'private save updates provider');
+  t.equal(saved.savedMapId, 'new-id', 'private save captures response id');
+  const noId = reducer(saved, exportFileSuccess({provider, response: {}}));
+  t.equal(noId.savedMapId, null, 'a response without id clears stale identity');
+  t.equal(state.savedMapId, 'old-id', 'source state remains unchanged');
+  t.deepEqual(drainTasksForTesting(), [], 'no callback or modal task without opt-in');
+  t.end();
+});
+
+test('#providerStateReducer -> conflicting saves offer overwrite instead of invoking error callback', t => {
+  drainTasksForTesting();
+  const provider = new MockProvider();
+  const onError = sinon.spy(() => ({type: 'CUSTOM_ERROR'}));
+  const state = {...INITIAL_PROVIDER_STATE, isProviderLoading: true};
+  const next = reducer(
+    state,
+    exportFileError({provider, error: new Error(FILE_CONFLICT_MSG), onError})
+  );
+  t.equal(next.isProviderLoading, false, 'stops loading');
+  t.equal(next.mapSaved, provider.name, 'retains provider for overwrite');
+  t.equal(next.providerError, null, 'conflict is not a generic provider error');
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'only opens overwrite modal');
+  t.deepEqual(
+    succeedTaskInTest(tasks[0]),
+    {type: ActionTypes.TOGGLE_MODAL, payload: OVERWRITE_MAP_ID},
+    'opens overwrite modal'
+  );
+  t.equal(onError.callCount, 0, 'does not call generic error callback');
+  t.end();
+});
+
+test('#providerStateReducer -> load validation does not schedule invalid provider requests', t => {
+  drainTasksForTesting();
+  const warn = sinon.stub(Console, 'warn');
+  const error = sinon.stub(Console, 'error');
+  const state = {...INITIAL_PROVIDER_STATE};
+  try {
+    for (const payload of [{}, {loadParams: {}}, {loadParams: {}, provider: {name: 'invalid'}}]) {
+      t.equal(reducer(state, loadCloudMap(payload)), state, 'invalid request preserves state');
+    }
+    t.deepEqual(drainTasksForTesting(), [], 'invalid requests schedule no network work');
+  } finally {
+    warn.restore();
+    error.restore();
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> download failure clears loading and creates persistent error notification', t => {
+  drainTasksForTesting();
+  const warn = sinon.stub(Console, 'warn');
+  const provider = {name: 'cloud', downloadMap: async () => ({})};
+  const loadParams = {id: 'map-id'};
+  try {
+    const loading = reducer(undefined, loadCloudMap({provider, loadParams}));
+    t.equal(loading.isProviderLoading, true, 'provider starts loading');
+    t.equal(loading.isCloudMapLoading, true, 'map starts loading');
+    const [download] = drainTasksForTesting();
+    t.deepEqual(
+      download.payload,
+      {provider, payload: loadParams},
+      'forwards provider request parameters'
+    );
+    const failed = reducer(loading, errorTaskInTest(download, new Error('download failed')));
+    t.equal(failed.isProviderLoading, false, 'provider stops loading');
+    t.equal(failed.isCloudMapLoading, false, 'map stops loading');
+    const tasks = drainTasksForTesting();
+    t.equal(tasks.length, 1, 'error has no automatic dismissal task');
+    const notification = succeedTaskInTest(tasks[0]);
+    t.equal(notification.type, ActionTypes.ADD_NOTIFICATION, 'dispatches a notification');
+    t.equal(notification.payload.type, 'error', 'notification is an error');
+    t.equal(notification.payload.message, 'download failed', 'preserves failure message');
+  } finally {
+    warn.restore();
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> malformed download responses report errors without parsing', t => {
+  drainTasksForTesting();
+  const provider = {name: 'cloud'};
+  for (const response of [null, [], {}, {map: []}, {map: {config: {}}}, {map: {datasets: []}}]) {
+    const onError = sinon.spy(() => ({type: 'CUSTOM_ERROR'}));
+    const state = {...INITIAL_PROVIDER_STATE, isProviderLoading: true};
+    const next = reducer(state, loadCloudMapSuccess({provider, response, onError}));
+    t.equal(next.isProviderLoading, false, 'invalid response stops provider loading');
+    t.ok(next.providerError, 'invalid response produces an error');
+    const tasks = drainTasksForTesting();
+    t.equal(tasks.length, 1, 'only callback task is scheduled');
+    t.deepEqual(succeedTaskInTest(tasks[0]), {type: 'CUSTOM_ERROR'}, 'dispatches callback result');
+    t.equal(onError.firstCall.args[0].provider, provider, 'callback receives provider');
+    t.ok(onError.firstCall.args[0].error instanceof Error, 'callback receives validation error');
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> async dataset processors preserve order and load metadata', async t => {
+  drainTasksForTesting();
+  const table = getApplicationConfig().table;
+  const provider = {name: 'cloud', downloadMap: async () => response};
+  const loadParams = {id: 'saved-map'};
+  const datasets = [
+    {info: {id: 'a'}, data: 'first'},
+    {info: {id: 'b'}, data: 'second'}
+  ];
+  const response = {
+    format: 'custom',
+    map: {datasets, config: {version: 'v1'}, info: {title: 'Saved map'}}
+  };
+  const onSuccess = sinon.spy(() => ({type: 'CUSTOM_SUCCESS'}));
+  let resolveFirst;
+  const processor = sinon.spy(value =>
+    value === 'first'
+      ? new Promise(resolve => {
+          resolveFirst = resolve;
+        })
+      : Promise.resolve({rows: [[2]]})
+  );
+  initApplicationConfig({table: {getFileProcessor: () => ({processor})}});
+  try {
+    const loading = reducer(undefined, loadCloudMap({provider, loadParams, onSuccess}));
+    const [download] = drainTasksForTesting();
+    const parsed = reducer(loading, await runProviderTask(download));
+    const [parse] = drainTasksForTesting();
+    const pending = runProviderTask(parse);
+    await Promise.resolve();
+    resolveFirst({rows: [[1]]});
+    const loaded = reducer(parsed, await pending);
+    t.equal(loaded.isCloudMapLoading, false, 'load finishes after parsing');
+    t.equal(loaded.isProviderLoading, false, 'provider finishes after parsing');
+    t.equal(loaded.mapSaved, 'cloud', 'records loaded provider');
+    const tasks = drainTasksForTesting();
+    const addData = succeedTaskInTest(tasks[0]);
+    t.equal(addData.type, ActionTypes.ADD_DATA_TO_MAP, 'loads processed datasets');
+    t.deepEqual(
+      addData.payload.datasets,
+      [
+        {info: {id: 'a'}, data: {rows: [[1]]}},
+        {info: {id: 'b'}, data: {rows: [[2]]}}
+      ],
+      'dataset order and identity survive asynchronous processing'
+    );
+    t.deepEqual(
+      addData.payload.info,
+      {title: 'Saved map', provider: 'cloud', loadParams},
+      'preserves map metadata and source'
+    );
+    t.deepEqual(addData.payload.config, response.map.config, 'preserves saved config');
+    t.equal(addData.payload.options.centerMap, false, 'does not override saved viewport');
+    t.deepEqual(succeedTaskInTest(tasks[1]), {type: 'CUSTOM_SUCCESS'}, 'dispatches custom success');
+    t.deepEqual(
+      onSuccess.firstCall.args[0],
+      {response, loadParams, provider},
+      'success callback receives original response'
+    );
+    t.equal(
+      succeedTaskInTest(tasks[2]).type,
+      postSaveLoadSuccess('Map from cloud loaded').type,
+      'requests post-load cleanup'
+    );
+  } finally {
+    initApplicationConfig({table});
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> custom saved-map processors receive the whole map', async t => {
+  drainTasksForTesting();
+  const table = getApplicationConfig().table;
+  const map = {datasets: [{id: 'source'}], config: {version: 'v1'}};
+  const datasets = [{info: {id: 'processed'}, data: {rows: [[1]]}}];
+  const processor = sinon.spy(async () => ({datasets}));
+  initApplicationConfig({table: {getFileProcessor: () => ({processor})}});
+  try {
+    reducer(
+      undefined,
+      loadCloudMapSuccess({
+        provider: {name: 'cloud'},
+        response: {format: 'keplergl', map},
+        loadParams: {id: 'map'}
+      })
+    );
+    const [task] = drainTasksForTesting();
+    const action = await runProviderTask(task);
+    t.equal(processor.callCount, 1, 'whole map is processed once');
+    t.equal(processor.firstCall.args[0], map, 'plugin receives map rather than dataset fragments');
+    t.deepEqual(action.payload.datasetsPayload.datasets, datasets, 'uses plugin datasets');
+  } finally {
+    initApplicationConfig({table});
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> missing and unsupported formats use CSV fallback', async t => {
+  drainTasksForTesting();
+  const table = getApplicationConfig().table;
+  const warn = sinon.stub(Console, 'warn');
+  try {
+    for (const format of [undefined, 'unsupported']) {
+      for (const tableClass of [{}, {getFileProcessor: () => ({processor: null})}]) {
+        initApplicationConfig({table: tableClass});
+        reducer(
+          undefined,
+          loadCloudMapSuccess({
+            provider: {name: 'cloud'},
+            response: {
+              format,
+              map: {datasets: {info: {id: 'csv'}, data: 'value\n12\n'}, config: {}}
+            },
+            loadParams: {id: 'map'}
+          })
+        );
+        const [task] = drainTasksForTesting();
+        const action = await runProviderTask(task);
+        const [dataset] = action.payload.datasetsPayload.datasets;
+        t.equal(dataset.info.id, 'csv', 'preserves dataset id');
+        t.equal(dataset.data.fields[0].name, 'value', 'fallback parses CSV fields');
+        t.deepEqual(dataset.data.rows, [[12]], 'fallback parses numeric CSV values');
+      }
+    }
+  } finally {
+    initApplicationConfig({table});
+    warn.restore();
+    drainTasksForTesting();
+  }
   t.end();
 });
