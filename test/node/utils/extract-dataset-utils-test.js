@@ -231,3 +231,127 @@ test('extract-dataset-utils -> extractRowsInsideFeature unsupported layer', t =>
   t.equal(extracted, null, 'Unsupported layers should not copy every filtered row');
   t.end();
 });
+
+function localPointExtractionFixture(indexes = {}) {
+  const rows = [
+    [30.5, 12.25, 'first inside'],
+    [35.5, 12.25, 'outside'],
+    [30.5, 14.25, 'second inside']
+  ];
+  const fields = [
+    {name: 'lng', type: 'real'},
+    {name: 'lat', type: 'real'},
+    {name: 'name', type: 'string', displayName: 'Place', format: '', analyzerType: 'STRING'}
+  ];
+  return {
+    layer: {
+      id: 'points',
+      type: LAYER_TYPES.point,
+      config: {dataId: 'local', label: 'Points'},
+      getPositionAccessor:
+        dataContainer =>
+        ({index}) =>
+          [dataContainer.valueAt(index, 0), dataContainer.valueAt(index, 1)]
+    },
+    dataset: {
+      fields,
+      dataContainer: createDataContainer(rows),
+      allIndexes: [0, 1, 2],
+      ...indexes
+    },
+    feature: mockPolygonFeature
+  };
+}
+
+test('extract-dataset-utils -> local extraction combines polygon and CPU filters', t => {
+  const input = localPointExtractionFixture({
+    filteredIndex: [0, 1, 2],
+    filteredIdxCPU: [2, 1]
+  });
+  const extracted = extractRowsInsideFeature(input);
+
+  t.equal(extracted.kind, 'table', 'local datasets return a table');
+  t.deepEqual(
+    extracted.rows,
+    [[30.5, 14.25, 'second inside']],
+    'CPU-filtered rows take precedence and polygon clipping still excludes outside rows'
+  );
+  t.equal(extracted.rowCount, 1, 'count describes the final intersection');
+  t.deepEqual(input.dataset.filteredIdxCPU, [2, 1], 'source index order is unchanged');
+  t.end();
+});
+
+test('extract-dataset-utils -> local extraction index fallback and order', t => {
+  const cases = [
+    {indexes: {filteredIndex: [2, 1, 0]}, expected: ['second inside', 'first inside']},
+    {indexes: {}, expected: ['first inside', 'second inside']},
+    {indexes: {filteredIdxCPU: [], filteredIndex: [0, 2]}, expected: []},
+    {indexes: {filteredIndex: []}, expected: []},
+    {indexes: {allIndexes: undefined}, expected: []}
+  ];
+  cases.forEach(({indexes, expected}, i) => {
+    const extracted = extractRowsInsideFeature(localPointExtractionFixture(indexes));
+    t.deepEqual(
+      extracted.rows.map(row => row[2]),
+      expected,
+      `case ${i}: preserves chosen index order and does not fall through an empty selection`
+    );
+    t.equal(extracted.rowCount, expected.length, `case ${i}: row count matches copied rows`);
+  });
+  t.end();
+});
+
+test('extract-dataset-utils -> local extraction copies rows and field descriptors', t => {
+  const input = localPointExtractionFixture();
+  const extracted = extractRowsInsideFeature(input);
+  const expectedFields = input.dataset.fields.map(field => ({
+    name: field.name,
+    type: field.type,
+    format: field.format,
+    analyzerType: field.analyzerType,
+    displayName: field.displayName
+  }));
+
+  t.deepEqual(extracted.fields, expectedFields, 'field order and import metadata are preserved');
+  extracted.fields.forEach((field, i) => {
+    t.notEqual(field, input.dataset.fields[i], 'field descriptors are independent');
+  });
+  extracted.rows[0][2] = 'edited copy';
+  extracted.rows.push([31, 13, 'new row']);
+  extracted.fields[2].displayName = 'Edited label';
+  t.equal(
+    input.dataset.dataContainer.valueAt(0, 2),
+    'first inside',
+    'row edits leave source intact'
+  );
+  t.equal(input.dataset.dataContainer.numRows(), 3, 'adding copied rows leaves source size intact');
+  t.equal(input.dataset.fields[2].displayName, 'Place', 'field edits leave source intact');
+  t.end();
+});
+
+test('extract-dataset-utils -> local extraction requires a usable polygon and dataset', t => {
+  const input = localPointExtractionFixture();
+  t.equal(extractRowsInsideFeature({...input, feature: null}), null, 'missing drawing is rejected');
+  t.equal(
+    extractRowsInsideFeature({
+      ...input,
+      feature: {type: 'Feature', geometry: {type: 'Point', coordinates: [30, 12]}, properties: {}}
+    }),
+    null,
+    'non-polygon drawing is rejected'
+  );
+  t.equal(
+    extractRowsInsideFeature({...input, dataset: {...input.dataset, disableDataOperation: true}}),
+    null,
+    'disabled data operations are respected'
+  );
+  t.equal(
+    extractRowsInsideFeature({
+      ...input,
+      dataset: {...input.dataset, dataContainer: createDataContainer([])}
+    }),
+    null,
+    'empty source dataset is not extractable'
+  );
+  t.end();
+});
