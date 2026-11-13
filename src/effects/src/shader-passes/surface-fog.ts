@@ -5,14 +5,19 @@ import {ClipSpace} from '@luma.gl/engine';
 import type {ShaderModule} from '@luma.gl/shadertools';
 import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
+// Rebase the inverse matrix on the CPU before its doubles become GPU floats.
+// This is an origin interval, not a texture repeat: the noise also receives the
+// world lattice offset so neighboring origin tiles contain different waves.
+const WATER_ORIGIN_METERS = 4096;
+
 export type SurfaceFogProps = {
   density: number;
   /** Fog ceiling elevation in meters. Geometry below this gets fog. */
   height: number;
-  /** Vertical transition zone in meters above the ceiling. */
+  /** Fog fade above the ceiling, or underwater color/visibility transition depth (meters). */
   thickness: number;
   fogColor: [number, number, number];
-  /** When true, render a static wave/water pattern instead of plain fog. */
+  /** When true, render a reflective water surface instead of plain fog. */
   pattern: boolean;
 };
 
@@ -29,6 +34,8 @@ uniform surfaceFogUniforms {
   float viewportWidth;
   float viewportHeight;
   float unitsPerMeter;
+  float waveUnitsPerMeter;
+  vec2 waveOrigin;
   float pattern;
 } surfaceFog;
 `;
@@ -46,90 +53,87 @@ in vec2 uv;
 
 out vec4 fragColor;
 
-// --- Gradient noise for pattern detail ---
+const float WATER_ORIGIN_METERS = ${WATER_ORIGIN_METERS}.0;
 
+// Gradient noise with analytic derivatives: irregular wave slopes, without
+// regular sine trains or finite-difference sampling artifacts.
 vec2 hashGrad(vec2 p) {
+  // GPU mod can leave fractional errors even for integer lattice coordinates.
+  // Round before hashing, so equivalent cells keep the same gradient on rebase.
+  p = floor(mod(p, vec2(4093.0, 4091.0)) + 0.5);
   float h = dot(p, vec2(127.1, 311.7));
   float a = fract(sin(h) * 43758.5453) * 6.2831853;
   return vec2(cos(a), sin(a));
 }
 
-float noise2d(vec2 p) {
-  vec2 i = floor(p);
+vec3 noiseGradient(vec2 p, vec2 origin) {
+  vec2 cell = floor(p) + origin;
   vec2 f = fract(p);
   vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
-  float n00 = dot(hashGrad(i), f);
-  float n10 = dot(hashGrad(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
-  float n01 = dot(hashGrad(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
-  float n11 = dot(hashGrad(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
-  return mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+  vec2 du = 30.0 * f * f * (f - 1.0) * (f - 1.0);
+  vec2 g00 = hashGrad(cell);
+  vec2 g10 = hashGrad(cell + vec2(1.0, 0.0));
+  vec2 g01 = hashGrad(cell + vec2(0.0, 1.0));
+  vec2 g11 = hashGrad(cell + vec2(1.0, 1.0));
+  float n00 = dot(g00, f);
+  float n10 = dot(g10, f - vec2(1.0, 0.0));
+  float n01 = dot(g01, f - vec2(0.0, 1.0));
+  float n11 = dot(g11, f - vec2(1.0, 1.0));
+  float value = mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+  vec2 gradient = mix(mix(g00, g10, u.x), mix(g01, g11, u.x), u.y);
+  gradient += du * vec2(mix(n10 - n00, n11 - n01, u.y),
+                        mix(n01 - n00, n11 - n10, u.x));
+  return vec3(value, gradient);
 }
 
-// 3-octave FBM with rotation to break axis-alignment.
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  // ~47.6° rotation per octave — avoids 45°/90° multiples that reinforce grid lines
-  mat2 rot = mat2(0.6731, 0.7395, -0.7395, 0.6731);
-  for (int i = 0; i < 3; i++) {
-    v += a * noise2d(p);
-    p = rot * p * 2.03;
-    a *= 0.5;
+vec3 waveNoise(vec2 meters, float cellSize, mat2 frame) {
+  // Add the global offset only to integer cell IDs. Fractional positions stay
+  // local and precise even on a zoomed-in map thousands of kilometers away.
+  // Binary scales/frames keep the lattice offset integral when rebasing.
+  vec2 origin = frame * (surfaceFog.waveOrigin * (WATER_ORIGIN_METERS / cellSize));
+  origin = floor(mod(origin, vec2(4093.0, 4091.0)) + 0.5);
+  return noiseGradient(frame * (meters / cellSize), origin);
+}
+
+float waveWeight(float cellSize, float footprint) {
+  return 1.0 - smoothstep(0.15, 0.7, footprint / cellSize);
+}
+
+vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float footprint) {
+  vec2 gradient = waveNoise(meters, cellSize, frame).yz;
+  // Transform the gradient back to map coordinates, preserving stretched crests.
+  return vec2(dot(frame[0], gradient), dot(frame[1], gradient)) *
+         strength * waveWeight(cellSize, footprint);
+}
+
+vec3 waveNormal(vec2 meters, float footprint) {
+  // Broad noise bends the ripple field without contributing a large surface
+  // slope. Otherwise city views read the broad lighting bands as giant swells.
+  vec3 bend = waveNoise(meters, 64.0, mat2(1.0));
+  float bendWeight = waveWeight(64.0, footprint);
+  vec2 p = meters + bend.yz * 4.0 * bendWeight;
+  vec2 slope = vec2(0.0);
+  // Modest slopes and meter-scale crests fit the surrounding buildings. Keep
+  // their world scale fixed: unresolved ripples fade out as the map zooms out.
+  float warpedFootprint = footprint * 1.5;
+  slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint);
+  slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint);
+  slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint);
+  return normalize(vec3(-slope, 1.0));
+}
+
+vec3 skyReflection(vec3 direction) {
+  float elevation = pow(clamp(direction.z, 0.0, 1.0), 0.6);
+  return mix(vec3(0.78, 0.87, 0.93), vec3(0.24, 0.45, 0.68), elevation);
+}
+
+// smoothstep is undefined when the transition is zero (a supported UI value).
+float submerged(float elevation) {
+  if (surfaceFog.fogThickness <= 0.0) {
+    return step(elevation, surfaceFog.fogHeight);
   }
-  return v;
-}
-
-// Wave normal from layered sine trains + multi-octave noise.
-vec3 waveNormal(vec2 m) {
-  float normalScale = 6.0;
-  vec2 dh = vec2(0.0);
-  float p;
-
-  // Low-frequency pattern
-  p = dot(m, vec2( 0.014,  0.008)); dh += cos(p) * 0.50 * vec2( 0.014,  0.008);
-  p = dot(m, vec2(-0.009,  0.019)); dh += cos(p) * 0.40 * vec2(-0.009,  0.019);
-  p = dot(m, vec2( 0.022, -0.011)); dh += cos(p) * 0.30 * vec2( 0.022, -0.011);
-  p = dot(m, vec2(-0.005, -0.025)); dh += cos(p) * 0.25 * vec2(-0.005, -0.025);
-
-  // Mid-frequency pattern
-  p = dot(m, vec2( 0.041,  0.029)); dh += cos(p) * 0.18 * vec2( 0.041,  0.029);
-  p = dot(m, vec2(-0.033,  0.037)); dh += cos(p) * 0.15 * vec2(-0.033,  0.037);
-  p = dot(m, vec2( 0.057, -0.019)); dh += cos(p) * 0.10 * vec2( 0.057, -0.019);
-  p = dot(m, vec2(-0.018, -0.051)); dh += cos(p) * 0.08 * vec2(-0.018, -0.051);
-
-  // High-frequency pattern for fine detail when zoomed in
-  p = dot(m, vec2( 0.083,  0.061)); dh += cos(p) * 0.06 * vec2( 0.083,  0.061);
-  p = dot(m, vec2(-0.071,  0.089)); dh += cos(p) * 0.05 * vec2(-0.071,  0.089);
-  p = dot(m, vec2( 0.097, -0.067)); dh += cos(p) * 0.04 * vec2( 0.097, -0.067);
-  p = dot(m, vec2(-0.059, -0.103)); dh += cos(p) * 0.04 * vec2(-0.059, -0.103);
-  p = dot(m, vec2( 0.131,  0.047)); dh += cos(p) * 0.03 * vec2( 0.131,  0.047);
-  p = dot(m, vec2(-0.113,  0.127)); dh += cos(p) * 0.03 * vec2(-0.113,  0.127);
-
-  // Very high-frequency pattern for close-up detail
-  p = dot(m, vec2( 0.173, -0.139)); dh += cos(p) * 0.025 * vec2( 0.173, -0.139);
-  p = dot(m, vec2(-0.149,  0.181)); dh += cos(p) * 0.020 * vec2(-0.149,  0.181);
-  p = dot(m, vec2( 0.211,  0.157)); dh += cos(p) * 0.018 * vec2( 0.211,  0.157);
-  p = dot(m, vec2(-0.193, -0.167)); dh += cos(p) * 0.015 * vec2(-0.193, -0.167);
-
-  // Multi-octave noise via FBM for organic variation
-  float eps = 0.5;
-  float nc = fbm(m * 0.04);
-  float nx = fbm((m + vec2(eps, 0.0)) * 0.04);
-  float ny = fbm((m + vec2(0.0, eps)) * 0.04);
-  dh += vec2(nc - nx, nc - ny) * (0.4 / eps);
-
-  return normalize(vec3(-dh.x * normalScale, 1.0, -dh.y * normalScale));
-}
-
-const vec3 SUN_DIR   = normalize(vec3(0.3, 0.8, 0.5));
-const vec3 SUN_COLOR = vec3(1.0, 0.95, 0.8);
-
-void sunLight(vec3 normal, vec3 eyeDir, float shiny, float spec, float diff,
-              inout vec3 diffuseOut, inout vec3 specularOut) {
-  vec3 refl = normalize(reflect(-SUN_DIR, normal));
-  float d = max(0.0, dot(eyeDir, refl));
-  specularOut += pow(d, shiny) * SUN_COLOR * spec;
-  diffuseOut  += max(dot(SUN_DIR, normal), 0.0) * SUN_COLOR * diff;
+  return 1.0 - smoothstep(surfaceFog.fogHeight,
+                          surfaceFog.fogHeight + surfaceFog.fogThickness, elevation);
 }
 
 void main() {
@@ -151,72 +155,99 @@ void main() {
   bool isBasemap = depth >= 0.999;
   bool usePattern = surfaceFog.pattern > 0.5;
 
-  float submersion;
-  float fogFactor;
-  vec2 worldMeters = vec2(0.0);
+  vec4 sceneH = invMat * vec4(screenXY, depth * 2.0 - 1.0, 1.0);
+  float sceneZ = isBasemap ? 0.0 : sceneH.z / sceneH.w;
+  // Fog fades above its ceiling; water only covers geometry at or below its
+  // surface. In pattern mode Transition controls visibility below that surface.
+  float submersion = usePattern ? step(sceneZ, surfaceFog.fogHeight) : submerged(sceneZ);
+  float fogFactor = clamp(submersion * surfaceFog.density, 0.0, 1.0);
+  vec3 fogColorNorm = surfaceFog.fogColor / 255.0;
+  vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColorNorm;
 
-  if (isBasemap) {
-    // Basemap sits at z=0 in common space.
-    float groundZ = 0.0;
-    submersion = 1.0 - smoothstep(surfaceFog.fogHeight,
-                                   surfaceFog.fogHeight + surfaceFog.fogThickness,
-                                   groundZ);
-    fogFactor = submersion * surfaceFog.density;
+  if (!usePattern) {
     if (fogFactor <= 0.001) {
       fragColor = color;
       return;
     }
-    vec4 nearH = invMat * vec4(screenXY, -1.0, 1.0);
-    vec4 farH  = invMat * vec4(screenXY,  1.0, 1.0);
-    vec3 nearP = nearH.xyz / nearH.w;
-    vec3 farP  = farH.xyz / farH.w;
-    float denom = farP.z - nearP.z;
-    float t = abs(denom) > 1e-6 ? -nearP.z / denom : 0.0;
-    vec2 groundXY = nearP.xy + t * (farP.xy - nearP.xy);
-    worldMeters = groundXY / surfaceFog.unitsPerMeter;
-  } else {
-    vec4 commonPos = invMat * vec4(screenXY, depth * 2.0 - 1.0, 1.0);
-    commonPos /= commonPos.w;
-    submersion = 1.0 - smoothstep(surfaceFog.fogHeight,
-                                   surfaceFog.fogHeight + surfaceFog.fogThickness,
-                                   commonPos.z);
-    fogFactor = submersion * surfaceFog.density;
-    if (usePattern) {
-      worldMeters = commonPos.xy / surfaceFog.unitsPerMeter;
-    }
-  }
-
-  if (fogFactor <= 0.001) {
-    fragColor = color;
-    return;
-  }
-
-  vec3 fogColorNorm = surfaceFog.fogColor / 255.0;
-
-  if (!usePattern) {
-    float ff = clamp(fogFactor, 0.0, 1.0);
-    vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColorNorm;
-    vec3 straightRgb = mix(baseRgb, fogColorNorm, ff);
-    float outAlpha = ff + color.a * (1.0 - ff);
+    vec3 straightRgb = mix(baseRgb, fogColorNorm, fogFactor);
+    float outAlpha = fogFactor + color.a * (1.0 - fogFactor);
     fragColor = vec4(straightRgb * outAlpha, outAlpha);
     return;
   }
 
-  // --- Pattern mode ---
+  // Intersect the view ray with the water level, not with the submerged terrain.
+  // This keeps waves continuous across buildings, terrain and basemap pixels.
+  vec4 nearH = invMat * vec4(screenXY, -1.0, 1.0);
+  vec4 farH = invMat * vec4(screenXY, 1.0, 1.0);
+  vec3 nearP = nearH.xyz / nearH.w;
+  vec3 ray = farH.xyz / farH.w - nearP;
+  float rayZ = abs(ray.z) > 1e-6 ? ray.z : (ray.z < 0.0 ? -1e-6 : 1e-6);
+  float waterT = (surfaceFog.fogHeight - nearP.z) / rayZ;
+  vec2 worldMeters = (nearP.xy + ray.xy * max(waterT, 0.0)) / surfaceFog.waveUnitsPerMeter;
+  float waterDepth = max((surfaceFog.fogHeight - sceneZ) / surfaceFog.unitsPerMeter, 0.0);
 
-  vec3 N = waveNormal(worldMeters);
-  vec3 eyeDir = vec3(0.0, 1.0, 0.0);
-  vec3 diffuse  = vec3(0.0);
-  vec3 specular = vec3(0.0);
-  sunLight(N, eyeDir, 100.0, 2.0, 0.5, diffuse, specular);
+  // Evaluate derivatives before any per-pixel early returns at the waterline.
+  float footprint = max(length(dFdx(worldMeters)), length(dFdy(worldMeters)));
+  float shoreWidth = max(1.5, fwidth(waterDepth));
+  vec3 N = waveNormal(worldMeters, footprint);
+  vec3 normalDx = dFdx(N);
+  vec3 normalDy = dFdy(N);
+  float normalVariance = dot(normalDx, normalDx) + dot(normalDy, normalDy);
 
-  vec3 baseRgb = color.a > 0.001 ? color.rgb / color.a : fogColorNorm;
-  vec3 tinted = mix(baseRgb, fogColorNorm, submersion);
-  vec3 waterSurface = clamp(tinted * (diffuse + vec3(0.1)) + specular, 0.0, 1.0);
+  if (fogFactor <= 0.001 ||
+      (nearP.z > surfaceFog.fogHeight && (waterT < 0.0 || ray.z >= -1e-6))) {
+    fragColor = color;
+    return;
+  }
 
-  float wf = clamp(fogFactor, 0.0, 1.0);
-  vec3 straightRgb = mix(baseRgb, waterSurface, wf);
-  float outAlpha = wf + color.a * (1.0 - wf);
+  vec3 V = normalize(-ray);
+  vec3 L = normalize(vec3(0.35, -0.40, 0.85));
+  float facing = clamp(dot(N, V), 0.0, 1.0);
+  float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
+
+  // One transition controls both bottom visibility and depth-based color. Zero
+  // (or invalid negative) transition gives the same opaque body color at every
+  // depth, so submerged silhouettes cannot appear through depth shading alone.
+  float transitionDepth = surfaceFog.fogThickness / surfaceFog.unitsPerMeter;
+  float depthFactor = transitionDepth > 0.0
+    ? smoothstep(0.0, transitionDepth, waterDepth)
+    : 1.0;
+  float visibility = 1.0 - depthFactor;
+  vec3 transmission = pow(vec3(visibility), vec3(3.6, 1.6, 1.0) / max(abs(V.z), 0.2));
+  vec3 scattering = fogColorNorm * mix(vec3(0.85, 1.05, 1.1),
+                                      vec3(0.32, 0.48, 0.62),
+                                      depthFactor);
+  vec3 waterBody = baseRgb * transmission + scattering * (1.0 - transmission);
+  vec3 reflectedSky = skyReflection(reflect(-V, N));
+  vec3 waterSurface = mix(waterBody, reflectedSky, fresnel);
+
+  // A broad sun sheen, filtered by normal variance. Narrow unfiltered lobes
+  // turn subpixel ripples into isolated white pixels, even with filtered waves.
+  float sunAlignment = max(dot(N, normalize(L + V)), 0.0);
+  float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
+  float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
+                0.025 * pow(sunAlignment, 8.0);
+  waterSurface += vec3(1.0, 0.96, 0.86) * glint;
+
+  // A broken, narrow contact highlight where actual geometry meets the water.
+  // Basemap depth is unknown, so it must not turn into a sheet of foam at z=0.
+  float shoreNoise = 0.5 + 0.5 * waveNoise(worldMeters, 8.0, mat2(1.0)).x;
+  // Contact highlights must also disappear when depth cues are disabled or the
+  // bottom is beyond the transition, otherwise they still reveal its shape.
+  float foam = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
+               smoothstep(0.35, 0.65, shoreNoise) *
+               (1.0 - smoothstep(5.0, 20.0, footprint));
+  if (!isBasemap && sceneZ <= surfaceFog.fogHeight) {
+    waterSurface = mix(waterSurface, vec3(0.82, 0.92, 0.91), foam * 0.45);
+  }
+
+  // Once the camera is submerged, show absorption instead of reflecting the sky.
+  if (nearP.z <= surfaceFog.fogHeight) {
+    waterSurface = waterBody;
+  }
+
+  vec3 straightRgb = mix(baseRgb, clamp(waterSurface, 0.0, 1.0), fogFactor);
+  float outAlpha = fogFactor + color.a * (1.0 - fogFactor);
   fragColor = vec4(straightRgb * outAlpha, outAlpha);
 }
 `;
@@ -248,6 +279,8 @@ const surfaceFogModule = {
     viewportWidth: 'f32',
     viewportHeight: 'f32',
     unitsPerMeter: 'f32',
+    waveUnitsPerMeter: 'f32',
+    waveOrigin: 'vec2<f32>',
     pattern: 'f32'
   },
   defaultUniforms: {
@@ -262,6 +295,8 @@ const surfaceFogModule = {
     viewportWidth: 1,
     viewportHeight: 1,
     unitsPerMeter: 1,
+    waveUnitsPerMeter: 1,
+    waveOrigin: [0, 0],
     pattern: 0
   },
   propTypes: {
@@ -276,7 +311,9 @@ const surfaceFogModule = {
     invCol3: {value: [0, 0, 0, 1], private: true},
     viewportWidth: {value: 1, private: true},
     viewportHeight: {value: 1, private: true},
-    unitsPerMeter: {value: 1, private: true}
+    unitsPerMeter: {value: 1, private: true},
+    waveUnitsPerMeter: {value: 1, private: true},
+    waveOrigin: {value: [0, 0], private: true}
   }
 } as const satisfies ShaderModule;
 
@@ -284,9 +321,12 @@ const surfaceFogModule = {
  * Surface Fog / Water Effect — elevation-based ground-level fog or ocean overlay.
  *
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
- * When `pattern` is true a static wave pattern (layered sine trains + FBM noise,
- * lit with diffuse+specular sun shading) replaces the flat tint and the
- * effect also renders over basemap areas via straight-alpha compositing.
+ * When `pattern` is true, a level water surface uses filtered wave normals,
+ * view-dependent sky/sun reflections, depth absorption and shoreline highlights.
+ * In that mode `thickness` sets the underwater color and visibility transition.
+ * Zero hides submerged geometry and disables depth shading at full density.
+ * Geometry above the water surface is left unchanged.
+ * The surface is static so still images and tiled exports remain deterministic.
  */
 export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';
@@ -356,6 +396,8 @@ export class DeckSurfaceFogEffect {
     let invCol2 = [0, 0, 1, 0];
     let invCol3 = [0, 0, 0, 1];
     let unitsPerMeterZ = 1;
+    let waveUnitsPerMeter = 1;
+    let waveOrigin = [0, 0];
     let viewportWidth = 1;
     let viewportHeight = 1;
 
@@ -378,6 +420,32 @@ export class DeckSurfaceFogEffect {
         const z = Array.isArray(ds.unitsPerMeter) ? ds.unitsPerMeter[2] : ds.unitsPerMeter;
         if (Number.isFinite(z) && z > 0) {
           unitsPerMeterZ = z;
+        }
+      }
+
+      // Remove Mercator's latitude scale for the wave field, so north/south
+      // panning does not slide the pattern across the map. Elevations still use
+      // the local meters-to-common-space conversion above.
+      waveUnitsPerMeter = unitsPerMeterZ;
+      if (Number.isFinite(viewport.latitude) && Math.abs(viewport.latitude) < 90) {
+        waveUnitsPerMeter *= Math.cos((viewport.latitude * Math.PI) / 180);
+      }
+
+      // Subtract the origin in homogeneous coordinates using CPU doubles.
+      // Subtracting it in GLSL would be too late: global XY has already lost
+      // the fractional meters that distinguish neighboring pixels when zoomed in.
+      const tileSize = WATER_ORIGIN_METERS * waveUnitsPerMeter;
+      const center = viewport.center || [0, 0];
+      if (pum) {
+        waveOrigin = [
+          Number.isFinite(center[0]) ? Math.floor(center[0] / tileSize) : 0,
+          Number.isFinite(center[1]) ? Math.floor(center[1] / tileSize) : 0
+        ];
+        const originX = waveOrigin[0] * tileSize;
+        const originY = waveOrigin[1] * tileSize;
+        for (const column of [invCol0, invCol1, invCol2, invCol3]) {
+          column[0] -= originX * column[3];
+          column[1] -= originY * column[3];
         }
       }
     }
@@ -405,6 +473,8 @@ export class DeckSurfaceFogEffect {
         viewportWidth,
         viewportHeight,
         unitsPerMeter: unitsPerMeterZ,
+        waveUnitsPerMeter,
+        waveOrigin,
         pattern: this.props.pattern ? 1.0 : 0.0
       }
     });
