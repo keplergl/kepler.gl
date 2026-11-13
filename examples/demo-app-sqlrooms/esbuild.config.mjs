@@ -336,6 +336,9 @@ function openURL(url) {
 
 (async () => {
   if (args.includes('--build')) {
+    // Keep esbuild's Go subprocess within the memory budget of hosted builds.
+    process.env.GOMEMLIMIT ??= '2GiB';
+    process.env.GOMAXPROCS ??= '2';
     fs.rmSync(outdir, {recursive: true, force: true});
   }
   fs.mkdirSync(outdir, {recursive: true});
@@ -375,6 +378,9 @@ function openURL(url) {
   const localAliases = addAliases(externals, args);
 
   if (args.includes('--build')) {
+    // Keep esbuild's Go subprocess within the memory budget of hosted builds.
+    process.env.GOMEMLIMIT ??= '2GiB';
+    process.env.GOMAXPROCS ??= '2';
     // Generate the Tailwind stylesheet for the production build. The dev
     // (`--start`) path starts a watcher, but `--build` never ran Tailwind, so
     // dist/tailwind.css (referenced by dist/index.html) only ever existed when
