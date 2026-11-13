@@ -80,6 +80,7 @@ describe('surface fog rendering', () => {
       unitsPerMeter: 1,
       waveUnitsPerMeter: 1,
       waveOrigin: [0, 0],
+      cameraHeight: 1000,
       pattern: 1
     };
     for (const [name, value] of Object.entries({...defaults, ...uniforms})) {
@@ -134,6 +135,7 @@ describe('surface fog rendering', () => {
     width: number;
     height: number;
     center: number[];
+    cameraPosition: number[];
     latitude?: number;
     pixelUnprojectionMatrix: number[];
     distanceScales: {unitsPerMeter: number[]};
@@ -160,7 +162,8 @@ describe('surface fog rendering', () => {
     pitch = 50,
     longitude = 30.52,
     latitude = 50.45,
-    bearing = 35
+    bearing = 35,
+    nearZMultiplier = 0.1
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -169,7 +172,8 @@ describe('surface fog rendering', () => {
       latitude,
       zoom,
       pitch,
-      bearing
+      bearing,
+      nearZMultiplier
     });
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
@@ -180,6 +184,7 @@ describe('surface fog rendering', () => {
       width: SIZE,
       height: SIZE,
       center: [...viewport.center],
+      cameraPosition: [...viewport.cameraPosition],
       latitude: viewport.latitude,
       pixelUnprojectionMatrix: matrix,
       distanceScales: viewport.distanceScales
@@ -257,9 +262,15 @@ describe('surface fog rendering', () => {
     gl?.getExtension('STACKGL_destroy_context')?.destroy();
   });
 
-  test('preserves pixels above the water and at zero density', () => {
+  test('preserves pixels above the water', () => {
     expect(center(render({depth: 0.4}))).toEqual(SOURCE);
-    expect(center(render({uniforms: {density: 0}}))).toEqual(SOURCE);
+  });
+
+  test.each([0, 1])('preserves every source pixel at zero density with pattern=%s', pattern => {
+    for (const source of [SOURCE, [40, 60, 80, 128], [0, 0, 0, 0]]) {
+      const pixels = render({source, uniforms: {density: 0, pattern}});
+      expect(pixels.every((value, index) => value === source[index % 4])).toBe(true);
+    }
   });
 
   test('preserves the plain fog color when pattern is disabled', () => {
@@ -601,6 +612,41 @@ describe('surface fog rendering', () => {
     expect(shifted).toEqual(overhead);
     expect(center(overhead)).not.toEqual(SOURCE);
     expect(center(overhead)[3]).toBe(255);
+  });
+
+  test('keeps reflections when an above-water camera has a near plane crossing the water', () => {
+    const viewport = croppedViewport({zoom: 18, pitch: 65});
+    const matrix = viewport.pixelUnprojectionMatrix;
+    const nearElevation = (x: number, y: number) =>
+      (matrix[2] * x + matrix[6] * y - matrix[10] + matrix[14]) /
+      (matrix[3] * x + matrix[7] * y - matrix[11] + matrix[15]);
+    const nearHeights = [nearElevation(0.5, 0.5), nearElevation(SIZE - 0.5, SIZE - 0.5)];
+    const fogHeight = (nearHeights[0] + nearHeights[1]) / 2;
+    expect(Math.min(...nearHeights)).toBeLessThan(fogHeight);
+    expect(Math.max(...nearHeights)).toBeGreaterThan(fogHeight);
+    expect(viewport.cameraPosition[2]).toBeGreaterThan(fogHeight);
+
+    const pixels = render({
+      depth: 1,
+      uniforms: {...viewportUniforms(viewport), fogHeight, fogThickness: 0}
+    });
+    // Moving only the clipping plane closer to the camera must not change the
+    // water intersection or split the image into reflective/submerged regions.
+    const closerNearPlane = render({
+      depth: 1,
+      uniforms: {
+        ...viewportUniforms(croppedViewport({zoom: 18, pitch: 65, nearZMultiplier: 0.01})),
+        fogHeight,
+        fogThickness: 0
+      }
+    });
+    expect(maxPixelDifference(pixels, closerNearPlane)).toBeLessThanOrEqual(1);
+    expect(center(pixels)).not.toEqual(SOURCE);
+    const submerged = render({
+      depth: 1,
+      uniforms: {...viewportUniforms(viewport), fogHeight, fogThickness: 0, cameraHeight: 0}
+    });
+    expect(maxPixelDifference(pixels, submerged)).toBeGreaterThan(1);
   });
 
   test('composites water over transparent basemap pixels with premultiplied alpha', () => {

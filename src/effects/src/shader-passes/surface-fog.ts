@@ -36,6 +36,7 @@ uniform surfaceFogUniforms {
   float unitsPerMeter;
   float waveUnitsPerMeter;
   vec2 waveOrigin;
+  float cameraHeight;
   float pattern;
 } surfaceFog;
 `;
@@ -100,13 +101,22 @@ float waveWeight(float cellSize, float footprint) {
 }
 
 vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float footprint) {
+  float weight = waveWeight(cellSize, footprint);
+  if (weight <= 0.0) {
+    return vec2(0.0);
+  }
   vec2 gradient = waveNoise(meters, cellSize, frame).yz;
   // Transform the gradient back to map coordinates, preserving stretched crests.
   return vec2(dot(frame[0], gradient), dot(frame[1], gradient)) *
-         strength * waveWeight(cellSize, footprint);
+         strength * weight;
 }
 
 vec3 waveNormal(vec2 meters, float footprint) {
+  float warpedFootprint = footprint * 1.5;
+  // If even the largest ripples are unresolved, skip the bend noise as well.
+  if (waveWeight(16.0, warpedFootprint) <= 0.0) {
+    return vec3(0.0, 0.0, 1.0);
+  }
   // Broad noise bends the ripple field without contributing a large surface
   // slope. Otherwise city views read the broad lighting bands as giant swells.
   vec3 bend = waveNoise(meters, 64.0, mat2(1.0));
@@ -115,7 +125,6 @@ vec3 waveNormal(vec2 meters, float footprint) {
   vec2 slope = vec2(0.0);
   // Modest slopes and meter-scale crests fit the surrounding buildings. Keep
   // their world scale fixed: unresolved ripples fade out as the map zooms out.
-  float warpedFootprint = footprint * 1.5;
   slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint);
   slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint);
   slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint);
@@ -138,6 +147,12 @@ float submerged(float elevation) {
 
 void main() {
   vec4 color = texture(texSrc, coordinate);
+  // Density is uniform across the frame, so this preserves derivative validity
+  // while avoiding all reconstruction and wave work for an invisible effect.
+  if (surfaceFog.density <= 0.001) {
+    fragColor = color;
+    return;
+  }
   float depth = texture(texDepth, coordinate).r;
 
   vec2 screenXY = vec2(
@@ -181,9 +196,11 @@ void main() {
   vec4 farH = invMat * vec4(screenXY, 1.0, 1.0);
   vec3 nearP = nearH.xyz / nearH.w;
   vec3 ray = farH.xyz / farH.w - nearP;
+  bool cameraAboveWater = surfaceFog.cameraHeight > surfaceFog.fogHeight;
   float rayZ = abs(ray.z) > 1e-6 ? ray.z : (ray.z < 0.0 ? -1e-6 : 1e-6);
   float waterT = (surfaceFog.fogHeight - nearP.z) / rayZ;
-  vec2 worldMeters = (nearP.xy + ray.xy * max(waterT, 0.0)) / surfaceFog.waveUnitsPerMeter;
+  // The surface can lie between the camera and its near plane (negative t).
+  vec2 worldMeters = (nearP.xy + ray.xy * waterT) / surfaceFog.waveUnitsPerMeter;
   float waterDepth = max((surfaceFog.fogHeight - sceneZ) / surfaceFog.unitsPerMeter, 0.0);
 
   // Evaluate derivatives before any per-pixel early returns at the waterline.
@@ -195,7 +212,7 @@ void main() {
   float normalVariance = dot(normalDx, normalDx) + dot(normalDy, normalDy);
 
   if (fogFactor <= 0.001 ||
-      (nearP.z > surfaceFog.fogHeight && (waterT < 0.0 || ray.z >= -1e-6))) {
+      (cameraAboveWater && ray.z >= -1e-6)) {
     fragColor = color;
     return;
   }
@@ -242,7 +259,7 @@ void main() {
   }
 
   // Once the camera is submerged, show absorption instead of reflecting the sky.
-  if (nearP.z <= surfaceFog.fogHeight) {
+  if (!cameraAboveWater) {
     waterSurface = waterBody;
   }
 
@@ -281,6 +298,7 @@ const surfaceFogModule = {
     unitsPerMeter: 'f32',
     waveUnitsPerMeter: 'f32',
     waveOrigin: 'vec2<f32>',
+    cameraHeight: 'f32',
     pattern: 'f32'
   },
   defaultUniforms: {
@@ -297,6 +315,7 @@ const surfaceFogModule = {
     unitsPerMeter: 1,
     waveUnitsPerMeter: 1,
     waveOrigin: [0, 0],
+    cameraHeight: 0,
     pattern: 0
   },
   propTypes: {
@@ -313,7 +332,8 @@ const surfaceFogModule = {
     viewportHeight: {value: 1, private: true},
     unitsPerMeter: {value: 1, private: true},
     waveUnitsPerMeter: {value: 1, private: true},
-    waveOrigin: {value: [0, 0], private: true}
+    waveOrigin: {value: [0, 0], private: true},
+    cameraHeight: {value: 0, private: true}
   }
 } as const satisfies ShaderModule;
 
@@ -398,6 +418,7 @@ export class DeckSurfaceFogEffect {
     let unitsPerMeterZ = 1;
     let waveUnitsPerMeter = 1;
     let waveOrigin = [0, 0];
+    let cameraHeight = 0;
     let viewportWidth = 1;
     let viewportHeight = 1;
 
@@ -406,6 +427,9 @@ export class DeckSurfaceFogEffect {
 
       viewportWidth = viewport.width;
       viewportHeight = viewport.height;
+      if (Number.isFinite(viewport.cameraPosition?.[2])) {
+        cameraHeight = viewport.cameraPosition[2];
+      }
 
       const pum = viewport.pixelUnprojectionMatrix;
       if (pum) {
@@ -475,6 +499,7 @@ export class DeckSurfaceFogEffect {
         unitsPerMeter: unitsPerMeterZ,
         waveUnitsPerMeter,
         waveOrigin,
+        cameraHeight,
         pattern: this.props.pattern ? 1.0 : 0.0
       }
     });
