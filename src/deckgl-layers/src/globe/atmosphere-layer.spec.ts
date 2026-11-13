@@ -24,7 +24,9 @@ function draw(
 }
 
 describe('globe atmosphere and occlusion uniforms', () => {
-  beforeEach(() => jest.spyOn(SimpleMeshLayer.prototype, 'draw').mockImplementation(() => undefined));
+  beforeEach(() =>
+    jest.spyOn(SimpleMeshLayer.prototype, 'draw').mockImplementation(() => undefined)
+  );
   afterEach(() => jest.restoreAllMocks());
 
   test('fades smoothly only between continent and close-up zooms', () => {
