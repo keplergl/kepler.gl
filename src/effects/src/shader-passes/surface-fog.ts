@@ -197,19 +197,29 @@ void main() {
   vec3 nearP = nearH.xyz / nearH.w;
   vec3 ray = farH.xyz / farH.w - nearP;
   bool cameraAboveWater = surfaceFog.cameraHeight > surfaceFog.fogHeight;
-  float rayZ = abs(ray.z) > 1e-6 ? ray.z : (ray.z < 0.0 ? -1e-6 : 1e-6);
-  float waterT = (surfaceFog.fogHeight - nearP.z) / rayZ;
-  // The surface can lie between the camera and its near plane (negative t).
-  vec2 worldMeters = (nearP.xy + ray.xy * waterT) / surfaceFog.waveUnitsPerMeter;
   float waterDepth = max((surfaceFog.fogHeight - sceneZ) / surfaceFog.unitsPerMeter, 0.0);
 
-  // Evaluate derivatives before any per-pixel early returns at the waterline.
-  float footprint = max(length(dFdx(worldMeters)), length(dFdy(worldMeters)));
-  float shoreWidth = max(1.5, fwidth(waterDepth));
-  vec3 N = waveNormal(worldMeters, footprint);
-  vec3 normalDx = dFdx(N);
-  vec3 normalDy = dFdy(N);
-  float normalVariance = dot(normalDx, normalDx) + dot(normalDy, normalDy);
+  vec2 worldMeters = vec2(0.0);
+  float footprint = 0.0;
+  float shoreWidth = 0.0;
+  vec3 N = vec3(0.0, 0.0, 1.0);
+  float normalVariance = 0.0;
+  // Camera elevation is uniform, so submerged views can skip the surface work
+  // without making derivative evaluation nonuniform at the waterline.
+  if (cameraAboveWater) {
+    float rayZ = abs(ray.z) > 1e-6 ? ray.z : (ray.z < 0.0 ? -1e-6 : 1e-6);
+    float waterT = (surfaceFog.fogHeight - nearP.z) / rayZ;
+    // The surface can lie between the camera and its near plane (negative t).
+    worldMeters = (nearP.xy + ray.xy * waterT) / surfaceFog.waveUnitsPerMeter;
+
+    // Evaluate derivatives before any per-pixel early returns at the waterline.
+    footprint = max(length(dFdx(worldMeters)), length(dFdy(worldMeters)));
+    shoreWidth = max(1.5, fwidth(waterDepth));
+    N = waveNormal(worldMeters, footprint);
+    vec3 normalDx = dFdx(N);
+    vec3 normalDy = dFdy(N);
+    normalVariance = dot(normalDx, normalDx) + dot(normalDy, normalDy);
+  }
 
   if (fogFactor <= 0.001 ||
       (cameraAboveWater && ray.z >= -1e-6)) {
@@ -218,9 +228,6 @@ void main() {
   }
 
   vec3 V = normalize(-ray);
-  vec3 L = normalize(vec3(0.35, -0.40, 0.85));
-  float facing = clamp(dot(N, V), 0.0, 1.0);
-  float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
 
   // One transition controls both bottom visibility and depth-based color. Zero
   // (or invalid negative) transition gives the same opaque body color at every
@@ -235,32 +242,33 @@ void main() {
                                       vec3(0.32, 0.48, 0.62),
                                       depthFactor);
   vec3 waterBody = baseRgb * transmission + scattering * (1.0 - transmission);
-  vec3 reflectedSky = skyReflection(reflect(-V, N));
-  vec3 waterSurface = mix(waterBody, reflectedSky, fresnel);
+  vec3 waterSurface = waterBody;
 
-  // A broad sun sheen, filtered by normal variance. Narrow unfiltered lobes
-  // turn subpixel ripples into isolated white pixels, even with filtered waves.
-  float sunAlignment = max(dot(N, normalize(L + V)), 0.0);
-  float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
-  float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
-                0.025 * pow(sunAlignment, 8.0);
-  waterSurface += vec3(1.0, 0.96, 0.86) * glint;
+  if (cameraAboveWater) {
+    vec3 L = normalize(vec3(0.35, -0.40, 0.85));
+    float facing = clamp(dot(N, V), 0.0, 1.0);
+    float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
+    vec3 reflectedSky = skyReflection(reflect(-V, N));
+    waterSurface = mix(waterBody, reflectedSky, fresnel);
 
-  // A broken, narrow contact highlight where actual geometry meets the water.
-  // Basemap depth is unknown, so it must not turn into a sheet of foam at z=0.
-  float shoreNoise = 0.5 + 0.5 * waveNoise(worldMeters, 8.0, mat2(1.0)).x;
-  // Contact highlights must also disappear when depth cues are disabled or the
-  // bottom is beyond the transition, otherwise they still reveal its shape.
-  float foam = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
-               smoothstep(0.35, 0.65, shoreNoise) *
-               (1.0 - smoothstep(5.0, 20.0, footprint));
-  if (!isBasemap && sceneZ <= surfaceFog.fogHeight) {
-    waterSurface = mix(waterSurface, vec3(0.82, 0.92, 0.91), foam * 0.45);
-  }
+    // A broad sun sheen, filtered by normal variance. Narrow unfiltered lobes
+    // turn subpixel ripples into isolated white pixels, even with filtered waves.
+    float sunAlignment = max(dot(N, normalize(L + V)), 0.0);
+    float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
+    float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
+                  0.025 * pow(sunAlignment, 8.0);
+    waterSurface += vec3(1.0, 0.96, 0.86) * glint;
 
-  // Once the camera is submerged, show absorption instead of reflecting the sky.
-  if (!cameraAboveWater) {
-    waterSurface = waterBody;
+    // Only sample shoreline noise where its highlight can contribute. Basemap
+    // depth is unknown, and invisible or unresolved contacts have no foam.
+    // This branch contains no derivatives.
+    if (!isBasemap && visibility > 0.0 && waterDepth < shoreWidth && footprint < 20.0) {
+      float shoreNoise = 0.5 + 0.5 * waveNoise(worldMeters, 8.0, mat2(1.0)).x;
+      float foam = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
+                   smoothstep(0.35, 0.65, shoreNoise) *
+                   (1.0 - smoothstep(5.0, 20.0, footprint));
+      waterSurface = mix(waterSurface, vec3(0.82, 0.92, 0.91), foam * 0.45);
+    }
   }
 
   vec3 straightRgb = mix(baseRgb, clamp(waterSurface, 0.0, 1.0), fogFactor);

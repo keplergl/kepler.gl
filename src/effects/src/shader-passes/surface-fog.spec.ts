@@ -526,6 +526,49 @@ describe('surface fog rendering', () => {
     expect(shifted).not.toEqual(original);
   });
 
+  test('keeps water shading consistent when rendering an image in tiles', () => {
+    const viewport = croppedViewport({zoom: 18, pitch: 65});
+    const surface = {fogHeight: 0, fogThickness: 0};
+    const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
+    const tileSize = SIZE / 2;
+    let maxError = 0;
+    for (const y of [0, tileSize]) {
+      for (const x of [0, tileSize]) {
+        const matrix = [...viewport.pixelUnprojectionMatrix];
+        for (let row = 0; row < 4; row++) {
+          matrix[12 + row] += matrix[row] * x + matrix[4 + row] * y;
+        }
+        const tile = render({
+          depth: 1,
+          size: tileSize,
+          uniforms: {
+            ...viewportUniforms({
+              ...viewport,
+              width: tileSize,
+              height: tileSize,
+              pixelUnprojectionMatrix: matrix
+            }),
+            ...surface
+          }
+        });
+        // Projection Y is top-down; readPixels returns rows bottom-up.
+        for (let row = 0; row < tileSize; row++) {
+          for (let col = 0; col < tileSize; col++) {
+            const fullOffset = ((SIZE - y - tileSize + row) * SIZE + x + col) * 4;
+            const tileOffset = (row * tileSize + col) * 4;
+            for (let channel = 0; channel < 4; channel++) {
+              maxError = Math.max(
+                maxError,
+                Math.abs(full[fullOffset + channel] - tile[tileOffset + channel])
+              );
+            }
+          }
+        }
+      }
+    }
+    expect(maxError).toBeLessThanOrEqual(1);
+  });
+
   test('retains close-up wave detail at global Mercator coordinates', () => {
     const global = croppedViewport();
     const globalUniforms = viewportUniforms(global);
@@ -605,13 +648,36 @@ describe('surface fog rendering', () => {
     ).toBeLessThanOrEqual(1);
   });
 
-  test('keeps submerged views tinted without sky reflections', () => {
-    const uniforms = {fogHeight: 2000};
-    const overhead = render({uniforms});
-    const shifted = render({uniforms: {...uniforms, invCol3: [700, 800, 0, 1]}});
-    expect(shifted).toEqual(overhead);
-    expect(center(overhead)).not.toEqual(SOURCE);
-    expect(center(overhead)[3]).toBe(255);
+  test.each([1000, 2000])(
+    'keeps submerged camera height %s free of surface reflections',
+    cameraHeight => {
+      const uniforms = {fogHeight: 2000, cameraHeight};
+      const overhead = render({uniforms});
+      const shifted = render({
+        uniforms: {...uniforms, invCol3: [700, 800, 0, 1], waveUnitsPerMeter: 0.001}
+      });
+      expect(shifted).toEqual(overhead);
+      expect(center(overhead)).not.toEqual(SOURCE);
+      expect(center(overhead)[3]).toBe(255);
+    }
+  );
+
+  test('shows contact highlights only for resolved geometry at the water surface', () => {
+    const uniforms = {fogHeight: 0, fogThickness: 20};
+    const geometry = render({depth: 0.5, uniforms});
+    const basemap = render({depth: 1, uniforms});
+    expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
+
+    const distant = {
+      ...uniforms,
+      invCol0: [1000, 0, 0, 0],
+      invCol1: [0, 1000, 0, 0]
+    };
+    expect(render({depth: 0.5, uniforms: distant})).toEqual(render({depth: 1, uniforms: distant}));
+    const underwater = {...uniforms, cameraHeight: -1};
+    expect(render({depth: 0.5, uniforms: underwater})).toEqual(
+      render({depth: 1, uniforms: underwater})
+    );
   });
 
   test('keeps reflections when an above-water camera has a near plane crossing the water', () => {
