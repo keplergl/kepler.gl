@@ -681,15 +681,14 @@ describe('dataset export', () => {
 });
 
 describe('geometry export fidelity', () => {
-  const feature = (geometry: Geometry | null, properties = {}): Feature => ({
+  const feature = (geometry: Geometry | null, properties = {}): Feature<Geometry | null> => ({
     type: 'Feature',
     geometry,
     properties
   });
-  const collection = (...features: Feature[]): FeatureCollection => ({
-    type: 'FeatureCollection',
-    features
-  });
+  const collection = (...features: Feature<Geometry | null>[]): FeatureCollection =>
+    // Both writers handle null geometries at runtime, despite their narrower public types.
+    ({type: 'FeatureCollection', features} as FeatureCollection);
 
   test('KML preserves multipart geometries and closes polygon boundaries without mutating them', () => {
     const polygon: Geometry = {
