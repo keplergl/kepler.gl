@@ -91,7 +91,7 @@
     "docs": "babel-node ./scripts/documentation.js",
     "typedoc": "typedoc --plugin typedoc-plugin-markdown --out typedoc --readme none --excludeExternals --excludePrivate ./src/reducers/src/index.ts ./src/actions/src/index.ts",
     "example-version": "babel-node ./scripts/edit-version.js",
-    "prettier-all": "prettier --write '{examples,src}/**/src/**/*.{js,tsx,ts}' 'test/**/*.{js,ts,tsx}'",
+    "prettier-all": "prettier --write --ignore-path .gitignore '{src,test,webpack,examples,website,scripts,esbuild}/**/*.{js,jsx,ts,tsx,mjs,cjs}'",
     "check-circular-deps": "node ./scripts/check-circular-deps.js",
     "validate:plugin": "node ./scripts/validate-plugin-manifests.js",
     "knip": "knip",
