@@ -6,9 +6,10 @@ import {
   $createRangeSelection,
   $createTextNode,
   $getRoot,
-  createEditor
+  createEditor,
+  TextNode
 } from 'lexical';
-import {getSelectedNode, sanitizeUrl} from './lexical-utils';
+import {getSelectedNode, sanitizeUrl, updateEditorState} from './lexical-utils';
 
 describe('annotation link URLs', () => {
   it('preserves supported links and trims surrounding whitespace', () => {
@@ -134,5 +135,78 @@ describe('annotation toolbar selected node', () => {
       },
       {discrete: true}
     );
+  });
+});
+
+describe('annotation editor state restoration', () => {
+  function makeEditor(text: string) {
+    const editor = createEditor({
+      onError: error => {
+        throw error;
+      }
+    });
+    editor.update(
+      () => {
+        $getRoot().append($createParagraphNode().append($createTextNode(text)));
+      },
+      {discrete: true}
+    );
+    return editor;
+  }
+
+  function content(editor: ReturnType<typeof createEditor>) {
+    return editor.getEditorState().read(() => $getRoot().getTextContent());
+  }
+
+  test('keeps the current document when no saved state is supplied', () => {
+    const editor = makeEditor('Unsaved annotation');
+    updateEditorState(editor, undefined);
+    expect(content(editor)).toBe('Unsaved annotation');
+  });
+
+  test('replaces existing content with the saved document and its formatting', () => {
+    const source = makeEditor('Saved annotation');
+    source.update(
+      () => {
+        ($getRoot().getFirstDescendant() as TextNode).toggleFormat('bold');
+      },
+      {discrete: true}
+    );
+    const editor = makeEditor('Previous annotation');
+    updateEditorState(editor, source.getEditorState().toJSON());
+    expect(content(editor)).toBe('Saved annotation');
+    editor.getEditorState().read(() => {
+      expect(($getRoot().getFirstDescendant() as TextNode).hasFormat('bold')).toBe(true);
+    });
+  });
+
+  test('preserves the document when a saved node cannot be parsed', () => {
+    const editor = makeEditor('Keep this annotation');
+    const saved = makeEditor('Invalid annotation').getEditorState().toJSON();
+    saved.root.children[0].type = 'unregistered-annotation-node';
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      expect(() => updateEditorState(editor, saved)).not.toThrow();
+      expect(content(editor)).toBe('Keep this annotation');
+      expect(log).toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  test('rejects an empty root without preventing a later valid restore', () => {
+    const editor = makeEditor('Original');
+    const empty = editor.getEditorState().toJSON();
+    empty.root.children = [];
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      updateEditorState(editor, empty);
+      expect(content(editor)).toBe('Original');
+      expect(log).toHaveBeenCalled();
+      updateEditorState(editor, makeEditor('Recovered').getEditorState().toJSON());
+      expect(content(editor)).toBe('Recovered');
+    } finally {
+      log.mockRestore();
+    }
   });
 });
