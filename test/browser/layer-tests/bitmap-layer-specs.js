@@ -882,7 +882,7 @@ function bitmapUVAtLocation(bitmap, viewport, geo) {
   if (coordinateConversion === 1) {
     position = lngLatToWorld(geo);
     textureBounds = bounds;
-  } else if (coordinateConversion === -1 || viewport.resolution) {
+  } else if (coordinateConversion === -1 || viewport instanceof GlobeViewport) {
     position = geo;
     textureBounds = coordinateConversion === -1 ? bounds : bitmap.props.bounds;
   } else {
