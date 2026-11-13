@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Layer, LayersList, LayerExtension, UpdateParameters} from '@deck.gl/core';
+import {Layer, LayersList, LayerExtension, UpdateParameters, _GlobeViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {
   MVTLayer as _MVTLayer,
@@ -105,7 +105,7 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
   declare state: _MVTLayer<ExtraProps>['state'] & {isGlobeMode?: boolean};
 
   updateState(params: UpdateParameters<this>): void {
-    const isGlobeMode = Boolean(params.context.viewport.resolution);
+    const isGlobeMode = params.context.viewport instanceof _GlobeViewport;
     if (this.state.isGlobeMode !== isGlobeMode) {
       // Clipping depends on the activated viewport, which can change after props.
       // Rebuild sublayers while retaining decoded tile content and the tileset.
@@ -147,8 +147,7 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
 
     props.autoHighlight = true;
 
-    // The globe viewport is identified by having a `resolution` (set by GlobeViewport).
-    const isGlobeMode = Boolean((this.context.viewport as any)?.resolution);
+    const isGlobeMode = this.state.isGlobeMode;
 
     if (boundingBox) {
       const [[west, south], [east, north]] = boundingBox;

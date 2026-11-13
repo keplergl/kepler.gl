@@ -1268,7 +1268,7 @@ test('#VectorTileLayer -> same-ID updates discover new PMTiles tiles at the same
   let revision = 0;
   const requests = [];
   const fetchStub = sinon.stub(globalThis, 'fetch').callsFake(async (_url, options) => {
-    const range = options.headers.get('range');
+    const range = new Headers(options.headers).get('range');
     const [, start, end] = range.match(/bytes=(\d+)-(\d+)/);
     requests.push({revision, range});
     return {
@@ -1373,7 +1373,7 @@ function pmtilesRetryFixture() {
   });
   const fetchStub = sinon
     .stub(globalThis, 'fetch')
-    .callsFake((_url, options) => readRange(options.headers.get('range')));
+    .callsFake((_url, options) => readRange(new Headers(options.headers).get('range')));
   return {
     layer,
     table,
