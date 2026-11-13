@@ -165,6 +165,7 @@ describe('fog reconstruction uniforms', () => {
         {
           width: 320,
           height: 240,
+          cameraPosition: [10, 20, 420],
           pixelUnprojectionMatrix: matrix,
           distanceScales: {unitsPerMeter: [2, 3, 4]}
         }
@@ -175,6 +176,7 @@ describe('fog reconstruction uniforms', () => {
       fogHeight: 400,
       fogThickness: 80,
       unitsPerMeter: 4,
+      cameraHeight: 420,
       density: 0,
       pattern: 1,
       fogColor: [10, 20, 30],
@@ -185,6 +187,7 @@ describe('fog reconstruction uniforms', () => {
     effect.postRender({...createBuffers(), viewports: [{distanceScales: {unitsPerMeter: 2}}]});
     expect(model.shaderInputs.setProps.mock.calls[1][0].surfaceFog).toMatchObject({
       fogHeight: 200,
+      cameraHeight: 0,
       pattern: 0
     });
   });
