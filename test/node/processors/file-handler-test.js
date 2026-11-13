@@ -3,7 +3,7 @@
 
 import test from 'tape';
 import sinon from 'sinon';
-import {WorkerFarm} from '@loaders.gl/core/worker-utils';
+import {TaskRunner} from '@math.gl/tasks';
 import {convertGeoArrowToBinaryFeatureCollection} from '@loaders.gl/core/geoarrow';
 import {KeplerTable} from '@kepler.gl/table';
 import GeoJsonLayer from '../../../src/layers/src/geojson-layer/geojson-layer';
@@ -760,25 +760,9 @@ function geoArrowPointBatches(pointBatches = [[[-122.4, 37.8]], [[-122.5, 37.9]]
 async function withGeoArrowWorker(parse, run) {
   const originalWorker = globalThis.Worker;
   globalThis.Worker = class {};
-  const stub = sinon.stub(WorkerFarm, 'getWorkerFarm').callsFake(() => ({
-    getWorkerPool: () => ({
-      startJob: async () => {
-        let resolve;
-        let reject;
-        const result = new Promise((yes, no) => {
-          resolve = yes;
-          reject = no;
-        });
-        return {
-          result,
-          postMessage: (_type, {input}) => {
-            Promise.resolve()
-              .then(() => parse(input))
-              .then(value => resolve({result: value}), reject);
-          }
-        };
-      }
-    })
+  const stub = sinon.stub(TaskRunner.prototype, 'initializeTask').callsFake(async () => ({
+    runTask: async ({value}) => ({value: await parse(value)}),
+    close: async () => {}
   }));
   try {
     await run();

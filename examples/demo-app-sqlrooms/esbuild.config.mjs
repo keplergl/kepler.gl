@@ -157,6 +157,10 @@ const checkEnvVariables = () => {
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
 const config = {
   platform: 'browser',
+  conditions: ['visgl:webgl-only', 'module'],
+
+  // LERC imports Node's module helper only on its Node execution path.
+  external: ['module'],
   format: 'iife',
   logLevel: 'info',
   // Silence noisy warnings from prebuilt third-party deps (e.g. @deck.gl-community

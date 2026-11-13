@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {LoaderContext, LoaderWithParser} from '@loaders.gl/core/loader-utils';
+import type {LoaderWithParser, StrictLoaderOptions} from '@loaders.gl/core/loader-utils';
 import type {CSVLoaderOptions} from '@loaders.gl/tables/csv';
 
-const KEPLER_CSV_OPTIONS: CSVLoaderOptions = {
+type KeplerCSVOptions = CSVLoaderOptions & StrictLoaderOptions;
+
+const KEPLER_CSV_OPTIONS: KeplerCSVOptions = {
   csv: {
+    shape: 'object-row-table',
+    skipEmptyLines: true,
     dynamicTyping: false,
     delimitersToGuess: [',', '\t', ';', '|']
   }
 };
 
-type KeplerCSVLoaderType = LoaderWithParser<any, any, CSVLoaderOptions>;
+type KeplerCSVLoaderType = LoaderWithParser<any, any, KeplerCSVOptions>;
 
-let csvLoaderPromise: Promise<KeplerCSVLoaderType> | null = null;
+type CSVParser = Awaited<ReturnType<typeof import('@loaders.gl/tables/csv').CSVLoader.preload>>;
 
-async function getCSVLoader(): Promise<KeplerCSVLoaderType> {
+let csvLoaderPromise: Promise<CSVParser> | null = null;
+
+async function getCSVLoader(): Promise<CSVParser> {
   csvLoaderPromise ||= import('@loaders.gl/tables/csv').then(
     module => module.CSVLoader.preload()
   );
@@ -29,7 +35,7 @@ function getOptions(options?: CSVLoaderOptions): CSVLoaderOptions {
       ...KEPLER_CSV_OPTIONS.csv,
       ...options?.csv,
       // Kepler performs its own type inference after parsing.
-      dynamicTyping: false,
+    dynamicTyping: false,
       delimitersToGuess: [',', '\t', ';', '|']
     }
   };
@@ -53,24 +59,23 @@ export const KeplerCSVLoader: KeplerCSVLoaderType = {
   text: true,
   options: KEPLER_CSV_OPTIONS,
 
-  parse: async (arrayBuffer: ArrayBuffer, options?: CSVLoaderOptions, context?: LoaderContext) => {
+  parse: async (arrayBuffer: ArrayBuffer, options?: CSVLoaderOptions) => {
     const loader = await getCSVLoader();
     if (!loader.parse) {
       throw new Error('KeplerCSVLoader: CSV loader does not support parse');
     }
-    return loader.parse(arrayBuffer, getOptions(options), context);
+    return loader.parse(arrayBuffer, getOptions(options));
   },
 
   parseInBatches: (
     iterator:
       | AsyncIterable<ArrayBufferLike | ArrayBufferView>
       | Iterable<ArrayBufferLike | ArrayBufferView>,
-    options?: CSVLoaderOptions,
-    context?: LoaderContext
+    options?: CSVLoaderOptions
   ) => {
     const batches = (async function* () {
       const loader = await getCSVLoader();
-      const output = loader.parseInBatches?.(iterator, getOptions(options), context);
+      const output = loader.parseInBatches?.(iterator, getOptions(options));
       if (!output) {
         throw new Error('KeplerCSVLoader: CSV loader does not support parseInBatches');
       }
@@ -79,11 +84,11 @@ export const KeplerCSVLoader: KeplerCSVLoaderType = {
     return batches;
   },
 
-  parseText: async (text: string, options?: CSVLoaderOptions, context?: LoaderContext) => {
+  parseText: async (text: string, options?: CSVLoaderOptions) => {
     const loader = await getCSVLoader();
     if (!loader.parseText) {
       throw new Error('KeplerCSVLoader: CSV loader does not support parseText');
     }
-    return loader.parseText(text, getOptions(options), context);
+    return loader.parseText(text, getOptions(options));
   }
 };

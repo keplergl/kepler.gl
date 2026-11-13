@@ -6,14 +6,14 @@
 import {convertGeometryToWKB, convertWKBToGeometry} from '@loaders.gl/core/geoarrow';
 import {convertArrowToSchema} from '@loaders.gl/core/schema-utils';
 import {parse} from '@loaders.gl/core';
-import {DBFLoader} from '@loaders.gl/geospatial/shapefile';
+import {DBFLoaderWithParser as DBFLoader} from '@loaders.gl/geospatial/dbf-loader';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer, validateInputData} from '@kepler.gl/utils';
 import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
 import * as arrow from 'apache-arrow';
 import {tableFromIPC} from 'apache-arrow';
-import {ZipLoader} from '@loaders.gl/archives/zip';
+import {openZipArchive} from '@loaders.gl/archives/zip';
 import {KeplerTable} from '@kepler.gl/table';
 import {arrowSchemaToFields, processArrowTable, processRowObject} from '../data-processor';
 import type {Feature, FeatureCollection, Geometry} from 'geojson';
@@ -89,8 +89,9 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const files = await ZipLoader.parse(shapefile.data);
-      const shp = new DataView(files['views.shp']);
+      const archive = await openZipArchive(shapefile.data);
+      const shp = new DataView(await archive.read('views.shp'));
+      await archive.close();
       expect(shp.getInt32(108, true)).toBe(8);
       expect(shp.getInt32(144, true)).toBe(geometry.coordinates.length);
       expect(
@@ -177,8 +178,9 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const files = await ZipLoader.parse(shapefile.data);
-      const shp = new DataView(files['geometry.shp']);
+      const archive = await openZipArchive(shapefile.data);
+      const shp = new DataView(await archive.read('geometry.shp'));
+      await archive.close();
       expect(shp.getInt32(0)).toBe(9994);
       expect(shp.getInt32(108, true)).toBe(1);
       expect([shp.getFloat64(112, true), shp.getFloat64(120, true)]).toEqual(geometry.coordinates);

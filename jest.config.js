@@ -25,6 +25,8 @@ const config = {
   // the ESM entry points directly; they are transpiled via
   // transformIgnorePatterns below.
   moduleNameMapper: {
+    '^@loaders\\.gl/geospatial/dbf-loader$':
+      '<rootDir>/node_modules/@loaders.gl/geospatial/dist/shapefile/dbf-loader.cjs',
     '^zarrita$': '<rootDir>/node_modules/zarrita/dist/src/index.js',
     '^@zarrita/storage$': '<rootDir>/node_modules/@zarrita/storage/dist/src/index.js',
     '^@zarrita/storage/(.*)$': '<rootDir>/node_modules/@zarrita/storage/dist/src/$1.js',

@@ -662,6 +662,7 @@ export async function readFileInBatches({
   // into a worker. Other formats keep loaders.gl worker parsing.
   const isShapefile = getDroppedFileExtension(file.name) === 'shp';
   const companionFetch = isShapefile ? createCompanionFetch(companionFiles) : undefined;
+  const {core, ...formatOptions} = loadOptions || {};
   loadOptions = {
     csv: CSV_LOADER_OPTIONS,
     arrow: ARROW_LOADER_OPTIONS,
@@ -674,12 +675,23 @@ export async function readFileInBatches({
     shp: {_maxDimensions: 2},
     excel: EXCEL_LOADER_OPTIONS,
     flatgeobuf: GIS_TABLE_LOADER_OPTIONS,
-    gis: {reproject: true, _targetCrs: 'WGS84'},
-    metadata: true,
-    ...(isShapefile ? {worker: false} : {}),
-    ...(mimeType ? {mimeType} : {}),
-    ...(companionFetch ? {fetch: companionFetch} : {}),
-    ...loadOptions
+    ndjson: {shape: 'object-row-table'},
+    gis: {
+      reproject: Boolean(
+        companionFiles?.some(
+          file => file.name.toLowerCase() === displayFileName.replace(/\.shp$/i, '.prj').toLowerCase()
+        )
+      ),
+      targetCrs: 'WGS84'
+    },
+    core: {
+      metadata: true,
+      ...(isShapefile ? {worker: false} : {}),
+      ...(mimeType ? {mimeType} : {}),
+      ...(companionFetch ? {fetch: companionFetch} : {}),
+      ...core
+    },
+    ...formatOptions
   };
 
   const batchIterator = await parseInBatches(file, loaders, loadOptions);

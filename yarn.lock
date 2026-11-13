@@ -6624,7 +6624,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@petamoriken/float16@npm:^3.4.7":
+"@petamoriken/float16@npm:^3.4.7, @petamoriken/float16@npm:^3.9.3":
   version: 3.9.3
   resolution: "@petamoriken/float16@npm:3.9.3"
   checksum: 10c0/de0a1a0224862cba16e6b614e6a5dd557c545c3f0372db21f61d7bcce7595fa63a28d10512c908acfbe177d209a39cea406f190159936f5891b3c095d460fdc2
@@ -7940,6 +7940,13 @@ __metadata:
     react-redux:
       optional: true
   checksum: 10c0/fa0aa4b7c6973ac87ce0ac7e45faa02c73b66c4ee0bc950d178494539a42a1bb908d109297102458b7ea14d5e7dae356e7a7ce9a1b9849b0e8451e6dd70fca9c
+  languageName: node
+  linkType: hard
+
+"@repeaterjs/repeater@npm:3.0.6":
+  version: 3.0.6
+  resolution: "@repeaterjs/repeater@npm:3.0.6"
+  checksum: 10c0/c3915e2603927c7d6a9eb09673bc28fc49ab3a86947ec191a74663b33deebee2fcc4b03c31cc663ff27bd6db9e6c9487639b6935e265d601ce71b8c497f5f4a8
   languageName: node
   linkType: hard
 
@@ -10132,6 +10139,13 @@ __metadata:
   version: 1.2.7
   resolution: "@types/range-parser@npm:1.2.7"
   checksum: 10c0/361bb3e964ec5133fa40644a0b942279ed5df1949f21321d77de79f48b728d39253e5ce0408c9c17e4e0fd95ca7899da36841686393b9f7a1e209916e9381a3c
+  languageName: node
+  linkType: hard
+
+"@types/rbush@npm:4.0.0":
+  version: 4.0.0
+  resolution: "@types/rbush@npm:4.0.0"
+  checksum: 10c0/15a4da94a2591aedf7915061ce07a85d99ba762b89b25f46dd8b8c09a3cd6087335839773ba99a5159d3db3e97a98856bc94c1eb8e0f93b89edc19bc608998c9
   languageName: node
   linkType: hard
 
@@ -17782,10 +17796,32 @@ __metadata:
   languageName: node
   linkType: hard
 
+"flatbuffers@npm:24.12.23":
+  version: 24.12.23
+  resolution: "flatbuffers@npm:24.12.23"
+  checksum: 10c0/f6c7e4440c724ee337dac54db1d6ae428e84b2bf6618c542d095956e77b521bdd8a0e4d87dc93b15ae6ed4d07a8b269b5c99fd766e5acbe67546ef81034b1e05
+  languageName: node
+  linkType: hard
+
 "flatbuffers@npm:^24.3.25":
   version: 24.3.25
   resolution: "flatbuffers@npm:24.3.25"
   checksum: 10c0/a40a1d46f6d474f1299091970700f36dc5bd86616b71cd99a1b6f521ca33b05f5d7623bd0ffadaa1e10fc63d6663aa3f9595f4916cd379e80c15787257e17a61
+  languageName: node
+  linkType: hard
+
+"flatgeobuf@npm:3.38.0":
+  version: 3.38.0
+  resolution: "flatgeobuf@npm:3.38.0"
+  dependencies:
+    "@repeaterjs/repeater": "npm:3.0.6"
+    flatbuffers: "npm:24.12.23"
+    ol: "npm:>=3"
+    slice-source: "npm:0.4.1"
+  dependenciesMeta:
+    ol:
+      optional: true
+  checksum: 10c0/6d78d91d3fa775a8461651f650e9c0cbcf9f0dc53ee95745694643eee70b49389c82f788feb486496cd1a47262f4841ae18668543e1799caf7a096c775f20877
   languageName: node
   linkType: hard
 
@@ -18150,6 +18186,22 @@ __metadata:
     xml-utils: "npm:^1.0.2"
     zstddec: "npm:^0.1.0"
   checksum: 10c0/565dde39ab2a58c16c6756bcf58e7e417f22de9faa73da6cf68f17ec24e2f9b3e020bedce96e7bcbb52188fb3b13f198ca29ee32007e6c887476f0f049e4859a
+  languageName: node
+  linkType: hard
+
+"geotiff@npm:^3.1.0-beta.0":
+  version: 3.1.0-beta.0
+  resolution: "geotiff@npm:3.1.0-beta.0"
+  dependencies:
+    "@petamoriken/float16": "npm:^3.9.3"
+    lerc: "npm:^3.0.0"
+    pako: "npm:^2.0.4"
+    parse-headers: "npm:^2.0.2"
+    quick-lru: "npm:^6.1.1"
+    web-worker: "npm:^1.5.0"
+    xml-utils: "npm:^1.10.2"
+    zstddec: "npm:^0.2.0"
+  checksum: 10c0/d6d22d5012c03b780aac925661275234b0c896671640dd3cedf19778da8e10c5d9f4753b214f3f3964629e5892b83406be08e57ed469abd6a260b89c48ec7d40
   languageName: node
   linkType: hard
 
@@ -21697,6 +21749,7 @@ __metadata:
     "@kepler.gl/components": "npm:3.3.0-alpha.21"
     "@loaders.gl/core": "npm:5.0.0-beta.8"
     "@luma.gl/core": "npm:10.0.0-alpha.14"
+    "@math.gl/tasks": "npm:5.0.0-beta.8"
     "@math.gl/web-mercator": "npm:5.0.0-beta.8"
     "@open-wc/webpack-import-meta-loader": "npm:0.4.7"
     "@probe.gl/test-utils": "npm:^4.1.1"
@@ -21741,6 +21794,7 @@ __metadata:
     eslint-plugin-prettier: "npm:4.2.1"
     eslint-plugin-react: "npm:^7.35.0"
     eslint-plugin-react-hooks: "npm:^4.6.2"
+    flatgeobuf: "npm:3.38.0"
     gl: "npm:9.0.0-rc.10"
     global: "npm:^4.4.0"
     html-webpack-plugin: "npm:^5.6.3"
@@ -25120,6 +25174,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ol@npm:>=3":
+  version: 10.11.0
+  resolution: "ol@npm:10.11.0"
+  dependencies:
+    "@types/rbush": "npm:4.0.0"
+    earcut: "npm:^3.0.0"
+    geotiff: "npm:^3.1.0-beta.0"
+    pbf: "npm:5.1.2"
+    rbush: "npm:^4.0.0"
+    zarrita: "npm:^0.7.1"
+  checksum: 10c0/5ef8669260e16aafa66fa3e4455bdca711087360964ab4c431e02f45c9dac15a16b9c3ff976a76fd4bbc6e62f2bfdfe2fb2884ea3624964913411aa3a6a61d17
+  languageName: node
+  linkType: hard
+
 "on-finished@npm:^2.4.1, on-finished@npm:~2.4.1":
   version: 2.4.1
   resolution: "on-finished@npm:2.4.1"
@@ -25996,6 +26064,17 @@ __metadata:
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
   checksum: 10c0/666f6973f332f27581371efaf303fd6c272cc43c2057b37aa99e3643158c7e4b2626549555d88626e99ea9e046f82f32e41bbde5f1508547e9a11b149b52387c
+  languageName: node
+  linkType: hard
+
+"pbf@npm:5.1.2":
+  version: 5.1.2
+  resolution: "pbf@npm:5.1.2"
+  dependencies:
+    resolve-protobuf-schema: "npm:^2.1.0"
+  bin:
+    pbf: bin/pbf
+  checksum: 10c0/e28e901d61a66c7afdeac881b3e2b0ad2c09df98bcd3bc3447c1a55d7bc866d71415bd7d8fcc8273f23828c0169cc60cb5f7c5beb4a5829e23506c8196460e83
   languageName: node
   linkType: hard
 
@@ -27147,6 +27226,15 @@ __metadata:
   dependencies:
     quickselect: "npm:^2.0.0"
   checksum: 10c0/55311586c30cdedaa2220de6f1da45fe1fa806263afbf7b6f4c0078983830c2abc7771187896d68bfc9078cb279079fb4c84971831da4b74384aab2c2c417758
+  languageName: node
+  linkType: hard
+
+"rbush@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "rbush@npm:4.0.1"
+  dependencies:
+    quickselect: "npm:^3.0.0"
+  checksum: 10c0/1d3c2e2c8b8111a6bcac0b36348ef55c977bc533a7a7bef44c423e24de531e43749bcf5b939008de69d97d3c6e7cf0e9040cecb4492358e6d562ea85165a1620
   languageName: node
   linkType: hard
 
@@ -29398,6 +29486,13 @@ __metadata:
     ansi-styles: "npm:^6.2.3"
     is-fullwidth-code-point: "npm:^5.1.0"
   checksum: 10c0/0ce4aa91febb7cea4a00c2c27bb820fa53b6d2862ce0f80f7120134719f7914fc416b0ed966cf35250a3169e152916392f35917a2d7cad0fcc5d8b841010fa9a
+  languageName: node
+  linkType: hard
+
+"slice-source@npm:0.4.1":
+  version: 0.4.1
+  resolution: "slice-source@npm:0.4.1"
+  checksum: 10c0/a36569e6d202c2cade2b943011807426104e90b0573d773ad80421013fd3ffab4da0f49fb0602b5adf06745313d79316349c60e1afc179da8a752d2c2b6de2f0
   languageName: node
   linkType: hard
 
@@ -32727,7 +32822,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-worker@npm:^1.2.0":
+"web-worker@npm:^1.2.0, web-worker@npm:^1.5.0":
   version: 1.5.0
   resolution: "web-worker@npm:1.5.0"
   checksum: 10c0/d42744757422803c73ca64fa51e1ce994354ace4b8438b3f740425a05afeb8df12dd5dadbf6b0839a08dbda56c470d7943c0383854c4fb1ae40ab874eb10427a
@@ -33443,7 +33538,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xml-utils@npm:^1.0.2":
+"xml-utils@npm:^1.0.2, xml-utils@npm:^1.10.2":
   version: 1.10.2
   resolution: "xml-utils@npm:1.10.2"
   checksum: 10c0/53e98971e9bca58f382806bbb3a83cba3798e823a7c43a0dcfd5588df0085af288ad20701277d7eda1049cbf99a4563763cbcd1be692ad91dd4074bf11fa2a90
@@ -33639,7 +33734,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zarrita@npm:^0.7.3, zarrita@npm:~0.7.1":
+"zarrita@npm:^0.7.1, zarrita@npm:^0.7.3, zarrita@npm:~0.7.1":
   version: 0.7.5
   resolution: "zarrita@npm:0.7.5"
   dependencies:
@@ -33676,6 +33771,13 @@ __metadata:
   version: 0.1.0
   resolution: "zstddec@npm:0.1.0"
   checksum: 10c0/13601cc53211af491cf3a28a49239405e44129c7aba6a0211401d7bf79ee96b4679016a4d3c5e9c01f753e6da806eb40550f12c469580548b695b146a6d8fe1a
+  languageName: node
+  linkType: hard
+
+"zstddec@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "zstddec@npm:0.2.0"
+  checksum: 10c0/58d0facb7171dfdab6b7cc1e2e3dcd23f4e3e4318fe0bbc5a293925f231b8f7932c82e2930867f4174fd4ccd443ee18b80cc240464bfd2519a82e92c7dc46b4a
   languageName: node
   linkType: hard
 
