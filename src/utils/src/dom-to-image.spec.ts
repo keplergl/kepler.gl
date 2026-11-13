@@ -211,7 +211,7 @@ describe('raster export outputs', () => {
       .mockReturnValue('data:image/png;base64,AA==');
     const png = await domtoimage.toPng(node, {width: 80, height: 40, bgcolor: 'red'});
     expect(png).toBe('data:image/png;base64,AA==');
-    const canvas = encode.mock.instances[0];
+    const canvas = encode.mock.instances[0] as unknown as HTMLCanvasElement;
     expect([canvas.width, canvas.height]).toEqual([80, 40]);
     expect(context.fillStyle).toBe('red');
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 80, 40);
