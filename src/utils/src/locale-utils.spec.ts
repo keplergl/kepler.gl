@@ -58,7 +58,7 @@ describe('custom locale messages', () => {
   test.each([undefined, null, 'invalid', {}, {fi: {}}, {en: null}, {en: 'invalid'}])(
     'keeps defaults and reports invalid custom messages: %p',
     custom => {
-      const error = jest.spyOn(Console, 'error').mockImplementation(() => {});
+      const error = jest.spyOn(Console, 'error').mockImplementation(() => undefined);
       try {
         expect(mergeMessages(defaults, custom)).toBe(defaults);
         expect(error).toHaveBeenCalledTimes(1);
