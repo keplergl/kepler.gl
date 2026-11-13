@@ -849,8 +849,8 @@ export default class TripLayer extends Layer {
       jointRounded: true,
       wrapLongitude: false,
       parameters: {
-        depthTest: mapState.dragRotate,
-        depthMask: false,
+        depthCompare: mapState.dragRotate ? 'less-equal' : 'always',
+        depthWriteEnabled: false,
         ...(mapState?.layerParameters ?? {})
       },
       trailLength: visConfig.trailLength * 1000,
@@ -891,7 +891,11 @@ export default class TripLayer extends Layer {
           _animations: {
             '*': {speed: 5}
           },
-          parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
+          parameters: {
+            depthCompare: 'less-equal',
+            blend: false,
+            ...(mapState?.layerParameters ?? {})
+          },
           updateTriggers: {
             getTransformMatrix: {
               currentTime: animationConfig.currentTime,

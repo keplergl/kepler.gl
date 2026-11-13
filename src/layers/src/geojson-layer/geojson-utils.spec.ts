@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Feature, Geometry} from 'geojson';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 import {GeoJsonLayer as DeckGLGeoJsonLayer} from '@deck.gl/layers';
 import {GEOARROW_EXTENSIONS} from '@kepler.gl/constants';
 import {GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
@@ -173,6 +173,7 @@ function renderGeojsonFeatures(data: Feature[]) {
       updateTriggersChanged: false,
       extensionsChanged: false,
       viewportChanged: false,
+      projectionChanged: false,
       stateChanged: false,
       propsOrDataChanged: true,
       somethingChanged: true

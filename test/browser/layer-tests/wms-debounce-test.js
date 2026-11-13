@@ -9,7 +9,6 @@
  */
 
 import test from 'tape-catch';
-import {ImageSource} from '@loaders.gl/wms';
 import WMSLayer from '../../../src/deckgl-layers/src/wms/wms-layer';
 
 const {Image} = window;
@@ -157,7 +156,7 @@ test('WMSLayer -> isLoaded tracks async loading', t => {
   t.end();
 });
 
-class TestImageSource extends ImageSource {
+class TestImageSource {
   requests = [];
   metadata = Promise.resolve({layers: []});
 

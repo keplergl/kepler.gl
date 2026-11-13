@@ -875,13 +875,14 @@ test('#BitmapOverlayLayer -> rejects alignment fits that extrapolate across mult
 // The default mesh is latitude-linear on GlobeViewport and Mercator-linear on WebMercatorViewport.
 function bitmapUVAtLocation(bitmap, viewport, geo) {
   bitmap.context = {viewport};
+  bitmap.state = {};
   const {coordinateConversion, bounds} = bitmap._getCoordinateUniforms();
   let position;
   let textureBounds;
   if (coordinateConversion === 1) {
     position = lngLatToWorld(geo);
     textureBounds = bounds;
-  } else if (coordinateConversion === -1 || viewport.resolution) {
+  } else if (coordinateConversion === -1 || viewport instanceof GlobeViewport) {
     position = geo;
     textureBounds = coordinateConversion === -1 ? bounds : bitmap.props.bounds;
   } else {
@@ -1201,6 +1202,7 @@ test('#BitmapOverlayLayer -> renders saved polar bounds with finite Mercator tex
       layerCallbacks: {}
     });
     bitmap.context = {viewport};
+    bitmap.state = {};
     t.ok(
       bitmap._getCoordinateUniforms().bounds.every(Number.isFinite),
       'texture bounds are finite at the poles'

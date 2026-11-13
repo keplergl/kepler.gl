@@ -3,7 +3,7 @@
 
 import {LightingEffect, shadow} from '@deck.gl/core';
 import type {Texture} from '@luma.gl/core';
-import type {ShaderModule} from '@luma.gl/shadertools';
+import type {ShaderModule, ShaderPlugin} from '@luma.gl/shaders';
 import {EDITOR_LAYER_ID} from '@kepler.gl/constants';
 import {patchTileViewportIds} from './tile-viewport-fix';
 
@@ -35,8 +35,8 @@ interface LightingEffectPrivate {
 // depthWriteEnabled. Disable polygonOffset so a later ground plane is not
 // pulled toward the sun and cannot overwrite building walls in the shadow map.
 const SHADOW_PASS_DEPTH_PARAMETERS = {
-  depthTest: true,
-  depthMask: true,
+  depthCompare: 'less-equal',
+  depthWriteEnabled: true,
   polygonOffsetFill: false,
   polygonOffset: [0, 0]
 };
@@ -119,9 +119,7 @@ function insertBefore(source: string, target: string, textToInsert: string): str
  * Also fixes the vertex injection to be a no-op when shadows are disabled,
  * preventing position corruption in billboard layers (e.g. the editor layer).
  */
-function createCustomShadowModule(): ShaderModule | null {
-  if (!shadow) return null;
-
+function createCustomShadowPlugin(): ShaderPlugin {
   const mod = {...shadow} as Record<string, any>;
 
   const uboField = '  float outputUniformShadow;\n  float useSimplePhong;\n';
@@ -148,13 +146,12 @@ function createCustomShadowModule(): ShaderModule | null {
     )
     .replace(/return gl_Position;\s*\}/, 'return currentPosition;\n}');
 
-  mod.inject = {
-    ...shadow.inject,
-    'vs:DECKGL_FILTER_GL_POSITION': `
+  const injections = {
+    'glsl:vs:DECKGL_FILTER_GL_POSITION': `
     position = shadow_setVertexPosition(geometry.position, position);
     custom_vWorldPos = geometry.position.xyz;
     `,
-    'fs:DECKGL_FILTER_COLOR': `
+    'glsl:fs:DECKGL_FILTER_COLOR': `
     #ifdef LIGHTING_FRAGMENT
     if (shadow.useSimplePhong > 0.5) {
       vec3 spDx = dFdx(custom_vWorldPos);
@@ -191,10 +188,10 @@ function createCustomShadowModule(): ShaderModule | null {
     return u;
   };
 
-  return mod as unknown as ShaderModule;
+  return {name: 'shadow', module: mod as ShaderModule, injections};
 }
 
-const CustomShadowModule = createCustomShadowModule();
+const customShadowPlugin = createCustomShadowPlugin();
 
 // deck.gl picking injects at order 99 and blends highlightColor over the
 // fragment. In the shadow pass that overwrites encoded depth, so a hovered
@@ -202,19 +199,21 @@ const CustomShadowModule = createCustomShadowModule();
 // Color-pass highlight compositing is unchanged (shadow still runs first).
 const PICKING_FILTER_COLOR_ORDER = 99;
 
-export const shadowMapHoverFixModule = {
+export const shadowMapHoverFixPlugin = {
   name: 'shadow-map-hover-fix',
-  inject: {
-    'fs:DECKGL_FILTER_COLOR': {
+  injections: [
+    {
+      stage: 'fragment',
+      target: 'DECKGL_FILTER_COLOR',
       order: PICKING_FILTER_COLOR_ORDER + 1,
-      injection: `
+      glsl: `
   if (shadow.drawShadowMap) {
     color = shadow_filterShadowColor(color);
   }
       `
     }
-  }
-} as unknown as ShaderModule;
+  ]
+} satisfies ShaderPlugin;
 
 /**
  * Detect layers that use the PBR shader module (3D tile sublayers:
@@ -259,8 +258,8 @@ class CustomDeckLightingEffect extends LightingEffect {
         patchShadowPassDepth(shadowPass);
         alignExportShadowPass(shadowPass, () => this.isExportMode);
       }
-      deck._addDefaultShaderModule(CustomShadowModule || shadow);
-      deck._addDefaultShaderModule(shadowMapHoverFixModule);
+      deck._addDefaultShaderPlugin(customShadowPlugin);
+      deck._addDefaultShaderPlugin(shadowMapHoverFixPlugin);
       this._private.dummyShadowMap = device.createTexture({width: 1, height: 1});
     }
   }
@@ -292,8 +291,8 @@ class CustomDeckLightingEffect extends LightingEffect {
     if (this._private.dummyShadowMap) {
       this._private.dummyShadowMap.destroy();
       this._private.dummyShadowMap = null;
-      context.deck._removeDefaultShaderModule(CustomShadowModule || shadow);
-      context.deck._removeDefaultShaderModule(shadowMapHoverFixModule);
+      context.deck._removeDefaultShaderPlugin(customShadowPlugin);
+      context.deck._removeDefaultShaderPlugin(shadowMapHoverFixPlugin);
     }
   }
 

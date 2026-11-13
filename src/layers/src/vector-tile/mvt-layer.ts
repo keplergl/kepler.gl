@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Layer, LayersList, LayerExtension, UpdateParameters} from '@deck.gl/core';
+import {Layer, LayersList, LayerExtension, UpdateParameters, _GlobeViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {
   MVTLayer as _MVTLayer,
   TileLayer,
-  // @ts-expect-error deck.gl 9 internal
   _getURLFromTemplate,
-  // @ts-expect-error deck.gl 9 internal
   _TileLoadProps,
   _Tile2DHeader
 } from '@deck.gl/geo-layers';
 import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-counter';
 
 /*
-  Custom MVT layer that works with MVTSource and PMTileSource.
+  Custom MVT layer that works with MVTSourceLoader and PMTileSource.
   Changes:
     - getTileData: handles props.getTileData.
     - renderSubLayers: removed coordinates logic present in original MVTLayer:renderSubLayers.
@@ -91,7 +89,7 @@ export class GlobeClipExtension extends LayerExtension {
   }
 
   draw(this: any): void {
-    const {clipBounds} = this.props as {clipBounds?: number[]};
+    const {clipBounds} = this.props as {clipBounds?: readonly [number, number, number, number]};
     if (!clipBounds) {
       return;
     }
@@ -100,14 +98,14 @@ export class GlobeClipExtension extends LayerExtension {
   }
 }
 
-// @ts-expect-error need to patch private methods because of newer loaders.gl
+// @ts-expect-error deck.gl declares getHighlightedObjectIndex as private.
 export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
   static layerName = 'MVTLayer';
 
   declare state: _MVTLayer<ExtraProps>['state'] & {isGlobeMode?: boolean};
 
   updateState(params: UpdateParameters<this>): void {
-    const isGlobeMode = Boolean(params.context.viewport.resolution);
+    const isGlobeMode = params.context.viewport instanceof _GlobeViewport;
     if (this.state.isGlobeMode !== isGlobeMode) {
       // Clipping depends on the activated viewport, which can change after props.
       // Rebuild sublayers while retaining decoded tile content and the tileset.
@@ -142,18 +140,18 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
       data: any;
       _offset: number;
       tile: any;
-      clipBounds?: number[];
+      clipBounds?: readonly [number, number, number, number];
     }
   ): Layer | null | LayersList {
     const {boundingBox} = props.tile;
 
     props.autoHighlight = true;
 
-    // The globe viewport is identified by having a `resolution` (set by GlobeViewport).
-    const isGlobeMode = Boolean((this.context.viewport as any)?.resolution);
+    const isGlobeMode = this.state.isGlobeMode;
 
     if (boundingBox) {
-      props.clipBounds = [...boundingBox[0], ...boundingBox[1]];
+      const [[west, south], [east, north]] = boundingBox;
+      props.clipBounds = [west, south, east, north];
       // In globe mode the stock ClipExtension clips in common (sphere) space, which
       // slices diagonally through geometry. Use the lng/lat-based GlobeClipExtension
       // so tile edges are trimmed correctly (prevents doubled/overlapping geometry at

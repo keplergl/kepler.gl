@@ -371,7 +371,7 @@ export default class LineLayer extends ArcLayer {
           // otherwise deck.gl defaults: depth test on + depth write on, so the
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
-          parameters: {cull: false, ...blendingParameters},
+          parameters: {cullMode: 'none', ...blendingParameters},
           // The target end, including the arrowhead, uses the target color.
           getSourceColor: data.getColor,
           getTargetColor: this.config.visConfig.targetArrowEnabled
@@ -387,7 +387,7 @@ export default class LineLayer extends ArcLayer {
                 id: `${id}-hovered`,
                 data: [hoveredObject],
                 getHeight: 0,
-                parameters: {cull: false, ...blendingParameters},
+                parameters: {cullMode: 'none', ...blendingParameters},
                 getSourceColor: this.config.highlightColor,
                 getTargetColor: this.config.highlightColor,
                 getWidth: data.getWidth,

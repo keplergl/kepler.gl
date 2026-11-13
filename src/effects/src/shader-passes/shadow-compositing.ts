@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {ClipSpace} from '@luma.gl/engine';
-import type {ShaderModule} from '@luma.gl/shadertools';
+import type {ShaderModule} from '@luma.gl/shaders';
 
 const BLIT_FS = /* glsl */ `\
 #version 300 es

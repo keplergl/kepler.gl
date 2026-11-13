@@ -39,7 +39,7 @@ import {createHeatmapSurfaceMesh} from '../../../src/layers/src/heatmap-layer/de
 import CustomDeckLightingEffect from '../../../src/effects/src/custom-deck-lighting-effect';
 import {device} from '@deck.gl/test-utils';
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 
 const {HeatmapLayer, PointLayer} = KeplerGlLayers;
 
@@ -1113,8 +1113,8 @@ test('#HeatmapLayer -> regular rendering survives surface and effect toggles on 
     const effectContext = {
       device,
       deck: {
-        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
-        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+        _addDefaultShaderPlugin: plugin => manager.addDefaultShaderPlugin(plugin),
+        _removeDefaultShaderPlugin: plugin => manager.removeDefaultShaderPlugin(plugin)
       }
     };
     let layer = new KeplerHeatmapLayer({
@@ -1273,8 +1273,8 @@ test('#HeatmapLayer -> surface responds to Light & Shadow on map and globe', t =
     const effectContext = {
       device,
       deck: {
-        _addDefaultShaderModule: module => manager.addDefaultShaderModule(module),
-        _removeDefaultShaderModule: module => manager.removeDefaultShaderModule(module)
+        _addDefaultShaderPlugin: plugin => manager.addDefaultShaderPlugin(plugin),
+        _removeDefaultShaderPlugin: plugin => manager.removeDefaultShaderPlugin(plugin)
       }
     };
     let layer = new KeplerHeatmapLayer({
@@ -1754,13 +1754,13 @@ test('#HeatmapLayer -> globe display edits preserve density aggregation', t => {
     const boundsBeforeZoom = layer.state.worldBounds;
     const radiusBeforeZoom = layer._getRadiusScale();
     const callsBeforeZoom = aggregate.callCount;
-    manager.activateViewport(
-      new _GlobeView().makeViewport({
-        width: 800,
-        height: 600,
-        viewState: {...viewState, zoom: 12}
-      })
-    );
+    const zoomedViewport = new _GlobeView().makeViewport({
+      width: 800,
+      height: 600,
+      viewState: {...viewState, zoom: 12}
+    });
+    manager.activateViewport(zoomedViewport);
+    layer.activateViewport(zoomedViewport);
     layer = layer.clone({surfaceHeight: 3000});
     testRenderDeckLayer(t, 'zoomed density frame', [layer], {layerManager: manager});
     t.ok(

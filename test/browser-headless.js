@@ -4,7 +4,7 @@
 // test in puppeteer browser
 require('@probe.gl/test-utils/polyfill');
 // ensure probe gets access to pure console first
-require('@probe.gl/log');
+require('probe.gl/log');
 
 const test = require('tape-catch');
 const enableDOMLogging = require('@probe.gl/test-utils')._enableDOMLogging;

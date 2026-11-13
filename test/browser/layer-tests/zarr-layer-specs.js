@@ -898,18 +898,18 @@ test('#ZarrLayer -> renderLayer forwards default and custom map parameters to ev
   const [first] = render({});
   t.deepEqual(
     first.props.parameters,
-    {depthTest: true, depthMask: false},
+    {depthCompare: 'less-equal', depthWriteEnabled: false},
     'uses the common 2D depth defaults'
   );
   t.deepEqual(
     render({dragRotate: true})[0].props.parameters,
-    {depthTest: true, depthMask: true},
+    {depthCompare: 'less-equal', depthWriteEnabled: true},
     'uses the common 3D depth defaults'
   );
   first.props.onViewportLoad();
   layer.updateLayerVisConfig({dimensionIndexes: {band: 2}});
 
-  const parameters = {depthTest: false, depthMask: true, blend: false};
+  const parameters = {depthCompare: 'always', depthWriteEnabled: true, blend: false};
   const slices = render({layerParameters: parameters});
   t.equal(slices.length, 2, 'renders the loaded backdrop and the new slice');
   for (const slice of slices) {

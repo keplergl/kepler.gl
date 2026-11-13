@@ -275,7 +275,7 @@ export function getHubbleDeckGlProps(
   return {
     parameters: {
       ...getHubbleParameters(keplerState),
-      cull: true
+      cullMode: 'back'
     },
     // Match the interactive globe controller bounds so panning/zoom feels the
     // same in the preview as on the main map.

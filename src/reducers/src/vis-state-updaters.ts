@@ -203,7 +203,7 @@ import {
   ChartConfig,
   LayerChartConfig
 } from '@kepler.gl/types';
-import {Loader} from '@loaders.gl/loader-utils';
+import {Loader} from '@loaders.gl/core/loader-utils';
 import {addMetersToLngLat} from '@math.gl/web-mercator';
 
 import {

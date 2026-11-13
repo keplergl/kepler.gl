@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {FetchError, load} from '@loaders.gl/core';
-import {QuantizedMeshLoader} from '@loaders.gl/terrain';
+import {QuantizedMeshLoader} from '@loaders.gl/raster/terrain';
 import {sleep} from '@kepler.gl/common-utils';
 import {getSTACImageRequests, loadTerrain} from './image';
 import type {GetTileDataProps} from './types';

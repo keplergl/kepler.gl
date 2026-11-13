@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {GL} from '@luma.gl/constants';
+import {GL} from '@luma.gl/core/webgl-constants';
 import type {Texture} from '@luma.gl/core';
 import {loadImages} from './images';
 import type {ImageInput, ImageState} from './types';

@@ -539,9 +539,9 @@ export default class IconLayer extends Layer {
 
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
-      depthTest: this.config.columns.altitude?.fieldIdx > -1,
+      depthCompare: this.config.columns.altitude?.fieldIdx > -1 ? 'less-equal' : 'always',
       cullMode: CULL_MODE.FRONT
-    };
+    } as const;
 
     // Append geometry version to layer id so deck.gl treats it as new layer when geometry changes
     const baseLayerId = defaultLayerProps.id || this.id;

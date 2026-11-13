@@ -631,7 +631,7 @@ test('#GeojsonLayer -> renderLayer', t => {
           filled: false,
           wireframe: false,
           opacity: 0.8,
-          parameters: {depthTest: true, depthMask: false},
+          parameters: {depthCompare: 'less-equal', depthWriteEnabled: false},
           visible: true,
           autoHighlight: false,
           wrapLongitude: false,

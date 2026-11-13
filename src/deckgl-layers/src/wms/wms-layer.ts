@@ -10,14 +10,14 @@ import {
   UpdateParameters,
   DefaultProps,
   Viewport,
-  COORDINATE_SYSTEM,
   _deepEqual as deepEqual
 } from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
-import {ImageSource, WMSImageSource} from '@loaders.gl/wms';
+import {createDataSourceSync} from '@loaders.gl/core';
+import {ImageSource, WMSSourceLoader} from '@loaders.gl/ogc/wms';
 
-import type {ImageSourceMetadata} from '@loaders.gl/loader-utils';
-import type {ImageType} from '@loaders.gl/wms';
+import type {ImageSourceMetadata} from '@loaders.gl/core/loader-utils';
+import type {ImageType} from '@loaders.gl/ogc/wms';
 
 // TODO: This is a modified copy of WMSLayer from deck.gl. Remove this once we upgrade deck.gl and loaders.gl.
 
@@ -161,9 +161,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       ? new BitmapLayer({
           ...this.getSubLayerProps({id: 'bitmap'}),
           _imageCoordinateSystem:
-            lastRequestParameters?.srs === 'EPSG:4326'
-              ? COORDINATE_SYSTEM.LNGLAT
-              : COORDINATE_SYSTEM.CARTESIAN,
+            lastRequestParameters?.srs === 'EPSG:4326' ? 'lnglat' : 'cartesian',
           bounds,
           image,
           pickable: this.props.pickable
@@ -193,9 +191,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     }
 
     if (typeof props.data === 'string') {
-      return new WMSImageSource(props.data, {
-        loadOptions: props.loadOptions
-      });
+      return createDataSourceSync(props.data, WMSSourceLoader, props.loadOptions);
     }
 
     throw new Error('invalid image source in props.data');
@@ -403,7 +399,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
       prev.width !== next.width ||
       prev.height !== next.height ||
       prev.transparent !== next.transparent ||
-      !deepEqual(prev.layers, next.layers)
+      !deepEqual(prev.layers, next.layers, 1)
     ) {
       return false;
     }
@@ -450,7 +446,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     }
 
     // Compare layers
-    if (!deepEqual(prev.layers, next.layers)) {
+    if (!deepEqual(prev.layers, next.layers, 1)) {
       return false;
     }
 

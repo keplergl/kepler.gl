@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
+import {Layer as DeckLayer} from '@deck.gl/core';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
-import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
-import type {TypedArray} from '@loaders.gl/loader-utils';
+import {createDataSourceSync} from '@loaders.gl/core';
+import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import type {TypedArray} from '@loaders.gl/core/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;
 import memoize from 'es-toolkit/compat/memoize';
@@ -315,7 +316,7 @@ export default class RasterTileLayer extends KeplerLayer {
     _dataContainer,
     _fields,
     _animationConfig,
-    hoverInfo?: {index?: number; coordinate?: number[]}
+    hoverInfo?: {index?: number; coordinate?: number[] | null}
   ) {
     if (!this.config.visConfig.allowHover) {
       return null;
@@ -488,7 +489,7 @@ export default class RasterTileLayer extends KeplerLayer {
 
   private async _onClickIdentify(
     layerCallbacks: BindedLayerCallbacks | undefined,
-    info: {coordinate?: number[]}
+    info: {coordinate?: number[] | null}
   ): Promise<void> {
     const coordinate = info?.coordinate;
     if (!Array.isArray(coordinate) || coordinate.length < 2) {
@@ -576,7 +577,7 @@ export default class RasterTileLayer extends KeplerLayer {
       if (oldDataset === dataset && oldTileSource?.data === metadataUrl) {
         tileSource = oldLayerData.tileSource;
       } else {
-        tileSource = metadataUrl ? PMTilesSource.createDataSource(metadataUrl, {}) : null;
+        tileSource = metadataUrl ? createDataSourceSync(metadataUrl, PMTilesSourceLoader) : null;
       }
     }
 
@@ -1307,7 +1308,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         moduleProps,
 
         getPolygonOffset: null,
-        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+        coordinateSystem: 'lnglat',
         getColor: [255, 255, 255]
       })
     : new RasterLayer(props, {
@@ -1316,7 +1317,7 @@ function renderSubLayersStac(props: RenderSubLayersProps): DeckLayer<any> | Deck
         modules,
         moduleProps,
         bounds: [west, south, east, north],
-        _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
+        _imageCoordinateSystem: 'cartesian'
       });
 
   const layers: DeckLayer<any>[] = [rasterLayer];
@@ -1450,7 +1451,7 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
         moduleProps,
 
         getPolygonOffset: null,
-        coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+        coordinateSystem: 'lnglat',
         // Color to use if surfaceImage is unavailable
         getColor: [255, 255, 255]
         // material: false
@@ -1462,6 +1463,6 @@ function getRasterLayerPMTiles(props: {id: string; data: any; tile: any}) {
         modules,
         moduleProps,
         bounds: [west, south, east, north],
-        _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN
+        _imageCoordinateSystem: 'cartesian'
       });
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {assembleGLSLShaderPair} from '@luma.gl/shadertools';
+import {assembleGLSLShaderPair} from '@luma.gl/shaders';
 
 import {withArrowHeadVertexInject} from './arrow-head-layer';
 
@@ -38,9 +38,17 @@ function assemble(inject: Record<string, string>) {
     fs,
     inject,
     modules: [],
-    hookFunctions: [
-      'vs:DECKGL_FILTER_SIZE(inout vec3 size, VertexGeometry geometry)',
-      'vs:DECKGL_FILTER_GL_POSITION(inout vec4 position, VertexGeometry geometry)'
+    injectionTargets: [
+      {
+        name: 'DECKGL_FILTER_SIZE',
+        stage: 'vertex',
+        glsl: {parameters: 'inout vec3 size, VertexGeometry geometry'}
+      },
+      {
+        name: 'DECKGL_FILTER_GL_POSITION',
+        stage: 'vertex',
+        glsl: {parameters: 'inout vec4 position, VertexGeometry geometry'}
+      }
     ]
   }).vs;
 }

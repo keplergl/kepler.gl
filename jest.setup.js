@@ -25,6 +25,6 @@ jest.mock('@kepler.gl/utils', () => ({
 }));
 
 // @loaders.gl/parquet isn't tested in jest atm, and is generating errors
-jest.mock('@loaders.gl/parquet', () => ({}));
+jest.mock('@loaders.gl/tables/parquet', () => ({}));
 
 global.URL.createObjectURL = jest.fn();

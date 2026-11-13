@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PMTilesSource} from '@loaders.gl/pmtiles';
+import {PMTilesSourceLoader} from '@loaders.gl/tiles/pmtiles';
 import {KeplerTable, getMVTMetadata, getWMSCapabilities, getFieldsFromTile} from '@kepler.gl/table';
 import {DatasetType} from '@kepler.gl/constants';
 import {getLoadTilesetCommand} from './load-tileset-command';
@@ -24,9 +24,9 @@ jest.mock('@kepler.gl/table', () => ({
   getWMSCapabilities: jest.fn(),
   getFieldsFromTile: jest.fn()
 }));
-jest.mock('@loaders.gl/pmtiles', () => ({
-  ...jest.requireActual('@loaders.gl/pmtiles'),
-  PMTilesSource: {createDataSource: jest.fn()}
+jest.mock('@loaders.gl/tiles/pmtiles', () => ({
+  ...jest.requireActual('@loaders.gl/tiles/pmtiles'),
+  PMTilesSourceLoader: {createDataSourceSync: jest.fn()}
 }));
 
 function setup() {
@@ -65,7 +65,7 @@ beforeEach(() => {
     version: '1.3.0',
     layers: [{name: 'roads', title: 'Roads'}]
   });
-  (PMTilesSource.createDataSource as jest.Mock).mockReturnValue({
+  (PMTilesSourceLoader.createDataSourceSync as jest.Mock).mockReturnValue({
     metadata: Promise.resolve({tileMIMEType: 'image/png'})
   });
 });

@@ -3,7 +3,7 @@
 
 import Tile3DLayer, {tile3dLoadErrorKind} from './tile3d-layer';
 import {UniformStore} from '@luma.gl/core';
-import type {Device} from '@luma.gl/core/dist/adapter/device';
+import type {Device} from '@luma.gl/core';
 
 const URL = 'https://assets.ion.cesium.com/57588/tileset.json';
 

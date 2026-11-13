@@ -211,7 +211,7 @@ export function getEditorLayer({
     // by the sphere; in flat 2D/3D keep deck.gl's default (empty parameters) so
     // this matches the pre-globe behavior exactly.
     parameters: mapState?.globe?.enabled
-      ? {depthTest: true, ...(mapState?.layerParameters ?? {})}
+      ? {depthCompare: 'less-equal', ...(mapState?.layerParameters ?? {})}
       : {},
     shadowEnabled: false,
     _subLayerProps: {

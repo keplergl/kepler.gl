@@ -539,7 +539,7 @@ export default class FlowLayer extends Layer {
     // In globe mode we still render flows (the layer is flagged unsupported and shows a
     // warning), but we want the flat arrows on the far side of the globe to be occluded
     // by the planet instead of drawing on top of it. The @flowmap.gl flow-line sublayers
-    // hardcode `depthTest: false` in their sublayer parameters (see FlowmapLayer.js), so
+    // disable depth testing in their sublayer parameters (see FlowmapLayer.js), so
     // a top-level `parameters` won't reach them — we override via _subLayerProps, which
     // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
     const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
@@ -547,10 +547,8 @@ export default class FlowLayer extends Layer {
     const globeDepthProps = isGlobeMode
       ? {
           parameters: {
-            cull: false,
-            depthTest: true,
-            depthCompare: 'less-equal',
             cullMode: 'none',
+            depthCompare: 'less-equal',
             ...blendingParameters
           }
         }
@@ -588,7 +586,7 @@ export default class FlowLayer extends Layer {
         onHover: layerCallbacks.onLayerHover,
         parameters: {
           ...(cleanProps.parameters || {}),
-          cull: false,
+          cullMode: 'none',
           ...blendingParameters
         }
       })

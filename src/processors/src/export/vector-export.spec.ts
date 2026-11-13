@@ -3,16 +3,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {convertGeometryToWKB, convertWKBToGeometry} from '@loaders.gl/gis';
-import {convertArrowToSchema} from '@loaders.gl/schema-utils';
-import {DBFLoader} from '@loaders.gl/shapefile';
+import {convertGeometryToWKB, convertWKBToGeometry} from '@loaders.gl/core/geoarrow';
+import {convertArrowToSchema} from '@loaders.gl/core/schema-utils';
+import {parse} from '@loaders.gl/core';
+import {DBFLoaderWithParser as DBFLoader} from '@loaders.gl/geospatial/dbf-loader';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer, validateInputData} from '@kepler.gl/utils';
 import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';
 import * as arrow from 'apache-arrow';
 import {tableFromIPC} from 'apache-arrow';
-import {ZipLoader} from '@loaders.gl/zip';
+import {openZipArchive} from '@loaders.gl/archives/zip';
 import {KeplerTable} from '@kepler.gl/table';
 import {arrowSchemaToFields, processArrowTable, processRowObject} from '../data-processor';
 import type {Feature, FeatureCollection, Geometry} from 'geojson';
@@ -88,8 +89,9 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const files = await ZipLoader.parse(shapefile.data);
-      const shp = new DataView(files['views.shp']);
+      const archive = await openZipArchive(shapefile.data as ArrayBuffer);
+      const shp = new DataView(await archive.read('views.shp'));
+      await archive.close();
       expect(shp.getInt32(108, true)).toBe(8);
       expect(shp.getInt32(144, true)).toBe(geometry.coordinates.length);
       expect(
@@ -176,8 +178,9 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const files = await ZipLoader.parse(shapefile.data);
-      const shp = new DataView(files['geometry.shp']);
+      const archive = await openZipArchive(shapefile.data as ArrayBuffer);
+      const shp = new DataView(await archive.read('geometry.shp'));
+      await archive.close();
       expect(shp.getInt32(0)).toBe(9994);
       expect(shp.getInt32(108, true)).toBe(1);
       expect([shp.getFloat64(112, true), shp.getFloat64(120, true)]).toEqual(geometry.coordinates);
@@ -401,7 +404,7 @@ describe('dataset export', () => {
     ).rejects.toThrow('Shapefile export requires all geometries to have the same shape family.');
   });
 
-  test('rounds noisy and tiny DBF numbers at the maximum supported precision', () => {
+  test('rounds noisy and tiny DBF numbers at the maximum supported precision', async () => {
     const values = [0.1 + 0.2, 1e-7, -1e-7, 1e-16, -1e-16, null];
     const collection: FeatureCollection = {
       type: 'FeatureCollection',
@@ -435,13 +438,13 @@ describe('dataset export', () => {
     ]);
     expect(cells.filter(Boolean).every(cell => /^-?\d+(?:\.\d+)?$/.test(cell))).toBe(true);
 
-    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+    const parsed = (await parse(dbf.buffer as ArrayBuffer, DBFLoader, {
       dbf: {shape: 'rows'}
-    }) as Array<{value: number | null}>;
+    })) as Array<{value: number | null}>;
     expect(parsed.map(row => row.value)).toEqual([0.3, 1e-7, -1e-7, 0, 0, null]);
   });
 
-  test('uses the highest common precision that fits mixed magnitudes after rounding', () => {
+  test('uses the highest common precision that fits mixed magnitudes after rounding', async () => {
     const values = [-1234567890123456, 999.9999, -12.3456, null];
     const collection: FeatureCollection = {
       type: 'FeatureCollection',
@@ -467,9 +470,9 @@ describe('dataset export', () => {
     expect({fieldLength, decimalCount}).toEqual({fieldLength: 19, decimalCount: 1});
     expect(cells).toEqual(['-1234567890123456.0', '1000.0', '-12.3', '']);
 
-    const parsed = DBFLoader.parseSync?.(dbf.buffer as ArrayBuffer, {
+    const parsed = (await parse(dbf.buffer as ArrayBuffer, DBFLoader, {
       dbf: {shape: 'rows'}
-    }) as Array<{value: number | null}>;
+    })) as Array<{value: number | null}>;
     expect(parsed.map(row => row.value)).toEqual([-1234567890123456, 1000, -12.3, null]);
   });
 

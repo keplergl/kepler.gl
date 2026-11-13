@@ -1730,31 +1730,31 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
   const flatLabel = renderWithMapState(INITIAL_MAP_STATE);
   t.ok(flatLabel, 'should create a text label layer in flat mode');
   t.equal(
-    flatLabel.props.parameters.depthTest,
-    false,
+    flatLabel.props.parameters.depthCompare,
+    'always',
     'should not depth-test labels outside globe mode'
   );
-  t.notOk('cull' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
+  t.notOk('cullMode' in flatLabel.props.parameters, 'should not touch culling outside globe mode');
   t.notOk(
     flatLabel.props._subLayerProps.characters,
     'should not override the glyph sublayer outside globe mode'
   );
   t.equal(
-    flatLabel.props._subLayerProps.background.parameters.depthTest,
-    false,
+    flatLabel.props._subLayerProps.background.parameters.depthCompare,
+    'always',
     'should not depth-test the label background outside globe mode'
   );
 
-  // globe mode sets a global `cull: true`, which would otherwise discard the glyph quads
+  // globe mode sets a global `cullMode: 'back'`, which would otherwise discard the glyph quads
   const globeLabel = renderWithMapState({...INITIAL_MAP_STATE, globe: {enabled: true}});
-  t.equal(globeLabel.props.parameters.cull, false, 'should disable culling in globe mode');
+  t.equal(globeLabel.props.parameters.cullMode, 'none', 'should disable culling in globe mode');
   t.equal(
-    globeLabel.props.parameters.depthTest,
-    true,
+    globeLabel.props.parameters.depthCompare,
+    'less-equal',
     'should depth-test labels against the globe depth disk'
   );
   t.equal(
-    globeLabel.props.parameters.depthMask,
+    globeLabel.props.parameters.depthWriteEnabled,
     false,
     'should not write depth so labels do not occlude each other'
   );
@@ -1769,12 +1769,12 @@ test('#PointLayer -> renderLayer globe mode text labels', t => {
     'should render the label background with the globe back-face culling sublayer'
   );
   t.equal(
-    globeLabel.props._subLayerProps.background.parameters.depthTest,
-    true,
+    globeLabel.props._subLayerProps.background.parameters.depthCompare,
+    'less-equal',
     'should depth-test the label background against the globe depth disk'
   );
   t.equal(
-    globeLabel.props._subLayerProps.background.parameters.depthMask,
+    globeLabel.props._subLayerProps.background.parameters.depthWriteEnabled,
     false,
     'should not write depth from the label background'
   );

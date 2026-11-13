@@ -134,13 +134,9 @@ export default defineConfig({
       'styled-components',
       'react',
       'react-dom',
-      '@luma.gl/constants',
       '@luma.gl/core',
-      '@luma.gl/effects',
       '@luma.gl/engine',
-      '@luma.gl/gltf',
-      '@luma.gl/shadertools',
-      '@luma.gl/webgl',
+      '@luma.gl/shaders',
       '@deck.gl/aggregation-layers',
       '@deck.gl/core',
       '@deck.gl/extensions',
@@ -151,11 +147,9 @@ export default defineConfig({
       '@deck.gl/react',
       '@deck.gl/widgets',
       '@math.gl/core',
-      '@math.gl/culling',
       '@math.gl/geospatial',
-      '@math.gl/polygon',
-      '@math.gl/sun',
-      '@math.gl/types',
+      '@math.gl/geometry',
+      '@math.gl/earth',
       '@math.gl/web-mercator',
       '@hubble.gl/core',
       '@hubble.gl/react',
@@ -170,7 +164,7 @@ export default defineConfig({
     // the @kepler.gl/* CJS packages can require() its subpaths safely.
     // The pure-CJS deps of the excluded parquet package are covered by
     // `loadersCjsDeps` above.
-    exclude: ['parquet-wasm', '@loaders.gl/parquet'],
+    exclude: ['parquet-wasm', '@loaders.gl/tables/parquet'],
     include: [...keplerPackages, 'apache-arrow', ...loadersCjsDeps, ...nodePolyfillDeps],
     esbuildOptions: {
       target: 'es2020'

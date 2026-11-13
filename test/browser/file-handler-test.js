@@ -23,7 +23,7 @@ import {
 import {cmpField} from '../helpers/comparison-utils';
 
 // Install polyfills required for loaders.gl
-import {installFilePolyfills} from '@loaders.gl/polyfills';
+import {installFilePolyfills} from '@loaders.gl/core/polyfills';
 installFilePolyfills();
 
 test('#file-handler -> readFileInBatches.csv -> processFileData', async t => {

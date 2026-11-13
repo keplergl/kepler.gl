@@ -5,7 +5,7 @@ import test from 'tape';
 import sinon from 'sinon';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
-import {GL} from '@luma.gl/constants';
+import {GL} from '@luma.gl/core/webgl-constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {
   getEOBands,

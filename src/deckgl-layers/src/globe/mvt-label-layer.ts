@@ -127,13 +127,13 @@ export class MVTLabelLayer extends CompositeLayer<MVTLabelLayerProps> {
         new TextLayer(this.getSubLayerProps({id: 'text'}), {
           data: this.state.labelData as any,
           parameters: {
-            // Globe mode sets a global `cull: true` (to backface-cull the sphere
+            // Globe mode sets a global `cullMode: 'back'` (to backface-cull the sphere
             // surface). That also backface-culls the glyph quads, hiding all labels,
             // so explicitly disable culling here. depthTest off keeps labels on top of
             // the globe surface rather than clipping into it.
-            cull: false,
-            depthTest: false,
-            depthMask: false
+            cullMode: 'none',
+            depthCompare: 'always',
+            depthWriteEnabled: false
           },
           billboard,
           sizeUnits: labelSizeUnits,

@@ -3,7 +3,7 @@
 
 import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components';
-import {WMSCapabilities} from '@loaders.gl/wms';
+import {WMSCapabilities} from '@loaders.gl/ogc/wms';
 
 import {validateUrl} from '@kepler.gl/common-utils';
 import {DatasetType, REMOTE_TILE, RemoteTileFormat, WMSDatasetMetadata} from '@kepler.gl/constants';

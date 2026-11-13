@@ -7,9 +7,9 @@
 
 import {parse, fetchFile, load, FetchError, Loader} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
-import {NPYLoader} from '@loaders.gl/textures';
+import {NPYLoader} from '@loaders.gl/scientific/npy-loader-types';
 // @ts-ignore GL resolution depends on moduleResolution setting
-import {GL} from '@luma.gl/constants';
+import {GL} from '@luma.gl/core/webgl-constants';
 
 /**
  * Loose texture data descriptor passed around before actual luma.gl Texture creation.

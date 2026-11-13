@@ -31,17 +31,16 @@
     "@geoarrow/geoarrow-js": "^0.3.0",
     "@kepler.gl/constants": "3.3.0-alpha.21",
     "@kepler.gl/utils": "3.3.0-alpha.21",
-    "@math.gl/core": "^4.1.0",
-    "@math.gl/polygon": "^4.1.0",
-    "@math.gl/types": "^4.1.0",
-    "apache-arrow": ">=15",
+    "@math.gl/core": "5.0.0-beta.8",
+    "@math.gl/geometry": "5.0.0-beta.8",
+    "apache-arrow": ">=17.0.0",
     "threads": "^1.7.0"
   },
   "peerDependencies": {
-    "@deck.gl/aggregation-layers": "^9.4.1",
-    "@deck.gl/core": "^9.4.1",
-    "@deck.gl/geo-layers": "^9.4.1",
-    "@deck.gl/layers": "^9.4.1"
+    "@deck.gl/aggregation-layers": "10.0.0-alpha.1",
+    "@deck.gl/core": "10.0.0-alpha.1",
+    "@deck.gl/geo-layers": "10.0.0-alpha.1",
+    "@deck.gl/layers": "10.0.0-alpha.1"
   },
   "nyc": {
     "sourceMap": false,

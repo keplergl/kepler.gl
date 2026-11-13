@@ -167,19 +167,19 @@ describe('createTargetArrowLayer', () => {
     const overriddenLayer = createArrowLayer(host, {
       mapState: {
         ...mapState,
-        layerParameters: {depthTest: false, depthMask: true, cull: true}
+        layerParameters: {depthCompare: 'always', depthWriteEnabled: true, cullMode: 'back'}
       }
     });
 
     expect(defaultLayer?.props.parameters).toEqual({
-      depthTest: true,
-      depthMask: false,
-      cull: false
+      depthCompare: 'less-equal',
+      depthWriteEnabled: false,
+      cullMode: 'none'
     });
     expect(overriddenLayer?.props.parameters).toEqual({
-      depthTest: false,
-      depthMask: true,
-      cull: true
+      depthCompare: 'always',
+      depthWriteEnabled: true,
+      cullMode: 'back'
     });
   });
 

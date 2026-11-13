@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Layer} from '@deck.gl/core';
+import {Layer} from '@deck.gl/core';
 import {SolidPolygonLayer, BitmapLayer} from '@deck.gl/layers';
 import {TileLayer, MVTLayer} from '@deck.gl/geo-layers';
 
@@ -24,13 +24,13 @@ const devicePixelRatio = Math.min(
 );
 
 const BACKGROUND_PARAMETERS = {
-  depthTest: true,
-  cull: true,
-  depthMask: false
-};
+  depthCompare: 'less-equal',
+  cullMode: 'back',
+  depthWriteEnabled: false
+} as const;
 
 const BASEMAP_RASTER_PARAMETERS = {
-  depthMask: false
+  depthWriteEnabled: false
 };
 
 const BACKGROUND_DATA = [
@@ -289,22 +289,22 @@ const INVISIBLE_COLOR: [number, number, number, number] = [0, 0, 0, 0];
 
 const BASEMAP_MVT_PARAMETERS = {
   // Occlude the far side of the globe via the DEPTH DISK (getGlobeDepthDiskLayer)
-  // rather than back-face culling. Globe mode sets a global `cull: true` for the
+  // rather than back-face culling. Globe mode sets a global `cullMode: 'back'` for the
   // opaque sphere surface, but back-face culling relies on stable triangle
   // winding — and deck.gl 9's globe projection loses precision at high zoom
   // (float32), flipping the winding of the small admin/water triangles so they
   // get wrongly culled and the geometry vanishes past ~zoom 12 (you then see
   // through to the far side / "different geometry"). Depth testing against the disk
   // is a precision-robust occluder that works at any zoom, so:
-  //   - cull: false     → don't winding-cull the near-side geometry
-  //   - depthTest: true → far-side geometry (behind the disk) fails depth, hidden
-  //   - depthMask: false → don't write depth (avoid self z-fighting on the shell)
+  //   - cullMode: 'none'     → don't winding-cull the near-side geometry
+  //   - depthCompare: 'less-equal' → hide far-side geometry behind the disk
+  //   - depthWriteEnabled: false → don't write depth (avoid self z-fighting on the shell)
   // Raster tiles are unaffected (their 4-corner quads keep stable winding), which
   // is why satellite already zooms to max cleanly. Labels disable cull for the
   // same reason (see mvt-label-layer.ts).
-  depthTest: true,
-  depthMask: false,
-  cull: false
+  depthCompare: 'less-equal',
+  depthWriteEnabled: false,
+  cullMode: 'none'
 };
 
 // deck.gl 9's globe selects finer tiles than needed for a given view (its
@@ -596,7 +596,7 @@ export const getGlobeBaseLayers = ({
 
           return [
             new BitmapLayer(props, {
-              _imageCoordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+              _imageCoordinateSystem: 'cartesian',
               data: undefined,
               image: props.data,
               bounds: [west, south, east, north]

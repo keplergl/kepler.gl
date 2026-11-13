@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cutPolygonByGrid, cutPolylineByGrid} from '@math.gl/polygon';
+import {cutPolygonByGrid, cutPolylineByGrid} from '@math.gl/geometry';
 import {ContourFeature, ScalarGrid} from './contour-utils';
 
 /** Drape the existing contours over one common, piecewise planar height field. */
@@ -150,7 +150,7 @@ export function buildContourSurface(grid: ScalarGrid | null, contours: ContourFe
             const vertices = fromDiagonal(triangle.positions);
             const starts = [
               0,
-              ...Array.from(triangle.holeIndices || [], i => i / 2),
+              ...Array.from(triangle.holeIndices ?? ([] as number[]), (i: number) => i / 2),
               vertices.length
             ];
             return starts.slice(0, -1).map((start, index) => {

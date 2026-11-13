@@ -45,7 +45,7 @@ import {
 } from '@kepler.gl/types';
 import {Datasets, GroupByOp, JoinOp, SuitabilityOp} from '@kepler.gl/table';
 import {Layer, LayerClassesType} from '@kepler.gl/layers';
-import {Loader} from '@loaders.gl/loader-utils';
+import {Loader} from '@loaders.gl/core/loader-utils';
 import KeplerGLSchema from './schema-manager';
 
 /**

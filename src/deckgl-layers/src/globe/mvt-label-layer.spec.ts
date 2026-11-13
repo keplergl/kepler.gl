@@ -132,9 +132,9 @@ describe('MVTLabelLayer', () => {
       expect(text.props.characterSet).toBe('auto');
       expect(text.props._subLayerProps?.characters?.type).toBe(EnhancedMultiIconLayer);
       expect(text.props.parameters).toMatchObject({
-        cull: false,
-        depthTest: false,
-        depthMask: false
+        cullMode: 'none',
+        depthCompare: 'always',
+        depthWriteEnabled: false
       });
     }
   );
