@@ -4,6 +4,9 @@
  * @jest-environment node
  */
 
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
 const zarrModule = {__esModule: true, open: jest.fn()};
 const geoZarrModule = {__esModule: true, parseGeoZarrMetadata: jest.fn()};
 let loadZarr: jest.Mock;

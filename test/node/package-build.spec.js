@@ -24,6 +24,19 @@ const testFiles = ['spec', 'test'].flatMap(kind =>
   ])
 );
 
+test('publishes MCP after its workspace dependencies', () => {
+  const workspaceNames = require('../../package.json').workspaces.map(
+    workspace => require(path.join(root, workspace, 'package.json')).name
+  );
+  const mcpIndex = workspaceNames.indexOf('@kepler.gl/mcp');
+  const {dependencies} = require('../../src/mcp/package.json');
+  const workspaceDependencies = Object.keys(dependencies).filter(name =>
+    workspaceNames.includes(name)
+  );
+  expect(mcpIndex).toBeGreaterThanOrEqual(0);
+  expect(workspaceNames.slice(0, mcpIndex)).toEqual(expect.arrayContaining(workspaceDependencies));
+});
+
 // Use Babel's actual ignore matching, including every CJS/ESM command, rather
 // than asserting one particular glob spelling in package.json.
 test.each(packages)('%s excludes tests from Babel output', workspace => {
