@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Tile3DLayer from './tile3d-layer';
+import Tile3DLayer, {tile3dLoadErrorKind} from './tile3d-layer';
 import {UniformStore} from '@luma.gl/core';
 import type {Device} from '@luma.gl/core/dist/adapter/device';
 
@@ -211,5 +211,157 @@ describe('3D tile uniform uploads', () => {
     expect(materialBuffer.write).toHaveBeenCalledTimes(2);
     expect(cameraBuffer.write).not.toHaveBeenCalled();
     store.destroy();
+  });
+});
+
+// Tile headers and callbacks do not require a WebGL device. Keep the real layer
+// metadata updates and mock only the external tileset payload/callback boundary.
+describe('3D tile metadata and material lifecycle', () => {
+  const tileset = (overrides: Record<string, unknown> = {}) =>
+    ({url: URL, options: {}, ...overrides} as unknown as Parameters<
+      Tile3DLayer['_onTilesetLoad']
+    >[0]);
+  const tile = (content: Record<string, unknown>) =>
+    ({content} as unknown as Parameters<Tile3DLayer['_onTileLoad']>[0]);
+
+  test('uses root bounds rather than center estimates and fits only once', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const onFitBounds = jest.fn();
+    render(layer, 'token-A', {layerCallbacks: {onFitBounds}});
+    layer._onTilesetLoad(
+      tileset({
+        root: {
+          boundingBox: [
+            [-122, 37, -10],
+            [-121, 38, 100]
+          ]
+        },
+        cartographicCenter: [0, 0, 0],
+        zoom: 2
+      })
+    );
+    expect(layer.meta.bounds).toEqual([-122, 37, -121, 38]);
+    expect(onFitBounds).toHaveBeenCalledWith([-122, 37, -121, 38]);
+    layer._onTilesetLoad(
+      tileset({
+        root: {
+          boundingBox: [
+            [1, 2, 3],
+            [4, 5, 6]
+          ]
+        }
+      })
+    );
+    expect(layer.meta.bounds).toEqual([1, 2, 4, 5]);
+    expect(onFitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  test('falls back from a throwing bounding box to cartographic bounds', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const root = {
+      get boundingBox() {
+        throw new Error('invalid volume');
+      }
+    };
+    layer._extractBoundsFromTileset(tileset({root, cartographicCenter: [30, 40, 100], zoom: 2}));
+    expect(layer.meta.bounds).toEqual([-15, -5, 75, 85]);
+  });
+
+  test('uses default zoom for center-only metadata and leaves missing bounds unset', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    layer._extractBoundsFromTileset(tileset());
+    expect(layer.meta.bounds).toBeUndefined();
+    layer._extractBoundsFromTileset(
+      tileset({root: {boundingBox: []}, cartographicCenter: [10, 20]})
+    );
+    const span = 180 / 2 ** 14;
+    expect(layer.meta.bounds).toEqual([10 - span, 20 - span, 10 + span, 20 + span]);
+  });
+
+  test('does not consume the first fit when a tileset has no bounds', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const onFitBounds = jest.fn();
+    render(layer, 'token-A', {layerCallbacks: {onFitBounds}});
+    layer._onTilesetLoad(tileset());
+    expect(onFitBounds).not.toHaveBeenCalled();
+    layer._onTilesetLoad(tileset({cartographicCenter: [10, 20], zoom: 2}));
+    expect(onFitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not auto-fit Google global tiles and deduplicates selected tile credits', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const onFitBounds = jest.fn();
+    render(layer, 'token-A', {layerCallbacks: {onFitBounds}});
+    const google = tileset({
+      url: 'https://tile.googleapis.com/v1/3dtiles/root.json',
+      cartographicCenter: [0, 0]
+    });
+    layer._onTilesetLoad(google);
+    expect(onFitBounds).not.toHaveBeenCalled();
+    const selected = [
+      tile({gltf: {asset: {copyright: 'A;B'}}}),
+      tile({gltf: {asset: {copyright: 'B;C'}}}),
+      tile({})
+    ];
+    const traverse = google.options.onTraversalComplete;
+    if (!traverse) throw new Error('Google traversal callback was not installed');
+    expect(traverse(selected)).toBe(selected);
+    expect(layer.meta.attribution.title).toBe('A; B; C');
+    const update = jest.spyOn(layer, 'updateMeta');
+    traverse(selected);
+    expect(update).not.toHaveBeenCalled();
+    traverse([tile({gltf: {asset: {copyright: 'C'}}})]);
+    expect(layer.meta.attribution.title).toBe('C');
+    traverse([]);
+    expect(layer.meta.attribution.title).toBe('');
+  });
+
+  test('successful load clears a previous error and notifies recovery once', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const onTilesetLoadError = jest.fn();
+    render(layer, 'token-A', {layerCallbacks: {onTilesetLoadError}});
+    layer._onTilesetError(null);
+    expect(onTilesetLoadError).not.toHaveBeenCalled();
+    layer._onTilesetError('token');
+    expect(layer.tilesetLoadError).toBe('token');
+    layer._onTilesetLoad(tileset());
+    expect(layer.tilesetLoadError).toBeNull();
+    expect(onTilesetLoadError.mock.calls).toEqual([['token'], [null]]);
+    layer._onTilesetLoad(tileset());
+    expect(onTilesetLoadError).toHaveBeenCalledTimes(2);
+  });
+
+  test('fills missing I3S factors without overwriting zero or configured material values', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    const missing = {baseColorFactor: [1, 0, 0, 1]};
+    const configured = {metallicFactor: 0.7, roughnessFactor: 0};
+    layer._onTileLoad(tile({material: {pbrMetallicRoughness: missing}}));
+    layer._onTileLoad(tile({material: {pbrMetallicRoughness: configured}}));
+    expect(missing).toEqual({baseColorFactor: [1, 0, 0, 1], metallicFactor: 0, roughnessFactor: 1});
+    expect(configured).toEqual({metallicFactor: 0.7, roughnessFactor: 0});
+    const withoutMaterial = tile({});
+    expect(() => layer._onTileLoad(withoutMaterial)).not.toThrow();
+    expect(withoutMaterial.content).toEqual({});
+  });
+});
+
+describe('3D tile loading error classification', () => {
+  test.each([400, 401, 403])('recognizes HTTP %s even without a message', status => {
+    expect(tile3dLoadErrorKind({status})).toBe('token');
+  });
+  test.each(['HTTP 401', 'Invalid API key', 'Expired access token', 'Unauthorized', 'Forbidden'])(
+    'recognizes credential error %s',
+    message => {
+      expect(tile3dLoadErrorKind(new Error(message))).toBe('token');
+    }
+  );
+  test.each([
+    null,
+    undefined,
+    {status: 500},
+    new Error('network disconnected'),
+    'tile 14003 missing'
+  ])('keeps non-credential failures generic: %s', error => {
+    expect(tile3dLoadErrorKind(error)).toBe('generic');
   });
 });
