@@ -89,7 +89,7 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const archive = await openZipArchive(shapefile.data);
+      const archive = await openZipArchive(shapefile.data as ArrayBuffer);
       const shp = new DataView(await archive.read('views.shp'));
       await archive.close();
       expect(shp.getInt32(108, true)).toBe(8);
@@ -178,7 +178,7 @@ describe('dataset export', () => {
         ...shared,
         dataType: EXPORT_DATA_TYPE.SHAPEFILE
       });
-      const archive = await openZipArchive(shapefile.data);
+      const archive = await openZipArchive(shapefile.data as ArrayBuffer);
       const shp = new DataView(await archive.read('geometry.shp'));
       await archive.close();
       expect(shp.getInt32(0)).toBe(9994);

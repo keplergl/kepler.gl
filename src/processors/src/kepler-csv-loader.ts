@@ -9,7 +9,7 @@ type KeplerCSVOptions = CSVLoaderOptions & StrictLoaderOptions;
 const KEPLER_CSV_OPTIONS: KeplerCSVOptions = {
   csv: {
     shape: 'object-row-table',
-    skipEmptyLines: true,
+    skipEmptyLines: 'greedy',
     dynamicTyping: false,
     delimitersToGuess: [',', '\t', ';', '|']
   }
