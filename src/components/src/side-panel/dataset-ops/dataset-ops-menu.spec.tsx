@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
-import {fireEvent} from '@testing-library/react';
-import {Datasets} from '@kepler.gl/table';
+import React, {useState} from 'react';
+import {fireEvent, within} from '@testing-library/react';
+import {Datasets, GroupByOp, SuitabilityOp} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -11,6 +11,24 @@ import {DatasetOpsMenu} from './dataset-ops-menu';
 import GroupByPanelFactory from './group-by-panel';
 import DatasetOpPanel, {CollapsibleSection, fieldNameFromSelector} from './dataset-op-panel';
 import SuitabilityPanelFactory from './suitability-panel';
+
+jest.mock('../../common/item-selector/item-selector', () => ({
+  __esModule: true,
+  default: ({options, selectedItems, onChange, disabled}: any) => (
+    <select
+      aria-label="operation-option"
+      value={selectedItems?.id || ''}
+      disabled={disabled}
+      onChange={event => onChange(event.target.value)}
+    >
+      {options.map((option: {id: string}) => (
+        <option key={option.id} value={option.id}>
+          {option.id}
+        </option>
+      ))}
+    </select>
+  )
+}));
 
 function MockFieldSelector({
   fields,
@@ -582,5 +600,223 @@ describe('SuitabilityPanel', () => {
 
     fireEvent.click(picker.querySelectorAll('input[type="checkbox"]')[0]);
     expect(setSuitabilityConfig).toHaveBeenCalledWith('op-1', {columns: ['access', 'cost']});
+  });
+});
+
+describe('Dataset operation configuration transitions', () => {
+  const datasets = {
+    source: {
+      id: 'source',
+      fields: [
+        {name: 'region', type: 'string'},
+        {name: 'population', type: 'integer'},
+        {name: 'cost', type: 'real'},
+        {name: 'opaque', type: 'object'}
+      ]
+    }
+  } as unknown as Datasets;
+  const GroupPanel = GroupByPanelFactory(MockFieldSelector as any);
+  const SuitabilityPanel = SuitabilityPanelFactory(MockRangeSlider as any);
+  const common = {
+    id: 'operation',
+    dataId: 'source',
+    resultId: 'result',
+    resultLabel: 'Output',
+    isConfigActive: true
+  };
+
+  function setupGroup(overrides: Partial<GroupByOp> = {}) {
+    const change = jest.fn();
+    const run = jest.fn();
+    const remove = jest.fn();
+    function Harness() {
+      const [op, setOp] = useState<GroupByOp>({
+        ...common,
+        fieldName: 'region',
+        aggregations: {population: 'sum'},
+        ...overrides
+      });
+      return (
+        <GroupPanel
+          op={op}
+          datasets={datasets}
+          setGroupByConfig={(id, config) => {
+            change(id, config);
+            setOp(previous => ({...previous, ...config}));
+          }}
+          runGroupBy={run}
+          removeDatasetOp={remove}
+        />
+      );
+    }
+    return {...renderWithTheme(<Harness />), change, run, remove};
+  }
+  function setupSuitability(overrides: Partial<SuitabilityOp> = {}) {
+    const change = jest.fn();
+    const run = jest.fn();
+    const remove = jest.fn();
+    function Harness() {
+      const [op, setOp] = useState<SuitabilityOp>({
+        ...common,
+        weights: {population: 0.5},
+        weightStandardization: 'normalize',
+        dataStandardization: 'range',
+        outputFieldName: 'score',
+        ...overrides
+      });
+      return (
+        <SuitabilityPanel
+          op={op}
+          datasets={datasets}
+          setSuitabilityConfig={(id, config) => {
+            change(id, config);
+            setOp(previous => ({...previous, ...config}));
+          }}
+          runSuitability={run}
+          removeDatasetOp={remove}
+        />
+      );
+    }
+    return {...renderWithTheme(<Harness />), change, run, remove};
+  }
+  function expand(container: HTMLElement) {
+    fireEvent.click(container.querySelector('.dataset-ops-collapsible__header') as HTMLElement);
+  }
+
+  test('group-by disappears when its source dataset has been removed', () => {
+    const {container, run, change} = setupGroup({dataId: 'removed'});
+    expect(container.querySelector('.dataset-ops-panel')).toBeNull();
+    expect(run).not.toHaveBeenCalled();
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  test('group-by enables default aggregations, changes techniques and removes only the toggled rule', () => {
+    const {container, change} = setupGroup();
+    expand(container);
+    const rows = (container.querySelector('.dataset-ops-column-list') as HTMLElement).children;
+    expect(rows).toHaveLength(2);
+    const cost = within(rows[1] as HTMLElement);
+    expect((cost.getByRole('combobox') as HTMLSelectElement).disabled).toBe(true);
+    fireEvent.click(cost.getByRole('checkbox'));
+    expect(change).toHaveBeenLastCalledWith('operation', {
+      aggregations: {population: 'sum', cost: 'average'}
+    });
+    fireEvent.change(cost.getByRole('combobox'), {target: {value: 'maximum'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {
+      aggregations: {population: 'sum', cost: 'maximum'}
+    });
+    fireEvent.click(cost.getByRole('checkbox'));
+    expect(change).toHaveBeenLastCalledWith('operation', {aggregations: {population: 'sum'}});
+    expect((cost.getByRole('combobox') as HTMLSelectElement).disabled).toBe(true);
+  });
+
+  test('group-by select-all excludes the grouping and unsupported fields then clears all rules', () => {
+    const {container, change} = setupGroup();
+    expand(container);
+    const all = container.querySelector('.dataset-ops-collapsible__select-all') as HTMLElement;
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {
+      aggregations: {population: 'average', cost: 'average'}
+    });
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {aggregations: {}});
+  });
+
+  test('choosing an aggregated field as group key removes its rule but preserves other rules', () => {
+    const {getByLabelText, change, container} = setupGroup({
+      aggregations: {population: 'sum', cost: 'maximum'}
+    });
+    fireEvent.change(getByLabelText('group-by-field'), {target: {value: 'population'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {
+      fieldName: 'population',
+      aggregations: {cost: 'maximum'}
+    });
+    expand(container);
+    const list = container.querySelector('.dataset-ops-column-list') as HTMLElement;
+    expect(list.textContent).not.toContain('population');
+    expect(list.textContent).toContain('cost');
+  });
+
+  test('group-by requires a key, saves output name, and routes run and cancel to the current operation', () => {
+    const {container, getByRole, getByLabelText, change, run, remove} = setupGroup({
+      fieldName: null
+    });
+    const runButton = container.querySelector('.dataset-ops-panel__run') as HTMLButtonElement;
+    fireEvent.click(runButton);
+    expect(run).not.toHaveBeenCalled();
+    fireEvent.change(getByLabelText('group-by-field'), {target: {value: 'region'}});
+    fireEvent.change(getByRole('textbox'), {target: {value: 'Regional totals'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {resultLabel: 'Regional totals'});
+    fireEvent.click(runButton);
+    expect(run).toHaveBeenCalledWith('operation');
+    fireEvent.click(container.querySelector('.dataset-ops-panel__back') as HTMLElement);
+    expect(remove).toHaveBeenCalledWith('operation');
+  });
+
+  test('suitability disappears when its source dataset has been removed', () => {
+    const {container, run, change} = setupSuitability({dataId: 'removed'});
+    expect(container.querySelector('.dataset-ops-panel')).toBeNull();
+    expect(run).not.toHaveBeenCalled();
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  test('suitability adds a numeric weight without overwriting an existing zero weight', () => {
+    const {container, change, run} = setupSuitability({weights: {population: 0}});
+    const checkboxes = container.querySelectorAll(
+      'input[type="checkbox"]'
+    ) as NodeListOf<HTMLInputElement>;
+    expect(checkboxes[0].checked).toBe(true);
+    expect(checkboxes[1].checked).toBe(false);
+    fireEvent.click(checkboxes[1]);
+    expect(change).toHaveBeenLastCalledWith('operation', {weights: {population: 0, cost: 1}});
+    fireEvent.click(container.querySelector('.dataset-ops-panel__run') as HTMLButtonElement);
+    expect(run).toHaveBeenCalledWith('operation');
+  });
+
+  test('suitability clear-all weights disables execution until fields are selected again', () => {
+    const {container, change, run} = setupSuitability({weights: {population: 0.5, cost: 0.25}});
+    const all = container.querySelector('.dataset-ops-suitability__select-all') as HTMLElement;
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {weights: {}});
+    const runButton = container.querySelector('.dataset-ops-panel__run') as HTMLButtonElement;
+    expect(runButton.disabled).toBe(true);
+    fireEvent.click(runButton);
+    expect(run).not.toHaveBeenCalled();
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {weights: {population: 1, cost: 1}});
+    expect(runButton.disabled).toBe(false);
+  });
+
+  test('suitability updates both standardization methods and score/output names independently', () => {
+    const {getAllByRole, container, change, remove} = setupSuitability();
+    const choices = getAllByRole('combobox');
+    fireEvent.change(choices[0], {target: {value: 'raw'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {weightStandardization: 'raw'});
+    fireEvent.change(choices[1], {target: {value: 'zScore'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {dataStandardization: 'zScore'});
+    const names = getAllByRole('textbox');
+    fireEvent.change(names[0], {target: {value: 'rank'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {outputFieldName: 'rank'});
+    fireEvent.change(names[1], {target: {value: 'Ranked sites'}});
+    expect(change).toHaveBeenLastCalledWith('operation', {resultLabel: 'Ranked sites'});
+    fireEvent.click(container.querySelector('.dataset-ops-panel__back') as HTMLElement);
+    expect(remove).toHaveBeenCalledWith('operation');
+  });
+
+  test('suitability column select-all restores source order and supports deliberately empty output columns', () => {
+    const {container, change} = setupSuitability({columns: ['cost']});
+    expand(container);
+    const all = container.querySelector('.dataset-ops-collapsible__select-all') as HTMLElement;
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {
+      columns: ['region', 'population', 'cost', 'opaque']
+    });
+    fireEvent.click(all);
+    expect(change).toHaveBeenLastCalledWith('operation', {columns: []});
+    const lists = container.querySelectorAll('.dataset-ops-column-list');
+    const columns = within(lists[1] as HTMLElement).getAllByRole('checkbox') as HTMLInputElement[];
+    expect(columns.every(column => !column.checked)).toBe(true);
+    fireEvent.click(columns[2]);
+    expect(change).toHaveBeenLastCalledWith('operation', {columns: ['cost']});
   });
 });

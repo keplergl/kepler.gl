@@ -362,3 +362,171 @@ describe('WMS import', () => {
     );
   });
 });
+
+describe('3D tileset validation and credential changes', () => {
+  it.each([
+    [403, /access token/i],
+    [404, /asset not found/i],
+    [503, /API error \(503\)/]
+  ])('stops after Cesium endpoint HTTP %s with an actionable error', async (status, message) => {
+    jest.mocked(fetch).mockResolvedValue(response(null, status as number));
+    const setResponse = jest.fn();
+    const {getByLabelText} = renderWithTheme(<TilesetTile3DForm setResponse={setResponse} />);
+    change(getByLabelText('Access Token (if needed)'), 'user-token');
+    change(getByLabelText('Tileset URL'), 'https://assets.ion.cesium.com/57588/tileset.json');
+    await waitFor(() =>
+      expect(lastResponse(setResponse).error?.message).toMatch(message as RegExp)
+    );
+    expect(lastResponse(setResponse)).toMatchObject({
+      dataset: null,
+      metadata: null,
+      loading: false
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith('https://api.cesium.com/v1/assets/57588/endpoint', {
+      headers: {Authorization: 'Bearer user-token'}
+    });
+  });
+
+  it('rejects an HTML response from a non-JSON tileset endpoint before parsing it', async () => {
+    const result = response('<html>Login required</html>', 200, 'text/html');
+    const parse = jest.spyOn(result, 'json');
+    jest.mocked(fetch).mockResolvedValue(result);
+    const setResponse = jest.fn();
+    const {getByLabelText} = renderWithTheme(<TilesetTile3DForm setResponse={setResponse} />);
+    change(getByLabelText('Tileset URL'), 'https://example.com/SceneServer/layers/0');
+    await waitFor(() => expect(lastResponse(setResponse).error).toBeInstanceOf(Error));
+    expect(lastResponse(setResponse)).toMatchObject({
+      dataset: null,
+      metadata: null,
+      loading: false
+    });
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it('accepts a JSON file served with a generic content type', async () => {
+    const metadata = {asset: {version: '1.1'}, root: {geometricError: 50}};
+    jest.mocked(fetch).mockResolvedValue(response(metadata, 200, 'application/octet-stream'));
+    const setResponse = jest.fn();
+    const {getByLabelText} = renderWithTheme(<TilesetTile3DForm setResponse={setResponse} />);
+    change(getByLabelText('Tileset URL'), 'https://example.com/tileset.json');
+    await waitFor(() => expect(lastResponse(setResponse).metadata).toEqual(metadata));
+    expect(lastResponse(setResponse)).toMatchObject({
+      error: null,
+      loading: false,
+      dataset: {metadata: {tile3dUrl: 'https://example.com/tileset.json'}}
+    });
+  });
+
+  it('refetches after a token edit and ignores the previous token request failure', async () => {
+    const oldRequest = deferred<Response>();
+    const newRequest = deferred<Response>();
+    jest
+      .mocked(fetch)
+      .mockReturnValueOnce(oldRequest.promise)
+      .mockReturnValueOnce(newRequest.promise);
+    const setResponse = jest.fn();
+    const {getByLabelText} = renderWithTheme(<TilesetTile3DForm setResponse={setResponse} />);
+    change(getByLabelText('Access Token (if needed)'), 'old-key');
+    const url = 'https://tile.googleapis.com/v1/3dtiles/root.json';
+    change(getByLabelText('Tileset URL'), url);
+    change(getByLabelText('Access Token (if needed)'), 'new-key');
+    await act(async () => newRequest.resolve(response({root: {geometricError: 25}})));
+    await act(async () => oldRequest.resolve(response(null, 403)));
+    expect(fetch).toHaveBeenNthCalledWith(2, url, {headers: {'X-GOOG-API-KEY': 'new-key'}});
+    expect(lastResponse(setResponse)).toMatchObject({
+      error: null,
+      loading: false,
+      metadata: {root: {geometricError: 25}},
+      dataset: {metadata: {tile3dAccessToken: 'new-key'}}
+    });
+  });
+});
+
+describe('bitmap file input interactions', () => {
+  it('imports only the first dropped image and preserves the explicit name', async () => {
+    const setResponse = jest.fn();
+    const {getByLabelText, getByText} = renderWithTheme(
+      <TilesetBitmapForm setResponse={setResponse} />
+    );
+    change(getByLabelText('Name'), 'Survey overlay');
+    const first = new File(['first'], 'first.png', {type: 'image/png'});
+    const second = new File(['second'], 'second.jpg', {type: 'image/jpeg'});
+    fireEvent.drop(getByText('Drop / Select'), {dataTransfer: {files: [first, second]}});
+    await waitFor(() => expect(lastResponse(setResponse).dataset?.metadata.isDataUri).toBe(true));
+    expect(lastResponse(setResponse).dataset).toMatchObject({
+      name: 'Survey overlay',
+      metadata: {imageUrl: `data:image/png;base64,${btoa('first')}`, isDataUri: true}
+    });
+  });
+
+  it('reports file-reader failure and allows retrying with a valid image', async () => {
+    const read = jest
+      .spyOn(FileReader.prototype, 'readAsDataURL')
+      .mockImplementation(function (this: FileReader) {
+        this.dispatchEvent(new ProgressEvent('error'));
+      });
+    const setResponse = jest.fn();
+    const {container} = renderWithTheme(<TilesetBitmapForm setResponse={setResponse} />);
+    const input = container.querySelector('input[type=file]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: {files: [new File(['data'], 'bad.png', {type: 'image/png'})]}
+    });
+    expect(lastResponse(setResponse)).toMatchObject({
+      dataset: null,
+      metadata: null,
+      loading: false
+    });
+    expect(lastResponse(setResponse).error).toBeInstanceOf(Error);
+    read.mockRestore();
+    fireEvent.change(input, {
+      target: {files: [new File(['pixels'], 'good.png', {type: 'image/png'})]}
+    });
+    await waitFor(() => expect(lastResponse(setResponse).dataset?.metadata.isDataUri).toBe(true));
+    expect(lastResponse(setResponse).error).toBeNull();
+    expect(lastResponse(setResponse).dataset.name).toBe('good');
+  });
+
+  it('keeps a valid URL selection when the file picker is cancelled or an empty drop occurs', () => {
+    const setResponse = jest.fn();
+    const {container, getByLabelText, getByText} = renderWithTheme(
+      <TilesetBitmapForm setResponse={setResponse} />
+    );
+    change(getByLabelText('Image source'), 'https://example.com/overlay.png');
+    const initial = lastResponse(setResponse);
+    fireEvent.change(container.querySelector('input[type=file]') as HTMLInputElement, {
+      target: {files: []}
+    });
+    fireEvent.drop(getByText('Drop / Select'), {dataTransfer: {files: []}});
+    expect(lastResponse(setResponse)).toEqual(initial);
+    expect(lastResponse(setResponse).dataset.metadata.imageUrl).toBe(
+      'https://example.com/overlay.png'
+    );
+  });
+});
+
+describe('WMS service naming', () => {
+  it('uses the service name when capabilities have no title and clears metadata after URL removal', async () => {
+    const capabilities = {name: 'Fallback service'} as Awaited<
+      ReturnType<typeof getWMSCapabilities>
+    >;
+    jest.mocked(getWMSCapabilities).mockResolvedValue(capabilities);
+    jest
+      .mocked(wmsCapabilitiesToDatasetMetadata)
+      .mockReturnValue({layers: [{name: 'water'}], version: '1.3.0'} as ReturnType<
+        typeof wmsCapabilitiesToDatasetMetadata
+      >);
+    const setResponse = jest.fn();
+    const {getByLabelText} = renderWithTheme(<TilesetWMSForm setResponse={setResponse} />);
+    change(getByLabelText('WMS URL'), 'https://example.com/wms');
+    await waitFor(() => expect(lastResponse(setResponse).dataset?.name).toBe('Fallback service'));
+    expect(lastResponse(setResponse).metadata).toBe(capabilities);
+    change(getByLabelText('WMS URL'), '');
+    expect(lastResponse(setResponse)).toMatchObject({
+      dataset: null,
+      metadata: null,
+      loading: false
+    });
+    expect(getWMSCapabilities).toHaveBeenCalledTimes(1);
+  });
+});
