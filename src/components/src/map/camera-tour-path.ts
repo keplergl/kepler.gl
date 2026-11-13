@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {PathLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
+import type {Layer} from '@deck.gl/core';
 import type {ScatterplotLayerProps} from '@deck.gl/layers';
 import type {CameraTour} from '@kepler.gl/types';
 import {normalizeCameraTour} from '@kepler.gl/utils';
@@ -23,7 +24,7 @@ function createPathData(tour: CameraTour) {
 export function getCameraTourPathLayers(
   tour?: CameraTour | null,
   dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onClick'>
-) {
+): Layer[] {
   if (!tour) return [];
   if (!cache.has(tour)) cache.set(tour, createPathData(tour));
   const cached = cache.get(tour);

@@ -3,6 +3,7 @@
 
 import {HeatmapLayer as DeckGLHeatmapLayer} from '@deck.gl/aggregation-layers';
 import {
+  DefaultProps,
   Layer,
   WebMercatorViewport,
   project32,
@@ -100,7 +101,7 @@ function packVertices3(points: number[][]): Float32Array {
 }
 
 export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
-  static defaultProps = {
+  static defaultProps: DefaultProps = {
     ...DeckGLHeatmapLayer.defaultProps,
     // kepler.gl extensions to support globe mode
     globeMode: false,

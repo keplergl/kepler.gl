@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {HexagonLayer, HexagonLayerPickingInfo} from '@deck.gl/aggregation-layers';
-import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
+import {DefaultProps, GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
 import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
 import {getHexbinCentroid} from '../layer-utils/aggregation-count-labels';
 import {
@@ -41,7 +41,7 @@ interface HexPickingObject {
  */
 // @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
-  static defaultProps = {
+  static defaultProps: DefaultProps = {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false,
     // Supplied by kepler's AggregationLayer when a point-count label is on.

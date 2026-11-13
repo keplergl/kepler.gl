@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {CompositeLayer, Color, Layer, UpdateParameters, AccessorFunction} from '@deck.gl/core';
+import {
+  CompositeLayer,
+  Color,
+  Layer,
+  UpdateParameters,
+  AccessorFunction,
+  DefaultProps
+} from '@deck.gl/core';
 import {GeoJsonLayer, TextLayer} from '@deck.gl/layers';
 
 import type {Globe} from '@kepler.gl/constants';
@@ -30,7 +37,7 @@ type MVTLabelLayerProps = {
 
 export class MVTLabelLayer extends CompositeLayer<MVTLabelLayerProps> {
   static layerName = 'MVTLabelLayer';
-  static defaultProps = {
+  static defaultProps: DefaultProps = {
     ...GeoJsonLayer.defaultProps,
     billboard: true,
     labelSizeUnits: 'pixels',

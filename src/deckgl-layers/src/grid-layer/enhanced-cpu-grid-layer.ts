@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {GridLayer, GridLayerPickingInfo} from '@deck.gl/aggregation-layers';
-import {GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
+import {DefaultProps, GetPickingInfoParams, Layer, PickingInfo, Viewport} from '@deck.gl/core';
 import {enrichedAggregationUpdate, enrichedRenderLayers} from '../layer-utils/aggregation-utils';
 import {
   makeGlobeCellLayerClass,
@@ -35,7 +35,7 @@ interface GridPickingObject {
  */
 // @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedGridLayer extends GridLayer<any> {
-  static defaultProps = {
+  static defaultProps: DefaultProps = {
     ...GridLayer.defaultProps,
     gpuAggregation: false,
     // Supplied by kepler's AggregationLayer when a point-count label is on.
