@@ -629,7 +629,7 @@ test('#FlowLayer -> picking colors reach every flow renderer and location circle
                 flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
                 'decoded picking indexes identify the current flow endpoints and magnitudes'
               );
-              t.equal(sublayer.props.parameters.depthTest, globe, 'preserves globe depth handling');
+              t.equal(sublayer.props.parameters.depthCompare, globe ? 'less-equal' : 'always', 'preserves globe depth handling');
             } else {
               const pickedLocations = await Promise.all(
                 indexes.map(index => composite.props.dataProvider.getLocationByIndex(index))

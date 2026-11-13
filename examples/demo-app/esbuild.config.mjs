@@ -191,7 +191,6 @@ const config = {
     'process.env.NODE_ENV': NODE_ENV
   },
   plugins: [
-    resolveWorkspaceVisgl,
     dotenvRun({
       verbose: true,
       environment: NODE_ENV,
@@ -253,27 +252,6 @@ const config = {
       }
     }
   ]
-};
-
-// Force @luma.gl/* and @deck.gl/* to the root monorepo node_modules.
-// The demo-app may install newer patch versions, but kepler.gl was built
-// and tested against the root versions (luma.gl 9.3.2 / deck.gl 9.3.1).
-// NOT added to config.plugins directly — it is injected conditionally so
-// that --env.deck / --env.deck_src modes (which alias deck.gl to a local
-// source tree) are not overridden.
-const dedupeWebglPlugin = {
-  name: 'dedupe-webgl',
-  setup(build) {
-    build.onResolve({filter: /^(@luma\.gl\/|@deck\.gl\/)/}, async args => {
-      if (args.pluginData?.deduped) return;
-      const result = await build.resolve(args.path, {
-        resolveDir: NODE_MODULES_DIR,
-        kind: args.kind,
-        pluginData: {deduped: true}
-      });
-      return result;
-    });
-  }
 };
 
 function addAliases(externals, args) {
@@ -417,7 +395,7 @@ function openURL(url) {
         // Optionally generate a bundle analysis
         plugins: [
           ...config.plugins,
-          dedupeWebglPlugin,
+          resolveWorkspaceVisgl,
           {
             name: 'bundle-analyzer',
             setup(build) {
@@ -462,7 +440,7 @@ function openURL(url) {
         ...config,
         plugins: [
           ...config.plugins,
-          ...(useDeckOverride ? [] : [dedupeWebglPlugin])
+          ...(useDeckOverride ? [] : [resolveWorkspaceVisgl])
         ],
         minify: false,
         sourcemap: true,

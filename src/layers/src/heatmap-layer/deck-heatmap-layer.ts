@@ -532,7 +532,7 @@ export default class KeplerHeatmapLayer extends DeckGLHeatmapLayer {
         // texture because the new visible bounds are contained in the old ones).
         this._densityViewport = null;
         this._densityViewportKey = null;
-        (this.state as any).worldBounds = null;
+        this.setState({worldBounds: undefined, isWeightMapDirty: true});
       }
     }
 

@@ -322,8 +322,8 @@ test('#ClusterLayer -> renderLayer', t => {
         t.equal(labelLayer.props.getTextAnchor, 'middle', 'count is centered on the bubble');
         t.equal(labelLayer.props.getAlignmentBaseline, 'center', 'count is centered on the bubble');
         t.equal(
-          labelLayer.props.parameters.depthTest,
-          false,
+          labelLayer.props.parameters.depthCompare,
+          'always',
           'labels draw on top of geometry, like geojson text'
         );
         t.deepEqual(
