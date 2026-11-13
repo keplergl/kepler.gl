@@ -78,7 +78,7 @@ const resolveWorkspaceVisgl = {
   name: 'resolve-workspace-visgl',
   setup(build) {
     build.onResolve(
-      {filter: /^(?:@(?:deck|luma|math|loaders)\.gl\/|@deck\.gl-community\/|probe\.gl(?:\/|$))/},
+      {filter: /^(?:@(?:deck|luma|math)\.gl\/|@deck\.gl-community\/|probe\.gl(?:\/|$))/},
       args => {
         if (args.pluginData?.resolvingWorkspaceVisgl) return;
         return build.resolve(args.path, {

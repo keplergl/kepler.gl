@@ -6,7 +6,7 @@ import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/tables/csv';
 import {GeoArrowLoader} from '@loaders.gl/tables/arrow';
-import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/tables/json';
+import {GeoJSONLoader} from '@loaders.gl/tables/json';
 import {ParquetLoader} from '@loaders.gl/tables/parquet';
 
 import {
