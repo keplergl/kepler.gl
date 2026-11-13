@@ -371,3 +371,174 @@ describe('time chart bin selection', () => {
     expect(store.getState().visState.filters).toHaveLength(0);
   });
 });
+
+// Keep selectors as small controllable boundaries while exercising real chart computation,
+// dataset changes and panel callbacks. Their own dropdown behavior is tested separately.
+const TestFieldSelector = ({fields, value, onSelect}) => (
+  <select
+    aria-label="Chart field"
+    value={value || ''}
+    onChange={event => onSelect(fields.find(field => field.name === event.target.value) || null)}
+  >
+    <option value="">No field</option>
+    {fields.map(field => (
+      <option key={field.name} value={field.name}>
+        {field.name}
+      </option>
+    ))}
+  </select>
+);
+const TestSourceSelector = ({datasets, dataId, onSelect}) => (
+  <select
+    aria-label="Chart dataset"
+    value={dataId || ''}
+    onChange={event => onSelect(event.target.value)}
+  >
+    <option value="">No dataset</option>
+    {Object.keys(datasets).map(id => (
+      <option key={id} value={id}>
+        {id}
+      </option>
+    ))}
+  </select>
+);
+const TestColorSelector = ({colorUI, setColorUI}) => (
+  <>
+    <button
+      onClick={() => setColorUI({colorRangeConfig: {reversed: !colorUI.colorRangeConfig.reversed}})}
+    >
+      Reverse palette
+    </button>
+    <button onClick={() => setColorUI({colorRangeConfig: {steps: 3}})}>Use three colors</button>
+    <button onClick={() => setColorUI({showDropdown: !colorUI.showDropdown})}>Open palette</button>
+  </>
+);
+const EditableChartPanel = ChartPanelContentFactory(
+  TestFieldSelector as any,
+  TestSourceSelector as any,
+  TestColorSelector as any,
+  EmptyControl as any
+);
+
+function renderEditable(chartConfig, datasets = {d1: makeDataset()}) {
+  const updateChart = jest.fn();
+  const removeChart = jest.fn();
+  return {
+    updateChart,
+    removeChart,
+    ...renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <EditableChartPanel
+          charts={[{...chartConfig, display: {isConfigActive: true}}]}
+          datasets={datasets}
+          layers={[]}
+          visStateActions={{updateChart, removeChart} as any}
+        />
+      </IntlProvider>
+    )
+  };
+}
+
+describe('chart editing contracts', () => {
+  test('renames/removes charts and toggles map filtering without replacing other settings', () => {
+    const chart = createBigNumberChart({
+      id: 'editable',
+      dataId: 'd1',
+      title: 'Rows',
+      applyFilters: true,
+      chartDisplay: {showCaption: true}
+    });
+    const {getByRole, getByLabelText, container, updateChart, removeChart} = renderEditable(chart);
+    fireEvent.change(getByRole('textbox'), {target: {value: 'Filtered rows'}});
+    expect(updateChart).toHaveBeenLastCalledWith('editable', {title: 'Filtered rows'});
+    fireEvent.click(container.querySelector('#editable-apply-filters') as HTMLInputElement);
+    expect(updateChart).toHaveBeenLastCalledWith('editable', {applyFilters: false});
+    fireEvent.click(getByLabelText('Remove chart'));
+    expect(removeChart).toHaveBeenCalledWith('editable');
+  });
+
+  test('changing a big-number field preserves aggregation and clearing removes the field', () => {
+    const chart = createBigNumberChart({
+      id: 'editable',
+      dataId: 'd1',
+      axis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum'}
+    });
+    const {getByLabelText, updateChart} = renderEditable(chart);
+    fireEvent.change(getByLabelText('Chart field'), {target: {value: 'group'}});
+    expect(updateChart).toHaveBeenLastCalledWith('editable', {
+      axis: {field: {name: 'group', type: 'string'}, aggregation: 'sum', title: 'group'}
+    });
+    fireEvent.change(getByLabelText('Chart field'), {target: {value: ''}});
+    expect(updateChart).toHaveBeenLastCalledWith('editable', {
+      axis: {field: null, aggregation: 'sum', title: null}
+    });
+  });
+
+  test.each([false, true])(
+    'changing the bin axis synchronizes palette length with categories (horizontal=%s)',
+    horizontal => {
+      const chart = createBarChart({id: 'editable', dataId: 'd1'});
+      const {getAllByLabelText, updateChart} = renderEditable({
+        ...chart,
+        type: horizontal ? ChartType.horizontalBar : ChartType.barChart
+      });
+      fireEvent.change(getAllByLabelText('Chart field')[horizontal ? 1 : 0], {
+        target: {value: 'group'}
+      });
+      const update = updateChart.mock.calls[0][1];
+      expect(update[horizontal ? 'yAxis' : 'xAxis']).toEqual({
+        field: {name: 'group', type: 'string'},
+        aggregation: 'uniqueBin',
+        title: 'group'
+      });
+      expect(update.chartDisplay.colorRange.colors).toHaveLength(2);
+    }
+  );
+
+  test('palette editing updates custom colors but opening its UI does not rewrite chart config', () => {
+    const colorRange = {
+      name: 'Example',
+      category: 'Custom',
+      type: 'sequential',
+      colors: ['#112233', '#445566']
+    };
+    const chart = createBarChart({
+      id: 'editable',
+      dataId: 'd1',
+      chartDisplay: {colorRange, showLegend: true}
+    });
+    const {getByText, updateChart} = renderEditable(chart);
+    fireEvent.click(getByText('Open palette'));
+    expect(updateChart).not.toHaveBeenCalled();
+    fireEvent.click(getByText('Reverse palette'));
+    expect(updateChart).toHaveBeenLastCalledWith('editable', {
+      chartDisplay: expect.objectContaining({
+        showLegend: true,
+        colorRange: expect.objectContaining({colors: ['#445566', '#112233']})
+      })
+    });
+    fireEvent.click(getByText('Use three colors'));
+    expect(updateChart.mock.calls[1][1].chartDisplay.colorRange.colors).toHaveLength(3);
+  });
+
+  test('dataset switching removes incompatible field references', () => {
+    const chart = createBigNumberChart({
+      id: 'editable',
+      dataId: 'd1',
+      axis: {field: {name: 'value', type: 'integer'}, aggregation: 'sum'}
+    });
+    const other = new KeplerTable({info: {id: 'd2'}, color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'other', type: 'string'}] as any,
+      rows: [['x']]
+    });
+    const {getByLabelText, updateChart} = renderEditable(chart, {
+      d1: makeDataset(),
+      d2: other
+    } as any);
+    fireEvent.change(getByLabelText('Chart dataset'), {target: {value: 'd2'}});
+    expect(updateChart).toHaveBeenCalledWith(
+      'editable',
+      expect.objectContaining({dataId: 'd2', axis: expect.objectContaining({field: null})})
+    );
+  });
+});
