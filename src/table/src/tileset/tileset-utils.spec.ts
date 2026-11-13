@@ -16,7 +16,7 @@ describe('getMVTMetadata', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     globalThis.fetch = fetchMock;
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
