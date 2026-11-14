@@ -81,6 +81,14 @@ export function getJenksDomain(
   return naturalBreaks(values, k);
 }
 
+// Preserve lexical ordering for strings and mixed domains, but do not stringify
+// numeric categories before assigning sequential palette positions.
+function sortOrdinalValues<T>(values: T[]): T[] {
+  return values.every(value => typeof value === 'number' && !Number.isNaN(value))
+    ? values.sort((a, b) => Number(a) - Number(b))
+    : values.sort();
+}
+
 /**
  * return ordinal domain for a data container
  */
@@ -90,7 +98,7 @@ export function getOrdinalDomain(
 ): string[] {
   const values = dataContainer.mapIndex(valueAccessor);
 
-  return unique(values).filter(notNullorUndefined).sort();
+  return sortOrdinalValues(unique(values).filter(notNullorUndefined));
 }
 
 /**
@@ -403,7 +411,7 @@ export function getCategoricalColorMap(
   colors: string[],
   domain: (string | number | string[] | number[] | null)[]
 ): any {
-  const uniqueValues = unique(domain).sort();
+  const uniqueValues = sortOrdinalValues(unique(domain));
   const colorMap = colors.map(color => [null, color]);
 
   if (colors.length === 0 || uniqueValues.length === 0) {

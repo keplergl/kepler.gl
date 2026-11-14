@@ -20,6 +20,7 @@ import {
   getHistogramDomain,
   getQuantLegends,
   getCategoricalColorMap,
+  getCategoricalColorScale,
   addCategoricalValuesToColorMap,
   removeCategoricalValueFromColorMap,
   selectRestCategoricalColorMapByIndex
@@ -43,6 +44,31 @@ test('DataScaleUtils -> getOrdinalDomain', t => {
     [0, 'a', 'b'],
     'should get correct ordinal domain'
   );
+
+  for (const [values, expected] of [
+    [
+      [10, 2, 1, null, undefined, 2],
+      [1, 2, 10]
+    ],
+    [
+      [-2, -10, 0, 1.5, 1.05],
+      [-10, -2, 0, 1.05, 1.5]
+    ],
+    [
+      ['2', '10', '1'],
+      ['1', '10', '2']
+    ],
+    [
+      [2, '10', 1],
+      [1, '10', 2]
+    ]
+  ]) {
+    t.deepEqual(
+      getOrdinalDomain(createDataContainer(values.map(value => [value])), valueAccessor),
+      expected,
+      'sorts numeric domains numerically without coercing string or mixed categories'
+    );
+  }
 
   t.end();
 });
@@ -402,7 +428,9 @@ test('DataScaleUtils -> getQuantLegends preserves string and infinite bounds', t
         const value = Number(boundary);
         // Preserve the shared formatter's handling of SI prefixes on infinite bounds.
         const label =
-          labelFormat && scaleType !== SCALE_TYPES.custom ? labelFormat(value) : formatNumber(value);
+          labelFormat && scaleType !== SCALE_TYPES.custom
+            ? labelFormat(value)
+            : formatNumber(value);
         t.deepEqual(
           getQuantLegends(scale, labelFormat).map(({label, inputs}) => ({label, inputs})),
           [
@@ -658,25 +686,25 @@ test('DataScaleUtils -> getCategoricalColorMap -> sorting behavior', t => {
     'should sort strings alphabetically'
   );
 
-  // Test numeric sorting (JavaScript default sort converts to strings)
+  // Numeric categories follow numeric palette order
   t.deepEqual(
     getCategoricalColorMap(['#ff0000', '#00ff00', '#0000ff'], [10, 2, 1]),
     [
       [1, '#ff0000'],
-      [10, '#00ff00'],
-      [2, '#0000ff']
+      [2, '#00ff00'],
+      [10, '#0000ff']
     ],
-    'should sort numbers lexicographically (as strings)'
+    'should sort numbers numerically'
   );
 
-  // Test lexicographic sorting with multi-digit numbers
+  // Overflow categories retain numeric ordering
   t.deepEqual(
     getCategoricalColorMap(['#ff0000', '#00ff00'], [100, 20, 3]),
     [
-      [100, '#ff0000'],
-      [[20, 3], '#00ff00']
+      [3, '#ff0000'],
+      [[20, 100], '#00ff00']
     ],
-    'should sort multi-digit numbers lexicographically: 100 comes before 20'
+    'should assign the lowest numeric category first and group the rest in numeric order'
   );
 
   // Test mixed string-number sorting (numbers come first when converted to strings)
@@ -700,6 +728,44 @@ test('DataScaleUtils -> getCategoricalColorMap -> sorting behavior', t => {
     'should be case sensitive in sorting'
   );
 
+  t.end();
+});
+
+test('DataScaleUtils -> numeric categorical colors preserve explicit assignments', t => {
+  const colors = ['#ff0000', '#00ff00', '#0000ff'];
+  const domain = [10, 2, 1];
+  const automaticScale = getCategoricalColorScale(domain, {colors}, false);
+  t.deepEqual([1, 2, 10].map(automaticScale), colors, 'automatic palette follows numeric order');
+
+  const reversedColors = [...colors].reverse();
+  const reversedScale = getCategoricalColorScale(domain, {colors: reversedColors}, false);
+  t.deepEqual(
+    [1, 2, 10].map(reversedScale),
+    reversedColors,
+    'preserves reversed palette direction'
+  );
+
+  const colorMap = [
+    [10, colors[0]],
+    [1, colors[1]],
+    [2, colors[2]]
+  ];
+  const savedScale = getCategoricalColorScale(domain, {colors, colorMap}, false);
+  t.deepEqual(
+    [10, 1, 2].map(savedScale),
+    colors,
+    'saved category-to-color assignments are preserved'
+  );
+  t.deepEqual(domain, [10, 2, 1], 'does not mutate the source domain');
+  t.deepEqual(
+    colorMap,
+    [
+      [10, colors[0]],
+      [1, colors[1]],
+      [2, colors[2]]
+    ],
+    'does not mutate saved assignments'
+  );
   t.end();
 });
 
