@@ -12,6 +12,7 @@ import {
   exportFileSuccess,
   exportFileError,
   loadCloudMap,
+  loadCloudMapError,
   loadCloudMapSuccess,
   postSaveLoadSuccess,
   resetProviderStatus
@@ -583,6 +584,56 @@ test('#providerStateReducer -> missing and unsupported formats use CSV fallback'
         t.deepEqual(dataset.data.rows, [[12]], 'fallback parses numeric CSV values');
       }
     }
+  } finally {
+    initApplicationConfig({table});
+    warn.restore();
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#providerStateReducer -> rejected async processors dispatch load failure and settle loading', async t => {
+  drainTasksForTesting();
+  const table = getApplicationConfig().table;
+  const warn = sinon.stub(Console, 'warn');
+  const error = new Error('invalid cloud dataset');
+  initApplicationConfig({
+    table: {
+      getFileProcessor: () => ({
+        processor: async () => {
+          throw error;
+        }
+      })
+    }
+  });
+  try {
+    const provider = {name: 'cloud'};
+    const state = {...INITIAL_PROVIDER_STATE, isProviderLoading: true, isCloudMapLoading: true};
+    const parsing = reducer(
+      state,
+      loadCloudMapSuccess({
+        provider,
+        response: {format: 'custom', map: {datasets: [{data: 'bad'}], config: {}}},
+        loadParams: {id: 'saved'}
+      })
+    );
+    const [parse] = drainTasksForTesting();
+    const failure = await runProviderTask(parse).catch(action => action);
+    t.equal(
+      failure.type,
+      loadCloudMapError({error, provider}).type,
+      'task returns a Redux action, not provider state'
+    );
+    t.equal(failure.payload.error, error, 'preserves parsing failure');
+    const failed = reducer(parsing, failure);
+    t.equal(failed.isCloudMapLoading, false, 'map loading settles');
+    t.equal(failed.isProviderLoading, false, 'provider loading settles');
+    const [notification] = drainTasksForTesting();
+    t.equal(
+      succeedTaskInTest(notification).payload.message,
+      error.message,
+      'shows the parsing error'
+    );
   } finally {
     initApplicationConfig({table});
     warn.restore();

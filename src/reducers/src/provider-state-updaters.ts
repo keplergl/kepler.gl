@@ -381,10 +381,7 @@ export const loadCloudMapSuccessUpdater = (
     (datasetsPayload: AddDataToMapPayload) => {
       return loadCloudMapSuccess2({...action.payload, datasetsPayload});
     },
-    error =>
-      exportFileErrorUpdater(state, {
-        payload: {error, provider, onError}
-      })
+    error => loadCloudMapError({error, provider, onError})
   );
 
   return withTask(state, parseLoadMapResponseTask);
