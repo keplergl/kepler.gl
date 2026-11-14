@@ -1070,7 +1070,7 @@ export function getNumericFieldDomain(
 
   const mappedValue = dataContainer.mapIndex(valueAccessor);
 
-  if (dataContainer.numRows() > 1) {
+  if (dataContainer.numRows() > 0) {
     domain = ScaleUtils.getLinearDomain(mappedValue);
     const diff = domain[1] - domain[0];
 

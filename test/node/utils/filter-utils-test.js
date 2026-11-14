@@ -17,6 +17,8 @@ import {
   getPolygonFilterFunctor,
   diffFilters,
   getTimestampFieldDomain,
+  getNumericFieldDomain,
+  getFilterProps,
   scaleSourceDomainToDestination,
   mergeFilterWithTimeline,
   createDataContainer,
@@ -1496,5 +1498,39 @@ test('filterUtils -> restoring tile filters preserves categories absent from met
       }
     }
   }
+  t.end();
+});
+
+test('filterUtils -> numeric filters keep the only row at the full domain', t => {
+  [42, -42, 0, 0.25, -0.25].forEach(value => {
+    const dataContainer = createDataContainer([[value]]);
+    const valueAccessor = d => dataContainer.valueAt(d.index, 0);
+    const field = {type: ALL_FIELD_TYPES.real, valueAccessor};
+    const fieldDomain = getNumericFieldDomain(dataContainer, valueAccessor);
+    const filter = {...getFilterProps(field, fieldDomain), enabled: true};
+    const predicate = getFilterFunction(field, 'single', filter, [], dataContainer);
+    const repeated = createDataContainer([[value], [value]]);
+
+    t.equal(predicate({index: 0}), true, `full-domain filter keeps the single value ${value}`);
+    t.deepEqual(
+      fieldDomain,
+      getNumericFieldDomain(repeated, d => repeated.valueAt(d.index, 0)),
+      `single value ${value} uses the same domain as repeated values`
+    );
+    t.ok(
+      fieldDomain.domain[1] > fieldDomain.domain[0],
+      'constant domain is expanded for the slider'
+    );
+  });
+  t.end();
+});
+
+test('filterUtils -> numeric domains retain fallback for empty or missing data', t => {
+  [[], [[null]], [[undefined]], [[NaN]]].forEach(rows => {
+    const dataContainer = createDataContainer(rows);
+    const result = getNumericFieldDomain(dataContainer, d => dataContainer.valueAt(d.index, 0));
+    t.deepEqual(result.domain, [0, 1], 'missing numeric values retain the fallback domain');
+    t.ok(Number.isFinite(result.step) && result.step > 0, 'step remains finite and positive');
+  });
   t.end();
 });
