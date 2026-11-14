@@ -3,10 +3,11 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {getFieldsFromData, latLngToCell} from '@kepler.gl/common-utils';
-import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
+import {Binary, Int64, Table, TimestampMillisecond, Uint64, vectorFromArray} from 'apache-arrow';
+import {datasetToFeatureCollection, processArrowTable} from '@kepler.gl/processors';
 import {Response} from 'node-fetch';
 import {ProtoDataset} from '@kepler.gl/types';
-import {timeToUnixMilli} from '@kepler.gl/utils';
+import {timeToUnixMilli, validateInputData} from '@kepler.gl/utils';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -407,6 +408,70 @@ describe('dataset-ops engine', () => {
     expect(byRegion.west.geometry.coordinates).toHaveLength(2);
     expect(byRegion.east.geometry.type).toBe('Polygon');
   });
+
+  test.each([false, true])(
+    'joining timestamped WKB preserves semantic fields (Arrow: %s)',
+    useArrow => {
+      const when = '2024-01-01T00:00:00.000Z';
+      const [timestamp] = getFieldsFromData([{when}], ['when']);
+      const metadata = new Map([['ARROW:extension:name', 'geoarrow.wkb']]);
+      const bytes = new Uint8Array([
+        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 38, 64
+      ]);
+      const table = new Table({
+        key: vectorFromArray(['match']),
+        when: vectorFromArray([Date.UTC(2024, 0, 1)], new TimestampMillisecond()),
+        geometry: vectorFromArray([bytes], new Binary())
+      });
+      table.schema.metadata.set(
+        'geo',
+        JSON.stringify({
+          primary_column: 'geometry',
+          columns: {geometry: {encoding: 'WKB'}}
+        })
+      );
+      const data = useArrow
+        ? processArrowTable({shape: 'arrow-table', data: table})
+        : {
+            fields: [
+              {name: 'key', type: 'string', analyzerType: 'STRING'},
+              timestamp,
+              {name: 'geometry', type: 'geoarrow', analyzerType: 'GEOMETRY', metadata}
+            ],
+            rows: [['match', when, bytes]]
+          };
+      if (!data) throw new Error('Arrow data did not import');
+      const source = new KeplerTable({info: {id: 'geoparquet'}, color: [0, 0, 0]}).updateSchema(
+        data
+      );
+      const originalFields = source.fields.map(field => ({...field}));
+      const joined = joinDatasets(source, source, {
+        leftField: 'key',
+        rightField: 'key',
+        type: 'INNER'
+      });
+      for (const index of [1, 4]) {
+        expect(joined.data.fields[index].format).toBe(source.fields[1].format);
+      }
+      const validated = validateInputData(joined.data);
+      if (!validated) throw new Error('Joined data did not validate');
+      for (const index of [2, 5]) {
+        expect(validated.fields[index].type).toBe('geoarrow');
+        expect(validated.fields[index].metadata).toEqual(metadata);
+        expect(validated.rows[0][index]).toEqual(bytes);
+      }
+      expect(source.fields).toEqual(originalFields);
+      const imported = new KeplerTable({color: [0, 0, 0]}).updateSchema(validated);
+      expect(imported.fields[1].valueAccessor({index: 0})).toBe(Date.UTC(2024, 0, 1));
+      expect(imported.fields[4].valueAccessor({index: 0})).toBe(Date.UTC(2024, 0, 1));
+      expect(
+        datasetToFeatureCollection(imported.dataContainer, imported.fields).features[0].geometry
+      ).toEqual({
+        type: 'Point',
+        coordinates: [10, 11]
+      });
+    }
+  );
 
   test('joinDatasets supports LEFT, INNER, and FULL with null keys', () => {
     const left = makeTable({
