@@ -2144,6 +2144,7 @@ export function clearStagedLoadedFiles(): {type: typeof ActionTypes.CLEAR_STAGED
 }
 
 export type LoadFileStepSuccessAction = {
+  loadId?: number;
   fileName: string;
   fileCache: FileCacheItem[];
 };
@@ -2155,15 +2156,17 @@ export type LoadFileStepSuccessAction = {
  */
 export function loadFileStepSuccess({
   fileName,
-  fileCache
-}: {
-  fileName: string;
-  fileCache: FileCacheItem[];
-}): Merge<LoadFileStepSuccessAction, {type: typeof ActionTypes.LOAD_FILE_STEP_SUCCESS}> {
+  fileCache,
+  loadId
+}: LoadFileStepSuccessAction): Merge<
+  LoadFileStepSuccessAction,
+  {type: typeof ActionTypes.LOAD_FILE_STEP_SUCCESS}
+> {
   return {
     type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
     fileName,
-    fileCache
+    fileCache,
+    ...(loadId == null ? {} : {loadId})
   };
 }
 
@@ -2441,6 +2444,7 @@ type FileContent = {
 };
 export type NextFileBatchUpdaterAction = {
   payload: {
+    loadId?: number;
     /* eslint-disable no-undef */
     gen: AsyncGenerator<FileContent>;
     fileName: string;
@@ -2468,6 +2472,7 @@ export function nextFileBatch(
 
 export type ProcessFileContentUpdaterAction = {
   payload: {
+    loadId?: number;
     content: FileContent;
     fileCache: FileCacheItem[];
   };

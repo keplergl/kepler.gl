@@ -2364,6 +2364,34 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
   t.end();
 });
 
+test('#composerStateReducer -> live progressive snapshots preserve their load session', t => {
+  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+  const loading = {loadId: 77, fileCache: [], filesToLoad: [], onFinish: loadFilesSuccess};
+  const state = {...base, visState: {...base.visState, fileLoading: loading}};
+  const partial = {...loadFilesSuccess([]), loadId: 77, isPartial: true};
+  const next = combinedUpdaters.loadFilesSuccessUpdater(state, partial);
+  t.equal(next.visState.fileLoading, loading, 'a live snapshot leaves later batches valid');
+  const canceled = {...next, visState: {...next.visState, fileLoading: false}};
+  t.equal(
+    combinedUpdaters.loadFilesSuccessUpdater(canceled, partial),
+    canceled,
+    'a canceled snapshot cannot add data'
+  );
+  const replaced = {...next, visState: {...next.visState, fileLoading: {...loading, loadId: 78}}};
+  t.equal(
+    combinedUpdaters.loadFilesSuccessUpdater(replaced, partial),
+    replaced,
+    'a late snapshot cannot finish a newer load'
+  );
+  const finished = combinedUpdaters.loadFilesSuccessUpdater(next, {
+    ...loadFilesSuccess([]),
+    loadId: 77
+  });
+  t.equal(finished.visState.fileLoading, false, 'the final completion still finishes the load');
+  drainTasksForTesting();
+  t.end();
+});
+
 test('#composerStateReducer -> progressive Arrow confirmation queues the next snapshot', t => {
   const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
   const first = {

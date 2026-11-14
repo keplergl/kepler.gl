@@ -9356,6 +9356,112 @@ test('#visStateReducer -> LOAD_FILES deferAddToMap', t => {
   t.end();
 });
 
+test('#visStateReducer -> progressive batches retain their originating load', t => {
+  drainTasksForTesting();
+  const previous = getApplicationConfig().useArrowProgressiveLoading;
+  initApplicationConfig({useArrowProgressiveLoading: true});
+  try {
+    const state = reducer(
+      CloneDeep(InitialState).visState,
+      VisStateActions.loadFiles([{name: 'points.arrow'}])
+    );
+    drainTasksForTesting();
+    const loadId = state.fileLoading.loadId;
+    reducer(
+      state,
+      VisStateActions.nextFileBatch({
+        loadId,
+        fileName: 'points.arrow',
+        gen: {next: () => Promise.resolve({done: true})},
+        accumulated: {data: [{}]},
+        onFinish: () => ({type: 'TEST_DONE'})
+      })
+    );
+    const [partial, unwrap] = drainTasksForTesting();
+    const success = succeedTaskInTest(partial, []);
+    t.equal(success.loadId, loadId, 'partial results retain their source load');
+    t.equal(success.isPartial, true, 'partial results do not finish the load');
+    t.equal(
+      errorTaskInTest(partial, new Error('partial failed')).loadId,
+      loadId,
+      'partial processing errors retain their source load'
+    );
+    t.equal(
+      errorTaskInTest(unwrap, new Error('unwrap failed')).loadId,
+      loadId,
+      'iterator errors retain their source load'
+    );
+  } finally {
+    initApplicationConfig({useArrowProgressiveLoading: previous});
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#visStateReducer -> canceled parsers cannot modify a newer import', async t => {
+  for (const fileName of ['canceled.csv', 'fresh.csv']) {
+    drainTasksForTesting();
+    const initial = CloneDeep(InitialState).visState;
+    let parsing = reducer(
+      initial,
+      VisStateActions.loadFiles([{name: fileName}], VisStateActions.stageLoadedFiles, {
+        deferAddToMap: true
+      })
+    );
+    const [load] = drainTasksForTesting();
+    const batches = async function* (name = fileName) {
+      yield {fileName: name, progress: {percent: 1}, data: []};
+    };
+    const batchAction = succeedTaskInTest(load, batches());
+    parsing = reducer(parsing, batchAction);
+    const [firstBatch] = drainTasksForTesting();
+    const nextBatchAction = succeedTaskInTest(firstBatch, await firstBatch.payload);
+    parsing = reducer(parsing, nextBatchAction);
+    const [lastBatch] = drainTasksForTesting();
+    const processAction = succeedTaskInTest(lastBatch, await lastBatch.payload);
+    parsing = reducer(parsing, processAction);
+    const [process] = drainTasksForTesting();
+    const canceled = reducer(parsing, VisStateActions.clearStagedLoadedFiles());
+    const fresh = reducer(
+      canceled,
+      VisStateActions.loadFiles([{name: 'fresh.csv'}], VisStateActions.stageLoadedFiles, {
+        deferAddToMap: true
+      })
+    );
+    const [freshLoad] = drainTasksForTesting();
+    const staleActions = [
+      batchAction,
+      nextBatchAction,
+      processAction,
+      succeedTaskInTest(process, [{info: {label: fileName}}]),
+      errorTaskInTest(load, new Error('read failed')),
+      errorTaskInTest(firstBatch, new Error('batch failed')),
+      errorTaskInTest(process, new Error('parse failed'))
+    ];
+    for (const action of staleActions) {
+      t.equal(reducer(canceled, action), canceled, `${action.type} stays canceled`);
+      t.equal(reducer(fresh, action), fresh, `${action.type} cannot hijack ${fileName}`);
+      t.equal(drainTasksForTesting().length, 0, 'stale work schedules nothing');
+    }
+    let resumed = reducer(fresh, succeedTaskInTest(freshLoad, batches('fresh.csv')));
+    t.notEqual(resumed, fresh, 'the current import continues normally');
+    let [task] = drainTasksForTesting();
+    while (task.type === 'UNWRAP') {
+      resumed = reducer(resumed, succeedTaskInTest(task, await task.payload));
+      [task] = drainTasksForTesting();
+    }
+    const freshCache = [{info: {label: 'fresh.csv'}}];
+    resumed = reducer(resumed, succeedTaskInTest(task, freshCache));
+    const [pause] = drainTasksForTesting();
+    resumed = reducer(resumed, succeedTaskInTest(pause));
+    const [finish] = drainTasksForTesting();
+    const completion = succeedTaskInTest(finish);
+    t.equal(completion.result, freshCache, 'only the fresh import is staged');
+    t.equal(completion.loadId, fresh.fileLoading.loadId, 'completion belongs to the fresh load');
+  }
+  t.end();
+});
+
 test('#visStateReducer -> local dataset is not blocked by a remote download', t => {
   drainTasksForTesting();
   const local = {

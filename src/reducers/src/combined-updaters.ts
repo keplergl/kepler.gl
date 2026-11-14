@@ -64,6 +64,8 @@ export type KeplerGlState = {
 
 type ProgressiveLoadFilesSuccessAction = loadFilesSuccessUpdaterAction & {
   progressiveSteps?: FileCacheItem[][];
+  /** A live parser snapshot must not finish its originating load. */
+  isPartial?: boolean;
 };
 
 type ProgressiveLoadContinuation = ReturnType<typeof loadFilesSuccess> & {
@@ -276,15 +278,17 @@ export const loadFilesSuccessUpdater = (
         progressiveSteps: remainingSteps.slice(1)
       }
     : undefined;
-  const nextState = compose_([
-    pick_('visState')(
-      merge_({
-        fileLoading: false,
-        fileLoadingProgress: {},
-        stagedToAdd: null
-      })
-    )
-  ])(state);
+  const nextState = action.isPartial
+    ? state
+    : compose_([
+        pick_('visState')(
+          merge_({
+            fileLoading: false,
+            fileLoadingProgress: {},
+            stagedToAdd: null
+          })
+        )
+      ])(state);
   // make multiple add data to map calls
   const stateWithData = compose_(
     payloads.map((p, index) =>
