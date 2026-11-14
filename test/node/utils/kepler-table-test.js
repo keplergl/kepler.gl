@@ -1333,3 +1333,111 @@ test('KeplerTable -> refresh updates timestamp units without changing column nam
   );
   t.end();
 });
+
+test('KeplerTable -> snapshot updates discard obsolete sort indexes', async t => {
+  const table = new KeplerTable({info: {id: 'sorted-refresh'}, color: [0, 0, 0]});
+  const fields = [{name: 'value', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}];
+  await table.importData({data: {fields, rows: [[3], [2], [1]]}});
+  t.equal(table.sortOrder, undefined, 'initial import preserves unset sorting');
+  t.equal(table.sortColumn, undefined, 'initial import has no sort indicator');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  t.deepEqual(table.sortOrder, [2, 1, 0], 'starts with sorted row indexes');
+  await table.update({fields, rows: [[42]]});
+  t.equal(table.sortOrder, null, 'shrinking snapshot clears sort indexes');
+  t.equal(table.sortColumn, undefined, 'clears the stale sort indicator');
+  t.equal(
+    table.dataContainer.valueAt((table.sortOrder || table.allIndexes)[0], 0),
+    42,
+    'first displayed cell reads the new row'
+  );
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  await table.update({
+    fields: [...fields, {name: 'label', type: ALL_FIELD_TYPES.string}],
+    rows: [[7, 'new']]
+  });
+  t.equal(table.sortOrder, null, 'schema-changing snapshot also clears sorting');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  await table.update({fields: table.fields, rows: []});
+  t.equal(table.sortOrder, null, 'empty snapshot clears sorting');
+  t.deepEqual(table.allIndexes, [], 'empty snapshot has no displayed indexes');
+  t.end();
+});
+
+test('KeplerTable -> unit changes reapply unchanged CPU and GPU filters', async t => {
+  const firstTime = 1700000000000;
+  const lastTime = firstTime + 1000;
+  const field = {name: 'time', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'};
+
+  for (const gpu of [false, true]) {
+    const table = new KeplerTable({info: {id: 'filtered-units'}, color: [0, 0, 0]});
+    await table.importData({
+      data: {fields: [field], rows: [[firstTime / 1000], [lastTime / 1000]]}
+    });
+    const filters = [
+      {
+        ...table.getColumnFilterProps('time'),
+        id: 'time',
+        dataId: [table.id],
+        name: ['time'],
+        fieldIdx: [0],
+        value: [firstTime, firstTime],
+        enabled: true,
+        gpu,
+        gpuChannel: [0]
+      }
+    ];
+    table.filterTable(filters, []);
+    table.filterTableCPU(filters, []);
+    t.deepEqual(table.filteredIdxCPU, [0], 'initial export selects the first row');
+
+    for (const [format, values, expected] of [
+      ['X', [lastTime, firstTime], [1]],
+      ['x', [], []],
+      ['X', [firstTime, lastTime, firstTime], [0, 2]]
+    ]) {
+      await table.update({fields: [{...field, format}], rows: values.map(value => [value])});
+      table.getColumnFilterProps('time');
+      table.filterTable(filters, []);
+      table.filterTableCPU(filters, []);
+      t.deepEqual(table.filteredIdxCPU, expected, 'export recomputes the selected rows');
+      t.deepEqual(
+        table.filteredIndex,
+        gpu ? table.allIndexes : expected,
+        'CPU filtering recomputes the selected rows'
+      );
+      const getValue = table.gpuFilter.filterValueAccessor(table.dataContainer)();
+      const visible = table.filteredIndex.filter(index =>
+        getValue({index}).every((value, channel) => {
+          const [min, max] = table.gpuFilter.filterRange[channel];
+          return value >= min && value <= max;
+        })
+      );
+      t.deepEqual(visible, expected, 'render filtering selects the refreshed rows');
+    }
+  }
+  t.end();
+});
+
+test('KeplerTable -> row snapshots retain omitted type and format metadata', async t => {
+  const table = new KeplerTable({info: {id: 'partial-fields'}, color: [0, 0, 0]});
+  const field = {name: 'time', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'};
+  await table.importData({data: {fields: [field], rows: [[1700000000]]}});
+  const container = table.dataContainer;
+
+  for (const incoming of [
+    {name: 'time'},
+    {name: 'time', type: field.type},
+    {name: 'time', format: field.format}
+  ]) {
+    await table.update({fields: [incoming], rows: [[1700000001], [1700000002]]});
+    t.equal(table.dataContainer, container, 'omitted metadata does not reimport the snapshot');
+    t.equal(table.fields[0].type, field.type, 'retains the known field type');
+    t.equal(table.fields[0].format, field.format, 'retains the known timestamp units');
+    t.deepEqual(
+      table.getColumnFilterProps('time').domain,
+      [1700000001000, 1700000002000],
+      'refreshed values use the retained timestamp metadata'
+    );
+  }
+  t.end();
+});

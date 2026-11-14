@@ -279,6 +279,11 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
     this.filteredIndexByLayer = {};
+    this.sortColumn = undefined;
+    // Keep sorting unset on initial imports; only invalidate an existing sort state.
+    if (this.sortOrder !== undefined) {
+      this.sortOrder = null;
+    }
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
@@ -303,12 +308,19 @@ class KeplerTable<F extends Field = Field> {
         (isRowSnapshot &&
           data.fields.some(
             (field, index) =>
-              field.type !== this.fields[index].type ||
-              (field.format || '') !== (this.fields[index].format || '')
+              (field.type !== undefined && field.type !== this.fields[index].type) ||
+              (field.format !== undefined &&
+                (field.format || '') !== (this.fields[index].format || ''))
           )))
     ) {
-      await this.importData({data});
+      // Refresh reducers reapply filters synchronously, before importData's await
+      // settles. Drop snapshot caches before they can reuse stale row indexes.
+      this.filteredIdxCPU = undefined;
+      this.filterRecord = undefined;
+      this.filterRecordCPU = undefined;
+      this.changedFilters = undefined;
       this.dataRevision += 1;
+      await this.importData({data});
       return this;
     }
 
@@ -365,6 +377,8 @@ class KeplerTable<F extends Field = Field> {
     this.filterRecord = undefined;
     this.filterRecordCPU = undefined;
     this.changedFilters = undefined;
+    this.sortColumn = undefined;
+    this.sortOrder = null;
     this.dataRevision += 1;
 
     // Rebuild after row indexes and filter results are reset: CPU/GPU consumers

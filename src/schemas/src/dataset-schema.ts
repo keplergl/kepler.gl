@@ -158,7 +158,10 @@ function getValueForSaving(value: any, ancestors = new Set<object>()): any {
  * @param dataContainer A data container to flatten.
  * @returns Row based data.
  */
-const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => {
+const getAllDataForSaving = (
+  dataContainer: DataContainerInterface,
+  fields: KeplerTable['fields']
+): any[][] => {
   const allData = dataContainer.flattenData();
 
   if (dataContainer instanceof ArrowDataContainer) {
@@ -166,28 +169,41 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
 
     for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
       const column = dataContainer.getColumn(columnIndex);
-      const field = dataContainer.getField(columnIndex);
 
-      if (
-        arrow.DataType.isTimestamp(column.type) ||
-        arrow.DataType.isDate(column.type) ||
-        arrow.DataType.isTime(column.type)
-      ) {
+      if (arrow.DataType.isTime(column.type)) {
+        // Arrow Time values are raw units since midnight, unlike Timestamp getters
+        // which already return milliseconds. Time64 getters return BigInt.
+        const divisor = [0.001, 1, 1000, 1000000][column.type.unit];
+        allData.forEach(row => {
+          const value = row[columnIndex];
+          row[columnIndex] = value == null ? null : new Date(Number(value) / divisor).toISOString();
+        });
+      } else if (arrow.DataType.isTimestamp(column.type) || arrow.DataType.isDate(column.type)) {
         allData.forEach(row => {
           const value = row[columnIndex];
           row[columnIndex] = value == null ? null : new Date(value).toISOString();
-        });
-      } else if (field?.type === ALL_FIELD_TYPES.geoarrow) {
-        const formatter = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow];
-        allData.forEach(row => {
-          row[columnIndex] = formatter(row[columnIndex], field);
         });
       }
     }
   }
 
+  // Joins produce row containers, but their cells can still contain Arrow geometry.
+  const geometryFields = fields.filter(field => field.type === ALL_FIELD_TYPES.geoarrow);
+  const savedRows = geometryFields.length
+    ? allData.map(row => {
+        if (row === null) return row;
+        const savedRow = row.slice();
+        for (const field of geometryFields) {
+          savedRow[field.fieldIdx] = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow](
+            row[field.fieldIdx],
+            field
+          );
+        }
+        return savedRow;
+      })
+    : allData;
   // Row containers expose live rows: copy only values that need conversion.
-  return getValueForSaving(allData);
+  return getValueForSaving(savedRows);
 };
 
 /**
@@ -249,7 +265,7 @@ export class DatasetSchema extends Schema {
     const datasetFlattened = dataset.dataContainer
       ? {
           ...dataset,
-          allData: getAllDataForSaving(dataset.dataContainer),
+          allData: getAllDataForSaving(dataset.dataContainer, dataset.fields),
           fields: getFieldsForSaving(dataset.fields),
           // we use flattenData to save arrow tables,
           // but once flattened it's not an arrow file anymore.

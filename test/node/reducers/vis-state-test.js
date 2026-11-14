@@ -11050,7 +11050,7 @@ test('VisStateUpdater -> refreshDataset reapplies active filters to Arrow snapsh
 test('VisStateUpdater -> timestamp refresh updates point filtering and export', async t => {
   const firstTime = Date.UTC(2024, 1, 1);
   const lastTime = firstTime + 86400000;
-  const snapshot = (values, rowBacked) => {
+  const snapshot = (values, rowBacked, format) => {
     const source = new arrow.Table({
       time: arrow.vectorFromArray(
         values.map(value => new Date(value)),
@@ -11067,7 +11067,10 @@ test('VisStateUpdater -> timestamp refresh updates point filtering and export', 
     });
     const data = processArrowBatches(arrow.tableFromIPC(arrow.tableToIPC(source, 'file')).batches);
     return rowBacked
-      ? {fields: data.fields, rows: values.map(value => [value, 37.77, -122.42])}
+      ? {
+          fields: data.fields.map(field => (field.name === 'time' ? {...field, format} : field)),
+          rows: values.map(value => [format === 'x' ? value / 1000 : value, 37.77, -122.42])
+        }
       : data;
   };
 
@@ -11094,13 +11097,18 @@ test('VisStateUpdater -> timestamp refresh updates point filtering and export', 
       state = reducer(state, VisStateActions.setFilter(0, 'gpu', gpu));
       const selection = state.filters[0];
 
-      for (const values of [[lastTime, firstTime], [], [lastTime, firstTime]]) {
+      for (const [values, format] of [
+        [[lastTime, firstTime], undefined],
+        [[lastTime, firstTime], 'x'],
+        [[], 'X'],
+        [[lastTime, firstTime], 'X']
+      ]) {
         state = reducer(state, VisStateActions.refreshDataset(dataId));
         state = reducer(state, VisStateActions.refreshDatasetProgress(dataId, 50));
         const [task] = drainTasksForTesting();
         state = reducer(
           state,
-          succeedTaskInTest(task, {data: snapshot(values, rowBacked), notModified: false})
+          succeedTaskInTest(task, {data: snapshot(values, rowBacked, format), notModified: false})
         );
         const table = state.datasets[dataId];
         const expected = values.length ? [1] : [];

@@ -135,7 +135,8 @@ export function resultFieldType(technique: DatasetOpAggregation, sourceType?: st
   }
   if (
     technique === DATASET_OPS_AGGREGATIONS.count ||
-    technique === DATASET_OPS_AGGREGATIONS.countUnique
+    technique === DATASET_OPS_AGGREGATIONS.countUnique ||
+    (technique === DATASET_OPS_AGGREGATIONS.sum && sourceType === ALL_FIELD_TYPES.boolean)
   ) {
     return ALL_FIELD_TYPES.integer;
   }
