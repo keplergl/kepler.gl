@@ -8,7 +8,7 @@ import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {FILTER_TYPES} from '@kepler.gl/constants';
-import {Filter} from '@kepler.gl/types';
+import {ChartConfig, Filter} from '@kepler.gl/types';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
 import LayerJsonEditorFactory from '../side-panel/layer-panel/layer-json-editor';
@@ -19,6 +19,8 @@ import AnimationControlFactory, {
 } from './animation-control/animation-json-editor';
 import FilterJsonEditorFactory from '../side-panel/filter-panel/filter-json-editor';
 import EffectJsonEditorFactory from '../effects/effect-json-editor';
+import ChartJsonEditorFactory from '../map/charts/chart-json-editor';
+import JsonEditor from './json-editor';
 import {animationConfigToJson, jsonToMapState, mapStateToJson} from './json-editor-utils';
 
 // Keep serialization, the editor and its apply flow real; inject state/actions at
@@ -469,5 +471,256 @@ describe('layer JSON editor validation and dispatch', () => {
     );
     edit(config);
     expect(applyLayerConfig).toHaveBeenCalledWith(layer.id, config, undefined);
+  });
+});
+
+describe('chart JSON editor validation and dispatch', () => {
+  const ChartEditor = ChartJsonEditorFactory();
+  const chart: ChartConfig = {
+    id: 'chart',
+    type: 'bigNumber',
+    title: 'Count',
+    dataId: 'points',
+    applyFilters: true,
+    display: {},
+    chartDisplay: {}
+  };
+  function fixture() {
+    const dataset = new KeplerTable({info: {id: 'points'}, color: [0, 0, 0]}).updateSchema({
+      fields: [{name: 'value', type: 'integer'}] as any,
+      rows: [[1]]
+    });
+    return {...INITIAL_VIS_STATE, datasets: {points: dataset}};
+  }
+
+  test('applies a schema-serialized chart without losing its saved chart settings', () => {
+    const updateChart = jest.fn();
+    const onClose = jest.fn();
+    render(
+      <ChartEditor
+        chart={chart}
+        visState={fixture()}
+        updateChart={updateChart}
+        onClose={onClose}
+      />,
+      {wrapper: Wrapper}
+    );
+    const saved = displayedConfig();
+    edit({
+      ...saved,
+      title: 'Edited',
+      applyFilters: false,
+      id: 'not-the-current-chart',
+      display: {isConfigActive: true}
+    });
+    expect(updateChart).toHaveBeenCalledWith(
+      chart.id,
+      expect.objectContaining({
+        id: chart.id,
+        title: 'Edited',
+        applyFilters: false,
+        dataId: 'points',
+        chartDisplay: {},
+        display: {isConfigActive: true, isJsonEditorActive: true}
+      })
+    );
+    fireEvent.click(screen.getByTestId('json-editor-close'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['state', 'action'])('does not report success without the chart %s', missing => {
+    const updateChart = jest.fn();
+    render(
+      <ChartEditor
+        chart={chart}
+        visState={missing === 'state' ? undefined : fixture()}
+        updateChart={missing === 'action' ? undefined : updateChart}
+      />,
+      {wrapper: Wrapper}
+    );
+    edit({...chart, title: 'Edited'});
+    expect(updateChart).not.toHaveBeenCalled();
+    expect(screen.getByText("Couldn't apply config")).toBeTruthy();
+  });
+
+  test('rejects a removed layer and recovers when that layer becomes available', () => {
+    const updateChart = jest.fn();
+    const visState = fixture();
+    const view = render(
+      <ChartEditor chart={chart} visState={visState} updateChart={updateChart} />,
+      {wrapper: Wrapper}
+    );
+    const layerChart = {
+      ...chart,
+      type: 'layerChart',
+      layerId: 'point-layer',
+      layerChartType: 'bar'
+    };
+    edit(layerChart);
+    expect(updateChart).not.toHaveBeenCalled();
+    expect(screen.getByText(/Layer "point-layer" not found/)).toBeTruthy();
+    const layer = new KeplerGlLayers.PointLayer({id: 'point-layer', dataId: 'points'});
+    view.rerender(
+      <ChartEditor
+        chart={chart}
+        visState={{...visState, layers: [layer]}}
+        updateChart={updateChart}
+      />
+    );
+    edit(layerChart);
+    expect(updateChart).toHaveBeenCalledWith(
+      chart.id,
+      expect.objectContaining({type: 'layerChart', layerId: layer.id})
+    );
+  });
+
+  test('does not dispatch a chart whose selected dataset has been removed', () => {
+    const updateChart = jest.fn();
+    render(
+      <ChartEditor
+        chart={chart}
+        visState={{...fixture(), datasets: {}}}
+        updateChart={updateChart}
+      />,
+      {wrapper: Wrapper}
+    );
+    edit({...chart, title: 'Edited'});
+    expect(updateChart).not.toHaveBeenCalled();
+    expect(screen.getByText(/Dataset "points" not found/)).toBeTruthy();
+  });
+
+  test('uses the current chart identity and action after a chart replacement', () => {
+    const oldAction = jest.fn();
+    const nextAction = jest.fn();
+    const visState = fixture();
+    const view = render(<ChartEditor chart={chart} visState={visState} updateChart={oldAction} />, {
+      wrapper: Wrapper
+    });
+    view.rerender(
+      <ChartEditor
+        chart={{...chart, id: 'replacement'}}
+        visState={visState}
+        updateChart={nextAction}
+      />
+    );
+    edit({...chart, title: 'Edited'});
+    expect(oldAction).not.toHaveBeenCalled();
+    expect(nextAction).toHaveBeenCalledWith(
+      'replacement',
+      expect.objectContaining({id: 'replacement'})
+    );
+  });
+
+  test('preserves dirty chart edits across debounced changes and resets to the latest saved chart', () => {
+    const visState = fixture();
+    const view = render(<ChartEditor chart={chart} visState={visState} />, {wrapper: Wrapper});
+    fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"title":"draft"}'}});
+    view.rerender(<ChartEditor chart={{...chart, title: 'External update'}} visState={visState} />);
+    act(() => jest.advanceTimersByTime(300));
+    expect(displayedConfig()).toEqual({title: 'draft'});
+    fireEvent.click(screen.getByTestId('json-editor-reset'));
+    expect(displayedConfig().title).toBe('External update');
+  });
+
+  test('reports failed chart application and permits a subsequent corrected apply', () => {
+    const updateChart = jest.fn().mockImplementationOnce(() => {
+      throw new Error('chart rejected');
+    });
+    render(<ChartEditor chart={chart} visState={fixture()} updateChart={updateChart} />, {
+      wrapper: Wrapper
+    });
+    edit({...chart, title: 'First attempt'});
+    expect(screen.getByText(/chart rejected/)).toBeTruthy();
+    edit({...chart, title: 'Second attempt'});
+    expect(updateChart).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Config applied')).toBeTruthy();
+  });
+});
+
+describe('shared JSON editing commands', () => {
+  test('formats valid object JSON but prevents formatting or applying invalid syntax', () => {
+    const onApply = jest.fn();
+    render(<JsonEditor jsonText="{}" onApply={onApply} />, {wrapper: Wrapper});
+    fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":0,"visible":false}'}});
+    fireEvent.click(screen.getByTestId('json-editor-format'));
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe(
+      JSON.stringify({zoom: 0, visible: false}, null, 2)
+    );
+    fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":'}});
+    expect((screen.getByTestId('json-editor-format') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId('json-editor-apply') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByTestId('json-editor-apply'));
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  test.each(['ctrlKey', 'metaKey'])(
+    'saves valid edits with %s+S and prevents the browser save action',
+    modifier => {
+      const onApply = jest.fn().mockReturnValue({status: 'success'});
+      render(<JsonEditor jsonText="{}" onApply={onApply} />, {wrapper: Wrapper});
+      fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":4}'}});
+      const event = new KeyboardEvent('keydown', {
+        key: 's',
+        [modifier]: true,
+        bubbles: true,
+        cancelable: true
+      });
+      fireEvent(screen.getByRole('textbox'), event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(onApply).toHaveBeenCalledWith('{"zoom":4}');
+    }
+  );
+
+  test('copies the edited text rather than the last saved config', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    const previous = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {writeText}});
+    try {
+      render(<JsonEditor jsonText="{}" />, {wrapper: Wrapper});
+      fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":4}'}});
+      await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Copy JSON'})));
+      expect(writeText).toHaveBeenCalledWith('{"zoom":4}');
+    } finally {
+      if (previous) Object.defineProperty(navigator, 'clipboard', previous);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
+  });
+
+  test('a clipboard denial does not discard edits or prevent applying them', async () => {
+    const writeText = jest.fn().mockRejectedValue(new Error('clipboard denied'));
+    const previous = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {writeText}});
+    try {
+      const onApply = jest.fn().mockReturnValue({status: 'success'});
+      render(<JsonEditor jsonText="{}" onApply={onApply} />, {wrapper: Wrapper});
+      fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":4}'}});
+      await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Copy JSON'})));
+      fireEvent.click(screen.getByTestId('json-editor-apply'));
+      expect(onApply).toHaveBeenCalledWith('{"zoom":4}');
+    } finally {
+      if (previous) Object.defineProperty(navigator, 'clipboard', previous);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
+  });
+
+  test('read-only mode disables mutation commands and the save shortcut', () => {
+    const onApply = jest.fn();
+    render(<JsonEditor jsonText='{"zoom":4}' isReadOnly onApply={onApply} />, {wrapper: Wrapper});
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).readOnly).toBe(true);
+    expect(screen.queryByTestId('json-editor-apply')).toBeNull();
+    expect(screen.queryByTestId('json-editor-format')).toBeNull();
+    fireEvent.keyDown(screen.getByRole('textbox'), {key: 's', ctrlKey: true});
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  test('clears feedback after its timeout without dropping the applied text', () => {
+    const onApply = jest.fn().mockReturnValue({status: 'success', message: 'Saved successfully'});
+    render(<JsonEditor jsonText="{}" onApply={onApply} />, {wrapper: Wrapper});
+    fireEvent.change(screen.getByRole('textbox'), {target: {value: '{"zoom":4}'}});
+    fireEvent.click(screen.getByTestId('json-editor-apply'));
+    expect(screen.getByText('Saved successfully')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(5000));
+    expect(screen.queryByText('Saved successfully')).toBeNull();
+    expect(displayedConfig()).toEqual({zoom: 4});
   });
 });

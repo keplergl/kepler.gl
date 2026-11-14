@@ -105,7 +105,7 @@ const baseOp: JoinOp = {
   isConfigActive: true
 };
 
-function setup(spatial = false, overrides: Partial<JoinOp> = {}) {
+function setup(spatial = false, overrides: Partial<JoinOp> = {}, sources: Datasets = datasets) {
   const change = jest.fn();
   const run = jest.fn();
   const remove = jest.fn();
@@ -118,7 +118,7 @@ function setup(spatial = false, overrides: Partial<JoinOp> = {}) {
     return spatial ? (
       <SpatialPanel
         op={op}
-        datasets={datasets}
+        datasets={sources}
         setSpatialJoinConfig={update}
         runSpatialJoin={run}
         removeDatasetOp={remove}
@@ -126,7 +126,7 @@ function setup(spatial = false, overrides: Partial<JoinOp> = {}) {
     ) : (
       <JoinPanel
         op={op}
-        datasets={datasets}
+        datasets={sources}
         setJoinConfig={update}
         runJoin={run}
         removeDatasetOp={remove}
@@ -311,4 +311,126 @@ describe('Spatial join configuration', () => {
     fireEvent.click(all);
     expect(change).toHaveBeenLastCalledWith('join', {aggregations: {}});
   });
+});
+
+describe('Join panel incomplete and restored configuration', () => {
+  test.each([false, true])(
+    'waits for a right dataset instead of running stale config (spatial=%s)',
+    spatial => {
+      const {container, queryAllByLabelText, getAllByLabelText, change, run} = setup(spatial, {
+        rightDataId: null
+      });
+      expect(runButton(container).disabled).toBe(true);
+      fireEvent.click(runButton(container));
+      expect(run).not.toHaveBeenCalled();
+      expect(queryAllByLabelText('key')).toHaveLength(0);
+      fireEvent.change(getAllByLabelText('dataset')[1], {target: {value: 'right'}});
+      expect(change).toHaveBeenCalledWith('join', expect.objectContaining({rightDataId: 'right'}));
+      // Spatial joins infer a geometry, attribute joins require selecting a new key.
+      expect(runButton(container).disabled).toBe(!spatial);
+    }
+  );
+
+  test.each([false, true])(
+    'ignores empty/current target selections without discarding saved configuration (spatial=%s)',
+    spatial => {
+      const {getAllByLabelText, change, container} = setup(spatial, {leftColumns: ['id']});
+      const target = getAllByLabelText('dataset')[0];
+      fireEvent.change(target, {target: {value: 'left'}});
+      fireEvent.change(target, {target: {value: ''}});
+      expect(change).not.toHaveBeenCalled();
+      expect(runButton(container).disabled).toBe(false);
+      const [columns] = openColumns(container);
+      const boxes = within(columns).getAllByRole('checkbox') as HTMLInputElement[];
+      expect(boxes.filter(box => box.checked)).toHaveLength(1);
+    }
+  );
+
+  test('restores intentionally empty column lists and inserts individual columns in source order', () => {
+    const {container, change} = setup(false, {leftColumns: [], rightColumns: []});
+    const [left, right] = openColumns(container);
+    expect(
+      within(left)
+        .getAllByRole('checkbox')
+        .some(box => (box as HTMLInputElement).checked)
+    ).toBe(false);
+    expect(
+      within(right)
+        .getAllByRole('checkbox')
+        .some(box => (box as HTMLInputElement).checked)
+    ).toBe(false);
+    fireEvent.click(within(left).getAllByRole('checkbox')[2]);
+    fireEvent.click(within(left).getAllByRole('checkbox')[0]);
+    expect(change).toHaveBeenLastCalledWith('join', {leftColumns: ['shape', 'name']});
+    fireEvent.click(within(right).getAllByRole('checkbox')[1]);
+    expect(change).toHaveBeenLastCalledWith('join', {rightColumns: ['amount']});
+  });
+
+  test('spatial columns can be re-enabled without including the active geometry', () => {
+    const {container, change} = setup(true, {leftColumns: []});
+    const [left] = openColumns(container);
+    expect(left.textContent).not.toContain('shape');
+    const boxes = within(left).getAllByRole('checkbox');
+    fireEvent.click(boxes[1]);
+    fireEvent.click(boxes[0]);
+    expect(change).toHaveBeenLastCalledWith('join', {leftColumns: ['id', 'name']});
+    const selectAll = container.querySelector(
+      '.dataset-ops-collapsible__select-all'
+    ) as HTMLElement;
+    fireEvent.click(selectAll);
+    expect(change).toHaveBeenLastCalledWith('join', {leftColumns: []});
+    expect(
+      within(left)
+        .getAllByRole('checkbox')
+        .every(box => !(box as HTMLInputElement).checked)
+    ).toBe(true);
+  });
+
+  const nonSpatial = {
+    ...datasets,
+    plain: {
+      id: 'plain',
+      type: 'local',
+      fields: [field('value', 'integer'), field('name', 'string')]
+    }
+  } as unknown as Datasets;
+
+  test('switching the spatial target to non-spatial data clears the old geometry and prevents execution', () => {
+    const {getAllByLabelText, container, change, run} = setup(true, {}, nonSpatial);
+    fireEvent.change(getAllByLabelText('dataset')[0], {target: {value: 'plain'}});
+    expect(change).toHaveBeenLastCalledWith('join', {
+      leftDataId: 'plain',
+      leftGeo: null,
+      leftColumns: undefined
+    });
+    expect((getAllByLabelText('option')[0] as HTMLSelectElement).options).toHaveLength(1);
+    expect(runButton(container).disabled).toBe(true);
+    fireEvent.click(runButton(container));
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  test('switching the spatial join source to non-spatial data clears geometry and replaces old aggregations', () => {
+    const {getAllByLabelText, container, change} = setup(
+      true,
+      {aggregations: {amount: 'sum'}},
+      nonSpatial
+    );
+    fireEvent.change(getAllByLabelText('dataset')[1], {target: {value: 'plain'}});
+    expect(change).toHaveBeenLastCalledWith('join', {
+      rightDataId: 'plain',
+      rightGeo: null,
+      aggregations: {value: 'average', name: 'countUnique'}
+    });
+    expect(runButton(container).disabled).toBe(true);
+  });
+
+  test.each([false, true])(
+    'clearing the right dataset selector does not erase the active operation (spatial=%s)',
+    spatial => {
+      const {getAllByLabelText, change, container} = setup(spatial);
+      fireEvent.change(getAllByLabelText('dataset')[1], {target: {value: ''}});
+      expect(change).not.toHaveBeenCalled();
+      expect(runButton(container).disabled).toBe(false);
+    }
+  );
 });
