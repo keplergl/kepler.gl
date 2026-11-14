@@ -680,3 +680,35 @@ test('#DatasetSchema -> null Arrow timestamps remain null through save and reloa
   );
   t.end();
 });
+
+test('#DatasetSchema -> Arrow time units save without BigInt conversion errors', t => {
+  for (const [type, value] of [
+    [new arrow.TimeSecond(), 12],
+    [new arrow.TimeMillisecond(), 12000],
+    [new arrow.TimeMicrosecond(), 12000000n],
+    [new arrow.TimeNanosecond(), 12000000000n]
+  ]) {
+    const zero = typeof value === 'bigint' ? 0n : 0;
+    const dataset = arrowDataset({time: arrow.vectorFromArray([null, zero, value], type)});
+    const original = dataset.dataContainer.flattenData();
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const expected = [[null], ['1970-01-01T00:00:00.000Z'], ['1970-01-01T00:00:12.000Z']];
+    t.deepEqual(saved.allData, expected, `${type} converts raw units to milliseconds`);
+    t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected, `${type} reloads`);
+    t.deepEqual(dataset.dataContainer.flattenData(), original, `${type} leaves source unchanged`);
+  }
+  for (const [type, value] of [
+    [new arrow.TimeMicrosecond(), 12123456n],
+    [new arrow.TimeNanosecond(), 12123456789n]
+  ]) {
+    const saved = datasetSchema[VERSIONS.v1].save(
+      arrowDataset({time: arrow.vectorFromArray([value], type)})
+    );
+    t.deepEqual(
+      saved.allData,
+      [['1970-01-01T00:00:12.123Z']],
+      `${type} uses saved timestamp millisecond precision`
+    );
+  }
+  t.end();
+});
