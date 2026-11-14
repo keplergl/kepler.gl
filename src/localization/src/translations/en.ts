@@ -1171,6 +1171,7 @@ ${'```'}
     copiedCoordinates: 'Coordinates copied',
     copyFailed: 'Could not copy coordinates',
     animation: 'Camera animation',
+    animationAndBookmarks: 'Animation & Bookmarks',
     animationHint: 'Animate the map between saved views.',
     enableAnimation: 'Enable camera animation',
     stop: 'Stop',

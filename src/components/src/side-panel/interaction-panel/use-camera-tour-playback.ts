@@ -89,6 +89,7 @@ export default function useCameraTourPlayback(
       // Capture phase pauses before a map gesture or navigation button changes the camera.
       if (
         event.target instanceof Element &&
+        !event.target.closest('.camera-tour-playback-controls') &&
         event.target.closest(
           '.maps, .geocoder-panel, .interaction-camera-bookmarks, .camera-bookmark-panel'
         )

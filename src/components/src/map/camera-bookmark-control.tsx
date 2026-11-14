@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import copy from 'copy-to-clipboard';
-import {CameraBookmark, MapControls, MapState} from '@kepler.gl/types';
+import {CameraBookmark, MapControlMapLegend, MapControls, MapState} from '@kepler.gl/types';
 import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 import {breakPointValues} from '@kepler.gl/styles';
 import {hasPortableWidth} from '@kepler.gl/utils';
@@ -17,15 +17,34 @@ import {cameraTransition} from '../camera-navigation';
 import {DraggableLegend} from './map-legend-panel';
 import MapControlPanelFactory from './map-control-panel';
 import {formatMapCoordinate} from './coordinate-info';
+import {CameraTourPlaybackContext} from '../side-panel/interaction-panel/camera-tour-playback-provider';
+import CameraTourPlaybackControls from '../side-panel/interaction-panel/camera-tour-playback-controls';
 
 const ROW_HEIGHT = 28;
 const ROW_GAP = 4;
 const ROWS_PADDING = 8;
 const MIN_CONTENT_HEIGHT = ROW_HEIGHT + ROW_GAP + ROWS_PADDING * 2;
 
-const MapControlPanel = styled(MapControlPanelFactory())`
+const MapControlPanel = styled(MapControlPanelFactory())<{
+  $hasPlayback: boolean;
+  $hasBookmarks: boolean;
+}>`
   .map-control__panel-content {
-    min-height: ${MIN_CONTENT_HEIGHT}px;
+    min-height: ${props =>
+      (props.$hasBookmarks ? MIN_CONTENT_HEIGHT : 0) +
+      (props.$hasPlayback ? 40 : 0) +
+      (props.$hasBookmarks && props.$hasPlayback ? 1 : 0)}px;
+  }
+`;
+const PlaybackControls = styled(CameraTourPlaybackControls)`
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 8px;
+  background: ${props => props.theme.mapPanelBackgroundColor};
+  &:not(:last-child) {
+    border-bottom: 1px solid ${props => props.theme.panelBorderColor};
   }
 `;
 const Rows = styled.nav`
@@ -136,6 +155,24 @@ export default function CameraBookmarkControl({
 }) {
   const intl = useIntl();
   const root = useContext(RootContext);
+  const playback = useContext(CameraTourPlaybackContext);
+  const showPlayback = Boolean(playback?.duration && mapControls?.cameraTour?.show);
+  const showBookmarks = bookmarks.length > 0 && mapControls?.cameraBookmarks?.show === true;
+  const contentHeight = (mapControls?.cameraBookmarks as MapControlMapLegend | undefined)?.settings
+    ?.contentHeight;
+  const previousSections = useRef({showPlayback, showBookmarks});
+  useLayoutEffect(() => {
+    const previous = previousSections.current;
+    previousSections.current = {showPlayback, showBookmarks};
+    if (
+      (previous.showPlayback !== showPlayback || previous.showBookmarks !== showBookmarks) &&
+      contentHeight !== undefined &&
+      contentHeight > 0
+    ) {
+      // Return to natural height when sections change; subsequent manual resizing still applies.
+      setMapControlSettings?.('cameraBookmarks', {contentHeight: 0});
+    }
+  }, [showPlayback, showBookmarks, contentHeight, setMapControlSettings]);
   const [status, setStatus] = useState('');
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   useEffect(() => {
@@ -144,68 +181,77 @@ export default function CameraBookmarkControl({
   }, [root]);
   const message = (key: string, fallback: string) =>
     intl.formatMessage({id: `camera.${key}`, defaultMessage: fallback});
-  if (
-    !bookmarks.length ||
-    !mapState ||
-    !mapStateActions ||
-    isExport ||
-    mapControls?.cameraBookmarks?.show !== true
-  )
-    return null;
+  if ((!showBookmarks && !showPlayback) || !mapState || !mapStateActions || isExport) return null;
 
-  const title = message('bookmarks', 'Bookmarks');
+  const title = showBookmarks
+    ? showPlayback
+      ? message('animationAndBookmarks', 'Animation & Bookmarks')
+      : message('bookmarks', 'Bookmarks')
+    : message('animation', 'Camera animation');
   const panel = (
     <MapControlPanel
-      header="camera.bookmarks"
+      $hasPlayback={showPlayback}
+      $hasBookmarks={showBookmarks}
+      header={
+        showBookmarks
+          ? showPlayback
+            ? 'camera.animationAndBookmarks'
+            : 'camera.bookmarks'
+          : 'camera.animation'
+      }
       disableClose={!setMapControlVisibility}
       onClick={event => {
         event.preventDefault();
-        setMapControlVisibility?.('cameraBookmarks', false);
+        if (showBookmarks) setMapControlVisibility?.('cameraBookmarks', false);
+        if (showPlayback) setMapControlVisibility?.('cameraTour', false);
       }}
       className="camera-bookmark-panel"
     >
-      <Rows aria-label={title}>
-        {bookmarks.map((bookmark, index) => {
-          const name = bookmark.name || `${message('bookmark', 'Bookmark')} ${index + 1}`;
-          const coordinates = formatMapCoordinate([
-            bookmark.camera.longitude,
-            bookmark.camera.latitude
-          ]);
-          const copyLabel = `${message('copyCoordinates', 'Copy coordinates')}: ${name}`;
-          return (
-            <Row key={bookmark.id}>
-              <NavigateButton
-                type="button"
-                title={name}
-                onClick={() => {
-                  const viewport = cameraTransition(bookmark.camera, mapState);
-                  if (mapState.isSplit) mapStateActions.updateMap(viewport, mapIndex);
-                  else mapStateActions.updateMap(viewport);
-                }}
-              >
-                <LocationMarker height="16px" aria-hidden="true" />
-                <span>{name}</span>
-              </NavigateButton>
-              <CopyButton
-                className="camera-bookmark-copy"
-                type="button"
-                aria-label={copyLabel}
-                title={copyLabel}
-                disabled={!coordinates}
-                onClick={() => {
-                  const copied = coordinates && copy(coordinates);
-                  setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
-                }}
-              >
-                <Copy height="14px" aria-hidden="true" />
-              </CopyButton>
-            </Row>
-          );
-        })}
-        <Status role="status" aria-live="polite">
-          {status}
-        </Status>
-      </Rows>
+      {showPlayback && playback && <PlaybackControls playback={playback} showTime={false} />}
+      {showBookmarks && (
+        <Rows aria-label={message('bookmarks', 'Bookmarks')}>
+          {bookmarks.map((bookmark, index) => {
+            const name = bookmark.name || `${message('bookmark', 'Bookmark')} ${index + 1}`;
+            const coordinates = formatMapCoordinate([
+              bookmark.camera.longitude,
+              bookmark.camera.latitude
+            ]);
+            const copyLabel = `${message('copyCoordinates', 'Copy coordinates')}: ${name}`;
+            return (
+              <Row key={bookmark.id}>
+                <NavigateButton
+                  type="button"
+                  title={name}
+                  onClick={() => {
+                    const viewport = cameraTransition(bookmark.camera, mapState);
+                    if (mapState.isSplit) mapStateActions.updateMap(viewport, mapIndex);
+                    else mapStateActions.updateMap(viewport);
+                  }}
+                >
+                  <LocationMarker height="16px" aria-hidden="true" />
+                  <span>{name}</span>
+                </NavigateButton>
+                <CopyButton
+                  className="camera-bookmark-copy"
+                  type="button"
+                  aria-label={copyLabel}
+                  title={copyLabel}
+                  disabled={!coordinates}
+                  onClick={() => {
+                    const copied = coordinates && copy(coordinates);
+                    setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
+                  }}
+                >
+                  <Copy height="14px" aria-hidden="true" />
+                </CopyButton>
+              </Row>
+            );
+          })}
+          <Status role="status" aria-live="polite">
+            {status}
+          </Status>
+        </Rows>
+      )}
     </MapControlPanel>
   );
 
