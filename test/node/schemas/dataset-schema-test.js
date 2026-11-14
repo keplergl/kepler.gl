@@ -9,6 +9,9 @@ import * as arrow from 'apache-arrow';
 import {KeplerTable, joinDatasets} from '@kepler.gl/table';
 import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
+import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
+import {formatCsv} from '@kepler.gl/reducers';
+import {csvParseRows} from 'd3-dsv';
 
 // fixtures
 import {
@@ -290,6 +293,43 @@ function reloadDataset(saved) {
     validateInputData(parsed.datasets[0].data)
   );
 }
+
+test('#DatasetSchema -> separated native GeoArrow points survive JSON save and reopen', t => {
+  for (const withZ of [false, true]) {
+    const pointType = new arrow.Struct([
+      new arrow.Field('x', new arrow.Float64(), false),
+      new arrow.Field('y', new arrow.Float64(), false),
+      ...(withZ ? [new arrow.Field('z', new arrow.Float64(), false)] : [])
+    ]);
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [withZ ? {x: 10, y: 11, z: 12} : {x: 10, y: 11}, null],
+        pointType
+      )
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    const dataset = new KeplerTable({info: {id: 'native-point'}, color: [1, 2, 3]}).updateSchema(
+      processArrowTable({shape: 'arrow-table', data: table})
+    );
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const geometry = {type: 'Point', coordinates: withZ ? [10, 11, 12] : [10, 11]};
+    t.equal(saved.allData[0][0], JSON.stringify(geometry), 'saves separate coordinates as GeoJSON');
+    t.equal(saved.allData[1][0], null, 'retains null point');
+    t.deepEqual(
+      JSON.parse(csvParseRows(formatCsv(dataset.dataContainer, dataset.fields))[1][0]),
+      geometry,
+      'CSV retains separate coordinates'
+    );
+    const reloaded = reloadDataset(saved);
+    t.deepEqual(
+      parseGeoJsonRawFeature(reloaded.dataContainer.valueAt(0, 0))?.geometry,
+      geometry,
+      'reopened native geometry remains usable'
+    );
+    t.equal(table.getChild('geometry').get(0).x, 10, 'source struct remains intact');
+  }
+  t.end();
+});
 
 test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without precision loss', t => {
   const dataset = arrowDataset({
