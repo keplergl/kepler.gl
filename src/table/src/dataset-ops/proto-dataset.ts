@@ -63,12 +63,14 @@ export function makeResultProtoDataset({
 }
 
 export function copyFieldAs(
-  field: {name: string; type: string; analyzerType?: string},
+  field: Pick<ProtoDatasetField, 'name' | 'type' | 'analyzerType' | 'format' | 'metadata'>,
   name: string
 ): ProtoDatasetField {
   return {
     name,
     type: field.type,
-    analyzerType: field.analyzerType || field.type || ALL_FIELD_TYPES.string
+    analyzerType: field.analyzerType || field.type || ALL_FIELD_TYPES.string,
+    ...(field.format !== undefined ? {format: field.format} : {}),
+    ...(field.metadata !== undefined ? {metadata: field.metadata} : {})
   };
 }

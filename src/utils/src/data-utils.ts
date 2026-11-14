@@ -4,6 +4,7 @@
 import assert from 'assert';
 import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
+import {StructRow} from 'apache-arrow';
 
 import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
 
@@ -317,6 +318,15 @@ export const FIELD_DISPLAY_FORMAT: {
       ? `[${String(d)}]`
       : '',
   [ALL_FIELD_TYPES.geoarrow]: (data, field) => {
+    if (
+      data instanceof StructRow &&
+      field?.metadata?.get('ARROW:extension:name') === 'geoarrow.point'
+    ) {
+      const {x, y, z} = data.toJSON();
+      const coordinates = [x, y];
+      if (z != null) coordinates.push(z);
+      return JSON.stringify({type: 'Point', coordinates});
+    }
     if (isArrowVector(data)) {
       try {
         const encoding = field?.metadata?.get('ARROW:extension:name');

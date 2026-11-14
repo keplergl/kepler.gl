@@ -9,6 +9,9 @@ import * as arrow from 'apache-arrow';
 import {KeplerTable, joinDatasets} from '@kepler.gl/table';
 import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
+import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
+import {formatCsv} from '@kepler.gl/reducers';
+import {csvParseRows} from 'd3-dsv';
 
 // fixtures
 import {
@@ -290,6 +293,43 @@ function reloadDataset(saved) {
     validateInputData(parsed.datasets[0].data)
   );
 }
+
+test('#DatasetSchema -> separated native GeoArrow points survive JSON save and reopen', t => {
+  for (const withZ of [false, true]) {
+    const pointType = new arrow.Struct([
+      new arrow.Field('x', new arrow.Float64(), false),
+      new arrow.Field('y', new arrow.Float64(), false),
+      ...(withZ ? [new arrow.Field('z', new arrow.Float64(), false)] : [])
+    ]);
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [withZ ? {x: 10, y: 11, z: 12} : {x: 10, y: 11}, null],
+        pointType
+      )
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    const dataset = new KeplerTable({info: {id: 'native-point'}, color: [1, 2, 3]}).updateSchema(
+      processArrowTable({shape: 'arrow-table', data: table})
+    );
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const geometry = {type: 'Point', coordinates: withZ ? [10, 11, 12] : [10, 11]};
+    t.equal(saved.allData[0][0], JSON.stringify(geometry), 'saves separate coordinates as GeoJSON');
+    t.equal(saved.allData[1][0], null, 'retains null point');
+    t.deepEqual(
+      JSON.parse(csvParseRows(formatCsv(dataset.dataContainer, dataset.fields))[1][0]),
+      geometry,
+      'CSV retains separate coordinates'
+    );
+    const reloaded = reloadDataset(saved);
+    t.deepEqual(
+      parseGeoJsonRawFeature(reloaded.dataContainer.valueAt(0, 0))?.geometry,
+      geometry,
+      'reopened native geometry remains usable'
+    );
+    t.equal(table.getChild('geometry').get(0).x, 10, 'source struct remains intact');
+  }
+  t.end();
+});
 
 test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without precision loss', t => {
   const dataset = arrowDataset({
@@ -678,5 +718,37 @@ test('#DatasetSchema -> null Arrow timestamps remain null through save and reloa
     [[null], [0], [1700000000123]],
     'saving leaves source values unchanged'
   );
+  t.end();
+});
+
+test('#DatasetSchema -> Arrow time units save without BigInt conversion errors', t => {
+  for (const [type, value] of [
+    [new arrow.TimeSecond(), 12],
+    [new arrow.TimeMillisecond(), 12000],
+    [new arrow.TimeMicrosecond(), 12000000n],
+    [new arrow.TimeNanosecond(), 12000000000n]
+  ]) {
+    const zero = typeof value === 'bigint' ? 0n : 0;
+    const dataset = arrowDataset({time: arrow.vectorFromArray([null, zero, value], type)});
+    const original = dataset.dataContainer.flattenData();
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const expected = [[null], ['1970-01-01T00:00:00.000Z'], ['1970-01-01T00:00:12.000Z']];
+    t.deepEqual(saved.allData, expected, `${type} converts raw units to milliseconds`);
+    t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected, `${type} reloads`);
+    t.deepEqual(dataset.dataContainer.flattenData(), original, `${type} leaves source unchanged`);
+  }
+  for (const [type, value] of [
+    [new arrow.TimeMicrosecond(), 12123456n],
+    [new arrow.TimeNanosecond(), 12123456789n]
+  ]) {
+    const saved = datasetSchema[VERSIONS.v1].save(
+      arrowDataset({time: arrow.vectorFromArray([value], type)})
+    );
+    t.deepEqual(
+      saved.allData,
+      [['1970-01-01T00:00:12.123Z']],
+      `${type} uses saved timestamp millisecond precision`
+    );
+  }
   t.end();
 });

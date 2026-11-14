@@ -101,6 +101,13 @@ function hasPolygonCoordinates(feature: Feature): boolean {
   );
 }
 
+// Coerce numeric strings, but not missing cells, booleans or containers to zero.
+function readCoordinate(value: unknown): number {
+  return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')
+    ? Number(value)
+    : NaN;
+}
+
 function readSpatialValue(
   dataset: DatasetOpsTable,
   rowIndex: number,
@@ -112,8 +119,8 @@ function readSpatialValue(
     if (!latField || !lngField) {
       return null;
     }
-    const lat = Number(rowValue(dataset, rowIndex, latField));
-    const lng = Number(rowValue(dataset, rowIndex, lngField));
+    const lat = readCoordinate(rowValue(dataset, rowIndex, latField));
+    const lng = readCoordinate(rowValue(dataset, rowIndex, lngField));
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return null;
     }
