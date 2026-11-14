@@ -170,11 +170,15 @@ const getAllDataForSaving = (
     for (let columnIndex = 0; columnIndex < numColumns; ++columnIndex) {
       const column = dataContainer.getColumn(columnIndex);
 
-      if (
-        arrow.DataType.isTimestamp(column.type) ||
-        arrow.DataType.isDate(column.type) ||
-        arrow.DataType.isTime(column.type)
-      ) {
+      if (arrow.DataType.isTime(column.type)) {
+        // Arrow Time values are raw units since midnight, unlike Timestamp getters
+        // which already return milliseconds. Time64 getters return BigInt.
+        const divisor = [0.001, 1, 1000, 1000000][column.type.unit];
+        allData.forEach(row => {
+          const value = row[columnIndex];
+          row[columnIndex] = value == null ? null : new Date(Number(value) / divisor).toISOString();
+        });
+      } else if (arrow.DataType.isTimestamp(column.type) || arrow.DataType.isDate(column.type)) {
         allData.forEach(row => {
           const value = row[columnIndex];
           row[columnIndex] = value == null ? null : new Date(value).toISOString();
@@ -187,6 +191,7 @@ const getAllDataForSaving = (
   const geometryFields = fields.filter(field => field.type === ALL_FIELD_TYPES.geoarrow);
   const savedRows = geometryFields.length
     ? allData.map(row => {
+        if (row === null) return row;
         const savedRow = row.slice();
         for (const field of geometryFields) {
           savedRow[field.fieldIdx] = FIELD_DISPLAY_FORMAT[ALL_FIELD_TYPES.geoarrow](

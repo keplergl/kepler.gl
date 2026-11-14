@@ -294,6 +294,43 @@ function reloadDataset(saved) {
   );
 }
 
+test('#DatasetSchema -> separated native GeoArrow points survive JSON save and reopen', t => {
+  for (const withZ of [false, true]) {
+    const pointType = new arrow.Struct([
+      new arrow.Field('x', new arrow.Float64(), false),
+      new arrow.Field('y', new arrow.Float64(), false),
+      ...(withZ ? [new arrow.Field('z', new arrow.Float64(), false)] : [])
+    ]);
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [withZ ? {x: 10, y: 11, z: 12} : {x: 10, y: 11}, null],
+        pointType
+      )
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    const dataset = new KeplerTable({info: {id: 'native-point'}, color: [1, 2, 3]}).updateSchema(
+      processArrowTable({shape: 'arrow-table', data: table})
+    );
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const geometry = {type: 'Point', coordinates: withZ ? [10, 11, 12] : [10, 11]};
+    t.equal(saved.allData[0][0], JSON.stringify(geometry), 'saves separate coordinates as GeoJSON');
+    t.equal(saved.allData[1][0], null, 'retains null point');
+    t.deepEqual(
+      JSON.parse(csvParseRows(formatCsv(dataset.dataContainer, dataset.fields))[1][0]),
+      geometry,
+      'CSV retains separate coordinates'
+    );
+    const reloaded = reloadDataset(saved);
+    t.deepEqual(
+      parseGeoJsonRawFeature(reloaded.dataContainer.valueAt(0, 0))?.geometry,
+      geometry,
+      'reopened native geometry remains usable'
+    );
+    t.equal(table.getChild('geometry').get(0).x, 10, 'source struct remains intact');
+  }
+  t.end();
+});
+
 test('#DatasetSchema -> Int64 values survive JSON, HTML and reload without precision loss', t => {
   const dataset = arrowDataset({
     signed: arrow.vectorFromArray(
@@ -730,7 +767,7 @@ test('#DatasetSchema -> invalid WKB stays invalid without mutating the row', t =
   const bytes = new Uint8Array([1, 2]);
   const dataset = new KeplerTable({info: {id: 'invalid-wkb'}, color: [1, 2, 3]}).updateSchema({
     fields: [{name: 'geometry', type: 'geoarrow', analyzerType: 'GEOMETRY'}],
-    rows: [[bytes]]
+    rows: [[bytes], null]
   });
   const saved = datasetSchema[VERSIONS.v1].save(dataset);
   t.equal(saved.allData[0][0], '0102', 'serializes bytes without inventing a geometry');
@@ -740,5 +777,44 @@ test('#DatasetSchema -> invalid WKB stays invalid without mutating the row', t =
     'invalid geometry remains non-renderable'
   );
   t.equal(dataset.dataContainer.valueAt(0, 0), bytes, 'live row is unchanged');
+  t.equal(saved.allData[1], null, 'retains the null row when saving GeoArrow data');
+  t.equal(
+    reloadDataset(saved).dataContainer.rowAsArray(1),
+    null,
+    'JSON reopen retains the null row'
+  );
+  t.equal(dataset.dataContainer.rowAsArray(1), null, 'live null row is unchanged');
+  t.end();
+});
+
+test('#DatasetSchema -> Arrow time units save without BigInt conversion errors', t => {
+  for (const [type, value] of [
+    [new arrow.TimeSecond(), 12],
+    [new arrow.TimeMillisecond(), 12000],
+    [new arrow.TimeMicrosecond(), 12000000n],
+    [new arrow.TimeNanosecond(), 12000000000n]
+  ]) {
+    const zero = typeof value === 'bigint' ? 0n : 0;
+    const dataset = arrowDataset({time: arrow.vectorFromArray([null, zero, value], type)});
+    const original = dataset.dataContainer.flattenData();
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const expected = [[null], ['1970-01-01T00:00:00.000Z'], ['1970-01-01T00:00:12.000Z']];
+    t.deepEqual(saved.allData, expected, `${type} converts raw units to milliseconds`);
+    t.deepEqual(reloadDataset(saved).dataContainer.flattenData(), expected, `${type} reloads`);
+    t.deepEqual(dataset.dataContainer.flattenData(), original, `${type} leaves source unchanged`);
+  }
+  for (const [type, value] of [
+    [new arrow.TimeMicrosecond(), 12123456n],
+    [new arrow.TimeNanosecond(), 12123456789n]
+  ]) {
+    const saved = datasetSchema[VERSIONS.v1].save(
+      arrowDataset({time: arrow.vectorFromArray([value], type)})
+    );
+    t.deepEqual(
+      saved.allData,
+      [['1970-01-01T00:00:12.123Z']],
+      `${type} uses saved timestamp millisecond precision`
+    );
+  }
   t.end();
 });
