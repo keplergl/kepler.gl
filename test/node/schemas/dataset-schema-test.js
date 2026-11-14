@@ -9,6 +9,9 @@ import * as arrow from 'apache-arrow';
 import {KeplerTable, joinDatasets} from '@kepler.gl/table';
 import {exportToJsonString, exportMapToHTML, validateInputData} from '@kepler.gl/utils';
 import {processArrowTable, processKeplerglJSON} from '@kepler.gl/processors';
+import {parseGeoJsonRawFeature} from '@kepler.gl/layers';
+import {formatCsv} from '@kepler.gl/reducers';
+import {csvParseRows} from 'd3-dsv';
 
 // fixtures
 import {
@@ -678,5 +681,112 @@ test('#DatasetSchema -> null Arrow timestamps remain null through save and reloa
     [[null], [0], [1700000000123]],
     'saving leaves source values unchanged'
   );
+  t.end();
+});
+
+test('#DatasetSchema -> joined WKB geometry survives JSON save and reopen', t => {
+  const wkb = Uint8Array.from([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 38, 64]);
+  const table = new arrow.Table({
+    key: arrow.vectorFromArray(['a', 'b']),
+    geometry: arrow.vectorFromArray([wkb, null], new arrow.Binary()),
+    observed: arrow.vectorFromArray(
+      [new Date('2024-01-01T00:00:00Z'), null],
+      new arrow.TimestampMillisecond()
+    )
+  });
+  table.schema.fields[1].metadata.set('ARROW:extension:name', 'geoarrow.wkb');
+  const source = new KeplerTable({info: {id: 'wkb-source'}, color: [1, 2, 3]}).updateSchema(
+    processArrowTable({shape: 'arrow-table', data: table})
+  );
+  const proto = joinDatasets(source, source, {
+    leftField: 'key',
+    rightField: 'key',
+    type: 'LEFT',
+    rightColumns: []
+  });
+  const dataset = new KeplerTable({info: proto.info, color: [1, 2, 3]}).updateSchema(
+    validateInputData(proto.data)
+  );
+  t.equal(dataset.fields[1].type, 'geoarrow', 'timestamp validation preserves geometry typing');
+  t.equal(dataset.fields[2].format, source.fields[2].format, 'join retains timestamp format');
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.equal(saved.fields[1].type, 'geojson', 'saved geometry uses the portable type');
+  t.equal(saved.allData[0][1], '010100000000000000000024400000000000002640', 'saves WKB as hex');
+  t.equal(saved.allData[1][1], null, 'retains missing geometry');
+  t.equal(
+    csvParseRows(formatCsv(dataset.dataContainer, dataset.fields))[1][1],
+    saved.allData[0][1],
+    'CSV uses portable WKB too'
+  );
+  const reloaded = reloadDataset(saved);
+  t.equal(
+    reloaded.fields[2].valueAccessor({index: 0}),
+    Date.UTC(2024, 0, 1),
+    'joined timestamp remains usable after reopening'
+  );
+  t.deepEqual(
+    parseGeoJsonRawFeature(reloaded.dataContainer.valueAt(0, 1))?.geometry,
+    {type: 'Point', coordinates: [10, 11]},
+    'reopened WKB remains a usable point'
+  );
+  t.ok(
+    dataset.dataContainer.valueAt(0, 1) instanceof Uint8Array,
+    'does not mutate live joined bytes'
+  );
+  t.deepEqual(table.getChild('geometry').get(0), wkb, 'does not mutate source bytes');
+  t.end();
+});
+
+test('#DatasetSchema -> separated native GeoArrow points survive JSON save and reopen', t => {
+  for (const withZ of [false, true]) {
+    const pointType = new arrow.Struct([
+      new arrow.Field('x', new arrow.Float64(), false),
+      new arrow.Field('y', new arrow.Float64(), false),
+      ...(withZ ? [new arrow.Field('z', new arrow.Float64(), false)] : [])
+    ]);
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [withZ ? {x: 10, y: 11, z: 12} : {x: 10, y: 11}, null],
+        pointType
+      )
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    const dataset = new KeplerTable({info: {id: 'native-point'}, color: [1, 2, 3]}).updateSchema(
+      processArrowTable({shape: 'arrow-table', data: table})
+    );
+    const saved = datasetSchema[VERSIONS.v1].save(dataset);
+    const geometry = {type: 'Point', coordinates: withZ ? [10, 11, 12] : [10, 11]};
+    t.equal(saved.allData[0][0], JSON.stringify(geometry), 'saves separate coordinates as GeoJSON');
+    t.equal(saved.allData[1][0], null, 'retains null point');
+    t.deepEqual(
+      JSON.parse(csvParseRows(formatCsv(dataset.dataContainer, dataset.fields))[1][0]),
+      geometry,
+      'CSV retains separate coordinates'
+    );
+    const reloaded = reloadDataset(saved);
+    t.deepEqual(
+      parseGeoJsonRawFeature(reloaded.dataContainer.valueAt(0, 0))?.geometry,
+      geometry,
+      'reopened native geometry remains usable'
+    );
+    t.equal(table.getChild('geometry').get(0).x, 10, 'source struct remains intact');
+  }
+  t.end();
+});
+
+test('#DatasetSchema -> invalid WKB stays invalid without mutating the row', t => {
+  const bytes = new Uint8Array([1, 2]);
+  const dataset = new KeplerTable({info: {id: 'invalid-wkb'}, color: [1, 2, 3]}).updateSchema({
+    fields: [{name: 'geometry', type: 'geoarrow', analyzerType: 'GEOMETRY'}],
+    rows: [[bytes]]
+  });
+  const saved = datasetSchema[VERSIONS.v1].save(dataset);
+  t.equal(saved.allData[0][0], '0102', 'serializes bytes without inventing a geometry');
+  t.equal(
+    parseGeoJsonRawFeature(saved.allData[0][0]),
+    null,
+    'invalid geometry remains non-renderable'
+  );
+  t.equal(dataset.dataContainer.valueAt(0, 0), bytes, 'live row is unchanged');
   t.end();
 });

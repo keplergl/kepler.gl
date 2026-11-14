@@ -6,7 +6,7 @@ import {getFieldsFromData, latLngToCell} from '@kepler.gl/common-utils';
 import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 import {Response} from 'node-fetch';
 import {ProtoDataset} from '@kepler.gl/types';
-import {timeToUnixMilli} from '@kepler.gl/utils';
+import {timeToUnixMilli, validateInputData} from '@kepler.gl/utils';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -406,6 +406,43 @@ describe('dataset-ops engine', () => {
     expect(byRegion.west.geometry.type).toBe('MultiPolygon');
     expect(byRegion.west.geometry.coordinates).toHaveLength(2);
     expect(byRegion.east.geometry.type).toBe('Polygon');
+  });
+
+  test('joining timestamped WKB preserves semantic fields through import validation', () => {
+    const when = '2024-01-01T00:00:00.000Z';
+    const [timestamp] = getFieldsFromData([{when}], ['when']);
+    const metadata = new Map([['ARROW:extension:name', 'geoarrow.wkb']]);
+    const bytes = new Uint8Array([
+      1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 0, 0, 38, 64
+    ]);
+    const source = new KeplerTable({info: {id: 'geoparquet'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'key', type: 'string', analyzerType: 'STRING'},
+        timestamp,
+        {name: 'geometry', type: 'geoarrow', analyzerType: 'GEOMETRY', metadata}
+      ],
+      rows: [['match', when, bytes]]
+    });
+    const originalFields = source.fields.map(field => ({...field}));
+    const joined = joinDatasets(source, source, {
+      leftField: 'key',
+      rightField: 'key',
+      type: 'INNER'
+    });
+    for (const index of [1, 4]) {
+      expect(joined.data.fields[index].format).toBe(timestamp.format);
+    }
+    const validated = validateInputData(joined.data);
+    if (!validated) throw new Error('Joined data did not validate');
+    for (const index of [2, 5]) {
+      expect(validated.fields[index].type).toBe('geoarrow');
+      expect(validated.fields[index].metadata).toEqual(metadata);
+      expect(validated.rows[0][index]).toBe(bytes);
+    }
+    expect(source.fields).toEqual(originalFields);
+    const imported = new KeplerTable({color: [0, 0, 0]}).updateSchema(validated);
+    expect(imported.fields[1].valueAccessor({index: 0})).toBe(Date.UTC(2024, 0, 1));
+    expect(imported.fields[4].valueAccessor({index: 0})).toBe(Date.UTC(2024, 0, 1));
   });
 
   test('joinDatasets supports LEFT, INNER, and FULL with null keys', () => {
