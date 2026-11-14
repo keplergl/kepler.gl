@@ -245,12 +245,33 @@ export default function VisConfigSliderFactory(
   RangeSlider: ReturnType<typeof RangeSliderFactory>,
   InfoHelper: ReturnType<typeof InfoHelperFactory>
 ) {
-  const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
-    layer: {id, config, visConfigSettings},
+  type SliderControlProps = Omit<
+    VisConfigSliderProps,
+    'layer' | 'label' | 'range' | 'focusRange'
+  > & {
+    id: string;
+    labelId: string;
+    showLabel: boolean;
+    hasSettingLabel: boolean;
+    value0: number;
+    value1: number;
+    range0: number;
+    range1: number;
+    focus0?: number;
+    focus1?: number;
+  };
+
+  const SliderControl = React.memo(function SliderControl({
+    id,
     property,
-    label,
+    labelId,
+    showLabel,
+    hasSettingLabel,
     description,
-    range,
+    value0,
+    value1,
+    range0,
+    range1,
     step,
     isRanged,
     allowCustomValue,
@@ -258,24 +279,24 @@ export default function VisConfigSliderFactory(
     disabled,
     onChange,
     inputTheme,
-    focusRange,
+    focus0,
+    focus1,
     focusWeight
-  }) => {
+  }: SliderControlProps) {
     const intl = useIntl();
-    const value = config.visConfig[property];
+    const range: [number, number] = [range0, range1];
+    const value = isRanged ? [value0, value1] : value1;
     const [mode, setMode] = useState<'slider' | 'editing' | 'saved'>(() =>
       isInRange(value, range) ? 'slider' : 'saved'
     );
     const custom = mode !== 'slider';
-    const scaleConfig = createSliderScale(focusRange, focusWeight);
-    const settingLabel = label || visConfigSettings[property]?.label;
-    const labelId =
-      typeof settingLabel === 'function'
-        ? settingLabel(config)
-        : settingLabel || `property.${property}`;
+    const scaleConfig = createSliderScale(
+      focus0 === undefined || focus1 === undefined ? undefined : [focus0, focus1],
+      focusWeight
+    );
     const settingName = intl.formatMessage({
       id: labelId,
-      defaultMessage: settingLabel ? labelId : property
+      defaultMessage: hasSettingLabel ? labelId : property
     });
     const displayedValue = Array.isArray(value) ? value.join(' – ') : String(value);
     const modeLabel = custom
@@ -292,8 +313,8 @@ export default function VisConfigSliderFactory(
     const toggleMode = () => {
       if (custom) {
         const adjustedValue = isRanged
-          ? [clamp(range, value[0]), clamp(range, value[1])]
-          : clamp(range, value);
+          ? [clamp(range, value0), clamp(range, value1)]
+          : clamp(range, value1);
         onChange({[property]: adjustedValue});
       }
       setMode(custom ? 'slider' : 'editing');
@@ -301,7 +322,7 @@ export default function VisConfigSliderFactory(
 
     return (
       <SidePanelSection disabled={Boolean(disabled)}>
-        {label ? (
+        {showLabel ? (
           <LabelRow>
             <PanelLabel>
               <FormattedMessage id={labelId} />
@@ -316,7 +337,7 @@ export default function VisConfigSliderFactory(
           {custom ? (
             <CustomInput
               isRanged={isRanged}
-              value={value}
+              value={value as unknown as CustomInputProps['value']}
               onChangeCustomInput={v => onChange({[property]: v})}
               autoFocus={mode === 'editing'}
               disabled={disabled}
@@ -325,8 +346,8 @@ export default function VisConfigSliderFactory(
           ) : (
             <RangeSlider
               range={range}
-              value0={isRanged ? value[0] : range[0]}
-              value1={isRanged ? value[1] : value}
+              value0={isRanged ? value0 : range0}
+              value1={value1}
               step={step}
               isRanged={Boolean(isRanged)}
               onChange={v => onChange({[property]: isRanged ? v : v[1]})}
@@ -358,6 +379,40 @@ export default function VisConfigSliderFactory(
           ) : null}
         </SliderRow>
       </SidePanelSection>
+    );
+  });
+
+  const VisConfigSlider: React.FC<VisConfigSliderProps> = ({
+    layer,
+    label,
+    range,
+    focusRange,
+    ...props
+  }) => {
+    // Layers and their settings can mutate in place. Read their current values before
+    // the memo boundary, including individual range endpoints.
+    const {id, config, visConfigSettings} = layer;
+    const value = config.visConfig[props.property];
+    const settingLabel = label || visConfigSettings[props.property]?.label;
+    const labelId =
+      typeof settingLabel === 'function'
+        ? settingLabel(config)
+        : settingLabel || `property.${props.property}`;
+
+    return (
+      <SliderControl
+        {...props}
+        id={id}
+        labelId={labelId}
+        showLabel={Boolean(label)}
+        hasSettingLabel={Boolean(settingLabel)}
+        value0={props.isRanged ? value[0] : range[0]}
+        value1={props.isRanged ? value[1] : value}
+        range0={range[0]}
+        range1={range[1]}
+        focus0={focusRange?.[0]}
+        focus1={focusRange?.[1]}
+      />
     );
   };
 

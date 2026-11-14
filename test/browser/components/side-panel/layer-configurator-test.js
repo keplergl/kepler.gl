@@ -26,6 +26,9 @@ import {
   dropdownListClassList,
   Checkbox,
   VisConfigSlider,
+  VisConfigSliderFactory,
+  RangeSlider,
+  InfoHelperFactory,
   getLayerFields,
   getLayerDataset
 } from '@kepler.gl/components';
@@ -198,6 +201,80 @@ function renderVisConfigSlider(property, initialValue, {layerType = 'point', ...
   );
   return {view, changed};
 }
+
+test('Components -> VisConfigSlider -> skips unchanged controls and reads mutable layer settings', t => {
+  const rendered = sinon.spy();
+  const Slider = VisConfigSliderFactory(props => {
+    rendered();
+    return <RangeSlider {...props} />;
+  }, appInjector.get(InfoHelperFactory));
+  const layer = new LayerClasses.point({id: 'mutable-slider'});
+  layer.updateLayerVisConfig({radius: 10, radiusRange: [2, 20]});
+  const onChange = sinon.spy();
+  const range = [0, 100];
+  const label = config =>
+    config.visConfig.fixedRadius ? 'layerVisConfigs.radius' : 'layerVisConfigs.radiusRange';
+  let property = 'radius';
+  let locale = 'en';
+  const slider = () => (
+    <IntlWrapper locale={locale}>
+      <Slider
+        layer={layer}
+        property={property}
+        isRanged={property === 'radiusRange'}
+        range={range}
+        step={1}
+        label={label}
+        onChange={onChange}
+      />
+    </IntlWrapper>
+  );
+  const view = render(slider(), {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
+  const inputValues = () =>
+    Array.from(view.container.querySelectorAll('.kg-range-slider__input'), input => input.value);
+  try {
+    rendered.reset();
+    view.rerender(slider());
+    t.ok(rendered.notCalled, 'unchanged parent renders skip the slider control');
+
+    layer.config.visConfig.radius = 25;
+    view.rerender(slider());
+    t.deepEqual(inputValues(), ['25'], 'reads a value changed on the same layer and config');
+
+    property = 'radiusRange';
+    view.rerender(slider());
+    t.deepEqual(inputValues(), ['2', '20'], 'switches to a ranged property');
+    layer.config.visConfig.radiusRange[1] = 35;
+    view.rerender(slider());
+    t.deepEqual(inputValues(), ['2', '35'], 'reads an in-place range value change');
+
+    range[1] = 30;
+    view.rerender(slider());
+    const inputs = view.container.querySelectorAll('.kg-range-slider__input');
+    fireEvent.change(inputs[1], {target: {value: '80'}});
+    fireEvent.blur(inputs[1]);
+    t.deepEqual(
+      onChange.lastCall.args[0],
+      {radiusRange: [2, 30]},
+      'uses the latest range bounds and property'
+    );
+
+    layer.config.visConfig.fixedRadius = true;
+    view.rerender(slider());
+    t.ok(
+      within(view.container).getByText('Radius'),
+      'reevaluates functional labels on the same config'
+    );
+    locale = 'es';
+    view.rerender(slider());
+    t.ok(within(view.container).getByText('Radio'), 'locale changes cross the memo boundary');
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
 
 test('Components -> VisConfigSlider -> edits a single custom radius using the keyboard', async t => {
   const {view, changed} = renderVisConfigSlider('radius', 10);
@@ -2053,8 +2130,14 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
         'custom heights update the surface, including values beyond the slider range'
       );
     }
-    fireEvent.click(within(options).getByRole('button', {name: 'Use slider for Maximum height (m)'}));
-    t.deepEqual(changed.lastCall.args[0], {surfaceHeight: 100000}, 'returning clamps to slider range');
+    fireEvent.click(
+      within(options).getByRole('button', {name: 'Use slider for Maximum height (m)'})
+    );
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {surfaceHeight: 100000},
+      'returning clamps to slider range'
+    );
     t.notOk(
       within(options).queryByRole('spinbutton', {name: 'Maximum height (m)'}),
       'returning closes the custom height input'
@@ -2085,7 +2168,11 @@ test('Components -> LayerConfigurator -> collapsed Heatmap surface toggle group'
     t.deepEqual(changed.lastCall.args[0], {surfaceEnabled: false}, 'disabling stores false');
     t.ok(content.classList.contains('disabled'), '2D disables the surface options again');
     fireEvent.click(toggle);
-    t.equal(layer.config.visConfig.surfaceHeight, 100000, 'switching modes retains surface settings');
+    t.equal(
+      layer.config.visConfig.surfaceHeight,
+      100000,
+      'switching modes retains surface settings'
+    );
     t.equal(layer.config.visConfig.surfaceContourStep, 100, 'switching modes retains contour step');
   } finally {
     view.unmount();
