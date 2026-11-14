@@ -96,8 +96,12 @@ function EffectManagerFactory(
     const {intl, children} = props;
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
-    const visStateFromStore = useSelector(state => selector(state)?.visState);
-    const visState = props.visState ?? visStateFromStore;
+    const effectsFromStore = useSelector(
+      state => (props.visState ?? selector(state)?.visState)?.effects
+    );
+    const effectOrderFromStore = useSelector(
+      state => (props.visState ?? selector(state)?.visState)?.effectOrder
+    );
     const visStateActions = useMemo(
       () =>
         props.visStateActions ?? {
@@ -109,8 +113,8 @@ function EffectManagerFactory(
       [dispatch, props.visStateActions]
     );
 
-    const effects = visState?.effects ?? [];
-    const effectOrder = visState?.effectOrder ?? [];
+    const effects = useMemo(() => effectsFromStore ?? [], [effectsFromStore]);
+    const effectOrder = useMemo(() => effectOrderFromStore ?? [], [effectOrderFromStore]);
     const {addEffect: visStateAddEffect} = visStateActions;
     const [typeSelectorOpened, setTypeSelectorOpened] = useState(false);
 
@@ -184,7 +188,7 @@ function EffectManagerFactory(
     );
   };
 
-  return injectIntl(EffectManager) as React.FC<EffectManagerProps>;
+  return injectIntl(React.memo(EffectManager)) as React.FC<EffectManagerProps>;
 }
 
 export default EffectManagerFactory;
