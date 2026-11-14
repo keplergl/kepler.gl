@@ -4119,6 +4119,7 @@ __metadata:
     "@luma.gl/effects": "npm:^9.4.2"
     "@luma.gl/engine": "npm:^9.4.2"
     "@luma.gl/shadertools": "npm:^9.4.2"
+    "@math.gl/core": "npm:^4.1.0"
     moment-timezone: "npm:^0.5.35"
     suncalc: "npm:^1.9.0"
   languageName: unknown

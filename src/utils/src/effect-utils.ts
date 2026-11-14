@@ -12,7 +12,8 @@ import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
   DISTANCE_FOG_TYPE,
-  SURFACE_FOG_TYPE
+  SURFACE_FOG_TYPE,
+  WATER_SIMULATION_TYPE
 } from '@kepler.gl/constants';
 import {arrayMove} from '@kepler.gl/common-utils';
 import {MapState, Effect, EffectProps, EffectDescription} from '@kepler.gl/types';
@@ -56,6 +57,12 @@ export function computeDeckEffects({
     .map(effectId => {
       const effect = findById(effectId)(visState.effects) as Effect | undefined;
       if (effect?.deckEffect) {
+        // GPU simulation is session-only and currently supports one flat map.
+        if (
+          effect.type === WATER_SIMULATION_TYPE &&
+          (isGlobeMode || isExport || visState.splitMaps?.length > 0)
+        )
+          return null;
         const isFogEffect = effect.type === SURFACE_FOG_TYPE || effect.type === DISTANCE_FOG_TYPE;
         const isLightingEffect = effect.type === LIGHT_AND_SHADOW_EFFECT.type;
 

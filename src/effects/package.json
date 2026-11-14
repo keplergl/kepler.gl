@@ -37,6 +37,7 @@
     "@luma.gl/effects": "^9.4.2",
     "@luma.gl/engine": "^9.4.2",
     "@luma.gl/shadertools": "^9.4.2",
+    "@math.gl/core": "^4.1.0",
     "moment-timezone": "^0.5.35",
     "suncalc": "^1.9.0"
   },

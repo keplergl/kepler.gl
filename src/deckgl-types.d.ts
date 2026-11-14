@@ -12,6 +12,7 @@
  */
 
 declare module '@deck.gl/core' {
+  export {default as _LayersPass} from '@deck.gl/core/dist/passes/layers-pass';
   export {default as Deck} from '@deck.gl/core/dist/lib/deck';
   export {default as DeckRenderer} from '@deck.gl/core/dist/lib/deck-renderer';
   export {default as LayerManager} from '@deck.gl/core/dist/lib/layer-manager';
@@ -67,7 +68,12 @@ declare module '@deck.gl/core' {
   export type {ChangeFlags} from '@deck.gl/core/dist/lib/layer-state';
   export type {MapViewState} from '@deck.gl/core/dist/views/map-view';
   export type {FilterContext} from '@deck.gl/core/dist/passes/layers-pass';
-  export type {Effect, PreRenderOptions, PostRenderOptions} from '@deck.gl/core/dist/lib/effect';
+  export type {
+    Effect,
+    EffectContext,
+    PreRenderOptions,
+    PostRenderOptions
+  } from '@deck.gl/core/dist/lib/effect';
   export type {ControllerProps} from '@deck.gl/core/dist/controllers/controller';
   export type {BinaryAttribute} from '@deck.gl/core/dist/lib/attribute/attribute';
   export type {_ConstructorOf} from '@deck.gl/core/dist/types/types';

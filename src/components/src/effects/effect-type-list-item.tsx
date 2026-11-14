@@ -9,7 +9,8 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {useIntl} from 'react-intl';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
-import {Add} from '../common/icons';
+import {Add, SurfaceFogEffectIcon} from '../common/icons';
+import {WATER_SIMULATION_TYPE} from '@kepler.gl/constants';
 import {Tooltip} from '../common/styled-components';
 
 const MultilineTooltip = styled(Tooltip)`
@@ -118,7 +119,13 @@ export function EffectTypeListItemFactory() {
         data-for={description ? tooltipId : undefined}
       >
         <div className="effect-type-selector__item__icon">
-          <img className="effect-preview" src={getImageUrl(value.type)} />
+          {value.type === WATER_SIMULATION_TYPE ? (
+            <div className="effect-preview">
+              <SurfaceFogEffectIcon />
+            </div>
+          ) : (
+            <img className="effect-preview" src={getImageUrl(value.type)} />
+          )}
         </div>
         <div className="effect-type-selector__item__label">
           <FormattedMessage id={`effect.type.${value.type}`} defaultMessage={value.name} />

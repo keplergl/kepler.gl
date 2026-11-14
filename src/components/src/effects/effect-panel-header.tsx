@@ -10,7 +10,8 @@ import {
   LIGHT_AND_SHADOW_EFFECT,
   POSTPROCESSING_EFFECTS,
   DISTANCE_FOG_TYPE,
-  SURFACE_FOG_TYPE
+  SURFACE_FOG_TYPE,
+  WATER_SIMULATION_TYPE
 } from '@kepler.gl/constants';
 import {useIntl} from 'react-intl';
 
@@ -120,6 +121,7 @@ const defaultEffectIcons = {
   [POSTPROCESSING_EFFECTS.magnify.type]: MagnifyEffectIcon,
   [POSTPROCESSING_EFFECTS.hexagonalPixelate.type]: HexagonalPixelateEffectIcon,
   [DISTANCE_FOG_TYPE]: DistanceFogEffectIcon,
+  [WATER_SIMULATION_TYPE]: SurfaceFogEffectIcon,
   [SURFACE_FOG_TYPE]: SurfaceFogEffectIcon
 };
 

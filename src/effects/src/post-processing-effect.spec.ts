@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import WaterSimulationEffect from './water-simulation-effect';
 import PostProcessingEffect, {getDefaultValueForParameter} from './post-processing-effect';
 
 describe('post-processing effect parameters', () => {
@@ -91,4 +92,39 @@ describe('post-processing effect parameters', () => {
     expect(effect.isValidToSave()).toBe(false);
     expect(effect.getParameterDescriptions()).toEqual([]);
   });
+});
+
+test('water effect stores settings while cloned maps start with independent empty simulations', () => {
+  const effect = new WaterSimulationEffect({id: 'water', parameters: {rain: 0, opacity: 0}});
+  expect(effect.isValidToSave()).toBe(true);
+  expect(effect.parameters).toMatchObject({
+    resolution: 256,
+    rain: 0,
+    smoothing: 1,
+    opacity: 0,
+    openBoundary: false
+  });
+  effect.setProps({parameters: {rain: 0.005, resolution: 512}});
+  expect(effect.deckEffect.props.rain).toBe(0.005);
+  expect(effect.deckEffect.props.resolution).toBe(512);
+  const clone = effect.clone();
+  expect(clone.parameters).toEqual(effect.parameters);
+  expect(clone.deckEffect).not.toBe(effect.deckEffect);
+  expect(clone.deckEffect.id).not.toBe(effect.deckEffect.id);
+  expect(clone.deckEffect.getSnapshot()).toMatchObject({ready: false, running: false});
+  clone.setProps({parameters: {rain: 0.008, smoothing: 0, resolution: 128}});
+  expect(clone.deckEffect.props.smoothing).toBe(0);
+  expect(effect.deckEffect.props.smoothing).toBe(1);
+  expect(effect.deckEffect.props.rain).toBe(0.005);
+  expect(clone.deckEffect.props.resolution).toBe(128);
+  expect(effect.deckEffect.props.resolution).toBe(512);
+});
+
+test('water rainfall defaults to low and supports the high preset when restoring settings', () => {
+  expect(new WaterSimulationEffect().deckEffect.props.rain).toBe(0.01);
+  const restored = new WaterSimulationEffect({parameters: {rain: 1, resolution: 2048}});
+  expect(restored.deckEffect.props).toMatchObject({rain: 0.1, resolution: 1024});
+  expect(restored.clone().deckEffect.props.rain).toBe(0.1);
+  restored.setProps({parameters: {rain: -1, resolution: 0}});
+  expect(restored.deckEffect.props).toMatchObject({rain: 0, resolution: 64});
 });

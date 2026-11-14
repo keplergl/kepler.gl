@@ -1646,6 +1646,7 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
 
 export const DISTANCE_FOG_TYPE = 'distanceFog';
 export const SURFACE_FOG_TYPE = 'surfaceFog';
+export const WATER_SIMULATION_TYPE = 'waterSimulation';
 
 export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
   ink: {
@@ -1867,6 +1868,39 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {name: 'fogColor', type: 'color', min: 0, max: 255, defaultValue: [217, 222, 230]}
     ]
   },
+  waterSimulation: {
+    type: WATER_SIMULATION_TYPE,
+    name: 'Water Simulation (Experimental)',
+    description: 'effectDescription.waterSimulation',
+    parameters: [
+      {
+        name: 'resolution',
+        label: 'Elevation resolution (recapture)',
+        defaultValue: 256,
+        min: 64,
+        max: 1024
+      },
+      {name: 'rain', label: 'Rainfall', defaultValue: 0.01, min: 0, max: 0.1},
+      {name: 'smoothing', label: 'Peak smoothing (recapture)', defaultValue: 1, min: 0, max: 1},
+      {
+        name: 'openBoundary',
+        type: 'checkbox',
+        label: 'Drain at area edges',
+        defaultValue: false,
+        min: 0,
+        max: 1
+      },
+      {name: 'opacity', label: 'Opacity', defaultValue: 0.8, min: 0, max: 1},
+      {
+        name: 'color',
+        type: 'color',
+        label: 'Water color',
+        defaultValue: [35, 145, 210],
+        min: 0,
+        max: 255
+      }
+    ]
+  },
   surfaceFog: {
     type: SURFACE_FOG_TYPE,
     name: 'Surface Fog',
@@ -1940,6 +1974,7 @@ export type EffectType =
   | 'hexagonalPixelate'
   | 'distanceFog'
   | 'surfaceFog'
+  | 'waterSimulation'
   | 'lightAndShadow';
 
 export const SYNC_TIMELINE_MODES: Record<string, SyncTimelineMode> = {

@@ -284,3 +284,21 @@ test('effectUtils -> validateEffectParameters', t => {
 
   t.end();
 });
+
+test('effectUtils -> water simulation only participates in a single flat interactive map', t => {
+  const effect = createEffect({id: 'water', type: 'waterSimulation'});
+  const visState = {effects: [effect], effectOrder: [effect.id], splitMaps: []};
+  const mapState = {latitude: 50, longitude: 30};
+  const includesWater = options =>
+    computeDeckEffects({visState, mapState, ...options}).includes(effect.deckEffect);
+  t.ok(includesWater({}), 'available in a flat map');
+  t.notOk(includesWater({isExport: true}), 'does not advance during export');
+  t.notOk(includesWater({mapState: {...mapState, globe: {enabled: true}}}), 'excluded from globe');
+  t.notOk(
+    includesWater({visState: {...visState, splitMaps: [{}, {}]}}),
+    'excluded from split maps'
+  );
+  effect.setProps({isEnabled: false});
+  t.notOk(includesWater({}), 'excluded when disabled');
+  t.end();
+});

@@ -5,6 +5,7 @@
 import React, {Component, createRef} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
+import {getWaterSimulationLayers} from '@kepler.gl/effects';
 import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
@@ -1435,7 +1436,7 @@ export default function MapContainerFactory(
           : [];
       const finalDeckGlLayers = isGlobeMode
         ? [...globeBaseLayers, ...deckGlLayers, ...cameraPathLayers, ...globeTopLayers]
-        : [...deckGlLayers, ...cameraPathLayers];
+        : [...deckGlLayers, ...getWaterSimulationLayers(effects), ...cameraPathLayers];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()

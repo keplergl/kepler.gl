@@ -474,6 +474,8 @@ export default {
     textPlacement: 'Placement'
   },
   effectDescription: {
+    waterSimulation:
+      'Experimental rainfall and water accumulation over captured polygon and mesh surfaces.',
     lightAndShadow:
       'Simulates realistic sun lighting and shadow casting based on time of day and geographic location. Adjustable shadow intensity, sun and ambient light colors.',
     ink: 'Applies an ink-wash artistic style that darkens edges and creates a hand-drawn appearance. Adjust strength to control the intensity of the effect.',

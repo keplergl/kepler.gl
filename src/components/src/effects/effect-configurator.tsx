@@ -5,7 +5,8 @@ import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, WATER_SIMULATION_TYPE} from '@kepler.gl/constants';
+import WaterSimulationControls from './water-simulation-controls';
 import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
@@ -364,6 +365,7 @@ export default function EffectConfiguratorFactory(
 
     const flatParameterDescriptions = useMemo(() => {
       return parameterDescriptions.reduce((acc, description) => {
+        if (effect.type === WATER_SIMULATION_TYPE && description.name === 'rain') return acc;
         if (hasElevationSection && ELEVATION_EXTRA_PARAMS.has(description.name)) return acc;
 
         if (hasElevationSection && description.name === 'height') {
@@ -389,7 +391,7 @@ export default function EffectConfiguratorFactory(
 
         return acc;
       }, [] as EffectParameterDescriptionFlattened[]);
-    }, [parameterDescriptions, hasElevationSection]);
+    }, [parameterDescriptions, hasElevationSection, effect.type]);
 
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
@@ -507,6 +509,12 @@ export default function EffectConfiguratorFactory(
 
     return (
       <StyledEffectConfigurator key={effect.id}>
+        {effect.type === WATER_SIMULATION_TYPE ? (
+          <WaterSimulationControls
+            effect={effect}
+            onRainChange={rain => updateEffectConfig(null, id, {parameters: {rain}})}
+          />
+        ) : null}
         {(() => {
           const elements: React.ReactNode[] = [];
           let i = 0;
