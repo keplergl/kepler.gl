@@ -3860,11 +3860,11 @@ const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
 
 // Table copies made for progress/filter updates retain the container. A completed
 // replacement installs a new container, even when it keeps the same dataset ID.
-type RefreshSource = Pick<Datasets[string], 'dataContainer'>;
+type RefreshSource = Datasets[string]['dataContainer'];
 type RefreshAction<T> = T & {refreshSource?: RefreshSource};
 
 function isCurrentRefresh(dataset: Datasets[string], source?: RefreshSource): boolean {
-  return !source || dataset.dataContainer === source.dataContainer;
+  return !source || dataset.dataContainer === source;
 }
 
 function isDatasetBeingReplaced(state: VisState, dataId: string): boolean {
@@ -3895,9 +3895,7 @@ export function refreshDatasetUpdater(
     return state;
   }
 
-  const refreshSource: RefreshSource = {
-    dataContainer: dataset.dataContainer
-  };
+  const refreshSource = dataset.dataContainer;
   const nextDataset = patchDatasetMetadata(dataset, {
     refreshStatus: 'loading',
     refreshError: undefined,
@@ -4512,7 +4510,6 @@ export const createNewDatasetSuccessUpdater = (
               'label',
               'type',
               'color',
-              'metadata',
               'supportedFilterTypes',
               'disableDataOperation',
               'pinnedColumns',
@@ -5014,6 +5011,15 @@ export function updateDatasetUpdater(
   const [sortedColumn, sortMode] = Object.entries(existing.sortColumn || {})[0] || [];
   newTable.updateSchema(data);
   newTable.dataRevision = existing.dataRevision + 1;
+  if (existing.metadata?.refreshStatus === 'loading') {
+    // Rebuilding the container invalidates the old poll's callbacks. Settle its
+    // status here, otherwise the loading guard would prevent future refreshes.
+    newTable.metadata = {
+      ...existing.metadata,
+      refreshStatus: 'idle',
+      refreshProgress: undefined
+    };
+  }
 
   // The data container is rebuilt unsorted and unfiltered; reset the table's
   // view state that indexes into the old container.

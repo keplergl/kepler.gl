@@ -19,6 +19,7 @@ import {
   registerEntry,
   setColumnDisplayFormat,
   stageLoadedFiles,
+  updateDataset,
   wrapTo
 } from '@kepler.gl/actions';
 import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
@@ -1468,6 +1469,95 @@ test('#composerStateReducer - late refresh cannot overwrite a completed replacem
     );
     drainTasksForTesting();
   }
+  t.end();
+});
+
+test('#composerStateReducer - updating a dataset abandons its pending refresh', async t => {
+  const original = replacementTestState();
+  const dataId = sampleConfig.dataId;
+  original.visState.datasets[dataId] = copyTableAndUpdate(original.visState.datasets[dataId], {
+    type: DatasetType.EXTERNALLY_HOSTED,
+    metadata: {source: 'https://example.test/original.csv', sourceFormat: 'csv'}
+  });
+  const loading = refreshDatasetUpdater(original.visState, {dataId});
+  const [oldRefresh] = drainTasksForTesting();
+  const progressed = visStateReducer(loading, oldRefresh.payload.onProgress({percent: 0.5}));
+  const updatedData = processCsvData('lat,lng\n10,20');
+  const updated = visStateReducer(progressed, updateDataset(dataId, updatedData));
+  t.equal(
+    updated.datasets[dataId].metadata.refreshStatus,
+    'idle',
+    'clears abandoned loading status'
+  );
+  t.equal(
+    updated.datasets[dataId].metadata.refreshProgress,
+    undefined,
+    'clears abandoned progress'
+  );
+  t.equal(
+    progressed.datasets[dataId].metadata.refreshStatus,
+    'loading',
+    'does not mutate prior metadata'
+  );
+  t.equal(
+    progressed.datasets[dataId].metadata.refreshProgress,
+    50,
+    'prior progress remains unchanged'
+  );
+  for (const late of [
+    succeedTaskInTest(oldRefresh, {data: processCsvData('lat,lng\n99,99'), notModified: false}),
+    succeedTaskInTest(oldRefresh, {data: null, notModified: true}),
+    errorTaskInTest(oldRefresh, new Error('old failure')),
+    oldRefresh.payload.onProgress({percent: 0.9})
+  ]) {
+    t.equal(
+      visStateReducer(updated, late),
+      updated,
+      'late callback cannot change the updated table'
+    );
+  }
+  t.deepEqual(
+    updated.datasets[dataId].dataContainer.flattenData(),
+    [[10, 20]],
+    'keeps updated rows'
+  );
+  const refreshing = refreshDatasetUpdater(updated, {dataId});
+  const tasks = drainTasksForTesting();
+  t.equal(tasks.length, 1, 'starts another refresh after dataset update');
+  if (tasks.length) {
+    const current = visStateReducer(
+      refreshing,
+      succeedTaskInTest(tasks[0], {data: processCsvData('lat,lng\n30,40'), notModified: false})
+    );
+    t.deepEqual(
+      current.datasets[dataId].dataContainer.flattenData(),
+      [[30, 40]],
+      'new refresh succeeds'
+    );
+    t.equal(
+      current.datasets[dataId].metadata.refreshStatus,
+      'idle',
+      'new refresh settles normally'
+    );
+  }
+  for (const refreshStatus of [undefined, 'idle', 'error']) {
+    const metadata = {
+      ...original.visState.datasets[dataId].metadata,
+      refreshStatus,
+      refreshError: 'retained'
+    };
+    const state = {
+      ...original.visState,
+      datasets: {[dataId]: copyTableAndUpdate(original.visState.datasets[dataId], {metadata})}
+    };
+    const next = visStateReducer(state, updateDataset(dataId, updatedData));
+    t.equal(
+      next.datasets[dataId].metadata,
+      metadata,
+      'does not change metadata without an active refresh'
+    );
+  }
+  drainTasksForTesting();
   t.end();
 });
 
