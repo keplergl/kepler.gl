@@ -1,6 +1,10 @@
-# Upgrade Guide — kepler.gl 3.3
+# Upgrade Guide — kepler.gl 3.3.0
 
 kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **deck.gl 9 / luma.gl 9**. This is a major dependency upgrade that changes how WebGL resources, shaders, and rendering parameters are handled under the hood. Most kepler.gl users will not need to change application code, but library consumers who extend layers, interact with the WebGL context directly, or depend on internal types should review this guide.
+
+## Release scope
+
+This guide describes upgrading to **stable 3.3.0 once it is released**, including changes made during the 3.3.0 alpha series. It does not announce that the stable release is already available. Until then, use an available prerelease; when adopting stable 3.3.0, upgrade all `@kepler.gl/*` packages together to that version. Consumers upgrading from an earlier 3.3.0 alpha should also review the behavior changes below, not only the original deck.gl 8-to-9 migration.
 
 ## Dependency Changes
 
@@ -12,36 +16,44 @@ kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **d
 | `react-intl`    | ^6.3.0      | **^7.0.0**  |
 | `react-map-gl`  | ^7.1.6      | **^8.1.1**  |
 | `maplibre-gl`   | ^3.6.2      | **^4.0.0**  |
-| `@deck.gl/*`    | 8.9.x       | **9.2.11**  |
-| `@luma.gl/*`    | 8.x         | **9.2.6**   |
-| `@loaders.gl/*` | 3.x / 4.3.2 | **4.3.4**   |
+| `@deck.gl/*`    | 8.9.x       | **9.4.1**   |
+| `@luma.gl/*`    | 8.x         | **9.4.2**   |
+| `@loaders.gl/*` | 3.x / 4.3.2 | **4.4.5**   |
 | `math.gl`       | —           | **^4.1.0**  |
 | `typescript`    | 4.7.2       | **5.6.3**   |
-| Node.js         | >=18.18.2   | **>=20.19.3** |
+| Node.js         | >=18.18.2   | **>=20**    |
 
 ### New dependencies
 
-| Package                              | Version | Notes                                         |
-| ------------------------------------ | ------- | --------------------------------------------- |
-| `@vis.gl/react-maplibre`             | 8.1.1   | MapLibre bindings for react-map-gl 8          |
-| `maplibregl-mapbox-request-transformer` | ^0.0.2 | Mapbox-style URL transform for MapLibre      |
-| `@deck.gl-community/editable-layers` | 9.2.8   | Replaces `@nebula.gl/layers` for editor layer |
-| `@deck.gl-community/layers`          | 9.2.8   | Community layers package                      |
-| `@deck.gl/widgets`                   | 9.2.11  | New deck.gl 9 module                          |
-| `@luma.gl/effects`                   | 9.2.6   | New luma.gl 9 module                          |
-| `@luma.gl/webgpu`                    | 9.2.6   | Dev dependency for test environment           |
+| Package                                 | Version | Notes                                         |
+| --------------------------------------- | ------- | --------------------------------------------- |
+| `@vis.gl/react-maplibre`                | 8.1.1   | MapLibre bindings for react-map-gl 8          |
+| `maplibregl-mapbox-request-transformer` | ^0.0.2  | Mapbox-style URL transform for MapLibre       |
+| `@deck.gl-community/editable-layers`    | 9.4.1   | Replaces `@nebula.gl/layers` for editor layer |
+| `@deck.gl-community/layers`             | 9.4.1   | Community layers package                      |
+| `@deck.gl/widgets`                      | 9.4.1   | New deck.gl 9 module                          |
+| `@luma.gl/effects`                      | 9.4.2   | New luma.gl 9 module                          |
+| `@luma.gl/webgpu`                       | 9.4.2   | Dev dependency for test environment           |
 
 ### Removed dependencies
 
-| Package                             | Notes                                            |
-| ----------------------------------- | ------------------------------------------------ |
-| `hubble.gl/core`, `hubble.gl/react` | Removed from kepler.gl                           |
-| `@nebula.gl/layers`                 | Replaced by `@deck.gl-community/editable-layers` |
-| `react-palm`                        | Replaced by built-in task runtime in `@kepler.gl/tasks` |
+| Package                             | Notes                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `hubble.gl/core`, `hubble.gl/react` | Replaced by scoped `@hubble.gl/core` and `@hubble.gl/react` (`2.0.0-alpha.4`); video export still uses Hubble |
+| `@nebula.gl/layers`                 | Replaced by `@deck.gl-community/editable-layers`                                                              |
+| `react-palm`                        | Replaced by built-in task runtime in `@kepler.gl/tasks`                                                       |
 
 ### Yarn resolutions
 
 All `@deck.gl/*`, `@loaders.gl/*`, and `@luma.gl/*` packages are pinned via resolutions. If your project has its own resolutions for these packages, make sure they are consistent with the versions above.
+
+---
+
+## Package entry points and builds
+
+Application code should import the published `@kepler.gl/*` packages. The repository root is private; its `src/index.js` UMD barrel is used by exported HTML maps, not a replacement for the scoped npm entry points. Keep the UMD bundle used for HTML exports aligned with the version that produced the saved configuration.
+
+Workspace builds now publish external source-map files rather than embedding inline maps in every JavaScript file. If your deployment strips `.map` files, production stack-trace mapping will need those files uploaded separately to your debugging service.
 
 ---
 
@@ -133,9 +145,9 @@ The upgrade to `react-redux@^9.1.0` drops the legacy context API. Ensure you are
 
 If you use kepler.gl's dependency injection to replace built-in components:
 
-1. Replace any class components with function components using hooks
-2. Remove `defaultProps` declarations — use default parameter values instead
-3. Update any `propTypes` usage (still functional but no longer shipped with kepler.gl)
+1. Review injected components against the current factory props and exports. Class components do not need to be rewritten solely because of this upgrade.
+2. For function components, replace `defaultProps` with default parameter values.
+3. Do not rely on React to validate function-component `propTypes`; use TypeScript or explicit validation instead.
 
 ---
 
@@ -161,11 +173,11 @@ maplibre-gl v4 includes breaking changes to the style specification and internal
 
 ### Minimum Node.js version raised to 20
 
-The minimum required Node.js version is now **20.19.3** (previously 18.18.2). Update your CI and development environments accordingly:
+The package manifests declare **Node.js >=20**. Repository development and CI use the Volta pin **24.21.0** with **Yarn 4.4.0**. Use the pinned toolchain when building or testing this checkout:
 
 ```sh
-nvm install 20
-nvm use 20
+nvm install 24.21.0
+nvm use 24.21.0
 ```
 
 ---
@@ -177,6 +189,7 @@ nvm use 20
 `HeatmapLayer` no longer extends `MapboxGLLayer`. It now extends the base `Layer` class and renders using a deck.gl-based implementation.
 
 **Impact:**
+
 - If you extended `HeatmapLayer` or relied on its Mapbox GL internals, your subclass will break.
 - The layer config type changed from `MapboxLayerGLConfig` to `LayerBaseConfig`.
 - New visual config properties: `intensity`, `threshold`, `aggregation`.
@@ -223,6 +236,28 @@ The function `setLayerBlending` (previously exported from `@kepler.gl/utils`) is
 The base map's WebGL context previously set `preserveDrawingBuffer: true` unconditionally. It is now **`false` by default** and only enabled during image/video export (`isExport: true`).
 
 **Impact:** If your application calls `canvas.toDataURL()` or `canvas.toBlob()` on kepler.gl's map canvas outside of the built-in export flow, the canvas will now return blank data. To restore the old behavior, pass `preserveDrawingBuffer: true` via `bottomMapContainerProps` in your `MapContainer` override.
+
+### Flat-map world repetition is now opt-in
+
+The default application configuration sets `enableMapRepeat: false`. Applications that need repeated worlds in flat-map views must opt in before mounting kepler.gl:
+
+```js
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableMapRepeat: true});
+```
+
+This is an application setting, not a new per-map saved-config field.
+
+### Existing datasets can render or filter differently
+
+Recent corrections intentionally change results for affected data. When upgrading from an earlier alpha, check these cases rather than compensating for the old behavior in application code:
+
+- **GeoJSON style zeros:** explicit `elevation: 0`, `radius: 0`, and `lineWidth: 0` are preserved instead of replaced with defaults. Trip stroke width also preserves zero.
+- **Polygon filters:** points on a polygon edge or vertex are included. Spatial-join containment semantics are unchanged.
+- **Dates:** complete slash dates use month-first by default; day-first is inferred only when all sampled dates are valid day-first and at least one day exceeds 12. Ambiguous dates such as `05/06/2016` still default to month-first. Charts interpret supported zone-less year-first timestamps in UTC, consistent with date aggregation.
+- **Raster colors:** continuous single-band palettes now use the full ramp, and integer rasters use reported statistics when available. Automatic Zarr ranges can widen as more tiles load. Review explicit color domains if a map must keep a fixed visual scale.
+- **Automatic layers:** recognized Icon and Flow Field datasets no longer also create a redundant Point layer. Highly detailed polygon datasets can start with strokes disabled; existing saved stroke settings are retained.
 
 ### `GEOCODER_ICON_SIZE` constant changed
 
@@ -349,9 +384,9 @@ The editor layer (`EditableGeoJsonLayer`) is now imported from `@deck.gl-communi
 
 If you extend `CustomDeckLightingEffect`, review the new lifecycle methods.
 
-### 12. `MapView` with `legacyMeterSizes`
+### 12. Current `MapView` configuration
 
-kepler.gl now creates `MapView` with `{legacyMeterSizes: true}` to preserve backward-compatible meter-based sizing behavior from deck.gl 8.
+The current map container no longer passes `legacyMeterSizes` to `MapView`. Do not copy that option from earlier 3.3-alpha integrations. Check custom meter-based sizing against the installed deck.gl version.
 
 ---
 
@@ -400,6 +435,18 @@ A new annotation system allows adding text labels, markers, and shapes directly 
 
 Layers can now be organized into named groups with shared visibility and legend controls. New actions: `addLayerGroup`, `removeLayerGroup`, `updateLayerGroup`, `addLayerToLayerGroup`, `removeLayerFromLayerGroup`.
 
+### Camera bookmarks and authored animations
+
+Saved views and camera tours are serialized as `cameraBookmarks` and `cameraTour` in `visState`. Applications that build or whitelist config objects themselves should retain these fields, preferably by using `KeplerGlSchema.save` and `KeplerGlSchema.load` rather than copying a fixed list of state properties. Camera navigation supports globe and split views, and video export can select an authored camera animation in addition to the built-in movement presets.
+
+### Additional layer options
+
+- **[Zarr](./user-guides/c-types-of-layers/s-zarr-layer.md)** (experimental), **[Contour](./user-guides/c-types-of-layers/contour.md)**, **[Voronoi Mosaic](./user-guides/c-types-of-layers/t-voronoi.md)**, and Donut layers extend the available layer types. Custom layer pickers should not assume the old fixed type list.
+- **[Icon rotation](./user-guides/c-types-of-layers/g-icon.md)** can be driven by a per-row angle column.
+- **[Heatmap](./user-guides/c-types-of-layers/i-heatmap.md)** and Contour layers offer 3D surface rendering modes.
+
+Zarr exports retain the store URL and layer selections, but fetch metadata again on load. The remote store must remain available and permit browser requests; an exported map does not embed the complete Zarr store.
+
 ### Other New Features
 
 - **Zoom and compass controls** — on-map navigation buttons
@@ -429,4 +476,4 @@ Both effects are registered in `POSTPROCESSING_EFFECTS` and can be created via `
 
 ### Performance with tiled layers on older hardware
 
-The deck.gl 9 upgrade introduces additional per-frame overhead in the layer management and GPU state pipelines compared to deck.gl 8. This may cause noticeable slowness when interacting with tiled layers (`Tile3DLayer`, raster tile layers) — especially when changing visual properties like opacity or when moving the camera over a scene with many visible tiles. The issue is more pronounced on older or lower-end GPUs and is currently under investigation.
+Recent changes update deck.gl/luma.gl to 9.4 and reduce unnecessary heatmap, tile, hover, and chart updates. These changes are not a guarantee of identical performance on every GPU. Validate representative tiled scenes, heatmaps, custom layers, and image/video exports on the hardware your application supports before rolling out the upgrade.

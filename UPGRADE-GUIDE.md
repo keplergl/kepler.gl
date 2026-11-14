@@ -13,16 +13,18 @@
 
 ## Upgrade from v3.2 to v3.3
 
-See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3](docs/upgrade-guide-v3.3.md)**
+See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3.0](docs/upgrade-guide-v3.3.md)**
+
+The guide describes upgrading to stable 3.3.0 once it is released, including changes made during the 3.3.0 alpha series. Review its release-scope note before choosing a package version.
 
 ### Highlights
 
 - **React 19** — kepler.gl now requires `react@^19.0.0` and `react-dom@^19.0.0`. React 18 is no longer supported.
 - **react-redux v9** — upgraded from `^8.0.5` to `^9.1.0`
 - **react-intl v7** — upgraded from `^6.3.0` to `^7.0.0`
-- **react-map-gl 8 / maplibre-gl 4** — new `@vis.gl/react-maplibre` peer dependency
-- **deck.gl 9 / luma.gl 9** — major rendering stack upgrade
-- **Node.js 20** — minimum raised from 18.18.2 to 20.19.3
+- **react-map-gl 8 / maplibre-gl 4** — uses the `@vis.gl/react-maplibre` adapter
+- **deck.gl 9.4.1 / luma.gl 9.4.2 / loaders.gl 4.4.5** — current rendering stack versions
+- **Node.js >=20** — repository builds and CI use Node 24.21.0 and Yarn 4.4.0
 - **TypeScript 5.6** — upgraded from 4.7.2
 - **HeatmapLayer** — rewritten from Mapbox GL to deck.gl base
 - **`layerOrder`** — type changed from flat `string[]` to `(string | LayerOrderGroup)[]`
