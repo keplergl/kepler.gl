@@ -280,7 +280,10 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndexForDomain = allIndexes;
     this.filteredIndexByLayer = {};
     this.sortColumn = undefined;
-    this.sortOrder = null;
+    // Keep sorting unset on initial imports; only invalidate an existing sort state.
+    if (this.sortOrder !== undefined) {
+      this.sortOrder = null;
+    }
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;

@@ -1313,6 +1313,8 @@ test('KeplerTable -> snapshot updates discard obsolete sort indexes', async t =>
   const table = new KeplerTable({info: {id: 'sorted-refresh'}, color: [0, 0, 0]});
   const fields = [{name: 'value', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}];
   await table.importData({data: {fields, rows: [[3], [2], [1]]}});
+  t.equal(table.sortOrder, undefined, 'initial import preserves unset sorting');
+  t.equal(table.sortColumn, undefined, 'initial import has no sort indicator');
   sortDatasetByColumn(table, 'value', 'ASCENDING');
   t.deepEqual(table.sortOrder, [2, 1, 0], 'starts with sorted row indexes');
   await table.update({fields, rows: [[42]]});
