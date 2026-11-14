@@ -3,11 +3,12 @@
 
 import React from 'react';
 import {act, render, fireEvent} from '@testing-library/react';
-import {createStore} from 'redux';
+import {combineReducers, createStore} from 'redux';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
-import {VisStateActions} from '@kepler.gl/actions';
-import {visStateReducer} from '@kepler.gl/reducers';
+import {MapStateActions, VisStateActions} from '@kepler.gl/actions';
+import {INITIAL_MAP_STATE, mapStateReducer, visStateReducer} from '@kepler.gl/reducers';
+import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
 import test from 'tape';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
@@ -152,5 +153,68 @@ test('Components -> EffectManager -> isolates pointer updates and preserves effe
     fixtureFlags,
     'effect actions preserve the shared fixture flags'
   );
+  t.end();
+});
+
+test('Components -> EffectManager -> Light & Shadow follows camera changes through memoization', t => {
+  const effect = StateWEffects.visState.effects
+    .find(item => item.type === LIGHT_AND_SHADOW_EFFECT.type)
+    .clone();
+  effect.setProps({
+    isEnabled: true,
+    isConfigActive: true,
+    parameters: {
+      timestamp: Date.UTC(2026, 5, 21, 12),
+      timezone: 'UTC',
+      timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick
+    }
+  });
+  const effects = [effect];
+  const store = createStore(
+    combineReducers({visState: visStateReducer, mapState: mapStateReducer}),
+    {
+      visState: {...StateWEffects.visState, effects, effectOrder: [effect.id]},
+      mapState: {...INITIAL_MAP_STATE, latitude: 0, longitude: 0}
+    }
+  );
+  let listRenders = 0;
+  const List = props => {
+    listRenders++;
+    return <EffectList {...props} />;
+  };
+  const Manager = EffectManagerFactory(List, SidePanelTitle, EffectTypeSelector);
+  const view = render(
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>
+          <Manager />
+        </IntlWrapper>
+      </ThemeProvider>
+    </Provider>,
+    {baseElement: document.createElement('div')}
+  );
+  const readTimes = () =>
+    Array.from(
+      view.container.querySelectorAll('.bottom_icon__sunrise, .bottom_icon__sunset'),
+      node => node.textContent
+    );
+  const initialTimes = readTimes();
+  const initialRenders = listRenders;
+  t.equal(initialTimes.length, 2, 'shows sunrise and sunset times');
+
+  act(() => store.dispatch(MapStateActions.updateMap({longitude: 30})));
+  const longitudeTimes = readTimes();
+  t.notDeepEqual(longitudeTimes, initialTimes, 'longitude changes update the day/night indicator');
+  act(() => store.dispatch(MapStateActions.updateMap({latitude: 50})));
+  t.notDeepEqual(readTimes(), longitudeTimes, 'latitude changes update the day/night indicator');
+  act(() => store.dispatch(MapStateActions.updateMap({latitude: 0, longitude: 0})));
+  t.deepEqual(readTimes(), initialTimes, 'returning to the original location restores its times');
+  t.equal(store.getState().visState.effects, effects, 'camera updates preserve the effects input');
+  t.equal(
+    listRenders,
+    initialRenders,
+    'the subscribed indicator updates without rerendering the list'
+  );
+  view.unmount();
   t.end();
 });
