@@ -61,6 +61,10 @@ test('Components -> EffectManager -> render', t => {
 });
 
 test('Components -> EffectManager -> isolates pointer updates and preserves effect changes', t => {
+  const fixtureFlags = StateWEffects.visState.effects.map(({isEnabled, isConfigActive}) => ({
+    isEnabled,
+    isConfigActive
+  }));
   let renders = 0;
   const List = ({effects, effectOrder, visStateActions}) => {
     renders++;
@@ -83,7 +87,11 @@ test('Components -> EffectManager -> isolates pointer updates and preserves effe
     ({children}) => <div>{children}</div>,
     () => null
   );
-  const store = createStore((state = {visState: StateWEffects.visState}, action) => ({
+  const storeVisState = {
+    ...StateWEffects.visState,
+    effects: StateWEffects.visState.effects.map(effect => effect.clone())
+  };
+  const store = createStore((state = {visState: storeVisState}, action) => ({
     visState: action.type === 'replace' ? action.visState : visStateReducer(state.visState, action)
   }));
   const tree = (props = {}) => (
@@ -136,5 +144,13 @@ test('Components -> EffectManager -> isolates pointer updates and preserves effe
     'hydrates missing state'
   );
   view.unmount();
+  t.deepEqual(
+    StateWEffects.visState.effects.map(({isEnabled, isConfigActive}) => ({
+      isEnabled,
+      isConfigActive
+    })),
+    fixtureFlags,
+    'effect actions preserve the shared fixture flags'
+  );
   t.end();
 });
