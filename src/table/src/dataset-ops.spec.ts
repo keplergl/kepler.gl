@@ -872,6 +872,67 @@ describe('dataset-ops engine', () => {
     expect(result.metadata.derivedDataset.type).toBe('spatialJoin');
   });
 
+  test.each([
+    ['timestamp', 'M/D/YYYY', ['2/1/2026', '12/1/2026'], '2/1/2026', '12/1/2026'],
+    ['date', 'MM/DD/YYYY', ['01/01/2026', '12/31/2025'], '12/31/2025', '01/01/2026'],
+    ['timestamp', 'x', [1767261600, 1767175200], 1767175200, 1767261600],
+    [
+      'timestamp',
+      'YYYY-MM-DDTHH:mm:ssZ',
+      ['2026-01-01T00:30:00+02:00', '2025-12-31T23:00:00Z'],
+      '2026-01-01T00:30:00+02:00',
+      '2025-12-31T23:00:00Z'
+    ],
+    ['timestamp', 'X', [1767261600000, 1767175200000], 1767175200000, 1767261600000],
+    ['timestamp', 'M/D/YYYY H:m:s', [januaryDate, december, january], december, januaryDate],
+    ['timestamp', 'M/D/YYYY', [null, 'invalid', '12/1/2026', '2/1/2026'], '2/1/2026', '12/1/2026'],
+    ['timestamp', 'M/D/YYYY', [null, undefined, 'invalid', NaN, Infinity], null, null],
+    ['timestamp', 'M/D/YYYY', [], null, null],
+    ['integer', '', [20, null, 10], 10, 20],
+    ['string', '', ['z', null, 'a'], 'a', 'z']
+  ] as const)(
+    'spatial join extrema compare %s values with format %s',
+    (type, format, values, minimum, maximum) => {
+      const left = makeTable({
+        id: 'areas',
+        fields: [{name: 'geometry', type: 'geojson'}],
+        rows: [[square(-1, -1, 1, 1)], [square(10, 10, 11, 11)]]
+      });
+      const right = new KeplerTable({info: {id: 'times'}, color: [0, 0, 0]}).updateSchema({
+        fields: [
+          {name: 'point', type: 'geojson'},
+          {name: 'value', type, format}
+        ],
+        rows: values.map(value => [{type: 'Point', coordinates: [0, 0]}, value])
+      });
+      for (const [technique, expected] of [
+        ['minimum', minimum],
+        ['maximum', maximum]
+      ] as const) {
+        const result = spatialJoinDatasets(left, right, {
+          leftGeo: {kind: 'geojson', fieldName: 'geometry'},
+          rightGeo: {kind: 'geojson', fieldName: 'point'},
+          aggregations: {value: technique}
+        });
+        expect(result.data.rows.map(row => row.slice(1))).toEqual([
+          [values.length, expected],
+          [0, null]
+        ]);
+        if (type === 'timestamp' || type === 'date') {
+          expect(result.data.fields[2]).toMatchObject({type, format});
+          const restored = importDerived(result);
+          expect(restored.fields[2].format).toBe(format);
+          if (expected !== null) {
+            expect(restored.fields[2].valueAccessor({index: 0})).toBe(
+              type === 'timestamp' ? timeToUnixMilli(expected, format) : expected
+            );
+          }
+        }
+      }
+      expect(right.dataContainer.flattenData().map(row => row[1])).toEqual(values);
+    }
+  );
+
   test('spatial joins ignore missing coordinates without rejecting zero or numeric strings', () => {
     const polygons = makeTable({
       id: 'polys',
