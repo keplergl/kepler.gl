@@ -21,6 +21,7 @@ import {ChartsSchema, chartPropsV1, VisState} from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
+import {initApplicationConfig} from '@kepler.gl/utils';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {ChartPanelContentFactory} from './chart-panel';
@@ -108,7 +109,11 @@ function makeState(): VisState {
   });
 }
 
-function renderManager(initialState = makeState(), initialProps: Partial<ChartManagerState> = {}) {
+function renderManager(
+  initialState = makeState(),
+  initialProps: Partial<ChartManagerState> = {},
+  Manager = ChartManager
+) {
   const store = createStore(
     (state: {visState: VisState} = {visState: initialState}, action: any) => ({
       visState:
@@ -124,7 +129,7 @@ function renderManager(initialState = makeState(), initialProps: Partial<ChartMa
       </ThemeProvider>
     </Provider>
   );
-  const result = render(<ChartManager intl={intl} {...initialProps} />, {wrapper});
+  const result = render(<Manager intl={intl} {...initialProps} />, {wrapper});
   return {
     ...result,
     store,
@@ -133,7 +138,7 @@ function renderManager(initialState = makeState(), initialProps: Partial<ChartMa
         store.dispatch(action);
       }),
     rerenderManager: (props: Partial<ChartManagerState>) =>
-      result.rerender(<ChartManager intl={intl} {...props} />)
+      result.rerender(<Manager intl={intl} {...props} />)
   };
 }
 
@@ -144,6 +149,40 @@ function lastChartValue() {
 
 describe('ChartManager reactivity', () => {
   beforeEach(() => jest.mocked(computeChart).mockClear());
+
+  test('skips unchanged parent renders while keeping chart, panel and feature changes live', () => {
+    const Header = jest.fn(({children, title}) => (
+      <div data-testid="manager-header">
+        {title}
+        {children}
+      </div>
+    ));
+    const Manager = ChartManagerFactory(ChartPanelContent, Header as any, EmptyControl as any);
+    const {rerenderManager, dispatch, getByDisplayValue, queryByDisplayValue, queryByTestId} =
+      renderManager(makeState(), {}, Manager);
+    expect(Header).toHaveBeenCalledTimes(1);
+    rerenderManager({});
+    dispatch(VisStateActions.onMouseMove({point: [1, 2], lngLat: [1, 2]} as any));
+    expect(Header).toHaveBeenCalledTimes(1);
+    expect(computeChart).toHaveBeenCalledTimes(1);
+    dispatch(VisStateActions.updateChart('c1', {title: 'Changed rows'}));
+    expect(getByDisplayValue('Changed rows')).toBeInTheDocument();
+    expect(Header).toHaveBeenCalledTimes(2);
+    rerenderManager({panelActive: false});
+    expect(queryByTestId('manager-header')).toBeNull();
+    rerenderManager({panelActive: true});
+    expect(Header).toHaveBeenCalledTimes(3);
+    try {
+      initApplicationConfig({enableChartsPanel: false});
+      rerenderManager({});
+      expect(queryByDisplayValue('Changed rows')).toBeNull();
+      initApplicationConfig({enableChartsPanel: true});
+      rerenderManager({});
+      expect(getByDisplayValue('Changed rows')).toBeInTheDocument();
+    } finally {
+      initApplicationConfig({});
+    }
+  });
 
   test.each([true, false])('does not aggregate on pointer moves (panelActive=%s)', panelActive => {
     const state = makeState();
