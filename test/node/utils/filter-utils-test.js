@@ -125,8 +125,8 @@ test('filterUtils -> adjustValueToFilterDomain', t => {
 
   t.deepEqual(
     adjustValueToFilterDomain([1, 2], multiSelectFilter),
-    [],
-    'should return [] if nothing matched to multiSelect filter'
+    [1, 2],
+    'should retain a nonempty selection when nothing matches the domain'
   );
 
   // TODO needs id
@@ -1479,8 +1479,8 @@ test('filterUtils -> restoring tile filters preserves categories absent from met
       t.equal(failed.length, 0, 'filter restores');
       t.deepEqual(
         validated[0].value,
-        type ? ['007 café'] : [],
-        'only tile filters keep values outside metadata'
+        ['007 café'],
+        'an entirely absent selection stays active for ordinary and tile filters'
       );
       t.deepEqual(dataset.fields[0].filterProps.domain, domain, 'metadata is not mutated');
       t.equal(validated[0].inverted, true, 'inversion preserved');
@@ -1532,5 +1532,77 @@ test('filterUtils -> numeric domains retain fallback for empty or missing data',
     t.deepEqual(result.domain, [0, 1], 'missing numeric values retain the fallback domain');
     t.ok(Number.isFinite(result.step) && result.step > 0, 'step remains finite and positive');
   });
+  t.end();
+});
+
+test('filterUtils -> restored missing categories never become an unselected filter', t => {
+  const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: [{name: 'category', type: 'string', analyzerType: 'STRING'}],
+    rows: [['B']]
+  });
+  for (const value of [['A'], [0], []]) {
+    const saved = {
+      ...getDefaultFilter({dataId: ['ds']}),
+      name: ['category'],
+      type: FILTER_TYPES.multiSelect,
+      value
+    };
+    const {validated, failed} = validateFiltersUpdateDatasets(
+      {datasets: {ds: dataset}, layers: [], isMergingDatasets: {}},
+      [JSON.parse(JSON.stringify(saved))]
+    );
+    t.equal(failed.length, 0, 'saved filter restores against changed data');
+    t.deepEqual(validated[0].value, value, 'restoration preserves the explicit predicate');
+    t.deepEqual(saved.value, value, 'saved config is unchanged');
+    t.equal(
+      isValidFilterValue(validated[0].type, validated[0].value),
+      Boolean(value.length),
+      'only the explicitly empty selection disables filtering'
+    );
+    if (value.length) {
+      const predicate = getFilterFunction(
+        dataset.fields[0],
+        'ds',
+        validated[0],
+        [],
+        dataset.dataContainer
+      );
+      t.equal(predicate({index: 0}), false, 'unmatched saved category excludes the current row');
+      const inverted = getFilterFunction(
+        dataset.fields[0],
+        'ds',
+        {...validated[0], inverted: true},
+        [],
+        dataset.dataContainer
+      );
+      t.equal(inverted({index: 0}), true, 'inversion retains the original predicate meaning');
+      const serialized = JSON.parse(JSON.stringify(validated[0]));
+      t.deepEqual(serialized.value, value, 'subsequent save preserves the absent selection');
+    }
+  }
+  t.end();
+});
+
+test('filterUtils -> absent categories survive empty data and match when data returns', t => {
+  let value = ['A'];
+  for (const domain of [[], ['B'], ['A', 'B']]) {
+    value = adjustValueToFilterDomain(value, {type: FILTER_TYPES.multiSelect, domain});
+    t.deepEqual(value, ['A'], 'domain updates do not erase an unmatched selection');
+  }
+  const predicate = getFilterFunction(
+    {valueAccessor: row => row.value},
+    'ds',
+    {type: FILTER_TYPES.multiSelect, value, enabled: true},
+    [],
+    null
+  );
+  t.equal(predicate({value: 'A'}), true, 'returning selected category matches');
+  t.equal(predicate({value: 'B'}), false, 'unselected category stays excluded');
+  t.deepEqual(
+    adjustValueToFilterDomain([], {type: FILTER_TYPES.multiSelect, domain: ['B']}),
+    [],
+    'explicitly clearing the selection stays empty'
+  );
   t.end();
 });

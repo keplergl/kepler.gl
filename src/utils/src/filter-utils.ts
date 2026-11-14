@@ -1046,7 +1046,9 @@ export function adjustValueToFilterDomain(value: Filter['value'], {domain, type}
         return [];
       }
       const filteredValue = value.filter(d => domain.includes(d));
-      return filteredValue.length ? filteredValue : [];
+      // An empty selection disables filtering. Keep an unmatched predicate instead
+      // of turning a saved selection into an unfiltered dataset.
+      return filteredValue.length ? filteredValue : value.slice();
     }
     case FILTER_TYPES.select:
       return typeof value === 'boolean' || domain.includes(value) ? value : true;

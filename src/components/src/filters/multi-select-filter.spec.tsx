@@ -34,6 +34,25 @@ beforeAll(() => {
 });
 
 describe('MultiSelectFilter', () => {
+  test('shows and clears a restored selection absent from the current domain', async () => {
+    const setFilter = jest.fn();
+    const user = userEvent.setup();
+    renderWithTheme(
+      <IntlProvider locale="en" messages={messages.en}>
+        <MultiSelectFilter
+          filter={{id: 'restored', domain: ['B'], value: ['A']} as any}
+          setFilter={setFilter}
+        />
+      </IntlProvider>
+    );
+    const selected = screen.getByText('A');
+    expect(selected).toBeInTheDocument();
+    const remove = selected.parentElement?.querySelector('svg');
+    expect(remove).not.toBeNull();
+    await user.click(remove as SVGSVGElement);
+    expect(setFilter).toHaveBeenCalledWith([]);
+  });
+
   test('searches string categories when other tile layers have same-named numeric fields', async () => {
     const metadata = parseVectorMetadata({
       tilejson: {
