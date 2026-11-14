@@ -39,13 +39,15 @@ const duckdbCore = {
 const tableSelection = loadTypeScript(path.join(sourceDir, 'keplerTableSelection.ts'), {
   '@sqlrooms/duckdb-core': duckdbCore
 });
-const wrapTo = (id, action) => {
-  const wrap = input => ({...input, payload: {...input.payload, meta: {_id_: id}}});
-  return action ? wrap(action) : wrap;
-};
+// Keep the real forwarding envelope/recognition contract alongside the task
+// runtime so this harness catches double wrapping and lost map destinations.
+const {wrapTo, isForwardAction} = loadTypeScript(
+  path.resolve(sourceDir, '../../actions/src/action-wrapper.ts')
+);
 const actions = {
   ActionTypes: {LAYER_HOVER: 'hover', UPDATE_MAP: 'pan', MOUSE_MOVE: 'mouse'},
   wrapTo,
+  isForwardAction,
   registerEntry: payload => ({type: 'register', payload}),
   deleteEntry: id => ({type: 'delete', payload: {id}}),
   addDataToMap: payload => ({type: 'add-data', payload}),
@@ -71,13 +73,15 @@ function emptyMap() {
 }
 
 function reducer(state = {}, action) {
+  // Like the real root reducer, unwrap exactly one forwarding envelope.
+  if (isForwardAction(action)) action = action.payload;
   if (action.type === 'register') return {...state, [action.payload.id]: emptyMap()};
   if (action.type === 'delete') {
     const result = {...state};
     delete result[action.payload.id];
     return result;
   }
-  const id = action.payload.meta._id_;
+  const id = action.meta._id_;
   const map = state[id];
   if (action.type === 'add-data') {
     let visState = {...map.visState};
