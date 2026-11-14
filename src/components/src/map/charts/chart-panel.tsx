@@ -35,7 +35,7 @@ import {
 } from '@kepler.gl/constants';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer} from '@kepler.gl/layers';
-import {Datasets} from '@kepler.gl/table';
+import {Datasets, getGpuFilterProps} from '@kepler.gl/table';
 import {ColorRange, ColorUI, Filter, NestedPartial, RGBColor} from '@kepler.gl/types';
 import {generateHashId} from '@kepler.gl/common-utils';
 import {
@@ -265,8 +265,6 @@ function toMapFilteredChartDataset(
   dataset: Datasets[string] | undefined,
   options?: {
     dataId?: string | null;
-    skipFieldName?: string | null;
-    skipFieldNames?: string[] | null;
     skipFilterIds?: string[] | null;
     layers?: Layer[];
   }
@@ -274,21 +272,31 @@ function toMapFilteredChartDataset(
   if (!dataset) {
     return null;
   }
-  const skipNames = (options?.skipFieldNames || []).filter(Boolean) as string[];
-  if (options?.skipFieldName) {
-    skipNames.push(options.skipFieldName);
-  }
-  const uniqueSkip = Array.from(new Set(skipNames));
   const skipFilterIds = (options?.skipFilterIds || []).filter(Boolean);
   const cpuIndex =
     options?.dataId && skipFilterIds.length
       ? cpuIndexExcludingFilterIds(dataset, options.dataId, skipFilterIds, options.layers || [])
       : undefined;
-  const plotSource = cpuIndex ? ({...dataset, filteredIndex: cpuIndex} as typeof dataset) : dataset;
+  const gpuFilters = dataset.filterRecord?.gpu;
+  const remainingGpuFilters = skipFilterIds.length
+    ? gpuFilters?.filter(filter => !skipFilterIds.includes(filter.id))
+    : gpuFilters;
+  // Exclude only owned filters, not every filter on the same field. Reuse the
+  // normal channel builder so mixed CPU/GPU and two-axis charts stay consistent.
+  const gpuFilter =
+    remainingGpuFilters && remainingGpuFilters.length !== gpuFilters?.length
+      ? getGpuFilterProps(remainingGpuFilters, dataset.id, dataset.fields)
+      : dataset.gpuFilter;
+  const plotSource =
+    cpuIndex || gpuFilter !== dataset.gpuFilter
+      ? ({
+          ...dataset,
+          gpuFilter,
+          filteredIndex: cpuIndex || dataset.filteredIndex
+        } as typeof dataset)
+      : dataset;
   const filteredIndex =
-    plotSource.gpuFilter?.filterValueAccessor != null
-      ? runGpuFilterForPlot(plotSource, undefined, uniqueSkip.length ? uniqueSkip : undefined)
-      : cpuIndex;
+    plotSource.gpuFilter?.filterValueAccessor != null ? runGpuFilterForPlot(plotSource) : cpuIndex;
   return toChartableDataset(dataset, filteredIndex ? {filteredIndex} : undefined);
 }
 
@@ -627,13 +635,11 @@ export function ChartPanelContentFactory(
       <ChartList className="chart-panel">
         {charts.map(chart => {
           const rawDataset = chart.dataId ? datasets[chart.dataId] : undefined;
-          const crossFilterFields = getCrossFilterFields(chart);
           const dataset = chart.dataId
             ? chart.applyFilters
               ? toMapFilteredChartDataset(rawDataset, {
                   dataId: chart.dataId,
                   // Keep this chart's bins stable while its own cross-filter drives the map.
-                  skipFieldNames: chart.crossFilter?.enabled ? crossFilterFields : null,
                   skipFilterIds: chart.crossFilter?.enabled ? chartOwnedFilterIds(chart) : null,
                   layers
                 })

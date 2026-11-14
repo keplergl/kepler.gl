@@ -542,3 +542,38 @@ describe('chart editing contracts', () => {
     );
   });
 });
+
+describe('chart-owned GPU filter exclusion', () => {
+  test.each([false, true])('retains external same-field filters (heatmap=%s)', heatmap => {
+    let state = makeState();
+    state = visStateUpdaters.createOrUpdateFilterUpdater(state, {
+      id: 'range',
+      dataId: 'd1',
+      field: 'value',
+      value: [2, 3]
+    });
+    const axis = {field: {name: 'value', type: 'integer'}, aggregation: 'unique'} as any;
+    const chart = heatmap
+      ? createHeatmapChart({id: 'filtered', dataId: 'd1', pinned: true, xAxis: axis, yAxis: axis})
+      : createBarChart({id: 'filtered', dataId: 'd1', pinned: true, xAxis: axis});
+    const {container, store, queryAllByRole, dispatch} = renderManager({...state, charts: [chart]});
+    const buttons = () =>
+      heatmap
+        ? queryAllByRole('button', {name: /^[23] \/ [23]:/})
+        : Array.from(container.querySelectorAll('.bar-chart [role="button"]'));
+    const before = buttons().map(button => button.getAttribute('aria-label'));
+    expect(buttons().length).toBeGreaterThan(0);
+    fireEvent.click(buttons()[0]);
+    expect(store.getState().visState.charts[0].crossFilter?.enabled).toBe(true);
+    expect(buttons().map(button => button.getAttribute('aria-label'))).toEqual(before);
+    const calls = jest.mocked(computeChart).mock.calls;
+    expect(calls[calls.length - 1][1]?.filteredIndex).toEqual([1, 2]);
+    fireEvent.click(buttons()[0]);
+    expect(store.getState().visState.filters.map(filter => filter.id)).toEqual(['range']);
+    expect(buttons().map(button => button.getAttribute('aria-label'))).toEqual(before);
+    fireEvent.click(buttons()[0]);
+    dispatch(VisStateActions.setFilter(0, 'value', [3, 3]));
+    const updated = jest.mocked(computeChart).mock.calls;
+    expect(updated[updated.length - 1][1]?.filteredIndex).toEqual([2]);
+  });
+});
