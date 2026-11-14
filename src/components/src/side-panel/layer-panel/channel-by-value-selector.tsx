@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 
 import {CHANNEL_SCALE_SUPPORTED_FIELDS} from '@kepler.gl/constants';
 import {Layer, VisualChannel} from '@kepler.gl/layers';
@@ -50,7 +50,10 @@ export function ChannelByValueSelectorFactory(
       channel;
     const channelSupportedFieldTypes =
       supportedFieldTypes || CHANNEL_SCALE_SUPPORTED_FIELDS[channelScaleType];
-    const supportedFields = fields.filter(({type}) => channelSupportedFieldTypes.includes(type));
+    const supportedFields = useMemo(
+      () => fields.filter(({type}) => channelSupportedFieldTypes.includes(type)),
+      [fields, channelSupportedFieldTypes]
+    );
     const showScale = !layer.isAggregated && layer.config[scale] && layer.config[field];
     const defaultDescription = 'layerConfiguration.defaultDescription';
     const updateField = useCallback(

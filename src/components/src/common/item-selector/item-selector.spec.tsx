@@ -2,13 +2,16 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
 
 import {messages} from '@kepler.gl/localization';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import ItemSelector from './item-selector';
+import FieldSelectorFactory from '../field-selector';
 
 beforeAll(() => {
   window.IntersectionObserver = class {
@@ -31,6 +34,52 @@ beforeAll(() => {
 });
 
 describe('ItemSelector', () => {
+  test('field dropdowns skip callback-only renders but select and clear through the latest callback', async () => {
+    const FieldItem = jest.fn(({value, displayOption}) => <span>{displayOption(value)}</span>);
+    const FieldSelector = FieldSelectorFactory(() => FieldItem);
+    let fields = [
+      {name: 'alpha', displayName: 'Alpha', type: 'integer', format: ''},
+      {name: 'beta', displayName: 'Beta', type: 'integer', format: ''}
+    ];
+    let value: string | null = 'alpha';
+    let disabled = false;
+    const originalCallback = jest.fn();
+    let onSelect = originalCallback;
+    const node = () => (
+      <IntlProvider locale="en" messages={messages.en}>
+        <FieldSelector fields={fields} value={value} onSelect={onSelect} disabled={disabled} />
+      </IntlProvider>
+    );
+    const view = render(node(), {
+      wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+    });
+    const user = userEvent.setup();
+
+    FieldItem.mockClear();
+    onSelect = jest.fn();
+    view.rerender(node());
+    expect(FieldItem).not.toHaveBeenCalled();
+
+    await user.click(screen.getByText('Alpha'));
+    await user.click(screen.getByText('Beta'));
+    expect(onSelect).toHaveBeenCalledWith(fields[1]);
+    expect(originalCallback).not.toHaveBeenCalled();
+
+    value = 'beta';
+    fields = fields.map(field => ({...field, displayName: `${field.displayName} updated`}));
+    view.rerender(node());
+    expect(screen.getByText('Beta updated')).toBeInTheDocument();
+    fireEvent.click(view.container.querySelector('.item-selector__dropdown svg')!);
+    expect(onSelect).toHaveBeenLastCalledWith(null);
+
+    value = null;
+    fields = [];
+    disabled = true;
+    view.rerender(node());
+    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText(messages.en['placeholder.selectField'])).toBeInTheDocument();
+  });
+
   test('keeps disabled single selectors out of the tab order and blocks keyboard opening', async () => {
     const user = userEvent.setup();
     renderWithTheme(
