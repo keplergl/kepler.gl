@@ -61,7 +61,8 @@ jobs:
           corepack yarn install:example
           cd website && corepack yarn && cd ..
           for d in examples/custom-reducer examples/custom-theme examples/open-modal examples/replace-component examples/node-app; do
-            (cd "$d" && corepack yarn)
+            # Templates resolve fresh published dependencies; only demo apps keep locks.
+            (cd "$d" && touch yarn.lock && YARN_ENABLE_IMMUTABLE_INSTALLS=false corepack yarn)
           done
 
       # - name: Install Puppeteer
