@@ -1,4 +1,4 @@
-# Prod image smoke test (env-only /config.json). PRs that touch image build inputs.
+# Prod image smoke test (env-only /config.json). PRs that touch docker packaging.
 # Master / tags: publish is manual (Actions → Docker publish → Run workflow).
 name: Docker CI
 
@@ -7,15 +7,6 @@ on:
     branches: [master]
     paths:
       - 'docker/**'
-      - 'src/**'
-      - 'examples/demo-app/**'
-      - 'package.json'
-      - 'yarn.lock'
-      - '.yarnrc.yml'
-      - 'scripts/**'
-      - 'babel.config.js'
-      - 'webpack/**'
-      - 'tsconfig*.json'
       - '.dockerignore'
       - '.github/workflows/docker.yml'
 
