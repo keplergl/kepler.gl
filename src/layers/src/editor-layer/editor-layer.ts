@@ -5,6 +5,7 @@ import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {Layer as DeckLayer, LayerProps as DeckLayerProps} from '@deck.gl/core';
 import {
   DrawPolygonMode,
+  DrawLineStringMode,
   DrawPointMode,
   TranslateMode,
   CompositeMode,
@@ -29,6 +30,41 @@ const DEFAULT_COMPOSITE_MODE = new CompositeMode([
   new TranslateMode() as unknown as GeoJsonEditMode,
   new ModifyModeExtended() as unknown as GeoJsonEditMode
 ]);
+
+class EditorLayer extends EditableGeoJsonLayer {
+  static layerName = 'EditorLayer';
+
+  _addEventHandlers() {
+    super._addEventHandlers();
+    // An active dblclick listener makes deck.gl defer every click by 300 ms.
+    // Let the map controller enable that recognizer only when it needs zoom.
+    // The inherited cleanup also removes this passive listener.
+    // @ts-expect-error eventManager is protected in deck.gl
+    const {eventManager} = this.context.deck;
+    const {eventHandler} = this.state._editableLayerState;
+    eventManager.off('dblclick', eventHandler);
+    eventManager.watch('dblclick', eventHandler, {priority: 100});
+  }
+
+  _onclick(event: Parameters<EditableGeoJsonLayer['_onclick']>[0]) {
+    const mode = this.getActiveMode();
+    if (
+      event.tapCount &&
+      event.tapCount % 2 === 0 &&
+      (mode instanceof DrawPolygonMode || mode instanceof DrawLineStringMode)
+    ) {
+      // Immediate clicks still carry a tap count. Finish on the second tap,
+      // even if the first tap's edit handle has not rendered for picking yet.
+      // Its vertex is already committed; do not add a duplicate position.
+      const minimumVertices = mode instanceof DrawPolygonMode ? 3 : 2;
+      if (mode.getClickSequence().length >= minimumVertices) {
+        this._ondblclick(event);
+      }
+      return;
+    }
+    super._onclick(event);
+  }
+}
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
@@ -96,7 +132,7 @@ export function getEditorLayer({
     (sketchesEnabled && editorMode === EDITOR_MODES.DRAW_POINT);
 
   // @ts-ignore
-  return new EditableGeoJsonLayer({
+  return new EditorLayer({
     id: EDITOR_LAYER_ID,
     mode,
     // @ts-ignore

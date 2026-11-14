@@ -3,8 +3,12 @@
 
 import React, {createRef, StrictMode} from 'react';
 import {act, render} from '@testing-library/react';
-import {Deck} from '@deck.gl/core';
+import {Deck, MapView, WebMercatorViewport} from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
+import {EditableGeoJsonLayer, ViewMode} from '@deck.gl-community/editable-layers';
+import {Timeline} from '@luma.gl/engine';
+import {EDITOR_MODES} from '@kepler.gl/constants';
+import {getEditorLayer} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
 import {
   INITIAL_MAP_STATE,
@@ -41,6 +45,210 @@ beforeEach(() => {
   jest.spyOn(MapContainer.prototype, '_renderMap').mockReturnValue(null);
 });
 afterEach(() => jest.restoreAllMocks());
+
+describe('Draw on Map click timing', () => {
+  const A = [1, 1];
+  const B = [9, 1];
+  const C = [9, 9];
+  const D = [1, 9];
+  let cleanup: () => void;
+
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    cleanup?.();
+    jest.useRealTimers();
+  });
+
+  function setupDrawing(editorMode = EDITOR_MODES.DRAW_POLYGON) {
+    const element = document.createElement('div');
+    document.body.appendChild(element);
+    // Use deck's real recognizers: calling a mode's handleClick directly would
+    // miss delayed/cancelled clicks between pointer-up and the editor.
+    const eventManager = (Deck.prototype as any)._createEventManager.call(
+      {props: {}, _onEvent: jest.fn(), _onPointerDown: jest.fn(), _onPointerMove: jest.fn()},
+      element
+    );
+    const onViewStateChange = jest.fn();
+    const Controller = new MapView().ControllerType;
+    const controller = new Controller({
+      eventManager,
+      timeline: new Timeline(),
+      makeViewport: props => new WebMercatorViewport(props),
+      onViewStateChange,
+      onStateChange: jest.fn()
+    });
+    const controllerProps = {
+      id: 'map',
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 400,
+      longitude: 0,
+      latitude: 0,
+      zoom: 2
+    };
+    controller.setProps({...controllerProps, doubleClickZoom: false});
+    onViewStateChange.mockClear();
+    const onSetFeatures = jest.fn();
+    const layer: any = getEditorLayer({
+      editorMenuActive: true,
+      editor: {...INITIAL_VIS_STATE.editor, mode: editorMode},
+      onSetFeatures,
+      setSelectedFeature: jest.fn(),
+      featureCollection: {type: 'FeatureCollection', features: []},
+      selectedFeatureIndexes: [],
+      viewport: new WebMercatorViewport(controllerProps) as any
+    });
+    // Only GPU initialization/picking is stubbed. Event registration, routing,
+    // mode edits and the map controller run as they do in the application.
+    layer.context = {deck: {eventManager}};
+    jest.spyOn(layer, 'getCurrentLayer').mockReturnValue(layer);
+    jest.spyOn(layer as EditableGeoJsonLayer, 'setState').mockImplementation(state => {
+      layer.state = {...layer.state, ...state};
+    });
+    jest.spyOn(layer, 'setNeedsUpdate').mockImplementation(() => undefined);
+    jest
+      .spyOn(layer as EditableGeoJsonLayer, 'getMapCoords')
+      .mockImplementation(coords => coords.map(n => n / 10));
+    const modeProps = () => layer.getModeProps(layer.props);
+    const getPicks = jest
+      .spyOn(layer as EditableGeoJsonLayer, 'getPicks')
+      .mockImplementation(coords => {
+        const [x, y] = coords.map(n => n / 10);
+        return layer
+          .getActiveMode()
+          .getGuides(modeProps())
+          .features.filter(
+            f =>
+              f.properties.guideType === 'editHandle' &&
+              Math.hypot(f.geometry.coordinates[0] - x, f.geometry.coordinates[1] - y) < 0.5
+          )
+          .map(object => ({object, isGuide: true}));
+      });
+    layer.initializeState();
+    layer.state.mode = new layer.props.mode();
+    let finalized = false;
+    const finalize = () => {
+      if (!finalized) layer.finalizeState();
+      finalized = true;
+    };
+    cleanup = () => {
+      finalize();
+      controller.finalize();
+      eventManager.destroy();
+      element.remove();
+    };
+    const pointer = (type: string, coords: number[], pointerType = 'mouse') => {
+      const [clientX, clientY] = coords.map(n => n * 10);
+      const event = new MouseEvent(type, {
+        bubbles: true,
+        clientX,
+        clientY,
+        button: 0,
+        buttons: type === 'pointerdown' ? 1 : 0
+      });
+      Object.defineProperties(event, {pointerId: {value: 1}, pointerType: {value: pointerType}});
+      element.dispatchEvent(event);
+    };
+    const click = (coords: number[], pointerType = 'mouse') => {
+      pointer('pointerdown', coords, pointerType);
+      jest.advanceTimersByTime(10);
+      pointer('pointerup', coords, pointerType);
+    };
+    return {
+      click,
+      pointer,
+      layer,
+      getPicks,
+      onSetFeatures,
+      onViewStateChange,
+      finalize,
+      setDrawing: (drawing: boolean) => {
+        controller.setProps({...controllerProps, doubleClickZoom: !drawing});
+        layer.state.mode = drawing ? new layer.props.mode() : new ViewMode();
+      },
+      guides: () => layer.getActiveMode().getGuides(modeProps()).features
+    };
+  }
+
+  test.each(['mouse', 'touch'])('commits each %s vertex before the cursor moves', pointerType => {
+    const {click, pointer, guides, onViewStateChange} = setupDrawing();
+    click(A, pointerType);
+    click(B, pointerType);
+    pointer('mousemove', C);
+    expect(
+      guides()
+        .filter(f => f.properties.guideType === 'editHandle')
+        .map(f => f.geometry.coordinates)
+    ).toEqual([A, B]);
+    expect(guides()[0].geometry.coordinates).toEqual([A, B, C]);
+    expect(onViewStateChange).not.toHaveBeenCalled();
+  });
+
+  test('preserves the last vertex when closing at the first point within 300 ms', () => {
+    const {click, onSetFeatures} = setupDrawing();
+    [A, B, C, D, A].forEach(coords => click(coords));
+    expect(onSetFeatures).toHaveBeenCalledTimes(1);
+    expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual([[A, B, C, D, A]]);
+    jest.advanceTimersByTime(350);
+    expect(onSetFeatures).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([EDITOR_MODES.DRAW_POLYGON, EDITOR_MODES.DRAW_LINESTRING])(
+    'double-click finishes %s with its final vertex before handles have rendered',
+    editorMode => {
+      const {click, getPicks, onSetFeatures, onViewStateChange} = setupDrawing(editorMode);
+      getPicks.mockReturnValue([]);
+      [A, B, C, D].forEach(coords => click(coords));
+      jest.advanceTimersByTime(100);
+      click(D);
+      expect(onSetFeatures).toHaveBeenCalledTimes(1);
+      expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual(
+        editorMode === EDITOR_MODES.DRAW_POLYGON ? [[A, B, C, D, A]] : [A, B, C, D]
+      );
+      jest.advanceTimersByTime(350);
+      expect(onSetFeatures).toHaveBeenCalledTimes(1);
+      expect(onViewStateChange).not.toHaveBeenCalled();
+    }
+  );
+
+  test('double-clicking before a polygon has three vertices does not finish or duplicate it', () => {
+    const {click, guides, onSetFeatures} = setupDrawing();
+    click(A);
+    click(A);
+    expect(guides().filter(f => f.properties.guideType === 'editHandle')).toHaveLength(1);
+    expect(onSetFeatures).not.toHaveBeenCalled();
+  });
+
+  test('restores normal double-click zoom after drawing and after removing the editor', () => {
+    const {click, setDrawing, finalize, onViewStateChange} = setupDrawing();
+    setDrawing(false);
+    for (const removeEditor of [false, true]) {
+      if (removeEditor) finalize();
+      onViewStateChange.mockClear();
+      click(A);
+      jest.advanceTimersByTime(100);
+      click(A);
+      jest.advanceTimersByTime(350);
+      expect(onViewStateChange).toHaveBeenCalledTimes(1);
+      expect(onViewStateChange.mock.calls[0][0].viewState.zoom).toBe(3);
+    }
+  });
+
+  test('responds immediately when drawing is enabled again on the same map', () => {
+    const {click, setDrawing, guides} = setupDrawing();
+    setDrawing(false);
+    click(A);
+    jest.advanceTimersByTime(350);
+    setDrawing(true);
+    click(B);
+    expect(
+      guides()
+        .filter(f => f.properties.guideType === 'editHandle')
+        .map(f => f.geometry.coordinates)
+    ).toEqual([B]);
+  });
+});
 
 describe('camera tour path dragging', () => {
   const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
