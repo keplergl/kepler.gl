@@ -5436,7 +5436,7 @@ export function loadFileStepSuccessUpdater(
   state: VisState,
   action: VisStateActions.LoadFileStepSuccessAction
 ): VisState {
-  if (!state.fileLoading) {
+  if (!state.fileLoading || (action.loadId != null && state.fileLoading.loadId !== action.loadId)) {
     return state;
   }
   const {fileName, fileCache} = action;
@@ -5509,7 +5509,9 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
       loaders,
       loadOptions,
       nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined,
-      options
+      options,
+      undefined,
+      currentLoadId
     )
   );
 }
@@ -5579,7 +5581,8 @@ export function expandZipArchiveSuccessUpdater(
         loadOptions,
         companionFiles,
         loading.options,
-        archiveName
+        archiveName,
+        loading.loadId
       )
     );
   }
@@ -5609,7 +5612,8 @@ export function makeLoadFileTask(
   loadOptions = {},
   companionFiles?: File[],
   addDataOptions?: VisStateActions.LoadFilesOptions,
-  fileName?: string
+  fileName?: string,
+  loadId?: number
 ) {
   const displayName = fileName || file.name;
   return LOAD_FILE_TASK({
@@ -5625,6 +5629,7 @@ export function makeLoadFileTask(
     gen =>
       nextFileBatch({
         gen,
+        ...(loadId == null ? {} : {loadId}),
         fileName: displayName,
         onFinish: result =>
           processFileContent({
@@ -5634,13 +5639,14 @@ export function makeLoadFileTask(
                 ? {prepareProgressiveReplay: true}
                 : {})
             },
-            fileCache
+            fileCache,
+            ...(loadId == null ? {} : {loadId})
           }),
         ...(addDataOptions ? {options: addDataOptions} : {})
       }),
 
     // error
-    err => loadFilesErr(displayName, err)
+    err => loadFilesErr(displayName, err, loadId)
   );
 }
 
@@ -5653,7 +5659,10 @@ export function processFileContentUpdater(
   state: VisState,
   action: VisStateActions.ProcessFileContentUpdaterAction
 ): VisState {
-  const {content, fileCache} = action.payload;
+  const {content, fileCache, loadId} = action.payload;
+  if (loadId != null && (!state.fileLoading || state.fileLoading.loadId !== loadId)) {
+    return state;
+  }
 
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName: content.fileName,
@@ -5663,8 +5672,8 @@ export function processFileContentUpdater(
   return withTask(
     stateWithProgress,
     PROCESS_FILE_DATA({content, fileCache}).bimap(
-      result => loadFileStepSuccess({fileName: content.fileName, fileCache: result}),
-      err => loadFilesErr(content.fileName, err)
+      result => loadFileStepSuccess({fileName: content.fileName, fileCache: result, loadId}),
+      err => loadFilesErr(content.fileName, err, loadId)
     )
   );
 }
@@ -5690,9 +5699,12 @@ export function parseProgress(prevProgress = {}, progress) {
 export const nextFileBatchUpdater = (
   state: VisState,
   {
-    payload: {gen, fileName, progress, accumulated, onFinish, options}
+    payload: {gen, fileName, progress, accumulated, onFinish, options, loadId}
   }: VisStateActions.NextFileBatchUpdaterAction
 ): VisState => {
+  if (loadId != null && (!state.fileLoading || state.fileLoading.loadId !== loadId)) {
+    return state;
+  }
   const stateWithProgress = updateFileLoadingProgressUpdater(state, {
     fileName,
     progress: parseProgress(state.fileLoadingProgress[fileName], progress)
@@ -5712,8 +5724,11 @@ export const nextFileBatchUpdater = (
             content: {...accumulated, skipArrowCompact: true},
             fileCache: []
           }).bimap(
-            result => (options ? loadFilesSuccess(result, options) : loadFilesSuccess(result)),
-            err => loadFilesErr(fileName, err)
+            result => ({
+              ...loadFilesSuccess(result, options),
+              ...(loadId == null ? {} : {loadId, isPartial: true})
+            }),
+            err => loadFilesErr(fileName, err, loadId)
           )
         ]
       : []),
@@ -5724,13 +5739,14 @@ export const nextFileBatchUpdater = (
           : nextFileBatch({
               gen,
               fileName,
+              ...(loadId == null ? {} : {loadId}),
               progress: value.progress,
               accumulated: value,
               onFinish,
               ...(options ? {options} : {})
             });
       },
-      err => loadFilesErr(fileName, err)
+      err => loadFilesErr(fileName, err, loadId)
     )
   ]);
 };
