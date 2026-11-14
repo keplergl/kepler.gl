@@ -4,6 +4,7 @@
 import {getCentroid, generateHashId, h3IsValid, idToPolygonGeo} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import {Field, ProtoDataset} from '@kepler.gl/types';
+import {timeToUnixMilli} from '@kepler.gl/utils';
 import {booleanCrosses} from '@turf/boolean-crosses';
 import {booleanEqual} from '@turf/boolean-equal';
 import {booleanIntersects} from '@turf/boolean-intersects';
@@ -100,6 +101,13 @@ function hasPolygonCoordinates(feature: Feature): boolean {
   );
 }
 
+// Coerce numeric strings, but not missing cells, booleans or containers to zero.
+function readCoordinate(value: unknown): number {
+  return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')
+    ? Number(value)
+    : NaN;
+}
+
 function readSpatialValue(
   dataset: DatasetOpsTable,
   rowIndex: number,
@@ -111,8 +119,8 @@ function readSpatialValue(
     if (!latField || !lngField) {
       return null;
     }
-    const lat = Number(rowValue(dataset, rowIndex, latField));
-    const lng = Number(rowValue(dataset, rowIndex, lngField));
+    const lat = readCoordinate(rowValue(dataset, rowIndex, latField));
+    const lng = readCoordinate(rowValue(dataset, rowIndex, lngField));
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return null;
     }
@@ -299,7 +307,10 @@ export function spatialJoinDatasets(
       throw new Error(`Spatial join aggregation field "${fieldName}" was not found`);
     }
     const name = uniqueColumnName(`${fieldName}_${technique}`, usedNames);
-    return {sourceField, technique, name};
+    const isTimeExtremum =
+      (technique === 'minimum' || technique === 'maximum') &&
+      (sourceField.type === ALL_FIELD_TYPES.timestamp || sourceField.type === ALL_FIELD_TYPES.date);
+    return {sourceField, technique, name, isTimeExtremum};
   });
 
   const fields = [
@@ -309,8 +320,9 @@ export function spatialJoinDatasets(
       type: ALL_FIELD_TYPES.integer,
       analyzerType: ALL_FIELD_TYPES.integer
     },
-    ...aggMeta.map(({name, technique, sourceField}) => ({
+    ...aggMeta.map(({name, technique, sourceField, isTimeExtremum}) => ({
       name,
+      ...(isTimeExtremum ? {format: sourceField.format} : {}),
       type: resultFieldType(technique, sourceField.type),
       analyzerType: sourceField.analyzerType || sourceField.type
     }))
@@ -326,7 +338,27 @@ export function spatialJoinDatasets(
     }
     const row: unknown[] = includedLeft.map(field => rowValue(left, leftIndex, field));
     row.push(matched.length);
-    for (const {sourceField, technique} of aggMeta) {
+    for (const {sourceField, technique, isTimeExtremum} of aggMeta) {
+      if (isTimeExtremum) {
+        let selectedValue: unknown = null;
+        let selectedTime: number | null = null;
+        for (const index of matched) {
+          const value = rowValue(right, index, sourceField);
+          const time = timeToUnixMilli(value as string | number | Date, sourceField.format || '');
+          if (
+            time !== null &&
+            Number.isFinite(time) &&
+            (selectedTime === null ||
+              (technique === 'minimum' ? time < selectedTime : time > selectedTime))
+          ) {
+            // Compare instants but keep the original representation, including ties.
+            selectedValue = value;
+            selectedTime = time;
+          }
+        }
+        row.push(selectedValue);
+        continue;
+      }
       const values = matched.map(index => rowValue(right, index, sourceField));
       row.push(aggregateValues(values, technique));
     }
