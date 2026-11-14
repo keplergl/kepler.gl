@@ -12,6 +12,7 @@ import {
 import test from 'tape';
 
 import {
+  addToDataset,
   appendStagedLoadedFiles,
   confirmReplaceDataset,
   loadFilesSuccess,
@@ -1403,6 +1404,103 @@ test('#composerStateReducer - replacement takes priority over background refresh
       }
     }
   }
+  t.end();
+});
+
+test('#composerStateReducer - late refresh cannot overwrite a completed replacement', async t => {
+  for (const targetId of [sampleConfig.dataId, 'existing-target']) {
+    const original = replacementTestState();
+    const remote = copyTableAndUpdate(original.visState.datasets[sampleConfig.dataId], {
+      type: DatasetType.EXTERNALLY_HOSTED,
+      metadata: {source: 'https://example.test/original.csv', sourceFormat: 'csv'}
+    });
+    original.visState = {
+      ...original.visState,
+      datasets: {
+        [sampleConfig.dataId]: remote,
+        ...(targetId !== sampleConfig.dataId
+          ? {[targetId]: copyTableAndUpdate(remote, {id: targetId})}
+          : {})
+      }
+    };
+    original.visState = refreshDatasetUpdater(original.visState, {dataId: targetId});
+    const [oldRefresh] = drainTasksForTesting();
+    const {pending, task, datasetToUse} = beginRemoteReplacement(original, targetId);
+    const replaced = visStateReducer(
+      pending.visState,
+      await finishRemoteDownload(task, datasetToUse)
+    );
+    drainTasksForTesting();
+    const refreshing = refreshDatasetUpdater(replaced, {dataId: targetId});
+    const [newRefresh] = drainTasksForTesting();
+    const newRows = refreshing.datasets[targetId].dataContainer.flattenData();
+    for (const staleAction of [
+      succeedTaskInTest(oldRefresh, {
+        data: processCsvData('lat,lng\n99,99'),
+        notModified: false,
+        etag: 'old-response'
+      }),
+      succeedTaskInTest(oldRefresh, {data: null, notModified: true, etag: 'old-304'}),
+      errorTaskInTest(oldRefresh, new Error('old error')),
+      oldRefresh.payload.onProgress({percent: 0.75})
+    ]) {
+      t.equal(
+        visStateReducer(refreshing, staleAction),
+        refreshing,
+        'ignores stale refresh callback'
+      );
+      t.equal(
+        refreshing.datasets[targetId].dataContainer.flattenData(),
+        newRows,
+        'does not mutate replacement rows'
+      );
+    }
+    const progressed = visStateReducer(refreshing, newRefresh.payload.onProgress({percent: 0.5}));
+    t.equal(progressed.datasets[targetId].metadata.refreshProgress, 50, 'accepts current progress');
+    const current = visStateReducer(
+      progressed,
+      succeedTaskInTest(newRefresh, {data: processCsvData('lat,lng\n10,20'), notModified: false})
+    );
+    t.deepEqual(
+      current.datasets[targetId].dataContainer.flattenData(),
+      [[10, 20]],
+      'accepts current response'
+    );
+    drainTasksForTesting();
+  }
+  t.end();
+});
+
+test('#composerStateReducer - failed replacement does not invalidate a pending refresh', async t => {
+  const original = replacementTestState();
+  const dataId = sampleConfig.dataId;
+  original.visState.datasets[dataId] = copyTableAndUpdate(original.visState.datasets[dataId], {
+    type: DatasetType.EXTERNALLY_HOSTED,
+    metadata: {source: 'https://example.test/original.csv', sourceFormat: 'csv'}
+  });
+  original.visState = refreshDatasetUpdater(original.visState, {dataId});
+  const [refresh] = drainTasksForTesting();
+  const {pending, task} = beginRemoteReplacement(original, dataId);
+  const failed = visStateReducer(
+    pending.visState,
+    errorTaskInTest(task, new Error('replacement failed'))
+  );
+  const previousLength = failed.datasets[dataId].length;
+  const appended = visStateReducer(
+    failed,
+    addToDataset(dataId, [failed.datasets[dataId].dataContainer.rowAsArray(0)])
+  );
+  t.equal(appended.datasets[dataId].length, previousLength + 1, 'appends while refresh is pending');
+  const refreshed = visStateReducer(
+    appended,
+    succeedTaskInTest(refresh, {data: processCsvData('lat,lng\n10,20'), notModified: false})
+  );
+  t.deepEqual(
+    refreshed.datasets[dataId].dataContainer.flattenData(),
+    [[10, 20]],
+    'keeps valid refresh after failed replacement'
+  );
+  drainTasksForTesting();
   t.end();
 });
 

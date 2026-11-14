@@ -3858,6 +3858,15 @@ const REFRESH_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
   'REFRESH_EXTERNALLY_HOSTED_DATASET_TASK'
 );
 
+// Table copies made for progress/filter updates retain the container. A completed
+// replacement installs a new container, even when it keeps the same dataset ID.
+type RefreshSource = Pick<Datasets[string], 'dataContainer'>;
+type RefreshAction<T> = T & {refreshSource?: RefreshSource};
+
+function isCurrentRefresh(dataset: Datasets[string], source?: RefreshSource): boolean {
+  return !source || dataset.dataContainer === source.dataContainer;
+}
+
 function isDatasetBeingReplaced(state: VisState, dataId: string): boolean {
   return Object.entries(state.pendingDatasetReplacements || {}).some(
     ([originalId, {targetId}]) => originalId === dataId || targetId === dataId
@@ -3886,6 +3895,9 @@ export function refreshDatasetUpdater(
     return state;
   }
 
+  const refreshSource: RefreshSource = {
+    dataContainer: dataset.dataContainer
+  };
   const nextDataset = patchDatasetMetadata(dataset, {
     refreshStatus: 'loading',
     refreshError: undefined,
@@ -3912,11 +3924,13 @@ export function refreshDatasetUpdater(
             ? nextDataset.metadata.lastModified
             : undefined
       },
-      onProgress: progress =>
-        refreshDatasetProgress(dataId, Math.round((progress?.percent ?? 0) * 100))
+      onProgress: progress => ({
+        ...refreshDatasetProgress(dataId, Math.round((progress?.percent ?? 0) * 100)),
+        refreshSource
+      })
     }).bimap(
-      result => refreshDatasetSuccess(dataId, result),
-      (error: Error) => refreshDatasetError(dataId, error)
+      result => ({...refreshDatasetSuccess(dataId, result), refreshSource}),
+      (error: Error) => ({...refreshDatasetError(dataId, error), refreshSource})
     )
   );
 }
@@ -3928,10 +3942,18 @@ export function refreshDatasetUpdater(
  */
 export function refreshDatasetProgressUpdater(
   state: VisState,
-  {dataId, percent}: VisStateActions.RefreshDatasetProgressUpdaterAction
+  {
+    dataId,
+    percent,
+    refreshSource
+  }: RefreshAction<VisStateActions.RefreshDatasetProgressUpdaterAction>
 ): VisState {
   const dataset = state.datasets[dataId];
-  if (!dataset || dataset.metadata?.refreshStatus !== 'loading') {
+  if (
+    !dataset ||
+    !isCurrentRefresh(dataset, refreshSource) ||
+    dataset.metadata?.refreshStatus !== 'loading'
+  ) {
     return state;
   }
   const nextPercent = Number.isFinite(percent)
@@ -4033,10 +4055,10 @@ function rebindLayersAndFiltersAfterSchemaChange(
  */
 export function refreshDatasetSuccessUpdater(
   state: VisState,
-  {dataId, result}: VisStateActions.RefreshDatasetSuccessUpdaterAction
+  {dataId, result, refreshSource}: RefreshAction<VisStateActions.RefreshDatasetSuccessUpdaterAction>
 ): VisState {
   const dataset = state.datasets[dataId];
-  if (!dataset) {
+  if (!dataset || !isCurrentRefresh(dataset, refreshSource)) {
     return state;
   }
 
@@ -4267,10 +4289,10 @@ export function removeFromDatasetUpdater(
  */
 export function refreshDatasetErrorUpdater(
   state: VisState,
-  {dataId, error}: VisStateActions.RefreshDatasetErrorUpdaterAction
+  {dataId, error, refreshSource}: RefreshAction<VisStateActions.RefreshDatasetErrorUpdaterAction>
 ): VisState {
   const dataset = state.datasets[dataId];
-  if (!dataset) {
+  if (!dataset || !isCurrentRefresh(dataset, refreshSource)) {
     return state;
   }
 
@@ -4497,6 +4519,11 @@ export const createNewDatasetSuccessUpdater = (
               'hiddenColumns',
               'getFileProcessor'
             ]),
+            // The old table's poll no longer owns this replacement's status.
+            metadata:
+              target.metadata?.refreshStatus === 'loading'
+                ? {...target.metadata, refreshStatus: 'idle', refreshProgress: undefined}
+                : target.metadata,
             fields: fieldNamesEqual(target.fields, dataset.fields)
               ? target.fields.map(({filterProps: _filterProps, ...field}, index) => ({
                   ...field,
