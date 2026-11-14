@@ -807,6 +807,49 @@ describe('dataset-ops engine', () => {
     expect(result.metadata.derivedDataset.type).toBe('spatialJoin');
   });
 
+  test('spatial joins ignore missing coordinates without rejecting zero or numeric strings', () => {
+    const polygons = makeTable({
+      id: 'polys',
+      fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+      rows: [[square(-1, -1, 1, 1)]]
+    });
+    const points = makeTable({
+      id: 'pts',
+      fields: [
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        {name: 'value', type: ALL_FIELD_TYPES.integer}
+      ],
+      rows: [
+        [0, 0, 2],
+        ['0', '0', 3],
+        [null, null, 100],
+        [null, 0, 100],
+        [0, undefined, 100],
+        ['', '', 100],
+        ['  ', 0, 100],
+        [false, false, 100],
+        [[], [], 100],
+        [NaN, 0, 100],
+        [0, Infinity, 100],
+        ['invalid', 0, 100]
+      ]
+    });
+    const result = spatialJoinDatasets(polygons, points, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'latlng', latField: 'lat', lngField: 'lng'},
+      aggregations: {value: DATASET_OPS_AGGREGATIONS.sum}
+    });
+    expect(result.data.rows[0].slice(1)).toEqual([2, 5]);
+    const reverse = spatialJoinDatasets(points, polygons, {
+      leftGeo: {kind: 'latlng', latField: 'lat', lngField: 'lng'},
+      rightGeo: {kind: 'geojson', fieldName: 'geom'},
+      predicate: 'within',
+      aggregations: {}
+    });
+    expect(reverse.data.rows.map(row => row[3])).toEqual([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
   test('spatialJoinDatasets leftColumns omits unselected attributes and keeps geometry', () => {
     const polygons = makeTable({
       id: 'polys',
