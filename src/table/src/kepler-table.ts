@@ -297,7 +297,16 @@ class KeplerTable<F extends Field = Field> {
     // on column updates, but invalidate cached filter results for every snapshot.
     const isRowSnapshot = !data.cols && Array.isArray(data.rows);
 
-    if (data.fields?.length && !fieldNamesMatch(this.fields, data.fields)) {
+    if (
+      data.fields?.length &&
+      (!fieldNamesMatch(this.fields, data.fields) ||
+        (isRowSnapshot &&
+          data.fields.some(
+            (field, index) =>
+              field.type !== this.fields[index].type ||
+              (field.format || '') !== (this.fields[index].format || '')
+          )))
+    ) {
       await this.importData({data});
       this.dataRevision += 1;
       return this;

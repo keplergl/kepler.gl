@@ -1308,3 +1308,28 @@ test('KeplerTable -> update replaces row snapshots', async t => {
   t.equal(table.length, 1, 'schema change should import the new rows');
   t.end();
 });
+
+test('KeplerTable -> refresh updates timestamp units without changing column names', async t => {
+  const table = new KeplerTable({info: {id: 'timestamp-refresh'}, color: [0, 0, 0]});
+  const field = {name: 'time', type: ALL_FIELD_TYPES.timestamp, analyzerType: 'TIME', format: 'x'};
+  await table.importData({data: {fields: [field], rows: [[1700000000], [1700000001]]}});
+  t.deepEqual(
+    table.getColumnFilterProps('time').domain,
+    [1700000000000, 1700000001000],
+    'initial seconds'
+  );
+  await table.update({fields: [{...field, format: 'X'}], rows: [[1700000002000], [1700000003000]]});
+  t.equal(table.fields[0].format, 'X', 'adopts incoming millisecond units');
+  t.deepEqual(
+    table.getColumnFilterProps('time').domain,
+    [1700000002000, 1700000003000],
+    'new timestamps have correct scale'
+  );
+  await table.update({fields: [field], rows: [[1700000004], [1700000005]]});
+  t.deepEqual(
+    table.getColumnFilterProps('time').domain,
+    [1700000004000, 1700000005000],
+    'switching back to seconds also works'
+  );
+  t.end();
+});
