@@ -83,7 +83,7 @@ function FilterAnimationControllerFactory(
     );
 
     // if filter is synced merge the filter and animation config
-    const timeline = getTimelineFromFilter(filter);
+    const timeline = useMemo(() => getTimelineFromFilter(filter), [filter]);
 
     return (
       <AnimationController

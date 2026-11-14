@@ -268,10 +268,12 @@ export default function BottomWidgetFactory(
     );
   };
 
-  return withTheme(
-    forwardRef((props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
-      <BottomWidget {...props} rootRef={ref} />
-    ))
+  return React.memo(
+    withTheme(
+      forwardRef((props: BottomWidgetThemedProps, ref: React.ForwardedRef<HTMLDivElement>) => (
+        <BottomWidget {...props} rootRef={ref} />
+      ))
+    )
   );
 }
 /* eslint-enable complexity */

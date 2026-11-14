@@ -2,6 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import {render, fireEvent} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
@@ -9,6 +12,8 @@ import {
   BottomWidgetFactory,
   TimeWidgetFactory,
   AnimationControlFactory,
+  FilterAnimationControllerFactory,
+  LayerAnimationControllerFactory,
   Icons,
   TimezoneSelector,
   appInjector
@@ -22,7 +27,7 @@ const TimeWidget = appInjector.get(TimeWidgetFactory);
 const AnimationControl = appInjector.get(AnimationControlFactory);
 
 // mock state
-import {InitialState, StateWFilters} from 'test/helpers/mock-state';
+import {InitialState, StateWFilters, StateWTripGeojson} from 'test/helpers/mock-state';
 
 // default props from initial state
 const defaultProps = {
@@ -35,6 +40,80 @@ const defaultProps = {
   sidePanelWidth: 300,
   visStateActions: VisStateActions
 };
+
+test('Components -> BottomWidget -> skips unchanged parent renders and keeps updates live', t => {
+  let renders = 0;
+  const TimeWidgetProbe = ({filter, onClose}) => {
+    renders++;
+    return <button onClick={onClose}>{filter.value.join(',')}</button>;
+  };
+  const Widget = BottomWidgetFactory(
+    TimeWidgetProbe,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  const closeCalls = [];
+  const props = {
+    ...defaultProps,
+    ...StateWFilters.visState,
+    visStateActions: {...VisStateActions, setFilterView: (...args) => closeCalls.push(args)}
+  };
+  const ref = React.createRef();
+  const tree = (next = props, nextTheme = theme) => (
+    <ThemeProvider theme={nextTheme}>
+      <Widget {...next} ref={ref} />
+    </ThemeProvider>
+  );
+  const view = render(tree(), {baseElement: document.createElement('div')});
+  t.equal(renders, 1, 'renders the enlarged filter');
+  t.equal(ref.current, view.container.firstChild, 'forwards the DOM ref');
+  view.rerender(tree({...props}));
+  t.equal(renders, 1, 'skips a parent render with unchanged inputs');
+
+  const filters = props.filters.map(filter => ({...filter, value: [1, 2]}));
+  view.rerender(tree({...props, filters}));
+  t.ok(view.getByText('1,2'), 'updates the displayed filter value');
+  fireEvent.click(view.getByText('1,2'));
+  t.deepEqual(closeCalls, [[0, FILTER_VIEW_TYPES.side]], 'retains filter controls');
+  const beforeTheme = renders;
+  view.rerender(tree({...props, filters}, {...theme, sidePanelBg: '#123456'}));
+  t.equal(renders, beforeTheme + 1, 'consumed theme changes still propagate');
+  view.rerender(tree({...props, filters: [], datasets: {}}));
+  t.equal(view.queryByRole('button'), null, 'handles the filter being removed');
+  view.unmount();
+  t.end();
+});
+
+test('Components -> timeline controllers -> reuse unchanged inputs and update replaced inputs', t => {
+  for (const [factory, prop, initial] of [
+    [FilterAnimationControllerFactory, 'filter', StateWFilters.visState.filters[0]],
+    [LayerAnimationControllerFactory, 'animationConfig', StateWTripGeojson.visState.animationConfig]
+  ]) {
+    let renders = 0;
+    const Timeline = React.memo(({timeline}) => {
+      renders++;
+      return <output>{JSON.stringify(timeline)}</output>;
+    });
+    const Controller = factory(({timeline}) => <Timeline timeline={timeline} />);
+    const props = {
+      [prop]: initial,
+      filterIdx: 0,
+      setFilterAnimationTime: () => {},
+      setLayerAnimationTime: () => {}
+    };
+    const view = render(<Controller {...props} />);
+    const original = view.container.textContent;
+    view.rerender(<Controller {...props} />);
+    t.equal(renders, 1, `${prop}: does not rerender a timeline with unchanged inputs`);
+    view.rerender(<Controller {...props} {...{[prop]: {...initial, domain: [10, 20]}}} />);
+    t.equal(renders, 2, `${prop}: updates after domain replacement`);
+    t.notEqual(view.container.textContent, original, `${prop}: renders the new domain`);
+    view.unmount();
+  }
+  t.end();
+});
 
 test('Components -> BottomWidget.mount -> initial state', t => {
   let wrapper;

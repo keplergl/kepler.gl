@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {AnimationConfig, Timeline} from '@kepler.gl/types';
 import {snapToMarks, getTimelineFromAnimationConfig} from '@kepler.gl/utils';
@@ -47,7 +47,10 @@ function LayerAnimationControllerFactory(
       [domain, setLayerAnimationTime, timeSteps]
     );
 
-    const timeline = getTimelineFromAnimationConfig(animationConfig);
+    const timeline = useMemo(
+      () => getTimelineFromAnimationConfig(animationConfig),
+      [animationConfig]
+    );
 
     return (
       <AnimationController
