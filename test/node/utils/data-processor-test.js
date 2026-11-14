@@ -719,6 +719,78 @@ test('Processor -> processCsvData -> timestamps in TSV', t => {
   t.end();
 });
 
+test('Processor -> duplicate CSV headers retain independent types and values', t => {
+  const result = processCsvData('value,value\nAlice,12\nBob,13');
+  t.deepEqual(
+    result.fields.map(f => f.name),
+    ['value', 'value-0'],
+    'uses existing unique names'
+  );
+  t.deepEqual(
+    result.fields.map(f => f.type),
+    ['string', 'integer'],
+    'infers each column independently'
+  );
+  t.deepEqual(
+    result.rows,
+    [
+      ['Alice', 12],
+      ['Bob', 13]
+    ],
+    'preserves names and parses numbers'
+  );
+
+  const header = ['value', 'value', 'value-0'];
+  const rows = [
+    ['12', 'Alice', 'true'],
+    ['13', 'Bob', 'false']
+  ];
+  const explicit = processCsvData(rows, header);
+  t.deepEqual(
+    explicit.fields.map(f => f.name),
+    ['value', 'value-0', 'value-0-0'],
+    'handles suffix collisions'
+  );
+  t.deepEqual(
+    explicit.fields.map(f => f.type),
+    ['integer', 'string', 'boolean'],
+    'keeps all distinct types'
+  );
+  t.deepEqual(
+    explicit.rows,
+    [
+      [12, 'Alice', true],
+      [13, 'Bob', false]
+    ],
+    'parses each positional column'
+  );
+  t.deepEqual(header, ['value', 'value', 'value-0'], 'does not mutate supplied headers');
+  const missing = processCsvData('value,value\n,12\nAlice,');
+  t.deepEqual(
+    missing.fields.map(f => f.type),
+    ['string', 'integer'],
+    'samples non-null values separately'
+  );
+  t.deepEqual(
+    missing.rows,
+    [
+      [null, 12],
+      ['Alice', null]
+    ],
+    'preserves missing cells'
+  );
+  const unnamed = processCsvData(',\nAlice,12\nBob,13');
+  t.deepEqual(
+    unnamed.rows,
+    [
+      ['Alice', 12],
+      ['Bob', 13]
+    ],
+    'blank duplicated headers do not collide'
+  );
+  t.end();
+});
+
 test('Processor -> processCsvData -> duplicated field name', t => {
   const testData1 = `column1,column1,column1,column2\na,b,c,d\nc,d,e,f`;
 

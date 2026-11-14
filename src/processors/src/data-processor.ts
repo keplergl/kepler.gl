@@ -32,6 +32,7 @@ import {
   getFieldsFromData,
   h3IsValid,
   notNullorUndefined,
+  renameDuplicateFields,
   toArray
 } from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
@@ -182,6 +183,8 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   // here we assume the csv file that people uploaded will have first row
   // as name of the column
 
+  // Sampling uses names as object keys, so make them unique before inferring types.
+  headerRow = renameDuplicateFields(headerRow).fieldByIndex;
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
