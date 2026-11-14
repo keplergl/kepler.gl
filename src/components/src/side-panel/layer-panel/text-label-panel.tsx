@@ -3,7 +3,7 @@
 
 import {ColorRange} from '@kepler.gl/types';
 import {FormattedMessage} from '@kepler.gl/localization';
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import styled from 'styled-components';
 
 import {Add} from '../../common/icons';
@@ -54,7 +54,7 @@ function TextLabelPanelFactory(
   FieldSelector: ReturnType<typeof FieldSelectorFactory>,
   ColorSelector: ReturnType<typeof ColorSelectorFactory>
 ): React.ComponentType<TextLabelPanelProps> {
-  class TextLabelPanel extends Component<TextLabelPanelProps> {
+  class TextLabelPanel extends PureComponent<TextLabelPanelProps> {
     render() {
       const {updateLayerTextLabel, textLabel, fields} = this.props;
       const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => Boolean(d));

@@ -13,6 +13,9 @@ import {theme} from '@kepler.gl/styles';
 import {KeplerTable} from '@kepler.gl/table';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {VisStateActions} from '@kepler.gl/actions';
+import {visStateReducer} from '@kepler.gl/reducers';
+import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 
 import {
   LayerConfiguratorFactory,
@@ -20,6 +23,8 @@ import {
   LayerColumnConfigFactory,
   LayerConfigGroupFactory,
   TextLabelPanelFactory,
+  RangeSliderFactory,
+  ColorSelectorFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
   appInjector,
@@ -174,6 +179,113 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   );
 
   t.end();
+});
+
+test('Components -> TextLabelPanel -> skips camera renders and follows label, field and locale updates', t => {
+  const rendered = sinon.spy();
+  const Panel = TextLabelPanelFactory(
+    appInjector.get(RangeSliderFactory),
+    props => {
+      rendered();
+      return <LayerConfigGroup {...props} />;
+    },
+    FieldSelector,
+    appInjector.get(ColorSelectorFactory)
+  );
+  const layer = new LayerClasses.point({id: 'text-label-memo'});
+  layer.updateLayerConfig({
+    ...StateWFiles.visState.layers[0].config,
+    textLabel: [{...DEFAULT_TEXT_LABEL, collisionEnabled: false}]
+  });
+  let state = {
+    ...StateWFiles.visState,
+    layers: [layer],
+    layerData: [StateWFiles.visState.layerData[0]]
+  };
+  let fields = state.datasets[testCsvDataId].fields;
+  let locale = 'en';
+  const update = (idx, prop, value) => {
+    state = visStateReducer(state, VisStateActions.layerTextLabelChange(layer, idx, prop, value));
+    view.rerender(panel());
+  };
+  let onChange = update;
+  const panel = () => (
+    <IntlWrapper locale={locale}>
+      <Panel
+        id={layer.id}
+        fields={fields}
+        textLabel={layer.config.textLabel}
+        updateLayerTextLabel={onChange}
+      />
+    </IntlWrapper>
+  );
+  const view = render(panel(), {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
+  const inputs = () => view.container.querySelectorAll('.kg-range-slider__input');
+  try {
+    rendered.reset();
+    view.rerender(panel());
+    t.ok(rendered.notCalled, 'unchanged camera-driven parent renders skip label controls');
+
+    const previousLabels = layer.config.textLabel;
+    fireEvent.change(inputs()[0], {target: {value: '24'}});
+    fireEvent.blur(inputs()[0]);
+    t.equal(state.layers[0], layer, 'the reducer retains the same layer instance');
+    t.notEqual(layer.config.textLabel, previousLabels, 'the reducer replaces the label array');
+    t.equal(layer.config.textLabel[0].size, 24, 'editing updates the label configuration');
+    t.equal(inputs()[0].value, '24', 'the control displays the updated value');
+
+    fireEvent.click(view.container.querySelector('#text-label-memo-textCollisionEnabled'));
+    t.equal(
+      layer.config.textLabel[0].collisionEnabled,
+      true,
+      'collision changes remain responsive'
+    );
+    t.ok(
+      view.container.querySelector('#text-label-memo-textCollisionEnabled').checked,
+      'collision toggle reflects the update'
+    );
+
+    update(0, 'field', fields[0]);
+    t.ok(
+      within(view.container).getAllByText(fields[0].displayName || fields[0].name).length,
+      'field selection is displayed'
+    );
+    fields = fields.map((field, idx) =>
+      idx === 0 ? {...field, displayName: 'Renamed label field'} : field
+    );
+    view.rerender(panel());
+    t.ok(
+      within(view.container).getAllByText('Renamed label field').length,
+      'updated field metadata reaches selectors'
+    );
+
+    update(1, '', null);
+    t.equal(inputs().length, 6, 'adding a label renders its formatting controls');
+    update(1, 'field', null);
+    t.equal(inputs().length, 3, 'removing a label removes its controls');
+    update('all', 'fields', []);
+    t.equal(inputs().length, 0, 'clearing all fields supports an empty label array');
+    update(0, '', null);
+    t.equal(inputs().length, 3, 'a label can be added after clearing');
+
+    onChange = sinon.spy(update);
+    view.rerender(panel());
+    fireEvent.change(inputs()[0], {target: {value: '30'}});
+    fireEvent.blur(inputs()[0]);
+    t.ok(onChange.calledWith(0, 'size', 30), 'controls use a replacement callback');
+
+    locale = 'es';
+    view.rerender(panel());
+    t.ok(
+      within(view.container).getByText(messages.es['panel.text.fontSize']),
+      'locale updates cross the pure component boundary'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
 });
 
 function renderVisConfigSlider(property, initialValue, {layerType = 'point', ...sliderProps} = {}) {
