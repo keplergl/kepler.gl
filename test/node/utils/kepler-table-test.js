@@ -1308,3 +1308,30 @@ test('KeplerTable -> update replaces row snapshots', async t => {
   t.equal(table.length, 1, 'schema change should import the new rows');
   t.end();
 });
+
+test('KeplerTable -> snapshot updates discard obsolete sort indexes', async t => {
+  const table = new KeplerTable({info: {id: 'sorted-refresh'}, color: [0, 0, 0]});
+  const fields = [{name: 'value', type: ALL_FIELD_TYPES.integer, analyzerType: 'INT'}];
+  await table.importData({data: {fields, rows: [[3], [2], [1]]}});
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  t.deepEqual(table.sortOrder, [2, 1, 0], 'starts with sorted row indexes');
+  await table.update({fields, rows: [[42]]});
+  t.equal(table.sortOrder, null, 'shrinking snapshot clears sort indexes');
+  t.equal(table.sortColumn, undefined, 'clears the stale sort indicator');
+  t.equal(
+    table.dataContainer.valueAt((table.sortOrder || table.allIndexes)[0], 0),
+    42,
+    'first displayed cell reads the new row'
+  );
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  await table.update({
+    fields: [...fields, {name: 'label', type: ALL_FIELD_TYPES.string}],
+    rows: [[7, 'new']]
+  });
+  t.equal(table.sortOrder, null, 'schema-changing snapshot also clears sorting');
+  sortDatasetByColumn(table, 'value', 'ASCENDING');
+  await table.update({fields: table.fields, rows: []});
+  t.equal(table.sortOrder, null, 'empty snapshot clears sorting');
+  t.deepEqual(table.allIndexes, [], 'empty snapshot has no displayed indexes');
+  t.end();
+});

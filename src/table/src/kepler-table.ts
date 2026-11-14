@@ -279,6 +279,8 @@ class KeplerTable<F extends Field = Field> {
     this.filteredIndex = allIndexes;
     this.filteredIndexForDomain = allIndexes;
     this.filteredIndexByLayer = {};
+    this.sortColumn = undefined;
+    this.sortOrder = null;
     this.fieldPairs = findPointFieldPairs(fields);
     // @ts-expect-error Make sure that fields satisfies F extends Field
     this.fields = fields;
@@ -356,6 +358,8 @@ class KeplerTable<F extends Field = Field> {
     this.filterRecord = undefined;
     this.filterRecordCPU = undefined;
     this.changedFilters = undefined;
+    this.sortColumn = undefined;
+    this.sortOrder = null;
     this.dataRevision += 1;
 
     // Rebuild after row indexes and filter results are reset: CPU/GPU consumers
