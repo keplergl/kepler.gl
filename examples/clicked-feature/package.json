@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@deck.gl/mapbox": "9.3.1",
-    "@kepler.gl/actions": "^3.3.0-alpha.6",
-    "@kepler.gl/components": "^3.3.0-alpha.6",
-    "@kepler.gl/processors": "^3.3.0-alpha.6",
-    "@kepler.gl/reducers": "^3.3.0-alpha.6",
-    "@kepler.gl/utils": "^3.3.0-alpha.6",
+    "@kepler.gl/actions": "^3.3.0-alpha.21",
+    "@kepler.gl/components": "^3.3.0-alpha.21",
+    "@kepler.gl/processors": "^3.3.0-alpha.21",
+    "@kepler.gl/reducers": "^3.3.0-alpha.21",
+    "@kepler.gl/utils": "^3.3.0-alpha.21",
     "maplibre-gl": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -44,6 +44,7 @@
     "@luma.gl/engine": "9.3.2",
     "@luma.gl/shadertools": "9.3.2",
     "@luma.gl/webgl": "9.3.2",
-    "@luma.gl/webgpu": "9.3.2"
+    "@luma.gl/webgpu": "9.3.2",
+    "@luma.gl/gltf": "9.3.2"
   }
 }
