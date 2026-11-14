@@ -5511,7 +5511,7 @@ export function loadNextFileUpdater(state: VisState, action?: {loadId?: number})
       nextState.fileLoading ? nextState.fileLoading.companionFiles : undefined,
       options,
       undefined,
-      currentLoadId
+      options?.deferAddToMap ? currentLoadId : undefined
     )
   );
 }
@@ -5582,7 +5582,7 @@ export function expandZipArchiveSuccessUpdater(
         companionFiles,
         loading.options,
         archiveName,
-        loading.loadId
+        loading.options?.deferAddToMap ? loading.loadId : undefined
       )
     );
   }
@@ -5724,11 +5724,8 @@ export const nextFileBatchUpdater = (
             content: {...accumulated, skipArrowCompact: true},
             fileCache: []
           }).bimap(
-            result => ({
-              ...loadFilesSuccess(result, options),
-              ...(loadId == null ? {} : {loadId, isPartial: true})
-            }),
-            err => loadFilesErr(fileName, err, loadId)
+            result => (options ? loadFilesSuccess(result, options) : loadFilesSuccess(result)),
+            err => loadFilesErr(fileName, err)
           )
         ]
       : []),

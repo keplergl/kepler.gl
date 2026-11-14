@@ -13,11 +13,14 @@ import test from 'tape';
 
 import {
   appendStagedLoadedFiles,
+  clearStagedLoadedFiles,
   confirmReplaceDataset,
+  loadFiles,
   loadFilesSuccess,
   registerEntry,
   setColumnDisplayFormat,
   stageLoadedFiles,
+  toggleModal,
   wrapTo
 } from '@kepler.gl/actions';
 import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
@@ -2364,31 +2367,78 @@ test('#composerStateReducer -> stageLoadedFilesUpdater keeps the modal open', t 
   t.end();
 });
 
-test('#composerStateReducer -> live progressive snapshots preserve their load session', t => {
-  const base = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
-  const loading = {loadId: 77, fileCache: [], filesToLoad: [], onFinish: loadFilesSuccess};
-  const state = {...base, visState: {...base.visState, fileLoading: loading}};
-  const partial = {...loadFilesSuccess([]), loadId: 77, isPartial: true};
-  const next = combinedUpdaters.loadFilesSuccessUpdater(state, partial);
-  t.equal(next.visState.fileLoading, loading, 'a live snapshot leaves later batches valid');
-  const canceled = {...next, visState: {...next.visState, fileLoading: false}};
-  t.equal(
-    combinedUpdaters.loadFilesSuccessUpdater(canceled, partial),
-    canceled,
-    'a canceled snapshot cannot add data'
-  );
-  const replaced = {...next, visState: {...next.visState, fileLoading: {...loading, loadId: 78}}};
-  t.equal(
-    combinedUpdaters.loadFilesSuccessUpdater(replaced, partial),
-    replaced,
-    'a late snapshot cannot finish a newer load'
-  );
-  const finished = combinedUpdaters.loadFilesSuccessUpdater(next, {
-    ...loadFilesSuccess([]),
-    loadId: 77
-  });
-  t.equal(finished.visState.fileLoading, false, 'the final completion still finishes the load');
-  drainTasksForTesting();
+test('#composerStateReducer -> Add Data cancel/retry ignores old parser results and errors', async t => {
+  const reduce = (state, action) => keplerGlReducer({test: state}, action).test;
+  for (const fileName of ['canceled.csv', 'fresh.csv', 'canceled.zip']) {
+    drainTasksForTesting();
+    const initial = keplerGlReducer(undefined, registerEntry({id: 'test'})).test;
+    let parsing = reduce(
+      reduce(initial, toggleModal('addData')),
+      loadFiles([{name: fileName}], stageLoadedFiles, {deferAddToMap: true})
+    );
+    let [load] = drainTasksForTesting();
+    const staleActions = [];
+    if (fileName.endsWith('.zip')) {
+      const expanded = succeedTaskInTest(load, {
+        kind: 'shapefile',
+        shapefile: {name: 'shape.shp'},
+        companions: []
+      });
+      staleActions.push(expanded, errorTaskInTest(load, new Error('unzip failed')));
+      parsing = reduce(parsing, expanded);
+      [load] = drainTasksForTesting();
+    }
+    const batches = async function* (name = fileName) {
+      yield {fileName: name, progress: {percent: 1}, data: []};
+    };
+    const batchAction = succeedTaskInTest(load, batches());
+    parsing = reduce(parsing, batchAction);
+    const [firstBatch] = drainTasksForTesting();
+    const nextBatchAction = succeedTaskInTest(firstBatch, await firstBatch.payload);
+    parsing = reduce(parsing, nextBatchAction);
+    const [lastBatch] = drainTasksForTesting();
+    const processAction = succeedTaskInTest(lastBatch, await lastBatch.payload);
+    parsing = reduce(parsing, processAction);
+    const [process] = drainTasksForTesting();
+    const canceled = reduce(reduce(parsing, clearStagedLoadedFiles()), toggleModal(null));
+    const fresh = reduce(
+      reduce(canceled, toggleModal('addData')),
+      loadFiles([{name: 'fresh.csv'}], stageLoadedFiles, {deferAddToMap: true})
+    );
+    const [freshLoad] = drainTasksForTesting();
+    staleActions.push(
+      batchAction,
+      nextBatchAction,
+      processAction,
+      succeedTaskInTest(process, [{info: {label: fileName}}]),
+      errorTaskInTest(load, new Error('read failed')),
+      errorTaskInTest(firstBatch, new Error('batch failed')),
+      errorTaskInTest(process, new Error('parse failed'))
+    );
+    for (const action of staleActions) {
+      t.equal(reduce(canceled, action), canceled, `${action.type} leaves the closed modal alone`);
+      t.equal(reduce(fresh, action), fresh, `${action.type} preserves the retry's data and UI`);
+      t.equal(drainTasksForTesting().length, 0, 'stale work schedules nothing');
+    }
+    const failed = reduce(fresh, errorTaskInTest(freshLoad, new Error('current failure')));
+    t.equal(failed.uiState.notifications.length, 1, 'the current import still reports errors');
+    drainTasksForTesting();
+    let resumed = reduce(fresh, succeedTaskInTest(freshLoad, batches('fresh.csv')));
+    let [task] = drainTasksForTesting();
+    while (task.type === 'UNWRAP') {
+      resumed = reduce(resumed, succeedTaskInTest(task, await task.payload));
+      [task] = drainTasksForTesting();
+    }
+    const freshCache = [{info: {label: 'fresh.csv'}}];
+    resumed = reduce(resumed, succeedTaskInTest(task, freshCache));
+    const [pause] = drainTasksForTesting();
+    resumed = reduce(resumed, succeedTaskInTest(pause));
+    const [finish] = drainTasksForTesting();
+    resumed = reduce(resumed, succeedTaskInTest(finish));
+    t.deepEqual(resumed.visState.stagedToAdd, freshCache, 'only the retry is staged');
+    t.equal(resumed.uiState.loadFiles.fileLoading, false, 'the retry finishes normally');
+    t.equal(resumed.uiState.currentModal, 'addData', 'the retry waits for Add Data confirmation');
+  }
   t.end();
 });
 

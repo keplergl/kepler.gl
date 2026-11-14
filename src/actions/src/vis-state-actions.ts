@@ -2158,10 +2158,11 @@ export function loadFileStepSuccess({
   fileName,
   fileCache,
   loadId
-}: LoadFileStepSuccessAction): Merge<
-  LoadFileStepSuccessAction,
-  {type: typeof ActionTypes.LOAD_FILE_STEP_SUCCESS}
-> {
+}: {
+  fileName: string;
+  fileCache: FileCacheItem[];
+  loadId?: number;
+}): Merge<LoadFileStepSuccessAction, {type: typeof ActionTypes.LOAD_FILE_STEP_SUCCESS}> {
   return {
     type: ActionTypes.LOAD_FILE_STEP_SUCCESS,
     fileName,

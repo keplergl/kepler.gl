@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
+import {ActionTypes} from '@kepler.gl/actions';
 
 import {visStateReducerFactory} from './vis-state';
 import {mapStateReducerFactory} from './map-state';
@@ -41,6 +42,15 @@ const combined = (
 export const coreReducerFactory =
   (initialState: Partial<KeplerGlState> = {}, extraReducers = {}) =>
   (state, action) => {
+    // Ignore canceled imports' errors before they can update either visState or uiState.
+    if (
+      state &&
+      action.type === ActionTypes.LOAD_FILES_ERR &&
+      action.loadId != null &&
+      action.loadId !== state.visState.fileLoading?.loadId
+    ) {
+      return state;
+    }
     if (composers[action.type]) {
       return composers[action.type](state, action);
     }
