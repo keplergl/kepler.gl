@@ -6,7 +6,7 @@ import {getFieldsFromData, latLngToCell} from '@kepler.gl/common-utils';
 import {Int64, Table, Uint64, vectorFromArray} from 'apache-arrow';
 import {Response} from 'node-fetch';
 import {ProtoDataset} from '@kepler.gl/types';
-import {timeToUnixMilli} from '@kepler.gl/utils';
+import {getFilterProps, timeToUnixMilli} from '@kepler.gl/utils';
 
 import KeplerTable from './kepler-table';
 import {aggregateValues} from './dataset-ops/aggregations';
@@ -171,6 +171,61 @@ describe('dataset-ops engine', () => {
       }
     }
   );
+
+  test('boolean sums produce numeric fields and range filters in Group By and spatial joins', () => {
+    const values = makeTable({
+      id: 'boolean-values',
+      fields: [
+        {name: 'group', type: ALL_FIELD_TYPES.string},
+        {name: 'enabled', type: ALL_FIELD_TYPES.boolean},
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real}
+      ],
+      rows: [
+        ['yes', true, 0, 0],
+        ['yes', true, 0, 0],
+        ['no', false, 0, 0],
+        ['missing', null, 0, 0]
+      ]
+    });
+    const grouped = groupByDataset(values, {
+      fieldName: 'group',
+      aggregations: {enabled: DATASET_OPS_AGGREGATIONS.sum}
+    });
+    expect(grouped.data.rows).toEqual([
+      ['yes', 2],
+      ['no', 0],
+      ['missing', null]
+    ]);
+
+    const polygons = makeTable({
+      id: 'boolean-polygons',
+      fields: [{name: 'geom', type: ALL_FIELD_TYPES.geojson}],
+      rows: [[square(-1, -1, 1, 1)], [square(10, 10, 11, 11)]]
+    });
+    const joined = spatialJoinDatasets(polygons, values, {
+      leftGeo: {kind: 'geojson', fieldName: 'geom'},
+      rightGeo: {kind: 'latlng', latField: 'lat', lngField: 'lng'},
+      aggregations: {enabled: DATASET_OPS_AGGREGATIONS.sum}
+    });
+    expect(joined.data.rows.map(row => row.slice(1))).toEqual([
+      [4, 2],
+      [0, null]
+    ]);
+    for (const result of [grouped, joined]) {
+      const field = result.data.fields.find(field => field.name === 'enabled_sum');
+      expect(field?.type).toBe(ALL_FIELD_TYPES.integer);
+      const imported = importDerived(result);
+      const importedField = imported.fields[imported.fields.length - 1];
+      expect(imported.getValue('enabled_sum', 0)).toBe(2);
+      expect(getFilterProps(importedField, {domain: [0, 2], step: 1})).toMatchObject({
+        type: 'range',
+        value: [0, 2]
+      });
+    }
+    expect(values.getValue('enabled', 0)).toBe(true);
+    expect(values.fields[1].type).toBe(ALL_FIELD_TYPES.boolean);
+  });
 
   test('groupByDataset aggregates numeric and unique string values', () => {
     const dataset = makeTable({
