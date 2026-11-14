@@ -16,6 +16,11 @@ touch yarn.lock && yarn
 > `touch yarn.lock` is required the first time so Yarn treats the folder as a
 > standalone project, independent from the kepler.gl monorepo.
 
+Only `demo-app` and `demo-app-sqlrooms` commit their lockfiles for reproducible
+application builds. The smaller templates ignore generated lockfiles and resolve
+current compatible dependencies on a fresh install. Keep the generated lockfile
+in your own application if you copy a template.
+
 Then start the dev server:
 
 ```sh
@@ -33,7 +38,8 @@ Run this separately from `yarn bump-version`: the npm release workflow publishes
 `src/*` workspaces, not the private root `kepler.gl` package. Before using the helper,
 verify that the target scoped packages **and** the legacy `kepler.gl` UMD bundle are
 available. After updating, run `yarn install` in each changed standalone example
-and review its manifest and lockfile together before committing. The root install
+and validate the result. For the demo apps, review and commit the updated lockfile
+alongside the manifest; template lockfiles stay local and ignored. The root install
 does not update these standalone lockfiles.
 
 Older Kepler versions may remain in the dependency tree when another package,
