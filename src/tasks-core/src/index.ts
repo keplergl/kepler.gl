@@ -361,7 +361,28 @@ export const taskMiddleware =
     g[QUEUE_KEY].lastOrigin = null;
 
     // Dispatch task results asynchronously to avoid re-entrancy issues.
-    const dispatch = (nextAction: any) => microtask.then(() => store.dispatch(nextAction));
+    const dispatch = (nextAction: any) =>
+      microtask.then(() => {
+        // Follow-up actions belong to the same forwarded map instance unless
+        // the task explicitly chooses another destination.
+        const forwarded = action.meta?._forward_ === '@redux-forward/FORWARD';
+        const scopedAction =
+          forwarded && nextAction && !nextAction.meta?._forward_
+            ? {
+                type: nextAction.type,
+                payload: {
+                  ...nextAction,
+                  meta: {...nextAction.meta, _id_: action.payload?.meta?._id_}
+                },
+                meta: {
+                  ...nextAction.meta,
+                  _forward_: action.meta._forward_,
+                  _addr_: action.meta._addr_
+                }
+              }
+            : nextAction;
+        return store.dispatch(scopedAction);
+      });
 
     const runEffect: RunnerFn = (effect, resolve, reject, ctx) => effect(resolve, reject, ctx);
 

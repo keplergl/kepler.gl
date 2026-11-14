@@ -10,6 +10,7 @@ import {
   addLayer as addLayerAction,
   deleteEntry,
   interactionConfigChange,
+  isForwardAction,
   ActionTypes as KeplerActionTypes,
   registerEntry,
   removeDataset,
@@ -1155,8 +1156,8 @@ export function createKeplerSlice({
         const middlewareAPI: MiddlewareAPI<any, any> = {
           getState: get,
           dispatch: (action: Action, ...args: any) => {
-            // need to forward here as well
-            return wrapDispatch(wrapToMap(action), ...args);
+            // Task completions already retain their originating map scope.
+            return wrapDispatch(isForwardAction(action) ? action : wrapToMap(action), ...args);
           }
         };
 
