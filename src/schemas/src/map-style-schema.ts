@@ -3,15 +3,13 @@
 
 import {VERSIONS} from './versions';
 import Schema from './schema';
+import {schemaProperties} from './schema-properties';
+import {
+  CustomMapStyleSchema as CustomStyleDefinition,
+  MapStyleSchema as MapStyleDefinition
+} from './zod-schemas/map-style';
 
-export const customMapStylePropsV1 = {
-  accessToken: null,
-  custom: null,
-  icon: null,
-  id: null,
-  label: null,
-  url: null
-};
+export const customMapStylePropsV1 = schemaProperties(CustomStyleDefinition);
 
 export const CustomMapStyleSchema = new Schema({
   version: VERSIONS.v1,
@@ -54,14 +52,9 @@ export const propertiesV0 = {
   mapStyles: new MapStyleSchemaV1()
 };
 
-export const propertiesV1 = {
-  styleType: null,
-  topLayerGroups: null,
-  visibleLayerGroups: null,
-  threeDBuildingColor: null,
-  backgroundColor: null,
+export const propertiesV1 = schemaProperties(MapStyleDefinition, {
   mapStyles: new MapStyleSchemaV1()
-};
+});
 
 const mapStyleSchema = {
   [VERSIONS.v0]: new Schema({

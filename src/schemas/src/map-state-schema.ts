@@ -3,31 +3,13 @@
 
 import {VERSIONS} from './versions';
 import Schema from './schema';
+import {schemaProperties} from './schema-properties';
+import {MapStateSchema, ViewportSchema} from './zod-schemas/map-state';
 
 // version v0
-export const propertiesV0 = {
-  bearing: null,
-  dragRotate: null,
-  latitude: null,
-  longitude: null,
-  pitch: null,
-  zoom: null
-};
+export const propertiesV0 = schemaProperties(ViewportSchema);
 
-export const propertiesV1 = {
-  ...propertiesV0,
-  isSplit: null,
-  isViewportSynced: null,
-  isZoomLocked: null,
-  splitMapViewports: null,
-  maxPitch: null,
-  mapSplitMode: null,
-  swipeComparePercentage: null,
-  // Persist the current view mode (2D / 3D / Globe) and the full globe config
-  // (colors, toggles, background) so globe maps round-trip through save/load.
-  mapViewMode: null,
-  globe: null
-};
+export const propertiesV1 = schemaProperties(MapStateSchema);
 
 const mapStateSchema = {
   [VERSIONS.v0]: new Schema({

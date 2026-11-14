@@ -43,3 +43,6 @@ export {
 export {default as mapStateSchema} from './map-state-schema';
 export {default as uiStateSchema} from './ui-state-schema';
 export {default as Schema} from './schema';
+
+// Explicit typed validation; save/load keeps its permissive compatibility contract.
+export * as ZodSchemas from './zod-schemas';

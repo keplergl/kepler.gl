@@ -16,6 +16,8 @@ import {ProtoDataset, RGBColor, JsonObject} from '@kepler.gl/types';
 import {KeplerTable} from '@kepler.gl/table';
 import {VERSIONS} from './versions';
 import Schema from './schema';
+import {schemaProperties} from './schema-properties';
+import {DatasetFieldSchema, DatasetSchema as DatasetDefinition} from './zod-schemas/dataset';
 import {getFieldsFromData, getSampleForTypeAnalyze} from '@kepler.gl/common-utils';
 import {ArrowDataContainer, DataContainerInterface, FIELD_DISPLAY_FORMAT} from '@kepler.gl/utils';
 
@@ -65,13 +67,7 @@ export const fieldPropertiesV0 = {
   type: null
 };
 
-export const fieldPropertiesV1 = {
-  name: null,
-  type: null,
-  format: null,
-  analyzerType: null,
-  metadata: null
-};
+export const fieldPropertiesV1 = schemaProperties(DatasetFieldSchema);
 
 export class FieldSchema extends Schema {
   save(fields) {
@@ -96,17 +92,9 @@ export const propertiesV0 = {
   })
 };
 
-export const propertiesV1 = {
-  ...propertiesV0,
-  fields: new FieldSchema({
-    key: 'fields',
-    version: VERSIONS.v1,
-    properties: fieldPropertiesV1
-  }),
-  type: null,
-  metadata: null,
-  disableDataOperation: null
-};
+export const propertiesV1 = schemaProperties(DatasetDefinition, {
+  fields: new FieldSchema({key: 'fields', version: VERSIONS.v1, properties: fieldPropertiesV1})
+});
 
 /** Convert nested Arrow lists/structs and BigInts without changing live values. */
 function getValueForSaving(value: any, ancestors = new Set<object>()): any {
