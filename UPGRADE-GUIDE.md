@@ -13,9 +13,9 @@
 
 ## Upgrade from v3.2 to v3.3
 
-See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3 / 3.3.1](docs/upgrade-guide-v3.3.md)**
+See the full upgrade guide: **[Upgrade Guide — kepler.gl 3.3.0](docs/upgrade-guide-v3.3.md)**
 
-The guide includes recent 3.3-alpha changes being prepared for 3.3.1; the current repository version is still 3.3.0-alpha.21. Review its release-scope note before choosing a package version.
+The guide describes upgrading to stable 3.3.0 once it is released, including changes made during the 3.3.0 alpha series. Review its release-scope note before choosing a package version.
 
 ### Highlights
 

@@ -1,10 +1,10 @@
-# Upgrade Guide — kepler.gl 3.3 / 3.3.1
+# Upgrade Guide — kepler.gl 3.3.0
 
 kepler.gl 3.3 upgrades the rendering stack from **deck.gl 8 / luma.gl 8** to **deck.gl 9 / luma.gl 9**. This is a major dependency upgrade that changes how WebGL resources, shaders, and rendering parameters are handled under the hood. Most kepler.gl users will not need to change application code, but library consumers who extend layers, interact with the WebGL context directly, or depend on internal types should review this guide.
 
 ## Release scope
 
-This guide covers the 3.3 migration and the changes being prepared for 3.3.1. The repository currently declares **3.3.0-alpha.21**; the 3.3.1 heading is not a statement that 3.3.1 has been published. Install an available release and keep all `@kepler.gl/*` packages on the same version. Consumers upgrading from an earlier 3.3 alpha should also review the behavior changes below, not only the original deck.gl 8-to-9 migration.
+This guide describes upgrading to **stable 3.3.0 once it is released**, including changes made during the 3.3.0 alpha series. It does not announce that the stable release is already available. Until then, use an available prerelease; when adopting stable 3.3.0, upgrade all `@kepler.gl/*` packages together to that version. Consumers upgrading from an earlier 3.3.0 alpha should also review the behavior changes below, not only the original deck.gl 8-to-9 migration.
 
 ## Dependency Changes
 
