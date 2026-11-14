@@ -168,11 +168,15 @@ const getAllDataForSaving = (dataContainer: DataContainerInterface): any[][] => 
       const column = dataContainer.getColumn(columnIndex);
       const field = dataContainer.getField(columnIndex);
 
-      if (
-        arrow.DataType.isTimestamp(column.type) ||
-        arrow.DataType.isDate(column.type) ||
-        arrow.DataType.isTime(column.type)
-      ) {
+      if (arrow.DataType.isTime(column.type)) {
+        // Arrow Time values are raw units since midnight, unlike Timestamp getters
+        // which already return milliseconds. Time64 getters return BigInt.
+        const divisor = [0.001, 1, 1000, 1000000][column.type.unit];
+        allData.forEach(row => {
+          const value = row[columnIndex];
+          row[columnIndex] = value == null ? null : new Date(Number(value) / divisor).toISOString();
+        });
+      } else if (arrow.DataType.isTimestamp(column.type) || arrow.DataType.isDate(column.type)) {
         allData.forEach(row => {
           const value = row[columnIndex];
           row[columnIndex] = value == null ? null : new Date(value).toISOString();
