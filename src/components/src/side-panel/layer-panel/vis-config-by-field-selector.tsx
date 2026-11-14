@@ -73,7 +73,7 @@ function VisConfigByFieldSelectorFactory(
       </SidePanelSection>
     );
   };
-  return injectIntl(VisConfigByFieldSelector);
+  return injectIntl(React.memo(VisConfigByFieldSelector));
 }
 
 export default VisConfigByFieldSelectorFactory;

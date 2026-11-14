@@ -27,6 +27,7 @@ import {
   ColorSelectorFactory,
   FieldSelectorFactory,
   ColumnSelectorFactory,
+  ChannelByValueSelectorFactory,
   appInjector,
   dropdownListClassList,
   Checkbox,
@@ -1620,6 +1621,74 @@ test('Components -> LayerConfigurator -> contour slider handles missing, empty, 
   );
   view.unmount();
   t.end();
+});
+
+test('Components -> ChannelByValueSelector -> skips unchanged fields and follows channel and layer updates', t => {
+  const rendered = sinon.spy();
+  const [ByFieldFactory] = ChannelByValueSelectorFactory.deps;
+  const ByField = ByFieldFactory(appInjector.get(ByFieldFactory.deps[0]), props => {
+    rendered();
+    return <FieldSelector {...props} />;
+  });
+  const Selector = ChannelByValueSelectorFactory(ByField, () => null);
+  const layer = new LayerClasses.point({id: 'field-selector-memo'});
+  let fields = [
+    {name: 'count', displayName: 'Count', type: 'integer', format: ''},
+    {name: 'tag', displayName: 'Tag', type: 'string', format: ''}
+  ];
+  let channel = {...layer.visualChannels.color, supportedFieldTypes: ['integer']};
+  const onChange = sinon.spy();
+  let locale = 'en';
+  const node = () => (
+    <IntlWrapper locale={locale}>
+      <Selector layer={layer} channel={channel} fields={fields} onChange={onChange} />
+    </IntlWrapper>
+  );
+  const view = render(node(), {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
+  const ui = within(view.container);
+  const open = () => fireEvent.click(view.container.querySelector('.item-selector__dropdown'));
+  try {
+    rendered.reset();
+    channel = {...channel};
+    view.rerender(node());
+    t.ok(rendered.notCalled, 'a recreated channel with unchanged inputs skips the field controls');
+
+    layer.updateLayerConfig({colorField: fields[0]});
+    view.rerender(node());
+    t.ok(ui.getByText('Count'), 'selection updates on the same mutable layer instance');
+
+    channel = {...channel, supportedFieldTypes: ['string']};
+    view.rerender(node());
+    open();
+    t.notOk(
+      within(document.body).queryByText('Count'),
+      'a changed channel excludes unsupported fields'
+    );
+    t.ok(within(document.body).getByText('Tag'), 'a changed channel includes supported fields');
+
+    fields = [...fields, {name: 'new_tag', displayName: 'New tag', type: 'string', format: ''}];
+    view.rerender(node());
+    fireEvent.click(within(document.body).getByText('New tag'));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [{colorField: fields[2]}, 'color'],
+      'new fields remain selectable through the original update API'
+    );
+
+    layer.updateLayerConfig({colorField: null});
+    fields = [];
+    locale = 'es';
+    view.rerender(node());
+    t.ok(
+      ui.getByText(messages.es['placeholder.selectField']),
+      'empty fields and locale changes update the control'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
 });
 
 test('Components -> LayerConfigurator.mount -> LayerColumnConfig', t => {

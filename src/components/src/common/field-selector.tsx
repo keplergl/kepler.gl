@@ -15,6 +15,7 @@ import FieldTokenFactory from '../common/field-token';
 
 const defaultDisplayOption = (d: Field) => d.displayName || d.name;
 const defaultValueOption = (d: Field) => d.name;
+const getOptionValue = (d: Field) => d;
 
 const StyledToken = styled.div`
   display: inline-block;
@@ -162,11 +163,14 @@ function FieldSelectorFactory(
     // @ts-ignore Fix later
     fieldListItemSelector = createSelector(this.showTokenSelector, FieldListItemFactory);
 
+    // Keep the memoized dropdown stable while calling the latest parent callback.
+    _onSelect: FieldSelectorProps<MinimalField>['onSelect'] = items => this.props.onSelect(items);
+
     render() {
       return (
         <StyledFieldSelector className={classnames('field-selector', this.props.className)}>
           <ItemSelector
-            getOptionValue={d => d}
+            getOptionValue={getOptionValue}
             disabled={this.props.disabled}
             closeOnSelect={this.props.closeOnSelect}
             displayOption={defaultDisplayOption}
@@ -182,7 +186,7 @@ function FieldSelectorFactory(
             multiSelect={this.props.multiSelect}
             placeholder={this.props.placeholder}
             placement={this.props.placement}
-            onChange={this.props.onSelect}
+            onChange={this._onSelect}
             reorderItems={this.props.reorderItems}
             DropDownLineItemRenderComponent={this.fieldListItemSelector(this.props)}
             DropdownHeaderComponent={this.props.suggested ? SuggestedFieldHeader : null}
