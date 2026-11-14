@@ -12,6 +12,64 @@ import {MapViewStateContext, MapViewStateContextProvider} from './map-view-state
 
 const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 30, pitch: 45};
 
+test('does not notify camera consumers on parent renders or a Redux echo of the live view', () => {
+  const read = jest.fn();
+  const Consumer = React.memo(() => {
+    const {getInternalViewState, setInternalViewState} = useContext(MapViewStateContext);
+    const view = getInternalViewState();
+    read(view);
+    return <button onClick={() => setInternalViewState(camera)}>{view.longitude}</button>;
+  });
+  const tree = (mapState: MapState) => (
+    <MapViewStateContextProvider mapState={mapState}>
+      <Consumer />
+    </MapViewStateContextProvider>
+  );
+  const {rerender} = render(tree(INITIAL_MAP_STATE));
+  expect(read).toHaveBeenCalledTimes(1);
+  rerender(tree(INITIAL_MAP_STATE));
+  expect(read).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button'));
+  expect(screen.getByRole('button')).toHaveTextContent('10');
+  expect(read).toHaveBeenCalledTimes(2);
+  rerender(tree(mapStateUpdaters.updateMapUpdater(INITIAL_MAP_STATE, updateMap(camera))));
+  expect(read).toHaveBeenCalledTimes(2);
+  rerender(tree({...INITIAL_MAP_STATE, ...camera, longitude: 50}));
+  expect(screen.getByRole('button')).toHaveTextContent('50');
+  expect(read).toHaveBeenCalledTimes(3);
+});
+
+test('updates live camera routing when split viewport synchronization changes', () => {
+  const left = {...INITIAL_MAP_STATE, ...camera};
+  const right = {...left, longitude: 100};
+  const Consumer = React.memo(() => {
+    const {getInternalViewState, setInternalViewState} = useContext(MapViewStateContext);
+    return (
+      <button onClick={() => setInternalViewState({...camera, longitude: 150}, 1)}>
+        {getInternalViewState(0).longitude},{getInternalViewState(1).longitude}
+      </button>
+    );
+  });
+  const tree = (isViewportSynced: boolean) => (
+    <MapViewStateContextProvider
+      mapState={{
+        ...left,
+        isSplit: true,
+        isViewportSynced,
+        splitMapViewports: [left, right]
+      }}
+    >
+      <Consumer />
+    </MapViewStateContextProvider>
+  );
+  const {rerender} = render(tree(false));
+  fireEvent.click(screen.getByRole('button'));
+  expect(screen.getByRole('button')).toHaveTextContent('10,150');
+  rerender(tree(true));
+  fireEvent.click(screen.getByRole('button'));
+  expect(screen.getByRole('button')).toHaveTextContent('150,150');
+});
+
 function setup() {
   const read = jest.fn();
   function Consumer() {

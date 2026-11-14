@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState, useEffect, createContext} from 'react';
+import React, {useState, useEffect, useMemo, createContext} from 'react';
 import isEqual from 'es-toolkit/compat/isEqual';
 import pick from 'es-toolkit/compat/pick';
 type MapViewState = {
@@ -82,18 +82,21 @@ export const MapViewStateContextProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapState]);
 
-  const value = {
-    getInternalViewState: (index = 0) => viewStates[index] ?? viewStates[0],
-    setInternalViewState: (newViewState, index = 0) => {
-      setViewStates(prevViewStates => {
-        if (isSplit && !isViewportSynced) {
-          const nextViewStates = [...prevViewStates];
-          nextViewStates[index] = newViewState as MapState;
-          return nextViewStates;
-        }
-        return [newViewState] as MapState[];
-      });
-    }
-  } as MapViewStateContextType;
+  const value = useMemo<MapViewStateContextType>(
+    () => ({
+      getInternalViewState: (index = 0) => viewStates[index] ?? viewStates[0],
+      setInternalViewState: (newViewState, index = 0) => {
+        setViewStates(prevViewStates => {
+          if (isSplit && !isViewportSynced) {
+            const nextViewStates = [...prevViewStates];
+            nextViewStates[index] = newViewState as MapState;
+            return nextViewStates;
+          }
+          return [newViewState] as MapState[];
+        });
+      }
+    }),
+    [viewStates, isSplit, isViewportSynced]
+  );
   return <MapViewStateContext.Provider value={value}>{children}</MapViewStateContext.Provider>;
 };
