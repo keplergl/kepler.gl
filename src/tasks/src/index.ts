@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import Task, {taskCreator} from '@kepler.gl/tasks-core';
+import Task from '@kepler.gl/tasks-core';
 import {readFileInBatches, processFileData, expandZipArchive} from '@kepler.gl/processors';
 
 export {
@@ -45,26 +45,17 @@ export const EXPAND_ZIP_TASK = Task.fromPromise(
 
 export const PROCESS_FILE_DATA = Task.fromPromise(processFileData, 'PROCESS_FILE_CONTENT');
 
-export const LOAD_MAP_STYLE_TASK = taskCreator(
-  ({url, id}, success, error) =>
-    fetch(url)
-      .then(response => {
-        if (!response.ok) {
-          return response.text().then(text => {
-            error(text);
-          });
-        }
-        return response.json();
-      })
-      .then(result => {
-        if (!result) {
-          error(new Error('Map style response is empty'));
-        }
-        success({id, style: result});
-      }),
-
-  'LOAD_MAP_STYLE_TASK'
-);
+export const LOAD_MAP_STYLE_TASK = Task.fromPromise(async ({url, id}) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw await response.text();
+  }
+  const style = await response.json();
+  if (!style) {
+    throw new Error('Map style response is empty');
+  }
+  return {id, style};
+}, 'LOAD_MAP_STYLE_TASK');
 
 /**
  * task to upload file to cloud provider
