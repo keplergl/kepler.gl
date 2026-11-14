@@ -64,5 +64,15 @@ export default function EffectControlFactory(
   };
 
   EffectControl.displayName = 'EffectControl';
-  return React.memo(EffectControl);
+  const MemoizedEffectControl = React.memo(EffectControl);
+  // Keep unrelated camera/layer props outside the button's memo boundary.
+  return function EffectControlWrapper({mapControls, onToggleMapControl, actionIcons}) {
+    return (
+      <MemoizedEffectControl
+        mapControls={mapControls}
+        onToggleMapControl={onToggleMapControl}
+        actionIcons={actionIcons}
+      />
+    );
+  };
 }

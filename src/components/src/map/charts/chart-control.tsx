@@ -32,8 +32,9 @@ export default function ChartControlFactory(
   const ChartControl = ({
     mapControls,
     onToggleMapControl,
-    actionIcons = defaultActionIcons
-  }: ChartControlProps) => {
+    actionIcons = defaultActionIcons,
+    chartsEnabled
+  }: ChartControlProps & {chartsEnabled: boolean}) => {
     const onClick = useCallback(
       event => {
         event.preventDefault();
@@ -42,7 +43,7 @@ export default function ChartControlFactory(
       [onToggleMapControl]
     );
 
-    if (!getApplicationConfig().enableChartsPanel) {
+    if (!chartsEnabled) {
       return null;
     }
 
@@ -69,5 +70,17 @@ export default function ChartControlFactory(
   };
 
   ChartControl.displayName = 'ChartControl';
-  return React.memo(ChartControl);
+  const MemoizedChartControl = React.memo(ChartControl);
+  // MapControl forwards camera/layer props to all actions. Keep those outside
+  // this button's memo boundary without restricting injected action components.
+  return function ChartControlWrapper({mapControls, onToggleMapControl, actionIcons}) {
+    return (
+      <MemoizedChartControl
+        chartsEnabled={Boolean(getApplicationConfig().enableChartsPanel)}
+        mapControls={mapControls}
+        onToggleMapControl={onToggleMapControl}
+        actionIcons={actionIcons}
+      />
+    );
+  };
 }

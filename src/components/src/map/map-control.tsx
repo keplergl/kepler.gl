@@ -210,7 +210,7 @@ function MapControlFactory(
 
   MapControl.displayName = 'MapControl';
 
-  return MapControl;
+  return Object.assign(React.memo(MapControl), {defaultActionComponents: DEFAULT_ACTIONS});
 }
 
 export default MapControlFactory;

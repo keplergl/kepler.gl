@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import {renderWithTheme as renderWithThemeRTL} from 'test/helpers/rtl-utils';
 import test from 'tape';
 import sinon from 'sinon';
 import {
@@ -71,6 +72,43 @@ const defaultProps = {
   mapStyleActions: MapStyleActions,
   availableProviders: {}
 };
+
+test('Components -> SidePanel -> shallow memo keeps custom panel inputs current', t => {
+  let renders = 0;
+  const Panel = ({mapState, filters, layers}) => {
+    renders++;
+    return <output>{JSON.stringify({longitude: mapState.longitude, filters, layers})}</output>;
+  };
+  const props = {
+    ...defaultProps,
+    mapState: InitialState.mapState,
+    panels: [{...SidePanel.defaultPanels[0], component: Panel}]
+  };
+  const tree = next => (
+    <IntlWrapper>
+      <SidePanel {...next} />
+    </IntlWrapper>
+  );
+  const view = renderWithThemeRTL(tree(props), {
+    baseElement: document.createElement('div')
+  });
+  t.equal(renders, 1, 'renders the injected panel');
+  view.rerender(tree(props));
+  t.equal(renders, 1, 'skips unchanged parent props');
+  const mapState = {...props.mapState, longitude: 123};
+  const filters = [{value: [1, 2]}];
+  const layers = [{id: 'layer', config: {label: 'Updated', visConfig: {opacity: 0.2}}}];
+  view.rerender(tree({...props, mapState, filters, layers}));
+  t.deepEqual(
+    JSON.parse(view.container.querySelector('output').textContent),
+    {longitude: 123, filters, layers},
+    'forwards camera and complete replacement inputs to custom panels'
+  );
+  view.rerender(tree({...props, uiState: {...props.uiState, activeSidePanel: null}}));
+  t.equal(view.container.querySelector('output'), null, 'still closes the panel');
+  view.unmount();
+  t.end();
+});
 
 test('Components -> SidePanel.mount -> no prop', t => {
   // mount

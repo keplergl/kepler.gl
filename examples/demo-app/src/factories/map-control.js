@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useMemo} from 'react';
 import styled from 'styled-components';
 
 import {
@@ -105,13 +105,17 @@ function CustomMapControlFactory(
   const CustomMapControl = props => {
     const isExport = Boolean(props.isExport);
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
-    const actionComponents = [
-      ...(MapControl.defaultActionComponents ?? []),
-      ...(chartsEnabled ? [ChartControl] : []),
-      EffectControl,
-      SqlPanelControl,
-      AiAssistantControl
-    ];
+    const defaultActions = MapControl.defaultActionComponents;
+    const actionComponents = useMemo(
+      () => [
+        ...(defaultActions ?? []),
+        ...(chartsEnabled ? [ChartControl] : []),
+        EffectControl,
+        SqlPanelControl,
+        AiAssistantControl
+      ],
+      [chartsEnabled, defaultActions]
+    );
     const showEffects = Boolean(props.mapControls?.effect?.active);
     const showAnnotations = Boolean(props.mapControls?.annotation?.active);
     const showChartsPanel = chartsEnabled && Boolean(props.mapControls?.chart?.active);

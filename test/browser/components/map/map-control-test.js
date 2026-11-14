@@ -3,6 +3,7 @@
 
 /* eslint-disable max-statements */
 import React from 'react';
+import {fireEvent} from '@testing-library/react';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
@@ -17,6 +18,8 @@ import {
   MapContainerFactory,
   MapLegendFactory,
   MapControlFactory,
+  ChartControlFactory,
+  EffectControlFactory,
   MapControlToolbarFactory,
   Icons,
   MapViewStateContextProvider
@@ -44,6 +47,91 @@ const MapControlToolbar = appInjector.get(MapControlToolbarFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
 const mockStore = configureStore();
+
+test('MapControlFactory - memo preserves custom actions and their camera props', t => {
+  let renders = 0;
+  const Action = ({mapState, layers, extra}) => {
+    renders++;
+    return <output>{JSON.stringify({longitude: mapState.longitude, layers, extra})}</output>;
+  };
+  const props = {
+    mapState: initialProps.mapState,
+    layers: [],
+    mapControls: {},
+    actionComponents: [Action],
+    extra: 'custom'
+  };
+  const tree = next => (
+    <IntlWrapper>
+      <MapControl {...next} />
+    </IntlWrapper>
+  );
+  const view = renderWithThemeRTL(tree(props), {
+    baseElement: document.createElement('div')
+  });
+  t.ok(
+    Array.isArray(MapControl.defaultActionComponents),
+    'retains defaultActionComponents for extensions'
+  );
+  view.rerender(tree(props));
+  t.equal(renders, 1, 'skips unchanged action props');
+  const layers = [{id: 'a', config: {visConfig: {opacity: 0.4}}}];
+  view.rerender(tree({...props, mapState: {...props.mapState, longitude: 42}, layers}));
+  t.deepEqual(
+    JSON.parse(view.container.querySelector('output').textContent),
+    {longitude: 42, layers, extra: 'custom'},
+    'forwards full camera, layer and custom inputs'
+  );
+  view.rerender(tree({...props, actionComponents: []}));
+  t.equal(view.container.querySelector('output'), null, 'accepts action removal');
+  view.unmount();
+  t.end();
+});
+
+test('map action buttons - ignore camera props and keep visibility and callbacks live', t => {
+  initApplicationConfig({enableChartsPanel: true});
+  for (const [factory, id] of [
+    [ChartControlFactory, 'chart'],
+    [EffectControlFactory, 'effect']
+  ]) {
+    let renders = 0;
+    const Tooltip = ({children, message}) => {
+      renders++;
+      return <div data-message={message}>{children}</div>;
+    };
+    const Control = factory(Tooltip);
+    const onToggleMapControl = sinon.spy();
+    const props = {mapControls: {[id]: {show: true, active: false}}, onToggleMapControl};
+    const view = renderWithThemeRTL(<Control {...props} mapState={{longitude: 0}} />, {
+      baseElement: document.createElement('div')
+    });
+    view.rerender(<Control {...props} mapState={{longitude: 5}} />);
+    t.equal(renders, 1, `${id}: camera changes do not render the button`);
+    fireEvent.click(view.container.querySelector('button'));
+    t.deepEqual(onToggleMapControl.firstCall.args, [id], `${id}: toggles the right control`);
+    const replacement = sinon.spy();
+    view.rerender(
+      <Control
+        {...props}
+        onToggleMapControl={replacement}
+        mapControls={{[id]: {show: true, active: true}}}
+      />
+    );
+    t.equal(renders, 2, `${id}: active state and callback changes reach the button`);
+    fireEvent.click(view.container.querySelector('button'));
+    t.deepEqual(replacement.firstCall.args, [id], `${id}: calls the replacement handler`);
+    if (id === 'chart') {
+      initApplicationConfig({enableChartsPanel: false});
+      view.rerender(<Control {...props} />);
+      t.equal(view.container.querySelector('button'), null, 'honors chart feature flag changes');
+      initApplicationConfig({enableChartsPanel: true});
+    }
+    view.rerender(<Control {...props} mapControls={{}} />);
+    t.equal(view.container.querySelector('button'), null, `${id}: hides a removed control`);
+    view.unmount();
+  }
+  t.end();
+});
 
 test('MapControlFactory - display all options', t => {
   const onToggleSplitMap = sinon.spy();

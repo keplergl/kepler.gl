@@ -300,5 +300,5 @@ export default function SidePanelFactory(
   };
 
   SidePanel.defaultPanels = fullPanels;
-  return SidePanel;
+  return Object.assign(React.memo(SidePanel), {defaultPanels: fullPanels});
 }
