@@ -9,6 +9,9 @@ import {theme} from '@kepler.gl/styles';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {FILTER_TYPES} from '@kepler.gl/constants';
 import {Filter} from '@kepler.gl/types';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {KeplerTable} from '@kepler.gl/table';
+import LayerJsonEditorFactory from '../side-panel/layer-panel/layer-json-editor';
 import {Effect} from '@kepler.gl/effects';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import AnimationControlFactory, {
@@ -295,5 +298,176 @@ describe('JSON editor section adapters', () => {
       isSplit: true
     });
     expect(() => jsonToMapState('[]')).toThrow('JSON must be an object');
+  });
+});
+
+describe('layer JSON editor validation and dispatch', () => {
+  const LayerEditor = LayerJsonEditorFactory();
+
+  function fixture() {
+    const dataset = new KeplerTable({info: {id: 'points'}, color: [0, 0, 0]}).updateSchema({
+      fields: [
+        {name: 'latitude', type: 'real'},
+        {name: 'longitude', type: 'real'}
+      ] as any,
+      rows: [[37, -122]]
+    });
+    const layer = new KeplerGlLayers.PointLayer({id: 'point-layer', dataId: dataset.id});
+    layer.updateLayerConfig({
+      columns: {
+        ...layer.config.columns,
+        lat: {...layer.config.columns.lat, value: 'latitude', fieldIdx: 0},
+        lng: {...layer.config.columns.lng, value: 'longitude', fieldIdx: 1}
+      }
+    });
+    const visState = {...INITIAL_VIS_STATE, datasets: {[dataset.id]: dataset}, layers: [layer]};
+    const config = {
+      id: layer.id,
+      type: 'point',
+      config: {
+        dataId: dataset.id,
+        label: 'Edited points',
+        columns: {lat: 'latitude', lng: 'longitude'},
+        isVisible: false,
+        visConfig: {radius: 0}
+      }
+    };
+    return {layer, visState, config};
+  }
+
+  test('validates coordinate columns and dispatches edits with the current layer index', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(<LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />, {
+      wrapper: Wrapper
+    });
+    edit(config);
+    expect(applyLayerConfig).toHaveBeenCalledWith(layer.id, config, 0);
+    expect(layer.config.label).not.toBe(config.config.label);
+    expect(layer.config.isVisible).toBe(true);
+  });
+
+  test('saved schema JSON can be edited and passed back without dropping visual channels', () => {
+    const {layer, visState} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(<LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />, {
+      wrapper: Wrapper
+    });
+    const saved = displayedConfig();
+    expect(saved).toHaveProperty('visualChannels');
+    saved.config.label = 'Restored points';
+    edit(saved);
+    expect(applyLayerConfig).toHaveBeenCalledWith(layer.id, saved, 0);
+  });
+
+  test('rejects a removed dataset and can apply after it becomes available again', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    const view = render(
+      <LayerEditor
+        layer={layer}
+        visState={{...visState, datasets: {}}}
+        applyLayerConfig={applyLayerConfig}
+      />,
+      {wrapper: Wrapper}
+    );
+    edit(config);
+    expect(applyLayerConfig).not.toHaveBeenCalled();
+    expect(screen.getByText(/Dataset "points" not found/)).toBeTruthy();
+    view.rerender(
+      <LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />
+    );
+    edit(config);
+    expect(applyLayerConfig).toHaveBeenCalledTimes(1);
+  });
+
+  test('rejects a layer type absent from the registered classes', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(<LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />, {
+      wrapper: Wrapper
+    });
+    edit({...config, type: 'unregistered'});
+    expect(applyLayerConfig).not.toHaveBeenCalled();
+    expect(screen.getByText(/Layer has invalid type/)).toBeTruthy();
+  });
+
+  test('rejects a required coordinate column that no longer exists', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(<LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />, {
+      wrapper: Wrapper
+    });
+    edit({...config, config: {...config.config, columns: {lat: 'deleted', lng: 'longitude'}}});
+    expect(applyLayerConfig).not.toHaveBeenCalled();
+    expect(screen.getByText(/missing or invalid columns: lat/)).toBeTruthy();
+  });
+
+  test('reports an unavailable apply action rather than reporting success', () => {
+    const {layer, visState, config} = fixture();
+    render(<LayerEditor layer={layer} visState={visState} />, {wrapper: Wrapper});
+    edit(config);
+    expect(screen.getByText("Couldn't apply config")).toBeTruthy();
+    expect(screen.queryByText('Config applied')).toBeNull();
+  });
+
+  test('does not dispatch when map state is unavailable', () => {
+    const {layer, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(<LayerEditor layer={layer} applyLayerConfig={applyLayerConfig} />, {wrapper: Wrapper});
+    edit(config);
+    expect(applyLayerConfig).not.toHaveBeenCalled();
+    expect(screen.getByText("Couldn't apply config")).toBeTruthy();
+  });
+
+  test('surfaces reducer errors and permits a corrected retry', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn().mockImplementationOnce(() => {
+      throw new Error('layer rejected');
+    });
+    render(<LayerEditor layer={layer} visState={visState} applyLayerConfig={applyLayerConfig} />, {
+      wrapper: Wrapper
+    });
+    edit(config);
+    expect(screen.getByText(/layer rejected/)).toBeTruthy();
+    edit({...config, config: {...config.config, label: 'Retry'}});
+    expect(applyLayerConfig).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Config applied')).toBeTruthy();
+  });
+
+  test('recomputes the target index after layers are reordered', () => {
+    const {layer, visState, config} = fixture();
+    const firstAction = jest.fn();
+    const nextAction = jest.fn();
+    const view = render(
+      <LayerEditor layer={layer} visState={visState} applyLayerConfig={firstAction} />,
+      {wrapper: Wrapper}
+    );
+    const other = new KeplerGlLayers.PointLayer({id: 'other'});
+    view.rerender(
+      <LayerEditor
+        layer={layer}
+        visState={{...visState, layers: [other, layer]}}
+        applyLayerConfig={nextAction}
+      />
+    );
+    edit(config);
+    expect(firstAction).not.toHaveBeenCalled();
+    expect(nextAction).toHaveBeenCalledWith(layer.id, config, 1);
+  });
+
+  test('does not send a negative index when the edited layer has been removed', () => {
+    const {layer, visState, config} = fixture();
+    const applyLayerConfig = jest.fn();
+    render(
+      <LayerEditor
+        layer={layer}
+        visState={{...visState, layers: []}}
+        applyLayerConfig={applyLayerConfig}
+      />,
+      {wrapper: Wrapper}
+    );
+    edit(config);
+    expect(applyLayerConfig).toHaveBeenCalledWith(layer.id, config, undefined);
   });
 });

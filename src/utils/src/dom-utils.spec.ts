@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {processClone} from './dom-utils';
+import {IMAGE_EXPORT_ERRORS} from '@kepler.gl/constants';
+import {
+  canvasToBlob,
+  getAndEncode,
+  makeImage,
+  processClone,
+  setStyleSheetBaseHref
+} from './dom-utils';
 
 function style(cssText: string): CSSStyleDeclaration {
   const element = document.createElement('div');
@@ -131,5 +138,145 @@ describe('processClone export fidelity', () => {
     expect(clone.textContent).toBe('Current map note\nSecond line');
     expect(original.textContent).toBe('Original note');
     expect(original.value).toBe('Current map note\nSecond line');
+  });
+});
+
+describe('export resource loading', () => {
+  function requestResource(
+    options: {imagePlaceholder?: string; cacheBust?: boolean} = {},
+    url = 'https://example.test/tile.png'
+  ) {
+    const request = {
+      readyState: 0,
+      status: 200,
+      response: new Blob(['tile'], {type: 'image/png'}),
+      responseType: '',
+      timeout: 0,
+      onreadystatechange: null as null | (() => void),
+      ontimeout: null as null | (() => void),
+      open: jest.fn(),
+      send: jest.fn()
+    };
+    jest
+      .spyOn(window, 'XMLHttpRequest')
+      .mockImplementation(() => request as unknown as XMLHttpRequest);
+    return {request, result: getAndEncode(url, options)};
+  }
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('waits for completion and encodes the fetched binary rather than interim response data', async () => {
+    const {request, result} = requestResource();
+    const resolved = jest.fn();
+    result.then(resolved);
+    request.readyState = 3;
+    request.onreadystatechange?.();
+    await Promise.resolve();
+    expect(resolved).not.toHaveBeenCalled();
+    request.readyState = 4;
+    request.onreadystatechange?.();
+    expect(await result).toBe('dGlsZQ==');
+    expect(request.open).toHaveBeenCalledWith('GET', 'https://example.test/tile.png', true);
+    expect(request.responseType).toBe('blob');
+  });
+
+  test('uses the configured image bytes when the server rejects a resource', async () => {
+    const {request, result} = requestResource({imagePlaceholder: 'data:image/png;base64,UE5H'});
+    request.status = 404;
+    request.readyState = 4;
+    request.onreadystatechange?.();
+    expect(await result).toBe('UE5H');
+  });
+
+  test('reports HTTP failures and returns empty content when the placeholder is malformed', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const {request, result} = requestResource({imagePlaceholder: 'not-a-data-url'});
+    request.status = 403;
+    request.readyState = 4;
+    request.onreadystatechange?.();
+    expect(await result).toBe('');
+    expect(error).toHaveBeenCalledWith(
+      'cannot fetch resource: https://example.test/tile.png, status: 403'
+    );
+  });
+
+  test('uses the placeholder when a resource times out', async () => {
+    const {request, result} = requestResource({imagePlaceholder: 'data:image/png;base64,UE5H'});
+    expect(request.timeout).toBe(30000);
+    request.ontimeout?.();
+    expect(await result).toBe('UE5H');
+  });
+
+  test('settles timed-out downloads without a placeholder and reports the failing URL', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const {request, result} = requestResource();
+    request.ontimeout?.();
+    expect(await result).toBe('');
+    expect(error).toHaveBeenCalledWith(
+      'timeout of 30000ms occurred while fetching resource: https://example.test/tile.png'
+    );
+  });
+
+  test('cache busting preserves an existing query and also works for a queryless URL', async () => {
+    jest.spyOn(Date.prototype, 'getTime').mockReturnValue(123456);
+    for (const [source, expected] of [
+      ['https://example.test/tile.png', 'https://example.test/tile.png?123456'],
+      ['https://example.test/tile.png?token=abc', 'https://example.test/tile.png?token=abc&123456']
+    ]) {
+      const {request, result} = requestResource({cacheBust: true}, source);
+      expect(request.open).toHaveBeenCalledWith('GET', expected, true);
+      request.readyState = 4;
+      request.onreadystatechange?.();
+      expect(await result).toBe('dGlsZQ==');
+    }
+  });
+
+  test('image creation waits for decoding and returns the loaded image', async () => {
+    const image = document.createElement('img');
+    jest.spyOn(window, 'Image').mockImplementation(() => image);
+    const result = makeImage('data:image/png;base64,UE5H');
+    const resolved = jest.fn();
+    result.then(resolved);
+    await Promise.resolve();
+    expect(resolved).not.toHaveBeenCalled();
+    expect(image.src).toBe('data:image/png;base64,UE5H');
+    image.dispatchEvent(new Event('load'));
+    expect(await result).toBe(image);
+  });
+
+  test('image decode failure keeps the error event and export-specific message', async () => {
+    const image = document.createElement('img');
+    jest.spyOn(window, 'Image').mockImplementation(() => image);
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const result = makeImage('data:image/png;base64,broken');
+    const failure = new Event('error');
+    image.dispatchEvent(failure);
+    await expect(result).rejects.toEqual({
+      event: failure,
+      message: IMAGE_EXPORT_ERRORS.dataUri
+    });
+  });
+
+  test('PNG blob fallback preserves binary bytes when native toBlob is unavailable', async () => {
+    const blob = (await canvasToBlob({toDataURL: () => 'data:image/png;base64,AP+A'})) as Blob;
+    expect(blob.type).toBe('image/png');
+    expect(blob.size).toBe(3);
+    const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(blob);
+    });
+    expect(Array.from(new Uint8Array(bytes))).toEqual([0, 255, 128]);
+  });
+
+  test('external stylesheets resolve relative and root resources but preserve absolute resources', () => {
+    const css =
+      '@font-face{src:url(../fonts/font.woff2)} .map{background:url("/tiles/a.png")} .icon{background:url(https://cdn.test/icon.svg)}';
+    expect(setStyleSheetBaseHref(css, 'https://example.test/css/map.css')).toBe(
+      "@font-face{src:url('https://example.test/fonts/font.woff2')} .map{background:url('https://example.test/tiles/a.png')} .icon{background:url('https://cdn.test/icon.svg')}"
+    );
   });
 });
