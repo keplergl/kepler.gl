@@ -21,7 +21,7 @@ import {ChartsSchema, chartPropsV1, VisState} from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import {ChartPanelContentFactory} from './chart-panel';
@@ -151,6 +151,7 @@ describe('ChartManager reactivity', () => {
   beforeEach(() => jest.mocked(computeChart).mockClear());
 
   test('skips unchanged parent renders while keeping chart, panel and feature changes live', () => {
+    const {enableChartsPanel} = getApplicationConfig();
     const Header = jest.fn(({children, title}) => (
       <div data-testid="manager-header">
         {title}
@@ -180,7 +181,23 @@ describe('ChartManager reactivity', () => {
       rerenderManager({});
       expect(getByDisplayValue('Changed rows')).toBeInTheDocument();
     } finally {
-      initApplicationConfig({});
+      initApplicationConfig({enableChartsPanel});
+    }
+  });
+
+  test('reads the current feature flag on store updates without a parent render', () => {
+    const {enableChartsPanel} = getApplicationConfig();
+    try {
+      const {dispatch, getByDisplayValue, queryByDisplayValue} = renderManager();
+      expect(getByDisplayValue('Rows')).toBeInTheDocument();
+      initApplicationConfig({enableChartsPanel: false});
+      dispatch(VisStateActions.updateChart('c1', {title: 'Disabled rows'}));
+      expect(queryByDisplayValue('Disabled rows')).toBeNull();
+      initApplicationConfig({enableChartsPanel: true});
+      dispatch(VisStateActions.updateChart('c1', {title: 'Enabled rows'}));
+      expect(getByDisplayValue('Enabled rows')).toBeInTheDocument();
+    } finally {
+      initApplicationConfig({enableChartsPanel});
     }
   });
 

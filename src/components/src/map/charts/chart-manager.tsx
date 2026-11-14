@@ -101,7 +101,7 @@ export default function ChartManagerFactory(
   ChartTypeSelector: ReturnType<typeof ChartTypeSelectorFactory>
 ): React.FC<ChartManagerProps> {
   const ChartManager = (props: ChartManagerProps & {chartsEnabled: boolean}) => {
-    const {intl, children, panelActive = true, isExport = false, chartsEnabled} = props;
+    const {intl, children, panelActive = true, isExport = false} = props;
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
     // Pointer/hover updates replace visState without changing chart inputs.
@@ -172,7 +172,9 @@ export default function ChartManagerFactory(
       setTypeSelectorOpened(false);
     }, []);
 
-    if (!chartsEnabled) {
+    // The wrapper prop invalidates memoization on parent renders. Store/local
+    // updates can render this component independently, so read the live flag.
+    if (!getApplicationConfig().enableChartsPanel) {
       return null;
     }
 
