@@ -1014,18 +1014,32 @@ test.each([
   }
 );
 
-function setupSharedPlayer() {
+function setupSharedPlayer({
+  floatingBookmarks = false,
+  initialTour = tour,
+  bookmarks = [{id: 'saved', name: 'Saved view', camera}]
+}: {
+  floatingBookmarks?: boolean;
+  initialTour?: CameraTour | null;
+  bookmarks?: CameraBookmark[];
+} = {}) {
   const updateMap = jest.fn();
   let dispatch: React.Dispatch<any>;
   let setPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
   let setSplit: React.Dispatch<React.SetStateAction<boolean>>;
-  let setTour: React.Dispatch<React.SetStateAction<CameraTour>>;
+  let setTour: React.Dispatch<React.SetStateAction<CameraTour | null>>;
   function Harness() {
     const root = useRef<HTMLDivElement>(null);
-    const [ui, updateUi] = useReducer(uiStateReducer, INITIAL_UI_STATE);
+    const [ui, updateUi] = useReducer(uiStateReducer, {
+      ...INITIAL_UI_STATE,
+      mapControls: {
+        ...INITIAL_UI_STATE.mapControls,
+        cameraBookmarks: {...INITIAL_UI_STATE.mapControls.cameraBookmarks, active: true, show: true}
+      }
+    });
     const [panelOpen, updatePanel] = useState(false);
     const [split, updateSplit] = useState(false);
-    const [currentTour, updateTour] = useState(tour);
+    const [currentTour, updateTour] = useState(initialTour);
     setTour = updateTour;
     dispatch = updateUi;
     setPanelOpen = updatePanel;
@@ -1046,6 +1060,27 @@ function setupSharedPlayer() {
           >
             <div className="maps">
               <button>Map gesture</button>
+              {floatingBookmarks && (
+                <CameraBookmarkControl
+                  bookmarks={bookmarks}
+                  mapState={mapState}
+                  mapStateActions={{...MapStateActions, updateMap}}
+                  mapControls={ui.mapControls}
+                  setMapControlSettings={Object.assign(
+                    (panelId: string, settings: Record<string, unknown>) => {
+                      const action = UIStateActions.setMapControlSettings(panelId, settings);
+                      dispatch(action);
+                      return action;
+                    },
+                    UIStateActions.setMapControlSettings
+                  )}
+                  setMapControlVisibility={Object.assign((control: string, show: boolean) => {
+                    const action = UIStateActions.setMapControlVisibility(control, show);
+                    dispatch(action);
+                    return action;
+                  }, UIStateActions.setMapControlVisibility)}
+                />
+              )}
             </div>
             {panelOpen && (
               <CameraTourConfig
@@ -1088,6 +1123,12 @@ function setupSharedPlayer() {
       }),
     openPanel: () => act(() => setPanelOpen(true)),
     closePanel: () => act(() => setPanelOpen(false)),
+    enable: (enabled: boolean) =>
+      act(() => dispatch(UIStateActions.setMapControlVisibility('cameraTour', enabled))),
+    enableBookmarks: (enabled: boolean) =>
+      act(() => dispatch(UIStateActions.setMapControlVisibility('cameraBookmarks', enabled))),
+    setFloatingSettings: (settings: Record<string, unknown>) =>
+      act(() => dispatch(UIStateActions.setMapControlSettings('cameraBookmarks', settings))),
     selectStop: (stopId: string) =>
       act(() => {
         dispatch(UIStateActions.setMapControlSettings('cameraTour', {selection: {stopId}}));
@@ -1100,6 +1141,187 @@ function setupSharedPlayer() {
       })
   };
 }
+
+test.each([false, true])(
+  'floating playback runs with the sidebar closed and pauses on activation or navigation (split=%s)',
+  async split => {
+    const user = userEvent.setup();
+    const player = setupSharedPlayer({floatingBookmarks: true});
+    player.enable(true);
+    if (split) player.split();
+    const panel = document.querySelector('.camera-bookmark-panel') as HTMLElement;
+    const controls = within(panel);
+    expect(Boolean(panel.closest('.maps'))).toBe(split);
+    await user.click(controls.getByRole('button', {name: 'Play'}));
+    frame(1500);
+    expect(player.updateMap).toHaveBeenLastCalledWith({
+      ...evaluateCameraTour(tour, 1500),
+      transitionDuration: 0
+    });
+    const slider = controls.getByRole('slider', {name: 'Camera tour time'});
+    expect(slider).toHaveValue('1500');
+    expect(slider).toHaveAttribute('aria-valuetext', '1.5 s');
+    expect(slider).toHaveAttribute('max', '4000');
+    const staleCallback = [...callbacks.values()][0];
+    // A full pointer sequence must pause, without pointerdown switching the button to Play.
+    await user.click(controls.getByRole('button', {name: 'Pause'}));
+    expect(controls.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+    expect(callbacks.size).toBe(0);
+    player.updateMap.mockClear();
+    act(() => staleCallback(2000));
+    expect(player.updateMap).not.toHaveBeenCalled();
+    await user.click(controls.getByRole('button', {name: 'Play'}));
+    await user.click(controls.getByRole('button', {name: 'Saved view'}));
+    expect(callbacks.size).toBe(0);
+    expect(player.updateMap).toHaveBeenLastCalledWith(
+      expect.objectContaining({transitionDuration: 1000}),
+      ...(split ? [0] : [])
+    );
+  }
+);
+
+test('floating and sidebar controls share seeking, restart and a single clock across sidebar remounts', () => {
+  const player = setupSharedPlayer({floatingBookmarks: true});
+  player.enable(true);
+  player.openPanel();
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  const floating = within(document.querySelector('.camera-bookmark-panel') as HTMLElement);
+  const sidebar = within(document.querySelector('.interaction-camera-tour') as HTMLElement);
+  fireEvent.click(sidebar.getByRole('button', {name: 'Play'}));
+  frame(1500);
+  expect(floating.getByRole('button', {name: 'Pause'})).toBeInTheDocument();
+  fireEvent.change(floating.getByRole('slider', {name: 'Camera tour time'}), {
+    target: {value: '2500'}
+  });
+  expect(callbacks.size).toBe(0);
+  expect(sidebar.getByRole('slider')).toHaveValue('2500');
+  expect(sidebar.getByLabelText('Elapsed time')).toHaveTextContent('2.5 s');
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 2500),
+    transitionDuration: 0
+  });
+  fireEvent.change(sidebar.getByRole('slider'), {target: {value: '3000'}});
+  expect(floating.getByRole('slider')).toHaveValue('3000');
+  fireEvent.click(floating.getByRole('button', {name: 'Restart'}));
+  expect(sidebar.getByLabelText('Elapsed time')).toHaveTextContent('0 s');
+  expect(player.updateMap).toHaveBeenLastCalledWith({...camera, transitionDuration: 0});
+  fireEvent.click(floating.getByRole('button', {name: 'Play'}));
+  player.closePanel();
+  frame(1000);
+  player.openPanel();
+  fireEvent.click(screen.getByRole('button', {name: 'Camera animation'}));
+  expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('1 s');
+  expect(floating.getByRole('slider')).toHaveValue('1000');
+  expect(callbacks.size).toBe(1);
+});
+
+test('floating playback is available without saved bookmarks and hides when animation is disabled', () => {
+  const player = setupSharedPlayer({floatingBookmarks: true, bookmarks: []});
+  player.enable(false);
+  expect(screen.queryByRole('navigation', {name: 'Bookmarks'})).toBeNull();
+  player.enable(true);
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(1500);
+  player.enable(false);
+  expect(screen.queryByRole('slider')).toBeNull();
+  expect(callbacks.size).toBe(0);
+  player.enable(true);
+  expect(screen.getByRole('slider')).toHaveValue('1500');
+  expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+});
+
+test('bookmark visibility is independent of camera playback and the panel hides when both are off', () => {
+  const player = setupSharedPlayer({floatingBookmarks: true});
+  player.enable(true);
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(1500);
+  player.enableBookmarks(false);
+  expect(screen.queryByRole('navigation', {name: 'Bookmarks'})).toBeNull();
+  expect(screen.queryByRole('button', {name: 'Saved view'})).toBeNull();
+  expect(screen.getByRole('slider', {name: 'Camera tour time'})).toHaveValue('1500');
+  expect(screen.getByRole('button', {name: 'Pause'})).toBeInTheDocument();
+  expect(callbacks.size).toBe(1);
+  frame(2000);
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 2000),
+    transitionDuration: 0
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
+  fireEvent.change(screen.getByRole('slider'), {target: {value: '2500'}});
+  expect(player.updateMap).toHaveBeenLastCalledWith({
+    ...evaluateCameraTour(tour, 2500),
+    transitionDuration: 0
+  });
+  player.enableBookmarks(true);
+  expect(screen.getByRole('button', {name: 'Saved view'})).toBeInTheDocument();
+  expect(screen.getByRole('slider')).toHaveValue('2500');
+  player.enable(false);
+  expect(screen.queryByRole('slider')).toBeNull();
+  expect(screen.getByRole('button', {name: 'Saved view'})).toBeInTheDocument();
+  player.enableBookmarks(false);
+  expect(document.querySelector('.camera-bookmark-panel')).toBeNull();
+  player.enable(true);
+  expect(screen.getByRole('slider')).toHaveValue('2500');
+});
+
+test('refits the floating panel when visible sections change and preserves position and later resizing', () => {
+  const player = setupSharedPlayer({floatingBookmarks: true});
+  player.enable(true);
+  const position = {x: 80, y: 40, anchorX: 'right', anchorY: 'top'};
+  player.setFloatingSettings({contentHeight: 180, position});
+  const panel = document.querySelector('.draggable-legend') as HTMLElement;
+  const content = panel.querySelector('.map-control__panel-content') as HTMLElement;
+  expect(content).toHaveStyle({height: '180px'});
+
+  for (const toggle of [
+    () => player.enableBookmarks(false),
+    () => player.enableBookmarks(true),
+    () => player.enable(false),
+    () => player.enable(true)
+  ]) {
+    toggle();
+    // No fixed height: the remaining content fits naturally within the existing viewport cap.
+    expect(getComputedStyle(content).height).toBe('');
+    expect(panel).toHaveStyle({right: '80px', top: '40px'});
+    player.setFloatingSettings({contentHeight: 220});
+    expect(content).toHaveStyle({height: '220px'});
+  }
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(1500);
+  expect(content).toHaveStyle({height: '220px'});
+});
+
+test.each([false, true])(
+  'closing the floating panel disables its visible sections (bookmarks=%s)',
+  enabled => {
+    const player = setupSharedPlayer({floatingBookmarks: true});
+    player.enable(true);
+    player.enableBookmarks(enabled);
+    fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+    const panel = document.querySelector('.camera-bookmark-panel') as HTMLElement;
+    fireEvent.click(panel.querySelector('.close-map-control-item') as HTMLElement);
+    expect(document.querySelector('.camera-bookmark-panel')).toBeNull();
+    expect(callbacks.size).toBe(0);
+    player.enable(true);
+    expect(screen.getByRole('button', {name: 'Play'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Saved view'})).toBeNull();
+  }
+);
+
+test.each([
+  null,
+  {stops: []},
+  {stops: [{...tour.stops[0], holdDurationMs: 0, travelDurationMs: 0}]}
+])('keeps bookmarks usable without a playable camera animation: %p', initialTour => {
+  const player = setupSharedPlayer({floatingBookmarks: true, initialTour});
+  player.enable(true);
+  expect(screen.queryByRole('slider')).toBeNull();
+  expect(screen.queryByRole('button', {name: 'Play'})).toBeNull();
+  fireEvent.click(screen.getByRole('button', {name: 'Saved view'}));
+  expect(player.updateMap).toHaveBeenCalledWith(
+    expect.objectContaining({...camera, transitionDuration: 1000})
+  );
+});
 
 test('map selection opens the stop editor, pauses playback, and can select the same point again', () => {
   const player = setupSharedPlayer();
