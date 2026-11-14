@@ -2,18 +2,25 @@
 // Copyright contributors to the kepler.gl project
 
 // @ts-nocheck
-import {FILTER_TYPES, FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {
+  FILTER_TYPES,
+  FILTER_VIEW_TYPES,
+  GLOBE_MIN_ZOOM,
+  GLOBE_MAX_ZOOM
+} from '@kepler.gl/constants';
 import {
   getTimeRangeFilterKeyframes,
   getBeforeLayerId,
   getStaticMapProps,
   getAnimatableFilters,
   scaleToVideoExport,
-  getVideoExportContainer
+  getVideoExportContainer,
+  getHubbleDeckGlProps,
+  getGlobeExportLayers
 } from './hubble-utils';
 
 jest.mock('@kepler.gl/utils', () => ({
-  ...jest.requireActual('@kepler.gl/utils'),
+  getLayerBlendingParameters: jest.fn(() => ({blend: true})),
   getBaseMapLibrary: jest.fn(() => 'maplibre')
 }));
 
@@ -374,5 +381,122 @@ describe('hubble-utils', () => {
       expect(result.longitude).toBe(-122.35);
       expect(result.zoom).toBe(1);
     });
+  });
+});
+
+jest.mock('@kepler.gl/reducers', () => ({computeDeckLayers: jest.fn()}));
+jest.mock('@kepler.gl/deckgl-layers', () => ({
+  KeplerGlobeView: jest.requireActual('../../../deckgl-layers/src/globe/globe-view')
+    .KeplerGlobeView,
+  getGlobeBaseLayers: jest.fn(),
+  getGlobeTopLayers: jest.fn()
+}));
+
+describe('globe export layer composition', () => {
+  const {computeDeckLayers} = require('@kepler.gl/reducers');
+  const {getGlobeBaseLayers, getGlobeTopLayers} = require('@kepler.gl/deckgl-layers');
+  const state = {
+    visState: {layerBlending: 'normal'},
+    mapState: {longitude: 12, latitude: 40, zoom: 2, globe: {enabled: true}},
+    mapStyle: {styleType: 'dark'}
+  };
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getGlobeBaseLayers.mockImplementation(() => [{id: 'base'}]);
+    getGlobeTopLayers.mockImplementation(() => [{id: 'top'}]);
+    computeDeckLayers.mockImplementation(() => [{id: 'data'}]);
+  });
+
+  test('orders globe background, data and atmosphere for capture', () => {
+    const props = getHubbleDeckGlProps(state, 'export-token', 'https://maps.test');
+    expect(props.layers.map(layer => layer.id)).toEqual(['base', 'data', 'top']);
+    expect(computeDeckLayers).toHaveBeenCalledWith(state, {
+      primaryMap: true,
+      mapboxApiAccessToken: 'export-token',
+      mapboxApiUrl: 'https://maps.test'
+    });
+    expect(getGlobeBaseLayers).toHaveBeenCalledWith({
+      globe: state.mapState.globe,
+      mapStyleType: 'dark',
+      mapboxApiAccessToken: 'export-token'
+    });
+  });
+
+  test('seeds a valid interactive globe camera even when pitch and bearing are absent', () => {
+    const props = getHubbleDeckGlProps(state, 'token');
+    expect(props.initialViewState).toMatchObject({
+      longitude: 12,
+      latitude: 40,
+      zoom: 2,
+      pitch: 0,
+      bearing: 0
+    });
+    expect(props.initialViewState.minZoom).toBe(props.controller.minZoom);
+    expect(props.initialViewState.maxZoom).toBe(props.controller.maxZoom);
+    expect(props.initialViewState.minZoom).toBe(GLOBE_MIN_ZOOM);
+    expect(props.initialViewState.maxZoom).toBe(GLOBE_MAX_ZOOM);
+  });
+
+  test('preserves the current tilted camera in the globe export', () => {
+    const props = getHubbleDeckGlProps(
+      {...state, mapState: {...state.mapState, pitch: 30, bearing: -45}},
+      'token'
+    );
+    expect(props.initialViewState).toMatchObject({pitch: 30, bearing: -45});
+    expect(props.views.props.clearColor).toBe(false);
+  });
+
+  test('flat exports delegate layer creation to hubble rather than creating globe layers', () => {
+    const props = getHubbleDeckGlProps(
+      {...state, mapState: {...state.mapState, globe: {enabled: false}}},
+      'token'
+    );
+    expect(props.controller).toBe(true);
+    expect(props.views.id).toBe('mapbox');
+    expect(props.layers).toBeUndefined();
+    expect(computeDeckLayers).not.toHaveBeenCalled();
+    expect(getGlobeBaseLayers).not.toHaveBeenCalled();
+  });
+
+  test('builds separate layer instances and split visibility for each export deck', () => {
+    const left = getGlobeExportLayers(state, {mapIndex: 0});
+    const right = getGlobeExportLayers(state, {mapIndex: 1});
+    expect(left.map(layer => layer.id)).toEqual(['base', 'data', 'top']);
+    left.forEach((layer, i) => expect(layer).not.toBe(right[i]));
+    expect(
+      computeDeckLayers.mock.calls.map(call => [call[1].mapIndex, call[1].primaryMap])
+    ).toEqual([
+      [0, true],
+      [1, false]
+    ]);
+  });
+
+  test('uses the animated camera for zoom-dependent data layers without mutating the source map', () => {
+    const viewState = {longitude: 30, latitude: 50, zoom: 8, bearing: 90};
+    getGlobeExportLayers(state, {
+      mapIndex: 1,
+      viewState,
+      mapboxApiAccessToken: 'key',
+      mapboxApiUrl: 'https://maps.test'
+    });
+    expect(computeDeckLayers.mock.calls[0][0]).toEqual({
+      ...state,
+      mapState: {...state.mapState, ...viewState}
+    });
+    expect(computeDeckLayers.mock.calls[0][1]).toMatchObject({
+      mapboxApiAccessToken: 'key',
+      mapboxApiUrl: 'https://maps.test'
+    });
+    expect(state.mapState.zoom).toBe(2);
+    expect(state.mapState.longitude).toBe(12);
+  });
+
+  test('does not add a flat basemap behind the globe preview', () => {
+    const props = getStaticMapProps(
+      {...state, mapStyle: {...state.mapStyle, bottomMapStyle: {layers: [{id: 'flat'}]}}},
+      jest.fn(),
+      'key'
+    );
+    expect(props.mapStyle.layers).toEqual([]);
   });
 });

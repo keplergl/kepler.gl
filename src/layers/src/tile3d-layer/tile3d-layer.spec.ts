@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import Tile3DLayer, {tile3dLoadErrorKind} from './tile3d-layer';
+import {LightingEffect, COORDINATE_SYSTEM} from '@deck.gl/core';
 import {UniformStore} from '@luma.gl/core';
 import type {Device} from '@luma.gl/core/dist/adapter/device';
 
@@ -363,5 +364,288 @@ describe('3D tile loading error classification', () => {
     'tile 14003 missing'
   ])('keeps non-credential failures generic: %s', error => {
     expect(tile3dLoadErrorKind(error)).toBe('generic');
+  });
+});
+
+// Exercise the custom deck lifecycle without network requests or a GPU. The
+// superclass loader is the external boundary; Kepler's race/error guards run.
+describe('3D tile asynchronous lifecycle', () => {
+  function deckLayer() {
+    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}));
+    layer.initializeState();
+    layer.context = {timeline: {}};
+    return layer;
+  }
+
+  function deferred() {
+    let resolve!: () => void;
+    let reject!: (error: Error) => void;
+    const promise = new Promise<void>((yes, no) => {
+      resolve = yes;
+      reject = no;
+    });
+    return {promise, resolve, reject};
+  }
+
+  function mockLoad(layer: any, implementation: (this: any, url: string) => Promise<void>) {
+    const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
+    return jest.spyOn(parent, '_loadTileset').mockImplementation(implementation as any);
+  }
+
+  afterEach(() => jest.restoreAllMocks());
+
+  test('failed loads stop the spinner, report the error, and clear cached tiles', async () => {
+    const owner = new Tile3DLayer({dataId: 'tiles'});
+    const onTilesetLoadError = jest.fn();
+    const layer: any = render(owner, 'token-A', {layerCallbacks: {onTilesetLoadError}});
+    layer.initializeState();
+    layer.state.layerMap = {old: {layer: {}}};
+    const error = new Error('Unauthorized');
+    mockLoad(layer, async () => {
+      throw error;
+    });
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await layer._loadTileset(URL);
+    await Promise.resolve();
+    expect(layer.isLoaded).toBe(true);
+    expect(layer.state.tileset3d).toBeNull();
+    expect(layer.state.layerMap).toEqual({});
+    expect(onTilesetLoadError).toHaveBeenLastCalledWith('token');
+    expect(log).toHaveBeenCalledWith('Tile3DLayer: tileset load error', error);
+  });
+
+  test('retry disposes the old tileset and clears the failed state before loading', async () => {
+    const layer = deckLayer();
+    const old = {destroy: jest.fn()};
+    layer.state.tileset3d = old;
+    layer.state._tilesetLoadFailed = true;
+    layer.state.layerMap = {old: {layer: {}}};
+    const pending = deferred();
+    mockLoad(layer, () => pending.promise);
+    const request = layer._loadTileset(URL);
+    expect(old.destroy).toHaveBeenCalledTimes(1);
+    expect(layer.state.tileset3d).toBeNull();
+    expect(layer.state.layerMap).toEqual({});
+    expect(layer.state._tilesetLoadFailed).toBe(false);
+    expect(layer.isLoaded).toBe(false);
+    pending.resolve();
+    await request;
+  });
+
+  test('a late successful old request cannot overwrite an accepted newer tileset', async () => {
+    const layer = deckLayer();
+    const oldRequest = deferred();
+    const newRequest = deferred();
+    const stale = {destroy: jest.fn()};
+    const current = {destroy: jest.fn()};
+    mockLoad(layer, async function (url) {
+      await (url === 'old' ? oldRequest.promise : newRequest.promise);
+      this.setState({tileset3d: url === 'old' ? stale : current});
+    });
+    const oldLoad = layer._loadTileset('old');
+    const newLoad = layer._loadTileset('new');
+    newRequest.resolve();
+    await newLoad;
+    oldRequest.resolve();
+    await oldLoad;
+    expect(layer.state.tileset3d).toBe(current);
+    expect(stale.destroy).toHaveBeenCalledTimes(1);
+    expect(current.destroy).not.toHaveBeenCalled();
+  });
+
+  test('an old success is discarded while the newer request is still pending', async () => {
+    const layer = deckLayer();
+    const oldRequest = deferred();
+    const newRequest = deferred();
+    const stale = {destroy: jest.fn()};
+    const current = {destroy: jest.fn()};
+    mockLoad(layer, async function (url) {
+      await (url === 'old' ? oldRequest.promise : newRequest.promise);
+      this.setState({tileset3d: url === 'old' ? stale : current});
+    });
+    const oldLoad = layer._loadTileset('old');
+    const newLoad = layer._loadTileset('new');
+    oldRequest.resolve();
+    await oldLoad;
+    expect(layer.state.tileset3d).toBeNull();
+    expect(stale.destroy).toHaveBeenCalledTimes(1);
+    newRequest.resolve();
+    await newLoad;
+    expect(layer.state.tileset3d).toBe(current);
+  });
+
+  test('a late failure from an old request does not mark a newer load as failed', async () => {
+    const layer = deckLayer();
+    const oldRequest = deferred();
+    const current = {destroy: jest.fn()};
+    mockLoad(layer, async function (url) {
+      if (url === 'old') await oldRequest.promise;
+      else this.setState({tileset3d: current});
+    });
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const oldLoad = layer._loadTileset('old');
+    await layer._loadTileset('new');
+    oldRequest.reject(new Error('old credentials rejected'));
+    await oldLoad;
+    expect(layer.state.tileset3d).toBe(current);
+    expect(layer.state._tilesetLoadFailed).toBe(false);
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  test('tile selection records a new frame but does not repeat state writes for that frame', async () => {
+    const layer = deckLayer();
+    const viewport = {id: 'map'};
+    const selectTiles = jest.fn().mockResolvedValue(5);
+    layer.state.tileset3d = {selectTiles};
+    const setState = jest.spyOn(layer, 'setState');
+    layer._updateTileset({map: viewport});
+    await Promise.resolve();
+    expect(selectTiles).toHaveBeenCalledWith([viewport]);
+    expect(layer.state.frameNumber).toBe(5);
+    setState.mockClear();
+    layer._updateTileset({map: viewport});
+    await Promise.resolve();
+    expect(setState).not.toHaveBeenCalled();
+  });
+
+  test('selection failures are caught without discarding the last renderable frame', async () => {
+    const layer = deckLayer();
+    const error = new Error('invalid bounding volume');
+    layer.state.frameNumber = 4;
+    layer.state.tileset3d = {selectTiles: jest.fn().mockRejectedValue(error)};
+    const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    layer._updateTileset({map: {id: 'map'}});
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(log).toHaveBeenCalledWith('Tile3DLayer: selectTiles error', error);
+    expect(layer.state.frameNumber).toBe(4);
+  });
+
+  test('selection waits for both an active viewport and a timeline', () => {
+    const layer = deckLayer();
+    const selectTiles = jest.fn();
+    layer.state.tileset3d = {selectTiles};
+    layer._updateTileset(null);
+    layer._updateTileset({});
+    layer.context = {};
+    layer._updateTileset({map: {id: 'map'}});
+    expect(selectTiles).not.toHaveBeenCalled();
+  });
+
+  test('exports request higher detail using configured screen-space error', async () => {
+    const layer = deckLayer();
+    layer.context.deck = {props: {_isExport: true}};
+    layer.state.tileset3d = {
+      options: {maximumScreenSpaceError: 12},
+      selectTiles: jest.fn().mockResolvedValue(1)
+    };
+    layer._updateTileset({map: {id: 'map'}});
+    await Promise.resolve();
+    expect(layer.state.tileset3d.memoryAdjustedScreenSpaceError).toBe(6);
+  });
+
+  test('interactive selection preserves its adaptive screen-space error', async () => {
+    const layer = deckLayer();
+    layer.state.tileset3d = {
+      memoryAdjustedScreenSpaceError: 20,
+      selectTiles: jest.fn().mockResolvedValue(1)
+    };
+    layer._updateTileset({map: {id: 'map'}});
+    await Promise.resolve();
+    expect(layer.state.tileset3d.memoryAdjustedScreenSpaceError).toBe(20);
+  });
+});
+
+// The superclass readiness/render boundary is isolated here so these assertions
+// concern Kepler's export and compatibility policy rather than GPU availability.
+describe('3D tile export and lighting transitions', () => {
+  function initialized() {
+    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}));
+    layer.initializeState();
+    layer.context = {deck: {props: {}}};
+    return layer;
+  }
+  afterEach(() => jest.restoreAllMocks());
+
+  test('export waits for selected tiles only, then becomes ready when their sublayers exist', () => {
+    const layer = initialized();
+    const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
+    jest.spyOn(parent, 'isLoaded', 'get').mockReturnValue(true);
+    layer.context.deck.props._isExport = true;
+    layer.state.tileset3d = {
+      tiles: [
+        {id: 'visible', selected: true},
+        {id: 'offscreen', selected: false}
+      ]
+    };
+    expect(layer.isLoaded).toBe(false);
+    layer.state.layerMap.visible = {layer: {}};
+    expect(layer.isLoaded).toBe(true);
+    layer.state.layerMap = {};
+    layer.context.deck.props._isExport = false;
+    expect(layer.isLoaded).toBe(true);
+  });
+
+  test('export cannot become ready before the superclass finishes loading', () => {
+    const layer = initialized();
+    const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
+    jest.spyOn(parent, 'isLoaded', 'get').mockReturnValue(false);
+    layer.context.deck.props._isExport = true;
+    layer.state.tileset3d = {tiles: []};
+    expect(layer.isLoaded).toBe(false);
+  });
+
+  test('enabling and disabling shadow lighting invalidates cached tile materials once', () => {
+    const layer = initialized();
+    const effect = new LightingEffect();
+    Object.assign(effect, {shadow: true});
+    const tile = {layer: {}, needsUpdate: false};
+    layer.state.layerMap = {tile};
+    const params = {props: layer.props, oldProps: layer.props, changeFlags: {}};
+    layer.context.deck.props.effects = [effect];
+    expect(layer.shouldUpdateState(params)).toBe(true);
+    layer.updateState(params);
+    expect(tile.needsUpdate).toBe(true);
+    expect(layer.shouldUpdateState(params)).toBe(false);
+    tile.needsUpdate = false;
+    Object.assign(effect, {shadow: false});
+    expect(layer.shouldUpdateState(params)).toBe(true);
+    layer.updateState(params);
+    expect(tile.needsUpdate).toBe(true);
+    expect(layer.state._lightingWasActive).toBe(false);
+  });
+
+  test('extension changes invalidate cached tiles even with unchanged props', () => {
+    const layer = initialized();
+    const first = {layer: {}, needsUpdate: false};
+    const second = {layer: {}, needsUpdate: false};
+    layer.state.layerMap = {first, second};
+    layer.updateState({
+      props: layer.props,
+      oldProps: layer.props,
+      changeFlags: {extensionsChanged: true}
+    });
+    expect(first.needsUpdate).toBe(true);
+    expect(second.needsUpdate).toBe(true);
+  });
+
+  test('normalizes legacy I3S coordinate systems before rendering and preserves modern values', () => {
+    const layer = initialized();
+    const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
+    const systems = [-1, 0, 1, 2, 3, 999, COORDINATE_SYSTEM.LNGLAT];
+    const tiles = systems.map(coordinateSystem => ({content: {coordinateSystem}}));
+    layer.state.tileset3d = {tiles: [...tiles, {}]};
+    const renderBase = jest.spyOn(parent, 'renderLayers').mockReturnValue([]);
+    expect(layer.renderLayers()).toEqual([]);
+    expect(tiles.map(tile => tile.content.coordinateSystem)).toEqual([
+      COORDINATE_SYSTEM.DEFAULT,
+      COORDINATE_SYSTEM.CARTESIAN,
+      COORDINATE_SYSTEM.LNGLAT,
+      COORDINATE_SYSTEM.METER_OFFSETS,
+      COORDINATE_SYSTEM.LNGLAT_OFFSETS,
+      COORDINATE_SYSTEM.METER_OFFSETS,
+      COORDINATE_SYSTEM.LNGLAT
+    ]);
+    expect(renderBase).toHaveBeenCalledTimes(1);
   });
 });
