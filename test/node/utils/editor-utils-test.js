@@ -490,6 +490,84 @@ test('editorLayerUtils -> getEditorLayer', t => {
   t.end();
 });
 
+test('editorLayerUtils -> two-click shapes omit degenerate guides and recover', t => {
+  for (const editorMode of [EDITOR_MODES.DRAW_RECTANGLE, EDITOR_MODES.DRAW_CIRCLE]) {
+    const layer = getEditorLayer({
+      editorMenuActive: true,
+      editor: {...INITIAL_VIS_STATE.editor, mode: editorMode},
+      onSetFeatures: () => {},
+      setSelectedFeature: () => {},
+      featureCollection: {type: 'FeatureCollection', features: []},
+      selectedFeatureIndexes: [],
+      viewport: null
+    });
+    const Mode = layer.props.mode;
+    const start = [-122.4, 37.8];
+    const end = [-122.3, 37.9];
+
+    for (const drag of [false, true]) {
+      const mode = new Mode();
+      const edits = [];
+      const props = {
+        data: {type: 'FeatureCollection', features: []},
+        modeConfig: layer.props.modeConfig,
+        selectedIndexes: [],
+        onEdit: edit => edits.push(edit)
+      };
+      const label = `${editorMode} (${drag ? 'drag' : 'click'})`;
+      const begin = drag ? 'handleStartDragging' : 'handleClick';
+      const finish = drag ? 'handleStopDragging' : 'handleClick';
+      mode[begin]({mapCoords: start, cancelPan: () => {}}, props);
+      t.deepEqual(mode.getGuides(props).features, [], `${label}: no guide before pointer move`);
+
+      const invalidEnds = [start, undefined, null, [], [NaN, 37.9], [-122.3, Infinity]];
+      if (editorMode === EDITOR_MODES.DRAW_RECTANGLE) {
+        invalidEnds.push([start[0], end[1]], [end[0], start[1]]);
+      }
+      for (const mapCoords of invalidEnds) {
+        props.lastPointerMoveEvent = {mapCoords};
+        t.deepEqual(mode.getGuides(props).features, [], `${label}: no degenerate or invalid guide`);
+      }
+
+      props.lastPointerMoveEvent = {mapCoords: end};
+      const guide = mode.getGuides(props).features[0];
+      t.equal(guide.geometry.type, 'Polygon', `${label}: previews a valid polygon`);
+      t.ok(
+        guide.geometry.coordinates[0].every(position => position.every(Number.isFinite)),
+        `${label}: preview coordinates are finite`
+      );
+      t.equal(
+        new Set(guide.geometry.coordinates[0].map(position => JSON.stringify(position))).size,
+        editorMode === EDITOR_MODES.DRAW_RECTANGLE ? 4 : 64,
+        `${label}: preview has distinct vertices`
+      );
+      if (editorMode === EDITOR_MODES.DRAW_CIRCLE) {
+        t.equal(mode.getTooltips().length, 1, `${label}: valid circle shows its radius`);
+      }
+
+      props.lastPointerMoveEvent = {mapCoords: start};
+      t.deepEqual(mode.getGuides(props).features, [], `${label}: hides guide when collapsed again`);
+      if (editorMode === EDITOR_MODES.DRAW_CIRCLE) {
+        t.deepEqual(mode.getTooltips(), [], `${label}: collapsed circle hides its radius`);
+      }
+      mode[finish]({mapCoords: start}, props);
+      t.equal(edits.length, 0, `${label}: does not commit a collapsed shape`);
+
+      props.lastPointerMoveEvent = {mapCoords: end};
+      mode[finish]({mapCoords: end}, props);
+      t.equal(edits.length, 1, `${label}: can finish after a collapsed shape`);
+      t.equal(edits[0].editType, 'addFeature', `${label}: adds the completed shape`);
+      t.equal(
+        edits[0].updatedData.features[0].properties.shape,
+        editorMode === EDITOR_MODES.DRAW_RECTANGLE ? 'Rectangle' : 'Circle',
+        `${label}: retains editable shape metadata`
+      );
+      t.deepEqual(mode.getGuides(props).features, [], `${label}: clears the completed preview`);
+    }
+  }
+  t.end();
+});
+
 test('editorLayerUtils -> filter polygons are styled differently from sketches', t => {
   const sketch = {
     id: 'sketch-1',

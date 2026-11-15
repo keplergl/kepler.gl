@@ -2,6 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import {DrawCircleFromCenterMode} from '@deck.gl-community/editable-layers';
+import type {
+  FeatureCollection,
+  GuideFeatureCollection,
+  ModeProps
+} from '@deck.gl-community/editable-layers';
 
 import {formatCircleRadiusLabel} from './editor-measure-labels';
 
@@ -17,6 +22,26 @@ import {formatCircleRadiusLabel} from './editor-measure-labels';
  * While the circle is being sized, a radius label is shown at the rim.
  */
 export class DrawCircleModeExtended extends DrawCircleFromCenterMode {
+  getGuides(props: ModeProps<FeatureCollection>): GuideFeatureCollection {
+    const center = this.getClickSequence()[0];
+    const rim = props.lastPointerMoveEvent?.mapCoords;
+
+    // The base mode clamps a zero radius to 1 m, producing a tiny stroked polygon
+    // before the pointer moves. Omit that preview and its radius label instead.
+    if (
+      !center ||
+      !rim ||
+      ![center[0], center[1], rim[0], rim[1]].every(Number.isFinite) ||
+      (center[0] === rim[0] && center[1] === rim[1])
+    ) {
+      this.radius = null;
+      this.areaCircle = null;
+      return {type: 'FeatureCollection', features: []};
+    }
+
+    return super.getGuides(props);
+  }
+
   handleClick(event, props) {
     this.addClickSequence(event);
     this.checkAndFinishPolygon(props);
