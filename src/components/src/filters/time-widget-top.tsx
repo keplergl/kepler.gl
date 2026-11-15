@@ -8,6 +8,8 @@ import {
   Close,
   ArrowDown,
   ArrowUp,
+  ArrowLeft,
+  ArrowRight,
   Gear,
   Play,
   Pause,
@@ -43,6 +45,37 @@ const TopSectionWrapper: IStyledComponent<'web', TopSectionWrapperProps> = style
   color: ${props => props.theme.labelColor};
   container-type: inline-size;
   container-name: timeline-header;
+
+  .time-widget-step {
+    &,
+    &:disabled {
+      opacity: 0;
+    }
+    pointer-events: none;
+  }
+
+  &:hover .time-widget-step,
+  &:focus-within .time-widget-step,
+  .bottom-widget--inner:hover & .time-widget-step,
+  .bottom-widget--inner:focus-within & .time-widget-step {
+    opacity: 1;
+    pointer-events: auto;
+
+    &:disabled {
+      opacity: 0.3;
+    }
+  }
+
+  @media (hover: none) {
+    .time-widget-step {
+      opacity: 1;
+      pointer-events: auto;
+
+      &:disabled {
+        opacity: 0.3;
+      }
+    }
+  }
 `;
 
 const HeaderRow = styled.div`
@@ -483,8 +516,46 @@ function TimeWidgetTopFactory(
         {rangeDisplay}
       </SelectedRange>
     );
+    const stepControl = (direction: 'backward' | 'forward') => {
+      const isForward = direction === 'forward';
+      const onClick = isForward ? playbackControls?.stepForward : playbackControls?.stepBackward;
+      if (!onClick) {
+        return null;
+      }
+      const label = isForward ? 'Next interval' : 'Previous interval';
+      const key = isForward ? 'ArrowRight' : 'ArrowLeft';
+      const Icon = isForward ? ArrowRight : ArrowLeft;
+      const canStep = isForward
+        ? playbackControls?.canStepForward
+        : playbackControls?.canStepBackward;
+      return (
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => (
+            <span role="tooltip">
+              {label} (Ctrl/Cmd + {isForward ? '→' : '←'})
+            </span>
+          )}
+        >
+          <HeaderButton
+            as="button"
+            type="button"
+            className="time-widget-step"
+            data-testid={`time-widget-step-${direction}`}
+            aria-label={label}
+            aria-keyshortcuts={`Control+${key} Meta+${key}`}
+            disabled={!playbackControls?.isAnimatable || canStep === false}
+            onClick={onClick}
+          >
+            <Icon height="16px" />
+          </HeaderButton>
+        </TippyTooltip>
+      );
+    };
     const playback = playbackControls ? (
       <StyledCenterBox role="group" aria-label="Playback controls">
+        {stepControl('backward')}
         <TippyTooltip
           placement="top"
           delay={[500, 0]}
@@ -502,6 +573,7 @@ function TimeWidgetTopFactory(
             {playbackControls.isAnimating ? <Pause height="16px" /> : <Play height="16px" />}
           </PlayButton>
         </TippyTooltip>
+        {stepControl('forward')}
         <TippyTooltip
           placement="top"
           delay={[500, 0]}
