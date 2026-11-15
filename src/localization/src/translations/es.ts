@@ -381,6 +381,8 @@ export default {
     animationByWindow: 'Ventana Temporal Móvil',
     animationByIncremental: 'Ventana Temporal Incremental',
     animationByInterval: 'Paso por intervalo',
+    previousInterval: 'Intervalo anterior',
+    nextInterval: 'Intervalo siguiente',
     speed: 'velocidad',
     play: 'iniciar',
     pause: 'pausar',

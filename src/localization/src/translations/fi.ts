@@ -378,6 +378,8 @@ export default {
     animationByWindow: 'Liukuva aikaikkuna',
     animationByIncremental: 'Kasvava aikaikkuna',
     animationByInterval: 'Askel intervallin mukaan',
+    previousInterval: 'Edellinen intervalli',
+    nextInterval: 'Seuraava intervalli',
     speed: 'nopeus',
     play: 'toista',
     pause: 'tauko',

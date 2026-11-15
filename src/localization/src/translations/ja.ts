@@ -373,6 +373,8 @@ export default {
     animationByWindow: '時間枠を移動',
     animationByIncremental: '時間枠を増加',
     animationByInterval: '間隔ごとに進む',
+    previousInterval: '前の区間',
+    nextInterval: '次の区間',
     speed: '速度',
     play: '再生',
     pause: '一時停止',

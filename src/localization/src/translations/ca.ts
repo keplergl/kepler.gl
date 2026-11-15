@@ -380,6 +380,8 @@ export default {
     animationByWindow: 'Finestra Temporal Mòbil',
     animationByIncremental: 'Finestra Temporal Incremental',
     animationByInterval: 'Pas per interval',
+    previousInterval: 'Interval anterior',
+    nextInterval: 'Interval següent',
     speed: 'velocitat',
     play: 'iniciar',
     pause: 'pausar',

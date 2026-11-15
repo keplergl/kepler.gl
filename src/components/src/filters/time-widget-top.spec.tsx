@@ -247,6 +247,72 @@ describe('compact timeline playback controls', () => {
     }
   );
 
+  test.each([false, true])(
+    'supports step buttons by keyboard and explains their shortcuts when minimized is %s',
+    async isMinified => {
+      const user = userEvent.setup();
+      const stepBackward = jest.fn();
+      const stepForward = jest.fn();
+      setupPlayback({isMinified}, {stepBackward, stepForward});
+      for (const [name, shortcut, callback] of [
+        ['Previous interval', 'ArrowLeft', stepBackward],
+        ['Next interval', 'ArrowRight', stepForward]
+      ] as const) {
+        const button = screen.getByRole('button', {name});
+        button.focus();
+        expect(button).toHaveFocus();
+        expect(button).toHaveAttribute('aria-keyshortcuts', `Control+${shortcut} Meta+${shortcut}`);
+        await user.keyboard('{Enter}');
+        await user.keyboard(' ');
+        expect(callback).toHaveBeenCalledTimes(2);
+        await expectTooltip(
+          button,
+          `${name} (Ctrl/Cmd + ${shortcut === 'ArrowRight' ? '→' : '←'})`
+        );
+      }
+    }
+  );
+
+  test.each([false, true])(
+    'shows localized step controls without hovering when minimized is %s',
+    async isMinified => {
+      const user = userEvent.setup();
+      const stepBackward = jest.fn();
+      const stepForward = jest.fn();
+      setupPlayback({isMinified}, {stepBackward, stepForward}, 'es');
+      const previous = screen.getByRole('button', {name: messages.es['tooltip.previousInterval']});
+      const next = screen.getByRole('button', {name: messages.es['tooltip.nextInterval']});
+      expect(previous).toBeVisible();
+      expect(next).toBeVisible();
+      for (const [button, id, arrow, callback] of [
+        [previous, 'tooltip.previousInterval', '←', stepBackward],
+        [next, 'tooltip.nextInterval', '→', stepForward]
+      ] as const) {
+        await expectTooltip(button, `${messages.es[id]} (Ctrl/Cmd + ${arrow})`);
+        await user.click(button);
+        expect(callback).toHaveBeenCalledTimes(1);
+      }
+    }
+  );
+
+  test('disables unavailable steps without blocking the other direction', async () => {
+    const user = userEvent.setup();
+    const stepBackward = jest.fn();
+    const stepForward = jest.fn();
+    const {props, playbackControls, rerender} = setupPlayback(
+      {},
+      {stepBackward, stepForward, canStepBackward: false, canStepForward: true}
+    );
+    expect(screen.getByRole('button', {name: 'Previous interval'})).toBeDisabled();
+    await user.click(screen.getByRole('button', {name: 'Next interval'}));
+    expect(stepForward).toHaveBeenCalledTimes(1);
+    expect(stepBackward).not.toHaveBeenCalled();
+    rerender(
+      <CompactHeader {...props} playbackControls={{...playbackControls, isAnimatable: false}} />
+    );
+    expect(screen.getByRole('button', {name: 'Next interval'})).toBeDisabled();
+  });
+
   test('groups chart actions separately from the selected range and playback controls', async () => {
     const user = userEvent.setup();
     setupPlayback();

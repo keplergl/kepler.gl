@@ -6,9 +6,11 @@ import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
-import {fireEvent, within} from '@testing-library/react';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import 'moment/locale/en-gb';
+import {render, fireEvent, cleanup, within} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {theme} from '@kepler.gl/styles';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {
@@ -1112,53 +1114,182 @@ test('Components -> TimeWidget.mount -> timeline container renders', t => {
   t.end();
 });
 
-test('Components -> TimeWidget.mount -> keyboard panning calls setFilterAnimationTime', t => {
-  const setFilterAnimationTime = sinon.spy();
-  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
-
-  // Use a filter where value doesn't touch the domain boundary
-  // domain: [1474588800000, 1474617600000], value: [1474595000000, 1474605000000]
-  const filterWithRoom = {
-    ...defaultProps.filter,
-    value: [1474595000000, 1474605000000]
-  };
-
-  let wrapper;
-  t.doesNotThrow(() => {
-    wrapper = mountWithTheme(
+function renderSteppingWidget(filter, onChange, otherProps = {}) {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  return render(
+    <ThemeProvider theme={theme}>
       <IntlWrapper>
         <TimeWidget
           {...defaultProps}
-          filter={filterWithRoom}
-          setFilterAnimationTime={setFilterAnimationTime}
+          filter={filter}
+          setFilterAnimationTime={onChange}
+          {...otherProps}
         />
-      </IntlWrapper>,
-      {attachTo: document.body}
+      </IntlWrapper>
+    </ThemeProvider>,
+    {container, baseElement: container}
+  );
+}
+
+[false, true].forEach(isMinified => {
+  test(`Components -> TimeWidget -> step controls and scoped shortcuts (minified=${isMinified})`, t => {
+    const setFilterAnimationTime = sinon.spy();
+    const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+    const filter = {
+      ...defaultProps.filter,
+      view: isMinified ? FILTER_VIEW_TYPES.minified : FILTER_VIEW_TYPES.enlarged,
+      value: [1474595000000, 1474605000000]
+    };
+    const view = renderSteppingWidget(filter, setFilterAnimationTime);
+    const previous = view.getByRole('button', {name: 'Previous interval'});
+    const next = view.getByRole('button', {name: 'Next interval'});
+    fireEvent.click(next);
+    t.deepEqual(
+      setFilterAnimationTime.lastCall.args,
+      [0, 'value', [1474605000000, 1474615000000]],
+      'next button advances one selected window'
     );
-  }, 'mount TimeWidget should not fail');
+    fireEvent.click(previous);
+    t.deepEqual(
+      setFilterAnimationTime.lastCall.args,
+      [0, 'value', [1474588800000, 1474595000000]],
+      'previous button clips the leading edge at the domain boundary'
+    );
 
-  // Dispatch after effects have registered (enzyme mount flushes effects)
-  const event = new window.KeyboardEvent('keydown', {
-    key: 'ArrowRight',
-    ctrlKey: true,
-    bubbles: true
+    const playback = view.getByRole('button', {name: 'Play'});
+    fireEvent.keyDown(playback, {key: 'ArrowRight', ctrlKey: true});
+    t.deepEqual(
+      setFilterAnimationTime.lastCall.args[2],
+      [1474605000000, 1474615000000],
+      'Ctrl+Right uses the same next-window behavior'
+    );
+    fireEvent.keyDown(playback, {key: 'ArrowLeft', metaKey: true});
+    t.deepEqual(
+      setFilterAnimationTime.lastCall.args[2],
+      [1474588800000, 1474595000000],
+      'Cmd+Left uses the same previous-window behavior'
+    );
+    const callCount = setFilterAnimationTime.callCount;
+    fireEvent.keyDown(playback, {key: 'ArrowRight'});
+    fireEvent.keyDown(document.body, {key: 'ArrowRight', ctrlKey: true});
+    const input = document.createElement('input');
+    const widget = view.container.querySelector('.bottom-widget--inner');
+    widget.appendChild(input);
+    fireEvent.keyDown(input, {key: 'ArrowRight', ctrlKey: true});
+    input.remove();
+    const editor = document.createElement('div');
+    editor.setAttribute('contenteditable', 'true');
+    widget.appendChild(editor);
+    fireEvent.keyDown(editor, {key: 'ArrowRight', ctrlKey: true});
+    editor.remove();
+    t.equal(
+      setFilterAnimationTime.callCount,
+      callCount,
+      'unmodified arrows, focus outside the timeline, and text editors do not step'
+    );
+    cleanup();
+    clientSizeStub.restore();
+    t.end();
   });
-  window.dispatchEvent(event);
+});
 
-  const windowWidth = 1474605000000 - 1474595000000;
-  if (setFilterAnimationTime.called) {
-    const args = setFilterAnimationTime.getCall(0).args;
-    t.equal(args[0], 0, 'should pass filter index');
-    t.equal(args[1], 'value', 'should pass "value" as field');
-    t.ok(Array.isArray(args[2]), 'should pass array as value');
-    t.equal(args[2][0], 1474605000000, 'new start should equal old end');
-    t.equal(args[2][1], 1474605000000 + windowWidth, 'new end should equal old end + width');
-  } else {
-    // In some test environments, effects may not flush synchronously
-    t.pass('keyboard handler may not be registered synchronously in this environment');
-  }
+test('Components -> TimeWidget -> step boundaries and unavailable data', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const domain = defaultProps.filter.domain;
+  [
+    {value: [domain[0], domain[0] + 1000], disabled: 'Previous interval'},
+    {value: [domain[1] - 1000, domain[1]], disabled: 'Next interval'},
+    {value: [...domain], disabled: 'both'},
+    {value: [domain[0], domain[0]], disabled: 'both'},
+    {value: [NaN, NaN], disabled: 'both'},
+    {value: [...domain], disabled: 'both', isAnimatable: false}
+  ].forEach(({value, disabled, isAnimatable = true}) => {
+    const onChange = sinon.spy();
+    const view = renderSteppingWidget({...defaultProps.filter, value}, onChange, {isAnimatable});
+    const names = disabled === 'both' ? ['Previous interval', 'Next interval'] : [disabled];
+    names.forEach(name => {
+      const button = view.getByRole('button', {name});
+      t.equal(button.disabled, true, `${name} is unavailable for ${value}`);
+      fireEvent.click(button);
+    });
+    t.equal(onChange.callCount, 0, 'disabled steps do not change the selection');
+    cleanup();
+  });
+  clientSizeStub.restore();
+  t.end();
+});
 
-  wrapper.detach();
+[false, true].forEach(isMinified => {
+  test(`Components -> TimeWidget -> fractional steps retain shared boundaries (minified=${isMinified})`, t => {
+    const onChange = sinon.spy();
+    const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+    const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+    const filter = {
+      ...numericState.filters[0],
+      domain: [-1, 1],
+      value: [-0.1, 0.3],
+      view: isMinified ? FILTER_VIEW_TYPES.minified : FILTER_VIEW_TYPES.enlarged
+    };
+    const view = renderSteppingWidget(filter, onChange);
+    fireEvent.click(view.getByRole('button', {name: 'Next interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [0.3, 0.7]],
+      'forward stepping starts exactly on the previous end, retaining records at 0.3'
+    );
+    fireEvent.click(view.getByRole('button', {name: 'Previous interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [-0.5, -0.1]],
+      'backward stepping ends exactly on the previous start, retaining records at -0.1'
+    );
+    cleanup();
+    clientSizeStub.restore();
+    t.end();
+  });
+});
+
+test('Components -> TimeWidget -> interval stepping follows adjacent bins', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const filterId = defaultProps.filter.id;
+  const visState = reducer(
+    StateWFilters.visState,
+    setFilterAnimationWindow({id: filterId, animationWindow: 'interval'})
+  );
+  const filter = visState.filters[0];
+  const marks = getTimelineFromFilter(filter).marks;
+  const onChange = sinon.spy();
+  const view = renderSteppingWidget({...filter, value: [marks[1], marks[2] - 1]}, onChange, {
+    datasets: visState.datasets
+  });
+  fireEvent.click(view.getByRole('button', {name: 'Previous interval'}));
+  t.deepEqual(
+    onChange.lastCall.args[2],
+    [marks[0], marks[1] - 1],
+    'previous selects the preceding bin'
+  );
+  fireEvent.click(view.getByRole('button', {name: 'Next interval'}));
+  t.deepEqual(
+    onChange.lastCall.args[2],
+    [marks[2], marks[3] - 1],
+    'next selects the following bin'
+  );
+  cleanup();
+  const empty = renderSteppingWidget(filter, onChange, {
+    timeline: {...getTimelineFromFilter(filter), marks: []}
+  });
+  t.equal(
+    empty.getByRole('button', {name: 'Previous interval'}).disabled,
+    true,
+    'empty bins disable previous'
+  );
+  t.equal(
+    empty.getByRole('button', {name: 'Next interval'}).disabled,
+    true,
+    'empty bins disable next'
+  );
+  cleanup();
   clientSizeStub.restore();
   t.end();
 });

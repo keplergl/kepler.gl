@@ -84,6 +84,10 @@ export type TimeWidgetTopProps = {
     animationWindow?: string | null;
     toggleAnimation: () => void;
     resetAnimation: () => void;
+    stepBackward?: () => void;
+    stepForward?: () => void;
+    canStepBackward?: boolean;
+    canStepForward?: boolean;
     updateAnimationSpeed: (speed: number) => void;
     setFilterAnimationWindow: (window: string) => void;
     exportAnimation?: () => void;
