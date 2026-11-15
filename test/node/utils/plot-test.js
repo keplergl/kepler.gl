@@ -985,6 +985,145 @@ function numericGroupDataset(values, type = 'real') {
   };
 }
 
+test('Utils -> categorical histogram reuses domains across filters and palettes', t => {
+  const rows = Array.from({length: 1000}, (_, index) => `category ${index}`);
+  const valueAccessor = sinon.spy(({index}) => rows[index]);
+  const dataset = {
+    dataContainer: {},
+    dataRevision: 0,
+    allIndexes: rows.map((_, index) => index),
+    fields: [{name: 'g', type: 'string', valueAccessor}]
+  };
+  const bins = {ds: [{x0: 0, x1: 1, count: 2, indexes: [1, 999]}]};
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 1,
+    groupOthers: true,
+    colorRange: {colors: ['#111111', '#222222', '#333333']}
+  };
+  const initial = getCategoricalHistogram(bins, {ds: dataset}, {groupBy});
+  valueAccessor.reset();
+  t.deepEqual(
+    getCategoricalHistogram(bins, {ds: {...dataset}}, {groupBy}),
+    initial,
+    'playback wrappers should keep category and Others colors'
+  );
+  t.ok(valueAccessor.callCount < 10, 'playback should read only binned rows, not the full domain');
+
+  const recoloredGroupBy = {...groupBy, colorRange: {colors: ['#aaaaaa', '#bbbbbb', '#cccccc']}};
+  valueAccessor.reset();
+  const recolored = getCategoricalHistogram(bins, {ds: dataset}, {groupBy: recoloredGroupBy});
+  t.equal(
+    recolored.legend[0].color,
+    '#bbbbbb',
+    'palette changes should use the stable category index'
+  );
+  t.deepEqual(
+    recolored.bins.ds[0].segments.map(({name, count}) => [name, count]),
+    initial.bins.ds[0].segments.map(({name, count}) => [name, count]),
+    'recoloring should keep counts'
+  );
+  t.ok(valueAccessor.callCount < 10, 'palette changes should not rescan the full domain');
+
+  valueAccessor.reset();
+  const filtered = getCategoricalHistogram(
+    {ds: [{...bins.ds[0], count: 1, indexes: [999]}]},
+    {ds: {...dataset}},
+    {groupBy: recoloredGroupBy}
+  );
+  t.deepEqual(
+    filtered.legend,
+    [{name: 'category 999', color: '#aaaaaa'}],
+    'cross-filters should promote the remaining category with its original color index'
+  );
+  t.ok(valueAccessor.callCount < 10, 'cross-filters should reuse the complete category domain');
+
+  valueAccessor.reset();
+  t.equal(
+    getCategoricalHistogram(bins, {ds: dataset}, {}),
+    null,
+    'ungrouped bins should stay plain'
+  );
+  t.equal(valueAccessor.callCount, 0, 'ungrouped bins should not read the grouping column');
+  t.end();
+});
+
+test('Utils -> histogram domain cache invalidates row edits, appends, replacements and fields', t => {
+  let values = [0, 2, 4, 6, 8];
+  const dataset = {...numericGroupDataset(values), dataContainer: {}, dataRevision: 0};
+  dataset.fields[0].valueAccessor = ({index}) => values[index];
+  const bins = {ds: [{x0: 0, x1: 1, count: 1, indexes: [0]}]};
+  const plotType = {groupBy: {fieldName: 'g', numGroups: 2}};
+  const label = () => getCategoricalHistogram(bins, {ds: dataset}, plotType).legend[0].name;
+  t.equal(label(), '0 ≤ x < 4', 'should start with the complete numeric domain');
+  values[4] = 12;
+  dataset.dataRevision++;
+  t.equal(label(), '0 ≤ x < 6', 'a revision change should invalidate in-place row edits');
+  values.push(16);
+  dataset.allIndexes = [...dataset.allIndexes, 5];
+  t.equal(label(), '0 ≤ x < 8', 'new row indexes should invalidate the domain');
+  values = [0, 2, 4, 6, 8, 20];
+  dataset.dataContainer = {};
+  t.equal(label(), '0 ≤ x < 10', 'a replacement container should invalidate the domain');
+  dataset.fields[0] = {...dataset.fields[0], valueAccessor: ({index}) => values[index] * 2};
+  t.equal(label(), '0 ≤ x < 20', 'a replacement field accessor should invalidate the domain');
+  dataset.fields[0] = {...dataset.fields[0], type: 'string'};
+  t.equal(label(), '0', 'field type changes should switch back to exact categories');
+  delete dataset.dataRevision;
+  dataset.fields[0] = {...dataset.fields[0], type: 'real'};
+  t.equal(label(), '0 ≤ x < 20', 'unversioned datasets should still support numeric ranges');
+  values[5] = 30;
+  t.equal(label(), '0 ≤ x < 30', 'unversioned datasets should not retain stale domains');
+  dataset.fields = [{name: 'other', type: 'real', valueAccessor: ({index}) => values[index]}];
+  t.equal(
+    getCategoricalHistogram(bins, {ds: dataset}, plotType),
+    null,
+    'removing the grouping field should not reuse stale categories'
+  );
+  t.end();
+});
+
+test('Utils -> histogram Others color preserves overrides and palette wrapping', t => {
+  const rows = ['a', 'b', 'c', 'd', 'e'];
+  const dataset = {...numericGroupDataset(rows, 'string'), dataContainer: {}, dataRevision: 0};
+  const bins = {ds: [{x0: 0, x1: 1, count: rows.length, indexes: dataset.allIndexes}]};
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 1,
+    groupOthers: true,
+    colorRange: {
+      colors: ['#111111', '#222222', '#333333'],
+      colorMap: [
+        [['a', 'd'], '#abcdef'],
+        ['a', '#111111']
+      ]
+    }
+  };
+  const result = getCategoricalHistogram(bins, {ds: dataset}, {groupBy});
+  t.deepEqual(
+    result.legend,
+    [
+      {name: 'a', color: '#abcdef'},
+      {name: PLOT_GROUP_OTHERS_NAME, color: '#111111'}
+    ],
+    'Others should use a palette color freed by overrides, respecting first-match precedence'
+  );
+  const filtered = getCategoricalHistogram(
+    {ds: [{...bins.ds[0], count: 2, indexes: [1, 2]}]},
+    {ds: dataset},
+    {groupBy}
+  );
+  t.deepEqual(
+    filtered.legend,
+    [
+      {name: 'b', color: '#222222'},
+      {name: PLOT_GROUP_OTHERS_NAME, color: '#111111'}
+    ],
+    'Others should keep its color when mapped categories are filtered out'
+  );
+  t.end();
+});
+
 test('Utils -> numeric histogram groups use equal widths and include boundary values exactly once', t => {
   for (const [type, values] of [
     ['integer', [8, 0, 2, 4, 6]],

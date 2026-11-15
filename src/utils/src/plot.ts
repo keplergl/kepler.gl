@@ -1088,6 +1088,99 @@ function groupLimit(numGroups: number | typeof PLOT_NUM_GROUPS_ALL): number {
   return Math.min(numGroups, MAX_PLOT_NUM_GROUPS);
 }
 
+function histogramCategoryKey(value: unknown, numeric: boolean): string | null {
+  return numeric &&
+    typeof value !== 'bigint' &&
+    (typeof value !== 'number' || !Number.isFinite(value))
+    ? null
+    : toGroupKey(value);
+}
+
+// Filter updates replace dataset wrappers, but keep the accessor and data revision.
+// Weak keys release the domain when its field is replaced or the dataset is removed.
+const histogramCategoryDomains = new WeakMap<
+  Field['valueAccessor'],
+  {
+    dataContainer: DataContainerInterface;
+    dataRevision: number;
+    allIndexes: number[];
+    numeric: boolean;
+    order: Map<string, number>;
+    canUseNumericRanges: boolean;
+    lower: number;
+    upper: number;
+  }
+>();
+
+function histogramCategoryDomain(dataset, field: Field, numeric: boolean) {
+  const {dataContainer, dataRevision, allIndexes} = dataset;
+  const cached = histogramCategoryDomains.get(field.valueAccessor);
+  if (
+    cached &&
+    cached.dataContainer === dataContainer &&
+    cached.dataRevision === dataRevision &&
+    cached.allIndexes === allIndexes &&
+    cached.numeric === numeric
+  ) {
+    return cached;
+  }
+  const order = new Map<string, number>();
+  let canUseNumericRanges = numeric;
+  let lower = Infinity;
+  let upper = -Infinity;
+  for (const index of allIndexes || []) {
+    const value = field.valueAccessor({index});
+    const key = histogramCategoryKey(value, numeric);
+    if (key === null) continue;
+    if (!order.has(key)) order.set(key, order.size);
+    if (numeric) {
+      const number = Number(value);
+      lower = Math.min(lower, number);
+      upper = Math.max(upper, number);
+      if (typeof value === 'bigint' && !Number.isSafeInteger(number)) {
+        canUseNumericRanges = false;
+      }
+    }
+  }
+  const domain = {
+    dataContainer,
+    dataRevision,
+    allIndexes,
+    numeric,
+    order,
+    canUseNumericRanges,
+    lower,
+    upper
+  };
+  // Callers without a revision cannot promise that an accessor's data is unchanged.
+  if (Number.isFinite(dataRevision) && allIndexes) {
+    histogramCategoryDomains.set(field.valueAccessor, domain);
+  }
+  return domain;
+}
+
+/** Colors used by the complete domain, without coloring every distinct category. */
+function histogramDomainColors(colorRange: ColorRange | undefined, order: Map<string, number>) {
+  const palette = colorRange?.colors?.length ? colorRange.colors : FALLBACK_SERIES_COLORS;
+  const counts = palette.map((_, index) =>
+    Math.max(0, Math.ceil((order.size - index) / palette.length))
+  );
+  const mappedColors = new Map<string, string>();
+  for (const [values, color] of colorRange?.colorMap || []) {
+    if (!color || (!Array.isArray(values) && (values === null || values === undefined))) continue;
+    for (const value of Array.isArray(values) ? values : [values]) {
+      const key = String(value);
+      const index = order.get(key);
+      // mappedSeriesColor uses the first matching override.
+      if (index !== undefined && !mappedColors.has(key)) {
+        counts[index % palette.length]--;
+        mappedColors.set(key, color);
+      }
+    }
+  }
+  return [...palette.filter((_, index) => counts[index] > 0), ...mappedColors.values()];
+}
+
 /** Split counts by category or numeric range, preserving the original bin totals and indexes. */
 export function getCategoricalHistogram(
   bins: Bins,
@@ -1114,33 +1207,45 @@ export function getCategoricalHistogram(
     });
   let canUseNumericRanges = numericFields;
   let getCategoryKey = (value: unknown): string | null => {
-    if (numericFields) {
-      if (typeof value === 'bigint') {
-        // Preserve exact categories for Int64 identifiers that Number cannot represent.
-        if (!Number.isSafeInteger(Number(value))) {
-          canUseNumericRanges = false;
-        }
-      } else if (typeof value !== 'number' || !Number.isFinite(value)) {
-        return null;
-      }
+    if (numericFields && typeof value === 'bigint' && !Number.isSafeInteger(Number(value))) {
+      // Preserve exact categories for Int64 identifiers that Number cannot represent.
+      canUseNumericRanges = false;
     }
-    return toGroupKey(value);
+    return histogramCategoryKey(value, numericFields);
   };
-  let categoryOrder = new Set<string>();
+  let categoryOrder = new Map<string, number>();
   let presentCategories = new Set<string>();
+  let lower = Infinity;
+  let upper = -Infinity;
   for (const [dataId, getGroup] of accessors) {
     // Use the complete dataset to keep a category's color stable as other filters change.
-    for (const index of datasets[dataId].allIndexes || []) {
-      const key = getCategoryKey(getGroup(index));
-      if (key !== null) {
-        categoryOrder.add(key);
+    const dataset = datasets[dataId];
+    const field = dataset.fields.find(item => item.name === groupBy.fieldName);
+    const domain = histogramCategoryDomain(dataset, field, numericFields);
+    canUseNumericRanges = canUseNumericRanges && domain.canUseNumericRanges;
+    lower = Math.min(lower, domain.lower);
+    upper = Math.max(upper, domain.upper);
+    // Reuse the usual single-dataset order; copy only when adding uncached categories.
+    if (!categoryOrder.size) {
+      categoryOrder = domain.order;
+    } else {
+      categoryOrder = new Map(categoryOrder);
+      for (const key of domain.order.keys()) {
+        if (!categoryOrder.has(key)) categoryOrder.set(key, categoryOrder.size);
       }
     }
     for (const bin of bins[dataId] || []) {
       for (const index of bin.indexes || []) {
         const key = getCategoryKey(getGroup(index));
         if (key !== null) {
-          categoryOrder.add(key);
+          if (!categoryOrder.has(key)) {
+            if (categoryOrder === domain.order) categoryOrder = new Map(categoryOrder);
+            categoryOrder.set(key, categoryOrder.size);
+          }
+          if (numericFields) {
+            lower = Math.min(lower, Number(key));
+            upper = Math.max(upper, Number(key));
+          }
           presentCategories.add(key);
         }
       }
@@ -1152,7 +1257,6 @@ export function getCategoricalHistogram(
 
   const limit = Math.max(1, Math.floor(groupLimit(groupBy.numGroups)));
   if (canUseNumericRanges && categoryOrder.size > limit) {
-    const [lower, upper] = extent(Array.from(categoryOrder, Number)) as [number, number];
     const boundaries = [lower];
     for (let index = 1; index < limit; index++) {
       const fraction = index / limit;
@@ -1191,20 +1295,16 @@ export function getCategoricalHistogram(
     presentCategories = new Set(
       Array.from(presentCategories, key => ranges[bisectRight(thresholds, Number(key))])
     );
-    categoryOrder = new Set(ranges);
+    categoryOrder = new Map(ranges.map((name, index) => [name, index]));
   }
 
   const colorRange = plotType?.groupBy?.colorRange;
-  const colors = new Map(
-    Array.from(categoryOrder, (name, index) => [name, seriesColor(colorRange, name, index)])
-  );
-  const order = Array.from(categoryOrder).filter(name => presentCategories.has(name));
+  const order = Array.from(categoryOrder.keys()).filter(name => presentCategories.has(name));
   const keep = order.slice(0, limit);
   const rest = order.slice(keep.length);
   const legend = keep.map(name => ({
     name,
-    // Every kept category was assigned a color above.
-    color: colors.get(name)!
+    color: seriesColor(colorRange, name, categoryOrder.get(name)!)
   }));
   const keyToGroup = new Map(keep.map((name, index) => [name, index]));
   if (groupBy.groupOthers && rest.length) {
@@ -1217,7 +1317,7 @@ export function getCategoricalHistogram(
     }
     legend.push({
       name: othersName,
-      color: othersSeriesColor(colorRange, Array.from(colors.values()))
+      color: othersSeriesColor(colorRange, histogramDomainColors(colorRange, categoryOrder))
     });
     rest.forEach(key => keyToGroup.set(key, othersIndex));
   }

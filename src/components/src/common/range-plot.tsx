@@ -9,7 +9,6 @@ import LineChartFactory, {HoverDP} from './line-chart';
 import {
   getCategoricalHistogram,
   getLayerHistogram,
-  isLayerHistogramSupported,
   hasMobileWidth,
   isTest,
   lineChartSeriesLegend
@@ -232,7 +231,7 @@ export default function RangePlotFactory(
           candidate => candidate.id === plotType.groupBy.layerId
         );
         const dataId = otherProps.filter?.dataId[0];
-        return layer && dataId && isLayerHistogramSupported(layer, dataId)
+        return layer && dataId && layer.config.dataId === dataId
           ? getLayerHistogram(bins, otherProps.datasets, layer)
           : null;
       }

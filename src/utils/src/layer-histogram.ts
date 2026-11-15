@@ -44,6 +44,7 @@ function getLayerHistogramSource(layer: KeplerLayer, dataId: string) {
     !ROW_COLOR_LAYERS.has(layer?.type || '') ||
     !config ||
     config.dataId !== dataId ||
+    (layer.type === 'geojson' && config.columnMode === 'table') ||
     !channel ||
     channel.aggregation ||
     (channel.condition && !channel.condition(config))
@@ -156,7 +157,9 @@ export function getLayerHistogram(
       color: cssColor(item.data)
     }));
   } else {
-    const count = ordinal ? scale.domain().length : scale.range().length;
+    const scaleDomain = scale.domain();
+    const scaleRange = scale.range();
+    const count = ordinal ? scaleDomain.length : scaleRange.length;
     classifier.range(Array.from({length: count}, (_, index) => index));
     classes = getLegendOfScale({
       scale: classifier,
@@ -164,17 +167,19 @@ export function getLayerHistogram(
       fieldType: source.field.type
     }).map((item, index) => ({
       name: legendName(item.label),
-      color: cssColor(ordinal ? scale(scale.domain()[index]) : scale.range()[index])
+      color: cssColor(ordinal ? scale(scaleDomain[index]) : scaleRange[index])
     }));
   }
   classifier.unknown?.(undefined);
   const customLabels = new Map(
     Object.entries(range?.colorLegends || {}).map(([color, name]) => [cssColor(color), name])
   );
-  classes = classes.map(item => ({
-    ...item,
-    name: customLabels.get(item.color) ?? item.name
-  }));
+  classes = classes.map(item => {
+    const name = customLabels.get(item.color) ?? item.name;
+    // The map legend applies an override only to the first class with that color.
+    customLabels.delete(item.color);
+    return {...item, name};
+  });
 
   const extraClasses = new Map<string, number>();
   const noValueClass = (value: unknown): number => {

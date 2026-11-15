@@ -3,6 +3,7 @@
 
 import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import type {Bins, ColorRange, Field} from '@kepler.gl/types';
+import GeoJsonLayer from '../../layers/src/geojson-layer/geojson-layer';
 import PointLayer from '../../layers/src/point-layer/point-layer';
 import {getLayerHistogram, isLayerHistogramSupported} from './layer-histogram';
 
@@ -61,6 +62,25 @@ test('uses quantile membership instead of rebuilding equal-width classes', () =>
   expect(histogram().bins.data[0].segments).toEqual([
     {name: '0 to 1.5', color: '#ff0000', count: 2},
     {name: '1.5 to 100', color: '#0000ff', count: 2}
+  ]);
+});
+
+test('applies custom labels only to the first class with a repeated color', () => {
+  const {layer, bins, datasets, histogram} = setup({
+    range: {colors: ['#ff0000', '#ff0000'], colorLegends: {'#ff0000': 'Low'}}
+  });
+  const result = histogram();
+  expect(result.bins.data[0].segments).toEqual([
+    {name: 'Low', color: '#ff0000', count: 2},
+    {name: '5 to 10', color: '#ff0000', count: 2}
+  ]);
+  expect(result.legend).toEqual([
+    {name: 'Low', color: '#ff0000'},
+    {name: '5 to 10', color: '#ff0000'}
+  ]);
+  const filteredBins = {data: [{...bins.data[0], count: 2, indexes: [2, 3]}]};
+  expect(getLayerHistogram(filteredBins, datasets, layer)?.legend).toEqual([
+    {name: '5 to 10', color: '#ff0000'}
   ]);
 });
 
@@ -196,6 +216,27 @@ test('rejects incompatible sources and handles missing fields or empty bins', ()
   expect(isLayerHistogramSupported(layer, 'data')).toBe(false);
   layer.updateLayerConfig({colorDomain: [0, 5, 10], colorField: null});
   expect(isLayerHistogramSupported(layer, 'data')).toBe(false);
+});
+
+test('rejects grouped GeoJSON table colors while retaining row-based GeoJSON colors', () => {
+  const {field, datasets, bins} = setup();
+  const layer = new GeoJsonLayer({id: 'source', dataId: 'data', columnMode: 'table'});
+  layer.updateLayerConfig({
+    colorField: field,
+    colorScale: SCALE_TYPES.quantize,
+    colorDomain: [0, 10]
+  });
+  layer.updateLayerVisConfig({filled: true, colorRange: {colors: ['#ff0000', '#0000ff']}});
+
+  expect(isLayerHistogramSupported(layer, 'data')).toBe(false);
+  expect(getLayerHistogram(bins, datasets, layer)).toBeNull();
+
+  layer.updateLayerConfig({columnMode: 'geojson'});
+  expect(isLayerHistogramSupported(layer, 'data')).toBe(true);
+  expect(getLayerHistogram(bins, datasets, layer)?.bins.data[0].segments).toEqual([
+    {name: '0 to 5', color: '#ff0000', count: 2},
+    {name: '5 to 10', color: '#0000ff', count: 2}
+  ]);
 });
 
 test.each(['grid', 'hexagon', 'vectorTile', 'raster', 'trip'])(

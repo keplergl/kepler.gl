@@ -7,6 +7,7 @@ import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {Bins, LineChart, TimeRangeFilter} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {KeplerGlLayers} from '@kepler.gl/layers';
 import {getDefaultFilter, mergePlotGroupBy} from '@kepler.gl/utils';
 import HistogramPlotFactory from './histogram-plot';
 import RangePlotFactory from './range-plot';
@@ -132,4 +133,32 @@ test('uses the active chart legend when switching between Y-axis lines and count
   update({plotType: {...plotType, groupBy: {...plotType.groupBy, fieldName: 'missing'}}});
   expect(container.querySelector('.time-widget__series-legend')).not.toBeInTheDocument();
   expect(container.querySelectorAll('.histogram-bars rect')).toHaveLength(2);
+});
+
+test('clears linked grouping when the source layer changes to another dataset', () => {
+  const {container, update} = setup();
+  const layer = new KeplerGlLayers.PointLayer({id: 'source-layer', dataId: 'data'});
+  layer.updateLayerConfig({
+    colorField: {...datasets.data.fields[0], type: 'string'},
+    colorScale: 'ordinal',
+    colorDomain: ['Solar', 'Wind']
+  });
+  update({
+    layers: [layer],
+    plotType: {
+      ...plotType,
+      groupBy: mergePlotGroupBy(null, {source: 'layer', layerId: layer.id})
+    }
+  });
+  expect(container.querySelectorAll('.histogram-segment')).toHaveLength(3);
+
+  layer.updateLayerConfig({dataId: 'other'});
+  update({
+    layers: [layer],
+    datasets: {...datasets, other: datasets.data},
+    bins: {...bins, other: bins.data}
+  });
+  expect(container.querySelectorAll('.histogram-segment')).toHaveLength(0);
+  expect(container.querySelectorAll('.histogram-bars rect')).toHaveLength(4);
+  expect(container.querySelector('.time-widget__series-legend')).not.toBeInTheDocument();
 });
