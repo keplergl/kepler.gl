@@ -273,6 +273,28 @@ describe('compact timeline playback controls', () => {
     }
   );
 
+  test.each([false, true])(
+    'shows localized step controls without hovering when minimized is %s',
+    async isMinified => {
+      const user = userEvent.setup();
+      const stepBackward = jest.fn();
+      const stepForward = jest.fn();
+      setupPlayback({isMinified}, {stepBackward, stepForward}, 'es');
+      const previous = screen.getByRole('button', {name: messages.es['tooltip.previousInterval']});
+      const next = screen.getByRole('button', {name: messages.es['tooltip.nextInterval']});
+      expect(previous).toBeVisible();
+      expect(next).toBeVisible();
+      for (const [button, id, arrow, callback] of [
+        [previous, 'tooltip.previousInterval', '←', stepBackward],
+        [next, 'tooltip.nextInterval', '→', stepForward]
+      ] as const) {
+        await expectTooltip(button, `${messages.es[id]} (Ctrl/Cmd + ${arrow})`);
+        await user.click(button);
+        expect(callback).toHaveBeenCalledTimes(1);
+      }
+    }
+  );
+
   test('disables unavailable steps without blocking the other direction', async () => {
     const user = userEvent.setup();
     const stepBackward = jest.fn();

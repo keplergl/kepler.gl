@@ -380,6 +380,8 @@ export default {
     animationByWindow: 'Janela de tempo móvel',
     animationByIncremental: 'Janela de tempo incremental',
     animationByInterval: 'Passo por intervalo',
+    previousInterval: 'Intervalo anterior',
+    nextInterval: 'Próximo intervalo',
     speed: 'velocidade',
     play: 'reproduzir',
     pause: 'pausar',

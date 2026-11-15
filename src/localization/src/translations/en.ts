@@ -721,6 +721,8 @@ export default {
     animationByWindow: 'Moving Time Window',
     animationByIncremental: 'Incremental Time Window',
     animationByInterval: 'Step by Interval',
+    previousInterval: 'Previous interval',
+    nextInterval: 'Next interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',

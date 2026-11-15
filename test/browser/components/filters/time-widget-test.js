@@ -1219,6 +1219,36 @@ test('Components -> TimeWidget -> step boundaries and unavailable data', t => {
   t.end();
 });
 
+[false, true].forEach(isMinified => {
+  test(`Components -> TimeWidget -> fractional steps retain shared boundaries (minified=${isMinified})`, t => {
+    const onChange = sinon.spy();
+    const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+    const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+    const filter = {
+      ...numericState.filters[0],
+      domain: [-1, 1],
+      value: [-0.1, 0.3],
+      view: isMinified ? FILTER_VIEW_TYPES.minified : FILTER_VIEW_TYPES.enlarged
+    };
+    const view = renderSteppingWidget(filter, onChange);
+    fireEvent.click(view.getByRole('button', {name: 'Next interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [0.3, 0.7]],
+      'forward stepping starts exactly on the previous end, retaining records at 0.3'
+    );
+    fireEvent.click(view.getByRole('button', {name: 'Previous interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [-0.5, -0.1]],
+      'backward stepping ends exactly on the previous start, retaining records at -0.1'
+    );
+    cleanup();
+    clientSizeStub.restore();
+    t.end();
+  });
+});
+
 test('Components -> TimeWidget -> interval stepping follows adjacent bins', t => {
   const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
   const filterId = defaultProps.filter.id;

@@ -524,8 +524,8 @@ function TimeWidgetFactory(
           return null;
         }
         const range = clampWindowToDomain(
-          filterStart + direction * windowWidth,
-          filterEnd + direction * windowWidth,
+          direction > 0 ? filterEnd : filterStart - windowWidth,
+          direction > 0 ? filterEnd + windowWidth : filterStart,
           domainRange,
           minimumRangeWidth
         );
