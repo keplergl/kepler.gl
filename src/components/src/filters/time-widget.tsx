@@ -25,6 +25,7 @@ import {timeRangeSliderFieldsSelector} from './time-range-filter';
 import {TimeWidgetProps} from './types';
 import TimeWidgetTopFactory from './time-widget-top';
 import TimeWidgetSettingsFactory from './time-widget-settings';
+import TimeRangeEditor from './time-range-editor';
 import {rangesEqual, clampRange, clampWindowToDomain} from '../common/timeline-helpers';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
@@ -524,8 +525,8 @@ function TimeWidgetFactory(
           return null;
         }
         const range = clampWindowToDomain(
-          filterStart + direction * windowWidth,
-          filterEnd + direction * windowWidth,
+          direction > 0 ? filterEnd : filterStart - windowWidth,
+          direction > 0 ? filterEnd + windowWidth : filterStart,
           domainRange,
           minimumRangeWidth
         );
@@ -585,6 +586,19 @@ function TimeWidgetFactory(
       setTimelineDomain(null);
     }, []);
 
+    const rangeDisplay = (
+      <FloatingTimeDisplay
+        currentTime={isMinified ? filterTimeline.value : filter.value}
+        defaultTimeFormat={timeDisplayConfig?.defaultTimeFormat}
+        timeFormat={timeDisplayConfig?.timeFormat}
+        timezone={timeDisplayConfig?.timezone}
+        formatValue={isTimeFilter ? undefined : formatNumeric}
+        displayLabel={
+          isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
+        }
+      />
+    );
+
     return (
       <TimeBottomWidgetInner
         className="bottom-widget--inner"
@@ -600,16 +614,22 @@ function TimeWidgetFactory(
           settingsOpen={showSettings && !isMinified}
           isMinified={isMinified}
           rangeDisplay={
-            <FloatingTimeDisplay
-              currentTime={isMinified ? filterTimeline.value : filter.value}
-              defaultTimeFormat={timeDisplayConfig?.defaultTimeFormat}
-              timeFormat={timeDisplayConfig?.timeFormat}
-              timezone={timeDisplayConfig?.timezone}
-              formatValue={isTimeFilter ? undefined : formatNumeric}
-              displayLabel={
-                isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
-              }
-            />
+            isTimeFilter ? (
+              <TimeRangeEditor
+                key={`${filter.id}-${isMinified}`}
+                value={isMinified ? filterTimeline.value : filter.value}
+                domain={fullDomain}
+                timezone={timeDisplayConfig?.timezone}
+                interval={filter.animationWindow === ANIMATION_WINDOW.interval}
+                marks={filterTimeline.marks}
+                onChange={timeSliderOnChange}
+                onOpen={filter.isAnimating ? _toggleAnimation : undefined}
+              >
+                {rangeDisplay}
+              </TimeRangeEditor>
+            ) : (
+              rangeDisplay
+            )
           }
           playbackControls={{
             isAnimatable,

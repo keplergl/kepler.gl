@@ -46,37 +46,6 @@ const TopSectionWrapper: IStyledComponent<'web', TopSectionWrapperProps> = style
   color: ${props => props.theme.labelColor};
   container-type: inline-size;
   container-name: timeline-header;
-
-  .time-widget-step {
-    &,
-    &:disabled {
-      opacity: 0;
-    }
-    pointer-events: none;
-  }
-
-  &:hover .time-widget-step,
-  &:focus-within .time-widget-step,
-  .bottom-widget--inner:hover & .time-widget-step,
-  .bottom-widget--inner:focus-within & .time-widget-step {
-    opacity: 1;
-    pointer-events: auto;
-
-    &:disabled {
-      opacity: 0.3;
-    }
-  }
-
-  @media (hover: none) {
-    .time-widget-step {
-      opacity: 1;
-      pointer-events: auto;
-
-      &:disabled {
-        opacity: 0.3;
-      }
-    }
-  }
 `;
 
 const HeaderRow = styled.div`
@@ -569,7 +538,9 @@ function TimeWidgetTopFactory(
       if (!onClick) {
         return null;
       }
-      const label = isForward ? 'Next interval' : 'Previous interval';
+      const label = intl.formatMessage({
+        id: isForward ? 'tooltip.nextInterval' : 'tooltip.previousInterval'
+      });
       const key = isForward ? 'ArrowRight' : 'ArrowLeft';
       const Icon = isForward ? ArrowRight : ArrowLeft;
       const canStep = isForward

@@ -6,8 +6,9 @@ import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import 'moment/locale/en-gb';
-import {render, fireEvent, cleanup} from '@testing-library/react';
+import {render, fireEvent, cleanup, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 
@@ -1219,6 +1220,36 @@ test('Components -> TimeWidget -> step boundaries and unavailable data', t => {
   t.end();
 });
 
+[false, true].forEach(isMinified => {
+  test(`Components -> TimeWidget -> fractional steps retain shared boundaries (minified=${isMinified})`, t => {
+    const onChange = sinon.spy();
+    const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+    const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
+    const filter = {
+      ...numericState.filters[0],
+      domain: [-1, 1],
+      value: [-0.1, 0.3],
+      view: isMinified ? FILTER_VIEW_TYPES.minified : FILTER_VIEW_TYPES.enlarged
+    };
+    const view = renderSteppingWidget(filter, onChange);
+    fireEvent.click(view.getByRole('button', {name: 'Next interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [0.3, 0.7]],
+      'forward stepping starts exactly on the previous end, retaining records at 0.3'
+    );
+    fireEvent.click(view.getByRole('button', {name: 'Previous interval'}));
+    t.deepEqual(
+      onChange.lastCall.args,
+      [0, 'value', [-0.5, -0.1]],
+      'backward stepping ends exactly on the previous start, retaining records at -0.1'
+    );
+    cleanup();
+    clientSizeStub.restore();
+    t.end();
+  });
+});
+
 test('Components -> TimeWidget -> interval stepping follows adjacent bins', t => {
   const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
   const filterId = defaultProps.filter.id;
@@ -1371,5 +1402,37 @@ test('Components -> TimeWidget -> interval window locks the histogram brush to o
   });
 
   wrapper.detach();
+  t.end();
+});
+
+test('Components -> TimeWidget -> exact range editor updates expanded and compact filters', t => {
+  for (const view of [FILTER_VIEW_TYPES.enlarged, FILTER_VIEW_TYPES.minified]) {
+    const setFilterAnimationTime = sinon.spy();
+    const filter = {...defaultProps.filter, view, timezone: 'UTC'};
+    const rendered = renderWithTheme(
+      <TimeWidget
+        {...defaultProps}
+        filter={filter}
+        setFilterAnimationTime={setFilterAnimationTime}
+      />
+    );
+    fireEvent.click(within(rendered.container).getByRole('button', {name: 'Edit time range'}));
+    const editor = within(rendered.getByRole('dialog', {name: 'Edit time range'}));
+    const start = filter.domain[0];
+    const end = filter.domain[1];
+    fireEvent.change(editor.getByRole('textbox', {name: 'Start'}), {
+      target: {value: moment.utc(start).format('YYYY-MM-DD HH:mm:ss.SSS Z')}
+    });
+    fireEvent.change(editor.getByRole('textbox', {name: 'End'}), {
+      target: {value: moment.utc(end).format('YYYY-MM-DD HH:mm:ss.SSS Z')}
+    });
+    fireEvent.click(editor.getByRole('button', {name: 'Apply'}));
+    t.deepEqual(
+      setFilterAnimationTime.args,
+      [[0, 'value', [start, end]]],
+      `${view} updates the selected filter`
+    );
+    rendered.unmount();
+  }
   t.end();
 });

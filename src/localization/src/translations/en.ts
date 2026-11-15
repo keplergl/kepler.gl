@@ -726,6 +726,8 @@ export default {
     singleInterval: 'Single interval',
     loopPlayback: 'Loop playback',
     stopAtEnd: 'Stop at end',
+    previousInterval: 'Previous interval',
+    nextInterval: 'Next interval',
     speed: 'Speed',
     play: 'Play',
     pause: 'Pause',
