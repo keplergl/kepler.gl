@@ -3,10 +3,14 @@
 
 import React from 'react';
 import {act, fireEvent, screen} from '@testing-library/react';
-import {Filter, Timeline} from '@kepler.gl/types';
+import {Filter, PlotGroupBy, RangeFilter, TimeRangeFilter, Timeline} from '@kepler.gl/types';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {RangeSlider as RealRangeSlider} from '@kepler.gl/components';
+import {Datasets} from '@kepler.gl/table';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+import {getDefaultFilter, mergePlotGroupBy} from '@kepler.gl/utils';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
+import {timeRangeSliderFieldsSelector} from '../filters/time-range-filter';
 import TimeRangeSliderFactory from './time-range-slider';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
 import AnimationControlFactory from './animation-control/animation-control';
@@ -143,6 +147,276 @@ test('preserves the zoomed chart viewport when cached time bins span the full fi
   } finally {
     width.mockRestore();
   }
+});
+
+test.each(
+  [true, false].flatMap(isTime => ['string', 'real'].map(fieldType => ({isTime, fieldType})))
+)(
+  'renders grouped count bins through the timeline (isTime=$isTime, fieldType=$fieldType)',
+  ({isTime, fieldType}) => {
+    const width = jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(212);
+    const RealTimeRangeSlider = TimeRangeSliderFactory(
+      PlaybackControls,
+      RealRangeSlider,
+      React.memo(() => <></>),
+      TimeRangeSliderTimeTitleFactory(),
+      AnimationControl
+    );
+    const numeric = fieldType === 'real';
+    const categories = numeric ? [0, 1, 2, 3] : ['Solar', 'Wind', 'Solar', 'Wind'];
+    const datasets = {
+      data: {
+        allIndexes: [0, 1, 2, 3],
+        fields: [{name: 'source', type: fieldType, valueAccessor: ({index}) => categories[index]}]
+      }
+    } as unknown as Datasets;
+    const bins = [
+      {x0: 0, x1: 1000, count: 3, indexes: [0, 1, 2]},
+      {x0: 1000, x1: 2000, count: 1, indexes: [3]}
+    ];
+    function ControlledTimeline() {
+      const [groupBy, setGroupBy] = React.useState<PlotGroupBy | null>(null);
+      const filter = {
+        ...getDefaultFilter({dataId: 'data', id: 'time'}),
+        type: isTime ? 'timeRange' : 'range',
+        view: 'enlarged',
+        domain: [0, 2000],
+        value: [0, 2000] as [number, number],
+        yAxis: null,
+        step: 1,
+        syncedWithLayerTimeline: false,
+        syncTimelineMode: 0,
+        invertTrendColor: false,
+        timeBins: {data: {second: bins}},
+        bins: {data: bins},
+        plotType: {type: 'histogram', interval: 'second', groupBy}
+      } as TimeRangeFilter | RangeFilter;
+      return (
+        <>
+          <button
+            onClick={() => setGroupBy(mergePlotGroupBy(null, {fieldName: 'source', numGroups: 2}))}
+          >
+            Group by source
+          </button>
+          <button onClick={() => setGroupBy(null)}>Clear grouping</button>
+          <RealTimeRangeSlider
+            {...timeRangeSliderFieldsSelector(filter, datasets, [])}
+            showControls={false}
+            hideTimeTitle
+            timeline={{...timeline, domain: [0, 2000], value: [0, 2000]}}
+            onChange={jest.fn()}
+            toggleAnimation={jest.fn()}
+          />
+        </>
+      );
+    }
+    try {
+      const {container} = renderWithTheme(<ControlledTimeline />);
+      expect(container.querySelectorAll('.histogram-segment')).toHaveLength(0);
+      fireEvent.click(screen.getByRole('button', {name: 'Group by source'}));
+      expect(
+        Array.from(
+          container.querySelectorAll('.histogram-segment title'),
+          (el: Element) => el.textContent
+        )
+      ).toEqual(
+        numeric
+          ? ['0 ≤ x < 1.5: 2', '1.5 ≤ x ≤ 3: 1', '1.5 ≤ x ≤ 3: 1']
+          : ['Solar: 2', 'Wind: 1', 'Wind: 1']
+      );
+      expect(screen.getByText(numeric ? '0 ≤ x < 1.5' : 'Solar')).toBeInTheDocument();
+      expect(screen.getByText(numeric ? '1.5 ≤ x ≤ 3' : 'Wind')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', {name: 'Clear grouping'}));
+      expect(container.querySelectorAll('.histogram-segment')).toHaveLength(0);
+      expect(container.querySelectorAll('.histogram-bars rect')).toHaveLength(2);
+      expect(container.querySelector('.time-widget__series-legend')).not.toBeInTheDocument();
+    } finally {
+      width.mockRestore();
+    }
+  }
+);
+
+describe('timeline histogram colors from a layer', () => {
+  const RealTimeRangeSlider = TimeRangeSliderFactory(
+    PlaybackControls,
+    RealRangeSlider,
+    React.memo(() => <></>),
+    TimeRangeSliderTimeTitleFactory(),
+    AnimationControl
+  );
+
+  beforeEach(() => {
+    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(212);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  function setupLayerTimeline() {
+    const values = [0, 1, 2, 100];
+    const alternateValues = [100, 100, 100, 0];
+    const datasets = {
+      data: {
+        allIndexes: [0, 1, 2, 3],
+        fields: [
+          {name: 'source', type: 'real', valueAccessor: ({index}) => values[index]},
+          {name: 'alternate', type: 'real', valueAccessor: ({index}) => alternateValues[index]}
+        ]
+      }
+    } as unknown as Datasets;
+    const makeLayer = ({
+      fieldIndex = 0,
+      domain = values,
+      colors = ['#ff0000', '#0000ff'],
+      scale = 'quantile'
+    } = {}) => {
+      const layer = new KeplerGlLayers.PointLayer({id: 'source-layer', dataId: 'data'});
+      layer.updateLayerConfig({
+        colorField: datasets.data.fields[fieldIndex],
+        colorScale: scale,
+        colorDomain: domain
+      });
+      layer.updateLayerVisConfig({colorRange: {...layer.config.visConfig.colorRange, colors}});
+      return layer;
+    };
+    const bins = [
+      {x0: 0, x1: 1000, count: 3, indexes: [0, 1, 2]},
+      {x0: 1000, x1: 2000, count: 1, indexes: [3]}
+    ];
+    const independent = mergePlotGroupBy(null, {
+      fieldName: 'source',
+      numGroups: 2,
+      colorRange: {
+        ...makeLayer().config.visConfig.colorRange,
+        colors: ['#00ff00', '#ff00ff']
+      }
+    });
+
+    function ControlledTimeline() {
+      const [layer, setLayer] = React.useState<ReturnType<typeof makeLayer> | null>(makeLayer);
+      const [groupBy, setGroupBy] = React.useState<PlotGroupBy | null>(independent);
+      const filter = {
+        ...getDefaultFilter({dataId: 'data', id: 'time'}),
+        type: 'timeRange',
+        view: 'enlarged',
+        domain: [0, 2000],
+        value: [0, 2000] as [number, number],
+        yAxis: null,
+        step: 1,
+        syncedWithLayerTimeline: false,
+        syncTimelineMode: 0,
+        invertTrendColor: false,
+        timeBins: {data: {second: bins}},
+        plotType: {type: 'histogram', interval: 'second', groupBy}
+      } as TimeRangeFilter;
+      return (
+        <>
+          <button
+            onClick={() =>
+              setGroupBy(current =>
+                mergePlotGroupBy(current, {source: 'layer', layerId: 'source-layer'})
+              )
+            }
+          >
+            From layer
+          </button>
+          <button
+            onClick={() =>
+              setGroupBy(current => mergePlotGroupBy(current, {source: 'independent'}))
+            }
+          >
+            Independent
+          </button>
+          <button onClick={() => setLayer(makeLayer({colors: ['#ffff00', '#00ffff']}))}>
+            Change palette
+          </button>
+          <button onClick={() => setLayer(makeLayer({domain: [0, 2, 100, 100]}))}>
+            Change domain
+          </button>
+          <button onClick={() => setLayer(makeLayer({fieldIndex: 1, domain: alternateValues}))}>
+            Change field
+          </button>
+          <button onClick={() => setLayer(null)}>Remove layer</button>
+          <button onClick={() => setLayer(makeLayer({scale: 'linear'}))}>
+            Use continuous scale
+          </button>
+          <RealTimeRangeSlider
+            {...timeRangeSliderFieldsSelector(filter, datasets, layer ? [layer] : [])}
+            showControls={false}
+            hideTimeTitle
+            timeline={{...timeline, domain: [0, 2000], value: [0, 2000]}}
+            onChange={jest.fn()}
+            toggleAnimation={jest.fn()}
+          />
+        </>
+      );
+    }
+
+    const {container} = renderWithTheme(<ControlledTimeline />);
+    const segmentCounts = () =>
+      Array.from(container.querySelectorAll('.histogram-segment title'), (element: Element) =>
+        Number(element.textContent?.match(/: (\d+)$/)?.[1])
+      );
+    const expectSegmentColors = (colors: string[]) => {
+      const segments = container.querySelectorAll('.histogram-segment');
+      expect(segments).toHaveLength(colors.length);
+      colors.forEach((color, index) =>
+        expect(getComputedStyle(segments[index]).fill.toLowerCase()).toBe(color.toLowerCase())
+      );
+    };
+    return {container, segmentCounts, expectSegmentColors};
+  }
+
+  test('uses layer quantiles and colors, then restores the independent grouping', () => {
+    const {segmentCounts, expectSegmentColors} = setupLayerTimeline();
+    expect(segmentCounts()).toEqual([3, 1]);
+    expectSegmentColors(['#00ff00', '#ff00ff']);
+
+    fireEvent.click(screen.getByRole('button', {name: 'From layer'}));
+    expect(segmentCounts()).toEqual([2, 1, 1]);
+    expectSegmentColors(['#ff0000', '#0000ff', '#0000ff']);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Independent'}));
+    expect(segmentCounts()).toEqual([3, 1]);
+    expectSegmentColors(['#00ff00', '#ff00ff']);
+    expect(screen.getByText('0 ≤ x < 50')).toBeInTheDocument();
+    expect(screen.getByText('50 ≤ x ≤ 100')).toBeInTheDocument();
+  });
+
+  test('updates linked bins and legend when layer colors, domain, or field changes', () => {
+    const {container, segmentCounts, expectSegmentColors} = setupLayerTimeline();
+    fireEvent.click(screen.getByRole('button', {name: 'From layer'}));
+    const originalLegend = container.querySelector('.time-widget__series-legend')?.textContent;
+
+    fireEvent.click(screen.getByRole('button', {name: 'Change palette'}));
+    expect(segmentCounts()).toEqual([2, 1, 1]);
+    expectSegmentColors(['#ffff00', '#00ffff', '#00ffff']);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Change domain'}));
+    expect(segmentCounts()).toEqual([3, 1]);
+    expectSegmentColors(['#ff0000', '#0000ff']);
+    expect(container.querySelector('.time-widget__series-legend')?.textContent).not.toEqual(
+      originalLegend
+    );
+
+    fireEvent.click(screen.getByRole('button', {name: 'Change field'}));
+    expect(segmentCounts()).toEqual([3, 1]);
+    expectSegmentColors(['#0000ff', '#ff0000']);
+  });
+
+  test.each(['Remove layer', 'Use continuous scale'])(
+    'falls back to plain bins without a stale legend after %s',
+    action => {
+      const {container, segmentCounts} = setupLayerTimeline();
+      fireEvent.click(screen.getByRole('button', {name: 'From layer'}));
+      expect(segmentCounts()).toEqual([2, 1, 1]);
+
+      fireEvent.click(screen.getByRole('button', {name: action}));
+      expect(segmentCounts()).toEqual([]);
+      expect(container.querySelectorAll('.histogram-bars rect')).toHaveLength(2);
+      expect(container.querySelector('.time-widget__series-legend')).not.toBeInTheDocument();
+    }
+  );
 });
 
 describe('expanded timeline range dragging', () => {

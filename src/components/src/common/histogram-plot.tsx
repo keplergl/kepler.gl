@@ -311,19 +311,49 @@ function HistogramPlotFactory() {
                     ? perGroupW * i + (perGroupW - drawnWidth) / 2
                     : (binW - drawnWidth) / 2;
                 const startX = bx0 + groupOffset;
+                const remainder =
+                  countProp === 'count'
+                    ? Math.max(
+                        bar.count -
+                          (bar.segments?.reduce((sum, segment) => sum + segment.count, 0) || 0),
+                        0
+                      )
+                    : bar[countProp];
+                let stackedCount = 0;
                 return (
-                  <Bar
-                    $isOverlay={false}
-                    $inRange={inRange}
-                    $color={colorsByGroup?.[key]}
-                    key={`bar-${idx}`}
-                    height={y(bar[countProp])}
-                    width={drawnWidth}
-                    x={startX}
-                    rx={1}
-                    ry={1}
-                    y={height - y(bar[countProp])}
-                  />
+                  <React.Fragment key={`bar-${idx}`}>
+                    <Bar
+                      $isOverlay={false}
+                      $inRange={inRange}
+                      $color={colorsByGroup?.[key]}
+                      height={y(remainder)}
+                      width={drawnWidth}
+                      x={startX}
+                      rx={1}
+                      ry={1}
+                      y={height - y(bar[countProp])}
+                    />
+                    {countProp === 'count'
+                      ? bar.segments?.map((segment, segmentIndex) => {
+                          stackedCount += segment.count;
+                          return (
+                            <Bar
+                              className="histogram-segment"
+                              $isOverlay={false}
+                              $inRange={inRange}
+                              $color={segment.color}
+                              key={segmentIndex}
+                              height={y(segment.count)}
+                              width={drawnWidth}
+                              x={startX}
+                              y={height - y(stackedCount)}
+                            >
+                              <title>{`${segment.name}: ${segment.count}`}</title>
+                            </Bar>
+                          );
+                        })
+                      : null}
+                  </React.Fragment>
                 );
               })}
             </g>

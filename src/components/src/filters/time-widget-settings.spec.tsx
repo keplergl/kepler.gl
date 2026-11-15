@@ -2,15 +2,25 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen, render} from '@testing-library/react';
+import {fireEvent, screen, render, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {getDefaultFilter} from '@kepler.gl/utils';
+import {getDefaultFilter, mergePlotGroupBy} from '@kepler.gl/utils';
 import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
-import {ColorRange, TimeRangeFilter} from '@kepler.gl/types';
+import {ColorRange, Field, TimeRangeFilter} from '@kepler.gl/types';
+import {Layer, KeplerGlLayers} from '@kepler.gl/layers';
 import {IntlWrapper} from 'test/helpers/component-jest-utils';
 import TimeWidgetSettingsFactory from './time-widget-settings';
 
-const FieldSelector = () => null;
+const categoryField = {name: 'category', type: 'string'};
+const FieldSelector: Parameters<typeof TimeWidgetSettingsFactory>[0] = props =>
+  props.id === 'time-widget-group-by-field' ? (
+    <>
+      <button onClick={() => props.onSelect(categoryField)}>Select category</button>
+      <button disabled={!props.value} onClick={() => props.onSelect(null)}>
+        Clear category
+      </button>
+    </>
+  ) : null;
 const ColorSelector: Parameters<typeof TimeWidgetSettingsFactory>[1] = props => (
   <>
     <button onClick={() => props.setColorUI?.({showDropdown: 0})}>Open palette</button>
@@ -41,12 +51,13 @@ const baseFilter = {
   plotType: {interval: '2-second'}
 } as TimeRangeFilter;
 
-function renderSettings(filter = baseFilter, onClose?: () => void) {
+function renderSettings(filter = baseFilter, onClose?: () => void, layers: Layer[] = []) {
   const setFilterPlot = jest.fn();
   const props = {
     onClose,
     filter,
     datasets: {},
+    layers,
     setFilterPlot,
     onTimezoneChange: jest.fn(),
     onTimeFormatChange: jest.fn()
@@ -54,6 +65,137 @@ function renderSettings(filter = baseFilter, onClose?: () => void) {
   const rendered = render(<Settings {...props} />, {wrapper: IntlWrapper});
   return {...rendered, props, setFilterPlot};
 }
+
+const originalIntersectionObserver = window.IntersectionObserver;
+beforeAll(() => {
+  window.IntersectionObserver = jest.fn().mockImplementation(() => ({
+    observe: jest.fn(),
+    disconnect: jest.fn(),
+    unobserve: jest.fn()
+  }));
+});
+afterAll(() => {
+  window.IntersectionObserver = originalIntersectionObserver;
+});
+
+describe('TimeWidgetSettings histogram grouping sources', () => {
+  function categoryLayer(id = 'categories', dataId = 'data') {
+    const layer = new KeplerGlLayers.PointLayer({id, dataId, label: `Map ${id}`});
+    layer.config.colorField = {...categoryField, name: 'mapCategory'} as Field;
+    layer.config.colorScale = 'ordinal';
+    layer.config.colorDomain = ['A', 'B'];
+    layer.config.visConfig.colorRange = palette;
+    return layer;
+  }
+
+  function linkedFilter(layerId?: string): TimeRangeFilter {
+    return {
+      ...baseFilter,
+      plotType: {
+        ...baseFilter.plotType,
+        groupBy: {
+          source: 'layer',
+          layerId,
+          fieldName: 'category',
+          numGroups: 4,
+          groupOthers: true,
+          colorRange: palette
+        }
+      }
+    };
+  }
+
+  test('defaults to independent grouping and switches to a compatible layer', async () => {
+    const user = userEvent.setup();
+    const layer = categoryLayer();
+    const wrongDataset = categoryLayer('unrelated', 'other-data');
+    const continuous = categoryLayer('continuous');
+    continuous.config.colorScale = 'linear';
+    const {props, rerender, setFilterPlot} = renderSettings(baseFilter, undefined, [
+      layer,
+      wrongDataset,
+      continuous
+    ]);
+    expect(screen.getByRole('button', {name: 'Select category'})).toBeInTheDocument();
+    await user.click(screen.getByText('Independent'));
+    await user.click(screen.getByText('From layer'));
+    expect(setFilterPlot).toHaveBeenLastCalledWith({plotType: {groupBy: {source: 'layer'}}});
+
+    rerender(<Settings {...props} filter={linkedFilter()} />);
+    expect(screen.queryByRole('button', {name: 'Select category'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Open palette'})).not.toBeInTheDocument();
+    fireEvent.keyDown(within(screen.getByTestId('time-widget-source-layer')).getByRole('button'), {
+      key: 'Enter',
+      keyCode: 13
+    });
+    expect(screen.queryByText('Map unrelated')).not.toBeInTheDocument();
+    expect(screen.queryByText('Map continuous')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Map categories'));
+    expect(setFilterPlot).toHaveBeenLastCalledWith({
+      plotType: {groupBy: {source: 'layer', layerId: 'categories'}}
+    });
+
+    rerender(<Settings {...props} filter={linkedFilter('categories')} />);
+    expect(screen.getByTitle('mapCategory')).toHaveTextContent('mapCategory');
+    expect(screen.getByText('Ordinal')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  test('returns to independent grouping while retaining its field and palette', async () => {
+    const user = userEvent.setup();
+    const filter = linkedFilter('categories');
+    const {props, rerender, setFilterPlot} = renderSettings(filter, undefined, [categoryLayer()]);
+    await user.click(screen.getByText('From layer'));
+    await user.click(screen.getByText('Independent'));
+    expect(setFilterPlot).toHaveBeenLastCalledWith({
+      plotType: {groupBy: {source: 'independent'}}
+    });
+    const groupBy = mergePlotGroupBy(
+      filter.plotType?.groupBy,
+      setFilterPlot.mock.calls[0][0].plotType.groupBy
+    );
+    rerender(<Settings {...props} filter={{...filter, plotType: {...filter.plotType, groupBy}}} />);
+    expect(screen.getByRole('button', {name: 'Clear category'})).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Open palette'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: '4'})).toBeInTheDocument();
+    expect(groupBy?.colorRange).toBe(palette);
+    expect(groupBy?.layerId).toBe('categories');
+  });
+
+  test.each(['removed', 'unsupported'])('keeps an explicit %s source unavailable', kind => {
+    const layer = categoryLayer();
+    if (kind === 'unsupported') layer.config.colorScale = 'linear';
+    const {setFilterPlot} = renderSettings(
+      linkedFilter('categories'),
+      undefined,
+      kind === 'removed' ? [] : [layer]
+    );
+    expect(screen.getByText(/\(unavailable\)/)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('unavailable');
+    expect(screen.queryByRole('button', {name: 'Select category'})).not.toBeInTheDocument();
+    expect(setFilterPlot).not.toHaveBeenCalled();
+  });
+
+  test('explains when the dataset has no compatible source layers', () => {
+    renderSettings(linkedFilter());
+    expect(screen.getByRole('status')).toHaveTextContent('No compatible layers');
+    expect(
+      within(screen.getByTestId('time-widget-source-layer')).getByRole('button')
+    ).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('keeps line-chart grouping independent without clearing the saved layer preference', () => {
+    const filter = {
+      ...linkedFilter('categories'),
+      yAxis: {name: 'value'} as TimeRangeFilter['yAxis']
+    };
+    const {setFilterPlot} = renderSettings(filter, undefined, [categoryLayer()]);
+    expect(screen.queryByTestId('time-widget-source-layer')).not.toBeInTheDocument();
+    expect(screen.queryByText('From layer')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Select category'})).toBeInTheDocument();
+    expect(setFilterPlot).not.toHaveBeenCalled();
+  });
+});
 
 describe('TimeWidgetSettings field names', () => {
   test.each([undefined, 'measurements.device_session.completed_timestamp'])(
@@ -163,6 +305,32 @@ describe('TimeWidgetSettings group palettes', () => {
       }
     };
   }
+
+  test('selects and clears histogram categories without a Y-axis field', () => {
+    const {setFilterPlot, props, rerender} = renderSettings();
+    expect(props.filter.yAxis).toBeNull();
+    expect(screen.getByRole('button', {name: 'Clear category'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', {name: 'Select category'}));
+    expect(setFilterPlot).toHaveBeenLastCalledWith({
+      plotType: {groupBy: {fieldName: 'category'}}
+    });
+
+    rerender(<Settings {...props} filter={{...groupedFilter(), yAxis: null}} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Clear category'}));
+    expect(setFilterPlot).toHaveBeenLastCalledWith({plotType: {groupBy: null}});
+  });
+
+  test('updates a histogram palette without selecting a Y-axis field', () => {
+    const {setFilterPlot} = renderSettings({...groupedFilter(), yAxis: null});
+    fireEvent.click(screen.getByRole('button', {name: 'Reverse palette'}));
+    expect(setFilterPlot).toHaveBeenCalledWith({
+      plotType: {
+        groupBy: expect.objectContaining({
+          colorRange: expect.objectContaining({colors: [...palette.colors].reverse()})
+        })
+      }
+    });
+  });
 
   test('dropdown UI changes preserve palette configuration without replacing colors', () => {
     const {setFilterPlot} = renderSettings(groupedFilter());

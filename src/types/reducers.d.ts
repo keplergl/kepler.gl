@@ -144,6 +144,9 @@ export type LineChartGroupBy = {
 };
 
 export type PlotGroupBy = {
+  /** Omitted in older configs, which keep independent grouping. */
+  source?: 'independent' | 'layer';
+  layerId?: string;
   fieldName?: string;
   numGroups: number | 'ALL';
   groupOthers: boolean;
@@ -285,6 +288,8 @@ export interface Bin {
   indexes: number[];
   x0: number;
   x1: number;
+  /** Derived categorical counts within this bin; unrepresented rows retain the base color. */
+  segments?: {name: string; color: string; count: number}[];
 }
 
 export interface Bins {
@@ -304,7 +309,7 @@ export interface PlotType {
   aggregation: ValueOf<AggregationTypes>;
   defaultTimeFormat: string;
   colorsByDataId?: {[dataId: string]: string};
-  /** Categorical series split for the timeline line chart. */
+  /** Categorical split for timeline histogram bins and line chart series. */
   groupBy?: PlotGroupBy | null;
   yAxisAutoRange?: boolean;
 }

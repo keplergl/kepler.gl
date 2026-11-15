@@ -3,7 +3,9 @@
 
 import test from 'tape';
 import sinon from 'sinon';
+import * as arrow from 'apache-arrow';
 import {TIME_INTERVALS} from '@kepler.gl/constants';
+import {KeplerTable} from '@kepler.gl/table';
 import {
   getBinThresholds,
   getTimeBins,
@@ -19,6 +21,7 @@ import {
   mergePolygonLayerIndexes,
   runGpuFilterForPlot,
   getLineChart,
+  getCategoricalHistogram,
   mergePlotGroupBy,
   lineChartSeriesLegend,
   PLOT_GROUP_OTHERS_NAME,
@@ -735,6 +738,689 @@ function seriesSummary(lineChart) {
   };
 }
 
+test('Utils -> getCategoricalHistogram splits bin counts without changing totals or input', t => {
+  const bins = {ds: groupedBins};
+  const original = JSON.parse(JSON.stringify(bins));
+  const plotType = {
+    groupBy: {
+      fieldName: 'g',
+      numGroups: 3,
+      groupOthers: false,
+      colorRange: {colors: ['#111111', '#222222', '#333333']}
+    }
+  };
+  const result = getCategoricalHistogram(bins, {ds: groupedDataset()}, plotType);
+
+  t.deepEqual(
+    result.bins.ds.map(bin => bin.segments),
+    [
+      [
+        {name: 'a', color: '#111111', count: 1},
+        {name: 'b', color: '#222222', count: 1}
+      ],
+      [{name: 'a', color: '#111111', count: 1}],
+      [{name: 'c', color: '#333333', count: 1}]
+    ],
+    'should count each category within its bin and use the same color across bins'
+  );
+  t.deepEqual(
+    result.bins.ds.map(({segments, ...bin}) => bin),
+    groupedBins,
+    'should preserve total counts, membership, and boundaries including missing categories'
+  );
+  t.equal(
+    result.bins.ds[0].segments[0].count / result.bins.ds[0].count,
+    1 / 3,
+    'should express category proportions relative to the full bin count'
+  );
+  t.deepEqual(bins, original, 'should leave source bins unchanged');
+  t.end();
+});
+
+test('Utils -> getCategoricalHistogram shares category colors across linked datasets', t => {
+  const rows = ['b', 'b', 'd'];
+  const linkedBins = [
+    {count: 2, indexes: [0, 1], x0: 0, x1: 1},
+    {count: 1, indexes: [2], x0: 1, x1: 2}
+  ];
+  const result = getCategoricalHistogram(
+    {ds: groupedBins, linked: linkedBins, missing: linkedBins},
+    {
+      ds: groupedDataset(),
+      linked: {fields: [{name: 'g', valueAccessor: ({index}) => rows[index]}]},
+      missing: {fields: []}
+    },
+    {
+      groupBy: {
+        fieldName: 'g',
+        numGroups: 4,
+        colorRange: {colors: ['#111111', '#222222', '#333333', '#444444']}
+      }
+    }
+  );
+
+  t.deepEqual(
+    result.legend,
+    [
+      {name: 'a', color: '#111111'},
+      {name: 'b', color: '#222222'},
+      {name: 'c', color: '#333333'},
+      {name: 'd', color: '#444444'}
+    ],
+    'should use one first-seen category order for all datasets'
+  );
+  t.deepEqual(
+    result.bins.linked.map(bin => bin.segments),
+    [[{name: 'b', color: '#222222', count: 2}], [{name: 'd', color: '#444444', count: 1}]],
+    'should count linked categories with the shared color mapping'
+  );
+  t.deepEqual(
+    result.bins.missing,
+    linkedBins,
+    'should leave a dataset without the grouping column as a plain histogram'
+  );
+  t.end();
+});
+
+test('Utils -> getCategoricalHistogram caps categories and optionally folds Others', t => {
+  const bins = {ds: groupedBins};
+  const datasets = {ds: groupedDataset()};
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 1,
+    groupOthers: true,
+    colorRange: {colors: ['#111111'], colorMap: [[PLOT_GROUP_OTHERS_NAME, '#abcdef']]}
+  };
+  const grouped = getCategoricalHistogram(bins, datasets, {groupBy});
+
+  t.deepEqual(
+    grouped.legend,
+    [
+      {name: 'a', color: '#111111'},
+      {name: PLOT_GROUP_OTHERS_NAME, color: '#abcdef'}
+    ],
+    'should honor the category cap and mapped Others color'
+  );
+  t.deepEqual(
+    grouped.bins.ds.map(bin => bin.segments.map(segment => [segment.name, segment.count])),
+    [
+      [
+        ['a', 1],
+        [PLOT_GROUP_OTHERS_NAME, 1]
+      ],
+      [['a', 1]],
+      [[PLOT_GROUP_OTHERS_NAME, 1]]
+    ],
+    'should fold remaining non-missing categories into Others in every bin'
+  );
+  const capped = getCategoricalHistogram(bins, datasets, {
+    groupBy: {...groupBy, groupOthers: false}
+  });
+  t.deepEqual(
+    capped.bins.ds.map(bin => bin.segments),
+    [[{name: 'a', color: '#111111', count: 1}], [{name: 'a', color: '#111111', count: 1}], []],
+    'should leave capped categories unrepresented when Others is disabled'
+  );
+  t.deepEqual(
+    capped.bins.ds.map(bin => bin.count),
+    [3, 1, 1],
+    'should preserve full bar heights when categories are missing or capped'
+  );
+  t.end();
+});
+
+test('Utils -> getCategoricalHistogram keeps colors stable when categories are filtered out', t => {
+  const linkedRows = ['b', 'd'];
+  const datasets = {
+    ds: {...groupedDataset(), allIndexes: [0, 1, 2, 3, 4]},
+    linked: {
+      allIndexes: [0, 1],
+      fields: [{name: 'g', valueAccessor: ({index}) => linkedRows[index]}]
+    }
+  };
+  const bins = {
+    ds: groupedBins,
+    linked: [{count: 2, indexes: [0, 1], x0: 0, x1: 1}]
+  };
+  const filteredBins = {
+    ...bins,
+    ds: [{count: 2, indexes: [1, 3], x0: 0, x1: 1}]
+  };
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 4,
+    colorRange: {colors: ['#111111', '#222222', '#333333', '#444444']}
+  };
+  const initial = getCategoricalHistogram(bins, datasets, {groupBy});
+  const filtered = getCategoricalHistogram(filteredBins, datasets, {groupBy});
+
+  t.deepEqual(
+    filtered.legend,
+    initial.legend.filter(({name}) => name !== 'a'),
+    'should hide an absent category without shifting remaining colors across datasets'
+  );
+  t.deepEqual(
+    filtered.bins.ds[0].segments,
+    [
+      {name: 'b', color: '#222222', count: 1},
+      {name: 'c', color: '#333333', count: 1}
+    ],
+    'should preserve stable category colors within the filtered bin'
+  );
+  t.deepEqual(
+    getCategoricalHistogram(bins, datasets, {groupBy}),
+    initial,
+    'should restore the original categorical histogram when the filter is cleared'
+  );
+
+  const cappedPlot = {groupBy: {...groupBy, numGroups: 1, groupOthers: true}};
+  const initialCapped = getCategoricalHistogram(bins, datasets, cappedPlot);
+  const filteredCapped = getCategoricalHistogram(filteredBins, datasets, cappedPlot);
+  t.deepEqual(
+    filteredCapped.legend.find(({name}) => name === PLOT_GROUP_OTHERS_NAME),
+    initialCapped.legend.find(({name}) => name === PLOT_GROUP_OTHERS_NAME),
+    'should keep the Others color stable when a preceding category disappears'
+  );
+  t.equal(
+    filteredCapped.legend[0].color,
+    '#222222',
+    'should use the stable color when a formerly folded category enters the visible group limit'
+  );
+  t.end();
+});
+
+test('Utils -> getCategoricalHistogram handles missing grouping and empty categories', t => {
+  const datasets = {ds: groupedDataset()};
+  const bins = {ds: groupedBins};
+  const plotType = {groupBy: {fieldName: 'g'}};
+  for (const groupBy of [null, {}, {fieldName: 'unknown'}]) {
+    t.equal(
+      getCategoricalHistogram(bins, datasets, {groupBy}),
+      null,
+      'should retain plain bins when no valid grouping field is selected'
+    );
+  }
+  t.equal(getCategoricalHistogram({}, datasets, plotType), null, 'should accept no datasets');
+  t.equal(getCategoricalHistogram({ds: []}, datasets, plotType), null, 'should accept empty bins');
+  const missingRows = [null, undefined, ''];
+  t.equal(
+    getCategoricalHistogram(
+      {ds: [{count: 3, indexes: [0, 1, 2], x0: 0, x1: 1}]},
+      {ds: {fields: [{name: 'g', valueAccessor: ({index}) => missingRows[index]}]}},
+      plotType
+    ),
+    null,
+    'should keep a plain histogram when every category is missing'
+  );
+  t.end();
+});
+
+test('Utils -> getCategoricalHistogram distinguishes literal Others from folded categories', t => {
+  const rows = [PLOT_GROUP_OTHERS_NAME, 'Others (grouped)', 'a', 'b'];
+  const result = getCategoricalHistogram(
+    {ds: [{count: rows.length, indexes: [0, 1, 2, 3], x0: 0, x1: 1}]},
+    {ds: {fields: [{name: 'g', valueAccessor: ({index}) => rows[index]}]}},
+    {groupBy: {fieldName: 'g', numGroups: 2, groupOthers: true}}
+  );
+
+  t.deepEqual(
+    result.bins.ds[0].segments.map(({name, count}) => ({name, count})),
+    [
+      {name: PLOT_GROUP_OTHERS_NAME, count: 1},
+      {name: 'Others (grouped)', count: 1},
+      {name: 'Others (grouped 2)', count: 2}
+    ],
+    'should keep real category names and give folded counts an unambiguous name'
+  );
+  t.equal(
+    new Set(result.legend.map(({color}) => color)).size,
+    3,
+    'should distinguish the folded category with a separate color'
+  );
+  t.end();
+});
+
+function numericGroupDataset(values, type = 'real') {
+  return {
+    allIndexes: values.map((_, index) => index),
+    fields: [{name: 'g', type, valueAccessor: ({index}) => values[index]}]
+  };
+}
+
+test('Utils -> categorical histogram reuses domains across filters and palettes', t => {
+  const rows = Array.from({length: 1000}, (_, index) => `category ${index}`);
+  const valueAccessor = sinon.spy(({index}) => rows[index]);
+  const dataset = {
+    dataContainer: {},
+    dataRevision: 0,
+    allIndexes: rows.map((_, index) => index),
+    fields: [{name: 'g', type: 'string', valueAccessor}]
+  };
+  const bins = {ds: [{x0: 0, x1: 1, count: 2, indexes: [1, 999]}]};
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 1,
+    groupOthers: true,
+    colorRange: {colors: ['#111111', '#222222', '#333333']}
+  };
+  const initial = getCategoricalHistogram(bins, {ds: dataset}, {groupBy});
+  valueAccessor.reset();
+  t.deepEqual(
+    getCategoricalHistogram(bins, {ds: {...dataset}}, {groupBy}),
+    initial,
+    'playback wrappers should keep category and Others colors'
+  );
+  t.ok(valueAccessor.callCount < 10, 'playback should read only binned rows, not the full domain');
+
+  const recoloredGroupBy = {...groupBy, colorRange: {colors: ['#aaaaaa', '#bbbbbb', '#cccccc']}};
+  valueAccessor.reset();
+  const recolored = getCategoricalHistogram(bins, {ds: dataset}, {groupBy: recoloredGroupBy});
+  t.equal(
+    recolored.legend[0].color,
+    '#bbbbbb',
+    'palette changes should use the stable category index'
+  );
+  t.deepEqual(
+    recolored.bins.ds[0].segments.map(({name, count}) => [name, count]),
+    initial.bins.ds[0].segments.map(({name, count}) => [name, count]),
+    'recoloring should keep counts'
+  );
+  t.ok(valueAccessor.callCount < 10, 'palette changes should not rescan the full domain');
+
+  valueAccessor.reset();
+  const filtered = getCategoricalHistogram(
+    {ds: [{...bins.ds[0], count: 1, indexes: [999]}]},
+    {ds: {...dataset}},
+    {groupBy: recoloredGroupBy}
+  );
+  t.deepEqual(
+    filtered.legend,
+    [{name: 'category 999', color: '#aaaaaa'}],
+    'cross-filters should promote the remaining category with its original color index'
+  );
+  t.ok(valueAccessor.callCount < 10, 'cross-filters should reuse the complete category domain');
+
+  valueAccessor.reset();
+  t.equal(
+    getCategoricalHistogram(bins, {ds: dataset}, {}),
+    null,
+    'ungrouped bins should stay plain'
+  );
+  t.equal(valueAccessor.callCount, 0, 'ungrouped bins should not read the grouping column');
+  t.end();
+});
+
+test('Utils -> histogram domain cache invalidates row edits, appends, replacements and fields', t => {
+  let values = [0, 2, 4, 6, 8];
+  const dataset = {...numericGroupDataset(values), dataContainer: {}, dataRevision: 0};
+  dataset.fields[0].valueAccessor = ({index}) => values[index];
+  const bins = {ds: [{x0: 0, x1: 1, count: 1, indexes: [0]}]};
+  const plotType = {groupBy: {fieldName: 'g', numGroups: 2}};
+  const label = () => getCategoricalHistogram(bins, {ds: dataset}, plotType).legend[0].name;
+  t.equal(label(), '0 ≤ x < 4', 'should start with the complete numeric domain');
+  values[4] = 12;
+  dataset.dataRevision++;
+  t.equal(label(), '0 ≤ x < 6', 'a revision change should invalidate in-place row edits');
+  values.push(16);
+  dataset.allIndexes = [...dataset.allIndexes, 5];
+  t.equal(label(), '0 ≤ x < 8', 'new row indexes should invalidate the domain');
+  values = [0, 2, 4, 6, 8, 20];
+  dataset.dataContainer = {};
+  t.equal(label(), '0 ≤ x < 10', 'a replacement container should invalidate the domain');
+  dataset.fields[0] = {...dataset.fields[0], valueAccessor: ({index}) => values[index] * 2};
+  t.equal(label(), '0 ≤ x < 20', 'a replacement field accessor should invalidate the domain');
+  dataset.fields[0] = {...dataset.fields[0], type: 'string'};
+  t.equal(label(), '0', 'field type changes should switch back to exact categories');
+  delete dataset.dataRevision;
+  dataset.fields[0] = {...dataset.fields[0], type: 'real'};
+  t.equal(label(), '0 ≤ x < 20', 'unversioned datasets should still support numeric ranges');
+  values[5] = 30;
+  t.equal(label(), '0 ≤ x < 30', 'unversioned datasets should not retain stale domains');
+  dataset.fields = [{name: 'other', type: 'real', valueAccessor: ({index}) => values[index]}];
+  t.equal(
+    getCategoricalHistogram(bins, {ds: dataset}, plotType),
+    null,
+    'removing the grouping field should not reuse stale categories'
+  );
+  t.end();
+});
+
+test('Utils -> histogram Others color preserves overrides and palette wrapping', t => {
+  const rows = ['a', 'b', 'c', 'd', 'e'];
+  const dataset = {...numericGroupDataset(rows, 'string'), dataContainer: {}, dataRevision: 0};
+  const bins = {ds: [{x0: 0, x1: 1, count: rows.length, indexes: dataset.allIndexes}]};
+  const groupBy = {
+    fieldName: 'g',
+    numGroups: 1,
+    groupOthers: true,
+    colorRange: {
+      colors: ['#111111', '#222222', '#333333'],
+      colorMap: [
+        [['a', 'd'], '#abcdef'],
+        ['a', '#111111']
+      ]
+    }
+  };
+  const result = getCategoricalHistogram(bins, {ds: dataset}, {groupBy});
+  t.deepEqual(
+    result.legend,
+    [
+      {name: 'a', color: '#abcdef'},
+      {name: PLOT_GROUP_OTHERS_NAME, color: '#111111'}
+    ],
+    'Others should use a palette color freed by overrides, respecting first-match precedence'
+  );
+  const filtered = getCategoricalHistogram(
+    {ds: [{...bins.ds[0], count: 2, indexes: [1, 2]}]},
+    {ds: dataset},
+    {groupBy}
+  );
+  t.deepEqual(
+    filtered.legend,
+    [
+      {name: 'b', color: '#222222'},
+      {name: PLOT_GROUP_OTHERS_NAME, color: '#111111'}
+    ],
+    'Others should keep its color when mapped categories are filtered out'
+  );
+  t.end();
+});
+
+test('Utils -> numeric histogram groups use equal widths and include boundary values exactly once', t => {
+  for (const [type, values] of [
+    ['integer', [8, 0, 2, 4, 6]],
+    ['real', [8, 0, 2, 4, 6]],
+    ['integer', [8n, 0n, 2n, 4n, 6n]]
+  ]) {
+    const datasets = {ds: numericGroupDataset(values, type)};
+    const bins = {
+      ds: [
+        {x0: 0, x1: 1, count: 3, indexes: [0, 1, 2]},
+        {x0: 1, x1: 2, count: 2, indexes: [3, 4]}
+      ]
+    };
+    const original = JSON.stringify(bins);
+    const groupBy = {
+      fieldName: 'g',
+      numGroups: 2,
+      groupOthers: false,
+      colorRange: {colors: ['#111111', '#222222']}
+    };
+    const result = getCategoricalHistogram(bins, datasets, {groupBy});
+    t.deepEqual(
+      result.legend,
+      [
+        {name: '0 ≤ x < 4', color: '#111111'},
+        {name: '4 ≤ x ≤ 8', color: '#222222'}
+      ],
+      `${type}: should describe equal-width ranges in numeric order`
+    );
+    t.deepEqual(
+      result.bins.ds.map(bin => bin.segments.map(({name, count}) => [name, count])),
+      [
+        [
+          ['0 ≤ x < 4', 2],
+          ['4 ≤ x ≤ 8', 1]
+        ],
+        [['4 ≤ x ≤ 8', 2]]
+      ],
+      `${type}: should put interior boundaries in the next range and include the maximum`
+    );
+    t.deepEqual(
+      result.bins.ds.map(bin => bin.segments.reduce((total, segment) => total + segment.count, 0)),
+      bins.ds.map(bin => bin.count),
+      `${type}: should color every finite numeric row, even with Others disabled`
+    );
+    t.deepEqual(
+      getCategoricalHistogram(bins, datasets, {groupBy: {...groupBy, groupOthers: true}}),
+      result,
+      `${type}: should need no overflow group for numeric ranges`
+    );
+    t.equal(
+      getCategoricalHistogram(bins, datasets, {groupBy: {...groupBy, numGroups: 4}}).legend.length,
+      4,
+      `${type}: should update the range count when Max groups changes`
+    );
+    t.equal(JSON.stringify(bins), original, `${type}: should not mutate source bins`);
+  }
+  t.end();
+});
+
+test('Utils -> numeric histogram groups keep small domains exact and ignore invalid numbers', t => {
+  const values = [2, 1, 2, 0, null, undefined, '', NaN, Infinity, -Infinity, 'invalid', '3', false];
+  const bins = {ds: [{x0: 0, x1: 1, count: values.length, indexes: values.map((_, i) => i)}]};
+  const datasets = {ds: numericGroupDataset(values)};
+  const groupBy = {fieldName: 'g', numGroups: 3};
+  const result = getCategoricalHistogram(bins, datasets, {groupBy});
+  t.deepEqual(
+    result.bins.ds[0].segments.map(({name, count}) => [name, count]).sort(),
+    [
+      ['0', 1],
+      ['1', 1],
+      ['2', 2]
+    ],
+    'should keep exact categories when finite distinct values equal the limit'
+  );
+  const ranges = getCategoricalHistogram(bins, datasets, {groupBy: {...groupBy, numGroups: 2}});
+  t.deepEqual(
+    ranges.bins.ds[0].segments.map(({name, count}) => [name, count]),
+    [
+      ['0 ≤ x < 1', 1],
+      ['1 ≤ x ≤ 2', 3]
+    ],
+    'should exclude missing and nonfinite values from the range domain and counts'
+  );
+  t.equal(
+    ranges.bins.ds[0].count,
+    values.length,
+    'should preserve the total including invalid rows'
+  );
+  t.deepEqual(
+    getCategoricalHistogram(
+      {ds: [{x0: 0, x1: 1, count: 2, indexes: [0, 1]}]},
+      {ds: numericGroupDataset([7, 7], 'integer')},
+      {groupBy: {...groupBy, numGroups: 1}}
+    ).bins.ds[0].segments.map(({name, count}) => [name, count]),
+    [['7', 2]],
+    'should keep a constant column as one exact category'
+  );
+  t.equal(
+    getCategoricalHistogram(
+      {ds: [{x0: 0, x1: 1, count: 3, indexes: [0, 1, 2]}]},
+      {ds: numericGroupDataset([null, NaN, Infinity])},
+      {groupBy}
+    ),
+    null,
+    'should retain plain bins when no numeric values are valid'
+  );
+  const text = getCategoricalHistogram(
+    {ds: [{x0: 0, x1: 1, count: 3, indexes: [0, 1, 2]}]},
+    {ds: numericGroupDataset(['0', '1', '2'], 'string')},
+    {groupBy: {...groupBy, numGroups: 2}}
+  );
+  t.deepEqual(
+    text.legend.map(({name}) => name),
+    ['0', '1'],
+    'should keep numeric text categorical'
+  );
+  const largeIntegers = [9007199254740992n, 9007199254740993n];
+  const exactLargeIntegers = getCategoricalHistogram(
+    {ds: [{x0: 0, x1: 1, count: 2, indexes: [0, 1]}]},
+    {ds: numericGroupDataset(largeIntegers, 'integer')},
+    {groupBy}
+  );
+  t.deepEqual(
+    exactLargeIntegers.legend.map(({name}) => name),
+    largeIntegers.map(String),
+    'should not merge distinct unsafe bigint values through a lossy numeric conversion'
+  );
+  t.end();
+});
+
+test('Utils -> categorical histograms preserve unsafe Arrow integers and refresh numeric ranges', async t => {
+  for (const [type, largeIntegers] of [
+    [new arrow.Int64(), [-9007199254740992n, -9007199254740993n]],
+    [new arrow.Uint64(), [18446744073709551614n, 18446744073709551615n]]
+  ]) {
+    const fields = [{name: 'g', type: 'integer', analyzerType: 'INT'}];
+    const arrowData = values => {
+      const arrowTable = new arrow.Table({g: arrow.vectorFromArray(values, type)});
+      return {fields, cols: [arrowTable.getChildAt(0)], arrowTable};
+    };
+    const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]}).updateSchema(
+      arrowData([...largeIntegers, null])
+    );
+    const plotType = {groupBy: {fieldName: 'g', numGroups: 2}};
+    const histogram = () =>
+      getCategoricalHistogram(
+        {ds: [{x0: 0, x1: 1, count: dataset.allIndexes.length, indexes: dataset.allIndexes}]},
+        {ds: dataset},
+        plotType
+      );
+    const exact = histogram();
+    t.deepEqual(
+      exact.legend.map(({name}) => name),
+      largeIntegers.map(String),
+      `${type}: should keep distinct unsafe integer categories from real table accessors`
+    );
+    t.deepEqual(
+      exact.bins.ds[0].segments.map(({name, count}) => [name, count]),
+      largeIntegers.map(value => [String(value), 1]),
+      `${type}: should count each integer exactly once and exclude null`
+    );
+    t.equal(exact.bins.ds[0].count, 3, `${type}: should retain the total including null`);
+
+    await dataset.update(arrowData([0n, 2n, 4n, 6n, 8n, null]));
+    const ranges = histogram();
+    t.deepEqual(
+      ranges.bins.ds[0].segments.map(({name, count}) => [name, count]),
+      [
+        ['0 ≤ x < 4', 2],
+        ['4 ≤ x ≤ 8', 3]
+      ],
+      `${type}: should invalidate the cached domain and group safe integers into ranges`
+    );
+    t.equal(ranges.bins.ds[0].count, 6, `${type}: should preserve null in the updated total`);
+  }
+  t.end();
+});
+
+test('Utils -> numeric histogram ranges share a stable domain across datasets and cross-filters', t => {
+  const datasets = {
+    ds: numericGroupDataset([-10, 0, 5, 10], 'integer'),
+    linked: numericGroupDataset([20, 30])
+  };
+  const bins = {
+    ds: [{x0: 0, x1: 1, count: 4, indexes: [0, 1, 2, 3]}],
+    linked: [{x0: 0, x1: 1, count: 2, indexes: [0, 1]}]
+  };
+  const plotType = {groupBy: {fieldName: 'g', numGroups: 2}};
+  const initial = getCategoricalHistogram(bins, datasets, plotType);
+  t.deepEqual(
+    initial.legend.map(({name}) => name),
+    ['-10 ≤ x < 10', '10 ≤ x ≤ 30'],
+    'should use the full shared numeric domain'
+  );
+  t.deepEqual(
+    initial.bins.linked[0].segments,
+    [{...initial.legend[1], count: 2}],
+    'should use the same ranges and colors in linked datasets'
+  );
+  const filtered = getCategoricalHistogram(
+    {...bins, ds: [{x0: 0, x1: 1, count: 1, indexes: [3]}]},
+    datasets,
+    plotType
+  );
+  t.deepEqual(
+    filtered.legend,
+    [initial.legend[1]],
+    'should preserve upper-range boundaries and color when lower values are filtered out'
+  );
+  t.deepEqual(
+    filtered.bins.ds[0].segments,
+    [{...initial.legend[1], count: 1}],
+    'should retain ranges even when the visible distinct count falls below the limit'
+  );
+  t.deepEqual(
+    getCategoricalHistogram(bins, datasets, plotType),
+    initial,
+    'should restore the same grouping when the filter is cleared'
+  );
+  t.end();
+});
+
+test('Utils -> numeric histogram range labels hide floating-point noise without changing membership', t => {
+  const lower = 2.5;
+  const upper = 7.39;
+  const boundary = lower * 0.7 + upper * 0.3;
+  const values = [
+    ...Array.from({length: 11}, (_, i) => lower * (1 - i / 10) + upper * (i / 10)),
+    nextDown(boundary),
+    boundary,
+    nextUp(boundary)
+  ];
+  const result = getCategoricalHistogram(
+    {
+      ds: [
+        {x0: 0, x1: 1, count: 11, indexes: values.slice(0, 11).map((_, i) => i)},
+        {x0: 1, x1: 2, count: 3, indexes: [11, 12, 13]}
+      ]
+    },
+    {ds: numericGroupDataset(values)},
+    {groupBy: {fieldName: 'g', numGroups: 10}}
+  );
+  t.deepEqual(
+    result.legend.map(({name}) => name),
+    [
+      '2.5 ≤ x < 2.989',
+      '2.989 ≤ x < 3.478',
+      '3.478 ≤ x < 3.967',
+      '3.967 ≤ x < 4.456',
+      '4.456 ≤ x < 4.945',
+      '4.945 ≤ x < 5.434',
+      '5.434 ≤ x < 5.923',
+      '5.923 ≤ x < 6.412',
+      '6.412 ≤ x < 6.901',
+      '6.901 ≤ x ≤ 7.39'
+    ],
+    'should use compact labels instead of exposing binary floating-point digits'
+  );
+  t.deepEqual(
+    result.bins.ds[1].segments.map(({name, count}) => [name, count]),
+    [
+      ['3.478 ≤ x < 3.967', 1],
+      ['3.967 ≤ x < 4.456', 2]
+    ],
+    'should still classify adjacent values using the original unrounded boundary'
+  );
+  t.end();
+});
+
+test('Utils -> numeric histogram ranges handle tiny decimals and extreme finite spans', t => {
+  for (const values of [
+    [1, 1 + Number.EPSILON, 1 + 2 * Number.EPSILON, 1 + 3 * Number.EPSILON],
+    [-Number.MAX_VALUE, -1e308, 0, 1e308, Number.MAX_VALUE]
+  ]) {
+    const result = getCategoricalHistogram(
+      {ds: [{x0: 0, x1: 1, count: values.length, indexes: values.map((_, i) => i)}]},
+      {ds: numericGroupDataset(values)},
+      {groupBy: {fieldName: 'g', numGroups: 2}}
+    );
+    t.equal(result.legend.length, 2, 'should produce two distinguishable nonempty numeric ranges');
+    result.legend.forEach(({name}) => {
+      const match = name.match(/^(.+) ≤ x [<≤] (.+)$/);
+      t.ok(match && match[1] !== match[2], 'should not label different bounds as the same value');
+      t.notOk(/NaN|Infinity|undefined/.test(name), 'should describe finite boundaries');
+    });
+    t.equal(
+      result.bins.ds[0].segments.reduce((sum, segment) => sum + segment.count, 0),
+      values.length,
+      'should represent all finite values including the maximum'
+    );
+  }
+  t.end();
+});
+
 test('Utils -> getLineChart aggregates numeric range bins on a numeric X axis', t => {
   const rows = [
     {x: -1.25, y: 2},
@@ -949,6 +1635,24 @@ test('Utils -> mergePlotGroupBy fills defaults and clears', t => {
   t.equal(updated.numGroups, 3, 'should apply the new cap');
   t.equal(updated.groupOthers, true, 'should apply group others');
   t.equal(updated.colorRange, created.colorRange, 'should keep the existing series colors');
+  t.notOk(created.source, 'should keep legacy grouping independent without a source setting');
+
+  const linked = mergePlotGroupBy(updated, {source: 'layer', layerId: 'points'});
+  t.equal(linked.source, 'layer', 'should enable layer grouping');
+  t.equal(linked.layerId, 'points', 'should retain the chosen layer');
+  t.equal(linked.fieldName, updated.fieldName, 'should preserve the independent field');
+  t.equal(linked.colorRange, updated.colorRange, 'should preserve the independent palette');
+  const independent = mergePlotGroupBy(linked, {source: 'independent'});
+  t.deepEqual(
+    independent,
+    {...updated, source: 'independent', layerId: 'points'},
+    'should restore independent settings while remembering the layer'
+  );
+  t.equal(
+    mergePlotGroupBy(linked, {groupOthers: false}).source,
+    'layer',
+    'should preserve the source when updating another setting'
+  );
 
   t.equal(mergePlotGroupBy(updated, null), null, 'should clear groupBy');
 

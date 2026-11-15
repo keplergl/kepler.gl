@@ -9,10 +9,19 @@ import RangeSliderFactory from './range-slider';
 import TimeSliderMarkerFactory from './time-slider-marker';
 import PlaybackControlsFactory from './animation-control/playback-controls';
 import TimeRangeSliderTimeTitleFactory from './time-range-slider-time-title';
-import {LineChart, Timeline, AnimationConfig, TimeBins, Filter, Bins} from '@kepler.gl/types';
+import {
+  LineChart,
+  Timeline,
+  AnimationConfig,
+  TimeBins,
+  Filter,
+  Bins,
+  KeplerLayer
+} from '@kepler.gl/types';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 import {ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {intervalBinFromMarks} from '@kepler.gl/utils';
+import {Datasets} from '@kepler.gl/table';
 import AnimationControlFactory from './animation-control/animation-control';
 import {BaseComponentProps} from '../types';
 
@@ -50,6 +59,8 @@ type TimeRangeSliderProps = {
   invertTrendColor?: boolean;
   animationConfig?: AnimationConfig;
   filter?: Filter;
+  datasets?: Datasets;
+  layers?: readonly KeplerLayer[];
   isTime?: boolean;
   formatValue?: (value: number) => string;
 };
@@ -141,6 +152,8 @@ export default function TimeRangeSliderFactory(
       setFilterPlot,
       timeline,
       filter,
+      datasets,
+      layers,
       isTime = true,
       formatValue
     } = props;
@@ -217,6 +230,8 @@ export default function TimeRangeSliderFactory(
             <div className="timeline-container" style={style}>
               <RangeSlider
                 filter={filter}
+                datasets={datasets}
+                layers={layers}
                 range={byInterval ? sliderRange : domain}
                 value0={byInterval && sliderRange ? sliderRange[0] : value[0]}
                 value1={byInterval ? value[0] : value[1]}

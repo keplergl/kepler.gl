@@ -16,7 +16,7 @@ import {
   scaleSourceDomainToDestination
 } from '@kepler.gl/utils';
 import type {SliderScaleConfig} from '@kepler.gl/utils';
-import {LineChart, Filter, Bins} from '@kepler.gl/types';
+import {LineChart, Filter, Bins, KeplerLayer} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 import {ActionHandler, setFilterPlot} from '@kepler.gl/actions';
 
@@ -83,6 +83,7 @@ interface RangeSliderProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+  layers?: readonly KeplerLayer[];
 
   invertTrendColor?: boolean;
   scaleConfig?: SliderScaleConfig | null;
@@ -321,6 +322,7 @@ export default function RangeSliderFactory(
         subAnimations: subAnimations,
         filter,
         datasets,
+        layers,
         scaleConfig
       } = this.props;
 
@@ -360,6 +362,7 @@ export default function RangeSliderFactory(
                   animationWindow={animationWindow}
                   filter={filter}
                   datasets={datasets}
+                  layers={layers}
                   range={displayRange || range}
                   value={value}
                   width={plotWidth}

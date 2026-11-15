@@ -9,6 +9,7 @@ import {
   histogram as d3Histogram,
   ticks
 } from 'd3-array';
+import {format as d3Format} from 'd3-format';
 import isEqual from 'es-toolkit/compat/isEqual';
 import {
   getFilterMappedValue,
@@ -18,6 +19,7 @@ import {
 } from './time';
 import {
   Bin,
+  Bins,
   TimeBins,
   Millisecond,
   TimeRangeFilter,
@@ -37,6 +39,7 @@ import {
 import {notNullorUndefined, toArray} from '@kepler.gl/common-utils';
 import {
   ANIMATION_WINDOW,
+  ALL_FIELD_TYPES,
   BINS,
   BINS_LARGE,
   FILTER_TYPES,
@@ -50,7 +53,7 @@ import {
   DEFAULT_CUSTOM_PALETTE
 } from '@kepler.gl/constants';
 
-import {isNumber, roundValToStep} from './data-utils';
+import {formatNumber, isNumber, roundValToStep} from './data-utils';
 import {aggregate, AGGREGATION_NAME} from './aggregation';
 import {capitalizeFirstLetter} from './strings';
 import {getDefaultTimeFormat} from './format';
@@ -973,7 +976,11 @@ export function mergePlotGroupBy(
   const source = next || {};
   const numGroups = source.numGroups ?? prev?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS;
   const colorRange = source.colorRange ?? prev?.colorRange ?? defaultPlotGroupColorRange(numGroups);
+  const groupingSource = source.source ?? prev?.source;
+  const layerId = source.layerId ?? prev?.layerId;
   return {
+    ...(groupingSource !== undefined ? {source: groupingSource} : {}),
+    ...(layerId !== undefined ? {layerId} : {}),
     fieldName: source.fieldName !== undefined ? source.fieldName : prev?.fieldName,
     numGroups,
     groupOthers: Boolean(source.groupOthers !== undefined ? source.groupOthers : prev?.groupOthers),
@@ -1079,6 +1086,293 @@ function groupLimit(numGroups: number | typeof PLOT_NUM_GROUPS_ALL): number {
     return DEFAULT_PLOT_NUM_GROUPS;
   }
   return Math.min(numGroups, MAX_PLOT_NUM_GROUPS);
+}
+
+function histogramCategoryKey(value: unknown, numeric: boolean): string | null {
+  return numeric &&
+    typeof value !== 'bigint' &&
+    (typeof value !== 'number' || !Number.isFinite(value))
+    ? null
+    : toGroupKey(value);
+}
+
+function histogramGroupValueAccessor(
+  dataset,
+  fieldName: string
+): ((index: number) => unknown) | null {
+  const field = dataset?.fields?.find(item => item.name === fieldName);
+  if (!field?.valueAccessor) return null;
+  const numeric = field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real;
+  return index => {
+    const value = field.valueAccessor({index});
+    if (
+      numeric &&
+      typeof value === 'number' &&
+      Number.isInteger(value) &&
+      !Number.isSafeInteger(value)
+    ) {
+      // Table accessors convert Int64 cells to Number; categories need the exact raw integer.
+      const rawValue = dataset.dataContainer?.valueAt?.(index, field.fieldIdx);
+      if (typeof rawValue === 'bigint') return rawValue;
+    }
+    return value;
+  };
+}
+
+// Filter updates replace dataset wrappers, but keep the accessor and data revision.
+// Weak keys release the domain when its field is replaced or the dataset is removed.
+const histogramCategoryDomains = new WeakMap<
+  Field['valueAccessor'],
+  {
+    dataContainer: DataContainerInterface;
+    dataRevision: number;
+    allIndexes: number[];
+    numeric: boolean;
+    order: Map<string, number>;
+    canUseNumericRanges: boolean;
+    lower: number;
+    upper: number;
+  }
+>();
+
+function histogramCategoryDomain(
+  dataset,
+  field: Field,
+  numeric: boolean,
+  getGroup: (index: number) => unknown
+) {
+  const {dataContainer, dataRevision, allIndexes} = dataset;
+  const cached = histogramCategoryDomains.get(field.valueAccessor);
+  if (
+    cached &&
+    cached.dataContainer === dataContainer &&
+    cached.dataRevision === dataRevision &&
+    cached.allIndexes === allIndexes &&
+    cached.numeric === numeric
+  ) {
+    return cached;
+  }
+  const order = new Map<string, number>();
+  let canUseNumericRanges = numeric;
+  let lower = Infinity;
+  let upper = -Infinity;
+  for (const index of allIndexes || []) {
+    const value = getGroup(index);
+    const key = histogramCategoryKey(value, numeric);
+    if (key === null) continue;
+    if (!order.has(key)) order.set(key, order.size);
+    if (numeric) {
+      const number = Number(value);
+      lower = Math.min(lower, number);
+      upper = Math.max(upper, number);
+      if (typeof value === 'bigint' && !Number.isSafeInteger(number)) {
+        canUseNumericRanges = false;
+      }
+    }
+  }
+  const domain = {
+    dataContainer,
+    dataRevision,
+    allIndexes,
+    numeric,
+    order,
+    canUseNumericRanges,
+    lower,
+    upper
+  };
+  // Callers without a revision cannot promise that an accessor's data is unchanged.
+  if (Number.isFinite(dataRevision) && allIndexes) {
+    histogramCategoryDomains.set(field.valueAccessor, domain);
+  }
+  return domain;
+}
+
+/** Colors used by the complete domain, without coloring every distinct category. */
+function histogramDomainColors(colorRange: ColorRange | undefined, order: Map<string, number>) {
+  const palette = colorRange?.colors?.length ? colorRange.colors : FALLBACK_SERIES_COLORS;
+  const counts = palette.map((_, index) =>
+    Math.max(0, Math.ceil((order.size - index) / palette.length))
+  );
+  const mappedColors = new Map<string, string>();
+  for (const [values, color] of colorRange?.colorMap || []) {
+    if (!color || (!Array.isArray(values) && (values === null || values === undefined))) continue;
+    for (const value of Array.isArray(values) ? values : [values]) {
+      const key = String(value);
+      const index = order.get(key);
+      // mappedSeriesColor uses the first matching override.
+      if (index !== undefined && !mappedColors.has(key)) {
+        counts[index % palette.length]--;
+        mappedColors.set(key, color);
+      }
+    }
+  }
+  return [...palette.filter((_, index) => counts[index] > 0), ...mappedColors.values()];
+}
+
+/** Split counts by category or numeric range, preserving the original bin totals and indexes. */
+export function getCategoricalHistogram(
+  bins: Bins,
+  datasets: Datasets,
+  plotType: Filter['plotType']
+): {bins: Bins; legend: {name: string; color: string}[]} | null {
+  const groupBy = groupByCacheValue(plotType);
+  if (!groupBy || !bins) {
+    return null;
+  }
+
+  const accessors = new Map<string, (index: number) => unknown>();
+  for (const dataId of Object.keys(bins)) {
+    const getGroup = histogramGroupValueAccessor(datasets?.[dataId], groupBy.fieldName);
+    if (getGroup) {
+      accessors.set(dataId, getGroup);
+    }
+  }
+  const numericFields =
+    accessors.size > 0 &&
+    Array.from(accessors.keys()).every(dataId => {
+      const field = datasets[dataId].fields.find(item => item.name === groupBy.fieldName);
+      return field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real;
+    });
+  let canUseNumericRanges = numericFields;
+  let getCategoryKey = (value: unknown): string | null => {
+    if (numericFields && typeof value === 'bigint' && !Number.isSafeInteger(Number(value))) {
+      // Preserve exact categories for Int64 identifiers that Number cannot represent.
+      canUseNumericRanges = false;
+    }
+    return histogramCategoryKey(value, numericFields);
+  };
+  let categoryOrder = new Map<string, number>();
+  let presentCategories = new Set<string>();
+  let lower = Infinity;
+  let upper = -Infinity;
+  for (const [dataId, getGroup] of accessors) {
+    // Use the complete dataset to keep a category's color stable as other filters change.
+    const dataset = datasets[dataId];
+    const field = dataset.fields.find(item => item.name === groupBy.fieldName);
+    const domain = histogramCategoryDomain(dataset, field, numericFields, getGroup);
+    canUseNumericRanges = canUseNumericRanges && domain.canUseNumericRanges;
+    lower = Math.min(lower, domain.lower);
+    upper = Math.max(upper, domain.upper);
+    // Reuse the usual single-dataset order; copy only when adding uncached categories.
+    if (!categoryOrder.size) {
+      categoryOrder = domain.order;
+    } else {
+      categoryOrder = new Map(categoryOrder);
+      for (const key of domain.order.keys()) {
+        if (!categoryOrder.has(key)) categoryOrder.set(key, categoryOrder.size);
+      }
+    }
+    for (const bin of bins[dataId] || []) {
+      for (const index of bin.indexes || []) {
+        const key = getCategoryKey(getGroup(index));
+        if (key !== null) {
+          if (!categoryOrder.has(key)) {
+            if (categoryOrder === domain.order) categoryOrder = new Map(categoryOrder);
+            categoryOrder.set(key, categoryOrder.size);
+          }
+          if (numericFields) {
+            lower = Math.min(lower, Number(key));
+            upper = Math.max(upper, Number(key));
+          }
+          presentCategories.add(key);
+        }
+      }
+    }
+  }
+  if (!presentCategories.size) {
+    return null;
+  }
+
+  const limit = Math.max(1, Math.floor(groupLimit(groupBy.numGroups)));
+  if (canUseNumericRanges && categoryOrder.size > limit) {
+    const boundaries = [lower];
+    for (let index = 1; index < limit; index++) {
+      const fraction = index / limit;
+      // Convex interpolation avoids overflowing upper - lower on extreme finite domains.
+      const boundary = lower * (1 - fraction) + upper * fraction;
+      if (
+        Number.isFinite(boundary) &&
+        boundary > boundaries[boundaries.length - 1] &&
+        boundary < upper
+      ) {
+        boundaries.push(boundary);
+      }
+    }
+    boundaries.push(upper);
+    let labels = boundaries.map(value => formatNumber(value, ALL_FIELD_TYPES.real));
+    // Keep labels compact, adding precision only when different bounds would look identical.
+    // Membership still uses the original numeric thresholds, never the rounded labels.
+    for (
+      let precision = 5;
+      precision <= 17 &&
+      (new Set(labels).size < labels.length || labels.some(label => label.length > 24));
+      precision++
+    ) {
+      labels = boundaries.map(d3Format(`.${precision}~g`));
+    }
+    const ranges = boundaries.slice(1).map((_, index) => {
+      const last = index === boundaries.length - 2;
+      return `${labels[index]} ≤ x ${last ? '≤' : '<'} ${labels[index + 1]}`;
+    });
+    const thresholds = boundaries.slice(1, -1);
+    const numericKey = getCategoryKey;
+    getCategoryKey = value => {
+      const key = numericKey(value);
+      return key === null ? null : ranges[bisectRight(thresholds, Number(key))];
+    };
+    presentCategories = new Set(
+      Array.from(presentCategories, key => ranges[bisectRight(thresholds, Number(key))])
+    );
+    categoryOrder = new Map(ranges.map((name, index) => [name, index]));
+  }
+
+  const colorRange = plotType?.groupBy?.colorRange;
+  const order = Array.from(categoryOrder.keys()).filter(name => presentCategories.has(name));
+  const keep = order.slice(0, limit);
+  const rest = order.slice(keep.length);
+  const legend = keep.map(name => ({
+    name,
+    color: seriesColor(colorRange, name, categoryOrder.get(name)!)
+  }));
+  const keyToGroup = new Map(keep.map((name, index) => [name, index]));
+  if (groupBy.groupOthers && rest.length) {
+    const othersIndex = legend.length;
+    let othersName = PLOT_GROUP_OTHERS_NAME;
+    let suffix = 1;
+    while (categoryOrder.has(othersName)) {
+      othersName = `${PLOT_GROUP_OTHERS_NAME} (grouped${suffix > 1 ? ` ${suffix}` : ''})`;
+      suffix += 1;
+    }
+    legend.push({
+      name: othersName,
+      color: othersSeriesColor(colorRange, histogramDomainColors(colorRange, categoryOrder))
+    });
+    rest.forEach(key => keyToGroup.set(key, othersIndex));
+  }
+
+  const groupedBins: Bins = {};
+  for (const dataId of Object.keys(bins)) {
+    const getGroup = accessors.get(dataId);
+    groupedBins[dataId] = getGroup
+      ? (bins[dataId] || []).map(bin => {
+          const counts = new Array<number>(legend.length).fill(0);
+          for (const index of bin.indexes || []) {
+            const key = getCategoryKey(getGroup(index));
+            const groupIndex = key === null ? undefined : keyToGroup.get(key);
+            if (groupIndex !== undefined) {
+              counts[groupIndex] += 1;
+            }
+          }
+          return {
+            ...bin,
+            segments: legend.flatMap((group, index) =>
+              counts[index] ? [{...group, count: counts[index]}] : []
+            )
+          };
+        })
+      : bins[dataId];
+  }
+  return {bins: groupedBins, legend};
 }
 
 /**
