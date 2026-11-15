@@ -15,6 +15,7 @@ import {
   ALL_FIELD_TYPES,
   DEFAULT_COLOR_UI,
   DEFAULT_TIME_FORMAT,
+  SCALE_TYPE_NAMES,
   durationMillisecond,
   durationSecond,
   durationMinute,
@@ -33,9 +34,11 @@ import {
   NestedPartial
 } from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {Layer} from '@kepler.gl/layers';
 import {
   getDefaultTimeFormat,
   getNumericPlotInterval,
+  isLayerHistogramSupported,
   PLOT_NUM_GROUPS_ALL,
   PLOT_NUM_GROUPS_OPTIONS,
   DEFAULT_PLOT_NUM_GROUPS,
@@ -62,6 +65,10 @@ const INTERVAL_UNITS = [
 ];
 
 const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
+const GROUP_SOURCE_OPTIONS = [
+  {id: 'independent', label: 'Independent'},
+  {id: 'layer', label: 'From layer'}
+];
 const SELECTOR_WIDTH = '160px';
 
 type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
@@ -402,6 +409,7 @@ export type TimeWidgetSettingsProps = {
   onClose?: () => void;
   filter: TimeRangeFilter | RangeFilter;
   datasets: Datasets;
+  layers?: readonly Layer[];
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
   onTimezoneChange: (timezone: string) => void;
   onTimeFormatChange: (timeFormat: string) => void;
@@ -426,6 +434,7 @@ function TimeWidgetSettingsFactory(
     onClose,
     filter,
     datasets,
+    layers = [],
     setFilterPlot,
     onTimezoneChange,
     onTimeFormatChange
@@ -496,6 +505,27 @@ function TimeWidgetSettingsFactory(
     );
 
     const groupBy = filter.plotType?.groupBy;
+    const groupSource = groupBy?.source === 'layer' ? 'layer' : 'independent';
+    const useLayerGrouping = !filter.yAxis && groupSource === 'layer';
+    const sourceLayers = useMemo(
+      () => layers.filter(layer => isLayerHistogramSupported(layer, filter.dataId[0])),
+      [layers, filter.dataId]
+    );
+    const sourceLayer = sourceLayers.find(layer => layer.id === groupBy?.layerId);
+    const sourceLayerOptions = useMemo(
+      () => sourceLayers.map(layer => ({id: layer.id, label: layer.config.label || layer.id})),
+      [sourceLayers]
+    );
+    const displaySourceLayer = useCallback(
+      option => {
+        if (typeof option !== 'string') return option?.label || '';
+        const supported = sourceLayerOptions.find(layer => layer.id === option);
+        if (supported) return supported.label;
+        const label = layers.find(layer => layer.id === option)?.config.label || option;
+        return `${label} (unavailable)`;
+      },
+      [layers, sourceLayerOptions]
+    );
 
     const applyInterval = useCallback(
       (step: number, unit: string) => {
@@ -569,6 +599,24 @@ function TimeWidgetSettingsFactory(
           plotType: {groupBy: field ? {fieldName: field.name} : null}
         }),
       [setFilterPlot]
+    );
+
+    const _setGroupSource = useCallback(
+      source => {
+        if (source === 'independent' || source === 'layer') {
+          setFilterPlot({plotType: {groupBy: {source}}});
+        }
+      },
+      [setFilterPlot]
+    );
+
+    const _setSourceLayer = useCallback(
+      layerId => {
+        if (sourceLayers.some(layer => layer.id === layerId)) {
+          setFilterPlot({plotType: {groupBy: {source: 'layer', layerId}}});
+        }
+      },
+      [setFilterPlot, sourceLayers]
     );
 
     const _setNumGroups = useCallback(
@@ -793,93 +841,161 @@ function TimeWidgetSettingsFactory(
             </DisabledBlock>
           </AxisRow>
         </AxisSection>
-        {filter.yAxis ? (
-          <AxisSection className="time-widget__group-by">
-            <AxisHeader>
-              <FormattedMessage id="filterManager.groupBy" />
-            </AxisHeader>
-            <AxisRow>
+        <AxisSection className="time-widget__group-by">
+          <AxisHeader>
+            <FormattedMessage id="filterManager.groupBy" />
+          </AxisHeader>
+          <AxisRow>
+            {!filter.yAxis ? (
               <FieldBlock>
-                <FieldLabel>
-                  <FormattedMessage id="filterManager.groupByField" />
-                </FieldLabel>
-                <FieldSelectorWrapper>
-                  <FieldSelector
+                <FieldLabel>Mode</FieldLabel>
+                <SelectorWrapper>
+                  <ItemSelector
                     inputTheme="secondary"
-                    fields={groupByFields}
+                    selectedItems={groupSource}
+                    options={GROUP_SOURCE_OPTIONS}
+                    multiSelect={false}
+                    searchable={false}
                     placement="top"
-                    id="time-widget-group-by-field"
-                    value={groupBy?.fieldName || null}
-                    onSelect={_setGroupByField}
-                    erasable
-                    showToken={false}
+                    onChange={_setGroupSource}
+                    getOptionValue={option => option.id}
+                    displayOption={option =>
+                      typeof option === 'string'
+                        ? GROUP_SOURCE_OPTIONS.find(source => source.id === option)?.label || ''
+                        : option.label
+                    }
                   />
-                </FieldSelectorWrapper>
+                </SelectorWrapper>
               </FieldBlock>
-              <DisabledBlock $disabled={!groupBy?.fieldName}>
+            ) : null}
+            {useLayerGrouping ? (
+              <>
                 <FieldBlock>
-                  <FieldLabel>
-                    <FormattedMessage id="filterManager.maxGroups" />
-                  </FieldLabel>
-                  <SelectorWrapper>
+                  <FieldLabel>Source layer</FieldLabel>
+                  <SelectorWrapper data-testid="time-widget-source-layer">
                     <ItemSelector
                       inputTheme="secondary"
-                      selectedItems={
-                        groupBy?.numGroups === PLOT_NUM_GROUPS_ALL
-                          ? MAX_PLOT_NUM_GROUPS
-                          : groupBy?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS
-                      }
-                      options={PLOT_NUM_GROUPS_OPTIONS}
+                      selectedItems={groupBy?.layerId || null}
+                      options={sourceLayerOptions}
                       multiSelect={false}
                       searchable={false}
-                      onChange={_setNumGroups}
-                      displayOption={displayNumGroups}
-                      getOptionValue={opt => opt}
                       placement="top"
-                      disabled={!groupBy?.fieldName}
+                      onChange={_setSourceLayer}
+                      getOptionValue={option => option.id}
+                      displayOption={displaySourceLayer}
+                      disabled={!sourceLayerOptions.length}
                     />
                   </SelectorWrapper>
                 </FieldBlock>
-              </DisabledBlock>
-              <DisabledBlock $disabled={!groupBy?.fieldName}>
+                {sourceLayer ? (
+                  <>
+                    <FieldBlock>
+                      <FieldLabel>Field</FieldLabel>
+                      <FieldValue title={sourceLayer.config.colorField?.name}>
+                        {sourceLayer.config.colorField?.name}
+                      </FieldValue>
+                    </FieldBlock>
+                    <FieldBlock>
+                      <FieldLabel>Scale</FieldLabel>
+                      <FieldValue>
+                        {SCALE_TYPE_NAMES[sourceLayer.config.colorScale || ''] ||
+                          sourceLayer.config.colorScale}
+                      </FieldValue>
+                    </FieldBlock>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <>
                 <FieldBlock>
                   <FieldLabel>
-                    <FormattedMessage id="filterManager.groupOthers" />
+                    <FormattedMessage id="filterManager.groupByField" />
                   </FieldLabel>
-                  <SwitchBlock>
-                    <Switch
-                      checked={Boolean(groupBy?.groupOthers)}
-                      id={`${filter.id}-group-others`}
-                      onChange={_toggleGroupOthers}
-                      disabled={!groupBy?.fieldName}
-                      secondary
+                  <FieldSelectorWrapper>
+                    <FieldSelector
+                      inputTheme="secondary"
+                      fields={groupByFields}
+                      placement="top"
+                      id="time-widget-group-by-field"
+                      value={groupBy?.fieldName || null}
+                      onSelect={_setGroupByField}
+                      erasable
+                      showToken={false}
                     />
-                  </SwitchBlock>
+                  </FieldSelectorWrapper>
                 </FieldBlock>
-              </DisabledBlock>
-              {groupBy?.fieldName && groupBy.colorRange ? (
-                <FieldBlock>
-                  <FieldLabel>
-                    <FormattedMessage id="filterManager.seriesColors" />
-                  </FieldLabel>
-                  <ColorSelectorWrap>
-                    <ColorSelector
-                      colorSets={[
-                        {
-                          selectedColor: groupBy.colorRange,
-                          isRange: true,
-                          setColor: colorRange => _setGroupColor(colorRange as ColorRange)
-                        } as ColorSet
-                      ]}
-                      colorUI={groupBy.colorUI || DEFAULT_COLOR_UI}
-                      setColorUI={_setGroupColorUI}
-                    />
-                  </ColorSelectorWrap>
-                </FieldBlock>
-              ) : null}
-            </AxisRow>
-          </AxisSection>
-        ) : null}
+                <DisabledBlock $disabled={!groupBy?.fieldName}>
+                  <FieldBlock>
+                    <FieldLabel>
+                      <FormattedMessage id="filterManager.maxGroups" />
+                    </FieldLabel>
+                    <SelectorWrapper>
+                      <ItemSelector
+                        inputTheme="secondary"
+                        selectedItems={
+                          groupBy?.numGroups === PLOT_NUM_GROUPS_ALL
+                            ? MAX_PLOT_NUM_GROUPS
+                            : groupBy?.numGroups ?? DEFAULT_PLOT_NUM_GROUPS
+                        }
+                        options={PLOT_NUM_GROUPS_OPTIONS}
+                        multiSelect={false}
+                        searchable={false}
+                        onChange={_setNumGroups}
+                        displayOption={displayNumGroups}
+                        getOptionValue={opt => opt}
+                        placement="top"
+                        disabled={!groupBy?.fieldName}
+                      />
+                    </SelectorWrapper>
+                  </FieldBlock>
+                </DisabledBlock>
+                <DisabledBlock $disabled={!groupBy?.fieldName}>
+                  <FieldBlock>
+                    <FieldLabel>
+                      <FormattedMessage id="filterManager.groupOthers" />
+                    </FieldLabel>
+                    <SwitchBlock>
+                      <Switch
+                        checked={Boolean(groupBy?.groupOthers)}
+                        id={`${filter.id}-group-others`}
+                        onChange={_toggleGroupOthers}
+                        disabled={!groupBy?.fieldName}
+                        secondary
+                      />
+                    </SwitchBlock>
+                  </FieldBlock>
+                </DisabledBlock>
+                {groupBy?.fieldName && groupBy.colorRange ? (
+                  <FieldBlock>
+                    <FieldLabel>
+                      <FormattedMessage id="filterManager.seriesColors" />
+                    </FieldLabel>
+                    <ColorSelectorWrap>
+                      <ColorSelector
+                        colorSets={[
+                          {
+                            selectedColor: groupBy.colorRange,
+                            isRange: true,
+                            setColor: colorRange => _setGroupColor(colorRange as ColorRange)
+                          } as ColorSet
+                        ]}
+                        colorUI={groupBy.colorUI || DEFAULT_COLOR_UI}
+                        setColorUI={_setGroupColorUI}
+                      />
+                    </ColorSelectorWrap>
+                  </FieldBlock>
+                ) : null}
+              </>
+            )}
+          </AxisRow>
+          {useLayerGrouping && !sourceLayer && (groupBy?.layerId || !sourceLayers.length) ? (
+            <PanelLabel as="div" role="status">
+              {groupBy?.layerId
+                ? 'The selected layer is unavailable or no longer supports grouped bins. Choose another layer.'
+                : 'No compatible layers are available for this dataset.'}
+            </PanelLabel>
+          ) : null}
+        </AxisSection>
       </SettingsPanel>
     );
   };

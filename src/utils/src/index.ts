@@ -68,6 +68,7 @@ export {
   runGpuFilterForPlot,
   updateTimeFilterPlotType,
   getLineChart,
+  getCategoricalHistogram,
   mergePlotGroupBy,
   lineChartSeriesLegend,
   defaultPlotGroupColorRange,
@@ -77,6 +78,7 @@ export {
   DEFAULT_PLOT_NUM_GROUPS,
   MAX_PLOT_NUM_GROUPS
 } from './plot';
+export {getLayerHistogram, isLayerHistogramSupported} from './layer-histogram';
 // eslint-disable-next-line prettier/prettier
 export * from './data-utils';
 export type {FieldFormatter} from './data-utils';

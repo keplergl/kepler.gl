@@ -16,15 +16,9 @@ import {
   formatNumber,
   getNumericRangeMinimum,
   getTimelineFromFilter,
-  intervalBinFromMarks,
-  lineChartSeriesLegend
+  intervalBinFromMarks
 } from '@kepler.gl/utils';
-import {
-  BottomWidgetInner,
-  Button,
-  PanelLabel,
-  shouldForwardProp
-} from '../common/styled-components';
+import {BottomWidgetInner, Button, PanelLabel} from '../common/styled-components';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
@@ -126,29 +120,6 @@ const timelinePlotTheme = (theme: DefaultTheme) => ({
     theme.rangePlotContainerHLargePalm - theme.rangePlotMarginLarge.top
   )
 });
-
-const SeriesLegend = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-`;
-
-const SeriesLegendItem = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: ${props => props.theme.textColor};
-  font-size: ${props => props.theme.selectFontSize};
-  line-height: 16px;
-`;
-
-const SeriesSwatch = styled.span.withConfig({shouldForwardProp})<{$color: string}>`
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: ${props => props.$color};
-  flex: 0 0 auto;
-`;
 
 const TimelineStatusBar = styled.div`
   display: flex;
@@ -609,11 +580,6 @@ function TimeWidgetFactory(
       setTimelineDomain(null);
     }, []);
 
-    const seriesLegend = useMemo(
-      () => (isMinified ? [] : lineChartSeriesLegend(filter.lineChart)),
-      [filter.lineChart, isMinified]
-    );
-
     return (
       <TimeBottomWidgetInner className="bottom-widget--inner" ref={widgetRef}>
         <TimeWidgetTop
@@ -653,22 +619,13 @@ function TimeWidgetFactory(
             onClose={_hideSettings}
             filter={filter}
             datasets={datasets}
+            layers={layers}
             setFilterPlot={_setFilterPlot}
             onTimezoneChange={_onTimezoneChange}
             onTimeFormatChange={_onTimeFormatChange}
           />
         ) : null}
         <TimelineSection>
-          {seriesLegend.length > 1 ? (
-            <SeriesLegend className="time-widget__series-legend">
-              {seriesLegend.map(item => (
-                <SeriesLegendItem key={item.name}>
-                  <SeriesSwatch $color={item.color} />
-                  {item.name}
-                </SeriesLegendItem>
-              ))}
-            </SeriesLegend>
-          ) : null}
           {timelineZoomed && timelineRangeLabel ? (
             <TimelineStatusBar>
               <PanelLabel>Showing</PanelLabel>

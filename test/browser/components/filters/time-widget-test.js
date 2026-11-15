@@ -113,7 +113,11 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
 
   openTimelineSettings(wrapper);
 
-  t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
+  t.deepEqual(
+    wrapper.find(FieldSelector).map(selector => selector.props().id),
+    ['selected-time-widget-field', 'time-widget-group-by-field'],
+    'should render Y-axis and category field selectors'
+  );
   t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
 
   // check yAxisFields

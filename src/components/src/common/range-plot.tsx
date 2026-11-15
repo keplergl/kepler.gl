@@ -6,17 +6,48 @@ import styled, {withTheme} from 'styled-components';
 import RangeBrushFactory, {OnBrush, RangeBrushProps} from './range-brush';
 import HistogramPlotFactory from './histogram-plot';
 import LineChartFactory, {HoverDP} from './line-chart';
-import {hasMobileWidth, isTest} from '@kepler.gl/utils';
-import {PLOT_TYPES} from '@kepler.gl/constants';
+import {
+  getCategoricalHistogram,
+  getLayerHistogram,
+  isLayerHistogramSupported,
+  hasMobileWidth,
+  isTest,
+  lineChartSeriesLegend
+} from '@kepler.gl/utils';
+import {FILTER_VIEW_TYPES, PLOT_TYPES} from '@kepler.gl/constants';
 import LoadingSpinner from './loading-spinner';
 import {breakPointValues} from '@kepler.gl/styles';
-import {LineChart as LineChartType, Filter, Bins} from '@kepler.gl/types';
+import {LineChart as LineChartType, Filter, Bins, KeplerLayer} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
 
 const StyledRangePlot = styled.div`
   margin-bottom: ${props => props.theme.sliderBarHeight}px;
   display: flex;
   position: relative;
+`;
+
+const SeriesLegend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+`;
+
+const SeriesLegendItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.theme.textColor};
+  font-size: ${props => props.theme.selectFontSize};
+  line-height: 16px;
+`;
+
+const SeriesSwatch = styled.span<{$color: string}>`
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: ${props => props.$color};
+  flex: 0 0 auto;
 `;
 
 interface RangePlotProps {
@@ -41,6 +72,7 @@ interface RangePlotProps {
   animationWindow?: string;
   filter?: Filter;
   datasets?: Datasets;
+  layers?: readonly KeplerLayer[];
 
   invertTrendColor?: boolean;
 
@@ -191,6 +223,35 @@ export default function RangePlotFactory(
   }: WithPlotLoadingProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const isChangingRef = useRef(false);
+    const categoricalHistogram = useMemo(() => {
+      if (!isHistogramPlot(plotType) || otherProps.filter?.yAxis || !bins || !otherProps.datasets) {
+        return null;
+      }
+      if (plotType.groupBy?.source === 'layer') {
+        const layer = otherProps.layers?.find(
+          candidate => candidate.id === plotType.groupBy.layerId
+        );
+        const dataId = otherProps.filter?.dataId[0];
+        return layer && dataId && isLayerHistogramSupported(layer, dataId)
+          ? getLayerHistogram(bins, otherProps.datasets, layer)
+          : null;
+      }
+      return getCategoricalHistogram(bins, otherProps.datasets, plotType);
+    }, [
+      bins,
+      otherProps.datasets,
+      otherProps.filter?.yAxis,
+      otherProps.filter?.dataId,
+      otherProps.layers,
+      plotType
+    ]);
+    const seriesLegend = useMemo(
+      () =>
+        isLineChart(plotType)
+          ? lineChartSeriesLegend(lineChart)
+          : categoricalHistogram?.legend || [],
+      [categoricalHistogram, lineChart, plotType]
+    );
 
     useEffect(() => {
       if (isChangingRef.current) {
@@ -238,22 +299,34 @@ export default function RangePlotFactory(
     );
 
     return (
-      <StyledRangePlot style={rangePlotStyle} className="kg-range-slider__plot">
-        {isLoading ? (
-          <div style={LOADING_SPINNER_CONTAINER_STYLE}>
-            <LoadingSpinner borderColor="transparent" size={40} />
-          </div>
-        ) : (
-          <RangePlotWithTheme
-            lineChart={lineChart}
-            bins={bins}
-            plotType={plotType}
-            isEnlarged={isEnlarged}
-            theme={theme}
-            {...otherProps}
-          />
-        )}
-      </StyledRangePlot>
+      <>
+        {otherProps.filter?.view === FILTER_VIEW_TYPES.enlarged && seriesLegend.length > 0 ? (
+          <SeriesLegend className="time-widget__series-legend">
+            {seriesLegend.map((item, index) => (
+              <SeriesLegendItem key={`${index}-${item.name}`}>
+                <SeriesSwatch $color={item.color} />
+                {item.name}
+              </SeriesLegendItem>
+            ))}
+          </SeriesLegend>
+        ) : null}
+        <StyledRangePlot style={rangePlotStyle} className="kg-range-slider__plot">
+          {isLoading ? (
+            <div style={LOADING_SPINNER_CONTAINER_STYLE}>
+              <LoadingSpinner borderColor="transparent" size={40} />
+            </div>
+          ) : (
+            <RangePlotWithTheme
+              lineChart={lineChart}
+              bins={categoricalHistogram?.bins || bins}
+              plotType={plotType}
+              isEnlarged={isEnlarged}
+              theme={theme}
+              {...otherProps}
+            />
+          )}
+        </StyledRangePlot>
+      </>
     );
   };
 

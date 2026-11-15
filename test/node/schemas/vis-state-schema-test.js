@@ -214,6 +214,47 @@ test('#visStateSchema -> v1 -> save load filters', t => {
   t.end();
 });
 
+test('#visStateSchema -> v1 -> persists timeline layer grouping and independent preferences', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  const independent = {fieldName: 'gps_data.lat', numGroups: 3, groupOthers: true};
+  const state = keplerGlReducer(
+    initialState,
+    VisStateActions.setFilterPlot(0, {
+      plotType: {
+        groupBy: {
+          ...independent,
+          source: 'layer',
+          layerId: initialState.visState.layers[0].id
+        }
+      }
+    })
+  );
+  const expected = state.visState.filters[0].plotType.groupBy;
+  const savedState = SchemaManager.getConfigToSave(state);
+  const loaded = SchemaManager.parseSavedConfig(savedState).visState;
+
+  t.deepEqual(savedState.config.visState.filters[0].plotType.groupBy, expected, 'saves grouping');
+  t.deepEqual(
+    loaded.filters[0].plotType.groupBy,
+    expected,
+    'loads source and independent settings'
+  );
+  t.ok(
+    loaded.layers.some(layer => layer.id === expected.layerId),
+    'retains the referenced layer id across save and load'
+  );
+  const restored = keplerGlReducer(
+    state,
+    VisStateActions.setFilterPlot(0, {
+      plotType: {groupBy: {source: 'independent'}}
+    })
+  ).visState.filters[0].plotType.groupBy;
+  t.equal(restored.fieldName, independent.fieldName, 'restores independent field after unlinking');
+  t.equal(restored.numGroups, independent.numGroups, 'restores independent group count');
+  t.equal(restored.groupOthers, independent.groupOthers, 'restores independent Others option');
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> persists opt-in numeric timeline configuration', t => {
   let state = keplerGlReducer(
     cloneDeep(StateWFilesFiltersLayerColor),
