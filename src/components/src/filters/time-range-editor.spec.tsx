@@ -94,6 +94,25 @@ test('selects the containing bin in interval mode without editing its width', ()
   expect(props.onChange).toHaveBeenCalledWith([start + day, start + day * 2 - 1]);
 });
 
+test.each([
+  {name: 'first of several bins', lastRecord: '2025-01-17T12:00:00Z', days: 3},
+  {name: 'only bin', lastRecord: '2025-01-15T20:00:00Z', days: 1}
+])('confirms an unchanged $name when records start after its boundary', ({lastRecord, days}) => {
+  const midnight = Date.parse('2025-01-15T00:00:00Z');
+  const day = 86400000;
+  const value = [midnight, midnight + day - 1];
+  const {props} = setup({
+    interval: true,
+    value,
+    domain: [Date.parse('2025-01-15T18:00:00Z'), Date.parse(lastRecord)],
+    marks: Array.from({length: days + 1}, (_, index) => midnight + day * index)
+  });
+  open();
+  apply();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(props.onChange).toHaveBeenCalledWith(value);
+});
+
 test.each(['2025-01-15 18:00:00', '2025-01-15 23:59:59.999'])(
   'keeps a second-half-bin timestamp %s in its containing interval',
   time => {

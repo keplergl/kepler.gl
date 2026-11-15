@@ -119,7 +119,12 @@ export default function TimeRangeEditor({
     trigger.current?.focus();
   };
   const startEditing = () => {
-    setDraft(value.map(timestamp => moment.utc(timestamp).tz(zone).format(INPUT_FORMATS[0])));
+    // The first calendar bin can start before the first record. Use a timestamp
+    // inside that bin and the data domain so confirming it preserves the selection.
+    const initialValue = interval && domain ? [Math.max(domain[0], value[0])] : value;
+    setDraft(
+      initialValue.map(timestamp => moment.utc(timestamp).tz(zone).format(INPUT_FORMATS[0]))
+    );
     setError('');
     setOpen(true);
     onOpen?.();
