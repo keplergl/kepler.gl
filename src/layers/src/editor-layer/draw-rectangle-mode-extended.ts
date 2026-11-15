@@ -2,6 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import {DrawRectangleMode} from '@deck.gl-community/editable-layers';
+import type {
+  FeatureCollection,
+  GuideFeatureCollection,
+  ModeProps
+} from '@deck.gl-community/editable-layers';
 
 /**
  * Extends DrawRectangleMode to support both click-move-click and
@@ -14,6 +19,25 @@ import {DrawRectangleMode} from '@deck.gl-community/editable-layers';
  * - Mousedown → drag → mouseup  (drag-to-draw behavior)
  */
 export class DrawRectangleModeExtended extends DrawRectangleMode {
+  getGuides(props: ModeProps<FeatureCollection>): GuideFeatureCollection {
+    const start = this.getClickSequence()[0];
+    const end = props.lastPointerMoveEvent?.mapCoords;
+
+    // Collapsed polygon strokes can produce unbounded joins in deck.gl.
+    // Wait until both rectangle dimensions are nonzero before rendering or committing it.
+    if (
+      !start ||
+      !end ||
+      ![start[0], start[1], end[0], end[1]].every(Number.isFinite) ||
+      start[0] === end[0] ||
+      start[1] === end[1]
+    ) {
+      return {type: 'FeatureCollection', features: []};
+    }
+
+    return super.getGuides(props);
+  }
+
   handleClick(event, props) {
     // Always handle clicks (no dragToDraw guard)
     this.addClickSequence(event);
