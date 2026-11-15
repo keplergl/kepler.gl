@@ -1014,6 +1014,7 @@ export const filterPropsV1 = {
     version: VERSIONS.v1
   }),
   animationWindow: null,
+  animationLoop: null,
   yAxis: new DimensionFieldSchema({
     version: VERSIONS.v1,
     key: 'yAxis',

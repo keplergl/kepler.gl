@@ -28,6 +28,7 @@ import {formatNumber, getNumericPlotInterval, preciseRound} from '@kepler.gl/uti
 import {RangeFilter} from '@kepler.gl/types';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
+import Switch from '../common/switch';
 import {ContextMenuAction, ContextMenuList} from '../common/context-menu';
 import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
 import {AnimationJsonEditorFactory} from '../common/animation-control/animation-json-editor';
@@ -82,7 +83,7 @@ const PlaybackRow = styled(HeaderRow)`
   justify-content: flex-start;
   background-color: transparent;
 
-  @container timeline-header (max-width: 300px) {
+  @container timeline-header (max-width: 480px) {
     flex-wrap: wrap;
   }
 `;
@@ -99,6 +100,10 @@ const CompactPlayback = styled.div`
   align-items: center;
   gap: 4px 12px;
   min-width: min(100%, 300px);
+
+  @container timeline-header (max-width: 480px) {
+    flex-wrap: wrap;
+  }
 `;
 
 const CompactSummary = styled.div`
@@ -106,6 +111,10 @@ const CompactSummary = styled.div`
   flex-direction: column;
   flex: 0 1 auto;
   min-width: 0;
+
+  @container timeline-header (max-width: 480px) {
+    flex-basis: 100%;
+  }
 `;
 
 const CompactActions = styled.div`
@@ -119,6 +128,10 @@ const SelectedRange = styled.div`
   font-size: ${props => props.theme.selectFontSize};
   font-weight: 500;
   line-height: 16px;
+
+  @container timeline-header (max-width: 480px) {
+    flex-basis: 100%;
+  }
 
   .floating-time-display {
     position: static;
@@ -229,6 +242,25 @@ const PlayButton = styled(HeaderButton)`
   color: ${props => props.theme.textColor};
 `;
 
+const ModeButton = styled(HeaderButton)`
+  width: auto;
+  gap: 6px;
+  padding: 0 6px;
+  white-space: nowrap;
+`;
+
+const PlaybackButtons = styled(StyledCenterBox)`
+  flex-wrap: wrap;
+  max-width: 100%;
+`;
+
+const LoopSetting = styled.div`
+  padding: 10px 8px;
+  border-top: 1px solid ${props => props.theme.dropdownListHighlightBg};
+  background: ${props => props.theme.dropdownListBgd};
+  font-size: 12px;
+`;
+
 const PopoverContent = styled.div`
   .animation-control__speed-slider,
   .animation-json-editor {
@@ -246,9 +278,24 @@ const PopoverContent = styled.div`
 `;
 
 const ANIMATION_MODES = [
-  {id: ANIMATION_WINDOW.free, labelId: 'tooltip.animationByWindow', Icon: FreeWindow},
-  {id: ANIMATION_WINDOW.incremental, labelId: 'tooltip.animationByIncremental', Icon: AnchorWindow},
-  {id: ANIMATION_WINDOW.interval, labelId: 'tooltip.animationByInterval', Icon: Interval}
+  {
+    id: ANIMATION_WINDOW.free,
+    labelId: 'tooltip.animationByWindow',
+    shortLabelId: 'tooltip.movingWindow',
+    Icon: FreeWindow
+  },
+  {
+    id: ANIMATION_WINDOW.incremental,
+    labelId: 'tooltip.animationByIncremental',
+    shortLabelId: 'tooltip.cumulativeWindow',
+    Icon: AnchorWindow
+  },
+  {
+    id: ANIMATION_WINDOW.interval,
+    labelId: 'tooltip.animationByInterval',
+    shortLabelId: 'tooltip.singleInterval',
+    Icon: Interval
+  }
 ];
 
 TimeWidgetTopFactory.deps = [AnimationSpeedSliderFactory, AnimationJsonEditorFactory];
@@ -320,6 +367,7 @@ function TimeWidgetTopFactory(
       ANIMATION_MODES.find(
         mode => mode.id === (playbackControls?.animationWindow || filter.animationWindow)
       ) || ANIMATION_MODES[0];
+    const modeLabel = intl.formatMessage({id: currentMode.shortLabelId});
     const playLabel = intl.formatMessage({
       id: playbackControls?.isAnimating ? 'tooltip.pause' : 'tooltip.play'
     });
@@ -525,7 +573,7 @@ function TimeWidgetTopFactory(
       );
     };
     const playback = playbackControls ? (
-      <StyledCenterBox role="group" aria-label="Playback controls">
+      <PlaybackButtons role="group" aria-label="Playback controls">
         {stepControl('backward')}
         <TippyTooltip
           placement="top"
@@ -588,18 +636,20 @@ function TimeWidgetTopFactory(
           delay={[500, 0]}
           render={() => <span role="tooltip">{intl.formatMessage({id: currentMode.labelId})}</span>}
         >
-          <HeaderButton
+          <ModeButton
             as="button"
             type="button"
             data-testid="time-widget-animation-mode"
-            aria-label="Animation mode"
+            aria-label={modeLabel}
             aria-expanded={popover === 'animation'}
             aria-haspopup="dialog"
             disabled={!playbackControls.isAnimatable}
             onClick={() => setPopover('animation')}
           >
             <currentMode.Icon height="16px" />
-          </HeaderButton>
+            {modeLabel}
+            <ArrowDown height="10px" />
+          </ModeButton>
         </TippyTooltip>
         <Portaled
           theme={popoverTheme}
@@ -623,7 +673,20 @@ function TimeWidgetTopFactory(
         >
           <PopoverContent ref={popoverRef}>
             {popover === 'animation' ? (
-              <ContextMenuList className="time-widget-animation-menu" items={animationItems} />
+              <>
+                <ContextMenuList className="time-widget-animation-menu" items={animationItems} />
+                {playbackControls.setAnimationLoop ? (
+                  <LoopSetting>
+                    <Switch
+                      id={`time-widget-loop-${filter.id}`}
+                      label={intl.formatMessage({id: 'tooltip.loopPlayback'})}
+                      checked={playbackControls.animationLoop !== false}
+                      disabled={!playbackControls.isAnimatable}
+                      onChange={event => playbackControls.setAnimationLoop?.(event.target.checked)}
+                    />
+                  </LoopSetting>
+                ) : null}
+              </>
             ) : null}
             {popover === 'speed' && AnimationSpeedSlider ? (
               <AnimationSpeedSlider
@@ -640,7 +703,7 @@ function TimeWidgetTopFactory(
             ) : null}
           </PopoverContent>
         </Portaled>
-      </StyledCenterBox>
+      </PlaybackButtons>
     ) : null;
 
     return (

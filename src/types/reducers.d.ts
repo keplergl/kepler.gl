@@ -185,6 +185,8 @@ export type FilterBase<L extends LineChart> = {
   view: FilterViewType;
   isAnimating: boolean;
   animationWindow?: string;
+  /** Whether playback repeats. Missing values preserve looping in older saved maps. */
+  animationLoop?: boolean;
   speed: number;
   showTimeDisplay?: boolean;
 
