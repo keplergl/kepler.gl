@@ -30,6 +30,7 @@ import {ListItemProps} from '../../common/item-selector/dropdown-list';
 import {Add, AnnotationText, Delete, Settings, ZoomIn} from '../../common/icons';
 import PanelHeaderActionFactory, {PanelHeaderActionIcon} from '../panel-header-action';
 import Switch from '../../common/switch';
+import TippyTooltip from '../../common/tippy-tooltip';
 import {
   Button,
   PanelContent,
@@ -393,16 +394,26 @@ function ZoomOpacityConfigFactory(
                       <PanelLabel>
                         <FormattedMessage id="interactions.fadeOnZoomLayers" />
                       </PanelLabel>
-                      <RemoveButton
-                        type="button"
-                        link
-                        small
-                        className="interaction-zoom-opacity__delete"
-                        title={intl.formatMessage({id: 'interactions.fadeOnZoomDelete'})}
-                        onClick={() => onDeleteController(controller.id)}
+                      <TippyTooltip
+                        placement="top"
+                        delay={[500, 0]}
+                        render={() => (
+                          <span role="tooltip">
+                            <FormattedMessage id="interactions.fadeOnZoomDelete" />
+                          </span>
+                        )}
                       >
-                        <Delete height="12px" />
-                      </RemoveButton>
+                        <RemoveButton
+                          type="button"
+                          link
+                          small
+                          className="interaction-zoom-opacity__delete"
+                          aria-label={intl.formatMessage({id: 'interactions.fadeOnZoomDelete'})}
+                          onClick={() => onDeleteController(controller.id)}
+                        >
+                          <Delete height="12px" />
+                        </RemoveButton>
+                      </TippyTooltip>
                     </LayersRow>
                     <ItemSelector
                       options={options}

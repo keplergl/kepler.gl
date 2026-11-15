@@ -53,6 +53,9 @@ describe('Notification tests', () => {
 
     expect(copy).toHaveBeenCalledWith('Failed to load tiles');
     expect(notification).toHaveClass('notification-item--expanded');
-    expect(screen.getByTitle('Copied')).toBeInTheDocument();
+    expect(screen.getByTestId(dataTestIds.copyNotificationIcon)).toHaveAttribute(
+      'aria-label',
+      'Copied'
+    );
   });
 });

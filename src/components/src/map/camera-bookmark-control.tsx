@@ -11,6 +11,7 @@ import {MapStateActions, UIStateActions} from '@kepler.gl/actions';
 import {breakPointValues} from '@kepler.gl/styles';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {StyledPanelHeader} from '../common/styled-components';
+import TippyTooltip from '../common/tippy-tooltip';
 import {LocationMarker, Copy} from '../common/icons';
 import {RootContext} from '../context';
 import {cameraTransition} from '../camera-navigation';
@@ -219,31 +220,41 @@ export default function CameraBookmarkControl({
             const copyLabel = `${message('copyCoordinates', 'Copy coordinates')}: ${name}`;
             return (
               <Row key={bookmark.id}>
-                <NavigateButton
-                  type="button"
-                  title={name}
-                  onClick={() => {
-                    const viewport = cameraTransition(bookmark.camera, mapState);
-                    if (mapState.isSplit) mapStateActions.updateMap(viewport, mapIndex);
-                    else mapStateActions.updateMap(viewport);
-                  }}
+                <TippyTooltip
+                  placement="top"
+                  delay={[500, 0]}
+                  render={() => <span role="tooltip">{name}</span>}
                 >
-                  <LocationMarker height="16px" aria-hidden="true" />
-                  <span>{name}</span>
-                </NavigateButton>
-                <CopyButton
-                  className="camera-bookmark-copy"
-                  type="button"
-                  aria-label={copyLabel}
-                  title={copyLabel}
-                  disabled={!coordinates}
-                  onClick={() => {
-                    const copied = coordinates && copy(coordinates);
-                    setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
-                  }}
+                  <NavigateButton
+                    type="button"
+                    onClick={() => {
+                      const viewport = cameraTransition(bookmark.camera, mapState);
+                      if (mapState.isSplit) mapStateActions.updateMap(viewport, mapIndex);
+                      else mapStateActions.updateMap(viewport);
+                    }}
+                  >
+                    <LocationMarker height="16px" aria-hidden="true" />
+                    <span>{name}</span>
+                  </NavigateButton>
+                </TippyTooltip>
+                <TippyTooltip
+                  placement="top"
+                  delay={[500, 0]}
+                  render={() => <span role="tooltip">{copyLabel}</span>}
                 >
-                  <Copy height="14px" aria-hidden="true" />
-                </CopyButton>
+                  <CopyButton
+                    className="camera-bookmark-copy"
+                    type="button"
+                    aria-label={copyLabel}
+                    disabled={!coordinates}
+                    onClick={() => {
+                      const copied = coordinates && copy(coordinates);
+                      setStatus(copied ? '' : message('copyFailed', 'Could not copy coordinates'));
+                    }}
+                  >
+                    <Copy height="14px" aria-hidden="true" />
+                  </CopyButton>
+                </TippyTooltip>
               </Row>
             );
           })}

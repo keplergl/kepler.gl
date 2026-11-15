@@ -48,6 +48,7 @@ import Switch from '../common/switch';
 import ItemSelector from '../common/item-selector/item-selector';
 import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
+import TippyTooltip from '../common/tippy-tooltip';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -697,17 +698,22 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                         {ANNOTATION_KINDS.map(({id, label}) => {
                           const Icon = ANNOTATION_ICONS[id];
                           return (
-                            <StyledAnnotationTypeButton
+                            <TippyTooltip
                               key={id}
-                              type="button"
-                              title={label}
-                              aria-label={label}
-                              aria-pressed={annotation.kind === id}
-                              $active={annotation.kind === id}
-                              onClick={() => handleChangeKind(annotation.id, id)}
+                              placement="top"
+                              delay={[500, 0]}
+                              render={() => <span role="tooltip">{label}</span>}
                             >
-                              <Icon height="20px" aria-hidden="true" focusable="false" />
-                            </StyledAnnotationTypeButton>
+                              <StyledAnnotationTypeButton
+                                type="button"
+                                aria-label={label}
+                                aria-pressed={annotation.kind === id}
+                                $active={annotation.kind === id}
+                                onClick={() => handleChangeKind(annotation.id, id)}
+                              >
+                                <Icon height="20px" aria-hidden="true" focusable="false" />
+                              </StyledAnnotationTypeButton>
+                            </TippyTooltip>
                           );
                         })}
                       </StyledAnnotationTypeGroup>

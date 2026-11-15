@@ -226,7 +226,6 @@ function SortableBookmark({
           <ActionButton
             key={key}
             aria-label={label}
-            title={label}
             type="button"
             disabled={disabled}
             onClick={onClick}

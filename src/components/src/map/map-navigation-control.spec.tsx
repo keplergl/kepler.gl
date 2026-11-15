@@ -33,20 +33,20 @@ function setup(mapState: Partial<MapState> = {}, liveView?: LiveView, mapIndex =
   return {...result, updateMap, getInternalViewState};
 }
 
-const click = (title: string) => fireEvent.click(screen.getByTitle(title));
+const click = (name: string) => fireEvent.click(screen.getByRole('button', {name}));
 
 test('hides navigation when disabled and hides only the compass when rotation is disabled', () => {
   initApplicationConfig({enableMapNavigationControl: false});
   const {unmount, updateMap} = setup();
-  expect(screen.queryByTitle('Zoom in')).not.toBeInTheDocument();
-  expect(screen.queryByTitle('Reset bearing/pitch')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Zoom in'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Reset bearing/pitch'})).not.toBeInTheDocument();
   expect(updateMap).not.toHaveBeenCalled();
   unmount();
   initApplicationConfig({enableMapNavigationControl: true});
   setup({dragRotate: false});
-  expect(screen.getByTitle('Zoom in')).toBeInTheDocument();
-  expect(screen.getByTitle('Zoom out')).toBeInTheDocument();
-  expect(screen.queryByTitle('Reset bearing/pitch')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', {name: 'Zoom in'})).toBeInTheDocument();
+  expect(screen.getByRole('button', {name: 'Zoom out'})).toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Reset bearing/pitch'})).not.toBeInTheDocument();
 });
 
 test('uses the live split viewport rather than stale Redux zoom, including zoom zero', () => {

@@ -13,6 +13,7 @@ import {
   PanelTitleFactory,
   SidePanelSection,
   Button,
+  TippyTooltip,
   Icons
 } from '@kepler.gl/components';
 import {
@@ -104,6 +105,7 @@ const MapStyleDropdown: React.FC<{
   onChange: (styleType: string) => void;
   customMapStylesActions?: any;
 }> = ({mapStyle, onChange, customMapStylesActions}) => {
+  const intl = useIntl();
   const {mapStyles, styleType} = mapStyle;
   const currentStyle = mapStyles[styleType];
 
@@ -142,17 +144,25 @@ const MapStyleDropdown: React.FC<{
               {style.custom && customMapStylesActions?.[style.id] && (
                 <div className="flex items-center" onClick={e => e.stopPropagation()}>
                   {customMapStylesActions[style.id].map((action: any) => (
-                    <button
+                    <TippyTooltip
                       key={action.id}
-                      onClick={e => {
-                        e.stopPropagation();
-                        action.onClick();
-                      }}
-                      className="rounded bg-white p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                      title={action.tooltip}
+                      placement="top"
+                      delay={[500, 0]}
+                      render={() => (
+                        <span role="tooltip">{intl.formatMessage({id: action.tooltip})}</span>
+                      )}
                     >
-                      <action.IconComponent height="16px" />
-                    </button>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          action.onClick();
+                        }}
+                        className="rounded bg-white p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        aria-label={intl.formatMessage({id: action.tooltip})}
+                      >
+                        <action.IconComponent height="16px" />
+                      </button>
+                    </TippyTooltip>
                   ))}
                 </div>
               )}

@@ -9,6 +9,7 @@ import {Edit, Settings} from '../../common/icons';
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import RangeSliderFactory from '../../common/range-slider';
 import InfoHelperFactory from '../../common/info-helper';
+import TippyTooltip from '../../common/tippy-tooltip';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {Layer, LayerBaseConfig} from '@kepler.gl/layers';
 import {isInRange, clamp, createSliderScale} from '@kepler.gl/utils';
@@ -357,25 +358,34 @@ export default function VisConfigSliderFactory(
             />
           )}
           {allowCustomValue ? (
-            <ModeButton
-              type="button"
-              title={custom ? modeLabel : `${modeLabel} (${displayedValue})`}
-              aria-label={accessibleModeLabel}
-              aria-description={custom ? undefined : displayedValue}
-              disabled={disabled}
-              onClick={toggleMode}
-            >
-              {custom ? (
-                <Settings height="16px" aria-hidden="true" />
-              ) : (
-                <>
-                  <ValueReadout>{displayedValue}</ValueReadout>
-                  <Pencil>
-                    <Edit aria-hidden="true" />
-                  </Pencil>
-                </>
+            <TippyTooltip
+              placement="top"
+              delay={[500, 0]}
+              render={() => (
+                <span role="tooltip">
+                  {custom ? modeLabel : `${modeLabel} (${displayedValue})`}
+                </span>
               )}
-            </ModeButton>
+            >
+              <ModeButton
+                type="button"
+                aria-label={accessibleModeLabel}
+                aria-description={custom ? undefined : displayedValue}
+                disabled={disabled}
+                onClick={toggleMode}
+              >
+                {custom ? (
+                  <Settings height="16px" aria-hidden="true" />
+                ) : (
+                  <>
+                    <ValueReadout>{displayedValue}</ValueReadout>
+                    <Pencil>
+                      <Edit aria-hidden="true" />
+                    </Pencil>
+                  </>
+                )}
+              </ModeButton>
+            </TippyTooltip>
           ) : null}
         </SliderRow>
       </SidePanelSection>

@@ -133,7 +133,6 @@ describe('AnnotationManager type icons', () => {
       for (const button of buttons) {
         expect(button).toHaveStyle({flex: '1', height: '100%', padding: '0'});
         expect(button).toHaveAttribute('type', 'button');
-        expect(button).toHaveAttribute('title', button.getAttribute('aria-label'));
         expect(button.querySelector('svg')).toBeInTheDocument();
       }
 
