@@ -5,8 +5,7 @@ import React, {Component, createRef} from 'react';
 import styled, {withTheme} from 'styled-components';
 import {select, Selection} from 'd3-selection';
 import {BrushBehavior, brushX} from 'd3-brush';
-import {normalizeSliderValue, clamp, datetimeFormatter} from '@kepler.gl/utils';
-import {DEFAULT_TIME_FORMAT} from '@kepler.gl/constants';
+import {normalizeSliderValue} from '@kepler.gl/utils';
 
 interface StyledGProps {
   $isRanged?: boolean;
@@ -17,11 +16,6 @@ const StyledG = styled.g<StyledGProps>`
     stroke: none;
     fill: ${props => (props.$isRanged ? props.theme.rangeBrushBgd : props.theme.BLUE2)};
     fill-opacity: ${props => (props.$isRanged ? 0.3 : 1)};
-  }
-  .handle--custom:focus-visible,
-  .selection:focus-visible {
-    outline: 2px solid ${props => props.theme.activeColor};
-    outline-offset: 2px;
   }
   .handle {
     fill: ${props => props.theme.BLUE2};
@@ -63,9 +57,6 @@ export interface RangeBrushProps {
   height: number;
   onBrush: OnBrush;
   step?: number;
-  isTime?: boolean;
-  timezone?: string | null;
-  timeFormat?: string;
   marks?: number[];
   onMouseoverHandle: () => void;
   onMouseoutHandle: () => void;
@@ -156,7 +147,6 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
       } = this.props;
       this.moving = true;
       this._move(val0, val1);
-      this.updateKeyboardHandles();
     }
 
     componentDidUpdate(prevProps) {
@@ -186,92 +176,6 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
 
       if (!this.props.isRanged && this.handle) {
         this.handle.attr('display', 'none');
-      }
-      this.updateKeyboardHandles();
-    }
-
-    updateKeyboardHandles() {
-      const {isRanged, range, value, isTime, timezone, timeFormat} = this.props;
-      const label = isTime ? 'Time' : 'Range';
-      const configure = (selection, edge: 0 | 1) =>
-        selection
-          .attr('role', 'slider')
-          .attr('tabindex', 0)
-          .attr('aria-orientation', 'horizontal')
-          .attr(
-            'aria-label',
-            isRanged ? `${label} ${edge ? 'end' : 'start'}` : isTime ? 'Time' : 'Value'
-          )
-          .attr('aria-valuemin', isRanged && edge ? value[0] : range[0])
-          .attr('aria-valuemax', isRanged && !edge ? value[1] : range[1])
-          .attr('aria-valuenow', isRanged ? value[edge] : value[0])
-          .attr(
-            'aria-valuetext',
-            isTime
-              ? datetimeFormatter(timezone)(timeFormat || DEFAULT_TIME_FORMAT)(
-                  isRanged ? value[edge] : value[0]
-                )
-              : null
-          )
-          .on('keydown', event => this.handleKeyDown(edge, event));
-      if (isRanged) {
-        configure(
-          this.handle?.filter(d => d.type === 'w'),
-          0
-        );
-        configure(
-          this.handle?.filter(d => d.type === 'e'),
-          1
-        );
-        this.root
-          ?.select('.selection')
-          .attr('role', null)
-          .attr('tabindex', null)
-          .on('keydown', null);
-      } else {
-        configure(this.root?.select('.selection'), 0);
-        this.handle?.attr('tabindex', null).attr('role', null).on('keydown', null);
-      }
-    }
-
-    handleKeyDown(edge: 0 | 1, event: KeyboardEvent) {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      const {range, value, isRanged, marks, step = 1} = this.props;
-      const current = isRanged ? value[edge] : value[0];
-      const min = isRanged && edge ? value[0] : range[0];
-      const max = isRanged && !edge ? value[1] : range[1];
-      const direction = ['ArrowRight', 'ArrowUp', 'PageUp'].includes(event.key) ? 1 : -1;
-      let next: number;
-      if (event.key === 'Home' || event.key === 'End') {
-        next = event.key === 'Home' ? min : max;
-      } else if (
-        ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(
-          event.key
-        )
-      ) {
-        if (marks?.length) {
-          next =
-            direction > 0
-              ? marks.find(mark => mark > current) ?? max
-              : [...marks].reverse().find(mark => mark < current) ?? min;
-        } else {
-          const increment = Number.isFinite(step) && step > 0 ? step : (range[1] - range[0]) / 100;
-          next = normalizeSliderValue(
-            current + direction * increment * (event.key.startsWith('Page') ? 10 : 1),
-            range[0],
-            increment
-          );
-        }
-      } else {
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      next = clamp([min, max], next);
-      if (next !== current) {
-        this.props.onBrushStart?.();
-        this._onBrush(isRanged && edge ? value[0] : next, isRanged && !edge ? value[1] : next);
-        this.props.onBrushEnd?.();
       }
     }
 

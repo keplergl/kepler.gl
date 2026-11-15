@@ -5,7 +5,6 @@ import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
-import {bisectRight} from 'd3-array';
 import {clamp, datetimeFormatter} from '@kepler.gl/utils';
 import {media} from '@kepler.gl/styles';
 import {DEFAULT_TIME_FORMAT, ANIMATION_WINDOW} from '@kepler.gl/constants';
@@ -146,57 +145,6 @@ function TimelineSliderFactory() {
       ];
     }, [animationWindow, domain, isRanged, value0, value1, onThrottleUpdate]);
 
-    const onIntervalKeyDown = useCallback(
-      (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (
-          event.defaultPrevented ||
-          event.ctrlKey ||
-          event.metaKey ||
-          event.altKey ||
-          animationWindow !== ANIMATION_WINDOW.interval ||
-          !domain ||
-          !marks ||
-          marks.length < 2 ||
-          !Number.isFinite(value1)
-        ) {
-          return;
-        }
-        // The final mark closes the last bin; it is not another interval.
-        const lastIndex = marks.length - 2;
-        const currentIndex = clamp([0, lastIndex], bisectRight(marks, value1) - 1);
-        let nextIndex: number;
-        switch (event.key) {
-          case 'Home':
-            nextIndex = 0;
-            break;
-          case 'End':
-            nextIndex = lastIndex;
-            break;
-          case 'ArrowLeft':
-          case 'ArrowDown':
-          case 'PageDown':
-            nextIndex = Math.max(0, currentIndex - 1);
-            break;
-          case 'ArrowRight':
-          case 'ArrowUp':
-          case 'PageUp':
-            nextIndex = Math.min(lastIndex, currentIndex + 1);
-            break;
-          default:
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        const nextMark = marks[nextIndex];
-        if (nextMark !== value1) {
-          // Calendar bins may begin before the raw data domain. Keep the mark
-          // for selection; only the rendered handle position should be clamped.
-          onThrottleUpdate([nextMark, nextMark]);
-        }
-      },
-      [animationWindow, domain, marks, onThrottleUpdate, value1]
-    );
-
     const onSliderBarChange = useCallback(
       (nextStart: number) => {
         if (!domain || !isRanged) return;
@@ -245,15 +193,9 @@ function TimelineSliderFactory() {
           className="animation-control__slider"
           onMouseDownCapture={onRangeDragStart}
           onTouchStartCapture={onRangeDragStart}
-          onKeyDownCapture={onIntervalKeyDown}
         >
           <StyledSlider
             $rangeDraggable={rangeDraggable}
-            title={formatValue ? 'Range' : 'Time'}
-            formatValue={
-              formatValue ||
-              datetimeFormatter(timezone)(timeFormat || defaultTimeFormat || DEFAULT_TIME_FORMAT)
-            }
             isRanged={requiresRangeSlider}
             step={step || undefined}
             minValue={domain ? domain[0] : 0}

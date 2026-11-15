@@ -57,7 +57,6 @@ type SliderProps = {
   className?: string;
   style?: object;
   scaleConfig?: SliderScaleConfig | null;
-  formatValue?: (value: number) => string;
 };
 
 export default class Slider extends Component<SliderProps> {
@@ -191,44 +190,6 @@ export default class Slider extends Component<SliderProps> {
     }
   };
 
-  handleKeyDown = (edge: 0 | 1, event: React.KeyboardEvent) => {
-    if (this.props.disabled || event.ctrlKey || event.metaKey || event.altKey) return;
-    const {value0, value1, minValue, maxValue, isRanged, step, marks} = this.props;
-    const current = edge === 0 ? value0 : value1;
-    const min = edge === 0 || !isRanged ? minValue : value0;
-    const max = edge === 0 ? value1 : maxValue;
-    const direction = ['ArrowRight', 'ArrowUp', 'PageUp'].includes(event.key) ? 1 : -1;
-    let next: number;
-    if (event.key === 'Home' || event.key === 'End') {
-      next = event.key === 'Home' ? min : max;
-    } else if (
-      ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)
-    ) {
-      if (marks?.length) {
-        next =
-          direction > 0
-            ? marks.find(mark => mark > current) ?? max
-            : [...marks].reverse().find(mark => mark < current) ?? min;
-      } else {
-        const increment = Number.isFinite(step) && step > 0 ? step : (maxValue - minValue) / 100;
-        if (!(increment > 0)) return;
-        next = normalizeSliderValue(
-          current + direction * increment * (event.key.startsWith('Page') ? 10 : 1),
-          minValue,
-          increment
-        );
-      }
-    } else {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    next = clamp([min, max], next);
-    if (next !== current) {
-      (edge === 0 ? this.props.onSlider0Change : this.props.onSlider1Change)(next);
-    }
-  };
-
   calcHandleLeft0 = (w: number, l: number) => {
     return w === 0
       ? `calc(${l}% - ${this.props.sliderHandleWidth / 2}px)`
@@ -273,13 +234,6 @@ export default class Slider extends Component<SliderProps> {
             valueListener={this.slide0Listener}
             sliderHandleWidth={sliderHandleWidth}
             display={isRanged}
-            value={value0}
-            minValue={minValue}
-            maxValue={value1}
-            disabled={disabled}
-            label={`${this.props.title || 'Range'} start`}
-            valueText={this.props.formatValue?.(value0)}
-            onKeyDown={event => this.handleKeyDown(0, event)}
             vertical={vertical}
             showTooltip={showTooltip}
             track={this.track}
@@ -290,12 +244,6 @@ export default class Slider extends Component<SliderProps> {
             sliderHandleWidth={sliderHandleWidth}
             vertical={vertical}
             value={value1}
-            minValue={isRanged ? value0 : minValue}
-            maxValue={this.props.maxValue}
-            disabled={disabled}
-            label={isRanged ? `${this.props.title || 'Range'} end` : this.props.title || 'Value'}
-            valueText={this.props.formatValue?.(value1)}
-            onKeyDown={event => this.handleKeyDown(1, event)}
             showTooltip={showTooltip}
             track={this.track}
           />

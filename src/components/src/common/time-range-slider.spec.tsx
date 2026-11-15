@@ -591,7 +591,7 @@ describe('minimized timeline range dragging', () => {
     jest.restoreAllMocks();
   });
 
-  function renderMinimized(initial: Timeline = {...timeline, value: [20, 60]}, isTime = false) {
+  function renderMinimized(initial: Timeline = {...timeline, value: [20, 60]}) {
     const onChange = jest.fn();
     function ControlledTimeline() {
       const [value, setValue] = React.useState(initial.value);
@@ -608,7 +608,7 @@ describe('minimized timeline range dragging', () => {
           isAnimating={false}
           isMinified
           showControls={false}
-          isTime={isTime}
+          isTime={false}
           timeFormat="YYYY"
           timeline={{...initial, value}}
           animationWindow={initial.animationWindow ?? undefined}
@@ -621,47 +621,6 @@ describe('minimized timeline range dragging', () => {
     const bar = result.container.querySelector('.kg-range-slider__bar') as HTMLElement;
     return {...result, bar, onChange};
   }
-
-  test.each(['ArrowLeft', 'Home'])(
-    '%s reaches the first calendar interval even when its start is outside the raw domain',
-    key => {
-      const start = Date.parse('2025-01-15T00:00:00Z');
-      const hour = 3600000;
-      const marks = [start, start + 24 * hour, start + 48 * hour, start + 72 * hour];
-      const domain: [number, number] = [start + 18 * hour, start + 54 * hour];
-      const {onChange} = renderMinimized(
-        {
-          ...timeline,
-          domain,
-          marks,
-          animationWindow: ANIMATION_WINDOW.interval,
-          value: [marks[1], marks[2] - 1]
-        },
-        true
-      );
-      const handle = screen.getByRole('slider', {name: 'Time'});
-      fireEvent.keyDown(handle, {key});
-      act(() => jest.advanceTimersByTime(40));
-      expect(onChange).toHaveBeenCalledTimes(1);
-      expect(onChange).toHaveBeenLastCalledWith([marks[0], marks[1] - 1]);
-      expect(Number(handle.getAttribute('aria-valuenow'))).toBeGreaterThanOrEqual(domain[0]);
-
-      fireEvent.keyDown(handle, {key: 'ArrowRight'});
-      act(() => jest.advanceTimersByTime(40));
-      expect(onChange).toHaveBeenCalledTimes(2);
-      expect(onChange).toHaveBeenLastCalledWith([marks[1], marks[2] - 1]);
-
-      fireEvent.keyDown(handle, {key: 'End'});
-      act(() => jest.advanceTimersByTime(40));
-      expect(onChange).toHaveBeenCalledTimes(3);
-      expect(onChange).toHaveBeenLastCalledWith([marks[2], marks[3] - 1]);
-      fireEvent.keyDown(handle, {key: 'ArrowRight'});
-      fireEvent.keyDown(handle, {key: 'Home', ctrlKey: true});
-      fireEvent.keyDown(handle, {key: 'ArrowLeft', metaKey: true});
-      act(() => jest.advanceTimersByTime(40));
-      expect(onChange).toHaveBeenCalledTimes(3);
-    }
-  );
 
   test('moves both ends together through rapid mouse moves', () => {
     const {bar, onChange} = renderMinimized();
