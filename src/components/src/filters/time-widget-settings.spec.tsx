@@ -136,7 +136,10 @@ describe('TimeWidgetSettings histogram grouping sources', () => {
     });
 
     rerender(<Settings {...props} filter={linkedFilter('categories')} />);
-    expect(screen.getByTitle('mapCategory')).toHaveTextContent('mapCategory');
+    const sourceField = screen.getByText('mapCategory');
+    expect(sourceField).not.toHaveAttribute('title');
+    await user.hover(sourceField);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('mapCategory');
     expect(screen.getByText('Ordinal')).toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
@@ -199,8 +202,9 @@ describe('TimeWidgetSettings histogram grouping sources', () => {
 
 describe('TimeWidgetSettings field names', () => {
   test.each([undefined, 'measurements.device_session.completed_timestamp'])(
-    'preserves the full X-axis field label with end field %p',
-    endName => {
+    'shows the full X-axis field label in a tooltip with end field %p',
+    async endName => {
+      const user = userEvent.setup();
       const name = 'measurements.device_session.started_timestamp';
       const label = endName ? `${name} → ${endName}` : name;
       renderSettings({
@@ -209,12 +213,30 @@ describe('TimeWidgetSettings field names', () => {
         ...(endName ? {endName: [endName]} : {})
       });
 
-      expect(screen.getByTitle(label)).toHaveTextContent(label);
+      const field = screen.getByText(label);
+      expect(field).not.toHaveAttribute('title');
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      await user.hover(field);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(label);
     }
   );
 });
 
 describe('TimeWidgetSettings dismissal', () => {
+  test('shows a tooltip for the hide control while preserving its action', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+    const {setFilterPlot} = renderSettings(baseFilter, onClose);
+    const button = screen.getByRole('button', {name: 'Hide settings'});
+    expect(button).not.toHaveAttribute('title');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.hover(button);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Hide settings');
+    await user.click(button);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(setFilterPlot).not.toHaveBeenCalled();
+  });
+
   test.each(['{Enter}', ' '])('activates the hide control by keyboard with %p', async key => {
     const user = userEvent.setup();
     const onClose = jest.fn();

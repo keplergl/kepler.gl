@@ -25,6 +25,7 @@ import {FILTER_TYPES} from '@kepler.gl/constants';
 import {formatNumber, getNumericPlotInterval, preciseRound} from '@kepler.gl/utils';
 import {RangeFilter} from '@kepler.gl/types';
 import Portaled from '../common/portaled';
+import TippyTooltip from '../common/tippy-tooltip';
 import {ContextMenuAction, ContextMenuList} from '../common/context-menu';
 import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
 import {AnimationJsonEditorFactory} from '../common/animation-control/animation-json-editor';
@@ -385,68 +386,95 @@ function TimeWidgetTopFactory(
 
     const title = (
       <StyledTitle className="bottom-widget__field">
-        <StyledTitleText title={chartTitle}>{chartTitle}</StyledTitleText>
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">{chartTitle}</span>}
+        >
+          <StyledTitleText>{chartTitle}</StyledTitleText>
+        </TippyTooltip>
       </StyledTitle>
     );
     const actions = (
       <StyledCenterBox>
         {!isMinified && onToggleSettings ? (
-          <HeaderButton
-            as="button"
-            type="button"
-            className="time-widget-settings"
-            data-testid="time-widget-settings"
-            aria-label={intl.formatMessage({id: 'tooltip.settings'})}
-            aria-expanded={settingsOpen}
-            title={settingsOpen ? 'Hide settings' : intl.formatMessage({id: 'tooltip.settings'})}
-            onClick={selectAction(onToggleSettings)}
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => (
+              <span role="tooltip">
+                {settingsOpen ? 'Hide settings' : intl.formatMessage({id: 'tooltip.settings'})}
+              </span>
+            )}
           >
-            <Gear height="16px" />
-          </HeaderButton>
+            <HeaderButton
+              as="button"
+              type="button"
+              className="time-widget-settings"
+              data-testid="time-widget-settings"
+              aria-label={intl.formatMessage({id: 'tooltip.settings'})}
+              aria-expanded={settingsOpen}
+              onClick={selectAction(onToggleSettings)}
+            >
+              <Gear height="16px" />
+            </HeaderButton>
+          </TippyTooltip>
         ) : null}
         {headerActions.map(action => {
           const isJson = action.className === 'time-widget-json';
           const label = intl.formatMessage({id: action.labelId});
           return (
-            <HeaderButton
+            <TippyTooltip
               key={action.className}
-              as="button"
-              type="button"
-              className={action.className}
-              data-testid={action.className}
-              aria-label={label}
-              title={label}
-              aria-expanded={isJson ? popover === 'json' : undefined}
-              aria-haspopup={isJson ? 'dialog' : undefined}
-              disabled={action.disabled}
-              onClick={action.onClick}
+              placement="top"
+              delay={[500, 0]}
+              render={() => <span role="tooltip">{label}</span>}
             >
-              <action.Icon height={action.iconHeight} />
-            </HeaderButton>
+              <HeaderButton
+                as="button"
+                type="button"
+                className={action.className}
+                data-testid={action.className}
+                aria-label={label}
+                aria-expanded={isJson ? popover === 'json' : undefined}
+                aria-haspopup={isJson ? 'dialog' : undefined}
+                disabled={action.disabled}
+                onClick={action.onClick}
+              >
+                <action.Icon height={action.iconHeight} />
+              </HeaderButton>
+            </TippyTooltip>
           );
         })}
         <ActionSeparator aria-hidden="true" />
-        <HeaderButton
-          as="button"
-          type="button"
-          ref={minifyButtonRef}
-          aria-label={isMinified ? 'Expand timeline' : 'Collapse timeline'}
-          title={isMinified ? 'Expand timeline' : 'Collapse timeline'}
-          aria-expanded={!isMinified}
-          onClick={toggleMinify}
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => (
+            <span role="tooltip">{isMinified ? 'Expand timeline' : 'Collapse timeline'}</span>
+          )}
         >
-          {isMinified ? <ArrowUp height="14px" /> : <ArrowDown height="14px" />}
-        </HeaderButton>
-        {!readOnly ? (
           <HeaderButton
             as="button"
             type="button"
-            aria-label="Close timeline"
-            title="Close timeline"
-            onClick={onClose}
+            ref={minifyButtonRef}
+            aria-label={isMinified ? 'Expand timeline' : 'Collapse timeline'}
+            aria-expanded={!isMinified}
+            onClick={toggleMinify}
           >
-            <Close height="14px" />
+            {isMinified ? <ArrowUp height="14px" /> : <ArrowDown height="14px" />}
           </HeaderButton>
+        </TippyTooltip>
+        {!readOnly ? (
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Close timeline</span>}
+          >
+            <HeaderButton as="button" type="button" aria-label="Close timeline" onClick={onClose}>
+              <Close height="14px" />
+            </HeaderButton>
+          </TippyTooltip>
         ) : null}
       </StyledCenterBox>
     );
@@ -457,59 +485,79 @@ function TimeWidgetTopFactory(
     );
     const playback = playbackControls ? (
       <StyledCenterBox role="group" aria-label="Playback controls">
-        <PlayButton
-          as="button"
-          type="button"
-          data-testid="time-widget-play"
-          aria-label={playLabel}
-          title={playLabel}
-          aria-pressed={playbackControls.isAnimating}
-          disabled={!playbackControls.isAnimatable}
-          onClick={playbackControls.toggleAnimation}
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">{playLabel}</span>}
         >
-          {playbackControls.isAnimating ? <Pause height="16px" /> : <Play height="16px" />}
-        </PlayButton>
-        <HeaderButton
-          as="button"
-          type="button"
-          className="time-widget-reset"
-          data-testid="time-widget-reset"
-          aria-label={resetLabel}
-          title={resetLabel}
-          disabled={!playbackControls.isAnimatable}
-          onClick={playbackControls.resetAnimation}
+          <PlayButton
+            as="button"
+            type="button"
+            data-testid="time-widget-play"
+            aria-label={playLabel}
+            aria-pressed={playbackControls.isAnimating}
+            disabled={!playbackControls.isAnimatable}
+            onClick={playbackControls.toggleAnimation}
+          >
+            {playbackControls.isAnimating ? <Pause height="16px" /> : <Play height="16px" />}
+          </PlayButton>
+        </TippyTooltip>
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">{resetLabel}</span>}
         >
-          <Reset height="16px" />
-        </HeaderButton>
-        {AnimationSpeedSlider ? (
           <HeaderButton
             as="button"
             type="button"
-            ref={speedButtonRef}
-            data-testid="time-widget-speed"
-            aria-label={speedLabel}
-            title={speedLabel}
-            aria-expanded={popover === 'speed'}
+            className="time-widget-reset"
+            data-testid="time-widget-reset"
+            aria-label={resetLabel}
+            disabled={!playbackControls.isAnimatable}
+            onClick={playbackControls.resetAnimation}
+          >
+            <Reset height="16px" />
+          </HeaderButton>
+        </TippyTooltip>
+        {AnimationSpeedSlider ? (
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">{speedLabel}</span>}
+          >
+            <HeaderButton
+              as="button"
+              type="button"
+              ref={speedButtonRef}
+              data-testid="time-widget-speed"
+              aria-label={speedLabel}
+              aria-expanded={popover === 'speed'}
+              aria-haspopup="dialog"
+              disabled={!playbackControls.isAnimatable}
+              onClick={() => setPopover('speed')}
+            >
+              {preciseRound(playbackControls.speed, 1)}×
+            </HeaderButton>
+          </TippyTooltip>
+        ) : null}
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">{intl.formatMessage({id: currentMode.labelId})}</span>}
+        >
+          <HeaderButton
+            as="button"
+            type="button"
+            data-testid="time-widget-animation-mode"
+            aria-label="Animation mode"
+            aria-expanded={popover === 'animation'}
             aria-haspopup="dialog"
             disabled={!playbackControls.isAnimatable}
-            onClick={() => setPopover('speed')}
+            onClick={() => setPopover('animation')}
           >
-            {preciseRound(playbackControls.speed, 1)}×
+            <currentMode.Icon height="16px" />
           </HeaderButton>
-        ) : null}
-        <HeaderButton
-          as="button"
-          type="button"
-          data-testid="time-widget-animation-mode"
-          aria-label="Animation mode"
-          title={intl.formatMessage({id: currentMode.labelId})}
-          aria-expanded={popover === 'animation'}
-          aria-haspopup="dialog"
-          disabled={!playbackControls.isAnimatable}
-          onClick={() => setPopover('animation')}
-        >
-          <currentMode.Icon height="16px" />
-        </HeaderButton>
+        </TippyTooltip>
         <Portaled
           theme={popoverTheme}
           isOpened={popover !== null}
