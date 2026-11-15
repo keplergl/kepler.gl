@@ -376,6 +376,8 @@ export default {
     animationByWindow: 'Перемещение временного окна',
     animationByIncremental: 'Дополнительное временное окно',
     animationByInterval: 'Шаг по интервалу',
+    previousInterval: 'Предыдущий интервал',
+    nextInterval: 'Следующий интервал',
     speed: 'скорость',
     play: 'проиграть',
     pause: 'пауза',

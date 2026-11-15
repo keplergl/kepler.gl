@@ -499,89 +499,98 @@ function TimeWidgetFactory(
       return () => node.removeEventListener('wheel', handleNativeWheel);
     }, [isMinified, sliderDomain, throttledTimelineZoom, throttledWindowZoom]);
 
-    useEffect(() => {
-      if (isMinified) {
-        return undefined;
-      }
-      const handler = (event: KeyboardEvent) => {
-        if (!(event.ctrlKey || event.metaKey)) {
-          return;
-        }
-        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-          return;
-        }
-        const activeEl = document.activeElement;
+    const stepRanges = useMemo(() => {
+      const domainRange = timelineDomain ?? fullDomain;
+      const nextRange = (direction: -1 | 1): [number, number] | null => {
         if (
-          activeEl instanceof HTMLInputElement ||
-          activeEl instanceof HTMLTextAreaElement ||
-          (activeEl as HTMLElement)?.isContentEditable
+          !domainRange ||
+          !domainRange.every(Number.isFinite) ||
+          !Number.isFinite(filterStart) ||
+          !Number.isFinite(filterEnd)
         ) {
-          return;
+          return null;
         }
-        const domainRange = timelineDomain ?? fullDomain;
-        if (!domainRange) {
-          return;
-        }
-        event.preventDefault();
-        if (filter.animationWindow === ANIMATION_WINDOW.interval && fullDomain) {
+        if (filter.animationWindow === ANIMATION_WINDOW.interval) {
           const marks = filterTimeline.marks || [];
           const currentIdx = marks.indexOf(intervalBinFromMarks(marks, filterStart)[0]);
-          const nextIdx = event.key === 'ArrowRight' ? currentIdx + 1 : currentIdx - 1;
-          if (nextIdx < 0 || nextIdx >= marks.length - 1) {
-            return;
+          const nextIdx = currentIdx + direction;
+          if (currentIdx < 0 || nextIdx < 0 || nextIdx >= marks.length - 1) {
+            return null;
           }
-          const nextBin = intervalBinFromMarks(marks, marks[nextIdx], isTimeFilter ? 1 : 0);
-          if (nextBin[0] !== filterStart || nextBin[1] !== filterEnd) {
-            setFilterAnimationTime(index, 'value', nextBin);
-          }
-          return;
+          return intervalBinFromMarks(marks, marks[nextIdx], isTimeFilter ? 1 : 0);
         }
         const windowWidth = filterEnd - filterStart;
         if (!(windowWidth > 0)) {
-          return;
+          return null;
         }
-        let nextStart: number;
-        let nextEnd: number;
-        if (event.key === 'ArrowRight') {
-          nextStart = filterEnd;
-          nextEnd = filterEnd + windowWidth;
-        } else {
-          nextStart = filterStart - windowWidth;
-          nextEnd = filterStart;
-        }
-        [nextStart, nextEnd] = clampWindowToDomain(
-          nextStart,
-          nextEnd,
+        const range = clampWindowToDomain(
+          direction > 0 ? filterEnd : filterStart - windowWidth,
+          direction > 0 ? filterEnd + windowWidth : filterStart,
           domainRange,
           minimumRangeWidth
         );
-        if (nextStart !== filterStart || nextEnd !== filterEnd) {
-          setFilterAnimationTime(index, 'value', [nextStart, nextEnd]);
-        }
+        return range[0] === filterStart && range[1] === filterEnd ? null : range;
       };
-      window.addEventListener('keydown', handler);
-      return () => window.removeEventListener('keydown', handler);
+      return {backward: nextRange(-1), forward: nextRange(1)};
     }, [
       filter.animationWindow,
-      filter.step,
       filterEnd,
       filterStart,
       fullDomain,
-      index,
-      isMinified,
       isTimeFilter,
       minimumRangeWidth,
-      setFilterAnimationTime,
       filterTimeline.marks,
       timelineDomain
     ]);
+
+    const stepSelection = useCallback(
+      (direction: 'backward' | 'forward') => {
+        const range = stepRanges[direction];
+        if (!isAnimatable || !range) {
+          return;
+        }
+        setFilterAnimationTime(index, 'value', range);
+      },
+      [index, isAnimatable, setFilterAnimationTime, stepRanges]
+    );
+
+    const handleKeyDown = useCallback(
+      (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (
+          event.defaultPrevented ||
+          !(event.ctrlKey || event.metaKey) ||
+          (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') ||
+          !isAnimatable
+        ) {
+          return;
+        }
+        const target = event.target;
+        // Keep shortcuts local to the focused timeline and leave editing and
+        // portaled dialogs to their own keyboard handlers.
+        if (
+          !(target instanceof Element) ||
+          !event.currentTarget.contains(target) ||
+          target.closest('input, textarea, select, [contenteditable], [role="textbox"]')
+        ) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        stepSelection(event.key === 'ArrowRight' ? 'forward' : 'backward');
+      },
+      [isAnimatable, stepSelection]
+    );
 
     const handleResetTimeline = useCallback(() => {
       setTimelineDomain(null);
     }, []);
 
     return (
-      <TimeBottomWidgetInner className="bottom-widget--inner" ref={widgetRef}>
+      <TimeBottomWidgetInner
+        className="bottom-widget--inner"
+        ref={widgetRef}
+        onKeyDown={handleKeyDown}
+      >
         <TimeWidgetTop
           filter={filter}
           readOnly={readOnly}
@@ -609,6 +618,10 @@ function TimeWidgetFactory(
             animationWindow: isMinified ? filterTimeline.animationWindow : filter.animationWindow,
             toggleAnimation: _toggleAnimation,
             resetAnimation,
+            stepBackward: () => stepSelection('backward'),
+            stepForward: () => stepSelection('forward'),
+            canStepBackward: Boolean(stepRanges.backward),
+            canStepForward: Boolean(stepRanges.forward),
             updateAnimationSpeed: _updateAnimationSpeed,
             setFilterAnimationWindow: _setFilterAnimationWindow,
             exportAnimation: exportAnimation ? _exportAnimation : undefined

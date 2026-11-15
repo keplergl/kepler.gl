@@ -8,6 +8,8 @@ import {
   Close,
   ArrowDown,
   ArrowUp,
+  ArrowLeft,
+  ArrowRight,
   Gear,
   Play,
   Pause,
@@ -483,8 +485,48 @@ function TimeWidgetTopFactory(
         {rangeDisplay}
       </SelectedRange>
     );
+    const stepControl = (direction: 'backward' | 'forward') => {
+      const isForward = direction === 'forward';
+      const onClick = isForward ? playbackControls?.stepForward : playbackControls?.stepBackward;
+      if (!onClick) {
+        return null;
+      }
+      const label = intl.formatMessage({
+        id: isForward ? 'tooltip.nextInterval' : 'tooltip.previousInterval'
+      });
+      const key = isForward ? 'ArrowRight' : 'ArrowLeft';
+      const Icon = isForward ? ArrowRight : ArrowLeft;
+      const canStep = isForward
+        ? playbackControls?.canStepForward
+        : playbackControls?.canStepBackward;
+      return (
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => (
+            <span role="tooltip">
+              {label} (Ctrl/Cmd + {isForward ? '→' : '←'})
+            </span>
+          )}
+        >
+          <HeaderButton
+            as="button"
+            type="button"
+            className="time-widget-step"
+            data-testid={`time-widget-step-${direction}`}
+            aria-label={label}
+            aria-keyshortcuts={`Control+${key} Meta+${key}`}
+            disabled={!playbackControls?.isAnimatable || canStep === false}
+            onClick={onClick}
+          >
+            <Icon height="16px" />
+          </HeaderButton>
+        </TippyTooltip>
+      );
+    };
     const playback = playbackControls ? (
       <StyledCenterBox role="group" aria-label="Playback controls">
+        {stepControl('backward')}
         <TippyTooltip
           placement="top"
           delay={[500, 0]}
@@ -502,6 +544,7 @@ function TimeWidgetTopFactory(
             {playbackControls.isAnimating ? <Pause height="16px" /> : <Play height="16px" />}
           </PlayButton>
         </TippyTooltip>
+        {stepControl('forward')}
         <TippyTooltip
           placement="top"
           delay={[500, 0]}

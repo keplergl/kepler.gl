@@ -363,6 +363,8 @@ export default {
     animationByWindow: '移动时间窗口',
     animationByIncremental: '增量时间窗口',
     animationByInterval: '按间隔步进',
+    previousInterval: '上一个区间',
+    nextInterval: '下一个区间',
     speed: '速度',
     play: '播放',
     pause: '暂停',
