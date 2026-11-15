@@ -158,6 +158,35 @@ test('#visStateSchema -> v1 -> load layers', t => {
   t.end();
 });
 
+test('#visStateSchema -> filter playback loop is optional and survives save/load', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const legacy = SchemaManager.getConfigToSave(state);
+  t.notOk(
+    'animationLoop' in legacy.config.visState.filters[0],
+    'legacy maps do not gain a loop setting'
+  );
+  t.equal(
+    SchemaManager.parseSavedConfig(legacy).visState.filters[0].animationLoop,
+    undefined,
+    'legacy playback keeps its default'
+  );
+  for (const animationLoop of [false, true]) {
+    state.visState.filters[0].animationLoop = animationLoop;
+    const saved = SchemaManager.getConfigToSave(state);
+    t.equal(
+      saved.config.visState.filters[0].animationLoop,
+      animationLoop,
+      'saves explicit loop preference'
+    );
+    t.equal(
+      SchemaManager.parseSavedConfig(saved).visState.filters[0].animationLoop,
+      animationLoop,
+      'loads explicit loop preference'
+    );
+  }
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   initialState.visState.filters[0].inverted = true;

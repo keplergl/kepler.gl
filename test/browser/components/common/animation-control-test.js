@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {act, useState} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
+import animationWindow from 'global/window';
 import {
   setFilter,
   setFilterAnimationTime,
@@ -32,6 +33,98 @@ import {visStateReducer as reducer, updateAnimationDomain} from '@kepler.gl/redu
 const AnimationControl = appInjector.get(AnimationControlFactory);
 const PlaybackControls = appInjector.get(PlaybackControlsFactory);
 const FloatingTimeDisplay = appInjector.get(FloatingTimeDisplayFactory);
+
+test('Components -> AnimationController -> stop at end keeps the final frame and can replay', t => {
+  const AnimationController = AnimationControllerFactory();
+  const clock = sinon.useFakeTimers();
+  let frameId = 0;
+  const frames = new Map();
+  const requestFrame = sinon.stub(animationWindow, 'requestAnimationFrame').callsFake(callback => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  const cancelFrame = sinon
+    .stub(animationWindow, 'cancelAnimationFrame')
+    .callsFake(id => frames.delete(id));
+  const cases = [
+    {mode: 'free', domain: [0, 100], value: [0, 40], expected: [60, 100]},
+    {mode: 'incremental', domain: [0, 95], value: [0, 40], steps: [0, 50], expected: [0, 100]},
+    {
+      mode: 'incremental',
+      domain: [0, 0.1],
+      value: [0, 0.04],
+      minimumIncrement: 0.001,
+      expected: [0, 0.1]
+    },
+    {mode: 'interval', domain: [0, 100], value: [0, 49], steps: [0, 50, 100], expected: [100, 2]},
+    {mode: 'point', domain: [0, 100], value: 0, expected: 100}
+  ];
+
+  try {
+    cases.forEach(({mode, domain, value: initialValue, steps, minimumIncrement, expected}) => {
+      const ended = sinon.spy();
+      const values = [];
+      function Player() {
+        const [value, setValue] = useState(initialValue);
+        const [playing, setPlaying] = useState(false);
+        return (
+          <div>
+            <button onClick={() => setPlaying(true)}>Play</button>
+            <output>{playing ? 'Playing' : 'Paused'}</output>
+            <AnimationController
+              domain={domain}
+              value={value}
+              steps={steps}
+              minimumIncrement={minimumIncrement}
+              animationWindow={mode}
+              baseSpeed={1}
+              loop={false}
+              isAnimating={playing}
+              setTimelineValue={next => {
+                values.push(next);
+                setValue(next);
+              }}
+              onAnimationEnd={() => {
+                ended();
+                setPlaying(false);
+              }}
+            />
+          </div>
+        );
+      }
+      const wrapper = mountWithTheme(<Player />);
+      const advance = () => {
+        const entry = frames.entries().next().value;
+        if (entry) {
+          frames.delete(entry[0]);
+          act(() => {
+            clock.tick(20000);
+            entry[1]();
+          });
+          wrapper.update();
+        }
+      };
+      wrapper.find('button').simulate('click');
+      for (let frame = 0; frame < 4 && frames.size; frame++) advance();
+      t.deepEqual(values[values.length - 1], expected, `${mode} retains the complete final frame`);
+      t.equal(ended.callCount, 1, `${mode} signals completion once`);
+      t.equal(wrapper.find('output').text(), 'Paused', `${mode} pauses the owner`);
+      t.equal(frames.size, 0, `${mode} schedules no frames after completion`);
+
+      wrapper.find('button').simulate('click');
+      t.notDeepEqual(values[values.length - 1], expected, `${mode} restarts from the beginning`);
+      for (let frame = 0; frame < 4 && frames.size; frame++) advance();
+      t.deepEqual(values[values.length - 1], expected, `${mode} reaches the final frame on replay`);
+      t.equal(ended.callCount, 2, `${mode} completes replay once`);
+      wrapper.unmount();
+    });
+  } finally {
+    requestFrame.restore();
+    cancelFrame.restore();
+    clock.restore();
+  }
+  t.end();
+});
 
 test('Components -> AnimationControl.render', t => {
   t.doesNotThrow(() => {
@@ -433,6 +526,45 @@ test('Components -> FilterAnimationController -> numeric incremental bins stay i
   t.deepEqual(violations, [], 'every reducer-applied frame should stay inside the numeric domain');
   t.ok(reachedMaximum, 'a complete numeric sweep should include the exact domain maximum');
   t.equal(resets, 2, 'numeric incremental playback should complete and restart two cycles');
+  wrapper.unmount();
+  t.end();
+});
+
+test('Components -> FilterAnimationController -> completion pauses a synced filter at its final time', t => {
+  let controllerProps;
+  const Controller = props => {
+    controllerProps = props;
+    return null;
+  };
+  const FilterAnimationController = FilterAnimationControllerFactory(Controller);
+  const filter = {
+    ...StateWFilters.visState.filters[0],
+    animationLoop: false,
+    isAnimating: true,
+    syncedWithLayerTimeline: true,
+    syncTimelineMode: 1
+  };
+  let state = {...StateWFilters.visState, filters: [filter]};
+  const wrapper = mountWithTheme(
+    <FilterAnimationController
+      filter={filter}
+      filterIdx={0}
+      setFilterAnimationTime={(idx, prop, value) => {
+        state = reducer(state, setFilterAnimationTime(idx, prop, value));
+      }}
+    />
+  );
+  t.equal(controllerProps.loop, false, 'passes the saved stop-at-end preference to playback');
+  const finalValue = [filter.value[0], filter.domain[1]];
+  controllerProps.updateAnimation(finalValue);
+  controllerProps.onAnimationEnd();
+  t.deepEqual(state.filters[0].value, finalValue, 'keeps the final selected range');
+  t.equal(state.filters[0].isAnimating, false, 'stops the filter playing state');
+  t.equal(
+    state.animationConfig.currentTime,
+    finalValue[1],
+    'keeps linked layers at the final time'
+  );
   wrapper.unmount();
   t.end();
 });

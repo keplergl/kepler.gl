@@ -616,6 +616,8 @@ function TimeWidgetFactory(
             isAnimating: filter.isAnimating,
             speed: isMinified ? filterTimeline.speed : filter.speed,
             animationWindow: isMinified ? filterTimeline.animationWindow : filter.animationWindow,
+            animationLoop: filter.animationLoop,
+            setAnimationLoop: loop => setFilterAnimationTime(index, 'animationLoop', loop),
             toggleAnimation: _toggleAnimation,
             resetAnimation,
             stepBackward: () => stepSelection('backward'),

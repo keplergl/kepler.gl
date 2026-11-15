@@ -82,6 +82,8 @@ export type TimeWidgetTopProps = {
     isAnimating: boolean;
     speed: number;
     animationWindow?: string | null;
+    animationLoop?: boolean;
+    setAnimationLoop?: (loop: boolean) => void;
     toggleAnimation: () => void;
     resetAnimation: () => void;
     stepBackward?: () => void;

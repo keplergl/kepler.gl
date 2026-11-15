@@ -216,6 +216,41 @@ describe('compact timeline playback controls', () => {
   });
 
   test.each([false, true])(
+    'edits loop behavior inside the mode menu when minimized is %s',
+    async isMinified => {
+      const user = userEvent.setup();
+      const setAnimationLoop = jest.fn();
+      const {props, playbackControls, rerender} = setupPlayback({isMinified}, {setAnimationLoop});
+      expect(screen.queryByRole('checkbox', {name: 'Loop playback'})).not.toBeInTheDocument();
+      const mode = screen.getByRole('button', {name: 'Animation mode'});
+      expect(mode).toHaveTextContent('Moving window');
+      await user.click(mode);
+      const loop = screen.getByRole('checkbox', {name: 'Loop playback'});
+      expect(loop).toBeChecked();
+      loop.focus();
+      await user.keyboard(' ');
+      expect(setAnimationLoop).toHaveBeenCalledWith(false);
+      rerender(
+        <CompactHeader
+          {...props}
+          playbackControls={{
+            ...playbackControls,
+            animationLoop: false,
+            animationWindow: 'incremental'
+          }}
+        />
+      );
+      expect(loop).not.toBeChecked();
+      expect(screen.getByText('Stop at end')).toBeInTheDocument();
+      expect(mode).toHaveTextContent('Cumulative');
+      await user.click(loop);
+      expect(setAnimationLoop).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('checkbox', {name: 'Loop playback'})).not.toBeInTheDocument();
+    }
+  );
+
+  test.each([false, true])(
     'localizes playback tooltips and accessible names when minimized is %s',
     async isMinified => {
       const user = userEvent.setup();

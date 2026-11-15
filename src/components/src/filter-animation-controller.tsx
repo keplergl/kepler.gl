@@ -16,7 +16,7 @@ import {Timeline} from '@kepler.gl/types';
 interface FilterAnimationControllerProps {
   filter: TimeRangeFilter | RangeFilter;
   filterIdx: number;
-  setFilterAnimationTime: (idx: number, value: string, a: any[]) => void;
+  setFilterAnimationTime: (idx: number, value: string, a: any) => void;
   children?: (
     isAnimating: boolean | undefined,
     startAnimation: () => void,
@@ -85,6 +85,11 @@ function FilterAnimationControllerFactory(
     // if filter is synced merge the filter and animation config
     const timeline = useMemo(() => getTimelineFromFilter(filter), [filter]);
 
+    const onAnimationEnd = useCallback(
+      () => setFilterAnimationTime(filterIdx, 'isAnimating', false),
+      [filterIdx, setFilterAnimationTime]
+    );
+
     return (
       <AnimationController
         key="filter-control"
@@ -93,6 +98,8 @@ function FilterAnimationControllerFactory(
         speed={filter.speed}
         isAnimating={filter.isAnimating}
         animationWindow={filter.animationWindow}
+        loop={filter.animationLoop !== false}
+        onAnimationEnd={onAnimationEnd}
         steps={steps}
         minimumIncrement={numericAnimationIncrement}
         updateAnimation={updateAnimation}
