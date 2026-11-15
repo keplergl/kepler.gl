@@ -284,7 +284,10 @@ export const bottomWidgetSelector = (props: KeplerGLProps, theme) => ({
   animationConfig: props.visState.animationConfig,
   visStateActions: props.visStateActions,
   toggleModal: props.uiStateActions.toggleModal,
-  sidePanelWidth: props.uiState.readOnly ? 0 : props.sidePanelWidth + theme.sidePanel.margin.left
+  sidePanelWidth:
+    props.readOnly || props.uiState.readOnly
+      ? 0
+      : props.sidePanelWidth + theme.sidePanel.margin.left
 });
 
 export const modalContainerSelector = (props: KeplerGLProps, rootNode) => ({

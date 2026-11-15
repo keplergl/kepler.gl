@@ -16,6 +16,7 @@ import {
   FilterAnimationControllerFactory,
   LayerAnimationControllerFactory,
   TimezoneSelector,
+  bottomWidgetSelector,
   appInjector
 } from '@kepler.gl/components';
 import {VisStateActions} from '@kepler.gl/actions';
@@ -202,6 +203,50 @@ test('Components -> BottomWidget -> updates available space on resize and sideba
   } finally {
     view?.unmount();
     Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> read-only embeds do not reserve hidden sidebar space', t => {
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  const containerW = 600;
+  const tree = (readOnly, stateReadOnly) => {
+    const props = bottomWidgetSelector(
+      {
+        readOnly,
+        sidePanelWidth: defaultProps.sidePanelWidth,
+        visState: StateWFilters.visState,
+        uiState: {...defaultProps.uiState, activeSidePanel: 'layer', readOnly: stateReadOnly},
+        visStateActions: VisStateActions,
+        uiStateActions: {toggleModal: () => {}}
+      },
+      theme
+    );
+    return (
+      <ThemeProvider theme={theme}>
+        <Widget {...props} containerW={containerW} />
+      </ThemeProvider>
+    );
+  };
+  const view = render(tree(false, false));
+  const width = () => window.getComputedStyle(view.container.firstChild).width;
+  const sidebarWidth = defaultProps.sidePanelWidth + theme.sidePanel.margin.left;
+  try {
+    t.equal(width(), `${containerW - sidebarWidth}px`, 'reserves space for a visible sidebar');
+    view.rerender(tree(true, false));
+    t.equal(width(), `${containerW}px`, 'the readOnly prop releases hidden sidebar space');
+    view.rerender(tree(false, true));
+    t.equal(width(), `${containerW}px`, 'read-only UI state releases hidden sidebar space');
+    view.rerender(tree(false, false));
+    t.equal(width(), `${containerW - sidebarWidth}px`, 'restores space when the sidebar returns');
+  } finally {
+    view.unmount();
   }
   t.end();
 });

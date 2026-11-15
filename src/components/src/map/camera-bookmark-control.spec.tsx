@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen, within, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, within, waitFor} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
 import {ThemeProvider} from 'styled-components';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
@@ -480,7 +480,46 @@ test.each([
 });
 
 describe('floating legend placement above the timeline', () => {
-  afterEach(() => jest.restoreAllMocks());
+  let resizeObserverDescriptor: PropertyDescriptor | undefined;
+  let resizeObservers: TestResizeObserver[];
+
+  class TestResizeObserver implements ResizeObserver {
+    readonly targets = new Set<Element>();
+    observe = jest.fn((target: Element) => {
+      this.targets.add(target);
+    });
+    unobserve = jest.fn((target: Element) => {
+      this.targets.delete(target);
+    });
+    disconnect = jest.fn(() => this.targets.clear());
+
+    constructor(private callback: ResizeObserverCallback) {
+      resizeObservers.push(this);
+    }
+
+    notify() {
+      this.callback([], this);
+    }
+  }
+
+  beforeEach(() => {
+    resizeObservers = [];
+    resizeObserverDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'ResizeObserver');
+    Object.defineProperty(globalThis, 'ResizeObserver', {
+      configurable: true,
+      writable: true,
+      value: TestResizeObserver
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    if (resizeObserverDescriptor) {
+      Object.defineProperty(globalThis, 'ResizeObserver', resizeObserverDescriptor);
+    } else {
+      Reflect.deleteProperty(globalThis, 'ResizeObserver');
+    }
+  });
 
   function setupTimelineLegend({
     controlId = 'mapLegend',
@@ -567,6 +606,26 @@ describe('floating legend placement above the timeline', () => {
     return {
       settings,
       panel: () => root.querySelector('.draggable-legend') as HTMLElement,
+      timelineObserver: () =>
+        resizeObservers.find(observer =>
+          observer.targets.has(root.querySelector('.bottom-widget--container') as Element)
+        ),
+      resizeTimeline: (top: number, height = rootBounds.bottom - top) => {
+        timeline = {left: 400, top, width: 700, height};
+        const element = root.querySelector('.bottom-widget--container') as Element;
+        act(() => {
+          resizeObservers
+            .filter(observer => observer.targets.has(element))
+            .forEach(observer => {
+              observer.notify();
+            });
+        });
+      },
+      savePosition: (position: MapLegendControlSettings['position']) => {
+        storedSettings = {...storedSettings, position};
+        view.rerender(tree());
+      },
+      unmount: view.unmount,
       reopen: (top: number) => {
         timeline = {left: 400, top, width: 700, height: rootBounds.bottom - top};
         view.rerender(tree(1));
@@ -609,6 +668,45 @@ describe('floating legend placement above the timeline', () => {
     await waitFor(() => expect(move).not.toHaveAttribute('aria-pressed', 'true'));
   });
 
+  test('tracks timeline height changes without remounting or resizing the map', () => {
+    const {panel, settings, resizeTimeline, timelineObserver, unmount} = setupTimelineLegend();
+    const mountedPanel = panel();
+    const observer = timelineObserver();
+    expect(observer).toBeDefined();
+    resizeTimeline(500);
+    expect(panel()).toBe(mountedPanel);
+    expect(panel()).toHaveStyle({bottom: '360px'});
+    resizeTimeline(850, 0);
+    expect(panel()).toHaveStyle({bottom: '30px'});
+    resizeTimeline(600);
+    expect(panel()).toHaveStyle({bottom: '260px'});
+    expect(settings).not.toHaveBeenCalled();
+    unmount();
+    expect(observer?.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  test('places an already open legend above a newly visible timeline', () => {
+    const {panel, settings, resizeTimeline} = setupTimelineLegend({
+      timeline: {left: 400, top: 850, width: 700, height: 0}
+    });
+    expect(panel()).toHaveStyle({bottom: '30px'});
+    resizeTimeline(600);
+    expect(panel()).toHaveStyle({bottom: '260px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
+
+  test('stops following the timeline once the user position is saved', () => {
+    const {panel, settings, timelineObserver, savePosition, resizeTimeline} = setupTimelineLegend();
+    const observer = timelineObserver();
+    expect(observer).toBeDefined();
+    savePosition({x: 40, y: 60, anchorX: 'right', anchorY: 'bottom'});
+    expect(observer?.disconnect).toHaveBeenCalledTimes(1);
+    expect(timelineObserver()).toBeUndefined();
+    resizeTimeline(500);
+    expect(panel()).toHaveStyle({right: '40px', bottom: '60px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
+
   test('does not save automatic placement when shrinking the map clamps the legend height', () => {
     const {panel, settings, resize} = setupTimelineLegend({contentHeight: 600});
     expect(panel()).toHaveStyle({bottom: '260px'});
@@ -647,9 +745,10 @@ describe('floating legend placement above the timeline', () => {
   });
 
   test('does not move the bookmark panel above the timeline', () => {
-    const {panel, settings} = setupTimelineLegend({controlId: 'cameraBookmarks'});
+    const {panel, settings, timelineObserver} = setupTimelineLegend({controlId: 'cameraBookmarks'});
     expect(panel()).toHaveStyle({right: '10px', bottom: '30px'});
     expect(settings).not.toHaveBeenCalled();
+    expect(timelineObserver()).toBeUndefined();
   });
 });
 
