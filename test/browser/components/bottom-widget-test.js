@@ -123,7 +123,7 @@ test('Components -> BottomWidget -> legend changes do not reserve timeline space
       const initialMargin = initialStyle.marginRight;
       t.equal(
         initialWidth,
-        `${portable ? props.containerW : props.containerW - props.sidePanelWidth}px`,
+        `${props.containerW - props.sidePanelWidth}px`,
         'starts with the available width for the current layout'
       );
       for (const [action, legend] of [
@@ -176,7 +176,16 @@ test('Components -> BottomWidget -> updates available space on resize and sideba
     t.equal(width(), '700px', 'desktop reserves space for the open sidebar');
     portable = true;
     view.rerender(tree(600));
-    t.equal(width(), '600px', 'resizing to portable uses the full-width portable layout');
+    t.equal(width(), '300px', 'resizing to portable still reserves space for the open sidebar');
+    t.equal(
+      window.getComputedStyle(view.container.firstChild).marginLeft,
+      'auto',
+      'aligns the narrower timeline to the right of the sidebar in normal flow'
+    );
+    view.rerender(tree(600, null));
+    t.equal(width(), '600px', 'closing the sidebar in portable mode releases its space');
+    view.rerender(tree(600));
+    t.equal(width(), '300px', 'reopening the sidebar in portable mode reserves its space');
     portable = false;
     view.rerender(tree(900));
     t.equal(width(), '600px', 'resizing back to desktop reserves sidebar space again');

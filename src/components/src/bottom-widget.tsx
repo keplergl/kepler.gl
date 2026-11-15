@@ -5,8 +5,8 @@ import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
 import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
-import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
-import {media, breakPointValues} from '@kepler.gl/styles';
+import {isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
+import {media} from '@kepler.gl/styles';
 import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import TimeWidgetFactory from './filters/time-widget';
@@ -46,6 +46,7 @@ const BottomWidgetContainer: IStyledComponent<
     pointer-events: all;
   }
   width: ${props => props.width}px;
+  margin-left: auto;
   z-index: 1;
   ${media.portable`padding: 0;`}
 `;
@@ -105,11 +106,7 @@ export default function BottomWidgetFactory(
       [filters]
     );
 
-    const isMobile = hasPortableWidth(breakPointValues);
-    const enlargedFilterWidth = Math.max(
-      0,
-      !isMobile && isOpen ? containerW - sidePanelWidth : containerW
-    );
+    const enlargedFilterWidth = Math.max(0, isOpen ? containerW - sidePanelWidth : containerW);
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
