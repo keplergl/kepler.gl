@@ -262,6 +262,70 @@ describe('minimized timeline range dragging', () => {
     expect(onChange).toHaveBeenLastCalledWith([2, 7]);
   });
 
+  test.each<{
+    name: string;
+    initial: Timeline;
+    delta: number;
+    expected: [number, number];
+    trackWidth?: number;
+  }>([
+    {
+      name: 'right-clipped calendar bin',
+      initial: {...timeline, domain: [0, 950], value: [800, 1000]},
+      delta: -100,
+      expected: [700, 900],
+      trackWidth: 95
+    },
+    {
+      name: 'left-clipped selection',
+      initial: {...timeline, domain: [0, 950], value: [-50, 150]},
+      delta: 100,
+      expected: [50, 250],
+      trackWidth: 95
+    },
+    {
+      name: 'left-clipped selection at the lower boundary',
+      initial: {...timeline, value: [-10, 30]},
+      delta: -100,
+      expected: [0, 40]
+    },
+    {
+      name: 'right-clipped selection at the upper boundary',
+      initial: {...timeline, value: [80, 110]},
+      delta: 100,
+      expected: [70, 100]
+    },
+    {
+      name: 'selection wider than the domain',
+      initial: {...timeline, value: [-10, 110]},
+      delta: 20,
+      expected: [0, 100]
+    },
+    {
+      name: 'clipped fractional duration that is not a multiple of the step',
+      initial: {...timeline, domain: [0, 1], value: [0.8, 1.05], step: 0.1},
+      delta: -0.2,
+      expected: [0.6, 0.85]
+    }
+  ])(
+    'preserves the selected duration for $name',
+    ({initial, delta, expected, trackWidth = 100}) => {
+      jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(trackWidth);
+      const {bar, onChange} = renderMinimized(initial);
+      const domain = initial.domain as [number, number];
+      const pixelDelta = (delta / (domain[1] - domain[0])) * trackWidth;
+      fireEvent.mouseDown(bar, {clientX: 50});
+      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta / 2});
+      act(() => jest.advanceTimersByTime(40));
+      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta});
+      fireEvent.mouseUp(document);
+      act(() => jest.advanceTimersByTime(40));
+      const result = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+      expect(result[0]).toBeCloseTo(expected[0], 10);
+      expect(result[1]).toBeCloseTo(expected[1], 10);
+    }
+  );
+
   test('moves a time range by touch and still allows independent endpoint dragging', () => {
     const start = Date.UTC(2026, 0, 1);
     const hour = 60 * 60 * 1000;

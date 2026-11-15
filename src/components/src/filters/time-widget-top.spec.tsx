@@ -8,6 +8,7 @@ import {ThemeProvider} from 'styled-components';
 import {getDefaultFilter, initApplicationConfig} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {theme} from '@kepler.gl/styles';
+import {messages} from '@kepler.gl/localization';
 import {IntlWrapper} from 'test/helpers/component-jest-utils';
 import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
 import {AnimationJsonEditorProps} from '../common/animation-control/animation-json-editor';
@@ -30,10 +31,10 @@ const filter: TimeRangeFilter = {
   plotType: {interval: '3-month'}
 };
 
-function HeaderWrapper({children}: {children: React.ReactNode}) {
+function HeaderWrapper({children, locale = 'en'}: {children: React.ReactNode; locale?: string}) {
   return (
     <ThemeProvider theme={theme}>
-      <IntlWrapper>{children}</IntlWrapper>
+      <IntlWrapper locale={locale}>{children}</IntlWrapper>
     </ThemeProvider>
   );
 }
@@ -137,7 +138,8 @@ describe('compact timeline playback controls', () => {
 
   function setupPlayback(
     overrides: Partial<TimeWidgetTopProps> = {},
-    playbackOverrides: Partial<NonNullable<TimeWidgetTopProps['playbackControls']>> = {}
+    playbackOverrides: Partial<NonNullable<TimeWidgetTopProps['playbackControls']>> = {},
+    locale = 'en'
   ) {
     const playbackControls = {
       isAnimatable: true,
@@ -161,7 +163,9 @@ describe('compact timeline playback controls', () => {
       playbackControls,
       ...overrides
     };
-    const result = render(<CompactHeader {...props} />, {wrapper: HeaderWrapper});
+    const result = render(<CompactHeader {...props} />, {
+      wrapper: ({children}) => <HeaderWrapper locale={locale}>{children}</HeaderWrapper>
+    });
     return {...result, props, playbackControls};
   }
 
@@ -175,6 +179,38 @@ describe('compact timeline playback controls', () => {
     initApplicationConfig({});
     jest.restoreAllMocks();
   });
+
+  test.each([false, true])(
+    'localizes playback tooltips and accessible names when minimized is %s',
+    async isMinified => {
+      const user = userEvent.setup();
+      const {props, playbackControls, rerender} = setupPlayback({isMinified}, {}, 'es');
+      const translated = messages.es;
+      for (const [id, action] of [
+        ['tooltip.play', playbackControls.toggleAnimation],
+        ['tooltip.reset', playbackControls.resetAnimation]
+      ] as const) {
+        const button = screen.getByRole('button', {name: translated[id]});
+        expect(button).toHaveAttribute('title', translated[id]);
+        await user.click(button);
+        expect(action).toHaveBeenCalledTimes(1);
+      }
+
+      const speed = screen.getByRole('button', {name: translated['tooltip.speed']});
+      expect(speed).toHaveAttribute('title', translated['tooltip.speed']);
+      await user.click(speed);
+      expect(screen.getByRole('dialog', {name: translated['tooltip.speed']})).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+
+      rerender(
+        <CompactHeader {...props} playbackControls={{...playbackControls, isAnimating: true}} />
+      );
+      const pause = screen.getByRole('button', {name: translated['tooltip.pause']});
+      expect(pause).toHaveAttribute('title', translated['tooltip.pause']);
+      await user.click(pause);
+      expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(2);
+    }
+  );
 
   test('groups chart actions separately from the selected range and playback controls', async () => {
     const user = userEvent.setup();
@@ -201,7 +237,7 @@ describe('compact timeline playback controls', () => {
       within(controls)
         .getAllByRole('button')
         .map(button => button.getAttribute('aria-label'))
-    ).toEqual(['Play', 'Reset', 'Playback speed', 'Animation mode']);
+    ).toEqual(['Play', 'Reset', 'Speed', 'Animation mode']);
     expect(within(playback).getByRole('group', {name: 'Selected range'})).toHaveTextContent(
       '08 Jan 1991 — 30 Mar 2011'
     );
@@ -227,7 +263,7 @@ describe('compact timeline playback controls', () => {
     const names = [
       'Play',
       'Reset',
-      'Playback speed',
+      'Speed',
       'Animation mode',
       'Video Export',
       'Edit animation JSON',
@@ -271,7 +307,7 @@ describe('compact timeline playback controls', () => {
     expect(play).toHaveAttribute('aria-pressed', 'false');
     await user.click(play);
     expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', {name: 'Playback speed'})).toHaveTextContent('1.3×');
+    expect(screen.getByRole('button', {name: 'Speed'})).toHaveTextContent('1.3×');
 
     rerender(
       <CompactHeader {...props} playbackControls={{...playbackControls, isAnimating: true}} />
@@ -310,8 +346,8 @@ describe('compact timeline playback controls', () => {
     async dismissal => {
       const user = userEvent.setup();
       const {playbackControls} = setupPlayback();
-      await user.click(screen.getByRole('button', {name: 'Playback speed'}));
-      const dialog = screen.getByRole('dialog', {name: 'Playback speed'});
+      await user.click(screen.getByRole('button', {name: 'Speed'}));
+      const dialog = screen.getByRole('dialog', {name: 'Speed'});
       const input = within(dialog).getByRole('spinbutton', {name: 'Playback speed value'});
       await user.click(input);
       fireEvent.change(input, {target: {value: '2'}});
@@ -324,9 +360,7 @@ describe('compact timeline playback controls', () => {
       expect(playbackControls.updateAnimationSpeed).toHaveBeenCalledWith(2);
       expect(playbackControls.updateAnimationSpeed).toHaveBeenCalledTimes(1);
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      await waitFor(() =>
-        expect(screen.getByRole('button', {name: 'Playback speed'})).toHaveFocus()
-      );
+      await waitFor(() => expect(screen.getByRole('button', {name: 'Speed'})).toHaveFocus());
     }
   );
 
@@ -363,7 +397,7 @@ describe('compact timeline playback controls', () => {
     setupPlayback();
     for (const [name, left] of [
       ['Animation mode', 100],
-      ['Playback speed', 300],
+      ['Speed', 300],
       ['Animation mode', 200]
     ] as const) {
       anchorLeft = left;
@@ -463,7 +497,7 @@ describe('compact timeline playback controls', () => {
     const user = userEvent.setup();
     const {props, playbackControls} = setupPlayback({}, {isAnimatable: false});
     expect(screen.getByRole('button', {name: 'Play'})).toBeDisabled();
-    expect(screen.getByRole('button', {name: 'Playback speed'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Speed'})).toBeDisabled();
     const reset = screen.getByRole('button', {name: 'Reset'});
     const mode = screen.getByRole('button', {name: 'Animation mode'});
     expect(reset).toBeDisabled();
@@ -490,7 +524,7 @@ describe('compact timeline playback controls', () => {
     const {playbackControls} = setupPlayback({isMinified: true});
     await user.click(screen.getByRole('button', {name: 'Play'}));
     expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', {name: 'Playback speed'})).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Speed'})).toBeEnabled();
     await user.click(screen.getByRole('button', {name: 'Reset'}));
     expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole('button', {name: 'Animation mode'}));
@@ -510,7 +544,7 @@ describe('compact timeline playback controls', () => {
     expect(screen.queryByRole('button', {name: 'Timeline options'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Video Export'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Edit animation JSON'})).not.toBeInTheDocument();
-    for (const name of ['Play', 'Playback speed', 'Reset', 'Animation mode']) {
+    for (const name of ['Play', 'Speed', 'Reset', 'Animation mode']) {
       expect(screen.getByRole('button', {name})).toBeEnabled();
     }
   });

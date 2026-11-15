@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
@@ -121,6 +121,13 @@ function TimelineSliderFactory() {
       return [isRanged ? clamp(domain, value0) : value0, clamp(domain, value1)];
     }, [domain, isRanged, value0, value1]);
 
+    const dragStartOffset = useRef(0);
+    const onRangeDragStart = useCallback(() => {
+      // The slider measures movement from the visible edge. Keep the hidden
+      // part of a clipped start attached to it throughout controlled updates.
+      dragStartOffset.current = isRanged ? value0 - displayValue0 : 0;
+    }, [isRanged, value0, displayValue0]);
+
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
       if (!domain) return [noop, noop];
       return [
@@ -141,11 +148,13 @@ function TimelineSliderFactory() {
     const onSliderBarChange = useCallback(
       (nextStart: number) => {
         if (!domain || !isRanged) return;
-        const width = displayValue1 - displayValue0;
-        const start = clamp([domain[0], domain[1] - width], nextStart);
+        // Calendar bins can extend beyond the displayed domain. Preserve the
+        // selected duration, limiting it only when the entire window cannot fit.
+        const width = Math.min(value1 - value0, domain[1] - domain[0]);
+        const start = clamp([domain[0], domain[1] - width], nextStart + dragStartOffset.current);
         onThrottleUpdate([start, start + width]);
       },
-      [domain, isRanged, displayValue0, displayValue1, onThrottleUpdate]
+      [domain, isRanged, value0, value1, onThrottleUpdate]
     );
 
     const timelineSliderStyle = useMemo(() => ({height: `${height}px`}), [height]);
@@ -180,7 +189,11 @@ function TimelineSliderFactory() {
             <span>{timeStart}</span>
           </StyledDomain>
         ) : null}
-        <SliderWrapper className="animation-control__slider">
+        <SliderWrapper
+          className="animation-control__slider"
+          onMouseDownCapture={onRangeDragStart}
+          onTouchStartCapture={onRangeDragStart}
+        >
           <StyledSlider
             $rangeDraggable={rangeDraggable}
             isRanged={requiresRangeSlider}

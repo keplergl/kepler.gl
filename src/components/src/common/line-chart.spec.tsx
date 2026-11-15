@@ -240,6 +240,74 @@ describe('LineChart time-bin endpoints', () => {
     update({isTime: false});
     expect(ticks()).toEqual([0, 1000, 2000]);
   });
+
+  test('Fit Y keeps grouped segments visible when the selection lies between their endpoints', () => {
+    const lines = [
+      [{x: 0, y: 10}],
+      [{x: 0, y: 20}],
+      [
+        {x: 0, y: 100},
+        {x: 20, y: 120}
+      ]
+    ];
+    const {container} = setup({
+      isTime: true,
+      isEnlarged: true,
+      yAxisAutoRange: true,
+      range: [0, 40],
+      value: [5, 15],
+      lineChart: chart(lines, {
+        xDomain: [0, 40],
+        yDomain: [10, 120],
+        bins: bins([
+          [0, 20],
+          [20, 40]
+        ]),
+        series: makeSeries(lines, {colors: ['red', 'orange', 'blue'], names: ['A', 'C', 'B']})
+      })
+    });
+    expect(
+      Array.from(container.querySelectorAll('.line-chart__axis-tick'), tick =>
+        Number(tick.textContent)
+      )
+    ).toEqual([0, 50, 100]);
+    const points = requiredElement(container, 'path[stroke="blue"]')
+      .getAttribute('d')!
+      .slice(1)
+      .split('L')
+      .map(point => point.split(',').map(Number));
+    for (const [, y] of points) {
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(y).toBeLessThanOrEqual(120);
+    }
+  });
+
+  test('Fit Y excludes grouped segments separated from the selection by missing bins', () => {
+    const lines = [[{x: 20, y: 10}], [{x: 20, y: 20}], [{x: 0, y: 1000}], [{x: 40, y: 1000}]];
+    const {container} = setup({
+      isTime: true,
+      isEnlarged: true,
+      yAxisAutoRange: true,
+      value: [25, 35],
+      lineChart: chart(lines, {
+        yDomain: [10, 1000],
+        bins: bins([
+          [0, 20],
+          [20, 40],
+          [40, 60]
+        ]),
+        series: makeSeries(lines, {
+          colors: ['red', 'orange', 'blue', 'blue'],
+          names: ['A', 'C', 'B', 'B']
+        })
+      })
+    });
+    expect(
+      Array.from(container.querySelectorAll('.line-chart__axis-tick'), tick =>
+        Number(tick.textContent)
+      )
+    ).toEqual([10, 15, 20]);
+  });
 });
 
 describe('LineChart hover interactions', () => {

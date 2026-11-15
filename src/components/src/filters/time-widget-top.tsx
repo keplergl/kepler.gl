@@ -314,6 +314,11 @@ function TimeWidgetTopFactory(
       ANIMATION_MODES.find(
         mode => mode.id === (playbackControls?.animationWindow || filter.animationWindow)
       ) || ANIMATION_MODES[0];
+    const playLabel = intl.formatMessage({
+      id: playbackControls?.isAnimating ? 'tooltip.pause' : 'tooltip.play'
+    });
+    const resetLabel = intl.formatMessage({id: 'tooltip.reset'});
+    const speedLabel = intl.formatMessage({id: 'tooltip.speed'});
     const animationItems: ContextMenuAction[] = playbackControls
       ? ANIMATION_MODES.map(mode => ({
           ...mode,
@@ -453,8 +458,8 @@ function TimeWidgetTopFactory(
           as="button"
           type="button"
           data-testid="time-widget-play"
-          aria-label={playbackControls.isAnimating ? 'Pause' : 'Play'}
-          title={playbackControls.isAnimating ? 'Pause' : 'Play'}
+          aria-label={playLabel}
+          title={playLabel}
           aria-pressed={playbackControls.isAnimating}
           disabled={!playbackControls.isAnimatable}
           onClick={playbackControls.toggleAnimation}
@@ -466,8 +471,8 @@ function TimeWidgetTopFactory(
           type="button"
           className="time-widget-reset"
           data-testid="time-widget-reset"
-          aria-label="Reset"
-          title="Reset"
+          aria-label={resetLabel}
+          title={resetLabel}
           disabled={!playbackControls.isAnimatable}
           onClick={playbackControls.resetAnimation}
         >
@@ -479,8 +484,8 @@ function TimeWidgetTopFactory(
             type="button"
             ref={speedButtonRef}
             data-testid="time-widget-speed"
-            aria-label="Playback speed"
-            title="Playback speed"
+            aria-label={speedLabel}
+            title={speedLabel}
             aria-expanded={popover === 'speed'}
             aria-haspopup="dialog"
             disabled={!playbackControls.isAnimatable}
@@ -516,7 +521,7 @@ function TimeWidgetTopFactory(
             },
             contentLabel:
               popover === 'speed'
-                ? 'Playback speed'
+                ? speedLabel
                 : popover === 'animation'
                 ? 'Animation mode'
                 : 'Edit animation JSON'

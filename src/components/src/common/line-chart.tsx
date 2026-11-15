@@ -231,22 +231,16 @@ function LineChartFactory() {
         return computedYDomain;
       let min: number | undefined;
       let max: number | undefined;
-      for (let lineIndex = 0; lineIndex < renderLines.length; lineIndex++) {
-        const line = renderLines[lineIndex];
+      for (const line of renderLines) {
         for (let i = 0; i < line.length; i++) {
           const point = line[i];
           const inRange = point.x >= value[0] && point.x <= value[1];
-          const isAdjacentToRange =
-            (!inRange && line[i + 1] && line[i + 1].x >= value[0] && line[i + 1].x <= value[1]) ||
-            (!inRange && line[i - 1] && line[i - 1].x >= value[0] && line[i - 1].x <= value[1]);
-          // A selection can lie wholly inside the final bin, with neither
-          // endpoint inside it. Include that bin's constant aggregate as well.
-          const isVisibleBinEnd =
-            line !== series.lines[lineIndex] &&
-            i === line.length - 1 &&
-            line[i - 1].x <= value[1] &&
-            point.x >= value[0];
-          if ((inRange || isAdjacentToRange || isVisibleBinEnd) && point.y != null) {
+          // Include both endpoints of every segment crossing the selection,
+          // including final-bin extensions. Separate lines keep gaps excluded.
+          const isVisibleSegment =
+            (line[i - 1]?.y != null && line[i - 1].x <= value[1] && point.x >= value[0]) ||
+            (line[i + 1]?.y != null && point.x <= value[1] && line[i + 1].x >= value[0]);
+          if ((inRange || isVisibleSegment) && point.y != null) {
             if (min === undefined || point.y < min) min = point.y;
             if (max === undefined || point.y > max) max = point.y;
           }
