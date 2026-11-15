@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {ReactElement, useMemo, useRef} from 'react';
+import React, {ReactElement, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {scaleLinear} from 'd3-scale';
 import {hcl} from 'd3-color';
-import {min, max} from 'd3-array';
+import {bisector, min, max} from 'd3-array';
+import {format} from 'd3-format';
 import styled from 'styled-components';
 
-import {Bins} from '@kepler.gl/types';
+import {Bin, Bins} from '@kepler.gl/types';
+import {datetimeFormatter, formatNumber} from '@kepler.gl/utils';
+import TippyTooltip from './tippy-tooltip';
 
 // clipping mask constants
 export const HISTOGRAM_MASK_MODE = {
@@ -43,6 +46,43 @@ const YAxisTick = styled.text`
   font-size: 9px;
   fill: ${props => props.theme.textColor};
 `;
+
+const BinDetails = styled.div`
+  .histogram-tooltip__range,
+  .histogram-tooltip__total {
+    margin-bottom: 4px;
+  }
+
+  .histogram-tooltip__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .histogram-tooltip__name {
+    flex: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .histogram-tooltip__swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex: none;
+    background: ${props => props.theme.histogramFillInRange};
+  }
+
+  .histogram-tooltip__number {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+`;
+
+const formatCount = format(',d');
+const formatPercent = format('.1~%');
+const bisectBin = bisector<Bin, number>(bin => bin.x0).right;
+
+type HoveredBin = {dataId: string; index: number; bin: Bin; groupIndex: number};
 
 type BarType = {
   $inRange: boolean;
@@ -95,6 +135,13 @@ export interface HistogramPlotProps {
   breakLines?: number[];
   /** Dark plot surface for the range brush. Column histograms leave this off. */
   recessed?: boolean;
+  // Timeline charts already supply these hover controls and axis formatters.
+  enableChartHover?: boolean;
+  brushing?: boolean;
+  isTime?: boolean;
+  timeFormat?: string;
+  timezone?: string | null;
+  datasets?: Record<string, {label?: string}>;
 }
 
 function HistogramPlotFactory() {
@@ -112,8 +159,16 @@ function HistogramPlotFactory() {
     value,
     brushComponent,
     breakLines,
-    recessed
+    recessed,
+    enableChartHover,
+    brushing,
+    isTime = true,
+    timeFormat,
+    timezone,
+    datasets
   }: HistogramPlotProps) => {
+    const svgRef = useRef<SVGSVGElement | null>(null);
+    const [hoveredBin, setHoveredBin] = useState<HoveredBin | null>(null);
     const groupKeys = useMemo(
       () =>
         Object.keys(histogramsByGroup)
@@ -176,6 +231,131 @@ function HistogramPlotFactory() {
 
     const clipIdRef = useRef(`histogram-clip-${Math.random().toString(36).slice(2)}`);
     const clipId = clipIdRef.current;
+
+    const getBarBounds = useCallback(
+      (bar: Bin, groupIndex: number) => {
+        const inRange = isBarInRange(bar, 0, [], domain, value);
+        const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
+        const bx0 = x(undefinedToZero(bar.x0));
+        const binW = Math.max(x(undefinedToZero(bar.x1)) - bx0, 1);
+        const perGroupW = binW / groupKeys.length;
+        const drawnWidth = perGroupW * wRatio;
+        return {
+          x: bx0 + perGroupW * groupIndex + (perGroupW - drawnWidth) / 2,
+          y: height - y(bar[countProp]),
+          width: drawnWidth,
+          height: y(bar[countProp])
+        };
+      },
+      [countProp, domain, groupKeys.length, height, value, x, y]
+    );
+
+    const clearHover = useCallback(() => setHoveredBin(null), []);
+    useEffect(clearHover, [
+      clearHover,
+      histogramsByGroup,
+      range,
+      brushing,
+      enableChartHover,
+      width,
+      height
+    ]);
+
+    const handleMouseMove = useCallback(
+      (event: React.MouseEvent<SVGSVGElement>) => {
+        if (!enableChartHover || brushing || event.buttons || !width || !height) {
+          clearHover();
+          return;
+        }
+        svgRef.current = event.currentTarget;
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const mouseX = ((event.clientX - rect.left) * width) / rect.width;
+        const mouseY = ((event.clientY - rect.top) * height) / rect.height;
+        if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
+          clearHover();
+          return;
+        }
+        const valueX = x.invert(mouseX);
+        const overlapStart = x.invert(mouseX - 1);
+        // Minimum-width bars can overlap later intervals. Follow reverse SVG paint order.
+        for (let groupIndex = groupKeys.length - 1; groupIndex >= 0; groupIndex--) {
+          const dataId = groupKeys[groupIndex];
+          const bins = histogramsByGroup[dataId];
+          // Include the interval containing the lower bound for ordinary wider bars.
+          const firstIndex = Math.max(0, bisectBin(bins, overlapStart) - 1);
+          for (let index = bisectBin(bins, valueX) - 1; index >= firstIndex; index--) {
+            const bin = bins[index];
+            const bounds = getBarBounds(bin, groupIndex);
+            if (
+              bounds.height > 0 &&
+              mouseX >= bounds.x &&
+              mouseX <= bounds.x + bounds.width &&
+              mouseY >= bounds.y &&
+              mouseY <= height
+            ) {
+              setHoveredBin(previous =>
+                previous?.bin === bin && previous.dataId === dataId
+                  ? previous
+                  : {dataId, index, bin, groupIndex}
+              );
+              return;
+            }
+          }
+        }
+        clearHover();
+      },
+      [
+        brushing,
+        clearHover,
+        enableChartHover,
+        getBarBounds,
+        groupKeys,
+        height,
+        histogramsByGroup,
+        width,
+        x
+      ]
+    );
+
+    const activeHover =
+      enableChartHover &&
+      !brushing &&
+      width > 0 &&
+      height > 0 &&
+      hoveredBin &&
+      histogramsByGroup[hoveredBin.dataId]?.[hoveredBin.index] === hoveredBin.bin
+        ? hoveredBin
+        : null;
+    const getReferenceClientRect = useCallback(() => {
+      const rect = svgRef.current?.getBoundingClientRect();
+      let left = 0;
+      let right = 0;
+      let top = 0;
+      let bottom = 0;
+      if (rect && activeHover) {
+        const bounds = getBarBounds(activeHover.bin, activeHover.groupIndex);
+        left = rect.left + (Math.max(0, bounds.x) * rect.width) / width;
+        right = rect.left + (Math.min(width, bounds.x + bounds.width) * rect.width) / width;
+        top = rect.top + (Math.max(0, bounds.y) * rect.height) / height;
+        bottom = rect.bottom;
+      }
+      const bounds = {
+        x: left,
+        y: top,
+        left,
+        right,
+        top,
+        bottom,
+        width: right - left,
+        height: bottom - top
+      };
+      return {...bounds, toJSON: () => bounds};
+    }, [activeHover, getBarBounds, height, width]);
+    const formatBoundary = useMemo(
+      () => (isTime ? datetimeFormatter(timezone)(timeFormat) : formatNumber),
+      [isTime, timeFormat, timezone]
+    );
 
     if (groupKeys.length === 0) {
       return null;
@@ -280,13 +460,16 @@ function HistogramPlotFactory() {
       );
     };
 
-    return isMasked ? (
-      maskedHistogram()
-    ) : (
+    if (isMasked) return maskedHistogram();
+
+    const histogram = (
       <HistogramWrapper
         width={width}
         height={height}
         $recessed={recessed}
+        onMouseMove={enableChartHover === undefined ? undefined : handleMouseMove}
+        onMouseLeave={enableChartHover === undefined ? undefined : clearHover}
+        onMouseDown={enableChartHover === undefined ? undefined : clearHover}
         style={{margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`}}
       >
         <defs>
@@ -300,17 +483,7 @@ function HistogramPlotFactory() {
               {histogramsByGroup[key].map((bar, idx, list) => {
                 const inRange = isBarInRange(bar, idx, list, domain, value);
 
-                const wRatio = inRange ? histogramStyle.highlightW : histogramStyle.unHighlightedW;
-                const bx0 = x(undefinedToZero(bar.x0));
-                const bx1 = x(undefinedToZero(bar.x1));
-                const binW = Math.max(bx1 - bx0, 1);
-                const perGroupW = isMasked ? binW : binW / groupKeys.length;
-                const drawnWidth = perGroupW * wRatio;
-                const groupOffset =
-                  groupKeys.length > 1
-                    ? perGroupW * i + (perGroupW - drawnWidth) / 2
-                    : (binW - drawnWidth) / 2;
-                const startX = bx0 + groupOffset;
+                const {x: startX, width: drawnWidth} = getBarBounds(bar, i);
                 const remainder =
                   countProp === 'count'
                     ? Math.max(
@@ -376,6 +549,57 @@ function HistogramPlotFactory() {
         ) : null}
         <g transform={`translate(${isRanged ? 0 : fallbackBarWidth / 2}, 0)`}>{brushComponent}</g>
       </HistogramWrapper>
+    );
+
+    // Other histogram consumers keep their existing SVG and interactions.
+    if (enableChartHover === undefined) return histogram;
+    const bin = activeHover?.bin;
+    const segments = bin?.segments || [];
+    const remainder = bin?.segments
+      ? Math.max(bin.count - segments.reduce((sum, segment) => sum + segment.count, 0), 0)
+      : 0;
+    const rows = remainder
+      ? [
+          ...segments,
+          {name: 'Other / missing', count: remainder, color: colorsByGroup?.[activeHover!.dataId]}
+        ]
+      : segments;
+
+    return (
+      <TippyTooltip
+        visible={Boolean(activeHover)}
+        duration={0}
+        placement="top"
+        getReferenceClientRect={getReferenceClientRect}
+        render={() =>
+          bin ? (
+            <BinDetails className="histogram-tooltip" role="tooltip">
+              {groupKeys.length > 1 ? (
+                <div>{datasets?.[activeHover!.dataId]?.label || activeHover!.dataId}</div>
+              ) : null}
+              <div className="histogram-tooltip__range">
+                {formatBoundary(bin.x0)} – {formatBoundary(bin.x1)}
+              </div>
+              <div className="histogram-tooltip__total">Count: {formatCount(bin.count)}</div>
+              {rows.map((segment, index) => (
+                <div className="histogram-tooltip__row" key={index}>
+                  <span
+                    className="histogram-tooltip__swatch"
+                    style={{backgroundColor: segment.color}}
+                  />
+                  <span className="histogram-tooltip__name">{segment.name}</span>
+                  <span className="histogram-tooltip__number">{formatCount(segment.count)}</span>
+                  <span className="histogram-tooltip__number">
+                    {formatPercent(segment.count / bin.count)}
+                  </span>
+                </div>
+              ))}
+            </BinDetails>
+          ) : null
+        }
+      >
+        {histogram}
+      </TippyTooltip>
     );
   };
 
