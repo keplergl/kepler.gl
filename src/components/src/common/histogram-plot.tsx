@@ -277,26 +277,30 @@ function HistogramPlotFactory() {
           return;
         }
         const valueX = x.invert(mouseX);
-        for (let groupIndex = 0; groupIndex < groupKeys.length; groupIndex++) {
+        const overlapStart = x.invert(mouseX - 1);
+        // Minimum-width bars can overlap later intervals. Follow reverse SVG paint order.
+        for (let groupIndex = groupKeys.length - 1; groupIndex >= 0; groupIndex--) {
           const dataId = groupKeys[groupIndex];
           const bins = histogramsByGroup[dataId];
-          const index = bisectBin(bins, valueX) - 1;
-          const bin = bins[index];
-          if (!bin) continue;
-          const bounds = getBarBounds(bin, groupIndex);
-          if (
-            bounds.height > 0 &&
-            mouseX >= bounds.x &&
-            mouseX <= bounds.x + bounds.width &&
-            mouseY >= bounds.y &&
-            mouseY <= height
-          ) {
-            setHoveredBin(previous =>
-              previous?.bin === bin && previous.dataId === dataId
-                ? previous
-                : {dataId, index, bin, groupIndex}
-            );
-            return;
+          // Include the interval containing the lower bound for ordinary wider bars.
+          const firstIndex = Math.max(0, bisectBin(bins, overlapStart) - 1);
+          for (let index = bisectBin(bins, valueX) - 1; index >= firstIndex; index--) {
+            const bin = bins[index];
+            const bounds = getBarBounds(bin, groupIndex);
+            if (
+              bounds.height > 0 &&
+              mouseX >= bounds.x &&
+              mouseX <= bounds.x + bounds.width &&
+              mouseY >= bounds.y &&
+              mouseY <= height
+            ) {
+              setHoveredBin(previous =>
+                previous?.bin === bin && previous.dataId === dataId
+                  ? previous
+                  : {dataId, index, bin, groupIndex}
+              );
+              return;
+            }
           }
         }
         clearHover();

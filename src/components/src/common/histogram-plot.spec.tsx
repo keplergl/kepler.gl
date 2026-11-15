@@ -61,15 +61,15 @@ function geometry(rect: Element) {
   );
 }
 
-function setPlotBounds(svg: SVGSVGElement) {
+function setPlotBounds(svg: SVGSVGElement, width = 400) {
   jest.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
     x: 20,
     y: 30,
     left: 20,
     top: 30,
-    right: 420,
+    right: 20 + width,
     bottom: 230,
-    width: 400,
+    width,
     height: 200,
     toJSON: () => ({})
   });
@@ -244,6 +244,71 @@ describe('HistogramPlot bin tooltips', () => {
     await expectNoTooltip();
     hover(svg, 25, 25);
     await expectNoTooltip();
+  });
+
+  test('finds the last painted visible bar when dense bins overlap several intervals', async () => {
+    const denseBins = Array.from({length: 200}, (_, index) => ({
+      x0: index,
+      x1: index + 1,
+      count: index === 0 ? 10 : (index % 10) + 1,
+      indexes: []
+    }));
+    const {container} = setup({
+      enableChartHover: true,
+      width: 20,
+      range: [0, 200],
+      value: [0, 200],
+      histogramsByGroup: {data: denseBins}
+    });
+    const svg = container.querySelector('svg')!;
+    setPlotBounds(svg, 40);
+
+    // The pointer's interval is bin 5, but bin 3 is the last bar painted here.
+    hover(svg, 0.5);
+    let tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.querySelector('.histogram-tooltip__range')).toHaveTextContent('3 – 4');
+    expect(tooltip.querySelector('.histogram-tooltip__total')).toHaveTextContent('Count: 4');
+
+    // Above the shorter bars, the earlier, taller bin remains visible.
+    hover(svg, 0.5, 20);
+    tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.querySelector('.histogram-tooltip__range')).toHaveTextContent('0 – 1');
+    expect(tooltip.querySelector('.histogram-tooltip__total')).toHaveTextContent('Count: 10');
+  });
+
+  test('respects linked dataset paint order and heights when narrow bars overlap', async () => {
+    const linkedBins = Array.from({length: 200}, (_, index) => ({
+      x0: index,
+      x1: index + 1,
+      count: 8,
+      indexes: []
+    }));
+    const {container} = setup({
+      enableChartHover: true,
+      width: 20,
+      range: [0, 200],
+      value: [0, 200],
+      histogramsByGroup: {
+        first: linkedBins,
+        second: linkedBins.map(bin => ({...bin, count: 4}))
+      },
+      datasets: {first: {label: 'First dataset'}, second: {label: 'Second dataset'}}
+    });
+    const svg = container.querySelector('svg')!;
+    setPlotBounds(svg, 40);
+
+    // First dataset/bin 9 and second dataset/bin 4 overlap at their group offsets.
+    hover(svg, 1);
+    let tooltip = await screen.findByRole('tooltip');
+    expect(within(tooltip).getByText('Second dataset')).toBeInTheDocument();
+    expect(tooltip.querySelector('.histogram-tooltip__range')).toHaveTextContent('4 – 5');
+    expect(tooltip.querySelector('.histogram-tooltip__total')).toHaveTextContent('Count: 4');
+
+    hover(svg, 1, 25);
+    tooltip = await screen.findByRole('tooltip');
+    expect(within(tooltip).getByText('First dataset')).toBeInTheDocument();
+    expect(tooltip.querySelector('.histogram-tooltip__range')).toHaveTextContent('9 – 10');
+    expect(tooltip.querySelector('.histogram-tooltip__total')).toHaveTextContent('Count: 8');
   });
 
   test('formats temporal intervals with the configured format and timezone', async () => {
