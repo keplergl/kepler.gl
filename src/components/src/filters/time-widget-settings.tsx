@@ -7,7 +7,8 @@ import moment from 'moment';
 import ItemSelector from '../common/item-selector/item-selector';
 import FieldSelectorFactory from '../common/field-selector';
 import Switch from '../common/switch';
-import {ArrowRight} from '../common/icons';
+import {ArrowDown} from '../common/icons';
+import {IconRoundSmall, Input, PanelLabel, PanelLabelBold} from '../common/styled-components';
 import {
   TIME_AGGREGATION,
   AGGREGATION_TYPES,
@@ -61,7 +62,7 @@ const INTERVAL_UNITS = [
 ];
 
 const TIME_FORMAT_OPTIONS = ['12-hour', '24-hour'] as const;
-const SELECTOR_WIDTH = '120px';
+const SELECTOR_WIDTH = '160px';
 
 type HourCycle = (typeof TIME_FORMAT_OPTIONS)[number];
 
@@ -158,10 +159,48 @@ function updateHourCycle(format: string, hourCycle: HourCycle): string {
 }
 
 const SettingsPanel = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 4px 0 8px 0;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: ${props => props.theme.panelContentBackground};
+  border-top: 1px solid ${props => props.theme.panelBorderColor};
+  border-bottom: 1px solid ${props => props.theme.panelBorderColor};
   gap: 12px;
+
+  .timezone-field-selector {
+    max-width: 100%;
+  }
+
+  .timezone-field-selector .item-selector__dropdown {
+    ${props => props.theme.secondaryInput};
+  }
+`;
+
+const HideSettingsButton = styled(IconRoundSmall)`
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: ${props => props.theme.panelContentBackground};
+  color: ${props => props.theme.textColor};
+
+  &:hover {
+    background: ${props => props.theme.panelBackgroundHover};
+    color: ${props => props.theme.panelHeaderIconHover};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+    outline-offset: -2px;
+  }
 `;
 
 const AxisSection = styled.div`
@@ -170,13 +209,12 @@ const AxisSection = styled.div`
   gap: 6px;
 `;
 
-const AxisHeader = styled.div`
+const AxisHeader = styled(PanelLabelBold).attrs({as: 'div'})`
   display: flex;
   align-items: center;
   gap: 4px;
   color: ${props => props.theme.textColor};
-  font-size: 11px;
-  font-weight: 600;
+  margin-bottom: 0;
   white-space: nowrap;
 `;
 
@@ -184,54 +222,42 @@ const AxisRow = styled.div`
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 25px;
+  gap: 12px;
 `;
 
 const FieldBlock = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  min-width: min(${SELECTOR_WIDTH}, 100%);
+  max-width: 100%;
 `;
 
-const FieldLabel = styled.span`
-  color: ${props => props.theme.labelColor};
-  font-size: 10px;
-  font-weight: 400;
+const FieldLabel = styled(PanelLabel).attrs({as: 'span'})`
   white-space: nowrap;
 `;
 
 const FieldValue = styled.span`
   color: ${props => props.theme.textColor};
-  font-size: 11px;
-  font-weight: 500;
-  width: 160px;
-  height: 28px;
-  display: flex;
-  align-items: center;
+  font-size: ${props => props.theme.inputFontSize};
+  font-weight: ${props => props.theme.inputFontWeight};
+  width: ${SELECTOR_WIDTH};
+  max-width: 100%;
+  height: ${props => props.theme.inputBoxHeight};
+  line-height: ${props => props.theme.inputBoxHeight};
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const SelectorWrapper = styled.div`
   width: ${SELECTOR_WIDTH};
-
-  .item-selector__dropdown {
-    background: ${props => props.theme.secondaryInputBgd};
-    border-color: ${props => props.theme.secondaryInputBorderColor};
-    height: 28px;
-    padding: 2px 8px;
-    font-size: 11px;
-  }
+  max-width: 100%;
 `;
 
 const FieldSelectorWrapper = styled.div`
-  width: 160px;
-
-  .item-selector__dropdown {
-    background: ${props => props.theme.secondaryInputBgd};
-    border-color: ${props => props.theme.secondaryInputBorderColor};
-    height: 28px;
-    padding: 2px 8px;
-    font-size: 11px;
-  }
+  width: ${SELECTOR_WIDTH};
+  max-width: 100%;
 `;
 
 type StepInputProps = {
@@ -239,28 +265,19 @@ type StepInputProps = {
   $fullWidth?: boolean;
 };
 
-const StepInput = styled.input<StepInputProps>`
+const StepInput = styled(Input)<StepInputProps>`
   width: ${props => (props.$fullWidth ? SELECTOR_WIDTH : '48px')};
-  height: 28px;
-  padding: 2px 8px;
-  font-size: 11px;
-  border-radius: 4px;
-  border: 1px solid
-    ${props => (props.$hasError ? props.theme.errorColor : props.theme.secondaryInputBorderColor)};
-  background: ${props => props.theme.secondaryInputBgd};
-  color: ${props => props.theme.textColor};
-  outline: none;
-
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+  min-width: 0;
+  max-width: 100%;
+  padding: ${props =>
+    props.$fullWidth ? props.theme.inputPadding : props.theme.inputPaddingSmall};
+  border-color: ${props =>
+    props.$hasError ? props.theme.errorColor : props.theme.secondaryInputBorderColor};
   -moz-appearance: textfield;
 
   &:focus {
     border-color: ${props =>
-      props.$hasError ? props.theme.errorColor : props.theme.primaryBtnBgd};
+      props.$hasError ? props.theme.errorColor : props.theme.secondaryInputBorderActiveColor};
   }
 `;
 
@@ -269,34 +286,32 @@ type UnitSelectorWrapperProps = {
 };
 
 const UnitSelectorWrapper = styled.div<UnitSelectorWrapperProps>`
-  width: 110px;
+  width: 108px;
+  min-width: 0;
+  max-width: 100%;
 
   .item-selector__dropdown {
-    background: ${props => props.theme.secondaryInputBgd};
     border-color: ${props =>
       props.$hasError ? props.theme.errorColor : props.theme.secondaryInputBorderColor};
-    height: 28px;
-    padding: 2px 8px;
-    font-size: 11px;
   }
 `;
 
 const IntervalGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 `;
 
 const ErrorMessage = styled.span`
   color: ${props => props.theme.errorColor};
-  font-size: 10px;
+  font-size: ${props => props.theme.inputFontSize};
   white-space: nowrap;
 `;
 
 const SwitchBlock = styled.div`
   display: flex;
   align-items: center;
-  height: 28px;
+  height: ${props => props.theme.inputBoxHeight};
 `;
 
 type DisabledOverlayProps = {
@@ -304,6 +319,8 @@ type DisabledOverlayProps = {
 };
 
 const DisabledBlock = styled.div<DisabledOverlayProps>`
+  min-width: 0;
+  max-width: 100%;
   opacity: ${props => (props.$disabled ? 0.4 : 1)};
   pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
 `;
@@ -311,6 +328,7 @@ const DisabledBlock = styled.div<DisabledOverlayProps>`
 const ColorSelectorWrap = styled.div`
   position: relative;
   width: 180px;
+  max-width: 100%;
 
   .color-selector__dropdown {
     position: absolute;
@@ -381,6 +399,7 @@ function colorRangeFromColorUI(
 }
 
 export type TimeWidgetSettingsProps = {
+  onClose?: () => void;
   filter: TimeRangeFilter | RangeFilter;
   datasets: Datasets;
   setFilterPlot: (newProp: any, valueIndex?: number) => void;
@@ -404,6 +423,7 @@ function TimeWidgetSettingsFactory(
   ColorSelector: ReturnType<typeof ColorSelectorFactory>
 ) {
   const TimeWidgetSettings: React.FC<TimeWidgetSettingsProps> = ({
+    onClose,
     filter,
     datasets,
     setFilterPlot,
@@ -621,6 +641,8 @@ function TimeWidgetSettingsFactory(
         ? timeFilter.timeFormat
         : timeFilter?.defaultTimeFormat) || DEFAULT_TIME_FORMAT;
     const selectedTimeFormat = getHourCycle(effectiveTimeFormat) || getLocaleHourCycle();
+    const xAxisName = (Array.isArray(filter.name) ? filter.name[0] : filter.name) || '';
+    const xAxisLabel = `${xAxisName}${filter.endName?.[0] ? ` → ${filter.endName[0]}` : ''}`;
 
     const handleTimeFormatChange = useCallback(
       (value: unknown) => {
@@ -633,22 +655,30 @@ function TimeWidgetSettingsFactory(
 
     return (
       <SettingsPanel className="time-widget--settings">
+        {onClose ? (
+          <HideSettingsButton
+            as="button"
+            type="button"
+            className="time-widget__hide-settings"
+            aria-label="Hide settings"
+            title="Hide settings"
+            onClick={onClose}
+          >
+            <ArrowDown height="18px" />
+          </HideSettingsButton>
+        ) : null}
         <AxisSection>
-          <AxisHeader>
-            <ArrowRight height="10px" />X Axis
-          </AxisHeader>
+          <AxisHeader>X Axis</AxisHeader>
           <AxisRow>
             <FieldBlock>
-              <FieldLabel>Select Field</FieldLabel>
-              <FieldValue>
-                {Array.isArray(filter.name) ? filter.name[0] : filter.name}
-                {filter.endName?.[0] ? ` → ${filter.endName[0]}` : ''}
-              </FieldValue>
+              <FieldLabel>Field</FieldLabel>
+              <FieldValue title={xAxisLabel}>{xAxisLabel}</FieldValue>
             </FieldBlock>
             <FieldBlock>
               <FieldLabel>{isTimeFilter ? 'Interval' : 'Bin size'}</FieldLabel>
               <IntervalGroup>
                 <StepInput
+                  secondary
                   type="number"
                   data-testid={isTimeFilter ? undefined : 'numeric-bin-size'}
                   min={isTimeFilter ? 1 : filter.step}
@@ -663,6 +693,7 @@ function TimeWidgetSettingsFactory(
                 {isTimeFilter ? (
                   <UnitSelectorWrapper $hasError={intervalTooSmall}>
                     <ItemSelector
+                      inputTheme="secondary"
                       selectedItems={unitValue}
                       options={INTERVAL_UNITS}
                       multiSelect={false}
@@ -693,7 +724,7 @@ function TimeWidgetSettingsFactory(
                     aria-labelledby="time-widget-time-format-label"
                   >
                     <ItemSelector
-                      size="small"
+                      inputTheme="secondary"
                       selectedItems={selectedTimeFormat}
                       options={TIME_FORMAT_OPTIONS}
                       multiSelect={false}
@@ -711,14 +742,13 @@ function TimeWidgetSettingsFactory(
           ) : null}
         </AxisSection>
         <AxisSection>
-          <AxisHeader>
-            <ArrowRight height="10px" />Y Axis
-          </AxisHeader>
+          <AxisHeader>Y Axis</AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Select Field</FieldLabel>
               <FieldSelectorWrapper>
                 <FieldSelector
+                  inputTheme="secondary"
                   fields={yAxisFields}
                   placement="top"
                   id="selected-time-widget-field"
@@ -735,6 +765,7 @@ function TimeWidgetSettingsFactory(
                 <FieldLabel>Aggregation</FieldLabel>
                 <SelectorWrapper data-testid="time-widget-aggregation">
                   <ItemSelector
+                    inputTheme="secondary"
                     selectedItems={currentAggregation}
                     options={aggregationOptions}
                     multiSelect={false}
@@ -765,7 +796,6 @@ function TimeWidgetSettingsFactory(
         {filter.yAxis ? (
           <AxisSection className="time-widget__group-by">
             <AxisHeader>
-              <ArrowRight height="10px" />
               <FormattedMessage id="filterManager.groupBy" />
             </AxisHeader>
             <AxisRow>
@@ -775,6 +805,7 @@ function TimeWidgetSettingsFactory(
                 </FieldLabel>
                 <FieldSelectorWrapper>
                   <FieldSelector
+                    inputTheme="secondary"
                     fields={groupByFields}
                     placement="top"
                     id="time-widget-group-by-field"
@@ -792,6 +823,7 @@ function TimeWidgetSettingsFactory(
                   </FieldLabel>
                   <SelectorWrapper>
                     <ItemSelector
+                      inputTheme="secondary"
                       selectedItems={
                         groupBy?.numGroups === PLOT_NUM_GROUPS_ALL
                           ? MAX_PLOT_NUM_GROUPS

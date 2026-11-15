@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import styled from 'styled-components';
+import styled, {DefaultTheme, ThemeProvider} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import {
   ANIMATION_WINDOW,
@@ -34,12 +34,69 @@ import TimeWidgetSettingsFactory from './time-widget-settings';
 import {rangesEqual, clampRange, clampWindowToDomain} from '../common/timeline-helpers';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
-  padding: 6px 32px 24px 32px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  .time-widget__hide-settings {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover .time-widget__hide-settings,
+  .time-widget__hide-settings:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (hover: none) {
+    .time-widget__hide-settings {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .animation-widget--inner .animation-control__time-slider {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    min-width: 0;
+    height: auto;
+  }
+
+  .animation-control__slider {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+
+    .kg-range-slider__bar {
+      background-color: ${props => props.theme.histogramFillInRange};
+    }
+
+    .kg-range-slider__bar--active {
+      background-color: ${props => props.theme.sliderBarHoverColor};
+    }
+  }
+
+  .animation-control__time-domain {
+    grid-row: 2;
+    position: static;
+    color: ${props => props.theme.textColor};
+    font-size: ${props => props.theme.selectFontSize};
+    line-height: 16px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    &.domain-end {
+      text-align: right;
+    }
+  }
 `;
 
 const TimelineSection = styled.div`
   position: relative;
-  margin-top: 22px;
+  margin: 4px 12px 12px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -50,11 +107,30 @@ const TimelineContainer = styled.div`
   touch-action: none;
 `;
 
+// The playback row already separates the chart from the title. Remove the
+// legacy top plot margin and its reserved height only within this widget.
+const timelinePlotTheme = (theme: DefaultTheme) => ({
+  ...theme,
+  rangePlotMargin: {...theme.rangePlotMargin, top: 0},
+  rangePlotMarginLarge: {...theme.rangePlotMarginLarge, top: 0},
+  rangePlotContainerH: Math.max(
+    theme.rangePlotH,
+    theme.rangePlotContainerH - theme.rangePlotMargin.top
+  ),
+  rangePlotContainerHLarge: Math.max(
+    theme.rangePlotHLarge,
+    theme.rangePlotContainerHLarge - theme.rangePlotMarginLarge.top
+  ),
+  rangePlotContainerHLargePalm: Math.max(
+    theme.rangePlotHLargePalm,
+    theme.rangePlotContainerHLargePalm - theme.rangePlotMarginLarge.top
+  )
+});
+
 const SeriesLegend = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  margin-top: -8px;
 `;
 
 const SeriesLegendItem = styled.span`
@@ -62,8 +138,8 @@ const SeriesLegendItem = styled.span`
   align-items: center;
   gap: 4px;
   color: ${props => props.theme.textColor};
-  font-size: 10px;
-  line-height: 14px;
+  font-size: ${props => props.theme.selectFontSize};
+  line-height: 16px;
 `;
 
 const SeriesSwatch = styled.span.withConfig({shouldForwardProp})<{$color: string}>`
@@ -75,13 +151,10 @@ const SeriesSwatch = styled.span.withConfig({shouldForwardProp})<{$color: string
 `;
 
 const TimelineStatusBar = styled.div`
-  position: absolute;
-  top: -32px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 6px 12px;
   font-size: 11px;
   color: ${props => props.theme.subtextColor};
 
@@ -93,7 +166,7 @@ const TimelineStatusBar = styled.div`
 const TimelineStatusRange = styled.span`
   color: ${props => props.theme.textColorHl || props.theme.textColor};
   font-weight: 500;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 `;
 
 TimeWidgetFactory.deps = [
@@ -115,7 +188,6 @@ function TimeWidgetFactory(
     layers,
     index,
     readOnly,
-    showTimeDisplay,
     setFilterAnimationTime,
     onClose,
     onToggleMinify,
@@ -131,6 +203,7 @@ function TimeWidgetFactory(
     timeline
   }: TimeWidgetProps) => {
     const [showSettings, setShowSettings] = useState(false);
+    const widgetRef = useRef<HTMLDivElement>(null);
     const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
     const timeFilter = isTimeFilter ? filter : null;
     const filterTimeline = useMemo(
@@ -147,6 +220,7 @@ function TimeWidgetFactory(
     const _exportAnimation = useCallback(() => exportAnimation?.(), [exportAnimation]);
 
     const isMinified = useMemo(() => filter.view === FILTER_VIEW_TYPES.minified, [filter]);
+    const timeDisplayConfig = isMinified ? filterTimeline : timeFilter;
 
     const _setFilterAnimationWindow = useCallback(
       animationWindow => setFilterAnimationWindow({id: filter.id, animationWindow}),
@@ -175,6 +249,11 @@ function TimeWidgetFactory(
 
     const _onToggleSettings = useCallback(() => {
       setShowSettings(prev => !prev);
+    }, []);
+
+    const _hideSettings = useCallback(() => {
+      setShowSettings(false);
+      widgetRef.current?.querySelector<HTMLButtonElement>('button.time-widget-settings')?.focus();
     }, []);
 
     const timeRangeSlideProps = useMemo(
@@ -536,17 +615,42 @@ function TimeWidgetFactory(
     );
 
     return (
-      <TimeBottomWidgetInner className="bottom-widget--inner">
+      <TimeBottomWidgetInner className="bottom-widget--inner" ref={widgetRef}>
         <TimeWidgetTop
           filter={filter}
           readOnly={readOnly}
           onClose={onClose}
           onToggleMinify={onToggleMinify}
           onToggleSettings={_onToggleSettings}
+          settingsOpen={showSettings && !isMinified}
           isMinified={isMinified}
+          rangeDisplay={
+            <FloatingTimeDisplay
+              currentTime={isMinified ? filterTimeline.value : filter.value}
+              defaultTimeFormat={timeDisplayConfig?.defaultTimeFormat}
+              timeFormat={timeDisplayConfig?.timeFormat}
+              timezone={timeDisplayConfig?.timezone}
+              formatValue={isTimeFilter ? undefined : formatNumeric}
+              displayLabel={
+                isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
+              }
+            />
+          }
+          playbackControls={{
+            isAnimatable,
+            isAnimating: filter.isAnimating,
+            speed: isMinified ? filterTimeline.speed : filter.speed,
+            animationWindow: isMinified ? filterTimeline.animationWindow : filter.animationWindow,
+            toggleAnimation: _toggleAnimation,
+            resetAnimation,
+            updateAnimationSpeed: _updateAnimationSpeed,
+            setFilterAnimationWindow: _setFilterAnimationWindow,
+            exportAnimation: exportAnimation ? _exportAnimation : undefined
+          }}
         />
         {showSettings && !isMinified ? (
           <TimeWidgetSettings
+            onClose={_hideSettings}
             filter={filter}
             datasets={datasets}
             setFilterPlot={_setFilterPlot}
@@ -585,37 +689,28 @@ function TimeWidgetFactory(
             ref={timelineContainerRef}
             data-testid="time-widget-timeline-container"
           >
-            <TimeRangeSlider
-              {...timeRangeSlideProps}
-              domain={sliderDomain}
-              onChange={timeSliderOnChange}
-              toggleAnimation={_toggleAnimation}
-              exportAnimation={_exportAnimation}
-              updateAnimationSpeed={_updateAnimationSpeed}
-              setFilterAnimationWindow={_setFilterAnimationWindow}
-              hideTimeTitle={showTimeDisplay}
-              resetAnimation={resetAnimation}
-              isAnimatable={isAnimatable}
-              setFilterPlot={_setFilterPlot}
-              animationConfig={animationConfig}
-              isMinified={isMinified}
-              timeline={filterTimeline}
-              formatValue={isTimeFilter ? undefined : formatNumeric}
-            />
+            <ThemeProvider theme={timelinePlotTheme}>
+              <TimeRangeSlider
+                {...timeRangeSlideProps}
+                showControls={false}
+                domain={sliderDomain}
+                onChange={timeSliderOnChange}
+                toggleAnimation={_toggleAnimation}
+                exportAnimation={_exportAnimation}
+                updateAnimationSpeed={_updateAnimationSpeed}
+                setFilterAnimationWindow={_setFilterAnimationWindow}
+                hideTimeTitle
+                resetAnimation={resetAnimation}
+                isAnimatable={isAnimatable}
+                setFilterPlot={_setFilterPlot}
+                animationConfig={animationConfig}
+                isMinified={isMinified}
+                timeline={filterTimeline}
+                formatValue={isTimeFilter ? undefined : formatNumeric}
+              />
+            </ThemeProvider>
           </TimelineContainer>
         </TimelineSection>
-        {showTimeDisplay ? (
-          <FloatingTimeDisplay
-            currentTime={filter.value}
-            defaultTimeFormat={timeFilter?.defaultTimeFormat}
-            timeFormat={timeFilter?.timeFormat}
-            timezone={timeFilter?.timezone}
-            formatValue={isTimeFilter ? undefined : formatNumeric}
-            displayLabel={
-              isTimeFilter ? undefined : Array.isArray(filter.name) ? filter.name[0] : filter.name
-            }
-          />
-        ) : null}
       </TimeBottomWidgetInner>
     );
   };

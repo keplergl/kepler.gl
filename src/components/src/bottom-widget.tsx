@@ -140,7 +140,8 @@ export default function BottomWidgetFactory(
         layer.config.visConfig.zarrAxis.kind !== 'off'
     );
 
-    // if animation control is showing, hide time display in time slider
+    // Preserve the legacy display flag for injected TimeWidget implementations.
+    // The default TimeWidget always shows its selected range inline.
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl =
       animatableLayer.length && readyToAnimation && !animationConfig.hideControl;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
@@ -37,10 +37,28 @@ const SliderWrapper = styled.div`
   `}
 `;
 
-const StyledSlider = styled(Slider)`
-  .kg-range-slider__bar {
-    // change colors
-  }
+const StyledSlider = styled(Slider)<{$rangeDraggable: boolean}>`
+  ${props =>
+    props.$rangeDraggable
+      ? `
+    .kg-range-slider__bar,
+    .kg-range-slider__bar:hover {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .kg-range-slider__bar::before {
+      content: '';
+      position: absolute;
+      inset: -6px 0;
+    }
+
+    .kg-range-slider__bar--active,
+    .kg-range-slider__bar--active:hover {
+      cursor: grabbing;
+    }
+  `
+      : ''}
 `;
 
 const StyledDomain = styled.div.attrs(props => ({
@@ -79,6 +97,7 @@ function TimelineSliderFactory() {
     formatValue
   }) => {
     const onThrottleUpdate = useMemo(() => throttle(setTimelineValue, 20), [setTimelineValue]);
+    useEffect(() => () => onThrottleUpdate.cancel(), [onThrottleUpdate]);
 
     const {step, domain, value, timeFormat, defaultTimeFormat, timezone, animationWindow, marks} =
       timeline;
@@ -102,6 +121,13 @@ function TimelineSliderFactory() {
       return [isRanged ? clamp(domain, value0) : value0, clamp(domain, value1)];
     }, [domain, isRanged, value0, value1]);
 
+    const dragStartOffset = useRef(0);
+    const onRangeDragStart = useCallback(() => {
+      // The slider measures movement from the visible edge. Keep the hidden
+      // part of a clipped start attached to it throughout controlled updates.
+      dragStartOffset.current = isRanged ? value0 - displayValue0 : 0;
+    }, [isRanged, value0, displayValue0]);
+
     const [onSlider0Change, onSlider1Change] = useMemo(() => {
       if (!domain) return [noop, noop];
       return [
@@ -118,6 +144,18 @@ function TimelineSliderFactory() {
               )
       ];
     }, [animationWindow, domain, isRanged, value0, value1, onThrottleUpdate]);
+
+    const onSliderBarChange = useCallback(
+      (nextStart: number) => {
+        if (!domain || !isRanged) return;
+        // Calendar bins can extend beyond the displayed domain. Preserve the
+        // selected duration, limiting it only when the entire window cannot fit.
+        const width = Math.min(value1 - value0, domain[1] - domain[0]);
+        const start = clamp([domain[0], domain[1] - width], nextStart + dragStartOffset.current);
+        onThrottleUpdate([start, start + width]);
+      },
+      [domain, isRanged, value0, value1, onThrottleUpdate]
+    );
 
     const timelineSliderStyle = useMemo(() => ({height: `${height}px`}), [height]);
 
@@ -139,6 +177,7 @@ function TimelineSliderFactory() {
     }, [domain, timezone, timeFormat, defaultTimeFormat, showDomainTimes, formatValue]);
 
     const requiresRangeSlider = isRanged && animationWindow !== ANIMATION_WINDOW.interval;
+    const rangeDraggable = enableBarDrag && requiresRangeSlider && Boolean(domain);
 
     return (
       <AnimationControlSlider
@@ -150,16 +189,22 @@ function TimelineSliderFactory() {
             <span>{timeStart}</span>
           </StyledDomain>
         ) : null}
-        <SliderWrapper className="animation-control__slider">
+        <SliderWrapper
+          className="animation-control__slider"
+          onMouseDownCapture={onRangeDragStart}
+          onTouchStartCapture={onRangeDragStart}
+        >
           <StyledSlider
+            $rangeDraggable={rangeDraggable}
             isRanged={requiresRangeSlider}
             step={step || undefined}
             minValue={domain ? domain[0] : 0}
             maxValue={domain ? domain[1] : 1}
-            enableBarDrag={enableBarDrag}
+            enableBarDrag={rangeDraggable}
             style={timelineSliderStyle}
             onSlider0Change={onSlider0Change}
             onSlider1Change={onSlider1Change}
+            onSliderBarChange={onSliderBarChange}
             value0={displayValue0}
             value1={displayValue1}
             marks={marks}

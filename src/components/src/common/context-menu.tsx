@@ -106,6 +106,7 @@ export function ContextMenuActionButton({action}: {action: ContextMenuAction}) {
       className={action.className}
       type="button"
       disabled={action.disabled}
+      aria-pressed={action.active}
       $active={action.active}
       $destructive={action.destructive}
       onClick={event => {

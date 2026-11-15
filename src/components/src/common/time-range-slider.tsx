@@ -25,6 +25,7 @@ type TimeRangeSliderProps = {
   isEnlarged?: boolean;
   isMinified?: boolean;
   hideTimeTitle?: boolean;
+  showControls?: boolean;
   isAnimating: boolean;
   timeFormat: string;
   timezone?: string | null;
@@ -118,6 +119,7 @@ export default function TimeRangeSliderFactory(
       isEnlarged,
       isMinified,
       hideTimeTitle,
+      showControls = true,
       isAnimating,
       resetAnimation,
       timeFormat,
@@ -187,9 +189,9 @@ export default function TimeRangeSliderFactory(
 
     const style = useMemo(
       () => ({
-        width: isEnlarged ? `calc(100% - ${width}px)` : '100%'
+        width: isEnlarged && showControls ? `calc(100% - ${width}px)` : '100%'
       }),
-      [isEnlarged, width]
+      [isEnlarged, showControls, width]
     );
 
     return (
@@ -214,6 +216,7 @@ export default function TimeRangeSliderFactory(
           {!isMinified ? (
             <div className="timeline-container" style={style}>
               <RangeSlider
+                filter={filter}
                 range={byInterval ? sliderRange : domain}
                 value0={byInterval && sliderRange ? sliderRange[0] : value[0]}
                 value1={byInterval ? value[0] : value[1]}
@@ -248,12 +251,13 @@ export default function TimeRangeSliderFactory(
               setAnimationWindow={setFilterAnimationWindow}
               exportAnimation={exportAnimation}
               showTimeDisplay={false}
+              showControls={showControls}
               timeline={timeline}
               filter={filter}
               formatTimelineValue={formatValue}
             />
           )}
-          {isEnlarged && !isMinified ? (
+          {showControls && isEnlarged && !isMinified ? (
             <PlaybackControls
               isAnimatable={isAnimatable}
               width={width}
