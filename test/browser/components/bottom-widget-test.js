@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import Window from 'global/window';
 import {render, fireEvent} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
@@ -82,6 +83,117 @@ test('Components -> BottomWidget -> skips unchanged parent renders and keeps upd
   view.rerender(tree({...props, filters: [], datasets: {}}));
   t.equal(view.queryByRole('button'), null, 'handles the filter being removed');
   view.unmount();
+  t.end();
+});
+
+test('Components -> BottomWidget -> legend changes do not reserve timeline space', t => {
+  const matchMedia = Window.matchMedia;
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  let view;
+  try {
+    for (const portable of [false, true]) {
+      Window.matchMedia = query => ({...matchMedia(query), matches: portable});
+      const props = {
+        ...defaultProps,
+        ...StateWFilters.visState,
+        containerW: portable ? 600 : 1000,
+        uiState: {...defaultProps.uiState, activeSidePanel: 'layer'}
+      };
+      const tree = legend => (
+        <ThemeProvider theme={theme}>
+          <Widget
+            {...props}
+            uiState={{
+              ...props.uiState,
+              mapControls: {...props.uiState.mapControls, mapLegend: {show: true, ...legend}}
+            }}
+          />
+        </ThemeProvider>
+      );
+      view = render(tree({active: false}));
+      const widget = view.container.querySelector('.bottom-widget--container');
+      const initialStyle = window.getComputedStyle(widget);
+      const initialWidth = initialStyle.width;
+      const initialMargin = initialStyle.marginRight;
+      t.equal(
+        initialWidth,
+        `${portable ? props.containerW : props.containerW - props.sidePanelWidth}px`,
+        'starts with the available width for the current layout'
+      );
+      for (const [action, legend] of [
+        ['opening', {active: true}],
+        [
+          'moving',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 10, anchorX: 'left', anchorY: 'top'}}
+          }
+        ],
+        ['closing', {active: false}]
+      ]) {
+        view.rerender(tree(legend));
+        const style = window.getComputedStyle(widget);
+        t.equal(style.width, initialWidth, `${action} legend preserves timeline width`);
+        t.equal(style.marginRight, initialMargin, `${action} legend preserves timeline offset`);
+      }
+      view.unmount();
+      view = null;
+    }
+  } finally {
+    view?.unmount();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> updates available space on resize and sidebar changes', t => {
+  const matchMedia = Window.matchMedia;
+  let portable = false;
+  Window.matchMedia = query => ({...matchMedia(query), matches: portable});
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  const props = {...defaultProps, ...StateWFilters.visState};
+  const tree = (containerW, activeSidePanel = 'layer') => (
+    <ThemeProvider theme={theme}>
+      <Widget {...props} containerW={containerW} uiState={{...props.uiState, activeSidePanel}} />
+    </ThemeProvider>
+  );
+  let view;
+  try {
+    view = render(tree(1000));
+    const width = () => window.getComputedStyle(view.container.firstChild).width;
+    t.equal(width(), '700px', 'desktop reserves space for the open sidebar');
+    portable = true;
+    view.rerender(tree(600));
+    t.equal(width(), '600px', 'resizing to portable uses the full-width portable layout');
+    portable = false;
+    view.rerender(tree(900));
+    t.equal(width(), '600px', 'resizing back to desktop reserves sidebar space again');
+    view.rerender(tree(900, null));
+    t.equal(width(), '900px', 'closing the sidebar releases its space');
+    view.rerender(tree(900));
+    t.equal(width(), '600px', 'reopening the sidebar reserves its space');
+    view.rerender(tree(200));
+    t.equal(
+      width(),
+      '0px',
+      'an embedded container narrower than the sidebar has no negative width'
+    );
+  } finally {
+    view?.unmount();
+    Window.matchMedia = matchMedia;
+  }
   t.end();
 });
 

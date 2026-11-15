@@ -90,8 +90,7 @@ export default function BottomWidgetFactory(
       uiState,
       sidePanelWidth,
       layers,
-      rootRef,
-      theme
+      rootRef
     } = props;
 
     const {activeSidePanel, readOnly} = uiState;
@@ -106,18 +105,10 @@ export default function BottomWidgetFactory(
       [filters]
     );
 
-    const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
-    const isLegendPinned =
-      uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
-    const spaceForLegendWidth = isLegendPinned
-      ? theme.mapControl?.width +
-        theme.mapControl?.mapLegend?.pinned?.right * 2 -
-        theme.bottomWidgetPaddingRight
-      : 0;
-
-    const enlargedFilterWidth = useMemo(
-      () => (!isMobile && isOpen ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth,
-      [isMobile, isOpen, containerW, sidePanelWidth, spaceForLegendWidth]
+    const isMobile = hasPortableWidth(breakPointValues);
+    const enlargedFilterWidth = Math.max(
+      0,
+      !isMobile && isOpen ? containerW - sidePanelWidth : containerW
     );
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
@@ -185,7 +176,6 @@ export default function BottomWidgetFactory(
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
-        style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
         ref={rootRef}
