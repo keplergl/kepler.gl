@@ -268,7 +268,7 @@ describe('compact timeline playback controls', () => {
         />
       );
       expect(loop).not.toBeChecked();
-      expect(screen.getByText('Stop at end')).toBeInTheDocument();
+      expect(screen.queryByText('Stop at end')).not.toBeInTheDocument();
       expect(mode).toHaveTextContent('Cumulative');
       expect(mode).toHaveAccessibleName('Cumulative');
       await user.click(loop);

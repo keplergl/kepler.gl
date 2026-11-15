@@ -258,7 +258,6 @@ const LoopSetting = styled.div`
   padding: 10px 8px;
   border-top: 1px solid ${props => props.theme.dropdownListHighlightBg};
   background: ${props => props.theme.dropdownListBgd};
-  color: ${props => props.theme.subtextColor};
   font-size: 12px;
 `;
 
@@ -685,9 +684,6 @@ function TimeWidgetTopFactory(
                       disabled={!playbackControls.isAnimatable}
                       onChange={event => playbackControls.setAnimationLoop?.(event.target.checked)}
                     />
-                    {playbackControls.animationLoop === false ? (
-                      <div>{intl.formatMessage({id: 'tooltip.stopAtEnd'})}</div>
-                    ) : null}
                   </LoopSetting>
                 ) : null}
               </>
