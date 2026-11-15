@@ -11,6 +11,7 @@ import {createSelector} from 'reselect';
 import ItemSelector from '../../common/item-selector/item-selector';
 import FieldSelectorFactory from '../../common/field-selector';
 import InfoHelperFactory from '../../common/info-helper';
+import TippyTooltip from '../../common/tippy-tooltip';
 import Switch from '../../common/switch';
 import {
   Input,
@@ -389,9 +390,15 @@ const BitmapImageSourceSection: React.FC<BitmapImageSourceProps> = ({dataset, on
       />
       <BitmapDropZoneWrapper>
         {isCurrentDataUri && (
-          <BitmapClearButton onClick={onClearLocal} title="Clear image">
-            ✕
-          </BitmapClearButton>
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Clear image</span>}
+          >
+            <BitmapClearButton onClick={onClearLocal} aria-label="Clear image">
+              ✕
+            </BitmapClearButton>
+          </TippyTooltip>
         )}
         <BitmapDropZone
           $isDragging={isDragging}

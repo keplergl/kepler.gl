@@ -266,32 +266,32 @@ describe('annotation toolbar and link editing', () => {
   });
 
   it('formats only the selected text and toggles the same format off', async () => {
-    const {editor, getByTitle} = mountToolbar();
+    const {editor, getByRole} = mountToolbar();
     for (const [title, format] of [
       ['Bold', 'bold'],
       ['Italic', 'italic'],
       ['Underline', 'underline']
     ] as const) {
       await act(async () => {
-        fireEvent.click(getByTitle(title));
+        fireEvent.click(getByRole('button', {name: title}));
       });
       expect(readText(editor).map(node => node[format])).toEqual([true, false]);
       await act(async () => {
-        fireEvent.click(getByTitle(title));
+        fireEvent.click(getByRole('button', {name: title}));
       });
       expect(readText(editor).map(node => node[format])).toEqual([false, false]);
     }
   });
 
   it('changes selected font styles and background presets without touching other text', async () => {
-    const {editor, getAllByRole, getByTitle, getByText, queryByText} = mountToolbar();
+    const {editor, getAllByRole, getByRole, getByText, queryByText} = mountToolbar();
     await act(async () => {
       fireEvent.change(getAllByRole('combobox')[0], {target: {value: 'Georgia'}});
     });
     await act(async () => {
       fireEvent.change(getAllByRole('combobox')[1], {target: {value: '24px'}});
     });
-    fireEvent.click(getByTitle('Background Color'));
+    fireEvent.click(getByRole('button', {name: 'Background Color'}));
     await act(async () => {
       fireEvent.click(getByText('White'));
     });
@@ -300,7 +300,7 @@ describe('annotation toolbar and link editing', () => {
     expect(readText(editor)[0].style).toContain('font-size: 24px');
     expect(readText(editor)[1].style).toBe('color: blue');
     expect(queryByText('No fill')).toBeNull();
-    fireEvent.click(getByTitle('Background Color'));
+    fireEvent.click(getByRole('button', {name: 'Background Color'}));
     await act(async () => {
       fireEvent.click(getByText('No fill'));
     });
@@ -308,34 +308,34 @@ describe('annotation toolbar and link editing', () => {
   });
 
   it('applies whole-annotation styles when read-only without leaving editing enabled', async () => {
-    const {editor, getByTitle, getByText} = mountToolbar(false);
+    const {editor, getByRole, getByText} = mountToolbar(false);
     act(() => editor.update(() => $setSelection(null), {discrete: true}));
-    fireEvent.click(getByTitle('Text Color'));
+    fireEvent.click(getByRole('button', {name: 'Text Color'}));
     await act(async () => {
       fireEvent.click(getByText('Black'));
     });
     expect(readText(editor).every(node => node.style.includes('color: #000000'))).toBe(true);
     expect(editor.isEditable()).toBe(false);
-    expect((getByTitle('Insert Link') as HTMLButtonElement).disabled).toBe(true);
+    expect((getByRole('button', {name: 'Insert Link'}) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('dismisses an unfinished color choice and reopens the preset chooser', () => {
-    const {getByTitle, getByText, queryByText} = mountToolbar();
-    fireEvent.click(getByTitle('Text Color'));
+    const {getByRole, getByText, queryByText} = mountToolbar();
+    fireEvent.click(getByRole('button', {name: 'Text Color'}));
     expect(getByText('White')).toBeTruthy();
     fireEvent.mouseDown(document.body);
     expect(queryByText('White')).toBeNull();
-    fireEvent.click(getByTitle('Text Color'));
+    fireEvent.click(getByRole('button', {name: 'Text Color'}));
     expect(getByText('White')).toBeTruthy();
   });
 
   it('adds and removes links through the toolbar', async () => {
-    const {editor, getByTitle} = mountToolbar();
-    fireEvent.click(getByTitle('Insert Link'));
+    const {editor, getByRole} = mountToolbar();
+    fireEvent.click(getByRole('button', {name: 'Insert Link'}));
     await waitFor(() =>
       expect(required(editor.getRootElement()).querySelector('a')).not.toBeNull()
     );
-    fireEvent.click(getByTitle('Insert Link'));
+    fireEvent.click(getByRole('button', {name: 'Insert Link'}));
     await waitFor(() => expect(required(editor.getRootElement()).querySelector('a')).toBeNull());
     expect(
       readText(editor)

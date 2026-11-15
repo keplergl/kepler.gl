@@ -5,6 +5,7 @@ import React, {useCallback, useContext, useMemo} from 'react';
 import styled, {useTheme} from 'styled-components';
 import {MapViewStateContext, MapViewStateContextType} from '../map-view-state-context';
 import {MapControlButton} from '../common/styled-components';
+import TippyTooltip from '../common/tippy-tooltip';
 import {MapState} from '@kepler.gl/types';
 import {MapStateActions} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -111,61 +112,79 @@ export default function MapNavigationControlFactory() {
     return (
       <StyledMapNavigationControl className="map-navigation-control">
         <NavButtonGroup>
-          <NavButton
-            $isFirst
-            onClick={handleZoomIn}
-            title="Zoom in"
-            className="map-navigation-control__zoom-in"
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Zoom in</span>}
           >
-            <svg
-              fill="none"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              stroke="currentColor"
+            <NavButton
+              $isFirst
+              onClick={handleZoomIn}
+              aria-label="Zoom in"
+              className="map-navigation-control__zoom-in"
             >
-              <path d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </NavButton>
-          <NavButton
-            onClick={handleZoomOut}
-            title="Zoom out"
-            className="map-navigation-control__zoom-out"
+              <svg
+                fill="none"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+              >
+                <path d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </NavButton>
+          </TippyTooltip>
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Zoom out</span>}
           >
-            <svg
-              fill="none"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              stroke="currentColor"
+            <NavButton
+              onClick={handleZoomOut}
+              aria-label="Zoom out"
+              className="map-navigation-control__zoom-out"
             >
-              <path d="M19.5 12h-15" />
-            </svg>
-          </NavButton>
+              <svg
+                fill="none"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+              >
+                <path d="M19.5 12h-15" />
+              </svg>
+            </NavButton>
+          </TippyTooltip>
         </NavButtonGroup>
         {mapState.dragRotate ? (
-          <MapControlButton
-            onClick={handleCompassClick}
-            title="Reset bearing/pitch"
-            className="map-navigation-control__compass"
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Reset bearing/pitch</span>}
           >
-            <div style={{transform: `rotateX(${rotation.pitch}deg)`}}>
-              <svg fill="none" width="18" height="18" viewBox="0 0 16 16">
-                <g transform={`rotate(${rotation.bearing},8,8)`}>
-                  <path
-                    d="M5 8.00006L7.99987 0L10.9997 8.00006H5Z"
-                    fill={theme.notificationColors?.error || '#F05C44'}
-                  />
-                  <path
-                    d="M11.0002 7.99994L8.00038 16L5.00051 7.99994L11.0002 7.99994Z"
-                    fill="currentColor"
-                  />
-                </g>
-              </svg>
-            </div>
-          </MapControlButton>
+            <MapControlButton
+              onClick={handleCompassClick}
+              aria-label="Reset bearing/pitch"
+              className="map-navigation-control__compass"
+            >
+              <div style={{transform: `rotateX(${rotation.pitch}deg)`}}>
+                <svg fill="none" width="18" height="18" viewBox="0 0 16 16">
+                  <g transform={`rotate(${rotation.bearing},8,8)`}>
+                    <path
+                      d="M5 8.00006L7.99987 0L10.9997 8.00006H5Z"
+                      fill={theme.notificationColors?.error || '#F05C44'}
+                    />
+                    <path
+                      d="M11.0002 7.99994L8.00038 16L5.00051 7.99994L11.0002 7.99994Z"
+                      fill="currentColor"
+                    />
+                  </g>
+                </svg>
+              </div>
+            </MapControlButton>
+          </TippyTooltip>
         ) : null}
       </StyledMapNavigationControl>
     );

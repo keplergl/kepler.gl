@@ -5,6 +5,7 @@ import React from 'react';
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import {Play, Pause, Reset} from '../../common/icons';
+import TippyTooltip from '../../common/tippy-tooltip';
 import {CameraIconButton} from './camera-panel-header';
 import type {CameraTourPlaybackContext} from './camera-tour-playback-provider';
 
@@ -111,24 +112,38 @@ export default function CameraTourPlaybackControls({
     `${intl.formatNumber(time / 1000, {maximumFractionDigits: 2})} s`;
   return (
     <Timeline className={className}>
-      <CameraTourActionButton
-        type="button"
-        aria-label={playback.playing ? message('pause', 'Pause') : message('play', 'Play')}
-        title={playback.playing ? message('pause', 'Pause') : message('play', 'Play')}
-        disabled={disabled || !playback.duration}
-        onClick={playback.playing ? playback.pause : playback.play}
+      <TippyTooltip
+        placement="top"
+        delay={[500, 0]}
+        render={() => (
+          <span role="tooltip">
+            {playback.playing ? message('pause', 'Pause') : message('play', 'Play')}
+          </span>
+        )}
       >
-        {playback.playing ? <Pause height="16px" /> : <Play height="16px" />}
-      </CameraTourActionButton>
-      <CameraTourActionButton
-        type="button"
-        aria-label={message('restart', 'Restart')}
-        title={message('restart', 'Restart')}
-        disabled={disabled}
-        onClick={() => playback.seek(0)}
+        <CameraTourActionButton
+          type="button"
+          aria-label={playback.playing ? message('pause', 'Pause') : message('play', 'Play')}
+          disabled={disabled || !playback.duration}
+          onClick={playback.playing ? playback.pause : playback.play}
+        >
+          {playback.playing ? <Pause height="16px" /> : <Play height="16px" />}
+        </CameraTourActionButton>
+      </TippyTooltip>
+      <TippyTooltip
+        placement="top"
+        delay={[500, 0]}
+        render={() => <span role="tooltip">{message('restart', 'Restart')}</span>}
       >
-        <Reset height="14px" />
-      </CameraTourActionButton>
+        <CameraTourActionButton
+          type="button"
+          aria-label={message('restart', 'Restart')}
+          disabled={disabled}
+          onClick={() => playback.seek(0)}
+        >
+          <Reset height="14px" />
+        </CameraTourActionButton>
+      </TippyTooltip>
       <Scrubber
         $progress={playback.duration ? (playback.elapsed / playback.duration) * 100 : 0}
         type="range"

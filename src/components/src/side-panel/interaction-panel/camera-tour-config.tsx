@@ -42,6 +42,7 @@ import {Hint} from './zoom-opacity-config';
 import Portaled from '../../common/portaled';
 import Switch from '../../common/switch';
 import {ContextMenu} from '../../common/context-menu';
+import TippyTooltip from '../../common/tippy-tooltip';
 
 // Keep transient text local so clearing or typing a decimal never writes an
 // invalid duration to the saved tour. Blur restores the last accepted value.
@@ -415,38 +416,43 @@ function DraggableStopMarker({
         zIndex: isDragging ? 4 : isOver ? 3 : selected ? 2 : 1
       }}
     >
-      <StopMarker
-        {...listeners}
-        ref={node => {
-          setNodeRef(node);
-          markerRef(node);
-        }}
-        id={`${panelId}-${stop.id}`}
-        type="button"
-        data-stop-id={stop.id}
-        data-dragging={isDragging || undefined}
-        $selected={selected}
-        $dragging={isDragging}
-        style={{transform: CSS.Translate.toString(transform)}}
-        data-drop-target={isOver || undefined}
-        aria-label={label}
-        title={label}
-        aria-pressed={selected}
-        aria-current={current ? 'step' : undefined}
-        aria-controls={`${panelId}-selected-stop`}
-        onClick={onSelect}
-        onKeyDown={event => {
-          if (!isDragging && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-            event.preventDefault();
-            onMoveFocus(event.key);
-          } else if (!isDragging && event.key === 'Enter') {
-            event.preventDefault();
-            onSelect();
-          }
-        }}
+      <TippyTooltip
+        placement="top"
+        delay={[500, 0]}
+        render={() => <span role="tooltip">{label}</span>}
       >
-        <span aria-hidden="true">{index + 1}</span>
-      </StopMarker>
+        <StopMarker
+          {...listeners}
+          ref={node => {
+            setNodeRef(node);
+            markerRef(node);
+          }}
+          id={`${panelId}-${stop.id}`}
+          type="button"
+          data-stop-id={stop.id}
+          data-dragging={isDragging || undefined}
+          $selected={selected}
+          $dragging={isDragging}
+          style={{transform: CSS.Translate.toString(transform)}}
+          data-drop-target={isOver || undefined}
+          aria-label={label}
+          aria-pressed={selected}
+          aria-current={current ? 'step' : undefined}
+          aria-controls={`${panelId}-selected-stop`}
+          onClick={onSelect}
+          onKeyDown={event => {
+            if (!isDragging && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+              event.preventDefault();
+              onMoveFocus(event.key);
+            } else if (!isDragging && event.key === 'Enter') {
+              event.preventDefault();
+              onSelect();
+            }
+          }}
+        >
+          <span aria-hidden="true">{index + 1}</span>
+        </StopMarker>
+      </TippyTooltip>
     </MarkerSlot>
   );
 }
@@ -792,27 +798,32 @@ export default function CameraTourConfig({
                             : message('holdSegment', 'Hold')
                         }: ${seconds(stop[field])}`;
                         return (
-                          <TimeSegment
+                          <TippyTooltip
                             key={`${stop.id}-${field}`}
-                            type="button"
-                            tabIndex={stop[field] > 0 ? 0 : -1}
-                            $travel={travel}
-                            $selected={selected?.id === stop.id}
-                            data-timing-stop-id={stop.id}
-                            data-timing-field={field}
-                            aria-label={label}
-                            title={label}
-                            aria-controls={`${panelId}-${field}`}
-                            style={{
-                              left: `${percent(
-                                starts[index] + (travel ? stop.holdDurationMs : 0)
-                              )}%`,
-                              width: `${percent(stop[field])}%`
-                            }}
-                            onClick={() => focusTiming(stop, field)}
+                            placement="top"
+                            delay={[500, 0]}
+                            render={() => <span role="tooltip">{label}</span>}
                           >
-                            {seconds(stop[field])}
-                          </TimeSegment>
+                            <TimeSegment
+                              type="button"
+                              tabIndex={stop[field] > 0 ? 0 : -1}
+                              $travel={travel}
+                              $selected={selected?.id === stop.id}
+                              data-timing-stop-id={stop.id}
+                              data-timing-field={field}
+                              aria-label={label}
+                              aria-controls={`${panelId}-${field}`}
+                              style={{
+                                left: `${percent(
+                                  starts[index] + (travel ? stop.holdDurationMs : 0)
+                                )}%`,
+                                width: `${percent(stop[field])}%`
+                              }}
+                              onClick={() => focusTiming(stop, field)}
+                            >
+                              {seconds(stop[field])}
+                            </TimeSegment>
+                          </TippyTooltip>
                         );
                       })
                     )}
@@ -839,7 +850,6 @@ export default function CameraTourConfig({
                             key={key}
                             type="button"
                             aria-label={label}
-                            title={label}
                             disabled={disabled}
                             onClick={onClick}
                           >

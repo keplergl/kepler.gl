@@ -9,6 +9,7 @@ import {DatasetType, BitmapDatasetMetadata, BitmapBounds} from '@kepler.gl/const
 
 import {MetaResponse, DatasetCreationAttributes} from './common';
 import {InputLight} from '../../common';
+import TippyTooltip from '../../common/tippy-tooltip';
 
 const TilesetInputContainer = styled.div`
   display: grid;
@@ -286,9 +287,15 @@ const TilesetBitmapForm: React.FC<BitmapFormProps> = ({setResponse}) => {
           />
           <DropZoneWrapper>
             {(imageDataUri || imageUrl) && (
-              <ClearButton onClick={onClearImage} title="Clear image">
-                ✕
-              </ClearButton>
+              <TippyTooltip
+                placement="top"
+                delay={[500, 0]}
+                render={() => <span role="tooltip">Clear image</span>}
+              >
+                <ClearButton onClick={onClearImage} aria-label="Clear image">
+                  ✕
+                </ClearButton>
+              </TippyTooltip>
             )}
             <DropZone
               isDragging={isDragging}

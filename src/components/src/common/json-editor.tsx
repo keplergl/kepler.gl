@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import {Button} from './styled-components';
 import {Checkmark, Close, Copy, Warning} from './icons';
 import {formatJsonText, JsonEditorStatus} from './json-editor-utils';
+import TippyTooltip from './tippy-tooltip';
 
 export type JsonEditorProps = {
   jsonText: string;
@@ -193,26 +194,36 @@ function JsonEditor({
     <StyledEditorPanel className={className} data-testid="json-editor">
       <StyledEditorHeader>
         <div className="spacer" />
-        <button
-          type="button"
-          className="json-editor-icon-button"
-          onClick={handleCopy}
-          aria-label="Copy JSON"
-          title="Copy JSON"
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">Copy JSON</span>}
         >
-          <Copy height="14px" />
-        </button>
-        {onClose ? (
           <button
             type="button"
             className="json-editor-icon-button"
-            onClick={onClose}
-            aria-label="Close"
-            title="Close"
-            data-testid="json-editor-close"
+            onClick={handleCopy}
+            aria-label="Copy JSON"
           >
-            <Close height="14px" />
+            <Copy height="14px" />
           </button>
+        </TippyTooltip>
+        {onClose ? (
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Close</span>}
+          >
+            <button
+              type="button"
+              className="json-editor-icon-button"
+              onClick={onClose}
+              aria-label="Close"
+              data-testid="json-editor-close"
+            >
+              <Close height="14px" />
+            </button>
+          </TippyTooltip>
         ) : null}
         {touched ? (
           <Button

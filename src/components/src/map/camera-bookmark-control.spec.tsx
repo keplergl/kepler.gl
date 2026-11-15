@@ -170,7 +170,7 @@ test('fills the row with a Layer-style bookmark and an independent overlaid copy
       paddingRight: '40px',
       background: 'transparent'
     });
-    expect(navigate).toHaveAttribute('title', name);
+    expect(navigate).not.toHaveAttribute('title');
     expect(navigate.querySelector('span')).toHaveStyle({
       overflow: 'hidden',
       textOverflow: 'ellipsis',

@@ -7,6 +7,7 @@ import moment from 'moment';
 import ItemSelector from '../common/item-selector/item-selector';
 import FieldSelectorFactory from '../common/field-selector';
 import Switch from '../common/switch';
+import TippyTooltip from '../common/tippy-tooltip';
 import {ArrowDown} from '../common/icons';
 import {IconRoundSmall, Input, PanelLabel, PanelLabelBold} from '../common/styled-components';
 import {
@@ -704,23 +705,34 @@ function TimeWidgetSettingsFactory(
     return (
       <SettingsPanel className="time-widget--settings">
         {onClose ? (
-          <HideSettingsButton
-            as="button"
-            type="button"
-            className="time-widget__hide-settings"
-            aria-label="Hide settings"
-            title="Hide settings"
-            onClick={onClose}
+          <TippyTooltip
+            placement="top"
+            delay={[500, 0]}
+            render={() => <span role="tooltip">Hide settings</span>}
           >
-            <ArrowDown height="18px" />
-          </HideSettingsButton>
+            <HideSettingsButton
+              as="button"
+              type="button"
+              className="time-widget__hide-settings"
+              aria-label="Hide settings"
+              onClick={onClose}
+            >
+              <ArrowDown height="18px" />
+            </HideSettingsButton>
+          </TippyTooltip>
         ) : null}
         <AxisSection>
           <AxisHeader>X Axis</AxisHeader>
           <AxisRow>
             <FieldBlock>
               <FieldLabel>Field</FieldLabel>
-              <FieldValue title={xAxisLabel}>{xAxisLabel}</FieldValue>
+              <TippyTooltip
+                placement="top"
+                delay={[500, 0]}
+                render={() => <span role="tooltip">{xAxisLabel}</span>}
+              >
+                <FieldValue>{xAxisLabel}</FieldValue>
+              </TippyTooltip>
             </FieldBlock>
             <FieldBlock>
               <FieldLabel>{isTimeFilter ? 'Interval' : 'Bin size'}</FieldLabel>
@@ -891,9 +903,15 @@ function TimeWidgetSettingsFactory(
                   <>
                     <FieldBlock>
                       <FieldLabel>Field</FieldLabel>
-                      <FieldValue title={sourceLayer.config.colorField?.name}>
-                        {sourceLayer.config.colorField?.name}
-                      </FieldValue>
+                      <TippyTooltip
+                        placement="top"
+                        delay={[500, 0]}
+                        render={() => (
+                          <span role="tooltip">{sourceLayer.config.colorField?.name}</span>
+                        )}
+                      >
+                        <FieldValue>{sourceLayer.config.colorField?.name}</FieldValue>
+                      </TippyTooltip>
                     </FieldBlock>
                     <FieldBlock>
                       <FieldLabel>Scale</FieldLabel>

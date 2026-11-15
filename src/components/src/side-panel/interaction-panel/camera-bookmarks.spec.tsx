@@ -227,7 +227,7 @@ test('icon actions retain accessible names, tooltips, focus and fixed row space'
   expect(screen.queryByRole('button', {name: 'Down'})).toBeNull();
   for (const name of ['Go to', 'Copy coordinates', 'Update view', 'Delete']) {
     const button = screen.getByRole('button', {name});
-    expect(button).toHaveAttribute('title', name);
+    expect(button).not.toHaveAttribute('title');
     expect(button.querySelector('.panel--header__action__component')).not.toBeNull();
     expect(button.querySelector('.__react_component_tooltip')).toHaveTextContent(name);
     expect(button.querySelector('svg')).not.toBeNull();

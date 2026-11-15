@@ -10,6 +10,7 @@ import {dataTestIds} from '@kepler.gl/constants';
 import {ActionHandler, removeNotification as removeNotificationActions} from '@kepler.gl/actions';
 
 import LinkRenderer from '../common/link-renderer';
+import TippyTooltip from '../common/tippy-tooltip';
 interface NotificationItemContentBlockProps {
   isExpanded?: boolean;
 }
@@ -224,14 +225,20 @@ export default function NotificationItemFactory() {
             </Markdown>
           </NotificationMessage>
           <NotificationActions onClick={event => event.stopPropagation()}>
-            <ActionIconButton
-              $copied={copied}
-              data-testid={dataTestIds.copyNotificationIcon}
-              title={copied ? 'Copied' : 'Copy to clipboard'}
-              onClick={onCopy}
+            <TippyTooltip
+              placement="top"
+              delay={[500, 0]}
+              render={() => <span role="tooltip">{copied ? 'Copied' : 'Copy to clipboard'}</span>}
             >
-              {copied ? <CopiedIcon height="10px" /> : <CopyIcon height="10px" />}
-            </ActionIconButton>
+              <ActionIconButton
+                $copied={copied}
+                data-testid={dataTestIds.copyNotificationIcon}
+                aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+                onClick={onCopy}
+              >
+                {copied ? <CopiedIcon height="10px" /> : <CopyIcon height="10px" />}
+              </ActionIconButton>
+            </TippyTooltip>
             {typeof removeNotification === 'function' ? (
               <DeleteIcon height="10px" onClick={() => removeNotification(notification.id)} />
             ) : null}

@@ -12,6 +12,7 @@ import {
   useInsertLexicalLink
 } from './use-lexical-toolbar';
 import SingleColorPalette from '../../side-panel/layer-panel/single-color-palette';
+import TippyTooltip from '../../common/tippy-tooltip';
 
 export type LexicalToolbarProps = {
   isEditingText?: boolean;
@@ -211,13 +212,19 @@ const ColorPickerButton: FC<ColorPickerButtonProps> = ({
 
   return (
     <ColorPickerWrapper ref={wrapperRef}>
-      <ToolbarButton onClick={handleToggle} title={title}>
-        {renderIcon ? renderIcon() : <span style={{fontSize: '10px'}}>{label}</span>}
-        <ColorSwatch
-          $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color}
-          style={{marginLeft: 4}}
-        />
-      </ToolbarButton>
+      <TippyTooltip
+        placement="top"
+        delay={[500, 0]}
+        render={() => <span role="tooltip">{title}</span>}
+      >
+        <ToolbarButton onClick={handleToggle} aria-label={title}>
+          {renderIcon ? renderIcon() : <span style={{fontSize: '10px'}}>{label}</span>}
+          <ColorSwatch
+            $color={color === 'transparent' ? 'rgba(255,255,255,0.1)' : color}
+            style={{marginLeft: 4}}
+          />
+        </ToolbarButton>
+      </TippyTooltip>
       {isOpen && !showCustom && (
         <ColorPickerPopover onMouseDown={e => e.preventDefault()}>
           {presets.map(p => (
@@ -325,23 +332,45 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
           ))}
         </ToolbarSelect>
         <ToolbarDivider />
-        <ToolbarButton $active={isBold} onClick={() => handleToggleTextFormat('bold')} title="Bold">
-          <strong>B</strong>
-        </ToolbarButton>
-        <ToolbarButton
-          $active={isItalic}
-          onClick={() => handleToggleTextFormat('italic')}
-          title="Italic"
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">Bold</span>}
         >
-          <em>I</em>
-        </ToolbarButton>
-        <ToolbarButton
-          $active={isUnderline}
-          onClick={() => handleToggleTextFormat('underline')}
-          title="Underline"
+          <ToolbarButton
+            $active={isBold}
+            onClick={() => handleToggleTextFormat('bold')}
+            aria-label="Bold"
+          >
+            <strong>B</strong>
+          </ToolbarButton>
+        </TippyTooltip>
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">Italic</span>}
         >
-          <u>U</u>
-        </ToolbarButton>
+          <ToolbarButton
+            $active={isItalic}
+            onClick={() => handleToggleTextFormat('italic')}
+            aria-label="Italic"
+          >
+            <em>I</em>
+          </ToolbarButton>
+        </TippyTooltip>
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">Underline</span>}
+        >
+          <ToolbarButton
+            $active={isUnderline}
+            onClick={() => handleToggleTextFormat('underline')}
+            aria-label="Underline"
+          >
+            <u>U</u>
+          </ToolbarButton>
+        </TippyTooltip>
         <ToolbarDivider />
         <ColorPickerButton
           color={fontColor}
@@ -371,14 +400,20 @@ export const LexicalToolbar: FC<LexicalToolbarProps> = ({
           onSelectColor={c => handleChangeStyle('background-color', c)}
         />
         <ToolbarDivider />
-        <ToolbarButton
-          $active={isLink}
-          onClick={insertLink}
-          disabled={!isEditingText}
-          title="Insert Link"
+        <TippyTooltip
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">Insert Link</span>}
         >
-          🔗
-        </ToolbarButton>
+          <ToolbarButton
+            $active={isLink}
+            onClick={insertLink}
+            disabled={!isEditingText}
+            aria-label="Insert Link"
+          >
+            🔗
+          </ToolbarButton>
+        </TippyTooltip>
       </ToolbarRow>
     </ToolbarContainer>
   );

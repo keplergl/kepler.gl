@@ -9,6 +9,7 @@ import {Filter, Feature} from '@kepler.gl/types';
 import {getFilterFeatureAnchor} from '@kepler.gl/utils';
 
 import {FilterFunnel} from '../common/icons';
+import TippyTooltip from '../common/tippy-tooltip';
 import {MapViewport, isPointVisibleOnGlobe} from '../annotations/annotation-utils';
 
 const BADGE_SIZE = 22;
@@ -105,19 +106,24 @@ function FilterFeatureBadges({
   return (
     <BadgeLayer className="editor-filter-badges">
       {badges.map(badge => (
-        <FilterBadge
+        <TippyTooltip
           key={badge.id}
-          type="button"
-          title={polygonFilterLabel}
-          aria-label={polygonFilterLabel}
-          style={{left: badge.x, top: badge.y}}
-          onClick={event => {
-            event.stopPropagation();
-            onSelect?.(badge.feature);
-          }}
+          placement="top"
+          delay={[500, 0]}
+          render={() => <span role="tooltip">{polygonFilterLabel}</span>}
         >
-          <FilterFunnel height="12px" />
-        </FilterBadge>
+          <FilterBadge
+            type="button"
+            aria-label={polygonFilterLabel}
+            style={{left: badge.x, top: badge.y}}
+            onClick={event => {
+              event.stopPropagation();
+              onSelect?.(badge.feature);
+            }}
+          >
+            <FilterFunnel height="12px" />
+          </FilterBadge>
+        </TippyTooltip>
       ))}
     </BadgeLayer>
   );

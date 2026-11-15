@@ -64,6 +64,29 @@ function setup(overrides: Partial<TimeWidgetTopProps> = {}) {
   return {...result, props};
 }
 
+async function expectTooltip(target: HTMLElement, text: string) {
+  expect(target).not.toHaveAttribute('title');
+  fireEvent.mouseEnter(target);
+  const tooltip = await waitFor(() => {
+    const popup = document.getElementById(target.getAttribute('aria-describedby') || '');
+    expect(popup).not.toBeNull();
+    const content = within(popup as HTMLElement).getByRole('tooltip');
+    expect(content).toHaveTextContent(text);
+    return content;
+  });
+  fireEvent.mouseLeave(target);
+  fireEvent.blur(target);
+  await waitFor(() => expect(tooltip).not.toBeInTheDocument());
+}
+
+test('uses kepler tooltips for the chart title and close action', async () => {
+  const {container} = setup();
+  const title = screen.getByText('Count of Rows per 3 month');
+  await expectTooltip(title, title.textContent || '');
+  await expectTooltip(screen.getByRole('button', {name: 'Close timeline'}), 'Close timeline');
+  expect(container.querySelector('[title]')).not.toBeInTheDocument();
+});
+
 test.each(['{Enter}', ' '])('activates each header action by keyboard with %p', async key => {
   const user = userEvent.setup();
   const {props} = setup();
@@ -100,7 +123,7 @@ test('announces the settings state and offers hiding them from the same gear', a
   expect(props.onToggleSettings).toHaveBeenCalledTimes(1);
   rerender(<TimeWidgetTop {...props} settingsOpen />);
   expect(settings).toHaveAttribute('aria-expanded', 'true');
-  expect(settings).toHaveAttribute('title', 'Hide settings');
+  await expectTooltip(settings, 'Hide settings');
   await user.click(settings);
   expect(props.onToggleSettings).toHaveBeenCalledTimes(2);
   rerender(<TimeWidgetTop {...props} settingsOpen={false} />);
@@ -114,6 +137,7 @@ test('exposes the collapsed state and keeps expansion keyboard accessible in rea
   expect(expand).toHaveAttribute('aria-expanded', 'false');
   expect(screen.queryByRole('button', {name: 'Settings'})).not.toBeInTheDocument();
   expect(screen.queryByRole('button', {name: 'Close timeline'})).not.toBeInTheDocument();
+  await expectTooltip(expand, 'Expand timeline');
   await user.tab();
   expect(expand).toHaveFocus();
   await user.keyboard('{Enter}');
@@ -202,13 +226,13 @@ describe('compact timeline playback controls', () => {
         ['tooltip.reset', playbackControls.resetAnimation]
       ] as const) {
         const button = screen.getByRole('button', {name: translated[id]});
-        expect(button).toHaveAttribute('title', translated[id]);
+        await expectTooltip(button, translated[id]);
         await user.click(button);
         expect(action).toHaveBeenCalledTimes(1);
       }
 
       const speed = screen.getByRole('button', {name: translated['tooltip.speed']});
-      expect(speed).toHaveAttribute('title', translated['tooltip.speed']);
+      await expectTooltip(speed, translated['tooltip.speed']);
       await user.click(speed);
       expect(screen.getByRole('dialog', {name: translated['tooltip.speed']})).toBeInTheDocument();
       await user.keyboard('{Escape}');
@@ -217,7 +241,7 @@ describe('compact timeline playback controls', () => {
         <CompactHeader {...props} playbackControls={{...playbackControls, isAnimating: true}} />
       );
       const pause = screen.getByRole('button', {name: translated['tooltip.pause']});
-      expect(pause).toHaveAttribute('title', translated['tooltip.pause']);
+      await expectTooltip(pause, translated['tooltip.pause']);
       await user.click(pause);
       expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(2);
     }
@@ -240,10 +264,7 @@ describe('compact timeline playback controls', () => {
       'Collapse timeline',
       'Close timeline'
     ]);
-    expect(within(actions).getByRole('button', {name: 'Settings'})).toHaveAttribute(
-      'title',
-      'Settings'
-    );
+    await expectTooltip(within(actions).getByRole('button', {name: 'Settings'}), 'Settings');
     expect(
       within(controls)
         .getAllByRole('button')
@@ -257,6 +278,7 @@ describe('compact timeline playback controls', () => {
       ...within(actions).getAllByRole('button'),
       ...within(controls).getAllByRole('button')
     ]) {
+      expect(button).not.toHaveAttribute('title');
       await user.tab();
       expect(button).toHaveFocus();
     }
@@ -285,6 +307,7 @@ describe('compact timeline playback controls', () => {
     for (const name of names) {
       const button = screen.getByRole('button', {name});
       expect(button).toBeVisible();
+      expect(button).not.toHaveAttribute('title');
       await user.tab();
       expect(button).toHaveFocus();
       if (name === 'Reset' || name === 'Expand timeline') {
@@ -429,7 +452,7 @@ describe('compact timeline playback controls', () => {
     const user = userEvent.setup();
     setupPlayback({}, {animationWindow: 'interval'});
     const mode = screen.getByRole('button', {name: 'Animation mode'});
-    expect(mode).toHaveAttribute('title', expect.stringContaining('Step by Interval'));
+    await expectTooltip(mode, 'Step by Interval');
     expect(mode.querySelector('.data-ex-icons-interval')).not.toBeNull();
     await user.click(mode);
     const dialog = screen.getByRole('dialog', {name: 'Animation mode'});
@@ -483,7 +506,7 @@ describe('compact timeline playback controls', () => {
       rerender(
         <CompactHeader {...props} playbackControls={{...playbackControls, animationWindow: id}} />
       );
-      expect(mode).toHaveAttribute('title', expect.stringContaining(label));
+      await expectTooltip(mode, label);
       expect(mode.querySelector(`.data-ex-icons-${icon}`)).not.toBeNull();
     }
   );
@@ -495,6 +518,7 @@ describe('compact timeline playback controls', () => {
     const user = userEvent.setup();
     const {props, playbackControls} = setupPlayback();
     const button = screen.getByRole('button', {name: label});
+    await expectTooltip(button, label);
     await user.click(button.querySelector('svg') as SVGElement);
     const callback =
       action === 'onToggleSettings' ? props.onToggleSettings : playbackControls[action];

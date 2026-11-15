@@ -164,7 +164,7 @@ describe('3D tileset import', () => {
 describe('bitmap import', () => {
   it('requires complete numeric bounds, retains zero, and clears the selected image', () => {
     const setResponse = jest.fn();
-    const {getByLabelText, getByTitle} = renderWithTheme(
+    const {getByLabelText, getByRole} = renderWithTheme(
       <TilesetBitmapForm setResponse={setResponse} />
     );
     change(getByLabelText('Image source'), 'https://example.com/image.png');
@@ -174,13 +174,13 @@ describe('bitmap import', () => {
     expect(lastResponse(setResponse).dataset).toBeNull();
     change(getByLabelText('West (min lng)'), '0');
     expect(lastResponse(setResponse).dataset.metadata.bounds[0]).toBe(0);
-    fireEvent.click(getByTitle('Clear image'));
+    fireEvent.click(getByRole('button', {name: 'Clear image'}));
     expect(lastResponse(setResponse)).toMatchObject({dataset: null, metadata: null, error: null});
   });
 
   it('loads a local image, derives its name, and can return to a URL source', async () => {
     const setResponse = jest.fn();
-    const {container, getByLabelText, getByTitle} = renderWithTheme(
+    const {container, getByLabelText, getByRole} = renderWithTheme(
       <TilesetBitmapForm setResponse={setResponse} />
     );
     fireEvent.change(container.querySelector('input[type=file]') as HTMLInputElement, {
@@ -190,7 +190,7 @@ describe('bitmap import', () => {
     expect(lastResponse(setResponse).dataset.name).toBe('map.overlay');
     expect(lastResponse(setResponse).dataset.metadata.imageUrl).toMatch(/^data:image\/png;base64,/);
     expect(getByLabelText('Image source')).toBeDisabled();
-    fireEvent.click(getByTitle('Clear image'));
+    fireEvent.click(getByRole('button', {name: 'Clear image'}));
     change(getByLabelText('Image source'), 'https://example.com/new.png');
     expect(lastResponse(setResponse).dataset.metadata).toMatchObject({
       imageUrl: 'https://example.com/new.png',
