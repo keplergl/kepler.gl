@@ -258,6 +258,7 @@ const LoopSetting = styled.div`
   padding: 10px 8px;
   border-top: 1px solid ${props => props.theme.dropdownListHighlightBg};
   background: ${props => props.theme.dropdownListBgd};
+  color: ${props => props.theme.subtextColor};
   font-size: 12px;
 `;
 
@@ -367,6 +368,7 @@ function TimeWidgetTopFactory(
       ANIMATION_MODES.find(
         mode => mode.id === (playbackControls?.animationWindow || filter.animationWindow)
       ) || ANIMATION_MODES[0];
+    const modeLabel = intl.formatMessage({id: currentMode.shortLabelId});
     const playLabel = intl.formatMessage({
       id: playbackControls?.isAnimating ? 'tooltip.pause' : 'tooltip.play'
     });
@@ -639,14 +641,14 @@ function TimeWidgetTopFactory(
             as="button"
             type="button"
             data-testid="time-widget-animation-mode"
-            aria-label="Animation mode"
+            aria-label={modeLabel}
             aria-expanded={popover === 'animation'}
             aria-haspopup="dialog"
             disabled={!playbackControls.isAnimatable}
             onClick={() => setPopover('animation')}
           >
             <currentMode.Icon height="16px" />
-            {intl.formatMessage({id: currentMode.shortLabelId})}
+            {modeLabel}
             <ArrowDown height="10px" />
           </ModeButton>
         </TippyTooltip>

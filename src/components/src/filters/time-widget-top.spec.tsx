@@ -4,6 +4,7 @@
 import React from 'react';
 import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {getDefaultFilter, initApplicationConfig} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
@@ -216,13 +217,39 @@ describe('compact timeline playback controls', () => {
   });
 
   test.each([false, true])(
+    'announces the visible localized mode as it changes when minimized is %s',
+    isMinified => {
+      const {props, playbackControls, rerender} = setupPlayback({isMinified});
+      const localizedMessages = {
+        ...messages.es,
+        'tooltip.movingWindow': 'Ventana móvil',
+        'tooltip.cumulativeWindow': 'Acumulativo',
+        'tooltip.singleInterval': 'Intervalo único'
+      };
+      for (const [animationWindow, labelId] of [
+        ['free', 'tooltip.movingWindow'],
+        ['incremental', 'tooltip.cumulativeWindow'],
+        ['interval', 'tooltip.singleInterval']
+      ] as const) {
+        rerender(
+          <IntlProvider locale="es" messages={localizedMessages}>
+            <CompactHeader {...props} playbackControls={{...playbackControls, animationWindow}} />
+          </IntlProvider>
+        );
+        const label = localizedMessages[labelId];
+        expect(screen.getByRole('button', {name: label})).toHaveTextContent(label);
+      }
+    }
+  );
+
+  test.each([false, true])(
     'edits loop behavior inside the mode menu when minimized is %s',
     async isMinified => {
       const user = userEvent.setup();
       const setAnimationLoop = jest.fn();
       const {props, playbackControls, rerender} = setupPlayback({isMinified}, {setAnimationLoop});
       expect(screen.queryByRole('checkbox', {name: 'Loop playback'})).not.toBeInTheDocument();
-      const mode = screen.getByRole('button', {name: 'Animation mode'});
+      const mode = screen.getByRole('button', {name: 'Moving window'});
       expect(mode).toHaveTextContent('Moving window');
       await user.click(mode);
       const loop = screen.getByRole('checkbox', {name: 'Loop playback'});
@@ -243,6 +270,7 @@ describe('compact timeline playback controls', () => {
       expect(loop).not.toBeChecked();
       expect(screen.getByText('Stop at end')).toBeInTheDocument();
       expect(mode).toHaveTextContent('Cumulative');
+      expect(mode).toHaveAccessibleName('Cumulative');
       await user.click(loop);
       expect(setAnimationLoop).toHaveBeenLastCalledWith(true);
       await user.keyboard('{Escape}');
@@ -370,7 +398,7 @@ describe('compact timeline playback controls', () => {
       within(controls)
         .getAllByRole('button')
         .map(button => button.getAttribute('aria-label'))
-    ).toEqual(['Play', 'Reset', 'Speed', 'Animation mode']);
+    ).toEqual(['Play', 'Reset', 'Speed', 'Moving window']);
     expect(within(playback).getByRole('group', {name: 'Selected range'})).toHaveTextContent(
       '08 Jan 1991 — 30 Mar 2011'
     );
@@ -398,7 +426,7 @@ describe('compact timeline playback controls', () => {
       'Play',
       'Reset',
       'Speed',
-      'Animation mode',
+      'Moving window',
       'Video Export',
       'Edit animation JSON',
       'Expand timeline',
@@ -530,15 +558,15 @@ describe('compact timeline playback controls', () => {
         return {left, right: left, top: 100, bottom: 100, width: 0, height: 0} as DOMRect;
       });
     setupPlayback();
-    for (const [name, left] of [
-      ['Animation mode', 100],
-      ['Speed', 300],
-      ['Animation mode', 200]
+    for (const [name, dialogName, left] of [
+      ['Moving window', 'Animation mode', 100],
+      ['Speed', 'Speed', 300],
+      ['Moving window', 'Animation mode', 200]
     ] as const) {
       anchorLeft = left;
       const trigger = screen.getByRole('button', {name});
       await user.click(trigger);
-      const dialog = screen.getByRole('dialog', {name});
+      const dialog = screen.getByRole('dialog', {name: dialogName});
       const popup = dialog.querySelector('.portaled-content');
       await waitFor(() => expect(popup).toHaveStyle({left: `${left}px`, opacity: '1'}));
       // A transition on coordinates would visibly travel from the old anchor.
@@ -552,7 +580,7 @@ describe('compact timeline playback controls', () => {
   test('reflects the active playback mode when it overrides the filter mode', async () => {
     const user = userEvent.setup();
     setupPlayback({}, {animationWindow: 'interval'});
-    const mode = screen.getByRole('button', {name: 'Animation mode'});
+    const mode = screen.getByRole('button', {name: 'Single interval'});
     await expectTooltip(mode, 'Step by Interval');
     expect(mode.querySelector('.data-ex-icons-interval')).not.toBeNull();
     await user.click(mode);
@@ -578,7 +606,7 @@ describe('compact timeline playback controls', () => {
       for (let index = 0; index < 9; index++) {
         await user.tab();
       }
-      const mode = screen.getByRole('button', {name: 'Animation mode'});
+      const mode = screen.getByRole('button', {name: 'Moving window'});
       expect(mode).toHaveFocus();
       expect(mode.querySelector('.data-ex-icons-freewindow')).not.toBeNull();
       await user.keyboard('{Enter}');
@@ -635,7 +663,7 @@ describe('compact timeline playback controls', () => {
     expect(screen.getByRole('button', {name: 'Play'})).toBeDisabled();
     expect(screen.getByRole('button', {name: 'Speed'})).toBeDisabled();
     const reset = screen.getByRole('button', {name: 'Reset'});
-    const mode = screen.getByRole('button', {name: 'Animation mode'});
+    const mode = screen.getByRole('button', {name: 'Moving window'});
     expect(reset).toBeDisabled();
     expect(mode).toBeDisabled();
     fireEvent.click(reset);
@@ -663,7 +691,7 @@ describe('compact timeline playback controls', () => {
     expect(screen.getByRole('button', {name: 'Speed'})).toBeEnabled();
     await user.click(screen.getByRole('button', {name: 'Reset'}));
     expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', {name: 'Animation mode'}));
+    await user.click(screen.getByRole('button', {name: 'Moving window'}));
     const modes = screen.getByRole('dialog', {name: 'Animation mode'});
     expect(within(modes).getAllByRole('button')).toHaveLength(3);
     await user.click(within(modes).getByRole('button', {name: 'Step by Interval'}));
@@ -680,7 +708,7 @@ describe('compact timeline playback controls', () => {
     expect(screen.queryByRole('button', {name: 'Timeline options'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Video Export'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Edit animation JSON'})).not.toBeInTheDocument();
-    for (const name of ['Play', 'Speed', 'Reset', 'Animation mode']) {
+    for (const name of ['Play', 'Speed', 'Reset', 'Moving window']) {
       expect(screen.getByRole('button', {name})).toBeEnabled();
     }
   });
