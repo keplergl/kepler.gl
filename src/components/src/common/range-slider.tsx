@@ -163,17 +163,50 @@ export default function RangeSliderFactory(
     };
 
     _getDisplayRangeInfo = () => {
-      const {range, bins, isRanged} = this.props;
+      const {range, bins, isRanged, filter} = this.props;
       if (!range) {
         return {displayRange: range, binStep: 0};
       }
 
-      if (!bins || !isRanged) {
+      if (!bins) {
         return {displayRange: range, binStep: 0};
       }
 
       const groupKeys = Object.keys(bins).filter(k => bins[k]?.length > 0);
       if (groupKeys.length === 0) {
+        return {displayRange: range, binStep: 0};
+      }
+
+      if (this._isTimeFilter()) {
+        const fullDomain = filter?.domain || range;
+        const displayRange = [...range];
+        // Calendar bins can extend past the first/last timestamp. Include only
+        // those actual edge bins, without adding empty intervals or undoing zoom.
+        for (const key of groupKeys) {
+          const group = bins[key];
+          const first = group[0];
+          const last = group[group.length - 1];
+          if (
+            range[0] === fullDomain[0] &&
+            Number.isFinite(first.x0) &&
+            Number.isFinite(first.x1) &&
+            first.x1 > first.x0
+          ) {
+            displayRange[0] = Math.min(displayRange[0], first.x0);
+          }
+          if (
+            range[1] === fullDomain[1] &&
+            Number.isFinite(last.x0) &&
+            Number.isFinite(last.x1) &&
+            last.x1 > last.x0
+          ) {
+            displayRange[1] = Math.max(displayRange[1], last.x1);
+          }
+        }
+        return {displayRange, binStep: 0};
+      }
+
+      if (!isRanged) {
         return {displayRange: range, binStep: 0};
       }
 
@@ -183,11 +216,6 @@ export default function RangeSliderFactory(
 
       if (binStep <= 0) {
         return {displayRange: range, binStep: 0};
-      }
-
-      if (this._isTimeFilter()) {
-        const displayRange = [range[0] - binStep, range[1] + binStep];
-        return {displayRange, binStep};
       }
 
       // Non-time range filters: pad by half a bin so edge bars aren't clipped

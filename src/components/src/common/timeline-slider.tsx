@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import styled, {IStyledComponent} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import classnames from 'classnames';
@@ -37,10 +37,28 @@ const SliderWrapper = styled.div`
   `}
 `;
 
-const StyledSlider = styled(Slider)`
-  .kg-range-slider__bar {
-    // change colors
-  }
+const StyledSlider = styled(Slider)<{$rangeDraggable: boolean}>`
+  ${props =>
+    props.$rangeDraggable
+      ? `
+    .kg-range-slider__bar,
+    .kg-range-slider__bar:hover {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .kg-range-slider__bar::before {
+      content: '';
+      position: absolute;
+      inset: -6px 0;
+    }
+
+    .kg-range-slider__bar--active,
+    .kg-range-slider__bar--active:hover {
+      cursor: grabbing;
+    }
+  `
+      : ''}
 `;
 
 const StyledDomain = styled.div.attrs(props => ({
@@ -79,6 +97,7 @@ function TimelineSliderFactory() {
     formatValue
   }) => {
     const onThrottleUpdate = useMemo(() => throttle(setTimelineValue, 20), [setTimelineValue]);
+    useEffect(() => () => onThrottleUpdate.cancel(), [onThrottleUpdate]);
 
     const {step, domain, value, timeFormat, defaultTimeFormat, timezone, animationWindow, marks} =
       timeline;
@@ -119,6 +138,16 @@ function TimelineSliderFactory() {
       ];
     }, [animationWindow, domain, isRanged, value0, value1, onThrottleUpdate]);
 
+    const onSliderBarChange = useCallback(
+      (nextStart: number) => {
+        if (!domain || !isRanged) return;
+        const width = displayValue1 - displayValue0;
+        const start = clamp([domain[0], domain[1] - width], nextStart);
+        onThrottleUpdate([start, start + width]);
+      },
+      [domain, isRanged, displayValue0, displayValue1, onThrottleUpdate]
+    );
+
     const timelineSliderStyle = useMemo(() => ({height: `${height}px`}), [height]);
 
     const [timeStart, timeEnd] = useMemo(() => {
@@ -139,6 +168,7 @@ function TimelineSliderFactory() {
     }, [domain, timezone, timeFormat, defaultTimeFormat, showDomainTimes, formatValue]);
 
     const requiresRangeSlider = isRanged && animationWindow !== ANIMATION_WINDOW.interval;
+    const rangeDraggable = enableBarDrag && requiresRangeSlider && Boolean(domain);
 
     return (
       <AnimationControlSlider
@@ -152,14 +182,16 @@ function TimelineSliderFactory() {
         ) : null}
         <SliderWrapper className="animation-control__slider">
           <StyledSlider
+            $rangeDraggable={rangeDraggable}
             isRanged={requiresRangeSlider}
             step={step || undefined}
             minValue={domain ? domain[0] : 0}
             maxValue={domain ? domain[1] : 1}
-            enableBarDrag={enableBarDrag}
+            enableBarDrag={rangeDraggable}
             style={timelineSliderStyle}
             onSlider0Change={onSlider0Change}
             onSlider1Change={onSlider1Change}
+            onSliderBarChange={onSliderBarChange}
             value0={displayValue0}
             value1={displayValue1}
             marks={marks}

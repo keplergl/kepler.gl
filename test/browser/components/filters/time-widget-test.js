@@ -27,7 +27,6 @@ import {
   Icons,
   TimeSliderMarkerFactory,
   TimeRangeSliderTimeTitleFactory,
-  IconButton,
   SliderHandle,
   Typeahead,
   ItemSelector,
@@ -35,6 +34,7 @@ import {
   appInjector
 } from '@kepler.gl/components';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {getTimelineFromFilter} from '@kepler.gl/utils';
 
 moment.locale('en');
 
@@ -72,6 +72,16 @@ const defaultProps = {
   animationConfig: DEFAULT_ANIMATION_CONFIG
 };
 
+function openTimelineModes(wrapper) {
+  wrapper.find('[data-testid="time-widget-animation-mode"]').hostNodes().simulate('click');
+  wrapper.update();
+}
+
+function openTimelineSettings(wrapper) {
+  wrapper.find('button.time-widget-settings').hostNodes().simulate('click');
+  wrapper.update();
+}
+
 // call to set filter timezone and timeformat
 const nextState = reducer(
   StateWFilters.visState,
@@ -94,12 +104,14 @@ test('Components -> TimeWidget.mount -> with time filter', t => {
   t.equal(wrapper.find(TimeWidget).length, 1, 'should render TimeWidget');
   t.equal(wrapper.find(FloatingTimeDisplay).length, 1, 'should render FloatingTimeDisplay');
   t.equal(wrapper.find(TimeRangeSlider).length, 1, 'should render TimeRangeSlider');
-  t.equal(wrapper.find(PlaybackControls).length, 1, 'should render PlaybackControls');
+  t.equal(wrapper.find(PlaybackControls).length, 0, 'should not duplicate playback controls');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-play"]').hostNodes().length,
+    1,
+    'should expose playback in the header'
+  );
 
-  // FieldSelector is now inside the collapsible settings panel
-  // open settings by clicking the Gear icon
-  wrapper.find(Icons.Gear).at(0).simulate('click');
-  wrapper.update();
+  openTimelineSettings(wrapper);
 
   t.equal(wrapper.find(FieldSelector).length, 1, 'should render FieldSelector');
   t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
@@ -126,8 +138,7 @@ test('Components -> TimeWidget.mount -> timezone selector', t => {
     );
   }, 'TimeWidget should not fail without props');
 
-  wrapper.find(Icons.Gear).at(0).simulate('click');
-  wrapper.update();
+  openTimelineSettings(wrapper);
 
   t.equal(wrapper.find(TimezoneSelector).length, 1, 'should render TimezoneSelector');
   t.equal(
@@ -179,8 +190,7 @@ test('Components -> TimeWidget.mount -> time format selector', t => {
         />
       </IntlWrapper>
     );
-    mounted.find(Icons.Gear).at(0).simulate('click');
-    mounted.update();
+    openTimelineSettings(mounted);
     return mounted;
   };
 
@@ -337,6 +347,8 @@ test('Components -> TimeWidget.mount -> time format selector', t => {
 
 test('Components -> TimeWidget.mount -> test actions', t => {
   const onClose = sinon.spy();
+  const resetAnimation = sinon.spy();
+  const exportAnimation = sinon.spy();
   const toggleAnimation = sinon.spy();
   const updateAnimationSpeed = sinon.spy();
   const setFilterAnimationWindow = sinon.spy();
@@ -352,6 +364,8 @@ test('Components -> TimeWidget.mount -> test actions', t => {
         <TimeWidget
           {...defaultProps}
           onClose={onClose}
+          resetAnimation={resetAnimation}
+          exportAnimation={exportAnimation}
           toggleAnimation={toggleAnimation}
           updateAnimationSpeed={updateAnimationSpeed}
           setFilterAnimationWindow={setFilterAnimationWindow}
@@ -372,26 +386,32 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   //   'should set plotType to linechart'
   // );
   t.equal(wrapper.find(Icons.Close).length, 1, 'should render Close icon');
-  t.equal(wrapper.find(Icons.Reset).length, 1, 'should render Reset icon');
   t.equal(wrapper.find(Icons.Play).length, 1, 'should render Play icon');
-  t.equal(wrapper.find(Icons.FreeWindow).length, 1, 'should render Window icon');
+  t.equal(
+    wrapper.find('[data-testid="time-widget-export"]').hostNodes().length,
+    1,
+    'should expose animation export directly in the header'
+  );
+  t.ok(
+    wrapper.find('[data-testid="time-widget-export"]').hostNodes().prop('aria-label'),
+    'should name the export button for assistive technology'
+  );
   t.equal(
     wrapper.find(AnimationSpeedSlider).length,
     0,
-    'should  not render AnimationSpeedSlider iniitally'
+    'should not render AnimationSpeedSlider initially'
   );
   t.equal(
-    wrapper.find('.animation-window-control').length,
+    wrapper.find('div.time-widget-animation-menu').hostNodes().length,
     0,
-    'should not render AnimationWindowControl initially'
+    'should keep animation modes closed initially'
   );
 
   // hit play
   wrapper.find(Icons.Play).at(0).simulate('click');
   t.deepEqual(toggleAnimation.args[0], [0], 'should call toggle animation');
 
-  // hit speed icon
-  wrapper.find(Icons.Speed).at(0).simulate('click');
+  wrapper.find('[data-testid="time-widget-speed"]').hostNodes().simulate('click');
 
   t.equal(wrapper.find(AnimationSpeedSlider).length, 1, 'should render AnimationSpeedSlider');
   t.equal(
@@ -414,31 +434,79 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   // test updateAnimationSpeed
   t.deepEqual(updateAnimationSpeed.args[0], [0, 2], 'should call updateAnimationSpeed with speed');
 
-  // hit animation window
-  wrapper.find(Icons.FreeWindow).at(0).simulate('click');
+  wrapper
+    .find(AnimationSpeedSlider)
+    .find('.animation-control__speed-slider')
+    .hostNodes()
+    .simulate('keydown', {key: 'Escape', keyCode: 27});
+  t.equal(wrapper.find(AnimationSpeedSlider).length, 0, 'Escape should close the speed popup');
+
+  wrapper.find('[data-testid="time-widget-reset"]').hostNodes().simulate('click');
+  t.ok(resetAnimation.calledOnce, 'should reset directly from the header');
   t.equal(
-    wrapper.find('.animation-window-control').length,
+    wrapper.find('div.time-widget-animation-menu').hostNodes().length,
+    0,
+    'reset should not open animation modes'
+  );
+
+  ['free', 'incremental', 'interval'].forEach(animationWindow => {
+    openTimelineModes(wrapper);
+    t.equal(
+      wrapper.find(`button.time-widget-animation-${animationWindow}`).hostNodes().length,
+      1,
+      `should expose ${animationWindow} animation mode`
+    );
+    wrapper.find(`button.time-widget-animation-${animationWindow}`).hostNodes().simulate('click');
+    t.deepEqual(
+      setFilterAnimationWindow.lastCall.args,
+      [{id: StateWFilters.visState.filters[0].id, animationWindow}],
+      `should select ${animationWindow} animation mode`
+    );
+    t.equal(
+      wrapper.find('div.time-widget-animation-menu').hostNodes().length,
+      0,
+      'choosing an animation mode should close the menu'
+    );
+  });
+
+  wrapper.find('button.time-widget-export').hostNodes().simulate('click');
+  t.ok(exportAnimation.calledOnce, 'should export animation directly from the header');
+
+  openTimelineSettings(wrapper);
+  t.equal(
+    wrapper.find('div.time-widget--settings').hostNodes().length,
     1,
-    'should render AnimationWindowControl initially'
+    'should open chart settings directly from the header'
+  );
+
+  const settingsButton = wrapper.find('button.time-widget-settings').hostNodes();
+  t.equal(
+    settingsButton.getDOMNode().getAttribute('aria-expanded'),
+    'true',
+    'gear should announce expanded settings'
+  );
+  wrapper.find('button[aria-label="Hide settings"]').hostNodes().simulate('click');
+  t.equal(
+    wrapper.find('div.time-widget--settings').hostNodes().length,
+    0,
+    'chevron should hide settings'
   );
   t.equal(
-    wrapper.find('.animation-window-control').at(0).find(IconButton).length,
-    2,
-    'should render incremental and interval window options'
+    wrapper
+      .find('button.time-widget-settings')
+      .hostNodes()
+      .getDOMNode()
+      .getAttribute('aria-expanded'),
+    'false',
+    'gear should reflect the closed panel'
   );
-
-  // select an animation option
-  wrapper.find('.animation-window-control').at(0).find(IconButton).at(0).simulate('click');
-
-  t.deepEqual(
-    setFilterAnimationWindow.args[0],
-    [{id: StateWFilters.visState.filters[0].id, animationWindow: 'incremental'}],
-    'should call setFilterAnimationWindow'
+  t.equal(
+    document.activeElement,
+    settingsButton.getDOMNode(),
+    'closing should restore focus to the gear'
   );
-
-  // click yaxis select (open settings first since FieldSelector moved there)
-  wrapper.find(Icons.Gear).at(0).simulate('click');
-  wrapper.update();
+  t.equal(wrapper.find(TimeRangeSlider).length, 1, 'hiding settings should keep the timeline open');
+  openTimelineSettings(wrapper);
 
   wrapper.find(FieldSelector).find('.item-selector__dropdown').at(0).simulate('click');
   t.equal(wrapper.find(Typeahead).length, 1, 'should render dropdown select');
@@ -493,10 +561,10 @@ test('Components -> TimeWidget.mount -> test setFilterAnimationTime', t => {
   const mouseMove = new window.MouseEvent('mousemove', {clientX: 100});
   document.dispatchEvent(mouseMove);
 
-  // test updateAnimationSpeed
+  // Dragging 20% across the nine populated hourly bins selects 01:48.
   t.deepEqual(
     setFilterAnimationTime.args[0],
-    [0, 'value', [1474592400000, 1474617600000]],
+    [0, 'value', [1474595280000, 1474617600000]],
     'should call setFilterAnimationTime with new value'
   );
 
@@ -506,7 +574,7 @@ test('Components -> TimeWidget.mount -> test setFilterAnimationTime', t => {
   t.end();
 });
 
-test('Components -> TimeWidget.mount -> test floating time display', t => {
+test('Components -> TimeWidget.mount -> inline selected range', t => {
   const topSelector = '.animation-control__time-display__top';
   const bottomSelector = '.animation-control__time-display__bottom';
   let wrapper;
@@ -522,6 +590,27 @@ test('Components -> TimeWidget.mount -> test floating time display', t => {
     );
   }, 'mount TimeWidget should not fail');
 
+  const selectedRange = wrapper.find('[role="group"][aria-label="Selected range"]').hostNodes();
+  t.equal(selectedRange.length, 1, 'should identify the selected range for assistive technology');
+  t.ok(
+    selectedRange
+      .getDOMNode()
+      .parentElement.contains(
+        wrapper.find('[data-testid="time-widget-play"]').hostNodes().getDOMNode()
+      ),
+    'selected range should share the playback row with its controls'
+  );
+  t.equal(
+    selectedRange.find('div.floating-time-display').hostNodes().length,
+    1,
+    'should place the existing range display inside the playback row'
+  );
+  t.equal(
+    wrapper.find('div.floating-time-display').hostNodes().length,
+    1,
+    'should not render an additional standalone range badge'
+  );
+  t.equal(wrapper.find(TimeRangeSliderTimeTitle).length, 0, 'should not repeat the slider title');
   const timeDisplay = wrapper.find(FloatingTimeDisplay);
   t.equal(timeDisplay.find(topSelector).length, 1, 'should render 1 top row');
   t.equal(
@@ -652,8 +741,9 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
   t.end();
 });
 
-test('Components -> TimeWidget.mount -> TimeTitle', t => {
-  const selector = '.time-range-slider__time-title .time-value span';
+test('Components -> TimeWidget.mount -> inline range when floating display is disabled', t => {
+  const selector =
+    '[aria-label="Selected range"] .animation-control__time-display__bottom .time-value';
   let wrapper;
   // because we are using locale based formats, we set a locale here to make sure
   // result are always the same
@@ -669,12 +759,17 @@ test('Components -> TimeWidget.mount -> TimeTitle', t => {
 
   t.equal(
     wrapper.find(TimeRangeSliderTimeTitle).length,
-    1,
-    'should render TimeRangeSliderTimeTitle'
+    0,
+    'should keep the separate slider title hidden'
   );
-  t.equal(wrapper.find(selector).length, 2, 'Should render 2 time title value');
+  t.equal(
+    wrapper.find('[role="group"][aria-label="Selected range"]').hostNodes().length,
+    1,
+    'should retain the inline selected range when the floating display is disabled'
+  );
+  t.equal(wrapper.find(selector).length, 2, 'should render both selected range endpoints');
 
-  let expected = ['09/23/2016 5:00:00 AM', '09/23/2016 8:00:00 AM'];
+  let expected = ['5:00:00 AM', '8:00:00 AM'];
   wrapper.find(selector).forEach((span, i) => {
     t.equal(span.text(), expected[i], `should render correct time value ${expected[i]}`);
   });
@@ -750,9 +845,16 @@ test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and res
   );
   const timeDisplay = wrapper.find(FloatingTimeDisplay);
   t.equal(
+    wrapper
+      .find('[role="group"][aria-label="Selected range"] div.floating-time-display')
+      .hostNodes().length,
+    1,
+    'numeric selection should appear in the playback row'
+  );
+  t.equal(
     timeDisplay.find('.animation-control__time-display__top').text(),
     'gps_data.lat',
-    'numeric range badge should identify its column'
+    'numeric selected range should identify its column'
   );
   t.deepEqual(
     timeDisplay
@@ -760,7 +862,7 @@ test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and res
       .find('.time-value')
       .map(n => n.text()),
     ['0.02', '0.08'],
-    'numeric range badge should keep the selected values below the column name'
+    'numeric selected range should retain its formatted values'
   );
   const container = wrapper
     .find('[data-testid="time-widget-timeline-container"]')
@@ -815,6 +917,8 @@ test('Components -> TimeWidget.mount -> fractional numeric timeline zoom and res
 });
 
 test('Components -> TimeWidget.mount -> minimized numeric timeline formats numeric bounds', t => {
+  const toggleAnimation = sinon.spy();
+  const onToggleMinify = sinon.spy();
   const numericState = reducer(StateWFilters.visState, setFilter(0, 'name', 'gps_data.lat'));
   const numericFilter = {
     ...numericState.filters[0],
@@ -824,7 +928,12 @@ test('Components -> TimeWidget.mount -> minimized numeric timeline formats numer
   };
   const wrapper = mountWithTheme(
     <IntlWrapper>
-      <TimeWidget {...defaultProps} filter={numericFilter} />
+      <TimeWidget
+        {...defaultProps}
+        filter={numericFilter}
+        toggleAnimation={toggleAnimation}
+        onToggleMinify={onToggleMinify}
+      />
     </IntlWrapper>
   );
 
@@ -838,7 +947,137 @@ test('Components -> TimeWidget.mount -> minimized numeric timeline formats numer
     '0.08',
     'compact numeric timeline formats its domain end as a number'
   );
+  t.equal(
+    wrapper.find(PlaybackControls).length,
+    0,
+    'collapsed slider should not duplicate controls'
+  );
+  wrapper.find('[data-testid="time-widget-play"]').hostNodes().simulate('click');
+  t.deepEqual(toggleAnimation.lastCall.args, [0], 'collapsed timeline should retain playback');
 
+  t.equal(
+    wrapper.find('button.time-widget-settings').hostNodes().length,
+    0,
+    'chart settings should stay hidden while the chart is collapsed'
+  );
+  t.equal(
+    wrapper.find('button.time-widget-export').hostNodes().length,
+    0,
+    'should not offer export without an export callback'
+  );
+  openTimelineModes(wrapper);
+  ['free', 'incremental', 'interval'].forEach(animationWindow => {
+    t.equal(
+      wrapper.find(`button.time-widget-animation-${animationWindow}`).hostNodes().length,
+      1,
+      `collapsed timeline should retain ${animationWindow} animation mode`
+    );
+  });
+  wrapper
+    .find('div.time-widget-animation-menu')
+    .hostNodes()
+    .simulate('keydown', {key: 'Escape', keyCode: 27});
+  t.equal(
+    wrapper.find('div.time-widget-animation-menu').hostNodes().length,
+    0,
+    'Escape should dismiss animation modes'
+  );
+  wrapper.find('[aria-label="Expand timeline"]').hostNodes().simulate('click');
+  t.ok(onToggleMinify.calledOnce, 'collapsed timeline should retain its expand action');
+
+  wrapper.unmount();
+  t.end();
+});
+
+test('Components -> TimeWidget.mount -> collapsed header follows the supplied timeline', t => {
+  const updateAnimationSpeed = sinon.spy();
+  const filter = {
+    ...defaultProps.filter,
+    speed: 1,
+    animationWindow: 'free',
+    view: FILTER_VIEW_TYPES.minified
+  };
+  const timeline = {
+    ...getTimelineFromFilter(filter),
+    speed: 4,
+    animationWindow: 'incremental',
+    value: [1474610400000, 1474614000000],
+    timezone: 'America/New_York',
+    timeFormat: 'YYYY-MM-DD HH:mm'
+  };
+  const wrapper = mountWithTheme(
+    <IntlWrapper>
+      <TimeWidget
+        {...defaultProps}
+        index={3}
+        filter={filter}
+        timeline={timeline}
+        updateAnimationSpeed={updateAnimationSpeed}
+      />
+    </IntlWrapper>
+  );
+
+  t.equal(
+    Number.parseFloat(wrapper.find('[data-testid="time-widget-speed"]').hostNodes().text()),
+    4,
+    'collapsed header should display the supplied timeline speed'
+  );
+  t.deepEqual(
+    wrapper
+      .find('[aria-label="Selected range"] .animation-control__time-display__bottom .time-value')
+      .map(value => value.text()),
+    ['2016-09-23 02:00', '2016-09-23 03:00'],
+    'collapsed range should use the supplied timeline selection, timezone, and custom format'
+  );
+  openTimelineModes(wrapper);
+  t.equal(
+    wrapper.find('button.time-widget-animation-incremental').hostNodes().prop('aria-pressed'),
+    true,
+    'collapsed modes should select the supplied timeline animation mode'
+  );
+  t.equal(
+    wrapper.find('button.time-widget-animation-free').hostNodes().prop('aria-pressed'),
+    false,
+    'the original filter mode should not be marked selected'
+  );
+  wrapper
+    .find('div.time-widget-animation-menu')
+    .hostNodes()
+    .simulate('keydown', {key: 'Escape', keyCode: 27});
+
+  wrapper.find('[data-testid="time-widget-speed"]').hostNodes().simulate('click');
+  const speedInput = wrapper.find(AnimationSpeedSlider).find('input').hostNodes();
+  t.equal(
+    speedInput.getDOMNode().value,
+    '4',
+    'the speed editor should match the supplied timeline'
+  );
+  speedInput.simulate('change', {target: {value: '2'}});
+  speedInput.simulate('blur', {target: {value: '2'}});
+  t.deepEqual(
+    updateAnimationSpeed.lastCall.args,
+    [3, 2],
+    'speed edits should still route to the filter index'
+  );
+
+  wrapper.setProps({
+    children: (
+      <TimeWidget
+        {...defaultProps}
+        filter={{...filter, view: FILTER_VIEW_TYPES.enlarged}}
+        timeline={timeline}
+      />
+    )
+  });
+  t.deepEqual(
+    wrapper
+      .find('[aria-label="Selected range"] .animation-control__time-display__bottom .time-value')
+      .map(value => value.text()),
+    ['5:00:00 AM', '8:00:00 AM'],
+    'expanded range should follow the histogram filter selection and formatting'
+  );
+
+  wrapper.unmount();
   t.end();
 });
 
@@ -940,8 +1179,7 @@ test('Components -> TimeWidget.mount -> group by field', t => {
     );
   }, 'mount TimeWidget should not fail');
 
-  wrapper.find(Icons.Gear).at(0).simulate('click');
-  wrapper.update();
+  openTimelineSettings(wrapper);
 
   t.ok(wrapper.find('.time-widget__group-by').length > 0, 'should render group by settings');
 
@@ -1009,7 +1247,22 @@ test('Components -> TimeWidget -> interval window locks the histogram brush to o
     [marks[0], marks[1] - 1],
     'should set the filter to that bin'
   );
-  t.equal(wrapper.find(Icons.Interval).length, 1, 'playback bar shows Step by Interval');
+  openTimelineModes(wrapper);
+  t.equal(
+    wrapper.find('button.time-widget-animation-interval').hostNodes().prop('aria-pressed'),
+    true,
+    'animation modes should identify Step by Interval as selected'
+  );
+  ['free', 'incremental'].forEach(animationWindow => {
+    t.equal(
+      wrapper
+        .find(`button.time-widget-animation-${animationWindow}`)
+        .hostNodes()
+        .prop('aria-pressed'),
+      false,
+      `${animationWindow} should not be marked selected in interval mode`
+    );
+  });
 
   wrapper.detach();
   t.end();

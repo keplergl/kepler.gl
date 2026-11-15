@@ -79,6 +79,7 @@ export default class Slider extends Component<SliderProps> {
   };
 
   private anchor = 0;
+  private dragStartValues: [number, number] | null = null;
 
   public ref: RefObject<(typeof SliderWrapper & HTMLDivElement) | null> = createRef<
     (typeof SliderWrapper & HTMLDivElement) | null
@@ -92,6 +93,7 @@ export default class Slider extends Component<SliderProps> {
   private setAnchor = (x: number) => {
     // used to calculate delta
     this.anchor = x;
+    this.dragStartValues = [this.props.value0, this.props.value1];
   };
 
   private getBaseDistance() {
@@ -128,12 +130,6 @@ export default class Slider extends Component<SliderProps> {
     const maxDelta = this.props.maxValue - this.props.minValue;
     return percent * maxDelta;
   }
-  private getDeltaX(v: number) {
-    const percent = v / (this.props.maxValue - this.props.minValue);
-    const maxDelta = this.getBaseDistance();
-    return percent * maxDelta;
-  }
-
   private getValue(baseV: number, offset: number) {
     // offset is the distance between slider handle and track left
     const rawValue = baseV + this.getDeltaVal(offset);
@@ -183,14 +179,14 @@ export default class Slider extends Component<SliderProps> {
       this.props.onSliderBarChange(val0, val1);
       this.anchor = x;
     } else {
-      const anchor = this.anchor;
-      const length = value1 - value0;
-      const val0 = clamp([minValue, maxValue - length], this.getValue(value0, x - anchor));
-      const val1 = clamp([val0 + length, maxValue], this.getValue(value1, x - anchor));
+      // Controlled values can lag behind pointer events when the consumer throttles updates.
+      // Measure the whole drag from its start so intermediate events cannot lose movement.
+      const [start0, start1] = this.dragStartValues || [value0, value1];
+      const length = start1 - start0;
+      const val0 = clamp([minValue, maxValue - length], this.getValue(start0, x - this.anchor));
+      const val1 = clamp([val0 + length, maxValue], this.getValue(start1, x - this.anchor));
 
-      const deltaX = this.getDeltaX(val0 - this.props.value0);
       this.props.onSliderBarChange(val0, val1);
-      this.anchor = this.anchor + deltaX;
     }
   };
 

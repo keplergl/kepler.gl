@@ -184,6 +184,24 @@ function LineChartFactory() {
     const {yDomain, xDomain} = lineChart || {};
     const series =
       lineChart?.series && !Array.isArray(lineChart.series) ? lineChart.series : undefined;
+    const renderLines = useMemo(() => {
+      if (!isTime || !series?.lines || !Array.isArray(lineChart?.bins)) return series?.lines;
+      const binEnds = new Map<number, number>();
+      for (const bin of lineChart.bins) {
+        if (bin && Number.isFinite(bin.x0) && Number.isFinite(bin.x1) && bin.x1 > bin.x0) {
+          binEnds.set(bin.x0, bin.x1);
+        }
+      }
+      return series.lines.map(line => {
+        const last = line[line.length - 1];
+        const end = last && binEnds.get(last.x);
+        // Aggregates represent a whole bin; keep the extension out of stored
+        // observations so hover timestamps and gaps between segments stay intact.
+        return last && last.y != null && Number.isFinite(last.y) && end !== undefined
+          ? [...line, {...last, x: end}]
+          : line;
+      });
+    }, [isTime, series, lineChart?.bins]);
 
     const lineColor = color || (theme && theme.activeColor) || '#3A414C';
 
@@ -209,24 +227,33 @@ function LineChartFactory() {
     );
 
     const filteredYDomain = useMemo(() => {
-      if (!yAxisAutoRange || !series?.lines || !value || value.length < 2) return computedYDomain;
+      if (!yAxisAutoRange || !series?.lines || !renderLines || !value || value.length < 2)
+        return computedYDomain;
       let min: number | undefined;
       let max: number | undefined;
-      for (const line of series.lines) {
+      for (let lineIndex = 0; lineIndex < renderLines.length; lineIndex++) {
+        const line = renderLines[lineIndex];
         for (let i = 0; i < line.length; i++) {
           const point = line[i];
           const inRange = point.x >= value[0] && point.x <= value[1];
           const isAdjacentToRange =
             (!inRange && line[i + 1] && line[i + 1].x >= value[0] && line[i + 1].x <= value[1]) ||
             (!inRange && line[i - 1] && line[i - 1].x >= value[0] && line[i - 1].x <= value[1]);
-          if ((inRange || isAdjacentToRange) && point.y != null) {
+          // A selection can lie wholly inside the final bin, with neither
+          // endpoint inside it. Include that bin's constant aggregate as well.
+          const isVisibleBinEnd =
+            line !== series.lines[lineIndex] &&
+            i === line.length - 1 &&
+            line[i - 1].x <= value[1] &&
+            point.x >= value[0];
+          if ((inRange || isAdjacentToRange || isVisibleBinEnd) && point.y != null) {
             if (min === undefined || point.y < min) min = point.y;
             if (max === undefined || point.y > max) max = point.y;
           }
         }
       }
       return min !== undefined && max !== undefined ? [min, max] : computedYDomain;
-    }, [series, value, computedYDomain, yAxisAutoRange]);
+    }, [series, renderLines, value, computedYDomain, yAxisAutoRange]);
 
     const paddedYDomain = useMemo(() => {
       if (!filteredYDomain || filteredYDomain[0] == null || filteredYDomain[1] == null) return [];
@@ -275,12 +302,12 @@ function LineChartFactory() {
     const lineMarks = useMemo(() => {
       const paths: {key: number; d: string; color: string}[] = [];
       const dots: {key: number; x: number; y: number; color: string}[] = [];
-      if (!xScale || !yScale || !series?.lines) {
+      if (!xScale || !yScale || !renderLines) {
         return {paths, dots};
       }
-      series.lines.forEach((lineData, index) => {
+      renderLines.forEach((lineData, index) => {
         const points = lineData.filter(point => point.x != null && point.y != null);
-        const markColor = series.colors?.[index] || lineColor;
+        const markColor = series?.colors?.[index] || lineColor;
         if (points.length > 1) {
           paths.push({
             key: index,
@@ -299,7 +326,7 @@ function LineChartFactory() {
         }
       });
       return {paths, dots};
-    }, [isTime, xScale, yScale, series, lineColor]);
+    }, [isTime, xScale, yScale, renderLines, series, lineColor]);
 
     const bisectX = useMemo(() => bisector<LineSeriesPoint, number>(d => d.x).left, []);
 

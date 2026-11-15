@@ -181,6 +181,7 @@ test('Components -> BottomWidget.mount -> datetime and opt-in numeric filters', 
   wrapper = mountWidget(numericState);
   t.equal(wrapper.find(TimeWidget).length, 1, 'should render the numeric widget when enlarged');
 
+  wrapper.find('button[data-testid="time-widget-options"]').simulate('click');
   wrapper.find(Icons.Gear).at(0).simulate('click');
   wrapper.update();
   t.ok(wrapper.text().includes('Bin size'), 'should show numeric binning controls');

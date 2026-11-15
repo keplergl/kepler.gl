@@ -3,6 +3,7 @@
 
 import React from 'react';
 import {fireEvent, screen, render} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {getDefaultFilter} from '@kepler.gl/utils';
 import {DEFAULT_COLOR_UI} from '@kepler.gl/constants';
 import {ColorRange, TimeRangeFilter} from '@kepler.gl/types';
@@ -40,9 +41,10 @@ const baseFilter = {
   plotType: {interval: '2-second'}
 } as TimeRangeFilter;
 
-function renderSettings(filter = baseFilter) {
+function renderSettings(filter = baseFilter, onClose?: () => void) {
   const setFilterPlot = jest.fn();
   const props = {
+    onClose,
     filter,
     datasets: {},
     setFilterPlot,
@@ -52,6 +54,55 @@ function renderSettings(filter = baseFilter) {
   const rendered = render(<Settings {...props} />, {wrapper: IntlWrapper});
   return {...rendered, props, setFilterPlot};
 }
+
+describe('TimeWidgetSettings field names', () => {
+  test.each([undefined, 'measurements.device_session.completed_timestamp'])(
+    'preserves the full X-axis field label with end field %p',
+    endName => {
+      const name = 'measurements.device_session.started_timestamp';
+      const label = endName ? `${name} → ${endName}` : name;
+      renderSettings({
+        ...baseFilter,
+        name: [name],
+        ...(endName ? {endName: [endName]} : {})
+      });
+
+      expect(screen.getByTitle(label)).toHaveTextContent(label);
+    }
+  );
+});
+
+describe('TimeWidgetSettings dismissal', () => {
+  test.each(['{Enter}', ' '])('activates the hide control by keyboard with %p', async key => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+    const {setFilterPlot} = renderSettings(baseFilter, onClose);
+    await user.tab();
+    expect(screen.getByRole('button', {name: 'Hide settings'})).toHaveFocus();
+    await user.keyboard(key);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(setFilterPlot).not.toHaveBeenCalled();
+  });
+
+  test('commits a pending interval edit before hiding the panel', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+    const {setFilterPlot} = renderSettings(baseFilter, onClose);
+    const input = screen.getByRole('spinbutton');
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '3');
+    expect(setFilterPlot).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', {name: 'Hide settings'}));
+    expect(setFilterPlot).toHaveBeenCalledWith({
+      plotType: {interval: '3-second', defaultTimeFormat: expect.any(String)}
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(setFilterPlot.mock.invocationCallOrder[0]).toBeLessThan(
+      onClose.mock.invocationCallOrder[0]
+    );
+  });
+});
 
 describe('TimeWidgetSettings interval commits', () => {
   test('edits locally until blur and accepts the exact 2048-bin boundary', () => {

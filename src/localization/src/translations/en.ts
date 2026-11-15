@@ -726,6 +726,8 @@ export default {
     pause: 'Pause',
     reset: 'Reset',
     export: 'Export',
+    videoExport: 'Video Export',
+    settings: 'Settings',
     timeLayerSync: 'Link with the layer timeline',
     timeLayerUnsync: 'Unlink with the layer timeline',
     syncTimelineStart: 'Start of current filter timeframe',

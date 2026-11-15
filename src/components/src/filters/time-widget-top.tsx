@@ -1,15 +1,34 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useMemo} from 'react';
-import styled, {IStyledComponent} from 'styled-components';
-import {Clock, Close, ArrowDown, ArrowUp, Gear} from '../common/icons';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
+import styled, {IStyledComponent, useTheme} from 'styled-components';
+import {useIntl} from 'react-intl';
+import {
+  Close,
+  ArrowDown,
+  ArrowUp,
+  Gear,
+  Play,
+  Pause,
+  Reset,
+  FreeWindow,
+  AnchorWindow,
+  Interval,
+  Save,
+  CodeAlt
+} from '../common/icons';
 import {SelectTextBold, IconRoundSmall, CenterFlexbox} from '../common/styled-components';
 import {TimeWidgetTopProps, TopSectionWrapperProps} from './types';
-import {TIME_AGGREGATION, AGGREGATION_TYPES} from '@kepler.gl/constants';
+import {TIME_AGGREGATION, AGGREGATION_TYPES, ANIMATION_WINDOW} from '@kepler.gl/constants';
 import {FILTER_TYPES} from '@kepler.gl/constants';
-import {formatNumber, getNumericPlotInterval} from '@kepler.gl/utils';
+import {formatNumber, getNumericPlotInterval, preciseRound} from '@kepler.gl/utils';
 import {RangeFilter} from '@kepler.gl/types';
+import Portaled from '../common/portaled';
+import {ContextMenuAction, ContextMenuList} from '../common/context-menu';
+import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
+import {AnimationJsonEditorFactory} from '../common/animation-control/animation-json-editor';
+import {isJsonEditorEnabled} from '../common/json-editor-utils';
 
 const TOP_SECTION_HEIGHT = '36px';
 
@@ -17,49 +36,316 @@ const TopSectionWrapper: IStyledComponent<'web', TopSectionWrapperProps> = style
   className: 'time-widget--top'
 })<TopSectionWrapperProps>`
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   width: 100%;
+  min-width: 0;
   color: ${props => props.theme.labelColor};
-  height: ${TOP_SECTION_HEIGHT};
+  container-type: inline-size;
+  container-name: timeline-header;
+`;
 
-  .animation-control__speed-control {
-    margin-right: -12px;
+const HeaderRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 12px;
+  background-color: ${props => props.theme.panelBackground};
+  min-height: ${TOP_SECTION_HEIGHT};
+`;
 
-    .animation-control__speed-slider {
-      right: calc(0% - 48px);
+const StyledTitle = styled(CenterFlexbox)`
+  flex: 1;
+  min-width: 0;
+  color: ${props => props.theme.textColor};
+`;
+
+const StyledTitleText = styled(SelectTextBold)`
+  min-width: 0;
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const StyledCenterBox = styled(CenterFlexbox)`
+  flex-shrink: 0;
+  gap: 4px;
+`;
+
+const PlaybackRow = styled(HeaderRow)`
+  justify-content: flex-start;
+  background-color: transparent;
+
+  @container timeline-header (max-width: 300px) {
+    flex-wrap: wrap;
+  }
+`;
+
+const CompactHeaderRow = styled(HeaderRow)`
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  background-color: transparent;
+`;
+
+const CompactPlayback = styled.div`
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: min(100%, 300px);
+`;
+
+const CompactSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-width: 0;
+`;
+
+const CompactActions = styled.div`
+  margin-left: auto;
+`;
+
+const SelectedRange = styled.div`
+  flex: 0 1 auto;
+  min-width: 0;
+  color: ${props => props.theme.textColor};
+  font-size: ${props => props.theme.selectFontSize};
+  font-weight: 500;
+  line-height: 16px;
+
+  .floating-time-display {
+    position: static;
+    bottom: auto;
+    width: auto;
+    margin-left: 0;
+    justify-content: flex-start;
+    pointer-events: auto;
+  }
+
+  .floating-time-display__inner {
+    background: transparent;
+    border-radius: 0;
+    height: auto;
+    min-width: 0;
+    max-width: 100%;
+    opacity: 1;
+    padding: 0;
+    justify-content: flex-start;
+    color: inherit;
+    font: inherit;
+  }
+
+  .animation-control__time-display__top,
+  .animation-control__time-display__bottom {
+    justify-content: flex-start;
+    color: inherit;
+    font: inherit;
+    min-width: 0;
+  }
+
+  .floating-time-display__inner > div,
+  .animation-control__time-display__top > div,
+  .animation-control__time-display__bottom > div {
+    min-width: 0;
+    align-items: flex-start;
+  }
+
+  .animation-control__horizontal-bar {
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+
+  .time-value,
+  .animation-control__time-value-group {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  @container timeline-header (max-width: 560px) {
+    .floating-time-display__inner > div,
+    .animation-control__time-display__top > div,
+    .animation-control__time-display__bottom > div {
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 0;
+    }
+
+    .animation-control__horizontal-bar {
+      display: none;
     }
   }
 `;
 
-const StyledTitle = styled(CenterFlexbox)`
-  flex-grow: 0;
+const ActionSeparator = styled.span`
+  height: 16px;
+  border-left: 1px solid ${props => props.theme.panelBorderColor};
+  margin: 0 2px;
+`;
+
+const HeaderButton = styled(IconRoundSmall)`
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  font-size: ${props => props.theme.selectFontSize};
+  font-weight: ${props => props.theme.selectFontWeightBold};
+  line-height: 16px;
+  background-color: transparent;
   color: ${props => props.theme.textColor};
-  margin-right: 10px;
 
-  .bottom-widget__icon {
-    margin-right: 6px;
+  &:hover {
+    background-color: ${props => props.theme.panelBackgroundHover};
+    color: ${props => props.theme.panelHeaderIconHover};
   }
-  .bottom-widget__icon.speed {
-    margin-right: 0;
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  &[aria-pressed='true'],
+  &[aria-haspopup][aria-expanded='true'] {
+    background-color: ${props => props.theme.panelBackgroundHover};
+    color: ${props => props.theme.panelHeaderIconActive};
   }
 `;
 
-const StyledCenterBox = styled(CenterFlexbox)`
-  > div {
-    margin-left: 4px;
+const PlayButton = styled(HeaderButton)`
+  background-color: ${props => props.theme.panelBackgroundHover};
+  color: ${props => props.theme.textColor};
+`;
+
+const PopoverContent = styled.div`
+  .animation-control__speed-slider,
+  .animation-json-editor {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+  }
+
+  .animation-json-editor {
+    width: min(360px, calc(100vw - 80px));
+    box-sizing: border-box;
   }
 `;
 
-TimeWidgetTopFactory.deps = [];
-function TimeWidgetTopFactory() {
+const ANIMATION_MODES = [
+  {id: ANIMATION_WINDOW.free, labelId: 'tooltip.animationByWindow', Icon: FreeWindow},
+  {id: ANIMATION_WINDOW.incremental, labelId: 'tooltip.animationByIncremental', Icon: AnchorWindow},
+  {id: ANIMATION_WINDOW.interval, labelId: 'tooltip.animationByInterval', Icon: Interval}
+];
+
+TimeWidgetTopFactory.deps = [AnimationSpeedSliderFactory, AnimationJsonEditorFactory];
+function TimeWidgetTopFactory(
+  AnimationSpeedSlider?: ReturnType<typeof AnimationSpeedSliderFactory>,
+  AnimationJsonEditor?: ReturnType<typeof AnimationJsonEditorFactory>
+) {
   const TimeWidgetTop: React.FC<TimeWidgetTopProps> = ({
     filter,
     readOnly,
     onClose,
     isMinified,
     onToggleMinify,
-    onToggleSettings
+    onToggleSettings,
+    settingsOpen = false,
+    playbackControls,
+    rangeDisplay
   }) => {
+    const intl = useIntl();
+    const theme = useTheme();
+    // Portaled remeasures on open; animating its retained coordinates makes
+    // the popup travel from the previous position before settling into place.
+    const popoverTheme = useMemo(() => ({...theme, transitionFast: 'none'}), [theme]);
+    const [popover, setPopover] = useState<'animation' | 'speed' | 'json' | null>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const speedButtonRef = useRef<HTMLButtonElement>(null);
+    const minifyButtonRef = useRef<HTMLButtonElement>(null);
+    const restoreMinifyFocus = useRef(false);
+    useEffect(() => {
+      if (restoreMinifyFocus.current) {
+        minifyButtonRef.current?.focus();
+        restoreMinifyFocus.current = false;
+      }
+    }, [isMinified]);
+    const toggleMinify = () => {
+      const button = minifyButtonRef.current;
+      restoreMinifyFocus.current = Boolean(button && button.ownerDocument.activeElement === button);
+      onToggleMinify();
+    };
+    const closePopover = () => {
+      // The speed input commits on blur. Outside pointer events can dismiss
+      // the popup before the browser moves focus, so commit before unmounting.
+      if (
+        popover === 'speed' &&
+        document.activeElement instanceof HTMLElement &&
+        popoverRef.current?.contains(document.activeElement)
+      ) {
+        document.activeElement.blur();
+      }
+      if (popover === 'speed') {
+        // Restore focus after dismissal's default focus action, unless the user
+        // has already moved to another control or opened another popup.
+        requestAnimationFrame(() => {
+          if (document.activeElement === document.body) {
+            speedButtonRef.current?.focus();
+          }
+        });
+      }
+      setPopover(null);
+    };
+    const selectAction = (action: () => void) => () => {
+      closePopover();
+      action();
+    };
+    const currentMode =
+      ANIMATION_MODES.find(
+        mode => mode.id === (playbackControls?.animationWindow || filter.animationWindow)
+      ) || ANIMATION_MODES[0];
+    const animationItems: ContextMenuAction[] = playbackControls
+      ? ANIMATION_MODES.map(mode => ({
+          ...mode,
+          className: `time-widget-animation-${mode.id}`,
+          iconHeight: '16px',
+          active: currentMode.id === mode.id,
+          disabled: !playbackControls.isAnimatable,
+          onClick: selectAction(() => playbackControls.setFilterAnimationWindow(mode.id))
+        }))
+      : [];
+    const headerActions: ContextMenuAction[] = [];
+
+    if (playbackControls?.exportAnimation) {
+      headerActions.push({
+        className: 'time-widget-export',
+        labelId: 'tooltip.videoExport',
+        Icon: Save,
+        iconHeight: '16px',
+        disabled: !playbackControls.isAnimatable,
+        onClick: selectAction(playbackControls.exportAnimation)
+      });
+    }
+    if (playbackControls && AnimationJsonEditor && isJsonEditorEnabled('animation')) {
+      headerActions.push({
+        className: 'time-widget-json',
+        labelId: 'tooltip.editAnimationJson',
+        Icon: CodeAlt,
+        iconHeight: '16px',
+        disabled: !playbackControls.isAnimatable,
+        onClick: () => setPopover('json')
+      });
+    }
     const chartTitle = useMemo(() => {
       if (filter.type === FILTER_TYPES.range) {
         const rangeFilter = filter as RangeFilter;
@@ -89,33 +375,212 @@ function TimeWidgetTopFactory() {
       return `${aggLabel} ${filter.yAxis.name} per ${intervalLabel}`;
     }, [filter]);
 
+    const title = (
+      <StyledTitle className="bottom-widget__field">
+        <StyledTitleText title={chartTitle}>{chartTitle}</StyledTitleText>
+      </StyledTitle>
+    );
+    const actions = (
+      <StyledCenterBox>
+        {!isMinified && onToggleSettings ? (
+          <HeaderButton
+            as="button"
+            type="button"
+            className="time-widget-settings"
+            data-testid="time-widget-settings"
+            aria-label={intl.formatMessage({id: 'tooltip.settings'})}
+            aria-expanded={settingsOpen}
+            title={settingsOpen ? 'Hide settings' : intl.formatMessage({id: 'tooltip.settings'})}
+            onClick={selectAction(onToggleSettings)}
+          >
+            <Gear height="16px" />
+          </HeaderButton>
+        ) : null}
+        {headerActions.map(action => {
+          const isJson = action.className === 'time-widget-json';
+          const label = intl.formatMessage({id: action.labelId});
+          return (
+            <HeaderButton
+              key={action.className}
+              as="button"
+              type="button"
+              className={action.className}
+              data-testid={action.className}
+              aria-label={label}
+              title={label}
+              aria-expanded={isJson ? popover === 'json' : undefined}
+              aria-haspopup={isJson ? 'dialog' : undefined}
+              disabled={action.disabled}
+              onClick={action.onClick}
+            >
+              <action.Icon height={action.iconHeight} />
+            </HeaderButton>
+          );
+        })}
+        <ActionSeparator aria-hidden="true" />
+        <HeaderButton
+          as="button"
+          type="button"
+          ref={minifyButtonRef}
+          aria-label={isMinified ? 'Expand timeline' : 'Collapse timeline'}
+          title={isMinified ? 'Expand timeline' : 'Collapse timeline'}
+          aria-expanded={!isMinified}
+          onClick={toggleMinify}
+        >
+          {isMinified ? <ArrowUp height="14px" /> : <ArrowDown height="14px" />}
+        </HeaderButton>
+        {!readOnly ? (
+          <HeaderButton
+            as="button"
+            type="button"
+            aria-label="Close timeline"
+            title="Close timeline"
+            onClick={onClose}
+          >
+            <Close height="14px" />
+          </HeaderButton>
+        ) : null}
+      </StyledCenterBox>
+    );
+    const selectedRange = (
+      <SelectedRange role="group" aria-label="Selected range">
+        {rangeDisplay}
+      </SelectedRange>
+    );
+    const playback = playbackControls ? (
+      <StyledCenterBox role="group" aria-label="Playback controls">
+        <PlayButton
+          as="button"
+          type="button"
+          data-testid="time-widget-play"
+          aria-label={playbackControls.isAnimating ? 'Pause' : 'Play'}
+          title={playbackControls.isAnimating ? 'Pause' : 'Play'}
+          aria-pressed={playbackControls.isAnimating}
+          disabled={!playbackControls.isAnimatable}
+          onClick={playbackControls.toggleAnimation}
+        >
+          {playbackControls.isAnimating ? <Pause height="16px" /> : <Play height="16px" />}
+        </PlayButton>
+        <HeaderButton
+          as="button"
+          type="button"
+          className="time-widget-reset"
+          data-testid="time-widget-reset"
+          aria-label="Reset"
+          title="Reset"
+          disabled={!playbackControls.isAnimatable}
+          onClick={playbackControls.resetAnimation}
+        >
+          <Reset height="16px" />
+        </HeaderButton>
+        {AnimationSpeedSlider ? (
+          <HeaderButton
+            as="button"
+            type="button"
+            ref={speedButtonRef}
+            data-testid="time-widget-speed"
+            aria-label="Playback speed"
+            title="Playback speed"
+            aria-expanded={popover === 'speed'}
+            aria-haspopup="dialog"
+            disabled={!playbackControls.isAnimatable}
+            onClick={() => setPopover('speed')}
+          >
+            {preciseRound(playbackControls.speed, 1)}×
+          </HeaderButton>
+        ) : null}
+        <HeaderButton
+          as="button"
+          type="button"
+          data-testid="time-widget-animation-mode"
+          aria-label="Animation mode"
+          title={intl.formatMessage({id: currentMode.labelId})}
+          aria-expanded={popover === 'animation'}
+          aria-haspopup="dialog"
+          disabled={!playbackControls.isAnimatable}
+          onClick={() => setPopover('animation')}
+        >
+          <currentMode.Icon height="16px" />
+        </HeaderButton>
+        <Portaled
+          theme={popoverTheme}
+          isOpened={popover !== null}
+          left={0}
+          top={0}
+          onClose={closePopover}
+          modalProps={{
+            onAfterOpen: () => {
+              if (popover === 'json') {
+                popoverRef.current?.querySelector('textarea')?.focus();
+              }
+            },
+            contentLabel:
+              popover === 'speed'
+                ? 'Playback speed'
+                : popover === 'animation'
+                ? 'Animation mode'
+                : 'Edit animation JSON'
+          }}
+        >
+          <PopoverContent ref={popoverRef}>
+            {popover === 'animation' ? (
+              <ContextMenuList className="time-widget-animation-menu" items={animationItems} />
+            ) : null}
+            {popover === 'speed' && AnimationSpeedSlider ? (
+              <AnimationSpeedSlider
+                speed={playbackControls.speed}
+                updateAnimationSpeed={playbackControls.updateAnimationSpeed}
+                onHide={closePopover}
+              />
+            ) : null}
+            {popover === 'json' && AnimationJsonEditor ? (
+              <AnimationJsonEditor
+                filterId={filter.type === FILTER_TYPES.timeRange ? filter.id : undefined}
+                onClose={closePopover}
+              />
+            ) : null}
+          </PopoverContent>
+        </Portaled>
+      </StyledCenterBox>
+    ) : null;
+
     return (
       <TopSectionWrapper>
-        <StyledTitle className="bottom-widget__field">
-          <CenterFlexbox className="bottom-widget__icon">
-            <Clock height="15px" />
-          </CenterFlexbox>
-          <SelectTextBold>{chartTitle}</SelectTextBold>
-        </StyledTitle>
-        <StyledCenterBox>
-          {!isMinified ? (
-            <IconRoundSmall>
-              <Gear height="12px" onClick={onToggleSettings} />
-            </IconRoundSmall>
-          ) : null}
-          <IconRoundSmall>
-            {isMinified ? (
-              <ArrowUp height="12px" onClick={onToggleMinify} />
-            ) : (
-              <ArrowDown height="12px" onClick={onToggleMinify} />
-            )}
-          </IconRoundSmall>
-          {!readOnly ? (
-            <IconRoundSmall>
-              <Close height="12px" onClick={onClose} />
-            </IconRoundSmall>
-          ) : null}
-        </StyledCenterBox>
+        {isMinified ? (
+          <CompactHeaderRow>
+            <CompactPlayback role="group" aria-label="Timeline playback">
+              <CompactSummary>
+                {title}
+                {rangeDisplay ? selectedRange : null}
+              </CompactSummary>
+              {playback}
+            </CompactPlayback>
+            <CompactActions role="group" aria-label="Timeline actions">
+              {actions}
+            </CompactActions>
+          </CompactHeaderRow>
+        ) : (
+          <>
+            <HeaderRow
+              role="group"
+              aria-label="Timeline actions"
+              className="time-widget__title-row"
+            >
+              {title}
+              {actions}
+            </HeaderRow>
+            {playbackControls || rangeDisplay ? (
+              <PlaybackRow
+                className="time-widget__playback-row"
+                role="group"
+                aria-label="Timeline playback"
+              >
+                {selectedRange}
+                {playback}
+              </PlaybackRow>
+            ) : null}
+          </>
+        )}
       </TopSectionWrapper>
     );
   };
