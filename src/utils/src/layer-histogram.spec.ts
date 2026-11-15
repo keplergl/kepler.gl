@@ -5,6 +5,7 @@ import {ALL_FIELD_TYPES, SCALE_TYPES} from '@kepler.gl/constants';
 import type {Bins, ColorRange, Field} from '@kepler.gl/types';
 import GeoJsonLayer from '../../layers/src/geojson-layer/geojson-layer';
 import PointLayer from '../../layers/src/point-layer/point-layer';
+import {rgbToHex} from './color-utils';
 import {getLayerHistogram, isLayerHistogramSupported} from './layer-histogram';
 
 function setup({
@@ -160,6 +161,54 @@ test('keeps numeric custom ordinal colors when unused palette slots add null cat
     {name: '10', color: '#0000ff', count: 1}
   ]);
 });
+
+test.each([false, true])(
+  'matches actual custom ordinal colors with empty slots before the group: %s',
+  emptySlotsFirst => {
+    const emptySlots: ColorRange['colorMap'] = [
+      [null, '#0000ff'],
+      [null, '#00ff00']
+    ];
+    const group: ColorRange['colorMap'] = [[['b', 'c'], '#ffffff']];
+    const {layer, histogram} = setup({
+      values: ['a', 'b', 'b', 'c', 'missing', null],
+      fieldType: ALL_FIELD_TYPES.string,
+      scaleType: SCALE_TYPES.customOrdinal,
+      domain: ['a', 'b', 'c'],
+      range: {
+        colors: ['#ff0000', '#0000ff', '#00ff00', '#ffffff'],
+        colorMap: [
+          ['a', '#ff0000'],
+          ...(emptySlotsFirst ? [...emptySlots, ...group] : [...group, ...emptySlots])
+        ]
+      }
+    });
+    const scale = layer.getColorScale(
+      SCALE_TYPES.customOrdinal,
+      layer.config.colorDomain,
+      layer.config.visConfig.colorRange
+    )!;
+    const colorOf = value => rgbToHex(scale(value)).toLowerCase();
+    const result = histogram();
+
+    expect(colorOf('b') === colorOf('c')).toBe(!emptySlotsFirst);
+    expect(result.bins.data[0].segments).toEqual([
+      {name: 'a', color: colorOf('a'), count: 1},
+      ...(emptySlotsFirst
+        ? [
+            {name: 'b', color: colorOf('b'), count: 2},
+            {name: 'c', color: colorOf('c'), count: 1}
+          ]
+        : [{name: 'b, c', color: colorOf('b'), count: 3}]),
+      {name: 'Unknown', color: 'rgba(0, 0, 0, 0)', count: 1},
+      {name: 'No value', color: 'rgba(0, 0, 0, 0)', count: 1}
+    ]);
+    expect(result.legend).toEqual(
+      result.bins.data[0].segments?.map(({name, color}) => ({name, color}))
+    );
+    expect(result.bins.data[0].count).toBe(6);
+  }
+);
 
 test('matches the layer null color while retaining the scale handling of infinities', () => {
   const {layer, histogram} = setup({values: [null, undefined, NaN, -Infinity, Infinity]});

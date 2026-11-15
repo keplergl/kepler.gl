@@ -3,7 +3,9 @@
 
 import test from 'tape';
 import sinon from 'sinon';
+import * as arrow from 'apache-arrow';
 import {TIME_INTERVALS} from '@kepler.gl/constants';
+import {KeplerTable} from '@kepler.gl/table';
 import {
   getBinThresholds,
   getTimeBins,
@@ -1252,6 +1254,54 @@ test('Utils -> numeric histogram groups keep small domains exact and ignore inva
     largeIntegers.map(String),
     'should not merge distinct unsafe bigint values through a lossy numeric conversion'
   );
+  t.end();
+});
+
+test('Utils -> categorical histograms preserve unsafe Arrow integers and refresh numeric ranges', async t => {
+  for (const [type, largeIntegers] of [
+    [new arrow.Int64(), [-9007199254740992n, -9007199254740993n]],
+    [new arrow.Uint64(), [18446744073709551614n, 18446744073709551615n]]
+  ]) {
+    const fields = [{name: 'g', type: 'integer', analyzerType: 'INT'}];
+    const arrowData = values => {
+      const arrowTable = new arrow.Table({g: arrow.vectorFromArray(values, type)});
+      return {fields, cols: [arrowTable.getChildAt(0)], arrowTable};
+    };
+    const dataset = new KeplerTable({info: {id: 'ds'}, color: [0, 0, 0]}).updateSchema(
+      arrowData([...largeIntegers, null])
+    );
+    const plotType = {groupBy: {fieldName: 'g', numGroups: 2}};
+    const histogram = () =>
+      getCategoricalHistogram(
+        {ds: [{x0: 0, x1: 1, count: dataset.allIndexes.length, indexes: dataset.allIndexes}]},
+        {ds: dataset},
+        plotType
+      );
+    const exact = histogram();
+    t.deepEqual(
+      exact.legend.map(({name}) => name),
+      largeIntegers.map(String),
+      `${type}: should keep distinct unsafe integer categories from real table accessors`
+    );
+    t.deepEqual(
+      exact.bins.ds[0].segments.map(({name, count}) => [name, count]),
+      largeIntegers.map(value => [String(value), 1]),
+      `${type}: should count each integer exactly once and exclude null`
+    );
+    t.equal(exact.bins.ds[0].count, 3, `${type}: should retain the total including null`);
+
+    await dataset.update(arrowData([0n, 2n, 4n, 6n, 8n, null]));
+    const ranges = histogram();
+    t.deepEqual(
+      ranges.bins.ds[0].segments.map(({name, count}) => [name, count]),
+      [
+        ['0 ≤ x < 4', 2],
+        ['4 ≤ x ≤ 8', 3]
+      ],
+      `${type}: should invalidate the cached domain and group safe integers into ranges`
+    );
+    t.equal(ranges.bins.ds[0].count, 6, `${type}: should preserve null in the updated total`);
+  }
   t.end();
 });
 

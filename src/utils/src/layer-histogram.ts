@@ -3,12 +3,7 @@
 
 import {NO_VALUE_COLOR, SCALE_TYPES} from '@kepler.gl/constants';
 import type {Bins, ColorRange, Field, KeplerLayer, VisualChannels} from '@kepler.gl/types';
-import {
-  colorMapToCategoricalColorBreaks,
-  getCategoricalColorMap,
-  getLayerColorScale,
-  getLegendOfScale
-} from './data-scale-utils';
+import {getCategoricalColorMap, getLayerColorScale, getLegendOfScale} from './data-scale-utils';
 import {rgbToHex} from './color-utils';
 
 // These layers map one row to one feature's primary color. Trajectories,
@@ -148,14 +143,31 @@ export function getLayerHistogram(
   if (scaleType === SCALE_TYPES.customOrdinal) {
     const colorMap = range?.colorMap || getCategoricalColorMap(range?.colors || [], domain);
     const classByValue = new Map<unknown, number>();
-    colorMap.forEach(([values], index) => {
-      (Array.isArray(values) ? values : [values]).forEach(value => classByValue.set(value, index));
+    classes = [];
+    colorMap.forEach(([values, color]) => {
+      const valuesByColor = new Map<string, unknown[]>();
+      (Array.isArray(values) ? values : [values]).forEach(value => {
+        if (value === null || value === undefined) return;
+        const actualColor = cssColor(scale(value));
+        const members = valuesByColor.get(actualColor) || [];
+        members.push(value);
+        valuesByColor.set(actualColor, members);
+      });
+      if (!valuesByColor.size) {
+        classes.push({name: legendName(values), color: cssColor(color)});
+      }
+      // Repeated empty slots are deduplicated by the ordinal domain, which can
+      // give members of one configured group different colors in the layer.
+      valuesByColor.forEach((members, actualColor) => {
+        const index = classes.length;
+        members.forEach(value => classByValue.set(value, index));
+        classes.push({
+          name: legendName(valuesByColor.size === 1 ? values : members),
+          color: actualColor
+        });
+      });
     });
     classifier.range(scale.domain().map(value => classByValue.get(value)));
-    classes = (colorMapToCategoricalColorBreaks(colorMap) || []).map(item => ({
-      name: legendName(item.label),
-      color: cssColor(item.data)
-    }));
   } else {
     const scaleDomain = scale.domain();
     const scaleRange = scale.range();

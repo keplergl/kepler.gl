@@ -1096,6 +1096,29 @@ function histogramCategoryKey(value: unknown, numeric: boolean): string | null {
     : toGroupKey(value);
 }
 
+function histogramGroupValueAccessor(
+  dataset,
+  fieldName: string
+): ((index: number) => unknown) | null {
+  const field = dataset?.fields?.find(item => item.name === fieldName);
+  if (!field?.valueAccessor) return null;
+  const numeric = field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real;
+  return index => {
+    const value = field.valueAccessor({index});
+    if (
+      numeric &&
+      typeof value === 'number' &&
+      Number.isInteger(value) &&
+      !Number.isSafeInteger(value)
+    ) {
+      // Table accessors convert Int64 cells to Number; categories need the exact raw integer.
+      const rawValue = dataset.dataContainer?.valueAt?.(index, field.fieldIdx);
+      if (typeof rawValue === 'bigint') return rawValue;
+    }
+    return value;
+  };
+}
+
 // Filter updates replace dataset wrappers, but keep the accessor and data revision.
 // Weak keys release the domain when its field is replaced or the dataset is removed.
 const histogramCategoryDomains = new WeakMap<
@@ -1112,7 +1135,12 @@ const histogramCategoryDomains = new WeakMap<
   }
 >();
 
-function histogramCategoryDomain(dataset, field: Field, numeric: boolean) {
+function histogramCategoryDomain(
+  dataset,
+  field: Field,
+  numeric: boolean,
+  getGroup: (index: number) => unknown
+) {
   const {dataContainer, dataRevision, allIndexes} = dataset;
   const cached = histogramCategoryDomains.get(field.valueAccessor);
   if (
@@ -1129,7 +1157,7 @@ function histogramCategoryDomain(dataset, field: Field, numeric: boolean) {
   let lower = Infinity;
   let upper = -Infinity;
   for (const index of allIndexes || []) {
-    const value = field.valueAccessor({index});
+    const value = getGroup(index);
     const key = histogramCategoryKey(value, numeric);
     if (key === null) continue;
     if (!order.has(key)) order.set(key, order.size);
@@ -1194,7 +1222,7 @@ export function getCategoricalHistogram(
 
   const accessors = new Map<string, (index: number) => unknown>();
   for (const dataId of Object.keys(bins)) {
-    const getGroup = groupValueAccessor(datasets?.[dataId], groupBy.fieldName);
+    const getGroup = histogramGroupValueAccessor(datasets?.[dataId], groupBy.fieldName);
     if (getGroup) {
       accessors.set(dataId, getGroup);
     }
@@ -1221,7 +1249,7 @@ export function getCategoricalHistogram(
     // Use the complete dataset to keep a category's color stable as other filters change.
     const dataset = datasets[dataId];
     const field = dataset.fields.find(item => item.name === groupBy.fieldName);
-    const domain = histogramCategoryDomain(dataset, field, numericFields);
+    const domain = histogramCategoryDomain(dataset, field, numericFields, getGroup);
     canUseNumericRanges = canUseNumericRanges && domain.canUseNumericRanges;
     lower = Math.min(lower, domain.lower);
     upper = Math.max(upper, domain.upper);
