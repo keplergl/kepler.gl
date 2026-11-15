@@ -9,7 +9,9 @@ import React, {
   forwardRef,
   useCallback,
   useContext,
+  useLayoutEffect,
   useRef,
+  useState,
   PropsWithChildren
 } from 'react';
 import styled, {withTheme} from 'styled-components';
@@ -239,7 +241,12 @@ export const DraggableLegend = withTheme(
     label = 'legend',
     theme
   }: DraggableLegendProps & {theme: any}) => {
-    const settings = (mapControls?.[controlId] as MapControlMapLegend)?.settings;
+    const storedSettings = (mapControls?.[controlId] as MapControlMapLegend)?.settings;
+    const [defaultSettings, setDefaultSettings] = useState<MapLegendControlSettings>();
+    const settings =
+      storedSettings?.position || !defaultSettings
+        ? storedSettings
+        : {...storedSettings, ...defaultSettings};
 
     const legendContentRef = useRef<HTMLElement>(null);
     const onChangeSettings = useCallback(
@@ -257,8 +264,62 @@ export const DraggableLegend = withTheme(
         mapWidth: mapState?.width
       });
 
+    useLayoutEffect(() => {
+      if (controlId !== 'mapLegend' || storedSettings?.position) return;
+
+      const legend = legendContentRef.current;
+      const root = legend?.closest('.kepler-gl');
+      const timeline = root?.querySelector('.bottom-widget--container');
+      const content = legend?.querySelector('.map-control__panel-content');
+      let initialSettings: MapLegendControlSettings | undefined;
+
+      if (
+        legend &&
+        root instanceof HTMLElement &&
+        timeline instanceof HTMLElement &&
+        content instanceof HTMLElement
+      ) {
+        const rootRect = root.getBoundingClientRect();
+        const timelineRect = timeline.getBoundingClientRect();
+        const legendRect = legend.getBoundingClientRect();
+        const contentRect = content.getBoundingClientRect();
+        const gap = 10;
+        const headerHeight = legendRect.height - contentRect.height;
+        const availableHeight = timelineRect.top - rootRect.top - gap * 2 - headerHeight;
+        const cssMinHeight = parseFloat(window.getComputedStyle(content).minHeight);
+        const minHeight = Number.isFinite(cssMinHeight) && cssMinHeight > 0 ? cssMinHeight : 100;
+
+        if (
+          timelineRect.width > 0 &&
+          timelineRect.height > 0 &&
+          timelineRect.top < rootRect.bottom &&
+          legendRect.right > timelineRect.left &&
+          legendRect.left < timelineRect.right &&
+          contentRect.height > 0 &&
+          availableHeight >= minHeight
+        ) {
+          initialSettings = {
+            position: {
+              x: rootRect.right - legendRect.right,
+              y: rootRect.bottom - timelineRect.top + gap,
+              anchorX: 'right',
+              anchorY: 'bottom'
+            },
+            contentHeight: Math.min(contentRect.height, availableHeight)
+          };
+        }
+      }
+
+      // Keep automatic placement local so reopening can use the current timeline height.
+      setDefaultSettings(initialSettings);
+    }, [controlId, storedSettings?.position, mapState?.height, mapState?.width]);
+
     const handleDragStart = useCallback(
       event => {
+        // Preserve the fitted height only when the user first moves or resizes the legend.
+        if (!storedSettings?.position && defaultSettings) {
+          onChangeSettings(defaultSettings);
+        }
         switch (event.active.id) {
           case DRAG_RESIZE_ID:
           case DRAG_RESIZE_TOP_ID:
@@ -268,7 +329,7 @@ export const DraggableLegend = withTheme(
             updatePosition();
         }
       },
-      [updatePosition, startResize]
+      [updatePosition, startResize, storedSettings?.position, defaultSettings, onChangeSettings]
     );
     const handleDragEnd = useCallback(updatePosition, [updatePosition]);
     const handleDragMove = useCallback(

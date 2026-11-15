@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen, within, waitFor} from '@testing-library/react';
+import {fireEvent, render, screen, within, waitFor} from '@testing-library/react';
 import copy from 'copy-to-clipboard';
 import {ThemeProvider} from 'styled-components';
 import {MapStateActions, UIStateActions, VisStateActions} from '@kepler.gl/actions';
@@ -14,6 +14,7 @@ import {
 } from '@kepler.gl/reducers';
 import {MapViewMode} from '@kepler.gl/constants';
 import {theme} from '@kepler.gl/styles';
+import {MapLegendControlSettings} from '@kepler.gl/types';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import CameraBookmarkControl from './camera-bookmark-control';
 import {RootContext} from '../context';
@@ -476,6 +477,180 @@ test.each([
   } finally {
     restoreStyles();
   }
+});
+
+describe('floating legend placement above the timeline', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  function setupTimelineLegend({
+    controlId = 'mapLegend',
+    settings: storedSettings = {},
+    contentHeight = 180,
+    timeline = {left: 400, top: 600, width: 700, height: 250}
+  }: {
+    controlId?: string;
+    settings?: Partial<MapLegendControlSettings>;
+    contentHeight?: number;
+    timeline?: {left: number; top: number; width: number; height: number} | null;
+  } = {}) {
+    const bounds = (left: number, top: number, width: number, height: number): DOMRect => ({
+      x: left,
+      y: top,
+      left,
+      top,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      toJSON: () => ({})
+    });
+    const root = document.createElement('div');
+    root.className = 'kepler-gl';
+    document.body.appendChild(root);
+    let rootBounds = bounds(100, 50, 1000, 800);
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    const measuredContentHeight = (element: Element | null) => {
+      const height = Number.parseFloat(element ? window.getComputedStyle(element).height : '');
+      // JSDOM retains the legacy height:-1px sentinel instead of treating it as auto.
+      return Number.isFinite(height) && height > 0 ? height : contentHeight;
+    };
+    jest
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this === root) return rootBounds;
+        if (this.closest('.kepler-gl') !== root) return originalRect.call(this);
+        if (this.classList.contains('bottom-widget--container') && timeline) {
+          return bounds(timeline.left, timeline.top, timeline.width, timeline.height);
+        }
+        if (this.classList.contains('draggable-legend')) {
+          const height =
+            measuredContentHeight(this.querySelector('.map-control__panel-content')) + 34;
+          const right = rootBounds.right - (Number.parseFloat(this.style.right) || 10);
+          const bottom = rootBounds.bottom - (Number.parseFloat(this.style.bottom) || 30);
+          return bounds(right - 300, bottom - height, 300, height);
+        }
+        if (this.classList.contains('map-control__panel-content')) {
+          const panel = this.closest('.draggable-legend');
+          const panelBounds = panel?.getBoundingClientRect() || rootBounds;
+          return bounds(panelBounds.left, panelBounds.top + 34, 300, measuredContentHeight(this));
+        }
+        return originalRect.call(this);
+      });
+    const MapControlPanel = MapControlPanelFactory();
+    const settings = jest.fn();
+    const tree = (key = 0) => (
+      <>
+        {timeline && <div className="bottom-widget--container" />}
+        <DraggableLegend
+          key={key}
+          controlId={controlId}
+          isSidePanelShown={false}
+          mapControls={{
+            ...enabledMapControls,
+            [controlId]: {...enabledMapControls.mapLegend, settings: storedSettings}
+          }}
+          setMapControlSettings={settings}
+          mapState={{...INITIAL_MAP_STATE, width: 1000, height: rootBounds.height}}
+        >
+          <MapControlPanel header="header.layerLegend">Legend content</MapControlPanel>
+        </DraggableLegend>
+      </>
+    );
+    const view = render(tree(), {
+      container: root,
+      wrapper: ({children}: React.PropsWithChildren) => (
+        <ThemeProvider theme={theme}>
+          <IntlWrapper>{children}</IntlWrapper>
+        </ThemeProvider>
+      )
+    });
+    return {
+      settings,
+      panel: () => root.querySelector('.draggable-legend') as HTMLElement,
+      reopen: (top: number) => {
+        timeline = {left: 400, top, width: 700, height: rootBounds.bottom - top};
+        view.rerender(tree(1));
+      },
+      resize: (height: number, top: number) => {
+        rootBounds = bounds(100, 50, 1000, height);
+        timeline = {left: 400, top, width: 700, height: rootBounds.bottom - top};
+        view.rerender(tree());
+      }
+    };
+  }
+
+  test('opens above the measured timeline without saving automatic placement', () => {
+    const {panel, settings, reopen} = setupTimelineLegend();
+    expect(panel()).toHaveStyle({right: '10px', bottom: '260px'});
+    expect(panel().querySelector('.map-control__panel-content')).toHaveStyle({height: '180px'});
+    expect(settings).not.toHaveBeenCalled();
+    reopen(500);
+    expect(panel()).toHaveStyle({bottom: '360px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
+
+  test('fits tall content above the timeline and retains that height when dragging starts', async () => {
+    const {panel, settings} = setupTimelineLegend({contentHeight: 600});
+    expect(panel()).toHaveStyle({bottom: '260px'});
+    expect(panel().querySelector('.map-control__panel-content')).toHaveStyle({
+      height: '496px',
+      overflowY: 'auto'
+    });
+    expect(settings).not.toHaveBeenCalled();
+    const move = screen.getByRole('button', {name: 'Move legend'});
+    move.focus();
+    fireEvent.keyDown(move, {code: 'Space'});
+    await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+    expect(settings).toHaveBeenCalledWith(
+      'mapLegend',
+      expect.objectContaining({contentHeight: 496, position: expect.any(Object)})
+    );
+    fireEvent.keyDown(document, {code: 'Space'});
+    await waitFor(() => expect(move).not.toHaveAttribute('aria-pressed', 'true'));
+  });
+
+  test('does not save automatic placement when shrinking the map clamps the legend height', () => {
+    const {panel, settings, resize} = setupTimelineLegend({contentHeight: 600});
+    expect(panel()).toHaveStyle({bottom: '260px'});
+    expect(settings).not.toHaveBeenCalled();
+    resize(400, 180);
+    expect(panel()).toHaveStyle({bottom: '30px'});
+    expect(settings).toHaveBeenCalledWith('mapLegend', {contentHeight: 326});
+    expect(settings.mock.calls.every(([, value]) => !('position' in value))).toBe(true);
+    resize(800, 600);
+    expect(panel()).toHaveStyle({bottom: '260px'});
+  });
+
+  test.each([
+    {label: 'missing', timeline: null},
+    {label: 'empty', timeline: {left: 400, top: 600, width: 700, height: 0}},
+    {
+      label: 'outside the legend column',
+      timeline: {left: 100, top: 600, width: 200, height: 250}
+    },
+    {
+      label: 'leaving insufficient vertical room',
+      timeline: {left: 400, top: 180, width: 700, height: 670}
+    }
+  ])('keeps the default when the timeline is $label', ({timeline}) => {
+    const {panel, settings} = setupTimelineLegend({timeline});
+    expect(panel()).toHaveStyle({right: '10px', bottom: '30px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
+
+  test('preserves an explicitly saved position even if it matches the old default', () => {
+    const {panel, settings} = setupTimelineLegend({
+      settings: {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}}
+    });
+    expect(panel()).toHaveStyle({right: '10px', bottom: '30px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
+
+  test('does not move the bookmark panel above the timeline', () => {
+    const {panel, settings} = setupTimelineLegend({controlId: 'cameraBookmarks'});
+    expect(panel()).toHaveStyle({right: '10px', bottom: '30px'});
+    expect(settings).not.toHaveBeenCalled();
+  });
 });
 
 function setupFloatingPanel(controlId: string, label: string) {
