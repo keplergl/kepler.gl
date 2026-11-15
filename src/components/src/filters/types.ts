@@ -96,6 +96,10 @@ export type TimeWidgetProps = {
   filter: TimeRangeFilter | RangeFilter;
   index: number;
   readOnly: boolean;
+  /**
+   * @deprecated The default TimeWidget always shows the selected range inline.
+   * Retained and forwarded for compatibility with injected TimeWidget implementations.
+   */
   showTimeDisplay: boolean;
   isAnimatable: boolean;
   resetAnimation: () => void;
