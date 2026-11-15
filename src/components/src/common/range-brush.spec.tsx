@@ -132,3 +132,37 @@ describe('RangeBrush interaction', () => {
     expect(props.onMouseoutHandle).toHaveBeenCalledTimes(1);
   });
 });
+
+test('range brush endpoints support keyboard adjustment without crossing', () => {
+  const {getByRole, props, update} = setup({step: 10});
+  const start = getByRole('slider', {name: 'Range start'});
+  const end = getByRole('slider', {name: 'Range end'});
+  expect(start).toHaveAttribute('aria-valuenow', '20');
+  expect(end).toHaveAttribute('aria-valuemin', '20');
+  fireEvent.keyDown(start, {key: 'ArrowRight'});
+  expect(props.onBrush).toHaveBeenLastCalledWith(30, 60);
+  fireEvent.keyDown(end, {key: 'Home'});
+  expect(props.onBrush).toHaveBeenLastCalledWith(20, 20);
+  fireEvent.keyDown(start, {key: 'End'});
+  expect(props.onBrush).toHaveBeenLastCalledWith(60, 60);
+  update({value: [30, 70]});
+  expect(start).toHaveAttribute('aria-valuenow', '30');
+  expect(start).toHaveAttribute('aria-valuemax', '70');
+  const calls = jest.mocked(props.onBrush).mock.calls.length;
+  fireEvent.keyDown(start, {key: 'ArrowRight', metaKey: true});
+  expect(props.onBrush).toHaveBeenCalledTimes(calls);
+});
+
+test('a single interval brush is keyboard operable and moves to neighboring marks', () => {
+  const {getByRole, getAllByRole, props} = setup({
+    isRanged: false,
+    value: [25, 25],
+    marks: [0, 25, 90, 100]
+  });
+  const handle = getByRole('slider', {name: 'Value'});
+  expect(getAllByRole('slider')).toHaveLength(1);
+  fireEvent.keyDown(handle, {key: 'ArrowRight'});
+  expect(props.onBrush).toHaveBeenLastCalledWith(90, 90);
+  fireEvent.keyDown(handle, {key: 'ArrowLeft'});
+  expect(props.onBrush).toHaveBeenLastCalledWith(0, 0);
+});

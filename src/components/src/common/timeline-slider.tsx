@@ -196,6 +196,11 @@ function TimelineSliderFactory() {
         >
           <StyledSlider
             $rangeDraggable={rangeDraggable}
+            title={formatValue ? 'Range' : 'Time'}
+            formatValue={
+              formatValue ||
+              datetimeFormatter(timezone)(timeFormat || defaultTimeFormat || DEFAULT_TIME_FORMAT)
+            }
             isRanged={requiresRangeSlider}
             step={step || undefined}
             minValue={domain ? domain[0] : 0}

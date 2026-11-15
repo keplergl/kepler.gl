@@ -42,6 +42,11 @@ const StyledSliderHandle: IStyledComponent<'web', StyledSliderHandleProps> = sty
   border-color: ${props =>
     props.$active ? props.theme.selectBorderColor : props.theme.sliderInactiveBorderColor};
 
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+    outline-offset: 2px;
+  }
+
   &:hover {
     background-color: ${props => props.theme.sliderHandleHoverColor};
     cursor: pointer;
@@ -135,6 +140,12 @@ type SliderHandleProps = {
   track: RefObject<StyleRangeSliderType | null>;
   showTooltip: boolean;
   value?: number;
+  minValue?: number;
+  maxValue?: number;
+  label?: string;
+  valueText?: string;
+  disabled?: boolean;
+  onKeyDown?: React.KeyboardEventHandler;
 };
 
 export default class SliderHandle extends Component {
@@ -190,6 +201,16 @@ export default class SliderHandle extends Component {
           $active={this.state.mouseOver}
           $vertical={this.props.vertical}
           style={style}
+          role="slider"
+          tabIndex={this.props.disabled ? -1 : 0}
+          aria-label={this.props.label || 'Value'}
+          aria-valuemin={this.props.minValue}
+          aria-valuemax={this.props.maxValue}
+          aria-valuenow={this.props.value}
+          aria-valuetext={this.props.valueText}
+          aria-orientation={this.props.vertical ? 'vertical' : 'horizontal'}
+          aria-disabled={this.props.disabled}
+          onKeyDown={this.props.onKeyDown}
           onMouseDown={this.mouseEvent.handleMouseDown}
           onTouchStart={this.mouseEvent.handleTouchStart}
         />

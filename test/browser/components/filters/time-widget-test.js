@@ -6,6 +6,8 @@ import React, {act} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
 import moment from 'moment';
+import {fireEvent, within} from '@testing-library/react';
+import {renderWithTheme} from 'test/helpers/component-jest-utils';
 import 'moment/locale/en-gb';
 
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
@@ -1269,5 +1271,37 @@ test('Components -> TimeWidget -> interval window locks the histogram brush to o
   });
 
   wrapper.detach();
+  t.end();
+});
+
+test('Components -> TimeWidget -> exact range editor updates expanded and compact filters', t => {
+  for (const view of [FILTER_VIEW_TYPES.enlarged, FILTER_VIEW_TYPES.minified]) {
+    const setFilterAnimationTime = sinon.spy();
+    const filter = {...defaultProps.filter, view, timezone: 'UTC'};
+    const rendered = renderWithTheme(
+      <TimeWidget
+        {...defaultProps}
+        filter={filter}
+        setFilterAnimationTime={setFilterAnimationTime}
+      />
+    );
+    fireEvent.click(within(rendered.container).getByRole('button', {name: 'Edit time range'}));
+    const editor = within(rendered.getByRole('dialog', {name: 'Edit time range'}));
+    const start = filter.domain[0];
+    const end = filter.domain[1];
+    fireEvent.change(editor.getByRole('textbox', {name: 'Start'}), {
+      target: {value: moment.utc(start).format('YYYY-MM-DD HH:mm:ss.SSS Z')}
+    });
+    fireEvent.change(editor.getByRole('textbox', {name: 'End'}), {
+      target: {value: moment.utc(end).format('YYYY-MM-DD HH:mm:ss.SSS Z')}
+    });
+    fireEvent.click(editor.getByRole('button', {name: 'Apply'}));
+    t.deepEqual(
+      setFilterAnimationTime.args,
+      [[0, 'value', [start, end]]],
+      `${view} updates the selected filter`
+    );
+    rendered.unmount();
+  }
   t.end();
 });
