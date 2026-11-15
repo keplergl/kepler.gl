@@ -282,13 +282,18 @@ describe('LineChart time-bin endpoints', () => {
     }
   });
 
-  test('Fit Y excludes grouped segments separated from the selection by missing bins', () => {
+  test.each([
+    {name: 'a selection inside a bin', value: [25, 35], ticks: [10, 15, 20]},
+    {name: 'a selection starting at a bin boundary', value: [20, 39], ticks: [10, 15, 20]},
+    {name: 'a point selection at a bin boundary', value: [20, 20], ticks: [10, 15, 20]},
+    {name: 'a selection ending at a real observation', value: [20, 40], ticks: [0, 500, 1000]}
+  ])('Fit Y uses the correct grouped segments for $name', ({value, ticks}) => {
     const lines = [[{x: 20, y: 10}], [{x: 20, y: 20}], [{x: 0, y: 1000}], [{x: 40, y: 1000}]];
     const {container} = setup({
       isTime: true,
       isEnlarged: true,
       yAxisAutoRange: true,
-      value: [25, 35],
+      value,
       lineChart: chart(lines, {
         yDomain: [10, 1000],
         bins: bins([
@@ -306,7 +311,7 @@ describe('LineChart time-bin endpoints', () => {
       Array.from(container.querySelectorAll('.line-chart__axis-tick'), tick =>
         Number(tick.textContent)
       )
-    ).toEqual([10, 15, 20]);
+    ).toEqual(ticks);
   });
 });
 

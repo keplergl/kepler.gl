@@ -9,13 +9,24 @@ import {getDefaultFilter, initApplicationConfig} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
+import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {IntlWrapper} from 'test/helpers/component-jest-utils';
 import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
-import {AnimationJsonEditorProps} from '../common/animation-control/animation-json-editor';
+import {
+  AnimationJsonEditorFactory,
+  AnimationJsonEditorProps
+} from '../common/animation-control/animation-json-editor';
 import TimeWidgetTopFactory from './time-widget-top';
 import {TimeWidgetTopProps} from './types';
 
+// Exercise the real editor and apply flow while providing state at the Redux boundary.
+jest.mock('../injector', () => ({
+  withState: () => (Component: React.ComponentType) => Component
+}));
+
 const TimeWidgetTop = TimeWidgetTopFactory();
+const RealAnimationJsonEditor = AnimationJsonEditorFactory();
 const filter: TimeRangeFilter = {
   ...getDefaultFilter({dataId: 'data', id: 'time'}),
   type: 'timeRange',
@@ -579,6 +590,89 @@ describe('compact timeline playback controls', () => {
     expect(jsonButton).toHaveFocus();
     expect(jsonButton).toBeVisible();
   });
+
+  test.each([FILTER_VIEW_TYPES.enlarged, FILTER_VIEW_TYPES.minified])(
+    'dismisses JSON after applying a view change from %s without leaving a blocking popup',
+    async initialView => {
+      const user = userEvent.setup();
+      const nextView =
+        initialView === FILTER_VIEW_TYPES.enlarged
+          ? FILTER_VIEW_TYPES.minified
+          : FILTER_VIEW_TYPES.enlarged;
+      const applyFilterConfig = jest.fn();
+      const toggleAnimation = jest.fn();
+      const EditorState = React.createContext<
+        Pick<AnimationJsonEditorProps, 'visState' | 'applyFilterConfig'>
+      >({});
+      const Editor = (props: AnimationJsonEditorProps) => (
+        <RealAnimationJsonEditor {...props} {...React.useContext(EditorState)} />
+      );
+      const Header = TimeWidgetTopFactory(AnimationSpeedSlider, Editor);
+      function StatefulHeader() {
+        const [currentFilter, setCurrentFilter] = React.useState({
+          ...filter,
+          name: ['time'],
+          view: initialView
+        });
+        applyFilterConfig.mockImplementation((_id, nextFilter) => setCurrentFilter(nextFilter));
+        return (
+          <EditorState.Provider
+            value={{
+              visState: {...INITIAL_VIS_STATE, filters: [currentFilter]},
+              applyFilterConfig
+            }}
+          >
+            <Header
+              filter={currentFilter}
+              isMinified={currentFilter.view === FILTER_VIEW_TYPES.minified}
+              readOnly={false}
+              onClose={jest.fn()}
+              onToggleMinify={jest.fn()}
+              playbackControls={{
+                isAnimatable: true,
+                isAnimating: false,
+                speed: 1,
+                toggleAnimation,
+                resetAnimation: jest.fn(),
+                updateAnimationSpeed: jest.fn(),
+                setFilterAnimationWindow: jest.fn()
+              }}
+            />
+          </EditorState.Provider>
+        );
+      }
+
+      render(<StatefulHeader />, {wrapper: HeaderWrapper});
+      await user.click(screen.getByRole('button', {name: 'Edit animation JSON'}));
+      const editor = screen.getByRole('textbox', {name: 'JSON configuration'});
+      await waitFor(() => expect(editor).toBeVisible());
+      fireEvent.change(editor, {target: {value: JSON.stringify({view: nextView})}});
+      await user.click(screen.getByTestId('json-editor-apply'));
+
+      expect(applyFilterConfig).toHaveBeenCalledWith(
+        filter.id,
+        expect.objectContaining({view: nextView})
+      );
+      expect(
+        screen.getByRole('button', {
+          name: nextView === FILTER_VIEW_TYPES.minified ? 'Expand timeline' : 'Collapse timeline'
+        })
+      ).toBeVisible();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      const jsonButton = screen.getByRole('button', {name: 'Edit animation JSON'});
+      expect(jsonButton).toHaveAttribute('aria-expanded', 'false');
+      await user.click(screen.getByRole('button', {name: 'Play'}));
+      expect(toggleAnimation).toHaveBeenCalledTimes(1);
+
+      await user.click(jsonButton);
+      await waitFor(() =>
+        expect(screen.getByRole('textbox', {name: 'JSON configuration'})).toBeVisible()
+      );
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(jsonButton).toHaveFocus();
+    }
+  );
 
   test.each([
     {enableJsonEditors: false, enableAnimationJsonEditor: true},

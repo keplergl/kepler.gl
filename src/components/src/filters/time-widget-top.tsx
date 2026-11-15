@@ -275,6 +275,9 @@ function TimeWidgetTopFactory(
     const minifyButtonRef = useRef<HTMLButtonElement>(null);
     const restoreMinifyFocus = useRef(false);
     useEffect(() => {
+      // Changing layouts remounts the popup anchor. Dismiss the popup instead
+      // of retaining an open modal on an initially invisible Portaled instance.
+      setPopover(null);
       if (restoreMinifyFocus.current) {
         minifyButtonRef.current?.focus();
         restoreMinifyFocus.current = false;

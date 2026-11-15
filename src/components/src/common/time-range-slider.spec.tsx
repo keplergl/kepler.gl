@@ -145,6 +145,155 @@ test('preserves the zoomed chart viewport when cached time bins span the full fi
   }
 });
 
+describe('expanded timeline range dragging', () => {
+  const ExpandedTimeRangeSlider = TimeRangeSliderFactory(
+    PlaybackControls,
+    RealRangeSlider,
+    React.memo(() => <></>),
+    TimeRangeSliderTimeTitleFactory(),
+    AnimationControl
+  );
+  const svgDimensions = ['width', 'height'] as const;
+  const svgDescriptors = svgDimensions.map(name =>
+    Object.getOwnPropertyDescriptor(SVGSVGElement.prototype, name)
+  );
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(212);
+    // RangePlot normally omits D3 brushes in tests because jsdom lacks these SVG APIs.
+    jest.spyOn(jest.requireMock('@kepler.gl/utils'), 'isTest').mockReturnValue(false);
+    svgDimensions.forEach(name => {
+      Object.defineProperty(SVGSVGElement.prototype, name, {
+        configurable: true,
+        get() {
+          return {baseVal: {value: Number(this.getAttribute(name))}};
+        }
+      });
+    });
+  });
+
+  afterEach(() => {
+    fireEvent.mouseUp(window, {view: window});
+    act(() => jest.runOnlyPendingTimers());
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+    svgDimensions.forEach((name, index) => {
+      const descriptor = svgDescriptors[index];
+      if (descriptor) Object.defineProperty(SVGSVGElement.prototype, name, descriptor);
+      else Reflect.deleteProperty(SVGSVGElement.prototype, name);
+    });
+  });
+
+  test.each<{
+    name: string;
+    domain: [number, number];
+    initialValue: [number, number];
+    firstMove: [number, number];
+    secondMove: [number, number];
+    boundaries: [number, number];
+  }>([
+    {
+      name: 'the full calendar-bin domain',
+      domain: [250, 1750],
+      initialValue: [500, 1000],
+      firstMove: [750, 1250],
+      secondMove: [1000, 1500],
+      boundaries: [0, 2000]
+    },
+    {
+      name: 'a zoomed viewport inside the calendar bins',
+      domain: [500, 1500],
+      initialValue: [750, 1000],
+      firstMove: [875, 1125],
+      secondMove: [1000, 1250],
+      boundaries: [500, 1500]
+    }
+  ])(
+    'moves the existing brush and resizes both ends within $name',
+    ({domain, initialValue, firstMove, secondMove, boundaries}) => {
+      const onChange = jest.fn();
+      function ControlledTimeline() {
+        const [value, setValue] = React.useState(initialValue);
+        const update = React.useCallback((next: number[]) => {
+          onChange(next);
+          setValue([next[0], next[1]]);
+        }, []);
+        return (
+          <ExpandedTimeRangeSlider
+            domain={domain}
+            value={value}
+            filter={{domain: [250, 1750]} as Filter}
+            timeBins={{
+              data: {
+                second: [
+                  {x0: 0, x1: 1000, count: 1, indexes: [0]},
+                  {x0: 1000, x1: 2000, count: 1, indexes: [1]}
+                ]
+              }
+            }}
+            plotType={{type: 'histogram', interval: 'second'}}
+            step={1}
+            speed={1}
+            isAnimating={false}
+            showControls={false}
+            isTime
+            timeFormat="HH:mm:ss"
+            timeline={{...timeline, domain: [250, 1750], value}}
+            onChange={update}
+            toggleAnimation={jest.fn()}
+          />
+        );
+      }
+      const {container} = renderWithTheme(<ControlledTimeline />);
+      function brushElement(selector: string) {
+        const element = container.querySelector(`.kg-range-slider__brush ${selector}`);
+        if (!element) throw new Error(`Missing brush element: ${selector}`);
+        return element;
+      }
+      function move(clientX: number) {
+        fireEvent.mouseMove(window, {clientX, clientY: 10, buttons: 1, view: window});
+      }
+      function release(clientX: number) {
+        fireEvent.mouseUp(window, {clientX, clientY: 10, button: 0, view: window});
+        act(() => jest.advanceTimersByTime(40));
+      }
+      function press(selector: string, clientX: number) {
+        fireEvent.mouseDown(brushElement(selector), {
+          clientX,
+          clientY: 10,
+          button: 0,
+          view: window
+        });
+      }
+
+      // Both fixtures start at pixels [50, 100] on a 200-pixel brush track.
+      press('.selection', 75);
+      move(100);
+      act(() => jest.advanceTimersByTime(40));
+      expect(onChange).toHaveBeenLastCalledWith(firstMove);
+      move(125);
+      release(125);
+      expect(onChange).toHaveBeenLastCalledWith(secondMove);
+
+      press('.handle--w', 100);
+      move(-20);
+      release(-20);
+      expect(onChange).toHaveBeenLastCalledWith([boundaries[0], secondMove[1]]);
+
+      press('.handle--e', 150);
+      move(220);
+      release(220);
+      expect(onChange).toHaveBeenLastCalledWith(boundaries);
+
+      const updateCount = onChange.mock.calls.length;
+      move(100);
+      act(() => jest.advanceTimersByTime(40));
+      expect(onChange).toHaveBeenCalledTimes(updateCount);
+    }
+  );
+});
+
 describe('minimized timeline range dragging', () => {
   const RealTimelineSlider = TimelineSliderFactory();
   const MinimizedTimeRangeSlider = TimeRangeSliderFactory(
@@ -326,7 +475,7 @@ describe('minimized timeline range dragging', () => {
     }
   );
 
-  test('moves a time range by touch and still allows independent endpoint dragging', () => {
+  test('moves a time range through controlled touch updates and resizes both ends by touch', () => {
     const start = Date.UTC(2026, 0, 1);
     const hour = 60 * 60 * 1000;
     const {bar, container, onChange} = renderMinimized({
@@ -337,22 +486,33 @@ describe('minimized timeline range dragging', () => {
     });
     fireEvent.touchStart(bar, {touches: [{clientX: 40}]});
     fireEvent.touchMove(document, {touches: [{clientX: 50}]});
-    fireEvent.touchEnd(document);
-    act(() => jest.advanceTimersByTime(40));
-    expect(onChange).toHaveBeenLastCalledWith([start + 30 * hour, start + 70 * hour]);
-
-    const handles = container.querySelectorAll('.kg-range-slider__handle');
-    fireEvent.mouseDown(handles[0], {clientX: 30});
-    fireEvent.mouseMove(document, {clientX: 40});
-    fireEvent.mouseUp(document);
-    act(() => jest.advanceTimersByTime(40));
-    expect(onChange).toHaveBeenLastCalledWith([start + 40 * hour, start + 70 * hour]);
-
-    fireEvent.mouseDown(handles[1], {clientX: 70});
-    fireEvent.mouseMove(document, {clientX: 80});
-    fireEvent.mouseUp(document);
+    fireEvent.touchMove(document, {touches: [{clientX: 60}]});
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith([start + 40 * hour, start + 80 * hour]);
+    fireEvent.touchMove(document, {touches: [{clientX: 70}]});
+    fireEvent.touchEnd(document);
+    act(() => jest.advanceTimersByTime(40));
+    expect(onChange).toHaveBeenLastCalledWith([start + 50 * hour, start + 90 * hour]);
+
+    const handles = container.querySelectorAll('.kg-range-slider__handle');
+    fireEvent.touchStart(handles[0], {touches: [{clientX: 50}]});
+    fireEvent.touchMove(document, {touches: [{clientX: 55}]});
+    fireEvent.touchMove(document, {touches: [{clientX: 60}]});
+    fireEvent.touchEnd(document);
+    act(() => jest.advanceTimersByTime(40));
+    expect(onChange).toHaveBeenLastCalledWith([start + 60 * hour, start + 90 * hour]);
+
+    fireEvent.touchStart(handles[1], {touches: [{clientX: 90}]});
+    fireEvent.touchMove(document, {touches: [{clientX: 95}]});
+    fireEvent.touchMove(document, {touches: [{clientX: 100}]});
+    fireEvent.touchEnd(document);
+    act(() => jest.advanceTimersByTime(40));
+    expect(onChange).toHaveBeenLastCalledWith([start + 60 * hour, start + 100 * hour]);
+
+    const updateCount = onChange.mock.calls.length;
+    fireEvent.touchMove(document, {touches: [{clientX: 80}]});
+    act(() => jest.advanceTimersByTime(40));
+    expect(onChange).toHaveBeenCalledTimes(updateCount);
   });
 
   test.each<Timeline>([

@@ -231,7 +231,12 @@ function LineChartFactory() {
         return computedYDomain;
       let min: number | undefined;
       let max: number | undefined;
-      for (const line of renderLines) {
+      for (const [lineIndex, line] of renderLines.entries()) {
+        // A synthetic endpoint marks the exclusive end of its bin. A segment
+        // ending there does not overlap a selection that starts at that boundary.
+        if (line.length > series.lines[lineIndex].length && line[line.length - 1].x <= value[0]) {
+          continue;
+        }
         for (let i = 0; i < line.length; i++) {
           const point = line[i];
           const inRange = point.x >= value[0] && point.x <= value[1];
