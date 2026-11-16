@@ -48,6 +48,9 @@ const CF_UNIT_MS: Record<string, number> = {
 /** Guard against walking an unbounded hierarchy when a store lists thousands of nodes. */
 const MAX_VARIABLE_CANDIDATES = 200;
 
+/** Optional zoom bounds must not leave dataset loading waiting on the CRS service. */
+const CRS_LOOKUP_TIMEOUT_MS = 5_000;
+
 /**
  * Axis labels `@developmentseed/geozarr` accepts for the spatial dimensions.
  * Anything else cannot be rendered, so it is not worth deriving metadata for.
@@ -1139,7 +1142,7 @@ async function buildVariableInfo(
     geoAttrs,
     spatialMetadata: {
       crs: geo.crs,
-      bounds: await getZarrBounds(geo),
+      bounds: await getZarrBounds(geo, store.signal),
       axes: geo.axes,
       xAxisIndex: geo.xAxisIndex,
       yAxisIndex: geo.yAxisIndex,
@@ -1162,9 +1165,40 @@ async function buildVariableInfo(
   };
 }
 
+/** Reuse the renderer's CRS cache, but keep network lookups bounded and cancellable. */
+async function resolveZarrEpsg(epsg: number, signal?: AbortSignal) {
+  const {PROJECTION_REGISTRY, parseWkt} = await import('@developmentseed/proj');
+  throwIfAborted(signal);
+  const code = `EPSG:${epsg}`;
+  const cached = PROJECTION_REGISTRY.get(code);
+  if (cached) return cached;
+
+  // The library resolver does not accept a signal. Fetch the same definition
+  // here so cancelling a dataset also cancels the request and response body.
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', abort, {once: true});
+  const timeout = setTimeout(
+    () => controller.abort(new DOMException('CRS lookup timed out', 'TimeoutError')),
+    CRS_LOOKUP_TIMEOUT_MS
+  );
+  try {
+    const response = await fetch(`https://epsg.io/${epsg}.json`, {signal: controller.signal});
+    if (!response.ok) throw new Error(`Failed to resolve ${code}`);
+    const definition = parseWkt(await response.json());
+    throwIfAborted(controller.signal);
+    PROJECTION_REGISTRY.set(code, definition);
+    return definition;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
+}
+
 /** Derive the same coarsest-level footprint used by the raster tileset, in map coordinates. */
 async function getZarrBounds(
-  geo: ReturnType<typeof import('@developmentseed/geozarr')['parseGeoZarrMetadata']>
+  geo: ReturnType<typeof import('@developmentseed/geozarr')['parseGeoZarrMetadata']>,
+  signal?: AbortSignal
 ): Promise<ZarrDatasetMetadata['bounds']> {
   const level = geo.levels[geo.levels.length - 1];
   if (!level || !(level.arrayWidth > 0) || !(level.arrayHeight > 0)) {
@@ -1172,16 +1206,15 @@ async function getZarrBounds(
   }
   try {
     // Keep these ESM dependencies lazy, like the Zarr parser and renderer.
-    const [{apply}, {epsgResolver, parseWkt, transformBounds}, {default: proj4}] =
-      await Promise.all([
-        import('@developmentseed/affine'),
-        import('@developmentseed/proj'),
-        import('proj4')
-      ]);
+    const [{apply}, {parseWkt, transformBounds}, {default: proj4}] = await Promise.all([
+      import('@developmentseed/affine'),
+      import('@developmentseed/proj'),
+      import('proj4')
+    ]);
     const {crs} = geo;
     const epsg = crs.code?.match(/^EPSG:(\d+)$/);
     const definition = crs.code
-      ? epsg && (proj4.defs(crs.code) || (await epsgResolver(Number(epsg[1]))))
+      ? epsg && (proj4.defs(crs.code) || (await resolveZarrEpsg(Number(epsg[1]), signal)))
       : crs.wkt2 || crs.projjson
       ? parseWkt((crs.wkt2 || crs.projjson) as Parameters<typeof parseWkt>[0])
       : null;
@@ -1214,6 +1247,7 @@ async function getZarrBounds(
       Math.min(90, north)
     ];
   } catch {
+    throwIfAborted(signal);
     // An unavailable CRS definition must not prevent the dataset from loading.
     return null;
   }

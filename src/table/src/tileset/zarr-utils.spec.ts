@@ -63,6 +63,24 @@ describe('Zarr metadata', () => {
     Headers: globalThis.Headers
   };
   const fetchMock = jest.fn();
+  const lookupCode = 'EPSG:4258';
+  const lookupUrl = 'https://epsg.io/4258.json';
+  const lookupDefinition = {
+    type: 'GeographicCRS',
+    name: 'ETRS89',
+    datum: {
+      type: 'GeodeticReferenceFrame',
+      name: 'European Terrestrial Reference System 1989',
+      ellipsoid: {name: 'GRS 1980', semi_major_axis: 6378137, inverse_flattening: 298.257222101}
+    },
+    coordinate_system: {
+      subtype: 'ellipsoidal',
+      axis: [
+        {name: 'Geodetic latitude', abbreviation: 'Lat', direction: 'north', unit: 'degree'},
+        {name: 'Geodetic longitude', abbreviation: 'Lon', direction: 'east', unit: 'degree'}
+      ]
+    }
+  };
   const array = {
     zarr_format: 2,
     shape: [2, 2, 2],
@@ -115,9 +133,28 @@ describe('Zarr metadata', () => {
   afterAll(() => Object.assign(globalThis, originalGlobals));
   beforeEach(() => {
     clearZarrStoreCache();
+    projections.PROJECTION_REGISTRY.delete(lookupCode);
     fetchMock.mockReset();
   });
-  afterEach(() => clearZarrStoreCache());
+  afterEach(() => {
+    clearZarrStoreCache();
+    projections.PROJECTION_REGISTRY.delete(lookupCode);
+  });
+
+  function serveLookupMetadata(request: Request) {
+    return request.url.endsWith('/.zmetadata')
+      ? Response.json({
+          ...consolidated,
+          metadata: {
+            ...consolidated.metadata,
+            'climate/.zattrs': {
+              ...consolidated.metadata['climate/.zattrs'],
+              'proj:code': lookupCode
+            }
+          }
+        })
+      : serve(request);
+  }
 
   async function metadataWithGeoAttrs(attrs: Record<string, unknown>) {
     fetchMock.mockImplementation((request: Request | string) =>
@@ -176,22 +213,25 @@ describe('Zarr metadata', () => {
 
   it('keeps the variable available if a CRS definition cannot be resolved', async () => {
     const metadata = await metadataWithGeoAttrs({'proj:code': 'EPSG:999999'});
-    expect(fetchMock).toHaveBeenCalledWith('https://epsg.io/999999.json');
+    expect(fetchMock).toHaveBeenCalledWith('https://epsg.io/999999.json', {
+      signal: expect.any(AbortSignal)
+    });
     expect(metadata.variables[0].path).toBe('climate');
     expect(metadata.bounds).toBeNull();
+    expect(projections.PROJECTION_REGISTRY.has('EPSG:999999')).toBe(false);
   });
 
   it('uses the renderer CRS registry for projected grids beyond Web Mercator', async () => {
-    projections.PROJECTION_REGISTRY.set('EPSG:32631', {
-      title: 'WGS 84 / UTM zone 31N',
+    projections.PROJECTION_REGISTRY.set('EPSG:25831', {
+      title: 'ETRS89 / UTM zone 31N',
       projName: 'utm',
       zone: 31,
-      datumCode: 'WGS84',
+      ellps: 'GRS80',
       units: 'm'
     });
     try {
       const metadata = await metadataWithGeoAttrs({
-        'proj:code': 'EPSG:32631',
+        'proj:code': 'EPSG:25831',
         'spatial:transform': [1000, 0, 500000, 0, -1000, 2000]
       });
       expect(metadata.bounds?.[0]).toBeCloseTo(3, 5);
@@ -199,10 +239,97 @@ describe('Zarr metadata', () => {
       expect(metadata.bounds?.[2]).toBeCloseTo(3.017973, 5);
       expect(metadata.bounds?.[3]).toBeCloseTo(0.018095, 5);
       expect(validateBounds(metadata.bounds)).toBe(metadata.bounds);
+      expect(fetchMock.mock.calls.some(([request]) => typeof request === 'string')).toBe(false);
     } finally {
-      projections.PROJECTION_REGISTRY.delete('EPSG:32631');
+      projections.PROJECTION_REGISTRY.delete('EPSG:25831');
     }
   });
+
+  it.each(['headers', 'body'])(
+    'cancels a stalled EPSG lookup %s and permits retry',
+    async stage => {
+      let started: () => void;
+      const lookupStarted = new Promise<void>(resolve => {
+        started = resolve;
+      });
+      let lookupSignal: AbortSignal;
+      fetchMock.mockImplementation((request: Request | string, options?: RequestInit) => {
+        if (typeof request !== 'string') return Promise.resolve(serveLookupMetadata(request));
+        expect(request).toBe(lookupUrl);
+        lookupSignal = options?.signal as AbortSignal;
+        const stall = () => {
+          started();
+          return pendingUntilAbort(lookupSignal);
+        };
+        return stage === 'headers' ? stall() : Promise.resolve({ok: true, json: stall});
+      });
+      const controller = new AbortController();
+      const pending = getZarrMetadata(url, {signal: controller.signal});
+      const reason = new DOMException('Metadata load cancelled', 'AbortError');
+      const rejected = expect(pending).rejects.toBe(reason);
+      await lookupStarted;
+      const requestCount = fetchMock.mock.calls.length;
+      controller.abort(reason);
+      await rejected;
+      expect(lookupSignal!.aborted).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(requestCount);
+      expect(projections.PROJECTION_REGISTRY.has(lookupCode)).toBe(false);
+
+      fetchMock.mockImplementation((request: Request | string) =>
+        Promise.resolve(
+          typeof request === 'string'
+            ? Response.json(lookupDefinition)
+            : serveLookupMetadata(request)
+        )
+      );
+      const retry = await getZarrMetadata(url, {signal: new AbortController().signal});
+      expect(retry.variable).toBe('climate');
+      retry.bounds!.forEach((value, index) => expect(value).toBeCloseTo([0, 0, 2, 2][index]));
+      expect(projections.PROJECTION_REGISTRY.has(lookupCode)).toBe(true);
+      const lookupCount = fetchMock.mock.calls.filter(([request]) => request === lookupUrl).length;
+      const cached = await getZarrMetadata(url);
+      expect(cached.bounds).toEqual(retry.bounds);
+      expect(fetchMock.mock.calls.filter(([request]) => request === lookupUrl)).toHaveLength(
+        lookupCount
+      );
+    }
+  );
+
+  it.each(['headers', 'body'])(
+    'times out stalled EPSG lookup %s without preventing a signal-free metadata load',
+    async stage => {
+      jest.useFakeTimers();
+      try {
+        let started: () => void;
+        const lookupStarted = new Promise<void>(resolve => {
+          started = resolve;
+        });
+        let lookupSignal: AbortSignal;
+        fetchMock.mockImplementation((request: Request | string, options?: RequestInit) => {
+          if (typeof request !== 'string') return Promise.resolve(serveLookupMetadata(request));
+          expect(request).toBe(lookupUrl);
+          lookupSignal = options?.signal as AbortSignal;
+          const stall = () => {
+            started();
+            return pendingUntilAbort(lookupSignal);
+          };
+          return stage === 'headers' ? stall() : Promise.resolve({ok: true, json: stall});
+        });
+        const pending = getZarrMetadata(url);
+        await lookupStarted;
+        await jest.advanceTimersByTimeAsync(5000);
+        const metadata = await pending;
+        expect(lookupSignal!.aborted).toBe(true);
+        expect(metadata.variable).toBe('climate');
+        expect(metadata.bounds).toBeNull();
+        expect(metadata.nonSpatialDims[0].values).toEqual([1, 2]);
+        expect(projections.PROJECTION_REGISTRY.has(lookupCode)).toBe(false);
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    }
+  );
 
   it('does not publish zoom bounds for a footprint outside geographic latitude limits', async () => {
     const metadata = await metadataWithGeoAttrs({'spatial:transform': [1, 0, 0, 0, 1, 100]});
