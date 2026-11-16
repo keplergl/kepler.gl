@@ -1615,11 +1615,22 @@ test('Components -> TimeWidget -> resized chart survives settings and collapsed 
   t.end();
 });
 
-test('Components -> TimeWidget -> resizing leaves room above the widget and its settings', t => {
+test('Components -> TimeWidget -> default and reset heights fit a short map', t => {
   const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
   const root = document.createElement('div');
-  const rootBounds = {top: 50, bottom: 550, height: 500};
+  const rootBounds = {top: 50, bottom: 230, height: 180};
   const rootRect = sinon.stub(root, 'getBoundingClientRect').returns(rootBounds);
+  const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+  const widgetRect = sinon
+    .stub(HTMLElement.prototype, 'getBoundingClientRect')
+    .callsFake(function () {
+      if (!this.classList.contains('bottom-widget--inner')) {
+        return getBoundingClientRect.call(this);
+      }
+      const handle = this.querySelector('[role="separator"]');
+      const height = Number(handle.getAttribute('aria-valuenow')) + 100;
+      return {top: rootBounds.bottom - height, bottom: rootBounds.bottom, height};
+    });
   const view = render(
     <ThemeProvider theme={theme}>
       <IntlWrapper>
@@ -1633,12 +1644,80 @@ test('Components -> TimeWidget -> resizing leaves room above the widget and its 
     </ThemeProvider>
   );
   const handle = prepareResizeHandle(view);
-  const widget = view.container.querySelector('.bottom-widget--inner');
   const chartHeight = () =>
     Number(view.container.querySelector('.histogram-bars').closest('svg').getAttribute('height'));
-  // Model a bottom-anchored widget with fixed controls and an optional settings row.
+  const maximum = Number(handle.getAttribute('aria-valuemax'));
+  t.ok(maximum < theme.rangePlotHLarge, 'map is shorter than the default chart needs');
+  t.equal(chartHeight(), maximum, 'initial default chart fits the available height');
+  t.equal(
+    Number(handle.getAttribute('aria-valuenow')),
+    maximum,
+    'accessible height does not exceed the maximum'
+  );
+  fireEvent.keyDown(handle, {key: 'Home'});
+  t.ok(chartHeight() < maximum, 'keyboard can shrink below the constrained default');
+  fireEvent.doubleClick(handle);
+  t.equal(chartHeight(), maximum, 'reset fits the default chart into the available height');
+  t.equal(
+    Number(handle.getAttribute('aria-valuenow')),
+    maximum,
+    'reset preserves the accessible height limit'
+  );
+  widgetRect.restore();
+  rootRect.restore();
+  cleanup();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget -> resizing leaves room for the whole widget stack', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const originalResizeObserver = globalThis.ResizeObserver;
+  const observers = [];
+  globalThis.ResizeObserver = class {
+    constructor(callback) {
+      this.callback = callback;
+      this.targets = [];
+      observers.push(this);
+    }
+    observe(target) {
+      this.targets.push(target);
+    }
+    disconnect() {
+      this.targets = [];
+    }
+  };
+  const root = document.createElement('div');
+  const rootBounds = {top: 50, bottom: 550, height: 500};
+  const rootRect = sinon.stub(root, 'getBoundingClientRect').returns(rootBounds);
+  const view = render(
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <RootContext.Provider value={{current: root}}>
+          <div className="bottom-widget--container">
+            <div>Layer animation and Zarr controls</div>
+            <TimeWidget
+              {...defaultProps}
+              filter={{...defaultProps.filter, view: FILTER_VIEW_TYPES.enlarged}}
+            />
+          </div>
+        </RootContext.Provider>
+      </IntlWrapper>
+    </ThemeProvider>
+  );
+  const handle = prepareResizeHandle(view);
+  const widget = view.container.querySelector('.bottom-widget--inner');
+  const stack = view.container.querySelector('.bottom-widget--container');
+  const chartHeight = () =>
+    Number(view.container.querySelector('.histogram-bars').closest('svg').getAttribute('height'));
+  // Model the bottom-anchored stack with padding and controls above the timeline.
+  let otherControlsHeight = 80;
   const widgetRect = sinon.stub(widget, 'getBoundingClientRect').callsFake(() => {
     const height = chartHeight() + 100 + (widget.querySelector('.time-widget--settings') ? 80 : 0);
+    return {top: 488 - height, bottom: 488, height};
+  });
+  const stackRect = sinon.stub(stack, 'getBoundingClientRect').callsFake(() => {
+    const height = widget.getBoundingClientRect().height + otherControlsHeight + 24;
     return {top: 500 - height, bottom: 500, height};
   });
   fireEvent.keyDown(handle, {key: 'ArrowUp'});
@@ -1647,8 +1726,8 @@ test('Components -> TimeWidget -> resizing leaves room above the widget and its 
   fireEvent.keyDown(handle, {key: 'End'});
   t.equal(chartHeight(), availableHeight, 'keyboard expansion stops at available map space');
   t.ok(
-    widget.getBoundingClientRect().top > rootBounds.top,
-    'header and handle remain inside the map'
+    stack.getBoundingClientRect().top > rootBounds.top,
+    'preceding controls and stack padding remain inside the map'
   );
   resizePointer(handle, 'pointerdown', 100);
   resizePointer(handle, 'pointermove', -1000);
@@ -1667,12 +1746,28 @@ test('Components -> TimeWidget -> resizing leaves room above the widget and its 
     'accessible maximum reflects the remaining space'
   );
   t.ok(
-    widget.getBoundingClientRect().top > rootBounds.top,
-    'settings do not push the header offscreen'
+    stack.getBoundingClientRect().top > rootBounds.top,
+    'settings do not push the preceding controls offscreen'
   );
+
+  const observer = observers.findLast(candidate => candidate.targets.includes(stack));
+  t.ok(observer, 'observes the enclosing stack for changes to preceding controls');
+  otherControlsHeight += 40;
+  act(() => observer?.callback());
+  t.equal(chartHeight(), availableHeight - 120, 'new controls reduce the available chart height');
+  t.ok(
+    stack.getBoundingClientRect().top > rootBounds.top,
+    'changing sibling controls keeps the whole stack inside the map'
+  );
+  stackRect.restore();
   widgetRect.restore();
   rootRect.restore();
   cleanup();
+  if (originalResizeObserver) {
+    globalThis.ResizeObserver = originalResizeObserver;
+  } else {
+    delete globalThis.ResizeObserver;
+  }
   clientSizeStub.restore();
   t.end();
 });

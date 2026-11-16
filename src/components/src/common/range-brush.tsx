@@ -91,6 +91,10 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
 
       this.root = this.rootContainer.current ? select(this.rootContainer.current) : undefined;
       this.brush = brushX()
+        .extent((): [[number, number], [number, number]] => [
+          [0, 0],
+          [this.props.width, this.props.height]
+        ])
         .handleSize(3)
         .on('start', event => {
           if (typeof this.props.onBrushStart === 'function') this.props.onBrushStart();
@@ -152,18 +156,21 @@ function RangeBrushFactory(): React.ComponentType<RangeBrushProps> {
     componentDidUpdate(prevProps) {
       const {
         value: [val0, val1],
-        width
+        width,
+        height
       } = this.props;
       const [prevVal0, prevVal1] = prevProps.value;
 
       if (
         prevProps.width !== width ||
+        prevProps.height !== height ||
         prevProps.range[0] !== this.props.range[0] ||
         prevProps.range[1] !== this.props.range[1]
       ) {
         // dimension change should not trigger this._brushed
         this.moving = true;
         if (this.brush) this.root?.call(this.brush);
+        this.handle?.attr('d', getHandlePath(this.props));
         this._move(val0, val1);
       }
 

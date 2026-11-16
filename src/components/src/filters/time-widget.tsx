@@ -306,15 +306,16 @@ function TimeWidgetFactory(
         ? theme.rangePlotHLargePalm
         : theme.rangePlotHLarge
       : theme.rangePlotH;
-    const currentChartHeight = chartHeight ?? defaultChartHeight;
-    // The widget is bottom anchored: extra chart height consumes space above it.
-    // Recheck when settings, map bounds or wrapping controls change that space.
+    const currentChartHeight = Math.min(chartHeight ?? defaultChartHeight, maxChartHeight);
+    // The whole widget stack is bottom anchored. Reserve its padding and any
+    // layer/Zarr controls above the timeline as well as the timeline's own controls.
     useLayoutEffect(() => {
       const widget = widgetRef.current;
       const root = rootRef?.current;
       if (!widget || isMinified) return undefined;
+      const stack = widget.closest('.bottom-widget--container') ?? widget;
       const updateMaxHeight = () => {
-        const bounds = widget.getBoundingClientRect();
+        const bounds = stack.getBoundingClientRect();
         if (!bounds.height) return;
         const top = Math.max(0, root?.getBoundingClientRect().top ?? 0);
         const maximum = clamp(
@@ -328,6 +329,7 @@ function TimeWidgetFactory(
       const observer =
         typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateMaxHeight);
       observer?.observe(widget);
+      if (stack !== widget) observer?.observe(stack);
       if (root) observer?.observe(root);
       window.addEventListener('resize', updateMaxHeight);
       return () => {
@@ -337,8 +339,8 @@ function TimeWidgetFactory(
     }, [currentChartHeight, isMinified, rootRef, showSettings]);
 
     const plotTheme = useCallback(
-      (outerTheme: DefaultTheme) => timelinePlotTheme(outerTheme, chartHeight),
-      [chartHeight]
+      (outerTheme: DefaultTheme) => timelinePlotTheme(outerTheme, currentChartHeight),
+      [currentChartHeight]
     );
 
     const startChartResize = useCallback(

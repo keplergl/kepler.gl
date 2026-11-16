@@ -61,10 +61,10 @@ function setup(overrides: Partial<RangeBrushProps> = {}) {
   }
 }
 
-function drag(target: Element, start: number, end: number) {
-  fireEvent.mouseDown(target, {clientX: start, clientY: 10, button: 0, view: window});
-  fireEvent.mouseMove(window, {clientX: end, clientY: 10, buttons: 1, view: window});
-  fireEvent.mouseUp(window, {clientX: end, clientY: 10, button: 0, view: window});
+function drag(target: Element, start: number, end: number, clientY = 10) {
+  fireEvent.mouseDown(target, {clientX: start, clientY, button: 0, view: window});
+  fireEvent.mouseMove(window, {clientX: end, clientY, buttons: 1, view: window});
+  fireEvent.mouseUp(window, {clientX: end, clientY, button: 0, view: window});
 }
 
 function element(container: HTMLElement, selector: string): Element {
@@ -104,6 +104,40 @@ describe('RangeBrush interaction', () => {
     fireEvent.mouseMove(window, {clientX: 190, buttons: 0, view: window});
     expect(props.onBrush).toHaveBeenCalledTimes(calls);
   });
+
+  test.each([true, false])(
+    'refreshes brush coverage and centers handles after a height change (ranged=%s)',
+    isRanged => {
+      const {container, props, update} = setup({isRanged});
+      const initialSelection = selection(container);
+      const handles = Array.from(container.querySelectorAll('.handle--custom'));
+      const initialTransforms = handles.map(handle => handle.getAttribute('transform'));
+      const handleStartY = (handle: Element) =>
+        Number(handle.getAttribute('d')?.match(/^M[^,]+,([^c]+)/)?.[1]);
+      const initialHandleY = handles.map(handleStartY);
+
+      update({height: 150});
+      expect(element(container, '.overlay')).toHaveAttribute('height', '150');
+      expect(element(container, '.selection')).toHaveAttribute('height', '150');
+      expect(selection(container)).toEqual(initialSelection);
+      expect(handles.map(handle => handle.getAttribute('transform'))).toEqual(initialTransforms);
+      handles.forEach((handle, index) => {
+        expect(handleStartY(handle) - initialHandleY[index]).toBe(50);
+        if (!isRanged) expect(handle).toHaveAttribute('display', 'none');
+      });
+      expect(props.onBrush).not.toHaveBeenCalled();
+
+      drag(element(container, '.overlay'), 40, 140, 125);
+      expect(props.onBrush).toHaveBeenLastCalledWith(...(isRanged ? [20, 70] : [70, 70]));
+
+      update({height: 40});
+      expect(element(container, '.overlay')).toHaveAttribute('height', '40');
+      expect(element(container, '.selection')).toHaveAttribute('height', '40');
+      handles.forEach((handle, index) => {
+        expect(handleStartY(handle) - initialHandleY[index]).toBe(-5);
+      });
+    }
+  );
 
   test('snaps to marks while keeping the exact lower domain boundary', () => {
     const {container, props} = setup({marks: [10, 25, 50, 100]});
