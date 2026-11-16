@@ -597,7 +597,7 @@ export default function CameraTourConfig({
         id,
         name: name || `${message('stop', 'Stop')} ${stops.length + 1}`,
         camera,
-        holdDurationMs: 2000,
+        holdDurationMs: 0,
         travelDurationMs: 3000
       }
     ]);

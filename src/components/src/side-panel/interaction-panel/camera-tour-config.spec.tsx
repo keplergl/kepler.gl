@@ -168,7 +168,9 @@ test('captures the live view, renames it and removes the last stop without datas
   liveCamera.zoom = 12;
   fireEvent.click(screen.getByRole('button', {name: 'Add stop'}));
   expect(commit.mock.lastCall[0].stops[0].camera).toEqual(liveCamera);
-  expect(screen.getByLabelText('Tour duration')).toHaveTextContent('2 s');
+  expect(commit.mock.lastCall[0].stops[0].holdDurationMs).toBe(0);
+  expect(screen.getByRole('spinbutton', {name: 'Hold (s)'})).toHaveValue(0);
+  expect(screen.getByLabelText('Tour duration')).toHaveTextContent('0 s');
   fireEvent.change(screen.getByRole('textbox', {name: 'Stop name'}), {
     target: {value: 'New view'}
   });
@@ -189,6 +191,7 @@ test('copies bookmarks and updates a stop from the current view without modifyin
   fireEvent.click(screen.getByTitle(bookmark.name));
   const saved = commit.mock.lastCall[0].stops[0];
   expect(saved.name).toBe(bookmark.name);
+  expect(saved.holdDurationMs).toBe(0);
   expect(saved.camera).toEqual(bookmark.camera);
   expect(saved.camera).not.toBe(bookmark.camera);
   bookmark.camera.zoom = 20;
@@ -1496,6 +1499,86 @@ test('path geometry follows stop order and reuses data during navigation', () =>
   ]);
   expect(getCameraTourPathLayers(null)).toEqual([]);
   expect(getCameraTourPathLayers({stops: []})).toEqual([]);
+});
+
+test.each([
+  {name: 'ordinary', longitudes: [10, 30, 50], unwrapped: [10, 30, 50]},
+  {name: 'antimeridian', longitudes: [179, -179, -177], unwrapped: [179, 181, 183]}
+])(
+  'path geometry follows smooth $name travel through zero-hold stops',
+  ({longitudes, unwrapped}) => {
+    const curvedTour: CameraTour = {
+      stops: longitudes.map((longitude, index) => ({
+        ...tour.stops[0],
+        id: String(index),
+        camera: {...camera, longitude, latitude: index === 1 ? 40 : 20},
+        holdDurationMs: index === 1 ? 0 : 1000,
+        travelDurationMs: index === 0 ? 2000 : 4000
+      }))
+    };
+    const layers = getCameraTourPathLayers(curvedTour);
+    const path = (layers[0].props.data as {path: number[][]}[])[0].path;
+    expect(path.length).toBeGreaterThan(3);
+    expect(path).toEqual(
+      expect.arrayContaining(
+        unwrapped.map((longitude, index) => [longitude, index === 1 ? 40 : 20])
+      )
+    );
+    [2000, 5000].forEach((time, index) => {
+      const frame = evaluateCameraTour(curvedTour, time)!;
+      const longitude = frame.longitude + unwrapped[index] - longitudes[index];
+      expect(path).toEqual(
+        expect.arrayContaining([
+          [expect.closeTo(longitude, 10), expect.closeTo(frame.latitude, 10)]
+        ])
+      );
+    });
+    // The incoming curve leaves the straight line between its authored centers.
+    const longitudeSpan = unwrapped[1] - unwrapped[0];
+    expect(
+      path.some(
+        ([longitude, latitude]) =>
+          longitude < unwrapped[1] &&
+          Math.abs(latitude - 20 - ((longitude - unwrapped[0]) / longitudeSpan) * 20) > 0.01
+      )
+    ).toBe(true);
+    expect(
+      path.every(
+        (position, index) => index === 0 || Math.abs(position[0] - path[index - 1][0]) < 180
+      )
+    ).toBe(true);
+    expect(layers[1].props.data).toEqual(
+      expect.arrayContaining(
+        curvedTour.stops.map(stop =>
+          expect.objectContaining({position: [stop.camera.longitude, stop.camera.latitude]})
+        )
+      )
+    );
+    expect(getCameraTourPathLayers(curvedTour)[0].props.data).toBe(layers[0].props.data);
+  }
+);
+
+test.each([
+  {name: 'hold', holdDurationMs: 1000, travelDurationMs: 2000},
+  {name: 'cut', holdDurationMs: 0, travelDurationMs: 0}
+])('path geometry keeps straight spans around a $name', ({holdDurationMs, travelDurationMs}) => {
+  const stoppedTour: CameraTour = {
+    stops: [10, 30, 50].map((longitude, index) => ({
+      ...tour.stops[0],
+      id: String(index),
+      camera: {...camera, longitude, latitude: index === 1 ? 40 : 20},
+      ...(index === 1 ? {holdDurationMs, travelDurationMs} : {})
+    }))
+  };
+  expect(getCameraTourPathLayers(stoppedTour)[0].props.data).toEqual([
+    {
+      path: [
+        [10, 20],
+        [30, 40],
+        [50, 20]
+      ]
+    }
+  ]);
 });
 
 test('path labels include authored Unicode names in their font atlas', () => {
