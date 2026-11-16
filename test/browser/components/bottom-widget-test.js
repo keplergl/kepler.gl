@@ -3,10 +3,11 @@
 
 import React from 'react';
 import Window from 'global/window';
-import {render, fireEvent} from '@testing-library/react';
+import {render, fireEvent, act} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import test from 'tape';
+import sinon from 'sinon';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {
@@ -22,6 +23,7 @@ import {
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer as reducer} from '@kepler.gl/reducers';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import * as dimensions from '../../../src/utils/src/observe-dimensions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);
 const TimeWidget = appInjector.get(TimeWidgetFactory);
@@ -242,6 +244,75 @@ test('Components -> BottomWidget -> reserves space only for the bottom-right leg
   } finally {
     view?.unmount();
     heightStub.restore();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> refreshes legend clearance when Settings changes height', t => {
+  const matchMedia = Window.matchMedia;
+  Window.matchMedia = query => ({...matchMedia(query), matches: false});
+  const resizeCallbacks = new Map();
+  const observeStub = sinon.stub(dimensions, 'observeDimensions').callsFake((target, callback) => {
+    resizeCallbacks.set(target, callback);
+  });
+  const unobserveStub = sinon.stub(dimensions, 'unobserveDimensions').callsFake(target => {
+    resizeCallbacks.delete(target);
+  });
+  const heightStub = sinon.stub(HTMLElement.prototype, 'offsetHeight').get(function () {
+    return this.querySelector('.time-widget--settings') ? 400 : 240;
+  });
+  const tree = y => (
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <BottomWidget
+          {...defaultProps}
+          {...StateWFilters.visState}
+          containerW={1000}
+          uiState={{
+            ...defaultProps.uiState,
+            mapControls: {
+              ...defaultProps.uiState.mapControls,
+              mapLegend: {
+                show: true,
+                active: true,
+                settings: {position: {x: 10, y, anchorX: 'right', anchorY: 'bottom'}}
+              }
+            }
+          }}
+        />
+      </IntlWrapper>
+    </ThemeProvider>
+  );
+  let view;
+  try {
+    view = render(tree(260));
+    const widget = view.container.querySelector('.bottom-widget--container');
+    const reservedSpace = () => parseFloat(window.getComputedStyle(widget).marginRight);
+    const notifyResize = () => act(() => resizeCallbacks.get(widget)?.());
+    t.equal(reservedSpace(), 0, 'legend above the timeline reserves no space');
+    t.ok(resizeCallbacks.has(widget), 'watches the timeline for content size changes');
+
+    fireEvent.click(view.getByTestId('time-widget-settings'));
+    t.ok(view.container.querySelector('.time-widget--settings'), 'opens real Timeline Settings');
+    notifyResize();
+    t.ok(reservedSpace() > 0, 'reserves space when opening Settings creates overlap');
+
+    view.rerender(tree(259));
+    t.ok(reservedSpace() > 0, 'keeps space after moving Legend over the taller timeline');
+    fireEvent.click(view.getByTestId('time-widget-settings'));
+    t.notOk(view.container.querySelector('.time-widget--settings'), 'closes Timeline Settings');
+    notifyResize();
+    t.equal(reservedSpace(), 0, 'releases space after Settings closes without moving Legend');
+
+    view.unmount();
+    view = null;
+    t.notOk(resizeCallbacks.has(widget), 'stops watching after the widget unmounts');
+  } finally {
+    view?.unmount();
+    heightStub.restore();
+    observeStub.restore();
+    unobserveStub.restore();
     Window.matchMedia = matchMedia;
   }
   t.end();

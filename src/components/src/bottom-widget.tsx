@@ -6,7 +6,13 @@ import styled, {withTheme, IStyledComponent} from 'styled-components';
 import {useMergeRefs} from '@floating-ui/react';
 
 import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
-import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
+import {
+  hasPortableWidth,
+  isSideFilter,
+  mergeFilterWithTimeline,
+  observeDimensions,
+  unobserveDimensions
+} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
@@ -131,8 +137,14 @@ export default function BottomWidgetFactory(
         : 0;
     const enlargedFilterWidth = availableWidth - spaceForLegendWidth;
     useLayoutEffect(() => {
-      setTimelineHeight(containerRef.current?.offsetHeight ?? 0);
-    }, [legend, enlargedFilterWidth, filters]);
+      const container = containerRef.current;
+      if (!container) return undefined;
+      const measureHeight = () => setTimelineHeight(container.offsetHeight);
+      measureHeight();
+      // Settings and other child-local changes can resize the timeline without new props.
+      observeDimensions(container, measureHeight, 0);
+      return () => unobserveDimensions(container);
+    }, []);
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
