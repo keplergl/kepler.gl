@@ -1563,6 +1563,7 @@ export default class FlowFieldLayer extends Layer {
   }
 
   formatLayerData(datasets: any) {
+    this.updateMeta({bounds: null});
     // Streamline colors use the grid speed, not a copied color-by-field channel.
     // Reset the legend too when the data no longer produces a grid.
     this.updateLayerConfig({
@@ -1606,10 +1607,13 @@ export default class FlowFieldLayer extends Layer {
 
     const geoEncoding = useGeojson ? getGeoArrowEncoding(fields?.[geojson.fieldIdx]) : undefined;
 
-    const readLatLng = (idx: number): {lat: number; lng: number} | null => {
+    const readLatLng = (
+      idx: number,
+      container = dataContainer
+    ): {lat: number; lng: number} | null => {
       if (useGeojson) {
         const centroid = centroidFromRawFeature(
-          dataContainer.valueAt(idx, geojson.fieldIdx),
+          container.valueAt(idx, geojson.fieldIdx),
           geoEncoding
         );
         if (!centroid) {
@@ -1617,13 +1621,20 @@ export default class FlowFieldLayer extends Layer {
         }
         return {lng: centroid[0], lat: centroid[1]};
       }
-      const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
-      const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
+      const latVal = container.valueAt(idx, lat.fieldIdx);
+      const lngVal = container.valueAt(idx, lng.fieldIdx);
       if (!Number.isFinite(latVal) || !Number.isFinite(lngVal)) {
         return null;
       }
       return {lat: latVal, lng: lngVal};
     };
+
+    // Zoom to layer uses the dataset's positions, independently of flow values and filters.
+    const bounds = this.getPointsBounds(dataContainer, ({index}, container) => {
+      const position = readLatLng(index, container);
+      return position ? [position.lng, position.lat] : [];
+    });
+    this.updateMeta({bounds});
 
     if (altitudeMode) {
       if (!altitude || altitude.fieldIdx < 0) {
