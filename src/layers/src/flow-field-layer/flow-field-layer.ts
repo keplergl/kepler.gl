@@ -29,7 +29,7 @@ import {
   TRIP_LAYER_SCENEGRAPH_MODELS
 } from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
+import {Field, LayerBaseConfig, LayerColorConfig, LayerSizeConfig} from '@kepler.gl/types';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -1572,6 +1572,25 @@ export default class FlowFieldLayer extends Layer {
     return hasLatLngPosition(this.config.columns) || hasGeojsonPosition(this.config.columns);
   }
 
+  updateLayerConfig<
+    LayerConfig extends LayerBaseConfig &
+      Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
+  >(newConfig: Partial<LayerConfig>): this {
+    const {columns, dataId} = this.config;
+    super.updateLayerConfig(newConfig);
+    const positionsChanged = ['lat', 'lng', 'geojson'].some(
+      key =>
+        columns[key]?.fieldIdx !== this.config.columns[key]?.fieldIdx ||
+        columns[key]?.value !== this.config.columns[key]?.value
+    );
+    // Incomplete columns make the reducer skip formatLayerData. Invalidate the
+    // old extent here; formatting restores bounds once the layer is configured.
+    if (positionsChanged || dataId !== this.config.dataId) {
+      this.updateMeta({bounds: null});
+    }
+    return this;
+  }
+
   getDefaultLayerConfig(config: LayerBaseConfigPartial = {} as LayerBaseConfigPartial) {
     const rawMode = (config as any).columnMode;
     return {
@@ -1653,6 +1672,7 @@ export default class FlowFieldLayer extends Layer {
   }
 
   formatLayerData(datasets: any) {
+    this.updateMeta({bounds: null});
     // Streamline colors use the grid speed, not a copied color-by-field channel.
     // Reset the legend too when the data no longer produces a grid.
     this.updateLayerConfig({
@@ -1696,10 +1716,13 @@ export default class FlowFieldLayer extends Layer {
 
     const geoEncoding = useGeojson ? getGeoArrowEncoding(fields?.[geojson.fieldIdx]) : undefined;
 
-    const readLatLng = (idx: number): {lat: number; lng: number} | null => {
+    const readLatLng = (
+      idx: number,
+      container = dataContainer
+    ): {lat: number; lng: number} | null => {
       if (useGeojson) {
         const centroid = centroidFromRawFeature(
-          dataContainer.valueAt(idx, geojson.fieldIdx),
+          container.valueAt(idx, geojson.fieldIdx),
           geoEncoding
         );
         if (!centroid) {
@@ -1707,13 +1730,20 @@ export default class FlowFieldLayer extends Layer {
         }
         return {lng: centroid[0], lat: centroid[1]};
       }
-      const latVal = dataContainer.valueAt(idx, lat.fieldIdx);
-      const lngVal = dataContainer.valueAt(idx, lng.fieldIdx);
+      const latVal = container.valueAt(idx, lat.fieldIdx);
+      const lngVal = container.valueAt(idx, lng.fieldIdx);
       if (!Number.isFinite(latVal) || !Number.isFinite(lngVal)) {
         return null;
       }
       return {lat: latVal, lng: lngVal};
     };
+
+    // Zoom to layer uses the dataset's positions, independently of flow values and filters.
+    const bounds = this.getPointsBounds(dataContainer, ({index}, container) => {
+      const position = readLatLng(index, container);
+      return position ? [position.lng, position.lat] : [];
+    });
+    this.updateMeta({bounds});
 
     if (altitudeMode) {
       if (!altitude || altitude.fieldIdx < 0) {

@@ -162,7 +162,8 @@ test('#FlowFieldLayer -> formatLayerData', t => {
         [dataId]: dataset
       },
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(layer.meta.bounds, [-122, 37, -121, 38], 'zoom bounds follow selected lat/lng');
         t.ok(layerData.grid, 'should build a grid');
         t.ok(layerData.data?.length >= 4, 'should keep sample points');
         t.ok(Number.isFinite(layerData.grid.maxSpeed), 'grid has maxSpeed');
@@ -172,6 +173,187 @@ test('#FlowFieldLayer -> formatLayerData', t => {
   ];
 
   testFormatLayerDataCases(t, FlowFieldLayer, TEST_CASES);
+  t.end();
+});
+
+test('#FlowFieldLayer -> zoom bounds update with positions and clear when unavailable', t => {
+  const dataset = createFlowFieldDataset();
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      type: 'flowField',
+      config: {
+        dataId,
+        columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'}
+      }
+    },
+    LayerClasses
+  );
+  const columns = layer.config.columns;
+  const withRows = inputRows => {
+    const replacement = new KeplerTable({info: {id: dataId}, color: [255, 255, 255]});
+    replacement.importData({data: {fields: dataset.fields, rows: inputRows}});
+    return replacement;
+  };
+  const format = input => layer.formatLayerData({[dataId]: input});
+
+  format(dataset);
+  const point = validateLayerWithData(
+    dataset,
+    {type: 'point', config: {dataId, columns: {lat: 'latitude', lng: 'longitude'}}},
+    LayerClasses
+  );
+  point.formatLayerData({[dataId]: dataset});
+  t.deepEqual(
+    layer.meta.bounds,
+    point.meta.bounds,
+    'flow and point layers have the same zoom bounds'
+  );
+
+  layer.updateLayerConfig({columns: {...columns, lat: columns.v, lng: columns.u}});
+  format(dataset);
+  t.deepEqual(
+    layer.meta.bounds,
+    [0.8, 0.2, 1.3, 0.7],
+    'changing position columns updates zoom bounds'
+  );
+  layer.updateLayerConfig({columns});
+
+  const mixed = withRows([
+    [0, 0, null, null],
+    [10, 20, null, null],
+    [null, -150, 1, 1],
+    [80, undefined, 1, 1],
+    [NaN, 100, 1, 1],
+    [90, Infinity, 1, 1]
+  ]);
+  mixed.filteredIndex = [];
+  format(mixed);
+  t.deepEqual(
+    layer.meta.bounds,
+    [0, 0, 20, 10],
+    'bounds include valid positions regardless of flow values or filters and exclude invalid pairs'
+  );
+
+  for (const [label, input] of [
+    ['empty data', withRows([])],
+    [
+      'invalid positions',
+      withRows([
+        [null, null, 1, 1],
+        [NaN, Infinity, 1, 1]
+      ])
+    ],
+    ['missing dataset', undefined]
+  ]) {
+    format(dataset);
+    format(input);
+    t.equal(layer.meta.bounds, null, `${label} clears previous zoom bounds`);
+  }
+
+  format(dataset);
+  layer.updateLayerConfig({columns: {...columns, lat: {value: null, fieldIdx: -1}}});
+  format(dataset);
+  t.equal(layer.meta.bounds, null, 'clearing a position column clears previous zoom bounds');
+  t.end();
+});
+
+test('#FlowFieldLayer -> reducer clears stale zoom bounds when position columns change', t => {
+  const dataset = new KeplerTable({info: {id: dataId}, color: [255, 255, 255]});
+  const positions = [
+    [-122, 37],
+    [-121, 37],
+    [-122, 38],
+    [-121, 38]
+  ];
+  dataset.importData({
+    data: processGeojson({
+      type: 'FeatureCollection',
+      features: positions.map(([longitude, latitude], index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [longitude, latitude]},
+        properties: {latitude, longitude, u: 1 + (index % 2), v: index < 2 ? 10 : 20}
+      }))
+    })
+  });
+  const datasets = {[dataId]: dataset};
+  const bounds = [-122, 37, -121, 38];
+  const empty = {value: null, fieldIdx: -1};
+
+  for (const positionKey of ['lat', 'lng', 'geojson']) {
+    const layer = validateLayerWithData(
+      dataset,
+      {
+        type: 'flowField',
+        config: {
+          dataId,
+          columns: {
+            ...(positionKey === 'geojson'
+              ? {geojson: '_geojson'}
+              : {lat: 'latitude', lng: 'longitude'}),
+            u: 'u',
+            v: 'v'
+          }
+        }
+      },
+      LayerClasses
+    );
+    const columns = layer.config.columns;
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [layer.formatLayerData(datasets)]
+    };
+    const changeColumns = nextColumns => {
+      state = visStateReducer(
+        state,
+        VisStateActions.layerConfigChange(state.layers[0], {columns: nextColumns})
+      );
+    };
+
+    t.deepEqual(state.layers[0].meta.bounds, bounds, `${positionKey}: initial zoom bounds`);
+    changeColumns({...columns, [positionKey]: empty});
+    t.deepEqual(state.layerData[0], {}, `${positionKey}: incomplete columns clear layer data`);
+    t.equal(
+      state.layers[0].meta.bounds,
+      null,
+      `${positionKey}: clearing a position clears bounds even when formatting is skipped`
+    );
+    changeColumns(columns);
+    t.deepEqual(
+      state.layers[0].meta.bounds,
+      bounds,
+      `${positionKey}: restoring positions restores zoom bounds`
+    );
+
+    if (positionKey === 'lat') {
+      changeColumns({...columns, u: empty});
+      t.deepEqual(
+        state.layers[0].meta.bounds,
+        bounds,
+        'missing flow values retain position bounds'
+      );
+      changeColumns({...columns, u: empty, lat: columns.v, lng: columns.u});
+      t.equal(
+        state.layers[0].meta.bounds,
+        null,
+        'changing positions with an incomplete flow configuration clears the previous extent'
+      );
+      changeColumns({...columns, lat: columns.v, lng: columns.u});
+      t.deepEqual(
+        state.layers[0].meta.bounds,
+        [1, 10, 2, 20],
+        'restoring the flow configuration calculates bounds from the new position columns'
+      );
+      state = visStateReducer(
+        state,
+        VisStateActions.layerConfigChange(state.layers[0], {dataId: null})
+      );
+      t.equal(state.layers[0].meta.bounds, null, 'clearing the dataset clears zoom bounds');
+      t.deepEqual(state.layerData[0], {}, 'clearing the dataset clears layer data');
+    }
+  }
   t.end();
 });
 
@@ -206,7 +388,8 @@ test('#FlowFieldLayer -> formatLayerData from altitude', t => {
         [dataId]: dataset
       },
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(layer.meta.bounds, [-122, 37, -121, 38], 'altitude mode exposes zoom bounds');
         t.ok(layerData.grid, 'should build a grid from altitude');
         t.ok(layerData.grid.alt, 'grid should keep altitude for path Z');
         t.ok(Number.isFinite(layerData.grid.maxSpeed), 'grid has maxSpeed from slope');
@@ -251,7 +434,12 @@ test('#FlowFieldLayer -> formatLayerData from speed/direction', t => {
         [dataId]: dataset
       },
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122, 37, -121, 38],
+          'speed/direction mode exposes zoom bounds'
+        );
         t.ok(layerData.grid, 'should build a grid from speed/direction');
         t.ok(layerData.data?.length >= 4, 'should keep sample points');
         // Meteorological from-direction 0° (from N) → u=0, v=-speed
@@ -974,7 +1162,7 @@ test('#FlowFieldLayer -> formatLayerData from geojson centroids', t => {
         [dataId]: dataset
       },
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
         t.ok(layerData.grid, 'should build a grid from geojson centroids');
         t.equal(layerData.data?.length, 4, 'should keep one sample per feature');
         const point = layerData.data.find(d => d.lng === -122 && d.lat === 37);
@@ -997,6 +1185,11 @@ test('#FlowFieldLayer -> formatLayerData from geojson centroids', t => {
         ];
         const expectedPolyLng = polyCoords.reduce((s, c) => s + c[0], 0) / polyCoords.length;
         const expectedPolyLat = polyCoords.reduce((s, c) => s + c[1], 0) / polyCoords.length;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122, 37, -121.5, expectedPolyLat],
+          'GeoJSON zoom bounds use the same centroids as the flow field'
+        );
         const poly = layerData.data.find(
           d => Math.abs(d.lng - expectedPolyLng) < 1e-9 && Math.abs(d.lat - expectedPolyLat) < 1e-9
         );
