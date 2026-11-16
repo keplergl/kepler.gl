@@ -100,19 +100,19 @@ id,geometry
 
 #### Coordinate order and legacy arrays
 
-Use explicit GeoJSON geometry objects for new integrations and data exchange. [GeoJSON positions](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1) use `[longitude, latitude]`, with optional altitude as the third value. This order applies to points, lines and polygons.
+**Use explicit GeoJSON for new data.** Its positions use `[longitude, latitude]`, with optional altitude. Bare arrays are a legacy shorthand with different point and line conventions:
 
-kepler.gl also accepts bare coordinate arrays as values in a dataset field treated as `geojson`. These are a legacy shorthand, not complete GeoJSON objects, and points and lines have different conventions:
-
-| Dataset cell | Input order | Geometry coordinates after parsing |
+| Input | Coordinate order | Parser behavior |
 | --- | --- | --- |
-| Bare point `[-74, 40]` | `[longitude, latitude]` | `[-74, 40]` |
-| Bare line `[[40, -74], [41, -73]]` | `[[latitude, longitude], ...]` | `[[-74, 40], [-73, 41]]` |
-| GeoJSON `LineString` with `coordinates: [[-74, 40], [-73, 41]]` | `[[longitude, latitude], ...]` | `[[-74, 40], [-73, 41]]` |
+| GeoJSON geometry | `[longitude, latitude]` | Keeps coordinate order |
+| Bare point `[-74, 40]` | `[longitude, latitude]` | Keeps coordinate order |
+| Bare line `[[40, -74], [41, -73]]` | `[latitude, longitude]` | Reverses each pair |
 
-The bare-line parser always reverses the first two values of each vertex; it does not infer the order from their values. It also retains only those two values, discarding altitude and any additional components. Use an explicit GeoJSON geometry when those components matter; animated trips follow the [Trip layer format](../c-types-of-layers/k-trip.md).
+Bare arrays must be actual values in a field treated as `geojson`; names such as `_geojson` and `all_points` can trigger that detection. For CSV, use a [complete geometry string](#3-embed-geometries-in-csv), not an array-looking string.
 
-For example, the legacy bare line `[[40, -74], [41, -73]]` represents the same locations as this geometry object in a dataset cell:
+**Bare lines discard altitude and later components.** For those values, use explicit GeoJSON and, for animation, the [Trip layer format](../c-types-of-layers/k-trip.md).
+
+For example, this geometry represents the same locations as the bare line above:
 
 ```json
 {
@@ -121,30 +121,25 @@ For example, the legacy bare line `[[40, -74], [41, -73]]` represents the same l
 }
 ```
 
-For a standalone `.geojson` file, wrap the geometry in a Feature or FeatureCollection as shown below. For CSV, use a complete GeoJSON geometry string as described in [Embed Geometries in CSV](#3-embed-geometries-in-csv); an array-looking string is not the bare-array input described here. A generic array field is not automatically a geometry, although legacy names such as `_geojson`, `geojson` and `all_points` can cause geometry detection. Explicitly typed `geojson` fields and saved maps can also contain bare arrays.
+Use it as a dataset cell, or wrap it in a Feature for a standalone GeoJSON file.
 
-##### Why the legacy line convention is retained
+##### Why we keep the existing convention
 
-Coordinate order depends on the input format. [Leaflet polylines](https://leafletjs.com/reference.html#polyline) and [`@mapbox/polyline.decode()`](https://github.com/mapbox/polyline#readme) use latitude-first coordinates, while GeoJSON uses longitude first. Public data varies too: [Porto taxi trajectories](https://archive.ics.uci.edu/dataset/339/taxi%2Bservice%2Btrajectory%2B) store longitude-first pairs inside a string. Check the source format before converting it; neither reversing every array nor preserving every array is a universal conversion rule. For encoded polylines, `@mapbox/polyline.toGeoJSON()` provides an explicit GeoJSON LineString.
+- **Compatibility:** changing bare lines to longitude-first would move existing lines and saved maps.
+- **Both conventions are used:** [Leaflet](https://leafletjs.com/reference.html#polyline) and [`@mapbox/polyline.decode()`](https://github.com/mapbox/polyline#readme) use latitude first; [GeoJSON](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1) uses longitude first. Ambiguous coordinate values cannot reliably reveal the intended order.
+- **An explicit alternative exists:** GeoJSON already accepts longitude-first lines. Making the shorthand forms uniform does not justify a compatibility break.
 
-The swap was already present in the [initial 2018 source](https://github.com/keplergl/kepler.gl/blob/10655c7b141fc8dbe561526eefa040f11b106697/src/layers/geojson-layer/geojson-utils.js#L52-L62). Its original motivation is undocumented in the inspected history; the examples above do not establish its origin. The array branch became unreachable in the 2019 [Trip layer refactor](https://github.com/keplergl/kepler.gl/pull/699), because arrays were handled as objects first. [PR #3642](https://github.com/keplergl/kepler.gl/pull/3642) restored that branch in August 2026 while adding longitude-first bare points.
+The swap dates to the [2018 source](https://github.com/keplergl/kepler.gl/blob/10655c7b141fc8dbe561526eefa040f11b106697/src/layers/geojson-layer/geojson-utils.js#L52-L62); its original motivation is unknown. The branch became unreachable in [#699](https://github.com/keplergl/kepler.gl/pull/699) and was restored in [#3642](https://github.com/keplergl/kepler.gl/pull/3642). [#4009](https://github.com/keplergl/kepler.gl/pull/4009) retains its behavior, including the loss of extra components.
 
-[PR #4009](https://github.com/keplergl/kepler.gl/pull/4009) considered making bare lines longitude-first as well. That convention change is not being adopted: it would silently relocate existing latitude-first lines, including data whose coordinates were deliberately reversed to work with the current parser. Explicit GeoJSON already supports longitude-first lines without changing existing inputs. Keeping established data and saved maps in the same location takes precedence over making the two shorthand forms uniform.
+##### Export and import
 
-This decision also retains the current handling of additional vertex components. Preserving them would be a separate behavior change: a fourth component can affect Trip layer detection. No coordinate-order inference, migration or new option is introduced here. Values alone cannot safely determine the intended order when both numbers are valid latitudes and longitudes.
+| Export | What happens |
+| --- | --- |
+| **Map JSON with data** | Saves original cells. Bare arrays are interpreted again on import; export does not normalize or repeatedly swap them. |
+| **Map HTML** | Embeds data and normally pins a kepler.gl version. Behavior stays the same while that runtime is retained. |
+| **Data as GeoJSON**, where available | Writes explicit longitude-first geometries at their interpreted locations. |
 
-##### Saved maps and export/import
-
-**Export Map as JSON with data saves the original dataset cells, not the geometries produced by the layer parser.** A bare line stored as `[[40, -74], [41, -73]]` stays in that form in the saved file. On import, the parser converts it to `[[-74, 40], [-73, 41]]` again. Export/import does not repeatedly reverse the stored data. Changing the parser's convention would reinterpret that same saved file and move its line; retaining the convention avoids this compatibility break.
-
-The export format matters:
-
-- **Map JSON with data:** retains bare arrays and their dependence on the parser's convention. There is no per-cell coordinate-order marker.
-- **Config-only JSON:** contains no coordinates; interpretation depends on the dataset supplied with it.
-- **Map HTML:** embeds data and normally pins a kepler.gl version. An existing export keeps its behavior while using that same runtime.
-- **Data exported as GeoJSON:** writes explicit geometries. Where this export option is available, exporting a legacy bare line converts it to longitude-first GeoJSON at its currently interpreted location, suitable for interchange.
-
-These bare-line rules do not change the dedicated parsing of GeoJSON objects or strings, WKT, WKB or native GeoArrow, nor the use of separately named latitude and longitude columns. For new data, use explicit geometry types and the coordinate order required by that format instead of relying on bare-array shorthand.
+Keeping the parser convention preserves existing map locations. No coordinate-order migration or automatic detection is introduced.
 
 #### 1. Feature types
 
