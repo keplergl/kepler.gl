@@ -86,7 +86,10 @@ const COMMON_CONFIG = {
         include: [SRC_DIR, TEST_DIR],
         exclude: [/node_modules/],
         options: {
-          rootMode: 'upward',
+          // Keep browser imports as ESM so flowmap and these tests share deck/luma
+          // classes instead of also loading the root Babel config's CommonJS builds.
+          configFile: false,
+          babelrc: false,
           presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
           plugins: [
             ['@babel/plugin-transform-typescript', {isTSX: true, allowDeclareFields: true}],

@@ -2,7 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {LayerManager, WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
+import {
+  LayerManager,
+  WebMercatorViewport,
+  _GlobeViewport as GlobeViewport,
+  _PickLayersPass as PickLayersPass
+} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 
 import {testCreateCases, dataId, preparedDataset} from 'test/helpers/layer-utils';
@@ -550,9 +555,9 @@ test('#FlowLayer -> renderLayer keeps its data value while the flows are unchang
 test('#FlowLayer -> picking and globe rendering survive filtered data changes', async t => {
   const layer = new FlowLayer({id: 'flow-picking', dataId});
   const locations = [
-    {id: 0, lon: 0, lat: 0, name: 'A'},
-    {id: 1, lon: 1, lat: 1, name: 'B'},
-    {id: 2, lon: 2, lat: 2, name: 'C'}
+    {id: 0, lon: -35, lat: -20, name: 'A'},
+    {id: 1, lon: 35, lat: -20, name: 'B'},
+    {id: 2, lon: 0, lat: 35, name: 'C'}
   ];
   const flows = [
     {index: 0, sourceId: 0, targetId: 1, count: 10},
@@ -560,10 +565,55 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
     {index: 2, sourceId: 2, targetId: 0, count: 30}
   ];
   const clusterLevels = [{zoom: 0, nodes: locations}];
+  const width = 400;
+  const height = 400;
   const manager = new LayerManager(device, {
-    viewport: new WebMercatorViewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
+    viewport: new WebMercatorViewport({width, height, longitude: 0, latitude: 0, zoom: 1})
   });
   manager.setProps({onError: error => t.fail(error.message)});
+  const pickingPass = device.type === 'webgl' ? new PickLayersPass(device) : null;
+  const pickingFBO = pickingPass
+    ? device.createFramebuffer({
+        width,
+        height,
+        colorAttachments: ['rgba8unorm'],
+        depthStencilAttachment: 'depth16unorm'
+      })
+    : null;
+  if (!pickingPass) {
+    t.skip('GPU picking readback requires WebGL2; run the browser-headless suite');
+  }
+  const readPickingIndexes = (sublayer, viewport) => {
+    // Draw each renderer separately so circles and overlapping routes cannot
+    // hide another renderer's picking IDs. Use one device pixel per CSS pixel.
+    const {decodePickingColor} = pickingPass.render({
+      layers: [sublayer],
+      viewports: [viewport],
+      onViewportActive: manager.activateViewport,
+      pickingFBO,
+      deviceRect: {x: 0, y: 0, width, height},
+      pickZ: false,
+      effects: [],
+      canvasContext: {
+        getDrawingBufferSize: () => [width, height],
+        cssToDeviceRatio: () => 1
+      }
+    });
+    const pixels = new Uint8Array(width * height * 4);
+    device.readPixelsToArrayWebGL(pickingFBO, {
+      sourceWidth: width,
+      sourceHeight: height,
+      target: pixels
+    });
+    const indexes = new Set();
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const picked = decodePickingColor(pixels.subarray(offset, offset + 4));
+      if (picked) {
+        indexes.add(picked.pickedObjectIndex);
+      }
+    }
+    return Array.from(indexes).sort((a, b) => a - b);
+  };
   let resolveHover;
   const hover = (composite, sourceLayer, index) =>
     new Promise(resolve => {
@@ -572,9 +622,7 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
     });
   const render = async (flowData, globe) => {
     const Viewport = globe ? GlobeViewport : WebMercatorViewport;
-    manager.activateViewport(
-      new Viewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
-    );
+    manager.activateViewport(new Viewport({width, height, longitude: 0, latitude: 0, zoom: 1}));
     const [composite] = layer.renderLayer({
       data: {layerData: {locations, flows: flowData, clusterLevels}},
       gpuFilter: {},
@@ -625,10 +673,26 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
               );
             }
 
-            // Flowmap 9.5 derives picking colors from gl_InstanceID. Exercise its
-            // public hover callback for every rendered instance after each filter change.
+            if (!isCircle && globe) {
+              t.ok(
+                sublayer.props.numSegments > 1,
+                `${mode}: follows the globe with a segmented route`
+              );
+              if (mode === 'straight') {
+                t.equal(sublayer.props.curviness, 0, 'straight globe routes have no lateral bow');
+              }
+            }
+            if (!pickingPass) continue;
+
+            const indexes = readPickingIndexes(sublayer, sublayer.context.viewport);
+            t.deepEqual(
+              indexes,
+              Array.from({length: count}, (_, index) => index),
+              `${mode}: every instance emits a distinct non-background picking ID`
+            );
+            // Only IDs decoded from the offscreen GPU pass reach the hover callback.
             const picked = [];
-            for (let index = 0; index < count; index++) {
+            for (const index of indexes) {
               const info = await hover(composite, sublayer, index);
               t.ok(info?.picked, 'a rendered instance produces hover data');
               t.equal(info?.index, index, 'hover preserves the picked instance index');
@@ -645,15 +709,6 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
                 flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
                 'hover identifies the current flow endpoints and magnitudes'
               );
-              if (globe) {
-                t.ok(
-                  sublayer.props.numSegments > 1,
-                  `${mode}: follows the globe with a segmented route`
-                );
-                if (mode === 'straight') {
-                  t.equal(sublayer.props.curviness, 0, 'straight globe routes have no lateral bow');
-                }
-              }
             } else {
               t.deepEqual(
                 picked.map(({location}) => location.id).sort(),
@@ -667,6 +722,8 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
     }
   } finally {
     manager.finalize();
+    pickingFBO?.destroy();
+    pickingPass?.cleanup();
   }
   t.end();
 });
