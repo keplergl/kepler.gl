@@ -5,7 +5,9 @@ import {PathLayer, ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 import type {Layer} from '@deck.gl/core';
 import type {ScatterplotLayerProps} from '@deck.gl/layers';
 import type {CameraTour} from '@kepler.gl/types';
-import {normalizeCameraTour} from '@kepler.gl/utils';
+import {evaluateCameraTour, normalizeCameraTour} from '@kepler.gl/utils';
+
+const PATH_SAMPLES_PER_SEGMENT = 20;
 
 // The geometry depends only on the tour, not mouse/pan/playback state. Keep the
 // data references stable so deck does not rebuild attributes during navigation.
@@ -18,7 +20,46 @@ function createPathData(tour: CameraTour) {
     position: [stop.camera.longitude, stop.camera.latitude] as [number, number],
     label: `${index + 1}. ${stop.name}`
   }));
-  return {data, path: [{path: data.map(stop => stop.position)}]};
+  const path: [number, number][] = [data[0].position];
+  const appendPosition = ([longitude, latitude]: [number, number]) => {
+    const previousLongitude = path[path.length - 1][0];
+    const delta = longitude - previousLongitude;
+    // The evaluator uses equivalent wrapped coordinates at authored stops.
+    // Keep adjacent vertices in the same world across the antimeridian.
+    path.push([
+      Math.abs(delta) < 180
+        ? longitude
+        : previousLongitude + ((((delta + 180) % 360) + 360) % 360) - 180,
+      latitude
+    ]);
+  };
+  const passesThrough = (index: number) =>
+    index > 0 &&
+    index < stops.length - 1 &&
+    stops[index].holdDurationMs === 0 &&
+    stops[index - 1].travelDurationMs > 0 &&
+    stops[index].travelDurationMs > 0;
+  for (let index = 0; index < stops.length - 1; index++) {
+    const stop = stops[index];
+    if (passesThrough(index) || passesThrough(index + 1)) {
+      // A leg's endpoint velocities depend only on its immediate neighbors.
+      // Keep normalization and timeline scans bounded when rebuilding during drag.
+      const segmentTour = {stops: stops.slice(Math.max(0, index - 1), index + 3)};
+      const previous = stops[index - 1];
+      const elapsed =
+        stop.holdDurationMs + (previous ? previous.holdDurationMs + previous.travelDurationMs : 0);
+      for (let sample = 1; sample < PATH_SAMPLES_PER_SEGMENT; sample++) {
+        const camera = evaluateCameraTour(
+          segmentTour,
+          elapsed + (stop.travelDurationMs * sample) / PATH_SAMPLES_PER_SEGMENT
+        )!;
+        appendPosition([camera.longitude, camera.latitude]);
+      }
+    }
+    // Include authored endpoints explicitly, even when the next travel is a cut.
+    appendPosition(data[index + 1].position);
+  }
+  return {data, path: [{path}]};
 }
 
 export function getCameraTourPathLayers(
