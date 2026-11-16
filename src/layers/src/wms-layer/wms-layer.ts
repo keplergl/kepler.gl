@@ -170,6 +170,14 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     return () => null;
   }
 
+  getDataUpdateTriggers(dataset: KeplerDataset) {
+    const triggers = super.getDataUpdateTriggers(dataset);
+    return {
+      ...triggers,
+      getMeta: {...triggers.getMeta, wmsLayer: this._getCurrentServiceLayer()?.name ?? null}
+    };
+  }
+
   formatLayerData(datasets, oldLayerData, animationConfig): WMSLayerData {
     const {dataId} = this.config;
     if (!notNullorUndefined(dataId) || !datasets[dataId]) {
@@ -223,11 +231,7 @@ export default class WMSLayer extends AbstractTileLayer<WMSTile, any[]> {
     }
 
     const selectedLayer = this._getCurrentServiceLayer();
-    if (selectedLayer?.boundingBox) {
-      this.updateMeta({
-        bounds: selectedLayer.boundingBox
-      });
-    }
+    this.updateMeta({bounds: selectedLayer?.boundingBox ?? null});
 
     if (metadata?.layers) {
       this.updateMeta({

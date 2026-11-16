@@ -4,6 +4,7 @@
 import test from 'tape-catch';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {testCreateCases} from 'test/helpers/layer-utils';
+import {validateBounds} from '@kepler.gl/utils';
 
 const {WMSLayer} = KeplerGlLayers;
 
@@ -11,10 +12,7 @@ const {WMSLayer} = KeplerGlLayers;
 const MOCK_WMS_LAYER_CONFIG = {
   name: 'test_layer',
   title: 'Test WMS Layer',
-  boundingBox: [
-    [-180, -90],
-    [180, 90]
-  ],
+  boundingBox: [-180, -90, 180, 90],
   queryable: true
 };
 
@@ -381,15 +379,43 @@ test('#WMSLayer -> updateLayerMeta', t => {
     layer.updateLayerMeta({type: 'wms-tile'});
   }, 'should update meta with WMS dataset');
 
+  t.deepEqual(layer.meta.bounds, [-180, -90, 180, 90], 'should set bounds from bounding box');
+
+  t.end();
+});
+
+test('#WMSLayer -> zoom bounds follow the selected service layer', t => {
+  const first = {...MOCK_WMS_LAYER_CONFIG, boundingBox: [-10, -5, 10, 5]};
+  const second = {...first, name: 'second_layer', boundingBox: [30, 40, 35, 45]};
+  const withoutBounds = {...first, name: 'no_bounds', boundingBox: null};
+  const dataset = {
+    ...MOCK_WMS_DATASET,
+    metadata: {...MOCK_WMS_DATASET.metadata, layers: [first, second, withoutBounds]}
+  };
+  const layer = createWMSLayer({visConfig: {wmsLayer: first}});
+  const format = () => layer.formatLayerData({'wms-dataset': dataset});
+  format();
   t.deepEqual(
     layer.meta.bounds,
-    [
-      [-180, -90],
-      [180, 90]
-    ],
-    'should set bounds from bounding box'
+    first.boundingBox,
+    'initial bounds locate the first service layer'
   );
+  t.ok(validateBounds(layer.meta.bounds), 'published bounds are accepted by zoom to layer');
 
+  layer.updateLayerVisConfig({wmsLayer: second});
+  format();
+  t.deepEqual(layer.meta.bounds, second.boundingBox, 'switching service layer updates zoom bounds');
+
+  layer.updateLayerVisConfig({wmsLayer: withoutBounds});
+  format();
+  t.equal(layer.meta.bounds, null, 'a service layer without bounds clears the previous extent');
+
+  layer.updateLayerVisConfig({wmsLayer: first});
+  format();
+  t.deepEqual(layer.meta.bounds, first.boundingBox, 'switching back restores the first extent');
+  layer.updateLayerVisConfig({wmsLayer: null});
+  format();
+  t.equal(layer.meta.bounds, null, 'clearing the selected service layer clears the extent');
   t.end();
 });
 
