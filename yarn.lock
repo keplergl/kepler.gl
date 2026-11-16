@@ -2886,10 +2886,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@flowmap.gl/data@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "@flowmap.gl/data@npm:9.2.0"
+"@flowmap.gl/data@npm:^9.5.0":
+  version: 9.5.0
+  resolution: "@flowmap.gl/data@npm:9.5.0"
   dependencies:
+    "@math.gl/web-mercator": "npm:^4.1.0"
     d3-array: "npm:^3.2.4"
     d3-color: "npm:^3.1.0"
     d3-geo: "npm:^3.1.1"
@@ -2901,22 +2902,23 @@ __metadata:
     kdbush: "npm:^4.0.2"
     reselect: "npm:^5.1.1"
     seedrandom: "npm:^3.0.5"
-  checksum: 10c0/9ca2d80cb174dceafe0f351a7bde8fa12ee933f944361bb4e830fb3dc313b12cab9eb6f04f736d59d8deada5b57d248d936d5b345f34a5cbf8b222af12d2b83d
+  checksum: 10c0/a60d2dac5edb6a6e3ff9f84c44a9a2230898e31eb82af63017e09d81043e2dc95e300387c2fd3f9189754cf2dce9cf183aa3f248836490cff22e6d21de3f6b2e
   languageName: node
   linkType: hard
 
-"@flowmap.gl/layers@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "@flowmap.gl/layers@npm:9.2.0"
+"@flowmap.gl/layers@npm:^9.5.0":
+  version: 9.5.0
+  resolution: "@flowmap.gl/layers@npm:9.5.0"
   dependencies:
-    "@flowmap.gl/data": "npm:^9.2.0"
-    "@luma.gl/core": "npm:9.2.6"
-    "@luma.gl/engine": "npm:9.2.6"
-    "@luma.gl/shadertools": "npm:9.2.6"
+    "@flowmap.gl/data": "npm:^9.5.0"
   peerDependencies:
-    "@deck.gl/core": ^9.0.0
-    "@deck.gl/layers": ^9.0.0
-  checksum: 10c0/69dc796d963b8860d5b6646a558b9e75a01d938f80c6e2300a518f864dd05e1cc636e42fa988126f8d82cec01ea6c450dddba41103d17df056759f83940d34f8
+    "@deck.gl/core": ^9.4.0
+    "@deck.gl/extensions": ^9.4.1
+    "@deck.gl/layers": ^9.4.0
+    "@luma.gl/core": ^9.4.0
+    "@luma.gl/engine": ^9.4.0
+    "@luma.gl/shadertools": ^9.4.0
+  checksum: 10c0/b43a86a5e29a3efb4312e1958f38bea9add2b9de699f75867cc251daf73a98fec7366f442d2dd6af7bcf9f7d67f459e429d2854b58d5a1aa04691a114b959215
   languageName: node
   linkType: hard
 
@@ -4138,8 +4140,8 @@ __metadata:
     "@developmentseed/deck.gl-zarr": "npm:0.7.0"
     "@developmentseed/geozarr": "npm:0.7.0"
     "@developmentseed/morecantile": "npm:0.7.0"
-    "@flowmap.gl/data": "npm:^9.2.0"
-    "@flowmap.gl/layers": "npm:^9.2.0"
+    "@flowmap.gl/data": "npm:^9.5.0"
+    "@flowmap.gl/layers": "npm:^9.5.0"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.21"
     "@kepler.gl/constants": "npm:3.3.0-alpha.21"
     "@kepler.gl/deckgl-arrow-layers": "npm:3.3.0-alpha.21"
@@ -4162,6 +4164,8 @@ __metadata:
     "@loaders.gl/wkt": "npm:^4.4.5"
     "@luma.gl/constants": "npm:^9.4.2"
     "@luma.gl/core": "npm:^9.4.2"
+    "@luma.gl/engine": "npm:^9.4.2"
+    "@luma.gl/shadertools": "npm:^9.4.2"
     "@mapbox/geojson-normalize": "npm:0.0.1"
     "@math.gl/core": "npm:^4.1.0"
     "@math.gl/polygon": "npm:^4.1.0"
