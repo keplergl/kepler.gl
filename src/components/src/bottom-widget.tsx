@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {forwardRef, useMemo, useCallback} from 'react';
+import React, {forwardRef, useMemo, useCallback, useRef, useState, useLayoutEffect} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
+import {useMergeRefs} from '@floating-ui/react';
 
 import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
 import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
@@ -97,6 +98,9 @@ export default function BottomWidgetFactory(
 
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const mergedRef = useMergeRefs([rootRef, containerRef]);
+    const [timelineHeight, setTimelineHeight] = useState(0);
 
     const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
@@ -110,18 +114,24 @@ export default function BottomWidgetFactory(
     const availableWidth = Math.max(0, isOpen ? containerW - sidePanelWidth : containerW);
     const legend = uiState.mapControls?.mapLegend;
     const position = legend?.settings?.position;
+    const reservedLegendWidth =
+      theme.mapControl?.width +
+      theme.mapControl?.mapLegend?.pinned?.right * 2 -
+      theme.bottomWidgetPaddingRight;
     const isLegendInCorner =
-      !position || (position.anchorX === 'right' && position.anchorY === 'bottom');
+      !position ||
+      (position.anchorX === 'right' &&
+        position.anchorY === 'bottom' &&
+        position.x < reservedLegendWidth &&
+        position.y < timelineHeight - theme.bottomWidgetPaddingTop);
     const spaceForLegendWidth =
       !hasPortableWidth(breakPointValues) && legend?.show && legend.active && isLegendInCorner
-        ? Math.min(
-            availableWidth,
-            theme.mapControl?.width +
-              theme.mapControl?.mapLegend?.pinned?.right * 2 -
-              theme.bottomWidgetPaddingRight
-          )
+        ? Math.min(availableWidth, reservedLegendWidth)
         : 0;
     const enlargedFilterWidth = availableWidth - spaceForLegendWidth;
+    useLayoutEffect(() => {
+      setTimelineHeight(containerRef.current?.offsetHeight ?? 0);
+    }, [legend, enlargedFilterWidth, filters]);
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
@@ -191,7 +201,7 @@ export default function BottomWidgetFactory(
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
-        ref={rootRef}
+        ref={mergedRef}
       >
         {dimensionLayers.map(layer => {
           const {visConfig, dataId} = layer.config;

@@ -8,7 +8,7 @@ import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import test from 'tape';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {
   BottomWidgetFactory,
   TimeWidgetFactory,
@@ -89,6 +89,8 @@ test('Components -> BottomWidget -> skips unchanged parent renders and keeps upd
 
 test('Components -> BottomWidget -> reserves space only for the bottom-right legend', t => {
   const matchMedia = Window.matchMedia;
+  const timelineHeight = 240;
+  const heightStub = mockHTMLElementClientSize('offsetHeight', timelineHeight);
   const Widget = BottomWidgetFactory(
     () => <div>Timeline</div>,
     () => null,
@@ -126,6 +128,11 @@ test('Components -> BottomWidget -> reserves space only for the bottom-right leg
         : theme.mapControl.width +
           theme.mapControl.mapLegend.pinned.right * 2 -
           theme.bottomWidgetPaddingRight;
+      const cornerWidth =
+        theme.mapControl.width +
+        theme.mapControl.mapLegend.pinned.right * 2 -
+        theme.bottomWidgetPaddingRight;
+      const visibleTimelineTop = timelineHeight - theme.bottomWidgetPaddingTop;
       t.equal(
         initialWidth,
         `${props.containerW - props.sidePanelWidth}px`,
@@ -148,6 +155,39 @@ test('Components -> BottomWidget -> reserves space only for the bottom-right leg
             settings: {position: {x: 10, y: 30, anchorX: 'left', anchorY: 'bottom'}}
           },
           0
+        ],
+        [
+          'moving just above the timeline with the same corner anchors',
+          {
+            active: true,
+            settings: {
+              position: {x: 10, y: visibleTimelineTop, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'moving left of the corner column with the same anchors',
+          {
+            active: true,
+            settings: {position: {x: cornerWidth, y: 30, anchorX: 'right', anchorY: 'bottom'}}
+          },
+          0
+        ],
+        [
+          'moving just inside the corner bounds',
+          {
+            active: true,
+            settings: {
+              position: {
+                x: cornerWidth - 1,
+                y: visibleTimelineTop - 1,
+                anchorX: 'right',
+                anchorY: 'bottom'
+              }
+            }
+          },
+          reservedWidth
         ],
         [
           'returning to the bottom-right',
@@ -181,6 +221,7 @@ test('Components -> BottomWidget -> reserves space only for the bottom-right leg
     }
   } finally {
     view?.unmount();
+    heightStub.restore();
     Window.matchMedia = matchMedia;
   }
   t.end();
