@@ -366,8 +366,8 @@ export default function EffectConfiguratorFactory(
     const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
-    const animationControl = (name: string) => (
-      <EffectAnimationControl {...{effect, name, RangeSlider, updateEffectConfig}} />
+    const animationControl = (name: string, step = COMMON_SLIDER_PROPS.step) => (
+      <EffectAnimationControl {...{effect, name, step, RangeSlider, updateEffectConfig}} />
     );
 
     const hasElevationSection = parameterDescriptions.some(d => d.name === 'animateHeight');
@@ -636,7 +636,7 @@ export default function EffectConfiguratorFactory(
                   <RegularSectionTitleWrapper>
                     {control.label}
                     {!flatParameterDescriptions[i].index
-                      ? animationControl(flatParameterDescriptions[i].name)
+                      ? animationControl(flatParameterDescriptions[i].name, control.step)
                       : null}
                   </RegularSectionTitleWrapper>
                 ) : null}

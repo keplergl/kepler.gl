@@ -8,6 +8,7 @@ import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {Effect} from '@kepler.gl/types';
+import {createEffect} from '@kepler.gl/effects';
 import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import EffectConfiguratorFactory from './effect-configurator';
 import RangeSliderFactory from '../common/range-slider';
@@ -61,6 +62,14 @@ const Elevation = (() => <div>elevation section</div>) as ReturnType<
   typeof SurfaceFogElevationSectionFactory
 >;
 const Configurator = EffectConfiguratorFactory(Slider, Time, Elevation);
+const RealConfigurator = EffectConfiguratorFactory(
+  RangeSliderFactory(
+    () => <></>,
+    () => <></>
+  ),
+  Time,
+  Elevation
+);
 function Wrapper({children}: {children: React.ReactNode}) {
   return (
     <IntlProvider locale="en">
@@ -77,9 +86,9 @@ function makeEffect(descriptions: unknown[], parameters = {}, uniforms = {}): Ef
     getParameterDescriptions: () => descriptions
   } as unknown as Effect;
 }
-function setup(effect: Effect) {
+function setup(effect: Effect, Component = Configurator) {
   const update = jest.fn();
-  const view = render(<Configurator effect={effect} updateEffectConfig={update} />, {
+  const view = render(<Component effect={effect} updateEffectConfig={update} />, {
     wrapper: Wrapper
   });
   return {update, ...view};
@@ -295,6 +304,57 @@ describe('effect parameter editing', () => {
     expect(tooltip).toBeVisible();
     expect(tooltip).toHaveTextContent(/video export and preview/);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [2, 3],
+    [2.25, 3.75],
+    [0.5, 50]
+  ])(
+    'preserves Magnify zoom Start %s and End %s through real input blur and Save',
+    async (start, end) => {
+      const user = userEvent.setup();
+      const effect = createEffect({type: 'magnify', parameters: {zoom: start}});
+      const {update} = setup(effect, RealConfigurator);
+      await user.click(screen.getByRole('button', {name: 'Animate zoom'}));
+      const dialog = within(screen.getByRole('dialog'));
+      const startInput = dialog.getByRole('spinbutton', {name: 'Start value'});
+      const endInput = dialog.getByRole('spinbutton', {name: 'End value'});
+      await user.click(startInput);
+      await user.click(endInput);
+      expect(startInput).toHaveValue(start);
+      await user.clear(endInput);
+      await user.type(endInput, String(end));
+      await user.click(dialog.getByRole('button', {name: 'Save'}));
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(update).toHaveBeenCalledWith(null, effect.id, {
+        parameters: {zoom: start},
+        animation: {zoom: {endValue: end, easing: 'easeInOut'}}
+      });
+    }
+  );
+
+  test('labels real vector inputs by endpoint and component and saves only the edited component', async () => {
+    const user = userEvent.setup();
+    const effect = createEffect({type: 'magnify'});
+    const {update} = setup(effect, RealConfigurator);
+    await user.click(screen.getByRole('button', {name: 'Animate screenXY'}));
+    const dialog = within(screen.getByRole('dialog'));
+    const inputs = ['Start', 'End'].flatMap(endpoint =>
+      ['Position X', 'Position Y'].map(component =>
+        dialog.getByRole('spinbutton', {name: `${endpoint} value (${component})`})
+      )
+    );
+    expect(new Set(inputs.map(input => input.id)).size).toBe(4);
+    await user.click(dialog.getByText('End value (Position Y)'));
+    expect(inputs[3]).toHaveFocus();
+    await user.clear(inputs[3]);
+    await user.type(inputs[3], '0.75');
+    await user.click(dialog.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, effect.id, {
+      parameters: {screenXY: [0.5, 0.5]},
+      animation: {screenXY: {endValue: [0.5, 0.75], easing: 'easeInOut'}}
+    });
   });
 
   test('Cancel discards both endpoint drafts and reopening uses saved values', () => {

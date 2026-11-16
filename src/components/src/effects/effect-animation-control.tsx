@@ -125,6 +125,7 @@ type Props = {
   effect: Effect;
   name: string;
   RangeSlider: ReturnType<typeof RangeSliderFactory>;
+  step?: number;
   updateEffectConfig: (
     event: Event | null | undefined,
     id: string,
@@ -139,6 +140,7 @@ export default function EffectAnimationControl({
   effect,
   name,
   RangeSlider,
+  step = 0.001,
   updateEffectConfig
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -278,35 +280,41 @@ export default function EffectAnimationControl({
             ) : (
               editors.map(({title, value, setValue}) => (
                 <Field key={title} role="group" aria-label={`${title} value`}>
-                  {(Array.isArray(value) ? value : [value]).map((part, index) => (
-                    <div key={index}>
-                      <PanelLabel>
-                        {title} value
-                        {Array.isArray(value)
-                          ? ` (${
-                              (Array.isArray(description.label) && description.label[index]) ||
-                              index + 1
-                            })`
-                          : ''}
-                      </PanelLabel>
-                      <RangeSlider
-                        showInput
-                        inputTheme="secondary"
-                        isRanged={false}
-                        value0={range[0]}
-                        value1={part}
-                        range={range}
-                        step={range[1] - range[0] > 10 ? 1 : 0.001}
-                        onChange={next =>
-                          setValue(previous =>
-                            Array.isArray(previous)
-                              ? previous.map((component, i) => (i === index ? next[1] : component))
-                              : next[1]
-                          )
-                        }
-                      />
-                    </div>
-                  ))}
+                  {(Array.isArray(value) ? value : [value]).map((part, index) => {
+                    const inputIdPrefix = `effect-animation-${effect.id}-${name}-${title}-${index}`;
+                    return (
+                      <div key={index}>
+                        <PanelLabel htmlFor={`${inputIdPrefix}-value1`}>
+                          {title} value
+                          {Array.isArray(value)
+                            ? ` (${
+                                (Array.isArray(description.label) && description.label[index]) ||
+                                index + 1
+                              })`
+                            : ''}
+                        </PanelLabel>
+                        <RangeSlider
+                          showInput
+                          inputIdPrefix={inputIdPrefix}
+                          inputTheme="secondary"
+                          isRanged={false}
+                          value0={range[0]}
+                          value1={part}
+                          range={range}
+                          step={step}
+                          onChange={next =>
+                            setValue(previous =>
+                              Array.isArray(previous)
+                                ? previous.map((component, i) =>
+                                    i === index ? next[1] : component
+                                  )
+                                : next[1]
+                            )
+                          }
+                        />
+                      </div>
+                    );
+                  })}
                 </Field>
               ))
             )}

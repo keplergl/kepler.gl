@@ -53,6 +53,7 @@ export default function SurfaceFogElevationSectionFactory(
     if (!description) return null;
     const min = description.min ?? -200;
     const max = description.max ?? 6000;
+    const step = max - min > 10 ? 1 : 0.001;
     return (
       <Section>
         <Title>
@@ -61,6 +62,7 @@ export default function SurfaceFogElevationSectionFactory(
             effect={effect}
             name="height"
             RangeSlider={RangeSlider}
+            step={step}
             updateEffectConfig={updateEffectConfig}
           />
         </Title>
@@ -71,7 +73,7 @@ export default function SurfaceFogElevationSectionFactory(
             value0={min}
             value1={effect.parameters.height ?? description.defaultValue ?? 0}
             range={[min, max]}
-            step={max - min > 10 ? 1 : 0.001}
+            step={step}
             onChange={(value, event) =>
               updateEffectConfig(event, effect.id, {parameters: {height: value[1]}})
             }

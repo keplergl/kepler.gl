@@ -73,6 +73,7 @@ const DEFAULT_OFFSET = {
 const SingleColorPickerDropdown = ({
   isOpened,
   onClose,
+  label,
   selectedColor,
   onSelectColor,
   offset = DEFAULT_OFFSET
@@ -84,7 +85,13 @@ const SingleColorPickerDropdown = ({
     [onSelectColor]
   );
   return (
-    <Portaled top={offset.top} left={offset.left} isOpened={isOpened} onClose={onClose}>
+    <Portaled
+      top={offset.top}
+      left={offset.left}
+      isOpened={isOpened}
+      onClose={onClose}
+      modalProps={{contentLabel: label}}
+    >
       <StyledPanelDropdown>
         <SingleColorPalette selectedColor={selectedColor} onSelectColor={onSelectColorCb} />
       </StyledPanelDropdown>
@@ -130,7 +137,13 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
         {labelAction}
       </SectionTitle>
       <StyledDropdownButtonWrapper>
-        <Button onClick={toggleDropdown}>
+        <Button
+          type="button"
+          aria-label={label}
+          aria-haspopup="dialog"
+          aria-expanded={isColorPickerOpened}
+          onClick={toggleDropdown}
+        >
           <div style={colorBlockStyle} />
           <Icon />
         </Button>
@@ -138,6 +151,7 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
       <SingleColorPickerDropdown
         isOpened={isColorPickerOpened}
         onClose={closeDropdown}
+        label={label}
         selectedColor={hexColor}
         onSelectColor={onSetColor}
       />
