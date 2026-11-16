@@ -23,7 +23,7 @@ import {
   SCALE_TYPES
 } from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
-import {Field} from '@kepler.gl/types';
+import {Field, LayerBaseConfig, LayerColorConfig, LayerSizeConfig} from '@kepler.gl/types';
 import {DATA_TYPES} from 'type-analyzer';
 import Layer, {LayerBaseConfigPartial} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -1480,6 +1480,25 @@ export default class FlowFieldLayer extends Layer {
     }
     // Position: either lat+lng or a GeoJSON geometry column.
     return hasLatLngPosition(this.config.columns) || hasGeojsonPosition(this.config.columns);
+  }
+
+  updateLayerConfig<
+    LayerConfig extends LayerBaseConfig &
+      Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
+  >(newConfig: Partial<LayerConfig>): this {
+    const {columns, dataId} = this.config;
+    super.updateLayerConfig(newConfig);
+    const positionsChanged = ['lat', 'lng', 'geojson'].some(
+      key =>
+        columns[key]?.fieldIdx !== this.config.columns[key]?.fieldIdx ||
+        columns[key]?.value !== this.config.columns[key]?.value
+    );
+    // Incomplete columns make the reducer skip formatLayerData. Invalidate the
+    // old extent here; formatting restores bounds once the layer is configured.
+    if (positionsChanged || dataId !== this.config.dataId) {
+      this.updateMeta({bounds: null});
+    }
+    return this;
   }
 
   getDefaultLayerConfig(config: LayerBaseConfigPartial = {} as LayerBaseConfigPartial) {

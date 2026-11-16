@@ -256,6 +256,105 @@ test('#FlowFieldLayer -> zoom bounds update with positions and clear when unavai
   t.end();
 });
 
+test('#FlowFieldLayer -> reducer clears stale zoom bounds when position columns change', t => {
+  const dataset = new KeplerTable({info: {id: dataId}, color: [255, 255, 255]});
+  const positions = [
+    [-122, 37],
+    [-121, 37],
+    [-122, 38],
+    [-121, 38]
+  ];
+  dataset.importData({
+    data: processGeojson({
+      type: 'FeatureCollection',
+      features: positions.map(([longitude, latitude], index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [longitude, latitude]},
+        properties: {latitude, longitude, u: 1 + (index % 2), v: index < 2 ? 10 : 20}
+      }))
+    })
+  });
+  const datasets = {[dataId]: dataset};
+  const bounds = [-122, 37, -121, 38];
+  const empty = {value: null, fieldIdx: -1};
+
+  for (const positionKey of ['lat', 'lng', 'geojson']) {
+    const layer = validateLayerWithData(
+      dataset,
+      {
+        type: 'flowField',
+        config: {
+          dataId,
+          columns: {
+            ...(positionKey === 'geojson'
+              ? {geojson: '_geojson'}
+              : {lat: 'latitude', lng: 'longitude'}),
+            u: 'u',
+            v: 'v'
+          }
+        }
+      },
+      LayerClasses
+    );
+    const columns = layer.config.columns;
+    let state = {
+      ...INITIAL_VIS_STATE,
+      datasets,
+      layers: [layer],
+      layerData: [layer.formatLayerData(datasets)]
+    };
+    const changeColumns = nextColumns => {
+      state = visStateReducer(
+        state,
+        VisStateActions.layerConfigChange(state.layers[0], {columns: nextColumns})
+      );
+    };
+
+    t.deepEqual(state.layers[0].meta.bounds, bounds, `${positionKey}: initial zoom bounds`);
+    changeColumns({...columns, [positionKey]: empty});
+    t.deepEqual(state.layerData[0], {}, `${positionKey}: incomplete columns clear layer data`);
+    t.equal(
+      state.layers[0].meta.bounds,
+      null,
+      `${positionKey}: clearing a position clears bounds even when formatting is skipped`
+    );
+    changeColumns(columns);
+    t.deepEqual(
+      state.layers[0].meta.bounds,
+      bounds,
+      `${positionKey}: restoring positions restores zoom bounds`
+    );
+
+    if (positionKey === 'lat') {
+      changeColumns({...columns, u: empty});
+      t.deepEqual(
+        state.layers[0].meta.bounds,
+        bounds,
+        'missing flow values retain position bounds'
+      );
+      changeColumns({...columns, u: empty, lat: columns.v, lng: columns.u});
+      t.equal(
+        state.layers[0].meta.bounds,
+        null,
+        'changing positions with an incomplete flow configuration clears the previous extent'
+      );
+      changeColumns({...columns, lat: columns.v, lng: columns.u});
+      t.deepEqual(
+        state.layers[0].meta.bounds,
+        [1, 10, 2, 20],
+        'restoring the flow configuration calculates bounds from the new position columns'
+      );
+      state = visStateReducer(
+        state,
+        VisStateActions.layerConfigChange(state.layers[0], {dataId: null})
+      );
+      t.equal(state.layers[0].meta.bounds, null, 'clearing the dataset clears zoom bounds');
+      t.deepEqual(state.layerData[0], {}, 'clearing the dataset clears layer data');
+    }
+  }
+  t.end();
+});
+
 test('#FlowFieldLayer -> findDefaultLayerProps altitude', t => {
   const dataset = createDatasetFromCsv(elevCsv, 'elev-data');
   const {props} = FlowFieldLayer.findDefaultLayerProps(dataset);
