@@ -861,7 +861,8 @@ export const effectPropsV1 = {
   id: null,
   type: null,
   isEnabled: null,
-  parameters: null
+  parameters: null,
+  animation: null
 };
 
 export const chartPropsV1 = {

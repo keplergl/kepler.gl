@@ -63,6 +63,7 @@ interface RangeSliderProps {
   showInput?: boolean;
   inputTheme?: string;
   inputSize?: string;
+  inputIdPrefix?: string;
   step?: number;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
@@ -282,7 +283,7 @@ export default function RangeSliderFactory(
           className="kg-range-slider__input"
           type="number"
           ref={ref}
-          id={`slider-input-${key}`}
+          id={`${this.props.inputIdPrefix ?? 'slider-input'}-${key}`}
           key={key}
           value={this.state[key]}
           onChange={onChange}

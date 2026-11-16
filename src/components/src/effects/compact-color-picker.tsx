@@ -14,6 +14,7 @@ export type SingleColorPickerProps = {
   color: [number, number, number];
   onSetColor: (value: [number, number, number]) => void;
   label: string;
+  labelAction?: React.ReactNode;
   Icon: React.ElementType;
 };
 
@@ -29,7 +30,7 @@ export const StyledPanelDropdown = styled.div`
   width: 220px;
 `;
 
-const StyledConfigSection = styled.div`
+const StyledConfigSection = styled.div.attrs({className: 'effect-configurator__animation-row'})`
   display: flex;
   flex-direction: column;
 `;
@@ -72,6 +73,7 @@ const DEFAULT_OFFSET = {
 const SingleColorPickerDropdown = ({
   isOpened,
   onClose,
+  label,
   selectedColor,
   onSelectColor,
   offset = DEFAULT_OFFSET
@@ -83,7 +85,13 @@ const SingleColorPickerDropdown = ({
     [onSelectColor]
   );
   return (
-    <Portaled top={offset.top} left={offset.left} isOpened={isOpened} onClose={onClose}>
+    <Portaled
+      top={offset.top}
+      left={offset.left}
+      isOpened={isOpened}
+      onClose={onClose}
+      modalProps={{contentLabel: label}}
+    >
       <StyledPanelDropdown>
         <SingleColorPalette selectedColor={selectedColor} onSelectColor={onSelectColorCb} />
       </StyledPanelDropdown>
@@ -95,7 +103,8 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
   color,
   onSetColor,
   Icon,
-  label
+  label,
+  labelAction
 }: SingleColorPickerProps) => {
   const [isColorPickerOpened, setIsColorPickerOpened] = React.useState(false);
 
@@ -123,9 +132,18 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
 
   return (
     <StyledConfigSection>
-      <SectionTitle>{label}</SectionTitle>
+      <SectionTitle>
+        {label}
+        {labelAction}
+      </SectionTitle>
       <StyledDropdownButtonWrapper>
-        <Button onClick={toggleDropdown}>
+        <Button
+          type="button"
+          aria-label={label}
+          aria-haspopup="dialog"
+          aria-expanded={isColorPickerOpened}
+          onClick={toggleDropdown}
+        >
           <div style={colorBlockStyle} />
           <Icon />
         </Button>
@@ -133,6 +151,7 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
       <SingleColorPickerDropdown
         isOpened={isColorPickerOpened}
         onClose={closeDropdown}
+        label={label}
         selectedColor={hexColor}
         onSelectColor={onSetColor}
       />

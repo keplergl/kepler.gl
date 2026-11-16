@@ -5,7 +5,7 @@
 import React from 'react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, renderHook, screen, waitFor} from '@testing-library/react';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 import {MapSplitMode} from '@kepler.gl/constants';
@@ -74,6 +74,7 @@ jest.mock('@kepler.gl/utils', () => {
 });
 
 jest.mock('@kepler.gl/effects', () => ({
+  ...jest.requireActual('../../../effects/src/animation-utils'),
   DeckShadowCompositingEffect: jest.fn().mockImplementation(() => ({
     id: 'shadow-compositing-effect',
     postRender: jest.fn(),
@@ -118,6 +119,7 @@ jest.mock('./hubble-utils', () => ({
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
+import {useEffectAnimation} from './effect-animation';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 
 function renderWithThemeLocal(component) {
@@ -326,7 +328,8 @@ describe('ExportVideoModal', () => {
       controller: true,
       views: {},
       _isExport: true,
-      effects: []
+      effects: [],
+      onBeforeRender: expect.any(Function)
     });
   });
 
@@ -439,111 +442,195 @@ describe('ExportVideoModal', () => {
     });
   });
 
-  describe('surface fog height animation', () => {
-    function makeFogDeckEffect() {
-      const effect = {
-        id: 'surface-fog-deck',
-        props: {height: 50},
-        postRender: jest.fn(),
-        setProps: jest.fn(function (newProps) {
-          Object.assign(effect.props, newProps);
-        })
-      };
-      return effect;
-    }
+  describe('effect animation during video export', () => {
+    const descriptions = [
+      {name: 'amount', min: -100, max: 100},
+      {name: 'color', type: 'color', min: 0, max: 255, defaultValue: [0, 0, 0]},
+      {name: 'height', min: -200, max: 6000},
+      {name: 'sunLightIntensity', min: 0, max: 10}
+    ];
 
-    function makeSurfaceFogEffect(deckEffect, overrides = {}) {
+    function makeEffect(parameters = {amount: 0}, animation = undefined, overrides = {}) {
       const effect = {
-        id: 'fog-1',
-        type: 'surfaceFog',
+        id: 'effect-1',
+        type: 'test-effect',
         isEnabled: true,
-        parameters: {
-          height: 50,
-          animateHeight: true,
-          heightEnd: 200,
-          linearEasing: false,
-          ...overrides
-        },
-        deckEffect,
-        clone: jest.fn()
+        parameters: {...parameters},
+        animation,
+        deckEffect: {postRender: jest.fn()},
+        getParameterDescriptions: () => descriptions,
+        setProps: jest.fn(({parameters: update}) => {
+          effect.parameters = {...effect.parameters, ...update};
+        }),
+        ...overrides
       };
-      // clone returns a fresh reference that still points to the same deckEffect
-      effect.clone.mockImplementation(() => ({...effect, clone: effect.clone}));
+      effect.clone = jest.fn(() => makeEffect(effect.parameters, effect.animation, overrides));
       return effect;
     }
 
-    function propsWithFogEffect(fogEffect) {
-      return {
+    function mountAnimation(effects, state = {}) {
+      const containerRef = {
+        current: {
+          state: {
+            previewing: true,
+            adapter: {videoCapture: {timeMs: 250, timecode: {start: 0, duration: 1000}}},
+            ...state
+          }
+        }
+      };
+      const hook = renderHook(() => useEffectAnimation(effects, containerRef));
+      return {...hook, state: containerRef.current.state, draw: () => hook.result.current()};
+    }
+
+    test('wires a pre-render callback and animates export clones without changing live effects', async () => {
+      const liveEffect = makeEffect({amount: 2}, {amount: {endValue: 10, easing: 'linear'}});
+      await renderAndWaitForPanel({
         ...DEFAULT_PROPS,
         visState: {
           ...DEFAULT_PROPS.visState,
-          effects: [fogEffect],
-          effectOrder: [fogEffect.id]
+          effects: [liveEffect],
+          effectOrder: [liveEffect.id]
         }
-      };
-    }
-
-    test('patches deckEffect.postRender when animateHeight is enabled', async () => {
-      const deckEffect = makeFogDeckEffect();
-      const originalPostRender = deckEffect.postRender;
-      const fogEffect = makeSurfaceFogEffect(deckEffect);
-      mockComputeDeckEffects.mockReturnValue([deckEffect]);
-
-      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
-
-      expect(deckEffect.postRender).not.toBe(originalPostRender);
+      });
+      const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+      expect(panelProps.deckProps.onBeforeRender).toEqual(expect.any(Function));
+      const clone = liveEffect.clone.mock.results[0].value;
+      const {draw} = mountAnimation([clone]);
+      draw();
+      expect(clone.parameters.amount).toBe(4);
+      expect(liveEffect.parameters.amount).toBe(2);
+      expect(liveEffect.setProps).not.toHaveBeenCalled();
     });
 
-    test('restores original height when hubble is not playing', async () => {
-      const deckEffect = makeFogDeckEffect();
-      deckEffect.props.height = 75;
-      const fogEffect = makeSurfaceFogEffect(deckEffect, {height: 75});
-      mockComputeDeckEffects.mockReturnValue([deckEffect]);
-
-      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
-
-      // Call the patched postRender without hubble playing
-      deckEffect.postRender.call(deckEffect, {});
-
-      // Not playing → height resets to originalHeight
-      expect(deckEffect.props.height).toBe(75);
+    test('interpolates multiple effects, scalars and vectors with independent easing', () => {
+      const linear = makeEffect(
+        {amount: 0, color: [0, 40, 80], untouched: 7},
+        {
+          amount: {endValue: 100, easing: 'linear'},
+          color: {endValue: [80, 0, 40], easing: 'linear'}
+        }
+      );
+      const smooth = makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'easeInOut'}});
+      const {draw, state} = mountAnimation([linear, smooth]);
+      draw();
+      expect(linear.parameters).toEqual({amount: 25, color: [20, 30, 70], untouched: 7});
+      expect(smooth.parameters.amount).toBe(15.625);
+      state.adapter.videoCapture.timeMs = 500;
+      draw();
+      expect(linear.parameters.amount).toBe(50);
+      expect(smooth.parameters.amount).toBe(50);
+      state.adapter.videoCapture.timeMs = 2000;
+      draw();
+      expect(linear.parameters.amount).toBe(100);
+      state.adapter.videoCapture.timeMs = -100;
+      draw();
+      expect(linear.parameters.amount).toBe(0);
     });
 
-    test('does not mutate height when animateHeight is disabled', async () => {
-      const deckEffect = makeFogDeckEffect();
-      const fogEffect = makeSurfaceFogEffect(deckEffect, {animateHeight: false});
-      mockComputeDeckEffects.mockReturnValue([deckEffect]);
-
-      await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
-
-      deckEffect.props.height = 42;
-      deckEffect.postRender.call(deckEffect, {});
-
-      // ref.active is false so height should not be touched
-      expect(deckEffect.props.height).toBe(42);
+    test.each(['previewing', 'rendering'])('uses the globe/swipe clock while %s', mode => {
+      const effect = makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}});
+      const {draw, state} = mountAnimation([effect], {
+        previewing: false,
+        [mode]: true,
+        currentTimeMs: 750,
+        durationMs: 1000,
+        adapter: {videoCapture: {timeMs: 0, timecode: null}}
+      });
+      draw();
+      expect(effect.parameters.amount).toBe(75);
+      state.currentTimeMs = 1000;
+      draw();
+      expect(effect.parameters.amount).toBe(100);
+      state[mode] = false;
+      draw();
+      expect(effect.parameters.amount).toBe(0);
     });
 
-    test('restores original postRender on unmount', async () => {
-      const deckEffect = makeFogDeckEffect();
-      const fogEffect = makeSurfaceFogEffect(deckEffect);
-      mockComputeDeckEffects.mockReturnValue([deckEffect]);
-
-      const {unmount} = await renderAndWaitForPanel(propsWithFogEffect(fogEffect));
-
-      // postRender was patched (the wrapper function drives animation)
-      const patchedPostRender = deckEffect.postRender;
-      // Verify it's not the original mock (component binds and wraps it)
-      expect(patchedPostRender).not.toBe(deckEffect.postRender.bind(deckEffect));
-
+    test('leaves missing, invalid and disabled animations untouched', () => {
+      const effects = [
+        makeEffect(),
+        makeEffect({amount: 0}, {amount: {endValue: NaN, easing: 'linear'}}),
+        makeEffect({amount: 0}, {amount: {endValue: [1], easing: 'linear'}}),
+        makeEffect({color: [0, 0, 0]}, {color: {endValue: [100], easing: 'linear'}}),
+        makeEffect({amount: Infinity}, {amount: {endValue: 100, easing: 'linear'}}),
+        makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}}, {isEnabled: false})
+      ];
+      const {draw, unmount} = mountAnimation(effects);
+      draw();
       unmount();
-
-      // After unmount, postRender no longer drives animation.
-      // The restored function is a bound copy of the original mock.
-      deckEffect.props.height = 99;
-      deckEffect.postRender.call(deckEffect, {});
-      // Height should NOT be mutated by animation logic anymore
-      expect(deckEffect.props.height).toBe(99);
+      effects.forEach(effect => expect(effect.setProps).not.toHaveBeenCalled());
     });
+
+    test('restores starts on stop, invalid timing, restart and cleanup without patching effects', () => {
+      const effect = makeEffect({amount: 10}, {amount: {endValue: 90, easing: 'linear'}});
+      const originalPostRender = effect.deckEffect.postRender;
+      const {draw, state, unmount} = mountAnimation([effect]);
+      draw();
+      expect(effect.parameters.amount).toBe(30);
+      state.previewing = false;
+      draw();
+      expect(effect.parameters.amount).toBe(10);
+      effect.setProps.mockClear();
+      draw();
+      expect(effect.setProps).not.toHaveBeenCalled();
+      state.previewing = true;
+      draw();
+      expect(effect.parameters.amount).toBe(30);
+      state.adapter.videoCapture.timecode.duration = 0;
+      draw();
+      expect(effect.parameters.amount).toBe(10);
+      state.adapter.videoCapture.timecode.duration = 1000;
+      draw();
+      unmount();
+      expect(effect.parameters.amount).toBe(10);
+      expect(effect.deckEffect.postRender).toBe(originalPostRender);
+    });
+
+    test('keeps legacy fog playable and gives generic height settings precedence', () => {
+      const parameters = {height: 0, animateHeight: true, heightEnd: 100, linearEasing: false};
+      const legacy = makeEffect(parameters, undefined, {type: 'surfaceFog'});
+      const generic = makeEffect(
+        parameters,
+        {height: {endValue: 200, easing: 'linear'}},
+        {type: 'surfaceFog'}
+      );
+      const disabled = makeEffect({...parameters, animateHeight: false}, undefined, {
+        type: 'surfaceFog'
+      });
+      const {draw} = mountAnimation([legacy, generic, disabled]);
+      draw();
+      expect(legacy.parameters.height).toBe(15.625);
+      expect(generic.parameters.height).toBe(50);
+      expect(disabled.setProps).not.toHaveBeenCalled();
+    });
+
+    test.each(['current', 'animation'])(
+      'preserves %s lighting time and nighttime suppression',
+      timeMode => {
+        const sunLight = {timestamp: 1234, intensity: 0, shadow: false};
+        const effect = makeEffect(
+          {sunLightIntensity: 2, timestamp: 99, timeMode},
+          {sunLightIntensity: {endValue: 6, easing: 'linear'}},
+          {
+            type: 'lightAndShadow',
+            deckEffect: {directionalLights: [sunLight], outputUniformShadow: true, shadow: false}
+          }
+        );
+        effect.setProps.mockImplementation(({parameters}) => {
+          effect.parameters = {...effect.parameters, ...parameters};
+          sunLight.timestamp = effect.parameters.timestamp;
+          sunLight.intensity = effect.parameters.sunLightIntensity;
+        });
+        const {draw} = mountAnimation([effect]);
+        draw();
+        expect(effect.parameters.sunLightIntensity).toBe(3);
+        expect(sunLight).toEqual({timestamp: 1234, intensity: 0, shadow: false});
+        expect(effect.deckEffect.shadow).toBe(false);
+        effect.deckEffect.outputUniformShadow = false;
+        draw();
+        expect(sunLight.intensity).toBe(3);
+      }
+    );
   });
 
   describe('shadow compositing fallback', () => {
