@@ -866,6 +866,9 @@ describe('GeoJsonLayer source revisions', () => {
       [1, 2],
       [3, 4]
     ]);
+    expect(layer.meta.bounds).toEqual([1, 2, 3, 4]);
+    layer.updateLayerMeta(dataset);
+    expect(layer.meta.bounds).toEqual([1, 2, 3, 4]);
 
     // A larger replacement is not an append just because it adds one chunk.
     const replacement = pointVector([[30, 40]])
@@ -878,6 +881,7 @@ describe('GeoJsonLayer source revisions', () => {
       [50, 60],
       [70, 80]
     ]);
+    expect(layer.meta.bounds).toEqual([30, 40, 70, 80]);
 
     await dataset.update({
       fields: dataset.fields,
@@ -898,6 +902,18 @@ describe('GeoJsonLayer source revisions', () => {
       [70, 80]
     ]);
     expect(layer.meta).toMatchObject({bounds: [30, 40, 70, 80]});
+  });
+
+  test('retains zoom bounds when an empty Arrow chunk is appended', async () => {
+    const first = pointVector([
+      [1, 2],
+      [3, 4]
+    ]);
+    const dataset = arrowTable(first, GEOARROW_EXTENSIONS.POINT);
+    const layer = layerFor(dataset);
+    await dataset.update({fields: dataset.fields, cols: [first.concat(pointVector([]))], rows: []});
+    layer.updateLayerMeta(dataset);
+    expect(layer.meta.bounds).toEqual([1, 2, 3, 4]);
   });
 });
 
