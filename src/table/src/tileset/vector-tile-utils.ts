@@ -739,7 +739,7 @@ export const getFieldsFromTile = async ({
       metadataUrl &&
       metadata &&
       metadata.fields?.length === 0 &&
-      metadata.minZoom &&
+      notNullOrUndefined(metadata.minZoom) &&
       metadata.bounds?.length === 4 &&
       (!metadata.pmtilesType || metadata.pmtilesType === PMTilesType.MVT)
     ) {

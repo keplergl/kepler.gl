@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {MVTSource} from '@loaders.gl/mvt';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
 
-import {getTileUrl, getMetaUrl, parseVectorMetadata as parseMetadata} from './vector-tile-utils';
+import {
+  getTileUrl,
+  getMetaUrl,
+  getFieldsFromTile,
+  parseVectorMetadata as parseMetadata
+} from './vector-tile-utils';
 import {
   PMTILES_METADATA,
   PMTILES_METADATA_NUMERIC_TYPES,
@@ -508,3 +514,28 @@ test.each(['1970-01-01', '1970-01-01T00:00:00Z'])(
     });
   }
 );
+
+test('getFieldsFromTile reads the fields from a tile when minZoom is 0', async () => {
+  const getTileData = jest.fn().mockResolvedValue({features: [{properties: {height: 1.5}}]});
+  const source = jest.spyOn(MVTSource, 'createDataSource').mockReturnValue({getTileData} as any);
+  const metadata = {
+    metaJson: null,
+    bounds: [-10, -10, 10, 10],
+    center: null,
+    maxZoom: 5,
+    minZoom: 0,
+    fields: []
+  };
+  try {
+    await getFieldsFromTile({
+      remoteTileFormat: RemoteTileFormat.MVT,
+      tilesetUrl: 'http://www.example.com/{z}/{x}/{y}.pbf',
+      metadataUrl: 'http://www.example.com/metadata.json',
+      metadata
+    });
+  } finally {
+    source.mockRestore();
+  }
+  expect(getTileData).toHaveBeenCalledWith({index: {x: 0, y: 0, z: 0}});
+  expect(metadata.fields).toMatchObject([{name: 'height', type: ALL_FIELD_TYPES.real}]);
+});
