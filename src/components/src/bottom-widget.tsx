@@ -20,6 +20,7 @@ import {getZarrVariable, isExplicitZarrAxis} from '@kepler.gl/table';
 import {BaseComponentProps} from './types';
 
 const maxWidth = 1080;
+const allowedLegendOverlap = 30;
 
 function isChartFilter(filter?: Filter): filter is RangeFilter | TimeRangeFilter {
   return filter?.type === FILTER_TYPES.timeRange || filter?.type === FILTER_TYPES.range;
@@ -122,8 +123,8 @@ export default function BottomWidgetFactory(
       !position ||
       (position.anchorX === 'right' &&
         position.anchorY === 'bottom' &&
-        position.x < reservedLegendWidth &&
-        position.y < timelineHeight - theme.bottomWidgetPaddingTop);
+        position.x < reservedLegendWidth - allowedLegendOverlap &&
+        position.y < timelineHeight - theme.bottomWidgetPaddingTop - allowedLegendOverlap);
     const spaceForLegendWidth =
       !hasPortableWidth(breakPointValues) && legend?.show && legend.active && isLegendInCorner
         ? Math.min(availableWidth, reservedLegendWidth)

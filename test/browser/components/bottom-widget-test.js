@@ -175,13 +175,33 @@ test('Components -> BottomWidget -> reserves space only for the bottom-right leg
           0
         ],
         [
-          'moving just inside the corner bounds',
+          'overlapping the timeline by exactly 30px',
+          {
+            active: true,
+            settings: {
+              position: {x: 10, y: visibleTimelineTop - 30, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'overlapping the corner column by exactly 30px',
+          {
+            active: true,
+            settings: {
+              position: {x: cornerWidth - 30, y: 30, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'overlapping both corner bounds by 31px',
           {
             active: true,
             settings: {
               position: {
-                x: cornerWidth - 1,
-                y: visibleTimelineTop - 1,
+                x: cornerWidth - 31,
+                y: visibleTimelineTop - 31,
                 anchorX: 'right',
                 anchorY: 'bottom'
               }
