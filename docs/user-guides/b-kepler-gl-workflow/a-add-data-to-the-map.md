@@ -98,6 +98,49 @@ id,geometry
 
 ### GeoJSON
 
+#### Coordinate order and legacy arrays
+
+**Use explicit GeoJSON for new data.** Its positions use `[longitude, latitude]`, with optional altitude. Bare arrays are a legacy shorthand with different point and line conventions:
+
+| Input | Coordinate order | Parser behavior |
+| --- | --- | --- |
+| GeoJSON geometry | `[longitude, latitude]` | Keeps coordinate order |
+| Bare point `[-74, 40]` | `[longitude, latitude]` | Keeps coordinate order |
+| Bare line `[[40, -74], [41, -73]]` | `[latitude, longitude]` | Reverses each pair |
+
+Bare arrays must be actual values in a field treated as `geojson`; names such as `_geojson` and `all_points` can trigger that detection. For CSV, use a [complete geometry string](#3-embed-geometries-in-csv), not an array-looking string.
+
+**Bare lines discard altitude and later components.** For those values, use explicit GeoJSON and, for animation, the [Trip layer format](../c-types-of-layers/k-trip.md).
+
+For example, this geometry represents the same locations as the bare line above:
+
+```json
+{
+  "type": "LineString",
+  "coordinates": [[-74, 40], [-73, 41]]
+}
+```
+
+Use it as a dataset cell, or wrap it in a Feature for a standalone GeoJSON file.
+
+##### Why we keep the existing convention
+
+- **Compatibility:** changing bare lines to longitude-first would move existing lines and saved maps.
+- **Both conventions are used:** [Leaflet](https://leafletjs.com/reference.html#polyline) and [`@mapbox/polyline.decode()`](https://github.com/mapbox/polyline#readme) use latitude first; [GeoJSON](https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.1) uses longitude first. Ambiguous coordinate values cannot reliably reveal the intended order.
+- **An explicit alternative exists:** GeoJSON already accepts longitude-first lines. Making the shorthand forms uniform does not justify a compatibility break.
+
+The swap dates to the [2018 source](https://github.com/keplergl/kepler.gl/blob/10655c7b141fc8dbe561526eefa040f11b106697/src/layers/geojson-layer/geojson-utils.js#L52-L62); its original motivation is unknown. The branch became unreachable in [#699](https://github.com/keplergl/kepler.gl/pull/699) and was restored in [#3642](https://github.com/keplergl/kepler.gl/pull/3642). [#4009](https://github.com/keplergl/kepler.gl/pull/4009) retains its behavior, including the loss of extra components.
+
+##### Export and import
+
+| Export | What happens |
+| --- | --- |
+| **Map JSON with data** | Saves original cells. Bare arrays are interpreted again on import; export does not normalize or repeatedly swap them. |
+| **Map HTML** | Embeds data and normally pins a kepler.gl version. Behavior stays the same while that runtime is retained. |
+| **Data as GeoJSON**, where available | Writes explicit longitude-first geometries at their interpreted locations. |
+
+Keeping the parser convention preserves existing map locations. No coordinate-order migration or automatic detection is introduced.
+
 #### 1. Feature types
 
 - kepler.gl accepts GeoJSON formatted JSON that contains a single [Feature](https://tools.ietf.org/html/rfc7946#section-3.2) object or a [FeatureCollection](https://tools.ietf.org/html/rfc7946#section-3.3) object. kepler.gl creates one **`Polygon`** layer per GeoJSON file.
