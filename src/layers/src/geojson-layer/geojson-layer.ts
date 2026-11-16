@@ -12,6 +12,7 @@ import Layer, {
   defaultGetFieldValue,
   LayerBaseConfig,
   LayerBaseConfigPartial,
+  LayerBounds,
   LayerColorConfig,
   LayerElevationOffsetConfig,
   LayerHeightConfig,
@@ -197,6 +198,7 @@ export type GeoJsonLayerConfig = Merge<
   GeoJsonLayerVisualChannelConfig;
 
 export type GeoJsonLayerMeta = {
+  bounds?: LayerBounds;
   featureTypes?: DeckGlGeoTypes;
   fixedRadius?: boolean;
 };
@@ -783,7 +785,20 @@ export default class GeoJsonLayer extends Layer {
           this.centroids = centroids || [];
           this.dataToFeature = dataToFeature;
         }
-        this.updateMeta({bounds, fixedRadius, featureTypes});
+        const previousBounds = isIncrementalLoad ? this.meta.bounds : null;
+        this.updateMeta({
+          bounds:
+            previousBounds && bounds
+              ? [
+                  Math.min(previousBounds[0], bounds[0]),
+                  Math.min(previousBounds[1], bounds[1]),
+                  Math.max(previousBounds[2], bounds[2]),
+                  Math.max(previousBounds[3], bounds[3])
+                ]
+              : bounds || previousBounds,
+          fixedRadius,
+          featureTypes
+        });
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
       const getFeature = this.getPositionAccessor(dataContainer);
