@@ -2498,6 +2498,7 @@ export default function LayerConfiguratorFactory(
 
     _renderFlowFieldLayerConfig({layer, visConfiguratorProps, layerConfiguratorProps}) {
       const colorBySpeed = Boolean(layer.config.visConfig.colorBySpeed);
+      const showTrails = layer.config.visConfig.showTrails !== false;
       return (
         <StyledLayerVisualConfigurator>
           <LayerConfigGroup label="layer.color">
@@ -2514,8 +2515,17 @@ export default function LayerConfiguratorFactory(
               {...layer.visConfigSettings.linesPerScreen}
               {...visConfiguratorProps}
             />
-            <VisConfigSlider {...layer.visConfigSettings.strokeWidth} {...visConfiguratorProps} />
-            <VisConfigSlider {...layer.visConfigSettings.trailLength} {...visConfiguratorProps} />
+            <VisConfigSwitch {...layer.visConfigSettings.showTrails} {...visConfiguratorProps} />
+            <VisConfigSlider
+              {...layer.visConfigSettings.strokeWidth}
+              {...visConfiguratorProps}
+              disabled={!showTrails}
+            />
+            <VisConfigSlider
+              {...layer.visConfigSettings.trailLength}
+              {...visConfiguratorProps}
+              disabled={!showTrails}
+            />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider
                 {...layer.visConfigSettings.zoomResponse}
@@ -2527,6 +2537,52 @@ export default function LayerConfiguratorFactory(
             <VisConfigSlider {...layer.visConfigSettings.cycleSeconds} {...visConfiguratorProps} />
             <VisConfigSlider {...layer.visConfigSettings.lineLifetime} {...visConfiguratorProps} />
             <VisConfigSwitch {...layer.visConfigSettings.seamlessLoop} {...visConfiguratorProps} />
+          </LayerConfigGroup>
+          <LayerConfigGroup
+            {...visConfiguratorProps}
+            label="layer.3DModel"
+            collapsible
+            property="scenegraphEnabled"
+          >
+            <ScenegraphModelSelector
+              selected={layer.config.visConfig.scenegraph}
+              customModelUrl={layer.config.visConfig.scenegraphCustomModelUrl}
+              disabled={!layer.config.visConfig.scenegraphEnabled}
+              onChange={visConfiguratorProps.onChange}
+            />
+            {layer.config.visConfig.scenegraphEnabled ? (
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSwitch
+                  {...layer.visConfigSettings.scenegraphColorEnabled}
+                  {...visConfiguratorProps}
+                />
+                {layer.config.visConfig.scenegraphColorEnabled ? (
+                  <>
+                    <VisConfigSwitch
+                      {...layer.visConfigSettings.scenegraphUseTrailColor}
+                      {...visConfiguratorProps}
+                    />
+                    {!layer.config.visConfig.scenegraphUseTrailColor ? (
+                      <LayerColorSelector
+                        {...visConfiguratorProps}
+                        selectedColor={layer.config.visConfig.scenegraphColor}
+                        property="scenegraphColor"
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+                <VisConfigSlider {...layer.visConfigSettings.sizeScale} {...visConfiguratorProps} />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.adjustRoll}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider
+                  {...layer.visConfigSettings.adjustPitch}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider {...layer.visConfigSettings.adjustYaw} {...visConfiguratorProps} />
+              </ConfigGroupCollapsibleContent>
+            ) : null}
           </LayerConfigGroup>
           <LayerConfigGroup label="layerVisConfigs.flowField.field" collapsible>
             <VisConfigSlider {...layer.visConfigSettings.smoothing} {...visConfiguratorProps} />

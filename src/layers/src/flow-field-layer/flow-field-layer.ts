@@ -16,11 +16,17 @@ import {WebMercatorViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer, PolygonLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
+import {ScenegraphLayer} from '@deck.gl/mesh-layers';
+import {Matrix4, Quaternion} from '@math.gl/core';
+import {lngLatToWorld} from '@math.gl/web-mercator';
+import {bisectRight} from 'd3-array';
 import {
+  CUSTOM_SCENEGRAPH_MODEL_ID,
   GEOJSON_FIELDS,
   GEOARROW_METADATA_KEY,
   LAYER_TYPES,
-  SCALE_TYPES
+  SCALE_TYPES,
+  TRIP_LAYER_SCENEGRAPH_MODELS
 } from '@kepler.gl/constants';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {Field} from '@kepler.gl/types';
@@ -30,6 +36,8 @@ import {getFilterDataFunc} from '../aggregation-layer';
 import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/geojson-utils';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowFieldLayerIcon from './flow-field-layer-icon';
+import {fetchGltf} from '../scenegraph-layer/scenegraph-layer';
+import {tripVisConfigs} from '../trip-layer/trip-layer';
 
 type FlowPoint = {lat: number; lng: number; u: number; v: number; alt?: number};
 /** Point with a scalar height used to derive downhill u/v. */
@@ -61,10 +69,17 @@ type FlowViewportState = {
   onRedrawNeeded?: (() => void) | null;
 };
 
+type FlowAnimationProps = {cycleSeconds?: number; seamlessLoop?: boolean};
+
+function flowAnimationTime({cycleSeconds, seamlessLoop}: FlowAnimationProps): number {
+  const phase = (performance.now() / 1000 / Math.max(1, cycleSeconds || 20)) % 1;
+  return seamlessLoop ? 1 + phase : phase;
+}
+
 // Animate currentTime inside deck.gl so we never call kepler's onRedrawNeeded.
 // That callback dispatches updateMap({}) every frame, which MapViewStateContext
 // treats as an external viewport change and snaps pan/zoom back.
-class AnimatedTripsLayer extends TripsLayer<any, {cycleSeconds?: number; seamlessLoop?: boolean}> {
+class AnimatedTripsLayer extends TripsLayer<any, FlowAnimationProps> {
   draw(params: any) {
     // Skip until the PathLayer model exists. Calling PathLayer.draw without it
     // (or with empty/invalid geometry mid-update) can throw and disable the layer.
@@ -72,9 +87,7 @@ class AnimatedTripsLayer extends TripsLayer<any, {cycleSeconds?: number; seamles
       this.setNeedsRedraw();
       return;
     }
-    const cycle = Math.max(1, this.props.cycleSeconds || 20);
-    const phase = (performance.now() / 1000 / cycle) % 1;
-    const currentTime = this.props.seamlessLoop ? 1 + phase : phase;
+    const currentTime = flowAnimationTime(this.props);
     const {fadeTrail, trailLength} = this.props;
     this.state.model.shaderInputs.setProps({trips: {fadeTrail, trailLength, currentTime}});
     PathLayer.prototype.draw.call(this, params);
@@ -83,6 +96,26 @@ class AnimatedTripsLayer extends TripsLayer<any, {cycleSeconds?: number; seamles
 }
 
 AnimatedTripsLayer.layerName = 'AnimatedTripsLayer';
+
+// Only model positions/transforms change each frame; the cached trails and colors
+// remain untouched. Keep animation inside deck.gl, just like AnimatedTripsLayer.
+class AnimatedFlowScenegraphLayer extends ScenegraphLayer<
+  FlowTrip,
+  FlowAnimationProps & {animationTime: {currentTime: number}}
+> {
+  draw(params: any) {
+    if (!this.state.scenegraph) return;
+    this.props.animationTime.currentTime = flowAnimationTime(this.props);
+    const attributes = this.getAttributeManager();
+    attributes?.invalidate('getPosition');
+    attributes?.invalidate('getTransformMatrix');
+    this._updateAttributes();
+    super.draw(params);
+    this.setNeedsRedraw();
+  }
+}
+
+AnimatedFlowScenegraphLayer.layerName = 'AnimatedFlowScenegraphLayer';
 
 const clipExtension = new ClipExtension();
 
@@ -268,6 +301,22 @@ function centroidFromRawFeature(
 }
 
 export const flowFieldVisConfigs = {
+  showTrails: {
+    type: 'boolean',
+    defaultValue: true,
+    label: 'layerVisConfigs.flowField.showTrails',
+    property: 'showTrails'
+  },
+  scenegraph: tripVisConfigs.scenegraph,
+  scenegraphEnabled: tripVisConfigs.scenegraphEnabled,
+  scenegraphCustomModelUrl: tripVisConfigs.scenegraphCustomModelUrl,
+  scenegraphColor: tripVisConfigs.scenegraphColor,
+  scenegraphColorEnabled: tripVisConfigs.scenegraphColorEnabled,
+  scenegraphUseTrailColor: tripVisConfigs.scenegraphUseTrailColor,
+  sizeScale: tripVisConfigs.sizeScale,
+  adjustRoll: tripVisConfigs.adjustRoll,
+  adjustPitch: tripVisConfigs.adjustPitch,
+  adjustYaw: tripVisConfigs.adjustYaw,
   opacity: {
     type: 'number',
     defaultValue: 0.55,
@@ -1315,6 +1364,36 @@ function collectStreamlines(
   return lines;
 }
 
+function sampleTripHead(trip: FlowTrip, currentTime: number, elevationMultiplier: number) {
+  const {path, timestamps} = trip;
+  // A half-open interval prevents two models appearing at a seamless-loop join.
+  if (currentTime < timestamps[0] || currentTime >= timestamps[timestamps.length - 1]) {
+    return null;
+  }
+  const index = bisectRight(timestamps, currentTime);
+  const start = path[index - 1];
+  const end = path[index];
+  if (!start || !end) return null;
+  const fraction =
+    (currentTime - timestamps[index - 1]) / (timestamps[index] - timestamps[index - 1]);
+  const position = [
+    start[0] + (end[0] - start[0]) * fraction,
+    start[1] + (end[1] - start[1]) * fraction,
+    ((start[2] || 0) + ((end[2] || 0) - (start[2] || 0)) * fraction) * elevationMultiplier
+  ];
+  const a = lngLatToWorld(start);
+  const b = lngLatToWorld(end);
+  return {position, yaw: Math.atan2(b[1] - a[1], b[0] - a[0])};
+}
+
+function modelRotation(roll: number, pitch: number, yaw: number) {
+  const radians = Math.PI / 180;
+  return new Quaternion()
+    .rotateZ(yaw * radians)
+    .rotateY(pitch * radians)
+    .rotateX(roll * radians);
+}
+
 /** Midpoint cell bounds around axis node i (half-way to neighbors). */
 function axisCellEdges(values: number[], i: number): [number, number] {
   const n = values.length;
@@ -1452,6 +1531,7 @@ export default class FlowFieldLayer extends Layer {
   get noneLayerDataAffectingProps() {
     return [
       ...super.noneLayerDataAffectingProps,
+      'showTrails',
       'strokeWidth',
       'trailLength',
       'cycleSeconds',
@@ -1461,7 +1541,17 @@ export default class FlowFieldLayer extends Layer {
       'zoomResponse',
       'colorBySpeed',
       'colorRange',
-      'elevationMultiplier'
+      'elevationMultiplier',
+      'scenegraph',
+      'scenegraphEnabled',
+      'scenegraphCustomModelUrl',
+      'scenegraphColor',
+      'scenegraphColorEnabled',
+      'scenegraphUseTrailColor',
+      'sizeScale',
+      'adjustRoll',
+      'adjustPitch',
+      'adjustYaw'
     ];
   }
 
@@ -1814,6 +1904,77 @@ export default class FlowFieldLayer extends Layer {
 
     const hasAltitude = Boolean(data.grid?.alt);
 
+    const model = visConfig.scenegraphEnabled
+      ? TRIP_LAYER_SCENEGRAPH_MODELS.find(d => d.id === visConfig.scenegraph)
+      : null;
+    const modelUrl =
+      model?.id === CUSTOM_SCENEGRAPH_MODEL_ID ? visConfig.scenegraphCustomModelUrl : model?.url;
+    const modelLayers: AnimatedFlowScenegraphLayer[] = [];
+    if (model && modelUrl) {
+      const animationTime = {currentTime: flowAnimationTime(visConfig)};
+      const rotation = modelRotation(
+        visConfig.adjustRoll || 0,
+        -(visConfig.adjustPitch || 0),
+        -(visConfig.adjustYaw || 0)
+      ).multiply(modelRotation(model.angles[0], model.angles[1], model.angles[2]));
+      const scale = model.scale * Math.pow(2, visConfig.sizeScale ?? 1);
+      const getHead = (trip: FlowTrip) =>
+        sampleTripHead(trip, animationTime.currentTime, elevationMultiplier);
+      const modelColor = visConfig.scenegraphColorEnabled
+        ? visConfig.scenegraphUseTrailColor
+          ? getColor
+          : visConfig.scenegraphColor || [255, 255, 255]
+        : [255, 255, 255];
+      modelLayers.push(
+        new AnimatedFlowScenegraphLayer({
+          id: `${this.id}-scenegraph`,
+          data: trips,
+          scenegraph: modelUrl,
+          fetch: fetchGltf,
+          animationTime,
+          cycleSeconds: visConfig.cycleSeconds,
+          seamlessLoop: visConfig.seamlessLoop,
+          getPosition: trip => getHead(trip)?.position || [0, 0, 0],
+          getTransformMatrix: trip => {
+            const head = getHead(trip);
+            return new Matrix4()
+              .fromQuaternion(new Quaternion().rotateZ(head?.yaw || 0).multiply(rotation))
+              .scale(head ? scale : 0);
+          },
+          getColor: modelColor,
+          _lighting: 'pbr',
+          _animations: {'*': {speed: 5}},
+          pickable: false,
+          wrapLongitude: false,
+          parameters: {depthTest: true, ...blendingParameters},
+          extensions: [clipExtension],
+          clipByInstance: true,
+          clipBounds,
+          updateTriggers: {
+            getPosition: elevationMultiplier,
+            getTransformMatrix: [elevationMultiplier, scale, ...rotation],
+            getColor: [
+              visConfig.scenegraphColorEnabled,
+              visConfig.scenegraphUseTrailColor,
+              visConfig.scenegraphColor,
+              visConfig.colorBySpeed,
+              visConfig.colorRange,
+              minSpeed,
+              maxSpeed,
+              r,
+              g,
+              b,
+              opacity
+            ]
+          }
+        } as any)
+      );
+    }
+
+    if (visConfig.showTrails === false) {
+      return [...debugLayers, ...modelLayers];
+    }
+
     return [
       ...debugLayers,
       new AnimatedTripsLayer({
@@ -1850,7 +2011,8 @@ export default class FlowFieldLayer extends Layer {
         extensions: [clipExtension],
         clipByInstance: false,
         clipBounds
-      } as any)
+      } as any),
+      ...modelLayers
     ];
   }
 }

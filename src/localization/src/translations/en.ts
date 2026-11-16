@@ -399,6 +399,7 @@ export default {
     },
     flowField: {
       streamlines: 'Streamlines',
+      showTrails: 'Show Trails',
       animation: 'Animation',
       field: 'Field',
       colorGroupDescription: 'Single layer color, or a speed palette when Color By Speed is on.',
