@@ -564,7 +564,16 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
     {index: 1, sourceId: 1, targetId: 2, count: 20},
     {index: 2, sourceId: 2, targetId: 0, count: 30}
   ];
-  const clusterLevels = [{zoom: 0, nodes: locations}];
+  const locationFixtures = [
+    {longitude: 0, locations},
+    {
+      longitude: 180,
+      locations: locations.map(location => ({
+        ...location,
+        lon: location.lon > 0 ? location.lon - 180 : location.lon + 180
+      }))
+    }
+  ];
   const width = 400;
   const height = 400;
   const manager = new LayerManager(device, {
@@ -620,11 +629,27 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
       resolveHover = resolve;
       composite.props.onHover({layer: composite, sourceLayer, index, picked: index >= 0}, {});
     });
-  const render = async (flowData, globe) => {
+  const render = async (flowData, globe, fixture) => {
     const Viewport = globe ? GlobeViewport : WebMercatorViewport;
-    manager.activateViewport(new Viewport({width, height, longitude: 0, latitude: 0, zoom: 1}));
+    manager.activateViewport(
+      new Viewport({
+        width,
+        height,
+        longitude: fixture.longitude,
+        latitude: 0,
+        zoom: 1,
+        // The antimeridian fixture spans two world copies on a flat map.
+        repeat: !globe
+      })
+    );
     const [composite] = layer.renderLayer({
-      data: {layerData: {locations, flows: flowData, clusterLevels}},
+      data: {
+        layerData: {
+          locations: fixture.locations,
+          flows: flowData,
+          clusterLevels: [{zoom: 0, nodes: fixture.locations}]
+        }
+      },
       gpuFilter: {},
       objectHovered: null,
       mapState: {globe: {enabled: globe}},
@@ -647,74 +672,100 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
         flowAdaptiveScalesEnabled: false
       });
       for (const globe of [false, true]) {
-        // Exercise growth, shrinking to empty, and repopulation after filtering.
-        for (const flowData of [flows.slice(0, 2), flows, [], flows.slice(1)]) {
-          const composite = await render(flowData, globe);
-          const sublayers = composite.getSubLayers();
-          t.equal(sublayers.length, 2, `${mode}: renders flow lines and circles`);
-          for (const sublayer of sublayers) {
-            const isCircle = sublayer.id.endsWith('-circles');
-            const count = sublayer.getNumInstances();
-            const expectedCount = isCircle && flowData.length ? locations.length : flowData.length;
-            t.equal(count, expectedCount, 'renders current data');
-            t.equal(
-              sublayer.props.extensions.some(
-                extension => extension.constructor.extensionName === 'FlowmapGlobeOcclusion'
-              ),
-              globe,
-              'clips the hidden hemisphere in globe color and picking passes'
-            );
-            if (globe) {
-              t.equal(sublayer.props.parameters.depthCompare, 'always', 'uses shader occlusion');
+        for (const fixture of locationFixtures) {
+          // Exercise growth, shrinking to empty, and repopulation after filtering.
+          for (const flowData of [flows.slice(0, 2), flows, [], flows.slice(1)]) {
+            const composite = await render(flowData, globe, fixture);
+            const sublayers = composite.getSubLayers();
+            t.equal(sublayers.length, 2, `${mode}: renders flow lines and circles`);
+            for (const sublayer of sublayers) {
+              const isCircle = sublayer.id.endsWith('-circles');
+              const count = sublayer.getNumInstances();
+              const expectedCount =
+                isCircle && flowData.length ? locations.length : flowData.length;
+              t.equal(count, expectedCount, 'renders current data');
               t.equal(
-                sublayer.props.parameters.depthWriteEnabled,
-                false,
-                'does not write globe depth'
+                sublayer.props.extensions.some(
+                  extension => extension.constructor.extensionName === 'FlowmapGlobeOcclusion'
+                ),
+                globe,
+                'clips the hidden hemisphere in globe color and picking passes'
               );
-            }
-
-            if (!isCircle && globe) {
-              t.ok(
-                sublayer.props.numSegments > 1,
-                `${mode}: follows the globe with a segmented route`
-              );
-              if (mode === 'straight') {
-                t.equal(sublayer.props.curviness, 0, 'straight globe routes have no lateral bow');
+              if (globe) {
+                t.equal(sublayer.props.parameters.depthCompare, 'always', 'uses shader occlusion');
+                t.equal(
+                  sublayer.props.parameters.depthWriteEnabled,
+                  false,
+                  'does not write globe depth'
+                );
               }
-            }
-            if (!pickingPass) continue;
 
-            const indexes = readPickingIndexes(sublayer, sublayer.context.viewport);
-            t.deepEqual(
-              indexes,
-              Array.from({length: count}, (_, index) => index),
-              `${mode}: every instance emits a distinct non-background picking ID`
-            );
-            // Only IDs decoded from the offscreen GPU pass reach the hover callback.
-            const picked = [];
-            for (const index of indexes) {
-              const info = await hover(composite, sublayer, index);
-              t.ok(info?.picked, 'a rendered instance produces hover data');
-              t.equal(info?.index, index, 'hover preserves the picked instance index');
-              picked.push(info?.object);
-            }
-            t.equal(
-              await hover(composite, sublayer, -1),
-              undefined,
-              'clearing hover removes the object'
-            );
-            if (!isCircle) {
+              if (!isCircle && globe) {
+                t.ok(
+                  sublayer.props.numSegments > 1,
+                  `${mode}: follows the globe with a segmented route`
+                );
+                if (mode === 'straight') {
+                  t.equal(sublayer.props.curviness, 0, 'straight globe routes have no lateral bow');
+                }
+              }
+              if (!pickingPass) continue;
+
+              const indexes = readPickingIndexes(sublayer, sublayer.context.viewport);
               t.deepEqual(
-                picked.map(({origin, dest, count}) => [origin.id, dest.id, count]).sort(),
-                flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
-                'hover identifies the current flow endpoints and magnitudes'
+                indexes,
+                Array.from({length: count}, (_, index) => index),
+                `${mode}, ${globe ? 'globe' : 'flat'}, ${
+                  fixture.longitude
+                }°: every instance emits a distinct non-background picking ID`
               );
-            } else {
-              t.deepEqual(
-                picked.map(({location}) => location.id).sort(),
-                (flowData.length ? locations : []).map(location => location.id).sort(),
-                'hover identifies the current locations'
+              if (globe) {
+                const viewport = sublayer.context.viewport;
+                try {
+                  // Keep the same GPU data and view it from the opposite hemisphere,
+                  // so this checks shader occlusion rather than provider filtering.
+                  const oppositeView = new GlobeViewport({
+                    width,
+                    height,
+                    longitude: fixture.longitude + 180,
+                    latitude: 0,
+                    zoom: 1
+                  });
+                  t.deepEqual(
+                    readPickingIndexes(sublayer, oppositeView),
+                    [],
+                    `${mode}: far-side ${isCircle ? 'locations' : 'flows'} cannot be picked`
+                  );
+                } finally {
+                  manager.activateViewport(viewport);
+                }
+              }
+              // Only IDs decoded from the offscreen GPU pass reach the hover callback.
+              const picked = [];
+              for (const index of indexes) {
+                const info = await hover(composite, sublayer, index);
+                t.ok(info?.picked, 'a rendered instance produces hover data');
+                t.equal(info?.index, index, 'hover preserves the picked instance index');
+                picked.push(info?.object);
+              }
+              t.equal(
+                await hover(composite, sublayer, -1),
+                undefined,
+                'clearing hover removes the object'
               );
+              if (!isCircle) {
+                t.deepEqual(
+                  picked.map(({origin, dest, count}) => [origin.id, dest.id, count]).sort(),
+                  flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
+                  'hover identifies the current flow endpoints and magnitudes'
+                );
+              } else {
+                t.deepEqual(
+                  picked.map(({location}) => location.id).sort(),
+                  (flowData.length ? locations : []).map(location => location.id).sort(),
+                  'hover identifies the current locations'
+                );
+              }
             }
           }
         }
@@ -724,6 +775,79 @@ test('#FlowLayer -> picking and globe rendering survive filtered data changes', 
     manager.finalize();
     pickingFBO?.destroy();
     pickingPass?.cleanup();
+  }
+  t.end();
+});
+
+test('#FlowLayer -> replacing a dataset refreshes rendered flows and hover data', async t => {
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
+  });
+  manager.setProps({onError: error => t.fail(error.message)});
+  let resolveHover;
+  const hover = (composite, sourceLayer, index) =>
+    new Promise(resolve => {
+      resolveHover = resolve;
+      composite.props.onHover({layer: composite, sourceLayer, index, picked: index >= 0}, {});
+    });
+  const replaceDataset = async (locations, flows) => {
+    // Dataset replacement constructs a new Kepler layer; deck reuses the old
+    // composite state because its ID is unchanged.
+    const layer = new FlowLayer({id: 'replaced-flow-data', dataId});
+    layer.updateLayerVisConfig({
+      flowClusteringEnabled: false,
+      flowAdaptiveScalesEnabled: false
+    });
+    const [composite] = layer.renderLayer({
+      data: {layerData: {locations, flows, clusterLevels: [{zoom: 0, nodes: locations}]}},
+      gpuFilter: {},
+      objectHovered: null,
+      mapState: {},
+      layerCallbacks: {onLayerHover: info => resolveHover(info)},
+      idx: 0,
+      visible: true
+    });
+    manager.setLayers([composite]);
+    await Promise.resolve();
+    manager.updateLayers();
+    return composite;
+  };
+  const originalLocations = [
+    {id: 0, lon: -20, lat: 0, name: 'Old origin'},
+    {id: 1, lon: 20, lat: 0, name: 'Old destination'}
+  ];
+  const replacementLocations = [
+    {id: 2, lon: -30, lat: 20, name: 'New origin'},
+    {id: 3, lon: 30, lat: 20, name: 'New destination'}
+  ];
+
+  try {
+    for (const [locations, flow] of [
+      [originalLocations, {index: 0, sourceId: 0, targetId: 1, count: 10}],
+      [replacementLocations, {index: 0, sourceId: 2, targetId: 3, count: 37}]
+    ]) {
+      const composite = await replaceDataset(locations, [flow]);
+      const flowLines = composite
+        .getSubLayers()
+        .find(sublayer => !sublayer.id.endsWith('-circles'));
+      t.equal(flowLines.getNumInstances(), 1, 'renders the current dataset flow');
+      // This tests provider replacement after deck transfers composite state;
+      // shader ID generation is covered by the offscreen picking test above.
+      const info = await hover(composite, flowLines, 0);
+      t.deepEqual(
+        [info?.object.origin, info?.object.dest, info?.object.count],
+        [locations[0], locations[1], flow.count],
+        'hover uses the current dataset locations and magnitude'
+      );
+    }
+
+    const empty = await replaceDataset(replacementLocations, []);
+    for (const sublayer of empty.getSubLayers()) {
+      t.equal(sublayer.getNumInstances(), 0, 'empty replacement removes the previous instances');
+      t.equal(await hover(empty, sublayer, 0), undefined, 'previous picking IDs no longer resolve');
+    }
+  } finally {
+    manager.finalize();
   }
   t.end();
 });
