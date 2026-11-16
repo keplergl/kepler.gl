@@ -2,12 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {render, fireEvent} from '@testing-library/react';
+import Window from 'global/window';
+import {render, fireEvent, act} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import test from 'tape';
+import sinon from 'sinon';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import {IntlWrapper, mountWithTheme} from 'test/helpers/component-utils';
+import {IntlWrapper, mountWithTheme, mockHTMLElementClientSize} from 'test/helpers/component-utils';
 import {
   BottomWidgetFactory,
   TimeWidgetFactory,
@@ -15,11 +17,13 @@ import {
   FilterAnimationControllerFactory,
   LayerAnimationControllerFactory,
   TimezoneSelector,
+  bottomWidgetSelector,
   appInjector
 } from '@kepler.gl/components';
 import {VisStateActions} from '@kepler.gl/actions';
 import {visStateReducer as reducer} from '@kepler.gl/reducers';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import * as dimensions from '../../../src/utils/src/observe-dimensions';
 
 const BottomWidget = appInjector.get(BottomWidgetFactory);
 const TimeWidget = appInjector.get(TimeWidgetFactory);
@@ -82,6 +86,333 @@ test('Components -> BottomWidget -> skips unchanged parent renders and keeps upd
   view.rerender(tree({...props, filters: [], datasets: {}}));
   t.equal(view.queryByRole('button'), null, 'handles the filter being removed');
   view.unmount();
+  t.end();
+});
+
+test('Components -> BottomWidget -> reserves space only for the bottom-right legend', t => {
+  const matchMedia = Window.matchMedia;
+  const timelineHeight = 240;
+  const heightStub = mockHTMLElementClientSize('offsetHeight', timelineHeight);
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  let view;
+  try {
+    for (const portable of [false, true]) {
+      Window.matchMedia = query => ({...matchMedia(query), matches: portable});
+      const props = {
+        ...defaultProps,
+        ...StateWFilters.visState,
+        containerW: portable ? 600 : 1000,
+        uiState: {...defaultProps.uiState, activeSidePanel: 'layer'}
+      };
+      const tree = legend => (
+        <ThemeProvider theme={theme}>
+          <Widget
+            {...props}
+            uiState={{
+              ...props.uiState,
+              mapControls: {...props.uiState.mapControls, mapLegend: {show: true, ...legend}}
+            }}
+          />
+        </ThemeProvider>
+      );
+      view = render(tree({active: false}));
+      const widget = view.container.querySelector('.bottom-widget--container');
+      const initialStyle = window.getComputedStyle(widget);
+      const initialWidth = initialStyle.width;
+      const reservedWidth = portable
+        ? 0
+        : theme.mapControl.width +
+          theme.mapControl.mapLegend.pinned.right * 2 -
+          theme.bottomWidgetPaddingRight;
+      const cornerWidth =
+        theme.mapControl.width +
+        theme.mapControl.mapLegend.pinned.right * 2 -
+        theme.bottomWidgetPaddingRight;
+      const visibleTimelineTop = timelineHeight - theme.bottomWidgetPaddingTop;
+      t.equal(
+        initialWidth,
+        `${props.containerW - props.sidePanelWidth}px`,
+        'starts with the available width for the current layout'
+      );
+      for (const [action, legend, reserved] of [
+        ['opening in the default corner', {active: true}, reservedWidth],
+        [
+          'moving to the top-right',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 10, anchorX: 'right', anchorY: 'top'}}
+          },
+          0
+        ],
+        [
+          'moving to the bottom-left',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 30, anchorX: 'left', anchorY: 'bottom'}}
+          },
+          0
+        ],
+        [
+          'moving just above the timeline with the same corner anchors',
+          {
+            active: true,
+            settings: {
+              position: {x: 10, y: visibleTimelineTop, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'moving left of the corner column with the same anchors',
+          {
+            active: true,
+            settings: {position: {x: cornerWidth, y: 30, anchorX: 'right', anchorY: 'bottom'}}
+          },
+          0
+        ],
+        [
+          'overlapping the timeline by exactly 30px',
+          {
+            active: true,
+            settings: {
+              position: {x: 10, y: visibleTimelineTop - 30, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'overlapping the corner column by exactly 30px',
+          {
+            active: true,
+            settings: {
+              position: {x: cornerWidth - 30, y: 30, anchorX: 'right', anchorY: 'bottom'}
+            }
+          },
+          0
+        ],
+        [
+          'overlapping both corner bounds by 31px',
+          {
+            active: true,
+            settings: {
+              position: {
+                x: cornerWidth - 31,
+                y: visibleTimelineTop - 31,
+                anchorX: 'right',
+                anchorY: 'bottom'
+              }
+            }
+          },
+          reservedWidth
+        ],
+        [
+          'returning to the bottom-right',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}}
+          },
+          reservedWidth
+        ],
+        ['hiding', {active: true, show: false}, 0],
+        ['closing', {active: false}, 0]
+      ]) {
+        view.rerender(tree(legend));
+        const style = window.getComputedStyle(widget);
+        t.equal(style.width, `${parseFloat(initialWidth) - reserved}px`, `${action}: width`);
+        t.equal(style.marginRight, `${reserved}px`, `${action}: reserved corner space`);
+      }
+      if (!portable) {
+        props.containerW = props.sidePanelWidth + 100;
+        view.rerender(tree({active: true}));
+        const style = window.getComputedStyle(widget);
+        t.equal(style.width, '0px', 'a small embedded map never produces a negative width');
+        t.equal(
+          style.marginRight,
+          '100px',
+          'legend space cannot push the timeline under the sidebar'
+        );
+      }
+      view.unmount();
+      view = null;
+    }
+  } finally {
+    view?.unmount();
+    heightStub.restore();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> refreshes legend clearance when Settings changes height', t => {
+  const matchMedia = Window.matchMedia;
+  Window.matchMedia = query => ({...matchMedia(query), matches: false});
+  const resizeCallbacks = new Map();
+  const observeStub = sinon.stub(dimensions, 'observeDimensions').callsFake((target, callback) => {
+    resizeCallbacks.set(target, callback);
+  });
+  const unobserveStub = sinon.stub(dimensions, 'unobserveDimensions').callsFake(target => {
+    resizeCallbacks.delete(target);
+  });
+  const heightStub = sinon.stub(HTMLElement.prototype, 'offsetHeight').get(function () {
+    return this.querySelector('.time-widget--settings') ? 400 : 240;
+  });
+  const tree = y => (
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <BottomWidget
+          {...defaultProps}
+          {...StateWFilters.visState}
+          containerW={1000}
+          uiState={{
+            ...defaultProps.uiState,
+            mapControls: {
+              ...defaultProps.uiState.mapControls,
+              mapLegend: {
+                show: true,
+                active: true,
+                settings: {position: {x: 10, y, anchorX: 'right', anchorY: 'bottom'}}
+              }
+            }
+          }}
+        />
+      </IntlWrapper>
+    </ThemeProvider>
+  );
+  let view;
+  try {
+    view = render(tree(260));
+    const widget = view.container.querySelector('.bottom-widget--container');
+    const reservedSpace = () => parseFloat(window.getComputedStyle(widget).marginRight);
+    const notifyResize = () => act(() => resizeCallbacks.get(widget)?.());
+    t.equal(reservedSpace(), 0, 'legend above the timeline reserves no space');
+    t.ok(resizeCallbacks.has(widget), 'watches the timeline for content size changes');
+
+    fireEvent.click(view.getByTestId('time-widget-settings'));
+    t.ok(view.container.querySelector('.time-widget--settings'), 'opens real Timeline Settings');
+    notifyResize();
+    t.ok(reservedSpace() > 0, 'reserves space when opening Settings creates overlap');
+
+    view.rerender(tree(259));
+    t.ok(reservedSpace() > 0, 'keeps space after moving Legend over the taller timeline');
+    fireEvent.click(view.getByTestId('time-widget-settings'));
+    t.notOk(view.container.querySelector('.time-widget--settings'), 'closes Timeline Settings');
+    notifyResize();
+    t.equal(reservedSpace(), 0, 'releases space after Settings closes without moving Legend');
+
+    view.unmount();
+    view = null;
+    t.notOk(resizeCallbacks.has(widget), 'stops watching after the widget unmounts');
+  } finally {
+    view?.unmount();
+    heightStub.restore();
+    observeStub.restore();
+    unobserveStub.restore();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> updates available space on resize and sidebar changes', t => {
+  const matchMedia = Window.matchMedia;
+  let portable = false;
+  Window.matchMedia = query => ({...matchMedia(query), matches: portable});
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  const props = {...defaultProps, ...StateWFilters.visState};
+  const tree = (containerW, activeSidePanel = 'layer') => (
+    <ThemeProvider theme={theme}>
+      <Widget {...props} containerW={containerW} uiState={{...props.uiState, activeSidePanel}} />
+    </ThemeProvider>
+  );
+  let view;
+  try {
+    view = render(tree(1000));
+    const width = () => window.getComputedStyle(view.container.firstChild).width;
+    t.equal(width(), '700px', 'desktop reserves space for the open sidebar');
+    portable = true;
+    view.rerender(tree(600));
+    t.equal(width(), '300px', 'resizing to portable still reserves space for the open sidebar');
+    t.equal(
+      window.getComputedStyle(view.container.firstChild).marginLeft,
+      'auto',
+      'aligns the narrower timeline to the right of the sidebar in normal flow'
+    );
+    view.rerender(tree(600, null));
+    t.equal(width(), '600px', 'closing the sidebar in portable mode releases its space');
+    view.rerender(tree(600));
+    t.equal(width(), '300px', 'reopening the sidebar in portable mode reserves its space');
+    portable = false;
+    view.rerender(tree(900));
+    t.equal(width(), '600px', 'resizing back to desktop reserves sidebar space again');
+    view.rerender(tree(900, null));
+    t.equal(width(), '900px', 'closing the sidebar releases its space');
+    view.rerender(tree(900));
+    t.equal(width(), '600px', 'reopening the sidebar reserves its space');
+    view.rerender(tree(200));
+    t.equal(
+      width(),
+      '0px',
+      'an embedded container narrower than the sidebar has no negative width'
+    );
+  } finally {
+    view?.unmount();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
+test('Components -> BottomWidget -> read-only embeds do not reserve hidden sidebar space', t => {
+  const Widget = BottomWidgetFactory(
+    () => <div>Timeline</div>,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    appInjector.get(LayerAnimationControllerFactory),
+    () => null
+  );
+  const containerW = 600;
+  const tree = (readOnly, stateReadOnly) => {
+    const props = bottomWidgetSelector(
+      {
+        readOnly,
+        sidePanelWidth: defaultProps.sidePanelWidth,
+        visState: StateWFilters.visState,
+        uiState: {...defaultProps.uiState, activeSidePanel: 'layer', readOnly: stateReadOnly},
+        visStateActions: VisStateActions,
+        uiStateActions: {toggleModal: () => {}}
+      },
+      theme
+    );
+    return (
+      <ThemeProvider theme={theme}>
+        <Widget {...props} containerW={containerW} />
+      </ThemeProvider>
+    );
+  };
+  const view = render(tree(false, false));
+  const width = () => window.getComputedStyle(view.container.firstChild).width;
+  const sidebarWidth = defaultProps.sidePanelWidth + theme.sidePanel.margin.left;
+  try {
+    t.equal(width(), `${containerW - sidebarWidth}px`, 'reserves space for a visible sidebar');
+    view.rerender(tree(true, false));
+    t.equal(width(), `${containerW}px`, 'the readOnly prop releases hidden sidebar space');
+    view.rerender(tree(false, true));
+    t.equal(width(), `${containerW}px`, 'read-only UI state releases hidden sidebar space');
+    view.rerender(tree(false, false));
+    t.equal(width(), `${containerW - sidebarWidth}px`, 'restores space when the sidebar returns');
+  } finally {
+    view.unmount();
+  }
   t.end();
 });
 

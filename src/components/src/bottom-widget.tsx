@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {forwardRef, useMemo, useCallback} from 'react';
+import React, {forwardRef, useMemo, useCallback, useRef, useState, useLayoutEffect} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
+import {useMergeRefs} from '@floating-ui/react';
 
 import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
-import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
+import {
+  hasPortableWidth,
+  isSideFilter,
+  mergeFilterWithTimeline,
+  observeDimensions,
+  unobserveDimensions
+} from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
 import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
@@ -19,6 +26,7 @@ import {getZarrVariable, isExplicitZarrAxis} from '@kepler.gl/table';
 import {BaseComponentProps} from './types';
 
 const maxWidth = 1080;
+const allowedLegendOverlap = 30;
 
 function isChartFilter(filter?: Filter): filter is RangeFilter | TimeRangeFilter {
   return filter?.type === FILTER_TYPES.timeRange || filter?.type === FILTER_TYPES.range;
@@ -46,6 +54,7 @@ const BottomWidgetContainer: IStyledComponent<
     pointer-events: all;
   }
   width: ${props => props.width}px;
+  margin-left: auto;
   z-index: 1;
   ${media.portable`padding: 0;`}
 `;
@@ -96,6 +105,9 @@ export default function BottomWidgetFactory(
 
     const {activeSidePanel, readOnly} = uiState;
     const isOpen = Boolean(activeSidePanel);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const mergedRef = useMergeRefs([rootRef, containerRef]);
+    const [timelineHeight, setTimelineHeight] = useState(0);
 
     const enlargedFilterIdx = useMemo(() => filters.findIndex(f => !isSideFilter(f)), [filters]);
     const animatedFilterIdx = useMemo(() => filters.findIndex(f => f.isAnimating), [filters]);
@@ -106,19 +118,33 @@ export default function BottomWidgetFactory(
       [filters]
     );
 
-    const isMobile = useMemo(() => hasPortableWidth(breakPointValues), []);
-    const isLegendPinned =
-      uiState.mapControls?.mapLegend?.show && uiState.mapControls?.mapLegend?.active;
-    const spaceForLegendWidth = isLegendPinned
-      ? theme.mapControl?.width +
-        theme.mapControl?.mapLegend?.pinned?.right * 2 -
-        theme.bottomWidgetPaddingRight
-      : 0;
-
-    const enlargedFilterWidth = useMemo(
-      () => (!isMobile && isOpen ? containerW - sidePanelWidth : containerW) - spaceForLegendWidth,
-      [isMobile, isOpen, containerW, sidePanelWidth, spaceForLegendWidth]
-    );
+    const availableWidth = Math.max(0, isOpen ? containerW - sidePanelWidth : containerW);
+    const legend = uiState.mapControls?.mapLegend;
+    const position = legend?.settings?.position;
+    const reservedLegendWidth =
+      theme.mapControl?.width +
+      theme.mapControl?.mapLegend?.pinned?.right * 2 -
+      theme.bottomWidgetPaddingRight;
+    const isLegendInCorner =
+      !position ||
+      (position.anchorX === 'right' &&
+        position.anchorY === 'bottom' &&
+        position.x < reservedLegendWidth - allowedLegendOverlap &&
+        position.y < timelineHeight - theme.bottomWidgetPaddingTop - allowedLegendOverlap);
+    const spaceForLegendWidth =
+      !hasPortableWidth(breakPointValues) && legend?.show && legend.active && isLegendInCorner
+        ? Math.min(availableWidth, reservedLegendWidth)
+        : 0;
+    const enlargedFilterWidth = availableWidth - spaceForLegendWidth;
+    useLayoutEffect(() => {
+      const container = containerRef.current;
+      if (!container) return undefined;
+      const measureHeight = () => setTimelineHeight(container.offsetHeight);
+      measureHeight();
+      // Settings and other child-local changes can resize the timeline without new props.
+      observeDimensions(container, measureHeight, 0);
+      return () => unobserveDimensions(container);
+    }, []);
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
@@ -188,7 +214,7 @@ export default function BottomWidgetFactory(
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
-        ref={rootRef}
+        ref={mergedRef}
       >
         {dimensionLayers.map(layer => {
           const {visConfig, dataId} = layer.config;
