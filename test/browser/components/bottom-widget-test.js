@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Window from 'global/window';
-import {render, fireEvent, act} from '@testing-library/react';
+import {render, fireEvent, act, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import test from 'tape';
@@ -293,14 +293,15 @@ test('Components -> BottomWidget -> refreshes legend clearance when Settings cha
     t.equal(reservedSpace(), 0, 'legend above the timeline reserves no space');
     t.ok(resizeCallbacks.has(widget), 'watches the timeline for content size changes');
 
-    fireEvent.click(view.getByTestId('time-widget-settings'));
+    const settings = within(widget).getByRole('button', {name: 'Settings'});
+    fireEvent.click(settings);
     t.ok(view.container.querySelector('.time-widget--settings'), 'opens real Timeline Settings');
     notifyResize();
     t.ok(reservedSpace() > 0, 'reserves space when opening Settings creates overlap');
 
     view.rerender(tree(259));
     t.ok(reservedSpace() > 0, 'keeps space after moving Legend over the taller timeline');
-    fireEvent.click(view.getByTestId('time-widget-settings'));
+    fireEvent.click(settings);
     t.notOk(view.container.querySelector('.time-widget--settings'), 'closes Timeline Settings');
     notifyResize();
     t.equal(reservedSpace(), 0, 'releases space after Settings closes without moving Legend');
