@@ -39,14 +39,18 @@ function createPathData(tour: CameraTour) {
     stops[index].holdDurationMs === 0 &&
     stops[index - 1].travelDurationMs > 0 &&
     stops[index].travelDurationMs > 0;
-  let elapsed = 0;
   for (let index = 0; index < stops.length - 1; index++) {
     const stop = stops[index];
-    elapsed += stop.holdDurationMs;
     if (passesThrough(index) || passesThrough(index + 1)) {
+      // A leg's endpoint velocities depend only on its immediate neighbors.
+      // Keep normalization and timeline scans bounded when rebuilding during drag.
+      const segmentTour = {stops: stops.slice(Math.max(0, index - 1), index + 3)};
+      const previous = stops[index - 1];
+      const elapsed =
+        stop.holdDurationMs + (previous ? previous.holdDurationMs + previous.travelDurationMs : 0);
       for (let sample = 1; sample < PATH_SAMPLES_PER_SEGMENT; sample++) {
         const camera = evaluateCameraTour(
-          {stops},
+          segmentTour,
           elapsed + (stop.travelDurationMs * sample) / PATH_SAMPLES_PER_SEGMENT
         )!;
         appendPosition([camera.longitude, camera.latitude]);
@@ -54,7 +58,6 @@ function createPathData(tour: CameraTour) {
     }
     // Include authored endpoints explicitly, even when the next travel is a cut.
     appendPosition(data[index + 1].position);
-    elapsed += stop.travelDurationMs;
   }
   return {data, path: [{path}]};
 }

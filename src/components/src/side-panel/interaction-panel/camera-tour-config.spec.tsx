@@ -1581,6 +1581,63 @@ test.each([
   ]);
 });
 
+test('path geometry matches playback across interior legs and refreshes after a waypoint move', () => {
+  const multiStopTour: CameraTour = {
+    stops: [
+      [20, 700, 400],
+      [35, 0, 1400],
+      [25, 300, 600],
+      [40, 500, 0],
+      [30, 250, 1600],
+      [10, 0, 800],
+      [30, 0, 1200],
+      [20, 600, 0]
+    ].map(([latitude, holdDurationMs, travelDurationMs], index) => ({
+      id: String(index),
+      name: `Stop ${index + 1}`,
+      camera: {...camera, longitude: index * 10, latitude},
+      holdDurationMs,
+      travelDurationMs
+    }))
+  };
+  const movedTour: CameraTour = {
+    stops: multiStopTour.stops.map((stop, index) =>
+      index === 5 ? {...stop, camera: {...stop.camera, longitude: 55, latitude: 20}} : stop
+    )
+  };
+  const originalLayers = getCameraTourPathLayers(multiStopTour);
+  const movedLayers = getCameraTourPathLayers(movedTour);
+  expect(movedLayers[0].props.data).not.toEqual(originalLayers[0].props.data);
+  for (const [activeTour, layers] of [
+    [multiStopTour, originalLayers],
+    [movedTour, movedLayers]
+  ] as const) {
+    const path = (layers[0].props.data as {path: number[][]}[])[0].path;
+    expect(path).toEqual(
+      expect.arrayContaining(
+        activeTour.stops.map(stop => [stop.camera.longitude, stop.camera.latitude])
+      )
+    );
+    let elapsed = 0;
+    activeTour.stops.forEach((stop, index) => {
+      elapsed += stop.holdDurationMs;
+      // Cover both boundary legs and interior curves on either side of the cut.
+      if ([0, 1, 4, 5, 6].includes(index)) {
+        for (const fraction of [0.25, 0.5, 0.75]) {
+          const frame = evaluateCameraTour(activeTour, elapsed + stop.travelDurationMs * fraction)!;
+          expect(path).toEqual(
+            expect.arrayContaining([
+              [expect.closeTo(frame.longitude, 10), expect.closeTo(frame.latitude, 10)]
+            ])
+          );
+        }
+      }
+      elapsed += stop.travelDurationMs;
+    });
+  }
+  expect(getCameraTourPathLayers(multiStopTour)[0].props.data).toBe(originalLayers[0].props.data);
+});
+
 test('path labels include authored Unicode names in their font atlas', () => {
   const names = ['München', '東京', 'Київ 🌍'];
   const layers = getCameraTourPathLayers({
