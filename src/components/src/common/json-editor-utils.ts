@@ -151,7 +151,8 @@ export function effectToJson(effect: Effect, schema: KeplerGLSchemaClass): strin
       id: effect.id,
       type: effect.type,
       isEnabled: effect.isEnabled,
-      parameters: effect.parameters
+      parameters: effect.parameters,
+      ...(effect.animation ? {animation: effect.animation} : {})
     }
   );
 }

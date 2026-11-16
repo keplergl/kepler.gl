@@ -34,7 +34,15 @@ function EffectJsonEditorFactory() {
   }) => {
     const jsonText = useMemo(
       () => (visState?.schema ? effectToJson(effect, visState.schema) : '{}'),
-      [effect, effect.id, effect.type, effect.isEnabled, effect.parameters, visState?.schema]
+      [
+        effect,
+        effect.id,
+        effect.type,
+        effect.isEnabled,
+        effect.parameters,
+        effect.animation,
+        visState?.schema
+      ]
     );
     const debouncedJsonText = useDebounce(jsonText, 300);
 

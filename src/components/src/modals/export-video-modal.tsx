@@ -37,7 +37,7 @@ import {
   getVideoExportContainer,
   scaleToVideoExport
 } from './hubble-utils';
-import {useFogHeightAnimation} from './fog-height-animation';
+import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
 import {CAMERA_TOUR_PRESET, withCameraTourExport} from './camera-tour-export';
 
@@ -392,7 +392,7 @@ const ExportVideoModalFactory = () => {
 
     const hubbleContainerRef = useRef<any>(null);
 
-    useFogHeightAnimation(videoEffects, hubbleContainerRef);
+    const animateEffects = useEffectAnimation(videoEffects, hubbleContainerRef);
 
     const deckEffects = useMemo(() => {
       if (videoEffects.length === 0) return [];
@@ -419,9 +419,10 @@ const ExportVideoModalFactory = () => {
       () => ({
         ...hubbleDeckGlProps,
         _isExport: true,
-        effects: deckEffects
+        effects: deckEffects,
+        onBeforeRender: animateEffects
       }),
-      [hubbleDeckGlProps, deckEffects]
+      [hubbleDeckGlProps, deckEffects, animateEffects]
     );
 
     const onViewChange = useCallback(
@@ -579,6 +580,7 @@ const ExportVideoModalFactory = () => {
         <StyledExportVideoModalContent className="export-video-modal">
           {isSwipeMode && SwipeContainer ? (
             <SwipeContainer
+              ref={hubbleContainerRef}
               initialState={videoConfiguration}
               mapData={keplerState}
               onSettingsChange={onUpdateVideoConfiguration}

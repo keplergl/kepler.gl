@@ -14,6 +14,7 @@ export type SingleColorPickerProps = {
   color: [number, number, number];
   onSetColor: (value: [number, number, number]) => void;
   label: string;
+  labelAction?: React.ReactNode;
   Icon: React.ElementType;
 };
 
@@ -29,7 +30,7 @@ export const StyledPanelDropdown = styled.div`
   width: 220px;
 `;
 
-const StyledConfigSection = styled.div`
+const StyledConfigSection = styled.div.attrs({className: 'effect-configurator__animation-row'})`
   display: flex;
   flex-direction: column;
 `;
@@ -95,7 +96,8 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
   color,
   onSetColor,
   Icon,
-  label
+  label,
+  labelAction
 }: SingleColorPickerProps) => {
   const [isColorPickerOpened, setIsColorPickerOpened] = React.useState(false);
 
@@ -123,7 +125,10 @@ const CompactColorPicker: React.FC<SingleColorPickerProps> = ({
 
   return (
     <StyledConfigSection>
-      <SectionTitle>{label}</SectionTitle>
+      <SectionTitle>
+        {label}
+        {labelAction}
+      </SectionTitle>
       <StyledDropdownButtonWrapper>
         <Button onClick={toggleDropdown}>
           <div style={colorBlockStyle} />

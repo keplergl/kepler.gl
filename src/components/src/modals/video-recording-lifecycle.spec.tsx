@@ -2,11 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {act, cleanup, fireEvent, render, screen} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, renderHook, screen} from '@testing-library/react';
 import download from 'downloadjs';
 import {GlobeExportVideoPanelContainer} from './globe-export-video-container';
 import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
 import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
+import {useEffectAnimation} from './effect-animation';
+import type {Effect} from '@kepler.gl/types';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -58,8 +60,9 @@ jest.mock('@hubble.gl/core', () => {
 jest.mock('./globe-export-video-preview', () => {
   const React = require('react');
   return {
-    GlobeExportVideoPreview: React.forwardRef((_props, ref) => {
+    GlobeExportVideoPreview: React.forwardRef((props, ref) => {
       React.useImperativeHandle(ref, () => mockPreview);
+      React.useLayoutEffect(() => props.deckProps?.onBeforeRender?.());
       return null;
     })
   };
@@ -67,8 +70,9 @@ jest.mock('./globe-export-video-preview', () => {
 jest.mock('./swipe-export-video-preview', () => {
   const React = require('react');
   return {
-    SwipeExportVideoPreview: React.forwardRef((_props, ref) => {
+    SwipeExportVideoPreview: React.forwardRef((props, ref) => {
       React.useImperativeHandle(ref, () => mockPreview);
+      React.useLayoutEffect(() => props.deckProps?.onBeforeRender?.());
       return null;
     })
   };
@@ -78,6 +82,7 @@ jest.mock('../common', () => ({
   Button: ({children, ...props}) => <button {...props}>{children}</button>
 }));
 jest.mock('@kepler.gl/utils', () => ({getCameraTourDuration: () => 0}));
+jest.mock('@kepler.gl/effects', () => jest.requireActual('../../../effects/src/animation-utils'));
 jest.mock('@kepler.gl/deckgl-layers', () => ({
   drawStarsBackground: jest.fn(),
   getGlobeClearColor: () => [12, 34, 56],
@@ -135,8 +140,9 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-function mount(kind: 'globe' | 'swipe', durationMs = 33) {
+function mount(kind: 'globe' | 'swipe', durationMs = 33, effects: Effect[] = []) {
   const ref = React.createRef<any>();
+  const {result: animation} = renderHook(() => useEffectAnimation(effects, ref));
   const props = {
     exportVideoWidth: 320,
     handleClose: jest.fn(),
@@ -153,6 +159,7 @@ function mount(kind: 'globe' | 'swipe', durationMs = 33) {
       visState: {filters: [], layers: [], animationConfig: {}}
     },
     mapProps: {},
+    deckProps: {onBeforeRender: animation.current},
     defaultFileName: 'recording',
     animatableFilters: [],
     onTripFrameUpdate: jest.fn(),
@@ -190,6 +197,27 @@ function start() {
 
 describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind => {
   const framesPerCapture = kind === 'globe' ? 2 : 3;
+  it('applies effect endpoints before captured frames and restores their starts after recording', async () => {
+    const effect = {
+      type: 'test-effect',
+      isEnabled: true,
+      parameters: {amount: 0},
+      animation: {amount: {endValue: 100, easing: 'linear'}},
+      getParameterDescriptions: () => [{name: 'amount', min: 0, max: 100}],
+      setProps: ({parameters}) => Object.assign(effect.parameters, parameters)
+    } as unknown as Effect;
+    mount(kind, 66, [effect]);
+    const encoder = start();
+    const captured: number[] = [];
+    encoder.add.mockImplementation(() => {
+      captured.push(effect.parameters.amount);
+      return Promise.resolve();
+    });
+    await flushFrames(framesPerCapture * 3);
+    expect(captured).toEqual([0, 50, 100]);
+    expect(effect.parameters.amount).toBe(0);
+  });
+
   it('waits for each encoded frame and save before downloading, then restores the camera', async () => {
     const {container} = mount(kind);
     const initial = {...container.state.viewState};

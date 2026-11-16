@@ -261,6 +261,29 @@ describe('JSON editor section adapters', () => {
     expect(screen.getByText(/effect rejected/)).toBeTruthy();
   });
 
+  test('effect endpoints appear in JSON and refresh after updates on the same effect instance', () => {
+    const effect = new Effect({
+      type: 'ink',
+      parameters: {strength: 0.2},
+      animation: {strength: {endValue: 0.8, easing: 'linear'}}
+    });
+    const updateEffect = jest.fn();
+    const view = render(
+      <EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />,
+      {wrapper: Wrapper}
+    );
+    expect(displayedConfig().animation).toEqual(effect.animation);
+    effect.setProps({animation: {strength: {endValue: 0, easing: 'easeInOut'}}});
+    view.rerender(<EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />);
+    act(() => jest.advanceTimersByTime(300));
+    expect(displayedConfig().animation).toEqual({strength: {endValue: 0, easing: 'easeInOut'}});
+    edit({...displayedConfig(), animation: {}});
+    expect(updateEffect).toHaveBeenLastCalledWith(
+      effect.id,
+      expect.objectContaining({animation: {}})
+    );
+  });
+
   test('animation serialization omits runtime fields without losing falsy configuration', () => {
     const input = {
       ...state.animationConfig,

@@ -7,13 +7,15 @@ import {
   Effect as EffectInterface,
   EffectProps,
   EffectPropsPartial,
-  EffectParameterDescription
+  EffectParameterDescription,
+  EffectAnimation
 } from '@kepler.gl/types';
 import {
   DEFAULT_POST_PROCESSING_EFFECT_TYPE,
   POSTPROCESSING_EFFECTS,
   LIGHT_AND_SHADOW_EFFECT
 } from '@kepler.gl/constants';
+import {validateEffectAnimation} from './animation-utils';
 
 export class Effect implements EffectInterface {
   id: string;
@@ -21,6 +23,7 @@ export class Effect implements EffectInterface {
   isEnabled: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
+  animation?: EffectAnimation;
   // runtime props
   isConfigActive: boolean;
   isJsonEditorActive: boolean;
@@ -41,6 +44,8 @@ export class Effect implements EffectInterface {
         ? LIGHT_AND_SHADOW_EFFECT.parameters
         : POSTPROCESSING_EFFECTS[this.type]?.parameters || [];
     this.parameters = validateEffectParameters(_props.parameters, this._uiConfig);
+    this.animation = validateEffectAnimation(_props.animation, this._uiConfig);
+    if (!this.animation) delete this.animation;
 
     this.deckEffect = null;
     this._initializeEffect();
@@ -62,7 +67,8 @@ export class Effect implements EffectInterface {
       isEnabled: props.isEnabled ?? true,
       isConfigActive: props.isConfigActive ?? true,
       isJsonEditorActive: props.isJsonEditorActive ?? false,
-      parameters: {...props.parameters}
+      parameters: {...props.parameters},
+      ...(props.animation ? {animation: props.animation} : {})
     };
   }
 
@@ -76,6 +82,10 @@ export class Effect implements EffectInterface {
       ...this.parameters,
       ...validateEffectParameters(props.parameters, this._uiConfig)
     };
+    if (Object.prototype.hasOwnProperty.call(props, 'animation')) {
+      this.animation = validateEffectAnimation(props.animation, this._uiConfig);
+      if (!this.animation) delete this.animation;
+    }
   }
 
   isValidToSave() {

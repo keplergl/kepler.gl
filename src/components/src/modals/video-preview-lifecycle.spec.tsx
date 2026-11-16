@@ -12,6 +12,7 @@ import {createKeplerLayers} from '@hubble.gl/react';
 
 const mockDecks = [];
 const mockMaps = [];
+const mockOverlays = [];
 jest.mock('@deck.gl/react', () => {
   const React = require('react');
   return React.forwardRef((props, ref) => {
@@ -61,6 +62,7 @@ jest.mock('@deck.gl/mapbox', () => ({
   MapboxOverlay: class {
     constructor(props) {
       this._deck = {props};
+      mockOverlays.push(this);
     }
     setProps(props) {
       this._deck.props = props;
@@ -105,6 +107,7 @@ beforeEach(() => {
   originalPixelRatio = window.devicePixelRatio;
   mockDecks.length = 0;
   mockMaps.length = 0;
+  mockOverlays.length = 0;
   jest.clearAllMocks();
   createKeplerLayers.mockImplementation((_data, _view, side) => [
     {id: `map-${side}`, isLoaded: true}
@@ -119,6 +122,19 @@ afterEach(() => {
 });
 
 describe('swipe preview frame lifecycle', () => {
+  test.each([false, true])(
+    'forwards effect frame updates to both swipe decks (globe: %s)',
+    disableBaseMap => {
+      const onBeforeRender = jest.fn();
+      render(<SwipeExportVideoPreview {...props({disableBaseMap, deckProps: {onBeforeRender}})} />);
+      const decks = disableBaseMap
+        ? mockDecks.map(record => record.props)
+        : mockOverlays.map(overlay => overlay._deck.props);
+      decks.forEach(deck => deck.onBeforeRender());
+      expect(onBeforeRender).toHaveBeenCalledTimes(2);
+    }
+  );
+
   test('renders distinct sides, captures at export resolution, and forwards camera changes', () => {
     const input = props();
     const ref = React.createRef<SwipeExportVideoPreview>();
@@ -249,6 +265,13 @@ describe('swipe preview frame lifecycle', () => {
 });
 
 describe('globe preview capture contract', () => {
+  test('forwards effect frame updates to the globe deck', () => {
+    const onBeforeRender = jest.fn();
+    render(<GlobeExportVideoPreview {...props({deckProps: {onBeforeRender}})} />);
+    mockDecks[0].props.onBeforeRender();
+    expect(onBeforeRender).toHaveBeenCalledTimes(1);
+  });
+
   test('exposes canvas, waits for nonempty loaded layers, and clears ref on unmount', () => {
     const ref = React.createRef<GlobeExportVideoPreview>();
     const {unmount} = render(<GlobeExportVideoPreview ref={ref} {...props()} />);

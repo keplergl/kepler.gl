@@ -18,12 +18,20 @@ export type EffectDescription = {
   parameters: EffectParameterDescription[];
 };
 
+export type EffectParameterAnimation = {
+  endValue: number | number[];
+  easing: 'linear' | 'easeInOut';
+};
+
+export type EffectAnimation = Record<string, EffectParameterAnimation>;
+
 export type EffectUpdateProps = {
   isEnabled: boolean;
   isConfigActive: boolean;
   isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
+  animation?: EffectAnimation;
 };
 
 export type EffectProps = EffectUpdateProps & {
@@ -41,6 +49,7 @@ export interface Effect {
   isJsonEditorActive: boolean;
   // effect specific parameters for a deck.gl effect (uniforms)
   parameters: {[key: string]: any};
+  animation?: EffectAnimation;
   deckEffect: any;
   _uiConfig: EffectParameterDescription[];
 

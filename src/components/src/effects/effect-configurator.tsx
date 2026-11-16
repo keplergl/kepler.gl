@@ -15,6 +15,7 @@ import {Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
 import SurfaceFogElevationSectionFactory, {ELEVATION_SECTION_TYPE} from './surface-fog-section';
+import EffectAnimationControl from './effect-animation-control';
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -71,7 +72,7 @@ const StyledWrapper = styled.div<StyledWrapperProps>`
   margin-bottom: ${props => props.$marginBottom ?? 9}px;
 `;
 
-const StyledConfigSection = styled.div`
+const StyledConfigSection = styled.div.attrs({className: 'effect-configurator__animation-row'})`
   display: flex;
   flex-direction: column;
 `;
@@ -232,6 +233,9 @@ export default function EffectConfiguratorFactory(
     updateEffectConfig
   }) => {
     const {parameters, id} = effect;
+    const animationControl = (name: string) => (
+      <EffectAnimationControl {...{effect, name, RangeSlider, updateEffectConfig}} />
+    );
 
     const sliderProps = useMemo(() => {
       const propNames = ['shadowIntensity', 'ambientLightIntensity', 'sunLightIntensity'];
@@ -298,12 +302,13 @@ export default function EffectConfiguratorFactory(
         <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
+            labelAction={animationControl('shadowColor')}
             color={colorPickerProps[2].colorSets[0].selectedColor}
             onSetColor={colorPickerProps[2].colorSets[0].setColor}
             Icon={ArrowDownSmall}
           />
           <StyledConfigSection>
-            <SectionSubTitle>Intensity</SectionSubTitle>
+            <SectionSubTitle>Intensity{animationControl('shadowIntensity')}</SectionSubTitle>
             <StyleSliderWrapper>
               <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
             </StyleSliderWrapper>
@@ -316,12 +321,13 @@ export default function EffectConfiguratorFactory(
         <StyledWrapper $marginBottom={16}>
           <CompactColorPicker
             label={'Color'}
+            labelAction={animationControl('ambientLightColor')}
             color={colorPickerProps[0].colorSets[0].selectedColor}
             onSetColor={colorPickerProps[0].colorSets[0].setColor}
             Icon={ArrowDownSmall}
           />
           <StyledConfigSection>
-            <SectionSubTitle>Intensity</SectionSubTitle>
+            <SectionSubTitle>Intensity{animationControl('ambientLightIntensity')}</SectionSubTitle>
             <StyleSliderWrapper>
               <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[1]} />
             </StyleSliderWrapper>
@@ -334,12 +340,13 @@ export default function EffectConfiguratorFactory(
         <StyledWrapper $marginBottom={0}>
           <CompactColorPicker
             label={'Color'}
+            labelAction={animationControl('sunLightColor')}
             color={colorPickerProps[1].colorSets[0].selectedColor}
             onSetColor={colorPickerProps[1].colorSets[0].setColor}
             Icon={ArrowDownSmall}
           />
           <StyledConfigSection>
-            <SectionSubTitle>Intensity</SectionSubTitle>
+            <SectionSubTitle>Intensity{animationControl('sunLightIntensity')}</SectionSubTitle>
             <StyleSliderWrapper>
               <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[2]} />
             </StyleSliderWrapper>
@@ -359,6 +366,9 @@ export default function EffectConfiguratorFactory(
     const uniforms = effect.deckEffect?.module.propTypes || defaultUniforms;
     const parameterDescriptions = effect.getParameterDescriptions();
     const {parameters, id} = effect;
+    const animationControl = (name: string) => (
+      <EffectAnimationControl {...{effect, name, RangeSlider, updateEffectConfig}} />
+    );
 
     const hasElevationSection = parameterDescriptions.some(d => d.name === 'animateHeight');
 
@@ -527,6 +537,7 @@ export default function EffectConfiguratorFactory(
                   <StyledColorCheckboxRow key={`${effect.id}-${i}`}>
                     <CompactColorPicker
                       label={typeof control.label === 'string' ? control.label : 'Color'}
+                      labelAction={animationControl(flatParameterDescriptions[i].name)}
                       color={control.color}
                       onSetColor={
                         control.onSetColor ??
@@ -571,6 +582,7 @@ export default function EffectConfiguratorFactory(
                 <RegularOuterWrapper key={`${effect.id}-${i}`}>
                   <CompactColorPicker
                     label={typeof control.label === 'string' ? control.label : 'Color'}
+                    labelAction={animationControl(flatParameterDescriptions[i].name)}
                     color={control.color}
                     onSetColor={
                       control.onSetColor ??
@@ -621,7 +633,12 @@ export default function EffectConfiguratorFactory(
             elements.push(
               <RegularOuterWrapper key={`${effect.id}-${i}`}>
                 {control.label ? (
-                  <RegularSectionTitleWrapper>{control.label}</RegularSectionTitleWrapper>
+                  <RegularSectionTitleWrapper>
+                    {control.label}
+                    {!flatParameterDescriptions[i].index
+                      ? animationControl(flatParameterDescriptions[i].name)
+                      : null}
+                  </RegularSectionTitleWrapper>
                 ) : null}
                 <RegularSliderWrapper>
                   <RangeSlider key={i} {...COMMON_SLIDER_PROPS} {...control} />

@@ -2,7 +2,8 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
@@ -15,9 +16,24 @@ import SurfaceFogElevationSectionFactory from './surface-fog-section';
 
 // Exercise configuration routing independently of child controls' pointer/popover mechanics.
 jest.mock('./compact-color-picker', () => ({
+  ...jest.requireActual('./compact-color-picker'),
   __esModule: true,
-  default: ({color, onSetColor}: {color: number[]; onSetColor: (color: number[]) => void}) => (
-    <button onClick={() => onSetColor([0, 20, 30])}>{JSON.stringify(color)}</button>
+  default: ({color, onSetColor, labelAction, label}) => (
+    <>
+      {labelAction}
+      <button
+        aria-label={label === 'Start color' || label === 'End color' ? label : undefined}
+        onClick={() => onSetColor(label === 'Start color' ? [40, 50, 60] : [0, 20, 30])}
+      >
+        {JSON.stringify(color)}
+      </button>
+    </>
+  )
+}));
+jest.mock('../side-panel/layer-panel/single-color-palette', () => ({
+  __esModule: true,
+  default: ({onSelectColor}) => (
+    <button onClick={() => onSelectColor([0, 20, 30])}>Choose end color</button>
   )
 }));
 const Slider = (({value1, range = [0, 1], step, onChange}) => (
@@ -246,5 +262,154 @@ describe('effect parameter editing', () => {
       {parameters: {ambientLightIntensity: 0.7}},
       {parameters: {sunLightIntensity: 0.8}}
     ]);
+  });
+
+  test('animation opens from the keyboard without saving and Escape discards the draft', async () => {
+    const user = userEvent.setup();
+    const {update} = setup(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
+    screen.getByRole('button', {name: 'Animate amount'}).focus();
+    await user.keyboard('{Enter}');
+    const dialog = screen.getByRole('dialog', {name: 'Effect Transition: amount'});
+    fireEvent.change(
+      within(within(dialog).getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
+      {target: {value: '0.25'}}
+    );
+    fireEvent.change(
+      within(within(dialog).getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
+      {target: {value: '0'}}
+    );
+    expect(update).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(update).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(screen.getByRole('button', {name: 'Animate amount'}));
+  });
+
+  test('Cancel discards both endpoint drafts and reopening uses saved values', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+    effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
+    fireEvent.change(
+      within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
+      {target: {value: '0.1'}}
+    );
+    fireEvent.change(
+      within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
+      {target: {value: '0.2'}}
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+    expect(update).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
+    expect(
+      (
+        within(screen.getByRole('group', {name: 'Start value'})).getByRole(
+          'spinbutton'
+        ) as HTMLInputElement
+      ).value
+    ).toBe('0.5');
+    expect(
+      (
+        within(screen.getByRole('group', {name: 'End value'})).getByRole(
+          'spinbutton'
+        ) as HTMLInputElement
+      ).value
+    ).toBe('0.8');
+  });
+
+  test('saves draft start, zero endpoint and easing together while preserving other animations', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+    effect.animation = {other: {endValue: 0.8, easing: 'easeInOut'}};
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(
+      within(dialog.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
+      {target: {value: '0.25'}}
+    );
+    fireEvent.change(
+      within(dialog.getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
+      {target: {value: '0'}}
+    );
+    fireEvent.click(dialog.getByRole('checkbox', {name: 'Linear easing'}));
+    fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      animation: {
+        other: {endValue: 0.8, easing: 'easeInOut'},
+        amount: {endValue: 0, easing: 'linear'}
+      },
+      parameters: {amount: 0.25}
+    });
+    expect(effect.parameters.amount).toBe(0.5);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  test('removes only the selected animation without applying the draft start', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+    effect.animation = {
+      amount: {endValue: 0.1, easing: 'linear'},
+      other: {endValue: 0.8, easing: 'easeInOut'}
+    };
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
+    fireEvent.change(
+      within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
+      {target: {value: '0.9'}}
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      animation: {other: {endValue: 0.8, easing: 'easeInOut'}}
+    });
+  });
+
+  test('edits vector endpoints together without changing sibling components', () => {
+    const {update} = setup(
+      makeEffect(
+        [{name: 'center', type: 'array', min: 0, max: 1, defaultValue: [0, 0], label: ['X', 'Y']}],
+        {center: [0.2, 0.8]},
+        {center: {value: [0, 0]}}
+      )
+    );
+    expect(screen.getAllByRole('button', {name: 'Animate center'})).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Animate center'}));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(
+      within(dialog.getByRole('group', {name: 'Start value'})).getAllByRole('spinbutton')[1],
+      {target: {value: '0.4'}}
+    );
+    fireEvent.change(
+      within(dialog.getByRole('group', {name: 'End value'})).getAllByRole('spinbutton')[0],
+      {target: {value: '0'}}
+    );
+    fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      animation: {center: {endValue: [0, 0.8], easing: 'easeInOut'}},
+      parameters: {center: [0.2, 0.4]}
+    });
+  });
+
+  test('offers color and shadow intensity endpoints while leaving time controls alone', () => {
+    const effect = makeEffect(
+      [
+        {name: 'shadowIntensity', min: 0, max: 1},
+        {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: [0, 0, 0]},
+        {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER}
+      ],
+      {shadowIntensity: 0.5, shadowColor: [10, 20, 30]}
+    );
+    effect.type = LIGHT_AND_SHADOW_EFFECT.type;
+    const {update} = setup(effect);
+    expect(screen.getByRole('button', {name: 'Animate shadowIntensity'})).toBeTruthy();
+    expect(screen.queryByRole('button', {name: 'Animate timestamp'})).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name: 'Animate shadowColor'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Start color'}));
+    fireEvent.click(screen.getByRole('button', {name: 'End color'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      animation: {shadowColor: {endValue: [0, 20, 30], easing: 'easeInOut'}},
+      parameters: {shadowColor: [40, 50, 60]}
+    });
   });
 });

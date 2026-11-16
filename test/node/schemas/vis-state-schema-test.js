@@ -29,6 +29,7 @@ import {
 import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {createEffect} from '@kepler.gl/effects';
 
 const expectedVisStateEntries = [
   'filters',
@@ -613,6 +614,53 @@ test('#visStateSchema -> v1 -> save load effects', t => {
   t.deepEqual(savedEffects, expectedEffects, 'Effects should be saved as expected');
   t.deepEqual(loadedEffects, expectedEffects, 'Effects should be loaded as expected');
 
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = state.visState.effects.find(item => item.type === 'sepia');
+  const animation = {amount: {endValue: 0, easing: 'linear'}};
+  const parameters = {...effect.parameters};
+  effect.setProps({animation});
+
+  const saved = SchemaManager.getConfigToSave(state);
+  const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
+  t.deepEqual(
+    savedEffect.animation,
+    animation,
+    'saves optional animation, including zero endpoints'
+  );
+  t.deepEqual(savedEffect.parameters, parameters, 'keeps static start parameters');
+  const loaded = SchemaManager.parseSavedConfig(saved);
+  const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
+  t.deepEqual(loadedEffect.animation, animation, 'reconstructs animation after loading');
+  t.deepEqual(loadedEffect.parameters, parameters, 'restores start parameters');
+
+  effect.setProps({animation: {}});
+  const cleared = SchemaManager.getConfigToSave(state);
+  t.notOk(
+    'animation' in cleared.config.visState.effects.find(item => item.id === effect.id),
+    'removing endpoints omits animation from saved config'
+  );
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> legacy fog animation stays compatible', t => {
+  const state = cloneDeep(StateWEffects);
+  const fog = createEffect({
+    type: 'surfaceFog',
+    parameters: {height: 0, animateHeight: true, heightEnd: 400, linearEasing: true}
+  });
+  state.visState.effects = [fog];
+  state.visState.effectOrder = [fog.id];
+  const saved = SchemaManager.getConfigToSave(state);
+  t.notOk(
+    'animation' in saved.config.visState.effects[0],
+    'adds no generic metadata to legacy fog'
+  );
+  const loaded = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
+  t.deepEqual(loaded.parameters, fog.parameters, 'preserves legacy elevation animation settings');
   t.end();
 });
 

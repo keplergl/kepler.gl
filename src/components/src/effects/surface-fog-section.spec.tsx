@@ -2,10 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {Effect} from '@kepler.gl/types';
+import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import SurfaceFogElevationSectionFactory from './surface-fog-section';
 import RangeSliderFactory from '../common/range-slider';
 
@@ -26,7 +27,12 @@ const descriptions = [
   {name: 'linearEasing'}
 ];
 function effect(parameters: Record<string, unknown> = {}, desc = descriptions) {
-  return {id: 'fog', parameters, getParameterDescriptions: () => desc} as unknown as Effect;
+  return {
+    id: 'fog',
+    type: SURFACE_FOG_TYPE,
+    parameters,
+    getParameterDescriptions: () => desc
+  } as unknown as Effect;
 }
 function Wrapper({children}: {children: React.ReactNode}) {
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
@@ -36,75 +42,95 @@ function setup(parameters: Record<string, unknown> = {}, desc = descriptions) {
   const view = render(<Section effect={effect(parameters, desc)} updateEffectConfig={update} />, {
     wrapper: Wrapper
   });
-  const heading = screen.queryByText('Elevation');
-  if (heading) fireEvent.click(heading);
   return {update, ...view};
 }
 
 describe('surface fog elevation editing', () => {
-  test('does not offer incomplete elevation parameters', () => {
+  test('does not offer an elevation control when height is absent', () => {
     const {container} = setup(
       {},
-      descriptions.filter(d => d.name !== 'heightEnd')
+      descriptions.filter(d => d.name !== 'height')
     );
     expect(container.firstChild).toBeNull();
   });
-  test('uses descriptor defaults but preserves explicit zero elevations', () => {
+
+  test('uses the descriptor default and preserves explicit zero without showing extra controls', () => {
     const {rerender} = setup();
-    expect(screen.getAllByRole('spinbutton').map(e => (e as HTMLInputElement).value)).toEqual([
-      '10',
-      '1000'
-    ]);
+    expect((screen.getByRole('spinbutton') as HTMLInputElement).value).toBe('10');
+    expect(screen.queryByRole('checkbox')).toBeNull();
     rerender(<Section effect={effect({height: 0, heightEnd: 0})} updateEffectConfig={jest.fn()} />);
-    expect(screen.getAllByRole('spinbutton').map(e => (e as HTMLInputElement).value)).toEqual([
-      '0',
-      '0'
-    ]);
+    expect((screen.getByRole('spinbutton') as HTMLInputElement).value).toBe('0');
   });
-  test('updates the selected elevation without replacing unrelated parameters', () => {
+
+  test('updates elevation without replacing animation or unrelated parameters', () => {
     const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
-    fireEvent.change(screen.getAllByRole('spinbutton')[0], {target: {value: '200'}});
+    fireEvent.change(screen.getByRole('spinbutton'), {target: {value: '200'}});
     expect(update).toHaveBeenLastCalledWith(undefined, 'fog', {parameters: {height: 200}});
-    fireEvent.change(screen.getAllByRole('spinbutton')[1], {target: {value: '800'}});
-    expect(update).toHaveBeenLastCalledWith(undefined, 'fog', {parameters: {heightEnd: 800}});
   });
-  test('starts animation with a usable end when both elevations coincide', () => {
-    const {update} = setup({height: 100, heightEnd: 100});
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
-    expect(update).toHaveBeenCalledTimes(1);
+
+  test('opens legacy endpoint and easing without migrating on open', () => {
+    const {update} = setup({height: 100, heightEnd: 0, animateHeight: true, linearEasing: true});
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(
+      (
+        within(dialog.getByRole('group', {name: 'End value'})).getByRole(
+          'spinbutton'
+        ) as HTMLInputElement
+      ).value
+    ).toBe('0');
+    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  test('saving a legacy endpoint uses generic animation and disables the legacy flag', () => {
+    const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(
+      within(dialog.getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
+      {target: {value: '800'}}
+    );
+    fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'fog', {
-      parameters: {animateHeight: true, heightEnd: 6000}
+      animation: {height: {endValue: 800, easing: 'easeInOut'}},
+      parameters: {height: 100, animateHeight: false}
     });
   });
-  test('preserves a distinct end elevation when enabling animation', () => {
-    const {update} = setup({height: 100, heightEnd: 500});
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
-    expect(update).toHaveBeenCalledWith(null, 'fog', {parameters: {animateHeight: true}});
+
+  test('removing legacy animation prevents it from reappearing', () => {
+    const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
+    expect(update).toHaveBeenCalledWith(null, 'fog', {
+      animation: {},
+      parameters: {animateHeight: false}
+    });
   });
-  test('disabling animation does not rewrite the saved end', () => {
-    const {update} = setup({height: 100, heightEnd: 100, animateHeight: true});
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
-    expect(update).toHaveBeenCalledWith(null, 'fog', {parameters: {animateHeight: false}});
+
+  test('generic height animation takes precedence over legacy settings', () => {
+    const {update, rerender} = setup();
+    const next = effect({height: 100, heightEnd: 500, animateHeight: true, linearEasing: true});
+    next.animation = {height: {endValue: 0, easing: 'easeInOut'}};
+    rerender(<Section effect={next} updateEffectConfig={update} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(
+      (
+        within(dialog.getByRole('group', {name: 'End value'})).getByRole(
+          'spinbutton'
+        ) as HTMLInputElement
+      ).value
+    ).toBe('0');
+    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
   });
-  test('toggles easing exactly once without toggling height animation', () => {
-    const {update} = setup({animateHeight: true, linearEasing: true});
-    fireEvent.click(screen.getAllByRole('checkbox')[1]);
-    expect(update).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith(null, 'fog', {parameters: {linearEasing: false}});
-  });
-  test('omits easing when the effect does not support it', () => {
-    setup(
-      {},
-      descriptions.filter(d => d.name !== 'linearEasing')
-    );
-    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
-  });
+
   test('uses current effect identity and callback after replacement', () => {
     const {update, rerender} = setup({height: 100});
     const replacement = jest.fn();
     const next = {...effect({height: 200, heightEnd: 800}), id: 'replacement'};
     rerender(<Section effect={next} updateEffectConfig={replacement} />);
-    fireEvent.change(screen.getAllByRole('spinbutton')[0], {target: {value: '300'}});
+    fireEvent.change(screen.getByRole('spinbutton'), {target: {value: '300'}});
     expect(update).not.toHaveBeenCalled();
     expect(replacement).toHaveBeenCalledWith(undefined, 'replacement', {parameters: {height: 300}});
   });
