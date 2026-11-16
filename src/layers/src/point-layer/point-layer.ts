@@ -16,7 +16,12 @@ import Layer, {
   LayerSizeConfig,
   LayerStrokeColorConfig
 } from '../base-layer';
-import {hexToRgb, DataContainerInterface, ArrowDataContainer} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  DataContainerInterface,
+  ArrowDataContainer,
+  createDataContainer
+} from '@kepler.gl/utils';
 import {applyDefaultColorField} from '../layer-color-utils';
 import {default as KeplerTable} from '@kepler.gl/table';
 import PointLayerIcon from './point-layer-icon';
@@ -705,6 +710,17 @@ export default class PointLayer extends Layer {
     if (this.config.columnMode === COLUMN_MODE_GEOJSON) {
       const getFeature = this.getPositionAccessor();
       this.dataToFeature = getGeojsonPointDataMaps(dataContainer, getFeature);
+      const positions = this.dataToFeature.flatMap<number[]>(coordinates =>
+        !coordinates
+          ? []
+          : Array.isArray(coordinates[0])
+          ? (coordinates as number[][])
+          : [coordinates as number[]]
+      );
+      const bounds = this.getPointsBounds(createDataContainer(positions), ({index}, container) =>
+        container.rowAsArray(index)
+      );
+      this.updateMeta({bounds});
     } else if (this.config.columnMode === COLUMN_MODE_GEOARROW) {
       const boundsFromMetadata = getBoundsFromArrowMetadata(
         this.config.columns.geoarrow,

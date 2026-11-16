@@ -1907,7 +1907,12 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
         data: geojsonPointDataset
       }),
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122.3, 37.1, -122.1, 37.3],
+          'Point geometry exposes zoom bounds'
+        );
         // ! layerData is empty here
         const expectedLayerData = {
           data: [
@@ -1971,7 +1976,8 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
         data: geojsonPolygonDataset
       }),
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.equal(layer.meta.bounds, null, 'unsupported polygon geometry has no zoom bounds');
         const expectedLayerData = {
           data: [],
           getFilterValue: () => {},
@@ -2016,7 +2022,12 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
         data: geojsonMultiPolygonDataset
       }),
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122.3, 37.1, -121.9, 37.5],
+          'zoom bounds include every MultiPoint coordinate'
+        );
         const expectedLayerData = {
           data: [
             {
@@ -2086,7 +2097,12 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
         data: geojsonGeometryCollectionDataset
       }),
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122.3, 37.1, -121.8, 37.6],
+          'zoom bounds include GeometryCollection points'
+        );
         const expectedLayerData = {
           data: [
             {
@@ -2160,7 +2176,12 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
         data: geojsonPointWithNullDataset
       }),
       assert: result => {
-        const {layerData} = result;
+        const {layerData, layer} = result;
+        t.deepEqual(
+          layer.meta.bounds,
+          [-122.3, 37.1, -122.1, 37.3],
+          'missing geometry does not extend zoom bounds'
+        );
         const expectedLayerData = {
           data: [
             {
@@ -2205,6 +2226,29 @@ test('#PointLayer -> formatLayerData -> Geojson column mode', async t => {
   ];
 
   testFormatLayerDataCases(t, PointLayer, TEST_CASES);
+
+  const layer = testCreateLayerFromConfig(t, TEST_CASES[0]);
+  for (const [label, replacement, expectedBounds] of [
+    ['original data', geojsonPointDataset, [-122.3, 37.1, -122.1, 37.3]],
+    [
+      'replacement positions',
+      processGeojson({
+        type: 'FeatureCollection',
+        features: [
+          {type: 'Feature', properties: {}, geometry: {type: 'Point', coordinates: [0, 0]}},
+          {type: 'Feature', properties: {}, geometry: {type: 'Point', coordinates: [20, 10]}}
+        ]
+      }),
+      [0, 0, 20, 10]
+    ],
+    ['missing geometry', {...geojsonPointDataset, rows: [[null], ['']]}, null],
+    ['restored data', geojsonPointDataset, [-122.3, 37.1, -122.1, 37.3]],
+    ['empty data', {...geojsonPointDataset, rows: []}, null]
+  ]) {
+    const datasets = await createNewDataEntryMock({info: {id: dataId}, data: replacement});
+    layer.formatLayerData(datasets);
+    t.deepEqual(layer.meta.bounds, expectedBounds, `${label} refreshes GeoJSON zoom bounds`);
+  }
   t.end();
 });
 
