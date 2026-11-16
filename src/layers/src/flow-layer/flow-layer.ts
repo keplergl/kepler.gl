@@ -29,10 +29,8 @@ import {getFilterDataFunc} from '../aggregation-layer';
 import {diffUpdateTriggers} from '../layer-update';
 import {FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import FlowLayerIcon from './flow-layer-icon';
-import FlowPickingExtension from './flow-picking-extension';
 
 const MAX_CLUSTER_ZOOM_LEVEL = 20;
-const flowPickingExtensions = [new FlowPickingExtension()];
 
 export type LocationDatum = {
   id: number;
@@ -536,37 +534,11 @@ export default class FlowLayer extends Layer {
     const {visConfig} = this.config;
     const flowLinesRenderingMode = visConfig.flowLinesRenderingMode || 'straight';
 
-    // In globe mode we still render flows (the layer is flagged unsupported and shows a
-    // warning), but we want the flat arrows on the far side of the globe to be occluded
-    // by the planet instead of drawing on top of it. The @flowmap.gl flow-line sublayers
-    // hardcode `depthTest: false` in their sublayer parameters (see FlowmapLayer.js), so
-    // a top-level `parameters` won't reach them — we override via _subLayerProps, which
-    // getSubLayerProps applies last. cullMode 'none' keeps both faces (arrows are flat).
-    const isGlobeMode = Boolean(opts.mapState?.globe?.enabled);
     const blendingParameters = opts.mapState?.layerParameters ?? {};
-    const globeDepthProps = isGlobeMode
-      ? {
-          parameters: {
-            cull: false,
-            depthTest: true,
-            depthCompare: 'less-equal',
-            cullMode: 'none',
-            ...blendingParameters
-          }
-        }
-      : {};
-    const flowLineProps = {extensions: flowPickingExtensions, ...globeDepthProps};
 
     return [
       new FlowmapLayer<LocationDatum, FlowDatum>({
         ...cleanProps,
-        _subLayerProps: {
-          'flow-lines': flowLineProps,
-          'curved-flow-lines': flowLineProps,
-          'animated-flow-lines': flowLineProps,
-          circles: {extensions: flowPickingExtensions},
-          'flow-highlight': globeDepthProps
-        },
         dataProvider: this._dataProvider,
         data: this._dataVersion as any,
         ...flowmapDataAccessors,

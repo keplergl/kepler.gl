@@ -2,11 +2,12 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import {LayerManager, WebMercatorViewport, _GlobeViewport as GlobeViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 
 import {testCreateCases, dataId, preparedDataset} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {GLOBE_SUPPORTED_LAYERS} from '@kepler.gl/constants';
 import {copyTableAndUpdate} from '@kepler.gl/table';
 import {VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_VIS_STATE, visStateReducer as reducer} from '@kepler.gl/reducers';
@@ -47,6 +48,7 @@ test('#FlowLayer -> constructor defaults', t => {
     ['LAT_LNG', 'H3'],
     'should support LAT_LNG and H3 column modes'
   );
+  t.equal(GLOBE_SUPPORTED_LAYERS.flow, true, 'flow layers support globe mode');
 
   t.deepEqual(
     Object.keys(layer.visConfigSettings),
@@ -545,7 +547,7 @@ test('#FlowLayer -> renderLayer keeps its data value while the flows are unchang
   t.end();
 });
 
-test('#FlowLayer -> picking colors reach every flow renderer and location circles', async t => {
+test('#FlowLayer -> picking and globe rendering survive filtered data changes', async t => {
   const layer = new FlowLayer({id: 'flow-picking', dataId});
   const locations = [
     {id: 0, lon: 0, lat: 0, name: 'A'},
@@ -562,13 +564,23 @@ test('#FlowLayer -> picking colors reach every flow renderer and location circle
     viewport: new WebMercatorViewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
   });
   manager.setProps({onError: error => t.fail(error.message)});
+  let resolveHover;
+  const hover = (composite, sourceLayer, index) =>
+    new Promise(resolve => {
+      resolveHover = resolve;
+      composite.props.onHover({layer: composite, sourceLayer, index, picked: index >= 0}, {});
+    });
   const render = async (flowData, globe) => {
+    const Viewport = globe ? GlobeViewport : WebMercatorViewport;
+    manager.activateViewport(
+      new Viewport({width: 400, height: 400, longitude: 0, latitude: 0, zoom: 1})
+    );
     const [composite] = layer.renderLayer({
       data: {layerData: {locations, flows: flowData, clusterLevels}},
       gpuFilter: {},
       objectHovered: null,
       mapState: {globe: {enabled: globe}},
-      layerCallbacks: {onLayerHover: () => {}},
+      layerCallbacks: {onLayerHover: info => resolveHover(info)},
       idx: 0,
       visible: true
     });
@@ -597,47 +609,56 @@ test('#FlowLayer -> picking colors reach every flow renderer and location circle
             const count = sublayer.getNumInstances();
             const expectedCount = isCircle && flowData.length ? locations.length : flowData.length;
             t.equal(count, expectedCount, 'renders current data');
-            const attribute = sublayer.getAttributeManager().getAttributes().instancePickingColors;
-            t.ok(attribute, `${sublayer.id}: supplies the picking input consumed by its shader`);
-            if (!attribute || !count) continue;
+            t.equal(
+              sublayer.props.extensions.some(
+                extension => extension.constructor.extensionName === 'FlowmapGlobeOcclusion'
+              ),
+              globe,
+              'clips the hidden hemisphere in globe color and picking passes'
+            );
+            if (globe) {
+              t.equal(sublayer.props.parameters.depthCompare, 'always', 'uses shader occlusion');
+              t.equal(
+                sublayer.props.parameters.depthWriteEnabled,
+                false,
+                'does not write globe depth'
+              );
+            }
 
-            const buffer = attribute.getBuffer();
-            t.ok(buffer, 'uploads picking colors to a buffer');
-            t.ok(
-              sublayer
-                .getModels()
-                .every(model =>
-                  model.bufferLayout.some(layout => layout.name === 'instancePickingColors')
-                ),
-              'includes the picking attribute in the model buffer layout'
-            );
-            const bytes = await buffer.readAsync(0, count * 4);
-            const indexes = Array.from({length: count}, (_, i) =>
-              sublayer.decodePickingColor(bytes.subarray(i * 4, i * 4 + 3))
-            );
-            t.deepEqual(
-              indexes,
-              Array.from({length: count}, (_, i) => i),
-              'every rendered instance has a distinct, non-background picking color'
+            // Flowmap 9.5 derives picking colors from gl_InstanceID. Exercise its
+            // public hover callback for every rendered instance after each filter change.
+            const picked = [];
+            for (let index = 0; index < count; index++) {
+              const info = await hover(composite, sublayer, index);
+              t.ok(info?.picked, 'a rendered instance produces hover data');
+              t.equal(info?.index, index, 'hover preserves the picked instance index');
+              picked.push(info?.object);
+            }
+            t.equal(
+              await hover(composite, sublayer, -1),
+              undefined,
+              'clearing hover removes the object'
             );
             if (!isCircle) {
-              const pickedFlows = await Promise.all(
-                indexes.map(index => composite.props.dataProvider.getFlowByIndex(index))
-              );
               t.deepEqual(
-                pickedFlows.map(({origin, dest, count}) => [origin, dest, count]).sort(),
+                picked.map(({origin, dest, count}) => [origin.id, dest.id, count]).sort(),
                 flowData.map(({sourceId, targetId, count}) => [sourceId, targetId, count]).sort(),
-                'decoded picking indexes identify the current flow endpoints and magnitudes'
+                'hover identifies the current flow endpoints and magnitudes'
               );
-              t.equal(sublayer.props.parameters.depthTest, globe, 'preserves globe depth handling');
+              if (globe) {
+                t.ok(
+                  sublayer.props.numSegments > 1,
+                  `${mode}: follows the globe with a segmented route`
+                );
+                if (mode === 'straight') {
+                  t.equal(sublayer.props.curviness, 0, 'straight globe routes have no lateral bow');
+                }
+              }
             } else {
-              const pickedLocations = await Promise.all(
-                indexes.map(index => composite.props.dataProvider.getLocationByIndex(index))
-              );
               t.deepEqual(
-                pickedLocations.map(location => location.id).sort(),
-                locations.map(location => location.id).sort(),
-                'decoded picking indexes identify the current locations'
+                picked.map(({location}) => location.id).sort(),
+                (flowData.length ? locations : []).map(location => location.id).sort(),
+                'hover identifies the current locations'
               );
             }
           }
