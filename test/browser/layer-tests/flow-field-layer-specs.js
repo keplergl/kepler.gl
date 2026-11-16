@@ -5,6 +5,8 @@ import test from 'tape';
 import sinon from 'sinon';
 import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
 import {PathLayer} from '@deck.gl/layers';
+import {ScenegraphLayer} from '@deck.gl/mesh-layers';
+import {TRIP_LAYER_SCENEGRAPH_MODELS} from '@kepler.gl/constants';
 import {device} from '@deck.gl/test-utils';
 import React from 'react';
 import {render} from '@testing-library/react';
@@ -532,6 +534,220 @@ test('#FlowFieldLayer -> animation updates time without replacing trail data', t
     draw.restore();
     now.restore();
   }
+  t.end();
+});
+
+test('#FlowFieldLayer -> optional models follow animated heads', t => {
+  const dataset = createFlowFieldDataset();
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      id: 'flow-models',
+      type: 'flowField',
+      config: {
+        dataId,
+        columns: {lat: 'latitude', lng: 'longitude', u: 'u', v: 'v'},
+        visConfig: {linesPerScreen: 100, smoothing: 0, seamlessLoop: true, cycleSeconds: 20}
+      }
+    },
+    LayerClasses
+  );
+  const mapState = {longitude: -121.8, latitude: 37.25, zoom: 11, width: 800, height: 600};
+  const data = layer.formatLayerData({[dataId]: dataset});
+  const onRedrawNeeded = sinon.spy();
+  const render = () => layer.renderLayer({data, mapState, layerCallbacks: {onRedrawNeeded}});
+  const original = render()[0];
+  t.equal(layer.config.visConfig.scenegraphEnabled, false, 'meshes default to disabled');
+  t.equal(layer.config.visConfig.showTrails, true, 'trails remain enabled for existing configs');
+  t.equal(render().length, 1, 'default renders only trails');
+  layer.updateLayerVisConfig({scenegraphEnabled: true});
+  t.equal(render().length, 1, 'no model selected retains trails');
+  layer.updateLayerVisConfig({scenegraph: 'unknown'});
+  t.equal(render().length, 1, 'unknown model retains trails');
+  layer.updateLayerVisConfig({scenegraph: 'custom', scenegraphCustomModelUrl: ''});
+  t.equal(render().length, 1, 'empty custom URL retains trails');
+  const preset = TRIP_LAYER_SCENEGRAPH_MODELS.find(d => d.id !== 'custom');
+  layer.updateLayerVisConfig({scenegraph: preset.id});
+  const manager = new LayerManager(device, {viewport: new WebMercatorViewport(mapState)});
+  const fetchModel = sinon.stub().returns(new Promise(() => {}));
+  manager.setLayers([render()[1].clone({fetch: fetchModel})]);
+  t.equal(fetchModel.lastCall.args[0], preset.url, 'gallery selection loads the shared model');
+  layer.updateLayerVisConfig({
+    scenegraph: 'custom',
+    scenegraphCustomModelUrl: 'https://example.com/flow.glb',
+    elevationMultiplier: 3,
+    sizeScale: 0
+  });
+  const [trails] = render();
+  layer.updateLayerVisConfig({showTrails: false});
+  const modelOnly = render();
+  t.deepEqual(
+    modelOnly.map(d => d.id),
+    ['flow-models-scenegraph'],
+    'hiding trails renders only the model'
+  );
+  const [model] = modelOnly;
+  try {
+    manager.setLayers([model.clone({fetch: fetchModel})]);
+    t.equal(fetchModel.lastCall.args[0], 'https://example.com/flow.glb', 'custom URL is loaded');
+  } finally {
+    manager.finalize();
+  }
+  t.equal(trails.props.data, original.props.data, 'mesh controls preserve cached streamlines');
+  t.equal(model.props.data, trails.props.data, 'meshes follow the rendered streamline data');
+  t.deepEqual(
+    model.props.clipBounds,
+    trails.props.clipBounds,
+    'meshes use the same viewport clipping'
+  );
+
+  const trip = {
+    path: [
+      [0, 0, 10],
+      [2, 0, 20],
+      [2, 2, 30]
+    ],
+    timestamps: [1, 1.5, 2],
+    speed: 1
+  };
+  const looped = {...trip, timestamps: [2, 2.5, 3]};
+  const now = sinon.stub(performance, 'now');
+  const draw = sinon.stub(ScenegraphLayer.prototype, 'draw');
+  const updateAttributes = sinon.stub(model, '_updateAttributes');
+  const invalidate = sinon.spy();
+  const getAttributes = sinon.stub(model, 'getAttributeManager').returns({invalidate});
+  const redraw = sinon.stub(model, 'setNeedsRedraw');
+  try {
+    model.state = {};
+    model.draw({});
+    t.equal(updateAttributes.callCount, 0, 'unloaded models do not update attributes');
+    model.state = {scenegraph: {}};
+    now.returns(5000);
+    model.draw({});
+    t.deepEqual(
+      model.props.getPosition(trip),
+      [1, 0, 45],
+      'head interpolates position and elevation'
+    );
+    const east = model.props.getTransformMatrix(trip);
+    t.ok(Math.abs(east[0] - 1) < 1e-6, 'custom mesh points east along the first segment');
+    t.ok(
+      model.props
+        .getTransformMatrix(looped)
+        .slice(0, 12)
+        .every(v => v === 0),
+      'future copy is hidden'
+    );
+    now.returns(15000);
+    model.draw({});
+    t.deepEqual(
+      model.props.getPosition(trip),
+      [2, 1, 75],
+      'head advances with the automatic clock'
+    );
+    const north = model.props.getTransformMatrix(trip);
+    t.ok(
+      Math.abs(north[0]) < 1e-6 && Math.abs(north[1] - 1) < 1e-6,
+      'mesh turns along the next segment'
+    );
+    now.returns(20000);
+    model.draw({});
+    t.deepEqual(model.props.getPosition(trip), [0, 0, 30], 'cycle wraps to the beginning');
+    const completed = {...trip, timestamps: [0, 0.5, 1]};
+    t.ok(
+      model.props
+        .getTransformMatrix(completed)
+        .slice(0, 12)
+        .every(v => v === 0),
+      'completed copy is hidden at the loop boundary'
+    );
+    t.deepEqual(
+      invalidate.args,
+      [
+        ['getPosition'],
+        ['getTransformMatrix'],
+        ['getPosition'],
+        ['getTransformMatrix'],
+        ['getPosition'],
+        ['getTransformMatrix']
+      ],
+      'animation refreshes only model positions and transforms'
+    );
+    t.equal(updateAttributes.callCount, 3, 'each loaded frame uploads model attributes');
+    t.equal(draw.callCount, 3, 'each loaded frame draws meshes');
+    t.equal(redraw.callCount, 3, 'each loaded frame schedules deck redraw');
+    t.equal(onRedrawNeeded.callCount, 0, 'mesh animation does not dispatch map updates');
+    t.equal(model.props.data, original.props.data, 'animation retains cached paths');
+  } finally {
+    now.restore();
+    draw.restore();
+    updateAttributes.restore();
+    getAttributes.restore();
+    redraw.restore();
+  }
+
+  layer.updateLayerVisConfig({showTrails: true});
+  const restored = render();
+  t.deepEqual(
+    restored.map(d => d.id),
+    ['flow-models', 'flow-models-scenegraph'],
+    'showing trails restores both layers'
+  );
+  t.equal(
+    restored[0].props.data,
+    original.props.data,
+    'toggling trails retains the generated paths'
+  );
+  layer.updateLayerVisConfig({scenegraphColorEnabled: true, scenegraphColor: [10, 20, 30]});
+  t.deepEqual(render()[1].props.getColor, [10, 20, 30], 'model supports custom tint');
+  layer.updateLayerVisConfig({scenegraphUseTrailColor: true, colorBySpeed: true});
+  const [coloredTrails, coloredModel] = render();
+  const first = coloredTrails.props.data[0];
+  t.deepEqual(
+    coloredModel.props.getColor(first),
+    coloredTrails.props.getColor(first),
+    'model can inherit speed-based trail colors'
+  );
+  layer.updateLayerVisConfig({scenegraphColorEnabled: false});
+  t.deepEqual(
+    render()[1].props.getColor,
+    [255, 255, 255],
+    'disabling tint restores original model colors'
+  );
+  layer.updateLayerVisConfig({sizeScale: 2, adjustYaw: 90, seamlessLoop: false});
+  const adjusted = render()[1];
+  adjusted.props.animationTime.currentTime = 0.25;
+  const shortTrip = {...trip, timestamps: [0, 0.5, 1]};
+  const adjustedMatrix = adjusted.props.getTransformMatrix(shortTrip);
+  t.ok(
+    Math.abs(adjustedMatrix[0]) < 1e-6 && Math.abs(adjustedMatrix[1] + 4) < 1e-6,
+    'model size and orientation adjustments follow the Trips convention'
+  );
+  t.deepEqual(
+    adjusted.props.getPosition(shortTrip),
+    [1, 0, 45],
+    'non-seamless heads follow the same path'
+  );
+  adjusted.props.animationTime.currentTime = 1;
+  t.ok(
+    adjusted.props
+      .getTransformMatrix(shortTrip)
+      .slice(0, 12)
+      .every(v => v === 0),
+    'non-seamless models disappear after their path ends'
+  );
+  t.deepEqual(layer.renderLayer({data: {}, mapState}), [], 'missing grid produces no models');
+  t.deepEqual(
+    layer.renderLayer({data, mapState, visible: false}),
+    [],
+    'hidden map produces no models'
+  );
+  layer.updateLayerVisConfig({scenegraphEnabled: false});
+  t.equal(render().length, 1, 'disabling mesh retains the trails');
+  layer.updateLayerVisConfig({showTrails: false});
+  t.deepEqual(render(), [], 'disabling both models and trails renders neither');
+  layer.updateLayerVisConfig({scenegraphEnabled: true, scenegraphCustomModelUrl: ''});
+  t.deepEqual(render(), [], 'missing model URL does not restore hidden trails');
   t.end();
 });
 

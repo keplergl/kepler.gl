@@ -1957,6 +1957,115 @@ test('Components -> LayerConfigurator -> getLayerFields', t => {
   t.end();
 });
 
+test('Components -> Flow Field optional models use the shared model controls', t => {
+  const update = sinon.spy();
+  function Editor() {
+    const [visConfig, setVisConfig] = React.useState({});
+    const layer = new LayerClasses.flowField({id: 'flow-field-mesh', dataId: testCsvDataId});
+    layer.updateLayerVisConfig(visConfig);
+    return (
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        updateLayerVisConfig={next => {
+          update(next);
+          setVisConfig(previous => ({...previous, ...next}));
+        }}
+      />
+    );
+  }
+  const {container, unmount} = renderWithTheme(
+    <IntlWrapper>
+      <Editor />
+    </IntlWrapper>
+  );
+  try {
+    const enabled = container.querySelector('#flow-field-mesh-scenegraphEnabled');
+    const showTrails = container.querySelector('#flow-field-mesh-showTrails-switch');
+    t.ok(showTrails.checked, 'trails remain enabled by default');
+    const group = enabled.closest('.layer-config-group');
+    const modelControls = within(group);
+    t.notOk(enabled.checked, 'models are optional and disabled by default');
+    fireEvent.click(modelControls.getByLabelText('URL'));
+    t.equal(update.callCount, 0, 'model source cannot change while disabled');
+
+    fireEvent.click(enabled);
+    t.deepEqual(update.lastCall.args[0], {scenegraphEnabled: true}, 'enables models');
+    const dropdown = group.querySelector('.layer-config__type');
+    fireEvent.keyDown(within(dropdown).getByRole('button'), {key: 'Enter', keyCode: 13});
+    fireEvent.click(within(document.body).getByText('Car'));
+    t.deepEqual(update.lastCall.args[0], {scenegraph: 'car'}, 'selects a shared gallery model');
+
+    fireEvent.click(modelControls.getByLabelText('URL'));
+    const url = modelControls.getByRole('textbox');
+    fireEvent.change(url, {target: {value: 'https://example.com/flow.glb'}});
+    fireEvent.blur(url);
+    t.deepEqual(
+      update.lastCall.args[0],
+      {scenegraph: 'custom', scenegraphCustomModelUrl: 'https://example.com/flow.glb'},
+      'selects a custom model URL'
+    );
+
+    fireEvent.click(showTrails);
+    t.deepEqual(update.lastCall.args[0], {showTrails: false}, 'allows models without trails');
+    t.ok(enabled.checked, 'hiding trails keeps the model enabled');
+
+    fireEvent.click(group.querySelector('#flow-field-mesh-scenegraphColorEnabled-switch'));
+    t.deepEqual(update.lastCall.args[0], {scenegraphColorEnabled: true}, 'enables model tint');
+    t.ok(group.querySelector('.color-selector__selector'), 'offers a fixed model color');
+    fireEvent.click(group.querySelector('#flow-field-mesh-scenegraphUseTrailColor-switch'));
+    t.deepEqual(
+      update.lastCall.args[0],
+      {scenegraphUseTrailColor: true},
+      'can follow streamline colors'
+    );
+    t.notOk(
+      group.querySelector('.color-selector__selector'),
+      'hides fixed color when following trails'
+    );
+
+    for (const [property, label, value] of [
+      ['sizeScale', 'adjustSize', 2],
+      ['adjustRoll', 'adjustRoll', 10],
+      ['adjustPitch', 'adjustPitch', 20],
+      ['adjustYaw', 'adjustYaw', 30]
+    ]) {
+      const setting = messages.en[`layerVisConfigs.${label}`];
+      fireEvent.click(
+        modelControls.getByRole('button', {name: `Enter custom value for ${setting}`})
+      );
+      const input = modelControls.getByRole('spinbutton', {name: setting});
+      fireEvent.change(input, {target: {value: String(value)}});
+      fireEvent.blur(input);
+      t.deepEqual(update.lastCall.args[0], {[property]: value}, `updates ${property}`);
+    }
+
+    fireEvent.click(enabled);
+    t.deepEqual(update.lastCall.args[0], {scenegraphEnabled: false}, 'disables models');
+    t.notOk(
+      group.querySelector('#flow-field-mesh-scenegraphColorEnabled-switch'),
+      'hides model styling while disabled'
+    );
+    fireEvent.click(enabled);
+    t.equal(
+      modelControls.getByRole('textbox').value,
+      'https://example.com/flow.glb',
+      'retains the model URL'
+    );
+    t.ok(
+      group.querySelector('#flow-field-mesh-scenegraphUseTrailColor-switch').checked,
+      'retains model coloring when enabled again'
+    );
+    t.notOk(showTrails.checked, 'model toggles preserve the hidden trails preference');
+    fireEvent.click(showTrails);
+    t.deepEqual(update.lastCall.args[0], {showTrails: true}, 'can restore trails');
+    t.ok(showTrails.checked, 'restoring trails updates the control');
+  } finally {
+    unmount();
+    t.end();
+  }
+});
+
 for (const locale of ['en', 'es']) {
   test(`Components -> Flow Field column labels resolve in ${locale}`, t => {
     const layer = new LayerClasses.flowField({id: 'flow-field', dataId: testCsvDataId});
