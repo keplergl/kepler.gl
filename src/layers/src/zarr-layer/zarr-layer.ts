@@ -442,6 +442,8 @@ export default class ZarrLayer extends Layer {
   formatLayerData(datasets: KeplerDatasets): ZarrLayerData {
     const {dataId} = this.config;
     if (!dataId || !datasets[dataId]) {
+      this.updateMeta({bounds: null});
+      this._oldDataUpdateTriggers = undefined;
       return {metadata: null, variable: null};
     }
     const dataset = datasets[dataId];
@@ -466,6 +468,7 @@ export default class ZarrLayer extends Layer {
 
   updateLayerMeta(dataset: KeplerDataset): void {
     if (dataset.type !== DatasetType.ZARR) {
+      this.updateMeta({bounds: null});
       return;
     }
     const sourceMetadata = (dataset.metadata || {}) as ZarrDatasetMetadata;
@@ -497,6 +500,7 @@ export default class ZarrLayer extends Layer {
     }
 
     this.updateMeta({
+      bounds: variable ? metadata.bounds ?? null : null,
       zarrUrl: metadata.url,
       variable: variable?.path,
       crs: metadata.crs?.code

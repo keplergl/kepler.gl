@@ -303,7 +303,7 @@ export type ZarrVariableInfo = {
   /** Parsed grid and pyramid settings for this variable, independent of the active variable. */
   spatialMetadata?: Pick<
     ZarrDatasetMetadata,
-    'crs' | 'axes' | 'xAxisIndex' | 'yAxisIndex' | 'levels' | 'webMercatorPyramid'
+    'crs' | 'axes' | 'xAxisIndex' | 'yAxisIndex' | 'levels' | 'webMercatorPyramid' | 'bounds'
   >;
   /** Shape of the finest resolution level. */
   shape: number[];
@@ -326,6 +326,8 @@ export type ZarrDatasetMetadata = {
   /** Path of the selected variable within the store. */
   variable?: string;
   crs?: {code?: string; wkt2?: string};
+  /** Geographic extent of the selected variable, [west, south, east, north] in degrees. */
+  bounds?: [number, number, number, number] | null;
   /** Axis names of the selected variable, e.g. `['time', 'y', 'x']`. */
   axes: string[];
   xAxisIndex: number;

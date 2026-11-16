@@ -10,6 +10,8 @@
 import type {ZarrDatasetMetadata, ZarrVariableInfo} from '@kepler.gl/constants';
 
 import {parseGeoZarrMetadata} from '@developmentseed/geozarr';
+import * as projections from '@developmentseed/proj';
+import {validateBounds} from '@kepler.gl/utils';
 import {BoolArray, UnicodeStringArray} from 'zarrita';
 
 import {
@@ -116,6 +118,96 @@ describe('Zarr metadata', () => {
     fetchMock.mockReset();
   });
   afterEach(() => clearZarrStoreCache());
+
+  async function metadataWithGeoAttrs(attrs: Record<string, unknown>) {
+    fetchMock.mockImplementation((request: Request | string) =>
+      Promise.resolve(
+        typeof request === 'string'
+          ? new Response(null, {status: 503})
+          : request.url.endsWith('/.zmetadata')
+          ? Response.json({
+              ...consolidated,
+              metadata: {
+                ...consolidated.metadata,
+                'climate/.zattrs': {...consolidated.metadata['climate/.zattrs'], ...attrs}
+              }
+            })
+          : serve(request)
+      )
+    );
+    return getZarrMetadata(url);
+  }
+
+  it.each([
+    ['geographic', [1, 0, 0, 0, -1, 2], [0, 0, 2, 2]],
+    ['rotated', [1, 0.5, 10, 0.25, -1, 20], [10, 18, 13, 20.5]],
+    ['0–360 global', [180, 0, 0, 0, -90, 90], [-180, -90, 180, 90]],
+    ['0–360 regional', [10, 0, 200, 0, -1, 2], [-160, 0, -140, 2]],
+    ['antimeridian', [10, 0, 170, 0, -1, 2], [-180, 0, 180, 2]],
+    ['polar edge cells', [1, 0, 0, 0, -90.5, 90.5], [0, -90, 2, 90]]
+  ])('derives valid zoom bounds for %s grids', async (_name, transform, bounds) => {
+    const metadata = await metadataWithGeoAttrs({'spatial:transform': transform});
+    expect(metadata.bounds).toEqual(bounds);
+    expect(metadata.variables[0].spatialMetadata?.bounds).toEqual(bounds);
+    expect(validateBounds(metadata.bounds)).toBe(metadata.bounds);
+  });
+
+  it('projects the raster footprint from Web Mercator to geographic bounds', async () => {
+    const halfWorld = 20037508.342789244;
+    const metadata = await metadataWithGeoAttrs({
+      'proj:code': 'EPSG:3857',
+      'spatial:transform': [halfWorld, 0, -halfWorld, 0, -halfWorld, halfWorld]
+    });
+    expect(metadata.bounds?.[0]).toBeCloseTo(-180);
+    expect(metadata.bounds?.[1]).toBeCloseTo(-85.0511287798);
+    expect(metadata.bounds?.[2]).toBeCloseTo(180);
+    expect(metadata.bounds?.[3]).toBeCloseTo(85.0511287798);
+    expect(validateBounds(metadata.bounds)).toBe(metadata.bounds);
+  });
+
+  it('uses declared WKT without an EPSG lookup', async () => {
+    const metadata = await metadataWithGeoAttrs({
+      'proj:code': undefined,
+      'proj:wkt2':
+        'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    });
+    expect(metadata.bounds).toEqual([0, 0, 2, 2]);
+  });
+
+  it('keeps the variable available if a CRS definition cannot be resolved', async () => {
+    const metadata = await metadataWithGeoAttrs({'proj:code': 'EPSG:999999'});
+    expect(fetchMock).toHaveBeenCalledWith('https://epsg.io/999999.json');
+    expect(metadata.variables[0].path).toBe('climate');
+    expect(metadata.bounds).toBeNull();
+  });
+
+  it('uses the renderer CRS registry for projected grids beyond Web Mercator', async () => {
+    projections.PROJECTION_REGISTRY.set('EPSG:32631', {
+      title: 'WGS 84 / UTM zone 31N',
+      projName: 'utm',
+      zone: 31,
+      datumCode: 'WGS84',
+      units: 'm'
+    });
+    try {
+      const metadata = await metadataWithGeoAttrs({
+        'proj:code': 'EPSG:32631',
+        'spatial:transform': [1000, 0, 500000, 0, -1000, 2000]
+      });
+      expect(metadata.bounds?.[0]).toBeCloseTo(3, 5);
+      expect(metadata.bounds?.[1]).toBeCloseTo(0, 5);
+      expect(metadata.bounds?.[2]).toBeCloseTo(3.017973, 5);
+      expect(metadata.bounds?.[3]).toBeCloseTo(0.018095, 5);
+      expect(validateBounds(metadata.bounds)).toBe(metadata.bounds);
+    } finally {
+      projections.PROJECTION_REGISTRY.delete('EPSG:32631');
+    }
+  });
+
+  it('does not publish zoom bounds for a footprint outside geographic latitude limits', async () => {
+    const metadata = await metadataWithGeoAttrs({'spatial:transform': [1, 0, 0, 0, 1, 100]});
+    expect(metadata.bounds).toBeNull();
+  });
 
   it.each(['known', 'unknown', 'encoded'])(
     'reports streamed metadata and coordinate bytes with %s response size',
@@ -263,6 +355,7 @@ describe('Zarr metadata', () => {
       expect(metadata.variables.map(variable => variable.path)).toEqual(['climate', 'rain']);
       for (const variable of metadata.variables) {
         expect(variable.geoAttrs?.['spatial:transform']).toEqual([1, 0, 0, 0, -1, 2]);
+        expect(variable.spatialMetadata?.bounds).toEqual([0, 0, 2, 2]);
         expect(variable.nonSpatialDims[0].values).toEqual([0.5, 1.5]);
       }
       const requested = fetchMock.mock.calls.map(([request]) => request.url.slice(url.length));
@@ -367,7 +460,12 @@ describe('Zarr metadata', () => {
       };
       contents[`pyramid/${level}/spatial_ref/.zattrs`] = {
         epsg_code: 3857,
-        GeoTransform: [-20037508, 40075016 / size, 0, 20037508, 0, -40075016 / size].join(' ')
+        // Coarser levels can include padded edge cells: use the renderer's
+        // coarsest footprint instead of assuming the finest one is identical.
+        GeoTransform: (level === 0
+          ? [-20037508, 40075016 / size, 0, 20037508, 0, -40075016 / size]
+          : [-10000000, 20000000 / size, 0, 10000000, 0, -20000000 / size]
+        ).join(' ')
       };
     });
     fetchMock.mockImplementation((request: Request) =>
@@ -384,6 +482,7 @@ describe('Zarr metadata', () => {
     expect(metadata.crs).toEqual({code: 'EPSG:4326'});
     expect(metadata.axes).toEqual(['lat', 'lon']);
     expect(metadata.levels).toEqual([{path: '.', shape: [2, 2], chunks: [2, 2]}]);
+    expect(metadata.bounds).toEqual([0, 0, 2, 2]);
     const requestCount = fetchMock.mock.calls.length;
 
     // Switching also works after a save/load, without reopening the store.
@@ -393,6 +492,11 @@ describe('Zarr metadata', () => {
     expect(selected.axes).toEqual(['y', 'x']);
     expect(selected.xAxisIndex).toBe(1);
     expect(selected.yAxisIndex).toBe(0);
+    expect(selected.bounds?.[0]).toBeCloseTo(-180);
+    expect(selected.bounds?.[1]).toBeCloseTo(-85.051128);
+    expect(selected.bounds?.[2]).toBeCloseTo(180);
+    expect(selected.bounds?.[3]).toBeCloseTo(85.051128);
+    expect(validateBounds(selected.bounds)).toBe(selected.bounds);
     expect(selected.levels).toEqual(
       [512, 256, 128].map((size, i) => ({
         path: `${2 - i}/rain`,
@@ -1180,12 +1284,13 @@ describe('variable selection', () => {
 
   it('does not reuse another variable grid when spatial metadata is missing', () => {
     const next = selectZarrVariable(
-      {...metadata, crs: {code: 'EPSG:4326'}, webMercatorPyramid: true},
+      {...metadata, crs: {code: 'EPSG:4326'}, bounds: [0, 0, 2, 2], webMercatorPyramid: true},
       'elevation'
     );
     expect(next.crs).toBeUndefined();
     expect(next.axes).toEqual([]);
     expect(next.levels).toEqual([]);
     expect(next.webMercatorPyramid).toBe(false);
+    expect(next.bounds).toBeNull();
   });
 });

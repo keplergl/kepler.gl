@@ -750,6 +750,50 @@ test('#ZarrLayer -> formatLayerData resolves the layer variable', t => {
   t.end();
 });
 
+test('#ZarrLayer -> zoom bounds follow the selected variable and clear when unavailable', t => {
+  const temperatureBounds = [-122, 37, -121, 38];
+  const precipitationBounds = [10, 20, 30, 40];
+  const dataset = {
+    ...MOCK_ZARR_DATASET,
+    metadata: {
+      ...MOCK_ZARR_DATASET.metadata,
+      bounds: temperatureBounds,
+      variables: [
+        {...TEMPERATURE, spatialMetadata: {bounds: temperatureBounds}},
+        {...PRECIPITATION, spatialMetadata: {bounds: precipitationBounds}}
+      ]
+    }
+  };
+  const layer = new ZarrLayer({dataId: dataset.id});
+  const datasets = {[dataset.id]: dataset};
+  layer.formatLayerData(datasets);
+  t.deepEqual(layer.meta.bounds, temperatureBounds, 'default variable exposes geographic bounds');
+
+  layer.updateLayerVisConfig({zarrVariable: 'precipitation'});
+  layer.formatLayerData(datasets);
+  t.deepEqual(layer.meta.bounds, precipitationBounds, 'variable selection updates zoom bounds');
+
+  layer.formatLayerData({});
+  t.equal(layer.meta.bounds, null, 'missing dataset clears stale zoom bounds');
+  layer.formatLayerData(datasets);
+  t.deepEqual(layer.meta.bounds, precipitationBounds, 'restoring a dataset restores its bounds');
+
+  layer.formatLayerData({
+    [dataset.id]: {
+      ...dataset,
+      metadata: {...dataset.metadata, variables: [TEMPERATURE, PRECIPITATION]}
+    }
+  });
+  t.equal(layer.meta.bounds, null, 'unavailable variable extent cannot inherit another variable');
+
+  layer.formatLayerData(datasets);
+  layer.formatLayerData({
+    [dataset.id]: {...dataset, metadata: {...dataset.metadata, variables: []}}
+  });
+  t.equal(layer.meta.bounds, null, 'empty variables clear stale zoom bounds');
+  t.end();
+});
+
 test('#ZarrLayer -> findNearestTimeIndex', t => {
   const steps = TIME_DIMENSION.values;
 

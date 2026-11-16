@@ -28,7 +28,9 @@
     "dist"
   ],
   "dependencies": {
+    "@developmentseed/affine": "^0.7.0",
     "@developmentseed/geozarr": "0.7.0",
+    "@developmentseed/proj": "^0.7.0",
     "@kepler.gl/common-utils": "3.3.0-alpha.22",
     "@kepler.gl/constants": "3.3.0-alpha.22",
     "@kepler.gl/tasks-core": "3.3.0-alpha.22",
@@ -50,6 +52,7 @@
     "es-toolkit": "^1.39.10",
     "global": "^4.3.0",
     "moment": "^2.10.6",
+    "proj4": "^2.20.8",
     "type-analyzer": "0.4.0",
     "zarrita": "^0.7.3"
   },

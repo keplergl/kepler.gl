@@ -277,6 +277,11 @@ export function selectZarrVariable(
             levels: [],
             webMercatorPyramid: false
           })),
+    bounds: variable.spatialMetadata
+      ? variable.spatialMetadata.bounds ?? null
+      : variable.path === metadata.variable
+      ? metadata.bounds ?? null
+      : null,
     variable: variable.path,
     nonSpatialDims: variable.nonSpatialDims,
     timeDimension: variable.timeDimension,
@@ -1134,6 +1139,7 @@ async function buildVariableInfo(
     geoAttrs,
     spatialMetadata: {
       crs: geo.crs,
+      bounds: await getZarrBounds(geo),
       axes: geo.axes,
       xAxisIndex: geo.xAxisIndex,
       yAxisIndex: geo.yAxisIndex,
@@ -1154,6 +1160,63 @@ async function buildVariableInfo(
       readNumber(arrayAttrs, ['_FillValue', 'missing_value', 'nodata']) ??
       readNumber({fillValue}, ['fillValue'])
   };
+}
+
+/** Derive the same coarsest-level footprint used by the raster tileset, in map coordinates. */
+async function getZarrBounds(
+  geo: ReturnType<typeof import('@developmentseed/geozarr')['parseGeoZarrMetadata']>
+): Promise<ZarrDatasetMetadata['bounds']> {
+  const level = geo.levels[geo.levels.length - 1];
+  if (!level || !(level.arrayWidth > 0) || !(level.arrayHeight > 0)) {
+    return null;
+  }
+  try {
+    // Keep these ESM dependencies lazy, like the Zarr parser and renderer.
+    const [{apply}, {epsgResolver, parseWkt, transformBounds}, {default: proj4}] =
+      await Promise.all([
+        import('@developmentseed/affine'),
+        import('@developmentseed/proj'),
+        import('proj4')
+      ]);
+    const {crs} = geo;
+    const epsg = crs.code?.match(/^EPSG:(\d+)$/);
+    const definition = crs.code
+      ? epsg && (proj4.defs(crs.code) || (await epsgResolver(Number(epsg[1]))))
+      : crs.wkt2 || crs.projjson
+      ? parseWkt((crs.wkt2 || crs.projjson) as Parameters<typeof parseWkt>[0])
+      : null;
+    if (!definition) return null;
+    const projection = new proj4.Proj(definition as import('proj4').ProjectionDefinition);
+    const converter = proj4(projection, 'EPSG:4326');
+    let valid = true;
+    const bounds = transformBounds(
+      (col, row) => {
+        const point = converter.forward(apply(level.affine, col, row));
+        valid = valid && point.every(Number.isFinite);
+        return point;
+      },
+      0,
+      0,
+      level.arrayWidth,
+      level.arrayHeight
+    );
+    if (!valid || !bounds.every(Number.isFinite)) return null;
+    const [west, south, east, north] = bounds;
+    if (south > 90 || north < -90 || west > east || south > north) return null;
+    // CF longitude axes often use 0–360. Fit-bounds requires both endpoints
+    // within ±180, so use a full-world envelope for antimeridian crossings.
+    const shift = 360 * Math.floor((west + 180) / 360);
+    const fullLongitude = east - west >= 360 - 1e-6 || east - shift > 180;
+    return [
+      fullLongitude ? -180 : west - shift,
+      Math.max(-90, south),
+      fullLongitude ? 180 : east - shift,
+      Math.min(90, north)
+    ];
+  } catch {
+    // An unavailable CRS definition must not prevent the dataset from loading.
+    return null;
+  }
 }
 
 /**

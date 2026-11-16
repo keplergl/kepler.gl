@@ -4399,7 +4399,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kepler.gl/table@workspace:src/table"
   dependencies:
+    "@developmentseed/affine": "npm:^0.7.0"
     "@developmentseed/geozarr": "npm:0.7.0"
+    "@developmentseed/proj": "npm:^0.7.0"
     "@kepler.gl/common-utils": "npm:3.3.0-alpha.22"
     "@kepler.gl/constants": "npm:3.3.0-alpha.22"
     "@kepler.gl/tasks-core": "npm:3.3.0-alpha.22"
@@ -4421,6 +4423,7 @@ __metadata:
     es-toolkit: "npm:^1.39.10"
     global: "npm:^4.3.0"
     moment: "npm:^2.10.6"
+    proj4: "npm:^2.20.8"
     type-analyzer: "npm:0.4.0"
     zarrita: "npm:^0.7.3"
   languageName: unknown
