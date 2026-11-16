@@ -7,23 +7,23 @@ import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
-import {Add, ArrowDownSmall, Trash} from '../common/icons';
-import {Button, PanelLabel} from '../common/styled-components';
+import {Add, ArrowDownSmall, Help, Trash} from '../common/icons';
+import {Button, PanelLabel, Tooltip} from '../common/styled-components';
 import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
 
-const IconButton = styled(Button)`
+const IconButton = styled(Button).attrs({link: true})`
   padding: 0;
   width: 20px;
   height: 20px;
   background: transparent;
-  color: ${props => props.theme.labelColor};
+  color: ${props => props.theme.panelHeaderIcon};
   border: none;
   &:hover,
   &:focus-visible {
-    color: ${props => props.theme.textColorHl};
+    color: ${props => props.theme.panelHeaderIconHover};
   }
   & > svg {
     margin: 0;
@@ -32,7 +32,8 @@ const IconButton = styled(Button)`
 
 const Trigger = styled(IconButton)<{$active: boolean; $open: boolean}>`
   margin-left: 6px;
-  color: ${props => (props.$active ? props.theme.activeColor : props.theme.labelColor)};
+  color: ${props =>
+    props.$active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
   opacity: ${props => (props.$open ? 1 : 0)};
   transition: opacity 120ms ease;
   .effect-configurator__pp-section:hover &,
@@ -84,6 +85,17 @@ const Body = styled.div`
 
 const Field = styled.div`
   margin-bottom: 12px;
+
+  .kg-range-slider__input {
+    flex: 0 0 96px;
+    width: 96px;
+    height: 32px;
+    margin-left: 12px;
+    padding: 3px 6px;
+    border-color: ${props => props.theme.panelBorderColor};
+    text-align: center;
+    text-overflow: clip;
+  }
 `;
 
 const ColorRow = styled.div`
@@ -182,6 +194,7 @@ export default function EffectAnimationControl({
   };
   const range = [description.min, description.max];
   const easingId = `effect-animation-linear-${effect.id}-${name}`;
+  const helpId = `effect-transition-help-${effect.id}-${name}`;
   const editors = [
     {title: 'Start', value: startValue, setValue: setStartValue},
     {title: 'End', value: endValue, setValue: setEndValue}
@@ -218,7 +231,24 @@ export default function EffectAnimationControl({
         <Content>
           <Header>
             <div>
-              Effect Transition
+              Effect Transition{' '}
+              <IconButton
+                type="button"
+                aria-label="About effect transitions"
+                aria-describedby={helpId}
+                data-tip
+                data-for={helpId}
+              >
+                <Help height="14px" />
+              </IconButton>
+              <Tooltip id={helpId} role="tooltip" effect="solid" place="bottom" delayShow={200}>
+                <div
+                  style={{maxWidth: 220, whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.4}}
+                >
+                  Animates this setting from Start to End in video export and preview. Turn on
+                  Linear easing for a constant rate; otherwise it eases in and out.
+                </div>
+              </Tooltip>
               <ParameterName>{label.replace(/([a-z])([A-Z])/g, '$1 $2')}</ParameterName>
             </div>
             {saved ? (
@@ -261,6 +291,7 @@ export default function EffectAnimationControl({
                       </PanelLabel>
                       <RangeSlider
                         showInput
+                        inputTheme="secondary"
                         isRanged={false}
                         value0={range[0]}
                         value1={part}

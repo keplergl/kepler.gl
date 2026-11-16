@@ -285,6 +285,18 @@ describe('effect parameter editing', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', {name: 'Animate amount'}));
   });
 
+  test('transition help is accessible on focus without changing configuration', async () => {
+    const {update} = setup(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
+    fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
+    const help = screen.getByRole('button', {name: 'About effect transitions'});
+    fireEvent.focus(help);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(help).toHaveAttribute('aria-describedby', tooltip.id);
+    expect(tooltip).toBeVisible();
+    expect(tooltip).toHaveTextContent(/video export and preview/);
+    expect(update).not.toHaveBeenCalled();
+  });
+
   test('Cancel discards both endpoint drafts and reopening uses saved values', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
     effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
