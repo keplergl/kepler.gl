@@ -31,6 +31,7 @@ import {
   Icons,
   TimeSliderMarkerFactory,
   TimeRangeSliderTimeTitleFactory,
+  RootContext,
   SliderHandle,
   Typeahead,
   ItemSelector,
@@ -1434,5 +1435,244 @@ test('Components -> TimeWidget -> exact range editor updates expanded and compac
     );
     rendered.unmount();
   }
+  t.end();
+});
+
+function resizePointer(handle, type, clientY, pointerType = 'mouse') {
+  // jsdom has no PointerEvent or pointer capture; keep the DOM event path real.
+  const event = new window.MouseEvent(type, {bubbles: true, cancelable: true, clientY});
+  Object.defineProperties(event, {
+    pointerId: {value: 7},
+    pointerType: {value: pointerType},
+    isPrimary: {value: true}
+  });
+  fireEvent(handle, event);
+}
+
+function prepareResizeHandle(view) {
+  const handle = within(view.container).getByRole('separator', {name: 'Resize timeline chart'});
+  handle.setPointerCapture = sinon.spy();
+  handle.releasePointerCapture = sinon.spy();
+  handle.hasPointerCapture = () => true;
+  return handle;
+}
+
+test('Components -> TimeWidget -> resizing scales bins while keeping surrounding controls fixed', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const onChange = sinon.spy();
+  const view = renderSteppingWidget(
+    {...defaultProps.filter, view: FILTER_VIEW_TYPES.enlarged},
+    onChange
+  );
+  fireEvent.click(view.container.querySelector('button.time-widget-settings'));
+  const handle = prepareResizeHandle(view);
+  const bars = () => Array.from(view.container.querySelectorAll('.histogram-bars rect'));
+  const svg = bars()[0].closest('svg');
+  const plot = view.container.querySelector('.kg-range-slider__plot');
+  const initialHeight = Number(svg.getAttribute('height'));
+  const initialWidth = svg.getAttribute('width');
+  const initialPlotHeight = parseFloat(plot.style.height);
+  const initialBins = bars().map(bar => Number(bar.getAttribute('height')));
+  const fixedDimensions = () =>
+    [
+      view.container.querySelector('.time-widget--top'),
+      view.container.querySelector('.time-widget__playback-row'),
+      view.container.querySelector('.time-widget--settings'),
+      view.container.querySelector('.kg-range-slider__slider'),
+      view.getByTestId('time-widget-timeline-container').parentElement
+    ].map(element => {
+      const style = window.getComputedStyle(element);
+      return [style.height, style.minHeight, style.padding, style.margin, style.gap];
+    });
+  const beforeDimensions = fixedDimensions();
+  t.ok(
+    initialBins.some(height => height > 0),
+    'fixture renders populated histogram bins'
+  );
+  t.equal(handle.getAttribute('aria-orientation'), 'horizontal', 'names the resize direction');
+  t.equal(handle.tabIndex, 0, 'resize control is keyboard focusable');
+
+  resizePointer(handle, 'pointerdown', 200);
+  resizePointer(handle, 'pointermove', 140);
+  t.equal(Number(svg.getAttribute('height')), initialHeight + 60, 'dragging up grows the chart');
+  t.equal(
+    parseFloat(plot.style.height),
+    initialPlotHeight + 60,
+    'plot reserves the same extra space'
+  );
+  t.deepEqual(
+    bars().map(bar => Number(bar.getAttribute('height')) / (initialHeight + 60)),
+    initialBins.map(height => height / initialHeight),
+    'each bin scales with the plot instead of leaving unused space'
+  );
+  t.equal(svg.getAttribute('width'), initialWidth, 'vertical resizing preserves chart width');
+  t.deepEqual(
+    fixedDimensions(),
+    beforeDimensions,
+    'controls, settings and outer spacing stay fixed'
+  );
+  t.equal(onChange.callCount, 0, 'resizing does not change the selected time range');
+  t.ok(handle.setPointerCapture.calledWith(7), 'drag captures the initiating pointer');
+  resizePointer(handle, 'pointerup', 140);
+  resizePointer(handle, 'pointermove', 100);
+  t.equal(Number(svg.getAttribute('height')), initialHeight + 60, 'release ends resizing');
+  t.ok(handle.releasePointerCapture.calledWith(7), 'release returns pointer capture');
+  cleanup();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget -> resize bounds, touch cancellation and keyboard controls', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const view = renderSteppingWidget(
+    {...defaultProps.filter, view: FILTER_VIEW_TYPES.enlarged},
+    sinon.spy()
+  );
+  const handle = prepareResizeHandle(view);
+  const height = () => Number(handle.getAttribute('aria-valuenow'));
+  const initialHeight = height();
+  const minHeight = Number(handle.getAttribute('aria-valuemin'));
+  const maxHeight = Number(handle.getAttribute('aria-valuemax'));
+
+  resizePointer(handle, 'pointerdown', 200, 'touch');
+  resizePointer(handle, 'pointermove', 2000, 'touch');
+  t.equal(height(), minHeight, 'downward drag stops at the readable minimum');
+  resizePointer(handle, 'pointermove', -2000, 'touch');
+  t.equal(height(), maxHeight, 'upward drag stops at the maximum');
+  resizePointer(handle, 'pointercancel', -2000, 'touch');
+  resizePointer(handle, 'pointermove', 100, 'touch');
+  t.equal(height(), maxHeight, 'cancelled touch drag cannot keep resizing');
+
+  fireEvent.keyDown(handle, {key: 'Home'});
+  t.equal(height(), minHeight, 'Home selects the minimum height');
+  fireEvent.keyDown(handle, {key: 'ArrowDown'});
+  t.equal(height(), minHeight, 'keyboard shrinking respects the minimum');
+  fireEvent.keyDown(handle, {key: 'ArrowUp'});
+  t.equal(height(), minHeight + 10, 'ArrowUp increases chart height');
+  fireEvent.keyDown(handle, {key: 'ArrowDown'});
+  t.equal(height(), minHeight, 'ArrowDown decreases chart height');
+  fireEvent.keyDown(handle, {key: 'End'});
+  fireEvent.keyDown(handle, {key: 'ArrowUp'});
+  t.equal(height(), maxHeight, 'End and ArrowUp respect the maximum');
+  fireEvent.doubleClick(handle);
+  t.equal(height(), initialHeight, 'double click restores the themed default');
+
+  resizePointer(handle, 'pointerdown', 200);
+  resizePointer(handle, 'pointermove', 180);
+  resizePointer(handle, 'lostpointercapture', 180);
+  resizePointer(handle, 'pointermove', 100);
+  t.equal(height(), initialHeight + 20, 'losing capture ends the active drag');
+  cleanup();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget -> resized chart survives settings and collapsed view changes', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const filter = {...defaultProps.filter, view: FILTER_VIEW_TYPES.enlarged};
+  const widget = currentFilter => (
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <TimeWidget {...defaultProps} filter={currentFilter} />
+      </IntlWrapper>
+    </ThemeProvider>
+  );
+  const view = render(widget(filter));
+  const queries = within(view.container);
+  const handle = prepareResizeHandle(view);
+  fireEvent.keyDown(handle, {key: 'ArrowUp'});
+  const resizedHeight = Number(handle.getAttribute('aria-valuenow'));
+  fireEvent.click(view.container.querySelector('button.time-widget-settings'));
+  fireEvent.click(queries.getByRole('button', {name: 'Hide settings'}));
+  t.equal(
+    Number(handle.getAttribute('aria-valuenow')),
+    resizedHeight,
+    'settings preserve chart height'
+  );
+
+  view.rerender(widget({...filter, view: FILTER_VIEW_TYPES.minified}));
+  t.equal(
+    queries.queryByRole('separator', {name: 'Resize timeline chart'}),
+    null,
+    'collapsed timeline has no chart resize control'
+  );
+  view.rerender(widget(filter));
+  t.equal(
+    Number(
+      queries.getByRole('separator', {name: 'Resize timeline chart'}).getAttribute('aria-valuenow')
+    ),
+    resizedHeight,
+    'expanding restores the resized height'
+  );
+  const svg = view.container.querySelector('.histogram-bars').closest('svg');
+  t.equal(
+    Number(svg.getAttribute('height')),
+    resizedHeight,
+    'restored histogram uses the resized height'
+  );
+  cleanup();
+  clientSizeStub.restore();
+  t.end();
+});
+
+test('Components -> TimeWidget -> resizing leaves room above the widget and its settings', t => {
+  const clientSizeStub = mockHTMLElementClientSize('offsetWidth', 500);
+  const root = document.createElement('div');
+  const rootBounds = {top: 50, bottom: 550, height: 500};
+  const rootRect = sinon.stub(root, 'getBoundingClientRect').returns(rootBounds);
+  const view = render(
+    <ThemeProvider theme={theme}>
+      <IntlWrapper>
+        <RootContext.Provider value={{current: root}}>
+          <TimeWidget
+            {...defaultProps}
+            filter={{...defaultProps.filter, view: FILTER_VIEW_TYPES.enlarged}}
+          />
+        </RootContext.Provider>
+      </IntlWrapper>
+    </ThemeProvider>
+  );
+  const handle = prepareResizeHandle(view);
+  const widget = view.container.querySelector('.bottom-widget--inner');
+  const chartHeight = () =>
+    Number(view.container.querySelector('.histogram-bars').closest('svg').getAttribute('height'));
+  // Model a bottom-anchored widget with fixed controls and an optional settings row.
+  const widgetRect = sinon.stub(widget, 'getBoundingClientRect').callsFake(() => {
+    const height = chartHeight() + 100 + (widget.querySelector('.time-widget--settings') ? 80 : 0);
+    return {top: 500 - height, bottom: 500, height};
+  });
+  fireEvent.keyDown(handle, {key: 'ArrowUp'});
+  const availableHeight = Number(handle.getAttribute('aria-valuemax'));
+  t.ok(availableHeight < 600, 'available map space lowers the resize maximum');
+  fireEvent.keyDown(handle, {key: 'End'});
+  t.equal(chartHeight(), availableHeight, 'keyboard expansion stops at available map space');
+  t.ok(
+    widget.getBoundingClientRect().top > rootBounds.top,
+    'header and handle remain inside the map'
+  );
+  resizePointer(handle, 'pointerdown', 100);
+  resizePointer(handle, 'pointermove', -1000);
+  resizePointer(handle, 'pointerup', -1000);
+  t.equal(chartHeight(), availableHeight, 'pointer expansion respects the same available height');
+
+  fireEvent.click(view.container.querySelector('button.time-widget-settings'));
+  t.equal(
+    chartHeight(),
+    availableHeight - 80,
+    'opening settings gives its space back from the chart'
+  );
+  t.equal(
+    Number(handle.getAttribute('aria-valuemax')),
+    chartHeight(),
+    'accessible maximum reflects the remaining space'
+  );
+  t.ok(
+    widget.getBoundingClientRect().top > rootBounds.top,
+    'settings do not push the header offscreen'
+  );
+  widgetRect.restore();
+  rootRect.restore();
+  cleanup();
+  clientSizeStub.restore();
   t.end();
 });

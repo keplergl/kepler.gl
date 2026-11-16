@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import styled, {DefaultTheme, ThemeProvider} from 'styled-components';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
+import styled, {DefaultTheme, ThemeProvider, useTheme} from 'styled-components';
 import throttle from 'es-toolkit/compat/throttle';
 import {
   ANIMATION_WINDOW,
@@ -16,9 +24,12 @@ import {
   formatNumber,
   getNumericRangeMinimum,
   getTimelineFromFilter,
+  hasMobileWidth,
   intervalBinFromMarks
 } from '@kepler.gl/utils';
+import {breakPointValues} from '@kepler.gl/styles';
 import {BottomWidgetInner, Button, PanelLabel} from '../common/styled-components';
+import {HorizontalResizeHandle} from '../common/icons';
 import TimeRangeSliderFactory from '../common/time-range-slider';
 import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {timeRangeSliderFieldsSelector} from './time-range-filter';
@@ -27,11 +38,17 @@ import TimeWidgetTopFactory from './time-widget-top';
 import TimeWidgetSettingsFactory from './time-widget-settings';
 import TimeRangeEditor from './time-range-editor';
 import {rangesEqual, clampRange, clampWindowToDomain} from '../common/timeline-helpers';
+import {RootContext} from '../context';
 
 const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   padding: 0;
   border: 0;
   min-width: 0;
+
+  &:hover .time-widget__resize-handle,
+  &:focus-within .time-widget__resize-handle {
+    opacity: 1;
+  }
 
   .time-widget__hide-settings {
     opacity: 0;
@@ -89,6 +106,44 @@ const TimeBottomWidgetInner = styled(BottomWidgetInner)`
   }
 `;
 
+// Match the legend's top resize handle without reserving additional layout space.
+const TimelineResizeHandle = styled(Button)`
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  opacity: 0;
+
+  &,
+  &:hover,
+  &:active,
+  &:focus {
+    background-color: ${props => props.theme.activeColor};
+    color: #f7f8fa;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.textColor};
+    outline-offset: 2px;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    opacity: 1;
+  }
+`;
+
+const MIN_CHART_HEIGHT = 40;
+const MAX_CHART_HEIGHT = 600;
+
 const TimelineSection = styled.div`
   position: relative;
   margin: 4px 12px 12px;
@@ -104,22 +159,30 @@ const TimelineContainer = styled.div`
 
 // The playback row already separates the chart from the title. Remove the
 // legacy top plot margin and its reserved height only within this widget.
-const timelinePlotTheme = (theme: DefaultTheme) => ({
+const timelinePlotTheme = (theme: DefaultTheme, chartHeight?: number) => ({
   ...theme,
+  rangePlotH: chartHeight ?? theme.rangePlotH,
+  rangePlotHLarge: chartHeight ?? theme.rangePlotHLarge,
+  rangePlotHLargePalm: chartHeight ?? theme.rangePlotHLargePalm,
   rangePlotMargin: {...theme.rangePlotMargin, top: 0},
   rangePlotMarginLarge: {...theme.rangePlotMarginLarge, top: 0},
-  rangePlotContainerH: Math.max(
-    theme.rangePlotH,
-    theme.rangePlotContainerH - theme.rangePlotMargin.top
-  ),
-  rangePlotContainerHLarge: Math.max(
-    theme.rangePlotHLarge,
-    theme.rangePlotContainerHLarge - theme.rangePlotMarginLarge.top
-  ),
-  rangePlotContainerHLargePalm: Math.max(
-    theme.rangePlotHLargePalm,
-    theme.rangePlotContainerHLargePalm - theme.rangePlotMarginLarge.top
-  )
+  rangePlotContainerH:
+    (chartHeight ?? theme.rangePlotH) +
+    Math.max(0, theme.rangePlotContainerH - theme.rangePlotH - theme.rangePlotMargin.top),
+  rangePlotContainerHLarge:
+    (chartHeight ?? theme.rangePlotHLarge) +
+    Math.max(
+      0,
+      theme.rangePlotContainerHLarge - theme.rangePlotHLarge - theme.rangePlotMarginLarge.top
+    ),
+  rangePlotContainerHLargePalm:
+    (chartHeight ?? theme.rangePlotHLargePalm) +
+    Math.max(
+      0,
+      theme.rangePlotContainerHLargePalm -
+        theme.rangePlotHLargePalm -
+        theme.rangePlotMarginLarge.top
+    )
 });
 
 const TimelineStatusBar = styled.div`
@@ -175,6 +238,11 @@ function TimeWidgetFactory(
     timeline
   }: TimeWidgetProps) => {
     const [showSettings, setShowSettings] = useState(false);
+    const [chartHeight, setChartHeight] = useState<number>();
+    const [maxChartHeight, setMaxChartHeight] = useState(MAX_CHART_HEIGHT);
+    const theme = useTheme();
+    const rootRef = useContext(RootContext);
+    const resizeStart = useRef<{pointerId: number; y: number; height: number} | null>(null);
     const widgetRef = useRef<HTMLDivElement>(null);
     const isTimeFilter = filter.type === FILTER_TYPES.timeRange;
     const timeFilter = isTimeFilter ? filter : null;
@@ -231,6 +299,102 @@ function TimeWidgetFactory(
     const timeRangeSlideProps = useMemo(
       () => timeRangeSliderFieldsSelector(filter, datasets, layers),
       [filter, datasets, layers]
+    );
+
+    const defaultChartHeight = timeRangeSlideProps.isEnlarged
+      ? hasMobileWidth(breakPointValues)
+        ? theme.rangePlotHLargePalm
+        : theme.rangePlotHLarge
+      : theme.rangePlotH;
+    const currentChartHeight = chartHeight ?? defaultChartHeight;
+    // The widget is bottom anchored: extra chart height consumes space above it.
+    // Recheck when settings, map bounds or wrapping controls change that space.
+    useLayoutEffect(() => {
+      const widget = widgetRef.current;
+      const root = rootRef?.current;
+      if (!widget || isMinified) return undefined;
+      const updateMaxHeight = () => {
+        const bounds = widget.getBoundingClientRect();
+        if (!bounds.height) return;
+        const top = Math.max(0, root?.getBoundingClientRect().top ?? 0);
+        const maximum = clamp(
+          [MIN_CHART_HEIGHT, MAX_CHART_HEIGHT],
+          Math.floor(currentChartHeight + bounds.top - top - 8)
+        );
+        setMaxChartHeight(maximum);
+        setChartHeight(height => (height === undefined ? height : Math.min(height, maximum)));
+      };
+      updateMaxHeight();
+      const observer =
+        typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateMaxHeight);
+      observer?.observe(widget);
+      if (root) observer?.observe(root);
+      window.addEventListener('resize', updateMaxHeight);
+      return () => {
+        observer?.disconnect();
+        window.removeEventListener('resize', updateMaxHeight);
+      };
+    }, [currentChartHeight, isMinified, rootRef, showSettings]);
+
+    const plotTheme = useCallback(
+      (outerTheme: DefaultTheme) => timelinePlotTheme(outerTheme, chartHeight),
+      [chartHeight]
+    );
+
+    const startChartResize = useCallback(
+      (event: React.PointerEvent<HTMLElement>) => {
+        if (event.button !== 0 || resizeStart.current) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.focus();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        resizeStart.current = {
+          pointerId: event.pointerId,
+          y: event.clientY,
+          height: currentChartHeight
+        };
+      },
+      [currentChartHeight]
+    );
+
+    const resizeChart = useCallback(
+      (event: React.PointerEvent<HTMLElement>) => {
+        const start = resizeStart.current;
+        if (!start || start.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setChartHeight(
+          clamp([MIN_CHART_HEIGHT, maxChartHeight], start.height + start.y - event.clientY)
+        );
+      },
+      [maxChartHeight]
+    );
+
+    const endChartResize = useCallback((event: React.PointerEvent<HTMLElement>) => {
+      if (resizeStart.current?.pointerId !== event.pointerId) return;
+      event.stopPropagation();
+      resizeStart.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }, []);
+
+    useEffect(() => {
+      if (isMinified) resizeStart.current = null;
+    }, [isMinified]);
+
+    const resizeChartWithKeyboard = useCallback(
+      (event: React.KeyboardEvent<HTMLElement>) => {
+        const nextHeight = {
+          ArrowUp: currentChartHeight + 10,
+          ArrowDown: currentChartHeight - 10,
+          Home: MIN_CHART_HEIGHT,
+          End: maxChartHeight
+        }[event.key];
+        if (nextHeight === undefined) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setChartHeight(clamp([MIN_CHART_HEIGHT, maxChartHeight], nextHeight));
+      },
+      [currentChartHeight, maxChartHeight]
     );
 
     const fullDomain = Array.isArray(timeRangeSlideProps.domain)
@@ -605,6 +769,30 @@ function TimeWidgetFactory(
         ref={widgetRef}
         onKeyDown={handleKeyDown}
       >
+        {!isMinified ? (
+          <TimelineResizeHandle
+            as="div"
+            className="time-widget__resize-handle"
+            tabIndex={0}
+            role="separator"
+            aria-label="Resize timeline chart"
+            aria-orientation="horizontal"
+            aria-valuemin={MIN_CHART_HEIGHT}
+            aria-valuemax={maxChartHeight}
+            aria-valuenow={currentChartHeight}
+            onPointerDown={startChartResize}
+            onPointerMove={resizeChart}
+            onPointerUp={endChartResize}
+            onPointerCancel={endChartResize}
+            onLostPointerCapture={() => {
+              resizeStart.current = null;
+            }}
+            onKeyDown={resizeChartWithKeyboard}
+            onDoubleClick={() => setChartHeight(undefined)}
+          >
+            <HorizontalResizeHandle height="12px" />
+          </TimelineResizeHandle>
+        ) : null}
         <TimeWidgetTop
           filter={filter}
           readOnly={readOnly}
@@ -681,7 +869,7 @@ function TimeWidgetFactory(
             ref={timelineContainerRef}
             data-testid="time-widget-timeline-container"
           >
-            <ThemeProvider theme={timelinePlotTheme}>
+            <ThemeProvider theme={plotTheme}>
               <TimeRangeSlider
                 {...timeRangeSlideProps}
                 showControls={false}
