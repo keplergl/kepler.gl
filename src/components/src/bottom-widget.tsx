@@ -5,8 +5,8 @@ import React, {forwardRef, useMemo, useCallback} from 'react';
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 
 import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
-import {isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
-import {media} from '@kepler.gl/styles';
+import {hasPortableWidth, isSideFilter, mergeFilterWithTimeline} from '@kepler.gl/utils';
+import {media, breakPointValues} from '@kepler.gl/styles';
 import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import TimeWidgetFactory from './filters/time-widget';
@@ -91,7 +91,8 @@ export default function BottomWidgetFactory(
       uiState,
       sidePanelWidth,
       layers,
-      rootRef
+      rootRef,
+      theme
     } = props;
 
     const {activeSidePanel, readOnly} = uiState;
@@ -106,7 +107,21 @@ export default function BottomWidgetFactory(
       [filters]
     );
 
-    const enlargedFilterWidth = Math.max(0, isOpen ? containerW - sidePanelWidth : containerW);
+    const availableWidth = Math.max(0, isOpen ? containerW - sidePanelWidth : containerW);
+    const legend = uiState.mapControls?.mapLegend;
+    const position = legend?.settings?.position;
+    const isLegendInCorner =
+      !position || (position.anchorX === 'right' && position.anchorY === 'bottom');
+    const spaceForLegendWidth =
+      !hasPortableWidth(breakPointValues) && legend?.show && legend.active && isLegendInCorner
+        ? Math.min(
+            availableWidth,
+            theme.mapControl?.width +
+              theme.mapControl?.mapLegend?.pinned?.right * 2 -
+              theme.bottomWidgetPaddingRight
+          )
+        : 0;
+    const enlargedFilterWidth = availableWidth - spaceForLegendWidth;
 
     // show playback control if layers contain trip layer & at least one trip layer is visible
     const animatableLayer = useMemo(
@@ -173,6 +188,7 @@ export default function BottomWidgetFactory(
     return (
       <BottomWidgetContainer
         width={Math.min(maxWidth, enlargedFilterWidth)}
+        style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
         $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
         ref={rootRef}

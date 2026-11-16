@@ -87,7 +87,7 @@ test('Components -> BottomWidget -> skips unchanged parent renders and keeps upd
   t.end();
 });
 
-test('Components -> BottomWidget -> legend changes do not reserve timeline space', t => {
+test('Components -> BottomWidget -> reserves space only for the bottom-right legend', t => {
   const matchMedia = Window.matchMedia;
   const Widget = BottomWidgetFactory(
     () => <div>Timeline</div>,
@@ -121,27 +121,60 @@ test('Components -> BottomWidget -> legend changes do not reserve timeline space
       const widget = view.container.querySelector('.bottom-widget--container');
       const initialStyle = window.getComputedStyle(widget);
       const initialWidth = initialStyle.width;
-      const initialMargin = initialStyle.marginRight;
+      const reservedWidth = portable
+        ? 0
+        : theme.mapControl.width +
+          theme.mapControl.mapLegend.pinned.right * 2 -
+          theme.bottomWidgetPaddingRight;
       t.equal(
         initialWidth,
         `${props.containerW - props.sidePanelWidth}px`,
         'starts with the available width for the current layout'
       );
-      for (const [action, legend] of [
-        ['opening', {active: true}],
+      for (const [action, legend, reserved] of [
+        ['opening in the default corner', {active: true}, reservedWidth],
         [
-          'moving',
+          'moving to the top-right',
           {
             active: true,
-            settings: {position: {x: 10, y: 10, anchorX: 'left', anchorY: 'top'}}
-          }
+            settings: {position: {x: 10, y: 10, anchorX: 'right', anchorY: 'top'}}
+          },
+          0
         ],
-        ['closing', {active: false}]
+        [
+          'moving to the bottom-left',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 30, anchorX: 'left', anchorY: 'bottom'}}
+          },
+          0
+        ],
+        [
+          'returning to the bottom-right',
+          {
+            active: true,
+            settings: {position: {x: 10, y: 30, anchorX: 'right', anchorY: 'bottom'}}
+          },
+          reservedWidth
+        ],
+        ['hiding', {active: true, show: false}, 0],
+        ['closing', {active: false}, 0]
       ]) {
         view.rerender(tree(legend));
         const style = window.getComputedStyle(widget);
-        t.equal(style.width, initialWidth, `${action} legend preserves timeline width`);
-        t.equal(style.marginRight, initialMargin, `${action} legend preserves timeline offset`);
+        t.equal(style.width, `${parseFloat(initialWidth) - reserved}px`, `${action}: width`);
+        t.equal(style.marginRight, `${reserved}px`, `${action}: reserved corner space`);
+      }
+      if (!portable) {
+        props.containerW = props.sidePanelWidth + 100;
+        view.rerender(tree({active: true}));
+        const style = window.getComputedStyle(widget);
+        t.equal(style.width, '0px', 'a small embedded map never produces a negative width');
+        t.equal(
+          style.marginRight,
+          '100px',
+          'legend space cannot push the timeline under the sidebar'
+        );
       }
       view.unmount();
       view = null;
