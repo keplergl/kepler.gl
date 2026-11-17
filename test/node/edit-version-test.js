@@ -358,3 +358,116 @@ test('release:prepare leaves the changelog untouched if the existing bump comman
   });
   t.end();
 });
+
+function withReleaseCheckFixture(callback) {
+  const cwd = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-release-check-')));
+  const callsPath = path.join(cwd, 'npm-calls.jsonl');
+  const calls = () =>
+    fs.existsSync(callsPath)
+      ? fs
+          .readFileSync(callsPath, 'utf8')
+          .trim()
+          .split('\n')
+          .map(line => JSON.parse(line))
+      : [];
+  try {
+    fs.mkdirSync(path.join(cwd, 'scripts'));
+    fs.mkdirSync(path.join(cwd, 'bin'));
+    fs.mkdirSync(path.join(cwd, 'nested'));
+    const script = path.join(cwd, 'scripts/check-release.js');
+    fs.copyFileSync(path.join(ROOT, 'scripts/check-release.js'), script);
+    const npm = path.join(cwd, 'bin/npm');
+    fs.writeFileSync(
+      npm,
+      `#!/usr/bin/env node
+const fs = require('fs');
+const log = process.env.RELEASE_CHECK_CALLS;
+const count = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\\n').length : 0;
+fs.appendFileSync(log, JSON.stringify({args: process.argv.slice(2), cwd: process.cwd()}) + '\\n');
+if (count + 1 === Number(process.env.RELEASE_CHECK_FAIL_AT)) {
+  console.error('Simulated npm failure');
+  process.exit(17);
+}
+`
+    );
+    fs.chmodSync(npm, 0o755);
+    const run = (args = [], env = {}) =>
+      spawnSync(process.execPath, [script, ...args], {
+        cwd: path.join(cwd, 'nested'),
+        encoding: 'utf8',
+        timeout: 30000,
+        env: {
+          ...process.env,
+          PATH: `${path.join(cwd, 'bin')}${path.delimiter}${process.env.PATH}`,
+          RELEASE_CHECK_CALLS: callsPath,
+          ...env
+        }
+      });
+    callback({cwd, calls, run});
+  } finally {
+    fs.rmSync(cwd, {recursive: true, force: true});
+  }
+}
+
+test('release:check validates every workspace before the root bundle without publishing', t => {
+  withReleaseCheckFixture(({cwd, calls, run}) => {
+    const result = run([], {npm_config_ignore_scripts: 'true', npm_config_dry_run: 'false'});
+    t.equal(result.status, 0, result.stderr || 'both dry runs succeed');
+    const invocations = calls();
+    t.equal(invocations.length, 2, 'runs both checks');
+    t.deepEqual(
+      invocations.map(call => call.args),
+      [
+        [
+          'publish',
+          '--workspaces',
+          '--include-workspace-root=false',
+          '--access',
+          'public',
+          '--tag',
+          'latest',
+          '--dry-run',
+          '--ignore-scripts=false'
+        ],
+        ['publish', '--workspaces=false', '--tag', 'latest', '--dry-run', '--ignore-scripts=false']
+      ],
+      'always performs dry runs with build hooks enabled and explicit workspace/root selection'
+    );
+    t.ok(
+      invocations.every(call => call.cwd === cwd),
+      'checks run from the repository root'
+    );
+    t.ok(
+      result.stdout.includes('Both release dry runs passed'),
+      'reports success after both checks'
+    );
+  });
+  t.end();
+});
+
+test('release:check stops on failure of either dry run', t => {
+  [1, 2].forEach(failingCheck => {
+    withReleaseCheckFixture(({calls, run}) => {
+      const result = run([], {RELEASE_CHECK_FAIL_AT: String(failingCheck)});
+      t.equal(result.status, 17, `propagates failure from check ${failingCheck}`);
+      t.equal(calls().length, failingCheck, 'does not start another command after failure');
+      t.ok(result.stderr.includes('Simulated npm failure'), 'preserves npm error output');
+      t.notOk(result.stdout.includes('Both release dry runs passed'), 'does not report success');
+    });
+  });
+  t.end();
+});
+
+test('release:check fails if npm cannot start and rejects flags that could change publishing behavior', t => {
+  withReleaseCheckFixture(({cwd, calls, run}) => {
+    const missingNpm = run([], {PATH: path.join(cwd, 'nested')});
+    t.notEqual(missingNpm.status, 0, 'missing npm is a failure');
+    t.notOk(missingNpm.stdout.includes('Both release dry runs passed'), 'does not report success');
+    ['--dry-run=false', '--ignore-scripts', '--workspace=other'].forEach(arg => {
+      t.notEqual(run([arg]).status, 0, `rejects ${arg}`);
+    });
+    t.equal(run(['--help']).status, 0, 'help succeeds');
+    t.deepEqual(calls(), [], 'invalid flags and help never invoke npm');
+  });
+  t.end();
+});
