@@ -398,6 +398,20 @@ To prepare a new release you need the following tool:
 
 Setup `gh-release` with your github api token ([instructions](https://www.npmjs.com/package/gh-release#command-line-interface))
 
+#### Preview releases in CI
+
+The separate [npm Release Preview workflow](../.github/workflows/npmpublish-preview.yml) runs both workspace and standalone bundle dry runs with `yarn release:check`. It uses npm 11.19.0, the version intended for future Trusted Publishing, and keeps the repository's Node/Yarn versions.
+
+Once this workflow is on `master`, open GitHub **Actions → npm Release Preview → Run workflow**, select the branch to check, and start the run. It runs only when started manually; creating a GitHub release does not trigger it.
+
+The preview executes the release builds but does not upload packages, change npm tags, or remove `private` from the root manifest. It has only read access to repository contents, no npm credentials, and no OIDC publishing permission. A failure in either dry run fails the preview.
+
+The existing [release workflow](../.github/workflows/npmpublish.yml) and local commands are unchanged. Continue the current release process, including manual publishing when token authentication fails and manual publishing of the root `kepler.gl` bundle.
+
+A successful preview checks the CI build path; it does **not** prove npm publishing authentication works or guarantee that a later multi-package release cannot fail partway through. Actual publishing, bundle automation, and recovery from partially published versions require a follow-up change and a controlled publish before switching the release trigger. Only one workflow should own publishing; adding a second workflow with the same release trigger would run both.
+
+Do not configure npm Trusted Publishers for this preview. Those settings must match the final publishing workflow filename and should be created close to its first real release: [npm requires a first successful publish within two days](https://docs.npmjs.com/trusted-publishers/#trusted-publisher-configuration-expiry). Keep the existing npm token and GitHub secret during this rehearsal.
+
 ### Push a new release
 
 In order to publish a new version of kepler.gl a developer must perform the following steps:

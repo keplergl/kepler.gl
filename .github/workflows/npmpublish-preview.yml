@@ -1,0 +1,30 @@
+name: npm Release Preview
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # use Volta to manage yarn/node versions
+      - uses: volta-cli/action@v4
+
+      # Exercise the npm version intended for future Trusted Publishing.
+      - name: Set up npm
+        run: volta install npm@11.19.0
+
+      - run: yarn install --immutable && yarn bootstrap:prepare
+        env:
+          HUSKY: 0
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+
+      # Both dry runs execute the release builds, but never upload packages.
+      - name: Check workspace and bundle releases
+        run: yarn release:check
