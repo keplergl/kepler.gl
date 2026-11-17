@@ -85,7 +85,7 @@ class KeplerGl(anywidget.AnyWidget):
         config=None,
         read_only=False,
         center_map=True,
-        mapbox_token="",
+        mapbox_token=None,
         json_encoder=str,
         app_name=None,
         theme=None,
@@ -102,7 +102,9 @@ class KeplerGl(anywidget.AnyWidget):
             read_only: If True, hide side panel to disable map customization.
             center_map: If True, fit map bounds to the data (default: True).
             mapbox_token: Mapbox access token. Required for Mapbox basemap styles
-                (e.g. "Dark", "Muted Light"). Leave empty for free MapLibre styles.
+                (e.g. "Dark", "Muted Light"). If None, uses the token set at
+                widget creation. Pass ``""`` to export without a token, for free
+                MapLibre styles.
             json_encoder: Fallback function passed as ``default`` when
                 JSON-serializing GeoDataFrame data.  Defaults to ``str`` so
                 that ``datetime`` and similar types are converted automatically.
@@ -116,7 +118,7 @@ class KeplerGl(anywidget.AnyWidget):
         """
         data_to_save = data if data is not None else self.data
         config_to_save = config if config is not None else self.config
-        token = mapbox_token if mapbox_token else self.mapbox_token
+        token = mapbox_token if mapbox_token is not None else self.mapbox_token
         resolved_theme = theme if theme is not None else self.theme
         resolved_app_name = app_name if app_name is not None else self.app_name
 

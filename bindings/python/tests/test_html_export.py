@@ -614,6 +614,32 @@ class TestSaveToHtml:
             content = f.read()
         assert '"light"' in content
 
+    def test_saves_with_widget_mapbox_token(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, mapbox_token="pk.widget_token")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out)
+        with open(out) as f:
+            content = f.read()
+        assert "pk.widget_token" in content
+
+    def test_saves_with_mapbox_token_override(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, mapbox_token="pk.widget_token")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, mapbox_token="pk.export_token")
+        with open(out) as f:
+            content = f.read()
+        assert "pk.export_token" in content
+        assert "pk.widget_token" not in content
+
+    def test_empty_mapbox_token_clears_widget_token(self, sample_df, tmp_path):
+        widget = KeplerGl(data={"d": sample_df}, mapbox_token="pk.widget_token")
+        out = str(tmp_path / "map.html")
+        widget.save_to_html(file_name=out, mapbox_token="")
+        with open(out) as f:
+            content = f.read()
+        assert "pk.widget_token" not in content
+        assert 'MAPBOX_TOKEN = ""' in content
+
     def test_saves_with_custom_app_name(self, sample_df, tmp_path):
         widget = KeplerGl(data={"d": sample_df}, app_name="My Map")
         out = str(tmp_path / "map.html")
