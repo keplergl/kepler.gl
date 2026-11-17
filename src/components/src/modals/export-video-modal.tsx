@@ -392,7 +392,22 @@ const ExportVideoModalFactory = () => {
 
     const hubbleContainerRef = useRef<any>(null);
 
-    const animateEffects = useEffectAnimation(videoEffects, hubbleContainerRef);
+    const updateAnimatedLighting = useCallback(() => {
+      computeDeckEffects({
+        visState: {
+          ...visState,
+          effects: videoEffects,
+          effectOrder: visState.effectOrder || videoEffects.map(effect => effect.id)
+        },
+        mapState: {...mapState, ...hubbleContainerRef.current?.state?.viewState},
+        isExport: true
+      });
+    }, [visState, videoEffects, mapState]);
+    const animateEffects = useEffectAnimation(
+      videoEffects,
+      hubbleContainerRef,
+      updateAnimatedLighting
+    );
 
     const deckEffects = useMemo(() => {
       if (videoEffects.length === 0) return [];

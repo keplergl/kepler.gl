@@ -237,6 +237,44 @@ describe('post-processing effect parameters', () => {
     expect(effect.deckEffect.props).toEqual(effect.parameters);
   });
 
+  test.each([
+    [0, Date.UTC(2024, 0, 1)],
+    [Date.UTC(2024, 0, 1), 0],
+    [0, 8.64e15],
+    [8.64e15, 0]
+  ])(
+    'accepts timestamp endpoints from %s to %s, including reverse ranges',
+    (startValue, endValue) => {
+      const animation = {timestamp: {startValue, endValue, easing: 'linear'}};
+      expect(validateEffectAnimation(animation, LIGHT_AND_SHADOW_EFFECT.parameters)).toEqual(
+        animation
+      );
+    }
+  );
+
+  test.each([8.64e15 + 1, -8.64e15 - 1, Number.MAX_SAFE_INTEGER, Infinity, NaN, null, '0', [0]])(
+    'rejects invalid timestamp endpoint %j instead of clamping it into a valid date',
+    value => {
+      for (const endpoint of ['startValue', 'endValue']) {
+        expect(
+          validateEffectAnimation(
+            {timestamp: {startValue: 0, endValue: 1, [endpoint]: value, easing: 'linear'}},
+            LIGHT_AND_SHADOW_EFFECT.parameters
+          )
+        ).toBeUndefined();
+      }
+    }
+  );
+
+  test('accepts a timestamp animation without an explicit start', () => {
+    expect(
+      validateEffectAnimation(
+        {timestamp: {endValue: 0, easing: 'easeInOut'}},
+        LIGHT_AND_SHADOW_EFFECT.parameters
+      )
+    ).toEqual({timestamp: {endValue: 0, easing: 'easeInOut'}});
+  });
+
   test('only continuous effect descriptors accept animation endpoints', () => {
     const descriptions = [
       ...POSTPROCESSING_EFFECTS.surfaceFog.parameters,
@@ -252,6 +290,7 @@ describe('post-processing effect parameters', () => {
       height: {endValue: 0, easing: 'linear'},
       thickness: {endValue: 0, easing: 'linear'},
       fogColor: {endValue: [0, 100, 255], easing: 'linear'},
+      timestamp: {endValue: 0, easing: 'linear'},
       shadowIntensity: {endValue: 0, easing: 'linear'},
       sunLightIntensity: {endValue: 0, easing: 'linear'},
       ambientLightIntensity: {endValue: 0, easing: 'linear'}
@@ -265,6 +304,7 @@ describe('post-processing effect parameters', () => {
       'height',
       'thickness',
       'fogColor',
+      'timestamp',
       'shadowIntensity',
       'sunLightIntensity',
       'ambientLightIntensity',

@@ -649,6 +649,52 @@ test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
   t.end();
 });
 
+test('#visStateSchema -> v1 -> shadow timestamp animation round trips independently of static time', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = state.visState.effects.find(item => item.type === 'lightAndShadow');
+  effect.setProps({
+    parameters: {
+      timestamp: Date.UTC(2024, 6, 1, 12),
+      timezone: 'America/New_York',
+      timeMode: 'animation'
+    }
+  });
+  const parameters = {...effect.parameters};
+  const animation = {
+    timestamp: {
+      startValue: Date.UTC(2024, 0, 1, 6),
+      endValue: Date.UTC(2024, 0, 1, 18),
+      easing: 'linear'
+    }
+  };
+  effect.setProps({animation});
+
+  const saved = SchemaManager.getConfigToSave(state);
+  const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
+  t.deepEqual(savedEffect.animation, animation, 'saves explicit UTC shadow time endpoints');
+  t.deepEqual(
+    savedEffect.parameters,
+    parameters,
+    'saves static timestamp, timezone and time mode unchanged'
+  );
+  const loaded = SchemaManager.parseSavedConfig(saved);
+  const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
+  t.deepEqual(loadedEffect.animation, animation, 'reconstructs validated timestamp animation');
+  t.deepEqual(loadedEffect.parameters, parameters, 'restores the separate static time settings');
+  t.equal(
+    loadedEffect.deckEffect.directionalLights[0].timestamp,
+    parameters.timestamp,
+    'initializes loaded lighting from static time'
+  );
+  t.deepEqual(effect.parameters, parameters, 'saving does not change the original time settings');
+  t.equal(
+    effect.deckEffect.directionalLights[0].timestamp,
+    parameters.timestamp,
+    'saving does not apply endpoints to the original light'
+  );
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> legacy fog animation stays compatible', t => {
   const state = cloneDeep(StateWEffects);
   const fog = createEffect({

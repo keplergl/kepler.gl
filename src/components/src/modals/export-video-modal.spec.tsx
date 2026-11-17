@@ -14,11 +14,16 @@ const mockExportVideoPanelContainer = jest.fn(() => (
   <div data-testid="export-video-panel">Mock Panel</div>
 ));
 const MockKeplerUIContext = React.createContext(null);
+let mockHubbleContainer;
 
 jest.mock('@hubble.gl/react', () => ({
   ExportVideoPanelContainer: class extends require('react').Component {
     static contextType = MockKeplerUIContext;
     state = {viewState: {}};
+    constructor(props) {
+      super(props);
+      mockHubbleContainer = this;
+    }
     setViewState(viewState) {
       this.setState({viewState});
     }
@@ -121,6 +126,7 @@ jest.mock('./hubble-utils', () => ({
 import ExportVideoModalFactory from './export-video-modal';
 import {useEffectAnimation} from './effect-animation';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
+import LightingEffect from '../../../effects/src/lighting-effect';
 
 function renderWithThemeLocal(component) {
   return render(component, {
@@ -468,7 +474,7 @@ describe('ExportVideoModal', () => {
       return effect;
     }
 
-    function mountAnimation(effects, state = {}) {
+    function mountAnimation(effects, state = {}, onLightingTimeChange = undefined) {
       const containerRef = {
         current: {
           state: {
@@ -478,7 +484,9 @@ describe('ExportVideoModal', () => {
           }
         }
       };
-      const hook = renderHook(() => useEffectAnimation(effects, containerRef));
+      const hook = renderHook(() =>
+        useEffectAnimation(effects, containerRef, onLightingTimeChange)
+      );
       return {...hook, state: containerRef.current.state, draw: () => hook.result.current()};
     }
 
@@ -660,6 +668,136 @@ describe('ExportVideoModal', () => {
         expect(sunLight.intensity).toBe(3);
       }
     );
+
+    test.each(['pick', 'current', 'animation'])(
+      'plays explicit sunlight dates independently of %s mode and restores that mode',
+      timeMode => {
+        const midnight = Date.UTC(2024, 5, 21);
+        const noon = midnight + 12 * 60 * 60 * 1000;
+        const savedTimestamp = Date.UTC(2024, 4, 1, 12);
+        const live = new LightingEffect({
+          parameters: {timeMode, timestamp: savedTimestamp, sunLightIntensity: 2},
+          animation: {
+            timestamp: {
+              startValue: midnight,
+              endValue: midnight + 24 * 60 * 60 * 1000,
+              easing: 'linear'
+            },
+            sunLightIntensity: {startValue: 2, endValue: 4, easing: 'linear'}
+          }
+        });
+        const effect = live.clone();
+        const compute = jest.requireActual('@kepler.gl/utils').computeDeckEffects;
+        const refreshLighting = () =>
+          compute({
+            visState: {
+              effects: [effect],
+              effectOrder: [effect.id],
+              animationConfig: {currentTime: 0},
+              filters: []
+            },
+            mapState: {latitude: 0, longitude: 0},
+            isExport: true
+          });
+        const clock = jest.spyOn(Date, 'now').mockReturnValue(noon);
+        try {
+          refreshLighting();
+          const {draw, state, unmount} = mountAnimation(
+            [effect],
+            {currentTimeMs: 0, durationMs: 1000},
+            refreshLighting
+          );
+          const sunLight = effect.deckEffect.directionalLights[0];
+          draw();
+          expect(effect.parameters.timeMode).toBe('pick');
+          expect(sunLight.timestamp).toBe(midnight);
+          expect(effect.deckEffect.outputUniformShadow).toBe(true);
+          expect(sunLight.intensity).toBe(0);
+          state.currentTimeMs = 500;
+          draw();
+          expect(sunLight.timestamp).toBe(noon);
+          expect(effect.deckEffect.outputUniformShadow).toBe(false);
+          expect(sunLight.intensity).toBe(3);
+          state.currentTimeMs = 1000;
+          draw();
+          expect(sunLight.timestamp).toBe(midnight + 24 * 60 * 60 * 1000);
+          expect(effect.deckEffect.outputUniformShadow).toBe(true);
+          expect(sunLight.intensity).toBe(0);
+          expect(live.parameters).toMatchObject({timeMode, timestamp: savedTimestamp});
+
+          state.previewing = false;
+          draw();
+          expect(effect.parameters).toMatchObject({
+            timeMode,
+            timestamp: savedTimestamp,
+            sunLightIntensity: 2
+          });
+          expect(sunLight.timestamp).toBe(
+            timeMode === 'animation' ? 0 : timeMode === 'current' ? noon : savedTimestamp
+          );
+          expect(effect.deckEffect.outputUniformShadow).toBe(timeMode === 'animation');
+          expect(sunLight.intensity).toBe(timeMode === 'animation' ? 0 : 2);
+          state.previewing = true;
+          state.currentTimeMs = 0;
+          draw();
+          expect(sunLight.timestamp).toBe(midnight);
+          unmount();
+          expect(effect.parameters).toMatchObject({timeMode, timestamp: savedTimestamp});
+        } finally {
+          clock.mockRestore();
+        }
+      }
+    );
+
+    test('refreshes export sunlight after each timestamp frame using the export camera', async () => {
+      const midnight = Date.UTC(2024, 5, 21);
+      const live = new LightingEffect({
+        parameters: {timeMode: 'animation', timestamp: 99},
+        animation: {
+          timestamp: {
+            startValue: midnight,
+            endValue: midnight + 24 * 60 * 60 * 1000,
+            easing: 'linear'
+          }
+        }
+      });
+      mockComputeDeckEffects.mockImplementation(
+        jest.requireActual('@kepler.gl/utils').computeDeckEffects
+      );
+      await renderAndWaitForPanel({
+        ...DEFAULT_PROPS,
+        visState: {
+          ...DEFAULT_PROPS.visState,
+          effects: [live],
+          effectOrder: [live.id],
+          animationConfig: {currentTime: 0},
+          filters: []
+        }
+      });
+      const draw = time => {
+        act(() => {
+          mockHubbleContainer.setState({
+            previewing: true,
+            currentTimeMs: time,
+            durationMs: 1000,
+            viewState: {latitude: 0, longitude: 0}
+          });
+        });
+        mockExportVideoPanelContainer.mock.lastCall[0].deckProps.onBeforeRender();
+        return mockComputeDeckEffects.mock.lastCall[0].visState.effects[0].deckEffect;
+      };
+      expect(draw(0).outputUniformShadow).toBe(true);
+      const daytime = draw(500);
+      expect(daytime.directionalLights[0].timestamp).toBe(midnight + 12 * 60 * 60 * 1000);
+      expect(daytime.outputUniformShadow).toBe(false);
+      expect(daytime.directionalLights[0].intensity).toBe(1);
+      expect(draw(1000).outputUniformShadow).toBe(true);
+      expect(mockComputeDeckEffects.mock.lastCall[0].mapState).toMatchObject({
+        latitude: 0,
+        longitude: 0
+      });
+      expect(live.parameters).toMatchObject({timeMode: 'animation', timestamp: 99});
+    });
   });
 
   describe('shadow compositing fallback', () => {

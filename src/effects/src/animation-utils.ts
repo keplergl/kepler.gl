@@ -3,12 +3,8 @@
 
 import type {Effect, EffectAnimation, EffectParameterDescription} from '@kepler.gl/types';
 
-const NON_ANIMATABLE_PARAMETERS = new Set([
-  'timestamp',
-  'animateHeight',
-  'heightEnd',
-  'linearEasing'
-]);
+const NON_ANIMATABLE_PARAMETERS = new Set(['animateHeight', 'heightEnd', 'linearEasing']);
+const MAX_DATE_TIMESTAMP = 8.64e15;
 
 function isAnimatableParameter(description: EffectParameterDescription): boolean {
   const {name, type, min, max, defaultValue} = description;
@@ -66,7 +62,14 @@ export function validateEffectAnimation(
         }
         return value.map(clampValue);
       }
-      return typeof value === 'number' && Number.isFinite(value) ? clampValue(value) : undefined;
+      if (
+        typeof value !== 'number' ||
+        !Number.isFinite(value) ||
+        (name === 'timestamp' && Math.abs(value) > MAX_DATE_TIMESTAMP)
+      ) {
+        return undefined;
+      }
+      return clampValue(value);
     };
     const endValue = validateValue(entry.endValue);
     const hasStart = Object.prototype.hasOwnProperty.call(entry, 'startValue');
