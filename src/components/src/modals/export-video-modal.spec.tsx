@@ -14,7 +14,7 @@ const mockExportVideoPanelContainer = jest.fn(() => (
   <div data-testid="export-video-panel">Mock Panel</div>
 ));
 const MockKeplerUIContext = React.createContext(null);
-let mockHubbleContainer;
+const mockHubbleContainerRef = React.createRef();
 
 jest.mock('@hubble.gl/react', () => ({
   ExportVideoPanelContainer: class extends require('react').Component {
@@ -22,7 +22,7 @@ jest.mock('@hubble.gl/react', () => ({
     state = {viewState: {}};
     constructor(props) {
       super(props);
-      mockHubbleContainer = this;
+      mockHubbleContainerRef.current = this;
     }
     setViewState(viewState) {
       this.setState({viewState});
@@ -776,7 +776,7 @@ describe('ExportVideoModal', () => {
       });
       const draw = time => {
         act(() => {
-          mockHubbleContainer.setState({
+          mockHubbleContainerRef.current.setState({
             previewing: true,
             currentTimeMs: time,
             durationMs: 1000,
