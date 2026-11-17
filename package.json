@@ -253,6 +253,8 @@
     "webpack-stats-plugin": "^0.2.1"
   },
   "resolutions": {
+    "documentation/ansi-html": "0.0.9",
+    "eslint-plugin-compat/semver": "7.6.3",
     "documentation/@babel/parser": "7.29.7",
     "@babel/core@npm:7.12.3": "7.29.7",
     "@duckdb/duckdb-wasm": "1.32.0",
