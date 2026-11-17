@@ -20,6 +20,7 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {SqlPanel} from '@kepler.gl/duckdb/components';
 import Banner from './components/banner';
 import Announcement, {FormLink} from './components/announcement';
+import AssistantApiKeyHelp from './components/assistant-api-key-help';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 import {replaceMapControl} from './factories/map-control';
 import {replacePanelHeader} from './factories/panel-header';
@@ -972,15 +973,21 @@ const App = props => {
                 <>
                   <StyledVerticalResizeHandle />
                   <Panel defaultSize={30} minSize={20}>
-                    <AiAssistantPanel
-                      reduxStore={reduxStore}
-                      stateAccessors={{
-                        getVisState: () =>
-                          (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
-                        getMapBoundary: () =>
-                          (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl?.mapBoundary
-                      }}
-                    />
+                    <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                      <AssistantApiKeyHelp />
+                      <div style={{flex: 1, minHeight: 0}}>
+                        <AiAssistantPanel
+                          reduxStore={reduxStore}
+                          stateAccessors={{
+                            getVisState: () =>
+                              (reduxStore?.getState() as any)?.demo?.keplerGl?.map?.visState,
+                            getMapBoundary: () =>
+                              (reduxStore?.getState() as any)?.demo?.aiAssistant?.keplerGl
+                                ?.mapBoundary
+                          }}
+                        />
+                      </div>
+                    </div>
                   </Panel>
                 </>
               )}
