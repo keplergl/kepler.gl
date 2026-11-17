@@ -1,6 +1,29 @@
 @import 'tailwindcss';
 
 @import '@sqlrooms/ui/tailwind-preset.css';
+@import '../../demo-app-sqlrooms/src/kepler-theme.css';
+
+/* Match the sidebar's text sizes without changing the page's root font size.
+ * Radix menus and dialogs are portaled outside the assistant panel. */
+.kepler-ai-assistant,
+body > [data-state='open'],
+body > [data-radix-popper-content-wrapper] {
+  --text-sm: 0.75rem;
+  --text-sm--line-height: 1.71429;
+  --text-base: 0.75rem;
+  --text-base--line-height: 1.71429;
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+/* SQLRooms suggestion rows have a title and left-aligned muted text. Keep
+ * them readable even before an API key is entered, when they are disabled. */
+.kepler-ai-assistant button.text-left.text-muted-foreground[title] {
+  color: hsl(var(--foreground));
+}
+.kepler-ai-assistant button.text-left.text-muted-foreground[title]:disabled {
+  opacity: 0.85;
+}
 
 /*
  * The demo (CONTAINER_STYLE in app.tsx) is `position: absolute; height: 100%`.

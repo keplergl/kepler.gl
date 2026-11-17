@@ -3,23 +3,6 @@
   --font-sans: ff-clan-web-pro, 'Helvetica Neue', Helvetica, sans-serif;
 }
 
-@layer base {
-  body {
-    margin: 0;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: hsl(var(--foreground));
-    background: hsl(var(--background));
-  }
-
-  h1,
-  h2,
-  h3 {
-    color: hsl(var(--card-foreground));
-    font-weight: 400;
-  }
-}
-
 :root {
   --radius: 4px;
   --background: 0 0% 100%; /* #FFFFFF */

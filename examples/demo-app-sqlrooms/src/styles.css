@@ -6,6 +6,24 @@
 @source '../../../src/sqlrooms/src/**/*.{ts,tsx}';
 @source '../node_modules/@sqlrooms/layout/dist/**/*.js';
 
+/* Keep this demo's page typography separate from the shared theme tokens. */
+@layer base {
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: hsl(var(--card-foreground));
+    font-weight: 400;
+  }
+}
+
 /*
  * The demo (CONTAINER_STYLE in app.tsx) is `position: absolute; height: 100%`.
  * That resolves against the viewport while `body` is `position: static`. Opening
