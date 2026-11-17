@@ -43,6 +43,7 @@ import type {Store} from 'redux';
 import type {DemoRoomState} from './sqlrooms-demo-layout';
 import {getChatModel} from './assistant-model';
 import {createAssistantSkillTools} from './assistant-tools';
+import AssistantApiKeyHelp from '../../../demo-app/src/components/assistant-api-key-help';
 
 // Keep SQLRooms assistant state separate from the original demo on the same origin.
 // Retain the provider-settings schema and pre-v1 migration.
@@ -166,6 +167,7 @@ export function AiAssistantPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background p-3 text-foreground">
+      <AssistantApiKeyHelp />
       <Chat>
         <div className="mb-3 flex items-center gap-2">
           <Chat.Sessions className="min-w-0 flex-1" />
