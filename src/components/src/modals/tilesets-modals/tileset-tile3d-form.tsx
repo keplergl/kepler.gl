@@ -381,7 +381,6 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
           {detectProvider(tileUrl) === 'google' && (
             <TippyTooltip
               placement="top"
-              isLightTheme
               render={() => (
                 <ApiKeyInstructions role="tooltip">
                   <strong>Get a Google Maps API key</strong>
