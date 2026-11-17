@@ -972,7 +972,7 @@ const App = props => {
               {isAiAssistantPanelOpen && (
                 <>
                   <StyledVerticalResizeHandle />
-                  <Panel defaultSize={30} minSize={20}>
+                  <Panel className="kepler-ai-assistant" defaultSize={30} minSize={20}>
                     <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
                       <AssistantApiKeyHelp />
                       <div style={{flex: 1, minHeight: 0}}>
