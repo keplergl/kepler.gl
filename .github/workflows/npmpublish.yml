@@ -21,6 +21,10 @@ jobs:
         env:
           HUSKY: 0
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+
+      - name: Check workspace and bundle releases
+        run: yarn release:check
+
       - name: Login to NPM
         run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
 
