@@ -971,7 +971,7 @@ const App = props => {
               {isAiAssistantPanelOpen && (
                 <>
                   <StyledVerticalResizeHandle />
-                  <Panel defaultSize={30} minSize={20}>
+                  <Panel className="kepler-ai-assistant" defaultSize={30} minSize={20}>
                     <AiAssistantPanel
                       reduxStore={reduxStore}
                       stateAccessors={{
