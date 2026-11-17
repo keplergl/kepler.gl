@@ -76,6 +76,7 @@ test('#BitmapOverlayLayer -> constructor', t => {
           t.equal(layer.config.isVisible, true, 'should be visible');
           t.ok(layer.config.visConfig, 'should have visConfig');
           t.equal(layer.config.visConfig.opacity, 1, 'should have default opacity of 1');
+          t.equal(layer.config.visConfig.elevationOffset, 0, 'should start at ground level');
           t.equal(layer.config.visConfig.showBounds, true, 'should show bounds by default');
           t.equal(layer.config.visConfig.editBounds, false, 'edit bounds off by default');
           t.equal(layer.config.visConfig.boundsWest, 0, 'default boundsWest should be 0');
@@ -268,6 +269,88 @@ test('#BitmapOverlayLayer -> renderLayer without bounds outline', t => {
   t.end();
 });
 
+test('#BitmapOverlayLayer -> elevation offset raises the image, bounds and alignment markers', t => {
+  for (const globe of [false, true]) {
+    const layer = createBitmapLayer({
+      visConfig: {
+        boundsWest: -122.52,
+        boundsSouth: 37.7,
+        boundsEast: -122.35,
+        boundsNorth: 37.82,
+        alignMode: true
+      }
+    });
+    layer.onAlignImageClick([0, 0]);
+    layer.onAlignMapClick([-122.52, 37.82]);
+    layer.onAlignImageClick([0.5, 0.5]);
+    const viewport = new (globe ? GlobeViewport : WebMercatorViewport)({
+      width: 800,
+      height: 600,
+      longitude: -122.435,
+      latitude: 37.76,
+      zoom: 10,
+      pitch: 60
+    });
+    const manager = new LayerManager(device, {viewport});
+    manager.setProps({onError: error => t.error(error, 'elevated bitmap initializes')});
+    const data = layer.formatLayerData(MOCK_DATASETS);
+    try {
+      for (const elevationOffset of [125.5, 350, 0, undefined, NaN]) {
+        layer.updateLayerVisConfig({elevationOffset});
+        const layers = layer.renderLayer({
+          data,
+          mapState: {globe: {enabled: globe}},
+          layerCallbacks: {},
+          visible: true
+        });
+        manager.setLayers(layers);
+        const altitude = Number.isFinite(elevationOffset) ? elevationOffset : 0;
+        for (const deckLayer of layers) {
+          const positions =
+            deckLayer.id === layers[0].id
+              ? [Array.from(deckLayer.state.mesh.positions.slice(0, 3))]
+              : deckLayer.id.endsWith('-bounds')
+              ? deckLayer.props.data[0]
+              : deckLayer.props.data.map(deckLayer.props.getPosition);
+          for (const position of positions) {
+            const actual = deckLayer.project([...position.slice(0, 2), 0]);
+            const expected = viewport.project([...position.slice(0, 2), altitude]);
+            t.ok(
+              actual.every((value, index) => Math.abs(value - expected[index]) < 1e-6),
+              `${deckLayer.id} renders at ${altitude} meters in ${globe ? 'globe' : 'flat'} view`
+            );
+          }
+        }
+        const uv = bitmapUVAtLocation(layers[0], viewport, [-122.52, 37.82]);
+        t.ok(Math.abs(uv[0]) < 1e-8 && Math.abs(uv[1]) < 1e-8, 'offset preserves image alignment');
+        t.deepEqual(layers[0].props.bounds, data.bounds, 'offset preserves geographic bounds');
+      }
+    } finally {
+      manager.finalize();
+    }
+  }
+  t.end();
+});
+
+test('#BitmapOverlayLayer -> elevation offset survives save/load and defaults for older maps', t => {
+  const layer = createBitmapLayer({visConfig: {elevationOffset: 125.5}});
+  const saved = visStateSchema[CURRENT_VERSION].save({layers: [layer], layerOrder: [layer.id]});
+  const loaded = visStateSchema[CURRENT_VERSION].load(JSON.parse(JSON.stringify(saved.visState)));
+  const restored = createBitmapLayer();
+  restored.config = restored.copyLayerConfig(restored.config, loaded.visState.layers[0].config);
+  t.equal(restored.config.visConfig.elevationOffset, 125.5, 'restores saved elevation in meters');
+
+  delete saved.visState.layers[0].config.visConfig.elevationOffset;
+  const legacy = visStateSchema[CURRENT_VERSION].load(JSON.parse(JSON.stringify(saved.visState)));
+  const restoredLegacy = createBitmapLayer();
+  restoredLegacy.config = restoredLegacy.copyLayerConfig(
+    restoredLegacy.config,
+    legacy.visState.layers[0].config
+  );
+  t.equal(restoredLegacy.config.visConfig.elevationOffset, 0, 'older maps remain at ground level');
+  t.end();
+});
+
 test('#BitmapOverlayLayer -> renderLayer with editBounds', t => {
   const layer = createBitmapLayer({
     visConfig: {
@@ -304,7 +387,7 @@ test('#BitmapOverlayLayer -> renderLayer with editBounds', t => {
   t.end();
 });
 
-test('#BitmapOverlayLayer -> edit handles follow the surface in pitched and globe views', t => {
+test('#BitmapOverlayLayer -> edit handles follow the elevated surface in pitched and globe views', t => {
   for (const globe of [false, true]) {
     const layer = createBitmapLayer({
       visConfig: {
@@ -312,6 +395,7 @@ test('#BitmapOverlayLayer -> edit handles follow the surface in pitched and glob
         boundsSouth: 37.7,
         boundsEast: -122.35,
         boundsNorth: 37.82,
+        elevationOffset: 125.5,
         editBounds: true
       }
     });
@@ -346,6 +430,28 @@ test('#BitmapOverlayLayer -> edit handles follow the surface in pitched and glob
       t.equal(icon.props.billboard, false, 'center icon follows the same surface as its circle');
       t.notEqual(circles.props.parameters.depthCompare, 'always', 'handles retain depth testing');
       t.notEqual(icon.props.parameters.depthCompare, 'always', 'center icon retains depth testing');
+      for (const handle of circles.props.data) {
+        const position = handle.geometry.coordinates;
+        const actual = circles.project([...position, 0]);
+        const expected = viewport.project([...position, 125.5]);
+        t.ok(
+          actual.every((value, index) => Math.abs(value - expected[index]) < 1e-6),
+          'corner and center handles render at the bitmap elevation'
+        );
+        const mapCoords = editable.getMapCoords(expected.slice(0, 2));
+        t.ok(
+          mapCoords.length === 2 &&
+            mapCoords.every((value, index) => Math.abs(value - position[index]) < 1e-6),
+          'dragging unprojects onto the elevated surface and keeps editable geometry in 2D'
+        );
+      }
+      const center = icon.props.getPosition(icon.props.data[0]);
+      const actual = icon.project([...center, 0]);
+      const expected = viewport.project([...center, 125.5]);
+      t.ok(
+        actual.every((value, index) => Math.abs(value - expected[index]) < 1e-6),
+        'move icon renders at the same elevation as its handle'
+      );
     } finally {
       manager.finalize();
     }

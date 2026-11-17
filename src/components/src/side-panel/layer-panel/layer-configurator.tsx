@@ -2162,6 +2162,11 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.appearance'}>
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <VisConfigSlider
+              {...layer.visConfigSettings.elevationOffset}
+              {...visConfiguratorProps}
+              description={undefined}
+            />
           </LayerConfigGroup>
           <LayerConfigGroup label={'layer.bounds'} collapsible>
             <VisConfigSwitch {...layer.visConfigSettings.editBounds} {...visConfiguratorProps} />

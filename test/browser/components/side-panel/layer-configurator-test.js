@@ -622,6 +622,50 @@ test('Components -> VisConfigSlider -> disabled custom controls cannot change mo
   t.end();
 });
 
+test('Components -> LayerConfigurator -> bitmap elevation offset can be edited and reset', t => {
+  const dataset = new KeplerTable({info: {id: 'bitmap-elevation'}, color: [0, 0, 0]});
+  const layer = new LayerClasses.bitmap({id: 'bitmap-elevation', dataId: dataset.id});
+  const changed = sinon.spy();
+  const Editor = () => {
+    const [, redraw] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          datasets={{[dataset.id]: dataset}}
+          updateLayerVisConfig={change => {
+            changed(change);
+            layer.updateLayerVisConfig(change);
+            redraw(version => version + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  };
+  const view = renderWithTheme(<Editor />);
+  const editor = within(view.container);
+  try {
+    t.equal(layer.config.visConfig.elevationOffset, 0, 'bitmap starts at ground level');
+    fireEvent.click(editor.getByRole('button', {name: /Enter custom value for Elevation Offset/}));
+    const input = editor.getByRole('spinbutton', {name: /Elevation Offset/});
+    for (const elevationOffset of [125.5, 0]) {
+      fireEvent.change(input, {target: {value: String(elevationOffset)}});
+      fireEvent.blur(input);
+      t.deepEqual(
+        changed.lastCall.args[0],
+        {elevationOffset},
+        'editing commits the elevation offset through the layer callback'
+      );
+      t.equal(layer.config.visConfig.elevationOffset, elevationOffset, 'layer receives the offset');
+      t.equal(Number(input.value), elevationOffset, 'control displays the updated offset');
+    }
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
 test('Components -> LayerConfigurator -> bitmap bounds keep sliders across the dateline', t => {
   for (const [west, east] of [
     [-180.5, -170],
