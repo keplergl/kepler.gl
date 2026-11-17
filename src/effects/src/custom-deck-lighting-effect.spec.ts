@@ -17,56 +17,82 @@ const {_LayersPass: LayersPass, _PickLayersPass: PickLayersPass} =
 describe('lighting effect during picking', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  test.each([
-    [true, 'bitmap-edit-guides-points-circle'],
-    [false, 'bitmap-edit-guides-points-circle'],
-    [true, 'kepler_editor_layer-geojson-polygons-fill'],
-    [false, 'kepler_editor_layer-geojson-polygons-fill']
-  ])('keeps shadow textures bound with shadows %s for %s', (enabled, id) => {
-    const effect = new CustomDeckLightingEffect({});
-    const texture = device.createTexture({width: 1, height: 1});
-    Object.assign(effect, {
-      shadow: enabled,
-      dummyShadowMap: texture,
-      shadowMatrices: [new Matrix4()],
-      shadowPasses: [{getShadowMap: () => texture}]
-    });
-    const layer = {
-      id,
-      props: {},
-      context: {
-        viewport: new WebMercatorViewport({width: 800, height: 600}),
-        defaultShaderModules: [shadow]
+  test.each(
+    [
+      {id: 'bitmap-edit-guides-points-circle', layerProps: {}},
+      {id: 'kepler_editor_layer-geojson-polygons-fill', layerProps: {}},
+      {id: 'scenegraph-layer', layerProps: {_lighting: 'pbr'}}
+    ].flatMap(layer =>
+      [true, false].flatMap(enabled =>
+        ['color', 'depth', 'debug'].map(mode => ({...layer, enabled, mode}))
+      )
+    )
+  )(
+    'disables shadows for $id during $mode picking (enabled=$enabled)',
+    ({enabled, id, layerProps, mode}) => {
+      const effect = new CustomDeckLightingEffect({});
+      const texture = device.createTexture({width: 1, height: 1});
+      const shadowTexture = device.createTexture({width: 1, height: 1});
+      const getShadowMap = jest.fn(() => shadowTexture);
+      const renderShadowMap = jest.fn();
+      Object.assign(effect, {
+        shadow: enabled,
+        dummyShadowMap: texture,
+        shadowMatrices: [new Matrix4()],
+        shadowPasses: [{getShadowMap, render: renderShadowMap}]
+      });
+      const layer = {
+        id,
+        props: layerProps,
+        context: {
+          viewport: new WebMercatorViewport({width: 800, height: 600}),
+          defaultShaderModules: [shadow]
+        }
+      };
+      const pass = new PickLayersPass(device);
+      const render = jest.spyOn(LayersPass.prototype as any, '_render').mockReturnValue([]);
+      try {
+        effect.preRender({isPicking: true, layers: [layer]});
+        // Run deck's real effect filtering for picking, then resolve the bindings
+        // that the GPU draw needs even when shadow calculations are disabled.
+        pass.render({
+          layers: [layer],
+          effects: [effect],
+          isPicking: true,
+          ...(mode === 'debug'
+            ? {}
+            : {
+                pickingFBO: {},
+                pickZ: mode === 'depth',
+                deviceRect: {x: 0, y: 0, width: 1, height: 1}
+              })
+        } as any);
+        const options = render.mock.calls[0][0] as any;
+        const props = (pass as any)._getShaderModuleProps(
+          layer,
+          options.effects,
+          'picking',
+          {cssToDeviceRatio: () => 1},
+          {}
+        );
+        const uniforms = shadow.getUniforms(props.shadow);
+        expect(uniforms.shadow_uShadowMap0).toBe(texture);
+        expect(uniforms.shadow_uShadowMap1).toBe(texture);
+        expect(uniforms.drawShadowMap).toBe(false);
+        expect(uniforms.useShadowMap).toBe(false);
+        expect(props.shadow.useSimplePhong).toBeFalsy();
+        expect(props.lighting.enabled).toBe(false);
+        expect(props.pbrMaterial.unlit).toBe(1);
+        expect(props.picking.isActive).toBe(1);
+        if (mode !== 'debug') expect(props.picking.isAttribute).toBe(mode === 'depth');
+        expect(renderShadowMap).not.toHaveBeenCalled();
+        expect(getShadowMap).not.toHaveBeenCalled();
+      } finally {
+        texture.destroy();
+        shadowTexture.destroy();
       }
-    };
-    const pass = new PickLayersPass(device);
-    const render = jest.spyOn(LayersPass.prototype as any, '_render').mockReturnValue([]);
-    try {
-      // Run deck's real effect filtering for picking, then resolve the bindings
-      // that the GPU draw needs even when shadow calculations are disabled.
-      pass.render({
-        layers: [layer],
-        effects: [effect],
-        pickingFBO: {},
-        deviceRect: {x: 0, y: 0, width: 1, height: 1}
-      } as any);
-      const options = render.mock.calls[0][0] as any;
-      const props = (pass as any)._getShaderModuleProps(
-        layer,
-        options.effects,
-        'picking',
-        {cssToDeviceRatio: () => 1},
-        {}
-      );
-      const uniforms = shadow.getUniforms(props.shadow);
-      expect(uniforms.shadow_uShadowMap0).toBe(texture);
-      expect(uniforms.shadow_uShadowMap1).toBe(texture);
-      expect(uniforms.drawShadowMap).toBe(false);
-      expect(props.picking.isActive).toBe(1);
-    } finally {
-      texture.destroy();
     }
-  });
+  );
 
   test('does not render shadow maps during picking', () => {
     const effect = new CustomDeckLightingEffect({});
@@ -76,6 +102,41 @@ describe('lighting effect during picking', () => {
     effect.preRender({isPicking: true, layers: []});
 
     expect(render).not.toHaveBeenCalled();
+  });
+
+  test('restores shadow rendering and sampling on the next normal draw', () => {
+    const effect = new CustomDeckLightingEffect({});
+    const dummyTexture = device.createTexture({width: 1, height: 1});
+    const shadowTexture = device.createTexture({width: 1, height: 1});
+    const render = jest.fn();
+    Object.assign(effect, {
+      shadow: true,
+      dummyShadowMap: dummyTexture,
+      shadowPasses: [{getShadowMap: () => shadowTexture, render}]
+    });
+    const viewport = new WebMercatorViewport({width: 800, height: 600});
+    const layer = {id: 'scenegraph-layer', props: {_lighting: 'pbr'}};
+    let expectedShadowRenders = 0;
+    try {
+      for (const isPicking of [false, true, true, false]) {
+        effect.preRender({
+          layers: [layer],
+          viewports: [viewport],
+          ...(isPicking ? {isPicking} : {})
+        });
+        const props = effect.getShaderModuleProps(layer, {project: {viewport}}) as any;
+        const uniforms = shadow.getUniforms(props.shadow);
+        expect(uniforms.useShadowMap).toBe(!isPicking);
+        expect(uniforms.drawShadowMap).toBe(false);
+        expect(uniforms.shadow_uShadowMap0).toBe(isPicking ? dummyTexture : shadowTexture);
+        expect(Boolean(props.shadow.useSimplePhong)).toBe(!isPicking);
+        if (!isPicking) expectedShadowRenders++;
+        expect(render).toHaveBeenCalledTimes(expectedShadowRenders);
+      }
+    } finally {
+      dummyTexture.destroy();
+      shadowTexture.destroy();
+    }
   });
 });
 

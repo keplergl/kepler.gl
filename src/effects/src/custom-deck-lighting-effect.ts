@@ -241,6 +241,7 @@ class CustomDeckLightingEffect extends LightingEffect {
   useInPicking = true;
   outputUniformShadow: boolean;
   isExportMode: boolean;
+  private isPicking = false;
 
   private get _private(): LightingEffectPrivate {
     return this as unknown as LightingEffectPrivate;
@@ -268,7 +269,9 @@ class CustomDeckLightingEffect extends LightingEffect {
   }
 
   preRender(opts) {
-    if (opts.isPicking || !this._private.shadow) return;
+    // Effects resolve their props before deck sets the picking shader flag.
+    this.isPicking = Boolean(opts.isPicking);
+    if (this.isPicking || !this._private.shadow) return;
 
     // Filter editor layers out of the shadow pass so they don't cast shadows.
     const originalLayers = opts.layers;
@@ -300,14 +303,15 @@ class CustomDeckLightingEffect extends LightingEffect {
   }
 
   getShaderModuleProps(layer, otherShaderModuleProps) {
-    // Skip lighting/shadow for the editor layer and its sublayers.
-    if (layer.id.startsWith(EDITOR_LAYER_ID)) {
+    // Picking and editor layers need sampler bindings without shadow calculations.
+    if (this.isPicking || layer.id.startsWith(EDITOR_LAYER_ID)) {
       return {
         shadow: {
           shadowEnabled: false,
           dummyShadowMap: this._private.dummyShadowMap
         },
         lighting: {enabled: false},
+        pbrMaterial: {unlit: 1},
         phongMaterial: null,
         gouraudMaterial: null
       } as unknown as ReturnType<LightingEffect['getShaderModuleProps']>;
