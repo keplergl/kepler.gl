@@ -11,12 +11,12 @@ import isEqual from 'es-toolkit/compat/isEqual';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';
-import {createKeplerLayers} from '@hubble.gl/react';
 import {compositeSwipeFrame, getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
 import {
   EXPORT_DECK_DEVICE_PROPS,
   EXPORT_OVERLAY_DEVICE_PROPS,
-  getGlobeExportLayers
+  getGlobeExportLayers,
+  getFlatExportLayers
 } from './hubble-utils';
 
 function setRef<T>(ref: React.Ref<T> | React.MutableRefObject<T>, value: T) {
@@ -260,7 +260,7 @@ export class SwipeExportVideoPreview extends Component<
           : layer
       );
     }
-    return createKeplerLayers(mapData, viewState, mapIndex, beforeId);
+    return getFlatExportLayers(mapData, {viewState, mapIndex, beforeId});
   }
 
   _onLeftMapLoad = () => {

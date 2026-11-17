@@ -104,6 +104,9 @@ jest.mock('./hubble-utils', () => ({
   })),
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
+  getFlatExportLayers: jest.fn(() => []),
+  scaleZoomOpacityForVideoExport: jest.fn(config => config),
+  parseSetCameraType: (...args) => jest.requireActual('./hubble-utils').parseSetCameraType(...args),
   scaleToVideoExport: jest.fn((viewState, container) => ({
     ...viewState,
     width: container.width,
@@ -225,6 +228,154 @@ describe('ExportVideoModal', () => {
       })
     );
   });
+
+  test('passes the preview zoom correction to export-only fade settings', async () => {
+    const {scaleToVideoExport, scaleZoomOpacityForVideoExport} = require('./hubble-utils');
+    const interactionConfig = {zoomOpacity: {enabled: true, config: {controllers: []}}};
+    const scaled = {...interactionConfig, exportOnly: true};
+    scaleToVideoExport.mockImplementationOnce((camera, container) => ({
+      ...camera,
+      ...container,
+      zoom: camera.zoom - 2
+    }));
+    scaleZoomOpacityForVideoExport.mockReturnValueOnce(scaled);
+    const props = {
+      ...DEFAULT_PROPS,
+      visState: {...DEFAULT_PROPS.visState, interactionConfig}
+    };
+    await renderAndWaitForPanel(props);
+    const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+    expect(scaleZoomOpacityForVideoExport).toHaveBeenCalledWith(interactionConfig, -2);
+    expect(panelProps.mapData.visState.interactionConfig).toBe(scaled);
+    expect(props.visState.interactionConfig).toBe(interactionConfig);
+    expect(interactionConfig).not.toHaveProperty('exportOnly');
+  });
+
+  test.each(['regular', 'swipe'])(
+    'preserves fades and preview cameras when changing resolution in an open %s export',
+    async mode => {
+      const utils = require('./hubble-utils');
+      const actualUtils = jest.requireActual('./hubble-utils');
+      const {getLayerZoomOpacityFactor} = jest.requireActual(
+        '../../../reducers/src/interaction-utils'
+      );
+      const originalScale = utils.scaleToVideoExport.getMockImplementation();
+      const originalFadeScale = utils.scaleZoomOpacityForVideoExport.getMockImplementation();
+      utils.scaleToVideoExport.mockImplementation(actualUtils.scaleToVideoExport);
+      utils.scaleZoomOpacityForVideoExport.mockImplementation(
+        actualUtils.scaleZoomOpacityForVideoExport
+      );
+      const mockSwipe = jest.requireMock(
+        './swipe-export-video-container'
+      ).SwipeExportVideoPanelContainer;
+      const SwipeContainer = jest.requireActual(
+        './swipe-export-video-container'
+      ).SwipeExportVideoPanelContainer;
+      let swipePanel;
+      if (mode === 'swipe') {
+        mockSwipe.mockImplementation(({ref, ...props}) => (
+          <SwipeContainer
+            {...props}
+            ref={panel => {
+              ref.current = panel;
+              swipePanel = panel;
+            }}
+          />
+        ));
+      }
+      const props = {
+        ...DEFAULT_PROPS,
+        mapState: {
+          ...DEFAULT_PROPS.mapState,
+          width: 1440,
+          height: 900,
+          zoom: 4.1,
+          pitch: 0,
+          bearing: 0,
+          ...(mode === 'swipe' ? {isSplit: true, mapSplitMode: MapSplitMode.SWIPE_COMPARE} : {})
+        },
+        visState: {
+          ...DEFAULT_PROPS.visState,
+          animationConfig: {},
+          interactionConfig: {
+            zoomOpacity: {
+              enabled: true,
+              config: {
+                controllers: [
+                  {id: 'fade', layerIds: ['a'], stops: {appear: 4, full: 4.1, fade: 8, gone: 10}}
+                ]
+              }
+            }
+          }
+        }
+      };
+      const savedProps = JSON.stringify({mapState: props.mapState, visState: props.visState});
+      let mounted;
+      try {
+        mounted = renderWithThemeLocal(<ExportVideoModal {...props} />);
+        await waitFor(() => {
+          expect(mode === 'swipe' ? mockSwipe : mockExportVideoPanelContainer).toHaveBeenCalled();
+          expect(mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current).toBeTruthy();
+        });
+        const panel = mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current;
+        const initialCamera = {...panel.state.viewState};
+        const userCamera = {
+          ...initialCamera,
+          longitude: 20,
+          bearing: 35,
+          pitch: 40,
+          zoom: initialCamera.zoom + 0.02
+        };
+        act(() => panel.setViewState(userCamera));
+        const opacity = () =>
+          getLayerZoomOpacityFactor(
+            'a',
+            panel.state.viewState.zoom,
+            panel.props.mapData.visState.interactionConfig
+          );
+        expect(opacity()).toBeCloseTo(1);
+
+        for (const resolution of ['1280x960', '1920x1440', '1280x720']) {
+          act(() => {
+            if (mode === 'swipe') panel.setResolution(resolution);
+            else panel.props.onSettingsChange({resolution});
+          });
+          const settings = mode === 'swipe' ? panel.state : panel.props.initialState;
+          expect(settings.resolution).toBe(resolution);
+          const {width, height, zoom} = panel.props.mapData.mapState;
+          const zoomDelta = zoom - initialCamera.zoom;
+          expect(opacity()).toBeCloseTo(1);
+          expect(panel.state.viewState).toMatchObject({
+            ...userCamera,
+            width,
+            height,
+            zoom: userCamera.zoom + zoomDelta
+          });
+          expect(panel.state.memo.viewState).toMatchObject({
+            ...initialCamera,
+            width,
+            height,
+            zoom: initialCamera.zoom + zoomDelta
+          });
+          expect(mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current).toBe(panel);
+        }
+
+        const currentCamera = panel.state.viewState;
+        mounted.rerender(
+          <ExportVideoModal {...props} visState={{...props.visState, filters: []}} />
+        );
+        expect(panel.state.viewState).toBe(currentCamera);
+        expect(JSON.stringify({mapState: props.mapState, visState: props.visState})).toBe(
+          savedProps
+        );
+      } finally {
+        mounted?.unmount();
+        utils.scaleToVideoExport.mockImplementation(originalScale);
+        utils.scaleZoomOpacityForVideoExport.mockImplementation(originalFadeScale);
+        mockSwipe.mockImplementation(() => null);
+      }
+    }
+  );
 
   test('offers authored animation only for a playable tour and keeps saved cameras unchanged', async () => {
     const camera = {longitude: 12, latitude: 30, zoom: 5, bearing: 0, pitch: 0};
@@ -975,6 +1126,39 @@ describe('Camera Animation video export', () => {
     expect(instance.state.viewState).toMatchObject({...tour.stops[1].camera, width: 800});
     instance.setCameraPreset('Zoom In');
     expect(instance.getCameraKeyframes()).toBe('ordinary');
+  });
+
+  test('rebuilds regular export layers from each animated frame while preserving deck settings', () => {
+    const {getFlatExportLayers} = require('./hubble-utils');
+    class Base {
+      props = {
+        mapData: {visState: {}, mapState: camera},
+        deckProps: {effects: ['lighting'], onBeforeRender: jest.fn()},
+        mapboxLayerBeforeId: 'labels'
+      };
+      state = {viewState: camera};
+      render() {
+        return <div deckProps={this.props.deckProps} />;
+      }
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    const frames = [[{id: 'first'}], [{id: 'next'}]];
+    getFlatExportLayers.mockReturnValueOnce(frames[0]).mockReturnValueOnce(frames[1]);
+    for (const [i, zoom] of [4, 6].entries()) {
+      instance.state.viewState = {...camera, zoom};
+      const panel = instance.render();
+      expect(getFlatExportLayers).toHaveBeenLastCalledWith(instance.props.mapData, {
+        mapIndex: 0,
+        viewState: instance.state.viewState,
+        beforeId: 'labels'
+      });
+      expect(panel.props.deckProps).toEqual({...instance.props.deckProps, layers: frames[i]});
+    }
+    instance.props.deckProps = {...instance.props.deckProps, layers: frames[0]};
+    getFlatExportLayers.mockClear();
+    expect(instance.render().props.deckProps.layers).toBe(frames[0]);
+    expect(getFlatExportLayers).not.toHaveBeenCalled();
   });
 });
 

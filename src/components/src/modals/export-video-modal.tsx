@@ -35,7 +35,8 @@ import {
   getAnimatableFilters,
   getResolutionSetting,
   getVideoExportContainer,
-  scaleToVideoExport
+  scaleToVideoExport,
+  scaleZoomOpacityForVideoExport
 } from './hubble-utils';
 import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
@@ -303,6 +304,14 @@ const ExportVideoModalFactory = () => {
         exportVideoWidth,
         videoConfiguration.resolution || ''
       );
+      const exportMapState = {
+        ...mapState,
+        ...scaleToVideoExport(mapState, container)
+      };
+      const interactionConfig = scaleZoomOpacityForVideoExport(
+        visState.interactionConfig,
+        exportMapState.zoom - mapState.zoom
+      );
       const exportVisState = visState.cameraTour
         ? {
             ...visState,
@@ -318,10 +327,10 @@ const ExportVideoModalFactory = () => {
             }
           }
         : visState;
-      const exportMapState = {
-        ...mapState,
-        ...scaleToVideoExport(mapState, container)
-      };
+      const exportVisStateWithFades =
+        interactionConfig === visState.interactionConfig
+          ? exportVisState
+          : {...exportVisState, interactionConfig};
 
       if (mapStyle?.styleType === NO_MAP_ID) {
         const noMapEntry = mapStyle.mapStyles?.[NO_MAP_ID];
@@ -345,7 +354,7 @@ const ExportVideoModalFactory = () => {
             JSON.stringify(bgStyle)
           )}`;
           return {
-            visState: exportVisState,
+            visState: exportVisStateWithFades,
             mapState: exportMapState,
             mapStyle: {
               ...mapStyle,
@@ -357,7 +366,7 @@ const ExportVideoModalFactory = () => {
           };
         }
       }
-      return {visState: exportVisState, mapState: exportMapState, mapStyle};
+      return {visState: exportVisStateWithFades, mapState: exportMapState, mapStyle};
     }, [visState, mapState, mapStyle, exportVideoWidth, videoConfiguration.resolution]);
 
     const onUpdateMap = useCallback(
@@ -457,37 +466,66 @@ const ExportVideoModalFactory = () => {
     // itself; the flat maplibre base map must be disabled so it doesn't render a
     // 2D Mercator map behind/around the globe.
     const isGlobeEnabled = Boolean(mapState?.globe?.enabled);
-    const didSyncExportCameraRef = useRef(false);
+    const exportCameraScaleRef = useRef<{
+      panel: unknown;
+      zoomOffset: number;
+      width: number;
+      height: number;
+    } | null>(null);
 
     // Hubble's ExportVideoPanelContainer constructor always runs its own
     // scaleToVideoExport (fitBounds of screen corners), which recenters a pitched
-    // camera. Push the already-corrected camera after mount so the preview matches
-    // the main map. Globe/swipe containers use our scaler and don't need this.
+    // camera. Correct it after mount, then keep the current and restore cameras
+    // aligned with the export fade stops when the preview's scale changes.
     useLayoutEffect(() => {
-      if (isSwipeMode || isGlobeEnabled || didSyncExportCameraRef.current) return;
-      const panel = hubbleContainerRef.current as {
-        setViewState?: (viewState: Record<string, any>) => void;
-        setState?: (state: Record<string, any>) => void;
-      } | null;
+      if (isGlobeEnabled) return;
+      const panel = hubbleContainerRef.current;
       if (!panel) return;
       const {longitude, latitude, zoom, pitch, bearing, altitude, minZoom, maxZoom, width, height} =
         keplerState.mapState;
-      const viewState = {
-        longitude,
-        latitude,
-        zoom,
-        pitch,
-        bearing,
-        altitude,
-        minZoom,
-        maxZoom,
-        width,
-        height
-      };
-      panel.setViewState?.(viewState);
-      panel.setState?.({viewState, memo: {viewState}});
-      didSyncExportCameraRef.current = true;
-    }, [hubble, isSwipeMode, isGlobeEnabled, keplerState.mapState]);
+      const zoomOffset = zoom - mapState.zoom;
+      const previous = exportCameraScaleRef.current;
+      exportCameraScaleRef.current = {panel, zoomOffset, width, height};
+
+      if (!previous || previous.panel !== panel) {
+        // Swipe already uses our scaler in its constructor.
+        if (isSwipeMode) return;
+        const viewState = {
+          longitude,
+          latitude,
+          zoom,
+          pitch,
+          bearing,
+          altitude,
+          minZoom,
+          maxZoom,
+          width,
+          height
+        };
+        panel.setViewState?.(viewState);
+        panel.setState?.({viewState, memo: {viewState}});
+      } else if (
+        previous.zoomOffset !== zoomOffset ||
+        previous.width !== width ||
+        previous.height !== height
+      ) {
+        const zoomDelta = zoomOffset - previous.zoomOffset;
+        const rescaleCamera = (camera: Record<string, any>) => ({
+          ...camera,
+          zoom: camera.zoom + zoomDelta,
+          width,
+          height
+        });
+        panel.setState(
+          (state: {viewState: Record<string, any>; memo?: {viewState: Record<string, any>}}) => ({
+            viewState: rescaleCamera(state.viewState),
+            ...(state.memo
+              ? {memo: {...state.memo, viewState: rescaleCamera(state.memo.viewState)}}
+              : {})
+          })
+        );
+      }
+    }, [hubble, isSwipeMode, isGlobeEnabled, keplerState.mapState, mapState.zoom]);
 
     useEffect(() => {
       // Same freeze as before: hubble.gl writes window.devicePixelRatio to scale

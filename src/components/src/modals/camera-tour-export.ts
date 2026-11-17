@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {cloneElement} from 'react';
 import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
+import {getFlatExportLayers} from './hubble-utils';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -39,6 +41,23 @@ export function resolveCameraTourExportFrame<T extends object>(
 /** Keep Hubble's encoder/capture implementation and its ordinary presets intact. */
 export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
+    render() {
+      const panel = super.render();
+      if (this.props.deckProps?.layers) return panel;
+      // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
+      // layers from the current frame, including ordinary camera presets.
+      return cloneElement(panel, {
+        deckProps: {
+          ...this.props.deckProps,
+          layers: getFlatExportLayers(this.props.mapData, {
+            mapIndex: 0,
+            viewState: this.state.viewState,
+            beforeId: this.props.mapboxLayerBeforeId
+          })
+        }
+      });
+    }
+
     getCameraKeyframes() {
       return (
         getCameraTourExportKeyframes(

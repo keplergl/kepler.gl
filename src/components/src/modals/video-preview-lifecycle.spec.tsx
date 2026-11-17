@@ -7,8 +7,7 @@ import {act, cleanup, render} from '@testing-library/react';
 import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import {compositeSwipeFrame} from './swipe-composite-utils';
-import {getGlobeExportLayers} from './hubble-utils';
-import {createKeplerLayers} from '@hubble.gl/react';
+import {getGlobeExportLayers, getFlatExportLayers} from './hubble-utils';
 
 const mockDecks = [];
 const mockMaps = [];
@@ -69,11 +68,11 @@ jest.mock('@deck.gl/mapbox', () => ({
     }
   }
 }));
-jest.mock('@hubble.gl/react', () => ({createKeplerLayers: jest.fn()}));
 jest.mock('./hubble-utils', () => ({
   EXPORT_DECK_DEVICE_PROPS: {antialias: true},
   EXPORT_OVERLAY_DEVICE_PROPS: {},
-  getGlobeExportLayers: jest.fn()
+  getGlobeExportLayers: jest.fn(),
+  getFlatExportLayers: jest.fn()
 }));
 jest.mock('./swipe-composite-utils', () => ({
   ...jest.requireActual('./swipe-composite-utils'),
@@ -109,8 +108,8 @@ beforeEach(() => {
   mockMaps.length = 0;
   mockOverlays.length = 0;
   jest.clearAllMocks();
-  createKeplerLayers.mockImplementation((_data, _view, side) => [
-    {id: `map-${side}`, isLoaded: true}
+  getFlatExportLayers.mockImplementation((_data, {mapIndex}) => [
+    {id: `map-${mapIndex}`, isLoaded: true}
   ]);
   getGlobeExportLayers.mockImplementation((_data, {mapIndex}) => [
     {id: `globe-${mapIndex}`, isLoaded: true}
@@ -139,13 +138,24 @@ describe('swipe preview frame lifecycle', () => {
     const input = props();
     const ref = React.createRef<SwipeExportVideoPreview>();
     render(<SwipeExportVideoPreview ref={ref} {...input} />);
-    expect(createKeplerLayers.mock.calls.map(call => call[2])).toEqual([0, 1]);
+    expect(getFlatExportLayers.mock.calls.map(call => call[1].mapIndex)).toEqual([0, 1]);
     expect(ref.current.getCompositeCanvas().width).toBe(1280);
     expect(ref.current.getCompositeCanvas().height).toBe(720);
     const camera = {...input.viewState, zoom: 5};
     act(() => mockDecks[0].props.onViewStateChange({viewState: camera}));
     expect(input.setViewState).toHaveBeenCalledWith(camera);
     expect(window.devicePixelRatio).toBe(2);
+  });
+
+  test('rebuilds both flat swipe sides with each frame zoom and preserves insertion order', () => {
+    const input = props({disableBaseMap: false, mapboxLayerBeforeId: 'labels'});
+    const {rerender} = render(<SwipeExportVideoPreview {...input} />);
+    getFlatExportLayers.mockClear();
+    const frame = {...input.viewState, zoom: 8};
+    rerender(<SwipeExportVideoPreview {...input} viewState={frame} />);
+    expect(getFlatExportLayers.mock.calls.map(call => call[1])).toEqual(
+      [0, 1].map(mapIndex => ({mapIndex, viewState: frame, beforeId: 'labels'}))
+    );
   });
 
   test('composites live deck frames while streaming, but captures only when both sides are loaded', () => {
@@ -251,7 +261,7 @@ describe('swipe preview frame lifecycle', () => {
     render(<SwipeExportVideoPreview {...props({deckProps: {layers: [layer]}})} />);
     expect(layer.clone.mock.calls).toEqual([[{id: 'points-swipe-0'}], [{id: 'points-swipe-1'}]]);
     expect(mockDecks[0].props.layers[0]).not.toBe(mockDecks[1].props.layers[0]);
-    expect(createKeplerLayers).not.toHaveBeenCalled();
+    expect(getFlatExportLayers).not.toHaveBeenCalled();
   });
 
   test('does not composite or capture before deck refs are available', () => {

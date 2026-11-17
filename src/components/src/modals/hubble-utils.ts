@@ -16,7 +16,7 @@ import {computeDeckLayers} from '@kepler.gl/reducers';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
 import {point} from '@turf/helpers';
 import {transformTranslate} from '@turf/transform-translate';
-import {TimeRangeFilter} from '@kepler.gl/types';
+import {InteractionConfig, TimeRangeFilter} from '@kepler.gl/types';
 
 type KeplerState = {
   visState: any;
@@ -341,6 +341,51 @@ export function getGlobeExportLayers(
     }
   );
   return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
+}
+
+/** Use the same opacity and split-visibility rules as the live map for each frame. */
+export function getFlatExportLayers(
+  keplerState: KeplerState,
+  {mapIndex, viewState, beforeId}: {mapIndex: number; viewState?: MapViewState; beforeId?: string}
+) {
+  if (!keplerState.visState.layerData?.length) return [];
+  return (
+    computeDeckLayers(
+      {...keplerState, mapState: {...keplerState.mapState, ...viewState}},
+      {mapIndex, primaryMap: false}
+    )
+      .flat(Infinity)
+      // Capture must not wait for asynchronous resources belonging to invisible layers.
+      .filter((layer: any) => layer && layer.props?.visible !== false)
+      .map((layer: any) => layer.clone({pickable: false, beforeId}))
+  );
+}
+
+/** Match authored fade thresholds to the resized preview camera without changing saved settings. */
+export function scaleZoomOpacityForVideoExport(
+  interactionConfig: InteractionConfig | undefined,
+  zoomOffset: number
+): InteractionConfig | undefined {
+  const zoomOpacity = interactionConfig?.zoomOpacity;
+  if (!zoomOpacity || !Number.isFinite(zoomOffset) || zoomOffset === 0) return interactionConfig;
+  return {
+    ...interactionConfig,
+    zoomOpacity: {
+      ...zoomOpacity,
+      config: {
+        ...zoomOpacity.config,
+        controllers: (zoomOpacity.config?.controllers || []).map(controller => ({
+          ...controller,
+          stops: {
+            appear: controller.stops.appear + zoomOffset,
+            full: controller.stops.full + zoomOffset,
+            fade: controller.stops.fade + zoomOffset,
+            gone: controller.stops.gone + zoomOffset
+          }
+        }))
+      }
+    }
+  };
 }
 
 export function getAnimatableFilters(keplerState: KeplerState): TimeRangeFilter[] {
