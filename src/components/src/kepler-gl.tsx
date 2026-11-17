@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {Component, createRef, Dispatch} from 'react';
+import React, {Component, createRef, Dispatch, useContext} from 'react';
 import Console from 'global/console';
 import {bindActionCreators} from 'redux';
 import styled, {withTheme, StyleSheetManager, ThemeProvider} from 'styled-components';
@@ -51,7 +51,7 @@ import {
 } from '@kepler.gl/constants';
 
 import SidePanelFactory from './side-panel';
-import MapContainerFactory from './map-container';
+import MapContainerFactory, {MapContainerProps} from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 import BottomWidgetFactory from './bottom-widget';
@@ -60,6 +60,9 @@ import PlotContainerFactory from './plot-container';
 import NotificationPanelFactory from './notification-panel';
 import GeoCoderPanelFactory from './geocoder-panel';
 import EffectManagerFactory from './effects/effect-manager';
+import EffectAnimationPreviewProvider, {
+  EffectAnimationPreviewContext
+} from './effects/effect-animation-preview';
 import DndContextFactory from './dnd-context';
 import {CloudListProvider} from './hooks/use-cloud-list-provider';
 import RemoteDatasetRefreshController from './remote-dataset-refresh-controller';
@@ -529,6 +532,16 @@ function KeplerGlFactory(
   NotificationPanel: ReturnType<typeof NotificationPanelFactory>,
   DndContext: ReturnType<typeof DndContextFactory>
 ): React.ComponentType<KeplerGLBasicProps & {selector: (...args: any[]) => KeplerGlState}> {
+  const PreviewMapContainer = (props: MapContainerProps) => {
+    const preview = useContext(EffectAnimationPreviewContext);
+    return (
+      <MapContainer
+        {...props}
+        visState={preview?.effects ? {...props.visState, effects: preview.effects} : props.visState}
+      />
+    );
+  };
+
   /** @typedef {import('./kepler-gl').UnconnectedKeplerGlProps} KeplerGlProps */
   /** @augments React.Component<KeplerGlProps> */
   class KeplerGL extends Component<
@@ -691,7 +704,7 @@ function KeplerGlFactory(
 
       const mapContainers = !isSplit
         ? [
-            <MapContainer
+            <PreviewMapContainer
               primary={true}
               key={0}
               index={0}
@@ -701,7 +714,7 @@ function KeplerGlFactory(
             />
           ]
         : splitMaps.map((settings, index) => (
-            <MapContainer
+            <PreviewMapContainer
               key={index}
               index={index}
               primary={index === 1}
@@ -742,21 +755,30 @@ function KeplerGlFactory(
                         enabled={Boolean(uiState.mapControls.cameraTour?.show)}
                         request={uiState.cameraTourPlaybackRequest}
                       >
-                        <MapViewStateContextProvider mapState={this.props.mapState}>
-                          <DndContext visState={visState}>
-                            {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
-                            <MapsLayout
-                              provideViewState={false}
-                              className="maps"
-                              mapState={this.props.mapState}
-                              onSetSwipeComparePercentage={
-                                this.props.mapStateActions.setSwipeComparePercentage
-                              }
-                            >
-                              {mapContainers}
-                            </MapsLayout>
-                          </DndContext>
-                        </MapViewStateContextProvider>
+                        <EffectAnimationPreviewProvider
+                          effects={visState.effects}
+                          enabled={Boolean(
+                            uiState.mapControls.effect?.active &&
+                              !uiState.currentModal &&
+                              !isExportingImage
+                          )}
+                        >
+                          <MapViewStateContextProvider mapState={this.props.mapState}>
+                            <DndContext visState={visState}>
+                              {!uiState.readOnly && !readOnly && <SidePanel {...sideFields} />}
+                              <MapsLayout
+                                provideViewState={false}
+                                className="maps"
+                                mapState={this.props.mapState}
+                                onSetSwipeComparePercentage={
+                                  this.props.mapStateActions.setSwipeComparePercentage
+                                }
+                              >
+                                {mapContainers}
+                              </MapsLayout>
+                            </DndContext>
+                          </MapViewStateContextProvider>
+                        </EffectAnimationPreviewProvider>
                       </CameraTourPlaybackProvider>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}

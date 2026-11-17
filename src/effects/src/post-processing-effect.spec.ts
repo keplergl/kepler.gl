@@ -113,22 +113,107 @@ describe('post-processing effect parameters', () => {
 
   test('animation endpoints are bounded, independently cloned, and never mutate input', () => {
     const animation = {
-      center: {endValue: Object.freeze([-1, 2]), easing: 'linear' as const},
-      size: {endValue: 50, easing: 'easeInOut' as const}
+      center: {
+        startValue: Object.freeze([2, -1]),
+        endValue: Object.freeze([-1, 2]),
+        easing: 'linear' as const
+      },
+      size: {startValue: -2, endValue: 50, easing: 'easeInOut' as const}
     };
     const effect = new PostProcessingEffect({type: 'dotScreen', animation: animation as any});
     expect(effect.animation).toEqual({
-      center: {endValue: [0, 1], easing: 'linear'},
-      size: {endValue: 20, easing: 'easeInOut'}
+      center: {startValue: [1, 0], endValue: [0, 1], easing: 'linear'},
+      size: {startValue: 1, endValue: 20, easing: 'easeInOut'}
     });
+    expect(animation.center.startValue).toEqual([2, -1]);
     expect(animation.center.endValue).toEqual([-1, 2]);
     const clone = effect.clone();
     expect(clone.animation).toEqual(effect.animation);
     expect(clone.animation).not.toBe(effect.animation);
     expect(clone.animation?.center).not.toBe(effect.animation?.center);
+    expect(clone.animation?.center.startValue).not.toBe(effect.animation?.center.startValue);
     expect(clone.animation?.center.endValue).not.toBe(effect.animation?.center.endValue);
+    (clone.animation!.center.startValue as number[])[0] = 0.25;
     (clone.animation!.center.endValue as number[])[0] = 0.75;
+    expect(effect.animation?.center.startValue).toEqual([1, 0]);
     expect(effect.animation?.center.endValue).toEqual([0, 1]);
+  });
+
+  test('saved zero starts remain independent of static parameter edits', () => {
+    const effect = new PostProcessingEffect({
+      type: 'brightnessContrast',
+      parameters: {brightness: 0.5},
+      animation: {brightness: {startValue: 0, endValue: 1, easing: 'linear'}}
+    });
+    effect.setProps({parameters: {brightness: 0.75}});
+    expect(effect.parameters.brightness).toBe(0.75);
+    expect(effect.deckEffect.props.brightness).toBe(0.75);
+    expect(effect.animation?.brightness).toEqual({startValue: 0, endValue: 1, easing: 'linear'});
+  });
+
+  test('preserves older implicit starts before the animated static parameter is edited', () => {
+    const effect = new PostProcessingEffect({
+      type: 'brightnessContrast',
+      parameters: {brightness: 0.2},
+      animation: {brightness: {endValue: 1, easing: 'linear'}}
+    });
+    expect(effect.animation?.brightness).not.toHaveProperty('startValue');
+    effect.setProps({parameters: {brightness: 0.7}});
+    expect(effect.parameters.brightness).toBe(0.7);
+    expect(effect.animation?.brightness).toEqual({startValue: 0.2, endValue: 1, easing: 'linear'});
+    effect.setProps({parameters: {brightness: 0.9}});
+    expect(effect.parameters.brightness).toBe(0.9);
+    expect(effect.animation?.brightness.startValue).toBe(0.2);
+  });
+
+  test('captures older vector starts independently of the current and supplied arrays', () => {
+    const initial = [0.2, 0.8];
+    const next = [0.4, 0.6];
+    const effect = new PostProcessingEffect({
+      type: 'dotScreen',
+      parameters: {center: initial},
+      animation: {center: {endValue: [0, 1], easing: 'linear'}}
+    });
+    const originalCenter = effect.parameters.center;
+    effect.setProps({parameters: {center: next}});
+    expect(effect.parameters.center).toEqual(next);
+    expect(effect.animation?.center.startValue).toEqual([0.2, 0.8]);
+    expect(effect.animation?.center.startValue).not.toBe(initial);
+    expect(effect.animation?.center.startValue).not.toBe(originalCenter);
+    expect(effect.animation?.center.startValue).not.toBe(next);
+    effect.setProps({parameters: {center: [0.9, 0.1]}});
+    expect(effect.animation?.center.startValue).toEqual([0.2, 0.8]);
+  });
+
+  test('validates and copies color starts independently of end colors', () => {
+    const startValue = Object.freeze([-20, 0, 300]);
+    const endValue = Object.freeze([255, 80, 10]);
+    const animation = validateEffectAnimation(
+      {fogColor: {startValue, endValue, easing: 'easeInOut'}},
+      POSTPROCESSING_EFFECTS.surfaceFog.parameters
+    );
+    expect(animation).toEqual({
+      fogColor: {startValue: [0, 0, 255], endValue: [255, 80, 10], easing: 'easeInOut'}
+    });
+    expect(animation?.fogColor.startValue).not.toBe(startValue);
+    expect(animation?.fogColor.endValue).not.toBe(endValue);
+    expect(startValue).toEqual([-20, 0, 300]);
+  });
+
+  test.each([
+    {size: {startValue: undefined, endValue: 2, easing: 'linear'}},
+    {size: {startValue: null, endValue: 2, easing: 'linear'}},
+    {size: {startValue: NaN, endValue: 2, easing: 'linear'}},
+    {size: {startValue: Infinity, endValue: 2, easing: 'linear'}},
+    {size: {startValue: '1', endValue: 2, easing: 'linear'}},
+    {size: {startValue: [1], endValue: 2, easing: 'linear'}},
+    {center: {startValue: [0.2], endValue: [0.2, 0.8], easing: 'linear'}},
+    {center: {startValue: [0.2, NaN], endValue: [0.2, 0.8], easing: 'linear'}},
+    {center: {startValue: 0, endValue: [0.2, 0.8], easing: 'linear'}}
+  ])('rejects explicit invalid starts instead of using the current value: %j', animation => {
+    expect(validateEffectAnimation(animation, POSTPROCESSING_EFFECTS.dotScreen.parameters)).toBe(
+      undefined
+    );
   });
 
   test.each([

@@ -48,23 +48,35 @@ export function validateEffectAnimation(
   for (const description of descriptions.filter(isAnimatableParameter)) {
     const {name, type, min, max, defaultValue} = description;
     if (!Object.prototype.hasOwnProperty.call(animation, name)) continue;
-    const entry = (animation as Record<string, {endValue?: unknown; easing?: unknown}>)[name];
+    const entry = (
+      animation as Record<string, {startValue?: unknown; endValue?: unknown; easing?: unknown}>
+    )[name];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
 
     const clampValue = (value: number) => Math.max(min, Math.min(max, value));
-    if (type === 'array' || type === 'color') {
-      if (
-        !Array.isArray(entry.endValue) ||
-        entry.endValue.length !== (defaultValue as number[]).length ||
-        !Array.from(entry.endValue).every(Number.isFinite)
-      ) {
-        continue;
+    const validateValue = (value: unknown): number | number[] | undefined => {
+      if (type === 'array' || type === 'color') {
+        if (
+          !Array.isArray(value) ||
+          value.length !== (defaultValue as number[]).length ||
+          !Array.from(value).every(Number.isFinite)
+        ) {
+          return undefined;
+        }
+        return value.map(clampValue);
       }
-      result[name] = {endValue: entry.endValue.map(clampValue), easing: entry.easing};
-    } else if (typeof entry.endValue === 'number' && Number.isFinite(entry.endValue)) {
-      result[name] = {endValue: clampValue(entry.endValue), easing: entry.easing};
-    }
+      return typeof value === 'number' && Number.isFinite(value) ? clampValue(value) : undefined;
+    };
+    const endValue = validateValue(entry.endValue);
+    const hasStart = Object.prototype.hasOwnProperty.call(entry, 'startValue');
+    const startValue = hasStart ? validateValue(entry.startValue) : undefined;
+    if (endValue === undefined || (hasStart && startValue === undefined)) continue;
+    result[name] = {
+      ...(hasStart ? {startValue} : {}),
+      endValue,
+      easing: entry.easing
+    };
   }
   return Object.keys(result).length ? result : undefined;
 }

@@ -135,7 +135,7 @@ type Props = {
 
 type Value = number | number[];
 
-/** Edit export endpoints together without applying draft values to the map. */
+/** Edit animation endpoints together without applying draft values to the map. */
 export default function EffectAnimationControl({
   effect,
   name,
@@ -157,6 +157,7 @@ export default function EffectAnimationControl({
     effect.animation?.[name] ??
     (legacyHeight
       ? {
+          startValue: effect.parameters.height,
           endValue: effect.parameters.heightEnd,
           easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
         }
@@ -167,7 +168,7 @@ export default function EffectAnimationControl({
     if (remove) {
       delete animation[name];
     } else {
-      animation[name] = {endValue, easing: linear ? 'linear' : 'easeInOut'};
+      animation[name] = {startValue, endValue, easing: linear ? 'linear' : 'easeInOut'};
     }
     const parameters = {
       ...(!remove ? {[name]: startValue} : {}),
@@ -211,9 +212,9 @@ export default function EffectAnimationControl({
         aria-label={`${saved ? 'Edit animation for' : 'Animate'} ${label}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        title="Animate during video export"
+        title="Animate this effect setting"
         onClick={() => {
-          const start = effect.parameters[name] ?? description.defaultValue;
+          const start = saved?.startValue ?? effect.parameters[name] ?? description.defaultValue;
           const end = saved?.endValue ?? start;
           setStartValue(Array.isArray(start) ? [...start] : (start as number));
           setEndValue(Array.isArray(end) ? [...end] : (end as number));
@@ -247,8 +248,9 @@ export default function EffectAnimationControl({
                 <div
                   style={{maxWidth: 220, whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.4}}
                 >
-                  Animates this setting from Start to End in video export and preview. Turn on
-                  Linear easing for a constant rate; otherwise it eases in and out.
+                  Animates this setting from Start to End with Run in the effects panel or during
+                  video export. Turn on Linear easing for a constant rate; otherwise it eases in and
+                  out.
                 </div>
               </Tooltip>
               <ParameterName>{label.replace(/([a-z])([A-Z])/g, '$1 $2')}</ParameterName>

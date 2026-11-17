@@ -93,7 +93,7 @@ describe('surface fog elevation editing', () => {
     );
     fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'fog', {
-      animation: {height: {endValue: 800, easing: 'easeInOut'}},
+      animation: {height: {startValue: 100, endValue: 800, easing: 'easeInOut'}},
       parameters: {height: 100, animateHeight: false}
     });
   });

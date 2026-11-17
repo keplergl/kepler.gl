@@ -19,6 +19,7 @@ export type EffectDescription = {
 };
 
 export type EffectParameterAnimation = {
+  startValue?: number | number[];
   endValue: number | number[];
   easing: 'linear' | 'easeInOut';
 };

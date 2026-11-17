@@ -302,7 +302,7 @@ describe('effect parameter editing', () => {
     const tooltip = await screen.findByRole('tooltip');
     expect(help).toHaveAttribute('aria-describedby', tooltip.id);
     expect(tooltip).toBeVisible();
-    expect(tooltip).toHaveTextContent(/video export and preview/);
+    expect(tooltip).toHaveTextContent(/Run in the effects panel or during video export/);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -329,7 +329,7 @@ describe('effect parameter editing', () => {
       expect(update).toHaveBeenCalledTimes(1);
       expect(update).toHaveBeenCalledWith(null, effect.id, {
         parameters: {zoom: start},
-        animation: {zoom: {endValue: end, easing: 'easeInOut'}}
+        animation: {zoom: {startValue: start, endValue: end, easing: 'easeInOut'}}
       });
     }
   );
@@ -353,8 +353,39 @@ describe('effect parameter editing', () => {
     await user.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, effect.id, {
       parameters: {screenXY: [0.5, 0.5]},
-      animation: {screenXY: {endValue: [0.5, 0.75], easing: 'easeInOut'}}
+      animation: {screenXY: {startValue: [0.5, 0.5], endValue: [0.5, 0.75], easing: 'easeInOut'}}
     });
+  });
+
+  test('keeps the saved Start when the main slider changes and the animation editor reopens', () => {
+    const effect = createEffect({type: 'brightnessContrast', parameters: {brightness: 0}});
+    const {update, rerender} = setup(effect);
+    update.mockImplementation((_event, _id, props) => {
+      effect.setProps(props);
+      rerender(<Configurator effect={effect} updateEffectConfig={update} />);
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Animate brightness'}));
+    fireEvent.change(
+      within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
+      {target: {value: '1'}}
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(effect.animation?.brightness).toEqual({
+      startValue: 0,
+      endValue: 1,
+      easing: 'easeInOut'
+    });
+
+    // This is the ordinary effect slider, outside the animation editor.
+    fireEvent.change(screen.getAllByRole('spinbutton')[0], {target: {value: '0.7'}});
+    expect(effect.parameters.brightness).toBe(0.7);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for brightness'}));
+    expect(
+      within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton')
+    ).toHaveValue(0);
+    expect(
+      within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton')
+    ).toHaveValue(1);
   });
 
   test('Cancel discards both endpoint drafts and reopening uses saved values', () => {
@@ -410,7 +441,7 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenCalledWith(null, 'effect', {
       animation: {
         other: {endValue: 0.8, easing: 'easeInOut'},
-        amount: {endValue: 0, easing: 'linear'}
+        amount: {startValue: 0.25, endValue: 0, easing: 'linear'}
       },
       parameters: {amount: 0.25}
     });
@@ -457,7 +488,7 @@ describe('effect parameter editing', () => {
     );
     fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'effect', {
-      animation: {center: {endValue: [0, 0.8], easing: 'easeInOut'}},
+      animation: {center: {startValue: [0.2, 0.4], endValue: [0, 0.8], easing: 'easeInOut'}},
       parameters: {center: [0.2, 0.4]}
     });
   });
@@ -480,7 +511,9 @@ describe('effect parameter editing', () => {
     fireEvent.click(screen.getByRole('button', {name: 'End color'}));
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'effect', {
-      animation: {shadowColor: {endValue: [0, 20, 30], easing: 'easeInOut'}},
+      animation: {
+        shadowColor: {startValue: [40, 50, 60], endValue: [0, 20, 30], easing: 'easeInOut'}
+      },
       parameters: {shadowColor: [40, 50, 60]}
     });
   });

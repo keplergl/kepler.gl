@@ -12,7 +12,7 @@ import {ChartConfig, Filter} from '@kepler.gl/types';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {KeplerTable} from '@kepler.gl/table';
 import LayerJsonEditorFactory from '../side-panel/layer-panel/layer-json-editor';
-import {Effect} from '@kepler.gl/effects';
+import {Effect, createEffect} from '@kepler.gl/effects';
 import {initApplicationConfig} from '@kepler.gl/utils';
 import AnimationControlFactory, {
   AnimationJsonEditorFactory
@@ -262,26 +262,42 @@ describe('JSON editor section adapters', () => {
   });
 
   test('effect endpoints appear in JSON and refresh after updates on the same effect instance', () => {
-    const effect = new Effect({
+    const effect = createEffect({
       type: 'ink',
       parameters: {strength: 0.2},
-      animation: {strength: {endValue: 0.8, easing: 'linear'}}
+      animation: {strength: {startValue: 0, endValue: 0.8, easing: 'linear'}}
     });
     const updateEffect = jest.fn();
+    updateEffect.mockImplementation((_id, props) => effect.setProps(props));
     const view = render(
       <EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />,
       {wrapper: Wrapper}
     );
     expect(displayedConfig().animation).toEqual(effect.animation);
-    effect.setProps({animation: {strength: {endValue: 0, easing: 'easeInOut'}}});
+    expect(displayedConfig().parameters).toEqual({strength: 0.2});
+    expect(effect.deckEffect.props).toEqual({strength: 0.2});
+    effect.setProps({animation: {strength: {startValue: 0.1, endValue: 0, easing: 'easeInOut'}}});
     view.rerender(<EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />);
     act(() => jest.advanceTimersByTime(300));
-    expect(displayedConfig().animation).toEqual({strength: {endValue: 0, easing: 'easeInOut'}});
+    expect(displayedConfig().animation).toEqual({
+      strength: {startValue: 0.1, endValue: 0, easing: 'easeInOut'}
+    });
+    const animation = {strength: {startValue: 0.3, endValue: 0.9, easing: 'linear'}};
+    edit({...displayedConfig(), animation});
+    expect(updateEffect).toHaveBeenLastCalledWith(
+      effect.id,
+      expect.objectContaining({animation, parameters: {strength: 0.2}})
+    );
+    expect(effect.animation).toEqual(animation);
+    expect(effect.parameters).toEqual({strength: 0.2});
+    expect(effect.deckEffect.props).toEqual({strength: 0.2});
     edit({...displayedConfig(), animation: {}});
     expect(updateEffect).toHaveBeenLastCalledWith(
       effect.id,
       expect.objectContaining({animation: {}})
     );
+    expect(effect).not.toHaveProperty('animation');
+    expect(effect.deckEffect.props).toEqual({strength: 0.2});
   });
 
   test('animation serialization omits runtime fields without losing falsy configuration', () => {
