@@ -11565,18 +11565,18 @@ __metadata:
   linkType: hard
 
 "ajv@npm:^6.12.3, ajv@npm:^6.12.4, ajv@npm:^6.12.5":
-  version: 6.12.6
-  resolution: "ajv@npm:6.12.6"
+  version: 6.15.0
+  resolution: "ajv@npm:6.15.0"
   dependencies:
     fast-deep-equal: "npm:^3.1.1"
     fast-json-stable-stringify: "npm:^2.0.0"
     json-schema-traverse: "npm:^0.4.1"
     uri-js: "npm:^4.2.2"
-  checksum: 10c0/41e23642cbe545889245b9d2a45854ebba51cda6c778ebced9649420d9205f2efb39cb43dbc41e358409223b1ea43303ae4839db682c848b891e4811da1a5a71
+  checksum: 10c0/67966499dd272ecde1c2e467084411132891523d057487587879d39ac04207f4351b7b2324c83198013967fbfa632c1612adc960114a30770fbe07a0773b32c2
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.0.0, ajv@npm:^8.17.1, ajv@npm:^8.9.0":
+"ajv@npm:^8.0.0, ajv@npm:^8.0.1, ajv@npm:^8.17.1, ajv@npm:^8.9.0":
   version: 8.20.0
   resolution: "ajv@npm:8.20.0"
   dependencies:
@@ -11585,18 +11585,6 @@ __metadata:
     json-schema-traverse: "npm:^1.0.0"
     require-from-string: "npm:^2.0.2"
   checksum: 10c0/5df9a1c8f83863cde1bd3a9ddb426f599718f88e3dc9153616c79fb28e0be455335830d7f21d745576519f057b371352daa31047b6a33d7036fe08777d60cf2a
-  languageName: node
-  linkType: hard
-
-"ajv@npm:^8.0.1":
-  version: 8.17.1
-  resolution: "ajv@npm:8.17.1"
-  dependencies:
-    fast-deep-equal: "npm:^3.1.3"
-    fast-uri: "npm:^3.0.1"
-    json-schema-traverse: "npm:^1.0.0"
-    require-from-string: "npm:^2.0.2"
-  checksum: 10c0/ec3ba10a573c6b60f94639ffc53526275917a2df6810e4ab5a6b959d87459f9ef3f00d5e7865b82677cb7d21590355b34da14d1d0b9c32d75f95a187e76fff35
   languageName: node
   linkType: hard
 
@@ -12703,20 +12691,13 @@ __metadata:
   linkType: hard
 
 "bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.9":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0"
-  checksum: 10c0/9736aaa317421b6b3ed038ff3d4491935a01419ac2d83ddcfebc5717385295fcfcf0c57311d90fe49926d0abbd7a9dbefdd8861e6129939177f7e67ebc645b21
+  version: 4.12.5
+  resolution: "bn.js@npm:4.12.5"
+  checksum: 10c0/e15e35d0e082fa43c5dd03b552041faf23bc870fbe5de0e41ab5d2d987875f43ffb1f8f57021494e9d71784223c59ddbba1819948b2c2648477a61ab7455aa42
   languageName: node
   linkType: hard
 
-"bn.js@npm:^5.0.0, bn.js@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "bn.js@npm:5.2.1"
-  checksum: 10c0/bed3d8bd34ec89dbcf9f20f88bd7d4a49c160fda3b561c7bb227501f974d3e435a48fb9b61bc3de304acab9215a3bda0803f7017ffb4d0016a0c3a740a283caa
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.2.3":
+"bn.js@npm:^5.0.0, bn.js@npm:^5.2.1, bn.js@npm:^5.2.3":
   version: 5.2.5
   resolution: "bn.js@npm:5.2.5"
   checksum: 10c0/4c47bcb261950086a9d5d311bea97197b5950703e0a80caf6e226f3bb049954a864c80b0fca7f70149c74c2e255cb4a63d0da2c425d7b15f9051a042a4e12095
@@ -12741,8 +12722,8 @@ __metadata:
   linkType: hard
 
 "body-parser@npm:~1.20.5":
-  version: 1.20.6
-  resolution: "body-parser@npm:1.20.6"
+  version: 1.20.9
+  resolution: "body-parser@npm:1.20.9"
   dependencies:
     bytes: "npm:~3.1.2"
     content-type: "npm:~1.0.5"
@@ -12752,11 +12733,11 @@ __metadata:
     http-errors: "npm:~2.0.1"
     iconv-lite: "npm:~0.4.24"
     on-finished: "npm:~2.4.1"
-    qs: "npm:~6.15.1"
+    qs: "npm:~6.16.0"
     raw-body: "npm:~2.5.3"
     type-is: "npm:~1.6.18"
     unpipe: "npm:~1.0.0"
-  checksum: 10c0/ad477209f1e714c41fa892a7d2fe22e10b23262103cc25cc6492dd3e6f7869cd2d8b00928b543a1a14d3c3663432452a192efd00422fad6f3687b0e38f7e3b07
+  checksum: 10c0/685d3208335377a3dfc6d7bc8b2af6d40d38b9a72e25bab4d9f7aff19d059729d5b1b3a9f5561274f460020bb9166c211d5302abe0b45452665420ca5e16013b
   languageName: node
   linkType: hard
 
@@ -16058,9 +16039,9 @@ __metadata:
   linkType: hard
 
 "diff@npm:^3.1.0":
-  version: 3.5.0
-  resolution: "diff@npm:3.5.0"
-  checksum: 10c0/fc62d5ba9f6d1b8b5833380969037007913d4886997838c247c54ec6934f09ae5a07e17ae28b1f016018149d81df8ad89306f52eac1afa899e0bed49015a64d1
+  version: 3.5.1
+  resolution: "diff@npm:3.5.1"
+  checksum: 10c0/28913ba64929561bd91e9aad8b6d5a2766d3c75451b8a2f7b2c0aa19f7edd32842da92ae23ae418a57362cc7a8673a26a9441d6ad896b0c64faf0a54c7ccffe6
   languageName: node
   linkType: hard
 
