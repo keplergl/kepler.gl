@@ -105,6 +105,7 @@
     "clean": "rm -rf node_modules examples/**/node_modules website/node_modules .nyc_output coverage jest-coverage tape-coverage",
     "fix-dependencies": "./scripts/fix-dependencies.sh",
     "bump-version": "node ./scripts/bump-version.js",
+    "release:prepare": "node ./scripts/prepare-release.js",
     "test:sqlrooms": "yarn workspace @kepler.gl/sqlrooms build && yarn workspace @kepler.gl/sqlrooms test"
   },
   "files": [
