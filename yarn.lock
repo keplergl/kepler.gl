@@ -31997,10 +31997,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"trim@npm:0.0.1":
-  version: 0.0.1
-  resolution: "trim@npm:0.0.1"
-  checksum: 10c0/d974971fc8b8629d13286f20ec6ccc48f480494ca9df358d452beb1fd7eea1b802be41cc7ee157be4abbdf1b3ca79cc6d04c34b14a7026037d437e8de9dacecb
+"trim@npm:0.0.3":
+  version: 0.0.3
+  resolution: "trim@npm:0.0.3"
+  checksum: 10c0/e13cbd17adfe116918762c7b0fe6ae5ace5a2d4229e2b3f4115651a31569676f73381ce5e843d1500de74a720fb012e5106e7e327a2eb2052ce575b1cd33fd5f
   languageName: node
   linkType: hard
 
