@@ -16,9 +16,11 @@ jobs:
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
 
-      # Exercise the npm version intended for future Trusted Publishing.
-      - name: Set up npm
-        run: volta install npm@11.19.0
+      # Installing npm requires a default Node, even with a project Node pin.
+      - name: Set up Node and npm
+        run: |
+          volta install "node@$(node -p 'require("./package.json").volta.node')"
+          volta install npm@11.19.0
 
       - run: yarn install --immutable && yarn bootstrap:prepare
         env:
