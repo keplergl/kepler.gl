@@ -90,7 +90,8 @@
     "socks": "2.8.9",
     "source-map-js": "1.2.2",
     "tar": "7.5.22",
-    "tmp": "0.2.7"
+    "tmp": "0.2.7",
+    "flat-cache/flatted": "3.4.3"
   },
   "engines": {
     "node": ">=20"

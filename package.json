@@ -373,7 +373,9 @@
     "zod@npm:^4.1.11": "4.6.7",
     "zod@npm:^4.1.13": "4.6.7",
     "zod@npm:^4.1.8": "4.6.7",
-    "zod@npm:^4.4.3": "4.6.7"
+    "zod@npm:^4.4.3": "4.6.7",
+    "remark-parse/trim": "0.0.3",
+    "tap-out/trim": "0.0.3"
   },
   "peerDependencies": {
     "react": ">=18.2",
