@@ -104,6 +104,8 @@ jest.mock('./hubble-utils', () => ({
   })),
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
+  getFlatExportLayers: jest.fn(() => []),
+  scaleZoomOpacityForVideoExport: jest.fn(config => config),
   scaleToVideoExport: jest.fn((viewState, container) => ({
     ...viewState,
     width: container.width,
@@ -224,6 +226,28 @@ describe('ExportVideoModal', () => {
         height: expect.any(Number)
       })
     );
+  });
+
+  test('passes the preview zoom correction to export-only fade settings', async () => {
+    const {scaleToVideoExport, scaleZoomOpacityForVideoExport} = require('./hubble-utils');
+    const interactionConfig = {zoomOpacity: {enabled: true, config: {controllers: []}}};
+    const scaled = {...interactionConfig, exportOnly: true};
+    scaleToVideoExport.mockImplementationOnce((camera, container) => ({
+      ...camera,
+      ...container,
+      zoom: camera.zoom - 2
+    }));
+    scaleZoomOpacityForVideoExport.mockReturnValueOnce(scaled);
+    const props = {
+      ...DEFAULT_PROPS,
+      visState: {...DEFAULT_PROPS.visState, interactionConfig}
+    };
+    await renderAndWaitForPanel(props);
+    const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
+    expect(scaleZoomOpacityForVideoExport).toHaveBeenCalledWith(interactionConfig, -2);
+    expect(panelProps.mapData.visState.interactionConfig).toBe(scaled);
+    expect(props.visState.interactionConfig).toBe(interactionConfig);
+    expect(interactionConfig).not.toHaveProperty('exportOnly');
   });
 
   test('offers authored animation only for a playable tour and keeps saved cameras unchanged', async () => {
@@ -975,6 +999,39 @@ describe('Camera Animation video export', () => {
     expect(instance.state.viewState).toMatchObject({...tour.stops[1].camera, width: 800});
     instance.setCameraPreset('Zoom In');
     expect(instance.getCameraKeyframes()).toBe('ordinary');
+  });
+
+  test('rebuilds regular export layers from each animated frame while preserving deck settings', () => {
+    const {getFlatExportLayers} = require('./hubble-utils');
+    class Base {
+      props = {
+        mapData: {visState: {}, mapState: camera},
+        deckProps: {effects: ['lighting'], onBeforeRender: jest.fn()},
+        mapboxLayerBeforeId: 'labels'
+      };
+      state = {viewState: camera};
+      render() {
+        return <div deckProps={this.props.deckProps} />;
+      }
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    const frames = [[{id: 'first'}], [{id: 'next'}]];
+    getFlatExportLayers.mockReturnValueOnce(frames[0]).mockReturnValueOnce(frames[1]);
+    for (const [i, zoom] of [4, 6].entries()) {
+      instance.state.viewState = {...camera, zoom};
+      const panel = instance.render();
+      expect(getFlatExportLayers).toHaveBeenLastCalledWith(instance.props.mapData, {
+        mapIndex: 0,
+        viewState: instance.state.viewState,
+        beforeId: 'labels'
+      });
+      expect(panel.props.deckProps).toEqual({...instance.props.deckProps, layers: frames[i]});
+    }
+    instance.props.deckProps = {...instance.props.deckProps, layers: frames[0]};
+    getFlatExportLayers.mockClear();
+    expect(instance.render().props.deckProps.layers).toBe(frames[0]);
+    expect(getFlatExportLayers).not.toHaveBeenCalled();
   });
 });
 

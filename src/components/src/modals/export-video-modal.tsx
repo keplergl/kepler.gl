@@ -35,7 +35,8 @@ import {
   getAnimatableFilters,
   getResolutionSetting,
   getVideoExportContainer,
-  scaleToVideoExport
+  scaleToVideoExport,
+  scaleZoomOpacityForVideoExport
 } from './hubble-utils';
 import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
@@ -303,6 +304,14 @@ const ExportVideoModalFactory = () => {
         exportVideoWidth,
         videoConfiguration.resolution || ''
       );
+      const exportMapState = {
+        ...mapState,
+        ...scaleToVideoExport(mapState, container)
+      };
+      const interactionConfig = scaleZoomOpacityForVideoExport(
+        visState.interactionConfig,
+        exportMapState.zoom - mapState.zoom
+      );
       const exportVisState = visState.cameraTour
         ? {
             ...visState,
@@ -318,10 +327,10 @@ const ExportVideoModalFactory = () => {
             }
           }
         : visState;
-      const exportMapState = {
-        ...mapState,
-        ...scaleToVideoExport(mapState, container)
-      };
+      const exportVisStateWithFades =
+        interactionConfig === visState.interactionConfig
+          ? exportVisState
+          : {...exportVisState, interactionConfig};
 
       if (mapStyle?.styleType === NO_MAP_ID) {
         const noMapEntry = mapStyle.mapStyles?.[NO_MAP_ID];
@@ -345,7 +354,7 @@ const ExportVideoModalFactory = () => {
             JSON.stringify(bgStyle)
           )}`;
           return {
-            visState: exportVisState,
+            visState: exportVisStateWithFades,
             mapState: exportMapState,
             mapStyle: {
               ...mapStyle,
@@ -357,7 +366,7 @@ const ExportVideoModalFactory = () => {
           };
         }
       }
-      return {visState: exportVisState, mapState: exportMapState, mapStyle};
+      return {visState: exportVisStateWithFades, mapState: exportMapState, mapStyle};
     }, [visState, mapState, mapStyle, exportVideoWidth, videoConfiguration.resolution]);
 
     const onUpdateMap = useCallback(

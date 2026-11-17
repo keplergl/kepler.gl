@@ -16,13 +16,22 @@ import {
   scaleToVideoExport,
   getVideoExportContainer,
   getHubbleDeckGlProps,
-  getGlobeExportLayers
+  getGlobeExportLayers,
+  getFlatExportLayers,
+  scaleZoomOpacityForVideoExport
 } from './hubble-utils';
 
 jest.mock('@kepler.gl/utils', () => ({
+  ...jest.requireActual('../../../utils/src/utils'),
+  getMapLayersFromSplitMaps: jest.requireActual('../../../utils/src/map-utils')
+    .getMapLayersFromSplitMaps,
   getLayerBlendingParameters: jest.fn(() => ({blend: true})),
   getBaseMapLibrary: jest.fn(() => 'maplibre')
 }));
+
+// The export regression uses the real reducer render path with a minimal layer
+// renderer, so no concrete layer classes or GPU resources are needed.
+jest.mock('@kepler.gl/layers', () => ({OVERLAY_TYPE_CONST: {deckgl: 'deckgl'}}));
 
 jest.mock('maplibregl-mapbox-request-transformer', () => ({
   isMapboxURL: jest.fn((url: string) => url.startsWith('mapbox:')),
@@ -446,7 +455,7 @@ describe('globe export layer composition', () => {
     expect(props.views.props.clearColor).toBe(false);
   });
 
-  test('flat exports delegate layer creation to hubble rather than creating globe layers', () => {
+  test('flat deck props leave layers to the per-frame export renderer', () => {
     const props = getHubbleDeckGlProps(
       {...state, mapState: {...state.mapState, globe: {enabled: false}}},
       'token'
@@ -498,5 +507,182 @@ describe('globe export layer composition', () => {
       'key'
     );
     expect(props.mapStyle.layers).toEqual([]);
+  });
+});
+
+describe('flat export zoom fading', () => {
+  const {computeDeckLayers} = require('@kepler.gl/reducers');
+  const realComputeDeckLayers = jest.requireActual(
+    '../../../reducers/src/layer-utils'
+  ).computeDeckLayers;
+  const stops = {appear: 2, full: 4, fade: 8, gone: 10};
+
+  function makeDeckLayer(props) {
+    return {id: props.id, props, clone: next => makeDeckLayer({...props, ...next})};
+  }
+
+  function setup() {
+    const source = makeDeckLayer({
+      id: 'data-layer',
+      opacity: 0.8,
+      visible: true,
+      pickable: true,
+      _subLayerProps: {'polygons-stroke': {opacity: 0.6}}
+    });
+    const layer = {
+      id: 'a',
+      config: {dataId: 'data', isVisible: true},
+      overlayType: 'deckgl',
+      shouldRenderLayer: () => true,
+      renderLayer: ({visible}) => [source.clone({visible: layer.config.isVisible && visible})]
+    };
+    const state = {
+      visState: {
+        datasets: {},
+        effects: [],
+        layers: [layer],
+        layerData: [{}],
+        layerOrder: ['a'],
+        splitMaps: [],
+        interactionConfig: {
+          zoomOpacity: {
+            enabled: true,
+            config: {controllers: [{id: 'fade', layerIds: ['a'], stops: {...stops}}]}
+          }
+        }
+      },
+      mapState: {longitude: 12, latitude: 40, zoom: 6},
+      mapStyle: {visibleLayerGroups: {}}
+    };
+    return {source, state};
+  }
+
+  beforeEach(() => {
+    computeDeckLayers.mockImplementation(realComputeDeckLayers);
+  });
+
+  test('follows each animated frame without capturing fully faded layers or changing the saved map', () => {
+    const {source, state} = setup();
+    const savedInteraction = JSON.parse(JSON.stringify(state.visState.interactionConfig));
+    const frames = [1, 3, 6, 9, 10].map(zoom =>
+      getFlatExportLayers(state, {
+        mapIndex: 0,
+        viewState: {...state.mapState, zoom},
+        beforeId: 'labels'
+      })
+    );
+
+    expect(frames.map(layers => layers.map(layer => layer.props.opacity))).toEqual([
+      [],
+      [0.4],
+      [0.8],
+      [0.4],
+      []
+    ]);
+    expect(frames[1][0].props._subLayerProps['polygons-stroke'].opacity).toBe(0.3);
+    frames.flat().forEach(layer => {
+      expect(layer.props.visible).toBe(true);
+      expect(layer.props.pickable).toBe(false);
+      expect(layer.props.beforeId).toBe('labels');
+    });
+    expect(source.props.opacity).toBe(0.8);
+    expect(source.props._subLayerProps['polygons-stroke'].opacity).toBe(0.6);
+    expect(source.props.pickable).toBe(true);
+    expect(state.mapState.zoom).toBe(6);
+    expect(state.visState.interactionConfig).toEqual(savedInteraction);
+  });
+
+  test.each(['disabled', 'unassigned'])('preserves base opacity when fading is %s', condition => {
+    const {state} = setup();
+    const fade = state.visState.interactionConfig.zoomOpacity;
+    if (condition === 'disabled') fade.enabled = false;
+    else fade.config.controllers[0].layerIds = ['other'];
+
+    const [layer] = getFlatExportLayers(state, {
+      mapIndex: 0,
+      viewState: {...state.mapState, zoom: 1}
+    });
+
+    expect(layer.props.opacity).toBe(0.8);
+    expect(layer.props.visible).toBe(true);
+    expect(layer.props._subLayerProps['polygons-stroke'].opacity).toBe(0.6);
+  });
+
+  test('excludes config-hidden layers from capture readiness', () => {
+    const {state} = setup();
+    state.visState.layers[0].config.isVisible = false;
+
+    expect(getFlatExportLayers(state, {mapIndex: 0})).toEqual([]);
+    expect(state.visState.layers[0].config.isVisible).toBe(false);
+  });
+
+  test('excludes split-hidden layers and creates separate visible instances', () => {
+    const {state} = setup();
+    state.visState.splitMaps = [{layers: {a: true}}, {layers: {a: false}}];
+    const [left] = getFlatExportLayers(state, {mapIndex: 0});
+    const right = getFlatExportLayers(state, {mapIndex: 1});
+    const [nextLeft] = getFlatExportLayers(state, {mapIndex: 0});
+
+    expect(left.props.visible).toBe(true);
+    expect(right).toEqual([]);
+    expect(nextLeft.props.visible).toBe(true);
+    expect(nextLeft).not.toBe(left);
+    expect(state.visState.splitMaps).toEqual([{layers: {a: true}}, {layers: {a: false}}]);
+  });
+});
+
+describe('export zoom-fade scaling', () => {
+  const {getLayerZoomOpacityFactor} = jest.requireActual('../../../reducers/src/interaction-utils');
+  const interactionConfig = {
+    tooltip: {enabled: true},
+    zoomOpacity: {
+      enabled: true,
+      config: {
+        controllers: [{id: 'fade', layerIds: ['a'], stops: {appear: 2, full: 4, fade: 8, gone: 10}}]
+      }
+    }
+  };
+  const map = {longitude: 12, latitude: 40, zoom: 6, width: 1440, height: 900};
+
+  test.each([
+    {width: 360, height: 225},
+    {width: 540, height: 304}
+  ])('preserves authored fades in a $width × $height export preview', container => {
+    const original = JSON.parse(JSON.stringify(interactionConfig));
+    const offset = scaleToVideoExport(map, container).zoom - map.zoom;
+    const scaled = scaleZoomOpacityForVideoExport(interactionConfig, offset);
+
+    for (const zoom of [1, 2, 3, 4, 6, 8, 9, 10, 12]) {
+      expect(getLayerZoomOpacityFactor('a', zoom + offset, scaled)).toBeCloseTo(
+        getLayerZoomOpacityFactor('a', zoom, interactionConfig)
+      );
+    }
+    expect(scaled).not.toBe(interactionConfig);
+    expect(scaled.zoomOpacity.config.controllers[0].stops).not.toBe(
+      interactionConfig.zoomOpacity.config.controllers[0].stops
+    );
+    expect(scaled.tooltip).toEqual(interactionConfig.tooltip);
+    expect(interactionConfig).toEqual(original);
+  });
+
+  test('leaves globe fade stops unchanged because globe zoom is not rescaled', () => {
+    const globeMap = {...map, globe: {enabled: true}};
+    const offset = scaleToVideoExport(globeMap, {width: 360, height: 225}).zoom - map.zoom;
+
+    expect(offset).toBe(0);
+    expect(scaleZoomOpacityForVideoExport(interactionConfig, offset)).toBe(interactionConfig);
+  });
+
+  test.each([0, NaN, Infinity, -Infinity])(
+    'leaves fade settings unchanged for offset %s',
+    offset => {
+      expect(scaleZoomOpacityForVideoExport(interactionConfig, offset)).toBe(interactionConfig);
+    }
+  );
+
+  test('accepts missing fade settings', () => {
+    const withoutFade = {tooltip: {enabled: true}};
+    expect(scaleZoomOpacityForVideoExport(undefined, -2)).toBeUndefined();
+    expect(scaleZoomOpacityForVideoExport(withoutFade, -2)).toBe(withoutFade);
   });
 });
