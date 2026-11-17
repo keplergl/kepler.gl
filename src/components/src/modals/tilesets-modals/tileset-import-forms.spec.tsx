@@ -61,6 +61,53 @@ afterEach(() => {
 });
 
 describe('3D tileset import', () => {
+  it.each(['mouseEnter', 'focus'] as const)(
+    'shows Google API key help on %s after selecting the Google example',
+    async trigger => {
+      initApplicationConfig({showInlineTilesetExamples: true});
+      jest.mocked(fetch).mockResolvedValue(response({root: {}}));
+      const setResponse = jest.fn();
+      const {getByText, getByRole, queryByRole, findByRole} = renderWithTheme(
+        <TilesetTile3DForm setResponse={setResponse} />
+      );
+      const helpLink = {name: 'Open Google Maps API key setup guide'};
+      expect(queryByRole('link', helpLink)).not.toBeInTheDocument();
+
+      fireEvent.click(getByText('Google 3D Tiles'));
+      await waitFor(() => expect(lastResponse(setResponse).loading).toBe(false));
+      const help = getByRole('link', helpLink);
+      expect(help).toHaveAttribute(
+        'href',
+        'https://developers.google.com/maps/documentation/tile/get-api-key'
+      );
+      expect(queryByRole('tooltip')).not.toBeInTheDocument();
+      fireEvent[trigger](help);
+      const tooltip = await findByRole('tooltip');
+      expect(tooltip).toHaveTextContent(/enable billing/i);
+      expect(tooltip).toHaveTextContent(/enable the Map Tiles API/i);
+      expect(tooltip).toHaveTextContent(/Keys & Credentials/);
+
+      fireEvent.click(getByText('Cesium Ion'));
+      await waitFor(() => expect(lastResponse(setResponse).loading).toBe(false));
+      expect(queryByRole('link', helpLink)).not.toBeInTheDocument();
+      expect(queryByRole('tooltip')).not.toBeInTheDocument();
+    }
+  );
+
+  it('shows Google API key help for an entered URL and removes it when cleared', async () => {
+    jest.mocked(fetch).mockResolvedValue(response({root: {}}));
+    const setResponse = jest.fn();
+    const {getByLabelText, getByRole, queryByRole} = renderWithTheme(
+      <TilesetTile3DForm setResponse={setResponse} />
+    );
+    const helpLink = {name: 'Open Google Maps API key setup guide'};
+    change(getByLabelText('Tileset URL'), 'https://tile.googleapis.com/v1/3dtiles/root.json');
+    await waitFor(() => expect(lastResponse(setResponse).loading).toBe(false));
+    expect(getByRole('link', helpLink)).toBeInTheDocument();
+    change(getByLabelText('Tileset URL'), '');
+    expect(queryByRole('link', helpLink)).not.toBeInTheDocument();
+  });
+
   it('waits for metadata and preserves an explicit dataset name', async () => {
     const pending = deferred<Response>();
     jest.mocked(fetch).mockReturnValue(pending.promise);
