@@ -8,8 +8,13 @@ import {createStore} from 'redux';
 import {IntlProvider, useIntl} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {createEffect} from '@kepler.gl/effects';
+import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
 import type {Effect} from '@kepler.gl/types';
+import CameraTourPlaybackProvider, {
+  CameraTourPlaybackContext
+} from '../side-panel/interaction-panel/camera-tour-playback-provider';
+import CameraTourPlaybackControls from '../side-panel/interaction-panel/camera-tour-playback-controls';
 import EffectManagerFactory from './effect-manager';
 import EffectAnimationPreviewProvider, {
   EffectAnimationPreviewContext
@@ -60,7 +65,23 @@ function animatedBrightness() {
   });
 }
 
-function setup(effects: Effect[], enabled = true) {
+function setup(
+  effects: Effect[],
+  enabled = true,
+  {cameraDuration, managerOpen = true}: {cameraDuration?: number; managerOpen?: boolean} = {}
+) {
+  const updateMap = jest.fn();
+  const tour = {
+    stops: [
+      {
+        id: 'start',
+        name: 'Start',
+        camera: {longitude: 10, latitude: 20, zoom: 6, bearing: 0, pitch: 0},
+        holdDurationMs: cameraDuration ?? 0,
+        travelDurationMs: 0
+      }
+    ]
+  };
   const initialState = {visState: {effects, effectOrder: effects.map(effect => effect.id)}};
   const store = createStore((state = initialState, action: {type: string; effects?: Effect[]}) =>
     action.type === 'replaceEffects' && action.effects
@@ -78,32 +99,54 @@ function setup(effects: Effect[], enabled = true) {
       </output>
     );
   }
-  function Content({active}: {active: boolean}) {
+  function CameraControls() {
+    const playback = useContext(CameraTourPlaybackContext);
+    return playback && cameraDuration !== undefined ? (
+      <CameraTourPlaybackControls playback={playback} />
+    ) : null;
+  }
+  function Content({active, showManager}: {active: boolean; showManager: boolean}) {
     const intl = useIntl();
     const saved = useSelector((state: typeof initialState) => state.visState.effects);
     return (
       <EffectAnimationPreviewProvider effects={saved} enabled={active}>
-        <Manager intl={intl} />
-        <MapPreview />
+        <CameraTourPlaybackProvider
+          tour={tour}
+          mapState={INITIAL_MAP_STATE}
+          updateMap={updateMap}
+          enabled
+        >
+          {showManager && <Manager intl={intl} />}
+          <CameraControls />
+          <MapPreview />
+        </CameraTourPlaybackProvider>
       </EffectAnimationPreviewProvider>
     );
   }
-  const tree = (active: boolean) => (
+  const tree = () => (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <IntlProvider locale="en" messages={{'effectManager.effects': 'Effects'}}>
-          <Content active={active} />
+          <Content active={enabled} showManager={managerOpen} />
         </IntlProvider>
       </ThemeProvider>
     </Provider>
   );
-  const view = render(tree(enabled));
+  const view = render(tree());
   return {
     ...view,
     store,
+    updateMap,
     getPreviewEffects: () => previewEffects,
     parameters: () => JSON.parse(screen.getByLabelText('Rendered effects').textContent || '[]'),
-    setEnabled: (active: boolean) => view.rerender(tree(active)),
+    setEnabled: (active: boolean) => {
+      enabled = active;
+      view.rerender(tree());
+    },
+    setManagerOpen: (open: boolean) => {
+      managerOpen = open;
+      view.rerender(tree());
+    },
     replaceEffects: (next: Effect[]) => {
       act(() => store.dispatch({type: 'replaceEffects', effects: next}));
     }
@@ -111,6 +154,65 @@ function setup(effects: Effect[], enabled = true) {
 }
 
 describe('effects panel animation preview', () => {
+  test.each([
+    {cameraDuration: 4000, managerOpen: false},
+    {cameraDuration: 20000, managerOpen: false},
+    {cameraDuration: 20000, managerOpen: true}
+  ])(
+    'camera Play runs a ten-second effects preview (camera=$cameraDuration ms, manager open=$managerOpen)',
+    options => {
+      const effect = animatedBrightness();
+      const view = setup([effect], true, options);
+      fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+      expect(view.getPreviewEffects()).not.toBeNull();
+      expect(view.parameters()[0].brightness).toBe(0);
+      advanceFrame(2500);
+      expect(view.parameters()[0].brightness).toBe(0.25);
+      view.setManagerOpen(!options.managerOpen);
+      advanceFrame(5000);
+      expect(view.parameters()[0].brightness).toBe(0.5);
+      expect(screen.getByLabelText('Elapsed time')).toHaveTextContent(
+        options.cameraDuration < 10000 ? '4 s' : '5 s'
+      );
+      advanceFrame(9999);
+      expect(view.parameters()[0].brightness).toBeCloseTo(0.9999);
+      advanceFrame(10000);
+      expect(view.parameters()[0].brightness).toBe(1);
+      expect(effect.parameters.brightness).toBe(0);
+      expect(frames.size).toBe(options.cameraDuration > 10000 ? 1 : 0);
+
+      advanceFrame(20000);
+      expect(view.parameters()[0].brightness).toBe(1);
+      expect(frames.size).toBe(0);
+      fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+      expect(view.parameters()[0].brightness).toBe(0);
+      advanceFrame(22500);
+      expect(view.parameters()[0].brightness).toBe(0.25);
+    }
+  );
+
+  test('camera playback still runs without animated effects', () => {
+    const view = setup([], true, {cameraDuration: 4000, managerOpen: false});
+    fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+    advanceFrame(2000);
+    expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('2 s');
+    expect(view.updateMap).toHaveBeenCalled();
+    expect(view.getPreviewEffects()).toBeNull();
+    expect(frames.size).toBe(1);
+  });
+
+  test('camera playback respects the effects preview disable guard', () => {
+    const view = setup([animatedBrightness()], false, {
+      cameraDuration: 4000,
+      managerOpen: false
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+    advanceFrame(2000);
+    expect(screen.getByLabelText('Elapsed time')).toHaveTextContent('2 s');
+    expect(view.getPreviewEffects()).toBeNull();
+    expect(frames.size).toBe(1);
+  });
+
   test.each<[string, () => Effect[]]>([
     ['empty effects', () => []],
     ['missing animation', () => [createEffect({type: 'brightnessContrast'})]],

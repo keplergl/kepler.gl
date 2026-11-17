@@ -748,20 +748,16 @@ function KeplerGlFactory(
                         datasets={visState.datasets}
                         refreshDataset={this.props.visStateActions.refreshDataset}
                       />
-                      <CameraTourPlaybackProvider
-                        tour={visState.cameraTour}
-                        mapState={this.props.mapState}
-                        updateMap={this.props.mapStateActions.updateMap}
-                        enabled={Boolean(uiState.mapControls.cameraTour?.show)}
-                        request={uiState.cameraTourPlaybackRequest}
+                      <EffectAnimationPreviewProvider
+                        effects={visState.effects}
+                        enabled={!uiState.currentModal && !isExportingImage}
                       >
-                        <EffectAnimationPreviewProvider
-                          effects={visState.effects}
-                          enabled={Boolean(
-                            uiState.mapControls.effect?.active &&
-                              !uiState.currentModal &&
-                              !isExportingImage
-                          )}
+                        <CameraTourPlaybackProvider
+                          tour={visState.cameraTour}
+                          mapState={this.props.mapState}
+                          updateMap={this.props.mapStateActions.updateMap}
+                          enabled={Boolean(uiState.mapControls.cameraTour?.show)}
+                          request={uiState.cameraTourPlaybackRequest}
                         >
                           <MapViewStateContextProvider mapState={this.props.mapState}>
                             <DndContext visState={visState}>
@@ -778,8 +774,8 @@ function KeplerGlFactory(
                               </MapsLayout>
                             </DndContext>
                           </MapViewStateContextProvider>
-                        </EffectAnimationPreviewProvider>
-                      </CameraTourPlaybackProvider>
+                        </CameraTourPlaybackProvider>
+                      </EffectAnimationPreviewProvider>
                       {isExportingImage && <PlotContainer {...plotContainerFields} />}
                       {/* 1 geocoder: single mode OR split mode and synced viewports */}
                       {!isViewportDisjointed(this.props) && interactionConfig.geocoder.enabled && (
