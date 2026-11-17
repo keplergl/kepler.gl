@@ -6,8 +6,10 @@ const fs = require('fs');
 const path = require('path');
 
 const usage = 'Usage: yarn release:prepare <version> (example: 3.3.0-alpha.23)';
+// Lerna strips +build metadata, while bump-version keeps it in the root manifest.
+// Reject it here so root and workspace versions cannot diverge for that input.
 const versionPattern =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([\da-zA-Z-]+(?:\.[\da-zA-Z-]+)*))?(?:\+[\da-zA-Z-]+(?:\.[\da-zA-Z-]+)*)?$/;
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([\da-zA-Z-]+(?:\.[\da-zA-Z-]+)*))?$/;
 
 function isVersion(value) {
   const match = typeof value === 'string' && value.match(versionPattern);
@@ -24,7 +26,7 @@ function prepareRelease(
 ) {
   // The existing bump script uses a shell command, so accept only exact versions.
   if (!isVersion(version)) {
-    throw new Error(`Expected an exact semantic version. ${usage}`);
+    throw new Error(`Expected an exact semantic version without build metadata. ${usage}`);
   }
 
   const changelogPath = path.join(repoRoot, 'CHANGELOG.md');

@@ -332,6 +332,22 @@ test('release:prepare refuses missing or unreachable history before changing ver
   t.end();
 });
 
+test('release:prepare rejects build metadata before it can create inconsistent package versions', t => {
+  ['3.3.0+build.1', '3.3.0-alpha.23+build.1'].forEach(version => {
+    withReleaseFixture(({cwd, read, commit, run}) => {
+      commit('new change');
+      const originalPackage = read('package.json');
+      const result = run(version);
+      t.notEqual(result.status, 0, `rejects ${version}`);
+      t.ok(result.stderr.includes('without build metadata'), 'explains the unsupported input');
+      t.notOk(fs.existsSync(path.join(cwd, 'bump-args.json')), 'does not call the bump command');
+      t.equal(read('package.json'), originalPackage, 'leaves the manifest unchanged');
+      t.equal(read('CHANGELOG.md'), releaseChangelog, 'leaves the changelog unchanged');
+    });
+  });
+  t.end();
+});
+
 test('release:prepare leaves the changelog untouched if the existing bump command fails', t => {
   withReleaseFixture(({read, commit, run}) => {
     commit('new change');
