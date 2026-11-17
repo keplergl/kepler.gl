@@ -11,6 +11,7 @@ import {getApplicationConfig} from '@kepler.gl/utils';
 import {MetaResponse, DatasetCreationAttributes} from './common';
 import {InputLight} from '../../common';
 import {Help} from '../../common/icons';
+import TippyTooltip from '../../common/tippy-tooltip';
 
 const TilesetInputContainer = styled.div`
   display: grid;
@@ -90,6 +91,23 @@ const InfoIconLink = styled.a`
 
 const TILE3D_DOCUMENTATION_URL =
   'https://docs.kepler.gl/docs/user-guides/c-types-of-layers/p-3d-tile-layer';
+
+const GOOGLE_API_KEY_DOCUMENTATION_URL =
+  'https://developers.google.com/maps/documentation/tile/get-api-key';
+
+const ApiKeyInstructions = styled.div`
+  max-width: 280px;
+  white-space: normal;
+
+  ol {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+
+  li + li {
+    margin-top: 4px;
+  }
+`;
 
 const TILE3D_EXAMPLES = [
   {
@@ -358,7 +376,37 @@ const TilesetTile3DForm: React.FC<Tile3DFormProps> = ({setResponse}) => {
         </TilesetInputDescription>
       </div>
       <div>
-        <label htmlFor="tile3d-token">Access Token (if needed)</label>
+        <LabelRow>
+          <label htmlFor="tile3d-token">Access Token (if needed)</label>
+          {detectProvider(tileUrl) === 'google' && (
+            <TippyTooltip
+              placement="top"
+              render={() => (
+                <ApiKeyInstructions role="tooltip">
+                  <strong>Get a Google Maps API key</strong>
+                  <ol>
+                    <li>Create or select a Google Cloud project and enable billing.</li>
+                    <li>Enable the Map Tiles API for the project.</li>
+                    <li>
+                      Open Google Maps Platform → Keys &amp; Credentials, create an API key, and
+                      restrict it to Map Tiles API.
+                    </li>
+                    <li>Copy the key and paste it into the Access Token field.</li>
+                  </ol>
+                </ApiKeyInstructions>
+              )}
+            >
+              <InfoIconLink
+                href={GOOGLE_API_KEY_DOCUMENTATION_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Google Maps API key setup guide"
+              >
+                <Help height="16px" />
+              </InfoIconLink>
+            </TippyTooltip>
+          )}
+        </LabelRow>
         <InputLight
           id="tile3d-token"
           placeholder="Enter access token"
