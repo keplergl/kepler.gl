@@ -527,6 +527,35 @@ describe('ExportVideoModal', () => {
       expect(linear.parameters.amount).toBe(0);
     });
 
+    test('uses saved starts after static edits and restores the edited static values', () => {
+      const effect = makeEffect(
+        {amount: 70, color: [10, 20, 30]},
+        {
+          amount: {startValue: 0, endValue: 100, easing: 'linear'},
+          color: {startValue: [0, 40, 80], endValue: [80, 0, 40], easing: 'linear'}
+        }
+      );
+      const {draw, state, unmount} = mountAnimation([effect]);
+      state.adapter.videoCapture.timeMs = 0;
+      draw();
+      expect(effect.parameters).toEqual({amount: 0, color: [0, 40, 80]});
+      state.adapter.videoCapture.timeMs = 500;
+      draw();
+      expect(effect.parameters).toEqual({amount: 50, color: [40, 20, 60]});
+      state.adapter.videoCapture.timeMs = 1000;
+      draw();
+      expect(effect.parameters).toEqual({amount: 100, color: [80, 0, 40]});
+      state.previewing = false;
+      draw();
+      expect(effect.parameters).toEqual({amount: 70, color: [10, 20, 30]});
+      state.previewing = true;
+      state.adapter.videoCapture.timeMs = 0;
+      draw();
+      expect(effect.parameters).toEqual({amount: 0, color: [0, 40, 80]});
+      unmount();
+      expect(effect.parameters).toEqual({amount: 70, color: [10, 20, 30]});
+    });
+
     test.each(['previewing', 'rendering'])('uses the globe/swipe clock while %s', mode => {
       const effect = makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}});
       const {draw, state} = mountAnimation([effect], {

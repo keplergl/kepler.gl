@@ -620,7 +620,8 @@ test('#visStateSchema -> v1 -> save load effects', t => {
 test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
   const state = cloneDeep(StateWEffects);
   const effect = state.visState.effects.find(item => item.type === 'sepia');
-  const animation = {amount: {endValue: 0, easing: 'linear'}};
+  const animation = {amount: {startValue: 0.25, endValue: 0, easing: 'linear'}};
+  effect.setProps({parameters: {amount: 0.7}});
   const parameters = {...effect.parameters};
   effect.setProps({animation});
 
@@ -631,11 +632,13 @@ test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
     animation,
     'saves optional animation, including zero endpoints'
   );
-  t.deepEqual(savedEffect.parameters, parameters, 'keeps static start parameters');
+  t.deepEqual(savedEffect.parameters, parameters, 'keeps static parameters separate from Start');
+  t.deepEqual(effect.deckEffect.props, parameters, 'animation endpoints do not reach uniforms');
   const loaded = SchemaManager.parseSavedConfig(saved);
   const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
   t.deepEqual(loadedEffect.animation, animation, 'reconstructs animation after loading');
-  t.deepEqual(loadedEffect.parameters, parameters, 'restores start parameters');
+  t.deepEqual(loadedEffect.parameters, parameters, 'restores the separate static parameters');
+  t.deepEqual(loadedEffect.deckEffect.props, parameters, 'loaded uniforms retain static values');
 
   effect.setProps({animation: {}});
   const cleared = SchemaManager.getConfigToSave(state);

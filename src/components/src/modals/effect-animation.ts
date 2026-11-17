@@ -25,6 +25,7 @@ type ParameterTrack = {
   name: string;
   start: number | number[];
   end: number | number[];
+  original: number | number[];
   easing: 'linear' | 'easeInOut';
 };
 
@@ -49,7 +50,10 @@ function getProgress(state?: PlaybackState): number | null {
   return Math.min(Math.max(((time as number) - (start as number)) / duration, 0), 1);
 }
 
-function setAnimatedParameters(effect: Effect, parameters: Record<string, number | number[]>) {
+export function setAnimatedParameters(
+  effect: Effect,
+  parameters: Record<string, number | number[]>
+) {
   const sunLight =
     effect.type === LIGHT_AND_SHADOW_EFFECT.type ? effect.deckEffect?.directionalLights?.[0] : null;
   const timestamp = sunLight?.timestamp;
@@ -68,53 +72,74 @@ function setAnimatedParameters(effect: Effect, parameters: Record<string, number
   }
 }
 
+/** Collect playable endpoints without changing effects or their saved start values. */
+export function getEffectAnimationTracks(effects: Effect[]) {
+  return effects.flatMap(effect => {
+    if (!effect.isEnabled) return [];
+    const animation = {...effect.animation};
+    // Keep existing saved fog animations playable. An explicit generic height wins.
+    if (
+      effect.type === SURFACE_FOG_TYPE &&
+      effect.parameters.animateHeight &&
+      !Object.prototype.hasOwnProperty.call(animation, 'height')
+    ) {
+      animation.height = {
+        endValue: effect.parameters.heightEnd,
+        easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
+      };
+    }
+    if (!Object.keys(animation).length) return [];
+
+    const validated = validateEffectAnimation(animation, effect.getParameterDescriptions());
+    const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entry]) => {
+      const current = effect.parameters[name];
+      const original = Array.isArray(current) ? current.slice() : current;
+      const start = entry.startValue ?? current;
+      const end = entry.endValue;
+      if (Array.isArray(start) && Array.isArray(end)) {
+        if (start.length !== end.length || !start.every(Number.isFinite)) return [];
+        return [{name, start: start.slice(), end, original, easing: entry.easing}];
+      }
+      if (!Number.isFinite(start) || Array.isArray(end)) return [];
+      return [{name, start: start as number, end, original, easing: entry.easing}];
+    });
+    return parameters.length ? [{effect, parameters, modified: false}] : [];
+  });
+}
+
+export function applyEffectAnimation(
+  tracks: ReturnType<typeof getEffectAnimationTracks>,
+  progress: number
+): void {
+  for (const track of tracks) {
+    if (!track.effect.isEnabled) continue;
+    const parameters = Object.fromEntries(
+      track.parameters.map(({name, start, end, easing}) => {
+        const t = easing === 'linear' ? progress : progress * progress * (3 - 2 * progress);
+        const value = Array.isArray(start)
+          ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
+          : start + ((end as number) - start) * t;
+        return [name, value];
+      })
+    );
+    setAnimatedParameters(track.effect, parameters);
+    track.modified = true;
+  }
+}
+
 /** Apply optional effect endpoints before drawing an export frame, using export clones only. */
 export function useEffectAnimation(
   videoEffects: Effect[],
   containerRef: RefObject<{state?: PlaybackState} | null>
 ): () => void {
-  const tracks = useMemo(
-    () =>
-      videoEffects.flatMap(effect => {
-        if (!effect.isEnabled) return [];
-        const animation = {...effect.animation};
-        // Keep existing saved fog animations playable. An explicit generic height wins.
-        if (
-          effect.type === SURFACE_FOG_TYPE &&
-          effect.parameters.animateHeight &&
-          !Object.prototype.hasOwnProperty.call(animation, 'height')
-        ) {
-          animation.height = {
-            endValue: effect.parameters.heightEnd,
-            easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
-          };
-        }
-        if (!Object.keys(animation).length) return [];
-
-        const validated = validateEffectAnimation(animation, effect.getParameterDescriptions());
-        const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(
-          ([name, entry]) => {
-            const start = effect.parameters[name];
-            const end = entry.endValue;
-            if (Array.isArray(start) && Array.isArray(end)) {
-              if (start.length !== end.length || !start.every(Number.isFinite)) return [];
-              return [{name, start: start.slice(), end, easing: entry.easing}];
-            }
-            if (!Number.isFinite(start) || Array.isArray(end)) return [];
-            return [{name, start: start as number, end, easing: entry.easing}];
-          }
-        );
-        return parameters.length ? [{effect, parameters, modified: false}] : [];
-      }),
-    [videoEffects]
-  );
+  const tracks = useMemo(() => getEffectAnimationTracks(videoEffects), [videoEffects]);
 
   const restore = useCallback(() => {
     for (const track of tracks) {
       if (!track.modified) continue;
       setAnimatedParameters(
         track.effect,
-        Object.fromEntries(track.parameters.map(({name, start}) => [name, start]))
+        Object.fromEntries(track.parameters.map(({name, original}) => [name, original]))
       );
       track.modified = false;
     }
@@ -128,19 +153,6 @@ export function useEffectAnimation(
       restore();
       return;
     }
-    for (const track of tracks) {
-      if (!track.effect.isEnabled) continue;
-      const parameters = Object.fromEntries(
-        track.parameters.map(({name, start, end, easing}) => {
-          const t = easing === 'linear' ? progress : progress * progress * (3 - 2 * progress);
-          const value = Array.isArray(start)
-            ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
-            : start + ((end as number) - start) * t;
-          return [name, value];
-        })
-      );
-      setAnimatedParameters(track.effect, parameters);
-      track.modified = true;
-    }
+    applyEffectAnimation(tracks, progress);
   }, [containerRef, restore, tracks]);
 }
