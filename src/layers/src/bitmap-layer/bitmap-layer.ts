@@ -37,6 +37,17 @@ const CORNER_HANDLE_RADIUS = 6;
 class BitmapBoundsLayer extends EditableGeoJsonLayer {
   static layerName = 'BitmapBoundsLayer';
 
+  _addEventHandlers() {
+    super._addEventHandlers();
+    // Keep bitmap editing from delaying clicks in the polygon drawing tool.
+    // The map controller decides whether double-click zoom is active.
+    // @ts-expect-error eventManager is protected in deck.gl
+    const {eventManager} = this.context.deck;
+    const {eventHandler} = this.state._editableLayerState;
+    eventManager.off('dblclick', eventHandler);
+    eventManager.watch('dblclick', eventHandler, {priority: 100});
+  }
+
   getMapCoords(screenCoords: number[]): number[] | null {
     const elevationOffset = this.props.modelMatrix?.[14] ?? 0;
     if (!elevationOffset) return super.getMapCoords(screenCoords);
