@@ -72,7 +72,10 @@ const RealConfigurator = EffectConfiguratorFactory(
 );
 function Wrapper({children}: {children: React.ReactNode}) {
   return (
-    <IntlProvider locale="en">
+    <IntlProvider
+      locale="en"
+      messages={{'effectManager.date': 'Date', 'effectManager.time': 'Time'}}
+    >
       <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </IntlProvider>
   );
@@ -493,7 +496,7 @@ describe('effect parameter editing', () => {
     });
   });
 
-  test('offers color and shadow intensity endpoints while leaving time controls alone', () => {
+  test('offers date/time, color and shadow intensity endpoints', () => {
     const effect = makeEffect(
       [
         {name: 'shadowIntensity', min: 0, max: 1},
@@ -505,7 +508,7 @@ describe('effect parameter editing', () => {
     effect.type = LIGHT_AND_SHADOW_EFFECT.type;
     const {update} = setup(effect);
     expect(screen.getByRole('button', {name: 'Animate shadowIntensity'})).toBeTruthy();
-    expect(screen.queryByRole('button', {name: 'Animate timestamp'})).toBeNull();
+    expect(screen.getByRole('button', {name: 'Animate Date & Time'})).toBeTruthy();
     fireEvent.click(screen.getByRole('button', {name: 'Animate shadowColor'}));
     fireEvent.click(screen.getByRole('button', {name: 'Start color'}));
     fireEvent.click(screen.getByRole('button', {name: 'End color'}));
@@ -515,6 +518,93 @@ describe('effect parameter editing', () => {
         shadowColor: {startValue: [40, 50, 60], endValue: [0, 20, 30], easing: 'easeInOut'}
       },
       parameters: {shadowColor: [40, 50, 60]}
+    });
+  });
+
+  test('edits shadow Start and End using real date/time pickers in the effect timezone', () => {
+    const effect = createEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {
+        timestamp: Date.UTC(2026, 5, 21, 19),
+        timezone: 'America/Los_Angeles',
+        timeMode: 'animation'
+      },
+      animation: {
+        timestamp: {
+          startValue: Date.UTC(2026, 5, 21, 13),
+          endValue: Date.UTC(2026, 5, 22, 1),
+          easing: 'linear'
+        },
+        shadowIntensity: {startValue: 0.2, endValue: 0.8, easing: 'easeInOut'}
+      }
+    });
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for Date & Time'}));
+    const dialog = within(screen.getByRole('dialog', {name: 'Effect Transition: Date & Time'}));
+    expect(dialog.getByRole('spinbutton', {name: 'Start hour'})).toHaveValue(6);
+    expect(dialog.getByRole('spinbutton', {name: 'End hour'})).toHaveValue(6);
+    expect(dialog.getByRole('combobox', {name: 'Start AM/PM'})).toHaveValue('am');
+    expect(dialog.getByRole('combobox', {name: 'End AM/PM'})).toHaveValue('pm');
+    fireEvent.change(dialog.getByRole('spinbutton', {name: 'Start hour'}), {target: {value: '7'}});
+    fireEvent.change(dialog.getByRole('spinbutton', {name: 'End day'}), {target: {value: '22'}});
+    expect(update).not.toHaveBeenCalled();
+    fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, effect.id, {
+      animation: {
+        ...effect.animation,
+        timestamp: {
+          startValue: Date.UTC(2026, 5, 21, 14),
+          endValue: Date.UTC(2026, 5, 23, 1),
+          easing: 'linear'
+        }
+      },
+      parameters: {timestamp: Date.UTC(2026, 5, 21, 14)}
+    });
+    expect(effect.parameters.timeMode).toBe('animation');
+  });
+
+  test('supports epoch zero and rejects incomplete date/time endpoints without saving', () => {
+    const effect = createEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {timestamp: 0, timezone: 'UTC', timeMode: 'current'}
+    });
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Animate Date & Time'}));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getByRole('spinbutton', {name: 'Start year'})).toHaveValue(1970);
+    expect(dialog.getByRole('spinbutton', {name: 'Start hour'})).toHaveValue(12);
+    expect(dialog.getByRole('button', {name: 'Save'})).toBeEnabled();
+    fireEvent.change(dialog.getByRole('spinbutton', {name: 'End minute'}), {target: {value: ''}});
+    expect(dialog.getByRole('button', {name: 'Save'})).toBeDisabled();
+    fireEvent.change(dialog.getByRole('spinbutton', {name: 'End day'}), {target: {value: '2'}});
+    expect(dialog.getByRole('button', {name: 'Save'})).toBeDisabled();
+    expect(dialog.getByRole('spinbutton', {name: 'End minute'})).toHaveValue(null);
+    fireEvent.change(dialog.getByRole('spinbutton', {name: 'End minute'}), {target: {value: '30'}});
+    expect(dialog.getByRole('button', {name: 'Save'})).toBeEnabled();
+    fireEvent.click(dialog.getByRole('button', {name: 'Cancel'}));
+    expect(update).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', {name: 'Animate Date & Time'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, effect.id, {
+      animation: {timestamp: {startValue: 0, endValue: 0, easing: 'easeInOut'}},
+      parameters: {timestamp: 0}
+    });
+  });
+
+  test('removing a custom shadow time range preserves its normal clock and other animations', () => {
+    const effect = createEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {timestamp: 0, timezone: 'UTC', timeMode: 'animation'},
+      animation: {
+        timestamp: {startValue: 0, endValue: 3600000, easing: 'linear'},
+        shadowIntensity: {endValue: 0.8, easing: 'linear'}
+      }
+    });
+    const {update} = setup(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for Date & Time'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
+    expect(update).toHaveBeenCalledWith(null, effect.id, {
+      animation: {shadowIntensity: {endValue: 0.8, easing: 'linear'}}
     });
   });
 });

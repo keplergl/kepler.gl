@@ -254,7 +254,6 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
     // set timestamp for shadow
     if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.current) {
       timestamp = Date.now();
-      if (sunLight) sunLight.timestamp = timestamp;
     } else if (timeMode === LIGHT_AND_SHADOW_EFFECT_TIME_MODES.animation) {
       const {currentTime} = visState.animationConfig;
       timestamp = currentTime ?? 0;
@@ -269,8 +268,9 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
           timestamp = filter.value?.[0] ?? 0;
         }
       }
-      if (sunLight) sunLight.timestamp = timestamp;
     }
+    // A preview clone may adopt the retained deck effect, including in pick mode.
+    if (sunLight) sunLight.timestamp = timestamp;
 
     // output uniform shadow during nighttime
     if (isDaytime(mapState.latitude, mapState.longitude, timestamp)) {

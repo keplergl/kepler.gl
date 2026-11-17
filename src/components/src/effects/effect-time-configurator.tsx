@@ -17,7 +17,11 @@ import {
 } from '@kepler.gl/constants';
 
 import KeplerGlContext from '../context';
-import {StyledDatePicker as DatePicker, Tooltip} from '../common/styled-components';
+import {
+  StyledDatePicker as DatePicker,
+  StyledTimePicker,
+  Tooltip
+} from '../common/styled-components';
 import Checkbox from '../common/checkbox';
 import Button from '../common/data-table/button';
 import {LocationMarker, Calendar, Clock, Globe} from '../common/icons';
@@ -190,6 +194,103 @@ const normalizeTimeInput = (newTime: unknown): string | null => {
   const parsed = moment(trimmed, ['HH:mm', 'H:mm', 'hh:mm A', 'h:mm A', 'hh:mm a', 'h:mm a'], true);
   return parsed.isValid() ? parsed.format('HH:mm') : null;
 };
+
+/** The existing shadow date/time pickers, used for one animation endpoint. */
+export function EffectDateTimeInput({
+  timestamp,
+  timezone,
+  label,
+  onChange
+}: {
+  timestamp: number;
+  timezone: string;
+  label: string;
+  onChange: (timestamp: number) => void;
+}) {
+  const formatValue = useCallback((): {date: Date | null; time: string | null} => {
+    const date = moment.tz(timestamp, timezone);
+    return date.isValid()
+      ? {date: new Date(date.year(), date.month(), date.date()), time: date.format('HH:mm')}
+      : {date: null, time: null};
+  }, [timestamp, timezone]);
+  const [value, setValue] = useState(formatValue);
+  const validFields = useRef({date: Boolean(value.date), time: Boolean(value.time)});
+  useEffect(() => {
+    // Keep incomplete fields editable while the parent disables Save.
+    if (Number.isFinite(timestamp)) {
+      const next = formatValue();
+      validFields.current = {date: Boolean(next.date), time: Boolean(next.time)};
+      setValue(next);
+    }
+  }, [timestamp, formatValue]);
+
+  const commit = (field: 'date' | 'time', next: typeof value) => {
+    validFields.current[field] = Boolean(next[field]);
+    setValue(next);
+    const nextTimestamp =
+      validFields.current.date && validFields.current.time && next.date && next.time
+        ? getTimestamp(moment(next.date).format('YYYY-MM-DD'), next.time, timezone)
+        : null;
+    if (nextTimestamp !== timestamp) onChange(nextTimestamp ?? NaN);
+  };
+
+  return (
+    <>
+      <StyledWrapper $marginBottom={2}>
+        <TextBlock width="110px">
+          <FormattedMessage id="effectManager.date" />
+        </TextBlock>
+        <TextBlock width="110px">
+          <FormattedMessage id="effectManager.time" />
+        </TextBlock>
+      </StyledWrapper>
+      <StyledWrapper
+        $marginBottom={0}
+        onChangeCapture={event => {
+          // The picker emits its value only when every field is complete.
+          const input = event.target;
+          if (input instanceof HTMLInputElement && (!input.value || !input.validity.valid)) {
+            validFields.current[input.closest('.react-date-picker') ? 'date' : 'time'] = false;
+            onChange(NaN);
+          }
+        }}
+      >
+        <WithIconWrapper>
+          <StyledDatePicker>
+            <DatePicker
+              value={value.date}
+              onChange={date =>
+                commit('date', {...value, date: date instanceof Date ? date : null})
+              }
+              maxDetail="month"
+              dayAriaLabel={`${label} day`}
+              monthAriaLabel={`${label} month`}
+              yearAriaLabel={`${label} year`}
+              calendarAriaLabel={`${label} calendar`}
+            />
+          </StyledDatePicker>
+          <StyledExtraIcon>
+            <Calendar width="16px" height="32px" />
+          </StyledExtraIcon>
+        </WithIconWrapper>
+        <WithIconWrapper>
+          <StyledTimePicker
+            value={value.time}
+            onChange={time => commit('time', {...value, time: normalizeTimeInput(time)})}
+            disableClock
+            format="hh:mm a"
+            hourAriaLabel={`${label} hour`}
+            minuteAriaLabel={`${label} minute`}
+            amPmAriaLabel={`${label} AM/PM`}
+          />
+          <StyledExtraIcon>
+            <Clock width="16px" height="32px" />
+          </StyledExtraIcon>
+        </WithIconWrapper>
+      </StyledWrapper>
+    </>
+  );
+}
 
 EffectTimeConfiguratorFactory.deps = [
   TimezoneSelectorFactory,

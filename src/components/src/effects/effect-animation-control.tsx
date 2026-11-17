@@ -3,7 +3,8 @@
 
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
+import moment from 'moment-timezone';
+import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
@@ -13,6 +14,7 @@ import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
+import {EffectDateTimeInput} from './effect-time-configurator';
 
 const IconButton = styled(Button).attrs({link: true})`
   padding: 0;
@@ -150,7 +152,15 @@ export default function EffectAnimationControl({
   const description = getAnimatableEffectParameters(effect).find(d => d.name === name);
   if (!description) return null;
 
-  const label = typeof description.label === 'string' ? description.label : name;
+  const isTimestamp = effect.type === LIGHT_AND_SHADOW_EFFECT.type && name === 'timestamp';
+  const timezone = moment.tz.zone(effect.parameters.timezone || '')
+    ? effect.parameters.timezone
+    : DEFAULT_TIMEZONE;
+  const label = isTimestamp
+    ? 'Date & Time'
+    : typeof description.label === 'string'
+    ? description.label
+    : name;
   const legacyHeight =
     effect.type === SURFACE_FOG_TYPE && name === 'height' && effect.parameters.animateHeight;
   const saved =
@@ -192,7 +202,8 @@ export default function EffectAnimationControl({
       (vectorSize ? Array.isArray(value) && values.length === vectorSize : !Array.isArray(value)) &&
       values.every(
         part => Number.isFinite(part) && part >= description.min && part <= description.max
-      )
+      ) &&
+      (!isTimestamp || Number.isFinite(new Date(value as number).getTime()))
     );
   };
   const range = [description.min, description.max];
@@ -251,6 +262,8 @@ export default function EffectAnimationControl({
                   Animates this setting from Start to End with Run in the effects panel or during
                   video export. Turn on Linear easing for a constant rate; otherwise it eases in and
                   out.
+                  {isTimestamp &&
+                    ' This range overrides Current time and Animation time only during playback.'}
                 </div>
               </Tooltip>
               <ParameterName>{label.replace(/([a-z])([A-Z])/g, '$1 $2')}</ParameterName>
@@ -267,7 +280,22 @@ export default function EffectAnimationControl({
             ) : null}
           </Header>
           <Body>
-            {description.type === 'color' ? (
+            {isTimestamp ? (
+              <>
+                {editors.map(({title, value, setValue}) => (
+                  <Field key={title} role="group" aria-label={`${title} date and time`}>
+                    <PanelLabel>{title} date and time</PanelLabel>
+                    <EffectDateTimeInput
+                      timestamp={value as number}
+                      timezone={timezone}
+                      label={title}
+                      onChange={setValue}
+                    />
+                  </Field>
+                ))}
+                <ParameterName>Time zone: {timezone}</ParameterName>
+              </>
+            ) : description.type === 'color' ? (
               <ColorRow>
                 {editors.map(({title, value, setValue}) => (
                   <CompactColorPicker

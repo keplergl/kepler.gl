@@ -227,6 +227,26 @@ describe('effects panel animation preview', () => {
     expect(frames.size).toBe(0);
   });
 
+  test('runs explicit sunlight dates without changing the saved time mode', () => {
+    const start = Date.UTC(2024, 5, 21);
+    const end = start + 24 * 60 * 60 * 1000;
+    const effect = createEffect({
+      type: 'lightAndShadow',
+      parameters: {timeMode: 'animation', timestamp: 0},
+      animation: {timestamp: {startValue: start, endValue: end, easing: 'linear'}}
+    });
+    const view = setup([effect]);
+    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+    expect(view.parameters()[0]).toMatchObject({timeMode: 'pick', timestamp: start});
+    advanceFrame(5000);
+    expect(view.parameters()[0].timestamp).toBe(start + (end - start) / 2);
+    advanceFrame(10000);
+    expect(view.parameters()[0].timestamp).toBe(end);
+    expect(effect.parameters).toMatchObject({timeMode: 'animation', timestamp: 0});
+    view.setEnabled(false);
+    expect(view.parameters()[0]).toMatchObject({timeMode: 'animation', timestamp: 0});
+  });
+
   test('shows Run when an animation is configured and removes it when cleared', () => {
     const effect = createEffect({type: 'brightnessContrast'});
     const view = setup([effect]);

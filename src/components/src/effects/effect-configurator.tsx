@@ -284,8 +284,11 @@ export default function EffectConfiguratorFactory(
 
     return (
       <StyledEffectConfigurator key={effect.id}>
-        <PanelLabelWrapper>
-          <SectionTitle>{'Date & Time'}</SectionTitle>
+        <PanelLabelWrapper className="effect-configurator__animation-row">
+          <SectionTitle>
+            {'Date & Time'}
+            {animationControl('timestamp')}
+          </SectionTitle>
         </PanelLabelWrapper>
         <EffectTimeConfigurator
           timestamp={parameters.timestamp}

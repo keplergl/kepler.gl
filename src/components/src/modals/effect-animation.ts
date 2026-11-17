@@ -50,10 +50,7 @@ function getProgress(state?: PlaybackState): number | null {
   return Math.min(Math.max(((time as number) - (start as number)) / duration, 0), 1);
 }
 
-export function setAnimatedParameters(
-  effect: Effect,
-  parameters: Record<string, number | number[]>
-) {
+export function setAnimatedParameters(effect: Effect, parameters: Effect['parameters']) {
   const sunLight =
     effect.type === LIGHT_AND_SHADOW_EFFECT.type ? effect.deckEffect?.directionalLights?.[0] : null;
   const timestamp = sunLight?.timestamp;
@@ -103,7 +100,20 @@ export function getEffectAnimationTracks(effects: Effect[]) {
       if (!Number.isFinite(start) || Array.isArray(end)) return [];
       return [{name, start: start as number, end, original, easing: entry.easing}];
     });
-    return parameters.length ? [{effect, parameters, modified: false}] : [];
+    const animatesTimestamp =
+      effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
+      parameters.some(parameter => parameter.name === 'timestamp');
+    return parameters.length
+      ? [
+          {
+            effect,
+            parameters,
+            animatesTimestamp,
+            originalTimeMode: effect.parameters.timeMode,
+            modified: false
+          }
+        ]
+      : [];
   });
 }
 
@@ -122,7 +132,10 @@ export function applyEffectAnimation(
         return [name, value];
       })
     );
-    setAnimatedParameters(track.effect, parameters);
+    setAnimatedParameters(track.effect, {
+      ...parameters,
+      ...(track.animatesTimestamp ? {timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick} : {})
+    });
     track.modified = true;
   }
 }
@@ -130,20 +143,24 @@ export function applyEffectAnimation(
 /** Apply optional effect endpoints before drawing an export frame, using export clones only. */
 export function useEffectAnimation(
   videoEffects: Effect[],
-  containerRef: RefObject<{state?: PlaybackState} | null>
+  containerRef: RefObject<{state?: PlaybackState} | null>,
+  onLightingTimeChange?: () => void
 ): () => void {
   const tracks = useMemo(() => getEffectAnimationTracks(videoEffects), [videoEffects]);
 
   const restore = useCallback(() => {
+    let restoredTimestamp = false;
     for (const track of tracks) {
       if (!track.modified) continue;
-      setAnimatedParameters(
-        track.effect,
-        Object.fromEntries(track.parameters.map(({name, original}) => [name, original]))
-      );
+      setAnimatedParameters(track.effect, {
+        ...Object.fromEntries(track.parameters.map(({name, original}) => [name, original])),
+        ...(track.animatesTimestamp ? {timeMode: track.originalTimeMode} : {})
+      });
+      restoredTimestamp ||= track.animatesTimestamp;
       track.modified = false;
     }
-  }, [tracks]);
+    if (restoredTimestamp) onLightingTimeChange?.();
+  }, [tracks, onLightingTimeChange]);
 
   useEffect(() => restore, [restore]);
 
@@ -154,5 +171,6 @@ export function useEffectAnimation(
       return;
     }
     applyEffectAnimation(tracks, progress);
-  }, [containerRef, restore, tracks]);
+    if (tracks.some(track => track.animatesTimestamp)) onLightingTimeChange?.();
+  }, [containerRef, restore, tracks, onLightingTimeChange]);
 }

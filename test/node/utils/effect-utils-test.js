@@ -61,6 +61,40 @@ test('effectUtils -> computeDeckEffects', t => {
   t.end();
 });
 
+test('effectUtils -> picked sunlight time survives retained runtime adoption', t => {
+  const midnight = Date.UTC(2024, 5, 21);
+  const noon = midnight + 12 * 60 * 60 * 1000;
+  const original = createEffect({
+    type: LIGHT_AND_SHADOW_EFFECT.type,
+    parameters: {
+      timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick,
+      timestamp: midnight,
+      sunLightIntensity: 2
+    }
+  });
+  const compute = effect =>
+    computeDeckEffects({
+      visState: {effects: [effect], effectOrder: [effect.id]},
+      mapState: {latitude: 0, longitude: 0}
+    })[0];
+  const retained = compute(original);
+  const preview = original.clone();
+  preview.setProps({parameters: {timestamp: noon}});
+  const daytime = compute(preview);
+  t.equal(daytime, retained, 'reuses the retained live lighting instance');
+  t.equal(daytime.directionalLights[0].timestamp, noon, 'applies picked time on the first draw');
+  t.equal(daytime.outputUniformShadow, false, 'recalculates daytime shadow behavior');
+  t.equal(daytime.directionalLights[0].intensity, 2, 'restores daytime sunlight intensity');
+
+  preview.setProps({parameters: {timestamp: midnight + 24 * 60 * 60 * 1000}});
+  const nighttime = compute(preview);
+  t.equal(nighttime.outputUniformShadow, true, 'recalculates nighttime shadow behavior');
+  t.equal(nighttime.directionalLights[0].intensity, 0, 'suppresses sunlight at night');
+  t.equal(original.parameters.timestamp, midnight, 'keeps the saved timestamp unchanged');
+  t.equal(compute(original).directionalLights[0].timestamp, midnight, 'restores saved picked time');
+  t.end();
+});
+
 test('effectUtils -> animation sunlight timestamp precedence', t => {
   const filterTimestamp = 1689415852635;
   const enlargedFilter = {
