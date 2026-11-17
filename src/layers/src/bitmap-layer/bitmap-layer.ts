@@ -8,6 +8,8 @@ import {
   ScatterplotLayer
 } from '@deck.gl/layers';
 import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
+import {WebMercatorViewport} from '@deck.gl/core';
+import {Matrix4} from '@math.gl/core';
 import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 
 import Layer from '../base-layer';
@@ -32,6 +34,33 @@ const MOVE_HANDLE_COLOR: [number, number, number, number] = [38, 181, 242, 255];
 const MOVE_HANDLE_RADIUS = 10;
 const CORNER_HANDLE_RADIUS = 6;
 
+class BitmapBoundsLayer extends EditableGeoJsonLayer {
+  static layerName = 'BitmapBoundsLayer';
+
+  getMapCoords(screenCoords: number[]): number[] | null {
+    const elevationOffset = this.props.modelMatrix?.[14] ?? 0;
+    if (!elevationOffset) return super.getMapCoords(screenCoords);
+
+    // Drag on the raised bitmap surface while keeping editable geometry in 2D.
+    const {viewport} = this.context;
+    const screenPosition = screenCoords.slice(0, 2);
+    let position = viewport.unproject(screenPosition, {
+      targetZ: elevationOffset
+    });
+    if (viewport instanceof WebMercatorViewport) {
+      // unproject's targetZ uses the viewport center's scale; rendered altitude
+      // uses each position's latitude. Refine the intersection at that latitude.
+      for (let i = 0; i < 3; i++) {
+        const targetZ =
+          viewport.projectPosition([position[0], position[1], elevationOffset])[2] /
+          viewport.distanceScales.unitsPerMeter[2];
+        position = viewport.unproject(screenPosition, {targetZ});
+      }
+    }
+    return position.slice(0, 2);
+  }
+}
+
 const MOVE_HANDLE_ICON_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
       <g fill="#fff" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linejoin="round">
@@ -45,6 +74,7 @@ const MOVE_HANDLE_ICON_URL = `data:image/svg+xml;charset=utf-8,${encodeURICompon
 
 export type BitmapLayerVisConfigSettings = {
   opacity: VisConfigNumber;
+  elevationOffset: VisConfigNumber;
   showBounds: VisConfigBoolean;
   editBounds: VisConfigBoolean;
   alignMode: VisConfigBoolean;
@@ -60,6 +90,7 @@ export const bitmapVisConfigs = {
     defaultValue: 1,
     property: 'opacity'
   } as VisConfigNumber,
+  elevationOffset: LAYER_VIS_CONFIGS.elevationOffset,
   showBounds: {
     type: 'boolean',
     defaultValue: true,
@@ -402,6 +433,11 @@ export default class BitmapOverlayLayer extends Layer {
 
     this._onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
     const {visConfig} = this.config;
+    const elevationOffset = Number.isFinite(visConfig.elevationOffset)
+      ? visConfig.elevationOffset
+      : 0;
+    // Translate altitude before projection, preserving Mercator image coordinates on the globe.
+    const modelMatrix = new Matrix4().translate([0, 0, elevationOffset]);
 
     const {visible} = this.getDefaultDeckLayerProps(opts);
 
@@ -472,6 +508,7 @@ export default class BitmapOverlayLayer extends Layer {
         // Keep the texture in the alignment solver's Mercator plane, including on a globe.
         _imageCoordinateSystem: 'cartesian',
         bounds: bitmapBounds,
+        modelMatrix,
         opacity: visConfig.opacity ?? 1,
         pickable: isAligning,
         visible,
@@ -493,6 +530,7 @@ export default class BitmapOverlayLayer extends Layer {
       layers.push(
         new ScatterplotLayer({
           id: `${this.id}-align-pts`,
+          modelMatrix,
           data: this.alignControlPoints,
           getPosition: (d: AlignControlPoint) => {
             // Keep map-click markers beside the image in flat view as well as globe.
@@ -522,6 +560,7 @@ export default class BitmapOverlayLayer extends Layer {
       layers.push(
         new ScatterplotLayer({
           id: `${this.id}-align-pending`,
+          modelMatrix,
           data: [{position}],
           getPosition: (d: any) => d.position,
           getFillColor: [100, 200, 255, 220],
@@ -542,6 +581,7 @@ export default class BitmapOverlayLayer extends Layer {
       layers.push(
         new PathLayer({
           id: `${this.id}-bounds`,
+          modelMatrix,
           data: [
             [
               [aW, aN],
@@ -564,8 +604,9 @@ export default class BitmapOverlayLayer extends Layer {
     if (visConfig.editBounds) {
       // @ts-ignore - EditableGeoJsonLayer types are loose
       layers.push(
-        new EditableGeoJsonLayer({
+        new BitmapBoundsLayer({
           id: `${this.id}-edit`,
+          modelMatrix,
           // @ts-ignore
           data: this._editFeatureCollection,
           mode: BITMAP_BOUNDS_EDIT_MODE,
@@ -637,6 +678,7 @@ export default class BitmapOverlayLayer extends Layer {
       layers.push(
         new IconLayer({
           id: `${this.id}-move-handle`,
+          modelMatrix,
           data: [{position: [(aW + aE) / 2, (aS + aN) / 2]}],
           getPosition: (d: {position: [number, number]}) => d.position,
           getIcon: () => ({
