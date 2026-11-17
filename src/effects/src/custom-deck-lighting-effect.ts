@@ -237,6 +237,8 @@ function isPbrLayer(layer: any): boolean {
  *   to prevent "Bad texture binding" errors when shadows are disabled.
  */
 class CustomDeckLightingEffect extends LightingEffect {
+  // Picking still needs the sampler bindings for the installed shadow shader.
+  useInPicking = true;
   outputUniformShadow: boolean;
   isExportMode: boolean;
 
@@ -266,7 +268,7 @@ class CustomDeckLightingEffect extends LightingEffect {
   }
 
   preRender(opts) {
-    if (!this._private.shadow) return;
+    if (opts.isPicking || !this._private.shadow) return;
 
     // Filter editor layers out of the shadow pass so they don't cast shadows.
     const originalLayers = opts.layers;

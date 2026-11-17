@@ -8,7 +8,7 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import {EditableGeoJsonLayer, ViewMode} from '@deck.gl-community/editable-layers';
 import {Timeline} from '@luma.gl/engine';
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {getEditorLayer} from '@kepler.gl/layers';
+import {BitmapOverlayLayer, getEditorLayer} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
 import {
   INITIAL_MAP_STATE,
@@ -59,7 +59,7 @@ describe('Draw on Map click timing', () => {
     jest.useRealTimers();
   });
 
-  function setupDrawing(editorMode = EDITOR_MODES.DRAW_POLYGON) {
+  function setupDrawing(editorMode = EDITOR_MODES.DRAW_POLYGON, bitmapEditing = false) {
     const element = document.createElement('div');
     document.body.appendChild(element);
     // Use deck's real recognizers: calling a mode's handleClick directly would
@@ -127,6 +127,30 @@ describe('Draw on Map click timing', () => {
       });
     layer.initializeState();
     layer.state.mode = new layer.props.mode();
+    let bitmapEditor: any;
+    if (bitmapEditing) {
+      const bitmap = new BitmapOverlayLayer({id: 'drawing-bitmap', dataId: 'drawing-bitmap-data'});
+      bitmap.updateLayerVisConfig({editBounds: true});
+      bitmapEditor = bitmap
+        .renderLayer({
+          data: {imageUrl: 'image.png', bounds: [20, 20, 30, 30]},
+          mapState: {},
+          visible: true
+        })
+        .find(candidate => candidate.id === `${bitmap.id}-edit`);
+      bitmapEditor.context = {deck: {eventManager}};
+      jest.spyOn(bitmapEditor, 'getCurrentLayer').mockReturnValue(bitmapEditor);
+      jest.spyOn(bitmapEditor as EditableGeoJsonLayer, 'setState').mockImplementation(state => {
+        bitmapEditor.state = {...bitmapEditor.state, ...state};
+      });
+      jest.spyOn(bitmapEditor, 'setNeedsUpdate').mockImplementation(() => undefined);
+      jest
+        .spyOn(bitmapEditor as EditableGeoJsonLayer, 'getMapCoords')
+        .mockImplementation(coords => coords.map(n => n / 10));
+      jest.spyOn(bitmapEditor, 'getPicks').mockReturnValue([]);
+      bitmapEditor.initializeState();
+      bitmapEditor.state.mode = bitmapEditor.props.mode;
+    }
     let finalized = false;
     const finalize = () => {
       if (!finalized) layer.finalizeState();
@@ -134,6 +158,7 @@ describe('Draw on Map click timing', () => {
     };
     cleanup = () => {
       finalize();
+      bitmapEditor?.finalizeState();
       controller.finalize();
       eventManager.destroy();
       element.remove();
@@ -192,6 +217,28 @@ describe('Draw on Map click timing', () => {
     expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual([[A, B, C, D, A]]);
     jest.advanceTimersByTime(350);
     expect(onSetFeatures).toHaveBeenCalledTimes(1);
+  });
+
+  test('commits and finishes a polygon while bitmap bounds editing is active', () => {
+    const {click, guides, getPicks, onSetFeatures, onViewStateChange} = setupDrawing(
+      EDITOR_MODES.DRAW_POLYGON,
+      true
+    );
+    click(A);
+    click(B);
+    expect(
+      guides()
+        .filter(f => f.properties.guideType === 'editHandle')
+        .map(f => f.geometry.coordinates)
+    ).toEqual([A, B]);
+    getPicks.mockReturnValue([]);
+    click(C);
+    click(D);
+    jest.advanceTimersByTime(100);
+    click(D);
+    expect(onSetFeatures).toHaveBeenCalledTimes(1);
+    expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual([[A, B, C, D, A]]);
+    expect(onViewStateChange).not.toHaveBeenCalled();
   });
 
   test.each([EDITOR_MODES.DRAW_POLYGON, EDITOR_MODES.DRAW_LINESTRING])(

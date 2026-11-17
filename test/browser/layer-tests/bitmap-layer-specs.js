@@ -409,7 +409,7 @@ test('#BitmapOverlayLayer -> edit handles follow the elevated surface in pitched
     });
     const manager = new LayerManager(device, {
       viewport,
-      deck: {eventManager: {on: () => {}, off: () => {}}}
+      deck: {eventManager: {on: () => {}, off: () => {}, watch: () => {}}}
     });
     manager.setProps({onError: error => t.error(error, 'edit handles initialize')});
     const layers = layer.renderLayer({

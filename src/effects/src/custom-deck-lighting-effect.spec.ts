@@ -1,11 +1,83 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {
+import {WebMercatorViewport, shadow} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+import {Matrix4} from '@math.gl/core';
+import CustomDeckLightingEffect, {
   alignExportShadowPass,
   patchShadowPassDepth,
   shadowMapHoverFixModule
 } from './custom-deck-lighting-effect';
+
+// These pass classes are exported at runtime but omitted from deck.gl's declarations.
+const {_LayersPass: LayersPass, _PickLayersPass: PickLayersPass} =
+  jest.requireActual('@deck.gl/core');
+
+describe('lighting effect during picking', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  test.each([
+    [true, 'bitmap-edit-guides-points-circle'],
+    [false, 'bitmap-edit-guides-points-circle'],
+    [true, 'kepler_editor_layer-geojson-polygons-fill'],
+    [false, 'kepler_editor_layer-geojson-polygons-fill']
+  ])('keeps shadow textures bound with shadows %s for %s', (enabled, id) => {
+    const effect = new CustomDeckLightingEffect({});
+    const texture = device.createTexture({width: 1, height: 1});
+    Object.assign(effect, {
+      shadow: enabled,
+      dummyShadowMap: texture,
+      shadowMatrices: [new Matrix4()],
+      shadowPasses: [{getShadowMap: () => texture}]
+    });
+    const layer = {
+      id,
+      props: {},
+      context: {
+        viewport: new WebMercatorViewport({width: 800, height: 600}),
+        defaultShaderModules: [shadow]
+      }
+    };
+    const pass = new PickLayersPass(device);
+    const render = jest.spyOn(LayersPass.prototype as any, '_render').mockReturnValue([]);
+    try {
+      // Run deck's real effect filtering for picking, then resolve the bindings
+      // that the GPU draw needs even when shadow calculations are disabled.
+      pass.render({
+        layers: [layer],
+        effects: [effect],
+        pickingFBO: {},
+        deviceRect: {x: 0, y: 0, width: 1, height: 1}
+      } as any);
+      const options = render.mock.calls[0][0] as any;
+      const props = (pass as any)._getShaderModuleProps(
+        layer,
+        options.effects,
+        'picking',
+        {cssToDeviceRatio: () => 1},
+        {}
+      );
+      const uniforms = shadow.getUniforms(props.shadow);
+      expect(uniforms.shadow_uShadowMap0).toBe(texture);
+      expect(uniforms.shadow_uShadowMap1).toBe(texture);
+      expect(uniforms.drawShadowMap).toBe(false);
+      expect(props.picking.isActive).toBe(1);
+    } finally {
+      texture.destroy();
+    }
+  });
+
+  test('does not render shadow maps during picking', () => {
+    const effect = new CustomDeckLightingEffect({});
+    const render = jest.fn();
+    Object.assign(effect, {shadow: true, shadowPasses: [{render}]});
+
+    effect.preRender({isPicking: true, layers: []});
+
+    expect(render).not.toHaveBeenCalled();
+  });
+});
 
 describe('shadowMapHoverFixModule', () => {
   test('re-encodes shadow map depth after picking highlight', () => {
