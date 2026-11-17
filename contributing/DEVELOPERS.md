@@ -398,6 +398,45 @@ To prepare a new release you need the following tool:
 
 Setup `gh-release` with your github api token ([instructions](https://www.npmjs.com/package/gh-release#command-line-interface))
 
+#### npm Trusted Publishing setup
+
+The [npm workflow](../.github/workflows/npmpublish.yml) uses GitHub Actions OIDC to publish the workspace packages. It runs both release dry runs before publishing and does not use an npm publish token. The workflow pins npm 11.19.0 and keeps the repository's Node/Yarn versions.
+
+Before the next release, a maintainer with package write access and account 2FA must configure a Trusted Publisher for **every publishable workspace package**. In each package's npm settings, select GitHub Actions and enter:
+
+| Setting              | Value                                                   |
+| -------------------- | ------------------------------------------------------- |
+| Organization or user | `keplergl`                                              |
+| Repository           | `kepler.gl`                                             |
+| Workflow filename    | `npmpublish.yml` (filename only)                        |
+| Environment name     | Leave empty; this job does not use a GitHub environment |
+| Allowed actions      | Allow direct publishing with `npm publish`              |
+
+Alternatively, use npm 11.15.0 or newer locally. Sign in with `npm login --registry=https://registry.npmjs.org`, then run this from the repository root to **preview** all workspace registrations:
+
+```bash
+(
+  for package_name in $(node -e 'for (const dir of require("./package.json").workspaces) { const pkg = require(dir + "/package.json"); if (!pkg.private) console.log(pkg.name); }'); do
+    npm trust github "$package_name" \
+      --repo keplergl/kepler.gl \
+      --file npmpublish.yml \
+      --allow-publish --yes --dry-run \
+      --registry=https://registry.npmjs.org || exit
+    sleep 2
+  done
+)
+```
+
+When ready, run the same loop **without `--dry-run`** to create the registrations. npm may request browser verification; `--yes` skips configuration confirmation, not 2FA. The loop stops on the first failure. If a package already has a publisher, inspect it with `npm trust list <package-name>` and configure only the remaining packages; do not replace unrelated publishers blindly.
+
+New registrations must complete their **first successful OIDC publish within two days of creation**. A release made before setup does not count, and a dry run does not validate the registration. Configure them close to the next release and verify all workspace registrations before creating the GitHub release.
+
+The root `kepler.gl` bundle is not yet published by this workflow. Configure its publisher separately when automated bundle publishing is ready; otherwise its unused registration may expire.
+
+The workflow continues to publish alpha versions to `latest`, matching the existing release process. After the first successful OIDC release, remove the unused GitHub `npm_token` secret and revoke the old npm token if it is not used elsewhere. Do not publish an already-released version just to test authentication.
+
+See [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and the [npm trust CLI reference](https://docs.npmjs.com/cli/v11/commands/npm-trust/) for setup requirements and troubleshooting.
+
 ### Push a new release
 
 In order to publish a new version of kepler.gl a developer must perform the following steps:

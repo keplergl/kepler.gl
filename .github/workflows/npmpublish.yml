@@ -8,14 +8,19 @@ jobs:
   publish-npm:
     runs-on: ubuntu-latest
 
-    env:
-      NPM_AUTH_TOKEN: ${{secrets.npm_token}}
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
       # use Volta to manage yarn/node versions
       - uses: volta-cli/action@v4
+
+      # OIDC publishing requires npm >= 11.5.1. Keep Node/Yarn on the repo pins.
+      - name: Set up npm for Trusted Publishing
+        run: volta install npm@11.19.0
 
       - run: yarn install --immutable && yarn bootstrap:prepare
         env:
@@ -25,8 +30,5 @@ jobs:
       - name: Check workspace and bundle releases
         run: yarn release:check
 
-      - name: Login to NPM
-        run: npm config set "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}"
-
       - name: Publish
-        run: npm publish --workspaces --access public
+        run: npm publish --workspaces --access public --tag latest
