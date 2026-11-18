@@ -308,6 +308,9 @@ const ExportVideoModalFactory = () => {
         ...mapState,
         ...scaleToVideoExport(mapState, container)
       };
+      // Match image export: keep zoom-scaled radii and elevations proportional
+      // to the map when fitting it into the smaller video preview.
+      exportMapState.zoomOffset = (mapState.zoomOffset || 0) + exportMapState.zoom - mapState.zoom;
       const interactionConfig = scaleZoomOpacityForVideoExport(
         visState.interactionConfig,
         exportMapState.zoom - mapState.zoom
