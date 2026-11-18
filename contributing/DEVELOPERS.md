@@ -403,7 +403,7 @@ Run the local commands below from the repository root after completing the devel
    yarn release:prepare 3.3.0-alpha.23
    ```
 
-   Replace `3.3.0-alpha.23` with the new version. `release:prepare` bumps the workspace and root package versions and their internal dependency references, updates `yarn.lock` and the manual publisher workflow's version default, and adds a `CHANGELOG.md` section from commits since the previous release tag. It uses the first version heading in `CHANGELOG.md` and requires the matching local `v<version>` tag to be an ancestor of the current branch. It does not commit, tag, push, or publish.
+   Replace `3.3.0-alpha.23` with the new version. `release:prepare` bumps the workspace and root package versions and their internal dependency references, updates `yarn.lock` and the manual publisher workflow's version default, and adds a `CHANGELOG.md` section from commits since the previous release tag. It uses the first version heading in `CHANGELOG.md` and requires the matching local `v<version>` tag. If that tag is outside the current branch's history after a squash merge, preparation accepts a single ancestor with identical contents and the same single parent as the tagged commit. Otherwise, it stops before changing files. The existing release tag is preserved. Preparation does not commit, tag, push, or publish.
 
    Review the generated version, lockfile, workflow, and changelog changes. Use this command for patch releases too; `npm version` in the private root package does not update the workspace packages and their cross-references.
 
