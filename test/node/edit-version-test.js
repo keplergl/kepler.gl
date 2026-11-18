@@ -191,12 +191,19 @@ function withReleaseFixture(callback) {
       path.join(ROOT, 'scripts/prepare-release.js'),
       path.join(cwd, 'scripts/prepare-release.js')
     );
-    // Stub only the existing bump command; exercise Git and changelog IO for real.
+    // Stub the bump and check commands; exercise Git and changelog IO for real.
     write(
       'bin/yarn',
       `#!/usr/bin/env node
 const fs = require('fs');
 const args = process.argv.slice(2);
+if (args.length === 1 && args[0] === 'release:check') {
+  fs.writeFileSync('checked-release.json', JSON.stringify({
+    version: JSON.parse(fs.readFileSync('package.json', 'utf8')).version,
+    changelog: fs.readFileSync('CHANGELOG.md', 'utf8')
+  }));
+  process.exit(process.env.RELEASE_TEST_CHECK_FAIL ? 1 : 0);
+}
 fs.writeFileSync('bump-args.json', JSON.stringify(args));
 if (process.env.RELEASE_TEST_BUMP_FAIL) process.exit(1);
 if (args.length !== 2 || args[0] !== 'bump-version') process.exit(2);
@@ -227,10 +234,10 @@ fs.writeFileSync('package.json', JSON.stringify(pkg));
         ],
         {cwd, env: {...env, ...extraEnv}, encoding: 'utf8', timeout: 30000}
       );
-    const cli = args =>
+    const cli = (args, extraEnv = {}) =>
       spawnSync(process.execPath, ['scripts/prepare-release.js', ...args], {
         cwd,
-        env,
+        env: {...env, ...extraEnv},
         encoding: 'utf8',
         timeout: 30000
       });
@@ -258,6 +265,11 @@ test('release:prepare bumps via the existing command and prepends commits since 
       'preserves the introduction/history and adds only unreleased commits, newest first'
     );
     const updated = read('CHANGELOG.md');
+    t.deepEqual(
+      JSON.parse(read('checked-release.json')),
+      {version: '3.3.0-alpha.23', changelog: updated},
+      'checks the prepared version and changelog'
+    );
     const repeated = run('3.3.0-alpha.23');
     t.notEqual(repeated.status, 0, 'rejects duplicate preparation');
     t.ok(repeated.stderr.includes('already contains version'), 'explains the duplicate');
@@ -287,6 +299,7 @@ test('release:prepare validates versions before calling the existing bump comman
     });
     t.equal(cli(['--help']).status, 0, 'help succeeds without preparing a release');
     t.notOk(fs.existsSync(path.join(cwd, 'bump-args.json')), 'never calls the bump command');
+    t.notOk(fs.existsSync(path.join(cwd, 'checked-release.json')), 'never runs release checks');
     t.equal(read('package.json'), originalPackage, 'leaves the manifest unchanged');
     t.equal(read('CHANGELOG.md'), releaseChangelog, 'leaves the changelog unchanged');
   });
@@ -351,11 +364,30 @@ test('release:prepare rejects build metadata before it can create inconsistent p
 });
 
 test('release:prepare leaves the changelog untouched if the existing bump command fails', t => {
-  withReleaseFixture(({read, commit, run}) => {
+  withReleaseFixture(({cwd, read, commit, run}) => {
     commit('new change');
     const result = run('3.3.0', {RELEASE_TEST_BUMP_FAIL: '1'});
     t.notEqual(result.status, 0, 'reports the failed bump');
     t.equal(read('CHANGELOG.md'), releaseChangelog, 'does not add a release section');
+    t.notOk(fs.existsSync(path.join(cwd, 'checked-release.json')), 'does not run release checks');
+    t.notOk(result.stdout.includes('Updated CHANGELOG.md'), 'does not report completion');
+  });
+  t.end();
+});
+
+test('release:prepare preserves prepared changes and explains how to retry failed checks', t => {
+  withReleaseFixture(({read, commit, cli}) => {
+    commit('new change');
+    const result = cli(['3.3.0'], {RELEASE_TEST_CHECK_FAIL: '1'});
+    t.equal(result.status, 1, 'reports the failed release check');
+    t.equal(JSON.parse(read('package.json')).version, '3.3.0', 'preserves the prepared version');
+    t.ok(read('CHANGELOG.md').includes('## [3.3.0]'), 'preserves the prepared changelog');
+    t.deepEqual(
+      JSON.parse(read('checked-release.json')),
+      {version: '3.3.0', changelog: read('CHANGELOG.md')},
+      'checks run after preparation'
+    );
+    t.ok(result.stderr.includes('yarn release:check'), 'directs the user to retry only the checks');
     t.notOk(result.stdout.includes('Updated CHANGELOG.md'), 'does not report completion');
   });
   t.end();

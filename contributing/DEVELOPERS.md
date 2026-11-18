@@ -411,21 +411,17 @@ Set up `gh-release` with your GitHub API token ([instructions](https://www.npmjs
 
    Review the generated version, lockfile, and changelog changes. Use this command for patch releases too; `npm version` in the private root package does not update the workspace packages and their cross-references.
 
-2. **Optionally check locally before opening the PR.** This catches release build and TypeScript errors before spending a CI run:
+   Preparation finishes by running `yarn release:check` to catch release build and TypeScript errors. This runs npm publish dry runs for both the workspace packages and the standalone `kepler.gl` bundle, including their release builds. It does not upload packages or validate npm publishing authentication. The manual publisher runs these checks again in CI.
 
-   ```bash
-   yarn release:check
-   ```
+   If the checks fail, the prepared version, lockfile, and changelog changes remain. Fix the errors and rerun `yarn release:check`; do not rerun `release:prepare` for the same version, since its changelog entry already exists.
 
-   It runs npm publish dry runs for both the workspace packages and the standalone `kepler.gl` bundle, including their release builds. It does not upload packages or validate npm publishing authentication. The manual publisher runs these checks again in CI, even if you skip this local step.
+2. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, and changelog changes. Wait for review and merge before starting the publisher.
 
-3. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, and changelog changes. Wait for review and merge before starting the publisher.
-
-4. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, enter the exact merged version (for example, `3.3.0-alpha.23`), and check **publish**. Publishing is off by default; leaving it unchecked only rehearses the release.
+3. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, enter the exact merged version (for example, `3.3.0-alpha.23`), and check **publish**. Publishing is off by default; leaving it unchecked only rehearses the release.
 
    The [npm Manual Publisher workflow](../.github/workflows/npmpublish-manual.yml) runs `release:check`, packs and validates the workspaces and standalone bundle, saves the checked tarballs and checksums, and publishes those artifacts. The root manifest's `private` field is removed only while packing and restored afterward. Packages are published with public access and the npm `latest` tag, **including alpha versions**. Wait for the publish job to succeed before creating the GitHub release; see [failed publishing runs](#failed-publishing-runs) if it fails.
 
-5. **Create the GitHub release after publishing succeeds.** Update your local `master`:
+4. **Create the GitHub release after publishing succeeds.** Update your local `master`:
 
    ```bash
    git switch master
