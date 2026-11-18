@@ -3,7 +3,7 @@
 
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
 import type {Field} from '@kepler.gl/types';
-import type {DataContainerInterface} from '@kepler.gl/utils';
+import {getApplicationConfig, type DataContainerInterface} from '@kepler.gl/utils';
 import {convertGeometryToWKB} from '@loaders.gl/gis';
 import * as arrow from 'apache-arrow';
 import type {FeatureCollection, Geometry} from 'geojson';
@@ -36,7 +36,7 @@ async function importParquetWasm(): Promise<ParquetWasm> {
   }
   const imported = await import('parquet-wasm');
   if (typeof imported.default === 'function') {
-    await imported.default(PARQUET_WASM_URL);
+    await imported.default(getApplicationConfig().parquetWasmUrl || PARQUET_WASM_URL);
   }
   return (imported.Table ? imported : imported.default) as ParquetWasm;
 }

@@ -140,6 +140,17 @@ export type KeplerApplicationConfig = {
 
   // A URL to the CDN where the kepler.gl assets are hosted.
   cdnUrl?: string;
+  /**
+   * Folder that Export data loads sql.js from to write GeoPackage files. It must hold
+   * `sql-wasm.js` and `sql-wasm.wasm` from the sql.js version kepler.gl depends on.
+   * Empty loads them from jsDelivr.
+   */
+  sqlJsUrl?: string;
+  /**
+   * URL of `parquet_wasm_bg.wasm` from the parquet-wasm version kepler.gl depends on,
+   * which Export data uses to write GeoParquet files. Empty loads it from unpkg.
+   */
+  parquetWasmUrl?: string;
 
   // Raster Tile layer config
   // Raster Tile layer is under development and not ready for production use. Disabled by default.
@@ -455,6 +466,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   },
 
   cdnUrl: KEPLER_UNFOLDED_BUCKET,
+  sqlJsUrl: '',
+  parquetWasmUrl: '',
 
   plugins: [],
   // The default table class is KeplerTable.
