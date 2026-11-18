@@ -48,12 +48,6 @@ function prepareRelease(
   } catch {
     throw new Error(`Missing release tag ${tag}. Run git fetch --tags before preparing a release.`);
   }
-  try {
-    git(['merge-base', '--is-ancestor', baseline, 'HEAD']);
-  } catch {
-    throw new Error(`Release tag ${tag} is not an ancestor of HEAD. Check out the release branch.`);
-  }
-
   const commits = git(['log', '--format=- %h %s', `${baseline}..HEAD`]).trimEnd();
   if (!commits) {
     throw new Error(`No commits since ${tag}; there is nothing to add to the changelog.`);
