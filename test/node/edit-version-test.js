@@ -1308,8 +1308,12 @@ test('manual publisher workflow requires explicit publishing and the original ch
   );
   t.notOk(prepare.permissions?.['id-token'], 'build job cannot authenticate to npm with OIDC');
   t.equal(publish.permissions['id-token'], 'write', 'only publishing job requests OIDC');
-  t.equal(publish.environment, 'npm-release', 'OIDC publishing uses the protected environment');
-  t.notOk(prepare.environment, 'preparation does not require the publishing environment');
+  t.equal(
+    publish.environment,
+    undefined,
+    'publishing does not require an admin-managed environment'
+  );
+  t.equal(prepare.environment, undefined, 'preparation does not require a GitHub environment');
   t.ok(publish['timeout-minutes'] >= 120, 'allows bounded registry polling across all 24 packages');
   t.equal(
     publish.if,

@@ -77,9 +77,8 @@ jobs:
   publish:
     needs: prepare
     if: inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'
-    # Configure this environment to allow deployments from master only, and
-    # require the same environment in every npm Trusted Publisher registration.
-    environment: npm-release
+    # npm Trusted Publisher registrations must leave the environment empty.
+    # The master check prevents mistakes; repository workflow editors are trusted.
     runs-on: ubuntu-latest
     # Allow bounded post-upload registry polling across all 24 packages.
     timeout-minutes: 120
