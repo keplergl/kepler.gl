@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 // @ts-nocheck
+import {TileLayer, MVTLayer, _Tileset2D} from '@deck.gl/geo-layers';
 import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
@@ -388,7 +389,73 @@ describe('hubble-utils', () => {
 
       expect(result.latitude).toBe(37.75);
       expect(result.longitude).toBe(-122.35);
-      expect(result.zoom).toBe(1);
+      expect(result.zoom).toBeCloseTo(1 + Math.log2(304 / 900));
+    });
+    test('uses live globe limits even when generic map bounds differ', () => {
+      const source = {
+        longitude: 0,
+        latitude: 0,
+        zoom: 4,
+        minZoom: 0,
+        maxZoom: 30,
+        width: 1440,
+        height: 900,
+        globe: {enabled: true}
+      };
+      const result = scaleToVideoExport(source, {width: 360, height: 225});
+      expect(result.minZoom).toBe(GLOBE_MIN_ZOOM - 2);
+      expect(result.maxZoom).toBe(GLOBE_MAX_ZOOM - 2);
+    });
+
+    test.each([undefined, 0])('leaves zoom unchanged when source dimensions are %s', size => {
+      const source = {
+        longitude: 0,
+        latitude: 0,
+        zoom: 4,
+        width: size,
+        height: size,
+        globe: {enabled: true}
+      };
+      expect(scaleToVideoExport(source, {width: 360, height: 225})).toMatchObject({
+        zoom: 4,
+        zoomOffset: 0,
+        minZoom: GLOBE_MIN_ZOOM,
+        maxZoom: GLOBE_MAX_ZOOM
+      });
+    });
+
+    test.each([0, 40])('preserves the globe framing at latitude %s', latitude => {
+      const {KeplerGlobeView} = require('@kepler.gl/deckgl-layers');
+      const source = {
+        longitude: 0,
+        latitude,
+        zoom: 3,
+        pitch: 0,
+        bearing: 0,
+        width: 1440,
+        height: 900,
+        globe: {enabled: true}
+      };
+      const preview = scaleToVideoExport(source, {width: 360, height: 225});
+      const view = new KeplerGlobeView();
+      const project = (camera, point) => {
+        const viewport = view.makeViewport({...camera, viewState: camera});
+        const [x, y] = viewport.project(point);
+        return [x / camera.width, y / camera.height];
+      };
+      for (const point of [
+        [0, latitude],
+        [30, latitude],
+        [-20, latitude + 10]
+      ]) {
+        const expected = project(source, point);
+        const actual = project(preview, point);
+        expect(actual[0]).toBeCloseTo(expected[0]);
+        expect(actual[1]).toBeCloseTo(expected[1]);
+      }
+      expect(preview.minZoom).toBe(GLOBE_MIN_ZOOM - 2);
+      expect(preview.maxZoom).toBe(GLOBE_MAX_ZOOM - 2);
+      expect(scaleToVideoExport({...source, ...preview}, preview)).toEqual(preview);
     });
   });
 });
@@ -427,7 +494,9 @@ describe('globe export layer composition', () => {
     expect(getGlobeBaseLayers).toHaveBeenCalledWith({
       globe: state.mapState.globe,
       mapStyleType: 'dark',
-      mapboxApiAccessToken: 'export-token'
+      mapboxApiAccessToken: 'export-token',
+      latitude: 40,
+      zoom: 2
     });
   });
 
@@ -445,6 +514,71 @@ describe('globe export layer composition', () => {
     expect(props.initialViewState.minZoom).toBe(GLOBE_MIN_ZOOM);
     expect(props.initialViewState.maxZoom).toBe(GLOBE_MAX_ZOOM);
   });
+
+  test('keeps globe controller bounds and tile detail aligned with the scaled preview', () => {
+    const tile = new MVTLayer({id: 'basemap', data: [], zoomOffset: -1});
+    getGlobeBaseLayers.mockReturnValue([tile]);
+    const scaledMap = {
+      ...state.mapState,
+      ...scaleToVideoExport(
+        {...state.mapState, width: 1440, height: 900},
+        {width: 360, height: 225}
+      )
+    };
+    const props = getHubbleDeckGlProps({...state, mapState: scaledMap}, 'token');
+    expect(props.controller).toEqual({minZoom: 0, maxZoom: 14});
+    expect(props.initialViewState).toMatchObject({zoom: 0, minZoom: 0, maxZoom: 14});
+    expect(props.layers[0].props.zoomOffset).toBe(1);
+    expect(tile.props.zoomOffset).toBe(-1);
+    expect(getGlobeBaseLayers).toHaveBeenLastCalledWith(
+      expect.objectContaining({latitude: 40, zoom: 2})
+    );
+    expect(getGlobeTopLayers).toHaveBeenLastCalledWith({globe: state.mapState.globe, zoom: 2});
+    getGlobeExportLayers(
+      {...state, mapState: scaledMap},
+      {
+        mapIndex: 0,
+        viewState: {...scaledMap, zoom: 1, latitude: 30}
+      }
+    );
+    expect(getGlobeBaseLayers).toHaveBeenLastCalledWith(
+      expect.objectContaining({latitude: 30, zoom: 3})
+    );
+    expect(getGlobeTopLayers).toHaveBeenLastCalledWith({globe: state.mapState.globe, zoom: 3});
+  });
+
+  test.each([TileLayer, MVTLayer])(
+    'preserves tile selection detail for %p data layers',
+    LayerType => {
+      const {KeplerGlobeView} = require('@kepler.gl/deckgl-layers');
+      const source = {...state.mapState, zoom: 4, width: 1440, height: 900};
+      const preview = {...source, ...scaleToVideoExport(source, {width: 360, height: 225})};
+      const tile = new LayerType({id: 'data-tile', data: [], zoomOffset: -1});
+      const ordinary = {id: 'ordinary'};
+      computeDeckLayers.mockReturnValue([null, [tile, ordinary]]);
+      const selectedZooms = (camera, layer) => {
+        const view = new KeplerGlobeView().makeViewport({...camera, viewState: camera});
+        const tileset = new _Tileset2D({zoomOffset: layer.props.zoomOffset});
+        return [
+          ...new Set(tileset.getTileIndices({viewport: view, zRange: null}).map(index => index.z))
+        ];
+      };
+      for (const layers of [
+        getHubbleDeckGlProps({...state, mapState: preview}, 'token').layers,
+        getGlobeExportLayers({...state, mapState: preview}, {mapIndex: 0})
+      ]) {
+        const [exported, unchanged] = layers
+          .flat(Infinity)
+          .filter(layer => layer?.id === 'data-tile' || layer === ordinary);
+        expect(exported).not.toBe(tile);
+        expect(exported.props.zoomOffset).toBe(1);
+        expect(selectedZooms(preview, exported)).toEqual(selectedZooms(source, tile));
+        expect(selectedZooms(source, tile).length).toBeGreaterThan(0);
+        expect(unchanged).toBe(ordinary);
+      }
+      expect(tile.props.zoomOffset).toBe(-1);
+    }
+  );
 
   test('preserves the current tilted camera in the globe export', () => {
     const props = getHubbleDeckGlProps(
@@ -665,12 +799,15 @@ describe('export zoom-fade scaling', () => {
     expect(interactionConfig).toEqual(original);
   });
 
-  test('leaves globe fade stops unchanged because globe zoom is not rescaled', () => {
+  test('preserves globe fades at the resized preview zoom', () => {
     const globeMap = {...map, globe: {enabled: true}};
     const offset = scaleToVideoExport(globeMap, {width: 360, height: 225}).zoom - map.zoom;
 
-    expect(offset).toBe(0);
-    expect(scaleZoomOpacityForVideoExport(interactionConfig, offset)).toBe(interactionConfig);
+    expect(offset).toBe(-2);
+    const scaled = scaleZoomOpacityForVideoExport(interactionConfig, offset);
+    expect(getLayerZoomOpacityFactor('a', map.zoom + offset, scaled)).toBe(
+      getLayerZoomOpacityFactor('a', map.zoom, interactionConfig)
+    );
   });
 
   test.each([0, NaN, Infinity, -Infinity])(
