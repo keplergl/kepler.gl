@@ -273,6 +273,15 @@ class CustomDeckLightingEffect extends LightingEffect {
     this.isPicking = Boolean(opts.isPicking);
     if (this.isPicking || !this._private.shadow) return;
 
+    // kepler turns shadows on by setting `shadow` directly (updateEffect in
+    // effect-utils), not through setProps, so deck.gl does not call setup()
+    // again. An effect set up while its shadows were off (a map loaded with
+    // Light & Shadow disabled) has no shadow passes and no shadow module:
+    // create them now. deck.gl rebuilds the layers with the module next frame.
+    if (!this._private.dummyShadowMap && this.context) {
+      this.setup(this.context);
+    }
+
     // Filter editor layers out of the shadow pass so they don't cast shadows.
     const originalLayers = opts.layers;
     opts.layers = originalLayers.filter(l => !l.id.startsWith(EDITOR_LAYER_ID));
