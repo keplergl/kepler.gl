@@ -408,11 +408,41 @@ The preview executes the release builds but does not upload packages, change npm
 
 The existing [release workflow](../.github/workflows/npmpublish.yml) and local commands are unchanged. Continue the current release process, including manual publishing when token authentication fails and manual publishing of the root `kepler.gl` bundle.
 
-A successful preview checks the CI build path; it does **not** prove npm publishing authentication works or guarantee that a later multi-package release cannot fail partway through. Actual publishing, bundle automation, and recovery from partially published versions require a follow-up change and a controlled publish before switching the release trigger. Only one workflow should own publishing; adding a second workflow with the same release trigger would run both.
+A successful preview checks the CI build path; it does **not** prove npm publishing authentication works or guarantee that a later multi-package release cannot fail partway through. Use the separate manual publisher below for a deliberate publishing run. Only one workflow should own publishing; adding a second workflow with the same release trigger would run both.
 
 Do not configure npm Trusted Publishers for this preview. Those settings must match the final publishing workflow filename and should be created close to its first real release: [npm requires a first successful publish within two days](https://docs.npmjs.com/trusted-publishers/#trusted-publisher-configuration-expiry). Keep the existing npm token and GitHub secret during this rehearsal.
 
-### Push a new release
+#### Publish manually from CI
+
+The separate [npm Manual Publisher workflow](../.github/workflows/npmpublish-manual.yml) handles both the workspace packages and the standalone `kepler.gl` bundle. Existing workflows and local commands are unchanged. It runs only when started manually, and **publishing is off by default**.
+
+1. Prepare and merge the version/changelog changes. Open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, and enter the exact committed version.
+2. Leave **publish** unchecked for a rehearsal. The workflow runs both existing release dry runs, packs the resulting workspaces and bundle, and dry-runs those tarballs. The root manifest's `private` field is removed only while packing and restored afterward. The checked tarballs and their checksums are saved as an artifact; nothing is uploaded to npm.
+3. Before configuring npm, create the GitHub environment **`npm-release`** under repository **Settings → Environments**. Under **Deployment branches and tags**, choose **Selected branches and tags** and add a **Branch** rule for exactly **`master`**, with no other branch or tag rules. This server-side policy enforces the branch restriction; the workflow's `if` check alone is not a security boundary. Then configure npm Trusted Publishing for **every workspace package and the root `kepler.gl` package** using the settings below. Configure these close to the release because new registrations need their first successful publish within two days. A dry run does not validate authentication.
+4. In GitHub Actions, open the old **Node.js Package** workflow and choose **Disable workflow** from its menu. Wait for or cancel any outstanding runs. The manual publisher checks that this workflow is disabled and idle before uploading; it never changes that setting itself. Avoid concurrent local publishing too.
+5. Start **npm Manual Publisher** on `master` again with the exact version and **publish** checked. Only this explicit mode can upload packages, and publishing is restricted to `master` in `keplergl/kepler.gl`. It publishes the saved tarballs with public access and `latest`, including alpha versions, matching the existing release channel.
+
+In each package's npm settings, add a GitHub Actions Trusted Publisher:
+
+| Setting              | Value                                      |
+| -------------------- | ------------------------------------------ |
+| Organization or user | `keplergl`                                 |
+| Repository           | `kepler.gl`                                |
+| Workflow filename    | `npmpublish-manual.yml`                    |
+| Environment name     | `npm-release`                              |
+| Allowed actions      | Allow direct publishing with `npm publish` |
+
+The publish job uses GitHub OIDC, not an npm token. The environment policy and matching npm environment bindings must be configured before publishing; this PR does not configure account settings. Replace any existing registration for this workflow that leaves the environment empty: keeping it alongside the restricted registration would still allow branch workflows to bypass the intended restriction. Keep the old token/secret until the new path has completed a successful release. See [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and [GitHub deployment branch rules](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments#deployment-branches-and-tags) for setup requirements.
+
+If publishing fails, use **Re-run failed jobs** on that same run. The failed publish job downloads the original artifact by ID and does not rebuild. It skips an already-published version only when its registry checksum matches the saved tarball, and refuses conflicts, registry errors, or an attempt to move `latest` backward. After an upload succeeds, it waits briefly for registry visibility with bounded backoff only while that version is missing; it never repeats the upload during this wait. Checksum conflicts and registry request errors stop immediately.
+
+Do not use **Re-run all jobs** or start a new run to resume an interrupted upload. GitHub [may delete the original artifacts on a full rerun](https://github.com/actions/upload-artifact/issues/323#issuecomment-2786789065), even with a fixed artifact name and overwriting disabled. For publishing runs, preparation refuses every attempt after the first, before any build or upload. This prevents replacement artifacts from being published but cannot prevent GitHub deleting the originals. If the original artifact is deleted or expires after 14 days, stop and recover the original tarballs from an independently saved copy for manual review; do not rebuild a partial release. If preparation itself failed before publishing could start, start a new workflow run instead.
+
+Publishing multiple packages is not atomic: a network or authentication failure can leave a partial release. The retry continues from verified existing packages; it does not roll back uploads. After all packages succeed, create the GitHub release with `gh-release` while the old workflow remains disabled so it cannot publish the same version again.
+
+### Legacy release process
+
+These steps describe the existing release path. For the manual CI publisher, use the preceding section.
 
 In order to publish a new version of kepler.gl a developer must perform the following steps:
 

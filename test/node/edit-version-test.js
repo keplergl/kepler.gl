@@ -4,6 +4,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
+import assert from 'assert';
 import {execFileSync, spawnSync} from 'child_process';
 import test from 'tape';
 
@@ -469,5 +471,1043 @@ test('release:check fails if npm cannot start and rejects flags that could chang
     t.equal(run(['--help']).status, 0, 'help succeeds');
     t.deepEqual(calls(), [], 'invalid flags and help never invoke npm');
   });
+  t.end();
+});
+
+const {prepareReleaseArtifacts, publishReleaseArtifacts} = require('../../scripts/publish-release');
+const publisherVersion = '3.3.0-alpha.22';
+const publisherCommit = 'a'.repeat(40);
+
+async function withPublisherFixture(callback) {
+  const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-publisher-')));
+  const repoRoot = path.join(temporary, 'repo');
+  const directory = path.join(temporary, 'artifacts');
+  const events = [];
+  const state = {commit: publisherCommit, uploadCount: 0, dryRunCount: 0};
+  const registry = new Map();
+  const write = (file, value) => {
+    const target = path.join(repoRoot, file);
+    fs.mkdirSync(path.dirname(target), {recursive: true});
+    fs.writeFileSync(target, `${JSON.stringify(value, null, 2)}\n`);
+  };
+  const read = file => JSON.parse(fs.readFileSync(path.join(repoRoot, file), 'utf8'));
+  write('package.json', {
+    name: 'kepler.gl',
+    version: publisherVersion,
+    private: true,
+    workspaces: ['./src/first', './src/second', './src/private']
+  });
+  ['first', 'second', 'private'].forEach(name =>
+    write(`src/${name}/package.json`, {
+      name: `@kepler.gl/${name}`,
+      version: publisherVersion,
+      ...(name === 'private' ? {private: true} : {})
+    })
+  );
+  ['@kepler.gl/first', '@kepler.gl/second', 'kepler.gl'].forEach(name =>
+    registry.set(name, {
+      name,
+      versions: {'3.2.0': {version: '3.2.0'}},
+      'dist-tags': {latest: '3.2.0'}
+    })
+  );
+  const accept = artifact => {
+    const metadata = registry.get(artifact.name);
+    metadata.versions[artifact.version] = {
+      version: artifact.version,
+      dist: {integrity: artifact.integrity}
+    };
+    metadata['dist-tags'].latest = artifact.version;
+  };
+  const run = (command, args, options) => {
+    if (command === 'git') return `${state.commit}\n`;
+    if (command === process.execPath) {
+      events.push({type: 'checks', args});
+      if (state.failChecks) throw new Error('Source dry run failed');
+      return '';
+    }
+    if (command !== 'npm') throw new Error(`Unexpected fixture command: ${command}`);
+    if (args[0] === 'pack') {
+      const manifest = JSON.parse(fs.readFileSync(path.join(options.cwd, 'package.json'), 'utf8'));
+      events.push({type: 'pack', name: manifest.name, args, manifest});
+      if (state.failPack === manifest.name) throw new Error('Packing failed');
+      const filename = `${manifest.name.replace('@', '').replace('/', '-')}.tgz`;
+      const bytes = Buffer.from(JSON.stringify(manifest));
+      fs.writeFileSync(path.join(directory, filename), bytes);
+      const artifact = {
+        name: manifest.name,
+        version: manifest.version,
+        filename,
+        integrity: `sha512-${crypto.createHash('sha512').update(bytes).digest('base64')}`
+      };
+      if (state.badPack) state.badPack(artifact);
+      return JSON.stringify([artifact]);
+    }
+    if (args[0] !== 'publish') throw new Error('Unexpected npm command');
+    if (args.includes('--dry-run')) {
+      events.push({type: 'tarball-check', args});
+      state.dryRunCount++;
+      if (state.failDryRun === state.dryRunCount) throw new Error('Tarball dry run failed');
+      return '';
+    }
+    // This fixture never executes npm: an upload only updates this in-memory registry.
+    const release = JSON.parse(fs.readFileSync(path.join(directory, 'release.json'), 'utf8'));
+    const artifact = release.packages.find(pkg => path.join(directory, pkg.filename) === args[1]);
+    if (!artifact) throw new Error('Unknown upload artifact');
+    events.push({
+      type: 'upload',
+      name: artifact.name,
+      args,
+      bytes: fs.readFileSync(args[1], 'utf8')
+    });
+    state.uploadCount++;
+    if (state.ambiguousFailure === state.uploadCount) {
+      accept(artifact);
+      throw new Error('Connection lost after registry accepted upload');
+    }
+    if (state.failUpload === state.uploadCount) throw new Error('Upload failed');
+    accept(artifact);
+    return '';
+  };
+  const fetchRegistry = async url => {
+    const name = decodeURIComponent(url.slice('https://registry.npmjs.org/'.length));
+    events.push({type: 'registry', name});
+    if (state.registryFailure && name === 'kepler.gl') return state.registryFailure();
+    return {ok: true, status: 200, json: async () => structuredClone(registry.get(name))};
+  };
+  const options = {
+    repoRoot,
+    run,
+    fetchRegistry,
+    sleep: async delay => {
+      events.push({type: 'wait', delay});
+    }
+  };
+  const prepare = () => prepareReleaseArtifacts(publisherVersion, directory, options);
+  const publish = () => publishReleaseArtifacts(publisherVersion, directory, options);
+  try {
+    await callback({
+      repoRoot,
+      directory,
+      events,
+      state,
+      registry,
+      write,
+      read,
+      options,
+      prepare,
+      publish,
+      accept
+    });
+  } finally {
+    fs.rmSync(temporary, {recursive: true, force: true});
+  }
+}
+
+async function rejects(t, promise, expected, message) {
+  await assert.rejects(promise, expected);
+  t.pass(typeof expected === 'string' ? expected : message);
+}
+
+function publisherTest(name, callback) {
+  test(name, async t => {
+    try {
+      await callback(t);
+    } catch (error) {
+      t.fail(error.stack);
+    } finally {
+      t.end();
+    }
+  });
+}
+
+publisherTest(
+  'manual publisher prepares all checked artifacts and restores the private bundle manifest',
+  async t => {
+    await withPublisherFixture(({repoRoot, directory, events, prepare}) => {
+      const manifest = fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8');
+      const release = prepare();
+      t.deepEqual(
+        events.map(event => event.type),
+        ['checks', 'pack', 'pack', 'pack', 'tarball-check', 'tarball-check', 'tarball-check'],
+        'both source checks precede all packing, then every tarball is checked'
+      );
+      t.deepEqual(
+        release.packages.map(pkg => pkg.name),
+        ['@kepler.gl/first', '@kepler.gl/second', 'kepler.gl'],
+        'includes workspaces and bundle, excluding private workspaces'
+      );
+      t.deepEqual(
+        events[0].args,
+        [path.join(repoRoot, 'scripts/check-release.js')],
+        'uses the existing mandatory dual check'
+      );
+      t.notOk(Object.hasOwn(events[3].manifest, 'private'), 'packed bundle is publishable');
+      t.equal(
+        fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'),
+        manifest,
+        'restores original manifest bytes'
+      );
+      t.equal(release.commit, publisherCommit, 'records the source commit');
+      t.deepEqual(
+        JSON.parse(fs.readFileSync(path.join(directory, 'release.json'), 'utf8')),
+        release,
+        'saves the checked release'
+      );
+      t.ok(
+        events
+          .filter(event => event.type === 'pack' || event.type === 'tarball-check')
+          .every(
+            event =>
+              event.args.includes('--ignore-scripts') && event.args.includes('--workspaces=false')
+          ),
+        'packing and tarball checks do not rebuild or include other workspaces'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher fails closed on source, bundle packing, or tarball check failures',
+  async t => {
+    for (const failure of ['checks', 'pack', 'tarball']) {
+      await withPublisherFixture(({repoRoot, directory, state, events, prepare}) => {
+        const original = fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8');
+        if (failure === 'checks') state.failChecks = true;
+        if (failure === 'pack') state.failPack = 'kepler.gl';
+        if (failure === 'tarball') state.failDryRun = 2;
+        t.throws(prepare, /failed/i, `reports ${failure} failure`);
+        t.notOk(
+          fs.existsSync(path.join(directory, 'release.json')),
+          'does not mark failed artifacts ready'
+        );
+        t.notOk(
+          events.some(event => event.type === 'upload'),
+          'does not upload'
+        );
+        t.equal(
+          fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'),
+          original,
+          'private manifest survives failure'
+        );
+        if (failure === 'checks')
+          t.equal(events.length, 1, 'does not pack after a failed source check');
+      });
+    }
+  }
+);
+
+publisherTest('manual publisher overrides scoped user registries in real npm', async t => {
+  await withPublisherFixture(async ({repoRoot, options, prepare, publish}) => {
+    const temporary = path.dirname(repoRoot);
+    const userConfig = path.join(temporary, 'user.npmrc');
+    const globalConfig = path.join(temporary, 'global.npmrc');
+    fs.writeFileSync(userConfig, '@kepler.gl:registry=https://example.invalid/\n');
+    fs.writeFileSync(globalConfig, '');
+    const env = {
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key))
+      ),
+      npm_config_userconfig: userConfig,
+      npm_config_globalconfig: globalConfig,
+      npm_config_cache: path.join(temporary, 'npm-cache'),
+      npm_config_update_notifier: 'false',
+      ACTIONS_ID_TOKEN_REQUEST_URL: '',
+      ACTIONS_ID_TOKEN_REQUEST_TOKEN: '',
+      NPM_ID_TOKEN: ''
+    };
+    const fixtureRun = options.run;
+    let checkedTarballs = 0;
+    options.run = (command, args, commandOptions) => {
+      if (command !== 'npm') return fixtureRun(command, args, commandOptions);
+      // Exercise both command paths with real npm, but never upload or access the network.
+      const safeArgs = args.map(arg => (arg === '--dry-run=false' ? '--dry-run' : arg));
+      assert.ok(args[0] === 'pack' || safeArgs.includes('--dry-run'));
+      const result = spawnSync(command, [...safeArgs, '--offline', '--loglevel=notice'], {
+        ...commandOptions,
+        env,
+        stdio: 'pipe',
+        encoding: 'utf8',
+        timeout: 15000
+      });
+      assert.equal(result.status, 0, result.stderr || result.error?.message);
+      if (args[0] === 'publish') {
+        checkedTarballs++;
+        t.ok(
+          result.stderr.includes('Publishing to https://registry.npmjs.org/ with tag latest'),
+          'real npm uses the intended registry despite the scoped user override'
+        );
+        t.notOk(/Unknown cli config/i.test(result.stderr), 'npm recognizes the scoped option');
+      }
+      return args.includes('--dry-run=false')
+        ? fixtureRun(command, args, commandOptions)
+        : result.stdout;
+    };
+    const release = prepare();
+    await publish();
+    t.equal(checkedTarballs, release.packages.length * 2, 'checks preparation and publication');
+  });
+});
+
+publisherTest('manual publisher rejects unsafe preparation inputs before building', async t => {
+  const cases = [
+    [
+      'invalid version',
+      f => {
+        f.version = '3.3.0-alpha.01';
+      }
+    ],
+    [
+      'build metadata',
+      f => {
+        f.version = `${publisherVersion}+test`;
+      }
+    ],
+    [
+      'wrong version',
+      f => {
+        f.version = '3.3.0';
+      }
+    ],
+    [
+      'workspace version mismatch',
+      f =>
+        f.write('src/first/package.json', {...f.read('src/first/package.json'), version: '3.2.0'})
+    ],
+    [
+      'duplicate name',
+      f =>
+        f.write('src/second/package.json', {
+          ...f.read('src/second/package.json'),
+          name: '@kepler.gl/first'
+        })
+    ],
+    [
+      'conflicting publish configuration',
+      f =>
+        f.write('src/first/package.json', {
+          ...f.read('src/first/package.json'),
+          publishConfig: {registry: 'https://example.com'}
+        })
+    ],
+    [
+      'nested artifacts',
+      f => {
+        f.destination = path.join(f.repoRoot, 'artifacts');
+      }
+    ],
+    [
+      'existing artifacts',
+      f => {
+        fs.mkdirSync(f.directory);
+        fs.writeFileSync(path.join(f.directory, 'old.tgz'), 'existing');
+      }
+    ]
+  ];
+  for (const [name, change] of cases) {
+    await withPublisherFixture(f => {
+      change(f);
+      t.throws(
+        () =>
+          prepareReleaseArtifacts(
+            f.version || publisherVersion,
+            f.destination || f.directory,
+            f.options
+          ),
+        name
+      );
+      t.deepEqual(f.events, [], `${name}: no builds or uploads`);
+    });
+  }
+  for (const badPack of [
+    artifact => {
+      artifact.version = '3.2.0';
+    },
+    artifact => {
+      artifact.integrity = 'sha512-wrong';
+    }
+  ]) {
+    await withPublisherFixture(({state, prepare, directory}) => {
+      state.badPack = badPack;
+      t.throws(prepare, /packed/i, 'rejects inconsistent npm pack output');
+      t.notOk(
+        fs.existsSync(path.join(directory, 'release.json')),
+        'does not save inconsistent artifacts'
+      );
+    });
+  }
+});
+
+publisherTest(
+  'manual publisher preflights every package and publishes only the checked tarballs',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, events, directory, repoRoot}) => {
+      const release = prepare();
+      events.length = 0;
+      await publish();
+      const firstUpload = events.findIndex(event => event.type === 'upload');
+      t.deepEqual(
+        events.slice(0, release.packages.length).map(event => event.name),
+        release.packages.map(pkg => pkg.name),
+        'checks all registry states before the first upload'
+      );
+      t.ok(firstUpload >= release.packages.length, 'no early upload');
+      const uploads = events.filter(event => event.type === 'upload');
+      t.deepEqual(
+        uploads.map(event => event.name),
+        release.packages.map(pkg => pkg.name),
+        'publishes workspaces before bundle'
+      );
+      t.deepEqual(
+        uploads.map(event => event.args[1]),
+        release.packages.map(pkg => path.join(directory, pkg.filename)),
+        'publishes the saved tarballs'
+      );
+      t.ok(
+        uploads.every(event =>
+          [
+            '--ignore-scripts',
+            '--workspaces=false',
+            '--registry=https://registry.npmjs.org/',
+            '--access=public',
+            '--tag=latest',
+            '--dry-run=false'
+          ].every(flag => event.args.includes(flag))
+        ),
+        'uses explicit publication settings and never rebuilds'
+      );
+      t.notOk(
+        events.some(event => ['checks', 'pack', 'tarball-check'].includes(event.type)),
+        'publication does not rerun source builds or pack'
+      );
+      t.equal(
+        JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).private,
+        true,
+        'publishing leaves root private'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher skips identical versions, including a fully completed retry',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, events, accept}) => {
+      const release = prepare();
+      accept(release.packages[0]);
+      events.length = 0;
+      await publish();
+      t.deepEqual(
+        events.filter(event => event.type === 'upload').map(event => event.name),
+        release.packages.slice(1).map(pkg => pkg.name),
+        'uploads only missing packages'
+      );
+      events.length = 0;
+      await publish();
+      t.notOk(
+        events.some(event => event.type === 'upload'),
+        'completed retry performs no writes'
+      );
+    });
+  }
+);
+
+publisherTest('manual publisher resolves relative artifact paths from the caller', async t => {
+  await withPublisherFixture(async ({prepare, directory, options}) => {
+    const release = prepare();
+    const resolvedUploads = [];
+    await publishReleaseArtifacts(publisherVersion, path.relative(process.cwd(), directory), {
+      ...options,
+      run: (command, args, runOptions) => {
+        if (command === 'npm') {
+          const file = path.resolve(runOptions.cwd, args[1]);
+          t.ok(fs.existsSync(file), 'npm can resolve the tarball from its working directory');
+          resolvedUploads.push(file);
+        }
+        return options.run(command, args, runOptions);
+      }
+    });
+    t.deepEqual(
+      resolvedUploads,
+      release.packages.map(artifact => path.join(directory, artifact.filename)),
+      'publishes the original artifacts without duplicating the relative directory'
+    );
+  });
+});
+
+publisherTest(
+  'manual publisher refuses a late integrity conflict or tag conflict before any upload',
+  async t => {
+    for (const conflict of ['integrity', 'tag']) {
+      await withPublisherFixture(async ({prepare, publish, registry, events, accept}) => {
+        const release = prepare();
+        accept(release.packages[2]);
+        const metadata = registry.get('kepler.gl');
+        if (conflict === 'integrity')
+          metadata.versions[publisherVersion].dist.integrity = 'sha512-different';
+        else metadata['dist-tags'].latest = '3.2.0';
+        events.length = 0;
+        await rejects(
+          t,
+          publish(),
+          conflict === 'integrity' ? /Integrity conflict/ : /points elsewhere/,
+          `rejects ${conflict} conflict`
+        );
+        t.notOk(
+          events.some(event => event.type === 'upload'),
+          'a conflict in the final package prevents every upload'
+        );
+      });
+    }
+  }
+);
+
+publisherTest(
+  'manual publisher never treats registry errors or malformed responses as missing versions',
+  async t => {
+    const failures = [
+      ...[401, 404, 429, 500].map(status => [String(status), () => ({ok: false, status})]),
+      [
+        'network',
+        () => {
+          throw new Error('Network unavailable');
+        }
+      ],
+      [
+        'invalid JSON',
+        () => ({
+          ok: true,
+          json: async () => {
+            throw new Error('Invalid JSON');
+          }
+        })
+      ],
+      ['invalid document', () => ({ok: true, json: async () => ({name: 'kepler.gl'})})],
+      [
+        'wrong package',
+        () => ({ok: true, json: async () => ({name: 'wrong', versions: {}, 'dist-tags': {}})})
+      ],
+      [
+        'array tags',
+        () => ({
+          ok: true,
+          json: async () => ({
+            name: 'kepler.gl',
+            versions: {'3.2.0': {version: '3.2.0'}},
+            'dist-tags': []
+          })
+        })
+      ],
+      [
+        'empty versions',
+        () => ({ok: true, json: async () => ({name: 'kepler.gl', versions: {}, 'dist-tags': {}})})
+      ],
+      [
+        'missing latest version',
+        () => ({
+          ok: true,
+          json: async () => ({
+            name: 'kepler.gl',
+            versions: {'3.2.0': {version: '3.2.0'}},
+            'dist-tags': {latest: '3.2.1'}
+          })
+        })
+      ],
+      [
+        'missing version string',
+        () => ({
+          ok: true,
+          json: async () => ({
+            name: 'kepler.gl',
+            versions: {'3.2.0': {}},
+            'dist-tags': {latest: '3.2.0'}
+          })
+        })
+      ]
+    ];
+    for (const [name, failure] of failures) {
+      await withPublisherFixture(async ({prepare, publish, state, events}) => {
+        prepare();
+        events.length = 0;
+        state.registryFailure = failure;
+        await rejects(t, publish(), `${name} fails closed`);
+        t.notOk(
+          events.some(event => event.type === 'upload'),
+          `${name} prevents all uploads`
+        );
+      });
+    }
+  }
+);
+
+publisherTest(
+  'manual publisher rejects corrupt or mismatched artifacts before contacting npm',
+  async t => {
+    const changes = [
+      [
+        'corrupt tarball',
+        (f, release) =>
+          fs.appendFileSync(path.join(f.directory, release.packages[2].filename), 'changed')
+      ],
+      [
+        'missing tarball',
+        (f, release) => fs.unlinkSync(path.join(f.directory, release.packages[2].filename))
+      ],
+      [
+        'source commit mismatch',
+        f => {
+          f.state.commit = 'b'.repeat(40);
+        }
+      ],
+      [
+        'version mismatch',
+        (f, release) => {
+          release.version = '3.2.0';
+        }
+      ],
+      [
+        'missing package',
+        (f, release) => {
+          release.packages.pop();
+        }
+      ],
+      [
+        'path traversal',
+        (f, release) => {
+          release.packages[2].filename = '../outside.tgz';
+        }
+      ]
+    ];
+    for (const [name, change] of changes) {
+      await withPublisherFixture(async f => {
+        const release = f.prepare();
+        change(f, release);
+        fs.writeFileSync(path.join(f.directory, 'release.json'), JSON.stringify(release));
+        f.events.length = 0;
+        await rejects(t, f.publish(), `${name} fails`);
+        t.deepEqual(f.events, [], `${name} causes no registry requests or uploads`);
+      });
+    }
+  }
+);
+
+publisherTest(
+  'manual publisher safely resumes partial and ambiguously accepted uploads',
+  async t => {
+    for (const failure of ['failUpload', 'ambiguousFailure']) {
+      await withPublisherFixture(async ({prepare, publish, events, state, directory}) => {
+        const release = prepare();
+        const originals = release.packages.map(pkg =>
+          fs.readFileSync(path.join(directory, pkg.filename), 'utf8')
+        );
+        state[failure] = 2;
+        events.length = 0;
+        await rejects(t, publish(), /failed|Connection lost/, 'stops on the second upload failure');
+        t.deepEqual(
+          events.filter(event => event.type === 'upload').map(event => event.name),
+          release.packages.slice(0, 2).map(pkg => pkg.name),
+          'does not attempt bundle after failure'
+        );
+        events.length = 0;
+        await publish();
+        const expected = release.packages.slice(failure === 'ambiguousFailure' ? 2 : 1);
+        t.deepEqual(
+          events.filter(event => event.type === 'upload').map(event => event.name),
+          expected.map(pkg => pkg.name),
+          'retry skips versions actually accepted by the registry'
+        );
+        t.deepEqual(
+          release.packages.map(pkg => fs.readFileSync(path.join(directory, pkg.filename), 'utf8')),
+          originals,
+          'retry retains the exact original tarballs'
+        );
+        t.notOk(
+          events.some(event => event.type === 'pack' || event.type === 'checks'),
+          'retry never rebuilds'
+        );
+      });
+    }
+  }
+);
+
+publisherTest(
+  'manual publisher waits for delayed registry visibility without uploading twice',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+      const release = prepare();
+      const first = release.packages[0];
+      const stale = structuredClone(registry.get(first.name));
+      const fetchRegistry = options.fetchRegistry;
+      let missingReads = 0;
+      options.fetchRegistry = async url => {
+        const response = await fetchRegistry(url);
+        if (
+          url.endsWith(encodeURIComponent(first.name)) &&
+          state.uploadCount === 1 &&
+          missingReads++ < 2
+        ) {
+          return {...response, json: async () => structuredClone(stale)};
+        }
+        return response;
+      };
+      events.length = 0;
+      await publish();
+      t.deepEqual(
+        events.filter(event => event.type === 'upload').map(event => event.name),
+        release.packages.map(pkg => pkg.name),
+        'publishes every package exactly once despite delayed visibility'
+      );
+      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
+      t.equal(waits.length, 2, 'waits only for the two missing metadata responses');
+      t.ok(waits[0] > 0 && waits[1] > waits[0], 'backs off between visibility checks');
+      const firstUpload = events.findIndex(event => event.type === 'upload');
+      const nextUpload = events.findIndex(
+        event => event.type === 'upload' && event.name !== first.name
+      );
+      t.equal(
+        events.slice(firstUpload, nextUpload).filter(event => event.type === 'wait').length,
+        2,
+        'finishes verifying the first upload before starting the next'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher bounds visibility polling and stops the next upload on timeout',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+      const release = prepare();
+      const first = release.packages[0];
+      const stale = structuredClone(registry.get(first.name));
+      const fetchRegistry = options.fetchRegistry;
+      options.fetchRegistry = async url => {
+        const response = await fetchRegistry(url);
+        return state.uploadCount === 1 && url.endsWith(encodeURIComponent(first.name))
+          ? {...response, json: async () => structuredClone(stale)}
+          : response;
+      };
+      events.length = 0;
+      await rejects(
+        t,
+        publish(),
+        /Could not verify.*Retry the same artifacts/,
+        'reports exhausted visibility polling'
+      );
+      t.deepEqual(
+        events.filter(event => event.type === 'upload').map(event => event.name),
+        [first.name],
+        'does not repeat the successful upload or start another package'
+      );
+      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
+      t.ok(waits.length > 0 && waits.length <= 5, 'limits the number of delayed checks');
+      t.ok(
+        waits.every(delay => delay > 0),
+        'never spins without a delay'
+      );
+      t.ok(
+        waits.reduce((total, delay) => total + delay, 0) <= 31000,
+        'bounds the extra wait to 31 seconds per package'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher stops visibility polling immediately on conflicts or registry errors',
+  async t => {
+    for (const failure of ['integrity', 'registry']) {
+      await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+        const release = prepare();
+        const first = release.packages[0];
+        const stale = structuredClone(registry.get(first.name));
+        const fetchRegistry = options.fetchRegistry;
+        let postUploadReads = 0;
+        options.fetchRegistry = async url => {
+          const response = await fetchRegistry(url);
+          if (state.uploadCount !== 1 || !url.endsWith(encodeURIComponent(first.name)))
+            return response;
+          if (postUploadReads++ === 0)
+            return {...response, json: async () => structuredClone(stale)};
+          if (failure === 'registry') return {ok: false, status: 500};
+          const conflict = await response.json();
+          conflict.versions[publisherVersion].dist.integrity = 'sha512-different';
+          return {...response, json: async () => conflict};
+        };
+        events.length = 0;
+        await rejects(
+          t,
+          publish(),
+          failure === 'integrity' ? /Integrity conflict/ : /HTTP 500/,
+          `reports post-upload ${failure} failure`
+        );
+        t.deepEqual(
+          events.filter(event => event.type === 'upload').map(event => event.name),
+          [first.name],
+          'does not repeat or continue uploads after a hard verification failure'
+        );
+        t.equal(
+          events.filter(event => event.type === 'wait').length,
+          1,
+          'does not retry the conflict or registry error'
+        );
+      });
+    }
+  }
+);
+
+publisherTest(
+  'manual publisher prevents latest rollback using numeric prerelease ordering',
+  async t => {
+    for (const latest of ['3.3.0-alpha.23', '3.3.0-alpha.22.1', '3.3.0-beta.1', '3.3.0', '4.0.0']) {
+      await withPublisherFixture(async ({prepare, publish, registry, events}) => {
+        prepare();
+        registry.get('kepler.gl')['dist-tags'].latest = latest;
+        registry.get('kepler.gl').versions[latest] = {version: latest};
+        events.length = 0;
+        await rejects(t, publish(), /newer/, `rejects newer latest ${latest}`);
+        t.notOk(
+          events.some(event => event.type === 'upload'),
+          'does not roll back any package'
+        );
+      });
+    }
+    await withPublisherFixture(async ({prepare, publish, registry, events}) => {
+      prepare();
+      registry.get('kepler.gl')['dist-tags'].latest = '3.3.0-alpha.9';
+      registry.get('kepler.gl').versions['3.3.0-alpha.9'] = {version: '3.3.0-alpha.9'};
+      events.length = 0;
+      await publish();
+      t.equal(
+        events.filter(event => event.type === 'upload').length,
+        3,
+        'alpha.22 is newer than alpha.9 numerically'
+      );
+    });
+  }
+);
+
+const manualWorkflow = () =>
+  require('js-yaml').load(
+    fs.readFileSync(path.join(ROOT, '.github/workflows/npmpublish-manual.yml'), 'utf8')
+  );
+
+test('manual publisher workflow requires explicit publishing and the original checked artifact', t => {
+  const workflow = manualWorkflow();
+  const {prepare, publish} = workflow.jobs;
+  t.deepEqual(Object.keys(workflow.on), ['workflow_dispatch'], 'no automatic publishing trigger');
+  t.equal(
+    workflow.on.workflow_dispatch.inputs.publish.default,
+    false,
+    'manual runs prepare only by default'
+  );
+  t.deepEqual(
+    workflow.permissions,
+    {contents: 'read'},
+    'default permissions cannot request publishing credentials'
+  );
+  t.notOk(prepare.permissions?.['id-token'], 'build job cannot authenticate to npm with OIDC');
+  t.equal(publish.permissions['id-token'], 'write', 'only publishing job requests OIDC');
+  t.equal(publish.environment, 'npm-release', 'OIDC publishing uses the protected environment');
+  t.notOk(prepare.environment, 'preparation does not require the publishing environment');
+  t.ok(publish['timeout-minutes'] >= 120, 'allows bounded registry polling across all 24 packages');
+  t.equal(
+    publish.if,
+    "inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'",
+    'publishing is restricted to explicit runs on canonical master'
+  );
+  t.equal(publish.needs, 'prepare', 'publication requires successful preparation');
+  t.equal(
+    workflow.concurrency['cancel-in-progress'],
+    false,
+    'a new run never cancels an active upload'
+  );
+  const upload = prepare.steps.find(step => step.uses?.startsWith('actions/upload-artifact@'));
+  const download = publish.steps.find(step => step.uses?.startsWith('actions/download-artifact@'));
+  t.equal(
+    upload.with.name,
+    'npm-release-${{ github.run_id }}',
+    'rerunning all jobs cannot select a differently named rebuilt artifact'
+  );
+  t.equal(upload.with.overwrite, false, 'rerunning preparation cannot replace saved tarballs');
+  t.equal(
+    prepare.outputs['artifact-id'],
+    '${{ steps.artifacts.outputs.artifact-id }}',
+    'build exports its immutable artifact ID'
+  );
+  t.equal(
+    download.with['artifact-ids'],
+    '${{ needs.prepare.outputs.artifact-id }}',
+    'retry downloads the original successful build artifact'
+  );
+  t.equal(
+    download.with['merge-multiple'],
+    true,
+    'tarballs are downloaded directly into the expected directory'
+  );
+  for (const job of Object.values(workflow.jobs)) {
+    for (const step of job.steps.filter(step => step.uses)) {
+      t.ok(/^[^@]+@[a-f0-9]{40}$/.test(step.uses), 'actions are pinned to immutable commits');
+    }
+    t.notOk(job['continue-on-error'], 'job failures block publication');
+    t.notOk(
+      job.steps.some(step => step['continue-on-error']),
+      'step failures block publication'
+    );
+  }
+  t.end();
+});
+
+test('manual publisher workflow rejects absent or malformed original artifact IDs', t => {
+  const steps = manualWorkflow().jobs.publish.steps;
+  const index = steps.findIndex(step => step.name === 'Require the original artifact ID');
+  const guard = steps[index];
+  t.ok(
+    steps[index + 1].uses.startsWith('actions/download-artifact@'),
+    'validates ID before download can fall back to all artifacts'
+  );
+  t.equal(
+    guard.env.RELEASE_ARTIFACT_ID,
+    '${{ needs.prepare.outputs.artifact-id }}',
+    'validates the actual saved ID'
+  );
+  for (const id of ['1', '12345678901234567890', '', '0', '-1', '1,2', 'abc', '1\n', ' 1', '01']) {
+    const result = spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', guard.run], {
+      encoding: 'utf8',
+      env: {...process.env, RELEASE_ARTIFACT_ID: id}
+    });
+    t.equal(
+      result.status === 0,
+      ['1', '12345678901234567890'].includes(id),
+      `validates ${JSON.stringify(id)}`
+    );
+  }
+  t.end();
+});
+
+test('manual publisher workflow checks that the legacy publisher is disabled and idle', t => {
+  const workflow = manualWorkflow();
+  const steps = workflow.jobs.publish.steps;
+  const guardIndex = steps.findIndex(
+    step => step.name === 'Require the legacy publisher to be disabled and idle'
+  );
+  const guard = steps[guardIndex];
+  t.ok(
+    steps[guardIndex + 1].run.startsWith('node scripts/publish-release.js publish '),
+    'checks legacy publisher immediately before upload'
+  );
+  t.equal(guard.env.GH_TOKEN, '${{ github.token }}', 'read API token is scoped to the guard');
+  t.notOk(
+    steps[guardIndex + 1].env?.GH_TOKEN,
+    'publish command does not receive the GitHub API token'
+  );
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-publish-guard-'));
+  try {
+    const gh = path.join(directory, 'gh');
+    fs.writeFileSync(
+      gh,
+      `#!/usr/bin/env node
+if (process.env.MOCK_FAIL) process.exit(17);
+if (process.argv.includes('.state')) {
+  console.log(process.env.MOCK_STATE);
+  process.exit();
+}
+if (process.env.MOCK_FAIL_LIST) process.exit(17);
+if (!process.argv.includes('--paginate') || !process.argv.includes('--slurp') || process.argv.some(value => value.includes('status='))) process.exit(18);
+console.log(process.env.MOCK_PAGES || JSON.stringify([{workflow_runs: [{status: 'completed'}]}]));
+`
+    );
+    fs.chmodSync(gh, 0o755);
+    const run = overrides =>
+      spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', guard.run], {
+        encoding: 'utf8',
+        timeout: 30000,
+        env: {
+          ...process.env,
+          PATH: `${directory}${path.delimiter}${process.env.PATH}`,
+          GITHUB_REPOSITORY: 'keplergl/kepler.gl',
+          MOCK_STATE: 'disabled_manually',
+          ...overrides
+        }
+      });
+    t.equal(run({}).status, 0, 'allows disabled and idle legacy publisher');
+    t.equal(
+      run({MOCK_PAGES: JSON.stringify([{workflow_runs: []}])}).status,
+      0,
+      'allows no historical runs'
+    );
+    t.equal(
+      run({
+        MOCK_PAGES: JSON.stringify([
+          {workflow_runs: [{status: 'completed'}]},
+          {workflow_runs: [{status: 'completed'}]}
+        ])
+      }).status,
+      0,
+      'checks all pages without treating multiple idle pages as active'
+    );
+    for (const state of ['active', 'disabled_inactivity', 'null', '']) {
+      t.notEqual(
+        run({MOCK_STATE: state}).status,
+        0,
+        `rejects legacy state ${JSON.stringify(state)}`
+      );
+    }
+    for (const status of ['queued', 'in_progress', 'waiting', 'pending', 'requested', 'unknown']) {
+      t.notEqual(
+        run({
+          MOCK_PAGES: JSON.stringify([
+            {workflow_runs: [{status: 'completed'}]},
+            {workflow_runs: [{status}]}
+          ])
+        }).status,
+        0,
+        `rejects ${status} legacy runs on a later page`
+      );
+    }
+    t.notEqual(run({MOCK_FAIL: '1'}).status, 0, 'API failure blocks publication');
+    t.notEqual(
+      run({MOCK_FAIL_LIST: '1'}).status,
+      0,
+      'pagination request failure blocks publication'
+    );
+    for (const pages of ['not JSON', '[]', '{}', '[{}]', '[{"workflow_runs":[{}]}]']) {
+      t.notEqual(run({MOCK_PAGES: pages}).status, 0, 'malformed run metadata blocks publication');
+    }
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+  const selection = workflow.jobs.prepare.steps.find(
+    step => step.name === 'Validate publish selection'
+  );
+  t.equal(
+    workflow.jobs.prepare.steps[0],
+    selection,
+    'rejects unsafe rebuilds before any actions run'
+  );
+  t.equal(selection.if, 'inputs.publish', 'preparation-only runs remain retryable');
+  for (const [ref, repository, attempt, success] of [
+    ['refs/heads/master', 'keplergl/kepler.gl', '1', true],
+    ['refs/heads/other', 'keplergl/kepler.gl', '1', false],
+    ['refs/heads/master', 'other/kepler.gl', '1', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '2', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '3', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '', false]
+  ]) {
+    const result = spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', selection.run], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        GITHUB_REF: ref,
+        GITHUB_REPOSITORY: repository,
+        GITHUB_RUN_ATTEMPT: attempt
+      }
+    });
+    t.equal(
+      result.status === 0,
+      success,
+      `validates publish selection ${repository}/${ref} attempt ${attempt}`
+    );
+  }
   t.end();
 });

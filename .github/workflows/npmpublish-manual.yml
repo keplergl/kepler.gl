@@ -1,0 +1,146 @@
+name: npm Manual Publisher
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version already committed in package.json
+        type: string
+        required: true
+      publish:
+        description: Publish the checked workspace and bundle tarballs to npm
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Do not cancel an upload halfway through when another run is requested.
+concurrency:
+  group: npm-manual-publisher
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+
+    steps:
+      - name: Validate publish selection
+        if: inputs.publish
+        run: |
+          if [[ "$GITHUB_RUN_ATTEMPT" != "1" ]]; then
+            echo "Publishing runs cannot rebuild artifacts on retry. Re-run only the failed publish job."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != "refs/heads/master" || "$GITHUB_REPOSITORY" != "keplergl/kepler.gl" ]]; then
+            echo "Publishing is only allowed from master in keplergl/kepler.gl."
+            exit 1
+          fi
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
+
+      - name: Set up Node and npm
+        run: |
+          volta install "node@$(node -p 'require("./package.json").volta.node')"
+          volta install npm@11.19.0
+
+      - run: yarn install --immutable && yarn bootstrap:prepare
+        env:
+          HUSKY: 0
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
+
+      - name: Check and pack workspaces and bundle
+        run: node scripts/publish-release.js prepare "$RELEASE_VERSION" "$RUNNER_TEMP/npm-release"
+        env:
+          HUSKY: 0
+
+      - name: Save checked tarballs for publishing and retries
+        id: artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/npm-release
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+          overwrite: false
+
+  publish:
+    needs: prepare
+    if: inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'
+    # Configure this environment to allow deployments from master only, and
+    # require the same environment in every npm Trusted Publisher registration.
+    environment: npm-release
+    runs-on: ubuntu-latest
+    # Allow bounded post-upload registry polling across all 24 packages.
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
+
+      - name: Set up Node and npm
+        run: |
+          volta install "node@$(node -p 'require("./package.json").volta.node')"
+          volta install npm@11.19.0
+
+      # An empty artifact-ids input would otherwise download every artifact.
+      - name: Require the original artifact ID
+        env:
+          RELEASE_ARTIFACT_ID: ${{ needs.prepare.outputs.artifact-id }}
+        run: |
+          if [[ ! "$RELEASE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "The original release artifact ID is missing or invalid; refusing to publish."
+            exit 1
+          fi
+
+      - name: Download the original checked tarballs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          path: ${{ runner.temp }}/npm-release
+          merge-multiple: true
+
+      # The legacy workflow has a release trigger and no shared concurrency group.
+      # Check immediately before publishing; never change its state automatically.
+      - name: Require the legacy publisher to be disabled and idle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          legacy="repos/$GITHUB_REPOSITORY/actions/workflows/npmpublish.yml"
+          state=$(gh api "$legacy" --jq '.state')
+          if [[ "$state" != "disabled_manually" ]]; then
+            echo "Disable the Node.js Package workflow in GitHub Actions before publishing here."
+            exit 1
+          fi
+          runs=$(gh api --paginate --slurp "$legacy/runs?per_page=100")
+          if ! node -e '
+            const pages = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (!Array.isArray(pages) || !pages.length || !pages.every(page =>
+              Array.isArray(page.workflow_runs) && page.workflow_runs.every(run => run?.status === "completed")
+            )) process.exit(1);
+          ' <<< "$runs"; then
+            echo "The legacy publisher has unfinished runs or unreadable run metadata. Wait for or cancel them before retrying."
+            exit 1
+          fi
+
+      - name: Publish missing workspaces and bundle
+        run: node scripts/publish-release.js publish "$RELEASE_VERSION" "$RUNNER_TEMP/npm-release"
