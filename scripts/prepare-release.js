@@ -48,31 +48,6 @@ function prepareRelease(
   } catch {
     throw new Error(`Missing release tag ${tag}. Run git fetch --tags before preparing a release.`);
   }
-  try {
-    git(['merge-base', '--is-ancestor', baseline, 'HEAD']);
-  } catch (error) {
-    if (error.status !== 1) throw error;
-    // A squash can replace a tagged commit with an identical sibling commit.
-    // Require both its snapshot and single parent to match, without moving the tag.
-    const identity = git(['show', '-s', '--format=%T %P', baseline]).trim();
-    const [, parent, ...otherParents] = identity.split(' ');
-    const matches =
-      parent && !otherParents.length
-        ? git(['log', '--format=%H%x09%T %P', `${parent}..HEAD`])
-            .trimEnd()
-            .split('\n')
-            .map(line => line.split('\t'))
-            .filter(([, candidateIdentity]) => candidateIdentity === identity)
-        : [];
-    if (matches.length !== 1) {
-      throw new Error(
-        `Release tag ${tag} is not an ancestor of HEAD and has no unique equivalent commit. Check out the release branch.`
-      );
-    }
-    baseline = matches[0][0];
-    console.log(`Using equivalent merged commit ${baseline} for ${tag}.`);
-  }
-
   const commits = git(['log', '--format=- %h %s', `${baseline}..HEAD`]).trimEnd();
   if (!commits) {
     throw new Error(`No commits since ${tag}; there is nothing to add to the changelog.`);

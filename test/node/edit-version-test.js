@@ -298,7 +298,7 @@ test('release:prepare bumps via the existing command and prepends commits since 
   t.end();
 });
 
-test('release:prepare recognizes an identical squashed sibling without moving the release tag', t => {
+test('release:prepare accepts a previous release tag outside the current branch history', t => {
   withReleaseFixture(({read, git, commit, run}) => {
     const parent = git('rev-parse', 'HEAD');
     const tree = git('rev-parse', 'HEAD^{tree}');
@@ -308,67 +308,25 @@ test('release:prepare recognizes an identical squashed sibling without moving th
     const next = commit('fix: next release change');
 
     const result = run('3.3.0-alpha.23');
-    t.equal(result.status, 0, result.stderr || 'preparation accepts the equivalent merged commit');
+    t.equal(
+      result.status,
+      0,
+      result.stderr || 'preparation succeeds with a non-ancestor release tag'
+    );
     t.equal(
       JSON.parse(read('package.json')).version,
       '3.3.0-alpha.23',
       'prepares the next version'
     );
     const insertion = releaseChangelog.indexOf('## [');
-    const section = `## [3.3.0-alpha.23] - Nov 16 2026\n\n- ${next} fix: next release change\n\n`;
+    const section = `## [3.3.0-alpha.23] - Nov 16 2026\n\n- ${next} fix: next release change\n- ${merged} squashed release commit\n\n`;
     t.equal(
       read('CHANGELOG.md'),
       releaseChangelog.slice(0, insertion) + section + releaseChangelog.slice(insertion),
-      'includes only changes after the equivalent merged release'
+      'includes current-branch commits not reachable from the previous tag'
     );
-    t.ok(result.stdout.includes(merged), 'identifies the equivalent commit used');
     t.equal(git('rev-parse', 'refs/tags/v3.3.0-alpha.22'), tagged, 'preserves the original tag');
   });
-  t.end();
-});
-
-test('release:prepare rejects non-equivalent or ambiguous squash history before changing files', t => {
-  for (const scenario of ['different tree', 'different parent', 'ambiguous siblings']) {
-    withReleaseFixture(({cwd, write, read, git, commit, run}) => {
-      const parent = git('rev-parse', 'HEAD');
-      const tree = git('rev-parse', 'HEAD^{tree}');
-      const tagParent =
-        scenario === 'different parent'
-          ? git('commit-tree', tree, '-p', parent, '-m', 'other parent')
-          : parent;
-      const tagged = git('commit-tree', tree, '-p', tagParent, '-m', 'original release commit');
-      git('tag', '-f', 'v3.3.0-alpha.22', tagged);
-      if (scenario === 'different tree') {
-        write('different.txt', 'Different release contents');
-        git('add', 'different.txt');
-      }
-      commit('first candidate');
-      if (scenario === 'ambiguous siblings') {
-        const other = git('commit-tree', tree, '-p', parent, '-m', 'second candidate');
-        const merged = git(
-          'commit-tree',
-          tree,
-          '-p',
-          git('rev-parse', 'HEAD'),
-          '-p',
-          other,
-          '-m',
-          'merge candidates'
-        );
-        git('checkout', '--detach', merged);
-      }
-      const originalPackage = read('package.json');
-      const result = run('3.3.0-alpha.23');
-      t.notEqual(result.status, 0, `rejects ${scenario}`);
-      t.ok(result.stderr.includes('no unique equivalent commit'), 'explains the unsafe baseline');
-      t.notOk(fs.existsSync(path.join(cwd, 'bump-args.json')), 'does not bump versions');
-      t.notOk(fs.existsSync(path.join(cwd, 'checked-release.json')), 'does not run release checks');
-      t.equal(read('package.json'), originalPackage, 'preserves the manifest');
-      t.equal(read('CHANGELOG.md'), releaseChangelog, 'preserves the changelog');
-      t.equal(read(releaseWorkflowPath), releaseWorkflow, 'preserves the workflow');
-      t.equal(git('rev-parse', 'refs/tags/v3.3.0-alpha.22'), tagged, 'preserves the release tag');
-    });
-  }
   t.end();
 });
 
@@ -401,7 +359,7 @@ test('release:prepare validates versions before calling the existing bump comman
   t.end();
 });
 
-test('release:prepare refuses missing or unreachable history before changing versions', t => {
+test('release:prepare refuses missing release history or no new commits before changing versions', t => {
   const cases = [
     {
       name: 'missing changelog version',
@@ -415,14 +373,6 @@ test('release:prepare refuses missing or unreachable history before changing ver
         commit('new change');
       },
       message: 'git fetch --tags'
-    },
-    {
-      name: 'release tag outside branch history',
-      setup: ({git, commit}) => {
-        git('checkout', '--orphan', 'unrelated');
-        commit('unrelated change');
-      },
-      message: 'not an ancestor'
     },
     {name: 'no new commits', setup: () => {}, message: 'No commits since'}
   ];
