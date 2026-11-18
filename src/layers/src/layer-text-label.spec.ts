@@ -5,6 +5,11 @@ import {Table, vectorFromArray} from 'apache-arrow';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
+import {
+  EnhancedMultiIconLayer,
+  EnhancedTextBackgroundLayer,
+  KeplerGlobeView
+} from '@kepler.gl/deckgl-layers';
 import PointLayer from './point-layer/point-layer';
 import {
   formatTextLabelData,
@@ -105,6 +110,52 @@ describe('getSingleTextLabelValue', () => {
 });
 
 describe('renderTextLabelLayer', () => {
+  test.each([false, true])(
+    'disables inherited globe face culling for glyphs and backgrounds (collision=%s)',
+    async collisionEnabled => {
+      const table = await makeTable();
+      const layer = new PointLayer({id: 'point', dataId: table.id});
+      layer.updateLayerConfig({
+        textLabel: [
+          {...DEFAULT_TEXT_LABEL, field: table.fields[3], background: true, collisionEnabled}
+        ]
+      });
+      const view = new KeplerGlobeView();
+
+      for (const globeEnabled of [false, true]) {
+        const [text] = layer.renderTextLabelLayer(
+          {getPixelOffset: () => [0, 0], updateTriggers: {}, sharedProps: {}},
+          {
+            data: {data: [], textLabels: [{getText: () => 'label', characterSet: ['l']}]},
+            mapState: {globe: {enabled: globeEnabled}},
+            visible: true
+          }
+        );
+        for (const id of ['characters', 'background']) {
+          // Use deck.gl's real sublayer inheritance before merging the view's
+          // parameters, as LayersPass does for each rendered primitive layer.
+          const props = (text as any).getSubLayerProps({id});
+          const parameters = {
+            ...(globeEnabled ? view.props.parameters : {}),
+            ...props.parameters
+          };
+          if (globeEnabled) {
+            expect(parameters.cullMode).toBe('none');
+            expect(parameters).toMatchObject({depthTest: true, depthMask: false});
+            // Disabling GPU face culling must retain the far-side shader guard.
+            expect(props.type).toBe(
+              id === 'characters' ? EnhancedMultiIconLayer : EnhancedTextBackgroundLayer
+            );
+          } else {
+            expect(parameters.cullMode).toBeUndefined();
+            expect(parameters.depthTest).toBe(false);
+            expect(props.type).toBeUndefined();
+          }
+        }
+      }
+    }
+  );
+
   test('includes the display format in the deck.gl text update trigger', async () => {
     const table = await makeTable();
     const field = {...findField(table, 'time')!, displayFormat: 'YYYY'};
