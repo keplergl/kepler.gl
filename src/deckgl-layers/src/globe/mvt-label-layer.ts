@@ -132,6 +132,8 @@ export class MVTLabelLayer extends CompositeLayer<MVTLabelLayerProps> {
             // so explicitly disable culling here. depthTest off keeps labels on top of
             // the globe surface rather than clipping into it.
             cull: false,
+            // Override GlobeView's cullMode; legacy cull alone loses at draw time.
+            cullMode: 'none',
             depthTest: false,
             depthMask: false
           },
