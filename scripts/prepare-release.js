@@ -64,10 +64,22 @@ function prepareRelease(
   const updated = `${changelog.slice(0, insertion)}${heading}\n\n${commits}\n\n${changelog.slice(
     insertion
   )}`;
+  const workflowPath = path.join(repoRoot, '.github/workflows/npmpublish-manual.yml');
+  const workflow = fs.readFileSync(workflowPath, 'utf8');
+  const defaultPattern = /^([ \t]+default: )\S+( # Updated by release:prepare\.)$/gm;
+  if ([...workflow.matchAll(defaultPattern)].length !== 1) {
+    throw new Error(
+      'Expected one marked version default in .github/workflows/npmpublish-manual.yml.'
+    );
+  }
 
   console.log(`Preparing ${version} with commits since ${tag}...`);
   execFileSync('yarn', ['bump-version', version], {cwd: repoRoot, stdio: 'inherit'});
   fs.writeFileSync(changelogPath, updated);
+  fs.writeFileSync(
+    workflowPath,
+    workflow.replace(defaultPattern, (_, prefix, suffix) => `${prefix}${version}${suffix}`)
+  );
   console.log('Running release checks...');
   try {
     execFileSync('yarn', ['release:check'], {cwd: repoRoot, stdio: 'inherit'});
