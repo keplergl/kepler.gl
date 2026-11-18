@@ -450,6 +450,24 @@ describe('ExportVideoModal', () => {
     expect(cameraTour.stops[0].camera).toBe(camera);
   });
 
+  test('offers the experimental native format and retains its selection in regular export', async () => {
+    await renderAndWaitForPanel(DEFAULT_PROPS);
+    const options = [
+      {value: 'webm', label: 'WebM Video'},
+      {value: 'gif', label: 'GIF'}
+    ];
+    let ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    expect(ui.ItemSelector({options}).props.options.map(option => option.value)).toEqual([
+      'webm',
+      'gif',
+      'webm-native'
+    ]);
+    act(() => mockHubbleContainerRef.current.props.onSettingsChange({mediaType: 'webm-native'}));
+    ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    expect(ui.ItemSelector({options}).props.selectedItems.value).toBe('webm-native');
+    expect(DEFAULT_PROPS.exportVideo.mediaType).toBe('webm');
+  });
+
   describe('default camera preset', () => {
     const modes = [
       {mode: 'regular', mapState: {}, panel: mockExportVideoPanelContainer},
@@ -1104,6 +1122,116 @@ describe('Camera Animation video export', () => {
   } = require('./camera-tour-export');
   const {CameraKeyframes} = require('@hubble.gl/core');
   const camera = {longitude: 179, latitude: 0, zoom: 4, bearing: 350, pitch: 30};
+  test('restores the camera and clears saving after a native encoding failure', () => {
+    const encoders = require('./native-webm-encoder');
+    let hooks;
+    const createEncoder = jest
+      .spyOn(encoders, 'createNativeWebMEncoder')
+      .mockImplementation(value => {
+        hooks = value;
+        return class {};
+      });
+    class Base {
+      state = {
+        adapter: {videoCapture: {encoder: {cancel: jest.fn()}}},
+        mediaType: 'webm-native',
+        rendering: true,
+        saving: true,
+        viewState: {...camera, zoom: 10},
+        memo: {viewState: camera}
+      };
+      setState(update) {
+        Object.assign(this.state, update);
+      }
+      onStop() {}
+    }
+    try {
+      const Container = withCameraTourExport(Base);
+      const instance = new Container();
+      instance.getEncoder();
+      hooks.onError(new Error('finalization failed'));
+      expect(instance.state.viewState).toEqual(camera);
+      expect(instance.state.rendering).toBe(false);
+      expect(instance.state.saving).toBe(false);
+      expect(instance.state.encodingError).toContain('Video encoding failed');
+      expect(instance.state.adapter.videoCapture.encoder.cancel).toHaveBeenCalledTimes(1);
+    } finally {
+      createEncoder.mockRestore();
+    }
+  });
+  test('isolates recording sessions and cancels native resources when aborted', () => {
+    const {NativeWebMEncoder} = require('./native-webm-encoder');
+    class Capture {
+      encoder = {cancel: jest.fn()};
+      download = jest.fn();
+    }
+    const legacy = class {};
+    class Base {
+      state = {
+        adapter: {
+          videoCapture: new Capture(),
+          animationManager: {setKeyframes: jest.fn()},
+          render: jest.fn(options => {
+            this.state.adapter.videoCapture.encoder = new options.Encoder({framerate: 30});
+          }),
+          stop: jest.fn(options => options.onStopped?.())
+        },
+        mediaType: 'webm',
+        viewState: camera
+      };
+      setState(update) {
+        Object.assign(this.state, update);
+      }
+      getEncoder() {
+        return legacy;
+      }
+      getFilterKeyframes() {
+        return {};
+      }
+      getTripKeyframes() {
+        return {};
+      }
+      getFormatConfigs() {
+        return {};
+      }
+      getTimecode() {
+        return {framerate: 30};
+      }
+      getFileName() {
+        return 'recording';
+      }
+      onRenderVideo() {}
+      onStop() {}
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    instance.getCameraKeyframes = () => ({});
+    expect(instance.getEncoder()).toBe(legacy);
+    instance.state.mediaType = 'webm-native';
+    const Encoder = instance.getEncoder();
+    expect(new Encoder({framerate: 30})).toBeInstanceOf(NativeWebMEncoder);
+    const previous = instance.state.adapter.videoCapture;
+    instance.onRenderVideo();
+    expect(previous.encoder.cancel).toHaveBeenCalledTimes(1);
+    expect(instance.state.adapter.videoCapture).not.toBe(previous);
+    const current = instance.state.adapter.videoCapture;
+    jest.spyOn(current.encoder, 'cancel');
+    const renderOptions = instance.state.adapter.render.mock.lastCall[0];
+    renderOptions.onStopped();
+    expect(instance.state.saving).toBe(true);
+    instance.onRenderVideo();
+    expect(instance.state.adapter.videoCapture).toBe(current);
+    instance.onStop();
+    expect(current.encoder.cancel).not.toHaveBeenCalled();
+    expect(instance.state.adapter.stop.mock.lastCall[0].onSave).toBe(renderOptions.onSave);
+    const blob = new Blob(['video']);
+    renderOptions.onSave(blob);
+    expect(current.download).toHaveBeenCalledWith(blob);
+    expect(instance.state.rendering).toBe(false);
+    expect(instance.state.saving).toBe(false);
+    instance.onStop({abort: true});
+    expect(current.encoder.cancel).toHaveBeenCalledTimes(1);
+  });
   const tour = {
     stops: [
       {id: 'a', name: 'Start', camera, holdDurationMs: 1000, travelDurationMs: 2000},

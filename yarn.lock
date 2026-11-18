@@ -3968,6 +3968,7 @@ __metadata:
     maplibre-gl: "npm:^4.0.0"
     maplibregl-mapbox-request-transformer: "npm:^0.0.2"
     markdown-to-jsx: "npm:^7.7.6"
+    mediabunny: "npm:1.66.1"
     mjolnir.js: "npm:^3.0.0"
     moment: "npm:^2.10.6"
     moment-timezone: "npm:^0.5.35"
@@ -9952,6 +9953,29 @@ __metadata:
   dependencies:
     "@types/ms": "npm:*"
   checksum: 10c0/e5e124021bbdb23a82727eee0a726ae0fc8a3ae1f57253cbcc47497f259afb357de7f6941375e773e1abbfa1604c1555b901a409d762ec2bb4c1612131d4afb7
+  languageName: node
+  linkType: hard
+
+"@types/dom-mediacapture-transform@npm:^0.1.11":
+  version: 0.1.12
+  resolution: "@types/dom-mediacapture-transform@npm:0.1.12"
+  dependencies:
+    "@types/dom-webcodecs": "npm:*"
+  checksum: 10c0/340d31b37dd12c4c145d9cb1e10057376bcbefeb32833bb829a9cea430e04ddc6f5a942479f92ad9f33adb8ee0fe208675cb1f3f1ad501c8e8c50f0a14cd496c
+  languageName: node
+  linkType: hard
+
+"@types/dom-webcodecs@npm:*":
+  version: 0.1.19
+  resolution: "@types/dom-webcodecs@npm:0.1.19"
+  checksum: 10c0/bb6e04daf5c22eda547db38ddc000d978b5af6203a519962859439a14c3455ce89edeea33d9464f698872a3540971c20c7cda354a5535b1a3bc18cbdddcdf843
+  languageName: node
+  linkType: hard
+
+"@types/dom-webcodecs@npm:0.1.13":
+  version: 0.1.13
+  resolution: "@types/dom-webcodecs@npm:0.1.13"
+  checksum: 10c0/16683fd0330fdfbb867affec1c18fd493d88433a4ec66257579adc5d07b07e9492268b4401e9017b7388b13750722365b0392b375e39c84e74f564d5b4f634a4
   languageName: node
   linkType: hard
 
@@ -23801,6 +23825,16 @@ __metadata:
   version: 1.1.1
   resolution: "media-typer@npm:1.1.1"
   checksum: 10c0/924644de220c3107fc53ec0299b7c1488503470265d32f1492535bd798cc369ba7ceaf9c2a4533361590dcf7208d1cc7b7032dbc1a5918773f5f5d912cab5211
+  languageName: node
+  linkType: hard
+
+"mediabunny@npm:1.66.1":
+  version: 1.66.1
+  resolution: "mediabunny@npm:1.66.1"
+  dependencies:
+    "@types/dom-mediacapture-transform": "npm:^0.1.11"
+    "@types/dom-webcodecs": "npm:0.1.13"
+  checksum: 10c0/100c9c6997eb89973f118314b74536b819b8ffe6dee9db1050789c9d8653e48eaefd4e9565962f7802ac8ac83aadbbc60feb6009c7ef4097d9635ca2e90fd9aa
   languageName: node
   linkType: hard
 

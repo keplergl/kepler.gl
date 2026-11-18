@@ -6,6 +6,13 @@ import {easeInOut} from 'popmotion';
 import download from 'downloadjs';
 import styled from 'styled-components';
 import {Button} from '../common';
+import {StyledModalInputFootnote} from '../common/styled-components';
+import {createNativeWebMEncoder} from './native-webm-encoder';
+import {
+  NATIVE_WEBM_FORMAT,
+  NATIVE_WEBM_FALLBACK,
+  VIDEO_ENCODING_ERROR
+} from './video-export-formats';
 import {
   DeckAdapter,
   KeplerAnimation,
@@ -82,6 +89,8 @@ type GlobeExportVideoPanelContainerState = {
   previewing: boolean;
   saving: boolean;
   currentTimeMs: number;
+  encodingError?: string;
+  encodingNotice?: string;
   memo?: {viewState: MapViewState};
 };
 
@@ -245,7 +254,11 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getEncoder() {
     const {mediaType} = this.state;
-    return ENCODERS[mediaType];
+    return mediaType === NATIVE_WEBM_FORMAT.value
+      ? createNativeWebMEncoder({
+          onFallback: () => this.setState({encodingNotice: NATIVE_WEBM_FALLBACK})
+        })
+      : ENCODERS[mediaType];
   }
 
   getCameraKeyframes() {
@@ -414,6 +427,8 @@ export class GlobeExportVideoPanelContainer extends Component<
 
     this.setState({
       rendering: true,
+      encodingError: undefined,
+      encodingNotice: undefined,
       saving: false,
       currentTimeMs: 0,
       memo: {viewState: {...this.state.viewState!}}
@@ -488,27 +503,33 @@ export class GlobeExportVideoPanelContainer extends Component<
               offCtx.drawImage(deckCanvas, 0, 0, width, height);
             }
 
-            encoder.add(offscreen).then(() => {
-              if (this.activeEncoder !== encoder) return;
-              timeMs += frameLengthMs;
-              if (timeMs > timecode.end) {
-                this.setState({saving: true});
-                encoder.save().then((blob: Blob | null) => {
-                  if (this.activeEncoder !== encoder) return;
-                  if (blob) {
-                    download(blob, filename + encoder.extension, encoder.mimeType);
-                  }
-                  this.setState({
-                    rendering: false,
-                    saving: false,
-                    currentTimeMs: 0,
-                    viewState: {...this.state.memo!.viewState}
-                  });
-                });
-              } else {
-                captureNextFrame();
-              }
-            });
+            encoder
+              .add(offscreen)
+              .then(() => {
+                if (this.activeEncoder !== encoder) return;
+                timeMs += frameLengthMs;
+                if (timeMs > timecode.end) {
+                  this.setState({saving: true});
+                  encoder
+                    .save()
+                    .then((blob: Blob | null) => {
+                      if (this.activeEncoder !== encoder) return;
+                      if (blob) {
+                        download(blob, filename + encoder.extension, encoder.mimeType);
+                      }
+                      this.setState({
+                        rendering: false,
+                        saving: false,
+                        currentTimeMs: 0,
+                        viewState: {...this.state.memo!.viewState}
+                      });
+                    })
+                    .catch(() => this.onEncodingError(encoder));
+                } else {
+                  captureNextFrame();
+                }
+              })
+              .catch(() => this.onEncodingError(encoder));
           });
         });
       };
@@ -520,11 +541,18 @@ export class GlobeExportVideoPanelContainer extends Component<
     setTimeout(() => captureNextFrame(), 500);
   };
 
+  onEncodingError = (encoder: any) => {
+    if (this.activeEncoder !== encoder) return;
+    this.onStop();
+    this.setState({encodingError: VIDEO_ENCODING_ERROR, saving: false});
+  };
+
   onStop = ({abort = false}: {abort?: boolean} = {}) => {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.activeEncoder?.cancel?.();
     this.activeEncoder = null;
     if (!abort) {
       this.setState({
@@ -564,6 +592,14 @@ export class GlobeExportVideoPanelContainer extends Component<
 
     return (
       <div className="export-video-panel">
+        {(this.state.encodingError || this.state.encodingNotice) && (
+          <StyledModalInputFootnote
+            error={Boolean(this.state.encodingError)}
+            role={this.state.encodingError ? 'alert' : 'status'}
+          >
+            {this.state.encodingError || this.state.encodingNotice}
+          </StyledModalInputFootnote>
+        )}
         <PanelBody $exportVideoWidth={exportVideoWidth}>
           <GlobeExportVideoPreview
             ref={this.previewRef}

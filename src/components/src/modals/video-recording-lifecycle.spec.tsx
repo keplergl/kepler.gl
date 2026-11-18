@@ -9,6 +9,7 @@ import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
 import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
 import {useEffectAnimation} from './effect-animation';
 import type {Effect} from '@kepler.gl/types';
+import {NativeWebMEncoder} from './native-webm-encoder';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -34,6 +35,7 @@ jest.mock('@hubble.gl/core', () => {
     start = jest.fn();
     add = jest.fn(() => Promise.resolve());
     save = jest.fn(() => Promise.resolve(null));
+    cancel = jest.fn();
     constructor() {
       mockEncoders.push(this);
     }
@@ -197,6 +199,37 @@ function start() {
 
 describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind => {
   const framesPerCapture = kind === 'globe' ? 2 : 3;
+  it('keeps native encoding opt-in and releases an active encoder when stopped', () => {
+    const {container} = mount(kind);
+    const original = container.getEncoder();
+    act(() => container.setMediaType('webm-native'));
+    const Native = container.getEncoder();
+    expect(new Native({framerate: 30})).toBeInstanceOf(NativeWebMEncoder);
+    act(() => container.setMediaType('webm'));
+    expect(container.getEncoder()).toBe(original);
+    const encoder = start();
+    act(() => container.onStop({abort: true}));
+    expect(encoder.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['add', 'save'])(
+    'recovers from %s rejection and permits another recording',
+    async method => {
+      const {container} = mount(kind, 0);
+      const encoder = start();
+      encoder[method].mockRejectedValueOnce(new Error('encoder unavailable'));
+      await flushFrames(framesPerCapture);
+      expect(screen.getByRole('alert')).toHaveTextContent('Video encoding failed');
+      expect(container.state.rendering).toBe(false);
+      expect(container.state.saving).toBe(false);
+      expect(encoder.cancel).toHaveBeenCalledTimes(1);
+      expect(download).not.toHaveBeenCalled();
+      start();
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(container.state.rendering).toBe(true);
+    }
+  );
+
   it('applies effect endpoints before captured frames and restores their starts after recording', async () => {
     const effect = {
       type: 'test-effect',

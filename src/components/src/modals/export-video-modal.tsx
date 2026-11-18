@@ -41,6 +41,7 @@ import {
 import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
 import {CAMERA_TOUR_PRESET, withCameraTourExport} from './camera-tour-export';
+import {NATIVE_WEBM_FORMAT} from './video-export-formats';
 
 type SwipeContainerType = React.ComponentType<any>;
 
@@ -584,8 +585,14 @@ const ExportVideoModalFactory = () => {
         ItemSelector: (props: any) => (
           <LightItemSelector
             {...props}
+            {...(props.options?.some(option => option?.value === 'webm') &&
+            videoConfiguration.mediaType === NATIVE_WEBM_FORMAT.value
+              ? {selectedItems: NATIVE_WEBM_FORMAT}
+              : {})}
             options={
-              hasCameraTour && props.options?.includes('Orbit (90º)')
+              props.options?.some(option => option?.value === 'webm')
+                ? [...props.options, NATIVE_WEBM_FORMAT]
+                : hasCameraTour && props.options?.includes('Orbit (90º)')
                 ? [...props.options, CAMERA_TOUR_PRESET]
                 : props.options
             }
@@ -602,7 +609,7 @@ const ExportVideoModalFactory = () => {
           />
         )
       }),
-      [hasCameraTour, cameraTourDurationMs]
+      [hasCameraTour, cameraTourDurationMs, videoConfiguration.mediaType]
     );
 
     if (!hubble) {

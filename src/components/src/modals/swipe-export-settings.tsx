@@ -4,6 +4,7 @@
 import React, {ChangeEvent, useMemo, useState} from 'react';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 import {SwipeEasing} from './swipe-composite-utils';
+import {NATIVE_WEBM_FORMAT} from './video-export-formats';
 import {CAMERA_TOUR_PRESET} from './camera-tour-export';
 
 import Slider from '../common/slider/slider';
@@ -99,6 +100,7 @@ const EASING_OPTIONS = [
 const FORMAT_OPTIONS = [
   {value: 'gif', label: 'GIF'},
   {value: 'webm', label: 'WebM Video'},
+  NATIVE_WEBM_FORMAT,
   {value: 'png', label: 'PNG Sequence'},
   {value: 'jpeg', label: 'JPEG Sequence'}
 ];
