@@ -5,6 +5,7 @@ const {execFileSync} = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const {setTimeout: defaultSleep} = require('timers/promises');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = 'https://registry.npmjs.org/';
@@ -237,10 +238,22 @@ async function registryState(artifact, fetchRegistry) {
   return true;
 }
 
+async function waitForPublishedArtifact(artifact, fetchRegistry, sleep) {
+  // Registry metadata can lag a successful upload. Only a missing version is
+  // retryable here; integrity conflicts, tag changes and request errors escape.
+  for (const delay of [0, 1000, 2000, 4000, 8000, 16000]) {
+    if (delay) await sleep(delay);
+    if (await registryState(artifact, fetchRegistry)) return;
+  }
+  throw new Error(
+    `Could not verify ${artifact.name}@${artifact.version} after publishing. Retry the same artifacts.`
+  );
+}
+
 async function publishReleaseArtifacts(
   version,
   directory,
-  {repoRoot = ROOT, run = execFileSync, fetchRegistry = global.fetch} = {}
+  {repoRoot = ROOT, run = execFileSync, fetchRegistry = global.fetch, sleep = defaultSleep} = {}
 ) {
   const packages = readPackages(repoRoot, version);
   const release = JSON.parse(fs.readFileSync(path.join(directory, 'release.json'), 'utf8'));
@@ -282,11 +295,7 @@ async function publishReleaseArtifacts(
     if (integrity(file) !== artifact.integrity)
       throw new Error(`Artifact changed before publishing ${artifact.name}.`);
     run('npm', publishArgs(file, false), {cwd: directory, stdio: 'inherit'});
-    if (!(await registryState(artifact, fetchRegistry))) {
-      throw new Error(
-        `Could not verify ${artifact.name}@${version} after publishing. Retry the same artifacts.`
-      );
-    }
+    await waitForPublishedArtifact(artifact, fetchRegistry, sleep);
   }
   console.log(`Verified all ${release.packages.length} packages at ${version} on ${TAG}.`);
 }

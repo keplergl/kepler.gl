@@ -575,7 +575,14 @@ async function withPublisherFixture(callback) {
     if (state.registryFailure && name === 'kepler.gl') return state.registryFailure();
     return {ok: true, status: 200, json: async () => structuredClone(registry.get(name))};
   };
-  const options = {repoRoot, run, fetchRegistry};
+  const options = {
+    repoRoot,
+    run,
+    fetchRegistry,
+    sleep: async delay => {
+      events.push({type: 'wait', delay});
+    }
+  };
   const prepare = () => prepareReleaseArtifacts(publisherVersion, directory, options);
   const publish = () => publishReleaseArtifacts(publisherVersion, directory, options);
   try {
@@ -1049,6 +1056,132 @@ publisherTest(
 );
 
 publisherTest(
+  'manual publisher waits for delayed registry visibility without uploading twice',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+      const release = prepare();
+      const first = release.packages[0];
+      const stale = structuredClone(registry.get(first.name));
+      const fetchRegistry = options.fetchRegistry;
+      let missingReads = 0;
+      options.fetchRegistry = async url => {
+        const response = await fetchRegistry(url);
+        if (
+          url.endsWith(encodeURIComponent(first.name)) &&
+          state.uploadCount === 1 &&
+          missingReads++ < 2
+        ) {
+          return {...response, json: async () => structuredClone(stale)};
+        }
+        return response;
+      };
+      events.length = 0;
+      await publish();
+      t.deepEqual(
+        events.filter(event => event.type === 'upload').map(event => event.name),
+        release.packages.map(pkg => pkg.name),
+        'publishes every package exactly once despite delayed visibility'
+      );
+      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
+      t.equal(waits.length, 2, 'waits only for the two missing metadata responses');
+      t.ok(waits[0] > 0 && waits[1] > waits[0], 'backs off between visibility checks');
+      const firstUpload = events.findIndex(event => event.type === 'upload');
+      const nextUpload = events.findIndex(
+        event => event.type === 'upload' && event.name !== first.name
+      );
+      t.equal(
+        events.slice(firstUpload, nextUpload).filter(event => event.type === 'wait').length,
+        2,
+        'finishes verifying the first upload before starting the next'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher bounds visibility polling and stops the next upload on timeout',
+  async t => {
+    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+      const release = prepare();
+      const first = release.packages[0];
+      const stale = structuredClone(registry.get(first.name));
+      const fetchRegistry = options.fetchRegistry;
+      options.fetchRegistry = async url => {
+        const response = await fetchRegistry(url);
+        return state.uploadCount === 1 && url.endsWith(encodeURIComponent(first.name))
+          ? {...response, json: async () => structuredClone(stale)}
+          : response;
+      };
+      events.length = 0;
+      await rejects(
+        t,
+        publish(),
+        /Could not verify.*Retry the same artifacts/,
+        'reports exhausted visibility polling'
+      );
+      t.deepEqual(
+        events.filter(event => event.type === 'upload').map(event => event.name),
+        [first.name],
+        'does not repeat the successful upload or start another package'
+      );
+      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
+      t.ok(waits.length > 0 && waits.length <= 5, 'limits the number of delayed checks');
+      t.ok(
+        waits.every(delay => delay > 0),
+        'never spins without a delay'
+      );
+      t.ok(
+        waits.reduce((total, delay) => total + delay, 0) <= 31000,
+        'bounds the extra wait to 31 seconds per package'
+      );
+    });
+  }
+);
+
+publisherTest(
+  'manual publisher stops visibility polling immediately on conflicts or registry errors',
+  async t => {
+    for (const failure of ['integrity', 'registry']) {
+      await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+        const release = prepare();
+        const first = release.packages[0];
+        const stale = structuredClone(registry.get(first.name));
+        const fetchRegistry = options.fetchRegistry;
+        let postUploadReads = 0;
+        options.fetchRegistry = async url => {
+          const response = await fetchRegistry(url);
+          if (state.uploadCount !== 1 || !url.endsWith(encodeURIComponent(first.name)))
+            return response;
+          if (postUploadReads++ === 0)
+            return {...response, json: async () => structuredClone(stale)};
+          if (failure === 'registry') return {ok: false, status: 500};
+          const conflict = await response.json();
+          conflict.versions[publisherVersion].dist.integrity = 'sha512-different';
+          return {...response, json: async () => conflict};
+        };
+        events.length = 0;
+        await rejects(
+          t,
+          publish(),
+          failure === 'integrity' ? /Integrity conflict/ : /HTTP 500/,
+          `reports post-upload ${failure} failure`
+        );
+        t.deepEqual(
+          events.filter(event => event.type === 'upload').map(event => event.name),
+          [first.name],
+          'does not repeat or continue uploads after a hard verification failure'
+        );
+        t.equal(
+          events.filter(event => event.type === 'wait').length,
+          1,
+          'does not retry the conflict or registry error'
+        );
+      });
+    }
+  }
+);
+
+publisherTest(
   'manual publisher prevents latest rollback using numeric prerelease ordering',
   async t => {
     for (const latest of ['3.3.0-alpha.23', '3.3.0-alpha.22.1', '3.3.0-beta.1', '3.3.0', '4.0.0']) {
@@ -1084,7 +1217,7 @@ const manualWorkflow = () =>
     fs.readFileSync(path.join(ROOT, '.github/workflows/npmpublish-manual.yml'), 'utf8')
   );
 
-test('manual publisher workflow requires explicit publishing and retains the original checked artifact', t => {
+test('manual publisher workflow requires explicit publishing and the original checked artifact', t => {
   const workflow = manualWorkflow();
   const {prepare, publish} = workflow.jobs;
   t.deepEqual(Object.keys(workflow.on), ['workflow_dispatch'], 'no automatic publishing trigger');
@@ -1100,6 +1233,9 @@ test('manual publisher workflow requires explicit publishing and retains the ori
   );
   t.notOk(prepare.permissions?.['id-token'], 'build job cannot authenticate to npm with OIDC');
   t.equal(publish.permissions['id-token'], 'write', 'only publishing job requests OIDC');
+  t.equal(publish.environment, 'npm-release', 'OIDC publishing uses the protected environment');
+  t.notOk(prepare.environment, 'preparation does not require the publishing environment');
+  t.ok(publish['timeout-minutes'] >= 120, 'allows bounded registry polling across all 24 packages');
   t.equal(
     publish.if,
     "inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'",
@@ -1111,8 +1247,8 @@ test('manual publisher workflow requires explicit publishing and retains the ori
     false,
     'a new run never cancels an active upload'
   );
-  const upload = prepare.steps.find(step => step.uses === 'actions/upload-artifact@v4');
-  const download = publish.steps.find(step => step.uses === 'actions/download-artifact@v4');
+  const upload = prepare.steps.find(step => step.uses?.startsWith('actions/upload-artifact@'));
+  const download = publish.steps.find(step => step.uses?.startsWith('actions/download-artifact@'));
   t.equal(
     upload.with.name,
     'npm-release-${{ github.run_id }}',
@@ -1135,6 +1271,9 @@ test('manual publisher workflow requires explicit publishing and retains the ori
     'tarballs are downloaded directly into the expected directory'
   );
   for (const job of Object.values(workflow.jobs)) {
+    for (const step of job.steps.filter(step => step.uses)) {
+      t.ok(/^[^@]+@[a-f0-9]{40}$/.test(step.uses), 'actions are pinned to immutable commits');
+    }
     t.notOk(job['continue-on-error'], 'job failures block publication');
     t.notOk(
       job.steps.some(step => step['continue-on-error']),
@@ -1148,9 +1287,8 @@ test('manual publisher workflow rejects absent or malformed original artifact ID
   const steps = manualWorkflow().jobs.publish.steps;
   const index = steps.findIndex(step => step.name === 'Require the original artifact ID');
   const guard = steps[index];
-  t.equal(
-    steps[index + 1].uses,
-    'actions/download-artifact@v4',
+  t.ok(
+    steps[index + 1].uses.startsWith('actions/download-artifact@'),
     'validates ID before download can fall back to all artifacts'
   );
   t.equal(
@@ -1199,7 +1337,9 @@ if (process.argv.includes('.state')) {
   console.log(process.env.MOCK_STATE);
   process.exit();
 }
-console.log(process.argv.some(value => value.includes('status=' + process.env.MOCK_ACTIVE + '&')) ? '1' : '0');
+if (process.env.MOCK_FAIL_LIST) process.exit(17);
+if (!process.argv.includes('--paginate') || !process.argv.includes('--slurp') || process.argv.some(value => value.includes('status='))) process.exit(18);
+console.log(process.env.MOCK_PAGES || JSON.stringify([{workflow_runs: [{status: 'completed'}]}]));
 `
     );
     fs.chmodSync(gh, 0o755);
@@ -1216,6 +1356,21 @@ console.log(process.argv.some(value => value.includes('status=' + process.env.MO
         }
       });
     t.equal(run({}).status, 0, 'allows disabled and idle legacy publisher');
+    t.equal(
+      run({MOCK_PAGES: JSON.stringify([{workflow_runs: []}])}).status,
+      0,
+      'allows no historical runs'
+    );
+    t.equal(
+      run({
+        MOCK_PAGES: JSON.stringify([
+          {workflow_runs: [{status: 'completed'}]},
+          {workflow_runs: [{status: 'completed'}]}
+        ])
+      }).status,
+      0,
+      'checks all pages without treating multiple idle pages as active'
+    );
     for (const state of ['active', 'disabled_inactivity', 'null', '']) {
       t.notEqual(
         run({MOCK_STATE: state}).status,
@@ -1223,26 +1378,61 @@ console.log(process.argv.some(value => value.includes('status=' + process.env.MO
         `rejects legacy state ${JSON.stringify(state)}`
       );
     }
-    for (const status of ['queued', 'in_progress', 'waiting', 'pending', 'requested']) {
-      t.notEqual(run({MOCK_ACTIVE: status}).status, 0, `rejects ${status} legacy runs`);
+    for (const status of ['queued', 'in_progress', 'waiting', 'pending', 'requested', 'unknown']) {
+      t.notEqual(
+        run({
+          MOCK_PAGES: JSON.stringify([
+            {workflow_runs: [{status: 'completed'}]},
+            {workflow_runs: [{status}]}
+          ])
+        }).status,
+        0,
+        `rejects ${status} legacy runs on a later page`
+      );
     }
     t.notEqual(run({MOCK_FAIL: '1'}).status, 0, 'API failure blocks publication');
+    t.notEqual(
+      run({MOCK_FAIL_LIST: '1'}).status,
+      0,
+      'pagination request failure blocks publication'
+    );
+    for (const pages of ['not JSON', '[]', '{}', '[{}]', '[{"workflow_runs":[{}]}]']) {
+      t.notEqual(run({MOCK_PAGES: pages}).status, 0, 'malformed run metadata blocks publication');
+    }
   } finally {
     fs.rmSync(directory, {recursive: true, force: true});
   }
   const selection = workflow.jobs.prepare.steps.find(
     step => step.name === 'Validate publish selection'
   );
-  for (const [ref, repository, success] of [
-    ['refs/heads/master', 'keplergl/kepler.gl', true],
-    ['refs/heads/other', 'keplergl/kepler.gl', false],
-    ['refs/heads/master', 'other/kepler.gl', false]
+  t.equal(
+    workflow.jobs.prepare.steps[0],
+    selection,
+    'rejects unsafe rebuilds before any actions run'
+  );
+  t.equal(selection.if, 'inputs.publish', 'preparation-only runs remain retryable');
+  for (const [ref, repository, attempt, success] of [
+    ['refs/heads/master', 'keplergl/kepler.gl', '1', true],
+    ['refs/heads/other', 'keplergl/kepler.gl', '1', false],
+    ['refs/heads/master', 'other/kepler.gl', '1', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '2', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '3', false],
+    ['refs/heads/master', 'keplergl/kepler.gl', '', false]
   ]) {
     const result = spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', selection.run], {
       encoding: 'utf8',
-      env: {...process.env, GITHUB_REF: ref, GITHUB_REPOSITORY: repository}
+      env: {
+        ...process.env,
+        GITHUB_REF: ref,
+        GITHUB_REPOSITORY: repository,
+        GITHUB_RUN_ATTEMPT: attempt
+      }
     });
-    t.equal(result.status === 0, success, `validates publish selection ${repository}/${ref}`);
+    t.equal(
+      result.status === 0,
+      success,
+      `validates publish selection ${repository}/${ref} attempt ${attempt}`
+    );
   }
   t.end();
 });

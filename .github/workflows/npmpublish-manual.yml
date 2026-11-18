@@ -33,16 +33,20 @@ jobs:
       - name: Validate publish selection
         if: inputs.publish
         run: |
+          if [[ "$GITHUB_RUN_ATTEMPT" != "1" ]]; then
+            echo "Publishing runs cannot rebuild artifacts on retry. Re-run only the failed publish job."
+            exit 1
+          fi
           if [[ "$GITHUB_REF" != "refs/heads/master" || "$GITHUB_REPOSITORY" != "keplergl/kepler.gl" ]]; then
             echo "Publishing is only allowed from master in keplergl/kepler.gl."
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}
 
-      - uses: volta-cli/action@v4
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
 
       - name: Set up Node and npm
         run: |
@@ -61,7 +65,7 @@ jobs:
 
       - name: Save checked tarballs for publishing and retries
         id: artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: npm-release-${{ github.run_id }}
           path: ${{ runner.temp }}/npm-release
@@ -73,8 +77,12 @@ jobs:
   publish:
     needs: prepare
     if: inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'
+    # Configure this environment to allow deployments from master only, and
+    # require the same environment in every npm Trusted Publisher registration.
+    environment: npm-release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Allow bounded post-upload registry polling across all 24 packages.
+    timeout-minutes: 120
     permissions:
       contents: read
       actions: read
@@ -83,11 +91,11 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}
 
-      - uses: volta-cli/action@v4
+      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
 
       - name: Set up Node and npm
         run: |
@@ -105,7 +113,7 @@ jobs:
           fi
 
       - name: Download the original checked tarballs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
           path: ${{ runner.temp }}/npm-release
@@ -123,13 +131,16 @@ jobs:
             echo "Disable the Node.js Package workflow in GitHub Actions before publishing here."
             exit 1
           fi
-          for status in queued in_progress waiting pending requested; do
-            active=$(gh api "$legacy/runs?status=$status&per_page=1" --jq '.total_count')
-            if [[ "$active" != "0" ]]; then
-              echo "The legacy publisher has $status runs. Wait for or cancel them before retrying."
-              exit 1
-            fi
-          done
+          runs=$(gh api --paginate --slurp "$legacy/runs?per_page=100")
+          if ! node -e '
+            const pages = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (!Array.isArray(pages) || !pages.length || !pages.every(page =>
+              Array.isArray(page.workflow_runs) && page.workflow_runs.every(run => run?.status === "completed")
+            )) process.exit(1);
+          ' <<< "$runs"; then
+            echo "The legacy publisher has unfinished runs or unreadable run metadata. Wait for or cancel them before retrying."
+            exit 1
+          fi
 
       - name: Publish missing workspaces and bundle
         run: node scripts/publish-release.js publish "$RELEASE_VERSION" "$RUNNER_TEMP/npm-release"
