@@ -403,17 +403,17 @@ Run the local commands below from the repository root after completing the devel
    yarn release:prepare 3.3.0-alpha.23
    ```
 
-   Replace `3.3.0-alpha.23` with the new version. `release:prepare` bumps the workspace and root package versions and their internal dependency references, updates `yarn.lock`, and adds a `CHANGELOG.md` section from commits since the previous release tag. It uses the first version heading in `CHANGELOG.md` and requires the matching local `v<version>` tag to be an ancestor of the current branch. It does not commit, tag, push, or publish.
+   Replace `3.3.0-alpha.23` with the new version. `release:prepare` bumps the workspace and root package versions and their internal dependency references, updates `yarn.lock` and the manual publisher workflow's version default, and adds a `CHANGELOG.md` section from commits since the previous release tag. It uses the first version heading in `CHANGELOG.md` and requires the matching local `v<version>` tag to be an ancestor of the current branch. It does not commit, tag, push, or publish.
 
-   Review the generated version, lockfile, and changelog changes. Use this command for patch releases too; `npm version` in the private root package does not update the workspace packages and their cross-references.
+   Review the generated version, lockfile, workflow, and changelog changes. Use this command for patch releases too; `npm version` in the private root package does not update the workspace packages and their cross-references.
 
    Preparation finishes by running `yarn release:check` to catch release build and TypeScript errors. This runs npm publish dry runs for both the workspace packages and the standalone `kepler.gl` bundle, including their release builds. It does not upload packages or validate npm publishing authentication. The manual publisher runs these checks again in CI.
 
-   If the checks fail, the prepared version, lockfile, and changelog changes remain. Fix the errors and rerun `yarn release:check`; do not rerun `release:prepare` for the same version, since its changelog entry already exists.
+   If the checks fail, the prepared version, lockfile, workflow, and changelog changes remain. Fix the errors and rerun `yarn release:check`; do not rerun `release:prepare` for the same version, since its changelog entry already exists.
 
-2. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, and changelog changes. Wait for review and merge before starting the publisher.
+2. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, workflow, and changelog changes. Wait for review and merge before starting the publisher.
 
-3. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, enter the exact merged version (for example, `3.3.0-alpha.23`), and check **publish**. Publishing is off by default; leaving it unchecked only rehearses the release.
+3. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, confirm the prefilled version matches the merged release (for example, `3.3.0-alpha.23`), and check **publish**. `release:prepare` keeps this default current; the publisher still rejects a version that differs from the checked-out packages. Publishing is off by default; leaving it unchecked only rehearses the release.
 
    The [npm Manual Publisher workflow](../.github/workflows/npmpublish-manual.yml) runs `release:check`, packs and validates the workspaces and standalone bundle, saves the checked tarballs and checksums, and publishes those artifacts. The root manifest's `private` field is removed only while packing and restored afterward. Packages are published with public access and the npm `latest` tag, **including alpha versions**.
 

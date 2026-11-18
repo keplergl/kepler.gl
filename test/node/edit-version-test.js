@@ -159,6 +159,19 @@ All notable changes to kepler.gl will be documented in this file.
 - Older change
 `;
 
+const releaseWorkflowPath = '.github/workflows/npmpublish-manual.yml';
+const releaseWorkflow = `name: npm Manual Publisher
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        default: 3.3.0-alpha.22 # Updated by release:prepare.
+      publish:
+        type: boolean
+        default: false
+`;
+
 function withReleaseFixture(callback) {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-prepare-release-'));
   const write = (file, content) => fs.writeFileSync(path.join(cwd, file), content);
@@ -187,6 +200,8 @@ function withReleaseFixture(callback) {
   try {
     fs.mkdirSync(path.join(cwd, 'scripts'));
     fs.mkdirSync(path.join(cwd, 'bin'));
+    fs.mkdirSync(path.join(cwd, '.github/workflows'), {recursive: true});
+    write(releaseWorkflowPath, releaseWorkflow);
     fs.copyFileSync(
       path.join(ROOT, 'scripts/prepare-release.js'),
       path.join(cwd, 'scripts/prepare-release.js')
@@ -265,6 +280,11 @@ test('release:prepare bumps via the existing command and prepends commits since 
       'preserves the introduction/history and adds only unreleased commits, newest first'
     );
     const updated = read('CHANGELOG.md');
+    t.equal(
+      read(releaseWorkflowPath),
+      releaseWorkflow.replace('3.3.0-alpha.22', '3.3.0-alpha.23'),
+      'updates the version default without changing other workflow settings'
+    );
     t.deepEqual(
       JSON.parse(read('checked-release.json')),
       {version: '3.3.0-alpha.23', changelog: updated},
@@ -302,6 +322,7 @@ test('release:prepare validates versions before calling the existing bump comman
     t.notOk(fs.existsSync(path.join(cwd, 'checked-release.json')), 'never runs release checks');
     t.equal(read('package.json'), originalPackage, 'leaves the manifest unchanged');
     t.equal(read('CHANGELOG.md'), releaseChangelog, 'leaves the changelog unchanged');
+    t.equal(read(releaseWorkflowPath), releaseWorkflow, 'leaves the workflow unchanged');
   });
   t.end();
 });
@@ -369,6 +390,7 @@ test('release:prepare leaves the changelog untouched if the existing bump comman
     const result = run('3.3.0', {RELEASE_TEST_BUMP_FAIL: '1'});
     t.notEqual(result.status, 0, 'reports the failed bump');
     t.equal(read('CHANGELOG.md'), releaseChangelog, 'does not add a release section');
+    t.equal(read(releaseWorkflowPath), releaseWorkflow, 'does not change the workflow default');
     t.notOk(fs.existsSync(path.join(cwd, 'checked-release.json')), 'does not run release checks');
     t.notOk(result.stdout.includes('Updated CHANGELOG.md'), 'does not report completion');
   });
@@ -382,6 +404,11 @@ test('release:prepare preserves prepared changes and explains how to retry faile
     t.equal(result.status, 1, 'reports the failed release check');
     t.equal(JSON.parse(read('package.json')).version, '3.3.0', 'preserves the prepared version');
     t.ok(read('CHANGELOG.md').includes('## [3.3.0]'), 'preserves the prepared changelog');
+    t.equal(
+      read(releaseWorkflowPath),
+      releaseWorkflow.replace('3.3.0-alpha.22', '3.3.0'),
+      'preserves the prepared workflow default'
+    );
     t.deepEqual(
       JSON.parse(read('checked-release.json')),
       {version: '3.3.0', changelog: read('CHANGELOG.md')},
@@ -390,6 +417,27 @@ test('release:prepare preserves prepared changes and explains how to retry faile
     t.ok(result.stderr.includes('yarn release:check'), 'directs the user to retry only the checks');
     t.notOk(result.stdout.includes('Updated CHANGELOG.md'), 'does not report completion');
   });
+  t.end();
+});
+
+test('release:prepare refuses a missing or ambiguous workflow default before changing versions', t => {
+  for (const workflow of [
+    releaseWorkflow.replace(' # Updated by release:prepare.', ''),
+    `${releaseWorkflow}        default: 3.3.0-alpha.22 # Updated by release:prepare.\n`
+  ]) {
+    withReleaseFixture(({cwd, write, read, commit, run}) => {
+      commit('new change');
+      write(releaseWorkflowPath, workflow);
+      const originalPackage = read('package.json');
+      const result = run('3.3.0-alpha.23');
+      t.notEqual(result.status, 0, 'refuses to update an unrecognized workflow');
+      t.ok(result.stderr.includes('Expected one marked version default'), 'explains the problem');
+      t.notOk(fs.existsSync(path.join(cwd, 'bump-args.json')), 'does not bump versions');
+      t.equal(read('package.json'), originalPackage, 'preserves the manifest');
+      t.equal(read('CHANGELOG.md'), releaseChangelog, 'preserves the changelog');
+      t.equal(read(releaseWorkflowPath), workflow, 'preserves the workflow');
+    });
+  }
   t.end();
 });
 
@@ -1260,6 +1308,11 @@ const manualWorkflow = () =>
 test('manual publisher workflow requires explicit publishing and the original checked artifact', t => {
   const workflow = manualWorkflow();
   const {prepare, publish} = workflow.jobs;
+  t.equal(
+    workflow.on.workflow_dispatch.inputs.version.default,
+    version,
+    'prefills the publisher version with the current package version'
+  );
   t.deepEqual(Object.keys(workflow.on), ['workflow_dispatch'], 'no automatic publishing trigger');
   t.equal(
     workflow.on.workflow_dispatch.inputs.publish.default,
