@@ -9,6 +9,8 @@ import {act, fireEvent, render, renderHook, screen, waitFor} from '@testing-libr
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 import {MapSplitMode} from '@kepler.gl/constants';
+import {WebMercatorViewport} from '@deck.gl/core';
+import PointLayer from '../../../layers/src/point-layer/point-layer';
 
 const mockExportVideoPanelContainer = jest.fn(() => (
   <div data-testid="export-video-panel">Mock Panel</div>
@@ -376,6 +378,56 @@ describe('ExportVideoModal', () => {
       }
     }
   );
+
+  test('preserves point radii relative to the map across video resolutions and animation zooms', async () => {
+    const utils = require('./hubble-utils');
+    const actualUtils = jest.requireActual('./hubble-utils');
+    const originalScale = utils.scaleToVideoExport.getMockImplementation();
+    utils.scaleToVideoExport.mockImplementation(actualUtils.scaleToVideoExport);
+    const point = new PointLayer({id: 'points', dataId: 'data'});
+    const source = {
+      ...DEFAULT_PROPS.mapState,
+      width: 1440,
+      height: 810,
+      pitch: 0,
+      bearing: 0
+    };
+    const props = {...DEFAULT_PROPS, containerW: 1600, mapState: source};
+    const relativeRadius = (mapState, fixedRadius) => {
+      const viewport = new WebMercatorViewport(mapState);
+      return (
+        point.getRadiusScaleByZoom(mapState, fixedRadius) / viewport.metersPerPixel / viewport.width
+      );
+    };
+    let mounted;
+    try {
+      mounted = await renderAndWaitForPanel(props);
+      const panel = mockHubbleContainerRef.current;
+      for (const resolution of ['1280x720', '1920x1080', '1280x960']) {
+        act(() => panel.props.onSettingsChange({resolution}));
+        const exported = panel.props.mapData.mapState;
+        const zoomDelta = exported.zoom - source.zoom;
+        const scale = Math.min(exported.width / source.width, exported.height / source.height);
+        // A different aspect ratio may add space around the map; use the same
+        // fitting scale for the expected normalized radius.
+        const fit = (scale * source.width) / exported.width;
+        for (const zoom of [4, 13, 14, 16]) {
+          const live = {...source, zoom};
+          const frame = {...exported, zoom: zoom + zoomDelta};
+          for (const fixedRadius of [false, true]) {
+            expect(relativeRadius(frame, fixedRadius)).toBeCloseTo(
+              relativeRadius(live, fixedRadius) * fit,
+              8
+            );
+          }
+        }
+      }
+      expect(source).not.toHaveProperty('zoomOffset');
+    } finally {
+      mounted?.unmount();
+      utils.scaleToVideoExport.mockImplementation(originalScale);
+    }
+  });
 
   test('offers authored animation only for a playable tour and keeps saved cameras unchanged', async () => {
     const camera = {longitude: 12, latitude: 30, zoom: 5, bearing: 0, pitch: 0};
