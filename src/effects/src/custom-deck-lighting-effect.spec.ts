@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {WebMercatorViewport, shadow} from '@deck.gl/core';
+import {WebMercatorViewport, _SunLight as SunLight, shadow} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {Matrix4} from '@math.gl/core';
 import CustomDeckLightingEffect, {
@@ -136,6 +136,40 @@ describe('lighting effect during picking', () => {
     } finally {
       dummyTexture.destroy();
       shadowTexture.destroy();
+    }
+  });
+});
+
+describe('lighting effect with shadows turned on after setup', () => {
+  test('creates the shadow passes and the shadow module on the next draw', () => {
+    const effect = new CustomDeckLightingEffect({
+      sunLight: new SunLight({timestamp: Date.UTC(2026, 5, 21, 12), _shadow: true})
+    });
+    const deck = {_addDefaultShaderModule: jest.fn(), _removeDefaultShaderModule: jest.fn()};
+    const context = {device, deck} as any;
+    const state = effect as any;
+
+    // A map loaded with Light & Shadow disabled: computeDeckEffects turns the
+    // shadows off before deck.gl sets the effect up.
+    state.shadow = false;
+    effect.setup(context);
+    expect(state.shadowPasses).toHaveLength(0);
+    expect(deck._addDefaultShaderModule).not.toHaveBeenCalled();
+
+    // The user enables the effect: updateEffect sets `shadow` directly.
+    state.shadow = true;
+    try {
+      effect.preRender({
+        layers: [],
+        viewports: [new WebMercatorViewport({width: 800, height: 600})]
+      } as any);
+      expect(state.shadowPasses).toHaveLength(1);
+      expect(state.dummyShadowMap).toBeTruthy();
+      expect(deck._addDefaultShaderModule).toHaveBeenCalledWith(
+        expect.objectContaining({name: shadow.name})
+      );
+    } finally {
+      effect.cleanup(context);
     }
   });
 });
