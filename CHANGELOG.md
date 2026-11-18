@@ -15,6 +15,16 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.24] - Nov 18 2026
+
+- 45d1dea1c feat: let apps serve the GeoPackage and GeoParquet export libraries (#4271)
+- f9d2a692a [Bug] Remove release tag ancestry requirement (#4270)
+- f232a2aa9 [Chore] Prefill the manual publisher version (#4269)
+- b69b13c8f fix: cast shadows when Light & Shadow is enabled after the map loads (#4268)
+- 785ad0160 [Chore] Automate release checks and GitHub release creation (#4267)
+- 733e59b70 [Docs] Document the current npm release process (#4266)
+- e51d68cf6 [Chore] update manual publisher action runtimes (#4265)
+
 ## [3.3.0-alpha.23] - Nov 18 2026
 
 - 931b858cb remove manual publisher environment requirement (#4262)
