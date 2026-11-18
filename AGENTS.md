@@ -1,5 +1,11 @@
 # kepler.gl Agent Instructions
 
+## Worktrees
+
+Unless the user explicitly asks otherwise, make repository changes in a dedicated Git worktree with its own task branch. Create the worktree before editing; reuse the current task's worktree for follow-up work.
+
+Do not edit the main checkout or reuse another active task's worktree. Keep concurrent tasks on separate code copies.
+
 ## Effort
 
 Match the work to the size of the change. Extra passes, repo-wide searches, and screenshot comparisons spend credits without making the change more correct.
@@ -74,6 +80,10 @@ Proceed on local choices: naming, test layout, an existing pattern, an obvious t
 Ask first for a public API change, saved-config compatibility, product behavior, or a new architectural abstraction.
 
 ## Pull requests
+
+When opening a PR, request review from Xun Li or Igor Dykhta using their verified GitHub usernames. If the PR author is one of them, request review from the other; do not request self-review.
+
+Assign the opened PR to its GitHub author if that user is a repository maintainer. Verify the PR author and maintainer status before assigning; do not substitute the local Git user or commit author.
 
 After an authorized push, verify it succeeded and confirm the remote commit SHA, then report completion immediately. Do not wait for or poll GitHub checks (including DCO, GitBook, Netlify previews, redirect/header/page checks, and Node.js CI), or start background CI monitors, by default. Monitor checks only when the user explicitly requests it or the task specifically requires their terminal outcome.
 
