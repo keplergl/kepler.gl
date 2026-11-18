@@ -80,8 +80,8 @@ jobs:
     # npm Trusted Publisher registrations must leave the environment empty.
     # The master check prevents mistakes; repository workflow editors are trusted.
     runs-on: ubuntu-latest
-    # Allow bounded post-upload registry polling across all 24 packages.
-    timeout-minutes: 120
+    # Continue when npm publish succeeds; do not wait for registry visibility.
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: read
