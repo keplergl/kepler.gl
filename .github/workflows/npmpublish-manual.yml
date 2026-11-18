@@ -83,7 +83,7 @@ jobs:
     # Continue when npm publish succeeds; do not wait for registry visibility.
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       actions: read
       id-token: write
     env:
@@ -143,3 +143,8 @@ jobs:
 
       - name: Publish missing workspaces and bundle
         run: node scripts/publish-release.js publish "$RELEASE_VERSION" "$RUNNER_TEMP/npm-release"
+
+      - name: Create GitHub release
+        env:
+          GH_RELEASE_GITHUB_API_TOKEN: ${{ github.token }}
+        run: npm exec --yes --package=gh-release@7.0.2 -- gh-release --yes --target_commitish "$GITHUB_SHA"

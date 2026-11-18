@@ -1332,6 +1332,81 @@ test('manual publisher workflow requires explicit publishing and the original ch
   t.end();
 });
 
+test('manual publisher creates the GitHub release only after npm publishing succeeds', t => {
+  const {prepare, publish} = manualWorkflow().jobs;
+  const release = publish.steps[publish.steps.length - 1];
+  t.ok(
+    publish.steps[publish.steps.length - 2].run.startsWith(
+      'node scripts/publish-release.js publish '
+    ),
+    'release creation immediately follows npm publishing'
+  );
+  t.notOk(release.if, 'uses the default success condition to skip release creation on failure');
+  t.equal(publish.permissions.contents, 'write', 'publishing job can create the GitHub release');
+  t.notEqual(
+    prepare.permissions?.contents,
+    'write',
+    'preparation cannot write repository contents'
+  );
+  t.equal(
+    release.env.GH_RELEASE_GITHUB_API_TOKEN,
+    '${{ github.token }}',
+    'release creation uses the built-in GitHub token'
+  );
+  t.notOk(publish.env.GH_RELEASE_GITHUB_API_TOKEN, 'token is not exposed to the whole job');
+  t.deepEqual(
+    publish.steps.filter(step => step.env?.GH_RELEASE_GITHUB_API_TOKEN),
+    [release],
+    'only the final release command receives the token'
+  );
+
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'kepler-github-release-'));
+  try {
+    const npm = path.join(directory, 'npm');
+    fs.writeFileSync(
+      npm,
+      `#!/usr/bin/env node
+console.log(JSON.stringify(process.argv.slice(2)));
+process.exit(Number(process.env.MOCK_RELEASE_EXIT || 0));
+`
+    );
+    fs.chmodSync(npm, 0o755);
+    const sha = '1234567890abcdef1234567890abcdef12345678';
+    const run = exitCode =>
+      spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', release.run], {
+        cwd: ROOT,
+        encoding: 'utf8',
+        timeout: 30000,
+        env: {
+          ...process.env,
+          PATH: `${directory}${path.delimiter}${process.env.PATH}`,
+          GITHUB_SHA: sha,
+          MOCK_RELEASE_EXIT: String(exitCode)
+        }
+      });
+    const result = run(0);
+    t.equal(result.status, 0, 'successful release creation succeeds');
+    t.deepEqual(
+      JSON.parse(result.stdout),
+      [
+        'exec',
+        '--yes',
+        '--package=gh-release@7.0.2',
+        '--',
+        'gh-release',
+        '--yes',
+        '--target_commitish',
+        sha
+      ],
+      'uses the pinned CLI without prompts and targets the published commit'
+    );
+    t.equal(run(23).status, 23, 'release creation errors fail the step without being hidden');
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+  t.end();
+});
+
 test('manual publisher workflow rejects absent or malformed original artifact IDs', t => {
   const steps = manualWorkflow().jobs.publish.steps;
   const index = steps.findIndex(step => step.name === 'Require the original artifact ID');
