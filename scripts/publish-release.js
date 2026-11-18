@@ -10,6 +10,7 @@ const {setTimeout: defaultSleep} = require('timers/promises');
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = 'https://registry.npmjs.org/';
 const TAG = 'latest';
+const VISIBILITY_WAIT_MS = 15 * 60 * 1000;
 const usage =
   'Usage: node scripts/publish-release.js <prepare|publish> <version> <artifact-directory>';
 const npmOptions = ['--workspaces=false', '--ignore-scripts', `--registry=${REGISTRY}`];
@@ -240,11 +241,18 @@ async function registryState(artifact, fetchRegistry) {
 }
 
 async function waitForPublishedArtifact(artifact, fetchRegistry, sleep) {
-  // Registry metadata can lag a successful upload. Only a missing version is
-  // retryable here; integrity conflicts, tag changes and request errors escape.
-  for (const delay of [0, 1000, 2000, 4000, 8000, 16000]) {
-    if (delay) await sleep(delay);
+  // npm scans accepted uploads before making them visible, often for minutes.
+  // Retry only missing versions; conflicts, tag changes and request errors escape.
+  let waited = 0;
+  let delay = 1000;
+  while (true) {
     if (await registryState(artifact, fetchRegistry)) return;
+    if (waited >= VISIBILITY_WAIT_MS) break;
+    const pause = Math.min(delay, VISIBILITY_WAIT_MS - waited);
+    console.log(`Waiting for npm to finish processing ${artifact.name}@${artifact.version}...`);
+    await sleep(pause);
+    waited += pause;
+    delay = Math.min(delay * 2, 30000);
   }
   throw new Error(
     `Could not verify ${artifact.name}@${artifact.version} after publishing. Retry the same artifacts.`

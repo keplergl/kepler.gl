@@ -1174,6 +1174,49 @@ publisherTest(
 );
 
 publisherTest(
+  'manual publisher allows minutes of npm scanning without repeating uploads',
+  async t => {
+    for (const processingTime of [5 * 60 * 1000, 15 * 60 * 1000]) {
+      await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+        const release = prepare();
+        const first = release.packages[0];
+        const stale = structuredClone(registry.get(first.name));
+        const fetchRegistry = options.fetchRegistry;
+        let waited = 0;
+        options.sleep = async delay => {
+          waited += delay;
+          events.push({type: 'wait', delay});
+        };
+        options.fetchRegistry = async url => {
+          const response = await fetchRegistry(url);
+          return state.uploadCount === 1 &&
+            url.endsWith(encodeURIComponent(first.name)) &&
+            waited < processingTime
+            ? {...response, json: async () => structuredClone(stale)}
+            : response;
+        };
+        events.length = 0;
+        await publish();
+        t.deepEqual(
+          events.filter(event => event.type === 'upload').map(event => event.name),
+          release.packages.map(pkg => pkg.name),
+          `publishes each package once after ${processingTime / 60000} minutes of scanning`
+        );
+        const nextUpload = events.findIndex(
+          event => event.type === 'upload' && event.name !== first.name
+        );
+        const waits = events.slice(0, nextUpload).filter(event => event.type === 'wait');
+        t.ok(
+          waits.reduce((total, event) => total + event.delay, 0) >= processingTime,
+          'waits for verification before uploading the next package'
+        );
+        t.ok(waited <= 15 * 60 * 1000, 'finishes within the bounded scan wait');
+      });
+    }
+  }
+);
+
+publisherTest(
   'manual publisher bounds visibility polling and stops the next upload on timeout',
   async t => {
     await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
@@ -1200,14 +1243,15 @@ publisherTest(
         'does not repeat the successful upload or start another package'
       );
       const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
-      t.ok(waits.length > 0 && waits.length <= 5, 'limits the number of delayed checks');
+      t.ok(waits.length > 0 && waits.length <= 35, 'limits the number of delayed checks');
       t.ok(
-        waits.every(delay => delay > 0),
-        'never spins without a delay'
+        waits.every(delay => delay > 0 && delay <= 30000),
+        'waits between checks with a maximum interval of 30 seconds'
       );
-      t.ok(
-        waits.reduce((total, delay) => total + delay, 0) <= 31000,
-        'bounds the extra wait to 31 seconds per package'
+      t.equal(
+        waits.reduce((total, delay) => total + delay, 0),
+        15 * 60 * 1000,
+        'bounds the extra wait to 15 minutes per package'
       );
     });
   }
@@ -1314,7 +1358,7 @@ test('manual publisher workflow requires explicit publishing and the original ch
     'publishing does not require an admin-managed environment'
   );
   t.equal(prepare.environment, undefined, 'preparation does not require a GitHub environment');
-  t.ok(publish['timeout-minutes'] >= 120, 'allows bounded registry polling across all 24 packages');
+  t.equal(publish['timeout-minutes'], 360, 'allows six hours for scanning across all 24 packages');
   t.equal(
     publish.if,
     "inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'",
