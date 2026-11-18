@@ -15,6 +15,38 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.23] - Nov 18 2026
+
+- 931b858cb remove manual publisher environment requirement (#4262)
+- 0dd815a88 Add manual npm publisher with verified retries (#4261)
+- b00310300 chore: patch docs trim and website cache dependencies (#4260)
+- 915158da6 Fix Fade on Zoom in Video Capture (#4259)
+- 2f34bd488 fix: disable shadow sampling during picking (#4258)
+- 1a826e44a fix: restore Bitmap and polygon editing interactions (#4257)
+- 87c3b5155 feat: add elevation offset to Bitmap layers (#4256)
+- c79ddb21a fix: start effects preview with camera playback (#4255)
+- 3e6ddc4ce Fix Node initialization in release preview (#4254)
+- 0e8477691 Add an isolated manual release preview (#4253)
+- 37090c0ef chore(deps): patch documentation and lint security helpers (#4252)
+- fad61cbdd ci: require release dry runs before publishing (#4251)
+- 51c025305 chore: add local release preparation command (#4250)
+- 8efe8d966 feat: add Google 3D Tiles API key help (#4249)
+- 53828400b fix: let save_to_html clear the widget Mapbox token with an empty string (#4248)
+- 1ec2c9e57 feat: add explicit shadow date and time animation ranges (#4246)
+- 5bd0766f6 chore(deps): patch compatible JS and Python security dependencies (#4247)
+- 01cb9847d feat: preview effect animations with independent start values (#4245)
+- 716bc946b feat: add AI assistant API key setup guide (#4244)
+- f7952ee3a chore(deps): patch compatible transitive security dependencies (#4243)
+- 2b6e81908 fix: align AI assistant styling with kepler theme (#4242)
+- 3b98423aa fix: smooth camera animation through zero-hold waypoints (#4241)
+- 5b42c9325 docs: explain legacy coordinate order (#4009)
+- 6c7163427 fix: retain GeoJSON zoom bounds during progressive loading (#4240)
+- 4527e5897 fix: refresh WMS zoom bounds when switching sublayers (#4239)
+- e538d4478 fix: calculate zoom bounds for GeoJSON point layers (#4238)
+- eb56781d8 fix: restore zoom to flow field layers (#4237)
+- 695fe79f0 fix: support zoom to layer for Zarr datasets (#4236)
+- f8d756c41 feat: add Flow Field meshes and trail visibility controls (#4235)
+
 ## [3.3.0-alpha.22] - Nov 16 2026
 
 - 43f2c8897 fix: read fields from a tile when a tileset starts at zoom 0 (#4233)
