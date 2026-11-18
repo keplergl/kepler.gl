@@ -1287,6 +1287,7 @@ test('manual publisher workflow requires explicit publishing and the original ch
     'tarballs are downloaded directly into the expected directory'
   );
   for (const job of Object.values(workflow.jobs)) {
+    t.equal(job['runs-on'], 'ubuntu-26.04', 'pins the Ubuntu image used by the successful release');
     for (const step of job.steps.filter(step => step.uses)) {
       t.ok(/^[^@]+@[a-f0-9]{40}$/.test(step.uses), 'actions are pinned to immutable commits');
     }

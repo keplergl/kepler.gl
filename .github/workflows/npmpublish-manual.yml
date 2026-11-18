@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     outputs:
       artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
@@ -42,11 +42,11 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
 
-      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
+      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
 
       - name: Set up Node and npm
         run: |
@@ -65,7 +65,7 @@ jobs:
 
       - name: Save checked tarballs for publishing and retries
         id: artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: npm-release-${{ github.run_id }}
           path: ${{ runner.temp }}/npm-release
@@ -79,7 +79,7 @@ jobs:
     if: inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'
     # npm Trusted Publisher registrations must leave the environment empty.
     # The master check prevents mistakes; repository workflow editors are trusted.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Continue when npm publish succeeds; do not wait for registry visibility.
     timeout-minutes: 30
     permissions:
@@ -90,11 +90,11 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
 
-      - uses: volta-cli/action@5c175f92dea6f48441c436471e6479dbc192e194 # v4
+      - uses: volta-cli/action@615a78f6c83e116339c53b94f3f82b4d6c0b7d18 # v5.0.0
 
       - name: Set up Node and npm
         run: |
@@ -112,7 +112,7 @@ jobs:
           fi
 
       - name: Download the original checked tarballs
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
           path: ${{ runner.temp }}/npm-release
