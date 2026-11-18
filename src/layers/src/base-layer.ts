@@ -1756,7 +1756,9 @@ class Layer implements KeplerLayer {
               // depth, and keep cull off so billboard glyph quads are not discarded.
               depthTest: true,
               depthMask: false,
-              cull: false
+              cull: false,
+              // Override GlobeView's cullMode; legacy cull alone loses at draw time.
+              cullMode: 'none'
             }
           : {
               // text will always show on top of all layers

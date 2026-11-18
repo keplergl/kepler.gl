@@ -7,6 +7,7 @@ import {DEFAULT_GLOBE_CONFIG} from '@kepler.gl/constants';
 import type {Feature} from 'geojson';
 import EnhancedMultiIconLayer from './enhanced-multi-icon-layer';
 import {MVTLabelLayer} from './mvt-label-layer';
+import {KeplerGlobeView} from './globe-view';
 
 const feature = (
   properties: Feature['properties'],
@@ -34,6 +35,19 @@ const initializeState = (layer: MVTLabelLayer) => {
 };
 
 describe('MVTLabelLayer', () => {
+  test('country glyphs override the globe view face culling and retain far-side protection', () => {
+    const layer = initializeState(createLayer({data: [country({name: 'France'})]}));
+    update(layer, true);
+    const text = layer.renderLayers()[1] as TextLayer;
+    const glyph = (text as any).getSubLayerProps({id: 'characters'});
+    const view = new KeplerGlobeView();
+    const parameters = {...view.props.parameters, ...glyph.parameters};
+
+    expect(parameters.cullMode).toBe('none');
+    expect(parameters).toMatchObject({depthTest: false, depthMask: false});
+    expect(glyph.type).toBe(EnhancedMultiIconLayer);
+  });
+
   test.each([
     [{layerName: 'place_label', name_en: 'Germany', name: 'Deutschland'}, 'Germany'],
     [{layerName: 'place_label', name_en: '', name: 'Deutschland'}, 'Deutschland'],
