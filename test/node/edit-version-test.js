@@ -697,6 +697,58 @@ publisherTest(
   }
 );
 
+publisherTest('manual publisher overrides scoped user registries in real npm', async t => {
+  await withPublisherFixture(async ({repoRoot, options, prepare, publish}) => {
+    const temporary = path.dirname(repoRoot);
+    const userConfig = path.join(temporary, 'user.npmrc');
+    const globalConfig = path.join(temporary, 'global.npmrc');
+    fs.writeFileSync(userConfig, '@kepler.gl:registry=https://example.invalid/\n');
+    fs.writeFileSync(globalConfig, '');
+    const env = {
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key))
+      ),
+      npm_config_userconfig: userConfig,
+      npm_config_globalconfig: globalConfig,
+      npm_config_cache: path.join(temporary, 'npm-cache'),
+      npm_config_update_notifier: 'false',
+      ACTIONS_ID_TOKEN_REQUEST_URL: '',
+      ACTIONS_ID_TOKEN_REQUEST_TOKEN: '',
+      NPM_ID_TOKEN: ''
+    };
+    const fixtureRun = options.run;
+    let checkedTarballs = 0;
+    options.run = (command, args, commandOptions) => {
+      if (command !== 'npm') return fixtureRun(command, args, commandOptions);
+      // Exercise both command paths with real npm, but never upload or access the network.
+      const safeArgs = args.map(arg => (arg === '--dry-run=false' ? '--dry-run' : arg));
+      assert.ok(args[0] === 'pack' || safeArgs.includes('--dry-run'));
+      const result = spawnSync(command, [...safeArgs, '--offline', '--loglevel=notice'], {
+        ...commandOptions,
+        env,
+        stdio: 'pipe',
+        encoding: 'utf8',
+        timeout: 15000
+      });
+      assert.equal(result.status, 0, result.stderr || result.error?.message);
+      if (args[0] === 'publish') {
+        checkedTarballs++;
+        t.ok(
+          result.stderr.includes('Publishing to https://registry.npmjs.org/ with tag latest'),
+          'real npm uses the intended registry despite the scoped user override'
+        );
+        t.notOk(/Unknown cli config/i.test(result.stderr), 'npm recognizes the scoped option');
+      }
+      return args.includes('--dry-run=false')
+        ? fixtureRun(command, args, commandOptions)
+        : result.stdout;
+    };
+    const release = prepare();
+    await publish();
+    t.equal(checkedTarballs, release.packages.length * 2, 'checks preparation and publication');
+  });
+});
+
 publisherTest('manual publisher rejects unsafe preparation inputs before building', async t => {
   const cases = [
     [
@@ -859,6 +911,29 @@ publisherTest(
     });
   }
 );
+
+publisherTest('manual publisher resolves relative artifact paths from the caller', async t => {
+  await withPublisherFixture(async ({prepare, directory, options}) => {
+    const release = prepare();
+    const resolvedUploads = [];
+    await publishReleaseArtifacts(publisherVersion, path.relative(process.cwd(), directory), {
+      ...options,
+      run: (command, args, runOptions) => {
+        if (command === 'npm') {
+          const file = path.resolve(runOptions.cwd, args[1]);
+          t.ok(fs.existsSync(file), 'npm can resolve the tarball from its working directory');
+          resolvedUploads.push(file);
+        }
+        return options.run(command, args, runOptions);
+      }
+    });
+    t.deepEqual(
+      resolvedUploads,
+      release.packages.map(artifact => path.join(directory, artifact.filename)),
+      'publishes the original artifacts without duplicating the relative directory'
+    );
+  });
+});
 
 publisherTest(
   'manual publisher refuses a late integrity conflict or tag conflict before any upload',

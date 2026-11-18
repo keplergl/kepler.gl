@@ -102,11 +102,12 @@ function tarballPath(directory, filename) {
   return path.join(directory, filename);
 }
 
-function publishArgs(file, dryRun) {
+function publishArgs(file, dryRun, name) {
   return [
     'publish',
     file,
     ...npmOptions,
+    ...(name.startsWith('@') ? [`--${name.split('/')[0]}:registry=${REGISTRY}`] : []),
     '--access=public',
     `--tag=${TAG}`,
     dryRun ? '--dry-run' : '--dry-run=false'
@@ -170,7 +171,7 @@ function prepareReleaseArtifacts(version, directory, {repoRoot = ROOT, run = exe
   }
   // Validate the actual tarballs without running build hooks again.
   for (const artifact of artifacts) {
-    run('npm', publishArgs(tarballPath(directory, artifact.filename), true), {
+    run('npm', publishArgs(tarballPath(directory, artifact.filename), true, artifact.name), {
       cwd: directory,
       stdio: 'inherit'
     });
@@ -255,6 +256,7 @@ async function publishReleaseArtifacts(
   directory,
   {repoRoot = ROOT, run = execFileSync, fetchRegistry = global.fetch, sleep = defaultSleep} = {}
 ) {
+  directory = fs.realpathSync(directory);
   const packages = readPackages(repoRoot, version);
   const release = JSON.parse(fs.readFileSync(path.join(directory, 'release.json'), 'utf8'));
   if (
@@ -294,7 +296,7 @@ async function publishReleaseArtifacts(
     const file = tarballPath(directory, artifact.filename);
     if (integrity(file) !== artifact.integrity)
       throw new Error(`Artifact changed before publishing ${artifact.name}.`);
-    run('npm', publishArgs(file, false), {cwd: directory, stdio: 'inherit'});
+    run('npm', publishArgs(file, false, artifact.name), {cwd: directory, stdio: 'inherit'});
     await waitForPublishedArtifact(artifact, fetchRegistry, sleep);
   }
   console.log(`Verified all ${release.packages.length} packages at ${version} on ${TAG}.`);
