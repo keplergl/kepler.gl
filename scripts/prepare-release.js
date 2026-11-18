@@ -68,6 +68,14 @@ function prepareRelease(
   console.log(`Preparing ${version} with commits since ${tag}...`);
   execFileSync('yarn', ['bump-version', version], {cwd: repoRoot, stdio: 'inherit'});
   fs.writeFileSync(changelogPath, updated);
+  console.log('Running release checks...');
+  try {
+    execFileSync('yarn', ['release:check'], {cwd: repoRoot, stdio: 'inherit'});
+  } catch {
+    throw new Error(
+      'Release checks failed. Prepared changes are preserved. Fix the errors, then run yarn release:check.'
+    );
+  }
   console.log(`Updated CHANGELOG.md for ${version}. Review the version and changelog changes.`);
 }
 
@@ -76,6 +84,7 @@ if (require.main === module) {
   if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
     console.log(usage);
     console.log('Uses the first CHANGELOG.md release heading and its local v<version> Git tag.');
+    console.log('Runs yarn release:check after preparing the version and changelog changes.');
   } else {
     try {
       if (args.length !== 1) throw new Error(usage);

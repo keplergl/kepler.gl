@@ -392,11 +392,7 @@ By generating builds for new and updated PRs we support CI/CD so developers can 
 
 #### Requirements
 
-Run the local commands below from the repository root after completing the development setup. To create the GitHub release after publishing, you also need:
-
-- [gh-release](https://www.npmjs.com/package/gh-release): this tool facilitates the creation of a new git tag (using package.json version number) and a github release (different from npm release)
-
-Set up `gh-release` with your GitHub API token ([instructions](https://www.npmjs.com/package/gh-release#command-line-interface)). The npm publisher must also have the [publisher setup](#publisher-setup) below in place.
+Run the local commands below from the repository root after completing the development setup. The npm publisher must also have the [publisher setup](#publisher-setup) below in place. GitHub release creation uses the workflow's built-in token; no local `gh-release` installation or personal GitHub token is required.
 
 #### Release a new version
 
@@ -411,34 +407,17 @@ Set up `gh-release` with your GitHub API token ([instructions](https://www.npmjs
 
    Review the generated version, lockfile, and changelog changes. Use this command for patch releases too; `npm version` in the private root package does not update the workspace packages and their cross-references.
 
-2. **Optionally check locally before opening the PR.** This catches release build and TypeScript errors before spending a CI run:
+   Preparation finishes by running `yarn release:check` to catch release build and TypeScript errors. This runs npm publish dry runs for both the workspace packages and the standalone `kepler.gl` bundle, including their release builds. It does not upload packages or validate npm publishing authentication. The manual publisher runs these checks again in CI.
 
-   ```bash
-   yarn release:check
-   ```
+   If the checks fail, the prepared version, lockfile, and changelog changes remain. Fix the errors and rerun `yarn release:check`; do not rerun `release:prepare` for the same version, since its changelog entry already exists.
 
-   It runs npm publish dry runs for both the workspace packages and the standalone `kepler.gl` bundle, including their release builds. It does not upload packages or validate npm publishing authentication. The manual publisher runs these checks again in CI, even if you skip this local step.
+2. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, and changelog changes. Wait for review and merge before starting the publisher.
 
-3. **Commit, open a PR, and merge it into `master`.** Include the version, lockfile, and changelog changes. Wait for review and merge before starting the publisher.
+3. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, enter the exact merged version (for example, `3.3.0-alpha.23`), and check **publish**. Publishing is off by default; leaving it unchecked only rehearses the release.
 
-4. **Publish from CI.** In `keplergl/kepler.gl`, open GitHub **Actions → npm Manual Publisher → Run workflow**, select `master`, enter the exact merged version (for example, `3.3.0-alpha.23`), and check **publish**. Publishing is off by default; leaving it unchecked only rehearses the release.
+   The [npm Manual Publisher workflow](../.github/workflows/npmpublish-manual.yml) runs `release:check`, packs and validates the workspaces and standalone bundle, saves the checked tarballs and checksums, and publishes those artifacts. The root manifest's `private` field is removed only while packing and restored afterward. Packages are published with public access and the npm `latest` tag, **including alpha versions**.
 
-   The [npm Manual Publisher workflow](../.github/workflows/npmpublish-manual.yml) runs `release:check`, packs and validates the workspaces and standalone bundle, saves the checked tarballs and checksums, and publishes those artifacts. The root manifest's `private` field is removed only while packing and restored afterward. Packages are published with public access and the npm `latest` tag, **including alpha versions**. Wait for the publish job to succeed before creating the GitHub release; see [failed publishing runs](#failed-publishing-runs) if it fails.
-
-5. **Create the GitHub release after publishing succeeds.** Update your local `master`:
-
-   ```bash
-   git switch master
-   git pull --ff-only
-   ```
-
-   Confirm that the local `package.json` version and top `CHANGELOG.md` section match the version just published, then run:
-
-   ```bash
-   gh-release
-   ```
-
-   This creates the Git tag and GitHub release using that version and changelog. Keep the old **Node.js Package** workflow disabled so creating the GitHub release cannot publish the same version again.
+   After all npm uploads succeed, the final step runs `gh-release` noninteractively to create the Git tag and GitHub release from the exact published commit, using its `package.json` version and `CHANGELOG.md` section. The existing `gh-release` metadata defaults are unchanged. Wait for the publish job to succeed; see [failed publishing runs](#failed-publishing-runs) if it fails.
 
 #### Publisher setup
 
@@ -470,13 +449,15 @@ A successful rehearsal checks the release build path; it does not prove npm publ
 
 #### Failed publishing runs
 
-The workflow proceeds to the next package as soon as `npm publish` succeeds and finishes after the bundle publish succeeds. It does not poll the registry or wait for npm's background processing. A successful run means npm accepted the uploads; the new versions may become available later. Both release dry runs and all artifact checks still run before publishing.
+The workflow proceeds to the next package as soon as `npm publish` succeeds, then creates the GitHub release after the bundle publish succeeds. It does not poll the registry or wait for npm's background processing. A successful run means npm accepted the uploads and the GitHub release was created; the new package versions may become available later. Both release dry runs and all artifact checks still run before publishing.
 
 If a publish command fails, use **Re-run failed jobs** on that same run. The failed publish job downloads the original artifact by ID and does not rebuild. It skips an already-published version only when its registry checksum matches the saved tarball, and refuses conflicts, registry errors, or an attempt to move `latest` backward. If an earlier accepted upload is still being processed by npm, a retry can fail because that version is not yet visible to the skip check. Let npm finish processing before retrying; CI does not wait for it. A rerun uses the original commit and script, so merging a script fix does not change an existing run's behavior.
 
+If the final GitHub release step fails, npm uploads may already be complete. Fix the error and use **Re-run failed jobs** on the same run; the existing checksum checks skip matching npm packages before retrying release creation. `gh-release` fails if the GitHub release already exists and does not overwrite it. If an error leaves creation uncertain, inspect the existing GitHub release before retrying.
+
 Do not use **Re-run all jobs** or start a new run to resume an interrupted upload. GitHub [may delete the original artifacts on a full rerun](https://github.com/actions/upload-artifact/issues/323#issuecomment-2786789065), even with a fixed artifact name and overwriting disabled. For publishing runs, preparation refuses every attempt after the first, before any build or upload. This prevents replacement artifacts from being published but cannot prevent GitHub deleting the originals. If the original artifact is deleted or expires after 14 days, stop and recover the original tarballs from an independently saved copy for manual review; do not rebuild a partial release. If preparation itself failed before publishing could start, start a new workflow run instead.
 
-Publishing multiple packages is not atomic: a network or authentication failure can leave a partial release. The retry continues from verified existing packages; it does not roll back uploads. Create the GitHub release only after all packages succeed.
+Publishing multiple packages is not atomic: a network or authentication failure can leave a partial release. The retry continues from verified existing packages; it does not roll back uploads. The workflow creates the GitHub release only after all packages succeed.
 
 #### After the release
 
