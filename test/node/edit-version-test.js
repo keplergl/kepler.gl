@@ -578,10 +578,7 @@ async function withPublisherFixture(callback) {
   const options = {
     repoRoot,
     run,
-    fetchRegistry,
-    sleep: async delay => {
-      events.push({type: 'wait', delay});
-    }
+    fetchRegistry
   };
   const prepare = () => prepareReleaseArtifacts(publisherVersion, directory, options);
   const publish = () => publishReleaseArtifacts(publisherVersion, directory, options);
@@ -1131,174 +1128,66 @@ publisherTest(
 );
 
 publisherTest(
-  'manual publisher waits for delayed registry visibility without uploading twice',
+  'manual publisher finishes when npm accepts uploads while registry versions are still unavailable',
   async t => {
-    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
+    await withPublisherFixture(async ({prepare, publish, options, registry, events, directory}) => {
       const release = prepare();
-      const first = release.packages[0];
-      const stale = structuredClone(registry.get(first.name));
+      const stale = new Map(
+        [...registry].map(([name, metadata]) => [name, structuredClone(metadata)])
+      );
+      const accepted = new Set();
+      const run = options.run;
       const fetchRegistry = options.fetchRegistry;
-      let missingReads = 0;
-      options.fetchRegistry = async url => {
-        const response = await fetchRegistry(url);
-        if (
-          url.endsWith(encodeURIComponent(first.name)) &&
-          state.uploadCount === 1 &&
-          missingReads++ < 2
-        ) {
-          return {...response, json: async () => structuredClone(stale)};
+      options.run = (command, args, settings) => {
+        const result = run(command, args, settings);
+        if (command === 'npm' && args[0] === 'publish' && !args.includes('--dry-run')) {
+          const artifact = release.packages.find(
+            pkg => path.join(directory, pkg.filename) === args[1]
+          );
+          accepted.add(artifact.name);
+          registry.set(artifact.name, structuredClone(stale.get(artifact.name)));
         }
-        return response;
+        return result;
+      };
+      options.fetchRegistry = async url => {
+        const name = decodeURIComponent(url.slice('https://registry.npmjs.org/'.length));
+        if (accepted.has(name)) throw new Error(`Registry queried after npm accepted ${name}`);
+        return fetchRegistry(url);
       };
       events.length = 0;
       await publish();
       t.deepEqual(
         events.filter(event => event.type === 'upload').map(event => event.name),
         release.packages.map(pkg => pkg.name),
-        'publishes every package exactly once despite delayed visibility'
+        'publishes each workspace and then the bundle exactly once'
       );
-      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
-      t.equal(waits.length, 2, 'waits only for the two missing metadata responses');
-      t.ok(waits[0] > 0 && waits[1] > waits[0], 'backs off between visibility checks');
-      const firstUpload = events.findIndex(event => event.type === 'upload');
-      const nextUpload = events.findIndex(
-        event => event.type === 'upload' && event.name !== first.name
-      );
-      t.equal(
-        events.slice(firstUpload, nextUpload).filter(event => event.type === 'wait').length,
-        2,
-        'finishes verifying the first upload before starting the next'
-      );
-    });
-  }
-);
-
-publisherTest(
-  'manual publisher allows minutes of npm scanning without repeating uploads',
-  async t => {
-    for (const processingTime of [5 * 60 * 1000, 15 * 60 * 1000]) {
-      await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
-        const release = prepare();
-        const first = release.packages[0];
-        const stale = structuredClone(registry.get(first.name));
-        const fetchRegistry = options.fetchRegistry;
-        let waited = 0;
-        options.sleep = async delay => {
-          waited += delay;
-          events.push({type: 'wait', delay});
-        };
-        options.fetchRegistry = async url => {
-          const response = await fetchRegistry(url);
-          return state.uploadCount === 1 &&
-            url.endsWith(encodeURIComponent(first.name)) &&
-            waited < processingTime
-            ? {...response, json: async () => structuredClone(stale)}
-            : response;
-        };
-        events.length = 0;
-        await publish();
-        t.deepEqual(
-          events.filter(event => event.type === 'upload').map(event => event.name),
-          release.packages.map(pkg => pkg.name),
-          `publishes each package once after ${processingTime / 60000} minutes of scanning`
-        );
-        const nextUpload = events.findIndex(
-          event => event.type === 'upload' && event.name !== first.name
-        );
-        const waits = events.slice(0, nextUpload).filter(event => event.type === 'wait');
-        t.ok(
-          waits.reduce((total, event) => total + event.delay, 0) >= processingTime,
-          'waits for verification before uploading the next package'
-        );
-        t.ok(waited <= 15 * 60 * 1000, 'finishes within the bounded scan wait');
-      });
-    }
-  }
-);
-
-publisherTest(
-  'manual publisher bounds visibility polling and stops the next upload on timeout',
-  async t => {
-    await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
-      const release = prepare();
-      const first = release.packages[0];
-      const stale = structuredClone(registry.get(first.name));
-      const fetchRegistry = options.fetchRegistry;
-      options.fetchRegistry = async url => {
-        const response = await fetchRegistry(url);
-        return state.uploadCount === 1 && url.endsWith(encodeURIComponent(first.name))
-          ? {...response, json: async () => structuredClone(stale)}
-          : response;
-      };
-      events.length = 0;
-      await rejects(
-        t,
-        publish(),
-        /Could not verify.*Retry the same artifacts/,
-        'reports exhausted visibility polling'
-      );
-      t.deepEqual(
-        events.filter(event => event.type === 'upload').map(event => event.name),
-        [first.name],
-        'does not repeat the successful upload or start another package'
-      );
-      const waits = events.filter(event => event.type === 'wait').map(event => event.delay);
-      t.ok(waits.length > 0 && waits.length <= 35, 'limits the number of delayed checks');
       t.ok(
-        waits.every(delay => delay > 0 && delay <= 30000),
-        'waits between checks with a maximum interval of 30 seconds'
+        release.packages.every(pkg => !registry.get(pkg.name).versions[publisherVersion]),
+        'completes even though none of the new versions is visible yet'
       );
       t.equal(
-        waits.reduce((total, delay) => total + delay, 0),
-        15 * 60 * 1000,
-        'bounds the extra wait to 15 minutes per package'
+        events.at(-1).type,
+        'upload',
+        'finishes immediately after the bundle upload succeeds'
       );
+      t.equal(events.at(-1).name, 'kepler.gl', 'the bundle is the final upload');
     });
   }
 );
 
-publisherTest(
-  'manual publisher stops visibility polling immediately on conflicts or registry errors',
-  async t => {
-    for (const failure of ['integrity', 'registry']) {
-      await withPublisherFixture(async ({prepare, publish, options, registry, state, events}) => {
-        const release = prepare();
-        const first = release.packages[0];
-        const stale = structuredClone(registry.get(first.name));
-        const fetchRegistry = options.fetchRegistry;
-        let postUploadReads = 0;
-        options.fetchRegistry = async url => {
-          const response = await fetchRegistry(url);
-          if (state.uploadCount !== 1 || !url.endsWith(encodeURIComponent(first.name)))
-            return response;
-          if (postUploadReads++ === 0)
-            return {...response, json: async () => structuredClone(stale)};
-          if (failure === 'registry') return {ok: false, status: 500};
-          const conflict = await response.json();
-          conflict.versions[publisherVersion].dist.integrity = 'sha512-different';
-          return {...response, json: async () => conflict};
-        };
-        events.length = 0;
-        await rejects(
-          t,
-          publish(),
-          failure === 'integrity' ? /Integrity conflict/ : /HTTP 500/,
-          `reports post-upload ${failure} failure`
-        );
-        t.deepEqual(
-          events.filter(event => event.type === 'upload').map(event => event.name),
-          [first.name],
-          'does not repeat or continue uploads after a hard verification failure'
-        );
-        t.equal(
-          events.filter(event => event.type === 'wait').length,
-          1,
-          'does not retry the conflict or registry error'
-        );
-      });
-    }
-  }
-);
+publisherTest('manual publisher still fails when npm rejects the bundle upload', async t => {
+  await withPublisherFixture(async ({prepare, publish, events, state}) => {
+    const release = prepare();
+    state.failUpload = release.packages.length;
+    events.length = 0;
+    await rejects(t, publish(), /Upload failed/, 'propagates the final npm publish failure');
+    t.deepEqual(
+      events.filter(event => event.type === 'upload').map(event => event.name),
+      release.packages.map(pkg => pkg.name),
+      'attempts each workspace and the bundle once without retrying the failed command'
+    );
+  });
+});
 
 publisherTest(
   'manual publisher prevents latest rollback using numeric prerelease ordering',
@@ -1358,7 +1247,11 @@ test('manual publisher workflow requires explicit publishing and the original ch
     'publishing does not require an admin-managed environment'
   );
   t.equal(prepare.environment, undefined, 'preparation does not require a GitHub environment');
-  t.equal(publish['timeout-minutes'], 360, 'allows six hours for scanning across all 24 packages');
+  t.equal(
+    publish['timeout-minutes'],
+    30,
+    'bounds publishing without waiting for registry scanning'
+  );
   t.equal(
     publish.if,
     "inputs.publish && github.ref == 'refs/heads/master' && github.repository == 'keplergl/kepler.gl'",

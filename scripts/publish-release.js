@@ -5,12 +5,10 @@ const {execFileSync} = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const {setTimeout: defaultSleep} = require('timers/promises');
 
 const ROOT = path.resolve(__dirname, '..');
 const REGISTRY = 'https://registry.npmjs.org/';
 const TAG = 'latest';
-const VISIBILITY_WAIT_MS = 15 * 60 * 1000;
 const usage =
   'Usage: node scripts/publish-release.js <prepare|publish> <version> <artifact-directory>';
 const npmOptions = ['--workspaces=false', '--ignore-scripts', `--registry=${REGISTRY}`];
@@ -240,29 +238,10 @@ async function registryState(artifact, fetchRegistry) {
   return true;
 }
 
-async function waitForPublishedArtifact(artifact, fetchRegistry, sleep) {
-  // npm scans accepted uploads before making them visible, often for minutes.
-  // Retry only missing versions; conflicts, tag changes and request errors escape.
-  let waited = 0;
-  let delay = 1000;
-  while (true) {
-    if (await registryState(artifact, fetchRegistry)) return;
-    if (waited >= VISIBILITY_WAIT_MS) break;
-    const pause = Math.min(delay, VISIBILITY_WAIT_MS - waited);
-    console.log(`Waiting for npm to finish processing ${artifact.name}@${artifact.version}...`);
-    await sleep(pause);
-    waited += pause;
-    delay = Math.min(delay * 2, 30000);
-  }
-  throw new Error(
-    `Could not verify ${artifact.name}@${artifact.version} after publishing. Retry the same artifacts.`
-  );
-}
-
 async function publishReleaseArtifacts(
   version,
   directory,
-  {repoRoot = ROOT, run = execFileSync, fetchRegistry = global.fetch, sleep = defaultSleep} = {}
+  {repoRoot = ROOT, run = execFileSync, fetchRegistry = global.fetch} = {}
 ) {
   directory = fs.realpathSync(directory);
   const packages = readPackages(repoRoot, version);
@@ -305,9 +284,10 @@ async function publishReleaseArtifacts(
     if (integrity(file) !== artifact.integrity)
       throw new Error(`Artifact changed before publishing ${artifact.name}.`);
     run('npm', publishArgs(file, false, artifact.name), {cwd: directory, stdio: 'inherit'});
-    await waitForPublishedArtifact(artifact, fetchRegistry, sleep);
   }
-  console.log(`Verified all ${release.packages.length} packages at ${version} on ${TAG}.`);
+  console.log(
+    `npm accepted all ${release.packages.length} packages at ${version} on ${TAG}. New uploads may still be processing.`
+  );
 }
 
 if (require.main === module) {
