@@ -8,6 +8,7 @@ import {GlobeExportVideoPanelContainer} from './globe-export-video-container';
 import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
 import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
 import {useEffectAnimation} from './effect-animation';
+import {NativeWebMEncoder} from './native-webm-encoder';
 import {compositeVideoAnnotations} from './video-annotation-overlay';
 import type {Annotation, Effect} from '@kepler.gl/types';
 
@@ -37,7 +38,11 @@ jest.mock('@hubble.gl/core', () => {
     save = jest.fn(() => Promise.resolve(null));
     constructor() {
       jest.spyOn(this as Encoder, 'add');
+      jest.spyOn(this as Encoder, 'cancel');
       mockEncoders.push(this);
+    }
+    cancel() {
+      return undefined;
     }
     add(canvas: HTMLCanvasElement) {
       return this.addFrame(canvas);
@@ -211,7 +216,61 @@ function start() {
 
 describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind => {
   const framesPerCapture = kind === 'globe' ? 2 : 3;
+  it('keeps native encoding opt-in and releases an active encoder when stopped', () => {
+    const {container} = mount(kind);
+    expect(new (container.getEncoder())({framerate: 30})).not.toBeInstanceOf(NativeWebMEncoder);
+    act(() => container.setMediaType('webm-native'));
+    const Native = container.getEncoder();
+    expect(new Native({framerate: 30})).toBeInstanceOf(NativeWebMEncoder);
+    act(() => container.setMediaType('webm'));
+    expect(new (container.getEncoder())({framerate: 30})).not.toBeInstanceOf(NativeWebMEncoder);
+    const encoder = start();
+    act(() => container.onStop({abort: true}));
+    expect(encoder.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['add', 'save'])(
+    'recovers from %s rejection and permits another recording',
+    async method => {
+      const {container} = mount(kind, 0);
+      const encoder = start();
+      encoder[method].mockRejectedValueOnce(new Error('encoder unavailable'));
+      await flushFrames(framesPerCapture);
+      expect(screen.getByRole('alert')).toHaveTextContent('Video encoding failed');
+      expect(container.state.rendering).toBe(false);
+      expect(container.state.saving).toBe(false);
+      expect(encoder.cancel).toHaveBeenCalledTimes(1);
+      expect(download).not.toHaveBeenCalled();
+      start();
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(container.state.rendering).toBe(true);
+    }
+  );
   const annotations = [{id: 'label', isVisible: true, mapIndex: 0}] as Annotation[];
+
+  it('composites annotations before submitting frames to the opt-in native encoder', async () => {
+    const {container} = mount(kind, 33, [], annotations);
+    act(() => container.setMediaType('webm-native'));
+    const Encoder = container.getEncoder();
+    const encoder = new Encoder({framerate: 30});
+    container.activeEncoder = encoder;
+    const addNative = jest.spyOn(NativeWebMEncoder.prototype, 'add').mockResolvedValue(undefined);
+    const pending = deferred<void>();
+    jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
+    let adding: Promise<void>;
+    await act(async () => {
+      adding = encoder.add(source);
+      await Promise.resolve();
+    });
+    expect(compositeVideoAnnotations).toHaveBeenCalledTimes(1);
+    expect(addNative).not.toHaveBeenCalled();
+    await act(async () => {
+      pending.resolve();
+      await adding;
+    });
+    expect(addNative).toHaveBeenCalledWith(jest.mocked(compositeVideoAnnotations).mock.calls[0][0]);
+    expect(addNative.mock.calls[0][0]).not.toBe(source);
+  });
 
   it('waits for annotation composition before encoding and advancing the clock', async () => {
     mount(kind, 33, [], annotations);

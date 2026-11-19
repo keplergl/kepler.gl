@@ -100,6 +100,7 @@
     "maplibre-gl": "^4.0.0",
     "maplibregl-mapbox-request-transformer": "^0.0.2",
     "markdown-to-jsx": "^7.7.6",
+    "mediabunny": "1.66.1",
     "mjolnir.js": "^3.0.0",
     "moment": "^2.10.6",
     "moment-timezone": "^0.5.35",

@@ -260,7 +260,7 @@ export const DEFAULT_EXPORT_MAP: ExportMap = {
  * Default initial `exportVideo` settings
  * @memberof uiStateUpdaters
  * @constant
- * @property mediaType Default: `'webm'`
+ * @property mediaType Default: `'webm-native'` (legacy WebM when unsupported)
  * @property cameraPreset Default: `'None'`
  * @property fileName Default: `'kepler.gl'`
  * @property resolution Default: `'1280x720'`
@@ -268,7 +268,7 @@ export const DEFAULT_EXPORT_MAP: ExportMap = {
  * @public
  */
 export const DEFAULT_EXPORT_VIDEO: ExportVideo = {
-  mediaType: 'webm', // use webm as default as gif export tends to freeze on larger recordings
+  mediaType: 'webm-native', // the export modal probes codec support before choosing the encoder
   cameraPreset: 'None',
   fileName: 'kepler.gl',
   resolution: '1280x720',

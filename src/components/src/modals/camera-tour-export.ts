@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cloneElement, createElement} from 'react';
-import {VideoAnnotationPreview} from './video-annotation-overlay';
+import {cloneElement, createElement, Fragment} from 'react';
 import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
+import {VideoAnnotationPreview} from './video-annotation-overlay';
+import {createNativeWebMEncoder, NativeWebMEncoder} from './native-webm-encoder';
+import {
+  NATIVE_WEBM_FORMAT,
+  NATIVE_WEBM_FALLBACK,
+  VIDEO_ENCODING_ERROR
+} from './video-export-formats';
+import {StyledModalInputFootnote} from '../common/styled-components';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -45,64 +52,36 @@ export function resolveCameraTourExportFrame<T extends object>(
   return {...current, ...adapted, zoom: adapted.zoom + zoomOffset} as T;
 }
 
-/** Keep Hubble's encoder/capture implementation and its ordinary presets intact. */
+/** Reuse Hubble's export UI and presets, with opt-in native video encoding. */
 export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
-    render() {
-      const panel = super.render();
+    private finishNativeRecording?: (blob: Blob | null) => void;
 
-      // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
-      // layers from the current frame, including ordinary camera presets.
-      const preview = this.props.deckProps?.layers
-        ? panel
-        : cloneElement(panel, {
-            deckProps: {
-              ...this.props.deckProps,
-              layers: getFlatExportLayers(this.props.mapData, {
-                mapIndex: 0,
-                viewState: this.state.viewState,
-                beforeId: this.props.mapboxLayerBeforeId
-              })
-            }
-          });
-      if (!this.props.mapData.visState.annotations?.length) return preview;
-      return createElement(VideoAnnotationPreview, {
-        frame: {
-          annotations: this.props.mapData.visState.annotations,
-          interactionConfig: this.props.mapData.visState.interactionConfig,
-          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
-          ...this._getContainer()
+    getBaseEncoder() {
+      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) return super.getEncoder();
+      const capture = this.state.adapter.videoCapture;
+      return createNativeWebMEncoder({
+        onFallback: () => {
+          if (this.state.adapter.videoCapture === capture) {
+            this.setState({encodingNotice: NATIVE_WEBM_FALLBACK});
+          }
         },
-        children: preview
+        onError: () => {
+          if (this.state.adapter.videoCapture !== capture) return;
+          this.onStop({abort: true});
+          this.setState({
+            encodingError: VIDEO_ENCODING_ERROR,
+            rendering: false,
+            saving: false,
+            viewState: this.state.memo?.viewState || this.state.viewState
+          });
+        }
       });
-    }
-
-    onRenderVideo() {
-      // A stopped asynchronous capture must not clear the next recording's
-      // in-flight flag when its rasterization/encoding promise settles.
-      const adapter = this.state.adapter;
-      adapter.videoCapture = new adapter.videoCapture.constructor();
-      super.onRenderVideo();
-    }
-
-    onPreviewVideo() {
-      const adapter = this.state.adapter;
-      adapter.videoCapture = new adapter.videoCapture.constructor();
-      super.onPreviewVideo();
-    }
-
-    onStop(options: {abort?: boolean}) {
-      const encoder = this.state.adapter.videoCapture.encoder;
-      // A normal Hubble Stop saves completed frames. Abort only the pending
-      // annotation rasterization in that case, keeping encoder output intact.
-      if (options.abort) encoder?.cancel?.();
-      else encoder?.cancelAnnotationCapture?.();
-      super.onStop(options);
     }
 
     getEncoder() {
       return createAnnotationVideoEncoder(
-        super.getEncoder(),
+        this.getBaseEncoder(),
         () => ({
           annotations: this.props.mapData.visState.annotations || [],
           interactionConfig: this.props.mapData.visState.interactionConfig,
@@ -118,6 +97,127 @@ export function withCameraTourExport(Base: any) {
           this.onStop({abort: true});
         }
       );
+    }
+
+    onRenderVideo() {
+      const adapter = this.state.adapter;
+      if (this.state.encodingError || this.state.encodingNotice) {
+        this.setState({encodingError: undefined, encodingNotice: undefined});
+      }
+      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) {
+        adapter.videoCapture = new adapter.videoCapture.constructor();
+        return super.onRenderVideo();
+      }
+      if (this.state.rendering || this.state.saving) return;
+      // Late completion of a cancelled add() must not advance a new recording.
+      adapter.videoCapture.encoder?.cancel?.();
+      const capture = new adapter.videoCapture.constructor();
+      adapter.videoCapture = capture;
+      this.setState({
+        encodingError: undefined,
+        encodingNotice: undefined,
+        rendering: true,
+        saving: false,
+        memo: {viewState: {...this.state.viewState}}
+      });
+      adapter.animationManager.setKeyframes('kepler', {
+        ...this.getFilterKeyframes(),
+        ...this.getTripKeyframes(),
+        cameraKeyframe: this.getCameraKeyframes()
+      });
+      const finishNativeRecording = (blob: Blob | null) => {
+        if (
+          adapter.videoCapture !== capture ||
+          this.finishNativeRecording !== finishNativeRecording
+        )
+          return;
+        capture.download(blob);
+        this.finishNativeRecording = undefined;
+        this.setState({
+          rendering: false,
+          saving: false,
+          viewState: {...this.state.memo.viewState}
+        });
+      };
+      this.finishNativeRecording = finishNativeRecording;
+      adapter.render({
+        Encoder: this.getEncoder(),
+        formatConfigs: this.getFormatConfigs(),
+        timecode: this.getTimecode(),
+        filename: this.getFileName(),
+        onStopped: () => this.setState({saving: true}),
+        // Hubble invokes onComplete before async save finishes. Complete this
+        // experiment only when the encoded file has actually been finalized.
+        onSave: this.finishNativeRecording
+      });
+    }
+
+    onPreviewVideo() {
+      const adapter = this.state.adapter;
+      adapter.videoCapture = new adapter.videoCapture.constructor();
+      super.onPreviewVideo();
+    }
+
+    onStop(options: {abort?: boolean} = {}) {
+      const adapter = this.state.adapter;
+      const encoder = adapter.videoCapture.encoder;
+      if (!options.abort) encoder?.cancelAnnotationCapture?.();
+      if (options.abort) {
+        encoder?.cancel?.();
+        this.finishNativeRecording = undefined;
+      } else if (encoder instanceof NativeWebMEncoder && this.finishNativeRecording) {
+        adapter.stop({
+          onStopped: () => this.setState({saving: true}),
+          onSave: this.finishNativeRecording
+        });
+        return;
+      }
+      super.onStop(options);
+    }
+
+    render() {
+      const panel = super.render();
+      // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
+      // layers from the current frame, including ordinary camera presets.
+      let preview = this.props.deckProps?.layers
+        ? panel
+        : cloneElement(panel, {
+            deckProps: {
+              ...this.props.deckProps,
+              layers: getFlatExportLayers(this.props.mapData, {
+                mapIndex: 0,
+                viewState: this.state.viewState,
+                beforeId: this.props.mapboxLayerBeforeId
+              })
+            }
+          });
+      if (this.props.mapData.visState.annotations?.length) {
+        preview = createElement(VideoAnnotationPreview, {
+          frame: {
+            annotations: this.props.mapData.visState.annotations,
+            interactionConfig: this.props.mapData.visState.interactionConfig,
+            mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+            ...this._getContainer()
+          },
+          children: preview
+        });
+      }
+      const message = this.state.encodingError || this.state.encodingNotice;
+      return message
+        ? createElement(
+            Fragment,
+            null,
+            preview,
+            createElement(
+              StyledModalInputFootnote,
+              {
+                error: Boolean(this.state.encodingError),
+                role: this.state.encodingError ? 'alert' : 'status'
+              },
+              message
+            )
+          )
+        : preview;
     }
 
     getCameraKeyframes() {
