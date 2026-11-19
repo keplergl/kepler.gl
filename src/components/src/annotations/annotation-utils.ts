@@ -176,7 +176,7 @@ export function angleForTextPlacement(
 
 export type AnnotationTextBoxStyle = {
   minWidth?: number;
-  width?: number;
+  width?: number | 'max-content';
   top?: number;
   bottom?: number;
   left?: number;
@@ -197,7 +197,9 @@ export function getAnnotationTextBoxStyle(
   const {side, vertical} = getTextPlacement(annotation);
   const px = x + tx;
   const py = y + ty;
-  const style: AnnotationTextBoxStyle = autoSize ? {minWidth: 80} : {width: textWidth || 120};
+  const style: AnnotationTextBoxStyle = autoSize
+    ? {minWidth: 80, width: 'max-content'}
+    : {width: textWidth || 120};
 
   if (kind === AnnotationKind.RULER) {
     style.left = px;

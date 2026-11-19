@@ -59,6 +59,20 @@ const renderRulerText = (annotation: Annotation, isEditing = false, opacity = 1)
   );
 
 describe('AnnotationText ruler labels', () => {
+  test('keeps autosized labels intrinsic near the right edge but preserves fixed-width wrapping', () => {
+    const annotation = makeRuler({anchorPoint: [49, 0], endPoint: [50, 0]} as Partial<Annotation>);
+    const auto = renderRulerText(annotation);
+    expect(auto.container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+      width: 'max-content',
+      left: '995px'
+    });
+    auto.unmount();
+    const fixed = renderRulerText({...annotation, autoSize: false, textWidth: 160});
+    expect(fixed.container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+      width: '160px'
+    });
+  });
+
   test('renders custom text and live distance together at the ruler midpoint', async () => {
     const {container} = renderRulerText(makeRuler());
 
