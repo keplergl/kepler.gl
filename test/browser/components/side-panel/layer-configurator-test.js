@@ -550,7 +550,7 @@ test('Components -> VisConfigSlider -> dragging preserves scalar, range, and foc
       Object.defineProperty(track, 'offsetWidth', {configurable: true, value: 100});
       const handle = view.container.querySelectorAll('.kg-range-slider__handle')[handleIndex];
       fireEvent.mouseDown(handle, {clientX});
-      fireEvent.mouseMove(document, {clientX});
+      fireEvent.mouseMove(document, {clientX, buttons: 1});
       t.deepEqual(
         changed.lastCall.args[0],
         {[property]: expected},
@@ -759,7 +759,7 @@ test('Components -> LayerConfigurator -> bitmap slider drags stay continuous acr
       const handle = slider.querySelectorAll('.kg-range-slider__handle')[1];
       fireEvent.mouseDown(handle, {clientX: start});
       for (const clientX of positions) {
-        fireEvent.mouseMove(document, {clientX});
+        fireEvent.mouseMove(document, {clientX, buttons: 1});
       }
       fireEvent.mouseUp(document);
       const property = index === 0 ? 'boundsWest' : 'boundsEast';
@@ -829,7 +829,7 @@ function dragContourHandle(container, index, percent) {
   Object.defineProperty(slider, 'offsetWidth', {configurable: true, value: 100});
   const handles = range.querySelectorAll('.kg-range-slider__handle');
   fireEvent.mouseDown(handles[index], {clientX: percent});
-  fireEvent.mouseMove(document, {clientX: percent});
+  fireEvent.mouseMove(document, {clientX: percent, buttons: 1});
   fireEvent.mouseUp(document);
 }
 
@@ -1208,7 +1208,7 @@ test('Components -> LayerConfigurator -> contour fill and outline groups retain 
       const slider = group.querySelector('.kg-slider');
       Object.defineProperty(slider, 'offsetWidth', {configurable: true, value: 100});
       fireEvent.mouseDown(group.querySelectorAll('.kg-range-slider__handle')[1], {clientX: 60});
-      fireEvent.mouseMove(document, {clientX: 60});
+      fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
       fireEvent.mouseUp(document);
       t.deepEqual(
         onChange.lastCall.args[0],
@@ -1220,7 +1220,7 @@ test('Components -> LayerConfigurator -> contour fill and outline groups retain 
           fireEvent.mouseDown(group.querySelectorAll('.kg-range-slider__handle')[1], {
             clientX: percent
           });
-          fireEvent.mouseMove(document, {clientX: percent});
+          fireEvent.mouseMove(document, {clientX: percent, buttons: 1});
           fireEvent.mouseUp(document);
           t.deepEqual(
             onChange.lastCall.args[0],

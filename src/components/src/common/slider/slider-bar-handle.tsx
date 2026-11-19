@@ -60,6 +60,10 @@ export default class SliderBarHandle extends Component {
 
   state = {mouseOver: false};
 
+  componentWillUnmount() {
+    this.mouseEvent.destroy();
+  }
+
   toggleMouseOver = () => {
     this.setState({mouseOver: !this.state.mouseOver});
   };

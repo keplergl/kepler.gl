@@ -28,6 +28,53 @@ test('Components -> RangeSlider.render', t => {
   t.end();
 });
 
+test('Components -> slider handles release mouse and touch drags on unmount', t => {
+  const cases = [
+    {Handle: SliderHandle, selector: '.kg-range-slider__handle', listener: 'valueListener'},
+    {Handle: SliderBarHandle, selector: '.kg-range-slider__bar', listener: 'sliderBarListener'}
+  ];
+
+  for (const {Handle, selector, listener} of cases) {
+    for (const input of ['mouse', 'touch']) {
+      const changes = [];
+      const track = {current: document.createElement('div')};
+      track.current.getBoundingClientRect = () => ({left: 0, bottom: 100});
+      const props = {[listener]: distance => changes.push(distance)};
+      const view = render(
+        <ThemeProvider theme={theme}>
+          <Handle track={track} width={40} v0Left={20} enableBarDrag {...props} />
+        </ThemeProvider>
+      );
+
+      try {
+        const handle = view.container.querySelector(selector);
+        const label = `${selector} ${input}`;
+        if (input === 'mouse') {
+          fireEvent.mouseDown(handle, {clientX: 20, buttons: 1});
+          fireEvent.mouseMove(document, {clientX: 30, buttons: 1});
+        } else {
+          fireEvent.touchStart(handle, {touches: [{clientX: 20}]});
+          fireEvent.touchMove(document, {touches: [{clientX: 30}]});
+        }
+        t.deepEqual(changes, [30], `${label}: dragging reports movement before unmount`);
+
+        view.unmount();
+        t.ok(
+          fireEvent.mouseMove(document, {clientX: 40, buttons: 1, cancelable: true}),
+          `${label}: unmounted handle does not cancel subsequent mouse movement`
+        );
+        fireEvent.touchMove(document, {touches: [{clientX: 40}]});
+        t.deepEqual(changes, [30], `${label}: unmounted handle receives no more movement`);
+      } finally {
+        fireEvent.mouseUp(document);
+        fireEvent.touchEnd(document);
+        view.unmount();
+      }
+    }
+  }
+  t.end();
+});
+
 function renderControlledRange(initialValue, changes, props = {}) {
   function ControlledRange() {
     const [value, setValue] = React.useState(initialValue);
@@ -64,7 +111,7 @@ test('Components -> RangeSlider -> controlled bar dragging preserves translation
     const bar = view.container.querySelector('.kg-range-slider__bar');
     fireEvent.mouseDown(bar, {clientX: 40});
     for (const clientX of [50, 60, 70]) {
-      fireEvent.mouseMove(document, {clientX});
+      fireEvent.mouseMove(document, {clientX, buttons: 1});
     }
     t.deepEqual(
       changes,
@@ -76,14 +123,14 @@ test('Components -> RangeSlider -> controlled bar dragging preserves translation
       'each move translates both endpoints with immediate controlled updates'
     );
 
-    fireEvent.mouseMove(document, {clientX: 120});
+    fireEvent.mouseMove(document, {clientX: 120, buttons: 1});
     t.deepEqual(changes[changes.length - 1], [60, 100], 'clamps the whole range at the upper end');
-    fireEvent.mouseMove(document, {clientX: 20});
+    fireEvent.mouseMove(document, {clientX: 20, buttons: 1});
     t.deepEqual(changes[changes.length - 1], [0, 40], 'clamps the whole range at the lower end');
     fireEvent.mouseUp(document);
 
     fireEvent.mouseDown(bar, {clientX: 20});
-    fireEvent.mouseMove(document, {clientX: 35});
+    fireEvent.mouseMove(document, {clientX: 35, buttons: 1});
     t.deepEqual(
       changes[changes.length - 1],
       [15, 55],
@@ -108,8 +155,8 @@ test('Components -> RangeSlider -> bar dragging retains nonlinear scale behavior
     const bar = view.container.querySelector('.kg-range-slider__bar');
     // The focus range occupies 75 pixels, so [20, 40] starts at pixels [30, 60].
     fireEvent.mouseDown(bar, {clientX: 45});
-    fireEvent.mouseMove(document, {clientX: 60});
-    fireEvent.mouseMove(document, {clientX: 75});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
+    fireEvent.mouseMove(document, {clientX: 75, buttons: 1});
     t.deepEqual(
       changes,
       [
@@ -121,7 +168,7 @@ test('Components -> RangeSlider -> bar dragging retains nonlinear scale behavior
     fireEvent.mouseUp(document);
 
     fireEvent.mouseDown(bar, {clientX: 75});
-    fireEvent.mouseMove(document, {clientX: 60});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
     t.deepEqual(
       changes[changes.length - 1],
       [30, 50],

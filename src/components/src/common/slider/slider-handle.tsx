@@ -165,6 +165,10 @@ export default class SliderHandle extends Component {
   state = {mouseOver: false};
   ref = createRef<HTMLSpanElement | null>();
 
+  componentWillUnmount() {
+    this.mouseEvent.destroy();
+  }
+
   toggleMouseOver = () => {
     this.setState({mouseOver: !this.state.mouseOver});
   };

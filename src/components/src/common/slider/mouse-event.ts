@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import document from 'global/document';
+import window from 'global/window';
 import {
   RefObject,
   TouchEvent,
@@ -29,6 +30,7 @@ export default class MouseEventHandler {
   private toggleMouseOver: () => void;
   private track: RefObject<StyleRangeSliderType | null>;
   private setAnchor: null | ((distance: number) => void); // Set correct type
+  private dragging = false;
 
   constructor({
     vertical = false,
@@ -45,8 +47,13 @@ export default class MouseEventHandler {
   }
 
   handleMouseDown: ReactMouseEventHandler = (e: MouseEvent) => {
-    document.addEventListener('mouseup', this.mouseup);
+    if (this.dragging) {
+      return;
+    }
+    this.dragging = true;
+    document.addEventListener('mouseup', this.endDrag);
     document.addEventListener('mousemove', this.mousemove);
+    window.addEventListener('blur', this.endDrag);
     if (this.setAnchor) {
       const pos = this.getMousePos(e);
       this.setAnchor(this.getDistanceToTrack(pos));
@@ -62,11 +69,23 @@ export default class MouseEventHandler {
     return this.vertical ? e.touches[0].clientY : e.touches[0].clientX;
   }
 
-  private mouseup = () => {
-    document.removeEventListener('mouseup', this.mouseup);
-    document.removeEventListener('mousemove', this.mousemove);
+  private endDrag = () => {
+    if (!this.dragging) {
+      return;
+    }
+    this.destroy();
     this.toggleMouseOver();
   };
+
+  destroy() {
+    document.removeEventListener('mouseup', this.endDrag);
+    document.removeEventListener('mousemove', this.mousemove);
+    document.removeEventListener('touchend', this.endDrag);
+    document.removeEventListener('touchcancel', this.endDrag);
+    document.removeEventListener('touchmove', this.touchmove);
+    window.removeEventListener('blur', this.endDrag);
+    this.dragging = false;
+  }
 
   private getDistanceToTrack(pos: number) {
     if (!this.track.current) {
@@ -77,15 +96,26 @@ export default class MouseEventHandler {
   }
 
   private mousemove = (e: MouseEvent) => {
+    // A release outside the document may not deliver a mouseup here.
+    if (e.buttons === 0) {
+      this.endDrag();
+      return;
+    }
     e.preventDefault();
     const pos = this.getMousePos(e);
     this.valueListener(this.getDistanceToTrack(pos));
   };
 
   handleTouchStart: TouchEventHandler = (e: TouchEvent) => {
+    if (this.dragging) {
+      return;
+    }
+    this.dragging = true;
     // TODO: fix touch event
-    document.addEventListener('touchend', this.touchend);
+    document.addEventListener('touchend', this.endDrag);
+    document.addEventListener('touchcancel', this.endDrag);
     document.addEventListener('touchmove', this.touchmove);
+    window.addEventListener('blur', this.endDrag);
     if (this.setAnchor) {
       const pos = this.getTouchPosition(e);
       this.setAnchor(this.getDistanceToTrack(pos));
@@ -97,11 +127,5 @@ export default class MouseEventHandler {
     // TODO: touch not tested
     const pos = this.getTouchPosition(e);
     this.valueListener(this.getDistanceToTrack(pos));
-  };
-
-  private touchend = () => {
-    document.removeEventListener('touchend', this.touchend);
-    document.removeEventListener('touchmove', this.touchmove);
-    this.toggleMouseOver();
   };
 }

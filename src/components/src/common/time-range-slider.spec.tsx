@@ -625,9 +625,9 @@ describe('minimized timeline range dragging', () => {
   test('moves both ends together through rapid mouse moves', () => {
     const {bar, onChange} = renderMinimized();
     fireEvent.mouseDown(bar, {clientX: 40});
-    fireEvent.mouseMove(document, {clientX: 50});
-    fireEvent.mouseMove(document, {clientX: 60});
-    fireEvent.mouseMove(document, {clientX: 70});
+    fireEvent.mouseMove(document, {clientX: 50, buttons: 1});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
+    fireEvent.mouseMove(document, {clientX: 70, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith([50, 90]);
@@ -641,20 +641,20 @@ describe('minimized timeline range dragging', () => {
     const {bar, container, onChange} = renderMinimized({...timeline, value: [20, 43]});
 
     fireEvent.mouseDown(bar, {clientX: 32});
-    fireEvent.mouseMove(document, {clientX: 42});
+    fireEvent.mouseMove(document, {clientX: 42, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith([30, 53]);
 
     const handles = container.querySelectorAll('.kg-range-slider__handle');
     fireEvent.mouseDown(handles[0], {clientX: 30});
-    fireEvent.mouseMove(document, {clientX: 35});
+    fireEvent.mouseMove(document, {clientX: 35, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith([35, 53]);
 
     fireEvent.mouseDown(handles[1], {clientX: 53});
-    fireEvent.mouseMove(document, {clientX: 60});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith([35, 60]);
@@ -666,7 +666,7 @@ describe('minimized timeline range dragging', () => {
   ])('keeps the selected width at the domain edge: $expected', ({clientX, expected}) => {
     const {bar, onChange} = renderMinimized();
     fireEvent.mouseDown(bar, {clientX: 40});
-    fireEvent.mouseMove(document, {clientX});
+    fireEvent.mouseMove(document, {clientX, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).toHaveBeenLastCalledWith(expected);
@@ -680,7 +680,7 @@ describe('minimized timeline range dragging', () => {
       step: 2
     });
     fireEvent.mouseDown(bar, {clientX: 70});
-    fireEvent.mouseMove(document, {clientX: 48});
+    fireEvent.mouseMove(document, {clientX: 48, buttons: 1});
     fireEvent.mouseUp(document);
     expect(onChange).toHaveBeenLastCalledWith([2, 7]);
   });
@@ -738,9 +738,9 @@ describe('minimized timeline range dragging', () => {
       const domain = initial.domain as [number, number];
       const pixelDelta = (delta / (domain[1] - domain[0])) * trackWidth;
       fireEvent.mouseDown(bar, {clientX: 50});
-      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta / 2});
+      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta / 2, buttons: 1});
       act(() => jest.advanceTimersByTime(40));
-      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta});
+      fireEvent.mouseMove(document, {clientX: 50 + pixelDelta, buttons: 1});
       fireEvent.mouseUp(document);
       act(() => jest.advanceTimersByTime(40));
       const result = onChange.mock.calls[onChange.mock.calls.length - 1][0];
@@ -796,7 +796,7 @@ describe('minimized timeline range dragging', () => {
   ])('does not turn a point, interval, or missing domain into a draggable range: %j', initial => {
     const {bar, onChange} = renderMinimized(initial);
     fireEvent.mouseDown(bar, {clientX: 40});
-    fireEvent.mouseMove(document, {clientX: 60});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).not.toHaveBeenCalled();
@@ -809,7 +809,7 @@ describe('minimized timeline range dragging', () => {
     );
     const bar = container.querySelector('.kg-range-slider__bar') as HTMLElement;
     fireEvent.mouseDown(bar, {clientX: 40});
-    fireEvent.mouseMove(document, {clientX: 60});
+    fireEvent.mouseMove(document, {clientX: 60, buttons: 1});
     fireEvent.mouseUp(document);
     act(() => jest.advanceTimersByTime(40));
     expect(onChange).not.toHaveBeenCalled();

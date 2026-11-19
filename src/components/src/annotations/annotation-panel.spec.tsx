@@ -237,7 +237,7 @@ describe('AnnotationManager line width slider', () => {
     const handle = slider.querySelectorAll('.kg-range-slider__handle')[1];
 
     fireEvent.mouseDown(handle);
-    fireEvent.mouseMove(document, {clientX});
+    fireEvent.mouseMove(document, {clientX, buttons: 1});
     fireEvent.mouseUp(document);
 
     expect(store.getActions()).toEqual([

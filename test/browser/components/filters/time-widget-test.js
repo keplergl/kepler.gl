@@ -437,7 +437,7 @@ test('Components -> TimeWidget.mount -> test actions', t => {
   sliderHandle.simulate('mousedown', {clientX: 0});
 
   // simulate slider move
-  const mouseMove = new window.MouseEvent('mousemove', {clientX: 100});
+  const mouseMove = new window.MouseEvent('mousemove', {clientX: 100, buttons: 1});
   document.dispatchEvent(mouseMove);
 
   // test updateAnimationSpeed
@@ -567,7 +567,7 @@ test('Components -> TimeWidget.mount -> test setFilterAnimationTime', t => {
     .at(0)
     .simulate('mousedown', {clientX: 0});
   // simulate slider move
-  const mouseMove = new window.MouseEvent('mousemove', {clientX: 100});
+  const mouseMove = new window.MouseEvent('mousemove', {clientX: 100, buttons: 1});
   document.dispatchEvent(mouseMove);
 
   // Dragging 20% across the nine populated hourly bins selects 01:48.
