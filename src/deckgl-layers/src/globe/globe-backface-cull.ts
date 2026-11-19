@@ -3,11 +3,8 @@
 
 // Back-face culling for globe-mode text labels.
 //
-// Extracted unchanged from EnhancedMultiIconLayer so the same inject can be reused by
-// the glyph sublayer and the text-background sublayer. The GLSL is a copy of the
-// original snippet; do not change the horizon formula here without treating it as a
-// behavior change for every globe label that already uses EnhancedMultiIconLayer
-// (including MVTLabelLayer basemap place names).
+// Shared by the glyph and text-background sublayers, including MVTLabelLayer
+// basemap place names.
 //
 // deck.gl's TextLayer uses a MultiIconLayer to render glyphs; on a globe, labels
 // anchored on the far hemisphere would otherwise be drawn "through" the planet.
@@ -34,9 +31,10 @@ const BACKFACE_CULL_INJECT = /* glsl */ `
     // Guard against degenerate anchors / camera at the center.
     if (radius > 0.0 && camDist > radius) {
       float cosSurface = dot(anchorCommon / radius, project.cameraPosition / camDist);
-      // Cosine of the horizon half-angle. Add a tiny margin so labels are hidden just
-      // before they wrap exactly onto the limb (avoids glyphs smeared along the edge).
-      float cosHorizon = radius / camDist + 0.02;
+      // Shrink the visible cap slightly to avoid glyphs smeared along the limb.
+      // Scale the margin with the cap: a fixed +0.02 exceeds 1 as the camera
+      // approaches the surface, incorrectly culling every label at city zooms.
+      float cosHorizon = mix(radius / camDist, 1.0, 0.02);
       if (cosSurface < cosHorizon) {
         // Push the vertex outside clip space so this glyph is discarded. The hook
         // exposes the clip-space position as \`position\`, not \`gl_Position\`.

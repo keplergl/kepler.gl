@@ -9,6 +9,10 @@ import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import {compositeSwipeFrame} from './swipe-composite-utils';
 import {getGlobeExportLayers, getFlatExportLayers} from './hubble-utils';
 
+const mockAnnotationOverlay = jest.fn(() => null);
+jest.mock('./video-annotation-overlay', () => ({
+  VideoAnnotationOverlay: props => mockAnnotationOverlay(props)
+}));
 const mockDecks = [];
 const mockMaps = [];
 const mockOverlays = [];
@@ -310,3 +314,34 @@ describe('globe preview capture contract', () => {
     expect(mockDecks[0].props.viewState).toBe(camera);
   });
 });
+
+test.each(['globe', 'swipe'])(
+  'passes the live %s camera and swipe clock to the annotation overlay',
+  mode => {
+    const input = props({
+      mapData: {
+        mapState: {zoomOffset: -1},
+        visState: {annotations: [{id: 'label'}], interactionConfig: {}}
+      }
+    });
+    const Preview = mode === 'globe' ? GlobeExportVideoPreview : SwipeExportVideoPreview;
+    const view = render(<Preview {...input} />);
+    expect(mockAnnotationOverlay).toHaveBeenLastCalledWith({
+      frame: {
+        annotations: input.mapData.visState.annotations,
+        interactionConfig: input.mapData.visState.interactionConfig,
+        mapState: {...input.mapData.mapState, ...input.viewState},
+        width: 640,
+        height: 360,
+        ...(mode === 'swipe' ? {swipePercentage: 25} : {})
+      }
+    });
+    view.rerender(
+      <Preview {...input} currentTimeMs={750} viewState={{...input.viewState, longitude: 50}} />
+    );
+    expect(mockAnnotationOverlay.mock.lastCall[0].frame.mapState.longitude).toBe(50);
+    expect(mockAnnotationOverlay.mock.lastCall[0].frame.swipePercentage).toBe(
+      mode === 'swipe' ? 75 : undefined
+    );
+  }
+);

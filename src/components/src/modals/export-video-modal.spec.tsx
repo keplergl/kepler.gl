@@ -145,6 +145,16 @@ function renderWithThemeLocal(component) {
   });
 }
 
+// Load the real preview helpers outside timed tests; cold dependency transforms
+// should not consume the interaction test's timeout budget.
+const actualHubbleUtils = jest.requireActual('./hubble-utils');
+const ActualSwipeContainer = jest.requireActual(
+  './swipe-export-video-container'
+).SwipeExportVideoPanelContainer;
+const ActualGlobeContainer = jest.requireActual(
+  './globe-export-video-container'
+).GlobeExportVideoPanelContainer;
+
 const ExportVideoModal = ExportVideoModalFactory();
 
 const DEFAULT_PROPS = {
@@ -253,11 +263,11 @@ describe('ExportVideoModal', () => {
     expect(interactionConfig).not.toHaveProperty('exportOnly');
   });
 
-  test.each(['regular', 'swipe'])(
+  test.each(['regular', 'swipe', 'globe'])(
     'preserves fades and preview cameras when changing resolution in an open %s export',
     async mode => {
       const utils = require('./hubble-utils');
-      const actualUtils = jest.requireActual('./hubble-utils');
+      const actualUtils = actualHubbleUtils;
       const {getLayerZoomOpacityFactor} = jest.requireActual(
         '../../../reducers/src/interaction-utils'
       );
@@ -270,13 +280,18 @@ describe('ExportVideoModal', () => {
       const mockSwipe = jest.requireMock(
         './swipe-export-video-container'
       ).SwipeExportVideoPanelContainer;
-      const SwipeContainer = jest.requireActual(
-        './swipe-export-video-container'
-      ).SwipeExportVideoPanelContainer;
+      const SwipeContainer = ActualSwipeContainer;
+      const mockGlobe = jest.requireMock(
+        './globe-export-video-container'
+      ).GlobeExportVideoPanelContainer;
+      const GlobeContainer = ActualGlobeContainer;
+      const isOwnContainer = mode !== 'regular';
+      const mockContainer = mode === 'globe' ? mockGlobe : mockSwipe;
+      const Container = mode === 'globe' ? GlobeContainer : SwipeContainer;
       let swipePanel;
-      if (mode === 'swipe') {
-        mockSwipe.mockImplementation(({ref, ...props}) => (
-          <SwipeContainer
+      if (isOwnContainer) {
+        mockContainer.mockImplementation(({ref, ...props}) => (
+          <Container
             {...props}
             ref={panel => {
               ref.current = panel;
@@ -294,7 +309,8 @@ describe('ExportVideoModal', () => {
           zoom: 4.1,
           pitch: 0,
           bearing: 0,
-          ...(mode === 'swipe' ? {isSplit: true, mapSplitMode: MapSplitMode.SWIPE_COMPARE} : {})
+          ...(mode === 'swipe' ? {isSplit: true, mapSplitMode: MapSplitMode.SWIPE_COMPARE} : {}),
+          ...(mode === 'globe' ? {globe: {enabled: true}} : {})
         },
         visState: {
           ...DEFAULT_PROPS.visState,
@@ -316,10 +332,10 @@ describe('ExportVideoModal', () => {
       try {
         mounted = renderWithThemeLocal(<ExportVideoModal {...props} />);
         await waitFor(() => {
-          expect(mode === 'swipe' ? mockSwipe : mockExportVideoPanelContainer).toHaveBeenCalled();
-          expect(mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current).toBeTruthy();
+          expect(isOwnContainer ? mockContainer : mockExportVideoPanelContainer).toHaveBeenCalled();
+          expect(isOwnContainer ? swipePanel : mockHubbleContainerRef.current).toBeTruthy();
         });
-        const panel = mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current;
+        const panel = isOwnContainer ? swipePanel : mockHubbleContainerRef.current;
         const initialCamera = {...panel.state.viewState};
         const userCamera = {
           ...initialCamera,
@@ -339,27 +355,30 @@ describe('ExportVideoModal', () => {
 
         for (const resolution of ['1280x960', '1920x1440', '1280x720']) {
           act(() => {
-            if (mode === 'swipe') panel.setResolution(resolution);
+            if (isOwnContainer) panel.setResolution(resolution);
             else panel.props.onSettingsChange({resolution});
           });
-          const settings = mode === 'swipe' ? panel.state : panel.props.initialState;
+          const settings = isOwnContainer ? panel.state : panel.props.initialState;
           expect(settings.resolution).toBe(resolution);
-          const {width, height, zoom} = panel.props.mapData.mapState;
+          const {width, height, zoom, minZoom, maxZoom, zoomOffset} = panel.props.mapData.mapState;
+          const globeCameraBounds = mode === 'globe' ? {minZoom, maxZoom, zoomOffset} : {};
           const zoomDelta = zoom - initialCamera.zoom;
           expect(opacity()).toBeCloseTo(1);
           expect(panel.state.viewState).toMatchObject({
             ...userCamera,
+            ...globeCameraBounds,
             width,
             height,
             zoom: userCamera.zoom + zoomDelta
           });
           expect(panel.state.memo.viewState).toMatchObject({
             ...initialCamera,
+            ...globeCameraBounds,
             width,
             height,
             zoom: initialCamera.zoom + zoomDelta
           });
-          expect(mode === 'swipe' ? swipePanel : mockHubbleContainerRef.current).toBe(panel);
+          expect(isOwnContainer ? swipePanel : mockHubbleContainerRef.current).toBe(panel);
         }
 
         const currentCamera = panel.state.viewState;
@@ -374,14 +393,14 @@ describe('ExportVideoModal', () => {
         mounted?.unmount();
         utils.scaleToVideoExport.mockImplementation(originalScale);
         utils.scaleZoomOpacityForVideoExport.mockImplementation(originalFadeScale);
-        mockSwipe.mockImplementation(() => null);
+        mockContainer.mockImplementation(() => null);
       }
     }
   );
 
   test('preserves point radii relative to the map across video resolutions and animation zooms', async () => {
     const utils = require('./hubble-utils');
-    const actualUtils = jest.requireActual('./hubble-utils');
+    const actualUtils = actualHubbleUtils;
     const originalScale = utils.scaleToVideoExport.getMockImplementation();
     utils.scaleToVideoExport.mockImplementation(actualUtils.scaleToVideoExport);
     const point = new PointLayer({id: 'points', dataId: 'data'});
@@ -1212,7 +1231,7 @@ describe('Camera Animation video export', () => {
     const Container = withCameraTourExport(Base);
     const instance = new Container();
     instance.getCameraKeyframes = () => ({});
-    expect(instance.getEncoder()).toBe(legacy);
+    expect(new (instance.getEncoder())()).toBeInstanceOf(legacy);
     instance.state.mediaType = 'webm-native';
     const Encoder = instance.getEncoder();
     expect(new Encoder({framerate: 30})).toBeInstanceOf(NativeWebMEncoder);
@@ -1271,6 +1290,35 @@ describe('Camera Animation video export', () => {
     expect(globe).toMatchObject({longitude: 180, latitude: 0, bearing: 0, pitch: 0, width: 800});
     expect(tour.stops[0].camera).toEqual(camera);
   });
+  test.each([0, 40])(
+    'keeps a resized globe tour below the live-map minimum at latitude %s',
+    latitude => {
+      const zoomOffset = -2;
+      const source = {
+        ...camera,
+        latitude,
+        zoom: 2 + Math.log2(Math.cos((latitude * Math.PI) / 180))
+      };
+      const scaledTour = {
+        stops: [{...tour.stops[0], camera: {...source, zoom: source.zoom + zoomOffset}}]
+      };
+      const result = resolveCameraTourExportFrame(
+        {cameraTourTime: 0},
+        scaledTour,
+        {width: 360},
+        true,
+        zoomOffset
+      );
+      expect(result).toMatchObject({
+        latitude,
+        zoom: source.zoom + zoomOffset,
+        pitch: 0,
+        bearing: 0
+      });
+      expect(scaledTour.stops[0].camera.zoom).toBe(source.zoom + zoomOffset);
+    }
+  );
+
   test('ordinary presets and manual view updates are unchanged', () => {
     expect(
       getCameraTourExportKeyframes(tour, 'Orbit (90º)', 5000, {width: 800, height: 600})
@@ -1279,6 +1327,60 @@ describe('Camera Animation video export', () => {
       getCameraTourExportKeyframes(null, CAMERA_TOUR_PRESET, 5000, {width: 800, height: 600})
     ).toBeNull();
     expect(resolveCameraTourExportFrame(camera, tour)).toBe(camera);
+  });
+
+  test.each(['onRenderVideo', 'onPreviewVideo'])(
+    '%s isolates a new capture from a stopped asynchronous frame',
+    async method => {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      let finishOld;
+      const oldCapture = new DeckAdapter({}).videoCapture;
+      oldCapture.recording = true;
+      oldCapture._capture = () =>
+        new Promise(resolve => {
+          finishOld = resolve;
+        });
+      oldCapture.capture(document.createElement('canvas'), jest.fn());
+      class Base {
+        state = {adapter: {videoCapture: oldCapture}};
+        onRenderVideo() {
+          this.state.adapter.videoCapture.capturing = true;
+        }
+        onPreviewVideo() {
+          this.state.adapter.videoCapture.capturing = true;
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const instance = new Container();
+      oldCapture.recording = false;
+      instance[method]();
+      const currentCapture = instance.state.adapter.videoCapture;
+      expect(currentCapture).not.toBe(oldCapture);
+      finishOld({kind: 'stop'});
+      await Promise.resolve();
+      expect(oldCapture.capturing).toBe(false);
+      expect(currentCapture.capturing).toBe(true);
+    }
+  );
+
+  test('normal Stop preserves partial encoder output while abort cancels it', () => {
+    const encoder = {cancel: jest.fn(), cancelAnnotationCapture: jest.fn()};
+    const onStop = jest.fn();
+    class Base {
+      state = {adapter: {videoCapture: {encoder}}};
+      onStop(options) {
+        onStop(options);
+      }
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    instance.onStop({abort: false});
+    expect(encoder.cancelAnnotationCapture).toHaveBeenCalledTimes(1);
+    expect(encoder.cancel).not.toHaveBeenCalled();
+    expect(onStop).toHaveBeenLastCalledWith({abort: false});
+    instance.onStop({abort: true});
+    expect(encoder.cancel).toHaveBeenCalledTimes(1);
+    expect(onStop).toHaveBeenLastCalledWith({abort: true});
   });
   test('regular Hubble adapter defaults to authored duration and evaluates cut boundaries', () => {
     class Base {

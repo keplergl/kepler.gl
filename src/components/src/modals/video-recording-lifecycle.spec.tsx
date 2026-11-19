@@ -8,8 +8,9 @@ import {GlobeExportVideoPanelContainer} from './globe-export-video-container';
 import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
 import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
 import {useEffectAnimation} from './effect-animation';
-import type {Effect} from '@kepler.gl/types';
 import {NativeWebMEncoder} from './native-webm-encoder';
+import {compositeVideoAnnotations} from './video-annotation-overlay';
+import type {Annotation, Effect} from '@kepler.gl/types';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -33,11 +34,18 @@ jest.mock('@hubble.gl/core', () => {
     extension = '.webm';
     mimeType = 'video/webm';
     start = jest.fn();
-    add = jest.fn(() => Promise.resolve());
+    addFrame = jest.fn((_canvas: HTMLCanvasElement) => Promise.resolve());
     save = jest.fn(() => Promise.resolve(null));
-    cancel = jest.fn();
     constructor() {
+      jest.spyOn(this as Encoder, 'add');
+      jest.spyOn(this as Encoder, 'cancel');
       mockEncoders.push(this);
+    }
+    cancel() {
+      return undefined;
+    }
+    add(canvas: HTMLCanvasElement) {
+      return this.addFrame(canvas);
     }
   }
   return {
@@ -59,6 +67,10 @@ jest.mock('@hubble.gl/core', () => {
     GifEncoder: Encoder
   };
 });
+jest.mock('./video-annotation-overlay', () => ({
+  VideoAnnotationPreview: ({children}) => children,
+  compositeVideoAnnotations: jest.fn(() => Promise.resolve())
+}));
 jest.mock('./globe-export-video-preview', () => {
   const React = require('react');
   return {
@@ -142,7 +154,12 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-function mount(kind: 'globe' | 'swipe', durationMs = 33, effects: Effect[] = []) {
+function mount(
+  kind: 'globe' | 'swipe',
+  durationMs = 33,
+  effects: Effect[] = [],
+  annotations: Annotation[] = []
+) {
   const ref = React.createRef<any>();
   const {result: animation} = renderHook(() => useEffectAnimation(effects, ref));
   const props = {
@@ -158,7 +175,7 @@ function mount(kind: 'globe' | 'swipe', durationMs = 33, effects: Effect[] = [])
         bearing: 0,
         globe: {enabled: true, config: {stars: true}}
       },
-      visState: {filters: [], layers: [], animationConfig: {}}
+      visState: {filters: [], layers: [], animationConfig: {}, annotations}
     },
     mapProps: {},
     deckProps: {onBeforeRender: animation.current},
@@ -201,12 +218,12 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
   const framesPerCapture = kind === 'globe' ? 2 : 3;
   it('keeps native encoding opt-in and releases an active encoder when stopped', () => {
     const {container} = mount(kind);
-    const original = container.getEncoder();
+    expect(new (container.getEncoder())({framerate: 30})).not.toBeInstanceOf(NativeWebMEncoder);
     act(() => container.setMediaType('webm-native'));
     const Native = container.getEncoder();
     expect(new Native({framerate: 30})).toBeInstanceOf(NativeWebMEncoder);
     act(() => container.setMediaType('webm'));
-    expect(container.getEncoder()).toBe(original);
+    expect(new (container.getEncoder())({framerate: 30})).not.toBeInstanceOf(NativeWebMEncoder);
     const encoder = start();
     act(() => container.onStop({abort: true}));
     expect(encoder.cancel).toHaveBeenCalledTimes(1);
@@ -229,6 +246,72 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
       expect(container.state.rendering).toBe(true);
     }
   );
+  const annotations = [{id: 'label', isVisible: true, mapIndex: 0}] as Annotation[];
+
+  it('composites annotations before submitting frames to the opt-in native encoder', async () => {
+    const {container} = mount(kind, 33, [], annotations);
+    act(() => container.setMediaType('webm-native'));
+    const Encoder = container.getEncoder();
+    const encoder = new Encoder({framerate: 30});
+    container.activeEncoder = encoder;
+    const addNative = jest.spyOn(NativeWebMEncoder.prototype, 'add').mockResolvedValue(undefined);
+    const pending = deferred<void>();
+    jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
+    let adding: Promise<void>;
+    await act(async () => {
+      adding = encoder.add(source);
+      await Promise.resolve();
+    });
+    expect(compositeVideoAnnotations).toHaveBeenCalledTimes(1);
+    expect(addNative).not.toHaveBeenCalled();
+    await act(async () => {
+      pending.resolve();
+      await adding;
+    });
+    expect(addNative).toHaveBeenCalledWith(jest.mocked(compositeVideoAnnotations).mock.calls[0][0]);
+    expect(addNative.mock.calls[0][0]).not.toBe(source);
+  });
+
+  it('waits for annotation composition before encoding and advancing the clock', async () => {
+    mount(kind, 33, [], annotations);
+    const pending = deferred<void>();
+    jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
+    const encoder = start();
+    await flushFrames(framesPerCapture);
+    expect(compositeVideoAnnotations).toHaveBeenCalledTimes(1);
+    const [canvas, frame] = jest.mocked(compositeVideoAnnotations).mock.calls[0];
+    expect([canvas.width, canvas.height]).toEqual([640, 360]);
+    expect(frame.annotations).toBe(annotations);
+    expect(frame.swipePercentage).toBe(kind === 'swipe' ? 0 : undefined);
+    expect(encoder.addFrame).not.toHaveBeenCalled();
+    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0]]);
+    await flushFrames(framesPerCapture);
+    expect(compositeVideoAnnotations).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      pending.resolve();
+    });
+    expect(encoder.addFrame).toHaveBeenCalledWith(canvas);
+    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0], [33]]);
+  });
+
+  it('aborts annotation composition and discards its frame after cancellation', async () => {
+    const {container} = mount(kind, 33, [], annotations);
+    const pending = deferred<void>();
+    jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
+    const encoder = start();
+    await flushFrames(framesPerCapture);
+    const signal = jest.mocked(compositeVideoAnnotations).mock.calls[0][2];
+    act(() => container.onStop());
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      pending.resolve();
+    });
+    expect(encoder.addFrame).not.toHaveBeenCalled();
+    expect(encoder.save).not.toHaveBeenCalled();
+    expect(download).not.toHaveBeenCalled();
+    expect(container.state.rendering).toBe(false);
+    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0]]);
+  });
 
   it('applies effect endpoints before captured frames and restores their starts after recording', async () => {
     const effect = {

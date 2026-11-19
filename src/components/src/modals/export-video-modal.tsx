@@ -290,9 +290,7 @@ const ExportVideoModalFactory = () => {
     const hasCameraTour = cameraTourDurationMs > 0;
     const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
       ...exportVideo,
-      ...(hasCameraTour
-        ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs}
-        : {})
+      ...(hasCameraTour ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs} : {})
     }));
 
     const keplerState = useMemo(() => {
@@ -482,7 +480,6 @@ const ExportVideoModalFactory = () => {
     // camera. Correct it after mount, then keep the current and restore cameras
     // aligned with the export fade stops when the preview's scale changes.
     useLayoutEffect(() => {
-      if (isGlobeEnabled) return;
       const panel = hubbleContainerRef.current;
       if (!panel) return;
       const {longitude, latitude, zoom, pitch, bearing, altitude, minZoom, maxZoom, width, height} =
@@ -492,8 +489,8 @@ const ExportVideoModalFactory = () => {
       exportCameraScaleRef.current = {panel, zoomOffset, width, height};
 
       if (!previous || previous.panel !== panel) {
-        // Swipe already uses our scaler in its constructor.
-        if (isSwipeMode) return;
+        // Swipe and globe already use our scaler in their constructors.
+        if (isSwipeMode || isGlobeEnabled) return;
         const viewState = {
           longitude,
           latitude,
@@ -517,6 +514,9 @@ const ExportVideoModalFactory = () => {
         const rescaleCamera = (camera: Record<string, any>) => ({
           ...camera,
           zoom: camera.zoom + zoomDelta,
+          ...(isGlobeEnabled
+            ? {minZoom, maxZoom, zoomOffset: keplerState.mapState.zoomOffset}
+            : {}),
           width,
           height
         });

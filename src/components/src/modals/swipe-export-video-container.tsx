@@ -28,6 +28,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {getCameraTourDuration} from '@kepler.gl/utils';
+import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
   CAMERA_TOUR_PRESET,
   getCameraTourExportKeyframes,
@@ -35,7 +36,7 @@ import {
 } from './camera-tour-export';
 import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
-import {SwipeEasing} from './swipe-composite-utils';
+import {getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
 import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
 
 const ENCODERS = {
@@ -248,11 +249,33 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getEncoder() {
     const {mediaType} = this.state;
-    return mediaType === NATIVE_WEBM_FORMAT.value
-      ? createNativeWebMEncoder({
-          onFallback: () => this.setState({encodingNotice: NATIVE_WEBM_FALLBACK})
-        })
-      : ENCODERS[mediaType];
+    const Encoder =
+      mediaType === NATIVE_WEBM_FORMAT.value
+        ? createNativeWebMEncoder({
+            onFallback: () => this.setState({encodingNotice: NATIVE_WEBM_FALLBACK})
+          })
+        : ENCODERS[mediaType];
+    return createAnnotationVideoEncoder(
+      Encoder,
+      () => ({
+        annotations: this.props.mapData.visState.annotations || [],
+        interactionConfig: this.props.mapData.visState.interactionConfig,
+        mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+        swipePercentage: getSwipePercentageAtTime(
+          this.state.currentTimeMs,
+          this.state.durationMs,
+          this.props.swipeStartPct,
+          this.props.swipeEndPct,
+          this.props.swipeEasing
+        ),
+        ...this._getContainer()
+      }),
+      encoder => this.activeEncoder === encoder,
+      error => {
+        console.error('Video annotation capture failed:', error);
+        this.onEncodingError(this.activeEncoder);
+      }
+    );
   }
 
   getCameraKeyframes() {
@@ -330,7 +353,8 @@ export class SwipeExportVideoPanelContainer extends Component<
         viewState,
         this.props.mapData.visState.cameraTour,
         this.state.viewState,
-        Boolean(this.props.mapData.mapState.globe?.enabled)
+        Boolean(this.props.mapData.mapState.globe?.enabled),
+        this.props.mapData.mapState.zoomOffset || 0
       )
     });
   };

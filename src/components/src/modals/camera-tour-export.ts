@@ -6,6 +6,8 @@ import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers} from './hubble-utils';
+import {createAnnotationVideoEncoder} from './video-annotation-encoder';
+import {VideoAnnotationPreview} from './video-annotation-overlay';
 import {createNativeWebMEncoder, NativeWebMEncoder} from './native-webm-encoder';
 import {
   NATIVE_WEBM_FORMAT,
@@ -37,12 +39,17 @@ export function resolveCameraTourExportFrame<T extends object>(
   frame: T,
   tour: CameraTour | null | undefined,
   current: object = {},
-  globe = false
+  globe = false,
+  zoomOffset = 0
 ): T {
   const time = (frame as {cameraTourTime?: number}).cameraTourTime;
   if (time === undefined) return frame;
   const camera = evaluateCameraTour(tour, time);
-  return {...current, ...(camera ? cameraForMap(camera, globe) : {})} as T;
+  if (!camera) return {...current} as T;
+  // Globe bounds apply to the authored zoom, before fitting the smaller export
+  // preview. Clamping the scaled zoom directly would enlarge the globe again.
+  const adapted = cameraForMap({...camera, zoom: camera.zoom - zoomOffset}, globe);
+  return {...current, ...adapted, zoom: adapted.zoom + zoomOffset} as T;
 }
 
 /** Reuse Hubble's export UI and presets, with opt-in native video encoding. */
@@ -50,7 +57,7 @@ export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
 
-    getEncoder() {
+    getBaseEncoder() {
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) return super.getEncoder();
       const capture = this.state.adapter.videoCapture;
       return createNativeWebMEncoder({
@@ -72,12 +79,33 @@ export function withCameraTourExport(Base: any) {
       });
     }
 
+    getEncoder() {
+      return createAnnotationVideoEncoder(
+        this.getBaseEncoder(),
+        () => ({
+          annotations: this.props.mapData.visState.annotations || [],
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          ...this._getContainer()
+        }),
+        encoder => {
+          const capture = this.state.adapter.videoCapture;
+          return capture.isRecording() && capture.encoder === encoder;
+        },
+        error => {
+          console.error('Video annotation capture failed:', error);
+          this.onStop({abort: true});
+        }
+      );
+    }
+
     onRenderVideo() {
       const adapter = this.state.adapter;
       if (this.state.encodingError || this.state.encodingNotice) {
         this.setState({encodingError: undefined, encodingNotice: undefined});
       }
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) {
+        adapter.videoCapture = new adapter.videoCapture.constructor();
         return super.onRenderVideo();
       }
       if (this.state.rendering || this.state.saving) return;
@@ -124,9 +152,16 @@ export function withCameraTourExport(Base: any) {
       });
     }
 
+    onPreviewVideo() {
+      const adapter = this.state.adapter;
+      adapter.videoCapture = new adapter.videoCapture.constructor();
+      super.onPreviewVideo();
+    }
+
     onStop(options: {abort?: boolean} = {}) {
       const adapter = this.state.adapter;
       const encoder = adapter.videoCapture.encoder;
+      if (!options.abort) encoder?.cancelAnnotationCapture?.();
       if (options.abort) {
         encoder?.cancel?.();
         this.finishNativeRecording = undefined;
@@ -144,7 +179,7 @@ export function withCameraTourExport(Base: any) {
       const panel = super.render();
       // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
       // layers from the current frame, including ordinary camera presets.
-      const preview = this.props.deckProps?.layers
+      let preview = this.props.deckProps?.layers
         ? panel
         : cloneElement(panel, {
             deckProps: {
@@ -156,6 +191,17 @@ export function withCameraTourExport(Base: any) {
               })
             }
           });
+      if (this.props.mapData.visState.annotations?.length) {
+        preview = createElement(VideoAnnotationPreview, {
+          frame: {
+            annotations: this.props.mapData.visState.annotations,
+            interactionConfig: this.props.mapData.visState.interactionConfig,
+            mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+            ...this._getContainer()
+          },
+          children: preview
+        });
+      }
       const message = this.state.encodingError || this.state.encodingNotice;
       return message
         ? createElement(
