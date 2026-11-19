@@ -64,6 +64,7 @@ export function withCameraTourExport(Base: any) {
 
       let requestedFrame = 0;
       let committedFrame = -1;
+      let refreshingDeck = false;
       const seek = adapter.seek.bind(adapter);
       const onAfterRender = adapter.onAfterRender.bind(adapter);
 
@@ -88,6 +89,22 @@ export function withCameraTourExport(Base: any) {
         });
       };
       adapter.onAfterRender = (nextFrame: (timeMs: number) => void, readyToCapture = true) => {
+        if (!adapter.deck) {
+          // Hubble reads deckRef before its overlay publishes the asynchronously
+          // created renderer. Commit the ref, then let the preview pass it to
+          // the adapter. A later map render also recovers recording started
+          // before the map loaded; no timer or skipped readiness check is needed.
+          if (!refreshingDeck) {
+            refreshingDeck = true;
+            this.forceUpdate(() => {
+              this.forceUpdate(() => {
+                refreshingDeck = false;
+                adapter.deck?.redraw('video capture renderer ready');
+              });
+            });
+          }
+          return;
+        }
         // Keep Hubble's tile/layer readiness checks, and only accept a render
         // after the requested frame has committed. Encoding remains serialized.
         onAfterRender(nextFrame, readyToCapture && committedFrame === requestedFrame);

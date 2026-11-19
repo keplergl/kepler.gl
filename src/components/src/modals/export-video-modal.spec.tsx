@@ -1728,7 +1728,12 @@ describe('Camera Animation video export', () => {
   );
 
   describe('regular export frame synchronization', () => {
-    function mountCapture({mediaType = 'webm', holdCamera = false} = {}) {
+    function mountCapture({
+      mediaType = 'webm',
+      holdCamera = false,
+      delayedRenderer = false,
+      emptyLayers = false
+    } = {}) {
       const {DeckAdapter} = require('@hubble.gl/core');
       const encoders = [];
       const nextFrame = jest.fn();
@@ -1736,10 +1741,17 @@ describe('Camera Animation video export', () => {
       let requestedTime = 0;
       const layer = {isLoaded: true};
       const deck = {
-        props: {layers: [layer]},
+        props: {layers: emptyLayers ? [] : [layer]},
         getCanvas: () => canvas,
         redraw: jest.fn()
       };
+      let controlDeck;
+      const previewDeckRef = {current: undefined};
+      function Overlay({time, zoom}) {
+        // Hubble publishes the control's Deck only while the child renders.
+        previewDeckRef.current = controlDeck;
+        return <canvas ref={element => (canvas = element)} data-time={time} data-zoom={zoom} />;
+      }
       class Encoder {
         frames = [];
         pending = [];
@@ -1777,7 +1789,7 @@ describe('Camera Animation video export', () => {
                     })
             }
           });
-          adapter.setDeck(deck);
+          if (!delayedRenderer) adapter.setDeck(deck);
           this.state = {adapter, mediaType, viewState: {...camera, frameTime: 0}};
         }
         setViewState(viewState) {
@@ -1812,11 +1824,13 @@ describe('Camera Animation video export', () => {
           this.setState({rendering: false, saving: false});
         }
         render() {
+          // Like Hubble's preview, the parent reads its ref before Overlay can
+          // publish a renderer created asynchronously by the map control.
+          if (delayedRenderer) this.state.adapter.getProps({deck: previewDeckRef.current});
           return (
-            <canvas
-              ref={element => (canvas = element)}
-              data-time={this.state.filterTime ?? this.state.viewState.frameTime}
-              data-zoom={this.state.viewState.zoom}
+            <Overlay
+              time={this.state.filterTime ?? this.state.viewState.frameTime}
+              zoom={this.state.viewState.zoom}
             />
           );
         }
@@ -1830,7 +1844,18 @@ describe('Camera Animation video export', () => {
       container.getEncoder = () => Encoder;
       const adapter = container.state.adapter;
       const draw = (ready = true) => adapter.onAfterRender(nextFrame, ready);
-      return {...result, container, adapter, draw, encoders, layer, deck};
+      return {
+        ...result,
+        container,
+        adapter,
+        draw,
+        encoders,
+        layer,
+        deck,
+        createRenderer: () => {
+          controlDeck = deck;
+        }
+      };
     }
 
     async function settleCapture() {
@@ -1882,6 +1907,43 @@ describe('Camera Animation video export', () => {
         });
         act(() => draw());
         expect(encoder.frames.map(frame => frame.time)).toEqual([0, 1000 / 30, 2000 / 30]);
+      }
+    );
+
+    test.each([
+      ['before recording', false],
+      ['after recording starts', false],
+      ['after recording starts', true]
+    ])(
+      'starts capture when the preview renderer arrives %s (empty map: %s)',
+      (readiness, emptyLayers) => {
+        const {container, draw, encoders, layer, deck, createRenderer} = mountCapture({
+          delayedRenderer: true,
+          emptyLayers
+        });
+        layer.isLoaded = false;
+        // Map renders triggered by the binding commit still have pending tiles.
+        deck.redraw.mockImplementation(() => draw(false));
+        if (readiness === 'before recording') createRenderer();
+        act(() => {
+          container.onRenderVideo();
+          draw(false);
+          expect(encoders[0].frames).toEqual([]);
+        });
+        if (readiness === 'after recording starts') {
+          createRenderer();
+          act(() => draw(false));
+        }
+        const encoder = encoders[0];
+        act(() => draw(!emptyLayers));
+        expect(encoder.frames).toEqual([]);
+        act(() => {
+          layer.isLoaded = true;
+          draw(false);
+        });
+        expect(encoder.frames).toEqual([]);
+        act(() => draw());
+        expect(encoder.frames).toEqual([{time: 0, zoom: camera.zoom}]);
       }
     );
 
