@@ -360,17 +360,20 @@ describe('ExportVideoModal', () => {
           });
           const settings = isOwnContainer ? panel.state : panel.props.initialState;
           expect(settings.resolution).toBe(resolution);
-          const {width, height, zoom} = panel.props.mapData.mapState;
+          const {width, height, zoom, minZoom, maxZoom, zoomOffset} = panel.props.mapData.mapState;
+          const globeCameraBounds = mode === 'globe' ? {minZoom, maxZoom, zoomOffset} : {};
           const zoomDelta = zoom - initialCamera.zoom;
           expect(opacity()).toBeCloseTo(1);
           expect(panel.state.viewState).toMatchObject({
             ...userCamera,
+            ...globeCameraBounds,
             width,
             height,
             zoom: userCamera.zoom + zoomDelta
           });
           expect(panel.state.memo.viewState).toMatchObject({
             ...initialCamera,
+            ...globeCameraBounds,
             width,
             height,
             zoom: initialCamera.zoom + zoomDelta
