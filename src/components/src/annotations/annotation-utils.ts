@@ -56,6 +56,8 @@ export type RulerAnnotationMarker = BaseAnnotationMarker & {
   ey: number;
   mx: number;
   my: number;
+  path?: string;
+  labelAngle?: number;
 };
 
 export type AnnotationMarker =
@@ -116,7 +118,52 @@ function onNearestWorldCopy(point: LngLatAltitude, viewport: MapViewport): LngLa
   return point.length === 3 ? [point[0] + shift, point[1], point[2]] : [point[0] + shift, point[1]];
 }
 
-export function makeMarker(annotation: Annotation, viewport: MapViewport): AnnotationMarker {
+/** Sample the shortest surface arc, with at most 90 segments (two degrees each). */
+function projectRulerArc(start: LngLatAltitude, end: LngLatAltitude, viewport: MapViewport) {
+  const radians = Math.PI / 180;
+  const lat = start[1] * radians;
+  const endLat = end[1] * radians;
+  const deltaLon = (end[0] - start[0]) * radians;
+  const angle = angularDistanceDeg(start, end) * radians;
+  const bearing = Math.atan2(
+    Math.sin(deltaLon) * Math.cos(endLat),
+    Math.cos(lat) * Math.sin(endLat) - Math.sin(lat) * Math.cos(endLat) * Math.cos(deltaLon)
+  );
+  // An even count includes the geographic midpoint exactly.
+  const segments = Math.max(2, 2 * Math.ceil(angle / (4 * radians)));
+  return Array.from({length: segments + 1}, (_, index) => {
+    if (index === 0) return viewport.project(start);
+    if (index === segments) return viewport.project(end);
+    const fraction = index / segments;
+    const step = angle * fraction;
+    const latitude = Math.asin(
+      Math.max(
+        -1,
+        Math.min(
+          1,
+          Math.sin(lat) * Math.cos(step) + Math.cos(lat) * Math.sin(step) * Math.cos(bearing)
+        )
+      )
+    );
+    const longitude =
+      start[0] * radians +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(step) * Math.cos(lat),
+        Math.cos(step) - Math.sin(lat) * Math.sin(latitude)
+      );
+    return viewport.project([
+      longitude / radians,
+      latitude / radians,
+      (start[2] || 0) + ((end[2] || 0) - (start[2] || 0)) * fraction
+    ]);
+  });
+}
+
+export function makeMarker(
+  annotation: Annotation,
+  viewport: MapViewport,
+  isGlobeEnabled = false
+): AnnotationMarker {
   const {kind} = annotation;
   const anchorPoint = onNearestWorldCopy(annotation.anchorPoint, viewport);
   const angle = isAnnotationWithArm(annotation) ? degreesToRadians(annotation.angle) : 0;
@@ -140,6 +187,29 @@ export function makeMarker(annotation: Annotation, viewport: MapViewport): Annot
       const [endX, endY] = projectClosestEndpoint(viewport, anchorPoint, annotation.endPoint);
       const ex = endX - x;
       const ey = endY - y;
+      if (isGlobeEnabled) {
+        const points = projectRulerArc(anchorPoint, annotation.endPoint, viewport);
+        const middle = (points.length - 1) / 2;
+        const mx = points[middle][0] - x;
+        const my = points[middle][1] - y;
+        const before = points[middle - 1];
+        const after = points[middle + 1];
+        return {
+          kind,
+          x,
+          y,
+          tx: mx,
+          ty: my,
+          ex,
+          ey,
+          mx,
+          my,
+          path: points
+            .map(([px, py], index) => `${index ? 'L' : 'M'}${px - x},${py - y}`)
+            .join(' '),
+          labelAngle: (Math.atan2(after[1] - before[1], after[0] - before[0]) * 180) / Math.PI
+        };
+      }
       const mx = ex / 2;
       const my = ey / 2;
       return {kind, x, y, tx: mx, ty: my, ex, ey, mx, my};
@@ -189,10 +259,11 @@ export type AnnotationTextBoxStyle = {
 
 export function getAnnotationTextBoxStyle(
   annotation: Annotation,
-  viewport: MapViewport
+  viewport: MapViewport,
+  isGlobeEnabled = false
 ): AnnotationTextBoxStyle {
   const {textWidth, lineColor, lineWidth, autoSize, kind} = annotation;
-  const marker = makeMarker(annotation, viewport);
+  const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {x, y, tx, ty} = marker;
   const {side, vertical} = getTextPlacement(annotation);
   const px = x + tx;
@@ -202,10 +273,10 @@ export function getAnnotationTextBoxStyle(
   if (kind === AnnotationKind.RULER) {
     style.left = px;
     style.top = py;
-    const {ex, ey} = marker as RulerAnnotationMarker;
+    const {ex, ey, labelAngle} = marker as RulerAnnotationMarker;
     // Follow the projected line (including map bearing/pitch), but never turn
     // the label upside down when the endpoints are reversed.
-    const angle = (Math.atan2(ey, ex) * 180) / Math.PI;
+    const angle = labelAngle ?? (Math.atan2(ey, ex) * 180) / Math.PI;
     const uprightAngle = angle >= 90 ? angle - 180 : angle < -90 ? angle + 180 : angle;
     const gap = Math.max(0, lineWidth) / 2 + 4;
     style.transformOrigin = '50% 100%';
