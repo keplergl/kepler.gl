@@ -72,15 +72,33 @@ describe('ZoomOpacitySlider interactions', () => {
     else Reflect.deleteProperty(window, 'PointerEvent');
   });
 
-  function setup() {
+  function setup(zoom?: number) {
     const onChange = jest.fn();
     const view = renderWithTheme(
       <IntlWrapper>
-        <ZoomOpacitySlider idPrefix="test" stops={stops} onChange={onChange} />
+        <ZoomOpacitySlider idPrefix="test" stops={stops} zoom={zoom} onChange={onChange} />
       </IntlWrapper>
     );
     return {...view, onChange};
   }
+
+  test.each([220, 420])('snaps within two pixels of the current zoom at width %i', plotWidth => {
+    width = plotWidth;
+    const zoom = (ZOOM_OPACITY_RANGE[0] + ZOOM_OPACITY_RANGE[1]) / 2;
+    const markerX =
+      110 +
+      ((zoom - ZOOM_OPACITY_RANGE[0]) / (ZOOM_OPACITY_RANGE[1] - ZOOM_OPACITY_RANGE[0])) *
+        (width - 20);
+    const {getAllByRole, onChange} = setup(zoom);
+    fireEvent.pointerDown(getAllByRole('slider')[0], {clientX: markerX - 2});
+    expect(onChange).toHaveBeenLastCalledWith('appear', zoom);
+    fireEvent.pointerMove(window, {clientX: markerX + 2});
+    expect(onChange).toHaveBeenLastCalledWith('appear', zoom);
+    fireEvent.pointerMove(window, {clientX: markerX + 3});
+    expect(onChange.mock.lastCall[1]).toBeCloseTo(
+      zoom + (3 * (ZOOM_OPACITY_RANGE[1] - ZOOM_OPACITY_RANGE[0])) / (width - 20)
+    );
+  });
 
   test.each([
     ['ArrowLeft', false, -0.1],

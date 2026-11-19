@@ -179,9 +179,16 @@ export default function ZoomOpacitySlider({
       if (!plot) {
         return;
       }
-      onChange(key, clientXToZoom(clientX, plot.getBoundingClientRect()));
+      const rect = plot.getBoundingClientRect();
+      const value = clientXToZoom(clientX, rect);
+      const snapToZoom =
+        Number.isFinite(zoom) &&
+        (zoom as number) >= minZoom &&
+        (zoom as number) <= maxZoom &&
+        Math.abs(clientX - rect.left - zoomToX(zoom as number, rect.width)) <= 2;
+      onChange(key, snapToZoom ? (zoom as number) : value);
     },
-    [onChange]
+    [onChange, zoom, minZoom, maxZoom]
   );
 
   const endDrag = useCallback(() => {
