@@ -33,6 +33,27 @@ describe('slider drag events', () => {
     document.dispatchEvent(new Event('touchend'));
   });
 
+  test('prevents selection from starting and keeps dragging over surrounding text', () => {
+    const drag = createHandler();
+    const down = new MouseEvent('mousedown', {clientX: 130, cancelable: true});
+    drag.handler.handleMouseDown(down);
+    expect(down.defaultPrevented).toBe(true);
+    const outside = document.createElement('p');
+    outside.textContent = 'Surrounding text';
+    document.body.appendChild(outside);
+    try {
+      const move = new MouseEvent('mousemove', {clientX: 350, bubbles: true, cancelable: true});
+      outside.dispatchEvent(move);
+      expect(move.defaultPrevented).toBe(true);
+      expect(drag.valueListener).toHaveBeenLastCalledWith(250);
+      outside.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+      outside.dispatchEvent(new MouseEvent('mousemove', {clientX: 400, bubbles: true}));
+      expect(drag.valueListener).toHaveBeenCalledTimes(1);
+    } finally {
+      outside.remove();
+    }
+  });
+
   test.each([
     {vertical: false, anchor: 30, distance: 80},
     {vertical: true, anchor: -60, distance: -100}
