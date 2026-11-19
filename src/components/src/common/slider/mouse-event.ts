@@ -45,6 +45,8 @@ export default class MouseEventHandler {
   }
 
   handleMouseDown: ReactMouseEventHandler = (e: MouseEvent) => {
+    // Stop the browser starting a text selection that can take over the drag.
+    e.preventDefault();
     document.addEventListener('mouseup', this.mouseup);
     document.addEventListener('mousemove', this.mousemove);
     if (this.setAnchor) {
