@@ -198,6 +198,7 @@ function InteractionManagerFactory(
         {enableCameraTour && (
           <CameraTourConfig
             tour={cameraTour}
+            annotations={annotations}
             enabled={cameraTourEnabled}
             pathVisible={cameraTourPathVisible}
             selection={cameraTourSelection}
