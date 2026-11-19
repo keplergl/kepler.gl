@@ -1649,9 +1649,17 @@ test('path labels include authored Unicode names in their font atlas', () => {
   });
 });
 
-test('path labels override globe backface culling without disabling depth testing', () => {
-  const layers = getCameraTourPathLayers(tour);
-  expect(layers[2].props.parameters).toEqual({cull: false});
+test('flat path overlays meshes while globe path preserves depth occlusion', () => {
+  for (const layer of getCameraTourPathLayers(tour)) {
+    expect(layer.props.parameters).toMatchObject({
+      depthCompare: 'always',
+      depthWriteEnabled: false
+    });
+  }
+  const globeLayers = getCameraTourPathLayers(tour, undefined, true);
+  expect(globeLayers[0].props.parameters?.depthCompare).toBeUndefined();
+  expect(globeLayers[1].props.parameters?.depthCompare).toBeUndefined();
+  expect(globeLayers[2].props.parameters).toEqual({cull: false});
 });
 
 test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {
