@@ -34,6 +34,7 @@ import {
   getTimeRangeFilterKeyframes,
   getAnimatableFilters,
   getResolutionSetting,
+  RESOLUTIONS,
   getVideoExportContainer,
   scaleToVideoExport,
   scaleZoomOpacityForVideoExport
@@ -621,22 +622,34 @@ const ExportVideoModalFactory = () => {
     const keplerUI = useMemo(
       () => ({
         ...KEPLER_UI,
-        ItemSelector: (props: any) => (
-          <LightItemSelector
-            {...props}
-            {...(props.options?.some(option => option?.value === 'webm') &&
-            videoConfiguration.mediaType === NATIVE_WEBM_FORMAT.value
-              ? {selectedItems: NATIVE_WEBM_FORMAT}
-              : {})}
-            options={
-              props.options?.some(option => option?.value === 'webm')
-                ? [...props.options, NATIVE_WEBM_FORMAT]
-                : hasCameraTour && props.options?.includes('Orbit (90º)')
-                ? [...props.options, CAMERA_TOUR_PRESET]
-                : props.options
-            }
-          />
-        ),
+        ItemSelector: (props: any) => {
+          const resolutionRatio = props.options?.find(option => option?.aspectRatio)?.aspectRatio;
+          return (
+            <LightItemSelector
+              {...props}
+              {...(props.options?.some(option => option?.value === 'webm') &&
+              videoConfiguration.mediaType === NATIVE_WEBM_FORMAT.value
+                ? {selectedItems: NATIVE_WEBM_FORMAT}
+                : {})}
+              {...(resolutionRatio
+                ? {
+                    selectedItems: getResolutionSetting(
+                      videoConfiguration.resolution || props.selectedItems?.value || '1280x720'
+                    )
+                  }
+                : {})}
+              options={
+                resolutionRatio
+                  ? RESOLUTIONS.filter(option => option.aspectRatio === resolutionRatio)
+                  : props.options?.some(option => option?.value === 'webm')
+                  ? [...props.options, NATIVE_WEBM_FORMAT]
+                  : hasCameraTour && props.options?.includes('Orbit (90º)')
+                  ? [...props.options, CAMERA_TOUR_PRESET]
+                  : props.options
+              }
+            />
+          );
+        },
         Slider: (props: any) => (
           <LightSlider
             {...props}
@@ -648,7 +661,12 @@ const ExportVideoModalFactory = () => {
           />
         )
       }),
-      [hasCameraTour, cameraTourDurationMs, videoConfiguration.mediaType]
+      [
+        hasCameraTour,
+        cameraTourDurationMs,
+        videoConfiguration.mediaType,
+        videoConfiguration.resolution
+      ]
     );
 
     if (!hubble || !defaultFormatReady) {

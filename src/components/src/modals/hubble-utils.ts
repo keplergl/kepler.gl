@@ -518,15 +518,23 @@ export function parseSetCameraType(strCameraType: string, viewState: MapViewStat
   return modifiedViewState;
 }
 
-type Resolution = {value: string; label: string; width: number; height: number};
+type Resolution = {
+  value: string;
+  label: string;
+  width: number;
+  height: number;
+  aspectRatio: string;
+};
 
-const RESOLUTIONS: Resolution[] = [
-  {value: '960x540', label: 'Good (540p)', width: 960, height: 540},
-  {value: '1280x720', label: 'High (720p)', width: 1280, height: 720},
-  {value: '1920x1080', label: 'Highest (1080p)', width: 1920, height: 1080},
-  {value: '640x480', label: 'Good (480p)', width: 640, height: 480},
-  {value: '1280x960', label: 'High (960p)', width: 1280, height: 960},
-  {value: '1920x1440', label: 'Highest (1440p)', width: 1920, height: 1440}
+export const RESOLUTIONS: Resolution[] = [
+  {value: '960x540', label: 'Good (540p)', width: 960, height: 540, aspectRatio: '16:9'},
+  {value: '1280x720', label: 'High (720p)', width: 1280, height: 720, aspectRatio: '16:9'},
+  {value: '1920x1080', label: 'Full HD (1080p)', width: 1920, height: 1080, aspectRatio: '16:9'},
+  {value: '2560x1440', label: 'Quad HD (1440p)', width: 2560, height: 1440, aspectRatio: '16:9'},
+  {value: '3840x2160', label: 'Ultra HD (4K)', width: 3840, height: 2160, aspectRatio: '16:9'},
+  {value: '640x480', label: 'Good (480p)', width: 640, height: 480, aspectRatio: '4:3'},
+  {value: '1280x960', label: 'High (960p)', width: 1280, height: 960, aspectRatio: '4:3'},
+  {value: '1920x1440', label: 'Highest (1440p)', width: 1920, height: 1440, aspectRatio: '4:3'}
 ];
 
 export function getResolutionSetting(value: string): Resolution {
