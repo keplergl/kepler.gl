@@ -71,6 +71,15 @@ function setup(
   return {commit, updateMap, toggle};
 }
 
+test('exposes the full bookmark name on hover and updates it after renaming', () => {
+  const name = 'A long descriptive bookmark name that extends beyond the side panel';
+  setup([{...initial[0], name}]);
+  const input = screen.getByRole('textbox', {name: 'Bookmark name 1'});
+  expect(input).toHaveAttribute('title', name);
+  fireEvent.change(input, {target: {value: `${name} updated`}});
+  expect(input).toHaveAttribute('title', `${name} updated`);
+});
+
 test('captures, renames and deletes a bookmark without datasets', () => {
   const {commit} = setup();
   fireEvent.click(screen.getByRole('button', {name: 'Add Bookmark'}));

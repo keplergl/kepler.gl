@@ -212,6 +212,7 @@ function SortableBookmark({
       </DragHandle>
       <InlineInput
         aria-label={`${message('bookmarkName', 'Bookmark name')} ${index + 1}`}
+        title={bookmark.name}
         value={bookmark.name}
         onChange={event =>
           onChange(
