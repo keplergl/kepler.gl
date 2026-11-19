@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import type {DeckProps} from '@deck.gl/core';
 import styled, {ThemeProvider, useTheme} from 'styled-components';
 
 import {
@@ -466,14 +467,29 @@ const ExportVideoModalFactory = () => {
       return effects;
     }, [visState, videoEffects, mapState]);
 
+    const onBeforeRender = useCallback<NonNullable<DeckProps['onBeforeRender']>>(
+      ({device}) => {
+        const canvasContext = device.canvasContext;
+        if (canvasContext && !canvasContext.props.autoResize) {
+          // MapLibre owns this canvas. A quality change resizes its buffer
+          // without changing CSS size, so luma's observer may not fire. Sync
+          // the cached size before Deck computes viewports and effect buffers.
+          const {width, height} = canvasContext.canvas;
+          canvasContext.setDrawingBufferSize(width, height);
+        }
+        animateEffects();
+      },
+      [animateEffects]
+    );
+
     const deckPropsWithEffects = useMemo(
       () => ({
         ...hubbleDeckGlProps,
         _isExport: true,
         effects: deckEffects,
-        onBeforeRender: animateEffects
+        onBeforeRender
       }),
-      [hubbleDeckGlProps, deckEffects, animateEffects]
+      [hubbleDeckGlProps, deckEffects, onBeforeRender]
     );
 
     const onViewChange = useCallback(

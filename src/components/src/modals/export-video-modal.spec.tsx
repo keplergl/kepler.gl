@@ -9,8 +9,15 @@ import {act, fireEvent, render, renderHook, screen, waitFor} from '@testing-libr
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 import {MapSplitMode} from '@kepler.gl/constants';
-import {WebMercatorViewport} from '@deck.gl/core';
+import {WebMercatorViewport, _LayersPass as LayersPass} from '@deck.gl/core';
+import {CanvasContext} from '@luma.gl/core';
+import {isBrowser} from '@probe.gl/env';
 import PointLayer from '../../../layers/src/point-layer/point-layer';
+
+jest.mock('@probe.gl/env', () => {
+  const actual = jest.requireActual('@probe.gl/env');
+  return {...actual, isBrowser: jest.fn(actual.isBrowser)};
+});
 
 beforeAll(() => {
   window.IntersectionObserver = class {
@@ -1227,7 +1234,9 @@ describe('ExportVideoModal', () => {
             viewState: {latitude: 0, longitude: 0}
           });
         });
-        mockExportVideoPanelContainer.mock.lastCall[0].deckProps.onBeforeRender();
+        mockExportVideoPanelContainer.mock.lastCall[0].deckProps.onBeforeRender({
+          device: {canvasContext: null}
+        });
         return mockComputeDeckEffects.mock.lastCall[0].visState.effects[0].deckEffect;
       };
       expect(draw(0).outputUniformShadow).toBe(true);
@@ -1336,6 +1345,87 @@ describe('ExportVideoModal', () => {
       expect(window.devicePixelRatio).toBe(originalDpr);
     });
 
+    test('fills the resized basemap with Deck at 1080p, 1440p, and 4K without clearing it', async () => {
+      await renderAndWaitForPanel();
+      const {exportVideoWidth, deckProps} = mockExportVideoPanelContainer.mock.lastCall[0];
+      const previewHeight = (exportVideoWidth * 9) / 16;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280;
+      canvas.height = 720;
+      Object.defineProperties(canvas, {
+        clientWidth: {value: exportVideoWidth},
+        clientHeight: {value: previewHeight}
+      });
+      // Keep luma's real size tracking and Deck's real viewport calculation;
+      // only replace the GPU framebuffer and render-pass operations.
+      class TestCanvasContext extends CanvasContext {
+        _configureDevice() {
+          return undefined;
+        }
+        _getCurrentFramebuffer() {
+          return {width: this.drawingBufferWidth, height: this.drawingBufferHeight};
+        }
+      }
+      isBrowser.mockReturnValueOnce(true);
+      const canvasContext = new TestCanvasContext({canvas, autoResize: false});
+      canvasContext.getCurrentFramebuffer();
+      const renderPass = {setParameters: jest.fn(), end: jest.fn()};
+      const device = {
+        type: 'webgl',
+        canvasContext,
+        beginRenderPass: () => renderPass,
+        submit: jest.fn()
+      };
+      const layersPass = new LayersPass(device);
+      const viewport = new WebMercatorViewport({width: exportVideoWidth, height: previewHeight});
+      const setWidth = jest.spyOn(canvas, 'width', 'set');
+      const setHeight = jest.spyOn(canvas, 'height', 'set');
+
+      try {
+        for (const [width, height] of [
+          [1280, 720],
+          [1920, 1080],
+          [2560, 1440],
+          [3840, 2160],
+          [1280, 720]
+        ]) {
+          // MapLibre changes the backing buffer without changing CSS size,
+          // so luma's ResizeObserver does not update its cached dimensions.
+          canvas.width = width;
+          canvas.height = height;
+          setWidth.mockClear();
+          setHeight.mockClear();
+          deckProps.onBeforeRender({device});
+          layersPass.render({layers: [], viewports: [viewport], clearCanvas: false});
+
+          expect(renderPass.setParameters).toHaveBeenLastCalledWith({
+            viewport: [0, 0, width, height]
+          });
+          expect(setWidth).not.toHaveBeenCalled();
+          expect(setHeight).not.toHaveBeenCalled();
+        }
+      } finally {
+        setWidth.mockRestore();
+        setHeight.mockRestore();
+        canvasContext.destroy();
+      }
+    });
+
+    test('preserves a pending resize when Deck owns the canvas', async () => {
+      await renderAndWaitForPanel();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280;
+      canvas.height = 720;
+      isBrowser.mockReturnValueOnce(true);
+      const canvasContext = new CanvasContext({canvas, autoResize: true});
+      canvasContext.setDrawingBufferSize(3840, 2160);
+      mockExportVideoPanelContainer.mock.lastCall[0].deckProps.onBeforeRender({
+        device: {canvasContext}
+      });
+      expect(canvasContext.getDrawingBufferSize()).toEqual([3840, 2160]);
+      canvasContext.destroy();
+    });
+
     test('resizes the capture buffer with the current quality before passive effects run', async () => {
       const canvas = document.createElement('canvas');
       function ResizePreview({exportVideoWidth}) {
@@ -1367,19 +1457,19 @@ describe('ExportVideoModal', () => {
         });
       };
 
-      for (const resolution of ['1920x1080', '1280x720', '640x360', '1280x1280']) {
+      for (const resolution of ['1920x1080', '1280x720', '960x540', '1280x960']) {
         setResolution(resolution);
         expect([canvas.width, canvas.height]).toEqual(resolution.split('x').map(Number));
       }
 
       act(() => panel.setState({previewing: true}));
-      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
+      expect([canvas.width, canvas.height]).toEqual([1280, 960]);
       act(() => panel.setState({previewing: false, rendering: true}));
-      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
+      expect([canvas.width, canvas.height]).toEqual([1280, 960]);
 
       rerender(<ExportVideoModal {...DEFAULT_PROPS} containerW={1800} />);
       expect(mockHubbleContainerRef.current).toBe(panel);
-      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
+      expect([canvas.width, canvas.height]).toEqual([1280, 960]);
       unmount();
       expect(window.devicePixelRatio).toBe(originalDpr);
     });
