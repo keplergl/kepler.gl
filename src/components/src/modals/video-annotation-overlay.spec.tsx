@@ -266,3 +266,24 @@ test('mounts regular preview annotations only inside its own map and removes the
   expect(document.querySelector('[data-annotation-id="label"]')).toBeNull();
   expect(domtoimage.toPng).not.toHaveBeenCalled();
 });
+
+test('applies the Kepler box model only to the offscreen capture subtree', async () => {
+  const {canvas, frame} = setup({annotations: [{...annotation, autoSize: false, textWidth: 150}]});
+  const hostLabel = document.createElement('div');
+  hostLabel.style.boxSizing = 'content-box';
+  document.body.appendChild(hostLabel);
+  try {
+    jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+      const label = node.querySelector('[data-annotation-part="text"]') as HTMLElement;
+      expect(getComputedStyle(label).boxSizing).toBe('border-box');
+      expect(getComputedStyle(label).width).toBe('150px');
+      expect(getComputedStyle(label.firstElementChild as HTMLElement).boxSizing).toBe('border-box');
+      expect(getComputedStyle(hostLabel).boxSizing).toBe('content-box');
+      return 'data:image/png;base64,annotation';
+    });
+    await act(async () => compositeVideoAnnotations(canvas, frame));
+    expect(document.querySelector('[data-video-annotation-capture]')).toBeNull();
+  } finally {
+    hostLabel.remove();
+  }
+});

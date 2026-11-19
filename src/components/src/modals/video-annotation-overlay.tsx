@@ -150,6 +150,17 @@ export async function compositeVideoAnnotations(
   const mount = document.createElement('div');
   mount.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
   mount.setAttribute('aria-hidden', 'true');
+  // This offscreen root is outside Kepler's scoped GlobalStyle reset.
+  mount.setAttribute('data-video-annotation-capture', '');
+  const reset = document.createElement('style');
+  reset.textContent = `
+    [data-video-annotation-capture] *,
+    [data-video-annotation-capture] *::before,
+    [data-video-annotation-capture] *::after {
+      box-sizing: border-box;
+    }
+  `;
+  mount.appendChild(reset);
   const rasterNode = document.createElement('div');
   Object.assign(rasterNode.style, {
     position: 'relative',
