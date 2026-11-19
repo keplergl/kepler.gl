@@ -569,13 +569,21 @@ const ExportVideoModalFactory = () => {
       // so preview stays aligned and recording still uses the selected quality.
       if (isSwipeMode || isGlobeEnabled) return undefined;
 
-      const {width} = getResolutionSetting(videoConfiguration.resolution || '');
-      const scaledDpr = exportVideoWidth ? Math.max(1, width / exportVideoWidth) : 1;
       const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
 
       Object.defineProperty(window, 'devicePixelRatio', {
         configurable: true,
-        get: () => scaledDpr,
+        get: () => {
+          // Hubble resizes its map in the child's componentDidUpdate, before
+          // this effect reruns. Read the live settings so that resize and Deck
+          // both use the new ratio, including while preview playback requests 1.
+          const panel = hubbleContainerRef.current;
+          const {width} = getResolutionSetting(
+            panel?.state?.resolution || videoConfiguration.resolution || ''
+          );
+          const previewWidth = panel?.props?.exportVideoWidth ?? exportVideoWidth;
+          return previewWidth ? Math.max(1, width / previewWidth) : 1;
+        },
         set: () => {
           // no-op: ignore hubble.gl dropping DPR to 1 during preview
         }
