@@ -30,12 +30,17 @@ export function resolveCameraTourExportFrame<T extends object>(
   frame: T,
   tour: CameraTour | null | undefined,
   current: object = {},
-  globe = false
+  globe = false,
+  zoomOffset = 0
 ): T {
   const time = (frame as {cameraTourTime?: number}).cameraTourTime;
   if (time === undefined) return frame;
   const camera = evaluateCameraTour(tour, time);
-  return {...current, ...(camera ? cameraForMap(camera, globe) : {})} as T;
+  if (!camera) return {...current} as T;
+  // Globe bounds apply to the authored zoom, before fitting the smaller export
+  // preview. Clamping the scaled zoom directly would enlarge the globe again.
+  const adapted = cameraForMap({...camera, zoom: camera.zoom - zoomOffset}, globe);
+  return {...current, ...adapted, zoom: adapted.zoom + zoomOffset} as T;
 }
 
 /** Keep Hubble's encoder/capture implementation and its ordinary presets intact. */

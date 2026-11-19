@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {MapView, type MapViewState} from '@deck.gl/core';
+import {TileLayer} from '@deck.gl/geo-layers';
 import {
   DEFAULT_MAPBOX_API_URL,
   EMPTY_MAPBOX_STYLE,
@@ -239,12 +240,11 @@ export function getHubbleDeckGlProps(
   //   verbatim (skipping its internal 2D-only createKeplerLayers path), and the
   //   kepler layers are built from `mapState.globe`, so composite layers (e.g.
   //   the heatmap) emit their globe-conforming sublayers.
-  const globeBaseLayers = getGlobeBaseLayers({
-    mapboxApiAccessToken: mapboxApiAccessToken || '',
+  const globeBaseLayers = getGlobeExportBaseLayers(keplerState, mapboxApiAccessToken);
+  const globeTopLayers = getGlobeTopLayers({
     globe,
-    mapStyleType: keplerState.mapStyle?.styleType
+    zoom: keplerState.mapState.zoom - (keplerState.mapState.zoomOffset || 0)
   });
-  const globeTopLayers = getGlobeTopLayers({globe});
   const dataLayers = computeDeckLayers(keplerState, {
     primaryMap: true,
     mapboxApiAccessToken,
@@ -261,15 +261,15 @@ export function getHubbleDeckGlProps(
   // fires and the export hangs. Provide an explicit initialViewState (deck.gl
   // uses it to seed the controller when no controlled viewState is supplied) so
   // the globe camera is valid, tiles resolve, and interaction works.
-  const {longitude, latitude, zoom, pitch, bearing} = keplerState.mapState || {};
+  const {longitude, latitude, zoom, pitch, bearing, minZoom, maxZoom} = keplerState.mapState || {};
   const initialViewState = {
     longitude,
     latitude,
     zoom,
     pitch: pitch || 0,
     bearing: bearing || 0,
-    minZoom: GLOBE_MIN_ZOOM,
-    maxZoom: GLOBE_MAX_ZOOM
+    minZoom: minZoom ?? GLOBE_MIN_ZOOM,
+    maxZoom: maxZoom ?? GLOBE_MAX_ZOOM
   };
 
   return {
@@ -280,8 +280,8 @@ export function getHubbleDeckGlProps(
     // Match the interactive globe controller bounds so panning/zoom feels the
     // same in the preview as on the main map.
     controller: {
-      minZoom: GLOBE_MIN_ZOOM,
-      maxZoom: GLOBE_MAX_ZOOM
+      minZoom: minZoom ?? GLOBE_MIN_ZOOM,
+      maxZoom: maxZoom ?? GLOBE_MAX_ZOOM
     },
     initialViewState,
     views: new KeplerGlobeView({
@@ -297,8 +297,39 @@ export function getHubbleDeckGlProps(
       clear: true,
       clearColor: false
     }),
-    layers: [...globeBaseLayers, ...dataLayers, ...globeTopLayers]
+    layers: [
+      ...globeBaseLayers,
+      ...scaleGlobeExportTileLayers(dataLayers, keplerState.mapState.zoomOffset || 0),
+      ...globeTopLayers
+    ]
   };
+}
+
+/** Tile selection uses viewport zoom, so retain live-map detail after fitting the preview. */
+function scaleGlobeExportTileLayers(layers: any[], zoomOffset: number): any[] {
+  if (!zoomOffset) return layers;
+  return layers.map(layer =>
+    Array.isArray(layer)
+      ? scaleGlobeExportTileLayers(layer, zoomOffset)
+      : layer instanceof TileLayer
+      ? layer.clone({zoomOffset: (layer.props.zoomOffset || 0) - zoomOffset})
+      : layer
+  );
+}
+
+/** Preserve source-map tile detail and atmosphere fades in the smaller export viewport. */
+function getGlobeExportBaseLayers(keplerState: KeplerState, mapboxApiAccessToken = '') {
+  const {globe, latitude, zoom, zoomOffset = 0} = keplerState.mapState;
+  return scaleGlobeExportTileLayers(
+    getGlobeBaseLayers({
+      mapboxApiAccessToken,
+      globe,
+      mapStyleType: keplerState.mapStyle?.styleType,
+      latitude,
+      zoom: zoom - zoomOffset
+    }),
+    zoomOffset
+  );
 }
 
 /**
@@ -323,24 +354,27 @@ export function getGlobeExportLayers(
   }
 ) {
   const globe = keplerState.mapState?.globe;
-  const globeBaseLayers = getGlobeBaseLayers({
-    mapboxApiAccessToken: mapboxApiAccessToken || '',
+  const frameState = viewState
+    ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}}
+    : keplerState;
+  const globeBaseLayers = getGlobeExportBaseLayers(frameState, mapboxApiAccessToken);
+  const globeTopLayers = getGlobeTopLayers({
     globe,
-    mapStyleType: keplerState.mapStyle?.styleType
+    zoom: frameState.mapState.zoom - (frameState.mapState.zoomOffset || 0)
   });
-  const globeTopLayers = getGlobeTopLayers({globe});
   // Same as hubble createKeplerLayers: fold the animated camera into mapState so
   // zoom-dependent props (scatterplot radiusScale) update each frame.
-  const dataLayers = computeDeckLayers(
-    viewState ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}} : keplerState,
-    {
-      mapIndex,
-      primaryMap: mapIndex === 0,
-      mapboxApiAccessToken,
-      mapboxApiUrl
-    }
-  );
-  return [...globeBaseLayers, ...dataLayers, ...globeTopLayers];
+  const dataLayers = computeDeckLayers(frameState, {
+    mapIndex,
+    primaryMap: mapIndex === 0,
+    mapboxApiAccessToken,
+    mapboxApiUrl
+  });
+  return [
+    ...globeBaseLayers,
+    ...scaleGlobeExportTileLayers(dataLayers, frameState.mapState.zoomOffset || 0),
+    ...globeTopLayers
+  ];
 }
 
 /** Use the same opacity and split-visibility rules as the live map for each frame. */
@@ -404,9 +438,11 @@ type VideoExportViewState = MapViewState & {
   height?: number;
   altitude?: number;
   globe?: {enabled?: boolean};
+  zoomOffset?: number;
 };
 
 type ScaledVideoViewState = MapViewState & {
+  zoomOffset?: number;
   width: number;
   height: number;
   altitude?: number;
@@ -423,11 +459,11 @@ export function scaleToVideoExport(
   const isGlobe = Boolean(viewState.globe?.enabled);
   const srcWidth = Number(viewState.width) || 0;
   const srcHeight = Number(viewState.height) || 0;
-  const canScaleZoom = !isGlobe && srcWidth > 0 && srcHeight > 0;
-  const zoom = canScaleZoom
-    ? viewState.zoom +
-      (Math.log2(Math.min(container.width / srcWidth, container.height / srcHeight)) || 0)
-    : viewState.zoom;
+  const zoomDelta =
+    srcWidth > 0 && srcHeight > 0
+      ? Math.log2(Math.min(container.width / srcWidth, container.height / srcHeight)) || 0
+      : 0;
+  const zoom = viewState.zoom + zoomDelta;
 
   return {
     longitude: viewState.longitude,
@@ -438,6 +474,16 @@ export function scaleToVideoExport(
     altitude: viewState.altitude,
     minZoom: viewState.minZoom,
     maxZoom: viewState.maxZoom,
+    // Globe zoom is also measured in pixels. Shift its controller limits with
+    // the preview, or the controller/tour clamp would undo the resize. Retain
+    // the cumulative offset for layer sizing and authored-camera evaluation.
+    ...(isGlobe
+      ? {
+          minZoom: GLOBE_MIN_ZOOM + (viewState.zoomOffset || 0) + zoomDelta,
+          maxZoom: GLOBE_MAX_ZOOM + (viewState.zoomOffset || 0) + zoomDelta,
+          zoomOffset: (viewState.zoomOffset || 0) + zoomDelta
+        }
+      : {}),
     width: container.width,
     height: container.height
   };

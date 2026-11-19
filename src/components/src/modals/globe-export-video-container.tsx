@@ -323,7 +323,8 @@ export class GlobeExportVideoPanelContainer extends Component<
         viewState,
         this.props.mapData.visState.cameraTour,
         this.state.viewState,
-        Boolean(this.props.mapData.mapState.globe?.enabled)
+        Boolean(this.props.mapData.mapState.globe?.enabled),
+        this.props.mapData.mapState.zoomOffset || 0
       )
     });
   };
