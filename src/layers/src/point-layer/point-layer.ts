@@ -989,7 +989,10 @@ export default class PointLayer extends Layer {
           getPosition,
           sharedProps,
           getPixelOffset,
-          updateTriggers,
+          updateTriggers: {
+            ...updateTriggers,
+            getRadius: {...updateTriggers.getRadius, radiusScale}
+          },
           getFiltered: data.getFiltered
         },
         this.geoArrowVector
