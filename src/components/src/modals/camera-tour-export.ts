@@ -57,6 +57,55 @@ export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
 
+    componentDidMount() {
+      super.componentDidMount?.();
+      const {adapter} = this.state;
+      if (!adapter) return;
+
+      let requestedFrame = 0;
+      let committedFrame = -1;
+      const seek = adapter.seek.bind(adapter);
+      const onAfterRender = adapter.onAfterRender.bind(adapter);
+
+      adapter.seek = (options: {timeMs: number}) => {
+        const frame = ++requestedFrame;
+        const capture = adapter.videoCapture;
+        // Hubble unlocks capture before seeking. React may defer the camera
+        // update, so map render events must not capture the previous view.
+        committedFrame = -1;
+        seek(options);
+        // This callback runs after the camera/layer props reach the preview.
+        // Request a commit even for holds and filter-only animation frames.
+        this.setState({}, () => {
+          if (
+            requestedFrame !== frame ||
+            adapter.videoCapture !== capture ||
+            !capture.isRecording()
+          )
+            return;
+          committedFrame = frame;
+          adapter.deck?.redraw('video capture frame committed');
+        });
+      };
+      adapter.onAfterRender = (nextFrame: (timeMs: number) => void, readyToCapture = true) => {
+        // Keep Hubble's tile/layer readiness checks, and only accept a render
+        // after the requested frame has committed. Encoding remains serialized.
+        onAfterRender(nextFrame, readyToCapture && committedFrame === requestedFrame);
+      };
+    }
+
+    private resetVideoCapture() {
+      const {adapter} = this.state;
+      const capture = new adapter.videoCapture.constructor();
+      let frameIndex = 0;
+      // Hubble floors 1000 / fps and accumulates that error on every frame.
+      // Derive each timestamp from its index, preserving its inclusive endpoint.
+      capture._getNextTimeMs = () =>
+        capture.timecode.start + (++frameIndex * 1000) / capture.timecode.framerate;
+      adapter.videoCapture = capture;
+      return capture;
+    }
+
     getCanvasSize() {
       // Hubble's built-in lookup does not include Kepler's higher resolutions.
       const {width, height} = getResolutionSetting(this.state.resolution);
@@ -111,14 +160,13 @@ export function withCameraTourExport(Base: any) {
         this.setState({encodingError: undefined, encodingNotice: undefined});
       }
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) {
-        adapter.videoCapture = new adapter.videoCapture.constructor();
+        this.resetVideoCapture();
         return super.onRenderVideo();
       }
       if (this.state.rendering || this.state.saving) return;
       // Late completion of a cancelled add() must not advance a new recording.
       adapter.videoCapture.encoder?.cancel?.();
-      const capture = new adapter.videoCapture.constructor();
-      adapter.videoCapture = capture;
+      const capture = this.resetVideoCapture();
       this.setState({
         encodingError: undefined,
         encodingNotice: undefined,
@@ -159,8 +207,7 @@ export function withCameraTourExport(Base: any) {
     }
 
     onPreviewVideo() {
-      const adapter = this.state.adapter;
-      adapter.videoCapture = new adapter.videoCapture.constructor();
+      this.resetVideoCapture();
       super.onPreviewVideo();
     }
 

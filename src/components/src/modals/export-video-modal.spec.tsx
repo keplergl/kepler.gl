@@ -1727,6 +1727,255 @@ describe('Camera Animation video export', () => {
     }
   );
 
+  describe('regular export frame synchronization', () => {
+    function mountCapture({mediaType = 'webm', holdCamera = false} = {}) {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      const encoders = [];
+      const nextFrame = jest.fn();
+      let canvas;
+      let requestedTime = 0;
+      const layer = {isLoaded: true};
+      const deck = {
+        props: {layers: [layer]},
+        getCanvas: () => canvas,
+        redraw: jest.fn()
+      };
+      class Encoder {
+        frames = [];
+        pending = [];
+        constructor() {
+          encoders.push(this);
+        }
+        start() {
+          return undefined;
+        }
+        add(source) {
+          this.frames.push({
+            time: Number(source.dataset.time),
+            zoom: Number(source.dataset.zoom)
+          });
+          return new Promise(resolve => this.pending.push(resolve));
+        }
+        cancel() {
+          return undefined;
+        }
+      }
+      class Base extends React.Component {
+        constructor(props) {
+          super(props);
+          const adapter = new DeckAdapter({
+            animationManager: {
+              setKeyframes: jest.fn(),
+              timeline: {setTime: time => (requestedTime = time)},
+              draw: () =>
+                holdCamera
+                  ? this.setState({filterTime: requestedTime})
+                  : this.setViewState({
+                      ...camera,
+                      zoom: camera.zoom + requestedTime / 1000,
+                      frameTime: requestedTime
+                    })
+            }
+          });
+          adapter.setDeck(deck);
+          this.state = {adapter, mediaType, viewState: {...camera, frameTime: 0}};
+        }
+        setViewState(viewState) {
+          this.setState({viewState});
+        }
+        getFilterKeyframes() {
+          return {};
+        }
+        getTripKeyframes() {
+          return {};
+        }
+        getCameraKeyframes() {
+          return {};
+        }
+        getFormatConfigs() {
+          return {};
+        }
+        getTimecode() {
+          return {start: 0, end: 1000, framerate: 30};
+        }
+        getFileName() {
+          return 'capture-test';
+        }
+        onRenderVideo() {
+          this.state.adapter.render({Encoder: this.getEncoder(), timecode: this.getTimecode()});
+        }
+        onPreviewVideo() {
+          this.onRenderVideo();
+        }
+        onStop() {
+          this.state.adapter.stop({abort: true});
+          this.setState({rendering: false, saving: false});
+        }
+        render() {
+          return (
+            <canvas
+              ref={element => (canvas = element)}
+              data-time={this.state.filterTime ?? this.state.viewState.frameTime}
+              data-zoom={this.state.viewState.zoom}
+            />
+          );
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const ref = React.createRef();
+      const result = render(
+        <Container ref={ref} mapData={{visState: {}, mapState: camera}} deckProps={{layers: []}} />
+      );
+      const container = ref.current;
+      container.getEncoder = () => Encoder;
+      const adapter = container.state.adapter;
+      const draw = (ready = true) => adapter.onAfterRender(nextFrame, ready);
+      return {...result, container, adapter, draw, encoders, layer, deck};
+    }
+
+    async function settleCapture() {
+      // Let the real Hubble promise chain finish while act still holds React's commit.
+      for (let i = 0; i < 12; i++) await Promise.resolve();
+    }
+
+    test.each(['webm', 'webm-native'])(
+      '%s waits for camera commits, tiles and each encoded frame without duplicating poses',
+      async mediaType => {
+        const {container, adapter, draw, encoders, layer} = mountCapture({mediaType});
+        act(() => {
+          container.onRenderVideo();
+          draw();
+          draw();
+          expect(encoders[0].frames).toEqual([]);
+        });
+        const encoder = encoders[0];
+        act(() => draw());
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0]);
+        await act(async () => {
+          encoder.pending.shift()();
+          await settleCapture();
+          expect(adapter.videoCapture.timeMs).toBe(1000 / 30);
+          draw();
+          draw();
+          expect(encoder.frames.map(frame => frame.time)).toEqual([0]);
+        });
+        act(() => {
+          layer.isLoaded = false;
+          draw();
+          layer.isLoaded = true;
+          draw(false);
+          draw(false);
+        });
+        expect(adapter.videoCapture.timeMs).toBe(1000 / 30);
+        expect(encoder.frames).toHaveLength(1);
+        act(() => {
+          draw();
+          draw();
+        });
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0, 1000 / 30]);
+        expect(encoder.frames[1].zoom).toBeCloseTo(camera.zoom + 1 / 30);
+        await act(async () => {
+          encoder.pending.shift()();
+          await settleCapture();
+          draw();
+          expect(encoder.frames).toHaveLength(2);
+        });
+        act(() => draw());
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0, 1000 / 30, 2000 / 30]);
+      }
+    );
+
+    test('advances stationary-camera frames only after their filter state commits', async () => {
+      const {container, draw, encoders} = mountCapture({holdCamera: true});
+      act(() => container.onPreviewVideo());
+      const encoder = encoders[0];
+      act(() => draw());
+      await act(async () => {
+        encoder.pending.shift()();
+        await settleCapture();
+        draw();
+        expect(encoder.frames).toHaveLength(1);
+      });
+      act(() => draw());
+      expect(encoder.frames).toEqual([
+        {time: 0, zoom: camera.zoom},
+        {time: 1000 / 30, zoom: camera.zoom}
+      ]);
+    });
+
+    test('ignores a cancelled session commit when a new session is still pending', () => {
+      const {container, adapter, draw, encoders, deck} = mountCapture();
+      // Simulate render notifications caused by a commit requesting a deck redraw.
+      deck.redraw.mockImplementation(() => draw());
+      act(() => {
+        container.onRenderVideo();
+        const previous = adapter.videoCapture;
+        container.onStop({abort: true});
+        container.onRenderVideo();
+        expect(adapter.videoCapture).not.toBe(previous);
+        draw();
+        expect(encoders.map(encoder => encoder.frames.length)).toEqual([0, 0]);
+      });
+      expect(encoders[0].frames).toEqual([]);
+      expect(encoders[1].frames).toEqual([{time: 0, zoom: camera.zoom}]);
+      // Only the current session's committed frame may request capture.
+      expect(deck.redraw).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test.each([
+    ['onRenderVideo', 30, 125.25],
+    ['onRenderVideo', 60, 250.5],
+    ['onPreviewVideo', 30, 125.25],
+    ['onPreviewVideo', 60, 250.5]
+  ])(
+    '%s captures %sfps without accumulated drift from start %s',
+    async (method, framerate, start) => {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      const timestamps = [];
+      const timecode = {start, end: start + 10000, framerate};
+      let capture;
+      class Encoder {
+        start() {
+          return undefined;
+        }
+        async add() {
+          timestamps.push(capture.timeMs);
+        }
+      }
+      class Base {
+        state = {adapter: new DeckAdapter({})};
+        onRenderVideo() {
+          capture = this.state.adapter.videoCapture;
+          capture.render({Encoder, timecode, formatConfigs: {}});
+        }
+        onPreviewVideo() {
+          Base.prototype.onRenderVideo.call(this);
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const container = new Container();
+      const canvas = document.createElement('canvas');
+      for (let session = 0; session < 2; session++) {
+        timestamps.length = 0;
+        container[method]();
+        while (capture.isRecording()) {
+          await new Promise(resolve => {
+            capture.onStop = () => {
+              capture.recording = false;
+              resolve();
+            };
+            capture.capture(canvas, resolve);
+          });
+        }
+        expect(timestamps).toEqual(
+          Array.from({length: 10 * framerate + 1}, (_, index) => start + (index * 1000) / framerate)
+        );
+        expect(timestamps[timestamps.length - 1]).toBe(timecode.end);
+      }
+    }
+  );
+
   test('normal Stop preserves partial encoder output while abort cancels it', () => {
     const encoder = {cancel: jest.fn(), cancelAnnotationCapture: jest.fn()};
     const onStop = jest.fn();

@@ -466,7 +466,7 @@ export class SwipeExportVideoPanelContainer extends Component<
     this.activeEncoder = encoder;
     encoder.start();
 
-    const frameLengthMs = Math.floor(1000 / timecode.framerate);
+    let frameIndex = 0;
     let timeMs = timecode.start;
     let retryCount = 0;
     const MAX_RETRIES = 10;
@@ -527,7 +527,8 @@ export class SwipeExportVideoPanelContainer extends Component<
                 .add(offscreen)
                 .then(() => {
                   if (this.activeEncoder !== encoder) return;
-                  timeMs += frameLengthMs;
+                  frameIndex++;
+                  timeMs = timecode.start + (frameIndex * 1000) / timecode.framerate;
                   if (timeMs > timecode.end) {
                     this.setState({saving: true});
                     encoder
