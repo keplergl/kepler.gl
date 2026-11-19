@@ -145,11 +145,13 @@ function projectRulerArc(start: LngLatAltitude, end: LngLatAltitude, viewport: M
         )
       )
     );
+    // Cancel the common cos(lat) factor before atan2 to avoid 0/0 and
+    // cancellation at and near either pole.
     const longitude =
       start[0] * radians +
       Math.atan2(
-        Math.sin(bearing) * Math.sin(step) * Math.cos(lat),
-        Math.cos(step) - Math.sin(lat) * Math.sin(latitude)
+        Math.sin(bearing) * Math.sin(step),
+        Math.cos(lat) * Math.cos(step) - Math.sin(lat) * Math.sin(step) * Math.cos(bearing)
       );
     return viewport.project([
       longitude / radians,

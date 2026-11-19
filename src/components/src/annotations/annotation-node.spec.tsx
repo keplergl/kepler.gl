@@ -130,6 +130,58 @@ describe('AnnotationNode', () => {
     }
   );
 
+  test.each([
+    [
+      [0, 89.9999999999],
+      [45, 80],
+      [45, 85]
+    ],
+    [
+      [120, -89.9999999999],
+      [-30, -80],
+      [-30, -85]
+    ],
+    [
+      [0, 90],
+      [45, 80],
+      [45, 85]
+    ],
+    [
+      [45, 80],
+      [0, 90],
+      [45, 85]
+    ],
+    [
+      [120, -90],
+      [-30, -80],
+      [-30, -85]
+    ],
+    [
+      [-30, -80],
+      [120, -90],
+      [-30, -85]
+    ]
+  ])(
+    'places the midpoint on the destination meridian for polar ruler %j to %j',
+    (anchorPoint, endPoint, midpoint) => {
+      const globe = new GlobeViewport({
+        longitude: 0,
+        latitude: 0,
+        zoom: 0,
+        width: 800,
+        height: 600
+      });
+      const arc = makeMarker(
+        {...rulerAnnotation, anchorPoint, endPoint} as typeof rulerAnnotation,
+        globe,
+        true
+      ) as RulerAnnotationMarker;
+      const projected = globe.project(midpoint);
+      expect(arc.x + arc.mx).toBeCloseTo(projected[0]);
+      expect(arc.y + arc.my).toBeCloseTo(projected[1]);
+    }
+  );
+
   test('reports great-circle surface distance rather than the globe chord length', () => {
     expect(
       getRulerDistanceLabel({...rulerAnnotation, anchorPoint: [0, 0], endPoint: [90, 0]} as any)
