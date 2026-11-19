@@ -171,7 +171,7 @@ test('skips rasterization for annotations hidden by zoom opacity or globe occlus
 test('unmounts pending annotation DOM immediately when capture is canceled', async () => {
   const {canvas, frame} = setup();
   const abort = new AbortController();
-  jest.mocked(domtoimage.toPng).mockImplementation(() => new Promise(() => {}));
+  jest.mocked(domtoimage.toPng).mockImplementation(() => new Promise(() => undefined));
   let pending!: Promise<void>;
   await act(async () => {
     pending = compositeVideoAnnotations(canvas, frame, abort.signal);
