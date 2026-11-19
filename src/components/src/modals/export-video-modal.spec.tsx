@@ -12,6 +12,20 @@ import {MapSplitMode} from '@kepler.gl/constants';
 import {WebMercatorViewport} from '@deck.gl/core';
 import PointLayer from '../../../layers/src/point-layer/point-layer';
 
+beforeAll(() => {
+  window.IntersectionObserver = class {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  };
+});
+
 const mockExportVideoPanelContainer = jest.fn(() => (
   <div data-testid="export-video-panel">Mock Panel</div>
 ));
@@ -90,6 +104,7 @@ jest.mock('@kepler.gl/effects', () => ({
 }));
 
 jest.mock('./hubble-utils', () => ({
+  RESOLUTIONS: jest.requireActual('./hubble-utils').RESOLUTIONS,
   getStaticMapProps: jest.fn((_state, _onChange, _token) => ({
     latitude: 37.7,
     longitude: -122.4,
@@ -120,12 +135,9 @@ jest.mock('./hubble-utils', () => ({
       .map(Number);
     return {width: exportVideoWidth, height: exportVideoWidth / (width / height)};
   }),
-  getResolutionSetting: jest.fn(value => {
-    const [width, height] = String(value || '1280x720')
-      .split('x')
-      .map(Number);
-    return {value, width, height, label: value};
-  })
+  getResolutionSetting: jest.fn(value =>
+    jest.requireActual('./hubble-utils').getResolutionSetting(value)
+  )
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
@@ -485,6 +497,85 @@ describe('ExportVideoModal', () => {
     ui = mockExportVideoPanelContainer.mock.lastCall[1];
     expect(ui.ItemSelector({options}).props.selectedItems.value).toBe('webm-native');
     expect(DEFAULT_PROPS.exportVideo.mediaType).toBe('webm');
+  });
+
+  test('offers higher resolutions in regular export and retains the selected value', async () => {
+    await renderAndWaitForPanel(DEFAULT_PROPS);
+    const options = [{value: '1280x720', label: 'High (720p)', aspectRatio: '16:9'}];
+    const selector = () => {
+      const ui = mockExportVideoPanelContainer.mock.lastCall[1];
+      return ui.ItemSelector({
+        options,
+        multiSelect: false,
+        searchable: false,
+        getOptionValue: option => option.value,
+        displayOption: option => option.label,
+        onChange: resolution => mockHubbleContainerRef.current.props.onSettingsChange({resolution})
+      });
+    };
+    const {rerender} = renderWithThemeLocal(selector());
+    let selectedLabel = 'High (720p)';
+    for (const [resolution, label] of [
+      ['2560x1440', 'Quad HD (1440p)'],
+      ['3840x2160', 'Ultra HD (4K)']
+    ]) {
+      fireEvent.click(screen.getByText(selectedLabel));
+      fireEvent.click(screen.getByText(label));
+      expect(mockHubbleContainerRef.current.props.initialState.resolution).toBe(resolution);
+      rerender(selector());
+      expect(screen.getByText(label)).toBeInTheDocument();
+      selectedLabel = label;
+    }
+    const ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    const fourByThree = ui.ItemSelector({
+      options: [{value: '640x480', aspectRatio: '4:3'}]
+    });
+    expect(fourByThree.props.options.map(option => option.value)).toEqual([
+      '640x480',
+      '1280x960',
+      '1920x1440'
+    ]);
+  });
+
+  test.each([
+    ['swipe', ActualSwipeContainer],
+    ['globe', ActualGlobeContainer]
+  ])('%s export selects higher resolutions and uses their canvas dimensions', (mode, Container) => {
+    const ref = React.createRef();
+    const onSettingsChange = jest.fn();
+    renderWithThemeLocal(
+      <Container
+        ref={ref}
+        initialState={{resolution: '1280x720'}}
+        mapData={{
+          mapState: {
+            ...DEFAULT_PROPS.mapState,
+            width: 1280,
+            height: 720,
+            bearing: 0,
+            pitch: 0,
+            globe: {enabled: mode === 'globe'}
+          },
+          visState: {...DEFAULT_PROPS.visState, animationConfig: {}}
+        }}
+        exportVideoWidth={480}
+        mapProps={{}}
+        onSettingsChange={onSettingsChange}
+      />
+    );
+    fireEvent.click(screen.getByText('Settings'));
+    let selectedLabel = 'High (720p)';
+    for (const [resolution, label, width, height] of [
+      ['2560x1440', 'Quad HD (1440p)', 2560, 1440],
+      ['3840x2160', 'Ultra HD (4K)', 3840, 2160]
+    ]) {
+      fireEvent.click(screen.getByText(selectedLabel));
+      fireEvent.click(screen.getByText(label));
+      expect(onSettingsChange).toHaveBeenLastCalledWith(expect.objectContaining({resolution}));
+      expect(ref.current.getCanvasSize()).toEqual({width, height});
+      expect(screen.getByText(label)).toBeInTheDocument();
+      selectedLabel = label;
+    }
   });
 
   describe('capability-aware default format', () => {
@@ -1254,6 +1345,25 @@ describe('Camera Animation video export', () => {
   } = require('./camera-tour-export');
   const {CameraKeyframes} = require('@hubble.gl/core');
   const camera = {longitude: 179, latitude: 0, zoom: 4, bearing: 350, pitch: 30};
+  test.each([
+    ['2560x1440', 2560, 1440],
+    ['3840x2160', 3840, 2160]
+  ])(
+    'regular export uses %s for its canvas and encoder dimensions',
+    (resolution, width, height) => {
+      const {ExportVideoPanelContainer} = jest.requireActual('@hubble.gl/react');
+      const Container = withCameraTourExport(ExportVideoPanelContainer);
+      const instance = new Container({
+        initialState: {resolution},
+        mapData: {mapState: {...camera, width: 1280, height: 720}},
+        exportVideoWidth: 480
+      });
+      expect(instance.getCanvasSize()).toEqual({width, height});
+      expect(instance.getFormatConfigs().gif).toMatchObject({width, height});
+      expect(instance._getContainer()).toEqual({width: 480, height: 270});
+    }
+  );
+
   test('restores the camera and clears saving after a native encoding failure', () => {
     const encoders = require('./native-webm-encoder');
     let hooks;

@@ -15,6 +15,7 @@ import {
   getStaticMapProps,
   getAnimatableFilters,
   scaleToVideoExport,
+  getResolutionSetting,
   getVideoExportContainer,
   getHubbleDeckGlProps,
   getGlobeExportLayers,
@@ -328,10 +329,26 @@ describe('hubble-utils', () => {
     });
   });
 
-  describe('getVideoExportContainer', () => {
-    test('returns preview size matching the resolution aspect ratio', () => {
-      expect(getVideoExportContainer(540, '1280x720')).toEqual({width: 540, height: 303.75});
+  describe('getResolutionSetting', () => {
+    test.each([
+      ['2560x1440', 2560, 1440],
+      ['3840x2160', 3840, 2160]
+    ])('returns the export dimensions for %s', (resolution, width, height) => {
+      expect(getResolutionSetting(resolution)).toMatchObject({width, height});
     });
+
+    test.each(['', 'unknown'])('keeps the fallback dimensions for %j', resolution => {
+      expect(getResolutionSetting(resolution)).toMatchObject({width: 960, height: 540});
+    });
+  });
+
+  describe('getVideoExportContainer', () => {
+    test.each(['1280x720', '2560x1440', '3840x2160'])(
+      'keeps the preview size at the selected 16:9 aspect ratio for %s',
+      resolution => {
+        expect(getVideoExportContainer(540, resolution)).toEqual({width: 540, height: 303.75});
+      }
+    );
   });
 
   describe('scaleToVideoExport', () => {

@@ -6,6 +6,7 @@ import styled, {ThemeProvider, useTheme} from 'styled-components';
 import {SwipeEasing} from './swipe-composite-utils';
 import {NATIVE_WEBM_FORMAT} from './video-export-formats';
 import {CAMERA_TOUR_PRESET} from './camera-tour-export';
+import {RESOLUTIONS} from './hubble-utils';
 
 import Slider from '../common/slider/slider';
 import ItemSelector from '../common/item-selector/item-selector';
@@ -106,15 +107,6 @@ const FORMAT_OPTIONS = [
 ];
 
 const DEFAULT_PREVIEW_RESOLUTIONS: Record<string, string> = {'16:9': '1280x720', '4:3': '1280x960'};
-
-const RESOLUTION_OPTIONS = [
-  {value: '960x540', label: 'Good (540p)', aspectRatio: '16:9'},
-  {value: '1280x720', label: 'High (720p)', aspectRatio: '16:9'},
-  {value: '1920x1080', label: 'Highest (1080p)', aspectRatio: '16:9'},
-  {value: '640x480', label: 'Good (480p)', aspectRatio: '4:3'},
-  {value: '1280x960', label: 'High (960p)', aspectRatio: '4:3'},
-  {value: '1920x1440', label: 'Highest (1440p)', aspectRatio: '4:3'}
-];
 
 const CAMERA_PRESETS = [
   'None',
@@ -389,10 +381,8 @@ const SettingsTab: React.FC<{
 
       <StyledLabelCell>Quality</StyledLabelCell>
       <LightItemSelector
-        selectedItems={
-          RESOLUTION_OPTIONS.find(o => o.value === resolution) || RESOLUTION_OPTIONS[1]
-        }
-        options={RESOLUTION_OPTIONS.filter(o => o.aspectRatio === aspRatio)}
+        selectedItems={RESOLUTIONS.find(o => o.value === resolution) || RESOLUTIONS[1]}
+        options={RESOLUTIONS.filter(o => o.aspectRatio === aspRatio)}
         multiSelect={false}
         searchable={false}
         onChange={(val: any) => onChangeResolution(val?.value || val)}

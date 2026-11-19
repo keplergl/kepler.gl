@@ -5,7 +5,7 @@ import {cloneElement, createElement, Fragment} from 'react';
 import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
-import {getFlatExportLayers} from './hubble-utils';
+import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {VideoAnnotationPreview} from './video-annotation-overlay';
 import {createNativeWebMEncoder, NativeWebMEncoder} from './native-webm-encoder';
@@ -56,6 +56,12 @@ export function resolveCameraTourExportFrame<T extends object>(
 export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
+
+    getCanvasSize() {
+      // Hubble's built-in lookup does not include Kepler's higher resolutions.
+      const {width, height} = getResolutionSetting(this.state.resolution);
+      return {width, height};
+    }
 
     getBaseEncoder() {
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) return super.getEncoder();
