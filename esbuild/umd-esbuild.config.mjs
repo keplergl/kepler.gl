@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import esbuild from 'esbuild';
+import {nativeWebMMuxerPlugin} from './native-webm-muxer.mjs';
 import {replace} from 'esbuild-plugin-replace';
 import {umdWrapper} from 'esbuild-plugin-umd-wrapper';
 
@@ -142,6 +143,7 @@ const config = {
   },
 
   plugins: [
+    nativeWebMMuxerPlugin,
     jsxRuntimeShimPlugin,
     audioRecorderStubPlugin,
     // automatically injected kepler.gl package version into the bundle

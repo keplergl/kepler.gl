@@ -50,7 +50,7 @@ export class NativeWebMEncoder {
     }
 
     const {BufferTarget, Output, WebMOutputFormat, EncodedVideoPacketSource, EncodedPacket} =
-      await import('mediabunny');
+      await import('./native-webm-muxer');
     if (this.cancelled) return;
     this.target = new BufferTarget();
     this.output = new Output({format: new WebMOutputFormat(), target: this.target});
