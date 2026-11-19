@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cloneElement} from 'react';
+import {cloneElement, createElement} from 'react';
+import {VideoAnnotationPreview} from './video-annotation-overlay';
 import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers} from './hubble-utils';
+import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -48,19 +50,74 @@ export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     render() {
       const panel = super.render();
-      if (this.props.deckProps?.layers) return panel;
+
       // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
       // layers from the current frame, including ordinary camera presets.
-      return cloneElement(panel, {
-        deckProps: {
-          ...this.props.deckProps,
-          layers: getFlatExportLayers(this.props.mapData, {
-            mapIndex: 0,
-            viewState: this.state.viewState,
-            beforeId: this.props.mapboxLayerBeforeId
-          })
-        }
+      const preview = this.props.deckProps?.layers
+        ? panel
+        : cloneElement(panel, {
+            deckProps: {
+              ...this.props.deckProps,
+              layers: getFlatExportLayers(this.props.mapData, {
+                mapIndex: 0,
+                viewState: this.state.viewState,
+                beforeId: this.props.mapboxLayerBeforeId
+              })
+            }
+          });
+      if (!this.props.mapData.visState.annotations?.length) return preview;
+      return createElement(VideoAnnotationPreview, {
+        frame: {
+          annotations: this.props.mapData.visState.annotations,
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          ...this._getContainer()
+        },
+        children: preview
       });
+    }
+
+    onRenderVideo() {
+      // A stopped asynchronous capture must not clear the next recording's
+      // in-flight flag when its rasterization/encoding promise settles.
+      const adapter = this.state.adapter;
+      adapter.videoCapture = new adapter.videoCapture.constructor();
+      super.onRenderVideo();
+    }
+
+    onPreviewVideo() {
+      const adapter = this.state.adapter;
+      adapter.videoCapture = new adapter.videoCapture.constructor();
+      super.onPreviewVideo();
+    }
+
+    onStop(options: {abort?: boolean}) {
+      const encoder = this.state.adapter.videoCapture.encoder;
+      // A normal Hubble Stop saves completed frames. Abort only the pending
+      // annotation rasterization in that case, keeping encoder output intact.
+      if (options.abort) encoder?.cancel?.();
+      else encoder?.cancelAnnotationCapture?.();
+      super.onStop(options);
+    }
+
+    getEncoder() {
+      return createAnnotationVideoEncoder(
+        super.getEncoder(),
+        () => ({
+          annotations: this.props.mapData.visState.annotations || [],
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          ...this._getContainer()
+        }),
+        encoder => {
+          const capture = this.state.adapter.videoCapture;
+          return capture.isRecording() && capture.encoder === encoder;
+        },
+        error => {
+          console.error('Video annotation capture failed:', error);
+          this.onStop({abort: true});
+        }
+      );
     }
 
     getCameraKeyframes() {

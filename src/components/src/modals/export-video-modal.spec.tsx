@@ -1194,6 +1194,60 @@ describe('Camera Animation video export', () => {
     ).toBeNull();
     expect(resolveCameraTourExportFrame(camera, tour)).toBe(camera);
   });
+
+  test.each(['onRenderVideo', 'onPreviewVideo'])(
+    '%s isolates a new capture from a stopped asynchronous frame',
+    async method => {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      let finishOld;
+      const oldCapture = new DeckAdapter({}).videoCapture;
+      oldCapture.recording = true;
+      oldCapture._capture = () =>
+        new Promise(resolve => {
+          finishOld = resolve;
+        });
+      oldCapture.capture(document.createElement('canvas'), jest.fn());
+      class Base {
+        state = {adapter: {videoCapture: oldCapture}};
+        onRenderVideo() {
+          this.state.adapter.videoCapture.capturing = true;
+        }
+        onPreviewVideo() {
+          this.state.adapter.videoCapture.capturing = true;
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const instance = new Container();
+      oldCapture.recording = false;
+      instance[method]();
+      const currentCapture = instance.state.adapter.videoCapture;
+      expect(currentCapture).not.toBe(oldCapture);
+      finishOld({kind: 'stop'});
+      await Promise.resolve();
+      expect(oldCapture.capturing).toBe(false);
+      expect(currentCapture.capturing).toBe(true);
+    }
+  );
+
+  test('normal Stop preserves partial encoder output while abort cancels it', () => {
+    const encoder = {cancel: jest.fn(), cancelAnnotationCapture: jest.fn()};
+    const onStop = jest.fn();
+    class Base {
+      state = {adapter: {videoCapture: {encoder}}};
+      onStop(options) {
+        onStop(options);
+      }
+    }
+    const Container = withCameraTourExport(Base);
+    const instance = new Container();
+    instance.onStop({abort: false});
+    expect(encoder.cancelAnnotationCapture).toHaveBeenCalledTimes(1);
+    expect(encoder.cancel).not.toHaveBeenCalled();
+    expect(onStop).toHaveBeenLastCalledWith({abort: false});
+    instance.onStop({abort: true});
+    expect(encoder.cancel).toHaveBeenCalledTimes(1);
+    expect(onStop).toHaveBeenLastCalledWith({abort: true});
+  });
   test('regular Hubble adapter defaults to authored duration and evaluates cut boundaries', () => {
     class Base {
       constructor() {

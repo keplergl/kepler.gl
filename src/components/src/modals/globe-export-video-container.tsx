@@ -21,6 +21,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {getCameraTourDuration} from '@kepler.gl/utils';
+import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
   CAMERA_TOUR_PRESET,
   getCameraTourExportKeyframes,
@@ -245,7 +246,20 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getEncoder() {
     const {mediaType} = this.state;
-    return ENCODERS[mediaType];
+    return createAnnotationVideoEncoder(
+      ENCODERS[mediaType],
+      () => ({
+        annotations: this.props.mapData.visState.annotations || [],
+        interactionConfig: this.props.mapData.visState.interactionConfig,
+        mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+        ...this._getContainer()
+      }),
+      encoder => this.activeEncoder === encoder,
+      error => {
+        console.error('Video annotation capture failed:', error);
+        this.onStop();
+      }
+    );
   }
 
   getCameraKeyframes() {
@@ -489,27 +503,35 @@ export class GlobeExportVideoPanelContainer extends Component<
               offCtx.drawImage(deckCanvas, 0, 0, width, height);
             }
 
-            encoder.add(offscreen).then(() => {
-              if (this.activeEncoder !== encoder) return;
-              timeMs += frameLengthMs;
-              if (timeMs > timecode.end) {
-                this.setState({saving: true});
-                encoder.save().then((blob: Blob | null) => {
-                  if (this.activeEncoder !== encoder) return;
-                  if (blob) {
-                    download(blob, filename + encoder.extension, encoder.mimeType);
-                  }
-                  this.setState({
-                    rendering: false,
-                    saving: false,
-                    currentTimeMs: 0,
-                    viewState: {...this.state.memo!.viewState}
+            encoder
+              .add(offscreen)
+              .then(() => {
+                if (this.activeEncoder !== encoder) return;
+                timeMs += frameLengthMs;
+                if (timeMs > timecode.end) {
+                  this.setState({saving: true});
+                  encoder.save().then((blob: Blob | null) => {
+                    if (this.activeEncoder !== encoder) return;
+                    if (blob) {
+                      download(blob, filename + encoder.extension, encoder.mimeType);
+                    }
+                    this.setState({
+                      rendering: false,
+                      saving: false,
+                      currentTimeMs: 0,
+                      viewState: {...this.state.memo!.viewState}
+                    });
                   });
-                });
-              } else {
-                captureNextFrame();
-              }
-            });
+                } else {
+                  captureNextFrame();
+                }
+              })
+              .catch(error => {
+                if (this.activeEncoder === encoder) {
+                  console.error('Video frame capture failed:', error);
+                  this.onStop();
+                }
+              });
           });
         });
       };
@@ -526,6 +548,7 @@ export class GlobeExportVideoPanelContainer extends Component<
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.activeEncoder?.cancel?.();
     this.activeEncoder = null;
     if (!abort) {
       this.setState({
