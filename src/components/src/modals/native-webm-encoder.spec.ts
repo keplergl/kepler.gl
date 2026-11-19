@@ -81,7 +81,9 @@ class FakeVideoEncoder extends EventTarget {
   close = jest.fn(() => {
     this.state = 'closed';
   });
-  constructor(public callbacks: {output: Function; error: Function}) {
+  constructor(
+    public callbacks: {output: (chunk: unknown, metadata: unknown) => void; error: (error: Error) => void}
+  ) {
     super();
     nativeEncoders.push(this);
   }

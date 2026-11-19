@@ -1143,7 +1143,9 @@ describe('Camera Animation video export', () => {
       setState(update) {
         Object.assign(this.state, update);
       }
-      onStop() {}
+      onStop() {
+        return undefined;
+      }
     }
     try {
       const Container = withCameraTourExport(Base);
@@ -1200,8 +1202,12 @@ describe('Camera Animation video export', () => {
       getFileName() {
         return 'recording';
       }
-      onRenderVideo() {}
-      onStop() {}
+      onRenderVideo() {
+        return undefined;
+      }
+      onStop() {
+        return undefined;
+      }
     }
     const Container = withCameraTourExport(Base);
     const instance = new Container();
