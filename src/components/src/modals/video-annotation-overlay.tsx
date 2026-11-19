@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {flushSync} from 'react-dom';
+import {createPortal, flushSync} from 'react-dom';
 import {domtoimage, getViewportFromMapState, getApplicationConfig} from '@kepler.gl/utils';
 import {getLayerZoomOpacityFactor, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
 import {fontFamily} from '@kepler.gl/styles';
@@ -26,12 +26,15 @@ function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   });
 }
 
-/** Experimental DOM capture preserves the existing rich text and SVG annotation renderer. */
-export async function compositeVideoAnnotations(
-  canvas: HTMLCanvasElement,
-  frame: VideoAnnotationFrame,
-  signal?: AbortSignal
-): Promise<void> {
+/** Shared DOM/SVG renderer: preview never rasterizes; encoders capture it separately. */
+export function VideoAnnotationOverlay({
+  frame,
+  outputWidth = frame.width
+}: {
+  frame: VideoAnnotationFrame;
+  outputWidth?: number;
+}) {
+  if (!frame.annotations.some(annotation => annotation.isVisible)) return null;
   const {mapState, width, height, interactionConfig, swipePercentage} = frame;
   const isGlobeEnabled = Boolean(mapState.globe?.enabled);
   const displayScale = 2 ** (mapState.zoomOffset || 0);
@@ -64,8 +67,86 @@ export async function compositeVideoAnnotations(
         (swipePercentage !== undefined && annotation.mapIndex === 1)) &&
       (!isGlobeEnabled || isAnnotationVisibleOnGlobe(annotation, viewport))
   );
-  if (!annotations.length) return;
+  if (!annotations.length) return null;
 
+  const scale = (outputWidth / width) * displayScale;
+  const split = Math.max(0, Math.min(100, swipePercentage ?? 100));
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        pointerEvents: 'none',
+        zIndex: 2,
+        overflow: 'hidden',
+        fontFamily,
+        fontSize: '14px',
+        width: viewport.width,
+        height: viewport.height,
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left'
+      }}
+    >
+      {(swipePercentage === undefined ? [0] : [0, 1]).map(mapIndex => (
+        <div
+          key={mapIndex}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            clipPath:
+              swipePercentage === undefined
+                ? undefined
+                : mapIndex === 0
+                ? `inset(0 ${100 - split}% 0 0)`
+                : `inset(0 0 0 ${split}%)`
+          }}
+        >
+          <AnnotationOverlay
+            annotations={annotations}
+            getAnnotationOpacity={opacity}
+            selectedAnnotationId={null}
+            isEditingAnnotationText={false}
+            isAnnotationMode={false}
+            mapIndex={mapIndex}
+            viewport={viewport}
+            isGlobeEnabled={isGlobeEnabled}
+            updateAnnotation={noop}
+            setSelectedAnnotation={noop}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Hubble owns the regular preview DOM, so scope the portal to this panel only. */
+export function VideoAnnotationPreview({
+  frame,
+  children
+}: {
+  frame: VideoAnnotationFrame;
+  children: React.ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setTarget(panelRef.current?.querySelector<HTMLElement>('#deck-canvas') || null);
+  }, []);
+  return (
+    <div ref={panelRef}>
+      {children}
+      {target && createPortal(<VideoAnnotationOverlay frame={frame} />, target)}
+    </div>
+  );
+}
+
+/** Experimental DOM capture preserves the existing rich text and SVG annotation renderer. */
+export async function compositeVideoAnnotations(
+  canvas: HTMLCanvasElement,
+  frame: VideoAnnotationFrame,
+  signal?: AbortSignal
+): Promise<void> {
   const mount = document.createElement('div');
   mount.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;';
   mount.setAttribute('aria-hidden', 'true');
@@ -81,52 +162,12 @@ export async function compositeVideoAnnotations(
   mount.appendChild(rasterNode);
   document.body.appendChild(mount);
   const root = createRoot(rasterNode);
-  const scale = (canvas.width / width) * displayScale;
-  const split = Math.max(0, Math.min(100, swipePercentage ?? 100));
   let image: HTMLImageElement | null = null;
   try {
     flushSync(() => {
-      root.render(
-        <div
-          style={{
-            position: 'relative',
-            width: viewport.width,
-            height: viewport.height,
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left'
-          }}
-        >
-          {(swipePercentage === undefined ? [0] : [0, 1]).map(mapIndex => (
-            <div
-              key={mapIndex}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                clipPath:
-                  swipePercentage === undefined
-                    ? undefined
-                    : mapIndex === 0
-                    ? `inset(0 ${100 - split}% 0 0)`
-                    : `inset(0 0 0 ${split}%)`
-              }}
-            >
-              <AnnotationOverlay
-                annotations={annotations}
-                getAnnotationOpacity={opacity}
-                selectedAnnotationId={null}
-                isEditingAnnotationText={false}
-                isAnnotationMode={false}
-                mapIndex={mapIndex}
-                viewport={viewport}
-                isGlobeEnabled={isGlobeEnabled}
-                updateAnnotation={noop}
-                setSelectedAnnotation={noop}
-              />
-            </div>
-          ))}
-        </div>
-      );
+      root.render(<VideoAnnotationOverlay frame={frame} outputWidth={canvas.width} />);
     });
+    if (!rasterNode.hasChildNodes()) return;
     await abortable(Promise.resolve(document.fonts?.ready), signal);
     const url = await abortable(
       domtoimage.toPng(rasterNode, {

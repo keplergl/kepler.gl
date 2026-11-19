@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {act} from '@testing-library/react';
+import React from 'react';
+import {act, render} from '@testing-library/react';
 import {domtoimage, getViewportFromMapState} from '@kepler.gl/utils';
 import {getLayerZoomOpacityFactor} from '@kepler.gl/reducers';
-import {compositeVideoAnnotations} from './video-annotation-overlay';
+import {
+  compositeVideoAnnotations,
+  VideoAnnotationOverlay,
+  VideoAnnotationPreview
+} from './video-annotation-overlay';
 import type {VideoAnnotationFrame} from './video-annotation-encoder';
 
 jest.mock('@kepler.gl/utils', () => ({
@@ -199,4 +204,65 @@ test('cleans up annotation DOM if rasterization fails', async () => {
   expect(document.querySelector('[data-annotation-id="label"]')).toBeNull();
   expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
   expect(canvas.getContext('2d')!.drawImage).not.toHaveBeenCalled();
+});
+
+test('renders live annotations at preview scale and updates camera, swipe and visibility without rasterization', () => {
+  const {frame} = setup({
+    annotations: [annotation, {...annotation, id: 'right', mapIndex: 1}],
+    swipePercentage: 25
+  });
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  expect(view.container.textContent).toContain(annotation.label);
+  expect(view.container.firstChild).toHaveStyle({
+    transform: 'scale(0.5)',
+    pointerEvents: 'none',
+    zIndex: 2
+  });
+  expect(
+    Array.from(view.container.querySelectorAll<HTMLElement>('div')).map(node => node.style.clipPath)
+  ).toContain('inset(0 75% 0 0)');
+  view.rerender(
+    <VideoAnnotationOverlay
+      frame={{...frame, swipePercentage: 75, mapState: {...frame.mapState, longitude: 20}}}
+    />
+  );
+  expect(getViewportFromMapState).toHaveBeenLastCalledWith(
+    expect.objectContaining({longitude: 20})
+  );
+  expect(
+    Array.from(view.container.querySelectorAll<HTMLElement>('div')).map(node => node.style.clipPath)
+  ).toContain('inset(0 25% 0 0)');
+  jest.mocked(getLayerZoomOpacityFactor).mockReturnValue(0);
+  view.rerender(<VideoAnnotationOverlay frame={frame} />);
+  expect(view.container).toBeEmptyDOMElement();
+  jest.mocked(getLayerZoomOpacityFactor).mockReturnValue(1);
+  view.rerender(
+    <VideoAnnotationOverlay
+      frame={{
+        ...frame,
+        mapState: {...frame.mapState, globe: {enabled: true}} as any,
+        annotations: [{...annotation, anchorPoint: [180, 0]} as any]
+      }}
+    />
+  );
+  expect(view.container).toBeEmptyDOMElement();
+  expect(domtoimage.toPng).not.toHaveBeenCalled();
+});
+
+test('mounts regular preview annotations only inside its own map and removes them on close', () => {
+  const {frame} = setup();
+  const otherMap = document.createElement('div');
+  otherMap.id = 'deck-canvas';
+  document.body.appendChild(otherMap);
+  const view = render(
+    <VideoAnnotationPreview frame={frame}>
+      <div id="deck-canvas" />
+    </VideoAnnotationPreview>
+  );
+  expect(otherMap).toBeEmptyDOMElement();
+  expect(view.container.querySelector('#deck-canvas')).toHaveTextContent(annotation.label);
+  view.unmount();
+  otherMap.remove();
+  expect(document.querySelector('[data-annotation-id="label"]')).toBeNull();
+  expect(domtoimage.toPng).not.toHaveBeenCalled();
 });

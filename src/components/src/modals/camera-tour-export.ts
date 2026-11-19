@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cloneElement} from 'react';
+import {cloneElement, createElement} from 'react';
+import {VideoAnnotationPreview} from './video-annotation-overlay';
 import type {CameraTour} from '@kepler.gl/types';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
@@ -44,18 +45,30 @@ export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     render() {
       const panel = super.render();
-      if (this.props.deckProps?.layers) return panel;
+
       // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
       // layers from the current frame, including ordinary camera presets.
-      return cloneElement(panel, {
-        deckProps: {
-          ...this.props.deckProps,
-          layers: getFlatExportLayers(this.props.mapData, {
-            mapIndex: 0,
-            viewState: this.state.viewState,
-            beforeId: this.props.mapboxLayerBeforeId
-          })
-        }
+      const preview = this.props.deckProps?.layers
+        ? panel
+        : cloneElement(panel, {
+            deckProps: {
+              ...this.props.deckProps,
+              layers: getFlatExportLayers(this.props.mapData, {
+                mapIndex: 0,
+                viewState: this.state.viewState,
+                beforeId: this.props.mapboxLayerBeforeId
+              })
+            }
+          });
+      if (!this.props.mapData.visState.annotations?.length) return preview;
+      return createElement(VideoAnnotationPreview, {
+        frame: {
+          annotations: this.props.mapData.visState.annotations,
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          ...this._getContainer()
+        },
+        children: preview
       });
     }
 
