@@ -1430,7 +1430,8 @@ export default function MapContainerFactory(
                     onDrag: this._onCameraTourPathDrag,
                     onDragEnd: this._onCameraTourPathDragEnd
                   }
-                : undefined
+                : undefined,
+              Boolean(isGlobeMode)
             )
           : [];
       const finalDeckGlLayers = isGlobeMode

@@ -8,6 +8,7 @@ import type {CameraTour} from '@kepler.gl/types';
 import {evaluateCameraTour, normalizeCameraTour} from '@kepler.gl/utils';
 
 const PATH_SAMPLES_PER_SEGMENT = 20;
+const OVERLAY_DEPTH = {depthCompare: 'always', depthWriteEnabled: false} as const;
 
 // The geometry depends only on the tour, not mouse/pan/playback state. Keep the
 // data references stable so deck does not rebuild attributes during navigation.
@@ -64,13 +65,17 @@ function createPathData(tour: CameraTour) {
 
 export function getCameraTourPathLayers(
   tour?: CameraTour | null,
-  dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onClick'>
+  dragHandlers?: Pick<ScatterplotLayerProps, 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onClick'>,
+  isGlobeMode = false
 ): Layer[] {
   if (!tour) return [];
   if (!cache.has(tour)) cache.set(tour, createPathData(tour));
   const cached = cache.get(tour);
   if (!cached) return [];
   const {data, path} = cached;
+  // Flat-map editing guides draw over 3D geometry. Keep globe depth testing
+  // so stops and lines on the far side stay hidden behind the globe.
+  const parameters = isGlobeMode ? undefined : OVERLAY_DEPTH;
   return [
     new PathLayer({
       id: 'camera-tour-path-line',
@@ -80,6 +85,7 @@ export function getCameraTourPathLayers(
       widthUnits: 'pixels',
       getWidth: 1.5,
       wrapLongitude: true,
+      parameters,
       pickable: false
     }),
     new ScatterplotLayer({
@@ -93,6 +99,7 @@ export function getCameraTourPathLayers(
       getLineWidth: 2,
       getFillColor: [27, 190, 220],
       getLineColor: [255, 255, 255],
+      parameters,
       pickable: Boolean(dragHandlers),
       // Handle stop clicks, but let hover reach the map's tooltip lifecycle.
       onClick: dragHandlers ? () => true : undefined,
@@ -105,7 +112,7 @@ export function getCameraTourPathLayers(
       getText: d => d.label,
       characterSet: 'auto',
       // Globe mode enables culling globally, but glyph quads must stay visible.
-      parameters: {cull: false},
+      parameters: {...parameters, cull: false},
       getSize: 12,
       getPixelOffset: [10, -12],
       getTextAnchor: 'start',
