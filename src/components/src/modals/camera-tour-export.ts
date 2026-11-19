@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {cloneElement, createElement, Fragment} from 'react';
+import type {ReactElement} from 'react';
 import type {CameraTour} from '@kepler.gl/types';
+import {NO_MAP_ID} from '@kepler.gl/constants';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
@@ -17,6 +19,18 @@ import {
 import {StyledModalInputFootnote} from '../common/styled-components';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
+
+const BASEMAP_LOADING_ERROR =
+  'The basemap could not load. Check its connection or access settings, then try again.';
+
+type PreviewMap = {
+  getStyle: () => unknown;
+  getSource: (id: string) => {loaded?: () => boolean} | undefined;
+  isStyleLoaded: () => boolean | undefined;
+  areTilesLoaded: () => boolean;
+};
+
+type PreviewMapEvent = {target: PreviewMap; sourceId?: string};
 
 /** Drive the authored evaluator with Hubble's linear export clock, rather than
  * approximating holds, cuts and shortest rotations with fly-to keyframes. */
@@ -56,6 +70,37 @@ export function resolveCameraTourExportFrame<T extends object>(
 export function withCameraTourExport(Base: any) {
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
+    private failedBasemap?: PreviewMap;
+
+    private onMapError({target: map, sourceId}: PreviewMapEvent) {
+      // Tile failures can settle without blocking the map's load event. A
+      // failed style or source metadata request cannot, so Hubble never starts
+      // its capture listener in that case.
+      const metadataFailed = sourceId
+        ? map.getSource(sourceId)?.loaded?.() === false
+        : !map.getStyle();
+      if (!metadataFailed || this.failedBasemap === map) return;
+      this.failedBasemap = map;
+      const {adapter, rendering, previewing, saving} = this.state;
+      if (adapter?.videoCapture.isRecording() || rendering || previewing || saving) {
+        this.onStop({abort: true});
+      }
+      this.setState((state: {viewState: object; memo?: {viewState: object}}) => ({
+        rendering: false,
+        previewing: false,
+        saving: false,
+        viewState: state.memo?.viewState ? {...state.memo.viewState} : state.viewState
+      }));
+    }
+
+    private onMapRender({target: map}: PreviewMapEvent) {
+      // A render alone is insufficient: areTilesLoaded can be true before a
+      // failed source has supplied any metadata or created its tiles.
+      if (this.failedBasemap === map && map.isStyleLoaded() && map.areTilesLoaded()) {
+        this.failedBasemap = undefined;
+        this.setState({});
+      }
+    }
 
     componentDidMount() {
       super.componentDidMount?.();
@@ -172,6 +217,7 @@ export function withCameraTourExport(Base: any) {
     }
 
     onRenderVideo() {
+      if (this.failedBasemap) return;
       const adapter = this.state.adapter;
       if (this.state.encodingError || this.state.encodingNotice) {
         this.setState({encodingError: undefined, encodingNotice: undefined});
@@ -224,6 +270,7 @@ export function withCameraTourExport(Base: any) {
     }
 
     onPreviewVideo() {
+      if (this.failedBasemap) return;
       this.resetVideoCapture();
       super.onPreviewVideo();
     }
@@ -246,7 +293,42 @@ export function withCameraTourExport(Base: any) {
     }
 
     render() {
-      const panel = super.render();
+      const basePanel = super.render();
+      const mapProps = basePanel.props.mapProps || this.props.mapProps;
+      const mapData = basePanel.props.mapData || this.props.mapData;
+      const styleType = mapData.mapStyle?.styleType;
+      const panel: ReactElement<any> = cloneElement(basePanel, {
+        // Hubble ignores mapProps.mapStyle and reads this entry instead. Use
+        // the same resolved style as the visible map, including its edits and
+        // its retained style when a newly selected style failed to load.
+        mapData:
+          mapProps?.mapStyle && styleType && styleType !== NO_MAP_ID
+            ? {
+                ...mapData,
+                mapStyle: {
+                  ...mapData.mapStyle,
+                  mapStyles: {
+                    ...mapData.mapStyle.mapStyles,
+                    [styleType]: {
+                      ...mapData.mapStyle.mapStyles?.[styleType],
+                      url: mapProps.mapStyle
+                    }
+                  }
+                }
+              }
+            : mapData,
+        mapProps: {
+          ...mapProps,
+          onError: (event: PreviewMapEvent) => {
+            this.onMapError(event);
+            mapProps?.onError?.(event);
+          },
+          onRender: (event: PreviewMapEvent) => {
+            this.onMapRender(event);
+            mapProps?.onRender?.(event);
+          }
+        }
+      });
       // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
       // layers from the current frame, including ordinary camera presets.
       let preview = this.props.deckProps?.layers
@@ -272,7 +354,9 @@ export function withCameraTourExport(Base: any) {
           children: preview
         });
       }
-      const message = this.state.encodingError || this.state.encodingNotice;
+      const message = this.failedBasemap
+        ? BASEMAP_LOADING_ERROR
+        : this.state.encodingError || this.state.encodingNotice;
       return message
         ? createElement(
             Fragment,
@@ -281,8 +365,8 @@ export function withCameraTourExport(Base: any) {
             createElement(
               StyledModalInputFootnote,
               {
-                error: Boolean(this.state.encodingError),
-                role: this.state.encodingError ? 'alert' : 'status'
+                error: Boolean(this.failedBasemap || this.state.encodingError),
+                role: this.failedBasemap || this.state.encodingError ? 'alert' : 'status'
               },
               message
             )
