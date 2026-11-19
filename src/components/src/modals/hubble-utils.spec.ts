@@ -391,6 +391,72 @@ describe('hubble-utils', () => {
       expect(result.bearing).toBe(30);
     });
 
+    test.each([undefined, 1])(
+      'preserves flat framing below zoom zero with live minimum %s',
+      minZoom => {
+        const {MapController, WebMercatorViewport} = require('@deck.gl/core');
+        const makeViewport = props => new WebMercatorViewport(props);
+        const {ControllerState} = new MapController({makeViewport});
+        const constrain = props => new ControllerState({...props, makeViewport}).getViewportProps();
+        const source = constrain({
+          longitude: 20.782920358671,
+          latitude: 38.3983734702045,
+          zoom: 2.1433240466230803,
+          pitch: 0,
+          bearing: 0,
+          width: 1600,
+          height: 900,
+          minZoom
+        });
+        // The live controller supplies its default zero minimum after interaction.
+        expect(source.minZoom).toBe(minZoom ?? 0);
+        const preview = scaleToVideoExport(source, {width: 320, height: 180});
+        const rendered = constrain(preview);
+        expect(preview.zoom).toBeLessThan(0);
+        expect(rendered.zoom).toBeCloseTo(preview.zoom);
+
+        const project = (camera, point) => {
+          const [x, y] = makeViewport(camera).project(point);
+          return [x / camera.width, y / camera.height];
+        };
+        for (const point of [
+          [source.longitude, source.latitude],
+          [source.longitude + 10, source.latitude + 5],
+          [source.longitude - 15, source.latitude - 10]
+        ]) {
+          const expected = project(source, point);
+          const actual = project(rendered, point);
+          expect(actual[0]).toBeCloseTo(expected[0], 6);
+          expect(actual[1]).toBeCloseTo(expected[1], 6);
+        }
+        // The modal scales first; the export container then sees matching dimensions.
+        expect(scaleToVideoExport({...source, ...preview}, preview)).toEqual(preview);
+      }
+    );
+
+    test('keeps a narrow flat zoom interval valid at the renderer minimum', () => {
+      const {MapController, WebMercatorViewport} = require('@deck.gl/core');
+      const makeViewport = props => new WebMercatorViewport(props);
+      const {ControllerState} = new MapController({makeViewport});
+      const source = {
+        longitude: 0,
+        latitude: 0,
+        zoom: 0.25,
+        minZoom: 0,
+        maxZoom: 0.25,
+        width: 1600,
+        height: 300
+      };
+      const preview = scaleToVideoExport(source, {width: 320, height: 180});
+      expect(preview.minZoom).toBe(-2);
+      expect(preview.maxZoom).toBeGreaterThanOrEqual(preview.minZoom);
+      const rendered = new ControllerState({...preview, makeViewport}).getViewportProps();
+      expect(Number.isFinite(rendered.zoom)).toBe(true);
+      expect(rendered.zoom).toBeGreaterThanOrEqual(preview.minZoom);
+      expect(rendered.zoom).toBeLessThanOrEqual(preview.maxZoom);
+      expect(scaleToVideoExport({...source, ...preview}, preview)).toEqual(preview);
+    });
+
     test('does not recenter globe cameras toward the equator', () => {
       const viewState = {
         latitude: 37.75,

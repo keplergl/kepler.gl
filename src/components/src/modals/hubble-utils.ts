@@ -464,6 +464,7 @@ export function scaleToVideoExport(
       ? Math.log2(Math.min(container.width / srcWidth, container.height / srcHeight)) || 0
       : 0;
   const zoom = viewState.zoom + zoomDelta;
+  const minZoom = Math.max(-2, (viewState.minZoom ?? 0) + zoomDelta);
 
   return {
     longitude: viewState.longitude,
@@ -472,8 +473,14 @@ export function scaleToVideoExport(
     pitch: viewState.pitch,
     bearing: viewState.bearing,
     altitude: viewState.altitude,
-    minZoom: viewState.minZoom,
-    maxZoom: viewState.maxZoom,
+    // Flat previews can need negative zoom even when the authored camera is
+    // above zero. Move its limits with the camera so MapLibre does not enlarge
+    // the fitted view; -2 is the lowest minimum its public setter accepts.
+    minZoom,
+    maxZoom:
+      viewState.maxZoom === undefined
+        ? undefined
+        : Math.max(minZoom, viewState.maxZoom + zoomDelta),
     // Globe zoom is also measured in pixels. Shift its controller limits with
     // the preview, or the controller/tour clamp would undo the resize. Retain
     // the cumulative offset for layer sizing and authored-camera evaluation.
