@@ -3446,3 +3446,58 @@ test('#PointLayer -> neighbor hover reuses deck attributes and invalidates safel
   }
   t.end();
 });
+
+test('#PointLayer -> globe rotation preserves point size at constant camera distance', t => {
+  const layer = testCreateLayerFromConfig(
+    t,
+    {
+      layer: {type: 'point', config: {dataId, columns: {lat: 'lat', lng: 'lng'}}},
+      datasets: {[dataId]: preparedDataset}
+    },
+    {point: PointLayer}
+  );
+  const data = testFormatLayerData(t, layer, {[dataId]: preparedDataset});
+  const render = (latitude, zoom, globe = true) =>
+    renderDeckGlLayer(
+      {
+        datasets: {[dataId]: preparedDataset},
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: {...INITIAL_MAP_STATE, latitude, zoom, globe: {enabled: globe}},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    )[0];
+  const equator = render(0, 3);
+  for (const latitude of [-75, -60, 60, 75]) {
+    // Same compensation used by GlobeController when panning.
+    const zoom = 3 + Math.log2(Math.cos((latitude * Math.PI) / 180));
+    const rotated = render(latitude, zoom);
+    t.ok(
+      Math.abs(rotated.props.radiusScale - equator.props.radiusScale) < 1e-9,
+      'rotation preserves the radius uniform at latitude ' + latitude
+    );
+    t.equal(rotated.props.data, equator.props.data, 'rotation reuses point data');
+    t.deepEqual(
+      rotated.props.updateTriggers,
+      equator.props.updateTriggers,
+      'rotation does not invalidate attribute buffers'
+    );
+  }
+  t.equal(
+    render(60, 3, false).props.radiusScale,
+    render(0, 3, false).props.radiusScale,
+    '2D retains its existing meter-based radius scale'
+  );
+  t.equal(
+    render(0, 4).props.radiusScale,
+    equator.props.radiusScale / 2,
+    'actual zoom still adjusts the radius'
+  );
+  layer.config.visConfig.fixedRadius = true;
+  layer.config.sizeField = preparedDataset.fields.find(field => field.type === 'integer');
+  t.ok(layer.config.sizeField, 'fixture supplies a fixed-radius field');
+  t.equal(render(60, 2).props.radiusScale, 1, 'fixed-meter radii stay unscaled');
+  t.end();
+});

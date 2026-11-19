@@ -9,6 +9,8 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {FilterArrowExtension} from '@kepler.gl/deckgl-layers';
 
+import {MAX_LATITUDE} from '@math.gl/web-mercator';
+
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
@@ -746,7 +748,13 @@ export default class PointLayer extends Layer {
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
-    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    // Globe panning lowers stored zoom toward the poles while keeping camera
+    // distance unchanged. Size points using visual zoom, not that pan adjustment.
+    const latitude = Math.max(-MAX_LATITUDE, Math.min(MAX_LATITUDE, mapState.latitude || 0));
+    const radiusMapState = mapState.globe?.enabled
+      ? {...mapState, zoom: mapState.zoom - Math.log2(Math.cos((latitude * Math.PI) / 180))}
+      : mapState;
+    const radiusScale = this.getRadiusScaleByZoom(radiusMapState, fixedRadius);
     const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion, pulseTrigger, pulseDurationMs} =
       this.config.visConfig;
     const continuous = pulseEnabled && pulseTrigger !== 'event';
