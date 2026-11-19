@@ -41,7 +41,7 @@ import {
 import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
 import {CAMERA_TOUR_PRESET, withCameraTourExport} from './camera-tour-export';
-import {NATIVE_WEBM_FORMAT} from './video-export-formats';
+import {getNativeWebMConfig, NATIVE_WEBM_FORMAT} from './video-export-formats';
 
 type SwipeContainerType = React.ComponentType<any>;
 
@@ -290,8 +290,32 @@ const ExportVideoModalFactory = () => {
     const hasCameraTour = cameraTourDurationMs > 0;
     const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
       ...exportVideo,
+      mediaType: exportVideo.mediaType || NATIVE_WEBM_FORMAT.value,
       ...(hasCameraTour ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs} : {})
     }));
+
+    const [defaultFormatReady, setDefaultFormatReady] = useState(
+      () => videoConfiguration.mediaType !== NATIVE_WEBM_FORMAT.value
+    );
+    useEffect(() => {
+      if (defaultFormatReady) return;
+      let canceled = false;
+      const {width, height} = getResolutionSetting(videoConfiguration.resolution || '1280x720');
+      getNativeWebMConfig(width, height)
+        .then(supported => {
+          if (canceled) return;
+          if (!supported) setVideoConfiguration(previous => ({...previous, mediaType: 'webm'}));
+          setDefaultFormatReady(true);
+        })
+        .catch(() => {
+          if (canceled) return;
+          setVideoConfiguration(previous => ({...previous, mediaType: 'webm'}));
+          setDefaultFormatReady(true);
+        });
+      return () => {
+        canceled = true;
+      };
+    }, [defaultFormatReady, videoConfiguration.resolution]);
 
     const keplerState = useMemo(() => {
       // Hubble (and our globe/swipe containers) run scaleToVideoExport on
@@ -529,7 +553,14 @@ const ExportVideoModalFactory = () => {
           })
         );
       }
-    }, [hubble, isSwipeMode, isGlobeEnabled, keplerState.mapState, mapState.zoom]);
+    }, [
+      hubble,
+      defaultFormatReady,
+      isSwipeMode,
+      isGlobeEnabled,
+      keplerState.mapState,
+      mapState.zoom
+    ]);
 
     useEffect(() => {
       // Same freeze as before: hubble.gl writes window.devicePixelRatio to scale
@@ -612,7 +643,7 @@ const ExportVideoModalFactory = () => {
       [hasCameraTour, cameraTourDurationMs, videoConfiguration.mediaType]
     );
 
-    if (!hubble) {
+    if (!hubble || !defaultFormatReady) {
       return (
         <StyledExportVideoModalContent className="export-video-modal">
           {hubbleError ? (

@@ -487,6 +487,119 @@ describe('ExportVideoModal', () => {
     expect(DEFAULT_PROPS.exportVideo.mediaType).toBe('webm');
   });
 
+  describe('capability-aware default format', () => {
+    const formats = require('./video-export-formats');
+    const modes = [
+      {mode: 'regular', mapState: {}, panel: mockExportVideoPanelContainer},
+      {
+        mode: 'globe',
+        mapState: {globe: {enabled: true}},
+        panel: jest.requireMock('./globe-export-video-container').GlobeExportVideoPanelContainer
+      },
+      {
+        mode: 'swipe',
+        mapState: {isSplit: true, mapSplitMode: MapSplitMode.SWIPE_COMPARE},
+        panel: jest.requireMock('./swipe-export-video-container').SwipeExportVideoPanelContainer
+      }
+    ];
+    test.each(modes)(
+      '$mode probes before mount and preserves subsequent explicit legacy choice',
+      async ({mapState, panel}) => {
+        let finish;
+        const probe = jest.spyOn(formats, 'getNativeWebMConfig').mockReturnValue(
+          new Promise(resolve => {
+            finish = resolve;
+          })
+        );
+        const props = {
+          ...DEFAULT_PROPS,
+          mapState: {...DEFAULT_PROPS.mapState, ...mapState},
+          exportVideo: {...DEFAULT_PROPS.exportVideo, mediaType: 'webm-native'}
+        };
+        try {
+          const view = renderWithThemeLocal(<ExportVideoModal {...props} />);
+          expect(panel).not.toHaveBeenCalled();
+          expect(probe).toHaveBeenCalledWith(1280, 720);
+          await act(async () => finish({codec: 'vp8', config: {}}));
+          await waitFor(() => expect(panel).toHaveBeenCalled());
+          expect(panel.mock.lastCall[0].initialState.mediaType).toBe('webm-native');
+          act(() => panel.mock.lastCall[0].onSettingsChange({mediaType: 'webm'}));
+          view.rerender(<ExportVideoModal {...props} containerW={1000} />);
+          expect(panel.mock.lastCall[0].initialState.mediaType).toBe('webm');
+          expect(probe).toHaveBeenCalledTimes(1);
+        } finally {
+          probe.mockRestore();
+        }
+      }
+    );
+    test('new export defaults request capability-aware native encoding', () => {
+      const {DEFAULT_EXPORT_VIDEO} = jest.requireActual('../../../reducers/src/ui-state-updaters');
+      expect(DEFAULT_EXPORT_VIDEO.mediaType).toBe('webm-native');
+    });
+    test('ignores a closed modal probe after reopening with an explicit legacy choice', async () => {
+      let finish;
+      const probe = jest.spyOn(formats, 'getNativeWebMConfig').mockReturnValue(
+        new Promise(resolve => {
+          finish = resolve;
+        })
+      );
+      try {
+        const view = renderWithThemeLocal(
+          <ExportVideoModal
+            {...DEFAULT_PROPS}
+            exportVideo={{...DEFAULT_PROPS.exportVideo, mediaType: 'webm-native'}}
+          />
+        );
+        view.unmount();
+        await renderAndWaitForPanel(DEFAULT_PROPS);
+        await act(async () => finish({codec: 'vp9', config: {}}));
+        expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState.mediaType).toBe('webm');
+      } finally {
+        probe.mockRestore();
+      }
+    });
+    test.each(['unsupported', 'rejected'])(
+      'uses legacy WebM for a %s capability probe',
+      async result => {
+        const probe = jest.spyOn(formats, 'getNativeWebMConfig');
+        if (result === 'rejected') probe.mockRejectedValue(new Error('unavailable'));
+        else probe.mockResolvedValue(undefined);
+        try {
+          await renderAndWaitForPanel({
+            ...DEFAULT_PROPS,
+            exportVideo: {...DEFAULT_PROPS.exportVideo, mediaType: 'webm-native'}
+          });
+          expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState.mediaType).toBe(
+            'webm'
+          );
+          expect(mockHubbleContainerRef.current.state.viewState).toMatchObject({
+            zoom: DEFAULT_PROPS.mapState.zoom
+          });
+        } finally {
+          probe.mockRestore();
+        }
+      }
+    );
+    test.each(['webm', 'gif', 'png', 'jpeg'])(
+      'does not probe or replace explicit %s',
+      async mediaType => {
+        const probe = jest.spyOn(formats, 'getNativeWebMConfig');
+        try {
+          await renderAndWaitForPanel({
+            ...DEFAULT_PROPS,
+            exportVideo: {...DEFAULT_PROPS.exportVideo, mediaType}
+          });
+          expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState.mediaType).toBe(
+            mediaType
+          );
+          expect(probe).not.toHaveBeenCalled();
+        } finally {
+          probe.mockRestore();
+        }
+      }
+    );
+  });
+
   describe('default camera preset', () => {
     const modes = [
       {mode: 'regular', mapState: {}, panel: mockExportVideoPanelContainer},

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {getNativeWebMConfig} from './video-export-formats';
 import type {FrameEncoder} from '@hubble.gl/core';
 import type {BufferTarget, EncodedVideoPacketSource, Output} from 'mediabunny';
 
@@ -36,39 +37,8 @@ export class NativeWebMEncoder {
   }
 
   private async initialize(canvas: HTMLCanvasElement) {
-    let codec: 'vp9' | 'vp8' | undefined;
-    let config: VideoEncoderConfig | undefined;
-    if (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined') {
-      for (const candidate of [
-        {name: 'vp9' as const, codec: 'vp09.00.51.08'},
-        {name: 'vp8' as const, codec: 'vp8'}
-      ]) {
-        const requested: VideoEncoderConfig = {
-          codec: candidate.codec,
-          width: canvas.width,
-          height: canvas.height,
-          bitrate: Math.round(
-            Math.min(
-              20000000,
-              Math.max(2000000, canvas.width * canvas.height * this.framerate * 0.15)
-            )
-          ),
-          framerate: this.framerate,
-          bitrateMode: 'variable',
-          latencyMode: 'quality'
-        };
-        try {
-          const support = await VideoEncoder.isConfigSupported(requested);
-          if (support.supported) {
-            codec = candidate.name;
-            config = support.config;
-            break;
-          }
-        } catch {
-          // The next codec, or the original encoder, may still be available.
-        }
-      }
-    }
+    const supported = await getNativeWebMConfig(canvas.width, canvas.height, this.framerate);
+    const {codec, config} = supported || {};
     if (this.cancelled) return;
     if (!codec || !config) {
       const {WebMEncoder} = await import('@hubble.gl/core');
