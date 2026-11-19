@@ -81,6 +81,13 @@ Ask first for a public API change, saved-config compatibility, product behavior,
 
 ## Pull requests
 
+Name PRs using `type(scope): short description`. Use a lowercase type and scope, with a meaningful scope that identifies the affected area. Examples:
+
+- `fix(layers): preserve filtered point positions`
+- `chore(docs): update the upgrade guide`
+- `feat(globe): add atmosphere controls`
+- `perf(layer): avoid redundant attribute updates`
+
 When opening a PR, request review from Xun Li or Igor Dykhta using their verified GitHub usernames. If the PR author is one of them, request review from the other; do not request self-review.
 
 Assign the opened PR to its GitHub author if that user is a repository maintainer. Verify the PR author and maintainer status before assigning; do not substitute the local Git user or commit author.
