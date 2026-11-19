@@ -1221,6 +1221,9 @@ describe('ExportVideoModal', () => {
     const originalDpr = window.devicePixelRatio;
 
     afterEach(() => {
+      mockExportVideoPanelContainer.mockImplementation(() => (
+        <div data-testid="export-video-panel">Mock Panel</div>
+      ));
       Object.defineProperty(window, 'devicePixelRatio', {
         configurable: true,
         enumerable: true,
@@ -1238,6 +1241,54 @@ describe('ExportVideoModal', () => {
       window.devicePixelRatio = 1;
       expect(window.devicePixelRatio).toBe(1280 / exportVideoWidth);
 
+      unmount();
+      expect(window.devicePixelRatio).toBe(originalDpr);
+    });
+
+    test('resizes the capture buffer with the current quality before passive effects run', async () => {
+      const canvas = document.createElement('canvas');
+      function ResizePreview({exportVideoWidth}) {
+        const mounted = React.useRef(false);
+        const {resolution, previewing} = mockHubbleContainerRef.current.state;
+        const [width, height] = (resolution || '1280x720').split('x').map(Number);
+        // Hubble's child preview writes DPR and resizes MapLibre during
+        // componentDidUpdate, before the modal's passive DPR effect runs.
+        React.useLayoutEffect(() => {
+          if (!mounted.current) {
+            mounted.current = true;
+            return;
+          }
+          window.devicePixelRatio = previewing ? 1 : width / exportVideoWidth;
+          canvas.width = Math.floor(exportVideoWidth * window.devicePixelRatio);
+          canvas.height = Math.floor((exportVideoWidth * height * window.devicePixelRatio) / width);
+        }, [exportVideoWidth, width, height, previewing]);
+        return null;
+      }
+      mockExportVideoPanelContainer.mockImplementation(props => <ResizePreview {...props} />);
+      const {rerender, unmount} = await renderAndWaitForPanel();
+      const panel = mockHubbleContainerRef.current;
+      const setResolution = resolution => {
+        act(() => {
+          // Match Hubble's setStateAndNotify: update local settings and notify
+          // the modal together, then let the mounted preview resize.
+          panel.setState({resolution});
+          panel.props.onSettingsChange({resolution});
+        });
+      };
+
+      for (const resolution of ['1920x1080', '1280x720', '640x360', '1280x1280']) {
+        setResolution(resolution);
+        expect([canvas.width, canvas.height]).toEqual(resolution.split('x').map(Number));
+      }
+
+      act(() => panel.setState({previewing: true}));
+      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
+      act(() => panel.setState({previewing: false, rendering: true}));
+      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
+
+      rerender(<ExportVideoModal {...DEFAULT_PROPS} containerW={1800} />);
+      expect(mockHubbleContainerRef.current).toBe(panel);
+      expect([canvas.width, canvas.height]).toEqual([1280, 1280]);
       unmount();
       expect(window.devicePixelRatio).toBe(originalDpr);
     });
