@@ -100,6 +100,45 @@ describe('ZoomOpacitySlider interactions', () => {
     );
   });
 
+  test('uses the rendered marker center with fractional and scaled plot dimensions', () => {
+    const zoom = 12;
+    const {container, getAllByRole, onChange} = setup(zoom);
+    const marker = container.querySelector('.interaction-zoom-opacity__zoom-marker') as HTMLElement;
+    const plot = marker.parentElement as HTMLElement;
+    jest.spyOn(plot, 'getBoundingClientRect').mockReturnValue({left: 100, width: 440.8} as DOMRect);
+    jest.spyOn(marker, 'getBoundingClientRect').mockReturnValue({left: 319, width: 2} as DOMRect);
+    fireEvent.pointerDown(getAllByRole('slider')[0], {clientX: 318});
+    expect(onChange).toHaveBeenLastCalledWith('appear', zoom);
+    fireEvent.pointerMove(window, {clientX: 322});
+    expect(onChange).toHaveBeenLastCalledWith('appear', zoom);
+    fireEvent.pointerMove(window, {clientX: 323});
+    expect(onChange.mock.lastCall[1]).not.toBe(zoom);
+  });
+
+  test('uses updated camera zoom while a pointer drag remains active', () => {
+    const onChange = jest.fn();
+    let updateZoom: React.Dispatch<React.SetStateAction<number>>;
+    function Camera() {
+      const [zoom, setZoom] = React.useState(12);
+      updateZoom = setZoom;
+      return <ZoomOpacitySlider idPrefix="test" stops={stops} zoom={zoom} onChange={onChange} />;
+    }
+    const {container, getAllByRole} = renderWithTheme(
+      <IntlWrapper>
+        <Camera />
+      </IntlWrapper>
+    );
+    const marker = container.querySelector('.interaction-zoom-opacity__zoom-marker') as HTMLElement;
+    const markerBounds = jest.spyOn(marker, 'getBoundingClientRect');
+    markerBounds.mockReturnValue({left: 209.5, width: 1} as DOMRect);
+    fireEvent.pointerDown(getAllByRole('slider')[0], {clientX: 208});
+    expect(onChange).toHaveBeenLastCalledWith('appear', 12);
+    act(() => updateZoom(6));
+    markerBounds.mockReturnValue({left: 159.5, width: 1} as DOMRect);
+    fireEvent.pointerMove(window, {clientX: 158});
+    expect(onChange).toHaveBeenLastCalledWith('appear', 6);
+  });
+
   test.each([
     ['ArrowLeft', false, -0.1],
     ['ArrowDown', true, -1],
