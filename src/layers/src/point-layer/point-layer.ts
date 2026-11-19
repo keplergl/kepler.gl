@@ -991,7 +991,7 @@ export default class PointLayer extends Layer {
           getPixelOffset,
           updateTriggers: {
             ...updateTriggers,
-            getRadius: {...updateTriggers.getRadius, radiusScale}
+            getRadius: {...visualChannelUpdateTriggers.getRadius, radiusScale}
           },
           getFiltered: data.getFiltered
         },
