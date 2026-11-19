@@ -5,6 +5,7 @@ import React, {useContext, useId, useLayoutEffect, useRef, useState} from 'react
 import styled from 'styled-components';
 import {useIntl} from 'react-intl';
 import {
+  Annotation,
   CameraBookmark,
   CameraSnapshot,
   CameraTour,
@@ -307,7 +308,13 @@ const SourceMenu = styled(ContextMenu)`
   }
 `;
 
-type StopSource = {key: string; label: string; disabled: boolean; bookmarkId?: string};
+type StopSource = {
+  key: string;
+  label: string;
+  disabled: boolean;
+  bookmarkId?: string;
+  annotationId?: string;
+};
 
 function StopSourceMenu({
   id,
@@ -464,6 +471,7 @@ export type CameraTourConfigProps = {
   selection?: {stopId: string};
   uiStateActions?: typeof UIStateActions;
   bookmarks?: CameraBookmark[];
+  annotations?: readonly Annotation[];
   mapState?: MapState;
   mapStateActions?: typeof MapStateActions;
   visStateActions: typeof VisStateActions;
@@ -476,6 +484,7 @@ export default function CameraTourConfig({
   selection,
   uiStateActions,
   bookmarks = [],
+  annotations = [],
   mapState,
   mapStateActions,
   visStateActions
@@ -495,6 +504,19 @@ export default function CameraTourConfig({
     getCameraSnapshot(
       mapState?.isSplit && !mapState.isViewportSynced ? mapState.splitMapViewports?.[0] : mapState
     );
+  // A stop copies the current orientation/zoom, centered on the annotation anchor.
+  // Camera snapshots have no elevation field, so annotation altitude is not copied.
+  const annotationCamera = (annotation: Annotation) => {
+    const current = readCamera();
+    return current && Array.isArray(annotation.anchorPoint)
+      ? getCameraSnapshot({
+          ...current,
+          longitude: annotation.anchorPoint[0],
+          latitude: annotation.anchorPoint[1]
+        })
+      : null;
+  };
+  const hasStopSources = bookmarks.length + annotations.length > 0;
   const supported = Boolean(mapState);
   const sharedPlayback = useContext(CameraTourPlaybackContext);
   const localPlayback = useCameraTourPlayback(
@@ -525,11 +547,11 @@ export default function CameraTourConfig({
     addButton.current?.focus();
   };
   useLayoutEffect(() => {
-    if (sourceMenuOpen && (!bookmarks.length || !supported || !open)) {
+    if (sourceMenuOpen && (!hasStopSources || !supported || !open)) {
       setSourceMenuOpen(false);
       addButton.current?.focus();
     }
-  }, [sourceMenuOpen, bookmarks.length, supported, open]);
+  }, [sourceMenuOpen, hasStopSources, supported, open]);
   const sources: StopSource[] = [
     {key: 'current', label: message('currentView', 'Current view'), disabled: !readCamera()},
     ...bookmarks.map(bookmark => ({
@@ -537,6 +559,12 @@ export default function CameraTourConfig({
       bookmarkId: bookmark.id,
       label: bookmark.name,
       disabled: !getCameraSnapshot(bookmark.camera)
+    })),
+    ...annotations.map((annotation, index) => ({
+      key: `annotation:${annotation.id}`,
+      annotationId: annotation.id,
+      label: `${message('annotation', 'Annotation')}: ${annotation.label || index + 1}`,
+      disabled: !annotationCamera(annotation)
     }))
   ];
   const timingInputs = useRef<
@@ -693,15 +721,15 @@ export default function CameraTourConfig({
                     small
                     ref={addButton}
                     disabled={sources.every(source => source.disabled)}
-                    aria-haspopup={bookmarks.length ? 'menu' : undefined}
-                    aria-expanded={bookmarks.length ? sourceMenuOpen : undefined}
+                    aria-haspopup={hasStopSources ? 'menu' : undefined}
+                    aria-expanded={hasStopSources ? sourceMenuOpen : undefined}
                     aria-controls={sourceMenuOpen ? `${panelId}-sources` : undefined}
                     onClick={() => {
-                      if (bookmarks.length) setSourceMenuOpen(!sourceMenuOpen);
+                      if (hasStopSources) setSourceMenuOpen(!sourceMenuOpen);
                       else add(readCamera());
                     }}
                     onKeyDown={event => {
-                      if (bookmarks.length && event.key === 'ArrowDown') {
+                      if (hasStopSources && event.key === 'ArrowDown') {
                         event.preventDefault();
                         setSourceMenuOpen(true);
                       }
@@ -712,7 +740,7 @@ export default function CameraTourConfig({
                   </Button>
                   <Portaled
                     component={MenuAnchor}
-                    isOpened={sourceMenuOpen && bookmarks.length > 0}
+                    isOpened={sourceMenuOpen && hasStopSources}
                     left={0}
                     top={0}
                     onClose={closeSourceMenu}
@@ -727,6 +755,11 @@ export default function CameraTourConfig({
                         if (source.bookmarkId !== undefined) {
                           const bookmark = bookmarks.find(item => item.id === source.bookmarkId);
                           if (bookmark) add(getCameraSnapshot(bookmark.camera), bookmark.name);
+                        } else if (source.annotationId !== undefined) {
+                          const annotation = annotations.find(
+                            item => item.id === source.annotationId
+                          );
+                          if (annotation) add(annotationCamera(annotation), annotation.label);
                         } else add(readCamera());
                       }}
                     />

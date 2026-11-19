@@ -12,7 +12,7 @@ import {
   uiStateReducer
 } from '@kepler.gl/reducers';
 import {MapViewMode} from '@kepler.gl/constants';
-import {CameraBookmark, CameraTour} from '@kepler.gl/types';
+import {Annotation, CameraBookmark, CameraTour} from '@kepler.gl/types';
 import {evaluateCameraTour} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import {MapViewStateContext} from '../../map-view-state-context';
@@ -41,6 +41,7 @@ function setup(
   initial: CameraTour | null = tour,
   options: {
     bookmarks?: CameraBookmark[];
+    annotations?: Annotation[];
     mapState?: typeof INITIAL_MAP_STATE;
     liveCamera?: typeof camera;
     floatingBookmarks?: boolean;
@@ -92,6 +93,7 @@ function setup(
           )}
           <CameraTourConfig
             tour={value}
+            annotations={options.annotations}
             enabled={enabled}
             uiStateActions={{
               ...UIStateActions,
@@ -1682,4 +1684,31 @@ test('plays a tour in the primary independent globe pane without clamping to fla
   expect(state.splitMapViewports[1]).toEqual(other);
   expect(globeTour.stops[0].camera).toEqual(target);
   fireEvent.click(screen.getByRole('button', {name: 'Pause'}));
+});
+
+test('annotation-only sources copy live zoom and orientation at selection, centered on the anchor', () => {
+  const liveCamera = {...camera};
+  const annotation = {id: 'point', label: 'Landmark', anchorPoint: [80, 40, 900]} as Annotation;
+  const {commit} = setup(null, {annotations: [annotation], liveCamera});
+  fireEvent.click(screen.getByRole('button', {name: 'Add stop'}));
+  expect(commit).not.toHaveBeenCalled();
+  liveCamera.zoom = 12;
+  liveCamera.bearing = 75;
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Annotation: Landmark'}));
+  expect(commit.mock.lastCall[0].stops[0]).toMatchObject({
+    name: 'Landmark',
+    camera: {...liveCamera, longitude: 80, latitude: 40}
+  });
+  expect(annotation.anchorPoint).toEqual([80, 40, 900]);
+});
+
+test('invalid annotation anchors are disabled without blocking saved bookmarks', () => {
+  setup(null, {
+    annotations: [{id: 'bad', label: 'Invalid', anchorPoint: [0, NaN]} as Annotation],
+    bookmarks: [{id: 'saved', name: 'Saved', camera}]
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add stop'}));
+  expect(screen.getByRole('menuitem', {name: 'Annotation: Invalid'})).toBeDisabled();
+  expect(screen.getByRole('menuitem', {name: 'Saved'})).toBeEnabled();
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Saved'}));
 });
