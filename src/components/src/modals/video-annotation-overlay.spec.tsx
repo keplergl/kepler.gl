@@ -3,7 +3,7 @@
 
 import React from 'react';
 import {act, render} from '@testing-library/react';
-import {domtoimage, getViewportFromMapState} from '@kepler.gl/utils';
+import {domtoimage, getApplicationConfig, getViewportFromMapState} from '@kepler.gl/utils';
 import {getLayerZoomOpacityFactor} from '@kepler.gl/reducers';
 import {
   compositeVideoAnnotations,
@@ -14,7 +14,7 @@ import type {VideoAnnotationFrame} from './video-annotation-encoder';
 
 jest.mock('@kepler.gl/utils', () => ({
   domtoimage: {toPng: jest.fn()},
-  getApplicationConfig: () => ({escapeXhtmlForWebpack: false}),
+  getApplicationConfig: jest.fn(() => ({escapeXhtmlForWebpack: false})),
   getViewportFromMapState: jest.fn(state => {
     const {WebMercatorViewport, _GlobeViewport} = require('@deck.gl/core');
     return new (state.globe?.enabled ? _GlobeViewport : WebMercatorViewport)(state);
@@ -156,6 +156,35 @@ test('clips the two map overlays at the animated swipe position', async () => {
   });
   await act(async () => compositeVideoAnnotations(canvas, frame));
 });
+
+test.each([false, true])(
+  'preserves annotation text through SVG serialization with webpack escaping configured as %s',
+  async escapeXhtmlForWebpack => {
+    jest.mocked(getApplicationConfig).mockReturnValue({
+      ...getApplicationConfig(),
+      escapeXhtmlForWebpack
+    });
+    const label = 'Rank #1 — Київ 🌍';
+    const {canvas, frame} = setup({annotations: [{...annotation, label}]});
+    const {domtoimage: actualDomtoimage} = jest.requireActual('@kepler.gl/utils');
+    const getComputedStyle = window.getComputedStyle.bind(window);
+    // jsdom cannot compute pseudo-element styles; keep the real text styles.
+    jest
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation((element, pseudo) =>
+        pseudo ? document.createElement('div').style : getComputedStyle(element)
+      );
+    let serializedSvg = '';
+    jest.mocked(domtoimage.toPng).mockImplementation(async (node, options) => {
+      const text = node.querySelector('[data-annotation-part="text"]');
+      const url = await actualDomtoimage.toSvg(text, options);
+      serializedSvg = Buffer.from(url.split(',')[1], 'base64').toString('utf8');
+      return 'data:image/png;base64,annotation';
+    });
+    await act(async () => compositeVideoAnnotations(canvas, frame));
+    expect(serializedSvg).toContain(label);
+  }
+);
 
 test('skips rasterization for annotations hidden by zoom opacity or globe occlusion', async () => {
   const {canvas, frame} = setup();

@@ -4,7 +4,7 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {createPortal, flushSync} from 'react-dom';
-import {domtoimage, getViewportFromMapState, getApplicationConfig} from '@kepler.gl/utils';
+import {domtoimage, getViewportFromMapState} from '@kepler.gl/utils';
 import {getLayerZoomOpacityFactor, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
 import {fontFamily} from '@kepler.gl/styles';
 import AnnotationOverlay from '../annotations/annotation-overlay';
@@ -184,7 +184,8 @@ export async function compositeVideoAnnotations(
       domtoimage.toPng(rasterNode, {
         width: canvas.width,
         height: canvas.height,
-        escapeXhtmlForWebpack: getApplicationConfig().escapeXhtmlForWebpack
+        // SVG is base64-encoded; URI escaping would turn literal '#' into '%23'.
+        escapeXhtmlForWebpack: false
       }),
       signal
     );
