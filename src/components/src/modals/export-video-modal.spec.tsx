@@ -8,7 +8,7 @@ import {IntlProvider} from 'react-intl';
 import {act, fireEvent, render, renderHook, screen, waitFor} from '@testing-library/react';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
-import {MapSplitMode} from '@kepler.gl/constants';
+import {MapSplitMode, NO_MAP_ID} from '@kepler.gl/constants';
 import {WebMercatorViewport, _LayersPass as LayersPass} from '@deck.gl/core';
 import {CanvasContext} from '@luma.gl/core';
 import {isBrowser} from '@probe.gl/env';
@@ -380,19 +380,23 @@ describe('ExportVideoModal', () => {
           const settings = isOwnContainer ? panel.state : panel.props.initialState;
           expect(settings.resolution).toBe(resolution);
           const {width, height, zoom, minZoom, maxZoom, zoomOffset} = panel.props.mapData.mapState;
-          const globeCameraBounds = mode === 'globe' ? {minZoom, maxZoom, zoomOffset} : {};
+          const cameraBounds = {
+            minZoom,
+            maxZoom,
+            ...(mode === 'globe' ? {zoomOffset} : {})
+          };
           const zoomDelta = zoom - initialCamera.zoom;
           expect(opacity()).toBeCloseTo(1);
           expect(panel.state.viewState).toMatchObject({
             ...userCamera,
-            ...globeCameraBounds,
+            ...cameraBounds,
             width,
             height,
             zoom: userCamera.zoom + zoomDelta
           });
           expect(panel.state.memo.viewState).toMatchObject({
             ...initialCamera,
-            ...globeCameraBounds,
+            ...cameraBounds,
             width,
             height,
             zoom: initialCamera.zoom + zoomDelta
@@ -1724,6 +1728,477 @@ describe('Camera Animation video export', () => {
       await Promise.resolve();
       expect(oldCapture.capturing).toBe(false);
       expect(currentCapture.capturing).toBe(true);
+    }
+  );
+
+  test.each(['satellite', NO_MAP_ID])(
+    'passes the visible basemap through Hubble without changing saved %s settings',
+    styleType => {
+      const {ExportVideoPanelPreview} = jest.requireActual(
+        require
+          .resolve('@hubble.gl/react')
+          .replace(/index\.cjs$/, 'components/export-video/export-video-panel-preview.js')
+      );
+      const resolvedStyle = {version: 8, sources: {}, layers: [{id: 'retained-background'}]};
+      const originalUrl =
+        styleType === NO_MAP_ID
+          ? 'data:application/json,{"version":8,"sources":{},"layers":[]}'
+          : 'mapbox://styles/mapbox/satellite-streets-v11';
+      const mapStyle = {
+        styleType,
+        mapStyles: {[styleType]: {url: originalUrl}}
+      };
+      class Base extends React.Component {
+        state = {viewState: camera};
+        render() {
+          return <div {...this.props} />;
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const instance = new Container({
+        mapData: {mapStyle, visState: {}},
+        mapProps: {mapStyle: resolvedStyle},
+        deckProps: {layers: []}
+      });
+      const panel = instance.render();
+      const devicePixelRatio = window.devicePixelRatio;
+      try {
+        const preview = new ExportVideoPanelPreview({
+          ...panel.props,
+          viewState: camera,
+          exportVideoWidth: 360,
+          resolution: [1280, 720],
+          adapter: {getProps: ({extraProps}) => extraProps}
+        });
+        const deckCanvas = React.Children.toArray(preview.render().props.children)[0];
+        const map = deckCanvas.props.children;
+        expect(map.props.mapStyle).toBe(styleType === NO_MAP_ID ? originalUrl : resolvedStyle);
+        expect(mapStyle.mapStyles[styleType].url).toBe(originalUrl);
+        expect(instance.props.mapData.mapStyle).toBe(mapStyle);
+      } finally {
+        window.devicePixelRatio = devicePixelRatio;
+      }
+    }
+  );
+
+  describe('regular export frame synchronization', () => {
+    function mountCapture({
+      mediaType = 'webm',
+      holdCamera = false,
+      delayedRenderer = false,
+      emptyLayers = false,
+      mapProps = {}
+    } = {}) {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      const encoders = [];
+      const nextFrame = jest.fn();
+      let canvas;
+      let requestedTime = 0;
+      const layer = {isLoaded: true};
+      const deck = {
+        props: {layers: emptyLayers ? [] : [layer]},
+        getCanvas: () => canvas,
+        redraw: jest.fn()
+      };
+      let controlDeck;
+      let previewMapProps;
+      const previewDeckRef = {current: undefined};
+      function Overlay({time, zoom, mapProps: currentMapProps}) {
+        // Hubble publishes the control's Deck only while the child renders.
+        previewDeckRef.current = controlDeck;
+        previewMapProps = currentMapProps;
+        return <canvas ref={element => (canvas = element)} data-time={time} data-zoom={zoom} />;
+      }
+      class Encoder {
+        frames = [];
+        pending = [];
+        constructor() {
+          encoders.push(this);
+        }
+        start() {
+          return undefined;
+        }
+        add(source) {
+          this.frames.push({
+            time: Number(source.dataset.time),
+            zoom: Number(source.dataset.zoom)
+          });
+          return new Promise(resolve => this.pending.push(resolve));
+        }
+        cancel() {
+          return undefined;
+        }
+      }
+      class Base extends React.Component {
+        constructor(props) {
+          super(props);
+          const adapter = new DeckAdapter({
+            animationManager: {
+              setKeyframes: jest.fn(),
+              timeline: {setTime: time => (requestedTime = time)},
+              draw: () =>
+                holdCamera
+                  ? this.setState({filterTime: requestedTime})
+                  : this.setViewState({
+                      ...camera,
+                      zoom: camera.zoom + requestedTime / 1000,
+                      frameTime: requestedTime
+                    })
+            }
+          });
+          if (!delayedRenderer) adapter.setDeck(deck);
+          this.state = {adapter, mediaType, viewState: {...camera, frameTime: 0}};
+        }
+        setViewState(viewState) {
+          this.setState({viewState});
+        }
+        getFilterKeyframes() {
+          return {};
+        }
+        getTripKeyframes() {
+          return {};
+        }
+        getCameraKeyframes() {
+          return {};
+        }
+        getFormatConfigs() {
+          return {};
+        }
+        getTimecode() {
+          return {start: 0, end: 1000, framerate: 30};
+        }
+        getFileName() {
+          return 'capture-test';
+        }
+        onRenderVideo() {
+          this.setState({rendering: true, memo: {viewState: {...this.state.viewState}}});
+          this.state.adapter.render({Encoder: this.getEncoder(), timecode: this.getTimecode()});
+        }
+        onPreviewVideo() {
+          this.setState({previewing: true, memo: {viewState: {...this.state.viewState}}});
+          this.state.adapter.render({Encoder: this.getEncoder(), timecode: this.getTimecode()});
+        }
+        onStop() {
+          this.state.adapter.stop({abort: true});
+          this.setState({rendering: false, saving: false});
+        }
+        render() {
+          // Like Hubble's preview, the parent reads its ref before Overlay can
+          // publish a renderer created asynchronously by the map control.
+          if (delayedRenderer) this.state.adapter.getProps({deck: previewDeckRef.current});
+          return (
+            <Overlay
+              mapProps={this.props.mapProps}
+              time={this.state.filterTime ?? this.state.viewState.frameTime}
+              zoom={this.state.viewState.zoom}
+            />
+          );
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const ref = React.createRef();
+      const result = render(
+        <Container
+          ref={ref}
+          mapData={{visState: {}, mapState: camera}}
+          mapProps={mapProps}
+          deckProps={{layers: []}}
+        />
+      );
+      const container = ref.current;
+      container.getEncoder = () => Encoder;
+      const adapter = container.state.adapter;
+      const draw = (ready = true) => adapter.onAfterRender(nextFrame, ready);
+      return {
+        ...result,
+        container,
+        adapter,
+        draw,
+        encoders,
+        layer,
+        deck,
+        mapError: event => previewMapProps.onError(event),
+        mapRender: event => previewMapProps.onRender(event),
+        createRenderer: () => {
+          controlDeck = deck;
+        }
+      };
+    }
+
+    async function settleCapture() {
+      // Let the real Hubble promise chain finish while act still holds React's commit.
+      for (let i = 0; i < 12; i++) await Promise.resolve();
+    }
+
+    function failedMap() {
+      return {
+        getSource: jest.fn(() => ({loaded: () => false})),
+        getStyle: jest.fn(() => ({version: 8})),
+        isStyleLoaded: jest.fn(() => false),
+        areTilesLoaded: jest.fn(() => true)
+      };
+    }
+
+    test.each(['style', 'source'])(
+      'remembers a failed basemap %s before Start and waits for real readiness to retry',
+      failure => {
+        const {container, adapter, encoders, mapError, mapRender, draw} = mountCapture();
+        const map = failedMap();
+        if (failure === 'style') map.getStyle.mockReturnValue(undefined);
+        act(() =>
+          mapError({
+            target: map,
+            ...(failure === 'source' ? {sourceId: 'satellite'} : {}),
+            error: new Error('HTTP 403 https://example.com/source.json?access_token=secret')
+          })
+        );
+        expect(screen.getByRole('alert')).toHaveTextContent('The basemap could not load');
+        expect(screen.getByRole('alert')).not.toHaveTextContent('secret');
+        act(() => {
+          container.onPreviewVideo();
+          container.onRenderVideo();
+          container.setState({mediaType: 'webm-native'});
+        });
+        act(() => container.onRenderVideo());
+        expect(encoders).toHaveLength(0);
+        expect(adapter.videoCapture.isRecording()).toBe(false);
+        act(() => mapRender({target: map}));
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        map.isStyleLoaded.mockReturnValue(true);
+        map.areTilesLoaded.mockReturnValue(false);
+        act(() => mapRender({target: map}));
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        map.areTilesLoaded.mockReturnValue(true);
+        act(() => mapRender({target: map}));
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        act(() => container.onRenderVideo());
+        act(() => draw());
+        expect(encoders[0].frames).toEqual([{time: 0, zoom: camera.zoom}]);
+      }
+    );
+
+    test.each([
+      ['onPreviewVideo', 'webm'],
+      ['onRenderVideo', 'webm'],
+      ['onRenderVideo', 'webm-native']
+    ])(
+      'aborts %s %s and restores controls and camera after metadata failure',
+      (method, mediaType) => {
+        const {container, adapter, encoders, mapError, draw} = mountCapture({mediaType});
+        const restoredCamera = {...container.state.viewState};
+        act(() => container[method]());
+        const cancel = jest.spyOn(encoders[0], 'cancel');
+        act(() => container.setState({viewState: {...restoredCamera, zoom: camera.zoom + 1}}));
+        act(() => mapError({target: failedMap(), sourceId: 'satellite'}));
+        expect(cancel).toHaveBeenCalledTimes(1);
+        expect(adapter.videoCapture.isRecording()).toBe(false);
+        expect(container.state).toMatchObject({
+          rendering: false,
+          previewing: false,
+          saving: false,
+          viewState: restoredCamera
+        });
+        expect(screen.getByRole('alert')).toHaveTextContent('The basemap could not load');
+        act(() => draw());
+        expect(encoders[0].frames).toEqual([]);
+      }
+    );
+
+    test('keeps ordinary tile errors nonfatal and forwards the map callbacks', () => {
+      const onError = jest.fn();
+      const onRender = jest.fn();
+      const {container, adapter, encoders, mapError, mapRender, draw} = mountCapture({
+        mapProps: {onError, onRender}
+      });
+      const map = failedMap();
+      map.getSource.mockReturnValue({loaded: () => true});
+      const errorEvent = {target: map, sourceId: 'satellite', error: new Error('Tile unavailable')};
+      const renderEvent = {target: map};
+      act(() => {
+        container.onPreviewVideo();
+        mapError(errorEvent);
+        mapRender(renderEvent);
+      });
+      expect(onError).toHaveBeenCalledWith(errorEvent);
+      expect(onRender).toHaveBeenCalledWith(renderEvent);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(adapter.videoCapture.isRecording()).toBe(true);
+      act(() => draw());
+      expect(encoders[0].frames).toEqual([{time: 0, zoom: camera.zoom}]);
+    });
+
+    test.each(['webm', 'webm-native'])(
+      '%s waits for camera commits, tiles and each encoded frame without duplicating poses',
+      async mediaType => {
+        const {container, adapter, draw, encoders, layer} = mountCapture({mediaType});
+        act(() => {
+          container.onRenderVideo();
+          draw();
+          draw();
+          expect(encoders[0].frames).toEqual([]);
+        });
+        const encoder = encoders[0];
+        act(() => draw());
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0]);
+        await act(async () => {
+          encoder.pending.shift()();
+          await settleCapture();
+          expect(adapter.videoCapture.timeMs).toBe(1000 / 30);
+          draw();
+          draw();
+          expect(encoder.frames.map(frame => frame.time)).toEqual([0]);
+        });
+        act(() => {
+          layer.isLoaded = false;
+          draw();
+          layer.isLoaded = true;
+          draw(false);
+          draw(false);
+        });
+        expect(adapter.videoCapture.timeMs).toBe(1000 / 30);
+        expect(encoder.frames).toHaveLength(1);
+        act(() => {
+          draw();
+          draw();
+        });
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0, 1000 / 30]);
+        expect(encoder.frames[1].zoom).toBeCloseTo(camera.zoom + 1 / 30);
+        await act(async () => {
+          encoder.pending.shift()();
+          await settleCapture();
+          draw();
+          expect(encoder.frames).toHaveLength(2);
+        });
+        act(() => draw());
+        expect(encoder.frames.map(frame => frame.time)).toEqual([0, 1000 / 30, 2000 / 30]);
+      }
+    );
+
+    test.each([
+      ['before recording', false],
+      ['after recording starts', false],
+      ['after recording starts', true]
+    ])(
+      'starts capture when the preview renderer arrives %s (empty map: %s)',
+      (readiness, emptyLayers) => {
+        const {container, draw, encoders, layer, deck, createRenderer} = mountCapture({
+          delayedRenderer: true,
+          emptyLayers
+        });
+        layer.isLoaded = false;
+        // Map renders triggered by the binding commit still have pending tiles.
+        deck.redraw.mockImplementation(() => draw(false));
+        if (readiness === 'before recording') createRenderer();
+        act(() => {
+          container.onRenderVideo();
+          draw(false);
+          expect(encoders[0].frames).toEqual([]);
+        });
+        if (readiness === 'after recording starts') {
+          createRenderer();
+          act(() => draw(false));
+        }
+        const encoder = encoders[0];
+        act(() => draw(!emptyLayers));
+        expect(encoder.frames).toEqual([]);
+        act(() => {
+          layer.isLoaded = true;
+          draw(false);
+        });
+        expect(encoder.frames).toEqual([]);
+        act(() => draw());
+        expect(encoder.frames).toEqual([{time: 0, zoom: camera.zoom}]);
+      }
+    );
+
+    test('advances stationary-camera frames only after their filter state commits', async () => {
+      const {container, draw, encoders} = mountCapture({holdCamera: true});
+      act(() => container.onPreviewVideo());
+      const encoder = encoders[0];
+      act(() => draw());
+      await act(async () => {
+        encoder.pending.shift()();
+        await settleCapture();
+        draw();
+        expect(encoder.frames).toHaveLength(1);
+      });
+      act(() => draw());
+      expect(encoder.frames).toEqual([
+        {time: 0, zoom: camera.zoom},
+        {time: 1000 / 30, zoom: camera.zoom}
+      ]);
+    });
+
+    test('ignores a cancelled session commit when a new session is still pending', () => {
+      const {container, adapter, draw, encoders, deck} = mountCapture();
+      // Simulate render notifications caused by a commit requesting a deck redraw.
+      deck.redraw.mockImplementation(() => draw());
+      act(() => {
+        container.onRenderVideo();
+        const previous = adapter.videoCapture;
+        container.onStop({abort: true});
+        container.onRenderVideo();
+        expect(adapter.videoCapture).not.toBe(previous);
+        draw();
+        expect(encoders.map(encoder => encoder.frames.length)).toEqual([0, 0]);
+      });
+      expect(encoders[0].frames).toEqual([]);
+      expect(encoders[1].frames).toEqual([{time: 0, zoom: camera.zoom}]);
+      // Only the current session's committed frame may request capture.
+      expect(deck.redraw).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test.each([
+    ['onRenderVideo', 30, 125.25],
+    ['onRenderVideo', 60, 250.5],
+    ['onPreviewVideo', 30, 125.25],
+    ['onPreviewVideo', 60, 250.5]
+  ])(
+    '%s captures %sfps without accumulated drift from start %s',
+    async (method, framerate, start) => {
+      const {DeckAdapter} = require('@hubble.gl/core');
+      const timestamps = [];
+      const timecode = {start, end: start + 10000, framerate};
+      let capture;
+      class Encoder {
+        start() {
+          return undefined;
+        }
+        async add() {
+          timestamps.push(capture.timeMs);
+        }
+      }
+      class Base {
+        state = {adapter: new DeckAdapter({})};
+        onRenderVideo() {
+          capture = this.state.adapter.videoCapture;
+          capture.render({Encoder, timecode, formatConfigs: {}});
+        }
+        onPreviewVideo() {
+          Base.prototype.onRenderVideo.call(this);
+        }
+      }
+      const Container = withCameraTourExport(Base);
+      const container = new Container();
+      const canvas = document.createElement('canvas');
+      for (let session = 0; session < 2; session++) {
+        timestamps.length = 0;
+        container[method]();
+        while (capture.isRecording()) {
+          await new Promise(resolve => {
+            capture.onStop = () => {
+              capture.recording = false;
+              resolve();
+            };
+            capture.capture(canvas, resolve);
+          });
+        }
+        expect(timestamps).toEqual(
+          Array.from({length: 10 * framerate + 1}, (_, index) => start + (index * 1000) / framerate)
+        );
+        expect(timestamps[timestamps.length - 1]).toBe(timecode.end);
+      }
     }
   );
 

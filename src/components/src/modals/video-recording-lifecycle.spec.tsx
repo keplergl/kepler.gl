@@ -156,7 +156,7 @@ afterEach(() => {
 
 function mount(
   kind: 'globe' | 'swipe',
-  durationMs = 33,
+  durationMs = 1000 / 30,
   effects: Effect[] = [],
   annotations: Annotation[] = []
 ) {
@@ -249,7 +249,7 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
   const annotations = [{id: 'label', isVisible: true, mapIndex: 0}] as Annotation[];
 
   it('composites annotations before submitting frames to the opt-in native encoder', async () => {
-    const {container} = mount(kind, 33, [], annotations);
+    const {container} = mount(kind, 1000 / 30, [], annotations);
     act(() => container.setMediaType('webm-native'));
     const Encoder = container.getEncoder();
     const encoder = new Encoder({framerate: 30});
@@ -273,7 +273,7 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
   });
 
   it('waits for annotation composition before encoding and advancing the clock', async () => {
-    mount(kind, 33, [], annotations);
+    mount(kind, 1000 / 30, [], annotations);
     const pending = deferred<void>();
     jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
     const encoder = start();
@@ -291,11 +291,11 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
       pending.resolve();
     });
     expect(encoder.addFrame).toHaveBeenCalledWith(canvas);
-    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0], [33]]);
+    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0], [1000 / 30]]);
   });
 
   it('aborts annotation composition and discards its frame after cancellation', async () => {
-    const {container} = mount(kind, 33, [], annotations);
+    const {container} = mount(kind, 1000 / 30, [], annotations);
     const pending = deferred<void>();
     jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
     const encoder = start();
@@ -322,7 +322,7 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
       getParameterDescriptions: () => [{name: 'amount', min: 0, max: 100}],
       setProps: ({parameters}) => Object.assign(effect.parameters, parameters)
     } as unknown as Effect;
-    mount(kind, 66, [effect]);
+    mount(kind, 2000 / 30, [effect]);
     const encoder = start();
     const captured: number[] = [];
     encoder.add.mockImplementation(() => {
@@ -356,7 +356,7 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     await act(async () => {
       first.resolve();
     });
-    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0], [33]]);
+    expect(mockManagers[0].timeline.setTime.mock.calls).toEqual([[0], [1000 / 30]]);
     await flushFrames(framesPerCapture);
     expect(encoder.add).toHaveBeenCalledTimes(2);
     expect(encoder.save).not.toHaveBeenCalled();
@@ -372,6 +372,32 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     expect(download).toHaveBeenCalledWith(blob, 'recording.webm', 'video/webm');
     expect(container.state.viewState).toEqual(initial);
     expect(container.state).toMatchObject({rendering: false, saving: false, currentTimeMs: 0});
+  });
+
+  it.each([30, 60])('captures exact %i fps timestamps without rounding drift', async framerate => {
+    const duration = 10000;
+    const startTime = 125;
+    const {container} = mount(kind, duration);
+    jest.spyOn(container, 'getTimecode').mockReturnValue({
+      start: startTime,
+      end: startTime + duration,
+      duration,
+      framerate
+    });
+    const encoder = start();
+    const capturedTimes: number[] = [];
+    encoder.add.mockImplementation(() => {
+      capturedTimes.push(container.state.currentTimeMs);
+      return Promise.resolve();
+    });
+    const expectedFrames = (duration * framerate) / 1000 + 1;
+    await flushFrames(framesPerCapture * (expectedFrames + 1));
+    expect(capturedTimes).toEqual(
+      Array.from({length: expectedFrames}, (_, index) => startTime + (index * 1000) / framerate)
+    );
+    expect(capturedTimes[capturedTimes.length - 1]).toBe(startTime + duration);
+    expect(encoder.save).toHaveBeenCalledTimes(1);
+    expect(container.state.rendering).toBe(false);
   });
 
   it('ignores a completed frame from a cancelled recording after a new recording starts', async () => {
@@ -486,7 +512,7 @@ it('still encodes a swipe canvas when cross-origin content prevents pixel inspec
 });
 
 it('reuses the globe output canvas and paints its background before each deck frame', async () => {
-  mount('globe', 33);
+  mount('globe', 1000 / 30);
   const encoder = start();
   await flushFrames(4);
   expect(encoder.add).toHaveBeenCalledTimes(2);

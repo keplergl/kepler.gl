@@ -555,9 +555,9 @@ const ExportVideoModalFactory = () => {
         const rescaleCamera = (camera: Record<string, any>) => ({
           ...camera,
           zoom: camera.zoom + zoomDelta,
-          ...(isGlobeEnabled
-            ? {minZoom, maxZoom, zoomOffset: keplerState.mapState.zoomOffset}
-            : {}),
+          minZoom,
+          maxZoom,
+          ...(isGlobeEnabled ? {zoomOffset: keplerState.mapState.zoomOffset} : {}),
           width,
           height
         });
