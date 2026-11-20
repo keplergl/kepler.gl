@@ -1612,7 +1612,6 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
   timestamp: number;
   timeMode: LightAndShadowEffectTimeMode;
   shadowIntensity: number;
-  shadowMapResolution: number;
   shadowColor: [number, number, number];
   sunLightColor: [number, number, number];
   sunLightIntensity: number;
@@ -1622,7 +1621,6 @@ export const DEFAULT_LIGHT_AND_SHADOW_PROPS: {
   timestamp: Date.now(),
   timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick as LightAndShadowEffectTimeMode,
   shadowIntensity: DEFAULT_SHADOW_INTENSITY,
-  shadowMapResolution: SHADOW_MAP_RESOLUTIONS.auto,
   shadowColor: [...DEFAULT_SHADOW_COLOR] as [number, number, number],
   sunLightColor: [...DEFAULT_LIGHT_COLOR] as [number, number, number],
   sunLightIntensity: DEFAULT_LIGHT_INTENSITY,

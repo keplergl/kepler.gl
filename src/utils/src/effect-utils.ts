@@ -237,7 +237,7 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
     // viewport to ShadowPass. Exclude it explicitly, in addition to that guard.
     deckEffect.shadowMapResolution = mapState?.isSplit
       ? SHADOW_MAP_RESOLUTIONS.auto
-      : parameters.shadowMapResolution;
+      : parameters.shadowMapResolution ?? SHADOW_MAP_RESOLUTIONS.auto;
 
     // Sync shadow color & intensity (not handled by deck.gl setProps)
     deckEffect.shadowColor = [
