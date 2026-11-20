@@ -60,9 +60,11 @@ not this one.
 
 Prefer an available map tool to clicking the UI. Direct MCP tools take
 their command input object as arguments. On hosts with a command dispatcher,
-pass `{commandId, input}` in the envelope described by that host. Do not assume
-every host serves every command: the demo WebMCP and stdio bridge do not offer
-the DuckDB-backed `map.create-table`, `map.add-column`, or `map.save-data`.
+pass `{commandId, input}` in the envelope described by that host. The stdio bridge
+lists the full catalog before a page connects, but calls require a connected page.
+Once connected, the page supplies the actual catalog. The demo omits the DuckDB-backed
+`map.create-table`, `map.add-column`, and `map.save-data` in both browser WebMCP
+and the bridged demo session.
 
 `map.add-layer` also accepts `contour`, `voronoi`, and `zarr`, with their
 options described below. The stdio bridge replaces the namespace dot with
@@ -532,8 +534,8 @@ zoom, bearing, and pitch; stops do not link to the source object.
 
 ### Annotations (`map.add-annotation`, `map.get-annotations`)
 
-Pick an unused id. Pass longitude first, then latitude, optionally altitude
-in meters. Create a plain-text label:
+Pick an unused id without colons. Pass longitude first, then latitude, optionally
+altitude in meters. Create a plain-text label:
 
 ```json
 {"id":"civic-center","kind":"text","anchorPoint":[-122.4,37.8],"label":"Civic Center"}

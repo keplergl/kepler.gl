@@ -82,6 +82,15 @@ test.each([
   expect(dispatch).not.toHaveBeenCalled();
 });
 
+test('rejects ids with a colon before dispatching', async () => {
+  const {context, dispatch} = setup();
+  expect(await execute(getAddAnnotationCommand(context), {...text, id: 'poi:city'})).toMatchObject({
+    success: false,
+    error: expect.stringContaining('Annotation id must not contain a colon')
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
 test('rejects duplicate ids and leaves an already-selected editor intact', async () => {
   const {context, dispatch} = setup();
   const add = getAddAnnotationCommand(context);

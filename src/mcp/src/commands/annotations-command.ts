@@ -15,7 +15,13 @@ const coordinates = z.union([
 const listSchema = z.object({}).strict();
 const addSchema = z
   .object({
-    id: z.string().trim().min(1).max(128).describe('Unique annotation id; used by zoom fades.'),
+    id: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .regex(/^[^:]+$/, 'Annotation id must not contain a colon (:).')
+      .describe('Unique annotation id without colons; used by zoom fades.'),
     kind: z.enum(['text', 'ruler']),
     anchorPoint: coordinates.describe('[longitude, latitude, optional altitude in meters].'),
     endPoint: coordinates
