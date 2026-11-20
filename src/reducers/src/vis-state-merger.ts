@@ -549,10 +549,7 @@ export function mergeInteractions<S extends VisState>(
 
       merged[key] = {
         ...state.interactionConfig[key],
-        enabled:
-          key === 'coordinate' && typeof enabled !== 'boolean'
-            ? state.interactionConfig.coordinate.enabled
-            : Boolean(enabled),
+        enabled: Boolean(enabled),
         ...(currentConfig
           ? {
               config: pick(

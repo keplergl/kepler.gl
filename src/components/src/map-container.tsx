@@ -576,13 +576,6 @@ export default function MapContainerFactory(
       });
     }
 
-    _isCoordinateCopyEnabled(): boolean {
-      return (
-        getApplicationConfig().enableCoordsCopy &&
-        this.props.visState.interactionConfig.coordinate.enabled
-      );
-    }
-
     /** Hide and show write each annotation, the same flag the panel eye uses. */
     _setEachAnnotationVisible(isVisible: boolean) {
       const {visState, visStateActions} = this.props;
@@ -636,13 +629,7 @@ export default function MapContainerFactory(
       }
 
       const {isExport, mapState, index} = this.props;
-      const annotationItems = this._annotationMenuItems();
-      if (
-        isExport ||
-        (!this._isCoordinateCopyEnabled() &&
-          !annotationItems.showAddAnnotation &&
-          !annotationItems.showAnnotationToggle)
-      ) {
+      if (isExport) {
         this._closeCoordinateMenu();
         return;
       }
@@ -2064,7 +2051,6 @@ export default function MapContainerFactory(
         return null;
       }
 
-      const enableCoordsCopy = this._isCoordinateCopyEnabled();
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
       const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
@@ -2102,8 +2088,7 @@ export default function MapContainerFactory(
             <MapCoordinateMenu
               x={this.state.coordinateMenu.x}
               y={this.state.coordinateMenu.y}
-              text={enableCoordsCopy ? this.state.coordinateMenu.text : null}
-              showCopy={enableCoordsCopy}
+              text={this.state.coordinateMenu.text}
               {...this._annotationMenuItems()}
               onAddAnnotation={this._onAddAnnotation}
               onToggleAnnotations={this._onToggleAnnotations}

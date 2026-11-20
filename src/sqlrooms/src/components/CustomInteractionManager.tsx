@@ -5,9 +5,10 @@
 // Copyright SQLRooms Contributors and contributors to the kepler.gl project
 
 import React, {useCallback, useMemo} from 'react';
-import {Switch, useTheme} from '@sqlrooms/ui';
+import {Switch, Checkbox, useTheme} from '@sqlrooms/ui';
 
 import {InteractionConfig} from '@kepler.gl/types';
+import {FormattedMessage} from '@kepler.gl/localization';
 
 import {useKeplerStateActions} from '../hooks/useKeplerStateActions';
 import {CustomTooltipConfig} from './CustomTooltipConfig';
@@ -38,11 +39,21 @@ const SimpleInteractionPanel: React.FC<{
 
 const TooltipPanel: React.FC<{
   tooltipConfig: any;
+  coordinateConfig: any;
   datasets: any;
   isDark: boolean;
   handleConfigChange: (configId: string, newConfig: any) => void;
+  handleCoordinateToggle: () => void;
   setColumnDisplayFormat: (dataId: string, formats: {[key: string]: string}) => void;
-}> = ({tooltipConfig, datasets, isDark, handleConfigChange, setColumnDisplayFormat}) => {
+}> = ({
+  tooltipConfig,
+  coordinateConfig,
+  datasets,
+  isDark,
+  handleConfigChange,
+  handleCoordinateToggle,
+  setColumnDisplayFormat
+}) => {
   const handleTooltipConfigChange = useCallback(
     (newConfig: any) => {
       handleConfigChange('tooltip', {config: newConfig});
@@ -68,6 +79,16 @@ const TooltipPanel: React.FC<{
       />
       {tooltipConfig.enabled && (
         <div className="pr-2 pl-4">
+          <div className="flex items-center space-x-2 py-2">
+            <Checkbox
+              checked={coordinateConfig?.enabled || false}
+              onCheckedChange={handleCoordinateToggle}
+              className="shadow-none"
+            />
+            <span className="text-muted-foreground text-xs">
+              Show <FormattedMessage id="interactions.coordinate" />
+            </span>
+          </div>
           <CustomTooltipConfig
             datasets={datasets}
             config={tooltipConfig.config}
@@ -111,14 +132,27 @@ export const CustomInteractionManager: React.FC<{mapId: string}> = ({mapId}) => 
     [interactionConfig, interactionConfigChange]
   );
 
+  // Handle coordinate display toggle
+  const handleCoordinateToggle = useCallback(() => {
+    const coordinateConfig = interactionConfig.coordinate;
+    if (coordinateConfig && typeof coordinateConfig === 'object') {
+      interactionConfigChange({
+        ...coordinateConfig,
+        enabled: !coordinateConfig.enabled
+      });
+    }
+  }, [interactionConfig.coordinate, interactionConfigChange]);
+
   return (
     <div className="interaction-manager">
       <div className="space-y-2">
         <TooltipPanel
           tooltipConfig={interactionConfig.tooltip}
+          coordinateConfig={interactionConfig.coordinate}
           datasets={datasets}
           isDark={isDark}
           handleConfigChange={handleConfigChange}
+          handleCoordinateToggle={handleCoordinateToggle}
           setColumnDisplayFormat={setColumnDisplayFormat}
         />
         {interactionConfig.geocoder && (

@@ -5889,28 +5889,10 @@ test('#visStateReducer -> MOUSE_MOVE', t => {
     nextState2.mousePos,
     {
       ...initialState.mousePos,
-      mousePosition: [1, 2],
-      coordinate: [90, 90]
+      mousePosition: [10, 20],
+      coordinate: [37, -122]
     },
-    'should track coordinates when the tooltip is disabled'
-  );
-
-  const nextState3 = reducer(
-    nextState2,
-    VisStateActions.interactionConfigChange({
-      ...defaultInteractionConfig.coordinate,
-      enabled: false
-    })
-  );
-  const nextState4 = reducer(
-    nextState3,
-    VisStateActions.onMouseMove({point: [3, 4], lngLat: [10, 20]})
-  );
-
-  t.deepEqual(
-    nextState4.mousePos,
-    nextState3.mousePos,
-    'should stop tracking when coordinates and tooltip are disabled'
+    'should not set mousePos'
   );
 
   t.end();

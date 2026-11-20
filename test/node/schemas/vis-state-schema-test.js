@@ -387,7 +387,7 @@ test('#visStateSchema -> v1 -> save load interaction', t => {
       size: 2.5
     },
     coordinate: {
-      enabled: true
+      enabled: false
     },
     geocoder: {
       enabled: false,
@@ -475,7 +475,7 @@ test('#visStateSchema -> v1 -> save load interaction -> tooltip format', t => {
       size: 2.5
     },
     coordinate: {
-      enabled: true
+      enabled: false
     },
     geocoder: {
       enabled: false,
