@@ -470,7 +470,7 @@ describe('point aggregation for contours', () => {
     expect(levels()).toEqual([110 / 3, (110 * 2) / 3]);
   });
 
-  test.each([
+  test.each<[string, [number, number][]]>([
     [
       'west',
       [
@@ -499,7 +499,7 @@ describe('point aggregation for contours', () => {
         [0, -89.89]
       ]
     ]
-  ] as const)('retains the unpadded layout near the %s world limit', (_, coordinates) => {
+  ])('retains the unpadded layout near the %s world limit', (_, coordinates) => {
     const input = coordinates.map(([longitude, latitude], index) =>
       point(longitude, latitude, index + 1)
     );
