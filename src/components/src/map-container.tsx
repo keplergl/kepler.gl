@@ -88,6 +88,7 @@ import {
   FILTER_TYPES,
   GEOCODER_LAYER_ID,
   EDITOR_LAYER_ID,
+  EDITOR_MODES,
   EDITOR_LAYER_PICKING_RADIUS,
   THROTTLE_NOTIFICATION_TIME,
   DEFAULT_PICKING_RADIUS,
@@ -936,7 +937,7 @@ export default function MapContainerFactory(
       return viewport;
     }
 
-    _pickAnnotationWorldPosition = (xy: [number, number]): number[] | null => {
+    _pickWorldPosition = (xy: [number, number], layerIds?: string[]): number[] | null => {
       const deck = this._deck;
       if (!deck || typeof deck.pickObject !== 'function') {
         return null;
@@ -946,7 +947,8 @@ export default function MapContainerFactory(
           x: xy[0],
           y: xy[1],
           radius: 0,
-          unproject3D: true
+          unproject3D: true,
+          ...(layerIds ? {layerIds} : {})
         });
         const coordinate = info?.coordinate;
         // Only accept a reconstructed 3D hit. A 2D unproject (no depth) is the
@@ -962,6 +964,24 @@ export default function MapContainerFactory(
       } catch {
         return null;
       }
+    };
+
+    _pickSketchWorldPosition = (xy: [number, number]): number[] | null => {
+      // Query surfaces rather than editor guides, sketch features or flat layers.
+      const surfaceLayerIds = this._deck?.layerManager
+        ?.getLayers()
+        .filter(
+          layer =>
+            layer.props.visible &&
+            layer.props.pickable &&
+            (layer.props.extruded ||
+              layer.props.pickable === '3d' ||
+              layer.constructor.layerName === 'KeplerTile3DLayer' ||
+              layer.constructor.layerName === 'ThreeDBuildingLayer')
+        )
+        .map(layer => layer.id);
+
+      return surfaceLayerIds?.length ? this._pickWorldPosition(xy, surfaceLayerIds) : null;
     };
 
     _onLayerError = (idx: number, error: Error) => {
@@ -1273,6 +1293,12 @@ export default function MapContainerFactory(
       const {mapDraw} = mapControls;
       const {active: editorMenuActive = false} = mapDraw || {};
       const isEditorDrawingMode = EditorLayerUtils.isDrawingActive(editorMenuActive, editor.mode);
+      const isSketchDrawing =
+        isInteractive &&
+        !this.props.readOnly &&
+        isEditorDrawingMode &&
+        getApplicationConfig().enableDrawOnMapSketches &&
+        (editor.mode === EDITOR_MODES.DRAW_POINT || editor.mode === EDITOR_MODES.DRAW_LINESTRING);
 
       const internalViewState = this.context?.getInternalViewState(index);
       const internalMapState = {...mapState, ...internalViewState};
@@ -1356,6 +1382,7 @@ export default function MapContainerFactory(
                 editor,
                 editorMenuActive,
                 onSetFeatures: setFeatures,
+                pickWorldPosition: isSketchDrawing ? this._pickSketchWorldPosition : undefined,
                 setSelectedFeature,
                 onApplyPolygonFilterAll: visStateActions.setPolygonFilterAllLayers,
                 // @ts-ignore Argument of type 'Readonly<MapContainerProps>' is not assignable to parameter of type 'never'
@@ -1927,7 +1954,7 @@ export default function MapContainerFactory(
             mapIndex={index || 0}
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
-            pickWorldPosition={this._pickAnnotationWorldPosition}
+            pickWorldPosition={this._pickWorldPosition}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />
