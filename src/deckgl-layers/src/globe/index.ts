@@ -40,6 +40,7 @@ export {
 export type {GlobeBasemapProvider, GlobeAttribution} from './globe-layers';
 export {MVTLabelLayer} from './mvt-label-layer';
 export {default as EnhancedMultiIconLayer} from './enhanced-multi-icon-layer';
+export {injectGlobeBackfaceCull} from './globe-backface-cull';
 export {default as EnhancedTextBackgroundLayer} from './enhanced-text-background-layer';
 export {KeplerGlobeView} from './globe-view';
 export {getStarsBackgroundImage, getStarsBackgroundStyle, drawStarsBackground} from './globe-stars-layer';

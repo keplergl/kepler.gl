@@ -3,6 +3,7 @@
 
 import {ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 import {DataFilterExtensionProps} from '@deck.gl/extensions';
+import {EnhancedMultiIconLayer} from '@kepler.gl/deckgl-layers';
 import {createSelector} from 'reselect';
 import {LAYER_VIS_CONFIGS, MAX_GPU_FILTERS} from '@kepler.gl/constants';
 import {Datasets, GpuFilter, KeplerTable} from '@kepler.gl/table';
@@ -266,8 +267,23 @@ export default class DonutLayer extends Layer {
       mapState.zoom - (mapState.zoomOffset || 0),
       groupingSize
     );
+    const globeMode = Boolean(mapState.globe?.enabled);
+    // The globe's global face culling hides billboard quads. Keep the depth
+    // disk active but reject far-side anchors in the vertex shader as well,
+    // so neither the glyphs nor their picking targets can leak at the limb.
     const shared = {
       ...props,
+      ...(globeMode
+        ? {
+            parameters: {
+              ...props.parameters,
+              cull: false,
+              cullMode: 'none' as const,
+              depthTest: true,
+              depthMask: false
+            }
+          }
+        : null),
       // Keep zero-valued members in aggregation, but omit zero-total glyphs,
       // labels and picking targets from the rendered data.
       data: this.renderablePoints(points),
@@ -307,13 +323,16 @@ export default class DonutLayer extends Layer {
       ? [
           new TextLayer<DonutPoint, DataFilterExtensionProps<DonutPoint>>({
             ...shared,
-            id: `${this.id}-totals`,
+            id: globeMode ? `${this.id}-totals-globe` : `${this.id}-totals`,
             pickable: false,
             billboard: true,
             getText: point =>
               radius < 12 ? '' : point.total === null ? '?' : totalFormatter.format(point.total),
             getSize: 11,
             getColor: [255, 255, 255],
+            ...(globeMode
+              ? {_subLayerProps: {characters: {type: EnhancedMultiIconLayer as any}}}
+              : null),
             getTextAnchor: 'middle',
             getAlignmentBaseline: 'center',
             updateTriggers: {

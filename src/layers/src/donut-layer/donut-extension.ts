@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {Layer, LayerExtension} from '@deck.gl/core';
+import {injectGlobeBackfaceCull} from '@kepler.gl/deckgl-layers';
 import {RGBColor} from '@kepler.gl/types';
 import {DONUT_COLORS, DONUT_NEUTRAL_COLOR} from './donut-utils';
 
@@ -54,7 +55,7 @@ export default class DonutExtension extends LayerExtension {
   }
 
   getShaders() {
-    return {
+    return injectGlobeBackfaceCull({
       modules: [donutUniforms],
       inject: {
         'vs:#decl':
@@ -76,7 +77,7 @@ export default class DonutExtension extends LayerExtension {
           color.a *= ring;
         `
       }
-    };
+    });
   }
 
   draw(this: Layer<DonutExtensionProps>) {
