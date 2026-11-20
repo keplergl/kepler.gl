@@ -12,7 +12,7 @@ import {breakPointValues} from '@kepler.gl/styles';
 import {hasPortableWidth} from '@kepler.gl/utils';
 import {StyledPanelHeader} from '../common/styled-components';
 import TippyTooltip from '../common/tippy-tooltip';
-import {LocationMarker, Copy} from '../common/icons';
+import {LocationMarker, Copy, Trash} from '../common/icons';
 import {RootContext} from '../context';
 import {cameraTransition} from '../camera-navigation';
 import {DraggableLegend} from './map-legend-panel';
@@ -51,7 +51,7 @@ const PlaybackControls = styled(CameraTourPlaybackControls)`
 const Rows = styled.nav`
   padding: ${ROWS_PADDING}px;
 `;
-const Row = styled(StyledPanelHeader)`
+const Row = styled(StyledPanelHeader)<{$hasDelete: boolean}>`
   position: relative;
   width: 100%;
   height: ${ROW_HEIGHT}px;
@@ -64,18 +64,25 @@ const Row = styled(StyledPanelHeader)`
     background-color: ${props => props.theme.panelBackgroundHover};
   }
   @media (hover: hover) and (pointer: fine) {
-    .camera-bookmark-copy {
+    .camera-bookmark-navigate {
+      padding-right: 9px;
+    }
+    &:hover .camera-bookmark-navigate,
+    &:has(:focus-visible) .camera-bookmark-navigate {
+      padding-right: ${props => (props.$hasDelete ? 68 : 40)}px;
+    }
+    .camera-bookmark-action {
       opacity: 0;
       pointer-events: none;
     }
-    &:hover .camera-bookmark-copy,
-    &:has(:focus-visible) .camera-bookmark-copy {
+    &:hover .camera-bookmark-action,
+    &:has(:focus-visible) .camera-bookmark-action {
       opacity: 1;
       pointer-events: auto;
     }
   }
 `;
-const NavigateButton = styled.button`
+const NavigateButton = styled.button<{$hasDelete?: boolean}>`
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -84,7 +91,7 @@ const NavigateButton = styled.button`
   min-width: 0;
   justify-content: flex-start;
   gap: 8px;
-  padding: 0 40px 0 9px;
+  padding: 0 ${props => (props.$hasDelete ? 68 : 40)}px 0 9px;
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -128,6 +135,9 @@ const CopyButton = styled(NavigateButton)`
     margin: 0;
   }
 `;
+const DeleteButton = styled(CopyButton)`
+  right: 32px;
+`;
 const Status = styled.div`
   color: ${props => props.theme.textColor};
   font-size: 11px;
@@ -135,6 +145,7 @@ const Status = styled.div`
 
 export default function CameraBookmarkControl({
   bookmarks = [],
+  onBookmarksChange,
   mapState,
   mapIndex = 0,
   mapStateActions,
@@ -145,6 +156,7 @@ export default function CameraBookmarkControl({
   isExport
 }: {
   bookmarks?: CameraBookmark[];
+  onBookmarksChange?: (bookmarks: CameraBookmark[]) => void;
   mapState?: MapState;
   mapIndex?: number;
   mapStateActions?: typeof MapStateActions;
@@ -217,15 +229,18 @@ export default function CameraBookmarkControl({
               bookmark.camera.longitude,
               bookmark.camera.latitude
             ]);
+            const deleteLabel = `${message('delete', 'Delete')}: ${name}`;
             const copyLabel = `${message('copyCoordinates', 'Copy coordinates')}: ${name}`;
             return (
-              <Row key={bookmark.id}>
+              <Row key={bookmark.id} $hasDelete={Boolean(onBookmarksChange)}>
                 <TippyTooltip
                   placement="top"
                   delay={[500, 0]}
                   render={() => <span role="tooltip">{name}</span>}
                 >
                   <NavigateButton
+                    className="camera-bookmark-navigate"
+                    $hasDelete={Boolean(onBookmarksChange)}
                     type="button"
                     onClick={() => {
                       const viewport = cameraTransition(bookmark.camera, mapState);
@@ -243,7 +258,7 @@ export default function CameraBookmarkControl({
                   render={() => <span role="tooltip">{copyLabel}</span>}
                 >
                   <CopyButton
-                    className="camera-bookmark-copy"
+                    className="camera-bookmark-copy camera-bookmark-action"
                     type="button"
                     aria-label={copyLabel}
                     disabled={!coordinates}
@@ -255,6 +270,25 @@ export default function CameraBookmarkControl({
                     <Copy height="14px" aria-hidden="true" />
                   </CopyButton>
                 </TippyTooltip>
+                {onBookmarksChange && (
+                  <TippyTooltip
+                    placement="top"
+                    delay={[500, 0]}
+                    render={() => <span role="tooltip">{deleteLabel}</span>}
+                  >
+                    <DeleteButton
+                      className="camera-bookmark-action"
+                      type="button"
+                      aria-label={deleteLabel}
+                      onClick={event => {
+                        event.stopPropagation();
+                        onBookmarksChange(bookmarks.filter(item => item.id !== bookmark.id));
+                      }}
+                    >
+                      <Trash height="14px" aria-hidden="true" />
+                    </DeleteButton>
+                  </TippyTooltip>
+                )}
               </Row>
             );
           })}

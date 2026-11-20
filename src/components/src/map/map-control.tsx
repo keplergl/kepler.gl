@@ -95,6 +95,7 @@ export type MapControlProps = {
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
   cameraBookmarks?: CameraBookmark[];
+  onCameraBookmarksChange?: (bookmarks: CameraBookmark[]) => void;
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;
   setMapControlVisibility?: typeof UIStateActions.setMapControlVisibility;
@@ -184,6 +185,7 @@ function MapControlFactory(
         <CameraBookmarkControl
           mapIndex={mapIndex}
           bookmarks={restProps.cameraBookmarks}
+          onBookmarksChange={restProps.readOnly ? undefined : restProps.onCameraBookmarksChange}
           mapControls={restProps.mapControls}
           setMapControlSettings={restProps.setMapControlSettings}
           setMapControlVisibility={restProps.setMapControlVisibility}
