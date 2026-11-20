@@ -15,6 +15,34 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.25] - Nov 20 2026
+
+- 80fbb00af feat(effects): add experimental shadow map resolution presets (#4299)
+- bdd359e61 fix(donut): hide far-side globe rings and restore totals (#4297)
+- 45ffb19ee fix(camera): outline the animation point zoom control (#4294)
+- 08add7b07 fix(annotations): clip partial globe rulers at the horizon (#4296)
+- 327809d4e fix(export): shorten the native WebM title (#4295)
+- 16326153d fix(layers): stabilize globe sizing during rotation (#4289)
+- 680b7dd37 fix(bookmarks): reveal full side-panel names on hover (#4290)
+- f63f9d3e3 fix(interaction): snap fade stops near the current zoom (#4292)
+- b3b70cce9 fix(annotations): follow globe surface with ruler arcs (#4291)
+- 6f10a8fd8 fix(annotations): keep autosized labels stable near map edges (#4287)
+- 08fd19c50 fix(slider): prevent text selection when starting a drag (#4288)
+- 4f964bb4c feat(camera-animation): add stops from annotations (#4286)
+- 2723ef998 fix(camera-animation): show path above flat-map meshes (#4285)
+- a75580127 fix(video-export): synchronize capture and recover preview startup (#4284)
+- 496e72dd3 fix(video-export): synchronize layer buffers with the basemap (#4283)
+- 21d68ea38 feat(video-export): add 1440p and 4K resolutions (#4282)
+- e69fbcb58 fix(video-export): synchronize preview resolution changes (#4281)
+- 287ce41ef feat(video-export): Add native WebM video encoding (#4279)
+- 04392a949 fix(video-export): Include annotations in video exports (#4278)
+- 899fbee8d chore(docs): document PR title format (#4280)
+- 95d5cd538 fix(globe): Preserve globe video framing (#4277)
+- 0f3bc3c46 fix: retain globe labels at high zoom (#4275)
+- f85eb7ba9 fix: override globe face culling for text labels (#4276)
+- 28a15a80f fix: preserve point scale in video export (#4274)
+- 2a2f3a00e docs: clarify agent worktrees and PR ownership (#4272)
+
 ## [3.3.0-alpha.24] - Nov 18 2026
 
 - 45d1dea1c feat: let apps serve the GeoPackage and GeoParquet export libraries (#4271)

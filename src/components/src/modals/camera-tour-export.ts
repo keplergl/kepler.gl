@@ -67,7 +67,7 @@ export function resolveCameraTourExportFrame<T extends object>(
 }
 
 /** Reuse Hubble's export UI and presets, with opt-in native video encoding. */
-export function withCameraTourExport(Base: any) {
+export function withCameraTourExport<T extends new (...args: any[]) => any>(Base: T): T {
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
     private failedBasemap?: PreviewMap;
