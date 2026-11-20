@@ -18,6 +18,7 @@ import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
 import {diffUpdateTriggers} from './layer-update';
 import {textLabelDeckLayerId} from './layer-text-label';
+import {getVisualZoom, LayerZoomState} from './layer-zoom';
 import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
@@ -653,27 +654,27 @@ class Layer implements KeplerLayer {
   /**
    * Calculate a radius zoom multiplier to render points, so they are visible in all zoom level
    * @param {object} mapState
-   * @param {number} mapState.zoom - actual zoom
+   * @param {number} mapState.zoom - stored zoom; globe sizing uses visual zoom
    * @param {number | void} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
-  getZoomFactor({zoom, zoomOffset = 0}) {
-    return Math.pow(2, Math.max(14 - zoom + zoomOffset, 0));
+  getZoomFactor(mapState: LayerZoomState) {
+    return Math.pow(2, Math.max(14 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0), 0));
   }
 
   /**
    * Calculate a elevation zoom multiplier to render points, so they are visible in all zoom level
    * @param {object} mapState
-   * @param {number} mapState.zoom - actual zoom
+   * @param {number} mapState.zoom - stored zoom; globe sizing uses visual zoom
    * @param {number=} mapState.zoomOffset - zoomOffset when render in the plot container for export image
    * @returns {number}
    */
-  getElevationZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}): number {
+  getElevationZoomFactor(mapState: LayerZoomState): number {
     // enableElevationZoomFactor is used to support existing maps
     const {fixedHeight, enableElevationZoomFactor} = this.config.visConfig;
     return fixedHeight || enableElevationZoomFactor === false
       ? 1
-      : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
+      : Math.pow(2, Math.max(8 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0), 0));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1820,6 +1821,7 @@ class Layer implements KeplerLayer {
                 ...updateTriggers.getPointRadius,
                 latitude: mapState.latitude,
                 zoom: mapState.zoom,
+                globe: isGlobeMode,
                 zoomOffset: mapState.zoomOffset,
                 scale: mapState.scale,
                 radius: this.config.visConfig.radius,

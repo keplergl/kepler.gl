@@ -3,6 +3,7 @@
 
 import {createSelector} from 'reselect';
 import KeplerHeatmapLayer from './deck-heatmap-layer';
+import {getVisualZoom} from '../layer-zoom';
 import {
   CHANNEL_SCALES,
   ALL_FIELD_TYPES,
@@ -710,14 +711,15 @@ class HeatmapLayer extends Layer {
     const {visConfig} = this.config;
     const colorRange = this.colorRampSelector(visConfig.colorRange.colors);
 
+    const visualZoom = getVisualZoom(mapState);
     const intensity = interpolateByZoom(
-      mapState.zoom,
+      visualZoom,
       0,
       visConfig.intensity,
       MAX_ZOOM_LEVEL,
       3 * visConfig.intensity
     );
-    const radiusPixels = interpolateByZoom(mapState.zoom, 0, 2, MAX_ZOOM_LEVEL, visConfig.radius);
+    const radiusPixels = interpolateByZoom(visualZoom, 0, 2, MAX_ZOOM_LEVEL, visConfig.radius);
 
     const updateTriggers = {
       getPosition: {columns: this.config.columns, columnMode: this.config.columnMode},

@@ -40,6 +40,7 @@ import {
   getHoveredObjectFromArrow
 } from '../layer-utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getVisualZoom, LayerZoomState} from '../layer-zoom';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
   GEOJSON_FIELDS,
@@ -949,8 +950,10 @@ export default class GeoJsonLayer extends Layer {
     return triggers;
   }
 
-  getElevationZoomFactor({zoom, zoomOffset = 0}) {
-    return this.config.visConfig.fixedHeight ? 1 : Math.pow(2, Math.max(8 - zoom + zoomOffset, 0));
+  getElevationZoomFactor(mapState: LayerZoomState) {
+    return this.config.visConfig.fixedHeight
+      ? 1
+      : Math.pow(2, Math.max(8 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0), 0));
   }
 
   renderLayer(opts) {
