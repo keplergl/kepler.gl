@@ -119,7 +119,16 @@ export default class ContourLayer extends Layer {
     (data: ContourLayerData) => data,
     data => {
       const surface = buildContourSurface(data.grid || null, data.data);
-      return {...surface, depth: surface.fills.slice(0, 1), mesh: buildContourMesh(surface.fills)};
+      // Globe contours can extend past a pole. Defer Mercator triangulation
+      // until the renderer needs it, sharing the cached fill/depth buffers.
+      let mesh: ReturnType<typeof buildContourMesh> | undefined;
+      const getMesh = () => (mesh ??= buildContourMesh(surface.fills));
+      return {
+        ...surface,
+        depth: surface.fills.slice(0, 1),
+        getFillMesh: () => getMesh().fill,
+        getDepthMesh: () => getMesh().depth
+      };
     }
   );
 
@@ -477,7 +486,7 @@ export default class ContourLayer extends Layer {
               ...shared,
               id: `${this.id}-surface-depth`,
               data: surface.depth,
-              mesh: surface.mesh.depth,
+              getMesh: surface.getDepthMesh,
               pickable: false,
               getFillColor: [0, 0, 0, 255],
               getPolygonOffset: () => [1, 1],
@@ -496,7 +505,7 @@ export default class ContourLayer extends Layer {
               ? new ContourMeshLayer({
                   ...fillProps,
                   getPolygonOffset: () => [0, 0],
-                  mesh: surface.mesh.fill,
+                  getMesh: surface.getFillMesh,
                   getSurfaceNormal: surface.getNormal
                 })
               : new GeoJsonLayer<ContourFeature['properties']>(fillProps)

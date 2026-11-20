@@ -18,7 +18,7 @@ import ContourSurfaceLayer, {SurfaceNormalAccessor} from './deck-contour-surface
 
 type ContourMeshLayerProps = {
   data: ContourFeature[];
-  mesh: ContourMeshData;
+  getMesh: () => ContourMeshData;
   getFillColor: Accessor<ContourFeature, Color>;
   getSurfaceNormal?: SurfaceNormalAccessor;
 };
@@ -39,13 +39,17 @@ function crossesWorldBounds(mesh: ContourMeshData): boolean {
 const createMeshSelector = () =>
   createSelector(
     (props: ContourMeshLayerProps & {wrapLongitude?: boolean}, _resolution?: number) => props.data,
-    (props: ContourMeshLayerProps) => props.mesh,
+    (props: ContourMeshLayerProps) => props.getMesh,
     (_props: ContourMeshLayerProps, resolution?: number) => resolution,
     (props: ContourMeshLayerProps & {wrapLongitude?: boolean}) => props.wrapLongitude,
-    (data, mesh, resolution, wrapLongitude) =>
-      resolution || (wrapLongitude && crossesWorldBounds(mesh))
+    (data, getMesh, resolution, wrapLongitude) => {
+      // Normalize globe geometry before projecting any polar contour vertices.
+      if (resolution) return buildContourMesh(data, {resolution, wrapLongitude}).fill;
+      const mesh = getMesh();
+      return wrapLongitude && crossesWorldBounds(mesh)
         ? buildContourMesh(data, {resolution, wrapLongitude}).fill
-        : mesh
+        : mesh;
+    }
   );
 
 /** Render indexed contour fills without expanding every triangle into GeoJSON rows. */

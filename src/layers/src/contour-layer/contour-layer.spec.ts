@@ -669,7 +669,7 @@ test('indexed contour fills preserve level colors, picking and the depth footpri
     const accessor = fill.props.getFillColor;
     if (typeof accessor !== 'function') throw new Error('Expected per-level contour colors');
     for (let level = 0; level < data.data.length; level++) {
-      const start = fill.props.mesh.startIndices[level];
+      const start = fill.props.getMesh().startIndices[level];
       const expected = accessor(data.data[level], {index: level, data: data.data, target: []});
       expect(Array.from(colors.subarray(start * 4, start * 4 + 4))).toEqual(expected);
       expect(rows[start]).toBe(level);
@@ -682,8 +682,11 @@ test('indexed contour fills preserve level colors, picking and the depth footpri
       expect(layer.getHoverData(picked.object)).toEqual(layer.getHoverData(data.data[level]));
     }
     expect(depth.props.data).toEqual(fill.props.data.slice(0, 1));
-    expect(depth.props.mesh.length).toBe(1);
-    expect(depth.props.mesh.startIndices[1]).toBe(fill.props.mesh.startIndices[1]);
+    expect(depth.props.getMesh().length).toBe(1);
+    expect(depth.props.getMesh().startIndices[1]).toBe(fill.props.getMesh().startIndices[1]);
+    expect(depth.props.getMesh().attributes.getPolygon.value.buffer).toBe(
+      fill.props.getMesh().attributes.getPolygon.value.buffer
+    );
     expect(onError).not.toHaveBeenCalled();
   } finally {
     manager.finalize();
@@ -719,7 +722,7 @@ test('contour meshes adapt to globe projection and reuse geometry across style c
     const layer = new ContourMeshLayer({
       id: 'projection-mesh',
       data: features,
-      mesh,
+      getMesh: () => mesh,
       getFillColor: [10, 20, 30, 100]
     });
     manager.setLayers([layer]);
@@ -747,6 +750,54 @@ test('contour meshes adapt to globe projection and reuse geometry across style c
     const flat = styled.clone({});
     manager.setLayers([flat]);
     expect(flat.getSubLayers()[0].props.data).toBe(mesh);
+    expect(onError).not.toHaveBeenCalled();
+  } finally {
+    manager.finalize();
+  }
+});
+
+test.each([-1, 1])('renders 3D globe contours beyond the pole at latitude sign %s', async sign => {
+  const {layer, dataset, datasets} = await setup([
+    [0, sign * 89, 1],
+    [1, sign * 89.99, 10]
+  ]);
+  layer.updateLayerVisConfig({
+    enable3d: true,
+    below: false,
+    gridResolution: 32,
+    smoothing: 0,
+    levels: 2,
+    customRange: false
+  });
+  const data = layer.formatLayerData(datasets);
+  expect(
+    data.data.some(feature => feature.geometry.coordinates.flat(2).some(p => Math.abs(p[1]) > 90))
+  ).toBe(true);
+  const passes = renderContourPasses(layer, dataset, data);
+  const onError = jest.fn();
+  const manager = new LayerManager(device, {
+    viewport: new GlobeViewport({
+      width: 800,
+      height: 600,
+      latitude: sign * 89,
+      zoom: 2,
+      resolution: 10
+    })
+  });
+  manager.setProps({onError});
+  try {
+    manager.setLayers(passes);
+    for (const pass of passes.slice(0, 2) as ContourMeshLayer[]) {
+      const surface = pass.getSubLayers()[0] as ContourSurfaceLayer;
+      const mesh = surface.props.data as ReturnType<typeof buildContourMesh>['fill'];
+      expect(mesh.attributes.indices.value.length).toBeGreaterThan(0);
+      expect(mesh.attributes.getPolygon.value.every(Number.isFinite)).toBe(true);
+      expect(
+        mesh.attributes.getPolygon.value.some(
+          (value, index) => index % 3 === 1 && Math.abs(value) > 90
+        )
+      ).toBe(true);
+    }
     expect(onError).not.toHaveBeenCalled();
   } finally {
     manager.finalize();
