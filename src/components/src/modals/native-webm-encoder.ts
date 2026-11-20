@@ -190,7 +190,9 @@ export class NativeWebMEncoder {
   }
 }
 
-export function createNativeWebMEncoder(hooks: Hooks) {
+export function createNativeWebMEncoder(
+  hooks: Hooks
+): new (settings: Settings) => NativeWebMEncoder {
   return class extends NativeWebMEncoder {
     constructor(settings: Settings) {
       super(settings, hooks);
