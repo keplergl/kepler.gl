@@ -27,6 +27,7 @@ export interface ToolResult {
  */
 export const MAP_TOOL_IDS = [
   'map.set-basemap',
+  'map.set-view-mode',
   'map.get-boundary',
   'map.add-layer',
   'map.update-layer-color',
@@ -37,6 +38,8 @@ export const MAP_TOOL_IDS = [
   'map.get-layer-options',
   'map.camera-bookmarks',
   'map.camera-tour',
+  'map.add-annotation',
+  'map.get-annotations',
   'map.set-zoom-fade',
   'map.save-data',
   'map.create-table',
