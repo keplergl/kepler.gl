@@ -5,17 +5,23 @@ import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import RangeSliderFactory from '../common/range-slider';
 import {ArrowDownSmall} from '../common/icons';
-import {Tooltip} from '../common/styled-components';
+import {Button, ButtonGroup, Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
 import SurfaceFogElevationSectionFactory, {ELEVATION_SECTION_TYPE} from './surface-fog-section';
 import EffectAnimationControl from './effect-animation-control';
+
+const SHADOW_MAP_OPTIONS = [
+  {label: 'Low', value: SHADOW_MAP_RESOLUTIONS.low},
+  {label: 'Auto', value: SHADOW_MAP_RESOLUTIONS.auto},
+  {label: 'High', value: SHADOW_MAP_RESOLUTIONS.high}
+];
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -233,6 +239,9 @@ export default function EffectConfiguratorFactory(
     updateEffectConfig
   }) => {
     const {parameters, id} = effect;
+    const shadowMapResolution =
+      SHADOW_MAP_OPTIONS.find(option => option.value === parameters.shadowMapResolution)?.value ??
+      SHADOW_MAP_RESOLUTIONS.auto;
     const animationControl = (name: string) => (
       <EffectAnimationControl {...{effect, name, RangeSlider, updateEffectConfig}} />
     );
@@ -316,6 +325,28 @@ export default function EffectConfiguratorFactory(
               <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
             </StyleSliderWrapper>
           </StyledConfigSection>
+        </StyledWrapper>
+
+        <StyledWrapper $marginBottom={16}>
+          <SectionSubTitle title="Applies to the single-map preview only">
+            Shadow map resolution
+          </SectionSubTitle>
+          <ButtonGroup role="group" aria-label="Shadow map resolution (experimental)">
+            {SHADOW_MAP_OPTIONS.map(({label, value}) => (
+              <Button
+                key={label}
+                type="button"
+                small
+                secondary={shadowMapResolution !== value}
+                aria-pressed={shadowMapResolution === value}
+                onClick={() =>
+                  updateEffectConfig(null, id, {parameters: {shadowMapResolution: value}})
+                }
+              >
+                {label}
+              </Button>
+            ))}
+          </ButtonGroup>
         </StyledWrapper>
 
         <StyledWrapper $marginBottom={0}>

@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import {LightingEffect, shadow} from '@deck.gl/core';
-import type {Texture} from '@luma.gl/core';
+import type {Framebuffer, Texture} from '@luma.gl/core';
 import type {ShaderModule} from '@luma.gl/shadertools';
-import {EDITOR_LAYER_ID} from '@kepler.gl/constants';
+import {EDITOR_LAYER_ID, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {patchTileViewportIds} from './tile-viewport-fix';
 
 // A plain LightingEffect() — its constructor calls _applyDefaultLights()
@@ -64,15 +64,113 @@ interface CustomShadowProps {
 }
 
 /**
+ * ShadowPass exclusively owns its attachments, but passes them to luma as
+ * external textures. In luma 9.4.2 framebuffer.resize tracks the replacement
+ * color view, not its texture. A quality toggle otherwise leaks that texture.
+ */
+function ownShadowAttachments(fbo: Framebuffer): void {
+  const getTextures = () => {
+    const color = fbo.colorAttachments[0]?.texture;
+    const depth = fbo.depthStencilAttachment?.texture;
+    return [color, depth].filter((texture): texture is Texture => Boolean(texture));
+  };
+  for (const texture of getTextures()) fbo.attachResource(texture);
+
+  const resize = fbo.resize.bind(fbo);
+  fbo.resize = (size?: {width: number; height: number} | [number, number]) => {
+    const previous = getTextures();
+    try {
+      if (Array.isArray(size)) resize(size);
+      else if (size) resize(size);
+      else resize();
+    } finally {
+      const current = getTextures();
+      for (const texture of previous) {
+        if (!current.includes(texture)) {
+          fbo.destroyAttachedResource(texture);
+        }
+      }
+      for (const texture of current) fbo.attachResource(texture);
+    }
+  };
+}
+
+/**
  * Video export shares MapLibre's canvas. Luma's cssToDeviceRatio() can lag that
  * bitmap, so ShadowPass draws into a corner of its FBO and the rest samples as
  * fully shadowed. For the shadow pass only, read the live GL buffer; restore
  * afterward so the color pass / basemap stay aligned.
  */
-export function alignExportShadowPass(shadowPass: any, isExportMode: () => boolean): void {
+export function alignExportShadowPass(
+  shadowPass: any,
+  isExportMode: () => boolean,
+  getResolution: () => number = () => SHADOW_MAP_RESOLUTIONS.auto
+): void {
   const render = shadowPass.render.bind(shadowPass);
+  let ownsAttachments = false;
   shadowPass.render = params => {
-    if (!isExportMode()) return render(params);
+    if (!isExportMode()) {
+      const scale = getResolution();
+      if (scale !== SHADOW_MAP_RESOLUTIONS.low && scale !== SHADOW_MAP_RESOLUTIONS.high) {
+        return render(params);
+      }
+
+      const {device} = shadowPass;
+      const canvasContext = device?.canvasContext;
+      const viewport = params?.viewports?.[0];
+      if (
+        device?.type !== 'webgl' ||
+        !canvasContext ||
+        params.viewports.length !== 1 ||
+        !viewport?.width ||
+        !viewport.height ||
+        viewport.x ||
+        viewport.y
+      ) {
+        return render(params);
+      }
+
+      const prevSize = canvasContext.getDrawingBufferSize;
+      const prevRatio = canvasContext.cssToDeviceRatio;
+      const ratio = prevRatio.call(canvasContext);
+      const {width, height} = viewport;
+      if (
+        !Number.isFinite(ratio) ||
+        ratio <= 0 ||
+        width * ratio * scale < 1 ||
+        height * ratio * scale < 1
+      ) {
+        return render(params);
+      }
+      // Never increase to more than ~48 MiB of raw RGBA8 + depth16 per map.
+      // If Auto already exceeds the bound, High must not reduce its quality.
+      const limit = Math.min(device.limits?.maxTextureDimension2D ?? 4096, 4096);
+      const maxRatio = Math.min(limit / width, limit / height, Math.sqrt(8e6 / (width * height)));
+      const scaledRatio =
+        scale === SHADOW_MAP_RESOLUTIONS.high
+          ? Math.max(ratio, Math.min(ratio * scale, maxRatio))
+          : ratio * scale;
+      if (!Number.isFinite(scaledRatio) || scaledRatio === ratio) return render(params);
+
+      if (!ownsAttachments && shadowPass.fbo) {
+        ownShadowAttachments(shadowPass.fbo);
+        ownsAttachments = true;
+      }
+
+      // ShadowPass and LayersPass must see the same ratio: one allocates the
+      // texture, the other scales its viewport. Color and picking keep Auto.
+      canvasContext.getDrawingBufferSize = () => [
+        Math.floor(width * scaledRatio),
+        Math.floor(height * scaledRatio)
+      ];
+      canvasContext.cssToDeviceRatio = () => scaledRatio;
+      try {
+        return render(params);
+      } finally {
+        canvasContext.getDrawingBufferSize = prevSize;
+        canvasContext.cssToDeviceRatio = prevRatio;
+      }
+    }
 
     const gl = shadowPass.device?.gl;
     const canvasContext = shadowPass.device?.canvasContext;
@@ -241,6 +339,7 @@ class CustomDeckLightingEffect extends LightingEffect {
   useInPicking = true;
   outputUniformShadow: boolean;
   isExportMode: boolean;
+  shadowMapResolution: number;
   private isPicking = false;
 
   private get _private(): LightingEffectPrivate {
@@ -251,6 +350,7 @@ class CustomDeckLightingEffect extends LightingEffect {
     super(props);
     this.outputUniformShadow = false;
     this.isExportMode = false;
+    this.shadowMapResolution = SHADOW_MAP_RESOLUTIONS.auto;
   }
 
   setup(context) {
@@ -260,7 +360,11 @@ class CustomDeckLightingEffect extends LightingEffect {
       this._private._createShadowPasses(device);
       for (const shadowPass of this._private.shadowPasses) {
         patchShadowPassDepth(shadowPass);
-        alignExportShadowPass(shadowPass, () => this.isExportMode);
+        alignExportShadowPass(
+          shadowPass,
+          () => this.isExportMode,
+          () => this.shadowMapResolution
+        );
       }
       deck._addDefaultShaderModule(CustomShadowModule || shadow);
       deck._addDefaultShaderModule(shadowMapHoverFixModule);

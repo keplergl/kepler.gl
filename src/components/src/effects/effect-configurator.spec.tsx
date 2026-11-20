@@ -257,6 +257,15 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenLastCalledWith(null, 'effect', {parameters: {}});
   });
 
+  test('older shadow settings show Auto and changing resolution updates only that setting', () => {
+    const {update} = setup({...makeEffect([]), type: LIGHT_AND_SHADOW_EFFECT.type});
+    expect(screen.getByRole('button', {name: 'Auto', pressed: true})).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name: 'High', pressed: false}));
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      parameters: {shadowMapResolution: 1.5}
+    });
+  });
+
   test('shadow intensity controls update their own parameter rather than every light', () => {
     const {update} = setup({
       ...makeEffect([{name: 'shadowIntensity', min: 0, max: 2}], {
