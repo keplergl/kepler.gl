@@ -3446,3 +3446,133 @@ test('#PointLayer -> neighbor hover reuses deck attributes and invalidates safel
   }
   t.end();
 });
+
+test('#PointLayer -> globe rotation preserves point size at constant camera distance', t => {
+  const layer = testCreateLayerFromConfig(
+    t,
+    {
+      layer: {type: 'point', config: {dataId, columns: {lat: 'lat', lng: 'lng'}}},
+      datasets: {[dataId]: preparedDataset}
+    },
+    {point: PointLayer}
+  );
+  const data = testFormatLayerData(t, layer, {[dataId]: preparedDataset});
+  const render = (latitude, zoom, globe = true) =>
+    renderDeckGlLayer(
+      {
+        datasets: {[dataId]: preparedDataset},
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: {...INITIAL_MAP_STATE, latitude, zoom, globe: {enabled: globe}},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    )[0];
+  const equator = render(0, 3);
+  for (const latitude of [-75, -60, 60, 75]) {
+    // Same compensation used by GlobeController when panning.
+    const zoom = 3 + Math.log2(Math.cos((latitude * Math.PI) / 180));
+    const rotated = render(latitude, zoom);
+    t.ok(
+      Math.abs(rotated.props.radiusScale - equator.props.radiusScale) < 1e-9,
+      'rotation preserves the radius uniform at latitude ' + latitude
+    );
+    t.equal(rotated.props.data, equator.props.data, 'rotation reuses point data');
+    t.deepEqual(
+      rotated.props.updateTriggers,
+      equator.props.updateTriggers,
+      'rotation does not invalidate attribute buffers'
+    );
+  }
+  t.equal(
+    render(60, 3, false).props.radiusScale,
+    render(0, 3, false).props.radiusScale,
+    '2D retains its existing meter-based radius scale'
+  );
+  t.equal(
+    render(0, 4).props.radiusScale,
+    equator.props.radiusScale / 2,
+    'actual zoom still adjusts the radius'
+  );
+  layer.config.visConfig.fixedRadius = true;
+  layer.config.sizeField = preparedDataset.fields.find(field => field.type === 'integer');
+  t.ok(layer.config.sizeField, 'fixture supplies a fixed-radius field');
+  t.equal(render(60, 2).props.radiusScale, 1, 'fixed-meter radii stay unscaled');
+  t.end();
+});
+
+test('#PointLayer -> projection toggles refresh field-sized label offsets only', t => {
+  const field = preparedDataset.fields.find(field => field.type === 'integer');
+  const layer = testCreateLayerFromConfig(
+    t,
+    {
+      layer: {
+        type: 'point',
+        config: {
+          dataId,
+          columns: {lat: 'lat', lng: 'lng'},
+          sizeField: {name: field.name, type: field.type},
+          textLabel: [
+            {
+              ...DEFAULT_TEXT_LABEL,
+              field: {name: 'types', type: 'string'},
+              anchor: 'start',
+              alignment: 'center'
+            }
+          ]
+        }
+      },
+      datasets: {[dataId]: preparedDataset}
+    },
+    {point: PointLayer}
+  );
+  const data = testFormatLayerData(t, layer, {[dataId]: preparedDataset});
+  const render = globe =>
+    renderDeckGlLayer(
+      {
+        datasets: {[dataId]: preparedDataset},
+        layer,
+        layerIndex: 0,
+        data,
+        mapState: {...INITIAL_MAP_STATE, latitude: 60, zoom: 3, globe: {enabled: globe}},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    );
+  const flat = render(false);
+  const globe = render(true);
+  const flatAgain = render(false);
+  const label = layers => layers.find(item => String(item.id).includes('-label-'));
+  const sizedPoint = data.data.find(point => data.getRadius(point) > 0);
+  t.ok(sizedPoint, 'fixture has a positive-radius point');
+  const flatLabel = label(flat);
+  const globeLabel = label(globe);
+  t.equal(
+    typeof flatLabel.props.getPixelOffset,
+    'function',
+    'field sizing uses cached per-row offsets'
+  );
+  t.notDeepEqual(
+    globeLabel.props.getPixelOffset(sizedPoint),
+    flatLabel.props.getPixelOffset(sizedPoint),
+    'projection changes the label offset'
+  );
+  t.notDeepEqual(
+    globeLabel.props.updateTriggers.getPixelOffset,
+    flatLabel.props.updateTriggers.getPixelOffset,
+    'projection invalidates cached label offsets'
+  );
+  t.deepEqual(
+    label(flatAgain).props.updateTriggers.getPixelOffset,
+    flatLabel.props.updateTriggers.getPixelOffset,
+    'switching back restores flat offset triggers'
+  );
+  t.deepEqual(
+    globe[0].props.updateTriggers,
+    flat[0].props.updateTriggers,
+    'projection does not invalidate scatterplot attributes'
+  );
+  t.equal(globe[0].props.data, flat[0].props.data, 'projection reuses point data');
+  t.end();
+});

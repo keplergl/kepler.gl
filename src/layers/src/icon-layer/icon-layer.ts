@@ -12,6 +12,7 @@ import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getVisualZoom, LayerZoomState} from '../layer-zoom';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
 import type {SvgIcon} from '@kepler.gl/utils';
@@ -269,8 +270,8 @@ export default class IconLayer extends Layer {
     };
   }
 
-  getZoomFactor({zoom, zoomOffset = 0}: {zoom: number; zoomOffset?: number}) {
-    return Math.pow(2, 14 - zoom + zoomOffset);
+  getZoomFactor(mapState: LayerZoomState) {
+    return Math.pow(2, 14 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0));
   }
 
   getSvgIcons(fallbackIcons: SvgIcon[] = []) {

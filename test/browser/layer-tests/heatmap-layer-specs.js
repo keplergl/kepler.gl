@@ -1650,6 +1650,62 @@ test('#HeatmapLayer -> waiting flat quads do not stretch cached edge pixels', t 
   t.end();
 });
 
+test('#HeatmapLayer -> globe rotation preserves kernel size and intensity', t => {
+  const heatmap = new HeatmapLayer({id: 'globe-rotation'});
+  heatmap.updateMeta({bounds: [-170, -75, 170, 75]});
+  heatmap.updateLayerVisConfig({radius: 20, intensity: 1});
+  const data = {data: [[0, 0]], getPosition: d => d, getWeight: 1};
+  const render = mapState =>
+    heatmap.renderLayer({data, mapState, idx: 0, visible: true, layerCallbacks: {}})[0];
+  const state = (latitude, zoom, globe = true) =>
+    Object.freeze({
+      ...INITIAL_MAP_STATE,
+      latitude,
+      zoom,
+      globe: Object.freeze({enabled: globe})
+    });
+
+  for (const surfaceEnabled of [false, true]) {
+    heatmap.updateLayerVisConfig({surfaceEnabled});
+    const equator = render(state(0, 3));
+    t.equal(equator.props.radiusPixels, 5, 'equatorial kernel size stays unchanged');
+    t.equal(equator.props.intensity, 4 / 3, 'equatorial intensity stays unchanged');
+    for (const latitude of [-75, -60, 60, 75]) {
+      const storedZoom = 3 + Math.log2(Math.cos((latitude * Math.PI) / 180));
+      const mapState = state(latitude, storedZoom);
+      const rotated = render(mapState);
+      for (const property of ['radiusPixels', 'intensity']) {
+        t.ok(
+          Math.abs(rotated.props[property] - equator.props[property]) < 1e-9,
+          `${property} stays stable at latitude ${latitude}, surface=${surfaceEnabled}`
+        );
+      }
+      t.equal(mapState.zoom, storedZoom, 'rendering preserves stored camera zoom');
+      t.equal(rotated.props.data, equator.props.data, 'rotation reuses the source data');
+      t.deepEqual(
+        rotated.props.updateTriggers,
+        equator.props.updateTriggers,
+        'rotation preserves position and weight attribute triggers'
+      );
+    }
+    const zoomed = render(state(0, 4));
+    for (const property of ['radiusPixels', 'intensity']) {
+      t.ok(zoomed.props[property] > equator.props[property], `real zoom still changes ${property}`);
+      t.equal(
+        render(state(60, 3, false)).props[property],
+        equator.props[property],
+        `2D ${property} still depends on stored zoom only`
+      );
+      t.equal(
+        render({...state(0, 3), zoomOffset: 2}).props[property],
+        equator.props[property],
+        `export zoomOffset keeps its existing ${property} behavior`
+      );
+    }
+  }
+  t.end();
+});
+
 test('#HeatmapLayer -> globe pans do not invalidate an unchanged density viewport', t => {
   for (const width of [800, 2560]) {
     const heatmap = new HeatmapLayer({id: `globe-pan-${width}`});
