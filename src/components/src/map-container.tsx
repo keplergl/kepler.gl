@@ -628,14 +628,8 @@ export default function MapContainerFactory(
         return;
       }
 
-      const {isExport, visState, mapState, index} = this.props;
-      const annotationItems = this._annotationMenuItems();
-      if (
-        isExport ||
-        (!visState.interactionConfig.coordinate.enabled &&
-          !annotationItems.showAddAnnotation &&
-          !annotationItems.showAnnotationToggle)
-      ) {
+      const {isExport, mapState, index} = this.props;
+      if (isExport) {
         this._closeCoordinateMenu();
         return;
       }
@@ -2070,11 +2064,7 @@ export default function MapContainerFactory(
         const camera = this.context?.getInternalViewState(this.props.index) || this.props.mapState;
         containerStyle = {
           ...containerStyle,
-          ...getStarsBackgroundStyle(
-            camera,
-            this.props.mapState.width,
-            this.props.mapState.height
-          )
+          ...getStarsBackgroundStyle(camera, this.props.mapState.width, this.props.mapState.height)
         };
       }
 
