@@ -310,7 +310,7 @@ test('reveals copying only for its hovered or keyboard-focused row without shift
 test('reclaims action space at rest and reveals copy/delete on hover or keyboard focus', () => {
   const onBookmarksChange = jest.fn();
   const {updateMap} = setup({onBookmarksChange});
-  const navigate = screen.getByRole('button', {name: 'Home', exact: true});
+  const navigate = screen.getByRole('button', {name: 'Home'});
   const remove = screen.getByRole('button', {name: 'Delete: Home'});
   const copyButton = screen.getByRole('button', {name: 'Copy coordinates: Home'});
   const row = navigate.parentElement as HTMLElement;
