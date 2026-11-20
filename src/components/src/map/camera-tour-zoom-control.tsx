@@ -41,7 +41,7 @@ const Control = styled.div`
   }
   .zoom-bar-track {
     fill: ${props => props.theme.panelBackground || '#18202a'};
-    stroke: ${props => props.theme.panelBackground || '#18202a'};
+    stroke: ${props => props.theme.textColor || '#fff'};
   }
   .zoom-bar-value {
     fill: ${props => props.theme.activeColor || '#1fbad6'};
@@ -234,7 +234,7 @@ export default function CameraTourZoomControl({
         <polygon
           className="zoom-bar-track"
           points={barShape(TOP, MAX_HALF_WIDTH)}
-          strokeWidth={4}
+          strokeWidth={2}
           strokeLinejoin="round"
         />
         <polygon className="zoom-bar-value" points={barShape(handleY, halfWidth)} />
