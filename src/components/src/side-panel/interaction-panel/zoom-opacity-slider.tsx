@@ -156,6 +156,9 @@ export default function ZoomOpacitySlider({
 }: ZoomOpacitySliderProps) {
   const intl = useIntl();
   const plotRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<HTMLDivElement>(null);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
   const activeKeyRef = useRef<keyof ZoomOpacityStops | null>(null);
   const [width, setWidth] = useState(0);
   const [active, setActive] = useState<keyof ZoomOpacityStops | null>(null);
@@ -179,9 +182,19 @@ export default function ZoomOpacitySlider({
       if (!plot) {
         return;
       }
-      onChange(key, clientXToZoom(clientX, plot.getBoundingClientRect()));
+      const rect = plot.getBoundingClientRect();
+      const value = clientXToZoom(clientX, rect);
+      const currentZoom = zoomRef.current;
+      const markerRect = markerRef.current?.getBoundingClientRect();
+      const snapToZoom =
+        Number.isFinite(currentZoom) &&
+        (currentZoom as number) >= minZoom &&
+        (currentZoom as number) <= maxZoom &&
+        markerRect &&
+        Math.abs(clientX - (markerRect.left + markerRect.width / 2)) <= 2;
+      onChange(key, snapToZoom ? (currentZoom as number) : value);
     },
-    [onChange]
+    [onChange, minZoom, maxZoom]
   );
 
   const endDrag = useCallback(() => {
@@ -287,6 +300,7 @@ export default function ZoomOpacitySlider({
           : null}
         {width > 0 && Number.isFinite(zoom) ? (
           <ZoomMarker
+            ref={markerRef}
             className="interaction-zoom-opacity__zoom-marker"
             $x={zoomToX(Math.min(maxZoom, Math.max(minZoom, zoom as number)), width)}
           />
