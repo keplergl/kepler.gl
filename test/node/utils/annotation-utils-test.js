@@ -732,7 +732,7 @@ test('#isPointVisibleOnGlobe -> non-finite projection is treated as not visible'
   t.end();
 });
 
-test('#isAnnotationVisibleOnGlobe -> RULER requires both endpoints on the visible hemisphere', t => {
+test('#isAnnotationVisibleOnGlobe -> RULER retains its visible endpoint for horizon clipping', t => {
   const viewport = {
     project: ([lng, lat]) => [lng, lat],
     unproject: ([x, y]) => (x > 90 ? [0, 0] : [x, y])
@@ -743,8 +743,8 @@ test('#isAnnotationVisibleOnGlobe -> RULER requires both endpoints on the visibl
       makeRulerAnnotation({anchorPoint: [10, 0], endPoint: [120, 0]}),
       viewport
     ),
-    false,
-    'ruler should hide rather than render through the globe when one endpoint is occluded'
+    true,
+    'partially visible rulers should be retained for arc clipping'
   );
   t.equal(
     isAnnotationVisibleOnGlobe(
@@ -753,6 +753,14 @@ test('#isAnnotationVisibleOnGlobe -> RULER requires both endpoints on the visibl
     ),
     true,
     'ruler should show when both endpoints are visible'
+  );
+
+  t.notOk(
+    isAnnotationVisibleOnGlobe(
+      makeRulerAnnotation({anchorPoint: [110, 0], endPoint: [120, 0]}),
+      viewport
+    ),
+    'rulers with both endpoints occluded remain filtered out'
   );
 
   t.end();

@@ -58,6 +58,7 @@ export type RulerAnnotationMarker = BaseAnnotationMarker & {
   my: number;
   path?: string;
   labelAngle?: number;
+  labelVisible?: boolean;
 };
 
 export type AnnotationMarker =
@@ -131,10 +132,9 @@ function projectRulerArc(start: LngLatAltitude, end: LngLatAltitude, viewport: M
   );
   // An even count includes the geographic midpoint exactly.
   const segments = Math.max(2, 2 * Math.ceil(angle / (4 * radians)));
-  return Array.from({length: segments + 1}, (_, index) => {
-    if (index === 0) return viewport.project(start);
-    if (index === segments) return viewport.project(end);
-    const fraction = index / segments;
+  const pointAt = (fraction: number): LngLatAltitude => {
+    if (fraction === 0) return start;
+    if (fraction === 1) return end;
     const step = angle * fraction;
     const latitude = Math.asin(
       Math.max(
@@ -153,12 +153,40 @@ function projectRulerArc(start: LngLatAltitude, end: LngLatAltitude, viewport: M
         Math.sin(bearing) * Math.sin(step),
         Math.cos(lat) * Math.cos(step) - Math.sin(lat) * Math.sin(step) * Math.cos(bearing)
       );
-    return viewport.project([
+    return [
       longitude / radians,
       latitude / radians,
       (start[2] || 0) + ((end[2] || 0) - (start[2] || 0)) * fraction
-    ]);
-  });
+    ];
+  };
+  const points = Array.from({length: segments + 1}, (_, index) =>
+    viewport.project(pointAt(index / segments))
+  );
+  const startVisible = isPointVisibleOnGlobe(start, viewport);
+  const endVisible = isPointVisibleOnGlobe(end, viewport);
+  if (startVisible === endVisible) {
+    return {points, pathPoints: startVisible ? points : [], labelVisible: startVisible};
+  }
+  // Only partial rulers need clipping. Bisect the spherical arc, not its screen
+  // chord, and keep the visible side of the horizon. Work is bounded per ruler.
+  let visible = startVisible ? 0 : 1;
+  let hidden = startVisible ? 1 : 0;
+  for (let i = 0; i < 12; i++) {
+    const middle = (visible + hidden) / 2;
+    if (isPointVisibleOnGlobe(pointAt(middle), viewport)) visible = middle;
+    else hidden = middle;
+  }
+  const pathPoints = points.filter((_, index) =>
+    startVisible ? index / segments < visible : index / segments > visible
+  );
+  const boundary = viewport.project(pointAt(visible));
+  if (startVisible) pathPoints.push(boundary);
+  else pathPoints.unshift(boundary);
+  return {
+    points,
+    pathPoints,
+    labelVisible: startVisible ? 0.5 <= visible : 0.5 >= visible
+  };
 }
 
 export function makeMarker(
@@ -190,7 +218,11 @@ export function makeMarker(
       const ex = endX - x;
       const ey = endY - y;
       if (isGlobeEnabled) {
-        const points = projectRulerArc(anchorPoint, annotation.endPoint, viewport);
+        const {points, pathPoints, labelVisible} = projectRulerArc(
+          anchorPoint,
+          annotation.endPoint,
+          viewport
+        );
         const middle = (points.length - 1) / 2;
         const mx = points[middle][0] - x;
         const my = points[middle][1] - y;
@@ -206,7 +238,8 @@ export function makeMarker(
           ey,
           mx,
           my,
-          path: points
+          labelVisible,
+          path: pathPoints
             .map(([px, py], index) => `${index ? 'L' : 'M'}${px - x},${py - y}`)
             .join(' '),
           labelAngle: (Math.atan2(after[1] - before[1], after[0] - before[0]) * 180) / Math.PI
@@ -247,6 +280,7 @@ export function angleForTextPlacement(
 }
 
 export type AnnotationTextBoxStyle = {
+  display?: 'none';
   minWidth?: number;
   width?: number | 'max-content';
   top?: number;
@@ -275,6 +309,7 @@ export function getAnnotationTextBoxStyle(
     : {width: textWidth || 120};
 
   if (kind === AnnotationKind.RULER) {
+    if ((marker as RulerAnnotationMarker).labelVisible === false) style.display = 'none';
     style.left = px;
     style.top = py;
     const {ex, ey, labelAngle} = marker as RulerAnnotationMarker;
@@ -369,11 +404,11 @@ export function isPointVisibleOnGlobe(
   return angularDistanceDeg(point, [roundTrip[0], roundTrip[1]]) < GLOBE_VISIBILITY_TOLERANCE_DEG;
 }
 
-/** A ruler is safe to draw as a DOM overlay only while both endpoints are visible. */
+/** Partially visible rulers are clipped by their renderer; other annotations use the anchor. */
 export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
   return (
-    isPointVisibleOnGlobe(annotation.anchorPoint, viewport) &&
-    (annotation.kind !== AnnotationKind.RULER ||
+    isPointVisibleOnGlobe(annotation.anchorPoint, viewport) ||
+    (annotation.kind === AnnotationKind.RULER &&
       isPointVisibleOnGlobe(annotation.endPoint, viewport))
   );
 }

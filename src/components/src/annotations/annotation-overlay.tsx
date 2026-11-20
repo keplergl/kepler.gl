@@ -240,6 +240,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
             )
             .map(annotation => (
               <RulerEndpointHandles
+                isGlobeEnabled={isGlobeEnabled}
                 key={annotation.id}
                 annotation={annotation}
                 opacity={getAnnotationOpacity(annotation.id)}
