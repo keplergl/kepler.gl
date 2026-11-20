@@ -1598,6 +1598,7 @@ export const DEFAULT_POST_PROCESSING_EFFECT_TYPE = 'ink';
 
 export const DEFAULT_LIGHT_COLOR: [number, number, number] = [255, 255, 255];
 export const DEFAULT_LIGHT_INTENSITY = 1;
+export const SHADOW_MAP_RESOLUTIONS = {low: 0.5, auto: 1, high: 1.5} as const;
 export const DEFAULT_SHADOW_INTENSITY = 0.5;
 export const DEFAULT_SHADOW_COLOR: [number, number, number] = [0, 0, 0];
 
@@ -1634,6 +1635,12 @@ export const LIGHT_AND_SHADOW_EFFECT: EffectDescription = {
   parameters: [
     {name: 'timestamp', min: 0, max: Number.MAX_SAFE_INTEGER},
     {name: 'shadowIntensity', min: 0, max: 1, defaultValue: DEFAULT_SHADOW_INTENSITY},
+    {
+      name: 'shadowMapResolution',
+      min: SHADOW_MAP_RESOLUTIONS.low,
+      max: SHADOW_MAP_RESOLUTIONS.high,
+      defaultValue: SHADOW_MAP_RESOLUTIONS.auto
+    },
     {name: 'sunLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
     {name: 'ambientLightIntensity', min: 0, max: 5, defaultValue: DEFAULT_LIGHT_INTENSITY},
     {name: 'shadowColor', type: 'color', min: 0, max: 255, defaultValue: DEFAULT_SHADOW_COLOR},

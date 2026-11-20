@@ -12,6 +12,7 @@ import {
   POSTPROCESSING_EFFECTS,
   LIGHT_AND_SHADOW_EFFECT,
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  SHADOW_MAP_RESOLUTIONS,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
   DISTANCE_FOG_TYPE,
@@ -92,6 +93,40 @@ test('effectUtils -> picked sunlight time survives retained runtime adoption', t
   t.equal(nighttime.directionalLights[0].intensity, 0, 'suppresses sunlight at night');
   t.equal(original.parameters.timestamp, midnight, 'keeps the saved timestamp unchanged');
   t.equal(compute(original).directionalLights[0].timestamp, midnight, 'restores saved picked time');
+  t.end();
+});
+
+test('effectUtils -> shadow resolution follows the active map and retained lighting instance', t => {
+  const createLighting = shadowMapResolution =>
+    createEffect({
+      type: LIGHT_AND_SHADOW_EFFECT.type,
+      parameters: {shadowMapResolution}
+    });
+  const compute = (effect, isSplit) =>
+    computeDeckEffects({
+      visState: {effects: [effect], effectOrder: [effect.id]},
+      mapState: {latitude: 0, longitude: 0, isSplit}
+    })[0];
+
+  const low = createLighting(SHADOW_MAP_RESOLUTIONS.low);
+  const retained = compute(low, false);
+  t.equal(retained.shadowMapResolution, SHADOW_MAP_RESOLUTIONS.low, 'uses Low on a single map');
+
+  const preview = createLighting(SHADOW_MAP_RESOLUTIONS.high);
+  t.notEqual(preview.deckEffect, retained, 'starts with a different runtime instance');
+  const split = compute(preview, true);
+  t.equal(split, retained, 'adopts the retained instance in split view');
+  t.equal(split.shadowMapResolution, SHADOW_MAP_RESOLUTIONS.auto, 'split view uses Auto');
+  t.equal(
+    preview.parameters.shadowMapResolution,
+    SHADOW_MAP_RESOLUTIONS.high,
+    'split view does not erase the saved choice'
+  );
+  t.equal(
+    compute(preview, false).shadowMapResolution,
+    SHADOW_MAP_RESOLUTIONS.high,
+    'restoring single view applies High to the active instance'
+  );
   t.end();
 });
 

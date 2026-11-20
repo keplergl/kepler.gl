@@ -5,17 +5,23 @@ import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
 import RangeSliderFactory from '../common/range-slider';
 import {ArrowDownSmall} from '../common/icons';
-import {Tooltip} from '../common/styled-components';
+import {Button, ButtonGroup, Tooltip} from '../common/styled-components';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import CompactColorPicker from './compact-color-picker';
 import SurfaceFogElevationSectionFactory, {ELEVATION_SECTION_TYPE} from './surface-fog-section';
 import EffectAnimationControl from './effect-animation-control';
+
+const SHADOW_MAP_OPTIONS = [
+  {label: 'Low', value: SHADOW_MAP_RESOLUTIONS.low},
+  {label: 'Auto', value: SHADOW_MAP_RESOLUTIONS.auto},
+  {label: 'High', value: SHADOW_MAP_RESOLUTIONS.high}
+];
 
 export type EffectConfiguratorProps = {
   effect: Effect;
@@ -89,6 +95,50 @@ const SectionSubTitle = styled.div`
   color: ${props => props.theme.effectPanelTextSecondary2};
   margin-bottom: 8px;
   margin-left: 6px;
+`;
+
+const ShadowResolutionLabel = styled(SectionSubTitle)`
+  margin-bottom: 0;
+`;
+
+const ShadowResolutionButtons = styled(ButtonGroup)`
+  .button {
+    /* Light uses the select surface for the neighboring numeric inputs. */
+    background-color: ${props =>
+      props.theme.input === props.theme.inputLT
+        ? props.theme.selectBackgroundLT
+        : props.theme.inputBgd};
+    color: ${props =>
+      props.theme.input === props.theme.inputLT
+        ? props.theme.selectColorLT
+        : props.theme.inputColor};
+    border: 0;
+
+    &:hover,
+    &:active {
+      background-color: ${props => props.theme.inputBgdHover};
+      box-shadow: inset 0 0 0 1px ${props => props.theme.inputBorderHoverColor};
+    }
+
+    &[aria-pressed='true'] {
+      background-color: ${props => props.theme.secondaryBtnBgd};
+      color: ${props =>
+        props.theme.input === props.theme.inputLT
+          ? props.theme.selectColorLT
+          : props.theme.secondaryBtnColor};
+
+      &:hover,
+      &:active {
+        background-color: ${props => props.theme.secondaryBtnBgdHover};
+        color: ${props => props.theme.secondaryBtnActColor};
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${props => props.theme.activeColor};
+      outline-offset: -2px;
+    }
+  }
 `;
 
 const StyleSliderWrapper = styled.div`
@@ -233,6 +283,9 @@ export default function EffectConfiguratorFactory(
     updateEffectConfig
   }) => {
     const {parameters, id} = effect;
+    const shadowMapResolution =
+      SHADOW_MAP_OPTIONS.find(option => option.value === parameters.shadowMapResolution)?.value ??
+      SHADOW_MAP_RESOLUTIONS.auto;
     const animationControl = (name: string) => (
       <EffectAnimationControl {...{effect, name, RangeSlider, updateEffectConfig}} />
     );
@@ -316,6 +369,27 @@ export default function EffectConfiguratorFactory(
               <RangeSlider {...COMMON_SLIDER_PROPS} {...sliderProps[0]} />
             </StyleSliderWrapper>
           </StyledConfigSection>
+        </StyledWrapper>
+
+        <StyledWrapper $marginBottom={16}>
+          <ShadowResolutionLabel title="Applies to the single-map preview only">
+            Shadow map resolution
+          </ShadowResolutionLabel>
+          <ShadowResolutionButtons role="group" aria-label="Shadow map resolution (experimental)">
+            {SHADOW_MAP_OPTIONS.map(({label, value}) => (
+              <Button
+                key={label}
+                type="button"
+                small
+                aria-pressed={shadowMapResolution === value}
+                onClick={() =>
+                  updateEffectConfig(null, id, {parameters: {shadowMapResolution: value}})
+                }
+              >
+                {label}
+              </Button>
+            ))}
+          </ShadowResolutionButtons>
         </StyledWrapper>
 
         <StyledWrapper $marginBottom={0}>

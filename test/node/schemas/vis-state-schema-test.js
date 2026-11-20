@@ -28,7 +28,7 @@ import {
 } from 'test/helpers/mock-state';
 import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
-import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
+import {FILTER_VIEW_TYPES, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {createEffect} from '@kepler.gl/effects';
 
 const expectedVisStateEntries = [
@@ -614,6 +614,28 @@ test('#visStateSchema -> v1 -> save load effects', t => {
   t.deepEqual(savedEffects, expectedEffects, 'Effects should be saved as expected');
   t.deepEqual(loadedEffects, expectedEffects, 'Effects should be loaded as expected');
 
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> explicit shadow map resolution round trips', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = state.visState.effects.find(item => item.type === 'lightAndShadow');
+  effect.setProps({parameters: {shadowMapResolution: SHADOW_MAP_RESOLUTIONS.high}});
+
+  const saved = SchemaManager.getConfigToSave(state);
+  const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
+  t.equal(
+    savedEffect.parameters.shadowMapResolution,
+    SHADOW_MAP_RESOLUTIONS.high,
+    'saves an explicit shadow map resolution'
+  );
+  const loaded = SchemaManager.parseSavedConfig(saved);
+  const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
+  t.equal(
+    loadedEffect.parameters.shadowMapResolution,
+    SHADOW_MAP_RESOLUTIONS.high,
+    'restores the chosen resolution'
+  );
   t.end();
 });
 

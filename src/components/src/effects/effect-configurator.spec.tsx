@@ -257,6 +257,28 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenLastCalledWith(null, 'effect', {parameters: {}});
   });
 
+  test('shadow resolution presets are keyboard-accessible and reflect the saved selection', async () => {
+    const user = userEvent.setup();
+    const effect = {...makeEffect([]), type: LIGHT_AND_SHADOW_EFFECT.type};
+    const {rerender, update} = setup(effect);
+    const presets = within(screen.getByRole('group', {name: /shadow map resolution/i}));
+    expect(presets.getByRole('button', {name: 'Auto', pressed: true})).toBeVisible();
+    presets.getByRole('button', {name: 'High', pressed: false}).focus();
+    await user.keyboard('{Enter}');
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      parameters: {shadowMapResolution: 1.5}
+    });
+
+    rerender(
+      <Configurator
+        effect={{...effect, parameters: {shadowMapResolution: 1.5}}}
+        updateEffectConfig={update}
+      />
+    );
+    expect(presets.getByRole('button', {name: 'High', pressed: true})).toBeVisible();
+    expect(presets.getByRole('button', {name: 'Auto', pressed: false})).toBeVisible();
+  });
+
   test('shadow intensity controls update their own parameter rather than every light', () => {
     const {update} = setup({
       ...makeEffect([{name: 'shadowIntensity', min: 0, max: 2}], {

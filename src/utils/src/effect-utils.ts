@@ -9,6 +9,7 @@ import type {Effect as DeckEffect} from '@deck.gl/core';
 import {
   LIGHT_AND_SHADOW_EFFECT,
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  SHADOW_MAP_RESOLUTIONS,
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
   DISTANCE_FOG_TYPE,
@@ -65,12 +66,6 @@ export function computeDeckEffects({
           return null;
         }
 
-        // Always reset isExportMode so the flag doesn't persist from a
-        // previous export session on reused effect instances.
-        if (isLightingEffect || isFogEffect) {
-          effect.deckEffect.isExportMode = Boolean(isExport);
-        }
-
         const enabledInThisView = effect.isEnabled && !(isGlobeMode && isLightingEffect);
 
         if (enabledInThisView) {
@@ -101,6 +96,12 @@ export function computeDeckEffects({
           // Disabling shadow on the lights avoids visual effects.
           disableLightingEffect(effect);
         }
+        // Reset the flag on the active lighting instance after adoption, even
+        // when disabled; export and the interactive maps can reuse effects.
+        if (isLightingEffect || isFogEffect) {
+          effect.deckEffect.isExportMode = Boolean(isExport);
+        }
+
         if (enabledInThisView || effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
           if (effect.type === LIGHT_AND_SHADOW_EFFECT.type) {
             hasLightingShadow = true;
@@ -231,6 +232,12 @@ function updateEffect({visState, mapState, effect}: {visState: any; mapState: an
       light.shadow = true;
     }
     deckEffect.shadow = deckEffect.directionalLights?.some(l => l.shadow) ?? false;
+
+    // Each split map is rendered as its own Deck viewport and also reports one
+    // viewport to ShadowPass. Exclude it explicitly, in addition to that guard.
+    deckEffect.shadowMapResolution = mapState?.isSplit
+      ? SHADOW_MAP_RESOLUTIONS.auto
+      : parameters.shadowMapResolution ?? SHADOW_MAP_RESOLUTIONS.auto;
 
     // Sync shadow color & intensity (not handled by deck.gl setProps)
     deckEffect.shadowColor = [

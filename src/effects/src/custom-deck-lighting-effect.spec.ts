@@ -225,7 +225,7 @@ describe('alignExportShadowPass', () => {
       getParameter: jest.fn(() => [0, 0.979])
     };
     const shadowPass = {
-      device: {gl, canvasContext},
+      device: {type: 'webgl', gl, canvasContext, limits: {maxTextureDimension2D: 4096}},
       render: jest.fn((_params?: unknown) => ({
         size: canvasContext.getDrawingBufferSize(),
         ratio: canvasContext.cssToDeviceRatio()
@@ -252,6 +252,121 @@ describe('alignExportShadowPass', () => {
       [0, 1],
       [0, 0.979]
     ]);
+  });
+
+  test.each([
+    [0.5, 1, [540, 304]],
+    [1.5, 3, [1620, 912]]
+  ])('uses shadow resolution %s for the pass only', (scale, ratio, size) => {
+    const {shadowPass, canvasContext, gl} = createShadowPass();
+    alignExportShadowPass(
+      shadowPass,
+      () => false,
+      () => scale
+    );
+    expect(shadowPass.render({viewports: [{width: 540, height: 304}]})).toEqual({ratio, size});
+    expect(canvasContext.cssToDeviceRatio()).toBe(2);
+    expect(canvasContext.getDrawingBufferSize()).toEqual([1080, 608]);
+    expect(gl.depthRange).not.toHaveBeenCalled();
+  });
+
+  test('bounds High by hardware texture size and total pixels without reducing Auto', () => {
+    const {shadowPass, canvasContext} = createShadowPass();
+    alignExportShadowPass(
+      shadowPass,
+      () => false,
+      () => 1.5
+    );
+    const viewport = {width: 1200, height: 1200};
+    const result = shadowPass.render({viewports: [viewport]});
+    expect(result.ratio).toBeGreaterThan(2);
+    expect(result.size[0] * result.size[1]).toBeLessThanOrEqual(8e6);
+    shadowPass.device.limits.maxTextureDimension2D = 2500;
+    expect(shadowPass.render({viewports: [viewport]}).size).toEqual([2500, 2500]);
+    shadowPass.device.limits.maxTextureDimension2D = 2000;
+    expect(shadowPass.render({viewports: [viewport]})).toEqual({
+      ratio: 2,
+      size: canvasContext.getDrawingBufferSize()
+    });
+  });
+
+  test('ignores experimental resolution in export, multi-viewport and non-WebGL passes', () => {
+    const {shadowPass} = createShadowPass();
+    let exporting = true;
+    alignExportShadowPass(
+      shadowPass,
+      () => exporting,
+      () => 0.5
+    );
+    const viewport = {width: 540, height: 304};
+    expect(shadowPass.render({viewports: [viewport]}).size).toEqual([1920, 1080]);
+    exporting = false;
+    expect(shadowPass.render({viewports: [viewport, viewport]}).ratio).toBe(2);
+    shadowPass.device.type = 'webgpu';
+    expect(shadowPass.render({viewports: [viewport]}).ratio).toBe(2);
+  });
+
+  test('releases replaced and final attachments when opting into a different resolution', () => {
+    const {shadowPass} = createShadowPass();
+    const makeTexture = () => ({destroy: jest.fn()});
+    const originalColor = makeTexture();
+    const originalDepth = makeTexture();
+    const owned = new Set<ReturnType<typeof makeTexture>>();
+    const fbo = {
+      colorAttachments: [{texture: originalColor}],
+      depthStencilAttachment: {texture: originalDepth},
+      attachResource: texture => owned.add(texture),
+      destroyAttachedResource: texture => {
+        if (owned.delete(texture)) texture.destroy();
+      },
+      resize() {
+        this.colorAttachments[0].texture = makeTexture();
+        this.depthStencilAttachment.texture = makeTexture();
+      }
+    };
+    const pass = {
+      ...shadowPass,
+      fbo,
+      render: (_params: unknown) => fbo.resize()
+    };
+    let scale = 0.5;
+    alignExportShadowPass(
+      pass,
+      () => false,
+      () => scale
+    );
+    const params = {viewports: [{width: 540, height: 304}]};
+    pass.render(params);
+    expect(originalColor.destroy).toHaveBeenCalledTimes(1);
+    expect(originalDepth.destroy).toHaveBeenCalledTimes(1);
+    const lowColor = fbo.colorAttachments[0].texture;
+
+    scale = 1;
+    pass.render(params);
+    expect(lowColor.destroy).toHaveBeenCalledTimes(1);
+    expect([...owned]).toEqual([
+      fbo.colorAttachments[0].texture,
+      fbo.depthStencilAttachment.texture
+    ]);
+  });
+
+  test('restores the shadow-only canvas overrides after a render failure', () => {
+    const {shadowPass, canvasContext} = createShadowPass();
+    const {cssToDeviceRatio, getDrawingBufferSize} = canvasContext;
+    shadowPass.render.mockImplementationOnce(() => {
+      expect(canvasContext.cssToDeviceRatio()).toBe(1);
+      throw new Error('render error');
+    });
+    alignExportShadowPass(
+      shadowPass,
+      () => false,
+      () => 0.5
+    );
+    expect(() => shadowPass.render({viewports: [{width: 540, height: 304}]})).toThrow(
+      'render error'
+    );
+    expect(canvasContext.cssToDeviceRatio).toBe(cssToDeviceRatio);
+    expect(canvasContext.getDrawingBufferSize).toBe(getDrawingBufferSize);
   });
 
   test('does not override luma sizes outside export mode', () => {

@@ -186,5 +186,6 @@ declare module '@deck.gl/extensions' {
 
 declare module '@luma.gl/core' {
   export {UniformStore} from '@luma.gl/core/dist/portable/uniform-store';
+  export type {Framebuffer} from '@luma.gl/core/dist/adapter/resources/framebuffer';
   export {Texture, type TextureProps} from '@luma.gl/core/dist/adapter/resources/texture';
 }
