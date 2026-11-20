@@ -5,8 +5,13 @@ import {SolidPolygonLayer} from '@deck.gl/layers';
 import {phongMaterial} from '@deck.gl/core';
 import {editShader, insertBefore} from '@kepler.gl/deckgl-layers';
 
+export type SurfaceNormalAccessor = (position: number[]) => [number, number, number];
+
 /** Light the draped surface without extruding its polygons into columns. */
-export default class ContourSurfaceLayer extends SolidPolygonLayer {
+export default class ContourSurfaceLayer extends SolidPolygonLayer<
+  unknown,
+  {getSurfaceNormal?: SurfaceNormalAccessor}
+> {
   static layerName = 'ContourSurfaceLayer';
 
   initializeState(): void {
@@ -23,10 +28,10 @@ export default class ContourSurfaceLayer extends SolidPolygonLayer {
   }
 
   protected calculateSurfaceNormals(attribute): void {
-    const positions = this.state.polygonTesselator.get('positions');
-    const getNormal = (this.props as any).getSurfaceNormal as
-      | ((position: number[]) => [number, number, number])
-      | undefined;
+    const positions =
+      (this.props.data as any)?.attributes?.getPolygon?.value ||
+      this.state.polygonTesselator.get('positions');
+    const getNormal = this.props.getSurfaceNormal;
     if (!positions || !getNormal) {
       attribute.value = null;
       return;

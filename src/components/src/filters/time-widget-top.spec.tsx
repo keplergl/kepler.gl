@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
@@ -281,32 +281,40 @@ describe('compact timeline playback controls', () => {
   test.each([false, true])(
     'localizes playback tooltips and accessible names when minimized is %s',
     async isMinified => {
-      const user = userEvent.setup();
-      const {props, playbackControls, rerender} = setupPlayback({isMinified}, {}, 'es');
-      const translated = messages.es;
-      for (const [id, action] of [
-        ['tooltip.play', playbackControls.toggleAnimation],
-        ['tooltip.reset', playbackControls.resetAnimation]
-      ] as const) {
-        const button = screen.getByRole('button', {name: translated[id]});
-        await expectTooltip(button, translated[id]);
-        await user.click(button);
-        expect(action).toHaveBeenCalledTimes(1);
+      // Advance tooltip delays without spending the CI timeout on wall-clock waits.
+      jest.useFakeTimers();
+      try {
+        const user = userEvent.setup({advanceTimers: jest.advanceTimersByTime});
+        const {props, playbackControls, rerender} = setupPlayback({isMinified}, {}, 'es');
+        const translated = messages.es;
+        for (const [id, action] of [
+          ['tooltip.play', playbackControls.toggleAnimation],
+          ['tooltip.reset', playbackControls.resetAnimation]
+        ] as const) {
+          const button = screen.getByRole('button', {name: translated[id]});
+          await expectTooltip(button, translated[id]);
+          await user.click(button);
+          expect(action).toHaveBeenCalledTimes(1);
+        }
+
+        const speed = screen.getByRole('button', {name: translated['tooltip.speed']});
+        await expectTooltip(speed, translated['tooltip.speed']);
+        await user.click(speed);
+        expect(screen.getByRole('dialog', {name: translated['tooltip.speed']})).toBeInTheDocument();
+        await user.keyboard('{Escape}');
+
+        rerender(
+          <CompactHeader {...props} playbackControls={{...playbackControls, isAnimating: true}} />
+        );
+        const pause = screen.getByRole('button', {name: translated['tooltip.pause']});
+        await expectTooltip(pause, translated['tooltip.pause']);
+        await user.click(pause);
+        expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(2);
+      } finally {
+        cleanup();
+        act(() => jest.runOnlyPendingTimers());
+        jest.useRealTimers();
       }
-
-      const speed = screen.getByRole('button', {name: translated['tooltip.speed']});
-      await expectTooltip(speed, translated['tooltip.speed']);
-      await user.click(speed);
-      expect(screen.getByRole('dialog', {name: translated['tooltip.speed']})).toBeInTheDocument();
-      await user.keyboard('{Escape}');
-
-      rerender(
-        <CompactHeader {...props} playbackControls={{...playbackControls, isAnimating: true}} />
-      );
-      const pause = screen.getByRole('button', {name: translated['tooltip.pause']});
-      await expectTooltip(pause, translated['tooltip.pause']);
-      await user.click(pause);
-      expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(2);
     }
   );
 

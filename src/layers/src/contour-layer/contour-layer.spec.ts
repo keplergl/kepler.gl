@@ -12,7 +12,9 @@ import {
   LightingEffect,
   WebMercatorViewport
 } from '@deck.gl/core';
+import * as DeckCore from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
+import {GeoJsonLayer} from '@deck.gl/layers';
 import {setGLParameters} from '@luma.gl/webgl';
 import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
@@ -20,6 +22,7 @@ import {processCsvData} from '@kepler.gl/processors';
 import booleanWithin from '@turf/boolean-within';
 import ContourLayer from './contour-layer';
 import ContourSurfaceLayer from './deck-contour-surface-layer';
+import ContourMeshLayer from './deck-contour-mesh-layer';
 import {buildContourSurface} from './contour-surface';
 import Layer from '../base-layer';
 import {LayerClasses} from '../index';
@@ -27,7 +30,8 @@ import {
   createContourSamples,
   contourConfig
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
-import {buildContourGrid, generateContours} from './contour-utils';
+import {buildContourGrid, ContourFeature, generateContours} from './contour-utils';
+import {buildContourMesh} from './contour-mesh';
 import SchemaManager from '@kepler.gl/schemas';
 import {
   calculateLayerData,
@@ -58,6 +62,8 @@ test.each(Object.keys(messages))('resolves contour column labels in locale %s', 
     expect(messages[locale][id]).not.toBe(id);
   }
 });
+
+const GlobeViewport = (DeckCore as any)._GlobeViewport;
 
 async function setup(scatteredRows?: number[][]) {
   const rows = Array.from({length: 81}, (_, i) => {
@@ -627,16 +633,239 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
   }
 });
 
+test('uses the same scaled border and contours in flat and 3D modes', async () => {
+  const {layer, datasets} = await setup();
+  layer.updateLayerVisConfig({gridResolution: 64, smoothing: 2});
+  const flat = layer.formatLayerData(datasets);
+  expect(flat.grid).toMatchObject({width: 64, height: 64, border: 2});
+  expect(layer.shouldCalculateLayerData(['enable3d'])).toBe(false);
+
+  layer.updateLayerVisConfig({enable3d: true});
+  const surface = layer.formatLayerData(datasets);
+  expect(surface).toEqual(flat);
+
+  layer.updateLayerVisConfig({enable3d: false});
+  expect(layer.formatLayerData(datasets)).toEqual(flat);
+});
+
+test('indexed contour fills preserve level colors, picking and the depth footprint', async () => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({enable3d: true, colorByLevel: true, fillOpacity: 0.25});
+  const data = layer.formatLayerData(datasets);
+  const passes = renderContourPasses(layer, dataset, data);
+  const fill = passes[1] as ContourMeshLayer;
+  const depth = passes[0] as ContourMeshLayer;
+  const onError = jest.fn();
+  const manager = new LayerManager(device, {
+    viewport: new WebMercatorViewport({width: 800, height: 600, zoom: 10, pitch: 45})
+  });
+  manager.setProps({onError});
+  try {
+    manager.setLayers(passes);
+    const surface = fill.getSubLayers()[0] as ContourSurfaceLayer;
+    const attributes = surface.getAttributeManager()!.getAttributes();
+    const colors = attributes.fillColors.value as Uint8Array;
+    const rows = attributes.rowIndexes.value as Uint32Array;
+    const accessor = fill.props.getFillColor;
+    if (typeof accessor !== 'function') throw new Error('Expected per-level contour colors');
+    for (let level = 0; level < data.data.length; level++) {
+      const start = fill.props.getMesh().startIndices[level];
+      const expected = accessor(data.data[level], {index: level, data: data.data, target: []});
+      expect(Array.from(colors.subarray(start * 4, start * 4 + 4))).toEqual(expected);
+      expect(rows[start]).toBe(level);
+      const picked = fill.getPickingInfo({
+        info: {index: level} as PickingInfo,
+        mode: 'hover',
+        sourceLayer: surface
+      });
+      expect(picked.object).toBe(fill.props.data[level]);
+      expect(layer.getHoverData(picked.object)).toEqual(layer.getHoverData(data.data[level]));
+    }
+    expect(depth.props.data).toEqual(fill.props.data.slice(0, 1));
+    expect(depth.props.getMesh().length).toBe(1);
+    expect(depth.props.getMesh().startIndices[1]).toBe(fill.props.getMesh().startIndices[1]);
+    expect(depth.props.getMesh().attributes.getPolygon.value.buffer).toBe(
+      fill.props.getMesh().attributes.getPolygon.value.buffer
+    );
+    expect(onError).not.toHaveBeenCalled();
+  } finally {
+    manager.finalize();
+  }
+});
+
+test('contour meshes adapt to globe projection and reuse geometry across style changes', () => {
+  const features: ContourFeature[] = [
+    {
+      type: 'Feature',
+      properties: {threshold: 1, below: false, rank: 0},
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [-25, 50, 0],
+              [25, 50, 100],
+              [10, 80, 200],
+              [-25, 50, 0]
+            ]
+          ]
+        ]
+      }
+    }
+  ];
+  const mesh = buildContourMesh(features).fill;
+  const viewport = new WebMercatorViewport({width: 800, height: 600, latitude: 60, zoom: 2});
+  const manager = new LayerManager(device, {viewport});
+  const onError = jest.fn();
+  manager.setProps({onError});
+  try {
+    const layer = new ContourMeshLayer({
+      id: 'projection-mesh',
+      data: features,
+      getMesh: () => mesh,
+      getFillColor: [10, 20, 30, 100]
+    });
+    manager.setLayers([layer]);
+    expect(layer.getSubLayers()[0].props.data).toBe(mesh);
+    const globeViewport = new GlobeViewport({
+      width: 800,
+      height: 600,
+      latitude: 60,
+      zoom: 2,
+      resolution: 10
+    });
+    manager.activateViewport(globeViewport);
+    layer.activateViewport(globeViewport);
+    const globe = layer.clone({});
+    manager.setLayers([globe]);
+    const globeMesh = globe.getSubLayers()[0].props.data as typeof mesh;
+    expect(globeMesh.attributes.indices.value.length).toBeGreaterThan(
+      mesh.attributes.indices.value.length
+    );
+    const styled = globe.clone({opacity: 0.5});
+    manager.setLayers([styled]);
+    expect(styled.getSubLayers()[0].props.data).toBe(globeMesh);
+    manager.activateViewport(viewport);
+    styled.activateViewport(viewport);
+    const flat = styled.clone({});
+    manager.setLayers([flat]);
+    expect(flat.getSubLayers()[0].props.data).toBe(mesh);
+    expect(onError).not.toHaveBeenCalled();
+  } finally {
+    manager.finalize();
+  }
+});
+
+test.each([-1, 1])('renders 3D globe contours beyond the pole at latitude sign %s', async sign => {
+  const {layer, dataset, datasets} = await setup([
+    [0, sign * 89, 1],
+    [1, sign * 89.99, 10]
+  ]);
+  layer.updateLayerVisConfig({
+    enable3d: true,
+    below: false,
+    gridResolution: 32,
+    smoothing: 0,
+    levels: 2,
+    customRange: false
+  });
+  const data = layer.formatLayerData(datasets);
+  expect(
+    data.data.some(feature => feature.geometry.coordinates.flat(2).some(p => Math.abs(p[1]) > 90))
+  ).toBe(true);
+  const passes = renderContourPasses(layer, dataset, data);
+  const onError = jest.fn();
+  const manager = new LayerManager(device, {
+    viewport: new GlobeViewport({
+      width: 800,
+      height: 600,
+      latitude: sign * 89,
+      zoom: 2,
+      resolution: 10
+    })
+  });
+  manager.setProps({onError});
+  try {
+    manager.setLayers(passes);
+    for (const pass of passes.slice(0, 2) as ContourMeshLayer[]) {
+      const surface = pass.getSubLayers()[0] as ContourSurfaceLayer;
+      const mesh = surface.props.data as ReturnType<typeof buildContourMesh>['fill'];
+      expect(mesh.attributes.indices.value.length).toBeGreaterThan(0);
+      expect(mesh.attributes.getPolygon.value.every(Number.isFinite)).toBe(true);
+      expect(
+        mesh.attributes.getPolygon.value.some(
+          (value, index) => index % 3 === 1 && Math.abs(value) > 90
+        )
+      ).toBe(true);
+    }
+    expect(onError).not.toHaveBeenCalled();
+  } finally {
+    manager.finalize();
+  }
+});
+
+test.each([false, true])(
+  '3D edge peaks slope through the border with customRange=%s',
+  async customRange => {
+    const {layer, dataset, datasets} = await setup([
+      [0, 0, 100],
+      [0.03, 0.03, 1]
+    ]);
+    layer.updateLayerVisConfig({
+      enable3d: true,
+      below: false,
+      gridResolution: 128,
+      smoothing: 2,
+      levels: 3,
+      customRange,
+      minimum: 0,
+      maximum: 2
+    });
+    const data = layer.formatLayerData(datasets);
+    expect(data.grid).toMatchObject({width: 128, height: 128, border: 4});
+    const [, fill, outline] = renderContourPasses(layer, dataset, data);
+    const raised = fill.props.data as typeof data.data;
+    const vertices = raised[0].geometry.coordinates.flat(2);
+    const grid = data.grid!;
+    const latitude = grid.latitude + 4 * grid.stepLat;
+    const longitude = grid.longitude + 4 * grid.stepLng;
+    const crossSection = vertices.filter(point => Math.abs(point[1] - latitude) < 1e-12);
+    const heights = [-2, -1, 0].map(
+      offset =>
+        crossSection.find(
+          point => Math.abs(point[0] - longitude - offset * grid.stepLng) < 1e-12
+        )?.[2]
+    );
+    expect(heights.every(height => Number.isFinite(height))).toBe(true);
+    expect(heights[0]).toBeGreaterThan(0);
+    expect(heights[1]).toBeGreaterThan(heights[0]!);
+    expect(heights[2]).toBeGreaterThan(heights[1]!);
+    expect(vertices.reduce((minimum, point) => Math.min(minimum, point[2]), Infinity)).toBeCloseTo(
+      0,
+      8
+    );
+    for (const pass of [fill, outline]) {
+      const features = pass.props.data as typeof data.data;
+      expect(
+        features.flatMap(feature => feature.geometry.coordinates.flat(3)).every(Number.isFinite)
+      ).toBe(true);
+    }
+  }
+);
+
 test.each([false, true])(
   '3D drapes the same smoothed contours, colors and hover values (below: %s)',
   async below => {
     const {layer, dataset, datasets} = await setup();
     layer.updateLayerVisConfig({below, smoothing: 1.5, colorByLevel: true});
-    const data = layer.formatLayerData(datasets);
+    let data = layer.formatLayerData(datasets);
     const flat = renderContourPasses(layer, dataset, data);
     const legend = layer.getContourLegend();
     expect(layer.config.visConfig.enable3d).toBe(false);
     layer.updateLayerVisConfig({enable3d: true, elevationScale: 2});
+    const surfaceData = layer.formatLayerData(datasets);
+    expect(surfaceData).toEqual(data);
+    data = surfaceData;
     const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
     expect(depth.props.pickable).toBe(false);
     const gl = {enable: jest.fn(), depthMask: jest.fn(), colorMask: jest.fn()};
@@ -704,7 +933,7 @@ test.each([true, false])(
     const data = layer.formatLayerData(datasets);
     const passes = renderContourPasses(layer, dataset, data);
     const getFillColor = passes[0].props.getFillColor;
-    const getLineColor = passes[1].props.getLineColor;
+    const getLineColor = (passes[1] as GeoJsonLayer).props.getLineColor;
     if (typeof getFillColor !== 'function' || typeof getLineColor !== 'function') {
       throw new Error('Expected colors for each contour level');
     }
@@ -753,7 +982,7 @@ test.each([false, true])('colors outlines independently of fills (3D: %s)', asyn
   const readColors = () => {
     const [fill, outline] = renderContourPasses(layer, dataset, data).slice(-2);
     const {getFillColor} = fill.props;
-    const {getLineColor} = outline.props;
+    const {getLineColor} = (outline as GeoJsonLayer).props;
     if (typeof getFillColor !== 'function' || typeof getLineColor !== 'function') {
       throw new Error('Expected colors for each contour level');
     }
@@ -948,7 +1177,7 @@ test.each([true, false])(
         layerCallbacks: {},
         mapState: {zoom: 10}
       });
-      const getLineColor = passes[passes.length - 1].props.getLineColor;
+      const getLineColor = (passes[passes.length - 1] as GeoJsonLayer).props.getLineColor;
       if (typeof getLineColor !== 'function') throw new Error('Expected per-level outline colors');
       const ordered = [...data.data].sort(
         (a, b) => a.properties.threshold - b.properties.threshold
@@ -1497,7 +1726,8 @@ test('polygon filters exclude observations, isolate layers, and restore on disab
       return [x, y, i === 40 ? 100 : (x - 4) ** 2 + (y - 4) ** 2];
     })
   );
-  layer.updateLayerVisConfig({gridResolution: 9});
+  // Preserve the nine observation cells, with two additional edge cells.
+  layer.updateLayerVisConfig({gridResolution: 11});
   const other = new ContourLayer({dataId: dataset.id, columns: layer.config.columns});
   other.updateLayerVisConfig(layer.config.visConfig);
   const point = new LayerClasses.point({dataId: dataset.id, columns: layer.config.columns});

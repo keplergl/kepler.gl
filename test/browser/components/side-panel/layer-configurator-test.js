@@ -1412,10 +1412,15 @@ test('Components -> LayerConfigurator -> sparse weighted contours retain usable 
 
       // Narrow the thresholds entirely into the smoothed surface, below the positive raw weights.
       if (minimum > 0) {
-        dragContourHandle(view.container, 1, 10);
+        // Use an attainable threshold below the smoothed peak. Its position on
+        // the raw-weight slider shifts when empty boundary cells are reserved.
+        const upperPercent = Math.floor(
+          (100 * automatic[automatic.length - 1].properties.threshold) / maximum
+        );
+        dragContourHandle(view.container, 1, upperPercent);
         layer.updateLayerVisConfig(onChange.lastCall.args[0]);
         view.update();
-        dragContourHandle(view.container, 0, 5);
+        dragContourHandle(view.container, 0, Math.floor(upperPercent / 2));
         layer.updateLayerVisConfig(onChange.lastCall.args[0]);
         view.update();
         const contours = layer.formatLayerData(datasets).data;

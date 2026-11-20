@@ -14,6 +14,8 @@ export type ScalarGrid = {
   stepLng: number;
   stepLat: number;
   values: Float64Array;
+  /** Padding cells on each side of the samples, when the extent permits. */
+  border?: number;
 };
 export type ContourFeature = Feature<
   MultiPolygon,
@@ -66,7 +68,8 @@ function regionalBounds(samples: ScalarSample[]) {
 export function buildContourGrid(
   samples: ScalarSample[],
   resolution = 64,
-  aggregation: 'MEAN' | 'COUNT' = 'MEAN'
+  aggregation: 'MEAN' | 'COUNT' = 'MEAN',
+  reserveBorder = true
 ): ScalarGrid | null {
   if (!Number.isFinite(resolution) || resolution < 2) {
     throw new Error('Contour grid resolution must be a finite number of at least 2 cells.');
@@ -85,21 +88,53 @@ export function buildContourGrid(
   const spanX = (east - west) * metersPerDegreeLng;
   const spanY = (north - south) * METERS_PER_DEGREE_LAT;
   const span = Math.max(spanX, spanY);
-  // Fit the longer axis to the selected resolution, with square geographic cells.
-  // Coincident points have no extent; use a minimal 2x2 grid with one-meter spacing.
-  const size = span > 0 ? span / (axis - 1) : 1;
-  const stepLng = size / metersPerDegreeLng;
-  const stepLat = size / METERS_PER_DEGREE_LAT;
-  // Clamp roundoff on the longer axis; pad a degenerate shorter axis to two cells.
-  const width = Math.max(2, Math.min(axis, Math.ceil(spanX / size) + 1));
-  const height = Math.max(2, Math.min(axis, Math.ceil(spanY / size) + 1));
+  // Reserve padding inside the selected allocation. An N-cell axis with B
+  // border cells uses N - 2B - 1 sample intervals. Two interior cells are
+  // required to anchor an extent.
+  const gridLayout = (border: number) => {
+    const innerAxis = axis - 2 * border;
+    const size = span > 0 ? span / (innerAxis - 1) : 1;
+    const stepLng = size / metersPerDegreeLng;
+    const stepLat = size / METERS_PER_DEGREE_LAT;
+    const innerWidth = Math.max(2, Math.min(innerAxis, Math.ceil(spanX / size) + 1));
+    const innerHeight = Math.max(2, Math.min(innerAxis, Math.ceil(spanY / size) + 1));
+    return {
+      border,
+      innerWidth,
+      innerHeight,
+      width: innerWidth + 2 * border,
+      height: innerHeight + 2 * border,
+      longitude: west - border * stepLng,
+      latitude: north - (innerHeight - 1 + border) * stepLat,
+      stepLng,
+      stepLat
+    };
+  };
+  const borderWidth = reserveBorder && axis >= 4 ? Math.max(1, Math.round(axis / 32)) : 0;
+  let layout = gridLayout(borderWidth);
+  // Don't make legacy near-pole or date-line extents wrap because of padding.
+  if (
+    layout.border &&
+    (layout.longitude - layout.stepLng / 2 < -180 ||
+      layout.longitude + (layout.width - 0.5) * layout.stepLng > 180 ||
+      layout.latitude - layout.stepLat / 2 < -90 ||
+      layout.latitude + (layout.height - 0.5) * layout.stepLat > 90)
+  ) {
+    layout = gridLayout(0);
+  }
+  const {border, innerWidth, innerHeight, width, height, longitude, latitude, stepLng, stepLat} =
+    layout;
   const values = new Float64Array(width * height);
   const counts = new Uint32Array(values.length);
   for (const sample of located) {
     // Resolve half-cell ties consistently despite roundoff when rescaling an extent.
-    const col = Math.min(width - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
+    const col =
+      border + Math.min(innerWidth - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
     const row =
-      height - 1 - Math.min(height - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
+      border +
+      innerHeight -
+      1 -
+      Math.min(innerHeight - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
     const index = row * width + col;
     const count = ++counts[index];
     // Incremental means avoid accumulating a large sum of weights.
@@ -113,11 +148,12 @@ export function buildContourGrid(
   return {
     width,
     height,
-    longitude: west,
-    latitude: north - (height - 1) * stepLat,
+    longitude,
+    latitude,
     stepLng,
     stepLat,
-    values
+    values,
+    ...(border ? {border} : {})
   };
 }
 
@@ -155,9 +191,20 @@ export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array 
     numerator = nextNumerator;
     denominator = nextDenominator;
   }
-  return Float64Array.from(grid.values, (value, i) =>
+  const values = Float64Array.from(grid.values, (value, i) =>
     Number.isFinite(value) && denominator[i] > 0 ? numerator[i] / denominator[i] : NaN
   );
+  // Let smoothing spread into the padding, but keep its outermost cells zero.
+  // Otherwise low thresholds would still reach the edge of the fixed grid.
+  if (grid.border) {
+    values.fill(0, 0, grid.width);
+    values.fill(0, (grid.height - 1) * grid.width);
+    for (let row = 1; row < grid.height - 1; row++) {
+      values[row * grid.width] = 0;
+      values[(row + 1) * grid.width - 1] = 0;
+    }
+  }
+  return values;
 }
 
 export function generateContours(
@@ -168,10 +215,17 @@ export function generateContours(
   const values = smoothScalarGrid(grid, options.smoothing);
   let min = Infinity;
   let max = -Infinity;
-  for (const value of values) {
-    if (Number.isFinite(value)) {
-      min = Math.min(min, value);
-      max = Math.max(max, value);
+  // The artificial ring closes edge peaks, but is not part of the sample
+  // range used to choose automatic levels. Real empty cells still count.
+  const border = options.domain ? 0 : grid.border ?? 0;
+  for (let row = border; row < grid.height - border; row++) {
+    const end = (row + 1) * grid.width - border;
+    for (let index = row * grid.width + border; index < end; index++) {
+      const value = values[index];
+      if (Number.isFinite(value)) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      }
     }
   }
   if (!Number.isFinite(min)) return [];
