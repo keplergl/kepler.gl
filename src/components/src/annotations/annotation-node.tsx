@@ -53,6 +53,7 @@ const ResizeHandle: FC<{id: string; x: number; y: number}> = ({id, x, y}) => {
 };
 
 export type AnnotationNodeProps = {
+  isGlobeEnabled?: boolean;
   annotation: Annotation;
   opacity?: number;
   viewport: MapViewport;
@@ -139,6 +140,7 @@ export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
 };
 
 const AnnotationNode: FC<AnnotationNodeProps> = ({
+  isGlobeEnabled,
   annotation,
   opacity = 1,
   viewport,
@@ -146,7 +148,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
   isSelected
 }) => {
   const {lineColor, lineWidth} = annotation;
-  const marker = makeMarker(annotation, viewport);
+  const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {kind, x, y, tx, ty} = marker;
   const arrW = 3 + lineWidth * 2;
   const isArm = 'armLength' in annotation;
@@ -225,7 +227,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
       const rulerMarker = marker as RulerAnnotationMarker;
       body = (
         <path
-          d={`M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
+          d={rulerMarker.path ?? `M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
           stroke={lineColor}
           fill="none"
           strokeWidth={lineWidth}

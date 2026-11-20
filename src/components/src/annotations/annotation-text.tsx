@@ -83,6 +83,7 @@ const StyledRulerDistance = styled.div`
 `;
 
 export type AnnotationTextProps = {
+  isGlobeEnabled?: boolean;
   annotation: Annotation;
   opacity?: number;
   viewport: MapViewport;
@@ -95,6 +96,7 @@ export type AnnotationTextProps = {
 };
 
 const AnnotationText: FC<AnnotationTextProps> = ({
+  isGlobeEnabled,
   annotation,
   opacity = 1,
   viewport,
@@ -117,8 +119,8 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   const {textWidth, textHeight, textVerticalAlign} = annotation;
 
   const style = useMemo(
-    () => getAnnotationTextBoxStyle(annotation, viewport),
-    [annotation, viewport]
+    () => getAnnotationTextBoxStyle(annotation, viewport, isGlobeEnabled),
+    [annotation, viewport, isGlobeEnabled]
   );
 
   const handleEditorChange = useCallback(

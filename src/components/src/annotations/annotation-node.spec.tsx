@@ -9,7 +9,14 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
 
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
-import {MapViewport} from './annotation-utils';
+import {
+  MapViewport,
+  makeMarker,
+  getRulerDistanceLabel,
+  RulerAnnotationMarker
+} from './annotation-utils';
+// @ts-ignore Experimental export is missing from the repository's deck.gl type augmentation.
+import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
 const annotation: Annotation = {
   id: 'annotation-1',
@@ -55,6 +62,132 @@ const rulerAnnotation: Annotation = {
 };
 
 describe('AnnotationNode', () => {
+  test('projects a globe surface arc and geographic midpoint instead of a screen chord', () => {
+    const globe = new GlobeViewport({longitude: 0, latitude: 20, zoom: 0, width: 800, height: 600});
+    const ruler = {
+      ...rulerAnnotation,
+      anchorPoint: [-60, 30],
+      endPoint: [60, 30]
+    } as typeof rulerAnnotation;
+    const arc = makeMarker(ruler, globe, true) as RulerAnnotationMarker;
+    const chord = makeMarker(ruler, globe) as RulerAnnotationMarker;
+    expect(arc.path?.split('L').length).toBeGreaterThan(2);
+    expect(Math.abs(arc.my - chord.my)).toBeGreaterThan(5);
+    // The spherical midpoint rises to latitude atan(tan(30) / cos(60)).
+    const midpoint = globe.project([
+      0,
+      (Math.atan(Math.tan(Math.PI / 6) / Math.cos(Math.PI / 3)) * 180) / Math.PI
+    ]);
+    expect(arc.x + arc.mx).toBeCloseTo(midpoint[0]);
+    expect(arc.y + arc.my).toBeCloseTo(midpoint[1]);
+    expect(chord.path).toBeUndefined();
+    const {container} = render(
+      <svg>
+        <DndContext>
+          <AnnotationNode
+            annotation={ruler}
+            viewport={globe}
+            isGlobeEnabled
+            isEditing={false}
+            isSelected={false}
+          />
+        </DndContext>
+      </svg>
+    );
+    expect(container.querySelector('path')).toHaveAttribute('d', arc.path);
+  });
+
+  test.each([
+    [
+      [179, 0],
+      [-179, 0]
+    ],
+    [
+      [0, 80],
+      [180, 80]
+    ],
+    [
+      [0, 0],
+      [0, 0]
+    ]
+  ])(
+    'keeps globe ruler %j to %j finite across the dateline, pole and coincident endpoints',
+    (anchorPoint, endPoint) => {
+      const globe = new GlobeViewport({
+        longitude: 180,
+        latitude: 40,
+        zoom: 0,
+        width: 800,
+        height: 600
+      });
+      const arc = makeMarker(
+        {...rulerAnnotation, anchorPoint, endPoint} as typeof rulerAnnotation,
+        globe,
+        true
+      ) as RulerAnnotationMarker;
+      expect(arc.path).not.toMatch(/NaN|Infinity/);
+      expect(arc.path?.split('L').length).toBeLessThanOrEqual(91);
+    }
+  );
+
+  test.each([
+    [
+      [0, 89.9999999999],
+      [45, 80],
+      [45, 85]
+    ],
+    [
+      [120, -89.9999999999],
+      [-30, -80],
+      [-30, -85]
+    ],
+    [
+      [0, 90],
+      [45, 80],
+      [45, 85]
+    ],
+    [
+      [45, 80],
+      [0, 90],
+      [45, 85]
+    ],
+    [
+      [120, -90],
+      [-30, -80],
+      [-30, -85]
+    ],
+    [
+      [-30, -80],
+      [120, -90],
+      [-30, -85]
+    ]
+  ])(
+    'places the midpoint on the destination meridian for polar ruler %j to %j',
+    (anchorPoint, endPoint, midpoint) => {
+      const globe = new GlobeViewport({
+        longitude: 0,
+        latitude: 0,
+        zoom: 0,
+        width: 800,
+        height: 600
+      });
+      const arc = makeMarker(
+        {...rulerAnnotation, anchorPoint, endPoint} as typeof rulerAnnotation,
+        globe,
+        true
+      ) as RulerAnnotationMarker;
+      const projected = globe.project(midpoint);
+      expect(arc.x + arc.mx).toBeCloseTo(projected[0]);
+      expect(arc.y + arc.my).toBeCloseTo(projected[1]);
+    }
+  );
+
+  test('reports great-circle surface distance rather than the globe chord length', () => {
+    expect(
+      getRulerDistanceLabel({...rulerAnnotation, anchorPoint: [0, 0], endPoint: [90, 0]} as any)
+    ).toBe('Length: 10007.56 km');
+  });
+
   test('removes the entire annotation shape from hit testing at zero opacity', () => {
     const {container, rerender} = render(
       <svg>

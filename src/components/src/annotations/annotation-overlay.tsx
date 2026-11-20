@@ -203,6 +203,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
         <AnnotationSvgContainer width={width} height={height}>
           {annotationsToRender.map(annotation => (
             <AnnotationNode
+              isGlobeEnabled={isGlobeEnabled}
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
@@ -215,6 +216,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
         <AnnotationTextContainer style={{width, height}}>
           {annotationsToRender.map(annotation => (
             <AnnotationText
+              isGlobeEnabled={isGlobeEnabled}
               key={annotation.id}
               annotation={annotation}
               opacity={getAnnotationOpacity(annotation.id)}
