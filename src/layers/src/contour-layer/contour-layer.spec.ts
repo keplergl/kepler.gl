@@ -27,7 +27,7 @@ import {
   createContourSamples,
   contourConfig
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
-import {buildContourGrid, generateContours} from './contour-utils';
+import {buildContourGrid, generateContours, smoothPointContourGrid} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
 import {
   calculateLayerData,
@@ -625,6 +625,22 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
   } finally {
     manager.finalize();
   }
+});
+
+test('pads only flat contours and regenerates data when switching surface mode', async () => {
+  const {layer, datasets} = await setup();
+  layer.updateLayerVisConfig({smoothing: 2, gridResolution: 32});
+  const flat = layer.formatLayerData(datasets);
+  expect(flat.grid?.width).toBeGreaterThan(32);
+  expect(layer.shouldCalculateLayerData(['enable3d'])).toBe(true);
+
+  layer.updateLayerVisConfig({enable3d: true});
+  const surface = layer.formatLayerData(datasets);
+  expect(surface.grid?.width).toBe(32);
+  expect(surface.grid?.sampleExtent).toBeUndefined();
+
+  layer.updateLayerVisConfig({enable3d: false});
+  expect(layer.formatLayerData(datasets)).toEqual(flat);
 });
 
 test.each([false, true])(
@@ -1356,7 +1372,9 @@ test.each([false, true])(
     )!;
     expect(grid.values.every(Number.isFinite)).toBe(true);
     expect(grid.values.some(value => value === 0)).toBe(true);
-    expect(filtered.data).toEqual(generateContours(grid, {smoothing: 3, levels: 7, below: false}));
+    expect(filtered.data).toEqual(
+      generateContours(smoothPointContourGrid(grid, 3), {smoothing: 0, levels: 7, below: false})
+    );
     expect(filtered.data).toHaveLength(7);
     expect(filtered.data.map(feature => feature.geometry)).not.toEqual(
       original.data.map(feature => feature.geometry)
@@ -1594,8 +1612,8 @@ test.each(['grid', 'geojson'])(
         })),
       3
     );
-    const expected = generateContours(expectedGrid, {
-      smoothing: 1.5,
+    const expected = generateContours(expectedGrid && smoothPointContourGrid(expectedGrid, 1.5), {
+      smoothing: 0,
       levels: 3,
       below: true,
       domain: [4, 8]

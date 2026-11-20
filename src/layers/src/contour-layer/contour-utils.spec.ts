@@ -6,6 +6,7 @@ import {
   generateContours,
   ScalarSample,
   ScalarGrid,
+  smoothPointContourGrid,
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
@@ -405,6 +406,53 @@ describe('point aggregation for contours', () => {
       expect(grid.width).toBeGreaterThanOrEqual(2);
       expect(grid.height).toBeGreaterThanOrEqual(2);
       expect(generateContours(grid, {...options, below: false})).toHaveLength(3);
+    }
+  });
+
+  test.each([false, true])('smooths edge peaks past the sample bounds (below=%s)', below => {
+    const sign = below ? -1 : 1;
+    const grid = buildContourGrid([point(0, 0, sign * 100), point(0.03, 0.03, 0)], 32)!;
+    const domain: [number, number] = below ? [-2, -1] : [1, 2];
+    const settings = {...options, smoothing: 0, below, domain};
+    const unpadded = {...grid, values: smoothScalarGrid(grid, 2)};
+    const padded = smoothPointContourGrid(grid, 2);
+    const west = (field: ScalarGrid) =>
+      Math.min(
+        ...generateContours(field, settings).flatMap(feature =>
+          feature.geometry.coordinates.flat(2).map(([longitude]) => longitude)
+        )
+      );
+    expect(west(unpadded)).toBeCloseTo(grid.longitude - grid.stepLng / 2, 12);
+    expect(west(padded)).toBeLessThan(grid.longitude - grid.stepLng);
+    expect(padded.stepLng).toBe(grid.stepLng);
+    expect(padded.stepLat).toBe(grid.stepLat);
+    expect(at(padded, 0, 0)).toBeCloseTo(at(padded, grid.stepLng, 0) * Math.exp(1 / 8), 10);
+    expect(generateContours(padded, settings)).not.toEqual([]);
+  });
+
+  test('bounds the smoothing halo and keeps unrounded sample locations', () => {
+    const grid = buildContourGrid([point(0, 0, 100), point(10, 10, 20)], 256)!;
+    const padded = smoothPointContourGrid(grid, 1e9);
+    expect(padded.width).toBeLessThanOrEqual(294);
+    expect(padded.height).toBeLessThanOrEqual(294);
+    expect(padded.values.length).toBeLessThanOrEqual(294 * 294);
+    expect(padded.longitude + 19 * padded.stepLng).toBe(grid.longitude);
+    expect(padded.latitude + 19 * padded.stepLat).toBe(grid.latitude);
+    expect(smoothPointContourGrid(grid, 0)).toBe(grid);
+  });
+
+  test('keeps single-point and collinear grids finite and caps padding at world bounds', () => {
+    for (const input of [
+      [point(179.92, 89.99, 8)],
+      [point(179.92, 89.98, 8), point(179.92, 89.99, 12)]
+    ]) {
+      const padded = smoothPointContourGrid(buildContourGrid(input, 32)!, 6);
+      expect(padded.latitude + (padded.height - 0.5) * padded.stepLat).toBeLessThanOrEqual(90);
+      expect(padded.longitude + (padded.width - 0.5) * padded.stepLng).toBeLessThanOrEqual(180);
+      expect(padded.values.every(Number.isFinite)).toBe(true);
+      expect(generateContours(padded, {...options, below: false, domain: undefined})).not.toEqual(
+        []
+      );
     }
   });
 

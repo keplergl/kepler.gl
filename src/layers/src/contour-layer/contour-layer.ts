@@ -26,6 +26,7 @@ import {
   generateContours,
   ScalarGrid,
   ScalarSample,
+  smoothPointContourGrid,
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
@@ -256,7 +257,6 @@ export default class ContourLayer extends Layer {
       'fillOpacity',
       'filled',
       'stroked',
-      'enable3d',
       'elevationScale'
     ];
   }
@@ -375,8 +375,15 @@ export default class ContourLayer extends Layer {
         ]
       });
     }
-    const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
-    const smoothedGrid = grid && {...grid, values: smoothScalarGrid(grid, smoothing)};
+    const {smoothing, levels, below, customRange, minimum, maximum, enable3d} =
+      this.config.visConfig;
+    // Keep the 3D tessellator's footprint unchanged. The added domain can
+    // substantially increase its cut geometry, especially during filtering.
+    const smoothedGrid =
+      grid &&
+      (enable3d
+        ? {...grid, values: smoothScalarGrid(grid, smoothing)}
+        : smoothPointContourGrid(grid, smoothing));
     const data = generateContours(smoothedGrid, {
       smoothing: 0,
       levels,
