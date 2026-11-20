@@ -214,10 +214,17 @@ export function generateContours(
   const values = smoothScalarGrid(grid, options.smoothing);
   let min = Infinity;
   let max = -Infinity;
-  for (const value of values) {
-    if (Number.isFinite(value)) {
-      min = Math.min(min, value);
-      max = Math.max(max, value);
+  // The artificial ring closes edge peaks, but is not part of the sample
+  // range used to choose automatic levels. Real empty cells still count.
+  const border = options.domain ? 0 : grid.border ?? 0;
+  for (let row = border; row < grid.height - border; row++) {
+    const end = (row + 1) * grid.width - border;
+    for (let index = row * grid.width + border; index < end; index++) {
+      const value = values[index];
+      if (Number.isFinite(value)) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      }
     }
   }
   if (!Number.isFinite(min)) return [];

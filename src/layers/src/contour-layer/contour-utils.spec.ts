@@ -3,6 +3,7 @@
 
 import {
   buildContourGrid,
+  ContourOptions,
   generateContours,
   ScalarSample,
   ScalarGrid,
@@ -451,6 +452,66 @@ describe('point aggregation for contours', () => {
     for (const feature of result) {
       expect(west(feature)).toBeCloseTo(grid.longitude - grid.stepLng / 2, 12);
     }
+  });
+
+  test('derives automatic levels from the interior without dropping real zeros', () => {
+    const settings = {smoothing: 0, levels: 2, below: false};
+    const grid = buildContourGrid(
+      [point(0, 0, 50), point(0.01, 0, 60), point(0, 0.01, 80), point(0.01, 0.01, 110)],
+      4
+    )!;
+    const levels = (opts: ContourOptions = settings) =>
+      generateContours(grid, opts).map(feature => feature.properties.threshold);
+    expect(grid.border).toBe(1);
+    expect(levels()).toEqual([70, 90]);
+    expect(levels({...settings, domain: [0, 30]})).toEqual([0, 30]);
+
+    grid.values[grid.width + 1] = 0;
+    expect(levels()).toEqual([110 / 3, (110 * 2) / 3]);
+  });
+
+  test.each([
+    [
+      'west',
+      [
+        [-179.99, 0],
+        [-179.89, 0]
+      ]
+    ],
+    [
+      'east',
+      [
+        [179.89, 0],
+        [179.99, 0]
+      ]
+    ],
+    [
+      'north',
+      [
+        [0, 89.89],
+        [0, 89.99]
+      ]
+    ],
+    [
+      'south',
+      [
+        [0, -89.99],
+        [0, -89.89]
+      ]
+    ]
+  ] as const)('retains the unpadded layout near the %s world limit', (_, coordinates) => {
+    const input = coordinates.map(([longitude, latitude], index) =>
+      point(longitude, latitude, index + 1)
+    );
+    const grid = buildContourGrid(input, 10)!;
+    expect(grid.border).toBeUndefined();
+    expect(grid).toEqual(buildContourGrid(input, 10, 'MEAN', false));
+  });
+
+  test('reserves the ring just inside the eastern fallback cutoff', () => {
+    const grid = buildContourGrid([point(179.85, 0, 1), point(179.95, 0, 2)], 10)!;
+    expect(grid.border).toBe(1);
+    expect(grid.longitude + (grid.width - 0.5) * grid.stepLng).toBeLessThanOrEqual(180);
   });
 
   test('keeps a zero field empty and handles a single nonzero sample', () => {
