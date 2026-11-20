@@ -207,16 +207,17 @@ describe('MapCoordinateMenu', () => {
     copyMock.mockReturnValue(true);
   });
 
-  test('copies lat, lng and then closes', () => {
+  test('copies lat, lng only on activation without displaying or describing the coordinates', () => {
     jest.useFakeTimers();
     const {onClose} = renderMenu();
 
     const item = screen.getByRole('menuitem', {name: 'Copy coordinates'});
-    expect(screen.getByText('37.774929, -122.419418')).toBeVisible();
-    expect(item).toHaveAccessibleDescription('37.774929, -122.419418');
+    expect(screen.queryByText('37.774929, -122.419418')).not.toBeInTheDocument();
+    expect(item).not.toHaveAccessibleDescription();
     expect(copyMock).not.toHaveBeenCalled();
     item.focus();
     expect(item).toHaveFocus();
+    expect(copyMock).not.toHaveBeenCalled();
     fireEvent.click(item);
 
     expect(copyMock).toHaveBeenCalledWith('37.774929, -122.419418');
