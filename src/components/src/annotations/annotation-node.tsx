@@ -9,7 +9,8 @@ import {
   makeMarker,
   MapViewport,
   CircleAnnotationMarker,
-  RulerAnnotationMarker
+  RulerAnnotationMarker,
+  isPointVisibleOnGlobe
 } from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
@@ -62,6 +63,7 @@ export type AnnotationNodeProps = {
 };
 
 export type RulerEndpointHandlesProps = {
+  isGlobeEnabled?: boolean;
   annotation: RulerAnnotation;
   opacity?: number;
   viewport: MapViewport;
@@ -74,6 +76,7 @@ export type RulerEndpointHandlesProps = {
  * ruler remains draggable when its label overlaps an endpoint.
  */
 export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
+  isGlobeEnabled,
   annotation,
   opacity = 1,
   viewport,
@@ -82,10 +85,12 @@ export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
 }) => {
   if (!isEditing) return null;
   const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+  const startVisible = !isGlobeEnabled || isPointVisibleOnGlobe(annotation.anchorPoint, viewport);
+  const endVisible = !isGlobeEnabled || isPointVisibleOnGlobe(annotation.endPoint, viewport);
   // Keep both hit targets reachable, including when the endpoints coincide.
   // Dragging still applies its delta to the geographic endpoint, not this offset.
   const length = Math.hypot(marker.ex, marker.ey);
-  const offset = Math.max(0, (HANDLE_RADIUS * 2 + 2 - length) / 2);
+  const offset = startVisible && endVisible ? Math.max(0, (HANDLE_RADIUS * 2 + 2 - length) / 2) : 0;
   const dx = length > 0 ? marker.ex / length : 1;
   const dy = length > 0 ? marker.ey / length : 0;
   const startX = -dx * offset;
@@ -113,26 +118,32 @@ export const RulerEndpointHandles: FC<RulerEndpointHandlesProps> = ({
           style={{pointerEvents: 'none'}}
         />
       ) : null}
-      <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={startX} y={startY} />
-      <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={endX} y={endY} />
+      {startVisible ? (
+        <MoveHandle id={`${annotation.id}:MOVE_RULER_START`} x={startX} y={startY} />
+      ) : null}
+      {endVisible ? <MoveHandle id={`${annotation.id}:MOVE_RULER_END`} x={endX} y={endY} /> : null}
       {isSelected ? (
         <>
-          <circle
-            cx={startX}
-            cy={startY}
-            r={HANDLE_RADIUS + 2}
-            fill="none"
-            stroke="rgba(64,169,255,0.6)"
-            strokeWidth={2}
-          />
-          <circle
-            cx={endX}
-            cy={endY}
-            r={HANDLE_RADIUS + 2}
-            fill="none"
-            stroke="rgba(64,169,255,0.6)"
-            strokeWidth={2}
-          />
+          {startVisible ? (
+            <circle
+              cx={startX}
+              cy={startY}
+              r={HANDLE_RADIUS + 2}
+              fill="none"
+              stroke="rgba(64,169,255,0.6)"
+              strokeWidth={2}
+            />
+          ) : null}
+          {endVisible ? (
+            <circle
+              cx={endX}
+              cy={endY}
+              r={HANDLE_RADIUS + 2}
+              fill="none"
+              stroke="rgba(64,169,255,0.6)"
+              strokeWidth={2}
+            />
+          ) : null}
         </>
       ) : null}
     </g>

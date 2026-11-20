@@ -10,6 +10,8 @@ import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationOverlay from './annotation-overlay';
 import {MapViewport} from './annotation-utils';
+// @ts-ignore Experimental export is missing from the repository's deck.gl type augmentation.
+import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
 const ruler: RulerAnnotation = {
   id: 'ruler-1',
@@ -121,6 +123,57 @@ describe('AnnotationOverlay ruler interactions', () => {
     expect(updateAnnotation).not.toHaveBeenCalled();
     expect(setSelectedAnnotation).not.toHaveBeenCalled();
   });
+
+  test.each([
+    [[0, 0], [120, 0], true, true],
+    [[120, 0], [0, 0], false, true],
+    [[60, 0], [120, 0], true, false]
+  ])(
+    'keeps only the visible globe ruler portion from %j to %j',
+    (anchorPoint, endPoint, startsVisible, labelVisible) => {
+      const globe = new GlobeViewport({
+        longitude: 0,
+        latitude: 0,
+        width: 800,
+        height: 600,
+        zoom: 0
+      });
+      const {container} = renderWithTheme(
+        <AnnotationOverlay
+          annotations={[{...ruler, anchorPoint, endPoint} as RulerAnnotation]}
+          selectedAnnotationId={ruler.id}
+          isEditingAnnotationText={false}
+          isAnnotationMode
+          mapIndex={0}
+          viewport={globe}
+          isGlobeEnabled
+          updateAnnotation={jest.fn()}
+          setSelectedAnnotation={jest.fn()}
+        />
+      );
+      const path = container.querySelector('[data-annotation-part="shape"] path');
+      expect(path).toBeInTheDocument();
+      const coordinates =
+        path
+          ?.getAttribute('d')
+          ?.split(/[ML]/)
+          .filter(Boolean)
+          .map(part => part.trim().split(',').map(Number)) || [];
+      expect(coordinates.length).toBeGreaterThan(2);
+      // A far-side equatorial arc doubles back on itself. Clipping must stop at
+      // the horizon instead of drawing that folded-back, occluded section.
+      for (let i = 1; i < coordinates.length; i++) {
+        const delta = coordinates[i][0] - coordinates[i - 1][0];
+        expect(startsVisible ? delta : -delta).toBeGreaterThanOrEqual(-0.01);
+      }
+      expect(
+        container.querySelectorAll('[data-annotation-part="handles"] [role="button"]')
+      ).toHaveLength(1);
+      expect(container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+        display: labelVisible ? 'block' : 'none'
+      });
+    }
+  );
 
   test('renders endpoint handles above midpoint text so short rulers remain draggable', () => {
     const {container} = renderWithTheme(
