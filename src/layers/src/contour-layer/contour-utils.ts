@@ -14,8 +14,8 @@ export type ScalarGrid = {
   stepLng: number;
   stepLat: number;
   values: Float64Array;
-  // Original sample-grid extent, excluding any smoothing halo.
-  sampleExtent?: {width: number; height: number; left: number; bottom: number};
+  /** One empty cell around the samples, when the resolution and extent permit. */
+  border?: 1;
 };
 export type ContourFeature = Feature<
   MultiPolygon,
@@ -29,7 +29,6 @@ export type ContourOptions = {
 };
 
 const MAX_GRID_AXIS = 256;
-const MAX_SMOOTHING_SIGMA = 6;
 const METERS_PER_DEGREE_LAT = 111320;
 
 function hasValidPosition(d: ScalarSample): boolean {
@@ -69,7 +68,8 @@ function regionalBounds(samples: ScalarSample[]) {
 export function buildContourGrid(
   samples: ScalarSample[],
   resolution = 64,
-  aggregation: 'MEAN' | 'COUNT' = 'MEAN'
+  aggregation: 'MEAN' | 'COUNT' = 'MEAN',
+  reserveBorder = true
 ): ScalarGrid | null {
   if (!Number.isFinite(resolution) || resolution < 2) {
     throw new Error('Contour grid resolution must be a finite number of at least 2 cells.');
@@ -88,21 +88,52 @@ export function buildContourGrid(
   const spanX = (east - west) * metersPerDegreeLng;
   const spanY = (north - south) * METERS_PER_DEGREE_LAT;
   const span = Math.max(spanX, spanY);
-  // Fit the longer axis to the selected resolution, with square geographic cells.
-  // Coincident points have no extent; use a minimal 2x2 grid with one-meter spacing.
-  const size = span > 0 ? span / (axis - 1) : 1;
-  const stepLng = size / metersPerDegreeLng;
-  const stepLat = size / METERS_PER_DEGREE_LAT;
-  // Clamp roundoff on the longer axis; pad a degenerate shorter axis to two cells.
-  const width = Math.max(2, Math.min(axis, Math.ceil(spanX / size) + 1));
-  const height = Math.max(2, Math.min(axis, Math.ceil(spanY / size) + 1));
+  // Reserve a zero ring inside the selected allocation. The outer observations
+  // lie on the first and last interior cells, so an N-cell axis uses N - 3
+  // sample intervals. Two interior cells are required to anchor an extent.
+  const gridLayout = (border: 0 | 1) => {
+    const innerAxis = axis - 2 * border;
+    const size = span > 0 ? span / (innerAxis - 1) : 1;
+    const stepLng = size / metersPerDegreeLng;
+    const stepLat = size / METERS_PER_DEGREE_LAT;
+    const innerWidth = Math.max(2, Math.min(innerAxis, Math.ceil(spanX / size) + 1));
+    const innerHeight = Math.max(2, Math.min(innerAxis, Math.ceil(spanY / size) + 1));
+    return {
+      border,
+      innerWidth,
+      innerHeight,
+      width: innerWidth + 2 * border,
+      height: innerHeight + 2 * border,
+      longitude: west - border * stepLng,
+      latitude: north - (innerHeight - 1 + border) * stepLat,
+      stepLng,
+      stepLat
+    };
+  };
+  let layout = gridLayout(reserveBorder && axis >= 4 ? 1 : 0);
+  // Don't make legacy near-pole or date-line extents wrap because of padding.
+  if (
+    layout.border &&
+    (layout.longitude - layout.stepLng / 2 < -180 ||
+      layout.longitude + (layout.width - 0.5) * layout.stepLng > 180 ||
+      layout.latitude - layout.stepLat / 2 < -90 ||
+      layout.latitude + (layout.height - 0.5) * layout.stepLat > 90)
+  ) {
+    layout = gridLayout(0);
+  }
+  const {border, innerWidth, innerHeight, width, height, longitude, latitude, stepLng, stepLat} =
+    layout;
   const values = new Float64Array(width * height);
   const counts = new Uint32Array(values.length);
   for (const sample of located) {
     // Resolve half-cell ties consistently despite roundoff when rescaling an extent.
-    const col = Math.min(width - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
+    const col =
+      border + Math.min(innerWidth - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
     const row =
-      height - 1 - Math.min(height - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
+      border +
+      innerHeight -
+      1 -
+      Math.min(innerHeight - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
     const index = row * width + col;
     const count = ++counts[index];
     // Incremental means avoid accumulating a large sum of weights.
@@ -116,100 +147,14 @@ export function buildContourGrid(
   return {
     width,
     height,
-    longitude: west,
-    latitude: north - (height - 1) * stepLat,
+    longitude,
+    latitude,
     stepLng,
     stepLat,
-    values
+    values,
+    ...(border ? {border} : {})
   };
 }
-
-/**
- * Zero is the empty-cell value for point aggregation. Surround the original
- * samples with enough zero cells for the finite Gaussian kernel to finish its
- * falloff before marching squares closes the contours against the grid edge.
- */
-export function smoothPointContourGrid(grid: ScalarGrid, sigma: number): ScalarGrid {
-  if (!Number.isFinite(sigma) || sigma <= 0) return grid;
-  const first = grid.values[0];
-  // Preserve constant fields, including their implicit-level behavior.
-  if (grid.values.every(value => value === first)) return grid;
-  const halo = Math.ceil(Math.min(sigma, MAX_SMOOTHING_SIGMA) * 3) + 1;
-  // Do not extend the grid farther than valid globe coordinates. Leave room
-  // for marching squares' half-cell boundary outside the last sample.
-  const available = (distance: number, step: number) =>
-    Math.max(0, Math.min(halo, Math.floor(distance / step - 0.5)));
-  const left = available(grid.longitude + 180, grid.stepLng);
-  const right = available(180 - grid.longitude - (grid.width - 1) * grid.stepLng, grid.stepLng);
-  const bottom = available(grid.latitude + 90, grid.stepLat);
-  const top = available(90 - grid.latitude - (grid.height - 1) * grid.stepLat, grid.stepLat);
-  if (left + right + bottom + top === 0) {
-    return {...grid, values: smoothScalarGrid(grid, sigma)};
-  }
-  const width = grid.width + left + right;
-  const height = grid.height + bottom + top;
-  const values = new Float64Array(width * height);
-  const padded = {
-    ...grid,
-    width,
-    height,
-    longitude: grid.longitude - left * grid.stepLng,
-    latitude: grid.latitude - bottom * grid.stepLat,
-    sampleExtent: {width: grid.width, height: grid.height, left, bottom},
-    values
-  };
-  if (!grid.values.every(Number.isFinite)) {
-    for (let row = 0; row < grid.height; row++) {
-      values.set(
-        grid.values.subarray(row * grid.width, (row + 1) * grid.width),
-        (row + bottom) * width + left
-      );
-    }
-    return {...padded, values: smoothScalarGrid(padded, sigma)};
-  }
-
-  // The halo contains only zeros. Convolve the source rows first, then read
-  // only those rows in the vertical pass. Unlike the generic missing-data
-  // path, finite point grids need just one denominator per axis position.
-  const radius = halo - 1;
-  const kernel = gaussianKernel(radius, Math.min(sigma, MAX_SMOOTHING_SIGMA));
-  const weightsFor = (size: number) =>
-    Float64Array.from({length: size}, (_, i) => {
-      let sum = 0;
-      for (let j = Math.max(0, i - radius); j <= Math.min(size - 1, i + radius); j++) {
-        sum += kernel[j - i + radius];
-      }
-      return sum;
-    });
-  const horizontalWeights = weightsFor(width);
-  const horizontal = new Float64Array(width * grid.height);
-  for (let x = 0; x < width; x++) {
-    const start = Math.max(0, x - left - radius);
-    const end = Math.min(grid.width - 1, x - left + radius);
-    for (let row = 0; row < grid.height; row++) {
-      let sum = 0;
-      for (let col = start; col <= end; col++) {
-        sum += grid.values[row * grid.width + col] * kernel[col + left - x + radius];
-      }
-      horizontal[row * width + x] = sum / horizontalWeights[x];
-    }
-  }
-  const verticalWeights = weightsFor(height);
-  for (let y = 0; y < height; y++) {
-    const start = Math.max(0, y - bottom - radius);
-    const end = Math.min(grid.height - 1, y - bottom + radius);
-    for (let row = start; row <= end; row++) {
-      const factor = kernel[row + bottom - y + radius] / verticalWeights[y];
-      for (let x = 0; x < width; x++) {
-        values[y * width + x] += horizontal[row * width + x] * factor;
-      }
-    }
-  }
-  return padded;
-}
-
-const gaussianKernel = (radius: number, sigma: number) =>
-  Array.from({length: radius * 2 + 1}, (_, i) => Math.exp(-0.5 * ((i - radius) / sigma) ** 2));
 
 /** Separable, normalized Gaussian smoothing. Missing samples remain missing. */
 export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array {
@@ -218,9 +163,11 @@ export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array 
   // membership at an explicit threshold equal to that value; retain no-data cells.
   const first = grid.values.find(Number.isFinite);
   if (grid.values.every(value => !Number.isFinite(value) || value === first)) return grid.values;
-  const boundedSigma = Math.min(sigma, MAX_SMOOTHING_SIGMA);
+  const boundedSigma = Math.min(sigma, 6);
   const radius = Math.ceil(boundedSigma * 3);
-  const kernel = gaussianKernel(radius, boundedSigma);
+  const kernel = Array.from({length: radius * 2 + 1}, (_, i) =>
+    Math.exp(-0.5 * ((i - radius) / boundedSigma) ** 2)
+  );
   let numerator = Float64Array.from(grid.values, value => (Number.isFinite(value) ? value : 0));
   let denominator = Float64Array.from(grid.values, value => (Number.isFinite(value) ? 1 : 0));
   for (const horizontal of [true, false]) {
@@ -243,9 +190,20 @@ export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array 
     numerator = nextNumerator;
     denominator = nextDenominator;
   }
-  return Float64Array.from(grid.values, (value, i) =>
+  const values = Float64Array.from(grid.values, (value, i) =>
     Number.isFinite(value) && denominator[i] > 0 ? numerator[i] / denominator[i] : NaN
   );
+  // Keep the empty boundary even when smoothing spreads an interior peak.
+  // Otherwise low thresholds would still reach the edge of the fixed grid.
+  if (grid.border) {
+    values.fill(0, 0, grid.width);
+    values.fill(0, (grid.height - 1) * grid.width);
+    for (let row = 1; row < grid.height - 1; row++) {
+      values[row * grid.width] = 0;
+      values[(row + 1) * grid.width - 1] = 0;
+    }
+  }
+  return values;
 }
 
 export function generateContours(
@@ -256,17 +214,10 @@ export function generateContours(
   const values = smoothScalarGrid(grid, options.smoothing);
   let min = Infinity;
   let max = -Infinity;
-  // The halo supplies falloff, not observations. Derive automatic levels
-  // from the original cells, without lowering the range to the added zeros.
-  const {left, bottom, width, height} = grid.sampleExtent ?? {left: 0, bottom: 0, ...grid};
-  for (let y = bottom; y < bottom + height; y++) {
-    const end = y * grid.width + left + width;
-    for (let index = end - width; index < end; index++) {
-      const value = values[index];
-      if (Number.isFinite(value)) {
-        min = Math.min(min, value);
-        max = Math.max(max, value);
-      }
+  for (const value of values) {
+    if (Number.isFinite(value)) {
+      min = Math.min(min, value);
+      max = Math.max(max, value);
     }
   }
   if (!Number.isFinite(min)) return [];

@@ -26,7 +26,6 @@ import {
   generateContours,
   ScalarGrid,
   ScalarSample,
-  smoothPointContourGrid,
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
@@ -356,7 +355,9 @@ export default class ContourLayer extends Layer {
     const grid = buildContourGrid(
       samples,
       this.config.visConfig.gridResolution,
-      weighted ? 'MEAN' : 'COUNT'
+      weighted ? 'MEAN' : 'COUNT',
+      // The zero ring changes area/thresholds, which can multiply 3D tessellation.
+      !this.config.visConfig.enable3d
     );
     if (grid) {
       let minimum = Infinity;
@@ -365,25 +366,19 @@ export default class ContourLayer extends Layer {
         minimum = Math.min(minimum, value);
         maximum = Math.max(maximum, value);
       }
+      const border = grid.border ?? 0;
       this.updateMeta({
         contourDomain: [minimum, maximum],
         bounds: [
-          grid.longitude,
-          grid.latitude,
-          grid.longitude + (grid.width - 1) * grid.stepLng,
-          grid.latitude + (grid.height - 1) * grid.stepLat
+          grid.longitude + border * grid.stepLng,
+          grid.latitude + border * grid.stepLat,
+          grid.longitude + (grid.width - 1 - border) * grid.stepLng,
+          grid.latitude + (grid.height - 1 - border) * grid.stepLat
         ]
       });
     }
-    const {smoothing, levels, below, customRange, minimum, maximum, enable3d} =
-      this.config.visConfig;
-    // Keep the 3D tessellator's footprint unchanged. The added domain can
-    // substantially increase its cut geometry, especially during filtering.
-    const smoothedGrid =
-      grid &&
-      (enable3d
-        ? {...grid, values: smoothScalarGrid(grid, smoothing)}
-        : smoothPointContourGrid(grid, smoothing));
+    const {smoothing, levels, below, customRange, minimum, maximum} = this.config.visConfig;
+    const smoothedGrid = grid && {...grid, values: smoothScalarGrid(grid, smoothing)};
     const data = generateContours(smoothedGrid, {
       smoothing: 0,
       levels,

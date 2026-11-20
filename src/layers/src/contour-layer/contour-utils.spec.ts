@@ -6,7 +6,6 @@ import {
   generateContours,
   ScalarSample,
   ScalarGrid,
-  smoothPointContourGrid,
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
@@ -388,7 +387,7 @@ describe('point aggregation for contours', () => {
     expect(grid.stepLng * Math.cos(Math.PI / 3)).toBeCloseTo(grid.stepLat, 12);
     expect(grid.longitude + (grid.width - 1) * grid.stepLng).toBeGreaterThanOrEqual(0.03);
     expect(grid.latitude).toBeLessThanOrEqual(59.99);
-    expect(grid.latitude + (grid.height - 1) * grid.stepLat).toBeCloseTo(60.01);
+    expect(grid.latitude + (grid.height - 2) * grid.stepLat).toBeCloseTo(60.01);
   });
 
   test('resolution determines which observations are averaged', () => {
@@ -409,51 +408,60 @@ describe('point aggregation for contours', () => {
     }
   });
 
-  test.each([false, true])('smooths edge peaks past the sample bounds (below=%s)', below => {
+  test.each([false, true])('reserves and preserves one ring in a 10-cell axis, below=%s', below => {
     const sign = below ? -1 : 1;
-    const grid = buildContourGrid([point(0, 0, sign * 100), point(0.03, 0.03, 0)], 32)!;
-    const domain: [number, number] = below ? [-2, -1] : [1, 2];
-    const settings = {...options, smoothing: 0, below, domain};
-    const unpadded = {...grid, values: smoothScalarGrid(grid, 2)};
-    const padded = smoothPointContourGrid(grid, 2);
-    const west = (field: ScalarGrid) =>
-      Math.min(
-        ...generateContours(field, settings).flatMap(feature =>
-          feature.geometry.coordinates.flat(2).map(([longitude]) => longitude)
-        )
-      );
-    expect(west(unpadded)).toBeCloseTo(grid.longitude - grid.stepLng / 2, 12);
-    expect(west(padded)).toBeLessThan(grid.longitude - grid.stepLng);
-    expect(padded.stepLng).toBe(grid.stepLng);
-    expect(padded.stepLat).toBe(grid.stepLat);
-    expect(at(padded, 0, 0)).toBeCloseTo(at(padded, grid.stepLng, 0) * Math.exp(1 / 8), 10);
-    expect(generateContours(padded, settings)).not.toEqual([]);
-  });
-
-  test('bounds the smoothing halo and keeps unrounded sample locations', () => {
-    const grid = buildContourGrid([point(0, 0, 100), point(10, 10, 20)], 256)!;
-    const padded = smoothPointContourGrid(grid, 1e9);
-    expect(padded.width).toBeLessThanOrEqual(294);
-    expect(padded.height).toBeLessThanOrEqual(294);
-    expect(padded.values.length).toBeLessThanOrEqual(294 * 294);
-    expect(padded.longitude + 19 * padded.stepLng).toBe(grid.longitude);
-    expect(padded.latitude + 19 * padded.stepLat).toBe(grid.latitude);
-    expect(smoothPointContourGrid(grid, 0)).toBe(grid);
-  });
-
-  test('keeps single-point and collinear grids finite and caps padding at world bounds', () => {
-    for (const input of [
-      [point(179.92, 89.99, 8)],
-      [point(179.92, 89.98, 8), point(179.92, 89.99, 12)]
-    ]) {
-      const padded = smoothPointContourGrid(buildContourGrid(input, 32)!, 6);
-      expect(padded.latitude + (padded.height - 0.5) * padded.stepLat).toBeLessThanOrEqual(90);
-      expect(padded.longitude + (padded.width - 0.5) * padded.stepLng).toBeLessThanOrEqual(180);
-      expect(padded.values.every(Number.isFinite)).toBe(true);
-      expect(generateContours(padded, {...options, below: false, domain: undefined})).not.toEqual(
-        []
-      );
+    const grid = buildContourGrid([point(0, 0, 100 * sign), point(0.03, 0.03, 0.2 * sign)], 10)!;
+    expect(grid.width).toBe(10);
+    expect(grid.height).toBe(10);
+    expect(grid.longitude + grid.stepLng).toBeCloseTo(0, 12);
+    expect(grid.latitude + grid.stepLat).toBeCloseTo(0, 12);
+    expect(grid.longitude + 8 * grid.stepLng).toBeCloseTo(0.03, 8);
+    expect(grid.latitude + 8 * grid.stepLat).toBeCloseTo(0.03, 12);
+    expect(grid.values[11]).toBe(100 * sign);
+    expect(grid.values[88]).toBe(0.2 * sign);
+    const smoothed = smoothScalarGrid(grid, 2);
+    for (let i = 0; i < 10; i++) {
+      for (const edge of [i, 90 + i, i * 10, i * 10 + 9]) {
+        expect(grid.values[edge]).toBe(0);
+        expect(smoothed[edge]).toBe(0);
+      }
     }
+    const contours = generateContours(grid, {
+      smoothing: 2,
+      levels: 2,
+      below,
+      domain: below ? [-2, -1] : [1, 2]
+    });
+    expect(contours).toHaveLength(2);
+    const west = Math.min(
+      ...contours.flatMap(feature =>
+        feature.geometry.coordinates.flat(2).map(([longitude]) => longitude)
+      )
+    );
+    expect(west).toBeGreaterThan(grid.longitude);
+    expect(west).toBeLessThan(0);
+  });
+
+  test('limits zero-inclusive contours to the same ten-cell grid', () => {
+    const grid = buildContourGrid([point(0, 0, 100), point(0.03, 0.03, 1)], 10)!;
+    const result = generateContours(grid, {smoothing: 2, levels: 2, below: true, domain: [1, 2]});
+    const west = (feature: (typeof result)[number]) =>
+      Math.min(...feature.geometry.coordinates.flat(2).map(([longitude]) => longitude));
+    expect(result.map(feature => feature.properties.threshold)).toEqual([2, 1]);
+    for (const feature of result) {
+      expect(west(feature)).toBeCloseTo(grid.longitude - grid.stepLng / 2, 12);
+    }
+  });
+
+  test('keeps a zero field empty and handles a single nonzero sample', () => {
+    const zero = buildContourGrid([point(0, 0, 0)], 10)!;
+    expect(generateContours(zero, {smoothing: 2, levels: 2, below: false})).toEqual([]);
+    const peak = buildContourGrid([point(0, 0, 100)], 10)!;
+    const contour = generateContours(peak, {smoothing: 2, levels: 2, below: false});
+    expect(contour).toHaveLength(2);
+    expect(
+      buildContourSurface({...peak, values: smoothScalarGrid(peak, 2)}, contour).fills
+    ).toHaveLength(2);
   });
 
   test('bounds grid allocation and handles empty, invalid settings and global inputs', () => {

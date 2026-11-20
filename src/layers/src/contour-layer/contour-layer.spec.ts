@@ -27,7 +27,7 @@ import {
   createContourSamples,
   contourConfig
 } from '../../../../examples/demo-app/src/data/sample-contour-data';
-import {buildContourGrid, generateContours, smoothPointContourGrid} from './contour-utils';
+import {buildContourGrid, generateContours} from './contour-utils';
 import SchemaManager from '@kepler.gl/schemas';
 import {
   calculateLayerData,
@@ -627,17 +627,17 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
   }
 });
 
-test('pads only flat contours and regenerates data when switching surface mode', async () => {
+test('reserves border only for flat contours with the same grid allocation', async () => {
   const {layer, datasets} = await setup();
-  layer.updateLayerVisConfig({smoothing: 2, gridResolution: 32});
+  layer.updateLayerVisConfig({gridResolution: 10, smoothing: 2});
   const flat = layer.formatLayerData(datasets);
-  expect(flat.grid?.width).toBeGreaterThan(32);
+  expect(flat.grid).toMatchObject({width: 10, height: 10, border: 1});
   expect(layer.shouldCalculateLayerData(['enable3d'])).toBe(true);
 
   layer.updateLayerVisConfig({enable3d: true});
   const surface = layer.formatLayerData(datasets);
-  expect(surface.grid?.width).toBe(32);
-  expect(surface.grid?.sampleExtent).toBeUndefined();
+  expect(surface.grid).toMatchObject({width: 10, height: 10});
+  expect(surface.grid?.border).toBeUndefined();
 
   layer.updateLayerVisConfig({enable3d: false});
   expect(layer.formatLayerData(datasets)).toEqual(flat);
@@ -1372,9 +1372,7 @@ test.each([false, true])(
     )!;
     expect(grid.values.every(Number.isFinite)).toBe(true);
     expect(grid.values.some(value => value === 0)).toBe(true);
-    expect(filtered.data).toEqual(
-      generateContours(smoothPointContourGrid(grid, 3), {smoothing: 0, levels: 7, below: false})
-    );
+    expect(filtered.data).toEqual(generateContours(grid, {smoothing: 3, levels: 7, below: false}));
     expect(filtered.data).toHaveLength(7);
     expect(filtered.data.map(feature => feature.geometry)).not.toEqual(
       original.data.map(feature => feature.geometry)
@@ -1515,7 +1513,8 @@ test('polygon filters exclude observations, isolate layers, and restore on disab
       return [x, y, i === 40 ? 100 : (x - 4) ** 2 + (y - 4) ** 2];
     })
   );
-  layer.updateLayerVisConfig({gridResolution: 9});
+  // Preserve the nine observation cells, with two additional edge cells.
+  layer.updateLayerVisConfig({gridResolution: 11});
   const other = new ContourLayer({dataId: dataset.id, columns: layer.config.columns});
   other.updateLayerVisConfig(layer.config.visConfig);
   const point = new LayerClasses.point({dataId: dataset.id, columns: layer.config.columns});
@@ -1612,8 +1611,8 @@ test.each(['grid', 'geojson'])(
         })),
       3
     );
-    const expected = generateContours(expectedGrid && smoothPointContourGrid(expectedGrid, 1.5), {
-      smoothing: 0,
+    const expected = generateContours(expectedGrid, {
+      smoothing: 1.5,
       levels: 3,
       below: true,
       domain: [4, 8]
