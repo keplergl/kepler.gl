@@ -167,7 +167,7 @@ test('fills the row with a Layer-style bookmark and an independent overlaid copy
       boxSizing: 'border-box',
       width: '100%',
       height: '100%',
-      paddingRight: '40px',
+      paddingRight: '9px',
       background: 'transparent'
     });
     expect(navigate).not.toHaveAttribute('title');
@@ -186,6 +186,7 @@ test('fills the row with a Layer-style bookmark and an independent overlaid copy
 
     row.setAttribute('data-test-hover', '');
     expect(row).toHaveStyle({backgroundColor: theme.panelBackgroundHover});
+    expect(navigate).toHaveStyle({paddingRight: '40px', width: '100%'});
     copyButton.setAttribute('data-test-hover', '');
     expect(copyButton).toHaveStyle({color: theme.panelHeaderIconHover});
     fireEvent.click(copyButton);
@@ -304,6 +305,74 @@ test('reveals copying only for its hovered or keyboard-focused row without shift
   } finally {
     restoreStyles();
   }
+});
+
+test('reclaims action space at rest and reveals copy/delete on hover or keyboard focus', () => {
+  const onBookmarksChange = jest.fn();
+  const {updateMap} = setup({onBookmarksChange});
+  const navigate = screen.getByRole('button', {name: 'Home'});
+  const remove = screen.getByRole('button', {name: 'Delete: Home'});
+  const copyButton = screen.getByRole('button', {name: 'Copy coordinates: Home'});
+  const row = navigate.parentElement as HTMLElement;
+  // No-hover/touch defaults keep both actions visible and reserve their space.
+  expect(navigate).toHaveStyle({paddingRight: '68px'});
+  expect(remove).not.toHaveStyle({opacity: '0'});
+  const restoreStyles = emulatePointerStyles();
+  try {
+    expect(navigate).toHaveStyle({paddingRight: '9px', width: '100%'});
+    expect(remove).toHaveStyle({opacity: '0', pointerEvents: 'none'});
+    row.setAttribute('data-test-hover', '');
+    expect(navigate).toHaveStyle({paddingRight: '68px', width: '100%'});
+    expect(remove).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    expect(copyButton).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    row.removeAttribute('data-test-hover');
+    remove.focus();
+    remove.setAttribute('data-test-focus-visible', '');
+    expect(remove).toHaveFocus();
+    expect(navigate).toHaveStyle({paddingRight: '68px'});
+    expect(remove).toHaveStyle({opacity: '1', pointerEvents: 'auto'});
+    fireEvent.click(remove);
+    expect(onBookmarksChange).toHaveBeenCalledWith([]);
+    expect(updateMap).not.toHaveBeenCalled();
+  } finally {
+    restoreStyles();
+  }
+});
+
+test('deletes only the chosen bookmark without navigating or hiding animation', () => {
+  const onBookmarksChange = jest.fn();
+  const {updateMap, visibility} = setup({
+    bookmarks: [...bookmarks, {...bookmarks[0], id: 'work', name: 'Work'}],
+    onBookmarksChange
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Delete: Home'}));
+  expect(onBookmarksChange).toHaveBeenCalledWith([{...bookmarks[0], id: 'work', name: 'Work'}]);
+  expect(updateMap).not.toHaveBeenCalled();
+  expect(visibility).not.toHaveBeenCalled();
+});
+
+test('removes the final focused bookmark using the existing empty-panel behavior', () => {
+  function Bookmarks() {
+    const [items, setItems] = React.useState(bookmarks);
+    return (
+      <CameraBookmarkControl
+        bookmarks={items}
+        onBookmarksChange={setItems}
+        mapState={INITIAL_MAP_STATE}
+        mapStateActions={MapStateActions}
+        mapControls={enabledMapControls}
+      />
+    );
+  }
+  renderWithTheme(
+    <IntlWrapper>
+      <Bookmarks />
+    </IntlWrapper>
+  );
+  const remove = screen.getByRole('button', {name: 'Delete: Home'});
+  remove.focus();
+  fireEvent.click(remove);
+  expect(screen.queryByRole('navigation', {name: 'Bookmarks'})).not.toBeInTheDocument();
 });
 
 test('reports clipboard failure and clears it after a successful retry', () => {
