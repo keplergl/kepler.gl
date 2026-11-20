@@ -52,6 +52,8 @@ import {
   fieldDomain
 } from 'test/helpers/layer-utils';
 
+const equatorialUnitsPerMeter = getDistanceScales({longitude: 0, latitude: 0}).unitsPerMeter[0];
+
 const {PointLayer} = KeplerGlLayers;
 
 const eventTimeFilter = (layer, time) => ({
@@ -1317,7 +1319,8 @@ test('#PointLayer -> renderLayer', t => {
           opacity: layer.config.visConfig.opacity,
           stroked: layer.config.visConfig.outline,
           filled: layer.config.visConfig.filled,
-          radiusScale: layer.getRadiusScaleByZoom(INITIAL_MAP_STATE),
+          radiusUnits: 'common',
+          radiusScale: layer.getRadiusScaleByZoom(INITIAL_MAP_STATE) * equatorialUnitsPerMeter,
           lineWidthScale: layer.config.visConfig.thickness,
           filterRange: preparedDataset.gpuFilter.filterRange
         };
@@ -1382,10 +1385,9 @@ test('#PointLayer -> renderLayer', t => {
           deckLayers[2].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[4].props;
 
-        const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
         const pixelRadius =
-          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
+          radiusScale * equatorialUnitsPerMeter * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 
@@ -1578,10 +1580,9 @@ test('#PointLayer -> renderLayer', t => {
         // test test_layer_1-label-types
         const {getColor, getSize, getPixelOffset} = deckLayers[2].props;
 
-        const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
         const pixelRadius =
-          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
+          radiusScale * equatorialUnitsPerMeter * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 
@@ -3535,7 +3536,9 @@ test('#PointLayer -> projection toggles refresh field-sized label offsets only',
         layer,
         layerIndex: 0,
         data,
-        mapState: {...INITIAL_MAP_STATE, latitude: 60, zoom: 3, globe: {enabled: globe}},
+        // Above the zoom-factor cutoff, globe latitude compensation no longer
+        // cancels the label's meter-to-pixel conversion at this latitude.
+        mapState: {...INITIAL_MAP_STATE, latitude: 60, zoom: 16, globe: {enabled: globe}},
         interactionConfig: INITIAL_VIS_STATE.interactionConfig
       },
       {}
