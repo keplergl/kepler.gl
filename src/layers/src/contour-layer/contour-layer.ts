@@ -29,7 +29,8 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
-import ContourSurfaceLayer from './deck-contour-surface-layer';
+import {buildContourMesh} from './contour-mesh';
+import ContourMeshLayer from './deck-contour-mesh-layer';
 
 type ContourLayerData = {data: ContourFeature[]; grid?: ScalarGrid | null};
 
@@ -118,7 +119,7 @@ export default class ContourLayer extends Layer {
     (data: ContourLayerData) => data,
     data => {
       const surface = buildContourSurface(data.grid || null, data.data);
-      return {...surface, depth: surface.fills.slice(0, 1)};
+      return {...surface, depth: surface.fills.slice(0, 1), mesh: buildContourMesh(surface.fills)};
     }
   );
 
@@ -256,6 +257,7 @@ export default class ContourLayer extends Layer {
       'fillOpacity',
       'filled',
       'stroked',
+      'enable3d',
       'elevationScale'
     ];
   }
@@ -355,9 +357,7 @@ export default class ContourLayer extends Layer {
     const grid = buildContourGrid(
       samples,
       this.config.visConfig.gridResolution,
-      weighted ? 'MEAN' : 'COUNT',
-      // The zero ring changes area/thresholds, which can multiply 3D tessellation.
-      !this.config.visConfig.enable3d
+      weighted ? 'MEAN' : 'COUNT'
     );
     if (grid) {
       let minimum = Infinity;
@@ -453,17 +453,31 @@ export default class ContourLayer extends Layer {
       extruded: false,
       ...(surface ? {modelMatrix: new Matrix4().scale([1, 1, elevationScale])} : {})
     };
+    const fillProps = {
+      ...shared,
+      // Separate IDs prevent deck.gl from reusing the unlit 2D GPU model in 3D.
+      id: surface ? `${this.id}-surface-fill` : `${this.id}-fill`,
+      data: surface ? surface.fills : data.data,
+      filled: true,
+      stroked: false,
+      getFillColor: visConfig.colorByLevel
+        ? (feature: Pick<ContourFeature, 'properties'>): [number, number, number, number] => [
+            ...colors[feature.properties.rank],
+            Math.round(255 * visConfig.fillOpacity)
+          ]
+        : ([...color, Math.round(255 * visConfig.fillOpacity)] as [number, number, number, number]),
+      updateTriggers: {getFillColor: [...colorTriggers, visConfig.fillOpacity]}
+    };
     return [
       // Resolve the visible surface before compositing the same translucent,
       // nested fills as 2D. This prevents the back of a hill showing through it.
       ...(surface && visConfig.filled && visConfig.fillOpacity > 0
         ? [
-            new GeoJsonLayer<ContourFeature['properties']>({
+            new ContourMeshLayer({
               ...shared,
               id: `${this.id}-surface-depth`,
               data: surface.depth,
-              filled: true,
-              stroked: false,
+              mesh: surface.mesh.depth,
               pickable: false,
               getFillColor: [0, 0, 0, 255],
               getPolygonOffset: () => [1, 1],
@@ -478,32 +492,14 @@ export default class ContourLayer extends Layer {
         : []),
       ...(visConfig.filled
         ? [
-            new GeoJsonLayer<ContourFeature['properties']>({
-              ...shared,
-              // Separate IDs prevent deck.gl from reusing the unlit 2D GPU model in 3D.
-              id: surface ? `${this.id}-surface-fill` : `${this.id}-fill`,
-              data: surface ? surface.fills : data.data,
-              ...(surface
-                ? {
-                    getPolygonOffset: () => [0, 0],
-                    _subLayerProps: {
-                      'polygons-fill': {
-                        type: ContourSurfaceLayer,
-                        getSurfaceNormal: surface.getNormal
-                      }
-                    }
-                  }
-                : {}),
-              filled: true,
-              stroked: false,
-              getFillColor: visConfig.colorByLevel
-                ? feature => [
-                    ...colors[feature.properties.rank],
-                    Math.round(255 * visConfig.fillOpacity)
-                  ]
-                : [...color, Math.round(255 * visConfig.fillOpacity)],
-              updateTriggers: {getFillColor: [...colorTriggers, visConfig.fillOpacity]}
-            })
+            surface
+              ? new ContourMeshLayer({
+                  ...fillProps,
+                  getPolygonOffset: () => [0, 0],
+                  mesh: surface.mesh.fill,
+                  getSurfaceNormal: surface.getNormal
+                })
+              : new GeoJsonLayer<ContourFeature['properties']>(fillProps)
           ]
         : []),
       ...(visConfig.stroked

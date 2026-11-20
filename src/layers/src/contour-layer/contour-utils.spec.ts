@@ -3,6 +3,7 @@
 
 import {
   buildContourGrid,
+  ContourFeature,
   ContourOptions,
   generateContours,
   ScalarSample,
@@ -10,6 +11,14 @@ import {
   smoothScalarGrid
 } from './contour-utils';
 import {buildContourSurface} from './contour-surface';
+import {buildContourMesh} from './contour-mesh';
+import {lngLatToWorld} from '@math.gl/web-mercator';
+import {SolidPolygonLayer} from '@deck.gl/layers';
+import {LayerManager, WebMercatorViewport} from '@deck.gl/core';
+import * as DeckCore from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
+
+const GlobeViewport = (DeckCore as any)._GlobeViewport;
 
 function samples(size: number, value: (x: number, y: number) => number | null): ScalarSample[] {
   return Array.from({length: size * size}, (_, i) => ({
@@ -182,6 +191,316 @@ describe('contour surface', () => {
       fills: [],
       outlines: []
     });
+  });
+});
+
+describe('contour mesh', () => {
+  const feature = (coordinates: number[][][][], rank = 0): ContourFeature => ({
+    type: 'Feature',
+    properties: {threshold: rank, below: false, rank},
+    geometry: {type: 'MultiPolygon', coordinates}
+  });
+  const projectedArea = (ring: number[][]) => {
+    const points = ring.map(lngLatToWorld);
+    return (
+      Math.abs(
+        points.reduce((sum, point, index) => {
+          const next = points[(index + 1) % points.length];
+          return sum + point[0] * next[1] - next[0] * point[1];
+        }, 0)
+      ) / 2
+    );
+  };
+  const triangles = (mesh: {
+    attributes: {
+      getPolygon: {value: ArrayLike<number>};
+      indices: {value: ArrayLike<number>};
+    };
+  }) => {
+    const positions = mesh.attributes.getPolygon.value;
+    const indices = mesh.attributes.indices.value;
+    return Array.from({length: indices.length / 3}, (_, triangle) =>
+      Array.from({length: 3}, (_, corner) => {
+        const offset = indices[triangle * 3 + corner] * 3;
+        return Array.from({length: 3}, (_, coordinate) => positions[offset + coordinate]);
+      })
+    );
+  };
+
+  test('triangulates holes in projected space without changing source heights', () => {
+    const outer = [
+      [0, 60, 0],
+      [4, 60, 4],
+      [4, 64, 8],
+      [0, 64, 4],
+      [0, 60, 0]
+    ];
+    const hole = [
+      [1, 61, 2],
+      [1, 63, 4],
+      [3, 63, 6],
+      [3, 61, 4],
+      [1, 61, 2]
+    ];
+    const source = [feature([[outer, hole]])];
+    const original = JSON.stringify(source);
+    const {fill, depth} = buildContourMesh(source);
+    const actual = triangles(fill);
+    expect(actual.length).toBeGreaterThan(0);
+    expect(actual.reduce((sum, triangle) => sum + projectedArea(triangle), 0)).toBeCloseTo(
+      projectedArea(outer) - projectedArea(hole),
+      8
+    );
+    for (const triangle of actual) {
+      for (const point of triangle) expect([...outer, ...hole]).toContainEqual(point);
+      const centroid = triangle
+        .map(lngLatToWorld)
+        .reduce((sum, point) => [sum[0] + point[0] / 3, sum[1] + point[1] / 3], [0, 0]);
+      const [west, south] = lngLatToWorld([1, 61]);
+      const [east, north] = lngLatToWorld([3, 63]);
+      expect(
+        centroid[0] > west && centroid[0] < east && centroid[1] > south && centroid[1] < north
+      ).toBe(false);
+    }
+    expect(triangles(depth)).toEqual(actual);
+    expect(JSON.stringify(source)).toBe(original);
+  });
+
+  test.each([true, false])(
+    'preserves draped footprints and heights in level order, below=%s',
+    below => {
+      const grid = testGrid(
+        samples(9, (x, y) => (x === 4 && y === 4 ? null : (x - 4) ** 2 + (y - 4) ** 2))
+      );
+      const surface = buildContourSurface(grid, generateContours(grid, {...options, below}));
+      const {fill, depth} = buildContourMesh(surface.fills);
+      expect(fill.length).toBe(surface.fills.length);
+      expect(fill.attributes.getPolygon.value.every(Number.isFinite)).toBe(true);
+      const indices = fill.attributes.indices.value;
+      expect(indices.every(index => index < fill.attributes.getPolygon.value.length / 3)).toBe(
+        true
+      );
+      let previousLevel = 0;
+      for (let i = 0; i < indices.length; i += 3) {
+        const level = surface.fills.findIndex(
+          (_, rank) => indices[i] < fill.startIndices[rank + 1]
+        );
+        expect(level).toBeGreaterThanOrEqual(previousLevel);
+        for (let corner = 0; corner < 3; corner++) {
+          expect(indices[i + corner]).toBeGreaterThanOrEqual(fill.startIndices[level]);
+          expect(indices[i + corner]).toBeLessThan(fill.startIndices[level + 1]);
+        }
+        previousLevel = level;
+      }
+      const allTriangles = triangles(fill);
+      const onError = jest.fn();
+      const manager = new LayerManager(device, {
+        viewport: new WebMercatorViewport({
+          width: 200,
+          height: 200,
+          longitude: 4,
+          latitude: 4,
+          zoom: 5
+        })
+      });
+      manager.setProps({onError});
+      try {
+        surface.fills.forEach((source, rank) => {
+          const actual = allTriangles.filter(
+            (_, i) =>
+              indices[i * 3] >= fill.startIndices[rank] &&
+              indices[i * 3] < fill.startIndices[rank + 1]
+          );
+          // Clipped holes can touch cell boundaries and leave degenerate vertices.
+          // Compare what the existing renderer triangulates, including those cases.
+          const legacy = new SolidPolygonLayer({
+            id: `legacy-contour-${rank}`,
+            data: source.geometry.coordinates,
+            getPolygon: polygon => polygon,
+            extruded: false
+          });
+          manager.setLayers([legacy]);
+          const tessellator = legacy.state.polygonTesselator;
+          const expected = triangles({
+            attributes: {
+              getPolygon: {value: tessellator.get('positions')!},
+              indices: {value: tessellator.get('indices')!}
+            }
+          });
+          expect(actual.reduce((sum, triangle) => sum + projectedArea(triangle), 0)).toBeCloseTo(
+            expected.reduce((sum, triangle) => sum + projectedArea(triangle), 0),
+            8
+          );
+          const heights = actual.flat().map(point => point[2]);
+          const expectedHeights = expected.flat().map(point => point[2]);
+          expect(Math.min(...heights)).toBeCloseTo(Math.min(...expectedHeights), 8);
+          expect(Math.max(...heights)).toBeCloseTo(Math.max(...expectedHeights), 8);
+        });
+        expect(onError).not.toHaveBeenCalled();
+      } finally {
+        manager.finalize();
+      }
+      expect(depth.length).toBe(1);
+      expect(depth.attributes.getPolygon.value.buffer).toBe(
+        fill.attributes.getPolygon.value.buffer
+      );
+      expect(depth.attributes.indices.value.buffer).toBe(indices.buffer);
+      expect(depth.attributes.indices.value.every(index => index < fill.startIndices[1])).toBe(
+        true
+      );
+    }
+  );
+
+  test.each(['globe', 'mercator'])('matches legacy viewport normalization for %s', projection => {
+    const globe = projection === 'globe';
+    const coordinates: number[][][][] = globe
+      ? [
+          [
+            [
+              [-25, 50, 0],
+              [25, 50, 100],
+              [10, 80, 200],
+              [-25, 50, 0]
+            ]
+          ]
+        ]
+      : [
+          [
+            [
+              [170, 84, 0],
+              [190, 84, 10],
+              [190, 88, 20],
+              [170, 88, 10],
+              [170, 84, 0]
+            ]
+          ],
+          [
+            [
+              [-170, 85, 0],
+              [-60, 85, 10],
+              [60, 85, 20],
+              [170, 85, 30],
+              [-170, 85, 0]
+            ]
+          ]
+        ];
+    const source = [feature(coordinates)];
+    const original = JSON.stringify(source);
+    const meshOptions = globe ? {resolution: 10, wrapLongitude: false} : {wrapLongitude: true};
+    const {fill} = buildContourMesh(source, meshOptions);
+    const viewport = globe
+      ? new GlobeViewport({
+          width: 200,
+          height: 200,
+          longitude: 0,
+          latitude: 60,
+          zoom: 1,
+          resolution: 10
+        })
+      : new WebMercatorViewport({width: 200, height: 200, longitude: 180, latitude: 85, zoom: 3});
+    const onError = jest.fn();
+    const manager = new LayerManager(device, {viewport});
+    manager.setProps({onError});
+    try {
+      const legacy = new SolidPolygonLayer({
+        id: `legacy-normalization-${projection}`,
+        data: coordinates,
+        getPolygon: polygon => polygon,
+        wrapLongitude: !globe,
+        extruded: false
+      });
+      manager.setLayers([legacy]);
+      const tessellator = legacy.state.polygonTesselator;
+      const expected = triangles({
+        attributes: {
+          getPolygon: {value: tessellator.get('positions')!},
+          indices: {value: tessellator.get('indices')!}
+        }
+      });
+      const triangleKeys = (values: number[][][]) =>
+        values
+          .map(triangle =>
+            triangle
+              .map(point => point.join(','))
+              .sort()
+              .join(';')
+          )
+          .sort();
+      const actual = triangles(fill);
+      expect(actual.length).toBeGreaterThan(1);
+      expect(triangleKeys(actual)).toEqual(triangleKeys(expected));
+      expect(onError).not.toHaveBeenCalled();
+      if (globe) {
+        for (const triangle of actual) {
+          for (const axis of [0, 1]) {
+            const values = triangle.map(point => point[axis]);
+            expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(10);
+          }
+        }
+      } else {
+        expect(actual.flat().every(point => Math.abs(point[0]) <= 180)).toBe(true);
+        expect(actual.flat().some(point => point[1] === 86)).toBe(true);
+      }
+      expect(JSON.stringify(source)).toBe(original);
+    } finally {
+      manager.finalize();
+    }
+    expect(buildContourMesh([feature([])], meshOptions).fill.attributes.indices.value).toHaveLength(
+      0
+    );
+  });
+
+  test('bounds vertex storage by grid points per level instead of repeated triangle corners', () => {
+    const size = 16;
+    const points = Array.from({length: size * size}, (_, i) => [
+      (i % size) / 100,
+      40 + Math.floor(i / size) / 100,
+      (i % size) + Math.floor(i / size)
+    ]);
+    const polygons: number[][][][] = [];
+    for (let row = 0; row < size - 1; row++) {
+      for (let col = 0; col < size - 1; col++) {
+        const a = points[row * size + col];
+        const b = points[row * size + col + 1];
+        const c = points[(row + 1) * size + col];
+        const d = points[(row + 1) * size + col + 1];
+        polygons.push([[a, b, d, a]], [[a, d, c, a]]);
+      }
+    }
+    const levels = 20;
+    const {fill, depth} = buildContourMesh(
+      Array.from({length: levels}, (_, rank) => feature(polygons, rank))
+    );
+    expect(fill.attributes.getPolygon.value.length / 3).toBeLessThanOrEqual(levels * size * size);
+    expect(fill.attributes.indices.value.length).toBe(levels * (size - 1) ** 2 * 6);
+    expect(depth.attributes.getPolygon.value.length / 3).toBeLessThanOrEqual(size * size);
+    expect(depth.attributes.indices.value.length).toBe((size - 1) ** 2 * 6);
+  });
+
+  test('handles empty features and degenerate pieces', () => {
+    for (const source of [
+      [],
+      [feature([])],
+      [
+        feature([
+          [
+            [
+              [0, 0, 0],
+              [1, 0, 1],
+              [2, 0, 2],
+              [0, 0, 0]
+            ]
+          ]
+        ])
+      ]
+    ]) {
+      const {fill, depth} = buildContourMesh(source);
+      expect(fill.length).toBe(source.length);
+      expect(fill.attributes.getPolygon.value).toHaveLength(0);
+      expect(fill.attributes.indices.value).toHaveLength(0);
+      expect(depth.length).toBe(Math.min(1, source.length));
+      expect(depth.attributes.indices.value).toHaveLength(0);
+    }
   });
 });
 
