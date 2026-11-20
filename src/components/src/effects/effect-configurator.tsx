@@ -97,6 +97,50 @@ const SectionSubTitle = styled.div`
   margin-left: 6px;
 `;
 
+const ShadowResolutionLabel = styled(SectionSubTitle)`
+  margin-bottom: 0;
+`;
+
+const ShadowResolutionButtons = styled(ButtonGroup)`
+  .button {
+    /* Light uses the select surface for the neighboring numeric inputs. */
+    background-color: ${props =>
+      props.theme.input === props.theme.inputLT
+        ? props.theme.selectBackgroundLT
+        : props.theme.inputBgd};
+    color: ${props =>
+      props.theme.input === props.theme.inputLT
+        ? props.theme.selectColorLT
+        : props.theme.inputColor};
+    border: 0;
+
+    &:hover,
+    &:active {
+      background-color: ${props => props.theme.inputBgdHover};
+      box-shadow: inset 0 0 0 1px ${props => props.theme.inputBorderHoverColor};
+    }
+
+    &[aria-pressed='true'] {
+      background-color: ${props => props.theme.secondaryBtnBgd};
+      color: ${props =>
+        props.theme.input === props.theme.inputLT
+          ? props.theme.selectColorLT
+          : props.theme.secondaryBtnColor};
+
+      &:hover,
+      &:active {
+        background-color: ${props => props.theme.secondaryBtnBgdHover};
+        color: ${props => props.theme.secondaryBtnActColor};
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${props => props.theme.activeColor};
+      outline-offset: -2px;
+    }
+  }
+`;
+
 const StyleSliderWrapper = styled.div`
   align-self: flex-start;
   width: 199px;
@@ -328,16 +372,15 @@ export default function EffectConfiguratorFactory(
         </StyledWrapper>
 
         <StyledWrapper $marginBottom={16}>
-          <SectionSubTitle title="Applies to the single-map preview only">
+          <ShadowResolutionLabel title="Applies to the single-map preview only">
             Shadow map resolution
-          </SectionSubTitle>
-          <ButtonGroup role="group" aria-label="Shadow map resolution (experimental)">
+          </ShadowResolutionLabel>
+          <ShadowResolutionButtons role="group" aria-label="Shadow map resolution (experimental)">
             {SHADOW_MAP_OPTIONS.map(({label, value}) => (
               <Button
                 key={label}
                 type="button"
                 small
-                secondary={shadowMapResolution !== value}
                 aria-pressed={shadowMapResolution === value}
                 onClick={() =>
                   updateEffectConfig(null, id, {parameters: {shadowMapResolution: value}})
@@ -346,7 +389,7 @@ export default function EffectConfiguratorFactory(
                 {label}
               </Button>
             ))}
-          </ButtonGroup>
+          </ShadowResolutionButtons>
         </StyledWrapper>
 
         <StyledWrapper $marginBottom={0}>
