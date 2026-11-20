@@ -211,7 +211,13 @@ describe('MapCoordinateMenu', () => {
     jest.useFakeTimers();
     const {onClose} = renderMenu();
 
-    fireEvent.click(screen.getByRole('menuitem', {name: 'Copy coordinates'}));
+    const item = screen.getByRole('menuitem', {name: 'Copy coordinates'});
+    expect(screen.getByText('37.774929, -122.419418')).toBeVisible();
+    expect(item).toHaveAccessibleDescription('37.774929, -122.419418');
+    expect(copyMock).not.toHaveBeenCalled();
+    item.focus();
+    expect(item).toHaveFocus();
+    fireEvent.click(item);
 
     expect(copyMock).toHaveBeenCalledWith('37.774929, -122.419418');
     expect(screen.getByRole('menuitem', {name: 'Copied'})).toBeTruthy();
@@ -246,6 +252,8 @@ describe('MapCoordinateMenu', () => {
       </ThemeProvider>
     );
 
+    expect(screen.getByRole('menuitem', {name: 'Copy coordinates'})).toBeVisible();
+    expect(copyMock).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('menuitem', {name: 'Add Annotation'}));
     expect(onAddAnnotation).toHaveBeenCalledTimes(1);
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import copy from 'copy-to-clipboard';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -205,6 +205,17 @@ const StyledMenu = styled.div`
   }
 `;
 
+const CopyLabel = styled.span`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+`;
+const CoordinatePreview = styled.span`
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+`;
+
 export type MapCoordinateMenuProps = {
   x: number;
   y: number;
@@ -231,6 +242,8 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
   onToggleAnnotations
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  const copyId = useId();
+  const coordinateId = useId();
   const [shift, setShift] = useState({x: MENU_OPEN_OFFSET_PX, y: MENU_OPEN_OFFSET_PX});
   const [interactive, setInteractive] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -312,6 +325,31 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
         event.stopPropagation();
       }}
     >
+      {showCopy && text ? (
+        <button
+          type="button"
+          role="menuitem"
+          aria-labelledby={copyId}
+          aria-describedby={coordinateId}
+          onClick={onCopy}
+        >
+          {copied ? (
+            <Checkmark height="14px" aria-hidden={true} />
+          ) : (
+            <Copy height="14px" aria-hidden={true} />
+          )}
+          <CopyLabel>
+            <span id={copyId}>
+              <FormattedMessage
+                id={copied ? 'interactions.coordinateCopied' : 'interactions.copyCoordinate'}
+              />
+            </span>
+            <CoordinatePreview id={coordinateId} dir="ltr">
+              {text}
+            </CoordinatePreview>
+          </CopyLabel>
+        </button>
+      ) : null}
       {showAddAnnotation ? (
         <button type="button" role="menuitem" onClick={() => onAddAnnotation?.()}>
           <AnnotationText height="14px" aria-hidden={true} />
@@ -330,20 +368,6 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
               annotationsVisible ? 'interactions.hideAnnotations' : 'interactions.showAnnotations'
             }
           />
-        </button>
-      ) : null}
-      {showCopy && text ? (
-        <button type="button" role="menuitem" onClick={onCopy}>
-          {copied ? (
-            <Checkmark height="14px" aria-hidden={true} />
-          ) : (
-            <Copy height="14px" aria-hidden={true} />
-          )}
-          {copied ? (
-            <FormattedMessage id="interactions.coordinateCopied" />
-          ) : (
-            <FormattedMessage id="interactions.copyCoordinate" />
-          )}
         </button>
       ) : null}
     </StyledMenu>

@@ -2071,12 +2071,7 @@ export default function MapContainerFactory(
             <MapCoordinateMenu
               x={this.state.coordinateMenu.x}
               y={this.state.coordinateMenu.y}
-              text={
-                visState.interactionConfig.coordinate.enabled
-                  ? this.state.coordinateMenu.text
-                  : null
-              }
-              showCopy={visState.interactionConfig.coordinate.enabled}
+              text={this.state.coordinateMenu.text}
               {...this._annotationMenuItems()}
               onAddAnnotation={this._onAddAnnotation}
               onToggleAnnotations={this._onToggleAnnotations}
