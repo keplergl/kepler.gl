@@ -3,7 +3,7 @@
 
 export const NATIVE_WEBM_FORMAT = {
   value: 'webm-native',
-  label: 'WebM Video (experimental native)'
+  label: 'WebM Native (beta)'
 };
 
 export const VIDEO_ENCODING_ERROR =
