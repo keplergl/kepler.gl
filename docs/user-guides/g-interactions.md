@@ -57,7 +57,7 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 ![coordinate](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-2.png "coordinate")
 
-When then on coordinate, a  panel contains latitude and longitude will follow your mouse
+Turn on **Coordinates** to show the latitude and longitude as you move the pointer. Right-click an empty spot to open the context menu and choose **Copy coordinates**. If annotation actions are available, the context menu still offers **Copy coordinates** when the **Coordinates** switch is off.
 
 [Back to table of contents](README.md)
 

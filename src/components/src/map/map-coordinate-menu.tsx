@@ -312,6 +312,18 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
         event.stopPropagation();
       }}
     >
+      {showCopy && text ? (
+        <button type="button" role="menuitem" onClick={onCopy}>
+          {copied ? (
+            <Checkmark height="14px" aria-hidden={true} />
+          ) : (
+            <Copy height="14px" aria-hidden={true} />
+          )}
+          <FormattedMessage
+            id={copied ? 'interactions.coordinateCopied' : 'interactions.copyCoordinate'}
+          />
+        </button>
+      ) : null}
       {showAddAnnotation ? (
         <button type="button" role="menuitem" onClick={() => onAddAnnotation?.()}>
           <AnnotationText height="14px" aria-hidden={true} />
@@ -330,20 +342,6 @@ const MapCoordinateMenu: React.FC<MapCoordinateMenuProps> = ({
               annotationsVisible ? 'interactions.hideAnnotations' : 'interactions.showAnnotations'
             }
           />
-        </button>
-      ) : null}
-      {showCopy && text ? (
-        <button type="button" role="menuitem" onClick={onCopy}>
-          {copied ? (
-            <Checkmark height="14px" aria-hidden={true} />
-          ) : (
-            <Copy height="14px" aria-hidden={true} />
-          )}
-          {copied ? (
-            <FormattedMessage id="interactions.coordinateCopied" />
-          ) : (
-            <FormattedMessage id="interactions.copyCoordinate" />
-          )}
         </button>
       ) : null}
     </StyledMenu>
