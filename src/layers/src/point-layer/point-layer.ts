@@ -40,6 +40,7 @@ import {
   DEFAULT_COLOR_UI
 } from '@kepler.gl/constants';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getSymbolRadiusProps} from '../symbol-radius';
 import {
   assignPointPairToLayerColumn,
   isLayerHoveredFromArrow,
@@ -746,7 +747,11 @@ export default class PointLayer extends Layer {
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
-    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const {radiusScale, radiusUnits} = getSymbolRadiusProps(
+      this.getRadiusScaleByZoom(mapState, fixedRadius),
+      fixedRadius,
+      Boolean(mapState.globe?.enabled)
+    );
     const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion, pulseTrigger, pulseDurationMs} =
       this.config.visConfig;
     const continuous = pulseEnabled && pulseTrigger !== 'event';
@@ -768,6 +773,7 @@ export default class PointLayer extends Layer {
       lineWidthScale: this.config.visConfig.thickness,
       billboard: this.config.visConfig.billboard,
       radiusScale,
+      radiusUnits,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
@@ -783,7 +789,12 @@ export default class PointLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      data.getRadius,
+      mapState,
+      radiusUnits
+    );
     const extensions = [
       ...defaultLayerProps.extensions,
       brushingExtension,

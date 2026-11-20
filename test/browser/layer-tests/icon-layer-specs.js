@@ -51,6 +51,8 @@ import {
 } from '@kepler.gl/reducers';
 import {IntlWrapper} from '../../helpers/component-utils';
 
+const equatorialUnitsPerMeter = getDistanceScales({longitude: 0, latitude: 0}).unitsPerMeter[0];
+
 const {IconLayer} = KeplerGlLayers;
 const columns = {
   lat: 'lat',
@@ -468,7 +470,8 @@ test('#IconLayer -> renderLayer', t => {
         const expectedProps = {
           opacity: layer.config.visConfig.opacity,
           radiusMaxPixels: 500,
-          radiusScale: layer.getRadiusScaleByZoom(INITIAL_MAP_STATE),
+          radiusUnits: 'common',
+          radiusScale: layer.getRadiusScaleByZoom(INITIAL_MAP_STATE) * equatorialUnitsPerMeter,
           filterRange: preparedDataset.gpuFilter.filterRange,
           brushingEnabled: false
         };
@@ -591,10 +594,9 @@ test('#IconLayer -> renderLayer', t => {
           deckLayers[4].props;
         const {getPixelOffset: getPixelOffset1} = deckLayers[6].props;
 
-        const distanceScale = getDistanceScales(INITIAL_MAP_STATE);
         const radiusScale = layer.getRadiusScaleByZoom(INITIAL_MAP_STATE);
         const pixelRadius =
-          radiusScale * distanceScale.unitsPerMeter[0] * zoomToScale(INITIAL_MAP_STATE.zoom);
+          radiusScale * equatorialUnitsPerMeter * zoomToScale(INITIAL_MAP_STATE.zoom);
 
         const padding = 20;
 

@@ -40,6 +40,7 @@ import {
   getHoveredObjectFromArrow
 } from '../layer-utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getSymbolRadiusProps} from '../symbol-radius';
 import {getVisualZoom, LayerZoomState} from '../layer-zoom';
 import GeojsonLayerIcon from './geojson-layer-icon';
 import {
@@ -960,9 +961,11 @@ export default class GeoJsonLayer extends Layer {
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
-    const radiusScale = this.getRadiusScaleByZoom(
-      mapState,
-      this.config.radiusField ? false : fixedRadius
+    const useFixedRadius = !this.config.radiusField && Boolean(fixedRadius);
+    const {radiusScale, radiusUnits} = getSymbolRadiusProps(
+      this.getRadiusScaleByZoom(mapState, useFixedRadius),
+      useFixedRadius,
+      Boolean(mapState.globe?.enabled)
     );
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
@@ -975,6 +978,7 @@ export default class GeoJsonLayer extends Layer {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
       elevationScale: visConfig.elevationScale * eleZoomFactor,
       pointRadiusScale: radiusScale,
+      pointRadiusUnits: radiusUnits,
       lineMiterLimit: 4
     };
 
@@ -996,7 +1000,12 @@ export default class GeoJsonLayer extends Layer {
 
     const {data, ...props} = dataProps;
 
-    const getPixelOffset = getTextOffsetByRadius(radiusScale, dataProps.getRadius, mapState);
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      dataProps.getRadius,
+      mapState,
+      radiusUnits
+    );
     const sharedProps = {
       getFilterValue: dataProps.getFilterValue,
       extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],

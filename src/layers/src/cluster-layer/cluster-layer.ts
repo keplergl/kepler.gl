@@ -111,6 +111,7 @@ export default class ClusterLayer extends AggregationLayer {
 
     const {_filterData: filterData, ...clusterData} = data;
     const hoveredObject = this.hasHoveredObject(objectHovered);
+    const radiusUnits = mapState.globe?.enabled ? 'meters' : 'pixels';
 
     return [
       new DeckGLClusterLayer({
@@ -120,6 +121,7 @@ export default class ClusterLayer extends AggregationLayer {
 
         // radius
         radiusScale: 1,
+        radiusUnits,
         radiusRange: visConfig.radiusRange,
         clusterRadius: visConfig.clusterRadius,
         minPointCount: visConfig.minClusterSize,
@@ -144,13 +146,15 @@ export default class ClusterLayer extends AggregationLayer {
       // hover layer
       ...(hoveredObject
         ? [
-            new ScatterplotLayer<{scaledRadiusValue: number}>({
+            new ScatterplotLayer<{scaledRadiusValue: number; scaledRadiusPixels?: number}>({
               id: `${this.id}-hovered`,
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               getFillColor: this.config.highlightColor,
-              getRadius: (d: {scaledRadiusValue: number}) => d.scaledRadiusValue,
+              getRadius: d =>
+                radiusUnits === 'pixels' ? d.scaledRadiusPixels ?? 0 : d.scaledRadiusValue,
               radiusScale: 1,
+              radiusUnits,
               pickable: false
             })
           ]
