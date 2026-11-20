@@ -26,6 +26,7 @@ export interface SvgIconLayerProps extends CompositeLayerProps {
   getPosition: (d: any) => Position;
   getAngle?: Accessor<any, number>;
   getRadius: ((d: any) => number) | number;
+  radiusUnits?: 'meters' | 'common' | 'pixels';
   getFillColor: RGBColor | RGBAColor;
 }
 

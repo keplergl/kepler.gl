@@ -11,9 +11,12 @@ import {
   KeplerGlobeView
 } from '@kepler.gl/deckgl-layers';
 import PointLayer from './point-layer/point-layer';
+import IconLayer from './icon-layer/icon-layer';
+import {getSymbolRadiusProps} from './symbol-radius';
 import {
   formatTextLabelData,
   getSingleTextLabelValue,
+  getTextOffsetByRadius,
   textLabelDeckLayerId
 } from './layer-text-label';
 
@@ -343,4 +346,54 @@ test('collision labels preserve shared extensions without mutating another layer
   expect(text.props.extensions).toHaveLength(2);
   expect(text.props.extensions[0]).toBe(extension);
   expect(text.props.extensions[1].constructor.extensionName).toBe('CollisionFilterExtension');
+});
+
+describe('latitude-stable point and icon sizing', () => {
+  test.each([PointLayer, IconLayer])(
+    '%p uses common radius only when opted in on the flat map',
+    Layer => {
+      const layer = new Layer({dataId: 'data'});
+      const render = (enabled: boolean) =>
+        layer.renderLayer({
+          data: {data: [], getRadius: 1, textLabels: []},
+          gpuFilter: {},
+          mapState: {zoom: 14, latitude: 60, globe: {enabled}},
+          interactionConfig: {brush: {config: {size: 0}}},
+          visible: true
+        })[0].props;
+      const defaults = render(false);
+      expect(defaults.radiusUnits).toBe('meters');
+      layer.updateLayerVisConfig({latitudeStableRadius: true});
+      const stable = render(false);
+      expect(stable.radiusUnits).toBe('common');
+      expect(stable.radiusScale).toBeLessThan(defaults.radiusScale);
+      expect(render(true).radiusUnits).toBe('meters');
+    }
+  );
+
+  test('matches the equatorial size and keeps label offsets stable across latitudes', () => {
+    const equator = {zoom: 14, latitude: 0, longitude: 0};
+    const north = {...equator, latitude: 60};
+    const {radiusScale, radiusUnits} = getSymbolRadiusProps(2, true, false, false);
+    const label = {...DEFAULT_TEXT_LABEL, anchor: 'start'};
+    const oldOffset = getTextOffsetByRadius(2, 20, equator)(label);
+    expect(radiusUnits).toBe('common');
+    expect(getTextOffsetByRadius(radiusScale, 20, equator, radiusUnits)(label)).toEqual(oldOffset);
+    expect(getTextOffsetByRadius(radiusScale, 20, north, radiusUnits)(label)).toEqual(oldOffset);
+    expect(getTextOffsetByRadius(2, 20, north)(label)[0]).toBeGreaterThan(oldOffset[0]);
+    expect(
+      getTextOffsetByRadius(radiusScale, 20, {...north, zoom: 15}, radiusUnits)(label)[0]
+    ).toBeGreaterThan(oldOffset[0]);
+  });
+
+  test.each([
+    [false, false, false],
+    [true, true, false],
+    [true, false, true]
+  ])('preserves metric radius when opt-in=%s, fixed=%s, globe=%s', (enabled, fixed, globe) => {
+    expect(getSymbolRadiusProps(3, enabled, fixed, globe)).toEqual({
+      radiusScale: 3,
+      radiusUnits: 'meters'
+    });
+  });
 });

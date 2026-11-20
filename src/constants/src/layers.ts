@@ -165,6 +165,14 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     group: PROPERTY_GROUPS.radius,
     property: 'fixedRadius'
   },
+  latitudeStableRadius: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.latitudeStableRadius',
+    description: 'layerVisConfigs.latitudeStableRadiusDescription',
+    group: PROPERTY_GROUPS.radius,
+    property: 'latitudeStableRadius'
+  },
   fixedHeight: {
     defaultValue: false,
     type: 'boolean',

@@ -16,11 +16,16 @@ import {max} from 'd3-array';
 
 export const defaultPadding = 20;
 
-export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
+export function getTextOffsetByRadius(
+  radiusScale,
+  getRadius,
+  mapState,
+  radiusUnits: 'meters' | 'common' = 'meters'
+) {
   return textLabel => {
-    const distanceScale = getDistanceScales(mapState);
     const scale = mapState.scale ?? zoomToScale(mapState.zoom);
-    const pixelsPerMeter = distanceScale.unitsPerMeter[0] * scale;
+    const pixelsPerUnit =
+      radiusUnits === 'common' ? scale : getDistanceScales(mapState).unitsPerMeter[0] * scale;
     const xMult = textLabel.anchor === 'middle' ? 0 : textLabel.anchor === 'start' ? 1 : -1;
     const yMult = textLabel.alignment === 'center' ? 0 : textLabel.alignment === 'bottom' ? 1 : -1;
 
@@ -31,7 +36,7 @@ export function getTextOffsetByRadius(radiusScale, getRadius, mapState) {
         ? textLabel.size
         : textLabel.size;
 
-    const pixelRadius = radiusScale * pixelsPerMeter;
+    const pixelRadius = radiusScale * pixelsPerUnit;
     const padding = defaultPadding;
 
     return typeof getRadius === 'function'

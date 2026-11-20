@@ -1056,6 +1056,7 @@ mergedLayer0.config = {
     filled: true,
     thickness: 2,
     fixedRadius: false,
+    latitudeStableRadius: false,
     colorRange: {
       name: 'Global Warming',
       type: 'sequential',
@@ -1231,6 +1232,7 @@ mergedLayer2.config = {
     },
     strokeColor: [218, 112, 191],
     fixedRadius: false,
+    latitudeStableRadius: false,
     radiusRange: [1, 854.16],
     allowHover: true,
     showNeighborOnHover: false,

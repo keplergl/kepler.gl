@@ -12,6 +12,7 @@ import Layer, {LayerBaseConfig, LayerBaseConfigPartial} from '../base-layer';
 import {assignPointPairToLayerColumn, FindDefaultLayerPropsReturnValue} from '../layer-utils';
 import {isTest} from '@kepler.gl/utils';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
+import {getSymbolRadiusProps} from '../symbol-radius';
 import {getVisualZoom, LayerZoomState} from '../layer-zoom';
 import {default as KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, DataContainerInterface} from '@kepler.gl/utils';
@@ -42,6 +43,7 @@ type IconGeometry = object | null;
 export type IconLayerVisConfigSettings = {
   radius: VisConfigNumber;
   fixedRadius: VisConfigBoolean;
+  latitudeStableRadius: VisConfigBoolean;
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
@@ -50,6 +52,7 @@ export type IconLayerVisConfigSettings = {
 export type IconLayerVisConfig = {
   radius: number;
   fixedRadius: boolean;
+  latitudeStableRadius?: boolean;
   opacity: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
@@ -100,6 +103,7 @@ export const iconAngleAccessor =
 export const pointVisConfigs: {
   radius: 'radius';
   fixedRadius: 'fixedRadius';
+  latitudeStableRadius: 'latitudeStableRadius';
   opacity: 'opacity';
   colorRange: 'colorRange';
   radiusRange: 'radiusRange';
@@ -107,6 +111,7 @@ export const pointVisConfigs: {
 } = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
+  latitudeStableRadius: 'latitudeStableRadius',
   opacity: 'opacity',
   colorRange: 'colorRange',
   radiusRange: 'radiusRange',
@@ -497,10 +502,16 @@ export default class IconLayer extends Layer {
     // Store callback to trigger map redraw when icon geometry loads asynchronously
     this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
 
-    const radiusScale = this.getRadiusScaleByZoom(mapState);
+    const {radiusScale, radiusUnits} = getSymbolRadiusProps(
+      this.getRadiusScaleByZoom(mapState),
+      this.config.visConfig.latitudeStableRadius === true,
+      this.config.visConfig.fixedRadius,
+      Boolean(mapState.globe?.enabled)
+    );
 
     const layerProps = {
       radiusScale,
+      radiusUnits,
       billboard: this.config.visConfig.billboard,
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
@@ -514,7 +525,12 @@ export default class IconLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      data.getRadius,
+      mapState,
+      radiusUnits
+    );
     const extensions = [...defaultLayerProps.extensions, brushingExtension];
 
     // shared Props between layer and label layer
