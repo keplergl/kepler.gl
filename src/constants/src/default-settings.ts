@@ -1536,7 +1536,7 @@ export const GLOBE_SUPPORTED_LAYERS: Record<string, boolean> = {
   hexagon: true,
   geojson: true,
   cluster: true,
-  donut: false,
+  donut: true,
   icon: true,
   hexagonId: true,
   '3D': true,

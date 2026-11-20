@@ -3,6 +3,7 @@
 
 import {Float64, Int64, Table, vectorFromArray} from 'apache-arrow';
 import Supercluster from 'supercluster';
+import {TextLayer} from '@deck.gl/layers';
 import {
   KeplerTable,
   copyTableAndUpdate,
@@ -10,6 +11,7 @@ import {
   assignGpuChannels
 } from '@kepler.gl/table';
 import {processArrowBatches} from '@kepler.gl/processors';
+import {EnhancedMultiIconLayer} from '@kepler.gl/deckgl-layers';
 import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, MAX_GPU_FILTERS} from '@kepler.gl/constants';
 import {getDefaultFilter, getPolygonFilterFunctor} from '@kepler.gl/utils';
 import SchemaManager, {VisState} from '@kepler.gl/schemas';
@@ -22,6 +24,7 @@ import {
 import {StateWFiles} from 'test/helpers/mock-state';
 import {LayerClasses} from '../index';
 import DonutLayer from './donut-layer';
+import DonutExtension from './donut-extension';
 import {
   DONUT_COLORS,
   getDonutBoundaries,
@@ -72,6 +75,58 @@ function render(layer, dataset, data, zoom = 10) {
     visible: true
   });
 }
+
+test('globe renders and picks donut anchors through the shared horizon shader', async () => {
+  const {layer, dataset, datasets} = await setup({
+    fields,
+    rows: [
+      [0, 0, 30, 70],
+      [180, 0, 10, 15]
+    ]
+  });
+  layer.updateLayerVisConfig({showTotal: true});
+  const data = layer.formatLayerData(datasets);
+  const [flatRings, flatLabels] = render(layer, dataset, data);
+  const renderGlobe = (longitude: number) =>
+    layer.renderLayer({
+      data,
+      idx: 0,
+      gpuFilter: dataset.gpuFilter,
+      mapState: {longitude, zoom: 10, globe: {enabled: true}},
+      visible: true
+    });
+  const [rings, labels] = renderGlobe(0);
+  const [rotatedRings] = renderGlobe(180);
+
+  // No camera-dependent CPU subset or aggregation: one buffer can serve both
+  // viewports and the render and pick passes share the vertex shader.
+  expect(rings.props.data).toBe(flatRings.props.data);
+  expect(rotatedRings.props.data).toBe(rings.props.data);
+  expect(rings.props.data).toHaveLength(2);
+  expect(labels.props.data).toBe(rings.props.data);
+  expect(rings.props.pickable).toBe(true);
+  expect(labels.props.pickable).toBe(false);
+
+  for (const globeLayer of [rings, labels]) {
+    expect(globeLayer.props.parameters).toMatchObject({
+      cull: false,
+      cullMode: 'none',
+      depthTest: true,
+      depthMask: false
+    });
+  }
+  expect(flatLabels.props.parameters.cullMode).toBeUndefined();
+  expect(labels.id).not.toBe(flatLabels.id);
+  if (!(labels instanceof TextLayer) || !(flatLabels instanceof TextLayer)) {
+    throw new Error('Expected total labels in both projections');
+  }
+  expect(labels.props._subLayerProps?.characters.type).toBe(EnhancedMultiIconLayer);
+  expect(flatLabels.props._subLayerProps?.characters).toBeUndefined();
+  const donut = rings.props.extensions.find(extension => extension instanceof DonutExtension);
+  const ringShader = donut?.getShaders();
+  expect(ringShader?.inject['vs:DECKGL_FILTER_GL_POSITION']).toContain('cosHorizon');
+  expect(ringShader?.inject['fs:DECKGL_FILTER_COLOR']).toContain('donut.color0');
+});
 
 test('offers a separate layer and point columns without adding a layer on import', async () => {
   const {layer, dataset} = await setup();
