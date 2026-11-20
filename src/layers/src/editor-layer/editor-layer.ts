@@ -9,7 +9,8 @@ import {
   DrawPointMode,
   TranslateMode,
   CompositeMode,
-  GeoJsonEditMode
+  GeoJsonEditMode,
+  getPickedEditHandle
 } from '@deck.gl-community/editable-layers';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
@@ -64,12 +65,34 @@ class EditorLayer extends EditableGeoJsonLayer {
     }
     super._onclick(event);
   }
+
+  onLayerClick(event: Parameters<EditableGeoJsonLayer['onLayerClick']>[0]) {
+    const mode = this.getActiveMode();
+    const isPoint = mode instanceof DrawPointMode;
+    const isNewLineVertex = mode instanceof DrawLineStringMode && !getPickedEditHandle(event.picks);
+    if (isPoint || isNewLineVertex) {
+      const position = this.props.modeConfig?.pickWorldPosition?.(event.screenCoords);
+      if (
+        Array.isArray(position) &&
+        position.length >= 3 &&
+        Number.isFinite(position[0]) &&
+        Number.isFinite(position[1]) &&
+        Number.isFinite(position[2]) &&
+        position[2] !== 0
+      ) {
+        super.onLayerClick({...event, mapCoords: [position[0], position[1], position[2]]});
+        return;
+      }
+    }
+    super.onLayerClick(event);
+  }
 }
 
 export type GetEditorLayerProps = {
   editorMenuActive: boolean;
   editor: Editor;
   onSetFeatures: (features: Feature[]) => any;
+  pickWorldPosition?: (xy: [number, number]) => number[] | null;
   setSelectedFeature: (feature: Feature | null, selectionContext?: FeatureSelectionContext) => any;
   onApplyPolygonFilterAll?: (feature: Feature) => any;
   viewport: Viewport;
@@ -96,6 +119,7 @@ export function getEditorLayer({
   editorMenuActive,
   editor,
   onSetFeatures,
+  pickWorldPosition,
   setSelectedFeature,
   onApplyPolygonFilterAll,
   featureCollection,
@@ -143,6 +167,7 @@ export function getEditorLayer({
     pickingRadius: EDITOR_LAYER_PICKING_RADIUS,
     modeConfig: {
       viewport,
+      pickWorldPosition,
       screenSpace: true,
       lockRectangles: true,
       // Turf circle() default; 64 vertices is a smooth tessellated polygon.

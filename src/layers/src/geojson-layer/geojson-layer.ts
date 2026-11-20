@@ -989,9 +989,10 @@ export default class GeoJsonLayer extends Layer {
       opacity: visConfig.strokeOpacity
     };
 
-    const pickable =
+    const hoverPickable =
       (interactionConfig.tooltip.enabled && visConfig.allowHover) ||
       Boolean(opts.experimentalContext?.isAnnotationMode && extruded);
+    const pickable = hoverPickable || Boolean(opts.experimentalContext?.pick3DSurfaces && extruded);
     const hoverOverlayData = extruded ? null : this._getHoverOverlayData(objectHovered);
 
     const {data, ...props} = dataProps;
@@ -1015,7 +1016,7 @@ export default class GeoJsonLayer extends Layer {
         id: deckLayerData.length > 1 ? `${this.id}-${i}` : this.id,
         pickable,
         highlightColor: HIGHLIGH_COLOR_3D,
-        autoHighlight: extruded && pickable,
+        autoHighlight: extruded && hoverPickable,
         stroked: visConfig.stroked && !offsetActive,
         filled: visConfig.filled,
         extruded,
