@@ -242,6 +242,12 @@ export type KeplerApplicationConfig = {
    */
   enableDrawOnMapSketches?: boolean;
 
+  /**
+   * Whether to offer Copy coordinates in the map context menu. Enabled by default.
+   * Saved maps with interactionConfig.coordinate.enabled set to false also disable copying.
+   */
+  enableCoordsCopy?: boolean;
+
   /** Whether to show the map navigation control (zoom buttons and compass). Enabled by default. */
   enableMapNavigationControl?: boolean;
 
@@ -532,6 +538,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableAnnotations: true,
 
   enableDrawOnMapSketches: true,
+
+  enableCoordsCopy: true,
 
   enableMapNavigationControl: true,
 

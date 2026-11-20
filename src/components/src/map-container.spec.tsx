@@ -2,7 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {createRef, StrictMode} from 'react';
-import {act, render} from '@testing-library/react';
+import {act, fireEvent, render, screen} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
+import {IntlProvider} from 'react-intl';
 import {Deck, MapView, WebMercatorViewport} from '@deck.gl/core';
 import {ScatterplotLayer} from '@deck.gl/layers';
 import {EditableGeoJsonLayer, ViewMode} from '@deck.gl-community/editable-layers';
@@ -19,6 +21,9 @@ import {
   wmsFeatureInfoUpdater
 } from '@kepler.gl/reducers';
 import type {CameraTour} from '@kepler.gl/types';
+import {theme} from '@kepler.gl/styles';
+import {messages} from '@kepler.gl/localization';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 
 jest.mock('styled-components', () => ({
   __esModule: true,
@@ -45,6 +50,79 @@ beforeEach(() => {
   jest.spyOn(MapContainer.prototype, '_renderMap').mockReturnValue(null);
 });
 afterEach(() => jest.restoreAllMocks());
+
+describe('map coordinate copying', () => {
+  const originalConfig = {...getApplicationConfig()};
+
+  afterEach(() => initApplicationConfig(originalConfig));
+
+  function setupCoordinateMenu(coordinateEnabled: boolean, enableAnnotations: boolean) {
+    initApplicationConfig({enableAnnotations});
+    (MapContainer.prototype._renderMap as jest.Mock).mockReturnValue(<div />);
+    const view = render(
+      <ThemeProvider theme={theme}>
+        <IntlProvider locale="en" messages={messages.en}>
+          <MapContainer
+            mapState={{...INITIAL_MAP_STATE, width: 400, height: 300}}
+            mapStyle={INITIAL_MAP_STYLE}
+            visState={{
+              ...INITIAL_VIS_STATE,
+              interactionConfig: {
+                ...INITIAL_VIS_STATE.interactionConfig,
+                coordinate: {
+                  ...INITIAL_VIS_STATE.interactionConfig.coordinate,
+                  enabled: coordinateEnabled
+                }
+              }
+            }}
+            mapStateActions={{updateMap: jest.fn()}}
+          />
+        </IntlProvider>
+      </ThemeProvider>
+    );
+    const map = view.container.firstElementChild as HTMLElement;
+    jest.spyOn(map, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 400,
+      height: 300
+    } as DOMRect);
+    fireEvent.contextMenu(map, {clientX: 200, clientY: 150});
+    return view;
+  }
+
+  test('offers coordinate copying by default', () => {
+    expect(getApplicationConfig().enableCoordsCopy).toBe(true);
+    setupCoordinateMenu(INITIAL_VIS_STATE.interactionConfig.coordinate.enabled, false);
+    expect(screen.getByRole('menuitem', {name: 'Copy coordinates'})).toBeTruthy();
+  });
+
+  test.each([
+    [true, true],
+    [true, false],
+    [false, true],
+    [false, false]
+  ])('requires both app flag %s and map setting %s', (enableCoordsCopy, coordinateEnabled) => {
+    initApplicationConfig({enableCoordsCopy});
+    setupCoordinateMenu(coordinateEnabled, true);
+    expect(Boolean(screen.queryByRole('menuitem', {name: 'Copy coordinates'}))).toBe(
+      enableCoordsCopy && coordinateEnabled
+    );
+    expect(screen.getByRole('menuitem', {name: 'Add Annotation'})).toBeTruthy();
+  });
+
+  test.each([
+    [false, true],
+    [true, false]
+  ])(
+    'does not open an empty menu with app flag %s and map setting %s',
+    (enableCoordsCopy, coordinateEnabled) => {
+      initApplicationConfig({enableCoordsCopy});
+      setupCoordinateMenu(coordinateEnabled, false);
+      expect(screen.queryByRole('menu')).toBeNull();
+    }
+  );
+});
 
 describe('Draw on Map click timing', () => {
   const A = [1, 1];
@@ -677,7 +755,9 @@ test('applies async layer defaults to their originating layer after reordering',
   const {props, layer, ref, rerender, getState} = setup();
   rerender({...getState(), layers: [{...layer, id: 'other'}, layer]});
   ref.current._onLayerVisConfigChange(layer, {showBounds: true});
-  expect(props.visStateActions.layerVisConfigChange).toHaveBeenCalledWith(layer, {showBounds: true});
+  expect(props.visStateActions.layerVisConfigChange).toHaveBeenCalledWith(layer, {
+    showBounds: true
+  });
 });
 
 test.each(['removed', 'replaced', 'unmounted'])(

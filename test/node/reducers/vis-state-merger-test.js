@@ -1495,7 +1495,7 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
 
           coordinate: {
             ...defaultInteractionConfig.coordinate,
-            enabled: false
+            enabled: true
           }
         },
         'Should disable interaction: null'
@@ -1593,6 +1593,51 @@ test('VisStateMerger.v1 -> mergeInteractions -> toWorkingState', t => {
   // test parsed interactions
   t.deepEqual(stateWData.interactionConfig, expectedInteractions, 'should merge interactionConfig');
   t.deepEqual(stateWData.interactionToBeMerged, {}, 'should clear interaction');
+
+  t.end();
+});
+
+test('VisStateMerger.v1 -> coordinates default on and preserve saved booleans', t => {
+  const initialState = visStateReducer(undefined, {});
+  t.equal(initialState.interactionConfig.coordinate.enabled, true, 'new maps enable coordinates');
+
+  [true, false].forEach(enabled => {
+    const state = {
+      ...cloneDeep(InitialState),
+      visState: {
+        ...initialState,
+        interactionConfig: {
+          ...initialState.interactionConfig,
+          coordinate: {...initialState.interactionConfig.coordinate, enabled}
+        }
+      }
+    };
+    const saved = SchemaManager.getConfigToSave(state);
+    t.equal(
+      saved.config.visState.interactionConfig.coordinate.enabled,
+      enabled,
+      `saves coordinate.enabled=${enabled}`
+    );
+    const parsed = SchemaManager.parseSavedConfig(saved);
+    const restored = visStateReducer(initialState, receiveMapConfig(parsed));
+    t.equal(
+      restored.interactionConfig.coordinate.enabled,
+      enabled,
+      `restores coordinate.enabled=${enabled}`
+    );
+  });
+
+  [undefined, {}, {coordinate: {}}, {coordinate: {enabled: null}}].forEach(interactionConfig => {
+    const restored = visStateReducer(
+      initialState,
+      receiveMapConfig({visState: {interactionConfig}})
+    );
+    t.equal(
+      restored.interactionConfig.coordinate.enabled,
+      true,
+      'uses the default when a saved map has no coordinate boolean'
+    );
+  });
 
   t.end();
 });

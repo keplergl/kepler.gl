@@ -23,6 +23,46 @@ global.ResizeObserver = class ResizeObserver {
 
 const panelMetadata = {id: 'interaction', label: 'sidebar.panels.interaction'};
 
+test('Components -> InteractionManager keeps coordinates internal for saved true and false', t => {
+  for (const enabled of [true, false]) {
+    const interactionConfig = {
+      ...defaultInteractionConfig,
+      coordinate: {...defaultInteractionConfig.coordinate, enabled}
+    };
+    const interactionConfigChange = sinon.spy();
+    const rendered = render(
+      <ThemeProvider theme={theme}>
+        <IntlWrapper>
+          <InteractionManager
+            interactionConfig={interactionConfig}
+            datasets={{}}
+            panelMetadata={panelMetadata}
+            visStateActions={{interactionConfigChange, setColumnDisplayFormat: () => {}}}
+          />
+        </IntlWrapper>
+      </ThemeProvider>
+    );
+    try {
+      t.equal(
+        rendered.container.querySelector('#coordinate-toggle'),
+        null,
+        `does not offer a coordinate switch when the saved value is ${enabled}`
+      );
+      t.ok(rendered.container.querySelector('#tooltip-toggle'), 'keeps the tooltip switch');
+      t.equal(
+        interactionConfig.coordinate.enabled,
+        enabled,
+        'preserves the saved coordinate value'
+      );
+      t.equal(interactionConfigChange.callCount, 0, 'does not rewrite the saved config');
+    } finally {
+      rendered.unmount();
+      rendered.container.remove();
+    }
+  }
+  t.end();
+});
+
 test('Components -> InteractionManager camera panels follow application config independently', t => {
   const {enableCameraBookmarks, enableCameraTour} = getApplicationConfig();
   const originalFlags = {enableCameraBookmarks, enableCameraTour};

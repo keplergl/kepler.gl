@@ -19,7 +19,7 @@ To toggle customization options on your map:
 
 2. Click the switch next to the options you wish to activate/deactivate.
 
-Alongside **Tooltip**, **Brushing**, and **Coordinate**, use **Bookmarks** to return to saved map views and **Fade on Zoom** to control visibility by zoom level. Only one of tooltip and brushing can be on at a time.
+Alongside **Tooltip** and **Brushing**, use **Bookmarks** to return to saved map views and **Fade on Zoom** to control visibility by zoom level. Only one of tooltip and brushing can be on at a time.
 
 ## Tooltips
 tooltip displays metrics when hovering over a data point. You can choose which fields are displayed from the tooltip config menu.
@@ -55,9 +55,9 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 ## Display Coordinates
 
-![coordinate](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/g-interactions-2.png "coordinate")
+Coordinates are enabled by default and appear in map tooltips. Right-click an empty area of the map and choose **Copy coordinates** to copy its latitude and longitude.
 
-When then on coordinate, a  panel contains latitude and longitude will follow your mouse
+There is no Coordinates switch in the Interactions panel. Saved maps retain their `visState.interactionConfig.coordinate.enabled` value; maps without this setting use `true`. Applications can disable coordinate copying with `initApplicationConfig({enableCoordsCopy: false})`.
 
 [Back to table of contents](README.md)
 

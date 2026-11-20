@@ -575,6 +575,13 @@ export default function MapContainerFactory(
       });
     }
 
+    _isCoordinateCopyEnabled(): boolean {
+      return (
+        getApplicationConfig().enableCoordsCopy &&
+        this.props.visState.interactionConfig.coordinate.enabled
+      );
+    }
+
     /** Hide and show write each annotation, the same flag the panel eye uses. */
     _setEachAnnotationVisible(isVisible: boolean) {
       const {visState, visStateActions} = this.props;
@@ -627,11 +634,11 @@ export default function MapContainerFactory(
         return;
       }
 
-      const {isExport, visState, mapState, index} = this.props;
+      const {isExport, mapState, index} = this.props;
       const annotationItems = this._annotationMenuItems();
       if (
         isExport ||
-        (!visState.interactionConfig.coordinate.enabled &&
+        (!this._isCoordinateCopyEnabled() &&
           !annotationItems.showAddAnnotation &&
           !annotationItems.showAnnotationToggle)
       ) {
@@ -2030,6 +2037,7 @@ export default function MapContainerFactory(
         return null;
       }
 
+      const enableCoordsCopy = this._isCoordinateCopyEnabled();
       const currentStyle = mapStyle.mapStyles?.[mapStyle.styleType];
       const baseMapLibraryName = getBaseMapLibrary(currentStyle);
       const baseMapLibraryConfig = getApplicationConfig().baseMapLibraryConfig[baseMapLibraryName];
@@ -2043,11 +2051,7 @@ export default function MapContainerFactory(
         const camera = this.context?.getInternalViewState(this.props.index) || this.props.mapState;
         containerStyle = {
           ...containerStyle,
-          ...getStarsBackgroundStyle(
-            camera,
-            this.props.mapState.width,
-            this.props.mapState.height
-          )
+          ...getStarsBackgroundStyle(camera, this.props.mapState.width, this.props.mapState.height)
         };
       }
 
@@ -2071,12 +2075,8 @@ export default function MapContainerFactory(
             <MapCoordinateMenu
               x={this.state.coordinateMenu.x}
               y={this.state.coordinateMenu.y}
-              text={
-                visState.interactionConfig.coordinate.enabled
-                  ? this.state.coordinateMenu.text
-                  : null
-              }
-              showCopy={visState.interactionConfig.coordinate.enabled}
+              text={enableCoordsCopy ? this.state.coordinateMenu.text : null}
+              showCopy={enableCoordsCopy}
               {...this._annotationMenuItems()}
               onAddAnnotation={this._onAddAnnotation}
               onToggleAnnotations={this._onToggleAnnotations}

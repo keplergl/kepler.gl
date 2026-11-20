@@ -372,7 +372,7 @@ export const defaultInteractionConfig: InteractionConfig = {
   coordinate: {
     id: 'coordinate',
     label: 'interactions.coordinate',
-    enabled: false,
+    enabled: true,
     position: null
   },
   annotation: {
