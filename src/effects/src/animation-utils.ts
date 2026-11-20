@@ -3,7 +3,12 @@
 
 import type {Effect, EffectAnimation, EffectParameterDescription} from '@kepler.gl/types';
 
-const NON_ANIMATABLE_PARAMETERS = new Set(['animateHeight', 'heightEnd', 'linearEasing']);
+const NON_ANIMATABLE_PARAMETERS = new Set([
+  'animateHeight',
+  'heightEnd',
+  'linearEasing',
+  'shadowMapResolution'
+]);
 const MAX_DATE_TIMESTAMP = 8.64e15;
 
 function isAnimatableParameter(description: EffectParameterDescription): boolean {
