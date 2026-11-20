@@ -43,7 +43,6 @@ type IconGeometry = object | null;
 export type IconLayerVisConfigSettings = {
   radius: VisConfigNumber;
   fixedRadius: VisConfigBoolean;
-  latitudeStableRadius: VisConfigBoolean;
   opacity: VisConfigNumber;
   colorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
@@ -52,7 +51,6 @@ export type IconLayerVisConfigSettings = {
 export type IconLayerVisConfig = {
   radius: number;
   fixedRadius: boolean;
-  latitudeStableRadius?: boolean;
   opacity: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
@@ -103,7 +101,6 @@ export const iconAngleAccessor =
 export const pointVisConfigs: {
   radius: 'radius';
   fixedRadius: 'fixedRadius';
-  latitudeStableRadius: 'latitudeStableRadius';
   opacity: 'opacity';
   colorRange: 'colorRange';
   radiusRange: 'radiusRange';
@@ -111,7 +108,6 @@ export const pointVisConfigs: {
 } = {
   radius: 'radius',
   fixedRadius: 'fixedRadius',
-  latitudeStableRadius: 'latitudeStableRadius',
   opacity: 'opacity',
   colorRange: 'colorRange',
   radiusRange: 'radiusRange',
@@ -504,7 +500,6 @@ export default class IconLayer extends Layer {
 
     const {radiusScale, radiusUnits} = getSymbolRadiusProps(
       this.getRadiusScaleByZoom(mapState),
-      this.config.visConfig.latitudeStableRadius === true,
       this.config.visConfig.fixedRadius,
       Boolean(mapState.globe?.enabled)
     );

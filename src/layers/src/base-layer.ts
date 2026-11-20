@@ -1826,7 +1826,6 @@ class Layer implements KeplerLayer {
                 scale: mapState.scale,
                 radius: this.config.visConfig.radius,
                 fixedRadius: this.meta.fixedRadius ?? this.config.visConfig.fixedRadius,
-                latitudeStableRadius: this.config.visConfig.latitudeStableRadius,
                 size: textLabel[i].size,
                 offset: textLabel[i].offset,
                 anchor: textLabel[i].anchor,

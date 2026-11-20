@@ -74,7 +74,6 @@ import {
 export type PointLayerVisConfigSettings = {
   radius: VisConfigNumber;
   fixedRadius: VisConfigBoolean;
-  latitudeStableRadius: VisConfigBoolean;
   opacity: VisConfigNumber;
   outline: VisConfigBoolean;
   thickness: VisConfigNumber;
@@ -107,7 +106,6 @@ export type PointLayerColumnsConfig = {
 export type PointLayerVisConfig = {
   radius: number;
   fixedRadius: boolean;
-  latitudeStableRadius?: boolean;
   opacity: number;
   outline: boolean;
   thickness: number;
@@ -220,7 +218,6 @@ function pushPointPosition(data: any[], pos: number[], index: number, neighbors?
 export const pointVisConfigs: {
   radius: 'radius';
   fixedRadius: 'fixedRadius';
-  latitudeStableRadius: 'latitudeStableRadius';
   opacity: 'opacity';
   outline: 'outline';
   thickness: 'thickness';
@@ -327,7 +324,6 @@ export const pointVisConfigs: {
   } as VisConfigNumber,
   radius: 'radius',
   fixedRadius: 'fixedRadius',
-  latitudeStableRadius: 'latitudeStableRadius',
   opacity: 'opacity',
   outline: 'outline',
   thickness: 'thickness',
@@ -753,7 +749,6 @@ export default class PointLayer extends Layer {
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
     const {radiusScale, radiusUnits} = getSymbolRadiusProps(
       this.getRadiusScaleByZoom(mapState, fixedRadius),
-      this.config.visConfig.latitudeStableRadius === true,
       fixedRadius,
       Boolean(mapState.globe?.enabled)
     );

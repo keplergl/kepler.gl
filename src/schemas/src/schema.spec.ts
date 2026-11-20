@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {layerPropsV1} from './vis-state-schema';
 import Schema from './schema';
 
 describe.each(['save', 'load'] as const)('Schema.%s', operation => {
@@ -104,14 +103,4 @@ describe.each(['save', 'load'] as const)('Schema.%s', operation => {
     expect(parents).toEqual([ancestor]);
     expect(settings.options).toEqual({visible: false});
   });
-});
-
-test.each(['point', 'icon'])('%s latitude-stable radius survives config save/load', type => {
-  const saved = layerPropsV1.config.save({visConfig: {latitudeStableRadius: true}});
-  expect(saved.config.visConfig.latitudeStableRadius).toBe(true);
-  const parsed = layerPropsV1.config.load(saved.config, [{type, config: {color: [255, 0, 0]}}]);
-  expect(parsed.config.visConfig.latitudeStableRadius).toBe(true);
-
-  const legacy = layerPropsV1.config.load({visConfig: {}}, [{type, config: {color: [255, 0, 0]}}]);
-  expect(legacy.config.visConfig.latitudeStableRadius).toBeUndefined();
 });

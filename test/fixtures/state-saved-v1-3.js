@@ -380,7 +380,6 @@ mergedLayer0.config = {
   visConfig: {
     radius: 10,
     fixedRadius: true,
-    latitudeStableRadius: false,
     opacity: 0.29,
     billboard: false,
     outline: false,

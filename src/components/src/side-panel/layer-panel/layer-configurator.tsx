@@ -799,14 +799,6 @@ export default function LayerConfiguratorFactory(
                   {...visConfiguratorProps}
                 />
               ) : null}
-              <VisConfigSwitch
-                {...layer.visConfigSettings.latitudeStableRadius}
-                {...visConfiguratorProps}
-                disabled={Boolean(
-                  layer.config.visConfig.fixedRadius &&
-                    (layer.type === LAYER_TYPES.icon || layer.config.sizeField)
-                )}
-              />
               <VisConfigSwitch {...layer.visConfigSettings.billboard} {...visConfiguratorProps} />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>

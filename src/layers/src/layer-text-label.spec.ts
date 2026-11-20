@@ -350,7 +350,7 @@ test('collision labels preserve shared extensions without mutating another layer
 
 describe('latitude-stable point and icon sizing', () => {
   test.each([PointLayer, IconLayer])(
-    '%p uses common radius only when opted in on the flat map',
+    '%p uses common radius on the flat map and metric radius on the globe',
     Layer => {
       const layer = new Layer({dataId: 'data'});
       const render = (enabled: boolean) =>
@@ -361,12 +361,7 @@ describe('latitude-stable point and icon sizing', () => {
           interactionConfig: {brush: {config: {size: 0}}},
           visible: true
         })[0].props;
-      const defaults = render(false);
-      expect(defaults.radiusUnits).toBe('meters');
-      layer.updateLayerVisConfig({latitudeStableRadius: true});
-      const stable = render(false);
-      expect(stable.radiusUnits).toBe('common');
-      expect(stable.radiusScale).toBeLessThan(defaults.radiusScale);
+      expect(render(false).radiusUnits).toBe('common');
       expect(render(true).radiusUnits).toBe('meters');
     }
   );
@@ -374,7 +369,7 @@ describe('latitude-stable point and icon sizing', () => {
   test('matches the equatorial size and keeps label offsets stable across latitudes', () => {
     const equator = {zoom: 14, latitude: 0, longitude: 0};
     const north = {...equator, latitude: 60};
-    const {radiusScale, radiusUnits} = getSymbolRadiusProps(2, true, false, false);
+    const {radiusScale, radiusUnits} = getSymbolRadiusProps(2, false, false);
     const label = {...DEFAULT_TEXT_LABEL, anchor: 'start'};
     const oldOffset = getTextOffsetByRadius(2, 20, equator)(label);
     expect(radiusUnits).toBe('common');
@@ -387,11 +382,10 @@ describe('latitude-stable point and icon sizing', () => {
   });
 
   test.each([
-    [false, false, false],
-    [true, true, false],
-    [true, false, true]
-  ])('preserves metric radius when opt-in=%s, fixed=%s, globe=%s', (enabled, fixed, globe) => {
-    expect(getSymbolRadiusProps(3, enabled, fixed, globe)).toEqual({
+    [true, false],
+    [false, true]
+  ])('preserves metric radius when fixed=%s or globe=%s', (fixed, globe) => {
+    expect(getSymbolRadiusProps(3, fixed, globe)).toEqual({
       radiusScale: 3,
       radiusUnits: 'meters'
     });

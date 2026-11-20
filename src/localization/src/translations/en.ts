@@ -223,9 +223,6 @@ export default {
     sliderAction: '{action} for {setting}',
     fixedRadius: 'Fixed Radius to meter',
     fixedRadiusDescription: 'Map radius to absolute radius in meters, e.g. 5 to 5 meters',
-    latitudeStableRadius: 'Latitude-stable radius',
-    latitudeStableRadiusDescription:
-      'Keep symbols the same size across latitudes on the flat map. Fixed radius in meters is unchanged.',
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
     radiusRangePixels: 'Radius Range in pixels',
