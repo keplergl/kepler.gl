@@ -465,6 +465,7 @@ export type ComputeDeckLayersProps = {
     editor: Editor;
     editorMenuActive: boolean;
     onSetFeatures: (features: Feature[]) => any;
+    pickWorldPosition?: (xy: [number, number]) => number[] | null;
     setSelectedFeature: (
       feature: Feature | null,
       selectionContext?: FeatureSelectionContext
@@ -509,6 +510,7 @@ function computeDeckLayersFromLayerOrder(
     mapLayers: any;
     hasShadowEffect: boolean;
     isAnnotationMode?: boolean;
+    pick3DSurfaces: boolean;
   },
   layerCallbacks?: any
 ): any[] {
@@ -523,7 +525,8 @@ function computeDeckLayersFromLayerOrder(
     filters,
     mapLayers,
     hasShadowEffect,
-    isAnnotationMode
+    isAnnotationMode,
+    pick3DSurfaces
   } = renderProps;
   return layerOrder
     .slice()
@@ -574,7 +577,8 @@ function computeDeckLayersFromLayerOrder(
           mapLayers,
           experimentalContext: {
             hasShadowEffect,
-            isAnnotationMode
+            isAnnotationMode,
+            pick3DSurfaces
           }
         },
         bindedLayerCallbacks
@@ -613,6 +617,7 @@ export function computeDeckLayers(
     editorInfo,
     isAnnotationMode
   } = options || {};
+  const pick3DSurfaces = Boolean(editorInfo?.pickWorldPosition);
 
   let dataLayers: any[] = [];
 
@@ -651,7 +656,8 @@ export function computeDeckLayers(
                 filters,
                 mapLayers,
                 hasShadowEffect,
-                isAnnotationMode
+                isAnnotationMode,
+                pick3DSurfaces
               },
               layerCallbacks
             )
@@ -686,7 +692,8 @@ export function computeDeckLayers(
             mapLayers,
             experimentalContext: {
               hasShadowEffect,
-              isAnnotationMode
+              isAnnotationMode,
+              pick3DSurfaces
             }
           },
           bindedLayerCallbacks
@@ -711,7 +718,7 @@ export function computeDeckLayers(
         mapboxApiAccessToken,
         mapboxApiUrl,
         threeDBuildingColor: mapStyle.threeDBuildingColor,
-        pickable: Boolean(isAnnotationMode),
+        pickable: Boolean(isAnnotationMode) || pick3DSurfaces,
         updateTriggers: {
           getFillColor: mapStyle.threeDBuildingColor
         }

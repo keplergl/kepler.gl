@@ -9,6 +9,7 @@
 // Copyright contributors to the kepler.gl project
 
 import WebSocket from 'ws';
+import {MAP_TOOL_IDS} from '../types';
 import {KeplerMcpBridge, toToolName} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';
 
@@ -46,7 +47,8 @@ describe('kepler-mcp bridge server', () => {
     // MCP tool names fold the dot: map.add-layer → map_add_layer
     expect(names).toContain(toToolName('map.add-layer'));
     expect(names).toContain(toToolName('map.set-basemap'));
-    expect(names.length).toBeGreaterThan(8);
+    expect(names).toContain(toToolName('map.get-annotations'));
+    expect(names.slice().sort()).toEqual(MAP_TOOL_IDS.map(toToolName).sort());
   });
 
   it('builds the page URL with the token', () => {
@@ -91,6 +93,8 @@ describe('kepler-mcp bridge server', () => {
       ['map.set-layer-options', 'options'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
+      ['map.add-annotation', 'anchorPoint'],
+      ['map.set-view-mode', 'globe'],
       ['map.set-zoom-fade', 'controllers']
     ]) {
       const tool = tools.find(item => item.name === toToolName(id));

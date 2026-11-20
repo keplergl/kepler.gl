@@ -137,7 +137,11 @@ describe('Draw on Map click timing', () => {
     jest.useRealTimers();
   });
 
-  function setupDrawing(editorMode = EDITOR_MODES.DRAW_POLYGON, bitmapEditing = false) {
+  function setupDrawing(
+    editorMode = EDITOR_MODES.DRAW_POLYGON,
+    bitmapEditing = false,
+    pickWorldPosition?: (xy: [number, number]) => number[] | null
+  ) {
     const element = document.createElement('div');
     document.body.appendChild(element);
     // Use deck's real recognizers: calling a mode's handleClick directly would
@@ -172,6 +176,7 @@ describe('Draw on Map click timing', () => {
       editorMenuActive: true,
       editor: {...INITIAL_VIS_STATE.editor, mode: editorMode},
       onSetFeatures,
+      pickWorldPosition,
       setSelectedFeature: jest.fn(),
       featureCollection: {type: 'FeatureCollection', features: []},
       selectedFeatureIndexes: [],
@@ -337,6 +342,67 @@ describe('Draw on Map click timing', () => {
     }
   );
 
+  test('commits a point at the picked XYZ and falls back to the original ground point', () => {
+    const pickWorldPosition = jest
+      .fn()
+      .mockReturnValueOnce([2, 3, 48])
+      .mockReturnValueOnce([9, 2, 0])
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce([0, 0, NaN]);
+    const {click, pointer, onSetFeatures} = setupDrawing(
+      EDITOR_MODES.DRAW_POINT,
+      false,
+      pickWorldPosition
+    );
+    pointer('mousemove', A);
+    expect(pickWorldPosition).not.toHaveBeenCalled();
+    [A, B, C, D].forEach(coords => click(coords));
+    expect(pickWorldPosition).toHaveBeenNthCalledWith(1, [10, 10]);
+    expect(onSetFeatures.mock.calls.map(([features]) => features[0].geometry.coordinates)).toEqual([
+      [2, 3, 48],
+      B,
+      C,
+      D
+    ]);
+  });
+
+  test('retains distinct clicked elevations on a completed line without picking during hover or finish', () => {
+    const first = [2, 3, 20];
+    const last = [7, 8, 75];
+    const pickWorldPosition = jest
+      .fn()
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(last);
+    const {click, pointer, getPicks, onSetFeatures} = setupDrawing(
+      EDITOR_MODES.DRAW_LINESTRING,
+      false,
+      pickWorldPosition
+    );
+    getPicks.mockReturnValue([]);
+    click(A);
+    pointer('mousemove', B);
+    click(B);
+    click(C);
+    jest.advanceTimersByTime(100);
+    click(C);
+    expect(pickWorldPosition).toHaveBeenCalledTimes(3);
+    expect(onSetFeatures).toHaveBeenCalledTimes(1);
+    expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual([first, B, last]);
+  });
+
+  test('polygon clicks never pick elevation', () => {
+    const pickWorldPosition = jest.fn().mockReturnValue([2, 3, 48]);
+    const {click, onSetFeatures} = setupDrawing(
+      EDITOR_MODES.DRAW_POLYGON,
+      false,
+      pickWorldPosition
+    );
+    [A, B, C, A].forEach(coords => click(coords));
+    expect(pickWorldPosition).not.toHaveBeenCalled();
+    expect(onSetFeatures.mock.calls[0][0][0].geometry.coordinates).toEqual([[A, B, C, A]]);
+  });
+
   test('double-clicking before a polygon has three vertices does not finish or duplicate it', () => {
     const {click, guides, onSetFeatures} = setupDrawing();
     click(A);
@@ -373,6 +439,30 @@ describe('Draw on Map click timing', () => {
         .map(f => f.geometry.coordinates)
     ).toEqual([B]);
   });
+});
+
+test('sketch depth picking queries only visible, pickable surfaces', () => {
+  const container = new MapContainer({});
+  const pickObject = jest.fn().mockReturnValue({coordinate: [1, 2, 35]});
+  const getLayers = jest.fn().mockReturnValue([
+    {id: 'flat', props: {visible: true, pickable: true}},
+    {id: 'roof', props: {visible: true, pickable: true, extruded: true}},
+    {id: 'hidden-roof', props: {visible: false, pickable: true, extruded: true}},
+    {id: 'disabled-roof', props: {visible: true, pickable: false, extruded: true}}
+  ]);
+  container._deck = {layerManager: {getLayers}, pickObject};
+
+  expect(container._pickSketchWorldPosition([10, 20])).toEqual([1, 2, 35]);
+  expect(pickObject).toHaveBeenCalledWith({
+    x: 10,
+    y: 20,
+    radius: 0,
+    unproject3D: true,
+    layerIds: ['roof']
+  });
+  getLayers.mockReturnValue([{id: 'flat', props: {visible: true, pickable: true}}]);
+  expect(container._pickSketchWorldPosition([10, 20])).toBeNull();
+  expect(pickObject).toHaveBeenCalledTimes(1);
 });
 
 describe('camera tour path dragging', () => {

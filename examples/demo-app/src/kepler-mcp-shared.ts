@@ -49,6 +49,7 @@ const SKILL_REQUIRED = new Set([
   'map.set-layer-options',
   'map.camera-bookmarks',
   'map.camera-tour',
+  'map.add-annotation',
   'map.set-zoom-fade',
   'map.set-basemap'
 ]);
