@@ -388,7 +388,7 @@ describe('point aggregation for contours', () => {
     expect(grid.stepLng * Math.cos(Math.PI / 3)).toBeCloseTo(grid.stepLat, 12);
     expect(grid.longitude + (grid.width - 1) * grid.stepLng).toBeGreaterThanOrEqual(0.03);
     expect(grid.latitude).toBeLessThanOrEqual(59.99);
-    expect(grid.latitude + (grid.height - 2) * grid.stepLat).toBeCloseTo(60.01);
+    expect(grid.latitude + (grid.height - 1 - grid.border!) * grid.stepLat).toBeCloseTo(60.01);
   });
 
   test('resolution determines which observations are averaged', () => {
@@ -443,6 +443,58 @@ describe('point aggregation for contours', () => {
     expect(west).toBeLessThan(0);
   });
 
+  test.each([
+    [32, 1],
+    [48, 2],
+    [64, 2],
+    [80, 3],
+    [128, 4],
+    [256, 8]
+  ])('fits a %s-cell axis around %s border cells on each side', (resolution, border) => {
+    const grid = buildContourGrid([point(0, 0, 100), point(0.03, 0.03, 1)], resolution)!;
+    expect(grid).toMatchObject({width: resolution, height: resolution, border});
+    expect(grid.longitude + border * grid.stepLng).toBeCloseTo(0, 12);
+    expect(grid.latitude + border * grid.stepLat).toBeCloseTo(0, 12);
+    const last = resolution - 1 - border;
+    expect(grid.longitude + last * grid.stepLng).toBeCloseTo(0.03, 8);
+    expect(grid.latitude + last * grid.stepLat).toBeCloseTo(0.03, 12);
+    expect(grid.values[border * resolution + border]).toBe(100);
+    expect(grid.values[last * resolution + last]).toBe(1);
+    for (let row = 0; row < resolution; row++) {
+      for (let col = 0; col < resolution; col++) {
+        if (row < border || row > last || col < border || col > last) {
+          expect(grid.values[row * resolution + col]).toBe(0);
+        }
+      }
+    }
+  });
+
+  test.each([false, true])('smooths edge peaks across the padding, below=%s', below => {
+    const sign = below ? -1 : 1;
+    const grid = buildContourGrid([point(0, 0, 100 * sign), point(0.03, 0.03, sign)], 128)!;
+    const border = grid.border!;
+    const smoothed = smoothScalarGrid(grid, 2);
+    const edge = Array.from(smoothed.slice(border * grid.width, border * grid.width + border + 1));
+    expect(edge[0]).toBe(0);
+    for (let col = 1; col <= border; col++) {
+      expect(edge[col] * sign).toBeGreaterThan(edge[col - 1] * sign);
+    }
+    const contours = generateContours(grid, {
+      smoothing: 2,
+      levels: 2,
+      below,
+      domain: below ? [-2, -1] : [1, 2]
+    });
+    expect(contours).toHaveLength(2);
+    const west = Math.min(
+      ...contours.flatMap(feature =>
+        feature.geometry.coordinates.flat(2).map(([longitude]) => longitude)
+      )
+    );
+    expect(west).toBeGreaterThan(grid.longitude);
+    expect(west).toBeLessThan(-grid.stepLng);
+  });
+
   test('limits zero-inclusive contours to the same ten-cell grid', () => {
     const grid = buildContourGrid([point(0, 0, 100), point(0.03, 0.03, 1)], 10)!;
     const result = generateContours(grid, {smoothing: 2, levels: 2, below: true, domain: [1, 2]});
@@ -454,21 +506,30 @@ describe('point aggregation for contours', () => {
     }
   });
 
-  test('derives automatic levels from the interior without dropping real zeros', () => {
-    const settings = {smoothing: 0, levels: 2, below: false};
-    const grid = buildContourGrid(
-      [point(0, 0, 50), point(0.01, 0, 60), point(0, 0.01, 80), point(0.01, 0.01, 110)],
-      4
-    )!;
-    const levels = (opts: ContourOptions = settings) =>
-      generateContours(grid, opts).map(feature => feature.properties.threshold);
-    expect(grid.border).toBe(1);
-    expect(levels()).toEqual([70, 90]);
-    expect(levels({...settings, domain: [0, 30]})).toEqual([0, 30]);
+  test.each([4, 64])(
+    'derives automatic levels inside a %s-cell grid without dropping real zeros',
+    resolution => {
+      const settings = {smoothing: 0, levels: 2, below: false};
+      const grid = buildContourGrid(
+        [point(0, 0, 50), point(0.01, 0, 60), point(0, 0.01, 80), point(0.01, 0.01, 110)],
+        resolution
+      )!;
+      const border = grid.border!;
+      for (let row = border; row < grid.height - border; row++) {
+        for (let col = border; col < grid.width - border; col++) {
+          const index = row * grid.width + col;
+          if (grid.values[index] === 0) grid.values[index] = 50;
+        }
+      }
+      const levels = (opts: ContourOptions = settings) =>
+        generateContours(grid, opts).map(feature => feature.properties.threshold);
+      expect(levels()).toEqual([70, 90]);
+      expect(levels({...settings, domain: [0, 30]})).toEqual([0, 30]);
 
-    grid.values[grid.width + 1] = 0;
-    expect(levels()).toEqual([110 / 3, (110 * 2) / 3]);
-  });
+      grid.values[border * grid.width + border] = 0;
+      expect(levels()).toEqual([110 / 3, (110 * 2) / 3]);
+    }
+  );
 
   test.each<[string, [number, number][]]>([
     [

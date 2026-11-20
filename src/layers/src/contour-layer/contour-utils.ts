@@ -14,8 +14,8 @@ export type ScalarGrid = {
   stepLng: number;
   stepLat: number;
   values: Float64Array;
-  /** One empty cell around the samples, when the resolution and extent permit. */
-  border?: 1;
+  /** Padding cells on each side of the samples, when the extent permits. */
+  border?: number;
 };
 export type ContourFeature = Feature<
   MultiPolygon,
@@ -88,10 +88,10 @@ export function buildContourGrid(
   const spanX = (east - west) * metersPerDegreeLng;
   const spanY = (north - south) * METERS_PER_DEGREE_LAT;
   const span = Math.max(spanX, spanY);
-  // Reserve a zero ring inside the selected allocation. The outer observations
-  // lie on the first and last interior cells, so an N-cell axis uses N - 3
-  // sample intervals. Two interior cells are required to anchor an extent.
-  const gridLayout = (border: 0 | 1) => {
+  // Reserve padding inside the selected allocation. An N-cell axis with B
+  // border cells uses N - 2B - 1 sample intervals. Two interior cells are
+  // required to anchor an extent.
+  const gridLayout = (border: number) => {
     const innerAxis = axis - 2 * border;
     const size = span > 0 ? span / (innerAxis - 1) : 1;
     const stepLng = size / metersPerDegreeLng;
@@ -110,7 +110,8 @@ export function buildContourGrid(
       stepLat
     };
   };
-  let layout = gridLayout(reserveBorder && axis >= 4 ? 1 : 0);
+  const borderWidth = reserveBorder && axis >= 4 ? Math.max(1, Math.round(axis / 32)) : 0;
+  let layout = gridLayout(borderWidth);
   // Don't make legacy near-pole or date-line extents wrap because of padding.
   if (
     layout.border &&
@@ -193,7 +194,7 @@ export function smoothScalarGrid(grid: ScalarGrid, sigma: number): Float64Array 
   const values = Float64Array.from(grid.values, (value, i) =>
     Number.isFinite(value) && denominator[i] > 0 ? numerator[i] / denominator[i] : NaN
   );
-  // Keep the empty boundary even when smoothing spreads an interior peak.
+  // Let smoothing spread into the padding, but keep its outermost cells zero.
   // Otherwise low thresholds would still reach the edge of the fixed grid.
   if (grid.border) {
     values.fill(0, 0, grid.width);

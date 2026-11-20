@@ -629,14 +629,14 @@ test('3D contour fills derive slope normals and respond to scene lighting after 
 
 test('reserves border only for flat contours with the same grid allocation', async () => {
   const {layer, datasets} = await setup();
-  layer.updateLayerVisConfig({gridResolution: 10, smoothing: 2});
+  layer.updateLayerVisConfig({gridResolution: 64, smoothing: 2});
   const flat = layer.formatLayerData(datasets);
-  expect(flat.grid).toMatchObject({width: 10, height: 10, border: 1});
+  expect(flat.grid).toMatchObject({width: 64, height: 64, border: 2});
   expect(layer.shouldCalculateLayerData(['enable3d'])).toBe(true);
 
   layer.updateLayerVisConfig({enable3d: true});
   const surface = layer.formatLayerData(datasets);
-  expect(surface.grid).toMatchObject({width: 10, height: 10});
+  expect(surface.grid).toMatchObject({width: 64, height: 64});
   expect(surface.grid?.border).toBeUndefined();
 
   layer.updateLayerVisConfig({enable3d: false});
