@@ -1102,6 +1102,54 @@ test('legacy visibility displays equivalent opacity blocks and converts only whe
   expect(source.config.visibilityTiming).toEqual(timing);
 });
 
+test.each(['layer', 'annotation'] as const)(
+  '%s block time inputs display and edit seconds with at most two decimal places',
+  kind => {
+    const timing = {
+      id: 'precise',
+      startTimeMs: 1234.5678,
+      endTimeMs: 9876.5432,
+      startValue: 0,
+      endValue: 1,
+      easing: 'linear' as const
+    };
+    const points = layer([timing]);
+    const harbor = annotation([timing]);
+    const {props, rerender} = setup({layers: [points], annotations: [harbor]});
+    const open = () =>
+      fireEvent.doubleClick(
+        screen.getByRole('button', {name: `Opacity 1 · ${kind === 'layer' ? 'Points' : 'Harbor'}`})
+      );
+    const saved = () =>
+      kind === 'layer'
+        ? (props.onLayerConfigChange as jest.Mock).mock.lastCall[1].propertyTransitions.opacity
+        : (props.onAnnotationChange as jest.Mock).mock.lastCall[1].opacityTransitions;
+    open();
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(1.23);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9.88);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(saved()).toEqual([timing]);
+    open();
+    const moved = {...timing, startTimeMs: 3456.789, endTimeMs: 8765.432};
+    points.config.opacityTransitions = [moved];
+    harbor.opacityTransitions = [moved];
+    rerender(<Editor {...props} />);
+    const start = screen.getByRole('spinbutton', {name: 'Start time (seconds)'});
+    const end = screen.getByRole('spinbutton', {name: 'End time (seconds)'});
+    expect(start).toHaveValue(3.46);
+    expect(end).toHaveValue(8.77);
+    fireEvent.change(start, {target: {value: ''}});
+    expect(start).toHaveValue(null);
+    expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+    fireEvent.change(start, {target: {value: '2.3456'}});
+    fireEvent.change(end, {target: {value: '7.891'}});
+    expect(start).toHaveValue(2.35);
+    expect(end).toHaveValue(7.89);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(saved()).toEqual([{...timing, startTimeMs: 2350, endTimeMs: 7890}]);
+  }
+);
+
 test('opacity popup times follow a block edit while unsaved endpoint values remain', () => {
   const source = layer(opacityTransitions());
   const {props, rerender} = setup({layers: [source]});

@@ -23,6 +23,7 @@ import {
   isRgbColor,
   normalizeLayerPropertyTransitions,
   normalizeLayerOpacityTransitions,
+  roundValToStep,
   rgbToHex
 } from '@kepler.gl/utils';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
@@ -363,6 +364,8 @@ const MenuHeading = styled.div`
 const title = (value: string) =>
   value.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
 const seconds = (value: number) => `${Math.round(value / 10) / 100} s`;
+const formatTimeInput = (value: string) =>
+  value.trim() ? String(roundValToStep(0, 0.01, Number(value))) : value;
 const formatPropertyValue = (value: number | RGBColor, property: LayerAnimatableProp) =>
   Array.isArray(value)
     ? rgbToHex(value)
@@ -486,8 +489,8 @@ function PropertySettings({
                   }
                 ]
               : []),
-            {key: 'start', label: 'Start time (seconds)', min: 0, max: undefined, step: 0.1},
-            {key: 'end', label: 'End time (seconds)', min: 0, max: undefined, step: 0.1}
+            {key: 'start', label: 'Start time (seconds)', min: 0, max: undefined, step: 0.01},
+            {key: 'end', label: 'End time (seconds)', min: 0, max: undefined, step: 0.01}
           ].map(({key, label, min, max, step}) => (
             <div key={key}>
               <PanelLabel htmlFor={`${id}-${key}`}>{label}</PanelLabel>
@@ -497,8 +500,17 @@ function PropertySettings({
                 min={min}
                 max={max}
                 step={step}
-                value={draft[key]}
-                onChange={event => setDraft({...draft, [key]: event.target.value})}
+                // Keep saved precision until this time field is edited.
+                value={key === 'start' || key === 'end' ? formatTimeInput(draft[key]) : draft[key]}
+                onChange={event =>
+                  setDraft({
+                    ...draft,
+                    [key]:
+                      key === 'start' || key === 'end'
+                        ? formatTimeInput(event.target.value)
+                        : event.target.value
+                  })
+                }
               />
             </div>
           ))}

@@ -204,6 +204,51 @@ describe('effect parameter editing', () => {
     });
   });
 
+  test('effect time inputs round displayed and edited seconds without changing untouched timing', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.6});
+    const timing = {
+      startValue: 0.2,
+      endValue: 0.8,
+      easing: 'linear' as const,
+      startTimeMs: 1234.5678,
+      endTimeMs: 9876.5432
+    };
+    effect.animation = {amount: timing};
+    const update = jest.fn();
+    const props = {
+      effect,
+      name: 'amount',
+      RangeSlider: Slider,
+      embedded: true,
+      updateEffectConfig: update
+    };
+    const {rerender} = render(<EffectAnimationControl {...props} />, {wrapper: Wrapper});
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(1.23);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9.88);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual(timing);
+    rerender(<EffectAnimationControl key="reopened" {...props} />);
+    const start = screen.getByRole('spinbutton', {name: 'Start time (seconds)'});
+    const end = screen.getByRole('spinbutton', {name: 'End time (seconds)'});
+    effect.animation = {amount: {...timing, startTimeMs: 3456.789, endTimeMs: 8765.432}};
+    rerender(<EffectAnimationControl key="reopened" {...props} effect={{...effect}} />);
+    expect(start).toHaveValue(3.46);
+    expect(end).toHaveValue(8.77);
+    fireEvent.change(start, {target: {value: ''}});
+    expect(start).toHaveValue(null);
+    expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+    fireEvent.change(start, {target: {value: '2.3456'}});
+    fireEvent.change(end, {target: {value: '7.891'}});
+    expect(start).toHaveValue(2.35);
+    expect(end).toHaveValue(7.89);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual({
+      ...timing,
+      startTimeMs: 2350,
+      endTimeMs: 7890
+    });
+  });
+
   test.each(['Cancel', 'Close effect settings', 'Remove animation'])(
     'embedded %s closes settings without applying an endpoint draft',
     action => {

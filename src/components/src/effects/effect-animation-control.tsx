@@ -7,6 +7,7 @@ import moment from 'moment-timezone';
 import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Effect, EffectParameterAnimation, EffectUpdateProps} from '@kepler.gl/types';
+import {roundValToStep} from '@kepler.gl/utils';
 
 import {Add, ArrowDownSmall, Close, Help, Trash} from '../common/icons';
 import {Button, Input, PanelLabel, Tooltip} from '../common/styled-components';
@@ -15,6 +16,9 @@ import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
 import {EffectDateTimeInput} from './effect-time-configurator';
+
+const formatTimeInput = (value: string) =>
+  value.trim() ? String(roundValToStep(0, 0.01, Number(value))) : value;
 
 const IconButton = styled(Button).attrs({link: true})`
   padding: 0;
@@ -419,18 +423,19 @@ export default function EffectAnimationControl({
                 id={`${timingId}-start`}
                 type="number"
                 min={0}
-                step={0.1}
-                value={startSeconds}
-                onChange={event => setStartSeconds(event.target.value)}
+                step={0.01}
+                // Keep saved precision until this time field is edited.
+                value={formatTimeInput(startSeconds)}
+                onChange={event => setStartSeconds(formatTimeInput(event.target.value))}
               />
               <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
               <Input
                 id={`${timingId}-end`}
                 type="number"
                 min={0}
-                step={0.1}
-                value={endSeconds}
-                onChange={event => setEndSeconds(event.target.value)}
+                step={0.01}
+                value={formatTimeInput(endSeconds)}
+                onChange={event => setEndSeconds(formatTimeInput(event.target.value))}
               />
               {!validTiming && (
                 <ParameterName role="alert">
