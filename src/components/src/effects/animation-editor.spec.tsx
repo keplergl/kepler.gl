@@ -112,7 +112,9 @@ beforeAll(() => {
     constructor(type: string, init: PointerEventInit = {}) {
       super(type, init);
       this.pointerId = init.pointerId ?? 1;
-      this.isPrimary = true;
+      this.isPrimary = init.isPrimary ?? true;
+      // Retain subpixel coordinates in the PointerEvent shim.
+      Object.defineProperty(this, 'clientX', {value: init.clientX ?? 0});
     }
   } as typeof PointerEvent;
 });
@@ -162,6 +164,115 @@ test('uses a shared time ruler and compact playback controls independently of th
   fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
   expect(props.playback.stop).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+});
+
+test('holding and dragging the playhead seeks continuously and updates the displayed frame', () => {
+  const {props, rerender} = setup();
+  (props.playback.seek as jest.Mock).mockImplementation(elapsed => {
+    rerender(<Editor {...props} playback={{...props.playback, elapsed}} />);
+  });
+  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+  let captured: number | null = null;
+  ruler.setPointerCapture = jest.fn(pointerId => {
+    captured = pointerId;
+  });
+  ruler.hasPointerCapture = pointerId => captured === pointerId;
+  ruler.releasePointerCapture = jest.fn(() => {
+    captured = null;
+  });
+  fireEvent.pointerDown(ruler, {pointerId: 7, button: 0, clientX: 50});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(2500);
+  expect(ruler).toHaveAttribute('aria-valuenow', '2500');
+  expect(ruler).toHaveFocus();
+  expect(ruler.setPointerCapture).toHaveBeenCalledWith(7);
+  fireEvent.pointerMove(ruler, {pointerId: 7, clientX: 80});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(4000);
+  fireEvent.pointerMove(ruler, {pointerId: 7, clientX: 165.5});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(8275);
+  expect(ruler).toHaveAttribute('aria-valuenow', '8275');
+  expect(screen.getByLabelText('Animation time')).toHaveTextContent('8.28 s / 20 s');
+  fireEvent.pointerUp(ruler, {pointerId: 7, clientX: 210});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(10500);
+  expect(ruler.releasePointerCapture).toHaveBeenCalledWith(7);
+  const calls = (props.playback.seek as jest.Mock).mock.calls.length;
+  fireEvent.click(ruler, {clientX: 50});
+  fireEvent.pointerMove(ruler, {pointerId: 7, clientX: 300});
+  expect(props.playback.seek).toHaveBeenCalledTimes(calls);
+  expect(ruler).toHaveAttribute('aria-valuenow', '10500');
+  expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+  expect(props.updateEffectConfig).not.toHaveBeenCalled();
+});
+
+test('playhead dragging uses the zoomed ruler and clamps captured movement outside its bounds', () => {
+  const {props} = setup();
+  fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
+  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+  jest.spyOn(ruler, 'getBoundingClientRect').mockReturnValue({
+    ...ruler.getBoundingClientRect(),
+    left: 100,
+    right: 500
+  });
+  fireEvent.pointerDown(ruler, {pointerId: 1, button: 0, clientX: 150});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(5000);
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 50});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(0);
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 600});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(20000);
+  fireEvent.pointerUp(ruler, {pointerId: 1, clientX: 450});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(20000);
+});
+
+test.each(['pointerCancel', 'lostPointerCapture'] as const)(
+  '%s ends playhead dragging without another seek',
+  eventName => {
+    const {props} = setup();
+    const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+    fireEvent.pointerDown(ruler, {pointerId: 1, button: 0, clientX: 100});
+    fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 200});
+    fireEvent[eventName](ruler, {pointerId: 1, clientX: 300});
+    fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 300});
+    fireEvent.pointerUp(ruler, {pointerId: 1, clientX: 300});
+    expect(props.playback.seek).toHaveBeenCalledTimes(2);
+    expect(props.playback.seek).toHaveBeenLastCalledWith(10000);
+    fireEvent.pointerDown(ruler, {pointerId: 2, button: 0, clientX: 50});
+    expect(props.playback.seek).toHaveBeenLastCalledWith(2500);
+  }
+);
+
+test('playhead dragging ignores other pointers, non-primary input and a zero-width ruler', () => {
+  const {props} = setup();
+  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+  fireEvent.pointerDown(ruler, {pointerId: 1, button: 2, clientX: 100});
+  fireEvent.pointerDown(ruler, {pointerId: 2, button: 0, isPrimary: false, clientX: 100});
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 100});
+  expect(props.playback.seek).not.toHaveBeenCalled();
+  fireEvent.pointerDown(ruler, {pointerId: 1, button: 0, clientX: 100});
+  fireEvent.pointerDown(ruler, {pointerId: 2, button: 0, clientX: 200});
+  fireEvent.pointerMove(ruler, {pointerId: 2, clientX: 200});
+  fireEvent.pointerUp(ruler, {pointerId: 2, clientX: 200});
+  expect(props.playback.seek).toHaveBeenCalledTimes(1);
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 200});
+  expect(props.playback.seek).toHaveBeenLastCalledWith(10000);
+  fireEvent.pointerUp(ruler, {pointerId: 1, clientX: 200});
+  (props.playback.seek as jest.Mock).mockClear();
+  jest.spyOn(ruler, 'getBoundingClientRect').mockReturnValue({
+    ...ruler.getBoundingClientRect(),
+    width: 0
+  });
+  fireEvent.pointerDown(ruler, {pointerId: 1, button: 0, clientX: 100});
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 200});
+  expect(props.playback.seek).not.toHaveBeenCalled();
+});
+
+test('unmounting during a playhead drag leaves no active seeking', () => {
+  const {props, unmount} = setup();
+  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+  fireEvent.pointerDown(ruler, {pointerId: 1, button: 0, clientX: 100});
+  unmount();
+  fireEvent.pointerMove(ruler, {pointerId: 1, clientX: 200});
+  fireEvent.pointerUp(ruler, {pointerId: 1, clientX: 200});
+  fireEvent.pointerMove(window, {pointerId: 1, clientX: 200});
+  expect(props.playback.seek).toHaveBeenCalledTimes(1);
 });
 
 test('elapsed time keeps its reserved width as fractions and digit counts change during playback', () => {

@@ -198,6 +198,8 @@ const Track = styled.div<{$grid: number}>`
 const Ruler = styled(Track)`
   min-height: 24px;
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
   outline: none;
   &:focus-visible {
     box-shadow: inset 0 0 0 2px ${props => props.theme.activeColor};
@@ -559,6 +561,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const editor = useRef<HTMLElement>(null);
     const addButton = useRef<HTMLButtonElement>(null);
     const addMenu = useRef<HTMLDivElement>(null);
+    const scrubPointer = useRef<number | null>(null);
+    const suppressRulerClick = useRef(false);
     const [adding, setAdding] = useState(false);
     const [addTarget, setAddTarget] = useState<AddTarget | null>(null);
     const [selected, setSelected] = useState<Selection | null>(null);
@@ -598,6 +602,24 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const step = ([1, 2, 5, 10].find(value => value * unit >= duration / 6) ?? 10) * unit;
     const ticks = Array.from({length: Math.ceil(duration / step)}, (_, index) => index * step);
     const percent = (time: number) => Math.max(0, Math.min(100, (time / duration) * 100));
+    const seekOnRuler = (event: React.MouseEvent<HTMLDivElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      if (!(rect.width > 0) || !Number.isFinite(event.clientX)) return false;
+      playback.seek(
+        Math.max(
+          0,
+          Math.min(playback.duration, ((event.clientX - rect.left) / rect.width) * duration)
+        )
+      );
+      return true;
+    };
+    const endScrub = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (scrubPointer.current !== event.pointerId) return;
+      scrubPointer.current = null;
+      if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    };
     const selectedEffect =
       selected?.kind === 'effect'
         ? effects.find(effect => effect.id === selected.effectId)
@@ -976,18 +998,43 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                 aria-valuemax={playback.duration}
                 aria-valuenow={playback.elapsed}
                 aria-valuetext={seconds(playback.elapsed)}
+                onPointerDown={event => {
+                  if (
+                    scrubPointer.current !== null ||
+                    event.button !== 0 ||
+                    event.isPrimary === false
+                  )
+                    return;
+                  suppressRulerClick.current = false;
+                  if (!seekOnRuler(event)) return;
+                  event.preventDefault();
+                  event.currentTarget.focus();
+                  scrubPointer.current = event.pointerId;
+                  suppressRulerClick.current = true;
+                  try {
+                    event.currentTarget.setPointerCapture?.(event.pointerId);
+                  } catch {
+                    // Seeking may synchronously unmount the editor.
+                  }
+                }}
+                onPointerMove={event => {
+                  if (scrubPointer.current !== event.pointerId) return;
+                  event.preventDefault();
+                  seekOnRuler(event);
+                }}
+                onPointerUp={event => {
+                  if (scrubPointer.current !== event.pointerId) return;
+                  seekOnRuler(event);
+                  endScrub(event);
+                }}
+                onPointerCancel={endScrub}
+                onLostPointerCapture={endScrub}
                 onClick={event => {
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  if (rect.width > 0)
-                    playback.seek(
-                      Math.max(
-                        0,
-                        Math.min(
-                          playback.duration,
-                          ((event.clientX - rect.left) / rect.width) * duration
-                        )
-                      )
-                    );
+                  if (suppressRulerClick.current) {
+                    suppressRulerClick.current = false;
+                    return;
+                  }
+                  seekOnRuler(event);
                 }}
                 onKeyDown={event => {
                   const amount = event.shiftKey ? 1000 : 100;
