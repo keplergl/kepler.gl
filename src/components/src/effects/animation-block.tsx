@@ -4,6 +4,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import type {KeyboardEvent, PointerEvent as ReactPointerEvent} from 'react';
 import styled from 'styled-components';
+import {Button} from '../common/styled-components';
+import {Close} from '../common/icons';
 
 type Range = [number, number];
 type Part = 'body' | 'start' | 'end';
@@ -19,6 +21,7 @@ export type AnimationBlockProps = {
   kind?: 'effect' | 'layer' | 'camera';
   onSelect: () => void;
   onOpen?: (anchor: HTMLElement) => void;
+  onRequestRemove?: (anchor: HTMLElement) => void;
   onChange: (startTimeMs: number, endTimeMs: number) => void;
   onDragStart?: () => void;
   minimumDurationMs?: number;
@@ -58,6 +61,7 @@ const Block = styled.div<{
   z-index: ${props => (props.$selected || props.$dragging ? 3 : 1)};
   &:hover,
   &:focus-within {
+    z-index: 4;
     box-shadow: inset 0 0 0 1px ${props => props.theme.activeColor};
   }
 `;
@@ -126,6 +130,36 @@ const Edge = styled.button<{
   }
 `;
 
+const RemoveAction = styled.div<{$dragging: boolean}>`
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  // The padding bridges the gap so moving from the block keeps this control visible.
+  padding-bottom: 3px;
+  opacity: 0;
+  pointer-events: none;
+  ${Block}:hover &,
+  ${Block}:focus-within & {
+    opacity: ${props => (props.$dragging ? 0 : 1)};
+    pointer-events: ${props => (props.$dragging ? 'none' : 'auto')};
+  }
+`;
+const RemoveButton = styled(Button).attrs({link: true})`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid ${props => props.theme.panelBorderColor};
+  border-radius: 3px;
+  background: ${props => props.theme.panelBackground};
+  color: ${props => props.theme.textColor};
+  svg {
+    margin: 0;
+  }
+`;
+
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const seconds = (time: number) => `${Math.round(time / 10) / 100} s`;
 
@@ -141,6 +175,7 @@ export default function AnimationBlock({
   kind = 'effect',
   onSelect,
   onOpen,
+  onRequestRemove,
   onChange,
   onDragStart,
   minimumDurationMs = 0,
@@ -382,6 +417,41 @@ export default function AnimationBlock({
           onKeyDown={event => keyDown(part, event)}
         />
       ))}
+      {onRequestRemove && (
+        <RemoveAction $dragging={draft !== null}>
+          <RemoveButton
+            type="button"
+            aria-label={`Remove ${ariaLabel}`}
+            aria-haspopup="dialog"
+            title="Remove action"
+            disabled={disabled || draft !== null}
+            onPointerDown={event => {
+              event.stopPropagation();
+              if (!cleanup.current) {
+                suppressClick.current = false;
+                suppressOpen.current = false;
+              }
+            }}
+            onKeyDown={event => {
+              if (!cleanup.current && (event.key === 'Enter' || event.key === ' ')) {
+                suppressClick.current = false;
+                suppressOpen.current = false;
+              }
+            }}
+            onClick={event => {
+              event.stopPropagation();
+              if (disabled || cleanup.current || suppressClick.current) return;
+              onRequestRemove(event.currentTarget);
+            }}
+            onDoubleClick={event => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+          >
+            <Close height="10px" />
+          </RemoveButton>
+        </RemoveAction>
+      )}
     </Block>
   );
 }

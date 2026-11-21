@@ -14,6 +14,7 @@ import type {
   RGBColor
 } from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
+import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {
   getCameraTourDuration,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
@@ -587,6 +588,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const [addTarget, setAddTarget] = useState<AddTarget | null>(null);
     const [selected, setSelected] = useState<Selection | null>(null);
     const [popup, setPopup] = useState<{left: number; top: number} | null>(null);
+    const [confirmRemoval, setConfirmRemoval] = useState(false);
     const addMenu = useOnClickOutside<HTMLDivElement>(event => {
       // The trigger handles its own toggle, including clicks on its icon.
       if (addButton.current?.contains(event.target)) return;
@@ -672,6 +674,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       setAddTarget(null);
       setSelected(selection);
       setPopup(null);
+      setConfirmRemoval(false);
     };
     const openSettings = (selection: Selection, anchor: HTMLElement) => {
       const rect = anchor.getBoundingClientRect();
@@ -679,6 +682,10 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       playback.pause();
       select(selection);
       setPopup({left: rect.left - (origin?.left ?? 0), top: rect.bottom - (origin?.top ?? 0) + 4});
+    };
+    const requestRemoval = (selection: Selection, anchor: HTMLElement) => {
+      openSettings(selection, anchor);
+      setConfirmRemoval(true);
     };
     const saveLayerTransitions = (
       layer: Layer,
@@ -717,6 +724,27 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         saveLayerTransitions(selectedLayerTrack.layer, selectedLayerTrack.property, transitions);
       else if (selectedAnnotationTrack)
         saveAnnotationTransitions(selectedAnnotationTrack.annotation, transitions);
+    };
+    const removeSelected = () => {
+      if (selectedEffect && selected?.kind === 'effect') {
+        const animation = {...selectedEffect.animation};
+        delete animation[selected.name];
+        const legacyHeight =
+          selectedEffect.type === SURFACE_FOG_TYPE &&
+          selected.name === 'height' &&
+          selectedEffect.parameters.animateHeight;
+        updateEffectConfig(null, selectedEffect.id, {
+          animation,
+          ...(legacyHeight ? {parameters: {animateHeight: false}} : {})
+        });
+      } else if (selectedTransitions && selectedTransition) {
+        saveSelectedTransitions(
+          selectedTransitions.filter(item => item.id !== selectedTransition.id)
+        );
+      }
+      setSelected(null);
+      setPopup(null);
+      setConfirmRemoval(false);
     };
     const effectChoices = effects.flatMap(effect =>
       getAnimatableEffectParameters(effect)
@@ -1156,6 +1184,12 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                           anchor
                         )
                       }
+                      onRequestRemove={anchor =>
+                        requestRemoval(
+                          {kind: 'effect', effectId: effect.id, name: parameter.name},
+                          anchor
+                        )
+                      }
                       onDragStart={playback.pause}
                       onChange={(startTimeMs, endTimeMs) => {
                         updateEffectConfig(null, effect.id, {
@@ -1231,6 +1265,20 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                           anchor
                         )
                       }
+                      onRequestRemove={
+                        onLayerConfigChange
+                          ? anchor =>
+                              requestRemoval(
+                                {
+                                  kind: 'layer',
+                                  layerId: layer.id,
+                                  propertyName: property.name,
+                                  transitionId: transition.id
+                                },
+                                anchor
+                              )
+                          : undefined
+                      }
                       onDragStart={playback.pause}
                       onChange={(startTimeMs, endTimeMs) =>
                         saveLayerTransitions(
@@ -1297,6 +1345,19 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                             anchor
                           )
                         }
+                        onRequestRemove={
+                          onAnnotationChange
+                            ? anchor =>
+                                requestRemoval(
+                                  {
+                                    kind: 'annotation',
+                                    annotationId: annotation.id,
+                                    transitionId: transition.id
+                                  },
+                                  anchor
+                                )
+                            : undefined
+                        }
                         onDragStart={playback.pause}
                         onChange={(startTimeMs, endTimeMs) =>
                           saveAnnotationTransitions(
@@ -1321,13 +1382,42 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         <Portaled
           component={PopupAnchor}
           isOpened={Boolean(popup && (selectedEffect || selectedTransition))}
-          onClose={() => setPopup(null)}
+          onClose={() => {
+            setPopup(null);
+            setConfirmRemoval(false);
+          }}
           top={popup?.top}
           left={popup?.left}
-          modalProps={{contentLabel: 'Block settings'}}
+          modalProps={{contentLabel: confirmRemoval ? 'Remove animation action' : 'Block settings'}}
         >
           <SettingsPopup className="animation-editor animation-editor-settings">
-            {selectedEffect && selected?.kind === 'effect' && (
+            {confirmRemoval ? (
+              <InspectorBody>
+                <div>Remove this animation block?</div>
+                <PanelLabel>
+                  {selectedEffect && selected?.kind === 'effect'
+                    ? `${title(selectedEffect.type)} · ${title(selected.name)}`
+                    : `${
+                        selectedLayerTrack?.layer.config.label ?? selectedAnnotationTrack?.label
+                      } · ${selectedLayerTrack?.property.label ?? 'Opacity'}`}
+                </PanelLabel>
+                <InspectorActions>
+                  <Button
+                    type="button"
+                    link
+                    onClick={() => {
+                      setPopup(null);
+                      setConfirmRemoval(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" negative onClick={removeSelected}>
+                    Remove
+                  </Button>
+                </InspectorActions>
+              </InspectorBody>
+            ) : selectedEffect && selected?.kind === 'effect' ? (
               <EffectAnimationControl
                 key={`${selectedEffect.id}-${selected.name}`}
                 embedded
@@ -1338,8 +1428,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                 updateEffectConfig={updateEffectConfig}
                 onClose={() => setPopup(null)}
               />
-            )}
-            {selectedTransition &&
+            ) : (
+              selectedTransition &&
               selectedTransitions &&
               ((selectedLayerTrack && onLayerConfigChange) ||
                 (selectedAnnotationTrack && onAnnotationChange)) && (
@@ -1360,15 +1450,10 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                     );
                     setPopup(null);
                   }}
-                  onRemove={() => {
-                    saveSelectedTransitions(
-                      selectedTransitions.filter(item => item.id !== selectedTransition.id)
-                    );
-                    setSelected(null);
-                    setPopup(null);
-                  }}
+                  onRemove={removeSelected}
                 />
-              )}
+              )
+            )}
           </SettingsPopup>
         </Portaled>
       </Editor>

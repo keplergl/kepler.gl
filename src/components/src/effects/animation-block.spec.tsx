@@ -331,6 +331,61 @@ test('single click selects and double-click opens settings anchored to the block
   expect(props.onChange).not.toHaveBeenCalled();
 });
 
+test('the separate remove control requests confirmation without dragging or opening settings', () => {
+  const onRequestRemove = jest.fn();
+  const onOpen = jest.fn();
+  const {body, props} = setup({onRequestRemove, onOpen});
+  const remove = screen.getByRole('button', {name: 'Remove Fog height'});
+  expect(remove).toHaveAttribute('aria-haspopup', 'dialog');
+  expect(body).not.toContainElement(remove);
+  expect(authoredStyle(remove.parentElement!, 'bottom')).toBe('100%');
+  down(remove, 600);
+  up(600);
+  fireEvent.click(remove);
+  fireEvent.doubleClick(remove);
+  expect(onRequestRemove).toHaveBeenCalledTimes(1);
+  expect(onRequestRemove).toHaveBeenCalledWith(remove);
+  expect(onOpen).not.toHaveBeenCalled();
+  expect(props.onSelect).not.toHaveBeenCalled();
+  expect(props.onChange).not.toHaveBeenCalled();
+  expect(props.onDragStart).not.toHaveBeenCalled();
+});
+
+test.each(['pointer', 'keyboard'])('removal requires a fresh %s action after dragging', action => {
+  const onRequestRemove = jest.fn();
+  const {body} = setup({onRequestRemove});
+  const remove = screen.getByRole('button', {name: 'Remove Fog height'});
+  down(body, 300);
+  move(400);
+  expect(remove).toBeDisabled();
+  fireEvent.click(remove);
+  expect(onRequestRemove).not.toHaveBeenCalled();
+  up(400);
+  expect(remove).toBeEnabled();
+  fireEvent.click(remove);
+  expect(onRequestRemove).not.toHaveBeenCalled();
+  if (action === 'pointer') {
+    down(remove, 700);
+    up(700);
+  } else {
+    remove.focus();
+    fireEvent.keyDown(remove, {key: 'Enter'});
+  }
+  fireEvent.click(remove);
+  expect(onRequestRemove).toHaveBeenCalledTimes(1);
+});
+
+test('only removable, enabled blocks can request removal', () => {
+  const {update} = setup();
+  expect(screen.queryByRole('button', {name: 'Remove Fog height'})).toBeNull();
+  const onRequestRemove = jest.fn();
+  update({onRequestRemove, disabled: true});
+  const remove = screen.getByRole('button', {name: 'Remove Fog height'});
+  expect(remove).toBeDisabled();
+  fireEvent.click(remove);
+  expect(onRequestRemove).not.toHaveBeenCalled();
+});
+
 test('Enter and Space open settings using the body anchor when available', () => {
   const onOpen = jest.fn();
   const {body, end, props} = setup({onOpen});

@@ -7,6 +7,7 @@ import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
+import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
 import {
   DEFAULT_LAYER_ANIMATABLE_PROPS,
@@ -412,6 +413,119 @@ test('dismisses the popup with Escape or an outside click without saving draft v
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
   expect(props.updateEffectConfig).not.toHaveBeenCalled();
 });
+
+test.each(['Cancel', 'Escape', 'outside'])(
+  '%s dismisses removal without deleting the block',
+  action => {
+    const {props} = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Remove Brightness'}));
+    const dialog = screen.getByRole('dialog', {name: 'Remove animation action'});
+    expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    expect(props.playback.pause).toHaveBeenCalled();
+    if (action === 'Cancel') fireEvent.click(within(dialog).getByRole('button', {name: 'Cancel'}));
+    else if (action === 'Escape') {
+      fireEvent.keyDown(dialog, {key: 'Escape', code: 'Escape', keyCode: 27});
+    } else fireEvent.click(dialog.parentElement!);
+    expect(screen.queryByRole('dialog', {name: 'Remove animation action'})).toBeNull();
+    expect(screen.getByRole('button', {name: 'Brightness'})).toBeInTheDocument();
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Brightness'}));
+    expect(screen.getByRole('dialog', {name: 'Block settings'})).toBeInTheDocument();
+  }
+);
+
+test('confirming effect removal keeps the effect, its values, and other animated parameters', () => {
+  const source = effect();
+  const contrast = {...source.animation!.brightness, startValue: 0.2, endValue: 0.8};
+  source.animation = {...source.animation, contrast};
+  const parameters = {...source.parameters};
+  const {props, rerender} = setup({effects: [source]});
+  (props.updateEffectConfig as jest.Mock).mockImplementation((_index, _id, config) => {
+    Object.assign(source, config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Remove Brightness'}));
+  expect(props.updateEffectConfig).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+  expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
+    animation: {contrast}
+  });
+  expect(source.parameters).toEqual(parameters);
+  expect(screen.queryByRole('button', {name: 'Brightness'})).toBeNull();
+  expect(screen.getByRole('button', {name: 'Contrast'})).toBeInTheDocument();
+  expect(screen.queryByRole('dialog', {name: 'Remove animation action'})).toBeNull();
+});
+
+test.each([false, true])(
+  'removing fog height disables legacy playback (explicit track: %s)',
+  explicit => {
+    const source = createEffect({
+      id: 'fog',
+      type: SURFACE_FOG_TYPE,
+      parameters: {animateHeight: true},
+      ...(explicit ? {animation: {height: {...effect().animation!.brightness}}} : {})
+    });
+    const {props, rerender} = setup({effects: [source]});
+    (props.updateEffectConfig as jest.Mock).mockImplementation((_index, _id, config) => {
+      source.animation = config.animation;
+      Object.assign(source.parameters, config.parameters);
+      rerender(<Editor {...props} />);
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Remove Elevation (m)'}));
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+    expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
+      animation: {},
+      parameters: {animateHeight: false}
+    });
+    expect(screen.queryByRole('button', {name: 'Elevation (m)'})).toBeNull();
+  }
+);
+
+test.each(['layer', 'annotation'])(
+  'confirmed %s removal preserves sibling blocks and other targets',
+  kind => {
+    const transitions = opacityTransitions();
+    const sourceLayer = layer(transitions);
+    const sourceAnnotation = annotation(transitions, 'points', 'Points');
+    const {props, rerender} = setup({layers: [sourceLayer], annotations: [sourceAnnotation]});
+    (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+      Object.assign(sourceLayer.config, config);
+      rerender(<Editor {...props} />);
+    });
+    (props.onAnnotationChange as jest.Mock).mockImplementation((_id, config) => {
+      Object.assign(sourceAnnotation, config);
+      rerender(<Editor {...props} />);
+    });
+    const rowName = `${kind === 'layer' ? 'Layer' : 'Annotation'} opacity: Points`;
+    const row = screen.getByRole('group', {name: rowName});
+    fireEvent.click(within(row).getByRole('button', {name: 'Remove Opacity 1 · Points'}));
+    expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+    expect(props.onAnnotationChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+    const remaining =
+      kind === 'layer'
+        ? sourceLayer.config.propertyTransitions!.opacity
+        : sourceAnnotation.opacityTransitions;
+    expect(remaining).toEqual([transitions[1]]);
+    expect(sourceLayer.config.isVisible).toBe(true);
+    expect(sourceAnnotation.isVisible).toBe(true);
+    expect(
+      kind === 'layer' ? props.onAnnotationChange : props.onLayerConfigChange
+    ).not.toHaveBeenCalled();
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', {name: 'Remove animation action'})).toBeNull();
+    fireEvent.click(within(row).getByRole('button', {name: 'Remove Opacity 1 · Points'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+    expect(
+      kind === 'layer'
+        ? sourceLayer.config.propertyTransitions!.opacity
+        : sourceAnnotation.opacityTransitions
+    ).toEqual([]);
+    expect(screen.queryByRole('group', {name: rowName})).toBeNull();
+  }
+);
 
 test('legacy effects keep full-duration timing until a block boundary is edited', () => {
   const source = effect(false);
