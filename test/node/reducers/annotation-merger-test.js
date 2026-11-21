@@ -44,26 +44,41 @@ test('#mergeAnnotations -> imports normalized opacity tracks without sharing or 
     endValue: 0,
     easing: 'easeInOut'
   };
-  const source = makeAnnotation({id: 'animated', opacityTransitions: [last, first]});
+  const source = makeAnnotation({id: 'animated', propertyTransitions: {opacity: [last, first]}});
   const result = mergeAnnotations(makeState(), [
     source,
-    makeAnnotation({id: 'cleared', opacityTransitions: []}),
+    makeAnnotation({id: 'cleared', propertyTransitions: {opacity: []}}),
     makeAnnotation({id: 'legacy'}),
-    makeAnnotation({id: 'invalid', opacityTransitions: [{...first, endValue: 2}]}),
-    makeAnnotation({id: 'overlap', opacityTransitions: [first, {...last, startTimeMs: 2000}]})
+    makeAnnotation({id: 'invalid', propertyTransitions: {opacity: [{...first, endValue: 2}]}}),
+    makeAnnotation({
+      id: 'overlap',
+      propertyTransitions: {opacity: [first, {...last, startTimeMs: 2000}]}
+    })
   ]);
-  t.deepEqual(result.annotations[0].opacityTransitions, [first, last], 'imports a sorted track');
+  t.deepEqual(
+    result.annotations[0].propertyTransitions?.opacity,
+    [first, last],
+    'imports a sorted track'
+  );
   t.notEqual(
-    result.annotations[0].opacityTransitions,
-    source.opacityTransitions,
+    result.annotations[0].propertyTransitions?.opacity,
+    source.propertyTransitions?.opacity,
     'import owns its array'
   );
-  t.notEqual(result.annotations[0].opacityTransitions[0], first, 'import owns its entries');
-  t.equal(source.opacityTransitions[0].id, 'last', 'import does not reorder source');
-  t.deepEqual(result.annotations[1].opacityTransitions, [], 'imports explicit empty tracks');
+  t.notEqual(
+    result.annotations[0].propertyTransitions?.opacity[0],
+    first,
+    'import owns its entries'
+  );
+  t.equal(source.propertyTransitions?.opacity[0].id, 'last', 'import does not reorder source');
+  t.deepEqual(
+    result.annotations[1].propertyTransitions?.opacity,
+    [],
+    'imports explicit empty tracks'
+  );
   for (const annotation of result.annotations.slice(2)) {
     t.notOk(
-      'opacityTransitions' in annotation,
+      'propertyTransitions' in annotation,
       `${annotation.id} has no invalid or invented animation`
     );
   }

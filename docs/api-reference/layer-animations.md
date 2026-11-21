@@ -18,7 +18,7 @@ Only expose a property when the current renderer supports it. For example, a lay
 
 ## Saved transitions
 
-Store blocks in `layer.config.propertyTransitions`, keyed by property name:
+Store blocks in `layer.config.propertyTransitions` or `annotation.propertyTransitions`, keyed by property name. Annotations currently support `opacity`; layers expose their supported properties through `animatableProps`:
 
 ```json
 {
@@ -44,7 +44,7 @@ Store blocks in `layer.config.propertyTransitions`, keyed by property name:
 - Numeric properties use native `visConfig` units. Opacity uses a multiplier from 0 to 1, combined with configured opacity and fade-on-zoom.
 - Color channels interpolate independently in RGB using the selected easing. Alpha stays controlled by opacity. Existing data-field colors and GeoJSON feature colors retain precedence over fixed-color animation.
 
-Playback applies temporary render values without changing authored colors or `visConfig`. Unsupported saved properties remain preserved but inactive. Removing a property from `animatableProps` also makes its track inactive. Existing numeric transitions require no migration.
+Playback applies temporary render values without changing authored colors or `visConfig`. Unsupported saved properties remain preserved but inactive. Removing a property from `animatableProps` also makes its track inactive.
 
 For custom rendering, `getLayerAnimatedConfig(layer, timeMs)` from `@kepler.gl/utils` returns the frame's `{color?, visConfig?}` overrides. `getLayerAnimatedVisConfig` returns only the `visConfig` portion. Both return empty objects outside playback; opacity remains available separately through `getLayerAnimationOpacityFactor`.
 
@@ -69,8 +69,6 @@ renderLayer(opts) {
 
 Treat the render configuration as read-only. Deferred accessors should read their captured values rather than looking up `this.config` later, when it contains the authored settings again. Callbacks that edit saved settings run outside the synchronous rendering scope. Subclasses can delegate to `super.renderLayer(opts)` normally.
 
-## Compatibility
+## Effects
 
-Existing layer `opacityTransitions` and older `visibilityTiming` remain readable. A `propertyTransitions.opacity` entry takes precedence, including an empty array. Editing a legacy layer in the Animation editor migrates its opacity blocks to the property map while preserving sibling tracks.
-
-Annotations use the same opacity block fields in `annotation.opacityTransitions`. Effects use `effect.animation[parameterName]` with optional paired `startTimeMs` and `endTimeMs`. Effects without explicit times continue to span the full playback or export duration; standalone preview falls back to 10 seconds when no timed tracks or camera tour define a duration.
+Effects use `effect.animation[parameterName]` with optional paired `startTimeMs` and `endTimeMs`. Effects without explicit times continue to span the full playback or export duration; standalone preview falls back to 10 seconds when no timed tracks or camera tour define a duration.

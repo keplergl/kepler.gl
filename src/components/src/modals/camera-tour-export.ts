@@ -11,7 +11,7 @@ import {
   getCameraTourDuration,
   getLayerAnimationDuration,
   getLayerAnimationTracks,
-  getLayerOpacityTransitions,
+  getLayerPropertyTransitions,
   getAnnotationOpacityDuration
 } from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
@@ -52,7 +52,8 @@ export function getAnimationExportDuration({
     : getEffectAnimationTracks(effects).length > 0 ||
       layers.some(layer => layer.config.isVisible && getLayerAnimationTracks(layer).length > 0) ||
       annotations.some(
-        annotation => annotation.isVisible && getLayerOpacityTransitions(annotation).length > 0
+        annotation =>
+          annotation.isVisible && getLayerPropertyTransitions(annotation, 'opacity').length > 0
       )
     ? 10000
     : 0;

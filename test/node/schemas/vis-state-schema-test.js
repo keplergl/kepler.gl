@@ -71,60 +71,73 @@ test('#visStateSchema -> annotation opacity transitions round trip without chang
     isVisible: true,
     anchorPoint: [0, 0],
     label: 'Note',
-    opacityTransitions: [last, first]
+    propertyTransitions: {opacity: [last, first], futureProperty: [{...first, endValue: 10}]}
   };
   state.visState.annotations = [annotation];
   const saved = SchemaManager.getConfigToSave(state);
   const savedAnnotation = saved.config.visState.annotations[0];
   t.deepEqual(
-    savedAnnotation.opacityTransitions,
+    savedAnnotation.propertyTransitions?.opacity,
     [first, last],
     'saves multiple normalized transitions'
   );
   t.notEqual(
-    savedAnnotation.opacityTransitions,
-    annotation.opacityTransitions,
+    savedAnnotation.propertyTransitions?.opacity,
+    annotation.propertyTransitions?.opacity,
     'saving clones the track'
   );
-  t.notEqual(savedAnnotation.opacityTransitions[0], first, 'saving clones individual transitions');
+  t.notEqual(
+    savedAnnotation.propertyTransitions?.opacity[0],
+    first,
+    'saving clones individual transitions'
+  );
   const loaded = SchemaManager.parseSavedConfig(saved).visState.annotations[0];
-  t.deepEqual(loaded.opacityTransitions, [first, last], 'loads multiple transitions');
-  loaded.opacityTransitions[0].endValue = 0.4;
+  t.deepEqual(loaded.propertyTransitions?.opacity, [first, last], 'loads multiple transitions');
+  t.deepEqual(
+    loaded.propertyTransitions.futureProperty,
+    [{...first, endValue: 10}],
+    'preserves other property tracks'
+  );
+  loaded.propertyTransitions.opacity[0].endValue = 0.4;
   t.equal(
-    savedAnnotation.opacityTransitions[0].endValue,
+    savedAnnotation.propertyTransitions?.opacity[0].endValue,
     0.8,
     'loaded transitions do not alias the saved config'
   );
   t.equal(first.endValue, 0.8, 'round trip leaves authored values unchanged');
-  t.equal(annotation.opacityTransitions[0].id, 'last', 'saving does not reorder authored input');
+  t.equal(
+    annotation.propertyTransitions?.opacity[0].id,
+    'last',
+    'saving does not reorder authored input'
+  );
 
-  annotation.opacityTransitions = [];
+  annotation.propertyTransitions = {opacity: []};
   const cleared = SchemaManager.getConfigToSave(state);
   t.deepEqual(
-    SchemaManager.parseSavedConfig(cleared).visState.annotations[0].opacityTransitions,
+    SchemaManager.parseSavedConfig(cleared).visState.annotations[0].propertyTransitions?.opacity,
     [],
     'explicit clear survives save/load'
   );
-  delete annotation.opacityTransitions;
+  delete annotation.propertyTransitions;
   const legacy = SchemaManager.getConfigToSave(state);
   t.notOk(
-    'opacityTransitions' in legacy.config.visState.annotations[0],
+    'propertyTransitions' in legacy.config.visState.annotations[0],
     'old annotations omit animation metadata'
   );
   t.notOk(
-    'opacityTransitions' in SchemaManager.parseSavedConfig(legacy).visState.annotations[0],
+    'propertyTransitions' in SchemaManager.parseSavedConfig(legacy).visState.annotations[0],
     'loading old annotations adds no animation metadata'
   );
 
   for (const invalid of [[{...first, endValue: 2}], [first, {...last, startTimeMs: 2000}]]) {
-    annotation.opacityTransitions = invalid;
+    annotation.propertyTransitions = {opacity: invalid};
     t.notOk(
-      'opacityTransitions' in SchemaManager.getConfigToSave(state).config.visState.annotations[0],
+      'propertyTransitions' in SchemaManager.getConfigToSave(state).config.visState.annotations[0],
       'save rejects invalid or overlapping transitions'
     );
-    savedAnnotation.opacityTransitions = invalid;
+    savedAnnotation.propertyTransitions = {opacity: invalid};
     t.notOk(
-      'opacityTransitions' in SchemaManager.parseSavedConfig(saved).visState.annotations[0],
+      'propertyTransitions' in SchemaManager.parseSavedConfig(saved).visState.annotations[0],
       'load rejects invalid or overlapping transitions'
     );
   }
@@ -994,34 +1007,6 @@ test('#visStateSchema -> v1 -> save load layer isIncludedInLegend', t => {
   t.end();
 });
 
-test('#visStateSchema -> v1 -> layer visibility timing round-trips without changing old maps', t => {
-  const state = cloneDeep(StateWFilesFiltersLayerColor);
-  const layer = state.visState.layers[0];
-  const timing = {startTimeMs: 3000, endTimeMs: 10000, fadeInMs: 1000, fadeOutMs: 2000};
-  layer.updateLayerConfig({visibilityTiming: timing});
-  const saved = SchemaManager.getConfigToSave(state);
-  const savedLayer = saved.config.visState.layers.find(item => item.id === layer.id);
-  t.deepEqual(savedLayer.config.visibilityTiming, timing, 'saves explicit milliseconds');
-  const untouched = saved.config.visState.layers.find(item => item.id !== layer.id);
-  t.notOk('visibilityTiming' in untouched.config, 'old layers omit unused timing');
-  const parsed = SchemaManager.parseSavedConfig(saved).visState.layers.find(
-    item => item.id === layer.id
-  );
-  const dataset = state.visState.datasets[layer.config.dataId];
-  const rebuilt = validateLayerWithData(dataset, parsed, state.visState.layerClasses);
-  t.deepEqual(rebuilt.config.visibilityTiming, timing, 'reconstructed layers keep timing');
-  savedLayer.config.visibilityTiming = {...timing, endTimeMs: 2000};
-  const invalid = SchemaManager.parseSavedConfig(saved).visState.layers.find(
-    item => item.id === layer.id
-  );
-  t.notOk('visibilityTiming' in invalid.config, 'invalid imported timing is ignored');
-  layer.updateLayerConfig({visibilityTiming: undefined});
-  t.notOk('visibilityTiming' in layer.config, 'removing timing restores the static layer');
-  layer.updateLayerConfig({visibilityTiming: {...timing, fadeOutMs: -1}});
-  t.notOk('visibilityTiming' in layer.config, 'invalid edits cannot hide a layer');
-  t.end();
-});
-
 test('#visStateSchema -> v1 -> layer opacity transitions preserve explicit empty and multiple tracks', t => {
   const state = cloneDeep(StateWFilesFiltersLayerColor);
   const layer = state.visState.layers[0];
@@ -1043,94 +1028,74 @@ test('#visStateSchema -> v1 -> layer opacity transitions preserve explicit empty
       easing: 'easeInOut'
     }
   ];
-  layer.updateLayerConfig({opacityTransitions: transitions});
-  t.notEqual(layer.config.opacityTransitions, transitions, 'copies the incoming track array');
+  layer.updateLayerConfig({propertyTransitions: {opacity: transitions}});
   t.notEqual(
-    layer.config.opacityTransitions[0],
+    layer.config.propertyTransitions?.opacity,
+    transitions,
+    'copies the incoming track array'
+  );
+  t.notEqual(
+    layer.config.propertyTransitions?.opacity[0],
     transitions[0],
     'copies individual transition objects'
   );
   const saved = SchemaManager.getConfigToSave(state);
   const savedLayer = saved.config.visState.layers.find(item => item.id === layer.id);
   t.deepEqual(
-    savedLayer.config.opacityTransitions,
+    savedLayer.config.propertyTransitions?.opacity,
     transitions,
     'saves each transition with times, values and easing'
   );
   const untouched = saved.config.visState.layers.find(item => item.id !== layer.id);
-  t.notOk('opacityTransitions' in untouched.config, 'existing static maps omit the new field');
+  t.notOk('propertyTransitions' in untouched.config, 'existing static maps omit the new field');
   const parsed = SchemaManager.parseSavedConfig(saved).visState.layers.find(
     item => item.id === layer.id
   );
   const dataset = state.visState.datasets[layer.config.dataId];
   const rebuilt = validateLayerWithData(dataset, parsed, state.visState.layerClasses);
   t.deepEqual(
-    rebuilt.config.opacityTransitions,
+    rebuilt.config.propertyTransitions?.opacity,
     transitions,
     'reconstructed layers retain all transitions'
   );
   t.notEqual(
-    rebuilt.config.opacityTransitions[0],
-    parsed.config.opacityTransitions[0],
+    rebuilt.config.propertyTransitions?.opacity[0],
+    parsed.config.propertyTransitions?.opacity[0],
     'reconstruction does not retain saved object references'
   );
 
   const overlapping = [transitions[0], {...transitions[1], startTimeMs: 2000}];
-  savedLayer.config.opacityTransitions = overlapping;
+  savedLayer.config.propertyTransitions = {opacity: overlapping};
   const invalid = SchemaManager.parseSavedConfig(saved).visState.layers.find(
     item => item.id === layer.id
   );
-  t.notOk('opacityTransitions' in invalid.config, 'invalid imported overlaps are ignored');
-  layer.config.opacityTransitions = overlapping;
+  t.notOk('propertyTransitions' in invalid.config, 'invalid imported overlaps are ignored');
+  layer.config.propertyTransitions = {opacity: overlapping};
   const invalidSaved = SchemaManager.getConfigToSave(state).config.visState.layers.find(
     item => item.id === layer.id
   );
-  t.notOk('opacityTransitions' in invalidSaved.config, 'invalid tracks cannot be saved');
+  t.notOk('propertyTransitions' in invalidSaved.config, 'invalid tracks cannot be saved');
 
-  layer.updateLayerConfig({opacityTransitions: []});
+  layer.updateLayerConfig({propertyTransitions: {opacity: []}});
   const cleared = SchemaManager.getConfigToSave(state);
   const clearedLayer = SchemaManager.parseSavedConfig(cleared).visState.layers.find(
     item => item.id === layer.id
   );
   t.deepEqual(
-    clearedLayer.config.opacityTransitions,
+    clearedLayer.config.propertyTransitions?.opacity,
     [],
     'an explicit empty track survives save/load'
   );
-  layer.updateLayerConfig({opacityTransitions: undefined});
+  layer.updateLayerConfig({propertyTransitions: undefined});
   t.notOk(
-    'opacityTransitions' in layer.config,
+    'propertyTransitions' in layer.config,
     'removing the optional track restores the original config shape'
   );
 
-  const legacy = {startTimeMs: 2000, endTimeMs: 9000, fadeInMs: 1000, fadeOutMs: 2000};
-  layer.updateLayerConfig({visibilityTiming: legacy});
-  const legacySaved = SchemaManager.getConfigToSave(state).config.visState.layers.find(
-    item => item.id === layer.id
-  );
-  t.deepEqual(
-    legacySaved.config.visibilityTiming,
-    legacy,
-    'untouched legacy timing stays in its original format'
-  );
-  t.notOk(
-    'opacityTransitions' in legacySaved.config,
-    'legacy timing is not migrated merely by saving'
-  );
-  layer.updateLayerConfig({opacityTransitions: transitions, visibilityTiming: undefined});
-  const edited = SchemaManager.getConfigToSave(state).config.visState.layers.find(
-    item => item.id === layer.id
-  );
-  t.deepEqual(
-    edited.config.opacityTransitions,
-    transitions,
-    'edited legacy timing stores explicit transitions'
-  );
-  t.notOk('visibilityTiming' in edited.config, 'editing clears the obsolete visibility schedule');
   t.end();
 });
 
-test('#visStateSchema -> v1 -> numeric property tracks round trip independently of legacy opacity', t => {
+test('#visStateSchema -> v1 -> numeric property tracks round trip independently', t => {
   const state = cloneDeep(StateWFilesFiltersLayerColor);
   const layer = state.visState.layers[0];
   const first = {
@@ -1154,8 +1119,7 @@ test('#visStateSchema -> v1 -> numeric property tracks round trip independently 
     opacity: [],
     futureProperty: [{...first, startValue: -50, endValue: 200}]
   };
-  const legacy = [{...first, startValue: 0, endValue: 1}];
-  layer.updateLayerConfig({propertyTransitions, opacityTransitions: legacy});
+  layer.updateLayerConfig({propertyTransitions});
   t.notEqual(
     layer.config.propertyTransitions,
     propertyTransitions,
@@ -1169,11 +1133,6 @@ test('#visStateSchema -> v1 -> numeric property tracks round trip independently 
     savedLayer.config.propertyTransitions,
     expected,
     'saves sorted numeric and unknown tracks with an explicit empty opacity track'
-  );
-  t.deepEqual(
-    savedLayer.config.opacityTransitions,
-    legacy,
-    'saving retains unedited legacy opacity'
   );
   t.deepEqual(propertyTransitions.radius, [last, first], 'saving does not reorder authored input');
   t.notEqual(

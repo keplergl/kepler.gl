@@ -16,7 +16,7 @@ import {
   findById,
   aggregate,
   isPlainObject,
-  normalizeLayerOpacityTransitions
+  normalizeLayerPropertyTransitions
 } from '@kepler.gl/utils';
 
 import {
@@ -904,9 +904,9 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
             }
           : {})
       };
-      const opacityTransitions = normalizeLayerOpacityTransitions(a.opacityTransitions);
-      if (opacityTransitions === undefined) delete annotation.opacityTransitions;
-      else annotation.opacityTransitions = opacityTransitions;
+      const propertyTransitions = normalizeLayerPropertyTransitions(a.propertyTransitions);
+      if (propertyTransitions === undefined) delete annotation.propertyTransitions;
+      else annotation.propertyTransitions = propertyTransitions;
       return annotation;
     });
   if (!validAnnotations.length) {
@@ -1356,8 +1356,6 @@ export function validateLayerWithData(
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
     isIncludedInLegend: savedLayer.config.isIncludedInLegend,
-    visibilityTiming: savedLayer.config.visibilityTiming,
-    opacityTransitions: savedLayer.config.opacityTransitions,
     propertyTransitions: savedLayer.config.propertyTransitions,
     columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor

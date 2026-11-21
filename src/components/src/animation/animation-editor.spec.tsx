@@ -9,16 +9,11 @@ import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
-import {
-  DEFAULT_LAYER_ANIMATABLE_PROPS,
-  getLayerOpacityTransitions,
-  rgbToHex
-} from '@kepler.gl/utils';
+import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
 import type {
   Annotation,
   CameraTour,
   LayerAnimatableProp,
-  LayerOpacityTransition,
   LayerPropertyTransition,
   RGBColor
 } from '@kepler.gl/types';
@@ -56,10 +51,7 @@ function effect(timed = true) {
     }
   });
 }
-function layer(
-  opacityTransitions?: LayerOpacityTransition[],
-  visibilityTiming?: Layer['config']['visibilityTiming']
-) {
+function layer(transitions?: LayerPropertyTransition[]) {
   return {
     id: 'points',
     animatableProps: DEFAULT_LAYER_ANIMATABLE_PROPS,
@@ -67,8 +59,7 @@ function layer(
       label: 'Points',
       color: [10, 20, 30],
       isVisible: true,
-      opacityTransitions,
-      visibilityTiming
+      propertyTransitions: transitions ? {opacity: transitions} : undefined
     }
   } as Layer;
 }
@@ -507,7 +498,7 @@ test.each(['layer', 'annotation'])(
     const remaining =
       kind === 'layer'
         ? sourceLayer.config.propertyTransitions!.opacity
-        : sourceAnnotation.opacityTransitions;
+        : sourceAnnotation.propertyTransitions?.opacity;
     expect(remaining).toEqual([transitions[1]]);
     expect(sourceLayer.config.isVisible).toBe(true);
     expect(sourceAnnotation.isVisible).toBe(true);
@@ -521,7 +512,7 @@ test.each(['layer', 'annotation'])(
     expect(
       kind === 'layer'
         ? sourceLayer.config.propertyTransitions!.opacity
-        : sourceAnnotation.opacityTransitions
+        : sourceAnnotation.propertyTransitions?.opacity
     ).toEqual([]);
     expect(screen.queryByRole('group', {name: rowName})).toBeNull();
   }
@@ -556,7 +547,7 @@ test('legacy effects keep full-duration timing until a block boundary is edited'
   });
 });
 
-function opacityTransitions(): LayerOpacityTransition[] {
+function opacityTransitions(): LayerPropertyTransition[] {
   return [
     {id: 'in', startTimeMs: 3000, endTimeMs: 5000, startValue: 0, endValue: 1, easing: 'linear'},
     {id: 'out', startTimeMs: 10000, endTimeMs: 12000, startValue: 1, endValue: 0, easing: 'linear'}
@@ -824,7 +815,7 @@ test('layer color blocks use authored colors and edit both endpoints through the
   expect(source.config.propertyTransitions!.radius).toEqual(radius);
   expect(source.config.color).toEqual([10, 20, 30]);
   expect(props.onAnnotationChange).not.toHaveBeenCalled();
-  expect(annotationSource.opacityTransitions).toEqual(opacityTransitions());
+  expect(annotationSource.propertyTransitions?.opacity).toEqual(opacityTransitions());
 
   addColor();
   const second = source.config.propertyTransitions!.color[1];
@@ -878,9 +869,7 @@ test.each<[string, RGBColor | null, RGBColor]>([
             easing: 'easeInOut'
           }
         ]
-      },
-      opacityTransitions: undefined,
-      visibilityTiming: undefined
+      }
     });
   }
 );
@@ -902,9 +891,7 @@ test('color blocks reject overlap and preserve endpoint arrays when their timing
   fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
   drag(screen.getByRole('button', {name: 'Color 1 · Points'}), 80, 300);
   expect(props.onLayerConfigChange).toHaveBeenLastCalledWith(source, {
-    propertyTransitions: {color: [{...color[0], startTimeMs: 8000, endTimeMs: 10000}, color[1]]},
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    propertyTransitions: {color: [{...color[0], startTimeMs: 8000, endTimeMs: 10000}, color[1]]}
   });
   expect(color[0].startTimeMs).toBe(3000);
   expect(color[0].startValue).toEqual([10, 20, 30]);
@@ -953,17 +940,11 @@ test('Add action preserves saved parameters on disabled effects', () => {
   expect(source.isEnabled).toBe(false);
 });
 
-test('concurrent property rows edit independently, preserve siblings and migrate legacy opacity', () => {
+test('concurrent property rows edit independently and preserve sibling tracks', () => {
   const radius = [{...opacityTransitions()[0], id: 'in', startValue: 12, endValue: 24}];
   const unsupported = [{...radius[0], endValue: 30}];
-  const source = propertyLayer([radiusProperty], {radius, unsupported});
-  source.config.visibilityTiming = {
-    startTimeMs: 3000,
-    endTimeMs: 10000,
-    fadeInMs: 2000,
-    fadeOutMs: 1000
-  };
-  const legacyOpacity = getLayerOpacityTransitions(source.config);
+  const opacity = opacityTransitions();
+  const source = propertyLayer([radiusProperty], {opacity, radius, unsupported});
   const {props, rerender} = setup({layers: [source]});
   (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
     Object.assign(source.config, config);
@@ -986,16 +967,14 @@ test('concurrent property rows edit independently, preserve siblings and migrate
   expect(screen.getByRole('button', {name: 'Save'})).toBeEnabled();
   fireEvent.click(screen.getByRole('button', {name: 'Save'}));
   expect(source.config.propertyTransitions).toEqual({
-    opacity: legacyOpacity,
+    opacity,
     radius: [{...radius[0], endValue: 32, endTimeMs: 9000}],
     unsupported
   });
-  expect(source.config.opacityTransitions).toBeUndefined();
-  expect(source.config.visibilityTiming).toBeUndefined();
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Radius 1 · Points'}));
   fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
   expect(source.config.propertyTransitions).toEqual({
-    opacity: legacyOpacity,
+    opacity,
     radius: [],
     unsupported
   });
@@ -1023,9 +1002,7 @@ test('native-property blocks reject overlap within their row and preserve other 
     propertyTransitions: {
       opacity,
       radius: [{...radius[0], startTimeMs: 8000, endTimeMs: 10000}, radius[1]]
-    },
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    }
   });
 });
 
@@ -1072,7 +1049,6 @@ test('adds multiple opacity blocks on one layer row and removes only the selecte
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
   fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
   expect(source.config.propertyTransitions?.opacity).toEqual([]);
-  expect(source.config.visibilityTiming).toBeUndefined();
   expect(source.config.isVisible).toBe(true);
   expect(screen.queryByRole('group', {name: 'Layer opacity: Points'})).toBeNull();
 });
@@ -1104,11 +1080,9 @@ test('double-click edits one opacity transition with percentages, times and easi
         {...transitions[0], endTimeMs: 4500, startValue: 0.2, endValue: 0.6, easing: 'easeInOut'},
         transitions[1]
       ]
-    },
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    }
   });
-  expect(source.config.opacityTransitions).toEqual(transitions);
+  expect(source.config.propertyTransitions?.opacity).toEqual(transitions);
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
 });
 
@@ -1136,21 +1110,15 @@ test('dragging and resizing opacity blocks preserve values and stop at neighbori
   expect(props.onLayerConfigChange).toHaveBeenLastCalledWith(source, {
     propertyTransitions: {
       opacity: [{...transitions[0], startTimeMs: 8000, endTimeMs: 10000}, transitions[1]]
-    },
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    }
   });
   drag(screen.getByRole('slider', {name: 'End time for Opacity 1 · Points'}), 100, 300);
   expect(props.onLayerConfigChange).toHaveBeenLastCalledWith(source, {
-    propertyTransitions: {opacity: [{...transitions[0], endTimeMs: 10000}, transitions[1]]},
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    propertyTransitions: {opacity: [{...transitions[0], endTimeMs: 10000}, transitions[1]]}
   });
   drag(screen.getByRole('slider', {name: 'Start time for Opacity 2 · Points'}), 200, 20);
   expect(props.onLayerConfigChange).toHaveBeenLastCalledWith(source, {
-    propertyTransitions: {opacity: [transitions[0], {...transitions[1], startTimeMs: 5000}]},
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
+    propertyTransitions: {opacity: [transitions[0], {...transitions[1], startTimeMs: 5000}]}
   });
 });
 
@@ -1245,51 +1213,6 @@ test.each([1490, 1500, 1510])(
   }
 );
 
-test('legacy visibility displays equivalent opacity blocks and converts only when edited', () => {
-  const timing = {startTimeMs: 3000, endTimeMs: 10000, fadeInMs: 2000, fadeOutMs: 1000};
-  const source = layer(undefined, timing);
-  const {props} = setup({layers: [source]});
-  expect(screen.getByRole('slider', {name: 'End time for Opacity 1 · Points'})).toHaveAttribute(
-    'aria-valuenow',
-    '5000'
-  );
-  expect(screen.getByRole('slider', {name: 'Start time for Opacity 2 · Points'})).toHaveAttribute(
-    'aria-valuenow',
-    '9000'
-  );
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 2 · Points'}));
-  expect(screen.getByRole('spinbutton', {name: 'Start opacity (%)'})).toHaveValue(100);
-  expect(screen.getByRole('spinbutton', {name: 'End opacity (%)'})).toHaveValue(0);
-  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
-  expect(props.onLayerConfigChange).not.toHaveBeenCalled();
-  drag(screen.getByRole('slider', {name: 'End time for Opacity 2 · Points'}), 200, 240);
-  expect(props.onLayerConfigChange).toHaveBeenCalledWith(source, {
-    propertyTransitions: {
-      opacity: [
-        {
-          id: 'legacy-visibility-in',
-          startTimeMs: 3000,
-          endTimeMs: 5000,
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear'
-        },
-        {
-          id: 'legacy-visibility-out',
-          startTimeMs: 9000,
-          endTimeMs: 12000,
-          startValue: 1,
-          endValue: 0,
-          easing: 'linear'
-        }
-      ]
-    },
-    opacityTransitions: undefined,
-    visibilityTiming: undefined
-  });
-  expect(source.config.visibilityTiming).toEqual(timing);
-});
-
 test.each(['layer', 'annotation'] as const)(
   '%s block time inputs display and edit seconds with at most two decimal places',
   kind => {
@@ -1311,7 +1234,7 @@ test.each(['layer', 'annotation'] as const)(
     const saved = () =>
       kind === 'layer'
         ? (props.onLayerConfigChange as jest.Mock).mock.lastCall[1].propertyTransitions.opacity
-        : (props.onAnnotationChange as jest.Mock).mock.lastCall[1].opacityTransitions;
+        : (props.onAnnotationChange as jest.Mock).mock.lastCall[1].propertyTransitions?.opacity;
     open();
     expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(1.23);
     expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9.88);
@@ -1319,8 +1242,8 @@ test.each(['layer', 'annotation'] as const)(
     expect(saved()).toEqual([timing]);
     open();
     const moved = {...timing, startTimeMs: 3456.789, endTimeMs: 8765.432};
-    points.config.opacityTransitions = [moved];
-    harbor.opacityTransitions = [moved];
+    points.config.propertyTransitions = {opacity: [moved]};
+    harbor.propertyTransitions = {opacity: [moved]};
     rerender(<Editor {...props} />);
     const start = screen.getByRole('spinbutton', {name: 'Start time (seconds)'});
     const end = screen.getByRole('spinbutton', {name: 'End time (seconds)'});
@@ -1345,17 +1268,24 @@ test('opacity popup times follow a block edit while unsaved endpoint values rema
   fireEvent.change(screen.getByRole('spinbutton', {name: 'End opacity (%)'}), {
     target: {value: '25'}
   });
-  source.config.opacityTransitions = source.config.opacityTransitions!.map((transition, index) =>
-    index === 0 ? {...transition, startTimeMs: 5000, endTimeMs: 7000} : transition
-  );
+  source.config.propertyTransitions = {
+    opacity: source.config.propertyTransitions!.opacity.map((transition, index) =>
+      index === 0 ? {...transition, startTimeMs: 5000, endTimeMs: 7000} : transition
+    )
+  };
   rerender(<Editor {...props} />);
   expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(5);
   expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(7);
   expect(screen.getByRole('spinbutton', {name: 'End opacity (%)'})).toHaveValue(25);
 });
 
-function annotation(transitions?: LayerOpacityTransition[], id = 'harbor', label = 'Harbor') {
-  return {id, label, isVisible: true, opacityTransitions: transitions} as unknown as Annotation;
+function annotation(transitions?: LayerPropertyTransition[], id = 'harbor', label = 'Harbor') {
+  return {
+    id,
+    label,
+    isVisible: true,
+    propertyTransitions: {opacity: transitions}
+  } as unknown as Annotation;
 }
 
 test('adds multiple annotation opacity blocks on one shared ruler and removes only the selected block', () => {
@@ -1371,7 +1301,7 @@ test('adds multiple annotation opacity blocks on one shared ruler and removes on
     fireEvent.click(screen.getByRole('menuitem', {name: 'Opacity'}));
   };
   add();
-  expect(source.opacityTransitions).toEqual([
+  expect(source.propertyTransitions?.opacity).toEqual([
     {
       id: 'opacity-1',
       startTimeMs: 5000,
@@ -1383,8 +1313,8 @@ test('adds multiple annotation opacity blocks on one shared ruler and removes on
   ]);
   fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
   add();
-  expect(source.opacityTransitions).toHaveLength(2);
-  expect(source.opacityTransitions![1]).toEqual({
+  expect(source.propertyTransitions?.opacity).toHaveLength(2);
+  expect(source.propertyTransitions!.opacity[1]).toEqual({
     id: 'opacity-2',
     startTimeMs: 7000,
     endTimeMs: 9000,
@@ -1398,11 +1328,11 @@ test('adds multiple annotation opacity blocks on one shared ruler and removes on
   expect(screen.getAllByRole('slider', {name: 'Animation playhead'})).toHaveLength(1);
   expect(screen.getByRole('group', {name: 'Layer opacity: Points'})).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
-  expect(source.opacityTransitions).toHaveLength(1);
-  expect(source.opacityTransitions![0].id).toBe('opacity-1');
+  expect(source.propertyTransitions?.opacity).toHaveLength(1);
+  expect(source.propertyTransitions!.opacity[0].id).toBe('opacity-1');
   fireEvent.doubleClick(row.getByRole('button', {name: 'Opacity 1 · Harbor'}));
   fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
-  expect(source.opacityTransitions).toEqual([]);
+  expect(source.propertyTransitions?.opacity).toEqual([]);
   expect(source.isVisible).toBe(true);
   expect(screen.queryByRole('group', {name: 'Annotation opacity: Harbor'})).toBeNull();
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
@@ -1411,6 +1341,8 @@ test('adds multiple annotation opacity blocks on one shared ruler and removes on
 test('annotation settings save values, times and easing without changing a layer with the same id', () => {
   const transitions = opacityTransitions();
   const source = annotation(transitions, 'points', 'Points');
+  const futureProperty = [{...transitions[0], startValue: 10, endValue: 20}];
+  source.propertyTransitions!.futureProperty = futureProperty;
   const layerSource = layer(opacityTransitions());
   const {props} = setup({annotations: [source], layers: [layerSource]});
   const annotationRow = within(screen.getByRole('group', {name: 'Annotation opacity: Points'}));
@@ -1439,14 +1371,17 @@ test('annotation settings save values, times and easing without changing a layer
   fireEvent.click(screen.getByRole('checkbox', {name: 'Linear easing'}));
   fireEvent.click(screen.getByRole('button', {name: 'Save'}));
   expect(props.onAnnotationChange).toHaveBeenCalledWith('points', {
-    opacityTransitions: [
-      {...transitions[0], endTimeMs: 4500, startValue: 0.2, endValue: 0.6, easing: 'easeInOut'},
-      transitions[1]
-    ]
+    propertyTransitions: {
+      futureProperty,
+      opacity: [
+        {...transitions[0], endTimeMs: 4500, startValue: 0.2, endValue: 0.6, easing: 'easeInOut'},
+        transitions[1]
+      ]
+    }
   });
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
-  expect(layerSource.config.opacityTransitions).toEqual(transitions);
-  expect(source.opacityTransitions).toEqual(transitions);
+  expect(layerSource.config.propertyTransitions?.opacity).toEqual(transitions);
+  expect(source.propertyTransitions?.opacity).toEqual(transitions);
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
 });
 
@@ -1467,19 +1402,23 @@ test('annotation block movement and both edges preserve values and respect neigh
   const {props} = setup({annotations: [source]});
   drag(screen.getByRole('button', {name: 'Opacity 1 · Harbor'}), 80, 300);
   expect(props.onAnnotationChange).toHaveBeenLastCalledWith(source.id, {
-    opacityTransitions: [{...transitions[0], startTimeMs: 8000, endTimeMs: 10000}, transitions[1]]
+    propertyTransitions: {
+      opacity: [{...transitions[0], startTimeMs: 8000, endTimeMs: 10000}, transitions[1]]
+    }
   });
   drag(screen.getByRole('slider', {name: 'End time for Opacity 1 · Harbor'}), 100, 300);
   expect(props.onAnnotationChange).toHaveBeenLastCalledWith(source.id, {
-    opacityTransitions: [{...transitions[0], endTimeMs: 10000}, transitions[1]]
+    propertyTransitions: {opacity: [{...transitions[0], endTimeMs: 10000}, transitions[1]]}
   });
   drag(screen.getByRole('slider', {name: 'Start time for Opacity 2 · Harbor'}), 200, 20);
   expect(props.onAnnotationChange).toHaveBeenLastCalledWith(source.id, {
-    opacityTransitions: [transitions[0], {...transitions[1], startTimeMs: 5000}]
+    propertyTransitions: {opacity: [transitions[0], {...transitions[1], startTimeMs: 5000}]}
   });
   fireEvent.keyDown(screen.getByRole('button', {name: 'Opacity 1 · Harbor'}), {key: 'ArrowRight'});
   expect(props.onAnnotationChange).toHaveBeenLastCalledWith(source.id, {
-    opacityTransitions: [{...transitions[0], startTimeMs: 3100, endTimeMs: 5100}, transitions[1]]
+    propertyTransitions: {
+      opacity: [{...transitions[0], startTimeMs: 3100, endTimeMs: 5100}, transitions[1]]
+    }
   });
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
@@ -1500,10 +1439,12 @@ test('hidden annotation blocks remain editable without enabling playback', () =>
   });
   fireEvent.click(screen.getByRole('button', {name: 'Save'}));
   expect(props.onAnnotationChange).toHaveBeenCalledWith(source.id, {
-    opacityTransitions: [
-      {...source.opacityTransitions![0], endValue: 0.4},
-      source.opacityTransitions![1]
-    ]
+    propertyTransitions: {
+      opacity: [
+        {...source.propertyTransitions!.opacity[0], endValue: 0.4},
+        source.propertyTransitions!.opacity[1]
+      ]
+    }
   });
   expect(source.isVisible).toBe(false);
 });

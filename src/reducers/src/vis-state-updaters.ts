@@ -103,7 +103,7 @@ import {
   isSideFilter,
   getApplicationConfig,
   validateFiltersUpdateDatasets,
-  normalizeLayerOpacityTransitions
+  normalizeLayerPropertyTransitions
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
@@ -3132,7 +3132,7 @@ export const removeChartUpdater = (
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
-  const opacityTransitions = normalizeLayerOpacityTransitions(config?.opacityTransitions);
+  const propertyTransitions = normalizeLayerPropertyTransitions(config?.propertyTransitions);
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
   const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
   const derivedFromAngle =
@@ -3153,7 +3153,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     id: config?.id ?? generateHashId(6),
     kind,
     isVisible: config?.isVisible ?? true,
-    ...(opacityTransitions !== undefined ? {opacityTransitions} : {}),
+    ...(propertyTransitions !== undefined ? {propertyTransitions} : {}),
     autoSize: config?.autoSize ?? true,
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
@@ -3288,10 +3288,10 @@ export const updateAnnotationUpdater = (
   } else {
     nextAnnotation = {...prev, ...config} as Annotation;
   }
-  if (Object.prototype.hasOwnProperty.call(config, 'opacityTransitions')) {
-    const opacityTransitions = normalizeLayerOpacityTransitions(config.opacityTransitions);
-    if (opacityTransitions === undefined) delete nextAnnotation.opacityTransitions;
-    else nextAnnotation.opacityTransitions = opacityTransitions;
+  if (Object.prototype.hasOwnProperty.call(config, 'propertyTransitions')) {
+    const propertyTransitions = normalizeLayerPropertyTransitions(config.propertyTransitions);
+    if (propertyTransitions === undefined) delete nextAnnotation.propertyTransitions;
+    else nextAnnotation.propertyTransitions = propertyTransitions;
   }
 
   const newAnnotations = [...state.annotations];

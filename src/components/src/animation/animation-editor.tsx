@@ -20,10 +20,8 @@ import {
   DEFAULT_LAYER_ANIMATABLE_PROPS,
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
-  getLayerOpacityTransitions,
   isRgbColor,
   normalizeLayerPropertyTransitions,
-  normalizeLayerOpacityTransitions,
   roundValToStep,
   rgbToHex
 } from '@kepler.gl/utils';
@@ -612,7 +610,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const annotationTracks = annotations.map((annotation, index) => ({
       annotation,
       label: annotation.label?.trim() || `Annotation ${index + 1}`,
-      transitions: getLayerOpacityTransitions(annotation)
+      transitions: getLayerPropertyTransitions(annotation, 'opacity')
     }));
     const configuredDuration = Math.max(
       playback.duration,
@@ -694,18 +692,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     ) => {
       const normalized = normalizeLayerPropertyTransitions({[property.name]: transitions});
       if (normalized) {
-        const propertyTransitions = {...layer.config.propertyTransitions};
-        // Retain legacy opacity when another property is the first one edited.
-        if (propertyTransitions.opacity === undefined) {
-          const opacity = getLayerOpacityTransitions(layer.config);
-          if (opacity.length || layer.config.opacityTransitions !== undefined)
-            propertyTransitions.opacity = opacity;
-        }
         playback.pause();
         onLayerConfigChange?.(layer, {
-          propertyTransitions: {...propertyTransitions, ...normalized},
-          opacityTransitions: undefined,
-          visibilityTiming: undefined
+          propertyTransitions: {...layer.config.propertyTransitions, ...normalized}
         });
       }
     };
@@ -713,10 +702,12 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       annotation: Annotation,
       transitions: LayerPropertyTransition[]
     ) => {
-      const normalized = normalizeLayerOpacityTransitions(transitions);
+      const normalized = normalizeLayerPropertyTransitions({opacity: transitions});
       if (normalized) {
         playback.pause();
-        onAnnotationChange?.(annotation.id, {opacityTransitions: normalized});
+        onAnnotationChange?.(annotation.id, {
+          propertyTransitions: {...annotation.propertyTransitions, ...normalized}
+        });
       }
     };
     const saveSelectedTransitions = (transitions: LayerPropertyTransition[]) => {
@@ -1313,9 +1304,13 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                     {transitions.map((transition, index) => (
                       <AnimationBlock
                         key={transition.id}
-                        label={`${Math.round(transition.startValue * 100)}% → ${Math.round(
-                          transition.endValue * 100
-                        )}%`}
+                        label={`${formatPropertyValue(
+                          transition.startValue,
+                          DEFAULT_LAYER_ANIMATABLE_PROPS[0]
+                        )} → ${formatPropertyValue(
+                          transition.endValue,
+                          DEFAULT_LAYER_ANIMATABLE_PROPS[0]
+                        )}`}
                         ariaLabel={`Opacity ${index + 1} · ${label}`}
                         kind="layer"
                         startTimeMs={transition.startTimeMs}

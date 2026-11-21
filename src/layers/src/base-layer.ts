@@ -48,8 +48,6 @@ import {
   hasColorMap,
   hexToRgb,
   isPlainObject,
-  normalizeLayerVisibilityTiming,
-  normalizeLayerOpacityTransitions,
   normalizeLayerPropertyTransitions,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
   isDomainStops,
@@ -541,8 +539,6 @@ class Layer implements KeplerLayer {
   getDefaultLayerConfig(
     props: LayerBaseConfigPartial
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
-    const visibilityTiming = normalizeLayerVisibilityTiming(props.visibilityTiming);
-    const opacityTransitions = normalizeLayerOpacityTransitions(props.opacityTransitions);
     const propertyTransitions = normalizeLayerPropertyTransitions(props.propertyTransitions);
     return {
       dataId: props.dataId,
@@ -554,8 +550,6 @@ class Layer implements KeplerLayer {
       isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden ?? false,
-      ...(visibilityTiming ? {visibilityTiming} : {}),
-      ...(opacityTransitions !== undefined ? {opacityTransitions} : {}),
       ...(propertyTransitions !== undefined ? {propertyTransitions} : {}),
       // Only persist an explicit choice so saved maps stay compatible until the user toggles it.
       ...(typeof props.isIncludedInLegend === 'boolean'
@@ -812,9 +806,7 @@ class Layer implements KeplerLayer {
       ...copied,
       // Optional animation fields are absent from a new layer's default keys.
       // Preserve them independently of the destination's supported properties.
-      propertyTransitions: configToCopy.propertyTransitions,
-      opacityTransitions: configToCopy.opacityTransitions,
-      visibilityTiming: configToCopy.visibilityTiming
+      propertyTransitions: configToCopy.propertyTransitions
     });
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
@@ -931,16 +923,6 @@ class Layer implements KeplerLayer {
       Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
   >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
-    if (Object.prototype.hasOwnProperty.call(newConfig, 'visibilityTiming')) {
-      const visibilityTiming = normalizeLayerVisibilityTiming(newConfig.visibilityTiming);
-      if (visibilityTiming) this.config.visibilityTiming = visibilityTiming;
-      else delete this.config.visibilityTiming;
-    }
-    if (Object.prototype.hasOwnProperty.call(newConfig, 'opacityTransitions')) {
-      const opacityTransitions = normalizeLayerOpacityTransitions(newConfig.opacityTransitions);
-      if (opacityTransitions !== undefined) this.config.opacityTransitions = opacityTransitions;
-      else delete this.config.opacityTransitions;
-    }
     if (Object.prototype.hasOwnProperty.call(newConfig, 'propertyTransitions')) {
       const propertyTransitions = normalizeLayerPropertyTransitions(newConfig.propertyTransitions);
       if (propertyTransitions !== undefined) this.config.propertyTransitions = propertyTransitions;

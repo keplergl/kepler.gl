@@ -844,8 +844,27 @@ describe('flat export zoom fading', () => {
 
   test('combines scheduled fades and zoom fades at elapsed export times and restores static opacity', () => {
     const {source, state} = setup();
-    const timing = {startTimeMs: 2000, endTimeMs: 6000, fadeInMs: 1000, fadeOutMs: 1000};
-    state.visState.layers[0].config.visibilityTiming = timing;
+    const propertyTransitions = {
+      opacity: [
+        {
+          id: 'appear',
+          startTimeMs: 2000,
+          endTimeMs: 3000,
+          startValue: 0,
+          endValue: 1,
+          easing: 'linear'
+        },
+        {
+          id: 'fade',
+          startTimeMs: 5000,
+          endTimeMs: 6000,
+          startValue: 1,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ]
+    };
+    state.visState.layers[0].config.propertyTransitions = propertyTransitions;
     const frames = [0, 2000, 2500, 3500, 5500, 6000].map(animationTimeMs =>
       getFlatExportLayers(state, {
         mapIndex: 0,
@@ -863,7 +882,7 @@ describe('flat export zoom fading', () => {
     ]);
     expect(frames[2][0].props._subLayerProps['polygons-stroke'].opacity).toBe(0.15);
     expect(getFlatExportLayers(state, {mapIndex: 0})[0].props.opacity).toBe(0.8);
-    expect(state.visState.layers[0].config.visibilityTiming).toEqual(timing);
+    expect(state.visState.layers[0].config.propertyTransitions).toEqual(propertyTransitions);
     expect(source.props.opacity).toBe(0.8);
   });
 
@@ -896,8 +915,7 @@ describe('flat export zoom fading', () => {
       }
     ];
     const config = state.visState.layers[0].config;
-    config.opacityTransitions = transitions;
-    config.visibilityTiming = {startTimeMs: 0, endTimeMs: 1000, fadeInMs: 0, fadeOutMs: 0};
+    config.propertyTransitions = {opacity: transitions};
     const saved = JSON.stringify(config);
     const times = [0, 2000, 4000, 7000, 9000, 11000, 12000];
     const viewState = {...state.mapState, zoom: 3};

@@ -737,7 +737,31 @@ describe('ExportVideoModal', () => {
       async ({mapState, panel}) => {
         const cameraTour = makeTour(15000);
         const layers = [
-          {config: {isVisible: true, visibilityTiming: {startTimeMs: 1000, endTimeMs: 4000}}}
+          {
+            config: {
+              isVisible: true,
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'appear',
+                    startTimeMs: 1000,
+                    endTimeMs: 1000,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  },
+                  {
+                    id: 'fade',
+                    startTimeMs: 4000,
+                    endTimeMs: 4000,
+                    startValue: 1,
+                    endValue: 0,
+                    easing: 'linear'
+                  }
+                ]
+              }
+            }
+          }
         ];
         const props = {
           ...DEFAULT_PROPS,
@@ -2529,24 +2553,26 @@ describe('authored export duration range', () => {
     const annotation = {
       id: 'label',
       isVisible: true,
-      opacityTransitions: [
-        {
-          id: 'in',
-          startTimeMs: 1000,
-          endTimeMs: 3000,
-          startValue: 0,
-          endValue: 0.8,
-          easing: 'linear'
-        },
-        {
-          id: 'dim',
-          startTimeMs: 18000,
-          endTimeMs: 24000,
-          startValue: 0.8,
-          endValue: 0.25,
-          easing: 'linear'
-        }
-      ]
+      propertyTransitions: {
+        opacity: [
+          {
+            id: 'in',
+            startTimeMs: 1000,
+            endTimeMs: 3000,
+            startValue: 0,
+            endValue: 0.8,
+            easing: 'linear'
+          },
+          {
+            id: 'dim',
+            startTimeMs: 18000,
+            endTimeMs: 24000,
+            startValue: 0.8,
+            endValue: 0.25,
+            easing: 'linear'
+          }
+        ]
+      }
     };
     const visState = {
       ...DEFAULT_PROPS.visState,
@@ -2564,14 +2590,18 @@ describe('authored export duration range', () => {
     });
     expect(getAnimationExportDuration({annotations: [{...annotation, isVisible: false}]})).toBe(0);
     expect(
-      getAnimationExportDuration({annotations: [{...annotation, opacityTransitions: []}]})
+      getAnimationExportDuration({
+        annotations: [{...annotation, propertyTransitions: {opacity: []}}]
+      })
     ).toBe(0);
     expect(
       getAnimationExportDuration({
         annotations: [
           {
             ...annotation,
-            opacityTransitions: [{...annotation.opacityTransitions[0], startTimeMs: -1}]
+            propertyTransitions: {
+              opacity: [{...annotation.propertyTransitions?.opacity[0], startTimeMs: -1}]
+            }
           }
         ]
       })
@@ -2581,9 +2611,11 @@ describe('authored export duration range', () => {
         annotations: [
           {
             ...annotation,
-            opacityTransitions: [
-              {...annotation.opacityTransitions[0], startTimeMs: 0, endTimeMs: 0}
-            ]
+            propertyTransitions: {
+              opacity: [
+                {...annotation.propertyTransitions?.opacity[0], startTimeMs: 0, endTimeMs: 0}
+              ]
+            }
           }
         ]
       })
@@ -2672,7 +2704,31 @@ describe('authored export duration range', () => {
     const {getAnimationExportDuration} = require('./camera-tour-export');
     const effects = [makeEffect({startTimeMs: 2000, endTimeMs: 12000})];
     const layers = [
-      {config: {isVisible: true, visibilityTiming: {startTimeMs: 1000, endTimeMs: 18000}}}
+      {
+        config: {
+          isVisible: true,
+          propertyTransitions: {
+            opacity: [
+              {
+                id: 'appear',
+                startTimeMs: 1000,
+                endTimeMs: 1000,
+                startValue: 0,
+                endValue: 1,
+                easing: 'linear'
+              },
+              {
+                id: 'fade',
+                startTimeMs: 18000,
+                endTimeMs: 18000,
+                startValue: 1,
+                endValue: 0,
+                easing: 'linear'
+              }
+            ]
+          }
+        }
+      }
     ];
     const visState = {...DEFAULT_PROPS.visState, cameraTour: makeTour(4000), effects, layers};
     expect(getAnimationExportDuration(visState)).toBe(18000);
@@ -2691,29 +2747,31 @@ describe('authored export duration range', () => {
     expect(ui.Slider({maxValue: 10000, value1: 4000}).props.maxValue).toBe(18000);
   });
 
-  test('layers-only export includes every opacity block and respects an explicit empty override', async () => {
+  test('layers-only export includes every opacity block and respects a cleared track', async () => {
     const {getAnimationExportDuration} = require('./camera-tour-export');
     const layer = {
       config: {
         isVisible: true,
-        opacityTransitions: [
-          {
-            id: 'fade-in',
-            startTimeMs: 1000,
-            endTimeMs: 3000,
-            startValue: 0,
-            endValue: 0.5,
-            easing: 'linear'
-          },
-          {
-            id: 'fade-out',
-            startTimeMs: 18000,
-            endTimeMs: 24000,
-            startValue: 0.5,
-            endValue: 0,
-            easing: 'linear'
-          }
-        ]
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'fade-in',
+              startTimeMs: 1000,
+              endTimeMs: 3000,
+              startValue: 0,
+              endValue: 0.5,
+              easing: 'linear'
+            },
+            {
+              id: 'fade-out',
+              startTimeMs: 18000,
+              endTimeMs: 24000,
+              startValue: 0.5,
+              endValue: 0,
+              easing: 'linear'
+            }
+          ]
+        }
       }
     };
     const visState = {...DEFAULT_PROPS.visState, cameraTour: null, effects: [], layers: [layer]};
@@ -2732,8 +2790,7 @@ describe('authored export duration range', () => {
           {
             config: {
               ...layer.config,
-              opacityTransitions: [],
-              visibilityTiming: {startTimeMs: 0, endTimeMs: 30000}
+              propertyTransitions: {opacity: []}
             }
           }
         ]
@@ -2745,16 +2802,18 @@ describe('authored export duration range', () => {
           {
             config: {
               isVisible: true,
-              opacityTransitions: [
-                {
-                  id: 'cut',
-                  startTimeMs: 0,
-                  endTimeMs: 0,
-                  startValue: 0,
-                  endValue: 1,
-                  easing: 'linear'
-                }
-              ]
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'cut',
+                    startTimeMs: 0,
+                    endTimeMs: 0,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  }
+                ]
+              }
             }
           }
         ]
@@ -2765,7 +2824,23 @@ describe('authored export duration range', () => {
   test('uses the playback fallback for valid zero-time schedules while ignoring inactive or invalid tracks', () => {
     const {getAnimationExportDuration} = require('./camera-tour-export');
     const cut = makeEffect({startTimeMs: 0, endTimeMs: 0});
-    const layer = {config: {isVisible: true, visibilityTiming: {startTimeMs: 0}}};
+    const layer = {
+      config: {
+        isVisible: true,
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'appear',
+              startTimeMs: 0,
+              endTimeMs: 0,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    };
     expect(getAnimationExportDuration({effects: [cut]})).toBe(10000);
     expect(getAnimationExportDuration({layers: [layer]})).toBe(10000);
     cut.setProps({isEnabled: false});
@@ -2775,7 +2850,25 @@ describe('authored export duration range', () => {
     ).toBe(0);
     expect(
       getAnimationExportDuration({
-        layers: [{config: {...layer.config, visibilityTiming: {startTimeMs: -1}}}]
+        layers: [
+          {
+            config: {
+              ...layer.config,
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'appear',
+                    startTimeMs: -1,
+                    endTimeMs: -1,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  }
+                ]
+              }
+            }
+          }
+        ]
       })
     ).toBe(0);
     expect(getAnimationExportDuration({})).toBe(0);

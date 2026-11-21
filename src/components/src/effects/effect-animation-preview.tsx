@@ -21,7 +21,7 @@ import {
   getAnnotationOpacityDuration,
   getLayerAnimationDuration,
   getLayerAnimationTracks,
-  getLayerOpacityTransitions
+  getLayerPropertyTransitions
 } from '@kepler.gl/utils';
 import {RootContext} from '../context';
 import {
@@ -97,7 +97,7 @@ export default function EffectAnimationPreviewProvider({
     annotations.map(annotation => [
       annotation.id,
       annotation.isVisible,
-      getLayerOpacityTransitions(annotation)
+      getLayerPropertyTransitions(annotation, 'opacity')
     ])
   );
   const effectTimingKey = JSON.stringify(
@@ -115,7 +115,8 @@ export default function EffectAnimationPreviewProvider({
     layer => layer.config.isVisible && getLayerAnimationTracks(layer).length > 0
   );
   const hasAnnotationTiming = annotations.some(
-    annotation => annotation.isVisible && getLayerOpacityTransitions(annotation).length > 0
+    annotation =>
+      annotation.isVisible && getLayerPropertyTransitions(annotation, 'opacity').length > 0
   );
   const hasAnimation = Boolean(
     effectTracks.length || cameraDuration || hasLayerTiming || hasAnnotationTiming

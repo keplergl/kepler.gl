@@ -9,8 +9,6 @@ import {
   colorRangeBackwardCompatibility,
   normalizeCameraBookmarks,
   normalizeCameraTour,
-  normalizeLayerVisibilityTiming,
-  normalizeLayerOpacityTransitions,
   normalizeLayerPropertyTransitions,
   isFilterValidToSave,
   findById,
@@ -575,28 +573,6 @@ class VisConfigSchemaV1 extends Schema {
   }
 }
 
-class LayerVisibilityTimingSchema extends Schema {
-  save(value: unknown) {
-    const visibilityTiming = normalizeLayerVisibilityTiming(value);
-    return visibilityTiming ? {visibilityTiming} : {};
-  }
-
-  load(value: unknown) {
-    return this.save(value);
-  }
-}
-
-class LayerOpacityTransitionsSchema extends Schema {
-  save(value: unknown) {
-    const opacityTransitions = normalizeLayerOpacityTransitions(value);
-    return opacityTransitions !== undefined ? {opacityTransitions} : {};
-  }
-
-  load(value: unknown) {
-    return this.save(value);
-  }
-}
-
 class LayerPropertyTransitionsSchema extends Schema {
   save(value: unknown) {
     const propertyTransitions = normalizeLayerPropertyTransitions(value);
@@ -627,8 +603,6 @@ export const layerPropsV1 = {
       }),
       isVisible: null,
       isIncludedInLegend: null,
-      visibilityTiming: new LayerVisibilityTimingSchema({key: 'visibilityTiming'}),
-      opacityTransitions: new LayerOpacityTransitionsSchema({key: 'opacityTransitions'}),
       propertyTransitions: new LayerPropertyTransitionsSchema({key: 'propertyTransitions'}),
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
@@ -1007,7 +981,7 @@ const annotationPropsV1 = {
   id: null,
   kind: null,
   isVisible: null,
-  opacityTransitions: new LayerOpacityTransitionsSchema({key: 'opacityTransitions'}),
+  propertyTransitions: new LayerPropertyTransitionsSchema({key: 'propertyTransitions'}),
   autoSize: null,
   autoSizeY: null,
   anchorPoint: null,

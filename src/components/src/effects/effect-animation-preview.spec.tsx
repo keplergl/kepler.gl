@@ -15,7 +15,7 @@ import {
   getLayerAnimatedVisConfig,
   getLayerOpacityFactor
 } from '@kepler.gl/utils';
-import type {Annotation, CameraTour, Effect} from '@kepler.gl/types';
+import type {Annotation, CameraTour, Effect, LayerPropertyTransition} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import CameraTourPlaybackProvider, {
   CameraTourPlaybackContext
@@ -234,24 +234,26 @@ function animatedAnnotation(): Annotation {
     id: 'callout',
     label: 'Place',
     isVisible: true,
-    opacityTransitions: [
-      {
-        id: 'in',
-        startTimeMs: 1000,
-        endTimeMs: 3000,
-        startValue: 0,
-        endValue: 0.5,
-        easing: 'linear'
-      },
-      {
-        id: 'later',
-        startTimeMs: 12000,
-        endTimeMs: 16000,
-        startValue: 0.5,
-        endValue: 1,
-        easing: 'linear'
-      }
-    ]
+    propertyTransitions: {
+      opacity: [
+        {
+          id: 'in',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: 0,
+          endValue: 0.5,
+          easing: 'linear'
+        },
+        {
+          id: 'later',
+          startTimeMs: 12000,
+          endTimeMs: 16000,
+          startValue: 0.5,
+          endValue: 1,
+          easing: 'linear'
+        }
+      ]
+    }
   } as unknown as Annotation;
 }
 
@@ -294,16 +296,23 @@ describe('annotation opacity playback', () => {
     expect(view.playback().running).toBe(true);
     const changed = {
       ...annotation,
-      opacityTransitions: annotation.opacityTransitions!.map((transition, index) =>
-        index === 0 ? {...transition, endValue: 1} : {...transition, endTimeMs: 20000}
-      )
+      propertyTransitions: {
+        opacity: annotation.propertyTransitions!.opacity.map((transition, index) =>
+          index === 0
+            ? {
+                ...(transition as Extract<LayerPropertyTransition, {startValue: number}>),
+                endValue: 1
+              }
+            : {...transition, endTimeMs: 20000}
+        )
+      }
     };
     view.replaceAnnotations([changed]);
     expect(view.playback().running).toBe(false);
     expect(view.playback().elapsed).toBe(2000);
     expect(view.playback().duration).toBe(20000);
     expect(view.annotationOpacities()).toEqual([0.5]);
-    view.replaceAnnotations([{...changed, opacityTransitions: []}]);
+    view.replaceAnnotations([{...changed, propertyTransitions: {opacity: []}}]);
     expect(view.playback().duration).toBe(5000);
     expect(view.annotationOpacities()).toEqual([1]);
   });
@@ -317,21 +326,36 @@ describe('annotation opacity playback', () => {
     expect(view.playback().hasAnimation).toBe(false);
     expect(view.playback().duration).toBe(0);
     view.replaceAnnotations([
-      {...annotation, opacityTransitions: [{...annotation.opacityTransitions![0], endValue: 2}]}
+      {
+        ...annotation,
+        propertyTransitions: {
+          opacity: [
+            {
+              ...(annotation.propertyTransitions!.opacity[0] as Extract<
+                LayerPropertyTransition,
+                {startValue: number}
+              >),
+              endValue: 2
+            }
+          ]
+        }
+      }
     ]);
     expect(view.playback().hasAnimation).toBe(false);
     view.replaceAnnotations([
       {
         ...annotation,
-        opacityTransitions: [
-          {id: 'cut', startTimeMs: 0, endTimeMs: 0, startValue: 1, endValue: 0, easing: 'linear'}
-        ]
+        propertyTransitions: {
+          opacity: [
+            {id: 'cut', startTimeMs: 0, endTimeMs: 0, startValue: 1, endValue: 0, easing: 'linear'}
+          ]
+        }
       }
     ]);
     expect(view.playback().duration).toBe(10000);
     act(() => view.playback().run());
     expect(view.annotationOpacities()).toEqual([0]);
-    view.replaceAnnotations([{...annotation, opacityTransitions: []}]);
+    view.replaceAnnotations([{...annotation, propertyTransitions: {opacity: []}}]);
     expect(view.playback().hasAnimation).toBe(false);
     expect(view.playback().animationTimeMs).toBeNull();
     expect(view.annotationOpacities()).toEqual([1]);
@@ -575,9 +599,28 @@ describe('effects panel animation preview', () => {
       id: 'scheduled',
       config: {
         isVisible: true,
-        visibilityTiming: {startTimeMs: 3000, endTimeMs: 15000, fadeInMs: 1000, fadeOutMs: 1000}
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'appear',
+              startTimeMs: 3000,
+              endTimeMs: 4000,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            },
+            {
+              id: 'fade',
+              startTimeMs: 14000,
+              endTimeMs: 15000,
+              startValue: 1,
+              endValue: 0,
+              easing: 'linear'
+            }
+          ]
+        }
       }
-    } as Layer;
+    } as unknown as Layer;
     const view = setup([animatedBrightness()], true, {layers: [layer], managerOpen: false});
     expect(view.playback().duration).toBe(15000);
     act(() => view.playback().run());
@@ -600,24 +643,26 @@ describe('effects panel animation preview', () => {
       config: {
         isVisible: true,
         visConfig: {opacity: 0.8},
-        opacityTransitions: [
-          {
-            id: 'first',
-            startTimeMs: 1000,
-            endTimeMs: 3000,
-            startValue: 0,
-            endValue: 0.5,
-            easing: 'linear'
-          },
-          {
-            id: 'second',
-            startTimeMs: 12000,
-            endTimeMs: 16000,
-            startValue: 0.5,
-            endValue: 1,
-            easing: 'linear'
-          }
-        ]
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'first',
+              startTimeMs: 1000,
+              endTimeMs: 3000,
+              startValue: 0,
+              endValue: 0.5,
+              easing: 'linear'
+            },
+            {
+              id: 'second',
+              startTimeMs: 12000,
+              endTimeMs: 16000,
+              startValue: 0.5,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
       }
     } as unknown as Layer);
 
@@ -657,9 +702,11 @@ describe('effects panel animation preview', () => {
         ...layer,
         config: {
           ...layer.config,
-          opacityTransitions: layer.config.opacityTransitions!.map(block => ({...block}))
+          propertyTransitions: {
+            opacity: layer.config.propertyTransitions!.opacity.map(block => ({...block}))
+          }
         }
-      } as Layer
+      } as unknown as Layer
     ]);
     expect(view.playback().running).toBe(true);
     expect(view.playback().elapsed).toBe(4000);
@@ -677,11 +724,13 @@ describe('effects panel animation preview', () => {
       ...layer,
       config: {
         ...layer.config,
-        opacityTransitions: layer.config.opacityTransitions!.map((block, index) =>
-          index === 0 ? {...block, endValue: 0.75} : {...block, startValue: 0.75}
-        )
+        propertyTransitions: {
+          opacity: layer.config.propertyTransitions!.opacity.map((block, index) =>
+            index === 0 ? {...block, endValue: 0.75} : {...block, startValue: 0.75}
+          )
+        }
       }
-    } as Layer;
+    } as unknown as Layer;
     view.replaceLayers([edited]);
     expect(view.playback().running).toBe(false);
     expect(view.playback().animationTimeMs).toBe(5000);
@@ -692,10 +741,9 @@ describe('effects panel animation preview', () => {
     expect(view.opacities()).toEqual([0.8]);
   });
 
-  test('explicitly empty opacity blocks disable a legacy visibility schedule', () => {
+  test('clearing opacity blocks disables coordinated playback', () => {
     const layer = opacityLayer();
-    layer.config.opacityTransitions = [];
-    layer.config.visibilityTiming = {startTimeMs: 0, endTimeMs: 20000, fadeInMs: 0, fadeOutMs: 0};
+    layer.config.propertyTransitions = {opacity: []};
     const view = setup([], true, {layers: [layer], managerOpen: false});
     expect(view.playback().hasAnimation).toBe(false);
     expect(view.playback().duration).toBe(0);
@@ -763,9 +811,28 @@ describe('effects panel animation preview', () => {
       id: 'scheduled',
       config: {
         isVisible: true,
-        visibilityTiming: {startTimeMs: 1000, endTimeMs: 15000, fadeInMs: 0, fadeOutMs: 0}
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'appear',
+              startTimeMs: 1000,
+              endTimeMs: 1000,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            },
+            {
+              id: 'fade',
+              startTimeMs: 15000,
+              endTimeMs: 15000,
+              startValue: 1,
+              endValue: 0,
+              easing: 'linear'
+            }
+          ]
+        }
       }
-    } as Layer;
+    } as unknown as Layer;
     view.replaceLayers([layer]);
     expect(view.playback().animationTimeMs).toBe(8000);
     expect(frames.size).toBe(0);

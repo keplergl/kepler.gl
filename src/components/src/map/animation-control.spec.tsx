@@ -42,7 +42,7 @@ function Editor(props: AnimationEditorProps) {
       <button onClick={props.onEditCamera}>Edit camera settings</button>
       <button
         onClick={() =>
-          props.onAnnotationChange?.(props.annotations![0].id, {opacityTransitions: []})
+          props.onAnnotationChange?.(props.annotations![0].id, {propertyTransitions: {opacity: []}})
         }
       >
         Clear annotation animation
@@ -146,7 +146,9 @@ test('forwards annotation tracks and writes changes through the annotation actio
   fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
   expect(screen.getByLabelText('Authored annotation')).toHaveTextContent('Place');
   fireEvent.click(screen.getByRole('button', {name: 'Clear annotation animation'}));
-  expect(view.updateAnnotation).toHaveBeenCalledWith('callout', {opacityTransitions: []});
+  expect(view.updateAnnotation).toHaveBeenCalledWith('callout', {
+    propertyTransitions: {opacity: []}
+  });
   expect(view.updateEffect).not.toHaveBeenCalled();
 });
 

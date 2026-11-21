@@ -831,10 +831,22 @@ test('layerUtils -> timed visibility composes with zoom fades without changing s
     pickable: true,
     _subLayerProps: {stroke: {opacity: 0.6}}
   });
-  const timing = {startTimeMs: 1000, endTimeMs: 5000, fadeInMs: 2000, fadeOutMs: 1000};
+  const propertyTransitions = {
+    opacity: [
+      {
+        id: 'appear',
+        startTimeMs: 1000,
+        endTimeMs: 3000,
+        startValue: 0,
+        endValue: 1,
+        easing: 'linear'
+      },
+      {id: 'fade', startTimeMs: 4000, endTimeMs: 5000, startValue: 1, endValue: 0, easing: 'linear'}
+    ]
+  };
   const layer = {
     id: 'timed',
-    config: {dataId: 'survey', isVisible: true, visibilityTiming: timing},
+    config: {dataId: 'survey', isVisible: true, propertyTransitions},
     renderLayer: () => original
   };
   const visState = {
@@ -876,7 +888,11 @@ test('layerUtils -> timed visibility composes with zoom fades without changing s
   }
   t.equal(original.props.opacity, 0.8, 'does not overwrite the authored opacity');
   t.equal(original.props._subLayerProps.stroke.opacity, 0.6, 'does not overwrite stroke opacity');
-  t.deepEqual(layer.config.visibilityTiming, timing, 'does not modify the schedule');
+  t.deepEqual(
+    layer.config.propertyTransitions,
+    propertyTransitions,
+    'does not modify the schedule'
+  );
   original.props.visible = false;
   t.equal(render(3000).props.visible, false, 'a manually hidden layer stays hidden');
   t.deepEqual(
@@ -918,7 +934,7 @@ test('layerUtils -> opacity transitions hold gaps and compose with zoom fades', 
   ];
   const layer = {
     id: 'opacity',
-    config: {dataId: 'survey', isVisible: true, opacityTransitions},
+    config: {dataId: 'survey', isVisible: true, propertyTransitions: {opacity: opacityTransitions}},
     renderLayer: () => original
   };
   const visState = {
@@ -970,19 +986,9 @@ test('layerUtils -> opacity transitions hold gaps and compose with zoom fades', 
   }
   t.equal(original.props.opacity, 0.8, 'does not change the saved opacity');
   t.equal(opacityTransitions[0].startValue, 0.25, 'does not change authored transition values');
-  layer.config.visibilityTiming = {startTimeMs: 10000, fadeInMs: 0, fadeOutMs: 0};
-  layer.config.opacityTransitions = [];
-  t.equal(
-    render(2000, ['opacity']).props.opacity,
-    0.4,
-    'an explicit empty track overrides legacy timing'
-  );
-  delete layer.config.opacityTransitions;
-  t.equal(
-    render(2000, ['opacity']).props.visible,
-    false,
-    'legacy visibility still applies without a new track'
-  );
+  layer.config.propertyTransitions = {opacity: []};
+  t.equal(render(2000, ['opacity']).props.opacity, 0.4, 'an empty track restores authored opacity');
+
   t.end();
 });
 

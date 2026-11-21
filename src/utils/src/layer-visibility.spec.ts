@@ -2,13 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {
-  normalizeLayerVisibilityTiming,
-  getLayerVisibilityFactor,
-  getLayerVisibilityDuration,
-  normalizeLayerOpacityTransitions,
-  getLayerOpacityTransitions,
   getLayerOpacityFactor,
-  getLayerOpacityDuration,
   getAnnotationOpacityDuration,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
   normalizeLayerPropertyTransitions,
@@ -19,49 +13,38 @@ import {
   getLayerAnimatedConfig,
   getLayerAnimatedVisConfig
 } from './layer-visibility';
-import type {
-  LayerAnimatableProp,
-  LayerOpacityTransition,
-  LayerPropertyTransition,
-  RGBColor
-} from '@kepler.gl/types';
-
-const timing = {startTimeMs: 3000, endTimeMs: 10000, fadeInMs: 2000, fadeOutMs: 2000};
-
-test.each([
-  [0, 0],
-  [3000, 0],
-  [4000, 0.5],
-  [5000, 1],
-  [8000, 1],
-  [9000, 0.5],
-  [10000, 0],
-  [12000, 0]
-])('visibility at %i ms is %f', (time, expected) => {
-  expect(getLayerVisibilityFactor(timing, time)).toBe(expected);
-});
+import type {LayerAnimatableProp, LayerPropertyTransition, RGBColor} from '@kepler.gl/types';
 
 test('annotation duration follows only visible valid tracks, including instantaneous and cleared tracks', () => {
   const opacityTransitions = [
     transition({id: 'later', startTimeMs: 6000, endTimeMs: 8000}),
     transition()
   ];
-  const annotation = {isVisible: true, opacityTransitions};
+  const futureProperty = [transition({endTimeMs: 50000, endValue: 100})];
+  const annotation = {
+    isVisible: true,
+    propertyTransitions: {opacity: opacityTransitions, futureProperty}
+  };
   expect(getAnnotationOpacityDuration([])).toBe(0);
   expect(getAnnotationOpacityDuration([{isVisible: true}])).toBe(0);
+  expect(
+    getAnnotationOpacityDuration([{isVisible: true, propertyTransitions: {futureProperty}}])
+  ).toBe(0);
   expect(getAnnotationOpacityDuration([annotation])).toBe(8000);
   expect(
     getAnnotationOpacityDuration([
       annotation,
-      {isVisible: false, opacityTransitions: [transition({endTimeMs: 50000})]}
+      {isVisible: false, propertyTransitions: {opacity: [transition({endTimeMs: 50000})]}}
     ])
   ).toBe(8000);
-  expect(getAnnotationOpacityDuration([{isVisible: true, opacityTransitions: []}])).toBe(0);
+  expect(
+    getAnnotationOpacityDuration([{isVisible: true, propertyTransitions: {opacity: []}}])
+  ).toBe(0);
   expect(
     getAnnotationOpacityDuration([
       {
         isVisible: true,
-        opacityTransitions: [transition({startTimeMs: 0, endTimeMs: 0})]
+        propertyTransitions: {opacity: [transition({startTimeMs: 0, endTimeMs: 0})]}
       }
     ])
   ).toBe(0);
@@ -69,80 +52,18 @@ test('annotation duration follows only visible valid tracks, including instantan
     getAnnotationOpacityDuration([
       {
         isVisible: true,
-        opacityTransitions: [transition(), transition({id: 'overlap', startTimeMs: 3000})]
+        propertyTransitions: {
+          opacity: [transition(), transition({id: 'overlap', startTimeMs: 3000})]
+        }
       }
     ])
   ).toBe(0);
   expect(opacityTransitions[0].id).toBe('later');
 });
 
-test('seeks deterministically without mutating the authored schedule', () => {
-  const original = {...timing};
-  expect(getLayerVisibilityFactor(timing, 9000)).toBe(0.5);
-  expect(getLayerVisibilityFactor(timing, 2000)).toBe(0);
-  expect(getLayerVisibilityFactor(timing, 6000)).toBe(1);
-  expect(timing).toEqual(original);
-});
-
-test('holds visible without an end and supports instantaneous cuts', () => {
-  const ongoing = {startTimeMs: 1000, fadeInMs: 0, fadeOutMs: 0};
-  expect(getLayerVisibilityFactor(ongoing, 999)).toBe(0);
-  expect(getLayerVisibilityFactor(ongoing, 1000)).toBe(1);
-  expect(getLayerVisibilityFactor(ongoing, 100000)).toBe(1);
-  expect(getLayerVisibilityFactor({...ongoing, endTimeMs: 2000}, 1999)).toBe(1);
-  expect(getLayerVisibilityFactor({...ongoing, endTimeMs: 2000}, 2000)).toBe(0);
-  expect(getLayerVisibilityFactor({...ongoing, endTimeMs: 1000}, 1000)).toBe(0);
-});
-
-test.each([
-  undefined,
-  null,
-  [],
-  {},
-  {...timing, startTimeMs: -1},
-  {...timing, startTimeMs: '3'},
-  {...timing, endTimeMs: NaN},
-  {...timing, endTimeMs: 2000},
-  {...timing, fadeInMs: Infinity},
-  {...timing, fadeInMs: -1},
-  {...timing, fadeInMs: 6000},
-  {...timing, endTimeMs: undefined},
-  {startTimeMs: Number.MAX_VALUE, fadeInMs: Number.MAX_VALUE}
-])('rejects invalid or overlapping schedules: %p', value => {
-  expect(normalizeLayerVisibilityTiming(value)).toBeUndefined();
-});
-
-test('normalizes defaults and strips unknown fields', () => {
-  expect(normalizeLayerVisibilityTiming({startTimeMs: 1000, extra: true})).toEqual({
-    startTimeMs: 1000,
-    fadeInMs: 0,
-    fadeOutMs: 0
-  });
-  expect(normalizeLayerVisibilityTiming(timing)).not.toBe(timing);
-});
-
-test('leaves the static map unchanged outside preview and for invalid timing', () => {
-  for (const time of [undefined, null, NaN, Infinity]) {
-    expect(getLayerVisibilityFactor(timing, time)).toBe(1);
-  }
-  expect(getLayerVisibilityFactor(undefined, 0)).toBe(1);
-  expect(getLayerVisibilityFactor({...timing, fadeOutMs: -1}, 0)).toBe(1);
-});
-
-test('duration follows visible schedules and supports a final fade with no disappearance', () => {
-  const layer = (visibilityTiming, isVisible = true) => ({config: {visibilityTiming, isVisible}});
-  expect(getLayerVisibilityDuration([])).toBe(0);
-  expect(getLayerVisibilityDuration([layer(timing)])).toBe(10000);
-  expect(
-    getLayerVisibilityDuration([
-      layer(timing),
-      layer({...timing, endTimeMs: 50000}, false),
-      layer({startTimeMs: 10000, fadeInMs: 3000, fadeOutMs: 0})
-    ])
-  ).toBe(13000);
-});
-
-const transition = (overrides: Partial<LayerOpacityTransition> = {}): LayerOpacityTransition => ({
+const transition = (
+  overrides: Partial<Extract<LayerPropertyTransition, {startValue: number}>> = {}
+): Extract<LayerPropertyTransition, {startValue: number}> => ({
   id: 'in',
   startTimeMs: 2000,
   endTimeMs: 4000,
@@ -157,7 +78,7 @@ describe('layer opacity transitions', () => {
     const first = Object.freeze({...transition(), easing: undefined, unknown: true});
     const later = Object.freeze(transition({id: 'out', startTimeMs: 6000, endTimeMs: 8000}));
     const input = Object.freeze([later, first]);
-    const result = normalizeLayerOpacityTransitions(input)!;
+    const result = normalizeLayerPropertyTransitions({opacity: input})!.opacity;
     expect(result).toEqual([transition({easing: 'easeInOut'}), later]);
     expect(result).not.toBe(input);
     expect(result[0]).not.toBe(first);
@@ -193,7 +114,7 @@ describe('layer opacity transitions', () => {
     [{...transition(), easing: 'bounce'}],
     [transition(), transition({startTimeMs: 6000, endTimeMs: 8000})]
   ])('rejects an invalid track atomically: %p', input => {
-    expect(normalizeLayerOpacityTransitions(input)).toBeUndefined();
+    expect(normalizeLayerPropertyTransitions({opacity: input})).toBeUndefined();
   });
 
   test.each([
@@ -202,7 +123,7 @@ describe('layer opacity transitions', () => {
     transition({id: 'cut-inside', startTimeMs: 3000, endTimeMs: 3000}),
     transition({id: 'same', startTimeMs: 2000, endTimeMs: 4000})
   ])('rejects overlapping intervals and cuts inside an active interval: %p', overlap => {
-    expect(normalizeLayerOpacityTransitions([overlap, transition()])).toBeUndefined();
+    expect(normalizeLayerPropertyTransitions({opacity: [overlap, transition()]})).toBeUndefined();
   });
 
   test('allows touching intervals and preserves equal-time cuts in authored order', () => {
@@ -228,30 +149,29 @@ describe('layer opacity transitions', () => {
       startValue: 0.6,
       endValue: 1
     });
-    expect(normalizeLayerOpacityTransitions([last, cutA, first, cutB])).toEqual([
-      first,
-      cutA,
-      cutB,
-      last
-    ]);
-    const config = {opacityTransitions: [first, cutA, cutB]};
+    expect(
+      normalizeLayerPropertyTransitions({opacity: [last, cutA, first, cutB]})?.opacity
+    ).toEqual([first, cutA, cutB, last]);
+    const config = {propertyTransitions: {opacity: [first, cutA, cutB]}};
     expect(getLayerOpacityFactor(config, 1999)).toBeCloseTo(0.7997);
     expect(getLayerOpacityFactor(config, 2000)).toBe(0.6);
     expect(getLayerOpacityFactor(config, 5000)).toBe(0.6);
   });
 
   const config = {
-    opacityTransitions: [
-      transition(),
-      transition({
-        id: 'out',
-        startTimeMs: 6000,
-        endTimeMs: 10000,
-        startValue: 0.4,
-        endValue: 0,
-        easing: 'easeInOut'
-      })
-    ]
+    propertyTransitions: {
+      opacity: [
+        transition(),
+        transition({
+          id: 'out',
+          startTimeMs: 6000,
+          endTimeMs: 10000,
+          startValue: 0.4,
+          endValue: 0,
+          easing: 'easeInOut'
+        })
+      ]
+    }
   };
   test.each([
     [-1000, 0.2],
@@ -281,74 +201,12 @@ describe('layer opacity transitions', () => {
     for (const time of [undefined, null, NaN, Infinity]) {
       expect(getLayerOpacityFactor(config, time)).toBe(1);
     }
-    expect(normalizeLayerOpacityTransitions([])).toEqual([]);
+    expect(normalizeLayerPropertyTransitions({opacity: []})?.opacity).toEqual([]);
     expect(getLayerOpacityFactor({}, 0)).toBe(1);
-    expect(getLayerOpacityFactor({opacityTransitions: []}, 0)).toBe(1);
-    expect(getLayerOpacityFactor({opacityTransitions: [transition({startValue: -1})]}, 0)).toBe(1);
-  });
-
-  test('valid new tracks, including an empty track, take precedence over legacy visibility', () => {
-    expect(getLayerOpacityTransitions({...config, visibilityTiming: timing})).toEqual(
-      config.opacityTransitions
-    );
-    expect(getLayerOpacityTransitions({opacityTransitions: [], visibilityTiming: timing})).toEqual(
-      []
-    );
-    expect(getLayerOpacityFactor({opacityTransitions: [], visibilityTiming: timing}, 0)).toBe(1);
+    expect(getLayerOpacityFactor({propertyTransitions: {opacity: []}}, 0)).toBe(1);
     expect(
-      getLayerOpacityTransitions({
-        opacityTransitions: [transition({startValue: -1})],
-        visibilityTiming: timing
-      })
-    ).toEqual(getLayerOpacityTransitions({visibilityTiming: timing}));
-  });
-
-  test.each([
-    timing,
-    {startTimeMs: 0, endTimeMs: 0, fadeInMs: 0, fadeOutMs: 0},
-    {startTimeMs: 2000, endTimeMs: 2000, fadeInMs: 0, fadeOutMs: 0},
-    {startTimeMs: 2000, endTimeMs: 6000, fadeInMs: 0, fadeOutMs: 0},
-    {startTimeMs: 2000, endTimeMs: 6000, fadeInMs: 2000, fadeOutMs: 2000},
-    {startTimeMs: 2000, fadeInMs: 1000, fadeOutMs: 0},
-    {startTimeMs: 0, fadeInMs: 0, fadeOutMs: 0}
-  ])(
-    'converts legacy visibility with equivalent boundary and cut behavior: %p',
-    visibilityTiming => {
-      const original = {...visibilityTiming};
-      const converted = getLayerOpacityTransitions({visibilityTiming});
-      expect(normalizeLayerOpacityTransitions(converted)).toEqual(converted);
-      expect(getLayerOpacityTransitions({visibilityTiming})).toEqual(converted);
-      const times = new Set([-1, 0, 1000, 2000, 3000, 4000, 5000, 6000, 9000, 10000, 12000]);
-      for (const block of converted) {
-        times.add(block.startTimeMs - 1);
-        times.add(block.startTimeMs);
-        times.add(block.endTimeMs - 1);
-        times.add(block.endTimeMs);
-        times.add(block.endTimeMs + 1);
-      }
-      for (const timeMs of times) {
-        expect(getLayerOpacityFactor({opacityTransitions: converted}, timeMs)).toBeCloseTo(
-          getLayerVisibilityFactor(visibilityTiming, timeMs)
-        );
-      }
-      expect(visibilityTiming).toEqual(original);
-    }
-  );
-
-  test('duration uses the final transition on visible layers, including converted legacy tracks', () => {
-    const layer = (config, isVisible = true) => ({config: {...config, isVisible}});
-    expect(getLayerOpacityDuration([])).toBe(0);
-    expect(getLayerOpacityDuration([layer(config)])).toBe(10000);
-    expect(
-      getLayerOpacityDuration([
-        layer(config),
-        layer({opacityTransitions: [transition({endTimeMs: 50000})]}, false),
-        layer({visibilityTiming: {startTimeMs: 12000, fadeInMs: 1000, fadeOutMs: 0}})
-      ])
-    ).toBe(13000);
-    expect(
-      getLayerOpacityDuration([layer({opacityTransitions: [], visibilityTiming: timing})])
-    ).toBe(0);
+      getLayerOpacityFactor({propertyTransitions: {opacity: [transition({startValue: -1})]}}, 0)
+    ).toBe(1);
   });
 });
 
@@ -456,21 +314,6 @@ describe('numeric layer property transitions', () => {
       );
     }
   );
-
-  test('cleared properties suppress legacy opacity while absent keys preserve legacy behavior', () => {
-    const legacy = {isVisible: true, opacityTransitions: [transition()], visibilityTiming: timing};
-    expect(getLayerPropertyTransitions(legacy, 'opacity')).toEqual([transition()]);
-    expect(getLayerOpacityTransitions({...legacy, propertyTransitions: {radius: []}})).toEqual([
-      transition()
-    ]);
-    for (const opacity of [[], [transition({endValue: 2})]]) {
-      const config = {...legacy, propertyTransitions: {opacity}};
-      expect(getLayerOpacityTransitions(config)).toEqual([]);
-      expect(getLayerOpacityFactor(config, 3000)).toBe(1);
-      expect(getLayerAnimationDuration([{config}])).toBe(0);
-    }
-    expect(getLayerOpacityDuration([{config: layer.config}])).toBe(4000);
-  });
 
   test('defaults plain fixtures to opacity and respects an explicit empty whitelist or narrower range', () => {
     expect(getLayerAnimationTracks({config: layer.config}).map(item => item.property.name)).toEqual(
@@ -704,8 +547,8 @@ describe('layer color property transitions', () => {
     };
     expect(getLayerAnimationTracks({...layer, config})).toEqual([]);
     expect(getLayerOpacityFactor(config, 3000)).toBe(1);
-    expect(getLayerOpacityTransitions(config)).toEqual([]);
-    expect(normalizeLayerOpacityTransitions([colorTransition()])).toBeUndefined();
+    expect(getLayerPropertyTransitions(config, 'opacity')).toEqual([]);
+    expect(normalizeLayerPropertyTransitions({opacity: [colorTransition()]})).toBeUndefined();
     expect(
       getLayerPropertyTransitions(layer.config, 'opacity', {...color, name: 'opacity'})
     ).toEqual([]);

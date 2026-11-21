@@ -531,14 +531,12 @@ test('#BaseLayer -> changing layer type preserves independent animation tracks',
       radius: [{...transition, startValue: 10, endValue: 20}],
       strokeColor: [color],
       futureProperty: [{...transition, endTimeMs: 50000}]
-    },
-    opacityTransitions: [{...transition, startValue: 0, endValue: 0}],
-    visibilityTiming: {startTimeMs: 5000, fadeInMs: 1000, fadeOutMs: 0}
+    }
   });
   const original = cloneDeep(source.config);
   const destination = new KeplerGlLayers.IconLayer({id: 'animated-icon'});
   destination.assignConfigToLayer(source.config, source.visConfigSettings);
-  for (const key of ['propertyTransitions', 'opacityTransitions', 'visibilityTiming']) {
+  for (const key of ['propertyTransitions']) {
     t.deepEqual(destination.config[key], source.config[key], `${key} survives type changes`);
     t.notEqual(destination.config[key], source.config[key], `${key} is independently cloned`);
   }
@@ -548,9 +546,9 @@ test('#BaseLayer -> changing layer type preserves independent animation tracks',
     'color endpoints are independently cloned'
   );
   t.notEqual(
-    destination.config.opacityTransitions[0],
-    source.config.opacityTransitions[0],
-    'legacy opacity blocks are independently cloned'
+    destination.config.propertyTransitions?.opacity[0],
+    source.config.propertyTransitions?.opacity[0],
+    'opacity blocks are independently cloned'
   );
   t.deepEqual(
     getLayerAnimationTracks(destination)
@@ -567,7 +565,7 @@ test('#BaseLayer -> changing layer type preserves independent animation tracks',
   t.equal(
     getLayerAnimationOpacityFactor(destination, 2000),
     0.5,
-    'explicit opacity still overrides legacy timing'
+    'opacity still animates after type change'
   );
   t.equal(
     getLayerAnimationDuration([destination]),
@@ -596,10 +594,9 @@ test('#BaseLayer -> changing layer type preserves independent animation tracks',
   t.end();
 });
 
-test('#BaseLayer -> changing layer type preserves empty tracks and legacy precedence', t => {
-  const timing = {startTimeMs: 1000, endTimeMs: 4000, fadeInMs: 1000, fadeOutMs: 1000};
+test('#BaseLayer -> changing layer type preserves empty and missing tracks', t => {
   const transition = {
-    id: 'legacy',
+    id: 'opacity',
     startTimeMs: 1000,
     endTimeMs: 3000,
     startValue: 0,
@@ -607,27 +604,16 @@ test('#BaseLayer -> changing layer type preserves empty tracks and legacy preced
     easing: 'linear'
   };
   const cases = [
-    {
-      config: {
-        propertyTransitions: {opacity: []},
-        opacityTransitions: [transition],
-        visibilityTiming: timing
-      },
-      factor: 1
-    },
-    {
-      config: {propertyTransitions: {}, opacityTransitions: [], visibilityTiming: timing},
-      factor: 1
-    },
-    {config: {opacityTransitions: [transition], visibilityTiming: timing}, factor: 0},
-    {config: {visibilityTiming: timing}, factor: 0.5},
+    {config: {propertyTransitions: {opacity: []}}, factor: 1},
+    {config: {propertyTransitions: {}}, factor: 1},
+    {config: {propertyTransitions: {opacity: [transition]}}, factor: 0},
     {config: {}, factor: 1}
   ];
   for (const {config, factor} of cases) {
     const source = new KeplerGlLayers.PointLayer({id: 'source', ...config});
     const destination = new KeplerGlLayers.IconLayer({id: 'destination'});
     destination.assignConfigToLayer(source.config, source.visConfigSettings);
-    for (const key of ['propertyTransitions', 'opacityTransitions', 'visibilityTiming']) {
+    for (const key of ['propertyTransitions']) {
       t.equal(
         Object.prototype.hasOwnProperty.call(destination.config, key),
         Object.prototype.hasOwnProperty.call(config, key),
@@ -638,7 +624,7 @@ test('#BaseLayer -> changing layer type preserves empty tracks and legacy preced
     t.equal(
       getLayerAnimationOpacityFactor(destination, 1500),
       factor,
-      'empty or legacy timing retains its precedence'
+      'empty and missing tracks keep static opacity'
     );
   }
   t.end();
@@ -660,21 +646,10 @@ test('#BaseLayer -> changing layer type normalizes malformed animation input', t
           easing: 'linear'
         }
       ]
-    },
-    opacityTransitions: [
-      {
-        id: 'bad-opacity',
-        startTimeMs: 0,
-        endTimeMs: 1000,
-        startValue: 0,
-        endValue: 2,
-        easing: 'linear'
-      }
-    ],
-    visibilityTiming: {startTimeMs: 2000, endTimeMs: 1000, fadeInMs: 0, fadeOutMs: 0}
+    }
   };
   destination.assignConfigToLayer(config, source.visConfigSettings);
-  for (const key of ['propertyTransitions', 'opacityTransitions', 'visibilityTiming']) {
+  for (const key of ['propertyTransitions']) {
     t.notOk(
       Object.prototype.hasOwnProperty.call(destination.config, key),
       `malformed ${key} is removed through normalization`

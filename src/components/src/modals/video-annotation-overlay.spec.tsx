@@ -82,24 +82,26 @@ test('preview and encoded annotations share elapsed opacity, hold gaps and resto
         kind: 'POINT',
         armLength: 20,
         angle: 0,
-        opacityTransitions: [
-          {
-            id: 'in',
-            startTimeMs: 1000,
-            endTimeMs: 3000,
-            startValue: 0,
-            endValue: 0.6,
-            easing: 'linear'
-          },
-          {
-            id: 'dim',
-            startTimeMs: 5000,
-            endTimeMs: 7000,
-            startValue: 0.6,
-            endValue: 0.2,
-            easing: 'linear'
-          }
-        ]
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'in',
+              startTimeMs: 1000,
+              endTimeMs: 3000,
+              startValue: 0,
+              endValue: 0.6,
+              easing: 'linear'
+            },
+            {
+              id: 'dim',
+              startTimeMs: 5000,
+              endTimeMs: 7000,
+              startValue: 0.6,
+              endValue: 0.2,
+              easing: 'linear'
+            }
+          ]
+        }
       }
     ],
     animationTimeMs: 0
