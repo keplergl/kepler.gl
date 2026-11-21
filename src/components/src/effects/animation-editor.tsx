@@ -123,11 +123,17 @@ const Divider = styled.span`
   margin: 0 4px;
   background: ${props => props.theme.panelBorderColor};
 `;
-const Readout = styled.output`
+const Readout = styled.output<{$elapsedWidth: number}>`
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  flex-shrink: 0;
   margin: 0 4px;
   color: ${props => props.theme.subtextColor};
+  span {
+    display: inline-block;
+    width: ${props => props.$elapsedWidth}ch;
+    text-align: right;
+  }
 `;
 const Spacer = styled.div`
   flex: 1;
@@ -771,8 +777,11 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
           <ToolbarButton type="button" onClick={playback.stop}>
             Stop
           </ToolbarButton>
-          <Readout aria-label="Animation time">
-            {seconds(playback.elapsed)} / {seconds(playback.duration)}
+          <Readout
+            aria-label="Animation time"
+            $elapsedWidth={seconds(playback.duration).length + 3}
+          >
+            <span>{seconds(playback.elapsed)}</span> / {seconds(playback.duration)}
           </Readout>
           <Divider />
           <PanelLabel htmlFor={`${id}-speed`}>Speed</PanelLabel>

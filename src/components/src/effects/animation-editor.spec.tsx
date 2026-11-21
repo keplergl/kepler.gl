@@ -164,6 +164,36 @@ test('uses a shared time ruler and compact playback controls independently of th
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
 });
 
+test('elapsed time keeps its reserved width as fractions and digit counts change during playback', () => {
+  const {props, rerender} = setup();
+  const showTime = (elapsed: number) =>
+    rerender(
+      <Editor
+        {...props}
+        playback={{...props.playback, elapsed, duration: 1000000, running: true}}
+      />
+    );
+  showTime(0);
+  const readout = screen.getByLabelText('Animation time');
+  const currentTime = within(readout).getByText('0 s');
+  const reservedWidth = getComputedStyle(currentTime).width;
+  expect(parseFloat(reservedWidth)).toBeGreaterThan(0);
+  expect(getComputedStyle(readout).flexShrink).toBe('0');
+  for (const [elapsed, label] of [
+    [9990, '9.99'],
+    [10000, '10'],
+    [99990, '99.99'],
+    [100000, '100'],
+    [999990, '999.99'],
+    [1000000, '1000'],
+    [0, '0']
+  ] as const) {
+    showTime(elapsed);
+    expect(readout).toHaveTextContent(`${label} s / 1000 s`);
+    expect(getComputedStyle(currentTime).width).toBe(reservedWidth);
+  }
+});
+
 test('moving an effect block preserves its length and values and commits without opening settings', () => {
   const source = effect();
   const {props} = setup({effects: [source]});
