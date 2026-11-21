@@ -1057,6 +1057,80 @@ test('keeps the time ruler fixed across committed edits and can expand its visib
   expect(source.animation!.brightness.endTimeMs).toBe(30000);
 });
 
+test.each([1490, 1500, 1510])(
+  'Fit contains ruler labels and end handles while retaining the exact %d ms range',
+  endTimeMs => {
+    const source = effect();
+    source.animation!.brightness = {
+      ...source.animation!.brightness,
+      startTimeMs: 0,
+      endTimeMs
+    };
+    const cut = layer([
+      {
+        id: 'cut',
+        startTimeMs: endTimeMs,
+        endTimeMs,
+        startValue: 0,
+        endValue: 1,
+        easing: 'linear'
+      }
+    ]);
+    const {props, rerender} = setup({
+      effects: [source],
+      layers: [cut],
+      tour: {stops: [{...tour.stops[0], holdDurationMs: endTimeMs, travelDurationMs: 0}]}
+    });
+    rerender(
+      <Editor {...props} playback={{...props.playback, elapsed: endTimeMs, duration: endTimeMs}} />
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Fit'}));
+    const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+    fireEvent.click(ruler, {clientX: 200});
+    expect(props.playback.seek).toHaveBeenLastCalledWith(endTimeMs / 2);
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+
+    // jsdom has no layout engine. Check the bounds for several intrinsic label
+    // widths, including labels wider than the available track.
+    const gutter = parseFloat(getComputedStyle(ruler).marginRight) || 0;
+    const trackWidth = 400 - gutter;
+    for (const tick of Array.from(ruler.querySelectorAll('span'))) {
+      const style = getComputedStyle(tick);
+      const position = parseFloat(style.left) / 100;
+      const shift = Number(style.transform.match(/translateX\(([-\d.]+)%\)/)?.[1] ?? 0) / 100;
+      const maxWidth = style.maxWidth.endsWith('%')
+        ? (parseFloat(style.maxWidth) / 100) * trackWidth
+        : parseFloat(style.maxWidth) || Infinity;
+      for (const intrinsicWidth of [20, 80, trackWidth * 2]) {
+        const width = Math.min(intrinsicWidth, maxWidth);
+        const left = position * trackWidth + shift * width;
+        expect(left).toBeGreaterThanOrEqual(-0.000001);
+        expect(left + width).toBeLessThanOrEqual(trackWidth + 0.000001);
+      }
+    }
+    const endHandle = screen.getByRole('slider', {name: 'End time for Opacity 1 · Points'});
+    // jsdom also cannot resolve clamp(). Its lower bound is the furthest outward
+    // handle offset, which must fit even for an instantaneous block at the end.
+    const right = Array.from(document.styleSheets)
+      .flatMap(sheet => Array.from(sheet.cssRules))
+      .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule)
+      .filter(rule => endHandle.matches(rule.selectorText))
+      .map(rule => rule.style.getPropertyValue('right'))
+      .filter(Boolean)
+      .pop()!;
+    const handleOverflow = -parseFloat(right.replace(/^clamp\(/, ''));
+    const blockTrack = endHandle.parentElement!.parentElement!;
+    expect(parseFloat(getComputedStyle(blockTrack).marginRight) || 0).toBeGreaterThanOrEqual(
+      handleOverflow
+    );
+    expect(
+      getComputedStyle(screen.getByRole('button', {name: 'Edit camera route'})).boxSizing
+    ).toBe('border-box');
+  }
+);
+
 test('legacy visibility displays equivalent opacity blocks and converts only when edited', () => {
   const timing = {startTimeMs: 3000, endTimeMs: 10000, fadeInMs: 2000, fadeOutMs: 1000};
   const source = layer(undefined, timing);

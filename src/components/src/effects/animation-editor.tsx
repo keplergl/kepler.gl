@@ -189,6 +189,8 @@ const RowLabel = styled.div`
 const Track = styled.div<{$grid: number}>`
   position: relative;
   min-width: 0;
+  // Keep end handles, their focus rings, and the playhead inside the timeline.
+  margin-right: 12px;
   min-height: 32px;
   background-image: linear-gradient(
     to right,
@@ -210,6 +212,11 @@ const Ruler = styled(Track)`
 const Tick = styled.span<{$position: number}>`
   position: absolute;
   left: ${props => props.$position}%;
+  transform: translateX(-${props => props.$position}%);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
   top: 5px;
   padding-left: 5px;
   color: ${props => props.theme.subtextColor};
@@ -245,6 +252,7 @@ const CameraRoute = styled.button<{$width: number; $muted: boolean}>`
   left: 0;
   width: ${props => props.$width}%;
   min-width: 6px;
+  box-sizing: border-box;
   height: 24px;
   padding: 0 10px;
   background: ${props => props.theme.panelBackgroundHover};
