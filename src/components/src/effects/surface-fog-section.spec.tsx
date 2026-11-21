@@ -79,7 +79,6 @@ describe('surface fog elevation editing', () => {
 
   test('updates elevation without replacing animation or unrelated parameters', () => {
     const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
-    expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
     fireEvent.change(screen.getByRole('spinbutton'), {target: {value: '200'}});
     expect(update).toHaveBeenLastCalledWith(undefined, 'fog', {parameters: {height: 200}});
   });

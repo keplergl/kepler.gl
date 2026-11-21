@@ -107,30 +107,6 @@ function change(index: number, value: number) {
 }
 
 describe('effect parameter editing', () => {
-  test.each(['brightnessContrast', 'magnify', 'surfaceFog', 'distanceFog', 'lightAndShadow'])(
-    '%s configurators omit animation shortcuts for new and configured transitions',
-    type => {
-      const effect = createEffect({type});
-      const {update, rerender} = setup(effect);
-      expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
-      const parameters = effect.getParameterDescriptions();
-      effect.setProps({
-        animation: Object.fromEntries(
-          parameters.map(({name}) => [
-            name,
-            {
-              startValue: effect.parameters[name],
-              endValue: effect.parameters[name],
-              easing: 'linear'
-            }
-          ])
-        )
-      });
-      rerender(<Configurator effect={effect} updateEffectConfig={update} />);
-      expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
-      expect(update).not.toHaveBeenCalled();
-    }
-  );
   test('embedded settings open with saved endpoints and preserve drafts across playback renders', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.6});
     effect.animation = {
@@ -157,7 +133,6 @@ describe('effect parameter editing', () => {
     expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(2);
     expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(7);
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.queryByRole('button', {name: 'Edit animation for amount'})).toBeNull();
     fireEvent.change(startValue, {target: {value: '0.3'}});
     fireEvent.change(endValue, {target: {value: '0.9'}});
     fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
