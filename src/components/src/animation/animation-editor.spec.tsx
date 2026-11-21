@@ -158,6 +158,19 @@ test('uses a shared time ruler and compact playback controls independently of th
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
 });
 
+test('orders timeline tracks by layers, annotations, then effects', () => {
+  setup({
+    tour: undefined,
+    layers: [layer(opacityTransitions())],
+    annotations: [annotation(opacityTransitions())]
+  });
+  expect(screen.getAllByRole('group').map(row => row.getAttribute('aria-label'))).toEqual([
+    'Layer opacity: Points',
+    'Annotation opacity: Harbor',
+    'Brightness Contrast: Brightness'
+  ]);
+});
+
 test('holding and dragging the playhead seeks continuously and updates the displayed frame', () => {
   const {props, rerender} = setup();
   (props.playback.seek as jest.Mock).mockImplementation(elapsed => {
@@ -588,7 +601,13 @@ test('Add action selects an entity before its supported property, with Back and 
   const addButton = screen.getByRole('button', {name: 'Add action'});
   addButton.focus();
   fireEvent.click(addButton);
-  expect(screen.getByRole('menuitem', {name: 'Brightness Contrast'})).toHaveFocus();
+  expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual([
+    'Points',
+    'Arcs',
+    'Harbor',
+    'Brightness Contrast'
+  ]);
+  expect(screen.getByRole('menuitem', {name: 'Points'})).toHaveFocus();
   expect(screen.queryByRole('menuitem', {name: 'Camera route'})).not.toBeInTheDocument();
   expect(screen.queryByRole('menuitem', {name: 'Radius'})).toBeNull();
   fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
@@ -598,19 +617,19 @@ test('Add action selects an entity before its supported property, with Back and 
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
   expect(props.playback.pause).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('menuitem', {name: 'Back'}));
-  expect(screen.getByRole('menuitem', {name: 'Brightness Contrast'})).toHaveFocus();
+  expect(screen.getByRole('menuitem', {name: 'Points'})).toHaveFocus();
   fireEvent.click(screen.getByRole('menuitem', {name: 'Arcs'}));
   expect(screen.getByRole('menuitem', {name: 'Back'})).toHaveFocus();
   expect(screen.getByRole('menuitem', {name: 'Stroke width'})).toBeInTheDocument();
   expect(screen.queryByRole('menuitem', {name: 'Radius'})).toBeNull();
   fireEvent.keyDown(document.activeElement!, {key: 'Escape'});
-  expect(screen.getByRole('menuitem', {name: 'Brightness Contrast'})).toHaveFocus();
+  expect(screen.getByRole('menuitem', {name: 'Points'})).toHaveFocus();
   fireEvent.click(screen.getByRole('menuitem', {name: 'Harbor'}));
   expect(screen.getByRole('menuitem', {name: 'Back'})).toHaveFocus();
   expect(screen.getByRole('menuitem', {name: 'Opacity'})).toBeInTheDocument();
   expect(screen.queryByRole('menuitem', {name: 'Radius'})).toBeNull();
   fireEvent.keyDown(document.activeElement!, {key: 'Escape'});
-  expect(screen.getByRole('menuitem', {name: 'Brightness Contrast'})).toHaveFocus();
+  expect(screen.getByRole('menuitem', {name: 'Points'})).toHaveFocus();
   fireEvent.keyDown(document.activeElement!, {key: 'Escape'});
   expect(screen.queryByRole('menu')).toBeNull();
   expect(addButton).toHaveFocus();
