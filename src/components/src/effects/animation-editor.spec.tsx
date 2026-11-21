@@ -343,6 +343,7 @@ test('Add action selects an entity before its supported property, with Back and 
   addButton.focus();
   fireEvent.click(addButton);
   expect(screen.getByRole('menuitem', {name: 'Brightness Contrast'})).toHaveFocus();
+  expect(screen.queryByRole('menuitem', {name: 'Camera route'})).not.toBeInTheDocument();
   expect(screen.queryByRole('menuitem', {name: 'Radius'})).toBeNull();
   fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
   expect(screen.getByRole('menuitem', {name: 'Back'})).toHaveFocus();

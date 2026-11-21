@@ -947,18 +947,6 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                         {label}
                       </ToolbarButton>
                     ))}
-                  {onEditCamera && (
-                    <ToolbarButton
-                      role="menuitem"
-                      type="button"
-                      onClick={() => {
-                        setAdding(false);
-                        onEditCamera();
-                      }}
-                    >
-                      Camera route
-                    </ToolbarButton>
-                  )}
                 </>
               )}
             </Menu>
