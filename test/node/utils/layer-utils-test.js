@@ -10,6 +10,7 @@ import {
   createGeoArrowPointVector,
   getNeighbors,
   getGeojsonLayerMetaFromArrow,
+  Layer,
   LayerClasses,
   KeplerGlLayers
 } from '@kepler.gl/layers';
@@ -18,7 +19,10 @@ import {
   findDefaultLayer,
   getLayerHoverProp,
   getLayerOrderFromLayers,
-  computeDeckLayers
+  computeDeckLayers,
+  renderDeckGlLayer,
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE
 } from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
@@ -44,6 +48,675 @@ import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
+
+const propertyTrack = (id, startValue, endValue) => [
+  {id, startTimeMs: 1000, endTimeMs: 3000, startValue, endValue, easing: 'linear'}
+];
+
+test('layerUtils -> layer property declarations and normalized updates retain compatibility', t => {
+  const transitions = {radius: propertyTrack('grow', 5, 25)};
+  const layer = new PointLayer({dataId: 'survey', propertyTransitions: transitions});
+  t.deepEqual(layer.config.propertyTransitions, transitions, 'accepts property tracks');
+  t.notEqual(layer.config.propertyTransitions.radius, transitions.radius, 'clones incoming tracks');
+  transitions.radius[0].endValue = 90;
+  t.equal(layer.config.propertyTransitions.radius[0].endValue, 25, 'detaches transition values');
+  t.deepEqual(
+    new Layer({}).animatableProps.map(prop => prop.name),
+    ['opacity'],
+    'base layers offer opacity'
+  );
+  t.ok(
+    layer.animatableProps.some(prop => prop.name === 'radius'),
+    'point radius is renderable'
+  );
+  layer.updateLayerConfig({sizeField: {name: 'size', fieldIdx: 0}});
+  t.notOk(
+    layer.animatableProps.some(prop => prop.name === 'radius'),
+    'data-driven point size omits a no-op radius control'
+  );
+  const icon = new KeplerGlLayers.IconLayer({dataId: 'survey'});
+  icon.updateLayerVisConfig({fixedRadius: true});
+  t.notOk(
+    icon.animatableProps.some(prop => prop.name === 'radius'),
+    'fixed icon radius omits a no-op control'
+  );
+  for (const LayerClass of [KeplerGlLayers.GridLayer, KeplerGlLayers.HexagonLayer]) {
+    const aggregation = new LayerClass({dataId: 'survey'});
+    t.ok(
+      aggregation.animatableProps.some(prop => prop.name === 'coverage'),
+      'aggregation coverage is declared'
+    );
+    aggregation.updateLayerVisConfig({enable3d: false});
+    t.notOk(
+      aggregation.animatableProps.some(prop => prop.name === 'elevationScale'),
+      'flat aggregation omits elevation scale'
+    );
+    aggregation.updateLayerVisConfig({enable3d: true});
+    t.ok(
+      aggregation.animatableProps.some(prop => prop.name === 'elevationScale'),
+      '3D aggregation declares elevation scale'
+    );
+  }
+  layer.updateLayerConfig({propertyTransitions: {radius: []}});
+  t.deepEqual(layer.config.propertyTransitions, {radius: []}, 'retains explicit cleared tracks');
+  layer.updateLayerConfig({propertyTransitions: {radius: propertyTrack('invalid', 0, Infinity)}});
+  t.notOk(layer.config.propertyTransitions?.radius, 'invalid values do not become live tracks');
+  layer.updateLayerConfig({propertyTransitions: undefined});
+  t.notOk(Object.hasOwn(layer.config, 'propertyTransitions'), 'supports removing the property map');
+  t.end();
+});
+
+test('layerUtils -> point and line frame properties leave saved settings and deck identity intact', t => {
+  class PrivatePointLayer extends PointLayer {
+    #renderCount = 0;
+
+    renderLayer(opts) {
+      this.#renderCount++;
+      return super.renderLayer(opts);
+    }
+
+    get renderCount() {
+      return this.#renderCount;
+    }
+  }
+  const mapState = {...INITIAL_MAP_STATE, zoom: 10};
+  const data = {
+    data: [{position: [10, 20], sourcePosition: [10, 20, 0], targetPosition: [11, 21, 0]}],
+    textLabels: [],
+    getPosition: d => d.position,
+    getSourcePosition: d => d.sourcePosition,
+    getTargetPosition: d => d.targetPosition,
+    getRadius: 1,
+    getWidth: 1,
+    getFillColor: [10, 20, 30],
+    getLineColor: [10, 20, 30],
+    getColor: [10, 20, 30],
+    getTargetColor: [10, 20, 30]
+  };
+  for (const LayerClass of [PointLayer, LineLayer, PrivatePointLayer]) {
+    const layer = new LayerClass({id: 'animated', dataId: 'survey'});
+    layer.updateLayerVisConfig({radius: 10, thickness: 2, outline: true, opacity: 0.8});
+    layer.updateLayerConfig({
+      propertyTransitions: {
+        radius: propertyTrack('grow', 5, 25),
+        thickness: propertyTrack('stroke', 2, 8),
+        opacity: propertyTrack('fade', 0, 1),
+        unsupported: propertyTrack('unknown', 100, 200)
+      }
+    });
+    const savedConfig = layer.config;
+    const savedVisConfig = cloneDeep(layer.config.visConfig);
+    const props = {
+      layer,
+      layerIndex: 0,
+      datasets: {survey: {gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}}},
+      data,
+      mapState,
+      interactionConfig: {
+        ...INITIAL_VIS_STATE.interactionConfig,
+        zoomOpacity: {
+          enabled: true,
+          config: {
+            controllers: [
+              {id: 'fade', layerIds: [layer.id], stops: {appear: 9, full: 11, fade: 15, gone: 17}}
+            ]
+          }
+        }
+      },
+      animationConfig: INITIAL_VIS_STATE.animationConfig
+    };
+    const onLayerError = sinon.spy();
+    const render = time => renderDeckGlLayer({...props, animationTimeMs: time}, {onLayerError})[0];
+    const original = render(undefined);
+    const animated = render(2000);
+    t.notOk(onLayerError.called, `${layer.type} renders the animation without errors`);
+    t.equal(animated.id, original.id, `${layer.type} keeps the deck layer identity`);
+    t.equal(
+      animated.props.opacity,
+      0.2,
+      `${layer.type} combines saved opacity, property opacity and zoom once`
+    );
+    if (layer.type === 'point') {
+      t.equal(animated.props.lineWidthScale, 5, 'point stroke interpolates');
+      t.equal(
+        animated.props.radiusScale,
+        original.props.radiusScale * 1.5,
+        'point radius interpolates without rebuilding data'
+      );
+      t.equal(
+        render(5000).props.radiusScale,
+        original.props.radiusScale * 2.5,
+        'point radius holds its final value'
+      );
+      const hovered = renderDeckGlLayer(
+        {
+          ...props,
+          animationTimeMs: 2000,
+          hoverInfo: {picked: true, layer: {props: {id: layer.id}}, object: data.data[0]}
+        },
+        {onLayerError}
+      );
+      t.equal(hovered.length, 2, 'preserves the point hover overlay');
+      t.equal(
+        hovered[1].props.radiusScale,
+        animated.props.radiusScale,
+        'hover radius follows the same frame'
+      );
+    } else {
+      t.equal(
+        animated.props.widthScale,
+        original.props.widthScale * 2.5,
+        'line stroke interpolates'
+      );
+      t.equal(
+        render(5000).props.widthScale,
+        original.props.widthScale * 4,
+        'line stroke holds its final value'
+      );
+    }
+    const restored = render(null);
+    t.equal(
+      restored.props.opacity,
+      original.props.opacity,
+      'stopping restores saved opacity with zoom'
+    );
+    t.equal(
+      restored.props.radiusScale ?? restored.props.widthScale,
+      original.props.radiusScale ?? original.props.widthScale,
+      'stopping restores the saved numeric setting'
+    );
+    t.equal(layer.config, savedConfig, 'does not replace authored config');
+    t.deepEqual(layer.config.visConfig, savedVisConfig, 'does not mutate authored visual settings');
+    if (layer instanceof PrivatePointLayer) {
+      t.equal(
+        layer.renderCount,
+        5,
+        'custom subclasses retain private state while delegating rendering'
+      );
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> custom declarations preserve caches and callbacks without leaking frame config on errors', t => {
+  class CustomLayer extends Layer {
+    #renderCount = 0;
+
+    get renderCount() {
+      return this.#renderCount;
+    }
+
+    get animatableProps() {
+      return [
+        ...super.animatableProps,
+        {name: 'amplitude', label: 'Amplitude', range: [0, 100], step: 1}
+      ];
+    }
+    renderLayer({layerCallbacks, frameConfig = this.config}) {
+      this.#renderCount++;
+      this.onRedrawNeeded = layerCallbacks.onRedrawNeeded;
+      const amplitude = frameConfig.visConfig.amplitude;
+      const unsupported = frameConfig.visConfig.unsupported;
+      if (this.fail) {
+        frameConfig.visConfig.amplitude = 999;
+        frameConfig.label = 'temporary';
+        throw new Error('Custom renderer failure');
+      }
+      return {
+        id: this.id,
+        receiver: this,
+        authoredConfig: this.config,
+        amplitude,
+        unsupported,
+        getAmplitude: () => {
+          // Deferred closures retain both the real private-field receiver and frame snapshot.
+          if (!this.#renderCount) throw new Error('Renderer has not run');
+          return frameConfig.visConfig.amplitude;
+        }
+      };
+    }
+  }
+  const layer = new CustomLayer({id: 'custom', dataId: 'survey'});
+  layer.updateLayerVisConfig({amplitude: 4, unsupported: 7});
+  layer.updateLayerConfig({
+    propertyTransitions: {
+      amplitude: propertyTrack('oscillate', 10, 30),
+      unsupported: propertyTrack('ignored', 100, 200)
+    }
+  });
+  const config = layer.config;
+  const saved = cloneDeep(config);
+  const onLayerError = sinon.spy();
+  const onRedrawNeeded = sinon.spy();
+  const render = time =>
+    renderDeckGlLayer(
+      {layer, datasets: {}, mapState: {}, animationTimeMs: time},
+      {onLayerError, onRedrawNeeded}
+    );
+  const midpoint = render(2000);
+  t.notOk(onLayerError.called, 'private fields render without a proxy-brand error');
+  t.equal(midpoint.receiver, layer, 'renderer keeps the original layer receiver');
+  t.equal(midpoint.authoredConfig, config, 'authored config remains available during rendering');
+  t.equal(midpoint.amplitude, 20, 'custom declaration enables its numeric property');
+  t.equal(midpoint.unsupported, 7, 'undeclared numeric property is ignored');
+  t.equal(render(3000).amplitude, 30, 'later frame uses the same custom property');
+  t.equal(midpoint.getAmplitude(), 20, 'deferred accessors retain their own frame values');
+  t.equal(layer.renderCount, 2, 'render cache writes persist on the original layer');
+  layer.onRedrawNeeded();
+  t.ok(onRedrawNeeded.calledOnce, 'redraw callback remains available on the original layer');
+  const log = sinon.stub(Console, 'error');
+  try {
+    layer.fail = true;
+    t.deepEqual(render(2000), [], 'contains a renderer exception');
+    t.ok(onLayerError.calledOnce, 'reports the renderer exception');
+    t.equal(layer.config, config, 'a throwing renderer cannot replace saved config');
+    t.deepEqual(layer.config, saved, 'a throwing renderer cannot leak frame visual settings');
+    layer.fail = false;
+    t.equal(render(null).amplitude, 4, 'static rendering recovers authored settings');
+  } finally {
+    log.restore();
+  }
+  t.end();
+});
+
+test('layerUtils -> opacity tracks respect a custom layer whitelist and declared range', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const layer = {
+    id: 'custom-opacity',
+    animatableProps: [],
+    config: {
+      visConfig: {opacity: 0.8},
+      propertyTransitions: {opacity: propertyTrack('fade', 0, 1)}
+    },
+    renderLayer() {
+      return deckLayer({opacity: this.config.visConfig.opacity});
+    }
+  };
+  const render = () =>
+    renderDeckGlLayer({layer, datasets: {}, mapState: {}, animationTimeMs: 2000}, {});
+  t.equal(render().props.opacity, 0.8, 'an undeclared opacity track stays static');
+  layer.animatableProps = [{name: 'opacity', label: 'Opacity', range: [0.25, 0.75], step: 0.01}];
+  t.equal(render().props.opacity, 0.8, 'out-of-range opacity endpoints stay static');
+  layer.config.propertyTransitions.opacity = propertyTrack('fade', 0.25, 0.75);
+  t.equal(render().props.opacity, 0.4, 'a declared valid opacity track multiplies saved opacity');
+  t.end();
+});
+
+test('layerUtils -> static layer colors refresh cached accessors and restore authored colors', t => {
+  const start = [0, 20, 40];
+  const end = [200, 120, 80];
+  const middle = [100, 70, 60];
+  const strokeStart = [40, 60, 80];
+  const strokeEnd = [140, 160, 180];
+  const strokeMiddle = [90, 110, 130];
+  const cases = [
+    {
+      LayerClass: PointLayer,
+      accessor: 'getFillColor',
+      secondary: 'getLineColor',
+      property: 'strokeColor'
+    },
+    {LayerClass: KeplerGlLayers.IconLayer, accessor: 'getFillColor'},
+    {
+      LayerClass: ArcLayer,
+      accessor: 'getSourceColor',
+      secondary: 'getTargetColor',
+      property: 'targetColor'
+    },
+    {
+      LayerClass: LineLayer,
+      accessor: 'getColor',
+      secondary: 'getTargetColor',
+      property: 'targetColor'
+    },
+    {
+      LayerClass: GeojsonLayer,
+      accessor: 'getFillColor',
+      secondary: 'getLineColor',
+      property: 'strokeColor'
+    }
+  ];
+  for (const {LayerClass, accessor, secondary, property} of cases) {
+    const layer = new LayerClass({id: 'colors', dataId: 'survey', color: [10, 20, 30]});
+    layer.updateLayerVisConfig({
+      filled: true,
+      outline: true,
+      stroked: true,
+      targetArrowEnabled: true,
+      opacity: 0.8,
+      glowEnabled: layer.type === 'point'
+    });
+    layer.updateLayerConfig({
+      propertyTransitions: {
+        color: propertyTrack('fill', start, end),
+        ...(property ? {[property]: propertyTrack('edge', strokeStart, strokeEnd)} : {}),
+        opacity: propertyTrack('opacity', 0, 1)
+      }
+    });
+    const feature = {
+      type: 'Feature',
+      geometry: {type: 'Point', coordinates: [10, 20]},
+      properties: {index: 0}
+    };
+    const row = {
+      index: 0,
+      position: [10, 20, 0, 11, 21, 0],
+      sourcePosition: [10, 20, 0],
+      targetPosition: [11, 21, 0]
+    };
+    const rows = layer.type === 'geojson' ? [feature] : [row];
+    const data = {
+      data: rows,
+      textLabels: [],
+      textLabelData: [],
+      getPosition: d => d.position,
+      getSourcePosition: d => d.sourcePosition,
+      getTargetPosition: d => d.targetPosition,
+      getFilterValue: () => [0, 0, 0, 0],
+      ...layer.getAttributeAccessors({dataContainer: {}})
+    };
+    const authoredConfig = layer.config;
+    const snapshot = cloneDeep(layer.config);
+    const authoredAccessor = data[accessor];
+    const onLayerError = sinon.spy();
+    const render = (time, globe = false) =>
+      renderDeckGlLayer(
+        {
+          layer,
+          layerIndex: 0,
+          datasets: {survey: {gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}}},
+          data,
+          animationTimeMs: time,
+          mapState: {
+            ...INITIAL_MAP_STATE,
+            width: 800,
+            height: 600,
+            zoom: 2,
+            globe: {enabled: globe}
+          },
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          animationConfig: INITIAL_VIS_STATE.animationConfig
+        },
+        {onLayerError}
+      );
+    const read = (deck, name, object = feature) =>
+      typeof deck.props[name] === 'function' ? deck.props[name](object) : deck.props[name];
+    const animatedLayers = render(2000);
+    t.notOk(onLayerError.called, `${layer.type} colors render without errors`);
+    const animated = animatedLayers.find(deck => deck.id === layer.id) || animatedLayers[0];
+    t.deepEqual(read(animated, accessor), middle, `${layer.type} interpolates base color`);
+    if (secondary)
+      t.deepEqual(
+        read(animated, secondary),
+        strokeMiddle,
+        `${layer.type} interpolates secondary color`
+      );
+    t.equal(animated.props.opacity, 0.4, `${layer.type} keeps color separate from opacity`);
+    t.equal(animated.props.data, rows, `${layer.type} preserves geometry data identity`);
+    t.deepEqual(read(render(5000)[0], accessor), end, `${layer.type} holds the final color`);
+    t.deepEqual(
+      read(render(null)[0], accessor),
+      [10, 20, 30],
+      `${layer.type} restores authored color`
+    );
+    if (layer.type === 'point') {
+      t.deepEqual(
+        read(animatedLayers[0], 'getFillColor'),
+        middle,
+        'point core and glow share the animated fill'
+      );
+    }
+    if (layer.type === 'arc' || layer.type === 'line') {
+      const arrowhead = animatedLayers.find(deck => deck.id.startsWith(`${layer.id}-arrow-head-`));
+      t.ok(arrowhead, `${layer.type} retains target arrows`);
+      t.deepEqual(
+        read(arrowhead, 'getFillColor', row),
+        strokeMiddle,
+        `${layer.type} arrowhead shares target color`
+      );
+      const globeLayer = render(2000, true)[0];
+      t.deepEqual(
+        read(globeLayer, 'getSourceColor'),
+        middle,
+        `${layer.type} globe source color updates`
+      );
+      t.deepEqual(
+        read(globeLayer, 'getTargetColor'),
+        strokeMiddle,
+        `${layer.type} globe target color updates`
+      );
+    }
+    if (layer.type === 'geojson') {
+      const embedded = {...feature, properties: {fillColor: [9, 8, 7], lineColor: [6, 5, 4]}};
+      t.deepEqual(
+        read(animated, accessor, embedded),
+        [9, 8, 7],
+        'GeoJSON embedded fill colors retain precedence'
+      );
+      t.deepEqual(
+        read(animated, secondary, embedded),
+        [6, 5, 4],
+        'GeoJSON embedded stroke colors retain precedence'
+      );
+    }
+    t.equal(data[accessor], authoredAccessor, `${layer.type} keeps the authored cached accessor`);
+    t.equal(layer.config, authoredConfig, `${layer.type} never swaps the saved config`);
+    t.deepEqual(
+      layer.config,
+      snapshot,
+      `${layer.type} never writes animated colors into saved config`
+    );
+  }
+  t.end();
+});
+
+test('layerUtils -> fixed color metadata omits data-driven and inactive channels', t => {
+  for (const LayerClass of [
+    PointLayer,
+    KeplerGlLayers.IconLayer,
+    ArcLayer,
+    LineLayer,
+    GeojsonLayer
+  ]) {
+    const layer = new LayerClass({dataId: 'survey'});
+    layer.updateLayerVisConfig({
+      filled: true,
+      outline: true,
+      stroked: true,
+      targetArrowEnabled: true
+    });
+    t.ok(
+      layer.animatableProps.some(prop => prop.name === 'color' && prop.type === 'color'),
+      `${layer.type} exposes fixed color`
+    );
+    layer.updateLayerConfig({
+      colorField: {name: 'value', fieldIdx: 0},
+      strokeColorField: {name: 'value', fieldIdx: 0}
+    });
+    t.notOk(
+      layer.animatableProps.some(prop => prop.type === 'color'),
+      `${layer.type} omits field-based color channels`
+    );
+  }
+  const line = new LineLayer({dataId: 'survey'});
+  t.notOk(
+    line.animatableProps.some(prop => prop.name === 'targetColor'),
+    'line target color requires target arrows for consistent globe rendering'
+  );
+  const point = new PointLayer({dataId: 'survey'});
+  point.updateLayerVisConfig({filled: false, outline: false});
+  t.notOk(
+    point.animatableProps.some(prop => prop.type === 'color'),
+    'inactive point fill and stroke omit color controls'
+  );
+  const geojson = new GeojsonLayer({dataId: 'survey'});
+  geojson.updateLayerVisConfig({filled: false, stroked: false});
+  t.notOk(
+    geojson.animatableProps.some(prop => prop.type === 'color'),
+    'inactive GeoJSON fill and stroke omit color controls'
+  );
+  t.end();
+});
+
+test('layerUtils -> color frames preserve field accessors while animating a separate static channel', t => {
+  const layer = new PointLayer({id: 'field-colors', dataId: 'survey'});
+  layer.updateLayerVisConfig({outline: true});
+  layer.updateLayerConfig({
+    colorField: {name: 'value', fieldIdx: 0},
+    propertyTransitions: {
+      color: propertyTrack('ignored', [0, 0, 0], [255, 255, 255]),
+      strokeColor: propertyTrack('stroke', [0, 20, 40], [100, 120, 140])
+    }
+  });
+  const fieldColor = () => [7, 8, 9];
+  const data = {data: [], textLabels: [], getFillColor: fieldColor, getLineColor: [1, 2, 3]};
+  const [frame] = renderDeckGlLayer(
+    {
+      layer,
+      data,
+      datasets: {survey: {gpuFilter: {filterValueUpdateTriggers: {}}}},
+      mapState: INITIAL_MAP_STATE,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      animationTimeMs: 2000
+    },
+    {}
+  );
+  t.equal(frame.props.getFillColor, fieldColor, 'keeps the original data-driven accessor');
+  t.deepEqual(frame.props.getLineColor, [50, 70, 90], 'updates the independent fixed stroke');
+  t.deepEqual(data.getLineColor, [1, 2, 3], 'keeps the authored cached stroke');
+  t.end();
+});
+
+test('layerUtils -> custom declared colors render without visual channels or data mutation', t => {
+  const data = {data: []};
+  const layer = {
+    id: 'custom-color',
+    config: {
+      color: [1, 2, 3],
+      visConfig: {},
+      propertyTransitions: {color: propertyTrack('color', [0, 10, 20], [100, 110, 120])}
+    },
+    animatableProps: [{name: 'color', label: 'Color', type: 'color'}],
+    renderLayer({data: frameData, frameConfig = this.config}) {
+      return {color: frameConfig.color, data: frameData};
+    }
+  };
+  const frame = renderDeckGlLayer(
+    {layer, data, datasets: {}, mapState: {}, animationTimeMs: 2000},
+    {}
+  );
+  t.deepEqual(frame.color, [50, 60, 70], 'supports a custom base color declaration');
+  t.equal(frame.data, data, 'does not replace custom data when no accessors need refresh');
+  t.deepEqual(layer.config.color, [1, 2, 3], 'preserves custom authored color');
+  t.end();
+});
+
+test('layerUtils -> Arrow colors remain constant accessors without replacing geometry buffers', t => {
+  const vector = arrow.vectorFromArray(
+    [[10, 20, 0]],
+    new arrow.FixedSizeList(3, new arrow.Field('xyz', new arrow.Float64()))
+  );
+  const target = arrow.vectorFromArray([[11, 21, 0]], vector.type);
+  const table = new arrow.Table({geometry: vector, target});
+  const metadata = new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]]);
+  const geoField = {name: 'geometry', type: 'geoarrow', fieldIdx: 0, metadata};
+  const dataContainer = new ArrowDataContainer({cols: [vector], fields: [geoField]});
+  const binary = getGeojsonLayerMetaFromArrow({
+    dataContainer,
+    geoColumn: vector,
+    geoField,
+    columnIndex: 0
+  });
+  for (const LayerClass of [PointLayer, ArcLayer, LineLayer, GeojsonLayer]) {
+    const layer = new LayerClass({id: 'arrow-colors', dataId: 'survey', color: [10, 20, 30]});
+    layer.updateLayerVisConfig({filled: true});
+    layer.updateLayerConfig({
+      propertyTransitions: {color: propertyTrack('color', [0, 20, 40], [200, 120, 80])}
+    });
+    if (layer.type === 'point') layer.geoArrowVector = vector;
+    else if (layer.type === 'geojson') {
+      layer.geoArrowMode = true;
+      layer.meta = {...layer.meta, ...binary};
+    } else {
+      layer.geoArrowVector0 = vector;
+      layer.geoArrowVector1 = target;
+    }
+    const data = {
+      data: layer.type === 'geojson' ? binary.dataToFeature : [],
+      textLabels: [],
+      textLabelData: [],
+      ...layer.getAttributeAccessors({dataContainer})
+    };
+    const geometry = vector.data[0].children[0].values;
+    const snapshot = Array.from(geometry);
+    const onLayerError = sinon.spy();
+    const [frame] = renderDeckGlLayer(
+      {
+        layer,
+        data,
+        datasets: {
+          survey: {
+            dataContainer: {getTable: () => table},
+            gpuFilter: {filterValueUpdateTriggers: {}}
+          }
+        },
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        animationTimeMs: 2000
+      },
+      {onLayerError}
+    );
+    t.notOk(onLayerError.called, `${layer.type} Arrow color frame renders`);
+    if (layer.type === 'geojson') {
+      t.equal(
+        frame.props.data,
+        binary.dataToFeature[0],
+        'GeoJSON retains its cached binary geometry'
+      );
+      t.deepEqual(
+        frame.props.getFillColor({properties: {}}),
+        [100, 70, 60],
+        'GeoJSON binary fill accessor uses the frame color'
+      );
+    } else {
+      t.equal(frame.props.data, table, `${layer.type} retains its Arrow table`);
+      const [sublayer] = frame.renderLayers();
+      const colorAccessor =
+        layer.type === 'point'
+          ? 'getFillColor'
+          : layer.type === 'line'
+          ? 'getColor'
+          : 'getSourceColor';
+      const positionAccessor = layer.type === 'point' ? 'getPosition' : 'getSourcePosition';
+      t.deepEqual(
+        sublayer.props[colorAccessor],
+        [100, 70, 60],
+        `${layer.type} binary sublayer receives a constant frame color`
+      );
+      t.equal(
+        sublayer.props.data.attributes[positionAccessor].value.buffer,
+        geometry.buffer,
+        `${layer.type} retains its binary position buffer`
+      );
+      t.equal(
+        sublayer.props.data.attributes[positionAccessor].value.byteOffset,
+        geometry.byteOffset,
+        `${layer.type} retains the position buffer offset`
+      );
+      t.deepEqual(
+        Array.from(sublayer.props.data.attributes[positionAccessor].value).slice(0, 3),
+        [10, 20, 0],
+        `${layer.type} retains the position coordinates`
+      );
+      t.notOk(
+        sublayer.props.data.attributes[colorAccessor],
+        `${layer.type} has no stale binary color buffer`
+      );
+    }
+    t.deepEqual(Array.from(geometry), snapshot, `${layer.type} leaves source positions unchanged`);
+  }
+  t.end();
+});
 
 test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
   const error = new Error('Cannot render geometry');
@@ -114,6 +787,169 @@ test('layerUtils -> a render failure leaves other layers and datasets usable', t
   } finally {
     log.restore();
   }
+  t.end();
+});
+
+test('layerUtils -> timed visibility composes with zoom fades without changing saved opacity', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const original = deckLayer({
+    opacity: 0.8,
+    visible: true,
+    pickable: true,
+    _subLayerProps: {stroke: {opacity: 0.6}}
+  });
+  const timing = {startTimeMs: 1000, endTimeMs: 5000, fadeInMs: 2000, fadeOutMs: 1000};
+  const layer = {
+    id: 'timed',
+    config: {dataId: 'survey', isVisible: true, visibilityTiming: timing},
+    renderLayer: () => original
+  };
+  const visState = {
+    datasets: {survey: {}},
+    layers: [layer],
+    layerData: [{}],
+    layerOrder: ['timed'],
+    effects: [],
+    splitMaps: [],
+    animationConfig: {},
+    interactionConfig: {
+      zoomOpacity: {
+        enabled: true,
+        config: {
+          controllers: [
+            {id: 'fade', layerIds: ['timed'], stops: {appear: 0, full: 2, fade: 5, gone: 7}}
+          ]
+        }
+      }
+    }
+  };
+  const render = (animationTimeMs, layerOrder = ['timed']) =>
+    computeDeckLayers(
+      {visState: {...visState, layerOrder}, mapState: {zoom: 1}, animationTimeMs},
+      {primaryMap: false, layersForDeck: {timed: true}}
+    )[0];
+  for (const order of [['timed'], [{id: 'group', isVisible: true, layerOrder: ['timed']}]]) {
+    const rendered = render(2000, order);
+    t.equal(
+      rendered.props.opacity,
+      0.2,
+      'combines saved, time and zoom opacity in flat/grouped layers'
+    );
+    t.equal(rendered.props._subLayerProps.stroke.opacity, 0.15, 'fades stroke overrides too');
+    t.equal(render(0, order).props.visible, false, 'hidden before the scheduled start');
+    t.equal(render(0, order).props.pickable, false, 'hidden scheduled layers cannot be picked');
+    t.equal(render(5000, order).props.visible, false, 'hidden at the scheduled end');
+    t.equal(render(null, order).props.opacity, 0.4, 'leaving preview keeps only the zoom fade');
+  }
+  t.equal(original.props.opacity, 0.8, 'does not overwrite the authored opacity');
+  t.equal(original.props._subLayerProps.stroke.opacity, 0.6, 'does not overwrite stroke opacity');
+  t.deepEqual(layer.config.visibilityTiming, timing, 'does not modify the schedule');
+  original.props.visible = false;
+  t.equal(render(3000).props.visible, false, 'a manually hidden layer stays hidden');
+  t.deepEqual(
+    computeDeckLayers(
+      {
+        visState: {...visState, layers: [], layerOrder: ['timed']},
+        mapState: {},
+        animationTimeMs: 3000
+      },
+      {primaryMap: false, layersForDeck: {timed: true}}
+    ),
+    [],
+    'a deleted scheduled layer is ignored'
+  );
+  t.end();
+});
+
+test('layerUtils -> opacity transitions hold gaps and compose with zoom fades', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const original = deckLayer({opacity: 0.8, visible: true, pickable: true});
+  const opacityTransitions = [
+    {
+      id: 'in',
+      startTimeMs: 1000,
+      endTimeMs: 3000,
+      startValue: 0.25,
+      endValue: 0.75,
+      easing: 'linear'
+    },
+    {
+      id: 'out',
+      startTimeMs: 5000,
+      endTimeMs: 6000,
+      startValue: 0.75,
+      endValue: 0,
+      easing: 'linear'
+    },
+    {id: 'cut', startTimeMs: 8000, endTimeMs: 8000, startValue: 0, endValue: 1, easing: 'linear'}
+  ];
+  const layer = {
+    id: 'opacity',
+    config: {dataId: 'survey', isVisible: true, opacityTransitions},
+    renderLayer: () => original
+  };
+  const visState = {
+    datasets: {survey: {}},
+    layers: [layer],
+    layerData: [{}],
+    layerOrder: ['opacity'],
+    effects: [],
+    splitMaps: [],
+    animationConfig: {},
+    interactionConfig: {
+      zoomOpacity: {
+        enabled: true,
+        config: {
+          controllers: [
+            {id: 'fade', layerIds: ['opacity'], stops: {appear: 0, full: 2, fade: 5, gone: 7}}
+          ]
+        }
+      }
+    }
+  };
+  const render = (animationTimeMs, layerOrder) =>
+    computeDeckLayers(
+      {visState: {...visState, layerOrder}, mapState: {zoom: 1}, animationTimeMs},
+      {primaryMap: false, layersForDeck: {opacity: true}}
+    )[0];
+  for (const order of [['opacity'], [{id: 'group', isVisible: true, layerOrder: ['opacity']}]]) {
+    for (const [time, expected] of [
+      [0, 0.1],
+      [2000, 0.2],
+      [4000, 0.3],
+      [5500, 0.15],
+      [7000, 0],
+      [8000, 0.4],
+      [9000, 0.4]
+    ]) {
+      t.ok(
+        Math.abs(render(time, order).props.opacity - expected) < 1e-9,
+        `evaluates opacity at ${time} ms`
+      );
+    }
+    t.equal(render(7000, order).props.visible, false, 'holds zero opacity between transitions');
+    t.equal(render(7000, order).props.pickable, false, 'a held zero opacity cannot be picked');
+    t.equal(
+      render(null, order).props.opacity,
+      0.4,
+      'leaving preview restores authored opacity with zoom fade'
+    );
+  }
+  t.equal(original.props.opacity, 0.8, 'does not change the saved opacity');
+  t.equal(opacityTransitions[0].startValue, 0.25, 'does not change authored transition values');
+  layer.config.visibilityTiming = {startTimeMs: 10000, fadeInMs: 0, fadeOutMs: 0};
+  layer.config.opacityTransitions = [];
+  t.equal(
+    render(2000, ['opacity']).props.opacity,
+    0.4,
+    'an explicit empty track overrides legacy timing'
+  );
+  delete layer.config.opacityTransitions;
+  t.equal(
+    render(2000, ['opacity']).props.visible,
+    false,
+    'legacy visibility still applies without a new track'
+  );
   t.end();
 });
 

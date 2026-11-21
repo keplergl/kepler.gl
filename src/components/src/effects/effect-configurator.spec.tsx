@@ -11,6 +11,7 @@ import {Effect} from '@kepler.gl/types';
 import {createEffect} from '@kepler.gl/effects';
 import {LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import EffectConfiguratorFactory from './effect-configurator';
+import EffectAnimationControl from './effect-animation-control';
 import RangeSliderFactory from '../common/range-slider';
 import EffectTimeConfiguratorFactory from './effect-time-configurator';
 import SurfaceFogElevationSectionFactory from './surface-fog-section';
@@ -62,13 +63,9 @@ const Elevation = (() => <div>elevation section</div>) as ReturnType<
   typeof SurfaceFogElevationSectionFactory
 >;
 const Configurator = EffectConfiguratorFactory(Slider, Time, Elevation);
-const RealConfigurator = EffectConfiguratorFactory(
-  RangeSliderFactory(
-    () => <></>,
-    () => <></>
-  ),
-  Time,
-  Elevation
+const RealSlider = RangeSliderFactory(
+  () => <></>,
+  () => <></>
 );
 function Wrapper({children}: {children: React.ReactNode}) {
   return (
@@ -96,11 +93,272 @@ function setup(effect: Effect, Component = Configurator) {
   });
   return {update, ...view};
 }
+// Test the shared animation settings directly; configurators no longer launch them.
+function setupAnimation(effect: Effect, name = 'amount', RangeSlider = Slider) {
+  const update = jest.fn();
+  const view = render(
+    <EffectAnimationControl {...{effect, name, RangeSlider}} updateEffectConfig={update} />,
+    {wrapper: Wrapper}
+  );
+  return {update, ...view};
+}
 function change(index: number, value: number) {
   fireEvent.change(screen.getAllByRole('spinbutton')[index], {target: {value: String(value)}});
 }
 
 describe('effect parameter editing', () => {
+  test.each(['brightnessContrast', 'magnify', 'surfaceFog', 'distanceFog', 'lightAndShadow'])(
+    '%s configurators omit animation shortcuts for new and configured transitions',
+    type => {
+      const effect = createEffect({type});
+      const {update, rerender} = setup(effect);
+      expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
+      const parameters = effect.getParameterDescriptions();
+      effect.setProps({
+        animation: Object.fromEntries(
+          parameters.map(({name}) => [
+            name,
+            {
+              startValue: effect.parameters[name],
+              endValue: effect.parameters[name],
+              easing: 'linear'
+            }
+          ])
+        )
+      });
+      rerender(<Configurator effect={effect} updateEffectConfig={update} />);
+      expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
+      expect(update).not.toHaveBeenCalled();
+    }
+  );
+  test('embedded settings open with saved endpoints and preserve drafts across playback renders', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.6});
+    effect.animation = {
+      amount: {startValue: 0.2, endValue: 0.8, easing: 'linear', startTimeMs: 2000, endTimeMs: 7000}
+    };
+    const update = jest.fn();
+    const onClose = jest.fn();
+    const props = {
+      effect,
+      name: 'amount',
+      RangeSlider: Slider,
+      embedded: true,
+      onClose,
+      updateEffectConfig: update,
+      durationMs: 10000
+    };
+    const {rerender} = render(<EffectAnimationControl {...props} />, {wrapper: Wrapper});
+    const startValue = within(screen.getByRole('group', {name: 'Start value'})).getByRole(
+      'spinbutton'
+    );
+    const endValue = within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton');
+    expect(startValue).toHaveValue(0.2);
+    expect(endValue).toHaveValue(0.8);
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(2);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(7);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('button', {name: 'Edit animation for amount'})).toBeNull();
+    fireEvent.change(startValue, {target: {value: '0.3'}});
+    fireEvent.change(endValue, {target: {value: '0.9'}});
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
+      target: {value: '3'}
+    });
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'End time (seconds)'}), {
+      target: {value: '8'}
+    });
+    rerender(
+      <EffectAnimationControl
+        {...props}
+        durationMs={20000}
+        effect={{...effect, parameters: {amount: 0.95}}}
+      />
+    );
+    expect(startValue).toHaveValue(0.3);
+    expect(endValue).toHaveValue(0.9);
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(3);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(8);
+    expect(update).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update).toHaveBeenCalledWith(null, effect.id, {
+      parameters: {amount: 0.3},
+      animation: {
+        amount: {
+          startValue: 0.3,
+          endValue: 0.9,
+          easing: 'linear',
+          startTimeMs: 3000,
+          endTimeMs: 8000
+        }
+      }
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test('embedded settings follow timeline timing edits while preserving endpoint drafts', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.6});
+    effect.animation = {
+      amount: {startValue: 0.2, endValue: 0.8, easing: 'linear', startTimeMs: 2000, endTimeMs: 7000}
+    };
+    const update = jest.fn();
+    const props = {
+      effect,
+      name: 'amount',
+      RangeSlider: Slider,
+      embedded: true,
+      updateEffectConfig: update
+    };
+    const {rerender} = render(<EffectAnimationControl {...props} />, {wrapper: Wrapper});
+    const endValue = within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton');
+    fireEvent.change(endValue, {target: {value: '0.9'}});
+    effect.animation = {amount: {...effect.animation.amount, startTimeMs: 4000, endTimeMs: 9000}};
+    rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(4);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9);
+    expect(endValue).toHaveValue(0.9);
+    effect.animation = {amount: {startValue: 0.2, endValue: 0.8, easing: 'linear'}};
+    rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
+    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).toBeChecked();
+    expect(screen.queryByRole('spinbutton', {name: 'Start time (seconds)'})).toBeNull();
+    expect(endValue).toHaveValue(0.9);
+    effect.animation = {amount: {...effect.animation.amount, startTimeMs: 4000, endTimeMs: 9000}};
+    rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
+    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).not.toBeChecked();
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual({
+      startValue: 0.2,
+      endValue: 0.9,
+      easing: 'linear',
+      startTimeMs: 4000,
+      endTimeMs: 9000
+    });
+  });
+
+  test('effect time inputs round displayed and edited seconds without changing untouched timing', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.6});
+    const timing = {
+      startValue: 0.2,
+      endValue: 0.8,
+      easing: 'linear' as const,
+      startTimeMs: 1234.5678,
+      endTimeMs: 9876.5432
+    };
+    effect.animation = {amount: timing};
+    const update = jest.fn();
+    const props = {
+      effect,
+      name: 'amount',
+      RangeSlider: Slider,
+      embedded: true,
+      updateEffectConfig: update
+    };
+    const {rerender} = render(<EffectAnimationControl {...props} />, {wrapper: Wrapper});
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(1.23);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9.88);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual(timing);
+    rerender(<EffectAnimationControl key="reopened" {...props} />);
+    const start = screen.getByRole('spinbutton', {name: 'Start time (seconds)'});
+    const end = screen.getByRole('spinbutton', {name: 'End time (seconds)'});
+    effect.animation = {amount: {...timing, startTimeMs: 3456.789, endTimeMs: 8765.432}};
+    rerender(<EffectAnimationControl key="reopened" {...props} effect={{...effect}} />);
+    expect(start).toHaveValue(3.46);
+    expect(end).toHaveValue(8.77);
+    fireEvent.change(start, {target: {value: ''}});
+    expect(start).toHaveValue(null);
+    expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+    fireEvent.change(start, {target: {value: '2.3456'}});
+    fireEvent.change(end, {target: {value: '7.891'}});
+    expect(start).toHaveValue(2.35);
+    expect(end).toHaveValue(7.89);
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual({
+      ...timing,
+      startTimeMs: 2350,
+      endTimeMs: 7890
+    });
+  });
+
+  test.each(['Cancel', 'Close effect settings', 'Remove animation'])(
+    'embedded %s closes settings without applying an endpoint draft',
+    action => {
+      const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+      effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+      const update = jest.fn();
+      const onClose = jest.fn();
+      render(
+        <EffectAnimationControl
+          effect={effect}
+          name="amount"
+          RangeSlider={Slider}
+          embedded
+          onClose={onClose}
+          updateEffectConfig={update}
+        />,
+        {wrapper: Wrapper}
+      );
+      fireEvent.change(
+        within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
+        {target: {value: '0.3'}}
+      );
+      fireEvent.click(screen.getByRole('button', {name: action}));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      if (action === 'Remove animation')
+        expect(update).toHaveBeenCalledWith(null, effect.id, {animation: {}});
+      else expect(update).not.toHaveBeenCalled();
+      expect(effect.parameters.amount).toBe(0.5);
+    }
+  );
+
+  test.each([false, true])(
+    'embedded legacy fog retains full-duration timing unless chosen explicitly: %s',
+    explicit => {
+      const effect = makeEffect([{name: 'height', min: 0, max: 100}], {
+        height: 10,
+        heightEnd: 50,
+        animateHeight: true,
+        linearEasing: true
+      });
+      effect.type = 'surfaceFog';
+      const update = jest.fn();
+      render(
+        <EffectAnimationControl
+          effect={effect}
+          name="height"
+          RangeSlider={Slider}
+          embedded
+          durationMs={14000}
+          updateEffectConfig={update}
+        />,
+        {wrapper: Wrapper}
+      );
+      expect(
+        within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton')
+      ).toHaveValue(10);
+      expect(
+        within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton')
+      ).toHaveValue(50);
+      const fullDuration = screen.getByRole('checkbox', {name: 'Use full animation duration'});
+      expect(fullDuration).toBeChecked();
+      if (explicit) {
+        fireEvent.click(fullDuration);
+        expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
+        expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
+      }
+      fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+      expect(update).toHaveBeenCalledWith(null, effect.id, {
+        parameters: {height: 10, animateHeight: false},
+        animation: {
+          height: {
+            startValue: 10,
+            endValue: 50,
+            easing: 'linear',
+            ...(explicit ? {startTimeMs: 0, endTimeMs: 14000} : {})
+          }
+        }
+      });
+    }
+  );
+
   test('updates one component of a wrapped array without discarding its sibling', () => {
     const {update} = setup(
       makeEffect(
@@ -300,7 +558,7 @@ describe('effect parameter editing', () => {
 
   test('animation opens from the keyboard without saving and Escape discards the draft', async () => {
     const user = userEvent.setup();
-    const {update} = setup(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
+    const {update} = setupAnimation(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
     screen.getByRole('button', {name: 'Animate amount'}).focus();
     await user.keyboard('{Enter}');
     const dialog = screen.getByRole('dialog', {name: 'Effect Transition: amount'});
@@ -320,14 +578,14 @@ describe('effect parameter editing', () => {
   });
 
   test('transition help is accessible on focus without changing configuration', async () => {
-    const {update} = setup(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
+    const {update} = setupAnimation(makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5}));
     fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
     const help = screen.getByRole('button', {name: 'About effect transitions'});
     fireEvent.focus(help);
     const tooltip = await screen.findByRole('tooltip');
     expect(help).toHaveAttribute('aria-describedby', tooltip.id);
     expect(tooltip).toBeVisible();
-    expect(tooltip).toHaveTextContent(/Run in the effects panel or during video export/);
+    expect(tooltip).toHaveTextContent(/playback in the Animation panel or video export/);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -340,7 +598,7 @@ describe('effect parameter editing', () => {
     async (start, end) => {
       const user = userEvent.setup();
       const effect = createEffect({type: 'magnify', parameters: {zoom: start}});
-      const {update} = setup(effect, RealConfigurator);
+      const {update} = setupAnimation(effect, 'zoom', RealSlider);
       await user.click(screen.getByRole('button', {name: 'Animate zoom'}));
       const dialog = within(screen.getByRole('dialog'));
       const startInput = dialog.getByRole('spinbutton', {name: 'Start value'});
@@ -354,7 +612,15 @@ describe('effect parameter editing', () => {
       expect(update).toHaveBeenCalledTimes(1);
       expect(update).toHaveBeenCalledWith(null, effect.id, {
         parameters: {zoom: start},
-        animation: {zoom: {startValue: start, endValue: end, easing: 'easeInOut'}}
+        animation: {
+          zoom: {
+            startValue: start,
+            endValue: end,
+            easing: 'easeInOut',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          }
+        }
       });
     }
   );
@@ -362,7 +628,7 @@ describe('effect parameter editing', () => {
   test('labels real vector inputs by endpoint and component and saves only the edited component', async () => {
     const user = userEvent.setup();
     const effect = createEffect({type: 'magnify'});
-    const {update} = setup(effect, RealConfigurator);
+    const {update} = setupAnimation(effect, 'screenXY', RealSlider);
     await user.click(screen.getByRole('button', {name: 'Animate screenXY'}));
     const dialog = within(screen.getByRole('dialog'));
     const inputs = ['Start', 'End'].flatMap(endpoint =>
@@ -378,13 +644,21 @@ describe('effect parameter editing', () => {
     await user.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, effect.id, {
       parameters: {screenXY: [0.5, 0.5]},
-      animation: {screenXY: {startValue: [0.5, 0.5], endValue: [0.5, 0.75], easing: 'easeInOut'}}
+      animation: {
+        screenXY: {
+          startValue: [0.5, 0.5],
+          endValue: [0.5, 0.75],
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      }
     });
   });
 
   test('keeps the saved Start when the main slider changes and the animation editor reopens', () => {
     const effect = createEffect({type: 'brightnessContrast', parameters: {brightness: 0}});
-    const {update, rerender} = setup(effect);
+    const {update, rerender} = setupAnimation(effect, 'brightness');
     update.mockImplementation((_event, _id, props) => {
       effect.setProps(props);
       rerender(<Configurator effect={effect} updateEffectConfig={update} />);
@@ -398,12 +672,22 @@ describe('effect parameter editing', () => {
     expect(effect.animation?.brightness).toEqual({
       startValue: 0,
       endValue: 1,
-      easing: 'easeInOut'
+      easing: 'easeInOut',
+      startTimeMs: 0,
+      endTimeMs: 10000
     });
 
     // This is the ordinary effect slider, outside the animation editor.
     fireEvent.change(screen.getAllByRole('spinbutton')[0], {target: {value: '0.7'}});
     expect(effect.parameters.brightness).toBe(0.7);
+    rerender(
+      <EffectAnimationControl
+        effect={effect}
+        name="brightness"
+        RangeSlider={Slider}
+        updateEffectConfig={update}
+      />
+    );
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for brightness'}));
     expect(
       within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton')
@@ -416,7 +700,7 @@ describe('effect parameter editing', () => {
   test('Cancel discards both endpoint drafts and reopening uses saved values', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
     effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
     fireEvent.change(
       within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
@@ -449,7 +733,7 @@ describe('effect parameter editing', () => {
   test('saves draft start, zero endpoint and easing together while preserving other animations', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
     effect.animation = {other: {endValue: 0.8, easing: 'easeInOut'}};
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
     const dialog = within(screen.getByRole('dialog'));
     fireEvent.change(
@@ -466,7 +750,7 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenCalledWith(null, 'effect', {
       animation: {
         other: {endValue: 0.8, easing: 'easeInOut'},
-        amount: {startValue: 0.25, endValue: 0, easing: 'linear'}
+        amount: {startValue: 0.25, endValue: 0, easing: 'linear', startTimeMs: 0, endTimeMs: 10000}
       },
       parameters: {amount: 0.25}
     });
@@ -480,7 +764,7 @@ describe('effect parameter editing', () => {
       amount: {endValue: 0.1, easing: 'linear'},
       other: {endValue: 0.8, easing: 'easeInOut'}
     };
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
     fireEvent.change(
       within(screen.getByRole('group', {name: 'Start value'})).getByRole('spinbutton'),
@@ -493,12 +777,13 @@ describe('effect parameter editing', () => {
   });
 
   test('edits vector endpoints together without changing sibling components', () => {
-    const {update} = setup(
+    const {update} = setupAnimation(
       makeEffect(
         [{name: 'center', type: 'array', min: 0, max: 1, defaultValue: [0, 0], label: ['X', 'Y']}],
         {center: [0.2, 0.8]},
         {center: {value: [0, 0]}}
-      )
+      ),
+      'center'
     );
     expect(screen.getAllByRole('button', {name: 'Animate center'})).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', {name: 'Animate center'}));
@@ -513,12 +798,20 @@ describe('effect parameter editing', () => {
     );
     fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'effect', {
-      animation: {center: {startValue: [0.2, 0.4], endValue: [0, 0.8], easing: 'easeInOut'}},
+      animation: {
+        center: {
+          startValue: [0.2, 0.4],
+          endValue: [0, 0.8],
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      },
       parameters: {center: [0.2, 0.4]}
     });
   });
 
-  test('offers date/time, color and shadow intensity endpoints', () => {
+  test('edits both shadow color endpoints', () => {
     const effect = makeEffect(
       [
         {name: 'shadowIntensity', min: 0, max: 1},
@@ -528,16 +821,20 @@ describe('effect parameter editing', () => {
       {shadowIntensity: 0.5, shadowColor: [10, 20, 30]}
     );
     effect.type = LIGHT_AND_SHADOW_EFFECT.type;
-    const {update} = setup(effect);
-    expect(screen.getByRole('button', {name: 'Animate shadowIntensity'})).toBeTruthy();
-    expect(screen.getByRole('button', {name: 'Animate Date & Time'})).toBeTruthy();
+    const {update} = setupAnimation(effect, 'shadowColor');
     fireEvent.click(screen.getByRole('button', {name: 'Animate shadowColor'}));
     fireEvent.click(screen.getByRole('button', {name: 'Start color'}));
     fireEvent.click(screen.getByRole('button', {name: 'End color'}));
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'effect', {
       animation: {
-        shadowColor: {startValue: [40, 50, 60], endValue: [0, 20, 30], easing: 'easeInOut'}
+        shadowColor: {
+          startValue: [40, 50, 60],
+          endValue: [0, 20, 30],
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
       },
       parameters: {shadowColor: [40, 50, 60]}
     });
@@ -560,7 +857,7 @@ describe('effect parameter editing', () => {
         shadowIntensity: {startValue: 0.2, endValue: 0.8, easing: 'easeInOut'}
       }
     });
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect, 'timestamp');
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for Date & Time'}));
     const dialog = within(screen.getByRole('dialog', {name: 'Effect Transition: Date & Time'}));
     expect(dialog.getByRole('spinbutton', {name: 'Start hour'})).toHaveValue(6);
@@ -590,7 +887,7 @@ describe('effect parameter editing', () => {
       type: LIGHT_AND_SHADOW_EFFECT.type,
       parameters: {timestamp: 0, timezone: 'UTC', timeMode: 'current'}
     });
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect, 'timestamp');
     fireEvent.click(screen.getByRole('button', {name: 'Animate Date & Time'}));
     const dialog = within(screen.getByRole('dialog'));
     expect(dialog.getByRole('spinbutton', {name: 'Start year'})).toHaveValue(1970);
@@ -608,7 +905,15 @@ describe('effect parameter editing', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Animate Date & Time'}));
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, effect.id, {
-      animation: {timestamp: {startValue: 0, endValue: 0, easing: 'easeInOut'}},
+      animation: {
+        timestamp: {
+          startValue: 0,
+          endValue: 0,
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      },
       parameters: {timestamp: 0}
     });
   });
@@ -622,11 +927,74 @@ describe('effect parameter editing', () => {
         shadowIntensity: {endValue: 0.8, easing: 'linear'}
       }
     });
-    const {update} = setup(effect);
+    const {update} = setupAnimation(effect, 'timestamp');
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for Date & Time'}));
     fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
     expect(update).toHaveBeenCalledWith(null, effect.id, {
       animation: {shadowIntensity: {endValue: 0.8, easing: 'linear'}}
+    });
+  });
+
+  test('saves explicit seconds, rejects empty or reversed times and supports an instant change', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+    const {update} = setupAnimation(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
+    const start = screen.getByRole('spinbutton', {name: 'Start time (seconds)'});
+    const end = screen.getByRole('spinbutton', {name: 'End time (seconds)'});
+    const save = screen.getByRole('button', {name: 'Save'});
+    expect(start).toHaveValue(0);
+    expect(end).toHaveValue(10);
+    fireEvent.change(start, {target: {value: ''}});
+    expect(save).toBeDisabled();
+    fireEvent.change(start, {target: {value: '-1'}});
+    expect(save).toBeDisabled();
+    fireEvent.change(start, {target: {value: '12.5'}});
+    expect(save).toBeDisabled();
+    fireEvent.change(end, {target: {value: '12.5'}});
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+    expect(update).toHaveBeenCalledWith(null, 'effect', {
+      parameters: {amount: 0.5},
+      animation: {
+        amount: {
+          startValue: 0.5,
+          endValue: 0.5,
+          easing: 'easeInOut',
+          startTimeMs: 12500,
+          endTimeMs: 12500
+        }
+      }
+    });
+  });
+
+  test('editing legacy endpoints keeps full-duration timing until explicit timing is chosen', () => {
+    const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
+    effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+    const {update} = setupAnimation(effect);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
+    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).toBeChecked();
+    expect(screen.queryByRole('spinbutton', {name: 'Start time (seconds)'})).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual({
+      startValue: 0.5,
+      endValue: 0.8,
+      easing: 'linear'
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
+    fireEvent.click(screen.getByRole('checkbox', {name: 'Use full animation duration'}));
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
+      target: {value: '3'}
+    });
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'End time (seconds)'}), {
+      target: {value: '7'}
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(update.mock.lastCall[2].animation.amount).toEqual({
+      startValue: 0.5,
+      endValue: 0.8,
+      easing: 'linear',
+      startTimeMs: 3000,
+      endTimeMs: 7000
     });
   });
 });

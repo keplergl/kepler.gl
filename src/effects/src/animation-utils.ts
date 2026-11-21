@@ -50,10 +50,33 @@ export function validateEffectAnimation(
     const {name, type, min, max, defaultValue} = description;
     if (!Object.prototype.hasOwnProperty.call(animation, name)) continue;
     const entry = (
-      animation as Record<string, {startValue?: unknown; endValue?: unknown; easing?: unknown}>
+      animation as Record<
+        string,
+        {
+          startValue?: unknown;
+          endValue?: unknown;
+          easing?: unknown;
+          startTimeMs?: unknown;
+          endTimeMs?: unknown;
+        }
+      >
     )[name];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
+    const hasTiming =
+      Object.prototype.hasOwnProperty.call(entry, 'startTimeMs') ||
+      Object.prototype.hasOwnProperty.call(entry, 'endTimeMs');
+    if (
+      hasTiming &&
+      (typeof entry.startTimeMs !== 'number' ||
+        !Number.isFinite(entry.startTimeMs) ||
+        entry.startTimeMs < 0 ||
+        typeof entry.endTimeMs !== 'number' ||
+        !Number.isFinite(entry.endTimeMs) ||
+        entry.endTimeMs < entry.startTimeMs)
+    ) {
+      continue;
+    }
 
     const clampValue = (value: number) => Math.max(min, Math.min(max, value));
     const validateValue = (value: unknown): number | number[] | undefined => {
@@ -83,7 +106,10 @@ export function validateEffectAnimation(
     result[name] = {
       ...(hasStart ? {startValue} : {}),
       endValue,
-      easing: entry.easing
+      easing: entry.easing,
+      ...(hasTiming
+        ? {startTimeMs: entry.startTimeMs as number, endTimeMs: entry.endTimeMs as number}
+        : {})
     };
   }
   return Object.keys(result).length ? result : undefined;

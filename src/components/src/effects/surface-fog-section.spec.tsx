@@ -8,6 +8,7 @@ import {theme} from '@kepler.gl/styles';
 import {Effect} from '@kepler.gl/types';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import SurfaceFogElevationSectionFactory from './surface-fog-section';
+import EffectAnimationControl from './effect-animation-control';
 import RangeSliderFactory from '../common/range-slider';
 
 // Isolate the slider's pointer mechanics while exercising real fog configuration.
@@ -44,6 +45,20 @@ function setup(parameters: Record<string, unknown> = {}, desc = descriptions) {
   });
   return {update, ...view};
 }
+function setupAnimation(parameters: Record<string, unknown> = {}) {
+  const update = jest.fn();
+  const view = render(
+    <EffectAnimationControl
+      effect={effect(parameters)}
+      name="height"
+      RangeSlider={Slider}
+      step={1}
+      updateEffectConfig={update}
+    />,
+    {wrapper: Wrapper}
+  );
+  return {update, ...view};
+}
 
 describe('surface fog elevation editing', () => {
   test('does not offer an elevation control when height is absent', () => {
@@ -64,12 +79,18 @@ describe('surface fog elevation editing', () => {
 
   test('updates elevation without replacing animation or unrelated parameters', () => {
     const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
+    expect(screen.queryByRole('button', {name: /^(Animate |Edit animation for )/})).toBeNull();
     fireEvent.change(screen.getByRole('spinbutton'), {target: {value: '200'}});
     expect(update).toHaveBeenLastCalledWith(undefined, 'fog', {parameters: {height: 200}});
   });
 
   test('opens legacy endpoint and easing without migrating on open', () => {
-    const {update} = setup({height: 100, heightEnd: 0, animateHeight: true, linearEasing: true});
+    const {update} = setupAnimation({
+      height: 100,
+      heightEnd: 0,
+      animateHeight: true,
+      linearEasing: true
+    });
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
     const dialog = within(screen.getByRole('dialog'));
     expect(
@@ -79,12 +100,14 @@ describe('surface fog elevation editing', () => {
         ) as HTMLInputElement
       ).value
     ).toBe('0');
-    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    expect(
+      (dialog.getByRole('checkbox', {name: 'Linear easing'}) as HTMLInputElement).checked
+    ).toBe(true);
     expect(update).not.toHaveBeenCalled();
   });
 
   test('saving a legacy endpoint uses generic animation and disables the legacy flag', () => {
-    const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
+    const {update} = setupAnimation({height: 100, heightEnd: 500, animateHeight: true});
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
     const dialog = within(screen.getByRole('dialog'));
     fireEvent.change(
@@ -99,7 +122,7 @@ describe('surface fog elevation editing', () => {
   });
 
   test('removing legacy animation prevents it from reappearing', () => {
-    const {update} = setup({height: 100, heightEnd: 500, animateHeight: true});
+    const {update} = setupAnimation({height: 100, heightEnd: 500, animateHeight: true});
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
     fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
     expect(update).toHaveBeenCalledWith(null, 'fog', {
@@ -109,10 +132,18 @@ describe('surface fog elevation editing', () => {
   });
 
   test('generic height animation takes precedence over legacy settings', () => {
-    const {update, rerender} = setup();
+    const {update, rerender} = setupAnimation();
     const next = effect({height: 100, heightEnd: 500, animateHeight: true, linearEasing: true});
     next.animation = {height: {endValue: 0, easing: 'easeInOut'}};
-    rerender(<Section effect={next} updateEffectConfig={update} />);
+    rerender(
+      <EffectAnimationControl
+        effect={next}
+        name="height"
+        RangeSlider={Slider}
+        step={1}
+        updateEffectConfig={update}
+      />
+    );
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
     const dialog = within(screen.getByRole('dialog'));
     expect(
@@ -122,7 +153,9 @@ describe('surface fog elevation editing', () => {
         ) as HTMLInputElement
       ).value
     ).toBe('0');
-    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    expect(
+      (dialog.getByRole('checkbox', {name: 'Linear easing'}) as HTMLInputElement).checked
+    ).toBe(false);
   });
 
   test('uses current effect identity and callback after replacement', () => {

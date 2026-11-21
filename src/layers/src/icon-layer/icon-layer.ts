@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import Window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 
@@ -215,6 +217,25 @@ export default class IconLayer extends Layer {
 
   get svgIconUrl() {
     return `${getApplicationConfig().cdnUrl}/icons/svg-icons.json`;
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Color', type: 'color'},
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || !this.config[this.visualChannels.color.field]) &&
+        (prop.name !== 'radius' ||
+          (!this.config[this.visualChannels.size.field] && !this.config.visConfig.fixedRadius))
+    );
   }
 
   get type(): 'icon' {
@@ -492,24 +513,25 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
 
     // Store callback to trigger map redraw when icon geometry loads asynchronously
     this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
 
-    const radiusScale = this.getRadiusScaleByZoom(mapState);
+    const radiusScale = this.getRadiusScaleByZoom(mapState, undefined, frameConfig);
 
     const layerProps = {
       radiusScale,
-      billboard: this.config.visConfig.billboard,
-      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
+      billboard: frameConfig.visConfig.billboard,
+      ...(frameConfig.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
     const updateTriggers = {
-      getPosition: this.config.columns,
-      getAngle: this.config.columns.angle,
+      getPosition: frameConfig.columns,
+      getAngle: frameConfig.columns.angle,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(frameConfig)
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -540,7 +562,7 @@ export default class IconLayer extends Layer {
 
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
-      depthTest: this.config.columns.altitude?.fieldIdx > -1,
+      depthTest: frameConfig.columns.altitude?.fieldIdx > -1,
       cullMode: CULL_MODE.FRONT
     };
 
@@ -585,7 +607,7 @@ export default class IconLayer extends Layer {
               getRadius: data.getRadius,
               getAngle: data.getAngle,
               updateTriggers,
-              getFillColor: this.config.highlightColor,
+              getFillColor: frameConfig.highlightColor,
               getIconGeometry
             })
           ]

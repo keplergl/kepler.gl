@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent} from '@testing-library/react';
+import {act, fireEvent} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation, RulerAnnotation} from '@kepler.gl/types';
@@ -49,6 +49,82 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
 
 const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
   ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
+
+describe('AnnotationOverlay opacity animation', () => {
+  test.each([
+    AnnotationKind.TEXT,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER
+  ])('combines zoom and elapsed opacity across %s shapes, text and handles', kind => {
+    const annotation: Annotation = {
+      ...makeLegacyAnnotation(kind),
+      opacityTransitions: [
+        {
+          id: 'in',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: 0,
+          endValue: 0.6,
+          easing: 'linear'
+        },
+        {
+          id: 'dim',
+          startTimeMs: 5000,
+          endTimeMs: 7000,
+          startValue: 0.6,
+          endValue: 0.2,
+          easing: 'linear'
+        }
+      ]
+    };
+    const savedAnnotation = JSON.parse(JSON.stringify(annotation));
+    let updatePreview!: React.Dispatch<
+      React.SetStateAction<{time: number | null | undefined; visible: boolean}>
+    >;
+    function Preview() {
+      const [preview, setPreview] = React.useState<{
+        time: number | null | undefined;
+        visible: boolean;
+      }>({time: 0, visible: true});
+      updatePreview = setPreview;
+      return (
+        <AnnotationOverlay
+          annotations={[{...annotation, isVisible: preview.visible}]}
+          animationTimeMs={preview.time}
+          getAnnotationOpacity={() => 0.8}
+          selectedAnnotationId={annotation.id}
+          isEditingAnnotationText={false}
+          isAnnotationMode={true}
+          mapIndex={0}
+          viewport={viewport}
+          updateAnnotation={jest.fn()}
+          setSelectedAnnotation={jest.fn()}
+        />
+      );
+    }
+    const {container} = renderWithTheme(<Preview />);
+    expect(container.querySelector('[data-annotation-id]')).toBeNull();
+    expect(container.querySelector('[role="button"]')).toBeNull();
+    for (const [time, expected] of [
+      [2000, 0.24],
+      [4000, 0.48],
+      [6000, 0.32],
+      [8000, 0.16],
+      [undefined, 0.8],
+      [null, 0.8]
+    ] as const) {
+      act(() => updatePreview({time, visible: true}));
+      const parts = container.querySelectorAll<HTMLElement>('[data-annotation-id]');
+      expect(parts).toHaveLength(kind === AnnotationKind.RULER ? 3 : 2);
+      parts.forEach(part => expect(Number(part.style.opacity)).toBeCloseTo(expected));
+    }
+    act(() => updatePreview({time: 4000, visible: false}));
+    expect(container.querySelector('[data-annotation-id]')).toBeNull();
+    expect(annotation).toEqual(savedAnnotation);
+  });
+});
 
 describe('AnnotationOverlay ruler interactions', () => {
   test.each([

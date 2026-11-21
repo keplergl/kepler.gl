@@ -22,6 +22,9 @@ export type EffectParameterAnimation = {
   startValue?: number | number[];
   endValue: number | number[];
   easing: 'linear' | 'easeInOut';
+  /** Optional paired timing in elapsed milliseconds; omitted timing spans the animation. */
+  startTimeMs?: number;
+  endTimeMs?: number;
 };
 
 export type EffectAnimation = Record<string, EffectParameterAnimation>;

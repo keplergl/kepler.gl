@@ -537,6 +537,8 @@ function KeplerGlFactory(
     return (
       <MapContainer
         {...props}
+        animationSourceEffects={props.visState.effects}
+        animationTimeMs={preview?.animationTimeMs}
         visState={preview?.effects ? {...props.visState, effects: preview.effects} : props.visState}
       />
     );
@@ -751,6 +753,12 @@ function KeplerGlFactory(
                       <EffectAnimationPreviewProvider
                         effects={visState.effects}
                         enabled={!uiState.currentModal && !isExportingImage}
+                        cameraTour={visState.cameraTour}
+                        cameraEnabled={Boolean(uiState.mapControls.cameraTour?.show)}
+                        updateMap={this.props.mapStateActions.updateMap}
+                        globe={Boolean(this.props.mapState.globe?.enabled)}
+                        layers={visState.layers}
+                        annotations={visState.annotations}
                       >
                         <CameraTourPlaybackProvider
                           tour={visState.cameraTour}

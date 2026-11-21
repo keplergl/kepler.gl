@@ -59,7 +59,8 @@ import {
   MapControls,
   Viewport,
   SplitMap,
-  SplitMapLayers
+  SplitMapLayers,
+  Effect
 } from '@kepler.gl/types';
 import {
   errorNotification,
@@ -243,6 +244,10 @@ export interface MapContainerProps {
   uiStateActions: typeof UIStateActions;
 
   // optional
+  /** Elapsed presentation time; omitted during ordinary data exploration. */
+  animationTimeMs?: number | null;
+  /** Authored effects for editing while visState.effects contains playback clones. */
+  animationSourceEffects?: Effect[];
   primary?: boolean; // primary one will be reporting its size to appState
   readOnly?: boolean;
   isExport?: boolean;
@@ -1362,6 +1367,7 @@ export default function MapContainerFactory(
         {
           visState,
           mapState: deckLayersMapState,
+          animationTimeMs: this.props.animationTimeMs,
           mapStyle
         },
         {
@@ -1853,6 +1859,10 @@ export default function MapContainerFactory(
             <MapControl
               mapState={mapState}
               cameraBookmarks={visState.cameraBookmarks}
+              cameraTour={visState.cameraTour}
+              effects={this.props.animationSourceEffects ?? visState.effects}
+              annotations={visState.annotations}
+              onEditCamera={() => uiStateActions.toggleSidePanel('interaction')}
               onCameraBookmarksChange={this.props.visStateActions.setCameraBookmarks}
               mapStateActions={mapStateActions}
               datasets={datasets}
@@ -1935,6 +1945,7 @@ export default function MapContainerFactory(
           ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
+            animationTimeMs={this.props.animationTimeMs}
             getAnnotationOpacity={annotationId =>
               getLayerZoomOpacityFactor(
                 getZoomOpacityAnnotationTargetId(annotationId),

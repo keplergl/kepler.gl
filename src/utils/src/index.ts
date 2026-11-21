@@ -4,6 +4,24 @@
 // UTILS
 export {getCameraSnapshot, normalizeCameraBookmarks, cameraForMap} from './camera-utils';
 export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
+export {
+  normalizeLayerVisibilityTiming,
+  getLayerVisibilityFactor,
+  getLayerVisibilityDuration,
+  normalizeLayerOpacityTransitions,
+  getLayerOpacityTransitions,
+  getLayerOpacityFactor,
+  getLayerOpacityDuration,
+  getAnnotationOpacityDuration,
+  DEFAULT_LAYER_ANIMATABLE_PROPS,
+  normalizeLayerPropertyTransitions,
+  getLayerPropertyTransitions,
+  getLayerAnimationTracks,
+  getLayerAnimationDuration,
+  getLayerAnimationOpacityFactor,
+  getLayerAnimatedConfig,
+  getLayerAnimatedVisConfig
+} from './layer-visibility';
 
 export {
   colorMaybeToRGB,

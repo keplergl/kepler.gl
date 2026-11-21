@@ -11,6 +11,7 @@ import {
   DatasetType,
   EXPORT_DATA_ID,
   EXPORT_MAP_ID,
+  EXPORT_VIDEO_ID,
   FIELD_COLORS,
   FIELD_TYPE_DISPLAY,
   SAVE_MAP_ID
@@ -39,6 +40,30 @@ import NewFilterPanelFactory, {
 } from './filters/filter-panels/new-filter-panel';
 import FieldSelectorFactory, {FieldListItemFactoryFactory} from './common/field-selector';
 import FieldTokenFactory from './common/field-token';
+
+test.each([true, false, undefined])('video export follows camera playback enablement: %s', show => {
+  const dependencies = ModalContainerFactory.deps.map(() => () => null) as unknown as Parameters<
+    typeof ModalContainerFactory
+  >;
+  dependencies[7] = (({cameraAnimationEnabled}) =>
+    React.createElement('div', {role: 'status'}, String(cameraAnimationEnabled))) as any;
+  dependencies[9] = (({children}) => children) as any;
+  const ModalContainer = ModalContainerFactory(...dependencies);
+  renderWithTheme(
+    React.createElement(ModalContainer, {
+      rootNode: document.body,
+      uiState: {
+        ...INITIAL_UI_STATE,
+        currentModal: EXPORT_VIDEO_ID,
+        mapControls: {...INITIAL_UI_STATE.mapControls, cameraTour: {show}}
+      },
+      visState: INITIAL_VIS_STATE,
+      visStateActions: {},
+      uiStateActions: {toggleModal: jest.fn()}
+    } as any)
+  );
+  expect(screen.getByRole('status')).toHaveTextContent(String(Boolean(show)));
+});
 
 describe('tileset filter eligibility', () => {
   const originalObserver = window.IntersectionObserver;

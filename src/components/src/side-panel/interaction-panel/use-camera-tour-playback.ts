@@ -6,7 +6,10 @@ import {CameraSnapshot, CameraTour} from '@kepler.gl/types';
 import {MapStateActions} from '@kepler.gl/actions';
 import {evaluateCameraTour, getCameraTourDuration, cameraForMap} from '@kepler.gl/utils';
 import {RootContext} from '../../context';
-import {EffectAnimationPreviewContext} from '../../effects/effect-animation-preview';
+import {
+  EffectAnimationPreviewContext,
+  AnimationPlayback
+} from '../../effects/effect-animation-preview';
 
 /** Local playback state, separate from the saved tour and data/filter animation. */
 export default function useCameraTourPlayback(
@@ -14,9 +17,9 @@ export default function useCameraTourPlayback(
   updateMap: typeof MapStateActions.updateMap | undefined,
   enabled: boolean,
   globe = false
-) {
+): AnimationPlayback {
   const root = useContext(RootContext);
-  const runEffectsPreview = useContext(EffectAnimationPreviewContext)?.run;
+  const sharedPlayback = useContext(EffectAnimationPreviewContext)?.cameraPlayback;
   const duration = useMemo(() => getCameraTourDuration(tour), [tour]);
   const [elapsed, setElapsed] = useState(0);
   const elapsedRef = useRef(0);
@@ -49,14 +52,13 @@ export default function useCameraTourPlayback(
   );
 
   const play = useCallback(() => {
-    if (!enabled || !updateMap || duration <= 0) return;
+    if (sharedPlayback || !enabled || !updateMap || duration <= 0) return;
     pause();
     const start = elapsedRef.current >= duration ? 0 : elapsedRef.current;
     const origin = performance.now() - start;
     running.current = true;
     setPlaying(true);
     apply(start);
-    runEffectsPreview?.();
     const tick = (now: number) => {
       if (!running.current) return;
       const time = Math.max(0, Math.min(duration, now - origin));
@@ -65,7 +67,7 @@ export default function useCameraTourPlayback(
       else if (running.current) frame.current = window.requestAnimationFrame(tick);
     };
     frame.current = window.requestAnimationFrame(tick);
-  }, [enabled, updateMap, duration, pause, apply, runEffectsPreview]);
+  }, [enabled, updateMap, duration, pause, apply, sharedPlayback]);
 
   useEffect(() => {
     pause();
@@ -112,5 +114,5 @@ export default function useCameraTourPlayback(
     };
   }, [playing, pause, root]);
 
-  return {elapsed, duration, playing, play, pause, seek};
+  return sharedPlayback ?? {elapsed, duration, playing, play, pause, seek};
 }

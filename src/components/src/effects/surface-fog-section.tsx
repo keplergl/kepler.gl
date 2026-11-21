@@ -5,7 +5,6 @@ import React from 'react';
 import styled from 'styled-components';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 import RangeSliderFactory from '../common/range-slider';
-import EffectAnimationControl from './effect-animation-control';
 
 export const ELEVATION_SECTION_TYPE = 'elevation-section';
 
@@ -56,16 +55,7 @@ export default function SurfaceFogElevationSectionFactory(
     const step = max - min > 10 ? 1 : 0.001;
     return (
       <Section>
-        <Title>
-          Elevation
-          <EffectAnimationControl
-            effect={effect}
-            name="height"
-            RangeSlider={RangeSlider}
-            step={step}
-            updateEffectConfig={updateEffectConfig}
-          />
-        </Title>
+        <Title>Elevation</Title>
         <SliderWrapper>
           <RangeSlider
             showInput

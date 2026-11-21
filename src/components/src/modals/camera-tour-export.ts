@@ -3,9 +3,17 @@
 
 import {cloneElement, createElement, Fragment} from 'react';
 import type {ReactElement} from 'react';
-import type {CameraTour} from '@kepler.gl/types';
+import type {Annotation, CameraTour, Effect} from '@kepler.gl/types';
 import {NO_MAP_ID} from '@kepler.gl/constants';
-import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
+import {
+  cameraForMap,
+  evaluateCameraTour,
+  getCameraTourDuration,
+  getLayerAnimationDuration,
+  getLayerAnimationTracks,
+  getLayerOpacityTransitions,
+  getAnnotationOpacityDuration
+} from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
@@ -17,8 +25,38 @@ import {
   VIDEO_ENCODING_ERROR
 } from './video-export-formats';
 import {StyledModalInputFootnote} from '../common/styled-components';
+import {getEffectAnimationDuration, getEffectAnimationTracks} from './effect-animation';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
+
+/** Authored tracks keep elapsed seconds when one track extends the recording. */
+export function getAnimationExportDuration({
+  cameraTour,
+  effects = [],
+  layers = [],
+  annotations = []
+}: {
+  cameraTour?: CameraTour | null;
+  effects?: Effect[];
+  layers?: Parameters<typeof getLayerAnimationDuration>[0];
+  annotations?: readonly Annotation[];
+}): number {
+  const duration = Math.max(
+    getCameraTourDuration(cameraTour),
+    getEffectAnimationDuration(effects),
+    getLayerAnimationDuration(layers),
+    getAnnotationOpacityDuration(annotations)
+  );
+  return duration > 0
+    ? duration
+    : getEffectAnimationTracks(effects).length > 0 ||
+      layers.some(layer => layer.config.isVisible && getLayerAnimationTracks(layer).length > 0) ||
+      annotations.some(
+        annotation => annotation.isVisible && getLayerOpacityTransitions(annotation).length > 0
+      )
+    ? 10000
+    : 0;
+}
 
 const BASEMAP_LOADING_ERROR =
   'The basemap could not load. Check its connection or access settings, then try again.';
@@ -45,7 +83,7 @@ export function getCameraTourExportKeyframes(
   return {
     ...size,
     timings: [0, durationMs],
-    keyframes: [{cameraTourTime: 0}, {cameraTourTime: tourDuration}]
+    keyframes: [{cameraTourTime: 0}, {cameraTourTime: durationMs}]
   } as unknown as CameraKeyframeProps;
 }
 
@@ -203,6 +241,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
           annotations: this.props.mapData.visState.annotations || [],
           interactionConfig: this.props.mapData.visState.interactionConfig,
           mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          animationTimeMs: this.getAnimationTimeMs(),
           ...this._getContainer()
         }),
         encoder => {
@@ -214,6 +253,14 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
           this.onStop({abort: true});
         }
       );
+    }
+
+    private getAnimationTimeMs(): number | undefined {
+      if (Number.isFinite(this.state.currentTimeMs)) return Math.max(0, this.state.currentTimeMs);
+      const capture = this.state.adapter?.videoCapture;
+      return Number.isFinite(capture?.timeMs)
+        ? Math.max(0, capture.timeMs - (capture.timecode?.start || 0))
+        : undefined;
     }
 
     onRenderVideo() {
@@ -331,6 +378,8 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
       });
       // Hubble's default renderer bypasses Kepler's zoom opacity rules. Supply
       // layers from the current frame, including ordinary camera presets.
+      const animationTimeMs =
+        this.state.rendering || this.state.previewing ? this.getAnimationTimeMs() : undefined;
       let preview = this.props.deckProps?.layers
         ? panel
         : cloneElement(panel, {
@@ -339,7 +388,8 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
               layers: getFlatExportLayers(this.props.mapData, {
                 mapIndex: 0,
                 viewState: this.state.viewState,
-                beforeId: this.props.mapboxLayerBeforeId
+                beforeId: this.props.mapboxLayerBeforeId,
+                animationTimeMs
               })
             }
           });
@@ -349,6 +399,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
             annotations: this.props.mapData.visState.annotations,
             interactionConfig: this.props.mapData.visState.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+            animationTimeMs,
             ...this._getContainer()
           },
           children: preview
@@ -386,7 +437,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
     }
 
     setCameraPreset(cameraPreset: string) {
-      const duration = getCameraTourDuration(this.props.mapData.visState.cameraTour);
+      const duration = getAnimationExportDuration(this.props.mapData.visState);
       this.setStateAndNotify({
         cameraPreset,
         ...(cameraPreset === CAMERA_TOUR_PRESET && duration > 0 ? {durationMs: duration} : {})

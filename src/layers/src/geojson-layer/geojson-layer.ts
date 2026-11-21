@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
 import {booleanWithin} from '@turf/boolean-within';
@@ -348,6 +350,44 @@ export default class GeoJsonLayer extends Layer {
       [COLUMN_MODE_TABLE]: GeojsonInfoModalFactory(COLUMN_MODE_TABLE),
       [COLUMN_MODE_GEOJSON]: GeojsonInfoModalFactory(COLUMN_MODE_GEOJSON)
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      },
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.stroked && !this.config.strokeColorField)) &&
+        (prop.name !== 'radius' ||
+          (!this.config.radiusField &&
+            !this.meta.fixedRadius &&
+            (!this.meta.featureTypes || this.meta.featureTypes.point))) &&
+        (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.isExtruded())
+    );
   }
 
   get type() {
@@ -917,17 +957,17 @@ export default class GeoJsonLayer extends Layer {
     return this._hoverOverlayData;
   }
 
-  isElevationOffsetActive(): boolean {
-    return Boolean(this.config.elevationOffsetField || this.config.visConfig.elevationOffset > 0);
+  isElevationOffsetActive(frameConfig: LayerBaseConfig = this.config): boolean {
+    return Boolean(frameConfig.elevationOffsetField || frameConfig.visConfig.elevationOffset > 0);
   }
 
-  isExtruded(): boolean {
-    return Boolean(this.config.visConfig.enable3d || this.isElevationOffsetActive());
+  isExtruded(frameConfig: LayerBaseConfig = this.config): boolean {
+    return Boolean(frameConfig.visConfig.enable3d || this.isElevationOffsetActive(frameConfig));
   }
 
   getDefaultDeckLayerProps(opts: Parameters<Layer['getDefaultDeckLayerProps']>[0]) {
     const props = super.getDefaultDeckLayerProps(opts);
-    if (!this.isElevationOffsetActive()) {
+    if (!this.isElevationOffsetActive(opts.frameConfig ?? this.config)) {
       return props;
     }
     return {
@@ -939,37 +979,39 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getVisualChannelUpdateTriggers() {
-    const triggers = super.getVisualChannelUpdateTriggers();
+  getVisualChannelUpdateTriggers(frameConfig: LayerBaseConfig = this.config) {
+    const triggers = super.getVisualChannelUpdateTriggers(frameConfig);
     if (triggers.getElevation) {
       triggers.getElevation = {
         ...triggers.getElevation,
-        enable3d: this.config.visConfig.enable3d
+        enable3d: frameConfig.visConfig.enable3d
       };
     }
     return triggers;
   }
 
-  getElevationZoomFactor(mapState: LayerZoomState) {
-    return this.config.visConfig.fixedHeight
+  getElevationZoomFactor(mapState: LayerZoomState, frameConfig: LayerBaseConfig = this.config) {
+    return frameConfig.visConfig.fixedHeight
       ? 1
       : Math.pow(2, Math.max(8 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0), 0));
   }
 
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(
       mapState,
-      this.config.radiusField ? false : fixedRadius
+      frameConfig.radiusField ? false : fixedRadius,
+      frameConfig
     );
     const zoomFactor = this.getZoomFactor(mapState);
-    const eleZoomFactor = this.getElevationZoomFactor(mapState);
+    const eleZoomFactor = this.getElevationZoomFactor(mapState, frameConfig);
 
-    const {visConfig} = this.config;
-    const offsetActive = this.isElevationOffsetActive();
-    const extruded = this.isExtruded();
+    const {visConfig} = frameConfig;
+    const offsetActive = this.isElevationOffsetActive(frameConfig);
+    const extruded = this.isExtruded(frameConfig);
 
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
@@ -979,7 +1021,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const updateTriggers = {
-      ...this.getVisualChannelUpdateTriggers(),
+      ...this.getVisualChannelUpdateTriggers(frameConfig),
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger
     } as UpdateTriggers;
@@ -1066,8 +1108,8 @@ export default class GeoJsonLayer extends Layer {
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
+              getLineColor: frameConfig.highlightColor,
+              getFillColor: frameConfig.highlightColor,
               // always draw outline
               stroked: true,
               filled: false

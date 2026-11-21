@@ -27,6 +27,49 @@ const makeAnnotation = (overrides = {}) => ({
   ...overrides
 });
 
+test('#mergeAnnotations -> imports normalized opacity tracks without sharing or inventing metadata', t => {
+  const first = {
+    id: 'first',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: 0,
+    endValue: 1,
+    easing: 'linear'
+  };
+  const last = {
+    id: 'last',
+    startTimeMs: 5000,
+    endTimeMs: 7000,
+    startValue: 1,
+    endValue: 0,
+    easing: 'easeInOut'
+  };
+  const source = makeAnnotation({id: 'animated', opacityTransitions: [last, first]});
+  const result = mergeAnnotations(makeState(), [
+    source,
+    makeAnnotation({id: 'cleared', opacityTransitions: []}),
+    makeAnnotation({id: 'legacy'}),
+    makeAnnotation({id: 'invalid', opacityTransitions: [{...first, endValue: 2}]}),
+    makeAnnotation({id: 'overlap', opacityTransitions: [first, {...last, startTimeMs: 2000}]})
+  ]);
+  t.deepEqual(result.annotations[0].opacityTransitions, [first, last], 'imports a sorted track');
+  t.notEqual(
+    result.annotations[0].opacityTransitions,
+    source.opacityTransitions,
+    'import owns its array'
+  );
+  t.notEqual(result.annotations[0].opacityTransitions[0], first, 'import owns its entries');
+  t.equal(source.opacityTransitions[0].id, 'last', 'import does not reorder source');
+  t.deepEqual(result.annotations[1].opacityTransitions, [], 'imports explicit empty tracks');
+  for (const annotation of result.annotations.slice(2)) {
+    t.notOk(
+      'opacityTransitions' in annotation,
+      `${annotation.id} has no invalid or invented animation`
+    );
+  }
+  t.end();
+});
+
 test('#mergeAnnotations -> should merge valid annotations', t => {
   const state = makeState();
   const annotations = [makeAnnotation({id: 'a1'}), makeAnnotation({id: 'a2', label: 'Second'})];

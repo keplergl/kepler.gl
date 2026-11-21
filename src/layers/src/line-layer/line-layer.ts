@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
@@ -221,6 +223,13 @@ export default class LineLayer extends ArcLayer {
     return 'line';
   }
 
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    // Globe lines use the target color only when target arrows are enabled.
+    return super.animatableProps.filter(
+      prop => prop.name !== 'targetColor' || this.config.visConfig.targetArrowEnabled
+    );
+  }
+
   get layerIcon() {
     return LineLayerIcon;
   }
@@ -295,18 +304,19 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
 
     const layerProps = {
-      widthScale: this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
-      elevationScale: this.config.visConfig.elevationScale
+      widthScale: frameConfig.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
+      elevationScale: frameConfig.visConfig.elevationScale
     };
 
     const updateTriggers = {
-      getPosition: this.config.columns,
+      getPosition: frameConfig.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(frameConfig)
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
@@ -315,6 +325,7 @@ export default class LineLayer extends ArcLayer {
     const blendingParameters = mapState?.layerParameters ?? {};
     const arrowLayers = createTargetArrowLayers({
       layer: this,
+      frameConfig,
       formattedData: data,
       defaultLayerProps,
       mapState,
@@ -323,10 +334,10 @@ export default class LineLayer extends ArcLayer {
       // segment, so the head follows the projected endpoints rather than a paraboloid.
       greatCircle: Boolean(globeMode),
       height: 0,
-      elevationScale: globeMode ? 1 : this.config.visConfig.elevationScale,
+      elevationScale: globeMode ? 1 : frameConfig.visConfig.elevationScale,
       getColor: data.getTargetColor,
       hoveredObject,
-      highlightColor: this.config.highlightColor
+      highlightColor: frameConfig.highlightColor
     });
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
@@ -374,7 +385,7 @@ export default class LineLayer extends ArcLayer {
           parameters: {cull: false, ...blendingParameters},
           // The target end, including the arrowhead, uses the target color.
           getSourceColor: data.getColor,
-          getTargetColor: this.config.visConfig.targetArrowEnabled
+          getTargetColor: frameConfig.visConfig.targetArrowEnabled
             ? data.getTargetColor
             : data.getColor,
           widthUnits: 'pixels' as const
@@ -388,8 +399,8 @@ export default class LineLayer extends ArcLayer {
                 data: [hoveredObject],
                 getHeight: 0,
                 parameters: {cull: false, ...blendingParameters},
-                getSourceColor: this.config.highlightColor,
-                getTargetColor: this.config.highlightColor,
+                getSourceColor: frameConfig.highlightColor,
+                getTargetColor: frameConfig.highlightColor,
                 getWidth: data.getWidth,
                 widthUnits: 'pixels' as const
               })
@@ -428,8 +439,8 @@ export default class LineLayer extends ArcLayer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               data: [hoveredObject],
-              getColor: this.config.highlightColor,
-              getTargetColor: this.config.highlightColor,
+              getColor: frameConfig.highlightColor,
+              getTargetColor: frameConfig.highlightColor,
               getWidth: data.getWidth
             })
           ]

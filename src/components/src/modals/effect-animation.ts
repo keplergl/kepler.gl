@@ -27,9 +27,11 @@ type ParameterTrack = {
   end: number | number[];
   original: number | number[];
   easing: 'linear' | 'easeInOut';
+  startTimeMs?: number;
+  endTimeMs?: number;
 };
 
-function getProgress(state?: PlaybackState): number | null {
+function getPlaybackTime(state?: PlaybackState): {progress: number; elapsedMs: number} | null {
   if (!state || !(state.previewing || state.rendering)) return null;
 
   // Globe/swipe own their capture loop; standard Hubble export owns VideoCapture.
@@ -47,7 +49,8 @@ function getProgress(state?: PlaybackState): number | null {
   ) {
     return null;
   }
-  return Math.min(Math.max(((time as number) - (start as number)) / duration, 0), 1);
+  const elapsedMs = Math.max(0, (time as number) - (start as number));
+  return {progress: Math.min(elapsedMs / duration, 1), elapsedMs};
 }
 
 export function setAnimatedParameters(effect: Effect, parameters: Effect['parameters']) {
@@ -93,12 +96,16 @@ export function getEffectAnimationTracks(effects: Effect[]) {
       const original = Array.isArray(current) ? current.slice() : current;
       const start = entry.startValue ?? current;
       const end = entry.endValue;
+      const timing =
+        entry.startTimeMs !== undefined
+          ? {startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs}
+          : {};
       if (Array.isArray(start) && Array.isArray(end)) {
         if (start.length !== end.length || !start.every(Number.isFinite)) return [];
-        return [{name, start: start.slice(), end, original, easing: entry.easing}];
+        return [{name, start: start.slice(), end, original, easing: entry.easing, ...timing}];
       }
       if (!Number.isFinite(start) || Array.isArray(end)) return [];
-      return [{name, start: start as number, end, original, easing: entry.easing}];
+      return [{name, start: start as number, end, original, easing: entry.easing, ...timing}];
     });
     const animatesTimestamp =
       effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
@@ -117,15 +124,40 @@ export function getEffectAnimationTracks(effects: Effect[]) {
   });
 }
 
+/** Latest explicit endpoint among enabled, playable effect transitions. */
+export function getEffectAnimationDuration(effects: Effect[]): number {
+  return getEffectAnimationTracks(effects).reduce(
+    (duration, track) =>
+      track.parameters.reduce(
+        (end, parameter) => Math.max(end, parameter.endTimeMs ?? 0),
+        duration
+      ),
+    0
+  );
+}
+
 export function applyEffectAnimation(
   tracks: ReturnType<typeof getEffectAnimationTracks>,
-  progress: number
+  progress: number,
+  elapsedMs?: number
 ): void {
   for (const track of tracks) {
     if (!track.effect.isEnabled) continue;
     const parameters = Object.fromEntries(
-      track.parameters.map(({name, start, end, easing}) => {
-        const t = easing === 'linear' ? progress : progress * progress * (3 - 2 * progress);
+      track.parameters.map(({name, start, end, easing, startTimeMs, endTimeMs}) => {
+        const localProgress =
+          startTimeMs !== undefined && endTimeMs !== undefined && Number.isFinite(elapsedMs)
+            ? endTimeMs === startTimeMs
+              ? Number((elapsedMs as number) >= endTimeMs)
+              : Math.max(
+                  0,
+                  Math.min(1, ((elapsedMs as number) - startTimeMs) / (endTimeMs - startTimeMs))
+                )
+            : progress;
+        const t =
+          easing === 'linear'
+            ? localProgress
+            : localProgress * localProgress * (3 - 2 * localProgress);
         const value = Array.isArray(start)
           ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
           : start + ((end as number) - start) * t;
@@ -165,12 +197,12 @@ export function useEffectAnimation(
   useEffect(() => restore, [restore]);
 
   return useCallback(() => {
-    const progress = getProgress(containerRef.current?.state);
-    if (progress === null) {
+    const time = getPlaybackTime(containerRef.current?.state);
+    if (time === null) {
       restore();
       return;
     }
-    applyEffectAnimation(tracks, progress);
+    applyEffectAnimation(tracks, time.progress, time.elapsedMs);
     if (tracks.some(track => track.animatesTimestamp)) onLightingTimeChange?.();
   }, [containerRef, restore, tracks, onLightingTimeChange]);
 }

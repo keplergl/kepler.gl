@@ -111,6 +111,43 @@ describe('post-processing effect parameters', () => {
     expect(effect.parameters.contrast).toBe(0.5);
   });
 
+  test.each([
+    {startTimeMs: 0, endTimeMs: 0},
+    {startTimeMs: 2000, endTimeMs: 5000}
+  ])('preserves valid explicit timing through updates and clones: %j', timing => {
+    const animation = {
+      brightness: {startValue: 0, endValue: 1, easing: 'linear' as const, ...timing}
+    };
+    const effect = new PostProcessingEffect({type: 'brightnessContrast', animation});
+    effect.setProps({parameters: {brightness: 0.5}});
+    expect(effect.animation).toEqual(animation);
+    expect(effect.clone().animation).toEqual(animation);
+    expect(effect.deckEffect.props.brightness).toBe(0.5);
+    expect(effect.deckEffect.props).not.toHaveProperty('startTimeMs');
+  });
+
+  test.each([
+    {startTimeMs: 0},
+    {endTimeMs: 1000},
+    {startTimeMs: undefined, endTimeMs: 1000},
+    {startTimeMs: -1, endTimeMs: 1000},
+    {startTimeMs: 1000, endTimeMs: 999},
+    {startTimeMs: NaN, endTimeMs: 1000},
+    {startTimeMs: 0, endTimeMs: Infinity},
+    {startTimeMs: '0', endTimeMs: 1000},
+    {startTimeMs: null, endTimeMs: 1000}
+  ])(
+    'rejects invalid or incomplete explicit timing without creating a legacy transition: %j',
+    timing => {
+      const effect = new PostProcessingEffect({
+        type: 'brightnessContrast',
+        animation: {brightness: {endValue: 1, easing: 'linear', ...timing}} as any
+      });
+      expect(effect).not.toHaveProperty('animation');
+      expect(effect.parameters.brightness).toBe(0);
+    }
+  );
+
   test('animation endpoints are bounded, independently cloned, and never mutate input', () => {
     const animation = {
       center: {

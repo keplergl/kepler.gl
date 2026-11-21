@@ -79,6 +79,7 @@ export type SwipeExportVideoPreviewProps = {
   swipeEndPct: number;
   swipeEasing: SwipeEasing;
   currentTimeMs: number;
+  animationTimeMs?: number;
   backgroundColor?: string;
 };
 
@@ -224,8 +225,10 @@ export class SwipeExportVideoPreview extends Component<
   _areLayersLoaded(side: 'left' | 'right'): boolean {
     const deckRef = side === 'left' ? this.leftDeckRef : this.rightDeckRef;
     if (!deckRef.current) return false;
-    const layers = deckRef.current.props.layers || [];
-    return layers.every((layer: any) => layer.isLoaded);
+    const layers = (deckRef.current.props.layers || []) as any[];
+    return layers
+      .flat(Infinity)
+      .every((layer: any) => !layer || layer.props?.visible === false || layer.isLoaded);
   }
 
   /**
@@ -236,7 +239,7 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   _createLayers(mapIndex: number, beforeId?: string) {
-    const {deckProps, mapData, viewState, disableBaseMap, mapProps} = this.props;
+    const {deckProps, mapData, viewState, disableBaseMap, mapProps, animationTimeMs} = this.props;
 
     // Globe swipe: build a fresh set of globe layers per side. Each side is a
     // separate Deck, so it needs its OWN Layer instances (deck.gl Layer objects
@@ -248,7 +251,8 @@ export class SwipeExportVideoPreview extends Component<
         mapIndex,
         mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
         mapboxApiUrl: mapProps?.mapboxApiUrl,
-        viewState
+        viewState,
+        animationTimeMs
       });
     }
 
@@ -261,7 +265,7 @@ export class SwipeExportVideoPreview extends Component<
           : layer
       );
     }
-    return getFlatExportLayers(mapData, {viewState, mapIndex, beforeId});
+    return getFlatExportLayers(mapData, {viewState, mapIndex, beforeId, animationTimeMs});
   }
 
   _onLeftMapLoad = () => {
@@ -401,6 +405,7 @@ export class SwipeExportVideoPreview extends Component<
             annotations: this.props.mapData.visState?.annotations || [],
             interactionConfig: this.props.mapData.visState?.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.props.viewState},
+            animationTimeMs: this.props.animationTimeMs,
             width,
             height,
             swipePercentage: this._getCurrentSwipePercentage()

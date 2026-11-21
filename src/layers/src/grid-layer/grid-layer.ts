@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {EnhancedGridLayer} from '@kepler.gl/deckgl-layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
@@ -89,6 +91,25 @@ export default class GridLayer extends AggregationLayer {
     this.visConfigSettings.worldUnitSize.label = 'columns.grid.worldUnitSize';
   }
 
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'coverage',
+        label: 'Coverage',
+        range: this.visConfigSettings.coverage.range,
+        step: this.visConfigSettings.coverage.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(prop => prop.name !== 'elevationScale' || this.config.visConfig.enable3d);
+  }
+
   get type(): 'grid' {
     return 'grid';
   }
@@ -98,12 +119,13 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
     const countLabelProps = this.getCountLabelProps(opts);
     const zoomFactor = this.getZoomFactor(mapState);
-    const {visConfig} = this.config;
+    const {visConfig} = frameConfig;
     const cellSize = visConfig.worldUnitSize * 1000;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
@@ -137,7 +159,7 @@ export default class GridLayer extends AggregationLayer {
                   }
                 }
               ],
-              getLineColor: this.config.highlightColor,
+              getLineColor: frameConfig.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]

@@ -102,7 +102,8 @@ import {
   isLayerAnimatable,
   isSideFilter,
   getApplicationConfig,
-  validateFiltersUpdateDatasets
+  validateFiltersUpdateDatasets,
+  normalizeLayerOpacityTransitions
 } from '@kepler.gl/utils';
 import {generateHashId, toArray, arrayMove} from '@kepler.gl/common-utils';
 // Mergers
@@ -3131,6 +3132,7 @@ export const removeChartUpdater = (
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
+  const opacityTransitions = normalizeLayerOpacityTransitions(config?.opacityTransitions);
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
   const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
   const derivedFromAngle =
@@ -3151,6 +3153,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     id: config?.id ?? generateHashId(6),
     kind,
     isVisible: config?.isVisible ?? true,
+    ...(opacityTransitions !== undefined ? {opacityTransitions} : {}),
     autoSize: config?.autoSize ?? true,
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
@@ -3284,6 +3287,11 @@ export const updateAnnotationUpdater = (
     nextAnnotation = makeNewAnnotation({...prev, ...config} as AnnotationPropsPartial);
   } else {
     nextAnnotation = {...prev, ...config} as Annotation;
+  }
+  if (Object.prototype.hasOwnProperty.call(config, 'opacityTransitions')) {
+    const opacityTransitions = normalizeLayerOpacityTransitions(config.opacityTransitions);
+    if (opacityTransitions === undefined) delete nextAnnotation.opacityTransitions;
+    else nextAnnotation.opacityTransitions = opacityTransitions;
   }
 
   const newAnnotations = [...state.annotations];

@@ -42,4 +42,14 @@ The enlarged timeline now lets you stay focused on the portion that matters:
 - Hold <kbd>Ctrl</kbd> (Windows/Linux) or <kbd>⌘</kbd> (macOS) and press the arrow keys to pan left/right, with <kbd>Shift</kbd> for bigger steps.
 
 
+## Animation editor
+
+Click the **Animation** clock icon in the map's right toolbar to open the floating editor. Its time axis measures seconds from animation start. Dataset playback keeps its own filters, bins, grouping, and controls.
+
+Choose **Add action**, select a layer, annotation, or effect, then select a supported property. Double-click a block to edit its start and end times, values, and easing. Drag its body to move it in time, or drag an edge to change that endpoint. The panel stays compact while settings open in a popup.
+
+Layers support opacity and additional properties depending on their type and configuration. Supported fixed-color properties offer **Start color** and **End color** pickers in the block settings. A color controlled by a data field keeps its data-driven styling. Annotations support opacity. Add multiple blocks to the same property to build a sequence: the end value stays in effect between blocks and after the last one. Blocks on the same property cannot overlap.
+
+The editor's playback controls coordinate these tracks with an enabled camera tour. Camera stops remain editable in the camera settings. Fade-on-zoom continues to apply alongside opacity animation.
+
 [Back to table of contents](README.md)

@@ -32,6 +32,7 @@ import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
   CAMERA_TOUR_PRESET,
   getCameraTourExportKeyframes,
+  getAnimationExportDuration,
   resolveCameraTourExportFrame
 } from './camera-tour-export';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
@@ -267,6 +268,7 @@ export class GlobeExportVideoPanelContainer extends Component<
         annotations: this.props.mapData.visState.annotations || [],
         interactionConfig: this.props.mapData.visState.interactionConfig,
         mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+        animationTimeMs: this.state.currentTimeMs,
         ...this._getContainer()
       }),
       encoder => this.activeEncoder === encoder,
@@ -382,7 +384,7 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   setMediaType = (mediaType: string) => this.setStateAndNotify({mediaType});
   setCameraPreset = (cameraPreset: string) => {
-    const duration = getCameraTourDuration(this.props.mapData.visState.cameraTour);
+    const duration = getAnimationExportDuration(this.props.mapData.visState);
     this.setStateAndNotify({
       cameraPreset,
       ...(cameraPreset === CAMERA_TOUR_PRESET && duration > 0 ? {durationMs: duration} : {})
@@ -630,6 +632,7 @@ export class GlobeExportVideoPanelContainer extends Component<
             rendering={rendering}
             saving={saving}
             durationMs={durationMs}
+            animationTimeMs={isActive ? currentTimeMs : undefined}
             deckProps={deckProps}
             mapProps={this.props.mapProps}
             backgroundColor={this.getBackgroundColor()}
@@ -642,7 +645,7 @@ export class GlobeExportVideoPanelContainer extends Component<
             fileName={fileName}
             cameraPreset={cameraPreset}
             hasCameraTour={cameraTourDurationMs > 0}
-            cameraTourDurationMs={cameraTourDurationMs}
+            cameraTourDurationMs={getAnimationExportDuration(mapData.visState)}
             frameRate={timecode.framerate}
             onChangeDuration={this.setDuration}
             onChangeMediaType={this.setMediaType}

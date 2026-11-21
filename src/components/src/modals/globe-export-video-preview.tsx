@@ -39,6 +39,7 @@ export type GlobeExportVideoPreviewProps = {
   saving: boolean;
   setViewState: (viewState: MapViewState) => void;
   durationMs: number;
+  animationTimeMs?: number;
   /** CSS color string for the area the globe does not cover. */
   backgroundColor: string;
   mapProps?: Record<string, any>;
@@ -77,8 +78,13 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
   areLayersLoaded(): boolean {
     const deck = this.deckRef.current;
     if (!deck) return false;
-    const layers = deck.props.layers || [];
-    return layers.length > 0 && layers.every((layer: any) => layer.isLoaded);
+    const layers = (deck.props.layers || []) as any[];
+    return (
+      layers.length > 0 &&
+      layers
+        .flat(Infinity)
+        .every((layer: any) => !layer || layer.props?.visible === false || layer.isLoaded)
+    );
   }
 
   render() {
@@ -102,7 +108,8 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
       mapIndex: 0,
       mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
       mapboxApiUrl: mapProps?.mapboxApiUrl,
-      viewState
+      viewState,
+      animationTimeMs: this.props.animationTimeMs
     });
 
     // adapter.getProps injects `_animate` (and toggles `controller` off while
@@ -154,6 +161,7 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
             annotations: this.props.mapData.visState?.annotations || [],
             interactionConfig: this.props.mapData.visState?.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.props.viewState},
+            animationTimeMs: this.props.animationTimeMs,
             width,
             height
           }}

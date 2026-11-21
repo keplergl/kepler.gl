@@ -95,7 +95,10 @@ jest.mock('./swipe-export-settings', () => ({__esModule: true, default: () => nu
 jest.mock('../common', () => ({
   Button: ({children, ...props}) => <button {...props}>{children}</button>
 }));
-jest.mock('@kepler.gl/utils', () => ({getCameraTourDuration: () => 0}));
+jest.mock('@kepler.gl/utils', () => ({
+  getCameraTourDuration: () => 0,
+  ...jest.requireActual('../../../utils/src/layer-visibility')
+}));
 jest.mock('@kepler.gl/effects', () => jest.requireActual('../../../effects/src/animation-utils'));
 jest.mock('@kepler.gl/deckgl-layers', () => ({
   drawStarsBackground: jest.fn(),

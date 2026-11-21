@@ -618,3 +618,40 @@ for (const LayerClass of [GridLayer, HexagonLayer, ClusterLayer, HeatmapLayer, S
     });
   }
 }
+
+test('#AggregationLayer -> frame config changes geometry props without mutating authored config', t => {
+  for (const LayerClass of [GridLayer, HexagonLayer]) {
+    const layer = new LayerClass({id: 'frame-aggregation'});
+    layer.updateLayerVisConfig({coverage: 0.9, elevationScale: 10});
+    const authored = layer.config;
+    const frameConfig = {
+      ...authored,
+      visConfig: {...authored.visConfig, coverage: 0.35, elevationScale: 25}
+    };
+    const opts = {
+      idx: 0,
+      visible: true,
+      mapState: {zoom: 14},
+      layerCallbacks: {},
+      gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}
+    };
+    const frame = layer.getDefaultAggregationLayerProp({...opts, frameConfig});
+    t.equal(frame.coverage, 0.35, `${layer.type} uses frame coverage`);
+    t.equal(frame.elevationScale, 25, `${layer.type} uses frame elevation scale`);
+    const staticProps = layer.getDefaultAggregationLayerProp(opts);
+    t.equal(staticProps.coverage, 0.9, `${layer.type} retains authored coverage without a frame`);
+    t.equal(
+      staticProps.elevationScale,
+      10,
+      `${layer.type} retains authored elevation without a frame`
+    );
+    t.equal(layer.config, authored, `${layer.type} retains config identity`);
+    t.equal(layer.config.visConfig.coverage, 0.9, `${layer.type} leaves saved coverage unchanged`);
+    t.equal(
+      layer.config.visConfig.elevationScale,
+      10,
+      `${layer.type} leaves saved elevation unchanged`
+    );
+  }
+  t.end();
+});

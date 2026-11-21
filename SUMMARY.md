@@ -66,6 +66,7 @@
     * [Processors](docs/api-reference/processors/README.md)
       * [All processors](docs/api-reference/processors/processors.md)
     * [Schemas](docs/api-reference/schemas/README.md)
+    * [Layer animations](docs/api-reference/layer-animations.md)
     * [Actions](docs/api-reference/actions/README.md)
       * [All actions](docs/api-reference/actions/actions.md)
     * [Cloud providers](docs/api-reference/cloud-providers/README.md)

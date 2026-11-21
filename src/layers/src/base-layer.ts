@@ -48,6 +48,10 @@ import {
   hasColorMap,
   hexToRgb,
   isPlainObject,
+  normalizeLayerVisibilityTiming,
+  normalizeLayerOpacityTransitions,
+  normalizeLayerPropertyTransitions,
+  DEFAULT_LAYER_ANIMATABLE_PROPS,
   isDomainStops,
   updateColorRangeByMatchingPalette,
   isArrowTable
@@ -67,6 +71,7 @@ import {
   AnimationConfig,
   KeplerLayer,
   LayerBaseConfig,
+  LayerAnimatableProp,
   LayerColumns,
   LayerColumn,
   ColumnPairs,
@@ -305,6 +310,10 @@ class Layer implements KeplerLayer {
     return this.type;
   }
 
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    return DEFAULT_LAYER_ANIMATABLE_PROPS;
+  }
+
   get isAggregated() {
     return false;
   }
@@ -532,6 +541,9 @@ class Layer implements KeplerLayer {
   getDefaultLayerConfig(
     props: LayerBaseConfigPartial
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
+    const visibilityTiming = normalizeLayerVisibilityTiming(props.visibilityTiming);
+    const opacityTransitions = normalizeLayerOpacityTransitions(props.opacityTransitions);
+    const propertyTransitions = normalizeLayerPropertyTransitions(props.propertyTransitions);
     return {
       dataId: props.dataId,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -542,6 +554,9 @@ class Layer implements KeplerLayer {
       isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden ?? false,
+      ...(visibilityTiming ? {visibilityTiming} : {}),
+      ...(opacityTransitions !== undefined ? {opacityTransitions} : {}),
+      ...(propertyTransitions !== undefined ? {propertyTransitions} : {}),
       // Only persist an explicit choice so saved maps stay compatible until the user toggles it.
       ...(typeof props.isIncludedInLegend === 'boolean'
         ? {isIncludedInLegend: props.isIncludedInLegend}
@@ -793,7 +808,14 @@ class Layer implements KeplerLayer {
       copied.columnMode = satisfiedColumnMode?.key || copied.columnMode;
     }
 
-    this.updateLayerConfig(copied);
+    this.updateLayerConfig({
+      ...copied,
+      // Optional animation fields are absent from a new layer's default keys.
+      // Preserve them independently of the destination's supported properties.
+      propertyTransitions: configToCopy.propertyTransitions,
+      opacityTransitions: configToCopy.opacityTransitions,
+      visibilityTiming: configToCopy.visibilityTiming
+    });
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
       this.validateVisualChannel(channel);
@@ -909,6 +931,21 @@ class Layer implements KeplerLayer {
       Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
   >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
+    if (Object.prototype.hasOwnProperty.call(newConfig, 'visibilityTiming')) {
+      const visibilityTiming = normalizeLayerVisibilityTiming(newConfig.visibilityTiming);
+      if (visibilityTiming) this.config.visibilityTiming = visibilityTiming;
+      else delete this.config.visibilityTiming;
+    }
+    if (Object.prototype.hasOwnProperty.call(newConfig, 'opacityTransitions')) {
+      const opacityTransitions = normalizeLayerOpacityTransitions(newConfig.opacityTransitions);
+      if (opacityTransitions !== undefined) this.config.opacityTransitions = opacityTransitions;
+      else delete this.config.opacityTransitions;
+    }
+    if (Object.prototype.hasOwnProperty.call(newConfig, 'propertyTransitions')) {
+      const propertyTransitions = normalizeLayerPropertyTransitions(newConfig.propertyTransitions);
+      if (propertyTransitions !== undefined) this.config.propertyTransitions = propertyTransitions;
+      else delete this.config.propertyTransitions;
+    }
     return this;
   }
 
@@ -1556,7 +1593,7 @@ class Layer implements KeplerLayer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  getVisualChannelUpdateTriggers(): UpdateTriggers {
+  getVisualChannelUpdateTriggers(frameConfig = this.config): UpdateTriggers {
     const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
@@ -1564,14 +1601,14 @@ class Layer implements KeplerLayer {
 
       if (accessor) {
         updateTriggers[accessor] = {
-          [field]: this.config[field],
-          [scale]: this.config[scale],
-          [domain]: this.config[domain],
-          [range]: this.config.visConfig[range],
+          [field]: frameConfig[field],
+          [scale]: frameConfig[scale],
+          [domain]: frameConfig[domain],
+          [range]: frameConfig.visConfig[range],
           defaultValue:
-            typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
-          ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {}),
-          ...(invert ? {[invert]: this.config.visConfig[invert]} : {})
+            typeof defaultValue === 'function' ? defaultValue(frameConfig) : defaultValue,
+          ...(fixed ? {[fixed]: frameConfig.visConfig[fixed]} : {}),
+          ...(invert ? {[invert]: frameConfig.visConfig[invert]} : {})
         };
       }
     });
@@ -1600,7 +1637,7 @@ class Layer implements KeplerLayer {
     return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
-  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean) {
+  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean, frameConfig = this.config) {
     const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
@@ -1608,10 +1645,10 @@ class Layer implements KeplerLayer {
     }
 
     const field = radiusChannel.field;
-    const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
-    const {radius} = this.config.visConfig;
+    const fixed = fixedRadius === undefined ? frameConfig.visConfig.fixedRadius : fixedRadius;
+    const {radius} = frameConfig.visConfig;
 
-    return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
+    return fixed ? 1 : (frameConfig[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
   shouldCalculateLayerData(props: string[]) {
@@ -1635,16 +1672,18 @@ class Layer implements KeplerLayer {
     gpuFilter,
     mapState,
     layerCallbacks,
-    visible
+    visible,
+    frameConfig = this.config
   }: {
     idx: number;
     gpuFilter: GpuFilter;
     mapState: MapState;
     layerCallbacks: any;
     visible: boolean;
+    frameConfig?: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   }) {
     const blendingParameters = mapState.layerParameters ?? {};
-    const enable3d = Boolean(this.config.visConfig.enable3d);
+    const enable3d = Boolean(frameConfig.visConfig.enable3d);
     const is3dView = Boolean(mapState.dragRotate);
     // Always depth-test so a flat layer cannot paint over closer extruded
     // geometry (e.g. a ground plane covering buildings in top view). Only 3D
@@ -1660,17 +1699,17 @@ class Layer implements KeplerLayer {
         depthMask: is3dView || enable3d,
         ...blendingParameters
       },
-      hidden: this.config.hidden,
+      hidden: frameConfig.hidden,
       // visconfig
-      opacity: this.config.visConfig.opacity,
-      highlightColor: this.config.highlightColor,
+      opacity: frameConfig.visConfig.opacity,
+      highlightColor: frameConfig.highlightColor,
       // data filtering
       extensions: [dataFilterExtension],
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
       // layer should be visible and, if splitMap, shown in one of the panels
-      visible: this.config.isVisible && visible
+      visible: frameConfig.isVisible && visible
     };
   }
 
