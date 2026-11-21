@@ -855,7 +855,7 @@ test('layer color blocks use authored colors and edit both endpoints through the
   expect(source.config.propertyTransitions!.color[1]).toEqual({...second, startTimeMs: 9000});
   expect(screen.getAllByRole('group', {name: 'Layer color: Points'})).toHaveLength(1);
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Color 2 · Points'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.config.propertyTransitions).toEqual({radius, color: [first]});
   fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
   fireEvent.click(screen.getByRole('menuitem', {name: 'Harbor'}));
@@ -991,7 +991,7 @@ test('concurrent property rows edit independently and preserve sibling tracks', 
     unsupported
   });
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Radius 1 · Points'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.config.propertyTransitions).toEqual({
     opacity,
     radius: [],
@@ -1062,11 +1062,11 @@ test('adds multiple opacity blocks on one layer row and removes only the selecte
   expect(screen.getAllByRole('group', {name: 'Layer opacity: Points'})).toHaveLength(1);
   expect(screen.getByRole('button', {name: 'Opacity 1 · Points'})).toHaveTextContent('0% → 100%');
   expect(screen.getByRole('button', {name: 'Opacity 2 · Points'})).toHaveTextContent('100% → 0%');
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.config.propertyTransitions?.opacity).toHaveLength(1);
   expect(source.config.propertyTransitions!.opacity[0].id).toBe('opacity-1');
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.config.propertyTransitions?.opacity).toEqual([]);
   expect(source.config.isVisible).toBe(true);
   expect(screen.queryByRole('group', {name: 'Layer opacity: Points'})).toBeNull();
@@ -1346,11 +1346,11 @@ test('adds multiple annotation opacity blocks on one shared ruler and removes on
   expect(row.getByRole('button', {name: 'Opacity 2 · Harbor'})).toHaveTextContent('100% → 0%');
   expect(screen.getAllByRole('slider', {name: 'Animation playhead'})).toHaveLength(1);
   expect(screen.getByRole('group', {name: 'Layer opacity: Points'})).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.propertyTransitions?.opacity).toHaveLength(1);
   expect(source.propertyTransitions!.opacity[0].id).toBe('opacity-1');
   fireEvent.doubleClick(row.getByRole('button', {name: 'Opacity 1 · Harbor'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
   expect(source.propertyTransitions?.opacity).toEqual([]);
   expect(source.isVisible).toBe(true);
   expect(screen.queryByRole('group', {name: 'Annotation opacity: Harbor'})).toBeNull();

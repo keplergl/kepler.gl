@@ -27,7 +27,7 @@ import {
 } from '@kepler.gl/utils';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Button, Input, PanelLabel} from '../common/styled-components';
-import {Add, ArrowDownSmall, Close, Pause, Play, Reset, ZoomOut} from '../common/icons';
+import {Add, ArrowDownSmall, Close, Pause, Play, Reset, Trash, ZoomOut} from '../common/icons';
 import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
@@ -281,23 +281,47 @@ const SettingsPopup = styled(StyledPanelDropdown)`
   width: 288px;
   max-height: min(500px, calc(100vh - 80px));
   border: 1px solid ${props => props.theme.panelBorderColor};
+  color: ${props => props.theme.textColor};
+  font-size: ${props => props.theme.inputFontSize};
+  text-transform: none;
 `;
 const InspectorHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  background: ${props => props.theme.panelBackgroundHover};
   border-bottom: 1px solid ${props => props.theme.panelBorderColor};
+  font-weight: 500;
   span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 500;
+  }
+`;
+const InspectorHeaderActions = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+`;
+const InspectorIconButton = styled(Button).attrs({link: true})`
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  color: ${props => props.theme.panelHeaderIcon};
+  border: none;
+  &:hover,
+  &:focus-visible {
+    color: ${props => props.theme.panelHeaderIconHover};
+  }
+  & > svg {
+    margin: 0;
   }
 `;
 const InspectorBody = styled.div`
-  padding: 12px;
+  padding: 14px;
 `;
 const Fields = styled.div`
   display: grid;
@@ -307,15 +331,12 @@ const Fields = styled.div`
   ${Input} {
     width: 100%;
   }
-  ${PanelLabel} {
-    font-size: 10px;
-  }
 `;
 const InspectorActions = styled.div`
   display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  gap: 8px;
 `;
 const ToggleRow = styled.div`
   display: flex;
@@ -460,9 +481,19 @@ function PropertySettings({
         <span title={`${label} · ${property.label}`}>
           {label} · {property.label}
         </span>
-        <CameraTourActionButton type="button" aria-label="Close block settings" onClick={onClose}>
-          <Close height="12px" />
-        </CameraTourActionButton>
+        <InspectorHeaderActions>
+          <InspectorIconButton
+            type="button"
+            aria-label="Remove animation"
+            title="Remove animation"
+            onClick={onRemove}
+          >
+            <Trash height="16px" />
+          </InspectorIconButton>
+          <InspectorIconButton type="button" aria-label="Close block settings" onClick={onClose}>
+            <Close height="14px" />
+          </InspectorIconButton>
+        </InspectorHeaderActions>
       </InspectorHeader>
       <InspectorBody>
         <Fields>
@@ -544,9 +575,6 @@ function PropertySettings({
           </Alert>
         )}
         <InspectorActions>
-          <ToolbarButton type="button" onClick={onRemove}>
-            Remove action
-          </ToolbarButton>
           <Button
             type="button"
             secondary
