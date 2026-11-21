@@ -222,6 +222,7 @@ export default class IconLayer extends Layer {
   get animatableProps(): readonly LayerAnimatableProp[] {
     const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'color', label: 'Color', type: 'color'},
       {
         name: 'radius',
         label: 'Radius',
@@ -231,8 +232,9 @@ export default class IconLayer extends Layer {
     ];
     return props.filter(
       prop =>
-        prop.name !== 'radius' ||
-        (!this.config[this.visualChannels.size.field] && !this.config.visConfig.fixedRadius)
+        (prop.name !== 'color' || !this.config[this.visualChannels.color.field]) &&
+        (prop.name !== 'radius' ||
+          (!this.config[this.visualChannels.size.field] && !this.config.visConfig.fixedRadius))
     );
   }
 

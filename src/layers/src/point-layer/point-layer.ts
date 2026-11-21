@@ -395,6 +395,8 @@ export default class PointLayer extends Layer {
   get animatableProps(): readonly LayerAnimatableProp[] {
     const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
       {
         name: 'radius',
         label: 'Radius',
@@ -410,6 +412,9 @@ export default class PointLayer extends Layer {
     ];
     return props.filter(
       prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.outline && !this.config.strokeColorField)) &&
         (prop.name !== 'radius' || !this.config.sizeField) &&
         (prop.name !== 'thickness' || this.config.visConfig.outline)
     );

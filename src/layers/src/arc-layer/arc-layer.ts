@@ -234,8 +234,10 @@ export default class ArcLayer extends Layer {
   }
 
   get animatableProps(): readonly LayerAnimatableProp[] {
-    return [
+    const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'color', label: 'Source color', type: 'color'},
+      {name: 'targetColor', label: 'Target color', type: 'color'},
       {
         name: 'thickness',
         label: 'Stroke width',
@@ -243,6 +245,7 @@ export default class ArcLayer extends Layer {
         step: this.visConfigSettings.thickness.step
       }
     ];
+    return props.filter(prop => prop.type !== 'color' || !this.config.colorField);
   }
 
   get type() {

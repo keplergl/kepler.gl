@@ -8,13 +8,18 @@ import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
 import type {Layer} from '@kepler.gl/layers';
-import {DEFAULT_LAYER_ANIMATABLE_PROPS, getLayerOpacityTransitions} from '@kepler.gl/utils';
+import {
+  DEFAULT_LAYER_ANIMATABLE_PROPS,
+  getLayerOpacityTransitions,
+  rgbToHex
+} from '@kepler.gl/utils';
 import type {
   Annotation,
   CameraTour,
   LayerAnimatableProp,
   LayerOpacityTransition,
-  LayerPropertyTransition
+  LayerPropertyTransition,
+  RGBColor
 } from '@kepler.gl/types';
 import AnimationEditorFactory, {
   AnimationEditorPlayback,
@@ -57,7 +62,13 @@ function layer(
   return {
     id: 'points',
     animatableProps: DEFAULT_LAYER_ANIMATABLE_PROPS,
-    config: {label: 'Points', isVisible: true, opacityTransitions, visibilityTiming}
+    config: {
+      label: 'Points',
+      color: [10, 20, 30],
+      isVisible: true,
+      opacityTransitions,
+      visibilityTiming
+    }
   } as Layer;
 }
 function Wrapper({children}: {children: React.ReactNode}) {
@@ -309,6 +320,7 @@ const strokeProperty: LayerAnimatableProp = {
   range: [0, 10],
   step: 0.1
 };
+const colorProperty: LayerAnimatableProp = {name: 'color', label: 'Color', type: 'color'};
 function propertyLayer(
   properties: LayerAnimatableProp[] = [radiusProperty],
   propertyTransitions?: Record<string, LayerPropertyTransition[]>
@@ -406,6 +418,179 @@ test('choosing a native layer property creates its block and opens range-aware s
   });
   expect(screen.getByRole('button', {name: 'Radius 1 · Points'})).toHaveTextContent('6.5 → 24.5');
   expect(source.config.visConfig.radius).toBe(12);
+});
+
+test('a legacy numeric property named color keeps its authored visConfig value', () => {
+  const source = propertyLayer([{name: 'color', label: 'Color scale', range: [0, 100], step: 1}]);
+  source.config.visConfig.color = 23;
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    Object.assign(source.config, config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Color scale'}));
+  expect(source.config.propertyTransitions?.color).toEqual([
+    {
+      id: 'color-1',
+      startTimeMs: 5000,
+      endTimeMs: 7000,
+      startValue: 23,
+      endValue: 23,
+      easing: 'easeInOut'
+    }
+  ]);
+  expect(screen.getByRole('spinbutton', {name: 'Start color scale'})).toHaveValue(23);
+  expect(screen.queryByRole('button', {name: 'Start color'})).toBeNull();
+  expect(source.config.color).toEqual([10, 20, 30]);
+});
+
+function pickEndpointColor(label: string, index: number): RGBColor {
+  fireEvent.click(screen.getByRole('button', {name: label}));
+  const dialog = screen.getByRole('dialog', {name: label});
+  const swatch = dialog.querySelectorAll<HTMLElement>('.single-color-palette__block')[index];
+  const channels = swatch.style.backgroundColor.match(/\d+/g)!.map(Number);
+  const color: RGBColor = [channels[0], channels[1], channels[2]];
+  fireEvent.click(swatch);
+  fireEvent.keyDown(dialog, {key: 'Escape', code: 'Escape', keyCode: 27});
+  expect(screen.queryByRole('dialog', {name: label})).toBeNull();
+  expect(screen.getByRole('dialog', {name: 'Block settings'})).toBeInTheDocument();
+  return color;
+}
+
+test('layer color blocks use authored colors and edit both endpoints through the existing pickers', () => {
+  const radius = [{...opacityTransitions()[0], startValue: 12, endValue: 24}];
+  const source = propertyLayer([radiusProperty, colorProperty], {radius});
+  const annotationSource = annotation(opacityTransitions());
+  const {props, rerender} = setup({layers: [source], annotations: [annotationSource]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    Object.assign(source.config, config);
+    rerender(<Editor {...props} />);
+  });
+  const addColor = () => {
+    fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Color'}));
+  };
+  addColor();
+  const initial = source.config.propertyTransitions!.color[0];
+  expect(initial).toEqual({
+    id: 'color-1',
+    startTimeMs: 5000,
+    endTimeMs: 7000,
+    startValue: [10, 20, 30],
+    endValue: [10, 20, 30],
+    easing: 'easeInOut'
+  });
+  expect(initial.startValue).not.toBe(source.config.color);
+  expect(initial.endValue).not.toBe(initial.startValue);
+  const startColor = pickEndpointColor('Start color', 0);
+  const endColor = pickEndpointColor('End color', 5);
+  expect(source.config.propertyTransitions!.color[0]).toEqual(initial);
+  fireEvent.click(screen.getByRole('checkbox', {name: 'Linear easing'}));
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'End time (seconds)'}), {
+    target: {value: '8'}
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  const first = source.config.propertyTransitions!.color[0];
+  expect(first).toEqual({
+    ...initial,
+    endTimeMs: 8000,
+    startValue: startColor,
+    endValue: endColor,
+    easing: 'linear'
+  });
+  expect(screen.getByRole('button', {name: 'Color 1 · Points'})).toHaveTextContent(
+    `${rgbToHex(startColor)} → ${rgbToHex(endColor)}`
+  );
+  expect(source.config.propertyTransitions!.radius).toEqual(radius);
+  expect(source.config.color).toEqual([10, 20, 30]);
+  expect(props.onAnnotationChange).not.toHaveBeenCalled();
+  expect(annotationSource.opacityTransitions).toEqual(opacityTransitions());
+
+  addColor();
+  const second = source.config.propertyTransitions!.color[1];
+  expect(second).toEqual({
+    id: 'color-2',
+    startTimeMs: 8000,
+    endTimeMs: 10000,
+    startValue: endColor,
+    endValue: endColor,
+    easing: 'easeInOut'
+  });
+  expect(second.startValue).not.toBe(first.endValue);
+  expect(second.endValue).not.toBe(second.startValue);
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
+    target: {value: '9'}
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  expect(source.config.propertyTransitions!.color[1]).toEqual({...second, startTimeMs: 9000});
+  expect(screen.getAllByRole('group', {name: 'Layer color: Points'})).toHaveLength(1);
+  fireEvent.doubleClick(screen.getByRole('button', {name: 'Color 2 · Points'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove action'}));
+  expect(source.config.propertyTransitions).toEqual({radius, color: [first]});
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Harbor'}));
+  expect(screen.queryByRole('menuitem', {name: 'Color'})).toBeNull();
+  expect(screen.getByRole('menuitem', {name: 'Opacity'})).toBeInTheDocument();
+});
+
+test.each<[string, RGBColor | null, RGBColor]>([
+  ['strokeColor', null, [10, 20, 30]],
+  ['targetColor', [40, 50, 60], [40, 50, 60]]
+])(
+  'new %s color blocks initialize from their authored visual value or base color',
+  (name, value, expected) => {
+    const property: LayerAnimatableProp = {name, label: 'Secondary color', type: 'color'};
+    const source = propertyLayer([property]);
+    source.config.visConfig[property.name] = value;
+    const {props} = setup({layers: [source]});
+    fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Secondary color'}));
+    expect(props.onLayerConfigChange).toHaveBeenCalledWith(source, {
+      propertyTransitions: {
+        [property.name]: [
+          {
+            id: `${property.name}-1`,
+            startTimeMs: 5000,
+            endTimeMs: 7000,
+            startValue: expected,
+            endValue: expected,
+            easing: 'easeInOut'
+          }
+        ]
+      },
+      opacityTransitions: undefined,
+      visibilityTiming: undefined
+    });
+  }
+);
+
+test('color blocks reject overlap and preserve endpoint arrays when their timing is dragged', () => {
+  const color: LayerPropertyTransition[] = opacityTransitions().map(transition => ({
+    ...transition,
+    startValue: [10, 20, 30],
+    endValue: [40, 50, 60]
+  }));
+  const source = propertyLayer([colorProperty], {color});
+  const {props} = setup({layers: [source]});
+  fireEvent.doubleClick(screen.getByRole('button', {name: 'Color 1 · Points'}));
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'End time (seconds)'}), {
+    target: {value: '11'}
+  });
+  expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+  expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
+  drag(screen.getByRole('button', {name: 'Color 1 · Points'}), 80, 300);
+  expect(props.onLayerConfigChange).toHaveBeenLastCalledWith(source, {
+    propertyTransitions: {color: [{...color[0], startTimeMs: 8000, endTimeMs: 10000}, color[1]]},
+    opacityTransitions: undefined,
+    visibilityTiming: undefined
+  });
+  expect(color[0].startTimeMs).toBe(3000);
+  expect(color[0].startValue).toEqual([10, 20, 30]);
 });
 
 test('effect selection is separate from choosing a parameter and preserves existing animation', () => {

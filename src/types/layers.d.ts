@@ -21,16 +21,24 @@ export type LayerOpacityTransition = {
   easing: 'linear' | 'easeInOut';
 };
 
-/** Numeric visual properties that a layer allows the animation player to override. */
-export type LayerAnimatableProp = {
-  name: string;
-  label: string;
-  range: [number, number];
-  step: number;
-};
+/** Visual properties that a layer allows the animation player to override. */
+export type LayerAnimatableProp =
+  | {
+      name: string;
+      label: string;
+      type?: 'number';
+      range: [number, number];
+      step: number;
+    }
+  | {name: string; label: string; type: 'color'};
 
 /** Endpoint values are validated against the property's supported range at playback time. */
-export type LayerPropertyTransition = LayerOpacityTransition;
+export type LayerPropertyTransition =
+  | LayerOpacityTransition
+  | (Omit<LayerOpacityTransition, 'startValue' | 'endValue'> & {
+      startValue: RGBColor;
+      endValue: RGBColor;
+    });
 
 export type LayerBaseConfig = {
   dataId: string;

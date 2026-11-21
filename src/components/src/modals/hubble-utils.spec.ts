@@ -932,17 +932,48 @@ describe('flat export zoom fading', () => {
     expect(source.props.opacity).toBe(0.8);
   });
 
-  test('declared native property values match live and export frames alongside opacity transitions', () => {
+  test('native numeric and color values match live and export frames alongside opacity transitions', () => {
     const {source, state} = setup();
     const layer = state.visState.layers[0];
     layer.animatableProps = [
       {name: 'opacity', label: 'Opacity', range: [0, 1], step: 0.01},
-      {name: 'radius', label: 'Radius', range: [0, 100], step: 0.1}
+      {name: 'radius', label: 'Radius', range: [0, 100], step: 0.1},
+      {name: 'color', label: 'Color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'}
     ];
-    layer.config.visConfig = {radius: 9, opacity: 0.8};
+    layer.config.color = [10, 20, 30];
+    layer.config.visConfig = {radius: 9, opacity: 0.8, strokeColor: [40, 50, 60]};
     layer.config.propertyTransitions = {
       opacity: [
         {id: 'dim', startTimeMs: 0, endTimeMs: 2000, startValue: 1, endValue: 0.5, easing: 'linear'}
+      ],
+      color: [
+        {
+          id: 'warm-to-cool',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: [200, 0, 0],
+          endValue: [0, 100, 200],
+          easing: 'linear'
+        },
+        {
+          id: 'cool-to-green',
+          startTimeMs: 8000,
+          endTimeMs: 10000,
+          startValue: [0, 100, 200],
+          endValue: [40, 80, 0],
+          easing: 'linear'
+        }
+      ],
+      strokeColor: [
+        {
+          id: 'stroke',
+          startTimeMs: 0,
+          endTimeMs: 2000,
+          startValue: [0, 0, 0],
+          endValue: [100, 120, 140],
+          easing: 'linear'
+        }
       ],
       radius: [
         {
@@ -964,13 +995,26 @@ describe('flat export zoom fading', () => {
       ]
     };
     layer.renderLayer = function () {
-      return [source.clone({radiusScale: this.config.visConfig.radius})];
+      return [
+        source.clone({
+          radiusScale: this.config.visConfig.radius,
+          getFillColor: this.config.color,
+          getLineColor: this.config.visConfig.strokeColor
+        })
+      ];
     };
     const saved = JSON.stringify(layer.config);
     const viewState = {...state.mapState, zoom: 3};
     const times = [0, 2000, 5000, 9000, 12000];
     const expectedRadius = [2, 4, 6, 5, 4];
     const expectedOpacity = [0.4, 0.2, 0.2, 0.2, 0.2];
+    const expectedColors = [
+      [200, 0, 0],
+      [100, 50, 100],
+      [0, 100, 200],
+      [20, 90, 100],
+      [40, 80, 0]
+    ];
     times.forEach((animationTimeMs, index) => {
       const [live] = realComputeDeckLayers(
         {...state, mapState: viewState, animationTimeMs},
@@ -981,8 +1025,21 @@ describe('flat export zoom fading', () => {
       expect(exported.props.radiusScale).toBe(live.props.radiusScale);
       expect(exported.props.opacity).toBeCloseTo(expectedOpacity[index]);
       expect(exported.props.opacity).toBe(live.props.opacity);
+      expect(exported.props.getFillColor).toEqual(expectedColors[index]);
+      expect(exported.props.getFillColor).toEqual(live.props.getFillColor);
+      expect(exported.props.getLineColor).toEqual(index === 0 ? [0, 0, 0] : [100, 120, 140]);
+      expect(exported.props.getLineColor).toEqual(live.props.getLineColor);
+      const globe = getGlobeExportLayers(state, {mapIndex: 0, viewState, animationTimeMs})
+        .flat(Infinity)
+        .find(deckLayer => deckLayer.id === live.id);
+      expect(globe).toBeDefined();
+      expect(globe.props.getFillColor).toEqual(live.props.getFillColor);
+      expect(globe.props.getLineColor).toEqual(live.props.getLineColor);
     });
-    expect(getFlatExportLayers(state, {mapIndex: 0})[0].props.radiusScale).toBe(9);
+    const [staticLayer] = getFlatExportLayers(state, {mapIndex: 0});
+    expect(staticLayer.props.radiusScale).toBe(9);
+    expect(staticLayer.props.getFillColor).toEqual([10, 20, 30]);
+    expect(staticLayer.props.getLineColor).toEqual([40, 50, 60]);
     expect(JSON.stringify(layer.config)).toBe(saved);
   });
 

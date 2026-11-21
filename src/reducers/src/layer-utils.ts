@@ -3,12 +3,13 @@
 
 import Console from 'global/console';
 
-import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {Layer as DeckLayer} from '@deck.gl/core';
 type DeckLayerProps = any;
 import {
   Field,
   LayerVisConfig,
+  VisualChannel,
   TooltipField,
   CompareType,
   SplitMapLayers,
@@ -41,7 +42,7 @@ import {
   DataRow,
   isPlainObject,
   getLayerAnimationOpacityFactor,
-  getLayerAnimatedVisConfig
+  getLayerAnimatedConfig
 } from '@kepler.gl/utils';
 import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
 import {getLayerZoomOpacityFactor} from './interaction-utils';
@@ -371,16 +372,17 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
-    const animatedVisConfig = getLayerAnimatedVisConfig(layer, animationTimeMs);
+    const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
     // Isolate frame values while keeping renderer caches and asynchronous redraw
     // callbacks attached to the authored layer. Never swap its saved config.
-    const renderLayer = Object.keys(animatedVisConfig).length
+    const renderLayer = Object.keys(animatedConfig).length
       ? new Proxy(
           Object.create(layer, {
             config: {
               value: {
                 ...layer.config,
-                visConfig: {...layer.config.visConfig, ...animatedVisConfig}
+                ...animatedConfig,
+                visConfig: {...layer.config.visConfig, ...animatedConfig.visConfig}
               },
               writable: true,
               configurable: true,
@@ -394,9 +396,31 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
           }
         )
       : layer;
+    let frameData = data;
+    if (
+      isPlainObject(data) &&
+      (animatedConfig.color || Object.values(animatedConfig.visConfig ?? {}).some(Array.isArray))
+    ) {
+      // Static colors are cached by formatLayerData. Refresh only their accessors
+      // against this frame, retaining field scales, geometry and feature styling.
+      const accessors: Record<string, unknown> = {};
+      for (const channel of Object.values(renderLayer.visualChannels ?? {}) as VisualChannel[]) {
+        const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
+        if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderLayer.config[field]) {
+          continue;
+        }
+        accessors[accessor] =
+          typeof getAttributeValue === 'function'
+            ? getAttributeValue(renderLayer.config)
+            : typeof defaultValue === 'function'
+            ? defaultValue(renderLayer.config)
+            : defaultValue;
+      }
+      if (Object.keys(accessors).length) frameData = {...data, ...accessors};
+    }
     // Layer is Layer class
     const rendered = renderLayer.renderLayer({
-      data,
+      data: frameData,
       gpuFilter,
       idx: layerIndex,
       interactionConfig,

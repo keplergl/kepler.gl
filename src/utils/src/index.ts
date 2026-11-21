@@ -19,6 +19,7 @@ export {
   getLayerAnimationTracks,
   getLayerAnimationDuration,
   getLayerAnimationOpacityFactor,
+  getLayerAnimatedConfig,
   getLayerAnimatedVisConfig
 } from './layer-visibility';
 

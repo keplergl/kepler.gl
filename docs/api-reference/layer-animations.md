@@ -1,6 +1,6 @@
 # Layer animations
 
-The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer reads from `config.visConfig`.
+The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric and RGB color properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer supports.
 
 ```ts
 import type {LayerAnimatableProp} from '@kepler.gl/types';
@@ -8,12 +8,13 @@ import type {LayerAnimatableProp} from '@kepler.gl/types';
 get animatableProps(): readonly LayerAnimatableProp[] {
   return [
     ...super.animatableProps,
-    {name: 'radius', label: 'Radius', range: [0, 100], step: 0.1}
+    {name: 'radius', label: 'Radius', range: [0, 100], step: 0.1},
+    {name: 'color', label: 'Fill color', type: 'color'}
   ];
 }
 ```
 
-Only expose a property when the current renderer supports it. For example, a layer may omit a fixed radius when a data field controls point size. The editor uses each descriptor's label, range, and step for its controls.
+Only expose a property when the current renderer supports it. For example, a layer may omit a fixed radius or color when a data field controls that channel. Numeric descriptors retain their range and step; color descriptors use `type: 'color'` and show start/end color pickers. A color descriptor named `color` targets `config.color`; other supported properties target `config.visConfig`.
 
 ## Saved transitions
 
@@ -37,12 +38,15 @@ Store blocks in `layer.config.propertyTransitions`, keyed by property name:
 ```
 
 - Times are nonnegative milliseconds from animation start. The editor displays seconds.
-- Values must be finite and within the property's declared range. Easing supports `linear` and `easeInOut`.
+- Numeric values must be finite and within the property's declared range. Color values are RGB triples such as `[255, 128, 0]`, with finite channels from 0 to 255. Both endpoints and every block on a property must use the same value type. Easing supports `linear` and `easeInOut`.
 - Each property supports multiple blocks with unique IDs. Blocks on the same property cannot overlap; different properties can animate concurrently.
 - Playback holds the first start value before the first block, interpolates during a block, and holds its end value until the next block and after the final block. Equal start and end times create an instantaneous change.
 - Numeric properties use native `visConfig` units. Opacity uses a multiplier from 0 to 1, combined with configured opacity and fade-on-zoom.
+- Color channels interpolate independently in RGB using the selected easing. Alpha stays controlled by opacity. Existing data-field colors and GeoJSON feature colors retain precedence over fixed-color animation.
 
-Playback applies temporary render values without changing authored `visConfig`. Unsupported saved properties remain preserved but inactive. Removing a property from `animatableProps` also makes its track inactive.
+Playback applies temporary render values without changing authored colors or `visConfig`. Unsupported saved properties remain preserved but inactive. Removing a property from `animatableProps` also makes its track inactive. Existing numeric transitions require no migration.
+
+For custom rendering, `getLayerAnimatedConfig(layer, timeMs)` from `@kepler.gl/utils` returns the frame's `{color?, visConfig?}` overrides. `getLayerAnimatedVisConfig` returns only the `visConfig` portion. Both return empty objects outside playback; opacity remains available separately through `getLayerAnimationOpacityFactor`.
 
 ## Compatibility
 

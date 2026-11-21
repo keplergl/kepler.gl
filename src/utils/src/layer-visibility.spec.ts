@@ -16,9 +16,15 @@ import {
   getLayerAnimationTracks,
   getLayerAnimationDuration,
   getLayerAnimationOpacityFactor,
+  getLayerAnimatedConfig,
   getLayerAnimatedVisConfig
 } from './layer-visibility';
-import type {LayerAnimatableProp, LayerOpacityTransition} from '@kepler.gl/types';
+import type {
+  LayerAnimatableProp,
+  LayerOpacityTransition,
+  LayerPropertyTransition,
+  RGBColor
+} from '@kepler.gl/types';
 
 const timing = {startTimeMs: 3000, endTimeMs: 10000, fadeInMs: 2000, fadeOutMs: 2000};
 
@@ -551,5 +557,176 @@ describe('numeric layer property transitions', () => {
       ]
     };
     expect(getLayerAnimatedVisConfig(extreme, 3000)).toEqual({elevationScale: 0});
+  });
+});
+
+describe('layer color property transitions', () => {
+  type ColorTransition = Extract<LayerPropertyTransition, {startValue: RGBColor}>;
+  const colorTransition = (overrides: Partial<ColorTransition> = {}): ColorTransition => ({
+    ...transition(),
+    startValue: [0, 20, 40],
+    endValue: [100, 120, 200],
+    ...overrides
+  });
+  const color: LayerAnimatableProp = {name: 'color', label: 'Color', type: 'color'};
+  const stroke: LayerAnimatableProp = {name: 'strokeColor', label: 'Stroke color', type: 'color'};
+  const radius: LayerAnimatableProp = {name: 'radius', label: 'Radius', range: [0, 100], step: 1};
+  const layer = {
+    config: {
+      isVisible: true,
+      propertyTransitions: {
+        color: [
+          colorTransition(),
+          colorTransition({
+            id: 'later',
+            startTimeMs: 6000,
+            endTimeMs: 10000,
+            startValue: [100, 120, 200],
+            endValue: [20, 40, 0],
+            easing: 'easeInOut'
+          }),
+          colorTransition({
+            id: 'cut',
+            startTimeMs: 10000,
+            endTimeMs: 10000,
+            startValue: [20, 40, 0],
+            endValue: [255, 255, 255]
+          })
+        ],
+        strokeColor: [colorTransition()],
+        radius: [transition({startValue: 10, endValue: 30})],
+        opacity: [transition()]
+      }
+    },
+    animatableProps: [...DEFAULT_LAYER_ANIMATABLE_PROPS, color, stroke, radius]
+  };
+
+  test('deep-clones color endpoints, sorts blocks and preserves existing numeric configs', () => {
+    const source = {
+      ...layer.config.propertyTransitions,
+      color: [...layer.config.propertyTransitions.color].reverse()
+    };
+    const normalized = normalizeLayerPropertyTransitions(source)!;
+    expect(normalized.color.map(block => block.id)).toEqual(['in', 'later', 'cut']);
+    expect(normalized.color[0].startValue).not.toBe(source.color[2].startValue);
+    expect(normalized.color[0].endValue).not.toBe(source.color[2].endValue);
+    expect(normalized.radius).toEqual(source.radius);
+    expect(source.color.map(block => block.id)).toEqual(['cut', 'later', 'in']);
+    expect(normalizeLayerPropertyTransitions({futureColor: [colorTransition()]})).toEqual({
+      futureColor: [colorTransition()]
+    });
+  });
+
+  test.each([
+    {startValue: 1},
+    {endValue: 1},
+    {startValue: []},
+    {startValue: [0, 10]},
+    {endValue: [0, 10, 20, 30]},
+    {startValue: [0, -1, 20]},
+    {endValue: [0, 10, 256]},
+    {startValue: [0, NaN, 20]},
+    {endValue: [0, Infinity, 20]},
+    {startValue: ['0', 10, 20]},
+    {endValue: new Array(3)}
+  ])('rejects malformed RGB or mixed endpoint types: %p', overrides => {
+    expect(
+      normalizeLayerPropertyTransitions({color: [{...colorTransition(), ...overrides}]})
+    ).toBeUndefined();
+  });
+
+  test('rejects changing endpoint kinds within one track, but supports concurrent property kinds', () => {
+    expect(
+      normalizeLayerPropertyTransitions({
+        color: [colorTransition(), transition({id: 'numeric', startTimeMs: 6000, endTimeMs: 8000})]
+      })
+    ).toBeUndefined();
+    expect(normalizeLayerPropertyTransitions(layer.config.propertyTransitions)).toEqual(
+      layer.config.propertyTransitions
+    );
+  });
+
+  test.each([
+    [0, [0, 20, 40]],
+    [2000, [0, 20, 40]],
+    [3000, [50, 70, 120]],
+    [4000, [100, 120, 200]],
+    [5000, [100, 120, 200]],
+    [6000, [100, 120, 200]],
+    [7000, [87.5, 107.5, 168.75]],
+    [8000, [60, 80, 100]],
+    [10000, [255, 255, 255]],
+    [20000, [255, 255, 255]]
+  ])('interpolates channels and holds boundaries, gaps and cuts at %i ms', (timeMs, expected) => {
+    expect(getLayerAnimatedConfig(layer, timeMs).color).toEqual(expected);
+  });
+
+  test('routes base color separately while mixing numeric and color visConfig values', () => {
+    expect(getLayerAnimatedConfig(layer, 3000)).toEqual({
+      color: [50, 70, 120],
+      visConfig: {strokeColor: [50, 70, 120], radius: 20}
+    });
+    expect(getLayerAnimatedVisConfig(layer, 3000)).toEqual({
+      strokeColor: [50, 70, 120],
+      radius: 20
+    });
+    expect(getLayerAnimationOpacityFactor(layer, 3000)).toBe(0.5);
+    expect(getLayerAnimationDuration([layer])).toBe(10000);
+  });
+
+  test('preserves numeric custom properties named color in visConfig', () => {
+    const numericLayer = {
+      config: {
+        isVisible: true,
+        propertyTransitions: {color: [transition({startValue: 10, endValue: 30})]}
+      },
+      animatableProps: [{...radius, name: 'color'}]
+    };
+    expect(getLayerAnimatedConfig(numericLayer, 3000)).toEqual({visConfig: {color: 20}});
+    expect(getLayerAnimatedVisConfig(numericLayer, 3000)).toEqual({color: 20});
+    expect(getLayerAnimatedConfig({...layer, animatableProps: [color]}, 3000)).toEqual({
+      color: [50, 70, 120]
+    });
+  });
+
+  test('ignores unsupported colors and rejects tracks that do not match property metadata', () => {
+    expect(getLayerAnimatedConfig({...layer, animatableProps: [radius]}, 3000)).toEqual({
+      visConfig: {radius: 20}
+    });
+    expect(getLayerAnimationDuration([{...layer, animatableProps: [radius]}])).toBe(4000);
+    const config = {
+      isVisible: true,
+      propertyTransitions: {
+        color: [transition()],
+        radius: [colorTransition()],
+        opacity: [colorTransition()]
+      }
+    };
+    expect(getLayerAnimationTracks({...layer, config})).toEqual([]);
+    expect(getLayerOpacityFactor(config, 3000)).toBe(1);
+    expect(getLayerOpacityTransitions(config)).toEqual([]);
+    expect(normalizeLayerOpacityTransitions([colorTransition()])).toBeUndefined();
+    expect(
+      getLayerPropertyTransitions(layer.config, 'opacity', {...color, name: 'opacity'})
+    ).toEqual([]);
+    expect(
+      getLayerAnimatedConfig(
+        {...layer, config: {isVisible: true, propertyTransitions: {color: []}}},
+        3000
+      )
+    ).toEqual({});
+  });
+
+  test('seeking and editing evaluated colors never mutate the saved track or static config', () => {
+    const original = JSON.parse(JSON.stringify(layer.config));
+    getLayerAnimatedConfig(layer, 7000).color![0] = 1;
+    getLayerAnimatedConfig(layer, 0).color![0] = 2;
+    (getLayerAnimatedVisConfig(layer, 20000).strokeColor as RGBColor)[0] = 3;
+    expect(getLayerAnimatedConfig(layer, 3000).color).toEqual([50, 70, 120]);
+    expect(layer.config).toEqual(original);
+    for (const time of [undefined, null, NaN, Infinity]) {
+      expect(getLayerAnimatedConfig(layer, time)).toEqual({});
+      expect(getLayerAnimatedVisConfig(layer, time)).toEqual({});
+    }
   });
 });

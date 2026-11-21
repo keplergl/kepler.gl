@@ -10,7 +10,11 @@ import {ThemeProvider} from 'styled-components';
 import {createEffect} from '@kepler.gl/effects';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
-import {getLayerAnimatedVisConfig, getLayerOpacityFactor} from '@kepler.gl/utils';
+import {
+  getLayerAnimatedConfig,
+  getLayerAnimatedVisConfig,
+  getLayerOpacityFactor
+} from '@kepler.gl/utils';
 import type {Annotation, Effect} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import CameraTourPlaybackProvider, {
@@ -133,6 +137,14 @@ function setup(
             layers.map(layer => getLayerAnimatedVisConfig(layer, playback?.animationTimeMs))
           )}
         </output>
+        <output aria-label="Rendered layer colors">
+          {JSON.stringify(
+            layers.map(
+              layer =>
+                getLayerAnimatedConfig(layer, playback?.animationTimeMs).color ?? layer.config.color
+            )
+          )}
+        </output>
       </>
     );
   }
@@ -199,6 +211,8 @@ function setup(
       JSON.parse(screen.getByLabelText('Rendered annotation opacity').textContent || '[]'),
     layerProperties: () =>
       JSON.parse(screen.getByLabelText('Rendered layer properties').textContent || '[]'),
+    layerColors: () =>
+      JSON.parse(screen.getByLabelText('Rendered layer colors').textContent || '[]'),
     setEnabled: (active: boolean) => {
       enabled = active;
       view.rerender(tree());
@@ -323,6 +337,66 @@ describe('annotation opacity playback', () => {
 });
 
 describe('declared layer property playback', () => {
+  test('color-only tracks drive playback, hold gaps, and restore authored colors', () => {
+    const layer = {
+      id: 'color-layer',
+      animatableProps: [{name: 'color', label: 'Color', type: 'color'}],
+      config: {
+        isVisible: true,
+        color: [25, 50, 75],
+        propertyTransitions: {
+          color: [
+            {
+              id: 'first',
+              startTimeMs: 1000,
+              endTimeMs: 3000,
+              startValue: [200, 0, 20],
+              endValue: [0, 100, 220],
+              easing: 'linear'
+            },
+            {
+              id: 'second',
+              startTimeMs: 6000,
+              endTimeMs: 8000,
+              startValue: [0, 100, 220],
+              endValue: [40, 80, 0],
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    } as unknown as Layer;
+    const saved = JSON.stringify(layer.config);
+    const view = setup([], true, {layers: [layer], managerOpen: false});
+    expect(view.playback().duration).toBe(8000);
+    expect(view.layerColors()).toEqual([[25, 50, 75]]);
+    act(() => view.playback().run());
+    expect(view.layerColors()).toEqual([[200, 0, 20]]);
+    advanceFrame(2000);
+    expect(view.layerColors()).toEqual([[100, 50, 120]]);
+    const equivalent = JSON.parse(JSON.stringify(layer)) as Layer;
+    view.replaceLayers([equivalent]);
+    expect(view.playback().running).toBe(true);
+    const edited = JSON.parse(JSON.stringify(layer)) as Layer;
+    edited.config.propertyTransitions!.color[0].endValue = [100, 100, 220];
+    view.replaceLayers([edited]);
+    expect(view.playback().running).toBe(false);
+    expect(view.playback().elapsed).toBe(2000);
+    expect(view.layerColors()).toEqual([[150, 50, 120]]);
+    act(() => view.playback().seek(4500));
+    expect(view.layerColors()).toEqual([[100, 100, 220]]);
+    act(() => view.playback().seek(7000));
+    expect(view.layerColors()).toEqual([[20, 90, 110]]);
+    act(() => view.playback().seek(8000));
+    expect(view.layerColors()).toEqual([[40, 80, 0]]);
+    act(() => view.playback().seek(0));
+    expect(view.layerColors()).toEqual([[200, 0, 20]]);
+    act(() => view.playback().stop());
+    expect(view.layerColors()).toEqual([[25, 50, 75]]);
+    expect(JSON.stringify(layer.config)).toBe(saved);
+    expect(view.updateMap).not.toHaveBeenCalled();
+  });
+
   const propertyLayer = () =>
     ({
       id: 'sized',

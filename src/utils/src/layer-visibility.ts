@@ -5,7 +5,8 @@ import type {
   LayerAnimatableProp,
   LayerOpacityTransition,
   LayerPropertyTransition,
-  LayerVisibilityTiming
+  LayerVisibilityTiming,
+  RGBColor
 } from '@kepler.gl/types';
 
 type LayerOpacityConfig = {
@@ -19,12 +20,23 @@ type AnimatableLayer = {
   animatableProps?: readonly LayerAnimatableProp[];
 };
 
-export const DEFAULT_LAYER_ANIMATABLE_PROPS: readonly LayerAnimatableProp[] = [
-  {name: 'opacity', label: 'Opacity', range: [0, 1], step: 0.01}
-];
+export const DEFAULT_LAYER_ANIMATABLE_PROPS: readonly Extract<
+  LayerAnimatableProp,
+  {type?: 'number'}
+>[] = [{name: 'opacity', label: 'Opacity', range: [0, 1], step: 0.01}];
 
 const isSafePropertyName = (name: string): boolean =>
   name.trim().length > 0 && !['__proto__', 'constructor', 'prototype'].includes(name);
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isRGBColor = (value: unknown): value is RGBColor =>
+  Array.isArray(value) &&
+  value.length === 3 &&
+  [value[0], value[1], value[2]].every(
+    channel => isFiniteNumber(channel) && channel >= 0 && channel <= 255
+  );
 
 /** Invalid schedules are ignored rather than making an imported layer disappear. */
 export function normalizeLayerVisibilityTiming(value: unknown): LayerVisibilityTiming | undefined {
@@ -89,15 +101,20 @@ export function getLayerVisibilityDuration(
 /** Validate one ordered, non-overlapping track without changing its saved input. */
 function normalizeTransitions(
   value: unknown,
-  range?: readonly [number, number]
+  range?: readonly [number, number],
+  type?: 'number' | 'color'
 ): LayerPropertyTransition[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const ids = new Set<string>();
   const transitions: LayerPropertyTransition[] = [];
+  let trackType = type;
   for (const candidate of value) {
     if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return undefined;
     const {id, startTimeMs, endTimeMs, startValue, endValue} = candidate;
     const easing = candidate.easing === undefined ? 'easeInOut' : candidate.easing;
+    const numeric = isFiniteNumber(startValue) && isFiniteNumber(endValue);
+    const color = isRGBColor(startValue) && isRGBColor(endValue);
+    const valueType = numeric ? 'number' : color ? 'color' : undefined;
     if (
       typeof id !== 'string' ||
       id.trim().length === 0 ||
@@ -106,18 +123,21 @@ function normalizeTransitions(
         time => typeof time === 'number' && Number.isFinite(time) && time >= 0
       ) ||
       endTimeMs < startTimeMs ||
-      ![startValue, endValue].every(
-        endpoint =>
-          typeof endpoint === 'number' &&
-          Number.isFinite(endpoint) &&
-          (!range || (endpoint >= range[0] && endpoint <= range[1]))
-      ) ||
+      !valueType ||
+      (trackType !== undefined && trackType !== valueType) ||
+      (numeric &&
+        range &&
+        ![startValue, endValue].every(endpoint => endpoint >= range[0] && endpoint <= range[1])) ||
       (easing !== 'linear' && easing !== 'easeInOut')
     ) {
       return undefined;
     }
+    trackType = valueType;
     ids.add(id);
-    transitions.push({id, startTimeMs, endTimeMs, startValue, endValue, easing});
+    const endpoints = color
+      ? {startValue: [...startValue] as RGBColor, endValue: [...endValue] as RGBColor}
+      : {startValue: startValue as number, endValue: endValue as number};
+    transitions.push({id, startTimeMs, endTimeMs, ...endpoints, easing});
   }
   // Cuts at an interval's start come first; equal-time cuts retain their authored order.
   transitions.sort((a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs);
@@ -134,7 +154,7 @@ function normalizeTransitions(
 export function normalizeLayerOpacityTransitions(
   value: unknown
 ): LayerOpacityTransition[] | undefined {
-  return normalizeTransitions(value, [0, 1]);
+  return normalizeTransitions(value, [0, 1], 'number') as LayerOpacityTransition[] | undefined;
 }
 
 /** Preserve unknown properties for forward compatibility, but never unsafe object keys. */
@@ -190,7 +210,10 @@ export function getLayerPropertyTransitions(
   definition?: LayerAnimatableProp
 ): LayerPropertyTransition[] {
   if (!isSafePropertyName(name)) return [];
-  let range: readonly [number, number] | undefined = definition?.range;
+  if (name === 'opacity' && definition?.type === 'color') return [];
+  let range: readonly [number, number] | undefined =
+    definition?.type === 'color' ? undefined : definition?.range;
+  const type = name === 'opacity' ? 'number' : definition ? definition.type ?? 'number' : undefined;
   if (
     range &&
     (!Array.isArray(range) ||
@@ -205,18 +228,21 @@ export function getLayerPropertyTransitions(
   }
   const tracks = config.propertyTransitions;
   if (tracks && typeof tracks === 'object' && Object.prototype.hasOwnProperty.call(tracks, name)) {
-    return normalizeTransitions(tracks[name], range) ?? [];
+    return normalizeTransitions(tracks[name], range, type) ?? [];
   }
   const legacy = name === 'opacity' ? getLegacyOpacityTransitions(config) : [];
-  return normalizeTransitions(legacy, range) ?? [];
+  return normalizeTransitions(legacy, range, type) ?? [];
 }
 
 export function getLayerOpacityTransitions(config: LayerOpacityConfig): LayerOpacityTransition[] {
-  return getLayerPropertyTransitions(config, 'opacity');
+  return getLayerPropertyTransitions(config, 'opacity') as LayerOpacityTransition[];
 }
 
 /** Evaluate elapsed time independently of playback order, holding values between transitions. */
-function evaluateTransitions(transitions: LayerPropertyTransition[], timeMs: number): number {
+function evaluateTransitions(
+  transitions: LayerPropertyTransition[],
+  timeMs: number
+): number | RGBColor {
   let value = transitions[0].startValue;
   for (const transition of transitions) {
     const {startTimeMs, endTimeMs, startValue, endValue, easing} = transition;
@@ -224,7 +250,11 @@ function evaluateTransitions(transitions: LayerPropertyTransition[], timeMs: num
     if (timeMs < endTimeMs) {
       const progress = (timeMs - startTimeMs) / (endTimeMs - startTimeMs);
       const t = easing === 'linear' ? progress : progress * progress * (3 - 2 * progress);
-      return startValue * (1 - t) + endValue * t;
+      return typeof startValue === 'number' && typeof endValue === 'number'
+        ? startValue * (1 - t) + endValue * t
+        : ((startValue as RGBColor).map(
+            (channel, index) => channel * (1 - t) + (endValue as RGBColor)[index] * t
+          ) as RGBColor);
     }
     value = endValue;
   }
@@ -234,7 +264,7 @@ function evaluateTransitions(transitions: LayerPropertyTransition[], timeMs: num
 export function getLayerOpacityFactor(config: LayerOpacityConfig, timeMs?: number | null): number {
   if (typeof timeMs !== 'number' || !Number.isFinite(timeMs)) return 1;
   const transitions = getLayerOpacityTransitions(config);
-  return transitions.length ? evaluateTransitions(transitions, timeMs) : 1;
+  return transitions.length ? (evaluateTransitions(transitions, timeMs) as number) : 1;
 }
 
 export function getLayerAnimationTracks(
@@ -262,22 +292,35 @@ export function getLayerAnimationOpacityFactor(
 ): number {
   if (typeof timeMs !== 'number' || !Number.isFinite(timeMs)) return 1;
   const track = getLayerAnimationTracks(layer).find(({property}) => property.name === 'opacity');
-  return track ? evaluateTransitions(track.transitions, timeMs) : 1;
+  return track ? (evaluateTransitions(track.transitions, timeMs) as number) : 1;
 }
 
-/** Numeric overrides are transient; opacity remains a separate authored-opacity multiplier. */
-export function getLayerAnimatedVisConfig(
+/** Overrides are transient; opacity remains a separate authored-opacity multiplier. */
+export function getLayerAnimatedConfig(
   layer: AnimatableLayer,
   timeMs?: number | null
-): Record<string, number> {
+): {color?: RGBColor; visConfig?: Record<string, number | RGBColor>} {
   if (typeof timeMs !== 'number' || !Number.isFinite(timeMs)) return {};
-  const result: Record<string, number> = {};
+  const result: {color?: RGBColor; visConfig?: Record<string, number | RGBColor>} = {};
   for (const {property, transitions} of getLayerAnimationTracks(layer)) {
     if (property.name !== 'opacity') {
-      result[property.name] = evaluateTransitions(transitions, timeMs);
+      const value = evaluateTransitions(transitions, timeMs);
+      if (property.name === 'color' && property.type === 'color') {
+        if (Array.isArray(value)) result.color = value;
+      } else {
+        result.visConfig ??= {};
+        result.visConfig[property.name] = value;
+      }
     }
   }
   return result;
+}
+
+export function getLayerAnimatedVisConfig(
+  layer: AnimatableLayer,
+  timeMs?: number | null
+): Record<string, number | RGBColor> {
+  return getLayerAnimatedConfig(layer, timeMs).visConfig ?? {};
 }
 
 export function getLayerOpacityDuration(

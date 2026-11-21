@@ -11,7 +11,7 @@ import type {
   EffectUpdateProps,
   LayerAnimatableProp,
   LayerPropertyTransition,
-  LayerOpacityTransition
+  RGBColor
 } from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import {
@@ -20,19 +20,21 @@ import {
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
   getLayerOpacityTransitions,
+  isRgbColor,
   normalizeLayerPropertyTransitions,
-  normalizeLayerOpacityTransitions
+  normalizeLayerOpacityTransitions,
+  rgbToHex
 } from '@kepler.gl/utils';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Button, Input, PanelLabel} from '../common/styled-components';
-import {Add, Close, Pause, Play, Reset, ZoomOut} from '../common/icons';
+import {Add, ArrowDownSmall, Close, Pause, Play, Reset, ZoomOut} from '../common/icons';
 import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import {CameraTourActionButton} from '../side-panel/interaction-panel/camera-tour-playback-controls';
 import EffectAnimationControl from './effect-animation-control';
 import AnimationBlock from './animation-block';
-import {StyledPanelDropdown} from './compact-color-picker';
+import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
 import {getEffectAnimationTracks} from '../modals/effect-animation';
 
 export type AnimationEditorPlayback = {
@@ -352,6 +354,12 @@ const MenuHeading = styled.div`
 const title = (value: string) =>
   value.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
 const seconds = (value: number) => `${Math.round(value / 10) / 100} s`;
+const formatPropertyValue = (value: number | RGBColor, property: LayerAnimatableProp) =>
+  Array.isArray(value)
+    ? rgbToHex(value)
+    : property.name === 'opacity'
+    ? `${Math.round(value * 100)}%`
+    : String(value);
 
 function PropertySettings({
   label,
@@ -373,13 +381,21 @@ function PropertySettings({
   const id = useId();
   const opacity = property.name === 'opacity';
   const multiplier = opacity ? 100 : 1;
-  const [minValue, maxValue] = property.range.map(value => value * multiplier);
+  const numericProperty = property.type === 'color' ? null : property;
+  const [minValue, maxValue] = numericProperty?.range.map(value => value * multiplier) ?? [0, 0];
   const [draft, setDraft] = useState({
     start: String(transition.startTimeMs / 1000),
     end: String(transition.endTimeMs / 1000),
-    startValue: String(transition.startValue * multiplier),
-    endValue: String(transition.endValue * multiplier)
+    startValue:
+      typeof transition.startValue === 'number' ? String(transition.startValue * multiplier) : '',
+    endValue:
+      typeof transition.endValue === 'number' ? String(transition.endValue * multiplier) : ''
   });
+  const [colors, setColors] = useState<{startValue: RGBColor; endValue: RGBColor} | null>(() =>
+    Array.isArray(transition.startValue) && Array.isArray(transition.endValue)
+      ? {startValue: [...transition.startValue], endValue: [...transition.endValue]}
+      : null
+  );
   const [linear, setLinear] = useState(transition.easing === 'linear');
   useEffect(() => {
     setDraft(previous => ({
@@ -388,26 +404,37 @@ function PropertySettings({
       end: String(transition.endTimeMs / 1000)
     }));
   }, [transition.startTimeMs, transition.endTimeMs]);
-  const candidate: LayerPropertyTransition = {
+  const timing: Pick<LayerPropertyTransition, 'id' | 'startTimeMs' | 'endTimeMs' | 'easing'> = {
     id: transition.id,
     startTimeMs: draft.start.trim() ? Number(draft.start) * 1000 : NaN,
     endTimeMs: draft.end.trim() ? Number(draft.end) * 1000 : NaN,
-    startValue: draft.startValue.trim() ? Number(draft.startValue) / multiplier : NaN,
-    endValue: draft.endValue.trim() ? Number(draft.endValue) / multiplier : NaN,
     easing: linear ? 'linear' : 'easeInOut'
   };
+  const candidate: LayerPropertyTransition =
+    property.type === 'color' && colors
+      ? {...timing, startValue: [...colors.startValue], endValue: [...colors.endValue]}
+      : {
+          ...timing,
+          startValue: draft.startValue.trim() ? Number(draft.startValue) / multiplier : NaN,
+          endValue: draft.endValue.trim() ? Number(draft.endValue) / multiplier : NaN
+        };
   const validValues =
-    Boolean(normalizeLayerPropertyTransitions({[property.name]: [candidate]})) &&
-    [candidate.startValue, candidate.endValue].every(
-      value => value >= property.range[0] && value <= property.range[1]
-    );
+    getLayerPropertyTransitions(
+      {propertyTransitions: {[property.name]: [candidate]}},
+      property.name,
+      property
+    ).length === 1;
   const valid =
     validValues &&
-    Boolean(
-      normalizeLayerPropertyTransitions({
-        [property.name]: transitions.map(item => (item.id === transition.id ? candidate : item))
-      })
-    );
+    getLayerPropertyTransitions(
+      {
+        propertyTransitions: {
+          [property.name]: transitions.map(item => (item.id === transition.id ? candidate : item))
+        }
+      },
+      property.name,
+      property
+    ).length === transitions.length;
   return (
     <div role="group" aria-label={`${property.label} settings for ${label}`}>
       <InspectorHeader>
@@ -420,21 +447,36 @@ function PropertySettings({
       </InspectorHeader>
       <InspectorBody>
         <Fields>
+          {property.type === 'color' &&
+            colors &&
+            (['startValue', 'endValue'] as const).map(key => (
+              <CompactColorPicker
+                key={key}
+                label={key === 'startValue' ? 'Start color' : 'End color'}
+                color={colors[key]}
+                onSetColor={value => setColors({...colors, [key]: [...value]})}
+                Icon={ArrowDownSmall}
+              />
+            ))}
           {[
-            {
-              key: 'startValue',
-              label: opacity ? 'Start opacity (%)' : `Start ${property.label.toLowerCase()}`,
-              min: minValue,
-              max: maxValue,
-              step: property.step * multiplier
-            },
-            {
-              key: 'endValue',
-              label: opacity ? 'End opacity (%)' : `End ${property.label.toLowerCase()}`,
-              min: minValue,
-              max: maxValue,
-              step: property.step * multiplier
-            },
+            ...(numericProperty
+              ? [
+                  {
+                    key: 'startValue',
+                    label: opacity ? 'Start opacity (%)' : `Start ${property.label.toLowerCase()}`,
+                    min: minValue,
+                    max: maxValue,
+                    step: numericProperty.step * multiplier
+                  },
+                  {
+                    key: 'endValue',
+                    label: opacity ? 'End opacity (%)' : `End ${property.label.toLowerCase()}`,
+                    min: minValue,
+                    max: maxValue,
+                    step: numericProperty.step * multiplier
+                  }
+                ]
+              : []),
             {key: 'start', label: 'Start time (seconds)', min: 0, max: undefined, step: 0.1},
             {key: 'end', label: 'End time (seconds)', min: 0, max: undefined, step: 0.1}
           ].map(({key, label, min, max, step}) => (
@@ -466,6 +508,8 @@ function PropertySettings({
           <Alert role="alert">
             {validValues
               ? `${property.label} blocks on this item cannot overlap.`
+              : property.type === 'color'
+              ? 'Choose valid colors and non-negative times, with End at or after Start.'
               : `Use ${minValue}–${maxValue}${
                   opacity ? '%' : ''
                 } values and non-negative times, with End at or after Start.`}
@@ -606,7 +650,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     };
     const saveAnnotationTransitions = (
       annotation: Annotation,
-      transitions: LayerOpacityTransition[]
+      transitions: LayerPropertyTransition[]
     ) => {
       const normalized = normalizeLayerOpacityTransitions(transitions);
       if (normalized) {
@@ -646,24 +690,43 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       const startTimeMs = Math.max(playback.elapsed, last?.endTimeMs ?? 0);
       let suffix = 1;
       while (transitions.some(item => item.id === `${property.name}-${suffix}`)) suffix++;
-      const current = addLayer?.config.visConfig?.[property.name];
-      const initialValue =
-        typeof current === 'number' && Number.isFinite(current)
-          ? Math.max(property.range[0], Math.min(property.range[1], current))
-          : property.range[0];
-      const transition: LayerPropertyTransition = {
+      const timing: Pick<LayerPropertyTransition, 'id' | 'startTimeMs' | 'endTimeMs' | 'easing'> = {
         id: `${property.name}-${suffix}`,
         startTimeMs,
         endTimeMs: startTimeMs + 2000,
-        startValue: last?.endValue ?? (property.name === 'opacity' ? 0 : initialValue),
-        endValue:
-          property.name === 'opacity'
-            ? last?.endValue === 1
-              ? 0
-              : 1
-            : last?.endValue ?? initialValue,
         easing: 'easeInOut'
       };
+      let transition: LayerPropertyTransition;
+      if (property.type === 'color') {
+        const current = Array.isArray(last?.endValue)
+          ? last.endValue
+          : property.name === 'color'
+          ? addLayer?.config.color
+          : addLayer?.config.visConfig?.[property.name] ?? addLayer?.config.color;
+        if (!Array.isArray(current) || !isRgbColor(current)) return;
+        transition = {
+          ...timing,
+          startValue: [current[0], current[1], current[2]],
+          endValue: [current[0], current[1], current[2]]
+        };
+      } else {
+        const current = addLayer?.config.visConfig?.[property.name];
+        const previousValue = typeof last?.endValue === 'number' ? last.endValue : undefined;
+        const initialValue =
+          typeof current === 'number' && Number.isFinite(current)
+            ? Math.max(property.range[0], Math.min(property.range[1], current))
+            : property.range[0];
+        transition = {
+          ...timing,
+          startValue: previousValue ?? (property.name === 'opacity' ? 0 : initialValue),
+          endValue:
+            property.name === 'opacity'
+              ? previousValue === 1
+                ? 0
+                : 1
+              : previousValue ?? initialValue
+        };
+      }
       if (addLayer) {
         saveLayerTransitions(addLayer, property, [...transitions, transition]);
         openSettings(
@@ -1062,13 +1125,10 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   {transitions.map((transition, index) => (
                     <AnimationBlock
                       key={transition.id}
-                      label={
-                        property.name === 'opacity'
-                          ? `${Math.round(transition.startValue * 100)}% → ${Math.round(
-                              transition.endValue * 100
-                            )}%`
-                          : `${transition.startValue} → ${transition.endValue}`
-                      }
+                      label={`${formatPropertyValue(
+                        transition.startValue,
+                        property
+                      )} → ${formatPropertyValue(transition.endValue, property)}`}
                       ariaLabel={`${property.label} ${index + 1} · ${layer.config.label}`}
                       kind="layer"
                       startTimeMs={transition.startTimeMs}

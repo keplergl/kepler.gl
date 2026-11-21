@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
@@ -219,6 +221,13 @@ export default class LineLayer extends ArcLayer {
 
   get type() {
     return 'line';
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    // Globe lines use the target color only when target arrows are enabled.
+    return super.animatableProps.filter(
+      prop => prop.name !== 'targetColor' || this.config.visConfig.targetArrowEnabled
+    );
   }
 
   get layerIcon() {

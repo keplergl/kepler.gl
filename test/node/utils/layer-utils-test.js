@@ -308,6 +308,382 @@ test('layerUtils -> opacity tracks respect a custom layer whitelist and declared
   t.end();
 });
 
+test('layerUtils -> static layer colors refresh cached accessors and restore authored colors', t => {
+  const start = [0, 20, 40];
+  const end = [200, 120, 80];
+  const middle = [100, 70, 60];
+  const strokeStart = [40, 60, 80];
+  const strokeEnd = [140, 160, 180];
+  const strokeMiddle = [90, 110, 130];
+  const cases = [
+    {
+      LayerClass: PointLayer,
+      accessor: 'getFillColor',
+      secondary: 'getLineColor',
+      property: 'strokeColor'
+    },
+    {LayerClass: KeplerGlLayers.IconLayer, accessor: 'getFillColor'},
+    {
+      LayerClass: ArcLayer,
+      accessor: 'getSourceColor',
+      secondary: 'getTargetColor',
+      property: 'targetColor'
+    },
+    {
+      LayerClass: LineLayer,
+      accessor: 'getColor',
+      secondary: 'getTargetColor',
+      property: 'targetColor'
+    },
+    {
+      LayerClass: GeojsonLayer,
+      accessor: 'getFillColor',
+      secondary: 'getLineColor',
+      property: 'strokeColor'
+    }
+  ];
+  for (const {LayerClass, accessor, secondary, property} of cases) {
+    const layer = new LayerClass({id: 'colors', dataId: 'survey', color: [10, 20, 30]});
+    layer.updateLayerVisConfig({
+      filled: true,
+      outline: true,
+      stroked: true,
+      targetArrowEnabled: true,
+      opacity: 0.8,
+      glowEnabled: layer.type === 'point'
+    });
+    layer.updateLayerConfig({
+      propertyTransitions: {
+        color: propertyTrack('fill', start, end),
+        ...(property ? {[property]: propertyTrack('edge', strokeStart, strokeEnd)} : {}),
+        opacity: propertyTrack('opacity', 0, 1)
+      }
+    });
+    const feature = {
+      type: 'Feature',
+      geometry: {type: 'Point', coordinates: [10, 20]},
+      properties: {index: 0}
+    };
+    const row = {
+      index: 0,
+      position: [10, 20, 0, 11, 21, 0],
+      sourcePosition: [10, 20, 0],
+      targetPosition: [11, 21, 0]
+    };
+    const rows = layer.type === 'geojson' ? [feature] : [row];
+    const data = {
+      data: rows,
+      textLabels: [],
+      textLabelData: [],
+      getPosition: d => d.position,
+      getSourcePosition: d => d.sourcePosition,
+      getTargetPosition: d => d.targetPosition,
+      getFilterValue: () => [0, 0, 0, 0],
+      ...layer.getAttributeAccessors({dataContainer: {}})
+    };
+    const authoredConfig = layer.config;
+    const snapshot = cloneDeep(layer.config);
+    const authoredAccessor = data[accessor];
+    const onLayerError = sinon.spy();
+    const render = (time, globe = false) =>
+      renderDeckGlLayer(
+        {
+          layer,
+          layerIndex: 0,
+          datasets: {survey: {gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}}},
+          data,
+          animationTimeMs: time,
+          mapState: {
+            ...INITIAL_MAP_STATE,
+            width: 800,
+            height: 600,
+            zoom: 2,
+            globe: {enabled: globe}
+          },
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          animationConfig: INITIAL_VIS_STATE.animationConfig
+        },
+        {onLayerError}
+      );
+    const read = (deck, name, object = feature) =>
+      typeof deck.props[name] === 'function' ? deck.props[name](object) : deck.props[name];
+    const animatedLayers = render(2000);
+    t.notOk(onLayerError.called, `${layer.type} colors render without errors`);
+    const animated = animatedLayers.find(deck => deck.id === layer.id) || animatedLayers[0];
+    t.deepEqual(read(animated, accessor), middle, `${layer.type} interpolates base color`);
+    if (secondary)
+      t.deepEqual(
+        read(animated, secondary),
+        strokeMiddle,
+        `${layer.type} interpolates secondary color`
+      );
+    t.equal(animated.props.opacity, 0.4, `${layer.type} keeps color separate from opacity`);
+    t.equal(animated.props.data, rows, `${layer.type} preserves geometry data identity`);
+    t.deepEqual(read(render(5000)[0], accessor), end, `${layer.type} holds the final color`);
+    t.deepEqual(
+      read(render(null)[0], accessor),
+      [10, 20, 30],
+      `${layer.type} restores authored color`
+    );
+    if (layer.type === 'point') {
+      t.deepEqual(
+        read(animatedLayers[0], 'getFillColor'),
+        middle,
+        'point core and glow share the animated fill'
+      );
+    }
+    if (layer.type === 'arc' || layer.type === 'line') {
+      const arrowhead = animatedLayers.find(deck => deck.id.startsWith(`${layer.id}-arrow-head-`));
+      t.ok(arrowhead, `${layer.type} retains target arrows`);
+      t.deepEqual(
+        read(arrowhead, 'getFillColor', row),
+        strokeMiddle,
+        `${layer.type} arrowhead shares target color`
+      );
+      const globeLayer = render(2000, true)[0];
+      t.deepEqual(
+        read(globeLayer, 'getSourceColor'),
+        middle,
+        `${layer.type} globe source color updates`
+      );
+      t.deepEqual(
+        read(globeLayer, 'getTargetColor'),
+        strokeMiddle,
+        `${layer.type} globe target color updates`
+      );
+    }
+    if (layer.type === 'geojson') {
+      const embedded = {...feature, properties: {fillColor: [9, 8, 7], lineColor: [6, 5, 4]}};
+      t.deepEqual(
+        read(animated, accessor, embedded),
+        [9, 8, 7],
+        'GeoJSON embedded fill colors retain precedence'
+      );
+      t.deepEqual(
+        read(animated, secondary, embedded),
+        [6, 5, 4],
+        'GeoJSON embedded stroke colors retain precedence'
+      );
+    }
+    t.equal(data[accessor], authoredAccessor, `${layer.type} keeps the authored cached accessor`);
+    t.equal(layer.config, authoredConfig, `${layer.type} never swaps the saved config`);
+    t.deepEqual(
+      layer.config,
+      snapshot,
+      `${layer.type} never writes animated colors into saved config`
+    );
+  }
+  t.end();
+});
+
+test('layerUtils -> fixed color metadata omits data-driven and inactive channels', t => {
+  for (const LayerClass of [
+    PointLayer,
+    KeplerGlLayers.IconLayer,
+    ArcLayer,
+    LineLayer,
+    GeojsonLayer
+  ]) {
+    const layer = new LayerClass({dataId: 'survey'});
+    layer.updateLayerVisConfig({
+      filled: true,
+      outline: true,
+      stroked: true,
+      targetArrowEnabled: true
+    });
+    t.ok(
+      layer.animatableProps.some(prop => prop.name === 'color' && prop.type === 'color'),
+      `${layer.type} exposes fixed color`
+    );
+    layer.updateLayerConfig({
+      colorField: {name: 'value', fieldIdx: 0},
+      strokeColorField: {name: 'value', fieldIdx: 0}
+    });
+    t.notOk(
+      layer.animatableProps.some(prop => prop.type === 'color'),
+      `${layer.type} omits field-based color channels`
+    );
+  }
+  const line = new LineLayer({dataId: 'survey'});
+  t.notOk(
+    line.animatableProps.some(prop => prop.name === 'targetColor'),
+    'line target color requires target arrows for consistent globe rendering'
+  );
+  const point = new PointLayer({dataId: 'survey'});
+  point.updateLayerVisConfig({filled: false, outline: false});
+  t.notOk(
+    point.animatableProps.some(prop => prop.type === 'color'),
+    'inactive point fill and stroke omit color controls'
+  );
+  const geojson = new GeojsonLayer({dataId: 'survey'});
+  geojson.updateLayerVisConfig({filled: false, stroked: false});
+  t.notOk(
+    geojson.animatableProps.some(prop => prop.type === 'color'),
+    'inactive GeoJSON fill and stroke omit color controls'
+  );
+  t.end();
+});
+
+test('layerUtils -> color frames preserve field accessors while animating a separate static channel', t => {
+  const layer = new PointLayer({id: 'field-colors', dataId: 'survey'});
+  layer.updateLayerVisConfig({outline: true});
+  layer.updateLayerConfig({
+    colorField: {name: 'value', fieldIdx: 0},
+    propertyTransitions: {
+      color: propertyTrack('ignored', [0, 0, 0], [255, 255, 255]),
+      strokeColor: propertyTrack('stroke', [0, 20, 40], [100, 120, 140])
+    }
+  });
+  const fieldColor = () => [7, 8, 9];
+  const data = {data: [], textLabels: [], getFillColor: fieldColor, getLineColor: [1, 2, 3]};
+  const [frame] = renderDeckGlLayer(
+    {
+      layer,
+      data,
+      datasets: {survey: {gpuFilter: {filterValueUpdateTriggers: {}}}},
+      mapState: INITIAL_MAP_STATE,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+      animationTimeMs: 2000
+    },
+    {}
+  );
+  t.equal(frame.props.getFillColor, fieldColor, 'keeps the original data-driven accessor');
+  t.deepEqual(frame.props.getLineColor, [50, 70, 90], 'updates the independent fixed stroke');
+  t.deepEqual(data.getLineColor, [1, 2, 3], 'keeps the authored cached stroke');
+  t.end();
+});
+
+test('layerUtils -> custom declared colors render without visual channels or data mutation', t => {
+  const data = {data: []};
+  const layer = {
+    id: 'custom-color',
+    config: {
+      color: [1, 2, 3],
+      visConfig: {},
+      propertyTransitions: {color: propertyTrack('color', [0, 10, 20], [100, 110, 120])}
+    },
+    animatableProps: [{name: 'color', label: 'Color', type: 'color'}],
+    renderLayer({data: frameData}) {
+      return {color: this.config.color, data: frameData};
+    }
+  };
+  const frame = renderDeckGlLayer(
+    {layer, data, datasets: {}, mapState: {}, animationTimeMs: 2000},
+    {}
+  );
+  t.deepEqual(frame.color, [50, 60, 70], 'supports a custom base color declaration');
+  t.equal(frame.data, data, 'does not replace custom data when no accessors need refresh');
+  t.deepEqual(layer.config.color, [1, 2, 3], 'preserves custom authored color');
+  t.end();
+});
+
+test('layerUtils -> Arrow colors remain constant accessors without replacing geometry buffers', t => {
+  const vector = arrow.vectorFromArray(
+    [[10, 20, 0]],
+    new arrow.FixedSizeList(3, new arrow.Field('xyz', new arrow.Float64()))
+  );
+  const target = arrow.vectorFromArray([[11, 21, 0]], vector.type);
+  const table = new arrow.Table({geometry: vector, target});
+  const metadata = new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.POINT]]);
+  const geoField = {name: 'geometry', type: 'geoarrow', fieldIdx: 0, metadata};
+  const dataContainer = new ArrowDataContainer({cols: [vector], fields: [geoField]});
+  const binary = getGeojsonLayerMetaFromArrow({
+    dataContainer,
+    geoColumn: vector,
+    geoField,
+    columnIndex: 0
+  });
+  for (const LayerClass of [PointLayer, ArcLayer, LineLayer, GeojsonLayer]) {
+    const layer = new LayerClass({id: 'arrow-colors', dataId: 'survey', color: [10, 20, 30]});
+    layer.updateLayerVisConfig({filled: true});
+    layer.updateLayerConfig({
+      propertyTransitions: {color: propertyTrack('color', [0, 20, 40], [200, 120, 80])}
+    });
+    if (layer.type === 'point') layer.geoArrowVector = vector;
+    else if (layer.type === 'geojson') {
+      layer.geoArrowMode = true;
+      layer.meta = {...layer.meta, ...binary};
+    } else {
+      layer.geoArrowVector0 = vector;
+      layer.geoArrowVector1 = target;
+    }
+    const data = {
+      data: layer.type === 'geojson' ? binary.dataToFeature : [],
+      textLabels: [],
+      textLabelData: [],
+      ...layer.getAttributeAccessors({dataContainer})
+    };
+    const geometry = vector.data[0].children[0].values;
+    const snapshot = Array.from(geometry);
+    const onLayerError = sinon.spy();
+    const [frame] = renderDeckGlLayer(
+      {
+        layer,
+        data,
+        datasets: {
+          survey: {
+            dataContainer: {getTable: () => table},
+            gpuFilter: {filterValueUpdateTriggers: {}}
+          }
+        },
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        animationTimeMs: 2000
+      },
+      {onLayerError}
+    );
+    t.notOk(onLayerError.called, `${layer.type} Arrow color frame renders`);
+    if (layer.type === 'geojson') {
+      t.equal(
+        frame.props.data,
+        binary.dataToFeature[0],
+        'GeoJSON retains its cached binary geometry'
+      );
+      t.deepEqual(
+        frame.props.getFillColor({properties: {}}),
+        [100, 70, 60],
+        'GeoJSON binary fill accessor uses the frame color'
+      );
+    } else {
+      t.equal(frame.props.data, table, `${layer.type} retains its Arrow table`);
+      const [sublayer] = frame.renderLayers();
+      const colorAccessor =
+        layer.type === 'point'
+          ? 'getFillColor'
+          : layer.type === 'line'
+          ? 'getColor'
+          : 'getSourceColor';
+      const positionAccessor = layer.type === 'point' ? 'getPosition' : 'getSourcePosition';
+      t.deepEqual(
+        sublayer.props[colorAccessor],
+        [100, 70, 60],
+        `${layer.type} binary sublayer receives a constant frame color`
+      );
+      t.equal(
+        sublayer.props.data.attributes[positionAccessor].value.buffer,
+        geometry.buffer,
+        `${layer.type} retains its binary position buffer`
+      );
+      t.equal(
+        sublayer.props.data.attributes[positionAccessor].value.byteOffset,
+        geometry.byteOffset,
+        `${layer.type} retains the position buffer offset`
+      );
+      t.deepEqual(
+        Array.from(sublayer.props.data.attributes[positionAccessor].value).slice(0, 3),
+        [10, 20, 0],
+        `${layer.type} retains the position coordinates`
+      );
+      t.notOk(
+        sublayer.props.data.attributes[colorAccessor],
+        `${layer.type} has no stale binary color buffer`
+      );
+    }
+    t.deepEqual(Array.from(geometry), snapshot, `${layer.type} leaves source positions unchanged`);
+  }
+  t.end();
+});
+
 test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
   const error = new Error('Cannot render geometry');
   const log = sinon.stub(Console, 'error');

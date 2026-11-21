@@ -1285,3 +1285,111 @@ test('#visStateSchema -> v1 -> save load zoomOpacity controllers', t => {
   t.deepEqual(loaded, {enabled: true, controllers}, 'should load fade-on-zoom controllers');
   t.end();
 });
+
+test('#visStateSchema -> v1 -> layer color tracks round trip with independent endpoint arrays', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const layer = state.visState.layers[0];
+  const first = {
+    id: 'color-first',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: [0, 20, 40],
+    endValue: [100, 120, 200],
+    easing: 'linear'
+  };
+  const last = {
+    ...first,
+    id: 'color-last',
+    startTimeMs: 5000,
+    endTimeMs: 6000,
+    startValue: [100, 120, 200],
+    endValue: [255, 10.5, 0],
+    easing: 'easeInOut'
+  };
+  const numeric = {...first, id: 'radius', startValue: 5, endValue: 20};
+  const propertyTransitions = {color: [last, first], strokeColor: [first], radius: [numeric]};
+  const expected = {...propertyTransitions, color: [first, last]};
+  const staticColor = [...layer.config.color];
+  layer.updateLayerConfig({propertyTransitions});
+  t.notEqual(
+    layer.config.propertyTransitions.color[0].startValue,
+    first.startValue,
+    'updating clones color endpoints'
+  );
+  const saved = SchemaManager.getConfigToSave(state);
+  const savedLayer = saved.config.visState.layers.find(item => item.id === layer.id);
+  t.deepEqual(
+    savedLayer.config.propertyTransitions,
+    expected,
+    'saves ordered RGB and numeric tracks concurrently'
+  );
+  t.deepEqual(savedLayer.config.color, staticColor, 'keeps authored static color separate');
+  t.notEqual(
+    savedLayer.config.propertyTransitions.color[0].startValue,
+    layer.config.propertyTransitions.color[0].startValue,
+    'saving clones endpoint arrays'
+  );
+  const parsed = SchemaManager.parseSavedConfig(saved).visState.layers.find(
+    item => item.id === layer.id
+  );
+  t.deepEqual(
+    parsed.config.propertyTransitions,
+    expected,
+    'loads RGB endpoints and fractional channels without changing numeric tracks'
+  );
+  t.notEqual(
+    parsed.config.propertyTransitions.color[0].endValue,
+    savedLayer.config.propertyTransitions.color[0].endValue,
+    'loading clones endpoint arrays'
+  );
+  const rebuilt = validateLayerWithData(
+    state.visState.datasets[layer.config.dataId],
+    parsed,
+    state.visState.layerClasses
+  );
+  t.deepEqual(
+    rebuilt.config.propertyTransitions,
+    expected,
+    'reconstructed layer preserves every track'
+  );
+  t.notEqual(
+    rebuilt.config.propertyTransitions.color[0].startValue,
+    parsed.config.propertyTransitions.color[0].startValue,
+    'reconstruction clones endpoint arrays'
+  );
+  rebuilt.config.propertyTransitions.color[0].startValue[0] = 99;
+  t.equal(
+    savedLayer.config.propertyTransitions.color[0].startValue[0],
+    0,
+    'editing reconstructed colors cannot mutate saved configs'
+  );
+  t.deepEqual(
+    propertyTransitions.color,
+    [last, first],
+    'normalization does not mutate authored order or endpoints'
+  );
+  for (const invalid of [
+    {color: [{...first, endValue: [0, 20, 256]}]},
+    {color: [{...first, startValue: 0}]},
+    {color: [{...first, endValue: [0, 20]}]},
+    {color: [first, {...numeric, id: 'mixed', startTimeMs: 5000, endTimeMs: 6000}]}
+  ]) {
+    savedLayer.config.propertyTransitions = invalid;
+    const loaded = SchemaManager.parseSavedConfig(saved).visState.layers.find(
+      item => item.id === layer.id
+    );
+    t.notOk(
+      'propertyTransitions' in loaded.config,
+      'invalid RGB values or mixed track kinds are omitted on load'
+    );
+    layer.config.propertyTransitions = invalid;
+    const invalidSaved = SchemaManager.getConfigToSave(state).config.visState.layers.find(
+      item => item.id === layer.id
+    );
+    t.notOk(
+      'propertyTransitions' in invalidSaved.config,
+      'invalid RGB values or mixed track kinds are omitted on save'
+    );
+  }
+  t.end();
+});
