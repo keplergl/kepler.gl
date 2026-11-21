@@ -15,6 +15,15 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.26] - Nov 21 2026
+
+- 53ebc9428 fix(map): keep coordinate copying independent of tooltip display (#4306)
+- fb24f8c8d fix(layers): scale contour borders in 2D and 3D (#4303)
+- 6463685db feat(mcp): add map annotation commands and usage guidance (#4302)
+- c4acf0c27 fix(map): enable copying coordinates in the context menu (#4301)
+- 540b2ddec fix(editor): snap sketch clicks to elevated surfaces (#4304)
+- 11ec7c6a7 chore(deps): bump mistune from 3.3.3 to 3.3.4 in /bindings/python (#4305)
+
 ## [3.3.0-alpha.25] - Nov 20 2026
 
 - 80fbb00af feat(effects): add experimental shadow map resolution presets (#4299)
