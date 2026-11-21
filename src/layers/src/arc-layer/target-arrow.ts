@@ -424,6 +424,7 @@ function viewportFromMapState(mapState): Viewport | null {
 
 export function createTargetArrowLayer({
   layer,
+  frameConfig = layer.config,
   formattedData,
   defaultLayerProps,
   mapState,
@@ -437,6 +438,8 @@ export function createTargetArrowLayer({
   highlight = false
 }: {
   layer: ArrowHost;
+  /** Optional visual snapshot; record caches remain keyed by the original layer. */
+  frameConfig?: ArrowHost['config'];
   formattedData: {data?: unknown; getFilterValue?: (d: StrokeRecord) => number[]};
   defaultLayerProps: {visible?: boolean; filterRange?: unknown; hidden?: boolean};
   mapState: {
@@ -464,7 +467,7 @@ export function createTargetArrowLayer({
   /** One head, painted in highlightColor over the hovered stroke. */
   highlight?: boolean;
 }): ArrowHeadLayer | null {
-  const {visConfig} = layer.config;
+  const {visConfig} = frameConfig;
   if (!visConfig.targetArrowEnabled) {
     return null;
   }

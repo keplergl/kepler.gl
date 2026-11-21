@@ -772,38 +772,39 @@ export default class PointLayer extends Layer {
 
   // eslint-disable-next-line complexity
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset, filters} = opts;
 
     // if no field size is defined we need to pass fixed radius = false
-    const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
-    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius);
+    const fixedRadius = frameConfig.visConfig.fixedRadius && Boolean(frameConfig.sizeField);
+    const radiusScale = this.getRadiusScaleByZoom(mapState, fixedRadius, frameConfig);
     const {pulseEnabled, pulseMode, pulseSpeed, pulseExpansion, pulseTrigger, pulseDurationMs} =
-      this.config.visConfig;
+      frameConfig.visConfig;
     const continuous = pulseEnabled && pulseTrigger !== 'event';
     const pulseProps = {pulseEnabled: continuous, pulseMode, pulseSpeed, pulseExpansion};
     const eventDomain = data.pulseTimeDomain;
     const pulseCurrentTime =
       pulseEnabled && pulseTrigger === 'event' ? this.getEventPulseCurrentTime(filters) : null;
-    const eventColorAccessor = this.config.visConfig.filled ? 'getFillColor' : 'getLineColor';
+    const eventColorAccessor = frameConfig.visConfig.filled ? 'getFillColor' : 'getLineColor';
     const showEventOverlay =
-      (this.config.visConfig.filled || this.config.visConfig.outline) &&
+      (frameConfig.visConfig.filled || frameConfig.visConfig.outline) &&
       pulseEnabled &&
       pulseTrigger === 'event' &&
       eventDomain &&
       isPulseTimeActive(pulseCurrentTime, eventDomain[0], eventDomain[1] - eventDomain[0]);
 
     const layerProps = {
-      stroked: this.config.visConfig.outline,
-      filled: this.config.visConfig.filled,
-      lineWidthScale: this.config.visConfig.thickness,
-      billboard: this.config.visConfig.billboard,
+      stroked: frameConfig.visConfig.outline,
+      filled: frameConfig.visConfig.filled,
+      lineWidthScale: frameConfig.visConfig.thickness,
+      billboard: frameConfig.visConfig.billboard,
       radiusScale,
-      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
+      ...(frameConfig.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers();
+    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers(frameConfig);
     const updateTriggers = {
-      getPosition: this.config.columns,
+      getPosition: frameConfig.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
       ...visualChannelUpdateTriggers
@@ -828,7 +829,7 @@ export default class PointLayer extends Layer {
       ...brushingProps
     };
     const hoveredObject = this.hasHoveredObject(objectHovered);
-    const {showNeighborOnHover, allowHover} = this.config.visConfig;
+    const {showNeighborOnHover, allowHover} = frameConfig.visConfig;
     let hoverData: ReturnType<typeof getNeighbors>;
     if (allowHover && showNeighborOnHover && hoveredObject && defaultLayerProps.visible) {
       // Arrow picking synthesizes a new object on each render. Compare its row and
@@ -838,8 +839,8 @@ export default class PointLayer extends Layer {
       const dependencies = [
         dataset.dataContainer,
         dataset.dataRevision,
-        this.config.columns,
-        this.config.columnMode,
+        frameConfig.columns,
+        frameConfig.columnMode,
         hoveredObject.index,
         ...(hoveredObject.position || [])
       ];
@@ -852,7 +853,7 @@ export default class PointLayer extends Layer {
           dependencies,
           data: [
             ...getNeighbors(
-              this.config.columns.neighbors,
+              frameConfig.columns.neighbors,
               dataset.dataContainer,
               hoveredObject.index,
               this.getPositionAccessor(dataset.dataContainer)
@@ -865,7 +866,7 @@ export default class PointLayer extends Layer {
     } else {
       // Split maps share this layer. A hidden pane must not evict the visible
       // pane's cache; source/config changes are checked when it renders again.
-      if (!allowHover || !showNeighborOnHover || !hoveredObject || !this.config.isVisible) {
+      if (!allowHover || !showNeighborOnHover || !hoveredObject || !frameConfig.isVisible) {
         this.neighborHoverCache = undefined;
       }
       hoverData = hoveredObject ? [hoveredObject] : [];
@@ -881,7 +882,7 @@ export default class PointLayer extends Layer {
       getPosition = this.geoArrowVector;
     }
 
-    const {glowEnabled, glowExtent, glowStrength} = this.config.visConfig;
+    const {glowEnabled, glowExtent, glowStrength} = frameConfig.visConfig;
     const withGlow = (point: ScatterplotLayer<any, any> | GeoArrowScatterplotLayer<any>) => {
       if (!glowEnabled || (!point.props.filled && !point.props.stroked)) {
         return [point];
@@ -927,14 +928,14 @@ export default class PointLayer extends Layer {
           getPosition,
           parameters: {
             // circles will be flat on the map when the altitude column is not used
-            depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+            depthTest: (frameConfig.columns.altitude?.fieldIdx as number) > -1,
             ...(mapState?.layerParameters ?? {})
           },
           lineWidthUnits: 'pixels',
           updateTriggers,
           ...pulseProps,
           extensions: [...extensions, ...(continuous ? [pulseRippleExtension] : [])],
-          opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
+          opacity: hoveredObject && showNeighborOnHover ? 0.2 : frameConfig.visConfig.opacity,
           pickable: allowHover,
           autoHighlight: false
         })
@@ -969,7 +970,7 @@ export default class PointLayer extends Layer {
                 getPulseStartTime: data.getPulseStartTime
               },
               parameters: {
-                depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
+                depthTest: (frameConfig.columns.altitude?.fieldIdx as number) > -1,
                 ...(mapState?.layerParameters ?? {})
               }
             })
@@ -985,20 +986,20 @@ export default class PointLayer extends Layer {
               ...(continuous ? {extensions: [pulseRippleExtension]} : {}),
               visible: defaultLayerProps.visible,
               data: hoverData,
-              getLineColor: this.config.visConfig.showHighlightColor
-                ? this.config.highlightColor
+              getLineColor: frameConfig.visConfig.showHighlightColor
+                ? frameConfig.highlightColor
                 : data.getLineColor,
-              getFillColor: this.config.visConfig.showHighlightColor
-                ? this.config.highlightColor
+              getFillColor: frameConfig.visConfig.showHighlightColor
+                ? frameConfig.highlightColor
                 : data.getFillColor,
               getRadius: data.getRadius,
               getPosition: data.getPosition,
               updateTriggers: {
-                getFillColor: this.config.visConfig.showHighlightColor
-                  ? [this.config.highlightColor]
+                getFillColor: frameConfig.visConfig.showHighlightColor
+                  ? [frameConfig.highlightColor]
                   : {...visualChannelUpdateTriggers.getFillColor, accessor: data.getFillColor},
-                getLineColor: this.config.visConfig.showHighlightColor
-                  ? [this.config.highlightColor]
+                getLineColor: frameConfig.visConfig.showHighlightColor
+                  ? [frameConfig.highlightColor]
                   : {...visualChannelUpdateTriggers.getLineColor, accessor: data.getLineColor},
                 getRadius: {...visualChannelUpdateTriggers.getRadius, accessor: data.getRadius}
               }

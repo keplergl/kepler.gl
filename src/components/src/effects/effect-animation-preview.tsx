@@ -189,11 +189,11 @@ export default function EffectAnimationPreviewProvider({
 
   const seek = useCallback(
     (time: number, camera?: CameraSnapshot) => {
-      if (!enabled || !hasAnimation || !Number.isFinite(time)) return;
+      if (!enabled || (!hasAnimation && !cameraEnabled) || !Number.isFinite(time)) return;
       pause();
       draw(Math.max(0, Math.min(duration, time)), camera);
     },
-    [enabled, hasAnimation, pause, draw, duration]
+    [enabled, hasAnimation, cameraEnabled, pause, draw, duration]
   );
 
   const run = useCallback(() => {

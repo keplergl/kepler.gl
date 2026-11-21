@@ -537,14 +537,15 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer(opts) {
+    const frameConfig = opts.frameConfig ?? this.config;
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
     const updateTriggers = {
-      getPosition: this.config.columns,
+      getPosition: frameConfig.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(frameConfig)
     };
-    const widthScale = this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
+    const widthScale = frameConfig.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
@@ -578,6 +579,7 @@ export default class ArcLayer extends Layer {
 
     const arrowLayers = createTargetArrowLayers({
       layer: this,
+      frameConfig,
       formattedData: data,
       defaultLayerProps,
       mapState,
@@ -587,7 +589,7 @@ export default class ArcLayer extends Layer {
       elevationScale: 1,
       getColor: data.getTargetColor,
       hoveredObject,
-      highlightColor: this.config.highlightColor
+      highlightColor: frameConfig.highlightColor
     });
 
     return [
@@ -615,8 +617,8 @@ export default class ArcLayer extends Layer {
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               widthScale,
-              getSourceColor: this.config.highlightColor,
-              getTargetColor: this.config.highlightColor,
+              getSourceColor: frameConfig.highlightColor,
+              getTargetColor: frameConfig.highlightColor,
               getWidth: data.getWidth
             })
           ]

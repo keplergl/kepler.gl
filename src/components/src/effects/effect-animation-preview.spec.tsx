@@ -15,7 +15,7 @@ import {
   getLayerAnimatedVisConfig,
   getLayerOpacityFactor
 } from '@kepler.gl/utils';
-import type {Annotation, Effect} from '@kepler.gl/types';
+import type {Annotation, CameraTour, Effect} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import CameraTourPlaybackProvider, {
   CameraTourPlaybackContext
@@ -76,18 +76,20 @@ function setup(
   enabled = true,
   {
     cameraDuration,
+    cameraTour,
     managerOpen = true,
     layers = [],
     annotations = []
   }: {
     cameraDuration?: number;
+    cameraTour?: CameraTour;
     managerOpen?: boolean;
     layers?: Layer[];
     annotations?: Annotation[];
   } = {}
 ) {
   const updateMap = jest.fn();
-  const tour = {
+  const tour = cameraTour ?? {
     stops: [
       {
         id: 'start',
@@ -807,6 +809,80 @@ describe('effects panel animation preview', () => {
     expect(view.updateMap).toHaveBeenCalled();
     expect(view.getPreviewEffects()).toBeNull();
     expect(frames.size).toBe(1);
+  });
+
+  test.each([1, 2])(
+    'an enabled zero-duration tour with %i stops can seek, go to a stop and restart without playing',
+    stopCount => {
+      const tour = {
+        stops: Array.from({length: stopCount}, (_, index) => ({
+          id: `stop-${index}`,
+          name: `Stop ${index}`,
+          camera: {longitude: 10 + index, latitude: 20, zoom: 6, bearing: 0, pitch: 0},
+          holdDurationMs: 0,
+          travelDurationMs: 0
+        }))
+      };
+      const savedTour = JSON.stringify(tour);
+      const view = setup([], true, {
+        cameraTour: tour,
+        cameraDuration: 0,
+        managerOpen: false
+      });
+      const savedState = view.store.getState();
+      const lastCamera = tour.stops[stopCount - 1].camera;
+      expect(view.playback().hasAnimation).toBe(false);
+      expect(view.playback().duration).toBe(0);
+      expect(screen.getByRole('button', {name: 'Play'})).toBeDisabled();
+      expect(screen.getByRole('slider')).toBeDisabled();
+      act(() => {
+        view.playback().run();
+        for (const time of [NaN, Infinity, -Infinity]) view.playback().seek(time);
+      });
+      expect(view.updateMap).not.toHaveBeenCalled();
+      expect(view.playback().animationTimeMs).toBeNull();
+
+      act(() => view.playback().seek(1000));
+      expect(view.updateMap).toHaveBeenLastCalledWith({...lastCamera, transitionDuration: 0});
+      expect(view.playback().elapsed).toBe(0);
+      act(() => view.playback().seek(0, tour.stops[0].camera));
+      expect(view.updateMap).toHaveBeenLastCalledWith({
+        ...tour.stops[0].camera,
+        transitionDuration: 0
+      });
+      view.updateMap.mockClear();
+      fireEvent.click(screen.getByRole('button', {name: 'Restart'}));
+      expect(view.updateMap).toHaveBeenLastCalledWith({...lastCamera, transitionDuration: 0});
+      view.updateMap.mockClear();
+      act(() => view.playback().reset());
+      expect(view.updateMap).toHaveBeenLastCalledWith({...lastCamera, transitionDuration: 0});
+      view.updateMap.mockClear();
+      act(() => view.playback().run());
+      expect(view.updateMap).not.toHaveBeenCalled();
+      expect(view.playback().running).toBe(false);
+      expect(frames.size).toBe(0);
+      act(() => view.playback().stop());
+      expect(view.playback().animationTimeMs).toBeNull();
+      expect(view.getPreviewEffects()).toBeNull();
+      expect(view.store.getState()).toBe(savedState);
+      expect(JSON.stringify(tour)).toBe(savedTour);
+    }
+  );
+
+  test.each([
+    {enabled: false, cameraDuration: 0},
+    {enabled: true, cameraDuration: undefined}
+  ])('disabled zero-duration camera navigation is ignored (%j)', options => {
+    const view = setup([], options.enabled, {...options, managerOpen: false});
+    act(() => {
+      view.playback().seek(0, {longitude: 30, latitude: 10, zoom: 4, bearing: 0, pitch: 0});
+      view.playback().reset();
+      view.playback().run();
+    });
+    expect(view.updateMap).not.toHaveBeenCalled();
+    expect(view.playback().animationTimeMs).toBeNull();
+    expect(view.playback().running).toBe(false);
+    expect(frames.size).toBe(0);
   });
 
   test('disabling coordinated preview prevents camera and effect playback', () => {

@@ -79,6 +79,40 @@ function up(clientX: number) {
   fireEvent.pointerUp(window, {pointerId: 1, clientX});
 }
 
+// jsdom drops unsupported CSS math from computed styles and cannot hit-test.
+// Read the authored rules and resolve lengths before checking target overlap.
+function authoredStyle(element: HTMLElement, property: string): string {
+  let value = getComputedStyle(element).getPropertyValue(property);
+  for (const sheet of Array.from(document.styleSheets)) {
+    for (const rule of Array.from(sheet.cssRules)) {
+      if (rule instanceof CSSStyleRule && element.matches(rule.selectorText)) {
+        value = rule.style.getPropertyValue(property) || value;
+      }
+    }
+  }
+  return value;
+}
+
+function resolveLength(value: string, relativeWidth: number): number {
+  const length = value.trim().match(/^(-?[\d.]+)(px|%)$/);
+  if (length) return Number(length[1]) * (length[2] === '%' ? relativeWidth / 100 : 1);
+  const calculation = value.trim().match(/^calc\((.+) ([+-]) (.+)\)$/);
+  if (calculation) {
+    return (
+      resolveLength(calculation[1], relativeWidth) +
+      (calculation[2] === '+' ? 1 : -1) * resolveLength(calculation[3], relativeWidth)
+    );
+  }
+  const bounds = value.trim().match(/^clamp\(([^,]+),([^,]+),([^,]+)\)$/);
+  if (bounds) {
+    return Math.max(
+      resolveLength(bounds[1], relativeWidth),
+      Math.min(resolveLength(bounds[2], relativeWidth), resolveLength(bounds[3], relativeWidth))
+    );
+  }
+  throw new Error(`Unsupported CSS length: ${value}`);
+}
+
 test('selects on click or keyboard without changing timing', () => {
   const {body, props} = setup();
   down(body, 300);
@@ -203,34 +237,63 @@ test('keyboard arrows move the block or its focused edge with larger Shift steps
   expect(props.onSelect).not.toHaveBeenCalled();
 });
 
-test('instantaneous cuts keep separate pointer targets for moving and resizing', () => {
-  const {body, start, end, props} = setup({startTimeMs: 2000, endTimeMs: 2000});
-  expect(start).toHaveAttribute('aria-valuenow', '2000');
-  expect(end).toHaveAttribute('aria-valuenow', '2000');
-  // jsdom cannot hit-test: require each resize target to end outside the body.
-  // The relationship matters here, rather than any particular handle width.
-  for (const [handle, side] of [
-    [start, 'left'],
-    [end, 'right']
-  ] as const) {
-    const style = getComputedStyle(handle);
-    expect(parseFloat(style[side]) + parseFloat(style.width)).toBeLessThanOrEqual(0);
+test.each([0, 30, 60, 100, 120, 180, 400])(
+  '%d ms intervals keep separate pointer targets for moving, resizing and opening settings',
+  lengthMs => {
+    const onOpen = jest.fn();
+    const {body, start, end, props} = setup({
+      startTimeMs: 2000,
+      endTimeMs: 2000 + lengthMs,
+      onOpen
+    });
+    expect(start).toHaveAttribute('aria-valuenow', '2000');
+    expect(end).toHaveAttribute('aria-valuenow', String(2000 + lengthMs));
+    const block = body.parentElement!;
+    const width = Math.max(
+      resolveLength(authoredStyle(block, 'width'), trackWidth),
+      resolveLength(authoredStyle(block, 'min-width'), trackWidth)
+    );
+    const startLeft = resolveLength(authoredStyle(start, 'left'), width);
+    const startRight = startLeft + resolveLength(authoredStyle(start, 'width'), width);
+    const endRight = width - resolveLength(authoredStyle(end, 'right'), width);
+    const endLeft = endRight - resolveLength(authoredStyle(end, 'width'), width);
+    const moveLeft = Math.max(0, startRight);
+    const moveRight = Math.min(width, endLeft);
+    expect(moveRight).toBeGreaterThan(moveLeft);
+    expect(resolveLength(authoredStyle(body, 'padding-inline'), width) * 2).toBeLessThanOrEqual(
+      width
+    );
+    const targetAt = (x: number) => {
+      if (x >= endLeft && x < endRight) return end;
+      if (x >= startLeft && x < startRight) return start;
+      return x >= 0 && x < width ? body : null;
+    };
+    const moveX = (moveLeft + moveRight) / 2;
+    const startX = (startLeft + startRight) / 2;
+    const endX = (endLeft + endRight) / 2;
+    expect(targetAt(moveX)).toBe(body);
+    expect(targetAt(startX)).toBe(start);
+    expect(targetAt(endX)).toBe(end);
+    down(targetAt(moveX)!, 200 + moveX);
+    move(300 + moveX);
+    up(300 + moveX);
+    expect(props.onChange).toHaveBeenLastCalledWith(3000, 3000 + lengthMs);
+    down(targetAt(startX)!, 200 + startX);
+    move(100 + startX);
+    up(100 + startX);
+    expect(props.onChange).toHaveBeenLastCalledWith(1000, 2000 + lengthMs);
+    down(targetAt(endX)!, 200 + endX);
+    move(300 + endX);
+    up(300 + endX);
+    expect(props.onChange).toHaveBeenLastCalledWith(2000, 3000 + lengthMs);
+    fireEvent.keyDown(end, {key: 'ArrowRight'});
+    expect(props.onChange).toHaveBeenLastCalledWith(2000, 2100 + lengthMs);
+    down(targetAt(moveX)!, 200 + moveX);
+    up(200 + moveX);
+    fireEvent.doubleClick(targetAt(moveX)!);
+    expect(onOpen).toHaveBeenCalledWith(body);
   }
-  down(body, 200);
-  move(300);
-  up(300);
-  expect(props.onChange).toHaveBeenLastCalledWith(3000, 3000);
-  down(start, 200);
-  move(100);
-  up(100);
-  expect(props.onChange).toHaveBeenLastCalledWith(1000, 2000);
-  down(end, 200);
-  move(300);
-  up(300);
-  expect(props.onChange).toHaveBeenLastCalledWith(2000, 3000);
-  fireEvent.keyDown(end, {key: 'ArrowRight'});
-  expect(props.onChange).toHaveBeenLastCalledWith(2000, 2100);
-});
+);
 
 test('disabled blocks remain selectable but do not change timing', () => {
   const {body, start, props} = setup({disabled: true});

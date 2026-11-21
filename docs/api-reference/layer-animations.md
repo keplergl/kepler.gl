@@ -48,6 +48,24 @@ Playback applies temporary render values without changing authored colors or `vi
 
 For custom rendering, `getLayerAnimatedConfig(layer, timeMs)` from `@kepler.gl/utils` returns the frame's `{color?, visConfig?}` overrides. `getLayerAnimatedVisConfig` returns only the `visConfig` portion. Both return empty objects outside playback; opacity remains available separately through `getLayerAnimationOpacityFactor`.
 
+## Custom renderers
+
+`renderLayer` receives an optional `frameConfig` containing the full layer configuration with the current numeric and color animation values applied. Built-in renderers use it automatically. Custom renderers that expose these properties must read `frameConfig` for their rendered values, falling back to `this.config` for static rendering:
+
+```ts
+renderLayer({frameConfig = this.config, ...opts}) {
+  return [
+    new MyDeckLayer({
+      ...this.getDefaultDeckLayerProps({...opts, frameConfig}),
+      radiusScale: frameConfig.visConfig.radius,
+      getFillColor: () => frameConfig.color
+    })
+  ];
+}
+```
+
+Rendering keeps the original layer instance as `this`, so private fields, instance caches, and callbacks work normally. Authored `this.config` remains unchanged. Treat `frameConfig` as read-only and capture it in deferred accessors, as above, so an earlier frame retains its values after later frames render. Custom subclasses delegating to a built-in `super.renderLayer(opts)` should pass the options through unchanged. Opacity-only animation continues to work without adopting `frameConfig`.
+
 ## Compatibility
 
 Existing layer `opacityTransitions` and older `visibilityTiming` remain readable. A `propertyTransitions.opacity` entry takes precedence, including an empty array. Editing a legacy layer in the Animation editor migrates its opacity blocks to the property map while preserving sibling tracks.

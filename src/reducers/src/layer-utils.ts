@@ -373,29 +373,16 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
     const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
-    // Isolate frame values while keeping renderer caches and asynchronous redraw
-    // callbacks attached to the authored layer. Never swap its saved config.
-    const renderLayer = Object.keys(animatedConfig).length
-      ? new Proxy(
-          Object.create(layer, {
-            config: {
-              value: {
-                ...layer.config,
-                ...animatedConfig,
-                visConfig: {...layer.config.visConfig, ...animatedConfig.visConfig}
-              },
-              writable: true,
-              configurable: true,
-              enumerable: true
-            }
-          }),
-          {
-            set(target, property, value) {
-              return Reflect.set(property === 'config' ? target : layer, property, value);
-            }
-          }
-        )
-      : layer;
+    // Keep the original receiver (including private fields and instance caches).
+    // Renderers capture this snapshot for frame-specific and deferred accessors.
+    const frameConfig = Object.keys(animatedConfig).length
+      ? {
+          ...layer.config,
+          ...animatedConfig,
+          visConfig: {...layer.config.visConfig, ...animatedConfig.visConfig}
+        }
+      : undefined;
+    const renderConfig = frameConfig ?? layer.config;
     let frameData = data;
     if (
       isPlainObject(data) &&
@@ -404,22 +391,23 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
       // Static colors are cached by formatLayerData. Refresh only their accessors
       // against this frame, retaining field scales, geometry and feature styling.
       const accessors: Record<string, unknown> = {};
-      for (const channel of Object.values(renderLayer.visualChannels ?? {}) as VisualChannel[]) {
+      for (const channel of Object.values(layer.visualChannels ?? {}) as VisualChannel[]) {
         const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
-        if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderLayer.config[field]) {
+        if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderConfig[field]) {
           continue;
         }
         accessors[accessor] =
           typeof getAttributeValue === 'function'
-            ? getAttributeValue(renderLayer.config)
+            ? getAttributeValue(renderConfig)
             : typeof defaultValue === 'function'
-            ? defaultValue(renderLayer.config)
+            ? defaultValue(renderConfig)
             : defaultValue;
       }
       if (Object.keys(accessors).length) frameData = {...data, ...accessors};
     }
     // Layer is Layer class
-    const rendered = renderLayer.renderLayer({
+    const rendered = layer.renderLayer({
+      ...(frameConfig ? {frameConfig} : {}),
       data: frameData,
       gpuFilter,
       idx: layerIndex,

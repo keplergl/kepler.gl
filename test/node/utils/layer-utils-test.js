@@ -107,6 +107,18 @@ test('layerUtils -> layer property declarations and normalized updates retain co
 });
 
 test('layerUtils -> point and line frame properties leave saved settings and deck identity intact', t => {
+  class PrivatePointLayer extends PointLayer {
+    #renderCount = 0;
+
+    renderLayer(opts) {
+      this.#renderCount++;
+      return super.renderLayer(opts);
+    }
+
+    get renderCount() {
+      return this.#renderCount;
+    }
+  }
   const mapState = {...INITIAL_MAP_STATE, zoom: 10};
   const data = {
     data: [{position: [10, 20], sourcePosition: [10, 20, 0], targetPosition: [11, 21, 0]}],
@@ -121,7 +133,7 @@ test('layerUtils -> point and line frame properties leave saved settings and dec
     getColor: [10, 20, 30],
     getTargetColor: [10, 20, 30]
   };
-  for (const LayerClass of [PointLayer, LineLayer]) {
+  for (const LayerClass of [PointLayer, LineLayer, PrivatePointLayer]) {
     const layer = new LayerClass({id: 'animated', dataId: 'survey'});
     layer.updateLayerVisConfig({radius: 10, thickness: 2, outline: true, opacity: 0.8});
     layer.updateLayerConfig({
@@ -215,33 +227,52 @@ test('layerUtils -> point and line frame properties leave saved settings and dec
     );
     t.equal(layer.config, savedConfig, 'does not replace authored config');
     t.deepEqual(layer.config.visConfig, savedVisConfig, 'does not mutate authored visual settings');
+    if (layer instanceof PrivatePointLayer) {
+      t.equal(
+        layer.renderCount,
+        5,
+        'custom subclasses retain private state while delegating rendering'
+      );
+    }
   }
   t.end();
 });
 
 test('layerUtils -> custom declarations preserve caches and callbacks without leaking frame config on errors', t => {
   class CustomLayer extends Layer {
+    #renderCount = 0;
+
+    get renderCount() {
+      return this.#renderCount;
+    }
+
     get animatableProps() {
       return [
         ...super.animatableProps,
         {name: 'amplitude', label: 'Amplitude', range: [0, 100], step: 1}
       ];
     }
-    renderLayer({layerCallbacks}) {
-      this.renderCount = (this.renderCount || 0) + 1;
+    renderLayer({layerCallbacks, frameConfig = this.config}) {
+      this.#renderCount++;
       this.onRedrawNeeded = layerCallbacks.onRedrawNeeded;
-      const amplitude = this.config.visConfig.amplitude;
-      const unsupported = this.config.visConfig.unsupported;
+      const amplitude = frameConfig.visConfig.amplitude;
+      const unsupported = frameConfig.visConfig.unsupported;
       if (this.fail) {
-        this.config.visConfig.amplitude = 999;
-        this.config = {...this.config, label: 'temporary'};
+        frameConfig.visConfig.amplitude = 999;
+        frameConfig.label = 'temporary';
         throw new Error('Custom renderer failure');
       }
       return {
         id: this.id,
+        receiver: this,
+        authoredConfig: this.config,
         amplitude,
         unsupported,
-        getAmplitude: () => this.config.visConfig.amplitude
+        getAmplitude: () => {
+          // Deferred closures retain both the real private-field receiver and frame snapshot.
+          if (!this.#renderCount) throw new Error('Renderer has not run');
+          return frameConfig.visConfig.amplitude;
+        }
       };
     }
   }
@@ -263,6 +294,9 @@ test('layerUtils -> custom declarations preserve caches and callbacks without le
       {onLayerError, onRedrawNeeded}
     );
   const midpoint = render(2000);
+  t.notOk(onLayerError.called, 'private fields render without a proxy-brand error');
+  t.equal(midpoint.receiver, layer, 'renderer keeps the original layer receiver');
+  t.equal(midpoint.authoredConfig, config, 'authored config remains available during rendering');
   t.equal(midpoint.amplitude, 20, 'custom declaration enables its numeric property');
   t.equal(midpoint.unsupported, 7, 'undeclared numeric property is ignored');
   t.equal(render(3000).amplitude, 30, 'later frame uses the same custom property');
@@ -563,8 +597,8 @@ test('layerUtils -> custom declared colors render without visual channels or dat
       propertyTransitions: {color: propertyTrack('color', [0, 10, 20], [100, 110, 120])}
     },
     animatableProps: [{name: 'color', label: 'Color', type: 'color'}],
-    renderLayer({data: frameData}) {
-      return {color: this.config.color, data: frameData};
+    renderLayer({data: frameData, frameConfig = this.config}) {
+      return {color: frameConfig.color, data: frameData};
     }
   };
   const frame = renderDeckGlLayer(

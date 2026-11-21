@@ -66,8 +66,10 @@ const Body = styled.button<{$disabled: boolean; $dragging: boolean}>`
   width: 100%;
   height: 100%;
   min-width: 0;
+  box-sizing: border-box;
   border: 0;
-  padding: 0 9px;
+  padding: 0;
+  padding-inline: clamp(0px, calc(50% - 3px), 9px);
   border-radius: inherit;
   background: transparent;
   color: inherit;
@@ -88,13 +90,11 @@ const Edge = styled.button<{
   $side: 'start' | 'end';
   $selected: boolean;
   $disabled: boolean;
-  $cut: boolean;
 }>`
   position: absolute;
   top: -2px;
   bottom: 0;
-  ${props => (props.$side === 'start' ? 'left' : 'right')}: ${props =>
-    props.$cut ? '-9px' : '-3px'};
+  ${props => (props.$side === 'start' ? 'left' : 'right')}: clamp(-9px, calc(50% - 12px), -3px);
   width: 9px;
   margin: 0;
   padding: 0;
@@ -375,7 +375,6 @@ export default function AnimationBlock({
           aria-valuetext={seconds(range[index])}
           aria-disabled={disabled || !valid}
           $side={part}
-          $cut={range[0] === range[1]}
           $selected={selected || draft !== null}
           $disabled={disabled}
           onPointerDown={event => begin(part, event)}
