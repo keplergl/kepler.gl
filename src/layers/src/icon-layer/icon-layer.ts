@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import Window from 'global/window';
 import {BrushingExtension} from '@deck.gl/extensions';
 
@@ -215,6 +217,23 @@ export default class IconLayer extends Layer {
 
   get svgIconUrl() {
     return `${getApplicationConfig().cdnUrl}/icons/svg-icons.json`;
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        prop.name !== 'radius' ||
+        (!this.config[this.visualChannels.size.field] && !this.config.visConfig.fixedRadius)
+    );
   }
 
   get type(): 'icon' {

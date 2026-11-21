@@ -35,7 +35,14 @@ import {
 
 import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
-import {isFunction, getMapLayersFromSplitMaps, DataRow, isPlainObject} from '@kepler.gl/utils';
+import {
+  isFunction,
+  getMapLayersFromSplitMaps,
+  DataRow,
+  isPlainObject,
+  getLayerAnimationOpacityFactor,
+  getLayerAnimatedVisConfig
+} from '@kepler.gl/utils';
 import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
 import {getLayerZoomOpacityFactor} from './interaction-utils';
 
@@ -335,6 +342,7 @@ function applyZoomOpacityToDeckLayer(deckLayer: any, factor: number): any {
     opacity,
     // Fully faded layers are not pickable.
     visible: deckLayer.props?.visible !== false && factor > 0,
+    ...(factor === 0 ? {pickable: false} : {}),
     ...(subLayerProps ? {_subLayerProps: subLayerProps} : {})
   });
 }
@@ -351,6 +359,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapIndex,
     interactionConfig,
     animationConfig,
+    animationTimeMs,
     filters,
     mapLayers,
     experimentalContext
@@ -362,8 +371,31 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
+    const animatedVisConfig = getLayerAnimatedVisConfig(layer, animationTimeMs);
+    // Isolate frame values while keeping renderer caches and asynchronous redraw
+    // callbacks attached to the authored layer. Never swap its saved config.
+    const renderLayer = Object.keys(animatedVisConfig).length
+      ? new Proxy(
+          Object.create(layer, {
+            config: {
+              value: {
+                ...layer.config,
+                visConfig: {...layer.config.visConfig, ...animatedVisConfig}
+              },
+              writable: true,
+              configurable: true,
+              enumerable: true
+            }
+          }),
+          {
+            set(target, property, value) {
+              return Reflect.set(property === 'config' ? target : layer, property, value);
+            }
+          }
+        )
+      : layer;
     // Layer is Layer class
-    const rendered = layer.renderLayer({
+    const rendered = renderLayer.renderLayer({
       data,
       gpuFilter,
       idx: layerIndex,
@@ -378,7 +410,9 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
       dataset,
       experimentalContext
     });
-    const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
+    const factor =
+      getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig) *
+      getLayerAnimationOpacityFactor(layer, animationTimeMs);
     return applyZoomOpacityToDeckLayer(rendered, factor);
   } catch (error) {
     // A synchronous renderer failure must not escape into React and unmount
@@ -506,6 +540,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex?: number;
     interactionConfig: any;
     animationConfig: any;
+    animationTimeMs?: number | null;
     filters?: VisState['filters'];
     mapLayers: any;
     hasShadowEffect: boolean;
@@ -522,6 +557,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex,
     interactionConfig,
     animationConfig,
+    animationTimeMs,
     filters,
     mapLayers,
     hasShadowEffect,
@@ -573,6 +609,7 @@ function computeDeckLayersFromLayerOrder(
           mapIndex,
           interactionConfig,
           animationConfig,
+          animationTimeMs,
           filters,
           mapLayers,
           experimentalContext: {
@@ -589,7 +626,7 @@ function computeDeckLayersFromLayerOrder(
 
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
-  {visState, mapState, mapStyle}: any,
+  {visState, mapState, mapStyle, animationTimeMs}: any,
   options?: ComputeDeckLayersProps,
   layerCallbacks?: LayerCallbacks,
   deckGlProps?: any
@@ -653,6 +690,7 @@ export function computeDeckLayers(
                 mapIndex,
                 interactionConfig,
                 animationConfig,
+                animationTimeMs,
                 filters,
                 mapLayers,
                 hasShadowEffect,
@@ -688,6 +726,7 @@ export function computeDeckLayers(
             mapIndex,
             interactionConfig,
             animationConfig,
+            animationTimeMs,
             filters,
             mapLayers,
             experimentalContext: {

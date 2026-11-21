@@ -98,11 +98,18 @@ export default function CameraTourPlaybackControls({
   playback,
   disabled = false,
   showTime = true,
+  scrubLabel,
+  durationLabel,
   className
 }: {
-  playback: NonNullable<React.ContextType<typeof CameraTourPlaybackContext>>;
+  playback: Pick<
+    NonNullable<React.ContextType<typeof CameraTourPlaybackContext>>,
+    'elapsed' | 'duration' | 'playing' | 'play' | 'pause' | 'seek'
+  >;
   disabled?: boolean;
   showTime?: boolean;
+  scrubLabel?: string;
+  durationLabel?: string;
   className?: string;
 }) {
   const intl = useIntl();
@@ -152,7 +159,7 @@ export default function CameraTourPlaybackControls({
         step="any"
         value={playback.elapsed}
         disabled={disabled || !playback.duration}
-        aria-label={message('scrub', 'Camera tour time')}
+        aria-label={scrubLabel ?? message('scrub', 'Camera tour time')}
         aria-valuetext={seconds(playback.elapsed)}
         onChange={event => playback.seek(Number(event.target.value))}
       />
@@ -162,7 +169,7 @@ export default function CameraTourPlaybackControls({
             {seconds(playback.elapsed)}
           </output>{' '}
           /{' '}
-          <output aria-label={message('duration', 'Tour duration')}>
+          <output aria-label={durationLabel ?? message('duration', 'Tour duration')}>
             {seconds(playback.duration)}
           </output>
         </TimeReadout>

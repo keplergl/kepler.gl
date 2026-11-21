@@ -13,6 +13,8 @@ import {
 import type {VideoAnnotationFrame} from './video-annotation-encoder';
 
 jest.mock('@kepler.gl/utils', () => ({
+  getLayerOpacityFactor: jest.requireActual('../../../utils/src/layer-visibility')
+    .getLayerOpacityFactor,
   domtoimage: {toPng: jest.fn()},
   getApplicationConfig: jest.fn(() => ({escapeXhtmlForWebpack: false})),
   getViewportFromMapState: jest.fn(state => {
@@ -71,6 +73,66 @@ beforeEach(() => {
   jest.mocked(domtoimage.toPng).mockResolvedValue('data:image/png;base64,annotation');
 });
 afterEach(() => jest.restoreAllMocks());
+
+test('preview and encoded annotations share elapsed opacity, hold gaps and restore static zoom opacity', async () => {
+  const {canvas, frame} = setup({
+    annotations: [
+      {
+        ...annotation,
+        kind: 'POINT',
+        armLength: 20,
+        angle: 0,
+        opacityTransitions: [
+          {
+            id: 'in',
+            startTimeMs: 1000,
+            endTimeMs: 3000,
+            startValue: 0,
+            endValue: 0.6,
+            easing: 'linear'
+          },
+          {
+            id: 'dim',
+            startTimeMs: 5000,
+            endTimeMs: 7000,
+            startValue: 0.6,
+            endValue: 0.2,
+            easing: 'linear'
+          }
+        ]
+      }
+    ],
+    animationTimeMs: 0
+  });
+  const savedAnnotation = JSON.parse(JSON.stringify(frame.annotations[0]));
+  jest.mocked(getLayerZoomOpacityFactor).mockReturnValue(0.8);
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  expect(view.container).toBeEmptyDOMElement();
+  await act(async () => compositeVideoAnnotations(canvas, frame));
+  expect(domtoimage.toPng).not.toHaveBeenCalled();
+  for (const [time, expected] of [
+    [2000, 0.24],
+    [4000, 0.48],
+    [8000, 0.16],
+    [undefined, 0.8]
+  ] as const) {
+    frame.animationTimeMs = time;
+    view.rerender(<VideoAnnotationOverlay frame={frame} />);
+    const assertOpacity = (node: HTMLElement) => {
+      const parts = node.querySelectorAll<HTMLElement>('[data-annotation-id]');
+      expect(parts).toHaveLength(2);
+      parts.forEach(part => expect(Number(part.style.opacity)).toBeCloseTo(expected));
+    };
+    assertOpacity(view.container);
+    jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+      assertOpacity(node);
+      return 'data:image/png;base64,annotation';
+    });
+    await act(async () => compositeVideoAnnotations(canvas, frame));
+  }
+  expect(domtoimage.toPng).toHaveBeenCalledTimes(4);
+  expect(frame.annotations[0]).toEqual(savedAnnotation);
+});
 
 test('rasterizes the existing text and shape renderer at output resolution', async () => {
   const {canvas, frame} = setup({

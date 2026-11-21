@@ -3,6 +3,35 @@
 
 import {HexColor, RGBColor, RGBAColor} from './types';
 
+/** Layer opacity envelope in milliseconds from the independent animation player's start. */
+export type LayerVisibilityTiming = {
+  startTimeMs: number;
+  endTimeMs?: number;
+  fadeInMs: number;
+  fadeOutMs: number;
+};
+
+/** A transition between multipliers of the layer's authored opacity. */
+export type LayerOpacityTransition = {
+  id: string;
+  startTimeMs: number;
+  endTimeMs: number;
+  startValue: number;
+  endValue: number;
+  easing: 'linear' | 'easeInOut';
+};
+
+/** Numeric visual properties that a layer allows the animation player to override. */
+export type LayerAnimatableProp = {
+  name: string;
+  label: string;
+  range: [number, number];
+  step: number;
+};
+
+/** Endpoint values are validated against the property's supported range at playback time. */
+export type LayerPropertyTransition = LayerOpacityTransition;
+
 export type LayerBaseConfig = {
   dataId: string;
   label: string;
@@ -15,6 +44,9 @@ export type LayerBaseConfig = {
   hidden: boolean;
   /** Omit from the map legend when false. Missing or true keeps the layer in the legend. */
   isIncludedInLegend?: boolean;
+  visibilityTiming?: LayerVisibilityTiming;
+  opacityTransitions?: LayerOpacityTransition[];
+  propertyTransitions?: Record<string, LayerPropertyTransition[]>;
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];

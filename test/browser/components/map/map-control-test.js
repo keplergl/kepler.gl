@@ -3,7 +3,7 @@
 
 /* eslint-disable max-statements */
 import React from 'react';
-import {fireEvent} from '@testing-library/react';
+import {fireEvent, within} from '@testing-library/react';
 import {mount} from 'enzyme';
 import sinon from 'sinon';
 import test from 'tape';
@@ -22,6 +22,7 @@ import {
   EffectControlFactory,
   MapControlToolbarFactory,
   Icons,
+  RootContext,
   MapViewStateContextProvider
 } from '@kepler.gl/components';
 import {LOCALE_CODES, LOCALES} from '@kepler.gl/localization';
@@ -37,6 +38,7 @@ import {
   StateWFiles
 } from '../../../helpers/mock-state';
 import {initApplicationConfig} from '@kepler.gl/utils';
+import EffectAnimationPreviewProvider from '../../../../src/components/src/effects/effect-animation-preview';
 
 const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
 const MapControl = appInjector.get(MapControlFactory);
@@ -47,6 +49,49 @@ const MapControlToolbar = appInjector.get(MapControlToolbarFactory);
 const initialProps = mapFieldsSelector(mockKeplerProps);
 
 const mockStore = configureStore();
+
+test('MapControlFactory - registered animation action opens without existing animations', t => {
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  const view = renderWithThemeRTL(
+    <IntlWrapper>
+      <RootContext.Provider value={{current: root}}>
+        <EffectAnimationPreviewProvider effects={[]} enabled>
+          <MapControl
+            mapState={initialProps.mapState}
+            visStateActions={initialProps.visStateActions}
+            mapControls={{}}
+            datasets={{}}
+            layers={[]}
+            effects={[]}
+            annotations={[]}
+          />
+        </EffectAnimationPreviewProvider>
+      </RootContext.Provider>
+    </IntlWrapper>,
+    {container: root, baseElement: root}
+  );
+  try {
+    const map = within(root);
+    const buttons = map.queryAllByRole('button', {name: 'Animation'});
+    t.equal(buttons.length, 1, 'the app injector includes one Animation action in this map');
+    if (buttons.length === 1) {
+      fireEvent.click(buttons[0]);
+      const panel = map.queryByRole('region', {name: 'Animation panel'});
+      t.ok(panel, 'opens the animation panel through the registered factory dependencies');
+      if (panel) {
+        t.ok(
+          within(panel).queryByRole('button', {name: 'Add action'}),
+          'the editor can create the first action on a map without animations'
+        );
+      }
+    }
+  } finally {
+    view.unmount();
+    root.remove();
+  }
+  t.end();
+});
 
 test('MapControlFactory - memo preserves custom actions and their camera props', t => {
   let renders = 0;
@@ -169,7 +214,7 @@ test('MapControlFactory - display all options', t => {
       </MapViewStateContextProvider>
     </IntlWrapper>
   );
-  t.equal($.find('.map-control-action').length, 10, 'Should show 10 action panels');
+  t.equal($.find('.map-control-action').length, 11, 'Should show 11 action panels');
   t.equal(
     $.find('.toggle-chart-panel').length,
     0,

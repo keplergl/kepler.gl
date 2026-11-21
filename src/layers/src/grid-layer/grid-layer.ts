@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {EnhancedGridLayer} from '@kepler.gl/deckgl-layers';
 import AggregationLayer, {AggregationLayerConfig} from '../aggregation-layer';
@@ -87,6 +89,25 @@ export default class GridLayer extends AggregationLayer {
 
     this.registerVisConfig(gridVisConfigs);
     this.visConfigSettings.worldUnitSize.label = 'columns.grid.worldUnitSize';
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'coverage',
+        label: 'Coverage',
+        range: this.visConfigSettings.coverage.range,
+        step: this.visConfigSettings.coverage.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(prop => prop.name !== 'elevationScale' || this.config.visConfig.enable3d);
   }
 
   get type(): 'grid' {

@@ -25,6 +25,7 @@ import {
 
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('../../../utils/src/utils'),
+  ...jest.requireActual('../../../utils/src/layer-visibility'),
   getMapLayersFromSplitMaps: jest.requireActual('../../../utils/src/map-utils')
     .getMapLayersFromSplitMaps,
   getLayerBlendingParameters: jest.fn(() => ({blend: true})),
@@ -717,6 +718,14 @@ describe('globe export layer composition', () => {
     expect(state.mapState.longitude).toBe(12);
   });
 
+  test('passes the elapsed frame to globe layer visibility without changing saved state', () => {
+    getGlobeExportLayers(state, {mapIndex: 1, animationTimeMs: 3500});
+    expect(computeDeckLayers.mock.lastCall[0]).toMatchObject({animationTimeMs: 3500});
+    expect(state).not.toHaveProperty('animationTimeMs');
+    getGlobeExportLayers(state, {mapIndex: 1});
+    expect(computeDeckLayers.mock.lastCall[0].animationTimeMs).toBeUndefined();
+  });
+
   test('does not add a flat basemap behind the globe preview', () => {
     const props = getStaticMapProps(
       {...state, mapStyle: {...state.mapStyle, bottomMapStyle: {layers: [{id: 'flat'}]}}},
@@ -831,6 +840,150 @@ describe('flat export zoom fading', () => {
 
     expect(getFlatExportLayers(state, {mapIndex: 0})).toEqual([]);
     expect(state.visState.layers[0].config.isVisible).toBe(false);
+  });
+
+  test('combines scheduled fades and zoom fades at elapsed export times and restores static opacity', () => {
+    const {source, state} = setup();
+    const timing = {startTimeMs: 2000, endTimeMs: 6000, fadeInMs: 1000, fadeOutMs: 1000};
+    state.visState.layers[0].config.visibilityTiming = timing;
+    const frames = [0, 2000, 2500, 3500, 5500, 6000].map(animationTimeMs =>
+      getFlatExportLayers(state, {
+        mapIndex: 0,
+        viewState: {...state.mapState, zoom: 3},
+        animationTimeMs
+      })
+    );
+    expect(frames.map(layers => layers.map(layer => layer.props.opacity))).toEqual([
+      [],
+      [],
+      [0.2],
+      [0.4],
+      [0.2],
+      []
+    ]);
+    expect(frames[2][0].props._subLayerProps['polygons-stroke'].opacity).toBe(0.15);
+    expect(getFlatExportLayers(state, {mapIndex: 0})[0].props.opacity).toBe(0.8);
+    expect(state.visState.layers[0].config.visibilityTiming).toEqual(timing);
+    expect(source.props.opacity).toBe(0.8);
+  });
+
+  test('multiple opacity blocks hold through gaps and match live rendering at each export frame', () => {
+    const {source, state} = setup();
+    const transitions = [
+      {
+        id: 'in',
+        startTimeMs: 1000,
+        endTimeMs: 3000,
+        startValue: 0,
+        endValue: 0.5,
+        easing: 'linear'
+      },
+      {
+        id: 'up',
+        startTimeMs: 6000,
+        endTimeMs: 8000,
+        startValue: 0.5,
+        endValue: 1,
+        easing: 'linear'
+      },
+      {
+        id: 'out',
+        startTimeMs: 10000,
+        endTimeMs: 12000,
+        startValue: 1,
+        endValue: 0,
+        easing: 'linear'
+      }
+    ];
+    const config = state.visState.layers[0].config;
+    config.opacityTransitions = transitions;
+    config.visibilityTiming = {startTimeMs: 0, endTimeMs: 1000, fadeInMs: 0, fadeOutMs: 0};
+    const saved = JSON.stringify(config);
+    const times = [0, 2000, 4000, 7000, 9000, 11000, 12000];
+    const viewState = {...state.mapState, zoom: 3};
+    const frames = times.map(animationTimeMs =>
+      getFlatExportLayers(state, {
+        mapIndex: 0,
+        viewState,
+        animationTimeMs
+      })
+    );
+    const live = times.map(animationTimeMs =>
+      realComputeDeckLayers(
+        {...state, mapState: viewState, animationTimeMs},
+        {mapIndex: 0, primaryMap: true}
+      )
+        .flat(Infinity)
+        .filter(layer => layer.props.visible !== false)
+    );
+    const expected = [0, 0.1, 0.2, 0.3, 0.4, 0.2, 0];
+    frames.forEach((frame, index) => {
+      expect(frame.length).toBe(expected[index] === 0 ? 0 : 1);
+      expect(live[index].length).toBe(frame.length);
+      if (frame.length) {
+        expect(frame[0].props.opacity).toBeCloseTo(expected[index]);
+        expect(frame[0].props.opacity).toBe(live[index][0].props.opacity);
+        expect(frame[0].props.pickable).toBe(false);
+      }
+    });
+    expect(frames[1][0].props._subLayerProps['polygons-stroke'].opacity).toBeCloseTo(0.075);
+    expect(getFlatExportLayers(state, {mapIndex: 0})[0].props.opacity).toBe(0.8);
+    expect(JSON.stringify(config)).toBe(saved);
+    expect(source.props.opacity).toBe(0.8);
+  });
+
+  test('declared native property values match live and export frames alongside opacity transitions', () => {
+    const {source, state} = setup();
+    const layer = state.visState.layers[0];
+    layer.animatableProps = [
+      {name: 'opacity', label: 'Opacity', range: [0, 1], step: 0.01},
+      {name: 'radius', label: 'Radius', range: [0, 100], step: 0.1}
+    ];
+    layer.config.visConfig = {radius: 9, opacity: 0.8};
+    layer.config.propertyTransitions = {
+      opacity: [
+        {id: 'dim', startTimeMs: 0, endTimeMs: 2000, startValue: 1, endValue: 0.5, easing: 'linear'}
+      ],
+      radius: [
+        {
+          id: 'grow',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: 2,
+          endValue: 6,
+          easing: 'linear'
+        },
+        {
+          id: 'shrink',
+          startTimeMs: 8000,
+          endTimeMs: 10000,
+          startValue: 6,
+          endValue: 4,
+          easing: 'linear'
+        }
+      ]
+    };
+    layer.renderLayer = function () {
+      return [source.clone({radiusScale: this.config.visConfig.radius})];
+    };
+    const saved = JSON.stringify(layer.config);
+    const viewState = {...state.mapState, zoom: 3};
+    const times = [0, 2000, 5000, 9000, 12000];
+    const expectedRadius = [2, 4, 6, 5, 4];
+    const expectedOpacity = [0.4, 0.2, 0.2, 0.2, 0.2];
+    times.forEach((animationTimeMs, index) => {
+      const [live] = realComputeDeckLayers(
+        {...state, mapState: viewState, animationTimeMs},
+        {mapIndex: 0, primaryMap: true}
+      ).flat(Infinity);
+      const [exported] = getFlatExportLayers(state, {mapIndex: 0, viewState, animationTimeMs});
+      expect(exported.props.radiusScale).toBe(expectedRadius[index]);
+      expect(exported.props.radiusScale).toBe(live.props.radiusScale);
+      expect(exported.props.opacity).toBeCloseTo(expectedOpacity[index]);
+      expect(exported.props.opacity).toBe(live.props.opacity);
+    });
+    expect(getFlatExportLayers(state, {mapIndex: 0})[0].props.radiusScale).toBe(9);
+    expect(JSON.stringify(layer.config)).toBe(saved);
   });
 
   test('excludes split-hidden layers and creates separate visible instances', () => {

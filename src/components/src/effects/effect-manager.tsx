@@ -202,7 +202,7 @@ function EffectManagerFactory(
                     onClick={preview.run}
                     title={intl.formatMessage({
                       id: 'effectManager.runAnimation',
-                      defaultMessage: 'Run effect animations for 10 seconds'
+                      defaultMessage: 'Play the animation'
                     })}
                   >
                     <Play height="16px" />

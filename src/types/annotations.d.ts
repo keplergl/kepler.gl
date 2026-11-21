@@ -6,6 +6,7 @@ import {
   AnnotationTextSide,
   AnnotationTextVerticalPosition
 } from '@kepler.gl/constants';
+import {LayerOpacityTransition} from './layers';
 
 export {AnnotationKind} from '@kepler.gl/constants';
 export {isAnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
@@ -14,6 +15,7 @@ export type BaseAnnotation = {
   id: string;
   kind: AnnotationKind;
   isVisible: boolean;
+  opacityTransitions?: LayerOpacityTransition[];
   autoSize: boolean;
   autoSizeY: boolean;
   /** [lng, lat] or [lng, lat, altitudeMeters]. Missing altitude is treated as 0. */

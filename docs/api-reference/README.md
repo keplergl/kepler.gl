@@ -28,6 +28,7 @@
     - [Actions and Updaters](./actions/actions.md)
     - [Data Processor](./processors/processors.md)
     - [Schemas](./schemas/README.md)
+    - [Layer animations](./layer-animations.md)
 
 ## Overview
 

@@ -74,12 +74,14 @@ test.each(
   }
 );
 
-test('freezes pixels and camera, and waits for annotation composition before encoding', async () => {
+test('freezes pixels, camera and animation time before annotation composition and encoding', async () => {
   const pending = deferred();
   jest.mocked(compositeVideoAnnotations).mockReturnValueOnce(pending.promise);
   const {frame, encoder, canvas} = setup();
+  frame.animationTimeMs = 2500;
   const result = encoder.add(canvas);
   frame.mapState.zoom = 10;
+  frame.animationTimeMs = 9000;
   await Promise.resolve();
   await Promise.resolve();
   expect(mockAdd).not.toHaveBeenCalled();
@@ -88,6 +90,7 @@ test('freezes pixels and camera, and waits for annotation composition before enc
   expect([output.width, output.height]).toEqual([1280, 720]);
   expect(output.getContext('2d')!.drawImage).toHaveBeenCalledWith(canvas, 0, 0);
   expect(snapshot.mapState.zoom).toBe(4);
+  expect(snapshot.animationTimeMs).toBe(2500);
   pending.resolve();
   await result;
   expect(mockAdd).toHaveBeenCalledWith(output);

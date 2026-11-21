@@ -10,6 +10,7 @@ import {
   createGeoArrowPointVector,
   getNeighbors,
   getGeojsonLayerMetaFromArrow,
+  Layer,
   LayerClasses,
   KeplerGlLayers
 } from '@kepler.gl/layers';
@@ -18,7 +19,10 @@ import {
   findDefaultLayer,
   getLayerHoverProp,
   getLayerOrderFromLayers,
-  computeDeckLayers
+  computeDeckLayers,
+  renderDeckGlLayer,
+  INITIAL_MAP_STATE,
+  INITIAL_VIS_STATE
 } from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
 
@@ -44,6 +48,265 @@ import {convertStructToFixedSizeList} from '../../../src/deckgl-arrow-layers/src
 import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 
 const defaultColorLayerTypes = ['a5', 's2', 'geohash', 'hexagonId', 'point', 'icon'];
+
+const propertyTrack = (id, startValue, endValue) => [
+  {id, startTimeMs: 1000, endTimeMs: 3000, startValue, endValue, easing: 'linear'}
+];
+
+test('layerUtils -> layer property declarations and normalized updates retain compatibility', t => {
+  const transitions = {radius: propertyTrack('grow', 5, 25)};
+  const layer = new PointLayer({dataId: 'survey', propertyTransitions: transitions});
+  t.deepEqual(layer.config.propertyTransitions, transitions, 'accepts property tracks');
+  t.notEqual(layer.config.propertyTransitions.radius, transitions.radius, 'clones incoming tracks');
+  transitions.radius[0].endValue = 90;
+  t.equal(layer.config.propertyTransitions.radius[0].endValue, 25, 'detaches transition values');
+  t.deepEqual(
+    new Layer({}).animatableProps.map(prop => prop.name),
+    ['opacity'],
+    'base layers offer opacity'
+  );
+  t.ok(
+    layer.animatableProps.some(prop => prop.name === 'radius'),
+    'point radius is renderable'
+  );
+  layer.updateLayerConfig({sizeField: {name: 'size', fieldIdx: 0}});
+  t.notOk(
+    layer.animatableProps.some(prop => prop.name === 'radius'),
+    'data-driven point size omits a no-op radius control'
+  );
+  const icon = new KeplerGlLayers.IconLayer({dataId: 'survey'});
+  icon.updateLayerVisConfig({fixedRadius: true});
+  t.notOk(
+    icon.animatableProps.some(prop => prop.name === 'radius'),
+    'fixed icon radius omits a no-op control'
+  );
+  for (const LayerClass of [KeplerGlLayers.GridLayer, KeplerGlLayers.HexagonLayer]) {
+    const aggregation = new LayerClass({dataId: 'survey'});
+    t.ok(
+      aggregation.animatableProps.some(prop => prop.name === 'coverage'),
+      'aggregation coverage is declared'
+    );
+    aggregation.updateLayerVisConfig({enable3d: false});
+    t.notOk(
+      aggregation.animatableProps.some(prop => prop.name === 'elevationScale'),
+      'flat aggregation omits elevation scale'
+    );
+    aggregation.updateLayerVisConfig({enable3d: true});
+    t.ok(
+      aggregation.animatableProps.some(prop => prop.name === 'elevationScale'),
+      '3D aggregation declares elevation scale'
+    );
+  }
+  layer.updateLayerConfig({propertyTransitions: {radius: []}});
+  t.deepEqual(layer.config.propertyTransitions, {radius: []}, 'retains explicit cleared tracks');
+  layer.updateLayerConfig({propertyTransitions: {radius: propertyTrack('invalid', 0, Infinity)}});
+  t.notOk(layer.config.propertyTransitions?.radius, 'invalid values do not become live tracks');
+  layer.updateLayerConfig({propertyTransitions: undefined});
+  t.notOk(Object.hasOwn(layer.config, 'propertyTransitions'), 'supports removing the property map');
+  t.end();
+});
+
+test('layerUtils -> point and line frame properties leave saved settings and deck identity intact', t => {
+  const mapState = {...INITIAL_MAP_STATE, zoom: 10};
+  const data = {
+    data: [{position: [10, 20], sourcePosition: [10, 20, 0], targetPosition: [11, 21, 0]}],
+    textLabels: [],
+    getPosition: d => d.position,
+    getSourcePosition: d => d.sourcePosition,
+    getTargetPosition: d => d.targetPosition,
+    getRadius: 1,
+    getWidth: 1,
+    getFillColor: [10, 20, 30],
+    getLineColor: [10, 20, 30],
+    getColor: [10, 20, 30],
+    getTargetColor: [10, 20, 30]
+  };
+  for (const LayerClass of [PointLayer, LineLayer]) {
+    const layer = new LayerClass({id: 'animated', dataId: 'survey'});
+    layer.updateLayerVisConfig({radius: 10, thickness: 2, outline: true, opacity: 0.8});
+    layer.updateLayerConfig({
+      propertyTransitions: {
+        radius: propertyTrack('grow', 5, 25),
+        thickness: propertyTrack('stroke', 2, 8),
+        opacity: propertyTrack('fade', 0, 1),
+        unsupported: propertyTrack('unknown', 100, 200)
+      }
+    });
+    const savedConfig = layer.config;
+    const savedVisConfig = cloneDeep(layer.config.visConfig);
+    const props = {
+      layer,
+      layerIndex: 0,
+      datasets: {survey: {gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}}},
+      data,
+      mapState,
+      interactionConfig: {
+        ...INITIAL_VIS_STATE.interactionConfig,
+        zoomOpacity: {
+          enabled: true,
+          config: {
+            controllers: [
+              {id: 'fade', layerIds: [layer.id], stops: {appear: 9, full: 11, fade: 15, gone: 17}}
+            ]
+          }
+        }
+      },
+      animationConfig: INITIAL_VIS_STATE.animationConfig
+    };
+    const onLayerError = sinon.spy();
+    const render = time => renderDeckGlLayer({...props, animationTimeMs: time}, {onLayerError})[0];
+    const original = render(undefined);
+    const animated = render(2000);
+    t.notOk(onLayerError.called, `${layer.type} renders the animation without errors`);
+    t.equal(animated.id, original.id, `${layer.type} keeps the deck layer identity`);
+    t.equal(
+      animated.props.opacity,
+      0.2,
+      `${layer.type} combines saved opacity, property opacity and zoom once`
+    );
+    if (layer.type === 'point') {
+      t.equal(animated.props.lineWidthScale, 5, 'point stroke interpolates');
+      t.equal(
+        animated.props.radiusScale,
+        original.props.radiusScale * 1.5,
+        'point radius interpolates without rebuilding data'
+      );
+      t.equal(
+        render(5000).props.radiusScale,
+        original.props.radiusScale * 2.5,
+        'point radius holds its final value'
+      );
+      const hovered = renderDeckGlLayer(
+        {
+          ...props,
+          animationTimeMs: 2000,
+          hoverInfo: {picked: true, layer: {props: {id: layer.id}}, object: data.data[0]}
+        },
+        {onLayerError}
+      );
+      t.equal(hovered.length, 2, 'preserves the point hover overlay');
+      t.equal(
+        hovered[1].props.radiusScale,
+        animated.props.radiusScale,
+        'hover radius follows the same frame'
+      );
+    } else {
+      t.equal(
+        animated.props.widthScale,
+        original.props.widthScale * 2.5,
+        'line stroke interpolates'
+      );
+      t.equal(
+        render(5000).props.widthScale,
+        original.props.widthScale * 4,
+        'line stroke holds its final value'
+      );
+    }
+    const restored = render(null);
+    t.equal(
+      restored.props.opacity,
+      original.props.opacity,
+      'stopping restores saved opacity with zoom'
+    );
+    t.equal(
+      restored.props.radiusScale ?? restored.props.widthScale,
+      original.props.radiusScale ?? original.props.widthScale,
+      'stopping restores the saved numeric setting'
+    );
+    t.equal(layer.config, savedConfig, 'does not replace authored config');
+    t.deepEqual(layer.config.visConfig, savedVisConfig, 'does not mutate authored visual settings');
+  }
+  t.end();
+});
+
+test('layerUtils -> custom declarations preserve caches and callbacks without leaking frame config on errors', t => {
+  class CustomLayer extends Layer {
+    get animatableProps() {
+      return [
+        ...super.animatableProps,
+        {name: 'amplitude', label: 'Amplitude', range: [0, 100], step: 1}
+      ];
+    }
+    renderLayer({layerCallbacks}) {
+      this.renderCount = (this.renderCount || 0) + 1;
+      this.onRedrawNeeded = layerCallbacks.onRedrawNeeded;
+      const amplitude = this.config.visConfig.amplitude;
+      const unsupported = this.config.visConfig.unsupported;
+      if (this.fail) {
+        this.config.visConfig.amplitude = 999;
+        this.config = {...this.config, label: 'temporary'};
+        throw new Error('Custom renderer failure');
+      }
+      return {
+        id: this.id,
+        amplitude,
+        unsupported,
+        getAmplitude: () => this.config.visConfig.amplitude
+      };
+    }
+  }
+  const layer = new CustomLayer({id: 'custom', dataId: 'survey'});
+  layer.updateLayerVisConfig({amplitude: 4, unsupported: 7});
+  layer.updateLayerConfig({
+    propertyTransitions: {
+      amplitude: propertyTrack('oscillate', 10, 30),
+      unsupported: propertyTrack('ignored', 100, 200)
+    }
+  });
+  const config = layer.config;
+  const saved = cloneDeep(config);
+  const onLayerError = sinon.spy();
+  const onRedrawNeeded = sinon.spy();
+  const render = time =>
+    renderDeckGlLayer(
+      {layer, datasets: {}, mapState: {}, animationTimeMs: time},
+      {onLayerError, onRedrawNeeded}
+    );
+  const midpoint = render(2000);
+  t.equal(midpoint.amplitude, 20, 'custom declaration enables its numeric property');
+  t.equal(midpoint.unsupported, 7, 'undeclared numeric property is ignored');
+  t.equal(render(3000).amplitude, 30, 'later frame uses the same custom property');
+  t.equal(midpoint.getAmplitude(), 20, 'deferred accessors retain their own frame values');
+  t.equal(layer.renderCount, 2, 'render cache writes persist on the original layer');
+  layer.onRedrawNeeded();
+  t.ok(onRedrawNeeded.calledOnce, 'redraw callback remains available on the original layer');
+  const log = sinon.stub(Console, 'error');
+  try {
+    layer.fail = true;
+    t.deepEqual(render(2000), [], 'contains a renderer exception');
+    t.ok(onLayerError.calledOnce, 'reports the renderer exception');
+    t.equal(layer.config, config, 'a throwing renderer cannot replace saved config');
+    t.deepEqual(layer.config, saved, 'a throwing renderer cannot leak frame visual settings');
+    layer.fail = false;
+    t.equal(render(null).amplitude, 4, 'static rendering recovers authored settings');
+  } finally {
+    log.restore();
+  }
+  t.end();
+});
+
+test('layerUtils -> opacity tracks respect a custom layer whitelist and declared range', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const layer = {
+    id: 'custom-opacity',
+    animatableProps: [],
+    config: {
+      visConfig: {opacity: 0.8},
+      propertyTransitions: {opacity: propertyTrack('fade', 0, 1)}
+    },
+    renderLayer() {
+      return deckLayer({opacity: this.config.visConfig.opacity});
+    }
+  };
+  const render = () =>
+    renderDeckGlLayer({layer, datasets: {}, mapState: {}, animationTimeMs: 2000}, {});
+  t.equal(render().props.opacity, 0.8, 'an undeclared opacity track stays static');
+  layer.animatableProps = [{name: 'opacity', label: 'Opacity', range: [0.25, 0.75], step: 0.01}];
+  t.equal(render().props.opacity, 0.8, 'out-of-range opacity endpoints stay static');
+  layer.config.propertyTransitions.opacity = propertyTrack('fade', 0.25, 0.75);
+  t.equal(render().props.opacity, 0.4, 'a declared valid opacity track multiplies saved opacity');
+  t.end();
+});
 
 test('layerUtils -> a render failure leaves other layers and datasets usable', t => {
   const error = new Error('Cannot render geometry');
@@ -114,6 +377,169 @@ test('layerUtils -> a render failure leaves other layers and datasets usable', t
   } finally {
     log.restore();
   }
+  t.end();
+});
+
+test('layerUtils -> timed visibility composes with zoom fades without changing saved opacity', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const original = deckLayer({
+    opacity: 0.8,
+    visible: true,
+    pickable: true,
+    _subLayerProps: {stroke: {opacity: 0.6}}
+  });
+  const timing = {startTimeMs: 1000, endTimeMs: 5000, fadeInMs: 2000, fadeOutMs: 1000};
+  const layer = {
+    id: 'timed',
+    config: {dataId: 'survey', isVisible: true, visibilityTiming: timing},
+    renderLayer: () => original
+  };
+  const visState = {
+    datasets: {survey: {}},
+    layers: [layer],
+    layerData: [{}],
+    layerOrder: ['timed'],
+    effects: [],
+    splitMaps: [],
+    animationConfig: {},
+    interactionConfig: {
+      zoomOpacity: {
+        enabled: true,
+        config: {
+          controllers: [
+            {id: 'fade', layerIds: ['timed'], stops: {appear: 0, full: 2, fade: 5, gone: 7}}
+          ]
+        }
+      }
+    }
+  };
+  const render = (animationTimeMs, layerOrder = ['timed']) =>
+    computeDeckLayers(
+      {visState: {...visState, layerOrder}, mapState: {zoom: 1}, animationTimeMs},
+      {primaryMap: false, layersForDeck: {timed: true}}
+    )[0];
+  for (const order of [['timed'], [{id: 'group', isVisible: true, layerOrder: ['timed']}]]) {
+    const rendered = render(2000, order);
+    t.equal(
+      rendered.props.opacity,
+      0.2,
+      'combines saved, time and zoom opacity in flat/grouped layers'
+    );
+    t.equal(rendered.props._subLayerProps.stroke.opacity, 0.15, 'fades stroke overrides too');
+    t.equal(render(0, order).props.visible, false, 'hidden before the scheduled start');
+    t.equal(render(0, order).props.pickable, false, 'hidden scheduled layers cannot be picked');
+    t.equal(render(5000, order).props.visible, false, 'hidden at the scheduled end');
+    t.equal(render(null, order).props.opacity, 0.4, 'leaving preview keeps only the zoom fade');
+  }
+  t.equal(original.props.opacity, 0.8, 'does not overwrite the authored opacity');
+  t.equal(original.props._subLayerProps.stroke.opacity, 0.6, 'does not overwrite stroke opacity');
+  t.deepEqual(layer.config.visibilityTiming, timing, 'does not modify the schedule');
+  original.props.visible = false;
+  t.equal(render(3000).props.visible, false, 'a manually hidden layer stays hidden');
+  t.deepEqual(
+    computeDeckLayers(
+      {
+        visState: {...visState, layers: [], layerOrder: ['timed']},
+        mapState: {},
+        animationTimeMs: 3000
+      },
+      {primaryMap: false, layersForDeck: {timed: true}}
+    ),
+    [],
+    'a deleted scheduled layer is ignored'
+  );
+  t.end();
+});
+
+test('layerUtils -> opacity transitions hold gaps and compose with zoom fades', t => {
+  const deckLayer = props => ({props, clone: next => deckLayer({...props, ...next})});
+  const original = deckLayer({opacity: 0.8, visible: true, pickable: true});
+  const opacityTransitions = [
+    {
+      id: 'in',
+      startTimeMs: 1000,
+      endTimeMs: 3000,
+      startValue: 0.25,
+      endValue: 0.75,
+      easing: 'linear'
+    },
+    {
+      id: 'out',
+      startTimeMs: 5000,
+      endTimeMs: 6000,
+      startValue: 0.75,
+      endValue: 0,
+      easing: 'linear'
+    },
+    {id: 'cut', startTimeMs: 8000, endTimeMs: 8000, startValue: 0, endValue: 1, easing: 'linear'}
+  ];
+  const layer = {
+    id: 'opacity',
+    config: {dataId: 'survey', isVisible: true, opacityTransitions},
+    renderLayer: () => original
+  };
+  const visState = {
+    datasets: {survey: {}},
+    layers: [layer],
+    layerData: [{}],
+    layerOrder: ['opacity'],
+    effects: [],
+    splitMaps: [],
+    animationConfig: {},
+    interactionConfig: {
+      zoomOpacity: {
+        enabled: true,
+        config: {
+          controllers: [
+            {id: 'fade', layerIds: ['opacity'], stops: {appear: 0, full: 2, fade: 5, gone: 7}}
+          ]
+        }
+      }
+    }
+  };
+  const render = (animationTimeMs, layerOrder) =>
+    computeDeckLayers(
+      {visState: {...visState, layerOrder}, mapState: {zoom: 1}, animationTimeMs},
+      {primaryMap: false, layersForDeck: {opacity: true}}
+    )[0];
+  for (const order of [['opacity'], [{id: 'group', isVisible: true, layerOrder: ['opacity']}]]) {
+    for (const [time, expected] of [
+      [0, 0.1],
+      [2000, 0.2],
+      [4000, 0.3],
+      [5500, 0.15],
+      [7000, 0],
+      [8000, 0.4],
+      [9000, 0.4]
+    ]) {
+      t.ok(
+        Math.abs(render(time, order).props.opacity - expected) < 1e-9,
+        `evaluates opacity at ${time} ms`
+      );
+    }
+    t.equal(render(7000, order).props.visible, false, 'holds zero opacity between transitions');
+    t.equal(render(7000, order).props.pickable, false, 'a held zero opacity cannot be picked');
+    t.equal(
+      render(null, order).props.opacity,
+      0.4,
+      'leaving preview restores authored opacity with zoom fade'
+    );
+  }
+  t.equal(original.props.opacity, 0.8, 'does not change the saved opacity');
+  t.equal(opacityTransitions[0].startValue, 0.25, 'does not change authored transition values');
+  layer.config.visibilityTiming = {startTimeMs: 10000, fadeInMs: 0, fadeOutMs: 0};
+  layer.config.opacityTransitions = [];
+  t.equal(
+    render(2000, ['opacity']).props.opacity,
+    0.4,
+    'an explicit empty track overrides legacy timing'
+  );
+  delete layer.config.opacityTransitions;
+  t.equal(
+    render(2000, ['opacity']).props.visible,
+    false,
+    'legacy visibility still applies without a new track'
+  );
   t.end();
 });
 

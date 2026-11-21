@@ -4,7 +4,7 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {createPortal, flushSync} from 'react-dom';
-import {domtoimage, getViewportFromMapState} from '@kepler.gl/utils';
+import {domtoimage, getViewportFromMapState, getLayerOpacityFactor} from '@kepler.gl/utils';
 import {getLayerZoomOpacityFactor, getZoomOpacityAnnotationTargetId} from '@kepler.gl/reducers';
 import {fontFamily} from '@kepler.gl/styles';
 import AnnotationOverlay from '../annotations/annotation-overlay';
@@ -63,6 +63,7 @@ export function VideoAnnotationOverlay({
     annotation =>
       annotation.isVisible &&
       opacity(annotation.id) > 0 &&
+      getLayerOpacityFactor(annotation, frame.animationTimeMs) > 0 &&
       ((annotation.mapIndex ?? 0) === 0 ||
         (swipePercentage !== undefined && annotation.mapIndex === 1)) &&
       (!isGlobeEnabled || isAnnotationVisibleOnGlobe(annotation, viewport))
@@ -105,6 +106,7 @@ export function VideoAnnotationOverlay({
           <AnnotationOverlay
             annotations={annotations}
             getAnnotationOpacity={opacity}
+            animationTimeMs={frame.animationTimeMs}
             selectedAnnotationId={null}
             isEditingAnnotationText={false}
             isAnnotationMode={false}

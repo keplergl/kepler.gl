@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 
 import {BrushingExtension} from '@deck.gl/extensions';
@@ -388,6 +390,29 @@ export default class PointLayer extends Layer {
           return pointPosAccessor(this.config.columns)(dataContainer);
       }
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      },
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'radius' || !this.config.sizeField) &&
+        (prop.name !== 'thickness' || this.config.visConfig.outline)
+    );
   }
 
   get type(): 'point' {

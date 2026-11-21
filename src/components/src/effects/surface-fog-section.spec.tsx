@@ -79,7 +79,9 @@ describe('surface fog elevation editing', () => {
         ) as HTMLInputElement
       ).value
     ).toBe('0');
-    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    expect(
+      (dialog.getByRole('checkbox', {name: 'Linear easing'}) as HTMLInputElement).checked
+    ).toBe(true);
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -122,7 +124,9 @@ describe('surface fog elevation editing', () => {
         ) as HTMLInputElement
       ).value
     ).toBe('0');
-    expect((dialog.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    expect(
+      (dialog.getByRole('checkbox', {name: 'Linear easing'}) as HTMLInputElement).checked
+    ).toBe(false);
   });
 
   test('uses current effect identity and callback after replacement', () => {

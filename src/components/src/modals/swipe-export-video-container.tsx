@@ -32,6 +32,7 @@ import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
   CAMERA_TOUR_PRESET,
   getCameraTourExportKeyframes,
+  getAnimationExportDuration,
   resolveCameraTourExportFrame
 } from './camera-tour-export';
 import {SwipeExportVideoPreview} from './swipe-export-video-preview';
@@ -261,6 +262,7 @@ export class SwipeExportVideoPanelContainer extends Component<
         annotations: this.props.mapData.visState.annotations || [],
         interactionConfig: this.props.mapData.visState.interactionConfig,
         mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+        animationTimeMs: this.state.currentTimeMs,
         swipePercentage: getSwipePercentageAtTime(
           this.state.currentTimeMs,
           this.state.durationMs,
@@ -384,7 +386,7 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   setMediaType = (mediaType: string) => this.setStateAndNotify({mediaType});
   setCameraPreset = (cameraPreset: string) => {
-    const duration = getCameraTourDuration(this.props.mapData.visState.cameraTour);
+    const duration = getAnimationExportDuration(this.props.mapData.visState);
     this.setStateAndNotify({
       cameraPreset,
       ...(cameraPreset === CAMERA_TOUR_PRESET && duration > 0 ? {durationMs: duration} : {})
@@ -653,6 +655,7 @@ export class SwipeExportVideoPanelContainer extends Component<
             swipeEndPct={swipeEndPct}
             swipeEasing={swipeEasing}
             currentTimeMs={currentTimeMs}
+            animationTimeMs={isActive ? currentTimeMs : undefined}
             backgroundColor={this.getBackgroundColor()}
           />
           <SwipeExportSettings
@@ -662,7 +665,7 @@ export class SwipeExportVideoPanelContainer extends Component<
             fileName={fileName}
             cameraPreset={cameraPreset}
             hasCameraTour={cameraTourDurationMs > 0}
-            cameraTourDurationMs={cameraTourDurationMs}
+            cameraTourDurationMs={getAnimationExportDuration(mapData.visState)}
             frameRate={timecode.framerate}
             onChangeDuration={this.setDuration}
             onChangeMediaType={this.setMediaType}

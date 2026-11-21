@@ -12,6 +12,148 @@ import {AnnotationKind} from '@kepler.gl/constants';
 
 const initialState = {...INITIAL_VIS_STATE};
 
+test('#visStateReducer -> annotation opacity tracks normalize, clone, survive kind changes and clear', t => {
+  const first = {
+    id: 'first',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: 0,
+    endValue: 1,
+    easing: 'linear'
+  };
+  const last = {
+    id: 'last',
+    startTimeMs: 5000,
+    endTimeMs: 7000,
+    startValue: 1,
+    endValue: 0,
+    easing: 'easeInOut'
+  };
+  const opacityTransitions = [last, first];
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({id: 'animated', opacityTransitions})
+  );
+  t.deepEqual(
+    state.annotations[0].opacityTransitions,
+    [first, last],
+    'adding normalizes multiple transitions'
+  );
+  t.notEqual(
+    state.annotations[0].opacityTransitions,
+    opacityTransitions,
+    'adding clones the array'
+  );
+  t.notEqual(state.annotations[0].opacityTransitions[0], first, 'adding clones entries');
+  t.equal(opacityTransitions[0].id, 'last', 'adding preserves input order');
+  state = reducer(state, VisStateActions.updateAnnotation('animated', {label: 'Animated label'}));
+  t.deepEqual(
+    state.annotations[0].opacityTransitions,
+    [first, last],
+    'unrelated updates preserve timing'
+  );
+  for (const kind of [
+    AnnotationKind.TEXT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER,
+    AnnotationKind.POINT
+  ]) {
+    state = reducer(state, VisStateActions.updateAnnotation('animated', {kind}));
+    t.deepEqual(
+      state.annotations[0].opacityTransitions,
+      [first, last],
+      `${kind} retains animation`
+    );
+  }
+  state = reducer(state, VisStateActions.duplicateAnnotation('animated'));
+  t.deepEqual(
+    state.annotations[0].opacityTransitions,
+    state.annotations[1].opacityTransitions,
+    'duplicate retains track values'
+  );
+  t.notEqual(
+    state.annotations[0].opacityTransitions,
+    state.annotations[1].opacityTransitions,
+    'duplicate owns its track'
+  );
+  t.notEqual(
+    state.annotations[0].opacityTransitions[0],
+    state.annotations[1].opacityTransitions[0],
+    'duplicate owns its entries'
+  );
+  const update = [{...first, endValue: 0.4}];
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation('animated', {opacityTransitions: update})
+  );
+  const target = state.annotations.find(item => item.id === 'animated');
+  t.deepEqual(target.opacityTransitions, update, 'updates the selected annotation track');
+  t.notEqual(target.opacityTransitions[0], update[0], 'updating clones entries');
+  t.equal(
+    state.annotations[0].opacityTransitions[0].endValue,
+    1,
+    'updating one annotation preserves the duplicate'
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('animated', {opacityTransitions: []}));
+  t.deepEqual(
+    state.annotations.find(item => item.id === 'animated').opacityTransitions,
+    [],
+    'explicit empty clears animation'
+  );
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation('animated', {opacityTransitions: undefined})
+  );
+  t.notOk(
+    'opacityTransitions' in state.annotations.find(item => item.id === 'animated'),
+    'undefined removes optional metadata'
+  );
+  t.end();
+});
+
+test('#visStateReducer -> invalid annotation opacity tracks never enter runtime state', t => {
+  const transition = {
+    id: 'first',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: 0,
+    endValue: 1,
+    easing: 'linear'
+  };
+  for (const invalid of [
+    null,
+    [{...transition, endValue: 2}],
+    [transition, {...transition, id: 'overlap', startTimeMs: 2000}]
+  ]) {
+    const added = reducer(
+      initialState,
+      VisStateActions.addAnnotation({id: 'invalid', opacityTransitions: invalid})
+    );
+    t.notOk('opacityTransitions' in added.annotations[0], 'adding drops invalid timing');
+    const valid = reducer(
+      initialState,
+      VisStateActions.addAnnotation({id: 'valid', opacityTransitions: [transition]})
+    );
+    const updated = reducer(
+      valid,
+      VisStateActions.updateAnnotation('valid', {opacityTransitions: invalid})
+    );
+    t.notOk('opacityTransitions' in updated.annotations[0], 'updating drops invalid timing');
+    t.deepEqual(
+      valid.annotations[0].opacityTransitions,
+      [transition],
+      'updating preserves previous state'
+    );
+  }
+  const legacy = reducer(initialState, VisStateActions.addAnnotation({id: 'legacy'}));
+  t.notOk(
+    'opacityTransitions' in legacy.annotations[0],
+    'new static annotations omit animation metadata'
+  );
+  t.end();
+});
+
 test('#visStateReducer -> ADD_ANNOTATION', t => {
   const state = reducer(
     initialState,

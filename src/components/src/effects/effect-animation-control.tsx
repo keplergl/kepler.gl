@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import moment from 'moment-timezone';
 import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
-import {Effect, EffectUpdateProps} from '@kepler.gl/types';
+import {Effect, EffectParameterAnimation, EffectUpdateProps} from '@kepler.gl/types';
 
-import {Add, ArrowDownSmall, Help, Trash} from '../common/icons';
-import {Button, PanelLabel, Tooltip} from '../common/styled-components';
+import {Add, ArrowDownSmall, Close, Help, Trash} from '../common/icons';
+import {Button, Input, PanelLabel, Tooltip} from '../common/styled-components';
 import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
@@ -32,11 +32,11 @@ const IconButton = styled(Button).attrs({link: true})`
   }
 `;
 
-const Trigger = styled(IconButton)<{$active: boolean; $open: boolean}>`
+const Trigger = styled(IconButton)<{$active: boolean; $open: boolean; $visible: boolean}>`
   margin-left: 6px;
   color: ${props =>
     props.$active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
-  opacity: ${props => (props.$open ? 1 : 0)};
+  opacity: ${props => (props.$open || props.$visible ? 1 : 0)};
   transition: opacity 120ms ease;
   .effect-configurator__pp-section:hover &,
   .effect-configurator__pp-section:focus-within &,
@@ -53,11 +53,11 @@ const Wrapper = styled.span`
   vertical-align: middle;
 `;
 
-const Content = styled(StyledPanelDropdown)`
-  width: 288px;
+const Content = styled(StyledPanelDropdown)<{$embedded: boolean}>`
+  width: ${props => (props.$embedded ? '100%' : '288px')};
   padding: 0;
-  border: 1px solid ${props => props.theme.panelBorderColor};
-  box-shadow: ${props => props.theme.panelBoxShadow};
+  border: ${props => (props.$embedded ? 'none' : `1px solid ${props.theme.panelBorderColor}`)};
+  box-shadow: ${props => (props.$embedded ? 'none' : props.theme.panelBoxShadow)};
   color: ${props => props.theme.textColor};
   font-size: ${props => props.theme.inputFontSize};
   text-transform: none;
@@ -71,6 +71,11 @@ const Header = styled.div`
   background: ${props => props.theme.panelBackgroundHover};
   border-bottom: 1px solid ${props => props.theme.panelBorderColor};
   font-weight: 500;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 4px;
 `;
 
 const ParameterName = styled.div`
@@ -128,6 +133,10 @@ type Props = {
   name: string;
   RangeSlider: ReturnType<typeof RangeSliderFactory>;
   step?: number;
+  alwaysVisible?: boolean;
+  durationMs?: number;
+  embedded?: boolean;
+  onClose?: () => void;
   updateEffectConfig: (
     event: Event | null | undefined,
     id: string,
@@ -143,13 +152,60 @@ export default function EffectAnimationControl({
   name,
   RangeSlider,
   step = 0.001,
+  alwaysVisible = false,
+  durationMs = 10000,
+  embedded = false,
+  onClose,
   updateEffectConfig
 }: Props) {
-  const [open, setOpen] = useState(false);
-  const [startValue, setStartValue] = useState<Value>(0);
-  const [endValue, setEndValue] = useState<Value>(0);
-  const [linear, setLinear] = useState(false);
   const description = getAnimatableEffectParameters(effect).find(d => d.name === name);
+  const legacyHeight =
+    effect.type === SURFACE_FOG_TYPE && name === 'height' && effect.parameters.animateHeight;
+  const saved: EffectParameterAnimation | undefined =
+    effect.animation?.[name] ??
+    (legacyHeight
+      ? {
+          startValue: effect.parameters.height,
+          endValue: effect.parameters.heightEnd,
+          easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
+        }
+      : undefined);
+  const initialStart =
+    saved?.startValue ?? effect.parameters[name] ?? description?.defaultValue ?? 0;
+  const initialEnd = saved?.endValue ?? initialStart;
+  const [open, setOpen] = useState(embedded);
+  const [startValue, setStartValue] = useState<Value>(() =>
+    Array.isArray(initialStart) ? [...initialStart] : (initialStart as number)
+  );
+  const [endValue, setEndValue] = useState<Value>(() =>
+    Array.isArray(initialEnd) ? [...initialEnd] : (initialEnd as number)
+  );
+  const [linear, setLinear] = useState(saved?.easing === 'linear');
+  const [timed, setTimed] = useState(!saved || saved.startTimeMs !== undefined);
+  const [startSeconds, setStartSeconds] = useState(() => String((saved?.startTimeMs ?? 0) / 1000));
+  const [endSeconds, setEndSeconds] = useState(() =>
+    String((saved?.endTimeMs ?? (saved ? durationMs : 10000)) / 1000)
+  );
+  const hasSavedAnimation = Boolean(saved);
+  const savedStartTimeMs = saved?.startTimeMs;
+  const savedEndTimeMs = saved?.endTimeMs;
+  const previousTiming = useRef({hasSavedAnimation, savedStartTimeMs, savedEndTimeMs});
+  useEffect(() => {
+    const previous = previousTiming.current;
+    previousTiming.current = {hasSavedAnimation, savedStartTimeMs, savedEndTimeMs};
+    if (
+      !embedded ||
+      (previous.hasSavedAnimation === hasSavedAnimation &&
+        previous.savedStartTimeMs === savedStartTimeMs &&
+        previous.savedEndTimeMs === savedEndTimeMs)
+    ) {
+      return;
+    }
+    // A timeline drag updates saved timing while endpoint drafts remain in this inspector.
+    setTimed(!hasSavedAnimation || savedStartTimeMs !== undefined);
+    setStartSeconds(String((savedStartTimeMs ?? 0) / 1000));
+    setEndSeconds(String((savedEndTimeMs ?? (hasSavedAnimation ? durationMs : 10000)) / 1000));
+  }, [embedded, hasSavedAnimation, savedStartTimeMs, savedEndTimeMs, durationMs]);
   if (!description) return null;
 
   const isTimestamp = effect.type === LIGHT_AND_SHADOW_EFFECT.type && name === 'timestamp';
@@ -161,24 +217,23 @@ export default function EffectAnimationControl({
     : typeof description.label === 'string'
     ? description.label
     : name;
-  const legacyHeight =
-    effect.type === SURFACE_FOG_TYPE && name === 'height' && effect.parameters.animateHeight;
-  const saved =
-    effect.animation?.[name] ??
-    (legacyHeight
-      ? {
-          startValue: effect.parameters.height,
-          endValue: effect.parameters.heightEnd,
-          easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
-        }
-      : undefined);
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    onClose?.();
+  };
   const apply = (remove = false) => {
     const animation = {...effect.animation};
     if (remove) {
       delete animation[name];
     } else {
-      animation[name] = {startValue, endValue, easing: linear ? 'linear' : 'easeInOut'};
+      animation[name] = {
+        startValue,
+        endValue,
+        easing: linear ? 'linear' : 'easeInOut',
+        ...(timed
+          ? {startTimeMs: Number(startSeconds) * 1000, endTimeMs: Number(endSeconds) * 1000}
+          : {})
+      };
     }
     const parameters = {
       ...(!remove ? {[name]: startValue} : {}),
@@ -209,42 +264,32 @@ export default function EffectAnimationControl({
   const range = [description.min, description.max];
   const easingId = `effect-animation-linear-${effect.id}-${name}`;
   const helpId = `effect-transition-help-${effect.id}-${name}`;
+  const timingId = `effect-animation-timing-${effect.id}-${name}`;
+  const validTiming =
+    !timed ||
+    (startSeconds.trim() !== '' &&
+      endSeconds.trim() !== '' &&
+      Number.isFinite(Number(startSeconds) * 1000) &&
+      Number.isFinite(Number(endSeconds) * 1000) &&
+      Number(startSeconds) >= 0 &&
+      Number(endSeconds) >= Number(startSeconds));
   const editors = [
     {title: 'Start', value: startValue, setValue: setStartValue},
     {title: 'End', value: endValue, setValue: setEndValue}
   ];
 
-  return (
-    <Wrapper>
-      <Trigger
-        type="button"
-        $active={Boolean(saved)}
-        $open={open}
-        aria-label={`${saved ? 'Edit animation for' : 'Animate'} ${label}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        title="Animate this effect setting"
-        onClick={() => {
-          const start = saved?.startValue ?? effect.parameters[name] ?? description.defaultValue;
-          const end = saved?.endValue ?? start;
-          setStartValue(Array.isArray(start) ? [...start] : (start as number));
-          setEndValue(Array.isArray(end) ? [...end] : (end as number));
-          setLinear(saved?.easing === 'linear');
-          setOpen(true);
-        }}
-      >
-        <Add height="14px" />
-      </Trigger>
-      <Portaled
-        isOpened={open}
-        onClose={close}
-        top={24}
-        left={24}
-        modalProps={{contentLabel: `Effect Transition: ${label}`}}
-      >
-        <Content>
-          <Header>
-            <div>
+  const content = (
+    <Content
+      $embedded={embedded}
+      role={embedded ? 'group' : undefined}
+      aria-label={embedded ? `Effect Transition: ${label}` : undefined}
+    >
+      <Header>
+        <div>
+          {embedded ? (
+            label
+          ) : (
+            <>
               Effect Transition{' '}
               <IconButton
                 type="button"
@@ -261,118 +306,200 @@ export default function EffectAnimationControl({
                 >
                   Animates this setting from Start to End with Run in the effects panel or during
                   video export. Turn on Linear easing for a constant rate; otherwise it eases in and
-                  out.
+                  out. Start and end times use seconds from animation start. The end value is held
+                  after the transition finishes.
                   {isTimestamp &&
                     ' This range overrides Current time and Animation time only during playback.'}
                 </div>
               </Tooltip>
               <ParameterName>{label.replace(/([a-z])([A-Z])/g, '$1 $2')}</ParameterName>
-            </div>
-            {saved ? (
-              <IconButton
-                type="button"
-                aria-label="Remove animation"
-                title="Remove animation"
-                onClick={() => apply(true)}
-              >
-                <Trash height="16px" />
-              </IconButton>
-            ) : null}
-          </Header>
-          <Body>
-            {isTimestamp ? (
-              <>
-                {editors.map(({title, value, setValue}) => (
-                  <Field key={title} role="group" aria-label={`${title} date and time`}>
-                    <PanelLabel>{title} date and time</PanelLabel>
-                    <EffectDateTimeInput
-                      timestamp={value as number}
-                      timezone={timezone}
-                      label={title}
-                      onChange={setValue}
-                    />
-                  </Field>
-                ))}
-                <ParameterName>Time zone: {timezone}</ParameterName>
-              </>
-            ) : description.type === 'color' ? (
-              <ColorRow>
-                {editors.map(({title, value, setValue}) => (
-                  <CompactColorPicker
-                    key={title}
-                    label={`${title} color`}
-                    color={value as [number, number, number]}
-                    onSetColor={setValue}
-                    Icon={ArrowDownSmall}
-                  />
-                ))}
-              </ColorRow>
-            ) : (
-              editors.map(({title, value, setValue}) => (
-                <Field key={title} role="group" aria-label={`${title} value`}>
-                  {(Array.isArray(value) ? value : [value]).map((part, index) => {
-                    const inputIdPrefix = `effect-animation-${effect.id}-${name}-${title}-${index}`;
-                    return (
-                      <div key={index}>
-                        <PanelLabel htmlFor={`${inputIdPrefix}-value1`}>
-                          {title} value
-                          {Array.isArray(value)
-                            ? ` (${
-                                (Array.isArray(description.label) && description.label[index]) ||
-                                index + 1
-                              })`
-                            : ''}
-                        </PanelLabel>
-                        <RangeSlider
-                          showInput
-                          inputIdPrefix={inputIdPrefix}
-                          inputTheme="secondary"
-                          isRanged={false}
-                          value0={range[0]}
-                          value1={part}
-                          range={range}
-                          step={step}
-                          onChange={next =>
-                            setValue(previous =>
-                              Array.isArray(previous)
-                                ? previous.map((component, i) =>
-                                    i === index ? next[1] : component
-                                  )
-                                : next[1]
-                            )
-                          }
-                        />
-                      </div>
-                    );
-                  })}
-                </Field>
-              ))
-            )}
-            <ToggleRow>
-              <PanelLabel as="label" htmlFor={easingId}>
-                Linear easing
-              </PanelLabel>
-              <Switch
-                id={easingId}
-                checked={linear}
-                onChange={event => setLinear(event.target.checked)}
+            </>
+          )}
+        </div>
+        <HeaderActions>
+          {saved ? (
+            <IconButton
+              type="button"
+              aria-label="Remove animation"
+              title="Remove animation"
+              onClick={() => apply(true)}
+            >
+              <Trash height="16px" />
+            </IconButton>
+          ) : null}
+          {embedded && (
+            <IconButton type="button" aria-label="Close effect settings" onClick={close}>
+              <Close height="14px" />
+            </IconButton>
+          )}
+        </HeaderActions>
+      </Header>
+      <Body>
+        {isTimestamp ? (
+          <>
+            {editors.map(({title, value, setValue}) => (
+              <Field key={title} role="group" aria-label={`${title} date and time`}>
+                <PanelLabel>{title} date and time</PanelLabel>
+                <EffectDateTimeInput
+                  timestamp={value as number}
+                  timezone={timezone}
+                  label={title}
+                  onChange={setValue}
+                />
+              </Field>
+            ))}
+            <ParameterName>Time zone: {timezone}</ParameterName>
+          </>
+        ) : description.type === 'color' ? (
+          <ColorRow>
+            {editors.map(({title, value, setValue}) => (
+              <CompactColorPicker
+                key={title}
+                label={`${title} color`}
+                color={value as [number, number, number]}
+                onSetColor={setValue}
+                Icon={ArrowDownSmall}
               />
-            </ToggleRow>
-            <Actions>
-              <Button type="button" link onClick={close}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                secondary
-                disabled={!isValid(startValue) || !isValid(endValue)}
-                onClick={() => apply()}
-              >
-                Save
-              </Button>
-            </Actions>
-          </Body>
-        </Content>
+            ))}
+          </ColorRow>
+        ) : (
+          editors.map(({title, value, setValue}) => (
+            <Field key={title} role="group" aria-label={`${title} value`}>
+              {(Array.isArray(value) ? value : [value]).map((part, index) => {
+                const inputIdPrefix = `effect-animation-${effect.id}-${name}-${title}-${index}`;
+                return (
+                  <div key={index}>
+                    <PanelLabel htmlFor={`${inputIdPrefix}-value1`}>
+                      {title} value
+                      {Array.isArray(value)
+                        ? ` (${
+                            (Array.isArray(description.label) && description.label[index]) ||
+                            index + 1
+                          })`
+                        : ''}
+                    </PanelLabel>
+                    <RangeSlider
+                      showInput
+                      inputIdPrefix={inputIdPrefix}
+                      inputTheme="secondary"
+                      isRanged={false}
+                      value0={range[0]}
+                      value1={part}
+                      range={range}
+                      step={step}
+                      onChange={next =>
+                        setValue(previous =>
+                          Array.isArray(previous)
+                            ? previous.map((component, i) => (i === index ? next[1] : component))
+                            : next[1]
+                        )
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </Field>
+          ))
+        )}
+        <Field>
+          <ToggleRow>
+            <PanelLabel as="label" htmlFor={timingId}>
+              Use full animation duration
+            </PanelLabel>
+            <Switch
+              id={timingId}
+              checked={!timed}
+              onChange={event => setTimed(!event.target.checked)}
+            />
+          </ToggleRow>
+          {timed && (
+            <>
+              <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
+              <Input
+                id={`${timingId}-start`}
+                type="number"
+                min={0}
+                step={0.1}
+                value={startSeconds}
+                onChange={event => setStartSeconds(event.target.value)}
+              />
+              <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
+              <Input
+                id={`${timingId}-end`}
+                type="number"
+                min={0}
+                step={0.1}
+                value={endSeconds}
+                onChange={event => setEndSeconds(event.target.value)}
+              />
+              {!validTiming && (
+                <ParameterName role="alert">
+                  Enter non-negative times with End at or after Start.
+                </ParameterName>
+              )}
+            </>
+          )}
+        </Field>
+        <ToggleRow>
+          <PanelLabel as="label" htmlFor={easingId}>
+            Linear easing
+          </PanelLabel>
+          <Switch
+            id={easingId}
+            checked={linear}
+            onChange={event => setLinear(event.target.checked)}
+          />
+        </ToggleRow>
+        <Actions>
+          <Button type="button" link onClick={close}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            secondary
+            disabled={!isValid(startValue) || !isValid(endValue) || !validTiming}
+            onClick={() => apply()}
+          >
+            Save
+          </Button>
+        </Actions>
+      </Body>
+    </Content>
+  );
+
+  if (embedded) return open ? content : null;
+
+  return (
+    <Wrapper>
+      <Trigger
+        type="button"
+        $active={Boolean(saved)}
+        $open={open}
+        $visible={alwaysVisible}
+        aria-label={`${saved ? 'Edit animation for' : 'Animate'} ${label}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        title="Animate this effect setting"
+        onClick={() => {
+          setStartValue(Array.isArray(initialStart) ? [...initialStart] : (initialStart as number));
+          setEndValue(Array.isArray(initialEnd) ? [...initialEnd] : (initialEnd as number));
+          setLinear(saved?.easing === 'linear');
+          setTimed(!saved || saved.startTimeMs !== undefined);
+          setStartSeconds(String((saved?.startTimeMs ?? 0) / 1000));
+          setEndSeconds(String((saved?.endTimeMs ?? (saved ? durationMs : 10000)) / 1000));
+          setOpen(true);
+        }}
+      >
+        <Add height="14px" />
+      </Trigger>
+      <Portaled
+        isOpened={open}
+        onClose={close}
+        top={24}
+        left={24}
+        modalProps={{contentLabel: `Effect Transition: ${label}`}}
+      >
+        {content}
       </Portaled>
     </Wrapper>
   );

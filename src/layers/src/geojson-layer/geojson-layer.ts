@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 import {point as turfPoint} from '@turf/helpers';
 import {booleanWithin} from '@turf/boolean-within';
@@ -348,6 +350,39 @@ export default class GeoJsonLayer extends Layer {
       [COLUMN_MODE_TABLE]: GeojsonInfoModalFactory(COLUMN_MODE_TABLE),
       [COLUMN_MODE_GEOJSON]: GeojsonInfoModalFactory(COLUMN_MODE_GEOJSON)
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      },
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'radius' ||
+          (!this.config.radiusField &&
+            !this.meta.fixedRadius &&
+            (!this.meta.featureTypes || this.meta.featureTypes.point))) &&
+        (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.isExtruded())
+    );
   }
 
   get type() {
