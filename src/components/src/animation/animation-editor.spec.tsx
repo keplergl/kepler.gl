@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen, within} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
@@ -399,6 +399,36 @@ test('double-click opens a value/time popup outside the timeline and saves both 
     }
   });
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+});
+
+test('opens settings at each selected block without animating from the previous position', async () => {
+  setup({
+    layers: [layer(opacityTransitions())],
+    annotations: [annotation(opacityTransitions())]
+  });
+  for (const {name, left, top} of [
+    {name: 'Brightness', left: 100, top: 80},
+    {name: 'Opacity 1 · Points', left: 240, top: 140},
+    {name: 'Opacity 1 · Harbor', left: 160, top: 200}
+  ]) {
+    const block = screen.getByRole('button', {name});
+    jest.spyOn(block, 'getBoundingClientRect').mockReturnValue({
+      ...block.getBoundingClientRect(),
+      left,
+      top,
+      right: left + 120,
+      bottom: top + 24,
+      width: 120,
+      height: 24
+    });
+    fireEvent.doubleClick(block);
+    const dialog = screen.getByRole('dialog', {name: 'Block settings'});
+    const popup = dialog.querySelector('.portaled-content');
+    // The portal measures after mounting, before showing its first visible frame.
+    await waitFor(() => expect(popup).toHaveStyle({opacity: '1', marginTop: '0px'}));
+    expect(popup).toHaveStyle({left: `${left}px`, top: `${top + 28}px`, transition: 'none'});
+    fireEvent.click(dialog.parentElement!);
+  }
 });
 
 test('dismisses the popup with Escape or an outside click without saving draft values', () => {

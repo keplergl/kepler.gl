@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {useEffect, useId, useRef, useState} from 'react';
-import styled from 'styled-components';
+import styled, {useTheme} from 'styled-components';
 import type {
   Annotation,
   AnnotationPropsPartial,
@@ -605,6 +605,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     onAnnotationChange,
     onEditCamera
   }: AnimationEditorProps) {
+    const theme = useTheme();
     const id = useId();
     const editor = useRef<HTMLElement>(null);
     const addButton = useRef<HTMLButtonElement>(null);
@@ -1404,6 +1405,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         </Workspace>
         <Portaled
           component={PopupAnchor}
+          // Open at the selected block instead of tweening from the previous popup position.
+          theme={{...theme, transitionFast: 'none'}}
           isOpened={Boolean(popup && (selectedEffect || selectedTransition))}
           onClose={() => {
             setPopup(null);
