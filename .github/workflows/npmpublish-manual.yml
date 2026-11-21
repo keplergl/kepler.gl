@@ -7,7 +7,7 @@ on:
         description: Exact version already committed in package.json
         type: string
         required: true
-        default: 3.3.0-alpha.25 # Updated by release:prepare.
+        default: 3.3.0-alpha.26 # Updated by release:prepare.
       publish:
         description: Publish the checked workspace and bundle tarballs to npm
         type: boolean
