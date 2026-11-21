@@ -16,7 +16,7 @@ import MapControlTooltipFactory from './map-control-tooltip';
 import EffectAnimationPreviewProvider, {
   EffectAnimationPreviewContext
 } from '../effects/effect-animation-preview';
-import type {AnimationEditorProps} from '../effects/animation-editor';
+import type {AnimationEditorProps} from '../animation/animation-editor';
 
 const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 0, pitch: 0};
 const tour = {

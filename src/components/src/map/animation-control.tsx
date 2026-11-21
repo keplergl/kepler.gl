@@ -17,7 +17,7 @@ import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
 import {MapControlButton} from '../common/styled-components';
 import {Clock} from '../common/icons';
 import {RootContext} from '../context';
-import AnimationEditorFactory from '../effects/animation-editor';
+import AnimationEditorFactory from '../animation/animation-editor';
 import {EffectAnimationPreviewContext} from '../effects/effect-animation-preview';
 import MapControlPanelFactory from './map-control-panel';
 import MapControlTooltipFactory from './map-control-tooltip';

@@ -35,9 +35,9 @@ import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import useOnClickOutside from '../hooks/use-on-click-outside';
 import {CameraTourActionButton} from '../side-panel/interaction-panel/camera-tour-playback-controls';
-import EffectAnimationControl from './effect-animation-control';
+import EffectAnimationControl from '../effects/effect-animation-control';
 import AnimationBlock from './animation-block';
-import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
+import CompactColorPicker, {StyledPanelDropdown} from '../effects/compact-color-picker';
 import {getEffectAnimationTracks} from '../modals/effect-animation';
 
 export type AnimationEditorPlayback = {
