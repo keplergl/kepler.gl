@@ -31,6 +31,7 @@ import {Add, ArrowDownSmall, Close, Pause, Play, Reset, ZoomOut} from '../common
 import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
+import useOnClickOutside from '../hooks/use-on-click-outside';
 import {CameraTourActionButton} from '../side-panel/interaction-panel/camera-tour-playback-controls';
 import EffectAnimationControl from './effect-animation-control';
 import AnimationBlock from './animation-block';
@@ -560,13 +561,18 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const id = useId();
     const editor = useRef<HTMLElement>(null);
     const addButton = useRef<HTMLButtonElement>(null);
-    const addMenu = useRef<HTMLDivElement>(null);
     const scrubPointer = useRef<number | null>(null);
     const suppressRulerClick = useRef(false);
     const [adding, setAdding] = useState(false);
     const [addTarget, setAddTarget] = useState<AddTarget | null>(null);
     const [selected, setSelected] = useState<Selection | null>(null);
     const [popup, setPopup] = useState<{left: number; top: number} | null>(null);
+    const addMenu = useOnClickOutside<HTMLDivElement>(event => {
+      // The trigger handles its own toggle, including clicks on its icon.
+      if (addButton.current?.contains(event.target)) return;
+      setAdding(false);
+      setAddTarget(null);
+    }, !adding);
     useEffect(() => {
       if (adding) {
         const firstItem = addMenu.current?.querySelector<HTMLElement>('[role="menuitem"]');

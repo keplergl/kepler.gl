@@ -515,6 +515,67 @@ test('Add action selects an entity before its supported property, with Back and 
   expect(props.updateEffectConfig).not.toHaveBeenCalled();
 });
 
+test('outside clicks dismiss either Add action menu level and preserve the clicked toolbar action', () => {
+  const {props} = setup({layers: [propertyLayer()]});
+  const addButton = screen.getByRole('button', {name: 'Add action'});
+  fireEvent.click(addButton);
+  fireEvent.click(document.body);
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  expect(addButton).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.click(addButton);
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+  expect(screen.getByRole('menuitem', {name: 'Radius'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  expect(props.playback.run).toHaveBeenCalledTimes(1);
+  fireEvent.click(addButton);
+  expect(screen.getByRole('menuitem', {name: 'Points'})).toBeInTheDocument();
+  expect(screen.queryByRole('menuitem', {name: 'Back'})).not.toBeInTheDocument();
+  expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+  expect(props.onAnnotationChange).not.toHaveBeenCalled();
+  expect(props.updateEffectConfig).not.toHaveBeenCalled();
+});
+
+test('Add action trigger toggles the menu without reopening it during outside-click dismissal', () => {
+  setup({layers: [propertyLayer()]});
+  const addButton = screen.getByRole('button', {name: 'Add action'});
+  fireEvent.click(addButton);
+  expect(screen.getByRole('menu')).toBeInTheDocument();
+  fireEvent.click(addButton.querySelector('svg')!);
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  fireEvent.click(addButton);
+  expect(screen.getByRole('menu')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+  fireEvent.click(addButton);
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  expect(addButton).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('Add action closes even when an outside control stops click propagation', () => {
+  const {props, rerender} = setup();
+  const onOutsideClick = jest.fn();
+  rerender(
+    <>
+      <Editor {...props} />
+      <button
+        onClick={event => {
+          event.stopPropagation();
+          onOutsideClick();
+        }}
+      >
+        Outside control
+      </button>
+    </>
+  );
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  const outside = screen.getByRole('button', {name: 'Outside control'});
+  outside.focus();
+  fireEvent.click(outside);
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  expect(onOutsideClick).toHaveBeenCalledTimes(1);
+  expect(outside).toHaveFocus();
+});
+
 test('choosing a native layer property creates its block and opens range-aware settings', () => {
   const source = propertyLayer();
   const {props, rerender} = setup({layers: [source]});
