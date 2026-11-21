@@ -348,6 +348,59 @@ function applyZoomOpacityToDeckLayer(deckLayer: any, factor: number): any {
   });
 }
 
+/** Apply frame values only while rendering, then restore the authored config. */
+function renderLayerWithAnimation(
+  layer: Layer,
+  renderOptions: Parameters<Layer['renderLayer']>[0],
+  animationTimeMs?: number | null
+) {
+  const {data, mapState, interactionConfig} = renderOptions;
+  const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
+  const authoredConfig = layer.config;
+  const renderConfig = Object.keys(animatedConfig).length
+    ? {
+        ...authoredConfig,
+        ...animatedConfig,
+        visConfig: {...authoredConfig.visConfig, ...animatedConfig.visConfig}
+      }
+    : authoredConfig;
+  let frameData = data;
+  if (
+    isPlainObject(data) &&
+    (animatedConfig.color || Object.values(animatedConfig.visConfig ?? {}).some(Array.isArray))
+  ) {
+    // Static colors are cached by formatLayerData. Refresh only their accessors
+    // against this frame, retaining field scales, geometry and feature styling.
+    const accessors: Record<string, unknown> = {};
+    for (const channel of Object.values(layer.visualChannels ?? {}) as VisualChannel[]) {
+      const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
+      if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderConfig[field]) {
+        continue;
+      }
+      accessors[accessor] =
+        typeof getAttributeValue === 'function'
+          ? getAttributeValue(renderConfig)
+          : typeof defaultValue === 'function'
+          ? defaultValue(renderConfig)
+          : defaultValue;
+    }
+    if (Object.keys(accessors).length) frameData = {...data, ...accessors};
+  }
+  let rendered;
+  try {
+    // Keep the real instance for private fields and caches. Deferred accessors
+    // capture config/values during render, before authored settings are restored.
+    if (renderConfig !== authoredConfig) layer.config = renderConfig;
+    rendered = layer.renderLayer({...renderOptions, data: frameData});
+  } finally {
+    if (renderConfig !== authoredConfig) layer.config = authoredConfig;
+  }
+  const factor =
+    getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig) *
+    getLayerAnimationOpacityFactor(layer, animationTimeMs);
+  return applyZoomOpacityToDeckLayer(rendered, factor);
+}
+
 export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}) {
   const {
     datasets,
@@ -372,44 +425,10 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
-    const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
-    const authoredConfig = layer.config;
-    const renderConfig = Object.keys(animatedConfig).length
-      ? {
-          ...authoredConfig,
-          ...animatedConfig,
-          visConfig: {...authoredConfig.visConfig, ...animatedConfig.visConfig}
-        }
-      : authoredConfig;
-    let frameData = data;
-    if (
-      isPlainObject(data) &&
-      (animatedConfig.color || Object.values(animatedConfig.visConfig ?? {}).some(Array.isArray))
-    ) {
-      // Static colors are cached by formatLayerData. Refresh only their accessors
-      // against this frame, retaining field scales, geometry and feature styling.
-      const accessors: Record<string, unknown> = {};
-      for (const channel of Object.values(layer.visualChannels ?? {}) as VisualChannel[]) {
-        const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
-        if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderConfig[field]) {
-          continue;
-        }
-        accessors[accessor] =
-          typeof getAttributeValue === 'function'
-            ? getAttributeValue(renderConfig)
-            : typeof defaultValue === 'function'
-            ? defaultValue(renderConfig)
-            : defaultValue;
-      }
-      if (Object.keys(accessors).length) frameData = {...data, ...accessors};
-    }
-    let rendered;
-    try {
-      // Keep the real instance for private fields and caches. Deferred accessors
-      // capture config/values during render, before authored settings are restored.
-      if (renderConfig !== authoredConfig) layer.config = renderConfig;
-      rendered = layer.renderLayer({
-        data: frameData,
+    return renderLayerWithAnimation(
+      layer,
+      {
+        data,
         gpuFilter,
         idx: layerIndex,
         interactionConfig,
@@ -422,14 +441,9 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
         visible,
         dataset,
         experimentalContext
-      });
-    } finally {
-      if (renderConfig !== authoredConfig) layer.config = authoredConfig;
-    }
-    const factor =
-      getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig) *
-      getLayerAnimationOpacityFactor(layer, animationTimeMs);
-    return applyZoomOpacityToDeckLayer(rendered, factor);
+      },
+      animationTimeMs
+    );
   } catch (error) {
     // A synchronous renderer failure must not escape into React and unmount
     // the map. Keep the imported data and let the other layers render.
