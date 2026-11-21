@@ -1467,9 +1467,8 @@ describe('GeoJsonLayer numeric feature styles', () => {
     }
   );
 
-  const render = (layer, dataset, data, zoom, frameConfig?) =>
+  const render = (layer, dataset, data, zoom) =>
     layer.renderLayer({
-      frameConfig,
       data,
       gpuFilter: dataset.gpuFilter,
       idx: 0,
@@ -1479,16 +1478,14 @@ describe('GeoJsonLayer numeric feature styles', () => {
       mapState: {zoom, width: 800, height: 600}
     })[0];
 
-  test('renders numeric values and color triggers from a frame without changing authored config', async () => {
-    const {layer, dataset} = await initializeGeoJsonLayer([
-      {geometry: point(0), properties: {}}
-    ]);
+  test('config replacement updates numeric values and color triggers without rebuilding data', async () => {
+    const {layer, dataset} = await initializeGeoJsonLayer([{geometry: point(0), properties: {}}]);
     layer.updateLayerVisConfig({radius: 2, thickness: 1, elevationScale: 2});
     const authoredConfig = layer.config;
     const saved = JSON.stringify(authoredConfig);
     const data = layer.formatLayerData({[dataset.id]: dataset}, {});
     const original = render(layer, dataset, data, 8);
-    const frameConfig: GeoJsonLayerConfig = {
+    layer.config = {
       ...authoredConfig,
       color: [10, 20, 30],
       visConfig: {
@@ -1499,16 +1496,16 @@ describe('GeoJsonLayer numeric feature styles', () => {
         strokeColor: [40, 50, 60]
       }
     };
-    const animated = render(layer, dataset, data, 8, frameConfig);
+    const animated = render(layer, dataset, data, 8);
     expect(animated.props.pointRadiusScale).toBe(original.props.pointRadiusScale * 3);
     expect(animated.props.lineWidthScale).toBe(original.props.lineWidthScale * 4);
     expect(animated.props.elevationScale).toBe(original.props.elevationScale * 5);
     expect(animated.props.updateTriggers.getFillColor.defaultValue).toEqual([10, 20, 30]);
     expect(animated.props.updateTriggers.getLineColor.defaultValue).toEqual([40, 50, 60]);
     expect(animated.props.data).toBe(original.props.data);
-    expect(layer.config).toBe(authoredConfig);
-    expect(JSON.stringify(layer.config)).toBe(saved);
+    expect(JSON.stringify(authoredConfig)).toBe(saved);
 
+    layer.config = authoredConfig;
     const restored = render(layer, dataset, data, 8);
     for (const property of ['pointRadiusScale', 'lineWidthScale', 'elevationScale']) {
       expect(restored.props[property]).toBe(original.props[property]);

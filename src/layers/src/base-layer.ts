@@ -1593,7 +1593,7 @@ class Layer implements KeplerLayer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  getVisualChannelUpdateTriggers(frameConfig = this.config): UpdateTriggers {
+  getVisualChannelUpdateTriggers(): UpdateTriggers {
     const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
@@ -1601,14 +1601,14 @@ class Layer implements KeplerLayer {
 
       if (accessor) {
         updateTriggers[accessor] = {
-          [field]: frameConfig[field],
-          [scale]: frameConfig[scale],
-          [domain]: frameConfig[domain],
-          [range]: frameConfig.visConfig[range],
+          [field]: this.config[field],
+          [scale]: this.config[scale],
+          [domain]: this.config[domain],
+          [range]: this.config.visConfig[range],
           defaultValue:
-            typeof defaultValue === 'function' ? defaultValue(frameConfig) : defaultValue,
-          ...(fixed ? {[fixed]: frameConfig.visConfig[fixed]} : {}),
-          ...(invert ? {[invert]: frameConfig.visConfig[invert]} : {})
+            typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
+          ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {}),
+          ...(invert ? {[invert]: this.config.visConfig[invert]} : {})
         };
       }
     });
@@ -1637,7 +1637,7 @@ class Layer implements KeplerLayer {
     return objectInfo?.picked && objectInfo?.layer?.props?.id === this.id;
   }
 
-  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean, frameConfig = this.config) {
+  getRadiusScaleByZoom(mapState: MapState, fixedRadius?: boolean) {
     const radiusChannel = Object.values(this.visualChannels).find(vc => vc.property === 'radius');
 
     if (!radiusChannel) {
@@ -1645,10 +1645,10 @@ class Layer implements KeplerLayer {
     }
 
     const field = radiusChannel.field;
-    const fixed = fixedRadius === undefined ? frameConfig.visConfig.fixedRadius : fixedRadius;
-    const {radius} = frameConfig.visConfig;
+    const fixed = fixedRadius === undefined ? this.config.visConfig.fixedRadius : fixedRadius;
+    const {radius} = this.config.visConfig;
 
-    return fixed ? 1 : (frameConfig[field] ? 1 : radius) * this.getZoomFactor(mapState);
+    return fixed ? 1 : (this.config[field] ? 1 : radius) * this.getZoomFactor(mapState);
   }
 
   shouldCalculateLayerData(props: string[]) {
@@ -1672,18 +1672,16 @@ class Layer implements KeplerLayer {
     gpuFilter,
     mapState,
     layerCallbacks,
-    visible,
-    frameConfig = this.config
+    visible
   }: {
     idx: number;
     gpuFilter: GpuFilter;
     mapState: MapState;
     layerCallbacks: any;
     visible: boolean;
-    frameConfig?: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   }) {
     const blendingParameters = mapState.layerParameters ?? {};
-    const enable3d = Boolean(frameConfig.visConfig.enable3d);
+    const enable3d = Boolean(this.config.visConfig.enable3d);
     const is3dView = Boolean(mapState.dragRotate);
     // Always depth-test so a flat layer cannot paint over closer extruded
     // geometry (e.g. a ground plane covering buildings in top view). Only 3D
@@ -1699,17 +1697,17 @@ class Layer implements KeplerLayer {
         depthMask: is3dView || enable3d,
         ...blendingParameters
       },
-      hidden: frameConfig.hidden,
+      hidden: this.config.hidden,
       // visconfig
-      opacity: frameConfig.visConfig.opacity,
-      highlightColor: frameConfig.highlightColor,
+      opacity: this.config.visConfig.opacity,
+      highlightColor: this.config.highlightColor,
       // data filtering
       extensions: [dataFilterExtension],
       filterRange: gpuFilter ? gpuFilter.filterRange : undefined,
       onFilteredItemsChange: gpuFilter ? layerCallbacks?.onFilteredItemsChange : undefined,
 
       // layer should be visible and, if splitMap, shown in one of the panels
-      visible: frameConfig.isVisible && visible
+      visible: this.config.isVisible && visible
     };
   }
 

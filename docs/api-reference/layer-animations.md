@@ -50,21 +50,24 @@ For custom rendering, `getLayerAnimatedConfig(layer, timeMs)` from `@kepler.gl/u
 
 ## Custom renderers
 
-`renderLayer` receives an optional `frameConfig` containing the full layer configuration with the current numeric and color animation values applied. Built-in renderers use it automatically. Custom renderers that expose these properties must read `frameConfig` for their rendered values, falling back to `this.config` for static rendering:
+During coordinated playback or export, `renderLayer` reads the current animation values through `this.config`. The renderer temporarily substitutes a shallow configuration copy with the animated color and `visConfig` overrides, then restores the authored configuration in `finally`, before returning or reporting a rendering error. The original layer instance remains the receiver, so private fields, caches, and redraw callbacks work normally. Static rendering uses the authored configuration directly.
+
+Capture the configuration or individual values when creating accessors that execute after `renderLayer` returns. This keeps each frame's values available after restoration, subsequent frames, or another map renders:
 
 ```ts
-renderLayer({frameConfig = this.config, ...opts}) {
+renderLayer(opts) {
+  const {config} = this;
   return [
     new MyDeckLayer({
-      ...this.getDefaultDeckLayerProps({...opts, frameConfig}),
-      radiusScale: frameConfig.visConfig.radius,
-      getFillColor: () => frameConfig.color
+      ...this.getDefaultDeckLayerProps(opts),
+      radiusScale: config.visConfig.radius,
+      getFillColor: () => config.color
     })
   ];
 }
 ```
 
-Rendering keeps the original layer instance as `this`, so private fields, instance caches, and callbacks work normally. Authored `this.config` remains unchanged. Treat `frameConfig` as read-only and capture it in deferred accessors, as above, so an earlier frame retains its values after later frames render. Custom subclasses delegating to a built-in `super.renderLayer(opts)` should pass the options through unchanged. Opacity-only animation continues to work without adopting `frameConfig`.
+Treat the render configuration as read-only. Deferred accessors should read their captured values rather than looking up `this.config` later, when it contains the authored settings again. Callbacks that edit saved settings run outside the synchronous rendering scope. Subclasses can delegate to `super.renderLayer(opts)` normally.
 
 ## Compatibility
 

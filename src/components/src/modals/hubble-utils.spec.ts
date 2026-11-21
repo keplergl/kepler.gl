@@ -994,12 +994,12 @@ describe('flat export zoom fading', () => {
         }
       ]
     };
-    layer.renderLayer = function ({frameConfig = this.config}) {
+    layer.renderLayer = function () {
       return [
         source.clone({
-          radiusScale: frameConfig.visConfig.radius,
-          getFillColor: frameConfig.color,
-          getLineColor: frameConfig.visConfig.strokeColor
+          radiusScale: this.config.visConfig.radius,
+          getFillColor: this.config.color,
+          getLineColor: this.config.visConfig.strokeColor
         })
       ];
     };

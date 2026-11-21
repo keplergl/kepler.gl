@@ -119,13 +119,12 @@ export default class GridLayer extends AggregationLayer {
   }
 
   renderLayer(opts) {
-    const frameConfig = opts.frameConfig ?? this.config;
     const {data, objectHovered, mapState} = opts;
 
     const defaultAggregationLayerProps = this.getDefaultAggregationLayerProp(opts);
     const countLabelProps = this.getCountLabelProps(opts);
     const zoomFactor = this.getZoomFactor(mapState);
-    const {visConfig} = frameConfig;
+    const {visConfig} = this.config;
     const cellSize = visConfig.worldUnitSize * 1000;
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
@@ -159,7 +158,7 @@ export default class GridLayer extends AggregationLayer {
                   }
                 }
               ],
-              getLineColor: frameConfig.highlightColor,
+              getLineColor: this.config.highlightColor,
               lineWidthScale: 8 * zoomFactor
             })
           ]

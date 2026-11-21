@@ -741,34 +741,33 @@ export default class AggregationLayer extends Layer {
 
   getDefaultDeckLayerProps(opts): any {
     const baseProp = super.getDefaultDeckLayerProps(opts);
-    const frameConfig = opts.frameConfig ?? this.config;
     return {
       ...baseProp,
       highlightColor: HIGHLIGH_COLOR_3D,
       // gpu data filtering is not supported in aggregation layer
       extensions: [],
-      autoHighlight: frameConfig.visConfig.enable3d
+      autoHighlight: this.config.visConfig.enable3d
     };
   }
 
   getDefaultAggregationLayerProp(opts) {
-    const {gpuFilter, mapState, layerCallbacks = {}, frameConfig = this.config} = opts;
-    const {visConfig} = frameConfig;
+    const {gpuFilter, mapState, layerCallbacks = {}} = opts;
+    const {visConfig} = this.config;
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
     const updateTriggers = {
       getColorValue: {
-        colorField: frameConfig.colorField,
-        colorAggregation: visConfig.colorAggregation,
+        colorField: this.config.colorField,
+        colorAggregation: this.config.visConfig.colorAggregation,
         colorRange: visConfig.colorRange,
         colorMap: visConfig.colorRange.colorMap,
-        colorScale: frameConfig.colorScale,
+        colorScale: this.config.colorScale,
         filterRange: gpuFilter.filterRange,
         ...gpuFilter.filterValueUpdateTriggers
       },
       getElevationValue: {
-        sizeField: frameConfig.sizeField,
-        sizeAggregation: visConfig.sizeAggregation,
+        sizeField: this.config.sizeField,
+        sizeAggregation: this.config.visConfig.sizeAggregation,
         filterRange: gpuFilter.filterRange,
         ...gpuFilter.filterValueUpdateTriggers
       }
@@ -782,7 +781,7 @@ export default class AggregationLayer extends Layer {
     // reclassifies each bin's raw value into a break index [0 … N-1].  We then
     // tell deck.gl to use 'quantize' over [0, N-1] so each index maps to the
     // correct color pixel.
-    let colorScaleType = frameConfig.colorScale as string;
+    let colorScaleType = this.config.colorScale as string;
     let customColorDomain: [number, number] | undefined;
     const isCustomScale = colorScaleType === SCALE_TYPES.custom;
     const isJenksScale = colorScaleType === SCALE_TYPES.jenks;
@@ -809,7 +808,7 @@ export default class AggregationLayer extends Layer {
       // elevation
       extruded: visConfig.enable3d,
       elevationScale: visConfig.elevationScale * eleZoomFactor,
-      elevationScaleType: frameConfig.sizeScale,
+      elevationScaleType: this.config.sizeScale,
       elevationRange: visConfig.sizeRange,
       elevationFixed: visConfig.fixedHeight,
 

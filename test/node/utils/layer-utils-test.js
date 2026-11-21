@@ -252,26 +252,28 @@ test('layerUtils -> custom declarations preserve caches and callbacks without le
         {name: 'amplitude', label: 'Amplitude', range: [0, 100], step: 1}
       ];
     }
-    renderLayer({layerCallbacks, frameConfig = this.config}) {
+    renderLayer({layerCallbacks}) {
+      const config = this.config;
       this.#renderCount++;
       this.onRedrawNeeded = layerCallbacks.onRedrawNeeded;
-      const amplitude = frameConfig.visConfig.amplitude;
-      const unsupported = frameConfig.visConfig.unsupported;
+      const amplitude = config.visConfig.amplitude;
+      const unsupported = config.visConfig.unsupported;
       if (this.fail) {
-        frameConfig.visConfig.amplitude = 999;
-        frameConfig.label = 'temporary';
+        config.visConfig.amplitude = 999;
+        config.label = 'temporary';
+        this.config = {...config, label: 'replacement'};
         throw new Error('Custom renderer failure');
       }
       return {
         id: this.id,
         receiver: this,
-        authoredConfig: this.config,
+        config,
         amplitude,
         unsupported,
         getAmplitude: () => {
           // Deferred closures retain both the real private-field receiver and frame snapshot.
           if (!this.#renderCount) throw new Error('Renderer has not run');
-          return frameConfig.visConfig.amplitude;
+          return config.visConfig.amplitude;
         }
       };
     }
@@ -286,7 +288,9 @@ test('layerUtils -> custom declarations preserve caches and callbacks without le
   });
   const config = layer.config;
   const saved = cloneDeep(config);
-  const onLayerError = sinon.spy();
+  const onLayerError = sinon.spy(() => {
+    t.equal(layer.config, config, 'authored config is restored before reporting errors');
+  });
   const onRedrawNeeded = sinon.spy();
   const render = time =>
     renderDeckGlLayer(
@@ -296,7 +300,9 @@ test('layerUtils -> custom declarations preserve caches and callbacks without le
   const midpoint = render(2000);
   t.notOk(onLayerError.called, 'private fields render without a proxy-brand error');
   t.equal(midpoint.receiver, layer, 'renderer keeps the original layer receiver');
-  t.equal(midpoint.authoredConfig, config, 'authored config remains available during rendering');
+  t.notEqual(midpoint.config, config, 'renderer reads a temporary config on the real instance');
+  t.equal(layer.config, config, 'authored config is restored before returning the frame');
+  t.deepEqual(layer.config, saved, 'successful rendering preserves authored settings');
   t.equal(midpoint.amplitude, 20, 'custom declaration enables its numeric property');
   t.equal(midpoint.unsupported, 7, 'undeclared numeric property is ignored');
   t.equal(render(3000).amplitude, 30, 'later frame uses the same custom property');
@@ -313,9 +319,36 @@ test('layerUtils -> custom declarations preserve caches and callbacks without le
     t.deepEqual(layer.config, saved, 'a throwing renderer cannot leak frame visual settings');
     layer.fail = false;
     t.equal(render(null).amplitude, 4, 'static rendering recovers authored settings');
+    t.equal(midpoint.getAmplitude(), 20, 'earlier accessors survive failures and static rendering');
   } finally {
     log.restore();
   }
+  t.end();
+});
+
+test('layerUtils -> nested renders restore the enclosing config before the authored config', t => {
+  const layer = new Layer({id: 'nested', dataId: 'survey'});
+  Object.defineProperty(layer, 'animatableProps', {
+    value: [{name: 'radius', label: 'Radius', range: [0, 100], step: 1}]
+  });
+  layer.updateLayerVisConfig({radius: 4});
+  layer.updateLayerConfig({propertyTransitions: {radius: propertyTrack('grow', 10, 30)}});
+  layer.renderLayer = function ({layerCallbacks}) {
+    const config = this.config;
+    const nested = layerCallbacks.renderNested?.();
+    return {config, nested, afterNested: this.config, getRadius: () => config.visConfig.radius};
+  };
+  const authored = layer.config;
+  const render = (time, callbacks = {}) =>
+    renderDeckGlLayer({layer, datasets: {}, mapState: {}, animationTimeMs: time}, callbacks);
+  const outer = render(2000, {renderNested: () => render(3000)});
+  t.equal(outer.getRadius(), 20, 'outer render captures its own value');
+  t.equal(outer.nested.getRadius(), 30, 'nested render captures a different frame');
+  t.equal(outer.afterNested, outer.config, 'nested render restores the enclosing config');
+  t.equal(layer.config, authored, 'outer render restores the authored config');
+  t.equal(render(null).config, authored, 'static rendering uses the original config object');
+  t.equal(outer.getRadius(), 20, 'deferred outer accessor retains its value after restoration');
+  t.equal(outer.nested.getRadius(), 30, 'deferred nested accessor retains its own value');
   t.end();
 });
 
@@ -597,8 +630,8 @@ test('layerUtils -> custom declared colors render without visual channels or dat
       propertyTransitions: {color: propertyTrack('color', [0, 10, 20], [100, 110, 120])}
     },
     animatableProps: [{name: 'color', label: 'Color', type: 'color'}],
-    renderLayer({data: frameData, frameConfig = this.config}) {
-      return {color: frameConfig.color, data: frameData};
+    renderLayer({data: frameData}) {
+      return {color: this.config.color, data: frameData};
     }
   };
   const frame = renderDeckGlLayer(

@@ -148,12 +148,12 @@ describe('createTargetArrowLayer', () => {
   test.each([
     {name: 'Arc', LayerClass: ArcLayer},
     {name: 'Line', LayerClass: LineLayer}
-  ])('$name renders stroke and arrow visuals from the frame snapshot', ({LayerClass}) => {
+  ])('$name renders stroke and arrow visuals from the current config', ({LayerClass}) => {
     const layer = new LayerClass({id: 'frame-stroke'});
     layer.config.visConfig.thickness = 1;
     layer.config.visConfig.opacity = 0.8;
     const authoredConfig = layer.config;
-    const frameConfig = {
+    layer.config = {
       ...authoredConfig,
       visConfig: {
         ...authoredConfig.visConfig,
@@ -165,7 +165,6 @@ describe('createTargetArrowLayer', () => {
     const rendered = layer.renderLayer({
       idx: 0,
       visible: true,
-      frameConfig,
       data: {
         data: [
           {index: 0, sourcePosition: [-122.45, 37.75, 0], targetPosition: [-122.35, 37.85, 0]}
@@ -191,24 +190,23 @@ describe('createTargetArrowLayer', () => {
         getFillColor: [70, 80, 90]
       })
     );
-    expect(layer.config).toBe(authoredConfig);
-    expect(layer.config.visConfig.thickness).toBe(1);
-    expect(layer.config.visConfig.opacity).toBe(0.8);
-    expect(layer.config.visConfig.targetArrowEnabled).toBe(false);
+    expect(authoredConfig.visConfig.thickness).toBe(1);
+    expect(authoredConfig.visConfig.opacity).toBe(0.8);
+    expect(authoredConfig.visConfig.targetArrowEnabled).toBe(false);
   });
 
-  test('reads frame visuals while retaining the original host record cache', () => {
+  test('config replacement retains the original host record cache and earlier visuals', () => {
     const source = {length: 1, get: jest.fn(() => [-122.45, 37.75, 0])};
     const target = {length: 1, get: jest.fn(() => [-122.35, 37.85, 0])};
     const host = makeArrowHost({geoArrowVector0: source, geoArrowVector1: target});
     const authoredConfig = host.config;
-    const frameConfig = {
+    host.config = {
       ...authoredConfig,
       visConfig: {...authoredConfig.visConfig, opacity: 0.2, targetArrowSize: 24}
     };
-    const first = createArrowLayer(host, {frameConfig, getColor: [40, 50, 60]});
+    const first = createArrowLayer(host, {getColor: [40, 50, 60]});
+    host.config = {...host.config, visConfig: {...host.config.visConfig, opacity: 0.4}};
     const second = createArrowLayer(host, {
-      frameConfig: {...frameConfig, visConfig: {...frameConfig.visConfig, opacity: 0.4}},
       getColor: [70, 80, 90]
     });
 
@@ -220,21 +218,17 @@ describe('createTargetArrowLayer', () => {
     expect(second?.props.data).toBe(first?.props.data);
     expect(source.get).toHaveBeenCalledTimes(1);
     expect(target.get).toHaveBeenCalledTimes(1);
-    expect(host.config).toBe(authoredConfig);
-    expect(host.config.visConfig).toEqual({
+    expect(authoredConfig.visConfig).toEqual({
       targetArrowEnabled: true,
       targetArrowShape: 'triangle',
       targetArrowSize: 16,
       opacity: 0.8
     });
-    expect(
-      createArrowLayer(host, {
-        frameConfig: {
-          ...frameConfig,
-          visConfig: {...frameConfig.visConfig, targetArrowEnabled: false}
-        }
-      })
-    ).toBeNull();
+    host.config = {
+      ...host.config,
+      visConfig: {...host.config.visConfig, targetArrowEnabled: false}
+    };
+    expect(createArrowLayer(host)).toBeNull();
   });
 
   test('invalidates GeoArrow records when the target vector changes', () => {

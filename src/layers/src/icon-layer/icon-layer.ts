@@ -513,25 +513,24 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
-    const frameConfig = opts.frameConfig ?? this.config;
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
 
     // Store callback to trigger map redraw when icon geometry loads asynchronously
     this.onRedrawNeeded = layerCallbacks?.onRedrawNeeded;
 
-    const radiusScale = this.getRadiusScaleByZoom(mapState, undefined, frameConfig);
+    const radiusScale = this.getRadiusScaleByZoom(mapState);
 
     const layerProps = {
       radiusScale,
-      billboard: frameConfig.visConfig.billboard,
-      ...(frameConfig.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
+      billboard: this.config.visConfig.billboard,
+      ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
     const updateTriggers = {
-      getPosition: frameConfig.columns,
-      getAngle: frameConfig.columns.angle,
+      getPosition: this.config.columns,
+      getAngle: this.config.columns.angle,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
-      ...this.getVisualChannelUpdateTriggers(frameConfig)
+      ...this.getVisualChannelUpdateTriggers()
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -562,7 +561,7 @@ export default class IconLayer extends Layer {
 
     const parameters = {
       // icons will be flat on the map when the altitude column is not used
-      depthTest: frameConfig.columns.altitude?.fieldIdx > -1,
+      depthTest: this.config.columns.altitude?.fieldIdx > -1,
       cullMode: CULL_MODE.FRONT
     };
 
@@ -607,7 +606,7 @@ export default class IconLayer extends Layer {
               getRadius: data.getRadius,
               getAngle: data.getAngle,
               updateTriggers,
-              getFillColor: frameConfig.highlightColor,
+              getFillColor: this.config.highlightColor,
               getIconGeometry
             })
           ]

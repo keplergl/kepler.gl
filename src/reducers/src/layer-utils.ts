@@ -373,16 +373,14 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
     const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
-    // Keep the original receiver (including private fields and instance caches).
-    // Renderers capture this snapshot for frame-specific and deferred accessors.
-    const frameConfig = Object.keys(animatedConfig).length
+    const authoredConfig = layer.config;
+    const renderConfig = Object.keys(animatedConfig).length
       ? {
-          ...layer.config,
+          ...authoredConfig,
           ...animatedConfig,
-          visConfig: {...layer.config.visConfig, ...animatedConfig.visConfig}
+          visConfig: {...authoredConfig.visConfig, ...animatedConfig.visConfig}
         }
-      : undefined;
-    const renderConfig = frameConfig ?? layer.config;
+      : authoredConfig;
     let frameData = data;
     if (
       isPlainObject(data) &&
@@ -405,23 +403,29 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
       }
       if (Object.keys(accessors).length) frameData = {...data, ...accessors};
     }
-    // Layer is Layer class
-    const rendered = layer.renderLayer({
-      ...(frameConfig ? {frameConfig} : {}),
-      data: frameData,
-      gpuFilter,
-      idx: layerIndex,
-      interactionConfig,
-      layerCallbacks,
-      mapState,
-      mapIndex,
-      animationConfig,
-      filters,
-      objectHovered,
-      visible,
-      dataset,
-      experimentalContext
-    });
+    let rendered;
+    try {
+      // Keep the real instance for private fields and caches. Deferred accessors
+      // capture config/values during render, before authored settings are restored.
+      if (renderConfig !== authoredConfig) layer.config = renderConfig;
+      rendered = layer.renderLayer({
+        data: frameData,
+        gpuFilter,
+        idx: layerIndex,
+        interactionConfig,
+        layerCallbacks,
+        mapState,
+        mapIndex,
+        animationConfig,
+        filters,
+        objectHovered,
+        visible,
+        dataset,
+        experimentalContext
+      });
+    } finally {
+      if (renderConfig !== authoredConfig) layer.config = authoredConfig;
+    }
     const factor =
       getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig) *
       getLayerAnimationOpacityFactor(layer, animationTimeMs);

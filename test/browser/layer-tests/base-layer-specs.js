@@ -694,27 +694,24 @@ test('#BaseLayer -> changing layer type normalizes malformed animation input', t
   t.end();
 });
 
-test('#BaseLayer -> frame config drives render helpers without changing authored config', t => {
+test('#BaseLayer -> render helpers follow config replacement without mutating prior values', t => {
   const layer = new KeplerGlLayers.PointLayer({id: 'frame-point'});
   layer.updateLayerVisConfig({radius: 10, fixedRadius: false, outline: true});
   const authored = cloneDeep(layer.config);
-  const frameConfig = {
+  const originalConfig = layer.config;
+  layer.config = {
     ...layer.config,
     color: [10, 30, 50],
     visConfig: {...layer.config.visConfig, radius: 25, strokeColor: [100, 120, 140], opacity: 0.4}
   };
   const mapState = {...INITIAL_MAP_STATE, zoom: 14};
+  t.equal(layer.getRadiusScaleByZoom(mapState), 25, 'radius helper reads the frame value');
   t.equal(
-    layer.getRadiusScaleByZoom(mapState, undefined, frameConfig),
-    25,
-    'radius helper reads the frame value'
-  );
-  t.equal(
-    layer.getRadiusScaleByZoom(mapState, true, frameConfig),
+    layer.getRadiusScaleByZoom(mapState, true),
     1,
     'explicit fixed radius keeps its existing behavior'
   );
-  const frameTriggers = layer.getVisualChannelUpdateTriggers(frameConfig);
+  const frameTriggers = layer.getVisualChannelUpdateTriggers();
   t.deepEqual(
     frameTriggers.getFillColor.defaultValue,
     [10, 30, 50],
@@ -727,14 +724,15 @@ test('#BaseLayer -> frame config drives render helpers without changing authored
   );
   const opts = {idx: 0, gpuFilter: null, mapState, layerCallbacks: {}, visible: true};
   t.equal(
-    layer.getDefaultDeckLayerProps({...opts, frameConfig}).opacity,
+    layer.getDefaultDeckLayerProps(opts).opacity,
     0.4,
     'default deck props use frame opacity'
   );
+  layer.config = originalConfig;
   t.equal(
     layer.getDefaultDeckLayerProps(opts).opacity,
     authored.visConfig.opacity,
-    'omitting frame config preserves static props'
+    'restoring config recovers static props'
   );
   t.equal(layer.getRadiusScaleByZoom(mapState), 10, 'static radius remains authored');
   t.deepEqual(

@@ -619,12 +619,12 @@ for (const LayerClass of [GridLayer, HexagonLayer, ClusterLayer, HeatmapLayer, S
   }
 }
 
-test('#AggregationLayer -> frame config changes geometry props without mutating authored config', t => {
+test('#AggregationLayer -> config replacement updates geometry props without mutating prior values', t => {
   for (const LayerClass of [GridLayer, HexagonLayer]) {
     const layer = new LayerClass({id: 'frame-aggregation'});
     layer.updateLayerVisConfig({coverage: 0.9, elevationScale: 10});
     const authored = layer.config;
-    const frameConfig = {
+    layer.config = {
       ...authored,
       visConfig: {...authored.visConfig, coverage: 0.35, elevationScale: 25}
     };
@@ -635,9 +635,10 @@ test('#AggregationLayer -> frame config changes geometry props without mutating 
       layerCallbacks: {},
       gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}
     };
-    const frame = layer.getDefaultAggregationLayerProp({...opts, frameConfig});
+    const frame = layer.getDefaultAggregationLayerProp(opts);
     t.equal(frame.coverage, 0.35, `${layer.type} uses frame coverage`);
     t.equal(frame.elevationScale, 25, `${layer.type} uses frame elevation scale`);
+    layer.config = authored;
     const staticProps = layer.getDefaultAggregationLayerProp(opts);
     t.equal(staticProps.coverage, 0.9, `${layer.type} retains authored coverage without a frame`);
     t.equal(

@@ -957,17 +957,17 @@ export default class GeoJsonLayer extends Layer {
     return this._hoverOverlayData;
   }
 
-  isElevationOffsetActive(frameConfig: LayerBaseConfig = this.config): boolean {
-    return Boolean(frameConfig.elevationOffsetField || frameConfig.visConfig.elevationOffset > 0);
+  isElevationOffsetActive(): boolean {
+    return Boolean(this.config.elevationOffsetField || this.config.visConfig.elevationOffset > 0);
   }
 
-  isExtruded(frameConfig: LayerBaseConfig = this.config): boolean {
-    return Boolean(frameConfig.visConfig.enable3d || this.isElevationOffsetActive(frameConfig));
+  isExtruded(): boolean {
+    return Boolean(this.config.visConfig.enable3d || this.isElevationOffsetActive());
   }
 
   getDefaultDeckLayerProps(opts: Parameters<Layer['getDefaultDeckLayerProps']>[0]) {
     const props = super.getDefaultDeckLayerProps(opts);
-    if (!this.isElevationOffsetActive(opts.frameConfig ?? this.config)) {
+    if (!this.isElevationOffsetActive()) {
       return props;
     }
     return {
@@ -979,39 +979,37 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getVisualChannelUpdateTriggers(frameConfig: LayerBaseConfig = this.config) {
-    const triggers = super.getVisualChannelUpdateTriggers(frameConfig);
+  getVisualChannelUpdateTriggers() {
+    const triggers = super.getVisualChannelUpdateTriggers();
     if (triggers.getElevation) {
       triggers.getElevation = {
         ...triggers.getElevation,
-        enable3d: frameConfig.visConfig.enable3d
+        enable3d: this.config.visConfig.enable3d
       };
     }
     return triggers;
   }
 
-  getElevationZoomFactor(mapState: LayerZoomState, frameConfig: LayerBaseConfig = this.config) {
-    return frameConfig.visConfig.fixedHeight
+  getElevationZoomFactor(mapState: LayerZoomState) {
+    return this.config.visConfig.fixedHeight
       ? 1
       : Math.pow(2, Math.max(8 - getVisualZoom(mapState) + (mapState.zoomOffset ?? 0), 0));
   }
 
   renderLayer(opts) {
-    const frameConfig = opts.frameConfig ?? this.config;
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
     const radiusScale = this.getRadiusScaleByZoom(
       mapState,
-      frameConfig.radiusField ? false : fixedRadius,
-      frameConfig
+      this.config.radiusField ? false : fixedRadius
     );
     const zoomFactor = this.getZoomFactor(mapState);
-    const eleZoomFactor = this.getElevationZoomFactor(mapState, frameConfig);
+    const eleZoomFactor = this.getElevationZoomFactor(mapState);
 
-    const {visConfig} = frameConfig;
-    const offsetActive = this.isElevationOffsetActive(frameConfig);
-    const extruded = this.isExtruded(frameConfig);
+    const {visConfig} = this.config;
+    const offsetActive = this.isElevationOffsetActive();
+    const extruded = this.isExtruded();
 
     const layerProps = {
       lineWidthScale: visConfig.thickness * zoomFactor * 8,
@@ -1021,7 +1019,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const updateTriggers = {
-      ...this.getVisualChannelUpdateTriggers(frameConfig),
+      ...this.getVisualChannelUpdateTriggers(),
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger
     } as UpdateTriggers;
@@ -1108,8 +1106,8 @@ export default class GeoJsonLayer extends Layer {
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
-              getLineColor: frameConfig.highlightColor,
-              getFillColor: frameConfig.highlightColor,
+              getLineColor: this.config.highlightColor,
+              getFillColor: this.config.highlightColor,
               // always draw outline
               stroked: true,
               filled: false
