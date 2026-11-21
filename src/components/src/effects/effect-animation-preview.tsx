@@ -89,16 +89,18 @@ export default function EffectAnimationPreviewProvider({
   const cameraDuration = cameraEnabled ? getCameraTourDuration(cameraTour) : 0;
   const layerDuration = getLayerAnimationDuration(layers);
   const annotationDuration = getAnnotationOpacityDuration(annotations);
-  // Data filtering can replace layer instances without changing the presentation.
+  // Static objects and replacement layer instances do not change animation timing.
   const layerTimingKey = JSON.stringify(
-    layers.map(layer => [layer.id, layer.config.isVisible, getLayerAnimationTracks(layer)])
+    layers.flatMap(layer => {
+      const tracks = getLayerAnimationTracks(layer);
+      return tracks.length ? [[layer.id, layer.config.isVisible, tracks]] : [];
+    })
   );
   const annotationTimingKey = JSON.stringify(
-    annotations.map(annotation => [
-      annotation.id,
-      annotation.isVisible,
-      getLayerPropertyTransitions(annotation, 'opacity')
-    ])
+    annotations.flatMap(annotation => {
+      const tracks = getLayerPropertyTransitions(annotation, 'opacity');
+      return tracks.length ? [[annotation.id, annotation.isVisible, tracks]] : [];
+    })
   );
   const effectTimingKey = JSON.stringify(
     effects.map(effect => [

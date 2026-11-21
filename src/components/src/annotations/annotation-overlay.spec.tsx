@@ -3,6 +3,13 @@
 
 import React from 'react';
 import {act, fireEvent} from '@testing-library/react';
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  getNearestEditorFromDOMNode,
+  UNDO_COMMAND
+} from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation, RulerAnnotation} from '@kepler.gl/types';
@@ -106,9 +113,14 @@ describe('AnnotationOverlay opacity animation', () => {
         />
       );
     }
-    const {container} = renderWithTheme(<Preview />);
-    expect(container.querySelector('[data-annotation-id]')).toBeNull();
-    expect(container.querySelector('[role="button"]')).toBeNull();
+    const {container, queryAllByRole} = renderWithTheme(<Preview />);
+    const fadedParts = container.querySelectorAll<HTMLElement>('[data-annotation-id]');
+    expect(fadedParts).toHaveLength(kind === AnnotationKind.RULER ? 3 : 2);
+    fadedParts.forEach(part => {
+      expect(part).not.toBeVisible();
+      expect(part).toHaveStyle({pointerEvents: 'none'});
+    });
+    expect(queryAllByRole('button')).toHaveLength(0);
     for (const [time, expected] of [
       [2000, 0.24],
       [4000, 0.48],
@@ -126,6 +138,57 @@ describe('AnnotationOverlay opacity animation', () => {
     expect(container.querySelector('[data-annotation-id]')).toBeNull();
     expect(annotation).toEqual(savedAnnotation);
   });
+});
+
+test('preserves annotation text undo after fading out and back in on zoom', async () => {
+  let changeOpacity!: React.Dispatch<React.SetStateAction<number>>;
+  function Preview() {
+    const [annotation, setAnnotation] = React.useState<Annotation>({
+      ...makeLegacyAnnotation(AnnotationKind.TEXT),
+      label: 'Original'
+    });
+    const [opacity, setOpacity] = React.useState(1);
+    changeOpacity = setOpacity;
+    return (
+      <AnnotationOverlay
+        annotations={[annotation]}
+        getAnnotationOpacity={() => opacity}
+        selectedAnnotationId={annotation.id}
+        isEditingAnnotationText={true}
+        isAnnotationMode={true}
+        mapIndex={0}
+        viewport={viewport}
+        updateAnnotation={(_id, {label, editorState}) => {
+          setAnnotation(previous => ({...previous, label: label ?? previous.label, editorState}));
+        }}
+        setSelectedAnnotation={jest.fn()}
+      />
+    );
+  }
+  const {container} = renderWithTheme(<Preview />);
+  const currentEditor = () =>
+    getNearestEditorFromDOMNode(container.querySelector('.editor-input'))!;
+  for (const text of ['Before', 'Changed']) {
+    await act(async () => {
+      currentEditor().update(
+        () => {
+          $getRoot()
+            .clear()
+            .append($createParagraphNode().append($createTextNode(text)));
+          $getRoot().selectEnd();
+        },
+        {tag: 'history-push', discrete: true}
+      );
+    });
+  }
+  expect(container.querySelector('.editor-input')).toHaveTextContent('Changed');
+  act(() => changeOpacity(0));
+  expect(container.querySelector('.editor-input')).not.toBeVisible();
+  act(() => changeOpacity(1));
+  await act(async () => {
+    currentEditor().dispatchCommand(UNDO_COMMAND, undefined);
+  });
+  expect(container.querySelector('.editor-input')).toHaveTextContent('Before');
 });
 
 describe('AnnotationOverlay ruler interactions', () => {

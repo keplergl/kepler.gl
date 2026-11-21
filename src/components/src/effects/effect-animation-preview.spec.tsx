@@ -878,6 +878,53 @@ describe('effects panel animation preview', () => {
     expect(frames.size).toBe(1);
   });
 
+  test.each(['layer', 'annotation'])(
+    'camera-only playback continues through static %s visibility, additions and removal',
+    target => {
+      const layer = {
+        id: 'static-layer',
+        config: {isVisible: true, visConfig: {opacity: 1}}
+      } as unknown as Layer;
+      const annotation = {id: 'static-note', isVisible: true} as Annotation;
+      const view = setup([], true, {
+        cameraDuration: 10000,
+        managerOpen: false,
+        layers: [layer],
+        annotations: [annotation]
+      });
+      fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+      advanceFrame(1000);
+      let elapsed = 1000;
+      for (const change of ['hide', 'show', 'add', 'remove']) {
+        if (target === 'layer') {
+          const updated = {...layer, config: {...layer.config, isVisible: change !== 'hide'}};
+          view.replaceLayers(
+            (change === 'remove'
+              ? []
+              : change === 'add'
+              ? [updated, {...layer, id: 'another-layer'}]
+              : [updated]) as Layer[]
+          );
+        } else {
+          const updated = {...annotation, isVisible: change !== 'hide'};
+          view.replaceAnnotations(
+            change === 'remove'
+              ? []
+              : change === 'add'
+              ? [updated, {...annotation, id: 'another-note'}]
+              : [updated]
+          );
+        }
+        expect(view.playback().running).toBe(true);
+        expect(view.playback().elapsed).toBe(elapsed);
+        advanceFrame((elapsed += 1000));
+        expect(view.playback().elapsed).toBe(elapsed);
+        expect(view.playback().duration).toBe(10000);
+        expect(frames.size).toBe(1);
+      }
+    }
+  );
+
   test.each([1, 2])(
     'an enabled zero-duration tour with %i stops can seek, go to a stop and restart without playing',
     stopCount => {

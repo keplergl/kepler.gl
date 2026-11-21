@@ -95,12 +95,11 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
           ann =>
             (ann.mapIndex ?? 0) === mapIndex &&
             ann.isVisible &&
-            getOpacity(ann) > 0 &&
             // Hide annotations on the far side of the globe (occluded by the planet)
             (!isGlobeEnabled || isAnnotationVisibleOnGlobe(ann, viewport))
         )
         .reverse(),
-    [annotations, mapIndex, isGlobeEnabled, viewport, getOpacity]
+    [annotations, mapIndex, isGlobeEnabled, viewport]
   );
 
   const draggedAnnotationRef = React.useRef<Annotation | null>(null);
