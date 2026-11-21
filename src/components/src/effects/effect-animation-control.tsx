@@ -308,7 +308,7 @@ export default function EffectAnimationControl({
                 <div
                   style={{maxWidth: 220, whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.4}}
                 >
-                  Animates this setting from Start to End with Run in the effects panel or during
+                  Animates this setting from Start to End during playback in the Animation panel or
                   video export. Turn on Linear easing for a constant rate; otherwise it eases in and
                   out. Start and end times use seconds from animation start. The end value is held
                   after the transition finishes.
