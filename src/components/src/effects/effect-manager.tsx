@@ -26,9 +26,6 @@ import KeplerGlContext from '../context';
 import SidePanelTitleFactory from './side-panel-title';
 import EffectListFactory from './effect-list';
 import EffectTypeSelectorFactory, {EffectTypeSelectorProps} from './effect-type-selector';
-import {EffectAnimationPreviewContext} from './effect-animation-preview';
-import {Button} from '../common/styled-components';
-import {Play} from '../common/icons';
 
 export type EffectManagerState = {
   visState: VisState;
@@ -77,30 +74,6 @@ const StyledEffectPanelHeader = styled.div`
   min-width: ${({theme}) => theme.effectPanelWidth}px;
 `;
 
-const HeaderActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const RunButton = styled(Button)`
-  height: ${props => props.theme.inputBoxHeight};
-  padding: 4px 13px;
-  border: none;
-  font-family: ${props => props.theme.effectPanelAddEffectFontFamily};
-  font-size: ${props => props.theme.primaryBtnFontSizeDefault};
-  line-height: inherit;
-  color: ${props => props.theme.secondaryBtnActColor};
-  opacity: 0;
-  pointer-events: none;
-
-  .effect-manager:hover &,
-  &:focus-visible {
-    opacity: ${props => (props.disabled ? 0.4 : 1)};
-    pointer-events: ${props => (props.disabled ? 'none' : 'all')};
-  }
-`;
-
 type StyledEffectPanelContentProps = {
   $extended?: boolean;
 };
@@ -121,7 +94,6 @@ function EffectManagerFactory(
 ): React.FC<EffectManagerProps> {
   const EffectManager = (props: EffectManagerWithIntlProp & Partial<EffectManagerState>) => {
     const {intl, children} = props;
-    const preview = useContext(EffectAnimationPreviewContext);
     const dispatch = useDispatch();
     const {selector} = useContext(KeplerGlContext);
     const effectsFromStore = useSelector(
@@ -193,32 +165,12 @@ function EffectManagerFactory(
               className="effect-manager-title"
               title={intl.formatMessage({id: 'effectManager.effects'})}
             >
-              <HeaderActions>
-                {preview?.hasAnimation && (
-                  <RunButton
-                    type="button"
-                    secondary
-                    disabled={preview.running}
-                    onClick={preview.run}
-                    title={intl.formatMessage({
-                      id: 'effectManager.runAnimation',
-                      defaultMessage: 'Play the animation'
-                    })}
-                  >
-                    <Play height="16px" />
-                    {intl.formatMessage({
-                      id: preview.running ? 'effectManager.running' : 'effectManager.run',
-                      defaultMessage: preview.running ? 'Running' : 'Run'
-                    })}
-                  </RunButton>
-                )}
-                <EffectTypeSelector
-                  options={effectOptions}
-                  onSelect={onAddEffect}
-                  onOpen={onTypeSelectOpen}
-                  onBlur={onTypeSelectClose}
-                />
-              </HeaderActions>
+              <EffectTypeSelector
+                options={effectOptions}
+                onSelect={onAddEffect}
+                onOpen={onTypeSelectOpen}
+                onBlur={onTypeSelectClose}
+              />
             </SidePanelTitle>
           </StyledEffectPanelHeader>
 

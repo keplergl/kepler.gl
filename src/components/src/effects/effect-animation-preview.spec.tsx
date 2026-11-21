@@ -952,8 +952,8 @@ describe('effects panel animation preview', () => {
       animation: structuredClone(effect.animation)
     }));
     const view = setup(effects);
-    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
-    expect(screen.getByRole('button', {name: 'Running'})).toBeDisabled();
+    act(() => view.playback().run());
+    expect(view.playback().running).toBe(true);
     expect(view.getPreviewEffects()?.[0]).not.toBe(effects[0]);
     expect(view.parameters()[0]).toMatchObject({brightness: 0, contrast: 0.3});
 
@@ -964,15 +964,15 @@ describe('effects panel animation preview', () => {
     advanceFrame(5000);
     expect(view.parameters()[0].brightness).toBe(0.5);
     expect(view.parameters()[1]).toMatchObject({height: 50, fogColor: [40, 20, 60]});
-    expect(screen.getByRole('button', {name: 'Running'})).toBeDisabled();
+    expect(view.playback().running).toBe(true);
     advanceFrame(10000);
     expect(view.parameters()[0].brightness).toBe(1);
     expect(view.parameters()[1]).toMatchObject({height: 100, fogColor: [80, 0, 40]});
-    expect(screen.getByRole('button', {name: 'Run'})).toBeEnabled();
+    expect(view.playback().running).toBe(false);
     expect(frames.size).toBe(0);
     expect(effects.map(({parameters, animation}) => ({parameters, animation}))).toEqual(saved);
 
-    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+    act(() => view.playback().run());
     expect(view.parameters()[0].brightness).toBe(0);
     expect(view.parameters()[1]).toMatchObject({height: 0, fogColor: [0, 40, 80]});
     advanceFrame(12500);
@@ -989,7 +989,7 @@ describe('effects panel animation preview', () => {
     view.replaceEffects([effect]);
     expect(view.parameters()[0].brightness).toBe(0.7);
 
-    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+    act(() => view.playback().run());
     expect(view.parameters()[0].brightness).toBe(0);
     advanceFrame(5000);
     expect(view.parameters()[0].brightness).toBe(0.5);
@@ -999,7 +999,7 @@ describe('effects panel animation preview', () => {
     expect(effect.parameters.brightness).toBe(0.7);
     expect(effect.animation).toEqual(animation);
 
-    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+    act(() => view.playback().run());
     expect(view.parameters()[0].brightness).toBe(0);
     // Mirror deck.gl retaining the original effect while accepting preview uniforms.
     effect.deckEffect.setProps(view.getPreviewEffects()?.[0].deckEffect.props);
@@ -1022,7 +1022,7 @@ describe('effects panel animation preview', () => {
       animation: {timestamp: {startValue: start, endValue: end, easing: 'linear'}}
     });
     const view = setup([effect]);
-    fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+    act(() => view.playback().run());
     expect(view.parameters()[0]).toMatchObject({timeMode: 'pick', timestamp: start});
     advanceFrame(5000);
     expect(view.parameters()[0].timestamp).toBe(start + (end - start) / 2);
@@ -1033,13 +1033,20 @@ describe('effects panel animation preview', () => {
     expect(view.parameters()[0]).toMatchObject({timeMode: 'animation', timestamp: 0});
   });
 
-  test('shows Run when an animation is configured and removes it when cleared', () => {
+  test('keeps playback controls out of the Effects panel when animations change or run', () => {
     const effect = createEffect({type: 'brightnessContrast'});
     const view = setup([effect]);
     expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
+    expect(view.playback().hasAnimation).toBe(false);
     effect.setProps({animation: {brightness: {endValue: 1, easing: 'linear'}}});
     view.replaceEffects([effect]);
-    expect(screen.getByRole('button', {name: 'Run'})).toBeEnabled();
+    expect(view.playback().hasAnimation).toBe(true);
+    expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
+    act(() => view.playback().run());
+    expect(view.playback().running).toBe(true);
+    expect(screen.queryByRole('button', {name: /^(Run|Running)$/})).toBeNull();
+    advanceFrame(10000);
+    expect(view.playback().running).toBe(false);
     effect.setProps({animation: {}});
     view.replaceEffects([effect]);
     expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
@@ -1050,7 +1057,7 @@ describe('effects panel animation preview', () => {
     cause => {
       const effect = animatedBrightness();
       const view = setup([effect]);
-      fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+      act(() => view.playback().run());
       advanceFrame(5000);
       const preview = view.getPreviewEffects()?.[0];
       expect(preview?.parameters.brightness).toBe(0.5);
@@ -1070,12 +1077,12 @@ describe('effects panel animation preview', () => {
         expect(view.getPreviewEffects()).toBeNull();
         expect(view.parameters()[0].brightness).toBe(cause === 'edit' ? 0.2 : 0);
         if (cause === 'disable') {
-          fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+          act(() => view.playback().run());
           expect(view.getPreviewEffects()).toBeNull();
           expect(frames.size).toBe(0);
           view.setEnabled(true);
         }
-        fireEvent.click(screen.getByRole('button', {name: 'Run'}));
+        act(() => view.playback().run());
         expect(view.parameters()[0].brightness).toBe(0);
         expect(effect.parameters.brightness).toBe(cause === 'edit' ? 0.2 : 0);
         expect(frames.size).toBe(1);
