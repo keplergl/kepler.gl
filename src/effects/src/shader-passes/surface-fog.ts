@@ -512,14 +512,11 @@ export class DeckSurfaceFogEffect {
       }
     });
 
-    // Only the final target contains the basemap. Intermediate buffers must
-    // start transparent even when interleaved rendering preserves the canvas.
-    const clearCanvas = target === undefined || params.clearCanvas !== false;
     const renderPass = this.model.device.beginRenderPass({
       framebuffer: outputBuffer,
       parameters: {viewport: [0, 0, ...texSize]},
-      clearColor: clearCanvas ? [0, 0, 0, 0] : false,
-      clearDepth: clearCanvas ? 1 : false
+      clearColor: params.clearCanvas !== false ? [0, 0, 0, 0] : false,
+      clearDepth: params.clearCanvas !== false ? 1 : false
     });
     this.model.draw(renderPass);
     renderPass.end();
