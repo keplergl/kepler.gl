@@ -107,7 +107,10 @@ export function formatResult(result: RoomCommandResult): {text: string; isError:
     return {text: `✗ ${result.commandId}: ${result.error}`, isError: true};
   }
   const data = result?.data as {details?: string} | undefined;
-  if (data && typeof data.details === 'string') return {text: data.details, isError: false};
+  // Keep prose-only replies readable, but never let a summary hide payload fields.
+  if (data && typeof data.details === 'string' && Object.keys(data).length === 1) {
+    return {text: data.details, isError: false};
+  }
   return {text: JSON.stringify(result?.data ?? result ?? null, null, 2), isError: false};
 }
 
