@@ -11,7 +11,7 @@
 import WebSocket from 'ws';
 import {z} from 'zod';
 import {MAP_TOOL_IDS} from '../types';
-import {KeplerMcpBridge, toToolName} from './bridge-server';
+import {KeplerMcpBridge, formatResult, toToolName} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';
 
 jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
@@ -35,6 +35,78 @@ function connect(port: number, token: string): WebSocket {
 function nextMessage(socket: WebSocket): Promise<any> {
   return new Promise(resolve => socket.once('message', data => resolve(JSON.parse(String(data)))));
 }
+
+describe('kepler-mcp result formatting', () => {
+  it('preserves dataset IDs, field types and layer bindings alongside the summary', () => {
+    const data = {
+      details: '1 dataset(s) loaded.',
+      datasets: [
+        {
+          datasetId: 'trips',
+          datasetName: 'Trips',
+          fields: {longitude: 'real', latitude: 'real', timestamp: 'timestamp'},
+          layers: [{id: 'points', type: 'point', geometryColumns: {lat: 'latitude'}}]
+        }
+      ]
+    };
+    const result = formatResult({success: true, commandId: 'map.get-dataset-context', data});
+
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toEqual(data);
+  });
+
+  it('preserves layer options without a details field', () => {
+    const data = {
+      layerId: 'points',
+      settings: {radius: {type: 'number', value: 10, range: [0, 100]}}
+    };
+    const result = formatResult({success: true, commandId: 'map.get-layer-options', data});
+
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toEqual(data);
+  });
+
+  it('preserves an empty dataset array alongside its summary', () => {
+    const data = {details: '0 dataset(s) loaded.', datasets: []};
+    const result = formatResult({success: true, commandId: 'map.get-dataset-context', data});
+
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toEqual(data);
+  });
+
+  it('keeps prose-only skill replies readable', () => {
+    expect(
+      formatResult({
+        success: true,
+        commandId: 'kepler.get-map-skill',
+        data: {details: '# Map skill\n\nChoose a layer.'}
+      })
+    ).toEqual({text: '# Map skill\n\nChoose a layer.', isError: false});
+  });
+
+  it('handles a successful reply without data', () => {
+    const result = {success: true, commandId: 'map.add-layer'};
+    const formatted = formatResult(result);
+
+    expect(formatted.isError).toBe(false);
+    expect(JSON.parse(formatted.text)).toEqual(result);
+  });
+
+  it.each([
+    {success: false, error: 'Dataset not found', reason: 'Dataset not found'},
+    {success: false, error: undefined, reason: 'failed'},
+    {success: true, error: 'Dataset not found', reason: 'Dataset not found'}
+  ])('reports failure for success=$success and error=$error', ({success, error, reason}) => {
+    expect(
+      formatResult({
+        success,
+        commandId: 'map.get-dataset-context',
+        error,
+        data: {details: 'A summary must not mask the failure', datasets: []}
+      })
+    ).toEqual({text: `✗ map.get-dataset-context: ${reason}`, isError: true});
+  });
+});
 
 describe('kepler-mcp bridge server', () => {
   let bridge: KeplerMcpBridge;

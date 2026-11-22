@@ -254,8 +254,21 @@ export function formatResult(result: RoomCommandExecuteOutput): string {
       const reason = r.error ?? (r as {message?: string}).message ?? 'failed';
       return `✗ ${r.commandId}: ${reason}`;
     }
-    const data = r.data as {details?: string} | undefined;
-    return data?.details ? `✓ ${data.details}` : `✓ ${r.commandId} ok`;
+    const data = r.data;
+    if (data != null) {
+      // Keep prose-only replies (including the map skill) readable, but do not
+      // let a summary hide the structured payload needed by the next call.
+      if (
+        typeof data === 'object' &&
+        'details' in data &&
+        typeof data.details === 'string' &&
+        Object.keys(data).length === 1
+      ) {
+        return `✓ ${data.details}`;
+      }
+      return JSON.stringify(data, null, 2);
+    }
+    return `✓ ${r.commandId} ok`;
   }
   return result == null
     ? '✓ ok'
