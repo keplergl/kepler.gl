@@ -270,8 +270,14 @@ export default function EffectAnimationPreviewProvider({
       previous.layerTimingKey !== layerTimingKey ||
       previous.annotationTimingKey !== annotationTimingKey ||
       previous.effectTimingKey !== effectTimingKey;
+    const staticEffectEdit =
+      previous.effects !== effects &&
+      !session.current?.tracks.length &&
+      !effectTracks.length &&
+      previous.layerTimingKey === layerTimingKey &&
+      previous.annotationTimingKey === annotationTimingKey;
     if (
-      timingEdit &&
+      (timingEdit || staticEffectEdit) &&
       session.current &&
       enabled &&
       hasAnimation &&
@@ -280,14 +286,18 @@ export default function EffectAnimationPreviewProvider({
       previous.enabled === enabled &&
       previous.globe === globe
     ) {
-      // Keep the inspected frame while dragging timing bounds; static edits still exit preview.
+      // Static effects do not affect the clock; refresh their copies without losing playback.
+      // Timing edits keep the inspected frame paused while dragging bounds.
       const time = Math.min(elapsedRef.current, duration);
+      const resume = staticEffectEdit && runningRef.current;
       pause();
       restore();
-      draw(time);
+      if (resume) run();
+      else draw(time);
     } else stop();
   }, [
     effects,
+    effectTracks.length,
     cameraTour,
     cameraEnabled,
     enabled,
@@ -300,6 +310,7 @@ export default function EffectAnimationPreviewProvider({
     pause,
     restore,
     draw,
+    run,
     stop
   ]);
 

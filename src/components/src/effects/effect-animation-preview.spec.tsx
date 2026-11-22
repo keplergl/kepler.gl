@@ -879,6 +879,68 @@ describe('effects panel animation preview', () => {
     expect(frames.size).toBe(1);
   });
 
+  test.each([true, false])(
+    'static effect changes preserve camera playback and its current frame (running=%s)',
+    running => {
+      const effect = createEffect({type: 'brightnessContrast', isConfigActive: false});
+      const view = setup([effect], true, {cameraDuration: 10000, managerOpen: false});
+      fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+      advanceFrame(1000);
+      if (!running) act(() => view.playback().pause());
+
+      const changes = [
+        () => effect.setProps({isConfigActive: true}),
+        () => effect.setProps({isJsonEditorActive: true}),
+        () => effect.setProps({parameters: {brightness: 0.7}}),
+        () => effect.setProps({isEnabled: false}),
+        () => effect.setProps({isEnabled: true}),
+        () => [],
+        () => [effect.clone()]
+      ];
+      let elapsed = 1000;
+      changes.forEach((change, index) => {
+        // Effect updates mutate the instance and replace the effects array in Redux.
+        const effects = change() ?? [effect];
+        view.replaceEffects(effects);
+        expect(view.playback().running).toBe(running);
+        expect(view.playback().elapsed).toBe(elapsed);
+        expect(view.playback().animationTimeMs).toBe(elapsed);
+        expect(view.parameters()).toEqual(effects.map(item => item.parameters));
+        expect(view.getPreviewEffects()).toBeNull();
+        advanceFrame((index + 2) * 1000);
+        if (running) elapsed += 1000;
+        expect(view.playback().elapsed).toBe(elapsed);
+        expect(view.playback().animationTimeMs).toBe(elapsed);
+        expect(view.playback().duration).toBe(10000);
+        expect(frames.size).toBe(running ? 1 : 0);
+      });
+
+      act(() => view.playback().stop());
+      expect(view.parameters()[0].brightness).toBe(0.7);
+      expect(effect.deckEffect.props.brightness).toBe(0.7);
+      expect(frames.size).toBe(0);
+    }
+  );
+
+  test.each(['add', 'remove'])(
+    '%s an animated effect still pauses camera playback at the current frame',
+    change => {
+      const effect = animatedBrightness();
+      const view = setup(change === 'add' ? [] : [effect], true, {
+        cameraDuration: 10000,
+        managerOpen: false
+      });
+      fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+      advanceFrame(1000);
+      view.replaceEffects(change === 'add' ? [effect] : []);
+      expect(view.playback().running).toBe(false);
+      expect(view.playback().elapsed).toBe(1000);
+      expect(view.playback().animationTimeMs).toBe(1000);
+      expect(frames.size).toBe(0);
+      if (change === 'add') expect(view.parameters()[0].brightness).toBe(0.1);
+    }
+  );
+
   test.each(['layer', 'annotation'])(
     'camera-only playback continues through static %s visibility, additions and removal',
     target => {
