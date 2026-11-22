@@ -4,8 +4,40 @@
 import PostProcessingEffect, {getDefaultValueForParameter} from './post-processing-effect';
 import {getAnimatableEffectParameters, validateEffectAnimation} from './animation-utils';
 import {LIGHT_AND_SHADOW_EFFECT, POSTPROCESSING_EFFECTS} from '@kepler.gl/constants';
+import {DeckRenderer, WebMercatorViewport} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 
 describe('post-processing effect parameters', () => {
+  test.each(['brightnessContrast', 'triangleBlur'])(
+    'renders both %s effects when a second instance is added',
+    type => {
+      const effects = [new PostProcessingEffect({type}), new PostProcessingEffect({type})];
+      const renderer = new DeckRenderer(device);
+      const drawLayers = jest.spyOn(renderer.drawLayersPass, 'render').mockReturnValue([]);
+      const render = (activeEffects: PostProcessingEffect[]) =>
+        renderer.renderLayers({
+          pass: 'test',
+          layers: [],
+          viewports: [new WebMercatorViewport({width: 1, height: 1})],
+          views: {},
+          onViewportActive: jest.fn(),
+          effects: activeEffects.map(effect => effect.deckEffect),
+          target: null
+        });
+      try {
+        effects.forEach(effect => effect.deckEffect.setup({device}));
+        render([effects[0]]);
+        // Exercise the real postprocessing chain with the canvas as its final target.
+        expect(() => render(effects)).not.toThrow();
+        expect(() => render([...effects].reverse())).not.toThrow();
+      } finally {
+        effects.forEach(effect => effect.deckEffect.cleanup());
+        renderer.finalize();
+        drawLayers.mockRestore();
+      }
+    }
+  );
+
   test('resolves defaults in UI, uniform value, raw uniform, then minimum order', () => {
     expect(
       getDefaultValueForParameter('amount', [{name: 'amount', min: -1, max: 1, defaultValue: 0}], {
@@ -81,6 +113,7 @@ describe('post-processing effect parameters', () => {
     expect(clone.isJsonEditorActive).toBe(true);
     expect(clone.parameters).toEqual(effect.parameters);
     expect(clone.deckEffect).not.toBe(effect.deckEffect);
+    expect(clone.deckEffect.id).toBe(effect.deckEffect.id);
     expect(clone.parameters.center).not.toBe(effect.parameters.center);
     clone.setProps({parameters: {center: [0.9, 0.1], size: 8}});
     expect(clone.deckEffect.props).toMatchObject({center: [0.9, 0.1], size: 8});
