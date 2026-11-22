@@ -573,7 +573,8 @@ test('legacy effects keep full-duration timing until a block boundary is edited'
     '20000'
   );
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Brightness'}));
-  expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).toBeChecked();
+  expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
+  expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(20);
   expect(props.updateEffectConfig).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 400, 240);

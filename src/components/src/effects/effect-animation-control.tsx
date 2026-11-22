@@ -226,6 +226,11 @@ export default function EffectAnimationControl({
     setStartSeconds(String((savedStartTimeMs ?? 0) / 1000));
     setEndSeconds(String((savedEndTimeMs ?? (hasSavedAnimation ? durationMs : 10000)) / 1000));
   }, [embedded, hasSavedAnimation, savedStartTimeMs, savedEndTimeMs, durationMs]);
+  useEffect(() => {
+    // Untouched legacy blocks still span playback; editing a time makes the bounds explicit.
+    if (!timed && hasSavedAnimation && savedStartTimeMs === undefined)
+      setEndSeconds(String(durationMs / 1000));
+  }, [durationMs, timed, hasSavedAnimation, savedStartTimeMs]);
   if (!description) return null;
 
   const isTimestamp = effect.type === LIGHT_AND_SHADOW_EFFECT.type && name === 'timestamp';
@@ -431,53 +436,43 @@ export default function EffectAnimationControl({
           ))
         )}
         <Field>
-          {!sequence && (
-            <ToggleRow>
-              <PanelLabel as="label" htmlFor={timingId}>
-                Use full animation duration
-              </PanelLabel>
-              <Switch
-                id={timingId}
-                checked={!timed}
-                onChange={event => setTimed(!event.target.checked)}
+          <TimeFields>
+            <div>
+              <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
+              <Input
+                secondary
+                id={`${timingId}-start`}
+                type="number"
+                min={0}
+                step={0.01}
+                // Keep saved precision until this time field is edited.
+                value={formatTimeInput(startSeconds)}
+                onChange={event => {
+                  setTimed(true);
+                  setStartSeconds(formatTimeInput(event.target.value));
+                }}
               />
-            </ToggleRow>
-          )}
-          {timed && (
-            <>
-              <TimeFields>
-                <div>
-                  <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
-                  <Input
-                    secondary
-                    id={`${timingId}-start`}
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    // Keep saved precision until this time field is edited.
-                    value={formatTimeInput(startSeconds)}
-                    onChange={event => setStartSeconds(formatTimeInput(event.target.value))}
-                  />
-                </div>
-                <div>
-                  <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
-                  <Input
-                    secondary
-                    id={`${timingId}-end`}
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={formatTimeInput(endSeconds)}
-                    onChange={event => setEndSeconds(formatTimeInput(event.target.value))}
-                  />
-                </div>
-              </TimeFields>
-              {!validTiming && (
-                <ParameterName role="alert">
-                  Enter non-negative times with End at or after Start.
-                </ParameterName>
-              )}
-            </>
+            </div>
+            <div>
+              <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
+              <Input
+                secondary
+                id={`${timingId}-end`}
+                type="number"
+                min={0}
+                step={0.01}
+                value={formatTimeInput(endSeconds)}
+                onChange={event => {
+                  setTimed(true);
+                  setEndSeconds(formatTimeInput(event.target.value));
+                }}
+              />
+            </div>
+          </TimeFields>
+          {!validTiming && (
+            <ParameterName role="alert">
+              Enter non-negative times with End at or after Start.
+            </ParameterName>
           )}
         </Field>
         <ToggleRow>

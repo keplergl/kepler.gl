@@ -192,12 +192,15 @@ describe('effect parameter editing', () => {
     expect(endValue).toHaveValue(0.9);
     effect.animation = {amount: {startValue: 0.2, endValue: 0.8, easing: 'linear'}};
     rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
-    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).toBeChecked();
-    expect(screen.queryByRole('spinbutton', {name: 'Start time (seconds)'})).toBeNull();
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(10);
+    rerender(<EffectAnimationControl {...props} effect={{...effect}} durationMs={14000} />);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
     expect(endValue).toHaveValue(0.9);
     effect.animation = {amount: {...effect.animation.amount, startTimeMs: 4000, endTimeMs: 9000}};
     rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
-    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).not.toBeChecked();
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(4);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9);
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update.mock.lastCall[2].animation.amount).toEqual({
       startValue: 0.2,
@@ -285,7 +288,7 @@ describe('effect parameter editing', () => {
   );
 
   test.each([false, true])(
-    'embedded legacy fog retains full-duration timing unless chosen explicitly: %s',
+    'embedded legacy fog retains full-duration timing unless a time is edited: %s',
     explicit => {
       const effect = makeEffect([{name: 'height', min: 0, max: 100}], {
         height: 10,
@@ -312,12 +315,12 @@ describe('effect parameter editing', () => {
       expect(
         within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton')
       ).toHaveValue(50);
-      const fullDuration = screen.getByRole('checkbox', {name: 'Use full animation duration'});
-      expect(fullDuration).toBeChecked();
+      expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
+      expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
       if (explicit) {
-        fireEvent.click(fullDuration);
-        expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
-        expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
+        fireEvent.change(screen.getByRole('spinbutton', {name: 'End time (seconds)'}), {
+          target: {value: '12'}
+        });
       }
       fireEvent.click(screen.getByRole('button', {name: 'Save'}));
       expect(update).toHaveBeenCalledWith(null, effect.id, {
@@ -327,7 +330,7 @@ describe('effect parameter editing', () => {
             startValue: 10,
             endValue: 50,
             easing: 'linear',
-            ...(explicit ? {startTimeMs: 0, endTimeMs: 14000} : {})
+            ...(explicit ? {startTimeMs: 0, endTimeMs: 12000} : {})
           }
         }
       });
@@ -942,13 +945,13 @@ describe('effect parameter editing', () => {
     });
   });
 
-  test('editing legacy endpoints keeps full-duration timing until explicit timing is chosen', () => {
+  test('legacy time fields are editable directly and preserve full-duration timing when untouched', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
     effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
     const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
-    expect(screen.getByRole('checkbox', {name: 'Use full animation duration'})).toBeChecked();
-    expect(screen.queryByRole('spinbutton', {name: 'Start time (seconds)'})).toBeNull();
+    expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(10);
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update.mock.lastCall[2].animation.amount).toEqual({
       startValue: 0.5,
@@ -956,7 +959,6 @@ describe('effect parameter editing', () => {
       easing: 'linear'
     });
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
-    fireEvent.click(screen.getByRole('checkbox', {name: 'Use full animation duration'}));
     fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
       target: {value: '3'}
     });
