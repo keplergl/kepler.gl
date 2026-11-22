@@ -1652,7 +1652,7 @@ describe('ExportVideoModal', () => {
     });
   });
 
-  describe('shadow compositing fallback', () => {
+  describe('export effect compositing', () => {
     const mockEffect = {
       id: 'light-shadow-1',
       type: 'light-and-shadow',
@@ -1686,7 +1686,7 @@ describe('ExportVideoModal', () => {
       expect(DeckShadowCompositingEffect).toHaveBeenCalled();
     });
 
-    test('does not add DeckShadowCompositingEffect when a postRender effect already exists', async () => {
+    test('finishes fog and shadow rendering with the same alpha compositor', async () => {
       const shadowDeckEffect = {id: 'lighting', shadow: true};
       const postProcessEffect = {id: 'fog', postRender: jest.fn()};
       mockComputeDeckEffects.mockReturnValue([shadowDeckEffect, postProcessEffect]);
@@ -1696,10 +1696,60 @@ describe('ExportVideoModal', () => {
       const panelProps = mockExportVideoPanelContainer.mock.calls[0][0];
       const effects = panelProps.deckProps.effects;
 
-      expect(effects.length).toBe(2);
+      expect(effects.length).toBe(3);
       expect(effects[0]).toBe(shadowDeckEffect);
       expect(effects[1]).toBe(postProcessEffect);
-      expect(effects.every(e => e.id !== 'shadow-compositing-effect')).toBe(true);
+      expect(effects[2].id).toBe('shadow-compositing-effect');
+    });
+
+    test.each([
+      {mode: 'regular', mapState: {}, panel: mockExportVideoPanelContainer},
+      {
+        mode: 'swipe',
+        mapState: {isSplit: true, mapSplitMode: MapSplitMode.SWIPE_COMPARE},
+        panel: jest.requireMock('./swipe-export-video-container').SwipeExportVideoPanelContainer
+      },
+      {
+        mode: 'globe',
+        mapState: {globe: {enabled: true}},
+        panel: jest.requireMock('./globe-export-video-container').GlobeExportVideoPanelContainer
+      }
+    ])(
+      '$mode composites post-processing only when sharing the basemap canvas',
+      async ({mode, mapState, panel}) => {
+        const brightness = {id: 'brightness', postRender: jest.fn()};
+        const blur = {id: 'blur', postRender: jest.fn()};
+        const filters = [brightness, blur];
+        mockComputeDeckEffects.mockImplementation(() => [...filters]);
+        const props = {
+          ...propsWithEffects([mockEffect]),
+          mapState: {...DEFAULT_PROPS.mapState, ...mapState}
+        };
+        const view = renderWithThemeLocal(<ExportVideoModal {...props} />);
+        await waitFor(() => expect(panel).toHaveBeenCalled());
+        const effects = panel.mock.lastCall[0].deckProps.effects;
+        expect(effects.slice(0, 2)).toEqual(filters);
+        if (mode === 'globe') {
+          expect(effects).toEqual(filters);
+          expect(DeckShadowCompositingEffect).not.toHaveBeenCalled();
+        } else {
+          expect(effects).toHaveLength(3);
+          expect(effects[2].id).toBe('shadow-compositing-effect');
+          // Rebuilding effects keeps a single final compositor after brightness alone.
+          filters.pop();
+          view.rerender(<ExportVideoModal {...props} mapState={{...props.mapState, zoom: 5}} />);
+          expect(panel.mock.lastCall[0].deckProps.effects).toEqual([brightness, effects[2]]);
+          expect(DeckShadowCompositingEffect).toHaveBeenCalledTimes(1);
+          view.unmount();
+          expect(effects[2].cleanup).toHaveBeenCalledTimes(1);
+        }
+      }
+    );
+
+    test('does not add a compositor for an empty or disabled effect stack', async () => {
+      await renderAndWaitForPanel(propsWithEffects([mockEffect]));
+      expect(mockExportVideoPanelContainer.mock.lastCall[0].deckProps.effects).toEqual([]);
+      expect(DeckShadowCompositingEffect).not.toHaveBeenCalled();
     });
 
     test('does not add DeckShadowCompositingEffect when no shadow effect exists', async () => {
