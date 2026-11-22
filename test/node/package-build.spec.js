@@ -230,3 +230,82 @@ test('UMD entrypoint provides the exports used by standalone HTML maps', () => {
     {cwd: root, stdio: 'pipe', timeout: 30000}
   );
 });
+
+// Exercise the emitted dependency code: Babel-based layer tests do not use
+// the demo's esbuild class-field semantics for TypeScript in node_modules.
+test('demo source builds preserve H3 column geometry attributes', () => {
+  const demo = path.join(root, 'examples/demo-app');
+  const source = ts.createSourceFile(
+    'esbuild.config.mjs',
+    fs.readFileSync(path.join(demo, 'esbuild.config.mjs'), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const declarations = source.statements
+    .filter(ts.isVariableStatement)
+    .flatMap(statement => [...statement.declarationList.declarations]);
+  const initializer = name =>
+    declarations.find(node => node.name.getText(source) === name).initializer;
+  // Read the real compiler settings and aliases without executing the demo
+  // CLI or requiring its separate dotenv/Tailwind dependencies in root tests.
+  const compilerOptions = initializer('config')
+    .properties.filter(property =>
+      ['tsconfig', 'tsconfigRaw', 'target'].includes(property.name?.getText(source))
+    )
+    .map(property => property.getText(source))
+    .join(',');
+  const sourceAliases = initializer('getLocalSourceStackAliases').getText(source);
+  execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {join} from 'node:path';
+import {build} from 'esbuild';
+
+const __dirname = process.cwd();
+const NODE_MODULES_DIR = '../../node_modules';
+const getLocalSourceStackAliases = ${sourceAliases};
+
+for (const minify of [false, true]) {
+  const result = await build({
+    ...{${compilerOptions}},
+    platform: 'browser',
+    format: 'iife',
+    bundle: true,
+    entryPoints: ['../../node_modules/@deck.gl/layers/src/column-layer/column-geometry.ts'],
+    alias: getLocalSourceStackAliases(),
+    write: false,
+    minify,
+    globalName: 'ColumnGeometryBundle',
+    logLevel: 'silent'
+  });
+  const {default: ColumnGeometry} = new Function(
+    result.outputFiles[0].text + '; return ColumnGeometryBundle;'
+  )();
+  const vertices = Array.from({length: 6}, (_, i) => [
+    Math.cos(i * Math.PI / 3), Math.sin(i * Math.PI / 3)
+  ]);
+  for (const height of [0, 1, 100]) {
+    const geometry = new ColumnGeometry({radius: 1, height, nradial: 6, vertices});
+    const positions = geometry.attributes.POSITION;
+    const normals = geometry.attributes.NORMAL;
+    assert.equal(positions.size, 3);
+    assert.ok(positions.value instanceof Float32Array);
+    assert.ok(positions.value.length > 0);
+    assert.ok(positions.value.every(Number.isFinite));
+    assert.equal(normals.value.length, positions.value.length);
+    const elevations = positions.value.filter((_, i) => i % 3 === 2);
+    assert.equal(Math.max(...elevations), height / 2);
+    assert.equal(Math.min(...elevations), height === 0 ? 0 : -height / 2);
+    if (height > 0) assert.ok(geometry.indices.value.length > 0);
+  }
+}
+`
+    ],
+    {cwd: demo, stdio: 'pipe', timeout: 30000}
+  );
+});
