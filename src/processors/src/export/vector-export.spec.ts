@@ -372,6 +372,261 @@ describe('dataset export', () => {
     }
   );
 
+  test.each<{name: string; geometry: Geometry; expectedGeometry: Geometry}>([
+    {
+      name: 'LineString',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [1, 2, 100],
+          [3, 4]
+        ]
+      },
+      expectedGeometry: {
+        type: 'LineString',
+        coordinates: [
+          [1, 2, 100],
+          [3, 4, 0]
+        ]
+      }
+    },
+    {
+      name: 'LineString with a 2D first position',
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [1, 2],
+          [3, 4, 100]
+        ]
+      },
+      expectedGeometry: {
+        type: 'LineString',
+        coordinates: [
+          [1, 2, 0],
+          [3, 4, 100]
+        ]
+      }
+    },
+    {
+      name: 'MultiPoint with zero and negative altitudes',
+      geometry: {
+        type: 'MultiPoint',
+        coordinates: [
+          [1, 2, 0],
+          [3, 4],
+          [5, 6, -10]
+        ]
+      },
+      expectedGeometry: {
+        type: 'MultiPoint',
+        coordinates: [
+          [1, 2, 0],
+          [3, 4, 0],
+          [5, 6, -10]
+        ]
+      }
+    },
+    {
+      name: 'Polygon',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0, 100],
+            [1, 0],
+            [1, 1],
+            [0, 0, 100]
+          ]
+        ]
+      },
+      expectedGeometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [0, 0, 100],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 0, 100]
+          ]
+        ]
+      }
+    },
+    {
+      name: 'MultiLineString',
+      geometry: {
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [1, 2, 100],
+            [3, 4]
+          ],
+          [
+            [5, 6],
+            [7, 8]
+          ]
+        ]
+      },
+      expectedGeometry: {
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [1, 2, 100],
+            [3, 4, 0]
+          ],
+          [
+            [5, 6, 0],
+            [7, 8, 0]
+          ]
+        ]
+      }
+    },
+    {
+      name: 'MultiPolygon',
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [0, 0, 100],
+              [1, 0],
+              [1, 1],
+              [0, 0, 100]
+            ]
+          ]
+        ]
+      },
+      expectedGeometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [0, 0, 100],
+              [1, 0, 0],
+              [1, 1, 0],
+              [0, 0, 100]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      name: 'nested GeometryCollection',
+      geometry: {
+        type: 'GeometryCollection',
+        geometries: [
+          {type: 'Point', coordinates: [1, 2, 100]},
+          {
+            type: 'GeometryCollection',
+            geometries: [
+              {type: 'Point', coordinates: [3, 4]},
+              {
+                type: 'LineString',
+                coordinates: [
+                  [5, 6],
+                  [7, 8, -10]
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      expectedGeometry: {
+        type: 'GeometryCollection',
+        geometries: [
+          {type: 'Point', coordinates: [1, 2, 100]},
+          {
+            type: 'GeometryCollection',
+            geometries: [
+              {type: 'Point', coordinates: [3, 4, 0]},
+              {
+                type: 'LineString',
+                coordinates: [
+                  [5, 6, 0],
+                  [7, 8, -10]
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ])(
+    'fills missing GeoPackage Z values in $name without mutating input',
+    async ({geometry, expectedGeometry}) => {
+      const original = JSON.parse(JSON.stringify(geometry));
+      const geopackage = await encodeDatasetExport({
+        data: createDataContainer([[geometry]]),
+        fields: [{name: '_geojson', type: ALL_FIELD_TYPES.geojson}] as Field[],
+        dataType: EXPORT_DATA_TYPE.GEOPACKAGE,
+        layerName: 'mixed'
+      });
+      const SQL = await loadSqlJs();
+      const db = new SQL.Database(new Uint8Array(geopackage.data as Uint8Array));
+      try {
+        const blob = db.exec('SELECT geom FROM mixed')[0].values[0][0] as Uint8Array;
+        // The WKB reader flattens singleton MultiPolygons and cannot read GeometryCollections.
+        expect(blob.slice(8)).toEqual(
+          new Uint8Array(convertGeometryToWKB(expectedGeometry, {hasZ: true}))
+        );
+        expect(db.exec('SELECT z FROM gpkg_geometry_columns')[0].values[0][0]).toBe(1);
+        expect(geometry).toEqual(original);
+      } finally {
+        db.close();
+      }
+    }
+  );
+
+  test('keeps separate 2D GeoPackage geometries when filling missing Z values', async () => {
+    const geometries: Geometry[] = [
+      {
+        type: 'LineString',
+        coordinates: [
+          [1, 2, 100],
+          [3, 4]
+        ]
+      },
+      {
+        type: 'LineString',
+        coordinates: [
+          [5, 6],
+          [7, 8]
+        ]
+      }
+    ];
+    const geopackage = await encodeDatasetExport({
+      data: createDataContainer(geometries.map(geometry => [geometry])),
+      fields: [{name: '_geojson', type: ALL_FIELD_TYPES.geojson}] as Field[],
+      dataType: EXPORT_DATA_TYPE.GEOPACKAGE,
+      layerName: 'mixed'
+    });
+    const SQL = await loadSqlJs();
+    const db = new SQL.Database(new Uint8Array(geopackage.data as Uint8Array));
+    try {
+      const exported = db
+        .exec('SELECT geom FROM mixed ORDER BY fid')[0]
+        .values.map(([value]) => convertWKBToGeometry((value as Uint8Array).slice(8).buffer));
+      expect(exported).toEqual([
+        {
+          type: 'LineString',
+          coordinates: [
+            [1, 2, 100],
+            [3, 4, 0]
+          ]
+        },
+        {
+          type: 'LineString',
+          coordinates: [
+            [5, 6],
+            [7, 8]
+          ]
+        }
+      ]);
+      expect(db.exec('SELECT z FROM gpkg_geometry_columns')[0].values[0][0]).toBe(2);
+    } finally {
+      db.close();
+    }
+  });
+
   test('rejects mixed geometry families when exporting a shapefile', async () => {
     const geometryFields = [
       {name: '_geojson', type: ALL_FIELD_TYPES.geojson},
