@@ -126,6 +126,34 @@ afterEach(() => {
 
 describe('swipe preview frame lifecycle', () => {
   test.each([false, true])(
+    'keeps effects on the left and layers on both sides (disableBaseMap: %s)',
+    disableBaseMap => {
+      const effect = {id: 'post-process'};
+      const input = props({
+        disableBaseMap,
+        mapData: {mapState: {globe: {enabled: disableBaseMap}}},
+        deckProps: {effects: [effect]}
+      });
+      const {rerender} = render(<SwipeExportVideoPreview {...input} />);
+      const getDeckProps = () =>
+        disableBaseMap
+          ? mockDecks.map(record => record.props)
+          : mockOverlays.map(overlay => overlay._deck.props);
+      const expectBothSides = () => {
+        const [left, right] = getDeckProps();
+        expect(left.effects).toEqual([effect]);
+        expect(right.effects).toEqual([]);
+        expect(left.layers).toHaveLength(1);
+        expect(right.layers).toHaveLength(1);
+        expect(left.layers[0]).not.toBe(right.layers[0]);
+      };
+      expectBothSides();
+      rerender(<SwipeExportVideoPreview {...input} currentTimeMs={750} />);
+      expectBothSides();
+    }
+  );
+
+  test.each([false, true])(
     'forwards effect frame updates to both swipe decks (globe: %s)',
     disableBaseMap => {
       const onBeforeRender = jest.fn();
@@ -133,7 +161,10 @@ describe('swipe preview frame lifecycle', () => {
       const decks = disableBaseMap
         ? mockDecks.map(record => record.props)
         : mockOverlays.map(overlay => overlay._deck.props);
-      decks.forEach(deck => deck.onBeforeRender());
+      decks.forEach(deck => {
+        expect(deck.effects).toEqual([]);
+        deck.onBeforeRender();
+      });
       expect(onBeforeRender).toHaveBeenCalledTimes(2);
     }
   );

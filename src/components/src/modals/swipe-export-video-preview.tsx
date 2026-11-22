@@ -327,11 +327,19 @@ export class SwipeExportVideoPreview extends Component<
     const deckRef = side === 'left' ? this.leftDeckRef : this.rightDeckRef;
     const onMapLoad = side === 'left' ? this._onLeftMapLoad : this._onRightMapLoad;
     const deck = deckRef.current;
+    const extraProps = {
+      ...deckProps,
+      layers: keplerLayers,
+      // Match the live split map: effects belong to the first view. Sharing
+      // effects across Deck instances lets the right map replace the left
+      // map's GPU resources, causing its layers to disappear from the export.
+      effects: mapIndex === 0 ? deckProps?.effects ?? [] : []
+    };
 
     if (disableBaseMap) {
       const adapterProps = adapter.getProps({
         deck: deck as any,
-        extraProps: {...deckProps, layers: keplerLayers}
+        extraProps
       }) as any;
       const adapterOnAfterRender = adapterProps.onAfterRender;
       return (
@@ -374,7 +382,7 @@ export class SwipeExportVideoPreview extends Component<
             deviceProps={EXPORT_OVERLAY_DEVICE_PROPS}
             {...adapter.getProps({
               deck: deck as any,
-              extraProps: {...deckProps, layers: keplerLayers}
+              extraProps
             })}
           />
         </ReactMapGL>
