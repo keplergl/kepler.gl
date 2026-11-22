@@ -171,6 +171,13 @@ const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
 const config = {
   platform: 'browser',
   format: 'iife',
+  // Dependencies aliased to TypeScript source also need the root compiler
+  // settings. Erase type-only fields such as ColumnGeometry.attributes so
+  // they do not overwrite values initialized by the superclass.
+  tsconfigRaw: {
+    extends: join(__dirname, '../../tsconfig.json'),
+    compilerOptions: {useDefineForClassFields: false}
+  },
   logLevel: 'info',
   // Silence noisy warnings from prebuilt third-party deps (e.g. @deck.gl-community
   // editable-layers ships files with a Preact `@jsxImportSource` pragma).
