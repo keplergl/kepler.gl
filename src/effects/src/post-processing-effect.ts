@@ -116,6 +116,9 @@ class PostProcessingEffect extends Effect {
     const effectDesc = POSTPROCESSING_EFFECTS_DESCS.find(desc => desc.type === this.type);
     if (effectDesc) {
       this.deckEffect = new DeckPostProcessEffect(effectDesc.class, this.parameters);
+      // deck.gl uses IDs to reconcile effects and identify the final render pass.
+      // Keep repeated effect types distinct and preserve identity across clones.
+      this.deckEffect.id = `${this.type}-${this.id}`;
 
       const propTypes = this.deckEffect?.module?.propTypes;
       if (propTypes) {
