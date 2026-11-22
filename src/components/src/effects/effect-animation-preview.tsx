@@ -335,7 +335,7 @@ export default function EffectAnimationPreviewProvider({
       (timingEdit || staticEffectEdit) &&
       session.current &&
       enabled &&
-      hasAnimation &&
+      (hasAnimation || (cameraTimingEdit && cameraEnabled)) &&
       (previous.cameraTour === cameraTour || cameraTimingEdit) &&
       previous.cameraEnabled === cameraEnabled &&
       previous.enabled === enabled &&

@@ -1545,6 +1545,47 @@ test('shortening camera-only timing clamps the playhead to the new route end', (
   expect(view.updateMap).toHaveBeenLastCalledWith({...camera, transitionDuration: 0});
 });
 
+test.each([false, true])(
+  'changing the final camera move to an instant cut redraws its destination (running: %s)',
+  running => {
+    const camera = {longitude: 0, latitude: 0, zoom: 4, bearing: 0, pitch: 0};
+    const tour: CameraTour = {
+      stops: [
+        {id: 'a', name: 'A', camera, holdDurationMs: 0, travelDurationMs: 4000},
+        {
+          id: 'b',
+          name: 'B',
+          camera: {...camera, longitude: 40},
+          holdDurationMs: 0,
+          travelDurationMs: 0
+        }
+      ]
+    };
+    const view = setup([], true, {cameraDuration: 4000, cameraTour: tour, managerOpen: false});
+    act(() => view.playback().seek(2000));
+    if (running) act(() => view.playback().run());
+    expect(view.updateMap).toHaveBeenLastCalledWith({
+      ...camera,
+      longitude: 20,
+      transitionDuration: 0
+    });
+    view.updateMap.mockClear();
+
+    view.replaceTour({stops: [{...tour.stops[0], travelDurationMs: 0}, tour.stops[1]]});
+    expect(view.updateMap).toHaveBeenCalledTimes(1);
+    expect(view.updateMap).toHaveBeenLastCalledWith({
+      ...tour.stops[1].camera,
+      transitionDuration: 0
+    });
+    expect(view.playback().duration).toBe(0);
+    expect(view.playback().elapsed).toBe(0);
+    expect(view.playback().hasAnimation).toBe(false);
+    expect(view.playback().running).toBe(false);
+    expect(frames.size).toBe(0);
+    expect(tour.stops[0].travelDurationMs).toBe(4000);
+  }
+);
+
 test('invalid replacement camera stops do not interrupt independent effect playback with an exception', () => {
   const view = setup([animatedBrightness()], true, {cameraDuration: 6000, managerOpen: false});
   act(() => view.playback().seek(3000));

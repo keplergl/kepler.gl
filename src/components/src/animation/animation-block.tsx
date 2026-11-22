@@ -261,10 +261,10 @@ export default function AnimationBlock({
   };
 
   const begin = (part: Part, event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (editMode === 'duration' && part !== 'end') return;
     if (cleanup.current) return;
     suppressClick.current = false;
     suppressOpen.current = false;
+    if (editMode === 'duration' && part !== 'end') return;
     if (disabled || !valid || event.button !== 0 || event.isPrimary === false) {
       return;
     }
