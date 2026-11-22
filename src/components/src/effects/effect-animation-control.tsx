@@ -114,6 +114,12 @@ const Field = styled.div`
   }
 `;
 
+const TimeFields = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+`;
+
 const ColorRow = styled.div`
   display: flex;
   gap: 24px;
@@ -439,27 +445,33 @@ export default function EffectAnimationControl({
           )}
           {timed && (
             <>
-              <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
-              <Input
-                secondary
-                id={`${timingId}-start`}
-                type="number"
-                min={0}
-                step={0.01}
-                // Keep saved precision until this time field is edited.
-                value={formatTimeInput(startSeconds)}
-                onChange={event => setStartSeconds(formatTimeInput(event.target.value))}
-              />
-              <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
-              <Input
-                secondary
-                id={`${timingId}-end`}
-                type="number"
-                min={0}
-                step={0.01}
-                value={formatTimeInput(endSeconds)}
-                onChange={event => setEndSeconds(formatTimeInput(event.target.value))}
-              />
+              <TimeFields>
+                <div>
+                  <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
+                  <Input
+                    secondary
+                    id={`${timingId}-start`}
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    // Keep saved precision until this time field is edited.
+                    value={formatTimeInput(startSeconds)}
+                    onChange={event => setStartSeconds(formatTimeInput(event.target.value))}
+                  />
+                </div>
+                <div>
+                  <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
+                  <Input
+                    secondary
+                    id={`${timingId}-end`}
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formatTimeInput(endSeconds)}
+                    onChange={event => setEndSeconds(formatTimeInput(event.target.value))}
+                  />
+                </div>
+              </TimeFields>
               {!validTiming && (
                 <ParameterName role="alert">
                   Enter non-negative times with End at or after Start.
