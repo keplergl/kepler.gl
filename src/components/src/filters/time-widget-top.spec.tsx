@@ -5,7 +5,7 @@ import React from 'react';
 import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
-import {ThemeProvider} from 'styled-components';
+import {ServerStyleSheet, StyleSheetManager, ThemeProvider} from 'styled-components';
 import {getDefaultFilter, initApplicationConfig} from '@kepler.gl/utils';
 import {TimeRangeFilter} from '@kepler.gl/types';
 import {theme} from '@kepler.gl/styles';
@@ -14,6 +14,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 import {INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {IntlWrapper} from 'test/helpers/component-jest-utils';
 import AnimationSpeedSliderFactory from '../common/animation-control/animation-speed-slider';
+import FloatingTimeDisplayFactory from '../common/animation-control/floating-time-display';
 import {
   AnimationJsonEditorFactory,
   AnimationJsonEditorProps
@@ -175,7 +176,8 @@ describe('compact timeline playback controls', () => {
   function setupPlayback(
     overrides: Partial<TimeWidgetTopProps> = {},
     playbackOverrides: Partial<NonNullable<TimeWidgetTopProps['playbackControls']>> = {},
-    locale = 'en'
+    locale = 'en',
+    styleSheet?: React.ComponentProps<typeof StyleSheetManager>['sheet']
   ) {
     const playbackControls = {
       isAnimatable: true,
@@ -200,7 +202,11 @@ describe('compact timeline playback controls', () => {
       ...overrides
     };
     const result = render(<CompactHeader {...props} />, {
-      wrapper: ({children}) => <HeaderWrapper locale={locale}>{children}</HeaderWrapper>
+      wrapper: ({children}) => (
+        <StyleSheetManager sheet={styleSheet}>
+          <HeaderWrapper locale={locale}>{children}</HeaderWrapper>
+        </StyleSheetManager>
+      )
     });
     return {...result, props, playbackControls};
   }
@@ -420,6 +426,56 @@ describe('compact timeline playback controls', () => {
       expect(button).toHaveFocus();
     }
   });
+
+  test.each([false, true])(
+    'reserves the time display width as animation changes the range (minimized=%s)',
+    isMinified => {
+      const FloatingTimeDisplay = FloatingTimeDisplayFactory();
+      const ranges = [
+        [Date.UTC(2026, 6, 7, 4, 48), Date.UTC(2026, 6, 7, 5, 48)],
+        [Date.UTC(2026, 6, 7, 10, 48), Date.UTC(2026, 6, 7, 11, 48)],
+        [Date.UTC(2026, 6, 7, 23, 48), Date.UTC(2026, 6, 8, 0, 48)]
+      ];
+      const rangeDisplay = (currentTime: number[]) => (
+        <FloatingTimeDisplay currentTime={currentTime} defaultTimeFormat="L LT" timezone="UTC" />
+      );
+      // Insert rules individually so JSDOM's unsupported @container rules do not
+      // prevent it from reading the rest of the header's stylesheet.
+      const styleSheet = new ServerStyleSheet().instance.reconstructWithOptions({
+        isServer: false,
+        useCSSOMInjection: true
+      });
+      const {props, playbackControls, rerender} = setupPlayback(
+        {isMinified, rangeDisplay: rangeDisplay(ranges[0])},
+        {},
+        'en',
+        styleSheet
+      );
+      const play = screen.getByRole('button', {name: 'Play'});
+      const selectedRange = screen.getByRole('group', {name: 'Selected range'});
+      expect(selectedRange).toHaveTextContent('4:48 AM');
+
+      for (const currentTime of ranges) {
+        rerender(<CompactHeader {...props} rangeDisplay={rangeDisplay(currentTime)} />);
+        // JSDOM has no layout. Protect the content-independent width that keeps
+        // the following controls stationary, including the collapsed summary.
+        expect(selectedRange).toHaveStyle({width: `${theme.timeDisplayMinWidth}px`});
+        if (isMinified) {
+          expect(selectedRange.parentElement).toHaveStyle({
+            flexBasis: `${theme.timeDisplayMinWidth}px`
+          });
+          // This is a column: the range must retain its content-based height.
+          expect(selectedRange).toHaveStyle({flexBasis: 'auto'});
+        }
+        expect(screen.getByRole('button', {name: 'Play'})).toBe(play);
+      }
+
+      expect(selectedRange).toHaveTextContent('07/08/2026');
+      expect(selectedRange).toHaveTextContent('12:48 AM');
+      fireEvent.click(play);
+      expect(playbackControls.toggleAnimation).toHaveBeenCalledTimes(1);
+    }
+  );
 
   test('keeps every minimized action visible and keyboard accessible in reading order', async () => {
     const user = userEvent.setup();
