@@ -1,11 +1,11 @@
 # Layer animations
 
-The experimental Animation editor button and floating panel are hidden by default. Enable them through application configuration:
+The experimental Animation editor button and floating panel are enabled by default. Hide them through application configuration:
 
 ```ts
 import {initApplicationConfig} from '@kepler.gl/utils';
 
-initApplicationConfig({enableAnimationEditor: true});
+initApplicationConfig({enableAnimationEditor: false});
 ```
 
 This flag only controls access to the editor; it does not disable playback or change saved animations.
@@ -82,3 +82,11 @@ Treat the render configuration as read-only. Deferred accessors should read thei
 ## Effects
 
 Effects use `effect.animation[parameterName]` as an array of blocks, even for a single block. Every block requires a unique `id`, explicit `startValue` and `endValue`, `easing`, and `startTimeMs` and `endTimeMs` in elapsed milliseconds. Each block keeps its authored timing regardless of playback or export duration. Earlier experimental formats (single objects, implicit start values, untimed blocks, and fog-height animation flags) are not supported; configure explicit blocks in the Animation editor.
+
+## Camera timing in the Animation editor
+
+The camera row shows numbered arrivals and a continuous sequence of **Hold** and **Move** segments. Click a stop marker to seek to its saved camera view. Double-click a segment for its duration and calculated start/end times; **Edit camera stop** opens that stop in the route editor. The popup can switch between the stop's hold and outgoing move, including zero-duration segments.
+
+Drag a segment's right edge to change its duration. Later camera segments shift together without gaps; layer, annotation, and effect times stay fixed. The drag previews locally and saves on release. Escape or pointer cancellation discards it. Arrow keys on the end handle adjust by 0.1 seconds (Shift: 1 second). Use **Zoom out** for more drag space, or enter a longer duration in the popup. Extend the first hold to delay movement.
+
+Zero holds pass through a stop; zero moves are instant cuts. The final stop has only a hold. Timing edits pause coordinated playback at the current frame, clamped if the animation becomes shorter. Camera positions and stop order remain editable in the route editor. These controls use the existing `holdDurationMs` and `travelDurationMs` fields without changing the saved tour format.

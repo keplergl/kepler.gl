@@ -524,6 +524,18 @@ describe('camera tour path dragging', () => {
     return {commit, update, deckProps, layers, handles, event, picked, ref, props: () => props};
   }
 
+  test('animation settings open the requested camera stop through the existing selection request', () => {
+    const {ref, props} = setupPath();
+    act(() => ref.current._editCameraTour('work'));
+    expect(props().uiStateActions.setMapControlSettings).toHaveBeenCalledWith('cameraTour', {
+      selection: {stopId: 'work'}
+    });
+    expect(props().uiStateActions.toggleSidePanel).toHaveBeenCalledWith('interaction');
+    props().uiStateActions.setMapControlSettings.mockClear();
+    act(() => ref.current._editCameraTour());
+    expect(props().uiStateActions.setMapControlSettings).not.toHaveBeenCalled();
+  });
+
   test.each([0, 1])(
     'edits selected stop zoom in pane %s without changing other camera fields',
     index => {

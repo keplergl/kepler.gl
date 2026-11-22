@@ -87,6 +87,7 @@ function setup(overrides: Partial<AnimationEditorProps> = {}) {
     onLayerConfigChange: jest.fn(),
     onAnnotationChange: jest.fn(),
     onEditCamera: jest.fn(),
+    onCameraTourChange: jest.fn(),
     ...overrides
   };
   return {...render(<Editor {...props} />, {wrapper: Wrapper}), props};
@@ -142,12 +143,6 @@ test('uses a shared time ruler and compact playback controls independently of th
   expect(props.playback.setSpeed).toHaveBeenCalledWith(2);
   fireEvent.click(screen.getByRole('checkbox', {name: 'Loop'}));
   expect(props.playback.setLoop).toHaveBeenCalledWith(true);
-  fireEvent.click(screen.getByRole('button', {name: 'Edit camera route'}));
-  expect(props.onEditCamera).not.toHaveBeenCalled();
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Edit camera route'}));
-  expect(props.onEditCamera).toHaveBeenCalledTimes(1);
-  fireEvent.keyDown(screen.getByRole('button', {name: 'Edit camera route'}), {key: 'Enter'});
-  expect(props.onEditCamera).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
   expect(props.playback.stop).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
@@ -1279,9 +1274,6 @@ test.each([1490, 1500, 1510])(
     expect(parseFloat(getComputedStyle(blockTrack).marginRight) || 0).toBeGreaterThanOrEqual(
       handleOverflow
     );
-    expect(
-      getComputedStyle(screen.getByRole('button', {name: 'Edit camera route'})).boxSizing
-    ).toBe('border-box');
   }
 );
 
@@ -1782,4 +1774,170 @@ test('effect row insertion copies vector endpoints and preserves authored parame
   expect(blocks[1].startValue).not.toBe(blocks[1].endValue);
   expect(blocks[1].startValue).not.toBe(blocks[0].endValue);
   expect(source.parameters.center).toEqual([0.1, 0.9]);
+});
+
+describe('camera timeline segments', () => {
+  function setupCamera(overrides: Partial<AnimationEditorProps> = {}) {
+    const view = setup(overrides);
+    (view.props.onCameraTourChange as jest.Mock | undefined)?.mockImplementation(next => {
+      view.props.tour = next;
+      view.rerender(<Editor {...view.props} />);
+    });
+    return view;
+  }
+  const end = (name: string) => screen.getByRole('slider', {name: `End time for ${name}`});
+
+  test('shows arrivals, outgoing moves and the final hold; markers seek the exact saved camera', () => {
+    const next = {
+      ...tour,
+      stops: [tour.stops[0], {...tour.stops[1], camera: {...camera, zoom: 10}}]
+    };
+    const {props} = setupCamera({tour: next});
+    expect(end('Hold at First')).toHaveAttribute('aria-valuenow', '3000');
+    expect(end('Move First → Last')).toHaveAttribute('aria-valuenow', '8000');
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuenow', '20000');
+    expect(screen.queryByRole('slider', {name: 'Start time for Hold at First'})).toBeNull();
+    const marker = screen.getByRole('button', {name: 'Camera stop 2: Last'});
+    expect(marker).toHaveAttribute('title', expect.stringContaining('Arrival 8 s'));
+    fireEvent.click(marker);
+    expect(props.playback.seek).toHaveBeenCalledWith(8000, next.stops[1].camera);
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Move First → Last'}));
+    expect(screen.getByRole('spinbutton', {name: 'Duration (seconds)'})).toHaveValue(5);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit camera stop'}));
+    expect(props.onEditCamera).toHaveBeenCalledWith('first');
+  });
+
+  test('resizing previews a continuous route and commits one duration without shifting other tracks', () => {
+    const {props} = setupCamera();
+    const effectTiming = props.effects[0].animation;
+    fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
+    fireEvent.pointerDown(end('Hold at First'), {pointerId: 1, button: 0, clientX: 30});
+    fireEvent.pointerMove(window, {pointerId: 1, clientX: 40});
+    expect(end('Hold at First')).toHaveAttribute('aria-valuenow', '4000');
+    expect(end('Move First → Last')).toHaveAttribute('aria-valuemin', '4000');
+    expect(end('Move First → Last')).toHaveAttribute('aria-valuenow', '9000');
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuemin', '9000');
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuenow', '21000');
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    fireEvent.pointerUp(window, {pointerId: 1, clientX: 40});
+    expect(props.onCameraTourChange).toHaveBeenCalledTimes(1);
+    expect(props.tour).toEqual({stops: [{...tour.stops[0], holdDurationMs: 4000}, tour.stops[1]]});
+    expect(tour.stops[0].holdDurationMs).toBe(3000);
+    expect(props.effects[0].animation).toEqual(effectTiming);
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+    expect(props.onAnnotationChange).not.toHaveBeenCalled();
+    drag(screen.getByRole('button', {name: 'Hold at First'}), 0, 100);
+    expect(props.onCameraTourChange).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['Escape', 'pointercancel'])(
+    '%s restores the entire draft route without saving',
+    cancel => {
+      const {props} = setupCamera();
+      fireEvent.pointerDown(end('Move First → Last'), {pointerId: 1, button: 0, clientX: 160});
+      fireEvent.pointerMove(window, {pointerId: 1, clientX: 140});
+      expect(end('Hold at Last')).toHaveAttribute('aria-valuemin', '7000');
+      if (cancel === 'Escape') fireEvent.keyDown(window, {key: 'Escape'});
+      else fireEvent.pointerCancel(window, {pointerId: 1});
+      expect(end('Move First → Last')).toHaveAttribute('aria-valuenow', '8000');
+      expect(end('Hold at Last')).toHaveAttribute('aria-valuemin', '8000');
+      fireEvent.pointerUp(window, {pointerId: 1, clientX: 140});
+      expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    }
+  );
+
+  test('duration handles support the keyboard and clamp moves to cuts without creating gaps', () => {
+    const {props} = setupCamera();
+    fireEvent.keyDown(end('Move First → Last'), {key: 'ArrowLeft', shiftKey: true});
+    expect(props.tour!.stops[0].travelDurationMs).toBe(4000);
+    drag(end('Move First → Last'), 100, -500);
+    expect(props.tour!.stops[0].travelDurationMs).toBe(0);
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuemin', '3000');
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuenow', '15000');
+  });
+
+  test('settings edit explicit duration, derive times, and keep all later durations unchanged', () => {
+    const {props} = setupCamera();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Hold at First'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Hold at First'}));
+    const input = screen.getByRole('spinbutton', {name: 'Duration (seconds)'});
+    fireEvent.change(input, {target: {value: '4.567'}});
+    expect(input).toHaveValue(4.57);
+    expect(screen.getByLabelText('Camera interval')).toHaveTextContent('0 s → 4.57 s');
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(props.tour).toEqual({stops: [{...tour.stops[0], holdDurationMs: 4570}, tour.stops[1]]});
+    expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+    expect(end('Move First → Last')).toHaveAttribute('aria-valuenow', '9570');
+  });
+
+  test.each(['', '-1', '1e20'])('rejects invalid duration %s without changing the route', value => {
+    const {props} = setupCamera();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Hold at First'}));
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'Duration (seconds)'}), {
+      target: {value}
+    });
+    expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+  });
+
+  test('zero-time stops and cuts remain editable, including when the entire route is instantaneous', () => {
+    const instant = {
+      stops: tour.stops.map((stop, i) => ({
+        ...stop,
+        holdDurationMs: 0,
+        travelDurationMs: i ? 9999 : 0
+      }))
+    };
+    const {props} = setupCamera({
+      tour: instant,
+      effects: [],
+      playback: {
+        elapsed: 0,
+        duration: 0,
+        running: false,
+        run: jest.fn(),
+        pause: jest.fn(),
+        seek: jest.fn(),
+        stop: jest.fn(),
+        speed: 1,
+        setSpeed: jest.fn(),
+        loop: false,
+        setLoop: jest.fn()
+      }
+    });
+    const first = screen.getByRole('button', {name: 'Camera stop 1: First'});
+    const last = screen.getByRole('button', {name: 'Camera stop 2: Last'});
+    fireEvent.click(first);
+    expect(props.playback.seek).toHaveBeenLastCalledWith(0, instant.stops[0].camera);
+    fireEvent.click(last);
+    expect(props.playback.seek).toHaveBeenLastCalledWith(0, instant.stops[1].camera);
+    fireEvent.doubleClick(first);
+    expect(screen.getByRole('spinbutton', {name: 'Duration (seconds)'})).toHaveValue(0);
+    fireEvent.click(screen.getByRole('button', {name: 'Edit move duration'}));
+    fireEvent.change(screen.getByRole('spinbutton', {name: 'Duration (seconds)'}), {
+      target: {value: '2'}
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+    expect(props.tour!.stops[0].travelDurationMs).toBe(2000);
+    expect(props.tour!.stops[1].travelDurationMs).toBe(9999);
+    expect(end('Hold at Last')).toHaveAttribute('aria-valuenow', '2000');
+  });
+
+  test('disabled routes can be edited, while missing write callbacks disable timing changes', () => {
+    const {props, rerender} = setupCamera({cameraEnabled: false});
+    fireEvent.keyDown(end('Hold at Last'), {key: 'ArrowLeft'});
+    expect(props.tour!.stops[1].holdDurationMs).toBe(11900);
+    (props.onCameraTourChange as jest.Mock).mockClear();
+    rerender(<Editor {...props} onCameraTourChange={undefined} />);
+    fireEvent.keyDown(end('Hold at Last'), {key: 'ArrowLeft'});
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Hold at Last'}));
+    expect(screen.getByRole('spinbutton', {name: 'Duration (seconds)'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+  });
 });

@@ -18,7 +18,11 @@ export type AnimationBlockProps = {
   durationMs: number;
   selected?: boolean;
   disabled?: boolean;
-  kind?: 'effect' | 'layer' | 'camera';
+  kind?: 'effect' | 'layer' | 'camera' | 'camera-hold';
+  /** Duration edits keep the start fixed and expose only the end handle. */
+  editMode?: 'interval' | 'duration';
+  /** Let connected intervals follow a local gesture without saving every pointer move. */
+  onPreview?: (range: Range | null) => void;
   onSelect: () => void;
   onOpen?: (anchor: HTMLElement) => void;
   onRequestRemove?: (anchor: HTMLElement) => void;
@@ -45,7 +49,11 @@ const Block = styled.div<{
   min-width: 6px;
   border-radius: 3px;
   background: ${props =>
-    props.$selected ? props.theme.panelContentBackground : props.theme.panelBackgroundHover};
+    props.$selected
+      ? props.theme.panelContentBackground
+      : props.$kind === 'camera'
+      ? props.theme.panelBackground
+      : props.theme.panelBackgroundHover};
   color: ${props => (props.$selected ? props.theme.textColorHl : props.theme.textColor)};
   box-shadow: inset 0 0 0 1px
     ${props => (props.$selected ? props.theme.activeColor : props.theme.panelBorderColor)};
@@ -172,6 +180,8 @@ export default function AnimationBlock({
   selected = false,
   disabled = false,
   kind = 'effect',
+  editMode = 'interval',
+  onPreview,
   onSelect,
   onOpen,
   onRequestRemove,
@@ -194,8 +204,8 @@ export default function AnimationBlock({
   const cancel = useRef<(() => void) | null>(null);
   const suppressClick = useRef(false);
   const suppressOpen = useRef(false);
-  const callbacks = useRef({onSelect, onOpen, onChange, onDragStart});
-  callbacks.current = {onSelect, onOpen, onChange, onDragStart};
+  const callbacks = useRef({onSelect, onOpen, onChange, onDragStart, onPreview});
+  callbacks.current = {onSelect, onOpen, onChange, onDragStart, onPreview};
 
   useEffect(() => () => cleanup.current?.(), []);
   useEffect(() => {
@@ -254,6 +264,7 @@ export default function AnimationBlock({
     if (cleanup.current) return;
     suppressClick.current = false;
     suppressOpen.current = false;
+    if (editMode === 'duration' && part !== 'end') return;
     if (disabled || !valid || event.button !== 0 || event.isPrimary === false) {
       return;
     }
@@ -292,6 +303,7 @@ export default function AnimationBlock({
       const delta = Math.round(((pixels / width) * total) / increment) * increment;
       next = shift(part, original, delta, lower, upper, minimumLength);
       setDraft({range: next, durationMs: total, minTimeMs: lower, maxTimeMs: upper});
+      callbacks.current.onPreview?.(next);
     };
     const remove = () => {
       window.removeEventListener('pointermove', move);
@@ -307,6 +319,7 @@ export default function AnimationBlock({
       suppressOpen.current = true;
       remove();
       setDraft(null);
+      callbacks.current.onPreview?.(null);
     };
     const abortPointer = (pointer: PointerEvent) => {
       if (pointer.pointerId === pointerId) abort();
@@ -325,6 +338,7 @@ export default function AnimationBlock({
       suppressOpen.current = moved;
       remove();
       setDraft(null);
+      callbacks.current.onPreview?.(null);
       if (moved && (next[0] !== original[0] || next[1] !== original[1])) {
         callbacks.current.onChange(...next);
       }
@@ -347,6 +361,7 @@ export default function AnimationBlock({
       return;
     }
     if (disabled || !valid || cleanup.current) return;
+    if (editMode === 'duration' && part !== 'end') return;
     const direction =
       event.key === 'ArrowRight' || event.key === 'ArrowUp'
         ? 1
@@ -389,7 +404,7 @@ export default function AnimationBlock({
         aria-label={ariaLabel}
         aria-pressed={selected}
         aria-haspopup={onOpen ? 'dialog' : undefined}
-        $disabled={disabled}
+        $disabled={disabled || editMode === 'duration'}
         $dragging={draft !== null}
         onPointerDown={event => begin('body', event)}
         onClick={select}
@@ -397,7 +412,7 @@ export default function AnimationBlock({
       >
         {label}
       </Body>
-      {(['start', 'end'] as const).map((part, index) => (
+      {(editMode === 'duration' ? (['end'] as const) : (['start', 'end'] as const)).map(part => (
         <Edge
           key={part}
           type="button"
@@ -405,8 +420,8 @@ export default function AnimationBlock({
           aria-label={`${part === 'start' ? 'Start' : 'End'} time for ${ariaLabel}`}
           aria-valuemin={part === 'start' ? displayMin : Math.min(displayMax, range[0] + minimum)}
           aria-valuemax={part === 'start' ? Math.max(displayMin, range[1] - minimum) : displayMax}
-          aria-valuenow={range[index]}
-          aria-valuetext={seconds(range[index])}
+          aria-valuenow={range[part === 'start' ? 0 : 1]}
+          aria-valuetext={seconds(range[part === 'start' ? 0 : 1])}
           aria-disabled={disabled || !valid}
           $side={part}
           $selected={selected || draft !== null}

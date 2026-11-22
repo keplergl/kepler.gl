@@ -10,7 +10,7 @@ import {ThemeProvider} from 'styled-components';
 import {createEffect} from '@kepler.gl/effects';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
-import {getLayerAnimatedConfig, getLayerOpacityFactor} from '@kepler.gl/utils';
+import {evaluateCameraTour, getLayerAnimatedConfig, getLayerOpacityFactor} from '@kepler.gl/utils';
 import type {Annotation, CameraTour, Effect, LayerPropertyTransition} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import CameraTourPlaybackProvider, {
@@ -97,7 +97,7 @@ function setup(
   } = {}
 ) {
   const updateMap = jest.fn();
-  const tour = cameraTour ?? {
+  let tour = cameraTour ?? {
     stops: [
       {
         id: 'start',
@@ -208,6 +208,10 @@ function setup(
     updateMap,
     getPreviewEffects: () => previewEffects,
     playback: () => controls!,
+    replaceTour: (next: CameraTour) => {
+      tour = next;
+      view.rerender(tree());
+    },
     replaceLayers: (next: Layer[]) => {
       layers = next;
       view.rerender(tree());
@@ -1479,4 +1483,116 @@ test('export frame sampling holds and eases vector blocks without changing the s
   }
   expect(source.parameters.center).toEqual([0.1, 0.9]);
   expect(exported.animation).toEqual(source.animation);
+});
+
+test.each([false, true])(
+  'camera timing edits preserve the inspected frame and pause playback (running: %s)',
+  running => {
+    const camera = {longitude: 0, latitude: 0, zoom: 4, bearing: 0, pitch: 0};
+    const tour: CameraTour = {
+      stops: [
+        {id: 'a', name: 'A', camera, holdDurationMs: 1000, travelDurationMs: 4000},
+        {
+          id: 'b',
+          name: 'B',
+          camera: {...camera, longitude: 40},
+          holdDurationMs: 1000,
+          travelDurationMs: 0
+        }
+      ]
+    };
+    const view = setup([animatedBrightness()], true, {
+      cameraDuration: 6000,
+      cameraTour: tour,
+      managerOpen: false
+    });
+    act(() => view.playback().seek(4000));
+    if (running) act(() => view.playback().run());
+    const edited = {stops: [{...tour.stops[0], holdDurationMs: 3000}, tour.stops[1]]};
+    view.replaceTour(edited);
+    expect(view.playback().elapsed).toBe(4000);
+    expect(view.playback().running).toBe(false);
+    expect(frames.size).toBe(0);
+    expect(view.parameters()[0].brightness).toBe(0.4);
+    expect(view.updateMap).toHaveBeenLastCalledWith({
+      ...evaluateCameraTour(edited, 4000),
+      transitionDuration: 0
+    });
+    expect(tour.stops[0].holdDurationMs).toBe(1000);
+    act(() => view.playback().run());
+    advanceFrame(1000);
+    expect(view.playback().elapsed).toBe(5000);
+    const moved = {
+      stops: [{...edited.stops[0], camera: {...camera, latitude: 20}}, edited.stops[1]]
+    };
+    view.replaceTour(moved);
+    expect(view.playback().elapsed).toBe(0);
+    expect(view.playback().running).toBe(false);
+  }
+);
+
+test('shortening camera-only timing clamps the playhead to the new route end', () => {
+  const camera = {longitude: 0, latitude: 0, zoom: 4, bearing: 0, pitch: 0};
+  const tour: CameraTour = {
+    stops: [{id: 'a', name: 'A', camera, holdDurationMs: 6000, travelDurationMs: 0}]
+  };
+  const view = setup([], true, {cameraDuration: 6000, cameraTour: tour, managerOpen: false});
+  act(() => view.playback().seek(5000));
+  view.replaceTour({stops: [{...tour.stops[0], holdDurationMs: 2000}]});
+  expect(view.playback().elapsed).toBe(2000);
+  expect(view.playback().duration).toBe(2000);
+  expect(view.playback().running).toBe(false);
+  expect(view.updateMap).toHaveBeenLastCalledWith({...camera, transitionDuration: 0});
+});
+
+test.each([false, true])(
+  'changing the final camera move to an instant cut redraws its destination (running: %s)',
+  running => {
+    const camera = {longitude: 0, latitude: 0, zoom: 4, bearing: 0, pitch: 0};
+    const tour: CameraTour = {
+      stops: [
+        {id: 'a', name: 'A', camera, holdDurationMs: 0, travelDurationMs: 4000},
+        {
+          id: 'b',
+          name: 'B',
+          camera: {...camera, longitude: 40},
+          holdDurationMs: 0,
+          travelDurationMs: 0
+        }
+      ]
+    };
+    const view = setup([], true, {cameraDuration: 4000, cameraTour: tour, managerOpen: false});
+    act(() => view.playback().seek(2000));
+    if (running) act(() => view.playback().run());
+    expect(view.updateMap).toHaveBeenLastCalledWith({
+      ...camera,
+      longitude: 20,
+      transitionDuration: 0
+    });
+    view.updateMap.mockClear();
+
+    view.replaceTour({stops: [{...tour.stops[0], travelDurationMs: 0}, tour.stops[1]]});
+    expect(view.updateMap).toHaveBeenCalledTimes(1);
+    expect(view.updateMap).toHaveBeenLastCalledWith({
+      ...tour.stops[1].camera,
+      transitionDuration: 0
+    });
+    expect(view.playback().duration).toBe(0);
+    expect(view.playback().elapsed).toBe(0);
+    expect(view.playback().hasAnimation).toBe(false);
+    expect(view.playback().running).toBe(false);
+    expect(frames.size).toBe(0);
+    expect(tour.stops[0].travelDurationMs).toBe(4000);
+  }
+);
+
+test('invalid replacement camera stops do not interrupt independent effect playback with an exception', () => {
+  const view = setup([animatedBrightness()], true, {cameraDuration: 6000, managerOpen: false});
+  act(() => view.playback().seek(3000));
+  expect(() => view.replaceTour({stops: [null]} as any)).not.toThrow();
+  expect(view.playback().duration).toBe(10000);
+  expect(view.playback().running).toBe(false);
+  act(() => view.playback().run());
+  advanceFrame(1000);
+  expect(view.parameters()[0].brightness).toBe(0.1);
 });

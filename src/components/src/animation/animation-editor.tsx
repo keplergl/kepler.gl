@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useId, useRef, useState} from 'react';
+import React, {useEffect, useId, useMemo, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components';
 import type {
   Annotation,
   AnnotationPropsPartial,
   CameraTour,
+  CameraSnapshot,
   Effect,
   EffectParameterAnimation,
   EffectUpdateProps,
@@ -17,6 +18,7 @@ import type {
 import type {Layer} from '@kepler.gl/layers';
 import {
   getCameraTourDuration,
+  normalizeCameraTour,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
@@ -35,6 +37,7 @@ import useOnClickOutside from '../hooks/use-on-click-outside';
 import {CameraTourActionButton} from '../side-panel/interaction-panel/camera-tour-playback-controls';
 import EffectAnimationControl from '../effects/effect-animation-control';
 import AnimationBlock from './animation-block';
+import CameraAnimationTrack, {CameraSegment, getCameraSegments} from './camera-animation-track';
 import CompactColorPicker, {StyledPanelDropdown} from '../effects/compact-color-picker';
 import {getEffectAnimationTracks} from '../modals/effect-animation';
 
@@ -44,7 +47,7 @@ export type AnimationEditorPlayback = {
   running: boolean;
   run: () => void;
   pause: () => void;
-  seek: (time: number) => void;
+  seek: (time: number, camera?: CameraSnapshot) => void;
   stop: () => void;
   speed: number;
   setSpeed: (speed: number) => void;
@@ -66,10 +69,12 @@ export type AnimationEditorProps = {
   ) => void;
   onLayerConfigChange?: (layer: Layer, config: Partial<Layer['config']>) => void;
   onAnnotationChange?: (id: string, props: AnnotationPropsPartial) => void;
-  onEditCamera?: () => void;
+  onCameraTourChange?: (tour: CameraTour) => void;
+  onEditCamera?: (stopId?: string) => void;
 };
 
 type Selection =
+  | {kind: 'camera'; stopId: string; field: CameraSegment['field']}
   | {kind: 'effect'; effectId: string; name: string; blockId: string}
   | {kind: 'layer'; layerId: string; propertyName: string; transitionId: string}
   | {kind: 'annotation'; annotationId: string; transitionId: string};
@@ -243,31 +248,6 @@ const Playhead = styled(Cursor)`
     height: 6px;
     background: ${props => props.theme.textColorHl};
     clip-path: polygon(0 0, 100% 0, 50% 100%);
-  }
-`;
-const CameraRoute = styled.button<{$width: number; $muted: boolean}>`
-  position: absolute;
-  top: 4px;
-  left: 0;
-  width: ${props => props.$width}%;
-  min-width: 6px;
-  box-sizing: border-box;
-  height: 24px;
-  padding: 0 10px;
-  background: ${props => props.theme.panelBackgroundHover};
-  border: 1px solid ${props => props.theme.activeColor};
-  border-radius: 4px;
-  color: ${props => props.theme.textColor};
-  font: inherit;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  opacity: ${props => (props.$muted ? 0.45 : 1)};
-  cursor: pointer;
-  &:focus-visible {
-    outline: 2px solid ${props => props.theme.activeColor};
-    outline-offset: 2px;
   }
 `;
 const PopupAnchor = styled.div`
@@ -631,6 +611,90 @@ function PropertySettings({
   );
 }
 
+function CameraSettings({
+  segment,
+  maxDurationMs,
+  onSave,
+  onClose,
+  onEditCamera,
+  onSwitch
+}: {
+  segment: CameraSegment;
+  maxDurationMs: number;
+  onSave?: (duration: number) => void;
+  onClose: () => void;
+  onEditCamera?: () => void;
+  onSwitch?: () => void;
+}) {
+  const id = useId();
+  const savedDuration = segment.stop[segment.field];
+  const [value, setValue] = useState(String(savedDuration / 1000));
+  useEffect(() => setValue(String(savedDuration / 1000)), [savedDuration]);
+  const duration = Number(value) * 1000;
+  const valid =
+    value.trim() !== '' && Number.isFinite(duration) && duration >= 0 && duration <= maxDurationMs;
+  return (
+    <>
+      <InspectorHeader>
+        <span title={segment.label}>{segment.label}</span>
+        <InspectorIconButton type="button" aria-label="Close camera settings" onClick={onClose}>
+          <Close height="14px" />
+        </InspectorIconButton>
+      </InspectorHeader>
+      <InspectorBody>
+        <Fields>
+          <div>
+            <PanelLabel htmlFor={id}>Duration (seconds)</PanelLabel>
+            <Input
+              secondary
+              id={id}
+              type="number"
+              min={0}
+              step={0.01}
+              disabled={!onSave}
+              value={formatTimeInput(value)}
+              onChange={event => setValue(formatTimeInput(event.target.value))}
+            />
+          </div>
+          <div>
+            <PanelLabel>Start → End</PanelLabel>
+            <output aria-label="Camera interval">
+              {seconds(segment.startTimeMs)} →{' '}
+              {valid ? seconds(segment.startTimeMs + duration) : '—'}
+            </output>
+          </div>
+        </Fields>
+        {!valid && (
+          <Alert role="alert">Enter a non-negative duration within the route limit.</Alert>
+        )}
+        {onSwitch && (
+          <Button type="button" link onClick={onSwitch}>
+            {segment.field === 'holdDurationMs' ? 'Edit move duration' : 'Edit hold duration'}
+          </Button>
+        )}
+        {onEditCamera && (
+          <Button type="button" link onClick={onEditCamera}>
+            Edit camera stop
+          </Button>
+        )}
+        <InspectorActions>
+          <Button type="button" link onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            secondary
+            disabled={!valid || !onSave}
+            onClick={() => onSave?.(duration)}
+          >
+            Save
+          </Button>
+        </InspectorActions>
+      </InspectorBody>
+    </>
+  );
+}
+
 AnimationEditorFactory.deps = [RangeSliderFactory];
 export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
   return function AnimationEditor({
@@ -643,6 +707,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     updateEffectConfig,
     onLayerConfigChange,
     onAnnotationChange,
+    onCameraTourChange,
     onEditCamera
   }: AnimationEditorProps) {
     const theme = useTheme();
@@ -668,7 +733,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         (firstItem ?? addMenu.current)?.focus();
       }
     }, [adding, addTarget]);
-    const cameraDuration = getCameraTourDuration(tour);
+    const cameraTour = useMemo(() => normalizeCameraTour(tour), [tour]);
+    const cameraSegments = cameraTour ? getCameraSegments(cameraTour) : [];
+    const cameraDuration = getCameraTourDuration(cameraTour);
     const tracks = getEffectAnimationTracks(effects);
     const rows = tracks.flatMap(track =>
       [...new Set(track.parameters.map(parameter => parameter.name))].map(name => ({
@@ -718,6 +785,29 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       scrubPointer.current = null;
       if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    };
+    const selectedCameraSegment =
+      selected?.kind === 'camera'
+        ? cameraSegments.find(
+            segment => segment.stop.id === selected.stopId && segment.field === selected.field
+          )
+        : undefined;
+    const saveCameraDuration = (segment: CameraSegment, nextDuration: number) => {
+      if (
+        !cameraTour ||
+        !onCameraTourChange ||
+        cameraTour.stops.find(stop => stop.id === segment.stop.id)?.[segment.field] === nextDuration
+      )
+        return;
+      const next = normalizeCameraTour({
+        stops: cameraTour.stops.map(stop =>
+          stop.id === segment.stop.id ? {...stop, [segment.field]: nextDuration} : stop
+        )
+      });
+      if (next && next.stops.length === cameraTour.stops.length) {
+        playback.pause();
+        onCameraTourChange(next);
       }
     };
     const selectedEffect =
@@ -1243,29 +1333,31 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                 <Playhead $position={percent(playback.elapsed)} />
               </Ruler>
             </RulerRow>
-            {cameraDuration > 0 && (
+            {cameraTour && (
               <Row role="group" aria-label="Camera animation">
                 <RowLabel>
                   <span>Camera</span>
-                  <small>{cameraEnabled ? `${tour?.stops.length} stops` : 'Disabled'}</small>
+                  <small>{cameraEnabled ? `${cameraTour.stops.length} stops` : 'Disabled'}</small>
                 </RowLabel>
                 <Track $grid={(step / duration) * 100}>
-                  <CameraRoute
-                    type="button"
-                    aria-label="Edit camera route"
-                    title="Double-click to edit camera route"
-                    $width={percent(cameraDuration)}
-                    $muted={!cameraEnabled}
-                    onDoubleClick={onEditCamera}
-                    onKeyDown={event => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onEditCamera?.();
-                      }
-                    }}
-                  >
-                    Camera route
-                  </CameraRoute>
+                  <CameraAnimationTrack
+                    tour={cameraTour}
+                    durationMs={duration}
+                    enabled={cameraEnabled}
+                    selected={selected?.kind === 'camera' ? selected : undefined}
+                    onSelect={segment =>
+                      select({kind: 'camera', stopId: segment.stop.id, field: segment.field})
+                    }
+                    onSeek={segment => playback.seek(segment.startTimeMs, segment.stop.camera)}
+                    onOpen={(segment, anchor) =>
+                      openSettings(
+                        {kind: 'camera', stopId: segment.stop.id, field: segment.field},
+                        anchor
+                      )
+                    }
+                    onDragStart={playback.pause}
+                    onChange={onCameraTourChange ? saveCameraDuration : undefined}
+                  />
                   <Cursor $position={percent(playback.elapsed)} />
                 </Track>
               </Row>
@@ -1553,14 +1645,16 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
             {!rows.length &&
               !layerTracks.length &&
               !annotationTracks.some(track => track.transitions.length) &&
-              !cameraDuration && <Empty>Add an action to begin.</Empty>}
+              !cameraTour && <Empty>Add an action to begin.</Empty>}
           </Timeline>
         </Workspace>
         <Portaled
           component={PopupAnchor}
           // Open at the selected block instead of tweening from the previous popup position.
           theme={{...theme, transitionFast: 'none'}}
-          isOpened={Boolean(popup && (selectedEffect || selectedTransition))}
+          isOpened={Boolean(
+            popup && (selectedEffect || selectedTransition || selectedCameraSegment)
+          )}
           onClose={() => {
             setPopup(null);
             setConfirmRemoval(false);
@@ -1596,6 +1690,50 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   </Button>
                 </InspectorActions>
               </InspectorBody>
+            ) : selectedCameraSegment ? (
+              <CameraSettings
+                key={`${selectedCameraSegment.stop.id}-${selectedCameraSegment.field}`}
+                segment={selectedCameraSegment}
+                maxDurationMs={
+                  Number.MAX_SAFE_INTEGER -
+                  (cameraDuration -
+                    (selectedCameraSegment.endTimeMs - selectedCameraSegment.startTimeMs))
+                }
+                onClose={() => setPopup(null)}
+                onSave={
+                  onCameraTourChange
+                    ? value => {
+                        saveCameraDuration(selectedCameraSegment, value);
+                        setPopup(null);
+                      }
+                    : undefined
+                }
+                onEditCamera={
+                  onEditCamera
+                    ? () => {
+                        onEditCamera(selectedCameraSegment.stop.id);
+                        setPopup(null);
+                      }
+                    : undefined
+                }
+                onSwitch={
+                  cameraSegments.some(
+                    segment =>
+                      segment.stop.id === selectedCameraSegment.stop.id &&
+                      segment.field !== selectedCameraSegment.field
+                  )
+                    ? () =>
+                        setSelected({
+                          kind: 'camera',
+                          stopId: selectedCameraSegment.stop.id,
+                          field:
+                            selectedCameraSegment.field === 'holdDurationMs'
+                              ? 'travelDurationMs'
+                              : 'holdDurationMs'
+                        })
+                    : undefined
+                }
+              />
             ) : selectedEffect && selected?.kind === 'effect' ? (
               <EffectAnimationControl
                 key={`${selectedEffect.id}-${selected.name}-${selected.blockId}`}

@@ -1186,6 +1186,12 @@ export default function MapContainerFactory(
       return true;
     };
 
+    _editCameraTour = (stopId?: string) => {
+      if (stopId)
+        this.props.uiStateActions.setMapControlSettings('cameraTour', {selection: {stopId}});
+      this.props.uiStateActions.toggleSidePanel('interaction');
+    };
+
     _canEditCameraTourPath = () =>
       !this.unmounted &&
       !this.props.readOnly &&
@@ -1862,7 +1868,7 @@ export default function MapContainerFactory(
               cameraTour={visState.cameraTour}
               effects={this.props.animationSourceEffects ?? visState.effects}
               annotations={visState.annotations}
-              onEditCamera={() => uiStateActions.toggleSidePanel('interaction')}
+              onEditCamera={this._editCameraTour}
               onCameraBookmarksChange={this.props.visStateActions.setCameraBookmarks}
               mapStateActions={mapStateActions}
               datasets={datasets}

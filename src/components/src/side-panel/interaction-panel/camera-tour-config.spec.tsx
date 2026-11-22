@@ -1022,10 +1022,12 @@ test.each([
 function setupSharedPlayer({
   floatingBookmarks = false,
   initialTour = tour,
+  initialMapControls = INITIAL_UI_STATE.mapControls,
   bookmarks = [{id: 'saved', name: 'Saved view', camera}]
 }: {
   floatingBookmarks?: boolean;
   initialTour?: CameraTour | null;
+  initialMapControls?: typeof INITIAL_UI_STATE.mapControls;
   bookmarks?: CameraBookmark[];
 } = {}) {
   const updateMap = jest.fn();
@@ -1038,7 +1040,7 @@ function setupSharedPlayer({
     const [ui, updateUi] = useReducer(uiStateReducer, {
       ...INITIAL_UI_STATE,
       mapControls: {
-        ...INITIAL_UI_STATE.mapControls,
+        ...initialMapControls,
         cameraBookmarks: {...INITIAL_UI_STATE.mapControls.cameraBookmarks, active: true, show: true}
       }
     });
@@ -1366,6 +1368,26 @@ test('ignores a selection request for a stop that no longer exists', () => {
     'false'
   );
   expect(player.updateMap).not.toHaveBeenCalled();
+});
+
+test('a stop selection opens Camera animation when its map-control entry is missing', () => {
+  const initialMapControls = {...INITIAL_UI_STATE.mapControls};
+  delete initialMapControls.cameraTour;
+  const player = setupSharedPlayer({initialMapControls});
+  player.selectStop('work');
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'true'
+  );
+  expect(screen.getByRole('textbox', {name: 'Stop name'})).toHaveValue('Work');
+  expect(player.updateMap).not.toHaveBeenCalled();
+  player.closePanel();
+  player.openPanel();
+  expect(screen.getByRole('button', {name: 'Camera animation'})).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
 });
 
 test('a handled map selection does not interrupt playback when Interactions remounts', () => {
