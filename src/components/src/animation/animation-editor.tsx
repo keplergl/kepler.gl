@@ -25,7 +25,7 @@ import {
   roundValToStep,
   rgbToHex
 } from '@kepler.gl/utils';
-import {getAnimatableEffectParameters, getEffectAnimationEntries} from '@kepler.gl/effects';
+import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Button, Input, PanelLabel} from '../common/styled-components';
 import {Add, ArrowDownSmall, Close, Pause, Play, Reset, Trash, ZoomOut} from '../common/icons';
 import Switch from '../common/switch';
@@ -70,7 +70,7 @@ export type AnimationEditorProps = {
 };
 
 type Selection =
-  | {kind: 'effect'; effectId: string; name: string; blockId?: string}
+  | {kind: 'effect'; effectId: string; name: string; blockId: string}
   | {kind: 'layer'; layerId: string; propertyName: string; transitionId: string}
   | {kind: 'annotation'; annotationId: string; transitionId: string};
 
@@ -796,11 +796,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const removeSelected = () => {
       if (selectedEffect && selected?.kind === 'effect') {
         const animation = {...selectedEffect.animation};
-        const remaining = selected.blockId
-          ? getEffectAnimationEntries(animation[selected.name]).filter(
-              block => block.id !== selected.blockId
-            )
-          : [];
+        const remaining = (animation[selected.name] ?? []).filter(
+          block => block.id !== selected.blockId
+        );
         if (remaining.length) animation[selected.name] = remaining;
         else delete animation[selected.name];
         updateEffectConfig(null, selectedEffect.id, {
@@ -857,7 +855,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     ) => {
       const name = parameters[0].name;
       const blocks = parameters.map(parameter => ({
-        id: parameter.id ?? `${name}-1`,
+        id: parameter.id,
         startTimeMs: parameter.startTimeMs,
         endTimeMs: parameter.endTimeMs,
         startValue: Array.isArray(parameter.start) ? [...parameter.start] : parameter.start,
@@ -1091,21 +1089,25 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                           onClick={event => {
                             const value =
                               effect.parameters[parameter.name] ?? parameter.defaultValue;
+                            const blockId = `${parameter.name}-1`;
                             playback.pause();
                             updateEffectConfig(null, effect.id, {
                               animation: {
                                 ...effect.animation,
-                                [parameter.name]: {
-                                  startValue: value,
-                                  endValue: value,
-                                  easing: 'easeInOut',
-                                  startTimeMs: 0,
-                                  endTimeMs: 10000
-                                }
+                                [parameter.name]: [
+                                  {
+                                    id: blockId,
+                                    startValue: value,
+                                    endValue: value,
+                                    easing: 'easeInOut',
+                                    startTimeMs: 0,
+                                    endTimeMs: 10000
+                                  }
+                                ]
                               }
                             });
                             openSettings(
-                              {kind: 'effect', effectId: effect.id, name: parameter.name},
+                              {kind: 'effect', effectId: effect.id, name: parameter.name, blockId},
                               event.currentTarget
                             );
                           }}
@@ -1502,7 +1504,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                       };
                       return (
                         <AnimationBlock
-                          key={parameter.id ?? parameter.name}
+                          key={parameter.id}
                           label={label}
                           ariaLabel={parameters.length > 1 ? `${label} ${index + 1}` : label}
                           kind="effect"
@@ -1524,7 +1526,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                           onChange={(startTimeMs, endTimeMs) => {
                             const saved = effect.animation?.[parameter.name];
                             const updated: EffectParameterAnimation = {
-                              ...(parameter.id ? {id: parameter.id} : {}),
+                              id: parameter.id,
                               startValue: parameter.start,
                               endValue: parameter.end,
                               easing: parameter.easing,
@@ -1534,11 +1536,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                             updateEffectConfig(null, effect.id, {
                               animation: {
                                 ...effect.animation,
-                                [parameter.name]: Array.isArray(saved)
-                                  ? saved.map(block =>
-                                      block.id === parameter.id ? updated : block
-                                    )
-                                  : updated
+                                [parameter.name]: (saved ?? []).map(block =>
+                                  block.id === parameter.id ? updated : block
+                                )
                               }
                             });
                           }}
@@ -1598,13 +1598,11 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
               </InspectorBody>
             ) : selectedEffect && selected?.kind === 'effect' ? (
               <EffectAnimationControl
-                key={`${selectedEffect.id}-${selected.name}-${selected.blockId ?? 'single'}`}
-                embedded
+                key={`${selectedEffect.id}-${selected.name}-${selected.blockId}`}
                 effect={selectedEffect}
                 name={selected.name}
                 blockId={selected.blockId}
                 RangeSlider={RangeSlider}
-                durationMs={playback.duration}
                 updateEffectConfig={updateEffectConfig}
                 onClose={() => setPopup(null)}
               />

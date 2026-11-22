@@ -14,20 +14,16 @@ import React, {
 import type {Annotation, CameraSnapshot, CameraTour, Effect} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import type {MapStateActions} from '@kepler.gl/actions';
-import {getEffectAnimationEntries} from '@kepler.gl/effects';
 import {
   cameraForMap,
   evaluateCameraTour,
   getCameraTourDuration,
-  getAnnotationOpacityDuration,
-  getLayerAnimationDuration,
   getLayerAnimationTracks,
   getLayerPropertyTransitions
 } from '@kepler.gl/utils';
 import {RootContext} from '../context';
 import {
   applyEffectAnimation,
-  getEffectAnimationDuration,
   getEffectAnimationTracks,
   setAnimatedParameters
 } from '../modals/effect-animation';
@@ -86,54 +82,92 @@ export default function EffectAnimationPreviewProvider({
   children: React.ReactNode;
 }) {
   const root = useContext(RootContext);
-  const effectTracks = useMemo(() => getEffectAnimationTracks(effects), [effects]);
-  const cameraDuration = cameraEnabled ? getCameraTourDuration(cameraTour) : 0;
-  const layerDuration = getLayerAnimationDuration(layers);
-  const annotationDuration = getAnnotationOpacityDuration(annotations);
-  // Static objects and replacement layer instances do not change animation timing.
-  const layerTimingKey = JSON.stringify(
-    layers.flatMap(layer => {
-      const tracks = getLayerAnimationTracks(layer);
-      return tracks.length ? [[layer.id, layer.config.isVisible, tracks]] : [];
-    })
-  );
-  const annotationTimingKey = JSON.stringify(
-    annotations.flatMap(annotation => {
-      const tracks = getLayerPropertyTransitions(annotation, 'opacity');
-      return tracks.length ? [[annotation.id, annotation.isVisible, tracks]] : [];
-    })
-  );
-  const effectTimingKey = JSON.stringify(
-    effects.map(effect => [
-      effect.id,
-      effect.isEnabled,
-      Object.entries(effect.animation ?? {}).map(([name, animation]) => [
-        name,
-        getEffectAnimationEntries(animation).map(block => [
-          block.id,
-          block.startTimeMs,
-          block.endTimeMs
+  const {
+    tracks: effectTracks,
+    duration: effectDuration,
+    timingKey: effectTimingKey
+  } = useMemo(() => {
+    const tracks = getEffectAnimationTracks(effects);
+    return {
+      tracks,
+      duration: tracks.reduce(
+        (latest, track) =>
+          track.parameters.reduce((end, parameter) => Math.max(end, parameter.endTimeMs), latest),
+        0
+      ),
+      timingKey: JSON.stringify(
+        tracks.map(({effect, parameters}) => [
+          effect.id,
+          parameters.map(block => [block.name, block.id, block.startTimeMs, block.endTimeMs])
         ])
-      ])
-    ])
+      )
+    };
+  }, [effects]);
+  const cameraDuration = useMemo(
+    () => (cameraEnabled ? getCameraTourDuration(cameraTour) : 0),
+    [cameraEnabled, cameraTour]
   );
-  const hasLayerTiming = layers.some(
-    layer => layer.config.isVisible && getLayerAnimationTracks(layer).length > 0
-  );
-  const hasAnnotationTiming = annotations.some(
-    annotation =>
-      annotation.isVisible && getLayerPropertyTransitions(annotation, 'opacity').length > 0
-  );
+  // Static objects and equivalent replacements do not change animation timing.
+  const {
+    duration: layerDuration,
+    hasAnimation: hasLayerTiming,
+    timingKey: layerTimingKey
+  } = useMemo(() => {
+    const tracks = layers
+      .map(layer => ({
+        id: layer.id,
+        visible: layer.config.isVisible,
+        tracks: getLayerAnimationTracks(layer)
+      }))
+      .filter(layer => layer.tracks.length);
+    return {
+      duration: tracks.reduce(
+        (latest, layer) =>
+          layer.visible
+            ? layer.tracks.reduce(
+                (end, {transitions}) =>
+                  Math.max(end, transitions[transitions.length - 1].endTimeMs),
+                latest
+              )
+            : latest,
+        0
+      ),
+      hasAnimation: tracks.some(layer => layer.visible),
+      timingKey: JSON.stringify(tracks.map(layer => [layer.id, layer.visible, layer.tracks]))
+    };
+  }, [layers]);
+  const {
+    duration: annotationDuration,
+    hasAnimation: hasAnnotationTiming,
+    timingKey: annotationTimingKey
+  } = useMemo(() => {
+    const tracks = annotations
+      .map(annotation => ({
+        id: annotation.id,
+        visible: annotation.isVisible,
+        transitions: getLayerPropertyTransitions(annotation, 'opacity')
+      }))
+      .filter(annotation => annotation.transitions.length);
+    return {
+      duration: tracks.reduce(
+        (latest, annotation) =>
+          annotation.visible
+            ? Math.max(latest, annotation.transitions[annotation.transitions.length - 1].endTimeMs)
+            : latest,
+        0
+      ),
+      hasAnimation: tracks.some(annotation => annotation.visible),
+      timingKey: JSON.stringify(
+        tracks.map(annotation => [annotation.id, annotation.visible, annotation.transitions])
+      )
+    };
+  }, [annotations]);
   const hasAnimation = Boolean(
     effectTracks.length || cameraDuration || hasLayerTiming || hasAnnotationTiming
   );
   const duration =
-    Math.max(
-      cameraDuration,
-      getEffectAnimationDuration(effects),
-      layerDuration,
-      annotationDuration
-    ) || (hasAnimation ? 10000 : 0);
+    Math.max(cameraDuration, effectDuration, layerDuration, annotationDuration) ||
+    (hasAnimation ? 10000 : 0);
   const [elapsed, setElapsed] = useState(0);
   const elapsedRef = useRef(0);
   const [running, setRunning] = useState(false);

@@ -213,13 +213,6 @@ export function getLayerAnimatedConfig(
   return result;
 }
 
-export function getLayerAnimatedVisConfig(
-  layer: AnimatableLayer,
-  timeMs?: number | null
-): Record<string, number | RGBColor> {
-  return getLayerAnimatedConfig(layer, timeMs).visConfig ?? {};
-}
-
 export function getAnnotationOpacityDuration(
   annotations: readonly (PropertyTransitionConfig & {isVisible: boolean})[]
 ): number {

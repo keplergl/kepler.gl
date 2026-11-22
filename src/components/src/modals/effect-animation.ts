@@ -4,7 +4,7 @@
 import {useCallback, useEffect, useMemo} from 'react';
 import type {RefObject} from 'react';
 import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
-import {getEffectAnimationEntries, validateEffectAnimation} from '@kepler.gl/effects';
+import {validateEffectAnimation} from '@kepler.gl/effects';
 import type {Effect} from '@kepler.gl/types';
 
 type PlaybackState = {
@@ -18,7 +18,7 @@ type PlaybackState = {
 };
 
 type ParameterTrack = {
-  id?: string;
+  id: string;
   name: string;
   start: number | number[];
   end: number | number[];
@@ -74,39 +74,18 @@ export function getEffectAnimationTracks(effects: Effect[]) {
     if (!effect.isEnabled || !effect.animation) return [];
     const validated = validateEffectAnimation(effect.animation, effect.getParameterDescriptions());
     const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entries]) =>
-      getEffectAnimationEntries(entries).flatMap<ParameterTrack>(entry => {
+      entries.map(entry => {
         const current = effect.parameters[name];
-        const original = Array.isArray(current) ? current.slice() : current;
-        const start = entry.startValue ?? current;
-        const end = entry.endValue;
-        const timing = {startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs};
-        const identity = entry.id ? {id: entry.id} : {};
-        if (Array.isArray(start) && Array.isArray(end)) {
-          if (start.length !== end.length || !start.every(Number.isFinite)) return [];
-          return [
-            {
-              name,
-              start: start.slice(),
-              end,
-              original,
-              easing: entry.easing,
-              ...timing,
-              ...identity
-            }
-          ];
-        }
-        if (!Number.isFinite(start) || Array.isArray(end)) return [];
-        return [
-          {
-            name,
-            start: start as number,
-            end,
-            original,
-            easing: entry.easing,
-            ...timing,
-            ...identity
-          }
-        ];
+        return {
+          id: entry.id,
+          name,
+          start: entry.startValue,
+          end: entry.endValue,
+          original: Array.isArray(current) ? current.slice() : current,
+          easing: entry.easing,
+          startTimeMs: entry.startTimeMs,
+          endTimeMs: entry.endTimeMs
+        };
       })
     );
     const animatesTimestamp =

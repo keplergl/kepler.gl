@@ -41,12 +41,6 @@ export function getAnimatableEffectParameters(
   return effect.getParameterDescriptions().filter(isAnimatableParameter);
 }
 
-export function getEffectAnimationEntries(
-  value: EffectAnimation[string] | undefined
-): EffectParameterAnimation[] {
-  return Array.isArray(value) ? value : value ? [value] : [];
-}
-
 /** Validate timed endpoints without creating animations for missing or invalid values. */
 export function validateEffectAnimation(
   animation: unknown,
@@ -60,70 +54,8 @@ export function validateEffectAnimation(
   for (const description of descriptions.filter(isAnimatableParameter)) {
     const {name, type, min, max, defaultValue} = description;
     if (!Object.prototype.hasOwnProperty.call(animation, name)) continue;
-    const entry = (
-      animation as Record<
-        string,
-        {
-          id?: unknown;
-          startValue?: unknown;
-          endValue?: unknown;
-          easing?: unknown;
-          startTimeMs?: unknown;
-          endTimeMs?: unknown;
-        }
-      >
-    )[name];
-    if (Array.isArray(entry)) {
-      const ids = new Set<string>();
-      if (
-        !entry.length ||
-        !entry.every(block => {
-          if (
-            !block ||
-            typeof block !== 'object' ||
-            Array.isArray(block) ||
-            typeof block.id !== 'string' ||
-            !block.id.trim() ||
-            ids.has(block.id) ||
-            block.startValue === undefined ||
-            block.startTimeMs === undefined ||
-            block.endTimeMs === undefined
-          )
-            return false;
-          ids.add(block.id);
-          return true;
-        })
-      )
-        continue;
-      const blocks = entry.map(
-        block => validateEffectAnimation({[name]: block}, [description])?.[name]
-      );
-      if (blocks.some(block => !block || Array.isArray(block))) continue;
-      const sequence = (blocks as EffectParameterAnimation[]).sort(
-        (a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs
-      );
-      if (
-        sequence.some(
-          (block, index) => index > 0 && block.startTimeMs < sequence[index - 1].endTimeMs
-        )
-      )
-        continue;
-      result[name] = sequence;
-      continue;
-    }
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-    if (entry.id !== undefined && (typeof entry.id !== 'string' || !entry.id.trim())) continue;
-    if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
-    if (
-      typeof entry.startTimeMs !== 'number' ||
-      !Number.isFinite(entry.startTimeMs) ||
-      entry.startTimeMs < 0 ||
-      typeof entry.endTimeMs !== 'number' ||
-      !Number.isFinite(entry.endTimeMs) ||
-      entry.endTimeMs < entry.startTimeMs
-    ) {
-      continue;
-    }
+    const entries = (animation as Record<string, unknown>)[name];
+    if (!Array.isArray(entries) || !entries.length) continue;
 
     const clampValue = (value: number) => Math.max(min, Math.min(max, value));
     const validateValue = (value: unknown): number | number[] | undefined => {
@@ -146,18 +78,35 @@ export function validateEffectAnimation(
       }
       return clampValue(value);
     };
-    const endValue = validateValue(entry.endValue);
-    const hasStart = Object.prototype.hasOwnProperty.call(entry, 'startValue');
-    const startValue = hasStart ? validateValue(entry.startValue) : undefined;
-    if (endValue === undefined || (hasStart && startValue === undefined)) continue;
-    result[name] = {
-      ...(typeof entry.id === 'string' ? {id: entry.id} : {}),
-      ...(hasStart ? {startValue} : {}),
-      endValue,
-      easing: entry.easing,
-      startTimeMs: entry.startTimeMs,
-      endTimeMs: entry.endTimeMs
-    };
+    const ids = new Set<string>();
+    const blocks: EffectParameterAnimation[] = [];
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) break;
+      const {id, easing, startTimeMs, endTimeMs} = entry;
+      if (
+        typeof id !== 'string' ||
+        !id.trim() ||
+        ids.has(id) ||
+        (easing !== 'linear' && easing !== 'easeInOut') ||
+        typeof startTimeMs !== 'number' ||
+        !Number.isFinite(startTimeMs) ||
+        startTimeMs < 0 ||
+        typeof endTimeMs !== 'number' ||
+        !Number.isFinite(endTimeMs) ||
+        endTimeMs < startTimeMs
+      )
+        break;
+      const startValue = validateValue(entry.startValue);
+      const endValue = validateValue(entry.endValue);
+      if (startValue === undefined || endValue === undefined) break;
+      ids.add(id);
+      blocks.push({id, startValue, endValue, easing, startTimeMs, endTimeMs});
+    }
+    if (blocks.length !== entries.length) continue;
+    blocks.sort((a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs);
+    if (blocks.some((block, index) => index > 0 && block.startTimeMs < blocks[index - 1].endTimeMs))
+      continue;
+    result[name] = blocks;
   }
   return Object.keys(result).length ? result : undefined;
 }

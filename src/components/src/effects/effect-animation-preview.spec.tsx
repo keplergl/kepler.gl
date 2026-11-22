@@ -10,11 +10,7 @@ import {ThemeProvider} from 'styled-components';
 import {createEffect} from '@kepler.gl/effects';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
-import {
-  getLayerAnimatedConfig,
-  getLayerAnimatedVisConfig,
-  getLayerOpacityFactor
-} from '@kepler.gl/utils';
+import {getLayerAnimatedConfig, getLayerOpacityFactor} from '@kepler.gl/utils';
 import type {Annotation, CameraTour, Effect, LayerPropertyTransition} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import CameraTourPlaybackProvider, {
@@ -68,7 +64,18 @@ function animatedBrightness() {
     id: 'brightness',
     type: 'brightnessContrast',
     parameters: {brightness: 0, contrast: 0.3},
-    animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'linear'}}
+    animation: {
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 1,
+          easing: 'linear'
+        }
+      ]
+    }
   });
 }
 
@@ -137,7 +144,9 @@ function setup(
         </output>
         <output aria-label="Rendered layer properties">
           {JSON.stringify(
-            layers.map(layer => getLayerAnimatedVisConfig(layer, playback?.animationTimeMs))
+            layers.map(
+              layer => getLayerAnimatedConfig(layer, playback?.animationTimeMs).visConfig ?? {}
+            )
           )}
         </output>
         <output aria-label="Rendered layer colors">
@@ -530,13 +539,16 @@ describe('effects panel animation preview', () => {
     const effect = animatedBrightness();
     effect.setProps({
       animation: {
-        brightness: {
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear',
-          startTimeMs: 3000,
-          endTimeMs: 7000
-        }
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear',
+            startTimeMs: 3000,
+            endTimeMs: 7000
+          }
+        ]
       }
     });
     const view = setup([effect], true, {cameraDuration: 20000, managerOpen: false});
@@ -570,13 +582,16 @@ describe('effects panel animation preview', () => {
     effect.setProps({
       parameters: {brightness: 0.7},
       animation: {
-        brightness: {
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear',
-          startTimeMs: 2000,
-          endTimeMs: 12000
-        }
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear',
+            startTimeMs: 2000,
+            endTimeMs: 12000
+          }
+        ]
       }
     });
     const view = setup([effect], true, {cameraDuration: 4000, managerOpen: false});
@@ -781,13 +796,16 @@ describe('effects panel animation preview', () => {
     const effect = animatedBrightness();
     effect.setProps({
       animation: {
-        brightness: {
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear',
-          startTimeMs: 3000,
-          endTimeMs: 7000
-        }
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear',
+            startTimeMs: 3000,
+            endTimeMs: 7000
+          }
+        ]
       }
     });
     const view = setup([effect], true, {cameraDuration: 20000, managerOpen: false});
@@ -795,13 +813,16 @@ describe('effects panel animation preview', () => {
     expect(view.parameters()[0].brightness).toBe(1);
     effect.setProps({
       animation: {
-        brightness: {
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear',
-          startTimeMs: 3000,
-          endTimeMs: 13000
-        }
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear',
+            startTimeMs: 3000,
+            endTimeMs: 13000
+          }
+        ]
       }
     });
     view.replaceEffects([effect]);
@@ -1080,12 +1101,37 @@ describe('effects panel animation preview', () => {
     ['empty effects', () => []],
     ['missing animation', () => [createEffect({type: 'brightnessContrast'})]],
     [
+      'unsupported experimental format',
+      () => {
+        const effect = animatedBrightness();
+        effect.animation = {
+          brightness: {
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear',
+            startTimeMs: 0,
+            endTimeMs: 1000
+          }
+        } as any;
+        return [effect];
+      }
+    ],
+    [
       'invalid endpoint',
       () => [
         createEffect({
           type: 'brightnessContrast',
           animation: {
-            brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: NaN, easing: 'linear'}
+            brightness: [
+              {
+                id: 'brightness-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 10000,
+                endValue: NaN,
+                easing: 'linear'
+              }
+            ]
           }
         })
       ]
@@ -1094,7 +1140,7 @@ describe('effects panel animation preview', () => {
       'invalid start',
       () => {
         const effect = animatedBrightness();
-        effect.parameters.brightness = Infinity;
+        effect.animation!.brightness[0].startValue = Infinity;
         return [effect];
       }
     ],
@@ -1106,9 +1152,9 @@ describe('effects panel animation preview', () => {
         return [effect];
       }
     ]
-  ])('hides Run for %s', (_name, createEffects) => {
-    setup(createEffects());
-    expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
+  ])('does not enable playback for %s', (_name, createEffects) => {
+    const view = setup(createEffects());
+    expect(view.playback().hasAnimation).toBe(false);
     expect(frames.size).toBe(0);
   });
 
@@ -1123,14 +1169,26 @@ describe('effects panel animation preview', () => {
           fogColor: [0, 40, 80]
         },
         animation: {
-          height: {
-            startValue: 0,
-            endValue: 100,
-            easing: 'easeInOut',
-            startTimeMs: 0,
-            endTimeMs: 10000
-          },
-          fogColor: {startTimeMs: 0, endTimeMs: 10000, endValue: [80, 0, 40], easing: 'linear'}
+          height: [
+            {
+              id: 'height-1',
+              startValue: 0,
+              endValue: 100,
+              easing: 'easeInOut',
+              startTimeMs: 0,
+              endTimeMs: 10000
+            }
+          ],
+          fogColor: [
+            {
+              id: 'fogColor-1',
+              startValue: [0, 40, 80],
+              startTimeMs: 0,
+              endTimeMs: 10000,
+              endValue: [80, 0, 40],
+              easing: 'linear'
+            }
+          ]
         }
       })
     ];
@@ -1170,13 +1228,16 @@ describe('effects panel animation preview', () => {
   test('uses the configured Start after static edits and restores the current static value', () => {
     const effect = animatedBrightness();
     const animation = {
-      brightness: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: 0,
-        endValue: 1,
-        easing: 'linear' as const
-      }
+      brightness: [
+        {
+          id: 'brightness-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 0,
+          endValue: 1,
+          easing: 'linear' as const
+        }
+      ]
     };
     effect.setProps({animation});
     const view = setup([effect]);
@@ -1215,13 +1276,16 @@ describe('effects panel animation preview', () => {
       type: 'lightAndShadow',
       parameters: {timeMode: 'animation', timestamp: 0},
       animation: {
-        timestamp: {
-          startTimeMs: 0,
-          endTimeMs: 10000,
-          startValue: start,
-          endValue: end,
-          easing: 'linear'
-        }
+        timestamp: [
+          {
+            id: 'timestamp-1',
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            startValue: start,
+            endValue: end,
+            easing: 'linear'
+          }
+        ]
       }
     });
     const view = setup([effect]);
@@ -1242,7 +1306,18 @@ describe('effects panel animation preview', () => {
     expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
     expect(view.playback().hasAnimation).toBe(false);
     effect.setProps({
-      animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'linear'}}
+      animation: {
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            endValue: 1,
+            easing: 'linear'
+          }
+        ]
+      }
     });
     view.replaceEffects([effect]);
     expect(view.playback().hasAnimation).toBe(true);

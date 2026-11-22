@@ -740,13 +740,16 @@ test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
   const state = cloneDeep(StateWEffects);
   const effect = state.visState.effects.find(item => item.type === 'sepia');
   const animation = {
-    amount: {
-      startValue: 0.25,
-      endValue: 0,
-      easing: 'linear',
-      startTimeMs: 2000,
-      endTimeMs: 6000
-    }
+    amount: [
+      {
+        id: 'amount-1',
+        startValue: 0.25,
+        endValue: 0,
+        easing: 'linear',
+        startTimeMs: 2000,
+        endTimeMs: 6000
+      }
+    ]
   };
   effect.setProps({parameters: {amount: 0.7}});
   const parameters = {...effect.parameters};
@@ -788,13 +791,16 @@ test('#visStateSchema -> v1 -> shadow timestamp animation round trips independen
   });
   const parameters = {...effect.parameters};
   const animation = {
-    timestamp: {
-      startTimeMs: 0,
-      endTimeMs: 10000,
-      startValue: Date.UTC(2024, 0, 1, 6),
-      endValue: Date.UTC(2024, 0, 1, 18),
-      easing: 'linear'
-    }
+    timestamp: [
+      {
+        id: 'timestamp-1',
+        startTimeMs: 0,
+        endTimeMs: 10000,
+        startValue: Date.UTC(2024, 0, 1, 6),
+        endValue: Date.UTC(2024, 0, 1, 18),
+        easing: 'linear'
+      }
+    ]
   };
   effect.setProps({animation});
 
@@ -830,7 +836,9 @@ test('#visStateSchema -> v1 -> untimed experimental effects are discarded on loa
   const parameters = {...effect.parameters};
   const saved = SchemaManager.getConfigToSave(state);
   const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
-  savedEffect.animation = {amount: {startValue: 0, endValue: 1, easing: 'linear'}};
+  savedEffect.animation = {
+    amount: [{id: 'amount-1', startValue: 0, endValue: 1, easing: 'linear'}]
+  };
   const loaded = SchemaManager.parseSavedConfig(saved);
   const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
   t.notOk(loadedEffect.animation, 'does not infer a duration for untimed metadata');

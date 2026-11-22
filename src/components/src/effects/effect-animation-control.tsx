@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import moment from 'moment-timezone';
 import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
-import {getAnimatableEffectParameters, getEffectAnimationEntries} from '@kepler.gl/effects';
+import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Effect, EffectParameterAnimation, EffectUpdateProps} from '@kepler.gl/types';
 import {roundValToStep} from '@kepler.gl/utils';
 
-import {Add, ArrowDownSmall, Close, Help, Trash} from '../common/icons';
-import {Button, Input, PanelLabel, Tooltip} from '../common/styled-components';
+import {ArrowDownSmall, Close, Trash} from '../common/icons';
+import {Button, Input, PanelLabel} from '../common/styled-components';
 import Switch from '../common/switch';
-import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import CompactColorPicker, {StyledPanelDropdown} from './compact-color-picker';
 import {EffectDateTimeInput} from './effect-time-configurator';
@@ -36,32 +35,11 @@ const IconButton = styled(Button).attrs({link: true})`
   }
 `;
 
-const Trigger = styled(IconButton)<{$active: boolean; $open: boolean; $visible: boolean}>`
-  margin-left: 6px;
-  color: ${props =>
-    props.$active ? props.theme.panelHeaderIconActive : props.theme.panelHeaderIcon};
-  opacity: ${props => (props.$open || props.$visible ? 1 : 0)};
-  transition: opacity 120ms ease;
-  .effect-configurator__pp-section:hover &,
-  .effect-configurator__pp-section:focus-within &,
-  .effect-configurator__animation-row:hover &,
-  .effect-configurator__animation-row:focus-within &,
-  &:hover,
-  &:focus-visible {
-    opacity: 1;
-  }
-`;
-
-const Wrapper = styled.span`
-  display: inline-flex;
-  vertical-align: middle;
-`;
-
-const Content = styled(StyledPanelDropdown)<{$embedded: boolean}>`
-  width: ${props => (props.$embedded ? '100%' : '288px')};
+const Content = styled(StyledPanelDropdown)`
+  width: 100%;
   padding: 0;
-  border: ${props => (props.$embedded ? 'none' : `1px solid ${props.theme.panelBorderColor}`)};
-  box-shadow: ${props => (props.$embedded ? 'none' : props.theme.panelBoxShadow)};
+  border: none;
+  box-shadow: none;
   color: ${props => props.theme.textColor};
   font-size: ${props => props.theme.inputFontSize};
   text-transform: none;
@@ -146,12 +124,9 @@ const Actions = styled.div`
 type Props = {
   effect: Effect;
   name: string;
-  blockId?: string;
+  blockId: string;
   RangeSlider: ReturnType<typeof RangeSliderFactory>;
   step?: number;
-  alwaysVisible?: boolean;
-  durationMs?: number;
-  embedded?: boolean;
   onClose?: () => void;
   updateEffectConfig: (
     event: Event | null | undefined,
@@ -169,21 +144,15 @@ export default function EffectAnimationControl({
   blockId,
   RangeSlider,
   step = 0.001,
-  alwaysVisible = false,
-  durationMs = 10000,
-  embedded = false,
   onClose,
   updateEffectConfig
 }: Props) {
   const description = getAnimatableEffectParameters(effect).find(d => d.name === name);
-  const sequence = Array.isArray(effect.animation?.[name]);
-  const entries = getEffectAnimationEntries(effect.animation?.[name]);
-  const selectedIndex = blockId ? entries.findIndex(entry => entry.id === blockId) : 0;
+  const entries = effect.animation?.[name] ?? [];
+  const selectedIndex = entries.findIndex(entry => entry.id === blockId);
   const saved: EffectParameterAnimation | undefined = entries[selectedIndex];
-  const initialStart =
-    saved?.startValue ?? effect.parameters[name] ?? description?.defaultValue ?? 0;
-  const initialEnd = saved?.endValue ?? initialStart;
-  const [open, setOpen] = useState(embedded);
+  const initialStart = saved?.startValue ?? 0;
+  const initialEnd = saved?.endValue ?? 0;
   const [startValue, setStartValue] = useState<Value>(() =>
     Array.isArray(initialStart) ? [...initialStart] : (initialStart as number)
   );
@@ -192,29 +161,15 @@ export default function EffectAnimationControl({
   );
   const [linear, setLinear] = useState(saved?.easing === 'linear');
   const [startSeconds, setStartSeconds] = useState(() => String((saved?.startTimeMs ?? 0) / 1000));
-  const [endSeconds, setEndSeconds] = useState(() =>
-    String((saved?.endTimeMs ?? durationMs) / 1000)
-  );
-  const hasSavedAnimation = Boolean(saved);
+  const [endSeconds, setEndSeconds] = useState(() => String((saved?.endTimeMs ?? 0) / 1000));
   const savedStartTimeMs = saved?.startTimeMs;
   const savedEndTimeMs = saved?.endTimeMs;
-  const previousTiming = useRef({hasSavedAnimation, savedStartTimeMs, savedEndTimeMs});
   useEffect(() => {
-    const previous = previousTiming.current;
-    previousTiming.current = {hasSavedAnimation, savedStartTimeMs, savedEndTimeMs};
-    if (
-      !embedded ||
-      (previous.hasSavedAnimation === hasSavedAnimation &&
-        previous.savedStartTimeMs === savedStartTimeMs &&
-        previous.savedEndTimeMs === savedEndTimeMs)
-    ) {
-      return;
-    }
-    // A timeline drag updates saved timing while endpoint drafts remain in this inspector.
+    // Follow timeline drags without replacing endpoint drafts.
     setStartSeconds(String((savedStartTimeMs ?? 0) / 1000));
-    setEndSeconds(String((savedEndTimeMs ?? durationMs) / 1000));
-  }, [embedded, hasSavedAnimation, savedStartTimeMs, savedEndTimeMs, durationMs]);
-  if (!description) return null;
+    setEndSeconds(String((savedEndTimeMs ?? 0) / 1000));
+  }, [savedStartTimeMs, savedEndTimeMs]);
+  if (!description || !saved) return null;
 
   const isTimestamp = effect.type === LIGHT_AND_SHADOW_EFFECT.type && name === 'timestamp';
   const timezone = moment.tz.zone(effect.parameters.timezone || '')
@@ -226,31 +181,27 @@ export default function EffectAnimationControl({
     ? description.label
     : name;
   const close = () => {
-    setOpen(false);
     onClose?.();
   };
   const apply = (remove = false) => {
     const animation = {...effect.animation};
     if (remove) {
-      const remaining = sequence ? entries.filter((_, index) => index !== selectedIndex) : [];
+      const remaining = entries.filter((_, index) => index !== selectedIndex);
       if (remaining.length) animation[name] = remaining;
       else delete animation[name];
     } else {
       const updated: EffectParameterAnimation = {
-        ...(saved?.id ? {id: saved.id} : {}),
+        id: saved.id,
         startValue,
         endValue,
         easing: linear ? 'linear' : 'easeInOut',
         startTimeMs: Number(startSeconds) * 1000,
         endTimeMs: Number(endSeconds) * 1000
       };
-      animation[name] = sequence
-        ? entries.map((entry, index) => (index === selectedIndex ? updated : entry))
-        : updated;
+      animation[name] = entries.map((entry, index) => (index === selectedIndex ? updated : entry));
     }
     updateEffectConfig(null, effect.id, {
-      animation,
-      ...(!remove && !sequence ? {parameters: {[name]: startValue}} : {})
+      animation
     });
     close();
   };
@@ -272,7 +223,6 @@ export default function EffectAnimationControl({
   };
   const range = [description.min, description.max];
   const easingId = `effect-animation-linear-${effect.id}-${name}`;
-  const helpId = `effect-transition-help-${effect.id}-${name}`;
   const timingId = `effect-animation-timing-${effect.id}-${name}`;
   const validTiming =
     startSeconds.trim() !== '' &&
@@ -281,68 +231,29 @@ export default function EffectAnimationControl({
     Number.isFinite(Number(endSeconds) * 1000) &&
     Number(startSeconds) >= 0 &&
     Number(endSeconds) >= Number(startSeconds) &&
-    (!sequence ||
-      (Number(startSeconds) * 1000 >= (entries[selectedIndex - 1]?.endTimeMs ?? 0) &&
-        Number(endSeconds) * 1000 <= (entries[selectedIndex + 1]?.startTimeMs ?? Infinity)));
+    Number(startSeconds) * 1000 >= (entries[selectedIndex - 1]?.endTimeMs ?? 0) &&
+    Number(endSeconds) * 1000 <= (entries[selectedIndex + 1]?.startTimeMs ?? Infinity);
   const editors = [
     {title: 'Start', value: startValue, setValue: setStartValue},
     {title: 'End', value: endValue, setValue: setEndValue}
   ];
 
-  const content = (
-    <Content
-      $embedded={embedded}
-      role={embedded ? 'group' : undefined}
-      aria-label={embedded ? `Effect Transition: ${label}` : undefined}
-    >
+  return (
+    <Content role="group" aria-label={`Effect Transition: ${label}`}>
       <Header>
-        <div>
-          {embedded ? (
-            label
-          ) : (
-            <>
-              Effect Transition{' '}
-              <IconButton
-                type="button"
-                aria-label="About effect transitions"
-                aria-describedby={helpId}
-                data-tip
-                data-for={helpId}
-              >
-                <Help height="14px" />
-              </IconButton>
-              <Tooltip id={helpId} role="tooltip" effect="solid" place="bottom" delayShow={200}>
-                <div
-                  style={{maxWidth: 220, whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.4}}
-                >
-                  Animates this setting from Start to End during playback in the Animation panel or
-                  video export. Turn on Linear easing for a constant rate; otherwise it eases in and
-                  out. Start and end times use seconds from animation start. The end value is held
-                  after the transition finishes.
-                  {isTimestamp &&
-                    ' This range overrides Current time and Animation time only during playback.'}
-                </div>
-              </Tooltip>
-              <ParameterName>{label.replace(/([a-z])([A-Z])/g, '$1 $2')}</ParameterName>
-            </>
-          )}
-        </div>
+        <div>{label}</div>
         <HeaderActions>
-          {saved ? (
-            <IconButton
-              type="button"
-              aria-label="Remove animation"
-              title="Remove animation"
-              onClick={() => apply(true)}
-            >
-              <Trash height="16px" />
-            </IconButton>
-          ) : null}
-          {embedded && (
-            <IconButton type="button" aria-label="Close effect settings" onClick={close}>
-              <Close height="14px" />
-            </IconButton>
-          )}
+          <IconButton
+            type="button"
+            aria-label="Remove animation"
+            title="Remove animation"
+            onClick={() => apply(true)}
+          >
+            <Trash height="16px" />
+          </IconButton>
+          <IconButton type="button" aria-label="Close effect settings" onClick={close}>
+            <Close height="14px" />
+          </IconButton>
         </HeaderActions>
       </Header>
       <Body>
@@ -475,41 +386,5 @@ export default function EffectAnimationControl({
         </Actions>
       </Body>
     </Content>
-  );
-
-  if (embedded) return open ? content : null;
-
-  return (
-    <Wrapper>
-      <Trigger
-        type="button"
-        $active={Boolean(saved)}
-        $open={open}
-        $visible={alwaysVisible}
-        aria-label={`${saved ? 'Edit animation for' : 'Animate'} ${label}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        title="Animate this effect setting"
-        onClick={() => {
-          setStartValue(Array.isArray(initialStart) ? [...initialStart] : (initialStart as number));
-          setEndValue(Array.isArray(initialEnd) ? [...initialEnd] : (initialEnd as number));
-          setLinear(saved?.easing === 'linear');
-          setStartSeconds(String((saved?.startTimeMs ?? 0) / 1000));
-          setEndSeconds(String((saved?.endTimeMs ?? durationMs) / 1000));
-          setOpen(true);
-        }}
-      >
-        <Add height="14px" />
-      </Trigger>
-      <Portaled
-        isOpened={open}
-        onClose={close}
-        top={24}
-        left={24}
-        modalProps={{contentLabel: `Effect Transition: ${label}`}}
-      >
-        {content}
-      </Portaled>
-    </Wrapper>
   );
 }

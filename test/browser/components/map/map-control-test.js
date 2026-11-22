@@ -37,7 +37,7 @@ import {
   StateWSplitMaps,
   StateWFiles
 } from '../../../helpers/mock-state';
-import {initApplicationConfig} from '@kepler.gl/utils';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import EffectAnimationPreviewProvider from '../../../../src/components/src/effects/effect-animation-preview';
 
 const {Cube3d, Split, Legend, DrawPolygon, Delete} = Icons;
@@ -51,6 +51,8 @@ const initialProps = mapFieldsSelector(mockKeplerProps);
 const mockStore = configureStore();
 
 test('MapControlFactory - registered animation action opens without existing animations', t => {
+  const previous = getApplicationConfig().enableAnimationEditor;
+  initApplicationConfig({enableAnimationEditor: true});
   const root = document.createElement('div');
   document.body.appendChild(root);
   const view = renderWithThemeRTL(
@@ -87,6 +89,7 @@ test('MapControlFactory - registered animation action opens without existing ani
       }
     }
   } finally {
+    initApplicationConfig({enableAnimationEditor: previous});
     view.unmount();
     root.remove();
   }

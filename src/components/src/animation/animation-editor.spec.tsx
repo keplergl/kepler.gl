@@ -6,7 +6,7 @@ import {fireEvent, render, screen, waitFor, within} from '@testing-library/react
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
-import {createEffect, getEffectAnimationEntries} from '@kepler.gl/effects';
+import {createEffect} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
@@ -42,12 +42,7 @@ function effect(timing = {startTimeMs: 3000, endTimeMs: 7000}) {
     type: 'brightnessContrast',
     parameters: {brightness: 0.2},
     animation: {
-      brightness: {
-        startValue: 0,
-        endValue: 1,
-        easing: 'linear',
-        ...timing
-      }
+      brightness: [{id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear', ...timing}]
     }
   });
 }
@@ -323,13 +318,16 @@ test('moving an effect block preserves its length and values and commits without
   expect(props.updateEffectConfig).toHaveBeenCalledTimes(1);
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
     animation: {
-      brightness: {
-        startValue: 0,
-        endValue: 1,
-        easing: 'linear',
-        startTimeMs: 5000,
-        endTimeMs: 9000
-      }
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          endValue: 1,
+          easing: 'linear',
+          startTimeMs: 5000,
+          endTimeMs: 9000
+        }
+      ]
     }
   });
   expect(source.parameters.brightness).toBe(0.2);
@@ -350,13 +348,9 @@ test.each([
     );
     expect(props.updateEffectConfig).toHaveBeenCalledWith(null, 'brightness', {
       animation: {
-        brightness: {
-          startValue: 0,
-          endValue: 1,
-          easing: 'linear',
-          startTimeMs,
-          endTimeMs
-        }
+        brightness: [
+          {id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear', startTimeMs, endTimeMs}
+        ]
       }
     });
   }
@@ -387,15 +381,17 @@ test('double-click opens a value/time popup outside the timeline and saves both 
   });
   fireEvent.click(inspector.getByRole('button', {name: 'Save'}));
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
-    parameters: {brightness: 0},
     animation: {
-      brightness: {
-        startValue: 0,
-        endValue: 0.75,
-        easing: 'linear',
-        startTimeMs: 3000,
-        endTimeMs: 9000
-      }
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          endValue: 0.75,
+          easing: 'linear',
+          startTimeMs: 3000,
+          endTimeMs: 9000
+        }
+      ]
     }
   });
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
@@ -471,7 +467,9 @@ test.each(['Cancel', 'Escape', 'outside'])(
 
 test('confirming effect removal keeps the effect, its values, and other animated parameters', () => {
   const source = effect();
-  const contrast = {...source.animation!.brightness, startValue: 0.2, endValue: 0.8};
+  const contrast = [
+    {...source.animation!.brightness[0], id: 'contrast-1', startValue: 0.2, endValue: 0.8}
+  ];
   source.animation = {...source.animation, contrast};
   const parameters = {...source.parameters};
   const {props, rerender} = setup({effects: [source]});
@@ -496,7 +494,7 @@ test('removing a fog height block preserves static parameters', () => {
     id: 'fog',
     type: SURFACE_FOG_TYPE,
     parameters: {animateHeight: true},
-    animation: {height: {...effect().animation!.brightness}}
+    animation: {height: effect().animation!.brightness}
   });
   const {props, rerender} = setup({effects: [source]});
   (props.updateEffectConfig as jest.Mock).mockImplementation((_index, _id, config) => {
@@ -581,13 +579,16 @@ test('effect blocks keep authored timing when the playback duration changes', ()
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 400, 240);
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, 'brightness', {
     animation: {
-      brightness: {
-        startValue: 0,
-        endValue: 1,
-        easing: 'linear',
-        startTimeMs: 0,
-        endTimeMs: 12000
-      }
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          endValue: 1,
+          easing: 'linear',
+          startTimeMs: 0,
+          endTimeMs: 12000
+        }
+      ]
     }
   });
 });
@@ -964,7 +965,16 @@ test('effect selection is separate from choosing a parameter and preserves exist
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
     animation: {
       brightness: effect().animation!.brightness,
-      contrast: {startValue: 0, endValue: 0, easing: 'easeInOut', startTimeMs: 0, endTimeMs: 10000}
+      contrast: [
+        {
+          id: 'contrast-1',
+          startValue: 0,
+          endValue: 0,
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      ]
     }
   });
   expect(screen.getByRole('dialog', {name: 'Block settings'})).toBeInTheDocument();
@@ -984,7 +994,16 @@ test('Add action preserves saved parameters on disabled effects', () => {
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
     animation: {
       brightness: savedBrightness,
-      contrast: {startValue: 0, endValue: 0, easing: 'easeInOut', startTimeMs: 0, endTimeMs: 10000}
+      contrast: [
+        {
+          id: 'contrast-1',
+          startValue: 0,
+          endValue: 0,
+          easing: 'easeInOut',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      ]
     }
   });
   expect(source.animation!.brightness).toEqual(savedBrightness);
@@ -1178,27 +1197,29 @@ test('keeps the time ruler fixed across committed edits and can expand its visib
   const {props, rerender} = setup({effects: [source], tour: null});
   (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, next) => {
     source.setProps(next);
-    props.playback.duration = next.animation.brightness.endTimeMs;
+    props.playback.duration = next.animation.brightness[0].endTimeMs;
     rerender(<Editor {...props} />);
   });
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 400, 240);
-  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(12000);
+  expect((source.animation?.brightness ?? [])[0].endTimeMs).toBe(12000);
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 240, 180);
-  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(9000);
+  expect((source.animation?.brightness ?? [])[0].endTimeMs).toBe(9000);
   fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 90, 300);
-  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(30000);
+  expect((source.animation?.brightness ?? [])[0].endTimeMs).toBe(30000);
 });
 
 test.each([1490, 1500, 1510])(
   'Fit contains ruler labels and end handles while retaining the exact %d ms range',
   endTimeMs => {
     const source = effect();
-    source.animation!.brightness = {
-      ...source.animation!.brightness,
-      startTimeMs: 0,
-      endTimeMs
-    };
+    source.animation!.brightness = [
+      {
+        ...source.animation!.brightness[0],
+        startTimeMs: 0,
+        endTimeMs
+      }
+    ];
     const cut = layer([
       {
         id: 'cut',
@@ -1425,7 +1446,13 @@ test('annotation settings save values, times and easing without changing a layer
     propertyTransitions: {
       futureProperty,
       opacity: [
-        {...transitions[0], endTimeMs: 4500, startValue: 0.2, endValue: 0.6, easing: 'easeInOut'},
+        {
+          ...transitions[0],
+          endTimeMs: 4500,
+          startValue: 0.2,
+          endValue: 0.6,
+          easing: 'easeInOut'
+        },
         transitions[1]
       ]
     }
@@ -1618,7 +1645,7 @@ test('empty row insertion ignores missing callbacks and unmeasurable tracks', ()
 
 test('effect row insertion preserves its original block and edits, drags and removes one new block', () => {
   const source = effect();
-  const original = source.animation!.brightness;
+  const original = source.animation!.brightness[0];
   const parameters = {...source.parameters};
   const {props, rerender} = setup({effects: [source]});
   (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, config) => {
@@ -1627,7 +1654,7 @@ test('effect row insertion preserves its original block and edits, drags and rem
   });
   const row = screen.getByRole('group', {name: 'Brightness Contrast: Brightness'});
   fireEvent.doubleClick(row.lastElementChild!, {clientX: 180});
-  const blocks = getEffectAnimationEntries(source.animation?.brightness);
+  const blocks = source.animation?.brightness ?? [];
   expect(blocks).toEqual([
     {...original, id: 'brightness-1'},
     {
@@ -1652,20 +1679,17 @@ test('effect row insertion preserves its original block and edits, drags and rem
   fireEvent.change(screen.getByRole('spinbutton', {name: 'End value'}), {target: {value: '0.5'}});
   fireEvent.blur(screen.getByRole('spinbutton', {name: 'End value'}));
   fireEvent.click(screen.getByRole('button', {name: 'Save'}));
-  expect(getEffectAnimationEntries(source.animation?.brightness)).toEqual([
-    blocks[0],
-    {...blocks[1], endValue: 0.5}
-  ]);
+  expect(source.animation?.brightness ?? []).toEqual([blocks[0], {...blocks[1], endValue: 0.5}]);
   expect(source.parameters).toEqual(parameters);
   drag(screen.getByRole('button', {name: 'Brightness 2'}), 180, 240);
-  expect(getEffectAnimationEntries(source.animation?.brightness)[1]).toMatchObject({
+  expect((source.animation?.brightness ?? [])[1]).toMatchObject({
     startTimeMs: 12000,
     endTimeMs: 13000,
     startValue: 1,
     endValue: 0.5
   });
   drag(screen.getByRole('slider', {name: 'Start time for Brightness 2'}), 240, 40);
-  expect(getEffectAnimationEntries(source.animation?.brightness)[1].startTimeMs).toBe(7000);
+  expect((source.animation?.brightness ?? [])[1].startTimeMs).toBe(7000);
   // Start a fresh click sequence after the drag, as the browser does before a double-click.
   drag(screen.getByRole('button', {name: 'Brightness 2'}), 140, 140);
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Brightness 2'}));
@@ -1688,7 +1712,7 @@ test('effect blocks fit around existing blocks and preserve their explicit timin
     screen.getByRole('group', {name: 'Brightness Contrast: Brightness'}).lastElementChild!,
     {clientX: 50}
   );
-  expect(getEffectAnimationEntries(source.animation?.brightness)[0]).toMatchObject({
+  expect((source.animation?.brightness ?? [])[0]).toMatchObject({
     startTimeMs: 2500,
     endTimeMs: 3000,
     startValue: 0,
@@ -1704,7 +1728,7 @@ test('effect blocks fit around existing blocks and preserve their explicit timin
   expect(props.updateEffectConfig).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
   fireEvent.doubleClick(track, {clientX: 250});
-  expect(getEffectAnimationEntries(source.animation?.brightness)).toEqual([
+  expect(source.animation?.brightness ?? []).toEqual([
     {
       id: 'brightness-1',
       startTimeMs: 0,
@@ -1729,13 +1753,16 @@ test('effect row insertion copies vector endpoints and preserves authored parame
     type: 'dotScreen',
     parameters: {center: [0.1, 0.9]},
     animation: {
-      center: {
-        startValue: [0.2, 0.8],
-        endValue: [0.8, 0.2],
-        startTimeMs: 1000,
-        endTimeMs: 2000,
-        easing: 'linear'
-      }
+      center: [
+        {
+          id: 'center-1',
+          startValue: [0.2, 0.8],
+          endValue: [0.8, 0.2],
+          startTimeMs: 1000,
+          endTimeMs: 2000,
+          easing: 'linear'
+        }
+      ]
     }
   });
   const {props, rerender} = setup({effects: [source]});
@@ -1745,7 +1772,7 @@ test('effect row insertion copies vector endpoints and preserves authored parame
   });
   const row = screen.getByRole('group', {name: 'Dot Screen: Center'});
   fireEvent.doubleClick(row.lastElementChild!, {clientX: 120});
-  const blocks = getEffectAnimationEntries(source.animation?.center);
+  const blocks = source.animation?.center ?? [];
   expect(blocks[1]).toMatchObject({
     startTimeMs: 6000,
     endTimeMs: 7000,

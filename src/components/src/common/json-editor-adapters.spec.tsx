@@ -266,7 +266,16 @@ describe('JSON editor section adapters', () => {
       type: 'ink',
       parameters: {strength: 0.2},
       animation: {
-        strength: {startValue: 0, endValue: 0.8, easing: 'linear', startTimeMs: 0, endTimeMs: 10000}
+        strength: [
+          {
+            id: 'strength-1',
+            startValue: 0,
+            endValue: 0.8,
+            easing: 'linear',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          }
+        ]
       }
     });
     const updateEffect = jest.fn();
@@ -280,28 +289,43 @@ describe('JSON editor section adapters', () => {
     expect(effect.deckEffect.props).toEqual({strength: 0.2});
     effect.setProps({
       animation: {
-        strength: {
+        strength: [
+          {
+            id: 'strength-1',
+            startValue: 0.1,
+            endValue: 0,
+            easing: 'easeInOut',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          }
+        ]
+      }
+    });
+    view.rerender(<EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />);
+    act(() => jest.advanceTimersByTime(300));
+    expect(displayedConfig().animation).toEqual({
+      strength: [
+        {
+          id: 'strength-1',
           startValue: 0.1,
           endValue: 0,
           easing: 'easeInOut',
           startTimeMs: 0,
           endTimeMs: 10000
         }
-      }
-    });
-    view.rerender(<EffectEditor effect={effect} visState={state} updateEffect={updateEffect} />);
-    act(() => jest.advanceTimersByTime(300));
-    expect(displayedConfig().animation).toEqual({
-      strength: {
-        startValue: 0.1,
-        endValue: 0,
-        easing: 'easeInOut',
-        startTimeMs: 0,
-        endTimeMs: 10000
-      }
+      ]
     });
     const animation = {
-      strength: {startValue: 0.3, endValue: 0.9, easing: 'linear', startTimeMs: 0, endTimeMs: 10000}
+      strength: [
+        {
+          id: 'strength-1',
+          startValue: 0.3,
+          endValue: 0.9,
+          easing: 'linear',
+          startTimeMs: 0,
+          endTimeMs: 10000
+        }
+      ]
     };
     edit({...displayedConfig(), animation});
     expect(updateEffect).toHaveBeenLastCalledWith(

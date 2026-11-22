@@ -1007,7 +1007,18 @@ describe('ExportVideoModal', () => {
     test('wires a pre-render callback and animates export clones without changing live effects', async () => {
       const liveEffect = makeEffect(
         {amount: 2},
-        {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 10, easing: 'linear'}}
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 2,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 10,
+              easing: 'linear'
+            }
+          ]
+        }
       );
       await renderAndWaitForPanel({
         ...DEFAULT_PROPS,
@@ -1031,13 +1042,42 @@ describe('ExportVideoModal', () => {
       const linear = makeEffect(
         {amount: 0, color: [0, 40, 80], untouched: 7},
         {
-          amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 100, easing: 'linear'},
-          color: {startTimeMs: 0, endTimeMs: 1000, endValue: [80, 0, 40], easing: 'linear'}
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startValue: [0, 40, 80],
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: [80, 0, 40],
+              easing: 'linear'
+            }
+          ]
         }
       );
       const smooth = makeEffect(
         {amount: 0},
-        {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 100, easing: 'easeInOut'}}
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'easeInOut'
+            }
+          ]
+        }
       );
       const {draw, state} = mountAnimation([linear, smooth]);
       draw();
@@ -1059,14 +1099,26 @@ describe('ExportVideoModal', () => {
       const effect = makeEffect(
         {amount: 70, color: [10, 20, 30]},
         {
-          amount: {startTimeMs: 0, endTimeMs: 1000, startValue: 0, endValue: 100, easing: 'linear'},
-          color: {
-            startTimeMs: 0,
-            endTimeMs: 1000,
-            startValue: [0, 40, 80],
-            endValue: [80, 0, 40],
-            easing: 'linear'
-          }
+          amount: [
+            {
+              id: 'amount-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: 0,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: [0, 40, 80],
+              endValue: [80, 0, 40],
+              easing: 'linear'
+            }
+          ]
         }
       );
       const {draw, state, unmount} = mountAnimation([effect]);
@@ -1096,20 +1148,26 @@ describe('ExportVideoModal', () => {
         const effect = makeEffect(
           {amount: 70, color: [10, 20, 30]},
           {
-            amount: {
-              startValue: 0,
-              endValue: 100,
-              easing: 'linear',
-              startTimeMs: 2000,
-              endTimeMs: 6000
-            },
-            color: {
-              startTimeMs: 0,
-              endTimeMs: 1000,
-              startValue: [0, 40, 80],
-              endValue: [80, 0, 40],
-              easing: 'linear'
-            }
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                endValue: 100,
+                easing: 'linear',
+                startTimeMs: 2000,
+                endTimeMs: 6000
+              }
+            ],
+            color: [
+              {
+                id: 'color-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: [0, 40, 80],
+                endValue: [80, 0, 40],
+                easing: 'linear'
+              }
+            ]
           }
         );
         const {draw, state, unmount} = mountAnimation([effect], {
@@ -1139,20 +1197,26 @@ describe('ExportVideoModal', () => {
       const effect = makeEffect(
         {amount: 0, color: [0, 0, 0]},
         {
-          amount: {
-            startValue: 10,
-            endValue: 90,
-            easing: 'linear',
-            startTimeMs: 3000,
-            endTimeMs: 3000
-          },
-          color: {
-            startValue: [0, 40, 80],
-            endValue: [80, 0, 40],
-            easing: 'easeInOut',
-            startTimeMs: 2000,
-            endTimeMs: 6000
-          }
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 10,
+              endValue: 90,
+              easing: 'linear',
+              startTimeMs: 3000,
+              endTimeMs: 3000
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startValue: [0, 40, 80],
+              endValue: [80, 0, 40],
+              easing: 'easeInOut',
+              startTimeMs: 2000,
+              endTimeMs: 6000
+            }
+          ]
         }
       );
       const {draw, state} = mountAnimation([effect], {
@@ -1172,12 +1236,24 @@ describe('ExportVideoModal', () => {
 
     test('finds the last explicit playable effect endpoint while ignoring disabled and invalid tracks', () => {
       const animation = {
-        amount: {endValue: 100, easing: 'linear', startTimeMs: 2000, endTimeMs: 6000}
+        amount: [
+          {
+            id: 'amount-1',
+            startValue: 0,
+            endValue: 100,
+            easing: 'linear',
+            startTimeMs: 2000,
+            endTimeMs: 6000
+          }
+        ]
       };
       expect(getEffectAnimationDuration([])).toBe(0);
       expect(
         getEffectAnimationDuration([
-          makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}})
+          makeEffect(
+            {amount: 0},
+            {amount: [{id: 'amount-1', startValue: 0, endValue: 100, easing: 'linear'}]}
+          )
         ])
       ).toBe(0);
       expect(
@@ -1185,10 +1261,10 @@ describe('ExportVideoModal', () => {
           makeEffect({amount: 0}, animation),
           makeEffect(
             {amount: 0},
-            {amount: {...animation.amount, endTimeMs: 20000}},
+            {amount: [{...animation.amount[0], endTimeMs: 20000}]},
             {isEnabled: false}
           ),
-          makeEffect({amount: 0}, {amount: {...animation.amount, startTimeMs: -1}})
+          makeEffect({amount: 0}, {amount: [{...animation.amount[0], startTimeMs: -1}]})
         ])
       ).toBe(6000);
     });
@@ -1196,7 +1272,18 @@ describe('ExportVideoModal', () => {
     test.each(['previewing', 'rendering'])('uses the globe/swipe clock while %s', mode => {
       const effect = makeEffect(
         {amount: 0},
-        {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 100, easing: 'linear'}}
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ]
+        }
       );
       const {draw, state} = mountAnimation([effect], {
         previewing: false,
@@ -1218,26 +1305,84 @@ describe('ExportVideoModal', () => {
     test('leaves missing, invalid and disabled animations untouched', () => {
       const effects = [
         makeEffect(),
-        makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}}),
         makeEffect(
           {amount: 0},
-          {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: NaN, easing: 'linear'}}
+          {amount: [{id: 'amount-1', startValue: 0, endValue: 100, easing: 'linear'}]}
         ),
         makeEffect(
           {amount: 0},
-          {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: [1], easing: 'linear'}}
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: NaN,
+                easing: 'linear'
+              }
+            ]
+          }
+        ),
+        makeEffect(
+          {amount: 0},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: [1],
+                easing: 'linear'
+              }
+            ]
+          }
         ),
         makeEffect(
           {color: [0, 0, 0]},
-          {color: {startTimeMs: 0, endTimeMs: 1000, endValue: [100], easing: 'linear'}}
+          {
+            color: [
+              {
+                id: 'color-1',
+                startValue: [0, 0, 0],
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: [100],
+                easing: 'linear'
+              }
+            ]
+          }
         ),
         makeEffect(
           {amount: Infinity},
-          {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 100, easing: 'linear'}}
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: Infinity,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 100,
+                easing: 'linear'
+              }
+            ]
+          }
         ),
         makeEffect(
           {amount: 0},
-          {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 100, easing: 'linear'}},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 100,
+                easing: 'linear'
+              }
+            ]
+          },
           {isEnabled: false}
         )
       ];
@@ -1250,7 +1395,18 @@ describe('ExportVideoModal', () => {
     test('restores starts on stop, invalid timing, restart and cleanup without patching effects', () => {
       const effect = makeEffect(
         {amount: 10},
-        {amount: {startTimeMs: 0, endTimeMs: 1000, endValue: 90, easing: 'linear'}}
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 10,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 90,
+              easing: 'linear'
+            }
+          ]
+        }
       );
       const originalPostRender = effect.deckEffect.postRender;
       const {draw, state, unmount} = mountAnimation([effect]);
@@ -1280,7 +1436,18 @@ describe('ExportVideoModal', () => {
       const legacy = makeEffect(parameters, undefined, {type: 'surfaceFog'});
       const generic = makeEffect(
         parameters,
-        {height: {startTimeMs: 0, endTimeMs: 1000, endValue: 200, easing: 'linear'}},
+        {
+          height: [
+            {
+              id: 'height-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 200,
+              easing: 'linear'
+            }
+          ]
+        },
         {type: 'surfaceFog'}
       );
       const disabled = makeEffect({...parameters, animateHeight: false}, undefined, {
@@ -1300,7 +1467,18 @@ describe('ExportVideoModal', () => {
         const sunLight = {timestamp: 1234, intensity: 0, shadow: false};
         const effect = makeEffect(
           {sunLightIntensity: 2, timestamp: 99, timeMode},
-          {sunLightIntensity: {startTimeMs: 0, endTimeMs: 1000, endValue: 6, easing: 'linear'}},
+          {
+            sunLightIntensity: [
+              {
+                id: 'sunLightIntensity-1',
+                startValue: 2,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 6,
+                easing: 'linear'
+              }
+            ]
+          },
           {
             type: 'lightAndShadow',
             deckEffect: {directionalLights: [sunLight], outputUniformShadow: true, shadow: false}
@@ -1331,20 +1509,26 @@ describe('ExportVideoModal', () => {
         const live = new LightingEffect({
           parameters: {timeMode, timestamp: savedTimestamp, sunLightIntensity: 2},
           animation: {
-            timestamp: {
-              startTimeMs: 0,
-              endTimeMs: 1000,
-              startValue: midnight,
-              endValue: midnight + 24 * 60 * 60 * 1000,
-              easing: 'linear'
-            },
-            sunLightIntensity: {
-              startTimeMs: 0,
-              endTimeMs: 1000,
-              startValue: 2,
-              endValue: 4,
-              easing: 'linear'
-            }
+            timestamp: [
+              {
+                id: 'timestamp-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: midnight,
+                endValue: midnight + 24 * 60 * 60 * 1000,
+                easing: 'linear'
+              }
+            ],
+            sunLightIntensity: [
+              {
+                id: 'sunLightIntensity-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: 2,
+                endValue: 4,
+                easing: 'linear'
+              }
+            ]
           }
         });
         const effect = live.clone();
@@ -1415,13 +1599,16 @@ describe('ExportVideoModal', () => {
       const live = new LightingEffect({
         parameters: {timeMode: 'animation', timestamp: 99},
         animation: {
-          timestamp: {
-            startTimeMs: 0,
-            endTimeMs: 1000,
-            startValue: midnight,
-            endValue: midnight + 24 * 60 * 60 * 1000,
-            easing: 'linear'
-          }
+          timestamp: [
+            {
+              id: 'timestamp-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: midnight,
+              endValue: midnight + 24 * 60 * 60 * 1000,
+              easing: 'linear'
+            }
+          ]
         }
       });
       mockComputeDeckEffects.mockImplementation(
@@ -2519,7 +2706,9 @@ describe('authored export duration range', () => {
   const makeEffect = timing =>
     new PostProcessingEffect({
       type: 'brightnessContrast',
-      animation: {brightness: {startValue: 0, endValue: 1, easing: 'linear', ...timing}}
+      animation: {
+        brightness: [{id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear', ...timing}]
+      }
     });
 
   test('declared layer properties set export duration while unsupported tracks stay inactive', async () => {

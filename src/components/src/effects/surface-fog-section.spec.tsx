@@ -49,7 +49,24 @@ function setupAnimation(parameters: Record<string, unknown> = {}, animation?: Ef
   const update = jest.fn();
   const view = render(
     <EffectAnimationControl
-      effect={{...effect(parameters), animation}}
+      effect={
+        {
+          ...effect(parameters),
+          animation: animation ?? {
+            height: [
+              {
+                id: 'height-1',
+                startValue: parameters.height ?? 10,
+                endValue: parameters.height ?? 10,
+                easing: 'easeInOut',
+                startTimeMs: 0,
+                endTimeMs: 10000
+              }
+            ]
+          }
+        } as Effect
+      }
+      blockId="height-1"
       name="height"
       RangeSlider={Slider}
       step={1}
@@ -90,8 +107,7 @@ describe('surface fog elevation editing', () => {
       animateHeight: true,
       linearEasing: true
     });
-    fireEvent.click(screen.getByRole('button', {name: 'Animate height'}));
-    const dialog = within(screen.getByRole('dialog'));
+    const dialog = within(screen.getByRole('group', {name: /^Effect Transition:/}));
     expect(
       (
         within(dialog.getByRole('group', {name: 'End value'})).getByRole(
@@ -107,8 +123,7 @@ describe('surface fog elevation editing', () => {
 
   test('saving a new height block writes explicit times without changing unrelated parameters', () => {
     const {update} = setupAnimation({height: 100, heightEnd: 500, animateHeight: true});
-    fireEvent.click(screen.getByRole('button', {name: 'Animate height'}));
-    const dialog = within(screen.getByRole('dialog'));
+    const dialog = within(screen.getByRole('group', {name: /^Effect Transition:/}));
     fireEvent.change(
       within(dialog.getByRole('group', {name: 'End value'})).getByRole('spinbutton'),
       {target: {value: '800'}}
@@ -116,15 +131,17 @@ describe('surface fog elevation editing', () => {
     fireEvent.click(dialog.getByRole('button', {name: 'Save'}));
     expect(update).toHaveBeenCalledWith(null, 'fog', {
       animation: {
-        height: {
-          startValue: 100,
-          endValue: 800,
-          easing: 'easeInOut',
-          startTimeMs: 0,
-          endTimeMs: 10000
-        }
-      },
-      parameters: {height: 100}
+        height: [
+          {
+            id: 'height-1',
+            startValue: 100,
+            endValue: 800,
+            easing: 'easeInOut',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          }
+        ]
+      }
     });
   });
 
@@ -132,10 +149,18 @@ describe('surface fog elevation editing', () => {
     const {update} = setupAnimation(
       {height: 100},
       {
-        height: {startValue: 100, endValue: 500, easing: 'linear', startTimeMs: 0, endTimeMs: 10000}
+        height: [
+          {
+            id: 'height-1',
+            startValue: 100,
+            endValue: 500,
+            easing: 'linear',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          }
+        ]
       }
     );
-    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
     fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
     expect(update).toHaveBeenCalledWith(null, 'fog', {
       animation: {}
@@ -146,19 +171,29 @@ describe('surface fog elevation editing', () => {
     const {update, rerender} = setupAnimation();
     const next = effect({height: 100, heightEnd: 500, animateHeight: true, linearEasing: true});
     next.animation = {
-      height: {endValue: 0, easing: 'easeInOut', startTimeMs: 2000, endTimeMs: 7000}
+      height: [
+        {
+          id: 'height-1',
+          startValue: 0,
+          endValue: 0,
+          easing: 'easeInOut',
+          startTimeMs: 2000,
+          endTimeMs: 7000
+        }
+      ]
     };
     rerender(
       <EffectAnimationControl
+        key="replacement"
         effect={next}
+        blockId="height-1"
         name="height"
         RangeSlider={Slider}
         step={1}
         updateEffectConfig={update}
       />
     );
-    fireEvent.click(screen.getByRole('button', {name: 'Edit animation for height'}));
-    const dialog = within(screen.getByRole('dialog'));
+    const dialog = within(screen.getByRole('group', {name: /^Effect Transition:/}));
     expect(dialog.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(2);
     expect(dialog.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(7);
     expect(

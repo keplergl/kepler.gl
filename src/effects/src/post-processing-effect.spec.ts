@@ -2,11 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import PostProcessingEffect, {getDefaultValueForParameter} from './post-processing-effect';
-import {
-  getAnimatableEffectParameters,
-  getEffectAnimationEntries,
-  validateEffectAnimation
-} from './animation-utils';
+import {getAnimatableEffectParameters, validateEffectAnimation} from './animation-utils';
 import {LIGHT_AND_SHADOW_EFFECT, POSTPROCESSING_EFFECTS} from '@kepler.gl/constants';
 
 describe('post-processing effect parameters', () => {
@@ -103,22 +99,71 @@ describe('post-processing effect parameters', () => {
     expect(effect).not.toHaveProperty('animation');
     const parameters = {...effect.parameters};
     effect.setProps({
-      animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'}}
+      animation: {
+        brightness: [
+          {
+            id: 'brightness-1',
+            startValue: 0,
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            endValue: 0,
+            easing: 'linear'
+          }
+        ]
+      }
     });
     expect(effect.animation).toEqual({
-      brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'}
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ]
     });
     expect(effect.parameters).toEqual(parameters);
     expect(effect.deckEffect.props).toEqual(parameters);
     effect.setProps({parameters: {contrast: 0.5}});
     expect(effect.animation).toEqual({
-      brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'}
+      brightness: [
+        {
+          id: 'brightness-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ]
     });
     effect.setProps({
-      animation: {contrast: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'easeInOut'}}
+      animation: {
+        contrast: [
+          {
+            id: 'contrast-1',
+            startValue: 0,
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            endValue: 1,
+            easing: 'easeInOut'
+          }
+        ]
+      }
     });
     expect(effect.animation).toEqual({
-      contrast: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'easeInOut'}
+      contrast: [
+        {
+          id: 'contrast-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 1,
+          easing: 'easeInOut'
+        }
+      ]
     });
     effect.setProps({animation: {}});
     expect(effect).not.toHaveProperty('animation');
@@ -130,7 +175,9 @@ describe('post-processing effect parameters', () => {
     {startTimeMs: 2000, endTimeMs: 5000}
   ])('preserves valid explicit timing through updates and clones: %j', timing => {
     const animation = {
-      brightness: {startValue: 0, endValue: 1, easing: 'linear' as const, ...timing}
+      brightness: [
+        {id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear' as const, ...timing}
+      ]
     };
     const effect = new PostProcessingEffect({type: 'brightnessContrast', animation});
     effect.setProps({parameters: {brightness: 0.5}});
@@ -154,7 +201,9 @@ describe('post-processing effect parameters', () => {
   ])('rejects missing, invalid or incomplete time bounds: %j', timing => {
     const effect = new PostProcessingEffect({
       type: 'brightnessContrast',
-      animation: {brightness: {endValue: 1, easing: 'linear', ...timing}} as any
+      animation: {
+        brightness: [{id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear', ...timing}]
+      } as any
     });
     expect(effect).not.toHaveProperty('animation');
     expect(effect.parameters.brightness).toBe(0);
@@ -162,48 +211,66 @@ describe('post-processing effect parameters', () => {
 
   test('animation endpoints are bounded, independently cloned, and never mutate input', () => {
     const animation = {
-      center: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: Object.freeze([2, -1]),
-        endValue: Object.freeze([-1, 2]),
-        easing: 'linear' as const
-      },
-      size: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: -2,
-        endValue: 50,
-        easing: 'easeInOut' as const
-      }
+      center: [
+        {
+          id: 'center-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: Object.freeze([2, -1]),
+          endValue: Object.freeze([-1, 2]),
+          easing: 'linear' as const
+        }
+      ],
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: -2,
+          endValue: 50,
+          easing: 'easeInOut' as const
+        }
+      ]
     };
     const effect = new PostProcessingEffect({type: 'dotScreen', animation: animation as any});
     expect(effect.animation).toEqual({
-      center: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: [1, 0],
-        endValue: [0, 1],
-        easing: 'linear'
-      },
-      size: {startTimeMs: 0, endTimeMs: 10000, startValue: 1, endValue: 20, easing: 'easeInOut'}
+      center: [
+        {
+          id: 'center-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: [1, 0],
+          endValue: [0, 1],
+          easing: 'linear'
+        }
+      ],
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 1,
+          endValue: 20,
+          easing: 'easeInOut'
+        }
+      ]
     });
-    expect(animation.center.startValue).toEqual([2, -1]);
-    expect(animation.center.endValue).toEqual([-1, 2]);
+    expect(animation.center[0].startValue).toEqual([2, -1]);
+    expect(animation.center[0].endValue).toEqual([-1, 2]);
     const clone = effect.clone();
     expect(clone.animation).toEqual(effect.animation);
     expect(clone.animation).not.toBe(effect.animation);
     expect(clone.animation?.center).not.toBe(effect.animation?.center);
-    expect(getEffectAnimationEntries(clone.animation?.center)[0].startValue).not.toBe(
-      getEffectAnimationEntries(effect.animation?.center)[0].startValue
+    expect((clone.animation?.center ?? [])[0].startValue).not.toBe(
+      (effect.animation?.center ?? [])[0].startValue
     );
-    expect(getEffectAnimationEntries(clone.animation?.center)[0].endValue).not.toBe(
-      getEffectAnimationEntries(effect.animation?.center)[0].endValue
+    expect((clone.animation?.center ?? [])[0].endValue).not.toBe(
+      (effect.animation?.center ?? [])[0].endValue
     );
-    (getEffectAnimationEntries(clone.animation?.center)[0].startValue as number[])[0] = 0.25;
-    (getEffectAnimationEntries(clone.animation?.center)[0].endValue as number[])[0] = 0.75;
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([1, 0]);
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].endValue).toEqual([0, 1]);
+    ((clone.animation?.center ?? [])[0].startValue as number[])[0] = 0.25;
+    ((clone.animation?.center ?? [])[0].endValue as number[])[0] = 0.75;
+    expect((effect.animation?.center ?? [])[0].startValue).toEqual([1, 0]);
+    expect((effect.animation?.center ?? [])[0].endValue).toEqual([0, 1]);
   });
 
   test('saved zero starts remain independent of static parameter edits', () => {
@@ -211,119 +278,176 @@ describe('post-processing effect parameters', () => {
       type: 'brightnessContrast',
       parameters: {brightness: 0.5},
       animation: {
-        brightness: {startTimeMs: 0, endTimeMs: 10000, startValue: 0, endValue: 1, easing: 'linear'}
+        brightness: [
+          {
+            id: 'brightness-1',
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            startValue: 0,
+            endValue: 1,
+            easing: 'linear'
+          }
+        ]
       }
     });
     effect.setProps({parameters: {brightness: 0.75}});
     expect(effect.parameters.brightness).toBe(0.75);
     expect(effect.deckEffect.props.brightness).toBe(0.75);
-    expect(effect.animation?.brightness).toEqual({
-      startTimeMs: 0,
-      endTimeMs: 10000,
-      startValue: 0,
-      endValue: 1,
-      easing: 'linear'
-    });
-  });
-
-  test('preserves older implicit starts before the animated static parameter is edited', () => {
-    const effect = new PostProcessingEffect({
-      type: 'brightnessContrast',
-      parameters: {brightness: 0.2},
-      animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'linear'}}
-    });
-    expect(effect.animation?.brightness).not.toHaveProperty('startValue');
-    effect.setProps({parameters: {brightness: 0.7}});
-    expect(effect.parameters.brightness).toBe(0.7);
-    expect(effect.animation?.brightness).toEqual({
-      startTimeMs: 0,
-      endTimeMs: 10000,
-      startValue: 0.2,
-      endValue: 1,
-      easing: 'linear'
-    });
-    effect.setProps({parameters: {brightness: 0.9}});
-    expect(effect.parameters.brightness).toBe(0.9);
-    expect(getEffectAnimationEntries(effect.animation?.brightness)[0].startValue).toBe(0.2);
-  });
-
-  test('captures older vector starts independently of the current and supplied arrays', () => {
-    const initial = [0.2, 0.8];
-    const next = [0.4, 0.6];
-    const effect = new PostProcessingEffect({
-      type: 'dotScreen',
-      parameters: {center: initial},
-      animation: {center: {startTimeMs: 0, endTimeMs: 10000, endValue: [0, 1], easing: 'linear'}}
-    });
-    const originalCenter = effect.parameters.center;
-    effect.setProps({parameters: {center: next}});
-    expect(effect.parameters.center).toEqual(next);
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([0.2, 0.8]);
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(initial);
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(
-      originalCenter
-    );
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(next);
-    effect.setProps({parameters: {center: [0.9, 0.1]}});
-    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([0.2, 0.8]);
+    expect(effect.animation?.brightness).toEqual([
+      {
+        id: 'brightness-1',
+        startTimeMs: 0,
+        endTimeMs: 10000,
+        startValue: 0,
+        endValue: 1,
+        easing: 'linear'
+      }
+    ]);
   });
 
   test('validates and copies color starts independently of end colors', () => {
     const startValue = Object.freeze([-20, 0, 300]);
     const endValue = Object.freeze([255, 80, 10]);
     const animation = validateEffectAnimation(
-      {fogColor: {startTimeMs: 0, endTimeMs: 10000, startValue, endValue, easing: 'easeInOut'}},
+      {
+        fogColor: [
+          {
+            id: 'fogColor-1',
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            startValue,
+            endValue,
+            easing: 'easeInOut'
+          }
+        ]
+      },
       POSTPROCESSING_EFFECTS.surfaceFog.parameters
     );
     expect(animation).toEqual({
-      fogColor: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: [0, 0, 255],
-        endValue: [255, 80, 10],
-        easing: 'easeInOut'
-      }
+      fogColor: [
+        {
+          id: 'fogColor-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: [0, 0, 255],
+          endValue: [255, 80, 10],
+          easing: 'easeInOut'
+        }
+      ]
     });
-    expect(getEffectAnimationEntries(animation?.fogColor)[0].startValue).not.toBe(startValue);
-    expect(getEffectAnimationEntries(animation?.fogColor)[0].endValue).not.toBe(endValue);
+    expect((animation?.fogColor ?? [])[0].startValue).not.toBe(startValue);
+    expect((animation?.fogColor ?? [])[0].endValue).not.toBe(endValue);
     expect(startValue).toEqual([-20, 0, 300]);
   });
 
   test.each([
     {
-      size: {startTimeMs: 0, endTimeMs: 10000, startValue: undefined, endValue: 2, easing: 'linear'}
-    },
-    {size: {startTimeMs: 0, endTimeMs: 10000, startValue: null, endValue: 2, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, startValue: NaN, endValue: 2, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, startValue: Infinity, endValue: 2, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, startValue: '1', endValue: 2, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, startValue: [1], endValue: 2, easing: 'linear'}},
-    {
-      center: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: [0.2],
-        endValue: [0.2, 0.8],
-        easing: 'linear'
-      }
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: undefined,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
     },
     {
-      center: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: [0.2, NaN],
-        endValue: [0.2, 0.8],
-        easing: 'linear'
-      }
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: null,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
     },
     {
-      center: {
-        startTimeMs: 0,
-        endTimeMs: 10000,
-        startValue: 0,
-        endValue: [0.2, 0.8],
-        easing: 'linear'
-      }
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: NaN,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: Infinity,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: '1',
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: [1],
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: [0.2],
+          endValue: [0.2, 0.8],
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: [0.2, NaN],
+          endValue: [0.2, 0.8],
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 0,
+          endValue: [0.2, 0.8],
+          easing: 'linear'
+        }
+      ]
     }
   ])('rejects explicit invalid starts instead of using the current value: %j', animation => {
     expect(validateEffectAnimation(animation, POSTPROCESSING_EFFECTS.dotScreen.parameters)).toBe(
@@ -337,15 +461,114 @@ describe('post-processing effect parameters', () => {
     [],
     {},
     {size: null},
-    {size: {startTimeMs: 0, endTimeMs: 10000, endValue: null, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, endValue: NaN, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, endValue: Infinity, easing: 'linear'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, endValue: 2, easing: 'invalid'}},
-    {size: {startTimeMs: 0, endTimeMs: 10000, endValue: '2', easing: 'linear'}},
-    {center: {startTimeMs: 0, endTimeMs: 10000, endValue: [0.2], easing: 'linear'}},
-    {center: {startTimeMs: 0, endTimeMs: 10000, endValue: [0.2, NaN], easing: 'linear'}},
-    {center: {startTimeMs: 0, endTimeMs: 10000, endValue: null, easing: 'linear'}},
-    {unknown: {startTimeMs: 0, endTimeMs: 10000, endValue: 2, easing: 'linear'}}
+    {
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: null,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: NaN,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: Infinity,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 2,
+          easing: 'invalid'
+        }
+      ]
+    },
+    {
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: '2',
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startValue: [0, 0],
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: [0.2],
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startValue: [0, 0],
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: [0.2, NaN],
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      center: [
+        {
+          id: 'center-1',
+          startValue: [0, 0],
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: null,
+          easing: 'linear'
+        }
+      ]
+    },
+    {
+      unknown: [
+        {
+          id: 'unknown-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    }
   ])('invalid or absent animation stays static: %j', animation => {
     const effect = new PostProcessingEffect({type: 'dotScreen', animation} as any);
     expect(effect).not.toHaveProperty('animation');
@@ -361,7 +584,16 @@ describe('post-processing effect parameters', () => {
     'accepts timestamp endpoints from %s to %s, including reverse ranges',
     (startValue, endValue) => {
       const animation = {
-        timestamp: {startTimeMs: 0, endTimeMs: 10000, startValue, endValue, easing: 'linear'}
+        timestamp: [
+          {
+            id: 'timestamp-1',
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            startValue,
+            endValue,
+            easing: 'linear'
+          }
+        ]
       };
       expect(validateEffectAnimation(animation, LIGHT_AND_SHADOW_EFFECT.parameters)).toEqual(
         animation
@@ -376,14 +608,17 @@ describe('post-processing effect parameters', () => {
         expect(
           validateEffectAnimation(
             {
-              timestamp: {
-                startTimeMs: 0,
-                endTimeMs: 10000,
-                startValue: 0,
-                endValue: 1,
-                [endpoint]: value,
-                easing: 'linear'
-              }
+              timestamp: [
+                {
+                  id: 'timestamp-1',
+                  startTimeMs: 0,
+                  endTimeMs: 10000,
+                  startValue: 0,
+                  endValue: 1,
+                  [endpoint]: value,
+                  easing: 'linear'
+                }
+              ]
             },
             LIGHT_AND_SHADOW_EFFECT.parameters
           )
@@ -391,15 +626,6 @@ describe('post-processing effect parameters', () => {
       }
     }
   );
-
-  test('accepts a timestamp animation without an explicit start', () => {
-    expect(
-      validateEffectAnimation(
-        {timestamp: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'easeInOut'}},
-        LIGHT_AND_SHADOW_EFFECT.parameters
-      )
-    ).toEqual({timestamp: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'easeInOut'}});
-  });
 
   test('only continuous effect descriptors accept animation endpoints', () => {
     const descriptions = [
@@ -410,19 +636,101 @@ describe('post-processing effect parameters', () => {
     const animation = Object.fromEntries(
       descriptions.map(description => [
         description.name,
-        {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'}
+        [
+          {
+            id: `${description.name}-1`,
+            startValue: 0,
+            startTimeMs: 0,
+            endTimeMs: 10000,
+            endValue: 0,
+            easing: 'linear'
+          }
+        ]
       ])
     );
-    animation.fogColor.endValue = [0, 100, 300] as any;
+    animation.fogColor[0].startValue = [0, 0, 0] as any;
+    animation.fogColor[0].endValue = [0, 100, 300] as any;
     expect(validateEffectAnimation(animation, descriptions)).toEqual({
-      density: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      height: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      thickness: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      fogColor: {startTimeMs: 0, endTimeMs: 10000, endValue: [0, 100, 255], easing: 'linear'},
-      timestamp: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      shadowIntensity: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      sunLightIntensity: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'},
-      ambientLightIntensity: {startTimeMs: 0, endTimeMs: 10000, endValue: 0, easing: 'linear'}
+      density: [
+        {
+          id: 'density-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      height: [
+        {
+          id: 'height-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      thickness: [
+        {
+          id: 'thickness-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      fogColor: [
+        {
+          id: 'fogColor-1',
+          startValue: [0, 0, 0],
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: [0, 100, 255],
+          easing: 'linear'
+        }
+      ],
+      timestamp: [
+        {
+          id: 'timestamp-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      shadowIntensity: [
+        {
+          id: 'shadowIntensity-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      sunLightIntensity: [
+        {
+          id: 'sunLightIntensity-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
+      ambientLightIntensity: [
+        {
+          id: 'ambientLightIntensity-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ]
     });
     expect(
       getAnimatableEffectParameters({getParameterDescriptions: () => descriptions}).map(
@@ -445,6 +753,25 @@ describe('post-processing effect parameters', () => {
 });
 
 describe('effect animation sequences', () => {
+  test.each(
+    [
+      {id: 'one', startValue: 0, endValue: 1, easing: 'linear', startTimeMs: 0, endTimeMs: 1000},
+      [{id: 'one', endValue: 1, easing: 'linear', startTimeMs: 0, endTimeMs: 1000}],
+      [{startValue: 0, endValue: 1, easing: 'linear', startTimeMs: 0, endTimeMs: 1000}]
+    ].map(blocks => ({blocks}))
+  )(
+    'rejects experimental single objects and blocks missing explicit starts or IDs: %j',
+    ({blocks}) => {
+      const effect = new PostProcessingEffect({
+        type: 'brightnessContrast',
+        animation: {brightness: blocks} as any
+      });
+      expect(effect.animation).toBeUndefined();
+      expect(effect.parameters.brightness).toBe(0);
+      expect(effect.deckEffect.props.brightness).toBe(0);
+    }
+  );
+
   const first = {
     id: 'first',
     startTimeMs: 1000,
@@ -469,11 +796,9 @@ describe('effect animation sequences', () => {
     expect(effect.animation?.center).toEqual([first, second]);
     const clone = effect.clone();
     expect(clone.animation).toEqual(effect.animation);
-    const copied = getEffectAnimationEntries(clone.animation?.center);
+    const copied = clone.animation?.center ?? [];
     expect(copied[0].startValue).not.toBe(first.startValue);
-    expect(copied[0].startValue).not.toBe(
-      getEffectAnimationEntries(effect.animation?.center)[0].startValue
-    );
+    expect(copied[0].startValue).not.toBe((effect.animation?.center ?? [])[0].startValue);
     effect.setProps({parameters: {center: [0.1, 0.9]}});
     expect(effect.animation?.center).toEqual([first, second]);
     expect(effect.deckEffect.props.center).toEqual([0.1, 0.9]);
@@ -495,10 +820,33 @@ describe('effect animation sequences', () => {
   )('rejects invalid sequences without removing valid sibling parameters: %j', ({blocks}) => {
     expect(
       validateEffectAnimation(
-        {center: blocks, size: {startTimeMs: 0, endTimeMs: 10000, endValue: 2, easing: 'linear'}},
+        {
+          center: blocks,
+          size: [
+            {
+              id: 'size-1',
+              startValue: 1,
+              startTimeMs: 0,
+              endTimeMs: 10000,
+              endValue: 2,
+              easing: 'linear'
+            }
+          ]
+        },
         POSTPROCESSING_EFFECTS.dotScreen.parameters
       )
-    ).toEqual({size: {startTimeMs: 0, endTimeMs: 10000, endValue: 2, easing: 'linear'}});
+    ).toEqual({
+      size: [
+        {
+          id: 'size-1',
+          startValue: 1,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 2,
+          easing: 'linear'
+        }
+      ]
+    });
   });
   test('allows adjacent transitions and ordered instantaneous cuts', () => {
     const cut = {...second, startTimeMs: 3000, endTimeMs: 3000};

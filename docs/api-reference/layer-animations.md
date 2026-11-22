@@ -81,4 +81,4 @@ Treat the render configuration as read-only. Deferred accessors should read thei
 
 ## Effects
 
-Effects use `effect.animation[parameterName]` with required `startTimeMs` and `endTimeMs` in elapsed milliseconds. A property can contain one block or a sequence of blocks. Each block keeps its authored timing regardless of playback or export duration. Untimed experimental animations, including the old fog-height animation flags, are not played; configure explicit blocks in the Animation editor.
+Effects use `effect.animation[parameterName]` as an array of blocks, even for a single block. Every block requires a unique `id`, explicit `startValue` and `endValue`, `easing`, and `startTimeMs` and `endTimeMs` in elapsed milliseconds. Each block keeps its authored timing regardless of playback or export duration. Earlier experimental formats (single objects, implicit start values, untimed blocks, and fog-height animation flags) are not supported; configure explicit blocks in the Animation editor.

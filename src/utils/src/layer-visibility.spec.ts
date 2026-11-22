@@ -10,8 +10,7 @@ import {
   getLayerAnimationTracks,
   getLayerAnimationDuration,
   getLayerAnimationOpacityFactor,
-  getLayerAnimatedConfig,
-  getLayerAnimatedVisConfig
+  getLayerAnimatedConfig
 } from './layer-visibility';
 import type {LayerAnimatableProp, LayerPropertyTransition, RGBColor} from '@kepler.gl/types';
 
@@ -286,7 +285,7 @@ describe('numeric layer property transitions', () => {
       'opacity',
       'elevationScale'
     ]);
-    expect(getLayerAnimatedVisConfig(candidate, 3000)).toEqual({elevationScale: 10});
+    expect(getLayerAnimatedConfig(candidate, 3000).visConfig).toEqual({elevationScale: 10});
     expect(getLayerAnimationDuration([candidate])).toBe(4000);
     expect(getLayerPropertyTransitions(candidate.config, 'radius', radius)).toEqual([]);
     expect(getLayerPropertyTransitions(candidate.config, 'constructor')).toEqual([]);
@@ -305,7 +304,7 @@ describe('numeric layer property transitions', () => {
   ])(
     'evaluates concurrent values, eased values and held gaps at %i ms',
     (time, radiusValue, height) => {
-      expect(getLayerAnimatedVisConfig(layer, time)).toEqual({
+      expect(getLayerAnimatedConfig(layer, time).visConfig).toEqual({
         radius: radiusValue,
         elevationScale: height
       });
@@ -319,7 +318,7 @@ describe('numeric layer property transitions', () => {
     expect(getLayerAnimationTracks({config: layer.config}).map(item => item.property.name)).toEqual(
       ['opacity']
     );
-    expect(getLayerAnimatedVisConfig({config: layer.config}, 3000)).toEqual({});
+    expect(getLayerAnimatedConfig({config: layer.config}, 3000)).toEqual({});
     expect(getLayerAnimationTracks({...layer, animatableProps: []})).toEqual([]);
     expect(getLayerAnimationOpacityFactor({...layer, animatableProps: []}, 3000)).toBe(1);
     expect(
@@ -351,11 +350,14 @@ describe('numeric layer property transitions', () => {
 
   test('preserves authored config while seeking and leaves static maps untouched', () => {
     const original = JSON.parse(JSON.stringify(layer.config));
-    getLayerAnimatedVisConfig(layer, 7000);
-    expect(getLayerAnimatedVisConfig(layer, 3000)).toEqual({radius: 20, elevationScale: 10});
+    getLayerAnimatedConfig(layer, 7000);
+    expect(getLayerAnimatedConfig(layer, 3000).visConfig).toEqual({
+      radius: 20,
+      elevationScale: 10
+    });
     expect(layer.config).toEqual(original);
     for (const time of [undefined, null, NaN, Infinity]) {
-      expect(getLayerAnimatedVisConfig(layer, time)).toEqual({});
+      expect(getLayerAnimatedConfig(layer, time)).toEqual({});
       expect(getLayerAnimationOpacityFactor(layer, time)).toBe(1);
     }
   });
@@ -385,9 +387,9 @@ describe('numeric layer property transitions', () => {
       },
       animatableProps: [elevation]
     };
-    expect(getLayerAnimatedVisConfig(candidate, 1000)).toEqual({elevationScale: 0});
-    expect(getLayerAnimatedVisConfig(candidate, 2000)).toEqual({elevationScale: -20});
-    expect(getLayerAnimatedVisConfig(candidate, 3000)).toEqual({elevationScale: -20});
+    expect(getLayerAnimatedConfig(candidate, 1000).visConfig).toEqual({elevationScale: 0});
+    expect(getLayerAnimatedConfig(candidate, 2000).visConfig).toEqual({elevationScale: -20});
+    expect(getLayerAnimatedConfig(candidate, 3000).visConfig).toEqual({elevationScale: -20});
     const extreme = {
       config: {
         isVisible: true,
@@ -399,7 +401,7 @@ describe('numeric layer property transitions', () => {
         {...elevation, range: [-Number.MAX_VALUE, Number.MAX_VALUE] as [number, number]}
       ]
     };
-    expect(getLayerAnimatedVisConfig(extreme, 3000)).toEqual({elevationScale: 0});
+    expect(getLayerAnimatedConfig(extreme, 3000).visConfig).toEqual({elevationScale: 0});
   });
 });
 
@@ -509,7 +511,7 @@ describe('layer color property transitions', () => {
       color: [50, 70, 120],
       visConfig: {strokeColor: [50, 70, 120], radius: 20}
     });
-    expect(getLayerAnimatedVisConfig(layer, 3000)).toEqual({
+    expect(getLayerAnimatedConfig(layer, 3000).visConfig).toEqual({
       strokeColor: [50, 70, 120],
       radius: 20
     });
@@ -526,7 +528,7 @@ describe('layer color property transitions', () => {
       animatableProps: [{...radius, name: 'color'}]
     };
     expect(getLayerAnimatedConfig(numericLayer, 3000)).toEqual({visConfig: {color: 20}});
-    expect(getLayerAnimatedVisConfig(numericLayer, 3000)).toEqual({color: 20});
+    expect(getLayerAnimatedConfig(numericLayer, 3000).visConfig).toEqual({color: 20});
     expect(getLayerAnimatedConfig({...layer, animatableProps: [color]}, 3000)).toEqual({
       color: [50, 70, 120]
     });
@@ -564,12 +566,11 @@ describe('layer color property transitions', () => {
     const original = JSON.parse(JSON.stringify(layer.config));
     getLayerAnimatedConfig(layer, 7000).color![0] = 1;
     getLayerAnimatedConfig(layer, 0).color![0] = 2;
-    (getLayerAnimatedVisConfig(layer, 20000).strokeColor as RGBColor)[0] = 3;
+    (getLayerAnimatedConfig(layer, 20000).visConfig!.strokeColor as RGBColor)[0] = 3;
     expect(getLayerAnimatedConfig(layer, 3000).color).toEqual([50, 70, 120]);
     expect(layer.config).toEqual(original);
     for (const time of [undefined, null, NaN, Infinity]) {
       expect(getLayerAnimatedConfig(layer, time)).toEqual({});
-      expect(getLayerAnimatedVisConfig(layer, time)).toEqual({});
     }
   });
 });

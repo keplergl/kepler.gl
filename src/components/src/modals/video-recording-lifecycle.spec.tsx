@@ -322,7 +322,16 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
       isEnabled: true,
       parameters: {amount: 0},
       animation: {
-        amount: {endValue: 100, easing: 'linear', startTimeMs: 0, endTimeMs: 2000 / 30}
+        amount: [
+          {
+            id: 'amount-1',
+            startValue: 0,
+            endValue: 100,
+            easing: 'linear',
+            startTimeMs: 0,
+            endTimeMs: 2000 / 30
+          }
+        ]
       },
       getParameterDescriptions: () => [{name: 'amount', min: 0, max: 100}],
       setProps: ({parameters}) => Object.assign(effect.parameters, parameters)
