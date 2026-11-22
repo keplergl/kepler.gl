@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {Effect, EffectAnimation, EffectParameterDescription} from '@kepler.gl/types';
+import type {
+  Effect,
+  EffectAnimation,
+  EffectParameterAnimation,
+  EffectParameterDescription
+} from '@kepler.gl/types';
 
 const NON_ANIMATABLE_PARAMETERS = new Set([
   'animateHeight',
@@ -36,7 +41,7 @@ export function getAnimatableEffectParameters(
   return effect.getParameterDescriptions().filter(isAnimatableParameter);
 }
 
-/** Validate optional endpoints without creating animations for missing or invalid values. */
+/** Validate timed endpoints without creating animations for missing or invalid values. */
 export function validateEffectAnimation(
   animation: unknown,
   descriptions: EffectParameterDescription[]
@@ -49,11 +54,8 @@ export function validateEffectAnimation(
   for (const description of descriptions.filter(isAnimatableParameter)) {
     const {name, type, min, max, defaultValue} = description;
     if (!Object.prototype.hasOwnProperty.call(animation, name)) continue;
-    const entry = (
-      animation as Record<string, {startValue?: unknown; endValue?: unknown; easing?: unknown}>
-    )[name];
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-    if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
+    const entries = (animation as Record<string, unknown>)[name];
+    if (!Array.isArray(entries) || !entries.length) continue;
 
     const clampValue = (value: number) => Math.max(min, Math.min(max, value));
     const validateValue = (value: unknown): number | number[] | undefined => {
@@ -76,15 +78,35 @@ export function validateEffectAnimation(
       }
       return clampValue(value);
     };
-    const endValue = validateValue(entry.endValue);
-    const hasStart = Object.prototype.hasOwnProperty.call(entry, 'startValue');
-    const startValue = hasStart ? validateValue(entry.startValue) : undefined;
-    if (endValue === undefined || (hasStart && startValue === undefined)) continue;
-    result[name] = {
-      ...(hasStart ? {startValue} : {}),
-      endValue,
-      easing: entry.easing
-    };
+    const ids = new Set<string>();
+    const blocks: EffectParameterAnimation[] = [];
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) break;
+      const {id, easing, startTimeMs, endTimeMs} = entry;
+      if (
+        typeof id !== 'string' ||
+        !id.trim() ||
+        ids.has(id) ||
+        (easing !== 'linear' && easing !== 'easeInOut') ||
+        typeof startTimeMs !== 'number' ||
+        !Number.isFinite(startTimeMs) ||
+        startTimeMs < 0 ||
+        typeof endTimeMs !== 'number' ||
+        !Number.isFinite(endTimeMs) ||
+        endTimeMs < startTimeMs
+      )
+        break;
+      const startValue = validateValue(entry.startValue);
+      const endValue = validateValue(entry.endValue);
+      if (startValue === undefined || endValue === undefined) break;
+      ids.add(id);
+      blocks.push({id, startValue, endValue, easing, startTimeMs, endTimeMs});
+    }
+    if (blocks.length !== entries.length) continue;
+    blocks.sort((a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs);
+    if (blocks.some((block, index) => index > 0 && block.startTimeMs < blocks[index - 1].endTimeMs))
+      continue;
+    result[name] = blocks;
   }
   return Object.keys(result).length ? result : undefined;
 }

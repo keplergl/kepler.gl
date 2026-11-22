@@ -2,7 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent} from '@testing-library/react';
+import {act, fireEvent} from '@testing-library/react';
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  getNearestEditorFromDOMNode,
+  UNDO_COMMAND
+} from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation, RulerAnnotation} from '@kepler.gl/types';
@@ -49,6 +56,140 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
 
 const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
   ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
+
+describe('AnnotationOverlay opacity animation', () => {
+  test.each([
+    AnnotationKind.TEXT,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER
+  ])('combines zoom and elapsed opacity across %s shapes, text and handles', kind => {
+    const annotation: Annotation = {
+      ...makeLegacyAnnotation(kind),
+      propertyTransitions: {
+        opacity: [
+          {
+            id: 'in',
+            startTimeMs: 1000,
+            endTimeMs: 3000,
+            startValue: 0,
+            endValue: 0.6,
+            easing: 'linear'
+          },
+          {
+            id: 'dim',
+            startTimeMs: 5000,
+            endTimeMs: 7000,
+            startValue: 0.6,
+            endValue: 0.2,
+            easing: 'linear'
+          }
+        ]
+      }
+    };
+    const savedAnnotation = JSON.parse(JSON.stringify(annotation));
+    let updatePreview!: React.Dispatch<
+      React.SetStateAction<{time: number | null | undefined; visible: boolean}>
+    >;
+    function Preview() {
+      const [preview, setPreview] = React.useState<{
+        time: number | null | undefined;
+        visible: boolean;
+      }>({time: 0, visible: true});
+      updatePreview = setPreview;
+      return (
+        <AnnotationOverlay
+          annotations={[{...annotation, isVisible: preview.visible}]}
+          animationTimeMs={preview.time}
+          getAnnotationOpacity={() => 0.8}
+          selectedAnnotationId={annotation.id}
+          isEditingAnnotationText={false}
+          isAnnotationMode={true}
+          mapIndex={0}
+          viewport={viewport}
+          updateAnnotation={jest.fn()}
+          setSelectedAnnotation={jest.fn()}
+        />
+      );
+    }
+    const {container, queryAllByRole} = renderWithTheme(<Preview />);
+    const fadedParts = container.querySelectorAll<HTMLElement>('[data-annotation-id]');
+    expect(fadedParts).toHaveLength(kind === AnnotationKind.RULER ? 3 : 2);
+    fadedParts.forEach(part => {
+      expect(part).not.toBeVisible();
+      expect(part).toHaveStyle({pointerEvents: 'none'});
+    });
+    expect(queryAllByRole('button')).toHaveLength(0);
+    for (const [time, expected] of [
+      [2000, 0.24],
+      [4000, 0.48],
+      [6000, 0.32],
+      [8000, 0.16],
+      [undefined, 0.8],
+      [null, 0.8]
+    ] as const) {
+      act(() => updatePreview({time, visible: true}));
+      const parts = container.querySelectorAll<HTMLElement>('[data-annotation-id]');
+      expect(parts).toHaveLength(kind === AnnotationKind.RULER ? 3 : 2);
+      parts.forEach(part => expect(Number(part.style.opacity)).toBeCloseTo(expected));
+    }
+    act(() => updatePreview({time: 4000, visible: false}));
+    expect(container.querySelector('[data-annotation-id]')).toBeNull();
+    expect(annotation).toEqual(savedAnnotation);
+  });
+});
+
+test('preserves annotation text undo after fading out and back in on zoom', async () => {
+  let changeOpacity!: React.Dispatch<React.SetStateAction<number>>;
+  function Preview() {
+    const [annotation, setAnnotation] = React.useState<Annotation>({
+      ...makeLegacyAnnotation(AnnotationKind.TEXT),
+      label: 'Original'
+    });
+    const [opacity, setOpacity] = React.useState(1);
+    changeOpacity = setOpacity;
+    return (
+      <AnnotationOverlay
+        annotations={[annotation]}
+        getAnnotationOpacity={() => opacity}
+        selectedAnnotationId={annotation.id}
+        isEditingAnnotationText={true}
+        isAnnotationMode={true}
+        mapIndex={0}
+        viewport={viewport}
+        updateAnnotation={(_id, {label, editorState}) => {
+          setAnnotation(previous => ({...previous, label: label ?? previous.label, editorState}));
+        }}
+        setSelectedAnnotation={jest.fn()}
+      />
+    );
+  }
+  const {container} = renderWithTheme(<Preview />);
+  const currentEditor = () =>
+    getNearestEditorFromDOMNode(container.querySelector('.editor-input'))!;
+  for (const text of ['Before', 'Changed']) {
+    await act(async () => {
+      currentEditor().update(
+        () => {
+          $getRoot()
+            .clear()
+            .append($createParagraphNode().append($createTextNode(text)));
+          $getRoot().selectEnd();
+        },
+        {tag: 'history-push', discrete: true}
+      );
+    });
+  }
+  expect(container.querySelector('.editor-input')).toHaveTextContent('Changed');
+  act(() => changeOpacity(0));
+  expect(container.querySelector('.editor-input')).not.toBeVisible();
+  act(() => changeOpacity(1));
+  await act(async () => {
+    currentEditor().dispatchCommand(UNDO_COMMAND, undefined);
+  });
+  expect(container.querySelector('.editor-input')).toHaveTextContent('Before');
+});
 
 describe('AnnotationOverlay ruler interactions', () => {
   test.each([

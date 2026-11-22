@@ -15,7 +15,8 @@ import {
   validateFiltersUpdateDatasets,
   findById,
   aggregate,
-  isPlainObject
+  isPlainObject,
+  normalizeLayerPropertyTransitions
 } from '@kepler.gl/utils';
 
 import {
@@ -885,23 +886,29 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
             (a.endPoint.length === 2 || a.endPoint.length === 3) &&
             a.endPoint.every(value => Number.isFinite(value))))
     )
-    .map(a => ({
-      isVisible: true,
-      autoSize: true,
-      autoSizeY: true,
-      label: '',
-      lineColor: INITIAL_ANNOTATION_LINE_COLOR,
-      lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
-      textWidth: 0,
-      textHeight: 0,
-      ...a,
-      ...(a.kind === AnnotationKind.RULER
-        ? {
-            showCustomText: a.showCustomText ?? true,
-            showDistance: a.showDistance ?? true
-          }
-        : {})
-    }));
+    .map(a => {
+      const annotation = {
+        isVisible: true,
+        autoSize: true,
+        autoSizeY: true,
+        label: '',
+        lineColor: INITIAL_ANNOTATION_LINE_COLOR,
+        lineWidth: INITIAL_ANNOTATION_LINE_WIDTH,
+        textWidth: 0,
+        textHeight: 0,
+        ...a,
+        ...(a.kind === AnnotationKind.RULER
+          ? {
+              showCustomText: a.showCustomText ?? true,
+              showDistance: a.showDistance ?? true
+            }
+          : {})
+      };
+      const propertyTransitions = normalizeLayerPropertyTransitions(a.propertyTransitions);
+      if (propertyTransitions === undefined) delete annotation.propertyTransitions;
+      else annotation.propertyTransitions = propertyTransitions;
+      return annotation;
+    });
   if (!validAnnotations.length) {
     return state;
   }
@@ -1349,6 +1356,7 @@ export function validateLayerWithData(
     isVisible: savedLayer.config.isVisible,
     hidden: savedLayer.config.hidden,
     isIncludedInLegend: savedLayer.config.isIncludedInLegend,
+    propertyTransitions: savedLayer.config.propertyTransitions,
     columnMode: savedLayer.config.columnMode,
     highlightColor: savedLayer.config.highlightColor
   });

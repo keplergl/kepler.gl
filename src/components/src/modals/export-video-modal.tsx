@@ -42,7 +42,11 @@ import {
 } from './hubble-utils';
 import {useEffectAnimation} from './effect-animation';
 import {getCameraTourDuration} from '@kepler.gl/utils';
-import {CAMERA_TOUR_PRESET, withCameraTourExport} from './camera-tour-export';
+import {
+  CAMERA_TOUR_PRESET,
+  getAnimationExportDuration,
+  withCameraTourExport
+} from './camera-tour-export';
 import {getNativeWebMConfig, NATIVE_WEBM_FORMAT} from './video-export-formats';
 
 type SwipeContainerType = React.ComponentType<any>;
@@ -228,6 +232,7 @@ export interface ExportVideoModalProps {
   mapStyle: MapStyle;
   visState: any;
   exportVideo: ExportVideo;
+  cameraAnimationEnabled?: boolean;
   containerW: number;
   visStateActions: typeof VisStateActions;
   uiStateActions: typeof UIStateActions;
@@ -244,13 +249,18 @@ const ExportVideoModalFactory = () => {
     mapboxApiUrl = DEFAULT_MAPBOX_API_URL,
     mapState,
     mapStyle,
-    visState,
+    visState: savedVisState,
     exportVideo,
+    cameraAnimationEnabled = true,
     containerW,
     visStateActions,
     uiStateActions,
     onClose
   }) => {
+    const visState = useMemo(
+      () => (cameraAnimationEnabled ? savedVisState : {...savedVisState, cameraTour: undefined}),
+      [savedVisState, cameraAnimationEnabled]
+    );
     const [hubble, setHubble] = useState<HubbleModule | null>(_hubbleModule);
     const shadowCompositingRef = useRef<InstanceType<typeof DeckShadowCompositingEffect> | null>(
       null
@@ -290,10 +300,16 @@ const ExportVideoModalFactory = () => {
 
     const cameraTourDurationMs = getCameraTourDuration(visState.cameraTour);
     const hasCameraTour = cameraTourDurationMs > 0;
+    const animationDurationMs = getAnimationExportDuration(visState);
     const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
       ...exportVideo,
       mediaType: exportVideo.mediaType || NATIVE_WEBM_FORMAT.value,
-      ...(hasCameraTour ? {cameraPreset: CAMERA_TOUR_PRESET, durationMs: cameraTourDurationMs} : {})
+      ...(hasCameraTour
+        ? {cameraPreset: CAMERA_TOUR_PRESET}
+        : !cameraAnimationEnabled && exportVideo.cameraPreset === CAMERA_TOUR_PRESET
+        ? {cameraPreset: 'None'}
+        : {}),
+      ...(animationDurationMs > 0 ? {durationMs: animationDurationMs} : {})
     }));
 
     const [defaultFormatReady, setDefaultFormatReady] = useState(
@@ -671,7 +687,7 @@ const ExportVideoModalFactory = () => {
             {...props}
             maxValue={
               props.maxValue === 10000
-                ? Math.max(10000, cameraTourDurationMs, props.value1)
+                ? Math.max(10000, animationDurationMs, props.value1)
                 : props.maxValue
             }
           />
@@ -679,7 +695,7 @@ const ExportVideoModalFactory = () => {
       }),
       [
         hasCameraTour,
-        cameraTourDurationMs,
+        animationDurationMs,
         videoConfiguration.mediaType,
         videoConfiguration.resolution
       ]

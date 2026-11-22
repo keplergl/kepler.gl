@@ -3,6 +3,25 @@
 
 import {HexColor, RGBColor, RGBAColor} from './types';
 
+/** Visual properties that a layer allows the animation player to override. */
+export type LayerAnimatableProp =
+  | {
+      name: string;
+      label: string;
+      type?: 'number';
+      range: [number, number];
+      step: number;
+    }
+  | {name: string; label: string; type: 'color'};
+
+/** Endpoint values are validated against the property's supported range at playback time. */
+export type LayerPropertyTransition = {
+  id: string;
+  startTimeMs: number;
+  endTimeMs: number;
+  easing: 'linear' | 'easeInOut';
+} & ({startValue: number; endValue: number} | {startValue: RGBColor; endValue: RGBColor});
+
 export type LayerBaseConfig = {
   dataId: string;
   label: string;
@@ -15,6 +34,7 @@ export type LayerBaseConfig = {
   hidden: boolean;
   /** Omit from the map legend when false. Missing or true keeps the layer in the legend. */
   isIncludedInLegend?: boolean;
+  propertyTransitions?: Record<string, LayerPropertyTransition[]>;
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];

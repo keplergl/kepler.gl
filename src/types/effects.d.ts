@@ -19,12 +19,18 @@ export type EffectDescription = {
 };
 
 export type EffectParameterAnimation = {
-  startValue?: number | number[];
+  /** Stable identity for a block in a timed sequence. */
+  id: string;
+  startValue: number | number[];
   endValue: number | number[];
   easing: 'linear' | 'easeInOut';
+  /** Explicit start and end in elapsed milliseconds. */
+  startTimeMs: number;
+  endTimeMs: number;
 };
 
-export type EffectAnimation = Record<string, EffectParameterAnimation>;
+/** An ordered sequence of explicit timed blocks for each property. */
+export type EffectAnimation = Record<string, EffectParameterAnimation[]>;
 
 export type EffectUpdateProps = {
   isEnabled: boolean;

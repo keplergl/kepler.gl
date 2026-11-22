@@ -48,6 +48,8 @@ import {
   hasColorMap,
   hexToRgb,
   isPlainObject,
+  normalizeLayerPropertyTransitions,
+  DEFAULT_LAYER_ANIMATABLE_PROPS,
   isDomainStops,
   updateColorRangeByMatchingPalette,
   isArrowTable
@@ -67,6 +69,7 @@ import {
   AnimationConfig,
   KeplerLayer,
   LayerBaseConfig,
+  LayerAnimatableProp,
   LayerColumns,
   LayerColumn,
   ColumnPairs,
@@ -305,6 +308,10 @@ class Layer implements KeplerLayer {
     return this.type;
   }
 
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    return DEFAULT_LAYER_ANIMATABLE_PROPS;
+  }
+
   get isAggregated() {
     return false;
   }
@@ -532,6 +539,7 @@ class Layer implements KeplerLayer {
   getDefaultLayerConfig(
     props: LayerBaseConfigPartial
   ): LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig> {
+    const propertyTransitions = normalizeLayerPropertyTransitions(props.propertyTransitions);
     return {
       dataId: props.dataId,
       label: props.label || DEFAULT_LAYER_LABEL,
@@ -542,6 +550,7 @@ class Layer implements KeplerLayer {
       isConfigActive: props.isConfigActive ?? false,
       highlightColor: props.highlightColor || DEFAULT_HIGHLIGHT_COLOR,
       hidden: props.hidden ?? false,
+      ...(propertyTransitions !== undefined ? {propertyTransitions} : {}),
       // Only persist an explicit choice so saved maps stay compatible until the user toggles it.
       ...(typeof props.isIncludedInLegend === 'boolean'
         ? {isIncludedInLegend: props.isIncludedInLegend}
@@ -793,7 +802,12 @@ class Layer implements KeplerLayer {
       copied.columnMode = satisfiedColumnMode?.key || copied.columnMode;
     }
 
-    this.updateLayerConfig(copied);
+    this.updateLayerConfig({
+      ...copied,
+      // Optional animation fields are absent from a new layer's default keys.
+      // Preserve them independently of the destination's supported properties.
+      propertyTransitions: configToCopy.propertyTransitions
+    });
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {
       this.validateVisualChannel(channel);
@@ -909,6 +923,11 @@ class Layer implements KeplerLayer {
       Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
   >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
+    if (Object.prototype.hasOwnProperty.call(newConfig, 'propertyTransitions')) {
+      const propertyTransitions = normalizeLayerPropertyTransitions(newConfig.propertyTransitions);
+      if (propertyTransitions !== undefined) this.config.propertyTransitions = propertyTransitions;
+      else delete this.config.propertyTransitions;
+    }
     return this;
   }
 

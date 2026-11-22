@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape-catch';
+import cloneDeep from 'es-toolkit/compat/cloneDeep';
 import {Layer, AggregationLayer, KeplerGlLayers} from '@kepler.gl/layers';
 import {_compareProps} from '@deck.gl/core';
 import {MAX_LATITUDE} from '@math.gl/web-mercator';
@@ -9,6 +10,12 @@ import {tableFromArrays} from 'apache-arrow';
 import {getTextOffsetByRadius} from '../../../src/layers/src/layer-text-label';
 import {getGpuFilterProps, KeplerTable} from '@kepler.gl/table';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {
+  getLayerAnimatedConfig,
+  getLayerAnimationDuration,
+  getLayerAnimationOpacityFactor,
+  getLayerAnimationTracks
+} from '@kepler.gl/utils';
 
 test('#BaseLayer -> updateLayerDomain', t => {
   const rows = [
@@ -502,5 +509,212 @@ test('#BaseLayer -> globe sizing preserves fixed modes and high-zoom limits', t 
     0.25,
     'icons retain their uncapped zoom scaling'
   );
+  t.end();
+});
+
+test('#BaseLayer -> changing layer type preserves independent animation tracks', t => {
+  const transition = {
+    id: 'transition',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: 0.2,
+    endValue: 0.8,
+    easing: 'linear'
+  };
+  const color = {...transition, startValue: [0, 20, 40], endValue: [100, 120, 200]};
+  const source = new KeplerGlLayers.PointLayer({id: 'animated-point'});
+  source.updateLayerVisConfig({outline: true, fixedRadius: false});
+  source.updateLayerConfig({
+    propertyTransitions: {
+      opacity: [transition],
+      color: [color],
+      radius: [{...transition, startValue: 10, endValue: 20}],
+      strokeColor: [color],
+      futureProperty: [{...transition, endTimeMs: 50000}]
+    }
+  });
+  const original = cloneDeep(source.config);
+  const destination = new KeplerGlLayers.IconLayer({id: 'animated-icon'});
+  destination.assignConfigToLayer(source.config, source.visConfigSettings);
+  for (const key of ['propertyTransitions']) {
+    t.deepEqual(destination.config[key], source.config[key], `${key} survives type changes`);
+    t.notEqual(destination.config[key], source.config[key], `${key} is independently cloned`);
+  }
+  t.notEqual(
+    destination.config.propertyTransitions.color[0].startValue,
+    source.config.propertyTransitions.color[0].startValue,
+    'color endpoints are independently cloned'
+  );
+  t.notEqual(
+    destination.config.propertyTransitions?.opacity[0],
+    source.config.propertyTransitions?.opacity[0],
+    'opacity blocks are independently cloned'
+  );
+  t.deepEqual(
+    getLayerAnimationTracks(destination)
+      .map(({property}) => property.name)
+      .sort(),
+    ['color', 'opacity', 'radius'],
+    'unsupported tracks remain saved but inactive'
+  );
+  t.deepEqual(
+    getLayerAnimatedConfig(destination, 2000),
+    {color: [50, 70, 120], visConfig: {radius: 15}},
+    'supported color and numeric values still animate after type change'
+  );
+  t.equal(
+    getLayerAnimationOpacityFactor(destination, 2000),
+    0.5,
+    'opacity still animates after type change'
+  );
+  t.equal(
+    getLayerAnimationDuration([destination]),
+    3000,
+    'unsupported tracks do not extend playback'
+  );
+  const restored = new KeplerGlLayers.PointLayer({id: 'restored-point'});
+  restored.assignConfigToLayer(destination.config, destination.visConfigSettings);
+  restored.updateLayerVisConfig({outline: true});
+  t.deepEqual(
+    restored.config.propertyTransitions.strokeColor,
+    source.config.propertyTransitions.strokeColor,
+    'switching back recovers an unsupported track'
+  );
+  t.deepEqual(
+    getLayerAnimatedConfig(restored, 2000).visConfig.strokeColor,
+    [50, 70, 120],
+    'recovered stroke color animates once supported'
+  );
+  destination.config.propertyTransitions.color[0].startValue[0] = 99;
+  t.deepEqual(
+    source.config,
+    original,
+    'editing destination transitions does not mutate source config'
+  );
+  t.end();
+});
+
+test('#BaseLayer -> changing layer type preserves empty and missing tracks', t => {
+  const transition = {
+    id: 'opacity',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: 0,
+    endValue: 0,
+    easing: 'linear'
+  };
+  const cases = [
+    {config: {propertyTransitions: {opacity: []}}, factor: 1},
+    {config: {propertyTransitions: {}}, factor: 1},
+    {config: {propertyTransitions: {opacity: [transition]}}, factor: 0},
+    {config: {}, factor: 1}
+  ];
+  for (const {config, factor} of cases) {
+    const source = new KeplerGlLayers.PointLayer({id: 'source', ...config});
+    const destination = new KeplerGlLayers.IconLayer({id: 'destination'});
+    destination.assignConfigToLayer(source.config, source.visConfigSettings);
+    for (const key of ['propertyTransitions']) {
+      t.equal(
+        Object.prototype.hasOwnProperty.call(destination.config, key),
+        Object.prototype.hasOwnProperty.call(config, key),
+        `${key} retains its optional shape`
+      );
+      t.deepEqual(destination.config[key], config[key], `${key} retains its contents`);
+    }
+    t.equal(
+      getLayerAnimationOpacityFactor(destination, 1500),
+      factor,
+      'empty and missing tracks keep static opacity'
+    );
+  }
+  t.end();
+});
+
+test('#BaseLayer -> changing layer type normalizes malformed animation input', t => {
+  const source = new KeplerGlLayers.PointLayer({id: 'source'});
+  const destination = new KeplerGlLayers.IconLayer({id: 'destination'});
+  const config = {
+    ...source.config,
+    propertyTransitions: {
+      color: [
+        {
+          id: 'bad-color',
+          startTimeMs: 0,
+          endTimeMs: 1000,
+          startValue: [0, 0, 0],
+          endValue: [256, 0, 0],
+          easing: 'linear'
+        }
+      ]
+    }
+  };
+  destination.assignConfigToLayer(config, source.visConfigSettings);
+  for (const key of ['propertyTransitions']) {
+    t.notOk(
+      Object.prototype.hasOwnProperty.call(destination.config, key),
+      `malformed ${key} is removed through normalization`
+    );
+    t.ok(Object.prototype.hasOwnProperty.call(config, key), `source ${key} is left untouched`);
+  }
+  t.equal(
+    getLayerAnimationOpacityFactor(destination, 500),
+    1,
+    'invalid timing cannot hide the destination'
+  );
+  t.deepEqual(
+    getLayerAnimatedConfig(destination, 500),
+    {},
+    'invalid color cannot override the destination'
+  );
+  t.end();
+});
+
+test('#BaseLayer -> render helpers follow config replacement without mutating prior values', t => {
+  const layer = new KeplerGlLayers.PointLayer({id: 'frame-point'});
+  layer.updateLayerVisConfig({radius: 10, fixedRadius: false, outline: true});
+  const authored = cloneDeep(layer.config);
+  const originalConfig = layer.config;
+  layer.config = {
+    ...layer.config,
+    color: [10, 30, 50],
+    visConfig: {...layer.config.visConfig, radius: 25, strokeColor: [100, 120, 140], opacity: 0.4}
+  };
+  const mapState = {...INITIAL_MAP_STATE, zoom: 14};
+  t.equal(layer.getRadiusScaleByZoom(mapState), 25, 'radius helper reads the frame value');
+  t.equal(
+    layer.getRadiusScaleByZoom(mapState, true),
+    1,
+    'explicit fixed radius keeps its existing behavior'
+  );
+  const frameTriggers = layer.getVisualChannelUpdateTriggers();
+  t.deepEqual(
+    frameTriggers.getFillColor.defaultValue,
+    [10, 30, 50],
+    'fill color trigger uses frame color'
+  );
+  t.deepEqual(
+    frameTriggers.getLineColor.defaultValue,
+    [100, 120, 140],
+    'stroke color trigger uses frame stroke color'
+  );
+  const opts = {idx: 0, gpuFilter: null, mapState, layerCallbacks: {}, visible: true};
+  t.equal(
+    layer.getDefaultDeckLayerProps(opts).opacity,
+    0.4,
+    'default deck props use frame opacity'
+  );
+  layer.config = originalConfig;
+  t.equal(
+    layer.getDefaultDeckLayerProps(opts).opacity,
+    authored.visConfig.opacity,
+    'restoring config recovers static props'
+  );
+  t.equal(layer.getRadiusScaleByZoom(mapState), 10, 'static radius remains authored');
+  t.deepEqual(
+    layer.getVisualChannelUpdateTriggers().getFillColor.defaultValue,
+    authored.color,
+    'static triggers remain authored'
+  );
+  t.deepEqual(layer.config, authored, 'render helpers never write frame values to saved config');
   t.end();
 });

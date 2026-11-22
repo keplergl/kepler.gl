@@ -14,6 +14,7 @@ import {
 } from '@dnd-kit/core';
 import {Annotation, RulerAnnotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
+import {getLayerOpacityFactor} from '@kepler.gl/utils';
 import {ActionHandler, updateAnnotation, setSelectedAnnotation} from '@kepler.gl/actions';
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
 import AnnotationText from './annotation-text';
@@ -55,6 +56,8 @@ const AnnotationTextContainer = styled.div`
 export type AnnotationOverlayProps = {
   annotations: Annotation[];
   getAnnotationOpacity?: (annotationId: string) => number;
+  /** Elapsed presentation time; omitted outside animation preview or export. */
+  animationTimeMs?: number | null;
   selectedAnnotationId: string | null;
   isEditingAnnotationText: boolean;
   isAnnotationMode: boolean;
@@ -69,6 +72,7 @@ export type AnnotationOverlayProps = {
 const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   annotations,
   getAnnotationOpacity = () => 1,
+  animationTimeMs,
   selectedAnnotationId,
   isEditingAnnotationText,
   isAnnotationMode,
@@ -79,6 +83,11 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   updateAnnotation: onUpdateAnnotation,
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
+  const getOpacity = useCallback(
+    (annotation: Annotation) =>
+      getAnnotationOpacity(annotation.id) * getLayerOpacityFactor(annotation, animationTimeMs),
+    [getAnnotationOpacity, animationTimeMs]
+  );
   const annotationsToRender = useMemo(
     () =>
       annotations
@@ -206,7 +215,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               isGlobeEnabled={isGlobeEnabled}
               key={annotation.id}
               annotation={annotation}
-              opacity={getAnnotationOpacity(annotation.id)}
+              opacity={getOpacity(annotation)}
               viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
@@ -219,7 +228,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               isGlobeEnabled={isGlobeEnabled}
               key={annotation.id}
               annotation={annotation}
-              opacity={getAnnotationOpacity(annotation.id)}
+              opacity={getOpacity(annotation)}
               viewport={viewport}
               isEditing={isAnnotationMode}
               isSelected={annotation.id === selectedAnnotationId}
@@ -243,7 +252,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
                 isGlobeEnabled={isGlobeEnabled}
                 key={annotation.id}
                 annotation={annotation}
-                opacity={getAnnotationOpacity(annotation.id)}
+                opacity={getOpacity(annotation)}
                 viewport={viewport}
                 isEditing={isAnnotationMode}
                 isSelected={annotation.id === selectedAnnotationId}

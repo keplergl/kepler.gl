@@ -304,6 +304,9 @@ export type KeplerApplicationConfig = {
   /** Whether to show the Camera animation panel in Interactions. Enabled by default. */
   enableCameraTour?: boolean;
 
+  /** Whether to show the experimental Animation editor map-control button and panel. Disabled by default. */
+  enableAnimationEditor?: boolean;
+
   /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
    * Defaults to true; each section also has its own flag.
@@ -558,6 +561,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableCameraBookmarks: true,
 
   enableCameraTour: true,
+
+  enableAnimationEditor: false,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

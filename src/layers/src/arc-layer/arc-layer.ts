@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
+
 import * as arrow from 'apache-arrow';
 
 import Layer, {
@@ -229,6 +231,21 @@ export default class ArcLayer extends Layer {
     this.registerVisConfig({...arcVisConfigs, ...targetArrowVisConfigs});
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       arcPosAccessor(this.config.columns, this.config.columnMode)(dataContainer);
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Source color', type: 'color'},
+      {name: 'targetColor', label: 'Target color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      }
+    ];
+    return props.filter(prop => prop.type !== 'color' || !this.config.colorField);
   }
 
   get type() {

@@ -3,11 +3,7 @@
 
 import {useCallback, useEffect, useMemo} from 'react';
 import type {RefObject} from 'react';
-import {
-  LIGHT_AND_SHADOW_EFFECT,
-  LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
-  SURFACE_FOG_TYPE
-} from '@kepler.gl/constants';
+import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
 import {validateEffectAnimation} from '@kepler.gl/effects';
 import type {Effect} from '@kepler.gl/types';
 
@@ -22,14 +18,17 @@ type PlaybackState = {
 };
 
 type ParameterTrack = {
+  id: string;
   name: string;
   start: number | number[];
   end: number | number[];
   original: number | number[];
   easing: 'linear' | 'easeInOut';
+  startTimeMs: number;
+  endTimeMs: number;
 };
 
-function getProgress(state?: PlaybackState): number | null {
+function getPlaybackTime(state?: PlaybackState): number | null {
   if (!state || !(state.previewing || state.rendering)) return null;
 
   // Globe/swipe own their capture loop; standard Hubble export owns VideoCapture.
@@ -47,7 +46,7 @@ function getProgress(state?: PlaybackState): number | null {
   ) {
     return null;
   }
-  return Math.min(Math.max(((time as number) - (start as number)) / duration, 0), 1);
+  return Math.max(0, (time as number) - (start as number));
 }
 
 export function setAnimatedParameters(effect: Effect, parameters: Effect['parameters']) {
@@ -72,34 +71,23 @@ export function setAnimatedParameters(effect: Effect, parameters: Effect['parame
 /** Collect playable endpoints without changing effects or their saved start values. */
 export function getEffectAnimationTracks(effects: Effect[]) {
   return effects.flatMap(effect => {
-    if (!effect.isEnabled) return [];
-    const animation = {...effect.animation};
-    // Keep existing saved fog animations playable. An explicit generic height wins.
-    if (
-      effect.type === SURFACE_FOG_TYPE &&
-      effect.parameters.animateHeight &&
-      !Object.prototype.hasOwnProperty.call(animation, 'height')
-    ) {
-      animation.height = {
-        endValue: effect.parameters.heightEnd,
-        easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
-      };
-    }
-    if (!Object.keys(animation).length) return [];
-
-    const validated = validateEffectAnimation(animation, effect.getParameterDescriptions());
-    const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entry]) => {
-      const current = effect.parameters[name];
-      const original = Array.isArray(current) ? current.slice() : current;
-      const start = entry.startValue ?? current;
-      const end = entry.endValue;
-      if (Array.isArray(start) && Array.isArray(end)) {
-        if (start.length !== end.length || !start.every(Number.isFinite)) return [];
-        return [{name, start: start.slice(), end, original, easing: entry.easing}];
-      }
-      if (!Number.isFinite(start) || Array.isArray(end)) return [];
-      return [{name, start: start as number, end, original, easing: entry.easing}];
-    });
+    if (!effect.isEnabled || !effect.animation) return [];
+    const validated = validateEffectAnimation(effect.animation, effect.getParameterDescriptions());
+    const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entries]) =>
+      entries.map(entry => {
+        const current = effect.parameters[name];
+        return {
+          id: entry.id,
+          name,
+          start: entry.startValue,
+          end: entry.endValue,
+          original: Array.isArray(current) ? current.slice() : current,
+          easing: entry.easing,
+          startTimeMs: entry.startTimeMs,
+          endTimeMs: entry.endTimeMs
+        };
+      })
+    );
     const animatesTimestamp =
       effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
       parameters.some(parameter => parameter.name === 'timestamp');
@@ -117,21 +105,39 @@ export function getEffectAnimationTracks(effects: Effect[]) {
   });
 }
 
+/** Latest explicit endpoint among enabled, playable effect transitions. */
+export function getEffectAnimationDuration(effects: Effect[]): number {
+  return getEffectAnimationTracks(effects).reduce(
+    (duration, track) =>
+      track.parameters.reduce((end, parameter) => Math.max(end, parameter.endTimeMs), duration),
+    0
+  );
+}
+
 export function applyEffectAnimation(
   tracks: ReturnType<typeof getEffectAnimationTracks>,
-  progress: number
+  elapsedMs: number
 ): void {
   for (const track of tracks) {
     if (!track.effect.isEnabled) continue;
-    const parameters = Object.fromEntries(
-      track.parameters.map(({name, start, end, easing}) => {
-        const t = easing === 'linear' ? progress : progress * progress * (3 - 2 * progress);
-        const value = Array.isArray(start)
-          ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
-          : start + ((end as number) - start) * t;
-        return [name, value];
-      })
-    );
+    const parameters: Effect['parameters'] = {};
+    for (const {name, start, end, easing, startTimeMs, endTimeMs} of track.parameters) {
+      // Later blocks do not override the held value until their start time.
+      if (Object.prototype.hasOwnProperty.call(parameters, name) && elapsedMs < startTimeMs)
+        continue;
+      const localProgress =
+        endTimeMs === startTimeMs
+          ? Number(elapsedMs >= endTimeMs)
+          : Math.max(0, Math.min(1, (elapsedMs - startTimeMs) / (endTimeMs - startTimeMs)));
+      const t =
+        easing === 'linear'
+          ? localProgress
+          : localProgress * localProgress * (3 - 2 * localProgress);
+      const value = Array.isArray(start)
+        ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
+        : start + ((end as number) - start) * t;
+      parameters[name] = value;
+    }
     setAnimatedParameters(track.effect, {
       ...parameters,
       ...(track.animatesTimestamp ? {timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick} : {})
@@ -165,12 +171,12 @@ export function useEffectAnimation(
   useEffect(() => restore, [restore]);
 
   return useCallback(() => {
-    const progress = getProgress(containerRef.current?.state);
-    if (progress === null) {
+    const time = getPlaybackTime(containerRef.current?.state);
+    if (time === null) {
       restore();
       return;
     }
-    applyEffectAnimation(tracks, progress);
+    applyEffectAnimation(tracks, time);
     if (tracks.some(track => track.animatesTimestamp)) onLightingTimeChange?.();
   }, [containerRef, restore, tracks, onLightingTimeChange]);
 }

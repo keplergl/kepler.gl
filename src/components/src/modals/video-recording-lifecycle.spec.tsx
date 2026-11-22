@@ -95,7 +95,10 @@ jest.mock('./swipe-export-settings', () => ({__esModule: true, default: () => nu
 jest.mock('../common', () => ({
   Button: ({children, ...props}) => <button {...props}>{children}</button>
 }));
-jest.mock('@kepler.gl/utils', () => ({getCameraTourDuration: () => 0}));
+jest.mock('@kepler.gl/utils', () => ({
+  getCameraTourDuration: () => 0,
+  ...jest.requireActual('../../../utils/src/layer-visibility')
+}));
 jest.mock('@kepler.gl/effects', () => jest.requireActual('../../../effects/src/animation-utils'));
 jest.mock('@kepler.gl/deckgl-layers', () => ({
   drawStarsBackground: jest.fn(),
@@ -318,7 +321,18 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
       type: 'test-effect',
       isEnabled: true,
       parameters: {amount: 0},
-      animation: {amount: {endValue: 100, easing: 'linear'}},
+      animation: {
+        amount: [
+          {
+            id: 'amount-1',
+            startValue: 0,
+            endValue: 100,
+            easing: 'linear',
+            startTimeMs: 0,
+            endTimeMs: 2000 / 30
+          }
+        ]
+      },
       getParameterDescriptions: () => [{name: 'amount', min: 0, max: 100}],
       setProps: ({parameters}) => Object.assign(effect.parameters, parameters)
     } as unknown as Effect;

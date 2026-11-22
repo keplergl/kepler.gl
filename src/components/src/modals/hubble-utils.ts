@@ -345,18 +345,22 @@ export function getGlobeExportLayers(
     mapIndex,
     mapboxApiAccessToken,
     mapboxApiUrl,
-    viewState
+    viewState,
+    animationTimeMs
   }: {
     mapIndex: number;
     mapboxApiAccessToken?: string;
     mapboxApiUrl?: string;
     viewState?: MapViewState;
+    animationTimeMs?: number;
   }
 ) {
   const globe = keplerState.mapState?.globe;
-  const frameState = viewState
-    ? {...keplerState, mapState: {...keplerState.mapState, ...viewState}}
-    : keplerState;
+  const frameState = {
+    ...keplerState,
+    animationTimeMs,
+    mapState: {...keplerState.mapState, ...viewState}
+  };
   const globeBaseLayers = getGlobeExportBaseLayers(frameState, mapboxApiAccessToken);
   const globeTopLayers = getGlobeTopLayers({
     globe,
@@ -380,12 +384,22 @@ export function getGlobeExportLayers(
 /** Use the same opacity and split-visibility rules as the live map for each frame. */
 export function getFlatExportLayers(
   keplerState: KeplerState,
-  {mapIndex, viewState, beforeId}: {mapIndex: number; viewState?: MapViewState; beforeId?: string}
+  {
+    mapIndex,
+    viewState,
+    beforeId,
+    animationTimeMs
+  }: {
+    mapIndex: number;
+    viewState?: MapViewState;
+    beforeId?: string;
+    animationTimeMs?: number;
+  }
 ) {
   if (!keplerState.visState.layerData?.length) return [];
   return (
     computeDeckLayers(
-      {...keplerState, mapState: {...keplerState.mapState, ...viewState}},
+      {...keplerState, animationTimeMs, mapState: {...keplerState.mapState, ...viewState}},
       {mapIndex, primaryMap: false}
     )
       .flat(Infinity)

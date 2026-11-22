@@ -9,6 +9,7 @@ import {
   colorRangeBackwardCompatibility,
   normalizeCameraBookmarks,
   normalizeCameraTour,
+  normalizeLayerPropertyTransitions,
   isFilterValidToSave,
   findById,
   isPlainObject
@@ -572,6 +573,17 @@ class VisConfigSchemaV1 extends Schema {
   }
 }
 
+class LayerPropertyTransitionsSchema extends Schema {
+  save(value: unknown) {
+    const propertyTransitions = normalizeLayerPropertyTransitions(value);
+    return propertyTransitions !== undefined ? {propertyTransitions} : {};
+  }
+
+  load(value: unknown) {
+    return this.save(value);
+  }
+}
+
 export const layerPropsV1 = {
   id: null,
   type: null,
@@ -591,6 +603,7 @@ export const layerPropsV1 = {
       }),
       isVisible: null,
       isIncludedInLegend: null,
+      propertyTransitions: new LayerPropertyTransitionsSchema({key: 'propertyTransitions'}),
       visConfig: new VisConfigSchemaV1({
         version: VERSIONS.v1
       }),
@@ -968,6 +981,7 @@ const annotationPropsV1 = {
   id: null,
   kind: null,
   isVisible: null,
+  propertyTransitions: new LayerPropertyTransitionsSchema({key: 'propertyTransitions'}),
   autoSize: null,
   autoSizeY: null,
   anchorPoint: null,

@@ -3,12 +3,13 @@
 
 import Console from 'global/console';
 
-import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {CHANNEL_SCALES, GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {Layer as DeckLayer} from '@deck.gl/core';
 type DeckLayerProps = any;
 import {
   Field,
   LayerVisConfig,
+  VisualChannel,
   TooltipField,
   CompareType,
   SplitMapLayers,
@@ -35,7 +36,14 @@ import {
 
 import KeplerTable from '@kepler.gl/table';
 import {VisState} from '@kepler.gl/schemas';
-import {isFunction, getMapLayersFromSplitMaps, DataRow, isPlainObject} from '@kepler.gl/utils';
+import {
+  isFunction,
+  getMapLayersFromSplitMaps,
+  DataRow,
+  isPlainObject,
+  getLayerAnimationOpacityFactor,
+  getLayerAnimatedConfig
+} from '@kepler.gl/utils';
 import {arrayMove, generateHashId} from '@kepler.gl/common-utils';
 import {getLayerZoomOpacityFactor} from './interaction-utils';
 
@@ -335,8 +343,62 @@ function applyZoomOpacityToDeckLayer(deckLayer: any, factor: number): any {
     opacity,
     // Fully faded layers are not pickable.
     visible: deckLayer.props?.visible !== false && factor > 0,
+    ...(factor === 0 ? {pickable: false} : {}),
     ...(subLayerProps ? {_subLayerProps: subLayerProps} : {})
   });
+}
+
+/** Apply frame values only while rendering, then restore the authored config. */
+function renderLayerWithAnimation(
+  layer: Layer,
+  renderOptions: Parameters<Layer['renderLayer']>[0],
+  animationTimeMs?: number | null
+) {
+  const {data, mapState, interactionConfig} = renderOptions;
+  const animatedConfig = getLayerAnimatedConfig(layer, animationTimeMs);
+  const authoredConfig = layer.config;
+  const renderConfig = Object.keys(animatedConfig).length
+    ? {
+        ...authoredConfig,
+        ...animatedConfig,
+        visConfig: {...authoredConfig.visConfig, ...animatedConfig.visConfig}
+      }
+    : authoredConfig;
+  let frameData = data;
+  if (
+    isPlainObject(data) &&
+    (animatedConfig.color || Object.values(animatedConfig.visConfig ?? {}).some(Array.isArray))
+  ) {
+    // Static colors are cached by formatLayerData. Refresh only their accessors
+    // against this frame, retaining field scales, geometry and feature styling.
+    const accessors: Record<string, unknown> = {};
+    for (const channel of Object.values(layer.visualChannels ?? {}) as VisualChannel[]) {
+      const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
+      if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderConfig[field]) {
+        continue;
+      }
+      accessors[accessor] =
+        typeof getAttributeValue === 'function'
+          ? getAttributeValue(renderConfig)
+          : typeof defaultValue === 'function'
+          ? defaultValue(renderConfig)
+          : defaultValue;
+    }
+    if (Object.keys(accessors).length) frameData = {...data, ...accessors};
+  }
+  let rendered;
+  try {
+    // Keep the real instance for private fields and caches. Deferred accessors
+    // capture config/values during render, before authored settings are restored.
+    if (renderConfig !== authoredConfig) layer.config = renderConfig;
+    rendered = layer.renderLayer({...renderOptions, data: frameData});
+  } finally {
+    if (renderConfig !== authoredConfig) layer.config = authoredConfig;
+  }
+  const factor =
+    getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig) *
+    getLayerAnimationOpacityFactor(layer, animationTimeMs);
+  return applyZoomOpacityToDeckLayer(rendered, factor);
 }
 
 export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: any}) {
@@ -351,6 +413,7 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
     mapIndex,
     interactionConfig,
     animationConfig,
+    animationTimeMs,
     filters,
     mapLayers,
     experimentalContext
@@ -362,24 +425,25 @@ export function renderDeckGlLayer(props: any, layerCallbacks: {[key: string]: an
   // instead of leaking undefined into deck.gl's visible prop
   const visible = !mapLayers || Boolean(mapLayers[layer.id]);
   try {
-    // Layer is Layer class
-    const rendered = layer.renderLayer({
-      data,
-      gpuFilter,
-      idx: layerIndex,
-      interactionConfig,
-      layerCallbacks,
-      mapState,
-      mapIndex,
-      animationConfig,
-      filters,
-      objectHovered,
-      visible,
-      dataset,
-      experimentalContext
-    });
-    const factor = getLayerZoomOpacityFactor(layer.id, mapState?.zoom, interactionConfig);
-    return applyZoomOpacityToDeckLayer(rendered, factor);
+    return renderLayerWithAnimation(
+      layer,
+      {
+        data,
+        gpuFilter,
+        idx: layerIndex,
+        interactionConfig,
+        layerCallbacks,
+        mapState,
+        mapIndex,
+        animationConfig,
+        filters,
+        objectHovered,
+        visible,
+        dataset,
+        experimentalContext
+      },
+      animationTimeMs
+    );
   } catch (error) {
     // A synchronous renderer failure must not escape into React and unmount
     // the map. Keep the imported data and let the other layers render.
@@ -506,6 +570,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex?: number;
     interactionConfig: any;
     animationConfig: any;
+    animationTimeMs?: number | null;
     filters?: VisState['filters'];
     mapLayers: any;
     hasShadowEffect: boolean;
@@ -522,6 +587,7 @@ function computeDeckLayersFromLayerOrder(
     mapIndex,
     interactionConfig,
     animationConfig,
+    animationTimeMs,
     filters,
     mapLayers,
     hasShadowEffect,
@@ -573,6 +639,7 @@ function computeDeckLayersFromLayerOrder(
           mapIndex,
           interactionConfig,
           animationConfig,
+          animationTimeMs,
           filters,
           mapLayers,
           experimentalContext: {
@@ -589,7 +656,7 @@ function computeDeckLayersFromLayerOrder(
 
 // eslint-disable-next-line complexity
 export function computeDeckLayers(
-  {visState, mapState, mapStyle}: any,
+  {visState, mapState, mapStyle, animationTimeMs}: any,
   options?: ComputeDeckLayersProps,
   layerCallbacks?: LayerCallbacks,
   deckGlProps?: any
@@ -653,6 +720,7 @@ export function computeDeckLayers(
                 mapIndex,
                 interactionConfig,
                 animationConfig,
+                animationTimeMs,
                 filters,
                 mapLayers,
                 hasShadowEffect,
@@ -688,6 +756,7 @@ export function computeDeckLayers(
             mapIndex,
             interactionConfig,
             animationConfig,
+            animationTimeMs,
             filters,
             mapLayers,
             experimentalContext: {

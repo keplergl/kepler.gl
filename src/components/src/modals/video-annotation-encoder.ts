@@ -10,6 +10,8 @@ export type VideoAnnotationFrame = {
   mapState: MapState & {zoomOffset?: number};
   width: number;
   height: number;
+  /** Frozen elapsed presentation time for this encoded or previewed frame. */
+  animationTimeMs?: number | null;
   /** Undefined for a single map; otherwise clip each map's annotations at this percentage. */
   swipePercentage?: number;
 };

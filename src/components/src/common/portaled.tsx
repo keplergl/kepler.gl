@@ -182,10 +182,14 @@ class Portaled extends Component<PortaledProps, PortaledState> {
   componentDidUpdate(prevProps: PortaledProps) {
     const didOpen = this.props.isOpened && !prevProps.isOpened;
     const didClose = !this.props.isOpened && prevProps.isOpened;
-    if (didOpen || didClose) {
+    if (didClose) {
+      this.setState({isVisible: false});
+    } else if (didOpen) {
       Window.requestAnimationFrame(() => {
-        if (this._unmounted) return;
-        this.setState({isVisible: Boolean(didOpen)});
+        if (this._unmounted || !this.props.isOpened) return;
+        // Measure the newly mounted content before revealing it, including rapid reopenings.
+        this.handleScroll();
+        this.setState({isVisible: true});
       });
     }
 

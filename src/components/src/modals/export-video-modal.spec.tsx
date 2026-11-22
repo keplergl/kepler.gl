@@ -50,6 +50,9 @@ jest.mock('@hubble.gl/react', () => ({
     setViewState(viewState) {
       this.setState({viewState});
     }
+    _getContainer() {
+      return {width: 480, height: 270};
+    }
     render() {
       return mockExportVideoPanelContainer(this.props, this.context);
     }
@@ -129,6 +132,7 @@ jest.mock('./hubble-utils', () => ({
   getTimeRangeFilterKeyframes: jest.fn(),
   getAnimatableFilters: jest.fn(() => []),
   getFlatExportLayers: jest.fn(() => []),
+  getGlobeExportLayers: jest.fn(() => []),
   scaleZoomOpacityForVideoExport: jest.fn(config => config),
   parseSetCameraType: (...args) => jest.requireActual('./hubble-utils').parseSetCameraType(...args),
   scaleToVideoExport: jest.fn((viewState, container) => ({
@@ -148,7 +152,7 @@ jest.mock('./hubble-utils', () => ({
 }));
 
 import ExportVideoModalFactory from './export-video-modal';
-import {useEffectAnimation} from './effect-animation';
+import {getEffectAnimationDuration, useEffectAnimation} from './effect-animation';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 import LightingEffect from '../../../effects/src/lighting-effect';
 
@@ -729,6 +733,61 @@ describe('ExportVideoModal', () => {
     });
 
     test.each(modes)(
+      '$mode excludes disabled camera tours from playback and duration while keeping them saved',
+      async ({mapState, panel}) => {
+        const cameraTour = makeTour(15000);
+        const layers = [
+          {
+            config: {
+              isVisible: true,
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'appear',
+                    startTimeMs: 1000,
+                    endTimeMs: 1000,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  },
+                  {
+                    id: 'fade',
+                    startTimeMs: 4000,
+                    endTimeMs: 4000,
+                    startValue: 1,
+                    endValue: 0,
+                    easing: 'linear'
+                  }
+                ]
+              }
+            }
+          }
+        ];
+        const props = {
+          ...DEFAULT_PROPS,
+          cameraAnimationEnabled: false,
+          exportVideo: {...DEFAULT_PROPS.exportVideo, cameraPreset: 'Camera Animation'},
+          mapState: {...DEFAULT_PROPS.mapState, ...mapState},
+          visState: {...DEFAULT_PROPS.visState, cameraTour, layers}
+        };
+        renderWithThemeLocal(<ExportVideoModal {...props} />);
+        await waitFor(() => expect(panel).toHaveBeenCalled());
+        const panelProps = panel.mock.lastCall[0];
+        expect(panelProps.initialState).toMatchObject({cameraPreset: 'None', durationMs: 4000});
+        expect(panelProps.mapData.visState.cameraTour).toBeUndefined();
+        expect(props.visState.cameraTour).toBe(cameraTour);
+        expect(props.visState.cameraTour.stops[0].holdDurationMs).toBe(15000);
+        if (panel === mockExportVideoPanelContainer) {
+          const ui = panel.mock.lastCall[1];
+          expect(ui.ItemSelector({options: ['None', 'Orbit (90º)']}).props.options).not.toContain(
+            'Camera Animation'
+          );
+          expect(ui.Slider({maxValue: 10000, value1: 4000}).props.maxValue).toBe(10000);
+        }
+      }
+    );
+
+    test.each(modes)(
       '$mode export defaults to the authored animation and allows changing the preset',
       async ({mapState, panel}) => {
         const props = {
@@ -946,7 +1005,21 @@ describe('ExportVideoModal', () => {
     }
 
     test('wires a pre-render callback and animates export clones without changing live effects', async () => {
-      const liveEffect = makeEffect({amount: 2}, {amount: {endValue: 10, easing: 'linear'}});
+      const liveEffect = makeEffect(
+        {amount: 2},
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 2,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 10,
+              easing: 'linear'
+            }
+          ]
+        }
+      );
       await renderAndWaitForPanel({
         ...DEFAULT_PROPS,
         visState: {
@@ -969,11 +1042,43 @@ describe('ExportVideoModal', () => {
       const linear = makeEffect(
         {amount: 0, color: [0, 40, 80], untouched: 7},
         {
-          amount: {endValue: 100, easing: 'linear'},
-          color: {endValue: [80, 0, 40], easing: 'linear'}
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startValue: [0, 40, 80],
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: [80, 0, 40],
+              easing: 'linear'
+            }
+          ]
         }
       );
-      const smooth = makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'easeInOut'}});
+      const smooth = makeEffect(
+        {amount: 0},
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'easeInOut'
+            }
+          ]
+        }
+      );
       const {draw, state} = mountAnimation([linear, smooth]);
       draw();
       expect(linear.parameters).toEqual({amount: 25, color: [20, 30, 70], untouched: 7});
@@ -994,8 +1099,26 @@ describe('ExportVideoModal', () => {
       const effect = makeEffect(
         {amount: 70, color: [10, 20, 30]},
         {
-          amount: {startValue: 0, endValue: 100, easing: 'linear'},
-          color: {startValue: [0, 40, 80], endValue: [80, 0, 40], easing: 'linear'}
+          amount: [
+            {
+              id: 'amount-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: 0,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: [0, 40, 80],
+              endValue: [80, 0, 40],
+              easing: 'linear'
+            }
+          ]
         }
       );
       const {draw, state, unmount} = mountAnimation([effect]);
@@ -1019,8 +1142,149 @@ describe('ExportVideoModal', () => {
       expect(effect.parameters).toEqual({amount: 70, color: [10, 20, 30]});
     });
 
+    test.each([8000, 20000])(
+      'uses explicit effect seconds independently of a %i ms export and holds endpoint values',
+      duration => {
+        const effect = makeEffect(
+          {amount: 70, color: [10, 20, 30]},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                endValue: 100,
+                easing: 'linear',
+                startTimeMs: 2000,
+                endTimeMs: 6000
+              }
+            ],
+            color: [
+              {
+                id: 'color-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: [0, 40, 80],
+                endValue: [80, 0, 40],
+                easing: 'linear'
+              }
+            ]
+          }
+        );
+        const {draw, state, unmount} = mountAnimation([effect], {
+          adapter: {videoCapture: {timeMs: 1000, timecode: {start: 1000, duration}}}
+        });
+        for (const [elapsedMs, amount] of [
+          [0, 0],
+          [2000, 0],
+          [4000, 50],
+          [6000, 100],
+          [8000, 100],
+          [1000, 0]
+        ]) {
+          state.adapter.videoCapture.timeMs = 1000 + elapsedMs;
+          draw();
+          expect(effect.parameters.amount).toBe(amount);
+        }
+        state.adapter.videoCapture.timeMs = 5000;
+        draw();
+        expect(effect.parameters.color[0]).toBe(80);
+        unmount();
+        expect(effect.parameters).toEqual({amount: 70, color: [10, 20, 30]});
+      }
+    );
+
+    test('uses timed vectors and exact cuts with the globe/swipe clock', () => {
+      const effect = makeEffect(
+        {amount: 0, color: [0, 0, 0]},
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 10,
+              endValue: 90,
+              easing: 'linear',
+              startTimeMs: 3000,
+              endTimeMs: 3000
+            }
+          ],
+          color: [
+            {
+              id: 'color-1',
+              startValue: [0, 40, 80],
+              endValue: [80, 0, 40],
+              easing: 'easeInOut',
+              startTimeMs: 2000,
+              endTimeMs: 6000
+            }
+          ]
+        }
+      );
+      const {draw, state} = mountAnimation([effect], {
+        currentTimeMs: 2999,
+        durationMs: 12000
+      });
+      draw();
+      expect(effect.parameters.amount).toBe(10);
+      state.currentTimeMs = 3000;
+      draw();
+      expect(effect.parameters.amount).toBe(90);
+      expect(effect.parameters.color).toEqual([12.5, 33.75, 73.75]);
+      state.currentTimeMs = 10000;
+      draw();
+      expect(effect.parameters).toEqual({amount: 90, color: [80, 0, 40]});
+    });
+
+    test('finds the last explicit playable effect endpoint while ignoring disabled and invalid tracks', () => {
+      const animation = {
+        amount: [
+          {
+            id: 'amount-1',
+            startValue: 0,
+            endValue: 100,
+            easing: 'linear',
+            startTimeMs: 2000,
+            endTimeMs: 6000
+          }
+        ]
+      };
+      expect(getEffectAnimationDuration([])).toBe(0);
+      expect(
+        getEffectAnimationDuration([
+          makeEffect(
+            {amount: 0},
+            {amount: [{id: 'amount-1', startValue: 0, endValue: 100, easing: 'linear'}]}
+          )
+        ])
+      ).toBe(0);
+      expect(
+        getEffectAnimationDuration([
+          makeEffect({amount: 0}, animation),
+          makeEffect(
+            {amount: 0},
+            {amount: [{...animation.amount[0], endTimeMs: 20000}]},
+            {isEnabled: false}
+          ),
+          makeEffect({amount: 0}, {amount: [{...animation.amount[0], startTimeMs: -1}]})
+        ])
+      ).toBe(6000);
+    });
+
     test.each(['previewing', 'rendering'])('uses the globe/swipe clock while %s', mode => {
-      const effect = makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}});
+      const effect = makeEffect(
+        {amount: 0},
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 100,
+              easing: 'linear'
+            }
+          ]
+        }
+      );
       const {draw, state} = mountAnimation([effect], {
         previewing: false,
         [mode]: true,
@@ -1041,11 +1305,86 @@ describe('ExportVideoModal', () => {
     test('leaves missing, invalid and disabled animations untouched', () => {
       const effects = [
         makeEffect(),
-        makeEffect({amount: 0}, {amount: {endValue: NaN, easing: 'linear'}}),
-        makeEffect({amount: 0}, {amount: {endValue: [1], easing: 'linear'}}),
-        makeEffect({color: [0, 0, 0]}, {color: {endValue: [100], easing: 'linear'}}),
-        makeEffect({amount: Infinity}, {amount: {endValue: 100, easing: 'linear'}}),
-        makeEffect({amount: 0}, {amount: {endValue: 100, easing: 'linear'}}, {isEnabled: false})
+        makeEffect(
+          {amount: 0},
+          {amount: [{id: 'amount-1', startValue: 0, endValue: 100, easing: 'linear'}]}
+        ),
+        makeEffect(
+          {amount: 0},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: NaN,
+                easing: 'linear'
+              }
+            ]
+          }
+        ),
+        makeEffect(
+          {amount: 0},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: [1],
+                easing: 'linear'
+              }
+            ]
+          }
+        ),
+        makeEffect(
+          {color: [0, 0, 0]},
+          {
+            color: [
+              {
+                id: 'color-1',
+                startValue: [0, 0, 0],
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: [100],
+                easing: 'linear'
+              }
+            ]
+          }
+        ),
+        makeEffect(
+          {amount: Infinity},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: Infinity,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 100,
+                easing: 'linear'
+              }
+            ]
+          }
+        ),
+        makeEffect(
+          {amount: 0},
+          {
+            amount: [
+              {
+                id: 'amount-1',
+                startValue: 0,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 100,
+                easing: 'linear'
+              }
+            ]
+          },
+          {isEnabled: false}
+        )
       ];
       const {draw, unmount} = mountAnimation(effects);
       draw();
@@ -1054,7 +1393,21 @@ describe('ExportVideoModal', () => {
     });
 
     test('restores starts on stop, invalid timing, restart and cleanup without patching effects', () => {
-      const effect = makeEffect({amount: 10}, {amount: {endValue: 90, easing: 'linear'}});
+      const effect = makeEffect(
+        {amount: 10},
+        {
+          amount: [
+            {
+              id: 'amount-1',
+              startValue: 10,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 90,
+              easing: 'linear'
+            }
+          ]
+        }
+      );
       const originalPostRender = effect.deckEffect.postRender;
       const {draw, state, unmount} = mountAnimation([effect]);
       draw();
@@ -1078,12 +1431,23 @@ describe('ExportVideoModal', () => {
       expect(effect.deckEffect.postRender).toBe(originalPostRender);
     });
 
-    test('keeps legacy fog playable and gives generic height settings precedence', () => {
+    test('ignores untimed fog flags and animates only explicit height blocks', () => {
       const parameters = {height: 0, animateHeight: true, heightEnd: 100, linearEasing: false};
       const legacy = makeEffect(parameters, undefined, {type: 'surfaceFog'});
       const generic = makeEffect(
         parameters,
-        {height: {endValue: 200, easing: 'linear'}},
+        {
+          height: [
+            {
+              id: 'height-1',
+              startValue: 0,
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              endValue: 200,
+              easing: 'linear'
+            }
+          ]
+        },
         {type: 'surfaceFog'}
       );
       const disabled = makeEffect({...parameters, animateHeight: false}, undefined, {
@@ -1091,7 +1455,8 @@ describe('ExportVideoModal', () => {
       });
       const {draw} = mountAnimation([legacy, generic, disabled]);
       draw();
-      expect(legacy.parameters.height).toBe(15.625);
+      expect(legacy.parameters.height).toBe(0);
+      expect(legacy.setProps).not.toHaveBeenCalled();
       expect(generic.parameters.height).toBe(50);
       expect(disabled.setProps).not.toHaveBeenCalled();
     });
@@ -1102,7 +1467,18 @@ describe('ExportVideoModal', () => {
         const sunLight = {timestamp: 1234, intensity: 0, shadow: false};
         const effect = makeEffect(
           {sunLightIntensity: 2, timestamp: 99, timeMode},
-          {sunLightIntensity: {endValue: 6, easing: 'linear'}},
+          {
+            sunLightIntensity: [
+              {
+                id: 'sunLightIntensity-1',
+                startValue: 2,
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                endValue: 6,
+                easing: 'linear'
+              }
+            ]
+          },
           {
             type: 'lightAndShadow',
             deckEffect: {directionalLights: [sunLight], outputUniformShadow: true, shadow: false}
@@ -1133,12 +1509,26 @@ describe('ExportVideoModal', () => {
         const live = new LightingEffect({
           parameters: {timeMode, timestamp: savedTimestamp, sunLightIntensity: 2},
           animation: {
-            timestamp: {
-              startValue: midnight,
-              endValue: midnight + 24 * 60 * 60 * 1000,
-              easing: 'linear'
-            },
-            sunLightIntensity: {startValue: 2, endValue: 4, easing: 'linear'}
+            timestamp: [
+              {
+                id: 'timestamp-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: midnight,
+                endValue: midnight + 24 * 60 * 60 * 1000,
+                easing: 'linear'
+              }
+            ],
+            sunLightIntensity: [
+              {
+                id: 'sunLightIntensity-1',
+                startTimeMs: 0,
+                endTimeMs: 1000,
+                startValue: 2,
+                endValue: 4,
+                easing: 'linear'
+              }
+            ]
           }
         });
         const effect = live.clone();
@@ -1209,11 +1599,16 @@ describe('ExportVideoModal', () => {
       const live = new LightingEffect({
         parameters: {timeMode: 'animation', timestamp: 99},
         animation: {
-          timestamp: {
-            startValue: midnight,
-            endValue: midnight + 24 * 60 * 60 * 1000,
-            easing: 'linear'
-          }
+          timestamp: [
+            {
+              id: 'timestamp-1',
+              startTimeMs: 0,
+              endTimeMs: 1000,
+              startValue: midnight,
+              endValue: midnight + 24 * 60 * 60 * 1000,
+              easing: 'linear'
+            }
+          ]
         }
       });
       mockComputeDeckEffects.mockImplementation(
@@ -1637,7 +2032,7 @@ describe('Camera Animation video export', () => {
       }
     ]
   };
-  test('export clock scales duration and preserves holds and shortest rotations', () => {
+  test('export clock preserves authored seconds and holds the camera when recording continues', () => {
     const spec = getCameraTourExportKeyframes(tour, CAMERA_TOUR_PRESET, 8000, {
       width: 800,
       height: 600
@@ -1649,7 +2044,8 @@ describe('Camera Animation video export', () => {
     };
     expect(at(0)).toMatchObject(camera);
     expect(at(1000)).toMatchObject(camera);
-    expect(at(4000)).toMatchObject({longitude: 180, bearing: 360, width: 800});
+    expect(at(2000)).toMatchObject({longitude: 180, bearing: 360, width: 800});
+    expect(at(4000)).toMatchObject(tour.stops[1].camera);
     expect(at(8000)).toMatchObject(tour.stops[1].camera);
     expect(at(4000)).not.toHaveProperty('cameraTourTime');
   });
@@ -2278,10 +2674,20 @@ describe('Camera Animation video export', () => {
       expect(getFlatExportLayers).toHaveBeenLastCalledWith(instance.props.mapData, {
         mapIndex: 0,
         viewState: instance.state.viewState,
-        beforeId: 'labels'
+        beforeId: 'labels',
+        animationTimeMs: undefined
       });
       expect(panel.props.deckProps).toEqual({...instance.props.deckProps, layers: frames[i]});
     }
+    Object.assign(instance.state, {
+      previewing: true,
+      adapter: {videoCapture: {timeMs: 3500, timecode: {start: 500}}}
+    });
+    instance.render();
+    expect(getFlatExportLayers.mock.lastCall[1].animationTimeMs).toBe(3000);
+    instance.state.previewing = false;
+    instance.render();
+    expect(getFlatExportLayers.mock.lastCall[1].animationTimeMs).toBeUndefined();
     instance.props.deckProps = {...instance.props.deckProps, layers: frames[0]};
     getFlatExportLayers.mockClear();
     expect(instance.render().props.deckProps.layers).toBe(frames[0]);
@@ -2293,6 +2699,515 @@ describe('authored export duration range', () => {
   const camera = {longitude: 12, latitude: 30, zoom: 5, bearing: 0, pitch: 0};
   const makeTour = duration => ({
     stops: [{id: 'a', name: 'A', camera, holdDurationMs: duration, travelDurationMs: 0}]
+  });
+  const PostProcessingEffect = jest.requireActual(
+    '../../../effects/src/post-processing-effect'
+  ).default;
+  const makeEffect = timing =>
+    new PostProcessingEffect({
+      type: 'brightnessContrast',
+      animation: {
+        brightness: [{id: 'brightness-1', startValue: 0, endValue: 1, easing: 'linear', ...timing}]
+      }
+    });
+
+  test('declared layer properties set export duration while unsupported tracks stay inactive', async () => {
+    const {getAnimationExportDuration} = require('./camera-tour-export');
+    const layer = {
+      id: 'sized',
+      animatableProps: [{name: 'radius', label: 'Radius', range: [0, 100], step: 0.1}],
+      config: {
+        isVisible: true,
+        propertyTransitions: {
+          radius: [
+            {
+              id: 'grow',
+              startTimeMs: 1000,
+              endTimeMs: 18000,
+              startValue: 2,
+              endValue: 10,
+              easing: 'linear'
+            }
+          ],
+          unsupported: [
+            {
+              id: 'ignored',
+              startTimeMs: 0,
+              endTimeMs: 60000,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    };
+    const visState = {...DEFAULT_PROPS.visState, layers: [layer], cameraTour: null, effects: []};
+    expect(getAnimationExportDuration(visState)).toBe(18000);
+    await renderAndWaitForPanel({...DEFAULT_PROPS, visState});
+    expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState).toMatchObject({
+      durationMs: 18000
+    });
+    expect(
+      getAnimationExportDuration({
+        layers: [{...layer, config: {...layer.config, isVisible: false}}]
+      })
+    ).toBe(0);
+    expect(getAnimationExportDuration({layers: [{...layer, animatableProps: []}]})).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        layers: [
+          {
+            ...layer,
+            config: {
+              ...layer.config,
+              propertyTransitions: {
+                radius: [{...layer.config.propertyTransitions.radius[0], endValue: 101}]
+              }
+            }
+          }
+        ]
+      })
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        layers: [
+          {
+            ...layer,
+            config: {
+              ...layer.config,
+              propertyTransitions: {
+                radius: [
+                  {...layer.config.propertyTransitions.radius[0], startTimeMs: 0, endTimeMs: 0}
+                ]
+              }
+            }
+          }
+        ]
+      })
+    ).toBe(10000);
+  });
+
+  test('annotation-only export includes all blocks and retains the final value through longer recordings', async () => {
+    const {getAnimationExportDuration} = require('./camera-tour-export');
+    const {getLayerOpacityFactor} = require('@kepler.gl/utils');
+    const annotation = {
+      id: 'label',
+      isVisible: true,
+      propertyTransitions: {
+        opacity: [
+          {
+            id: 'in',
+            startTimeMs: 1000,
+            endTimeMs: 3000,
+            startValue: 0,
+            endValue: 0.8,
+            easing: 'linear'
+          },
+          {
+            id: 'dim',
+            startTimeMs: 18000,
+            endTimeMs: 24000,
+            startValue: 0.8,
+            endValue: 0.25,
+            easing: 'linear'
+          }
+        ]
+      }
+    };
+    const visState = {
+      ...DEFAULT_PROPS.visState,
+      cameraTour: null,
+      effects: [],
+      layers: [],
+      annotations: [annotation]
+    };
+    expect(getAnimationExportDuration(visState)).toBe(24000);
+    expect(getLayerOpacityFactor(annotation, 30000)).toBe(0.25);
+    await renderAndWaitForPanel({...DEFAULT_PROPS, visState});
+    expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState).toMatchObject({
+      durationMs: 24000,
+      cameraPreset: 'None'
+    });
+    expect(getAnimationExportDuration({annotations: [{...annotation, isVisible: false}]})).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        annotations: [{...annotation, propertyTransitions: {opacity: []}}]
+      })
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        annotations: [
+          {
+            ...annotation,
+            propertyTransitions: {
+              opacity: [{...annotation.propertyTransitions?.opacity[0], startTimeMs: -1}]
+            }
+          }
+        ]
+      })
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        annotations: [
+          {
+            ...annotation,
+            propertyTransitions: {
+              opacity: [
+                {...annotation.propertyTransitions?.opacity[0], startTimeMs: 0, endTimeMs: 0}
+              ]
+            }
+          }
+        ]
+      })
+    ).toBe(10000);
+  });
+
+  test('regular export passes its elapsed clock to annotation preview and recorded frames', () => {
+    const {withCameraTourExport} = require('./camera-tour-export');
+    const encoderModule = require('./video-annotation-encoder');
+    const createEncoder = jest.spyOn(encoderModule, 'createAnnotationVideoEncoder');
+    let readFrame;
+    createEncoder.mockImplementation((Encoder, getFrame) => {
+      readFrame = getFrame;
+      return Encoder;
+    });
+    class Base {
+      props = {
+        mapData: {mapState: camera, visState: {annotations: [{id: 'label', isVisible: true}]}}
+      };
+      state = {
+        viewState: camera,
+        previewing: true,
+        adapter: {videoCapture: {timeMs: 3500, timecode: {start: 500}}}
+      };
+      _getContainer() {
+        return {width: 480, height: 270};
+      }
+      getEncoder() {
+        return class Encoder {};
+      }
+      render() {
+        return <div />;
+      }
+    }
+    try {
+      const Container = withCameraTourExport(Base);
+      const instance = new Container();
+      expect(instance.render().props.frame.animationTimeMs).toBe(3000);
+      instance.getEncoder();
+      expect(readFrame().animationTimeMs).toBe(3000);
+      instance.state.adapter.videoCapture.timeMs = 5500;
+      expect(readFrame().animationTimeMs).toBe(5000);
+      expect(instance.render().props.frame.animationTimeMs).toBe(5000);
+      instance.state.currentTimeMs = 6500;
+      expect(readFrame().animationTimeMs).toBe(6500);
+      expect(instance.render().props.frame.animationTimeMs).toBe(6500);
+      instance.state.previewing = false;
+      expect(instance.render().props.frame.animationTimeMs).toBeUndefined();
+    } finally {
+      createEncoder.mockRestore();
+    }
+  });
+
+  test.each([
+    ['globe', jest.requireActual('./globe-export-video-container').GlobeExportVideoPanelContainer],
+    ['swipe', jest.requireActual('./swipe-export-video-container').SwipeExportVideoPanelContainer]
+  ])('%s recorded annotations use the same elapsed clock as their map frame', (mode, Container) => {
+    const encoderModule = require('./video-annotation-encoder');
+    const createEncoder = jest.spyOn(encoderModule, 'createAnnotationVideoEncoder');
+    let readFrame;
+    createEncoder.mockImplementation((Encoder, getFrame) => {
+      readFrame = getFrame;
+      return Encoder;
+    });
+    try {
+      const instance = new Container({
+        initialState: {durationMs: 18000},
+        mapData: {
+          mapState: {...DEFAULT_PROPS.mapState, globe: {enabled: mode === 'globe'}},
+          visState: {...DEFAULT_PROPS.visState, annotations: [{id: 'label', isVisible: true}]}
+        },
+        exportVideoWidth: 480,
+        mapProps: {}
+      });
+      instance.state.currentTimeMs = 3500;
+      instance.getEncoder();
+      expect(readFrame().animationTimeMs).toBe(3500);
+      instance.state.currentTimeMs = 7000;
+      expect(readFrame().animationTimeMs).toBe(7000);
+    } finally {
+      createEncoder.mockRestore();
+    }
+  });
+
+  test('defaults to the last authored track and ignores untimed effects', async () => {
+    const {getAnimationExportDuration} = require('./camera-tour-export');
+    const effects = [makeEffect({startTimeMs: 2000, endTimeMs: 12000})];
+    const layers = [
+      {
+        config: {
+          isVisible: true,
+          propertyTransitions: {
+            opacity: [
+              {
+                id: 'appear',
+                startTimeMs: 1000,
+                endTimeMs: 1000,
+                startValue: 0,
+                endValue: 1,
+                easing: 'linear'
+              },
+              {
+                id: 'fade',
+                startTimeMs: 18000,
+                endTimeMs: 18000,
+                startValue: 1,
+                endValue: 0,
+                easing: 'linear'
+              }
+            ]
+          }
+        }
+      }
+    ];
+    const visState = {...DEFAULT_PROPS.visState, cameraTour: makeTour(4000), effects, layers};
+    expect(getAnimationExportDuration(visState)).toBe(18000);
+    expect(getAnimationExportDuration({...visState, layers: []})).toBe(12000);
+    expect(getAnimationExportDuration({effects: [makeEffect({})]})).toBe(0);
+    expect(
+      getAnimationExportDuration({effects: [makeEffect({})], cameraTour: makeTour(4000)})
+    ).toBe(4000);
+    await renderAndWaitForPanel({...DEFAULT_PROPS, visState});
+    const panelProps = mockExportVideoPanelContainer.mock.lastCall[0];
+    expect(panelProps.initialState).toMatchObject({
+      durationMs: 18000,
+      cameraPreset: 'Camera Animation'
+    });
+    const ui = mockExportVideoPanelContainer.mock.lastCall[1];
+    expect(ui.Slider({maxValue: 10000, value1: 4000}).props.maxValue).toBe(18000);
+  });
+
+  test('layers-only export includes every opacity block and respects a cleared track', async () => {
+    const {getAnimationExportDuration} = require('./camera-tour-export');
+    const layer = {
+      config: {
+        isVisible: true,
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'fade-in',
+              startTimeMs: 1000,
+              endTimeMs: 3000,
+              startValue: 0,
+              endValue: 0.5,
+              easing: 'linear'
+            },
+            {
+              id: 'fade-out',
+              startTimeMs: 18000,
+              endTimeMs: 24000,
+              startValue: 0.5,
+              endValue: 0,
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    };
+    const visState = {...DEFAULT_PROPS.visState, cameraTour: null, effects: [], layers: [layer]};
+    expect(getAnimationExportDuration(visState)).toBe(24000);
+    await renderAndWaitForPanel({...DEFAULT_PROPS, visState});
+    expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState).toMatchObject({
+      durationMs: 24000,
+      cameraPreset: 'None'
+    });
+    expect(
+      getAnimationExportDuration({layers: [{config: {...layer.config, isVisible: false}}]})
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        layers: [
+          {
+            config: {
+              ...layer.config,
+              propertyTransitions: {opacity: []}
+            }
+          }
+        ]
+      })
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        layers: [
+          {
+            config: {
+              isVisible: true,
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'cut',
+                    startTimeMs: 0,
+                    endTimeMs: 0,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      })
+    ).toBe(10000);
+  });
+
+  test('uses the playback fallback for valid zero-time schedules while ignoring inactive or invalid tracks', () => {
+    const {getAnimationExportDuration} = require('./camera-tour-export');
+    const cut = makeEffect({startTimeMs: 0, endTimeMs: 0});
+    const layer = {
+      config: {
+        isVisible: true,
+        propertyTransitions: {
+          opacity: [
+            {
+              id: 'appear',
+              startTimeMs: 0,
+              endTimeMs: 0,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    };
+    expect(getAnimationExportDuration({effects: [cut]})).toBe(10000);
+    expect(getAnimationExportDuration({layers: [layer]})).toBe(10000);
+    cut.setProps({isEnabled: false});
+    expect(getAnimationExportDuration({effects: [cut]})).toBe(0);
+    expect(
+      getAnimationExportDuration({layers: [{config: {...layer.config, isVisible: false}}]})
+    ).toBe(0);
+    expect(
+      getAnimationExportDuration({
+        layers: [
+          {
+            config: {
+              ...layer.config,
+              propertyTransitions: {
+                opacity: [
+                  {
+                    id: 'appear',
+                    startTimeMs: -1,
+                    endTimeMs: -1,
+                    startValue: 0,
+                    endValue: 1,
+                    easing: 'linear'
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      })
+    ).toBe(0);
+    expect(getAnimationExportDuration({})).toBe(0);
+  });
+
+  test.each([
+    [
+      'globe',
+      jest.requireActual('./globe-export-video-container').GlobeExportVideoPanelContainer,
+      './globe-export-video-preview',
+      'GlobeExportVideoPreview'
+    ],
+    [
+      'swipe',
+      jest.requireActual('./swipe-export-video-container').SwipeExportVideoPanelContainer,
+      './swipe-export-video-preview',
+      'SwipeExportVideoPreview'
+    ]
+  ])(
+    '%s supplies elapsed time only during playback and uses the full authored duration on preset selection',
+    (mode, Container, previewModule, previewName) => {
+      const instance = new Container({
+        initialState: {durationMs: 18000, cameraPreset: 'Camera Animation'},
+        mapData: {
+          mapState: {...DEFAULT_PROPS.mapState, globe: {enabled: mode === 'globe'}},
+          visState: {
+            ...DEFAULT_PROPS.visState,
+            cameraTour: makeTour(4000),
+            effects: [makeEffect({startTimeMs: 2000, endTimeMs: 18000})]
+          }
+        },
+        exportVideoWidth: 480,
+        mapProps: {}
+      });
+      instance.setState = update => Object.assign(instance.state, update);
+      instance.setCameraPreset('Camera Animation');
+      expect(instance.state.durationMs).toBe(18000);
+      instance.state.currentTimeMs = 3500;
+      const Preview = require(previewModule)[previewName];
+      const findPreview = element => {
+        if (element?.type === Preview) return element;
+        return React.Children.toArray(element?.props?.children).map(findPreview).find(Boolean);
+      };
+      expect(findPreview(instance.render()).props.animationTimeMs).toBeUndefined();
+      instance.state.previewing = true;
+      expect(findPreview(instance.render()).props.animationTimeMs).toBe(3500);
+      instance.state.previewing = false;
+      instance.state.rendering = true;
+      expect(findPreview(instance.render()).props.animationTimeMs).toBe(3500);
+    }
+  );
+
+  test('globe and both swipe sides rebuild layers with the elapsed time', () => {
+    const {getFlatExportLayers, getGlobeExportLayers} = require('./hubble-utils');
+    const {GlobeExportVideoPreview} = jest.requireActual('./globe-export-video-preview');
+    const {SwipeExportVideoPreview} = jest.requireActual('./swipe-export-video-preview');
+    const {VideoAnnotationOverlay} = require('./video-annotation-overlay');
+    const findOverlay = element =>
+      element?.type === VideoAnnotationOverlay
+        ? element
+        : React.Children.toArray(element?.props?.children).map(findOverlay).find(Boolean);
+    const props = {
+      mapData: {mapState: {globe: {enabled: true}}, visState: {}},
+      viewState: camera,
+      resolution: [1280, 720],
+      exportVideoWidth: 480,
+      adapter: {getProps: jest.fn(() => ({}))},
+      animationTimeMs: 4500
+    };
+    const globe = new GlobeExportVideoPreview(props);
+    expect(findOverlay(globe.render()).props.frame.animationTimeMs).toBe(4500);
+    expect(getGlobeExportLayers.mock.lastCall[1]).toMatchObject({
+      mapIndex: 0,
+      animationTimeMs: 4500
+    });
+    const swipe = new SwipeExportVideoPreview({...props, disableBaseMap: true});
+    expect(findOverlay(swipe.render()).props.frame.animationTimeMs).toBe(4500);
+    for (const mapIndex of [0, 1]) {
+      swipe._createLayers(mapIndex);
+      expect(getGlobeExportLayers.mock.lastCall[1]).toMatchObject({
+        mapIndex,
+        animationTimeMs: 4500
+      });
+    }
+    swipe.props = {...props, disableBaseMap: false};
+    for (const mapIndex of [0, 1]) {
+      swipe._createLayers(mapIndex);
+      expect(getFlatExportLayers.mock.lastCall[1]).toMatchObject({mapIndex, animationTimeMs: 4500});
+    }
+    const invisible = {props: {visible: false}, isLoaded: false};
+    globe.deckRef.current = {props: {layers: [invisible]}};
+    swipe.leftDeckRef.current = {props: {layers: [invisible]}};
+    expect(globe.areLayersLoaded()).toBe(true);
+    expect(swipe._areLayersLoaded('left')).toBe(true);
+    globe.props = {...props, animationTimeMs: undefined};
+    swipe.props = {...props, animationTimeMs: undefined};
+    expect(findOverlay(globe.render()).props.frame.animationTimeMs).toBeUndefined();
+    expect(findOverlay(swipe.render()).props.frame.animationTimeMs).toBeUndefined();
   });
 
   test('regular export retains the authored maximum after shortening and updates it with the tour', async () => {

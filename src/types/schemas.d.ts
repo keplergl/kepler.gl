@@ -12,7 +12,7 @@ import {
   MapLegendControlSettings
 } from './reducers';
 
-import {LayerTextLabel} from './layers';
+import {LayerTextLabel, LayerPropertyTransition} from './layers';
 import {ChartConfig} from './charts';
 import {CameraBookmark, CameraTour} from './camera';
 
@@ -90,6 +90,7 @@ export type SavedLayer = {
     visConfig: Record<string, any>;
     hidden: boolean;
     isIncludedInLegend?: boolean;
+    propertyTransitions?: Record<string, LayerPropertyTransition[]>;
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;

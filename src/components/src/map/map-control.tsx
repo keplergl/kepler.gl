@@ -16,7 +16,10 @@ import ThemeToggleButtonFactory from './theme-toggle-button';
 import MapNavigationControlFactory from './map-navigation-control';
 import {Layer} from '@kepler.gl/layers';
 import {
+  Annotation,
   CameraBookmark,
+  CameraTour,
+  Effect,
   Editor,
   LayerVisConfig,
   LayerOrder,
@@ -33,6 +36,7 @@ import {MapViewMode} from '@kepler.gl/constants';
 import AnnotationControlFactory from './annotations/annotation-control';
 import MapInfoPanelFactory from './map-info-panel';
 import ViewportJsonEditorControlFactory from './viewport-json-editor';
+import MapAnimationControlFactory from './animation-control';
 
 interface StyledMapControlProps {
   $top?: number;
@@ -95,6 +99,10 @@ export type MapControlProps = {
   logoComponent?: React.FC | React.ReactNode;
   isExport?: boolean;
   cameraBookmarks?: CameraBookmark[];
+  cameraTour?: CameraTour | null;
+  effects?: Effect[];
+  annotations?: readonly Annotation[];
+  onEditCamera?: () => void;
   onCameraBookmarksChange?: (bookmarks: CameraBookmark[]) => void;
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;
@@ -127,7 +135,8 @@ MapControlFactory.deps = [
   AnnotationControlFactory,
   MapNavigationControlFactory,
   ViewportJsonEditorControlFactory,
-  MapInfoPanelFactory
+  MapInfoPanelFactory,
+  MapAnimationControlFactory
 ];
 
 function MapControlFactory(
@@ -140,7 +149,8 @@ function MapControlFactory(
   AnnotationControl: ReturnType<typeof AnnotationControlFactory>,
   MapNavigationControl: ReturnType<typeof MapNavigationControlFactory>,
   ViewportJsonEditorControl: ReturnType<typeof ViewportJsonEditorControlFactory>,
-  MapInfoPanel: ReturnType<typeof MapInfoPanelFactory>
+  MapInfoPanel: ReturnType<typeof MapInfoPanelFactory>,
+  AnimationControl?: ReturnType<typeof MapAnimationControlFactory>
 ) {
   const DEFAULT_ACTIONS = [
     MapInfoPanel,
@@ -151,7 +161,8 @@ function MapControlFactory(
     LocalePanel,
     ThemeToggleButton,
     ViewportJsonEditorControl,
-    MapLegendPanel
+    MapLegendPanel,
+    ...(AnimationControl ? [AnimationControl] : [])
   ];
 
   const MapControl: React.FC<MapControlProps> & {

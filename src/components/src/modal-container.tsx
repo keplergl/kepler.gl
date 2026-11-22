@@ -648,6 +648,7 @@ export default function ModalContainerFactory(
                 mapStyle={mapStyle}
                 visState={visState}
                 exportVideo={uiState.exportVideo}
+                cameraAnimationEnabled={Boolean(uiState.mapControls?.cameraTour?.show)}
                 containerW={containerW}
                 visStateActions={visStateActions}
                 uiStateActions={uiStateActions}

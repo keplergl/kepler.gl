@@ -5,8 +5,11 @@ import {AttributeManager, Layer, MapView} from '@deck.gl/core';
 import {worldToPixels} from '@math.gl/web-mercator';
 
 import {KeplerGlobeView} from '@kepler.gl/deckgl-layers';
+import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
 
 import {createTargetArrowLayer, targetArrowAngle} from './target-arrow';
+import ArcLayer from './arc-layer';
+import LineLayer from '../line-layer/line-layer';
 
 function mercatorViewport(overrides = {}) {
   const viewport = new MapView({farZMultiplier: 1.2}).makeViewport({
@@ -142,6 +145,92 @@ describe('targetArrowAngle', () => {
 });
 
 describe('createTargetArrowLayer', () => {
+  test.each([
+    {name: 'Arc', LayerClass: ArcLayer},
+    {name: 'Line', LayerClass: LineLayer}
+  ])('$name renders stroke and arrow visuals from the current config', ({LayerClass}) => {
+    const layer = new LayerClass({id: 'frame-stroke'});
+    layer.config.visConfig.thickness = 1;
+    layer.config.visConfig.opacity = 0.8;
+    const authoredConfig = layer.config;
+    layer.config = {
+      ...authoredConfig,
+      visConfig: {
+        ...authoredConfig.visConfig,
+        thickness: 3,
+        opacity: 0.2,
+        targetArrowEnabled: true
+      }
+    };
+    const rendered = layer.renderLayer({
+      idx: 0,
+      visible: true,
+      data: {
+        data: [
+          {index: 0, sourcePosition: [-122.45, 37.75, 0], targetPosition: [-122.35, 37.85, 0]}
+        ],
+        getTargetColor: [70, 80, 90],
+        getWidth: 1
+      },
+      gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+      mapState,
+      interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+      layerCallbacks: {}
+    });
+    expect(rendered[0].props).toEqual(
+      expect.objectContaining({
+        widthScale: 3 * PROJECTED_PIXEL_SIZE_MULTIPLIER,
+        opacity: 0.2
+      })
+    );
+    expect(rendered).toHaveLength(2);
+    expect(rendered[1].props).toEqual(
+      expect.objectContaining({
+        opacity: 0.2,
+        getFillColor: [70, 80, 90]
+      })
+    );
+    expect(authoredConfig.visConfig.thickness).toBe(1);
+    expect(authoredConfig.visConfig.opacity).toBe(0.8);
+    expect(authoredConfig.visConfig.targetArrowEnabled).toBe(false);
+  });
+
+  test('config replacement retains the original host record cache and earlier visuals', () => {
+    const source = {length: 1, get: jest.fn(() => [-122.45, 37.75, 0])};
+    const target = {length: 1, get: jest.fn(() => [-122.35, 37.85, 0])};
+    const host = makeArrowHost({geoArrowVector0: source, geoArrowVector1: target});
+    const authoredConfig = host.config;
+    host.config = {
+      ...authoredConfig,
+      visConfig: {...authoredConfig.visConfig, opacity: 0.2, targetArrowSize: 24}
+    };
+    const first = createArrowLayer(host, {getColor: [40, 50, 60]});
+    host.config = {...host.config, visConfig: {...host.config.visConfig, opacity: 0.4}};
+    const second = createArrowLayer(host, {
+      getColor: [70, 80, 90]
+    });
+
+    expect(first?.props.opacity).toBe(0.2);
+    expect(first?.props.getRadius).toBe(24);
+    expect(first?.props.getFillColor).toEqual([40, 50, 60]);
+    expect(second?.props.opacity).toBe(0.4);
+    expect(second?.props.getFillColor).toEqual([70, 80, 90]);
+    expect(second?.props.data).toBe(first?.props.data);
+    expect(source.get).toHaveBeenCalledTimes(1);
+    expect(target.get).toHaveBeenCalledTimes(1);
+    expect(authoredConfig.visConfig).toEqual({
+      targetArrowEnabled: true,
+      targetArrowShape: 'triangle',
+      targetArrowSize: 16,
+      opacity: 0.8
+    });
+    host.config = {
+      ...host.config,
+      visConfig: {...host.config.visConfig, targetArrowEnabled: false}
+    };
+    expect(createArrowLayer(host)).toBeNull();
+  });
+
   test('invalidates GeoArrow records when the target vector changes', () => {
     const source = {length: 1, get: () => [-122.45, 37.75, 0]};
     const firstTarget = {length: 1, get: () => [-122.35, 37.85, 0]};

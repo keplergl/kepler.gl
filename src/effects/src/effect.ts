@@ -78,28 +78,6 @@ export class Effect implements EffectInterface {
     this.isEnabled = props.isEnabled ?? this.isEnabled;
     this.isConfigActive = props.isConfigActive ?? this.isConfigActive;
     this.isJsonEditorActive = props.isJsonEditorActive ?? this.isJsonEditorActive;
-    // Older animations used the current parameter as Start. Preserve it before
-    // an ordinary slider edit changes that parameter.
-    if (this.animation && !Object.prototype.hasOwnProperty.call(props, 'animation')) {
-      for (const [name, entry] of Object.entries(this.animation)) {
-        const start = this.parameters[name];
-        const next = props.parameters?.[name];
-        const unchanged =
-          Array.isArray(start) && Array.isArray(next)
-            ? start.length === next.length && start.every((value, index) => value === next[index])
-            : start === next;
-        if (
-          entry.startValue === undefined &&
-          !unchanged &&
-          Object.prototype.hasOwnProperty.call(props.parameters || {}, name)
-        ) {
-          this.animation = {
-            ...this.animation,
-            [name]: {...entry, startValue: Array.isArray(start) ? start.slice() : start}
-          };
-        }
-      }
-    }
     this.parameters = {
       ...this.parameters,
       ...validateEffectParameters(props.parameters, this._uiConfig)
