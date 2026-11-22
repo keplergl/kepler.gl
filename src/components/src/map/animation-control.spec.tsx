@@ -135,12 +135,17 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
   };
 }
 
-test('the Animation editor is disabled by default', () => {
-  expect(originalEnabled).toBe(false);
+test('the Animation editor is available by default without a camera animation', () => {
+  expect(originalEnabled).toBe(true);
   initApplicationConfig({enableAnimationEditor: originalEnabled});
-  setup();
-  expect(screen.queryByRole('button', {name: 'Animation'})).toBeNull();
-  expect(screen.queryByTestId('editor')).toBeNull();
+  const view = setup({cameraTour: null, mapControls: {cameraTour: {show: false, active: false}}});
+  fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
+  expect(screen.getByTestId('editor')).toBeInTheDocument();
+  expect(screen.getByLabelText('Camera enabled')).toHaveTextContent('false');
+  expect(view.setCameraTour).not.toHaveBeenCalled();
+  expect(view.playback.run).not.toHaveBeenCalled();
+  expect(view.playback.pause).not.toHaveBeenCalled();
+  expect(view.playback.stop).not.toHaveBeenCalled();
 });
 
 test.each([false, undefined])(

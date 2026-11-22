@@ -1,11 +1,11 @@
 # Layer animations
 
-The experimental Animation editor button and floating panel are hidden by default. Enable them through application configuration:
+The experimental Animation editor button and floating panel are enabled by default. Hide them through application configuration:
 
 ```ts
 import {initApplicationConfig} from '@kepler.gl/utils';
 
-initApplicationConfig({enableAnimationEditor: true});
+initApplicationConfig({enableAnimationEditor: false});
 ```
 
 This flag only controls access to the editor; it does not disable playback or change saved animations.
