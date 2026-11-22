@@ -216,16 +216,19 @@ export function toDescriptor(cmd: {
   let inputSchema: Record<string, unknown> = {type: 'object'};
   if (cmd.inputSchema) {
     try {
-      // zod v4 -> JSON Schema. Static import (not require): the demo-app
-      // bundles for platform 'browser' / format 'iife', where `require` is
-      // undefined — a runtime require would throw and silently fall back to
-      // {type: 'object'}, losing tool discoverability and validation.
-      inputSchema = (z.toJSONSchema(cmd.inputSchema) ?? {type: 'object'}) as Record<
-        string,
-        unknown
-      >;
-    } catch {
-      inputSchema = {type: 'object'};
+      // Use the schema's own Zod serializer: the host may have a different
+      // Zod version from @kepler.gl/mcp and cannot safely read its internals.
+      // Keep the static import for older schemas without an instance method.
+      inputSchema =
+        typeof cmd.inputSchema.toJSONSchema === 'function'
+          ? cmd.inputSchema.toJSONSchema()
+          : z.toJSONSchema(cmd.inputSchema);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Cannot serialize input schema for "${cmd.id}": ${reason}. ` +
+          'Ensure the host and @kepler.gl/mcp use compatible Zod versions and the schema supports JSON Schema.'
+      );
     }
   }
   return {

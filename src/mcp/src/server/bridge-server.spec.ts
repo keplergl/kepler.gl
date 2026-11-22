@@ -9,9 +9,16 @@
 // Copyright contributors to the kepler.gl project
 
 import WebSocket from 'ws';
+import {z} from 'zod';
 import {MAP_TOOL_IDS} from '../types';
 import {KeplerMcpBridge, toToolName} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';
+
+jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
+
+// Exercise the descriptor builder used by the page's hello message. Requiring
+// it keeps the demo's Markdown module declarations out of the package's types.
+const {buildCatalog, toDescriptor} = require('../../../../examples/demo-app/src/kepler-mcp-shared');
 
 async function waitFor(condition: () => boolean, timeoutMs = 3000): Promise<void> {
   const startedAt = Date.now();
@@ -104,6 +111,46 @@ describe('kepler-mcp bridge server', () => {
     }
   });
 
+  it('preserves the demo command parameters after the page handshake', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+
+    socket.send(JSON.stringify({type: 'hello', commands: buildCatalog({}).map(toDescriptor)}));
+    // The skill reader exists only in the demo catalog, so this also ensures
+    // the assertions inspect the received descriptors rather than static tools.
+    await waitFor(() =>
+      bridge.getTools().some(tool => tool.name === toToolName('kepler.get-map-skill'))
+    );
+
+    const tools = bridge.getTools();
+    const schemaFor = (id: string) => tools.find(tool => tool.name === toToolName(id))?.inputSchema;
+    expect(schemaFor('map.add-layer')).toMatchObject({
+      type: 'object',
+      properties: {
+        datasetName: {type: 'string'},
+        layerType: {type: 'string', enum: expect.arrayContaining(['point', 'flowField'])}
+      },
+      required: expect.arrayContaining(['datasetName', 'layerType'])
+    });
+    expect(schemaFor('map.set-layer-options')).toMatchObject({
+      type: 'object',
+      properties: {
+        layerId: {type: 'string'},
+        options: {
+          type: 'object',
+          additionalProperties: {type: expect.arrayContaining(['number', 'boolean', 'string'])}
+        }
+      },
+      required: expect.arrayContaining(['layerId'])
+    });
+    expect(schemaFor('map.add-time-filter')).toMatchObject({
+      type: 'object',
+      properties: {datasetName: {type: 'string'}, dateTimeColumn: {type: 'string'}},
+      required: expect.arrayContaining(['datasetName', 'dateTimeColumn'])
+    });
+    socket.close();
+  });
+
   it('rejects a connection with the wrong token', async () => {
     const socket = connect(started.port, 'not-the-token');
     const code = await new Promise<number>((resolve, reject) => {
@@ -180,5 +227,59 @@ describe('kepler-mcp bridge server', () => {
     socket.close();
 
     await expect(pending).rejects.toThrow(/disconnected/);
+  });
+});
+
+describe('demo MCP descriptors', () => {
+  it('preserves commands with no input schema', () => {
+    expect(toDescriptor({id: 'kepler.get-map-skill', name: 'Read map skill'})).toMatchObject({
+      id: 'kepler.get-map-skill',
+      inputSchema: {type: 'object'}
+    });
+  });
+
+  it('uses the producer serializer without requiring host-compatible schema internals', () => {
+    const producerSchema = z.object({
+      datasetName: z.string(),
+      layerType: z.enum(['point', 'line'])
+    });
+    // A host cannot introspect this schema; only its producer knows how to
+    // serialize it. This models the incompatible-Zod-installations boundary.
+    const inputSchema = {toJSONSchema: () => producerSchema.toJSONSchema()};
+
+    expect(toDescriptor({id: 'map.add-layer', name: 'Add layer', inputSchema})).toMatchObject({
+      inputSchema: {
+        properties: {
+          datasetName: {type: 'string'},
+          layerType: {enum: ['point', 'line']}
+        },
+        required: ['datasetName', 'layerType']
+      }
+    });
+  });
+
+  it('converts older schemas without a producer serializer', () => {
+    const inputSchema = z.object({layerId: z.string()});
+    Object.defineProperty(inputSchema, 'toJSONSchema', {value: undefined});
+
+    expect(
+      toDescriptor({id: 'map.get-layer-options', name: 'Get options', inputSchema})
+    ).toMatchObject({
+      inputSchema: {
+        type: 'object',
+        properties: {layerId: {type: 'string'}},
+        required: ['layerId']
+      }
+    });
+  });
+
+  it('reports the command and conversion failure instead of publishing an empty schema', () => {
+    expect(() =>
+      toDescriptor({
+        id: 'map.unsupported',
+        name: 'Unsupported schema',
+        inputSchema: z.object({value: z.bigint()})
+      })
+    ).toThrow(/map\.unsupported.*BigInt.*JSON Schema.*Zod/);
   });
 });
