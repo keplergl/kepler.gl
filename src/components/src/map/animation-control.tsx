@@ -14,6 +14,7 @@ import type {
 } from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import {UIStateActions, VisStateActions} from '@kepler.gl/actions';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import {MapControlButton} from '../common/styled-components';
 import {Clock} from '../common/icons';
 import {RootContext} from '../context';
@@ -127,6 +128,7 @@ export default function MapAnimationControlFactory(
     };
 
     if (
+      !getApplicationConfig().enableAnimationEditor ||
       !playback ||
       !mapState ||
       !visStateActions ||

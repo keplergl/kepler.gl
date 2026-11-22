@@ -6,6 +6,7 @@ import {act, fireEvent, screen, waitFor} from '@testing-library/react';
 import {MapStateActions, VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {createEffect} from '@kepler.gl/effects';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import type {Annotation} from '@kepler.gl/types';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import {RootContext} from '../context';
@@ -17,6 +18,10 @@ import EffectAnimationPreviewProvider, {
   EffectAnimationPreviewContext
 } from '../effects/effect-animation-preview';
 import type {AnimationEditorProps} from '../animation/animation-editor';
+
+const originalEnabled = getApplicationConfig().enableAnimationEditor;
+beforeEach(() => initApplicationConfig({enableAnimationEditor: true}));
+afterEach(() => initApplicationConfig({enableAnimationEditor: originalEnabled}));
 
 const camera = {longitude: 10, latitude: 20, zoom: 6, bearing: 0, pitch: 0};
 const tour = {
@@ -90,7 +95,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
   const root = document.createElement('div');
   root.className = 'kepler-gl';
   document.body.appendChild(root);
-  const result = renderWithTheme(
+  const tree = () => (
     <IntlWrapper>
       <RootContext.Provider value={{current: root}}>
         <EffectAnimationPreviewContext.Provider value={playback}>
@@ -107,11 +112,46 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
           </div>
         </EffectAnimationPreviewContext.Provider>
       </RootContext.Provider>
-    </IntlWrapper>,
-    {container: root}
+    </IntlWrapper>
   );
-  return {...result, root, playback, updateEffect, updateAnnotation, onEditCamera};
+  const result = renderWithTheme(tree(), {container: root});
+  return {
+    ...result,
+    root,
+    playback,
+    updateEffect,
+    updateAnnotation,
+    onEditCamera,
+    refresh: () => renderWithTheme(tree(), {container: root})
+  };
 }
+
+test('the Animation editor is disabled by default', () => {
+  expect(originalEnabled).toBe(false);
+  initApplicationConfig({enableAnimationEditor: originalEnabled});
+  setup();
+  expect(screen.queryByRole('button', {name: 'Animation'})).toBeNull();
+  expect(screen.queryByTestId('editor')).toBeNull();
+});
+
+test.each([false, undefined])(
+  'hides an open editor when the flag is %s without changing playback',
+  enabled => {
+    const view = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
+    expect(screen.getByRole('region', {name: 'Animation panel'})).toBeInTheDocument();
+    initApplicationConfig({enableAnimationEditor: enabled});
+    view.refresh();
+    expect(screen.queryByRole('button', {name: 'Animation'})).toBeNull();
+    expect(screen.queryByRole('region', {name: 'Animation panel'})).toBeNull();
+    expect(screen.queryByTestId('editor')).toBeNull();
+    expect(view.playback.pause).not.toHaveBeenCalled();
+    expect(view.playback.stop).not.toHaveBeenCalled();
+    expect(view.playback.reset).not.toHaveBeenCalled();
+    expect(view.updateEffect).not.toHaveBeenCalled();
+    expect(view.updateAnnotation).not.toHaveBeenCalled();
+  }
+);
 
 test('opens an independent floating editor and keeps authored settings accessible', () => {
   const view = setup();

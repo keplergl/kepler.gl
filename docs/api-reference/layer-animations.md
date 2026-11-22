@@ -1,5 +1,15 @@
 # Layer animations
 
+The experimental Animation editor button and floating panel are hidden by default. Enable them through application configuration:
+
+```ts
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enableAnimationEditor: true});
+```
+
+This flag only controls access to the editor; it does not disable playback or change saved animations.
+
 The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric and RGB color properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer supports.
 
 ```ts
