@@ -45,6 +45,18 @@ function Editor(props: AnimationEditorProps) {
         Save effect
       </button>
       <button onClick={() => props.onEditCamera?.('first')}>Edit camera settings</button>
+      {props.onEditEffect &&
+        props.effects.map(effect => (
+          <button key={effect.id} onClick={() => props.onEditEffect?.(effect.id)}>
+            Edit effect {effect.id}
+          </button>
+        ))}
+      {props.onEditAnnotation &&
+        props.annotations?.map(annotation => (
+          <button key={annotation.id} onClick={() => props.onEditAnnotation?.(annotation.id)}>
+            Edit annotation {annotation.id}
+          </button>
+        ))}
       <button
         onClick={() =>
           props.onCameraTourChange?.({...tour, stops: [{...tour.stops[0], holdDurationMs: 5000}]})
@@ -93,6 +105,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
   const playback = playbackValue();
   const updateEffect = jest.fn();
   const updateAnnotation = jest.fn();
+  const setSelectedAnnotation = jest.fn();
   const onEditCamera = jest.fn();
   const setCameraTour = Object.assign(jest.fn(), VisStateActions.setCameraTour);
   const effect = createEffect({
@@ -113,7 +126,13 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
               mapControls={{cameraTour: {show: true, active: false}}}
               effects={[effect]}
               cameraTour={tour}
-              visStateActions={{...VisStateActions, updateEffect, updateAnnotation, setCameraTour}}
+              visStateActions={{
+                ...VisStateActions,
+                updateEffect,
+                updateAnnotation,
+                setSelectedAnnotation,
+                setCameraTour
+              }}
               onEditCamera={onEditCamera}
               {...overrides}
             />
@@ -129,6 +148,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
     playback,
     updateEffect,
     updateAnnotation,
+    setSelectedAnnotation,
     onEditCamera,
     setCameraTour,
     refresh: () => renderWithTheme(tree(), {container: root})
@@ -208,6 +228,70 @@ test('forwards annotation tracks and writes changes through the annotation actio
     propertyTransitions: {opacity: []}
   });
   expect(view.updateEffect).not.toHaveBeenCalled();
+});
+
+test.each([false, true, undefined])(
+  'opens the addressed effect configurator when the Effects panel active state is %s',
+  active => {
+    const onToggleMapControl = jest.fn();
+    const view = setup({
+      effects: [
+        createEffect({id: 'first-effect', type: 'brightnessContrast'}),
+        createEffect({id: 'second-effect', type: 'brightnessContrast', isJsonEditorActive: true})
+      ],
+      mapControls: active === undefined ? {} : {effect: {show: true, active}},
+      onToggleMapControl
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Edit effect second-effect'}));
+    expect(view.updateEffect).toHaveBeenCalledTimes(1);
+    expect(view.updateEffect).toHaveBeenCalledWith('second-effect', {
+      isConfigActive: true,
+      isJsonEditorActive: false
+    });
+    if (active) {
+      expect(onToggleMapControl).not.toHaveBeenCalled();
+    } else {
+      expect(onToggleMapControl).toHaveBeenCalledTimes(1);
+      expect(onToggleMapControl).toHaveBeenCalledWith('effect');
+    }
+    expect(screen.getByRole('region', {name: 'Animation panel'})).toBeInTheDocument();
+    expect(view.setSelectedAnnotation).not.toHaveBeenCalled();
+  }
+);
+
+test.each([false, true, undefined])(
+  'opens the addressed annotation configurator when the Annotations panel active state is %s',
+  active => {
+    const onToggleMapControl = jest.fn();
+    const view = setup({
+      annotations: [
+        {id: 'first-annotation', label: 'First', isVisible: true} as Annotation,
+        {id: 'second-annotation', label: 'Second', isVisible: true} as Annotation
+      ],
+      mapControls: active === undefined ? {} : {annotation: {show: true, active}},
+      onToggleMapControl
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Edit annotation second-annotation'}));
+    expect(view.setSelectedAnnotation).toHaveBeenCalledTimes(1);
+    expect(view.setSelectedAnnotation).toHaveBeenCalledWith('second-annotation', false);
+    if (active) {
+      expect(onToggleMapControl).not.toHaveBeenCalled();
+    } else {
+      expect(onToggleMapControl).toHaveBeenCalledTimes(1);
+      expect(onToggleMapControl).toHaveBeenCalledWith('annotation');
+    }
+    expect(screen.getByRole('region', {name: 'Animation panel'})).toBeInTheDocument();
+    expect(view.updateEffect).not.toHaveBeenCalled();
+  }
+);
+
+test('omits panel navigation when no map-control handler is supplied', () => {
+  setup({annotations: [{id: 'callout', label: 'Place', isVisible: true} as Annotation]});
+  fireEvent.click(screen.getByRole('button', {name: 'Animation'}));
+  expect(screen.queryByRole('button', {name: 'Edit effect brightness'})).toBeNull();
+  expect(screen.queryByRole('button', {name: 'Edit annotation callout'})).toBeNull();
 });
 
 test.each([{readOnly: true}, {isExport: true}, {isSplit: true, primary: false}])(
