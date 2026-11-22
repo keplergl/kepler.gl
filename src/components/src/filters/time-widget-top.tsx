@@ -109,7 +109,7 @@ const CompactPlayback = styled.div`
 const CompactSummary = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 0 1 auto;
+  flex: 0 1 ${props => props.theme.timeDisplayMinWidth}px;
   min-width: 0;
 
   @container timeline-header (max-width: 480px) {
@@ -122,7 +122,10 @@ const CompactActions = styled.div`
 `;
 
 const SelectedRange = styled.div`
+  /* Reserve space independently of the animated date/time text. */
   flex: 0 1 auto;
+  width: ${props => props.theme.timeDisplayMinWidth}px;
+  max-width: 100%;
   min-width: 0;
   color: ${props => props.theme.textColor};
   font-size: ${props => props.theme.selectFontSize};
