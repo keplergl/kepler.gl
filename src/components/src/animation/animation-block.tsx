@@ -138,8 +138,7 @@ const RemoveAction = styled.div<{$dragging: boolean}>`
   padding-bottom: 3px;
   opacity: 0;
   pointer-events: none;
-  ${Block}:hover &,
-  ${Block}:focus-within & {
+  ${Block}:hover & {
     opacity: ${props => (props.$dragging ? 0 : 1)};
     pointer-events: ${props => (props.$dragging ? 'none' : 'auto')};
   }
