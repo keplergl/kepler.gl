@@ -144,11 +144,16 @@ describe('export compositing pixels', () => {
       expected: [60, 100, 140, 255]
     },
     {
-      name: 'color exceeding coverage',
+      name: 'bright partially transparent color',
       source: [240, 180, 32, 128],
-      expected: [148, 168, 92, 255]
+      expected: [255, 220, 92, 255]
+    },
+    {
+      name: 'additive white at half opacity',
+      source: [128, 128, 128, 64],
+      expected: [158, 188, 218, 255]
     }
-  ])('composites partial opacity without double-darkening: $name', ({source, expected}) => {
+  ])('preserves source-over for $name', ({source, expected}) => {
     const actual = render(source);
     expect(actual.every((value, index) => Math.abs(value - expected[index]) <= 1)).toBe(true);
   });
@@ -171,18 +176,29 @@ describe('export compositing lifecycle', () => {
       framebuffer: buffers.swapBuffer,
       parameters: {viewport: [0, 0, 640, 480]},
       clearColor: [0, 0, 0, 0],
-      clearDepth: 1
+      clearDepth: 1,
+      clearStencil: false
     });
     const target = {id: 'export-target'};
     expect(effect.postRender({...buffers, target, clearCanvas: false})).toBe(target);
     expect(device.beginRenderPass).toHaveBeenLastCalledWith(
-      expect.objectContaining({framebuffer: target, clearColor: false, clearDepth: false})
+      expect.objectContaining({
+        framebuffer: target,
+        clearColor: false,
+        clearDepth: false,
+        clearStencil: false
+      })
     );
     expect(effect.postRender({...buffers, target: null, clearCanvas: false})).toBe(
       buffers.inputBuffer
     );
     expect(device.beginRenderPass).toHaveBeenLastCalledWith(
-      expect.objectContaining({framebuffer: null, clearColor: false, clearDepth: false})
+      expect.objectContaining({
+        framebuffer: null,
+        clearColor: false,
+        clearDepth: false,
+        clearStencil: false
+      })
     );
     expect(model.draw).toHaveBeenCalledWith(pass);
     expect(pass.end).toHaveBeenCalledTimes(3);

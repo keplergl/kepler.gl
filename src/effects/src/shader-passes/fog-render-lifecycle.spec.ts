@@ -89,6 +89,23 @@ describe.each([
     );
   });
 
+  test('clears intermediate frames even when the final basemap must be preserved', () => {
+    const effect = new EffectClass();
+    const {device} = createRenderer();
+    const buffers = createBuffers();
+    effect.setup({device});
+    // Deck forwards the final canvas's clear flag to every effect. The swap
+    // buffer is reused across frames and must not retain the previous fog image.
+    expect(effect.postRender({...buffers, clearCanvas: false})).toBe(buffers.swapBuffer);
+    expect(device.beginRenderPass).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        framebuffer: buffers.swapBuffer,
+        clearColor: [0, 0, 0, 0],
+        clearDepth: 1
+      })
+    );
+  });
+
   test('honors explicit targets and preserves previously composited canvas content', () => {
     const effect = new EffectClass();
     const {device} = createRenderer();
@@ -100,9 +117,11 @@ describe.each([
       expect.objectContaining({framebuffer: target, clearColor: false, clearDepth: false})
     );
     // null is an explicit default-framebuffer target, not a request for the swap buffer.
-    expect(effect.postRender({...buffers, target: null})).toBe(buffers.inputBuffer);
+    expect(effect.postRender({...buffers, target: null, clearCanvas: false})).toBe(
+      buffers.inputBuffer
+    );
     expect(device.beginRenderPass).toHaveBeenLastCalledWith(
-      expect.objectContaining({framebuffer: null})
+      expect.objectContaining({framebuffer: null, clearColor: false, clearDepth: false})
     );
   });
 

@@ -20,9 +20,11 @@ out vec4 fragColor;
 
 void main() {
   fragColor = texture(texSrc, coordinate);
-  // Filters such as brightness can leave RGB in transparent pixels. Keep the
-  // final image premultiplied before blending it over the shared basemap.
-  fragColor.rgb = clamp(fragColor.rgb, vec3(0.0), vec3(fragColor.a));
+  // Filters such as brightness can leave RGB in fully transparent pixels.
+  // Preserve visible colors, including additive blends whose RGB exceeds alpha.
+  if (fragColor.a == 0.0) {
+    fragColor.rgb = vec3(0.0);
+  }
 }
 `;
 
@@ -52,8 +54,8 @@ uniform screenUniforms {
  * This effect replicates that mechanism: its mere presence as a
  * post-processing effect (postRender) forces the offscreen FBO path.
  * It also finishes post-processing chains in a separate pass, so filter RGB
- * outside the layers' alpha coverage never reaches the basemap. Already valid
- * premultiplied colors (including translucent layers and shadows) are unchanged.
+ * in fully transparent pixels never reaches the basemap. Visible pixels keep
+ * their existing colors, including translucent layers and non-normal blending.
  */
 export class DeckShadowCompositingEffect {
   id = 'shadow-compositing-effect';
@@ -107,7 +109,8 @@ export class DeckShadowCompositingEffect {
       framebuffer: outputBuffer,
       parameters: {viewport: [0, 0, ...texSize]},
       clearColor: params.clearCanvas !== false ? [0, 0, 0, 0] : false,
-      clearDepth: params.clearCanvas !== false ? 1 : false
+      clearDepth: params.clearCanvas !== false ? 1 : false,
+      clearStencil: false
     });
     model.draw(renderPass);
     renderPass.end();
