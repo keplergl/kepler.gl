@@ -97,15 +97,20 @@ const Body = styled.div`
 const Field = styled.div`
   margin-bottom: 12px;
 
-  .kg-range-slider__input {
-    flex: 0 0 96px;
-    width: 96px;
+  ${Input} {
+    width: 100%;
     height: 32px;
-    margin-left: 12px;
     padding: 3px 6px;
+    font-size: ${props => props.theme.sliderInputFontSize};
     border-color: ${props => props.theme.panelBorderColor};
     text-align: center;
     text-overflow: clip;
+  }
+
+  .kg-range-slider__input {
+    flex: 0 0 96px;
+    width: 96px;
+    margin-left: 12px;
   }
 `;
 
@@ -436,6 +441,7 @@ export default function EffectAnimationControl({
             <>
               <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>
               <Input
+                secondary
                 id={`${timingId}-start`}
                 type="number"
                 min={0}
@@ -446,6 +452,7 @@ export default function EffectAnimationControl({
               />
               <PanelLabel htmlFor={`${timingId}-end`}>End time (seconds)</PanelLabel>
               <Input
+                secondary
                 id={`${timingId}-end`}
                 type="number"
                 min={0}
