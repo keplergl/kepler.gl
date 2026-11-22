@@ -473,9 +473,7 @@ const ExportVideoModalFactory = () => {
 
       const hasShadow = effects.some((e: any) => e.shadow === true);
       const hasPostProcess = effects.some((e: any) => typeof e.postRender === 'function');
-      // Flat exports share the basemap canvas. Finish filters offscreen before
-      // compositing their alpha coverage, including when no shadows are active.
-      if ((hasPostProcess && !mapState.globe?.enabled) || (hasShadow && !hasPostProcess)) {
+      if (hasShadow && !hasPostProcess) {
         if (!shadowCompositingRef.current) {
           shadowCompositingRef.current = new DeckShadowCompositingEffect();
         }
