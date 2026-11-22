@@ -384,6 +384,10 @@ function applyColorConfig(
       .map(Number);
     if (color.length === 3) {
       newLayer.config.color = color;
+      if (!args.colorBy) {
+        // An automatically selected field would override the requested solid fill.
+        newLayer.config.colorField = null;
+      }
     }
   }
 

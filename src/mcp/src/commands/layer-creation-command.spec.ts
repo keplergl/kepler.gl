@@ -424,6 +424,64 @@ describe('map.add-layer (flowField)', () => {
   });
 });
 
+describe('map.add-layer (GeoJSON fill color)', () => {
+  async function createLayer(colorArgs: {simpleColor?: string; colorBy?: string}) {
+    const table = new KeplerTable({color: [255, 0, 0]} as any);
+    await table.importData({
+      data: {
+        fields: [
+          {name: '_geojson', type: ALL_FIELD_TYPES.geojson},
+          {name: 'count', type: ALL_FIELD_TYPES.integer}
+        ],
+        rows: [1, 10, 30].map((count, i) => [
+          {
+            type: 'Feature',
+            geometry: {type: 'Point', coordinates: [-122.42 + i * 0.01, 37.77]},
+            properties: {count}
+          },
+          count
+        ])
+      } as any
+    });
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {
+        datasetName: table.id,
+        layerType: 'geojson',
+        options: {filled: true, stroked: false},
+        ...colorArgs
+      })
+    ).toMatchObject({success: true});
+    return visStateReducer({...INITIAL_VIS_STATE, datasets: {[table.id]: table}}, getDispatched());
+  }
+
+  it('uses an explicit solid fill for every feature instead of the automatic color field', async () => {
+    const state = await createLayer({simpleColor: '[255, 208, 93]'});
+    expect(state.layers).toHaveLength(1);
+    expect(state.layers[0].config.color).toEqual([255, 208, 93]);
+    expect(state.layers[0].config.colorField).toBeNull();
+    expect(state.layers[0].config.visConfig).toMatchObject({filled: true, stroked: false});
+    const {data, getFillColor} = state.layerData[0] as any;
+    expect(data.map(getFillColor)).toEqual([
+      [255, 208, 93],
+      [255, 208, 93],
+      [255, 208, 93]
+    ]);
+  });
+
+  it.each([
+    ['no color is requested', {}],
+    ['the solid color has too few channels', {simpleColor: '[255, 208]'}],
+    ['colorBy is explicit', {colorBy: 'count'}],
+    ['colorBy accompanies a solid color', {simpleColor: '[255, 208, 93]', colorBy: 'count'}]
+  ])('preserves field-based coloring when %s', async (_description, colorArgs) => {
+    const state = await createLayer(colorArgs);
+    expect(state.layers[0].config.colorField?.name).toBe('count');
+    const {data, getFillColor} = state.layerData[0] as any;
+    expect(getFillColor(data[0])).not.toEqual(getFillColor(data[2]));
+  });
+});
+
 describe('map.add-layer (colorMap validation)', () => {
   it('finds a unique category that appears only later in a large dataset (full scan)', async () => {
     // 20k rows; the wanted category 'z' exists ONLY at index 10000 — beyond the
