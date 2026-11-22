@@ -3,6 +3,7 @@
 
 import React from 'react';
 import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
@@ -87,6 +88,8 @@ function setup(overrides: Partial<AnimationEditorProps> = {}) {
     onLayerConfigChange: jest.fn(),
     onAnnotationChange: jest.fn(),
     onEditCamera: jest.fn(),
+    onEditEffect: jest.fn(),
+    onEditAnnotation: jest.fn(),
     onCameraTourChange: jest.fn(),
     ...overrides
   };
@@ -102,7 +105,7 @@ beforeAll(() => {
       this.pointerId = init.pointerId ?? 1;
       this.isPrimary = init.isPrimary ?? true;
       // Retain subpixel coordinates in the PointerEvent shim.
-      Object.defineProperty(this, 'clientX', {value: init.clientX ?? 0});
+      Object.defineProperty(this, 'clientX', {value: init.clientX ?? 0, configurable: true});
     }
   } as typeof PointerEvent;
 });
@@ -159,6 +162,67 @@ test('orders timeline tracks by layers, annotations, then effects', () => {
     'Annotation opacity: Harbor',
     'Brightness Contrast: Brightness'
   ]);
+});
+
+test.each(['click', 'Enter', 'Space'])(
+  '%s on row labels opens the camera, clicked effect, and clicked annotation settings',
+  async activation => {
+    const user = userEvent.setup();
+    const secondEffect = effect();
+    secondEffect.id = 'second-effect';
+    const secondAnnotation = {...annotation(opacityTransitions()), id: 'second-annotation'};
+    const {props} = setup({
+      effects: [effect(), secondEffect],
+      annotations: [annotation(opacityTransitions()), secondAnnotation],
+      cameraEnabled: false
+    });
+    const buttons = [
+      screen.getByRole('button', {name: 'Open camera animation settings'}),
+      screen.getAllByRole('button', {name: 'Open effect settings for Brightness Contrast'})[1],
+      screen.getAllByRole('button', {name: 'Open annotation settings for Harbor'})[1]
+    ];
+    for (const button of buttons) {
+      if (activation === 'click') {
+        // The property/status line is part of the clickable label section too.
+        await user.click(button.querySelector('small')!);
+      } else {
+        button.focus();
+        await user.keyboard(activation === 'Enter' ? '{Enter}' : ' ');
+      }
+    }
+    expect(props.onEditCamera).toHaveBeenCalledTimes(1);
+    expect(props.onEditCamera).toHaveBeenCalledWith('first');
+    expect(props.onEditEffect).toHaveBeenCalledTimes(1);
+    expect(props.onEditEffect).toHaveBeenCalledWith(secondEffect.id);
+    expect(props.onEditAnnotation).toHaveBeenCalledTimes(1);
+    expect(props.onEditAnnotation).toHaveBeenCalledWith(secondAnnotation.id);
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    expect(props.onAnnotationChange).not.toHaveBeenCalled();
+    expect(props.onCameraTourChange).not.toHaveBeenCalled();
+    expect(props.playback.seek).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+  }
+);
+
+test('row labels stay noninteractive when panel navigation callbacks are unavailable', () => {
+  setup({
+    annotations: [annotation(opacityTransitions())],
+    onEditCamera: undefined,
+    onEditEffect: undefined,
+    onEditAnnotation: undefined
+  });
+  expect(screen.queryByRole('button', {name: /^Open .* settings/})).toBeNull();
+  for (const name of [
+    'Camera animation',
+    'Brightness Contrast: Brightness',
+    'Annotation opacity: Harbor'
+  ]) {
+    const label = screen.getByRole('group', {name}).firstElementChild!;
+    expect(label.tagName).toBe('DIV');
+    expect(label).not.toHaveAttribute('tabindex');
+    fireEvent.click(label);
+  }
+  expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
 });
 
 test('holding and dragging the playhead seeks continuously and updates the displayed frame', () => {

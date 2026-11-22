@@ -71,6 +71,8 @@ export type AnimationEditorProps = {
   onAnnotationChange?: (id: string, props: AnnotationPropsPartial) => void;
   onCameraTourChange?: (tour: CameraTour) => void;
   onEditCamera?: (stopId?: string) => void;
+  onEditEffect?: (effectId: string) => void;
+  onEditAnnotation?: (annotationId: string) => void;
 };
 
 type Selection =
@@ -170,15 +172,33 @@ const RulerRow = styled(Row)`
   height: 24px;
   background: ${props => props.theme.mapPanelBackgroundColor};
 `;
-const RowLabel = styled.div`
+const RowLabel = styled(Button).attrs({link: true})`
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   justify-content: center;
   gap: 0;
   min-width: 0;
   padding: 2px 8px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
   line-height: 12px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   border-right: 1px solid ${props => props.theme.panelBorderColor};
+  &:not(button) {
+    cursor: default;
+  }
+  &:not(button):hover {
+    color: inherit;
+    background: transparent;
+  }
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px ${props => props.theme.activeColor};
+  }
   span {
     white-space: nowrap;
     overflow: hidden;
@@ -708,7 +728,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     onLayerConfigChange,
     onAnnotationChange,
     onCameraTourChange,
-    onEditCamera
+    onEditCamera,
+    onEditEffect,
+    onEditAnnotation
   }: AnimationEditorProps) {
     const theme = useTheme();
     const id = useId();
@@ -1257,7 +1279,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         <Workspace>
           <Timeline>
             <RulerRow>
-              <RowLabel>
+              <RowLabel as="div">
                 <small>Time · seconds</small>
               </RowLabel>
               <Ruler
@@ -1335,7 +1357,12 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
             </RulerRow>
             {cameraTour && (
               <Row role="group" aria-label="Camera animation">
-                <RowLabel>
+                <RowLabel
+                  as={onEditCamera ? 'button' : 'div'}
+                  type={onEditCamera ? 'button' : undefined}
+                  aria-label={onEditCamera ? 'Open camera animation settings' : undefined}
+                  onClick={onEditCamera ? () => onEditCamera(cameraTour.stops[0].id) : undefined}
+                >
                   <span>Camera</span>
                   <small>{cameraEnabled ? `${cameraTour.stops.length} stops` : 'Disabled'}</small>
                 </RowLabel>
@@ -1368,7 +1395,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                 role="group"
                 aria-label={`Layer ${property.label.toLowerCase()}: ${layer.config.label}`}
               >
-                <RowLabel title={layer.config.label}>
+                <RowLabel as="div" title={layer.config.label}>
                   <span>{layer.config.label}</span>
                   <small>
                     {property.label}
@@ -1471,7 +1498,15 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   role="group"
                   aria-label={`Annotation opacity: ${label}`}
                 >
-                  <RowLabel title={label}>
+                  <RowLabel
+                    as={onEditAnnotation ? 'button' : 'div'}
+                    type={onEditAnnotation ? 'button' : undefined}
+                    title={label}
+                    aria-label={
+                      onEditAnnotation ? `Open annotation settings for ${label}` : undefined
+                    }
+                    onClick={onEditAnnotation ? () => onEditAnnotation(annotation.id) : undefined}
+                  >
                     <span>{label}</span>
                     <small>
                       {annotation.isVisible ? 'Annotation opacity' : 'Hidden annotation'}
@@ -1579,7 +1614,15 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   role="group"
                   aria-label={`${title(effect.type)}: ${label}`}
                 >
-                  <RowLabel title={title(effect.type)}>
+                  <RowLabel
+                    as={onEditEffect ? 'button' : 'div'}
+                    type={onEditEffect ? 'button' : undefined}
+                    title={title(effect.type)}
+                    aria-label={
+                      onEditEffect ? `Open effect settings for ${title(effect.type)}` : undefined
+                    }
+                    onClick={onEditEffect ? () => onEditEffect(effect.id) : undefined}
+                  >
                     <span>{title(effect.type)}</span>
                     <small>{label}</small>
                   </RowLabel>

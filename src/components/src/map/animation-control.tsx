@@ -57,6 +57,7 @@ export type AnimationControlProps = {
   activeSidePanel?: string | null;
   visStateActions?: typeof VisStateActions;
   onEditCamera?: (stopId?: string) => void;
+  onToggleMapControl?: (control: string) => void;
   primary?: boolean;
   isSplit?: boolean;
   readOnly?: boolean;
@@ -85,6 +86,7 @@ export default function MapAnimationControlFactory(
     activeSidePanel,
     visStateActions,
     onEditCamera,
+    onToggleMapControl,
     primary = true,
     isSplit = false,
     readOnly = false,
@@ -180,6 +182,25 @@ export default function MapAnimationControlFactory(
               onAnnotationChange={visStateActions.updateAnnotation}
               onCameraTourChange={visStateActions.setCameraTour}
               onEditCamera={onEditCamera}
+              onEditEffect={
+                onToggleMapControl
+                  ? effectId => {
+                      if (!mapControls?.effect?.active) onToggleMapControl('effect');
+                      visStateActions.updateEffect(effectId, {
+                        isConfigActive: true,
+                        isJsonEditorActive: false
+                      });
+                    }
+                  : undefined
+              }
+              onEditAnnotation={
+                onToggleMapControl
+                  ? annotationId => {
+                      if (!mapControls?.annotation?.active) onToggleMapControl('annotation');
+                      visStateActions.setSelectedAnnotation(annotationId, false);
+                    }
+                  : undefined
+              }
             />
           </MapControlPanel>
         </Panel>
