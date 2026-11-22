@@ -88,13 +88,38 @@ function visitPositions(geometry: Geometry, visit: (position: Position) => void)
 }
 
 function geometryHasZ(geometry: Geometry): boolean {
-  let hasPosition = false;
-  let hasZ = true;
+  let hasZ = false;
   visitPositions(geometry, position => {
-    hasPosition = true;
-    hasZ = hasZ && position.length >= 3;
+    hasZ = hasZ || position.length >= 3;
   });
-  return hasPosition && hasZ;
+  return hasZ;
+}
+
+/** Our WKB encoder uses one dimensionality per geometry. Preserve supplied altitudes and
+ * default missing Z to zero on an export copy, matching the KML export policy. */
+function withDefaultZ(geometry: Geometry): Geometry {
+  const positionWithZ = (position: Position): Position =>
+    position.length === 2 ? [...position, 0] : position;
+
+  switch (geometry.type) {
+    case 'Point':
+      return {...geometry, coordinates: positionWithZ(geometry.coordinates)};
+    case 'LineString':
+    case 'MultiPoint':
+      return {...geometry, coordinates: geometry.coordinates.map(positionWithZ)};
+    case 'Polygon':
+    case 'MultiLineString':
+      return {...geometry, coordinates: geometry.coordinates.map(part => part.map(positionWithZ))};
+    case 'MultiPolygon':
+      return {
+        ...geometry,
+        coordinates: geometry.coordinates.map(polygon =>
+          polygon.map(ring => ring.map(positionWithZ))
+        )
+      };
+    case 'GeometryCollection':
+      return {...geometry, geometries: geometry.geometries.map(withDefaultZ)};
+  }
 }
 
 function extendBoundingBox(box: BoundingBox, geometry: Geometry): void {
@@ -177,7 +202,10 @@ function coerceValue(value: unknown, type: ColumnType): number | string | null {
  */
 function geoPackageBlob(geometry: Geometry | null): Uint8Array | null {
   if (!geometry) return null;
-  const wkb = new Uint8Array(convertGeometryToWKB(geometry, {hasZ: geometryHasZ(geometry)}));
+  const hasZ = geometryHasZ(geometry);
+  const wkb = new Uint8Array(
+    convertGeometryToWKB(hasZ ? withDefaultZ(geometry) : geometry, {hasZ})
+  );
   const header = new Uint8Array(8);
   const view = new DataView(header.buffer);
   header[0] = 0x47; // 'G'
