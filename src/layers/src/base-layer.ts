@@ -1273,7 +1273,7 @@ class Layer implements KeplerLayer {
             typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue;
         }
 
-        if (!attributeAccessors[accessor]) {
+        if (!notNullorUndefined(attributeAccessors[accessor])) {
           Console.warn(`Failed to provide accessor function for ${accessor || channel}`);
         }
       }

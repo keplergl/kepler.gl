@@ -6,6 +6,7 @@ import {getAnimationDomainFromTimestamps, parseTripGeoJsonTimestamp} from './tri
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL, SCALE_TYPES} from '@kepler.gl/constants';
 import {timeToUnixMilli} from '@kepler.gl/utils';
+import {console as Console} from 'global/window';
 
 jest.mock('@kepler.gl/utils', () => {
   const actual = jest.requireActual('@kepler.gl/utils');
@@ -95,6 +96,35 @@ describe('TripLayer stroke width slider', () => {
       focusRange: [0, 1],
       focusWeight: 0.2
     });
+  });
+});
+
+describe('TripLayer model rotation accessors', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('preserves zero rotations without missing-accessor warnings', () => {
+    const layer = new TripLayer({id: 'trip_rotations'});
+    layer.updateLayerVisConfig({adjustRoll: 0, adjustPitch: 0, adjustYaw: 45});
+    const warn = jest.spyOn(Console, 'warn').mockImplementation(() => undefined);
+
+    const accessors = layer.getAttributeAccessors({dataContainer: null as any});
+
+    expect(accessors).toMatchObject({getAdjustRoll: 0, getAdjustPitch: 0, getAdjustYaw: 45});
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test.each([null, undefined])('warns when a rotation accessor is %s', value => {
+    const layer = new TripLayer({id: 'trip_missing_rotation'});
+    layer.updateLayerVisConfig({adjustRoll: value, adjustPitch: 0, adjustYaw: 45});
+    const warn = jest.spyOn(Console, 'warn').mockImplementation(() => undefined);
+
+    const accessors = layer.getAttributeAccessors({dataContainer: null as any});
+
+    expect(accessors.getAdjustRoll).toBe(value);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith('Failed to provide accessor function for getAdjustRoll');
   });
 });
 
