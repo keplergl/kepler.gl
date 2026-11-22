@@ -4,7 +4,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import moment from 'moment-timezone';
-import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
+import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {getAnimatableEffectParameters, getEffectAnimationEntries} from '@kepler.gl/effects';
 import {Effect, EffectParameterAnimation, EffectUpdateProps} from '@kepler.gl/types';
 import {roundValToStep} from '@kepler.gl/utils';
@@ -176,20 +176,10 @@ export default function EffectAnimationControl({
   updateEffectConfig
 }: Props) {
   const description = getAnimatableEffectParameters(effect).find(d => d.name === name);
-  const legacyHeight =
-    effect.type === SURFACE_FOG_TYPE && name === 'height' && effect.parameters.animateHeight;
   const sequence = Array.isArray(effect.animation?.[name]);
   const entries = getEffectAnimationEntries(effect.animation?.[name]);
   const selectedIndex = blockId ? entries.findIndex(entry => entry.id === blockId) : 0;
-  const saved: EffectParameterAnimation | undefined =
-    entries[selectedIndex] ??
-    (legacyHeight
-      ? {
-          startValue: effect.parameters.height,
-          endValue: effect.parameters.heightEnd,
-          easing: effect.parameters.linearEasing ? 'linear' : 'easeInOut'
-        }
-      : undefined);
+  const saved: EffectParameterAnimation | undefined = entries[selectedIndex];
   const initialStart =
     saved?.startValue ?? effect.parameters[name] ?? description?.defaultValue ?? 0;
   const initialEnd = saved?.endValue ?? initialStart;
@@ -201,10 +191,9 @@ export default function EffectAnimationControl({
     Array.isArray(initialEnd) ? [...initialEnd] : (initialEnd as number)
   );
   const [linear, setLinear] = useState(saved?.easing === 'linear');
-  const [timed, setTimed] = useState(!saved || saved.startTimeMs !== undefined);
   const [startSeconds, setStartSeconds] = useState(() => String((saved?.startTimeMs ?? 0) / 1000));
   const [endSeconds, setEndSeconds] = useState(() =>
-    String((saved?.endTimeMs ?? (saved ? durationMs : 10000)) / 1000)
+    String((saved?.endTimeMs ?? durationMs) / 1000)
   );
   const hasSavedAnimation = Boolean(saved);
   const savedStartTimeMs = saved?.startTimeMs;
@@ -222,15 +211,9 @@ export default function EffectAnimationControl({
       return;
     }
     // A timeline drag updates saved timing while endpoint drafts remain in this inspector.
-    setTimed(!hasSavedAnimation || savedStartTimeMs !== undefined);
     setStartSeconds(String((savedStartTimeMs ?? 0) / 1000));
-    setEndSeconds(String((savedEndTimeMs ?? (hasSavedAnimation ? durationMs : 10000)) / 1000));
+    setEndSeconds(String((savedEndTimeMs ?? durationMs) / 1000));
   }, [embedded, hasSavedAnimation, savedStartTimeMs, savedEndTimeMs, durationMs]);
-  useEffect(() => {
-    // Untouched legacy blocks still span playback; editing a time makes the bounds explicit.
-    if (!timed && hasSavedAnimation && savedStartTimeMs === undefined)
-      setEndSeconds(String(durationMs / 1000));
-  }, [durationMs, timed, hasSavedAnimation, savedStartTimeMs]);
   if (!description) return null;
 
   const isTimestamp = effect.type === LIGHT_AND_SHADOW_EFFECT.type && name === 'timestamp';
@@ -258,21 +241,16 @@ export default function EffectAnimationControl({
         startValue,
         endValue,
         easing: linear ? 'linear' : 'easeInOut',
-        ...(timed
-          ? {startTimeMs: Number(startSeconds) * 1000, endTimeMs: Number(endSeconds) * 1000}
-          : {})
+        startTimeMs: Number(startSeconds) * 1000,
+        endTimeMs: Number(endSeconds) * 1000
       };
       animation[name] = sequence
         ? entries.map((entry, index) => (index === selectedIndex ? updated : entry))
         : updated;
     }
-    const parameters = {
-      ...(!remove && !sequence ? {[name]: startValue} : {}),
-      ...(legacyHeight ? {animateHeight: false} : {})
-    };
     updateEffectConfig(null, effect.id, {
       animation,
-      ...(Object.keys(parameters).length ? {parameters} : {})
+      ...(!remove && !sequence ? {parameters: {[name]: startValue}} : {})
     });
     close();
   };
@@ -297,16 +275,15 @@ export default function EffectAnimationControl({
   const helpId = `effect-transition-help-${effect.id}-${name}`;
   const timingId = `effect-animation-timing-${effect.id}-${name}`;
   const validTiming =
-    !timed ||
-    (startSeconds.trim() !== '' &&
-      endSeconds.trim() !== '' &&
-      Number.isFinite(Number(startSeconds) * 1000) &&
-      Number.isFinite(Number(endSeconds) * 1000) &&
-      Number(startSeconds) >= 0 &&
-      Number(endSeconds) >= Number(startSeconds) &&
-      (!sequence ||
-        (Number(startSeconds) * 1000 >= (entries[selectedIndex - 1]?.endTimeMs ?? 0) &&
-          Number(endSeconds) * 1000 <= (entries[selectedIndex + 1]?.startTimeMs ?? Infinity))));
+    startSeconds.trim() !== '' &&
+    endSeconds.trim() !== '' &&
+    Number.isFinite(Number(startSeconds) * 1000) &&
+    Number.isFinite(Number(endSeconds) * 1000) &&
+    Number(startSeconds) >= 0 &&
+    Number(endSeconds) >= Number(startSeconds) &&
+    (!sequence ||
+      (Number(startSeconds) * 1000 >= (entries[selectedIndex - 1]?.endTimeMs ?? 0) &&
+        Number(endSeconds) * 1000 <= (entries[selectedIndex + 1]?.startTimeMs ?? Infinity)));
   const editors = [
     {title: 'Start', value: startValue, setValue: setStartValue},
     {title: 'End', value: endValue, setValue: setEndValue}
@@ -448,7 +425,6 @@ export default function EffectAnimationControl({
                 // Keep saved precision until this time field is edited.
                 value={formatTimeInput(startSeconds)}
                 onChange={event => {
-                  setTimed(true);
                   setStartSeconds(formatTimeInput(event.target.value));
                 }}
               />
@@ -463,7 +439,6 @@ export default function EffectAnimationControl({
                 step={0.01}
                 value={formatTimeInput(endSeconds)}
                 onChange={event => {
-                  setTimed(true);
                   setEndSeconds(formatTimeInput(event.target.value));
                 }}
               />
@@ -519,9 +494,8 @@ export default function EffectAnimationControl({
           setStartValue(Array.isArray(initialStart) ? [...initialStart] : (initialStart as number));
           setEndValue(Array.isArray(initialEnd) ? [...initialEnd] : (initialEnd as number));
           setLinear(saved?.easing === 'linear');
-          setTimed(!saved || saved.startTimeMs !== undefined);
           setStartSeconds(String((saved?.startTimeMs ?? 0) / 1000));
-          setEndSeconds(String((saved?.endTimeMs ?? (saved ? durationMs : 10000)) / 1000));
+          setEndSeconds(String((saved?.endTimeMs ?? durationMs) / 1000));
           setOpen(true);
         }}
       >

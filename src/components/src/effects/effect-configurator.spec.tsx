@@ -190,12 +190,14 @@ describe('effect parameter editing', () => {
     expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(4);
     expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(9);
     expect(endValue).toHaveValue(0.9);
-    effect.animation = {amount: {startValue: 0.2, endValue: 0.8, easing: 'linear'}};
+    effect.animation = {
+      amount: {startTimeMs: 0, endTimeMs: 10000, startValue: 0.2, endValue: 0.8, easing: 'linear'}
+    };
     rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
     expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
     expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(10);
     rerender(<EffectAnimationControl {...props} effect={{...effect}} durationMs={14000} />);
-    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
+    expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(10);
     expect(endValue).toHaveValue(0.9);
     effect.animation = {amount: {...effect.animation.amount, startTimeMs: 4000, endTimeMs: 9000}};
     rerender(<EffectAnimationControl {...props} effect={{...effect}} />);
@@ -260,7 +262,9 @@ describe('effect parameter editing', () => {
     'embedded %s closes settings without applying an endpoint draft',
     action => {
       const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
-      effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+      effect.animation = {
+        amount: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'linear'}
+      };
       const update = jest.fn();
       const onClose = jest.fn();
       render(
@@ -288,13 +292,10 @@ describe('effect parameter editing', () => {
   );
 
   test.each([false, true])(
-    'embedded legacy fog retains full-duration timing unless a time is edited: %s',
+    'new fog blocks always save explicit bounds (time edited: %s)',
     explicit => {
       const effect = makeEffect([{name: 'height', min: 0, max: 100}], {
-        height: 10,
-        heightEnd: 50,
-        animateHeight: true,
-        linearEasing: true
+        height: 10
       });
       effect.type = 'surfaceFog';
       const update = jest.fn();
@@ -314,7 +315,7 @@ describe('effect parameter editing', () => {
       ).toHaveValue(10);
       expect(
         within(screen.getByRole('group', {name: 'End value'})).getByRole('spinbutton')
-      ).toHaveValue(50);
+      ).toHaveValue(10);
       expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
       expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(14);
       if (explicit) {
@@ -324,13 +325,14 @@ describe('effect parameter editing', () => {
       }
       fireEvent.click(screen.getByRole('button', {name: 'Save'}));
       expect(update).toHaveBeenCalledWith(null, effect.id, {
-        parameters: {height: 10, animateHeight: false},
+        parameters: {height: 10},
         animation: {
           height: {
             startValue: 10,
-            endValue: 50,
-            easing: 'linear',
-            ...(explicit ? {startTimeMs: 0, endTimeMs: 12000} : {})
+            endValue: 10,
+            easing: 'easeInOut',
+            startTimeMs: 0,
+            endTimeMs: explicit ? 12000 : 14000
           }
         }
       });
@@ -677,7 +679,9 @@ describe('effect parameter editing', () => {
 
   test('Cancel discards both endpoint drafts and reopening uses saved values', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
-    effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+    effect.animation = {
+      amount: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'linear'}
+    };
     const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
     fireEvent.change(
@@ -710,7 +714,9 @@ describe('effect parameter editing', () => {
 
   test('saves draft start, zero endpoint and easing together while preserving other animations', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
-    effect.animation = {other: {endValue: 0.8, easing: 'easeInOut'}};
+    effect.animation = {
+      other: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'easeInOut'}
+    };
     const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Animate amount'}));
     const dialog = within(screen.getByRole('dialog'));
@@ -727,7 +733,7 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledWith(null, 'effect', {
       animation: {
-        other: {endValue: 0.8, easing: 'easeInOut'},
+        other: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'easeInOut'},
         amount: {startValue: 0.25, endValue: 0, easing: 'linear', startTimeMs: 0, endTimeMs: 10000}
       },
       parameters: {amount: 0.25}
@@ -739,8 +745,8 @@ describe('effect parameter editing', () => {
   test('removes only the selected animation without applying the draft start', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
     effect.animation = {
-      amount: {endValue: 0.1, easing: 'linear'},
-      other: {endValue: 0.8, easing: 'easeInOut'}
+      amount: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.1, easing: 'linear'},
+      other: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'easeInOut'}
     };
     const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
@@ -750,7 +756,7 @@ describe('effect parameter editing', () => {
     );
     fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
     expect(update).toHaveBeenCalledWith(null, 'effect', {
-      animation: {other: {endValue: 0.8, easing: 'easeInOut'}}
+      animation: {other: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'easeInOut'}}
     });
   });
 
@@ -828,11 +834,19 @@ describe('effect parameter editing', () => {
       },
       animation: {
         timestamp: {
+          startTimeMs: 0,
+          endTimeMs: 10000,
           startValue: Date.UTC(2026, 5, 21, 13),
           endValue: Date.UTC(2026, 5, 22, 1),
           easing: 'linear'
         },
-        shadowIntensity: {startValue: 0.2, endValue: 0.8, easing: 'easeInOut'}
+        shadowIntensity: {
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 0.2,
+          endValue: 0.8,
+          easing: 'easeInOut'
+        }
       }
     });
     const {update} = setupAnimation(effect, 'timestamp');
@@ -850,6 +864,8 @@ describe('effect parameter editing', () => {
       animation: {
         ...effect.animation,
         timestamp: {
+          startTimeMs: 0,
+          endTimeMs: 10000,
           startValue: Date.UTC(2026, 5, 21, 14),
           endValue: Date.UTC(2026, 5, 23, 1),
           easing: 'linear'
@@ -901,15 +917,23 @@ describe('effect parameter editing', () => {
       type: LIGHT_AND_SHADOW_EFFECT.type,
       parameters: {timestamp: 0, timezone: 'UTC', timeMode: 'animation'},
       animation: {
-        timestamp: {startValue: 0, endValue: 3600000, easing: 'linear'},
-        shadowIntensity: {endValue: 0.8, easing: 'linear'}
+        timestamp: {
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 0,
+          endValue: 3600000,
+          easing: 'linear'
+        },
+        shadowIntensity: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'linear'}
       }
     });
     const {update} = setupAnimation(effect, 'timestamp');
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for Date & Time'}));
     fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
     expect(update).toHaveBeenCalledWith(null, effect.id, {
-      animation: {shadowIntensity: {endValue: 0.8, easing: 'linear'}}
+      animation: {
+        shadowIntensity: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'linear'}
+      }
     });
   });
 
@@ -945,15 +969,19 @@ describe('effect parameter editing', () => {
     });
   });
 
-  test('legacy time fields are editable directly and preserve full-duration timing when untouched', () => {
+  test('effect time bounds are always saved and can be edited directly', () => {
     const effect = makeEffect([{name: 'amount', min: 0, max: 1}], {amount: 0.5});
-    effect.animation = {amount: {endValue: 0.8, easing: 'linear'}};
+    effect.animation = {
+      amount: {startTimeMs: 0, endTimeMs: 10000, endValue: 0.8, easing: 'linear'}
+    };
     const {update} = setupAnimation(effect);
     fireEvent.click(screen.getByRole('button', {name: 'Edit animation for amount'}));
     expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
     expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(10);
     fireEvent.click(screen.getByRole('button', {name: 'Save'}));
     expect(update.mock.lastCall[2].animation.amount).toEqual({
+      startTimeMs: 0,
+      endTimeMs: 10000,
       startValue: 0.5,
       endValue: 0.8,
       easing: 'linear'

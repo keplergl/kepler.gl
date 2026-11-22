@@ -15,7 +15,6 @@ import type {
   RGBColor
 } from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
-import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {
   getCameraTourDuration,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
@@ -689,7 +688,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const configuredDuration = Math.max(
       playback.duration,
       cameraDuration,
-      ...rows.flatMap(row => row.parameters.map(parameter => parameter.endTimeMs ?? 0)),
+      ...rows.flatMap(row => row.parameters.map(parameter => parameter.endTimeMs)),
       ...layerTracks.flatMap(track => track.transitions.map(transition => transition.endTimeMs)),
       ...annotationTracks.flatMap(track =>
         track.transitions.map(transition => transition.endTimeMs)
@@ -804,13 +803,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
           : [];
         if (remaining.length) animation[selected.name] = remaining;
         else delete animation[selected.name];
-        const legacyHeight =
-          selectedEffect.type === SURFACE_FOG_TYPE &&
-          selected.name === 'height' &&
-          selectedEffect.parameters.animateHeight;
         updateEffectConfig(null, selectedEffect.id, {
-          animation,
-          ...(legacyHeight ? {parameters: {animateHeight: false}} : {})
+          animation
         });
       } else if (selectedTransitions && selectedTransition) {
         saveSelectedTransitions(
@@ -864,8 +858,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       const name = parameters[0].name;
       const blocks = parameters.map(parameter => ({
         id: parameter.id ?? `${name}-1`,
-        startTimeMs: parameter.startTimeMs ?? 0,
-        endTimeMs: parameter.endTimeMs ?? playback.duration,
+        startTimeMs: parameter.startTimeMs,
+        endTimeMs: parameter.endTimeMs,
         startValue: Array.isArray(parameter.start) ? [...parameter.start] : parameter.start,
         endValue: Array.isArray(parameter.end) ? [...parameter.end] : parameter.end,
         easing: parameter.easing
@@ -885,11 +879,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       updateEffectConfig(null, effect.id, {
         animation: {
           ...effect.animation,
-          [name]: [...blocks, block].sort((a, b) => a.startTimeMs! - b.startTimeMs!)
-        },
-        ...(effect.type === SURFACE_FOG_TYPE && name === 'height'
-          ? {parameters: {animateHeight: false}}
-          : {})
+          [name]: [...blocks, block].sort((a, b) => a.startTimeMs - b.startTimeMs)
+        }
       });
       openSettings(
         {kind: 'effect', effectId: effect.id, name, blockId: block.id},
@@ -1515,8 +1506,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                           label={label}
                           ariaLabel={parameters.length > 1 ? `${label} ${index + 1}` : label}
                           kind="effect"
-                          startTimeMs={parameter.startTimeMs ?? 0}
-                          endTimeMs={parameter.endTimeMs ?? playback.duration}
+                          startTimeMs={parameter.startTimeMs}
+                          endTimeMs={parameter.endTimeMs}
                           durationMs={duration}
                           minTimeMs={parameters[index - 1]?.endTimeMs ?? 0}
                           maxTimeMs={parameters[index + 1]?.startTimeMs ?? duration}
@@ -1548,8 +1539,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                                       block.id === parameter.id ? updated : block
                                     )
                                   : updated
-                              },
-                              ...(saved ? {} : {parameters: {animateHeight: false}})
+                              }
                             });
                           }}
                         />

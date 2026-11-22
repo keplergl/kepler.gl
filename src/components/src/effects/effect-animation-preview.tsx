@@ -182,7 +182,7 @@ export default function EffectAnimationPreviewProvider({
         };
       }
       const current = session.current;
-      applyEffectAnimation(current.tracks, duration > 0 ? time / duration : 1, time);
+      applyEffectAnimation(current.tracks, time);
       if (cameraEnabled && updateMap) {
         const position = camera ?? evaluateCameraTour(cameraTour, Math.min(time, cameraDuration));
         if (position) updateMap({...cameraForMap(position, globe), transitionDuration: 0});

@@ -789,6 +789,8 @@ test('#visStateSchema -> v1 -> shadow timestamp animation round trips independen
   const parameters = {...effect.parameters};
   const animation = {
     timestamp: {
+      startTimeMs: 0,
+      endTimeMs: 10000,
       startValue: Date.UTC(2024, 0, 1, 6),
       endValue: Date.UTC(2024, 0, 1, 18),
       easing: 'linear'
@@ -822,21 +824,18 @@ test('#visStateSchema -> v1 -> shadow timestamp animation round trips independen
   t.end();
 });
 
-test('#visStateSchema -> v1 -> legacy fog animation stays compatible', t => {
+test('#visStateSchema -> v1 -> untimed experimental effects are discarded on load', t => {
   const state = cloneDeep(StateWEffects);
-  const fog = createEffect({
-    type: 'surfaceFog',
-    parameters: {height: 0, animateHeight: true, heightEnd: 400, linearEasing: true}
-  });
-  state.visState.effects = [fog];
-  state.visState.effectOrder = [fog.id];
+  const effect = state.visState.effects.find(item => item.type === 'sepia');
+  const parameters = {...effect.parameters};
   const saved = SchemaManager.getConfigToSave(state);
-  t.notOk(
-    'animation' in saved.config.visState.effects[0],
-    'adds no generic metadata to legacy fog'
-  );
-  const loaded = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
-  t.deepEqual(loaded.parameters, fog.parameters, 'preserves legacy elevation animation settings');
+  const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
+  savedEffect.animation = {amount: {startValue: 0, endValue: 1, easing: 'linear'}};
+  const loaded = SchemaManager.parseSavedConfig(saved);
+  const loadedEffect = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
+  t.notOk(loadedEffect.animation, 'does not infer a duration for untimed metadata');
+  t.deepEqual(loadedEffect.parameters, parameters, 'keeps the static effect parameters');
+  t.deepEqual(loadedEffect.deckEffect.props, parameters, 'leaves the rendered effect static');
   t.end();
 });
 

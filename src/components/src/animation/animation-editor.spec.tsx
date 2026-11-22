@@ -36,7 +36,7 @@ const tour: CameraTour = {
     {id: 'last', name: 'Last', camera, holdDurationMs: 12000, travelDurationMs: 0}
   ]
 };
-function effect(timed = true) {
+function effect(timing = {startTimeMs: 3000, endTimeMs: 7000}) {
   return createEffect({
     id: 'brightness',
     type: 'brightnessContrast',
@@ -46,7 +46,7 @@ function effect(timed = true) {
         startValue: 0,
         endValue: 1,
         easing: 'linear',
-        ...(timed ? {startTimeMs: 3000, endTimeMs: 7000} : {})
+        ...timing
       }
     }
   });
@@ -491,31 +491,28 @@ test('confirming effect removal keeps the effect, its values, and other animated
   expect(screen.queryByRole('dialog', {name: 'Remove animation action'})).toBeNull();
 });
 
-test.each([false, true])(
-  'removing fog height disables legacy playback (explicit track: %s)',
-  explicit => {
-    const source = createEffect({
-      id: 'fog',
-      type: SURFACE_FOG_TYPE,
-      parameters: {animateHeight: true},
-      ...(explicit ? {animation: {height: {...effect().animation!.brightness}}} : {})
-    });
-    const {props, rerender} = setup({effects: [source]});
-    (props.updateEffectConfig as jest.Mock).mockImplementation((_index, _id, config) => {
-      source.animation = config.animation;
-      Object.assign(source.parameters, config.parameters);
-      rerender(<Editor {...props} />);
-    });
-    fireEvent.click(screen.getByRole('button', {name: 'Remove Elevation (m)'}));
-    expect(props.updateEffectConfig).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
-    expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
-      animation: {},
-      parameters: {animateHeight: false}
-    });
-    expect(screen.queryByRole('button', {name: 'Elevation (m)'})).toBeNull();
-  }
-);
+test('removing a fog height block preserves static parameters', () => {
+  const source = createEffect({
+    id: 'fog',
+    type: SURFACE_FOG_TYPE,
+    parameters: {animateHeight: true},
+    animation: {height: {...effect().animation!.brightness}}
+  });
+  const {props, rerender} = setup({effects: [source]});
+  (props.updateEffectConfig as jest.Mock).mockImplementation((_index, _id, config) => {
+    source.animation = config.animation;
+    Object.assign(source.parameters, config.parameters);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Remove Elevation (m)'}));
+  expect(props.updateEffectConfig).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+  expect(props.updateEffectConfig).toHaveBeenCalledWith(null, source.id, {
+    animation: {}
+  });
+  expect(screen.queryByRole('button', {name: 'Elevation (m)'})).toBeNull();
+  expect(source.parameters.animateHeight).toBe(true);
+});
 
 test.each(['layer', 'annotation'])(
   'confirmed %s removal preserves sibling blocks and other targets',
@@ -561,9 +558,9 @@ test.each(['layer', 'annotation'])(
   }
 );
 
-test('legacy effects keep full-duration timing until a block boundary is edited', () => {
-  const source = effect(false);
-  const {props} = setup({effects: [source], tour: null});
+test('effect blocks keep authored timing when the playback duration changes', () => {
+  const source = effect({startTimeMs: 0, endTimeMs: 20000});
+  const {props, rerender} = setup({effects: [source], tour: null});
   expect(screen.getByRole('slider', {name: 'Start time for Brightness'})).toHaveAttribute(
     'aria-valuenow',
     '0'
@@ -576,7 +573,11 @@ test('legacy effects keep full-duration timing until a block boundary is edited'
   expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(0);
   expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(20);
   expect(props.updateEffectConfig).not.toHaveBeenCalled();
+  rerender(<Editor {...props} playback={{...props.playback, duration: 30000}} />);
+  expect(screen.getByRole('spinbutton', {name: 'End time (seconds)'})).toHaveValue(20);
+  rerender(<Editor {...props} />);
   fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Fit'}));
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 400, 240);
   expect(props.updateEffectConfig).toHaveBeenCalledWith(null, 'brightness', {
     animation: {
@@ -1173,7 +1174,7 @@ test('dragging and resizing opacity blocks preserve values and stop at neighbori
 });
 
 test('keeps the time ruler fixed across committed edits and can expand its visible range', () => {
-  const source = effect(false);
+  const source = effect({startTimeMs: 0, endTimeMs: 20000});
   const {props, rerender} = setup({effects: [source], tour: null});
   (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, next) => {
     source.setProps(next);
@@ -1676,7 +1677,7 @@ test('effect row insertion preserves its original block and edits, drags and rem
   expect(source.parameters).toEqual(parameters);
 });
 
-test('effect blocks fit before an existing block and preserve legacy full-duration timing', () => {
+test('effect blocks fit around existing blocks and preserve their explicit timing', () => {
   const source = effect();
   const {props, rerender} = setup({effects: [source]});
   (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, config) => {
@@ -1694,7 +1695,7 @@ test('effect blocks fit before an existing block and preserve legacy full-durati
     endValue: 0
   });
   fireEvent.click(screen.getByRole('button', {name: 'Close effect settings'}));
-  source.setProps({animation: effect(false).animation});
+  source.setProps({animation: effect({startTimeMs: 0, endTimeMs: 20000}).animation});
   rerender(<Editor {...props} />);
   const track = screen.getByRole('group', {name: 'Brightness Contrast: Brightness'})
     .lastElementChild!;

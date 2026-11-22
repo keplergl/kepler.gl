@@ -68,7 +68,7 @@ function animatedBrightness() {
     id: 'brightness',
     type: 'brightnessContrast',
     parameters: {brightness: 0, contrast: 0.3},
-    animation: {brightness: {endValue: 1, easing: 'linear'}}
+    animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'linear'}}
   });
 }
 
@@ -627,7 +627,7 @@ describe('effects panel animation preview', () => {
     act(() => view.playback().run());
     advanceFrame(7500);
     expect(view.playback().animationTimeMs).toBe(7500);
-    expect(view.parameters()[0].brightness).toBe(0.5);
+    expect(view.parameters()[0].brightness).toBe(0.75);
     expect(view.updateMap).not.toHaveBeenCalled();
     // Filtering can rebuild layer objects; it must not reset presentation playback.
     view.replaceLayers([{...layer} as Layer]);
@@ -844,27 +844,29 @@ describe('effects panel animation preview', () => {
     {cameraDuration: 20000, managerOpen: false},
     {cameraDuration: 20000, managerOpen: true}
   ])(
-    'camera and legacy effects share playback duration (camera=$cameraDuration ms, manager open=$managerOpen)',
+    'effect timing is independent of camera duration (camera=$cameraDuration ms, manager open=$managerOpen)',
     options => {
       const effect = animatedBrightness();
       const view = setup([effect], true, options);
       fireEvent.click(screen.getByRole('button', {name: 'Play'}));
       expect(view.getPreviewEffects()).not.toBeNull();
       expect(view.parameters()[0].brightness).toBe(0);
-      advanceFrame(options.cameraDuration / 4);
+      advanceFrame(2500);
       expect(view.parameters()[0].brightness).toBe(0.25);
       view.setManagerOpen(!options.managerOpen);
-      advanceFrame(options.cameraDuration / 2);
+      advanceFrame(5000);
       expect(view.parameters()[0].brightness).toBe(0.5);
-      expect(view.playback().elapsed).toBe(options.cameraDuration / 2);
+      expect(view.playback().elapsed).toBe(5000);
       expect(frames.size).toBe(1);
-      advanceFrame(options.cameraDuration);
+      const duration = Math.max(options.cameraDuration, 10000);
+      expect(view.playback().duration).toBe(duration);
+      advanceFrame(duration);
       expect(view.parameters()[0].brightness).toBe(1);
       expect(effect.parameters.brightness).toBe(0);
       expect(frames.size).toBe(0);
       fireEvent.click(screen.getByRole('button', {name: 'Play'}));
       expect(view.parameters()[0].brightness).toBe(0);
-      advanceFrame(options.cameraDuration * 1.25);
+      advanceFrame(duration + 2500);
       expect(view.parameters()[0].brightness).toBe(0.25);
     }
   );
@@ -1082,7 +1084,9 @@ describe('effects panel animation preview', () => {
       () => [
         createEffect({
           type: 'brightnessContrast',
-          animation: {brightness: {endValue: NaN, easing: 'linear'}}
+          animation: {
+            brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: NaN, easing: 'linear'}
+          }
         })
       ]
     ],
@@ -1116,12 +1120,18 @@ describe('effects panel animation preview', () => {
         type: 'surfaceFog',
         parameters: {
           height: 0,
-          animateHeight: true,
-          heightEnd: 100,
-          linearEasing: false,
           fogColor: [0, 40, 80]
         },
-        animation: {fogColor: {endValue: [80, 0, 40], easing: 'linear'}}
+        animation: {
+          height: {
+            startValue: 0,
+            endValue: 100,
+            easing: 'easeInOut',
+            startTimeMs: 0,
+            endTimeMs: 10000
+          },
+          fogColor: {startTimeMs: 0, endTimeMs: 10000, endValue: [80, 0, 40], easing: 'linear'}
+        }
       })
     ];
     const saved = effects.map(effect => ({
@@ -1159,7 +1169,15 @@ describe('effects panel animation preview', () => {
 
   test('uses the configured Start after static edits and restores the current static value', () => {
     const effect = animatedBrightness();
-    const animation = {brightness: {startValue: 0, endValue: 1, easing: 'linear' as const}};
+    const animation = {
+      brightness: {
+        startTimeMs: 0,
+        endTimeMs: 10000,
+        startValue: 0,
+        endValue: 1,
+        easing: 'linear' as const
+      }
+    };
     effect.setProps({animation});
     const view = setup([effect]);
     effect.setProps({parameters: {brightness: 0.7}});
@@ -1196,7 +1214,15 @@ describe('effects panel animation preview', () => {
     const effect = createEffect({
       type: 'lightAndShadow',
       parameters: {timeMode: 'animation', timestamp: 0},
-      animation: {timestamp: {startValue: start, endValue: end, easing: 'linear'}}
+      animation: {
+        timestamp: {
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: start,
+          endValue: end,
+          easing: 'linear'
+        }
+      }
     });
     const view = setup([effect]);
     act(() => view.playback().run());
@@ -1215,7 +1241,9 @@ describe('effects panel animation preview', () => {
     const view = setup([effect]);
     expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
     expect(view.playback().hasAnimation).toBe(false);
-    effect.setProps({animation: {brightness: {endValue: 1, easing: 'linear'}}});
+    effect.setProps({
+      animation: {brightness: {startTimeMs: 0, endTimeMs: 10000, endValue: 1, easing: 'linear'}}
+    });
     view.replaceEffects([effect]);
     expect(view.playback().hasAnimation).toBe(true);
     expect(screen.queryByRole('button', {name: 'Run'})).toBeNull();
@@ -1369,7 +1397,7 @@ test('export frame sampling holds and eases vector blocks without changing the s
     [9000, [0.4, 0.6]],
     [1000, [0.2, 0.8]]
   ] as [number, number[]][]) {
-    applyEffectAnimation(tracks, Math.min(1, time / 8000), time);
+    applyEffectAnimation(tracks, time);
     expected.forEach((value, index) =>
       expect(exported.parameters.center[index]).toBeCloseTo(value)
     );

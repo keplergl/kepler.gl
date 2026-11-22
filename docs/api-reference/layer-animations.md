@@ -71,4 +71,4 @@ Treat the render configuration as read-only. Deferred accessors should read thei
 
 ## Effects
 
-Effects use `effect.animation[parameterName]` with optional paired `startTimeMs` and `endTimeMs`. Effects without explicit times continue to span the full playback or export duration; standalone preview falls back to 10 seconds when no timed tracks or camera tour define a duration.
+Effects use `effect.animation[parameterName]` with required `startTimeMs` and `endTimeMs` in elapsed milliseconds. A property can contain one block or a sequence of blocks. Each block keeps its authored timing regardless of playback or export duration. Untimed experimental animations, including the old fog-height animation flags, are not played; configure explicit blocks in the Animation editor.

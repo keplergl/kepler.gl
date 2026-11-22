@@ -47,7 +47,7 @@ export function getEffectAnimationEntries(
   return Array.isArray(value) ? value : value ? [value] : [];
 }
 
-/** Validate optional endpoints without creating animations for missing or invalid values. */
+/** Validate timed endpoints without creating animations for missing or invalid values. */
 export function validateEffectAnimation(
   animation: unknown,
   descriptions: EffectParameterDescription[]
@@ -100,11 +100,11 @@ export function validateEffectAnimation(
       );
       if (blocks.some(block => !block || Array.isArray(block))) continue;
       const sequence = (blocks as EffectParameterAnimation[]).sort(
-        (a, b) => a.startTimeMs! - b.startTimeMs! || a.endTimeMs! - b.endTimeMs!
+        (a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs
       );
       if (
         sequence.some(
-          (block, index) => index > 0 && block.startTimeMs! < sequence[index - 1].endTimeMs!
+          (block, index) => index > 0 && block.startTimeMs < sequence[index - 1].endTimeMs
         )
       )
         continue;
@@ -114,17 +114,13 @@ export function validateEffectAnimation(
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     if (entry.id !== undefined && (typeof entry.id !== 'string' || !entry.id.trim())) continue;
     if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
-    const hasTiming =
-      Object.prototype.hasOwnProperty.call(entry, 'startTimeMs') ||
-      Object.prototype.hasOwnProperty.call(entry, 'endTimeMs');
     if (
-      hasTiming &&
-      (typeof entry.startTimeMs !== 'number' ||
-        !Number.isFinite(entry.startTimeMs) ||
-        entry.startTimeMs < 0 ||
-        typeof entry.endTimeMs !== 'number' ||
-        !Number.isFinite(entry.endTimeMs) ||
-        entry.endTimeMs < entry.startTimeMs)
+      typeof entry.startTimeMs !== 'number' ||
+      !Number.isFinite(entry.startTimeMs) ||
+      entry.startTimeMs < 0 ||
+      typeof entry.endTimeMs !== 'number' ||
+      !Number.isFinite(entry.endTimeMs) ||
+      entry.endTimeMs < entry.startTimeMs
     ) {
       continue;
     }
@@ -159,9 +155,8 @@ export function validateEffectAnimation(
       ...(hasStart ? {startValue} : {}),
       endValue,
       easing: entry.easing,
-      ...(hasTiming
-        ? {startTimeMs: entry.startTimeMs as number, endTimeMs: entry.endTimeMs as number}
-        : {})
+      startTimeMs: entry.startTimeMs,
+      endTimeMs: entry.endTimeMs
     };
   }
   return Object.keys(result).length ? result : undefined;

@@ -24,12 +24,12 @@ export type EffectParameterAnimation = {
   startValue?: number | number[];
   endValue: number | number[];
   easing: 'linear' | 'easeInOut';
-  /** Optional paired timing in elapsed milliseconds; omitted timing spans the animation. */
-  startTimeMs?: number;
-  endTimeMs?: number;
+  /** Explicit start and end in elapsed milliseconds. */
+  startTimeMs: number;
+  endTimeMs: number;
 };
 
-/** A legacy single transition or an ordered sequence of explicitly timed blocks. */
+/** A timed transition or an ordered sequence of timed blocks. */
 export type EffectAnimation = Record<string, EffectParameterAnimation | EffectParameterAnimation[]>;
 
 export type EffectUpdateProps = {
