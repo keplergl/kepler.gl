@@ -56,7 +56,7 @@ export type AnimationControlProps = {
   mapState?: MapState;
   activeSidePanel?: string | null;
   visStateActions?: typeof VisStateActions;
-  onEditCamera?: () => void;
+  onEditCamera?: (stopId?: string) => void;
   primary?: boolean;
   isSplit?: boolean;
   readOnly?: boolean;
@@ -178,6 +178,7 @@ export default function MapAnimationControlFactory(
               }
               onLayerConfigChange={visStateActions.layerConfigChange}
               onAnnotationChange={visStateActions.updateAnnotation}
+              onCameraTourChange={visStateActions.setCameraTour}
               onEditCamera={onEditCamera}
             />
           </MapControlPanel>

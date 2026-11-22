@@ -102,7 +102,7 @@ export type MapControlProps = {
   cameraTour?: CameraTour | null;
   effects?: Effect[];
   annotations?: readonly Annotation[];
-  onEditCamera?: () => void;
+  onEditCamera?: (stopId?: string) => void;
   onCameraBookmarksChange?: (bookmarks: CameraBookmark[]) => void;
 
   setMapControlSettings: typeof UIStateActions.setMapControlSettings;

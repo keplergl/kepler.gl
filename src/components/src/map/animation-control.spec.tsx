@@ -44,7 +44,14 @@ function Editor(props: AnimationEditorProps) {
       >
         Save effect
       </button>
-      <button onClick={props.onEditCamera}>Edit camera settings</button>
+      <button onClick={() => props.onEditCamera?.('first')}>Edit camera settings</button>
+      <button
+        onClick={() =>
+          props.onCameraTourChange?.({...tour, stops: [{...tour.stops[0], holdDurationMs: 5000}]})
+        }
+      >
+        Save camera timing
+      </button>
       <button
         onClick={() =>
           props.onAnnotationChange?.(props.annotations![0].id, {propertyTransitions: {opacity: []}})
@@ -87,6 +94,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
   const updateEffect = jest.fn();
   const updateAnnotation = jest.fn();
   const onEditCamera = jest.fn();
+  const setCameraTour = Object.assign(jest.fn(), VisStateActions.setCameraTour);
   const effect = createEffect({
     id: 'brightness',
     type: 'brightnessContrast',
@@ -105,7 +113,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
               mapControls={{cameraTour: {show: true, active: false}}}
               effects={[effect]}
               cameraTour={tour}
-              visStateActions={{...VisStateActions, updateEffect, updateAnnotation}}
+              visStateActions={{...VisStateActions, updateEffect, updateAnnotation, setCameraTour}}
               onEditCamera={onEditCamera}
               {...overrides}
             />
@@ -122,6 +130,7 @@ function setup(overrides: Partial<AnimationControlProps> = {}) {
     updateEffect,
     updateAnnotation,
     onEditCamera,
+    setCameraTour,
     refresh: () => renderWithTheme(tree(), {container: root})
   };
 }
@@ -169,7 +178,11 @@ test('opens an independent floating editor and keeps authored settings accessibl
   fireEvent.click(screen.getByRole('button', {name: 'Save effect'}));
   expect(view.updateEffect).toHaveBeenCalledWith('brightness', {parameters: {brightness: 0.4}});
   fireEvent.click(screen.getByRole('button', {name: 'Edit camera settings'}));
-  expect(view.onEditCamera).toHaveBeenCalledTimes(1);
+  expect(view.onEditCamera).toHaveBeenCalledWith('first');
+  fireEvent.click(screen.getByRole('button', {name: 'Save camera timing'}));
+  expect(view.setCameraTour).toHaveBeenCalledWith({
+    stops: [{...tour.stops[0], holdDurationMs: 5000}]
+  });
   fireEvent.click(panel.querySelector('.close-map-control-item')!);
   expect(screen.queryByRole('region', {name: 'Animation panel'})).toBeNull();
   expect(button).toHaveAttribute('aria-expanded', 'false');

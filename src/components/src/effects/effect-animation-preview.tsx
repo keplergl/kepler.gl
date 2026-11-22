@@ -18,6 +18,7 @@ import {
   cameraForMap,
   evaluateCameraTour,
   getCameraTourDuration,
+  normalizeCameraTour,
   getLayerAnimationTracks,
   getLayerPropertyTransitions
 } from '@kepler.gl/utils';
@@ -300,7 +301,27 @@ export default function EffectAnimationPreviewProvider({
       previous.annotationTimingKey !== annotationTimingKey ||
       previous.effectTimingKey !== effectTimingKey;
     if (!changed) return;
+    const previousStops = normalizeCameraTour(previous.cameraTour)?.stops;
+    const nextStops = normalizeCameraTour(cameraTour)?.stops;
+    const cameraTimingEdit = Boolean(
+      previousStops?.length &&
+        nextStops &&
+        previousStops.length === nextStops.length &&
+        previousStops.every(
+          (stop, index) =>
+            stop.id === nextStops[index].id &&
+            (['longitude', 'latitude', 'zoom', 'bearing', 'pitch'] as const).every(
+              key => stop.camera[key] === nextStops[index].camera[key]
+            )
+        ) &&
+        previousStops.some(
+          (stop, index) =>
+            stop.holdDurationMs !== nextStops[index].holdDurationMs ||
+            stop.travelDurationMs !== nextStops[index].travelDurationMs
+        )
+    );
     const timingEdit =
+      cameraTimingEdit ||
       previous.layerTimingKey !== layerTimingKey ||
       previous.annotationTimingKey !== annotationTimingKey ||
       previous.effectTimingKey !== effectTimingKey;
@@ -315,7 +336,7 @@ export default function EffectAnimationPreviewProvider({
       session.current &&
       enabled &&
       hasAnimation &&
-      previous.cameraTour === cameraTour &&
+      (previous.cameraTour === cameraTour || cameraTimingEdit) &&
       previous.cameraEnabled === cameraEnabled &&
       previous.enabled === enabled &&
       previous.globe === globe
@@ -323,7 +344,7 @@ export default function EffectAnimationPreviewProvider({
       // Static effects do not affect the clock; refresh their copies without losing playback.
       // Timing edits keep the inspected frame paused while dragging bounds.
       const time = Math.min(elapsedRef.current, duration);
-      const resume = staticEffectEdit && runningRef.current;
+      const resume = staticEffectEdit && !cameraTimingEdit && runningRef.current;
       pause();
       restore();
       if (resume) run();
