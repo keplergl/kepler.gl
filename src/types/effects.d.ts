@@ -19,6 +19,8 @@ export type EffectDescription = {
 };
 
 export type EffectParameterAnimation = {
+  /** Stable identity for a block in a timed sequence. */
+  id?: string;
   startValue?: number | number[];
   endValue: number | number[];
   easing: 'linear' | 'easeInOut';
@@ -27,7 +29,8 @@ export type EffectParameterAnimation = {
   endTimeMs?: number;
 };
 
-export type EffectAnimation = Record<string, EffectParameterAnimation>;
+/** A legacy single transition or an ordered sequence of explicitly timed blocks. */
+export type EffectAnimation = Record<string, EffectParameterAnimation | EffectParameterAnimation[]>;
 
 export type EffectUpdateProps = {
   isEnabled: boolean;

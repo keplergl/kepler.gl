@@ -8,6 +8,7 @@ import type {
   AnnotationPropsPartial,
   CameraTour,
   Effect,
+  EffectParameterAnimation,
   EffectUpdateProps,
   LayerAnimatableProp,
   LayerPropertyTransition,
@@ -25,7 +26,7 @@ import {
   roundValToStep,
   rgbToHex
 } from '@kepler.gl/utils';
-import {getAnimatableEffectParameters} from '@kepler.gl/effects';
+import {getAnimatableEffectParameters, getEffectAnimationEntries} from '@kepler.gl/effects';
 import {Button, Input, PanelLabel} from '../common/styled-components';
 import {Add, ArrowDownSmall, Close, Pause, Play, Reset, Trash, ZoomOut} from '../common/icons';
 import Switch from '../common/switch';
@@ -70,7 +71,7 @@ export type AnimationEditorProps = {
 };
 
 type Selection =
-  | {kind: 'effect'; effectId: string; name: string}
+  | {kind: 'effect'; effectId: string; name: string; blockId?: string}
   | {kind: 'layer'; layerId: string; propertyName: string; transitionId: string}
   | {kind: 'annotation'; annotationId: string; transitionId: string};
 
@@ -330,6 +331,12 @@ const Fields = styled.div`
   margin-bottom: 12px;
   ${Input} {
     width: 100%;
+    height: 32px;
+    padding: 3px 6px;
+    font-size: ${props => props.theme.sliderInputFontSize};
+    border-color: ${props => props.theme.panelBorderColor};
+    text-align: center;
+    text-overflow: clip;
   }
 `;
 const InspectorActions = styled.div`
@@ -400,6 +407,39 @@ const formatPropertyValue = (value: number | RGBColor, property: LayerAnimatable
     : property.name === 'opacity'
     ? `${Math.round(value * 100)}%`
     : String(value);
+
+function emptyTrackInterval(
+  event: React.MouseEvent<HTMLDivElement>,
+  duration: number,
+  blocks: {startTimeMs: number; endTimeMs: number}[]
+) {
+  if (event.target !== event.currentTarget || event.button !== 0) return null;
+  const rect = event.currentTarget.getBoundingClientRect();
+  if (!(rect.width > 0) || !Number.isFinite(event.clientX)) return null;
+  const startTimeMs = roundValToStep(0, 10, ((event.clientX - rect.left) / rect.width) * duration);
+  if (
+    startTimeMs < 0 ||
+    startTimeMs >= duration ||
+    blocks.some(
+      block =>
+        startTimeMs === block.startTimeMs ||
+        (startTimeMs > block.startTimeMs && startTimeMs < block.endTimeMs)
+    )
+  )
+    return null;
+  const next = blocks.find(block => block.startTimeMs > startTimeMs);
+  event.preventDefault();
+  return {
+    startTimeMs,
+    endTimeMs: Math.min(startTimeMs + 1000, next?.startTimeMs ?? duration, duration)
+  };
+}
+
+function nextBlockId(name: string, blocks: {id?: string}[]) {
+  let suffix = 1;
+  while (blocks.some(block => block.id === `${name}-${suffix}`)) suffix++;
+  return `${name}-${suffix}`;
+}
 
 function PropertySettings({
   label,
@@ -533,6 +573,7 @@ function PropertySettings({
             <div key={key}>
               <PanelLabel htmlFor={`${id}-${key}`}>{label}</PanelLabel>
               <Input
+                secondary
                 id={`${id}-${key}`}
                 type="number"
                 min={min}
@@ -631,7 +672,11 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const cameraDuration = getCameraTourDuration(tour);
     const tracks = getEffectAnimationTracks(effects);
     const rows = tracks.flatMap(track =>
-      track.parameters.map(parameter => ({effect: track.effect, parameter}))
+      [...new Set(track.parameters.map(parameter => parameter.name))].map(name => ({
+        effect: track.effect,
+        parameter: track.parameters.find(parameter => parameter.name === name)!,
+        parameters: track.parameters.filter(parameter => parameter.name === name)
+      }))
     );
     const layerTracks = layers
       .flatMap(layer => getLayerAnimationTracks(layer).map(track => ({layer, ...track})))
@@ -644,6 +689,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const configuredDuration = Math.max(
       playback.duration,
       cameraDuration,
+      ...rows.flatMap(row => row.parameters.map(parameter => parameter.endTimeMs ?? 0)),
       ...layerTracks.flatMap(track => track.transitions.map(transition => transition.endTimeMs)),
       ...annotationTracks.flatMap(track =>
         track.transitions.map(transition => transition.endTimeMs)
@@ -703,12 +749,15 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       setPopup(null);
       setConfirmRemoval(false);
     };
-    const openSettings = (selection: Selection, anchor: HTMLElement) => {
+    const openSettings = (selection: Selection, anchor: HTMLElement, left?: number) => {
       const rect = anchor.getBoundingClientRect();
       const origin = editor.current?.getBoundingClientRect();
       playback.pause();
       select(selection);
-      setPopup({left: rect.left - (origin?.left ?? 0), top: rect.bottom - (origin?.top ?? 0) + 4});
+      setPopup({
+        left: (left ?? rect.left) - (origin?.left ?? 0),
+        top: rect.bottom - (origin?.top ?? 0) + 4
+      });
     };
     const requestRemoval = (selection: Selection, anchor: HTMLElement) => {
       openSettings(selection, anchor);
@@ -748,7 +797,13 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     const removeSelected = () => {
       if (selectedEffect && selected?.kind === 'effect') {
         const animation = {...selectedEffect.animation};
-        delete animation[selected.name];
+        const remaining = selected.blockId
+          ? getEffectAnimationEntries(animation[selected.name]).filter(
+              block => block.id !== selected.blockId
+            )
+          : [];
+        if (remaining.length) animation[selected.name] = remaining;
+        else delete animation[selected.name];
         const legacyHeight =
           selectedEffect.type === SURFACE_FOG_TYPE &&
           selected.name === 'height' &&
@@ -783,6 +838,65 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         : undefined;
     const addEffect =
       addTarget?.kind === 'effect' ? effects.find(effect => effect.id === addTarget.id) : undefined;
+    const propertyBlockAt = (
+      event: React.MouseEvent<HTMLDivElement>,
+      property: LayerAnimatableProp,
+      transitions: LayerPropertyTransition[]
+    ): LayerPropertyTransition | null => {
+      const timing = emptyTrackInterval(event, duration, transitions);
+      if (!timing) return null;
+      const previous = transitions.filter(block => block.endTimeMs <= timing.startTimeMs).at(-1);
+      const value = previous?.endValue ?? transitions[0].startValue;
+      const common = {
+        ...timing,
+        id: nextBlockId(property.name, transitions),
+        easing: 'linear' as const
+      };
+      return Array.isArray(value)
+        ? {...common, startValue: [...value], endValue: [...value]}
+        : {...common, startValue: value, endValue: value};
+    };
+    const addEffectAt = (
+      event: React.MouseEvent<HTMLDivElement>,
+      effect: Effect,
+      parameters: (typeof rows)[number]['parameters']
+    ) => {
+      const name = parameters[0].name;
+      const blocks = parameters.map(parameter => ({
+        id: parameter.id ?? `${name}-1`,
+        startTimeMs: parameter.startTimeMs ?? 0,
+        endTimeMs: parameter.endTimeMs ?? playback.duration,
+        startValue: Array.isArray(parameter.start) ? [...parameter.start] : parameter.start,
+        endValue: Array.isArray(parameter.end) ? [...parameter.end] : parameter.end,
+        easing: parameter.easing
+      }));
+      const timing = emptyTrackInterval(event, duration, blocks);
+      if (!timing) return;
+      const previous = blocks.filter(block => block.endTimeMs <= timing.startTimeMs).at(-1);
+      const value = previous?.endValue ?? blocks[0].startValue;
+      const block: EffectParameterAnimation = {
+        ...timing,
+        id: nextBlockId(name, blocks),
+        startValue: Array.isArray(value) ? [...value] : value,
+        endValue: Array.isArray(value) ? [...value] : value,
+        easing: 'linear'
+      };
+      playback.pause();
+      updateEffectConfig(null, effect.id, {
+        animation: {
+          ...effect.animation,
+          [name]: [...blocks, block].sort((a, b) => a.startTimeMs! - b.startTimeMs!)
+        },
+        ...(effect.type === SURFACE_FOG_TYPE && name === 'height'
+          ? {parameters: {animateHeight: false}}
+          : {})
+      });
+      openSettings(
+        {kind: 'effect', effectId: effect.id, name, blockId: block.id},
+        event.currentTarget,
+        event.clientX
+      );
+    };
     const addProperty = (property: LayerAnimatableProp, anchor: HTMLElement) => {
       if (!addLayer && !addAnnotation) return;
       const transitions = addLayer
@@ -1176,7 +1290,25 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                     {layer.config.isVisible ? '' : ' · Hidden'}
                   </small>
                 </RowLabel>
-                <Track $grid={(step / duration) * 100}>
+                <Track
+                  $grid={(step / duration) * 100}
+                  onDoubleClick={event => {
+                    if (!onLayerConfigChange) return;
+                    const transition = propertyBlockAt(event, property, transitions);
+                    if (!transition) return;
+                    saveLayerTransitions(layer, property, [...transitions, transition]);
+                    openSettings(
+                      {
+                        kind: 'layer',
+                        layerId: layer.id,
+                        propertyName: property.name,
+                        transitionId: transition.id
+                      },
+                      event.currentTarget,
+                      event.clientX
+                    );
+                  }}
+                >
                   {transitions.map((transition, index) => (
                     <AnimationBlock
                       key={transition.id}
@@ -1260,7 +1392,28 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                       {annotation.isVisible ? 'Annotation opacity' : 'Hidden annotation'}
                     </small>
                   </RowLabel>
-                  <Track $grid={(step / duration) * 100}>
+                  <Track
+                    $grid={(step / duration) * 100}
+                    onDoubleClick={event => {
+                      if (!onAnnotationChange) return;
+                      const transition = propertyBlockAt(
+                        event,
+                        DEFAULT_LAYER_ANIMATABLE_PROPS[0],
+                        transitions
+                      );
+                      if (!transition) return;
+                      saveAnnotationTransitions(annotation, [...transitions, transition]);
+                      openSettings(
+                        {
+                          kind: 'annotation',
+                          annotationId: annotation.id,
+                          transitionId: transition.id
+                        },
+                        event.currentTarget,
+                        event.clientX
+                      );
+                    }}
+                  >
                     {transitions.map((transition, index) => (
                       <AnimationBlock
                         key={transition.id}
@@ -1328,23 +1481,16 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   </Track>
                 </Row>
               ))}
-            {rows.map(({effect, parameter}) => {
+            {rows.map(({effect, parameter: first, parameters}) => {
               const description = getAnimatableEffectParameters(effect).find(
-                item => item.name === parameter.name
+                item => item.name === first.name
               );
               const label = title(
-                typeof description?.label === 'string' ? description.label : parameter.name
+                typeof description?.label === 'string' ? description.label : first.name
               );
-              const saved = effect.animation?.[parameter.name];
-              const start = saved?.startTimeMs ?? 0;
-              const end = saved?.endTimeMs ?? playback.duration;
-              const active =
-                selected?.kind === 'effect' &&
-                selected.effectId === effect.id &&
-                selected.name === parameter.name;
               return (
                 <Row
-                  key={`${effect.id}-${parameter.name}`}
+                  key={`${effect.id}-${first.name}`}
                   role="group"
                   aria-label={`${title(effect.type)}: ${label}`}
                 >
@@ -1352,46 +1498,63 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                     <span>{title(effect.type)}</span>
                     <small>{label}</small>
                   </RowLabel>
-                  <Track $grid={(step / duration) * 100}>
-                    <AnimationBlock
-                      label={label}
-                      kind="effect"
-                      startTimeMs={start}
-                      endTimeMs={end}
-                      durationMs={duration}
-                      selected={active}
-                      onSelect={() =>
-                        select({kind: 'effect', effectId: effect.id, name: parameter.name})
-                      }
-                      onOpen={anchor =>
-                        openSettings(
-                          {kind: 'effect', effectId: effect.id, name: parameter.name},
-                          anchor
-                        )
-                      }
-                      onRequestRemove={anchor =>
-                        requestRemoval(
-                          {kind: 'effect', effectId: effect.id, name: parameter.name},
-                          anchor
-                        )
-                      }
-                      onDragStart={playback.pause}
-                      onChange={(startTimeMs, endTimeMs) => {
-                        updateEffectConfig(null, effect.id, {
-                          animation: {
-                            ...effect.animation,
-                            [parameter.name]: {
+                  <Track
+                    $grid={(step / duration) * 100}
+                    onDoubleClick={event => addEffectAt(event, effect, parameters)}
+                  >
+                    {parameters.map((parameter, index) => {
+                      const selection: Selection = {
+                        kind: 'effect',
+                        effectId: effect.id,
+                        name: parameter.name,
+                        blockId: parameter.id
+                      };
+                      return (
+                        <AnimationBlock
+                          key={parameter.id ?? parameter.name}
+                          label={label}
+                          ariaLabel={parameters.length > 1 ? `${label} ${index + 1}` : label}
+                          kind="effect"
+                          startTimeMs={parameter.startTimeMs ?? 0}
+                          endTimeMs={parameter.endTimeMs ?? playback.duration}
+                          durationMs={duration}
+                          minTimeMs={parameters[index - 1]?.endTimeMs ?? 0}
+                          maxTimeMs={parameters[index + 1]?.startTimeMs ?? duration}
+                          selected={
+                            selected?.kind === 'effect' &&
+                            selected.effectId === effect.id &&
+                            selected.name === parameter.name &&
+                            selected.blockId === parameter.id
+                          }
+                          onSelect={() => select(selection)}
+                          onOpen={anchor => openSettings(selection, anchor)}
+                          onRequestRemove={anchor => requestRemoval(selection, anchor)}
+                          onDragStart={playback.pause}
+                          onChange={(startTimeMs, endTimeMs) => {
+                            const saved = effect.animation?.[parameter.name];
+                            const updated: EffectParameterAnimation = {
+                              ...(parameter.id ? {id: parameter.id} : {}),
                               startValue: parameter.start,
                               endValue: parameter.end,
                               easing: parameter.easing,
                               startTimeMs,
                               endTimeMs
-                            }
-                          },
-                          ...(saved ? {} : {parameters: {animateHeight: false}})
-                        });
-                      }}
-                    />
+                            };
+                            updateEffectConfig(null, effect.id, {
+                              animation: {
+                                ...effect.animation,
+                                [parameter.name]: Array.isArray(saved)
+                                  ? saved.map(block =>
+                                      block.id === parameter.id ? updated : block
+                                    )
+                                  : updated
+                              },
+                              ...(saved ? {} : {parameters: {animateHeight: false}})
+                            });
+                          }}
+                        />
+                      );
+                    })}
                     <Cursor $position={percent(playback.elapsed)} />
                   </Track>
                 </Row>
@@ -1445,10 +1608,11 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
               </InspectorBody>
             ) : selectedEffect && selected?.kind === 'effect' ? (
               <EffectAnimationControl
-                key={`${selectedEffect.id}-${selected.name}`}
+                key={`${selectedEffect.id}-${selected.name}-${selected.blockId ?? 'single'}`}
                 embedded
                 effect={selectedEffect}
                 name={selected.name}
+                blockId={selected.blockId}
                 RangeSlider={RangeSlider}
                 durationMs={playback.duration}
                 updateEffectConfig={updateEffectConfig}

@@ -6,7 +6,7 @@ import {fireEvent, render, screen, waitFor, within} from '@testing-library/react
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
-import {createEffect} from '@kepler.gl/effects';
+import {createEffect, getEffectAnimationEntries} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
@@ -1180,12 +1180,12 @@ test('keeps the time ruler fixed across committed edits and can expand its visib
     rerender(<Editor {...props} />);
   });
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 400, 240);
-  expect(source.animation!.brightness.endTimeMs).toBe(12000);
+  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(12000);
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 240, 180);
-  expect(source.animation!.brightness.endTimeMs).toBe(9000);
+  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(9000);
   fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
   drag(screen.getByRole('slider', {name: 'End time for Brightness'}), 90, 300);
-  expect(source.animation!.brightness.endTimeMs).toBe(30000);
+  expect(getEffectAnimationEntries(source.animation?.brightness)[0].endTimeMs).toBe(30000);
 });
 
 test.each([1490, 1500, 1510])(
@@ -1496,4 +1496,261 @@ test('hidden annotation blocks remain editable without enabling playback', () =>
     }
   });
   expect(source.isVisible).toBe(false);
+});
+
+test.each(['layer', 'annotation'] as const)(
+  'double-clicking empty %s row space inserts short held-value blocks without changing siblings',
+  kind => {
+    const transitions = opacityTransitions();
+    const sourceLayer = layer(transitions);
+    const sourceAnnotation = annotation(transitions);
+    const {props, rerender} = setup({layers: [sourceLayer], annotations: [sourceAnnotation]});
+    (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+      Object.assign(sourceLayer.config, config);
+      rerender(<Editor {...props} />);
+    });
+    (props.onAnnotationChange as jest.Mock).mockImplementation((_id, config) => {
+      Object.assign(sourceAnnotation, config);
+      rerender(<Editor {...props} />);
+    });
+    const row = screen.getByRole('group', {
+      name: kind === 'layer' ? 'Layer opacity: Points' : 'Annotation opacity: Harbor'
+    });
+    const track = row.lastElementChild!;
+    for (const [start, end, value] of [
+      [1000, 2000, 0],
+      [6000, 7000, 1],
+      [9500, 10000, 1],
+      [19500, 20000, 0]
+    ]) {
+      fireEvent.doubleClick(track, {clientX: start / 50});
+      const blocks = (kind === 'layer' ? sourceLayer.config : sourceAnnotation).propertyTransitions!
+        .opacity;
+      expect(blocks).toEqual(expect.arrayContaining(transitions));
+      expect(blocks).toContainEqual(
+        expect.objectContaining({
+          startTimeMs: start,
+          endTimeMs: end,
+          startValue: value,
+          endValue: value
+        })
+      );
+      expect(screen.getByRole('spinbutton', {name: 'Start opacity (%)'})).toHaveValue(value * 100);
+      expect(screen.getByRole('spinbutton', {name: 'End opacity (%)'})).toHaveValue(value * 100);
+      fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
+    }
+    expect(
+      kind === 'layer' ? props.onAnnotationChange : props.onLayerConfigChange
+    ).not.toHaveBeenCalled();
+    expect(props.updateEffectConfig).not.toHaveBeenCalled();
+    const change = kind === 'layer' ? props.onLayerConfigChange : props.onAnnotationChange;
+    (change as jest.Mock).mockClear();
+    fireEvent.doubleClick(track, {clientX: 80}); // Existing 3–5 second block.
+    fireEvent.doubleClick(track, {clientX: 400}); // No room at the ruler's end.
+    fireEvent.doubleClick(track, {clientX: -1});
+    fireEvent.doubleClick(track, {clientX: 300, button: 2});
+    fireEvent.doubleClick(within(row).getAllByRole('button', {name: /^Opacity \d/})[0]);
+    expect(screen.getByRole('dialog', {name: 'Block settings'})).toBeInTheDocument();
+    expect(change).not.toHaveBeenCalled();
+  }
+);
+
+test('row insertion respects the visible ruler and holds numeric and color properties', () => {
+  const radius = opacityTransitions().map(block => ({...block, startValue: 12, endValue: 24}));
+  const color = opacityTransitions().map(block => ({
+    ...block,
+    startValue: [200, 0, 20] as RGBColor,
+    endValue: [0, 100, 220] as RGBColor
+  }));
+  const source = propertyLayer([radiusProperty, colorProperty], {radius, color});
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    Object.assign(source.config, config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
+  fireEvent.doubleClick(
+    screen.getByRole('group', {name: 'Layer radius: Points'}).lastElementChild!,
+    {clientX: 60}
+  );
+  expect(source.config.propertyTransitions!.radius[1]).toMatchObject({
+    startTimeMs: 6000,
+    endTimeMs: 7000,
+    startValue: 24,
+    endValue: 24
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
+  fireEvent.doubleClick(
+    screen.getByRole('group', {name: 'Layer color: Points'}).lastElementChild!,
+    {clientX: 60}
+  );
+  const added = source.config.propertyTransitions!.color[1];
+  expect(added).toMatchObject({
+    startTimeMs: 6000,
+    endTimeMs: 7000,
+    startValue: [0, 100, 220],
+    endValue: [0, 100, 220]
+  });
+  expect(added.startValue).not.toBe(added.endValue);
+  expect(source.config.propertyTransitions!.radius).toHaveLength(3);
+});
+
+test('empty row insertion ignores missing callbacks and unmeasurable tracks', () => {
+  const {props} = setup({
+    layers: [layer(opacityTransitions())],
+    annotations: [annotation(opacityTransitions())],
+    onLayerConfigChange: undefined
+  });
+  fireEvent.doubleClick(
+    screen.getByRole('group', {name: 'Layer opacity: Points'}).lastElementChild!,
+    {clientX: 120}
+  );
+  const track = screen.getByRole('group', {name: 'Annotation opacity: Harbor'}).lastElementChild!;
+  jest
+    .spyOn(track, 'getBoundingClientRect')
+    .mockReturnValue({...track.getBoundingClientRect(), width: 0});
+  fireEvent.doubleClick(track, {clientX: 120});
+  expect(props.onAnnotationChange).not.toHaveBeenCalled();
+  expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+});
+
+test('effect row insertion preserves its original block and edits, drags and removes one new block', () => {
+  const source = effect();
+  const original = source.animation!.brightness;
+  const parameters = {...source.parameters};
+  const {props, rerender} = setup({effects: [source]});
+  (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, config) => {
+    source.setProps(config);
+    rerender(<Editor {...props} />);
+  });
+  const row = screen.getByRole('group', {name: 'Brightness Contrast: Brightness'});
+  fireEvent.doubleClick(row.lastElementChild!, {clientX: 180});
+  const blocks = getEffectAnimationEntries(source.animation?.brightness);
+  expect(blocks).toEqual([
+    {...original, id: 'brightness-1'},
+    {
+      id: 'brightness-2',
+      startTimeMs: 9000,
+      endTimeMs: 10000,
+      startValue: 1,
+      endValue: 1,
+      easing: 'linear'
+    }
+  ]);
+  expect(source.parameters).toEqual(parameters);
+  expect(screen.getByRole('spinbutton', {name: 'Start time (seconds)'})).toHaveValue(9);
+  expect(screen.getByRole('spinbutton', {name: 'End value'})).toHaveValue(1);
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
+    target: {value: '6'}
+  });
+  expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'Start time (seconds)'}), {
+    target: {value: '9'}
+  });
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'End value'}), {target: {value: '0.5'}});
+  fireEvent.blur(screen.getByRole('spinbutton', {name: 'End value'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  expect(getEffectAnimationEntries(source.animation?.brightness)).toEqual([
+    blocks[0],
+    {...blocks[1], endValue: 0.5}
+  ]);
+  expect(source.parameters).toEqual(parameters);
+  drag(screen.getByRole('button', {name: 'Brightness 2'}), 180, 240);
+  expect(getEffectAnimationEntries(source.animation?.brightness)[1]).toMatchObject({
+    startTimeMs: 12000,
+    endTimeMs: 13000,
+    startValue: 1,
+    endValue: 0.5
+  });
+  drag(screen.getByRole('slider', {name: 'Start time for Brightness 2'}), 240, 40);
+  expect(getEffectAnimationEntries(source.animation?.brightness)[1].startTimeMs).toBe(7000);
+  // Start a fresh click sequence after the drag, as the browser does before a double-click.
+  drag(screen.getByRole('button', {name: 'Brightness 2'}), 140, 140);
+  fireEvent.doubleClick(screen.getByRole('button', {name: 'Brightness 2'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove animation'}));
+  expect(source.animation?.brightness).toEqual([blocks[0]]);
+  fireEvent.click(screen.getByRole('button', {name: 'Remove Brightness'}));
+  fireEvent.click(screen.getByRole('button', {name: 'Remove'}));
+  expect(source.animation).toBeUndefined();
+  expect(source.parameters).toEqual(parameters);
+});
+
+test('effect blocks fit before an existing block and preserve legacy full-duration timing', () => {
+  const source = effect();
+  const {props, rerender} = setup({effects: [source]});
+  (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, config) => {
+    source.setProps(config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.doubleClick(
+    screen.getByRole('group', {name: 'Brightness Contrast: Brightness'}).lastElementChild!,
+    {clientX: 50}
+  );
+  expect(getEffectAnimationEntries(source.animation?.brightness)[0]).toMatchObject({
+    startTimeMs: 2500,
+    endTimeMs: 3000,
+    startValue: 0,
+    endValue: 0
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Close effect settings'}));
+  source.setProps({animation: effect(false).animation});
+  rerender(<Editor {...props} />);
+  const track = screen.getByRole('group', {name: 'Brightness Contrast: Brightness'})
+    .lastElementChild!;
+  (props.updateEffectConfig as jest.Mock).mockClear();
+  fireEvent.doubleClick(track, {clientX: 200});
+  expect(props.updateEffectConfig).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name: 'Zoom out'}));
+  fireEvent.doubleClick(track, {clientX: 250});
+  expect(getEffectAnimationEntries(source.animation?.brightness)).toEqual([
+    {
+      id: 'brightness-1',
+      startTimeMs: 0,
+      endTimeMs: 20000,
+      startValue: 0,
+      endValue: 1,
+      easing: 'linear'
+    },
+    {
+      id: 'brightness-2',
+      startTimeMs: 25000,
+      endTimeMs: 26000,
+      startValue: 1,
+      endValue: 1,
+      easing: 'linear'
+    }
+  ]);
+});
+
+test('effect row insertion copies vector endpoints and preserves authored parameters', () => {
+  const source = createEffect({
+    type: 'dotScreen',
+    parameters: {center: [0.1, 0.9]},
+    animation: {
+      center: {
+        startValue: [0.2, 0.8],
+        endValue: [0.8, 0.2],
+        startTimeMs: 1000,
+        endTimeMs: 2000,
+        easing: 'linear'
+      }
+    }
+  });
+  const {props, rerender} = setup({effects: [source]});
+  (props.updateEffectConfig as jest.Mock).mockImplementation((_event, _id, config) => {
+    source.setProps(config);
+    rerender(<Editor {...props} />);
+  });
+  const row = screen.getByRole('group', {name: 'Dot Screen: Center'});
+  fireEvent.doubleClick(row.lastElementChild!, {clientX: 120});
+  const blocks = getEffectAnimationEntries(source.animation?.center);
+  expect(blocks[1]).toMatchObject({
+    startTimeMs: 6000,
+    endTimeMs: 7000,
+    startValue: [0.8, 0.2],
+    endValue: [0.8, 0.2]
+  });
+  expect(blocks[1].startValue).not.toBe(blocks[1].endValue);
+  expect(blocks[1].startValue).not.toBe(blocks[0].endValue);
+  expect(source.parameters.center).toEqual([0.1, 0.9]);
 });

@@ -1352,3 +1352,39 @@ test('#visStateSchema -> v1 -> layer color tracks round trip with independent en
   }
   t.end();
 });
+
+test('#visStateSchema -> v1 -> multiple effect animation blocks round trip', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = state.visState.effects.find(item => item.type === 'sepia');
+  const animation = {
+    amount: [
+      {
+        id: 'first',
+        startValue: 0.25,
+        endValue: 0.75,
+        easing: 'linear',
+        startTimeMs: 1000,
+        endTimeMs: 3000
+      },
+      {
+        id: 'hold',
+        startValue: 0.75,
+        endValue: 0.75,
+        easing: 'linear',
+        startTimeMs: 5000,
+        endTimeMs: 6000
+      }
+    ]
+  };
+  effect.setProps({animation});
+  const parameters = {...effect.parameters};
+  const saved = SchemaManager.getConfigToSave(state);
+  const savedEffect = saved.config.visState.effects.find(item => item.id === effect.id);
+  t.deepEqual(savedEffect.animation, animation, 'saves block identities, timing and held values');
+  const loaded = SchemaManager.parseSavedConfig(saved);
+  const restored = createEffect(loaded.visState.effects.find(item => item.id === effect.id));
+  t.deepEqual(restored.animation, animation, 'restores every timed block');
+  t.deepEqual(restored.parameters, parameters, 'preserves static parameters');
+  t.deepEqual(restored.deckEffect.props, parameters, 'keeps block metadata out of shader uniforms');
+  t.end();
+});

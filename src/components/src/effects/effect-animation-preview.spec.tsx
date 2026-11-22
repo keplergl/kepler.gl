@@ -25,6 +25,7 @@ import EffectManagerFactory from './effect-manager';
 import EffectAnimationPreviewProvider, {
   EffectAnimationPreviewContext
 } from './effect-animation-preview';
+import {applyEffectAnimation, getEffectAnimationTracks} from '../modals/effect-animation';
 
 const Manager = EffectManagerFactory(
   (() => null) as Parameters<typeof EffectManagerFactory>[0],
@@ -1203,4 +1204,114 @@ describe('effects panel animation preview', () => {
       }
     }
   );
+});
+
+test('multiple effect blocks interpolate independently, hold gaps, and restore authored values', () => {
+  const effect = createEffect({
+    type: 'brightnessContrast',
+    parameters: {brightness: 0.2},
+    animation: {
+      brightness: [
+        {
+          id: 'first',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: 0,
+          endValue: 1,
+          easing: 'linear'
+        },
+        {
+          id: 'hold',
+          startTimeMs: 4000,
+          endTimeMs: 4500,
+          startValue: 1,
+          endValue: 1,
+          easing: 'linear'
+        },
+        {
+          id: 'last',
+          startTimeMs: 6000,
+          endTimeMs: 8000,
+          startValue: 1,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ]
+    }
+  });
+  const saved = JSON.stringify(effect.animation);
+  const view = setup([effect]);
+  expect(view.playback().duration).toBe(8000);
+  act(() => view.playback().run());
+  expect(view.parameters()[0].brightness).toBe(0);
+  advanceFrame(2000);
+  expect(view.parameters()[0].brightness).toBe(0.5);
+  for (const [time, value] of [
+    [5000, 1],
+    [7000, 0.5],
+    [8000, 0],
+    [500, 0],
+    [4250, 1]
+  ]) {
+    act(() => view.playback().seek(time));
+    expect(view.parameters()[0].brightness).toBe(value);
+  }
+  expect(JSON.stringify(effect.animation)).toBe(saved);
+  expect(effect.parameters.brightness).toBe(0.2);
+  act(() => view.playback().stop());
+  expect(view.parameters()[0].brightness).toBe(0.2);
+  act(() => view.playback().run());
+  advanceFrame(3000);
+  const edited = effect.clone();
+  const blocks = edited.animation!.brightness;
+  if (!Array.isArray(blocks)) throw new Error('Expected multiple brightness blocks');
+  blocks[2].endTimeMs = 9000;
+  view.replaceEffects([edited]);
+  expect(view.playback().running).toBe(false);
+  expect(view.playback().elapsed).toBe(1000);
+  expect(view.playback().duration).toBe(9000);
+});
+
+test('export frame sampling holds and eases vector blocks without changing the source effect', () => {
+  const source = createEffect({
+    type: 'dotScreen',
+    parameters: {center: [0.1, 0.9]},
+    animation: {
+      center: [
+        {
+          id: 'first',
+          startTimeMs: 1000,
+          endTimeMs: 3000,
+          startValue: [0.2, 0.8],
+          endValue: [0.8, 0.2],
+          easing: 'linear'
+        },
+        {
+          id: 'last',
+          startTimeMs: 6000,
+          endTimeMs: 8000,
+          startValue: [0.8, 0.2],
+          endValue: [0.4, 0.6],
+          easing: 'easeInOut'
+        }
+      ]
+    }
+  });
+  const exported = source.clone();
+  const tracks = getEffectAnimationTracks([exported]);
+  for (const [time, expected] of [
+    [0, [0.2, 0.8]],
+    [2000, [0.5, 0.5]],
+    [5000, [0.8, 0.2]],
+    [6500, [0.7375, 0.2625]],
+    [9000, [0.4, 0.6]],
+    [1000, [0.2, 0.8]]
+  ] as [number, number[]][]) {
+    applyEffectAnimation(tracks, Math.min(1, time / 8000), time);
+    expected.forEach((value, index) =>
+      expect(exported.parameters.center[index]).toBeCloseTo(value)
+    );
+  }
+  expect(source.parameters.center).toEqual([0.1, 0.9]);
+  expect(exported.animation).toEqual(source.animation);
 });

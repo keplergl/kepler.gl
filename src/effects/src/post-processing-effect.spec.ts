@@ -2,7 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 import PostProcessingEffect, {getDefaultValueForParameter} from './post-processing-effect';
-import {getAnimatableEffectParameters, validateEffectAnimation} from './animation-utils';
+import {
+  getAnimatableEffectParameters,
+  getEffectAnimationEntries,
+  validateEffectAnimation
+} from './animation-utils';
 import {LIGHT_AND_SHADOW_EFFECT, POSTPROCESSING_EFFECTS} from '@kepler.gl/constants';
 
 describe('post-processing effect parameters', () => {
@@ -168,12 +172,16 @@ describe('post-processing effect parameters', () => {
     expect(clone.animation).toEqual(effect.animation);
     expect(clone.animation).not.toBe(effect.animation);
     expect(clone.animation?.center).not.toBe(effect.animation?.center);
-    expect(clone.animation?.center.startValue).not.toBe(effect.animation?.center.startValue);
-    expect(clone.animation?.center.endValue).not.toBe(effect.animation?.center.endValue);
-    (clone.animation!.center.startValue as number[])[0] = 0.25;
-    (clone.animation!.center.endValue as number[])[0] = 0.75;
-    expect(effect.animation?.center.startValue).toEqual([1, 0]);
-    expect(effect.animation?.center.endValue).toEqual([0, 1]);
+    expect(getEffectAnimationEntries(clone.animation?.center)[0].startValue).not.toBe(
+      getEffectAnimationEntries(effect.animation?.center)[0].startValue
+    );
+    expect(getEffectAnimationEntries(clone.animation?.center)[0].endValue).not.toBe(
+      getEffectAnimationEntries(effect.animation?.center)[0].endValue
+    );
+    (getEffectAnimationEntries(clone.animation?.center)[0].startValue as number[])[0] = 0.25;
+    (getEffectAnimationEntries(clone.animation?.center)[0].endValue as number[])[0] = 0.75;
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([1, 0]);
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].endValue).toEqual([0, 1]);
   });
 
   test('saved zero starts remain independent of static parameter edits', () => {
@@ -200,7 +208,7 @@ describe('post-processing effect parameters', () => {
     expect(effect.animation?.brightness).toEqual({startValue: 0.2, endValue: 1, easing: 'linear'});
     effect.setProps({parameters: {brightness: 0.9}});
     expect(effect.parameters.brightness).toBe(0.9);
-    expect(effect.animation?.brightness.startValue).toBe(0.2);
+    expect(getEffectAnimationEntries(effect.animation?.brightness)[0].startValue).toBe(0.2);
   });
 
   test('captures older vector starts independently of the current and supplied arrays', () => {
@@ -214,12 +222,14 @@ describe('post-processing effect parameters', () => {
     const originalCenter = effect.parameters.center;
     effect.setProps({parameters: {center: next}});
     expect(effect.parameters.center).toEqual(next);
-    expect(effect.animation?.center.startValue).toEqual([0.2, 0.8]);
-    expect(effect.animation?.center.startValue).not.toBe(initial);
-    expect(effect.animation?.center.startValue).not.toBe(originalCenter);
-    expect(effect.animation?.center.startValue).not.toBe(next);
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([0.2, 0.8]);
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(initial);
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(
+      originalCenter
+    );
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).not.toBe(next);
     effect.setProps({parameters: {center: [0.9, 0.1]}});
-    expect(effect.animation?.center.startValue).toEqual([0.2, 0.8]);
+    expect(getEffectAnimationEntries(effect.animation?.center)[0].startValue).toEqual([0.2, 0.8]);
   });
 
   test('validates and copies color starts independently of end colors', () => {
@@ -232,8 +242,8 @@ describe('post-processing effect parameters', () => {
     expect(animation).toEqual({
       fogColor: {startValue: [0, 0, 255], endValue: [255, 80, 10], easing: 'easeInOut'}
     });
-    expect(animation?.fogColor.startValue).not.toBe(startValue);
-    expect(animation?.fogColor.endValue).not.toBe(endValue);
+    expect(getEffectAnimationEntries(animation?.fogColor)[0].startValue).not.toBe(startValue);
+    expect(getEffectAnimationEntries(animation?.fogColor)[0].endValue).not.toBe(endValue);
     expect(startValue).toEqual([-20, 0, 300]);
   });
 
@@ -349,5 +359,70 @@ describe('post-processing effect parameters', () => {
       'sunLightColor',
       'ambientLightColor'
     ]);
+  });
+});
+
+describe('effect animation sequences', () => {
+  const first = {
+    id: 'first',
+    startTimeMs: 1000,
+    endTimeMs: 3000,
+    startValue: [0.2, 0.8],
+    endValue: [0.8, 0.2],
+    easing: 'linear' as const
+  };
+  const second = {
+    id: 'second',
+    startTimeMs: 5000,
+    endTimeMs: 7000,
+    startValue: [0.8, 0.2],
+    endValue: [0.4, 0.6],
+    easing: 'easeInOut' as const
+  };
+  test('sorts timed blocks and clones endpoints without changing static parameters', () => {
+    const effect = new PostProcessingEffect({
+      type: 'dotScreen',
+      animation: {center: [second, first]}
+    });
+    expect(effect.animation?.center).toEqual([first, second]);
+    const clone = effect.clone();
+    expect(clone.animation).toEqual(effect.animation);
+    const copied = getEffectAnimationEntries(clone.animation?.center);
+    expect(copied[0].startValue).not.toBe(first.startValue);
+    expect(copied[0].startValue).not.toBe(
+      getEffectAnimationEntries(effect.animation?.center)[0].startValue
+    );
+    effect.setProps({parameters: {center: [0.1, 0.9]}});
+    expect(effect.animation?.center).toEqual([first, second]);
+    expect(effect.deckEffect.props.center).toEqual([0.1, 0.9]);
+  });
+  test.each(
+    [
+      [],
+      [first, {...second, id: 'first'}],
+      [{...first, id: ''}],
+      [{...first, id: undefined}],
+      [{...first, startValue: undefined}],
+      [{...first, startTimeMs: undefined}],
+      [{...first, endTimeMs: undefined}],
+      [{...first, endTimeMs: NaN}],
+      [first, {...second, startTimeMs: 2000}],
+      [first, {...second, startValue: [0, NaN]}],
+      [[first]]
+    ].map(blocks => ({blocks}))
+  )('rejects invalid sequences without removing valid sibling parameters: %j', ({blocks}) => {
+    expect(
+      validateEffectAnimation(
+        {center: blocks, size: {endValue: 2, easing: 'linear'}},
+        POSTPROCESSING_EFFECTS.dotScreen.parameters
+      )
+    ).toEqual({size: {endValue: 2, easing: 'linear'}});
+  });
+  test('allows adjacent transitions and ordered instantaneous cuts', () => {
+    const cut = {...second, startTimeMs: 3000, endTimeMs: 3000};
+    expect(
+      validateEffectAnimation({center: [first, cut]}, POSTPROCESSING_EFFECTS.dotScreen.parameters)
+        ?.center
+    ).toEqual([first, cut]);
   });
 });

@@ -8,7 +8,7 @@ import {
   LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
   SURFACE_FOG_TYPE
 } from '@kepler.gl/constants';
-import {validateEffectAnimation} from '@kepler.gl/effects';
+import {getEffectAnimationEntries, validateEffectAnimation} from '@kepler.gl/effects';
 import type {Effect} from '@kepler.gl/types';
 
 type PlaybackState = {
@@ -22,6 +22,7 @@ type PlaybackState = {
 };
 
 type ParameterTrack = {
+  id?: string;
   name: string;
   start: number | number[];
   end: number | number[];
@@ -91,22 +92,45 @@ export function getEffectAnimationTracks(effects: Effect[]) {
     if (!Object.keys(animation).length) return [];
 
     const validated = validateEffectAnimation(animation, effect.getParameterDescriptions());
-    const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entry]) => {
-      const current = effect.parameters[name];
-      const original = Array.isArray(current) ? current.slice() : current;
-      const start = entry.startValue ?? current;
-      const end = entry.endValue;
-      const timing =
-        entry.startTimeMs !== undefined
-          ? {startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs}
-          : {};
-      if (Array.isArray(start) && Array.isArray(end)) {
-        if (start.length !== end.length || !start.every(Number.isFinite)) return [];
-        return [{name, start: start.slice(), end, original, easing: entry.easing, ...timing}];
-      }
-      if (!Number.isFinite(start) || Array.isArray(end)) return [];
-      return [{name, start: start as number, end, original, easing: entry.easing, ...timing}];
-    });
+    const parameters = Object.entries(validated || {}).flatMap<ParameterTrack>(([name, entries]) =>
+      getEffectAnimationEntries(entries).flatMap<ParameterTrack>(entry => {
+        const current = effect.parameters[name];
+        const original = Array.isArray(current) ? current.slice() : current;
+        const start = entry.startValue ?? current;
+        const end = entry.endValue;
+        const timing =
+          entry.startTimeMs !== undefined
+            ? {startTimeMs: entry.startTimeMs, endTimeMs: entry.endTimeMs}
+            : {};
+        const identity = entry.id ? {id: entry.id} : {};
+        if (Array.isArray(start) && Array.isArray(end)) {
+          if (start.length !== end.length || !start.every(Number.isFinite)) return [];
+          return [
+            {
+              name,
+              start: start.slice(),
+              end,
+              original,
+              easing: entry.easing,
+              ...timing,
+              ...identity
+            }
+          ];
+        }
+        if (!Number.isFinite(start) || Array.isArray(end)) return [];
+        return [
+          {
+            name,
+            start: start as number,
+            end,
+            original,
+            easing: entry.easing,
+            ...timing,
+            ...identity
+          }
+        ];
+      })
+    );
     const animatesTimestamp =
       effect.type === LIGHT_AND_SHADOW_EFFECT.type &&
       parameters.some(parameter => parameter.name === 'timestamp');
@@ -143,27 +167,34 @@ export function applyEffectAnimation(
 ): void {
   for (const track of tracks) {
     if (!track.effect.isEnabled) continue;
-    const parameters = Object.fromEntries(
-      track.parameters.map(({name, start, end, easing, startTimeMs, endTimeMs}) => {
-        const localProgress =
-          startTimeMs !== undefined && endTimeMs !== undefined && Number.isFinite(elapsedMs)
-            ? endTimeMs === startTimeMs
-              ? Number((elapsedMs as number) >= endTimeMs)
-              : Math.max(
-                  0,
-                  Math.min(1, ((elapsedMs as number) - startTimeMs) / (endTimeMs - startTimeMs))
-                )
-            : progress;
-        const t =
-          easing === 'linear'
-            ? localProgress
-            : localProgress * localProgress * (3 - 2 * localProgress);
-        const value = Array.isArray(start)
-          ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
-          : start + ((end as number) - start) * t;
-        return [name, value];
-      })
-    );
+    const parameters: Effect['parameters'] = {};
+    for (const {name, start, end, easing, startTimeMs, endTimeMs} of track.parameters) {
+      // Later blocks do not override the held value until their start time.
+      if (
+        Object.prototype.hasOwnProperty.call(parameters, name) &&
+        startTimeMs !== undefined &&
+        elapsedMs !== undefined &&
+        elapsedMs < startTimeMs
+      )
+        continue;
+      const localProgress =
+        startTimeMs !== undefined && endTimeMs !== undefined && Number.isFinite(elapsedMs)
+          ? endTimeMs === startTimeMs
+            ? Number((elapsedMs as number) >= endTimeMs)
+            : Math.max(
+                0,
+                Math.min(1, ((elapsedMs as number) - startTimeMs) / (endTimeMs - startTimeMs))
+              )
+          : progress;
+      const t =
+        easing === 'linear'
+          ? localProgress
+          : localProgress * localProgress * (3 - 2 * localProgress);
+      const value = Array.isArray(start)
+        ? start.map((value, index) => value + ((end as number[])[index] - value) * t)
+        : start + ((end as number) - start) * t;
+      parameters[name] = value;
+    }
     setAnimatedParameters(track.effect, {
       ...parameters,
       ...(track.animatesTimestamp ? {timeMode: LIGHT_AND_SHADOW_EFFECT_TIME_MODES.pick} : {})

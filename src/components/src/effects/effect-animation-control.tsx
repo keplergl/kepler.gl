@@ -5,7 +5,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import moment from 'moment-timezone';
 import {DEFAULT_TIMEZONE, LIGHT_AND_SHADOW_EFFECT, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
-import {getAnimatableEffectParameters} from '@kepler.gl/effects';
+import {getAnimatableEffectParameters, getEffectAnimationEntries} from '@kepler.gl/effects';
 import {Effect, EffectParameterAnimation, EffectUpdateProps} from '@kepler.gl/types';
 import {roundValToStep} from '@kepler.gl/utils';
 
@@ -135,6 +135,7 @@ const Actions = styled.div`
 type Props = {
   effect: Effect;
   name: string;
+  blockId?: string;
   RangeSlider: ReturnType<typeof RangeSliderFactory>;
   step?: number;
   alwaysVisible?: boolean;
@@ -154,6 +155,7 @@ type Value = number | number[];
 export default function EffectAnimationControl({
   effect,
   name,
+  blockId,
   RangeSlider,
   step = 0.001,
   alwaysVisible = false,
@@ -165,8 +167,11 @@ export default function EffectAnimationControl({
   const description = getAnimatableEffectParameters(effect).find(d => d.name === name);
   const legacyHeight =
     effect.type === SURFACE_FOG_TYPE && name === 'height' && effect.parameters.animateHeight;
+  const sequence = Array.isArray(effect.animation?.[name]);
+  const entries = getEffectAnimationEntries(effect.animation?.[name]);
+  const selectedIndex = blockId ? entries.findIndex(entry => entry.id === blockId) : 0;
   const saved: EffectParameterAnimation | undefined =
-    effect.animation?.[name] ??
+    entries[selectedIndex] ??
     (legacyHeight
       ? {
           startValue: effect.parameters.height,
@@ -228,9 +233,12 @@ export default function EffectAnimationControl({
   const apply = (remove = false) => {
     const animation = {...effect.animation};
     if (remove) {
-      delete animation[name];
+      const remaining = sequence ? entries.filter((_, index) => index !== selectedIndex) : [];
+      if (remaining.length) animation[name] = remaining;
+      else delete animation[name];
     } else {
-      animation[name] = {
+      const updated: EffectParameterAnimation = {
+        ...(saved?.id ? {id: saved.id} : {}),
         startValue,
         endValue,
         easing: linear ? 'linear' : 'easeInOut',
@@ -238,9 +246,12 @@ export default function EffectAnimationControl({
           ? {startTimeMs: Number(startSeconds) * 1000, endTimeMs: Number(endSeconds) * 1000}
           : {})
       };
+      animation[name] = sequence
+        ? entries.map((entry, index) => (index === selectedIndex ? updated : entry))
+        : updated;
     }
     const parameters = {
-      ...(!remove ? {[name]: startValue} : {}),
+      ...(!remove && !sequence ? {[name]: startValue} : {}),
       ...(legacyHeight ? {animateHeight: false} : {})
     };
     updateEffectConfig(null, effect.id, {
@@ -276,7 +287,10 @@ export default function EffectAnimationControl({
       Number.isFinite(Number(startSeconds) * 1000) &&
       Number.isFinite(Number(endSeconds) * 1000) &&
       Number(startSeconds) >= 0 &&
-      Number(endSeconds) >= Number(startSeconds));
+      Number(endSeconds) >= Number(startSeconds) &&
+      (!sequence ||
+        (Number(startSeconds) * 1000 >= (entries[selectedIndex - 1]?.endTimeMs ?? 0) &&
+          Number(endSeconds) * 1000 <= (entries[selectedIndex + 1]?.startTimeMs ?? Infinity))));
   const editors = [
     {title: 'Start', value: startValue, setValue: setStartValue},
     {title: 'End', value: endValue, setValue: setEndValue}
@@ -406,16 +420,18 @@ export default function EffectAnimationControl({
           ))
         )}
         <Field>
-          <ToggleRow>
-            <PanelLabel as="label" htmlFor={timingId}>
-              Use full animation duration
-            </PanelLabel>
-            <Switch
-              id={timingId}
-              checked={!timed}
-              onChange={event => setTimed(!event.target.checked)}
-            />
-          </ToggleRow>
+          {!sequence && (
+            <ToggleRow>
+              <PanelLabel as="label" htmlFor={timingId}>
+                Use full animation duration
+              </PanelLabel>
+              <Switch
+                id={timingId}
+                checked={!timed}
+                onChange={event => setTimed(!event.target.checked)}
+              />
+            </ToggleRow>
+          )}
           {timed && (
             <>
               <PanelLabel htmlFor={`${timingId}-start`}>Start time (seconds)</PanelLabel>

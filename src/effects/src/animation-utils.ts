@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {Effect, EffectAnimation, EffectParameterDescription} from '@kepler.gl/types';
+import type {
+  Effect,
+  EffectAnimation,
+  EffectParameterAnimation,
+  EffectParameterDescription
+} from '@kepler.gl/types';
 
 const NON_ANIMATABLE_PARAMETERS = new Set([
   'animateHeight',
@@ -36,6 +41,12 @@ export function getAnimatableEffectParameters(
   return effect.getParameterDescriptions().filter(isAnimatableParameter);
 }
 
+export function getEffectAnimationEntries(
+  value: EffectAnimation[string] | undefined
+): EffectParameterAnimation[] {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
+
 /** Validate optional endpoints without creating animations for missing or invalid values. */
 export function validateEffectAnimation(
   animation: unknown,
@@ -53,6 +64,7 @@ export function validateEffectAnimation(
       animation as Record<
         string,
         {
+          id?: unknown;
           startValue?: unknown;
           endValue?: unknown;
           easing?: unknown;
@@ -61,7 +73,46 @@ export function validateEffectAnimation(
         }
       >
     )[name];
+    if (Array.isArray(entry)) {
+      const ids = new Set<string>();
+      if (
+        !entry.length ||
+        !entry.every(block => {
+          if (
+            !block ||
+            typeof block !== 'object' ||
+            Array.isArray(block) ||
+            typeof block.id !== 'string' ||
+            !block.id.trim() ||
+            ids.has(block.id) ||
+            block.startValue === undefined ||
+            block.startTimeMs === undefined ||
+            block.endTimeMs === undefined
+          )
+            return false;
+          ids.add(block.id);
+          return true;
+        })
+      )
+        continue;
+      const blocks = entry.map(
+        block => validateEffectAnimation({[name]: block}, [description])?.[name]
+      );
+      if (blocks.some(block => !block || Array.isArray(block))) continue;
+      const sequence = (blocks as EffectParameterAnimation[]).sort(
+        (a, b) => a.startTimeMs! - b.startTimeMs! || a.endTimeMs! - b.endTimeMs!
+      );
+      if (
+        sequence.some(
+          (block, index) => index > 0 && block.startTimeMs! < sequence[index - 1].endTimeMs!
+        )
+      )
+        continue;
+      result[name] = sequence;
+      continue;
+    }
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    if (entry.id !== undefined && (typeof entry.id !== 'string' || !entry.id.trim())) continue;
     if (entry.easing !== 'linear' && entry.easing !== 'easeInOut') continue;
     const hasTiming =
       Object.prototype.hasOwnProperty.call(entry, 'startTimeMs') ||
@@ -104,6 +155,7 @@ export function validateEffectAnimation(
     const startValue = hasStart ? validateValue(entry.startValue) : undefined;
     if (endValue === undefined || (hasStart && startValue === undefined)) continue;
     result[name] = {
+      ...(typeof entry.id === 'string' ? {id: entry.id} : {}),
       ...(hasStart ? {startValue} : {}),
       endValue,
       easing: entry.easing,

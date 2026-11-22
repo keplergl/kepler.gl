@@ -82,6 +82,7 @@ export class Effect implements EffectInterface {
     // an ordinary slider edit changes that parameter.
     if (this.animation && !Object.prototype.hasOwnProperty.call(props, 'animation')) {
       for (const [name, entry] of Object.entries(this.animation)) {
+        if (Array.isArray(entry)) continue;
         const start = this.parameters[name];
         const next = props.parameters?.[name];
         const unchanged =

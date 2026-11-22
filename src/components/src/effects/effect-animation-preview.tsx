@@ -14,6 +14,7 @@ import React, {
 import type {Annotation, CameraSnapshot, CameraTour, Effect} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import type {MapStateActions} from '@kepler.gl/actions';
+import {getEffectAnimationEntries} from '@kepler.gl/effects';
 import {
   cameraForMap,
   evaluateCameraTour,
@@ -108,8 +109,11 @@ export default function EffectAnimationPreviewProvider({
       effect.isEnabled,
       Object.entries(effect.animation ?? {}).map(([name, animation]) => [
         name,
-        animation.startTimeMs,
-        animation.endTimeMs
+        getEffectAnimationEntries(animation).map(block => [
+          block.id,
+          block.startTimeMs,
+          block.endTimeMs
+        ])
       ])
     ])
   );
