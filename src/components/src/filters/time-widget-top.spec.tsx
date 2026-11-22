@@ -478,37 +478,45 @@ describe('compact timeline playback controls', () => {
   );
 
   test('keeps every minimized action visible and keyboard accessible in reading order', async () => {
-    const user = userEvent.setup();
-    const {props, playbackControls} = setupPlayback({isMinified: true});
-    const playback = screen.getByRole('group', {name: 'Timeline playback'});
-    const actions = screen.getByRole('group', {name: 'Timeline actions'});
-    expect(within(playback).getByRole('group', {name: 'Selected range'})).toHaveTextContent(
-      '08 Jan 1991 — 30 Mar 2011'
-    );
-    expect(within(actions).queryByRole('button', {name: 'Settings'})).not.toBeInTheDocument();
-    const names = [
-      'Play',
-      'Reset',
-      'Speed',
-      'Moving window',
-      'Video Export',
-      'Edit animation JSON',
-      'Expand timeline',
-      'Close timeline'
-    ];
-    expect(screen.getAllByRole('button')).toHaveLength(names.length);
-    for (const name of names) {
-      const button = screen.getByRole('button', {name});
-      expect(button).toBeVisible();
-      expect(button).not.toHaveAttribute('title');
-      await user.tab();
-      expect(button).toHaveFocus();
-      if (name === 'Reset' || name === 'Expand timeline') {
-        await user.keyboard(' ');
+    // Advance tooltip timers during keyboard traversal without waiting on the CI clock.
+    jest.useFakeTimers();
+    try {
+      const user = userEvent.setup({advanceTimers: jest.advanceTimersByTime});
+      const {props, playbackControls} = setupPlayback({isMinified: true});
+      const playback = screen.getByRole('group', {name: 'Timeline playback'});
+      const actions = screen.getByRole('group', {name: 'Timeline actions'});
+      expect(within(playback).getByRole('group', {name: 'Selected range'})).toHaveTextContent(
+        '08 Jan 1991 — 30 Mar 2011'
+      );
+      expect(within(actions).queryByRole('button', {name: 'Settings'})).not.toBeInTheDocument();
+      const names = [
+        'Play',
+        'Reset',
+        'Speed',
+        'Moving window',
+        'Video Export',
+        'Edit animation JSON',
+        'Expand timeline',
+        'Close timeline'
+      ];
+      expect(screen.getAllByRole('button')).toHaveLength(names.length);
+      for (const name of names) {
+        const button = screen.getByRole('button', {name});
+        expect(button).toBeVisible();
+        expect(button).not.toHaveAttribute('title');
+        await user.tab();
+        expect(button).toHaveFocus();
+        if (name === 'Reset' || name === 'Expand timeline') {
+          await user.keyboard(' ');
+        }
       }
+      expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
+      expect(props.onToggleMinify).toHaveBeenCalledTimes(1);
+    } finally {
+      cleanup();
+      act(() => jest.runOnlyPendingTimers());
+      jest.useRealTimers();
     }
-    expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
-    expect(props.onToggleMinify).toHaveBeenCalledTimes(1);
   });
 
   test('preserves keyboard focus when expanding and collapsing the compact header', async () => {
@@ -665,42 +673,52 @@ describe('compact timeline playback controls', () => {
   ] as const)(
     'selects %s from the keyboard mode menu and updates its trigger',
     async (label, id, tabs, icon) => {
-      const user = userEvent.setup();
-      const {props, playbackControls, rerender} = setupPlayback();
-      for (let index = 0; index < 9; index++) {
-        await user.tab();
-      }
-      const mode = screen.getByRole('button', {name: 'Moving window'});
-      expect(mode).toHaveFocus();
-      expect(mode.querySelector('.data-ex-icons-freewindow')).not.toBeNull();
-      await user.keyboard('{Enter}');
-      expect(mode).toHaveAttribute('aria-expanded', 'true');
-      const dialog = screen.getByRole('dialog', {name: 'Animation mode'});
-      expect(within(dialog).getAllByRole('button')).toHaveLength(3);
-      expect(within(dialog).getByRole('button', {name: 'Moving Time Window'})).toHaveAttribute(
-        'aria-pressed',
-        'true'
-      );
-      for (const name of ['Incremental Time Window', 'Step by Interval']) {
-        expect(within(dialog).getByRole('button', {name})).toHaveAttribute('aria-pressed', 'false');
-      }
-      await waitFor(() => expect(dialog).toHaveFocus());
-      for (let index = 0; index < tabs; index++) {
-        await user.tab();
-      }
-      expect(within(dialog).getByRole('button', {name: label})).toHaveFocus();
-      await user.keyboard('{Enter}');
-      expect(playbackControls.setFilterAnimationWindow).toHaveBeenCalledTimes(1);
-      expect(playbackControls.setFilterAnimationWindow).toHaveBeenCalledWith(id);
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(mode).toHaveAttribute('aria-expanded', 'false');
-      expect(mode).toHaveFocus();
+      // Advance tooltip timers during keyboard traversal without waiting on the CI clock.
+      jest.useFakeTimers();
+      try {
+        const user = userEvent.setup({advanceTimers: jest.advanceTimersByTime});
+        const {props, playbackControls, rerender} = setupPlayback();
+        const mode = screen.getByRole('button', {name: 'Moving window'});
+        // Header tab order is covered separately; start this menu interaction at its trigger.
+        act(() => mode.focus());
+        expect(mode).toHaveFocus();
+        expect(mode.querySelector('.data-ex-icons-freewindow')).not.toBeNull();
+        await user.keyboard('{Enter}');
+        expect(mode).toHaveAttribute('aria-expanded', 'true');
+        const dialog = screen.getByRole('dialog', {name: 'Animation mode'});
+        expect(within(dialog).getAllByRole('button')).toHaveLength(3);
+        expect(within(dialog).getByRole('button', {name: 'Moving Time Window'})).toHaveAttribute(
+          'aria-pressed',
+          'true'
+        );
+        for (const name of ['Incremental Time Window', 'Step by Interval']) {
+          expect(within(dialog).getByRole('button', {name})).toHaveAttribute(
+            'aria-pressed',
+            'false'
+          );
+        }
+        await waitFor(() => expect(dialog).toHaveFocus());
+        for (let index = 0; index < tabs; index++) {
+          await user.tab();
+        }
+        expect(within(dialog).getByRole('button', {name: label})).toHaveFocus();
+        await user.keyboard('{Enter}');
+        expect(playbackControls.setFilterAnimationWindow).toHaveBeenCalledTimes(1);
+        expect(playbackControls.setFilterAnimationWindow).toHaveBeenCalledWith(id);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(mode).toHaveAttribute('aria-expanded', 'false');
+        expect(mode).toHaveFocus();
 
-      rerender(
-        <CompactHeader {...props} playbackControls={{...playbackControls, animationWindow: id}} />
-      );
-      await expectTooltip(mode, label);
-      expect(mode.querySelector(`.data-ex-icons-${icon}`)).not.toBeNull();
+        rerender(
+          <CompactHeader {...props} playbackControls={{...playbackControls, animationWindow: id}} />
+        );
+        await expectTooltip(mode, label);
+        expect(mode.querySelector(`.data-ex-icons-${icon}`)).not.toBeNull();
+      } finally {
+        cleanup();
+        act(() => jest.runOnlyPendingTimers());
+        jest.useRealTimers();
+      }
     }
   );
 
