@@ -552,9 +552,9 @@ export const setMapControlSettingsUpdater = (
   {payload: {panelId, settings}}: UIStateActions.setMapControlSettingsUpdaterAction
 ): UiState => {
   const mapControl = (state.mapControls?.[panelId] ??
-    (panelId === 'cameraBookmarks' ? DEFAULT_MAP_CONTROLS.cameraBookmarks : undefined)) as
-    | MapControlMapLegend
-    | undefined;
+    (panelId === 'cameraBookmarks' || panelId === 'cameraTour'
+      ? DEFAULT_MAP_CONTROLS[panelId]
+      : undefined)) as MapControlMapLegend | undefined;
   if (!mapControl) {
     return state;
   }
