@@ -2,15 +2,20 @@
 // Copyright contributors to the kepler.gl project
 
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
-import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js';
-import {formatResult} from './bridge-server';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
+import {formatMcpResult} from './bridge-server';
 import type {KeplerMcpBridge} from './bridge-server';
 
 /** Configure the MCP protocol independently of the CLI's stdio transport. */
 export function createKeplerMcpServer(bridge: KeplerMcpBridge, version: string): Server {
   const server = new Server(
     {name: 'kepler-mcp', version},
-    {capabilities: {tools: {listChanged: true}}}
+    {capabilities: {tools: {listChanged: true}, resources: {}}}
   );
 
   // A client cannot receive catalog notifications until initialization finishes.
@@ -39,8 +44,12 @@ export function createKeplerMcpServer(bridge: KeplerMcpBridge, version: string):
     const {name, arguments: args} = request.params;
     try {
       const result = await bridge.callTool(name, (args ?? {}) as Record<string, unknown>);
-      const {text, isError} = formatResult(result);
-      return {content: [{type: 'text' as const, text}], ...(isError ? {isError: true} : {})};
+      const formatted = formatMcpResult(result);
+      const resource = !formatted.isError ? bridge.getVideoResourceLink(result) : undefined;
+      return {
+        ...formatted,
+        content: [...formatted.content, ...(resource ? [resource] : [])]
+      };
     } catch (error) {
       return {
         content: [
@@ -50,6 +59,19 @@ export function createKeplerMcpServer(bridge: KeplerMcpBridge, version: string):
       };
     }
   });
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: bridge.listVideoResources().map(({uri, name, mimeType, size}) => ({
+      uri,
+      name,
+      mimeType,
+      size
+    }))
+  }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async request => ({
+    contents: [await bridge.readVideoResource(request.params.uri)]
+  }));
 
   return server;
 }

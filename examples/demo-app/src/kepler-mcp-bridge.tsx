@@ -217,6 +217,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
 
       ws.onclose = event => {
         abortActiveCalls();
+        ctx.videoExport?.cancelActive();
         if (socket === ws) {
           socket = null;
           lastProjectState = null;
@@ -249,6 +250,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
       unsubscribe?.();
       stopped = true;
       abortActiveCalls();
+      ctx.videoExport?.cancelActive();
       if (retryTimer !== null) window.clearTimeout(retryTimer);
       socket?.close();
       socket = null;

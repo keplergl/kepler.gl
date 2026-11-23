@@ -253,7 +253,8 @@ export class SwipeExportVideoPreview extends Component<
         mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
         mapboxApiUrl: mapProps?.mapboxApiUrl,
         viewState,
-        animationTimeMs
+        animationTimeMs,
+        onLayerError: deckProps?.onError ?? undefined
       });
     }
 
@@ -266,7 +267,13 @@ export class SwipeExportVideoPreview extends Component<
           : layer
       );
     }
-    return getFlatExportLayers(mapData, {viewState, mapIndex, beforeId, animationTimeMs});
+    return getFlatExportLayers(mapData, {
+      viewState,
+      mapIndex,
+      beforeId,
+      animationTimeMs,
+      onLayerError: deckProps?.onError ?? undefined
+    });
   }
 
   _onLeftMapLoad = () => {
@@ -377,6 +384,8 @@ export class SwipeExportVideoPreview extends Component<
           {...viewState}
           mapStyle={mapStyleFromProps}
           onLoad={onMapLoad}
+          onRender={mapProps?.onRender}
+          onError={mapProps?.onError}
         >
           <DeckGLOverlay
             ref={deckRef}

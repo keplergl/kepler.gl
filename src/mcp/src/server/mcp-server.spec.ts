@@ -65,6 +65,88 @@ describe('kepler-mcp protocol', () => {
     }
   });
 
+  it('preserves preview images and exposes exported videos through MCP resources', async () => {
+    const bridge = new KeplerMcpBridge();
+    const artifact = {
+      uri: 'kepler://video/export.webm',
+      name: 'export.webm',
+      fileName: 'export.webm',
+      filePath: '/private/video/export.webm',
+      mimeType: 'video/webm' as const,
+      size: 5
+    };
+    const resourceContent = {uri: artifact.uri, mimeType: artifact.mimeType, blob: 'dmlkZW8='};
+    jest.spyOn(bridge, 'listVideoResources').mockReturnValue([artifact]);
+    jest.spyOn(bridge, 'readVideoResource').mockResolvedValue(resourceContent);
+    jest
+      .spyOn(bridge, 'callTool')
+      .mockResolvedValueOnce({
+        success: true,
+        commandId: 'map.render-preview',
+        data: {mimeType: 'image/png', width: 640, height: 480, data: 'cG5n'}
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        commandId: 'map.export-video',
+        data: {artifact}
+      })
+      .mockResolvedValueOnce({
+        success: false,
+        commandId: 'map.export-video',
+        error: 'Export failed',
+        data: {artifact}
+      });
+    const server = createKeplerMcpServer(bridge, 'test-build');
+    const client = new Client({name: 'test-client', version: '1.0'});
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+      expect(client.getServerCapabilities()).toMatchObject({
+        tools: {listChanged: true},
+        resources: {}
+      });
+      const preview = await client.callTool({name: 'map_render-preview', arguments: {}});
+      expect(preview.content).toEqual([
+        {
+          type: 'text',
+          text: JSON.stringify({mimeType: 'image/png', width: 640, height: 480}, null, 2)
+        },
+        {type: 'image', mimeType: 'image/png', data: 'cG5n'}
+      ]);
+      const video = await client.callTool({name: 'map_export-video', arguments: {}});
+      expect(video.content).toEqual([
+        expect.objectContaining({type: 'text'}),
+        expect.objectContaining({
+          type: 'resource_link',
+          uri: artifact.uri,
+          name: artifact.name,
+          mimeType: artifact.mimeType,
+          size: artifact.size
+        })
+      ]);
+      expect(await client.listResources()).toEqual({
+        resources: [
+          {uri: artifact.uri, name: artifact.name, mimeType: artifact.mimeType, size: artifact.size}
+        ]
+      });
+      expect(await client.readResource({uri: artifact.uri})).toEqual({
+        contents: [resourceContent]
+      });
+      const failed = await client.callTool({name: 'map_export-video', arguments: {}});
+      expect(failed).toMatchObject({
+        isError: true,
+        content: [{type: 'text', text: '✗ map.export-video: Export failed'}]
+      });
+    } finally {
+      await client.close();
+      await server.close();
+      await bridge.close();
+      jest.restoreAllMocks();
+    }
+  });
+
   it('subscribes only after initialization and releases the listener when the client closes', async () => {
     const unsubscribe = jest.fn();
     const onToolsChanged = jest.fn(() => unsubscribe);

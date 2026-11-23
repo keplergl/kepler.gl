@@ -11,6 +11,7 @@ import {useEffectAnimation} from './effect-animation';
 import {NativeWebMEncoder} from './native-webm-encoder';
 import {compositeVideoAnnotations} from './video-annotation-overlay';
 import type {Annotation, Effect} from '@kepler.gl/types';
+import type {ProgrammaticVideoExport} from './programmatic-video-export';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -163,11 +164,13 @@ function mount(
   kind: 'globe' | 'swipe',
   durationMs = 1000 / 30,
   effects: Effect[] = [],
-  annotations: Annotation[] = []
+  annotations: Annotation[] = [],
+  programmaticExport?: ProgrammaticVideoExport
 ) {
   const ref = React.createRef<any>();
   const {result: animation} = renderHook(() => useEffectAnimation(effects, ref));
   const props = {
+    programmaticExport,
     exportVideoWidth: 320,
     handleClose: jest.fn(),
     header: false,
@@ -404,6 +407,31 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     expect(download).toHaveBeenCalledWith(blob, 'recording.webm', 'video/webm');
     expect(container.state.viewState).toEqual(initial);
     expect(container.state).toMatchObject({rendering: false, saving: false, currentTimeMs: 0});
+  });
+
+  it('returns a finished 1080p file without downloading or recording the inclusive end frame', async () => {
+    const request = {
+      signal: new AbortController().signal,
+      onProgress: jest.fn(),
+      onComplete: jest.fn(),
+      onError: jest.fn()
+    };
+    const {container} = mount(kind, 1000 / 30, [], [], request);
+    act(() => container.setState({resolution: '1920x1080'}));
+    act(() => container.onRenderVideo());
+    const encoder = mockEncoders[mockEncoders.length - 1];
+    const saved = deferred<Blob>();
+    encoder.save.mockReturnValue(saved.promise);
+    act(() => jest.advanceTimersByTime(500));
+    await flushFrames(framesPerCapture * 2);
+    expect(encoder.add).toHaveBeenCalledTimes(1);
+    expect(encoder.add.mock.calls[0][0]).toMatchObject({width: 1920, height: 1080});
+    expect(request.onComplete).not.toHaveBeenCalled();
+    const blob = new Blob(['encoded-video'], {type: 'video/webm'});
+    await act(async () => saved.resolve(blob));
+    expect(request.onComplete).toHaveBeenCalledWith(blob);
+    expect(request.onError).not.toHaveBeenCalled();
+    expect(download).not.toHaveBeenCalled();
   });
 
   it.each([30, 60])('captures exact %i fps timestamps without rounding drift', async framerate => {

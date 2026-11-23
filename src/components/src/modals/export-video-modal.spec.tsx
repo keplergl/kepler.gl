@@ -228,6 +228,56 @@ describe('ExportVideoModal', () => {
     mockComputeDeckEffects.mockReturnValue([]);
   });
 
+  test('programmatic export honors explicit duration and camera settings and starts the renderer', async () => {
+    const helpers = require('./programmatic-video-export');
+    const cleanupExport = jest.fn();
+    const start = jest.spyOn(helpers, 'renderNativeVideo').mockReturnValue(cleanupExport);
+    const programmaticExport = {
+      signal: new AbortController().signal,
+      onProgress: jest.fn(),
+      onComplete: jest.fn(),
+      onError: jest.fn()
+    };
+    try {
+      const view = await renderAndWaitForPanel({
+        ...DEFAULT_PROPS,
+        programmaticExport,
+        visState: {
+          ...DEFAULT_PROPS.visState,
+          cameraTour: {
+            stops: [
+              {
+                id: 'start',
+                camera: {longitude: 0, latitude: 0, zoom: 3},
+                holdDurationMs: 5000,
+                travelDurationMs: 0
+              }
+            ]
+          }
+        },
+        exportVideo: {
+          ...DEFAULT_PROPS.exportVideo,
+          durationMs: 20000,
+          resolution: '1920x1080',
+          cameraPreset: 'None'
+        }
+      });
+      expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState).toMatchObject({
+        durationMs: 20000,
+        resolution: '1920x1080',
+        cameraPreset: 'None'
+      });
+      expect(start).toHaveBeenCalledWith(mockHubbleContainerRef.current, programmaticExport);
+      const renderError = new Error('Video layer could not render');
+      mockHubbleContainerRef.current.props.deckProps.onError(renderError);
+      expect(programmaticExport.onError).toHaveBeenCalledWith(renderError);
+      view.unmount();
+      expect(cleanupExport).toHaveBeenCalledTimes(1);
+    } finally {
+      start.mockRestore();
+    }
+  });
+
   test('renders without crashing', async () => {
     const {container} = await renderAndWaitForPanel();
     expect(container.querySelector('.export-video-modal')).toBeInTheDocument();
@@ -2020,6 +2070,44 @@ describe('Camera Animation video export', () => {
     instance.onStop({abort: true});
     expect(current.encoder.cancel).toHaveBeenCalledTimes(1);
   });
+  test.each(['webm', 'webm-native'])(
+    'programmatic flat %s export returns the finalized Blob without downloading',
+    mediaType => {
+      const {ExportVideoPanelContainer} = jest.requireActual('@hubble.gl/react');
+      const Container = withCameraTourExport(ExportVideoPanelContainer);
+      const programmaticExport = {
+        signal: new AbortController().signal,
+        onProgress: jest.fn(),
+        onComplete: jest.fn(),
+        onError: jest.fn()
+      };
+      const instance = new Container({
+        programmaticExport,
+        initialState: {mediaType, durationMs: 20000, resolution: '1920x1080'},
+        mapData: {
+          mapState: {...camera, width: 1280, height: 720},
+          visState: {filters: [], layers: [], animationConfig: {}}
+        },
+        exportVideoWidth: 480
+      });
+      instance.setState = update => Object.assign(instance.state, update);
+      instance.componentDidMount();
+      instance.state.adapter.render = jest.fn();
+      instance.onRenderVideo();
+      const capture = instance.state.adapter.videoCapture;
+      const download = jest.spyOn(capture, 'download');
+      const options = instance.state.adapter.render.mock.lastCall[0];
+      expect(options.timecode).toMatchObject({start: 0, framerate: 30});
+      expect(options.timecode.end).toBeLessThan(20000);
+      options.onStopped();
+      expect(programmaticExport.onComplete).not.toHaveBeenCalled();
+      const blob = new Blob(['video'], {type: 'video/webm'});
+      options.onSave(blob);
+      expect(programmaticExport.onComplete).toHaveBeenCalledWith(blob);
+      expect(download).not.toHaveBeenCalled();
+      expect(instance.state).toMatchObject({rendering: false, saving: false});
+    }
+  );
   const tour = {
     stops: [
       {id: 'a', name: 'Start', camera, holdDurationMs: 1000, travelDurationMs: 2000},
@@ -3271,4 +3359,92 @@ describe('authored export duration range', () => {
       expect(slider).toHaveAttribute('max', '30000');
     }
   );
+});
+
+test.each([500, undefined])(
+  'headless preview commits clock %s and forwards native render/error callbacks',
+  async animationTimeMs => {
+    const framePreview = {
+      width: 1000,
+      height: 700,
+      animationTimeMs,
+      onReady: jest.fn(),
+      onRender: jest.fn(),
+      onError: jest.fn()
+    };
+    renderWithThemeLocal(<ExportVideoModal {...DEFAULT_PROPS} framePreview={framePreview} />);
+    await waitFor(() => expect(framePreview.onReady).toHaveBeenCalled());
+    const panel = mockHubbleContainerRef.current;
+    expect(panel.state).toMatchObject({
+      currentTimeMs: animationTimeMs ?? 0,
+      rendering: true,
+      previewing: false
+    });
+    expect(panel.props.exportVideoWidth).toBe(320);
+    expect(panel.props.initialState.resolution).toBe('1000x700');
+    expect(panel.props.framePreview).toBe(framePreview);
+    panel.props.deckProps.onAfterRender();
+    expect(framePreview.onRender).toHaveBeenCalledWith(panel);
+    const map = {};
+    panel.props.mapProps.onRender({target: map});
+    expect(framePreview.onRender).toHaveBeenCalledWith(panel, map);
+    const error = new Error('Tile failed');
+    panel.props.deckProps.onError(error);
+    expect(framePreview.onError).toHaveBeenCalledWith(error);
+  }
+);
+
+test('prepares real point layer data in an isolated table at the requested data timestamp', () => {
+  const {preparePreviewFrame} = require('./render-preview-frame');
+  const {KeplerTable} = require('@kepler.gl/table');
+  const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: ['lat', 'lng'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+    rows: [
+      [20, 1],
+      [21, 2]
+    ]
+  });
+  const layer = new PointLayer({
+    id: 'points',
+    dataId: 'data',
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    }
+  });
+  const live = {
+    mapState: {...DEFAULT_PROPS.mapState, width: 1000, height: 700},
+    mapStyle: DEFAULT_PROPS.mapStyle,
+    visState: {
+      ...DEFAULT_PROPS.visState,
+      datasets: {data: dataset},
+      layers: [layer],
+      layerData: [],
+      animationConfig: {currentTime: 100}
+    }
+  };
+  const preview = preparePreviewFrame(live, {width: 1000, height: 700, dataTime: 250});
+  expect(preview.visState.layers[0]).toBeInstanceOf(PointLayer);
+  expect(preview.visState.layers[0]).not.toBe(layer);
+  expect(preview.visState.layers[0].isValid).toBe(true);
+  expect(preview.visState.layerData[0].data).toHaveLength(2);
+  expect(preview.visState.animationConfig.currentTime).toBe(250);
+  expect(live.visState.animationConfig.currentTime).toBe(100);
+  expect(preview.visState.datasets.data).not.toBe(dataset);
+  expect(preview.visState.datasets.data.filteredIndex).toEqual(dataset.filteredIndex);
+});
+
+test('caps a small headless viewport at its output width so native DPR can remain at least one', async () => {
+  const framePreview = {
+    width: 200,
+    height: 123,
+    onReady: jest.fn(),
+    onRender: jest.fn(),
+    onError: jest.fn()
+  };
+  renderWithThemeLocal(<ExportVideoModal {...DEFAULT_PROPS} framePreview={framePreview} />);
+  await waitFor(() => expect(framePreview.onReady).toHaveBeenCalled());
+  expect(mockHubbleContainerRef.current.props.exportVideoWidth).toBe(200);
+  expect(mockHubbleContainerRef.current.props.initialState.resolution).toBe('200x123');
 });
