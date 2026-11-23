@@ -659,7 +659,7 @@ const ExportVideoModalFactory = () => {
       // the preview, then sets it to 1 during animated preview, which desyncs
       // MapLibre from the Deck overlay. Pin to the *export* scale (not native DPR)
       // so preview stays aligned and recording still uses the selected quality.
-      if (isSwipeMode || isGlobeEnabled) return undefined;
+      if (framePreview || isSwipeMode || isGlobeEnabled) return undefined;
 
       const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
 
@@ -688,7 +688,13 @@ const ExportVideoModalFactory = () => {
           delete (window as {devicePixelRatio?: number}).devicePixelRatio;
         }
       };
-    }, [isSwipeMode, isGlobeEnabled, videoConfiguration.resolution, exportVideoWidth]);
+    }, [
+      framePreview,
+      isSwipeMode,
+      isGlobeEnabled,
+      videoConfiguration.resolution,
+      exportVideoWidth
+    ]);
 
     const onFilterFrameUpdate = useCallback(
       (filterIdx: number, name: string, value: any) => {

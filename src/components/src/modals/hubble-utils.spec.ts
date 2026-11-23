@@ -826,6 +826,44 @@ describe('flat export zoom fading', () => {
     computeDeckLayers.mockImplementation(realComputeDeckLayers);
   });
 
+  test.each([
+    ['flat', getFlatExportLayers, 0],
+    ['flat swipe', getFlatExportLayers, 1],
+    ['globe', getGlobeExportLayers, 0],
+    ['globe swipe', getGlobeExportLayers, 1]
+  ])(
+    '%s captures report tileset failures and ignore recovery notifications',
+    (_name, getLayers, mapIndex) => {
+      const {source, state} = setup();
+      const onLayerError = jest.fn();
+      let callbacks;
+      state.visState.layers[0].config.label = 'Buildings';
+      state.visState.layers[0].renderLayer = ({layerCallbacks}) => {
+        callbacks = layerCallbacks;
+        return [source];
+      };
+
+      getLayers(state, {mapIndex, onLayerError});
+      callbacks.onTilesetLoadError(null);
+      expect(onLayerError).not.toHaveBeenCalled();
+
+      callbacks.onTilesetLoadError('token');
+      expect(onLayerError).toHaveBeenLastCalledWith(
+        new Error('Tileset for layer "Buildings" could not load. Check its access token.')
+      );
+      callbacks.onTilesetLoadError('generic');
+      expect(onLayerError).toHaveBeenLastCalledWith(
+        new Error('Tileset for layer "Buildings" could not load. Check its URL and connection.')
+      );
+      callbacks.onTilesetLoadError(null);
+      expect(onLayerError).toHaveBeenCalledTimes(2);
+
+      const renderError = new Error('Layer render failed');
+      callbacks.onLayerError(renderError);
+      expect(onLayerError).toHaveBeenLastCalledWith(renderError);
+    }
+  );
+
   test('follows each animated frame without capturing fully faded layers or changing the saved map', () => {
     const {source, state} = setup();
     const savedInteraction = JSON.parse(JSON.stringify(state.visState.interactionConfig));

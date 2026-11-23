@@ -8,6 +8,7 @@ import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
 import {compositeSwipeFrame} from './swipe-composite-utils';
 import {getGlobeExportLayers, getFlatExportLayers} from './hubble-utils';
+import {withCameraTourExport} from './camera-tour-export';
 
 const mockAnnotationOverlay = jest.fn(() => null);
 jest.mock('./video-annotation-overlay', () => ({
@@ -42,7 +43,9 @@ jest.mock('react-map-gl/maplibre', () => {
         const handlers = {};
         const map = {
           getCanvas: () => canvas,
+          isStyleLoaded: jest.fn(() => true),
           areTilesLoaded: jest.fn(() => true),
+          setPixelRatio: jest.fn(),
           on: jest.fn((name, callback) => {
             handlers[name] = callback;
           })
@@ -107,7 +110,7 @@ function props(overrides = {}) {
 
 let originalPixelRatio;
 beforeEach(() => {
-  originalPixelRatio = window.devicePixelRatio;
+  originalPixelRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
   mockDecks.length = 0;
   mockMaps.length = 0;
   mockOverlays.length = 0;
@@ -121,7 +124,147 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
-  window.devicePixelRatio = originalPixelRatio;
+  Object.defineProperty(window, 'devicePixelRatio', originalPixelRatio);
+});
+
+describe('headless preview canvas resolution', () => {
+  test.each([false, true])(
+    'flat frame capture bypasses Hubble and captures its native canvas (disableBaseMap: %s)',
+    disableBaseMap => {
+      const privatePreview = jest.fn(() => {
+        throw new Error('Hubble preview must not mount for a still frame');
+      });
+      class BaseContainer extends React.Component<any> {
+        state = {
+          viewState: this.props.viewState,
+          durationMs: 1000,
+          currentTimeMs: 250,
+          rendering: true
+        };
+        render() {
+          return React.createElement(privatePreview, this.props);
+        }
+      }
+      const Panel = withCameraTourExport(BaseContainer);
+      const ref = React.createRef();
+      const capture = jest.fn();
+      const onRender = jest.fn(() => {
+        const preview = ref.current.previewRef.current;
+        preview.onAfterRender(() => capture(preview.getCanvas()));
+      });
+      const framePreview = {animationTimeMs: 250, onError: jest.fn()};
+      const input = props({
+        mapData: {mapState: {}, visState: {}},
+        disableBaseMap,
+        mapProps: {onRender},
+        deckProps: {onAfterRender: onRender},
+        framePreview
+      });
+      const descriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+      const {unmount} = render(<Panel {...input} ref={ref} />);
+      expect(privatePreview).not.toHaveBeenCalled();
+      const nativeCanvas = disableBaseMap
+        ? mockDecks[0].deck.getCanvas()
+        : mockMaps[0].map.getCanvas();
+      expect(ref.current.previewRef.current.getCanvas()).toBe(nativeCanvas);
+      if (disableBaseMap) {
+        expect(mockDecks).toHaveLength(1);
+        expect(mockDecks[0].props.useDevicePixels).toBe(2);
+        expect(mockDecks[0].props.viewState).toEqual(input.viewState);
+        act(() => mockDecks[0].props.onAfterRender({}));
+      } else {
+        expect(mockMaps).toHaveLength(1);
+        expect(mockMaps[0].props.pixelRatio).toBe(2);
+        expect(mockMaps[0].props.style).toEqual({width: 640, height: 360});
+        expect(mockMaps[0].props.longitude).toBe(input.viewState.longitude);
+        act(() => mockMaps[0].props.onRender({target: mockMaps[0].map}));
+      }
+      expect(getFlatExportLayers.mock.lastCall[1].animationTimeMs).toBe(250);
+      expect(capture).toHaveBeenCalledWith(nativeCanvas);
+      unmount();
+      expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(descriptor);
+    }
+  );
+
+  test.each([
+    [true, false],
+    [true, true],
+    [false, false],
+    [false, true]
+  ])(
+    'keeps DPR local while resizing (singleMap: %s, disableBaseMap: %s)',
+    (singleMap, disableBaseMap) => {
+      // A visible video export may already own this descriptor while a still
+      // preview is pending. Neither mounting nor cleanup may replace it.
+      const descriptor = {configurable: true, get: () => 1.25};
+      Object.defineProperty(window, 'devicePixelRatio', descriptor);
+      const before = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+      const input = props({singleMap, disableBaseMap, useLocalPixelRatio: true});
+      const {rerender, unmount} = render(<SwipeExportVideoPreview {...input} />);
+      const canvases = disableBaseMap ? mockDecks : mockMaps;
+      expect(canvases).toHaveLength(singleMap ? 1 : 2);
+      canvases.forEach(({props: canvasProps}) =>
+        expect(disableBaseMap ? canvasProps.useDevicePixels : canvasProps.pixelRatio).toBe(2)
+      );
+      expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(before);
+      rerender(<SwipeExportVideoPreview {...input} resolution={[1920, 1080]} />);
+      canvases.forEach(({map, props: canvasProps}) => {
+        expect(disableBaseMap ? canvasProps.useDevicePixels : canvasProps.pixelRatio).toBe(3);
+        if (map) expect(map.setPixelRatio).toHaveBeenLastCalledWith(3);
+      });
+      expect(window.devicePixelRatio).toBe(1.25);
+      unmount();
+      expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(before);
+    }
+  );
+
+  test('captures one native map only after its style, tiles and layers are ready', () => {
+    const ref = React.createRef<SwipeExportVideoPreview>();
+    render(
+      <SwipeExportVideoPreview
+        ref={ref}
+        {...props({singleMap: true, useLocalPixelRatio: true, disableBaseMap: false})}
+      />
+    );
+    const capture = jest.fn();
+    const map = mockMaps[0].map;
+    expect(ref.current.getCanvas()).toBe(map.getCanvas());
+    expect(ref.current.getCompositeCanvas()).toBeNull();
+    expect(mockAnnotationOverlay.mock.lastCall[0].frame.swipePercentage).toBeUndefined();
+    map.isStyleLoaded.mockReturnValue(false);
+    ref.current.onAfterRender(capture);
+    expect(capture).not.toHaveBeenCalled();
+    map.isStyleLoaded.mockReturnValue(true);
+    map.areTilesLoaded.mockReturnValue(false);
+    ref.current.onAfterRender(capture);
+    expect(capture).not.toHaveBeenCalled();
+    map.areTilesLoaded.mockReturnValue(true);
+    mockOverlays[0]._deck.props.layers[0].isLoaded = false;
+    ref.current.onAfterRender(capture);
+    expect(capture).not.toHaveBeenCalled();
+    mockOverlays[0]._deck.props.layers[0].isLoaded = true;
+    ref.current.onAfterRender(capture);
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(compositeSwipeFrame).not.toHaveBeenCalled();
+  });
+
+  test('preserves supplied layer instances and captures the bare canvas without a basemap', () => {
+    const layer = {id: 'points', isLoaded: true, clone: jest.fn()};
+    const ref = React.createRef<SwipeExportVideoPreview>();
+    render(
+      <SwipeExportVideoPreview
+        ref={ref}
+        {...props({singleMap: true, useLocalPixelRatio: true, deckProps: {layers: [layer]}})}
+      />
+    );
+    const capture = jest.fn();
+    ref.current.onAfterRender(capture);
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(ref.current.getCanvas()).toBe(mockDecks[0].deck.getCanvas());
+    expect(mockDecks[0].props.layers).toEqual([layer]);
+    expect(layer.clone).not.toHaveBeenCalled();
+    expect(compositeSwipeFrame).not.toHaveBeenCalled();
+  });
 });
 
 describe('swipe preview frame lifecycle', () => {

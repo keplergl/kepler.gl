@@ -6,10 +6,12 @@ import {createRoot, type Root} from 'react-dom/client';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
+import cloneDeepWith from 'es-toolkit/compat/cloneDeepWith';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 import {MapSplitMode} from '@kepler.gl/constants';
 import {calculateLayerData, visStateUpdaters} from '@kepler.gl/reducers';
+import {getFieldValueAccessor, type Datasets} from '@kepler.gl/table';
 import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
 import {drawStarsBackground, getGlobeClearColor} from '@kepler.gl/deckgl-layers';
 import ExportVideoModalFactory from './export-video-modal';
@@ -67,6 +69,22 @@ export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFra
     ...mapData,
     visState: {...mapData.visState, effects: [], layers: [], layerData: []}
   });
+  const datasets = snapshot.visState.datasets as Datasets;
+  for (const dataset of Object.values(datasets)) {
+    if (!dataset.dataContainer || !dataset.fields) continue;
+    const cachedFields = dataset.fields.filter(field => field.filterProps).map(field => field.name);
+    // cloneDeep retains functions, including accessors bound to the live table.
+    // Bind fields and their cached filter mappings to the copied container.
+    dataset.fields = dataset.fields.map((field, index) => {
+      const {filterProps: _filterProps, ...rest} = field;
+      return {...rest, valueAccessor: getFieldValueAccessor(field, index, dataset.dataContainer)};
+    });
+    dataset.filteredIdxCPU = undefined;
+    dataset.filterRecord = undefined;
+    dataset.filterRecordCPU = undefined;
+    dataset.changedFilters = undefined;
+    cachedFields.forEach(name => dataset.getColumnFilterProps(name));
+  }
   snapshot.visState.layers = mapData.visState.layers.map(layer => {
     if (layer.config.isVisible && layer.type === 'zarr') {
       throw new Error(
@@ -76,16 +94,30 @@ export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFra
     // Arrow callbacks/memoizers close over their owning layer. A deep copy
     // would retain callbacks bound to the live instance, so construct anew.
     const LayerClass = layer.constructor;
-    const copy = new LayerClass({...cloneDeep(layer.config), id: layer.id});
-    copy.config = cloneDeep(layer.config);
+    const dataset = datasets[layer.config.dataId];
+    const config = cloneDeepWith(layer.config, value => {
+      const field =
+        value && typeof value.valueAccessor === 'function'
+          ? dataset?.fields.find(field => field.name === value.name)
+          : undefined;
+      return field
+        ? {...cloneDeep(value), valueAccessor: field.valueAccessor, filterProps: field.filterProps}
+        : undefined;
+    });
+    const copy = new LayerClass({...config, id: layer.id});
+    copy.config = config;
     copy.meta = cloneDeep(layer.meta);
     return copy;
   });
+  for (const dataset of Object.values(datasets)) {
+    // Rebuild GPU accessors and CPU records using snapshot fields and layers.
+    dataset.filterTable?.(snapshot.visState.filters || [], snapshot.visState.layers);
+  }
   snapshot.visState.layerData = snapshot.visState.layers.map((original, index) => {
     if (original.config.isVisible === false) return {};
     const {layer, layerData} = calculateLayerData(original, snapshot.visState);
     snapshot.visState.layers[index] = layer;
-    if (original.config.isVisible !== false && !layer.isValid)
+    if (!layer.isValid)
       throw new Error(
         `Preview layer "${layer.config.label || layer.id}" could not render: ${layer.errorMessage}`
       );
@@ -109,14 +141,15 @@ export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFra
     for (const filter of getAnimatableFilters(snapshot)) {
       const idx = snapshot.visState.filters.findIndex(candidate => candidate.id === filter.id);
       const [start, end] = filter.value;
-      let value: number | number[];
-      if (filter.animationWindow === 'point') value = dataTime;
+      let value: number[];
+      if (filter.animationWindow === 'point') value = [dataTime, dataTime];
       else if (filter.animationWindow === 'incremental') value = [start, dataTime];
       else if (filter.animationWindow === 'interval') {
         const bins = filter.timeBins?.[filter.dataId[0]]?.[filter.plotType?.interval];
         const bin = bins?.find(bin => dataTime >= bin.x0 && dataTime < bin.x1);
         if (!bin) throw new Error('Preview dataTime does not belong to a loaded filter interval.');
-        value = [bin.x0, bin.x1];
+        // Time filters include both endpoints; histogram bins exclude x1.
+        value = [bin.x0, Math.max(bin.x0, bin.x1 - 1)];
       } else {
         value =
           filter.syncTimelineMode === 0
@@ -160,7 +193,6 @@ export async function renderPreviewFrame(
   if (signal?.aborted) throw new DOMException('Preview frame canceled', 'AbortError');
   const snapshot = preparePreviewFrame(mapData, options);
   previewActive = true;
-  const pixelRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
   let mount: HTMLDivElement | undefined;
   let root: Root | undefined;
   const capture = new AbortController();
@@ -172,11 +204,6 @@ export async function renderPreviewFrame(
   const isSwipe =
     snapshot.mapState.isSplit && snapshot.mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   try {
-    Object.defineProperty(window, 'devicePixelRatio', {
-      configurable: true,
-      writable: true,
-      value: 1
-    });
     mount = document.createElement('div');
     mount.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;width:1080px;';
     mount.setAttribute('aria-hidden', 'true');
@@ -200,11 +227,10 @@ export async function renderPreviewFrame(
           ),
         45000
       );
-      const onRender = (panel: any, map?: any) => {
+      const onRender = (panel: any) => {
         if (!frameReady || capturing || capture.signal.aborted || !panel) return;
         try {
           const preview = panel.previewRef?.current;
-          const deck = panel.state.adapter?.deck;
           let source: HTMLCanvasElement | null = null;
           if (isSwipe) {
             if (!preview) return;
@@ -216,11 +242,10 @@ export async function renderPreviewFrame(
             if (!preview?.areLayersLoaded()) return;
             source = preview.getCanvas();
           } else {
-            if (!map?.isStyleLoaded() || !map.areTilesLoaded() || !deck) return;
-            const layers = (deck.props.layers || []).flat(Infinity);
-            if (!layers.every(layer => !layer || layer.props?.visible === false || layer.isLoaded))
-              return;
-            source = map.getCanvas();
+            if (!preview) return;
+            preview.onAfterRender(() => {
+              source = preview.getCanvas();
+            });
           }
           if (!source) return;
           // MapLibre rounds its CSS container to integer pixels before applying
@@ -345,8 +370,6 @@ export async function renderPreviewFrame(
     } finally {
       mount?.remove();
       previewActive = false;
-      if (pixelRatio) Object.defineProperty(window, 'devicePixelRatio', pixelRatio);
-      else delete (window as {devicePixelRatio?: number}).devicePixelRatio;
     }
   }
 }

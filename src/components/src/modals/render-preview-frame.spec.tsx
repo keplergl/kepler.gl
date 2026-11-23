@@ -20,6 +20,7 @@ jest.mock('./video-annotation-overlay', () => ({
 }));
 jest.mock('../annotations/annotation-readout', () => ({getAnnotationReadoutValues: () => ({})}));
 jest.mock('./hubble-utils', () => ({getAnimatableFilters: data => data.visState.filters}));
+jest.mock('@kepler.gl/table', () => ({getFieldValueAccessor: jest.fn()}));
 jest.mock('@kepler.gl/reducers', () => ({
   calculateLayerData: jest.fn(layer => ({layer, layerData: {owner: layer}})),
   visStateUpdaters: {
@@ -117,6 +118,14 @@ function frame() {
     isStyleLoaded: () => true,
     areTilesLoaded: jest.fn(() => false)
   };
+  panel.previewRef = {
+    current: {
+      getCanvas: () => canvas,
+      onAfterRender: callback => {
+        if (map.isStyleLoaded() && map.areTilesLoaded() && layer.isLoaded) callback();
+      }
+    }
+  };
   return {canvas, panel, layer, map};
 }
 
@@ -163,6 +172,42 @@ test.each([
   {cameraTimeMs: 1001}
 ])('rejects invalid frame requests: %p', invalid => {
   expect(() => preparePreviewFrame(fixture(), {...size, ...invalid})).toThrow(/Preview/);
+});
+
+test('selects a valid zero-width time window for a point preview', () => {
+  const live = fixture();
+  live.visState.filters = [{id: 'time', value: [100, 150], animationWindow: 'point'}];
+  const snapshot = preparePreviewFrame(live, {...size, dataTime: 250});
+  expect(snapshot.visState.filters[0].value).toEqual([250, 250]);
+  expect(live.visState.filters[0].value).toEqual([100, 150]);
+});
+
+test.each([
+  [1999, [1000, 1999]],
+  [2000, [2000, 2999]],
+  [2500, [2000, 2999]]
+])('keeps interval preview at %s within its histogram bin', (dataTime, expected) => {
+  const live = fixture();
+  live.visState.filters = [
+    {
+      id: 'time',
+      dataId: ['data'],
+      value: [1000, 1999],
+      animationWindow: 'interval',
+      plotType: {interval: 'second'},
+      timeBins: {
+        data: {
+          second: [
+            {x0: 1000, x1: 2000},
+            {x0: 2000, x1: 3000}
+          ]
+        }
+      }
+    }
+  ];
+  const snapshot = preparePreviewFrame(live, {...size, dataTime});
+  expect(snapshot.visState.filters[0].value).toEqual(expected);
+  expect(live.visState.filters[0].value).toEqual([1000, 1999]);
 });
 
 test('waits for committed export buffers, layers and basemap and normalizes bounded pixel rounding', async () => {
@@ -241,6 +286,31 @@ test('rejects concurrent capture and reports native rendering failures', async (
     await failure;
   });
   expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
+});
+
+test('leaves another export pixel ratio untouched throughout capture and cancellation', async () => {
+  const pinnedRatio = {configurable: true, get: () => 4, set: jest.fn()};
+  Object.defineProperty(window, 'devicePixelRatio', pinnedRatio);
+  const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+  const controller = new AbortController();
+  let result;
+  await act(async () => {
+    result = renderPreviewFrame(fixture(), size, {...renderOptions, signal: controller.signal});
+  });
+  expect(window.devicePixelRatio).toBe(4);
+  expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(originalDescriptor);
+  expect(pinnedRatio.set).not.toHaveBeenCalled();
+
+  // A live map or another export may change its own ratio while resources load.
+  Object.defineProperty(window, 'devicePixelRatio', {configurable: true, get: () => 7});
+  const changedDescriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+  const failure = expect(result).rejects.toThrow('canceled');
+  await act(async () => {
+    controller.abort();
+    await failure;
+  });
+  expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(changedDescriptor);
+  expect(window.devicePixelRatio).toBe(7);
 });
 
 test('times out unfinished rendering with a useful error and releases the request lock', async () => {
