@@ -248,6 +248,35 @@ test('#ClusterLayer -> renderLayer', t => {
         const [clusterLayer, scatterplotLayer] = deckLayers;
         const {props} = clusterLayer;
         const scatterplotLayerProp = scatterplotLayer.props;
+        t.equal(scatterplotLayerProp.radiusUnits, 'pixels', 'flat circles use screen pixels');
+        t.equal(scatterplotLayerProp.radiusScale, 1, 'count scale is not converted to meters');
+        const cell = scatterplotLayerProp.data[0];
+        const pick = clusterLayer.getPickingInfo({info: {picked: true, index: cell.index}});
+        const options = {
+          data: {},
+          gpuFilter: preparedDataset.gpuFilter,
+          layerCallbacks: {},
+          visible: true,
+          objectHovered: {...pick, layer: clusterLayer}
+        };
+        const [, flatHover] = layer.renderLayer({...options, mapState: INITIAL_MAP_STATE});
+        const [globe, globeHover] = layer.renderLayer({
+          ...options,
+          mapState: {...INITIAL_MAP_STATE, globe: {enabled: true}}
+        });
+        t.equal(flatHover.props.radiusUnits, 'pixels', 'flat hover uses the same units');
+        t.equal(
+          flatHover.props.getRadius(pick.object),
+          scatterplotLayerProp.getRadius(cell),
+          'flat hover matches the circle radius'
+        );
+        t.equal(globe.props.radiusUnits, 'meters', 'globe retains meter sizing');
+        t.equal(globeHover.props.radiusUnits, 'meters', 'globe hover retains meter sizing');
+        t.equal(
+          globeHover.props.getRadius(pick.object),
+          pick.object.scaledRadiusValue,
+          'globe hover uses the legacy picked value'
+        );
 
         const expectedProps = {
           colorRange: [

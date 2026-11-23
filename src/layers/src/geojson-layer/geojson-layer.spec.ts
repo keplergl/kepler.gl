@@ -845,6 +845,15 @@ describe('GeoJsonLayer source revisions', () => {
       await dataset.update({fields: dataset.fields, cols: [vector([[30, 40]])], rows: []});
       const data = layer.formatLayerData({refresh: dataset}, initialData) as any;
       expect(Array.from(data.data[0].points.positions.value).slice(0, 2)).toEqual([30, 40]);
+      const [rendered] = layer.renderLayer({
+        data,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: {tooltip: {enabled: false}},
+        mapState: {zoom: 4},
+        visible: true
+      });
+      expect(rendered.props.pointRadiusUnits).toBe('common');
+
       expect(layer.centroids).toEqual([[30, 40]]);
       expect(layer.meta).toMatchObject({bounds: [30, 40, 30, 40]});
       layer.updateLayerMeta(dataset);
@@ -1467,7 +1476,7 @@ describe('GeoJsonLayer numeric feature styles', () => {
     }
   );
 
-  const render = (layer, dataset, data, zoom) =>
+  const render = (layer, dataset, data, zoom, globe = false) =>
     layer.renderLayer({
       data,
       gpuFilter: dataset.gpuFilter,
@@ -1475,7 +1484,7 @@ describe('GeoJsonLayer numeric feature styles', () => {
       visible: true,
       layerCallbacks: {},
       interactionConfig: {tooltip: {enabled: false}},
-      mapState: {zoom, width: 800, height: 600}
+      mapState: {zoom, width: 800, height: 600, globe: {enabled: globe}}
     })[0];
 
   test('config replacement updates numeric values and color triggers without rebuilding data', async () => {
@@ -1533,6 +1542,8 @@ describe('GeoJsonLayer numeric feature styles', () => {
     expect(near.props.data.map(near.props.getPointRadius)).toEqual(
       radii.map(radius => radius ?? 1)
     );
+    expect(near.props.pointRadiusUnits).toBe(fixed ? 'meters' : 'common');
+    expect(render(layer, dataset, data, 12, true).props.pointRadiusUnits).toBe('meters');
     if (fixed) {
       expect(near.props.pointRadiusScale).toBe(1);
       expect(far.props.pointRadiusScale).toBe(1);
@@ -1567,6 +1578,7 @@ describe('GeoJsonLayer numeric feature styles', () => {
     expect(near.props.data.map(near.props.getPointRadius)).toEqual([5, 10]);
     expect(far.props.data.map(far.props.getPointRadius)).toEqual([5, 10]);
     expect(far.props.pointRadiusScale).toBe(near.props.pointRadiusScale * 2 ** 8);
+    expect(near.props.pointRadiusUnits).toBe('common');
 
     layer.updateLayerConfig({[field]: null});
     const unmapped = layer.formatLayerData({[dataset.id]: dataset}, data);
@@ -1578,6 +1590,40 @@ describe('GeoJsonLayer numeric feature styles', () => {
     if (first != null || second != null) {
       expect(restored.props.pointRadiusScale).toBe(1);
     }
+  });
+
+  test('uses the same point radius for the main and hover layers across latitude', async () => {
+    const {layer, dataset} = await initializeGeoJsonLayer(
+      [0, 60].map(latitude => ({
+        geometry: {type: 'Point', coordinates: [0, latitude]},
+        properties: {}
+      }))
+    );
+    layer.updateLayerVisConfig({stroked: true});
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as any;
+    const renderAt = (latitude: number, index: number) =>
+      layer.renderLayer({
+        data,
+        gpuFilter: dataset.gpuFilter,
+        visible: true,
+        interactionConfig: {tooltip: {enabled: true}},
+        mapState: {zoom: 4, latitude, longitude: 0},
+        objectHovered: {
+          picked: true,
+          index,
+          layer: {props: {id: layer.id}},
+          object: data.data[index]
+        }
+      });
+    const [equator, equatorHover] = renderAt(0, 0);
+    const [north, northHover] = renderAt(60, 1);
+    expect(equator.props.stroked).toBe(true);
+    for (const rendered of [equatorHover, north, northHover]) {
+      expect(rendered.props.pointRadiusUnits).toBe('common');
+      expect(rendered.props.pointRadiusScale).toBe(equator.props.pointRadiusScale);
+      expect(rendered.props.lineWidthScale).toBe(equator.props.lineWidthScale);
+    }
+    expect(equator.props.pointRadiusUnits).toBe('common');
   });
 
   test('retains zero styles through data save/load and same-length refresh', async () => {

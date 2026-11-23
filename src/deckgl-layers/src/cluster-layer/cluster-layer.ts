@@ -168,6 +168,8 @@ const defaultProps = {
   colorScaleType: SCALE_TYPES.quantize,
   radiusScaleType: SCALE_TYPES.sqrt,
   radiusRange: defaultRadiusRange,
+  // Preserve the legacy sizing path unless a caller explicitly requests pixels.
+  radiusUnits: 'meters',
   getPosition: {type: 'accessor', value: x => x.position},
   getColorValue: {type: 'accessor', value: defaultGetColorValue},
   getRadiusValue: {type: 'accessor', value: defaultGetRadiusValue},
@@ -239,7 +241,10 @@ export default class ClusterLayer extends CompositeLayer {
     if (obj?.object) {
       const distanceScale = this.context.viewport.getDistanceScales();
       const metersPerPixel = distanceScale.metersPerUnit[0] / this.context.viewport.scale;
-      obj.object.scaledRadiusValue = obj.object.scaledRadiusValue * metersPerPixel;
+      // Preserve the legacy picked value in meters. The pixel value lets the
+      // Kepler hover layer match flat-map glyphs without a latitude correction.
+      obj.object.scaledRadiusPixels = obj.object.scaledRadiusValue;
+      obj.object.scaledRadiusValue *= metersPerPixel;
     }
 
     return obj as PickingInfo;
@@ -263,21 +268,31 @@ export default class ClusterLayer extends CompositeLayer {
   }
 
   renderLayers() {
-    const {id, radiusScale, visible, opacity, pickable, autoHighlight, highlightColor} = this
-      .props as Record<string, any>;
+    const {
+      id,
+      radiusScale,
+      radiusUnits,
+      visible,
+      opacity,
+      pickable,
+      autoHighlight,
+      highlightColor
+    } = this.props as Record<string, any>;
     const {cpuAggregator} = this.state as unknown as ClusterLayerState;
     const updateTriggers = this._getSublayerUpdateTriggers();
     const accessors = this._getSubLayerAccessors();
 
-    const distanceScale = this.context.viewport.getDistanceScales();
-    const metersPerPixel = distanceScale.metersPerUnit[0] / this.context.viewport.scale;
+    const viewport = this.context.viewport;
+    const radiusUnitScale =
+      radiusUnits === 'pixels' ? 1 : viewport.getDistanceScales().metersPerUnit[0] / viewport.scale;
 
     const clusters = cpuAggregator.state.layerData.data;
     // return props to the sublayer constructor
     const scatterplot = new ScatterplotLayer({
       id: `${id}-cluster`,
       data: clusters,
-      radiusScale: metersPerPixel * radiusScale,
+      radiusScale: radiusUnitScale * radiusScale,
+      radiusUnits,
       visible,
       opacity,
       pickable,
