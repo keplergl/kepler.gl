@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {Field} from '@kepler.gl/types';
-import {ageStyleColorAccessor, isPointAgeStyle, PointAgeStyle} from './point-age-style';
+import {ageStyleColorAccessor, isLayerAgeStyle, LayerAgeStyle} from './layer-age-style';
 
 const day = 86400000;
-const style: PointAgeStyle = {
+const style: LayerAgeStyle = {
   timeField: 'observed',
   stops: [
     {ageMs: 0, opacity: 1, color: [255, 0, 0]},
@@ -14,7 +13,7 @@ const style: PointAgeStyle = {
   ]
 };
 const base = [10, 20, 30, 200];
-const field = (time: unknown) => ({valueAccessor: () => time} as unknown as Field);
+const field = (time: unknown) => () => time;
 
 test.each([0, Date.UTC(2026, 10, 1)])(
   'age bands use exact boundaries and seek backward from %s',
@@ -41,12 +40,7 @@ test.each([0, Date.UTC(2026, 10, 1)])(
 test('combines RGB, alpha and hover color without depending on previous frames', () => {
   const valueAccessor = jest.fn(({index}) => index * day);
   const getColor = jest.fn(() => [5, 10, 15]);
-  const getStyled = ageStyleColorAccessor(
-    getColor,
-    style,
-    {valueAccessor} as unknown as Field,
-    36 * day
-  );
+  const getStyled = ageStyleColorAccessor(getColor, style, valueAccessor, 36 * day);
   expect(getStyled({index: 2})).toEqual([5, 10, 15, 127.5]);
   expect(valueAccessor).toHaveBeenCalledWith({index: 2});
   expect(getColor).toHaveBeenCalledWith({index: 2});
@@ -84,7 +78,7 @@ test('invalid saved styles are ignored rather than crashing rendering', () => {
     {...style, stops: [{ageMs: 0, color: [256, 0, 0]}]},
     {...style, stops: [...style.stops].reverse()}
   ]) {
-    expect(isPointAgeStyle(candidate as any)).toBe(false);
+    expect(isLayerAgeStyle(candidate as any)).toBe(false);
   }
-  expect(isPointAgeStyle(style)).toBe(true);
+  expect(isLayerAgeStyle(style)).toBe(true);
 });

@@ -3,7 +3,11 @@
 
 import test from 'tape';
 import {defaultElevation, defaultLineWidth, defaultRadius, KeplerGlLayers} from '@kepler.gl/layers';
-import {copyTableAndUpdate} from '@kepler.gl/table';
+import {copyTableAndUpdate, KeplerTable} from '@kepler.gl/table';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import * as arrow from 'apache-arrow';
+import {LayerManager, MapView} from '@deck.gl/core';
+import {device} from '@deck.gl/test-utils';
 
 const {GeojsonLayer} = KeplerGlLayers;
 
@@ -27,7 +31,7 @@ import {
   geoStyleDataToFeature,
   geoStyleMeta
 } from 'test/fixtures/geojson';
-import {processGeojson} from '@kepler.gl/processors';
+import {processGeojson, arrowSchemaToFields} from '@kepler.gl/processors';
 
 test('#GeojsonLayer -> constructor', t => {
   const TEST_CASES = {
@@ -832,5 +836,158 @@ test('#GeojsonLayer -> hover overlay caches outline data', t => {
     null,
     'should clear hover overlay data when nothing is picked'
   );
+  t.end();
+});
+
+test('#GeojsonLayer -> age bands use the first source row of table-built features', async t => {
+  const dataset = new KeplerTable({info: {id: 'table-ages'}});
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'id', type: 'string'},
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'},
+        {name: 'observed', type: 'timestamp', format: ''}
+      ],
+      rows: [
+        ['a', 1, 2, 1000],
+        ['a', 2, 3, 2000],
+        ['b', 3, 4, 2000],
+        ['b', 4, 5, null]
+      ]
+    }
+  });
+  const layer = new GeojsonLayer({id: 'table-ages', dataId: dataset.id, columnMode: 'table'});
+  layer.updateLayerConfig({
+    columns: {
+      ...layer.config.columns,
+      ...Object.fromEntries(
+        ['id', 'lat', 'lng'].map((name, fieldIdx) => [name, {value: name, fieldIdx}])
+      )
+    }
+  });
+  layer.updateLayerVisConfig({
+    ageStyle: {
+      timeField: 'observed',
+      stops: [
+        {ageMs: 0, opacity: 1},
+        {ageMs: 1000, opacity: 0.2}
+      ]
+    }
+  });
+  const data = layer.formatLayerData({[dataset.id]: dataset});
+  t.equal(data.data.length, 2, 'groups four rows into two features');
+  const opts = {
+    data,
+    dataset,
+    idx: 0,
+    mapState: INITIAL_MAP_STATE,
+    gpuFilter: dataset.gpuFilter,
+    interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+    visible: true,
+    layerCallbacks: {},
+    filters: [{type: 'timeRange', dataId: [dataset.id], name: ['observed'], value: [0, 2000]}]
+  };
+  const frame = layer.renderLayer(opts)[0];
+  t.deepEqual(
+    data.data.map(feature => frame.props.getFillColor(feature)[3]),
+    [51, 255],
+    'age uses the first row of each feature, not its feature index'
+  );
+  layer.updateLayerVisConfig({
+    ageStyle: {timeField: 'observed', stops: [{ageMs: 0, opacity: 0.5}]}
+  });
+  const changed = layer.renderLayer(opts)[0];
+  t.deepEqual(
+    data.data.map(feature => changed.props.getFillColor(feature)[3]),
+    [127.5, 127.5],
+    'editing bands at a paused playhead changes colors'
+  );
+  t.end();
+});
+
+test('#GeojsonLayer -> Arrow age colors use absolute rows in every batch', async t => {
+  const pointType = new arrow.FixedSizeList(2, new arrow.Field('xy', new arrow.Float64()));
+  const tables = [
+    [1000, 2000],
+    [null, 3000]
+  ].map(times => {
+    const table = new arrow.Table({
+      geometry: arrow.vectorFromArray(
+        [
+          [1, 2],
+          [3, 4]
+        ],
+        pointType
+      ),
+      observed: arrow.vectorFromArray(times, new arrow.TimestampMillisecond())
+    });
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    return table;
+  });
+  const dataset = new KeplerTable({info: {id: 'arrow-ages'}});
+  await dataset.importData({
+    data: {
+      fields: arrowSchemaToFields(tables[0]),
+      cols: tables[0].schema.fields.map((field, index) => tables[0].getChildAt(index))
+    }
+  });
+  const table = tables[0].concat(tables[1]);
+  await dataset.update({
+    cols: table.schema.fields.map((field, index) => table.getChildAt(index)),
+    arrowTable: table
+  });
+  const layer = new GeojsonLayer({id: 'arrow-ages', dataId: dataset.id});
+  layer.config.columns.geojson = {value: 'geometry', fieldIdx: 0};
+  layer.updateLayerVisConfig({
+    ageStyle: {
+      timeField: 'observed',
+      stops: [
+        {ageMs: 0, color: [255, 0, 0], opacity: 1},
+        {ageMs: 1000, color: [0, 0, 255], opacity: 0.2}
+      ]
+    }
+  });
+  const data = layer.formatLayerData({[dataset.id]: dataset});
+  t.equal(data.data.length, 2, 'retains two binary feature batches');
+  const manager = new LayerManager(device, {
+    viewport: new MapView().makeViewport({width: 400, height: 400, viewState: INITIAL_MAP_STATE})
+  });
+  try {
+    for (const time of [2000, 1999]) {
+      manager.setLayers(
+        layer.renderLayer({
+          data,
+          dataset,
+          idx: 0,
+          mapState: INITIAL_MAP_STATE,
+          gpuFilter: dataset.gpuFilter,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          visible: true,
+          layerCallbacks: {},
+          filters: [{type: 'timeRange', dataId: [dataset.id], name: ['observed'], value: [0, time]}]
+        })
+      );
+      const points = manager.getLayers().filter(item => item.id.endsWith('points-circle'));
+      t.equal(points.length, 2, 'initializes both point sublayers');
+      const colors = points.map(item =>
+        Array.from(item.getAttributeManager().getAttributes().instanceFillColors.value).slice(0, 8)
+      );
+      t.deepEqual(
+        colors[0],
+        time === 2000
+          ? [0, 0, 255, 51, 255, 0, 0, 255]
+          : [255, 0, 0, 255, ...layer.config.color, 0],
+        'first batch updates at the exact boundary and on backward seek'
+      );
+      t.deepEqual(
+        [colors[1][3], colors[1][7]],
+        [0, 0],
+        'later batch reads missing/future timestamps from absolute rows'
+      );
+    }
+  } finally {
+    manager.finalize();
+  }
   t.end();
 });

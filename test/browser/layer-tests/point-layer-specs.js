@@ -623,6 +623,31 @@ test('#PointLayer -> native separated points preserve every coordinate through i
           });
         });
       }
+      const paused = renderEvents(90500).find(item => item.id === layer.id);
+      const pausedBatches = paused.renderLayers();
+      const redraw = renderEvents(90500).find(item => item.id === layer.id);
+      redraw.state = paused.state; // deck.gl transfers composite state between renders.
+      t.equal(
+        redraw.props.getFillColor,
+        paused.props.getFillColor,
+        'paused age styling reuses its color accessor'
+      );
+      redraw.renderLayers().forEach((batch, index) => {
+        t.equal(
+          batch.props.data,
+          pausedBatches[index].props.data,
+          'paused redraw reuses each Arrow batch buffer'
+        );
+      });
+      const seek = renderEvents(90499).find(item => item.id === layer.id);
+      seek.state = redraw.state;
+      seek.renderLayers().forEach((batch, index) => {
+        t.notEqual(
+          batch.props.data,
+          pausedBatches[index].props.data,
+          'seeking rebuilds age-dependent Arrow buffers'
+        );
+      });
       const vectorLayer = new GeoArrowScatterplotLayer({
         id: 'batched-vector-radius',
         data: table,

@@ -33,10 +33,9 @@ import PulseRippleExtension, {
   isPulseTimeActive
 } from './pulse-ripple-extension';
 import PointGlowExtension from './point-glow-extension';
-import {ageStyleColorAccessor, isPointAgeStyle, PointAgeStyle} from './point-age-style';
+import {getLayerDataTime} from '../layer-age-style';
 import {
   DatasetType,
-  FILTER_TYPES,
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
@@ -60,7 +59,6 @@ import {
   ColorRange,
   Merge,
   RGBColor,
-  VisConfigObject,
   VisConfigBoolean,
   VisConfigColorRange,
   VisConfigColorSelect,
@@ -70,12 +68,10 @@ import {
   LayerColumn,
   Field,
   Filter,
-  TimeRangeFilter,
   AnimationConfig
 } from '@kepler.gl/types';
 
 export type PointLayerVisConfigSettings = {
-  ageStyle: VisConfigObject;
   radius: VisConfigNumber;
   fixedRadius: VisConfigBoolean;
   opacity: VisConfigNumber;
@@ -108,7 +104,6 @@ export type PointLayerColumnsConfig = {
 };
 
 export type PointLayerVisConfig = {
-  ageStyle: Partial<PointAgeStyle>;
   radius: number;
   fixedRadius: boolean;
   opacity: number;
@@ -221,7 +216,6 @@ function pushPointPosition(data: any[], pos: number[], index: number, neighbors?
 }
 
 export const pointVisConfigs: {
-  ageStyle: VisConfigObject;
   radius: 'radius';
   fixedRadius: 'fixedRadius';
   opacity: 'opacity';
@@ -247,13 +241,6 @@ export const pointVisConfigs: {
   showNeighborOnHover: 'showNeighborOnHover';
   showHighlightColor: 'showHighlightColor';
 } = {
-  ageStyle: {
-    type: 'object',
-    defaultValue: {},
-    group: 'point',
-    property: 'ageStyle',
-    label: 'Age style'
-  },
   pulseTrigger: {
     type: 'select',
     defaultValue: 'continuous',
@@ -673,28 +660,8 @@ export default class PointLayer extends Layer {
   }
   /* eslint-enable complexity */
 
-  getEventPulseCurrentTime(
-    filters: Filter[] = [],
-    timeField = this.config.visConfig.pulseTimeField
-  ): number | null {
-    const {dataId} = this.config;
-    if (!dataId || !timeField) return null;
-    const filter = filters.find((candidate): candidate is TimeRangeFilter => {
-      const datasetIndex = candidate.dataId.indexOf(dataId);
-      return (
-        candidate.type === FILTER_TYPES.timeRange &&
-        candidate.enabled !== false &&
-        datasetIndex >= 0 &&
-        candidate.name[datasetIndex] === timeField
-      );
-    });
-    const value = filter?.value;
-    return Array.isArray(value) &&
-      value.length === 2 &&
-      value.every(Number.isFinite) &&
-      value[1] >= value[0]
-      ? value[1]
-      : null;
+  getEventPulseCurrentTime(filters: Filter[] = []): number | null {
+    return getLayerDataTime(this.config.dataId, this.config.visConfig.pulseTimeField, filters);
   }
 
   updateEventAnimation(dataset: KeplerTable) {
@@ -787,24 +754,8 @@ export default class PointLayer extends Layer {
 
   // eslint-disable-next-line complexity
   renderLayer(opts) {
-    const {gpuFilter, objectHovered, mapState, interactionConfig, dataset, filters} = opts;
-    let {data} = opts;
-    const {ageStyle} = this.config.visConfig;
-    const ageField = isPointAgeStyle(ageStyle)
-      ? dataset?.fields.find(
-          field => field.name === ageStyle.timeField && field.type === 'timestamp'
-        )
-      : undefined;
-    const ageTime = ageField ? this.getEventPulseCurrentTime(filters, ageField.name) : null;
-    const styleColor = (base, highlight = false) =>
-      ageField && ageTime !== null && isPointAgeStyle(ageStyle)
-        ? ageStyleColorAccessor(base, ageStyle, ageField, ageTime, highlight)
-        : base;
-    data = {
-      ...data,
-      getFillColor: styleColor(data.getFillColor),
-      getLineColor: styleColor(data.getLineColor)
-    };
+    opts = this.getAgeStyledLayerProps(opts);
+    const {data, gpuFilter, objectHovered, mapState, interactionConfig, dataset, filters} = opts;
 
     // if no field size is defined we need to pass fixed radius = false
     const fixedRadius = this.config.visConfig.fixedRadius && Boolean(this.config.sizeField);
@@ -833,16 +784,7 @@ export default class PointLayer extends Layer {
       ...(this.config.visConfig.fixedRadius ? {} : {radiusMaxPixels: 500})
     };
 
-    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers();
-    for (const accessor of ['getFillColor', 'getLineColor']) {
-      visualChannelUpdateTriggers[accessor] = {
-        ...visualChannelUpdateTriggers[accessor],
-        ageStyle,
-        ageTime,
-        ageField,
-        ageDataRevision: ageField ? dataset.dataRevision : undefined
-      };
-    }
+    const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers(opts);
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
@@ -1027,10 +969,10 @@ export default class PointLayer extends Layer {
               visible: defaultLayerProps.visible,
               data: hoverData,
               getLineColor: this.config.visConfig.showHighlightColor
-                ? styleColor(this.config.highlightColor, true)
+                ? opts.ageStyleHighlightColor ?? this.config.highlightColor
                 : data.getLineColor,
               getFillColor: this.config.visConfig.showHighlightColor
-                ? styleColor(this.config.highlightColor, true)
+                ? opts.ageStyleHighlightColor ?? this.config.highlightColor
                 : data.getFillColor,
               getRadius: data.getRadius,
               getPosition: data.getPosition,

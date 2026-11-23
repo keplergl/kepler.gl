@@ -172,7 +172,7 @@ it('preserves automatic Zarr stretching while updating selections and opacity', 
   expect(state().layers[0].config.visConfig).toMatchObject({zarrFrame: 2, opacity: 0.5});
 });
 
-describe('point age styling', () => {
+describe('feature age styling', () => {
   const style = {
     timeField: 'observed',
     stops: [
@@ -182,21 +182,30 @@ describe('point age styling', () => {
     ]
   };
 
-  it('sets, inspects and clears age bands without changing other settings', async () => {
-    const {dataset, set, state, ctx, layer} = setup();
-    dataset.fields.push({name: 'observed', type: 'timestamp'} as any);
-    const previous = {...layer.config.visConfig};
-    expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: true});
-    expect(state().layers[0].config.visConfig).toEqual({...previous, ageStyle: style});
-    expect(await getLayerOptionsCommand(ctx).execute({} as any, {layerId: 'layer'})).toMatchObject({
-      success: true,
-      data: {ageStyle: style}
-    });
-    expect(await set({layerId: 'layer', options: {opacity: 0.4}})).toMatchObject({success: true});
-    expect(state().layers[0].config.visConfig.ageStyle).toEqual(style);
-    expect(await set({layerId: 'layer', ageStyle: null})).toMatchObject({success: true});
-    expect(state().layers[0].config.visConfig).toEqual({...previous, opacity: 0.4});
-  });
+  it.each(['point', 'arc', 'line', 'icon', 'hexagonId', 's2', 'a5', 'geohash', 'geojson'])(
+    'sets, inspects and clears %s age bands without changing other settings',
+    async type => {
+      const {dataset, set, state, ctx, layer} = setup(type);
+      expect(layer.config.visConfig).not.toHaveProperty('ageStyle');
+      dataset.fields.push({name: 'observed', type: 'timestamp'} as any);
+      const previous = {...layer.config.visConfig};
+      expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: true});
+      expect(state().layers[0].config.visConfig).toEqual({...previous, ageStyle: style});
+      expect(
+        await getLayerOptionsCommand(ctx).execute({} as any, {layerId: 'layer'})
+      ).toMatchObject({
+        success: true,
+        data: {ageStyle: style}
+      });
+      expect(await set({layerId: 'layer', options: {opacity: 0.4}})).toMatchObject({success: true});
+      expect(state().layers[0].config.visConfig.ageStyle).toEqual(style);
+      expect(await set({layerId: 'layer', ageStyle: null})).toMatchObject({success: true});
+      expect(state().layers[0].config.visConfig).toEqual({...previous, opacity: 0.4});
+      expect(
+        await getLayerOptionsCommand(ctx).execute({} as any, {layerId: 'layer'})
+      ).toMatchObject({data: {ageStyle: null}});
+    }
+  );
 
   it.each([
     {},
@@ -224,9 +233,12 @@ describe('point age styling', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it('rejects age styling on other layer types', async () => {
-    const {set, dispatch} = setup('heatmap');
-    expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: false});
-    expect(dispatch).not.toHaveBeenCalled();
-  });
+  it.each(['heatmap', 'cluster', 'grid', 'hexagon', 'trip', '3D', 'rasterTile', 'flow'])(
+    'rejects age styling on %s',
+    async type => {
+      const {set, dispatch} = setup(type);
+      expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: false});
+      expect(dispatch).not.toHaveBeenCalled();
+    }
+  );
 });

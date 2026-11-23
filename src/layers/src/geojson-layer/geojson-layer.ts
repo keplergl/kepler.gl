@@ -979,8 +979,8 @@ export default class GeoJsonLayer extends Layer {
     };
   }
 
-  getVisualChannelUpdateTriggers() {
-    const triggers = super.getVisualChannelUpdateTriggers();
+  getVisualChannelUpdateTriggers(opts?: {ageStyleTriggers?: Record<string, unknown>}) {
+    const triggers = super.getVisualChannelUpdateTriggers(opts);
     if (triggers.getElevation) {
       triggers.getElevation = {
         ...triggers.getElevation,
@@ -997,6 +997,7 @@ export default class GeoJsonLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data: dataProps, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const {fixedRadius, featureTypes} = this.meta;
@@ -1019,7 +1020,7 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const updateTriggers = {
-      ...this.getVisualChannelUpdateTriggers(),
+      ...this.getVisualChannelUpdateTriggers(opts),
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger
     } as UpdateTriggers;
@@ -1106,8 +1107,8 @@ export default class GeoJsonLayer extends Layer {
               getLineWidth: props.getLineWidth,
               getPointRadius: props.getPointRadius,
               getElevation: props.getElevation,
-              getLineColor: this.config.highlightColor,
-              getFillColor: this.config.highlightColor,
+              getLineColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
+              getFillColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
               // always draw outline
               stroked: true,
               filled: false

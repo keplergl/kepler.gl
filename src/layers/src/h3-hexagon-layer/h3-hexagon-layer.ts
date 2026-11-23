@@ -428,13 +428,14 @@ export default class HexagonIdLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, mapState, interactionConfig} = opts;
 
     const zoomFactor = this.getZoomFactor(mapState);
     const eleZoomFactor = this.getElevationZoomFactor(mapState);
     const {config} = this;
     const {visConfig} = config;
-    const updateTriggers = this.getVisualChannelUpdateTriggers();
+    const updateTriggers = this.getVisualChannelUpdateTriggers(opts);
 
     const h3HexagonLayerTriggers = {
       getHexagon: this.config.columns,
@@ -510,7 +511,7 @@ export default class HexagonIdLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               visible: defaultLayerProps.visible,
               data: [idToPolygonGeo(hoveredObject)].filter(Boolean) as Feature[],
-              getLineColor: config.highlightColor,
+              getLineColor: opts.ageStyleHighlightColor ?? config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
               wrapLongitude: false
             })

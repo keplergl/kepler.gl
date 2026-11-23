@@ -38,7 +38,7 @@ const inputSchema = z.object({
     .nullable()
     .optional()
     .describe(
-      'Point age bands relative to the upper bound of the first enabled time filter on timeField. ' +
+      'Feature age bands relative to the upper bound of the first enabled time filter on timeField. ' +
         'Stops start at ageMs 0 and increase strictly; each needs opacity and/or RGB color. ' +
         'Opacity multiplies existing alpha; omitted channels keep the base style. Null clears the style.'
     ),
@@ -130,7 +130,7 @@ export function getLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
             layerId,
             layerType: layer.type,
             settings,
-            ...(layer.type === 'point' ? {ageStyle: layer.config.visConfig.ageStyle} : {}),
+            ...(layer.supportsAgeStyle ? {ageStyle: layer.config.visConfig.ageStyle ?? null} : {}),
             ...(layer.type === 'zarr'
               ? {
                   zarr: {
@@ -176,7 +176,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
     name: 'Set layer options',
     group: 'Map',
     description:
-      'Patch visual settings using keys from map.get-layer-options. Supports point ageStyle bands, glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
+      'Patch visual settings using keys from map.get-layer-options. Supports feature ageStyle bands, point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
     metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema,
     execute: (_execution, input) => {
@@ -193,7 +193,10 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
           args.options ?? {}
         );
         if (args.ageStyle !== undefined) {
-          if (layer.type !== 'point') throw new Error('ageStyle requires a point layer.');
+          if (!layer.supportsAgeStyle)
+            throw new Error(
+              'ageStyle requires a point, arc, line, icon, H3, S2, A5, geohash or GeoJSON layer.'
+            );
           const style = args.ageStyle;
           if (style) {
             if (
