@@ -18,6 +18,7 @@
  */
 import {useEffect, useMemo, useRef} from 'react';
 import type {RoomCommandResult} from '@kepler.gl/mcp';
+import {KEPLER_GL_VERSION} from '@kepler.gl/constants';
 import {buildCatalog, buildKeplerContext, toDescriptor} from './kepler-mcp-shared';
 
 const DEFAULT_PORT = 8765;
@@ -132,7 +133,13 @@ export function KeplerMcpBridge({reduxStore}: Props) {
 
       ws.onopen = () => {
         attempts = 0;
-        ws.send(JSON.stringify({type: 'hello', commands: catalogRef.current.map(toDescriptor)}));
+        ws.send(
+          JSON.stringify({
+            type: 'hello',
+            commands: catalogRef.current.map(toDescriptor),
+            app: {name: 'kepler.gl demo', version: KEPLER_GL_VERSION}
+          })
+        );
         console.info(
           `[kepler.gl mcp bridge] connected to ${redacted} · ${catalogRef.current.length} map commands`
         );

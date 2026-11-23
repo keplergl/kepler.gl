@@ -771,6 +771,19 @@ require a host export workflow.
 
 ## Loading and readiness checks
 
+- On the stdio bridge, call `map_get-status` with no arguments (`{}`) to check
+  the connection and available tools. This bridge-owned tool works even before
+  a page connects and distinguishes `disconnected`, `connected` (before tool
+  negotiation), and `negotiated`.
+- Use the returned credential-free `launcherUrl` and `guidance` to connect a
+  disconnected page. Never copy or expose the bridge token. `app` identifies the
+  connected app/version; `capabilities.tools` lists the currently effective MCP
+  tools and `capabilities.localFileImport` reports local-file support. The bridge
+  sends `notifications/tools/list_changed` when its negotiated catalog changes.
+- Project readiness reporting is deferred: `project.state` is always `unknown`.
+  Negotiated tools do not guarantee that project data, configuration, or tiles
+  have loaded. This status tool does not wait for project readiness.
+
 - Do not infer basemap loading from generic `Loading...` text or a progress
   bar's dimensions. The loading indicator is shared across data and layer
   operations and remains mounted while visually hidden.

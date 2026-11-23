@@ -16,4 +16,9 @@ export {
   getMapTools,
   toToolName
 } from './bridge-server';
-export type {KeplerMcpBridgeOptions, KeplerMcpBridgeStart, MapTool} from './bridge-server';
+export type {
+  BridgeStatus,
+  KeplerMcpBridgeOptions,
+  KeplerMcpBridgeStart,
+  MapTool
+} from './bridge-server';

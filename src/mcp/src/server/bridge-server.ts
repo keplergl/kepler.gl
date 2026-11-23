@@ -38,6 +38,29 @@ import {VideoArtifacts} from './video-artifacts';
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_CALL_TIMEOUT_MS = 60_000;
+const STATUS_COMMAND = 'map.get-status';
+const statusInput = z.object({}).strict();
+
+export type BridgeStatus = {
+  state: 'disconnected' | 'connected' | 'negotiated';
+  connected: boolean;
+  toolsNegotiated: boolean;
+  app: {name: string; version?: string} | null;
+  project: {state: 'unknown'};
+  capabilities: {tools: string[]; localFileImport: boolean};
+  launcherUrl: string | null;
+  guidance?: string;
+};
+
+const statusTool: MapTool = {
+  name: toToolName(STATUS_COMMAND),
+  commandId: STATUS_COMMAND,
+  description:
+    'Check the map connection, negotiated tools, connected app and effective capabilities. ' +
+    'Works without a connected page and returns a credential-free launcher URL. ' +
+    'Project readiness is not tracked: negotiated tools do not mean project data has finished loading.',
+  inputSchema: z.toJSONSchema(statusInput) as Record<string, unknown>
+};
 
 export type MapTool = {
   /** MCP tool name, e.g. `map_add_layer` (dots are not allowed in tool names). */
@@ -177,6 +200,8 @@ export class KeplerMcpBridge {
   private pageOrigin = '';
   private token = '';
   private pageUrl = '';
+  private app: BridgeStatus['app'] = null;
+  private readonly toolListeners = new Set<() => void>();
 
   constructor(options: KeplerMcpBridgeOptions = {}) {
     this.options = {
@@ -190,16 +215,15 @@ export class KeplerMcpBridge {
 
   /** Tools the MCP client can call right now. */
   getTools(): MapTool[] {
-    return (this.pageTools ?? this.staticTools).map(tool => {
+    return [...(this.pageTools ?? this.staticTools), statusTool].map(tool => {
       if (tool.commandId !== 'map.load-data') return tool;
       const schema = tool.inputSchema;
       if (schema['x-kepler-local-resource'] !== 1) return tool;
       return {
         ...tool,
         description:
-          'LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ' +
-          'The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ' +
-          tool.description,
+          `LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ` +
+          `The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ${tool.description}`,
         inputSchema: {
           ...schema,
           properties: {
@@ -220,6 +244,65 @@ export class KeplerMcpBridge {
 
   get connected(): boolean {
     return this.socket?.readyState === WebSocket.OPEN;
+  }
+
+  /** Subscribe to effective catalog changes, including page replacement/disconnection. */
+  onToolsChanged(listener: () => void): () => void {
+    this.toolListeners.add(listener);
+    return () => this.toolListeners.delete(listener);
+  }
+
+  getStatus(): BridgeStatus {
+    const connected = this.connected;
+    const toolsNegotiated = connected && this.pageTools !== null;
+    const state = !connected ? 'disconnected' : toolsNegotiated ? 'negotiated' : 'connected';
+    const address = this.httpServer?.address();
+    const host = address && typeof address !== 'string' ? address.address : null;
+    const launcherUrl = host
+      ? `http://${host.includes(':') ? `[${host}]` : host}:${
+          address && typeof address !== 'string' ? address.port : this.options.port
+        }/`
+      : null;
+    return {
+      state,
+      connected,
+      toolsNegotiated,
+      app: connected && this.app ? {...this.app} : null,
+      project: {state: 'unknown'},
+      capabilities: {
+        tools: toolsNegotiated ? this.getTools().map(tool => tool.name) : [statusTool.name],
+        localFileImport: Boolean(
+          toolsNegotiated &&
+            (host === '127.0.0.1' || host === '::1') &&
+            this.pageTools?.some(
+              tool =>
+                tool.commandId === 'map.load-data' &&
+                tool.inputSchema['x-kepler-local-resource'] === 1
+            )
+        )
+      },
+      launcherUrl,
+      ...(state === 'disconnected'
+        ? {
+            guidance: launcherUrl
+              ? `Open ${launcherUrl} in a browser to connect the map, then call map_get-status again.`
+              : 'Start kepler-mcp, then open the local launcher URL printed at startup.'
+          }
+        : state === 'negotiated'
+        ? {
+            guidance:
+              'Tools are negotiated, but project readiness is unknown. This status does not establish that project data has finished loading.'
+          }
+        : {})
+    };
+  }
+
+  private updatePageTools(tools: MapTool[] | null): void {
+    const previous = JSON.stringify(this.getTools());
+    this.pageTools = tools;
+    if (previous !== JSON.stringify(this.getTools())) {
+      for (const listener of this.toolListeners) listener();
+    }
   }
 
   /** The five latest completed exports, retained until eviction or bridge shutdown. */
@@ -287,13 +370,19 @@ export class KeplerMcpBridge {
     this.pageUrl = `${mapUrl}${mapUrl.includes('?') ? '&' : '?'}mcp=${encodeURIComponent(
       this.token
     )}`;
+    if (port !== DEFAULT_PORT) this.pageUrl += `&mcpPort=${port}`;
+    if (this.options.host !== DEFAULT_HOST) {
+      this.pageUrl += `&mcpHost=${encodeURIComponent(this.options.host)}`;
+    }
     return {host: this.options.host, port, token: this.token, pageUrl: this.pageUrl};
   }
 
   async callTool(name: string, input: Record<string, unknown> = {}): Promise<RoomCommandResult> {
-    const tool =
-      this.getTools().find(candidate => candidate.name === name) ??
-      this.staticTools.find(candidate => candidate.name === name);
+    if (name === statusTool.name) {
+      statusInput.parse(input);
+      return {success: true, commandId: STATUS_COMMAND, data: this.getStatus()};
+    }
+    const tool = this.getTools().find(candidate => candidate.name === name);
     if (!tool) {
       throw new Error(
         `Unknown map tool "${name}". Available: ${this.getTools()
@@ -304,10 +393,7 @@ export class KeplerMcpBridge {
     const socket = this.socket;
     const connectionId = this.connectionId;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        'No kepler.gl map page is connected. Open the page URL printed at startup ' +
-          '(it carries ?mcp=<token>), then call the tool again.'
-      );
+      throw new Error(`No kepler.gl map page is connected. ${this.getStatus().guidance}`);
     }
 
     const callId = randomUUID();
@@ -413,9 +499,10 @@ export class KeplerMcpBridge {
 
   async close(): Promise<void> {
     this.rejectPending('The bridge was closed.');
-    this.pageTools = null;
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
+    this.app = null;
+    this.updatePageTools(null);
     await this.videoArtifacts.close();
     await Promise.all(
       [...this.localResources.values()].map(resource => this.releaseLocalResource(resource))
@@ -459,7 +546,8 @@ export class KeplerMcpBridge {
     this.socket = socket;
     this.connectionId++;
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
-    this.pageTools = null;
+    this.app = null;
+    this.updatePageTools(null);
 
     socket.on('message', data => {
       if (this.socket === socket) this.handleMessage(data);
@@ -467,7 +555,8 @@ export class KeplerMcpBridge {
     socket.on('close', () => {
       if (this.socket === socket) {
         this.socket = null;
-        this.pageTools = null;
+        this.app = null;
+        this.updatePageTools(null);
         this.rejectPending('The kepler.gl page disconnected.');
       }
     });
@@ -483,7 +572,18 @@ export class KeplerMcpBridge {
       return;
     }
     if (message?.type === 'hello' && Array.isArray(message.commands)) {
-      this.pageTools = toolsFromDescriptors(message.commands as ToolDescriptor[]);
+      this.app =
+        typeof message.app?.name === 'string'
+          ? {
+              name: message.app.name,
+              ...(typeof message.app.version === 'string' ? {version: message.app.version} : {})
+            }
+          : null;
+      this.updatePageTools(
+        toolsFromDescriptors(message.commands as ToolDescriptor[]).filter(
+          tool => tool.name !== statusTool.name
+        )
+      );
       return;
     }
     if (message?.type === 'result' && typeof message.callId === 'string') {

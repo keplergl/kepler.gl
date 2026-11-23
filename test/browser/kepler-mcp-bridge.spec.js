@@ -3,6 +3,7 @@
 
 import React from 'react';
 import {cleanup, render} from '@testing-library/react';
+import {KEPLER_GL_VERSION} from '@kepler.gl/constants';
 import {KeplerMcpBridge} from '../../examples/demo-app/src/kepler-mcp-bridge';
 import {buildCatalog, buildKeplerContext} from '../../examples/demo-app/src/kepler-mcp-shared';
 
@@ -40,7 +41,7 @@ function deferred() {
   return {promise, resolve};
 }
 
-describe('MCP browser bridge cancellation', () => {
+describe('MCP browser bridge', () => {
   let execute;
 
   beforeEach(() => {
@@ -63,6 +64,27 @@ describe('MCP browser bridge cancellation', () => {
   function call(socket, callId) {
     return socket.receive({type: 'call', callId, tool: 'map.load-data', input: {url: '/data.csv'}});
   }
+
+  it('advertises the command catalog and app identity when connected', () => {
+    render(<KeplerMcpBridge reduxStore={{}} />);
+    const socket = MockWebSocket.instances[0];
+    socket.onopen();
+
+    expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({
+      type: 'hello',
+      commands: [{id: 'map.load-data'}],
+      app: {name: 'kepler.gl demo', version: KEPLER_GL_VERSION}
+    });
+  });
+
+  it('does not connect or subscribe to the store without an MCP token', () => {
+    window.history.replaceState({}, '', '/');
+    const reduxStore = {subscribe: jest.fn()};
+    render(<KeplerMcpBridge reduxStore={reduxStore} />);
+
+    expect(MockWebSocket.instances).toHaveLength(0);
+    expect(reduxStore.subscribe).not.toHaveBeenCalled();
+  });
 
   it('passes a live signal to the command and returns a completed result', async () => {
     const result = {success: true, commandId: 'map.load-data', data: {datasetId: 'imported'}};
