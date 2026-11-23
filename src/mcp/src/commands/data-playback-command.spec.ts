@@ -4,7 +4,7 @@
 import KeplerTable from '@kepler.gl/table';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
-import {addFilter, setFilter} from '@kepler.gl/actions';
+import {addFilter, addLayer, setFilter} from '@kepler.gl/actions';
 import {
   INITIAL_MAP_STATE,
   INITIAL_VIS_STATE,
@@ -13,6 +13,7 @@ import {
 } from '@kepler.gl/reducers';
 import {getDataPlaybackCommand} from './data-playback-command';
 import {getTimeFilterCommand} from './shared-time-filter-command';
+import {getSetLayerLabelsCommand} from './layer-labels-command';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
 
 const START = Date.UTC(2024, 0, 1);
@@ -25,8 +26,17 @@ async function makeContext() {
   });
   await table.importData({
     data: {
-      fields: [{name: 'date', type: ALL_FIELD_TYPES.timestamp}],
-      rows: [['2024-01-01T00:00:00Z'], ['2024-01-02T00:00:00Z'], ['2024-01-03T00:00:00Z']]
+      fields: [
+        {name: 'date', type: ALL_FIELD_TYPES.timestamp},
+        {name: 'lat', type: ALL_FIELD_TYPES.real},
+        {name: 'lng', type: ALL_FIELD_TYPES.real},
+        {name: 'label', type: ALL_FIELD_TYPES.string}
+      ],
+      rows: [
+        ['2024-01-01T00:00:00Z', 40, -70, 'January'],
+        ['2024-01-02T00:00:00Z', 40, -70, 'February'],
+        ['2024-01-03T00:00:00Z', 40, -70, 'March']
+      ]
     } as any
   });
   let visState = {...INITIAL_VIS_STATE, datasets: {[table.id]: table}};
@@ -60,6 +70,44 @@ async function execute(command: RoomCommand, input: unknown) {
 }
 
 describe('map.data-playback', () => {
+  it('seeks between rows and displays the corresponding field-bound label', async () => {
+    const {ctx, target, dispatch} = await makeContext();
+    dispatch(
+      addLayer({
+        id: 'labels',
+        type: 'point',
+        config: {dataId: 'observations', columns: {lat: 'lat', lng: 'lng'}}
+      })
+    );
+    expect(
+      await execute(getSetLayerLabelsCommand(ctx), {
+        layerId: 'labels',
+        labels: [{field: 'label', size: 24}]
+      })
+    ).toMatchObject({success: true});
+    for (const [time, expected] of [
+      [START, 'January'],
+      [START + DAY, 'February'],
+      [START, 'January']
+    ] as const) {
+      expect(
+        await execute(getDataPlaybackCommand(ctx), {action: 'seek', target, time})
+      ).toMatchObject({success: true});
+      const state = ctx.getVisState();
+      const data = state.layerData[0];
+      const ranges = state.datasets.observations.gpuFilter.filterRange;
+      // Use the native label accessor and the GPU filter values used when rendering.
+      const visibleLabels = data.data
+        .filter(row =>
+          data
+            .getFilterValue(row)
+            .every((value, channel) => value >= ranges[channel][0] && value <= ranges[channel][1])
+        )
+        .map(data.textLabels[0].getText);
+      expect(visibleLabels).toEqual([expected]);
+    }
+  });
+
   it('seeks a native filter deterministically, reports the selected time and leaves the camera fixed', async () => {
     const {ctx, target} = await makeContext();
     const command = getDataPlaybackCommand(ctx);
