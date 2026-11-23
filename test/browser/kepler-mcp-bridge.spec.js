@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
+import {IntlProvider} from 'react-intl';
 import {applyMiddleware, combineReducers, createStore} from 'redux';
 import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
 import {
@@ -24,6 +25,7 @@ import {loadSampleConfigurations, setLoadingMapStatus} from '../../examples/demo
 import {act, cleanup, render, waitFor} from '@testing-library/react';
 import {KeplerMcpBridge, getProjectStatus} from '../../examples/demo-app/src/kepler-mcp-bridge';
 import {buildCatalog, buildKeplerContext} from '../../examples/demo-app/src/kepler-mcp-shared';
+import SampleMapGallery from '../../examples/demo-app/src/components/load-data-modal/sample-data-viewer';
 
 jest.mock('../../examples/demo-app/src/kepler-mcp-shared', () => ({
   buildCatalog: jest.fn(),
@@ -363,6 +365,40 @@ describe('MCP project readiness', () => {
     });
   });
 
+  it.each(['ready', 'loading', 'failed'])(
+    'preserves a %s project through catalog-only failure and retry',
+    async state => {
+      const reduxStore = createStore(
+        combineReducers({demo: demoReducer}),
+        applyMiddleware(...enhanceReduxMiddleware([thunk]))
+      );
+      reduxStore.dispatch(registerEntry({id: 'map'}));
+      if (state === 'loading') reduxStore.dispatch(setLoadingMapStatus(true));
+      if (state === 'failed') await reduxStore.dispatch(loadCloudMapError({error: 'Load failed'}));
+      const samples = [{id: 'sample'}];
+      global.fetch = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('Catalog unavailable'))
+        .mockResolvedValueOnce({ok: true, json: async () => samples});
+
+      await reduxStore.dispatch(loadSampleConfigurations());
+      expect(getProjectStatus(reduxStore)).toEqual({state});
+      expect(reduxStore.getState().demo.keplerGl.map.uiState.notifications).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'error',
+            message: expect.stringContaining('Catalog unavailable')
+          })
+        ])
+      );
+
+      await reduxStore.dispatch(loadSampleConfigurations());
+      expect(getProjectStatus(reduxStore)).toEqual({state});
+      expect(reduxStore.getState().demo.app.sampleMaps).toEqual(samples);
+      expect(reduxStore.getState().demo.app.error).toBeNull();
+    }
+  );
+
   it.each(['missing sample', 'fetch failure', 'processing failure'])(
     'reports %s as failed and clears the error on retry',
     async failure => {
@@ -573,6 +609,17 @@ describe('MCP project readiness', () => {
     reduxStore.dispatch(registerEntry({id: 'map'}));
     await reduxStore.dispatch(loadCloudMapError({error: new Error('Private URL failed')}));
     expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'});
+    const view = render(
+      <IntlProvider locale="en" messages={{'sampleDataViewer.rowCount': '{rowCount} rows'}}>
+        <SampleMapGallery
+          {...reduxStore.getState().demo.app}
+          sampleMaps={[{id: 'sample', label: 'Available sample', size: 1, visible: true}]}
+          onLoadSample={jest.fn()}
+          loadSampleConfigurations={jest.fn()}
+        />
+      </IntlProvider>
+    );
+    expect(view.getByText('Available sample')).toBeVisible();
   });
 
   it('retains accepted file errors after progress cleanup, ignores stale errors, and resets on retry', async () => {
@@ -591,14 +638,15 @@ describe('MCP project readiness', () => {
       onFinish: loadFilesSuccess
     };
     await reduxStore.dispatch(wrapTo('map', loadFilesErr('data.csv', new Error('stale'), 'old')));
-    expect(reduxStore.getState().demo.app.error).toBeNull();
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'loading'});
     await reduxStore.dispatch(
       wrapTo('map', loadFilesErr('data.csv', new Error('failed'), 'active'))
     );
     expect(reduxStore.getState().demo.keplerGl.map.visState.fileLoadingProgress).toEqual({});
     expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'});
     await reduxStore.dispatch(loadFiles([]));
-    expect(reduxStore.getState().demo.app.error).toBeNull();
+    // LOAD_FILES starts the next loading cycle; it must no longer report failure.
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'loading'});
   });
 
   it('retains rejected dataset installation and clears it when a cloud load starts', async () => {
@@ -633,8 +681,10 @@ describe('MCP project readiness', () => {
     render(<KeplerMcpBridge reduxStore={reduxStore} />);
     const socket = MockWebSocket.instances[0];
     socket.onopen();
-    reduxStore.update({demo: {app: {error: 'https://private/?token=secret'}}});
-    reduxStore.update({demo: {app: {isMapLoading: true, error: null}}});
+    reduxStore.update({
+      demo: {app: {projectLoadFailed: true, error: 'https://private/?token=secret'}}
+    });
+    reduxStore.update({demo: {app: {isMapLoading: true, projectLoadFailed: false, error: null}}});
     expect(socket.send.mock.calls.slice(1).map(([json]) => JSON.parse(json))).toEqual([
       {type: 'status', project: {state: 'failed'}},
       {type: 'status', project: {state: 'loading'}}

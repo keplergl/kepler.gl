@@ -79,7 +79,7 @@ export function getProjectStatus(reduxStore: any): {
   const fileFailed = Object.values(map?.visState?.fileLoadingProgress ?? {}).some(
     (progress: any) => progress?.error
   );
-  if (demo?.app?.error || fileFailed) return {state: 'failed'};
+  if (demo?.app?.projectLoadFailed || fileFailed) return {state: 'failed'};
   if (
     demo?.app?.isMapLoading ||
     demo?.app?.cloudMapPendingInstall ||

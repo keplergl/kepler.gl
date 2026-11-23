@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {loadFiles, toggleModal} from '@kepler.gl/actions';
+import {addNotification, loadFiles, toggleModal} from '@kepler.gl/actions';
 import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
 import {CSVLoader} from '@loaders.gl/csv';
@@ -319,11 +319,11 @@ export function loadSampleConfigurations(sampleMapId = null) {
         }
       })
       .catch(error => {
+        const message = `${error} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`;
         dispatch(
-          loadRemoteResourceError(
-            {message: `${error} - ${LOADING_SAMPLE_LIST_ERROR_MESSAGE}`},
-            mapConfigUrl
-          )
+          sampleMapId
+            ? loadRemoteResourceError({message}, mapConfigUrl)
+            : addNotification({type: 'error', message})
         );
       });
   };

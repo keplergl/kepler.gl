@@ -50,6 +50,7 @@ const initialAppState = {
   isMapLoading: false, // determine whether we are loading a sample map,
   cloudMapPendingInstall: false,
   progressiveContinuationPending: false,
+  projectLoadFailed: false,
   error: null // contains error when loading/retrieving data/configuration
   // {
   //   status: null,
@@ -68,7 +69,7 @@ export const appReducer = (state = initialAppState, action) => {
       return {
         ...state,
         cloudMapPendingInstall: false,
-        error: null,
+        projectLoadFailed: false,
         progressiveContinuationPending: false
       };
     case ProviderActionTypes.LOAD_CLOUD_MAP_SUCCESS_2:
@@ -77,9 +78,9 @@ export const appReducer = (state = initialAppState, action) => {
     case ActionTypes.ADD_DATA_TO_MAP:
       // The core loading indicator covers installation from this transition on.
       // MCP imports also start here, so a retry must clear the previous failure.
-      return {...state, cloudMapPendingInstall: false, error: null};
+      return {...state, cloudMapPendingInstall: false, projectLoadFailed: false};
     case ActionTypes.LOAD_FILES:
-      return {...state, error: null, progressiveContinuationPending: false};
+      return {...state, projectLoadFailed: false, progressiveContinuationPending: false};
     case ActionTypes.CLEAR_STAGED_LOADED_FILES:
       return {...state, progressiveContinuationPending: false};
     case ActionTypes.LOAD_FILES_SUCCESS:
@@ -91,7 +92,12 @@ export const appReducer = (state = initialAppState, action) => {
     case ActionTypes.CREATE_NEW_DATASET_SUCCESS: {
       const {results, replacement, onFinish} = unwrap(action).payload;
       if (!replacement && results?.some(result => result.status === 'rejected')) {
-        return {...state, isMapLoading: false, error: true, progressiveContinuationPending: false};
+        return {
+          ...state,
+          isMapLoading: false,
+          projectLoadFailed: true,
+          progressiveContinuationPending: false
+        };
       }
       // Arrow replay yields between snapshots. The table's loading indicator
       // is already cleared while this explicit next-snapshot action is queued.
@@ -104,14 +110,16 @@ export const appReducer = (state = initialAppState, action) => {
       return {
         ...state,
         cloudMapPendingInstall: false,
-        error: true,
+        projectLoadFailed: true,
         progressiveContinuationPending: false
       };
     case SET_SAMPLE_LOADING_STATUS:
       return {
         ...state,
         isMapLoading: action.isMapLoading,
-        ...(action.isMapLoading ? {error: null, progressiveContinuationPending: false} : {})
+        ...(action.isMapLoading
+          ? {projectLoadFailed: false, progressiveContinuationPending: false}
+          : {})
       };
     default:
       return state;
@@ -289,7 +297,7 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
     app: {
       ...state.app,
       currentSample: options,
-      error: null,
+      projectLoadFailed: false,
       isMapLoading: false // we turn off the spinner
     },
     keplerGl: {
@@ -311,7 +319,7 @@ export const loadRemoteResourceError = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      error: true, // Keep readiness failed until a new load starts; do not expose source URLs.
+      projectLoadFailed: true, // Keep readiness separate from the gallery's error object.
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
@@ -349,7 +357,7 @@ const composedReducer = (state, action) => {
     ) {
       return {
         ...nextState,
-        app: {...nextState.app, error: true, progressiveContinuationPending: false}
+        app: {...nextState.app, projectLoadFailed: true, progressiveContinuationPending: false}
       };
     }
   }
