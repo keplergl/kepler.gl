@@ -40,6 +40,8 @@ export const MAP_TOOL_IDS = [
   'map.camera-tour',
   'map.add-annotation',
   'map.get-annotations',
+  'map.update-annotation',
+  'map.remove-annotation',
   'map.set-zoom-fade',
   'map.save-data',
   'map.create-table',

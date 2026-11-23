@@ -127,6 +127,8 @@ describe('kepler-mcp bridge server', () => {
     expect(names).toContain(toToolName('map.add-layer'));
     expect(names).toContain(toToolName('map.set-basemap'));
     expect(names).toContain(toToolName('map.get-annotations'));
+    expect(names).toContain(toToolName('map.update-annotation'));
+    expect(names).toContain(toToolName('map.remove-annotation'));
     expect(names.slice().sort()).toEqual(MAP_TOOL_IDS.map(toToolName).sort());
   });
 
@@ -173,6 +175,8 @@ describe('kepler-mcp bridge server', () => {
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
       ['map.add-annotation', 'anchorPoint'],
+      ['map.update-annotation', 'fontSize'],
+      ['map.remove-annotation', 'id'],
       ['map.set-view-mode', 'globe'],
       ['map.set-zoom-fade', 'controllers']
     ]) {
@@ -181,6 +185,38 @@ describe('kepler-mcp bridge server', () => {
       expect(tool?.inputSchema.type).toBe('object');
       expect(JSON.stringify(tool?.inputSchema)).toContain(field);
     }
+  });
+
+  it('advertises styled point callouts and partial annotation edits', () => {
+    const tools = bridge.getTools();
+    const schemaFor = (id: string) => tools.find(tool => tool.name === toToolName(id))?.inputSchema;
+    expect(schemaFor('map.add-annotation')).toMatchObject({
+      type: 'object',
+      properties: {
+        kind: {enum: expect.arrayContaining(['text', 'point', 'ruler'])},
+        fontSize: {type: 'number'},
+        textColor: {type: 'string'},
+        textAlign: {enum: ['left', 'center', 'right', 'justify']},
+        armLength: {type: 'number'},
+        textSide: {enum: ['left', 'right']},
+        textVerticalPosition: {enum: ['above', 'below']}
+      },
+      required: expect.arrayContaining(['id', 'kind', 'anchorPoint'])
+    });
+    expect(schemaFor('map.update-annotation')).toMatchObject({
+      type: 'object',
+      properties: {
+        id: {type: 'string'},
+        label: {type: 'string'},
+        fontSize: {type: 'number'}
+      },
+      required: ['id']
+    });
+    expect(schemaFor('map.remove-annotation')).toMatchObject({
+      type: 'object',
+      properties: {id: {type: 'string'}},
+      required: ['id']
+    });
   });
 
   it('preserves the demo command parameters after the page handshake', async () => {
