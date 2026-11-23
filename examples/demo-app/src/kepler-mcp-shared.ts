@@ -24,6 +24,7 @@ import type {
 } from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {z} from 'zod';
+import {getVideoExportService} from './kepler-video-export';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
 // the demo-app folder stays self-contained — no relative path reaching outside
 // it into the monorepo layout.
@@ -67,6 +68,7 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
 export function buildKeplerContext(reduxStore: any): KeplerContext {
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
   return {
+    videoExport: getVideoExportService(reduxStore),
     getMapState: () => readMap()?.mapState,
     getVisState: () => {
       const visState = readMap()?.visState;

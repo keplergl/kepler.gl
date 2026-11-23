@@ -9,7 +9,7 @@
 // Copyright contributors to the kepler.gl project
 
 import WebSocket from 'ws';
-import {mkdtemp, rm, writeFile} from 'node:fs/promises';
+import {mkdtemp, readFile, rm, stat, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {PassThrough} from 'node:stream';
@@ -399,6 +399,198 @@ describe('kepler-mcp bridge server', () => {
       }
     }
   );
+});
+
+describe('kepler-mcp video artifacts', () => {
+  let bridge: KeplerMcpBridge;
+  let started: KeplerMcpBridgeStart;
+  let socket: WebSocket;
+  let contents: Buffer;
+  let reads: number[];
+  let artifactOverrides: Record<string, unknown>;
+  let chunkOverrides: Record<string, unknown>;
+  let disconnectOnRead: boolean;
+
+  const status = (jobId = 'video-job') =>
+    bridge.callTool(toToolName('map.export-video'), {action: 'status', jobId});
+
+  async function connectPage() {
+    const page = connect(started.port, started.token);
+    await new Promise(resolve => page.on('open', resolve));
+    page.send(
+      JSON.stringify({
+        type: 'hello',
+        commands: [{id: 'map.export-video', name: 'Export video', inputSchema: {type: 'object'}}]
+      })
+    );
+    await waitFor(() => bridge.getTools().length === 1);
+    page.on('message', raw => {
+      const message = JSON.parse(String(raw));
+      if (message.type !== 'call') return;
+      const {input, callId} = message;
+      let data: unknown;
+      if (input.action === 'read') {
+        reads.push(input.offset);
+        if (disconnectOnRead) {
+          page.close();
+          return;
+        }
+        const nextOffset = Math.min(contents.length, input.offset + 256 * 1024);
+        data = {
+          offset: input.offset,
+          nextOffset,
+          totalBytes: contents.length,
+          mimeType: 'video/webm',
+          fileName: '../../untrusted.webm',
+          base64: contents.subarray(input.offset, nextOffset).toString('base64'),
+          ...chunkOverrides
+        };
+      } else {
+        data = {
+          jobId: input.jobId,
+          status: 'succeeded',
+          progress: 1,
+          artifact: {
+            jobId: input.jobId,
+            fileName: '../../untrusted.webm',
+            mimeType: 'video/webm',
+            size: contents.length,
+            url: 'blob:http://localhost/browser-only',
+            ...artifactOverrides
+          }
+        };
+      }
+      page.send(
+        JSON.stringify({
+          type: 'result',
+          callId,
+          result: {success: true, commandId: 'map.export-video', data}
+        })
+      );
+    });
+    return page;
+  }
+
+  beforeEach(async () => {
+    contents = Buffer.from('encoded-video-frame-data'.repeat(30000));
+    reads = [];
+    artifactOverrides = {};
+    chunkOverrides = {};
+    disconnectOnRead = false;
+    bridge = new KeplerMcpBridge({port: 0, callTimeoutMs: 1000});
+    started = await bridge.start();
+    socket = await connectPage();
+  });
+
+  afterEach(async () => {
+    await bridge.close();
+  });
+
+  it('retrieves chunks into a private file and readable MCP resource without exposing browser URLs', async () => {
+    const result = await status();
+    const artifact = (result.data as any).artifact;
+    expect(reads).toEqual([0, 256 * 1024, 512 * 1024]);
+    expect(artifact).toMatchObject({
+      uri: expect.stringMatching(/^kepler:\/\/video\//),
+      mimeType: 'video/webm',
+      size: contents.length
+    });
+    expect(artifact.url).toBeUndefined();
+    expect(artifact.fileName).not.toContain('untrusted');
+    expect((await readFile(artifact.filePath)).equals(contents)).toBe(true);
+    expect((await stat(artifact.filePath)).mode & 0o777).toBe(0o600);
+    expect(bridge.listVideoResources()).toEqual([artifact]);
+    expect(bridge.getVideoResourceLink(result)).toMatchObject({
+      type: 'resource_link',
+      uri: artifact.uri,
+      name: artifact.fileName,
+      mimeType: 'video/webm',
+      size: contents.length
+    });
+    expect(await bridge.readVideoResource(artifact.uri)).toEqual({
+      uri: artifact.uri,
+      mimeType: 'video/webm',
+      blob: contents.toString('base64')
+    });
+    expect((await status()).data).toEqual(result.data);
+    expect(reads).toHaveLength(3);
+
+    socket.close();
+    await waitFor(() => !bridge.connected);
+    expect((await bridge.readVideoResource(artifact.uri)).blob).toBe(contents.toString('base64'));
+    await bridge.close();
+    await expect(stat(artifact.filePath)).rejects.toMatchObject({code: 'ENOENT'});
+    await expect(bridge.readVideoResource(artifact.uri)).rejects.toThrow(/unavailable or expired/);
+  });
+
+  it.each([{size: 0}, {size: 256 * 1024 * 1024 + 1}, {mimeType: 'text/html'}])(
+    'rejects unsupported artifacts before requesting bytes: %j',
+    async overrides => {
+      artifactOverrides = overrides;
+      await expect(status()).rejects.toThrow(/non-empty WebM.*256 MiB/);
+      expect(reads).toHaveLength(0);
+      expect(bridge.listVideoResources()).toEqual([]);
+    }
+  );
+
+  it.each([
+    {offset: 1},
+    {nextOffset: 1},
+    {totalBytes: 1},
+    {base64: 'not valid base64'},
+    {base64: ''},
+    {mimeType: 'text/plain'}
+  ])('rejects corrupt chunks and cleans up partial files: %j', async overrides => {
+    const makeDirectory = jest.spyOn(fsPromises, 'mkdtemp');
+    try {
+      chunkOverrides = overrides;
+      await expect(status()).rejects.toThrow(/invalid (data|chunk size)/);
+      expect(bridge.listVideoResources()).toEqual([]);
+      const directory = await makeDirectory.mock.results[0].value;
+      await expect(stat(directory)).rejects.toMatchObject({code: 'ENOENT'});
+    } finally {
+      makeDirectory.mockRestore();
+    }
+  });
+
+  it('reports disconnection during transfer and removes the partial file', async () => {
+    const makeDirectory = jest.spyOn(fsPromises, 'mkdtemp');
+    try {
+      disconnectOnRead = true;
+      await expect(status()).rejects.toThrow(/disconnected/);
+      expect(bridge.listVideoResources()).toEqual([]);
+      const directory = await makeDirectory.mock.results[0].value;
+      await expect(stat(directory)).rejects.toMatchObject({code: 'ENOENT'});
+    } finally {
+      makeDirectory.mockRestore();
+    }
+  });
+
+  it('does not reuse an old page artifact when a new page uses the same job ID', async () => {
+    const first = (await status()).data as any;
+    socket.close();
+    await waitFor(() => !bridge.connected);
+    contents = Buffer.from('a different video');
+    socket = await connectPage();
+    const second = (await status()).data as any;
+    expect(first.artifact.uri).not.toBe(second.artifact.uri);
+    expect(await readFile(second.artifact.filePath)).toEqual(contents);
+    expect(bridge.listVideoResources()).toHaveLength(2);
+  });
+
+  it('retains only the latest five artifacts and rejects unknown resource URIs', async () => {
+    contents = Buffer.from('short video');
+    const first = (await status('job-0')).data as any;
+    for (let index = 1; index <= 5; index++) await status(`job-${index}`);
+    expect(bridge.listVideoResources()).toHaveLength(5);
+    await expect(stat(first.artifact.filePath)).rejects.toMatchObject({code: 'ENOENT'});
+    await expect(bridge.readVideoResource(first.artifact.uri)).rejects.toThrow(
+      /unavailable or expired/
+    );
+    await expect(bridge.readVideoResource('file:///etc/passwd')).rejects.toThrow(
+      /unavailable or expired/
+    );
+  });
 });
 
 describe('kepler-mcp local file transfer', () => {

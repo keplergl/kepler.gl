@@ -59,6 +59,7 @@ not this one.
 | `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
 | `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
 | `map.camera-tour`        | Get/set location-animation stops, seek, play or pause. |
+| `map.export-video`       | Discover formats, start/cancel exports, poll progress, and retrieve finished videos. |
 | `map.property-transitions` | Discover, inspect, add, update, or remove timed layer/annotation/effect blocks. |
 | `map.add-annotation`     | Add a styled geographic annotation or viewport caption/readout. |
 | `map.get-annotations`    | Read annotation ids, locations, viewport placement, readouts and effective styling. |
@@ -560,6 +561,39 @@ do not add a time filter for camera movement. To place a stop at a bookmark or
 annotation, build an explicit camera snapshot using its coordinates and desired
 zoom, bearing, and pitch; stops do not link to the source object.
 
+### Video exports (`map.export-video`)
+
+Call `{"action":"capabilities","width":1920,"height":1080}` first. It reports
+formats supported by the connected browser at that size, preset dimensions,
+frame rates, and the duration limit. Native exports currently run at 30 fps.
+
+Start an export without opening the dialog:
+
+```json
+{"action":"start","settings":{"width":1920,"height":1080,"durationMs":20000,"frameRate":30,"format":"webm-native","cameraAnimation":true,"dataAnimation":true}}
+```
+
+Choose `webm-native` only if advertised; otherwise use `webm`. Camera and data
+animation default to true and use the project's existing camera tour, enlarged
+or synced time filters, and animated layers. Configure them before starting.
+Property transitions, effects, annotations, and swipe settings follow the native
+renderer. The visible map's timeline and export settings stay unchanged.
+Durations are rounded up to a frame boundary (at most 1/30 second).
+
+The start response contains `jobId`. Poll `{"action":"status","jobId":"..."}`
+for `progress` (0–1) and `queued`, `rendering`, `encoding`, `succeeded`, `failed`,
+or `cancelled`. Stop with `{"action":"cancel","jobId":"..."}`. Read an
+error on failed jobs before retrying. Keep the map connected while rendering;
+disconnecting cancels active work. Only one job can render at a time.
+
+On success, the stdio bridge returns a downloadable `kepler://video/...` MCP
+resource and a `filePath` on the MCP server. Read it with MCP `resources/read`,
+or use the local file artifact. Browser-only hosts return a browser Blob URL;
+it is not accessible on another machine. `action:"read"` is the bounded chunk
+transfer for hosts implementing their own artifact transport. Save completed
+files promptly: browser jobs and bridge resources retain at most five exports
+and 256 MiB, and bridge files are removed when the server closes.
+
 ### Timed property transitions (`map.property-transitions`)
 
 Call `{"action": "discover"}` to find eligible targets and properties. Use an
@@ -587,8 +621,8 @@ Opacity is a 0–1 multiplier. Easing is `linear` or `easeInOut`. Edits pause pl
 These are the native Animation editor tracks, shared by preview, saved projects,
 and video export. They are independent of dataset time filters. The command
 animates existing effects but does not create effects or change static effect
-settings. Use `map.camera-tour` for camera stops and playback, and the host's
-export workflow to produce a video.
+settings. Use `map.camera-tour` for camera stops and playback, and
+`map.export-video` to produce a video.
 
 ### Annotations (`map.add-annotation`, `map.get-annotations`, `map.update-annotation`, `map.remove-annotation`)
 

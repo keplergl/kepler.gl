@@ -48,6 +48,7 @@ import {
   withCameraTourExport
 } from './camera-tour-export';
 import {getNativeWebMConfig, NATIVE_WEBM_FORMAT} from './video-export-formats';
+import {renderNativeVideo, type ProgrammaticVideoExport} from './programmatic-video-export';
 
 type SwipeContainerType = React.ComponentType<any>;
 
@@ -226,6 +227,7 @@ export type VideoConfiguration = {
 };
 
 export interface ExportVideoModalProps {
+  programmaticExport?: ProgrammaticVideoExport;
   mapboxApiAccessToken: string;
   mapboxApiUrl?: string;
   mapState: any;
@@ -245,6 +247,7 @@ const MODAL_HORIZONTAL_PADDING = 144;
 
 const ExportVideoModalFactory = () => {
   const ExportVideoModal: React.FC<ExportVideoModalProps> = ({
+    programmaticExport,
     mapboxApiAccessToken,
     mapboxApiUrl = DEFAULT_MAPBOX_API_URL,
     mapState,
@@ -304,12 +307,12 @@ const ExportVideoModalFactory = () => {
     const [videoConfiguration, setVideoConfiguration] = useState<VideoConfiguration>(() => ({
       ...exportVideo,
       mediaType: exportVideo.mediaType || NATIVE_WEBM_FORMAT.value,
-      ...(hasCameraTour
+      ...(!programmaticExport && hasCameraTour
         ? {cameraPreset: CAMERA_TOUR_PRESET}
         : !cameraAnimationEnabled && exportVideo.cameraPreset === CAMERA_TOUR_PRESET
         ? {cameraPreset: 'None'}
         : {}),
-      ...(animationDurationMs > 0 ? {durationMs: animationDurationMs} : {})
+      ...(!programmaticExport && animationDurationMs > 0 ? {durationMs: animationDurationMs} : {})
     }));
 
     const [defaultFormatReady, setDefaultFormatReady] = useState(
@@ -445,6 +448,20 @@ const ExportVideoModalFactory = () => {
 
     const hubbleContainerRef = useRef<any>(null);
 
+    useEffect(() => {
+      if (hubbleError && programmaticExport) {
+        programmaticExport.onError(
+          new Error(`Unable to load the video renderer: ${hubbleError}. Reload the app and retry.`)
+        );
+      }
+    }, [hubbleError, programmaticExport]);
+
+    useEffect(() => {
+      if (!programmaticExport || !hubble || !defaultFormatReady || !hubbleContainerRef.current)
+        return undefined;
+      return renderNativeVideo(hubbleContainerRef.current, programmaticExport);
+    }, [hubble, defaultFormatReady, programmaticExport]);
+
     const updateAnimatedLighting = useCallback(() => {
       computeDeckEffects({
         visState: {
@@ -503,9 +520,12 @@ const ExportVideoModalFactory = () => {
         ...hubbleDeckGlProps,
         _isExport: true,
         effects: deckEffects,
+        ...(programmaticExport
+          ? {onError: (error: Error) => programmaticExport.onError(error)}
+          : {}),
         onBeforeRender
       }),
-      [hubbleDeckGlProps, deckEffects, onBeforeRender]
+      [hubbleDeckGlProps, deckEffects, onBeforeRender, programmaticExport]
     );
 
     const onViewChange = useCallback(
@@ -732,6 +752,7 @@ const ExportVideoModalFactory = () => {
         <StyledExportVideoModalContent className="export-video-modal">
           {isSwipeMode && SwipeContainer ? (
             <SwipeContainer
+              programmaticExport={programmaticExport}
               ref={hubbleContainerRef}
               initialState={videoConfiguration}
               mapData={keplerState}
@@ -758,6 +779,7 @@ const ExportVideoModalFactory = () => {
             // from the mapbox base map's render event, which doesn't fire in
             // globe mode (base map disabled), so its export would hang.
             <GlobeContainer
+              programmaticExport={programmaticExport}
               ref={hubbleContainerRef}
               initialState={videoConfiguration}
               mapData={keplerState}
@@ -775,6 +797,7 @@ const ExportVideoModalFactory = () => {
             />
           ) : (
             <ExportVideoPanelContainer
+              programmaticExport={programmaticExport}
               ref={hubbleContainerRef}
               initialState={videoConfiguration}
               mapData={keplerState}

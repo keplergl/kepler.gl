@@ -17,3 +17,5 @@
 export * from './map-contract';
 export * from './types';
 export * from './commands';
+
+export * from './video-export';

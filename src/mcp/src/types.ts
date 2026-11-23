@@ -28,6 +28,7 @@ export interface ToolResult {
 export const MAP_TOOL_IDS = [
   'map.set-basemap',
   'map.set-view-mode',
+  'map.export-video',
   'map.get-boundary',
   'map.add-layer',
   'map.update-layer-color',
