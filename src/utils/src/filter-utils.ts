@@ -1598,7 +1598,16 @@ export function mergeFilterDomain(
     const endName = toArray((filter as TimeRangeFilter).endName)[idx];
     if (endName) {
       const endProps = dataset.getColumnFilterProps(endName);
-      domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), endProps);
+      // All-null ends are open intervals. Their synthetic timestamp domain
+      // does not represent an observation and must not extend the timeline.
+      if (
+        endProps &&
+        'mappedValue' in endProps &&
+        Array.isArray(endProps.mappedValue) &&
+        endProps.mappedValue.some(Number.isFinite)
+      ) {
+        domainSteps = mergeFilterDomainStep(domainSteps ?? ({} as Filter), endProps);
+      }
     }
   });
   return domainSteps;

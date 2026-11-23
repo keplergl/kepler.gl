@@ -15,6 +15,8 @@ import {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
 import {getTableCommand} from './table-command';
 import {getAddColumnCommand} from './add-column-command';
 import {getAddTimeFilterCommand} from './time-filter-command';
+import {getTimeFilterCommand} from './shared-time-filter-command';
+import {getDataPlaybackCommand} from './data-playback-command';
 import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
@@ -72,6 +74,8 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getTableCommand(ctx),
     getAddColumnCommand(ctx),
     getAddTimeFilterCommand(ctx),
+    getTimeFilterCommand(ctx),
+    getDataPlaybackCommand(ctx),
     getToggleTimeFilterCommand(ctx),
     getSplitViewCommand(ctx),
     getDatasetContextCommand(ctx)
@@ -102,6 +106,8 @@ export {getSaveDataCommand} from './save-data-command';
 export {getTableCommand} from './table-command';
 export {getAddColumnCommand} from './add-column-command';
 export {getAddTimeFilterCommand} from './time-filter-command';
+export {getTimeFilterCommand} from './shared-time-filter-command';
+export {getDataPlaybackCommand} from './data-playback-command';
 export {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 export {getSplitViewCommand} from './split-view-command';
 export {getDatasetContextCommand} from './dataset-context-command';
