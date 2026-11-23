@@ -17,7 +17,12 @@ import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
-import {getAddAnnotationCommand, getListAnnotationsCommand} from './annotations-command';
+import {
+  getAddAnnotationCommand,
+  getListAnnotationsCommand,
+  getUpdateAnnotationCommand,
+  getRemoveAnnotationCommand
+} from './annotations-command';
 import {getZoomFadeCommand} from './zoom-fade-command';
 import {getLoadZarrCommand} from './load-zarr-command';
 import {getLoadTilesetCommand} from './load-tileset-command';
@@ -51,6 +56,8 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getCameraTourCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
+    getUpdateAnnotationCommand(ctx),
+    getRemoveAnnotationCommand(ctx),
     getZoomFadeCommand(ctx),
     getSaveDataCommand(ctx),
     getTableCommand(ctx),
@@ -71,7 +78,12 @@ export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
-export {getAddAnnotationCommand, getListAnnotationsCommand} from './annotations-command';
+export {
+  getAddAnnotationCommand,
+  getListAnnotationsCommand,
+  getUpdateAnnotationCommand,
+  getRemoveAnnotationCommand
+} from './annotations-command';
 export {getZoomFadeCommand} from './zoom-fade-command';
 export {getSaveDataCommand} from './save-data-command';
 export {getTableCommand} from './table-command';
