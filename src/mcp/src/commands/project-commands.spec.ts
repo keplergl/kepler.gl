@@ -9,6 +9,8 @@ import {ActionTypes, loadMapStyles, registerEntry, wrapTo} from '@kepler.gl/acti
 import {DatasetType, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
+import {getLayerLabelsCommand, getSetLayerLabelsCommand} from './layer-labels-command';
+import {getTooltipFieldsCommand, getSetTooltipFieldsCommand} from './tooltip-fields-command';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
 
 const camera = {latitude: 19, longitude: -155, zoom: 8, bearing: 10, pitch: 20};
@@ -147,6 +149,35 @@ it('round-trips the complete embedded project after both original URLs are unava
     url: 'https://example.com/project.json'
   });
   expect(opened).toMatchObject({success: true, data: {status: 'loaded', warnings: []}});
+  expect(
+    await execute(getSetLayerLabelsCommand(ctx), {
+      layerId: 'first-points',
+      labels: [
+        {
+          field: 'value',
+          size: 24,
+          color: [10, 20, 30],
+          anchor: 'middle',
+          alignment: 'bottom',
+          weight: 600,
+          outlineWidth: 0.5,
+          outlineColor: [0, 0, 0, 255],
+          background: true,
+          backgroundColor: [10, 20, 30, 180],
+          collisionEnabled: true
+        },
+        {field: 'lat', size: 12}
+      ]
+    })
+  ).toMatchObject({success: true});
+  expect(
+    await execute(getSetTooltipFieldsCommand(ctx), {
+      dataId: 'first',
+      fields: ['lng', 'value', 'lat']
+    })
+  ).toMatchObject({success: true});
+  const labelsBefore = await execute(getLayerLabelsCommand(ctx), {layerId: 'first-points'});
+  const tooltipsBefore = await execute(getTooltipFieldsCommand(ctx), {dataId: 'first'});
   const saved = await execute(getSaveProjectCommand(ctx), {
     dataMode: 'embedded',
     includeCredentials: false
@@ -194,8 +225,15 @@ it('round-trips the complete embedded project after both original URLs are unava
   }
   expect(state.visState.effects[0]).toMatchObject({id: 'fog', animation: {height: animation}});
   expect(state.visState.cameraBookmarks).toEqual([{id: 'hawaii', name: 'Hawaii', camera}]);
-  expect(state.visState.interactionConfig.tooltip.config.fieldsToShow).toEqual(
-    fixture().config.config.visState.interactionConfig.tooltip.fieldsToShow
+  expect(state.visState.interactionConfig.tooltip.config.fieldsToShow).toEqual({
+    ...fixture().config.config.visState.interactionConfig.tooltip.fieldsToShow,
+    first: tooltipsBefore.data.fields
+  });
+  expect(await execute(getLayerLabelsCommand(other.ctx), {layerId: 'first-points'})).toEqual(
+    labelsBefore
+  );
+  expect(await execute(getTooltipFieldsCommand(other.ctx), {dataId: 'first'})).toEqual(
+    tooltipsBefore
   );
 });
 

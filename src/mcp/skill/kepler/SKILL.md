@@ -47,6 +47,10 @@ not this one.
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.get-layer-options` | Inspect editable visual settings, values, ranges and choices. |
 | `map.set-layer-options` | Patch visual settings or Zarr variable/dimension/axis selections. |
+| `map.get-layer-labels` | Inspect field-bound labels, native styles and supported fields/offsets. |
+| `map.set-layer-labels` | Replace ordered field-bound labels and configure their native appearance. |
+| `map.get-tooltip-fields` | Inspect one dataset's ordered tooltip fields and formats. |
+| `map.set-tooltip-fields` | Select and order tooltip fields for one dataset. |
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
@@ -131,6 +135,33 @@ an underscore: for example, `map.camera-bookmarks` becomes
 - Scalar levels or point-count contours → `contour` with optional `contour.weightColumn`.
 - Nearest-site cells → `voronoi` with optional `voronoi.boundsPadding`.
 - Multidimensional raster slices → `map.load-zarr`, then a `zarr` layer.
+
+## Field-bound labels and tooltip fields
+
+Use `map.get-layer-labels` with `{"layerId":"points"}` to inspect labels and
+available fields, then `map.set-layer-labels`, for example:
+
+```json
+{"layerId":"points","labels":[{"field":"month","size":24,"color":[255,255,255],"anchor":"middle","alignment":"top"}]}
+```
+
+`labels` replaces the ordered list; `[]` clears it. Omitted appearance settings
+retain a matching field's current style or use native layer defaults. Supported
+settings include size, weight, color, anchor, alignment, outline, background and
+collision handling. Point, icon, GeoJSON (GeoJSON column mode), H3 and trip labels read dataset fields
+and follow native filtering/playback. Cluster, grid and hexagon labels support
+only their synthetic `pointCount` field. Only those aggregation labels support
+explicit pixel `offset`; row labels use native anchor/alignment positioning.
+Check `supported`, `offsetSupported` and `availableFields` before configuring.
+
+Use `map.set-tooltip-fields` with
+`{"dataId":"provinces","fields":["province","capital","population"]}` to
+select fields in display order; `[]` clears that dataset's selection. Names are
+case-sensitive and validated against the dataset. Existing formats, other
+datasets and interaction settings (including tooltip enabled state) are retained.
+`map.get-tooltip-fields` with `{"dataId":"provinces"}` reads back the ordered
+`{name, format}` entries and available fields. Native project save/open preserves
+both label settings and tooltip order.
 
 ## Color configuration
 
