@@ -171,13 +171,14 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
             );
           }
           const tileset = await response.json().catch(error => {
+            checkCancelled();
             if (google) throw new Error('Google 3D Tiles returned invalid tileset JSON.');
             throw error;
           });
           if (!tileset.asset || !tileset.root)
             throw new Error('URL must return a 3D Tiles tileset JSON with asset and root.');
           metadata = {
-            tile3dUrl: args.url,
+            tile3dUrl: google ? new URL(args.url).href : args.url,
             ...(accessToken ? {tile3dProvider: 'google', tile3dAccessToken: accessToken} : {})
           };
         } else if (args.type === 'vectorTile') {

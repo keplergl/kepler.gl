@@ -219,6 +219,23 @@ it('does not echo Google request or JSON errors and preserves cancellation', asy
   expect(dispatch).not.toHaveBeenCalled();
 });
 
+it('preserves cancellation while reading a Google tileset response body', async () => {
+  const {execute, dispatch} = setup({'google-credentials': googleSource});
+  const controller = new AbortController();
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: async () => {
+      controller.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    }
+  });
+  expect(await execute(googleInput, controller.signal)).toMatchObject({
+    success: false,
+    error: 'Tileset import cancelled.'
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
 it('redacts the referenced credential from downstream import failures', async () => {
   const key = `${googleKey}/encoded+value`;
   const {execute, dispatch} = setup({
@@ -315,7 +332,8 @@ function setupReducer() {
   };
 }
 
-it('imports Google tiles with a referenced key, renders natively, and honors export credential choices', async () => {
+const googleUrls = [googleUrl, 'https://TILE.GOOGLEAPIS.COM/v1/3dtiles/root.json'];
+it.each(googleUrls)('imports Google tiles for native rendering and export: %s', async url => {
   const {ctx} = setupReducer();
   await ctx.dispatch(
     addDataToMap({
@@ -329,18 +347,18 @@ it('imports Google tiles with a referenced key, renders natively, and honors exp
       options: {autoCreateLayers: false, centerMap: false}
     })
   );
-  (global.fetch as jest.Mock).mockImplementation(async (url, options) => ({
-    ok: url === googleUrl && options.headers['X-GOOG-API-KEY'] === googleKey,
+  (global.fetch as jest.Mock).mockImplementation(async (requestUrl, options) => ({
+    ok: new URL(requestUrl).href === googleUrl && options.headers['X-GOOG-API-KEY'] === googleKey,
     status: 403,
     json: async () => ({asset: {version: '1.1'}, root: {}})
   }));
-  const result = (await getLoadTilesetCommand(ctx).execute(
-    {} as any,
-    googleInput
-  )) as RoomCommandResult<any>;
+  const result = (await getLoadTilesetCommand(ctx).execute({} as any, {
+    ...googleInput,
+    url
+  })) as RoomCommandResult<any>;
   expect(result.success).toBe(true);
   expect(global.fetch).toHaveBeenCalledWith(
-    googleUrl,
+    url,
     expect.objectContaining({
       headers: {'X-GOOG-API-KEY': googleKey},
       redirect: 'error'
