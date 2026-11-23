@@ -17,6 +17,7 @@ import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+import {getPropertyTransitionsCommand} from './property-transitions-command';
 import {
   getAddAnnotationCommand,
   getListAnnotationsCommand,
@@ -54,6 +55,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getSetLayerOptionsCommand(ctx),
     getCameraBookmarksCommand(ctx),
     getCameraTourCommand(ctx),
+    getPropertyTransitionsCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
     getUpdateAnnotationCommand(ctx),
@@ -78,6 +80,7 @@ export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+export {getPropertyTransitionsCommand} from './property-transitions-command';
 export {
   getAddAnnotationCommand,
   getListAnnotationsCommand,

@@ -4227,6 +4227,7 @@ __metadata:
     "@babel/node": "npm:^7.12.1"
     "@kepler.gl/actions": "npm:3.3.0-alpha.27"
     "@kepler.gl/constants": "npm:3.3.0-alpha.27"
+    "@kepler.gl/effects": "npm:3.3.0-alpha.27"
     "@kepler.gl/layers": "npm:3.3.0-alpha.27"
     "@kepler.gl/processors": "npm:3.3.0-alpha.27"
     "@kepler.gl/reducers": "npm:3.3.0-alpha.27"
