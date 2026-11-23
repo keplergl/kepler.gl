@@ -47,6 +47,8 @@ export const MAP_TOOL_IDS = [
   'map.camera-tour',
   'map.render-preview',
   'map.property-transitions',
+  'map.get-effects',
+  'map.set-effect',
   'map.add-annotation',
   'map.get-annotations',
   'map.update-annotation',

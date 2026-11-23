@@ -69,6 +69,8 @@ not this one.
 | `map.camera-tour`        | Get/set location-animation stops, seek, play or pause. |
 | `map.export-video`       | Discover formats, start/cancel exports, poll progress, and retrieve finished videos. |
 | `map.property-transitions` | Discover, inspect, add, update, or remove timed layer/annotation/effect blocks. |
+| `map.get-effects`        | List supported effects, parameter definitions and current settings. |
+| `map.set-effect`         | Create, patch, enable or disable a native effect by ID. |
 | `map.add-annotation`     | Add a styled geographic annotation or viewport caption/readout. |
 | `map.get-annotations`    | Read annotation ids, locations, viewport placement, readouts and effective styling. |
 | `map.update-annotation`  | Edit an annotation by id while preserving omitted settings. |
@@ -693,6 +695,39 @@ transfer for hosts implementing their own artifact transport. Save completed
 files promptly: browser jobs and bridge resources retain at most five exports
 and 256 MiB, and bridge files are removed when the server closes.
 
+### Effects (`map.get-effects`, `map.set-effect`)
+
+Call `map.get-effects` with `{}` to inspect `supported` effect types and their
+parameter names, types, bounds and declared defaults, plus current `effects`
+(IDs, enabled states and actual values) and `effectOrder`.
+
+Create Surface Fog as reflective water with `map.set-effect`:
+
+```json
+{"id":"water","type":"surfaceFog","parameters":{"height":120,"fogColor":[40,120,190],"pattern":true}}
+```
+
+`height` is elevation in meters, `fogColor` is RGB 0–255, and `pattern` enables
+water reflections. `thickness` controls the underwater color/visibility
+transition in meters. Use the native parameter names, not `elevation`, `color`
+or `reflection` aliases.
+
+Patch only the elevation with `{"id":"water","parameters":{"height":180}}`.
+Omitted settings, enabled state and animation tracks are preserved. Disable with
+`{"id":"water","isEnabled":false}` and re-enable with `isEnabled:true`.
+New effects require `type` and default to enabled; existing IDs cannot change type.
+Use IDs from discovery when editing effects created in the UI. The app permits
+one Light & Shadow and one fog effect (Surface or Distance), even when disabled.
+
+Values must match the discovered types (`checkbox` means boolean). Native
+validation clamps numbers/components to their bounds and resets wrong-length
+color/vector arrays to defaults. Unknown types/parameters and invalid value
+types return errors without changing the map. Read back normalized values with
+`map.get-effects`, then use `map.render-preview` to inspect the native rendered
+map. Fog and shadows are not rendered in globe mode. Existing animation tracks
+can override static values during playback; inspect them with
+`map.property-transitions`.
+
 ### Timed property transitions (`map.property-transitions`)
 
 Call `{"action": "discover"}` to find eligible targets and properties. Use an
@@ -719,8 +754,8 @@ Opacity is a 0–1 multiplier. Easing is `linear` or `easeInOut`. Edits pause pl
 
 These are the native Animation editor tracks, shared by preview, saved projects,
 and video export. They are independent of dataset time filters. The command
-animates existing effects but does not create effects or change static effect
-settings. Use `map.camera-tour` for camera stops and playback, and
+animates existing effects; use `map.set-effect` to create effects or change
+static settings. Use `map.camera-tour` for camera stops and playback, and
 `map.export-video` to produce a video.
 
 ### Annotations (`map.add-annotation`, `map.get-annotations`, `map.update-annotation`, `map.remove-annotation`)
@@ -845,9 +880,8 @@ smaller output dimensions.
 
 The shared map command catalog supports single-frame previews and full-video
 exports when the host supplies the native renderer. Use `map.export-video` with
-`{"action":"capabilities"}` to discover the host's video export support. Creating
-effects and editing their static settings still require a dedicated host tool;
-if none is listed, explain the gap. Embedded hosts can set video options with
+`{"action":"capabilities"}` to discover the host's video export support.
+Embedded hosts can set video options with
 the `setExportVideoSetting` Redux action, but rendering and file delivery still
 require a host export workflow.
 

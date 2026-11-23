@@ -28,6 +28,7 @@ import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
 import {getPropertyTransitionsCommand} from './property-transitions-command';
+import {getEffectsCommand, getSetEffectCommand} from './effects-command';
 import {
   getAddAnnotationCommand,
   getListAnnotationsCommand,
@@ -75,6 +76,8 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getCameraTourCommand(ctx),
     getRenderPreviewCommand(ctx),
     getPropertyTransitionsCommand(ctx),
+    getEffectsCommand(ctx),
+    getSetEffectCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
     getUpdateAnnotationCommand(ctx),
@@ -111,6 +114,7 @@ export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
 export {getRenderPreviewCommand} from './render-preview-command';
 export {getPropertyTransitionsCommand} from './property-transitions-command';
+export {getEffectsCommand, getSetEffectCommand} from './effects-command';
 export {
   getAddAnnotationCommand,
   getListAnnotationsCommand,
