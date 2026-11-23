@@ -9,9 +9,13 @@
 // Copyright contributors to the kepler.gl project
 
 import WebSocket from 'ws';
+import {mkdtemp, rm, writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {PassThrough} from 'node:stream';
 import {z} from 'zod';
 import {MAP_TOOL_IDS} from '../types';
-import {KeplerMcpBridge, formatResult, toToolName} from './bridge-server';
+import {KeplerMcpBridge, formatResult, getMapTools, toToolName} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';
 
 jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
@@ -19,6 +23,7 @@ jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: t
 // Exercise the descriptor builder used by the page's hello message. Requiring
 // it keeps the demo's Markdown module declarations out of the package's types.
 const {buildCatalog, toDescriptor} = require('../../../../examples/demo-app/src/kepler-mcp-shared');
+const fsPromises = require('node:fs/promises') as typeof import('node:fs/promises');
 
 async function waitFor(condition: () => boolean, timeoutMs = 3000): Promise<void> {
   const startedAt = Date.now();
@@ -257,6 +262,11 @@ describe('kepler-mcp bridge server', () => {
       properties: {datasetName: {type: 'string'}, dateTimeColumn: {type: 'string'}},
       required: expect.arrayContaining(['datasetName', 'dateTimeColumn'])
     });
+    expect(schemaFor('map.load-data')).toMatchObject({
+      properties: {url: {type: 'string'}, filePath: {type: 'string'}},
+      oneOf: [{required: ['url']}, {required: ['filePath']}]
+    });
+    expect((schemaFor('map.load-data') as any).required).not.toContain('url');
     socket.close();
   });
 
@@ -337,6 +347,252 @@ describe('kepler-mcp bridge server', () => {
 
     await expect(pending).rejects.toThrow(/disconnected/);
   });
+
+  it.each(['before hello', 'older page'])(
+    'rejects local files before reading disk or forwarding a call: %s',
+    async state => {
+      const socket = connect(started.port, started.token);
+      await new Promise(resolve => socket.on('open', resolve));
+      const messages: unknown[] = [];
+      socket.on('message', message => messages.push(message));
+      if (state === 'older page') {
+        socket.send(
+          JSON.stringify({
+            type: 'hello',
+            commands: [
+              {
+                id: 'map.load-data',
+                name: 'Load data',
+                inputSchema: {
+                  type: 'object',
+                  properties: {url: {type: 'string'}},
+                  required: ['url']
+                }
+              }
+            ]
+          })
+        );
+        await waitFor(() => bridge.getTools().length === 1);
+        expect((bridge.getTools()[0].inputSchema.properties as any).filePath).toBeUndefined();
+      }
+      const openFile = jest.spyOn(fsPromises, 'open');
+      try {
+        await expect(
+          bridge.callTool(toToolName('map.load-data'), {filePath: '/selected.csv'})
+        ).rejects.toThrow(/Update or reload the map page/);
+        expect(openFile).not.toHaveBeenCalled();
+        expect(messages).toHaveLength(0);
+      } finally {
+        openFile.mockRestore();
+        socket.close();
+      }
+    }
+  );
+});
+
+describe('kepler-mcp local file transfer', () => {
+  let bridge: KeplerMcpBridge;
+  let started: KeplerMcpBridgeStart;
+  let directory: string;
+  let filePath: string;
+  let socket: WebSocket;
+
+  beforeEach(async () => {
+    directory = await mkdtemp(join(tmpdir(), 'kepler-mcp-file-'));
+    filePath = join(directory, 'selected dataset.csv');
+    await writeFile(filePath, 'lat,lng\n40,-73\n');
+    bridge = new KeplerMcpBridge({port: 0, callTimeoutMs: 1000});
+    started = await bridge.start();
+    socket = new WebSocket(`ws://127.0.0.1:${started.port}/ws?token=${started.token}`, {
+      origin: 'http://localhost:3000'
+    });
+    await new Promise(resolve => socket.on('open', resolve));
+    await advertiseLocalImport();
+  });
+
+  afterEach(async () => {
+    await bridge.close();
+    await rm(directory, {recursive: true, force: true});
+  });
+
+  function load(input: Record<string, unknown> = {filePath}) {
+    return bridge.callTool(toToolName('map.load-data'), input);
+  }
+
+  async function advertiseLocalImport() {
+    const tool = getMapTools().find(candidate => candidate.commandId === 'map.load-data')!;
+    socket.send(
+      JSON.stringify({
+        type: 'hello',
+        commands: [
+          {
+            id: tool.commandId,
+            name: tool.name,
+            inputSchema: tool.inputSchema
+          }
+        ]
+      })
+    );
+    await waitFor(() => bridge.getTools().length === 1);
+  }
+
+  function reply(callId: string, success = true) {
+    socket.send(
+      JSON.stringify({
+        type: 'result',
+        callId,
+        result: {
+          success,
+          commandId: 'map.load-data',
+          ...(success
+            ? {data: {datasetId: 'imported'}}
+            : {error: 'Unable to parse the selected file'})
+        }
+      })
+    );
+  }
+
+  it('streams multi-megabyte bytes outside the tool input and revokes the capability after completion', async () => {
+    const contents = 'latitude,longitude,name\n' + '40,-73,selected location\n'.repeat(140000);
+    expect(Buffer.byteLength(contents)).toBeGreaterThan(2 * 1024 * 1024);
+    await writeFile(filePath, contents);
+    const pending = load({filePath, datasetName: 'Local locations'});
+    const message = await nextMessage(socket);
+    expect(message).toMatchObject({
+      type: 'call',
+      tool: 'map.load-data',
+      input: {datasetName: 'Local locations'}
+    });
+    expect(JSON.stringify(message)).not.toContain(directory);
+    expect(JSON.stringify(message).length).toBeLessThan(500);
+    const url = new URL(message.input.url);
+    const response = await fetch(url, {headers: {Origin: 'http://localhost:3000'}});
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-kepler-local-resource')).toBe(url.pathname.split('/')[2]);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:3000');
+    expect(response.headers.get('access-control-expose-headers')).toBe('X-Kepler-Local-Resource');
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('content-length')).toBe(String(Buffer.byteLength(contents)));
+    expect(await response.text()).toBe(contents);
+
+    reply(message.callId);
+    await expect(pending).resolves.toMatchObject({success: true, data: {datasetId: 'imported'}});
+    expect((await fetch(url)).status).toBe(404);
+  });
+
+  it('limits transfer requests to the capability and the connected map origin', async () => {
+    const pending = load();
+    const message = await nextMessage(socket);
+    expect(
+      (await fetch(message.input.url, {headers: {Origin: 'http://unrelated.example'}})).status
+    ).toBe(403);
+    expect((await fetch(`${message.input.url}?path=${encodeURIComponent(filePath)}`)).status).toBe(
+      404
+    );
+    expect(
+      (await fetch(message.input.url.replace(/local-data\/[^/]+/, 'local-data/not-a-capability')))
+        .status
+    ).toBe(404);
+    expect((await fetch(message.input.url, {method: 'POST'})).status).toBe(405);
+    const preflight = await fetch(message.input.url, {
+      method: 'OPTIONS',
+      headers: {Origin: 'http://localhost:3000'}
+    });
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-methods')).toBe('GET');
+    reply(message.callId, false);
+    await expect(pending).resolves.toMatchObject({
+      success: false,
+      error: expect.stringContaining('parse')
+    });
+    expect((await fetch(message.input.url)).status).toBe(404);
+  });
+
+  it.each([
+    {input: {}, error: /exactly one/},
+    {input: {filePath: ''}, error: /absolute path/},
+    {input: {filePath: 'relative.csv'}, error: /absolute path/},
+    {input: {filePath: null}, error: /absolute path/},
+    {input: {filePath: 42}, error: /absolute path/},
+    {input: {filePath: '/selected.csv', url: 'https://example.com/file.csv'}, error: /exactly one/}
+  ])('rejects invalid local import input before forwarding: $input', async ({input, error}) => {
+    const messages: unknown[] = [];
+    socket.on('message', message => messages.push(message));
+    await expect(load(input)).rejects.toThrow(error);
+    expect(messages).toHaveLength(0);
+  });
+
+  it('reports missing, empty, and non-file paths without disclosing the full path', async () => {
+    const missing = join(directory, 'missing.csv');
+    await expect(load({filePath: missing})).rejects.toThrow(/ENOENT.*exists.*readable/);
+    await expect(load({filePath: missing})).rejects.not.toThrow(directory);
+    await expect(load({filePath: directory})).rejects.toThrow(/regular file/);
+    await writeFile(filePath, '');
+    await expect(load()).rejects.toThrow(/empty/);
+  });
+
+  it('cancels a timed-out import and revokes its capability', async () => {
+    const pending = load();
+    const rejected = expect(pending).rejects.toThrow(/Timed out.*smaller file/);
+    const message = await nextMessage(socket);
+    const cancel = await nextMessage(socket);
+    expect(cancel).toEqual({type: 'cancel', callId: message.callId});
+    await rejected;
+    expect((await fetch(message.input.url)).status).toBe(404);
+  });
+
+  it('reports disk read errors, cancels the command, and revokes the capability', async () => {
+    const actualOpen = fsPromises.open;
+    const openFile = jest.spyOn(fsPromises, 'open').mockImplementationOnce(async (...args) => {
+      const file = await actualOpen(...args);
+      jest.spyOn(file, 'createReadStream').mockImplementation(() => {
+        const stream = new PassThrough();
+        queueMicrotask(() => stream.destroy(new Error('Disk read failed')));
+        return stream as any;
+      });
+      return file;
+    });
+    try {
+      const pending = load();
+      const rejected = expect(pending).rejects.toThrow(/file transfer failed.*readable/);
+      const message = await nextMessage(socket);
+      const cancellation = nextMessage(socket);
+      await expect(fetch(message.input.url).then(response => response.text())).rejects.toThrow();
+      await expect(cancellation).resolves.toEqual({type: 'cancel', callId: message.callId});
+      await rejected;
+      expect((await fetch(message.input.url)).status).toBe(404);
+    } finally {
+      openFile.mockRestore();
+    }
+  });
+
+  it('requires a loopback listener for local file imports', async () => {
+    await bridge.close();
+    bridge = new KeplerMcpBridge({port: 0, host: '0.0.0.0'});
+    started = await bridge.start();
+    socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    await advertiseLocalImport();
+    await expect(load()).rejects.toThrow(/loopback bridge host/);
+  });
+
+  it.each(['disconnect', 'replacement', 'shutdown'])(
+    'revokes active local resources on %s',
+    async event => {
+      const pending = load();
+      const rejected = expect(pending).rejects.toThrow(/disconnected|replaced|closed/);
+      const message = await nextMessage(socket);
+      if (event === 'disconnect') socket.close();
+      else if (event === 'replacement') {
+        const replacement = connect(started.port, started.token);
+        await new Promise(resolve => replacement.on('open', resolve));
+      } else await bridge.close();
+      await rejected;
+      if (event === 'shutdown') {
+        await expect(fetch(message.input.url)).rejects.toThrow();
+      } else expect((await fetch(message.input.url)).status).toBe(404);
+    }
+  );
 });
 
 describe('demo MCP descriptors', () => {

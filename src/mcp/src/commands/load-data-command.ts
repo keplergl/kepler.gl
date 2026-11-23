@@ -7,6 +7,7 @@ import {addDataToMap} from '@kepler.gl/actions';
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 import type {ProcessFileDataContent} from '@kepler.gl/processors';
 import type {KeplerContext} from './types';
+import {getLocalDataLoaders} from './local-data-loaders';
 
 // MIME type → file extension for data URLs, so a `data:text/csv;base64,...`
 // payload gets a sensible default dataset name (`data.csv`) instead of `data`.
@@ -52,11 +53,10 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
       'or after `datasetName` when provided. Does NOT create a layer — call map.add-layer to visualize. ' +
       'Do NOT create a duplicate dataset (e.g. via map.create-table) just to rename it; ' +
       'name it here with `datasetName` instead, or use the URL-filename dataset as-is. ' +
-      'LOCAL FILES: a local file must be served over http(s) — the browser cannot fetch ' +
-      "`file://` paths. To load a file you have on disk: (1) copy it into the demo app's " +
-      'served directory (e.g. `examples/demo-app/dist/`) and pass `/filename.csv`, or ' +
-      '(2) serve it with a CORS-enabled local server (`npx serve --cors -l 8000` in the ' +
-      "file's folder) and pass `http://localhost:8000/filename.csv`. " +
+      'LOCAL FILES: the stdio MCP bridge accepts `filePath` instead of `url` for an ' +
+      'explicitly selected absolute path on the MCP server machine, including large files. ' +
+      'It transfers the file without a separate HTTP server or embedding content in tool text. ' +
+      'Browser-only hosts still require a browser-accessible URL; they cannot fetch `file://` paths. ' +
       'EMBEDDED CONTENT: if you have the file content but cannot serve it (e.g. a remote ' +
       'browser context), pass it as a data URL — `data:text/csv;base64,<base64 content>` ' +
       '(encode with `base64 -i file.csv`). Works for small files (up to ~2MB). ' +
@@ -64,24 +64,27 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
       'it loads much faster and is less likely to time out. Convert GeoJSON to GeoParquet ' +
       'with geopandas (`gdf.to_parquet("data.parquet")`); kepler reads GeoParquet geometry (WKB) natively.',
     metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
-    inputSchema: z.object({
-      url: z
-        .string()
-        .describe(
-          'The URL to load data from. May be a full http(s) URL, a path served by the demo app ' +
-            '(e.g. /data.geojson), or a data URL embedding small file content (data:text/csv;base64,...).'
-        ),
-      datasetName: z
-        .string()
-        .optional()
-        .describe(
-          'Optional name for the loaded dataset. If omitted, the URL filename is used. ' +
-            'Use this instead of creating a duplicate dataset to rename it.'
-        )
-    }) as any,
+    inputSchema: z
+      .object({
+        url: z
+          .string()
+          .describe(
+            'The URL to load data from. May be a full http(s) URL, a path served by the demo app ' +
+              '(e.g. /data.geojson), or a data URL embedding small file content (data:text/csv;base64,...).'
+          ),
+        datasetName: z
+          .string()
+          .optional()
+          .describe(
+            'Optional name for the loaded dataset. If omitted, the URL filename is used. ' +
+              'Use this instead of creating a duplicate dataset to rename it.'
+          )
+      })
+      .meta({'x-kepler-local-resource': 1}) as any,
     execute: async (execCtx, input) => {
       const {url, datasetName} = (input ?? {}) as {url: string; datasetName?: string};
       try {
+        execCtx?.signal?.throwIfAborted();
         if (typeof url !== 'string' || url.trim() === '') {
           throw new Error(`Invalid URL: ${url}`);
         }
@@ -105,13 +108,13 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         }
         if (parsedUrl.protocol === 'data:') {
           // Cap the size so a huge embedded payload can't stall the load or
-          // bloat the tool input. For larger files the agent should serve the
-          // file over http(s) or convert to Parquet instead.
+          // bloat the tool input. Larger local files can use the stdio bridge's
+          // filePath input without encoding the data into a tool argument.
           const MAX_DATA_URL_LENGTH = 2 * 1024 * 1024; // ~2MB of base64
           if (parsedUrl.href.length > MAX_DATA_URL_LENGTH) {
             throw new Error(
               `Data URL is too large (${parsedUrl.href.length} chars). ` +
-                'For files over a few MB, serve the file over http(s) or convert to Parquet.'
+                'Use the stdio MCP bridge filePath input or a browser-accessible HTTP(S) URL.'
             );
           }
         } else if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
@@ -134,14 +137,26 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         }
 
         const blob = await response.blob();
+        execCtx?.signal?.throwIfAborted();
+        // The stdio bridge streams selected files through short-lived capabilities.
+        // Treat only its loopback resource route as a local import: persisting the
+        // transfer URL as an externally hosted source would break saved maps.
+        const resourceId = response.headers?.get('X-Kepler-Local-Resource');
+        const isLocalResource = Boolean(
+          resourceId &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resourceId) &&
+            ['localhost', '127.0.0.1', '[::1]'].includes(parsedUrl.hostname) &&
+            parsedUrl.pathname.startsWith(`/local-data/${resourceId}/`)
+        );
         // Derive the filename from the URL pathname so query strings (e.g.
         // `data.csv?x=1`) don't end up in the dataset name. A data URL has no
         // pathname — fall back to a name derived from its MIME type so the
         // dataset gets a sensible default label (e.g. `data.csv`).
-        const fileName =
+        const urlFileName =
           parsedUrl.protocol === 'data:'
             ? fileNameFromDataUrl(parsedUrl)
             : parsedUrl.pathname.split('/').pop() || 'data';
+        const fileName = isLocalResource ? decodeURIComponent(urlFileName) : urlFileName;
         // Carry the Blob's MIME type into the File so loader selection in
         // readFileInBatches can use it — a URL with no extension (or a
         // misleading one) would otherwise leave file.type empty and fail to
@@ -156,12 +171,16 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         // storing the whole payload in the dataset metadata.
         const sourceUrl =
           parsedUrl.protocol === 'data:' ? `data:${hashString(parsedUrl.href)}` : parsedUrl.href;
-        (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = sourceUrl;
+        if (!isLocalResource) {
+          (file as File & {keplerSourceUrl?: string}).keplerSourceUrl = sourceUrl;
+        }
 
         const batches = await readFileInBatches({
           file,
           fileCache: [],
-          loaders: visState.loaders ?? [],
+          loaders: isLocalResource
+            ? await getLocalDataLoaders(file, visState.loaders ?? [], execCtx?.signal)
+            : visState.loaders ?? [],
           loadOptions: visState.loadOptions ?? {}
         });
 
@@ -170,6 +189,7 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         let parsedData: any[] = [];
 
         while (!result.done) {
+          execCtx?.signal?.throwIfAborted();
           content = result.value as ProcessFileDataContent;
           result = await batches.next();
           if (result.done) {
@@ -184,13 +204,24 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
 
         // Apply a caller-chosen dataset name (default: the URL filename) so the
         // agent never has to create a duplicate dataset just to rename it.
-        for (const d of parsedData) {
+        for (const [index, d] of parsedData.entries()) {
+          if (isLocalResource) {
+            if (!d?.info || !d.data || !Array.isArray(d.data.fields)) {
+              throw new Error(
+                `Could not parse a dataset from ${fileName}. Select a data file, not a saved map.`
+              );
+            }
+            // Importing a second same-named file must never replace an existing
+            // dataset or invalidate its layers.
+            d.info.id = `local-${resourceId}-${index}`;
+          }
           if (d?.info) {
             d.info.label = datasetName ?? d.info.label ?? fileName;
           }
         }
 
-        ctx.dispatch(
+        execCtx?.signal?.throwIfAborted();
+        await ctx.dispatch(
           addDataToMap({
             datasets: parsedData,
             // Do NOT auto-create a layer — the assistant creates the layer
@@ -201,10 +232,20 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         );
 
         const dataInfo = parsedData[0]?.info;
+        if (isLocalResource && parsedData.some(d => !ctx.getVisState().datasets[d.info.id])) {
+          throw new Error(
+            "Dataset registration failed. Check the map's dataset error notification for the cause. " +
+              'If the dataset appears later, ensure the host returns the task middleware completion promise from dispatch.'
+          );
+        }
         return {
           success: true,
           commandId: loadDataCommandId,
-          data: {details: `Successfully loaded data from ${url}`, dataInfo}
+          data: {
+            details: `Successfully loaded data from ${isLocalResource ? fileName : url}`,
+            datasetId: dataInfo?.id,
+            dataInfo
+          }
         };
       } catch (error) {
         return {

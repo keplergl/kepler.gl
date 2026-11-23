@@ -44,7 +44,7 @@ not this one.
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
-| `map.load-data`          | Load data from a URL (no layer — call `map.add-layer`).        |
+| `map.load-data`          | Load a URL or bridge-local file; then call `map.add-layer`.   |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
@@ -399,7 +399,7 @@ starry night", "watercolor"), generate an appropriate palette from the
 description. If the user refers to a layer by name rather than id, find the
 matching `layerId` from the dataset context.
 
-### 7. Load data from URL
+### 7. Load data from a URL or local file
 
 ```json
 { "url": "https://..." }
@@ -416,14 +416,34 @@ user wants a specific dataset name, pass it as `datasetName`:
 { "url": "https://.../nyc.geojson", "datasetName": "NYC Neighborhoods" }
 ```
 
-Local files: a local file must be served over http(s) — the browser cannot
-fetch `file://` paths. Copy the file into the demo app's served directory
-(e.g. `examples/demo-app/dist/`) and pass `/filename.csv`, or serve it with
-a CORS-enabled local server (`npx serve --cors -l 8000`) and pass
-`http://localhost:8000/filename.csv`. If you have the file content but
-cannot serve it (e.g. a remote browser context), pass it as a data URL —
-`data:text/csv;base64,<base64 content>` (encode with `base64 -i file.csv`).
-This works for small files (up to ~2MB).
+For an explicitly selected local file, the **stdio MCP bridge** accepts
+`filePath` instead of `url` on `map_load-data`:
+
+```json
+{ "filePath": "/absolute/path/nyc.geojson", "datasetName": "NYC Neighborhoods" }
+```
+
+The path must identify one readable, nonempty regular file on the machine
+running `kepler-mcp`. It is not a path on a remote client or browser's machine.
+The connected map must advertise local resource support; update or reload older pages.
+Supply exactly one of `filePath` and `url`; do not embed the file contents in
+the call. Multi-megabyte GeoJSON and CSV files use the existing bridge's binary
+HTTP transfer and format processors, with no separate user-run server. The
+temporary resource is revoked when the call finishes, times out, or disconnects;
+it is never saved as an externally hosted dataset source. Each local import
+gets a fresh ID, preserving existing datasets and layers even for same-named files.
+
+A successful local import waits for dataset registration and returns
+`datasetId` (also in `dataInfo.id`). Pass that ID as `datasetName` to
+`map_add-layer` to visualize it. A failed read, transfer, or parse reports an
+error without adding a partial dataset. If registration fails, check the map's
+dataset error notification for the cause. If the dataset appears later, ensure
+the host's dispatch returns the task middleware completion promise.
+
+Browser-only/WebMCP hosts still require a browser-accessible URL; browsers cannot
+fetch `file://` paths. Small embedded files can use a data URL such as
+`data:text/csv;base64,<base64 content>` (up to roughly 2 MiB of encoded text).
+For larger local files, use the stdio bridge's `filePath` input.
 
 For large files (over a few MB), prefer Parquet (`.parquet`) over
 GeoJSON/CSV — it loads much faster and is less likely to time out. Convert

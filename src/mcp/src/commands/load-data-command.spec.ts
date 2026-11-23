@@ -7,7 +7,8 @@ import {getLoadDataCommand} from './load-data-command';
 // command's fetch + batch-parse + dispatch flow is what we're asserting.
 jest.mock('@kepler.gl/processors', () => ({
   readFileInBatches: jest.fn(),
-  processFileData: jest.fn()
+  processFileData: jest.fn(),
+  getKeplerLoaders: jest.fn().mockResolvedValue([])
 }));
 
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
@@ -303,6 +304,94 @@ describe('map.load-data', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/Data URL is too large/);
+    expect(getDispatched()).toBeNull();
+  });
+
+  it('does not add a dataset when cancelled during parsing', async () => {
+    const {ctx, getDispatched} = makeCtx();
+    const controller = new AbortController();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      blob: async () => new Blob(['a,b\n1,2'], {type: 'text/csv'})
+    });
+    (readFileInBatches as jest.Mock).mockResolvedValue({
+      next: jest
+        .fn()
+        .mockResolvedValueOnce({value: {data: [], fileName: 'data.csv'}, done: false})
+        .mockResolvedValueOnce({done: true})
+    });
+    (processFileData as jest.Mock).mockImplementation(async () => {
+      controller.abort();
+      return [{info: {id: 'cancelled', label: 'data.csv'}, data: {rows: [[1, 2]]}}];
+    });
+
+    const result = (await getLoadDataCommand(ctx as any).execute(
+      {signal: controller.signal} as any,
+      {url: 'https://example.com/data.csv'}
+    )) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(getDispatched()).toBeNull();
+  });
+
+  it('registers a local resource before returning its ID and does not retain the transfer URL', async () => {
+    const {ctx} = makeCtx();
+    const resourceId = '12345678-1234-1234-1234-123456789abc';
+    const url = `http://127.0.0.1:8765/local-data/${resourceId}/my%20data.csv`;
+    const datasets: Record<string, any> = {};
+    ctx.getVisState = () => ({datasets, layers: [], loaders: [], loadOptions: {}});
+    const dispatch = jest.fn(async (action: any) => {
+      await Promise.resolve();
+      for (const dataset of action.payload.datasets) datasets[dataset.info.id] = dataset;
+    });
+    ctx.dispatch = dispatch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: {get: () => resourceId},
+      blob: async () => new Blob(['a,b\n1,2'], {type: 'text/csv'})
+    });
+    (readFileInBatches as jest.Mock).mockResolvedValue({
+      next: jest
+        .fn()
+        .mockResolvedValueOnce({value: {data: [], fileName: 'my data.csv'}, done: false})
+        .mockResolvedValueOnce({done: true})
+    });
+    (processFileData as jest.Mock).mockResolvedValue([
+      {info: {id: 'filename-hash', label: 'my data.csv'}, data: {fields: [], rows: [[1, 2]]}}
+    ]);
+
+    const result = (await getLoadDataCommand(ctx as any).execute({} as any, {
+      url
+    })) as CommandResult;
+
+    expect(result.success).toBe(true);
+    const datasetId = result.data?.datasetId as string;
+    expect(datasets[datasetId].info.label).toBe('my data.csv');
+    expect(datasetId).not.toBe('filename-hash');
+    expect(result.data?.dataInfo).toEqual(datasets[datasetId].info);
+    const {file} = (readFileInBatches as jest.Mock).mock.calls[0][0];
+    expect(file.name).toBe('my data.csv');
+    expect(file.keplerSourceUrl).toBeUndefined();
+    expect(JSON.stringify(result)).not.toContain(url);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a failed transfer without changing the map', async () => {
+    const {ctx, getDispatched} = makeCtx();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      blob: async () => {
+        throw new Error('Connection terminated before file transfer completed');
+      }
+    });
+
+    const result = (await getLoadDataCommand(ctx as any).execute({} as any, {
+      url: 'http://127.0.0.1:8765/local-data/resource/data.csv'
+    })) as CommandResult;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/transfer completed/);
+    expect(readFileInBatches).not.toHaveBeenCalled();
     expect(getDispatched()).toBeNull();
   });
 });
