@@ -43,6 +43,8 @@ import {getZoomFadeCommand} from './zoom-fade-command';
 import {getLoadZarrCommand} from './load-zarr-command';
 import {getLoadTilesetCommand} from './load-tileset-command';
 import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
+import {getLayerLabelsCommand, getSetLayerLabelsCommand} from './layer-labels-command';
+import {getTooltipFieldsCommand, getSetTooltipFieldsCommand} from './tooltip-fields-command';
 import {getRenderPreviewCommand} from './render-preview-command';
 
 /**
@@ -77,6 +79,10 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getLoadTilesetCommand(ctx),
     getLayerOptionsCommand(ctx),
     getSetLayerOptionsCommand(ctx),
+    getLayerLabelsCommand(ctx),
+    getSetLayerLabelsCommand(ctx),
+    getTooltipFieldsCommand(ctx),
+    getSetTooltipFieldsCommand(ctx),
     getCameraBookmarksCommand(ctx),
     getCameraTourCommand(ctx),
     getRenderPreviewCommand(ctx),
@@ -173,3 +179,5 @@ export {
 
 export {getLoadTilesetCommand} from './load-tileset-command';
 export {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
+export {getLayerLabelsCommand, getSetLayerLabelsCommand} from './layer-labels-command';
+export {getTooltipFieldsCommand, getSetTooltipFieldsCommand} from './tooltip-fields-command';

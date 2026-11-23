@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {LayerClasses} from '@kepler.gl/layers';
+import {COLUMN_MODE_TABLE, LayerClasses} from '@kepler.gl/layers';
 import KeplerTable from '@kepler.gl/table';
 import {DatasetType} from '@kepler.gl/constants';
 import {INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
 import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
+import {getLayerLabelsCommand, getSetLayerLabelsCommand} from './layer-labels-command';
 import type {KeplerContext, RoomCommandResult} from './types';
 
 function setup(type = 'point', metadata = {}) {
@@ -29,6 +30,159 @@ function setup(type = 'point', metadata = {}) {
       (await getSetLayerOptionsCommand(ctx).execute({} as any, input)) as RoomCommandResult<any>
   };
 }
+
+describe('field-bound layer labels', () => {
+  async function labelsContext(type = 'point') {
+    const context = setup(type);
+    await context.dataset.importData({
+      data: {
+        fields: [
+          {name: 'month', type: 'string'},
+          {name: 'count', type: 'integer'}
+        ],
+        rows: [
+          ['January', 10],
+          ['February', 20]
+        ]
+      } as any
+    });
+    return {
+      ...context,
+      read: async (input: unknown = {layerId: 'layer'}) =>
+        (await getLayerLabelsCommand(context.ctx).execute(
+          {} as any,
+          input
+        )) as RoomCommandResult<any>,
+      write: async (input: unknown) =>
+        (await getSetLayerLabelsCommand(context.ctx).execute(
+          {} as any,
+          input
+        )) as RoomCommandResult<any>
+    };
+  }
+
+  it('binds actual fields, preserves omitted styles, orders labels and clears them', async () => {
+    const {write, read, state, dataset, dispatch} = await labelsContext();
+    const previous = state().layers[0].config;
+    const labels = [
+      {
+        field: 'month',
+        size: 28,
+        color: [30, 80, 120],
+        anchor: 'middle',
+        alignment: 'top',
+        weight: 700,
+        outlineWidth: 0.5,
+        outlineColor: [0, 0, 0, 255],
+        background: true,
+        backgroundColor: [20, 20, 20, 200],
+        collisionEnabled: true
+      },
+      {field: 'count', size: 20}
+    ];
+    expect(await write({layerId: 'layer', labels})).toMatchObject({success: true, data: {labels}});
+    expect(state().layers[0].config.textLabel[0].field).toBe(dataset.fields[0]);
+    expect(state().layers[0].config).toMatchObject({
+      columns: previous.columns,
+      visConfig: previous.visConfig,
+      color: previous.color
+    });
+    expect(
+      await write({layerId: 'layer', labels: [{field: 'count'}, {field: 'month', size: 30}]})
+    ).toMatchObject({
+      success: true,
+      data: {
+        labels: [
+          {field: 'count', size: 20},
+          {...labels[0], size: 30}
+        ]
+      }
+    });
+    dispatch.mockClear();
+    expect(await read()).toMatchObject({
+      success: true,
+      data: {
+        supported: true,
+        offsetSupported: false,
+        availableFields: [
+          {name: 'month', type: 'string'},
+          {name: 'count', type: 'integer'}
+        ]
+      }
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(await write({layerId: 'layer', labels: []})).toMatchObject({
+      success: true,
+      data: {labels: []}
+    });
+    expect(state().layers[0].config.textLabel.every(label => label.field === null)).toBe(true);
+  });
+
+  it.each(['grid', 'hexagon', 'cluster'])(
+    'uses native %s count-label defaults and pixel offsets',
+    async type => {
+      const {write, read, state} = await labelsContext(type);
+      expect(await read()).toMatchObject({
+        data: {
+          supported: true,
+          offsetSupported: true,
+          availableFields: [{name: 'pointCount', type: 'integer'}]
+        }
+      });
+      expect(
+        await write({layerId: 'layer', labels: [{field: 'pointCount', offset: [12, -8]}]})
+      ).toMatchObject({
+        success: true,
+        data: {labels: [{field: 'pointCount', offset: [12, -8], anchor: 'middle'}]}
+      });
+      expect(state().layers[0].config.textLabel[0].field?.fieldIdx).toBe(-1);
+      expect(await write({layerId: 'layer', labels: [{field: 'month'}]})).toMatchObject({
+        success: false
+      });
+    }
+  );
+
+  it.each([
+    {labels: [{field: 'month'}, {field: 'missing'}]},
+    {labels: [{field: 'Month'}]},
+    {labels: [{field: 'month'}, {field: 'month'}]},
+    {labels: [{field: 'month', size: 0}]},
+    {labels: [{field: 'month', color: [256, 0, 0]}]},
+    {labels: [{field: 'month', anchor: 'left'}]},
+    {labels: [{field: 'month', offset: [1, 2]}]},
+    {labels: [{field: 'month', unknown: true}]},
+    {labels: [{field: null}]},
+    {layerId: 'missing', labels: []},
+    {}
+  ])('rejects invalid label input without mutation: %j', async input => {
+    const {write, dispatch} = await labelsContext();
+    expect(await write({layerId: 'layer', ...input})).toMatchObject({success: false});
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('reports unsupported layers and missing datasets without mutating them', async () => {
+    const {write, read, dispatch, state} = await labelsContext('heatmap');
+    expect(await read()).toMatchObject({data: {supported: false, availableFields: []}});
+    expect(await write({layerId: 'layer', labels: [{field: 'month'}]})).toMatchObject({
+      success: false
+    });
+    delete state().datasets.data;
+    expect(await read()).toMatchObject({success: false});
+    expect(await write({layerId: 'layer', labels: []})).toMatchObject({success: false});
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('does not advertise field labels for GeoJSON table column mode', async () => {
+    const {state, read, write, dispatch} = await labelsContext('geojson');
+    expect(await read()).toMatchObject({data: {supported: true}});
+    state().layers[0].config.columnMode = COLUMN_MODE_TABLE;
+    expect(await read()).toMatchObject({data: {supported: false, availableFields: []}});
+    expect(await write({layerId: 'layer', labels: [{field: 'month'}]})).toMatchObject({
+      success: false
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
 
 describe('layer visual options', () => {
   it.each([
