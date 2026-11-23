@@ -18,7 +18,12 @@ import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
-import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema
+} from '@modelcontextprotocol/sdk/types.js';
 import {KeplerMcpBridge, formatResult} from './bridge-server';
 import type {KeplerMcpBridgeOptions} from './bridge-server';
 
@@ -89,7 +94,7 @@ async function main(): Promise<void> {
 
   const server = new Server(
     {name: 'kepler-mcp', version: readVersion()},
-    {capabilities: {tools: {}}}
+    {capabilities: {tools: {}, resources: {}}}
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -100,12 +105,29 @@ async function main(): Promise<void> {
     }))
   }));
 
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: bridge.getResources()
+  }));
+  server.setRequestHandler(ReadResourceRequestSchema, async request => ({
+    contents: [bridge.readResource(request.params.uri)]
+  }));
+
   server.setRequestHandler(CallToolRequestSchema, async request => {
     const {name, arguments: args} = request.params;
     try {
       const result = await bridge.callTool(name, (args ?? {}) as Record<string, unknown>);
       const {text, isError} = formatResult(result);
-      return {content: [{type: 'text' as const, text}], ...(isError ? {isError: true} : {})};
+      const artifact = (result.data as {artifact?: {uri?: string}} | undefined)?.artifact;
+      const resource = artifact?.uri
+        ? bridge.getResources().find(item => item.uri === artifact.uri)
+        : undefined;
+      return {
+        content: [
+          {type: 'text' as const, text},
+          ...(!isError && resource ? [{type: 'resource_link' as const, ...resource}] : [])
+        ],
+        ...(isError ? {isError: true} : {})
+      };
     } catch (error) {
       return {
         content: [

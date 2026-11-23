@@ -6,6 +6,7 @@ import type {ZodType} from 'zod';
 import type {Datasets} from '@kepler.gl/table';
 import type {KeplerDispatch} from './utils';
 import type {MapState} from '@kepler.gl/types';
+import type {KeplerGlState} from '@kepler.gl/reducers';
 
 /**
  * Structural subset of `@sqlrooms/room-store`'s `RoomCommand` — enough for the
@@ -124,6 +125,8 @@ export type KeplerStateAccessors = {
  */
 export type KeplerContext = {
   getVisState: () => VisState;
+  /** Complete map state for saved-project export, including basemap and UI config. */
+  getKeplerState?: () => KeplerGlState | undefined;
   /** Current viewport for bookmark capture/navigation and camera-tour seeking. */
   getMapState?: () => MapState | undefined;
   getMapBoundary: () =>

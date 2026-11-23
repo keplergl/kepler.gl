@@ -32,6 +32,14 @@ import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '../commands
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_CALL_TIMEOUT_MS = 60_000;
+const MAX_PROJECT_ARTIFACT_BYTES = 100 * 1024 * 1024;
+const MAX_PROJECT_ARTIFACTS = 10;
+const PROJECT_ARTIFACT_AVAILABILITY =
+  'Available until the MCP server stops or newer exports evict it (10 artifacts / 100 MiB total). Download to retain it.';
+
+function supportsLocalResource(commandId: string): boolean {
+  return commandId === 'map.load-data' || commandId === 'map.open-project';
+}
 
 export type MapTool = {
   /** MCP tool name, e.g. `map_add_layer` (dots are not allowed in tool names). */
@@ -74,6 +82,16 @@ type LocalResource = {
   callId: string;
   transfers: Set<{stream: ReadStream; response: ServerResponse}>;
   cleanup?: Promise<void>;
+};
+
+type ProjectArtifact = {
+  uri: string;
+  path: string;
+  fileName: string;
+  mimeType: 'application/json';
+  size: number;
+  text: string;
+  origin: string;
 };
 
 /** MCP tool names are commonly restricted to [A-Za-z0-9_-]; `map.add-layer` → `map_add_layer`. */
@@ -140,6 +158,7 @@ export class KeplerMcpBridge {
   private httpServer: HttpServer | null = null;
   private readonly pending = new Map<string, PendingCall>();
   private readonly localResources = new Map<string, LocalResource>();
+  private readonly projectArtifacts = new Map<string, ProjectArtifact>();
   private pageOrigin = '';
   private token = '';
   private pageUrl = '';
@@ -157,7 +176,7 @@ export class KeplerMcpBridge {
   /** Tools the MCP client can call right now. */
   getTools(): MapTool[] {
     return (this.pageTools ?? this.staticTools).map(tool => {
-      if (tool.commandId !== 'map.load-data') return tool;
+      if (!supportsLocalResource(tool.commandId)) return tool;
       const schema = tool.inputSchema;
       if (schema['x-kepler-local-resource'] !== 1) return tool;
       return {
@@ -188,6 +207,25 @@ export class KeplerMcpBridge {
     return this.socket?.readyState === WebSocket.OPEN;
   }
 
+  /** Exported projects are also readable through the MCP resources API. */
+  getResources() {
+    return [...this.projectArtifacts.values()].map(artifact => ({
+      uri: artifact.uri,
+      name: artifact.fileName,
+      mimeType: artifact.mimeType,
+      size: artifact.size,
+      description: PROJECT_ARTIFACT_AVAILABILITY
+    }));
+  }
+
+  readResource(uri: string): {uri: string; mimeType: string; text: string} {
+    const artifact = [...this.projectArtifacts.values()].find(item => item.uri === uri);
+    if (!artifact) {
+      throw new Error('Project artifact not found or expired. Export the project again.');
+    }
+    return {uri: artifact.uri, mimeType: artifact.mimeType, text: artifact.text};
+  }
+
   async start(): Promise<KeplerMcpBridgeStart> {
     if (this.wss) throw new Error('The kepler.gl bridge is already running.');
 
@@ -197,6 +235,11 @@ export class KeplerMcpBridge {
     // the user can open `http://127.0.0.1:<port>/` even when the MCP client
     // never shows the server's stderr. Only `/ws` upgrades to a WebSocket.
     const httpServer = createServer((request, response) => {
+      const artifact = this.projectArtifacts.get(request.url ?? '');
+      if (artifact) {
+        this.serveProjectArtifact(artifact, request, response);
+        return;
+      }
       const resource = this.localResources.get(request.url ?? '');
       if (resource) {
         this.serveLocalResource(resource, request, response);
@@ -253,14 +296,14 @@ export class KeplerMcpBridge {
 
     const callId = randomUUID();
     let resource: LocalResource | undefined;
-    if (tool.commandId === 'map.load-data') {
+    if (supportsLocalResource(tool.commandId)) {
       const hasFilePath = Object.prototype.hasOwnProperty.call(input, 'filePath');
       const hasUrl = Object.prototype.hasOwnProperty.call(input, 'url');
       if (hasFilePath === hasUrl) {
-        throw new Error('Provide exactly one of url or filePath to load a dataset.');
+        throw new Error('Provide exactly one of url or filePath to load a dataset or project.');
       }
       if (hasFilePath) {
-        const pageTool = this.pageTools?.find(candidate => candidate.commandId === 'map.load-data');
+        const pageTool = this.pageTools?.find(candidate => candidate.commandId === tool.commandId);
         if (pageTool?.inputSchema['x-kepler-local-resource'] !== 1) {
           throw new Error(
             'The connected map has not advertised local file import support. Update or reload the map page, wait for its connection, and retry.'
@@ -285,9 +328,11 @@ export class KeplerMcpBridge {
           );
         }
         const host = address.address.includes(':') ? `[${address.address}]` : address.address;
+        const options = {...input};
+        delete options.filePath;
         input = {
-          url: `http://${host}:${address.port}${resource.path}`,
-          ...(input.datasetName !== undefined ? {datasetName: input.datasetName} : {})
+          ...options,
+          url: `http://${host}:${address.port}${resource.path}`
         };
       }
     }
@@ -310,7 +355,10 @@ export class KeplerMcpBridge {
       this.failCall(callId, 'Unable to send the command to the map. Reconnect and retry.');
     }
     try {
-      return await reply;
+      const result = await reply;
+      return tool.commandId === 'map.save-project' && result?.success
+        ? this.storeProjectArtifact(result)
+        : result;
     } finally {
       if (resource) await this.releaseLocalResource(resource);
     }
@@ -319,6 +367,7 @@ export class KeplerMcpBridge {
   async close(): Promise<void> {
     this.rejectPending('The bridge was closed.');
     this.pageTools = null;
+    this.projectArtifacts.clear();
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
     await Promise.all(
@@ -376,6 +425,119 @@ export class KeplerMcpBridge {
     });
     // Errors are followed by close; the close handler resets state.
     socket.on('error', () => undefined);
+  }
+
+  private storeProjectArtifact(result: RoomCommandResult): RoomCommandResult {
+    const data = result.data as Record<string, unknown> | undefined;
+    const exported = data?.artifact as Partial<ProjectArtifact> | undefined;
+    if (
+      !exported ||
+      typeof exported.text !== 'string' ||
+      exported.mimeType !== 'application/json' ||
+      typeof exported.fileName !== 'string' ||
+      !exported.fileName.trim()
+    ) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error:
+          'The map did not return a valid JSON project artifact. Update or reload the map page.'
+      };
+    }
+    const address = this.httpServer?.address();
+    if (
+      !address ||
+      typeof address === 'string' ||
+      (address.address !== '127.0.0.1' && address.address !== '::1')
+    ) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error: 'Project artifacts require a loopback bridge host (127.0.0.1 or ::1).'
+      };
+    }
+    const size = Buffer.byteLength(exported.text);
+    if (size > MAX_PROJECT_ARTIFACT_BYTES) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error:
+          'The project artifact exceeds 100 MiB. Use source references or export fewer datasets.'
+      };
+    }
+    let storedBytes = [...this.projectArtifacts.values()].reduce((sum, item) => sum + item.size, 0);
+    while (
+      this.projectArtifacts.size >= MAX_PROJECT_ARTIFACTS ||
+      storedBytes + size > MAX_PROJECT_ARTIFACT_BYTES
+    ) {
+      const oldest = this.projectArtifacts.values().next().value as ProjectArtifact;
+      this.projectArtifacts.delete(oldest.path);
+      storedBytes -= oldest.size;
+    }
+    const fileName = basename(exported.fileName);
+    const path = `/project-artifacts/${randomUUID()}/${encodeURIComponent(fileName)}`;
+    const host = address.address.includes(':') ? `[${address.address}]` : address.address;
+    const uri = `http://${host}:${address.port}${path}`;
+    const artifact: ProjectArtifact = {
+      uri,
+      path,
+      fileName,
+      mimeType: 'application/json',
+      size,
+      text: exported.text,
+      origin: this.pageOrigin
+    };
+    this.projectArtifacts.set(path, artifact);
+    return {
+      ...result,
+      data: {
+        ...data,
+        artifact: {
+          uri,
+          fileName,
+          mimeType: artifact.mimeType,
+          size,
+          availability: PROJECT_ARTIFACT_AVAILABILITY
+        }
+      }
+    };
+  }
+
+  private serveProjectArtifact(
+    artifact: ProjectArtifact,
+    request: IncomingMessage,
+    response: ServerResponse
+  ): void {
+    if (request.headers.origin && request.headers.origin !== artifact.origin) {
+      response.writeHead(403);
+      response.end('This artifact belongs to a different map origin.');
+      return;
+    }
+    const headers = {
+      'Access-Control-Allow-Origin': artifact.origin,
+      'Cache-Control': 'no-store',
+      Vary: 'Origin'
+    };
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {...headers, 'Access-Control-Allow-Methods': 'GET'});
+      response.end();
+      return;
+    }
+    if (request.method !== 'GET') {
+      response.writeHead(405, {...headers, Allow: 'GET, OPTIONS'});
+      response.end();
+      return;
+    }
+    response.writeHead(200, {
+      ...headers,
+      'Content-Type': artifact.mimeType,
+      'Content-Length': artifact.size,
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(
+        artifact.fileName
+      ).replace(/'/g, '%27')}`,
+      'X-Content-Type-Options': 'nosniff'
+    });
+    response.end(artifact.text);
   }
 
   private handleMessage(raw: unknown): void {

@@ -44,6 +44,8 @@ const SKILL_REQUIRED = new Set([
   'map.toggle-time-filter',
   'map.split-view',
   'map.load-data',
+  'map.open-project',
+  'map.save-project',
   'map.load-zarr',
   'map.load-tileset',
   'map.set-layer-options',
@@ -67,6 +69,7 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
 export function buildKeplerContext(reduxStore: any): KeplerContext {
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
   return {
+    getKeplerState: readMap,
     getMapState: () => readMap()?.mapState,
     getVisState: () => {
       const visState = readMap()?.visState;

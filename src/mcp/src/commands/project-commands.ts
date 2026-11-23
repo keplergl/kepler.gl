@@ -1,0 +1,277 @@
+// SPDX-License-Identifier: MIT
+// Copyright contributors to the kepler.gl project
+
+import {z} from 'zod';
+import {addDataToMap, resetMapConfig} from '@kepler.gl/actions';
+import {processKeplerglJSON} from '@kepler.gl/processors';
+import {serializeProject} from './project-export';
+import type {KeplerContext, RoomCommand, VisState} from './types';
+
+const openSchema = z
+  .object({
+    url: z
+      .string()
+      .trim()
+      .min(1)
+      .describe('Saved-map JSON URL (HTTP(S), same-origin path or data URL).')
+  })
+  .strict()
+  .meta({'x-kepler-local-resource': 1});
+
+const saveSchema = z
+  .object({
+    dataMode: z
+      .enum(['embedded', 'references'])
+      .default('embedded')
+      .describe(
+        'Embed loaded tabular data for portability, or preserve supported source references. Tiled data remains remote.'
+      ),
+    includeCredentials: z
+      .boolean()
+      .describe(
+        'Explicitly choose whether to include stored credentials. Use false for sharing; credentials in arbitrary data cells are not removed.'
+      )
+  })
+  .strict();
+
+function projectUrl(value: string): URL {
+  const origin = typeof window === 'undefined' ? undefined : window.location.origin;
+  const url = new URL(value, origin);
+  if (!['http:', 'https:', 'data:'].includes(url.protocol)) {
+    throw new Error('Use an HTTP(S) URL, a same-origin path, or the stdio bridge filePath input.');
+  }
+  if (url.protocol === 'data:' && url.href.length > 2 * 1024 * 1024) {
+    throw new Error(
+      'Data URL exceeds 2 MiB. Use a project URL or the stdio bridge filePath input.'
+    );
+  }
+  return url;
+}
+
+function validateProject(raw: any, schema: VisState['schema']): void {
+  if (!raw || !Array.isArray(raw.datasets) || !raw.config?.config?.visState) {
+    throw new Error('Expected a saved kepler.gl project with datasets and a versioned config.');
+  }
+  const versions = Object.values(schema._validVersions);
+  if (!versions.includes(raw.config.version)) {
+    throw new Error(`Unsupported project config version: ${String(raw.config.version)}.`);
+  }
+  const ids = new Set<string>();
+  for (const key of ['layers', 'filters', 'effects', 'cameraBookmarks']) {
+    const value = raw.config.config.visState[key];
+    if (value !== undefined && !Array.isArray(value)) {
+      throw new Error(`Project ${key} must be an array.`);
+    }
+  }
+  for (const dataset of raw.datasets) {
+    const data = dataset?.data;
+    if (!versions.includes(dataset?.version)) {
+      throw new Error(`Unsupported dataset version: ${String(dataset?.version)}.`);
+    }
+    if (
+      !data ||
+      typeof data.id !== 'string' ||
+      !data.id.trim() ||
+      ['__proto__', 'constructor', 'prototype'].includes(data.id) ||
+      ids.has(data.id) ||
+      !Array.isArray(data.fields) ||
+      !Array.isArray(data.allData)
+    ) {
+      throw new Error('Every saved dataset must have a unique ID, fields, and allData arrays.');
+    }
+    ids.add(data.id);
+  }
+}
+
+function animationWarnings(raw: any, state: VisState) {
+  const warnings: Array<{
+    code: string;
+    effectId: string;
+    effectType: string;
+    parameter: string;
+    message: string;
+  }> = [];
+  for (const saved of raw.config.config.visState.effects ?? []) {
+    if (!saved?.animation || typeof saved.animation !== 'object') continue;
+    const restored = state.effects?.find(effect => effect.id === saved.id);
+    for (const parameter of Object.keys(saved.animation)) {
+      if (restored?.animation?.[parameter]?.length) continue;
+      warnings.push({
+        code: 'unsupported-effect-animation',
+        effectId: saved.id,
+        effectType: saved.type,
+        parameter,
+        message:
+          `Skipped animation for effect "${saved.id}" (${saved.type}), parameter "${parameter}". ` +
+          'Use timed blocks with explicit start/end values and elapsed times; no duration was inferred.'
+      });
+    }
+  }
+  return warnings;
+}
+
+function skippedConfigWarnings(raw: any, state: VisState) {
+  return ['effects', 'cameraBookmarks'].flatMap(kind =>
+    (raw.config.config.visState[kind] ?? [])
+      .filter(saved => !state[kind]?.some(item => item.id === saved?.id))
+      .map(saved => ({
+        code: 'unsupported-project-config',
+        kind,
+        id: saved?.id,
+        message: `Skipped unsupported or invalid ${kind} entry "${saved?.id}".`
+      }))
+  );
+}
+
+/** Await the host task middleware, while letting bridge/WebMCP cancellation return promptly. */
+async function dispatchProject(ctx: KeplerContext, payload: any, signal?: AbortSignal) {
+  await new Promise<void>((resolve, reject) => {
+    const onAbort = () =>
+      reject(new Error('Project import cancelled; pending dataset loads may still complete.'));
+    signal?.addEventListener('abort', onAbort, {once: true});
+    Promise.resolve()
+      .then(() => {
+        signal?.throwIfAborted();
+        // addDataToMap alone reuses same-ID tables and retains old source metadata.
+        return ctx.dispatch(resetMapConfig());
+      })
+      .then(() => {
+        signal?.throwIfAborted();
+        return ctx.dispatch(addDataToMap(payload));
+      })
+      .then(() => resolve(), reject)
+      .finally(() => signal?.removeEventListener('abort', onAbort));
+  });
+  signal?.throwIfAborted();
+}
+
+export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
+  const id = 'map.open-project';
+  return {
+    id,
+    name: 'Open a saved project',
+    group: 'Map',
+    description:
+      'Replace the current map with a saved kepler.gl JSON project, including datasets, layers, filters, effects, tooltips and camera bookmarks. ' +
+      'Accepts a browser-accessible URL; the stdio bridge also accepts filePath for one selected local JSON file. ' +
+      'Waits for dataset registration and reports failures or skipped effect animations. Remote source references must remain accessible. ' +
+      'A failed or cancelled load may leave a partially loaded map.',
+    metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
+    inputSchema: openSchema,
+    execute: async (execution, input) => {
+      try {
+        const args = openSchema.parse(input);
+        execution.signal?.throwIfAborted();
+        const response = await fetch(projectUrl(args.url).href, {signal: execution.signal});
+        if (!response.ok) throw new Error(`Project request failed (HTTP ${response.status}).`);
+        const raw = await response.json();
+        execution.signal?.throwIfAborted();
+        const schema = ctx.getVisState().schema;
+        validateProject(raw, schema);
+        const parsed = processKeplerglJSON(raw, schema);
+        if (!parsed?.config || parsed.datasets?.length !== raw.datasets.length) {
+          throw new Error(
+            'The project could not be parsed completely. No map changes were applied.'
+          );
+        }
+        if (ctx.getVisState().fileLoading || ctx.getVisState().loadingIndicatorValue > 0) {
+          throw new Error('Wait for the current dataset load to finish before opening a project.');
+        }
+        await dispatchProject(
+          ctx,
+          {
+            ...parsed,
+            options: {centerMap: false, autoCreateLayers: false, keepExistingConfig: false}
+          },
+          execution.signal
+        );
+        const state = ctx.getVisState();
+        const missingDatasets = raw.datasets
+          .map(dataset => dataset.data.id)
+          .filter(id => !state.datasets[id]);
+        if (missingDatasets.length || state.loadingIndicatorValue > 0) {
+          throw new Error(
+            `Project dataset registration failed${
+              missingDatasets.length ? `: ${missingDatasets.join(', ')}` : ''
+            }. ` +
+              'Check source availability and data format. The host must return its task middleware completion promise from dispatch. The map may be partially loaded.'
+          );
+        }
+        for (const key of ['layers', 'filters'] as const) {
+          const missing = (parsed.config.visState?.[key] ?? []).filter(
+            saved => !state[key]?.some(item => item.id === saved.id)
+          );
+          if (missing.length)
+            throw new Error(
+              `Project ${key} could not be restored: ${missing
+                .map(item => item.id)
+                .join(', ')}. The map may be partially loaded.`
+            );
+        }
+        return {
+          success: true,
+          commandId: id,
+          data: {
+            status: 'loaded',
+            datasets: Object.values(state.datasets).map(dataset => ({
+              id: dataset.id,
+              label: dataset.label
+            })),
+            layerIds: state.layers.map(layer => layer.id),
+            warnings: [...animationWarnings(raw, state), ...skippedConfigWarnings(raw, state)]
+          }
+        };
+      } catch (error) {
+        return {
+          success: false,
+          commandId: id,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    }
+  };
+}
+
+export function getSaveProjectCommand(ctx: KeplerContext): RoomCommand {
+  const id = 'map.save-project';
+  return {
+    id,
+    name: 'Save the current project',
+    group: 'Map',
+    description:
+      'Export the complete current map as saved-map JSON. Choose embedded tabular data or supported source references and explicitly choose credential inclusion. ' +
+      'The stdio MCP bridge returns a retrievable artifact URI; other hosts receive the JSON artifact text. Remote tiles, images and Zarr data remain source references.',
+    metadata: {readOnly: true, riskLevel: 'medium'},
+    inputSchema: saveSchema,
+    execute: (execution, input) => {
+      try {
+        const args = saveSchema.parse(input);
+        execution.signal?.throwIfAborted();
+        const state = ctx.getKeplerState?.();
+        if (!state)
+          throw new Error(
+            'This host does not provide complete project state. Wire KeplerContext.getKeplerState to enable project export.'
+          );
+        if (state.visState.fileLoading || state.visState.loadingIndicatorValue > 0)
+          throw new Error('Wait for datasets to finish loading before exporting the project.');
+        const {text, warnings} = serializeProject(state, args);
+        return {
+          success: true,
+          commandId: id,
+          data: {
+            artifact: {fileName: 'kepler-project.json', mimeType: 'application/json', text},
+            dataMode: args.dataMode,
+            includeCredentials: args.includeCredentials,
+            warnings
+          }
+        };
+      } catch (error) {
+        return {
+          success: false,
+          commandId: id,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    }
+  };
+}

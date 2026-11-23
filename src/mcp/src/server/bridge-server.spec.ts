@@ -401,7 +401,7 @@ describe('kepler-mcp bridge server', () => {
   );
 });
 
-describe('kepler-mcp local file transfer', () => {
+describe.each(['map.load-data', 'map.open-project'])('%s local file transfer', commandId => {
   let bridge: KeplerMcpBridge;
   let started: KeplerMcpBridgeStart;
   let directory: string;
@@ -427,11 +427,11 @@ describe('kepler-mcp local file transfer', () => {
   });
 
   function load(input: Record<string, unknown> = {filePath}) {
-    return bridge.callTool(toToolName('map.load-data'), input);
+    return bridge.callTool(toToolName(commandId), input);
   }
 
   async function advertiseLocalImport() {
-    const tool = getMapTools().find(candidate => candidate.commandId === 'map.load-data')!;
+    const tool = getMapTools().find(candidate => candidate.commandId === commandId)!;
     socket.send(
       JSON.stringify({
         type: 'hello',
@@ -454,7 +454,7 @@ describe('kepler-mcp local file transfer', () => {
         callId,
         result: {
           success,
-          commandId: 'map.load-data',
+          commandId,
           ...(success
             ? {data: {datasetId: 'imported'}}
             : {error: 'Unable to parse the selected file'})
@@ -471,7 +471,7 @@ describe('kepler-mcp local file transfer', () => {
     const message = await nextMessage(socket);
     expect(message).toMatchObject({
       type: 'call',
-      tool: 'map.load-data',
+      tool: commandId,
       input: {datasetName: 'Local locations'}
     });
     expect(JSON.stringify(message)).not.toContain(directory);
@@ -525,7 +525,10 @@ describe('kepler-mcp local file transfer', () => {
     {input: {filePath: 'relative.csv'}, error: /absolute path/},
     {input: {filePath: null}, error: /absolute path/},
     {input: {filePath: 42}, error: /absolute path/},
-    {input: {filePath: '/selected.csv', url: 'https://example.com/file.csv'}, error: /exactly one/}
+    {
+      input: {filePath: '/selected.csv', url: 'https://example.com/file.csv'},
+      error: /exactly one/
+    }
   ])('rejects invalid local import input before forwarding: $input', async ({input, error}) => {
     const messages: unknown[] = [];
     socket.on('message', message => messages.push(message));
@@ -604,6 +607,161 @@ describe('kepler-mcp local file transfer', () => {
       } else expect((await fetch(message.input.url)).status).toBe(404);
     }
   );
+});
+
+describe('kepler-mcp project artifacts', () => {
+  let bridge: KeplerMcpBridge;
+  let started: KeplerMcpBridgeStart;
+  let socket: WebSocket;
+  const project = {
+    datasets: [{version: 'v1', data: {id: 'places', rows: [[37, -122, 'Café']]}}],
+    config: {version: 'v1', config: {visState: {layers: []}}}
+  };
+  const text = JSON.stringify(project);
+
+  beforeEach(async () => {
+    bridge = new KeplerMcpBridge({port: 0, callTimeoutMs: 1000});
+    started = await bridge.start();
+    socket = new WebSocket(`ws://127.0.0.1:${started.port}/ws?token=${started.token}`, {
+      origin: 'http://localhost:3000'
+    });
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(
+      JSON.stringify({
+        type: 'hello',
+        commands: [{id: 'map.save-project', name: 'Save project', inputSchema: {type: 'object'}}]
+      })
+    );
+    await waitFor(() => bridge.getTools().length === 1);
+  });
+
+  afterEach(async () => {
+    await bridge.close();
+  });
+
+  async function save(
+    result = {
+      success: true,
+      commandId: 'map.save-project',
+      data: {
+        datasetIds: ['places'],
+        artifact: {fileName: 'kepler-project.json', mimeType: 'application/json', text}
+      }
+    }
+  ): Promise<any> {
+    const pending = bridge.callTool('map_save-project', {includeCredentials: false});
+    const message = await nextMessage(socket);
+    expect(message.input).toEqual({includeCredentials: false});
+    socket.send(JSON.stringify({type: 'result', callId: message.callId, result}));
+    return pending;
+  }
+
+  it('returns a compact artifact link with the exact saved JSON retrievable over HTTP and MCP resources', async () => {
+    const result = await save();
+    const artifact = result.data.artifact;
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        datasetIds: ['places'],
+        artifact: {
+          fileName: 'kepler-project.json',
+          mimeType: 'application/json',
+          size: Buffer.byteLength(text),
+          availability: expect.stringContaining('Download to retain')
+        }
+      }
+    });
+    expect(artifact.text).toBeUndefined();
+    expect(artifact.uri).toMatch(
+      new RegExp(`^http://127.0.0.1:${started.port}/project-artifacts/`)
+    );
+    expect(bridge.getResources()).toEqual([
+      {
+        uri: artifact.uri,
+        name: artifact.fileName,
+        mimeType: artifact.mimeType,
+        size: artifact.size,
+        description: artifact.availability
+      }
+    ]);
+    expect(bridge.readResource(artifact.uri)).toEqual({
+      uri: artifact.uri,
+      mimeType: 'application/json',
+      text
+    });
+    const response = await fetch(artifact.uri, {headers: {Origin: 'http://localhost:3000'}});
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('application/json');
+    expect(response.headers.get('content-length')).toBe(String(Buffer.byteLength(text)));
+    expect(response.headers.get('content-disposition')).toContain('kepler-project.json');
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(await response.json()).toEqual(project);
+  });
+
+  it('retains artifacts through a page disconnect and replacement but clears them on server shutdown', async () => {
+    const {
+      data: {artifact}
+    } = await save();
+    socket.close();
+    await waitFor(() => !bridge.connected);
+    expect(await (await fetch(artifact.uri)).json()).toEqual(project);
+    socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    expect(bridge.readResource(artifact.uri).text).toBe(text);
+    await bridge.close();
+    expect(bridge.getResources()).toEqual([]);
+    expect(() => bridge.readResource(artifact.uri)).toThrow(/not found or expired/);
+    await expect(fetch(artifact.uri)).rejects.toThrow();
+  });
+
+  it('restricts HTTP artifact reads to the capability and original map origin', async () => {
+    const {
+      data: {artifact}
+    } = await save();
+    expect(
+      (await fetch(artifact.uri, {headers: {Origin: 'http://unrelated.example'}})).status
+    ).toBe(403);
+    expect((await fetch(`${artifact.uri}?extra=1`)).status).toBe(404);
+    expect((await fetch(artifact.uri, {method: 'POST'})).status).toBe(405);
+    const preflight = await fetch(artifact.uri, {
+      method: 'OPTIONS',
+      headers: {Origin: 'http://localhost:3000'}
+    });
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-methods')).toBe('GET');
+    expect(() => bridge.readResource('http://127.0.0.1/project-artifacts/unknown')).toThrow(
+      /not found or expired/
+    );
+  });
+
+  it('evicts the oldest artifact after ten exports and reports its expiration', async () => {
+    const first = await save();
+    const second = await save();
+    for (let index = 0; index < 9; index++) await save();
+    expect(bridge.getResources()).toHaveLength(10);
+    expect(() => bridge.readResource(first.data.artifact.uri)).toThrow(
+      /expired.*Export the project again/
+    );
+    expect((await fetch(first.data.artifact.uri)).status).toBe(404);
+    expect(bridge.readResource(second.data.artifact.uri).text).toBe(text);
+  });
+
+  it('does not publish failed or malformed exports', async () => {
+    expect(
+      await save({success: false, commandId: 'map.save-project', error: 'Cannot serialize'} as any)
+    ).toMatchObject({success: false, error: 'Cannot serialize'});
+    expect(
+      await save({
+        success: true,
+        commandId: 'map.save-project',
+        data: {artifact: {text: 42}}
+      } as any)
+    ).toMatchObject({
+      success: false,
+      error: expect.stringContaining('valid JSON project artifact')
+    });
+    expect(bridge.getResources()).toHaveLength(0);
+  });
 });
 
 describe('demo MCP descriptors', () => {
