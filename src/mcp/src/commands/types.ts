@@ -112,6 +112,23 @@ export type KeplerStateAccessors = {
     | undefined;
 };
 
+export type PreviewFrameOptions = {
+  width: number;
+  height: number;
+  /** Data timeline timestamp in milliseconds since the Unix epoch. */
+  dataTime?: number;
+  /** Elapsed camera-tour time in milliseconds. */
+  cameraTimeMs?: number;
+};
+
+export type PreviewFrameImage = {
+  mimeType: 'image/png';
+  /** PNG bytes encoded as base64, without a data URL prefix. */
+  data: string;
+  width: number;
+  height: number;
+};
+
 /**
  * KeplerContext provides access to kepler.gl state and dispatch.
  * This is passed into tool factories instead of using Redux directly.
@@ -124,6 +141,11 @@ export type KeplerStateAccessors = {
  */
 export type KeplerContext = {
   getVisState: () => VisState;
+  /** Render an isolated native export frame without changing the live map. */
+  renderPreviewFrame?: (
+    options: PreviewFrameOptions,
+    signal?: AbortSignal
+  ) => Promise<PreviewFrameImage>;
   /** Current viewport for bookmark capture/navigation and camera-tour seeking. */
   getMapState?: () => MapState | undefined;
   getMapBoundary: () =>

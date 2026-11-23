@@ -3,11 +3,43 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {formatResult} from '../../examples/demo-app/src/kepler-mcp-shared';
+import {buildKeplerContext, formatResult} from '../../examples/demo-app/src/kepler-mcp-shared';
 
 jest.mock('@kepler.gl/mcp', () => ({}));
 jest.mock('@deck.gl/core', () => ({}));
 jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
+jest.mock('@kepler.gl/components', () => ({renderPreviewFrame: jest.fn()}));
+jest.mock('../../examples/demo-app/src/constants/default-settings', () => ({
+  CLOUD_PROVIDERS_CONFIGURATION: {MAPBOX_TOKEN: 'configured-map-token'}
+}));
+
+describe('MCP native frame host', () => {
+  it('renders a snapshot of the current map without dispatching live changes', async () => {
+    const {renderPreviewFrame} = require('@kepler.gl/components');
+    const image = {mimeType: 'image/png', data: 'png', width: 1920, height: 1080};
+    renderPreviewFrame.mockResolvedValue(image);
+    const map = {visState: {}, mapState: {width: 1200}, mapStyle: {}};
+    const store = {getState: () => ({demo: {keplerGl: {map}}}), dispatch: jest.fn()};
+    const options = {width: 1920, height: 1080, dataTime: 123, cameraTimeMs: 500};
+    const signal = new AbortController().signal;
+
+    await expect(buildKeplerContext(store).renderPreviewFrame(options, signal)).resolves.toBe(
+      image
+    );
+    expect(renderPreviewFrame).toHaveBeenCalledWith(map, options, {
+      mapboxApiAccessToken: 'configured-map-token',
+      containerW: 1200,
+      signal
+    });
+    expect(store.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('reports an uninitialized map before mounting a renderer', async () => {
+    await expect(
+      buildKeplerContext({getState: () => ({})}).renderPreviewFrame({width: 640, height: 480})
+    ).rejects.toThrow('map is not initialized');
+  });
+});
 
 describe('WebMCP result formatting', () => {
   it('preserves dataset IDs, field types and layer bindings alongside the summary', () => {

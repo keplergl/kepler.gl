@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {FramePreviewCallbacks} from './render-preview-frame';
 import React, {Component, createRef} from 'react';
 import {easeInOut} from 'popmotion';
 import download from 'downloadjs';
@@ -64,6 +65,7 @@ export type GlobeExportVideoSettings = {
 };
 
 type GlobeExportVideoPanelContainerProps = {
+  framePreview?: FramePreviewCallbacks;
   initialState?: Partial<GlobeExportVideoPanelContainerState>;
   glContext?: WebGL2RenderingContext;
   exportVideoWidth: number;
@@ -637,7 +639,13 @@ export class GlobeExportVideoPanelContainer extends Component<
             rendering={rendering}
             saving={saving}
             durationMs={durationMs}
-            animationTimeMs={isActive ? currentTimeMs : undefined}
+            animationTimeMs={
+              this.props.framePreview
+                ? this.props.framePreview.animationTimeMs
+                : isActive
+                ? currentTimeMs
+                : undefined
+            }
             deckProps={deckProps}
             mapProps={this.props.mapProps}
             backgroundColor={this.getBackgroundColor()}

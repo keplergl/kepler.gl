@@ -19,7 +19,7 @@ import {dirname, join} from 'node:path';
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js';
-import {KeplerMcpBridge, formatResult} from './bridge-server';
+import {KeplerMcpBridge, formatMcpResult} from './bridge-server';
 import type {KeplerMcpBridgeOptions} from './bridge-server';
 
 const DEFAULT_MAP_URL = 'http://localhost:8080';
@@ -104,8 +104,7 @@ async function main(): Promise<void> {
     const {name, arguments: args} = request.params;
     try {
       const result = await bridge.callTool(name, (args ?? {}) as Record<string, unknown>);
-      const {text, isError} = formatResult(result);
-      return {content: [{type: 'text' as const, text}], ...(isError ? {isError: true} : {})};
+      return formatMcpResult(result);
     } catch (error) {
       return {
         content: [

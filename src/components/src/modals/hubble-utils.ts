@@ -346,13 +346,15 @@ export function getGlobeExportLayers(
     mapboxApiAccessToken,
     mapboxApiUrl,
     viewState,
-    animationTimeMs
+    animationTimeMs,
+    onLayerError
   }: {
     mapIndex: number;
     mapboxApiAccessToken?: string;
     mapboxApiUrl?: string;
     viewState?: MapViewState;
     animationTimeMs?: number;
+    onLayerError?: (error: Error) => void;
   }
 ) {
   const globe = keplerState.mapState?.globe;
@@ -368,12 +370,16 @@ export function getGlobeExportLayers(
   });
   // Same as hubble createKeplerLayers: fold the animated camera into mapState so
   // zoom-dependent props (scatterplot radiusScale) update each frame.
-  const dataLayers = computeDeckLayers(frameState, {
-    mapIndex,
-    primaryMap: mapIndex === 0,
-    mapboxApiAccessToken,
-    mapboxApiUrl
-  });
+  const dataLayers = computeDeckLayers(
+    frameState,
+    {
+      mapIndex,
+      primaryMap: mapIndex === 0,
+      mapboxApiAccessToken,
+      mapboxApiUrl
+    },
+    onLayerError ? {onLayerError: (_index, error) => onLayerError(error)} : undefined
+  );
   return [
     ...globeBaseLayers,
     ...scaleGlobeExportTileLayers(dataLayers, frameState.mapState.zoomOffset || 0),
@@ -388,19 +394,22 @@ export function getFlatExportLayers(
     mapIndex,
     viewState,
     beforeId,
-    animationTimeMs
+    animationTimeMs,
+    onLayerError
   }: {
     mapIndex: number;
     viewState?: MapViewState;
     beforeId?: string;
     animationTimeMs?: number;
+    onLayerError?: (error: Error) => void;
   }
 ) {
   if (!keplerState.visState.layerData?.length) return [];
   return (
     computeDeckLayers(
       {...keplerState, animationTimeMs, mapState: {...keplerState.mapState, ...viewState}},
-      {mapIndex, primaryMap: false}
+      {mapIndex, primaryMap: false},
+      onLayerError ? {onLayerError: (_index, error) => onLayerError(error)} : undefined
     )
       .flat(Infinity)
       // Capture must not wait for asynchronous resources belonging to invisible layers.
@@ -559,7 +568,17 @@ export const RESOLUTIONS: Resolution[] = [
 ];
 
 export function getResolutionSetting(value: string): Resolution {
-  return RESOLUTIONS.find(r => r.value === value) || RESOLUTIONS[0];
+  const preset = RESOLUTIONS.find(r => r.value === value);
+  if (preset) return preset;
+  const dimensions = /^(\d+)x(\d+)$/.exec(value);
+  if (dimensions) {
+    const width = Number(dimensions[1]);
+    const height = Number(dimensions[2]);
+    if (width > 0 && height > 0 && width <= 8192 && height <= 8192) {
+      return {value, label: value, width, height, aspectRatio: `${width}:${height}`};
+    }
+  }
+  return RESOLUTIONS[0];
 }
 
 /** CSS size of the video-export preview, matching hubble's `_getContainer`. */

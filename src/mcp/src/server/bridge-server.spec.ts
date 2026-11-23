@@ -15,7 +15,13 @@ import {join} from 'node:path';
 import {PassThrough} from 'node:stream';
 import {z} from 'zod';
 import {MAP_TOOL_IDS} from '../types';
-import {KeplerMcpBridge, formatResult, getMapTools, toToolName} from './bridge-server';
+import {
+  KeplerMcpBridge,
+  formatResult,
+  formatMcpResult,
+  getMapTools,
+  toToolName
+} from './bridge-server';
 import type {KeplerMcpBridgeStart} from './bridge-server';
 
 jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
@@ -42,6 +48,36 @@ function nextMessage(socket: WebSocket): Promise<any> {
 }
 
 describe('kepler-mcp result formatting', () => {
+  it('returns preview PNGs as image content without duplicating bytes in text', () => {
+    const metadata = {mimeType: 'image/png', width: 1920, height: 1080, dataTime: 1234};
+    expect(
+      formatMcpResult({
+        success: true,
+        commandId: 'map.render-preview',
+        data: {...metadata, data: 'cG5n'}
+      })
+    ).toEqual({
+      content: [
+        {type: 'text', text: JSON.stringify(metadata, null, 2)},
+        {type: 'image', mimeType: 'image/png', data: 'cG5n'}
+      ]
+    });
+  });
+
+  it('returns preview errors as errors without emitting an image', () => {
+    expect(
+      formatMcpResult({
+        success: false,
+        commandId: 'map.render-preview',
+        error: 'Frame timed out',
+        data: {mimeType: 'image/png', data: 'cG5n'}
+      })
+    ).toEqual({
+      content: [{type: 'text', text: '✗ map.render-preview: Frame timed out'}],
+      isError: true
+    });
+  });
+
   it('preserves dataset IDs, field types and layer bindings alongside the summary', () => {
     const data = {
       details: '1 dataset(s) loaded.',
@@ -179,6 +215,7 @@ describe('kepler-mcp bridge server', () => {
       ['map.set-layer-options', 'options'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
+      ['map.render-preview', 'cameraTimeMs'],
       ['map.property-transitions', 'startTimeMs'],
       ['map.add-annotation', 'anchorPoint'],
       ['map.add-annotation', 'viewport'],

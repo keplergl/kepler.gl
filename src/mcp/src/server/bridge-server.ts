@@ -27,7 +27,12 @@ import {basename, isAbsolute} from 'node:path';
 import {WebSocket, WebSocketServer} from 'ws';
 import {z} from 'zod';
 import {getKeplerCommands} from '../commands';
-import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '../commands/types';
+import type {
+  KeplerContext,
+  PreviewFrameImage,
+  RoomCommandResult,
+  ToolDescriptor
+} from '../commands/types';
 
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
@@ -129,6 +134,32 @@ export function formatResult(result: RoomCommandResult): {text: string; isError:
     return {text: data.details, isError: false};
   }
   return {text: JSON.stringify(result?.data ?? result ?? null, null, 2), isError: false};
+}
+
+/** Preserve preview PNGs as image content so MCP clients can display the frame. */
+export function formatMcpResult(result: RoomCommandResult): {
+  content: Array<{type: 'text'; text: string} | {type: 'image'; mimeType: string; data: string}>;
+  isError?: boolean;
+} {
+  const preview = result?.data as PreviewFrameImage | undefined;
+  if (
+    result?.commandId === 'map.render-preview' &&
+    result.success &&
+    !result.error &&
+    preview?.mimeType === 'image/png' &&
+    typeof preview.data === 'string' &&
+    preview.data.length > 0
+  ) {
+    const {data, ...metadata} = preview;
+    return {
+      content: [
+        {type: 'text', text: JSON.stringify(metadata, null, 2)},
+        {type: 'image', mimeType: preview.mimeType, data}
+      ]
+    };
+  }
+  const {text, isError} = formatResult(result);
+  return {content: [{type: 'text', text}], ...(isError ? {isError: true} : {})};
 }
 
 export class KeplerMcpBridge {

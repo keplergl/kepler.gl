@@ -3272,3 +3272,91 @@ describe('authored export duration range', () => {
     }
   );
 });
+
+test.each([500, undefined])(
+  'headless preview commits clock %s and forwards native render/error callbacks',
+  async animationTimeMs => {
+    const framePreview = {
+      width: 1000,
+      height: 700,
+      animationTimeMs,
+      onReady: jest.fn(),
+      onRender: jest.fn(),
+      onError: jest.fn()
+    };
+    renderWithThemeLocal(<ExportVideoModal {...DEFAULT_PROPS} framePreview={framePreview} />);
+    await waitFor(() => expect(framePreview.onReady).toHaveBeenCalled());
+    const panel = mockHubbleContainerRef.current;
+    expect(panel.state).toMatchObject({
+      currentTimeMs: animationTimeMs ?? 0,
+      rendering: true,
+      previewing: false
+    });
+    expect(panel.props.exportVideoWidth).toBe(320);
+    expect(panel.props.initialState.resolution).toBe('1000x700');
+    expect(panel.props.framePreview).toBe(framePreview);
+    panel.props.deckProps.onAfterRender();
+    expect(framePreview.onRender).toHaveBeenCalledWith(panel);
+    const map = {};
+    panel.props.mapProps.onRender({target: map});
+    expect(framePreview.onRender).toHaveBeenCalledWith(panel, map);
+    const error = new Error('Tile failed');
+    panel.props.deckProps.onError(error);
+    expect(framePreview.onError).toHaveBeenCalledWith(error);
+  }
+);
+
+test('prepares real point layer data in an isolated table at the requested data timestamp', () => {
+  const {preparePreviewFrame} = require('./render-preview-frame');
+  const {KeplerTable} = require('@kepler.gl/table');
+  const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: ['lat', 'lng'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+    rows: [
+      [20, 1],
+      [21, 2]
+    ]
+  });
+  const layer = new PointLayer({
+    id: 'points',
+    dataId: 'data',
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    }
+  });
+  const live = {
+    mapState: {...DEFAULT_PROPS.mapState, width: 1000, height: 700},
+    mapStyle: DEFAULT_PROPS.mapStyle,
+    visState: {
+      ...DEFAULT_PROPS.visState,
+      datasets: {data: dataset},
+      layers: [layer],
+      layerData: [],
+      animationConfig: {currentTime: 100}
+    }
+  };
+  const preview = preparePreviewFrame(live, {width: 1000, height: 700, dataTime: 250});
+  expect(preview.visState.layers[0]).toBeInstanceOf(PointLayer);
+  expect(preview.visState.layers[0]).not.toBe(layer);
+  expect(preview.visState.layers[0].isValid).toBe(true);
+  expect(preview.visState.layerData[0].data).toHaveLength(2);
+  expect(preview.visState.animationConfig.currentTime).toBe(250);
+  expect(live.visState.animationConfig.currentTime).toBe(100);
+  expect(preview.visState.datasets.data).not.toBe(dataset);
+  expect(preview.visState.datasets.data.filteredIndex).toEqual(dataset.filteredIndex);
+});
+
+test('caps a small headless viewport at its output width so native DPR can remain at least one', async () => {
+  const framePreview = {
+    width: 200,
+    height: 123,
+    onReady: jest.fn(),
+    onRender: jest.fn(),
+    onError: jest.fn()
+  };
+  renderWithThemeLocal(<ExportVideoModal {...DEFAULT_PROPS} framePreview={framePreview} />);
+  await waitFor(() => expect(framePreview.onReady).toHaveBeenCalled());
+  expect(mockHubbleContainerRef.current.props.exportVideoWidth).toBe(200);
+  expect(mockHubbleContainerRef.current.props.initialState.resolution).toBe('200x123');
+});
