@@ -118,14 +118,6 @@ function frame() {
     isStyleLoaded: () => true,
     areTilesLoaded: jest.fn(() => false)
   };
-  panel.previewRef = {
-    current: {
-      getCanvas: () => canvas,
-      onAfterRender: callback => {
-        if (map.isStyleLoaded() && map.areTilesLoaded() && layer.isLoaded) callback();
-      }
-    }
-  };
   return {canvas, panel, layer, map};
 }
 
@@ -227,6 +219,9 @@ test('waits for committed export buffers, layers and basemap and normalizes boun
   callbacks.onRender(panel, map);
   expect(draw).not.toHaveBeenCalled();
   layer.isLoaded = true;
+  // A Deck render can precede MapLibre's labels even after all resources load.
+  callbacks.onRender(panel);
+  expect(draw).not.toHaveBeenCalled();
   canvas.width = 540;
   callbacks.onRender(panel, map);
   expect(draw).not.toHaveBeenCalled();
@@ -286,31 +281,6 @@ test('rejects concurrent capture and reports native rendering failures', async (
     await failure;
   });
   expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
-});
-
-test('leaves another export pixel ratio untouched throughout capture and cancellation', async () => {
-  const pinnedRatio = {configurable: true, get: () => 4, set: jest.fn()};
-  Object.defineProperty(window, 'devicePixelRatio', pinnedRatio);
-  const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
-  const controller = new AbortController();
-  let result;
-  await act(async () => {
-    result = renderPreviewFrame(fixture(), size, {...renderOptions, signal: controller.signal});
-  });
-  expect(window.devicePixelRatio).toBe(4);
-  expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(originalDescriptor);
-  expect(pinnedRatio.set).not.toHaveBeenCalled();
-
-  // A live map or another export may change its own ratio while resources load.
-  Object.defineProperty(window, 'devicePixelRatio', {configurable: true, get: () => 7});
-  const changedDescriptor = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
-  const failure = expect(result).rejects.toThrow('canceled');
-  await act(async () => {
-    controller.abort();
-    await failure;
-  });
-  expect(Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')).toEqual(changedDescriptor);
-  expect(window.devicePixelRatio).toBe(7);
 });
 
 test('times out unfinished rendering with a useful error and releases the request lock', async () => {

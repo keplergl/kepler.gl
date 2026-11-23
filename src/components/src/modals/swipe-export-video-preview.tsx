@@ -82,10 +82,6 @@ export type SwipeExportVideoPreviewProps = {
   currentTimeMs: number;
   animationTimeMs?: number;
   backgroundColor?: string;
-  /** Still-frame capture reuses one native map without the swipe compositor. */
-  singleMap?: boolean;
-  /** Keep headless capture resolution local to its canvases. */
-  useLocalPixelRatio?: boolean;
 };
 
 type SwipeExportVideoPreviewState = {
@@ -120,10 +116,7 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   componentDidUpdate(prevProps: SwipeExportVideoPreviewProps) {
-    if (
-      !isEqual(prevProps.resolution, this.props.resolution) ||
-      (this.props.useLocalPixelRatio && prevProps.exportVideoWidth !== this.props.exportVideoWidth)
-    ) {
+    if (!isEqual(prevProps.resolution, this.props.resolution)) {
       this._resizeVideo();
     }
 
@@ -138,15 +131,8 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   _resizeVideo() {
-    const {exportVideoWidth, resolution, useLocalPixelRatio} = this.props;
-    const pixelRatio = resolution[0] / exportVideoWidth;
-    if (useLocalPixelRatio) {
-      [this.leftMapRef, this.rightMapRef].forEach(ref =>
-        ref.current?.getMap().setPixelRatio(pixelRatio)
-      );
-    } else {
-      this._setDevicePixelRatio(pixelRatio);
-    }
+    const {exportVideoWidth, resolution} = this.props;
+    this._setDevicePixelRatio(resolution[0] / exportVideoWidth);
   }
 
   _setDevicePixelRatio(devicePixelRatio: number) {
@@ -193,7 +179,6 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   _compositeFrame() {
-    if (this.props.singleMap) return;
     const leftCanvas = this._getLeftCanvas();
     const rightCanvas = this._getRightCanvas();
     const outputCanvas = this.compositeCanvasRef.current;
@@ -218,28 +203,25 @@ export class SwipeExportVideoPreview extends Component<
 
   /**
    * Called by the parent container's adapter after each render.
-   * All participating maps must be loaded before compositing and capturing.
+   * We need both maps to be loaded before compositing and capturing.
    */
   onAfterRender = (proceedToNextFrame: () => void) => {
     const leftLoaded = this._areLayersLoaded('left');
-    const rightLoaded = this.props.singleMap || this._areLayersLoaded('right');
-    const leftTilesReady = this._isMapReady(this.leftMapRef);
-    const rightTilesReady = this.props.singleMap || this._isMapReady(this.rightMapRef);
+    const rightLoaded = this._areLayersLoaded('right');
+    const leftTilesReady =
+      this.props.disableBaseMap ||
+      !this.leftMapRef.current ||
+      this.leftMapRef.current.getMap().areTilesLoaded();
+    const rightTilesReady =
+      this.props.disableBaseMap ||
+      !this.rightMapRef.current ||
+      this.rightMapRef.current.getMap().areTilesLoaded();
 
     if (leftLoaded && rightLoaded && leftTilesReady && rightTilesReady) {
       this._compositeFrame();
       proceedToNextFrame();
     }
   };
-
-  _isMapReady(ref: RefObject<MapRef | null>): boolean {
-    if (this.props.disableBaseMap) return true;
-    const map = ref.current?.getMap();
-    if (this.props.useLocalPixelRatio) {
-      return Boolean(map?.isStyleLoaded() && map.areTilesLoaded());
-    }
-    return !map || map.areTilesLoaded();
-  }
 
   _areLayersLoaded(side: 'left' | 'right'): boolean {
     const deckRef = side === 'left' ? this.leftDeckRef : this.rightDeckRef;
@@ -255,10 +237,6 @@ export class SwipeExportVideoPreview extends Component<
    */
   getCompositeCanvas(): HTMLCanvasElement | null {
     return this.compositeCanvasRef.current;
-  }
-
-  getCanvas(): HTMLCanvasElement | null {
-    return this._getLeftCanvas();
   }
 
   _createLayers(mapIndex: number, beforeId?: string) {
@@ -281,7 +259,6 @@ export class SwipeExportVideoPreview extends Component<
     }
 
     if (deckProps && deckProps.layers) {
-      if (this.props.singleMap) return deckProps.layers;
       // Non-globe path with explicit layers: clone per side with a unique id so
       // the two Deck instances don't share the same stateful Layer objects.
       return deckProps.layers.map((layer: any) =>
@@ -353,7 +330,6 @@ export class SwipeExportVideoPreview extends Component<
     const {viewState, adapter, deckProps, mapProps, disableBaseMap, mapboxLayerBeforeId} =
       this.props;
     const {width, height} = this._getContainer();
-    const pixelRatio = this.props.resolution[0] / width;
     const keplerLayers = this._createLayers(mapIndex, mapboxLayerBeforeId);
     const mapRef = side === 'left' ? this.leftMapRef : this.rightMapRef;
     const deckRef = side === 'left' ? this.leftDeckRef : this.rightDeckRef;
@@ -380,7 +356,6 @@ export class SwipeExportVideoPreview extends Component<
             ref={ref => setRef(deckRef, ref?.deck as any)}
             deviceProps={EXPORT_DECK_DEVICE_PROPS}
             {...adapterProps}
-            {...(this.props.useLocalPixelRatio ? {useDevicePixels: pixelRatio} : {})}
             viewState={viewState}
             onViewStateChange={({viewState: vs}: any) => this.props.setViewState(vs)}
             onAfterRender={(params: any) => {
@@ -406,7 +381,6 @@ export class SwipeExportVideoPreview extends Component<
           mapLib={mapLib}
           transformRequest={transformRequest}
           preserveDrawingBuffer
-          {...(this.props.useLocalPixelRatio ? {pixelRatio} : {})}
           {...viewState}
           mapStyle={mapStyleFromProps}
           onLoad={onMapLoad}
@@ -427,25 +401,23 @@ export class SwipeExportVideoPreview extends Component<
   }
 
   render() {
-    const {resolution, singleMap} = this.props;
+    const {resolution} = this.props;
     const {width, height} = this._getContainer();
 
     return (
       <PreviewContainer $width={width} $height={height}>
         {/* Hidden map canvases for left (mapIndex=0) and right (mapIndex=1) */}
         {this._renderMapCanvas('left', 0)}
-        {!singleMap && this._renderMapCanvas('right', 1)}
+        {this._renderMapCanvas('right', 1)}
 
         {/* Visible composited output */}
-        {!singleMap && (
-          <VisibleCanvas
-            ref={this.compositeCanvasRef}
-            width={resolution[0]}
-            height={resolution[1]}
-            $width={width}
-            $height={height}
-          />
-        )}
+        <VisibleCanvas
+          ref={this.compositeCanvasRef}
+          width={resolution[0]}
+          height={resolution[1]}
+          $width={width}
+          $height={height}
+        />
         <VideoAnnotationOverlay
           frame={{
             annotations: this.props.mapData.visState?.annotations || [],
@@ -458,7 +430,7 @@ export class SwipeExportVideoPreview extends Component<
             animationTimeMs: this.props.animationTimeMs,
             width,
             height,
-            ...(singleMap ? {} : {swipePercentage: this._getCurrentSwipePercentage()})
+            swipePercentage: this._getCurrentSwipePercentage()
           }}
         />
       </PreviewContainer>

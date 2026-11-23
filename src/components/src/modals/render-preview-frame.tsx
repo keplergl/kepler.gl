@@ -193,6 +193,7 @@ export async function renderPreviewFrame(
   if (signal?.aborted) throw new DOMException('Preview frame canceled', 'AbortError');
   const snapshot = preparePreviewFrame(mapData, options);
   previewActive = true;
+  const pixelRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
   let mount: HTMLDivElement | undefined;
   let root: Root | undefined;
   const capture = new AbortController();
@@ -204,6 +205,11 @@ export async function renderPreviewFrame(
   const isSwipe =
     snapshot.mapState.isSplit && snapshot.mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   try {
+    Object.defineProperty(window, 'devicePixelRatio', {
+      configurable: true,
+      writable: true,
+      value: 1
+    });
     mount = document.createElement('div');
     mount.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;width:1080px;';
     mount.setAttribute('aria-hidden', 'true');
@@ -227,10 +233,11 @@ export async function renderPreviewFrame(
           ),
         45000
       );
-      const onRender = (panel: any) => {
+      const onRender = (panel: any, map?: any) => {
         if (!frameReady || capturing || capture.signal.aborted || !panel) return;
         try {
           const preview = panel.previewRef?.current;
+          const deck = panel.state.adapter?.deck;
           let source: HTMLCanvasElement | null = null;
           if (isSwipe) {
             if (!preview) return;
@@ -242,10 +249,11 @@ export async function renderPreviewFrame(
             if (!preview?.areLayersLoaded()) return;
             source = preview.getCanvas();
           } else {
-            if (!preview) return;
-            preview.onAfterRender(() => {
-              source = preview.getCanvas();
-            });
+            if (!map?.isStyleLoaded() || !map.areTilesLoaded() || !deck) return;
+            const layers = (deck.props.layers || []).flat(Infinity);
+            if (!layers.every(layer => !layer || layer.props?.visible === false || layer.isLoaded))
+              return;
+            source = map.getCanvas();
           }
           if (!source) return;
           // MapLibre rounds its CSS container to integer pixels before applying
@@ -370,6 +378,8 @@ export async function renderPreviewFrame(
     } finally {
       mount?.remove();
       previewActive = false;
+      if (pixelRatio) Object.defineProperty(window, 'devicePixelRatio', pixelRatio);
+      else delete (window as {devicePixelRatio?: number}).devicePixelRatio;
     }
   }
 }
