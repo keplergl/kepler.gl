@@ -9,5 +9,16 @@
  * the stdio MCP server (`kepler-mcp`) and for tests.
  */
 
-export {KeplerMcpBridge, formatResult, getMapTools, toToolName} from './bridge-server';
-export type {KeplerMcpBridgeOptions, KeplerMcpBridgeStart, MapTool} from './bridge-server';
+export {
+  KeplerMcpBridge,
+  formatResult,
+  formatMcpResult,
+  getMapTools,
+  toToolName
+} from './bridge-server';
+export type {
+  BridgeStatus,
+  KeplerMcpBridgeOptions,
+  KeplerMcpBridgeStart,
+  MapTool
+} from './bridge-server';

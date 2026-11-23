@@ -7,6 +7,7 @@ import type {Datasets} from '@kepler.gl/table';
 import type {KeplerDispatch} from './utils';
 import type {MapState} from '@kepler.gl/types';
 import type {KeplerGlState} from '@kepler.gl/reducers';
+import type {VideoExportProvider} from '../video-export';
 
 /**
  * Structural subset of `@sqlrooms/room-store`'s `RoomCommand` — enough for the
@@ -113,6 +114,23 @@ export type KeplerStateAccessors = {
     | undefined;
 };
 
+export type PreviewFrameOptions = {
+  width: number;
+  height: number;
+  /** Data timeline timestamp in milliseconds since the Unix epoch. */
+  dataTime?: number;
+  /** Elapsed camera-tour time in milliseconds. */
+  cameraTimeMs?: number;
+};
+
+export type PreviewFrameImage = {
+  mimeType: 'image/png';
+  /** PNG bytes encoded as base64, without a data URL prefix. */
+  data: string;
+  width: number;
+  height: number;
+};
+
 /**
  * KeplerContext provides access to kepler.gl state and dispatch.
  * This is passed into tool factories instead of using Redux directly.
@@ -124,9 +142,16 @@ export type KeplerStateAccessors = {
  * kepler-app wiring.
  */
 export type KeplerContext = {
+  /** Optional native renderer supplied by the connected map host. */
+  videoExport?: VideoExportProvider;
   getVisState: () => VisState;
   /** Complete map state for project export and custom-basemap import. */
   getKeplerState?: () => KeplerGlState | undefined;
+  /** Render an isolated native export frame without changing the live map. */
+  renderPreviewFrame?: (
+    options: PreviewFrameOptions,
+    signal?: AbortSignal
+  ) => Promise<PreviewFrameImage>;
   /** Current viewport for bookmark capture/navigation and camera-tour seeking. */
   getMapState?: () => MapState | undefined;
   getMapBoundary: () =>

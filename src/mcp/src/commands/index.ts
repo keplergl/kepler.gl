@@ -5,6 +5,7 @@ import type {RoomCommand} from './types';
 import type {KeplerContext} from './types';
 import {getBasemapCommand} from './basemap-command';
 import {getViewModeCommand} from './view-mode-command';
+import {getVideoExportCommand} from './video-export-command';
 import {getMapBoundaryCommand} from './boundary-command';
 import {getAddLayerCommand} from './layer-creation-command';
 import {getUpdateLayerColorCommand} from './layer-style-command';
@@ -29,6 +30,7 @@ import {getZoomFadeCommand} from './zoom-fade-command';
 import {getLoadZarrCommand} from './load-zarr-command';
 import {getLoadTilesetCommand} from './load-tileset-command';
 import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
+import {getRenderPreviewCommand} from './render-preview-command';
 
 /**
  * Owner string under which all kepler-ai commands are registered in the
@@ -46,6 +48,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
   const commands = [
     getBasemapCommand(ctx),
     getViewModeCommand(ctx),
+    getVideoExportCommand(ctx),
     getMapBoundaryCommand(ctx),
     getAddLayerCommand(ctx),
     getUpdateLayerColorCommand(ctx),
@@ -58,6 +61,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getSetLayerOptionsCommand(ctx),
     getCameraBookmarksCommand(ctx),
     getCameraTourCommand(ctx),
+    getRenderPreviewCommand(ctx),
     getPropertyTransitionsCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
@@ -77,6 +81,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
 
 export {getBasemapCommand} from './basemap-command';
 export {getViewModeCommand} from './view-mode-command';
+export {getVideoExportCommand} from './video-export-command';
 export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
 export {getUpdateLayerColorCommand} from './layer-style-command';
@@ -84,6 +89,7 @@ export {getLoadDataCommand} from './load-data-command';
 export {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+export {getRenderPreviewCommand} from './render-preview-command';
 export {getPropertyTransitionsCommand} from './property-transitions-command';
 export {
   getAddAnnotationCommand,
@@ -103,6 +109,8 @@ export {toolToCommand, asInputSchema} from './command-wrappers';
 export type {AnyTool, CommandMeta} from './command-wrappers';
 export type {
   KeplerContext,
+  PreviewFrameOptions,
+  PreviewFrameImage,
   KeplerStateAccessors,
   VisState,
   RoomCommandResult,

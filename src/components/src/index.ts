@@ -213,6 +213,8 @@ export {default as ExportHtmlMapFactory} from './modals/export-map-modal/export-
 export {default as ExportJsonMapFactory} from './modals/export-map-modal/export-json-map';
 export {default as ExportMapModalFactory} from './modals/export-map-modal/export-map-modal';
 export {default as ExportVideoModalFactory} from './modals/export-video-modal';
+export {getNativeVideoExportCapabilities} from './modals/programmatic-video-export';
+export type {ProgrammaticVideoExport} from './modals/programmatic-video-export';
 export {default as LoadDataModalFactory} from './modals/load-data-modal';
 export {default as LoadTileSetFactory} from './modals/tilesets-modals/load-tileset';
 export {default as LoadStorageMapFactory} from './modals/load-storage-map';
@@ -590,3 +592,6 @@ export {default as useDndEffects} from './hooks/use-dnd-effects';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useFeatureFlags} from './hooks/use-feature-flags';
 export {default as useLegendPosition} from './hooks/use-legend-position';
+
+export {renderPreviewFrame} from './modals/render-preview-frame';
+export type {PreviewFrameOptions} from './modals/render-preview-frame';
