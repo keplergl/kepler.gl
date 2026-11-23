@@ -11,6 +11,7 @@ import {getAddLayerCommand} from './layer-creation-command';
 import {getUpdateLayerColorCommand} from './layer-style-command';
 import {getLoadDataCommand} from './load-data-command';
 import {getSaveDataCommand} from './save-data-command';
+import {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
 import {getTableCommand} from './table-command';
 import {getAddColumnCommand} from './add-column-command';
 import {getAddTimeFilterCommand} from './time-filter-command';
@@ -52,6 +53,8 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getAddLayerCommand(ctx),
     getUpdateLayerColorCommand(ctx),
     getLoadDataCommand(ctx),
+    getOpenProjectCommand(ctx),
+    getSaveProjectCommand(ctx),
     getLoadZarrCommand(ctx),
     getLoadTilesetCommand(ctx),
     getLayerOptionsCommand(ctx),
@@ -83,6 +86,7 @@ export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
 export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
+export {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
 export {getRenderPreviewCommand} from './render-preview-command';

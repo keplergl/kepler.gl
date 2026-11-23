@@ -6,6 +6,7 @@ import type {ZodType} from 'zod';
 import type {Datasets} from '@kepler.gl/table';
 import type {KeplerDispatch} from './utils';
 import type {MapState} from '@kepler.gl/types';
+import type {KeplerGlState} from '@kepler.gl/reducers';
 import type {VideoExportProvider} from '../video-export';
 
 /**
@@ -144,6 +145,8 @@ export type KeplerContext = {
   /** Optional native renderer supplied by the connected map host. */
   videoExport?: VideoExportProvider;
   getVisState: () => VisState;
+  /** Complete map state for project export and custom-basemap import. */
+  getKeplerState?: () => KeplerGlState | undefined;
   /** Render an isolated native export frame without changing the live map. */
   renderPreviewFrame?: (
     options: PreviewFrameOptions,

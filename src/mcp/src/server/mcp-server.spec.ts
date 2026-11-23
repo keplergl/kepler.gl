@@ -72,7 +72,7 @@ describe('kepler-mcp protocol', () => {
     }
   });
 
-  it('preserves preview images and exposes exported videos through MCP resources', async () => {
+  it('preserves preview images and exposes exported videos and projects through MCP resources', async () => {
     const bridge = new KeplerMcpBridge();
     const artifact = {
       uri: 'kepler://video/export.webm',
@@ -83,6 +83,16 @@ describe('kepler-mcp protocol', () => {
       size: 5
     };
     const resourceContent = {uri: artifact.uri, mimeType: artifact.mimeType, blob: 'dmlkZW8='};
+    const project = {
+      uri: 'http://127.0.0.1:8765/artifacts/project.json',
+      name: 'kepler-project.json',
+      mimeType: 'application/json' as const,
+      size: 2,
+      description: 'Saved project'
+    };
+    const projectContent = {uri: project.uri, mimeType: project.mimeType, text: '{}'};
+    jest.spyOn(bridge, 'getResources').mockReturnValue([project]);
+    jest.spyOn(bridge, 'readResource').mockReturnValue(projectContent);
     jest.spyOn(bridge, 'listVideoResources').mockReturnValue([artifact]);
     jest.spyOn(bridge, 'readVideoResource').mockResolvedValue(resourceContent);
     jest
@@ -96,6 +106,11 @@ describe('kepler-mcp protocol', () => {
         success: true,
         commandId: 'map.export-video',
         data: {artifact}
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        commandId: 'map.save-project',
+        data: {artifact: {uri: project.uri}}
       })
       .mockResolvedValueOnce({
         success: false,
@@ -133,13 +148,25 @@ describe('kepler-mcp protocol', () => {
           size: artifact.size
         })
       ]);
+      const savedProject = await client.callTool({
+        name: 'map_save-project',
+        arguments: {includeCredentials: false}
+      });
+      expect(savedProject.content).toEqual([
+        expect.objectContaining({type: 'text'}),
+        {type: 'resource_link', ...project}
+      ]);
       expect(await client.listResources()).toEqual({
         resources: [
+          project,
           {uri: artifact.uri, name: artifact.name, mimeType: artifact.mimeType, size: artifact.size}
         ]
       });
       expect(await client.readResource({uri: artifact.uri})).toEqual({
         contents: [resourceContent]
+      });
+      expect(await client.readResource({uri: project.uri})).toEqual({
+        contents: [projectContent]
       });
       const failed = await client.callTool({name: 'map_export-video', arguments: {}});
       expect(failed).toMatchObject({

@@ -3,10 +3,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {createStore, combineReducers, applyMiddleware} from 'redux';
+import {keplerGlReducer} from '@kepler.gl/reducers';
+import {taskMiddleware} from '@kepler.gl/tasks';
+import {addDataToMap, registerEntry, wrapTo} from '@kepler.gl/actions';
+import {KeplerTable} from '@kepler.gl/table';
+import {getOpenProjectCommand} from '../../src/mcp/src/commands/project-commands';
 import {buildKeplerContext, formatResult} from '../../examples/demo-app/src/kepler-mcp-shared';
 
 jest.mock('@kepler.gl/mcp', () => ({}));
-jest.mock('@deck.gl/core', () => ({}));
 jest.mock('@kepler.gl/mcp/skill/kepler/SKILL.md', () => 'Map skill', {virtual: true});
 jest.mock('@kepler.gl/components', () => ({renderPreviewFrame: jest.fn()}));
 jest.mock('../../examples/demo-app/src/constants/default-settings', () => ({
@@ -173,6 +178,90 @@ describe('MCP native frame host', () => {
     await expect(
       buildKeplerContext({getState: () => ({})}).renderPreviewFrame({width: 640, height: 480})
     ).rejects.toThrow('map is not initialized');
+  });
+});
+
+describe('demo map context', () => {
+  it('shares one live context across surfaces for the same Redux store', () => {
+    let state = {demo: {keplerGl: {map: {visState: {datasets: {}}}}}};
+    const store = {getState: () => state};
+    const bridgeContext = buildKeplerContext(store);
+    expect(buildKeplerContext(store)).toBe(bridgeContext);
+    state = {demo: {keplerGl: {map: {visState: {datasets: {newData: {id: 'newData'}}}}}}};
+    expect(bridgeContext.getVisState()).toBe(state.demo.keplerGl.map.visState);
+    expect(buildKeplerContext({getState: () => state})).not.toBe(bridgeContext);
+  });
+
+  it('opens a project only in the map instance and waits for its dataset tasks', async () => {
+    const store = createStore(
+      combineReducers({
+        demo: combineReducers({
+          keplerGl: keplerGlReducer.initialState({mapStyle: {styleType: 'no_map'}})
+        })
+      }),
+      applyMiddleware(taskMiddleware)
+    );
+    const table = id => ({
+      info: {id},
+      data: {fields: [{name: 'value', type: 'integer'}], rows: [[1]]}
+    });
+    for (const id of ['map', 'other-map']) {
+      await store.dispatch(registerEntry({id}));
+      await store.dispatch(
+        wrapTo(id, addDataToMap({datasets: [table(id)], options: {autoCreateLayers: false}}))
+      );
+    }
+    const otherMap = store.getState().demo.keplerGl['other-map'];
+    const context = buildKeplerContext(store);
+    const saved = {
+      datasets: [
+        {
+          version: 'v1',
+          data: {id: 'project-data', fields: [{name: 'value', type: 'integer'}], allData: [[42]]}
+        }
+      ],
+      config: {version: 'v1', config: {visState: {}, mapStyle: {styleType: 'no_map'}}}
+    };
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({ok: true, json: async () => saved});
+    const originalImport = KeplerTable.prototype.importData;
+    let release;
+    let started;
+    const gate = new Promise(resolve => {
+      release = resolve;
+    });
+    const importing = new Promise(resolve => {
+      started = resolve;
+    });
+    const importData = jest
+      .spyOn(KeplerTable.prototype, 'importData')
+      .mockImplementation(function (data) {
+        started();
+        return gate.then(() => originalImport.call(this, data));
+      });
+    try {
+      let completed = false;
+      const pending = getOpenProjectCommand(context)
+        .execute({}, {url: 'https://example.com/project.json'})
+        .then(result => {
+          completed = true;
+          return result;
+        });
+      await importing;
+      await new Promise(resolve => setImmediate(resolve));
+      expect(completed).toBe(false);
+      expect(store.getState().demo.keplerGl['other-map']).toBe(otherMap);
+      release();
+      expect(await pending).toMatchObject({success: true, data: {status: 'loaded'}});
+      expect(Object.keys(context.getVisState().datasets)).toEqual(['project-data']);
+      expect(context.getVisState().datasets['project-data'].dataContainer.valueAt(0, 0)).toBe(42);
+      expect(store.getState().demo.keplerGl['other-map']).toBe(otherMap);
+      expect(Object.keys(otherMap.visState.datasets)).toEqual(['other-map']);
+    } finally {
+      release();
+      importData.mockRestore();
+      global.fetch = originalFetch;
+    }
   });
 });
 

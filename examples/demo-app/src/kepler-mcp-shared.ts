@@ -23,6 +23,7 @@ import type {
   ToolDescriptor
 } from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
+import {wrapTo} from '@kepler.gl/actions';
 import {z} from 'zod';
 import {CLOUD_PROVIDERS_CONFIGURATION} from './constants/default-settings';
 import {getVideoExportService} from './kepler-video-export';
@@ -46,6 +47,8 @@ const SKILL_REQUIRED = new Set([
   'map.toggle-time-filter',
   'map.split-view',
   'map.load-data',
+  'map.open-project',
+  'map.save-project',
   'map.load-zarr',
   'map.load-tileset',
   'map.set-layer-options',
@@ -65,10 +68,17 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
   ...DUCKDB_REQUIRED
 ].join(', ')} — they are filtered out of the catalog. Use the available map.* commands only.`;
 
+// Both agent surfaces target the same map. Share context identity so in-flight
+// project imports cannot overlap across the bridge and WebMCP catalogs.
+const mapContexts = new WeakMap<object, KeplerContext>();
+
 /** Live accessors into the demo's own redux store — no kepler-assistant needed. */
 export function buildKeplerContext(reduxStore: any): KeplerContext {
+  const existing = mapContexts.get(reduxStore);
+  if (existing) return existing;
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
-  return {
+  const context: KeplerContext = {
+    getKeplerState: readMap,
     renderPreviewFrame: async (options, signal) => {
       const map = readMap();
       if (!map?.visState || !map?.mapState || !map?.mapStyle) {
@@ -167,7 +177,7 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
         return undefined;
       }
     },
-    dispatch: (action: any) => reduxStore?.dispatch(action),
+    dispatch: (action: any) => reduxStore?.dispatch(wrapTo('map', action)),
     getValuesFromDataset: (datasetName, variableName) => {
       const visState = readMap()?.visState;
       if (!visState) return [];
@@ -221,6 +231,8 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       throw new Error('DuckDB operations are not available in the mapping-only bridge.');
     }
   };
+  mapContexts.set(reduxStore, context);
+  return context;
 }
 
 /** The DuckDB-free map.* commands this page serves to agents, plus the map skill reader. */

@@ -45,6 +45,8 @@ not this one.
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
 | `map.load-data`          | Load a URL or bridge-local file; then call `map.add-layer`.   |
+| `map.open-project`       | Replace the map with a saved-map JSON URL or bridge-local file. |
+| `map.save-project`       | Export complete saved-map JSON as a retrievable MCP artifact. |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
@@ -61,6 +63,35 @@ not this one.
 | `map.update-annotation`  | Edit an annotation by id while preserving omitted settings. |
 | `map.remove-annotation`  | Remove an annotation and clean up its zoom-fade targets. |
 | `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
+
+### Complete projects
+
+Use `map.open-project` with `{"url":"https://example.com/map.json"}` to reopen a
+saved kepler.gl project. The stdio bridge also accepts
+`{"filePath":"/absolute/path/map.json"}` for an explicitly selected JSON file.
+Opening replaces the current map and waits for dataset registration. Check the
+result's `status` and `warnings`; failures or cancellation can leave a partial
+map. Invalid legacy effect tracks are reported by effect ID, type, and parameter.
+Do not infer missing animation durations: ask the user before recreating a track.
+
+Use `map.save-project` with
+`{"dataMode":"embedded","includeCredentials":false}` for a portable snapshot of
+loaded tabular data. Use `dataMode:"references"` to retain supported source URLs;
+local datasets stay embedded. Tiles, bitmaps, Zarr stores, and basemaps remain
+remote dependencies. Embedded export reports datasets that cannot be embedded.
+
+`includeCredentials` is required. With `false`, recognized credential fields and
+URL credentials in config/metadata are omitted. Dataset cells and unrecognized
+custom secret fields are not scanned. Set it to `true` only when the user wants
+stored credentials included. Protected references may need credentials on reopen.
+
+The stdio bridge returns `artifact.uri` and an MCP resource link. Retrieve it with
+HTTP GET or MCP `resources/read`, and download it before the server stops or its
+10-artifact / 100 MiB retention limit evicts it. Browser-only hosts receive the
+artifact JSON text. Host integrations must provide `KeplerContext.getKeplerState`
+for export and custom-basemap import, return the task middleware completion promise
+from `dispatch`, and reuse one context per map across agent surfaces so overlapping
+imports are rejected. The demo app supplies these integrations.
 
 Prefer an available map tool to clicking the UI. Direct MCP tools take
 their command input object as arguments. On hosts with a command dispatcher,

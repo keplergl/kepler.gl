@@ -33,6 +33,8 @@ export const MAP_TOOL_IDS = [
   'map.add-layer',
   'map.update-layer-color',
   'map.load-data',
+  'map.open-project',
+  'map.save-project',
   'map.load-zarr',
   'map.load-tileset',
   'map.set-layer-options',
