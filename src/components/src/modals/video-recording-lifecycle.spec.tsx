@@ -13,6 +13,7 @@ import {withCameraTourExport} from './camera-tour-export';
 import {getDataAnimationTimings} from './hubble-utils';
 import {compositeVideoAnnotations} from './video-annotation-overlay';
 import type {Annotation, Effect} from '@kepler.gl/types';
+import type {ProgrammaticVideoExport} from './programmatic-video-export';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -100,6 +101,8 @@ jest.mock('../common', () => ({
 jest.mock('@kepler.gl/table', () => ({copyTable: jest.fn()}));
 jest.mock('@kepler.gl/utils', () => ({
   datetimeFormatter: jest.requireActual('../../../utils/src/data-utils').datetimeFormatter,
+  mergeFilterWithTimeline: jest.requireActual('../../../utils/src/filter-utils')
+    .mergeFilterWithTimeline,
   getCameraTourDuration: () => 0,
   ...jest.requireActual('../../../utils/src/layer-visibility')
 }));
@@ -166,11 +169,13 @@ function mount(
   kind: 'globe' | 'swipe',
   durationMs = 1000 / 30,
   effects: Effect[] = [],
-  annotations: Annotation[] = []
+  annotations: Annotation[] = [],
+  programmaticExport?: ProgrammaticVideoExport
 ) {
   const ref = React.createRef<any>();
   const {result: animation} = renderHook(() => useEffectAnimation(effects, ref));
   const props = {
+    programmaticExport,
     exportVideoWidth: 320,
     handleClose: jest.fn(),
     header: false,
@@ -431,6 +436,31 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     expect(container.state).toMatchObject({rendering: false, saving: false, currentTimeMs: 0});
   });
 
+  it('returns a finished 1080p file without downloading or recording the inclusive end frame', async () => {
+    const request = {
+      signal: new AbortController().signal,
+      onProgress: jest.fn(),
+      onComplete: jest.fn(),
+      onError: jest.fn()
+    };
+    const {container} = mount(kind, 1000 / 30, [], [], request);
+    act(() => container.setState({resolution: '1920x1080'}));
+    act(() => container.onRenderVideo());
+    const encoder = mockEncoders[mockEncoders.length - 1];
+    const saved = deferred<Blob>();
+    encoder.save.mockReturnValue(saved.promise);
+    act(() => jest.advanceTimersByTime(500));
+    await flushFrames(framesPerCapture * 2);
+    expect(encoder.add).toHaveBeenCalledTimes(1);
+    expect(encoder.add.mock.calls[0][0]).toMatchObject({width: 1920, height: 1080});
+    expect(request.onComplete).not.toHaveBeenCalled();
+    const blob = new Blob(['encoded-video'], {type: 'video/webm'});
+    await act(async () => saved.resolve(blob));
+    expect(request.onComplete).toHaveBeenCalledWith(blob);
+    expect(request.onError).not.toHaveBeenCalled();
+    expect(download).not.toHaveBeenCalled();
+  });
+
   it.each([30, 60])('captures exact %i fps timestamps without rounding drift', async framerate => {
     const duration = 10000;
     const startTime = 125;
@@ -538,6 +568,56 @@ it('uses the same native layer hold timing in the standard exporter', () => {
   expect(getDataAnimationTimings).toHaveBeenLastCalledWith([0, 1000], 250);
   expect(animationConfig.domain).toEqual([100, 500]);
 });
+
+it.each(['standard', 'globe', 'swipe'] as const)(
+  '%s export lets a linked filter own the shared layer clock and its final hold',
+  kind => {
+    const filter = {
+      id: 'linked',
+      type: 'timeRange',
+      view: 'side',
+      domain: [100, 200],
+      value: [100, 100],
+      animationWindow: 'point',
+      syncedWithLayerTimeline: true,
+      endHoldDurationMs: 250
+    };
+    const animationConfig = {domain: [0, 300], currentTime: 100};
+    const instance = {
+      state: {durationMs: 1000},
+      props: {
+        animatableFilters: [filter],
+        mapData: {
+          visState: {
+            filters: [filter],
+            animationConfig,
+            layers: [{config: {isVisible: true, animation: {enabled: true}}}]
+          }
+        }
+      }
+    };
+    class Base {
+      getFilterKeyframes() {
+        return {filters: [filter], filterKeyframes: [{id: filter.id, timings: [0, 1000]}]};
+      }
+      getTripKeyframes() {
+        return {animationConfig, tripKeyframe: {timings: [0, 1000]}};
+      }
+    }
+    const Container =
+      kind === 'standard'
+        ? withCameraTourExport(Base)
+        : kind === 'globe'
+        ? GlobeExportVideoPanelContainer
+        : SwipeExportVideoPanelContainer;
+    const frames = Container.prototype.getFilterKeyframes.call(instance);
+    expect(frames.filters?.[0]).toMatchObject({domain: [0, 300], endHoldDurationMs: 250});
+    expect(frames.filterKeyframes).toEqual([{id: filter.id, timings: [0, 1000]}]);
+    expect(Container.prototype.getTripKeyframes.call(instance)).toEqual({});
+    expect(filter.domain).toEqual([100, 200]);
+    expect(animationConfig.domain).toEqual([0, 300]);
+  }
+);
 
 it('waits for globe layers and bounds readiness retries so export cannot wait indefinitely', async () => {
   mount('globe', 0);

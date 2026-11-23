@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import type {TimeRangeFilter} from '@kepler.gl/types';
+import {mergeFilterWithTimeline} from '@kepler.gl/utils';
 import type {KeplerContext} from './types';
 
 /** Include GPU filters, using the same CPU evaluation used for data export. */
@@ -18,15 +19,16 @@ export function getVisibleCounts(ctx: KeplerContext, datasetIds: string[]) {
 }
 
 export function getTimeFilterState(ctx: KeplerContext, filter: TimeRangeFilter) {
+  const state = ctx.getVisState();
   return {
     filterId: filter.id,
-    filterIndex: ctx.getVisState().filters.indexOf(filter),
+    filterIndex: state.filters.indexOf(filter),
     bindings: filter.dataId.map((datasetId, index) => ({
       datasetId,
       startField: filter.name[index],
       endField: filter.endName?.[index] ?? null
     })),
-    domain: filter.domain,
+    domain: mergeFilterWithTimeline(filter, state.animationConfig).filter.domain,
     value: filter.value,
     selectedTime:
       filter.value?.[filter.syncedWithLayerTimeline && filter.syncTimelineMode === 0 ? 0 : 1],

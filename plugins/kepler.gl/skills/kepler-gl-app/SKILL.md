@@ -52,6 +52,8 @@ not this one.
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
 | `map.load-data`          | Load a URL or bridge-local file; then call `map.add-layer`.   |
+| `map.open-project`       | Replace the map with a saved-map JSON URL or bridge-local file. |
+| `map.save-project`       | Export complete saved-map JSON as a retrievable MCP artifact. |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
@@ -61,12 +63,42 @@ not this one.
 | `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
 | `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
 | `map.camera-tour`        | Get/set location-animation stops, seek, play or pause. |
+| `map.export-video`       | Discover formats, start/cancel exports, poll progress, and retrieve finished videos. |
 | `map.property-transitions` | Discover, inspect, add, update, or remove timed layer/annotation/effect blocks. |
 | `map.add-annotation`     | Add a styled geographic annotation or viewport caption/readout. |
 | `map.get-annotations`    | Read annotation ids, locations, viewport placement, readouts and effective styling. |
 | `map.update-annotation`  | Edit an annotation by id while preserving omitted settings. |
 | `map.remove-annotation`  | Remove an annotation and clean up its zoom-fade targets. |
 | `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
+
+### Complete projects
+
+Use `map.open-project` with `{"url":"https://example.com/map.json"}` to reopen a
+saved kepler.gl project. The stdio bridge also accepts
+`{"filePath":"/absolute/path/map.json"}` for an explicitly selected JSON file.
+Opening replaces the current map and waits for dataset registration. Check the
+result's `status` and `warnings`; failures or cancellation can leave a partial
+map. Invalid legacy effect tracks are reported by effect ID, type, and parameter.
+Do not infer missing animation durations: ask the user before recreating a track.
+
+Use `map.save-project` with
+`{"dataMode":"embedded","includeCredentials":false}` for a portable snapshot of
+loaded tabular data. Use `dataMode:"references"` to retain supported source URLs;
+local datasets stay embedded. Tiles, bitmaps, Zarr stores, and basemaps remain
+remote dependencies. Embedded export reports datasets that cannot be embedded.
+
+`includeCredentials` is required. With `false`, recognized credential fields and
+URL credentials in config/metadata are omitted. Dataset cells and unrecognized
+custom secret fields are not scanned. Set it to `true` only when the user wants
+stored credentials included. Protected references may need credentials on reopen.
+
+The stdio bridge returns `artifact.uri` and an MCP resource link. Retrieve it with
+HTTP GET or MCP `resources/read`, and download it before the server stops or its
+10-artifact / 100 MiB retention limit evicts it. Browser-only hosts receive the
+artifact JSON text. Host integrations must provide `KeplerContext.getKeplerState`
+for export and custom-basemap import, return the task middleware completion promise
+from `dispatch`, and reuse one context per map across agent surfaces so overlapping
+imports are rejected. The demo app supplies these integrations.
 
 Prefer an available map tool to clicking the UI. Direct MCP tools take
 their command input object as arguments. On hosts with a command dispatcher,
@@ -622,6 +654,39 @@ do not add a time filter for camera movement. To place a stop at a bookmark or
 annotation, build an explicit camera snapshot using its coordinates and desired
 zoom, bearing, and pitch; stops do not link to the source object.
 
+### Video exports (`map.export-video`)
+
+Call `{"action":"capabilities","width":1920,"height":1080}` first. It reports
+formats supported by the connected browser at that size, preset dimensions,
+frame rates, and the duration limit. Native exports currently run at 30 fps.
+
+Start an export without opening the dialog:
+
+```json
+{"action":"start","settings":{"width":1920,"height":1080,"durationMs":20000,"frameRate":30,"format":"webm-native","cameraAnimation":true,"dataAnimation":true}}
+```
+
+Choose `webm-native` only if advertised; otherwise use `webm`. Camera and data
+animation default to true and use the project's existing camera tour, enlarged
+or synced time filters, and animated layers. Configure them before starting.
+Property transitions, effects, annotations, and swipe settings follow the native
+renderer. The visible map's timeline and export settings stay unchanged.
+Durations are rounded up to a frame boundary (at most 1/30 second).
+
+The start response contains `jobId`. Poll `{"action":"status","jobId":"..."}`
+for `progress` (0–1) and `queued`, `rendering`, `encoding`, `succeeded`, `failed`,
+or `cancelled`. Stop with `{"action":"cancel","jobId":"..."}`. Read an
+error on failed jobs before retrying. Keep the map connected while rendering;
+disconnecting cancels active work. Only one job can render at a time.
+
+On success, the stdio bridge returns a downloadable `kepler://video/...` MCP
+resource and a `filePath` on the MCP server. Read it with MCP `resources/read`,
+or use the local file artifact. Browser-only hosts return a browser Blob URL;
+it is not accessible on another machine. `action:"read"` is the bounded chunk
+transfer for hosts implementing their own artifact transport. Save completed
+files promptly: browser jobs and bridge resources retain at most five exports
+and 256 MiB, and bridge files are removed when the server closes.
+
 ### Timed property transitions (`map.property-transitions`)
 
 Call `{"action": "discover"}` to find eligible targets and properties. Use an
@@ -649,8 +714,8 @@ Opacity is a 0–1 multiplier. Easing is `linear` or `easeInOut`. Edits pause pl
 These are the native Animation editor tracks, shared by preview, saved projects,
 and video export. They are independent of dataset time filters. The command
 animates existing effects but does not create effects or change static effect
-settings. Use `map.camera-tour` for camera stops and playback, and the host's
-export workflow to produce a video.
+settings. Use `map.camera-tour` for camera stops and playback, and
+`map.export-video` to produce a video.
 
 ### Annotations (`map.add-annotation`, `map.get-annotations`, `map.update-annotation`, `map.remove-annotation`)
 
@@ -748,14 +813,37 @@ them in `annotationIds`. Controllers replace
 the complete list; omit them to only toggle, or pass `[]` to clear. The fade
 multiplies normal opacity and does not make hidden layers visible.
 
+## Preview an export frame (`map.render-preview`)
+
+Render a PNG through the native video-export path before rendering a full film:
+
+```json
+{"width":1920,"height":1080,"dataTime":1735689600000,"cameraTimeMs":1500}
+```
+
+`width` and `height` are required integer pixel dimensions (1–8192, at most
+33,554,432 pixels in total). `dataTime` is an optional data timestamp in
+milliseconds since the Unix epoch; `cameraTimeMs` is an optional nonnegative
+elapsed camera-tour time in milliseconds. Omit either to preserve its current
+value. The native renderer waits for the requested frame, includes visible
+layers, effects and labels, and leaves the live map's viewport and playhead
+unchanged. The MCP response includes a viewable PNG image plus dimensions and
+requested timestamps. Hosts without a native preview renderer return an explicit
+unsupported error; render failures and cancellation are reported as errors.
+The demo host currently rejects previews containing visible Zarr layers because
+their asynchronous state cannot yet be isolated from the live map. Hide those
+layers before previewing. If the encoded PNG exceeds the transfer limit, request
+smaller output dimensions.
+
 ## Host-only features
 
-A tool that configures a map is not an export tool. The shared map command
-catalog does not render/download images or videos, select the native video
-encoder, or create effects and edit their static settings. Use a dedicated tool
-from your host if one is listed; otherwise explain the gap. Embedded hosts
-can set video options with the `setExportVideoSetting` Redux action, but
-rendering and file delivery still require a host export workflow.
+The shared map command catalog supports single-frame previews and full-video
+exports when the host supplies the native renderer. Use `map.export-video` with
+`{"action":"capabilities"}` to discover the host's video export support. Creating
+effects and editing their static settings still require a dedicated host tool;
+if none is listed, explain the gap. Embedded hosts can set video options with
+the `setExportVideoSetting` Redux action, but rendering and file delivery still
+require a host export workflow.
 
 ## Rules
 
@@ -780,6 +868,19 @@ rendering and file delivery still require a host export workflow.
   name to find the matching layer id from the dataset context.
 
 ## Loading and readiness checks
+
+- On the stdio bridge, call `map_get-status` with no arguments (`{}`) to check
+  the connection and available tools. This bridge-owned tool works even before
+  a page connects and distinguishes `disconnected`, `connected` (before tool
+  negotiation), and `negotiated`.
+- Use the returned credential-free `launcherUrl` and `guidance` to connect a
+  disconnected page. Never copy or expose the bridge token. `app` identifies the
+  connected app/version; `capabilities.tools` lists the currently effective MCP
+  tools and `capabilities.localFileImport` reports local-file support. The bridge
+  sends `notifications/tools/list_changed` when its negotiated catalog changes.
+- Project readiness reporting is deferred: `project.state` is always `unknown`.
+  Negotiated tools do not guarantee that project data, configuration, or tiles
+  have loaded. This status tool does not wait for project readiness.
 
 - Do not infer basemap loading from generic `Loading...` text or a progress
   bar's dimensions. The loading indicator is shared across data and layer

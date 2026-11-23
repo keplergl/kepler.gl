@@ -23,7 +23,10 @@ import type {
   ToolDescriptor
 } from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
+import {wrapTo} from '@kepler.gl/actions';
 import {z} from 'zod';
+import {CLOUD_PROVIDERS_CONFIGURATION} from './constants/default-settings';
+import {getVideoExportService} from './kepler-video-export';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
 // the demo-app folder stays self-contained — no relative path reaching outside
 // it into the monorepo layout.
@@ -44,6 +47,8 @@ const SKILL_REQUIRED = new Set([
   'map.toggle-time-filter',
   'map.split-view',
   'map.load-data',
+  'map.open-project',
+  'map.save-project',
   'map.load-zarr',
   'map.load-tileset',
   'map.set-layer-options',
@@ -63,10 +68,77 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
   ...DUCKDB_REQUIRED
 ].join(', ')} — they are filtered out of the catalog. Use the available map.* commands only.`;
 
+// Both agent surfaces target the same map. Share context identity so in-flight
+// project imports cannot overlap across the bridge and WebMCP catalogs.
+const mapContexts = new WeakMap<object, KeplerContext>();
+
 /** Live accessors into the demo's own redux store — no kepler-assistant needed. */
 export function buildKeplerContext(reduxStore: any): KeplerContext {
+  const existing = mapContexts.get(reduxStore);
+  if (existing) return existing;
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
-  return {
+  const context: KeplerContext = {
+    getKeplerState: readMap,
+    renderPreviewFrame: async (options, signal) => {
+      const map = readMap();
+      if (!map?.visState || !map?.mapState || !map?.mapStyle) {
+        throw new Error('kepler.gl map is not initialized yet.');
+      }
+      // Share the data buffers, but reject a frame if live data changes while
+      // its native renderer loads. Read current tables: reducers can replace
+      // their wrappers while retaining the same mutable data container.
+      const datasets = Object.entries(map.visState.datasets || {}).map(
+        ([id, table]: [string, any]) => ({
+          id,
+          dataContainer: table.dataContainer,
+          dataRevision: table.dataRevision
+        })
+      );
+      const capture = new AbortController();
+      let dataChanged = false;
+      const cancel = () => capture.abort();
+      const unsubscribe = reduxStore.subscribe(() => {
+        if (capture.signal.aborted) return;
+        const current = readMap()?.visState?.datasets;
+        if (
+          !current ||
+          Object.keys(current).length !== datasets.length ||
+          datasets.some(
+            ({id, dataContainer, dataRevision}) =>
+              !current[id] ||
+              current[id].dataContainer !== dataContainer ||
+              current[id].dataRevision !== dataRevision
+          )
+        ) {
+          dataChanged = true;
+          capture.abort();
+        }
+      });
+      signal?.addEventListener('abort', cancel, {once: true});
+      if (signal?.aborted) cancel();
+      try {
+        const {renderPreviewFrame} = await import('@kepler.gl/components');
+        if (capture.signal.aborted) throw new DOMException('Preview frame canceled', 'AbortError');
+        return await renderPreviewFrame(map, options, {
+          mapboxApiAccessToken: CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN,
+          containerW:
+            (typeof document !== 'undefined' &&
+              document.getElementById('kepler-gl__map')?.clientWidth) ||
+            map.mapState.width,
+          signal: capture.signal
+        });
+      } catch (error) {
+        if (dataChanged)
+          throw new Error(
+            'Map data changed while rendering the preview. Retry with the updated data.'
+          );
+        throw error;
+      } finally {
+        unsubscribe();
+        signal?.removeEventListener('abort', cancel);
+      }
+    },
+    videoExport: getVideoExportService(reduxStore),
     getMapState: () => readMap()?.mapState,
     getVisState: () => {
       const visState = readMap()?.visState;
@@ -105,7 +177,7 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
         return undefined;
       }
     },
-    dispatch: (action: any) => reduxStore?.dispatch(action),
+    dispatch: (action: any) => reduxStore?.dispatch(wrapTo('map', action)),
     getValuesFromDataset: (datasetName, variableName) => {
       const visState = readMap()?.visState;
       if (!visState) return [];
@@ -159,6 +231,8 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       throw new Error('DuckDB operations are not available in the mapping-only bridge.');
     }
   };
+  mapContexts.set(reduxStore, context);
+  return context;
 }
 
 /** The DuckDB-free map.* commands this page serves to agents, plus the map skill reader. */

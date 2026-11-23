@@ -9,7 +9,12 @@ import {
   setLayerAnimationTime
 } from '@kepler.gl/actions';
 import {ANIMATION_WINDOW, FILTER_TYPES} from '@kepler.gl/constants';
-import {getFilterBinThresholds, intervalBinFromMarks, snapToMarks} from '@kepler.gl/utils';
+import {
+  getFilterBinThresholds,
+  intervalBinFromMarks,
+  mergeFilterWithTimeline,
+  snapToMarks
+} from '@kepler.gl/utils';
 import type {TimeRangeFilter} from '@kepler.gl/types';
 import type {KeplerContext, RoomCommand} from './types';
 import {getTimeFilterState, getVisibleCounts} from './time-filter-state';
@@ -111,7 +116,10 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
           filterIndex = filters.findIndex(filter => filter.syncedWithLayerTimeline);
         }
         const filter = filters[filterIndex];
-        const clock = filter ?? state.animationConfig;
+        const effectiveFilter = filter
+          ? mergeFilterWithTimeline(filter, state.animationConfig).filter
+          : undefined;
+        const clock = effectiveFilter ?? state.animationConfig;
         if (!clock) throw new Error('The selected data clock is unavailable.');
         const domain = clock.domain;
         if (args.action !== 'get') {
@@ -141,7 +149,7 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
             if (state.animationConfig?.isAnimating)
               ctx.dispatch(setAnimationConfig({isAnimating: false} as any));
           }
-          if (filter) {
+          if (effectiveFilter) {
             if (args.action === 'play') {
               const settings = {
                 ...(args.speed !== undefined ? {speed: args.speed} : {}),
@@ -159,7 +167,10 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
                   setFilterAnimationTime(
                     filterIndex,
                     'value',
-                    getTimeFilterSeekValue(filter, args.action === 'reset' ? domain[0] : args.time!)
+                    getTimeFilterSeekValue(
+                      effectiveFilter,
+                      args.action === 'reset' ? domain[0] : args.time!
+                    )
                   )
                 );
               }

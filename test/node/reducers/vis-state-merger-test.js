@@ -2646,6 +2646,37 @@ test('VisStateMerger -> load time filter/trip layer synced map', t => {
   t.end();
 });
 
+test('VisStateMerger -> restore animation settings without a positive current time', t => {
+  for (const currentTime of [0, null, undefined]) {
+    const source = cloneDeep(InitialState.visState);
+    source.animationConfig = {
+      ...source.animationConfig,
+      currentTime,
+      speed: 2,
+      animationLoop: false,
+      endHoldDurationMs: 2500,
+      timezone: 'America/Guayaquil',
+      timeFormat: 'L LTS'
+    };
+    const saved = JSON.parse(JSON.stringify(visStateSchema.v1.save(source)));
+    const parsed = visStateSchema.v1.load(saved.visState);
+    const restored = visStateReducer(InitialState.visState, receiveMapConfig(parsed));
+
+    t.equal(restored.animationConfig.speed, 2, `restores speed with currentTime=${currentTime}`);
+    t.equal(
+      restored.animationConfig.animationLoop,
+      false,
+      'preserves explicit non-looping playback'
+    );
+    t.equal(restored.animationConfig.endHoldDurationMs, 2500, 'restores the presentation hold');
+    t.equal(restored.animationConfig.timezone, 'America/Guayaquil', 'restores the timezone');
+    t.equal(restored.animationConfig.timeFormat, 'L LTS', 'restores the time format');
+    if (currentTime === 0)
+      t.equal(restored.animationConfig.currentTime, 0, 'restores the epoch timestamp');
+  }
+  t.end();
+});
+
 test('VisStateMerger -> load trip layer animation timezone and time format', t => {
   const oldState = cloneDeep(StateWTripGeojson);
   oldState.visState = visStateReducer(

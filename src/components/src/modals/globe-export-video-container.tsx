@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {FramePreviewCallbacks} from './render-preview-frame';
 import React, {Component, createRef} from 'react';
 import {easeInOut} from 'popmotion';
 import download from 'downloadjs';
@@ -32,7 +33,7 @@ import {
   scaleToVideoExport,
   getResolutionSetting
 } from './hubble-utils';
-import {getCameraTourDuration} from '@kepler.gl/utils';
+import {getCameraTourDuration, mergeFilterWithTimeline} from '@kepler.gl/utils';
 import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
@@ -42,6 +43,11 @@ import {
   resolveCameraTourExportFrame
 } from './camera-tour-export';
 import {GlobeExportVideoPreview} from './globe-export-video-preview';
+import {
+  programmaticTimecode,
+  withVideoExportErrors,
+  type ProgrammaticVideoExport
+} from './programmatic-video-export';
 import SwipeExportSettings from './swipe-export-settings';
 import {
   drawStarsBackground,
@@ -69,6 +75,8 @@ export type GlobeExportVideoSettings = {
 };
 
 type GlobeExportVideoPanelContainerProps = {
+  framePreview?: FramePreviewCallbacks;
+  programmaticExport?: ProgrammaticVideoExport;
   initialState?: Partial<GlobeExportVideoPanelContainerState>;
   glContext?: WebGL2RenderingContext;
   exportVideoWidth: number;
@@ -257,7 +265,10 @@ export class GlobeExportVideoPanelContainer extends Component<
 
   getTimecode(): Timecode {
     const {durationMs} = this.state;
-    return {start: 0, end: durationMs, framerate: 30};
+    return programmaticTimecode(
+      {start: 0, end: durationMs, framerate: 30},
+      this.props.programmaticExport
+    );
   }
 
   getEncoder() {
@@ -268,24 +279,27 @@ export class GlobeExportVideoPanelContainer extends Component<
             onFallback: () => this.setState({encodingNotice: NATIVE_WEBM_FALLBACK})
           })
         : ENCODERS[mediaType];
-    return createAnnotationVideoEncoder(
-      Encoder,
-      () => ({
-        annotations: this.props.mapData.visState.annotations || [],
-        readoutValues: getAnnotationReadoutValues(
-          this.props.mapData.visState?.annotations || [],
-          this.props.mapData.visState
-        ),
-        interactionConfig: this.props.mapData.visState.interactionConfig,
-        mapState: {...this.props.mapData.mapState, ...this.state.viewState},
-        animationTimeMs: this.state.currentTimeMs,
-        ...this._getContainer()
-      }),
-      encoder => this.activeEncoder === encoder,
-      error => {
-        console.error('Video annotation capture failed:', error);
-        this.onEncodingError(this.activeEncoder);
-      }
+    return withVideoExportErrors(
+      createAnnotationVideoEncoder(
+        Encoder,
+        () => ({
+          annotations: this.props.mapData.visState.annotations || [],
+          readoutValues: getAnnotationReadoutValues(
+            this.props.mapData.visState?.annotations || [],
+            this.props.mapData.visState
+          ),
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          animationTimeMs: this.state.currentTimeMs,
+          ...this._getContainer()
+        }),
+        encoder => this.activeEncoder === encoder,
+        error => {
+          console.error('Video annotation capture failed:', error);
+          this.onEncodingError(this.activeEncoder);
+        }
+      ),
+      this.props.programmaticExport
     );
   }
 
@@ -315,16 +329,21 @@ export class GlobeExportVideoPanelContainer extends Component<
   getFilterKeyframes() {
     const {
       mapData: {
-        visState: {filters}
+        visState: {filters: sourceFilters, animationConfig}
       },
       animatableFilters
     } = this.props;
 
+    const filters = sourceFilters.map(
+      filter => mergeFilterWithTimeline(filter, animationConfig).filter
+    );
     const filterKeyframes = (
       Array.isArray(animatableFilters) && animatableFilters.length
         ? animatableFilters
         : filters.filter(
-            (f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged
+            (f: any) =>
+              f.type === 'timeRange' &&
+              (f.view === FILTER_VIEW_TYPES.enlarged || f.syncedWithLayerTimeline)
           )
     ).map((f: any) => ({
       id: f.id,
@@ -340,10 +359,11 @@ export class GlobeExportVideoPanelContainer extends Component<
   getTripKeyframes() {
     const {
       mapData: {
-        visState: {layers, animationConfig}
+        visState: {layers, animationConfig, filters}
       }
     } = this.props;
 
+    if (filters?.some(filter => filter.syncedWithLayerTimeline)) return {};
     const animatableLayer = layers.filter(
       (l: any) => l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
@@ -549,7 +569,7 @@ export class GlobeExportVideoPanelContainer extends Component<
                     .save()
                     .then((blob: Blob | null) => {
                       if (this.activeEncoder !== encoder) return;
-                      if (blob) {
+                      if (blob && !this.props.programmaticExport) {
                         download(blob, filename + encoder.extension, encoder.mimeType);
                       }
                       this.setState({
@@ -558,6 +578,15 @@ export class GlobeExportVideoPanelContainer extends Component<
                         currentTimeMs: 0,
                         viewState: {...this.state.memo!.viewState}
                       });
+                      if (this.props.programmaticExport) {
+                        if (blob?.size) this.props.programmaticExport.onComplete(blob);
+                        else
+                          this.props.programmaticExport.onError(
+                            new Error(
+                              'Video export produced an empty file. Retry with a lower resolution.'
+                            )
+                          );
+                      }
                     })
                     .catch(() => this.onEncodingError(encoder));
                 } else {
@@ -647,7 +676,13 @@ export class GlobeExportVideoPanelContainer extends Component<
             rendering={rendering}
             saving={saving}
             durationMs={durationMs}
-            animationTimeMs={isActive ? currentTimeMs : undefined}
+            animationTimeMs={
+              this.props.framePreview
+                ? this.props.framePreview.animationTimeMs
+                : isActive
+                ? currentTimeMs
+                : undefined
+            }
             deckProps={deckProps}
             mapProps={this.props.mapProps}
             backgroundColor={this.getBackgroundColor()}

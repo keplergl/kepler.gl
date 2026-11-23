@@ -190,6 +190,27 @@ export default function BottomWidgetFactory(
       [chartFilter, animationConfig]
     );
 
+    // Keep each clock's controller mounted while paused so switching the
+    // displayed filter does not discard its remaining final-frame hold.
+    const filterControllers = useMemo(
+      () =>
+        filters.flatMap((currentFilter, filterIdx) =>
+          isChartFilter(currentFilter)
+            ? [
+                {
+                  filter:
+                    currentFilter.type === FILTER_TYPES.timeRange &&
+                    currentFilter.syncedWithLayerTimeline
+                      ? mergeFilterWithTimeline(currentFilter, animationConfig).filter
+                      : currentFilter,
+                  filterIdx
+                }
+              ]
+            : []
+        ),
+      [filters, animationConfig]
+    );
+
     const exportAnimation = useCallback(() => toggleModal(EXPORT_VIDEO_ID), [toggleModal]);
 
     const onClose = useCallback(
@@ -256,14 +277,18 @@ export default function BottomWidgetFactory(
             }
           </LayerAnimationController>
         ) : null}
-        {enhancedFilter ? (
+        {filterControllers.map(({filter: controllerFilter, filterIdx}) => (
           <FilterAnimationController
-            filter={enhancedFilter}
-            filterIdx={animatedFilterIdx > -1 ? animatedFilterIdx : enlargedFilterIdx}
+            key={controllerFilter.id}
+            filter={controllerFilter}
+            filterIdx={filterIdx}
             setFilterAnimationTime={visStateActions.setFilterAnimationTime}
           >
             {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
-              showTimeWidget && timeline ? (
+              showTimeWidget &&
+              timeline &&
+              enhancedFilter &&
+              controllerFilter.id === enhancedFilter.id ? (
                 <TimeWidget
                   // TimeWidget uses React.memo, here we pass width
                   // even though it doesnt use it, to force rerender
@@ -291,7 +316,7 @@ export default function BottomWidgetFactory(
               ) : null
             }
           </FilterAnimationController>
-        ) : null}
+        ))}
       </BottomWidgetContainer>
     );
   };

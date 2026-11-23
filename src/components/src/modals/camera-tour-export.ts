@@ -12,7 +12,8 @@ import {
   getLayerAnimationDuration,
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
-  getAnnotationOpacityDuration
+  getAnnotationOpacityDuration,
+  mergeFilterWithTimeline
 } from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getDataAnimationTimings, getFlatExportLayers, getResolutionSetting} from './hubble-utils';
@@ -27,6 +28,7 @@ import {
 } from './video-export-formats';
 import {StyledModalInputFootnote} from '../common/styled-components';
 import {getEffectAnimationDuration, getEffectAnimationTracks} from './effect-animation';
+import {programmaticTimecode, withVideoExportErrors} from './programmatic-video-export';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -112,7 +114,23 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
     private finishNativeRecording?: (blob: Blob | null) => void;
     private failedBasemap?: PreviewMap;
 
+    getFilterKeyframes() {
+      const frames = super.getFilterKeyframes();
+      if (!frames.filters) return frames;
+      const animationConfig = this.props.mapData.visState.animationConfig;
+      return {
+        ...frames,
+        filters: frames.filters.map(
+          filter => mergeFilterWithTimeline(filter, animationConfig).filter
+        )
+      };
+    }
+
     getTripKeyframes() {
+      // A synced filter updates the layer clock through the native reducer.
+      // An independent track would overwrite that clock during its final hold.
+      if (this.props?.mapData?.visState?.filters?.some(filter => filter.syncedWithLayerTimeline))
+        return {};
       const frames = super.getTripKeyframes();
       if (!frames.tripKeyframe) return frames;
       return {
@@ -136,6 +154,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
         : !map.getStyle();
       if (!metadataFailed || this.failedBasemap === map) return;
       this.failedBasemap = map;
+      this.props?.programmaticExport?.onError(new Error(BASEMAP_LOADING_ERROR));
       const {adapter, rendering, previewing, saving} = this.state;
       if (adapter?.videoCapture.isRecording() || rendering || previewing || saving) {
         this.onStop({abort: true});
@@ -229,6 +248,10 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
       return {width, height};
     }
 
+    getTimecode() {
+      return programmaticTimecode(super.getTimecode(), this.props?.programmaticExport);
+    }
+
     getBaseEncoder() {
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) return super.getEncoder();
       const capture = this.state.adapter.videoCapture;
@@ -252,31 +275,35 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
     }
 
     getEncoder() {
-      return createAnnotationVideoEncoder(
-        this.getBaseEncoder(),
-        () => ({
-          annotations: this.props.mapData.visState.annotations || [],
-          readoutValues: getAnnotationReadoutValues(
-            this.props.mapData.visState?.annotations || [],
-            this.props.mapData.visState
-          ),
-          interactionConfig: this.props.mapData.visState.interactionConfig,
-          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
-          animationTimeMs: this.getAnimationTimeMs(),
-          ...this._getContainer()
-        }),
-        encoder => {
-          const capture = this.state.adapter.videoCapture;
-          return capture.isRecording() && capture.encoder === encoder;
-        },
-        error => {
-          console.error('Video annotation capture failed:', error);
-          this.onStop({abort: true});
-        }
+      return withVideoExportErrors(
+        createAnnotationVideoEncoder(
+          this.getBaseEncoder(),
+          () => ({
+            annotations: this.props.mapData.visState.annotations || [],
+            readoutValues: getAnnotationReadoutValues(
+              this.props.mapData.visState?.annotations || [],
+              this.props.mapData.visState
+            ),
+            interactionConfig: this.props.mapData.visState.interactionConfig,
+            mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+            animationTimeMs: this.getAnimationTimeMs(),
+            ...this._getContainer()
+          }),
+          encoder => {
+            const capture = this.state.adapter.videoCapture;
+            return capture.isRecording() && capture.encoder === encoder;
+          },
+          error => {
+            console.error('Video annotation capture failed:', error);
+            this.onStop({abort: true});
+          }
+        ),
+        this.props?.programmaticExport
       );
     }
 
     private getAnimationTimeMs(): number | undefined {
+      if (this.props.framePreview) return this.props.framePreview.animationTimeMs;
       if (Number.isFinite(this.state.currentTimeMs)) return Math.max(0, this.state.currentTimeMs);
       const capture = this.state.adapter?.videoCapture;
       return Number.isFinite(capture?.timeMs)
@@ -290,7 +317,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
       if (this.state.encodingError || this.state.encodingNotice) {
         this.setState({encodingError: undefined, encodingNotice: undefined});
       }
-      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) {
+      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value && !this.props?.programmaticExport) {
         this.resetVideoCapture();
         return super.onRenderVideo();
       }
@@ -316,13 +343,21 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
           this.finishNativeRecording !== finishNativeRecording
         )
           return;
-        capture.download(blob);
         this.finishNativeRecording = undefined;
         this.setState({
           rendering: false,
           saving: false,
           viewState: {...this.state.memo.viewState}
         });
+        if (this.props?.programmaticExport) {
+          if (blob?.size) this.props?.programmaticExport.onComplete(blob);
+          else
+            this.props?.programmaticExport.onError(
+              new Error('Video export produced an empty file. Retry with a lower resolution.')
+            );
+        } else {
+          capture.download(blob);
+        }
       };
       this.finishNativeRecording = finishNativeRecording;
       adapter.render({
@@ -410,7 +445,8 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
                 mapIndex: 0,
                 viewState: this.state.viewState,
                 beforeId: this.props.mapboxLayerBeforeId,
-                animationTimeMs
+                animationTimeMs,
+                onLayerError: this.props.framePreview?.onError
               })
             }
           });

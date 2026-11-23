@@ -44,6 +44,118 @@ const defaultProps = {
   visStateActions: VisStateActions
 };
 
+test('Components -> BottomWidget -> a paused background filter retains its remaining hold', t => {
+  const clock = sinon.useFakeTimers();
+  let frameId = 0;
+  const frames = new Map();
+  const requestFrame = sinon.stub(Window, 'requestAnimationFrame').callsFake(callback => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  const cancelFrame = sinon.stub(Window, 'cancelAnimationFrame').callsFake(id => frames.delete(id));
+  const advance = ms =>
+    act(() => {
+      clock.tick(ms);
+      const frame = frames.entries().next().value;
+      if (frame) {
+        frames.delete(frame[0]);
+        frame[1]();
+      }
+    });
+  const TimeWidgetProbe = ({filter}) => <output data-testid="selected-filter">{filter.id}</output>;
+  const Widget = BottomWidgetFactory(
+    TimeWidgetProbe,
+    () => null,
+    appInjector.get(FilterAnimationControllerFactory),
+    () => null,
+    () => null
+  );
+  const baseFilter = StateWFilters.visState.filters.find(filter => filter.type === 'timeRange');
+  let latestFilters;
+  const Player = () => {
+    const [filters, setFilters] = React.useState([
+      {...baseFilter, id: 'displayed', view: FILTER_VIEW_TYPES.enlarged, isAnimating: false},
+      {
+        ...baseFilter,
+        id: 'background',
+        view: FILTER_VIEW_TYPES.side,
+        domain: [0, 100],
+        value: [0, 0],
+        animationWindow: 'point',
+        speed: 600,
+        isAnimating: true,
+        animationLoop: false,
+        endHoldDurationMs: 1000
+      }
+    ]);
+    latestFilters = filters;
+    const updateFilter = (idx, prop, value) =>
+      setFilters(previous =>
+        previous.map((filter, index) => (index === idx ? {...filter, [prop]: value} : filter))
+      );
+    return (
+      <>
+        <button onClick={() => updateFilter(1, 'isAnimating', !filters[1].isAnimating)}>
+          Toggle background
+        </button>
+        <Widget
+          {...defaultProps}
+          {...StateWFilters.visState}
+          filters={filters}
+          visStateActions={{...VisStateActions, setFilterAnimationTime: updateFilter}}
+        />
+      </>
+    );
+  };
+  let view;
+  try {
+    view = render(
+      <ThemeProvider theme={theme}>
+        <Player />
+      </ThemeProvider>
+    );
+    const player = within(view.container);
+    advance(16);
+    t.deepEqual(
+      latestFilters[1].value,
+      [100, 100],
+      'background filter reaches its final timestamp'
+    );
+    advance(400);
+    fireEvent.click(player.getByText('Toggle background'));
+    t.equal(
+      player.getByTestId('selected-filter').textContent,
+      'displayed',
+      'the other enlarged filter becomes visible'
+    );
+    t.equal(
+      player.getAllByTestId('selected-filter').length,
+      1,
+      'only one timeline widget is displayed'
+    );
+    t.equal(frames.size, 0, 'paused controllers schedule no animation frames');
+    advance(2000);
+    fireEvent.click(player.getByText('Toggle background'));
+    t.deepEqual(latestFilters[1].value, [100, 100], 'resuming does not restart the data sweep');
+    advance(599);
+    t.equal(latestFilters[1].isAnimating, true, 'the remaining presentation hold has not finished');
+    advance(1);
+    t.equal(
+      latestFilters[1].isAnimating,
+      false,
+      'the final millisecond completes only the remaining hold'
+    );
+    t.deepEqual(latestFilters[1].value, [100, 100], 'completion keeps the final data timestamp');
+    t.equal(frames.size, 0, 'completion leaves no active filter clocks');
+  } finally {
+    view?.unmount();
+    requestFrame.restore();
+    cancelFrame.restore();
+    clock.restore();
+  }
+  t.end();
+});
+
 test('Components -> BottomWidget -> stopping layer playback preserves the final data time', t => {
   const LayerController = ({animationConfig, setLayerAnimationTime, onAnimationEnd}) => (
     <button

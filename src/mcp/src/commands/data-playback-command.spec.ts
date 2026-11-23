@@ -12,6 +12,7 @@ import {
   visStateReducer
 } from '@kepler.gl/reducers';
 import {getDataPlaybackCommand} from './data-playback-command';
+import {getTimeFilterCommand} from './shared-time-filter-command';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
 
 const START = Date.UTC(2024, 0, 1);
@@ -183,6 +184,87 @@ describe('map.data-playback', () => {
     expect(result.success).toBe(true);
     expect(result.data).toMatchObject({clock: 'filter', selectedTime: START + DAY});
     expect(ctx.getVisState().animationConfig.currentTime).toBe(START + DAY);
+  });
+
+  it.each(['filter', 'layer'])(
+    'inspects, seeks and resets the merged linked domain through a %s target',
+    async targetType => {
+      const {ctx, target: filterTarget, dispatch, setState} = await makeContext();
+      const camera = ctx.getMapState?.();
+      const domain = [START - DAY, START + DAY * 4];
+      setState({
+        ...ctx.getVisState(),
+        filters: [
+          {...ctx.getVisState().filters[0], syncedWithLayerTimeline: true, syncTimelineMode: 1}
+        ],
+        layers: [new KeplerGlLayers.TripLayer({id: 'trip', dataId: 'observations'})],
+        animationConfig: {...INITIAL_VIS_STATE.animationConfig, domain, currentTime: START}
+      });
+      const command = getDataPlaybackCommand(ctx);
+      const target = targetType === 'layer' ? {layerId: 'trip'} : filterTarget;
+      expect((await execute(command, {action: 'get', target})).data.domain).toEqual(domain);
+      expect(
+        (await execute(getTimeFilterCommand(ctx), {action: 'get', ...filterTarget})).data.filters[0]
+          .domain
+      ).toEqual(domain);
+      expect(dispatch).not.toHaveBeenCalled();
+
+      const input = {action: 'seek', target, time: START + DAY * 3};
+      const first = await execute(command, input);
+      expect(first.success).toBe(true);
+      expect(first.data).toMatchObject({
+        domain,
+        selectedTime: input.time,
+        value: [input.time, input.time],
+        visibleCounts: {observations: 0}
+      });
+      expect(await execute(command, input)).toEqual(first);
+      expect(ctx.getVisState().animationConfig.currentTime).toBe(input.time);
+
+      const reset = await execute(command, {action: 'reset', target});
+      expect(reset.success).toBe(true);
+      expect(reset.data.selectedTime).toBe(domain[0]);
+      expect(ctx.getVisState().animationConfig.currentTime).toBe(domain[0]);
+      expect(ctx.getVisState().filters[0].domain).toEqual([START, START + DAY * 2]);
+      expect(ctx.getMapState?.()).toBe(camera);
+
+      dispatch.mockClear();
+      expect((await execute(command, {action: 'seek', target, time: domain[1] + 1})).success).toBe(
+        false
+      );
+      expect(dispatch).not.toHaveBeenCalled();
+    }
+  );
+
+  it('uses the merged domain when snapping a linked interval seek', async () => {
+    const {ctx, target, setState} = await makeContext();
+    const filter = ctx.getVisState().filters[0];
+    setState({
+      ...ctx.getVisState(),
+      filters: [
+        {
+          ...filter,
+          syncedWithLayerTimeline: true,
+          syncTimelineMode: 1,
+          animationWindow: 'interval',
+          plotType: {...filter.plotType, interval: '1-day'}
+        }
+      ],
+      layers: [new KeplerGlLayers.TripLayer({id: 'trip', dataId: 'observations'})],
+      animationConfig: {
+        ...INITIAL_VIS_STATE.animationConfig,
+        domain: [START - DAY, START + DAY * 5],
+        currentTime: START
+      }
+    });
+    const result = await execute(getDataPlaybackCommand(ctx), {
+      action: 'seek',
+      target,
+      time: START + DAY * 4
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.value).toEqual([START + DAY * 4, START + DAY * 5 - 1]);
+    expect(ctx.getVisState().animationConfig.currentTime).toBe(START + DAY * 5 - 1);
   });
 
   it.each([

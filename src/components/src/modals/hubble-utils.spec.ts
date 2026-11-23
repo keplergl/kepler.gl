@@ -30,6 +30,8 @@ jest.mock('@loaders.gl/video', () => ({GIFBuilder: jest.fn()}));
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('../../../utils/src/utils'),
   ...jest.requireActual('../../../utils/src/layer-visibility'),
+  getFilterBinThresholds: jest.requireActual('../../../utils/src/plot').getFilterBinThresholds,
+  intervalBinFromMarks: jest.requireActual('../../../utils/src/plot').intervalBinFromMarks,
   getMapLayersFromSplitMaps: jest.requireActual('../../../utils/src/map-utils')
     .getMapLayersFromSplitMaps,
   getLayerBlendingParameters: jest.fn(() => ({blend: true})),
@@ -153,8 +155,17 @@ describe('hubble-utils', () => {
         },
         timings: [0, 1000]
       });
-      expect(frames.timings).toEqual([0, 375, 750]);
+      expect(frames.timings).toEqual([0, 375, 750, 1000]);
       expect(frames.keyframes[2]).toEqual({value: [450, 500]});
+      const track = new KeplerFilterKeyframes({
+        filter: {...baseFilter, animationWindow: 'interval'},
+        timings: [0, 1000],
+        getTimeRangeFilterKeyframes: () => frames
+      });
+      for (const time of [750, 800, 999, 1000, 750]) {
+        track.setTime(time);
+        expect(track.getFrame()).toEqual([450, 500]);
+      }
     });
 
     test('returns point keyframes', () => {
@@ -164,6 +175,31 @@ describe('hubble-utils', () => {
       });
 
       expect(result.keyframes).toEqual([{value: 100}, {value: 500}]);
+    });
+
+    test('linked interval export covers the shared clock beyond cached dataset bins', () => {
+      const filter = {
+        ...baseFilter,
+        domain: [0, 3000],
+        value: [1000, 2000],
+        animationWindow: 'interval',
+        syncedWithLayerTimeline: true,
+        endHoldDurationMs: 250,
+        plotType: {interval: '1-second'},
+        timeBins: {dataset1: {'1-second': [{x0: 1000, x1: 2000}]}}
+      };
+      const track = new KeplerFilterKeyframes({
+        filter,
+        timings: [0, 1000],
+        getTimeRangeFilterKeyframes
+      });
+      track.setTime(0);
+      expect(track.getFrame()).toEqual([0, 999]);
+      for (const time of [750, 800, 999, 1000, 750]) {
+        track.setTime(time);
+        expect(track.getFrame()).toEqual([3000, 3000]);
+      }
+      expect(filter.timeBins.dataset1['1-second']).toEqual([{x0: 1000, x1: 2000}]);
     });
 
     test('returns interval keyframes with bins', () => {
@@ -188,14 +224,44 @@ describe('hubble-utils', () => {
       expect(result.keyframes).toEqual([
         {value: [100, 200]},
         {value: [200, 300]},
+        {value: [300, 400]},
         {value: [300, 400]}
       ]);
-      expect(result.timings).toEqual([0, 300, 600]);
+      expect(result.timings).toEqual([0, 300, 600, 900]);
       // hold easing: returns 0 unless p === 1
       expect(result.easings(0)).toBe(0);
       expect(result.easings(0.5)).toBe(0);
       expect(result.easings(1)).toBe(1);
     });
+
+    test.each([1, 2, 3])(
+      'holds all %i interval bins through the end of the native export',
+      count => {
+        const bins = Array.from({length: count}, (_, index) => ({
+          x0: index * 100,
+          x1: (index + 1) * 100
+        }));
+        const filter = {
+          ...baseFilter,
+          id: 'time',
+          animationWindow: 'interval',
+          plotType: {interval: 'day'},
+          timeBins: {dataset1: {day: bins}}
+        };
+        const frames = new KeplerFilterKeyframes({
+          filter,
+          filterIdx: 0,
+          timings: [0, 2000],
+          getTimeRangeFilterKeyframes
+        });
+        bins.forEach((bin, index) => {
+          frames.setTime(((index + 0.5) * 2000) / count);
+          expect(frames.getFrame()).toEqual([bin.x0, bin.x1]);
+        });
+        frames.setTime(1999);
+        expect(frames.getFrame()).toEqual([bins[count - 1].x0, bins[count - 1].x1]);
+      }
+    );
 
     test('falls back to free keyframes when interval has no bins', () => {
       const filter = {
@@ -403,6 +469,14 @@ describe('hubble-utils', () => {
   });
 
   describe('getResolutionSetting', () => {
+    test.each(['1000x700', '240x320', '8192x1'])('accepts exact custom output size %s', value => {
+      const [width, height] = value.split('x').map(Number);
+      expect(getResolutionSetting(value)).toMatchObject({width, height});
+    });
+    test.each(['0x700', '1.5x700', '8193x1', '-1x20'])('rejects invalid output size %s', value => {
+      expect(getResolutionSetting(value)).toMatchObject({width: 960, height: 540});
+    });
+
     test.each([
       ['2560x1440', 2560, 1440],
       ['3840x2160', 3840, 2160]
@@ -858,6 +932,44 @@ describe('flat export zoom fading', () => {
   beforeEach(() => {
     computeDeckLayers.mockImplementation(realComputeDeckLayers);
   });
+
+  test.each([
+    ['flat', getFlatExportLayers, 0],
+    ['flat swipe', getFlatExportLayers, 1],
+    ['globe', getGlobeExportLayers, 0],
+    ['globe swipe', getGlobeExportLayers, 1]
+  ])(
+    '%s captures report tileset failures and ignore recovery notifications',
+    (_name, getLayers, mapIndex) => {
+      const {source, state} = setup();
+      const onLayerError = jest.fn();
+      let callbacks;
+      state.visState.layers[0].config.label = 'Buildings';
+      state.visState.layers[0].renderLayer = ({layerCallbacks}) => {
+        callbacks = layerCallbacks;
+        return [source];
+      };
+
+      getLayers(state, {mapIndex, onLayerError});
+      callbacks.onTilesetLoadError(null);
+      expect(onLayerError).not.toHaveBeenCalled();
+
+      callbacks.onTilesetLoadError('token');
+      expect(onLayerError).toHaveBeenLastCalledWith(
+        new Error('Tileset for layer "Buildings" could not load. Check its access token.')
+      );
+      callbacks.onTilesetLoadError('generic');
+      expect(onLayerError).toHaveBeenLastCalledWith(
+        new Error('Tileset for layer "Buildings" could not load. Check its URL and connection.')
+      );
+      callbacks.onTilesetLoadError(null);
+      expect(onLayerError).toHaveBeenCalledTimes(2);
+
+      const renderError = new Error('Layer render failed');
+      callbacks.onLayerError(renderError);
+      expect(onLayerError).toHaveBeenLastCalledWith(renderError);
+    }
+  );
 
   test('follows each animated frame without capturing fully faded layers or changing the saved map', () => {
     const {source, state} = setup();

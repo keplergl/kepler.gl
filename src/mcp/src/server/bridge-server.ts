@@ -27,11 +27,49 @@ import {basename, isAbsolute} from 'node:path';
 import {WebSocket, WebSocketServer} from 'ws';
 import {z} from 'zod';
 import {getKeplerCommands} from '../commands';
-import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '../commands/types';
+import type {
+  KeplerContext,
+  PreviewFrameImage,
+  RoomCommandResult,
+  ToolDescriptor
+} from '../commands/types';
+import {VideoArtifacts} from './video-artifacts';
 
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_CALL_TIMEOUT_MS = 60_000;
+const MAX_PROJECT_ARTIFACT_BYTES = 100 * 1024 * 1024;
+const MAX_PROJECT_ARTIFACTS = 10;
+const PROJECT_ARTIFACT_AVAILABILITY =
+  'Available until the MCP server stops or newer exports evict it (10 artifacts / 100 MiB total). Download to retain it.';
+
+function supportsLocalResource(commandId: string): boolean {
+  return commandId === 'map.load-data' || commandId === 'map.open-project';
+}
+
+const STATUS_COMMAND = 'map.get-status';
+const statusInput = z.object({}).strict();
+
+export type BridgeStatus = {
+  state: 'disconnected' | 'connected' | 'negotiated';
+  connected: boolean;
+  toolsNegotiated: boolean;
+  app: {name: string; version?: string} | null;
+  project: {state: 'unknown'};
+  capabilities: {tools: string[]; localFileImport: boolean};
+  launcherUrl: string | null;
+  guidance?: string;
+};
+
+const statusTool: MapTool = {
+  name: toToolName(STATUS_COMMAND),
+  commandId: STATUS_COMMAND,
+  description:
+    'Check the map connection, negotiated tools, connected app and effective capabilities. ' +
+    'Works without a connected page and returns a credential-free launcher URL. ' +
+    'Project readiness is not tracked: negotiated tools do not mean project data has finished loading.',
+  inputSchema: z.toJSONSchema(statusInput) as Record<string, unknown>
+};
 
 export type MapTool = {
   /** MCP tool name, e.g. `map_add_layer` (dots are not allowed in tool names). */
@@ -74,6 +112,16 @@ type LocalResource = {
   callId: string;
   transfers: Set<{stream: ReadStream; response: ServerResponse}>;
   cleanup?: Promise<void>;
+};
+
+type ProjectArtifact = {
+  uri: string;
+  path: string;
+  fileName: string;
+  mimeType: 'application/json';
+  size: number;
+  text: string;
+  origin: string;
 };
 
 /** MCP tool names are commonly restricted to [A-Za-z0-9_-]; `map.add-layer` → `map_add_layer`. */
@@ -131,6 +179,32 @@ export function formatResult(result: RoomCommandResult): {text: string; isError:
   return {text: JSON.stringify(result?.data ?? result ?? null, null, 2), isError: false};
 }
 
+/** Preserve preview PNGs as image content so MCP clients can display the frame. */
+export function formatMcpResult(result: RoomCommandResult): {
+  content: Array<{type: 'text'; text: string} | {type: 'image'; mimeType: string; data: string}>;
+  isError?: boolean;
+} {
+  const preview = result?.data as PreviewFrameImage | undefined;
+  if (
+    result?.commandId === 'map.render-preview' &&
+    result.success &&
+    !result.error &&
+    preview?.mimeType === 'image/png' &&
+    typeof preview.data === 'string' &&
+    preview.data.length > 0
+  ) {
+    const {data, ...metadata} = preview;
+    return {
+      content: [
+        {type: 'text', text: JSON.stringify(metadata, null, 2)},
+        {type: 'image', mimeType: preview.mimeType, data}
+      ]
+    };
+  }
+  const {text, isError} = formatResult(result);
+  return {content: [{type: 'text', text}], ...(isError ? {isError: true} : {})};
+}
+
 export class KeplerMcpBridge {
   private readonly options: Required<KeplerMcpBridgeOptions>;
   private readonly staticTools: MapTool[];
@@ -140,9 +214,14 @@ export class KeplerMcpBridge {
   private httpServer: HttpServer | null = null;
   private readonly pending = new Map<string, PendingCall>();
   private readonly localResources = new Map<string, LocalResource>();
+  private readonly projectArtifacts = new Map<string, ProjectArtifact>();
+  private readonly videoArtifacts = new VideoArtifacts();
+  private connectionId = 0;
   private pageOrigin = '';
   private token = '';
   private pageUrl = '';
+  private app: BridgeStatus['app'] = null;
+  private readonly toolListeners = new Set<() => void>();
 
   constructor(options: KeplerMcpBridgeOptions = {}) {
     this.options = {
@@ -156,16 +235,15 @@ export class KeplerMcpBridge {
 
   /** Tools the MCP client can call right now. */
   getTools(): MapTool[] {
-    return (this.pageTools ?? this.staticTools).map(tool => {
-      if (tool.commandId !== 'map.load-data') return tool;
+    return [...(this.pageTools ?? this.staticTools), statusTool].map(tool => {
+      if (!supportsLocalResource(tool.commandId)) return tool;
       const schema = tool.inputSchema;
       if (schema['x-kepler-local-resource'] !== 1) return tool;
       return {
         ...tool,
         description:
-          'LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ' +
-          'The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ' +
-          tool.description,
+          `LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ` +
+          `The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ${tool.description}`,
         inputSchema: {
           ...schema,
           properties: {
@@ -188,6 +266,108 @@ export class KeplerMcpBridge {
     return this.socket?.readyState === WebSocket.OPEN;
   }
 
+  /** Exported projects are also readable through the MCP resources API. */
+  getResources() {
+    return [...this.projectArtifacts.values()].map(artifact => ({
+      uri: artifact.uri,
+      name: artifact.fileName,
+      mimeType: artifact.mimeType,
+      size: artifact.size,
+      description: PROJECT_ARTIFACT_AVAILABILITY
+    }));
+  }
+
+  readResource(uri: string): {uri: string; mimeType: string; text: string} {
+    const artifact = [...this.projectArtifacts.values()].find(item => item.uri === uri);
+    if (!artifact) {
+      throw new Error('Project artifact not found or expired. Export the project again.');
+    }
+    return {uri: artifact.uri, mimeType: artifact.mimeType, text: artifact.text};
+  }
+
+  /** Subscribe to effective catalog changes, including page replacement/disconnection. */
+  onToolsChanged(listener: () => void): () => void {
+    this.toolListeners.add(listener);
+    return () => this.toolListeners.delete(listener);
+  }
+
+  getStatus(): BridgeStatus {
+    const connected = this.connected;
+    const toolsNegotiated = connected && this.pageTools !== null;
+    const state = !connected ? 'disconnected' : toolsNegotiated ? 'negotiated' : 'connected';
+    const address = this.httpServer?.address();
+    const host = address && typeof address !== 'string' ? address.address : null;
+    const launcherUrl = host
+      ? `http://${host.includes(':') ? `[${host}]` : host}:${
+          address && typeof address !== 'string' ? address.port : this.options.port
+        }/`
+      : null;
+    return {
+      state,
+      connected,
+      toolsNegotiated,
+      app: connected && this.app ? {...this.app} : null,
+      project: {state: 'unknown'},
+      capabilities: {
+        tools: toolsNegotiated ? this.getTools().map(tool => tool.name) : [statusTool.name],
+        localFileImport: Boolean(
+          toolsNegotiated &&
+            (host === '127.0.0.1' || host === '::1') &&
+            this.pageTools?.some(
+              tool =>
+                supportsLocalResource(tool.commandId) &&
+                tool.inputSchema['x-kepler-local-resource'] === 1
+            )
+        )
+      },
+      launcherUrl,
+      ...(state === 'disconnected'
+        ? {
+            guidance: launcherUrl
+              ? `Open ${launcherUrl} in a browser to connect the map, then call map_get-status again.`
+              : 'Start kepler-mcp, then open the local launcher URL printed at startup.'
+          }
+        : state === 'negotiated'
+        ? {
+            guidance:
+              'Tools are negotiated, but project readiness is unknown. This status does not establish that project data has finished loading.'
+          }
+        : {})
+    };
+  }
+
+  private updatePageTools(tools: MapTool[] | null): void {
+    const previous = JSON.stringify(this.getTools());
+    this.pageTools = tools;
+    if (previous !== JSON.stringify(this.getTools())) {
+      for (const listener of this.toolListeners) listener();
+    }
+  }
+
+  /** The five latest completed exports, retained until eviction or bridge shutdown. */
+  listVideoResources() {
+    return this.videoArtifacts.list();
+  }
+
+  readVideoResource(uri: string) {
+    return this.videoArtifacts.read(uri);
+  }
+
+  getVideoResourceLink(result: RoomCommandResult) {
+    const data = result?.data as {artifact?: {uri?: unknown}} | undefined;
+    const resource = this.listVideoResources().find(item => item.uri === data?.artifact?.uri);
+    if (!resource) return undefined;
+    return {
+      type: 'resource_link' as const,
+      uri: resource.uri,
+      name: resource.name,
+      mimeType: resource.mimeType,
+      size: resource.size,
+      description:
+        'Completed native video export. Read this MCP resource or use its local file artifact.'
+    };
+  }
+
   async start(): Promise<KeplerMcpBridgeStart> {
     if (this.wss) throw new Error('The kepler.gl bridge is already running.');
 
@@ -197,6 +377,11 @@ export class KeplerMcpBridge {
     // the user can open `http://127.0.0.1:<port>/` even when the MCP client
     // never shows the server's stderr. Only `/ws` upgrades to a WebSocket.
     const httpServer = createServer((request, response) => {
+      const artifact = this.projectArtifacts.get(request.url ?? '');
+      if (artifact) {
+        this.serveProjectArtifact(artifact, request, response);
+        return;
+      }
       const resource = this.localResources.get(request.url ?? '');
       if (resource) {
         this.serveLocalResource(resource, request, response);
@@ -229,13 +414,19 @@ export class KeplerMcpBridge {
     this.pageUrl = `${mapUrl}${mapUrl.includes('?') ? '&' : '?'}mcp=${encodeURIComponent(
       this.token
     )}`;
+    if (port !== DEFAULT_PORT) this.pageUrl += `&mcpPort=${port}`;
+    if (this.options.host !== DEFAULT_HOST) {
+      this.pageUrl += `&mcpHost=${encodeURIComponent(this.options.host)}`;
+    }
     return {host: this.options.host, port, token: this.token, pageUrl: this.pageUrl};
   }
 
   async callTool(name: string, input: Record<string, unknown> = {}): Promise<RoomCommandResult> {
-    const tool =
-      this.getTools().find(candidate => candidate.name === name) ??
-      this.staticTools.find(candidate => candidate.name === name);
+    if (name === statusTool.name) {
+      statusInput.parse(input);
+      return {success: true, commandId: STATUS_COMMAND, data: this.getStatus()};
+    }
+    const tool = this.getTools().find(candidate => candidate.name === name);
     if (!tool) {
       throw new Error(
         `Unknown map tool "${name}". Available: ${this.getTools()
@@ -244,23 +435,21 @@ export class KeplerMcpBridge {
       );
     }
     const socket = this.socket;
+    const connectionId = this.connectionId;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        'No kepler.gl map page is connected. Open the page URL printed at startup ' +
-          '(it carries ?mcp=<token>), then call the tool again.'
-      );
+      throw new Error(`No kepler.gl map page is connected. ${this.getStatus().guidance}`);
     }
 
     const callId = randomUUID();
     let resource: LocalResource | undefined;
-    if (tool.commandId === 'map.load-data') {
+    if (supportsLocalResource(tool.commandId)) {
       const hasFilePath = Object.prototype.hasOwnProperty.call(input, 'filePath');
       const hasUrl = Object.prototype.hasOwnProperty.call(input, 'url');
       if (hasFilePath === hasUrl) {
-        throw new Error('Provide exactly one of url or filePath to load a dataset.');
+        throw new Error('Provide exactly one of url or filePath to load a dataset or project.');
       }
       if (hasFilePath) {
-        const pageTool = this.pageTools?.find(candidate => candidate.commandId === 'map.load-data');
+        const pageTool = this.pageTools?.find(candidate => candidate.commandId === tool.commandId);
         if (pageTool?.inputSchema['x-kepler-local-resource'] !== 1) {
           throw new Error(
             'The connected map has not advertised local file import support. Update or reload the map page, wait for its connection, and retry.'
@@ -285,9 +474,11 @@ export class KeplerMcpBridge {
           );
         }
         const host = address.address.includes(':') ? `[${address.address}]` : address.address;
+        const options = {...input};
+        delete options.filePath;
         input = {
-          url: `http://${host}:${address.port}${resource.path}`,
-          ...(input.datasetName !== undefined ? {datasetName: input.datasetName} : {})
+          ...options,
+          url: `http://${host}:${address.port}${resource.path}`
         };
       }
     }
@@ -310,7 +501,46 @@ export class KeplerMcpBridge {
       this.failCall(callId, 'Unable to send the command to the map. Reconnect and retry.');
     }
     try {
-      return await reply;
+      const result = await reply;
+      if (tool.commandId === 'map.save-project' && result?.success) {
+        return this.storeProjectArtifact(result);
+      }
+      const data = result?.data as
+        | {jobId?: string; status?: string; artifact?: {size?: unknown; mimeType?: unknown}}
+        | undefined;
+      if (
+        tool.commandId === 'map.export-video' &&
+        input.action === 'status' &&
+        result.success &&
+        data?.status === 'succeeded' &&
+        typeof data.jobId === 'string' &&
+        data.artifact
+      ) {
+        const artifact = await this.videoArtifacts.collect(
+          `${connectionId}:${data.jobId}`,
+          data.artifact,
+          async offset => {
+            if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) {
+              throw new Error(
+                'The map page disconnected during video transfer. Reconnect and retry the status request.'
+              );
+            }
+            const chunk = await this.callTool(toToolName('map.export-video'), {
+              action: 'read',
+              jobId: data.jobId,
+              offset
+            });
+            if (!chunk.success) {
+              throw new Error(
+                chunk.error || 'Unable to retrieve the video. Retry the status request.'
+              );
+            }
+            return chunk.data;
+          }
+        );
+        return {...result, data: {...data, artifact}};
+      }
+      return result;
     } finally {
       if (resource) await this.releaseLocalResource(resource);
     }
@@ -318,9 +548,12 @@ export class KeplerMcpBridge {
 
   async close(): Promise<void> {
     this.rejectPending('The bridge was closed.');
-    this.pageTools = null;
+    this.projectArtifacts.clear();
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
+    this.app = null;
+    this.updatePageTools(null);
+    await this.videoArtifacts.close();
     await Promise.all(
       [...this.localResources.values()].map(resource => this.releaseLocalResource(resource))
     );
@@ -361,8 +594,10 @@ export class KeplerMcpBridge {
     this.rejectPending('The kepler.gl page was replaced by a newer connection.');
     this.socket?.close(1000, 'replaced by a newer connection');
     this.socket = socket;
+    this.connectionId++;
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
-    this.pageTools = null;
+    this.app = null;
+    this.updatePageTools(null);
 
     socket.on('message', data => {
       if (this.socket === socket) this.handleMessage(data);
@@ -370,12 +605,126 @@ export class KeplerMcpBridge {
     socket.on('close', () => {
       if (this.socket === socket) {
         this.socket = null;
-        this.pageTools = null;
+        this.app = null;
+        this.updatePageTools(null);
         this.rejectPending('The kepler.gl page disconnected.');
       }
     });
     // Errors are followed by close; the close handler resets state.
     socket.on('error', () => undefined);
+  }
+
+  private storeProjectArtifact(result: RoomCommandResult): RoomCommandResult {
+    const data = result.data as Record<string, unknown> | undefined;
+    const exported = data?.artifact as Partial<ProjectArtifact> | undefined;
+    if (
+      !exported ||
+      typeof exported.text !== 'string' ||
+      exported.mimeType !== 'application/json' ||
+      typeof exported.fileName !== 'string' ||
+      !exported.fileName.trim()
+    ) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error:
+          'The map did not return a valid JSON project artifact. Update or reload the map page.'
+      };
+    }
+    const address = this.httpServer?.address();
+    if (
+      !address ||
+      typeof address === 'string' ||
+      (address.address !== '127.0.0.1' && address.address !== '::1')
+    ) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error: 'Project artifacts require a loopback bridge host (127.0.0.1 or ::1).'
+      };
+    }
+    const size = Buffer.byteLength(exported.text);
+    if (size > MAX_PROJECT_ARTIFACT_BYTES) {
+      return {
+        success: false,
+        commandId: 'map.save-project',
+        error:
+          'The project artifact exceeds 100 MiB. Use source references or export fewer datasets.'
+      };
+    }
+    let storedBytes = [...this.projectArtifacts.values()].reduce((sum, item) => sum + item.size, 0);
+    while (
+      this.projectArtifacts.size >= MAX_PROJECT_ARTIFACTS ||
+      storedBytes + size > MAX_PROJECT_ARTIFACT_BYTES
+    ) {
+      const oldest = this.projectArtifacts.values().next().value as ProjectArtifact;
+      this.projectArtifacts.delete(oldest.path);
+      storedBytes -= oldest.size;
+    }
+    const fileName = basename(exported.fileName);
+    const path = `/project-artifacts/${randomUUID()}/${encodeURIComponent(fileName)}`;
+    const host = address.address.includes(':') ? `[${address.address}]` : address.address;
+    const uri = `http://${host}:${address.port}${path}`;
+    const artifact: ProjectArtifact = {
+      uri,
+      path,
+      fileName,
+      mimeType: 'application/json',
+      size,
+      text: exported.text,
+      origin: this.pageOrigin
+    };
+    this.projectArtifacts.set(path, artifact);
+    return {
+      ...result,
+      data: {
+        ...data,
+        artifact: {
+          uri,
+          fileName,
+          mimeType: artifact.mimeType,
+          size,
+          availability: PROJECT_ARTIFACT_AVAILABILITY
+        }
+      }
+    };
+  }
+
+  private serveProjectArtifact(
+    artifact: ProjectArtifact,
+    request: IncomingMessage,
+    response: ServerResponse
+  ): void {
+    if (request.headers.origin && request.headers.origin !== artifact.origin) {
+      response.writeHead(403);
+      response.end('This artifact belongs to a different map origin.');
+      return;
+    }
+    const headers = {
+      'Access-Control-Allow-Origin': artifact.origin,
+      'Cache-Control': 'no-store',
+      Vary: 'Origin'
+    };
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {...headers, 'Access-Control-Allow-Methods': 'GET'});
+      response.end();
+      return;
+    }
+    if (request.method !== 'GET') {
+      response.writeHead(405, {...headers, Allow: 'GET, OPTIONS'});
+      response.end();
+      return;
+    }
+    response.writeHead(200, {
+      ...headers,
+      'Content-Type': artifact.mimeType,
+      'Content-Length': artifact.size,
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(
+        artifact.fileName
+      ).replace(/'/g, '%27')}`,
+      'X-Content-Type-Options': 'nosniff'
+    });
+    response.end(artifact.text);
   }
 
   private handleMessage(raw: unknown): void {
@@ -386,7 +735,18 @@ export class KeplerMcpBridge {
       return;
     }
     if (message?.type === 'hello' && Array.isArray(message.commands)) {
-      this.pageTools = toolsFromDescriptors(message.commands as ToolDescriptor[]);
+      this.app =
+        typeof message.app?.name === 'string'
+          ? {
+              name: message.app.name,
+              ...(typeof message.app.version === 'string' ? {version: message.app.version} : {})
+            }
+          : null;
+      this.updatePageTools(
+        toolsFromDescriptors(message.commands as ToolDescriptor[]).filter(
+          tool => tool.name !== statusTool.name
+        )
+      );
       return;
     }
     if (message?.type === 'result' && typeof message.callId === 'string') {

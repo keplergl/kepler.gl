@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {VIS_STATE_MERGERS} from '@kepler.gl/reducers';
+import {VIS_STATE_MERGERS, visStateReducer} from '@kepler.gl/reducers';
+import {receiveMapConfig} from '@kepler.gl/actions';
 
 const TEST_CASES = [
   {
@@ -336,6 +337,21 @@ const TEST_CASES = [
 ];
 
 describe('VisStateMergers: combineConfigs', () => {
+  test.each([
+    {animationLoop: false, endHoldDurationMs: 2500},
+    {animationLoop: true, endHoldDurationMs: 0}
+  ])('restores combined playback settings %j', settings => {
+    const {combineConfigs} = VIS_STATE_MERGERS.find(m => m.prop === 'animationConfig');
+    const animationConfig = combineConfigs([
+      {currentTime: 300, speed: 3},
+      {currentTime: 0, speed: 2, ...settings},
+      {currentTime: 100, speed: 1, ...settings},
+      {currentTime: 200, speed: 4, animationLoop: !settings.animationLoop, endHoldDurationMs: 1000}
+    ]);
+    const restored = visStateReducer(undefined, receiveMapConfig({visState: {animationConfig}}));
+    expect(restored.animationConfig).toMatchObject({currentTime: 0, speed: 1, ...settings});
+  });
+
   test.each(TEST_CASES)('$testMessage', ({propName, configsToMerge, expected}) => {
     const {combineConfigs} = VIS_STATE_MERGERS.find(
       m => m.prop === propName && typeof m.combineConfigs === 'function'

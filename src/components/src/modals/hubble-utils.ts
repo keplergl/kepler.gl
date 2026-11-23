@@ -11,13 +11,18 @@ import {
   GLOBE_MIN_ZOOM,
   GLOBE_MAX_ZOOM
 } from '@kepler.gl/constants';
-import {getLayerBlendingParameters, getBaseMapLibrary} from '@kepler.gl/utils';
+import {
+  getLayerBlendingParameters,
+  getBaseMapLibrary,
+  getFilterBinThresholds,
+  intervalBinFromMarks
+} from '@kepler.gl/utils';
 import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
 import {computeDeckLayers} from '@kepler.gl/reducers';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
 import {point} from '@turf/helpers';
 import {transformTranslate} from '@turf/transform-translate';
-import {InteractionConfig, TimeRangeFilter} from '@kepler.gl/types';
+import {InteractionConfig, LayerCallbacks, TimeRangeFilter} from '@kepler.gl/types';
 
 type KeplerState = {
   visState: any;
@@ -87,16 +92,18 @@ export function getTimeRangeFilterKeyframes({
   timings: number[];
 }): TimeRangeFilterKeyframes {
   const dataTimings = getDataAnimationTimings(timings, filter.endHoldDurationMs);
-  const frames = getTimeRangeFilterFrames({filter, timings: dataTimings});
+  const frames = getTimeRangeFilterFrames({filter, timings: dataTimings, endTime: timings[1]});
   return dataTimings === timings ? frames : {timings: dataTimings, ...frames};
 }
 
 function getTimeRangeFilterFrames({
   filter,
-  timings
+  timings,
+  endTime
 }: {
   filter: TimeRangeFilter;
   timings: number[];
+  endTime: number;
 }): TimeRangeFilterKeyframes {
   if (filter.type !== FILTER_TYPES.timeRange) {
     throw new Error("filter type must be 'timeRange'.");
@@ -128,7 +135,16 @@ function getTimeRangeFilterFrames({
       const {plotType, timeBins, dataId} = filter;
       const {interval} = plotType;
 
-      const bins = timeBins?.[dataId[0]]?.[interval];
+      // A linked clock can extend beyond the cached dataset histogram. Use
+      // the same merged-domain interval windows as the native controller.
+      const marks =
+        filter.syncedWithLayerTimeline && interval ? getFilterBinThresholds(filter) : null;
+      const bins = marks
+        ? marks.slice(0, -1).map(time => {
+            const [x0, x1] = intervalBinFromMarks(marks, time);
+            return {x0, x1};
+          })
+        : timeBins?.[dataId[0]]?.[interval];
 
       if (!interval || !bins || bins.length === 0) {
         return getKeyFramesFree(filter);
@@ -136,11 +152,13 @@ function getTimeRangeFilterFrames({
 
       const delta = filter.endHoldDurationMs
         ? duration / Math.max(1, bins.length - 1)
-        : Math.round(duration / bins.length);
+        : duration / bins.length;
 
       return {
-        timings: bins.map((_, idx) => timings[0] + delta * idx),
-        keyframes: bins.map(bin => ({
+        timings: [...bins.map((_, idx) => timings[0] + delta * idx), endTime],
+        // Keep a terminal segment for the final bin, including the requested
+        // data hold. Hubble evaluates intervals from the segment's start frame.
+        keyframes: [...bins, bins[bins.length - 1]].map(bin => ({
           value: [bin.x0, filter.endHoldDurationMs ? Math.min(bin.x1, filter.domain[1]) : bin.x1]
         })),
         easings: hold
@@ -357,6 +375,28 @@ function getGlobeExportBaseLayers(keplerState: KeplerState, mapboxApiAccessToken
   );
 }
 
+function getExportLayerCallbacks(
+  keplerState: KeplerState,
+  onLayerError?: (error: Error) => void
+): LayerCallbacks | undefined {
+  if (!onLayerError) return undefined;
+  return {
+    onLayerError: (_index, error) => onLayerError(error),
+    onTilesetLoadError: (index, kind) => {
+      // Tile3D reports a failed request as loaded so the live spinner can stop.
+      // Captures must reject the missing tileset; null only clears a prior error.
+      if (kind === null) return;
+      const layer = keplerState.visState.layers[index];
+      onLayerError(
+        new Error(
+          `Tileset for layer "${layer.config.label || layer.id}" could not load. ` +
+            (kind === 'token' ? 'Check its access token.' : 'Check its URL and connection.')
+        )
+      );
+    }
+  };
+}
+
 /**
  * Build a fresh set of globe layers (base + data + top) for a given split-map
  * index. Used by the swipe export preview, which mounts two independent Deck
@@ -371,13 +411,15 @@ export function getGlobeExportLayers(
     mapboxApiAccessToken,
     mapboxApiUrl,
     viewState,
-    animationTimeMs
+    animationTimeMs,
+    onLayerError
   }: {
     mapIndex: number;
     mapboxApiAccessToken?: string;
     mapboxApiUrl?: string;
     viewState?: MapViewState;
     animationTimeMs?: number;
+    onLayerError?: (error: Error) => void;
   }
 ) {
   const globe = keplerState.mapState?.globe;
@@ -393,12 +435,16 @@ export function getGlobeExportLayers(
   });
   // Same as hubble createKeplerLayers: fold the animated camera into mapState so
   // zoom-dependent props (scatterplot radiusScale) update each frame.
-  const dataLayers = computeDeckLayers(frameState, {
-    mapIndex,
-    primaryMap: mapIndex === 0,
-    mapboxApiAccessToken,
-    mapboxApiUrl
-  });
+  const dataLayers = computeDeckLayers(
+    frameState,
+    {
+      mapIndex,
+      primaryMap: mapIndex === 0,
+      mapboxApiAccessToken,
+      mapboxApiUrl
+    },
+    getExportLayerCallbacks(keplerState, onLayerError)
+  );
   return [
     ...globeBaseLayers,
     ...scaleGlobeExportTileLayers(dataLayers, frameState.mapState.zoomOffset || 0),
@@ -413,19 +459,22 @@ export function getFlatExportLayers(
     mapIndex,
     viewState,
     beforeId,
-    animationTimeMs
+    animationTimeMs,
+    onLayerError
   }: {
     mapIndex: number;
     viewState?: MapViewState;
     beforeId?: string;
     animationTimeMs?: number;
+    onLayerError?: (error: Error) => void;
   }
 ) {
   if (!keplerState.visState.layerData?.length) return [];
   return (
     computeDeckLayers(
       {...keplerState, animationTimeMs, mapState: {...keplerState.mapState, ...viewState}},
-      {mapIndex, primaryMap: false}
+      {mapIndex, primaryMap: false},
+      getExportLayerCallbacks(keplerState, onLayerError)
     )
       .flat(Infinity)
       // Capture must not wait for asynchronous resources belonging to invisible layers.
@@ -584,7 +633,17 @@ export const RESOLUTIONS: Resolution[] = [
 ];
 
 export function getResolutionSetting(value: string): Resolution {
-  return RESOLUTIONS.find(r => r.value === value) || RESOLUTIONS[0];
+  const preset = RESOLUTIONS.find(r => r.value === value);
+  if (preset) return preset;
+  const dimensions = /^(\d+)x(\d+)$/.exec(value);
+  if (dimensions) {
+    const width = Number(dimensions[1]);
+    const height = Number(dimensions[2]);
+    if (width > 0 && height > 0 && width <= 8192 && height <= 8192) {
+      return {value, label: value, width, height, aspectRatio: `${width}:${height}`};
+    }
+  }
+  return RESOLUTIONS[0];
 }
 
 /** CSS size of the video-export preview, matching hubble's `_getContainer`. */
