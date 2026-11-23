@@ -8,7 +8,64 @@ import {Annotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {getAnnotationTextBoxStyle, getRulerDistanceLabel, MapViewport} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
-import {SerializedEditorState} from 'lexical';
+import {
+  SerializedEditorState,
+  SerializedElementNode,
+  SerializedLexicalNode,
+  SerializedTextNode
+} from 'lexical';
+
+function firstTextNode(node: SerializedLexicalNode): SerializedTextNode | undefined {
+  if (!node) return undefined;
+  if (node.type === 'text') return node as SerializedTextNode;
+  const children = (node as SerializedElementNode).children;
+  if (!Array.isArray(children)) return undefined;
+  for (const child of children) {
+    const text = firstTextNode(child);
+    if (text) return text;
+  }
+  return undefined;
+}
+
+function readoutEditorState(
+  editorState: SerializedEditorState | undefined,
+  value: string
+): SerializedEditorState<SerializedElementNode<SerializedTextNode>> | undefined {
+  const blocks = editorState?.root?.children;
+  if (!editorState || !Array.isArray(blocks) || !blocks.length) return undefined;
+  // Readouts use the first text run's formatting, including empty styled labels.
+  const block = (blocks.find(node => firstTextNode(node)) ??
+    blocks.find(node => node?.type === 'paragraph')) as SerializedElementNode | undefined;
+  if (!block) return undefined;
+  const text = firstTextNode(block);
+  return {
+    root: {
+      ...editorState.root,
+      children: [
+        {
+          type: 'paragraph',
+          version: 1,
+          direction: block.direction,
+          format: block.format,
+          indent: 0,
+          children: [
+            {
+              type: 'text',
+              version: 1,
+              text: value,
+              style: text?.style ?? '',
+              format: text?.format ?? 0,
+              detail: 0,
+              mode: 'normal'
+            }
+          ]
+        }
+      ]
+    }
+  };
+}
+
+const ignoreReadoutChange = () => undefined;
 
 type StyledAnnotationTextProps = {
   $isEditing?: boolean;
@@ -119,6 +176,17 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   onUpdateAnnotation
 }) => {
   const isViewport = annotation.kind === AnnotationKind.TEXT && Boolean(annotation.viewport);
+  const hasReadout = isViewport && Boolean(annotation.readout);
+  const formattedReadout = useMemo(
+    () =>
+      hasReadout
+        ? readoutEditorState(
+            annotation.editorState as SerializedEditorState | undefined,
+            readoutValue ?? '—'
+          )
+        : undefined,
+    [hasReadout, annotation.editorState, readoutValue]
+  );
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -236,8 +304,17 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       {distanceText ? (
         <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
       ) : null}
-      {annotation.kind === AnnotationKind.TEXT && annotation.viewport && annotation.readout ? (
-        <div data-annotation-part="readout">{readoutValue ?? '—'}</div>
+      {hasReadout ? (
+        <div data-annotation-part="readout">
+          <LexicalRichTextEditor
+            // Initialize each value synchronously, before an export frame can capture it.
+            key={readoutValue ?? '—'}
+            isEditable={false}
+            editorState={formattedReadout}
+            initialText={readoutValue ?? '—'}
+            onChange={ignoreReadoutChange}
+          />
+        </div>
       ) : null}
     </StyledAnnotationText>
   );

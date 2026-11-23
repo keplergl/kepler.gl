@@ -144,6 +144,8 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
       {
         ...annotation,
         id: 'rich-text',
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout: {type: 'count', dataId: 'points'},
         editorState: {
           root: {
             type: 'root',
@@ -166,7 +168,7 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
                     format: 1,
                     detail: 0,
                     mode: 'normal',
-                    style: 'color: rgb(255, 0, 0)'
+                    style: 'color: rgb(255, 0, 0); font-size: 32px'
                   }
                 ]
               }
@@ -176,7 +178,8 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
       },
       {...annotation, id: 'hidden', isVisible: false},
       {...annotation, id: 'other-map', mapIndex: 1}
-    ]
+    ],
+    readoutValues: {'rich-text': '123'}
   });
   jest.mocked(domtoimage.toPng).mockImplementation(async node => {
     expect(node.querySelectorAll('[data-annotation-part="text"]')).toHaveLength(3);
@@ -184,6 +187,9 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
     expect(node.querySelector('[data-annotation-id="other-map"]')).toBeNull();
     expect(node.textContent).toContain(annotation.label);
     expect(node.querySelector('.lexical-text-bold')).toHaveTextContent('Bold export annotation');
+    const readout = node.querySelector('[data-annotation-part="readout"] [data-lexical-text]');
+    expect(readout).toHaveTextContent('123');
+    expect(readout).toHaveStyle({fontSize: '32px', color: 'rgb(255, 0, 0)'});
     expect(node.querySelector('svg')).toBeTruthy();
     expect(node.querySelector('[contenteditable="true"]')).toBeNull();
     return 'data:image/png;base64,annotation';

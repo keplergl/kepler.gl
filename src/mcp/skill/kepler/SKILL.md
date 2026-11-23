@@ -626,8 +626,9 @@ The same composition is used in live maps, export previews and native recordings
 {"id":"credits","kind":"text","label":"Source: observations","viewport":{"anchor":"bottom-right","margin":[24,24]}}
 ```
 
-Optional `readout` shows a value below the label. Text styling applies to the
-rich-text label above the readout. Use `{ "type": "time", "format":
+Optional `readout` shows a value below the label. Readouts inherit the label's
+first text style and its paragraph alignment, including font size, color and
+emphasis. Empty labels can also carry this formatting. Use `{ "type": "time", "format":
 "YYYY-MM-DD" }` for the current UTC data-timeline time. It follows the end of the
 active enabled time-filter window, or the synchronized edge when a free window
 is synchronized with a layer timeline; without an enabled time filter it falls
