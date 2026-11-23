@@ -15,6 +15,23 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.27] - Nov 23 2026
+
+- 159ddb82c fix(demo): preserve H3 column geometry in source builds (#4343)
+- cd0c19654 fix(mcp): preserve successful command payloads (#4340)
+- a39ff6767 fix(mcp): honor explicit solid fill when creating layers (#4341)
+- 0192b19f6 fix(layers): accept zero-valued model rotation accessors (#4342)
+- 485bb3f20 fix(mcp): preserve demo tool discovery schemas (#4339)
+- b6144923c fix(export): preserve mixed GeoPackage altitudes (#4338)
+- be622dc23 fix(video): preserve left swipe layers with effects (#4337)
+- 12d74ed4c revert(video-export): revert post-processing basemap changes (#4336)
+- c9050a5ba fix(video-export): keep post-processing off the basemap (#4312)
+- 7114825e0 fix(effects): prevent duplicate postprocessing crashes (#4335)
+- 14c91b2dd fix(animation): open configurators from timeline row labels (#4313)
+- 2b2ae14ba fix(timeline): keep playback controls stable during animation (#4311)
+- 145830ab9 feat(animation): edit camera hold and move timing (#4310)
+- c5e3a669a feat(animation): add coordinated playback and property timeline (#4307)
+
 ## [3.3.0-alpha.26] - Nov 21 2026
 
 - 53ebc9428 fix(map): keep coordinate copying independent of tooltip display (#4306)

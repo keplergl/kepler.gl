@@ -127,6 +127,8 @@ describe('kepler-mcp bridge server', () => {
     expect(names).toContain(toToolName('map.add-layer'));
     expect(names).toContain(toToolName('map.set-basemap'));
     expect(names).toContain(toToolName('map.get-annotations'));
+    expect(names).toContain(toToolName('map.update-annotation'));
+    expect(names).toContain(toToolName('map.remove-annotation'));
     expect(names.slice().sort()).toEqual(MAP_TOOL_IDS.map(toToolName).sort());
   });
 
@@ -172,8 +174,12 @@ describe('kepler-mcp bridge server', () => {
       ['map.set-layer-options', 'options'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
+      ['map.property-transitions', 'startTimeMs'],
+      ['map.add-annotation', 'anchorPoint'],
       ['map.add-annotation', 'viewport'],
+      ['map.update-annotation', 'fontSize'],
       ['map.update-annotation', 'readout'],
+      ['map.remove-annotation', 'id'],
       ['map.set-view-mode', 'globe'],
       ['map.set-zoom-fade', 'controllers']
     ]) {
@@ -182,6 +188,47 @@ describe('kepler-mcp bridge server', () => {
       expect(tool?.inputSchema.type).toBe('object');
       expect(JSON.stringify(tool?.inputSchema)).toContain(field);
     }
+  });
+
+  it('advertises styled geographic annotations, viewport captions and partial edits', () => {
+    const tools = bridge.getTools();
+    const schemaFor = (id: string) => tools.find(tool => tool.name === toToolName(id))?.inputSchema;
+    expect(schemaFor('map.add-annotation')).toMatchObject({
+      type: 'object',
+      properties: {
+        kind: {enum: expect.arrayContaining(['text', 'point', 'ruler'])},
+        fontSize: {type: 'number'},
+        textColor: {type: 'string'},
+        textAlign: {enum: ['left', 'center', 'right', 'justify']},
+        armLength: {type: 'number'},
+        textSide: {enum: ['left', 'right']},
+        textVerticalPosition: {enum: ['above', 'below']},
+        viewport: {
+          type: 'object',
+          properties: {
+            anchor: {enum: expect.arrayContaining(['top-left', 'bottom-right'])},
+            margin: {type: 'array', minItems: 2, maxItems: 2}
+          },
+          required: ['anchor', 'margin']
+        }
+      },
+      // Coordinates are conditional: geographic annotations need them, captions do not.
+      required: ['id', 'kind']
+    });
+    expect(schemaFor('map.update-annotation')).toMatchObject({
+      type: 'object',
+      properties: {
+        id: {type: 'string'},
+        label: {type: 'string'},
+        fontSize: {type: 'number'}
+      },
+      required: ['id']
+    });
+    expect(schemaFor('map.remove-annotation')).toMatchObject({
+      type: 'object',
+      properties: {id: {type: 'string'}},
+      required: ['id']
+    });
   });
 
   it('preserves the demo command parameters after the page handshake', async () => {
