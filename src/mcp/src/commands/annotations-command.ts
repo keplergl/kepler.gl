@@ -15,7 +15,11 @@ import {
   textPlacementFromAngle
 } from '@kepler.gl/constants';
 import type {Annotation, AnnotationPropsPartial} from '@kepler.gl/types';
-import {buildAnnotationEditorState, describeAnnotationText} from './annotation-text';
+import {
+  buildAnnotationEditorState,
+  describeAnnotationText,
+  getAnnotationText
+} from './annotation-text';
 import type {KeplerContext, RoomCommand} from './types';
 
 const point = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
@@ -63,7 +67,6 @@ function describeAnnotation(annotation: Annotation) {
   const {
     id,
     kind,
-    label,
     anchorPoint,
     isVisible,
     mapIndex,
@@ -80,7 +83,7 @@ function describeAnnotation(annotation: Annotation) {
   return {
     id,
     kind: kind.toLowerCase(),
-    label,
+    label: getAnnotationText(annotation),
     anchorPoint,
     isVisible,
     mapIndex,

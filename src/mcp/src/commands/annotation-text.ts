@@ -122,35 +122,94 @@ function textRuns(root: SerializedNode): TextRun[] {
   return runs;
 }
 
-function splitsSurrogatePair(text: string, index: number): boolean {
-  const previous = text.charCodeAt(index - 1);
-  const next = text.charCodeAt(index);
-  return previous >= 0xd800 && previous <= 0xdbff && next >= 0xdc00 && next <= 0xdfff;
+type TextMatch = {beforeStart: number; beforeEnd: number; afterStart: number; afterEnd: number};
+
+// Hirschberg's longest-common-subsequence diff uses linear row storage rather
+// than a quadratic matrix. Code points keep every edit boundary Unicode-safe.
+function matchingText(before: string, after: string): TextMatch[] {
+  const previous = Array.from(before);
+  const next = Array.from(after);
+  const offsets = (characters: string[]) => {
+    const result = [0];
+    for (const character of characters) result.push(result[result.length - 1] + character.length);
+    return result;
+  };
+  const previousOffsets = offsets(previous);
+  const nextOffsets = offsets(next);
+  const matches: TextMatch[] = [];
+  function retain(a: number, b: number) {
+    const last = matches[matches.length - 1];
+    if (last?.beforeEnd === previousOffsets[a] && last.afterEnd === nextOffsets[b]) {
+      last.beforeEnd = previousOffsets[a + 1];
+      last.afterEnd = nextOffsets[b + 1];
+    } else {
+      matches.push({
+        beforeStart: previousOffsets[a],
+        beforeEnd: previousOffsets[a + 1],
+        afterStart: nextOffsets[b],
+        afterEnd: nextOffsets[b + 1]
+      });
+    }
+  }
+  function row(aStart: number, aEnd: number, bStart: number, bEnd: number, reverse: boolean) {
+    const result = new Uint32Array(bEnd - bStart + 1);
+    for (let i = 0; i < aEnd - aStart; i++) {
+      const character = previous[reverse ? aEnd - 1 - i : aStart + i];
+      let diagonal = 0;
+      for (let j = 1; j < result.length; j++) {
+        const saved = result[j];
+        result[j] =
+          character === next[reverse ? bEnd - j : bStart + j - 1]
+            ? diagonal + 1
+            : Math.max(result[j], result[j - 1]);
+        diagonal = saved;
+      }
+    }
+    return result;
+  }
+  function split(aStart: number, middle: number, aEnd: number, bStart: number, bEnd: number) {
+    const forward = row(aStart, middle, bStart, bEnd, false);
+    const backward = row(middle, aEnd, bStart, bEnd, true);
+    let best = 0;
+    for (let i = 1; i < forward.length; i++) {
+      if (forward[i] + backward[bEnd - bStart - i] > forward[best] + backward[bEnd - bStart - best])
+        best = i;
+    }
+    return bStart + best;
+  }
+  function match(aStart: number, aEnd: number, bStart: number, bEnd: number) {
+    while (aStart < aEnd && bStart < bEnd && previous[aStart] === next[bStart]) {
+      retain(aStart++, bStart++);
+    }
+    let suffix = 0;
+    while (aStart < aEnd && bStart < bEnd && previous[aEnd - 1] === next[bEnd - 1]) {
+      aEnd--;
+      bEnd--;
+      suffix++;
+    }
+    if (aStart < aEnd && bStart < bEnd) {
+      if (aEnd - aStart === 1) {
+        const found = next.indexOf(previous[aStart], bStart);
+        if (found >= 0 && found < bEnd) retain(aStart, found);
+      } else {
+        const middle = Math.floor((aStart + aEnd) / 2);
+        const divide = split(aStart, middle, aEnd, bStart, bEnd);
+        match(aStart, middle, bStart, divide);
+        match(middle, aEnd, divide, bEnd);
+      }
+    }
+    for (let i = 0; i < suffix; i++) retain(aEnd + i, bEnd + i);
+  }
+  match(0, previous.length, 0, next.length);
+  return matches;
 }
 
-// Replace the changed range only. Unchanged text keeps its formats and links;
-// newly inserted text inherits the format at the start of the replaced range.
+// Retain every unchanged range, including text between separate edits. New
+// text inherits the formatting and link wrappers at the replaced range's start.
 function replaceLabel(root: SerializedNode, label: string): SerializedNode {
   const runs = textRuns(root);
   const previous = runs.map(run => run.text).join('');
   if (previous === label) return root;
-  let prefix = 0;
-  while (prefix < previous.length && prefix < label.length && previous[prefix] === label[prefix])
-    prefix++;
-  if (splitsSurrogatePair(previous, prefix) || splitsSurrogatePair(label, prefix)) prefix--;
-  let suffix = 0;
-  while (
-    suffix < previous.length - prefix &&
-    suffix < label.length - prefix &&
-    previous[previous.length - 1 - suffix] === label[label.length - 1 - suffix]
-  )
-    suffix++;
-  if (
-    splitsSurrogatePair(previous, previous.length - suffix) ||
-    splitsSurrogatePair(label, label.length - suffix)
-  )
-    suffix--;
-
   const slice = (start: number, end: number): TextRun[] => {
     let offset = 0;
     return runs.flatMap(run => {
@@ -167,27 +226,31 @@ function replaceLabel(root: SerializedNode, label: string): SerializedNode {
       ];
     });
   };
-  let offset = 0;
-  const inherited =
-    runs.find(run => {
-      offset += run.text.length;
-      return offset > prefix && run.node.type === 'text' && !run.boundary;
-    }) ?? [...runs].reverse().find(run => run.node.type === 'text' && !run.boundary);
-  const inserted = label.slice(prefix, label.length - suffix);
-  const nextRuns = [
-    ...slice(0, prefix),
-    ...(inserted
-      ? [
-          {
-            text: inserted,
-            node: inherited?.node ?? plainText(inserted),
-            wrappers: inherited?.wrappers ?? [],
-            paragraph: inherited?.paragraph ?? root.children?.[0] ?? paragraph()
-          }
-        ]
-      : []),
-    ...slice(previous.length - suffix, previous.length)
-  ];
+  const nextRuns: TextRun[] = [];
+  const insert = (position: number, text: string) => {
+    if (!text) return;
+    let offset = 0;
+    const inherited =
+      runs.find(run => {
+        offset += run.text.length;
+        return offset > position && run.node.type === 'text' && !run.boundary;
+      }) ?? [...runs].reverse().find(run => run.node.type === 'text' && !run.boundary);
+    nextRuns.push({
+      text,
+      node: inherited?.node ?? plainText(text),
+      wrappers: inherited?.wrappers ?? [],
+      paragraph: inherited?.paragraph ?? root.children?.[0] ?? paragraph()
+    });
+  };
+  let beforeOffset = 0;
+  let afterOffset = 0;
+  for (const match of matchingText(previous, label)) {
+    insert(beforeOffset, label.slice(afterOffset, match.afterStart));
+    nextRuns.push(...slice(match.beforeStart, match.beforeEnd));
+    beforeOffset = match.beforeEnd;
+    afterOffset = match.afterEnd;
+  }
+  insert(beforeOffset, label.slice(afterOffset));
 
   const blocks: SerializedNode[] = [];
   let block: SerializedNode = {
@@ -261,6 +324,15 @@ export function buildAnnotationEditorState(
   return {...saved, root: patch(root)};
 }
 
+export function getAnnotationText(annotation: TextAnnotation): string {
+  const root = annotation.editorState?.root;
+  return root?.type === 'root' && Array.isArray(root.children)
+    ? textRuns(root)
+        .map(run => run.text)
+        .join('')
+    : annotation.label;
+}
+
 export function describeAnnotationText(annotation: TextAnnotation): {
   fontSize: number | null;
   textColor: string | null;
@@ -271,18 +343,27 @@ export function describeAnnotationText(annotation: TextAnnotation): {
   const blocks: SerializedNode[] = state.root.children ?? [];
   const styles = blocks.flatMap(block => {
     const blockRuns = runs.filter(run => run.paragraph === block);
-    return blockRuns.length ? blockRuns.map(run => run.node.style) : [block.textStyle];
+    return blockRuns.length
+      ? blockRuns.map(run => ({
+          style: run.node.style,
+          color:
+            cssValue(run.node.style, 'color') ??
+            (run.wrappers.some(wrapper => wrapper.type === 'link' || wrapper.type === 'autolink')
+              ? 'rgb(33, 111, 219)'
+              : '#FFFFFF')
+        }))
+      : [{style: block.textStyle, color: cssValue(block.textStyle, 'color') ?? '#FFFFFF'}];
   });
   const uniform = <T>(values: T[], fallback: T): T | null =>
     values.length === 0 ? fallback : values.every(value => value === values[0]) ? values[0] : null;
-  const sizes = styles.map(style => {
+  const sizes = styles.map(({style}) => {
     const value = cssValue(style, 'font-size') ?? '14px';
     return /^\d+(?:\.\d+)?px$/i.test(value) ? Number.parseFloat(value) : null;
   });
   return {
     fontSize: uniform(sizes, 14),
     textColor: uniform(
-      styles.map(style => cssValue(style, 'color') ?? '#FFFFFF'),
+      styles.map(({color}) => color),
       '#FFFFFF'
     ),
     textAlign: uniform<TextAlignment>(

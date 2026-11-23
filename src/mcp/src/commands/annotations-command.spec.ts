@@ -3,6 +3,7 @@
 
 import {
   addAnnotation,
+  duplicateAnnotation,
   receiveMapConfig,
   setSelectedAnnotation,
   updateAnnotation
@@ -146,6 +147,36 @@ function roundTrip(context: KeplerContext) {
   restored.dispatch(receiveMapConfig(loaded, {}));
   return restored;
 }
+
+test.each([false, true])(
+  'reports displayed text when listing and restyling a native duplicate (rich text: %s)',
+  async richText => {
+    const {context, dispatch} = setup();
+    const label = 'Hawaiʻi\n\nBig Island';
+    if (richText) {
+      await execute(getAddAnnotationCommand(context), {...text, label, fontSize: 24});
+    } else {
+      dispatch(addAnnotation({id: text.id, kind: AnnotationKind.TEXT, label}));
+    }
+    dispatch(duplicateAnnotation(text.id));
+    const duplicate = context.getVisState().annotations[0];
+    const displayedText = richText ? readRenderedText(duplicate.editorState) : `Copy of ${label}`;
+    expect(duplicate.label).toBe(`Copy of ${label}`);
+    dispatch.mockClear();
+    expect((await execute(getListAnnotationsCommand(context))).data.annotations[0]).toMatchObject({
+      id: duplicate.id,
+      label: displayedText
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+
+    expect(
+      await execute(getUpdateAnnotationCommand(context), {id: duplicate.id, fontSize: 40})
+    ).toMatchObject({success: true, data: {id: duplicate.id, label: displayedText, fontSize: 40}});
+    const restyled = context.getVisState().annotations[0];
+    expect(restyled.label).toBe(duplicate.label);
+    expect(readRenderedText(restyled.editorState)).toBe(displayedText);
+  }
+);
 
 test('round-trips a styled geographic island callout and keeps placement and fade after text and size edits', async () => {
   let {context, dispatch} = setup();
