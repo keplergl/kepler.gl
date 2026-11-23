@@ -7,6 +7,7 @@ import {addDataToMap} from '@kepler.gl/actions';
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
 import type {ProcessFileDataContent} from '@kepler.gl/processors';
 import type {KeplerContext} from './types';
+import {getLocalDataLoaders} from './local-data-loaders';
 
 // MIME type → file extension for data URLs, so a `data:text/csv;base64,...`
 // payload gets a sensible default dataset name (`data.csv`) instead of `data`.
@@ -156,21 +157,6 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
             ? fileNameFromDataUrl(parsedUrl)
             : parsedUrl.pathname.split('/').pop() || 'data';
         const fileName = isLocalResource ? decodeURIComponent(urlFileName) : urlFileName;
-        // The streaming JSON loader can yield partial rows from an unfinished
-        // document. Validate local JSON before committing any of those rows so
-        // a truncated selected file cannot report a successful import.
-        if (isLocalResource && /\.(geo)?json$/i.test(fileName)) {
-          try {
-            JSON.parse(await blob.text());
-          } catch (error) {
-            throw new Error(
-              `Invalid JSON in ${fileName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`
-            );
-          }
-          execCtx?.signal?.throwIfAborted();
-        }
         // Carry the Blob's MIME type into the File so loader selection in
         // readFileInBatches can use it — a URL with no extension (or a
         // misleading one) would otherwise leave file.type empty and fail to
@@ -192,7 +178,9 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         const batches = await readFileInBatches({
           file,
           fileCache: [],
-          loaders: visState.loaders ?? [],
+          loaders: isLocalResource
+            ? await getLocalDataLoaders(file, visState.loaders ?? [], execCtx?.signal)
+            : visState.loaders ?? [],
           loadOptions: visState.loadOptions ?? {}
         });
 
@@ -246,7 +234,8 @@ export function getLoadDataCommand(ctx: KeplerContext): RoomCommand {
         const dataInfo = parsedData[0]?.info;
         if (isLocalResource && parsedData.some(d => !ctx.getVisState().datasets[d.info.id])) {
           throw new Error(
-            'Dataset registration failed. The host must return the task middleware completion promise from dispatch.'
+            "Dataset registration failed. Check the map's dataset error notification for the cause. " +
+              'If the dataset appears later, ensure the host returns the task middleware completion promise from dispatch.'
           );
         }
         return {

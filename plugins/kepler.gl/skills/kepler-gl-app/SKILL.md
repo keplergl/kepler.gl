@@ -438,8 +438,9 @@ gets a fresh ID, preserving existing datasets and layers even for same-named fil
 A successful local import waits for dataset registration and returns
 `datasetId` (also in `dataInfo.id`). Pass that ID as `datasetName` to
 `map_add-layer` to visualize it. A failed read, transfer, or parse reports an
-error without adding a partial dataset. If registration fails, check that the
-host's dispatch returns the task middleware completion promise.
+error without adding a partial dataset. If registration fails, check the map's
+dataset error notification for the cause. If the dataset appears later, ensure
+the host's dispatch returns the task middleware completion promise.
 
 Browser-only/WebMCP hosts still require a browser-accessible URL; browsers cannot
 fetch `file://` paths. Small embedded files can use a data URL such as

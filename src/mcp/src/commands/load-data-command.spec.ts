@@ -7,7 +7,8 @@ import {getLoadDataCommand} from './load-data-command';
 // command's fetch + batch-parse + dispatch flow is what we're asserting.
 jest.mock('@kepler.gl/processors', () => ({
   readFileInBatches: jest.fn(),
-  processFileData: jest.fn()
+  processFileData: jest.fn(),
+  getKeplerLoaders: jest.fn().mockResolvedValue([])
 }));
 
 import {readFileInBatches, processFileData} from '@kepler.gl/processors';
