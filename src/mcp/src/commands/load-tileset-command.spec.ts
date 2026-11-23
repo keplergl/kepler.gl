@@ -6,10 +6,11 @@ import {KeplerTable, getMVTMetadata, getWMSCapabilities, getFieldsFromTile} from
 import {DatasetType} from '@kepler.gl/constants';
 import {getLoadTilesetCommand} from './load-tileset-command';
 import {getAddLayerCommand} from './layer-creation-command';
+import {serializeProject} from './project-export';
 import {createStore, applyMiddleware} from 'redux';
 import {taskMiddleware} from '@kepler.gl/tasks';
 import {keplerGlReducer} from '@kepler.gl/reducers';
-import {registerEntry, wrapTo} from '@kepler.gl/actions';
+import {addDataToMap, registerEntry, wrapTo} from '@kepler.gl/actions';
 import {getApplicationConfig} from '@kepler.gl/utils';
 
 jest.mock('@kepler.gl/utils', () => {
@@ -29,8 +30,7 @@ jest.mock('@loaders.gl/pmtiles', () => ({
   PMTilesSource: {createDataSource: jest.fn()}
 }));
 
-function setup() {
-  const datasets = {};
+function setup(datasets = {}) {
   const dispatch = jest.fn(async action => {
     for (const dataset of action.payload.datasets) datasets[dataset.info.id] = dataset;
   });
@@ -50,6 +50,18 @@ const stac = {
   assets: {
     image: {href: 'https://example.com/image.tif', bands: [{name: 'red', data_type: 'float32'}]}
   }
+};
+const googleUrl = 'https://tile.googleapis.com/v1/3dtiles/root.json';
+const googleKey = 'test-google-key';
+const googleSource = {
+  type: DatasetType.TILE_3D,
+  metadata: {tile3dUrl: googleUrl, tile3dProvider: 'google', tile3dAccessToken: googleKey}
+};
+const googleInput = {
+  datasetName: 'Google terrain',
+  type: 'tile3d',
+  url: googleUrl,
+  credentialDatasetId: 'google-credentials'
 };
 const originalFetch = global.fetch;
 const appConfig = getApplicationConfig();
@@ -118,6 +130,129 @@ it('validates 3D Tiles metadata before dispatch', async () => {
   });
   expect((await execute(args)).success).toBe(true);
   expect(dispatch.mock.calls[0][0].payload.datasets[0].metadata.tile3dUrl).toBe(args.url);
+});
+
+it.each([
+  undefined,
+  {...googleSource, type: DatasetType.LOCAL},
+  {
+    ...googleSource,
+    metadata: {...googleSource.metadata, tile3dUrl: 'https://example.com/tileset.json'}
+  },
+  {...googleSource, metadata: {...googleSource.metadata, tile3dAccessToken: undefined}},
+  {...googleSource, metadata: {...googleSource.metadata, tile3dAccessToken: ''}},
+  {...googleSource, metadata: {...googleSource.metadata, tile3dAccessToken: ' '}}
+])('rejects an unavailable or unsuitable Google credential reference: %j', async source => {
+  const {execute, dispatch} = setup(source ? {'google-credentials': source} : {});
+  const result = await execute(googleInput);
+  expect(result).toMatchObject({
+    success: false,
+    error: expect.stringContaining('credentialDatasetId')
+  });
+  expect(JSON.stringify(result)).not.toContain(googleKey);
+  expect(global.fetch).not.toHaveBeenCalled();
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it.each([
+  {credentialDatasetId: undefined},
+  {credentialDatasetId: ''},
+  {url: `${googleUrl}?key=${googleKey}`},
+  {url: 'https://tile.googleapis.com.attacker.test/v1/3dtiles/root.json'},
+  {url: 'https://example.com/google/tileset.json'},
+  {url: googleUrl.replace('https:', 'http:')},
+  {type: 'bitmap', bounds: [-10, -10, 10, 10]}
+])('does not send Google credentials for invalid input: %j', async input => {
+  const {execute, dispatch} = setup({'google-credentials': googleSource});
+  const result = await execute({...googleInput, ...input});
+  expect(result.success).toBe(false);
+  expect(JSON.stringify(result)).not.toContain(googleKey);
+  expect(global.fetch).not.toHaveBeenCalled();
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it.each([401, 403])(
+  'reports Google authentication failure (HTTP %s) without credentials',
+  async status => {
+    const {execute, dispatch} = setup({'google-credentials': googleSource});
+    const json = jest.fn().mockResolvedValue({error: `Rejected key: ${googleKey}`});
+    (global.fetch as jest.Mock).mockResolvedValue({ok: false, status, statusText: googleKey, json});
+    const result = await execute(googleInput);
+    expect(result).toMatchObject({
+      success: false,
+      error: `Google 3D Tiles access denied (HTTP ${status}).`
+    });
+    expect(JSON.stringify(result)).not.toContain(googleKey);
+    expect(json).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+  }
+);
+
+it('does not echo Google request or JSON errors and preserves cancellation', async () => {
+  const {execute, dispatch} = setup({'google-credentials': googleSource});
+  (global.fetch as jest.Mock).mockRejectedValueOnce(
+    new Error(`Failed: ${googleUrl}?key=${googleKey}`)
+  );
+  expect(await execute(googleInput)).toMatchObject({
+    success: false,
+    error: 'Google 3D Tiles request failed (network, CORS, or redirect).'
+  });
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: async () => {
+      throw new Error(`Invalid JSON: ${googleKey}`);
+    }
+  });
+  expect(await execute(googleInput)).toMatchObject({
+    success: false,
+    error: 'Google 3D Tiles returned invalid tileset JSON.'
+  });
+  const controller = new AbortController();
+  (global.fetch as jest.Mock).mockImplementationOnce(async () => {
+    controller.abort();
+    throw new Error(googleKey);
+  });
+  expect(await execute(googleInput, controller.signal)).toMatchObject({
+    success: false,
+    error: 'Tileset import cancelled.'
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it('preserves cancellation while reading a Google tileset response body', async () => {
+  const {execute, dispatch} = setup({'google-credentials': googleSource});
+  const controller = new AbortController();
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: async () => {
+      controller.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    }
+  });
+  expect(await execute(googleInput, controller.signal)).toMatchObject({
+    success: false,
+    error: 'Tileset import cancelled.'
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+it('redacts the referenced credential from downstream import failures', async () => {
+  const key = `${googleKey}/encoded+value`;
+  const {execute, dispatch} = setup({
+    'google-credentials': {
+      ...googleSource,
+      metadata: {...googleSource.metadata, tile3dAccessToken: key}
+    }
+  });
+  (global.fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: async () => ({asset: {version: '1.1'}, root: {}})
+  });
+  dispatch.mockRejectedValueOnce(new Error(`Import failed: ${key}, ${encodeURIComponent(key)}`));
+  expect(await execute(googleInput)).toMatchObject({
+    success: false,
+    error: 'Import failed: [redacted], [redacted]'
+  });
 });
 
 it.each([
@@ -196,6 +331,77 @@ function setupReducer() {
       })) as RoomCommandResult<any>
   };
 }
+
+const googleUrls = [googleUrl, 'https://TILE.GOOGLEAPIS.COM/v1/3dtiles/root.json'];
+it.each(googleUrls)('imports Google tiles for native rendering and export: %s', async url => {
+  const {ctx} = setupReducer();
+  await ctx.dispatch(
+    addDataToMap({
+      datasets: [
+        {
+          info: {id: 'google-credentials', label: 'Google', type: DatasetType.TILE_3D},
+          data: {fields: [], rows: []},
+          metadata: googleSource.metadata
+        }
+      ],
+      options: {autoCreateLayers: false, centerMap: false}
+    })
+  );
+  (global.fetch as jest.Mock).mockImplementation(async (requestUrl, options) => ({
+    ok: new URL(requestUrl).href === googleUrl && options.headers['X-GOOG-API-KEY'] === googleKey,
+    status: 403,
+    json: async () => ({asset: {version: '1.1'}, root: {}})
+  }));
+  const result = (await getLoadTilesetCommand(ctx).execute({} as any, {
+    ...googleInput,
+    url
+  })) as RoomCommandResult<any>;
+  expect(result.success).toBe(true);
+  expect(global.fetch).toHaveBeenCalledWith(
+    url,
+    expect.objectContaining({
+      headers: {'X-GOOG-API-KEY': googleKey},
+      redirect: 'error'
+    })
+  );
+  expect(JSON.stringify(result)).not.toContain(googleKey);
+  expect(
+    await getAddLayerCommand(ctx).execute({} as any, {
+      datasetName: result.data.datasetId,
+      layerType: 'tile3d'
+    })
+  ).toMatchObject({success: true});
+  const visState = ctx.getVisState();
+  const layer = visState.layers[0];
+  const [rendered] = layer.renderLayer({
+    data: layer.formatLayerData(visState.datasets),
+    mapState: {},
+    visible: true,
+    idx: 0
+  });
+  // Native rendering authenticates the root URL and all subsequent tile fetches.
+  expect(rendered.props.data).toBe(`${googleUrl}?key=${googleKey}`);
+  expect(rendered.props.loadOptions.fetch.headers).toEqual({'X-GOOG-API-KEY': googleKey});
+  const metadata = visState.datasets[result.data.datasetId].metadata;
+  expect(metadata).toEqual({
+    ...googleSource.metadata,
+    id: result.data.datasetId,
+    label: googleInput.datasetName,
+    format: 'rows'
+  });
+  for (const includeCredentials of [false, true]) {
+    const exported = serializeProject({visState}, {dataMode: 'references', includeCredentials});
+    expect(exported.text.includes(googleKey)).toBe(includeCredentials);
+    expect(JSON.stringify(exported.warnings)).not.toContain(googleKey);
+    for (const dataset of JSON.parse(exported.text).datasets) {
+      expect(dataset.data.metadata.tile3dUrl).toBe(googleUrl);
+      expect(dataset.data.metadata.tile3dAccessToken).toBe(
+        includeCredentials ? googleKey : undefined
+      );
+    }
+  }
+  expect(metadata?.tile3dAccessToken).toBe(googleKey);
+});
 
 it('waits for asynchronous registration before an immediate add-layer call', async () => {
   const {ctx, execute} = setupReducer();
