@@ -90,3 +90,45 @@ The camera row shows numbered arrivals and a continuous sequence of **Hold** and
 Drag a segment's right edge to change its duration. Later camera segments shift together without gaps; layer, annotation, and effect times stay fixed. The drag previews locally and saves on release. Escape or pointer cancellation discards it. Arrow keys on the end handle adjust by 0.1 seconds (Shift: 1 second). Use **Zoom out** for more drag space, or enter a longer duration in the popup. Extend the first hold to delay movement.
 
 Zero holds pass through a stop; zero moves are instant cuts. The final stop has only a hold. Timing edits pause coordinated playback at the current frame, clamped if the animation becomes shorter. Camera positions and stop order remain editable in the route editor. These controls use the existing `holdDurationMs` and `travelDurationMs` fields without changing the saved tour format.
+
+## Authoring through MCP
+
+`map.property-transitions` discovers and edits the same timed blocks as the Animation editor. The stdio MCP bridge exposes it as `map_property-transitions`.
+
+Call `{"action": "discover"}` to list eligible layer, annotation, and effect targets and their supported properties. Pass `target: {"type": "layer" | "annotation" | "effect", "id": "<existing id>"}` to restrict discovery. Use the returned property names, value types, and ranges; eligibility can change with a layer's configuration. This command animates existing effects; it does not create or configure their static settings.
+
+Call `action: "get"` with a target to inspect its saved tracks, including preserved inactive properties. Add `property` to inspect one track. To add a block, supply a unique ID and all timing/value fields:
+
+```json
+{
+  "action": "add",
+  "target": {"type": "annotation", "id": "lava-label"},
+  "property": "opacity",
+  "block": {
+    "id": "reveal-label",
+    "startTimeMs": 2000,
+    "endTimeMs": 5000,
+    "startValue": 0,
+    "endValue": 1,
+    "easing": "easeInOut"
+  }
+}
+```
+
+Update a block by its stable ID; only supplied fields change:
+
+```json
+{
+  "action": "update",
+  "target": {"type": "annotation", "id": "lava-label"},
+  "property": "opacity",
+  "blockId": "reveal-label",
+  "changes": {"endTimeMs": 6000, "easing": "linear"}
+}
+```
+
+Use `action: "remove"` with the same target, property, and `blockId` to remove that block. Edits pause playback and preserve other blocks, other property tracks, and camera stops. IDs are unique within a property track and cannot be changed by an update.
+
+Effect properties also support numeric vectors matching the descriptor's default value length. Effect endpoints clamp to the native parameter bounds; layer and annotation endpoints must be within their declared range. Mutation results return the resulting tracks, including any clamped values.
+
+Timing uses nonnegative elapsed milliseconds, independently of dataset time. The command uses the native property validation and overlap rules described above; invalid requests leave the map unchanged. Preview, saved projects, and native video export consume these native tracks without an MCP-specific playback format. Camera stops and playback remain available through `map.camera-tour`; producing a video still requires the host's export workflow.

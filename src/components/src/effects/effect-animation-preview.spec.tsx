@@ -8,7 +8,9 @@ import {createStore} from 'redux';
 import {IntlProvider, useIntl} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {createEffect} from '@kepler.gl/effects';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
+import {addEffect, receiveMapConfig} from '@kepler.gl/actions';
+import {INITIAL_MAP_STATE, keplerGlReducerCore} from '@kepler.gl/reducers';
+import SchemaManager from '@kepler.gl/schemas';
 import {theme} from '@kepler.gl/styles';
 import {evaluateCameraTour, getLayerAnimatedConfig, getLayerOpacityFactor} from '@kepler.gl/utils';
 import type {Annotation, CameraTour, Effect, LayerPropertyTransition} from '@kepler.gl/types';
@@ -22,6 +24,11 @@ import EffectAnimationPreviewProvider, {
   EffectAnimationPreviewContext
 } from './effect-animation-preview';
 import {applyEffectAnimation, getEffectAnimationTracks} from '../modals/effect-animation';
+import {resolveCameraTourExportFrame} from '../modals/camera-tour-export';
+import {getCameraTourCommand} from '../../../mcp/src/commands/camera-commands';
+import {getAddAnnotationCommand} from '../../../mcp/src/commands/annotations-command';
+import {getPropertyTransitionsCommand} from '../../../mcp/src/commands/property-transitions-command';
+import type {KeplerContext, RoomCommand} from '../../../mcp/src/commands/types';
 
 const Manager = EffectManagerFactory(
   (() => null) as Parameters<typeof EffectManagerFactory>[0],
@@ -1483,6 +1490,128 @@ test('export frame sampling holds and eases vector blocks without changing the s
   }
   expect(source.parameters.center).toEqual([0.1, 0.9]);
   expect(exported.animation).toEqual(source.animation);
+});
+
+test('MCP-authored water and annotation transitions match reopened preview and native export frames', async () => {
+  let state = keplerGlReducerCore(undefined, {type: '@@INIT'});
+  const dispatch = action => {
+    state = keplerGlReducerCore(state, action);
+  };
+  const context = {
+    getVisState: () => state.visState,
+    getMapState: () => state.mapState,
+    dispatch
+  } as unknown as KeplerContext;
+  const execute = async (command: RoomCommand, input: unknown) => {
+    expect(await command.execute({} as any, input)).toMatchObject({success: true});
+  };
+  const camera = {longitude: -155.3, latitude: 19.4, zoom: 10, bearing: 0, pitch: 30};
+  await execute(getCameraTourCommand(context), {
+    action: 'set',
+    stops: [
+      {id: 'summit', name: 'Summit', camera, holdDurationMs: 1000, travelDurationMs: 6000},
+      {
+        id: 'coast',
+        name: 'Coast',
+        camera: {...camera, longitude: -155, zoom: 12},
+        holdDurationMs: 3000,
+        travelDurationMs: 0
+      }
+    ]
+  });
+  dispatch(addEffect({id: 'water', type: 'surfaceFog', parameters: {height: 50}}));
+  await execute(getAddAnnotationCommand(context), {
+    id: 'lava',
+    kind: 'text',
+    anchorPoint: [-155.2, 19.4],
+    label: 'Lava reveal'
+  });
+  const transitions = getPropertyTransitionsCommand(context);
+  for (const block of [
+    {
+      id: 'fall',
+      startTimeMs: 1000,
+      endTimeMs: 5000,
+      startValue: 120,
+      endValue: 20,
+      easing: 'easeInOut'
+    },
+    {
+      id: 'recede',
+      startTimeMs: 7000,
+      endTimeMs: 9000,
+      startValue: 20,
+      endValue: -20,
+      easing: 'linear'
+    }
+  ]) {
+    await execute(transitions, {
+      action: 'add',
+      target: {type: 'effect', id: 'water'},
+      property: 'height',
+      block
+    });
+  }
+  await execute(transitions, {
+    action: 'add',
+    target: {type: 'annotation', id: 'lava'},
+    property: 'opacity',
+    block: {
+      id: 'reveal',
+      startTimeMs: 2000,
+      endTimeMs: 4000,
+      startValue: 0,
+      endValue: 1,
+      easing: 'linear'
+    }
+  });
+  const saved = SchemaManager.getConfigToSave(state);
+  const reopened = keplerGlReducerCore(
+    undefined,
+    receiveMapConfig(SchemaManager.parseSavedConfig(JSON.parse(JSON.stringify(saved)))!, {})
+  );
+  const samples = [
+    [0, 120, 0],
+    [2000, 104.375, 0],
+    [3000, 70, 0.5],
+    [6000, 20, 1],
+    [8000, 0, 1],
+    [10000, -20, 1],
+    [2000, 104.375, 0]
+  ];
+  const previewFrames: unknown[][] = [];
+  for (const project of [state, reopened]) {
+    const {effects, annotations, cameraTour} = project.visState;
+    const view = setup(effects, true, {
+      cameraTour,
+      cameraDuration: 10000,
+      annotations,
+      managerOpen: false
+    });
+    const exportedEffects = effects.map(effect => effect.clone());
+    const exportTracks = getEffectAnimationTracks(exportedEffects);
+    const frames: unknown[] = [];
+    for (const [elapsed, height, opacity] of samples) {
+      act(() => view.playback().seek(elapsed));
+      expect(view.parameters()[0].height).toBeCloseTo(height);
+      expect(view.annotationOpacities()[0]).toBeCloseTo(opacity);
+      applyEffectAnimation(exportTracks, elapsed);
+      expect(exportedEffects[0].parameters.height).toBeCloseTo(height);
+      expect(getLayerOpacityFactor(annotations[0], elapsed)).toBeCloseTo(opacity);
+      const exportCamera = resolveCameraTourExportFrame({cameraTourTime: elapsed}, cameraTour);
+      expect(view.updateMap).toHaveBeenLastCalledWith({...exportCamera, transitionDuration: 0});
+      frames.push({
+        height: view.parameters()[0].height,
+        opacity: view.annotationOpacities()[0],
+        camera: view.updateMap.mock.lastCall?.[0]
+      });
+    }
+    previewFrames.push(frames);
+    view.unmount();
+    expect(effects[0].parameters.height).toBe(50);
+    expect(SchemaManager.getConfigToSave(project)).toEqual(saved);
+  }
+  expect(previewFrames[1]).toEqual(previewFrames[0]);
 });
 
 test.each([false, true])(

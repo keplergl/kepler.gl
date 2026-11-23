@@ -17,6 +17,7 @@ import {getToggleTimeFilterCommand} from './toggle-time-filter-command';
 import {getSplitViewCommand} from './split-view-command';
 import {getDatasetContextCommand} from './dataset-context-command';
 import {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+import {getPropertyTransitionsCommand} from './property-transitions-command';
 import {getAddAnnotationCommand, getListAnnotationsCommand} from './annotations-command';
 import {getZoomFadeCommand} from './zoom-fade-command';
 import {getLoadZarrCommand} from './load-zarr-command';
@@ -49,6 +50,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getSetLayerOptionsCommand(ctx),
     getCameraBookmarksCommand(ctx),
     getCameraTourCommand(ctx),
+    getPropertyTransitionsCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
     getZoomFadeCommand(ctx),
@@ -71,6 +73,7 @@ export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+export {getPropertyTransitionsCommand} from './property-transitions-command';
 export {getAddAnnotationCommand, getListAnnotationsCommand} from './annotations-command';
 export {getZoomFadeCommand} from './zoom-fade-command';
 export {getSaveDataCommand} from './save-data-command';

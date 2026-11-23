@@ -54,6 +54,7 @@ not this one.
 | `map.load-zarr`          | Import a remote Zarr store's metadata (then call `map.add-layer`). |
 | `map.camera-bookmarks`   | List, save, remove, or go to a saved camera view.               |
 | `map.camera-tour`        | Get/set location-animation stops, seek, play or pause. |
+| `map.property-transitions` | Discover, inspect, add, update, or remove timed layer/annotation/effect blocks. |
 | `map.add-annotation`     | Add a plain-text label or a distance ruler. |
 | `map.get-annotations`    | Read annotation ids, labels, locations and visibility. |
 | `map.set-zoom-fade`      | Enable zoom fades and configure layer/annotation controllers. |
@@ -532,6 +533,36 @@ do not add a time filter for camera movement. To place a stop at a bookmark or
 annotation, build an explicit camera snapshot using its coordinates and desired
 zoom, bearing, and pitch; stops do not link to the source object.
 
+### Timed property transitions (`map.property-transitions`)
+
+Call `{"action": "discover"}` to find eligible targets and properties. Use an
+existing target's returned ID and property names; a target is
+`{"type": "layer" | "annotation" | "effect", "id": "<id>"}`. Discovery may
+be restricted with `target`. Call `action: "get"` with a target (and optional
+`property`) to inspect saved blocks before editing.
+
+Add one block using `action: "add"`, `target`, `property`, and `block`:
+
+```json
+{"action":"add","target":{"type":"annotation","id":"lava-label"},"property":"opacity","block":{"id":"reveal","startTimeMs":2000,"endTimeMs":5000,"startValue":0,"endValue":1,"easing":"easeInOut"}}
+```
+
+Use `action: "update"` with `blockId` and `changes` containing only the timing,
+value, or easing fields to revise. IDs remain stable. Remove one block with
+`action: "remove"`, `target`, `property`, and `blockId`. Edits preserve other
+tracks and camera stops. Blocks on one property cannot overlap. Times are
+nonnegative elapsed milliseconds; equal start/end times make an instant change.
+Values use the discovered property's native units, RGB triples, or numeric effect
+vectors matching the descriptor's default value length. Effect values clamp to
+native bounds; layer and annotation values must be within their declared range.
+Opacity is a 0–1 multiplier. Easing is `linear` or `easeInOut`. Edits pause playback.
+
+These are the native Animation editor tracks, shared by preview, saved projects,
+and video export. They are independent of dataset time filters. The command
+animates existing effects but does not create effects or change static effect
+settings. Use `map.camera-tour` for camera stops and playback, and the host's
+export workflow to produce a video.
+
 ### Annotations (`map.add-annotation`, `map.get-annotations`)
 
 Pick an unused id without colons. Pass longitude first, then latitude, optionally
@@ -566,7 +597,7 @@ multiplies normal opacity and does not make hidden layers visible.
 
 A tool that configures a map is not an export tool. The shared map command
 catalog does not render/download images or videos, select the native video
-encoder, or edit lighting and post-processing effects. Use a dedicated tool
+encoder, or create effects and edit their static settings. Use a dedicated tool
 from your host if one is listed; otherwise explain the gap. Embedded hosts
 can set video options with the `setExportVideoSetting` Redux action, but
 rendering and file delivery still require a host export workflow.

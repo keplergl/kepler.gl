@@ -49,6 +49,7 @@
   "dependencies": {
     "@kepler.gl/actions": "3.3.0-alpha.26",
     "@kepler.gl/constants": "3.3.0-alpha.26",
+    "@kepler.gl/effects": "3.3.0-alpha.26",
     "@kepler.gl/layers": "3.3.0-alpha.26",
     "@kepler.gl/processors": "3.3.0-alpha.26",
     "@kepler.gl/reducers": "3.3.0-alpha.26",

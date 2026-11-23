@@ -38,6 +38,7 @@ export const MAP_TOOL_IDS = [
   'map.get-layer-options',
   'map.camera-bookmarks',
   'map.camera-tour',
+  'map.property-transitions',
   'map.add-annotation',
   'map.get-annotations',
   'map.set-zoom-fade',

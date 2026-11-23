@@ -172,6 +172,7 @@ describe('kepler-mcp bridge server', () => {
       ['map.set-layer-options', 'options'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
+      ['map.property-transitions', 'startTimeMs'],
       ['map.add-annotation', 'anchorPoint'],
       ['map.set-view-mode', 'globe'],
       ['map.set-zoom-fade', 'controllers']
