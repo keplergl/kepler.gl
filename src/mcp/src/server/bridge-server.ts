@@ -215,6 +215,7 @@ export class KeplerMcpBridge {
   private pageUrl = '';
   private app: BridgeStatus['app'] = null;
   private project: ProjectStatus = {state: 'unknown'};
+  private pageReportsProjectStatus = false;
   private readonly statusListeners = new Set<() => void>();
   private readonly toolListeners = new Set<() => void>();
 
@@ -337,8 +338,11 @@ export class KeplerMcpBridge {
   }
 
   private async waitForReady(timeoutMs: number): Promise<BridgeStatus> {
+    const canFinish = (status: BridgeStatus) =>
+      ['disconnected', 'ready', 'failed'].includes(status.state) ||
+      (status.toolsNegotiated && !this.pageReportsProjectStatus);
     const status = this.getStatus();
-    if (['disconnected', 'ready', 'failed'].includes(status.state)) return status;
+    if (canFinish(status)) return status;
     return new Promise(resolve => {
       const finish = (result: BridgeStatus) => {
         clearTimeout(timer);
@@ -347,7 +351,7 @@ export class KeplerMcpBridge {
       };
       const check = () => {
         const current = this.getStatus();
-        if (['disconnected', 'ready', 'failed'].includes(current.state)) finish(current);
+        if (canFinish(current)) finish(current);
       };
       const timer = setTimeout(() => finish({...this.getStatus(), timedOut: true}), timeoutMs);
       this.statusListeners.add(check);
@@ -555,6 +559,7 @@ export class KeplerMcpBridge {
     this.socket = null;
     this.app = null;
     this.project = {state: 'unknown'};
+    this.pageReportsProjectStatus = false;
     this.updatePageTools(null);
     this.notifyStatus();
     await this.videoArtifacts.close();
@@ -602,6 +607,7 @@ export class KeplerMcpBridge {
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
     this.app = null;
     this.project = {state: 'unknown'};
+    this.pageReportsProjectStatus = false;
     this.updatePageTools(null);
     this.notifyStatus();
 
@@ -613,6 +619,7 @@ export class KeplerMcpBridge {
         this.socket = null;
         this.app = null;
         this.project = {state: 'unknown'};
+        this.pageReportsProjectStatus = false;
         this.updatePageTools(null);
         this.notifyStatus();
         this.rejectPending('The kepler.gl page disconnected.');
@@ -637,7 +644,11 @@ export class KeplerMcpBridge {
               ...(typeof message.app.version === 'string' ? {version: message.app.version} : {})
             }
           : null;
-      this.project = readProjectStatus(message.project);
+      // Catalog-only hellos must not discard readiness already reported by this page.
+      if (Object.prototype.hasOwnProperty.call(message, 'project')) {
+        this.pageReportsProjectStatus = true;
+        this.project = readProjectStatus(message.project);
+      }
       this.updatePageTools(
         toolsFromDescriptors(message.commands as ToolDescriptor[]).filter(
           tool => tool.name !== statusTool.name
@@ -647,6 +658,7 @@ export class KeplerMcpBridge {
       return;
     }
     if (message?.type === 'status' && this.pageTools !== null) {
+      this.pageReportsProjectStatus = true;
       this.project = readProjectStatus(message.project);
       this.notifyStatus();
       return;

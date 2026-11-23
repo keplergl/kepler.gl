@@ -208,6 +208,59 @@ describe('kepler-mcp bridge server', () => {
     socket.close();
   });
 
+  it.each(['before', 'after'])(
+    'ends a readiness wait %s a legacy page hello without timing out',
+    async phase => {
+      const socket = connect(started.port, started.token);
+      await new Promise(resolve => socket.on('open', resolve));
+      const wait = () => bridge.callTool('map_get-status', {waitUntilReady: true, timeoutMs: 1000});
+      const pending = phase === 'before' ? wait() : undefined;
+      socket.send(JSON.stringify({type: 'hello', commands: []}));
+      await waitFor(() => bridge.getStatus().toolsNegotiated);
+      const result = await (pending ?? wait());
+      expect(result.data).toMatchObject({state: 'negotiated', project: {state: 'unknown'}});
+      expect(result.data).not.toHaveProperty('timedOut');
+      socket.close();
+    }
+  );
+
+  it.each(['hello', 'later status'])(
+    'waits for an unknown project advertised through %s',
+    async source => {
+      const socket = connect(started.port, started.token);
+      await new Promise(resolve => socket.on('open', resolve));
+      socket.send(
+        JSON.stringify({
+          type: 'hello',
+          commands: [],
+          ...(source === 'hello' ? {project: {state: 'unknown'}} : {})
+        })
+      );
+      await waitFor(() => bridge.getStatus().toolsNegotiated);
+      if (source === 'later status') {
+        socket.send(JSON.stringify({type: 'status', project: {state: 'loading'}}));
+        await waitFor(() => bridge.getStatus().state === 'loading');
+        socket.send(JSON.stringify({type: 'status', project: {state: 'unknown'}}));
+        await waitFor(() => bridge.getStatus().state === 'negotiated');
+      }
+      // A subsequent catalog-only hello does not remove readiness support.
+      socket.send(JSON.stringify({type: 'hello', commands: [{id: 'map.test-command'}]}));
+      await waitFor(() => bridge.getTools().some(tool => tool.commandId === 'map.test-command'));
+      let settled = false;
+      const pending = bridge
+        .callTool('map_get-status', {waitUntilReady: true, timeoutMs: 1000})
+        .then(result => {
+          settled = true;
+          return result;
+        });
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(settled).toBe(false);
+      socket.send(JSON.stringify({type: 'status', project: {state: 'ready'}}));
+      await expect(pending).resolves.toMatchObject({data: {state: 'ready'}});
+      socket.close();
+    }
+  );
+
   it('waits for delayed project data before the first layer lookup', async () => {
     const socket = connect(started.port, started.token);
     await new Promise(resolve => socket.on('open', resolve));
@@ -312,6 +365,11 @@ describe('kepler-mcp bridge server', () => {
       app: null,
       project: {state: 'unknown'}
     });
+    replacement.send(JSON.stringify({type: 'hello', commands: []}));
+    await waitFor(() => bridge.getStatus().toolsNegotiated);
+    const status = await bridge.callTool('map_get-status', {waitUntilReady: true, timeoutMs: 1000});
+    expect(status.data).toMatchObject({state: 'negotiated'});
+    expect(status.data).not.toHaveProperty('timedOut');
     replacement.close();
     await waitFor(() => !bridge.connected);
     expect(bridge.getStatus()).toMatchObject({state: 'disconnected', toolsNegotiated: false});
