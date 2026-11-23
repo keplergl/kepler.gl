@@ -8,7 +8,12 @@ import type {KeplerGlState} from '@kepler.gl/reducers';
 import {ActionTypes, loadMapStyles, registerEntry, wrapTo} from '@kepler.gl/actions';
 import {DatasetType, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
-import {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
+import {
+  getOpenProjectCommand,
+  getSaveProjectCommand,
+  getProjectStatusCommand
+} from './project-commands';
+import {getLayerOptionsCommand} from './layer-options-command';
 import {getLayerLabelsCommand, getSetLayerLabelsCommand} from './layer-labels-command';
 import {getTooltipFieldsCommand, getSetTooltipFieldsCommand} from './tooltip-fields-command';
 import type {KeplerContext, RoomCommand, RoomCommandResult} from './types';
@@ -295,7 +300,7 @@ it('reports HTTP and malformed JSON errors without replacing the map', async () 
   expect(ctx.dispatch).not.toHaveBeenCalled();
 });
 
-it('waits for table creation before reporting loaded', async () => {
+it('waits for delayed project data before ready and succeeds on the first layer lookup', async () => {
   const {ctx} = setup();
   const original = KeplerTable.prototype.importData;
   let release!: () => void;
@@ -318,10 +323,101 @@ it('waits for table creation before reporting loaded', async () => {
     finished = true;
     return result;
   });
+  // Fetch and parsing count as loading too, before any dataset task starts.
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({
+    data: {state: 'loading', scope: 'mcp-open-project'}
+  });
   await start;
   expect(finished).toBe(false);
+  let ready = false;
+  const status = execute(getProjectStatusCommand(ctx), {waitUntilReady: true}).then(result => {
+    ready = true;
+    return result;
+  });
+  await Promise.resolve();
+  expect(ready).toBe(false);
   release();
   expect(await pending).toMatchObject({success: true});
+  expect(await status).toMatchObject({success: true, data: {state: 'ready'}});
+  expect(await execute(getLayerOptionsCommand(ctx), {layerId: 'first-points'})).toMatchObject({
+    success: true,
+    data: {layerId: 'first-points'}
+  });
+});
+
+it('distinguishes an untracked empty map from a successfully opened empty project', async () => {
+  const {ctx} = setup();
+  expect(await execute(getProjectStatusCommand(ctx), {waitUntilReady: true})).toMatchObject({
+    data: {state: 'unknown', scope: 'mcp-open-project'}
+  });
+  serve({datasets: [], config: {version: 'v1', config: {visState: {}}}});
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/empty.json'})).toMatchObject({
+    success: true
+  });
+  expect(await execute(getProjectStatusCommand(ctx), {waitUntilReady: true})).toMatchObject({
+    data: {state: 'ready', scope: 'mcp-open-project'}
+  });
+  expect(ctx.getVisState().layers).toEqual([]);
+  expect(ctx.getVisState().datasets).toEqual({});
+});
+
+it('reports failed imports without source credentials and clears failure on retry', async () => {
+  const {ctx} = setup();
+  (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('https://example.com/?token=secret'));
+  expect((await execute(getOpenProjectCommand(ctx), {url: '/project.json'})).success).toBe(false);
+  expect(await execute(getProjectStatusCommand(ctx), {waitUntilReady: true})).toEqual({
+    success: true,
+    commandId: 'map.get-project-status',
+    data: {state: 'failed', scope: 'mcp-open-project'}
+  });
+  const retry = execute(getOpenProjectCommand(ctx), {url: '/project.json'});
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'loading'}});
+  expect(await retry).toMatchObject({success: true});
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'ready'}});
+});
+
+it('bounds and cancels readiness waits without cancelling the import', async () => {
+  const {ctx} = setup();
+  let release!: (value: Response) => void;
+  (global.fetch as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        release = resolve;
+      })
+  );
+  const pending = execute(getOpenProjectCommand(ctx), {url: '/project.json'});
+  expect(
+    await execute(getProjectStatusCommand(ctx), {waitUntilReady: true, timeoutMs: 1})
+  ).toMatchObject({
+    data: {state: 'loading', timedOut: true}
+  });
+  const controller = abortController();
+  const cancelled = execute(
+    getProjectStatusCommand(ctx),
+    {waitUntilReady: true},
+    controller.signal
+  );
+  controller.abort();
+  expect(await cancelled).toMatchObject({
+    success: false,
+    error: expect.stringContaining('cancelled')
+  });
+  release({ok: true, json: async () => fixture()} as Response);
+  expect(await pending).toMatchObject({success: true});
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'ready'}});
+});
+
+it('forgets readiness after observing an untracked load or replaced map data', async () => {
+  const {ctx} = setup();
+  await execute(getOpenProjectCommand(ctx), {url: '/project.json'});
+  const read = ctx.getVisState;
+  ctx.getVisState = () => ({...read(), loadingIndicatorValue: 1});
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'unknown'}});
+  ctx.getVisState = read;
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'unknown'}});
+  await execute(getOpenProjectCommand(ctx), {url: '/project.json'});
+  ctx.getVisState = () => ({...read(), datasets: {}});
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'unknown'}});
 });
 
 it('reports dataset creation failure rather than successful project loading', async () => {
@@ -352,6 +448,7 @@ it('rejects overlapping imports across command instances while allowing separate
   });
   expect(ctx.dispatch).not.toHaveBeenCalled();
   expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'loading'}});
   const other = setup();
   expect(await execute(getOpenProjectCommand(other.ctx), {url: '/other.json'})).toMatchObject({
     success: true
@@ -397,6 +494,7 @@ it('keeps a cancelled import locked until its pending dataset tasks settle', asy
     success: false,
     error: expect.stringContaining('cancelled')
   });
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'loading'}});
   const dispatchCount = (ctx.dispatch as jest.Mock).mock.calls.length;
   const fetchCount = (global.fetch as jest.Mock).mock.calls.length;
   expect(await execute(getOpenProjectCommand(ctx), {url: '/second.json'})).toMatchObject({
@@ -408,6 +506,7 @@ it('keeps a cancelled import locked until its pending dataset tasks settle', asy
   release();
   await dispatchCompletion;
   await new Promise(resolve => setTimeout(resolve, 0));
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'failed'}});
   importData.mockRestore();
   expect(await execute(getOpenProjectCommand(ctx), {url: '/retry.json'})).toMatchObject({
     success: true
@@ -421,6 +520,7 @@ it('releases the import lock after dispatch rejects', async () => {
     success: false,
     error: 'Reset failed'
   });
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({data: {state: 'failed'}});
   expect(await execute(getOpenProjectCommand(ctx), {url: '/retry.json'})).toMatchObject({
     success: true
   });

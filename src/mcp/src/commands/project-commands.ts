@@ -10,6 +10,111 @@ import type {KeplerContext, RoomCommand, VisState} from './types';
 
 // Hosts should reuse a context for each map, including across agent surfaces.
 const activeProjectImports = new WeakSet<KeplerContext>();
+const projectImports = new WeakMap<
+  KeplerContext,
+  {state: 'ready' | 'failed'; datasets: VisState['datasets']; layers: VisState['layers']}
+>();
+
+export type ProjectStatus = {
+  state: 'unknown' | 'loading' | 'ready' | 'failed';
+  /** Only map.open-project imports are tracked; native UI/URL loads are not. */
+  scope: 'mcp-open-project';
+  timedOut?: true;
+};
+
+export const projectStatusInput = z
+  .object({
+    waitUntilReady: z.boolean().optional().describe('Wait while an MCP project import is loading.'),
+    timeoutMs: z
+      .number()
+      .int()
+      .min(1)
+      .max(30000)
+      .optional()
+      .describe('Wait limit, default 30000 ms.')
+  })
+  .strict();
+
+function readProjectStatus(ctx: KeplerContext): ProjectStatus {
+  const status: ProjectStatus = {state: 'unknown', scope: 'mcp-open-project'};
+  // Cancellation may return before the dataset tasks settle. Keep reporting
+  // loading until those tasks release the same lock used by open-project.
+  if (activeProjectImports.has(ctx)) return {...status, state: 'loading'};
+  const imported = projectImports.get(ctx);
+  if (!imported) return status;
+  try {
+    const current = ctx.getVisState();
+    if (
+      current.datasets !== imported.datasets ||
+      current.layers !== imported.layers ||
+      current.fileLoading ||
+      current.loadingIndicatorValue > 0
+    ) {
+      // Never reinterpret the completion of an untracked load as success.
+      projectImports.delete(ctx);
+      return status;
+    }
+    return {...status, state: imported.state};
+  } catch {
+    projectImports.delete(ctx);
+    return status;
+  }
+}
+
+function waitForStatusPoll(delay: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    };
+    const timer = setTimeout(finish, delay);
+    const abort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+      reject(new Error('Project readiness wait cancelled.'));
+    };
+    signal?.addEventListener('abort', abort, {once: true});
+    if (signal?.aborted) abort();
+  });
+}
+
+export function getProjectStatusCommand(ctx: KeplerContext): RoomCommand {
+  const id = 'map.get-project-status';
+  return {
+    id,
+    name: 'Get project readiness',
+    group: 'Map',
+    description:
+      'Report readiness of the latest map.open-project import: unknown, loading, ready or failed. ' +
+      'Optionally wait up to 30 seconds while it loads. Empty projects can be ready. ' +
+      'UI/URL loads are not tracked; unknown returns immediately. Ready covers project registration, not tile rendering.',
+    metadata: {readOnly: true, riskLevel: 'low'},
+    inputSchema: projectStatusInput,
+    execute: async (execution, input) => {
+      try {
+        const args = projectStatusInput.parse(input);
+        const deadline = Date.now() + (args.timeoutMs ?? 30000);
+        let status = readProjectStatus(ctx);
+        while (args.waitUntilReady && status.state === 'loading') {
+          const remaining = deadline - Date.now();
+          if (remaining <= 0) {
+            status = {...status, timedOut: true};
+            break;
+          }
+          await waitForStatusPoll(Math.min(100, remaining), execution.signal);
+          status = readProjectStatus(ctx);
+        }
+        return {success: true, commandId: id, data: status};
+      } catch (error) {
+        return {
+          success: false,
+          commandId: id,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    }
+  };
+}
 
 const openSchema = z
   .object({
@@ -165,6 +270,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
     inputSchema: openSchema,
     execute: async (execution, input) => {
       let ownsImport = false;
+      let outcome: 'ready' | 'failed' = 'failed';
       let dispatchCompletion: Promise<void> | undefined;
       try {
         const args = openSchema.parse(input);
@@ -176,6 +282,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
         }
         // Acquire before the first await so simultaneous calls cannot both reset the map.
         activeProjectImports.add(ctx);
+        projectImports.delete(ctx);
         ownsImport = true;
         const response = await fetch(projectUrl(args.url).href, {signal: execution.signal});
         if (!response.ok) throw new Error(`Project request failed (HTTP ${response.status}).`);
@@ -232,6 +339,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
                 .join(', ')}. The map may be partially loaded.`
             );
         }
+        outcome = 'ready';
         return {
           success: true,
           commandId: id,
@@ -255,6 +363,12 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
         if (ownsImport) {
           const release = () => {
             activeProjectImports.delete(ctx);
+            try {
+              const {datasets, layers} = ctx.getVisState();
+              projectImports.set(ctx, {state: outcome, datasets, layers});
+            } catch {
+              projectImports.delete(ctx);
+            }
           };
           if (dispatchCompletion) {
             // The caller may have cancelled while the reducer's tasks are still running.

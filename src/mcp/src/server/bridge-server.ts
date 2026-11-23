@@ -27,6 +27,8 @@ import {basename, isAbsolute} from 'node:path';
 import {WebSocket, WebSocketServer} from 'ws';
 import {z} from 'zod';
 import {getKeplerCommands} from '../commands';
+import {projectStatusInput} from '../commands/project-commands';
+import type {ProjectStatus} from '../commands/project-commands';
 import type {
   KeplerContext,
   PreviewFrameImage,
@@ -48,14 +50,14 @@ function supportsLocalResource(commandId: string): boolean {
 }
 
 const STATUS_COMMAND = 'map.get-status';
-const statusInput = z.object({}).strict();
+const statusInput = projectStatusInput;
 
 export type BridgeStatus = {
   state: 'disconnected' | 'connected' | 'negotiated';
   connected: boolean;
   toolsNegotiated: boolean;
   app: {name: string; version?: string} | null;
-  project: {state: 'unknown'};
+  project: ProjectStatus | {state: 'unknown'};
   capabilities: {tools: string[]; localFileImport: boolean};
   launcherUrl: string | null;
   guidance?: string;
@@ -67,7 +69,8 @@ const statusTool: MapTool = {
   description:
     'Check the map connection, negotiated tools, connected app and effective capabilities. ' +
     'Works without a connected page and returns a credential-free launcher URL. ' +
-    'Project readiness is not tracked: negotiated tools do not mean project data has finished loading.',
+    'Reports readiness of map.open-project imports when supported by the page; optionally waits up to 30 seconds. ' +
+    'UI/URL loads remain unknown. Negotiated tools alone do not establish project readiness.',
   inputSchema: z.toJSONSchema(statusInput) as Record<string, unknown>
 };
 
@@ -423,8 +426,58 @@ export class KeplerMcpBridge {
 
   async callTool(name: string, input: Record<string, unknown> = {}): Promise<RoomCommandResult> {
     if (name === statusTool.name) {
-      statusInput.parse(input);
-      return {success: true, commandId: STATUS_COMMAND, data: this.getStatus()};
+      const args = statusInput.parse(input);
+      const connectionId = this.connectionId;
+      let project: BridgeStatus['project'] = {state: 'unknown'};
+      if (
+        this.connected &&
+        this.pageTools?.some(tool => tool.commandId === 'map.get-project-status')
+      ) {
+        try {
+          const result = await this.callTool(toToolName('map.get-project-status'), {
+            ...args,
+            ...(args.waitUntilReady
+              ? {
+                  timeoutMs: Math.min(
+                    args.timeoutMs ?? 30000,
+                    Math.max(1, this.options.callTimeoutMs - 100)
+                  )
+                }
+              : {})
+          });
+          const reported = result.data as ProjectStatus | undefined;
+          if (
+            connectionId === this.connectionId &&
+            this.connected &&
+            result.success &&
+            !result.error &&
+            reported?.scope === 'mcp-open-project' &&
+            ['unknown', 'loading', 'ready', 'failed'].includes(reported.state)
+          ) {
+            // Copy only the status contract, never host errors or source credentials.
+            project = {
+              state: reported.state,
+              scope: reported.scope,
+              ...(reported.timedOut === true ? {timedOut: true} : {})
+            };
+          }
+        } catch {
+          // Status must remain usable after disconnect, replacement or an
+          // unresponsive page. An unavailable readiness report stays unknown.
+        }
+      }
+      const status = {...this.getStatus(), project};
+      if (project.state !== 'unknown') {
+        delete status.guidance;
+        if (project.state === 'failed') {
+          status.guidance =
+            'The MCP project import failed. Check the map_open-project result and retry the import.';
+        } else if (project.state === 'loading') {
+          status.guidance =
+            'The MCP project import is still loading. Call map_get-status with waitUntilReady to wait again.';
+        }
+      }
+      return {success: true, commandId: STATUS_COMMAND, data: status};
     }
     const tool = this.getTools().find(candidate => candidate.name === name);
     if (!tool) {

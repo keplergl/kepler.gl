@@ -57,6 +57,7 @@ not this one.
 | `map.load-data`          | Load a URL or bridge-local file; then call `map.add-layer`.   |
 | `map.open-project`       | Replace the map with a saved-map JSON URL or bridge-local file. |
 | `map.save-project`       | Export complete saved-map JSON as a retrievable MCP artifact. |
+| `map.get-project-status` | Inspect or wait for an MCP-opened project to finish loading. |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
@@ -944,9 +945,21 @@ require a host export workflow.
   connected app/version; `capabilities.tools` lists the currently effective MCP
   tools and `capabilities.localFileImport` reports local-file support. The bridge
   sends `notifications/tools/list_changed` when its negotiated catalog changes.
-- Project readiness reporting is deferred: `project.state` is always `unknown`.
-  Negotiated tools do not guarantee that project data, configuration, or tiles
-  have loaded. This status tool does not wait for project readiness.
+- For projects opened with `map.open-project`, `project.state` reports `loading`,
+  `ready`, or `failed`, with `scope: "mcp-open-project"`. `ready` includes valid
+  empty projects and means dataset/layer registration completed, not tile rendering.
+  Status responses omit source URLs and load error text; inspect the original
+  `map.open-project` result for failure details and retry the import as needed.
+- Call `map_get-status` with `{"waitUntilReady":true,"timeoutMs":30000}` to wait
+  while a tracked import is loading. The default and maximum wait is 30 seconds
+  (or the bridge call timeout, if shorter). A timeout returns `loading` with
+  `timedOut: true`; it does not cancel the import. Wait again before layer lookup.
+  Hosts without the stdio bridge can call `map.get-project-status` directly.
+- UI/URL loads and older pages without `map.get-project-status` remain `unknown`;
+  waits return immediately in that case. This tracks only the last MCP import,
+  not native loading paths. Observed dataset/layer replacements or native data
+  loading invalidate its result. Changes that have not reached map state cannot
+  be detected. Never infer readiness from negotiation or a nonempty dataset list.
 
 - Do not infer basemap loading from generic `Loading...` text or a progress
   bar's dimensions. The loading indicator is shared across data and layer
