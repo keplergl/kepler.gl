@@ -8,10 +8,18 @@ import type KeplerTable from '@kepler.gl/table';
 import type {KeplerContext, RoomCommand} from './types';
 import {buildZarrLayer, zarrOptions} from './surface-layer-options';
 
-const scalar = z.union([z.number().finite(), z.boolean(), z.string()]);
+export const layerOptionsSchema = z.record(
+  z.string(),
+  z.union([
+    z.number().finite(),
+    z.boolean(),
+    z.string(),
+    z.tuple([z.number().finite(), z.number().finite()])
+  ])
+);
 const inputSchema = z.object({
   layerId: z.string().min(1),
-  options: z.record(z.string(), scalar).optional(),
+  options: layerOptionsSchema.optional(),
   zarr: zarrOptions.strict().optional(),
   wmsLayer: z
     .string()
@@ -29,7 +37,7 @@ function supportedOptions(layer: Layer) {
       ([key, setting]) =>
         ['number', 'boolean', 'input', 'select'].includes(setting.type) &&
         !['zarrVariable', 'zarrFrame'].includes(key) &&
-        !Array.isArray(setting.defaultValue)
+        (!Array.isArray(setting.defaultValue) || (setting.type === 'number' && setting.isRanged))
     )
   );
 }
@@ -38,15 +46,26 @@ export function validateLayerOptions(
   layer: Layer,
   dataset: KeplerTable,
   input: unknown
-): Record<string, number | boolean | string> {
-  const options = z.record(z.string(), scalar).parse(input);
+): z.infer<typeof layerOptionsSchema> {
+  const options = layerOptionsSchema.parse(input);
   const settings = supportedOptions(layer);
   for (const [key, value] of Object.entries(options)) {
     const setting = Object.prototype.hasOwnProperty.call(settings, key) ? settings[key] : undefined;
     if (!setting)
       throw new Error(`Unsupported option "${key}" for ${layer.type}. Use map.get-layer-options.`);
     if (setting.type === 'number') {
-      if (typeof value !== 'number' || value < setting.range[0] || value > setting.range[1]) {
+      if (setting.isRanged) {
+        if (
+          !Array.isArray(value) ||
+          value.some(endpoint => endpoint < setting.range[0] || endpoint > setting.range[1])
+        ) {
+          throw new Error(`${key} must be two numbers in [${setting.range.join(', ')}].`);
+        }
+      } else if (
+        typeof value !== 'number' ||
+        value < setting.range[0] ||
+        value > setting.range[1]
+      ) {
         throw new Error(`${key} must be a number in [${setting.range.join(', ')}].`);
       }
     } else if (setting.type === 'boolean') {
@@ -88,6 +107,7 @@ export function getLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
             {
               type: setting.type,
               value: layer.config.visConfig[key],
+              ...(setting.type === 'number' && setting.isRanged ? {isRanged: true} : {}),
               ...('range' in setting ? {range: setting.range} : {}),
               ...('options' in setting ? {options: setting.options} : {})
             }
@@ -145,7 +165,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
     name: 'Set layer options',
     group: 'Map',
     description:
-      'Patch visual settings using keys from map.get-layer-options. Supports point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
+      'Patch visual settings using keys from map.get-layer-options. Ranged settings (isRanged: true) accept two-number tuples, such as radiusRange: [1, 8], within the advertised range. Supports point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
     metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema,
     execute: (_execution, input) => {

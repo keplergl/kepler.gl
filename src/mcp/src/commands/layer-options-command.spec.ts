@@ -5,6 +5,7 @@ import {LayerClasses} from '@kepler.gl/layers';
 import KeplerTable from '@kepler.gl/table';
 import {DatasetType} from '@kepler.gl/constants';
 import {INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
+import {processGeojson} from '@kepler.gl/processors';
 import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
 import type {KeplerContext, RoomCommandResult} from './types';
 
@@ -62,8 +63,135 @@ describe('layer visual options', () => {
     })) as RoomCommandResult<any>;
     expect(result.data.settings.glowExtent).toEqual({type: 'number', value: 2, range: [1, 5]});
     expect(result.data.settings.pulseMode.options).toEqual(['pulse', 'ripple']);
-    expect(result.data.settings.radiusRange).toBeUndefined();
+    expect(result.data.settings.radiusRange).toEqual({
+      type: 'number',
+      isRanged: true,
+      value: [0, 50],
+      range: [0, 500]
+    });
+    expect(result.data.settings.colorRange).toBeUndefined();
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['point', 'radiusRange', [1, 8]],
+    ['geojson', 'radiusRange', [1, 8]],
+    ['geojson', 'sizeRange', [0, 200]],
+    ['geojson', 'heightRange', [0, 1000]],
+    ['grid', 'percentile', [10, 90]],
+    ['hexagonId', 'coverageRange', [0.1, 0.9]],
+    ['point', 'radiusRange', [8, 1]],
+    ['point', 'radiusRange', [2, 2]]
+  ])('updates and discovers %s %s: %j', async (type, key, value) => {
+    const {set, state, ctx, layer} = setup(type as string);
+    const previous = {...layer.config.visConfig};
+    expect(await set({layerId: layer.id, options: {[key as string]: value}})).toMatchObject({
+      success: true
+    });
+    expect(state().layers[0].config.visConfig).toEqual({...previous, [key as string]: value});
+    const result = (await getLayerOptionsCommand(ctx).execute({} as any, {
+      layerId: layer.id
+    })) as RoomCommandResult<any>;
+    expect(result.data.settings[key as string]).toMatchObject({
+      type: 'number',
+      isRanged: true,
+      value,
+      range: layer.visConfigSettings[key as string].range
+    });
+  });
+
+  it.each(
+    [
+      [],
+      [1],
+      [1, 8, 9],
+      ['1', 8],
+      [1, null],
+      [true, 8],
+      [NaN, 8],
+      [1, Infinity],
+      [-1, 8],
+      [1, 501],
+      [501, 8],
+      [1, -1],
+      8,
+      null,
+      {min: 1, max: 8}
+    ].map(value => [value])
+  )('rejects invalid radiusRange %j without changing any settings', async value => {
+    const {set, state, dispatch} = setup('geojson');
+    expect(await set({layerId: 'layer', options: {radiusRange: [1, 8]}})).toMatchObject({
+      success: true
+    });
+    const previous = {...state().layers[0].config.visConfig};
+    dispatch.mockClear();
+    expect(
+      await set({layerId: 'layer', options: {opacity: 0.2, radiusRange: value}})
+    ).toMatchObject({
+      success: false,
+      error: expect.stringContaining('radiusRange')
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(state().layers[0].config.visConfig).toEqual(previous);
+  });
+
+  it.each([
+    ['point', 'opacity', [0.1, 0.9]],
+    ['point', 'glowEnabled', [0, 1]],
+    ['point', 'pulseMode', [0, 1]],
+    ['point', 'colorRange', [1, 8]],
+    ['heatmap', 'radiusRange', [1, 8]],
+    ['hexagonId', 'coverageRange', [0, 2]],
+    ['grid', 'percentile', [-1, 90]]
+  ])('rejects incompatible or out-of-bounds %s %s', async (type, key, value) => {
+    const {set, dispatch} = setup(type as string);
+    expect(await set({layerId: 'layer', options: {[key as string]: value}})).toMatchObject({
+      success: false,
+      error: expect.stringContaining(key as string)
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('applies both radius endpoints to GeoJSON points sized by a field', async () => {
+    const {dataset, layer, state, set} = setup('geojson');
+    const data = processGeojson({
+      type: 'FeatureCollection',
+      features: [10, 15, 20].map((size, index) => ({
+        type: 'Feature',
+        geometry: {type: 'Point', coordinates: [index, 0]},
+        properties: {size}
+      }))
+    } as any);
+    if (!data) throw new Error('Expected processed GeoJSON data.');
+    await dataset.importData({data});
+    layer.updateLayerConfig({
+      columns: {geojson: {value: '_geojson', fieldIdx: 0}},
+      radiusField: dataset.fields.find(field => field.name === 'size'),
+      radiusScale: 'linear',
+      radiusDomain: [10, 20]
+    });
+    for (const radiusRange of [
+      [1, 8],
+      [2, 8],
+      [2, 10]
+    ]) {
+      expect(await set({layerId: layer.id, options: {radiusRange}})).toMatchObject({success: true});
+      const updated = state().layers[0];
+      const rendered = updated.renderLayer({
+        data: updated.formatLayerData({[dataset.id]: dataset}, {}),
+        gpuFilter: dataset.gpuFilter,
+        idx: 0,
+        visible: true,
+        layerCallbacks: {},
+        interactionConfig: {tooltip: {enabled: false}},
+        mapState: {zoom: 12, width: 800, height: 600}
+      } as any)[0];
+      expect(rendered.props.data.map(rendered.props.getPointRadius)).toEqual([
+        radiusRange[0],
+        (radiusRange[0] + radiusRange[1]) / 2,
+        radiusRange[1]
+      ]);
+    }
   });
 
   it.each<Record<string, unknown>>([
