@@ -23,6 +23,7 @@ import type {
   ToolDescriptor
 } from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
+import {wrapTo} from '@kepler.gl/actions';
 import {z} from 'zod';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
 // the demo-app folder stays self-contained — no relative path reaching outside
@@ -65,10 +66,16 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
   ...DUCKDB_REQUIRED
 ].join(', ')} — they are filtered out of the catalog. Use the available map.* commands only.`;
 
+// Both agent surfaces target the same map. Share context identity so in-flight
+// project imports cannot overlap across the bridge and WebMCP catalogs.
+const mapContexts = new WeakMap<object, KeplerContext>();
+
 /** Live accessors into the demo's own redux store — no kepler-assistant needed. */
 export function buildKeplerContext(reduxStore: any): KeplerContext {
+  const existing = mapContexts.get(reduxStore);
+  if (existing) return existing;
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
-  return {
+  const context: KeplerContext = {
     getKeplerState: readMap,
     getMapState: () => readMap()?.mapState,
     getVisState: () => {
@@ -108,7 +115,7 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
         return undefined;
       }
     },
-    dispatch: (action: any) => reduxStore?.dispatch(action),
+    dispatch: (action: any) => reduxStore?.dispatch(wrapTo('map', action)),
     getValuesFromDataset: (datasetName, variableName) => {
       const visState = readMap()?.visState;
       if (!visState) return [];
@@ -162,6 +169,8 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       throw new Error('DuckDB operations are not available in the mapping-only bridge.');
     }
   };
+  mapContexts.set(reduxStore, context);
+  return context;
 }
 
 /** The DuckDB-free map.* commands this page serves to agents, plus the map skill reader. */

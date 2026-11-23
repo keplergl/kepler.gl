@@ -5,7 +5,7 @@ import {createStore, applyMiddleware} from 'redux';
 import {taskMiddleware} from '@kepler.gl/tasks';
 import {keplerGlReducer} from '@kepler.gl/reducers';
 import type {KeplerGlState} from '@kepler.gl/reducers';
-import {registerEntry, wrapTo} from '@kepler.gl/actions';
+import {ActionTypes, loadMapStyles, registerEntry, wrapTo} from '@kepler.gl/actions';
 import {DatasetType, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
 import {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
@@ -112,6 +112,16 @@ function setup() {
 async function execute(command: RoomCommand, input: unknown, signal?: AbortSignal) {
   return (await command.execute({signal} as any, input)) as RoomCommandResult<any>;
 }
+
+function abortController() {
+  const controller = new AbortController();
+  // Jest's older jsdom lacks the method supplied by current browsers and Node.
+  controller.signal.throwIfAborted ??= () => {
+    if (controller.signal.aborted) throw controller.signal.reason;
+  };
+  return controller;
+}
+
 function serve(raw: unknown) {
   global.fetch = jest.fn(
     async url =>
@@ -288,6 +298,179 @@ it('reports dataset creation failure rather than successful project loading', as
   });
 });
 
+it('rejects overlapping imports across command instances while allowing separate maps', async () => {
+  const {ctx} = setup();
+  let release!: (response: Response) => void;
+  (global.fetch as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise<Response>(resolve => {
+        release = resolve;
+      })
+  );
+  const pending = execute(getOpenProjectCommand(ctx), {url: '/first.json'});
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/second.json'})).toMatchObject({
+    success: false,
+    error: expect.stringContaining('already in progress')
+  });
+  expect(ctx.dispatch).not.toHaveBeenCalled();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  const other = setup();
+  expect(await execute(getOpenProjectCommand(other.ctx), {url: '/other.json'})).toMatchObject({
+    success: true
+  });
+  release({ok: true, json: async () => fixture()} as Response);
+  expect(await pending).toMatchObject({success: true});
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/retry.json'})).toMatchObject({
+    success: true
+  });
+});
+
+it('keeps a cancelled import locked until its pending dataset tasks settle', async () => {
+  const {ctx} = setup();
+  const dispatch = ctx.dispatch;
+  let dispatchCompletion!: Promise<void>;
+  ctx.dispatch = jest.fn(action => {
+    const completion = dispatch(action);
+    if (action.type === ActionTypes.ADD_DATA_TO_MAP)
+      dispatchCompletion = Promise.resolve(completion);
+    return completion;
+  });
+  const original = KeplerTable.prototype.importData;
+  let release!: () => void;
+  const wait = new Promise<void>(resolve => {
+    release = resolve;
+  });
+  let started!: () => void;
+  const start = new Promise<void>(resolve => {
+    started = resolve;
+  });
+  const importData = jest
+    .spyOn(KeplerTable.prototype, 'importData')
+    .mockImplementation(async function (this: KeplerTable, data) {
+      started();
+      await wait;
+      return original.call(this, data);
+    });
+  const controller = abortController();
+  const pending = execute(getOpenProjectCommand(ctx), {url: '/first.json'}, controller.signal);
+  expect(await Promise.race([start.then(() => 'started'), pending])).toBe('started');
+  controller.abort();
+  expect(await pending).toMatchObject({
+    success: false,
+    error: expect.stringContaining('cancelled')
+  });
+  const dispatchCount = (ctx.dispatch as jest.Mock).mock.calls.length;
+  const fetchCount = (global.fetch as jest.Mock).mock.calls.length;
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/second.json'})).toMatchObject({
+    success: false,
+    error: expect.stringContaining('already in progress')
+  });
+  expect(ctx.dispatch).toHaveBeenCalledTimes(dispatchCount);
+  expect(global.fetch).toHaveBeenCalledTimes(fetchCount);
+  release();
+  await dispatchCompletion;
+  await new Promise(resolve => setTimeout(resolve, 0));
+  importData.mockRestore();
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/retry.json'})).toMatchObject({
+    success: true
+  });
+});
+
+it('releases the import lock after dispatch rejects', async () => {
+  const {ctx} = setup();
+  (ctx.dispatch as jest.Mock).mockRejectedValueOnce(new Error('Reset failed'));
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/first.json'})).toMatchObject({
+    success: false,
+    error: 'Reset failed'
+  });
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/retry.json'})).toMatchObject({
+    success: true
+  });
+});
+
+it('replaces a previous project basemap with a same-ID saved style', async () => {
+  const {ctx} = setup();
+  await ctx.dispatch(
+    loadMapStyles({
+      project: {
+        id: 'project',
+        label: 'Old style',
+        icon: '',
+        custom: 'LOCAL',
+        layerGroups: [],
+        url: 'https://styles.example.org/old.json',
+        accessToken: 'old-token',
+        style: {version: 8, name: 'Old cached style', sources: {}, layers: []}
+      }
+    })
+  );
+  const raw = fixture();
+  const importedStyle = {
+    id: 'project',
+    label: 'New style',
+    icon: '',
+    custom: 'LOCAL',
+    url: 'https://styles.example.org/new.json',
+    accessToken: 'new-token'
+  };
+  const project = {
+    ...raw,
+    config: {
+      ...raw.config,
+      config: {
+        ...raw.config.config,
+        mapStyle: {styleType: 'project', mapStyles: {project: importedStyle}}
+      }
+    }
+  };
+  const newStyle = {version: 8, name: 'New fetched style', sources: {}, layers: []};
+  global.fetch = jest.fn(
+    async url =>
+      ({
+        ok: true,
+        json: async () => (new URL(String(url)).hostname === 'localhost' ? project : newStyle)
+      } as Response)
+  );
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/project.json'})).toMatchObject({
+    success: true
+  });
+  expect(ctx.getKeplerState!()!.mapStyle).toMatchObject({
+    styleType: 'project',
+    mapStyles: {project: {...importedStyle, style: newStyle}}
+  });
+  serve(fixture());
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/without-custom.json'})).toMatchObject({
+    success: true
+  });
+  expect(ctx.getKeplerState!()!.mapStyle.mapStyles.project).toBeUndefined();
+});
+
+it('rejects custom basemap imports before mutation when the host cannot read map styles', async () => {
+  const raw = fixture();
+  serve({
+    ...raw,
+    config: {
+      ...raw.config,
+      config: {
+        ...raw.config.config,
+        mapStyle: {
+          styleType: 'custom',
+          mapStyles: {
+            custom: {id: 'custom', custom: 'LOCAL', url: 'https://styles.example.org/style.json'}
+          }
+        }
+      }
+    }
+  });
+  const {ctx} = setup();
+  delete ctx.getKeplerState;
+  expect(await execute(getOpenProjectCommand(ctx), {url: '/project.json'})).toMatchObject({
+    success: false,
+    error: expect.stringContaining('getKeplerState')
+  });
+  expect(ctx.dispatch).not.toHaveBeenCalled();
+});
+
 it('requires an explicit credential choice and complete host state for export', async () => {
   const {ctx} = setup();
   expect((await execute(getSaveProjectCommand(ctx), {})).success).toBe(false);
@@ -303,7 +486,7 @@ it('rejects invalid URLs and pre-cancelled calls without changing the map', asyn
   expect(
     (await execute(getOpenProjectCommand(ctx), {url: 'file:///tmp/project.json'})).success
   ).toBe(false);
-  const controller = new AbortController();
+  const controller = abortController();
   controller.abort();
   expect(
     (await execute(getOpenProjectCommand(ctx), {url: '/project.json'}, controller.signal)).success

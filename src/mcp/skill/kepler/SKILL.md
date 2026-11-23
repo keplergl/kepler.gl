@@ -88,8 +88,9 @@ The stdio bridge returns `artifact.uri` and an MCP resource link. Retrieve it wi
 HTTP GET or MCP `resources/read`, and download it before the server stops or its
 10-artifact / 100 MiB retention limit evicts it. Browser-only hosts receive the
 artifact JSON text. Host integrations must provide `KeplerContext.getKeplerState`
-for export and return the task middleware completion promise from `dispatch` for
-imports. The demo app supplies both.
+for export and custom-basemap import, return the task middleware completion promise
+from `dispatch`, and reuse one context per map across agent surfaces so overlapping
+imports are rejected. The demo app supplies these integrations.
 
 Prefer an available map tool to clicking the UI. Direct MCP tools take
 their command input object as arguments. On hosts with a command dispatcher,

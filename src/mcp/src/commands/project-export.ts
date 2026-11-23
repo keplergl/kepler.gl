@@ -72,38 +72,46 @@ function omitCredentials(value: unknown, removed: () => void, fieldName = ''): u
       /^(?:\/|\.\.?\/)/.test(value) ||
       (isUrlField && !/^[a-z][a-z\d+.-]*:/i.test(value)))
   ) {
-    const protocolRelative = value.startsWith('//');
-    const relative = !protocolRelative && !/^[a-z][a-z\d+.-]*:/i.test(value);
     let url: URL;
     try {
       url = new URL(value, 'https://kepler.invalid/');
     } catch {
       return value;
     }
-    let changed = false;
-    if (url.username || url.password) {
-      url.username = '';
-      url.password = '';
-      changed = true;
-    }
-    for (const name of Array.from(url.searchParams.keys())) {
-      if (URL_CREDENTIAL_FIELDS.has(normalizeCredentialName(name))) {
-        url.searchParams.delete(name);
-        changed = true;
-      }
-    }
+    // Editing URL.searchParams and returning URL.href also escapes tile tokens
+    // and rewrites unrelated query values. Keep the original resource text and
+    // remove only userinfo and credential parameters.
+    const hashIndex = value.indexOf('#');
+    const beforeHash = hashIndex < 0 ? value : value.slice(0, hashIndex);
+    const queryIndex = beforeHash.indexOf('?');
+    const path = queryIndex < 0 ? beforeHash : beforeHash.slice(0, queryIndex);
+    const safePath =
+      url.username || url.password
+        ? path.replace(/^((?:[a-z][a-z\d+.-]*:)?[/\\]{2,})[^/\\]*@/i, '$1')
+        : path;
+    let changed = safePath !== path;
+    const parameters =
+      queryIndex < 0
+        ? []
+        : beforeHash
+            .slice(queryIndex + 1)
+            .split('&')
+            .filter(parameter => {
+              const encodedName = parameter.split('=', 1)[0];
+              let name: string;
+              try {
+                name = decodeURIComponent(encodedName.replace(/\+/g, ' '));
+              } catch {
+                return true;
+              }
+              if (!URL_CREDENTIAL_FIELDS.has(normalizeCredentialName(name))) return true;
+              changed = true;
+              return false;
+            });
     if (!changed) return value;
     removed();
-    if (relative) {
-      // Keep relative directories and template paths intact; only the query
-      // changes. Resolving against a dummy origin is solely for URL parsing.
-      const hashIndex = value.indexOf('#');
-      const beforeHash = hashIndex < 0 ? value : value.slice(0, hashIndex);
-      const queryIndex = beforeHash.indexOf('?');
-      const path = queryIndex < 0 ? beforeHash : beforeHash.slice(0, queryIndex);
-      return `${path}${url.search}${hashIndex < 0 ? '' : value.slice(hashIndex)}`;
-    }
-    return protocolRelative ? url.href.slice('https:'.length) : url.href;
+    const query = parameters.length ? `?${parameters.join('&')}` : '';
+    return `${safePath}${query}${hashIndex < 0 ? '' : value.slice(hashIndex)}`;
   }
   if (Array.isArray(value)) return value.map(item => omitCredentials(item, removed, fieldName));
   if (!value || typeof value !== 'object') return value;

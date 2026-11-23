@@ -125,7 +125,7 @@ export type KeplerStateAccessors = {
  */
 export type KeplerContext = {
   getVisState: () => VisState;
-  /** Complete map state for saved-project export, including basemap and UI config. */
+  /** Complete map state for project export and custom-basemap import. */
   getKeplerState?: () => KeplerGlState | undefined;
   /** Current viewport for bookmark capture/navigation and camera-tour seeking. */
   getMapState?: () => MapState | undefined;

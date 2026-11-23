@@ -5,7 +5,11 @@ import {z} from 'zod';
 import {addDataToMap, resetMapConfig} from '@kepler.gl/actions';
 import {processKeplerglJSON} from '@kepler.gl/processors';
 import {serializeProject} from './project-export';
+import {prepareProjectMapStyles} from './project-map-styles';
 import type {KeplerContext, RoomCommand, VisState} from './types';
+
+// Hosts should reuse a context for each map, including across agent surfaces.
+const activeProjectImports = new WeakSet<KeplerContext>();
 
 const openSchema = z
   .object({
@@ -123,26 +127,27 @@ function skippedConfigWarnings(raw: any, state: VisState) {
   );
 }
 
-/** Await the host task middleware, while letting bridge/WebMCP cancellation return promptly. */
+/** This promise settles only after every dispatched task has settled. */
 async function dispatchProject(ctx: KeplerContext, payload: any, signal?: AbortSignal) {
-  await new Promise<void>((resolve, reject) => {
+  signal?.throwIfAborted();
+  // addDataToMap alone reuses same-ID tables and retains old source metadata.
+  await ctx.dispatch(resetMapConfig());
+  signal?.throwIfAborted();
+  await prepareProjectMapStyles(ctx, signal);
+  signal?.throwIfAborted();
+  await ctx.dispatch(addDataToMap(payload));
+  signal?.throwIfAborted();
+}
+
+/** Cancellation returns promptly without releasing an import still mutating the map. */
+function waitForProjectDispatch(completion: Promise<void>, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
     const onAbort = () =>
       reject(new Error('Project import cancelled; pending dataset loads may still complete.'));
-    signal?.addEventListener('abort', onAbort, {once: true});
-    Promise.resolve()
-      .then(() => {
-        signal?.throwIfAborted();
-        // addDataToMap alone reuses same-ID tables and retains old source metadata.
-        return ctx.dispatch(resetMapConfig());
-      })
-      .then(() => {
-        signal?.throwIfAborted();
-        return ctx.dispatch(addDataToMap(payload));
-      })
-      .then(() => resolve(), reject)
-      .finally(() => signal?.removeEventListener('abort', onAbort));
+    if (signal?.aborted) onAbort();
+    else signal?.addEventListener('abort', onAbort, {once: true});
+    completion.then(resolve, reject).finally(() => signal?.removeEventListener('abort', onAbort));
   });
-  signal?.throwIfAborted();
 }
 
 export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
@@ -159,9 +164,19 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
     metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: openSchema,
     execute: async (execution, input) => {
+      let ownsImport = false;
+      let dispatchCompletion: Promise<void> | undefined;
       try {
         const args = openSchema.parse(input);
         execution.signal?.throwIfAborted();
+        if (activeProjectImports.has(ctx)) {
+          throw new Error(
+            'A project import is already in progress for this map. Wait for it to finish.'
+          );
+        }
+        // Acquire before the first await so simultaneous calls cannot both reset the map.
+        activeProjectImports.add(ctx);
+        ownsImport = true;
         const response = await fetch(projectUrl(args.url).href, {signal: execution.signal});
         if (!response.ok) throw new Error(`Project request failed (HTTP ${response.status}).`);
         const raw = await response.json();
@@ -177,7 +192,15 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
         if (ctx.getVisState().fileLoading || ctx.getVisState().loadingIndicatorValue > 0) {
           throw new Error('Wait for the current dataset load to finish before opening a project.');
         }
-        await dispatchProject(
+        if (
+          Object.keys(parsed.config.mapStyle?.mapStyles ?? {}).length &&
+          !ctx.getKeplerState?.()
+        ) {
+          throw new Error(
+            'This host must provide KeplerContext.getKeplerState to replace custom project basemaps.'
+          );
+        }
+        dispatchCompletion = dispatchProject(
           ctx,
           {
             ...parsed,
@@ -185,6 +208,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
           },
           execution.signal
         );
+        await waitForProjectDispatch(dispatchCompletion, execution.signal);
         const state = ctx.getVisState();
         const missingDatasets = raw.datasets
           .map(dataset => dataset.data.id)
@@ -227,6 +251,18 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
           commandId: id,
           error: error instanceof Error ? error.message : String(error)
         };
+      } finally {
+        if (ownsImport) {
+          const release = () => {
+            activeProjectImports.delete(ctx);
+          };
+          if (dispatchCompletion) {
+            // The caller may have cancelled while the reducer's tasks are still running.
+            void dispatchCompletion.then(release, release);
+          } else {
+            release();
+          }
+        }
       }
     }
   };

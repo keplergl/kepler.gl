@@ -208,4 +208,44 @@ describe('project serialization', () => {
       serializeProject(stateFor(remote), {dataMode: 'embedded', includeCredentials: false})
     ).toThrow('Dataset "missing" has no loaded data to embed');
   });
+
+  it.each([
+    [
+      'https://user:secret@tiles.test/{z}/{x}/{y}.pbf?access_token=private&style=a%2fb&tile={z}&label=hello%20world#layer-{x}',
+      'https://tiles.test/{z}/{x}/{y}.pbf?style=a%2fb&tile={z}&label=hello%20world#layer-{x}'
+    ],
+    [
+      '//user:secret@tiles.test/{z}/{x}/{y}.pbf?v=1&%61pi_key=private&v=2&token=other#layer-{y}',
+      '//tiles.test/{z}/{x}/{y}.pbf?v=1&v=2#layer-{y}'
+    ],
+    [
+      '../tiles/{z}/{x}/{y}.pbf?token=private&style=a%2fb&tile={x}&label=hello+world#layer-{z}',
+      '../tiles/{z}/{x}/{y}.pbf?style=a%2fb&tile={x}&label=hello+world#layer-{z}'
+    ]
+  ])(
+    'preserves tile templates and unrelated URL text when excluding credentials: %s',
+    (url, expected) => {
+      const tiles = makeTable('tiles', DatasetType.VECTOR_TILE);
+      tiles.metadata = {tilesetDataUrl: url};
+      const state = stateFor(tiles);
+      state.mapStyle.mapStyles.custom.url = url;
+      const saved = JSON.parse(
+        serializeProject(state, {dataMode: 'references', includeCredentials: false}).text
+      );
+
+      expect(saved.datasets[0].data.metadata.tilesetDataUrl).toBe(expected);
+      expect(saved.config.config.mapStyle.mapStyles.custom.url).toBe(expected);
+      expect(processKeplerglJSON(saved)?.datasets?.[0]).toMatchObject({
+        metadata: {tilesetDataUrl: expected}
+      });
+      expect(tiles.metadata.tilesetDataUrl).toBe(url);
+      expect(state.mapStyle.mapStyles.custom.url).toBe(url);
+
+      const withCredentials = JSON.parse(
+        serializeProject(state, {dataMode: 'references', includeCredentials: true}).text
+      );
+      expect(withCredentials.datasets[0].data.metadata.tilesetDataUrl).toBe(url);
+      expect(withCredentials.config.config.mapStyle.mapStyles.custom.url).toBe(url);
+    }
+  );
 });
