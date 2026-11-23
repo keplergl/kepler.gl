@@ -978,6 +978,8 @@ export class EffectsSchema extends Schema {
 }
 
 const annotationPropsV1 = {
+  viewport: null,
+  readout: null,
   id: null,
   kind: null,
   isVisible: null,

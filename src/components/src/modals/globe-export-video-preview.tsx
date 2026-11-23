@@ -10,6 +10,7 @@ import {getStarsBackgroundStyle} from '@kepler.gl/deckgl-layers';
 import {DeckAdapter} from '@hubble.gl/core';
 import {EXPORT_DECK_DEVICE_PROPS, getGlobeExportLayers} from './hubble-utils';
 
+import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {VideoAnnotationOverlay} from './video-annotation-overlay';
 
 const PreviewContainer = styled.div<{
@@ -159,6 +160,10 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
         <VideoAnnotationOverlay
           frame={{
             annotations: this.props.mapData.visState?.annotations || [],
+            readoutValues: getAnnotationReadoutValues(
+              this.props.mapData.visState?.annotations || [],
+              this.props.mapData.visState
+            ),
             interactionConfig: this.props.mapData.visState?.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.props.viewState},
             animationTimeMs: this.props.animationTimeMs,

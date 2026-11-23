@@ -57,6 +57,84 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
 const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
   ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
 
+test.each([
+  [640, 360],
+  [1280, 720]
+])(
+  'keeps a live caption within %s x %s frame margins without projecting its geographic anchor',
+  (width, height) => {
+    const project = jest.fn(() => [NaN, NaN]);
+    const caption: Annotation = {
+      ...makeLegacyAnnotation(AnnotationKind.TEXT),
+      viewport: {anchor: 'bottom-right', margin: [24, 16]},
+      readout: {type: 'time'}
+    };
+    const props = {
+      annotations: [caption],
+      readoutValues: {[caption.id]: '1970-01-01'},
+      selectedAnnotationId: null,
+      isEditingAnnotationText: false,
+      isAnnotationMode: false,
+      mapIndex: 0,
+      viewport: {...viewport, width, height, project},
+      isGlobeEnabled: true,
+      updateAnnotation: jest.fn(),
+      setSelectedAnnotation: jest.fn()
+    };
+    const {container, rerender} = renderWithTheme(<AnnotationOverlay {...props} />);
+    const text = () => container.querySelector('[data-annotation-part="text"]');
+    expect(text()).toHaveStyle({
+      right: '24px',
+      bottom: '16px',
+      maxWidth: `${width - 48}px`,
+      maxHeight: `${height - 32}px`,
+      overflow: 'hidden'
+    });
+    expect(text()).toHaveTextContent('1970-01-01');
+    rerender(
+      <AnnotationOverlay
+        {...props}
+        viewport={{...props.viewport, longitude: 160}}
+        readoutValues={{[caption.id]: '1970-01-02'}}
+      />
+    );
+    expect(text()).toHaveStyle({right: '24px', bottom: '16px'});
+    expect(text()).toHaveTextContent('1970-01-02');
+    expect(container.querySelector('[data-annotation-part="shape"]')).toBeNull();
+    expect(project).not.toHaveBeenCalled();
+    expect(caption.label).toBe('Short ruler');
+  }
+);
+
+test('dragging a caption changes its margins without moving its geographic anchor', () => {
+  const caption: Annotation = {
+    ...makeLegacyAnnotation(AnnotationKind.TEXT),
+    viewport: {anchor: 'bottom-right', margin: [24, 16]}
+  };
+  const updateAnnotation = jest.fn();
+  const {container} = renderWithTheme(
+    <AnnotationOverlay
+      annotations={[caption]}
+      selectedAnnotationId={caption.id}
+      isEditingAnnotationText={false}
+      isAnnotationMode={true}
+      mapIndex={0}
+      viewport={viewport}
+      updateAnnotation={updateAnnotation}
+      setSelectedAnnotation={jest.fn()}
+    />
+  );
+  const text = container.querySelector('[data-annotation-part="text"]')!;
+  dispatchPointer(text, 'pointerdown', 500, 300);
+  dispatchPointer(document, 'pointermove', 504, 300);
+  dispatchPointer(document, 'pointermove', 520, 290);
+  dispatchPointer(document, 'pointerup', 520, 290);
+  expect(updateAnnotation).toHaveBeenLastCalledWith(caption.id, {
+    viewport: {anchor: 'bottom-right', margin: [4, 26]}
+  });
+  expect(caption.anchorPoint).toEqual([0, 0]);
+});
+
 describe('AnnotationOverlay opacity animation', () => {
   test.each([
     AnnotationKind.TEXT,

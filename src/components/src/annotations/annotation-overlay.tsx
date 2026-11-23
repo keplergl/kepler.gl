@@ -55,6 +55,7 @@ const AnnotationTextContainer = styled.div`
 
 export type AnnotationOverlayProps = {
   annotations: Annotation[];
+  readoutValues?: Record<string, string>;
   getAnnotationOpacity?: (annotationId: string) => number;
   /** Elapsed presentation time; omitted outside animation preview or export. */
   animationTimeMs?: number | null;
@@ -71,6 +72,7 @@ export type AnnotationOverlayProps = {
 
 const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   annotations,
+  readoutValues,
   getAnnotationOpacity = () => 1,
   animationTimeMs,
   selectedAnnotationId,
@@ -228,6 +230,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
               isGlobeEnabled={isGlobeEnabled}
               key={annotation.id}
               annotation={annotation}
+              readoutValue={readoutValues?.[annotation.id]}
               opacity={getOpacity(annotation)}
               viewport={viewport}
               isEditing={isAnnotationMode}

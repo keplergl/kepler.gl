@@ -17,6 +17,7 @@ import {
 import type {CameraKeyframeProps} from '@hubble.gl/core';
 import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
+import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {VideoAnnotationPreview} from './video-annotation-overlay';
 import {createNativeWebMEncoder, NativeWebMEncoder} from './native-webm-encoder';
 import {
@@ -240,6 +241,10 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
         this.getBaseEncoder(),
         () => ({
           annotations: this.props.mapData.visState.annotations || [],
+          readoutValues: getAnnotationReadoutValues(
+            this.props.mapData.visState?.annotations || [],
+            this.props.mapData.visState
+          ),
           interactionConfig: this.props.mapData.visState.interactionConfig,
           mapState: {...this.props.mapData.mapState, ...this.state.viewState},
           animationTimeMs: this.getAnimationTimeMs(),
@@ -398,6 +403,10 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
         preview = createElement(VideoAnnotationPreview, {
           frame: {
             annotations: this.props.mapData.visState.annotations,
+            readoutValues: getAnnotationReadoutValues(
+              this.props.mapData.visState?.annotations || [],
+              this.props.mapData.visState
+            ),
             interactionConfig: this.props.mapData.visState.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.state.viewState},
             animationTimeMs,

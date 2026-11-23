@@ -8,6 +8,9 @@ import deepmerge from 'deepmerge';
 import {
   arrayInsert,
   normalizeCameraBookmarks,
+  normalizeAnnotationViewport,
+  normalizeAnnotationReadout,
+  normalizeAnnotationCaption,
   normalizeCameraTour,
   combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
@@ -59,7 +62,8 @@ import {
   SavedAnimationConfig,
   LayerOrder,
   LayerOrderGroup,
-  ChartConfig
+  ChartConfig,
+  Annotation
 } from '@kepler.gl/types';
 import {KeplerTable, Datasets, assignGpuChannels, resetFilterGpuMode} from '@kepler.gl/table';
 
@@ -863,6 +867,22 @@ export function mergeEffects<S extends VisState>(
   };
 }
 
+function replaceAnnotationDatasetIds(
+  annotations: Annotation[] | undefined,
+  dataId: string,
+  dataIdToUse: string
+): Annotation[] | null {
+  const replaced = annotations
+    ?.filter(
+      annotation => annotation.readout?.type === 'count' && annotation.readout.dataId === dataId
+    )
+    .map(annotation => ({
+      ...annotation,
+      readout: {type: 'count' as const, dataId: dataIdToUse}
+    }));
+  return replaced?.length ? replaced : null;
+}
+
 /**
  * Merge annotations with saved config
  */
@@ -878,9 +898,13 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         a.id &&
         !existingIds.has(a.id) &&
         isAnnotationKind(a.kind) &&
-        Array.isArray(a.anchorPoint) &&
-        (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
-        a.anchorPoint.every(value => Number.isFinite(value)) &&
+        (a.viewport == null ||
+          (a.kind === AnnotationKind.TEXT && normalizeAnnotationViewport(a.viewport))) &&
+        (a.readout == null || (a.viewport && normalizeAnnotationReadout(a.readout))) &&
+        ((a.viewport && a.anchorPoint == null) ||
+          (Array.isArray(a.anchorPoint) &&
+            (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&
+            a.anchorPoint.every(value => Number.isFinite(value)))) &&
         (a.kind !== AnnotationKind.RULER ||
           (Array.isArray(a.endPoint) &&
             (a.endPoint.length === 2 || a.endPoint.length === 3) &&
@@ -904,6 +928,10 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
             }
           : {})
       };
+      annotation.anchorPoint = a.anchorPoint ?? [0, 0];
+      delete annotation.viewport;
+      delete annotation.readout;
+      Object.assign(annotation, normalizeAnnotationCaption(a));
       const propertyTransitions = normalizeLayerPropertyTransitions(a.propertyTransitions);
       if (propertyTransitions === undefined) delete annotation.propertyTransitions;
       else annotation.propertyTransitions = propertyTransitions;
@@ -1572,7 +1600,8 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
   {
     merge: mergeAnnotations,
     prop: 'annotations',
-    toMergeProp: 'annotationsToBeMerged'
+    toMergeProp: 'annotationsToBeMerged',
+    replaceParentDatasetIds: replaceAnnotationDatasetIds
   },
   {
     merge: mergeInteractions,

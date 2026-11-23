@@ -550,3 +550,77 @@ test('#visStateReducer -> SET_SELECTED_ANNOTATION', t => {
 
   t.end();
 });
+
+test('#visStateReducer -> captions persist through edits and duplication, and clear when made geographic', t => {
+  const viewport = {anchor: 'top-left', margin: [24, 24]};
+  const readout = {type: 'time', format: 'YYYY-MM-DD'};
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'caption',
+      kind: AnnotationKind.TEXT,
+      label: 'Date',
+      viewport,
+      readout
+    })
+  );
+  t.deepEqual(state.annotations[0].viewport, viewport, 'adds placement');
+  t.deepEqual(state.annotations[0].readout, readout, 'adds readout');
+  t.notEqual(state.annotations[0].viewport.margin, viewport.margin, 'owns margin array');
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {label: 'Current date'}));
+  t.deepEqual(state.annotations[0].viewport, viewport, 'ordinary edits retain placement');
+  state = reducer(state, VisStateActions.duplicateAnnotation('caption'));
+  t.deepEqual(state.annotations[0].readout, readout, 'duplicates readout');
+  t.notEqual(
+    state.annotations[0].viewport,
+    state.annotations[1].viewport,
+    'duplicate owns placement'
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {readout: undefined}));
+  t.notOk(state.annotations[1].readout, 'can return to static content');
+  t.deepEqual(state.annotations[1].viewport, viewport, 'static caption remains anchored');
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport: undefined}));
+  t.notOk(state.annotations[1].viewport, 'can return to geographic text');
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport, readout}));
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {kind: AnnotationKind.POINT}));
+  t.notOk(state.annotations[1].viewport, 'kind change clears viewport placement');
+  t.notOk(state.annotations[1].readout, 'kind change clears readout');
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {kind: AnnotationKind.TEXT}));
+  t.notOk(state.annotations[1].viewport, 'switching back starts with geographic text');
+  t.end();
+});
+
+test('#visStateReducer -> malformed caption fields never enter runtime state', t => {
+  const validViewport = {anchor: 'top', margin: [24, 24]};
+  for (const viewport of [
+    {anchor: 'unknown', margin: [1, 1]},
+    {anchor: 'top', margin: [-1, 1]},
+    {anchor: 'top', margin: [NaN, 1]}
+  ]) {
+    let state = reducer(
+      initialState,
+      VisStateActions.addAnnotation({
+        id: 'caption',
+        kind: AnnotationKind.TEXT,
+        viewport,
+        readout: {type: 'time'}
+      })
+    );
+    t.notOk(state.annotations[0].viewport, 'adding drops malformed placement');
+    t.notOk(state.annotations[0].readout, 'adding drops readout without placement');
+    state = reducer(
+      state,
+      VisStateActions.updateAnnotation('caption', {
+        viewport: validViewport,
+        readout: {type: 'count', dataId: ''}
+      })
+    );
+    t.deepEqual(
+      state.annotations[0].viewport,
+      validViewport,
+      'valid placement survives malformed readout'
+    );
+    t.notOk(state.annotations[0].readout, 'updating drops malformed readout');
+  }
+  t.end();
+});

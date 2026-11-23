@@ -205,9 +205,19 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
   expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
 });
 
-test('clips the two map overlays at the animated swipe position', async () => {
+test('clips geographic annotations and viewport captions to the same map panes', async () => {
   const {canvas, frame} = setup({
-    annotations: [annotation, {...annotation, id: 'right', mapIndex: 1}],
+    annotations: [
+      annotation,
+      {...annotation, id: 'right', mapIndex: 1},
+      {...annotation, id: 'caption-left', viewport: {anchor: 'top-left', margin: [24, 24]}},
+      {
+        ...annotation,
+        id: 'caption-right',
+        mapIndex: 1,
+        viewport: {anchor: 'top-right', margin: [24, 24]}
+      }
+    ],
     swipePercentage: 25
   });
   jest.mocked(domtoimage.toPng).mockImplementation(async node => {
@@ -215,7 +225,18 @@ test('clips the two map overlays at the animated swipe position', async () => {
       .map(element => element.style.clipPath)
       .filter(Boolean);
     expect(clips).toEqual(['inset(0 75% 0 0)', 'inset(0 0 0 25%)']);
-    expect(node.querySelectorAll('[data-annotation-part="text"]')).toHaveLength(2);
+    expect(node.querySelectorAll('[data-annotation-part="text"]')).toHaveLength(4);
+    for (const [id, clip] of [
+      ['caption-left', 'inset(0 75% 0 0)'],
+      ['caption-right', 'inset(0 0 0 25%)']
+    ]) {
+      const caption = (node as HTMLElement).querySelector<HTMLElement>(
+        `[data-annotation-id="${id}"]`
+      )!;
+      let parent = caption.parentElement;
+      while (parent && !parent.style.clipPath) parent = parent.parentElement;
+      expect(parent?.style.clipPath).toBe(clip);
+    }
     return 'data:image/png;base64,annotation';
   });
   await act(async () => compositeVideoAnnotations(canvas, frame));
@@ -380,3 +401,55 @@ test('applies the Kepler box model only to the offscreen capture subtree', async
     hostLabel.remove();
   }
 });
+
+test.each([1280, 1920])(
+  'keeps viewport captions inside frame margins during camera pans at %i output width',
+  async outputWidth => {
+    const {canvas, frame} = setup({
+      annotations: [
+        {
+          ...annotation,
+          viewport: {anchor: 'bottom-right', margin: [24, 16]},
+          // Even a geographic position behind the globe cannot hide a viewport caption.
+          anchorPoint: [180, 0],
+          readout: {type: 'time'}
+        }
+      ],
+      mapState: {longitude: 0, latitude: 0, zoom: 2, zoomOffset: -1, globe: {enabled: true}},
+      readoutValues: {label: '2026-01-01'}
+    });
+    canvas.width = outputWidth;
+    canvas.height = (outputWidth * 9) / 16;
+    const saved = JSON.parse(JSON.stringify(frame.annotations));
+    const view = render(<VideoAnnotationOverlay frame={frame} />);
+    const assertCaption = (node: HTMLElement, scale: number) => {
+      const captions = node.querySelectorAll<HTMLElement>('[data-annotation-part="text"]');
+      expect(captions).toHaveLength(1);
+      const caption = captions[0];
+      expect(caption).toHaveTextContent(annotation.label);
+      expect(caption).toHaveTextContent(frame.readoutValues!.label);
+      // These logical margins use the same uniformly scaled composition in preview and capture.
+      expect(Number.parseFloat(caption.style.right) * scale).toBe(24 * scale);
+      expect(Number.parseFloat(caption.style.bottom) * scale).toBe(16 * scale);
+      expect(Number.parseFloat(caption.style.maxWidth) * scale).toBe((640 - 48) * scale);
+      expect(Number.parseFloat(caption.style.maxHeight) * scale).toBe((360 - 32) * scale);
+    };
+    assertCaption(view.container, 0.5);
+    for (const longitude of [30, 120]) {
+      frame.mapState = {...frame.mapState, longitude};
+      frame.readoutValues = {label: longitude === 30 ? '2026-01-02' : '2026-01-03'};
+      view.rerender(<VideoAnnotationOverlay frame={frame} />);
+      assertCaption(view.container, 0.5);
+      jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+        assertCaption(node, outputWidth / 640);
+        expect((node.firstElementChild as HTMLElement).style.transform).toBe(
+          `scale(${outputWidth / 640})`
+        );
+        return 'data:image/png;base64,annotation';
+      });
+      await act(async () => compositeVideoAnnotations(canvas, frame));
+    }
+    expect(frame.annotations).toEqual(saved);
+    expect(domtoimage.toPng).toHaveBeenCalledTimes(2);
+  }
+);

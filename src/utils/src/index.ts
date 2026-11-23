@@ -2,6 +2,11 @@
 // Copyright contributors to the kepler.gl project
 
 // UTILS
+export {
+  normalizeAnnotationViewport,
+  normalizeAnnotationReadout,
+  normalizeAnnotationCaption
+} from './annotation-caption';
 export {getCameraSnapshot, normalizeCameraBookmarks, cameraForMap} from './camera-utils';
 export {normalizeCameraTour, getCameraTourDuration, evaluateCameraTour} from './camera-tour';
 export {

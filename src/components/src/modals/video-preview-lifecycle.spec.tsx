@@ -347,12 +347,23 @@ describe('globe preview capture contract', () => {
 });
 
 test.each(['globe', 'swipe'])(
-  'passes the live %s camera and swipe clock to the annotation overlay',
+  'passes the current %s camera, swipe clock and data readout to the annotation overlay',
   mode => {
     const input = props({
       mapData: {
         mapState: {zoomOffset: -1},
-        visState: {annotations: [{id: 'label'}], interactionConfig: {}}
+        visState: {
+          annotations: [
+            {
+              id: 'label',
+              kind: 'TEXT',
+              viewport: {anchor: 'top-left', margin: [24, 24]},
+              readout: {type: 'time', format: 'YYYY-MM-DD'}
+            }
+          ],
+          animationConfig: {currentTime: Date.UTC(2026, 0, 1)},
+          interactionConfig: {}
+        }
       }
     });
     const Preview = mode === 'globe' ? GlobeExportVideoPreview : SwipeExportVideoPreview;
@@ -360,6 +371,7 @@ test.each(['globe', 'swipe'])(
     expect(mockAnnotationOverlay).toHaveBeenLastCalledWith({
       frame: {
         annotations: input.mapData.visState.annotations,
+        readoutValues: {label: '2026-01-01'},
         interactionConfig: input.mapData.visState.interactionConfig,
         mapState: {...input.mapData.mapState, ...input.viewState},
         width: 640,
@@ -367,10 +379,15 @@ test.each(['globe', 'swipe'])(
         ...(mode === 'swipe' ? {swipePercentage: 25} : {})
       }
     });
+    input.mapData.visState = {
+      ...input.mapData.visState,
+      animationConfig: {currentTime: Date.UTC(2026, 0, 2)}
+    };
     view.rerender(
       <Preview {...input} currentTimeMs={750} viewState={{...input.viewState, longitude: 50}} />
     );
     expect(mockAnnotationOverlay.mock.lastCall[0].frame.mapState.longitude).toBe(50);
+    expect(mockAnnotationOverlay.mock.lastCall[0].frame.readoutValues).toEqual({label: '2026-01-02'});
     expect(mockAnnotationOverlay.mock.lastCall[0].frame.swipePercentage).toBe(
       mode === 'swipe' ? 75 : undefined
     );

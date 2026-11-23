@@ -105,6 +105,7 @@ export function VideoAnnotationOverlay({
         >
           <AnnotationOverlay
             annotations={annotations}
+            readoutValues={frame.readoutValues}
             getAnnotationOpacity={opacity}
             animationTimeMs={frame.animationTimeMs}
             selectedAnnotationId={null}

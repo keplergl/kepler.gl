@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import test from 'tape';
-import {mergeAnnotations, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {mergeAnnotations, INITIAL_VIS_STATE, replaceDatasetDepsInState} from '@kepler.gl/reducers';
 import {AnnotationKind} from '@kepler.gl/constants';
 
 const makeState = (annotations = []) => ({
@@ -238,5 +238,70 @@ test('#mergeAnnotations -> should accept 3D anchorPoint', t => {
   t.equal(result.annotations[0].id, 'xyz', 'should keep the 3D annotation');
   t.deepEqual(result.annotations[0].anchorPoint, [-122.4, 37.8, 45], 'should keep altitude');
 
+  t.end();
+});
+
+test('#mergeAnnotations -> imports viewport captions and rejects malformed placement/content', t => {
+  const viewport = {anchor: 'bottom-right', margin: [24, 32]};
+  const readout = {type: 'count', dataId: 'observations'};
+  const caption = {id: 'caption', kind: AnnotationKind.TEXT, viewport, readout, label: 'Count'};
+  const result = mergeAnnotations(makeState(), [
+    caption,
+    {...caption, id: 'bad-anchor', viewport: {...viewport, anchor: 'center'}},
+    {...caption, id: 'negative-margin', viewport: {...viewport, margin: [-1, 4]}},
+    {...caption, id: 'nonfinite-margin', viewport: {...viewport, margin: [Infinity, 4]}},
+    {...caption, id: 'missing-margin', viewport: {anchor: 'top'}},
+    {...caption, id: 'bad-readout', readout: {type: 'count'}},
+    {...caption, id: 'orphan-readout', viewport: undefined, anchorPoint: [0, 0]},
+    {...caption, id: 'point-caption', kind: AnnotationKind.POINT, anchorPoint: [0, 0]}
+  ]);
+  t.equal(result.annotations.length, 1, 'only valid text caption is imported');
+  t.deepEqual(result.annotations[0].viewport, viewport, 'placement is preserved');
+  t.deepEqual(result.annotations[0].readout, readout, 'count source is preserved');
+  t.deepEqual(result.annotations[0].anchorPoint, [0, 0], 'caption needs no geographic coordinates');
+  t.notEqual(result.annotations[0].viewport, viewport, 'placement belongs to imported state');
+  t.notEqual(result.annotations[0].viewport.margin, viewport.margin, 'margins are cloned');
+  t.notEqual(result.annotations[0].readout, readout, 'readout belongs to imported state');
+  t.end();
+});
+
+test('#mergeAnnotations -> count captions follow dataset replacements', t => {
+  const caption = makeAnnotation({
+    id: 'count',
+    kind: AnnotationKind.TEXT,
+    viewport: {anchor: 'top-left', margin: [24, 24]},
+    readout: {type: 'count', dataId: 'original'}
+  });
+  const staticCaption = {...caption, id: 'static', readout: undefined};
+  const otherCaption = {...caption, id: 'other', readout: {type: 'count', dataId: 'other-data'}};
+  const state = makeState([caption, staticCaption, otherCaption]);
+  const parked = replaceDatasetDepsInState(state, {dataId: 'original', dataIdToUse: 'replacement'});
+  t.deepEqual(
+    parked.annotations.map(a => a.id),
+    ['static', 'other'],
+    'only the dependent caption is parked'
+  );
+  t.deepEqual(
+    parked.annotationsToBeMerged[0].readout,
+    {type: 'count', dataId: 'replacement'},
+    'rewrites nested count source'
+  );
+  const merged = mergeAnnotations(parked, parked.annotationsToBeMerged);
+  t.deepEqual(
+    merged.annotations.find(a => a.id === 'count').readout,
+    {type: 'count', dataId: 'replacement'},
+    'restored caption follows replacement dataset'
+  );
+  t.deepEqual(
+    merged.annotations.find(a => a.id === 'count').viewport,
+    caption.viewport,
+    'keeps saved viewport placement'
+  );
+  t.deepEqual(caption.readout, {type: 'count', dataId: 'original'}, 'does not mutate prior state');
+  t.deepEqual(
+    merged.annotations.find(a => a.id === 'other').readout,
+    otherCaption.readout,
+    'unrelated count source is preserved'
+  );
   t.end();
 });

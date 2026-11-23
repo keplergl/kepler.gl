@@ -16,6 +16,7 @@ type StyledAnnotationTextProps = {
   $isEditingText?: boolean;
   $isDraggable?: boolean;
   $textVerticalAlign?: string;
+  $isViewport?: boolean;
 };
 
 const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
@@ -62,15 +63,23 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
         ? 'center'
         : 'flex-end'};
   }
+  ${props =>
+    props.$isViewport
+      ? `
+    .editor-inner { max-width: 100%; }
+    .editor-input { min-width: 0; }
+  `
+      : ''}
 `;
 
-const StyledToolbarWrapper = styled.div`
-  position: absolute;
-  bottom: 100%;
+const StyledToolbarWrapper = styled.div<{$isViewport?: boolean}>`
+  position: ${props => (props.$isViewport ? 'relative' : 'absolute')};
+  bottom: ${props => (props.$isViewport ? 'auto' : '100%')};
   left: 0;
   background-color: rgba(30, 33, 40, 0.95);
   border-radius: 5px;
   width: max-content;
+  max-width: ${props => (props.$isViewport ? '100%' : 'none')};
   padding: 2px 5px;
   margin-bottom: 4px;
   z-index: 1;
@@ -85,6 +94,7 @@ const StyledRulerDistance = styled.div`
 export type AnnotationTextProps = {
   isGlobeEnabled?: boolean;
   annotation: Annotation;
+  readoutValue?: string;
   opacity?: number;
   viewport: MapViewport;
   isEditing: boolean;
@@ -98,6 +108,7 @@ export type AnnotationTextProps = {
 const AnnotationText: FC<AnnotationTextProps> = ({
   isGlobeEnabled,
   annotation,
+  readoutValue,
   opacity = 1,
   viewport,
   isEditing,
@@ -107,6 +118,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   onChangeText,
   onUpdateAnnotation
 }) => {
+  const isViewport = annotation.kind === AnnotationKind.TEXT && Boolean(annotation.viewport);
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -148,10 +160,13 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isSelected={isSelected}
       $isDraggable={isDraggable}
       $textVerticalAlign={textVerticalAlign}
+      $isViewport={isViewport}
       data-annotation-id={annotation.id}
       data-annotation-part="text"
       style={{
         ...style,
+        // Keep editing popovers reachable; view/export composition stays clipped to its margins.
+        ...(isViewport && isEditing && isSelected ? {overflow: 'visible'} : {}),
         opacity,
         visibility: opacity === 0 ? 'hidden' : undefined,
         pointerEvents: opacity === 0 ? 'none' : undefined
@@ -206,7 +221,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
           onChange={handleEditorChange}
         >
           {isEditing && isSelected ? (
-            <StyledToolbarWrapper>
+            <StyledToolbarWrapper $isViewport={isViewport}>
               <LexicalToolbar
                 isEditingText={isEditingText}
                 textVerticalAlign={textVerticalAlign}
@@ -220,6 +235,9 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       ) : null}
       {distanceText ? (
         <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
+      ) : null}
+      {annotation.kind === AnnotationKind.TEXT && annotation.viewport && annotation.readout ? (
+        <div data-annotation-part="readout">{readoutValue ?? '—'}</div>
       ) : null}
     </StyledAnnotationText>
   );

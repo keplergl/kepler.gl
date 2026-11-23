@@ -6,6 +6,8 @@ import type {Annotation, InteractionConfig, MapState} from '@kepler.gl/types';
 
 export type VideoAnnotationFrame = {
   annotations: Annotation[];
+  /** Resolved data-timeline values for this frame, frozen before asynchronous capture. */
+  readoutValues?: Record<string, string>;
   interactionConfig?: InteractionConfig;
   mapState: MapState & {zoomOffset?: number};
   width: number;
@@ -51,7 +53,11 @@ export function createAnnotationVideoEncoder(
 
       // Both the mutable source canvas and camera must be frozen before the
       // asynchronous DOM rasterization starts. Redux annotation objects are immutable.
-      const snapshot = {...frame, mapState: {...frame.mapState}};
+      const snapshot = {
+        ...frame,
+        mapState: {...frame.mapState},
+        readoutValues: frame.readoutValues && {...frame.readoutValues}
+      };
       const output = this.annotationCanvas || document.createElement('canvas');
       this.annotationCanvas = output;
       output.width = canvas.width;

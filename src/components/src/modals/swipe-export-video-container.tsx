@@ -28,6 +28,7 @@ import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
 import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
 import {getCameraTourDuration} from '@kepler.gl/utils';
+import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
   CAMERA_TOUR_PRESET,
@@ -260,6 +261,10 @@ export class SwipeExportVideoPanelContainer extends Component<
       Encoder,
       () => ({
         annotations: this.props.mapData.visState.annotations || [],
+        readoutValues: getAnnotationReadoutValues(
+          this.props.mapData.visState?.annotations || [],
+          this.props.mapData.visState
+        ),
         interactionConfig: this.props.mapData.visState.interactionConfig,
         mapState: {...this.props.mapData.mapState, ...this.state.viewState},
         animationTimeMs: this.state.currentTimeMs,

@@ -61,6 +61,7 @@ import {
 import {
   FILTER_UPDATER_PROPS,
   normalizeCameraBookmarks,
+  normalizeAnnotationCaption,
   normalizeCameraTour,
   addNewLayersToSplitMap,
   snapToMarks,
@@ -3152,6 +3153,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
   const base = {
     id: config?.id ?? generateHashId(6),
     kind,
+    ...normalizeAnnotationCaption({...config, kind}),
     isVisible: config?.isVisible ?? true,
     ...(propertyTransitions !== undefined ? {propertyTransitions} : {}),
     autoSize: config?.autoSize ?? true,
@@ -3293,6 +3295,11 @@ export const updateAnnotationUpdater = (
     if (propertyTransitions === undefined) delete nextAnnotation.propertyTransitions;
     else nextAnnotation.propertyTransitions = propertyTransitions;
   }
+
+  const caption = normalizeAnnotationCaption(nextAnnotation);
+  delete nextAnnotation.viewport;
+  delete nextAnnotation.readout;
+  Object.assign(nextAnnotation, caption);
 
   const newAnnotations = [...state.annotations];
   newAnnotations[idx] = nextAnnotation;

@@ -95,7 +95,9 @@ jest.mock('./swipe-export-settings', () => ({__esModule: true, default: () => nu
 jest.mock('../common', () => ({
   Button: ({children, ...props}) => <button {...props}>{children}</button>
 }));
+jest.mock('@kepler.gl/table', () => ({copyTable: jest.fn()}));
 jest.mock('@kepler.gl/utils', () => ({
+  datetimeFormatter: jest.requireActual('../../../utils/src/data-utils').datetimeFormatter,
   getCameraTourDuration: () => 0,
   ...jest.requireActual('../../../utils/src/layer-visibility')
 }));
@@ -252,7 +254,16 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
   const annotations = [{id: 'label', isVisible: true, mapIndex: 0}] as Annotation[];
 
   it('composites annotations before submitting frames to the opt-in native encoder', async () => {
-    const {container} = mount(kind, 1000 / 30, [], annotations);
+    const captions = [
+      {
+        ...annotations[0],
+        kind: 'TEXT',
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout: {type: 'time', format: 'YYYY-MM-DD'}
+      }
+    ] as Annotation[];
+    const {container} = mount(kind, 1000 / 30, [], captions);
+    container.props.mapData.visState.animationConfig.currentTime = Date.UTC(2026, 0, 1);
     act(() => container.setMediaType('webm-native'));
     const Encoder = container.getEncoder();
     const encoder = new Encoder({framerate: 30});
@@ -267,12 +278,19 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     });
     expect(compositeVideoAnnotations).toHaveBeenCalledTimes(1);
     expect(addNative).not.toHaveBeenCalled();
+    expect(jest.mocked(compositeVideoAnnotations).mock.calls[0][1].readoutValues).toEqual({
+      label: '2026-01-01'
+    });
+    container.props.mapData.visState.animationConfig.currentTime = Date.UTC(2026, 0, 2);
     await act(async () => {
       pending.resolve();
       await adding;
     });
     expect(addNative).toHaveBeenCalledWith(jest.mocked(compositeVideoAnnotations).mock.calls[0][0]);
     expect(addNative.mock.calls[0][0]).not.toBe(source);
+    expect(jest.mocked(compositeVideoAnnotations).mock.calls[0][1].readoutValues).toEqual({
+      label: '2026-01-01'
+    });
   });
 
   it('waits for annotation composition before encoding and advancing the clock', async () => {

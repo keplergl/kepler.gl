@@ -7,6 +7,8 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {VERSIONS} from '@kepler.gl/schemas';
 
 const annotationPropsV1 = {
+  viewport: null,
+  readout: null,
   id: null,
   kind: null,
   isVisible: null,
@@ -289,5 +291,30 @@ test('#AnnotationsSchema -> 3D anchorPoint round-trips', t => {
     'should load [lng, lat, altitude]'
   );
 
+  t.end();
+});
+
+test('#AnnotationsSchema -> viewport captions and readouts round-trip', t => {
+  const annotations = [
+    makeTextAnnotation({viewport: {anchor: 'bottom-right', margin: [24, 32]}}),
+    makeTextAnnotation({
+      id: 'date',
+      viewport: {anchor: 'top', margin: [12, 16]},
+      readout: {type: 'time', format: 'YYYY-MM-DD'}
+    }),
+    makeTextAnnotation({
+      id: 'count',
+      viewport: {anchor: 'left', margin: [20, 40]},
+      readout: {type: 'count', dataId: 'observations'}
+    })
+  ];
+  const loaded = schema.load(schema.save(annotations).annotations).annotations;
+  loaded.forEach((annotation, index) => {
+    t.deepEqual(annotation.viewport, annotations[index].viewport, 'preserves placement');
+    t.deepEqual(annotation.readout, annotations[index].readout, 'preserves content source');
+  });
+  const legacy = schema.load(schema.save([makeTextAnnotation()]).annotations).annotations[0];
+  t.notOk(legacy.viewport, 'legacy text stays geographic');
+  t.notOk(legacy.readout, 'legacy text remains static');
   t.end();
 });
