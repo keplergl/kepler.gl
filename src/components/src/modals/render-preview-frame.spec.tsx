@@ -5,7 +5,7 @@
 import {act} from '@testing-library/react';
 import {preparePreviewFrame, renderPreviewFrame} from './render-preview-frame';
 import {compositeVideoAnnotations} from './video-annotation-overlay';
-import {calculateLayerData, visStateUpdaters} from '@kepler.gl/reducers';
+import {calculateLayerData} from '@kepler.gl/reducers';
 
 let mockModalProps;
 jest.mock('./export-video-modal', () => ({
@@ -20,23 +20,12 @@ jest.mock('./video-annotation-overlay', () => ({
 }));
 jest.mock('../annotations/annotation-readout', () => ({getAnnotationReadoutValues: () => ({})}));
 jest.mock('./hubble-utils', () => ({getAnimatableFilters: data => data.visState.filters}));
+jest.mock('@kepler.gl/table', () => ({copyTable: table => ({...table})}));
 jest.mock('@kepler.gl/reducers', () => ({
-  calculateLayerData: jest.fn(layer => ({layer, layerData: {owner: layer}})),
-  visStateUpdaters: {
-    setLayerAnimationTimeUpdater: jest.fn((state, {value}) => ({
-      ...state,
-      animationConfig: {...state.animationConfig, currentTime: value}
-    })),
-    setFilterAnimationTimeUpdater: jest.fn((state, {idx, value}) => ({
-      ...state,
-      filters: state.filters.map((filter, index) => ({
-        ...filter,
-        value: idx === index ? value : filter.value
-      }))
-    }))
-  }
+  calculateLayerData: jest.fn(layer => ({layer, layerData: {owner: layer}}))
 }));
 jest.mock('@kepler.gl/utils', () => ({
+  applyFiltersToDatasets: (_ids, datasets) => datasets,
   cameraForMap: camera => camera,
   getCameraTourDuration: tour => tour?.duration || 0,
   evaluateCameraTour: (_tour, time) => ({longitude: time / 1000, latitude: 20, zoom: 4})
@@ -120,26 +109,32 @@ function frame() {
   return {canvas, panel, layer, map};
 }
 
-test('isolates mutable layers, bound callbacks, effects, datasets and requested clocks', () => {
+test('shares dataset payloads while isolating layer ownership, table settings and requested clocks', () => {
   const live = fixture();
   const snapshot = preparePreviewFrame(live, {...size, dataTime: 250, cameraTimeMs: 500});
   expect(snapshot.mapState.longitude).toBe(0.5);
   expect(snapshot.visState.animationConfig.currentTime).toBe(250);
   snapshot.visState.layers[0].read();
-  snapshot.visState.effects[0].parameters.strength = 2;
-  snapshot.visState.datasets.data.filteredIndex.push(2);
+  expect(snapshot.visState.effects).toBe(live.visState.effects);
+  expect(snapshot.visState.datasets.data.filteredIndex).toBe(
+    live.visState.datasets.data.filteredIndex
+  );
+  snapshot.visState.datasets.data.filteredIndex = [2];
   expect(live.visState.layers[0].cache).toEqual([]);
   expect(live.visState.datasets.data.filteredIndex).toEqual([0, 1]);
   expect(live.mapState.longitude).toBe(1);
   expect(live.visState.animationConfig.currentTime).toBe(100);
+  expect(snapshot.visState.layers[0].config.animation.currentTime).toBe(250);
+  expect(live.visState.layers[0].config.animation.currentTime).toBeUndefined();
   expect(snapshot.visState.layerData[0].owner).toBe(snapshot.visState.layers[0]);
   expect(calculateLayerData).toHaveBeenCalled();
 });
 
-test('updates every time filter even when the previous update replaces other filter objects', () => {
+test('updates every time filter without changing the live filter windows', () => {
   const live = fixture();
   live.visState.filters = ['first', 'second'].map(id => ({
     id,
+    dataId: ['data'],
     value: [100, 150],
     animationWindow: 'free'
   }));
@@ -148,10 +143,8 @@ test('updates every time filter even when the previous update replaces other fil
     [200, 250],
     [200, 250]
   ]);
-  expect(
-    visStateUpdaters.setFilterAnimationTimeUpdater.mock.calls.map(call => call[1].idx)
-  ).toEqual([0, 1]);
   expect(live.visState.filters[0].value).toEqual([100, 150]);
+  expect(live.visState.filters[1].value).toEqual([100, 150]);
 });
 
 test.each([
@@ -163,6 +156,44 @@ test.each([
   {cameraTimeMs: 1001}
 ])('rejects invalid frame requests: %p', invalid => {
   expect(() => preparePreviewFrame(fixture(), {...size, ...invalid})).toThrow(/Preview/);
+});
+
+test('selects a valid zero-width time window for a point preview', () => {
+  const live = fixture();
+  live.visState.filters = [
+    {id: 'time', dataId: ['data'], value: [100, 150], animationWindow: 'point'}
+  ];
+  const snapshot = preparePreviewFrame(live, {...size, dataTime: 250});
+  expect(snapshot.visState.filters[0].value).toEqual([250, 250]);
+  expect(live.visState.filters[0].value).toEqual([100, 150]);
+});
+
+test.each([
+  [1999, [1000, 1999]],
+  [2000, [2000, 2999]],
+  [2500, [2000, 2999]]
+])('keeps interval preview at %s within its histogram bin', (dataTime, expected) => {
+  const live = fixture();
+  live.visState.filters = [
+    {
+      id: 'time',
+      dataId: ['data'],
+      value: [1000, 1999],
+      animationWindow: 'interval',
+      plotType: {interval: 'second'},
+      timeBins: {
+        data: {
+          second: [
+            {x0: 1000, x1: 2000},
+            {x0: 2000, x1: 3000}
+          ]
+        }
+      }
+    }
+  ];
+  const snapshot = preparePreviewFrame(live, {...size, dataTime});
+  expect(snapshot.visState.filters[0].value).toEqual(expected);
+  expect(live.visState.filters[0].value).toEqual([1000, 1999]);
 });
 
 test('waits for committed export buffers, layers and basemap and normalizes bounded pixel rounding', async () => {
@@ -182,6 +213,9 @@ test('waits for committed export buffers, layers and basemap and normalizes boun
   callbacks.onRender(panel, map);
   expect(draw).not.toHaveBeenCalled();
   layer.isLoaded = true;
+  // A Deck render can precede MapLibre's labels even after all resources load.
+  callbacks.onRender(panel);
+  expect(draw).not.toHaveBeenCalled();
   canvas.width = 540;
   callbacks.onRender(panel, map);
   expect(draw).not.toHaveBeenCalled();

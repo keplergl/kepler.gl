@@ -74,15 +74,59 @@ export function buildKeplerContext(reduxStore: any): KeplerContext {
       if (!map?.visState || !map?.mapState || !map?.mapStyle) {
         throw new Error('kepler.gl map is not initialized yet.');
       }
-      const {renderPreviewFrame} = await import('@kepler.gl/components');
-      return renderPreviewFrame(map, options, {
-        mapboxApiAccessToken: CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN,
-        containerW:
-          (typeof document !== 'undefined' &&
-            document.getElementById('kepler-gl__map')?.clientWidth) ||
-          map.mapState.width,
-        signal
+      // Share the data buffers, but reject a frame if live data changes while
+      // its native renderer loads. Read current tables: reducers can replace
+      // their wrappers while retaining the same mutable data container.
+      const datasets = Object.entries(map.visState.datasets || {}).map(
+        ([id, table]: [string, any]) => ({
+          id,
+          dataContainer: table.dataContainer,
+          dataRevision: table.dataRevision
+        })
+      );
+      const capture = new AbortController();
+      let dataChanged = false;
+      const cancel = () => capture.abort();
+      const unsubscribe = reduxStore.subscribe(() => {
+        if (capture.signal.aborted) return;
+        const current = readMap()?.visState?.datasets;
+        if (
+          !current ||
+          Object.keys(current).length !== datasets.length ||
+          datasets.some(
+            ({id, dataContainer, dataRevision}) =>
+              !current[id] ||
+              current[id].dataContainer !== dataContainer ||
+              current[id].dataRevision !== dataRevision
+          )
+        ) {
+          dataChanged = true;
+          capture.abort();
+        }
       });
+      signal?.addEventListener('abort', cancel, {once: true});
+      if (signal?.aborted) cancel();
+      try {
+        const {renderPreviewFrame} = await import('@kepler.gl/components');
+        if (capture.signal.aborted) throw new DOMException('Preview frame canceled', 'AbortError');
+        return await renderPreviewFrame(map, options, {
+          mapboxApiAccessToken: CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN,
+          containerW:
+            (typeof document !== 'undefined' &&
+              document.getElementById('kepler-gl__map')?.clientWidth) ||
+            map.mapState.width,
+          signal: capture.signal
+        });
+      } catch (error) {
+        if (dataChanged)
+          throw new Error(
+            'Map data changed while rendering the preview. Retry with the updated data.'
+          );
+        throw error;
+      } finally {
+        unsubscribe();
+        signal?.removeEventListener('abort', cancel);
+      }
     },
     videoExport: getVideoExportService(reduxStore),
     getMapState: () => readMap()?.mapState,
