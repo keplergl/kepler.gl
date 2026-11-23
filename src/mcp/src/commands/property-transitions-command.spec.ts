@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {addAnnotation} from '@kepler.gl/actions';
+import {addAnnotation, layerConfigChange, updateAnnotation, updateEffect} from '@kepler.gl/actions';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {createEffect} from '@kepler.gl/effects';
 import {LayerClasses} from '@kepler.gl/layers';
@@ -175,6 +175,54 @@ describe('timed property transition commands', () => {
   );
 
   it.each(targets)(
+    'addresses whitespace-bearing native block IDs verbatim on $type',
+    async ({type, id, property}) => {
+      const {run, dispatch, state} = setup();
+      const target = {type, id};
+      const plain = {...block, id: 'reveal'};
+      const spaced = {...block, id: ' reveal ', startTimeMs: 2000, endTimeMs: 3000};
+      const track = {[property]: [plain, spaced]};
+      if (type === 'layer') {
+        dispatch(layerConfigChange(state().layers[0], {propertyTransitions: track}));
+      } else if (type === 'annotation') {
+        dispatch(updateAnnotation(id, {propertyTransitions: track}));
+      } else {
+        dispatch(updateEffect(id, {animation: track}));
+      }
+      expect((await run({action: 'get', target, property})).data.tracks[property]).toEqual([
+        plain,
+        spaced
+      ]);
+
+      expect(
+        await run({
+          action: 'update',
+          target,
+          property,
+          blockId: spaced.id,
+          changes: {endValue: 0.4}
+        })
+      ).toMatchObject({success: true});
+      expect((await run({action: 'get', target, property})).data.tracks[property]).toEqual([
+        plain,
+        {...spaced, endValue: 0.4}
+      ]);
+      expect(await run({action: 'remove', target, property, blockId: spaced.id})).toMatchObject({
+        success: true
+      });
+      expect((await run({action: 'get', target, property})).data.tracks[property]).toEqual([plain]);
+
+      expect(await run({action: 'add', target, property, block: spaced})).toMatchObject({
+        success: true
+      });
+      expect((await run({action: 'get', target, property})).data.tracks[property]).toEqual([
+        plain,
+        spaced
+      ]);
+    }
+  );
+
+  it.each(targets)(
     'accepts adjacent blocks and zero-duration cuts on $type',
     async ({type, id, property}) => {
       const {run} = setup();
@@ -227,6 +275,7 @@ describe('timed property transition commands', () => {
     {action: 'add'},
     {action: 'add', property: undefined, block},
     {action: 'add', block: {...block, id: ''}},
+    {action: 'add', block: {...block, id: ' \t\n '}},
     {action: 'add', block: {...block, startTimeMs: -1}},
     {action: 'add', block: {...block, endTimeMs: -1}},
     {action: 'add', block: {...block, startTimeMs: 2000}},
@@ -238,7 +287,11 @@ describe('timed property transition commands', () => {
     {action: 'add', property: 'missing', block},
     {action: 'add', property: 'constructor', block},
     {action: 'add', target: {type: 'layer', id: 'missing'}, block},
+    {action: 'add', target: {type: 'layer', id: ' \t\n '}, block},
+    {action: 'add', property: ' \t\n ', block},
     {action: 'update', blockId: 'first', changes: {id: 'renamed'}},
+    {action: 'update', blockId: ' \t\n ', changes: {endValue: 0.4}},
+    {action: 'remove', blockId: ' \t\n '},
     {action: 'remove'}
   ])('rejects malformed requests without dispatch: %j', async input => {
     const {run, dispatch} = setup();

@@ -18,7 +18,7 @@ import {
 } from '@kepler.gl/utils';
 import type {KeplerContext, RoomCommand, VisState} from './types';
 
-const identifier = z.string().trim().min(1);
+const identifier = z.string().min(1).regex(/\S/, 'Identifier must not be blank.');
 const targetSchema = z.object({type: z.enum(['layer', 'annotation', 'effect']), id: identifier});
 const value = z.union([z.number().finite(), z.array(z.number().finite()).min(1)]);
 const blockFields = z.object({
