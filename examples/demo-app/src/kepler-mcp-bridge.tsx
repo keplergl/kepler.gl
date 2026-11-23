@@ -107,6 +107,12 @@ export function KeplerMcpBridge({reduxStore}: Props) {
     let socket: WebSocket | null = null;
     let attempts = 0;
     let retryTimer: number | null = null;
+    const activeCalls = new Map<string, AbortController>();
+
+    const abortActiveCalls = () => {
+      for (const controller of activeCalls.values()) controller.abort();
+      activeCalls.clear();
+    };
 
     const scheduleRetry = () => {
       if (stopped || attempts >= MAX_ATTEMPTS) return;
@@ -139,14 +145,26 @@ export function KeplerMcpBridge({reduxStore}: Props) {
         } catch {
           return;
         }
-        if (message?.type !== 'call') return;
+        if (message?.type === 'cancel') {
+          activeCalls.get(message.callId)?.abort();
+          activeCalls.delete(message.callId);
+          return;
+        }
+        if (message?.type !== 'call' || stopped) return;
         const {callId, tool, input} = message as {callId: string; tool: string; input?: unknown};
+        const controller = new AbortController();
+        activeCalls.set(callId, controller);
         let result: RoomCommandResult;
         try {
           const command = commandsById[tool];
           if (!command) throw new Error(`Unknown command: ${tool}`);
           result = (await command.execute(
-            {store: undefined, getState: () => undefined, invocation: {surface: 'mcp'}} as any,
+            {
+              store: undefined,
+              getState: () => undefined,
+              invocation: {surface: 'mcp'},
+              signal: controller.signal
+            } as any,
             input ?? {}
           )) as RoomCommandResult;
         } catch (error) {
@@ -156,12 +174,14 @@ export function KeplerMcpBridge({reduxStore}: Props) {
             error: error instanceof Error ? error.message : String(error)
           };
         }
-        if (ws.readyState === WebSocket.OPEN) {
+        activeCalls.delete(callId);
+        if (!controller.signal.aborted && !stopped && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({type: 'result', callId, result}));
         }
       };
 
       ws.onclose = event => {
+        abortActiveCalls();
         if (socket === ws) socket = null;
         if (stopped) return;
         if (event.code === 1008) {
@@ -178,6 +198,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
 
     return () => {
       stopped = true;
+      abortActiveCalls();
       if (retryTimer !== null) window.clearTimeout(retryTimer);
       socket?.close();
       socket = null;
