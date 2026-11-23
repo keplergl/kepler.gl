@@ -366,10 +366,12 @@ export const loadCloudMapSuccessUpdater = (
 
   const formatError = checkLoadMapResponseError(response);
   if (formatError) {
-    // if response format is not correct
-    return exportFileErrorUpdater(state, {
-      payload: {error: formatError, provider, onError}
-    });
+    // Dispatch the same load failure as download/parse errors so subscribers
+    // observe the failed load and both loading flags settle.
+    return withTask(
+      state,
+      ACTION_TASK().map(() => loadCloudMapError({error: formatError, provider, onError}))
+    );
   }
 
   // processorMethod can be async so create a task
@@ -414,7 +416,8 @@ export const loadCloudMapErrorUpdater = (
   state: ProviderState,
   action: ActionPayload<ProviderActions.LoadCloudMapErrorPayload>
 ): ProviderState => {
-  const message = getError(action.payload.error) || `Error loading saved map`;
+  const {error, provider, onError} = action.payload;
+  const message = getError(error) || `Error loading saved map`;
 
   Console.warn(message);
 
@@ -425,10 +428,12 @@ export const loadCloudMapErrorUpdater = (
     providerError: null
   };
 
-  return withTask(
-    newState,
-    createGlobalNotificationTasks({type: 'error', message, delayClose: false})
-  );
+  const tasks = [
+    ...createGlobalNotificationTasks({type: 'error', message, delayClose: false}),
+    createActionTask(onError, {error, provider})
+  ].filter((task): task is TaskDescriptor => Boolean(task));
+
+  return withTask(newState, tasks);
 };
 
 export const resetProviderStatusUpdater = (state: ProviderState): ProviderState => ({

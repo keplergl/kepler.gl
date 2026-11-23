@@ -82,6 +82,8 @@ export function getProjectStatus(reduxStore: any): {
   if (demo?.app?.error || fileFailed) return {state: 'failed'};
   if (
     demo?.app?.isMapLoading ||
+    demo?.app?.cloudMapPendingInstall ||
+    demo?.app?.progressiveContinuationPending ||
     map?.visState?.fileLoading ||
     map?.visState?.loadingIndicatorValue > 0 ||
     map?.uiState?.loadFiles?.fileLoading ||

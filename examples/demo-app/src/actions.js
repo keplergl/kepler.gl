@@ -91,8 +91,7 @@ export function onExportFileSuccess({provider, options}) {
 }
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
-  return dispatch => {
-    dispatch(setLoadingMapStatus(false));
+  return () => {
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
       const url = `/demo/map/${provider.name}?path=${mapUrl}`;
@@ -203,13 +202,16 @@ function loadRemoteSampleMap(options) {
     // Load remote dataset config for tiled layers
     toLoad.push(remoteDatasetConfigUrl ? loadRemoteConfig(remoteDatasetConfigUrl) : null);
 
-    Promise.all(toLoad)
+    return Promise.all(toLoad)
       .then(
         ([config, data, remoteDatasetConfig]) => {
           // TODO: these two actions can be merged
-          dispatch(loadRemoteResourceSuccess(data, config, options, remoteDatasetConfig));
+          const installation = dispatch(
+            loadRemoteResourceSuccess(data, config, options, remoteDatasetConfig)
+          );
           // TODO: toggleModal when async dataset task is done, show the spinner until then
           dispatch(toggleModal(null));
+          return installation;
         },
         error => {
           if (error) {

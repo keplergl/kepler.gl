@@ -48,6 +48,8 @@ const initialAppState = {
   loaded: false,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
+  cloudMapPendingInstall: false,
+  progressiveContinuationPending: false,
   error: null // contains error when loading/retrieving data/configuration
   // {
   //   status: null,
@@ -63,22 +65,53 @@ export const appReducer = (state = initialAppState, action) => {
     case LOAD_MAP_SAMPLE_FILE:
       return {...state, sampleMaps: action.samples};
     case ProviderActionTypes.LOAD_CLOUD_MAP:
-      return {...state, isMapLoading: true, error: null};
+      return {
+        ...state,
+        cloudMapPendingInstall: false,
+        error: null,
+        progressiveContinuationPending: false
+      };
+    case ProviderActionTypes.LOAD_CLOUD_MAP_SUCCESS_2:
+      // Core clears its download flag before the queued add-data action runs.
+      return {...state, cloudMapPendingInstall: true};
+    case ActionTypes.ADD_DATA_TO_MAP:
+      // The core loading indicator covers installation from this transition on.
+      // MCP imports also start here, so a retry must clear the previous failure.
+      return {...state, cloudMapPendingInstall: false, error: null};
     case ActionTypes.LOAD_FILES:
-      return {...state, error: null};
+      return {...state, error: null, progressiveContinuationPending: false};
+    case ActionTypes.CLEAR_STAGED_LOADED_FILES:
+      return {...state, progressiveContinuationPending: false};
+    case ActionTypes.LOAD_FILES_SUCCESS:
+      // This continuation now installs its next snapshot; the core loading
+      // indicator covers that work until another continuation is scheduled.
+      return Object.prototype.hasOwnProperty.call(unwrap(action), 'progressiveSteps')
+        ? {...state, progressiveContinuationPending: false}
+        : state;
     case ActionTypes.CREATE_NEW_DATASET_SUCCESS: {
-      const {results, replacement} = unwrap(action).payload;
-      return !replacement && results?.some(result => result.status === 'rejected')
-        ? {...state, isMapLoading: false, error: true}
+      const {results, replacement, onFinish} = unwrap(action).payload;
+      if (!replacement && results?.some(result => result.status === 'rejected')) {
+        return {...state, isMapLoading: false, error: true, progressiveContinuationPending: false};
+      }
+      // Arrow replay yields between snapshots. The table's loading indicator
+      // is already cleared while this explicit next-snapshot action is queued.
+      return onFinish?.type === ActionTypes.LOAD_FILES_SUCCESS &&
+        Array.isArray(onFinish.progressiveSteps)
+        ? {...state, progressiveContinuationPending: true}
         : state;
     }
     case ProviderActionTypes.LOAD_CLOUD_MAP_ERROR:
-      return {...state, isMapLoading: false, error: true};
+      return {
+        ...state,
+        cloudMapPendingInstall: false,
+        error: true,
+        progressiveContinuationPending: false
+      };
     case SET_SAMPLE_LOADING_STATUS:
       return {
         ...state,
         isMapLoading: action.isMapLoading,
-        ...(action.isMapLoading ? {error: null} : {})
+        ...(action.isMapLoading ? {error: null, progressiveContinuationPending: false} : {})
       };
     default:
       return state;
@@ -314,7 +347,10 @@ const composedReducer = (state, action) => {
       loading &&
       (loadId == null || loadId === loading.loadId)
     ) {
-      return {...nextState, app: {...nextState.app, error: true}};
+      return {
+        ...nextState,
+        app: {...nextState.app, error: true, progressiveContinuationPending: false}
+      };
     }
   }
   return nextState;
