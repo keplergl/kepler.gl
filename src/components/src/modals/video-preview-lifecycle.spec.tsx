@@ -357,6 +357,7 @@ test.each(['globe', 'swipe'])(
             {
               id: 'label',
               kind: 'TEXT',
+              isVisible: true,
               viewport: {anchor: 'top-left', margin: [24, 24]},
               readout: {type: 'time', format: 'YYYY-MM-DD'}
             }
@@ -387,7 +388,9 @@ test.each(['globe', 'swipe'])(
       <Preview {...input} currentTimeMs={750} viewState={{...input.viewState, longitude: 50}} />
     );
     expect(mockAnnotationOverlay.mock.lastCall[0].frame.mapState.longitude).toBe(50);
-    expect(mockAnnotationOverlay.mock.lastCall[0].frame.readoutValues).toEqual({label: '2026-01-02'});
+    expect(mockAnnotationOverlay.mock.lastCall[0].frame.readoutValues).toEqual({
+      label: '2026-01-02'
+    });
     expect(mockAnnotationOverlay.mock.lastCall[0].frame.swipePercentage).toBe(
       mode === 'swipe' ? 75 : undefined
     );

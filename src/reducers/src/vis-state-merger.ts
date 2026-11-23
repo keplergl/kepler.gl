@@ -170,9 +170,9 @@ export function parseLayerConfig(
   return schema.parseSavedConfig(savedConfig)?.visState?.layers?.[0];
 }
 
-function insertItemBasedOnPreservedOrder(
-  currentItems: Filter[],
-  items: Filter[],
+function insertItemBasedOnPreservedOrder<T extends {id: string}>(
+  currentItems: T[],
+  items: T[],
   preservedOrder: any[] = [],
   defaultStart?: boolean
 ) {
@@ -942,7 +942,16 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
   }
   return {
     ...state,
-    annotations: [...state.annotations, ...validAnnotations]
+    annotations: validAnnotations.reduce(
+      (merged, annotation) =>
+        insertItemBasedOnPreservedOrder(
+          merged,
+          [annotation],
+          state.preserveAnnotationOrder,
+          state.preserveAnnotationOrder?.includes(annotation.id)
+        ),
+      state.annotations
+    )
   };
 }
 
@@ -1601,6 +1610,7 @@ export const VIS_STATE_MERGERS: VisStateMergers<any> = [
     merge: mergeAnnotations,
     prop: 'annotations',
     toMergeProp: 'annotationsToBeMerged',
+    preserveOrder: 'preserveAnnotationOrder',
     replaceParentDatasetIds: replaceAnnotationDatasetIds
   },
   {

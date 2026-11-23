@@ -9,6 +9,7 @@ import {getAnnotationReadoutValues} from './annotation-readout';
 const caption = {
   id: 'caption',
   kind: AnnotationKind.TEXT,
+  isVisible: true,
   viewport: {anchor: 'top-left', margin: [24, 24]},
   readout: {type: 'time'}
 } as Annotation;
@@ -111,4 +112,90 @@ test('counts GPU-filtered records as the timeline advances without mutating data
   expect(getAnnotationReadoutValues([annotation], {...context, filters: []})).toEqual({
     caption: '3'
   });
+});
+
+test('counts only dataset filters and reuses counts across unrelated timeline changes', async () => {
+  const table = new KeplerTable({info: {id: 'counts'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [{name: 'time', type: 'integer', analyzerType: 'INT'}],
+      rows: [[0], [1], [2]]
+    }
+  });
+  const annotation = {...caption, readout: {type: 'count' as const, dataId: table.id}};
+  const filter = {
+    id: 'other-time',
+    dataId: ['other-dataset'],
+    name: ['time'],
+    fieldIdx: [0],
+    type: 'range',
+    domain: [0, 2],
+    value: [0, 1],
+    enabled: true,
+    gpu: true,
+    gpuChannel: [0]
+  } as Filter;
+  const context = {datasets: {[table.id]: table}, filters: [filter]};
+  const filterCPU = jest.spyOn(KeplerTable.prototype, 'filterTableCPU');
+  try {
+    expect(getAnnotationReadoutValues([annotation], context)).toEqual({caption: '3'});
+    expect(
+      getAnnotationReadoutValues([annotation], {...context, filters: [{...filter, value: [2, 2]}]})
+    ).toEqual({caption: '3'});
+    expect(filterCPU).toHaveBeenCalledTimes(1);
+    const ownFilter = {...filter, id: 'own-time', dataId: [table.id]};
+    expect(
+      getAnnotationReadoutValues([annotation], {...context, filters: [ownFilter, filter]})
+    ).toEqual({caption: '2'});
+    expect(
+      getAnnotationReadoutValues([annotation], {
+        ...context,
+        filters: [ownFilter, {...filter, value: [2, 2]}]
+      })
+    ).toEqual({caption: '2'});
+    expect(filterCPU).toHaveBeenCalledTimes(2);
+    expect(table.filteredIdxCPU).toBeUndefined();
+  } finally {
+    filterCPU.mockRestore();
+  }
+});
+
+test('hidden captions skip CPU counts and use the latest timeline when shown again', async () => {
+  const table = new KeplerTable({info: {id: 'counts'}, color: [0, 0, 0]});
+  await table.importData({
+    data: {
+      fields: [{name: 'time', type: 'integer', analyzerType: 'INT'}],
+      rows: [[0], [1], [2]]
+    }
+  });
+  const annotation = {...caption, readout: {type: 'count' as const, dataId: table.id}};
+  const filter = {
+    id: 'time',
+    dataId: [table.id],
+    name: ['time'],
+    fieldIdx: [0],
+    type: 'range',
+    domain: [0, 2],
+    value: [0, 1],
+    enabled: true,
+    gpu: true,
+    gpuChannel: [0]
+  } as Filter;
+  const context = {datasets: {[table.id]: table}, filters: [filter]};
+  const filterCPU = jest.spyOn(KeplerTable.prototype, 'filterTableCPU');
+  try {
+    expect(getAnnotationReadoutValues([{...annotation, isVisible: false}], context)).toEqual({});
+    expect(filterCPU).not.toHaveBeenCalled();
+    expect(getAnnotationReadoutValues([annotation], context)).toEqual({caption: '2'});
+    expect(filterCPU).toHaveBeenCalledTimes(1);
+    const nextContext = {...context, filters: [{...filter, value: [2, 2]}]};
+    expect(getAnnotationReadoutValues([{...annotation, isVisible: false}], nextContext)).toEqual(
+      {}
+    );
+    expect(filterCPU).toHaveBeenCalledTimes(1);
+    expect(getAnnotationReadoutValues([annotation], nextContext)).toEqual({caption: '1'});
+    expect(filterCPU).toHaveBeenCalledTimes(2);
+  } finally {
+    filterCPU.mockRestore();
+  }
 });

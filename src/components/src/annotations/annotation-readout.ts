@@ -43,7 +43,12 @@ export function getAnnotationReadoutValues(
     : animationConfig?.currentTime;
   const values: Record<string, string> = Object.create(null);
   for (const annotation of annotations) {
-    if (annotation.kind !== AnnotationKind.TEXT || !annotation.viewport || !annotation.readout) {
+    if (
+      !annotation.isVisible ||
+      annotation.kind !== AnnotationKind.TEXT ||
+      !annotation.viewport ||
+      !annotation.readout
+    ) {
       continue;
     }
     const {readout} = annotation;
@@ -60,18 +65,20 @@ export function getAnnotationReadoutValues(
         values[annotation.id] = '—';
         continue;
       }
+      const datasetFilters = filters.filter(filter => filter.dataId.includes(table.id));
       let cached = counts.get(table);
       if (
         !cached ||
-        cached.filters !== filters ||
+        cached.filters.length !== datasetFilters.length ||
+        datasetFilters.some((filter, index) => filter !== cached?.filters[index]) ||
         cached.layers !== layers ||
         cached.revision !== table.dataRevision
       ) {
         // CPU evaluation includes GPU time/range filters and polygon visibility.
         // Copy first: reading captions must not mutate the Redux dataset cache.
-        const filtered = copyTable(table).filterTableCPU(filters, layers);
+        const filtered = copyTable(table).filterTableCPU(datasetFilters, layers);
         cached = {
-          filters,
+          filters: datasetFilters,
           layers,
           revision: table.dataRevision,
           value: String(filtered.filteredIdxCPU?.length ?? 0)

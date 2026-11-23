@@ -118,6 +118,7 @@ export interface VisState {
   schema: typeof KeplerGLSchema;
   preserveLayerOrder?: string[];
   preserveFilterOrder?: string[];
+  preserveAnnotationOrder?: string[];
   preserveDatasetOrder?: string[];
   isMergingDatasets: {
     [datasetId: string]: boolean;
