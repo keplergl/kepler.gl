@@ -284,6 +284,30 @@ describe('surface fog rendering', () => {
     expect(center(render({depth: 0.51, uniforms}))).toEqual([40, 120, 190, 255]);
   });
 
+  test.each([0, 1])(
+    'draws signed relief relative to sea level and deep drawdown, pattern=%s',
+    pattern => {
+      const uniforms = {
+        invCol2: [0, 0, -10000, 0],
+        fogHeight: 0,
+        fogThickness: 0,
+        pattern
+      };
+      // The test camera reconstructs -1000, 0 and +1000 m at these depths.
+      for (const depth of [0.55, 0.5]) {
+        expect(center(render({depth, uniforms}))).not.toEqual(SOURCE);
+      }
+      expect(center(render({depth: 0.45, uniforms}))).toEqual(SOURCE);
+      for (const depth of [0.55, 0.5, 0.45]) {
+        expect(center(render({depth, uniforms: {...uniforms, fogHeight: -5000}}))).toEqual(SOURCE);
+      }
+      // A deeper seabed remains submerged after the drawdown.
+      expect(center(render({depth: 0.8, uniforms: {...uniforms, fogHeight: -5000}}))).not.toEqual(
+        SOURCE
+      );
+    }
+  );
+
   test('regular fog transition still fades above the elevation', () => {
     // Geometry at 100m, fog level 50m: a 100m transition puts it halfway
     // through the fade, while a 25m transition leaves it completely untouched.

@@ -1349,6 +1349,10 @@ export default function LayerConfiguratorFactory(
                 disabled={layer.config.visConfig.fixedHeight}
               />
               <VisConfigSwitch {...layer.visConfigSettings.fixedHeight} {...visConfiguratorProps} />
+              <VisConfigSlider
+                {...layer.visConfigSettings.elevationBase}
+                {...visConfiguratorProps}
+              />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 

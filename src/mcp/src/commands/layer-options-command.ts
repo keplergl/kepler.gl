@@ -145,7 +145,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
     name: 'Set layer options',
     group: 'Map',
     description:
-      'Patch visual settings using keys from map.get-layer-options. Supports point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
+      'Patch visual settings using keys from map.get-layer-options. Supports point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. For signed H3 elevations in meters, use enable3d=true, fixedHeight=true, elevationScale=1 and elevationBase below the minimum elevation; values below that display floor are clipped. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
     metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema,
     execute: (_execution, input) => {

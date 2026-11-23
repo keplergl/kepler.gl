@@ -293,6 +293,7 @@ mergedH3Layer.config = {
     coverageRange: [0, 1],
     enable3d: false,
     elevationScale: 5,
+    elevationBase: 0,
     enableElevationZoomFactor: true,
     fixedHeight: false
   },

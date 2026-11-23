@@ -66,6 +66,44 @@ describe('layer visual options', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
+  it('discovers and round trips an H3 display floor without changing the elevation data', async () => {
+    const {ctx, dispatch, dataset, layer, set, state} = setup('hexagonId');
+    dataset.importData({
+      data: {
+        fields: [{name: 'elevation', type: 'real'}],
+        rows: [[-1000], [0], [1000]]
+      }
+    });
+    const inspect = async () =>
+      (await getLayerOptionsCommand(ctx).execute({} as any, {
+        layerId: layer.id
+      })) as RoomCommandResult<any>;
+
+    expect((await inspect()).data.settings.elevationBase).toEqual({
+      type: 'number',
+      value: 0,
+      range: [-12000, 12000]
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+    const previous = {...layer.config.visConfig};
+    const options = {enable3d: true, fixedHeight: true, elevationScale: 1, elevationBase: -5900};
+    expect(await set({layerId: layer.id, options})).toMatchObject({success: true});
+    expect(state().layers[0].config.visConfig).toEqual({...previous, ...options});
+    expect((await inspect()).data.settings.elevationBase.value).toBe(-5900);
+    expect(dataset.dataContainer.flattenData()).toEqual([[-1000], [0], [1000]]);
+  });
+
+  it.each([-12001, 12001, NaN, Infinity, '-5900'])(
+    'rejects an invalid H3 display floor atomically: %s',
+    async elevationBase => {
+      const {set, dispatch} = setup('hexagonId');
+      expect(
+        await set({layerId: 'layer', options: {fixedHeight: true, elevationBase}})
+      ).toMatchObject({success: false});
+      expect(dispatch).not.toHaveBeenCalled();
+    }
+  );
+
   it.each<Record<string, unknown>>([
     {options: {glowExtent: 6}},
     {options: {glowExtent: NaN}},

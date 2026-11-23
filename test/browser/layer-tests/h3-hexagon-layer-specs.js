@@ -559,3 +559,150 @@ test('#H3Layer -> coverage field reaches polygon and column renderers', t => {
   testRenderLayerCases(t, H3Layer, cases);
   t.end();
 });
+
+test('#H3Layer -> signed relief uses a display floor without shifting the datum', t => {
+  const values = [-1000, 0, 1000, null, undefined, NaN, -7000];
+  const cases = [3, 9].map(resolution => {
+    const id = latLngToCell(19.5, -155.5, resolution);
+    const dataset = new KeplerTable({info: {id: dataId}, color: [255, 0, 0]});
+    dataset.importData({
+      data: {
+        fields: [
+          {name: 'hex_id', type: 'h3'},
+          {name: 'elevation', type: 'real'},
+          {name: 'coverage', type: 'real'}
+        ],
+        rows: values.map(value => [id, value, 0.25])
+      }
+    });
+    dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+
+    return {
+      name: `signed relief at resolution ${resolution}`,
+      layer: {
+        id: `signed-relief-${resolution}`,
+        type: 'hexagonId',
+        config: {
+          dataId,
+          columns: {hex_id: 'hex_id'},
+          sizeField: {name: 'elevation', type: 'real'},
+          coverageField: {name: 'coverage', type: 'real'},
+          visConfig: {
+            enable3d: true,
+            fixedHeight: true,
+            elevationScale: 1,
+            elevationBase: -5900,
+            coverageRange: [0, 1]
+          }
+        }
+      },
+      datasets: {[dataId]: dataset},
+      assert: (deckLayers, layer, layerData) => {
+        const manager = deckLayers[0].context.layerManager;
+        const renderUpdate = () => {
+          layerData = layer.formatLayerData({[dataId]: dataset}, layerData);
+          manager.setLayers(
+            layer.renderLayer({
+              data: layerData,
+              idx: 0,
+              gpuFilter: dataset.gpuFilter,
+              mapState: {...INITIAL_MAP_STATE, zoom: 2},
+              interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+              visible: true,
+              layerCallbacks: {}
+            })
+          );
+          return manager.getLayers()[1];
+        };
+        const assertRelief = (cells, base, scale = 1) => {
+          const heights = layerData.data.map(cells.props.getElevation);
+          t.deepEqual(
+            heights,
+            values.map(value => (Number.isFinite(value) ? Math.max(0, value * scale - base) : 0)),
+            'rendered extents use the display floor and omit missing elevations'
+          );
+          t.equal(cells.props.elevationScale, 1, 'rendered extents are already in meters');
+          t.deepEqual(
+            heights.slice(0, 3).map(height => base + height),
+            [-1000 * scale, 0, 1000 * scale],
+            'relief tops remain below, at and above the zero-meter water surface'
+          );
+          if (resolution === 9) {
+            const attributes = cells.getAttributeManager().getAttributes();
+            t.deepEqual(
+              Array.from(attributes.instanceElevations.value.slice(0, values.length)),
+              heights,
+              'column elevation attributes contain the render-only extents'
+            );
+            t.ok(
+              layerData.data.every(object => cells.props.getPosition(object)[2] === base),
+              'column positions use the display floor'
+            );
+            t.equal(
+              attributes.instanceCoverage.value[0],
+              0.5,
+              'per-cell coverage is preserved for columns'
+            );
+          } else {
+            t.equal(cells.props.positionFormat, 'XYZ', 'polygon geometry includes floor elevation');
+            const boundary = cellToBoundary(id, true).flat();
+            const center = getCentroid({id});
+            cells.state.paths.forEach(({path}) => {
+              t.ok(
+                path.every((value, i) =>
+                  i % 3 === 2
+                    ? value === base
+                    : Math.abs(
+                        value -
+                          (center[i % 3] +
+                            (boundary[Math.floor(i / 3) * 2 + (i % 3)] - center[i % 3]) * 0.5)
+                      ) < 1e-10
+                ),
+                'polygon vertices retain coverage at the display floor'
+              );
+            });
+          }
+        };
+
+        assertRelief(deckLayers[1], -5900);
+        t.deepEqual(
+          layerData.data
+            .slice(0, 3)
+            .map(object => layer.getHoverData(object, dataset.dataContainer).values()[1]),
+          [-1000, 0, 1000],
+          'tooltips retain signed source elevation'
+        );
+
+        layer.updateLayerVisConfig({elevationBase: -8000});
+        assertRelief(renderUpdate(), -8000);
+        layer.updateLayerVisConfig({elevationScale: 2});
+        assertRelief(renderUpdate(), -8000, 2);
+
+        layer.updateLayerVisConfig({enable3d: false});
+        const flatCells = renderUpdate();
+        t.equal(flatCells.props.extruded, false, '2D ignores the display floor');
+        if (resolution === 9) {
+          t.ok(
+            layerData.data.every(object => (flatCells.props.getPosition(object)[2] || 0) === 0),
+            'flat columns return to the geographic surface'
+          );
+        } else {
+          t.equal(flatCells.props.positionFormat, 'XY', 'flat polygons return to two dimensions');
+        }
+
+        layer.updateLayerVisConfig({enable3d: true, elevationBase: 0, elevationScale: 1});
+        const legacyCells = renderUpdate();
+        t.deepEqual(
+          layerData.data.slice(0, 3).map(legacyCells.props.getElevation),
+          [-1000, 0, 1000],
+          'the default zero base retains the original elevation accessor'
+        );
+        t.equal(legacyCells.props.elevationScale, 1, 'legacy elevation scaling is unchanged');
+        manager.finalize();
+      }
+    };
+  });
+
+  testRenderLayerCases(t, H3Layer, cases);
+  t.end();
+});

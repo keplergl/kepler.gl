@@ -2,12 +2,43 @@
 // Copyright contributors to the kepler.gl project
 
 import PostProcessingEffect, {getDefaultValueForParameter} from './post-processing-effect';
+import SurfaceFogEffect from './surface-fog-effect';
 import {getAnimatableEffectParameters, validateEffectAnimation} from './animation-utils';
 import {LIGHT_AND_SHADOW_EFFECT, POSTPROCESSING_EFFECTS} from '@kepler.gl/constants';
 import {DeckRenderer, WebMercatorViewport} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 
 describe('post-processing effect parameters', () => {
+  test('preserves geographic surface elevations and deep-water drawdown', () => {
+    const animation = {
+      height: [
+        {
+          id: 'water-drawdown',
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          startValue: 0,
+          endValue: -5000,
+          easing: 'linear' as const
+        }
+      ]
+    };
+    const effect = new SurfaceFogEffect({
+      type: 'surfaceFog',
+      parameters: {height: 0, heightEnd: -5000, animateHeight: true},
+      animation
+    });
+    expect(effect.parameters).toMatchObject({height: 0, heightEnd: -5000});
+    expect(effect.animation).toEqual(animation);
+    expect(effect.deckEffect.props.height).toBe(0);
+    effect.setProps({parameters: {height: -5000}});
+    expect(effect.parameters.height).toBe(-5000);
+    expect(effect.deckEffect.props.height).toBe(-5000);
+    const clone = effect.clone();
+    expect(clone.parameters).toEqual(effect.parameters);
+    expect(clone.animation).toEqual(animation);
+    expect(clone.deckEffect.props.height).toBe(-5000);
+  });
+
   test.each(['brightnessContrast', 'triangleBlur'])(
     'renders both %s effects when a second instance is added',
     type => {

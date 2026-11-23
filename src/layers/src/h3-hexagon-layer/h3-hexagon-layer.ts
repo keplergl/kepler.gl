@@ -58,6 +58,7 @@ export type HexagonIdLayerVisConfigSettings = {
   sizeRange: VisConfigRange;
   coverageRange: VisConfigRange;
   elevationScale: VisConfigNumber;
+  elevationBase: VisConfigNumber;
   enableElevationZoomFactor: VisConfigBoolean;
   fixedHeight: VisConfigBoolean;
   filled: VisConfigBoolean;
@@ -74,6 +75,7 @@ export type HexagonIdLayerVisConfig = {
   sizeRange: [number, number];
   coverageRange: [number, number];
   elevationScale: number;
+  elevationBase: number;
   enableElevationZoomFactor: boolean;
   fixedHeight: boolean;
   filled: boolean;
@@ -134,6 +136,7 @@ export const HexagonIdVisConfigs: {
   sizeRange: 'elevationRange';
   coverageRange: 'coverageRange';
   elevationScale: 'elevationScale';
+  elevationBase: VisConfigNumber;
   enableElevationZoomFactor: 'enableElevationZoomFactor';
   fixedHeight: 'fixedHeight';
 } = {
@@ -163,6 +166,15 @@ export const HexagonIdVisConfigs: {
   sizeRange: 'elevationRange',
   coverageRange: 'coverageRange',
   elevationScale: 'elevationScale',
+  elevationBase: {
+    ...LAYER_VIS_CONFIGS.elevationScale,
+    defaultValue: 0,
+    label: 'layerVisConfigs.elevationBase',
+    description: 'layerVisConfigs.elevationBaseDescription',
+    range: [-12000, 12000],
+    step: 1,
+    property: 'elevationBase'
+  },
   enableElevationZoomFactor: 'enableElevationZoomFactor',
   fixedHeight: 'fixedHeight'
 };
@@ -173,12 +185,44 @@ const brushingExtension = new BrushingExtension();
 // coverage accessor to its polygon geometry while keeping its renderer selection.
 class H3HexagonLayerWithCoverage extends H3HexagonLayer<
   HexagonIdLayerData,
-  {getCoverage: number | ((object: HexagonIdLayerData) => number)}
+  {getCoverage: number | ((object: HexagonIdLayerData) => number); elevationBase: number}
 > {
   renderLayers() {
-    const layer = super.renderLayers();
+    let layer = super.renderLayers();
+    const elevationBase = this.props.extruded ? this.props.elevationBase : 0;
+    if ((layer instanceof PolygonLayer || layer instanceof EnhancedColumnLayer) && elevationBase) {
+      const {getElevation, elevationScale, updateTriggers} = layer.props;
+      layer = layer.clone({
+        // Keep the source value relative to the geographic datum. Only the
+        // rendered extent is relative to the independent display floor.
+        getElevation: (object, objectInfo) => {
+          const elevation =
+            typeof getElevation === 'function' ? getElevation(object, objectInfo) : getElevation;
+          return Number.isFinite(elevation)
+            ? Math.max(0, elevation * elevationScale - elevationBase)
+            : 0;
+        },
+        elevationScale: 1,
+        updateTriggers: {
+          ...updateTriggers,
+          getElevation: {...updateTriggers.getElevation, elevationBase, elevationScale}
+        }
+      });
+      if (layer instanceof EnhancedColumnLayer) {
+        layer = layer.clone({
+          getPosition: (object: HexagonIdLayerData): [number, number, number] => [
+            ...object.centroid,
+            elevationBase
+          ],
+          updateTriggers: {
+            ...layer.props.updateTriggers,
+            getPosition: {...layer.props.updateTriggers.getPosition, elevationBase}
+          }
+        });
+      }
+    }
     const {getCoverage} = this.props;
-    if (!(layer instanceof PolygonLayer) || typeof getCoverage !== 'function') {
+    if (!(layer instanceof PolygonLayer) || (!elevationBase && typeof getCoverage !== 'function')) {
       return layer;
     }
     const {getPolygon, updateTriggers} = layer.props;
@@ -187,28 +231,35 @@ class H3HexagonLayerWithCoverage extends H3HexagonLayer<
     }
 
     return layer.clone({
+      positionFormat: elevationBase ? 'XYZ' : 'XY',
       getPolygon: (object, objectInfo) => {
-        const coverage = getCoverage(object);
+        const coverage = typeof getCoverage === 'function' ? getCoverage(object) : 1;
         const polygon = getPolygon(object, objectInfo) as Float64Array;
-        if (coverage === 1) {
+        if (coverage === 1 && !elevationBase) {
           return polygon;
         }
+        const positions = elevationBase ? new Float64Array((polygon.length / 2) * 3) : polygon;
         const [lng, lat] = object.centroid;
         for (let i = 0; i < polygon.length; i += 2) {
           // Keep dateline-crossing vertices on the same side as the cell center.
           const delta = polygon[i] - lng;
           const lngOffset = delta > 180 ? delta - 360 : delta < -180 ? delta + 360 : delta;
-          polygon[i] = lng + lngOffset * coverage;
-          polygon[i + 1] = lat + (polygon[i + 1] - lat) * coverage;
+          const index = elevationBase ? (i / 2) * 3 : i;
+          positions[index] = lng + lngOffset * coverage;
+          positions[index + 1] = lat + (polygon[i + 1] - lat) * coverage;
+          if (elevationBase) {
+            positions[index + 2] = elevationBase;
+          }
         }
-        return polygon;
+        return positions;
       },
       updateTriggers: {
         ...updateTriggers,
         // deck.gl compares trigger values shallowly; avoid nesting freshly created objects.
         getPolygon: {
           ...updateTriggers.getPolygon,
-          ...this.props.updateTriggers.getCoverage
+          ...this.props.updateTriggers.getCoverage,
+          elevationBase
         }
       }
     });
@@ -274,7 +325,8 @@ export default class HexagonIdLayer extends Layer {
         property: 'height',
         fixed: 'fixedHeight',
         accessor: 'getElevation',
-        nullValue: 0,
+        nullValue: config =>
+          config.visConfig.enable3d && config.visConfig.elevationBase !== 0 ? null : 0,
         condition: config => config.visConfig.enable3d,
         defaultValue: defaultElevation
       },
@@ -491,6 +543,7 @@ export default class HexagonIdLayer extends Layer {
         // elevation
         extruded: visConfig.enable3d,
         elevationScale: visConfig.elevationScale * eleZoomFactor,
+        elevationBase: visConfig.elevationBase,
 
         // render
         updateTriggers: h3HexagonLayerTriggers,

@@ -2846,6 +2846,56 @@ test('Components -> LayerConfigurator -> Voronoi fill, outline and bounds contro
   }
 });
 
+test('Components -> LayerConfigurator -> edits the H3 display floor without changing height settings', t => {
+  const layer = new LayerClasses.hexagonId({id: 'h3-floor', dataId: testCsvDataId});
+  const changed = sinon.spy();
+  function Editor() {
+    const [, setVersion] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          {...defaultProps}
+          layer={layer}
+          updateLayerVisConfig={value => {
+            changed(value);
+            layer.updateLayerVisConfig(value);
+            setVersion(version => version + 1);
+          }}
+        />
+      </IntlWrapper>
+    );
+  }
+  const view = renderWithTheme(<Editor />);
+  try {
+    const group = view.getByText('Display floor (m)').closest('.layer-config-group');
+    t.equal(layer.config.visConfig.elevationBase, 0, 'ordinary columns retain a zero floor');
+    t.ok(
+      group.querySelector('.layer-config-group__content').classList.contains('disabled'),
+      'floor controls are inactive until extrusion is enabled'
+    );
+    fireEvent.click(group.querySelector('.layer-config-group__header'));
+    fireEvent.click(
+      within(group.querySelector('.layer-config-group__header')).getByRole('checkbox')
+    );
+    fireEvent.click(group.querySelector('#h3-floor-fixedHeight-switch'));
+    fireEvent.click(
+      within(group).getByRole('button', {name: 'Enter custom value for Display floor (m)'})
+    );
+    const input = within(group).getByRole('spinbutton', {name: 'Display floor (m)'});
+    for (const floor of [-5900, -7000, 0]) {
+      fireEvent.change(input, {target: {value: String(floor)}});
+      fireEvent.blur(input);
+      t.deepEqual(changed.lastCall.args[0], {elevationBase: floor}, 'only updates the floor');
+      t.equal(layer.config.visConfig.elevationBase, floor, 'retains the signed floor');
+      t.equal(layer.config.visConfig.fixedHeight, true, 'preserves fixed source heights');
+      t.equal(layer.config.visConfig.enable3d, true, 'preserves extrusion');
+    }
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
 test('Components -> LayerConfigurator -> opacity remains accessible with advanced color settings collapsed', t => {
   for (const type of [
     'point',

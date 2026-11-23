@@ -30,6 +30,7 @@ import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@ke
 import {VisStateActions} from '@kepler.gl/actions';
 import {AnnotationKind, FILTER_VIEW_TYPES, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {createEffect} from '@kepler.gl/effects';
+import {KeplerTable, getGpuFilterProps} from '@kepler.gl/table';
 
 const expectedVisStateEntries = [
   'filters',
@@ -46,6 +47,74 @@ const expectedVisStateEntries = [
   'groupBys',
   'joins'
 ];
+
+test('#visStateSchema -> H3 display floor preserves signed data, filters and tooltip values', t => {
+  let state = keplerGlReducer(undefined, {});
+  const dataId = 'signed-relief';
+  const rows = [
+    ['89283082c2fffff', -1000],
+    ['89283082c3bffff', 0],
+    ['89283082c67ffff', 1000]
+  ];
+  const dataset = new KeplerTable({info: {id: dataId}});
+  dataset.importData({
+    data: {
+      fields: [
+        {name: 'hex_id', type: 'h3'},
+        {name: 'elevation', type: 'real'}
+      ],
+      rows
+    }
+  });
+  dataset.gpuFilter = getGpuFilterProps([], dataId, dataset.fields);
+  const visConfig = {enable3d: true, fixedHeight: true, elevationScale: 1, elevationBase: -5900};
+  const layer = validateLayerWithData(
+    dataset,
+    {
+      id: 'relief',
+      type: 'hexagonId',
+      config: {
+        dataId,
+        columns: {hex_id: 'hex_id'},
+        sizeField: {name: 'elevation', type: 'real'},
+        visConfig
+      }
+    },
+    state.visState.layerClasses
+  );
+  state.visState.datasets = {[dataId]: dataset};
+  state.visState.layers = [layer];
+  state.visState.layerOrder = [layer.id];
+  state = keplerGlReducer(state, VisStateActions.addFilter(dataId));
+  state = keplerGlReducer(state, VisStateActions.setFilter(0, 'name', 'elevation'));
+  state = keplerGlReducer(state, VisStateActions.setFilter(0, 'value', [-1000, 0]));
+  t.deepEqual(state.visState.filters[0].domain, [-1000, 1000], 'filter domain uses signed values');
+
+  const saved = SchemaManager.save(state);
+  const loaded = SchemaManager.load(saved);
+  t.deepEqual(loaded.datasets[0].data.rows, rows, 'saved data retains signed source elevations');
+  t.deepEqual(loaded.config.visState.filters[0].value, [-1000, 0], 'filter retains signed bounds');
+  const parsedLayer = loaded.config.visState.layers[0];
+  for (const [key, value] of Object.entries(visConfig)) {
+    t.equal(parsedLayer.config.visConfig[key], value, `saved map restores ${key}`);
+  }
+  const restoredDataset = new KeplerTable(loaded.datasets[0]);
+  restoredDataset.importData(loaded.datasets[0]);
+  const rebuilt = validateLayerWithData(restoredDataset, parsedLayer, state.visState.layerClasses);
+  t.equal(rebuilt.config.visConfig.elevationBase, -5900, 'reconstructed layer retains its floor');
+  t.deepEqual(
+    rows.map((row, index) =>
+      rebuilt.getHoverData({index}, restoredDataset.dataContainer).valueAt(1)
+    ),
+    [-1000, 0, 1000],
+    'tooltips expose measured elevations, not floor-relative heights'
+  );
+
+  delete parsedLayer.config.visConfig.elevationBase;
+  const legacy = validateLayerWithData(restoredDataset, parsedLayer, state.visState.layerClasses);
+  t.equal(legacy.config.visConfig.elevationBase, 0, 'old maps retain their zero column base');
+  t.end();
+});
 
 test('#visStateSchema -> annotation opacity transitions round trip without changing old annotations', t => {
   const state = cloneDeep(StateWFilesFiltersLayerColor);

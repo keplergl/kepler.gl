@@ -297,6 +297,9 @@ export default {
     sizeScale: 'Size Scale',
     worldUnitSize: 'World Unit Size',
     elevationScale: 'Elevation Scale',
+    elevationBase: 'Display floor (m)',
+    elevationBaseDescription:
+      'Base of H3 columns relative to sea level. For signed elevations, enable Fixed height, set Height Multiplier to 1, and choose a floor below the lowest elevation. Values below the floor are clipped. Zero preserves ordinary column heights.',
     elevationOffset: 'Elevation Offset',
     elevationOffsetDescription: 'Raise extruded polygons off the ground (same units as height)',
     elevationOffsetRange: 'Elevation Offset Range',
