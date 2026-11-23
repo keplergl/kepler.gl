@@ -3394,7 +3394,7 @@ test.each([500, undefined])(
   }
 );
 
-test('keeps preview geometry, styling, and filtering isolated from live row updates', () => {
+test('prepares preview styling with shared data without changing the live map or table', () => {
   const {preparePreviewFrame} = require('./render-preview-frame');
   const {KeplerTable} = require('@kepler.gl/table');
   const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
@@ -3425,7 +3425,7 @@ test('keeps preview geometry, styling, and filtering isolated from live row upda
     colors: ['#ff0000', '#0000ff']
   };
   layer.config.visConfig.radiusRange = [1, 10];
-  layer.config.textLabel[0].field = dataset.fields[2];
+  layer.config.textLabel = [{...layer.config.textLabel[0], field: dataset.fields[2]}];
   const filter = {
     id: 'values',
     type: 'range',
@@ -3451,6 +3451,13 @@ test('keeps preview geometry, styling, and filtering isolated from live row upda
       animationConfig: {currentTime: 100}
     }
   };
+  const originalConfig = layer.config;
+  const originalMeta = layer.meta;
+  const originalGpuFilter = dataset.gpuFilter;
+  const originalFilterRecord = dataset.filterRecord;
+  const originalIndex = dataset.filteredIndex;
+  const filterTable = jest.spyOn(dataset, 'filterTable');
+  const getColumnFilterProps = jest.spyOn(dataset, 'getColumnFilterProps');
   const preview = preparePreviewFrame(live, {width: 1000, height: 700, dataTime: 250});
   expect(preview.visState.layers[0]).toBeInstanceOf(PointLayer);
   expect(preview.visState.layers[0]).not.toBe(layer);
@@ -3458,8 +3465,14 @@ test('keeps preview geometry, styling, and filtering isolated from live row upda
   expect(preview.visState.layerData[0].data).toHaveLength(2);
   expect(preview.visState.animationConfig.currentTime).toBe(250);
   expect(live.visState.animationConfig.currentTime).toBe(100);
+  expect(preview.mapState).toEqual(live.mapState);
   expect(preview.visState.datasets.data).not.toBe(dataset);
-  expect(preview.visState.datasets.data.filteredIndex).toEqual(dataset.filteredIndex);
+  expect(preview.visState.datasets.data.dataContainer).toBe(dataset.dataContainer);
+  expect(preview.visState.datasets.data.fields).toBe(dataset.fields);
+  expect(preview.visState.datasets.data.fields[2].filterProps).toBe(dataset.fields[2].filterProps);
+  expect(preview.visState.datasets.data.filteredIndex).toBe(originalIndex);
+  expect(filterTable).not.toHaveBeenCalled();
+  expect(getColumnFilterProps).not.toHaveBeenCalled();
   const previewData = preview.visState.layerData[0];
   const [first, second] = previewData.data;
   expect(preview.visState.layers[0].config.colorField.valueAccessor(first)).toBe(10);
@@ -3470,14 +3483,94 @@ test('keeps preview geometry, styling, and filtering isolated from live row upda
   expect(previewData.getPosition(first)).toEqual([1, 20, 0]);
   expect(previewData.getFilterValue(first)[0]).toBe(0);
 
-  expect(dataset.upsertRows([[40, 1, 20]], 'lng')).toBe(true);
-  expect(dataset.fields[2].valueAccessor(first)).toBe(20);
-  expect(preview.visState.datasets.data.fields[2].valueAccessor(first)).toBe(10);
-  expect(preview.visState.layers[0].config.textLabel[0].field.valueAccessor(first)).toBe(10);
-  expect(previewData.getFillColor(first)).toEqual(color);
-  expect(previewData.getRadius(first)).toBe(1);
-  expect(previewData.getPosition(first)).toEqual([1, 20, 0]);
-  expect(previewData.getFilterValue(first)[0]).toBe(0);
+  expect(preview.visState.layers[0].config.colorField).toBe(dataset.fields[2]);
+  expect(preview.visState.layers[0].config.textLabel[0].field).toBe(dataset.fields[2]);
+  expect(layer.config).toBe(originalConfig);
+  expect(layer.meta).toBe(originalMeta);
+  expect(dataset.gpuFilter).toBe(originalGpuFilter);
+  expect(dataset.filterRecord).toBe(originalFilterRecord);
+  expect(dataset.filteredIndex).toBe(originalIndex);
+  expect(filter.value).toEqual([10, 20]);
+  filterTable.mockRestore();
+  getColumnFilterProps.mockRestore();
+});
+
+test.each([false, true])('seeks a time-filtered preview without copying data (gpu: %s)', gpu => {
+  const {preparePreviewFrame} = require('./render-preview-frame');
+  const {KeplerTable} = require('@kepler.gl/table');
+  const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: [
+      ...['lat', 'lng'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+      {name: 'time', type: 'timestamp', analyzerType: 'TIME', format: ''}
+    ],
+    rows: [
+      [20, 1, 1000],
+      [21, 2, 2000],
+      [22, 3, 3000]
+    ]
+  });
+  const layer = new PointLayer({
+    id: 'points',
+    dataId: 'data',
+    columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+  });
+  const cachedProps = dataset.getColumnFilterProps('time');
+  const filter = {
+    ...cachedProps,
+    id: 'time',
+    type: 'timeRange',
+    dataId: ['data'],
+    name: ['time'],
+    fieldIdx: [2],
+    value: [1000, 1000],
+    view: 'enlarged',
+    animationWindow: 'point',
+    gpu,
+    gpuChannel: [0],
+    fixedDomain: true
+  };
+  dataset.filterTable([filter], [layer]);
+  const originalIndex = dataset.filteredIndex;
+  const originalGpuFilter = dataset.gpuFilter;
+  const originalFilterRecord = dataset.filterRecord;
+  const live = {
+    mapState: DEFAULT_PROPS.mapState,
+    mapStyle: DEFAULT_PROPS.mapStyle,
+    visState: {
+      ...DEFAULT_PROPS.visState,
+      datasets: {data: dataset},
+      layers: [layer],
+      filters: [filter],
+      layerData: [],
+      animationConfig: {currentTime: 1000}
+    }
+  };
+  require('./hubble-utils').getAnimatableFilters.mockImplementationOnce(
+    actualHubbleUtils.getAnimatableFilters
+  );
+  const preview = preparePreviewFrame(live, {width: 1000, height: 700, dataTime: 2000});
+  const previewTable = preview.visState.datasets.data;
+  const previewData = preview.visState.layerData[0];
+  const range = previewTable.gpuFilter.filterRange[0];
+  const selected = gpu
+    ? previewData.data.filter(row => {
+        const value = previewData.getFilterValue(row)[0];
+        return value >= range[0] && value <= range[1];
+      })
+    : previewData.data;
+  expect(selected.map(row => row.index)).toEqual([1]);
+  expect(preview.visState.filters[0].value).toEqual([2000, 2000]);
+  expect(preview.visState.animationConfig.currentTime).toBe(2000);
+  expect(previewTable.dataContainer).toBe(dataset.dataContainer);
+  expect(previewTable.fields).toBe(dataset.fields);
+  expect(previewTable.fields[2].filterProps.mappedValue).toBe(cachedProps.mappedValue);
+  expect(preview.visState.filters[0].mappedValue).toBe(cachedProps.mappedValue);
+  expect(filter.value).toEqual([1000, 1000]);
+  expect(live.visState.animationConfig.currentTime).toBe(1000);
+  expect(dataset.filteredIndex).toBe(originalIndex);
+  expect(dataset.gpuFilter).toBe(originalGpuFilter);
+  expect(dataset.filterRecord).toBe(originalFilterRecord);
 });
 
 test('reports a visible layer formatting failure even when the reducer hides that layer', () => {

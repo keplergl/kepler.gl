@@ -17,6 +17,57 @@ jest.mock('../../examples/demo-app/src/kepler-video-export', () => ({
 }));
 
 describe('MCP native frame host', () => {
+  function host() {
+    let map = {
+      visState: {datasets: {points: {dataContainer: {}, dataRevision: 0}}},
+      mapState: {width: 1200},
+      mapStyle: {}
+    };
+    let onChange;
+    const unsubscribe = jest.fn(() => {
+      onChange = undefined;
+    });
+    const store = {
+      getState: () => ({demo: {keplerGl: {map}}}),
+      dispatch: jest.fn(),
+      subscribe: jest.fn(callback => {
+        onChange = callback;
+        return unsubscribe;
+      })
+    };
+    return {
+      store,
+      unsubscribe,
+      get map() {
+        return map;
+      },
+      update(next) {
+        map = next;
+        onChange?.();
+      }
+    };
+  }
+
+  function pendingRenderer() {
+    const {renderPreviewFrame} = require('@kepler.gl/components');
+    let started;
+    const ready = new Promise(resolve => {
+      started = resolve;
+    });
+    renderPreviewFrame.mockImplementationOnce(
+      (_map, _options, {signal}) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener(
+            'abort',
+            () => reject(new DOMException('Preview frame canceled', 'AbortError')),
+            {once: true}
+          );
+          started(signal);
+        })
+    );
+    return {ready};
+  }
+
   it('keeps video jobs and frame previews available on the same host', () => {
     const {getVideoExportService} = require('../../examples/demo-app/src/kepler-video-export');
     const store = {getState: () => ({})};
@@ -29,12 +80,11 @@ describe('MCP native frame host', () => {
     expect(getVideoExportService).toHaveBeenCalledWith(store);
   });
 
-  it('renders a snapshot of the current map without dispatching live changes', async () => {
+  it('renders the current map without dispatching live changes and releases its data guard', async () => {
     const {renderPreviewFrame} = require('@kepler.gl/components');
     const image = {mimeType: 'image/png', data: 'png', width: 1920, height: 1080};
     renderPreviewFrame.mockResolvedValue(image);
-    const map = {visState: {}, mapState: {width: 1200}, mapStyle: {}};
-    const store = {getState: () => ({demo: {keplerGl: {map}}}), dispatch: jest.fn()};
+    const {store, map, unsubscribe} = host();
     const options = {width: 1920, height: 1080, dataTime: 123, cameraTimeMs: 500};
     const signal = new AbortController().signal;
 
@@ -44,9 +94,79 @@ describe('MCP native frame host', () => {
     expect(renderPreviewFrame).toHaveBeenCalledWith(map, options, {
       mapboxApiAccessToken: 'configured-map-token',
       containerW: 1200,
-      signal
+      signal: expect.any(AbortSignal)
     });
     expect(store.dispatch).not.toHaveBeenCalled();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores view and wrapper changes but rejects a later mutation of the shared data', async () => {
+    const current = host();
+    const renderer = pendingRenderer();
+    const result = buildKeplerContext(current.store).renderPreviewFrame({width: 640, height: 480});
+    const signal = await renderer.ready;
+    const table = {...current.map.visState.datasets.points};
+    current.update({
+      ...current.map,
+      mapState: {width: 1200, zoom: 10},
+      mapStyle: {styleType: 'light'},
+      visState: {
+        ...current.map.visState,
+        animationConfig: {currentTime: 123},
+        datasets: {points: table}
+      }
+    });
+    expect(signal.aborted).toBe(false);
+
+    const failure = expect(result).rejects.toThrow('Map data changed');
+    table.dataRevision += 1;
+    current.update(current.map);
+    await failure;
+    expect(signal.aborted).toBe(true);
+    expect(current.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['replace', 'add', 'remove'])('cancels if datasets %s during rendering', async change => {
+    const current = host();
+    const renderer = pendingRenderer();
+    const result = buildKeplerContext(current.store).renderPreviewFrame({width: 640, height: 480});
+    await renderer.ready;
+    const datasets = {...current.map.visState.datasets};
+    if (change === 'replace') datasets.points = {...datasets.points, dataContainer: {}};
+    if (change === 'add') datasets.extra = {dataContainer: {}, dataRevision: 0};
+    if (change === 'remove') delete datasets.points;
+    const failure = expect(result).rejects.toThrow('Retry with the updated data');
+    current.update({...current.map, visState: {...current.map.visState, datasets}});
+    await failure;
+    expect(current.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves external cancellation and removes both listeners', async () => {
+    const current = host();
+    const renderer = pendingRenderer();
+    const controller = new AbortController();
+    const remove = jest.spyOn(controller.signal, 'removeEventListener');
+    const result = buildKeplerContext(current.store).renderPreviewFrame(
+      {width: 640, height: 480},
+      controller.signal
+    );
+    const signal = await renderer.ready;
+    const failure = expect(result).rejects.toThrow('Preview frame canceled');
+    controller.abort();
+    await failure;
+    expect(signal.aborted).toBe(true);
+    expect(current.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+
+  it('releases the data guard when rendering fails', async () => {
+    const {renderPreviewFrame} = require('@kepler.gl/components');
+    renderPreviewFrame.mockRejectedValueOnce(new Error('Invalid layer'));
+    const current = host();
+    await expect(
+      buildKeplerContext(current.store).renderPreviewFrame({width: 640, height: 480})
+    ).rejects.toThrow('Invalid layer');
+    expect(current.unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('reports an uninitialized map before mounting a renderer', async () => {

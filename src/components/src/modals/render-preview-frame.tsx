@@ -5,14 +5,18 @@ import React from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
-import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import cloneDeepWith from 'es-toolkit/compat/cloneDeepWith';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
 import {MapSplitMode} from '@kepler.gl/constants';
-import {calculateLayerData, visStateUpdaters} from '@kepler.gl/reducers';
-import {getFieldValueAccessor, type Datasets} from '@kepler.gl/table';
-import {cameraForMap, evaluateCameraTour, getCameraTourDuration} from '@kepler.gl/utils';
+import {calculateLayerData} from '@kepler.gl/reducers';
+import {copyTable} from '@kepler.gl/table';
+import type {TimeRangeFilter} from '@kepler.gl/types';
+import {
+  applyFiltersToDatasets,
+  cameraForMap,
+  evaluateCameraTour,
+  getCameraTourDuration
+} from '@kepler.gl/utils';
 import {drawStarsBackground, getGlobeClearColor} from '@kepler.gl/deckgl-layers';
 import ExportVideoModalFactory from './export-video-modal';
 import {getAnimatableFilters} from './hubble-utils';
@@ -42,7 +46,7 @@ export type FramePreviewCallbacks = {
 const noop = () => undefined;
 let previewActive = false;
 
-/** Snapshot mutable layer/table caches before reducers prepare the requested data frame. */
+/** Prepare independent frame settings over the loaded data; never copy dataset payloads. */
 export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFrameOptions) {
   const {width, height, dataTime, cameraTimeMs} = options;
   if (
@@ -63,85 +67,65 @@ export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFra
   if (cameraTimeMs !== undefined && (!Number.isFinite(cameraTimeMs) || cameraTimeMs < 0)) {
     throw new Error('Preview cameraTimeMs must be a finite, nonnegative number.');
   }
-  // Effects own GPU resources: use their supported clone operation, never copy
-  // an existing deck effect into another renderer. All other mutable caches are isolated.
-  const snapshot = cloneDeep({
+  const frame = {
     ...mapData,
-    visState: {...mapData.visState, effects: [], layers: [], layerData: []}
-  });
-  const datasets = snapshot.visState.datasets as Datasets;
-  for (const dataset of Object.values(datasets)) {
-    if (!dataset.dataContainer || !dataset.fields) continue;
-    const cachedFields = dataset.fields.filter(field => field.filterProps).map(field => field.name);
-    // cloneDeep retains functions, including accessors bound to the live table.
-    // Bind fields and their cached filter mappings to the copied container.
-    dataset.fields = dataset.fields.map((field, index) => {
-      const {filterProps: _filterProps, ...rest} = field;
-      return {...rest, valueAccessor: getFieldValueAccessor(field, index, dataset.dataContainer)};
-    });
-    dataset.filteredIdxCPU = undefined;
-    dataset.filterRecord = undefined;
-    dataset.filterRecordCPU = undefined;
-    dataset.changedFilters = undefined;
-    cachedFields.forEach(name => dataset.getColumnFilterProps(name));
-  }
-  snapshot.visState.layers = mapData.visState.layers.map(layer => {
-    if (layer.config.isVisible && layer.type === 'zarr') {
-      throw new Error(
-        'Preview frames do not yet support visible Zarr layers. Hide the Zarr layer before previewing.'
-      );
+    mapState: {...mapData.mapState},
+    visState: {
+      ...mapData.visState,
+      animationConfig: {
+        ...mapData.visState.animationConfig,
+        ...(dataTime === undefined ? {} : {currentTime: dataTime})
+      },
+      // filterTable replaces table properties. Its raw buffers, fields and
+      // cached time mappings remain shared and read-only during capture.
+      datasets: Object.fromEntries(
+        Object.entries(mapData.visState.datasets).map(([id, table]: [string, any]) => [
+          id,
+          copyTable(table)
+        ])
+      ),
+      layers: mapData.visState.layers.map(layer => {
+        if (layer.config.isVisible && layer.type === 'zarr') {
+          throw new Error(
+            'Preview frames do not yet support visible Zarr layers. Hide the Zarr layer before previewing.'
+          );
+        }
+        // New instances own their callbacks and render caches. Keep source
+        // fields/buffers shared, and isolate only mutable layer settings.
+        const config = {
+          ...layer.config,
+          animation: {
+            ...layer.config.animation,
+            ...(dataTime !== undefined && layer.config.animation?.enabled
+              ? {currentTime: dataTime}
+              : {})
+          }
+        };
+        const copy = new layer.constructor({...config, id: layer.id});
+        copy.config = config;
+        copy.meta = {...layer.meta};
+        return copy;
+      })
     }
-    // Arrow callbacks/memoizers close over their owning layer. A deep copy
-    // would retain callbacks bound to the live instance, so construct anew.
-    const LayerClass = layer.constructor;
-    const dataset = datasets[layer.config.dataId];
-    const config = cloneDeepWith(layer.config, value => {
-      const field =
-        value && typeof value.valueAccessor === 'function'
-          ? dataset?.fields.find(field => field.name === value.name)
-          : undefined;
-      return field
-        ? {...cloneDeep(value), valueAccessor: field.valueAccessor, filterProps: field.filterProps}
-        : undefined;
-    });
-    const copy = new LayerClass({...config, id: layer.id});
-    copy.config = config;
-    copy.meta = cloneDeep(layer.meta);
-    return copy;
-  });
-  for (const dataset of Object.values(datasets)) {
-    // Rebuild GPU accessors and CPU records using snapshot fields and layers.
-    dataset.filterTable?.(snapshot.visState.filters || [], snapshot.visState.layers);
-  }
-  snapshot.visState.layerData = snapshot.visState.layers.map((original, index) => {
-    if (original.config.isVisible === false) return {};
-    const {layer, layerData} = calculateLayerData(original, snapshot.visState);
-    snapshot.visState.layers[index] = layer;
-    if (!layer.isValid)
-      throw new Error(
-        `Preview layer "${layer.config.label || layer.id}" could not render: ${layer.errorMessage}`
-      );
-    return layerData;
-  });
-  snapshot.visState.effects = (mapData.visState.effects || []).map(effect => effect.clone());
+  };
   if (cameraTimeMs !== undefined) {
-    const duration = getCameraTourDuration(snapshot.visState.cameraTour);
+    const duration = getCameraTourDuration(frame.visState.cameraTour);
     if (!duration || cameraTimeMs > duration) {
       throw new Error(
         'Preview cameraTimeMs requires a camera tour and must be within its duration.'
       );
     }
-    const camera = evaluateCameraTour(snapshot.visState.cameraTour, cameraTimeMs);
-    snapshot.mapState = {
-      ...snapshot.mapState,
-      ...cameraForMap(camera!, Boolean(snapshot.mapState.globe?.enabled))
+    const camera = evaluateCameraTour(frame.visState.cameraTour, cameraTimeMs);
+    frame.mapState = {
+      ...frame.mapState,
+      ...cameraForMap(camera!, Boolean(frame.mapState.globe?.enabled))
     };
   }
+  const changedFilters: TimeRangeFilter[] = [];
   if (dataTime !== undefined) {
-    for (const filter of getAnimatableFilters(snapshot)) {
-      const idx = snapshot.visState.filters.findIndex(candidate => candidate.id === filter.id);
+    for (const filter of getAnimatableFilters(frame)) {
       const [start, end] = filter.value;
-      let value: number[];
+      let value: [number, number];
       if (filter.animationWindow === 'point') value = [dataTime, dataTime];
       else if (filter.animationWindow === 'incremental') value = [start, dataTime];
       else if (filter.animationWindow === 'interval') {
@@ -156,22 +140,42 @@ export function preparePreviewFrame(mapData: PreviewMapData, options: PreviewFra
             ? [dataTime, dataTime + end - start]
             : [dataTime - (end - start), dataTime];
       }
-      snapshot.visState = visStateUpdaters.setFilterAnimationTimeUpdater(snapshot.visState, {
-        idx,
-        prop: 'value',
-        value
-      });
+      changedFilters.push({...filter, value});
     }
-    snapshot.visState = visStateUpdaters.setLayerAnimationTimeUpdater(snapshot.visState, {
-      value: dataTime
-    });
+    frame.visState.filters = frame.visState.filters.map(
+      filter => changedFilters.find(changed => changed.id === filter.id) || filter
+    );
+    // Use the normal data filter path without rebuilding sidebar histograms.
+    frame.visState.datasets = applyFiltersToDatasets(
+      [...new Set<string>(changedFilters.flatMap(filter => filter.dataId))],
+      frame.visState.datasets,
+      frame.visState.filters,
+      frame.visState.layers
+    );
   }
-  return snapshot;
+  frame.visState.layerData = frame.visState.layers.map((layer, index) => {
+    if (layer.config.isVisible === false) return {};
+    const domainFilter = changedFilters.find(
+      filter => !filter.fixedDomain && filter.dataId.includes(layer.config.dataId)
+    );
+    if (domainFilter) layer.updateLayerDomain(frame.visState.datasets, domainFilter);
+    const {layer: renderedLayer, layerData} = calculateLayerData(layer, frame.visState);
+    frame.visState.layers[index] = renderedLayer;
+    if (!renderedLayer.isValid)
+      throw new Error(
+        `Preview layer "${renderedLayer.config.label || renderedLayer.id}" could not render: ${
+          renderedLayer.errorMessage
+        }`
+      );
+    return layerData;
+  });
+  return frame;
 }
 
 /**
  * Render one still through the video export's native canvases and annotation
- * compositor. This owns an isolated offscreen root; it never dispatches to the live map.
+ * compositor. The host must cancel via signal if shared dataset contents change.
+ * This owns an offscreen root and never dispatches to the live map.
  */
 export async function renderPreviewFrame(
   mapData: PreviewMapData,
@@ -191,7 +195,7 @@ export async function renderPreviewFrame(
   if (previewActive)
     throw new Error('A preview frame is already rendering. Try again when it finishes.');
   if (signal?.aborted) throw new DOMException('Preview frame canceled', 'AbortError');
-  const snapshot = preparePreviewFrame(mapData, options);
+  const frame = preparePreviewFrame(mapData, options);
   previewActive = true;
   const pixelRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
   let mount: HTMLDivElement | undefined;
@@ -201,9 +205,9 @@ export async function renderPreviewFrame(
   let abort: () => void = noop;
   let frameReady = false;
   let capturing = false;
-  const isGlobe = Boolean(snapshot.mapState.globe?.enabled);
+  const isGlobe = Boolean(frame.mapState.globe?.enabled);
   const isSwipe =
-    snapshot.mapState.isSplit && snapshot.mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
+    frame.mapState.isSplit && frame.mapState.mapSplitMode === MapSplitMode.SWIPE_COMPARE;
   try {
     Object.defineProperty(window, 'devicePixelRatio', {
       configurable: true,
@@ -273,10 +277,10 @@ export async function renderPreviewFrame(
           const context = canvas.getContext('2d');
           if (!context) throw new Error('Preview capture requires a 2D canvas.');
           if (isGlobe && !isSwipe) {
-            const [r, g, b] = getGlobeClearColor(snapshot.mapState.globe?.config?.backgroundColor);
+            const [r, g, b] = getGlobeClearColor(frame.mapState.globe?.config?.backgroundColor);
             context.fillStyle = `rgb(${r},${g},${b})`;
             context.fillRect(0, 0, canvas.width, canvas.height);
-            if (snapshot.mapState.globe?.config?.stars) {
+            if (frame.mapState.globe?.config?.stars) {
               drawStarsBackground(context, canvas.width, canvas.height, panel.state.viewState);
             }
           }
@@ -350,9 +354,9 @@ export async function renderPreviewFrame(
           <ThemeProvider theme={theme}>
             <IntlProvider locale="en" messages={messages.en}>
               <ExportVideoModal
-                {...snapshot}
+                {...frame}
                 exportVideo={{
-                  ...snapshot.uiState?.exportVideo,
+                  ...frame.uiState?.exportVideo,
                   resolution: `${options.width}x${options.height}`,
                   mediaType: 'png'
                 }}
