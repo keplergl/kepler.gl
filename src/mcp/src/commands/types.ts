@@ -6,6 +6,7 @@ import type {ZodType} from 'zod';
 import type {Datasets} from '@kepler.gl/table';
 import type {KeplerDispatch} from './utils';
 import type {MapState} from '@kepler.gl/types';
+import type {VideoExportProvider} from '../video-export';
 
 /**
  * Structural subset of `@sqlrooms/room-store`'s `RoomCommand` — enough for the
@@ -140,6 +141,8 @@ export type PreviewFrameImage = {
  * kepler-app wiring.
  */
 export type KeplerContext = {
+  /** Optional native renderer supplied by the connected map host. */
+  videoExport?: VideoExportProvider;
   getVisState: () => VisState;
   /** Render an isolated native export frame without changing the live map. */
   renderPreviewFrame?: (

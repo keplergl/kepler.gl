@@ -3,6 +3,7 @@
 
 // @ts-nocheck
 import {TileLayer, MVTLayer, _Tileset2D} from '@deck.gl/geo-layers';
+import {KeplerFilterKeyframes} from '@hubble.gl/core';
 import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
@@ -116,14 +117,44 @@ describe('hubble-utils', () => {
       expect(result.keyframes).toEqual([
         {value: [100, 200]},
         {value: [200, 300]},
+        {value: [300, 400]},
         {value: [300, 400]}
       ]);
-      expect(result.timings).toEqual([0, 300, 600]);
+      expect(result.timings).toEqual([0, 300, 600, 900]);
       // hold easing: returns 0 unless p === 1
       expect(result.easings(0)).toBe(0);
       expect(result.easings(0.5)).toBe(0);
       expect(result.easings(1)).toBe(1);
     });
+
+    test.each([1, 2, 3])(
+      'holds all %i interval bins through the end of the native export',
+      count => {
+        const bins = Array.from({length: count}, (_, index) => ({
+          x0: index * 100,
+          x1: (index + 1) * 100
+        }));
+        const filter = {
+          ...baseFilter,
+          id: 'time',
+          animationWindow: 'interval',
+          plotType: {interval: 'day'},
+          timeBins: {dataset1: {day: bins}}
+        };
+        const frames = new KeplerFilterKeyframes({
+          filter,
+          filterIdx: 0,
+          timings: [0, 2000],
+          getTimeRangeFilterKeyframes
+        });
+        bins.forEach((bin, index) => {
+          frames.setTime(((index + 0.5) * 2000) / count);
+          expect(frames.getFrame()).toEqual([bin.x0, bin.x1]);
+        });
+        frames.setTime(1999);
+        expect(frames.getFrame()).toEqual([bins[count - 1].x0, bins[count - 1].x1]);
+      }
+    );
 
     test('falls back to free keyframes when interval has no bins', () => {
       const filter = {

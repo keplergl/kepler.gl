@@ -12,8 +12,23 @@ jest.mock('@kepler.gl/components', () => ({renderPreviewFrame: jest.fn()}));
 jest.mock('../../examples/demo-app/src/constants/default-settings', () => ({
   CLOUD_PROVIDERS_CONFIGURATION: {MAPBOX_TOKEN: 'configured-map-token'}
 }));
+jest.mock('../../examples/demo-app/src/kepler-video-export', () => ({
+  getVideoExportService: jest.fn().mockReturnValue({start: jest.fn()})
+}));
 
 describe('MCP native frame host', () => {
+  it('keeps video jobs and frame previews available on the same host', () => {
+    const {getVideoExportService} = require('../../examples/demo-app/src/kepler-video-export');
+    const store = {getState: () => ({})};
+    const service = {start: jest.fn()};
+    getVideoExportService.mockReturnValueOnce(service);
+
+    const context = buildKeplerContext(store);
+    expect(context.videoExport).toBe(service);
+    expect(context.renderPreviewFrame).toEqual(expect.any(Function));
+    expect(getVideoExportService).toHaveBeenCalledWith(store);
+  });
+
   it('renders a snapshot of the current map without dispatching live changes', async () => {
     const {renderPreviewFrame} = require('@kepler.gl/components');
     const image = {mimeType: 'image/png', data: 'png', width: 1920, height: 1080};
