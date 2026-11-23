@@ -8,6 +8,12 @@ import {getViewModeCommand} from './view-mode-command';
 import {getVideoExportCommand} from './video-export-command';
 import {getMapBoundaryCommand} from './boundary-command';
 import {getAddLayerCommand} from './layer-creation-command';
+import {
+  getLayerOrderCommand,
+  getReorderLayersCommand,
+  getRemoveLayerCommand,
+  getRemoveDatasetCommand
+} from './layer-lifecycle-commands';
 import {getUpdateLayerColorCommand} from './layer-style-command';
 import {getLoadDataCommand} from './load-data-command';
 import {getSaveDataCommand} from './save-data-command';
@@ -53,6 +59,10 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getVideoExportCommand(ctx),
     getMapBoundaryCommand(ctx),
     getAddLayerCommand(ctx),
+    getLayerOrderCommand(ctx),
+    getReorderLayersCommand(ctx),
+    getRemoveLayerCommand(ctx),
+    getRemoveDatasetCommand(ctx),
     getUpdateLayerColorCommand(ctx),
     getLoadDataCommand(ctx),
     getOpenProjectCommand(ctx),
@@ -88,6 +98,12 @@ export {getViewModeCommand} from './view-mode-command';
 export {getVideoExportCommand} from './video-export-command';
 export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
+export {
+  getLayerOrderCommand,
+  getReorderLayersCommand,
+  getRemoveLayerCommand,
+  getRemoveDatasetCommand
+} from './layer-lifecycle-commands';
 export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getOpenProjectCommand, getSaveProjectCommand} from './project-commands';
