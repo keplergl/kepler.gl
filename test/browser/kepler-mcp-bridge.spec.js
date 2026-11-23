@@ -16,7 +16,6 @@ import {
   registerEntry,
   wrapTo
 } from '@kepler.gl/actions';
-import {load} from '@loaders.gl/core';
 import {processRowObject, processCsvData} from '@kepler.gl/processors';
 import {KeplerTable} from '@kepler.gl/table';
 import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
@@ -38,7 +37,24 @@ jest.mock('@openassistant/kepler-assistant', () => ({aiAssistantReducer: (state 
 jest.mock('../../examples/demo-app/src/utils/runtime-config', () => ({
   getRuntimeConfig: () => ({})
 }));
-jest.mock('@loaders.gl/core', () => ({...jest.requireActual('@loaders.gl/core'), load: jest.fn()}));
+// CI installs the demo separately, so its loaders can differ from the root copies.
+jest.mock(
+  require.resolve('@loaders.gl/parquet', {paths: [`${__dirname}/../../examples/demo-app`]}),
+  () => ({})
+);
+jest.mock(
+  require.resolve('@loaders.gl/core', {paths: [`${__dirname}/../../examples/demo-app`]}),
+  () => ({
+    ...jest.requireActual(
+      require.resolve('@loaders.gl/core', {paths: [`${__dirname}/../../examples/demo-app`]})
+    ),
+    load: jest.fn()
+  })
+);
+
+const {load} = require(require.resolve('@loaders.gl/core', {
+  paths: [`${__dirname}/../../examples/demo-app`]
+}));
 
 const thunk =
   ({dispatch, getState}) =>
