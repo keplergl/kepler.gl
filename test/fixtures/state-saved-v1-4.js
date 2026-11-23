@@ -260,6 +260,7 @@ mergedLayer0.config = {
     allowHover: true,
     showNeighborOnHover: false,
     showHighlightColor: true,
+    ageStyle: {},
     glowEnabled: false,
     glowExtent: 2,
     glowStrength: 0.5,

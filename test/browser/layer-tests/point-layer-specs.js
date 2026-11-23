@@ -13,6 +13,10 @@ import PulseRippleExtension, {
 } from '../../../src/layers/src/point-layer/pulse-ripple-extension';
 import PointGlowExtension from '../../../src/layers/src/point-layer/point-glow-extension';
 import moment from 'moment';
+import {
+  getFlatExportLayers,
+  getGlobeExportLayers
+} from '../../../src/components/src/modals/hubble-utils';
 import {getDistanceScales, zoomToScale} from '@math.gl/web-mercator';
 import {scaleQuantize} from 'd3-scale';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
@@ -24,6 +28,7 @@ import {GeoArrowScatterplotLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {arrowSchemaToFields, processArrowBatches, processGeojson} from '@kepler.gl/processors';
 import {
+  computeDeckLayers,
   findDefaultLayer,
   INITIAL_MAP_STATE,
   INITIAL_VIS_STATE,
@@ -583,6 +588,40 @@ test('#PointLayer -> native separated points preserve every coordinate through i
         );
       } finally {
         manager.finalize();
+      }
+      layer.updateLayerVisConfig({
+        ageStyle: {
+          timeField: 'started',
+          stops: [
+            {ageMs: 0, color: [255, 0, 0], opacity: 1},
+            {ageMs: 500, color: [0, 0, 255], opacity: 0.2}
+          ]
+        }
+      });
+      for (const time of [90500, 90499, 10000, 90500]) {
+        const core = renderEvents(time).find(item => item.id === layer.id);
+        core.renderLayers().forEach((sublayer, batchIndex) => {
+          rowIndices[batchIndex].forEach((rowIndex, index) => {
+            const age = time - values.flat()[rowIndex] * 1000;
+            const color = sublayer.props.getFillColor(null, {
+              index,
+              data: sublayer.props.data,
+              target: []
+            });
+            const expected = age < 0 ? 0 : age < 500 ? 255 : 51;
+            t.equal(
+              color[3],
+              expected,
+              'age alpha follows absolute rows across Arrow batches and MultiPoints'
+            );
+            if (age >= 0)
+              t.deepEqual(
+                color.slice(0, 3),
+                age < 500 ? [255, 0, 0] : [0, 0, 255],
+                'Arrow color changes at the boundary in either playback direction'
+              );
+          });
+        });
       }
       const vectorLayer = new GeoArrowScatterplotLayer({
         id: 'batched-vector-radius',
@@ -3574,5 +3613,151 @@ test('#PointLayer -> projection toggles refresh field-sized label offsets only',
     'projection does not invalidate scatterplot attributes'
   );
   t.equal(globe[0].props.data, flat[0].props.data, 'projection reuses point data');
+  t.end();
+});
+
+test('#PointLayer -> age bands survive saved maps and match live/native video frames', async t => {
+  const day = 86400000;
+  const epoch = Date.UTC(2026, 10, 1);
+  const dataset = new KeplerTable({info: {id: 'age-sightings'}, color: [0, 0, 0]});
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'},
+        {name: 'observed', type: 'timestamp', format: ''}
+      ],
+      rows: [
+        [1, 2, epoch],
+        [3, 4, null],
+        [5, 6, epoch + 100 * day]
+      ]
+    }
+  });
+  const layer = new PointLayer({id: 'age-points', dataId: dataset.id});
+  layer.config.columns.lat = {value: 'lat', fieldIdx: 0};
+  layer.config.columns.lng = {value: 'lng', fieldIdx: 1};
+  layer.updateLayerVisConfig({
+    opacity: 0.6,
+    outline: true,
+    ageStyle: {
+      timeField: 'observed',
+      stops: [
+        {ageMs: 0, color: [255, 0, 0], opacity: 1},
+        {ageMs: 14 * day, color: [0, 255, 0], opacity: 0.5},
+        {ageMs: 35 * day, color: [0, 0, 255], opacity: 0.2}
+      ]
+    }
+  });
+  const datasets = {[dataset.id]: dataset};
+  const filter = {
+    id: 'age-time',
+    type: 'timeRange',
+    dataId: [dataset.id],
+    name: ['observed'],
+    enabled: true,
+    value: [epoch, epoch],
+    domain: [epoch, epoch + 100 * day],
+    enlarged: true,
+    animationWindow: 'incremental'
+  };
+  const saved = visStateSchemaV1.save({
+    ...INITIAL_VIS_STATE,
+    layers: [layer],
+    layerOrder: [layer.id],
+    filters: [filter]
+  }).visState;
+  const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(saved))).visState;
+  const restored = testCreateLayerFromConfig(
+    t,
+    {layer: loaded.layers[0], datasets},
+    {point: PointLayer}
+  );
+  t.deepEqual(
+    restored.config.visConfig.ageStyle,
+    layer.config.visConfig.ageStyle,
+    'saves and restores the complete age configuration'
+  );
+  for (const candidate of [layer, restored]) {
+    const data = candidate.formatLayerData(datasets);
+    const configBefore = JSON.stringify(candidate.config);
+    for (const [age, rgb, alpha] of [
+      [0, [255, 0, 0], 255],
+      [14 * day - 1, [255, 0, 0], 255],
+      [14 * day, [0, 255, 0], 127.5],
+      [35 * day - 1, [0, 255, 0], 127.5],
+      [35 * day, [0, 0, 255], 51],
+      [14 * day, [0, 255, 0], 127.5],
+      [0, [255, 0, 0], 255]
+    ]) {
+      const state = {
+        visState: {
+          ...INITIAL_VIS_STATE,
+          datasets,
+          layers: [candidate],
+          layerOrder: [candidate.id],
+          layerData: [data],
+          filters: [{...filter, value: [epoch, epoch + age]}]
+        },
+        mapState: INITIAL_MAP_STATE,
+        mapStyle: {visibleLayerGroups: {}}
+      };
+      const live = computeDeckLayers(state, {mapIndex: 0, primaryMap: true})
+        .flat(Infinity)
+        .find(item => item.id === candidate.id);
+      const flat = getFlatExportLayers(state, {mapIndex: 0}).find(item => item.id === candidate.id);
+      const globe = getGlobeExportLayers(state, {mapIndex: 0})
+        .flat(Infinity)
+        .find(item => item.id === candidate.id);
+      for (const frame of [live, flat, globe]) {
+        t.deepEqual(
+          frame.props.getFillColor({index: 0}),
+          [...rgb, alpha],
+          'live, reopened and flat/globe export use identical age bands'
+        );
+        t.deepEqual(
+          frame.props.getLineColor({index: 0}),
+          [...rgb, alpha],
+          'outline follows age styling'
+        );
+        t.equal(frame.props.opacity, 0.6, 'layer opacity remains multiplicative');
+        t.equal(frame.props.getFillColor({index: 1})[3], 0, 'missing time is transparent');
+        t.equal(frame.props.getFillColor({index: 2})[3], 0, 'future observation is transparent');
+      }
+      t.equal(
+        live.props.updateTriggers.getFillColor.ageTime,
+        epoch + age,
+        'seeking invalidates GPU colors'
+      );
+    }
+    for (const filters of [
+      [],
+      [{...filter, enabled: false}],
+      [{...filter, name: ['other']}],
+      [{...filter, value: [NaN, Infinity]}]
+    ]) {
+      const [frame] = candidate.renderLayer({
+        data,
+        dataset,
+        idx: 0,
+        mapState: INITIAL_MAP_STATE,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        visible: true,
+        layerCallbacks: {},
+        filters
+      });
+      t.equal(
+        frame.props.getFillColor,
+        data.getFillColor,
+        'no valid matching clock leaves ordinary colors unchanged'
+      );
+    }
+    t.equal(
+      JSON.stringify(candidate.config),
+      configBefore,
+      'rendering never materializes styles into saved config'
+    );
+  }
   t.end();
 });

@@ -171,3 +171,62 @@ it('preserves automatic Zarr stretching while updating selections and opacity', 
   }
   expect(state().layers[0].config.visConfig).toMatchObject({zarrFrame: 2, opacity: 0.5});
 });
+
+describe('point age styling', () => {
+  const style = {
+    timeField: 'observed',
+    stops: [
+      {ageMs: 0, opacity: 1, color: [255, 0, 0]},
+      {ageMs: 14 * 86400000, opacity: 0.5},
+      {ageMs: 35 * 86400000, opacity: 0.2, color: [0, 0, 255]}
+    ]
+  };
+
+  it('sets, inspects and clears age bands without changing other settings', async () => {
+    const {dataset, set, state, ctx, layer} = setup();
+    dataset.fields.push({name: 'observed', type: 'timestamp'} as any);
+    const previous = {...layer.config.visConfig};
+    expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: true});
+    expect(state().layers[0].config.visConfig).toEqual({...previous, ageStyle: style});
+    expect(await getLayerOptionsCommand(ctx).execute({} as any, {layerId: 'layer'})).toMatchObject({
+      success: true,
+      data: {ageStyle: style}
+    });
+    expect(await set({layerId: 'layer', options: {opacity: 0.4}})).toMatchObject({success: true});
+    expect(state().layers[0].config.visConfig.ageStyle).toEqual(style);
+    expect(await set({layerId: 'layer', ageStyle: null})).toMatchObject({success: true});
+    expect(state().layers[0].config.visConfig).toEqual({...previous, opacity: 0.4});
+  });
+
+  it.each([
+    {},
+    {...style, timeField: 'missing'},
+    {...style, timeField: 'number'},
+    {...style, stops: []},
+    {...style, stops: [{ageMs: 1, opacity: 1}]},
+    {...style, stops: [{ageMs: -1, opacity: 1}]},
+    {...style, stops: [{ageMs: 0}]},
+    {...style, stops: [{ageMs: 0, opacity: 2}]},
+    {...style, stops: [{ageMs: 0, opacity: NaN}]},
+    {...style, stops: [{ageMs: 0, color: [0, 256, 0]}]},
+    {...style, stops: [{ageMs: 0, color: [0, 0]}]},
+    {...style, stops: [style.stops[0], style.stops[0]]},
+    {...style, stops: [style.stops[0], style.stops[2], style.stops[1]]}
+  ])('rejects invalid age styles atomically: %j', async ageStyle => {
+    const {dataset, set, dispatch} = setup();
+    dataset.fields.push(
+      {name: 'observed', type: 'timestamp'} as any,
+      {name: 'number', type: 'real'} as any
+    );
+    expect(await set({layerId: 'layer', options: {opacity: 0.4}, ageStyle})).toMatchObject({
+      success: false
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('rejects age styling on other layer types', async () => {
+    const {set, dispatch} = setup('heatmap');
+    expect(await set({layerId: 'layer', ageStyle: style})).toMatchObject({success: false});
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});
