@@ -48,7 +48,7 @@ describe('MCP browser bridge cancellation', () => {
     global.WebSocket = MockWebSocket;
     sessionStorage.clear();
     window.history.replaceState({}, '', '/?mcp=test-token');
-    buildKeplerContext.mockReturnValue({});
+    buildKeplerContext.mockReturnValue({videoExport: {cancelActive: jest.fn()}});
     execute = jest.fn();
     buildCatalog.mockReturnValue([{id: 'map.load-data', execute}]);
   });
@@ -118,6 +118,9 @@ describe('MCP browser bridge cancellation', () => {
     }
 
     expect(execute.mock.calls.map(([context]) => context.signal.aborted)).toEqual([true, true]);
+    expect(buildKeplerContext.mock.results[0].value.videoExport.cancelActive).toHaveBeenCalledTimes(
+      1
+    );
     pending.resolve({success: true});
     await Promise.all(calls);
     expect(socket.send).not.toHaveBeenCalled();

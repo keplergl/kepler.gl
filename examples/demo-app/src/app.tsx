@@ -14,6 +14,7 @@ import {setMapBoundary} from '@openassistant/kepler-assistant';
 import {AiAssistantPanel} from '@openassistant/kepler-assistant';
 import {KeplerWebMcp} from './kepler-webmcp';
 import {KeplerMcpBridge} from './kepler-mcp-bridge';
+import {disposeVideoExportService} from './kepler-video-export';
 import {panelBorderColor, theme} from '@kepler.gl/styles';
 import {ParsedConfig} from '@kepler.gl/types';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -159,6 +160,8 @@ const App = props => {
   const query = Object.fromEntries(searchParams.entries());
   const dispatch = useDispatch();
   const reduxStore = useStore();
+
+  useEffect(() => () => disposeVideoExportService(reduxStore), [reduxStore]);
 
   // TODO find another way to check for existence of duckDb plugin
   const duckDbPluginEnabled = (getApplicationConfig().plugins || []).some(p => p.name === 'duckdb');

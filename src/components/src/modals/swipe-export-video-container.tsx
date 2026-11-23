@@ -40,6 +40,11 @@ import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 import SwipeExportSettings from './swipe-export-settings';
 import {getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
 import {getGlobeClearColor} from '@kepler.gl/deckgl-layers';
+import {
+  programmaticTimecode,
+  withVideoExportErrors,
+  type ProgrammaticVideoExport
+} from './programmatic-video-export';
 
 const ENCODERS = {
   gif: GifEncoder,
@@ -60,6 +65,7 @@ export type SwipeExportVideoSettings = {
 };
 
 type SwipeExportVideoPanelContainerProps = {
+  programmaticExport?: ProgrammaticVideoExport;
   initialState?: Partial<SwipeExportVideoPanelContainerState>;
   glContext?: WebGL2RenderingContext;
   exportVideoWidth: number;
@@ -246,7 +252,10 @@ export class SwipeExportVideoPanelContainer extends Component<
 
   getTimecode(): Timecode {
     const {durationMs} = this.state;
-    return {start: 0, end: durationMs, framerate: 30};
+    return programmaticTimecode(
+      {start: 0, end: durationMs, framerate: 30},
+      this.props.programmaticExport
+    );
   }
 
   getEncoder() {
@@ -257,31 +266,34 @@ export class SwipeExportVideoPanelContainer extends Component<
             onFallback: () => this.setState({encodingNotice: NATIVE_WEBM_FALLBACK})
           })
         : ENCODERS[mediaType];
-    return createAnnotationVideoEncoder(
-      Encoder,
-      () => ({
-        annotations: this.props.mapData.visState.annotations || [],
-        readoutValues: getAnnotationReadoutValues(
-          this.props.mapData.visState?.annotations || [],
-          this.props.mapData.visState
-        ),
-        interactionConfig: this.props.mapData.visState.interactionConfig,
-        mapState: {...this.props.mapData.mapState, ...this.state.viewState},
-        animationTimeMs: this.state.currentTimeMs,
-        swipePercentage: getSwipePercentageAtTime(
-          this.state.currentTimeMs,
-          this.state.durationMs,
-          this.props.swipeStartPct,
-          this.props.swipeEndPct,
-          this.props.swipeEasing
-        ),
-        ...this._getContainer()
-      }),
-      encoder => this.activeEncoder === encoder,
-      error => {
-        console.error('Video annotation capture failed:', error);
-        this.onEncodingError(this.activeEncoder);
-      }
+    return withVideoExportErrors(
+      createAnnotationVideoEncoder(
+        Encoder,
+        () => ({
+          annotations: this.props.mapData.visState.annotations || [],
+          readoutValues: getAnnotationReadoutValues(
+            this.props.mapData.visState?.annotations || [],
+            this.props.mapData.visState
+          ),
+          interactionConfig: this.props.mapData.visState.interactionConfig,
+          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+          animationTimeMs: this.state.currentTimeMs,
+          swipePercentage: getSwipePercentageAtTime(
+            this.state.currentTimeMs,
+            this.state.durationMs,
+            this.props.swipeStartPct,
+            this.props.swipeEndPct,
+            this.props.swipeEasing
+          ),
+          ...this._getContainer()
+        }),
+        encoder => this.activeEncoder === encoder,
+        error => {
+          console.error('Video annotation capture failed:', error);
+          this.onEncodingError(this.activeEncoder);
+        }
+      ),
+      this.props.programmaticExport
     );
   }
 
@@ -542,7 +554,7 @@ export class SwipeExportVideoPanelContainer extends Component<
                       .save()
                       .then((blob: Blob | null) => {
                         if (this.activeEncoder !== encoder) return;
-                        if (blob) {
+                        if (blob && !this.props.programmaticExport) {
                           download(blob, filename + encoder.extension, encoder.mimeType);
                         }
                         this.setState({
@@ -551,6 +563,15 @@ export class SwipeExportVideoPanelContainer extends Component<
                           currentTimeMs: 0,
                           viewState: {...this.state.memo!.viewState}
                         });
+                        if (this.props.programmaticExport) {
+                          if (blob?.size) this.props.programmaticExport.onComplete(blob);
+                          else
+                            this.props.programmaticExport.onError(
+                              new Error(
+                                'Video export produced an empty file. Retry with a lower resolution.'
+                              )
+                            );
+                        }
                       })
                       .catch(() => this.onEncodingError(encoder));
                   } else {

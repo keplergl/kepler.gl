@@ -28,6 +28,7 @@ import {WebSocket, WebSocketServer} from 'ws';
 import {z} from 'zod';
 import {getKeplerCommands} from '../commands';
 import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '../commands/types';
+import {VideoArtifacts} from './video-artifacts';
 
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
@@ -140,6 +141,8 @@ export class KeplerMcpBridge {
   private httpServer: HttpServer | null = null;
   private readonly pending = new Map<string, PendingCall>();
   private readonly localResources = new Map<string, LocalResource>();
+  private readonly videoArtifacts = new VideoArtifacts();
+  private connectionId = 0;
   private pageOrigin = '';
   private token = '';
   private pageUrl = '';
@@ -186,6 +189,30 @@ export class KeplerMcpBridge {
 
   get connected(): boolean {
     return this.socket?.readyState === WebSocket.OPEN;
+  }
+
+  /** The five latest completed exports, retained until eviction or bridge shutdown. */
+  listVideoResources() {
+    return this.videoArtifacts.list();
+  }
+
+  readVideoResource(uri: string) {
+    return this.videoArtifacts.read(uri);
+  }
+
+  getVideoResourceLink(result: RoomCommandResult) {
+    const data = result?.data as {artifact?: {uri?: unknown}} | undefined;
+    const resource = this.listVideoResources().find(item => item.uri === data?.artifact?.uri);
+    if (!resource) return undefined;
+    return {
+      type: 'resource_link' as const,
+      uri: resource.uri,
+      name: resource.name,
+      mimeType: resource.mimeType,
+      size: resource.size,
+      description:
+        'Completed native video export. Read this MCP resource or use its local file artifact.'
+    };
   }
 
   async start(): Promise<KeplerMcpBridgeStart> {
@@ -244,6 +271,7 @@ export class KeplerMcpBridge {
       );
     }
     const socket = this.socket;
+    const connectionId = this.connectionId;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       throw new Error(
         'No kepler.gl map page is connected. Open the page URL printed at startup ' +
@@ -310,7 +338,43 @@ export class KeplerMcpBridge {
       this.failCall(callId, 'Unable to send the command to the map. Reconnect and retry.');
     }
     try {
-      return await reply;
+      const result = await reply;
+      const data = result?.data as
+        | {jobId?: string; status?: string; artifact?: {size?: unknown; mimeType?: unknown}}
+        | undefined;
+      if (
+        tool.commandId === 'map.export-video' &&
+        input.action === 'status' &&
+        result.success &&
+        data?.status === 'succeeded' &&
+        typeof data.jobId === 'string' &&
+        data.artifact
+      ) {
+        const artifact = await this.videoArtifacts.collect(
+          `${connectionId}:${data.jobId}`,
+          data.artifact,
+          async offset => {
+            if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) {
+              throw new Error(
+                'The map page disconnected during video transfer. Reconnect and retry the status request.'
+              );
+            }
+            const chunk = await this.callTool(toToolName('map.export-video'), {
+              action: 'read',
+              jobId: data.jobId,
+              offset
+            });
+            if (!chunk.success) {
+              throw new Error(
+                chunk.error || 'Unable to retrieve the video. Retry the status request.'
+              );
+            }
+            return chunk.data;
+          }
+        );
+        return {...result, data: {...data, artifact}};
+      }
+      return result;
     } finally {
       if (resource) await this.releaseLocalResource(resource);
     }
@@ -321,6 +385,7 @@ export class KeplerMcpBridge {
     this.pageTools = null;
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
+    await this.videoArtifacts.close();
     await Promise.all(
       [...this.localResources.values()].map(resource => this.releaseLocalResource(resource))
     );
@@ -361,6 +426,7 @@ export class KeplerMcpBridge {
     this.rejectPending('The kepler.gl page was replaced by a newer connection.');
     this.socket?.close(1000, 'replaced by a newer connection');
     this.socket = socket;
+    this.connectionId++;
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
     this.pageTools = null;
 

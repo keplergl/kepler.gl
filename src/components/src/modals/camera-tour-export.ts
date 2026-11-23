@@ -27,6 +27,7 @@ import {
 } from './video-export-formats';
 import {StyledModalInputFootnote} from '../common/styled-components';
 import {getEffectAnimationDuration, getEffectAnimationTracks} from './effect-animation';
+import {programmaticTimecode, withVideoExportErrors} from './programmatic-video-export';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -121,6 +122,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
         : !map.getStyle();
       if (!metadataFailed || this.failedBasemap === map) return;
       this.failedBasemap = map;
+      this.props?.programmaticExport?.onError(new Error(BASEMAP_LOADING_ERROR));
       const {adapter, rendering, previewing, saving} = this.state;
       if (adapter?.videoCapture.isRecording() || rendering || previewing || saving) {
         this.onStop({abort: true});
@@ -214,6 +216,10 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
       return {width, height};
     }
 
+    getTimecode() {
+      return programmaticTimecode(super.getTimecode(), this.props?.programmaticExport);
+    }
+
     getBaseEncoder() {
       if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) return super.getEncoder();
       const capture = this.state.adapter.videoCapture;
@@ -237,27 +243,30 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
     }
 
     getEncoder() {
-      return createAnnotationVideoEncoder(
-        this.getBaseEncoder(),
-        () => ({
-          annotations: this.props.mapData.visState.annotations || [],
-          readoutValues: getAnnotationReadoutValues(
-            this.props.mapData.visState?.annotations || [],
-            this.props.mapData.visState
-          ),
-          interactionConfig: this.props.mapData.visState.interactionConfig,
-          mapState: {...this.props.mapData.mapState, ...this.state.viewState},
-          animationTimeMs: this.getAnimationTimeMs(),
-          ...this._getContainer()
-        }),
-        encoder => {
-          const capture = this.state.adapter.videoCapture;
-          return capture.isRecording() && capture.encoder === encoder;
-        },
-        error => {
-          console.error('Video annotation capture failed:', error);
-          this.onStop({abort: true});
-        }
+      return withVideoExportErrors(
+        createAnnotationVideoEncoder(
+          this.getBaseEncoder(),
+          () => ({
+            annotations: this.props.mapData.visState.annotations || [],
+            readoutValues: getAnnotationReadoutValues(
+              this.props.mapData.visState?.annotations || [],
+              this.props.mapData.visState
+            ),
+            interactionConfig: this.props.mapData.visState.interactionConfig,
+            mapState: {...this.props.mapData.mapState, ...this.state.viewState},
+            animationTimeMs: this.getAnimationTimeMs(),
+            ...this._getContainer()
+          }),
+          encoder => {
+            const capture = this.state.adapter.videoCapture;
+            return capture.isRecording() && capture.encoder === encoder;
+          },
+          error => {
+            console.error('Video annotation capture failed:', error);
+            this.onStop({abort: true});
+          }
+        ),
+        this.props?.programmaticExport
       );
     }
 
@@ -275,7 +284,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
       if (this.state.encodingError || this.state.encodingNotice) {
         this.setState({encodingError: undefined, encodingNotice: undefined});
       }
-      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value) {
+      if (this.state.mediaType !== NATIVE_WEBM_FORMAT.value && !this.props?.programmaticExport) {
         this.resetVideoCapture();
         return super.onRenderVideo();
       }
@@ -301,13 +310,21 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
           this.finishNativeRecording !== finishNativeRecording
         )
           return;
-        capture.download(blob);
         this.finishNativeRecording = undefined;
         this.setState({
           rendering: false,
           saving: false,
           viewState: {...this.state.memo.viewState}
         });
+        if (this.props?.programmaticExport) {
+          if (blob?.size) this.props?.programmaticExport.onComplete(blob);
+          else
+            this.props?.programmaticExport.onError(
+              new Error('Video export produced an empty file. Retry with a lower resolution.')
+            );
+        } else {
+          capture.download(blob);
+        }
       };
       this.finishNativeRecording = finishNativeRecording;
       adapter.render({

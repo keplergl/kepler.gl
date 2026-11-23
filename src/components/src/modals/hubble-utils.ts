@@ -113,11 +113,12 @@ export function getTimeRangeFilterKeyframes({
         return getKeyFramesFree(filter);
       }
 
-      const delta = Math.round(duration / bins.length);
-
       return {
-        timings: bins.map((_, idx) => timings[0] + delta * idx),
-        keyframes: bins.map(bin => ({value: [bin.x0, bin.x1]})),
+        timings: [...bins.map((_, idx) => timings[0] + (duration * idx) / bins.length), timings[1]],
+        // Hubble's interval evaluator returns the start of the current segment.
+        // A terminal hold gives the last bin its own segment instead of leaving
+        // the animation on the penultimate bin through the end of the recording.
+        keyframes: [...bins, bins[bins.length - 1]].map(bin => ({value: [bin.x0, bin.x1]})),
         easings: hold
       };
     }
