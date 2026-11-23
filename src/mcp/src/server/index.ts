@@ -18,7 +18,6 @@ export {
 } from './bridge-server';
 export type {
   BridgeStatus,
-  ProjectStatus,
   KeplerMcpBridgeOptions,
   KeplerMcpBridgeStart,
   MapTool

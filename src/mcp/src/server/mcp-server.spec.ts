@@ -43,7 +43,6 @@ describe('kepler-mcp protocol', () => {
         JSON.stringify({
           type: 'hello',
           commands: [{id: 'map.test-command', name: 'Test command'}],
-          project: {state: 'ready'},
           app: {name: 'test-page', version: '1.0'}
         })
       );
@@ -52,6 +51,14 @@ describe('kepler-mcp protocol', () => {
         'map_get-status',
         'map_test-command'
       ]);
+      const negotiatedStatus = await client.callTool({name: 'map_get-status', arguments: {}});
+      const content = negotiatedStatus.content as Array<{type: string; text: string}>;
+      expect(content[0].type).toBe('text');
+      expect(JSON.parse(content[0].text)).toMatchObject({
+        state: 'negotiated',
+        project: {state: 'unknown'},
+        app: {name: 'test-page', version: '1.0'}
+      });
 
       const disconnected = nextCatalogChange();
       page.close();

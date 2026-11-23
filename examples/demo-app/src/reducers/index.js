@@ -2,7 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
-import {ActionTypes, ProviderActionTypes, unwrap} from '@kepler.gl/actions';
 import Task, {withTask} from '@kepler.gl/tasks';
 
 import {aiAssistantReducer} from '@openassistant/kepler-assistant';
@@ -26,8 +25,7 @@ import {
   LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
   LOAD_REMOTE_RESOURCE_ERROR,
   SET_SAMPLE_LOADING_STATUS,
-  loadRemoteDatasetProcessedSuccessAction,
-  loadRemoteResourceError as loadRemoteResourceErrorAction
+  loadRemoteDatasetProcessedSuccessAction
 } from '../actions';
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
@@ -48,9 +46,6 @@ const initialAppState = {
   loaded: false,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
-  cloudMapPendingInstall: false,
-  progressiveContinuationPending: false,
-  projectLoadFailed: false,
   error: null // contains error when loading/retrieving data/configuration
   // {
   //   status: null,
@@ -65,62 +60,8 @@ export const appReducer = (state = initialAppState, action) => {
       return {...state, loaded: true};
     case LOAD_MAP_SAMPLE_FILE:
       return {...state, sampleMaps: action.samples};
-    case ProviderActionTypes.LOAD_CLOUD_MAP:
-      return {
-        ...state,
-        cloudMapPendingInstall: false,
-        projectLoadFailed: false,
-        progressiveContinuationPending: false
-      };
-    case ProviderActionTypes.LOAD_CLOUD_MAP_SUCCESS_2:
-      // Core clears its download flag before the queued add-data action runs.
-      return {...state, cloudMapPendingInstall: true};
-    case ActionTypes.ADD_DATA_TO_MAP:
-      // The core loading indicator covers installation from this transition on.
-      // MCP imports also start here, so a retry must clear the previous failure.
-      return {...state, cloudMapPendingInstall: false, projectLoadFailed: false};
-    case ActionTypes.LOAD_FILES:
-      return {...state, projectLoadFailed: false, progressiveContinuationPending: false};
-    case ActionTypes.CLEAR_STAGED_LOADED_FILES:
-      return {...state, progressiveContinuationPending: false};
-    case ActionTypes.LOAD_FILES_SUCCESS:
-      // This continuation now installs its next snapshot; the core loading
-      // indicator covers that work until another continuation is scheduled.
-      return Object.prototype.hasOwnProperty.call(unwrap(action), 'progressiveSteps')
-        ? {...state, progressiveContinuationPending: false}
-        : state;
-    case ActionTypes.CREATE_NEW_DATASET_SUCCESS: {
-      const {results, replacement, onFinish} = unwrap(action).payload;
-      if (!replacement && results?.some(result => result.status === 'rejected')) {
-        return {
-          ...state,
-          isMapLoading: false,
-          projectLoadFailed: true,
-          progressiveContinuationPending: false
-        };
-      }
-      // Arrow replay yields between snapshots. The table's loading indicator
-      // is already cleared while this explicit next-snapshot action is queued.
-      return onFinish?.type === ActionTypes.LOAD_FILES_SUCCESS &&
-        Array.isArray(onFinish.progressiveSteps)
-        ? {...state, progressiveContinuationPending: true}
-        : state;
-    }
-    case ProviderActionTypes.LOAD_CLOUD_MAP_ERROR:
-      return {
-        ...state,
-        cloudMapPendingInstall: false,
-        projectLoadFailed: true,
-        progressiveContinuationPending: false
-      };
     case SET_SAMPLE_LOADING_STATUS:
-      return {
-        ...state,
-        isMapLoading: action.isMapLoading,
-        ...(action.isMapLoading
-          ? {projectLoadFailed: false, progressiveContinuationPending: false}
-          : {})
-      };
+      return {...state, isMapLoading: action.isMapLoading};
     default:
       return state;
   }
@@ -190,7 +131,6 @@ async function loadRemoteResourceSuccessTask({
 }) {
   if (dataUrl) {
     const data = await processorMethod(unprocessedData);
-    if (!data) throw new Error('Data processing failed.');
     return {
       info: {
         id: datasetId
@@ -258,7 +198,9 @@ export const loadRemoteResourceSuccess = (state, action) => {
     unprocessedData
   }).bimap(
     datasets => loadRemoteDatasetProcessedSuccessAction({...action, datasets}),
-    error => loadRemoteResourceErrorAction(error || {message: 'Data processing failed.'}, dataUrl)
+    () => {
+      throw new Error('loadRemoteResource data processor failed');
+    }
   );
 
   return withTask(state, task);
@@ -297,7 +239,6 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
     app: {
       ...state.app,
       currentSample: options,
-      projectLoadFailed: false,
       isMapLoading: false // we turn off the spinner
     },
     keplerGl: {
@@ -319,7 +260,6 @@ export const loadRemoteResourceError = (state, action) => {
     ...state,
     app: {
       ...state.app,
-      projectLoadFailed: true, // Keep readiness separate from the gallery's error object.
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
@@ -344,24 +284,7 @@ const composedReducer = (state, action) => {
   if (composedUpdaters[action.type]) {
     return composedUpdaters[action.type](state, action);
   }
-  const nextState = demoReducer(state, action);
-  if (action.type === ActionTypes.LOAD_FILES_ERR) {
-    const {loadId, meta} = unwrap(action);
-    const loading = state?.keplerGl?.map?.visState?.fileLoading;
-    // Core ignores late errors from a replaced file load. Retain accepted
-    // failures after its transient progress entries are cleared.
-    if (
-      (!meta?._id_ || meta._id_ === 'map') &&
-      loading &&
-      (loadId == null || loadId === loading.loadId)
-    ) {
-      return {
-        ...nextState,
-        app: {...nextState.app, projectLoadFailed: true, progressiveContinuationPending: false}
-      };
-    }
-  }
-  return nextState;
+  return demoReducer(state, action);
 };
 
 // export demoReducer to be combined in website app

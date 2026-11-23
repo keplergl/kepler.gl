@@ -39,41 +39,28 @@ const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_CALL_TIMEOUT_MS = 60_000;
 const STATUS_COMMAND = 'map.get-status';
-const statusInput = z
-  .object({
-    waitUntilReady: z.boolean().optional(),
-    timeoutMs: z.number().int().min(1).max(60_000).optional()
-  })
-  .strict();
+const statusInput = z.object({}).strict();
 
-export type ProjectStatus = {state: 'unknown' | 'loading' | 'ready' | 'failed'};
 export type BridgeStatus = {
-  state: 'disconnected' | 'connected' | 'negotiated' | 'loading' | 'ready' | 'failed';
+  state: 'disconnected' | 'connected' | 'negotiated';
   connected: boolean;
   toolsNegotiated: boolean;
   app: {name: string; version?: string} | null;
-  project: ProjectStatus;
+  project: {state: 'unknown'};
   capabilities: {tools: string[]; localFileImport: boolean};
   launcherUrl: string | null;
   guidance?: string;
-  timedOut?: boolean;
 };
 
 const statusTool: MapTool = {
   name: toToolName(STATUS_COMMAND),
   commandId: STATUS_COMMAND,
   description:
-    'Check the map connection, negotiated tools, connected app and project readiness. ' +
+    'Check the map connection, negotiated tools, connected app and effective capabilities. ' +
     'Works without a connected page and returns a credential-free launcher URL. ' +
-    'Use waitUntilReady to wait up to timeoutMs (default 30000, maximum 60000) before inspecting project layers. ' +
-    'Ready includes an empty project; it does not mean all rendered tiles have loaded.',
+    'Project readiness is not tracked: negotiated tools do not mean project data has finished loading.',
   inputSchema: z.toJSONSchema(statusInput) as Record<string, unknown>
 };
-
-function readProjectStatus(value: unknown): ProjectStatus {
-  const state = (value as ProjectStatus | undefined)?.state;
-  return {state: ['loading', 'ready', 'failed'].includes(state ?? '') ? state! : 'unknown'};
-}
 
 export type MapTool = {
   /** MCP tool name, e.g. `map_add_layer` (dots are not allowed in tool names). */
@@ -214,9 +201,6 @@ export class KeplerMcpBridge {
   private token = '';
   private pageUrl = '';
   private app: BridgeStatus['app'] = null;
-  private project: ProjectStatus = {state: 'unknown'};
-  private pageReportsProjectStatus = false;
-  private readonly statusListeners = new Set<() => void>();
   private readonly toolListeners = new Set<() => void>();
 
   constructor(options: KeplerMcpBridgeOptions = {}) {
@@ -271,14 +255,7 @@ export class KeplerMcpBridge {
   getStatus(): BridgeStatus {
     const connected = this.connected;
     const toolsNegotiated = connected && this.pageTools !== null;
-    const project = connected ? {...this.project} : {state: 'unknown' as const};
-    const state = !connected
-      ? 'disconnected'
-      : !toolsNegotiated
-      ? 'connected'
-      : project.state === 'unknown'
-      ? 'negotiated'
-      : project.state;
+    const state = !connected ? 'disconnected' : toolsNegotiated ? 'negotiated' : 'connected';
     const address = this.httpServer?.address();
     const host = address && typeof address !== 'string' ? address.address : null;
     const launcherUrl = host
@@ -291,7 +268,7 @@ export class KeplerMcpBridge {
       connected,
       toolsNegotiated,
       app: connected && this.app ? {...this.app} : null,
-      project,
+      project: {state: 'unknown'},
       capabilities: {
         tools: toolsNegotiated ? this.getTools().map(tool => tool.name) : [statusTool.name],
         localFileImport: Boolean(
@@ -308,25 +285,16 @@ export class KeplerMcpBridge {
       ...(state === 'disconnected'
         ? {
             guidance: launcherUrl
-              ? `Open ${launcherUrl} in a browser to connect the map, then call map_get-status with waitUntilReady=true.`
+              ? `Open ${launcherUrl} in a browser to connect the map, then call map_get-status again.`
               : 'Start kepler-mcp, then open the local launcher URL printed at startup.'
-          }
-        : state === 'failed'
-        ? {
-            guidance:
-              'The project failed to load. Check the map page for the error, then retry loading the project.'
           }
         : state === 'negotiated'
         ? {
             guidance:
-              'The connected page has not reported project readiness. Update or reload the page to enable readiness reporting.'
+              'Tools are negotiated, but project readiness is unknown. This status does not establish that project data has finished loading.'
           }
         : {})
     };
-  }
-
-  private notifyStatus(): void {
-    for (const listener of this.statusListeners) listener();
   }
 
   private updatePageTools(tools: MapTool[] | null): void {
@@ -335,27 +303,6 @@ export class KeplerMcpBridge {
     if (previous !== JSON.stringify(this.getTools())) {
       for (const listener of this.toolListeners) listener();
     }
-  }
-
-  private async waitForReady(timeoutMs: number): Promise<BridgeStatus> {
-    const canFinish = (status: BridgeStatus) =>
-      ['disconnected', 'ready', 'failed'].includes(status.state) ||
-      (status.toolsNegotiated && !this.pageReportsProjectStatus);
-    const status = this.getStatus();
-    if (canFinish(status)) return status;
-    return new Promise(resolve => {
-      const finish = (result: BridgeStatus) => {
-        clearTimeout(timer);
-        this.statusListeners.delete(check);
-        resolve(result);
-      };
-      const check = () => {
-        const current = this.getStatus();
-        if (canFinish(current)) finish(current);
-      };
-      const timer = setTimeout(() => finish({...this.getStatus(), timedOut: true}), timeoutMs);
-      this.statusListeners.add(check);
-    });
   }
 
   /** The five latest completed exports, retained until eviction or bridge shutdown. */
@@ -432,11 +379,8 @@ export class KeplerMcpBridge {
 
   async callTool(name: string, input: Record<string, unknown> = {}): Promise<RoomCommandResult> {
     if (name === statusTool.name) {
-      const options = statusInput.parse(input);
-      const data = options.waitUntilReady
-        ? await this.waitForReady(options.timeoutMs ?? 30_000)
-        : this.getStatus();
-      return {success: true, commandId: STATUS_COMMAND, data};
+      statusInput.parse(input);
+      return {success: true, commandId: STATUS_COMMAND, data: this.getStatus()};
     }
     const tool = this.getTools().find(candidate => candidate.name === name);
     if (!tool) {
@@ -558,10 +502,7 @@ export class KeplerMcpBridge {
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
     this.app = null;
-    this.project = {state: 'unknown'};
-    this.pageReportsProjectStatus = false;
     this.updatePageTools(null);
-    this.notifyStatus();
     await this.videoArtifacts.close();
     await Promise.all(
       [...this.localResources.values()].map(resource => this.releaseLocalResource(resource))
@@ -606,10 +547,7 @@ export class KeplerMcpBridge {
     this.connectionId++;
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
     this.app = null;
-    this.project = {state: 'unknown'};
-    this.pageReportsProjectStatus = false;
     this.updatePageTools(null);
-    this.notifyStatus();
 
     socket.on('message', data => {
       if (this.socket === socket) this.handleMessage(data);
@@ -618,10 +556,7 @@ export class KeplerMcpBridge {
       if (this.socket === socket) {
         this.socket = null;
         this.app = null;
-        this.project = {state: 'unknown'};
-        this.pageReportsProjectStatus = false;
         this.updatePageTools(null);
-        this.notifyStatus();
         this.rejectPending('The kepler.gl page disconnected.');
       }
     });
@@ -644,23 +579,11 @@ export class KeplerMcpBridge {
               ...(typeof message.app.version === 'string' ? {version: message.app.version} : {})
             }
           : null;
-      // Catalog-only hellos must not discard readiness already reported by this page.
-      if (Object.prototype.hasOwnProperty.call(message, 'project')) {
-        this.pageReportsProjectStatus = true;
-        this.project = readProjectStatus(message.project);
-      }
       this.updatePageTools(
         toolsFromDescriptors(message.commands as ToolDescriptor[]).filter(
           tool => tool.name !== statusTool.name
         )
       );
-      this.notifyStatus();
-      return;
-    }
-    if (message?.type === 'status' && this.pageTools !== null) {
-      this.pageReportsProjectStatus = true;
-      this.project = readProjectStatus(message.project);
-      this.notifyStatus();
       return;
     }
     if (message?.type === 'result' && typeof message.callId === 'string') {

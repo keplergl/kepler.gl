@@ -70,30 +70,6 @@ function getUrlConfig(): UrlConfig {
   return {token, tokenFromUrl: urlToken != null, host, port};
 }
 
-/** Project readiness follows load completion, never the presence of datasets. */
-export function getProjectStatus(reduxStore: any): {
-  state: 'unknown' | 'loading' | 'ready' | 'failed';
-} {
-  const demo = reduxStore?.getState?.()?.demo;
-  const map = demo?.keplerGl?.map;
-  const fileFailed = Object.values(map?.visState?.fileLoadingProgress ?? {}).some(
-    (progress: any) => progress?.error
-  );
-  if (demo?.app?.projectLoadFailed || fileFailed) return {state: 'failed'};
-  if (
-    demo?.app?.isMapLoading ||
-    demo?.app?.cloudMapPendingInstall ||
-    demo?.app?.progressiveContinuationPending ||
-    map?.visState?.fileLoading ||
-    map?.visState?.loadingIndicatorValue > 0 ||
-    map?.uiState?.loadFiles?.fileLoading ||
-    map?.providerState?.isCloudMapLoading
-  ) {
-    return {state: 'loading'};
-  }
-  return {state: map?.visState ? 'ready' : 'unknown'};
-}
-
 type Props = {
   reduxStore: any;
 };
@@ -132,7 +108,6 @@ export function KeplerMcpBridge({reduxStore}: Props) {
     let socket: WebSocket | null = null;
     let attempts = 0;
     let retryTimer: number | null = null;
-    let lastProjectState: string | null = null;
     const activeCalls = new Map<string, AbortController>();
 
     const abortActiveCalls = () => {
@@ -158,14 +133,11 @@ export function KeplerMcpBridge({reduxStore}: Props) {
 
       ws.onopen = () => {
         attempts = 0;
-        const project = getProjectStatus(reduxStore);
-        lastProjectState = project.state;
         ws.send(
           JSON.stringify({
             type: 'hello',
             commands: catalogRef.current.map(toDescriptor),
-            app: {name: 'kepler.gl demo', version: KEPLER_GL_VERSION},
-            project
+            app: {name: 'kepler.gl demo', version: KEPLER_GL_VERSION}
           })
         );
         console.info(
@@ -218,10 +190,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
       ws.onclose = event => {
         abortActiveCalls();
         ctx.videoExport?.cancelActive();
-        if (socket === ws) {
-          socket = null;
-          lastProjectState = null;
-        }
+        if (socket === ws) socket = null;
         if (stopped) return;
         if (event.code === 1008) {
           console.warn(
@@ -233,21 +202,9 @@ export function KeplerMcpBridge({reduxStore}: Props) {
       };
     };
 
-    const unsubscribe = reduxStore?.subscribe?.(() => {
-      const project = getProjectStatus(reduxStore);
-      if (
-        socket?.readyState === WebSocket.OPEN &&
-        lastProjectState !== null &&
-        project.state !== lastProjectState
-      ) {
-        lastProjectState = project.state;
-        socket.send(JSON.stringify({type: 'status', project}));
-      }
-    });
     connect();
 
     return () => {
-      unsubscribe?.();
       stopped = true;
       abortActiveCalls();
       ctx.videoExport?.cancelActive();
@@ -255,7 +212,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
       socket?.close();
       socket = null;
     };
-  }, [catalog, commandsById, reduxStore]);
+  }, [catalog, commandsById]);
 
   return null;
 }

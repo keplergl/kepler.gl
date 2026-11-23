@@ -440,50 +440,20 @@ test('#providerStateReducer -> download failure clears loading and creates persi
   t.end();
 });
 
-test('#providerStateReducer -> malformed download responses dispatch load failure without parsing', t => {
+test('#providerStateReducer -> malformed download responses report errors without parsing', t => {
   drainTasksForTesting();
-  const warn = sinon.stub(Console, 'warn');
   const provider = {name: 'cloud'};
-  try {
-    for (const response of [null, [], {}, {map: []}, {map: {config: {}}}, {map: {datasets: []}}]) {
-      const onError = sinon.spy(() => ({type: 'CUSTOM_ERROR'}));
-      const state = {...INITIAL_PROVIDER_STATE, isProviderLoading: true, isCloudMapLoading: true};
-      const received = reducer(state, loadCloudMapSuccess({provider, response, onError}));
-      const failureTasks = drainTasksForTesting();
-      t.equal(failureTasks.length, 1, 'schedules a load failure instead of parsing');
-      const failure = succeedTaskInTest(failureTasks[0]);
-      t.equal(failure.type, loadCloudMapError({}).type, 'dispatches an observable load failure');
-      t.equal(failure.payload.provider, provider, 'failure identifies the provider');
-      t.ok(failure.payload.error instanceof Error, 'failure contains the validation error');
-
-      const failed = reducer(received, failure);
-      t.equal(failed.isProviderLoading, false, 'invalid response stops provider loading');
-      t.equal(failed.isCloudMapLoading, false, 'invalid response stops map loading');
-      const tasks = drainTasksForTesting();
-      t.equal(tasks.length, 2, 'schedules persistent notification and callback');
-      const notification = succeedTaskInTest(tasks[0]);
-      t.equal(notification.type, ActionTypes.ADD_NOTIFICATION, 'dispatches a notification');
-      t.equal(notification.payload.type, 'error', 'notification reports failure');
-      t.equal(
-        notification.payload.message,
-        failure.payload.error.message,
-        'shows validation error'
-      );
-      t.deepEqual(
-        succeedTaskInTest(tasks[1]),
-        {type: 'CUSTOM_ERROR'},
-        'dispatches callback result'
-      );
-      t.equal(onError.callCount, 1, 'invokes error callback once');
-      t.deepEqual(
-        onError.firstCall.args[0],
-        {provider, error: failure.payload.error},
-        'callback receives provider and validation error'
-      );
-    }
-  } finally {
-    warn.restore();
-    drainTasksForTesting();
+  for (const response of [null, [], {}, {map: []}, {map: {config: {}}}, {map: {datasets: []}}]) {
+    const onError = sinon.spy(() => ({type: 'CUSTOM_ERROR'}));
+    const state = {...INITIAL_PROVIDER_STATE, isProviderLoading: true};
+    const next = reducer(state, loadCloudMapSuccess({provider, response, onError}));
+    t.equal(next.isProviderLoading, false, 'invalid response stops provider loading');
+    t.ok(next.providerError, 'invalid response produces an error');
+    const tasks = drainTasksForTesting();
+    t.equal(tasks.length, 1, 'only callback task is scheduled');
+    t.deepEqual(succeedTaskInTest(tasks[0]), {type: 'CUSTOM_ERROR'}, 'dispatches callback result');
+    t.equal(onError.firstCall.args[0].provider, provider, 'callback receives provider');
+    t.ok(onError.firstCall.args[0].error instanceof Error, 'callback receives validation error');
   }
   t.end();
 });
