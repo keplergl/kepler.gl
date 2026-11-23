@@ -134,11 +134,177 @@ describe('kepler-mcp bridge server', () => {
     expect(names).toContain(toToolName('map.get-annotations'));
     expect(names).toContain(toToolName('map.update-annotation'));
     expect(names).toContain(toToolName('map.remove-annotation'));
-    expect(names.slice().sort()).toEqual(MAP_TOOL_IDS.map(toToolName).sort());
+    expect(names.slice().sort()).toEqual(
+      [...MAP_TOOL_IDS, 'map.get-status'].map(toToolName).sort()
+    );
+  });
+
+  it('reports disconnected status and a working launcher without credentials', async () => {
+    const result = await bridge.callTool('map_get-status');
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        state: 'disconnected',
+        connected: false,
+        toolsNegotiated: false,
+        app: null,
+        project: {state: 'unknown'},
+        capabilities: {tools: ['map_get-status'], localFileImport: false},
+        launcherUrl: `http://127.0.0.1:${started.port}/`
+      }
+    });
+    expect(JSON.stringify(result)).not.toContain(started.token);
+    const response = await fetch((result.data as any).launcherUrl, {redirect: 'manual'});
+    const pageUrl = new URL(response.headers.get('location')!);
+    expect(pageUrl.searchParams.get('mcpPort')).toBe(String(started.port));
+  });
+
+  it('separates connection, negotiation, unknown readiness, and a ready empty project', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    expect(bridge.getStatus()).toMatchObject({state: 'connected', toolsNegotiated: false});
+    socket.send(JSON.stringify({type: 'hello', commands: []}));
+    await waitFor(() => bridge.getStatus().toolsNegotiated);
+    expect(bridge.getStatus()).toMatchObject({state: 'negotiated', project: {state: 'unknown'}});
+    socket.send(JSON.stringify({type: 'status', project: {state: 'ready'}}));
+    await waitFor(() => bridge.getStatus().state === 'ready');
+    expect(bridge.getStatus().capabilities.tools).toEqual(['map_get-status']);
+    socket.close();
+  });
+
+  it('waits for delayed project data before the first layer lookup', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(
+      JSON.stringify({
+        type: 'hello',
+        app: {name: 'kepler.gl demo', version: '3.3.0'},
+        project: {state: 'loading'},
+        commands: [{id: 'map.get-layer-options', name: 'Inspect layer'}]
+      })
+    );
+    await waitFor(() => bridge.getStatus().state === 'loading');
+    expect(bridge.getStatus()).toMatchObject({
+      app: {name: 'kepler.gl demo', version: '3.3.0'},
+      capabilities: {tools: ['map_get-layer-options', 'map_get-status']}
+    });
+    let resolved = false;
+    const pending = bridge
+      .callTool('map_get-status', {waitUntilReady: true, timeoutMs: 1000})
+      .then(result => {
+        resolved = true;
+        return result;
+      });
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(resolved).toBe(false);
+    // The page publishes readiness only after the delayed layer is installed.
+    const layers = new Map([['known-layer', {layerId: 'known-layer', settings: {radius: 10}}]]);
+    socket.on('message', raw => {
+      const message = JSON.parse(String(raw));
+      socket.send(
+        JSON.stringify({
+          type: 'result',
+          callId: message.callId,
+          result: {
+            success: layers.has(message.input.layerId),
+            commandId: message.tool,
+            data: layers.get(message.input.layerId)
+          }
+        })
+      );
+    });
+    socket.send(JSON.stringify({type: 'status', project: {state: 'ready'}}));
+    await expect(pending).resolves.toMatchObject({data: {state: 'ready'}});
+    await expect(
+      bridge.callTool('map_get-layer-options', {layerId: 'known-layer'})
+    ).resolves.toMatchObject({success: true, data: {layerId: 'known-layer'}});
+    socket.close();
+  });
+
+  it.each(['failed', 'disconnected'])(
+    'ends readiness waits on %s without leaking load errors',
+    async state => {
+      const socket = connect(started.port, started.token);
+      await new Promise(resolve => socket.on('open', resolve));
+      socket.send(JSON.stringify({type: 'hello', commands: [], project: {state: 'loading'}}));
+      await waitFor(() => bridge.getStatus().state === 'loading');
+      const pending = bridge.callTool('map_get-status', {waitUntilReady: true});
+      if (state === 'disconnected') socket.close();
+      else
+        socket.send(
+          JSON.stringify({
+            type: 'status',
+            project: {
+              state: 'failed',
+              error: `https://private.test/?token=${started.token}`
+            }
+          })
+        );
+      await expect(pending).resolves.toMatchObject({data: {state}});
+      expect(JSON.stringify(await pending)).not.toContain(started.token);
+    }
+  );
+
+  it('bounds waits and does not turn a timeout or invalid status into ready', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(JSON.stringify({type: 'hello', commands: [], project: {state: 'invalid'}}));
+    await waitFor(() => bridge.getStatus().toolsNegotiated);
+    await expect(
+      bridge.callTool('map_get-status', {waitUntilReady: true, timeoutMs: 10})
+    ).resolves.toMatchObject({data: {state: 'negotiated', timedOut: true}});
+    await expect(bridge.callTool('map_get-status', {timeoutMs: 60001})).rejects.toThrow();
+    await expect(bridge.callTool('map_get-status', {waitUntilReady: 'yes'})).rejects.toThrow();
+  });
+
+  it('resets identity, readiness and negotiated capabilities when a new page connects', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(
+      JSON.stringify({
+        type: 'hello',
+        app: {name: 'old page'},
+        commands: [],
+        project: {state: 'ready'}
+      })
+    );
+    await waitFor(() => bridge.getStatus().state === 'ready');
+    const replacement = connect(started.port, started.token);
+    await new Promise(resolve => replacement.on('open', resolve));
+    expect(bridge.getStatus()).toMatchObject({
+      state: 'connected',
+      app: null,
+      project: {state: 'unknown'}
+    });
+    replacement.close();
+    await waitFor(() => !bridge.connected);
+    expect(bridge.getStatus()).toMatchObject({state: 'disconnected', toolsNegotiated: false});
+  });
+
+  it('notifies only on catalog changes and rejects tools absent from the negotiated catalog', async () => {
+    const changed = jest.fn();
+    const unsubscribe = bridge.onToolsChanged(changed);
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    const hello = {type: 'hello', commands: [{id: 'map.get-dataset-context', name: 'Datasets'}]};
+    socket.send(JSON.stringify(hello));
+    await waitFor(() => changed.mock.calls.length === 1);
+    socket.send(JSON.stringify(hello));
+    socket.send(JSON.stringify({type: 'status', project: {state: 'ready'}}));
+    await waitFor(() => bridge.getStatus().state === 'ready');
+    expect(changed).toHaveBeenCalledTimes(1);
+    await expect(bridge.callTool('map_add-layer')).rejects.toThrow(/Unknown map tool/);
+    socket.send(JSON.stringify({...hello, commands: []}));
+    await waitFor(() => changed.mock.calls.length === 2);
+    socket.close();
+    await waitFor(() => changed.mock.calls.length === 3);
+    unsubscribe();
   });
 
   it('builds the page URL with the token', () => {
-    expect(started.pageUrl).toBe(`http://localhost:8080?mcp=${started.token}`);
+    expect(started.pageUrl).toBe(
+      `http://localhost:8080?mcp=${started.token}&mcpPort=${started.port}`
+    );
   });
 
   it('redirects a browser on / to the map page with the token', async () => {
@@ -322,7 +488,7 @@ describe('kepler-mcp bridge server', () => {
         ]
       })
     );
-    await waitFor(() => bridge.getTools().length === 1);
+    await waitFor(() => bridge.getTools().length === 2);
     expect(bridge.getTools()[0]).toMatchObject({
       name: toToolName('map.add-layer'),
       commandId: 'map.add-layer'
@@ -383,7 +549,7 @@ describe('kepler-mcp bridge server', () => {
             ]
           })
         );
-        await waitFor(() => bridge.getTools().length === 1);
+        await waitFor(() => bridge.getTools().length === 2);
         expect((bridge.getTools()[0].inputSchema.properties as any).filePath).toBeUndefined();
       }
       const openFile = jest.spyOn(fsPromises, 'open');
@@ -444,7 +610,7 @@ describe('kepler-mcp local file transfer', () => {
         ]
       })
     );
-    await waitFor(() => bridge.getTools().length === 1);
+    await waitFor(() => bridge.getTools().length === 2);
   }
 
   function reply(callId: string, success = true) {
@@ -464,7 +630,7 @@ describe('kepler-mcp local file transfer', () => {
   }
 
   it('streams multi-megabyte bytes outside the tool input and revokes the capability after completion', async () => {
-    const contents = 'latitude,longitude,name\n' + '40,-73,selected location\n'.repeat(140000);
+    const contents = `latitude,longitude,name\n${'40,-73,selected location\n'.repeat(140000)}`;
     expect(Buffer.byteLength(contents)).toBeGreaterThan(2 * 1024 * 1024);
     await writeFile(filePath, contents);
     const pending = load({filePath, datasetName: 'Local locations'});
@@ -584,6 +750,7 @@ describe('kepler-mcp local file transfer', () => {
     socket = connect(started.port, started.token);
     await new Promise(resolve => socket.on('open', resolve));
     await advertiseLocalImport();
+    expect(bridge.getStatus().capabilities.localFileImport).toBe(false);
     await expect(load()).rejects.toThrow(/loopback bridge host/);
   });
 

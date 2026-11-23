@@ -91,7 +91,8 @@ export function onExportFileSuccess({provider, options}) {
 }
 
 export function onLoadCloudMapSuccess({provider, loadParams}) {
-  return () => {
+  return dispatch => {
+    dispatch(setLoadingMapStatus(false));
     const mapUrl = provider?.getMapUrl(loadParams);
     if (mapUrl) {
       const url = `/demo/map/${provider.name}?path=${mapUrl}`;
@@ -113,21 +114,23 @@ export function loadRemoteMap(options) {
   return dispatch => {
     dispatch(setLoadingMapStatus(true));
     // breakdown url into url+query params
-    loadRemoteRawData(options.dataUrl).then(
-      // In this part we turn the response into a FileBlob
-      // so we can use it to call loadFiles
-      ([file, url]) => {
-        const {file: filename} = parseUri(url);
-        dispatch(loadFiles([new File([file], filename)])).then(() =>
-          dispatch(setLoadingMapStatus(false))
-        );
-      },
-      error => {
-        const {target = {}} = error;
-        const {status, responseText} = target;
-        dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
-      }
-    );
+    return loadRemoteRawData(options.dataUrl)
+      .then(
+        // In this part we turn the response into a FileBlob
+        // so we can use it to call loadFiles
+        ([file, url]) => {
+          const {file: filename} = parseUri(url);
+          return dispatch(loadFiles([new File([file], filename)])).then(() =>
+            dispatch(setLoadingMapStatus(false))
+          );
+        },
+        error => {
+          const {target = {}} = error;
+          const {status, responseText} = target;
+          dispatch(loadRemoteResourceError({status, message: responseText}, options.dataUrl));
+        }
+      )
+      .catch(error => dispatch(loadRemoteResourceError(error, options.dataUrl)));
   };
 }
 
@@ -176,14 +179,13 @@ export function loadSample(options, pushRoute = true) {
       const search = window.location.search || '';
       window.history.pushState(null, '', `/demo/${options.id}${search}`);
     }
+    dispatch(setLoadingMapStatus(true));
     // if the sample has a kepler.gl config file url we load it
     if (options.keplergl) {
       dispatch(loadRemoteMap({dataUrl: options.keplergl}));
     } else {
       dispatch(loadRemoteSampleMap(options));
     }
-
-    dispatch(setLoadingMapStatus(true));
   };
 }
 
@@ -201,29 +203,31 @@ function loadRemoteSampleMap(options) {
     // Load remote dataset config for tiled layers
     toLoad.push(remoteDatasetConfigUrl ? loadRemoteConfig(remoteDatasetConfigUrl) : null);
 
-    Promise.all(toLoad).then(
-      ([config, data, remoteDatasetConfig]) => {
-        // TODO: these two actions can be merged
-        dispatch(loadRemoteResourceSuccess(data, config, options, remoteDatasetConfig));
-        // TODO: toggleModal when async dataset task is done, show the spinner until then
-        dispatch(toggleModal(null));
-      },
-      error => {
-        if (error) {
-          const {target = {}} = error;
-          const {status, responseText} = target;
-          dispatch(
-            loadRemoteResourceError(
-              {
-                status,
-                message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`
-              },
-              configUrl
-            )
-          );
+    Promise.all(toLoad)
+      .then(
+        ([config, data, remoteDatasetConfig]) => {
+          // TODO: these two actions can be merged
+          dispatch(loadRemoteResourceSuccess(data, config, options, remoteDatasetConfig));
+          // TODO: toggleModal when async dataset task is done, show the spinner until then
+          dispatch(toggleModal(null));
+        },
+        error => {
+          if (error) {
+            const {target = {}} = error;
+            const {status, responseText} = target;
+            dispatch(
+              loadRemoteResourceError(
+                {
+                  status,
+                  message: `${responseText} - ${LOADING_SAMPLE_ERROR_MESSAGE} ${options.id} (${configUrl})`
+                },
+                configUrl
+              )
+            );
+          }
         }
-      }
-    );
+      )
+      .catch(error => dispatch(loadRemoteResourceError(error, dataUrl || configUrl)));
   };
 }
 
@@ -288,7 +292,9 @@ function loadRemoteData(url) {
 export function loadSampleConfigurations(sampleMapId = null) {
   return dispatch => {
     const mapConfigUrl = getMapConfigUrl();
-    fetch(mapConfigUrl)
+    // A requested sample is loading while its catalog is fetched too.
+    if (sampleMapId) dispatch(setLoadingMapStatus(true));
+    return fetch(mapConfigUrl)
       .then(response => {
         if (!response.ok) {
           return response.text().then(text => {
@@ -304,6 +310,10 @@ export function loadSampleConfigurations(sampleMapId = null) {
         const map = sampleMapId && samples.find(s => s.id === sampleMapId);
         if (map) {
           dispatch(loadSample(map, false));
+        } else if (sampleMapId) {
+          dispatch(
+            loadRemoteResourceError({message: 'Requested sample was not found.'}, mapConfigUrl)
+          );
         }
       })
       .catch(error => {

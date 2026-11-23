@@ -32,6 +32,42 @@ import type {KeplerContext, RoomCommandResult, ToolDescriptor} from '../commands
 const DEFAULT_PORT = 8765;
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_CALL_TIMEOUT_MS = 60_000;
+const STATUS_COMMAND = 'map.get-status';
+const statusInput = z
+  .object({
+    waitUntilReady: z.boolean().optional(),
+    timeoutMs: z.number().int().min(1).max(60_000).optional()
+  })
+  .strict();
+
+export type ProjectStatus = {state: 'unknown' | 'loading' | 'ready' | 'failed'};
+export type BridgeStatus = {
+  state: 'disconnected' | 'connected' | 'negotiated' | 'loading' | 'ready' | 'failed';
+  connected: boolean;
+  toolsNegotiated: boolean;
+  app: {name: string; version?: string} | null;
+  project: ProjectStatus;
+  capabilities: {tools: string[]; localFileImport: boolean};
+  launcherUrl: string | null;
+  guidance?: string;
+  timedOut?: boolean;
+};
+
+const statusTool: MapTool = {
+  name: toToolName(STATUS_COMMAND),
+  commandId: STATUS_COMMAND,
+  description:
+    'Check the map connection, negotiated tools, connected app and project readiness. ' +
+    'Works without a connected page and returns a credential-free launcher URL. ' +
+    'Use waitUntilReady to wait up to timeoutMs (default 30000, maximum 60000) before inspecting project layers. ' +
+    'Ready includes an empty project; it does not mean all rendered tiles have loaded.',
+  inputSchema: z.toJSONSchema(statusInput) as Record<string, unknown>
+};
+
+function readProjectStatus(value: unknown): ProjectStatus {
+  const state = (value as ProjectStatus | undefined)?.state;
+  return {state: ['loading', 'ready', 'failed'].includes(state ?? '') ? state! : 'unknown'};
+}
 
 export type MapTool = {
   /** MCP tool name, e.g. `map_add_layer` (dots are not allowed in tool names). */
@@ -143,6 +179,10 @@ export class KeplerMcpBridge {
   private pageOrigin = '';
   private token = '';
   private pageUrl = '';
+  private app: BridgeStatus['app'] = null;
+  private project: ProjectStatus = {state: 'unknown'};
+  private readonly statusListeners = new Set<() => void>();
+  private readonly toolListeners = new Set<() => void>();
 
   constructor(options: KeplerMcpBridgeOptions = {}) {
     this.options = {
@@ -156,16 +196,15 @@ export class KeplerMcpBridge {
 
   /** Tools the MCP client can call right now. */
   getTools(): MapTool[] {
-    return (this.pageTools ?? this.staticTools).map(tool => {
+    return [...(this.pageTools ?? this.staticTools), statusTool].map(tool => {
       if (tool.commandId !== 'map.load-data') return tool;
       const schema = tool.inputSchema;
       if (schema['x-kepler-local-resource'] !== 1) return tool;
       return {
         ...tool,
         description:
-          'LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ' +
-          'The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ' +
-          tool.description,
+          `LOCAL FILES ON THE MCP SERVER: pass filePath with the absolute path of one explicitly selected local file, instead of url. ` +
+          `The bridge transfers the file directly; no separate HTTP server or encoded tool payload is needed. ${tool.description}`,
         inputSchema: {
           ...schema,
           properties: {
@@ -186,6 +225,99 @@ export class KeplerMcpBridge {
 
   get connected(): boolean {
     return this.socket?.readyState === WebSocket.OPEN;
+  }
+
+  /** Subscribe to effective catalog changes, including page replacement/disconnection. */
+  onToolsChanged(listener: () => void): () => void {
+    this.toolListeners.add(listener);
+    return () => this.toolListeners.delete(listener);
+  }
+
+  getStatus(): BridgeStatus {
+    const connected = this.connected;
+    const toolsNegotiated = connected && this.pageTools !== null;
+    const project = connected ? {...this.project} : {state: 'unknown' as const};
+    const state = !connected
+      ? 'disconnected'
+      : !toolsNegotiated
+      ? 'connected'
+      : project.state === 'unknown'
+      ? 'negotiated'
+      : project.state;
+    const address = this.httpServer?.address();
+    const host = address && typeof address !== 'string' ? address.address : null;
+    const launcherUrl = host
+      ? `http://${host.includes(':') ? `[${host}]` : host}:${
+          address && typeof address !== 'string' ? address.port : this.options.port
+        }/`
+      : null;
+    return {
+      state,
+      connected,
+      toolsNegotiated,
+      app: connected && this.app ? {...this.app} : null,
+      project,
+      capabilities: {
+        tools: toolsNegotiated ? this.getTools().map(tool => tool.name) : [statusTool.name],
+        localFileImport: Boolean(
+          toolsNegotiated &&
+            (host === '127.0.0.1' || host === '::1') &&
+            this.pageTools?.some(
+              tool =>
+                tool.commandId === 'map.load-data' &&
+                tool.inputSchema['x-kepler-local-resource'] === 1
+            )
+        )
+      },
+      launcherUrl,
+      ...(state === 'disconnected'
+        ? {
+            guidance: launcherUrl
+              ? `Open ${launcherUrl} in a browser to connect the map, then call map_get-status with waitUntilReady=true.`
+              : 'Start kepler-mcp, then open the local launcher URL printed at startup.'
+          }
+        : state === 'failed'
+        ? {
+            guidance:
+              'The project failed to load. Check the map page for the error, then retry loading the project.'
+          }
+        : state === 'negotiated'
+        ? {
+            guidance:
+              'The connected page has not reported project readiness. Update or reload the page to enable readiness reporting.'
+          }
+        : {})
+    };
+  }
+
+  private notifyStatus(): void {
+    for (const listener of this.statusListeners) listener();
+  }
+
+  private updatePageTools(tools: MapTool[] | null): void {
+    const previous = JSON.stringify(this.getTools());
+    this.pageTools = tools;
+    if (previous !== JSON.stringify(this.getTools())) {
+      for (const listener of this.toolListeners) listener();
+    }
+  }
+
+  private async waitForReady(timeoutMs: number): Promise<BridgeStatus> {
+    const status = this.getStatus();
+    if (['disconnected', 'ready', 'failed'].includes(status.state)) return status;
+    return new Promise(resolve => {
+      const finish = (result: BridgeStatus) => {
+        clearTimeout(timer);
+        this.statusListeners.delete(check);
+        resolve(result);
+      };
+      const check = () => {
+        const current = this.getStatus();
+        if (['disconnected', 'ready', 'failed'].includes(current.state)) finish(current);
+      };
+      const timer = setTimeout(() => finish({...this.getStatus(), timedOut: true}), timeoutMs);
+      this.statusListeners.add(check);
+    });
   }
 
   async start(): Promise<KeplerMcpBridgeStart> {
@@ -229,13 +361,22 @@ export class KeplerMcpBridge {
     this.pageUrl = `${mapUrl}${mapUrl.includes('?') ? '&' : '?'}mcp=${encodeURIComponent(
       this.token
     )}`;
+    if (port !== DEFAULT_PORT) this.pageUrl += `&mcpPort=${port}`;
+    if (this.options.host !== DEFAULT_HOST) {
+      this.pageUrl += `&mcpHost=${encodeURIComponent(this.options.host)}`;
+    }
     return {host: this.options.host, port, token: this.token, pageUrl: this.pageUrl};
   }
 
   async callTool(name: string, input: Record<string, unknown> = {}): Promise<RoomCommandResult> {
-    const tool =
-      this.getTools().find(candidate => candidate.name === name) ??
-      this.staticTools.find(candidate => candidate.name === name);
+    if (name === statusTool.name) {
+      const options = statusInput.parse(input);
+      const data = options.waitUntilReady
+        ? await this.waitForReady(options.timeoutMs ?? 30_000)
+        : this.getStatus();
+      return {success: true, commandId: STATUS_COMMAND, data};
+    }
+    const tool = this.getTools().find(candidate => candidate.name === name);
     if (!tool) {
       throw new Error(
         `Unknown map tool "${name}". Available: ${this.getTools()
@@ -245,10 +386,7 @@ export class KeplerMcpBridge {
     }
     const socket = this.socket;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        'No kepler.gl map page is connected. Open the page URL printed at startup ' +
-          '(it carries ?mcp=<token>), then call the tool again.'
-      );
+      throw new Error(`No kepler.gl map page is connected. ${this.getStatus().guidance}`);
     }
 
     const callId = randomUUID();
@@ -318,9 +456,12 @@ export class KeplerMcpBridge {
 
   async close(): Promise<void> {
     this.rejectPending('The bridge was closed.');
-    this.pageTools = null;
     this.socket?.close(1000, 'bridge closed');
     this.socket = null;
+    this.app = null;
+    this.project = {state: 'unknown'};
+    this.updatePageTools(null);
+    this.notifyStatus();
     await Promise.all(
       [...this.localResources.values()].map(resource => this.releaseLocalResource(resource))
     );
@@ -362,7 +503,10 @@ export class KeplerMcpBridge {
     this.socket?.close(1000, 'replaced by a newer connection');
     this.socket = socket;
     this.pageOrigin = origin ?? new URL(this.options.mapUrl).origin;
-    this.pageTools = null;
+    this.app = null;
+    this.project = {state: 'unknown'};
+    this.updatePageTools(null);
+    this.notifyStatus();
 
     socket.on('message', data => {
       if (this.socket === socket) this.handleMessage(data);
@@ -370,7 +514,10 @@ export class KeplerMcpBridge {
     socket.on('close', () => {
       if (this.socket === socket) {
         this.socket = null;
-        this.pageTools = null;
+        this.app = null;
+        this.project = {state: 'unknown'};
+        this.updatePageTools(null);
+        this.notifyStatus();
         this.rejectPending('The kepler.gl page disconnected.');
       }
     });
@@ -386,7 +533,25 @@ export class KeplerMcpBridge {
       return;
     }
     if (message?.type === 'hello' && Array.isArray(message.commands)) {
-      this.pageTools = toolsFromDescriptors(message.commands as ToolDescriptor[]);
+      this.app =
+        typeof message.app?.name === 'string'
+          ? {
+              name: message.app.name,
+              ...(typeof message.app.version === 'string' ? {version: message.app.version} : {})
+            }
+          : null;
+      this.project = readProjectStatus(message.project);
+      this.updatePageTools(
+        toolsFromDescriptors(message.commands as ToolDescriptor[]).filter(
+          tool => tool.name !== statusTool.name
+        )
+      );
+      this.notifyStatus();
+      return;
+    }
+    if (message?.type === 'status' && this.pageTools !== null) {
+      this.project = readProjectStatus(message.project);
+      this.notifyStatus();
       return;
     }
     if (message?.type === 'result' && typeof message.callId === 'string') {

@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {combineReducers} from 'redux';
+import {ActionTypes, ProviderActionTypes, unwrap} from '@kepler.gl/actions';
 import Task, {withTask} from '@kepler.gl/tasks';
 
 import {aiAssistantReducer} from '@openassistant/kepler-assistant';
@@ -25,7 +26,8 @@ import {
   LOAD_REMOTE_DATASET_PROCESSED_SUCCESS,
   LOAD_REMOTE_RESOURCE_ERROR,
   SET_SAMPLE_LOADING_STATUS,
-  loadRemoteDatasetProcessedSuccessAction
+  loadRemoteDatasetProcessedSuccessAction,
+  loadRemoteResourceError as loadRemoteResourceErrorAction
 } from '../actions';
 
 import {CLOUD_PROVIDERS_CONFIGURATION} from '../constants/default-settings';
@@ -60,8 +62,24 @@ export const appReducer = (state = initialAppState, action) => {
       return {...state, loaded: true};
     case LOAD_MAP_SAMPLE_FILE:
       return {...state, sampleMaps: action.samples};
+    case ProviderActionTypes.LOAD_CLOUD_MAP:
+      return {...state, isMapLoading: true, error: null};
+    case ActionTypes.LOAD_FILES:
+      return {...state, error: null};
+    case ActionTypes.CREATE_NEW_DATASET_SUCCESS: {
+      const {results, replacement} = unwrap(action).payload;
+      return !replacement && results?.some(result => result.status === 'rejected')
+        ? {...state, isMapLoading: false, error: true}
+        : state;
+    }
+    case ProviderActionTypes.LOAD_CLOUD_MAP_ERROR:
+      return {...state, isMapLoading: false, error: true};
     case SET_SAMPLE_LOADING_STATUS:
-      return {...state, isMapLoading: action.isMapLoading};
+      return {
+        ...state,
+        isMapLoading: action.isMapLoading,
+        ...(action.isMapLoading ? {error: null} : {})
+      };
     default:
       return state;
   }
@@ -131,6 +149,7 @@ async function loadRemoteResourceSuccessTask({
 }) {
   if (dataUrl) {
     const data = await processorMethod(unprocessedData);
+    if (!data) throw new Error('Data processing failed.');
     return {
       info: {
         id: datasetId
@@ -198,9 +217,7 @@ export const loadRemoteResourceSuccess = (state, action) => {
     unprocessedData
   }).bimap(
     datasets => loadRemoteDatasetProcessedSuccessAction({...action, datasets}),
-    () => {
-      throw new Error('loadRemoteResource data processor failed');
-    }
+    error => loadRemoteResourceErrorAction(error || {message: 'Data processing failed.'}, dataUrl)
   );
 
   return withTask(state, task);
@@ -239,6 +256,7 @@ const loadRemoteDatasetProcessedSuccess = (state, action) => {
     app: {
       ...state.app,
       currentSample: options,
+      error: null,
       isMapLoading: false // we turn off the spinner
     },
     keplerGl: {
@@ -260,6 +278,7 @@ export const loadRemoteResourceError = (state, action) => {
     ...state,
     app: {
       ...state.app,
+      error: true, // Keep readiness failed until a new load starts; do not expose source URLs.
       isMapLoading: false // we turn of the spinner
     },
     keplerGl: {
@@ -284,7 +303,21 @@ const composedReducer = (state, action) => {
   if (composedUpdaters[action.type]) {
     return composedUpdaters[action.type](state, action);
   }
-  return demoReducer(state, action);
+  const nextState = demoReducer(state, action);
+  if (action.type === ActionTypes.LOAD_FILES_ERR) {
+    const {loadId, meta} = unwrap(action);
+    const loading = state?.keplerGl?.map?.visState?.fileLoading;
+    // Core ignores late errors from a replaced file load. Retain accepted
+    // failures after its transient progress entries are cleared.
+    if (
+      (!meta?._id_ || meta._id_ === 'map') &&
+      loading &&
+      (loadId == null || loadId === loading.loadId)
+    ) {
+      return {...nextState, app: {...nextState.app, error: true}};
+    }
+  }
+  return nextState;
 };
 
 // export demoReducer to be combined in website app

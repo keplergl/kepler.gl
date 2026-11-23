@@ -2,8 +2,23 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {cleanup, render} from '@testing-library/react';
-import {KeplerMcpBridge} from '../../examples/demo-app/src/kepler-mcp-bridge';
+import {applyMiddleware, combineReducers, createStore} from 'redux';
+import {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import {
+  createNewDatasetSuccess,
+  loadCloudMap,
+  loadCloudMapError,
+  loadFiles,
+  loadFilesErr,
+  loadFilesSuccess,
+  registerEntry,
+  wrapTo
+} from '@kepler.gl/actions';
+import {load} from '@loaders.gl/core';
+import demoReducer from '../../examples/demo-app/src/reducers';
+import {loadSampleConfigurations, setLoadingMapStatus} from '../../examples/demo-app/src/actions';
+import {act, cleanup, render, waitFor} from '@testing-library/react';
+import {KeplerMcpBridge, getProjectStatus} from '../../examples/demo-app/src/kepler-mcp-bridge';
 import {buildCatalog, buildKeplerContext} from '../../examples/demo-app/src/kepler-mcp-shared';
 
 jest.mock('../../examples/demo-app/src/kepler-mcp-shared', () => ({
@@ -12,7 +27,40 @@ jest.mock('../../examples/demo-app/src/kepler-mcp-shared', () => ({
   toDescriptor: command => ({id: command.id})
 }));
 
+jest.mock('@openassistant/kepler-assistant', () => ({aiAssistantReducer: (state = {}) => state}), {
+  virtual: true
+});
+jest.mock('../../examples/demo-app/src/utils/runtime-config', () => ({
+  getRuntimeConfig: () => ({})
+}));
+jest.mock('@loaders.gl/core', () => ({...jest.requireActual('@loaders.gl/core'), load: jest.fn()}));
+
+const thunk =
+  ({dispatch, getState}) =>
+  next =>
+  action =>
+    typeof action === 'function' ? action(dispatch, getState) : next(action);
+const originalFetch = global.fetch;
 const originalWebSocket = global.WebSocket;
+
+function projectStore(initialState) {
+  let state = initialState;
+  const listeners = new Set();
+  return {
+    getState: () => state,
+    subscribe: listener => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    update: next => {
+      state = next;
+      listeners.forEach(listener => listener());
+    },
+    listeners
+  };
+}
+
+const emptyProject = {visState: {datasets: {}, layers: []}};
 
 class MockWebSocket {
   static OPEN = 1;
@@ -56,6 +104,8 @@ describe('MCP browser bridge cancellation', () => {
   afterEach(() => {
     cleanup();
     global.WebSocket = originalWebSocket;
+    global.fetch = originalFetch;
+    load.mockReset();
     sessionStorage.clear();
     window.history.replaceState({}, '', '/');
   });
@@ -121,5 +171,217 @@ describe('MCP browser bridge cancellation', () => {
     pending.resolve({success: true});
     await Promise.all(calls);
     expect(socket.send).not.toHaveBeenCalled();
+  });
+});
+
+describe('MCP project readiness', () => {
+  beforeEach(() => {
+    MockWebSocket.instances = [];
+    global.WebSocket = MockWebSocket;
+    sessionStorage.clear();
+    window.history.replaceState({}, '', '/?mcp=secret-token');
+    buildKeplerContext.mockReturnValue({});
+    buildCatalog.mockReturnValue([]);
+  });
+
+  afterEach(() => {
+    cleanup();
+    global.WebSocket = originalWebSocket;
+    global.fetch = originalFetch;
+    load.mockReset();
+    sessionStorage.clear();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('advertises an initialized empty project as ready and identifies the app', () => {
+    const reduxStore = projectStore({demo: {keplerGl: {map: emptyProject}}});
+    render(<KeplerMcpBridge reduxStore={reduxStore} />);
+    const socket = MockWebSocket.instances[0];
+    socket.onopen();
+    expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({
+      type: 'hello',
+      commands: [],
+      app: {name: 'kepler.gl demo', version: expect.any(String)},
+      project: {state: 'ready'}
+    });
+  });
+
+  it('publishes ready only after delayed project data is installed, allowing the first lookup', async () => {
+    const reduxStore = createStore(
+      combineReducers({demo: demoReducer}),
+      applyMiddleware(...enhanceReduxMiddleware([thunk]))
+    );
+    reduxStore.dispatch(registerEntry({id: 'map'}));
+    const catalog = deferred();
+    const data = deferred();
+    load.mockReturnValue(data.promise);
+    global.fetch = jest.fn().mockReturnValue(catalog.promise);
+    const opening = reduxStore.dispatch(loadSampleConfigurations('delayed'));
+
+    const lookup = jest.fn(async () => ({
+      success: true,
+      data: reduxStore.getState().demo.keplerGl.map.visState.layers[0]
+    }));
+    buildCatalog.mockReturnValue([{id: 'map.get-layer-options', execute: lookup}]);
+    const view = render(<KeplerMcpBridge reduxStore={reduxStore} />);
+    const socket = MockWebSocket.instances[0];
+    socket.onopen();
+    expect(JSON.parse(socket.send.mock.calls[0][0]).project).toEqual({state: 'loading'});
+
+    let firstLookup;
+    let layerAtReady;
+    socket.send.mockImplementation(json => {
+      const message = JSON.parse(json);
+      if (message.type === 'status' && message.project.state === 'ready') {
+        // Inspect the store immediately: a later act() flush would hide a ready
+        // notification sent before the asynchronous table install completes.
+        layerAtReady = reduxStore.getState().demo.keplerGl.map.visState.layers[0];
+        firstLookup = socket.receive({
+          type: 'call',
+          callId: 'first-lookup',
+          tool: 'map.get-layer-options'
+        });
+      }
+    });
+
+    catalog.resolve({
+      ok: true,
+      json: async () => [{id: 'delayed', dataUrl: 'https://example.test/data.csv'}]
+    });
+    await opening;
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(socket.send).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      data.resolve({shape: 'object-row-table', data: [{lat: 1, lng: 2}]});
+    });
+    await waitFor(() => expect(getProjectStatus(reduxStore)).toEqual({state: 'ready'}));
+    const knownLayer = reduxStore.getState().demo.keplerGl.map.visState.layers[0];
+    expect(knownLayer.config.dataId).toBe('delayed');
+    expect(layerAtReady).toBe(knownLayer);
+    expect(JSON.parse(socket.send.mock.calls[1][0])).toEqual({
+      type: 'status',
+      project: {state: 'ready'}
+    });
+    await firstLookup;
+    expect(lookup).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(socket.send.mock.calls[2][0]).result.data.id).toBe(knownLayer.id);
+    view.unmount();
+  });
+
+  it.each(['missing sample', 'fetch failure', 'processing failure'])(
+    'reports %s as failed and clears the error on retry',
+    async failure => {
+      const reduxStore = createStore(
+        combineReducers({demo: demoReducer}),
+        applyMiddleware(...enhanceReduxMiddleware([thunk]))
+      );
+      reduxStore.dispatch(registerEntry({id: 'map'}));
+      global.fetch = jest.fn().mockImplementation(async () => {
+        if (failure === 'fetch failure') throw new Error('Failed to fetch private URL');
+        return {
+          ok: true,
+          json: async () =>
+            failure === 'missing sample'
+              ? []
+              : [{id: 'delayed', dataUrl: 'https://example.test/data.csv'}]
+        };
+      });
+      load.mockResolvedValue({shape: 'object-row-table', data: null});
+      await reduxStore.dispatch(loadSampleConfigurations('delayed'));
+      await waitFor(() => expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'}));
+      reduxStore.dispatch(setLoadingMapStatus(true));
+      expect(getProjectStatus(reduxStore)).toEqual({state: 'loading'});
+    }
+  );
+
+  it('retains cloud load failures after core loading flags clear', async () => {
+    const reduxStore = createStore(
+      combineReducers({demo: demoReducer}),
+      applyMiddleware(...enhanceReduxMiddleware([thunk]))
+    );
+    reduxStore.dispatch(registerEntry({id: 'map'}));
+    reduxStore.dispatch(setLoadingMapStatus(true));
+    await reduxStore.dispatch(loadCloudMapError({error: new Error('Private URL failed')}));
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'});
+  });
+
+  it('retains accepted file errors after progress cleanup, ignores stale errors, and resets on retry', async () => {
+    const reduxStore = createStore(
+      combineReducers({demo: demoReducer}),
+      applyMiddleware(...enhanceReduxMiddleware([thunk]))
+    );
+    reduxStore.dispatch(registerEntry({id: 'map'}));
+    // Model an active file queue; the real task middleware drains it after the error.
+    const initial = reduxStore.getState();
+    initial.demo.keplerGl.map.visState.fileLoading = {
+      loadId: 'active',
+      filesToLoad: [],
+      fileCache: [],
+      options: {},
+      onFinish: loadFilesSuccess
+    };
+    await reduxStore.dispatch(wrapTo('map', loadFilesErr('data.csv', new Error('stale'), 'old')));
+    expect(reduxStore.getState().demo.app.error).toBeNull();
+    await reduxStore.dispatch(
+      wrapTo('map', loadFilesErr('data.csv', new Error('failed'), 'active'))
+    );
+    expect(reduxStore.getState().demo.keplerGl.map.visState.fileLoadingProgress).toEqual({});
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'});
+    await reduxStore.dispatch(loadFiles([]));
+    expect(reduxStore.getState().demo.app.error).toBeNull();
+  });
+
+  it('retains rejected dataset installation and clears it when a cloud load starts', async () => {
+    const reduxStore = createStore(
+      combineReducers({demo: demoReducer}),
+      applyMiddleware(...enhanceReduxMiddleware([thunk]))
+    );
+    reduxStore.dispatch(registerEntry({id: 'map'}));
+    await reduxStore.dispatch(
+      wrapTo(
+        'map',
+        createNewDatasetSuccess({
+          results: [{status: 'rejected', reason: 'Private source failed'}],
+          addToMapOptions: {}
+        })
+      )
+    );
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'failed'});
+    const pending = deferred();
+    reduxStore.dispatch(
+      loadCloudMap({
+        provider: {name: 'test', downloadMap: () => pending.promise},
+        loadParams: {}
+      })
+    );
+    expect(getProjectStatus(reduxStore)).toEqual({state: 'loading'});
+    expect(reduxStore.getState().demo.app.error).toBeNull();
+  });
+
+  it('reports failure without source URLs and recovers when a new load starts', () => {
+    const reduxStore = projectStore({demo: {keplerGl: {map: emptyProject}}});
+    render(<KeplerMcpBridge reduxStore={reduxStore} />);
+    const socket = MockWebSocket.instances[0];
+    socket.onopen();
+    reduxStore.update({demo: {app: {error: 'https://private/?token=secret'}}});
+    reduxStore.update({demo: {app: {isMapLoading: true, error: null}}});
+    expect(socket.send.mock.calls.slice(1).map(([json]) => JSON.parse(json))).toEqual([
+      {type: 'status', project: {state: 'failed'}},
+      {type: 'status', project: {state: 'loading'}}
+    ]);
+    expect(socket.send.mock.calls.flat().join('')).not.toContain('secret');
+  });
+
+  it.each([
+    [{}, 'unknown'],
+    [{visState: {fileLoading: {}}}, 'loading'],
+    [{visState: {loadingIndicatorValue: 1}}, 'loading'],
+    [{visState: {loadingIndicatorValue: 0}}, 'ready'],
+    [{uiState: {loadFiles: {fileLoading: true}}}, 'loading'],
+    [{providerState: {isCloudMapLoading: true}}, 'loading'],
+    [{visState: {fileLoadingProgress: {data: {error: 'private-url'}}}}, 'failed']
+  ])('reports core map loading state %j as %s', (map, expected) => {
+    const reduxStore = projectStore({demo: {keplerGl: {map}}});
+    expect(getProjectStatus(reduxStore)).toEqual({state: expected});
   });
 });

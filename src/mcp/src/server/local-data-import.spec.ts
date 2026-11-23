@@ -100,7 +100,7 @@ describe('local dataset import through the MCP bridge', () => {
       })
     );
     const helloStarted = Date.now();
-    while (bridge.getTools().length !== 2) {
+    while (!bridge.getStatus().toolsNegotiated) {
       if (Date.now() - helloStarted > 3000) throw new Error('Page handshake timed out.');
       await new Promise(resolve => setTimeout(resolve, 10));
     }

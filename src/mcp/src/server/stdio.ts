@@ -16,10 +16,9 @@
 
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
-import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
-import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js';
-import {KeplerMcpBridge, formatResult} from './bridge-server';
+import {KeplerMcpBridge} from './bridge-server';
+import {createKeplerMcpServer} from './mcp-server';
 import type {KeplerMcpBridgeOptions} from './bridge-server';
 
 const DEFAULT_MAP_URL = 'http://localhost:8080';
@@ -87,34 +86,7 @@ async function main(): Promise<void> {
   const bridge = new KeplerMcpBridge(options);
   const started = await bridge.start();
 
-  const server = new Server(
-    {name: 'kepler-mcp', version: readVersion()},
-    {capabilities: {tools: {}}}
-  );
-
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: bridge.getTools().map(tool => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.inputSchema as {type: 'object'; [key: string]: unknown}
-    }))
-  }));
-
-  server.setRequestHandler(CallToolRequestSchema, async request => {
-    const {name, arguments: args} = request.params;
-    try {
-      const result = await bridge.callTool(name, (args ?? {}) as Record<string, unknown>);
-      const {text, isError} = formatResult(result);
-      return {content: [{type: 'text' as const, text}], ...(isError ? {isError: true} : {})};
-    } catch (error) {
-      return {
-        content: [
-          {type: 'text' as const, text: error instanceof Error ? error.message : String(error)}
-        ],
-        isError: true
-      };
-    }
-  });
+  const server = createKeplerMcpServer(bridge, readVersion());
 
   const shutdown = async () => {
     await bridge.close();

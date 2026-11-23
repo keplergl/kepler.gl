@@ -714,6 +714,24 @@ rendering and file delivery still require a host export workflow.
 
 ## Loading and readiness checks
 
+- On the stdio bridge, call `map_get-status` before inspecting a newly opened
+  project. This bridge-owned tool works even before a page connects. Pass
+  `{"waitUntilReady": true, "timeoutMs": 30000}` to wait for project readiness
+  (maximum 60000 ms). A timeout returns the current state with `timedOut: true`;
+  a failed load or disconnect ends the wait immediately.
+- The status distinguishes `disconnected`, `connected` (before tool negotiation),
+  `negotiated` (readiness unknown), `loading`, `ready`, and `failed`. A valid empty
+  project is ready. Older pages that do not report readiness remain unknown;
+  do not treat their negotiated tools as proof that a project has loaded.
+- Use the returned credential-free `launcherUrl` and `guidance` to connect a
+  disconnected page. Never copy or expose the bridge token. `app` identifies the
+  connected app/version; `capabilities.tools` lists the currently effective MCP
+  tools and `capabilities.localFileImport` reports local-file support. The bridge
+  sends `notifications/tools/list_changed` when its negotiated catalog changes.
+- `ready` means the project's data and configuration have loaded, not that all
+  basemap or streaming tiles have rendered. Only inspect known project layers
+  after `ready`; report `failed` instead of guessing from dataset names.
+
 - Do not infer basemap loading from generic `Loading...` text or a progress
   bar's dimensions. The loading indicator is shared across data and layer
   operations and remains mounted while visually hidden.
