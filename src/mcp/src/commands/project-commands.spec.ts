@@ -172,7 +172,15 @@ it('round-trips the complete embedded project after both original URLs are unava
   ]);
   for (const table of Object.values(state.visState.datasets)) {
     expect(table.dataContainer.numRows()).toBe(2);
-    expect(table.filteredIndex).toEqual([0]);
+    // Range filters run on the GPU; filteredIndex contains the CPU candidates.
+    const getFilterValue = table.gpuFilter.filterValueAccessor(table.dataContainer)();
+    const visibleRows = table.filteredIndex.filter(index =>
+      getFilterValue({index}).every((value, channel) => {
+        const [min, max] = table.gpuFilter.filterRange[channel];
+        return typeof value === 'number' && value >= min && value <= max;
+      })
+    );
+    expect(visibleRows).toEqual([0]);
   }
   expect(state.visState.effects[0]).toMatchObject({id: 'fog', animation: {height: animation}});
   expect(state.visState.cameraBookmarks).toEqual([{id: 'hawaii', name: 'Hawaii', camera}]);
