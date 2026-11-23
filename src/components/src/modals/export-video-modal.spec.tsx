@@ -3394,15 +3394,15 @@ test.each([500, undefined])(
   }
 );
 
-test('prepares real point layer data in an isolated table at the requested data timestamp', () => {
+test('keeps preview geometry, styling, and filtering isolated from live row updates', () => {
   const {preparePreviewFrame} = require('./render-preview-frame');
   const {KeplerTable} = require('@kepler.gl/table');
   const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
   dataset.updateSchema({
-    fields: ['lat', 'lng'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+    fields: ['lat', 'lng', 'value'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
     rows: [
-      [20, 1],
-      [21, 2]
+      [20, 1, 10],
+      [21, 2, 20]
     ]
   });
   const layer = new PointLayer({
@@ -3413,6 +3413,32 @@ test('prepares real point layer data in an isolated table at the requested data 
       lng: {value: 'lng', fieldIdx: 1}
     }
   });
+  dataset.getColumnFilterProps('value');
+  layer.config.colorField = dataset.fields[2];
+  layer.config.sizeField = dataset.fields[2];
+  layer.config.colorScale = 'linear';
+  layer.config.sizeScale = 'linear';
+  layer.config.colorDomain = [10, 20];
+  layer.config.sizeDomain = [10, 20];
+  layer.config.visConfig.colorRange = {
+    ...layer.config.visConfig.colorRange,
+    colors: ['#ff0000', '#0000ff']
+  };
+  layer.config.visConfig.radiusRange = [1, 10];
+  layer.config.textLabel[0].field = dataset.fields[2];
+  const filter = {
+    id: 'values',
+    type: 'range',
+    dataId: ['data'],
+    name: ['value'],
+    fieldIdx: [2],
+    value: [10, 20],
+    domain: [10, 20],
+    gpu: true,
+    gpuChannel: [0],
+    fixedDomain: true
+  };
+  dataset.filterTable([filter], [layer]);
   const live = {
     mapState: {...DEFAULT_PROPS.mapState, width: 1000, height: 700},
     mapStyle: DEFAULT_PROPS.mapStyle,
@@ -3420,6 +3446,7 @@ test('prepares real point layer data in an isolated table at the requested data 
       ...DEFAULT_PROPS.visState,
       datasets: {data: dataset},
       layers: [layer],
+      filters: [filter],
       layerData: [],
       animationConfig: {currentTime: 100}
     }
@@ -3433,6 +3460,63 @@ test('prepares real point layer data in an isolated table at the requested data 
   expect(live.visState.animationConfig.currentTime).toBe(100);
   expect(preview.visState.datasets.data).not.toBe(dataset);
   expect(preview.visState.datasets.data.filteredIndex).toEqual(dataset.filteredIndex);
+  const previewData = preview.visState.layerData[0];
+  const [first, second] = previewData.data;
+  expect(preview.visState.layers[0].config.colorField.valueAccessor(first)).toBe(10);
+  expect(preview.visState.layers[0].config.colorField.valueAccessor(second)).toBe(20);
+  const color = [...previewData.getFillColor(first)];
+  expect(color).not.toEqual(previewData.getFillColor(second));
+  expect(previewData.getRadius(first)).toBe(1);
+  expect(previewData.getPosition(first)).toEqual([1, 20, 0]);
+  expect(previewData.getFilterValue(first)[0]).toBe(0);
+
+  expect(dataset.upsertRows([[40, 1, 20]], 'lng')).toBe(true);
+  expect(dataset.fields[2].valueAccessor(first)).toBe(20);
+  expect(preview.visState.datasets.data.fields[2].valueAccessor(first)).toBe(10);
+  expect(preview.visState.layers[0].config.textLabel[0].field.valueAccessor(first)).toBe(10);
+  expect(previewData.getFillColor(first)).toEqual(color);
+  expect(previewData.getRadius(first)).toBe(1);
+  expect(previewData.getPosition(first)).toEqual([1, 20, 0]);
+  expect(previewData.getFilterValue(first)[0]).toBe(0);
+});
+
+test('reports a visible layer formatting failure even when the reducer hides that layer', () => {
+  const {preparePreviewFrame} = require('./render-preview-frame');
+  const {KeplerTable} = require('@kepler.gl/table');
+  const dataset = new KeplerTable({info: {id: 'data', label: 'Points'}, color: [0, 0, 0]});
+  dataset.updateSchema({
+    fields: ['lat', 'lng'].map(name => ({name, type: 'real', analyzerType: 'FLOAT'})),
+    rows: [[20, 1]]
+  });
+  class InvalidPointLayer extends PointLayer {
+    formatLayerData() {
+      throw new Error('Invalid point data');
+    }
+  }
+  const layer = new InvalidPointLayer({
+    id: 'invalid-points',
+    label: 'Broken points',
+    dataId: 'data',
+    columns: {
+      lat: {value: 'lat', fieldIdx: 0},
+      lng: {value: 'lng', fieldIdx: 1}
+    }
+  });
+  const live = {
+    mapState: DEFAULT_PROPS.mapState,
+    mapStyle: DEFAULT_PROPS.mapStyle,
+    visState: {...DEFAULT_PROPS.visState, datasets: {data: dataset}, layers: [layer]}
+  };
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  try {
+    expect(() => preparePreviewFrame(live, {width: 1000, height: 700})).toThrow(
+      'Preview layer "Broken points" could not render: Invalid point data'
+    );
+    expect(layer.config.isVisible).toBe(true);
+    expect(layer.isValid).toBe(true);
+  } finally {
+    consoleError.mockRestore();
+  }
 });
 
 test('caps a small headless viewport at its output width so native DPR can remain at least one', async () => {

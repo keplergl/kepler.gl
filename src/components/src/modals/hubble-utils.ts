@@ -17,7 +17,7 @@ import {computeDeckLayers} from '@kepler.gl/reducers';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
 import {point} from '@turf/helpers';
 import {transformTranslate} from '@turf/transform-translate';
-import {InteractionConfig, TimeRangeFilter} from '@kepler.gl/types';
+import {InteractionConfig, LayerCallbacks, TimeRangeFilter} from '@kepler.gl/types';
 
 type KeplerState = {
   visState: any;
@@ -333,6 +333,28 @@ function getGlobeExportBaseLayers(keplerState: KeplerState, mapboxApiAccessToken
   );
 }
 
+function getExportLayerCallbacks(
+  keplerState: KeplerState,
+  onLayerError?: (error: Error) => void
+): LayerCallbacks | undefined {
+  if (!onLayerError) return undefined;
+  return {
+    onLayerError: (_index, error) => onLayerError(error),
+    onTilesetLoadError: (index, kind) => {
+      // Tile3D reports a failed request as loaded so the live spinner can stop.
+      // Captures must reject the missing tileset; null only clears a prior error.
+      if (kind === null) return;
+      const layer = keplerState.visState.layers[index];
+      onLayerError(
+        new Error(
+          `Tileset for layer "${layer.config.label || layer.id}" could not load. ` +
+            (kind === 'token' ? 'Check its access token.' : 'Check its URL and connection.')
+        )
+      );
+    }
+  };
+}
+
 /**
  * Build a fresh set of globe layers (base + data + top) for a given split-map
  * index. Used by the swipe export preview, which mounts two independent Deck
@@ -379,7 +401,7 @@ export function getGlobeExportLayers(
       mapboxApiAccessToken,
       mapboxApiUrl
     },
-    onLayerError ? {onLayerError: (_index, error) => onLayerError(error)} : undefined
+    getExportLayerCallbacks(keplerState, onLayerError)
   );
   return [
     ...globeBaseLayers,
@@ -410,7 +432,7 @@ export function getFlatExportLayers(
     computeDeckLayers(
       {...keplerState, animationTimeMs, mapState: {...keplerState.mapState, ...viewState}},
       {mapIndex, primaryMap: false},
-      onLayerError ? {onLayerError: (_index, error) => onLayerError(error)} : undefined
+      getExportLayerCallbacks(keplerState, onLayerError)
     )
       .flat(Infinity)
       // Capture must not wait for asynchronous resources belonging to invisible layers.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cloneElement, createElement, Fragment} from 'react';
+import {cloneElement, createElement, createRef, Fragment} from 'react';
 import type {ReactElement} from 'react';
 import type {Annotation, CameraTour, Effect} from '@kepler.gl/types';
 import {NO_MAP_ID} from '@kepler.gl/constants';
@@ -28,6 +28,7 @@ import {
 import {StyledModalInputFootnote} from '../common/styled-components';
 import {getEffectAnimationDuration, getEffectAnimationTracks} from './effect-animation';
 import {programmaticTimecode, withVideoExportErrors} from './programmatic-video-export';
+import {SwipeExportVideoPreview} from './swipe-export-video-preview';
 
 export const CAMERA_TOUR_PRESET = 'Camera Animation';
 
@@ -110,6 +111,7 @@ export function resolveCameraTourExportFrame<T extends object>(
 /** Reuse Hubble's export UI and presets, with opt-in native video encoding. */
 export function withCameraTourExport<T extends new (...args: any[]) => any>(Base: T): T {
   return class CameraTourExportContainer extends Base {
+    previewRef = createRef<SwipeExportVideoPreview>();
     private finishNativeRecording?: (blob: Blob | null) => void;
     private failedBasemap?: PreviewMap;
 
@@ -418,6 +420,23 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
               })
             }
           });
+      if (this.props.framePreview) {
+        // Hubble's private preview changes the global DPR in its constructor.
+        // Reuse our native canvas renderer with an explicit per-map ratio while
+        // retaining Hubble's camera, layers and CSS preview size.
+        return createElement(SwipeExportVideoPreview, {
+          ...preview.props,
+          ref: this.previewRef,
+          singleMap: true,
+          useLocalPixelRatio: true,
+          durationMs: this.state.durationMs,
+          currentTimeMs: this.state.currentTimeMs ?? 0,
+          animationTimeMs,
+          swipeStartPct: 100,
+          swipeEndPct: 100,
+          swipeEasing: 'linear'
+        });
+      }
       if (this.props.mapData.visState.annotations?.length) {
         preview = createElement(VideoAnnotationPreview, {
           frame: {

@@ -666,6 +666,7 @@ export class SwipeExportVideoPanelContainer extends Component<
         <PanelBody $exportVideoWidth={exportVideoWidth}>
           <SwipeExportVideoPreview
             ref={this.previewRef}
+            useLocalPixelRatio={Boolean(this.props.framePreview)}
             mapData={mapData}
             adapter={adapter!}
             setViewState={this.setViewState}
