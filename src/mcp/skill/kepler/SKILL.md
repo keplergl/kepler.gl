@@ -438,6 +438,15 @@ Types are `vectorTile` (MVT/PMTiles), `rasterTile` (STAC/PMTiles), `wms`,
 `rasterTileServerUrls` unless the host configures a TiTiler server. For WMS, select a returned service-layer name using
 `map.set-layer-options.wmsLayer`. Preserve source URLs when exporting.
 
+For Google Photorealistic 3D Tiles, first configure a Google dataset and its
+access token through the native 3D Tiles importer. Use that dataset's ID as
+`credentialDatasetId` when calling `map.load-tileset` with `type: "tile3d"` and
+`url: "https://tile.googleapis.com/v1/3dtiles/root.json"`. This reuses its key
+without exposing it in tool arguments or results. Never put the key in the URL.
+The referenced dataset must still be loaded and contain a Google access token;
+an export with `includeCredentials: false` omits it, so configure it again
+after reopening before using it as a credential reference.
+
 ### 3. Split map comparison (`map.split-view`)
 
 - `action: "enable"` with `layerIdsForMap0` / `layerIdsForMap1`. Without the
