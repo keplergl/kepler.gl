@@ -26,7 +26,12 @@ import {
 import type {DeckProps, MapViewState} from '@deck.gl/core';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
-import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
+import {
+  getDataAnimationTimings,
+  parseSetCameraType,
+  scaleToVideoExport,
+  getResolutionSetting
+} from './hubble-utils';
 import {getCameraTourDuration} from '@kepler.gl/utils';
 import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
@@ -348,7 +353,12 @@ export class SwipeExportVideoPanelContainer extends Component<
     if (animatableLayer.length && readyToAnimation) {
       return {
         animationConfig,
-        tripKeyframe: {timings: [0, this.state.durationMs]}
+        tripKeyframe: {
+          timings: getDataAnimationTimings(
+            [0, this.state.durationMs],
+            animationConfig.endHoldDurationMs
+          )
+        }
       };
     }
     return {};

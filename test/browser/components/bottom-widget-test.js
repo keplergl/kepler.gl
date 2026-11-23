@@ -44,6 +44,61 @@ const defaultProps = {
   visStateActions: VisStateActions
 };
 
+test('Components -> BottomWidget -> stopping layer playback preserves the final data time', t => {
+  const LayerController = ({animationConfig, setLayerAnimationTime, onAnimationEnd}) => (
+    <button
+      onClick={() => {
+        setLayerAnimationTime(animationConfig.domain[1]);
+        onAnimationEnd();
+      }}
+    >
+      Finish playback
+    </button>
+  );
+  const Widget = BottomWidgetFactory(
+    () => null,
+    () => null,
+    () => null,
+    LayerController,
+    () => null
+  );
+  let state = {
+    ...StateWTripGeojson.visState,
+    filters: [],
+    animationConfig: {
+      ...StateWTripGeojson.visState.animationConfig,
+      domain: [0, 100],
+      currentTime: 99,
+      isAnimating: true,
+      animationLoop: false
+    }
+  };
+  const actions = {
+    ...VisStateActions,
+    setLayerAnimationTime: value => {
+      state = reducer(state, VisStateActions.setLayerAnimationTime(value));
+    },
+    setAnimationConfig: config => {
+      state = reducer(state, VisStateActions.setAnimationConfig(config));
+    }
+  };
+  const view = render(
+    <ThemeProvider theme={theme}>
+      <Widget {...defaultProps} {...state} visStateActions={actions} />
+    </ThemeProvider>
+  );
+  try {
+    // The controller publishes its final time and completion in the same frame,
+    // before React has rendered the updated animationConfig.
+    fireEvent.click(view.getByText('Finish playback'));
+    t.equal(state.animationConfig.currentTime, 100, 'retains the final native data timestamp');
+    t.equal(state.animationConfig.isAnimating, false, 'stops the native data clock');
+  } finally {
+    view.unmount();
+  }
+  t.end();
+});
+
 test('Components -> BottomWidget -> skips unchanged parent renders and keeps updates live', t => {
   let renders = 0;
   const TimeWidgetProbe = ({filter, onClose}) => {

@@ -118,6 +118,8 @@ export type SavedAnimationConfig = {
   speed: AnimationConfig['speed'];
   timeFormat?: AnimationConfig['timeFormat'];
   timezone?: AnimationConfig['timezone'];
+  animationLoop?: AnimationConfig['animationLoop'];
+  endHoldDurationMs?: AnimationConfig['endHoldDurationMs'];
 };
 
 export type SavedEditor = {

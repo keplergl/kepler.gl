@@ -66,11 +66,13 @@ function FilterAnimationControllerFactory(
           case ANIMATION_WINDOW.interval: {
             const idx = value[1];
             if (idx < binThresholds.length - 1) {
-              setFilterAnimationTime(
-                filterIdx,
-                'value',
-                intervalBinFromMarks(binThresholds, binThresholds[idx], intervalEndOffset)
+              const interval = intervalBinFromMarks(
+                binThresholds,
+                binThresholds[idx],
+                intervalEndOffset
               );
+              if (filter.endHoldDurationMs) interval[1] = Math.min(interval[1], filter.domain[1]);
+              setFilterAnimationTime(filterIdx, 'value', interval);
             }
             break;
           }
@@ -79,7 +81,15 @@ function FilterAnimationControllerFactory(
             break;
         }
       },
-      [filterIdx, binThresholds, filter.animationWindow, intervalEndOffset, setFilterAnimationTime]
+      [
+        filterIdx,
+        binThresholds,
+        filter.animationWindow,
+        filter.endHoldDurationMs,
+        filter.domain,
+        intervalEndOffset,
+        setFilterAnimationTime
+      ]
     );
 
     // if filter is synced merge the filter and animation config
@@ -99,6 +109,7 @@ function FilterAnimationControllerFactory(
         isAnimating={filter.isAnimating}
         animationWindow={filter.animationWindow}
         loop={filter.animationLoop !== false}
+        endHoldDurationMs={filter.endHoldDurationMs}
         onAnimationEnd={onAnimationEnd}
         steps={steps}
         minimumIncrement={numericAnimationIncrement}

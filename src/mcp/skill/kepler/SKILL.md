@@ -37,6 +37,8 @@ not this one.
 | ------------------------ | -------------------------------------------------------------- |
 | `map.add-layer`          | Add a layer (point, flow, flowField, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
+| `map.time-filter`        | Create, inspect and update shared timestamp/start-end filters. |
+| `map.data-playback`      | Inspect, play, pause, seek or reset a data clock; configure an end hold. |
 | `map.toggle-time-filter` | Show/hide the enlarged time controller at the bottom of the map. |
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.get-layer-options` | Inspect editable visual settings, values, ranges and choices. |
@@ -225,11 +227,71 @@ map; the animated layer is the deliverable.
 }
 ```
 
+### Shared data timelines
+
+Use `map.time-filter` when several datasets must share a clock or records have
+visibility start/end fields. Bindings use exact dataset IDs and TIMESTAMP field
+names. Omit `endField` for single timestamps; use it for interval overlap.
+Null end values are open-ended, following the native filter semantics.
+
+```json
+{
+  "action": "create",
+  "filterId": "migration",
+  "bindings": [
+    {"datasetId": "sightings", "startField": "observed_at", "endField": "visible_until"},
+    {"datasetId": "labels", "startField": "starts_at", "endField": "ends_at"}
+  ],
+  "animationWindow": "point"
+}
+```
+
+- `action: "get"` lists time filters; add `filterId` to inspect one.
+- `action: "update"` requires `filterId`. Supplied `bindings` replace the whole
+  list; omitted settings stay unchanged. Omit or clear an end field to return
+  that dataset to timestamp filtering. Edits pause the filter.
+- `animationWindow` accepts `free`, `point`, `incremental` or `interval`.
+  `value: [start, end]` sets the selected window in epoch milliseconds inside
+  the native domain; `interval` sets the histogram interval, and `enabled`
+  toggles filtering.
+- Results include `filterId`, aligned `bindings`, `domain`, `value`,
+  `selectedTime`, window/interval settings, playback state and `visibleCounts`
+  keyed by dataset ID. Counts apply all active filters, including GPU filters;
+  layer-specific polygon results are unioned. A null count means the dataset
+  cannot be evaluated locally. Counts represent records, not rendered trip segments.
+
+Use `map.data-playback` with `target: {"filterId": "migration"}` or
+`target: {"layerId": "<animated-layer-id>"}`:
+
+```json
+{"action": "seek", "target": {"filterId": "migration"}, "time": 1704240000000}
+```
+
+`get`, `play`, `pause`, `seek` and `reset` operate on the data timeline without
+moving the camera. Seek pauses and selects `time` in native domain units;
+timestamp domains use epoch milliseconds. Point windows select exactly that
+time; free windows retain their width; interval windows snap to native bins.
+Reset seeks the domain start. Repeating a seek produces the same native state
+and counts. Animated layers share one clock; a layer linked to a time filter
+uses that filter's clock, identified in the result.
+
+`play` additionally accepts `speed`, `loop`, and `endHoldDurationMs`. For example,
+`{"action":"play","target":{"filterId":"migration"},"loop":false,"endHoldDurationMs":3000}`
+holds the last observation for three presentation seconds before stopping.
+The data timestamp, data-driven ages and counts stay fixed while separately
+playing camera/effect tracks continue. This is distinct from a camera stop's
+hold. Hold settings survive saving/reloading. Video export reserves the hold
+within its chosen total duration, so the data sweep finishes that much earlier;
+a hold at least as long as the video keeps its final observation throughout.
+Zero disables the hold. Play pauses competing data clocks. Camera-tour
+playback remains controlled by `map.camera-tour`.
+
 ### Trip layers (`layerType: "trip"`)
 
 - Trip layers have **built-in** time animation. Do NOT add a
   `map.add-time-filter` for a trip layer — it is unnecessary and can break the
-  animation. After creating a trip layer, STOP.
+  animation. Use `map.data-playback` with `target: {"layerId": "<trip-layer-id>"}`
+  to control its native clock.
 - Strict columns: `id` (shared across a trip's waypoints), `latitude` /
   `longitude` (DOUBLE), `timestamp` (epoch milliseconds). If your epoch is in
   seconds, multiply by 1000.

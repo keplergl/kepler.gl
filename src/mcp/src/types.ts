@@ -48,6 +48,8 @@ export const MAP_TOOL_IDS = [
   'map.create-table',
   'map.add-column',
   'map.add-time-filter',
+  'map.time-filter',
+  'map.data-playback',
   'map.toggle-time-filter',
   'map.split-view',
   'map.get-dataset-context'

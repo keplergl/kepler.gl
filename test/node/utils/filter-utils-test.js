@@ -1205,6 +1205,21 @@ test('filterUtils -> applyTimeFilterEndFieldName', t => {
   t.notOk(cleared.endName, 'clearing end field should remove endName');
   t.deepEqual(cleared.domain, [0, 10], 'domain should shrink back to the start field');
 
+  dataset.fields[1].filterProps = {
+    fieldType: 'timestamp',
+    mappedValue: [null, null],
+    domain: [-100, 100],
+    step: 1
+  };
+  const {filter: openEnded} = applyTimeFilterEndFieldName(filter, {ds: dataset}, 'ds', 'end', 0);
+  t.deepEqual(openEnded.endName, ['end'], 'all-null end fields remain bound as open intervals');
+  t.deepEqual(
+    openEnded.domain,
+    [0, 10],
+    'all-null end fallback domain does not extend the timeline'
+  );
+  t.deepEqual(openEnded.value, [0, 10], 'open intervals keep the native start selection');
+
   t.end();
 });
 

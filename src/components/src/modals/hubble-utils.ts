@@ -70,7 +70,28 @@ function getKeyFramesFree(filter: TimeRangeFilter): TimeRangeFilterKeyframes {
   };
 }
 
+/** Reserve presentation time after the data sweep without extending the data domain. */
+export function getDataAnimationTimings(timings: number[], endHoldDurationMs?: number): number[] {
+  if (!Number.isFinite(endHoldDurationMs) || endHoldDurationMs! <= 0) return timings;
+  const end = Math.max(timings[0], timings[1] - endHoldDurationMs!);
+  // An all-hold movie starts at the final data frame. Finish its sweep just
+  // before the movie begins: equal keyframe timings produce NaN in Hubble.
+  return [end === timings[0] ? timings[0] - 1 : timings[0], end];
+}
+
 export function getTimeRangeFilterKeyframes({
+  filter,
+  timings
+}: {
+  filter: TimeRangeFilter;
+  timings: number[];
+}): TimeRangeFilterKeyframes {
+  const dataTimings = getDataAnimationTimings(timings, filter.endHoldDurationMs);
+  const frames = getTimeRangeFilterFrames({filter, timings: dataTimings});
+  return dataTimings === timings ? frames : {timings: dataTimings, ...frames};
+}
+
+function getTimeRangeFilterFrames({
   filter,
   timings
 }: {
@@ -113,11 +134,15 @@ export function getTimeRangeFilterKeyframes({
         return getKeyFramesFree(filter);
       }
 
-      const delta = Math.round(duration / bins.length);
+      const delta = filter.endHoldDurationMs
+        ? duration / Math.max(1, bins.length - 1)
+        : Math.round(duration / bins.length);
 
       return {
         timings: bins.map((_, idx) => timings[0] + delta * idx),
-        keyframes: bins.map(bin => ({value: [bin.x0, bin.x1]})),
+        keyframes: bins.map(bin => ({
+          value: [bin.x0, filter.endHoldDurationMs ? Math.min(bin.x1, filter.domain[1]) : bin.x1]
+        })),
         easings: hold
       };
     }

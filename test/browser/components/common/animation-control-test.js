@@ -4,6 +4,7 @@
 import React, {act, useState} from 'react';
 import test from 'tape';
 import sinon from 'sinon';
+import {render, fireEvent, cleanup, within} from '@testing-library/react';
 import moment from 'moment';
 import animationWindow from 'global/window';
 import {
@@ -33,6 +34,105 @@ import {visStateReducer as reducer, updateAnimationDomain} from '@kepler.gl/redu
 const AnimationControl = appInjector.get(AnimationControlFactory);
 const PlaybackControls = appInjector.get(PlaybackControlsFactory);
 const FloatingTimeDisplay = appInjector.get(FloatingTimeDisplayFactory);
+
+test('Components -> AnimationController -> final data hold pauses, resumes and loops in presentation time', t => {
+  const AnimationController = AnimationControllerFactory();
+  const clock = sinon.useFakeTimers();
+  let frameId = 0;
+  const frames = new Map();
+  const requestFrame = sinon.stub(animationWindow, 'requestAnimationFrame').callsFake(callback => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  const cancelFrame = sinon
+    .stub(animationWindow, 'cancelAnimationFrame')
+    .callsFake(id => frames.delete(id));
+  const advance = ms =>
+    act(() => {
+      clock.tick(ms);
+      const entry = frames.entries().next().value;
+      if (entry) {
+        frames.delete(entry[0]);
+        entry[1]();
+      }
+    });
+
+  try {
+    for (const loop of [false, true]) {
+      const ended = sinon.spy();
+      const Player = () => {
+        const [value, setValue] = useState(0);
+        const [playing, setPlaying] = useState(true);
+        return (
+          <>
+            <button onClick={() => setPlaying(p => !p)}>Toggle</button>
+            <button onClick={() => setValue(25)}>Seek</button>
+            <output>{value}</output>
+            <AnimationController
+              domain={[0, 100]}
+              value={value}
+              animationWindow="point"
+              baseSpeed={1}
+              loop={loop}
+              isAnimating={playing}
+              endHoldDurationMs={1000}
+              setTimelineValue={setValue}
+              onAnimationEnd={() => {
+                ended();
+                setPlaying(false);
+              }}
+            />
+          </>
+        );
+      };
+      const view = render(<Player />);
+      const player = within(view.container);
+      advance(16);
+      t.equal(player.getByRole('status').textContent, '100', 'reaches the actual final timestamp');
+      advance(400);
+      t.equal(
+        player.getByRole('status').textContent,
+        '100',
+        'keeps data fixed as presentation time advances'
+      );
+      fireEvent.click(player.getByText('Toggle'));
+      advance(2000);
+      t.equal(ended.callCount, 0, 'paused time does not consume the hold');
+      fireEvent.click(player.getByText('Toggle'));
+      advance(599);
+      t.equal(player.getByRole('status').textContent, '100', 'resumes the remaining hold');
+      advance(1);
+      t.equal(ended.callCount, loop ? 0 : 1, 'stops only after the complete presentation hold');
+      t.equal(
+        player.getByRole('status').textContent,
+        loop ? '0' : '100',
+        'loops or retains the held final frame'
+      );
+      if (loop) {
+        advance(16);
+        advance(200);
+        fireEvent.click(player.getByText('Seek'));
+        t.equal(
+          player.getByRole('status').textContent,
+          '25',
+          'seek cancels the previous held value'
+        );
+        advance(16);
+        advance(999);
+        t.equal(player.getByRole('status').textContent, '100', 'a new sweep gets a complete hold');
+        advance(1);
+        t.equal(player.getByRole('status').textContent, '0', 'the new hold ends once');
+      }
+      view.unmount();
+    }
+  } finally {
+    cleanup();
+    requestFrame.restore();
+    cancelFrame.restore();
+    clock.restore();
+  }
+  t.end();
+});
 
 test('Components -> AnimationController -> stop at end keeps the final frame and can replay', t => {
   const AnimationController = AnimationControllerFactory();

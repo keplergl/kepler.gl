@@ -238,6 +238,7 @@ export default function BottomWidgetFactory(
           <LayerAnimationController
             animationConfig={enhancedAnimationConfig}
             setLayerAnimationTime={visStateActions.setLayerAnimationTime}
+            onAnimationEnd={() => visStateActions.setAnimationConfig({isAnimating: false} as any)}
           >
             {(isAnimating, start, pause, resetAnimation, timeline, setTimelineValue) =>
               showAnimationControl ? (

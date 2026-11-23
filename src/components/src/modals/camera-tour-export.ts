@@ -15,7 +15,7 @@ import {
   getAnnotationOpacityDuration
 } from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
-import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
+import {getDataAnimationTimings, getFlatExportLayers, getResolutionSetting} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {VideoAnnotationPreview} from './video-annotation-overlay';
@@ -111,6 +111,21 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
     private failedBasemap?: PreviewMap;
+
+    getTripKeyframes() {
+      const frames = super.getTripKeyframes();
+      if (!frames.tripKeyframe) return frames;
+      return {
+        ...frames,
+        tripKeyframe: {
+          ...frames.tripKeyframe,
+          timings: getDataAnimationTimings(
+            frames.tripKeyframe.timings,
+            frames.animationConfig?.endHoldDurationMs
+          )
+        }
+      };
+    }
 
     private onMapError({target: map, sourceId}: PreviewMapEvent) {
       // Tile failures can settle without blocking the map's load event. A
