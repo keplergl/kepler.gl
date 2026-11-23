@@ -8,6 +8,7 @@ import {fireEvent, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {AnnotationKind} from '@kepler.gl/constants';
+import {Annotation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
 import {theme} from '@kepler.gl/styles';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -265,6 +266,141 @@ describe('AnnotationManager selectors', () => {
 
   afterAll(() => {
     window.IntersectionObserver = originalIntersectionObserver;
+  });
+
+  const renderCaption = (changes: Partial<Annotation> = {}, withDatasets = true) => {
+    const state = makeState(true, true);
+    const store = mockStore({
+      ...state,
+      visState: {
+        ...state.visState,
+        annotations: [{...state.visState.annotations[0], kind: AnnotationKind.TEXT, ...changes}],
+        datasets: withDatasets
+          ? {first: {id: 'first', label: 'Monarchs'}, second: {id: 'second', label: 'Sightings'}}
+          : {}
+      }
+    });
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    return store;
+  };
+
+  const viewport = {anchor: 'top-left' as const, margin: [24, 24] as [number, number]};
+
+  test('opts geographic text into a viewport caption without changing its text', () => {
+    const store = renderCaption();
+    expect(screen.queryByRole('spinbutton', {name: 'Horizontal margin'})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Geographic'));
+    fireEvent.click(screen.getByText('Viewport'));
+    expect(store.getActions()).toEqual([VisStateActions.updateAnnotation('ruler-1', {viewport})]);
+  });
+
+  test('returns a caption to geographic placement and clears its readout', () => {
+    const store = renderCaption({viewport, readout: {type: 'time'}});
+    fireEvent.click(screen.getByText('Viewport'));
+    fireEvent.click(screen.getByText('Geographic'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {viewport: undefined, readout: undefined})
+    ]);
+  });
+
+  test('changes the viewport anchor and margins independently', () => {
+    const store = renderCaption({viewport});
+    expect(screen.queryByText('Text Side')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Top left'));
+    fireEvent.click(screen.getByText('Bottom right'));
+    const horizontal = screen.getByRole('spinbutton', {name: 'Horizontal margin'});
+    const vertical = screen.getByRole('spinbutton', {name: 'Vertical margin'});
+    fireEvent.change(horizontal, {target: {value: '0'}});
+    fireEvent.blur(horizontal);
+    fireEvent.change(vertical, {target: {value: '48'}});
+    fireEvent.blur(vertical);
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        viewport: {...viewport, anchor: 'bottom-right'}
+      }),
+      VisStateActions.updateAnnotation('ruler-1', {viewport: {...viewport, margin: [0, 24]}}),
+      VisStateActions.updateAnnotation('ruler-1', {viewport: {...viewport, margin: [24, 48]}})
+    ]);
+  });
+
+  test.each(['', '-1'])('rejects an invalid caption margin %s', value => {
+    const store = renderCaption({viewport});
+    const input = screen.getByRole('spinbutton', {name: 'Horizontal margin'});
+    fireEvent.change(input, {target: {value}});
+    fireEvent.blur(input);
+    expect(input).toHaveValue(24);
+    expect(store.getActions()).toEqual([]);
+  });
+
+  test.each([
+    ['Timeline date', {type: 'time', format: 'YYYY-MM-DD'}],
+    ['Filtered count', {type: 'count', dataId: 'first'}]
+  ])('selects %s content', (content, readout) => {
+    const store = renderCaption({viewport});
+    fireEvent.click(screen.getByText('Static text'));
+    fireEvent.click(screen.getByText(content as string));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {readout} as Partial<Annotation>)
+    ]);
+  });
+
+  test('changes the date format and returns to static text', () => {
+    const store = renderCaption({viewport, readout: {type: 'time', format: 'YYYY-MM-DD'}});
+    const input = screen.getByRole('textbox', {name: 'Date format (UTC)'});
+    fireEvent.change(input, {target: {value: ''}});
+    expect(store.getActions()).toEqual([]);
+    fireEvent.change(input, {
+      target: {value: 'MMM YYYY'}
+    });
+    expect(store.getActions()).toEqual([]);
+    fireEvent.blur(input);
+    fireEvent.click(screen.getByText('Timeline date'));
+    fireEvent.click(screen.getByText('Static text'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'time', format: 'MMM YYYY'}}),
+      VisStateActions.updateAnnotation('ruler-1', {readout: undefined})
+    ]);
+  });
+
+  test('clearing the date format restores the default while preserving the time source', () => {
+    const store = renderCaption({viewport, readout: {type: 'time', format: 'MMM YYYY'}});
+    const input = screen.getByRole('textbox', {name: 'Date format (UTC)'});
+    fireEvent.change(input, {target: {value: ''}});
+    fireEvent.blur(input);
+    expect(input).toHaveValue('YYYY-MM-DD');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'time', format: undefined}})
+    ]);
+  });
+
+  test('rejects an oversized date format without changing the time source', () => {
+    const store = renderCaption({viewport, readout: {type: 'time', format: 'MMM YYYY'}});
+    const input = screen.getByRole('textbox', {name: 'Date format (UTC)'});
+    fireEvent.change(input, {target: {value: 'Y'.repeat(129)}});
+    fireEvent.blur(input);
+    expect(input).toHaveValue('MMM YYYY');
+    expect(store.getActions()).toEqual([]);
+  });
+
+  test('changes the dataset used by a filtered count', () => {
+    const store = renderCaption({viewport, readout: {type: 'count', dataId: 'first'}});
+    fireEvent.click(screen.getByText('Monarchs'));
+    fireEvent.click(screen.getByText('Sightings'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'count', dataId: 'second'}})
+    ]);
+  });
+
+  test('does not offer a count without a dataset', () => {
+    renderCaption({viewport}, false);
+    fireEvent.click(screen.getByText('Static text'));
+    expect(screen.queryByText('Filtered count')).not.toBeInTheDocument();
   });
 
   test.each([AnnotationKind.RULER, AnnotationKind.POINT])(

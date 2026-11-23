@@ -8,7 +8,64 @@ import {Annotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
 import {getAnnotationTextBoxStyle, getRulerDistanceLabel, MapViewport} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
-import {SerializedEditorState} from 'lexical';
+import {
+  SerializedEditorState,
+  SerializedElementNode,
+  SerializedLexicalNode,
+  SerializedTextNode
+} from 'lexical';
+
+function firstTextNode(node: SerializedLexicalNode): SerializedTextNode | undefined {
+  if (!node) return undefined;
+  if (node.type === 'text') return node as SerializedTextNode;
+  const children = (node as SerializedElementNode).children;
+  if (!Array.isArray(children)) return undefined;
+  for (const child of children) {
+    const text = firstTextNode(child);
+    if (text) return text;
+  }
+  return undefined;
+}
+
+function readoutEditorState(
+  editorState: SerializedEditorState | undefined,
+  value: string
+): SerializedEditorState<SerializedElementNode<SerializedTextNode>> | undefined {
+  const blocks = editorState?.root?.children;
+  if (!editorState || !Array.isArray(blocks) || !blocks.length) return undefined;
+  // Readouts use the first text run's formatting, including empty styled labels.
+  const block = (blocks.find(node => firstTextNode(node)) ??
+    blocks.find(node => node?.type === 'paragraph')) as SerializedElementNode | undefined;
+  if (!block) return undefined;
+  const text = firstTextNode(block);
+  return {
+    root: {
+      ...editorState.root,
+      children: [
+        {
+          type: 'paragraph',
+          version: 1,
+          direction: block.direction,
+          format: block.format,
+          indent: 0,
+          children: [
+            {
+              type: 'text',
+              version: 1,
+              text: value,
+              style: text?.style ?? '',
+              format: text?.format ?? 0,
+              detail: 0,
+              mode: 'normal'
+            }
+          ]
+        }
+      ]
+    }
+  };
+}
+
+const ignoreReadoutChange = () => undefined;
 
 type StyledAnnotationTextProps = {
   $isEditing?: boolean;
@@ -16,6 +73,7 @@ type StyledAnnotationTextProps = {
   $isEditingText?: boolean;
   $isDraggable?: boolean;
   $textVerticalAlign?: string;
+  $isViewport?: boolean;
 };
 
 const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
@@ -62,15 +120,23 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
         ? 'center'
         : 'flex-end'};
   }
+  ${props =>
+    props.$isViewport
+      ? `
+    .editor-inner { max-width: 100%; }
+    .editor-input { min-width: 0; }
+  `
+      : ''}
 `;
 
-const StyledToolbarWrapper = styled.div`
-  position: absolute;
-  bottom: 100%;
+const StyledToolbarWrapper = styled.div<{$isViewport?: boolean}>`
+  position: ${props => (props.$isViewport ? 'relative' : 'absolute')};
+  bottom: ${props => (props.$isViewport ? 'auto' : '100%')};
   left: 0;
   background-color: rgba(30, 33, 40, 0.95);
   border-radius: 5px;
   width: max-content;
+  max-width: ${props => (props.$isViewport ? '100%' : 'none')};
   padding: 2px 5px;
   margin-bottom: 4px;
   z-index: 1;
@@ -85,6 +151,7 @@ const StyledRulerDistance = styled.div`
 export type AnnotationTextProps = {
   isGlobeEnabled?: boolean;
   annotation: Annotation;
+  readoutValue?: string;
   opacity?: number;
   viewport: MapViewport;
   isEditing: boolean;
@@ -98,6 +165,7 @@ export type AnnotationTextProps = {
 const AnnotationText: FC<AnnotationTextProps> = ({
   isGlobeEnabled,
   annotation,
+  readoutValue,
   opacity = 1,
   viewport,
   isEditing,
@@ -107,6 +175,18 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   onChangeText,
   onUpdateAnnotation
 }) => {
+  const isViewport = annotation.kind === AnnotationKind.TEXT && Boolean(annotation.viewport);
+  const hasReadout = isViewport && Boolean(annotation.readout);
+  const formattedReadout = useMemo(
+    () =>
+      hasReadout
+        ? readoutEditorState(
+            annotation.editorState as SerializedEditorState | undefined,
+            readoutValue ?? '—'
+          )
+        : undefined,
+    [hasReadout, annotation.editorState, readoutValue]
+  );
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -148,10 +228,13 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isSelected={isSelected}
       $isDraggable={isDraggable}
       $textVerticalAlign={textVerticalAlign}
+      $isViewport={isViewport}
       data-annotation-id={annotation.id}
       data-annotation-part="text"
       style={{
         ...style,
+        // Keep editing popovers reachable; view/export composition stays clipped to its margins.
+        ...(isViewport && isEditing && isSelected ? {overflow: 'visible'} : {}),
         opacity,
         visibility: opacity === 0 ? 'hidden' : undefined,
         pointerEvents: opacity === 0 ? 'none' : undefined
@@ -206,7 +289,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
           onChange={handleEditorChange}
         >
           {isEditing && isSelected ? (
-            <StyledToolbarWrapper>
+            <StyledToolbarWrapper $isViewport={isViewport}>
               <LexicalToolbar
                 isEditingText={isEditingText}
                 textVerticalAlign={textVerticalAlign}
@@ -220,6 +303,18 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       ) : null}
       {distanceText ? (
         <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
+      ) : null}
+      {hasReadout ? (
+        <div data-annotation-part="readout">
+          <LexicalRichTextEditor
+            // Initialize each value synchronously, before an export frame can capture it.
+            key={readoutValue ?? '—'}
+            isEditable={false}
+            editorState={formattedReadout}
+            initialText={readoutValue ?? '—'}
+            onChange={ignoreReadoutChange}
+          />
+        </div>
       ) : null}
     </StyledAnnotationText>
   );

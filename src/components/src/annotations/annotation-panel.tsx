@@ -43,7 +43,7 @@ import {
   EyeUnseen,
   Trash
 } from '../common/icons';
-import {StyledPanelHeader, Tooltip, Button, ButtonGroup} from '../common/styled-components';
+import {StyledPanelHeader, Tooltip, Button, ButtonGroup, Input} from '../common/styled-components';
 import Switch from '../common/switch';
 import ItemSelector from '../common/item-selector/item-selector';
 import Slider from '../common/slider/slider';
@@ -326,6 +326,225 @@ const StyledSelect = styled(ItemSelector).attrs({size: 'small'})`
     box-sizing: border-box;
   }
 `;
+
+const StyledCaptionInput = styled(Input)`
+  width: 100px;
+  height: ${props => props.theme.inputBoxHeightSmall};
+`;
+
+function CaptionMarginInput({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [draft, setDraft] = React.useState(String(value));
+  React.useEffect(() => setDraft(String(value)), [value]);
+  const commit = () => {
+    const next = Number(draft);
+    if (draft.trim() && Number.isFinite(next) && next >= 0) {
+      if (next !== value) onChange(next);
+    } else {
+      setDraft(String(value));
+    }
+  };
+  return (
+    <StyledCaptionInput
+      aria-label={label}
+      type="number"
+      min={0}
+      step={1}
+      value={draft}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+      }}
+    />
+  );
+}
+
+function CaptionDateFormatInput({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string | undefined) => void;
+}) {
+  const [draft, setDraft] = React.useState(value ?? 'YYYY-MM-DD');
+  React.useEffect(() => setDraft(value ?? 'YYYY-MM-DD'), [value]);
+  const commit = () => {
+    if (draft.length > 128) {
+      setDraft(value ?? 'YYYY-MM-DD');
+      return;
+    }
+    const next = draft.trim() ? draft : undefined;
+    setDraft(next ?? 'YYYY-MM-DD');
+    if (next !== value) onChange(next);
+  };
+  return (
+    <StyledCaptionInput
+      aria-label={label}
+      value={draft}
+      maxLength={128}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+      }}
+    />
+  );
+}
+
+function CaptionSettings({
+  annotation,
+  datasets,
+  intl,
+  onChange
+}: {
+  annotation: Annotation;
+  datasets: VisState['datasets'];
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const label = (id: string, defaultMessage: string) =>
+    intl.formatMessage({id: `annotationManager.${id}`, defaultMessage});
+  const locations = [
+    {id: 'geographic', label: label('geographic', 'Geographic')},
+    {id: 'viewport', label: label('viewport', 'Viewport')}
+  ];
+  const anchors = [
+    ['top-left', 'Top left'],
+    ['top', 'Top'],
+    ['top-right', 'Top right'],
+    ['left', 'Left edge'],
+    ['right', 'Right edge'],
+    ['bottom-left', 'Bottom left'],
+    ['bottom', 'Bottom'],
+    ['bottom-right', 'Bottom right']
+  ].map(([id, name]) => ({id, label: label(`anchor.${id}`, name)}));
+  const datasetOptions = Object.values(datasets || {}).map(dataset => ({
+    id: dataset.id,
+    label: dataset.label
+  }));
+  const sources = [
+    {id: 'static', label: label('staticText', 'Static text')},
+    {id: 'time', label: label('timelineDate', 'Timeline date')},
+    ...(datasetOptions.length || annotation.readout?.type === 'count'
+      ? [{id: 'count', label: label('filteredCount', 'Filtered count')}]
+      : [])
+  ];
+  const selectProps = {
+    displayOption: 'label',
+    getOptionValue: 'id',
+    multiSelect: false,
+    searchable: false
+  };
+  const viewport = annotation.viewport;
+  const countDataId = annotation.readout?.type === 'count' ? annotation.readout.dataId : undefined;
+  return (
+    <>
+      <StyledConfigRow>
+        <StyledConfigLabel>{label('position', 'Position')}</StyledConfigLabel>
+        <StyledSelect
+          {...selectProps}
+          options={locations}
+          selectedItems={locations[viewport ? 1 : 0]}
+          onChange={value => {
+            if (value === 'viewport') {
+              onChange({viewport: {anchor: 'top-left', margin: [24, 24]}});
+            } else if (value === 'geographic') {
+              onChange({viewport: undefined, readout: undefined});
+            }
+          }}
+        />
+      </StyledConfigRow>
+      {viewport ? (
+        <>
+          <StyledConfigRow>
+            <StyledConfigLabel>{label('anchor', 'Anchor')}</StyledConfigLabel>
+            <StyledSelect
+              {...selectProps}
+              options={anchors}
+              selectedItems={anchors.find(option => option.id === viewport.anchor)}
+              onChange={anchor => {
+                if (typeof anchor === 'string' && anchors.some(option => option.id === anchor)) {
+                  onChange({viewport: {...viewport, anchor: anchor as typeof viewport.anchor}});
+                }
+              }}
+            />
+          </StyledConfigRow>
+          {(['horizontalMargin', 'verticalMargin'] as const).map((id, axis) => {
+            const marginLabel = label(id, axis === 0 ? 'Horizontal margin' : 'Vertical margin');
+            return (
+              <StyledConfigRow key={id}>
+                <StyledConfigLabel>{marginLabel}</StyledConfigLabel>
+                <CaptionMarginInput
+                  label={marginLabel}
+                  value={viewport.margin[axis]}
+                  onChange={value => {
+                    const margin: [number, number] = [...viewport.margin];
+                    margin[axis] = value;
+                    onChange({viewport: {...viewport, margin}});
+                  }}
+                />
+              </StyledConfigRow>
+            );
+          })}
+          <StyledConfigRow>
+            <StyledConfigLabel>{label('content', 'Content')}</StyledConfigLabel>
+            <StyledSelect
+              {...selectProps}
+              options={sources}
+              selectedItems={sources.find(
+                option => option.id === (annotation.readout?.type || 'static')
+              )}
+              onChange={source => {
+                if (source === 'static') onChange({readout: undefined});
+                if (source === 'time') onChange({readout: {type: 'time', format: 'YYYY-MM-DD'}});
+                if (source === 'count' && datasetOptions.length) {
+                  onChange({readout: {type: 'count', dataId: datasetOptions[0].id}});
+                }
+              }}
+            />
+          </StyledConfigRow>
+          {annotation.readout?.type === 'time' ? (
+            <StyledConfigRow>
+              <StyledConfigLabel>{label('dateFormat', 'Date format (UTC)')}</StyledConfigLabel>
+              <CaptionDateFormatInput
+                label={label('dateFormat', 'Date format (UTC)')}
+                value={annotation.readout.format}
+                onChange={format => onChange({readout: {type: 'time', format}})}
+              />
+            </StyledConfigRow>
+          ) : annotation.readout?.type === 'count' ? (
+            <StyledConfigRow>
+              <StyledConfigLabel>{label('dataset', 'Dataset')}</StyledConfigLabel>
+              <StyledSelect
+                {...selectProps}
+                options={datasetOptions}
+                selectedItems={datasetOptions.find(option => option.id === countDataId)}
+                onChange={dataId => {
+                  if (
+                    typeof dataId === 'string' &&
+                    datasetOptions.some(option => option.id === dataId)
+                  ) {
+                    onChange({readout: {type: 'count', dataId}});
+                  }
+                }}
+              />
+            </StyledConfigRow>
+          ) : null}
+        </>
+      ) : null}
+    </>
+  );
+}
 
 const StyledRulerSwitch = styled(Switch)`
   .kg-checkbox__label {
@@ -717,6 +936,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           );
                         })}
                       </StyledAnnotationTypeGroup>
+                      {annotation.kind === AnnotationKind.TEXT ? (
+                        <CaptionSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
                       <StyledConfigRow>
                         <StyledConfigLabel>
                           {intl.formatMessage({
@@ -810,7 +1039,7 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                             />
                           </StyledConfigRow>
                         </>
-                      ) : (
+                      ) : annotation.kind === AnnotationKind.TEXT && annotation.viewport ? null : (
                         <>
                           <StyledConfigRow>
                             <StyledConfigLabel>

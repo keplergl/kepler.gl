@@ -158,6 +158,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
   isEditing,
   isSelected
 }) => {
+  if (annotation.kind === AnnotationKind.TEXT && annotation.viewport) return null;
   const {lineColor, lineWidth} = annotation;
   const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {kind, x, y, tx, ty} = marker;

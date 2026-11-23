@@ -118,6 +118,7 @@ export interface VisState {
   schema: typeof KeplerGLSchema;
   preserveLayerOrder?: string[];
   preserveFilterOrder?: string[];
+  preserveAnnotationOrder?: string[];
   preserveDatasetOrder?: string[];
   isMergingDatasets: {
     [datasetId: string]: boolean;
@@ -978,6 +979,8 @@ export class EffectsSchema extends Schema {
 }
 
 const annotationPropsV1 = {
+  viewport: null,
+  readout: null,
   id: null,
   kind: null,
   isVisible: null,

@@ -3,7 +3,8 @@
 
 import React from 'react';
 import {DndContext} from '@dnd-kit/core';
-import {screen} from '@testing-library/react';
+import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import {SerializedEditorState, SerializedElementNode, SerializedTextNode} from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
@@ -57,6 +58,199 @@ const renderRulerText = (annotation: Annotation, isEditing = false, opacity = 1)
       />
     </DndContext>
   );
+
+function captionEditorState(
+  text: string,
+  style: string
+): SerializedEditorState<SerializedElementNode<SerializedTextNode>> {
+  return {
+    root: {
+      type: 'root',
+      version: 1,
+      direction: null,
+      format: '',
+      indent: 0,
+      children: [
+        {
+          type: 'paragraph',
+          version: 1,
+          direction: null,
+          format: 'right',
+          indent: 0,
+          children: [{type: 'text', version: 1, text, style, format: 3, detail: 0, mode: 'normal'}]
+        }
+      ]
+    }
+  };
+}
+
+describe('AnnotationText readout formatting', () => {
+  test.each([
+    {readout: {type: 'time'} as const, value: '2026-01-01', nextValue: '2026-01-02'},
+    {readout: {type: 'count', dataId: 'points'} as const, value: '123', nextValue: '45'}
+  ])(
+    '$readout.type keeps annotation formatting as its value and saved styles change',
+    async ({readout, value, nextValue}) => {
+      const annotation = makeRuler({
+        kind: AnnotationKind.TEXT,
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout,
+        label: 'Caption',
+        editorState: captionEditorState(
+          'Caption',
+          'font-size: 32px; color: #ff0000; font-family: Georgia;'
+        )
+      });
+      const original = JSON.stringify(annotation);
+      const onChangeText = jest.fn();
+      const renderCaption = (current: Annotation, currentValue: string) => (
+        <DndContext>
+          <AnnotationText
+            annotation={current}
+            readoutValue={currentValue}
+            viewport={viewport}
+            isEditing={false}
+            isSelected={false}
+            isEditingText={false}
+            onSelect={jest.fn()}
+            onChangeText={onChangeText}
+            onUpdateAnnotation={jest.fn()}
+          />
+        </DndContext>
+      );
+      const {container, rerender} = renderWithTheme(renderCaption(annotation, value));
+      expect(screen.getByText(value)).toHaveStyle({
+        fontSize: '32px',
+        color: '#ff0000',
+        fontFamily: 'Georgia'
+      });
+      expect(
+        container.querySelector('[data-annotation-part="readout"] .lexical-paragraph')
+      ).toHaveStyle({textAlign: 'right'});
+      expect(
+        container.querySelector('[data-annotation-part="readout"] .lexical-text-bold')
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector('[data-annotation-part="readout"] .lexical-text-italic')
+      ).toBeInTheDocument();
+      onChangeText.mockClear();
+      rerender(renderCaption(annotation, nextValue));
+      await waitFor(() =>
+        expect(screen.getByText(nextValue)).toHaveStyle({fontSize: '32px', color: '#ff0000'})
+      );
+      expect(screen.queryByText(value)).not.toBeInTheDocument();
+      expect(onChangeText).not.toHaveBeenCalled();
+      expect(JSON.stringify(annotation)).toBe(original);
+      rerender(
+        renderCaption(
+          {
+            ...annotation,
+            editorState: captionEditorState('Caption', 'font-size: 48px; color: #00ff00;')
+          },
+          nextValue
+        )
+      );
+      await waitFor(() =>
+        expect(screen.getByText(nextValue)).toHaveStyle({fontSize: '48px', color: '#00ff00'})
+      );
+      expect(screen.getByText('Caption')).toHaveStyle({fontSize: '48px', color: '#00ff00'});
+      rerender(renderCaption({...annotation, editorState: undefined}, nextValue));
+      await waitFor(() => expect(screen.getByText(nextValue).style.fontSize).toBe(''));
+      expect(screen.getByText(nextValue).style.color).toBe('');
+    }
+  );
+
+  test('uses saved formatting for an empty label and a missing readout value', () => {
+    const annotation = makeRuler({
+      kind: AnnotationKind.TEXT,
+      viewport: {anchor: 'top-left', margin: [24, 24]},
+      readout: {type: 'time'},
+      label: '',
+      editorState: captionEditorState('', 'font-size: 36px; color: #80caff;')
+    });
+    renderRulerText(annotation);
+    expect(screen.getByText('—')).toHaveStyle({fontSize: '36px', color: '#80caff'});
+  });
+
+  test('applies toolbar styles to an empty-label readout and retains them as the value changes', async () => {
+    const onChangeText = jest.fn();
+    let updateValue!: React.Dispatch<React.SetStateAction<string>>;
+    function Caption() {
+      const [value, setValue] = React.useState('123');
+      updateValue = setValue;
+      const [annotation, setAnnotation] = React.useState(() =>
+        makeRuler({
+          kind: AnnotationKind.TEXT,
+          viewport: {anchor: 'top-left', margin: [24, 24]},
+          readout: {type: 'count', dataId: 'points'},
+          label: ''
+        })
+      );
+      return (
+        <DndContext>
+          <AnnotationText
+            annotation={annotation}
+            readoutValue={value}
+            viewport={viewport}
+            isEditing
+            isSelected
+            isEditingText={false}
+            onSelect={jest.fn()}
+            onChangeText={(label, editorState) => {
+              onChangeText(label, editorState);
+              setAnnotation(previous => ({...previous, label, editorState}));
+            }}
+            onUpdateAnnotation={jest.fn()}
+          />
+        </DndContext>
+      );
+    }
+    const {container} = renderWithTheme(<Caption />);
+    await act(async () => {
+      fireEvent.change(screen.getAllByRole('combobox')[1], {target: {value: '24px'}});
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Text Color'}));
+    await act(async () => {
+      fireEvent.click(screen.getByText('Black'));
+    });
+    await waitFor(() =>
+      expect(screen.getByText('123')).toHaveStyle({fontSize: '24px', color: '#000000'})
+    );
+    expect(
+      container.querySelector('[data-annotation-part="readout"] .editor-input')
+    ).toHaveAttribute('contenteditable', 'false');
+    expect(container.querySelector('.editor-input')?.textContent).toBe('');
+    expect(onChangeText).toHaveBeenCalled();
+    expect(onChangeText.mock.calls.every(([label]) => label === '')).toBe(true);
+    onChangeText.mockClear();
+    act(() => updateValue('45'));
+    expect(screen.getByText('45')).toHaveStyle({fontSize: '24px', color: '#000000'});
+    expect(screen.queryByText('123')).not.toBeInTheDocument();
+    expect(container.querySelector('.editor-input')?.textContent).toBe('');
+    expect(onChangeText).not.toHaveBeenCalled();
+  });
+
+  test('uses the first text style when the label has mixed formatting', () => {
+    const editorState = captionEditorState('First', 'font-size: 36px; color: #80caff;');
+    const paragraph = editorState.root.children[0] as SerializedElementNode;
+    paragraph.children.push({
+      ...paragraph.children[0],
+      text: ' second',
+      style: 'font-size: 16px; color: #ff0000;'
+    } as (typeof paragraph.children)[0]);
+    renderRulerText(
+      makeRuler({
+        kind: AnnotationKind.TEXT,
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout: {type: 'count', dataId: 'points'},
+        label: 'First second',
+        editorState
+      })
+    );
+    expect(screen.getByText('—')).toHaveStyle({fontSize: '36px', color: '#80caff'});
+    expect(screen.getByText('second')).toHaveStyle({fontSize: '16px', color: '#ff0000'});
+  });
+});
 
 describe('AnnotationText ruler labels', () => {
   test('keeps autosized labels intrinsic near the right edge but preserves fixed-width wrapping', () => {

@@ -11,6 +11,29 @@ import {LayerPropertyTransition} from './layers';
 export {AnnotationKind} from '@kepler.gl/constants';
 export {isAnnotationKind, isAnnotationWithArm} from '@kepler.gl/constants';
 
+export type ViewportAnnotationAnchor =
+  | 'top-left'
+  | 'top'
+  | 'top-right'
+  | 'left'
+  | 'right'
+  | 'bottom-left'
+  | 'bottom'
+  | 'bottom-right';
+
+export type ViewportAnnotationPlacement = {
+  anchor: ViewportAnnotationAnchor;
+  /** Horizontal and vertical inset in composition CSS pixels. */
+  margin: [number, number];
+};
+
+export type AnnotationReadout =
+  | {type: 'time'; /** UTC Moment format; defaults to YYYY-MM-DD. */ format?: string}
+  | {
+      type: 'count';
+      /** Count rows passing the dataset's current filters, including GPU filters. */ dataId: string;
+    };
+
 export type BaseAnnotation = {
   id: string;
   kind: AnnotationKind;
@@ -21,6 +44,10 @@ export type BaseAnnotation = {
   /** [lng, lat] or [lng, lat, altitudeMeters]. Missing altitude is treated as 0. */
   anchorPoint: [number, number] | [number, number, number];
   label: string;
+  /** Present only on TEXT captions. Omitted means geographic placement. */
+  viewport?: ViewportAnnotationPlacement;
+  /** Rendered below the caption label. Missing values render an em dash. */
+  readout?: AnnotationReadout;
   editorState?: Record<string, any>;
   mapIndex?: number;
   lineColor: string;

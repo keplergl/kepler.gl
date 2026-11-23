@@ -11,6 +11,7 @@ import isEqual from 'es-toolkit/compat/isEqual';
 import styled from 'styled-components';
 
 import {DeckAdapter} from '@hubble.gl/core';
+import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {VideoAnnotationOverlay} from './video-annotation-overlay';
 import {compositeSwipeFrame, getSwipePercentageAtTime, SwipeEasing} from './swipe-composite-utils';
 import {
@@ -411,6 +412,10 @@ export class SwipeExportVideoPreview extends Component<
         <VideoAnnotationOverlay
           frame={{
             annotations: this.props.mapData.visState?.annotations || [],
+            readoutValues: getAnnotationReadoutValues(
+              this.props.mapData.visState?.annotations || [],
+              this.props.mapData.visState
+            ),
             interactionConfig: this.props.mapData.visState?.interactionConfig,
             mapState: {...this.props.mapData.mapState, ...this.props.viewState},
             animationTimeMs: this.props.animationTimeMs,

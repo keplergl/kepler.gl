@@ -181,7 +181,9 @@ describe('kepler-mcp bridge server', () => {
       ['map.camera-tour', 'holdDurationMs'],
       ['map.property-transitions', 'startTimeMs'],
       ['map.add-annotation', 'anchorPoint'],
+      ['map.add-annotation', 'viewport'],
       ['map.update-annotation', 'fontSize'],
+      ['map.update-annotation', 'readout'],
       ['map.remove-annotation', 'id'],
       ['map.set-view-mode', 'globe'],
       ['map.set-zoom-fade', 'controllers']
@@ -193,7 +195,7 @@ describe('kepler-mcp bridge server', () => {
     }
   });
 
-  it('advertises styled point callouts and partial annotation edits', () => {
+  it('advertises styled geographic annotations, viewport captions and partial edits', () => {
     const tools = bridge.getTools();
     const schemaFor = (id: string) => tools.find(tool => tool.name === toToolName(id))?.inputSchema;
     expect(schemaFor('map.add-annotation')).toMatchObject({
@@ -205,9 +207,18 @@ describe('kepler-mcp bridge server', () => {
         textAlign: {enum: ['left', 'center', 'right', 'justify']},
         armLength: {type: 'number'},
         textSide: {enum: ['left', 'right']},
-        textVerticalPosition: {enum: ['above', 'below']}
+        textVerticalPosition: {enum: ['above', 'below']},
+        viewport: {
+          type: 'object',
+          properties: {
+            anchor: {enum: expect.arrayContaining(['top-left', 'bottom-right'])},
+            margin: {type: 'array', minItems: 2, maxItems: 2}
+          },
+          required: ['anchor', 'margin']
+        }
       },
-      required: expect.arrayContaining(['id', 'kind', 'anchorPoint'])
+      // Coordinates are conditional: geographic annotations need them, captions do not.
+      required: ['id', 'kind']
     });
     expect(schemaFor('map.update-annotation')).toMatchObject({
       type: 'object',

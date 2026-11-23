@@ -10,8 +10,11 @@ import {
   FORMAT_ELEMENT_COMMAND,
   SELECTION_CHANGE_COMMAND,
   TextFormatType,
+  $createParagraphNode,
   $createRangeSelection,
+  $createTextNode,
   $getRoot,
+  $isElementNode,
   $setSelection,
   LexicalEditor
 } from 'lexical';
@@ -31,6 +34,26 @@ type UseLexicalToolbarProps = {
   isEditingText?: boolean;
   editor: LexicalEditor;
 };
+
+function selectEmptyText() {
+  const root = $getRoot();
+  if (root.getTextContent() !== '') return undefined;
+  let node = root.getAllTextNodes()[0];
+  if (!node) {
+    const first = root.getFirstChild();
+    const paragraph = $isElementNode(first) ? first : $createParagraphNode();
+    if (!first) root.append(paragraph);
+    node = $createTextNode('');
+    paragraph.append(node);
+  }
+  // Lexical 0.9 removes ordinary empty text nodes and does not serialize
+  // selection styles. Keep a native empty node so readout-only labels retain them.
+  if (!node.isUnmergeable()) node.toggleUnmergeable();
+  const selection = node.select();
+  selection.setStyle(node.getStyle());
+  selection.format = node.getFormat();
+  return {node, selection};
+}
 
 export type UseLexicalTextFormatReturn = {
   isBold: boolean;
@@ -81,8 +104,9 @@ export const useLexicalTextFormat = ({
         editor.setEditable(true);
       }
       editor.update(() => {
-        let selection = $getSelection();
-        if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+        const emptyText = selectEmptyText();
+        let selection = emptyText?.selection ?? $getSelection();
+        if (!emptyText && (!$isRangeSelection(selection) || selection.isCollapsed())) {
           const root = $getRoot();
           const newSelection = $createRangeSelection();
           newSelection.focus.set(root.getKey(), 0, 'element');
@@ -92,6 +116,7 @@ export const useLexicalTextFormat = ({
         }
         if ($isRangeSelection(selection)) {
           selection.formatText(format as TextFormatType);
+          emptyText?.node.setFormat(selection.format);
         }
       });
       if (!wasEditable) {
@@ -182,8 +207,9 @@ export const useLexicalTextStyle = ({
       }
       editor.update(
         () => {
-          let selection = $getSelection();
-          if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+          const emptyText = selectEmptyText();
+          let selection = emptyText?.selection ?? $getSelection();
+          if (!emptyText && (!$isRangeSelection(selection) || selection.isCollapsed())) {
             const root = $getRoot();
             const newSelection = $createRangeSelection();
             newSelection.focus.set(root.getKey(), 0, 'element');
@@ -193,6 +219,7 @@ export const useLexicalTextStyle = ({
           }
           if ($isRangeSelection(selection)) {
             $patchStyleText(selection, {[style]: option});
+            emptyText?.node.setStyle(selection.style);
           }
         },
         {

@@ -38,6 +38,7 @@ import {
 import EditorFactory from './editor/editor';
 import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
+import {getAnnotationReadoutValues} from './annotations/annotation-readout';
 import {getCameraTourPathLayers} from './map/camera-tour-path';
 import CameraTourZoomControl from './map/camera-tour-zoom-control';
 
@@ -1951,6 +1952,7 @@ export default function MapContainerFactory(
           ) : null}
           <AnnotationOverlay
             annotations={visState.annotations}
+            readoutValues={getAnnotationReadoutValues(visState.annotations, visState)}
             animationTimeMs={this.props.animationTimeMs}
             getAnnotationOpacity={annotationId =>
               getLayerZoomOpacityFactor(

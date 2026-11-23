@@ -454,3 +454,296 @@ test.each([{}, {id: ''}, {id: 'missing'}, {id: text.id, kind: 'text'}])(
     expect(dispatch).not.toHaveBeenCalled();
   }
 );
+
+const caption = {
+  id: 'date',
+  kind: 'text',
+  label: 'Current date',
+  viewport: {anchor: 'top-left', margin: [24, 24]},
+  readout: {type: 'time', format: 'YYYY-MM-DD'}
+};
+
+test('creates, lists and updates viewport captions without requiring geographic coordinates', async () => {
+  const {context, dispatch} = setup();
+  expect(await execute(getAddAnnotationCommand(context), caption)).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    ...caption,
+    kind: AnnotationKind.TEXT,
+    anchorPoint: [0, 0]
+  });
+  const listed = (await execute(getListAnnotationsCommand(context))).data.annotations;
+  expect(listed).toMatchObject([{...caption, isVisible: true}]);
+  expect(listed[0]).not.toHaveProperty('anchorPoint');
+  dispatch(setSelectedAnnotation('date', true));
+  const updatedPlacement = {anchor: 'bottom-right', margin: [32, 48]};
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: 'date', viewport: updatedPlacement})
+  ).toMatchObject({success: true});
+  expect(context.getVisState()).toMatchObject({
+    selectedAnnotationId: 'date',
+    isEditingAnnotationText: true
+  });
+  expect(context.getVisState().annotations[0].viewport).toEqual(updatedPlacement);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: 'date',
+      readout: null,
+      label: 'Credits'
+    })
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0].readout).toBeUndefined();
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: 'date',
+      viewport: null,
+      anchorPoint: [12, 24]
+    })
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0].viewport).toBeUndefined();
+  expect(context.getVisState().annotations[0].anchorPoint).toEqual([12, 24]);
+});
+
+test('supports static captions and count readouts from an existing dataset', async () => {
+  const {context} = setup();
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      ...caption,
+      id: 'credits',
+      readout: undefined,
+      label: 'Data source'
+    })
+  ).toMatchObject({success: true});
+  const original = context.getVisState;
+  const datasets = {observations: {id: 'observations'}};
+  context.getVisState = () => ({...original(), datasets} as any);
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      ...caption,
+      id: 'count',
+      label: '',
+      readout: {type: 'count', dataId: 'observations'}
+    })
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0].readout).toEqual({
+    type: 'count',
+    dataId: 'observations'
+  });
+});
+
+test.each([
+  {...caption, viewport: {anchor: 'center', margin: [24, 24]}},
+  {...caption, viewport: {anchor: 'top', margin: [-1, 24]}},
+  {...caption, viewport: {anchor: 'top', margin: [Infinity, 24]}},
+  {...caption, viewport: undefined},
+  {...caption, readout: {type: 'count', dataId: 'missing'}},
+  {...caption, readout: {type: 'count', dataId: '__proto__'}},
+  {...caption, readout: {type: 'count', dataId: 'constructor'}},
+  {...caption, readout: {type: 'unsupported'}},
+  {...caption, kind: 'ruler', endPoint: [1, 1]},
+  {...caption, readout: undefined, label: ''}
+])('rejects invalid caption creation without mutation: %j', async input => {
+  const {context, dispatch} = setup();
+  expect((await execute(getAddAnnotationCommand(context), input)).success).toBe(false);
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+test('rejects invalid caption updates atomically and preserves authored content', async () => {
+  const {context, dispatch} = setup();
+  await execute(getAddAnnotationCommand(context), caption);
+  const before = context.getVisState();
+  dispatch.mockClear();
+  for (const input of [
+    {id: 'missing', label: 'No annotation'},
+    {id: 'date'},
+    {id: 'date', viewport: null},
+    {id: 'date', viewport: {anchor: 'top', margin: [1]}},
+    {id: 'date', readout: {type: 'count', dataId: 'missing'}},
+    {id: 'date', readout: {type: 'count', dataId: '__proto__'}}
+  ]) {
+    expect((await execute(getUpdateAnnotationCommand(context), input)).success).toBe(false);
+  }
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(context.getVisState()).toBe(before);
+});
+
+test('ruler label updates preserve explicit visibility, and the visibility setting reveals or hides it', async () => {
+  const {context} = setup();
+  await execute(getAddAnnotationCommand(context), {
+    id: 'ruler',
+    kind: 'ruler',
+    anchorPoint: [0, 0],
+    endPoint: [1, 1]
+  });
+  expect(context.getVisState().annotations[0].showCustomText).toBe(false);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: 'ruler',
+      label: 'Distance across the bay'
+    })
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    label: 'Distance across the bay',
+    showCustomText: false,
+    showDistance: true
+  });
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: 'ruler', showCustomText: true})
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0].showCustomText).toBe(true);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: 'ruler', showCustomText: false})
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    label: 'Distance across the bay',
+    showCustomText: false,
+    showDistance: true
+  });
+});
+
+test('styled captions retain rendered text, readout, and opacity tracks through placement edits and save/load', async () => {
+  let {context, dispatch} = setup();
+  const styled = {...caption, fontSize: 28, textColor: '#AABBCC', textAlign: 'center'};
+  expect(await execute(getAddAnnotationCommand(context), styled)).toMatchObject({
+    success: true,
+    data: styled
+  });
+  const propertyTransitions = {
+    opacity: [
+      {
+        id: 'fade',
+        startTimeMs: 0,
+        endTimeMs: 1000,
+        startValue: 0,
+        endValue: 1,
+        easing: 'linear'
+      }
+    ]
+  };
+  dispatch(updateAnnotation(caption.id, {propertyTransitions} as any));
+  ({context, dispatch} = roundTrip(context));
+  const before = context.getVisState().annotations[0];
+  const placement = {anchor: 'bottom-right', margin: [32, 40]};
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: caption.id,
+      viewport: placement
+    })
+  ).toMatchObject({success: true, data: {...styled, viewport: placement}});
+  expect(context.getVisState().annotations[0].editorState).toBe(before.editorState);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: caption.id,
+      label: 'Observation date',
+      fontSize: 36,
+      readout: {type: 'time', format: 'YYYY-MM'}
+    })
+  ).toMatchObject({
+    success: true,
+    data: {
+      ...styled,
+      viewport: placement,
+      label: 'Observation date',
+      fontSize: 36,
+      readout: {type: 'time', format: 'YYYY-MM'}
+    }
+  });
+  const edited = context.getVisState().annotations[0];
+  expect(readRenderedText(edited.editorState)).toBe('Observation date');
+  expect(edited.propertyTransitions).toBe(before.propertyTransitions);
+  ({context} = roundTrip(context));
+  expect(context.getVisState().annotations[0]).toEqual(edited);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: caption.id,
+      viewport: null,
+      readout: null,
+      anchorPoint: [12, 24]
+    })
+  ).toMatchObject({
+    success: true,
+    data: {
+      label: 'Observation date',
+      fontSize: 36,
+      textColor: '#AABBCC',
+      textAlign: 'center',
+      anchorPoint: [12, 24]
+    }
+  });
+  expect(context.getVisState().annotations[0]).not.toHaveProperty('viewport');
+  expect(context.getVisState().annotations[0]).not.toHaveProperty('readout');
+  expect(context.getVisState().annotations[0].propertyTransitions).toEqual(propertyTransitions);
+});
+
+test('readout-only captions remain editable, but clearing the source requires static label content', async () => {
+  const {context, dispatch} = setup();
+  await execute(getAddAnnotationCommand(context), {...caption, label: ''});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: caption.id, fontSize: 36})
+  ).toMatchObject({success: true});
+  const before = context.getVisState();
+  dispatch.mockClear();
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: caption.id, readout: null})
+  ).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(context.getVisState()).toBe(before);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: caption.id,
+      readout: null,
+      label: 'Static caption'
+    })
+  ).toMatchObject({success: true, data: {label: 'Static caption', fontSize: 36}});
+  expect(context.getVisState().annotations[0].readout).toBeUndefined();
+});
+
+test('rejects viewport placement on a geographic point without discarding its styling', async () => {
+  const {context, dispatch} = setup();
+  await execute(getAddAnnotationCommand(context), {...text, kind: 'point', fontSize: 28});
+  const before = context.getVisState();
+  dispatch.mockClear();
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: text.id,
+      viewport: caption.viewport
+    })
+  ).toMatchObject({success: false});
+  expect(context.getVisState()).toBe(before);
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+test('captions remain editable after the referenced count dataset is removed', async () => {
+  const {context} = setup();
+  const original = context.getVisState;
+  let datasets: Record<string, unknown> = {observations: {id: 'observations'}};
+  context.getVisState = () => ({...original(), datasets} as any);
+  await execute(getAddAnnotationCommand(context), {
+    ...caption,
+    id: 'count',
+    readout: {type: 'count', dataId: 'observations'}
+  });
+  datasets = {};
+  const update = getUpdateAnnotationCommand(context);
+  const viewport = {anchor: 'bottom-left', margin: [16, 32]};
+  expect(
+    await execute(update, {
+      id: 'count',
+      viewport,
+      isVisible: false,
+      label: 'Unavailable observations'
+    })
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    viewport,
+    isVisible: false,
+    label: 'Unavailable observations',
+    readout: {type: 'count', dataId: 'observations'}
+  });
+  expect(
+    await execute(update, {id: 'count', readout: {type: 'count', dataId: 'missing'}})
+  ).toMatchObject({success: false});
+  expect(context.getVisState().annotations[0].readout).toEqual({
+    type: 'count',
+    dataId: 'observations'
+  });
+});

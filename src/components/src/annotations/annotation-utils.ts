@@ -291,6 +291,10 @@ export type AnnotationTextBoxStyle = {
   borderBottom?: string;
   transform?: string;
   transformOrigin?: string;
+  maxWidth?: number;
+  maxHeight?: number;
+  overflow?: 'hidden';
+  boxSizing?: 'border-box';
 };
 
 export function getAnnotationTextBoxStyle(
@@ -299,6 +303,31 @@ export function getAnnotationTextBoxStyle(
   isGlobeEnabled = false
 ): AnnotationTextBoxStyle {
   const {textWidth, lineColor, lineWidth, autoSize, kind} = annotation;
+  if (kind === AnnotationKind.TEXT && annotation.viewport) {
+    const {anchor, margin} = annotation.viewport;
+    const x = Math.max(0, Math.min(margin[0], viewport.width / 2));
+    const y = Math.max(0, Math.min(margin[1], viewport.height / 2));
+    const maxWidth = Math.max(0, viewport.width - 2 * x);
+    const maxHeight = Math.max(0, viewport.height - 2 * y);
+    return {
+      width: autoSize ? 'max-content' : textWidth || 120,
+      maxWidth,
+      maxHeight,
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      ...(!maxWidth || !maxHeight ? {display: 'none' as const} : {}),
+      ...(anchor.includes('left')
+        ? {left: x}
+        : anchor.includes('right')
+        ? {right: x}
+        : {left: viewport.width / 2, transform: 'translateX(-50%)'}),
+      ...(anchor.includes('top')
+        ? {top: y}
+        : anchor.includes('bottom')
+        ? {bottom: y}
+        : {top: viewport.height / 2, transform: 'translateY(-50%)'})
+    };
+  }
   const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {x, y, tx, ty} = marker;
   const {side, vertical} = getTextPlacement(annotation);
@@ -406,6 +435,7 @@ export function isPointVisibleOnGlobe(
 
 /** Partially visible rulers are clipped by their renderer; other annotations use the anchor. */
 export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
+  if (annotation.kind === AnnotationKind.TEXT && annotation.viewport) return true;
   return (
     isPointVisibleOnGlobe(annotation.anchorPoint, viewport) ||
     (annotation.kind === AnnotationKind.RULER &&
@@ -484,6 +514,32 @@ export function moveText(
   viewport: MapViewport,
   pickWorldPosition?: PickWorldPosition
 ): Partial<Annotation> {
+  if (annotation.kind === AnnotationKind.TEXT && annotation.viewport) {
+    const {anchor, margin} = annotation.viewport;
+    return {
+      viewport: {
+        anchor,
+        margin: [
+          Math.max(
+            0,
+            Math.min(
+              viewport.width / 2,
+              margin[0] +
+                (anchor.includes('left') ? delta.x : anchor.includes('right') ? -delta.x : 0)
+            )
+          ),
+          Math.max(
+            0,
+            Math.min(
+              viewport.height / 2,
+              margin[1] +
+                (anchor.includes('top') ? delta.y : anchor.includes('bottom') ? -delta.y : 0)
+            )
+          )
+        ]
+      }
+    };
+  }
   const marker = makeMarker(annotation, viewport);
   const {kind, tx, ty} = marker;
 

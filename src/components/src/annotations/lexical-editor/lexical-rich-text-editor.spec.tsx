@@ -319,6 +319,52 @@ describe('annotation toolbar and link editing', () => {
     expect((getByRole('button', {name: 'Insert Link'}) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it.each([true, false])(
+    'persists toolbar formatting on an empty label (editable: %s)',
+    async editable => {
+      const {editor, getAllByRole, getByRole, getByText} = mountToolbar(editable);
+      act(() =>
+        editor.update(
+          () => {
+            $getRoot().clear().append($createParagraphNode());
+            $setSelection(null);
+          },
+          {discrete: true}
+        )
+      );
+      await act(async () => {
+        fireEvent.change(getAllByRole('combobox')[1], {target: {value: '24px'}});
+      });
+      fireEvent.click(getByRole('button', {name: 'Text Color'}));
+      await act(async () => {
+        fireEvent.click(getByText('Black'));
+      });
+      await act(async () => {
+        fireEvent.click(getByRole('button', {name: 'Bold'}));
+      });
+      const formatted = readText(editor);
+      expect(formatted).toEqual([
+        {
+          text: '',
+          style: expect.stringContaining('font-size: 24px'),
+          bold: true,
+          italic: false,
+          underline: false
+        }
+      ]);
+      expect(formatted[0].style).toContain('color: #000000');
+      const saved = editor.getEditorState().toJSON();
+      act(() => editor.setEditorState(editor.parseEditorState(saved)));
+      expect(readText(editor)).toEqual(formatted);
+      expect(editor.getEditorState().read(() => $getRoot().getTextContent())).toBe('');
+      await act(async () => {
+        fireEvent.click(getByRole('button', {name: 'Bold'}));
+      });
+      expect(readText(editor)).toEqual([{...formatted[0], bold: false}]);
+      await waitFor(() => expect(editor.isEditable()).toBe(editable));
+    }
+  );
+
   it('dismisses an unfinished color choice and reopens the preset chooser', () => {
     const {getByRole, getByText, queryByText} = mountToolbar();
     fireEvent.click(getByRole('button', {name: 'Text Color'}));
