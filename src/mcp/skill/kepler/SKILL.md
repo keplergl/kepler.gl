@@ -36,6 +36,10 @@ not this one.
 | command                  | purpose                                                        |
 | ------------------------ | -------------------------------------------------------------- |
 | `map.add-layer`          | Add a layer (point, flow, flowField, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
+| `map.get-layer-order`    | Read stable layer IDs in stacking order, topmost first, including hidden layers and group structure. |
+| `map.reorder-layers`     | Set `layerIds` to every current layer ID exactly once, topmost first; keep each group contiguous. |
+| `map.remove-layer`       | Remove `layerId` with native cleanup, keeping its dataset and other layers. |
+| `map.remove-dataset`     | Remove `dataId` and its layers with native cleanup; `dryRun:true` previews `affectedLayerIds`. |
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
 | `map.time-filter`        | Create, inspect and update shared timestamp/start-end filters. |
 | `map.data-playback`      | Inspect, play, pause, seek or reset a native data clock.        |
