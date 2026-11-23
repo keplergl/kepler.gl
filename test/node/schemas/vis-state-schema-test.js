@@ -288,17 +288,11 @@ test('#visStateSchema -> filter playback loop is optional and survives save/load
 test('#visStateSchema -> v1 -> save load filters', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   initialState.visState.filters[0].inverted = true;
-  initialState.visState.filters[0].endHoldDurationMs = 2500;
-  initialState.visState.animationConfig.endHoldDurationMs = 3500;
-  initialState.visState.animationConfig.animationLoop = false;
   const savedState = SchemaManager.getConfigToSave(initialState);
 
   // save state
   const vsToSave = savedState.config.visState;
   const vsLoaded = SchemaManager.parseSavedConfig(savedState).visState;
-  t.equal(vsLoaded.filters[0].endHoldDurationMs, 2500, 'restores the filter presentation hold');
-  t.equal(vsLoaded.animationConfig.endHoldDurationMs, 3500, 'restores the layer presentation hold');
-  t.equal(vsLoaded.animationConfig.animationLoop, false, 'restores stop-at-end for native layers');
   const loadedFilters = vsLoaded.filters;
 
   // test saved filters
@@ -310,7 +304,6 @@ test('#visStateSchema -> v1 -> save load filters', t => {
       id: 'hjpn8frza',
       enabled: true,
       inverted: true,
-      endHoldDurationMs: 2500,
       name: ['time'],
       type: 'timeRange',
       value: [1474606800000, 1474617600000],

@@ -21,7 +21,6 @@ interface AnimationControllerProps<T extends number | number[]> {
   baseSpeed?: number;
   minimumIncrement?: number;
   loop?: boolean;
-  endHoldDurationMs?: number;
   onAnimationEnd?: () => void;
   children?: (
     isAnimating: boolean | undefined,
@@ -91,48 +90,15 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     _timer = null;
     _startTime = 0;
     _completed = false;
-    _holding = false;
-    _holdElapsed = 0;
-    _holdFrameTime = 0;
-    _holdValue: T | undefined;
-
-    _getHoldDuration = () =>
-      Number.isFinite(this.props.endHoldDurationMs)
-        ? Math.max(0, this.props.endHoldDurationMs || 0)
-        : 0;
-
-    _isHeldValue = () => {
-      const value = this.props.value;
-      const heldValue = this._holdValue;
-      if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
-        return (
-          (Array.isArray(value) ? value[0] : value) ===
-          (Array.isArray(heldValue) ? heldValue[0] : heldValue)
-        );
-      }
-      return Array.isArray(value) && Array.isArray(heldValue)
-        ? value.every((part, index) => part === heldValue[index])
-        : value === heldValue;
-    };
 
     _startOrPauseAnimation(previousProps?: AnimationControllerProps<T>) {
       const {isAnimating, speed = 1} = this.props;
-      // Seeking away from the held frame cancels the hold; pausing keeps its remainder.
-      if (this._holding && !this._isHeldValue()) {
-        this._holding = false;
-        this._holdElapsed = 0;
-        this._clearTimer();
-      }
       const starting = Boolean(isAnimating && !previousProps?.isAnimating);
       if (starting) {
         this._completed = false;
       }
       if (!this._timer && isAnimating && speed > 0 && !this._completed) {
-        if (this._holding) {
-          this._holdFrameTime = Date.now();
-          this._timer = requestAnimationFrame(this._nextHoldFrame);
-          this.setState({isAnimating: true});
-        } else this._startAnimation(starting);
+        this._startAnimation(starting);
       } else if (this._timer && !isAnimating) {
         this._pauseAnimation();
       }
@@ -191,8 +157,6 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _resetAnimation = () => {
-      this._holding = false;
-      this._holdElapsed = 0;
       if (this.props.animationWindow === ANIMATION_WINDOW.interval) {
         this._resetAnimationByTimeStep();
       } else {
@@ -235,32 +199,8 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
     };
 
     _pauseAnimation = () => {
-      if (this._holding && this._timer) {
-        this._holdElapsed += Math.max(0, Date.now() - this._holdFrameTime);
-      }
       this._clearTimer();
       this.setState({isAnimating: false});
-    };
-
-    _nextHoldFrame = () => {
-      this._timer = null;
-      const now = Date.now();
-      this._holdElapsed += Math.max(0, now - this._holdFrameTime);
-      this._holdFrameTime = now;
-      if (this._holdElapsed < this._getHoldDuration()) {
-        this._timer = requestAnimationFrame(this._nextHoldFrame);
-        return;
-      }
-      this._holding = false;
-      this._holdElapsed = 0;
-      if (this.props.loop === false) {
-        this._completed = true;
-        this._pauseAnimation();
-        this.props.onAnimationEnd?.();
-      } else {
-        this._resetAnimation();
-        this._startAnimation(false);
-      }
     };
 
     _nextFrame = () => {
@@ -273,19 +213,10 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
           ? this._nextFrameByTimeStep()
           : this._nextFrameByDomain();
 
-      const atEnd = this._isAtEnd(nextValue);
-      const holding = this._getHoldDuration() > 0 && atEnd;
-      const completed = this.props.loop === false && atEnd && !holding;
+      const completed = this.props.loop === false && this._isAtEnd(nextValue);
       // Mark completion before publishing the final frame: its parent may render
       // synchronously while the playing flag is still true.
       this._completed = completed;
-      if (holding) {
-        this._holding = true;
-        this._holdElapsed = 0;
-        this._holdFrameTime = Date.now();
-        this._holdValue = nextValue as T;
-        this._timer = requestAnimationFrame(this._nextHoldFrame);
-      }
 
       // interim solution while we fully migrate filter and layer controllers
       const setTimelineValue = this.props.updateAnimation || this.props.setTimelineValue;
@@ -302,7 +233,6 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
         return undefined;
       }
       let end = domain[1];
-      if (this._getHoldDuration() > 0) return end;
       // Calendar bins can extend past the last observation. Numeric bins are
       // already closed on their domain and must not be extrapolated.
       if (minimumIncrement === undefined && Array.isArray(steps) && steps.length > 1) {
@@ -367,16 +297,13 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
           // clamp the last step instead of discarding it, and loop back to the
           // anchor only after the final frame was emitted
           value1 =
-            value[1] >= endOfSweep && this.props.loop !== false && !this._getHoldDuration()
+            value[1] >= endOfSweep && this.props.loop !== false
               ? minimumIncrement === undefined
                 ? value[0] + 1
                 : Math.min(domain[1], value[0] + minimumIncrement)
               : Math.min(value[1] + delta, endOfSweep);
         } else {
-          if (
-            (this.props.loop === false || this._getHoldDuration() > 0) &&
-            value[1] + delta >= domain[1]
-          ) {
+          if (this.props.loop === false && value[1] + delta >= domain[1]) {
             return [Math.max(domain[0], domain[1] - windowSize), domain[1]];
           }
           const lastFrame = value[0] + delta > domain[1];
@@ -389,7 +316,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
 
       // current time is a point
       return Number(value) + delta > domain[1]
-        ? this.props.loop === false || this._getHoldDuration() > 0
+        ? this.props.loop === false
           ? domain[1]
           : domain[0]
         : Number(value) + delta;
@@ -401,11 +328,7 @@ function AnimationControllerFactory(): typeof AnimationControllerType {
       const val = Array.isArray(value) ? value[0] : Number(value);
       const index = bisectLeft(steps, val);
       const nextIdx =
-        index >= steps.length - 1
-          ? this.props.loop === false || this._getHoldDuration() > 0
-            ? steps.length - 1
-            : 0
-          : index + 1;
+        index >= steps.length - 1 ? (this.props.loop === false ? steps.length - 1 : 0) : index + 1;
 
       // why do we need to pass an array of two objects? are we reading nextIdx at some point?
       // _nextFrameByDomain only returns one value

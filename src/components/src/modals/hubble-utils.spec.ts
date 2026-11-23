@@ -3,7 +3,7 @@
 
 // @ts-nocheck
 import {TileLayer, MVTLayer, _Tileset2D} from '@deck.gl/geo-layers';
-import {KeplerFilterKeyframes, KeplerTripKeyframes} from '@hubble.gl/core';
+import {KeplerFilterKeyframes} from '@hubble.gl/core';
 import {
   FILTER_TYPES,
   FILTER_VIEW_TYPES,
@@ -12,7 +12,6 @@ import {
 } from '@kepler.gl/constants';
 import {
   getTimeRangeFilterKeyframes,
-  getDataAnimationTimings,
   getBeforeLayerId,
   getStaticMapProps,
   getAnimatableFilters,
@@ -25,13 +24,9 @@ import {
   scaleZoomOpacityForVideoExport
 } from './hubble-utils';
 
-jest.mock('@loaders.gl/video', () => ({GIFBuilder: jest.fn()}));
-
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('../../../utils/src/utils'),
   ...jest.requireActual('../../../utils/src/layer-visibility'),
-  getFilterBinThresholds: jest.requireActual('../../../utils/src/plot').getFilterBinThresholds,
-  intervalBinFromMarks: jest.requireActual('../../../utils/src/plot').intervalBinFromMarks,
   getMapLayersFromSplitMaps: jest.requireActual('../../../utils/src/map-utils')
     .getMapLayersFromSplitMaps,
   getLayerBlendingParameters: jest.fn(() => ({blend: true})),
@@ -82,30 +77,6 @@ describe('hubble-utils', () => {
       expect(result.easings(0.5)).toBe(0.5);
     });
 
-    test('holds the final data timestamp as export presentation frames advance', () => {
-      const filter = {...baseFilter, animationWindow: 'incremental', endHoldDurationMs: 250};
-      const frames = new KeplerFilterKeyframes({
-        filter,
-        timings: [0, 1000],
-        getTimeRangeFilterKeyframes
-      });
-      for (const time of [750, 800, 999, 1000, 800]) {
-        frames.setTime(time);
-        expect(frames.getFrame()).toEqual([200, 500]);
-      }
-      expect(filter.domain).toEqual([100, 500]);
-      const trip = new KeplerTripKeyframes({
-        animationConfig: {domain: [100, 500]},
-        timings: getDataAnimationTimings([0, 1000], 250)
-      });
-      for (const time of [750, 800, 1000, 800]) {
-        trip.setTime(time);
-        expect(trip.getFrame()).toEqual({currentTime: 500});
-      }
-      expect(getDataAnimationTimings([0, 1000], 0)).toEqual([0, 1000]);
-      expect(getDataAnimationTimings([0, 1000], undefined)).toEqual([0, 1000]);
-    });
-
     test('returns incremental keyframes', () => {
       const result = getTimeRangeFilterKeyframes({
         filter: {...baseFilter, animationWindow: 'incremental'},
@@ -115,59 +86,6 @@ describe('hubble-utils', () => {
       expect(result.keyframes).toEqual([{value: [200, 201]}, {value: [200, 500]}]);
     });
 
-    test.each([1000, 1500])(
-      'holds the final frame for the entire movie when hold is %i ms',
-      endHoldDurationMs => {
-        const frames = new KeplerFilterKeyframes({
-          filter: {...baseFilter, animationWindow: 'incremental', endHoldDurationMs},
-          timings: [0, 1000],
-          getTimeRangeFilterKeyframes
-        });
-        const trip = new KeplerTripKeyframes({
-          animationConfig: {domain: [100, 500]},
-          timings: getDataAnimationTimings([0, 1000], endHoldDurationMs)
-        });
-        for (const time of [0, 500, 1000]) {
-          frames.setTime(time);
-          trip.setTime(time);
-          expect(frames.getFrame()).toEqual([200, 500]);
-          expect(trip.getFrame()).toEqual({currentTime: 500});
-        }
-      }
-    );
-
-    test('starts the final interval hold at the requested presentation time', () => {
-      const frames = getTimeRangeFilterKeyframes({
-        filter: {
-          ...baseFilter,
-          animationWindow: 'interval',
-          endHoldDurationMs: 250,
-          plotType: {interval: 'day'},
-          timeBins: {
-            dataset1: {
-              day: [
-                {x0: 100, x1: 300},
-                {x0: 300, x1: 450},
-                {x0: 450, x1: 600}
-              ]
-            }
-          }
-        },
-        timings: [0, 1000]
-      });
-      expect(frames.timings).toEqual([0, 375, 750, 1000]);
-      expect(frames.keyframes[2]).toEqual({value: [450, 500]});
-      const track = new KeplerFilterKeyframes({
-        filter: {...baseFilter, animationWindow: 'interval'},
-        timings: [0, 1000],
-        getTimeRangeFilterKeyframes: () => frames
-      });
-      for (const time of [750, 800, 999, 1000, 750]) {
-        track.setTime(time);
-        expect(track.getFrame()).toEqual([450, 500]);
-      }
-    });
-
     test('returns point keyframes', () => {
       const result = getTimeRangeFilterKeyframes({
         filter: {...baseFilter, animationWindow: 'point'},
@@ -175,31 +93,6 @@ describe('hubble-utils', () => {
       });
 
       expect(result.keyframes).toEqual([{value: 100}, {value: 500}]);
-    });
-
-    test('linked interval export covers the shared clock beyond cached dataset bins', () => {
-      const filter = {
-        ...baseFilter,
-        domain: [0, 3000],
-        value: [1000, 2000],
-        animationWindow: 'interval',
-        syncedWithLayerTimeline: true,
-        endHoldDurationMs: 250,
-        plotType: {interval: '1-second'},
-        timeBins: {dataset1: {'1-second': [{x0: 1000, x1: 2000}]}}
-      };
-      const track = new KeplerFilterKeyframes({
-        filter,
-        timings: [0, 1000],
-        getTimeRangeFilterKeyframes
-      });
-      track.setTime(0);
-      expect(track.getFrame()).toEqual([0, 999]);
-      for (const time of [750, 800, 999, 1000, 750]) {
-        track.setTime(time);
-        expect(track.getFrame()).toEqual([3000, 3000]);
-      }
-      expect(filter.timeBins.dataset1['1-second']).toEqual([{x0: 1000, x1: 2000}]);
     });
 
     test('returns interval keyframes with bins', () => {

@@ -83,7 +83,7 @@ describe('map.data-playback', () => {
     expect(ctx.getMapState?.()).toBe(camera);
   });
 
-  it('plays, pauses and resets the selected filter with native speed, loop and hold settings', async () => {
+  it('plays, pauses and resets the selected filter with native speed', async () => {
     const {ctx, target} = await makeContext();
     const command = getDataPlaybackCommand(ctx);
     expect(
@@ -91,17 +91,13 @@ describe('map.data-playback', () => {
         await execute(command, {
           action: 'play',
           target,
-          speed: 2,
-          loop: false,
-          endHoldDurationMs: 2500
+          speed: 2
         })
       ).success
     ).toBe(true);
     expect(ctx.getVisState().filters[0]).toMatchObject({
       isAnimating: true,
-      speed: 2,
-      animationLoop: false,
-      endHoldDurationMs: 2500
+      speed: 2
     });
     await execute(command, {action: 'pause', target});
     expect(ctx.getVisState().filters[0].isAnimating).toBe(false);
@@ -143,15 +139,13 @@ describe('map.data-playback', () => {
         await execute(command, {
           action: 'play',
           target: layerTarget,
-          loop: false,
-          endHoldDurationMs: 1000
+          speed: 2
         })
       ).data
     ).toMatchObject({
       clock: 'layer',
       isAnimating: true,
-      animationLoop: false,
-      endHoldDurationMs: 1000
+      speed: 2
     });
     expect(ctx.getVisState().filters[0].isAnimating).toBe(false);
     expect(
@@ -273,11 +267,11 @@ describe('map.data-playback', () => {
     {action: 'play', target: {layerId: 'missing'}},
     {action: 'play', target: {filterId: 'x', layerId: 'y'}},
     {action: 'play', speed: -1},
-    {action: 'play', endHoldDurationMs: -1},
+    {action: 'play', unexpected: true},
     {action: 'seek'},
     {action: 'seek', time: NaN},
     {action: 'seek', time: START - 1},
-    {action: 'pause', loop: false}
+    {action: 'pause', speed: 2}
   ])('rejects invalid input without mutation: %j', async input => {
     const {ctx, target, dispatch} = await makeContext();
     const result = await execute(getDataPlaybackCommand(ctx), {target, ...input});

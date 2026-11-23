@@ -11,12 +11,7 @@ import {
   GLOBE_MIN_ZOOM,
   GLOBE_MAX_ZOOM
 } from '@kepler.gl/constants';
-import {
-  getLayerBlendingParameters,
-  getBaseMapLibrary,
-  getFilterBinThresholds,
-  intervalBinFromMarks
-} from '@kepler.gl/utils';
+import {getLayerBlendingParameters, getBaseMapLibrary} from '@kepler.gl/utils';
 import {getGlobeBaseLayers, getGlobeTopLayers, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
 import {computeDeckLayers} from '@kepler.gl/reducers';
 import {isMapboxURL, transformMapboxUrl} from 'maplibregl-mapbox-request-transformer';
@@ -75,35 +70,12 @@ function getKeyFramesFree(filter: TimeRangeFilter): TimeRangeFilterKeyframes {
   };
 }
 
-/** Reserve presentation time after the data sweep without extending the data domain. */
-export function getDataAnimationTimings(timings: number[], endHoldDurationMs?: number): number[] {
-  if (!Number.isFinite(endHoldDurationMs) || endHoldDurationMs! <= 0) return timings;
-  const end = Math.max(timings[0], timings[1] - endHoldDurationMs!);
-  // An all-hold movie starts at the final data frame. Finish its sweep just
-  // before the movie begins: equal keyframe timings produce NaN in Hubble.
-  return [end === timings[0] ? timings[0] - 1 : timings[0], end];
-}
-
 export function getTimeRangeFilterKeyframes({
   filter,
   timings
 }: {
   filter: TimeRangeFilter;
   timings: number[];
-}): TimeRangeFilterKeyframes {
-  const dataTimings = getDataAnimationTimings(timings, filter.endHoldDurationMs);
-  const frames = getTimeRangeFilterFrames({filter, timings: dataTimings, endTime: timings[1]});
-  return dataTimings === timings ? frames : {timings: dataTimings, ...frames};
-}
-
-function getTimeRangeFilterFrames({
-  filter,
-  timings,
-  endTime
-}: {
-  filter: TimeRangeFilter;
-  timings: number[];
-  endTime: number;
 }): TimeRangeFilterKeyframes {
   if (filter.type !== FILTER_TYPES.timeRange) {
     throw new Error("filter type must be 'timeRange'.");
@@ -135,32 +107,18 @@ function getTimeRangeFilterFrames({
       const {plotType, timeBins, dataId} = filter;
       const {interval} = plotType;
 
-      // A linked clock can extend beyond the cached dataset histogram. Use
-      // the same merged-domain interval windows as the native controller.
-      const marks =
-        filter.syncedWithLayerTimeline && interval ? getFilterBinThresholds(filter) : null;
-      const bins = marks
-        ? marks.slice(0, -1).map(time => {
-            const [x0, x1] = intervalBinFromMarks(marks, time);
-            return {x0, x1};
-          })
-        : timeBins?.[dataId[0]]?.[interval];
+      const bins = timeBins?.[dataId[0]]?.[interval];
 
       if (!interval || !bins || bins.length === 0) {
         return getKeyFramesFree(filter);
       }
 
-      const delta = filter.endHoldDurationMs
-        ? duration / Math.max(1, bins.length - 1)
-        : duration / bins.length;
-
       return {
-        timings: [...bins.map((_, idx) => timings[0] + delta * idx), endTime],
-        // Keep a terminal segment for the final bin, including the requested
-        // data hold. Hubble evaluates intervals from the segment's start frame.
-        keyframes: [...bins, bins[bins.length - 1]].map(bin => ({
-          value: [bin.x0, filter.endHoldDurationMs ? Math.min(bin.x1, filter.domain[1]) : bin.x1]
-        })),
+        timings: [...bins.map((_, idx) => timings[0] + (duration * idx) / bins.length), timings[1]],
+        // Hubble's interval evaluator returns the start of the current segment.
+        // A terminal hold gives the last bin its own segment instead of leaving
+        // the animation on the penultimate bin through the end of the recording.
+        keyframes: [...bins, bins[bins.length - 1]].map(bin => ({value: [bin.x0, bin.x1]})),
         easings: hold
       };
     }

@@ -39,20 +39,7 @@ const schema = z
       .finite()
       .positive()
       .optional()
-      .describe('For play: native playback speed multiplier.'),
-    loop: z
-      .boolean()
-      .optional()
-      .describe('For play: repeat after the final frame and optional hold.'),
-    endHoldDurationMs: z
-      .number()
-      .finite()
-      .min(0)
-      .max(Number.MAX_SAFE_INTEGER)
-      .optional()
-      .describe(
-        'For play: hold the last observation for this many presentation milliseconds before looping or stopping. Zero disables the hold; also used by video export.'
-      )
+      .describe('For play: native playback speed multiplier.')
   })
   .strict();
 
@@ -82,7 +69,7 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
       'Inspect, play, pause, seek or reset a native data timeline without moving the camera. ' +
       'Target a time filter by filterId, or an animated layer such as a trip by layerId. Animated layers share one native clock; a linked time filter controls that clock. ' +
       'Seek pauses data playback and uses the native window (including interval snapping); reset seeks the domain start. ' +
-      'Play pauses competing data clocks. Optional endHoldDurationMs keeps the final data timestamp fixed while presentation animation continues. ' +
+      'Play pauses competing data clocks and preserves native playback behavior. ' +
       'Counts include all active dataset filters, including GPU filters; they are record counts, not rendered trip segments.',
     metadata: {readOnly: false, riskLevel: 'low'},
     inputSchema: schema,
@@ -93,11 +80,8 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
           throw new Error('time is required for seek.');
         if (args.action !== 'seek' && args.time !== undefined)
           throw new Error('time is only accepted for seek.');
-        if (
-          args.action !== 'play' &&
-          [args.speed, args.loop, args.endHoldDurationMs].some(value => value !== undefined)
-        ) {
-          throw new Error('speed, loop and endHoldDurationMs are only accepted for play.');
+        if (args.action !== 'play' && args.speed !== undefined) {
+          throw new Error('speed is only accepted for play.');
         }
         const state = ctx.getVisState();
         const filters: TimeRangeFilter[] = state.filters ?? [];
@@ -153,10 +137,6 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
             if (args.action === 'play') {
               const settings = {
                 ...(args.speed !== undefined ? {speed: args.speed} : {}),
-                ...(args.loop !== undefined ? {animationLoop: args.loop} : {}),
-                ...(args.endHoldDurationMs !== undefined
-                  ? {endHoldDurationMs: args.endHoldDurationMs}
-                  : {}),
                 isAnimating: true
               };
               ctx.dispatch(setFilter(filterIndex, Object.keys(settings), Object.values(settings)));
@@ -179,11 +159,7 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
             ctx.dispatch(
               setAnimationConfig({
                 isAnimating: args.action === 'play',
-                ...(args.speed !== undefined ? {speed: args.speed} : {}),
-                ...(args.loop !== undefined ? {animationLoop: args.loop} : {}),
-                ...(args.endHoldDurationMs !== undefined
-                  ? {endHoldDurationMs: args.endHoldDurationMs}
-                  : {})
+                ...(args.speed !== undefined ? {speed: args.speed} : {})
               } as any)
             );
             if (args.action === 'seek' || args.action === 'reset') {
@@ -214,8 +190,6 @@ export function getDataPlaybackCommand(ctx: KeplerContext): RoomCommand {
                   selectedTime: animation.currentTime,
                   isAnimating: Boolean(animation.isAnimating),
                   speed: animation.speed,
-                  animationLoop: animation.animationLoop !== false,
-                  endHoldDurationMs: animation.endHoldDurationMs ?? 0,
                   timeSteps: animation.timeSteps,
                   visibleCounts: getVisibleCounts(ctx, [
                     ...new Set<string>(

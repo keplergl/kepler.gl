@@ -37,7 +37,6 @@ export function getTimeFilterState(ctx: KeplerContext, filter: TimeRangeFilter) 
     speed: filter.speed,
     isAnimating: Boolean(filter.isAnimating),
     animationLoop: filter.animationLoop !== false,
-    endHoldDurationMs: filter.endHoldDurationMs ?? 0,
     enabled: filter.enabled,
     syncedWithLayerTimeline: Boolean(filter.syncedWithLayerTimeline),
     syncTimelineMode: filter.syncTimelineMode,

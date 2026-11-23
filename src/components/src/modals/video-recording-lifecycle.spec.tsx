@@ -9,8 +9,6 @@ import {SwipeExportVideoPanelContainer} from './swipe-export-video-container';
 import {drawStarsBackground} from '@kepler.gl/deckgl-layers';
 import {useEffectAnimation} from './effect-animation';
 import {NativeWebMEncoder} from './native-webm-encoder';
-import {withCameraTourExport} from './camera-tour-export';
-import {getDataAnimationTimings} from './hubble-utils';
 import {compositeVideoAnnotations} from './video-annotation-overlay';
 import type {Annotation, Effect} from '@kepler.gl/types';
 import type {ProgrammaticVideoExport} from './programmatic-video-export';
@@ -101,8 +99,6 @@ jest.mock('../common', () => ({
 jest.mock('@kepler.gl/table', () => ({copyTable: jest.fn()}));
 jest.mock('@kepler.gl/utils', () => ({
   datetimeFormatter: jest.requireActual('../../../utils/src/data-utils').datetimeFormatter,
-  mergeFilterWithTimeline: jest.requireActual('../../../utils/src/filter-utils')
-    .mergeFilterWithTimeline,
   getCameraTourDuration: () => 0,
   ...jest.requireActual('../../../utils/src/layer-visibility')
 }));
@@ -113,7 +109,6 @@ jest.mock('@kepler.gl/deckgl-layers', () => ({
   getStarsBackgroundImage: () => 'stars'
 }));
 jest.mock('./hubble-utils', () => ({
-  getDataAnimationTimings: jest.fn(() => [0, 750]),
   scaleToVideoExport: (viewState, container) => ({...viewState, ...container}),
   getResolutionSetting: resolution => {
     const [width, height] = resolution.split('x').map(Number);
@@ -229,28 +224,6 @@ function start() {
 
 describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind => {
   const framesPerCapture = kind === 'globe' ? 2 : 3;
-  it('reserves the final presentation interval for a native layer hold', () => {
-    const Component =
-      kind === 'globe' ? GlobeExportVideoPanelContainer : SwipeExportVideoPanelContainer;
-    const animationConfig = {domain: [100, 500], currentTime: 100, endHoldDurationMs: 250};
-    const instance = {
-      state: {durationMs: 1000},
-      props: {
-        mapData: {
-          visState: {
-            animationConfig,
-            layers: [{config: {isVisible: true, animation: {enabled: true}}}]
-          }
-        }
-      }
-    };
-    expect(Component.prototype.getTripKeyframes.call(instance).tripKeyframe?.timings).toEqual([
-      0, 750
-    ]);
-    expect(getDataAnimationTimings).toHaveBeenLastCalledWith([0, 1000], 250);
-    expect(instance.state.durationMs).toBe(1000);
-    expect(animationConfig.domain).toEqual([100, 500]);
-  });
   it('keeps native encoding opt-in and releases an active encoder when stopped', () => {
     const {container} = mount(kind);
     expect(new (container.getEncoder())({framerate: 30})).not.toBeInstanceOf(NativeWebMEncoder);
@@ -555,69 +528,6 @@ describe.each(['globe', 'swipe'] as const)('%s recording orchestration', kind =>
     expect(container.state).toMatchObject({rendering: false, saving: false});
   });
 });
-
-it('uses the same native layer hold timing in the standard exporter', () => {
-  const animationConfig = {domain: [100, 500], endHoldDurationMs: 250};
-  class Base {
-    getTripKeyframes() {
-      return {animationConfig, tripKeyframe: {timings: [0, 1000]}};
-    }
-  }
-  const Container = withCameraTourExport(Base);
-  expect(new Container().getTripKeyframes().tripKeyframe.timings).toEqual([0, 750]);
-  expect(getDataAnimationTimings).toHaveBeenLastCalledWith([0, 1000], 250);
-  expect(animationConfig.domain).toEqual([100, 500]);
-});
-
-it.each(['standard', 'globe', 'swipe'] as const)(
-  '%s export lets a linked filter own the shared layer clock and its final hold',
-  kind => {
-    const filter = {
-      id: 'linked',
-      type: 'timeRange',
-      view: 'side',
-      domain: [100, 200],
-      value: [100, 100],
-      animationWindow: 'point',
-      syncedWithLayerTimeline: true,
-      endHoldDurationMs: 250
-    };
-    const animationConfig = {domain: [0, 300], currentTime: 100};
-    const instance = {
-      state: {durationMs: 1000},
-      props: {
-        animatableFilters: [filter],
-        mapData: {
-          visState: {
-            filters: [filter],
-            animationConfig,
-            layers: [{config: {isVisible: true, animation: {enabled: true}}}]
-          }
-        }
-      }
-    };
-    class Base {
-      getFilterKeyframes() {
-        return {filters: [filter], filterKeyframes: [{id: filter.id, timings: [0, 1000]}]};
-      }
-      getTripKeyframes() {
-        return {animationConfig, tripKeyframe: {timings: [0, 1000]}};
-      }
-    }
-    const Container =
-      kind === 'standard'
-        ? withCameraTourExport(Base)
-        : kind === 'globe'
-        ? GlobeExportVideoPanelContainer
-        : SwipeExportVideoPanelContainer;
-    const frames = Container.prototype.getFilterKeyframes.call(instance);
-    expect(frames.filters?.[0]).toMatchObject({domain: [0, 300], endHoldDurationMs: 250});
-    expect(frames.filterKeyframes).toEqual([{id: filter.id, timings: [0, 1000]}]);
-    expect(Container.prototype.getTripKeyframes.call(instance)).toEqual({});
-    expect(filter.domain).toEqual([100, 200]);
-    expect(animationConfig.domain).toEqual([0, 300]);
-  }
-);
 
 it('waits for globe layers and bounds readiness retries so export cannot wait indefinitely', async () => {
   mount('globe', 0);

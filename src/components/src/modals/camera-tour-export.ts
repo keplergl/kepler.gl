@@ -12,11 +12,10 @@ import {
   getLayerAnimationDuration,
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
-  getAnnotationOpacityDuration,
-  mergeFilterWithTimeline
+  getAnnotationOpacityDuration
 } from '@kepler.gl/utils';
 import type {CameraKeyframeProps} from '@hubble.gl/core';
-import {getDataAnimationTimings, getFlatExportLayers, getResolutionSetting} from './hubble-utils';
+import {getFlatExportLayers, getResolutionSetting} from './hubble-utils';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {VideoAnnotationPreview} from './video-annotation-overlay';
@@ -113,37 +112,6 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
   return class CameraTourExportContainer extends Base {
     private finishNativeRecording?: (blob: Blob | null) => void;
     private failedBasemap?: PreviewMap;
-
-    getFilterKeyframes() {
-      const frames = super.getFilterKeyframes();
-      if (!frames.filters) return frames;
-      const animationConfig = this.props.mapData.visState.animationConfig;
-      return {
-        ...frames,
-        filters: frames.filters.map(
-          filter => mergeFilterWithTimeline(filter, animationConfig).filter
-        )
-      };
-    }
-
-    getTripKeyframes() {
-      // A synced filter updates the layer clock through the native reducer.
-      // An independent track would overwrite that clock during its final hold.
-      if (this.props?.mapData?.visState?.filters?.some(filter => filter.syncedWithLayerTimeline))
-        return {};
-      const frames = super.getTripKeyframes();
-      if (!frames.tripKeyframe) return frames;
-      return {
-        ...frames,
-        tripKeyframe: {
-          ...frames.tripKeyframe,
-          timings: getDataAnimationTimings(
-            frames.tripKeyframe.timings,
-            frames.animationConfig?.endHoldDurationMs
-          )
-        }
-      };
-    }
 
     private onMapError({target: map, sourceId}: PreviewMapEvent) {
       // Tile failures can settle without blocking the map's load event. A

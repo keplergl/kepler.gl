@@ -1033,7 +1033,6 @@ export const filterPropsV1 = {
   }),
   animationWindow: null,
   animationLoop: null,
-  endHoldDurationMs: null,
   yAxis: new DimensionFieldSchema({
     version: VERSIONS.v1,
     key: 'yAxis',
@@ -1144,8 +1143,6 @@ export const propertiesV1 = {
     properties: {
       currentTime: null,
       speed: null,
-      animationLoop: null,
-      endHoldDurationMs: null,
       timeFormat: null,
       timezone: null
     },

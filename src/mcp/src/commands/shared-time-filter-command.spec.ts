@@ -162,8 +162,8 @@ describe('map.time-filter', () => {
     ctx.dispatch(
       setFilter(
         0,
-        ['speed', 'endHoldDurationMs', 'syncTimelineMode', 'syncedWithLayerTimeline', 'value'],
-        [2, 1000, 0, false, [time(2), time(3)]]
+        ['speed', 'syncTimelineMode', 'syncedWithLayerTimeline', 'value'],
+        [2, 0, false, [time(2), time(3)]]
       )
     );
     const result = await run({action: 'update', filterId: 'migration', bindings: [bindings[1]]});
@@ -172,7 +172,6 @@ describe('map.time-filter', () => {
       filterId: 'migration',
       bindings: [bindings[1]],
       speed: 2,
-      endHoldDurationMs: 1000,
       enabled: false,
       interval: '1-day',
       selectedTime: time(3),

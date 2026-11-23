@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen, within} from '@testing-library/react';
+import {fireEvent, screen} from '@testing-library/react';
 
 import {ALL_FIELD_TYPES, FILTER_TYPES} from '@kepler.gl/constants';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -15,7 +15,6 @@ import FilterSyncedDatasetPanelFactory, {
   SyncedDatasetButtonFactory
 } from './filter-synced-dataset-panel';
 import FieldPanelWithFieldSelectFactory from './filter-panel-with-field-select';
-import TimeRangeFilterPanelFactory from './time-range-filter-panel';
 
 const MockDatasetItem = ({dataId, datasets, fields, index, onFieldSelector, addButton}) => (
   <div
@@ -264,84 +263,5 @@ describe('FilterPanelWithFieldSelect', () => {
     expect(screen.getByTestId('synced-field')).toHaveTextContent(ALL_FIELD_TYPES.integer);
     expect(screen.getByTestId('synced-dataset-panel')).toBeInTheDocument();
     expect(screen.queryByTestId('field-selector')).not.toBeInTheDocument();
-  });
-});
-
-describe('TimeRangeFilterPanel shared interval fields', () => {
-  const MockFieldSelector = ({id, fields, value, onSelect}) => (
-    <div data-testid={id}>
-      <span>{value}</span>
-      {fields.map(field => (
-        <button key={field.name} onClick={() => onSelect(field)}>
-          {field.name}
-        </button>
-      ))}
-      <button onClick={() => onSelect(null)}>Clear</button>
-    </div>
-  );
-  const TimeRangeFilterPanel = TimeRangeFilterPanelFactory(
-    (() => null) as any,
-    (({children}) => <div>{children}</div>) as any,
-    MockFieldSelector as any,
-    (() => null) as any,
-    (() => null) as any,
-    (() => null) as any,
-    (() => null) as any
-  );
-
-  test('restores, edits and clears each dataset end binding independently', () => {
-    const timestampField = name => ({name, type: ALL_FIELD_TYPES.timestamp});
-    const first = {
-      id: 'first',
-      label: 'First',
-      supportedFilterTypes: [ALL_FIELD_TYPES.timestamp],
-      fields: [timestampField('start'), timestampField('end'), stringField('label')]
-    };
-    const second = {
-      id: 'second',
-      label: 'Second',
-      supportedFilterTypes: [ALL_FIELD_TYPES.timestamp],
-      fields: [timestampField('seen'), timestampField('until'), timestampField('updated')]
-    };
-    const setFilter = jest.fn();
-    renderWithTheme(
-      <TimeRangeFilterPanel
-        idx={2}
-        filter={
-          {
-            id: 'intervals',
-            type: FILTER_TYPES.timeRange,
-            dataId: ['first', 'second'],
-            name: ['start', 'seen'],
-            endName: ['end', 'until'],
-            view: 'enlarged',
-            domain: [0, 100],
-            value: [0, 100],
-            animationWindow: 'free'
-          } as any
-        }
-        datasets={{first, second} as any}
-        allAvailableFields={first.fields as any}
-        layers={[]}
-        setFilter={setFilter}
-        setFilterPlot={jest.fn()}
-        enlargeFilter={jest.fn()}
-        removeFilter={jest.fn()}
-        toggleAnimation={jest.fn()}
-      />
-    );
-
-    const firstSelector = within(screen.getByTestId('filter-intervals-end-time-0'));
-    const secondSelector = within(screen.getByTestId('filter-intervals-end-time-1'));
-    expect(firstSelector.getAllByText('end')).toHaveLength(2);
-    expect(secondSelector.getAllByText('until')).toHaveLength(2);
-    expect(firstSelector.queryByRole('button', {name: 'start'})).not.toBeInTheDocument();
-    expect(firstSelector.queryByRole('button', {name: 'label'})).not.toBeInTheDocument();
-    expect(secondSelector.queryByRole('button', {name: 'seen'})).not.toBeInTheDocument();
-
-    fireEvent.click(secondSelector.getByRole('button', {name: 'updated'}));
-    expect(setFilter).toHaveBeenLastCalledWith(2, 'endName', 'updated', 1);
-    fireEvent.click(firstSelector.getByRole('button', {name: 'Clear'}));
-    expect(setFilter).toHaveBeenLastCalledWith(2, 'endName', null, 0);
   });
 });

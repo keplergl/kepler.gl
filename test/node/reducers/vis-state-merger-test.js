@@ -26,7 +26,7 @@ import keplerGlReducer, {
 import {SYNC_TIMELINE_MODES} from '@kepler.gl/constants';
 
 import SchemaManager, {CURRENT_VERSION, visStateSchema} from '@kepler.gl/schemas';
-import {processCsvData, processKeplerglJSON} from '@kepler.gl/processors';
+import {processKeplerglJSON} from '@kepler.gl/processors';
 import {
   updateVisData,
   receiveMapConfig,
@@ -2263,101 +2263,6 @@ test('VisStateMerger.v1 -> mergeFilters -> syncedFilters', t => {
   t.end();
 });
 
-test('VisStateMerger -> shared interval bindings survive restoration, editing and repeated seeks', async t => {
-  const first = await createNewDataEntryMock({
-    info: {id: 'first', label: 'First'},
-    data: processCsvData(`start,end
-2020-01-01T00:00:00Z,2020-01-03T00:00:00Z
-2020-01-03T00:00:00Z,2020-01-05T00:00:00Z`)
-  });
-  const second = await createNewDataEntryMock({
-    info: {id: 'second', label: 'Second'},
-    data: processCsvData(`seen,until,extended
-2020-01-02T00:00:00Z,2020-01-04T00:00:00Z,2020-01-06T00:00:00Z
-2020-01-04T00:00:00Z,,`)
-  });
-  let state = {
-    ...cloneDeep(InitialState),
-    visState: {...cloneDeep(InitialState.visState), datasets: {...first, ...second}}
-  };
-  for (const action of [
-    VisStateActions.addFilter('first'),
-    VisStateActions.setFilter(0, 'name', 'start'),
-    VisStateActions.setFilter(0, 'endName', 'end'),
-    VisStateActions.setFilter(0, ['dataId', 'name'], ['second', 'seen'], 1),
-    VisStateActions.setFilter(0, 'endName', 'until', 1)
-  ]) {
-    state = coreReducer(state, action);
-  }
-  const saved = SchemaManager.save(state);
-  t.deepEqual(
-    saved.config.config.visState.filters[0].endName,
-    ['end', 'until'],
-    'saves both end bindings'
-  );
-  const restored = applyActions(coreReducer, cloneDeep(InitialState), [
-    {
-      action: addDataToMap,
-      payload: [
-        {
-          datasets: SchemaManager.parseSavedData(saved.datasets),
-          config: saved.config
-        }
-      ]
-    }
-  ]);
-  t.deepEqual(restored.visState.filters[0].endName, ['end', 'until'], 'restores both end bindings');
-  t.deepEqual(restored.visState.filters[0].fieldIdx, [0, 0], 'restores dataset-specific starts');
-  t.deepEqual(restored.visState.filters[0].endFieldIdx, [1, 1], 'restores dataset-specific ends');
-
-  state = coreReducer(restored, VisStateActions.setFilter(0, 'endName', 'extended', 1));
-  t.deepEqual(
-    state.visState.filters[0].endName,
-    ['end', 'extended'],
-    'editing the second end preserves the first'
-  );
-  // The lone non-null extended end uses the native one-second domain padding.
-  const domain = [Date.parse('2020-01-01'), Date.parse('2020-01-06') + 1000];
-  t.deepEqual(
-    state.visState.filters[0].domain,
-    domain,
-    'extends the native domain to the edited end field'
-  );
-  // Check actual filtered records through the native CPU path, including an open end.
-  state = coreReducer(state, VisStateActions.setFilter(0, 'gpu', false));
-  const camera = state.mapState;
-  const timestamp = Date.parse('2020-01-05');
-  for (let i = 0; i < 2; i++) {
-    state = coreReducer(
-      state,
-      VisStateActions.setFilterAnimationTime(0, 'value', [timestamp, timestamp])
-    );
-    t.deepEqual(
-      state.visState.datasets.first.filteredIndex,
-      [1],
-      'first interval remains visible at its inclusive endpoint'
-    );
-    t.deepEqual(
-      state.visState.datasets.second.filteredIndex,
-      [0, 1],
-      'edited and open-ended intervals overlap the selected time'
-    );
-    t.equal(state.mapState, camera, 'seeking leaves the camera untouched');
-  }
-  state = coreReducer(state, VisStateActions.setFilter(0, 'endName', null, 1));
-  t.deepEqual(
-    state.visState.filters[0].endName,
-    ['end', null],
-    'clearing the second end preserves the first'
-  );
-  t.deepEqual(
-    state.visState.datasets.second.filteredIndex,
-    [],
-    'clearing the end restores timestamp filtering'
-  );
-  t.end();
-});
-
 test('VisStateMerger -> import polygon filter map', t => {
   const oldState = cloneDeep(InitialState);
   const savedConfig = cloneDeep(polygonFilterMap);
@@ -2643,37 +2548,6 @@ test('VisStateMerger -> load time filter/trip layer synced map', t => {
     'Should have set animationConfig value to filter value[0]'
   );
 
-  t.end();
-});
-
-test('VisStateMerger -> restore animation settings without a positive current time', t => {
-  for (const currentTime of [0, null, undefined]) {
-    const source = cloneDeep(InitialState.visState);
-    source.animationConfig = {
-      ...source.animationConfig,
-      currentTime,
-      speed: 2,
-      animationLoop: false,
-      endHoldDurationMs: 2500,
-      timezone: 'America/Guayaquil',
-      timeFormat: 'L LTS'
-    };
-    const saved = JSON.parse(JSON.stringify(visStateSchema.v1.save(source)));
-    const parsed = visStateSchema.v1.load(saved.visState);
-    const restored = visStateReducer(InitialState.visState, receiveMapConfig(parsed));
-
-    t.equal(restored.animationConfig.speed, 2, `restores speed with currentTime=${currentTime}`);
-    t.equal(
-      restored.animationConfig.animationLoop,
-      false,
-      'preserves explicit non-looping playback'
-    );
-    t.equal(restored.animationConfig.endHoldDurationMs, 2500, 'restores the presentation hold');
-    t.equal(restored.animationConfig.timezone, 'America/Guayaquil', 'restores the timezone');
-    t.equal(restored.animationConfig.timeFormat, 'L LTS', 'restores the time format');
-    if (currentTime === 0)
-      t.equal(restored.animationConfig.currentTime, 0, 'restores the epoch timestamp');
-  }
   t.end();
 });
 

@@ -1055,7 +1055,7 @@ export function mergeAnimationConfig<S extends VisState>(
   state: S,
   animation: NonNullable<ParsedConfig['visState']>['animationConfig']
 ): S {
-  if (animation) {
+  if (animation && animation.currentTime) {
     return {
       ...state,
       animationConfig: {
@@ -1070,17 +1070,13 @@ export function mergeAnimationConfig<S extends VisState>(
 }
 
 function combineAnimationConfigs(configs: SavedAnimationConfig[]): SavedAnimationConfig {
-  const animationLoop = getValueWithHighestOccurrence(configs.map(c => c.animationLoop));
-  const endHoldDurationMs = getValueWithHighestOccurrence(configs.map(c => c.endHoldDurationMs));
   // get the smallest values of currentTime and speed among all configs
   return {
     currentTime: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.currentTime) ?? null,
     speed: aggregate(configs, AGGREGATION_TYPES.minimum, c => c.speed) ?? null,
     // and the most common time format and timezone among the configs that set one
     timeFormat: getValueWithHighestOccurrence(configs.map(c => c.timeFormat)),
-    timezone: getValueWithHighestOccurrence(configs.map(c => c.timezone)),
-    ...(animationLoop !== null ? {animationLoop} : {}),
-    ...(endHoldDurationMs !== null ? {endHoldDurationMs} : {})
+    timezone: getValueWithHighestOccurrence(configs.map(c => c.timezone))
   };
 }
 

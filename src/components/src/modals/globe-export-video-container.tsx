@@ -27,13 +27,8 @@ import {
 import type {DeckProps, MapViewState} from '@deck.gl/core';
 import {FILTER_VIEW_TYPES} from '@kepler.gl/constants';
 
-import {
-  getDataAnimationTimings,
-  parseSetCameraType,
-  scaleToVideoExport,
-  getResolutionSetting
-} from './hubble-utils';
-import {getCameraTourDuration, mergeFilterWithTimeline} from '@kepler.gl/utils';
+import {parseSetCameraType, scaleToVideoExport, getResolutionSetting} from './hubble-utils';
+import {getCameraTourDuration} from '@kepler.gl/utils';
 import {getAnnotationReadoutValues} from '../annotations/annotation-readout';
 import {createAnnotationVideoEncoder} from './video-annotation-encoder';
 import {
@@ -329,21 +324,16 @@ export class GlobeExportVideoPanelContainer extends Component<
   getFilterKeyframes() {
     const {
       mapData: {
-        visState: {filters: sourceFilters, animationConfig}
+        visState: {filters}
       },
       animatableFilters
     } = this.props;
 
-    const filters = sourceFilters.map(
-      filter => mergeFilterWithTimeline(filter, animationConfig).filter
-    );
     const filterKeyframes = (
       Array.isArray(animatableFilters) && animatableFilters.length
         ? animatableFilters
         : filters.filter(
-            (f: any) =>
-              f.type === 'timeRange' &&
-              (f.view === FILTER_VIEW_TYPES.enlarged || f.syncedWithLayerTimeline)
+            (f: any) => f.type === 'timeRange' && f.view === FILTER_VIEW_TYPES.enlarged
           )
     ).map((f: any) => ({
       id: f.id,
@@ -359,11 +349,10 @@ export class GlobeExportVideoPanelContainer extends Component<
   getTripKeyframes() {
     const {
       mapData: {
-        visState: {layers, animationConfig, filters}
+        visState: {layers, animationConfig}
       }
     } = this.props;
 
-    if (filters?.some(filter => filter.syncedWithLayerTimeline)) return {};
     const animatableLayer = layers.filter(
       (l: any) => l.config.animation && l.config.animation.enabled && l.config.isVisible
     );
@@ -372,12 +361,7 @@ export class GlobeExportVideoPanelContainer extends Component<
     if (animatableLayer.length && readyToAnimation) {
       return {
         animationConfig,
-        tripKeyframe: {
-          timings: getDataAnimationTimings(
-            [0, this.state.durationMs],
-            animationConfig.endHoldDurationMs
-          )
-        }
+        tripKeyframe: {timings: [0, this.state.durationMs]}
       };
     }
     return {};

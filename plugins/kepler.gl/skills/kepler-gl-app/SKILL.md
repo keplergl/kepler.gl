@@ -43,7 +43,7 @@ not this one.
 | `map.add-layer`          | Add a layer (point, flow, flowField, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
 | `map.add-time-filter`    | Animate a NON-trip layer over a TIMESTAMP/DATE column.         |
 | `map.time-filter`        | Create, inspect and update shared timestamp/start-end filters. |
-| `map.data-playback`      | Inspect, play, pause, seek or reset a data clock; configure an end hold. |
+| `map.data-playback`      | Inspect, play, pause, seek or reset a native data clock.        |
 | `map.toggle-time-filter` | Show/hide the enlarged time controller at the bottom of the map. |
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.get-layer-options` | Inspect editable visual settings, values, ranges and choices. |
@@ -312,15 +312,8 @@ Reset seeks the domain start. Repeating a seek produces the same native state
 and counts. Animated layers share one clock; a layer linked to a time filter
 uses that filter's clock, identified in the result.
 
-`play` additionally accepts `speed`, `loop`, and `endHoldDurationMs`. For example,
-`{"action":"play","target":{"filterId":"migration"},"loop":false,"endHoldDurationMs":3000}`
-holds the last observation for three presentation seconds before stopping.
-The data timestamp, data-driven ages and counts stay fixed while separately
-playing camera/effect tracks continue. This is distinct from a camera stop's
-hold. Hold settings survive saving/reloading. Video export reserves the hold
-within its chosen total duration, so the data sweep finishes that much earlier;
-a hold at least as long as the video keeps its final observation throughout.
-Zero disables the hold. Play pauses competing data clocks. Camera-tour
+`play` additionally accepts a positive `speed` multiplier and pauses competing
+data clocks. Playback uses the existing native timeline behavior. Camera-tour
 playback remains controlled by `map.camera-tour`.
 
 ### Trip layers (`layerType: "trip"`)

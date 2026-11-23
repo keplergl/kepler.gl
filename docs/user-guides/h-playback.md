@@ -29,11 +29,9 @@ By default, playback uses a single timestamp field: a feature is visible only wh
 
 To keep features visible for a whole time span (service coverage, deployments, availability windows), add a time filter on the **start** timestamp, then optionally choose an **End time** field in the filter panel. A feature stays on the map while the playback window overlaps `[start, end]`. Rows with a missing end time are treated as still active. The timeline histogram counts a feature in every bin that overlaps its start–end range.
 
-With **Time Filter Sync**, each dataset has its own **End time** selector. Choose or clear the end field independently for each dataset; the datasets share the same playback window. These bindings are preserved when you save and reopen the map.
+**End time** is available only on a time filter that is not synced across datasets. If you use Time Filter Sync, clear the extra datasets first, then set End time.
 
 **Incremental Time Window** and **End time** solve different problems: use Incremental when each feature is a single instant and you want them to accumulate; use End time when each feature has its own start–end duration.
-
-Through MCP, `map.time-filter` creates, inspects and updates these shared bindings. `map.data-playback` controls a time filter or an animated layer's native data clock without moving the camera. Its `play` action accepts `endHoldDurationMs` to hold the final data timestamp before stopping or looping. Data-driven values stay fixed during the hold while separately playing camera and effect tracks can continue. Video export reserves this hold within the chosen video duration; the data domain stays unchanged.
 
 ## Zoom & precision controls
 

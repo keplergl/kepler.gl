@@ -187,8 +187,6 @@ export type FilterBase<L extends LineChart> = {
   animationWindow?: string;
   /** Whether playback repeats. Missing values preserve looping in older saved maps. */
   animationLoop?: boolean;
-  /** Presentation milliseconds to hold the final data timestamp before stopping or looping. */
-  endHoldDurationMs?: number;
   speed: number;
   showTimeDisplay?: boolean;
 
@@ -379,8 +377,6 @@ export type AnimationConfig = {
   speed: number;
   duration?: number | null;
   isAnimating?: boolean;
-  animationLoop?: boolean;
-  endHoldDurationMs?: number;
   timeSteps: number[] | null;
   // auto generated based on time domain
   defaultTimeFormat: AnimationTimeFormat | null;

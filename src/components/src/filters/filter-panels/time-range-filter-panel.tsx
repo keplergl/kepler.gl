@@ -104,18 +104,12 @@ function TimeRangeFilterPanelFactory(
         [dataset.supportedFilterTypes, allAvailableFields]
       );
 
-      const endTimeFields = useMemo(
-        () =>
-          filter.dataId.map((dataId, index) => {
-            const currentDataset = datasets[dataId];
-            const startName = Array.isArray(filter.name) ? filter.name[index] : filter.name;
-            return getSupportedFilterFields(
-              currentDataset.supportedFilterTypes,
-              currentDataset.fields
-            ).filter(field => field.type === ALL_FIELD_TYPES.timestamp && field.name !== startName);
-          }),
-        [datasets, filter.dataId, filter.name]
-      );
+      const endTimeFields = useMemo(() => {
+        const startName = Array.isArray(filter.name) ? filter.name[0] : filter.name;
+        return supportedFields.filter(
+          field => field.type === ALL_FIELD_TYPES.timestamp && field.name !== startName
+        );
+      }, [supportedFields, filter.name]);
 
       const isSynced = useMemo(() => {
         return (
@@ -175,32 +169,28 @@ function TimeRangeFilterPanelFactory(
               setFilter={setFilter}
               syncTimeFilterWithLayerTimeline={syncTimeFilterWithLayerTimeline}
             />
-            {endTimeFields.map((fields, index) =>
-              fields.length ? (
-                <SidePanelSection key={filter.dataId[index]}>
-                  <PanelLabelWrapper>
-                    <PanelLabel htmlFor={`filter-${filter.id}-end-time-${index}`}>
-                      {isSynced ? `${datasets[filter.dataId[index]].label}: ` : null}
-                      <FormattedMessage id="filterManager.timeIntervalEndField" />
-                    </PanelLabel>
-                    <InfoHelper
-                      id={`filter-${filter.id}-end-time-hint-${index}`}
-                      description="filterManager.timeIntervalEndFieldHint"
-                      width={220}
-                    />
-                  </PanelLabelWrapper>
-                  <FieldSelector
-                    inputTheme="secondary"
-                    id={`filter-${filter.id}-end-time-${index}`}
-                    fields={fields}
-                    value={Array.isArray(filter.endName) ? filter.endName[index] : filter.endName}
-                    placeholder="placeholder.endTimeField"
-                    erasable
-                    onSelect={field => onEndFieldSelector(field, index)}
+            {!isSynced && endTimeFields.length ? (
+              <SidePanelSection>
+                <PanelLabelWrapper>
+                  <PanelLabel htmlFor={`filter-${filter.id}-end-time`}>
+                    <FormattedMessage id="filterManager.timeIntervalEndField" />
+                  </PanelLabel>
+                  <InfoHelper
+                    id={`filter-${filter.id}-end-time-hint`}
+                    description="filterManager.timeIntervalEndFieldHint"
+                    width={220}
                   />
-                </SidePanelSection>
-              ) : null
-            )}
+                </PanelLabelWrapper>
+                <FieldSelector
+                  inputTheme="secondary"
+                  fields={endTimeFields}
+                  value={Array.isArray(filter.endName) ? filter.endName[0] : filter.endName}
+                  placeholder="placeholder.endTimeField"
+                  erasable
+                  onSelect={field => onEndFieldSelector(field, 0)}
+                />
+              </SidePanelSection>
+            ) : null}
             <FilterInvertToggle
               filter={filter}
               idx={idx}

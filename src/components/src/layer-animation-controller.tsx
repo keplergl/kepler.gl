@@ -11,7 +11,6 @@ import AnimationControllerFactory from './common/animation-control/animation-con
 interface LayerAnimationControllerProps {
   animationConfig: AnimationConfig;
   setLayerAnimationTime: (x: number) => void;
-  onAnimationEnd?: () => void;
   children?: (
     isAnimating: boolean | undefined,
     startAnimation: () => void,
@@ -30,7 +29,6 @@ function LayerAnimationControllerFactory(
   const LayerAnimationController: React.FC<LayerAnimationControllerProps> = ({
     animationConfig,
     setLayerAnimationTime,
-    onAnimationEnd,
     children
   }) => {
     const {timeSteps, domain} = animationConfig;
@@ -61,9 +59,6 @@ function LayerAnimationControllerFactory(
         domain={animationConfig.domain}
         speed={animationConfig.speed}
         isAnimating={animationConfig.isAnimating}
-        loop={animationConfig.animationLoop !== false}
-        endHoldDurationMs={animationConfig.endHoldDurationMs}
-        onAnimationEnd={onAnimationEnd}
         steps={animationConfig.timeSteps}
         animationWindow={
           animationConfig.timeSteps ? ANIMATION_WINDOW.interval : ANIMATION_WINDOW.point
