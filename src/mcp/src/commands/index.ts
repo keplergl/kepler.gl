@@ -29,6 +29,7 @@ import {getZoomFadeCommand} from './zoom-fade-command';
 import {getLoadZarrCommand} from './load-zarr-command';
 import {getLoadTilesetCommand} from './load-tileset-command';
 import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
+import {getRenderPreviewCommand} from './render-preview-command';
 
 /**
  * Owner string under which all kepler-ai commands are registered in the
@@ -57,6 +58,7 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getSetLayerOptionsCommand(ctx),
     getCameraBookmarksCommand(ctx),
     getCameraTourCommand(ctx),
+    getRenderPreviewCommand(ctx),
     getPropertyTransitionsCommand(ctx),
     getAddAnnotationCommand(ctx),
     getListAnnotationsCommand(ctx),
@@ -83,6 +85,7 @@ export {getUpdateLayerColorCommand} from './layer-style-command';
 export {getLoadDataCommand} from './load-data-command';
 export {getLoadZarrCommand} from './load-zarr-command';
 export {getCameraBookmarksCommand, getCameraTourCommand} from './camera-commands';
+export {getRenderPreviewCommand} from './render-preview-command';
 export {getPropertyTransitionsCommand} from './property-transitions-command';
 export {
   getAddAnnotationCommand,
@@ -102,6 +105,8 @@ export {toolToCommand, asInputSchema} from './command-wrappers';
 export type {AnyTool, CommandMeta} from './command-wrappers';
 export type {
   KeplerContext,
+  PreviewFrameOptions,
+  PreviewFrameImage,
   KeplerStateAccessors,
   VisState,
   RoomCommandResult,

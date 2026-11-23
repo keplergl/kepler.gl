@@ -720,14 +720,37 @@ them in `annotationIds`. Controllers replace
 the complete list; omit them to only toggle, or pass `[]` to clear. The fade
 multiplies normal opacity and does not make hidden layers visible.
 
+## Preview an export frame (`map.render-preview`)
+
+Render a PNG through the native video-export path before rendering a full film:
+
+```json
+{"width":1920,"height":1080,"dataTime":1735689600000,"cameraTimeMs":1500}
+```
+
+`width` and `height` are required integer pixel dimensions (1–8192, at most
+33,554,432 pixels in total). `dataTime` is an optional data timestamp in
+milliseconds since the Unix epoch; `cameraTimeMs` is an optional nonnegative
+elapsed camera-tour time in milliseconds. Omit either to preserve its current
+value. The native renderer waits for the requested frame, includes visible
+layers, effects and labels, and leaves the live map's viewport and playhead
+unchanged. The MCP response includes a viewable PNG image plus dimensions and
+requested timestamps. Hosts without a native preview renderer return an explicit
+unsupported error; render failures and cancellation are reported as errors.
+The demo host currently rejects previews containing visible Zarr layers because
+their asynchronous state cannot yet be isolated from the live map. Hide those
+layers before previewing. If the encoded PNG exceeds the transfer limit, request
+smaller output dimensions.
+
 ## Host-only features
 
-A tool that configures a map is not an export tool. The shared map command
-catalog does not render/download images or videos, select the native video
-encoder, or create effects and edit their static settings. Use a dedicated tool
-from your host if one is listed; otherwise explain the gap. Embedded hosts
-can set video options with the `setExportVideoSetting` Redux action, but
-rendering and file delivery still require a host export workflow.
+The shared map command catalog supports single-frame previews and full-video
+exports when the host supplies the native renderer. Use `map.export-video` with
+`{"action":"capabilities"}` to discover the host's video export support. Creating
+effects and editing their static settings still require a dedicated host tool;
+if none is listed, explain the gap. Embedded hosts can set video options with
+the `setExportVideoSetting` Redux action, but rendering and file delivery still
+require a host export workflow.
 
 ## Rules
 

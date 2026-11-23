@@ -362,6 +362,14 @@ describe('hubble-utils', () => {
   });
 
   describe('getResolutionSetting', () => {
+    test.each(['1000x700', '240x320', '8192x1'])('accepts exact custom output size %s', value => {
+      const [width, height] = value.split('x').map(Number);
+      expect(getResolutionSetting(value)).toMatchObject({width, height});
+    });
+    test.each(['0x700', '1.5x700', '8193x1', '-1x20'])('rejects invalid output size %s', value => {
+      expect(getResolutionSetting(value)).toMatchObject({width: 960, height: 540});
+    });
+
     test.each([
       ['2560x1440', 2560, 1440],
       ['3840x2160', 3840, 2160]

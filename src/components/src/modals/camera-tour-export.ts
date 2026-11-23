@@ -271,6 +271,7 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
     }
 
     private getAnimationTimeMs(): number | undefined {
+      if (this.props.framePreview) return this.props.framePreview.animationTimeMs;
       if (Number.isFinite(this.state.currentTimeMs)) return Math.max(0, this.state.currentTimeMs);
       const capture = this.state.adapter?.videoCapture;
       return Number.isFinite(capture?.timeMs)
@@ -412,7 +413,8 @@ export function withCameraTourExport<T extends new (...args: any[]) => any>(Base
                 mapIndex: 0,
                 viewState: this.state.viewState,
                 beforeId: this.props.mapboxLayerBeforeId,
-                animationTimeMs
+                animationTimeMs,
+                onLayerError: this.props.framePreview?.onError
               })
             }
           });

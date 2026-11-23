@@ -110,7 +110,8 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
       mapboxApiAccessToken: mapProps?.mapboxApiAccessToken,
       mapboxApiUrl: mapProps?.mapboxApiUrl,
       viewState,
-      animationTimeMs: this.props.animationTimeMs
+      animationTimeMs: this.props.animationTimeMs,
+      onLayerError: deckProps?.onError ?? undefined
     });
 
     // adapter.getProps injects `_animate` (and toggles `controller` off while

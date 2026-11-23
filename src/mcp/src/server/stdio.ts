@@ -24,7 +24,7 @@ import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
-import {KeplerMcpBridge, formatResult} from './bridge-server';
+import {KeplerMcpBridge, formatMcpResult} from './bridge-server';
 import type {KeplerMcpBridgeOptions} from './bridge-server';
 
 const DEFAULT_MAP_URL = 'http://localhost:8080';
@@ -109,11 +109,11 @@ async function main(): Promise<void> {
     const {name, arguments: args} = request.params;
     try {
       const result = await bridge.callTool(name, (args ?? {}) as Record<string, unknown>);
-      const {text, isError} = formatResult(result);
-      const resource = !isError ? bridge.getVideoResourceLink(result) : undefined;
+      const formatted = formatMcpResult(result);
+      const resource = !formatted.isError ? bridge.getVideoResourceLink(result) : undefined;
       return {
-        content: [{type: 'text' as const, text}, ...(resource ? [resource] : [])],
-        ...(isError ? {isError: true} : {})
+        ...formatted,
+        content: [...formatted.content, ...(resource ? [resource] : [])]
       };
     } catch (error) {
       return {

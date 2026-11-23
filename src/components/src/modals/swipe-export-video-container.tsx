@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {FramePreviewCallbacks} from './render-preview-frame';
 import React, {Component, createRef} from 'react';
 import {easeInOut} from 'popmotion';
 import download from 'downloadjs';
@@ -65,6 +66,7 @@ export type SwipeExportVideoSettings = {
 };
 
 type SwipeExportVideoPanelContainerProps = {
+  framePreview?: FramePreviewCallbacks;
   programmaticExport?: ProgrammaticVideoExport;
   initialState?: Partial<SwipeExportVideoPanelContainerState>;
   glContext?: WebGL2RenderingContext;
@@ -681,7 +683,13 @@ export class SwipeExportVideoPanelContainer extends Component<
             swipeEndPct={swipeEndPct}
             swipeEasing={swipeEasing}
             currentTimeMs={currentTimeMs}
-            animationTimeMs={isActive ? currentTimeMs : undefined}
+            animationTimeMs={
+              this.props.framePreview
+                ? this.props.framePreview.animationTimeMs
+                : isActive
+                ? currentTimeMs
+                : undefined
+            }
             backgroundColor={this.getBackgroundColor()}
           />
           <SwipeExportSettings

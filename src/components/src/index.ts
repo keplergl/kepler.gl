@@ -592,3 +592,6 @@ export {default as useDndEffects} from './hooks/use-dnd-effects';
 export {default as useDndLayers} from './hooks/use-dnd-layers';
 export {default as useFeatureFlags} from './hooks/use-feature-flags';
 export {default as useLegendPosition} from './hooks/use-legend-position';
+
+export {renderPreviewFrame} from './modals/render-preview-frame';
+export type {PreviewFrameOptions} from './modals/render-preview-frame';

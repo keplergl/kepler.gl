@@ -24,6 +24,7 @@ import type {
 } from '@kepler.gl/mcp';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {z} from 'zod';
+import {CLOUD_PROVIDERS_CONFIGURATION} from './constants/default-settings';
 import {getVideoExportService} from './kepler-video-export';
 // The skill markdown ships with the @kepler.gl/mcp package (subpath export), so
 // the demo-app folder stays self-contained — no relative path reaching outside
@@ -68,6 +69,21 @@ const DUCKDB_UNAVAILABLE_NOTE = `> NOTE: this demo surface does NOT serve the Du
 export function buildKeplerContext(reduxStore: any): KeplerContext {
   const readMap = () => reduxStore?.getState()?.demo?.keplerGl?.map;
   return {
+    renderPreviewFrame: async (options, signal) => {
+      const map = readMap();
+      if (!map?.visState || !map?.mapState || !map?.mapStyle) {
+        throw new Error('kepler.gl map is not initialized yet.');
+      }
+      const {renderPreviewFrame} = await import('@kepler.gl/components');
+      return renderPreviewFrame(map, options, {
+        mapboxApiAccessToken: CLOUD_PROVIDERS_CONFIGURATION.MAPBOX_TOKEN,
+        containerW:
+          (typeof document !== 'undefined' &&
+            document.getElementById('kepler-gl__map')?.clientWidth) ||
+          map.mapState.width,
+        signal
+      });
+    },
     videoExport: getVideoExportService(reduxStore),
     getMapState: () => readMap()?.mapState,
     getVisState: () => {
