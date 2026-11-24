@@ -82,7 +82,7 @@ type StyledAnnotationTextProps = {
   $isDraggable?: boolean;
   $textVerticalAlign?: string;
   $isViewport?: boolean;
-  $hideEmptyLabel?: boolean;
+  $emptyLabel?: boolean;
 };
 
 const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
@@ -122,8 +122,20 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
   `
       : ''}
   ${props =>
-    props.$hideEmptyLabel
-      ? `
+    props.$emptyLabel
+      ? props.$isEditing && props.$isEditingText
+        ? `
+    > .editor-container > .editor-inner {
+      height: 0;
+      justify-content: flex-start;
+    }
+    > .editor-container > .editor-inner > .editor-input {
+      position: absolute;
+      width: 6px;
+      margin-inline-start: -6px;
+    }
+  `
+        : `
     > .editor-container > .editor-inner { display: none; }
   `
       : ''}
@@ -209,8 +221,8 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       ? blocks.some(node => firstTextNode(node, true))
       : Boolean(annotation.label?.trim());
   }, [hasReadout, annotation.editorState, annotation.label]);
-  // Keep the hidden label editor mounted so its formatting toolbar still controls the readout.
-  const hideEmptyLabel = !hasLabel && !(isEditing && isEditingText);
+  // Keep the editor mounted and focused when its empty caption no longer takes a row.
+  const emptyLabel = !hasLabel;
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -244,21 +256,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     return null;
   }
 
-  const readout = hasReadout ? (
-    <div data-annotation-part="readout">
-      <LexicalRichTextEditor
-        // Initialize each value synchronously, before an export frame can capture it.
-        key={readoutValue ?? '—'}
-        isEditable={false}
-        editorState={formattedReadout}
-        width={hideEmptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
-        height={hideEmptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
-        initialText={readoutValue ?? '—'}
-        onChange={ignoreReadoutChange}
-      />
-    </div>
-  ) : null;
-
   return (
     <StyledAnnotationText
       ref={setNodeRef}
@@ -268,7 +265,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isDraggable={isDraggable}
       $textVerticalAlign={textVerticalAlign}
       $isViewport={isViewport}
-      $hideEmptyLabel={hideEmptyLabel}
+      $emptyLabel={emptyLabel}
       data-annotation-id={annotation.id}
       data-annotation-part="text"
       style={{
@@ -319,7 +316,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         }
       }}
     >
-      {annotation.readout?.position === 'first' ? readout : null}
       {showCustomText ? (
         <LexicalRichTextEditor
           {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
@@ -345,7 +341,20 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       {distanceText ? (
         <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
       ) : null}
-      {annotation.readout?.position !== 'first' ? readout : null}
+      {hasReadout ? (
+        <div data-annotation-part="readout">
+          <LexicalRichTextEditor
+            // Initialize each value synchronously, before an export frame can capture it.
+            key={readoutValue ?? '—'}
+            isEditable={false}
+            editorState={formattedReadout}
+            width={emptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
+            height={emptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
+            initialText={readoutValue ?? '—'}
+            onChange={ignoreReadoutChange}
+          />
+        </div>
+      ) : null}
     </StyledAnnotationText>
   );
 };

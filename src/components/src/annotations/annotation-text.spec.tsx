@@ -4,7 +4,16 @@
 import React from 'react';
 import {DndContext} from '@dnd-kit/core';
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
-import {SerializedEditorState, SerializedElementNode, SerializedTextNode} from 'lexical';
+import {
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  $isTextNode,
+  LexicalEditor,
+  SerializedEditorState,
+  SerializedElementNode,
+  SerializedTextNode
+} from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
@@ -196,33 +205,76 @@ describe('AnnotationText readout formatting', () => {
     }
   );
 
-  test('displays content first while editing a nonempty caption', () => {
-    const annotation = makeRuler({
-      kind: AnnotationKind.TEXT,
-      label: 'Caption',
-      viewport: {anchor: 'top-left', margin: [0, 0]},
-      readout: {type: 'time', position: 'first'}
-    });
-    const {container} = renderWithTheme(
-      <DndContext>
-        <AnnotationText
-          annotation={annotation}
-          readoutValue="2026-01-01"
-          viewport={viewport}
-          isEditing
-          isSelected
-          isEditingText
-          onSelect={jest.fn()}
-          onChangeText={jest.fn()}
-          onUpdateAnnotation={jest.fn()}
-        />
-      </DndContext>
-    );
-    const value = screen.getByText('2026-01-01');
-    const caption = container.querySelector('[contenteditable="true"]');
-    expect(caption).toHaveTextContent('Caption');
-    expect(value.compareDocumentPosition(caption!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-  });
+  test.each([{type: 'time'} as const, {type: 'count', dataId: 'points'} as const])(
+    'removes the $type caption row immediately when deleting styled text',
+    async readout => {
+      function Caption() {
+        const [editing, setEditing] = React.useState(true);
+        const [annotation, setAnnotation] = React.useState(() =>
+          makeRuler({
+            kind: AnnotationKind.TEXT,
+            viewport: {anchor: 'top-left', margin: [24, 24]},
+            readout,
+            label: 'Caption',
+            editorState: captionEditorState('Caption', 'font-size: 36px;')
+          })
+        );
+        return (
+          <DndContext>
+            <button onClick={() => setEditing(false)}>Done editing</button>
+            <AnnotationText
+              annotation={annotation}
+              readoutValue="123"
+              viewport={viewport}
+              isEditing
+              isSelected
+              isEditingText={editing}
+              onSelect={jest.fn()}
+              onChangeText={(label, editorState) =>
+                setAnnotation(previous => ({...previous, label, editorState}))
+              }
+              onUpdateAnnotation={jest.fn()}
+            />
+          </DndContext>
+        );
+      }
+
+      const {container} = renderWithTheme(<Caption />);
+      const input = container.querySelector<HTMLElement>('[contenteditable="true"]')!;
+      const caption = input.parentElement!;
+      const editor = (input as HTMLElement & {__lexicalEditor: LexicalEditor}).__lexicalEditor;
+      expect(caption).not.toHaveStyle({height: '0px'});
+      input.focus();
+      const selectCaption = () => {
+        const text = $getRoot().getFirstDescendant();
+        if ($isTextNode(text)) text.select(0, 7);
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) selection.removeText();
+      };
+      await act(() => editor.update(selectCaption, {discrete: true, tag: 'skip-scroll-into-view'}));
+      expect(caption).toHaveStyle({height: '0px'});
+      expect(input).toHaveFocus();
+      expect(input).toHaveAttribute('contenteditable', 'true');
+      expect(screen.getByText('123')).toBeVisible();
+
+      await act(() =>
+        editor.update(
+          () => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) selection.insertText('Caption');
+          },
+          {discrete: true, tag: 'skip-scroll-into-view'}
+        )
+      );
+      expect(input).toHaveTextContent('Caption');
+      expect(caption).not.toHaveStyle({height: '0px'});
+
+      await act(() => editor.update(selectCaption, {discrete: true, tag: 'skip-scroll-into-view'}));
+      fireEvent.click(screen.getByText('Done editing'));
+      expect(caption).not.toBeVisible();
+      expect(screen.getByText('123')).toBeVisible();
+    }
+  );
 
   test('uses saved formatting for an empty label and a missing readout value', () => {
     const annotation = makeRuler({

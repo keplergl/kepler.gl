@@ -553,7 +553,7 @@ test('#visStateReducer -> SET_SELECTED_ANNOTATION', t => {
 
 test('#visStateReducer -> captions persist through edits and duplication, and clear when made geographic', t => {
   const viewport = {anchor: 'top-left', margin: [24, 24]};
-  const readout = {type: 'time', format: 'YYYY-MM-DD', position: 'first'};
+  const readout = {type: 'time', format: 'YYYY-MM-DD'};
   let state = reducer(
     initialState,
     VisStateActions.addAnnotation({

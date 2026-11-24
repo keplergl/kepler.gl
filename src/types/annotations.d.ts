@@ -27,16 +27,12 @@ export type ViewportAnnotationPlacement = {
   margin: [number, number];
 };
 
-export type AnnotationReadout = (
+export type AnnotationReadout =
   | {type: 'time'; /** UTC Moment format; defaults to YYYY-MM-DD. */ format?: string}
   | {
       type: 'count';
       /** Count rows passing the dataset's current filters, including GPU filters. */ dataId: string;
-    }
-) & {
-  /** Show the dynamic value above the caption. Omitted means below. */
-  position?: 'first';
-};
+    };
 
 export type BaseAnnotation = {
   id: string;
@@ -50,7 +46,7 @@ export type BaseAnnotation = {
   label: string;
   /** Present only on TEXT captions. Omitted means geographic placement. */
   viewport?: ViewportAnnotationPlacement;
-  /** A dynamic value for viewport captions. Missing values render an em dash. */
+  /** Rendered below the caption label. Missing values render an em dash. */
   readout?: AnnotationReadout;
   editorState?: Record<string, any>;
   mapIndex?: number;

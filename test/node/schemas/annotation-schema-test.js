@@ -300,7 +300,7 @@ test('#AnnotationsSchema -> viewport captions and readouts round-trip', t => {
     makeTextAnnotation({
       id: 'date',
       viewport: {anchor: 'top', margin: [12, 16]},
-      readout: {type: 'time', format: 'YYYY-MM-DD', position: 'first'}
+      readout: {type: 'time', format: 'YYYY-MM-DD'}
     }),
     makeTextAnnotation({
       id: 'count',

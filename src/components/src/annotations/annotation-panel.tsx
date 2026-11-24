@@ -446,12 +446,6 @@ function CaptionSettings({
     searchable: false
   };
   const viewport = annotation.viewport;
-  const readout = annotation.readout;
-  const positions = [
-    {id: 'first', label: label('contentFirst', 'Content first')},
-    {id: 'last', label: label('captionFirst', 'Caption first')}
-  ];
-  const placement = readout?.position === 'first' ? {position: 'first' as const} : {};
   const countDataId = annotation.readout?.type === 'count' ? annotation.readout.dataId : undefined;
   return (
     <>
@@ -512,38 +506,20 @@ function CaptionSettings({
               )}
               onChange={source => {
                 if (source === 'static') onChange({readout: undefined});
-                if (source === 'time')
-                  onChange({readout: {type: 'time', format: 'YYYY-MM-DD', ...placement}});
+                if (source === 'time') onChange({readout: {type: 'time', format: 'YYYY-MM-DD'}});
                 if (source === 'count' && datasetOptions.length) {
-                  onChange({readout: {type: 'count', dataId: datasetOptions[0].id, ...placement}});
+                  onChange({readout: {type: 'count', dataId: datasetOptions[0].id}});
                 }
               }}
             />
           </StyledConfigRow>
-          {readout ? (
-            <StyledConfigRow>
-              <StyledConfigLabel>{label('lineOrder', 'Line order')}</StyledConfigLabel>
-              <StyledSelect
-                {...selectProps}
-                options={positions}
-                selectedItems={positions[readout.position === 'first' ? 0 : 1]}
-                onChange={position => {
-                  if (position !== 'first' && position !== 'last') return;
-                  const next = {...readout};
-                  if (position === 'first') next.position = 'first';
-                  else delete next.position;
-                  onChange({readout: next});
-                }}
-              />
-            </StyledConfigRow>
-          ) : null}
           {annotation.readout?.type === 'time' ? (
             <StyledConfigRow>
               <StyledConfigLabel>{label('dateFormat', 'Date format (UTC)')}</StyledConfigLabel>
               <CaptionDateFormatInput
                 label={label('dateFormat', 'Date format (UTC)')}
                 value={annotation.readout.format}
-                onChange={format => onChange({readout: {type: 'time', format, ...placement}})}
+                onChange={format => onChange({readout: {type: 'time', format}})}
               />
             </StyledConfigRow>
           ) : annotation.readout?.type === 'count' ? (
@@ -558,7 +534,7 @@ function CaptionSettings({
                     typeof dataId === 'string' &&
                     datasetOptions.some(option => option.id === dataId)
                   ) {
-                    onChange({readout: {type: 'count', dataId, ...placement}});
+                    onChange({readout: {type: 'count', dataId}});
                   }
                 }}
               />
