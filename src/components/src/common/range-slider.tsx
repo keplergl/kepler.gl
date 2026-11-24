@@ -282,6 +282,7 @@ export default function RangeSliderFactory(
         <SliderInput
           className="kg-range-slider__input"
           type="number"
+          step={this.props.step}
           ref={ref}
           id={`${this.props.inputIdPrefix ?? 'slider-input'}-${key}`}
           key={key}

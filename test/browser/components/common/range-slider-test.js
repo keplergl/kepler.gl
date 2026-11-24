@@ -55,6 +55,36 @@ function renderControlledRange(initialValue, changes, props = {}) {
   );
 }
 
+test('Components -> RangeSlider -> native number inputs use the configured step', t => {
+  const changes = [];
+  const fractional = renderControlledRange([1, 3], changes, {step: 0.1});
+  try {
+    const [lower, upper] = within(fractional.container).getAllByRole('spinbutton');
+    t.equal(lower.getAttribute('step'), '0.1', 'configures fractional steps on the lower input');
+    t.equal(upper.getAttribute('step'), '0.1', 'configures fractional steps on the upper input');
+
+    fireEvent.change(lower, {target: {value: '1.1'}});
+    fireEvent.blur(lower);
+    t.deepEqual(changes.pop(), [1.1, 3], 'commits the increment to the controlled range');
+
+    fireEvent.change(upper, {target: {value: '2.9'}});
+    fireEvent.blur(upper);
+    t.deepEqual(changes.pop(), [1.1, 2.9], 'commits the decrement to the controlled range');
+  } finally {
+    fractional.unmount();
+  }
+
+  const defaultStep = renderControlledRange([1, 3], [], {step: undefined});
+  try {
+    const [lower] = within(defaultStep.container).getAllByRole('spinbutton');
+    t.notOk(lower.hasAttribute('step'), 'preserves the native default when no step is set');
+  } finally {
+    defaultStep.unmount();
+  }
+
+  t.end();
+});
+
 test('Components -> RangeSlider -> controlled bar dragging preserves translation and restarts', t => {
   const sizeStub = mockHTMLElementClientSize('offsetWidth', 100);
   const changes = [];
