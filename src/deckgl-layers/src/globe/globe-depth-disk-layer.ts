@@ -24,7 +24,10 @@ const DEPTH_DISK_PARAMETERS = {
   depthTest: true,
   // Do not inherit a disabled depth mask from earlier rendering.
   depthMask: true,
-  cull: false
+  cull: false,
+  // Deck normalizes the globe's global cull:true to cullMode:'back'. Luma applies
+  // that modern parameter after cull:false, which otherwise discards this plane.
+  cullMode: 'none'
 };
 
 // Earth radius in meters. The disk geometry is a [-1, 1] plane; we scale it into

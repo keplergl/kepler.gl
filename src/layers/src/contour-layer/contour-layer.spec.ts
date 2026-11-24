@@ -503,7 +503,7 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
 }
 
 test.each([true, false])(
-  'globe depth disk occludes 3D contours with inherited depth writes %s',
+  'globe depth disk occludes 3D contours with inherited culling and depth writes %s',
   async depthWritesEnabled => {
     const {layer, dataset, datasets} = await setup();
     layer.updateLayerVisConfig({enable3d: true, fillOpacity: 1});
@@ -521,10 +521,11 @@ test.each([true, false])(
         [
           '-e',
           `
-      const {setGLParameters} = require('@luma.gl/webgl');
-      const {disk, contours, depthWritesEnabled} = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
+      const {setGLParameters, setDeviceParameters} = require('@luma.gl/webgl');
+      const {disk, diskVertices, contours, depthWritesEnabled} = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
       const gl = require('gl')(4, 4, {preserveDrawingBuffer: true});
       if (!gl) throw new Error('Headless WebGL context unavailable');
+      const device = {gl, features: new Set()};
       const program = gl.createProgram();
       for (const [type, source] of [
         [
@@ -546,15 +547,15 @@ test.each([true, false])(
       if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
       const position = gl.getAttribLocation(program, 'position');
       gl.enableVertexAttribArray(position);
       gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
       gl.depthFunc(gl.LEQUAL);
-      const draw = (z, color) => {
+      const draw = (z, color, vertices = [-1, -1, 3, -1, -1, 3]) => {
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         gl.uniform1f(gl.getUniformLocation(program, 'depth'), z);
         gl.uniform4fv(gl.getUniformLocation(program, 'color'), color);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
       };
       const pixels = [0.5, -0.5].map(z => {
         gl.enable(gl.DEPTH_TEST);
@@ -565,13 +566,18 @@ test.each([true, false])(
         // establish its own depth before the contour's depth and color passes.
         gl.depthMask(depthWritesEnabled);
         gl.disable(gl.DEPTH_TEST);
-        setGLParameters(gl, disk);
-        draw(0, [0, 0, 1, 1]);
+        // Deck normalizes the globe's global cull:true to cullMode:'back'.
+        // Luma applies modern pipeline parameters after legacy layer overrides.
+        const diskParameters = {cull: true, cullMode: 'back', ...disk};
+        setGLParameters(gl, diskParameters);
+        setDeviceParameters(device, diskParameters);
+        draw(0, [0, 0, 1, 1], diskVertices);
         for (const parameters of contours) {
           // Each pass must explicitly enable testing against that existing depth.
           gl.disable(gl.DEPTH_TEST);
           gl.colorMask(true, true, true, true);
           setGLParameters(gl, parameters);
+          setDeviceParameters(device, parameters);
           if (!gl.isEnabled(gl.DEPTH_TEST)) throw new Error('Contour depth testing is disabled');
           draw(z, [1, 0, 0, 1]);
         }
@@ -588,6 +594,16 @@ test.each([true, false])(
           encoding: 'utf8',
           input: JSON.stringify({
             disk: getGlobeDepthDiskLayer({}).props.parameters,
+            // Use the actual plane's winding; a front-facing test triangle would
+            // conceal the inherited culling bug that discards the globe disk.
+            diskVertices: (() => {
+              const mesh = getGlobeDepthDiskLayer({}).props.mesh as any;
+              const positions = mesh.attributes.POSITION.value;
+              return Array.from(mesh.indices.value as Uint16Array).flatMap(index => [
+                positions[index * 3],
+                positions[index * 3 + 1]
+              ]);
+            })(),
             contours: [depth.props.parameters, fill.props.parameters],
             depthWritesEnabled
           })
