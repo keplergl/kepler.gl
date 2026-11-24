@@ -1,7 +1,7 @@
 # Playback
 
 Follow these steps to create a playback video of an event:
-1. Add a filter based on a time-related field, like timestamp. For GeoJson, property field should contain a timestamp entry.
+1. Add a filter based on a timestamp field. For GeoJSON, see the [example below](#geojson-playback-example).
 
 2. The playback window will appear on the bottom of the map. The bars are distribution graphs of all data points by time. Select the desired rolling time window:
 
@@ -14,6 +14,32 @@ Follow these steps to create a playback video of an event:
 4. Choose custom y axis. You can click __Select Y Axis__ to change the default distribution graph to a timeseries of the selected column. An example use of this function is to show a distance vs. time graph of a given trip.
 
 ![custom y axis](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/h-playback-3.png "select filters")
+
+## GeoJSON playback example
+
+Put one timestamp value in each feature's `properties`, not an array of times. If a location has several observations, create one feature per observation and repeat the location's geometry as needed.
+
+Save this example as `playback.geojson` and upload it with **Add Data**:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [-122.42, 37.77]},
+      "properties": {"observed_at": "2026-01-01T12:00:00Z"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [-122.39, 37.79]},
+      "properties": {"observed_at": "2026-01-01T14:00:00Z"}
+    }
+  ]
+}
+```
+
+Open **Filters**, click **Add Filter**, and choose `observed_at` from the uploaded dataset. Narrow the moving time window so it is shorter than the two-hour gap, then press **Play**. Each point is visible only while its timestamp falls inside the window. The `Z` in each timestamp denotes UTC.
 
 ## Animation window modes
 
