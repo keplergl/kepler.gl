@@ -205,7 +205,7 @@ test('Components -> LayerConfigurator switches cluster radius units and preserve
     </IntlWrapper>
   );
   try {
-    const toggle = view.container.querySelector('#cluster-units-clusterRadiusInMeters-switch');
+    const toggle = within(view.container).getByRole('checkbox', {name: 'Use Meters'});
     t.notOk(toggle.checked, 'default is pixels');
     t.equal(
       view
@@ -214,7 +214,8 @@ test('Components -> LayerConfigurator switches cluster radius units and preserve
       '75',
       'uses the saved pixel radius'
     );
-    fireEvent.click(toggle);
+    fireEvent.click(within(view.container).getByText('Use Meters'));
+    t.ok(toggle.checked, 'clicking the visible label enables the named checkbox');
     t.deepEqual(changed.lastCall.args[0], {clusterRadiusInMeters: true}, 'switch enables meters');
     fireEvent.click(
       view.getByRole('button', {name: 'Enter custom value for Cluster Radius in Meters'})
