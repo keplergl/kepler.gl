@@ -648,6 +648,46 @@ test('uses the same scaled border and contours in flat and 3D modes', async () =
   expect(layer.formatLayerData(datasets)).toEqual(flat);
 });
 
+test.each([false, true])(
+  'renders global contours with an explicit cut (3D: %s)',
+  async enable3d => {
+    const {layer, dataset, datasets} = await setup(
+      [-80, 0, 80].flatMap(latitude =>
+        [-180, -90, 0, 90, 180].map(longitude => [longitude, latitude, 10])
+      )
+    );
+    layer.updateLayerVisConfig({enable3d, below: false, gridResolution: 32});
+    const {layerData: data} = calculateContourLayerData(layer, datasets);
+    expect(layer.isValid).toBe(true);
+    expect(layer.errorMessage).toBeFalsy();
+    expect(data.data).toHaveLength(3);
+    const onError = jest.fn();
+    const manager = new LayerManager(device, {
+      viewport: new WebMercatorViewport({width: 800, height: 600, zoom: 0})
+    });
+    manager.setProps({onError});
+    try {
+      const passes = renderContourPasses(layer, dataset, data);
+      manager.setLayers(passes);
+      const fill = passes[enable3d ? 1 : 0] as ContourMeshLayer | GeoJsonLayer;
+      const polygonLayer = fill.getSubLayers()[0] as ContourSurfaceLayer;
+      const attributes = polygonLayer.getAttributeManager()!.getAttributes();
+      expect(attributes.indices.value!.length).toBeGreaterThan(0);
+      const positions = Array.from(attributes.vertexPositions.value!);
+      expect(positions.every(Number.isFinite)).toBe(true);
+      for (let i = 0; i < positions.length; i += 3) {
+        expect(Math.abs(positions[i])).toBeLessThanOrEqual(180);
+        expect(Math.abs(positions[i + 1])).toBeLessThanOrEqual(90);
+      }
+      expect(positions.some((value, index) => index % 3 === 0 && value === -180)).toBe(true);
+      expect(positions.some((value, index) => index % 3 === 0 && value === 180)).toBe(true);
+      expect(onError).not.toHaveBeenCalled();
+    } finally {
+      manager.finalize();
+    }
+  }
+);
+
 test('indexed contour fills preserve level colors, picking and the depth footprint', async () => {
   const {layer, dataset, datasets} = await setup();
   layer.updateLayerVisConfig({enable3d: true, colorByLevel: true, fillOpacity: 0.25});

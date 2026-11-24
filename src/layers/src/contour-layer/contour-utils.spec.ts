@@ -905,7 +905,100 @@ describe('point aggregation for contours', () => {
     ).toHaveLength(2);
   });
 
-  test('bounds grid allocation and handles empty, invalid settings and global inputs', () => {
+  test.each(['MEAN', 'COUNT'] as const)(
+    'aggregates worldwide samples without merging the antimeridian endpoints in %s mode',
+    aggregation => {
+      const input = [-89, 0, 89].flatMap(latitude =>
+        [-180, -90, 0, 90, 180].map(longitude => point(longitude, latitude, 2))
+      );
+      input.push(point(-180, 0, 6));
+      const grid = buildContourGrid(input, 64, aggregation)!;
+      expect(grid.width).toBe(64);
+      expect(grid.values.every(Number.isFinite)).toBe(true);
+      expect(grid.longitude - grid.stepLng / 2).toBe(-180);
+      expect(grid.longitude + (grid.width - 0.5) * grid.stepLng).toBe(180);
+      expect(grid.latitude - grid.stepLat / 2).toBeCloseTo(-90);
+      expect(grid.latitude + (grid.height - 0.5) * grid.stepLat).toBeCloseTo(90);
+      expect(at(grid, grid.longitude, 0)).toBe(aggregation === 'MEAN' ? 4 : 2);
+      expect(at(grid, grid.longitude + (grid.width - 1) * grid.stepLng, 0)).toBe(
+        aggregation === 'MEAN' ? 2 : 1
+      );
+      if (aggregation === 'COUNT') {
+        expect(grid.values.reduce((sum, value) => sum + value, 0)).toBe(input.length);
+      }
+    }
+  );
+
+  test.each([2, 32, 64, 256, 100000])(
+    'keeps global contour rings inside the world at resolution %s',
+    resolution => {
+      const grid = buildContourGrid(
+        [-89.99, 0, 89.99].flatMap(latitude =>
+          [-180, -90, 0, 90, 180].map(longitude => point(longitude, latitude, 10))
+        ),
+        resolution
+      )!;
+      expect(Math.max(grid.width, grid.height)).toBe(Math.min(resolution, 256));
+      const features = generateContours(grid, {...options, below: false});
+      expect(features).toHaveLength(3);
+      const positions = features.flatMap(feature => feature.geometry.coordinates.flat(2));
+      expect(positions.some(([longitude]) => longitude === -180)).toBe(true);
+      expect(positions.some(([longitude]) => longitude === 180)).toBe(true);
+      for (const [longitude, latitude] of positions) {
+        expect(Number.isFinite(longitude) && Number.isFinite(latitude)).toBe(true);
+        expect(Math.abs(longitude)).toBeLessThanOrEqual(180);
+        expect(Math.abs(latitude)).toBeLessThanOrEqual(90);
+      }
+      for (const feature of features) {
+        for (const ring of feature.geometry.coordinates.flat()) {
+          expect(ring[ring.length - 1]).toEqual(ring[0]);
+        }
+      }
+    }
+  );
+
+  test.each([false, true])(
+    'cuts date-line peaks without smoothing or joining across the seam (below: %s)',
+    below => {
+      const sign = below ? -1 : 1;
+      const makeGrid = (west: number, east: number) =>
+        buildContourGrid(
+          [point(-179, 0, west * sign), point(0, 0, 0), point(179, 0, east * sign)],
+          64
+        )!;
+      const grid = makeGrid(10, 10);
+      const smoothed = smoothScalarGrid(grid, 1);
+      const western = smoothScalarGrid(makeGrid(10, 0), 1);
+      const eastern = smoothScalarGrid(makeGrid(0, 10), 1);
+      for (let row = 0; row < grid.height; row++) {
+        const left = row * grid.width;
+        const right = left + grid.width - 1;
+        expect(smoothed[left]).toBe(western[left]);
+        expect(smoothed[right]).toBe(eastern[right]);
+        expect(western[right]).toBe(0);
+        expect(eastern[left]).toBe(0);
+      }
+      const features = generateContours(grid, {
+        smoothing: 1,
+        levels: 2,
+        below,
+        domain: below ? [-2, -1] : [1, 2]
+      });
+      expect(features).toHaveLength(2);
+      for (const feature of features) {
+        const polygons = feature.geometry.coordinates;
+        expect(polygons).toHaveLength(2);
+        expect(polygons.some(polygon => polygon.flat().some(([lng]) => lng === -180))).toBe(true);
+        expect(polygons.some(polygon => polygon.flat().some(([lng]) => lng === 180))).toBe(true);
+        for (const polygon of polygons) {
+          const longitudes = polygon.flat().map(([lng]) => lng);
+          expect(Math.max(...longitudes) - Math.min(...longitudes)).toBeLessThan(90);
+        }
+      }
+    }
+  );
+
+  test('bounds grid allocation and handles empty inputs and invalid settings', () => {
     const grid = buildContourGrid([point(0, 0, 4), point(10, 10, 8)], 100000)!;
     expect(Math.max(grid.width, grid.height)).toBe(256);
     expect(grid.values.length).toBeLessThanOrEqual(256 * 256);
@@ -914,6 +1007,5 @@ describe('point aggregation for contours', () => {
     for (const resolution of [0, 1, -1, NaN, Infinity]) {
       expect(() => buildContourGrid([point(0, 0, 1)], resolution)).toThrow('grid resolution');
     }
-    expect(() => buildContourGrid([point(-179, 0, 1), point(179, 1, 2)])).toThrow('antimeridian');
   });
 });
