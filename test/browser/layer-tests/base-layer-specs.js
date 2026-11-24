@@ -3,7 +3,9 @@
 
 import test from 'tape-catch';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import {Layer, AggregationLayer, KeplerGlLayers} from '@kepler.gl/layers';
+import {Layer, AggregationLayer, KeplerGlLayers, LayerClasses} from '@kepler.gl/layers';
+import {visStateSchemaV1} from '@kepler.gl/schemas';
+import {testCreateLayerFromConfig} from 'test/helpers/layer-utils';
 import {_compareProps} from '@deck.gl/core';
 import {MAX_LATITUDE} from '@math.gl/web-mercator';
 import {tableFromArrays} from 'apache-arrow';
@@ -716,5 +718,179 @@ test('#BaseLayer -> render helpers follow config replacement without mutating pr
     'static triggers remain authored'
   );
   t.deepEqual(layer.config, authored, 'render helpers never write frame values to saved config');
+  t.end();
+});
+
+test('#BaseLayer -> feature age bands reach every supported renderer and survive saved maps', async t => {
+  const dataset = new KeplerTable({info: {id: 'feature-ages'}});
+  const geometry = {
+    type: 'Feature',
+    properties: {},
+    geometry: {type: 'Point', coordinates: [2, 1]}
+  };
+  const columns = {
+    lat: ['real', 1],
+    lng: ['real', 2],
+    lat1: ['real', 3],
+    lng1: ['real', 4],
+    icon: ['string', 'place'],
+    h3: ['string', '8928308280fffff'],
+    s2: ['string', '80858004'],
+    a5: ['string', '9ca4cf8000000000'],
+    geohash: ['string', 'u4pruydqqvj'],
+    geometry: ['geojson', geometry],
+    observed: ['timestamp', 1000]
+  };
+  await dataset.importData({
+    data: {
+      fields: Object.entries(columns).map(([name, [type]]) => ({name, type, format: ''})),
+      rows: [1000, null, 10000].map(time => [
+        ...Object.values(columns)
+          .slice(0, -1)
+          .map(([, value]) => value),
+        time
+      ])
+    }
+  });
+  const datasets = {[dataset.id]: dataset};
+  const cases = {
+    point: {lat: 'lat', lng: 'lng'},
+    arc: {lat0: 'lat', lng0: 'lng', lat1: 'lat1', lng1: 'lng1'},
+    line: {lat0: 'lat', lng0: 'lng', lat1: 'lat1', lng1: 'lng1'},
+    icon: {lat: 'lat', lng: 'lng', icon: 'icon'},
+    hexagonId: {hex_id: 'h3'},
+    s2: {token: 's2'},
+    a5: {token: 'a5'},
+    geohash: {token: 'geohash'},
+    geojson: {geojson: 'geometry'}
+  };
+  const ageStyle = {
+    timeField: 'observed',
+    stops: [
+      {ageMs: 0, color: [255, 0, 0], opacity: 1},
+      {ageMs: 1000, color: [0, 0, 255], opacity: 0.2}
+    ]
+  };
+  for (const [type, columnNames] of Object.entries(cases)) {
+    const layer = new LayerClasses[type]({id: `age-${type}`, dataId: dataset.id});
+    layer.updateLayerConfig({
+      columns: {
+        ...layer.config.columns,
+        ...Object.fromEntries(
+          Object.entries(columnNames).map(([key, name]) => [
+            key,
+            {value: name, fieldIdx: dataset.fields.findIndex(field => field.name === name)}
+          ])
+        )
+      }
+    });
+    const save = () =>
+      visStateSchemaV1.save({...INITIAL_VIS_STATE, layers: [layer], layerOrder: [layer.id]})
+        .visState;
+    t.notOk(
+      'ageStyle' in save().layers[0].config.visConfig,
+      `${type}: ordinary maps have no age setting`
+    );
+    layer.updateLayerVisConfig({ageStyle, opacity: 0.6, targetArrowEnabled: true});
+    const loaded = visStateSchemaV1.load(JSON.parse(JSON.stringify(save()))).visState;
+    const restored = testCreateLayerFromConfig(
+      t,
+      {layer: loaded.layers[0], datasets},
+      LayerClasses
+    );
+    t.deepEqual(restored.config.visConfig.ageStyle, ageStyle, `${type}: restores age bands`);
+    const data = restored.formatLayerData(datasets);
+    t.equal(data.data.length, 3, `${type}: renders the fixture rows`);
+    const row = data.data[0];
+    const channels = Object.values(restored.visualChannels)
+      .filter(channel => channel.channelScaleType === 'color')
+      .map(channel => channel.accessor);
+    let previous;
+    for (const time of [1999, 2000, 1999]) {
+      const opts = {
+        data,
+        dataset,
+        idx: 0,
+        mapState: INITIAL_MAP_STATE,
+        gpuFilter: dataset.gpuFilter,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        visible: true,
+        layerCallbacks: {},
+        objectHovered: {picked: true, layer: {props: {id: restored.id}}, object: row},
+        filters: [
+          {
+            id: 'clock',
+            type: 'timeRange',
+            dataId: [dataset.id],
+            name: ['observed'],
+            value: [0, time]
+          }
+        ]
+      };
+      const frames = restored.renderLayer(opts).flat();
+      const frame = frames[0];
+      const expected = time < 2000 ? [255, 0, 0, 255] : [0, 0, 255, 51];
+      for (const channel of channels) {
+        t.deepEqual(
+          frame.props[channel](row),
+          expected,
+          `${type}: ${channel} follows age in both directions`
+        );
+        t.equal(
+          frame.props[channel](data.data[1])[3],
+          0,
+          `${type}: missing timestamp is transparent`
+        );
+        t.equal(
+          frame.props[channel](data.data[2])[3],
+          0,
+          `${type}: future timestamp is transparent`
+        );
+        t.equal(
+          frame.props.updateTriggers[channel].ageTime,
+          time,
+          `${type}: seeking invalidates ${channel}`
+        );
+      }
+      t.equal(frame.props.opacity, 0.6, `${type}: preserves layer opacity`);
+      const hover = frames.find(item => item.id.includes('hover'));
+      if (hover) {
+        const getColor =
+          hover.props.getLineColor ||
+          hover.props.getFillColor ||
+          hover.props.getSourceColor ||
+          hover.props.getColor;
+        const color = typeof getColor === 'function' ? getColor(row) : getColor;
+        t.deepEqual(
+          color,
+          [...restored.config.highlightColor.slice(0, 3), expected[3]],
+          `${type}: hover keeps highlight RGB and age alpha`
+        );
+      }
+      const paused = restored.renderLayer({
+        ...opts,
+        mapState: {...INITIAL_MAP_STATE, longitude: 4}
+      })[0];
+      t.equal(
+        paused.props[channels[0]],
+        frame.props[channels[0]],
+        `${type}: paused pan reuses color accessors`
+      );
+      if (previous)
+        t.notEqual(previous, frame.props[channels[0]], `${type}: seeking replaces color accessors`);
+      previous = frame.props[channels[0]];
+      const noClock = restored.renderLayer({...opts, filters: []})[0];
+      t.equal(
+        noClock.props[channels[0]],
+        data[channels[0]],
+        `${type}: missing clock preserves ordinary styling`
+      );
+    }
+    restored.updateLayerVisConfig({ageStyle: null});
+    t.notOk(
+      'ageStyle' in restored.config.visConfig,
+      `${type}: clearing removes the optional setting`
+    );
+  }
   t.end();
 });

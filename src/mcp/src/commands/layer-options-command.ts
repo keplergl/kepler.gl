@@ -17,9 +17,39 @@ export const layerOptionsSchema = z.record(
     z.tuple([z.number().finite(), z.number().finite()])
   ])
 );
+const ageStyleSchema = z
+  .object({
+    timeField: z.string().min(1),
+    stops: z
+      .array(
+        z
+          .object({
+            ageMs: z.number().finite().nonnegative(),
+            opacity: z.number().min(0).max(1).optional(),
+            color: z
+              .tuple([
+                z.number().int().min(0).max(255),
+                z.number().int().min(0).max(255),
+                z.number().int().min(0).max(255)
+              ])
+              .optional()
+          })
+          .strict()
+      )
+      .min(1)
+  })
+  .strict();
 const inputSchema = z.object({
   layerId: z.string().min(1),
   options: layerOptionsSchema.optional(),
+  ageStyle: ageStyleSchema
+    .nullable()
+    .optional()
+    .describe(
+      'Feature age bands relative to the upper bound of the first enabled time filter on timeField. ' +
+        'Stops start at ageMs 0 and increase strictly; each needs opacity and/or RGB color. ' +
+        'Opacity multiplies existing alpha; omitted channels keep the base style. Null clears the style.'
+    ),
   zarr: zarrOptions.strict().optional(),
   wmsLayer: z
     .string()
@@ -120,6 +150,7 @@ export function getLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
             layerId,
             layerType: layer.type,
             settings,
+            ...(layer.supportsAgeStyle ? {ageStyle: layer.config.visConfig.ageStyle ?? null} : {}),
             ...(layer.type === 'zarr'
               ? {
                   zarr: {
@@ -165,7 +196,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
     name: 'Set layer options',
     group: 'Map',
     description:
-      'Patch visual settings using keys from map.get-layer-options. Ranged settings (isRanged: true) accept two-number tuples, such as radiusRange: [1, 8], within the advertised range. Supports point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
+      'Patch visual settings using keys from map.get-layer-options. Ranged settings (isRanged: true) accept two-number tuples, such as radiusRange: [1, 8], within the advertised range. Supports feature ageStyle bands, point glow/pulse/ripple, heatmap surfaces, flow-field density/trails/timing, and model settings. Event pulses also require an enabled time filter on pulseTimeField. Use zarr for validated variable, dimension, axis, frame and rescale changes.',
     metadata: {readOnly: false, riskLevel: 'low', idempotent: true},
     inputSchema,
     execute: (_execution, input) => {
@@ -181,6 +212,32 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
           dataset,
           args.options ?? {}
         );
+        if (args.ageStyle !== undefined) {
+          if (!layer.supportsAgeStyle)
+            throw new Error(
+              'ageStyle requires a point, arc, line, icon, H3, S2, A5, geohash or GeoJSON layer.'
+            );
+          const style = args.ageStyle;
+          if (style) {
+            if (
+              !dataset.fields.some(
+                field => field.name === style.timeField && field.type === 'timestamp'
+              )
+            )
+              throw new Error('ageStyle.timeField must name a timestamp field in this dataset.');
+            if (
+              !style.stops.every(
+                (stop, index, stops) =>
+                  (index === 0 ? stop.ageMs === 0 : stop.ageMs > stops[index - 1].ageMs) &&
+                  (stop.opacity !== undefined || stop.color !== undefined)
+              )
+            )
+              throw new Error(
+                'Age stops must start at 0, increase strictly, and specify opacity or color.'
+              );
+          }
+          options.ageStyle = style ?? {};
+        }
         if (args.zarr) {
           if (layer.type !== 'zarr') throw new Error('zarr options require a Zarr layer.');
           const previous = layer.config.visConfig;
@@ -214,7 +271,7 @@ export function getSetLayerOptionsCommand(ctx: KeplerContext): RoomCommand {
           options.wmsLayer = serviceLayer;
         }
         if (!Object.keys(options).length)
-          throw new Error('Provide options or zarr settings to update.');
+          throw new Error('Provide options, ageStyle or zarr settings to update.');
         ctx.dispatch(layerVisConfigChange(layer, options));
         return {success: true, commandId: id, data: {layerId: layer.id, options}};
       } catch (error) {

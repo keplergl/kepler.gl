@@ -238,9 +238,60 @@ describe('kepler-mcp bridge server', () => {
     socket.close();
   });
 
-  it('does not accept unsupported readiness waits', async () => {
-    await expect(bridge.callTool('map_get-status', {waitUntilReady: true})).rejects.toThrow();
-    await expect(bridge.callTool('map_get-status', {timeoutMs: 1000})).rejects.toThrow();
+  it('returns immediately without a page and rejects invalid wait limits', async () => {
+    await expect(bridge.callTool('map_get-status', {waitUntilReady: true})).resolves.toMatchObject({
+      data: {state: 'disconnected', project: {state: 'unknown'}}
+    });
+    for (const timeoutMs of [0, -1, 30001, 1.5]) {
+      await expect(bridge.callTool('map_get-status', {timeoutMs})).rejects.toThrow();
+    }
+  });
+
+  it('reads current project readiness from the negotiated page without exposing extra fields', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(JSON.stringify({type: 'hello', commands: [{id: 'map.get-project-status'}]}));
+    await waitFor(() => bridge.getStatus().toolsNegotiated);
+    for (const state of ['loading', 'ready', 'failed']) {
+      const request = nextMessage(socket);
+      const pending = bridge.callTool('map_get-status', {waitUntilReady: true, timeoutMs: 100});
+      const message = await request;
+      expect(message).toMatchObject({
+        tool: 'map.get-project-status',
+        input: {waitUntilReady: true, timeoutMs: 100}
+      });
+      socket.send(
+        JSON.stringify({
+          type: 'result',
+          callId: message.callId,
+          result: {
+            success: true,
+            data: {state, scope: 'mcp-open-project', error: 'secret-token', url: 'secret-url'}
+          }
+        })
+      );
+      const result = await pending;
+      expect(result.data).toMatchObject({
+        state: 'negotiated',
+        project: {state, scope: 'mcp-open-project'}
+      });
+      expect(JSON.stringify(result)).not.toContain('secret-');
+    }
+    socket.close();
+  });
+
+  it('does not carry readiness across a connection replacement', async () => {
+    const socket = connect(started.port, started.token);
+    await new Promise(resolve => socket.on('open', resolve));
+    socket.send(JSON.stringify({type: 'hello', commands: [{id: 'map.get-project-status'}]}));
+    await waitFor(() => bridge.getStatus().toolsNegotiated);
+    const request = nextMessage(socket);
+    const pending = bridge.callTool('map_get-status', {waitUntilReady: true});
+    await request;
+    const replacement = connect(started.port, started.token);
+    await new Promise(resolve => replacement.on('open', resolve));
+    expect(await pending).toMatchObject({data: {state: 'connected', project: {state: 'unknown'}}});
+    replacement.close();
   });
 
   it('resets identity and negotiated capabilities when a new page connects', async () => {
@@ -329,6 +380,8 @@ describe('kepler-mcp bridge server', () => {
       ['map.load-tileset', 'metadataUrl'],
       ['map.get-layer-options', 'layerId'],
       ['map.set-layer-options', 'options'],
+      ['map.set-layer-options', 'ageStyle'],
+      ['map.set-layer-options', 'ageMs'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
       ['map.render-preview', 'cameraTimeMs'],

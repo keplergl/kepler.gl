@@ -362,6 +362,7 @@ export default class A5GeometryLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, mapState} = opts;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -373,7 +374,7 @@ export default class A5GeometryLayer extends Layer {
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
     const updateTriggers = {
-      ...this.getVisualChannelUpdateTriggers(),
+      ...this.getVisualChannelUpdateTriggers(opts),
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
@@ -414,7 +415,7 @@ export default class A5GeometryLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               visible: defaultLayerProps.visible,
               data: [a5TokenToPolygonGeo(hoveredObject)].filter(Boolean) as Feature[],
-              getLineColor: config.highlightColor,
+              getLineColor: opts.ageStyleHighlightColor ?? config.highlightColor,
               lineWidthScale: DEFAULT_LINE_SCALE_VALUE * zoomFactor,
               wrapLongitude: false
             })

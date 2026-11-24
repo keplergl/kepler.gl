@@ -52,12 +52,17 @@ not this one.
 | `map.split-view`         | Enable/disable dual-map comparison.                            |
 | `map.get-layer-options` | Inspect editable visual settings, values, ranges and choices. |
 | `map.set-layer-options` | Patch visual settings or Zarr variable/dimension/axis selections. |
+| `map.get-layer-labels` | Inspect field-bound labels, native styles and supported fields/offsets. |
+| `map.set-layer-labels` | Replace ordered field-bound labels and configure their native appearance. |
+| `map.get-tooltip-fields` | Inspect one dataset's ordered tooltip fields and formats. |
+| `map.set-tooltip-fields` | Select and order tooltip fields for one dataset. |
 | `map.update-layer-color` | Update an existing layer's color palette.                      |
 | `map.set-basemap`        | Change the basemap style.                                      |
 | `map.set-view-mode`      | Switch between the flat 2D map, the tilted 3D map and the 3D globe. |
 | `map.load-data`          | Load a URL or bridge-local file; then call `map.add-layer`.   |
 | `map.open-project`       | Replace the map with a saved-map JSON URL or bridge-local file. |
 | `map.save-project`       | Export complete saved-map JSON as a retrievable MCP artifact. |
+| `map.get-project-status` | Inspect or wait for an MCP-opened project to finish loading. |
 | `map.save-data`          | Save a DuckDB table as a map dataset (no layer — call `map.add-layer`). |
 | `map.add-column`         | Add a column to an EXISTING dataset in place (copy or expression). |
 | `map.create-table`       | Create a NEW dataset via SQL (original untouched — call `map.add-layer`). |
@@ -136,6 +141,33 @@ an underscore: for example, `map.camera-bookmarks` becomes
 - Scalar levels or point-count contours → `contour` with optional `contour.weightColumn`.
 - Nearest-site cells → `voronoi` with optional `voronoi.boundsPadding`.
 - Multidimensional raster slices → `map.load-zarr`, then a `zarr` layer.
+
+## Field-bound labels and tooltip fields
+
+Use `map.get-layer-labels` with `{"layerId":"points"}` to inspect labels and
+available fields, then `map.set-layer-labels`, for example:
+
+```json
+{"layerId":"points","labels":[{"field":"month","size":24,"color":[255,255,255],"anchor":"middle","alignment":"top"}]}
+```
+
+`labels` replaces the ordered list; `[]` clears it. Omitted appearance settings
+retain a matching field's current style or use native layer defaults. Supported
+settings include size, weight, color, anchor, alignment, outline, background and
+collision handling. Point, icon, GeoJSON (GeoJSON column mode), H3 and trip labels read dataset fields
+and follow native filtering/playback. Cluster, grid and hexagon labels support
+only their synthetic `pointCount` field. Only those aggregation labels support
+explicit pixel `offset`; row labels use native anchor/alignment positioning.
+Check `supported`, `offsetSupported` and `availableFields` before configuring.
+
+Use `map.set-tooltip-fields` with
+`{"dataId":"provinces","fields":["province","capital","population"]}` to
+select fields in display order; `[]` clears that dataset's selection. Names are
+case-sensitive and validated against the dataset. Existing formats, other
+datasets and interaction settings (including tooltip enabled state) are retained.
+`map.get-tooltip-fields` with `{"dataId":"provinces"}` reads back the ordered
+`{name, format}` entries and available fields. Native project save/open preserves
+both label settings and tooltip order.
 
 ## Color configuration
 
@@ -243,6 +275,47 @@ Continuous mode needs no time filter. Event pulses use `pulseTrigger: "event"`,
 same dataset/field. Missing timestamps produce no effect. Discover settings
 and ranges with `map.get-layer-options`; `map.add-layer.options` accepts the
 same visual settings when creating a layer.
+
+### Feature age bands
+
+Points, arcs, lines, icons, H3/S2/A5/geohash cells, and GeoJSON features can fade
+or change color as they age. Use
+`map.set-layer-options` with a structured `ageStyle` (inspect with
+`map.get-layer-options`; clear with `ageStyle: null`):
+
+```json
+{
+  "layerId": "sightings",
+  "ageStyle": {
+    "timeField": "observed_at",
+    "stops": [
+      {"ageMs": 0, "opacity": 1, "color": [255, 180, 0]},
+      {"ageMs": 1209600000, "opacity": 0.5},
+      {"ageMs": 3024000000, "opacity": 0.2}
+    ]
+  }
+}
+```
+
+These are 0–13, 14–34, and 35+ elapsed-day bands (one day = 86400000 ms).
+Stops must start at zero and increase strictly. Each stop applies until the
+next stop, including its lower boundary; the final stop has no upper limit.
+Opacity multiplies the feature's existing alpha and layer opacity. Color replaces
+fill, outline and arc/line endpoint RGB; an omitted channel uses the ordinary style, not the
+previous stop. Hover retains its highlight color and applies age opacity.
+
+Create an enabled time filter on that timestamp field, preferably with an
+`incremental` window to keep old observations visible. Age is the upper end of
+the first matching enabled filter minus the observation timestamp. Shared time
+filters work when they bind this dataset and field. Without a matching filter
+or timestamp field, ordinary styling is used. With an active age style, missing
+or future observations are transparent. No wall clock is involved: pauses,
+backward seeks, saved maps and native video frames use the same calculation.
+For GeoJSON built from table columns, the first row of each feature supplies its
+timestamp, matching its color fields. Age styling updates color attributes on the
+CPU as the data playhead changes; very large datasets can need downsampling for
+smooth playback. Paused pan/zoom reuses the color accessors and Arrow buffers.
+The setting is optional and adds nothing to saved maps until it is configured.
 
 ### Heatmap 3D Surface
 
@@ -930,9 +1003,21 @@ require a host export workflow.
   connected app/version; `capabilities.tools` lists the currently effective MCP
   tools and `capabilities.localFileImport` reports local-file support. The bridge
   sends `notifications/tools/list_changed` when its negotiated catalog changes.
-- Project readiness reporting is deferred: `project.state` is always `unknown`.
-  Negotiated tools do not guarantee that project data, configuration, or tiles
-  have loaded. This status tool does not wait for project readiness.
+- For projects opened with `map.open-project`, `project.state` reports `loading`,
+  `ready`, or `failed`, with `scope: "mcp-open-project"`. `ready` includes valid
+  empty projects and means dataset/layer registration completed, not tile rendering.
+  Status responses omit source URLs and load error text; inspect the original
+  `map.open-project` result for failure details and retry the import as needed.
+- Call `map_get-status` with `{"waitUntilReady":true,"timeoutMs":30000}` to wait
+  while a tracked import is loading. The default and maximum wait is 30 seconds
+  (or the bridge call timeout, if shorter). A timeout returns `loading` with
+  `timedOut: true`; it does not cancel the import. Wait again before layer lookup.
+  Hosts without the stdio bridge can call `map.get-project-status` directly.
+- UI/URL loads and older pages without `map.get-project-status` remain `unknown`;
+  waits return immediately in that case. This tracks only the last MCP import,
+  not native loading paths. Observed dataset/layer replacements or native data
+  loading invalidate its result. Changes that have not reached map state cannot
+  be detected. Never infer readiness from negotiation or a nonempty dataset list.
 
 - Do not infer basemap loading from generic `Loading...` text or a progress
   bar's dimensions. The loading indicator is shared across data and layer

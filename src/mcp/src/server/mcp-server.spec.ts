@@ -7,10 +7,149 @@ import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js';
 import {ToolListChangedNotificationSchema} from '@modelcontextprotocol/sdk/types.js';
 import WebSocket from 'ws';
+import {createStore, applyMiddleware} from 'redux';
+import {keplerGlReducer} from '@kepler.gl/reducers';
+import type {KeplerGlState} from '@kepler.gl/reducers';
+import {taskMiddleware} from '@kepler.gl/tasks';
+import {registerEntry, wrapTo} from '@kepler.gl/actions';
+import {KeplerTable} from '@kepler.gl/table';
+import {getKeplerCommands} from '../commands';
+import type {KeplerContext} from '../commands';
 import {KeplerMcpBridge} from './bridge-server';
 import {createKeplerMcpServer} from './mcp-server';
 
 describe('kepler-mcp protocol', () => {
+  it('waits for a delayed project through MCP before the first successful layer lookup', async () => {
+    const store = createStore(
+      keplerGlReducer.initialState({mapStyle: {styleType: 'no_map'}}),
+      applyMiddleware(taskMiddleware)
+    );
+    store.dispatch(registerEntry({id: 'map'}));
+    const ctx = {
+      getKeplerState: () => (store.getState() as {map: KeplerGlState}).map,
+      getVisState: () => (store.getState() as {map: KeplerGlState}).map.visState,
+      dispatch: action => store.dispatch(wrapTo('map', action))
+    } as unknown as KeplerContext;
+    const commands = getKeplerCommands(ctx);
+    const bridge = new KeplerMcpBridge({port: 0});
+    const started = await bridge.start();
+    const server = createKeplerMcpServer(bridge, 'test-build');
+    const client = new Client({name: 'readiness-client', version: '1.0'});
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        datasets: [
+          {
+            version: 'v1',
+            data: {
+              id: 'points',
+              fields: [
+                {name: 'lat', type: 'real'},
+                {name: 'lng', type: 'real'}
+              ],
+              allData: [[1, 2]]
+            }
+          }
+        ],
+        config: {
+          version: 'v1',
+          config: {
+            mapStyle: {styleType: 'no_map'},
+            visState: {
+              layers: [
+                {
+                  id: 'known-layer',
+                  type: 'point',
+                  config: {dataId: 'points', columns: {lat: 'lat', lng: 'lng'}}
+                }
+              ]
+            }
+          }
+        }
+      })
+    });
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    let importing!: () => void;
+    const importStarted = new Promise<void>(resolve => {
+      importing = resolve;
+    });
+    const originalImport = KeplerTable.prototype.importData;
+    const importData = jest
+      .spyOn(KeplerTable.prototype, 'importData')
+      .mockImplementation(async function (this: KeplerTable, data) {
+        importing();
+        await gate;
+        return originalImport.call(this, data);
+      });
+    let waiting!: () => void;
+    const waitStarted = new Promise<void>(resolve => {
+      waiting = resolve;
+    });
+    let page: WebSocket | undefined;
+    let opening: Promise<unknown> | undefined;
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+      page = new WebSocket(`ws://127.0.0.1:${started.port}/ws?token=${started.token}`);
+      await new Promise<void>(resolve => page!.once('open', resolve));
+      page.on('message', async raw => {
+        const message = JSON.parse(String(raw));
+        if (message.type !== 'call') return;
+        const pending = commands[message.tool].execute({} as any, message.input);
+        if (message.tool === 'map.get-project-status' && message.input.waitUntilReady) waiting();
+        page!.send(JSON.stringify({type: 'result', callId: message.callId, result: await pending}));
+      });
+      const negotiated = new Promise<void>(resolve => {
+        client.setNotificationHandler(ToolListChangedNotificationSchema, () => resolve());
+      });
+      page.send(
+        JSON.stringify({type: 'hello', commands: Object.values(commands).map(({id}) => ({id}))})
+      );
+      await negotiated;
+      const data = (result: any) => JSON.parse(result.content[0].text);
+      opening = client.callTool({
+        name: 'map_open-project',
+        arguments: {url: 'https://example.com/project.json'}
+      });
+      await importStarted;
+      expect(
+        data(await client.callTool({name: 'map_get-status', arguments: {}})).project.state
+      ).toBe('loading');
+      let ready = false;
+      const status = client
+        .callTool({name: 'map_get-status', arguments: {waitUntilReady: true}})
+        .then(result => {
+          ready = true;
+          return result;
+        });
+      await waitStarted;
+      expect(ready).toBe(false);
+      release();
+      expect(data(await status).project).toEqual({state: 'ready', scope: 'mcp-open-project'});
+      const layer = await client.callTool({
+        name: 'map_get-layer-options',
+        arguments: {layerId: 'known-layer'}
+      });
+      expect(layer.isError).not.toBe(true);
+      expect(data(layer).layerId).toBe('known-layer');
+      await opening;
+    } finally {
+      release();
+      await opening;
+      page?.terminate();
+      await client.close();
+      await server.close();
+      await bridge.close();
+      importData.mockRestore();
+      global.fetch = originalFetch;
+    }
+  });
+
   it('advertises catalog notifications and publishes page negotiation and disconnect changes', async () => {
     const bridge = new KeplerMcpBridge({port: 0});
     const started = await bridge.start();

@@ -16,6 +16,12 @@ import keymirror from 'keymirror';
 import React from 'react';
 import * as arrow from 'apache-arrow';
 import DefaultLayerIcon from './default-layer-icon';
+import {
+  AGE_STYLE_LAYER_TYPES,
+  AgeStyleAccessorCache,
+  getLayerDataTime,
+  isLayerAgeStyle
+} from './layer-age-style';
 import {diffUpdateTriggers} from './layer-update';
 import {textLabelDeckLayerId} from './layer-text-label';
 import {getVisualZoom, LayerZoomState} from './layer-zoom';
@@ -258,6 +264,13 @@ class Layer implements KeplerLayer {
   config: LayerBaseConfig & Partial<LayerColorConfig & LayerSizeConfig>;
   // TODO: define _oldDataUpdateTriggers
   _oldDataUpdateTriggers: any;
+
+  private ageStyleCache?: AgeStyleAccessorCache;
+  private ageStyleRowAccessor: (datum: any) => any = datum => datum;
+
+  get supportsAgeStyle(): boolean {
+    return AGE_STYLE_LAYER_TYPES.includes(this.type || '');
+  }
 
   isValid: boolean;
   errorMessage: string | null;
@@ -853,6 +866,15 @@ class Layer implements KeplerLayer {
       }
     });
 
+    // Keep the optional setting when restoring a map or changing layer type,
+    // without registering an empty default in every layer's saved config.
+    if (
+      currentConfig === this.config.visConfig &&
+      this.supportsAgeStyle &&
+      isLayerAgeStyle(configToCopy.ageStyle)
+    ) {
+      copied['ageStyle'] = configToCopy.ageStyle;
+    }
     return copied;
   }
 
@@ -923,6 +945,14 @@ class Layer implements KeplerLayer {
       Partial<LayerColorConfig & LayerSizeConfig> = LayerBaseConfig
   >(newConfig: Partial<LayerConfig>): Layer {
     this.config = {...this.config, ...newConfig};
+    if (
+      newConfig.visConfig &&
+      'ageStyle' in newConfig.visConfig &&
+      (!this.supportsAgeStyle || !isLayerAgeStyle(newConfig.visConfig.ageStyle))
+    ) {
+      this.config.visConfig = {...this.config.visConfig};
+      delete this.config.visConfig.ageStyle;
+    }
     if (Object.prototype.hasOwnProperty.call(newConfig, 'propertyTransitions')) {
       const propertyTransitions = normalizeLayerPropertyTransitions(newConfig.propertyTransitions);
       if (propertyTransitions !== undefined) this.config.propertyTransitions = propertyTransitions;
@@ -932,8 +962,7 @@ class Layer implements KeplerLayer {
   }
 
   updateLayerVisConfig(newVisConfig) {
-    this.config.visConfig = {...this.config.visConfig, ...newVisConfig};
-    return this;
+    return this.updateLayerConfig({visConfig: {...this.config.visConfig, ...newVisConfig}});
   }
 
   updateLayerColorUI(prop: string, newConfig: NestedPartial<ColorUI>): Layer {
@@ -1279,6 +1308,7 @@ class Layer implements KeplerLayer {
       }
     });
 
+    this.ageStyleRowAccessor = dataAccessor(dataContainer);
     return attributeAccessors;
   }
 
@@ -1575,7 +1605,66 @@ class Layer implements KeplerLayer {
     this.updateLayerConfig({[visualChannel.domain]: updatedDomain});
   }
 
-  getVisualChannelUpdateTriggers(): UpdateTriggers {
+  /** Shared by feature renderers; geometry, labels and native layer opacity stay intact. */
+  getAgeStyledLayerProps(opts) {
+    const {dataset, data, filters} = opts;
+    const style = this.config.visConfig.ageStyle;
+    const field =
+      this.supportsAgeStyle && isLayerAgeStyle(style)
+        ? dataset?.fields.find(
+            candidate => candidate.type === 'timestamp' && candidate.name === style.timeField
+          )
+        : undefined;
+    const time = field ? getLayerDataTime(this.config.dataId, field.name, filters) : null;
+    if (!field || time === null || !isLayerAgeStyle(style)) {
+      this.ageStyleCache = undefined;
+      return opts;
+    }
+    const rowAccessor = this.ageStyleRowAccessor;
+    const getTimestamp = datum => field.valueAccessor(rowAccessor(datum));
+    const cache = this.ageStyleCache ?? (this.ageStyleCache = new AgeStyleAccessorCache());
+    cache.update([style, field, time, dataset.dataContainer, dataset.dataRevision, rowAccessor]);
+    const accessors = {};
+    for (const channel of Object.values(this.visualChannels)) {
+      const key = channel.accessor;
+      if (key && channel.channelScaleType === CHANNEL_SCALES.color && data[key] !== undefined) {
+        accessors[key] = cache.get(key, data[key], style, getTimestamp, time);
+      }
+    }
+    const highlight = cache.get(
+      'highlight',
+      this.config.highlightColor,
+      style,
+      getTimestamp,
+      time,
+      true
+    );
+    const hovered = this.hasHoveredObject(opts.objectHovered);
+    return {
+      ...opts,
+      data: {...data, ...accessors},
+      // Point neighbors have separate ages. Other hover overlays describe one
+      // source feature, even when their renderer synthesizes polygon geometry.
+      ageStyleHighlightColor:
+        this.type === 'point'
+          ? highlight
+          : hovered
+          ? highlight(hovered)
+          : this.config.highlightColor,
+      ageStyleTriggers: {
+        ageStyle: style,
+        ageTime: time,
+        ageField: field,
+        ageData: dataset.dataContainer,
+        ageDataRevision: dataset.dataRevision,
+        ageRow: rowAccessor
+      }
+    };
+  }
+
+  getVisualChannelUpdateTriggers(opts?: {
+    ageStyleTriggers?: Record<string, unknown>;
+  }): UpdateTriggers {
     const updateTriggers: UpdateTriggers = {};
     Object.values(this.visualChannels).forEach(visualChannel => {
       // field range scale domain
@@ -1590,7 +1679,8 @@ class Layer implements KeplerLayer {
           defaultValue:
             typeof defaultValue === 'function' ? defaultValue(this.config) : defaultValue,
           ...(fixed ? {[fixed]: this.config.visConfig[fixed]} : {}),
-          ...(invert ? {[invert]: this.config.visConfig[invert]} : {})
+          ...(invert ? {[invert]: this.config.visConfig[invert]} : {}),
+          ...(visualChannel.channelScaleType === CHANNEL_SCALES.color ? opts?.ageStyleTriggers : {})
         };
       }
     });
