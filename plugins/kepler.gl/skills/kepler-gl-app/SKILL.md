@@ -254,6 +254,18 @@ H3 layer:
 `map.add-layer` returns `dateTimeColumns` when the dataset has TIMESTAMP/DATE
 fields — see "Time animation" below for the follow-up.
 
+### Layer Range Options
+
+`map.get-layer-options` lists scalar settings and numeric ranges for the selected
+layer. Settings marked `isRanged: true` take exactly two finite numbers; `value`
+is the current pair and `range` gives the inclusive limits for each endpoint.
+Use `map.set-layer-options` with `options: {"radiusRange": [1, 8]}` for Point or
+GeoJSON point sizing, or pass the same `options` to `map.add-layer`. The pair
+controls the output sizes when the corresponding size field is selected.
+Other supported ranges, such as GeoJSON `sizeRange`/`heightRange`, grid
+`percentile`, and H3 `coverageRange`, are discovered from the layer's own settings.
+Invalid options reject the whole update and preserve the previous values.
+
 ### Point Glow and Pulse / Ripple
 
 Use `map.set-layer-options` with `layerId` and `options`, for example

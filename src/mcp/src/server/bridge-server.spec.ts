@@ -455,11 +455,28 @@ describe('kepler-mcp bridge server', () => {
 
     const tools = bridge.getTools();
     const schemaFor = (id: string) => tools.find(tool => tool.name === toToolName(id))?.inputSchema;
+    const optionsSchema = {
+      type: 'object',
+      additionalProperties: {
+        anyOf: expect.arrayContaining([
+          {type: 'number'},
+          {type: 'boolean'},
+          {type: 'string'},
+          expect.objectContaining({
+            type: 'array',
+            minItems: 2,
+            maxItems: 2,
+            prefixItems: [{type: 'number'}, {type: 'number'}]
+          })
+        ])
+      }
+    };
     expect(schemaFor('map.add-layer')).toMatchObject({
       type: 'object',
       properties: {
         datasetName: {type: 'string'},
-        layerType: {type: 'string', enum: expect.arrayContaining(['point', 'flowField'])}
+        layerType: {type: 'string', enum: expect.arrayContaining(['point', 'flowField'])},
+        options: optionsSchema
       },
       required: expect.arrayContaining(['datasetName', 'layerType'])
     });
@@ -467,10 +484,7 @@ describe('kepler-mcp bridge server', () => {
       type: 'object',
       properties: {
         layerId: {type: 'string'},
-        options: {
-          type: 'object',
-          additionalProperties: {type: expect.arrayContaining(['number', 'boolean', 'string'])}
-        }
+        options: optionsSchema
       },
       required: expect.arrayContaining(['layerId'])
     });

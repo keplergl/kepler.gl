@@ -5,6 +5,7 @@ import {getAddLayerCommand} from './layer-creation-command';
 import KeplerTable from '@kepler.gl/table';
 import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
 import {INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
+import {getLayerOptionsCommand, getSetLayerOptionsCommand} from './layer-options-command';
 
 /**
  * Build a plain JS dataset with two point lat/lng pairs (origin + destination)
@@ -50,6 +51,97 @@ function makeCtx(table: KeplerTable) {
 }
 
 type CommandResult = {success: boolean; error?: string; data?: Record<string, unknown>};
+
+describe('map.add-layer (range options)', () => {
+  it.each(['point', 'geojson'])(
+    'creates %s with scalar and range options and reads them back',
+    async layerType => {
+      const table = await makeTwoPairTable();
+      if (layerType === 'geojson') {
+        await table.importData({
+          data: {
+            fields: [{name: '_geojson', type: ALL_FIELD_TYPES.geojson}],
+            rows: [
+              [{type: 'Feature', geometry: {type: 'Point', coordinates: [0, 0]}, properties: {}}]
+            ]
+          } as any
+        });
+      }
+      let state = {...INITIAL_VIS_STATE, datasets: {[table.id]: table}};
+      const ctx = {
+        ...makeCtx(table).ctx,
+        getVisState: () => state,
+        dispatch: action => {
+          state = visStateReducer(state, action);
+        }
+      };
+      const command = getAddLayerCommand(ctx as any);
+      const input = {
+        datasetName: table.id,
+        layerType,
+        options: {radiusRange: [1, 8], opacity: 0.4}
+      };
+      expect(command.inputSchema?.safeParse(input).success).toBe(true);
+      const result = await command.execute({} as any, input);
+      expect(result).toMatchObject({success: true});
+      expect(state.layers).toHaveLength(1);
+      expect(state.layers[0].config.visConfig).toMatchObject(input.options);
+      const details = await getLayerOptionsCommand(ctx as any).execute({} as any, {
+        layerId: state.layers[0].id
+      });
+      expect(details).toMatchObject({
+        success: true,
+        data: {settings: {radiusRange: {isRanged: true, value: [1, 8]}, opacity: {value: 0.4}}}
+      });
+    }
+  );
+
+  it.each(
+    [
+      [],
+      [1],
+      [1, 8, 9],
+      ['1', 8],
+      [1, null],
+      [NaN, 8],
+      [1, Infinity],
+      [-1, 8],
+      [1, 501],
+      8,
+      null
+    ].map(value => [value])
+  )('rejects invalid radiusRange %j before creating a layer', async radiusRange => {
+    const table = await makeTwoPairTable();
+    const {ctx, getDispatched} = makeCtx(table);
+    expect(
+      await getAddLayerCommand(ctx as any).execute({} as any, {
+        datasetName: table.id,
+        layerType: 'point',
+        options: {opacity: 0.4, radiusRange}
+      })
+    ).toMatchObject({success: false, error: expect.stringContaining('radiusRange')});
+    expect(getDispatched()).toBeNull();
+  });
+
+  it.each([[], [1], [1, 8, 9], ['1', 8], [1, null], [NaN, 8], [1, Infinity]].map(value => [value]))(
+    'advertises tuple shape validation for both commands: %j',
+    async radiusRange => {
+      const table = await makeTwoPairTable();
+      const {ctx} = makeCtx(table);
+      for (const [command, input] of [
+        [getAddLayerCommand(ctx as any), {datasetName: table.id, layerType: 'point'}],
+        [getSetLayerOptionsCommand(ctx as any), {layerId: 'layer'}]
+      ] as const) {
+        expect(command.inputSchema?.safeParse({...input, options: {radiusRange}}).success).toBe(
+          false
+        );
+        expect(
+          command.inputSchema?.safeParse({...input, options: {radiusRange: [1, 8]}}).success
+        ).toBe(true);
+      }
+    }
+  );
+});
 
 describe('map.add-layer (surface layers)', () => {
   it('creates weighted contours from explicit coordinates instead of the first detected pair', async () => {

@@ -10,7 +10,7 @@ import type {Datasets} from '@kepler.gl/table';
 import {findDefaultLayer, findMapBounds} from '@kepler.gl/reducers';
 import {addLayer as addLayerAction, fitBounds} from '@kepler.gl/actions';
 import type {KeplerContext} from './types';
-import {validateLayerOptions} from './layer-options-command';
+import {layerOptionsSchema, validateLayerOptions} from './layer-options-command';
 import {
   buildSurfaceLayer,
   buildZarrLayer,
@@ -568,11 +568,10 @@ For geojson datasets:
         .describe(
           'Explicit mappings for a5/geohash (token), icon (lat/lng/icon), or 3D (lat/lng/altitude or geojson).'
         ),
-      options: z
-        .record(z.string(), z.union([z.number().finite(), z.boolean(), z.string()]))
+      options: layerOptionsSchema
         .optional()
         .describe(
-          'Initial visual settings; inspect map.get-layer-options to discover editable keys.'
+          'Initial scalar or two-number range settings (e.g. radiusRange: [1, 8]); inspect map.get-layer-options to discover editable keys and limits.'
         ),
       contour: contourOptions.optional(),
       voronoi: voronoiOptions.optional(),
@@ -643,7 +642,7 @@ For geojson datasets:
       const args = (input ?? {}) as {
         datasetName: string;
         columns?: Record<string, string>;
-        options?: Record<string, number | boolean | string>;
+        options?: z.infer<typeof layerOptionsSchema>;
         layerName?: string;
         latitudeColumn?: string;
         longitudeColumn?: string;
