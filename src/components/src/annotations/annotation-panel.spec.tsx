@@ -350,8 +350,29 @@ describe('AnnotationManager selectors', () => {
     ]);
   });
 
+  test.each([
+    ['Caption first', 'Content first', undefined, 'first'],
+    ['Content first', 'Caption first', 'first', undefined]
+  ] as const)('can switch line order from %s to %s', (from, to, previous, next) => {
+    const readout = {type: 'time' as const, format: 'MMM YYYY'};
+    const store = renderCaption({
+      viewport,
+      readout: previous ? {...readout, position: previous} : readout
+    });
+    fireEvent.click(screen.getByText(from));
+    fireEvent.click(screen.getByText(to));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        readout: next ? {...readout, position: next} : readout
+      })
+    ]);
+  });
+
   test('changes the date format and returns to static text', () => {
-    const store = renderCaption({viewport, readout: {type: 'time', format: 'YYYY-MM-DD'}});
+    const store = renderCaption({
+      viewport,
+      readout: {type: 'time', format: 'YYYY-MM-DD', position: 'first'}
+    });
     const input = screen.getByRole('textbox', {name: 'Date format (UTC)'});
     fireEvent.change(input, {target: {value: ''}});
     expect(store.getActions()).toEqual([]);
@@ -363,7 +384,9 @@ describe('AnnotationManager selectors', () => {
     fireEvent.click(screen.getByText('Timeline date'));
     fireEvent.click(screen.getByText('Static text'));
     expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'time', format: 'MMM YYYY'}}),
+      VisStateActions.updateAnnotation('ruler-1', {
+        readout: {type: 'time', format: 'MMM YYYY', position: 'first'}
+      }),
       VisStateActions.updateAnnotation('ruler-1', {readout: undefined})
     ]);
   });
@@ -389,11 +412,16 @@ describe('AnnotationManager selectors', () => {
   });
 
   test('changes the dataset used by a filtered count', () => {
-    const store = renderCaption({viewport, readout: {type: 'count', dataId: 'first'}});
+    const store = renderCaption({
+      viewport,
+      readout: {type: 'count', dataId: 'first', position: 'first'}
+    });
     fireEvent.click(screen.getByText('Monarchs'));
     fireEvent.click(screen.getByText('Sightings'));
     expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'count', dataId: 'second'}})
+      VisStateActions.updateAnnotation('ruler-1', {
+        readout: {type: 'count', dataId: 'second', position: 'first'}
+      })
     ]);
   });
 

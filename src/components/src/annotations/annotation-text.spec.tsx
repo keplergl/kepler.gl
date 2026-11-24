@@ -196,6 +196,34 @@ describe('AnnotationText readout formatting', () => {
     }
   );
 
+  test('displays content first while editing a nonempty caption', () => {
+    const annotation = makeRuler({
+      kind: AnnotationKind.TEXT,
+      label: 'Caption',
+      viewport: {anchor: 'top-left', margin: [0, 0]},
+      readout: {type: 'time', position: 'first'}
+    });
+    const {container} = renderWithTheme(
+      <DndContext>
+        <AnnotationText
+          annotation={annotation}
+          readoutValue="2026-01-01"
+          viewport={viewport}
+          isEditing
+          isSelected
+          isEditingText
+          onSelect={jest.fn()}
+          onChangeText={jest.fn()}
+          onUpdateAnnotation={jest.fn()}
+        />
+      </DndContext>
+    );
+    const value = screen.getByText('2026-01-01');
+    const caption = container.querySelector('[contenteditable="true"]');
+    expect(caption).toHaveTextContent('Caption');
+    expect(value.compareDocumentPosition(caption!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   test('uses saved formatting for an empty label and a missing readout value', () => {
     const annotation = makeRuler({
       kind: AnnotationKind.TEXT,

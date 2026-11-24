@@ -37,6 +37,7 @@ export function normalizeAnnotationViewport(
 export function normalizeAnnotationReadout(value: unknown): AnnotationReadout | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const readout = value as AnnotationReadout;
+  const placement = readout.position === 'first' ? {position: 'first' as const} : {};
   if (
     readout.type === 'time' &&
     (readout.format === undefined ||
@@ -44,10 +45,14 @@ export function normalizeAnnotationReadout(value: unknown): AnnotationReadout | 
         readout.format.length > 0 &&
         readout.format.length <= 128))
   ) {
-    return {type: 'time', ...(readout.format !== undefined ? {format: readout.format} : {})};
+    return {
+      type: 'time',
+      ...(readout.format !== undefined ? {format: readout.format} : {}),
+      ...placement
+    };
   }
   if (readout.type === 'count' && typeof readout.dataId === 'string' && readout.dataId.trim()) {
-    return {type: 'count', dataId: readout.dataId};
+    return {type: 'count', dataId: readout.dataId, ...placement};
   }
   return undefined;
 }

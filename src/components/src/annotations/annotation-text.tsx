@@ -244,6 +244,21 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     return null;
   }
 
+  const readout = hasReadout ? (
+    <div data-annotation-part="readout">
+      <LexicalRichTextEditor
+        // Initialize each value synchronously, before an export frame can capture it.
+        key={readoutValue ?? '—'}
+        isEditable={false}
+        editorState={formattedReadout}
+        width={hideEmptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
+        height={hideEmptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
+        initialText={readoutValue ?? '—'}
+        onChange={ignoreReadoutChange}
+      />
+    </div>
+  ) : null;
+
   return (
     <StyledAnnotationText
       ref={setNodeRef}
@@ -304,6 +319,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         }
       }}
     >
+      {annotation.readout?.position === 'first' ? readout : null}
       {showCustomText ? (
         <LexicalRichTextEditor
           {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
@@ -329,20 +345,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       {distanceText ? (
         <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
       ) : null}
-      {hasReadout ? (
-        <div data-annotation-part="readout">
-          <LexicalRichTextEditor
-            // Initialize each value synchronously, before an export frame can capture it.
-            key={readoutValue ?? '—'}
-            isEditable={false}
-            editorState={formattedReadout}
-            width={hideEmptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
-            height={hideEmptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
-            initialText={readoutValue ?? '—'}
-            onChange={ignoreReadoutChange}
-          />
-        </div>
-      ) : null}
+      {annotation.readout?.position !== 'first' ? readout : null}
     </StyledAnnotationText>
   );
 };
