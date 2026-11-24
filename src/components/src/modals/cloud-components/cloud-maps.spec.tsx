@@ -43,6 +43,39 @@ describe('CloudMaps Component', () => {
     expect(getByText(/noSavedMaps/i)).toBeInTheDocument();
   });
 
+  it('filters by title regardless of case, selects a match, and restores maps when cleared', () => {
+    const maps = [
+      {id: 'streets', title: 'City Streets'},
+      {id: 'parks', title: 'Public Parks', description: 'Near City Streets'}
+    ];
+    const onSelectMap = jest.fn();
+    const provider = 'testProvider';
+    const {getByRole, getByText, queryByText} = renderWithTheme(
+      <CloudMaps
+        provider={provider}
+        onSelectMap={onSelectMap}
+        isLoading={false}
+        maps={maps}
+        error={null}
+      />
+    );
+
+    const input = getByRole('searchbox');
+    fireEvent.change(input, {target: {value: '  sTrEeTs '}});
+    expect(queryByText('Public Parks')).not.toBeInTheDocument();
+    fireEvent.click(getByText('City Streets'));
+    expect(onSelectMap).toHaveBeenCalledWith(provider, maps[0]);
+
+    fireEvent.change(input, {target: {value: 'harbor'}});
+    expect(queryByText('City Streets')).not.toBeInTheDocument();
+    expect(getByRole('status')).toBeInTheDocument();
+    expect(queryByText(/noSavedMaps/i)).not.toBeInTheDocument();
+
+    fireEvent.change(input, {target: {value: ''}});
+    expect(getByText('City Streets')).toBeInTheDocument();
+    expect(getByText('Public Parks')).toBeInTheDocument();
+  });
+
   it('calls onSelectMap when a CloudItem is clicked', () => {
     const mockMaps = [
       {id: 1, title: 'map'},
