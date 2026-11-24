@@ -67,6 +67,6 @@ Here is a TileJSON template for a tileset with an `events` source layer. Replace
 | `String` | Categorical multiselect |
 | `Boolean` (also `bool`) | Range from 0 (false) to 1 (true) |
 
-MVT has no native date/time property type. An ordinary ISO 8601 property is a string, not a time-range field, and `date`, `time`, and `datetime` are not recognized types here. To filter raw timestamps numerically, store a numeric Unix timestamp in the tiles and declare it as `Number`, as above. The slider shows the numeric values in your chosen unit (seconds in this example), not calendar dates or a time playback control.
+MVT has no native date/time property type. An ordinary ISO 8601 property is a string, not a time-range field, and `date`, `time`, and `datetime` are not recognized types here. To filter raw timestamps numerically, store a numeric Unix timestamp in the tiles and declare it as `Number`, as above. Use the clock icon to expand the numeric range filter and play through its values. The slider displays numbers in your chosen unit (seconds in this example) rather than calendar dates, and it does not offer a date/time picker or time-zone controls.
 
 [Back to layer overview](./README.md)
