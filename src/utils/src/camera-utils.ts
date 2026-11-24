@@ -43,11 +43,19 @@ export function normalizeCameraBookmarks(value: unknown): CameraBookmark[] {
 
 /** Adapt a saved camera to the current projection without changing the saved view. */
 export function cameraForMap(camera: CameraSnapshot, globe = false): CameraSnapshot {
-  if (!globe) return camera;
+  // Camera tours interpolate across the nearest world copy. Wrap before the
+  // map's viewport validator can clamp an in-flight coordinate to the seam.
+  const {longitude: inputLongitude} = camera;
+  const longitude =
+    Number.isFinite(inputLongitude) && Math.abs(inputLongitude) > 180
+      ? ((((inputLongitude + 180) % 360) + 360) % 360) - 180
+      : inputLongitude;
+  if (!globe) return Object.is(longitude, inputLongitude) ? camera : {...camera, longitude};
   const latitude = Math.max(-GLOBE_MAX_LATITUDE, Math.min(GLOBE_MAX_LATITUDE, camera.latitude));
   const adjustment = Math.log2(Math.cos((latitude * Math.PI) / 180));
   return {
     ...camera,
+    longitude,
     latitude,
     pitch: 0,
     bearing: 0,

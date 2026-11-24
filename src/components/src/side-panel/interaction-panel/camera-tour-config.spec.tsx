@@ -437,6 +437,43 @@ test('scrubbing and playback evaluate the same camera at the same timestamp', ()
   expect(callbacks.size).toBe(0);
 });
 
+test.each([
+  {direction: 1, globe: false},
+  {direction: -1, globe: false},
+  {direction: 1, globe: true},
+  {direction: -1, globe: true}
+])('plays through the antimeridian (direction $direction, globe $globe)', ({direction, globe}) => {
+  const start = {...camera, longitude: 178 * direction};
+  const end = {...camera, longitude: -178 * direction};
+  const crossing: CameraTour = {
+    stops: [
+      {id: 'start', name: 'Start', camera: start, holdDurationMs: 0, travelDurationMs: 1000},
+      {id: 'end', name: 'End', camera: end, holdDurationMs: 0, travelDurationMs: 0}
+    ]
+  };
+  let state = {
+    ...INITIAL_MAP_STATE,
+    ...start,
+    ...(globe ? {globe: {...INITIAL_MAP_STATE.globe!, enabled: true}} : {})
+  };
+  const {updateMap} = setup(crossing, {mapState: state});
+  updateMap.mockImplementation(viewport => {
+    state = mapStateUpdaters.updateMapUpdater(state, MapStateActions.updateMap(viewport));
+  });
+
+  fireEvent.click(screen.getByRole('button', {name: 'Play'}));
+  frame(250);
+  expect(state.longitude).toBeCloseTo(178.625 * direction);
+  frame(500);
+  expect(state.longitude).toBe(180 * direction);
+  frame(750);
+  expect(state.longitude).toBeCloseTo(-178.625 * direction);
+  frame(900);
+  expect(state.longitude).toBeCloseTo(-178.112 * direction);
+  frame(1000);
+  expect(state.longitude).toBe(end.longitude);
+});
+
 test('reserves a fixed elapsed-time width while scrubbing through fractional seconds', () => {
   setup({
     stops: [{...tour.stops[0], holdDurationMs: 1000000, travelDurationMs: 0}]
