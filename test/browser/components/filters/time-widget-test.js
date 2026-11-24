@@ -716,10 +716,10 @@ test('Components -> TimeWidget.mount -> TimeSliderMarker', t => {
   // moment.utc(1474617600000).tz('America/New_York') -> "2016-09-23 04:00"
   // Enyme cant detect element appended by d3
   const expectedMarks2 = [
-    '20 PM',
-    '21 PM',
-    '22 PM',
-    '23 PM',
+    '08 PM',
+    '09 PM',
+    '10 PM',
+    '11 PM',
     'Fri 23',
     '01 AM',
     '02 AM',

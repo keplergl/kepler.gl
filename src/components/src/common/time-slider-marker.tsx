@@ -60,7 +60,7 @@ const TICK_FORMATS = {
   millisecond: '.SSS',
   second: ':ss',
   minute: 'HH:mm',
-  hour: 'HH A',
+  hour: 'hh A',
   day: 'ddd DD',
   week: 'MMM DD',
   month: 'MMM',
