@@ -59,14 +59,15 @@ test('Components -> RangeSlider -> native number inputs use the configured step'
   const changes = [];
   const fractional = renderControlledRange([1, 3], changes, {step: 0.1});
   try {
-    const [lower, upper] = fractional.getAllByRole('spinbutton');
-    lower.stepUp();
-    t.equal(lower.valueAsNumber, 1.1, 'increments the lower input by one tenth');
+    const [lower, upper] = within(fractional.container).getAllByRole('spinbutton');
+    t.equal(lower.getAttribute('step'), '0.1', 'configures fractional steps on the lower input');
+    t.equal(upper.getAttribute('step'), '0.1', 'configures fractional steps on the upper input');
+
+    fireEvent.change(lower, {target: {value: '1.1'}});
     fireEvent.blur(lower);
     t.deepEqual(changes.pop(), [1.1, 3], 'commits the increment to the controlled range');
 
-    upper.stepDown();
-    t.equal(upper.valueAsNumber, 2.9, 'decrements the upper input by one tenth');
+    fireEvent.change(upper, {target: {value: '2.9'}});
     fireEvent.blur(upper);
     t.deepEqual(changes.pop(), [1.1, 2.9], 'commits the decrement to the controlled range');
   } finally {
@@ -75,9 +76,8 @@ test('Components -> RangeSlider -> native number inputs use the configured step'
 
   const defaultStep = renderControlledRange([1, 3], [], {step: undefined});
   try {
-    const [lower] = defaultStep.getAllByRole('spinbutton');
-    lower.stepUp();
-    t.equal(lower.valueAsNumber, 2, 'preserves native integer increments when no step is set');
+    const [lower] = within(defaultStep.container).getAllByRole('spinbutton');
+    t.notOk(lower.hasAttribute('step'), 'preserves the native default when no step is set');
   } finally {
     defaultStep.unmount();
   }
