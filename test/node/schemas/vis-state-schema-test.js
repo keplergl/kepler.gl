@@ -26,7 +26,12 @@ import {
   testCsvDataId,
   testGeoJsonDataId
 } from 'test/helpers/mock-state';
-import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@kepler.gl/reducers';
+import {
+  INITIAL_VIS_STATE,
+  keplerGlReducerCore as keplerGlReducer,
+  mergeInteractions,
+  validateLayerWithData
+} from '@kepler.gl/reducers';
 import {VisStateActions} from '@kepler.gl/actions';
 import {AnnotationKind, FILTER_VIEW_TYPES, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {createEffect} from '@kepler.gl/effects';
@@ -456,6 +461,32 @@ test('#visStateSchema -> v1 -> save and validate filters', t => {
   t.equal(nextStte.visState.filters.length, 3, 'should have 3 filters');
   t.equal(savedState.config.visState.filters.length, 2, 'should only save 2 filters');
 
+  t.end();
+});
+
+test('#visStateSchema -> preserves the geocoder result focus', t => {
+  const initialState = cloneDeep(StateWFilesFiltersLayerColor);
+  initialState.visState.interactionConfig.geocoder.config.focusMode = 'centerPin';
+  const saved = SchemaManager.getConfigToSave(initialState);
+  const parsed = SchemaManager.parseSavedConfig(saved);
+  t.equal(
+    saved.config.visState.interactionConfig.geocoder.focusMode,
+    'centerPin',
+    'saves the mode'
+  );
+  t.equal(parsed.visState.interactionConfig.geocoder.focusMode, 'centerPin', 'loads the mode');
+  const reopened = mergeInteractions(INITIAL_VIS_STATE, parsed.visState.interactionConfig);
+  t.equal(
+    reopened.interactionConfig.geocoder.config.focusMode,
+    'centerPin',
+    'applies the saved mode to a fresh map'
+  );
+  const {focusMode: _mode, ...legacy} = parsed.visState.interactionConfig.geocoder;
+  const older = mergeInteractions(INITIAL_VIS_STATE, {geocoder: legacy});
+  t.notOk(
+    'focusMode' in older.interactionConfig.geocoder.config,
+    'older maps keep the implicit fit setting'
+  );
   t.end();
 });
 

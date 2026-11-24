@@ -5,6 +5,16 @@ import {VIS_STATE_MERGERS} from '@kepler.gl/reducers';
 
 const TEST_CASES = [
   {
+    testMessage: 'interactionConfig preserves the first explicit geocoder result focus',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {geocoder: {enabled: false}},
+      {geocoder: {enabled: true, focusMode: 'centerPin'}},
+      {geocoder: {enabled: true, focusMode: 'fitBounds'}}
+    ],
+    expected: {geocoder: {enabled: true, limitSearch: false, focusMode: 'centerPin'}}
+  },
+  {
     testMessage:
       "interactionConfig (with input configs' tooltips.fieldsToShow with no repeated fields)",
     propName: 'interactionConfig',

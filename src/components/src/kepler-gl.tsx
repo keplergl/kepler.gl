@@ -334,6 +334,7 @@ export const geoCoderPanelSelector = (
   updateMap: props.mapStateActions.updateMap,
   appWidth: dimensions.width,
   limitSearch: props.visState.interactionConfig.geocoder.config?.limitSearch ?? false,
+  focusMode: props.visState.interactionConfig.geocoder.config?.focusMode,
   color: props.visState.interactionConfig.geocoder.config?.color ?? GEOCODER_ICON_COLOR
 });
 
