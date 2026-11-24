@@ -5,12 +5,14 @@ import {parseUri} from '@kepler.gl/common-utils';
 import {
   DATASET_FORMATS,
   DatasetType,
+  getDatasetRefreshIntervalMs,
+  getRemoteSourceFormat,
   MIME_TO_REMOTE_FILE_EXTENSION,
   REMOTE_FILE_EXTENSIONS,
   REMOTE_FILE_MIME_TYPES,
   RemoteFileFormat
 } from '@kepler.gl/constants';
-import {ProcessorResult} from '@kepler.gl/types';
+import {ProcessorResult, ProtoDataset} from '@kepler.gl/types';
 import {generateHashIdFromString} from '@kepler.gl/utils';
 
 import {
@@ -45,6 +47,7 @@ export type FetchRemoteFileOptions = {
   lastModified?: string;
   /** Bypass the HTTP cache. Used for poll/reload, not the first remote URL load. */
   bypassCache?: boolean;
+  signal?: AbortSignal;
 };
 
 export type FetchRemoteFileResult = {
@@ -140,7 +143,7 @@ export async function fetchRemoteFile(
   url: string,
   options: FetchRemoteFileOptions = {}
 ): Promise<FetchRemoteFileResult> {
-  const {format, onProgress, etag, lastModified, bypassCache} = options;
+  const {format, onProgress, etag, lastModified, bypassCache, signal} = options;
   if (!isRemoteDatasetUrl(url)) {
     throw new Error('Remote dataset URL must use http or https');
   }
@@ -156,7 +159,8 @@ export async function fetchRemoteFile(
   }
   const response = await fetch(url, {
     ...(bypassCache ? {cache: 'no-store' as RequestCache} : {}),
-    ...(Object.keys(headers).length ? {headers} : {})
+    ...(Object.keys(headers).length ? {headers} : {}),
+    ...(signal ? {signal} : {})
   });
   if (response.status === 304) {
     return {
@@ -413,14 +417,16 @@ export async function loadExternallyHostedDataset(metadata: {
   onProgress?: (progress: RemoteLoadProgress) => void;
   /** Established CSV columns, supplied only when refreshing an existing table. */
   csvHeader?: string[];
+  signal?: AbortSignal;
 }): Promise<LoadExternallyHostedDatasetResult> {
-  const {source, format, etag, lastModified, size, bypassCache, onProgress} = metadata;
+  const {source, format, etag, lastModified, size, bypassCache, onProgress, signal} = metadata;
   const fetched = await fetchRemoteFile(source, {
     format,
     etag,
     lastModified,
     bypassCache,
-    onProgress
+    onProgress,
+    signal
   });
   if (fetched.notModified || !fetched.file) {
     return {
@@ -440,6 +446,7 @@ export async function loadExternallyHostedDataset(metadata: {
   });
   // Let the loading indicator paint a processing state before parse blocks the tab.
   await waitForNextPaint();
+  signal?.throwIfAborted();
 
   const batches = await readFileInBatches({
     file: fetched.file,
@@ -450,6 +457,7 @@ export async function loadExternallyHostedDataset(metadata: {
 
   let content: ProcessFileDataContent | undefined;
   for await (const batch of batches) {
+    signal?.throwIfAborted();
     content = batch as ProcessFileDataContent;
   }
   // CSVLoader emits no data batch for a header-only file. Keep its populated
@@ -497,4 +505,58 @@ export async function loadExternallyHostedDataset(metadata: {
 
 export function isExternallyHostedFile(file: File): file is KeplerRemoteFile {
   return Boolean((file as KeplerRemoteFile).keplerSourceUrl);
+}
+
+// A loader can return a valid empty table. Only the actual loaded data
+// object, never a serialized reference, should bypass a second download.
+const hydratedEmptyData = new WeakSet<ProtoDataset['data']>();
+
+function hasTabularDatasetData(data?: ProtoDataset['data'] | null): boolean {
+  return Boolean(
+    data &&
+      (data.rows?.length || data.cols?.length || data.arrowTable || hydratedEmptyData.has(data))
+  );
+}
+
+export function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
+  return (
+    dataset.info?.type === DatasetType.EXTERNALLY_HOSTED &&
+    typeof dataset.metadata?.source === 'string' &&
+    !hasTabularDatasetData(dataset.data)
+  );
+}
+
+/** Resolve a saved reference using the same metadata rules as an ordinary map load. */
+export async function hydrateExternallyHostedDataset(
+  dataset: ProtoDataset,
+  options: {onProgress?: (progress: RemoteLoadProgress) => void; signal?: AbortSignal} = {}
+): Promise<ProtoDataset> {
+  if (!needsExternallyHostedHydrate(dataset)) {
+    return dataset;
+  }
+  const loaded = await loadExternallyHostedDataset({
+    source: dataset.metadata?.source as string,
+    format: getRemoteSourceFormat(dataset.metadata),
+    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
+    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0,
+    ...options
+  });
+  if (!loaded.data) {
+    throw new Error(`No data loaded from ${dataset.metadata?.source}`);
+  }
+  if (!hasTabularDatasetData(loaded.data)) {
+    hydratedEmptyData.add(loaded.data);
+  }
+  return {
+    ...dataset,
+    data: loaded.data,
+    metadata: {
+      ...dataset.metadata,
+      etag: loaded.etag,
+      lastModified: loaded.lastModified,
+      ...(typeof loaded.size === 'number' ? {size: loaded.size} : {}),
+      lastFetchedAt: Date.now(),
+      refreshStatus: 'idle'
+    }
+  };
 }

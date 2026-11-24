@@ -142,7 +142,6 @@ import {
   textPlacementFromAngle,
   AnnotationKind,
   DatasetType,
-  getDatasetRefreshIntervalMs,
   getRemoteSourceFormat,
   GEOCODER_DATASET_NAME,
   GEOCODER_ICON_COLOR,
@@ -181,10 +180,13 @@ import {
 import KeplerGLSchema, {Merger, PostMergerPayload, VisState} from '@kepler.gl/schemas';
 import {
   getFilesToParse,
+  hydrateExternallyHostedDataset,
   isZipFileName,
   loadExternallyHostedDataset,
+  needsExternallyHostedHydrate,
   processGeojson,
   type FileCacheItem,
+  type RemoteLoadProgress,
   ZipArchiveExpansion
 } from '@kepler.gl/processors';
 
@@ -3731,56 +3733,9 @@ export const toggleLayerForMapUpdater = (
   };
 };
 
-function hasTabularDatasetData(data?: ProtoDataset['data'] | null): boolean {
-  return Boolean(
-    data?.rows?.length || data?.cols?.length || (data as {arrowTable?: unknown})?.arrowTable
-  );
-}
-
-function needsExternallyHostedHydrate(dataset: ProtoDataset): boolean {
-  return (
-    dataset.info?.type === DatasetType.EXTERNALLY_HOSTED &&
-    typeof dataset.metadata?.source === 'string' &&
-    !hasTabularDatasetData(dataset.data)
-  );
-}
-
-async function hydrateExternallyHostedProtoDataset({
-  arg: dataset,
-  onProgress
-}: {
-  arg: ProtoDataset;
-  onProgress: (progress: {loaded: number; total?: number; percent: number}) => void;
-}): Promise<ProtoDataset> {
-  if (!needsExternallyHostedHydrate(dataset)) {
-    return dataset;
-  }
-  const loaded = await loadExternallyHostedDataset({
-    source: dataset.metadata?.source as string,
-    format: getRemoteSourceFormat(dataset.metadata),
-    size: typeof dataset.metadata?.size === 'number' ? dataset.metadata.size : undefined,
-    bypassCache: getDatasetRefreshIntervalMs(dataset.metadata) > 0,
-    onProgress
-  });
-  if (!loaded.data) {
-    throw new Error(`No data loaded from ${dataset.metadata?.source}`);
-  }
-  return {
-    ...dataset,
-    data: loaded.data,
-    metadata: {
-      ...dataset.metadata,
-      etag: loaded.etag,
-      lastModified: loaded.lastModified,
-      ...(typeof loaded.size === 'number' ? {size: loaded.size} : {}),
-      lastFetchedAt: Date.now(),
-      refreshStatus: 'idle'
-    }
-  };
-}
-
 const HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK = Task.fromPromiseWithProgress(
-  hydrateExternallyHostedProtoDataset,
+  ({arg, onProgress}: {arg: ProtoDataset; onProgress: (progress: RemoteLoadProgress) => void}) =>
+    hydrateExternallyHostedDataset(arg, {onProgress}),
   'HYDRATE_EXTERNALLY_HOSTED_DATASET_TASK'
 );
 
