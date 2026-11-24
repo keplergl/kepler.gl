@@ -62,6 +62,7 @@ const BottomWidgetContainer: IStyledComponent<
 export type BottomWidgetProps = {
   rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
+  isSideBySideSplit?: boolean;
 } & ReturnType<typeof bottomWidgetSelector>;
 type ThemeProp = {
   theme: any;
@@ -96,6 +97,7 @@ export default function BottomWidgetFactory(
       toggleModal,
       visStateActions,
       containerW,
+      isSideBySideSplit,
       uiState,
       sidePanelWidth,
       layers,
@@ -131,11 +133,16 @@ export default function BottomWidgetFactory(
         position.anchorY === 'bottom' &&
         position.x < reservedLegendWidth - allowedLegendOverlap &&
         position.y < timelineHeight - theme.bottomWidgetPaddingTop - allowedLegendOverlap);
+    const isPortable = hasPortableWidth(breakPointValues);
     const spaceForLegendWidth =
-      !hasPortableWidth(breakPointValues) && legend?.show && legend.active && isLegendInCorner
+      !isPortable && legend?.show && legend.active && isLegendInCorner
         ? Math.min(availableWidth, reservedLegendWidth)
         : 0;
     const enlargedFilterWidth = availableWidth - spaceForLegendWidth;
+    const widgetWidth = Math.min(maxWidth, enlargedFilterWidth);
+    // Split any leftover space evenly after excluding the sidebar and pinned legend.
+    const splitInset =
+      isSideBySideSplit && !isPortable ? (enlargedFilterWidth - widgetWidth) / 2 : 0;
     useLayoutEffect(() => {
       const container = containerRef.current;
       if (!container) return undefined;
@@ -210,8 +217,8 @@ export default function BottomWidgetFactory(
 
     return (
       <BottomWidgetContainer
-        width={Math.min(maxWidth, enlargedFilterWidth)}
-        style={{marginRight: spaceForLegendWidth}}
+        width={widgetWidth}
+        style={{marginRight: spaceForLegendWidth + splitInset}}
         className="bottom-widget--container"
         $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
         ref={mergedRef}

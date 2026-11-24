@@ -373,6 +373,69 @@ test('Components -> BottomWidget -> updates available space on resize and sideba
   t.end();
 });
 
+test('Components -> BottomWidget -> centers desktop split timelines in the usable area', t => {
+  const containerW = 1800;
+  const {sidePanelWidth} = defaultProps;
+  const legendWidth =
+    theme.mapControl.width +
+    theme.mapControl.mapLegend.pinned.right * 2 -
+    theme.bottomWidgetPaddingRight;
+  const uiState = {
+    ...defaultProps.uiState,
+    activeSidePanel: 'layer',
+    mapControls: {...defaultProps.uiState.mapControls, mapLegend: {show: true, active: true}}
+  };
+  const matchMedia = Window.matchMedia;
+  let portable = false;
+  Window.matchMedia = query => ({...matchMedia(query), matches: portable});
+  const tree = (
+    isSideBySideSplit,
+    width = containerW,
+    activeSidePanel = uiState.activeSidePanel
+  ) => (
+    <IntlWrapper>
+      <ThemeProvider theme={theme}>
+        <BottomWidget
+          {...defaultProps}
+          containerW={width}
+          isSideBySideSplit={isSideBySideSplit}
+          uiState={{...uiState, activeSidePanel}}
+        />
+      </ThemeProvider>
+    </IntlWrapper>
+  );
+  let view;
+  try {
+    view = render(tree(false));
+    const widget = view.container.querySelector('.bottom-widget--container');
+    const rightInset = () => parseFloat(window.getComputedStyle(widget).marginRight);
+    const width = () => parseFloat(window.getComputedStyle(widget).width);
+    const centerX = () => containerW - rightInset() - width() / 2;
+
+    t.equal(rightInset(), legendWidth, 'single map retains its right alignment');
+    view.rerender(tree(true));
+    t.equal(
+      centerX(),
+      (sidePanelWidth + containerW - legendWidth) / 2,
+      'centers within the desktop split area between the sidebar and pinned legend'
+    );
+    view.rerender(tree(true, containerW, null));
+    t.equal(centerX(), (containerW - legendWidth) / 2, 'recenters after the sidebar closes');
+    view.rerender(tree(true, 1000));
+    t.equal(width(), 1000 - sidePanelWidth - legendWidth, 'uses the full space when uncapped');
+    t.equal(rightInset(), legendWidth, 'keeps the pinned legend clear when uncapped');
+
+    portable = true;
+    view.rerender(tree(true, 600));
+    t.equal(width(), 600 - sidePanelWidth, 'retains the portable layout');
+    t.equal(rightInset(), 0, 'does not offset the widget on portable layouts');
+  } finally {
+    view?.unmount();
+    Window.matchMedia = matchMedia;
+  }
+  t.end();
+});
+
 test('Components -> BottomWidget -> read-only embeds do not reserve hidden sidebar space', t => {
   const Widget = BottomWidgetFactory(
     () => <div>Timeline</div>,

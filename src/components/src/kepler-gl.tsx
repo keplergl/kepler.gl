@@ -47,6 +47,7 @@ import {
   DEFAULT_MAPBOX_API_URL,
   GEOCODER_DATASET_NAME,
   GEOCODER_ICON_COLOR,
+  MapSplitMode,
   MISSING_MAPBOX_TOKEN
 } from '@kepler.gl/constants';
 
@@ -809,6 +810,10 @@ function KeplerGlFactory(
                           rootRef={this.bottomWidgetRef}
                           {...bottomWidgetFields}
                           containerW={dimensions.width}
+                          isSideBySideSplit={
+                            isSplit &&
+                            this.props.mapState.mapSplitMode !== MapSplitMode.SWIPE_COMPARE
+                          }
                           theme={theme}
                         />
                       </BottomWidgetOuter>
