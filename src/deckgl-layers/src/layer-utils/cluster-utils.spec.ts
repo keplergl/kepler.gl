@@ -177,3 +177,178 @@ describe('ClusterBuilder.clustersAtZoom', () => {
 function query(builder: ClusterBuilder, geoJSON, zoom = 4, clusterRadius = 40) {
   return builder.clustersAtZoom({bbox: WORLD_BBOX, clusterRadius, geoJSON, zoom});
 }
+
+describe('ClusterBuilder meter radius', () => {
+  const world: [number, number, number, number] = [-180, -90, 180, 90];
+  const degrees = (meters: number) => ((meters / 6371008.8) * 180) / Math.PI;
+  const makeData = (positions: number[][]) =>
+    positions.map((position, index) => ({index, position}));
+  const geo = input => getGeoJSON(input, d => d.position, null);
+  const memberships = clusters =>
+    clusters.map(c => c.points.map(p => p.index)).sort((a, b) => a[0] - b[0]);
+  const run = (builder, geoJSON, overrides = {}) =>
+    builder.clustersAtZoom({
+      bbox: world,
+      geoJSON,
+      zoom: 4,
+      clusterRadius: 100,
+      clusterRadiusInMeters: true,
+      ...overrides
+    });
+
+  test('uses the same ground distance at different latitudes and every zoom', () => {
+    const input = makeData(
+      [0, 60, 85].flatMap((lat, i) => [
+        [i * 30, lat],
+        [i * 30, lat + degrees(80)],
+        [i * 30, lat + degrees(220)]
+      ])
+    );
+    const builder = new ClusterBuilder();
+    const points = geo(input);
+    const load = jest.spyOn(Supercluster.prototype, 'load');
+    try {
+      for (const zoom of [0, 4, 14.5, 20, 22, 5]) {
+        expect(memberships(run(builder, points, {zoom}))).toEqual([
+          [0, 1],
+          [2],
+          [3, 4],
+          [5],
+          [6, 7],
+          [8]
+        ]);
+      }
+      expect(load).toHaveBeenCalledTimes(1);
+      const local = run(builder, points, {bbox: [29, 59, 31, 61]});
+      expect(memberships(local)).toEqual([[3, 4], [5]]);
+      expect(local.map(c => c.index)).toEqual([0, 1]);
+      expect(load).toHaveBeenCalledTimes(1);
+    } finally {
+      load.mockRestore();
+    }
+  });
+
+  test('uses a great-circle threshold east-west at high latitude', () => {
+    for (const lat of [0, 60, 85]) {
+      const offset = meters => degrees(meters) / Math.cos((lat * Math.PI) / 180);
+      const input = makeData([
+        [0, lat],
+        [offset(99), lat],
+        [-offset(101), lat]
+      ]);
+      expect(memberships(run(new ClusterBuilder(), geo(input)))).toEqual([[0, 1], [2]]);
+    }
+  });
+
+  test('groups across the dateline and keeps the centroid there', () => {
+    const input = makeData([
+      [179.9998, 0],
+      [-179.9998, 0],
+      [0, 0]
+    ]);
+    const builder = new ClusterBuilder();
+    const points = geo(input);
+    const clusters = run(builder, points);
+    expect(memberships(clusters)).toEqual([[0, 1], [2]]);
+    expect(Math.abs(clusters.find(c => c.points.length === 2)!.position[0])).toBeCloseTo(180);
+    expect(memberships(run(builder, points, {bbox: [179, -1, -179, 1]}))).toEqual([[0, 1]]);
+  });
+
+  test('groups around the first unassigned point without expanding through chains', () => {
+    const input = makeData([0, 80, 160].map(meters => [0, degrees(meters)]));
+    const clusters = run(new ClusterBuilder(), geo(input));
+    expect(memberships(clusters)).toEqual([[0, 1], [2]]);
+    expect(clusters[0].points[0]).toBe(input[0]);
+    expect(clusters[0].points[1]).toBe(input[1]);
+  });
+
+  test('switches units and radius without reusing incompatible groups', () => {
+    const input = makeData([
+      [0, 0],
+      [0, degrees(80)]
+    ]);
+    const points = geo(input);
+    const builder = new ClusterBuilder();
+    expect(memberships(run(builder, points))).toEqual([[0, 1]]);
+    expect(memberships(run(builder, points, {clusterRadius: 50}))).toEqual([[0], [1]]);
+    expect(memberships(run(builder, points, {clusterRadiusInMeters: false, zoom: 22}))).toEqual([
+      [0],
+      [1]
+    ]);
+    expect(memberships(run(builder, points))).toEqual([[0, 1]]);
+    expect(run(builder, points, {minPointCount: 3})).toEqual([]);
+    expect(memberships(run(builder, geo(input.slice(1))))).toEqual([[1]]);
+    builder.clearClustererCache();
+    expect(memberships(run(builder, points))).toEqual([[0, 1]]);
+  });
+
+  test('handles empty, invalid, coincident, wrapped and polar coordinates', () => {
+    expect(run(new ClusterBuilder(), [])).toEqual([]);
+    const input = makeData([
+      [NaN, 0],
+      [0, Infinity],
+      [0, 91],
+      [0, -91],
+      [0, 0],
+      [360, 0],
+      [0, 90],
+      [180, 90]
+    ]);
+    expect(memberships(run(new ClusterBuilder(), geo(input), {clusterRadius: 0}))).toEqual([
+      [4, 5],
+      [6, 7]
+    ]);
+    const dense = makeData(Array.from({length: 10000}, () => [0, 0]));
+    const clusters = run(new ClusterBuilder(), geo(dense));
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].points).toEqual(dense);
+  });
+
+  test.each([NaN, Infinity, -1, undefined])(
+    'falls back to the default for invalid radius %p',
+    clusterRadius => {
+      const input = makeData([
+        [0, 0],
+        [0, degrees(30)],
+        [0, degrees(100)]
+      ]);
+      expect(memberships(run(new ClusterBuilder(), geo(input), {clusterRadius}))).toEqual([
+        [0, 1],
+        [2]
+      ]);
+    }
+  );
+
+  test('matches a great-circle reference across small and global distances', () => {
+    const input = makeData(
+      Array.from({length: 128}, (_, index) => [
+        -179 + ((index * 71) % 358),
+        -89 + ((index * 29) % 178)
+      ]).flatMap(position => [position, [position[0] + degrees(10), position[1]]])
+    );
+    const distance = (a, b) => {
+      const radians = Math.PI / 180;
+      const haversine =
+        Math.sin(((b[1] - a[1]) * radians) / 2) ** 2 +
+        Math.cos(a[1] * radians) *
+          Math.cos(b[1] * radians) *
+          Math.sin(((b[0] - a[0]) * radians) / 2) ** 2;
+      return 2 * 6371008.8 * Math.asin(Math.sqrt(Math.min(1, haversine)));
+    };
+    for (const radius of [1, 25, 100000, 5000000, 21000000]) {
+      const remaining = new Set(input);
+      const expected: number[][] = [];
+      for (const seed of input) {
+        if (!remaining.has(seed)) continue;
+        const members = [...remaining].filter(
+          point => distance(seed.position, point.position) <= radius
+        );
+        members.forEach(point => remaining.delete(point));
+        expected.push(members.map(point => point.index));
+      }
+      expect(memberships(run(new ClusterBuilder(), geo(input), {clusterRadius: radius}))).toEqual(
+        expected
+      );
+    }
+  });
+});

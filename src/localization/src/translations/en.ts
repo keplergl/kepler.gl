@@ -225,6 +225,10 @@ export default {
     fixedRadiusDescription: 'Map radius to absolute radius in meters, e.g. 5 to 5 meters',
     radiusRange: 'Radius Range',
     clusterRadius: 'Cluster Radius in Pixels',
+    clusterRadiusInMeters: 'Use Meters',
+    clusterRadiusInMetersDescription:
+      'Group points by ground distance, independently of zoom. Pixel and meter radius values are saved separately.',
+    clusterRadiusMeters: 'Cluster Radius in Meters',
     radiusRangePixels: 'Radius Range in pixels',
     minClusterSize: 'Min Points per Cluster',
     minClusterSizeDescription:

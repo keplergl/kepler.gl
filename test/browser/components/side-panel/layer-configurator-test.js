@@ -182,6 +182,75 @@ test('Components -> LayerConfigurator localizes the aggregation count label', t 
   t.end();
 });
 
+test('Components -> LayerConfigurator switches cluster radius units and preserves both values', t => {
+  const changed = sinon.spy();
+  function Editor() {
+    const [config, setConfig] = React.useState({clusterRadius: 75, clusterRadiusMeters: 250});
+    const layer = new LayerClasses.cluster({id: 'cluster-units', dataId: testCsvDataId});
+    layer.updateLayerVisConfig(config);
+    return (
+      <LayerConfigurator
+        {...defaultProps}
+        layer={layer}
+        updateLayerVisConfig={next => {
+          changed(next);
+          setConfig(previous => ({...previous, ...next}));
+        }}
+      />
+    );
+  }
+  const view = renderWithTheme(
+    <IntlWrapper>
+      <Editor />
+    </IntlWrapper>
+  );
+  try {
+    const toggle = view.container.querySelector('#cluster-units-clusterRadiusInMeters-switch');
+    t.notOk(toggle.checked, 'default is pixels');
+    t.equal(
+      view
+        .getByRole('button', {name: 'Enter custom value for Cluster Radius in Pixels'})
+        .getAttribute('aria-description'),
+      '75',
+      'uses the saved pixel radius'
+    );
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {clusterRadiusInMeters: true}, 'switch enables meters');
+    fireEvent.click(
+      view.getByRole('button', {name: 'Enter custom value for Cluster Radius in Meters'})
+    );
+    const meterInput = view.getByRole('spinbutton', {name: 'Cluster Radius in Meters'});
+    t.equal(meterInput.value, '250', 'uses the independent meter radius');
+    fireEvent.change(meterInput, {target: {value: '500'}});
+    fireEvent.blur(meterInput);
+    t.deepEqual(
+      changed.lastCall.args[0],
+      {clusterRadiusMeters: 500},
+      'edits meters without changing pixels'
+    );
+    fireEvent.click(toggle);
+    t.deepEqual(changed.lastCall.args[0], {clusterRadiusInMeters: false}, 'can return to pixels');
+    t.equal(
+      view
+        .getByRole('button', {name: 'Enter custom value for Cluster Radius in Pixels'})
+        .getAttribute('aria-description'),
+      '75',
+      'restores the original pixel radius'
+    );
+    fireEvent.click(toggle);
+    t.equal(
+      view
+        .getByRole('button', {name: 'Enter custom value for Cluster Radius in Meters'})
+        .getAttribute('aria-description'),
+      '500',
+      'retains the edited meter radius'
+    );
+  } finally {
+    view.unmount();
+    t.end();
+  }
+});
+
 test('Components -> TextLabelPanel -> skips camera renders and follows label, field and locale updates', t => {
   const rendered = sinon.spy();
   const Panel = TextLabelPanelFactory(

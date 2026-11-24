@@ -4,6 +4,7 @@
 import Supercluster from 'supercluster';
 import memoize from 'es-toolkit/compat/memoize';
 import {BBox, Position} from 'geojson';
+import {getMeterClusterer} from './cluster-utils-meters';
 
 // es-toolkit/compat memoize does not export lodash's MemoizedFunction type.
 type MemoizedFunction = {
@@ -55,6 +56,8 @@ const getClusterer = ({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}
 };
 
 export default class ClusterBuilder {
+  // Only retain the latest meter index; camera changes never rebuild it.
+  private meterCache?: {geoJSON: any; radius: number; clusterer: Supercluster};
   clusterer: (({clusterRadius, geoJSON}: {clusterRadius: number; geoJSON}) => Supercluster) &
     MemoizedFunction;
 
@@ -67,12 +70,14 @@ export default class ClusterBuilder {
     clusterRadius,
     geoJSON,
     zoom,
+    clusterRadiusInMeters = false,
     minPointCount = 1
   }: {
     bbox: BBox;
     clusterRadius: number;
     geoJSON;
     zoom: number;
+    clusterRadiusInMeters?: boolean;
     /** Drop clusters holding fewer points than this, so sparse noise is not drawn. */
     minPointCount?: number;
   }): {
@@ -80,14 +85,30 @@ export default class ClusterBuilder {
     position: Position;
     index: number;
   }[] {
-    const clusterer = this.clusterer({clusterRadius, geoJSON});
+    let clusterer: Supercluster;
+    if (clusterRadiusInMeters === true) {
+      if (
+        !this.meterCache ||
+        this.meterCache.geoJSON !== geoJSON ||
+        !Object.is(this.meterCache.radius, clusterRadius)
+      ) {
+        this.meterCache = {
+          geoJSON,
+          radius: clusterRadius,
+          clusterer: getMeterClusterer(geoJSON, clusterRadius)
+        };
+      }
+      clusterer = this.meterCache.clusterer;
+    } else {
+      clusterer = this.clusterer({clusterRadius, geoJSON});
+    }
     const cutoff = Number.isFinite(minPointCount) ? minPointCount : 1;
 
     // map clusters to formatted bins to be passed to deck.gl bin-sorter.
     // `index` must stay the position in the returned array: the bin sorter and
     // picking both look cells up by it.
     const clusters: {points: any; position: Position; index: number}[] = [];
-    for (const c of clusterer.getClusters(bbox, zoom)) {
+    for (const c of clusterer.getClusters(bbox, clusterRadiusInMeters === true ? 1 : zoom)) {
       const points = c.properties.points;
       if (points.length < cutoff) {
         continue;
@@ -104,5 +125,6 @@ export default class ClusterBuilder {
 
   clearClustererCache() {
     this.clusterer.cache.clear?.();
+    this.meterCache = undefined;
   }
 }
