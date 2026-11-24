@@ -16,6 +16,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   AddDataToMapOptions,
+  GeocoderFocusMode,
   LayerOrder,
   MapState,
   ProtoDataset,
@@ -147,6 +148,7 @@ interface GeocoderPanelProps {
   updateMap: ActionHandler<typeof updateMap>;
   layerOrder: LayerOrder;
   limitSearch?: boolean;
+  focusMode?: GeocoderFocusMode;
   color?: RGBColor;
 
   transitionDuration?: MapViewState['transitionDuration'];
@@ -165,6 +167,7 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
     removeDataset,
     updateMap,
     limitSearch = false,
+    focusMode,
     color = GEOCODER_ICON_COLOR,
     transitionDuration = 3000,
     width,
@@ -190,19 +193,23 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
           updateVisData(...updateVisDataPayload, generateConfig(color));
         }
 
-        const bounds = bbox || [
-          lon - GEOCODER_GEO_OFFSET,
-          lat - GEOCODER_GEO_OFFSET,
-          lon + GEOCODER_GEO_OFFSET,
-          lat + GEOCODER_GEO_OFFSET
-        ];
-        const centerAndZoom = getCenterAndZoomFromBounds(bounds, {
-          width: mapState.width,
-          height: mapState.height
-        });
+        const centerOnPin = focusMode === 'centerPin';
+        // Don't fit the bounds in pin mode: keep the current pane's zoom and orientation.
+        const centerAndZoom = centerOnPin
+          ? Number.isFinite(lat) && Number.isFinite(lon)
+            ? {center: [lon, lat]}
+            : null
+          : getCenterAndZoomFromBounds(
+              bbox || [
+                lon - GEOCODER_GEO_OFFSET,
+                lat - GEOCODER_GEO_OFFSET,
+                lon + GEOCODER_GEO_OFFSET,
+                lat + GEOCODER_GEO_OFFSET
+              ],
+              {width: mapState.width, height: mapState.height}
+            );
 
         if (!centerAndZoom) {
-          // failed to fit bounds
           return;
         }
 
@@ -210,18 +217,27 @@ export default function GeocoderPanelFactory(): React.FC<GeocoderPanelProps> {
           {
             latitude: centerAndZoom.center[1],
             longitude: centerAndZoom.center[0],
-            // For marginal or invalid bounds, zoom may be NaN. Make sure to provide a valid value in order
-            // to avoid corrupt state and potential crashes as zoom is expected to be a number
-            ...(Number.isFinite(centerAndZoom.zoom) ? {zoom: centerAndZoom.zoom} : {}),
-            pitch: 0,
-            bearing: 0,
+            ...(!centerOnPin ? {pitch: 0, bearing: 0} : {}),
+            // Degenerate fit bounds may produce a non-finite zoom; leave it unchanged.
+            ...('zoom' in centerAndZoom && Number.isFinite(centerAndZoom.zoom)
+              ? {zoom: centerAndZoom.zoom}
+              : {}),
             transitionDuration,
             transitionInterpolator: new FlyToInterpolator()
           },
           index
         );
       },
-      [color, index, mapState, removeGeocoderDataset, transitionDuration, updateMap, updateVisData]
+      [
+        color,
+        focusMode,
+        index,
+        mapState,
+        removeGeocoderDataset,
+        transitionDuration,
+        updateMap,
+        updateVisData
+      ]
     );
 
     return (

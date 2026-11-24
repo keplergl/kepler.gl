@@ -10,6 +10,7 @@ import {
   ColorSelectorFactory,
   GeocoderConfigFactory,
   GeocoderPanelFactory,
+  ItemSelector,
   appInjector,
   testForCoordinates
 } from '@kepler.gl/components';
@@ -222,6 +223,28 @@ test('GeocoderPanel - render', t => {
     'Should be dispatching removeDataset action on removeMarker'
   );
 
+  const pinWrapper = mountWithTheme(
+    <IntlWrapper>
+      <GeocoderPanel {...wrapper.find(GeocoderPanel).props()} focusMode="centerPin" index={1} />
+    </IntlWrapper>
+  );
+  const selectPin = pinWrapper.find('GeoCoder').props().onSelected;
+  for (const result of [mockGeoItem, mockGeoItemWithOutBbox]) {
+    selectPin(null, result);
+    const [viewport, index] = updateMap.lastCall.args;
+    t.deepEqual(
+      {latitude: viewport.latitude, longitude: viewport.longitude},
+      {latitude: 55, longitude: 1},
+      'center mode uses the result pin, not the bounding-box midpoint'
+    );
+    t.notOk('zoom' in viewport, 'center mode keeps the current zoom');
+    t.notOk(
+      'pitch' in viewport || 'bearing' in viewport,
+      'center mode keeps the current orientation'
+    );
+    t.equal(index, 1, 'center mode updates the selected split pane');
+  }
+
   t.end();
 });
 
@@ -247,6 +270,19 @@ test('GeocoderConfig - change pin color', t => {
   t.ok(
     onChange.calledOnce && onChange.calledWith({limitSearch: false, color: nextColor}),
     'Should update the geocoder pin color'
+  );
+
+  const focusSelector = wrapper.find(ItemSelector);
+  t.equal(
+    focusSelector.props().selectedItems,
+    'fitBounds',
+    'maps without the setting default to fit'
+  );
+  focusSelector.props().onChange('centerPin');
+  t.deepEqual(
+    onChange.lastCall.args[0],
+    {limitSearch: false, color, focusMode: 'centerPin'},
+    'changing result focus preserves existing geocoder settings'
   );
 
   t.end();

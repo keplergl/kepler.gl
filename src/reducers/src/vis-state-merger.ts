@@ -562,7 +562,10 @@ export function mergeInteractions<S extends VisState>(
                   ...currentConfig,
                   ...configToMerge
                 },
-                Object.keys(currentConfig)
+                // The optional geocoder mode is absent from legacy/default configs.
+                key === 'geocoder'
+                  ? [...Object.keys(currentConfig), 'focusMode']
+                  : Object.keys(currentConfig)
               )
             }
           : {})
@@ -658,6 +661,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
 
     if (key === 'geocoder') {
       combined[key].limitSearch = toBeCombinedProps.some(p => p?.limitSearch);
+      const focusMode = toBeCombinedProps.find(p => p?.focusMode)?.focusMode;
+      if (focusMode) {
+        combined[key].focusMode = focusMode;
+      }
       const color = toBeCombinedProps.find(p => p?.color)?.color;
       if (color) {
         combined[key].color = color;

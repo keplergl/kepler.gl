@@ -7,7 +7,9 @@ import Switch from '../../common/switch';
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {GEOCODER_ICON_COLOR} from '@kepler.gl/constants';
-import {RGBColor} from '@kepler.gl/types';
+import {GeocoderFocusMode, RGBColor} from '@kepler.gl/types';
+import {injectIntl, IntlShape} from 'react-intl';
+import ItemSelector from '../../common/item-selector/item-selector';
 import ColorSelectorFactory from '../layer-panel/color-selector';
 
 const LimitSwitchWrapper = styled.div`
@@ -19,18 +21,24 @@ const LimitSwitchWrapper = styled.div`
   margin-bottom: 8px;
 `;
 
+type Config = {
+  limitSearch: boolean;
+  color?: RGBColor;
+  focusMode?: GeocoderFocusMode;
+};
+
+const focusModes: GeocoderFocusMode[] = ['fitBounds', 'centerPin'];
+
 type GeocoderConfigProps = {
-  config: {
-    limitSearch: boolean;
-    color?: RGBColor;
-  };
-  onChange: (config: {limitSearch: boolean; color?: RGBColor}) => void;
+  config: Config;
+  onChange: (config: Config) => void;
+  intl: IntlShape;
 };
 
 GeocoderConfigFactory.deps = [ColorSelectorFactory];
 
 function GeocoderConfigFactory(ColorSelector: ReturnType<typeof ColorSelectorFactory>) {
-  const GeocoderConfig = ({config, onChange}: GeocoderConfigProps) => (
+  const GeocoderConfig = ({config, onChange, intl}: GeocoderConfigProps) => (
     <SidePanelSection>
       <LimitSwitchWrapper>
         <FormattedMessage id="geocoder.limitSearch" />
@@ -58,10 +66,29 @@ function GeocoderConfigFactory(ColorSelector: ReturnType<typeof ColorSelectorFac
         ]}
         inputTheme="secondary"
       />
+      <SidePanelSection>
+        <PanelLabel>
+          <FormattedMessage id="geocoder.focusMode" />
+        </PanelLabel>
+        <ItemSelector
+          options={focusModes}
+          selectedItems={config?.focusMode === 'centerPin' ? 'centerPin' : 'fitBounds'}
+          getOptionValue={mode => mode}
+          displayOption={mode => intl.formatMessage({id: `geocoder.focusModes.${mode}`})}
+          onChange={focusMode => {
+            if (focusMode === 'fitBounds' || focusMode === 'centerPin') {
+              onChange({...config, focusMode});
+            }
+          }}
+          inputTheme="secondary"
+          multiSelect={false}
+          searchable={false}
+        />
+      </SidePanelSection>
     </SidePanelSection>
   );
 
-  return GeocoderConfig;
+  return injectIntl(GeocoderConfig);
 }
 
 export default GeocoderConfigFactory;

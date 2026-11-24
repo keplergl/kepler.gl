@@ -1356,7 +1356,12 @@ ${'```'}
   geocoder: {
     title: 'Enter an address or coordinates, ex 37.79,-122.40',
     limitSearch: 'Limit Search to Viewport',
-    pinColor: 'Pin Color'
+    pinColor: 'Pin Color',
+    focusMode: 'Result Focus',
+    focusModes: {
+      fitBounds: 'Fit result area',
+      centerPin: 'Center on pin'
+    }
   },
   fieldSelector: {
     clearAll: 'Clear All',

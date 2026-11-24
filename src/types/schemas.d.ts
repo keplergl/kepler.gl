@@ -49,6 +49,7 @@ export type SavedInteractionConfig = {
     enabled: boolean;
     limitSearch?: boolean;
     color?: RGBColor;
+    focusMode?: InteractionConfig['geocoder']['config']['focusMode'];
   };
   brush: InteractionConfig['brush']['config'] & {
     enabled: boolean;

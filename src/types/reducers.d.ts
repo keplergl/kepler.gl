@@ -427,12 +427,14 @@ export type TooltipInfo = BaseInteraction & {
     compareType: CompareType;
   };
 };
+export type GeocoderFocusMode = 'fitBounds' | 'centerPin';
 export type Geocoder = BaseInteraction & {
   id: 'geocoder';
   position: number[] | null;
   config: {
     limitSearch: boolean;
     color: RGBColor;
+    focusMode?: GeocoderFocusMode;
   };
 };
 export type Brush = BaseInteraction & {
