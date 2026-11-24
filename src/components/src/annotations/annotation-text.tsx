@@ -348,7 +348,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
             key={readoutValue ?? '—'}
             isEditable={false}
             editorState={formattedReadout}
-            width={emptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
             height={emptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
             initialText={readoutValue ?? '—'}
             onChange={ignoreReadoutChange}
