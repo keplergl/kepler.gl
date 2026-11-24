@@ -925,8 +925,11 @@ function addOrRemoveTextLabels(newFields, textLabel, defaultTextLabel = DEFAULT_
   return newTextLabel;
 }
 
-function updateTextLabelPropAndValue(idx, prop, value, textLabel) {
-  if (!Object.prototype.hasOwnProperty.call(textLabel[idx], prop)) {
+function updateTextLabelPropAndValue(idx, prop, value, textLabel, allowMissingProp = false) {
+  if (
+    !textLabel[idx] ||
+    (!allowMissingProp && !Object.prototype.hasOwnProperty.call(textLabel[idx], prop))
+  ) {
     return textLabel;
   }
 
@@ -979,7 +982,9 @@ export function layerTextLabelChangeUpdater(
   } else if (idx === 'all' && prop) {
     newTextLabel = textLabel.map(tl => ({...tl, [prop]: value}));
   } else {
-    newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel);
+    // Older and converted Point labels can lack the optional angle field.
+    const allowMissingProp = oldLayer.type === LAYER_TYPES.point && prop === 'angleField';
+    newTextLabel = updateTextLabelPropAndValue(idx, prop, value, newTextLabel, allowMissingProp);
   }
   // update text label prop and value
   return layerConfigChangeUpdater(state, {

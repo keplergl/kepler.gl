@@ -1640,6 +1640,44 @@ test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE', t => {
   t.end();
 });
 
+test('#visStateReducer -> Point labels can select and clear rotation after a type change', t => {
+  const initialState = StateWFiles.visState;
+  const [pointLayer] = initialState.layers;
+  const fields = initialState.datasets[pointLayer.config.dataId].fields;
+  const heading = fields.find(
+    field => field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real
+  );
+  const arcState = reducer(initialState, VisStateActions.layerTypeChange(pointLayer, 'arc'));
+  const [arcLayer] = arcState.layers;
+  const labeledState = reducer(
+    arcState,
+    VisStateActions.layerConfigChange(arcLayer, {
+      textLabel: [{...DEFAULT_TEXT_LABEL, field: heading}]
+    })
+  );
+
+  const pointState = reducer(
+    labeledState,
+    VisStateActions.layerTypeChange(labeledState.layers[0], 'point')
+  );
+  const [convertedPoint] = pointState.layers;
+  t.equal(convertedPoint.config.textLabel[0].field?.name, heading.name, 'keeps the label field');
+
+  const selected = reducer(
+    pointState,
+    VisStateActions.layerTextLabelChange(convertedPoint, 0, 'angleField', heading.name)
+  );
+  t.equal(selected.layers[0].config.textLabel[0].angleField, heading.name, 'selects rotation');
+
+  const cleared = reducer(
+    selected,
+    VisStateActions.layerTextLabelChange(selected.layers[0], 0, 'angleField', null)
+  );
+  t.equal(cleared.layers[0].config.textLabel[0].angleField, null, 'clears rotation');
+  t.equal(cleared.layers[0].config.textLabel[0].field?.name, heading.name, 'keeps the label');
+  t.end();
+});
+
 test('#visStateReducer -> LAYER_TEXT_LABEL_CHANGE -> cluster point count is added once', t => {
   const initialState = StateWFiles.visState;
   const pointLayer = initialState.layers.find(l => l.type === 'point');

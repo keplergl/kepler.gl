@@ -546,7 +546,6 @@ export default class PointLayer extends Layer {
       ...defaultLayerConfig,
 
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
-      textLabel: defaultLayerConfig.textLabel.map(label => ({...label, angleField: null})),
 
       // add stroke color visual channel
       strokeColorField: null,

@@ -70,18 +70,22 @@ test('saves and restores a configured point label angle without changing old sav
   const field = {name: 'label', type: 'string', fieldIdx: 0, valueAccessor: () => 'A'};
   const label = {...defaults[0], field};
   const save = (value: object) => layerPropsV1.config.save(value).config.textLabel;
-  const restore = (saved: object[]) =>
+  const restore = (saved: object[], layerType = 'point') =>
     validateSavedTextLabel(
       [field],
       defaults,
-      layerPropsV1.config.load({textLabel: saved}).config.textLabel
+      layerPropsV1.config.load({textLabel: saved}).config.textLabel,
+      {layerType}
     );
 
   const saved = save({textLabel: [{...label, angleField: 'heading'}]});
   expect(saved[0].angleField).toBe('heading');
   expect(restore(saved)[0]).toMatchObject({field, angleField: 'heading'});
+  expect(restore(saved, 'arc')[0]).not.toHaveProperty('angleField');
 
   const old = save({textLabel: [label]});
   expect(old[0]).not.toHaveProperty('angleField');
-  expect(restore(old)[0]).toMatchObject({field, angleField: null});
+  const [restoredOld] = restore(old);
+  expect(restoredOld).toMatchObject({field});
+  expect(restoredOld).not.toHaveProperty('angleField');
 });

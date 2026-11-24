@@ -347,9 +347,12 @@ test('collision labels preserve shared extensions without mutating another layer
 });
 
 describe.each([false, true])('point label rotation (Arrow: %s)', useArrow => {
-  const oldConfig = getApplicationConfig();
-  beforeEach(() => initApplicationConfig({maxArrowBatches: 2}));
-  afterEach(() => initApplicationConfig(oldConfig));
+  let priorMaxArrowBatches: number;
+  beforeEach(() => {
+    priorMaxArrowBatches = getApplicationConfig().maxArrowBatches;
+    initApplicationConfig({maxArrowBatches: 2});
+  });
+  afterEach(() => initApplicationConfig({maxArrowBatches: priorMaxArrowBatches}));
 
   test('resolves angle fields per row and restores the default when cleared', () => {
     const base = labelSnapshot(['A', 'BC', 'D'], useArrow);
