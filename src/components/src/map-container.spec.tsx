@@ -131,6 +131,99 @@ describe('map coordinate copying', () => {
   });
 });
 
+describe('planar rotation gestures', () => {
+  function setupController(globeEnabled: boolean) {
+    const state = {
+      ...INITIAL_MAP_STATE,
+      width: 400,
+      height: 400,
+      longitude: 0,
+      latitude: 0,
+      zoom: 3,
+      pitch: 0,
+      bearing: 0,
+      dragRotate: true,
+      globe: {...INITIAL_MAP_STATE.globe!, enabled: globeEnabled}
+    };
+    const map = new MapContainer({
+      index: 0,
+      mapState: state,
+      mapStyle: INITIAL_MAP_STYLE,
+      visState: INITIAL_VIS_STATE,
+      mapControls: INITIAL_UI_STATE.mapControls,
+      visStateActions: {},
+      generateDeckGLLayers: () => []
+    });
+    const overlay = map._renderDeckOverlay([], {primaryMap: true, isInteractive: true});
+    const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
+    const view = deck.props.views;
+    let camera = state;
+    const controller = new view.ControllerType({
+      makeViewport: props => view.makeViewport({width: 400, height: 400, viewState: props}),
+      eventManager: {on: jest.fn(), off: jest.fn()},
+      timeline: new Timeline(),
+      onViewStateChange: ({viewState}) => {
+        camera = {...camera, ...viewState};
+        controller.setProps({...camera, ...deck.props.controller, x: 0, y: 0});
+      }
+    });
+    controller.setProps({...camera, ...deck.props.controller, x: 0, y: 0});
+    const gesture = (type: string, x: number, y: number, extras = {}) =>
+      controller.handleEvent({
+        type,
+        offsetCenter: {x, y},
+        srcEvent: {},
+        stopPropagation: jest.fn(),
+        ...extras
+      });
+    return {camera: () => camera, gesture, finalize: () => controller.finalize()};
+  }
+
+  test.each([{srcEvent: {metaKey: true}}, {rightButton: true}])(
+    'only applies planar rotation in 3D for %j',
+    alternateDrag => {
+      for (const isGlobe of [true, false]) {
+        const {camera, gesture, finalize} = setupController(isGlobe);
+        try {
+          gesture('panstart', 200, 200, alternateDrag);
+          gesture('panmove', 230, 225, alternateDrag);
+          gesture('panend', 230, 225, alternateDrag);
+          if (isGlobe) {
+            expect(camera()).toMatchObject({longitude: 0, latitude: 0, bearing: 0, pitch: 0});
+          } else {
+            expect(camera().bearing).not.toBe(0);
+          }
+        } finally {
+          finalize();
+        }
+      }
+    }
+  );
+
+  test('still pans and pinch-zooms the globe', () => {
+    const {camera, gesture, finalize} = setupController(true);
+    try {
+      gesture('panstart', 200, 200);
+      gesture('panmove', 215, 210);
+      gesture('panend', 215, 210);
+      expect(camera().longitude).not.toBe(0);
+      const afterPan = camera();
+      const touch = {pointerType: 'touch'};
+      gesture('multipanstart', 200, 200, touch);
+      gesture('multipanmove', 230, 225, {...touch, deltaX: 30, deltaY: 25});
+      gesture('multipanend', 230, 225, touch);
+      expect(camera()).toEqual(afterPan);
+      gesture('pinchstart', 200, 200, {...touch, scale: 1, rotation: 0});
+      gesture('pinchmove', 200, 200, {...touch, scale: 1.5, rotation: 30});
+      gesture('pinchend', 200, 200, {...touch, scale: 1.5, rotation: 30});
+      expect(camera().zoom).toBeGreaterThan(afterPan.zoom);
+      expect(camera().bearing).toBe(afterPan.bearing);
+    } finally {
+      finalize();
+    }
+  });
+});
+
 describe('double-click zoom', () => {
   function getController(
     controller: boolean | {doubleClickZoom?: boolean} | undefined,
