@@ -10,6 +10,9 @@ import {getMapBoundaryCommand} from './boundary-command';
 import {getAddLayerCommand} from './layer-creation-command';
 import {
   getLayerOrderCommand,
+  getCreateLayerGroupCommand,
+  getMoveLayerToGroupCommand,
+  getUngroupLayersCommand,
   getReorderLayersCommand,
   getRemoveLayerCommand,
   getRemoveDatasetCommand
@@ -67,6 +70,9 @@ export function getKeplerCommands(ctx: KeplerContext): Record<string, RoomComman
     getMapBoundaryCommand(ctx),
     getAddLayerCommand(ctx),
     getLayerOrderCommand(ctx),
+    getCreateLayerGroupCommand(ctx),
+    getMoveLayerToGroupCommand(ctx),
+    getUngroupLayersCommand(ctx),
     getReorderLayersCommand(ctx),
     getRemoveLayerCommand(ctx),
     getRemoveDatasetCommand(ctx),
@@ -114,6 +120,9 @@ export {getMapBoundaryCommand} from './boundary-command';
 export {getAddLayerCommand, guessDefaultLayer} from './layer-creation-command';
 export {
   getLayerOrderCommand,
+  getCreateLayerGroupCommand,
+  getMoveLayerToGroupCommand,
+  getUngroupLayersCommand,
   getReorderLayersCommand,
   getRemoveLayerCommand,
   getRemoveDatasetCommand
