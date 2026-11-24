@@ -15,6 +15,27 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.28] - Nov 24 2026
+
+- 54939bf43 feat(cluster): support radius in meters (#4364)
+- 7291609ad feat(mcp): support range-valued layer options (#4360)
+- 3ed615ce8 feat(mcp): style feature layers by timeline age (#4363)
+- 0f16fc0e4 feat(mcp): track project import readiness (#4361)
+- 80c37d99d feat(mcp): configure field-bound labels and tooltip fields (#4362)
+- 5408e4a83 feat(mcp): discover and configure map effects (#4359)
+- 427302185 feat(mcp): inspect and manage layers and datasets (#4358)
+- 12a517728 feat(mcp): reuse Google 3D Tiles credentials (#4357)
+- cbf10078e feat(mcp): control shared data timelines (#4352)
+- 0e6fa93d7 feat(mcp): open and save complete projects (#4350)
+- 903f7015b fix(mcp): render preview frames without copying datasets (#4355)
+- 03f089063 feat(mcp): expose connection status and capabilities (#4351)
+- 229456eb0 feat(mcp): render native export preview frames (#4353)
+- fe5b171af feat(mcp): export native map videos asynchronously (#4354)
+- 03e8699a4 feat(annotations): add viewport captions and timeline readouts (#4349)
+- 6638a6198 feat(mcp): import local datasets through the bridge (#4348)
+- ec8fa969e feat(mcp): author timed property transitions (#4346)
+- 13fe5b708 feat(mcp): edit and style geographic annotations (#4347)
+
 ## [3.3.0-alpha.27] - Nov 23 2026
 
 - 159ddb82c fix(demo): preserve H3 column geometry in source builds (#4343)
