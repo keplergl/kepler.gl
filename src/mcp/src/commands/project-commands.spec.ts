@@ -5,8 +5,10 @@ import {createStore, applyMiddleware} from 'redux';
 import {taskMiddleware} from '@kepler.gl/tasks';
 import {keplerGlReducer} from '@kepler.gl/reducers';
 import type {KeplerGlState} from '@kepler.gl/reducers';
-import {ActionTypes, loadMapStyles, registerEntry, wrapTo} from '@kepler.gl/actions';
+import {ActionTypes, addDataToMap, loadMapStyles, registerEntry, wrapTo} from '@kepler.gl/actions';
 import {DatasetType, SURFACE_FOG_TYPE} from '@kepler.gl/constants';
+import {processArrowTable} from '@kepler.gl/processors';
+import {Field, FixedSizeList, Float64, Struct, Table, vectorFromArray} from 'apache-arrow';
 import {KeplerTable} from '@kepler.gl/table';
 import {
   getOpenProjectCommand,
@@ -241,6 +243,110 @@ it('round-trips the complete embedded project after both original URLs are unava
     tooltipsBefore
   );
 });
+
+it.each([
+  ['interleaved', false],
+  ['separated', true]
+])(
+  'keeps %s native GeoArrow points renderable after an embedded project round trip',
+  async (encoding, referenced) => {
+    const {ctx} = setup();
+    const coordinates = [-122.4, 37.8, 125];
+    const geometry =
+      encoding === 'interleaved'
+        ? vectorFromArray(
+            [coordinates, null],
+            new FixedSizeList(3, new Field('xyz', new Float64()))
+          )
+        : vectorFromArray(
+            [{x: coordinates[0], y: coordinates[1], z: coordinates[2]}, null],
+            new Struct(['x', 'y', 'z'].map(axis => new Field(axis, new Float64(), false)))
+          );
+    const table = new Table({geometry});
+    table.schema.fields[0].metadata.set('ARROW:extension:name', 'geoarrow.point');
+    const data = processArrowTable({shape: 'arrow-table', data: table});
+    if (!data) throw new Error('Could not process native GeoArrow fixture');
+
+    await ctx.dispatch(
+      addDataToMap({
+        datasets: [
+          {
+            info: {
+              id: 'arrow-points',
+              label: 'Arrow points',
+              type: referenced ? DatasetType.EXTERNALLY_HOSTED : DatasetType.LOCAL
+            },
+            data,
+            metadata: {
+              format: 'arrow',
+              ...(referenced
+                ? {source: 'https://example.test/points.arrow', sourceFormat: 'arrow'}
+                : {})
+            }
+          }
+        ],
+        options: {autoCreateLayers: false, centerMap: false},
+        config: {
+          visState: {
+            layers: [
+              {
+                id: 'native-points',
+                type: 'point',
+                config: {
+                  dataId: 'arrow-points',
+                  columnMode: 'geoarrow',
+                  columns: {geoarrow: 'geometry'},
+                  isVisible: true
+                }
+              }
+            ]
+          }
+        }
+      })
+    );
+    const originalLayer = ctx.getVisState().layers.find(layer => layer.type === 'point')!;
+    expect(originalLayer.config).toMatchObject({
+      columnMode: 'geoarrow',
+      columns: {geoarrow: {value: 'geometry'}}
+    });
+
+    if (referenced) {
+      const result = await execute(getSaveProjectCommand(ctx), {
+        dataMode: 'references',
+        includeCredentials: false
+      });
+      expect(result.success).toBe(true);
+      const reference = JSON.parse(result.data.artifact.text);
+      expect(reference.datasets[0].data).toMatchObject({
+        allData: [],
+        metadata: {source: 'https://example.test/points.arrow', format: 'arrow'}
+      });
+      expect(reference.config.config.visState.layers[0].config).toMatchObject({
+        columnMode: 'geoarrow',
+        columns: {geoarrow: 'geometry'}
+      });
+    }
+
+    const saved = await execute(getSaveProjectCommand(ctx), {
+      dataMode: 'embedded',
+      includeCredentials: false
+    });
+    expect(saved.success).toBe(true);
+    expect(originalLayer.config.columnMode).toBe('geoarrow');
+
+    const other = setup();
+    serve(JSON.parse(saved.data.artifact.text));
+    expect(await execute(getOpenProjectCommand(other.ctx), {url: '/geoarrow.json'})).toMatchObject({
+      success: true
+    });
+    const {layers, layerData} = other.ctx.getVisState();
+    const layerIndex = layers.findIndex(layer => layer.id === originalLayer.id);
+    expect(layerIndex).toBeGreaterThanOrEqual(0);
+    expect(layerData[layerIndex].data).toEqual([
+      expect.objectContaining({position: coordinates, index: 0})
+    ]);
+  }
+);
 
 it('reports the legacy Surface Fog parameter without inventing animation timing', async () => {
   const project = fixture();
