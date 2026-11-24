@@ -103,6 +103,7 @@ function DatasetSectionFactory(
             showDatasetTable={showDatasetTable}
             updateTableColor={updateTableColor}
             removeDataset={removeDataset}
+            renameDataset={visStateActions?.renameDataset}
             replaceDataset={replaceDataset}
             showDeleteDataset={showDeleteDataset}
             refreshDataset={refreshDataset}

@@ -3,6 +3,7 @@
 
 import React, {useCallback, useState} from 'react';
 import {useIntl} from 'react-intl';
+import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {DatasetType} from '@kepler.gl/constants';
 import {getApplicationConfig} from '@kepler.gl/utils';
@@ -16,6 +17,7 @@ import {
 
 import {
   Clock,
+  Edit,
   Grouping,
   Join,
   Overflow,
@@ -33,6 +35,12 @@ import {
   ContextMenuToggle
 } from '../../common/context-menu';
 
+const DatasetMenuToggle = styled(ContextMenuToggle).attrs({as: 'button', type: 'button'})`
+  padding: 0;
+  border: 0;
+  background: transparent;
+`;
+
 export type DatasetOpsMenuProps = {
   datasetId: string;
   dataset: {
@@ -49,6 +57,8 @@ export type DatasetOpsMenuProps = {
   removeDataset?: ActionHandler<typeof openDeleteModal>;
   onToggleRefreshSettings?: () => void;
   refreshSettingsOpen?: boolean;
+  onRename?: () => void;
+  toggleRef?: React.Ref<HTMLButtonElement>;
 };
 
 export function DatasetOpsMenu({
@@ -62,7 +72,9 @@ export function DatasetOpsMenu({
   showDeleteDataset,
   removeDataset,
   onToggleRefreshSettings,
-  refreshSettingsOpen
+  refreshSettingsOpen,
+  onRename,
+  toggleRef
 }: DatasetOpsMenuProps) {
   const intl = useIntl();
   const [open, setOpen] = useState(false);
@@ -86,11 +98,20 @@ export function DatasetOpsMenu({
     [datasetId]
   );
 
-  if (!showOps && !showReplace && !showRemove && !showRefresh) {
+  if (!showOps && !showReplace && !showRemove && !showRefresh && !onRename) {
     return null;
   }
 
   const opItems: ContextMenuAction[] = [];
+  if (onRename) {
+    opItems.push({
+      className: 'dataset-ops-menu__rename',
+      labelId: 'datasetTitle.rename',
+      Icon: Edit,
+      iconHeight: '16px',
+      onClick: () => onSelect(onRename)
+    });
+  }
   if (showRefresh && onToggleRefreshSettings) {
     opItems.push({
       className: 'dataset-ops-menu__refresh-settings',
@@ -152,11 +173,12 @@ export function DatasetOpsMenu({
 
   return (
     <>
-      <ContextMenuToggle
+      <DatasetMenuToggle
+        ref={toggleRef}
         className="dataset-action dataset-ops-menu dataset-ops-menu__toggle"
         data-tip
         data-for={tooltipId}
-        role="button"
+        aria-expanded={open}
         aria-label={tooltipLabel}
         onClick={e => {
           e.stopPropagation();
@@ -169,7 +191,7 @@ export function DatasetOpsMenu({
             <FormattedMessage id="datasetTitle.moreSettings" />
           </span>
         </Tooltip>
-      </ContextMenuToggle>
+      </DatasetMenuToggle>
       <Portaled
         component={ContextMenuAnchor}
         isOpened={open}

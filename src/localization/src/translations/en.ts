@@ -547,6 +547,8 @@ export default {
     showDataTable: 'Show data table',
     moreSettings: 'More settings',
     removeDataset: 'Remove dataset',
+    rename: 'Rename',
+    renameDataset: 'Rename dataset',
     refreshDataset: 'Refresh dataset',
     refreshFailed: 'Refresh failed',
     refreshSettings: 'Refresh settings',

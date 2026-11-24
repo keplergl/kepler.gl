@@ -125,6 +125,7 @@ function DatasetLayerSectionFactory(
           showDatasetTable={showDatasetTable}
           updateTableColor={updateTableColor}
           removeDataset={removeDataset}
+          renameDataset={visStateActions.renameDataset}
           replaceDataset={uiStateActions.openReplaceDatasetModal}
           showDeleteDataset={showDeleteDataset}
           refreshDataset={visStateActions.refreshDataset}
