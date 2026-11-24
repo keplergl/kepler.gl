@@ -258,6 +258,7 @@ test('#ClusterLayer -> renderLayer', t => {
           radiusScale: 1,
           radiusRange: layer.config.visConfig.radiusRange,
           clusterRadius: layer.config.visConfig.clusterRadius,
+          clusterRadiusInMeters: false,
           colorScaleType: layer.config.colorScale,
           zoom: Math.round(INITIAL_MAP_STATE.zoom),
           width: INITIAL_MAP_STATE.width,
@@ -632,6 +633,117 @@ test('#ClusterLayer -> fixed-zoom pans refresh visible points without rebuilding
   } finally {
     load.restore();
     query.restore();
+    manager.finalize();
+  }
+  t.end();
+});
+
+test('#ClusterLayer -> meter mode passes the selected radius to deck.gl', t => {
+  testRenderLayerCases(t, ClusterLayer, [
+    {
+      name: 'meter radius',
+      layer: {
+        type: 'cluster',
+        id: 'cluster-meter-props',
+        config: {
+          dataId,
+          columns,
+          visConfig: {clusterRadius: 75, clusterRadiusMeters: 250, clusterRadiusInMeters: true}
+        }
+      },
+      datasets: {[dataId]: preparedDataset},
+      assert: deckLayers => {
+        t.equal(
+          deckLayers[0].props.clusterRadius,
+          250,
+          'uses meters instead of the retained pixel radius'
+        );
+        t.equal(deckLayers[0].props.clusterRadiusInMeters, true, 'enables meter grouping');
+      }
+    }
+  ]);
+  t.end();
+});
+
+test('#ClusterLayer -> meter groups survive camera changes, filter updates and unit switches', t => {
+  const degrees = meters => ((meters / 6371008.8) * 180) / Math.PI;
+  const points = [
+    {index: 0, position: [0, 0]},
+    {index: 1, position: [degrees(80), 0]}
+  ];
+  const view = {longitude: degrees(40), latitude: 0, zoom: 18, width: 1024, height: 1024};
+  const manager = new LayerManager(device, {viewport: new WebMercatorViewport(view)});
+  const load = sinon.spy(Supercluster.prototype, 'load');
+  let labels = [];
+  let layer = new DeckGLClusterLayer({
+    id: 'meter-updates',
+    data: points,
+    getPosition: point => point.position,
+    colorRange: [
+      [0, 0, 0],
+      [255, 255, 255]
+    ],
+    onError: error => {
+      throw error;
+    },
+    clusterRadius: 100,
+    clusterRadiusInMeters: true,
+    zoom: view.zoom,
+    width: view.width,
+    height: view.height,
+    renderCountLabels: data => {
+      labels = data;
+      return [];
+    }
+  });
+  const update = patch => {
+    layer = layer.clone(patch);
+    manager.setLayers([layer]);
+  };
+  const counts = () => layer.state.aggregatorState.layerData.data.map(cell => cell.points.length);
+  const move = patch => {
+    Object.assign(view, patch);
+    update({zoom: view.zoom});
+    const viewport = new WebMercatorViewport(view);
+    manager.activateViewport(viewport);
+    layer.activateViewport(viewport);
+    manager.updateLayers();
+  };
+  try {
+    update({});
+    t.deepEqual(counts(), [2], 'groups nearby points in meters');
+    const picked = layer.getPickingInfo({info: {picked: true, index: 0}}).object;
+    t.deepEqual(picked.points, points, 'picking returns source members');
+    t.equal(picked.colorValue, 2, 'color aggregates the same members');
+    t.equal(picked.radiusValue, 2, 'bubble radius counts members');
+    t.deepEqual(
+      labels.map(label => label.count),
+      [2],
+      'label counts the group'
+    );
+    move({zoom: 22});
+    t.deepEqual(counts(), [2], 'does not split beyond Supercluster max zoom');
+    move({longitude: 1});
+    t.deepEqual(counts(), [], 'panning updates visible groups');
+    move({longitude: degrees(40), zoom: 18});
+    t.deepEqual(counts(), [2], 'panning back restores the same group');
+    t.equal(load.callCount, 1, 'camera changes reuse the meter index');
+    update({clusterRadiusInMeters: false});
+    t.deepEqual(counts(), [1, 1], 'unit toggle reclusters even when the number is unchanged');
+    update({clusterRadiusInMeters: true});
+    t.deepEqual(counts(), [2], 'switching back restores meter groups');
+    update({filterData: point => point.index === 0, updateTriggers: {filterData: 1}});
+    t.deepEqual(counts(), [1], 'filter changes rebuild membership');
+    t.deepEqual(
+      labels.map(label => label.count),
+      [1],
+      'labels follow filtering'
+    );
+    update({filterData: () => false, updateTriggers: {filterData: 2}});
+    t.deepEqual(counts(), [], 'empty filtered input renders nothing');
+    t.deepEqual(labels, [], 'empty filtered input has no labels');
+  } finally {
+    load.restore();
     manager.finalize();
   }
   t.end();

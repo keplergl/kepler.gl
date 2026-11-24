@@ -42,7 +42,7 @@ function VisConfigSwitchFactory(InfoHelper: ReturnType<typeof InfoHelperFactory>
       <StyledVisConfigSwitch className="vis-config-switch">
         <div className="vis-config-switch__title">
           {label ? (
-            <PanelLabel>
+            <PanelLabel htmlFor={`${id}-${property}-switch`}>
               {(label && <FormattedMessage id={label} />) || capitalizeFirstLetter(property)}
             </PanelLabel>
           ) : null}

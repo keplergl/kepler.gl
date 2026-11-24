@@ -1021,7 +1021,17 @@ export default function LayerConfiguratorFactory(
 
           {/* Cluster Radius */}
           <LayerConfigGroup label={'layer.radius'} collapsible>
-            <VisConfigSlider {...layer.visConfigSettings.clusterRadius} {...visConfiguratorProps} />
+            <VisConfigSwitch
+              {...layer.visConfigSettings.clusterRadiusInMeters}
+              {...visConfiguratorProps}
+            />
+            <VisConfigSlider
+              key={layer.config.visConfig.clusterRadiusInMeters === true ? 'meters' : 'pixels'}
+              {...(layer.config.visConfig.clusterRadiusInMeters === true
+                ? layer.visConfigSettings.clusterRadiusMeters
+                : layer.visConfigSettings.clusterRadius)}
+              {...visConfiguratorProps}
+            />
             <ConfigGroupCollapsibleContent>
               <VisConfigSlider {...layer.visConfigSettings.radiusRange} {...visConfiguratorProps} />
               <VisConfigSlider

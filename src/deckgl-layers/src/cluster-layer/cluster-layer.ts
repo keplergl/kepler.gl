@@ -43,13 +43,20 @@ function processGeoJSON(this: CPUAggregator, step, props, aggregation, {viewport
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getClusters(this: CPUAggregator, step, props, aggregation, {viewport}) {
   const {geoJSON, clusterBuilder} = this.state;
-  const {clusterRadius, zoom, width, height, minPointCount} = props;
+  const {clusterRadius, clusterRadiusInMeters, zoom, width, height, minPointCount} = props;
   const {longitude, latitude} = viewport;
 
   // zoom needs to be an integer for the different map utils. Also helps with cache key.
   const bbox = geoViewport.bounds([longitude, latitude], zoom, [width, height]);
   const clusters =
-    clusterBuilder?.clustersAtZoom({bbox, clusterRadius, geoJSON, zoom, minPointCount}) ?? [];
+    clusterBuilder?.clustersAtZoom({
+      bbox,
+      clusterRadius,
+      clusterRadiusInMeters,
+      geoJSON,
+      zoom,
+      minPointCount
+    }) ?? [];
 
   this.setState({
     layerData: {data: clusters}
@@ -94,6 +101,9 @@ export const clusterAggregation: AggregationType = {
         },
         clusterRadius: {
           prop: 'clusterRadius'
+        },
+        clusterRadiusInMeters: {
+          prop: 'clusterRadiusInMeters'
         },
         zoom: {
           prop: 'zoom'
@@ -162,6 +172,7 @@ const clusterLayerDimensions: [DimensionType<RGBAColor>, DimensionType<number>] 
 
 const defaultProps = {
   clusterRadius: defaultRadius,
+  clusterRadiusInMeters: false,
   minPointCount: defaultMinPointCount,
   colorDomain: null,
   colorRange: DEFAULT_COLOR_RANGE,

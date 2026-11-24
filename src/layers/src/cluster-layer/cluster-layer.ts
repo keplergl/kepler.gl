@@ -9,6 +9,7 @@ import ClusterLayerIcon from './cluster-layer-icon';
 import {
   ColorRange,
   Merge,
+  VisConfigBoolean,
   VisConfigColorRange,
   VisConfigNumber,
   VisConfigRange,
@@ -20,6 +21,8 @@ import {VisualChannels} from '../base-layer';
 export type ClusterLayerVisConfigSettings = {
   opacity: VisConfigNumber;
   clusterRadius: VisConfigNumber;
+  clusterRadiusInMeters: VisConfigBoolean;
+  clusterRadiusMeters: VisConfigNumber;
   colorRange: VisConfigColorRange;
   radiusRange: VisConfigRange;
   minClusterSize: VisConfigNumber;
@@ -29,6 +32,8 @@ export type ClusterLayerVisConfigSettings = {
 export type ClusterLayerVisConfig = {
   opacity: number;
   clusterRadius: number;
+  clusterRadiusInMeters: boolean;
+  clusterRadiusMeters: number;
   colorRange: ColorRange;
   radiusRange: [number, number];
   minClusterSize: number;
@@ -40,6 +45,8 @@ export type ClusterLayerConfig = Merge<AggregationLayerConfig, {visConfig: Clust
 export const clusterVisConfigs: {
   opacity: 'opacity';
   clusterRadius: 'clusterRadius';
+  clusterRadiusInMeters: 'clusterRadiusInMeters';
+  clusterRadiusMeters: 'clusterRadiusMeters';
   colorRange: 'colorRange';
   radiusRange: 'clusterRadiusRange';
   minClusterSize: 'minClusterSize';
@@ -47,6 +54,8 @@ export const clusterVisConfigs: {
 } = {
   opacity: 'opacity',
   clusterRadius: 'clusterRadius',
+  clusterRadiusInMeters: 'clusterRadiusInMeters',
+  clusterRadiusMeters: 'clusterRadiusMeters',
   colorRange: 'colorRange',
   radiusRange: 'clusterRadiusRange',
   minClusterSize: 'minClusterSize',
@@ -121,7 +130,11 @@ export default class ClusterLayer extends AggregationLayer {
         // radius
         radiusScale: 1,
         radiusRange: visConfig.radiusRange,
-        clusterRadius: visConfig.clusterRadius,
+        clusterRadius:
+          visConfig.clusterRadiusInMeters === true
+            ? visConfig.clusterRadiusMeters
+            : visConfig.clusterRadius,
+        clusterRadiusInMeters: visConfig.clusterRadiusInMeters === true,
         minPointCount: visConfig.minClusterSize,
 
         // color

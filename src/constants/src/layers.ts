@@ -222,6 +222,25 @@ export const LAYER_VIS_CONFIGS: LayerVisConfigSettings = {
     property: 'radiusRange',
     allowCustomValue: true
   },
+  clusterRadiusInMeters: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.clusterRadiusInMeters',
+    description: 'layerVisConfigs.clusterRadiusInMetersDescription',
+    group: PROPERTY_GROUPS.radius,
+    property: 'clusterRadiusInMeters'
+  },
+  clusterRadiusMeters: {
+    type: 'number',
+    label: 'layerVisConfigs.clusterRadiusMeters',
+    defaultValue: 40,
+    isRanged: false,
+    range: [1, 10000],
+    step: 1,
+    group: PROPERTY_GROUPS.radius,
+    property: 'clusterRadiusMeters',
+    allowCustomValue: true
+  },
   minClusterSize: {
     type: 'number',
     label: 'layerVisConfigs.minClusterSize',

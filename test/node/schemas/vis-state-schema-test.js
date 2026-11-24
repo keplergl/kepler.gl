@@ -30,6 +30,47 @@ import {keplerGlReducerCore as keplerGlReducer, validateLayerWithData} from '@ke
 import {VisStateActions} from '@kepler.gl/actions';
 import {AnnotationKind, FILTER_VIEW_TYPES, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
 import {createEffect} from '@kepler.gl/effects';
+import {KeplerGlLayers} from '@kepler.gl/layers';
+
+test('#visStateSchema -> cluster radius units preserve legacy pixel maps and round trip', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const layer = new KeplerGlLayers.ClusterLayer({id: 'cluster-units', dataId: testCsvDataId});
+  layer.updateLayerConfig({columns: state.visState.layers[0].config.columns});
+  layer.updateLayerVisConfig({clusterRadius: 75, clusterRadiusMeters: 250});
+  state.visState.layers = [layer];
+  state.visState.layerOrder = [layer.id];
+  const rebuild = saved =>
+    validateLayerWithData(
+      state.visState.datasets[testCsvDataId],
+      SchemaManager.parseSavedConfig(saved).visState.layers[0],
+      state.visState.layerClasses
+    );
+  for (const clusterRadiusInMeters of [true, false]) {
+    layer.updateLayerVisConfig({clusterRadiusInMeters});
+    const saved = SchemaManager.getConfigToSave(state);
+    const loaded = rebuild(saved);
+    t.ok(loaded, 'saved cluster layer reconstructs');
+    t.equal(
+      loaded.config.visConfig.clusterRadiusInMeters,
+      clusterRadiusInMeters,
+      'unit choice round trips'
+    );
+    t.equal(loaded.config.visConfig.clusterRadius, 75, 'preserves pixel radius');
+    t.equal(loaded.config.visConfig.clusterRadiusMeters, 250, 'preserves meter radius');
+  }
+  const legacy = SchemaManager.getConfigToSave(state);
+  delete legacy.config.visState.layers[0].config.visConfig.clusterRadiusInMeters;
+  delete legacy.config.visState.layers[0].config.visConfig.clusterRadiusMeters;
+  const loaded = rebuild(legacy);
+  t.equal(loaded.config.visConfig.clusterRadiusInMeters, false, 'old maps default to pixels');
+  t.equal(loaded.config.visConfig.clusterRadius, 75, 'old pixel radius is not reinterpreted');
+  t.equal(
+    loaded.config.visConfig.clusterRadiusMeters,
+    40,
+    'missing meter radius receives its default'
+  );
+  t.end();
+});
 
 const expectedVisStateEntries = [
   'filters',
