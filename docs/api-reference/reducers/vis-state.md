@@ -423,7 +423,8 @@ Returns **[Object][69]** nextState
 
 ### setFilterUpdater
 
-Update filter property
+Update a filter property. See the [saved filter schema](../schemas/README.md#saved-filters-v1)
+for field names and examples; the updater operates on live filter state.
 
 -   **Action**: [`setFilter`][92]
 
