@@ -22,6 +22,8 @@ const DEPTH_DISK_PARAMETERS = {
   // and used purely to fill the depth buffer so far-side geometry (arcs/lines) is
   // occluded by the planet.
   depthTest: true,
+  // Do not inherit a disabled depth mask from earlier rendering.
+  depthMask: true,
   cull: false
 };
 

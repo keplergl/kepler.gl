@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {spawnSync} from 'node:child_process';
 import {KeplerTable, getGpuFilterProps, assignGpuChannels} from '@kepler.gl/table';
 import {EDITOR_AVAILABLE_LAYERS, FILTER_TYPES, KEPLER_COLOR_PALETTES} from '@kepler.gl/constants';
 import {colorMaybeToRGB, generatePolygonFilter, getDefaultFilter} from '@kepler.gl/utils';
@@ -16,6 +17,7 @@ import * as DeckCore from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {setGLParameters} from '@luma.gl/webgl';
+import {getGlobeDepthDiskLayer} from '@kepler.gl/deckgl-layers';
 import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
 import {processCsvData} from '@kepler.gl/processors';
@@ -499,6 +501,110 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
     mapState: {zoom: 10}
   });
 }
+
+test.each([true, false])(
+  'globe depth disk occludes 3D contours with inherited depth writes %s',
+  async depthWritesEnabled => {
+    const {layer, dataset, datasets} = await setup();
+    layer.updateLayerVisConfig({enable3d: true, fillOpacity: 1});
+    const passes = renderContourPasses(layer, dataset, layer.formatLayerData(datasets));
+    const manager = new LayerManager(device, {
+      viewport: new GlobeViewport({width: 16, height: 16, latitude: 30, zoom: 1})
+    });
+    try {
+      manager.setLayers(passes);
+      const [depth, fill] = passes.slice(0, 2).map(pass => pass.getSubLayers()[0]);
+      // Native headless-gl cleanup hooks can crash when GC runs in Jest's VM.
+      // Run the pixel probe in a normal Node context with the actual layer parameters.
+      const result = spawnSync(
+        process.execPath,
+        [
+          '-e',
+          `
+      const {setGLParameters} = require('@luma.gl/webgl');
+      const {disk, contours, depthWritesEnabled} = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
+      const gl = require('gl')(4, 4, {preserveDrawingBuffer: true});
+      if (!gl) throw new Error('Headless WebGL context unavailable');
+      const program = gl.createProgram();
+      for (const [type, source] of [
+        [
+          gl.VERTEX_SHADER,
+          'attribute vec2 position; uniform float depth; void main() { gl_Position = vec4(position, depth, 1.0); }'
+        ],
+        [
+          gl.FRAGMENT_SHADER,
+          'precision highp float; uniform vec4 color; void main() { gl_FragColor = color; }'
+        ]
+      ]) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+        gl.attachShader(program, shader);
+      }
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const position = gl.getAttribLocation(program, 'position');
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+      gl.depthFunc(gl.LEQUAL);
+      const draw = (z, color) => {
+        gl.uniform1f(gl.getUniformLocation(program, 'depth'), z);
+        gl.uniform4fv(gl.getUniformLocation(program, 'color'), color);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      };
+      const pixels = [0.5, -0.5].map(z => {
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthMask(true);
+        gl.colorMask(true, true, true, true);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // Previous rendering may leave depth writes disabled. The globe disk must
+        // establish its own depth before the contour's depth and color passes.
+        gl.depthMask(depthWritesEnabled);
+        gl.disable(gl.DEPTH_TEST);
+        setGLParameters(gl, disk);
+        draw(0, [0, 0, 1, 1]);
+        for (const parameters of contours) {
+          // Each pass must explicitly enable testing against that existing depth.
+          gl.disable(gl.DEPTH_TEST);
+          gl.colorMask(true, true, true, true);
+          setGLParameters(gl, parameters);
+          if (!gl.isEnabled(gl.DEPTH_TEST)) throw new Error('Contour depth testing is disabled');
+          draw(z, [1, 0, 0, 1]);
+        }
+        const pixel = new Uint8Array(4);
+        gl.readPixels(2, 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+        if (gl.getError() !== gl.NO_ERROR) throw new Error('WebGL draw failed');
+        return Array.from(pixel);
+      });
+      gl.getExtension('STACKGL_destroy_context').destroy();
+      process.stdout.write(JSON.stringify(pixels));
+      `
+        ],
+        {
+          encoding: 'utf8',
+          input: JSON.stringify({
+            disk: getGlobeDepthDiskLayer({}).props.parameters,
+            contours: [depth.props.parameters, fill.props.parameters],
+            depthWritesEnabled
+          })
+        }
+      );
+      if (result.status !== 0) {
+        throw new Error(result.stderr || String(result.error || result.signal));
+      }
+      expect(JSON.parse(result.stdout)).toEqual([
+        [0, 0, 255, 255], // Far contour remains behind the globe.
+        [255, 0, 0, 255] // Near contour remains visible.
+      ]);
+    } finally {
+      manager.finalize();
+    }
+  }
+);
 
 test.each([0, 60])('projects contour normals perpendicular to slopes at latitude %s', latitude => {
   const grid = {
