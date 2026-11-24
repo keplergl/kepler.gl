@@ -380,6 +380,8 @@ describe('kepler-mcp bridge server', () => {
       ['map.load-tileset', 'metadataUrl'],
       ['map.get-layer-options', 'layerId'],
       ['map.set-layer-options', 'options'],
+      ['map.set-layer-options', 'ageStyle'],
+      ['map.set-layer-options', 'ageMs'],
       ['map.camera-bookmarks', 'camera'],
       ['map.camera-tour', 'holdDurationMs'],
       ['map.render-preview', 'cameraTimeMs'],

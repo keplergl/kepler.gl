@@ -537,12 +537,13 @@ export default class ArcLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(opts)
     };
     const widthScale = this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -587,7 +588,7 @@ export default class ArcLayer extends Layer {
       elevationScale: 1,
       getColor: data.getTargetColor,
       hoveredObject,
-      highlightColor: this.config.highlightColor
+      highlightColor: opts.ageStyleHighlightColor ?? this.config.highlightColor
     });
 
     return [
@@ -615,8 +616,8 @@ export default class ArcLayer extends Layer {
               visible: defaultLayerProps.visible,
               data: [hoveredObject],
               widthScale,
-              getSourceColor: this.config.highlightColor,
-              getTargetColor: this.config.highlightColor,
+              getSourceColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
+              getTargetColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
               getWidth: data.getWidth
             })
           ]

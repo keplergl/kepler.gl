@@ -264,6 +264,47 @@ same dataset/field. Missing timestamps produce no effect. Discover settings
 and ranges with `map.get-layer-options`; `map.add-layer.options` accepts the
 same visual settings when creating a layer.
 
+### Feature age bands
+
+Points, arcs, lines, icons, H3/S2/A5/geohash cells, and GeoJSON features can fade
+or change color as they age. Use
+`map.set-layer-options` with a structured `ageStyle` (inspect with
+`map.get-layer-options`; clear with `ageStyle: null`):
+
+```json
+{
+  "layerId": "sightings",
+  "ageStyle": {
+    "timeField": "observed_at",
+    "stops": [
+      {"ageMs": 0, "opacity": 1, "color": [255, 180, 0]},
+      {"ageMs": 1209600000, "opacity": 0.5},
+      {"ageMs": 3024000000, "opacity": 0.2}
+    ]
+  }
+}
+```
+
+These are 0–13, 14–34, and 35+ elapsed-day bands (one day = 86400000 ms).
+Stops must start at zero and increase strictly. Each stop applies until the
+next stop, including its lower boundary; the final stop has no upper limit.
+Opacity multiplies the feature's existing alpha and layer opacity. Color replaces
+fill, outline and arc/line endpoint RGB; an omitted channel uses the ordinary style, not the
+previous stop. Hover retains its highlight color and applies age opacity.
+
+Create an enabled time filter on that timestamp field, preferably with an
+`incremental` window to keep old observations visible. Age is the upper end of
+the first matching enabled filter minus the observation timestamp. Shared time
+filters work when they bind this dataset and field. Without a matching filter
+or timestamp field, ordinary styling is used. With an active age style, missing
+or future observations are transparent. No wall clock is involved: pauses,
+backward seeks, saved maps and native video frames use the same calculation.
+For GeoJSON built from table columns, the first row of each feature supplies its
+timestamp, matching its color fields. Age styling updates color attributes on the
+CPU as the data playhead changes; very large datasets can need downsampling for
+smooth playback. Paused pan/zoom reuses the color accessors and Arrow buffers.
+The setting is optional and adds nothing to saved maps until it is configured.
+
 ### Heatmap 3D Surface
 
 Set `options: {"surfaceEnabled": true, "surfaceHeight": 1000}` with

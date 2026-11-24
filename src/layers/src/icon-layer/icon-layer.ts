@@ -513,6 +513,7 @@ export default class IconLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, mapState, interactionConfig, layerCallbacks} = opts;
 
     // Store callback to trigger map redraw when icon geometry loads asynchronously
@@ -530,7 +531,7 @@ export default class IconLayer extends Layer {
       getPosition: this.config.columns,
       getAngle: this.config.columns.angle,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(opts)
     };
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -606,7 +607,7 @@ export default class IconLayer extends Layer {
               getRadius: data.getRadius,
               getAngle: data.getAngle,
               updateTriggers,
-              getFillColor: this.config.highlightColor,
+              getFillColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
               getIconGeometry
             })
           ]

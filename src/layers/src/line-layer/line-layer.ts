@@ -304,6 +304,7 @@ export default class LineLayer extends ArcLayer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
 
     const layerProps = {
@@ -315,7 +316,7 @@ export default class LineLayer extends ArcLayer {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers()
+      ...this.getVisualChannelUpdateTriggers(opts)
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
@@ -335,7 +336,7 @@ export default class LineLayer extends ArcLayer {
       elevationScale: globeMode ? 1 : this.config.visConfig.elevationScale,
       getColor: data.getTargetColor,
       hoveredObject,
-      highlightColor: this.config.highlightColor
+      highlightColor: opts.ageStyleHighlightColor ?? this.config.highlightColor
     });
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
@@ -397,8 +398,8 @@ export default class LineLayer extends ArcLayer {
                 data: [hoveredObject],
                 getHeight: 0,
                 parameters: {cull: false, ...blendingParameters},
-                getSourceColor: this.config.highlightColor,
-                getTargetColor: this.config.highlightColor,
+                getSourceColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
+                getTargetColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
                 getWidth: data.getWidth,
                 widthUnits: 'pixels' as const
               })
@@ -437,8 +438,8 @@ export default class LineLayer extends ArcLayer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               data: [hoveredObject],
-              getColor: this.config.highlightColor,
-              getTargetColor: this.config.highlightColor,
+              getColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
+              getTargetColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
               getWidth: data.getWidth
             })
           ]

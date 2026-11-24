@@ -330,6 +330,7 @@ export default class S2GeometryLayer extends Layer {
   }
 
   renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, interactionConfig, mapState} = opts;
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -340,7 +341,7 @@ export default class S2GeometryLayer extends Layer {
     const {visConfig} = config;
 
     const updateTriggers = {
-      ...this.getVisualChannelUpdateTriggers(),
+      ...this.getVisualChannelUpdateTriggers(opts),
       getFilterValue: gpuFilter.filterValueUpdateTriggers
     };
 
