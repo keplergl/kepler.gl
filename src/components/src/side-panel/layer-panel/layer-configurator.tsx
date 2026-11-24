@@ -2747,6 +2747,13 @@ export default function LayerConfiguratorFactory(
             <HowToButton onClick={() => openModal(layer.layerInfoModal as any)} />
           ) : null}
           <LayerConfigGroup label={'layer.basic'} collapsible expanded={!layer.hasAllColumns()}>
+            <SourceDataSelector
+              datasets={sourceDataSelectorOptions}
+              id={layer.id}
+              dataId={config.dataId}
+              // @ts-ignore
+              onSelect={(value: string) => updateLayerConfig({dataId: value})}
+            />
             <LayerTypeSelector
               selected={layer.type}
               selectedOption={
@@ -2760,13 +2767,6 @@ export default function LayerConfiguratorFactory(
               onSelect={updateLayerType}
             />
             <ConfigGroupCollapsibleContent>
-              <SourceDataSelector
-                datasets={sourceDataSelectorOptions}
-                id={layer.id}
-                dataId={config.dataId}
-                // @ts-ignore
-                onSelect={(value: string) => updateLayerConfig({dataId: value})}
-              />
               <LayerColumnModeConfig
                 layer={layer}
                 supportedColumnModes={sourceColumnModes}
