@@ -131,6 +131,51 @@ describe('map coordinate copying', () => {
   });
 });
 
+describe('double-click zoom', () => {
+  function getController(
+    controller: boolean | {doubleClickZoom?: boolean} | undefined,
+    isDrawing = false,
+    isInteractive = true
+  ) {
+    const map = new MapContainer({
+      index: 0,
+      mapState: {...INITIAL_MAP_STATE, width: 400, height: 300},
+      mapStyle: INITIAL_MAP_STYLE,
+      visState: {
+        ...INITIAL_VIS_STATE,
+        editor: {...INITIAL_VIS_STATE.editor, mode: EDITOR_MODES.DRAW_POLYGON}
+      },
+      mapControls: {...INITIAL_UI_STATE.mapControls, mapDraw: {active: isDrawing}},
+      visStateActions: {},
+      generateDeckGLLayers: () => [],
+      deckGlProps: {controller}
+    });
+
+    const overlay = map._renderDeckOverlay([], {primaryMap: true, isInteractive});
+    const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
+    return deck.props.controller;
+  }
+
+  test('honors an explicit zoom opt-out without disabling the map controller', () => {
+    expect(getController({doubleClickZoom: false}).doubleClickZoom).toBe(false);
+  });
+
+  test.each([undefined, {}, true, false])(
+    'preserves default zoom for a controller setting of %j without a zoom opt-out',
+    controller => {
+      expect(getController(controller).doubleClickZoom).toBe(true);
+    }
+  );
+
+  test('keeps zoom disabled while drawing even when the embedder enables it', () => {
+    expect(getController({doubleClickZoom: true}, true).doubleClickZoom).toBe(false);
+  });
+
+  test('keeps passive maps non-interactive even when the embedder enables zoom', () => {
+    expect(getController({doubleClickZoom: true}, false, false)).toBe(false);
+  });
+});
+
 describe('Draw on Map click timing', () => {
   const A = [1, 1];
   const B = [9, 1];

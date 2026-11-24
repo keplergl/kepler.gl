@@ -1533,7 +1533,8 @@ export default function MapContainerFactory(
             controller={
               isInteractive
                 ? {
-                    doubleClickZoom: !isEditorDrawingMode,
+                    doubleClickZoom:
+                      !isEditorDrawingMode && deckGlProps?.controller?.doubleClickZoom !== false,
                     dragRotate: this.props.mapState.dragRotate,
                     maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch,
                     // In globe mode allow zooming out further than deck.gl's default
