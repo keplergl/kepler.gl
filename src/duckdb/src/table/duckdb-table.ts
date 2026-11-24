@@ -115,14 +115,30 @@ export class KeplerGlDuckDbTable extends KeplerTable {
     super(props);
   }
 
-  async importRowData({data, db, c}: ImportDataToDuckProps): Promise<void> {
+  async importRowData(
+    {data, db, c}: ImportDataToDuckProps,
+    restoreSavedGeoJson = false
+  ): Promise<void> {
     try {
       const {fields, rows} = data;
 
       const columnTypes = fields.map(field => {
         const explicitDuckDBColumnType = (field as typeof field & {duckDBColumnType?: string})
           .duckDBColumnType;
-        const duckDBColumnType = explicitDuckDBColumnType ?? fieldTypeToColumnType(field.type);
+        // Saved projects store geometry as hex WKB or GeoJSON, not DuckDB's binary representation.
+        const savedGeometry = restoreSavedGeoJson && field.type === ALL_FIELD_TYPES.geojson;
+        // The project processor can sniff serialized Arrow timestamps as VARCHAR even though
+        // the saved field still carries an epoch format. Restore the native timestamp column.
+        const savedArrowTimestamp =
+          restoreSavedGeoJson &&
+          field.type === ALL_FIELD_TYPES.timestamp &&
+          field.format === 'X' &&
+          explicitDuckDBColumnType === 'VARCHAR';
+        const duckDBColumnType = savedGeometry
+          ? 'VARCHAR'
+          : savedArrowTimestamp
+          ? 'TIMESTAMP'
+          : explicitDuckDBColumnType ?? fieldTypeToColumnType(field.type);
 
         if (!duckDBColumnType) {
           throw new Error(
@@ -132,7 +148,8 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
         return {
           duckDBColumnType,
-          normalizeTimestamp: explicitDuckDBColumnType === undefined
+          savedGeometry,
+          normalizeTimestamp: savedArrowTimestamp || explicitDuckDBColumnType === undefined
         };
       });
 
@@ -149,7 +166,11 @@ export class KeplerGlDuckDbTable extends KeplerTable {
             field.type === ALL_FIELD_TYPES.timestamp &&
             value !== null &&
             value !== undefined
-              ? timeToUnixMilli(value as string | number | Date, field.format || '')
+              ? restoreSavedGeoJson &&
+                typeof value === 'string' &&
+                /^\d{4}-\d{2}-\d{2}T/.test(value)
+                ? Date.parse(value)
+                : timeToUnixMilli(value as string | number | Date, field.format || '')
               : null;
 
           newRow[field.name] =
@@ -165,13 +186,29 @@ export class KeplerGlDuckDbTable extends KeplerTable {
 
       const columns = fields.reduce((acc, field, index) => {
         const {duckDBColumnType} = columnTypes[index];
-        return `${acc}${index > 0 ? ',' : ''} '${field.name}': '${duckDBColumnType}'`;
+        const columnName = field.name.replace(/'/g, "''");
+        return `${acc}${index > 0 ? ',' : ''} '${columnName}': '${duckDBColumnType}'`;
       }, '');
 
-      const createTableSql = `
+      const hasSavedGeometry = columnTypes.some(column => column.savedGeometry);
+      const projection = hasSavedGeometry
+        ? fields
+            .map((field, index) => {
+              const column = quoteColumnName(field.name);
+              if (!columnTypes[index].savedGeometry) return column;
+              return `CASE WHEN starts_with(ltrim(${column}), '{') THEN
+                ST_GeomFromGeoJSON(NULLIF(
+                  COALESCE(json_extract(${column}, '$.geometry'), ${column}::JSON), 'null'::JSON
+                ))
+                ELSE ST_GeomFromWKB(from_hex(${column})) END AS ${column}`;
+            })
+            .join(', ')
+        : '*';
+      const spatialSetup = hasSavedGeometry ? 'INSTALL spatial; LOAD spatial;' : '';
+      const createTableSql = `${spatialSetup}
         CREATE TABLE ${quoteTableName(this.label)} AS
-        SELECT *
-        FROM read_json('${this.id}',
+        SELECT ${projection}
+        FROM read_json('${this.id.replace(/'/g, "''")}',
                        columns = {${columns}});
       `;
       await c.query(createTableSql);
@@ -277,11 +314,12 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         }
       }
 
+      const hasSavedGeoJsonRows = format === DATASET_FORMATS.geojson && Array.isArray(data.rows);
       let importDetails: ImportDataToDuckResult | undefined;
       if (data.duckdbTableName) {
         importDetails = {useNewFields: true};
-      } else if (format === DATASET_FORMATS.row) {
-        await this.importRowData({data, db, c});
+      } else if (format === DATASET_FORMATS.row || hasSavedGeoJsonRows) {
+        await this.importRowData({data, db, c}, hasSavedGeoJsonRows);
       } else if (format === DATASET_FORMATS.geojson) {
         importDetails = await this.importGeoJsonData({data, db, c});
       } else if (format === DATASET_FORMATS.arrow) {
@@ -311,6 +349,19 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         fields = useNewFields
           ? arrowSchemaToFields(compactedResult, tableDuckDBTypes)
           : data.fields ?? arrowSchemaToFields(compactedResult, tableDuckDBTypes);
+        if (hasSavedGeoJsonRows && !data.duckdbTableName) {
+          fields = fields.map((field, index) =>
+            field.type === ALL_FIELD_TYPES.geojson && tableDuckDBTypes[field.name] === 'GEOMETRY'
+              ? {
+                  ...field,
+                  type: ALL_FIELD_TYPES.geoarrow,
+                  analyzerType: 'GEOMETRY',
+                  duckDBColumnType: tableDuckDBTypes[field.name],
+                  metadata: compactedResult.schema.fields[index].metadata
+                }
+              : field
+          );
+        }
         cols = [...Array(compactedResult.numCols).keys()]
           .map(i => compactedResult.getChildAt(i))
           .filter(col => col) as arrow.Vector[];

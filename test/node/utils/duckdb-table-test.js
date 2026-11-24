@@ -296,3 +296,82 @@ test('KeplerGlDuckDbTable -> failed query closes connection and propagates failu
   t.equal(fixture.getClosed(), 1, 'closes connection after failure');
   t.end();
 });
+
+test('KeplerGlDuckDbTable -> restores saved GeoJSON rows as spatial data and timestamps', async t => {
+  const timestamp = Date.parse('2024-03-15T12:00:00.123Z');
+  const geometryHex = '0101000000000000000000f03f0000000000000040';
+  const geometry = Uint8Array.from(Buffer.from(geometryHex, 'hex'));
+  const values = new arrow.Table({
+    observed_at: arrow.vectorFromArray([timestamp], new arrow.TimestampMillisecond()),
+    _geojson: arrow.vectorFromArray([geometry], new arrow.Binary())
+  });
+  let registered;
+  const tableSql = [];
+  const c = {
+    query: async sql => {
+      if (sql.startsWith('PRAGMA')) {
+        return arrow.tableFromArrays({
+          name: ['observed_at', '_geojson'],
+          type: ['TIMESTAMP', 'GEOMETRY']
+        });
+      }
+      if (sql.startsWith('SELECT')) return values;
+      tableSql.push(sql);
+      return new arrow.Table();
+    },
+    close: async () => {}
+  };
+  const table = new KeplerGlDuckDbTable({
+    info: {id: '-geojson', label: 'Saved events'},
+    metadata: {format: 'geojson'}
+  });
+  await withDatabase(
+    {
+      connect: async () => c,
+      registerFileText: async (_id, contents) => {
+        registered = JSON.parse(contents);
+      }
+    },
+    () =>
+      table.importData({
+        data: {
+          fields: [
+            {name: 'observed_at', type: 'timestamp', format: 'X', duckDBColumnType: 'VARCHAR'},
+            {name: '_geojson', type: 'geojson', analyzerType: 'GEOMETRY'}
+          ],
+          rows: [['2024-03-15T12:00:00.123Z', geometryHex]]
+        }
+      })
+  );
+  t.deepEqual(
+    registered,
+    [{observed_at: '2024-03-15T12:00:00.123Z', _geojson: geometryHex}],
+    'restores row payload without interpreting the saved ISO value as epoch seconds'
+  );
+  t.ok(
+    tableSql.some(sql => sql.includes("'observed_at': 'TIMESTAMP'")),
+    'restores a native timestamp column'
+  );
+  t.ok(
+    tableSql.some(sql => sql.includes('read_json')),
+    'imports through the row reader'
+  );
+  t.ok(
+    tableSql.some(sql => sql.includes('ST_GeomFromWKB')),
+    'decodes saved hex WKB to native geometry'
+  );
+  t.ok(
+    tableSql.every(sql => !sql.includes('ST_READ')),
+    'does not pass saved rows to GDAL'
+  );
+  t.equal(table.fields[0].type, 'timestamp', 'keeps the time filter field type');
+  t.equal(table.dataContainer.valueAt(0, 0), timestamp, 'keeps the time filter timestamp');
+  t.equal(table.fields[1].type, 'geoarrow', 'restores the spatial field');
+  t.equal(
+    table.fields[1].metadata.get('ARROW:extension:name'),
+    'geoarrow.wkb',
+    'marks returned binary values as WKB'
+  );
+  t.deepEqual(table.dataContainer.valueAt(0, 1), geometry, 'keeps binary geometry for rendering');
+  t.end();
+});
