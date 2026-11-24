@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {Table, vectorFromArray} from 'apache-arrow';
+import {Int32, Int64, Table, vectorFromArray} from 'apache-arrow';
 import {DataFilterExtension} from '@deck.gl/extensions';
 import KeplerTable from '@kepler.gl/table';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {ALL_FIELD_TYPES, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import {
   EnhancedMultiIconLayer,
@@ -219,9 +220,9 @@ function makeLabelLayer(table: KeplerTable, field = table.fields[2]) {
   return layer;
 }
 
-function renderedTextLabel(layer: PointLayer, data) {
+function renderedTextLabel(layer: PointLayer, data, getPosition = undefined) {
   return layer.renderTextLabelLayer(
-    {getPixelOffset: () => [0, 0], updateTriggers: {}, sharedProps: {}},
+    {getPosition, getPixelOffset: () => [0, 0], updateTriggers: {}, sharedProps: {}},
     {data, mapState: {}, visible: true}
   )[0];
 }
@@ -343,4 +344,93 @@ test('collision labels preserve shared extensions without mutating another layer
   expect(text.props.extensions).toHaveLength(2);
   expect(text.props.extensions[0]).toBe(extension);
   expect(text.props.extensions[1].constructor.extensionName).toBe('CollisionFilterExtension');
+});
+
+describe.each([false, true])('point label rotation (Arrow: %s)', useArrow => {
+  const oldConfig = getApplicationConfig();
+  beforeEach(() => initApplicationConfig({maxArrowBatches: 2}));
+  afterEach(() => initApplicationConfig(oldConfig));
+
+  test('resolves angle fields per row and restores the default when cleared', () => {
+    const base = labelSnapshot(['A', 'BC', 'D'], useArrow);
+    const heading = vectorFromArray([12.5, -450, null]);
+    const other = vectorFromArray([70, 30, 10], new Int32());
+    const large = vectorFromArray([70n, 9007199254740993n, null], new Int64());
+    const fields = [
+      ...base.fields,
+      {name: 'heading', type: ALL_FIELD_TYPES.real},
+      {name: 'other', type: ALL_FIELD_TYPES.integer},
+      {name: 'large', type: ALL_FIELD_TYPES.integer}
+    ];
+    const arrowTable = base.cols
+      ? new Table<Record<string, any>>({
+          ...Object.fromEntries(base.fields.map((field, index) => [field.name, base.cols![index]])),
+          heading,
+          other,
+          large
+        })
+      : undefined;
+    const chunks = arrowTable?.slice(0, 1).concat(arrowTable.slice(1));
+    const table = new KeplerTable({color: [0, 0, 0]}).updateSchema(
+      chunks
+        ? {
+            ...base,
+            fields,
+            cols: fields.map(field => chunks.getChild(field.name)),
+            arrowTable: chunks
+          }
+        : {
+            ...base,
+            fields,
+            rows: base.rows.map((row, index) => [
+              ...row,
+              heading.get(index),
+              other.get(index),
+              large.get(index)
+            ])
+          }
+    );
+    const layer = makeLabelLayer(table);
+    const render = (angleField: string | null, oldData: object | null = null) => {
+      layer.updateLayerConfig({textLabel: [{...layer.config.textLabel[0], angleField}]});
+      const data = layer.formatLayerData({[table.id]: table}, oldData);
+      const text = renderedTextLabel(
+        layer,
+        data,
+        useArrow ? (layer as any).geoArrowVector : undefined
+      );
+      return {text, data};
+    };
+
+    const first = render('heading');
+    const read = text => [0, 1, 2].map(index => text.props.getAngle({index}));
+    expect(read(first.text)).toEqual([12.5, -90, 0]);
+    const readBatches = text => {
+      const batches = text.renderLayers();
+      expect(batches).toHaveLength(2);
+      return batches.flatMap(batch =>
+        Array.from({length: batch.props.data.length}, (_, index) =>
+          batch.props.getAngle(null, {index, data: batch.props.data})
+        )
+      );
+    };
+    if (useArrow) expect(readBatches(first.text)).toEqual([12.5, -90, 0]);
+
+    const second = render('other', first.data);
+    expect(read(second.text)).toEqual([70, 30, 10]);
+    if (useArrow) expect(readBatches(second.text)).toEqual([70, 30, 10]);
+    expect(second.text.props.updateTriggers.getAngle).not.toEqual(
+      first.text.props.updateTriggers.getAngle
+    );
+
+    const last = render('large', second.data);
+    expect(read(last.text)).toEqual([70, 33, 0]);
+    if (useArrow) expect(readBatches(last.text)).toEqual([70, 33, 0]);
+
+    const cleared = render(null, last.data);
+    expect(cleared.text.props.getAngle).toBe(0);
+    expect(cleared.text.props.updateTriggers.getAngle).toBeNull();
+    expect(render('missing', cleared.data).text.props.getAngle).toBe(0);
+    expect(render('label', cleared.data).text.props.getAngle).toBe(0);
+  });
 });

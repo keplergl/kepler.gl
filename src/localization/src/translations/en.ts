@@ -65,6 +65,7 @@ export default {
       label: 'label',
       labelWithId: 'Label {labelId}',
       fontSize: 'Font size',
+      angleField: 'Rotation field (degrees)',
       fontWeight: 'Font weight',
       fontColor: 'Font color',
       backgroundColor: 'Background color',

@@ -807,6 +807,7 @@ export default function LayerConfiguratorFactory(
           <TextLabelPanel
             id={layer.id}
             fields={visConfiguratorProps.fields}
+            enableAngleField={layer.type === LAYER_TYPES.point}
             updateLayerTextLabel={this.props.updateLayerTextLabel}
             textLabel={layer.config.textLabel}
           />

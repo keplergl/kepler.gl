@@ -3,6 +3,7 @@
 
 import {DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import {KeplerGlLayers} from '@kepler.gl/layers';
+import {layerPropsV1} from '../../schemas/src/vis-state-schema';
 
 import {fallbackTextLabelForLoadedLayer, validateSavedTextLabel} from './vis-state-merger';
 
@@ -61,4 +62,26 @@ describe('validateSavedTextLabel point count', () => {
 
     expect(fallbackTextLabelForLoadedLayer('point', defaults)).toBe(defaults);
   });
+});
+
+test('saves and restores a configured point label angle without changing old saves', () => {
+  const layer = new KeplerGlLayers.PointLayer({id: 'point'});
+  const defaults = layer.config.textLabel;
+  const field = {name: 'label', type: 'string', fieldIdx: 0, valueAccessor: () => 'A'};
+  const label = {...defaults[0], field};
+  const save = (value: object) => layerPropsV1.config.save(value).config.textLabel;
+  const restore = (saved: object[]) =>
+    validateSavedTextLabel(
+      [field],
+      defaults,
+      layerPropsV1.config.load({textLabel: saved}).config.textLabel
+    );
+
+  const saved = save({textLabel: [{...label, angleField: 'heading'}]});
+  expect(saved[0].angleField).toBe('heading');
+  expect(restore(saved)[0]).toMatchObject({field, angleField: 'heading'});
+
+  const old = save({textLabel: [label]});
+  expect(old[0]).not.toHaveProperty('angleField');
+  expect(restore(old)[0]).toMatchObject({field, angleField: null});
 });

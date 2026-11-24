@@ -39,7 +39,8 @@ import {
   LAYER_VIS_CONFIGS,
   DEFAULT_LAYER_COLOR,
   CHANNEL_SCALES,
-  DEFAULT_COLOR_UI
+  DEFAULT_COLOR_UI,
+  ALL_FIELD_TYPES
 } from '@kepler.gl/constants';
 import {getTextOffsetByRadius, formatTextLabelData} from '../layer-text-label';
 import {
@@ -545,6 +546,7 @@ export default class PointLayer extends Layer {
       ...defaultLayerConfig,
 
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      textLabel: defaultLayerConfig.textLabel.map(label => ({...label, angleField: null})),
 
       // add stroke color visual channel
       strokeColorField: null,
@@ -627,7 +629,7 @@ export default class PointLayer extends Layer {
       return {};
     }
     const {textLabel} = this.config;
-    const {gpuFilter, dataContainer} = datasets[this.config.dataId];
+    const {gpuFilter, dataContainer, fields, dataRevision} = datasets[this.config.dataId];
     const {data, triggerChanged} = this.updateData(datasets, oldLayerData);
     const pulseData = this.updateEventAnimation(datasets[this.config.dataId]);
     const getPosition = d => d.position;
@@ -642,6 +644,27 @@ export default class PointLayer extends Layer {
       filteredIndex: this.filteredIndex
     });
 
+    const textLabelAngles = textLabel.some(label => label.field && label.angleField)
+      ? textLabel.map(label => {
+          if (!label.field || !label.angleField) return null;
+          const fieldIdx = fields.findIndex(
+            field =>
+              field.name === label.angleField &&
+              (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+          );
+          if (fieldIdx < 0) return null;
+
+          return {
+            getAngle: ({index}: {index: number}) => {
+              const value = dataContainer.valueAt(index, fieldIdx);
+              const degrees = typeof value === 'bigint' ? Number(value % BigInt(360)) : value;
+              return Number.isFinite(degrees) ? degrees % 360 : 0;
+            },
+            trigger: {field: label.angleField, fieldIdx, dataContainer, dataRevision}
+          };
+        })
+      : null;
+
     const accessors = this.getAttributeAccessors({dataContainer});
 
     const isFilteredAccessor = (data: {index: number}) => {
@@ -654,6 +677,7 @@ export default class PointLayer extends Layer {
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       getFiltered: isFilteredAccessor,
       textLabels,
+      ...(textLabelAngles ? {textLabelAngles} : {}),
       ...pulseData,
       ...accessors
     };
