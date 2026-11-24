@@ -25,6 +25,57 @@ const DEFAULT_PORT = 8765;
 const RETRY_MS = 2000;
 const MAX_ATTEMPTS = 30;
 const TOKEN_KEY = 'kepler-mcp-token';
+// Keep in sync with the ws receiver's default maxPayload (100 MiB).
+const MAX_BRIDGE_MESSAGE_BYTES = 100 * 1024 * 1024;
+
+function exceedsUtf8Limit(message: string, limit: number): boolean {
+  // UTF-8 uses between one and three bytes per UTF-16 code unit on average.
+  // An ordinary save needs neither a second scan nor a UTF-8-sized allocation.
+  if (message.length <= limit / 3) return false;
+  let bytes = message.length;
+  for (let i = 0; i < message.length && bytes <= limit; i++) {
+    const unit = message.charCodeAt(i);
+    if (unit < 0x80) continue;
+    if (unit < 0x800) {
+      bytes++;
+    } else {
+      bytes += 2;
+      if (unit >= 0xd800 && unit <= 0xdbff) {
+        const next = message.charCodeAt(i + 1);
+        // A surrogate pair costs four bytes for two existing code units.
+        if (next >= 0xdc00 && next <= 0xdfff) i++;
+      }
+    }
+  }
+  return bytes > limit;
+}
+
+export function serializeBridgeResult(
+  callId: string,
+  result: RoomCommandResult,
+  maxBytes = MAX_BRIDGE_MESSAGE_BYTES
+): string {
+  const message = JSON.stringify({type: 'result', callId, result});
+  // Escaping the artifact JSON and adding the envelope consume wire bytes that
+  // do not count towards the server's separate project artifact retention limit.
+  if (
+    result.success &&
+    result.commandId === 'map.save-project' &&
+    exceedsUtf8Limit(message, maxBytes)
+  ) {
+    return JSON.stringify({
+      type: 'result',
+      callId,
+      result: {
+        success: false,
+        commandId: result.commandId,
+        error:
+          'The saved project is too large to transfer over the local bridge. Use source references or export fewer datasets.'
+      }
+    });
+  }
+  return message;
+}
 
 // The bridge only ever talks to a loopback server. A crafted link must not be
 // able to point it at a remote WebSocket (data-exfil / remote-control risk), so
@@ -183,7 +234,7 @@ export function KeplerMcpBridge({reduxStore}: Props) {
         }
         activeCalls.delete(callId);
         if (!controller.signal.aborted && !stopped && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({type: 'result', callId, result}));
+          ws.send(serializeBridgeResult(callId, result));
         }
       };
 

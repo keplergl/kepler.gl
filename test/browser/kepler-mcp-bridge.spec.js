@@ -4,7 +4,10 @@
 import React from 'react';
 import {cleanup, render} from '@testing-library/react';
 import {KEPLER_GL_VERSION} from '@kepler.gl/constants';
-import {KeplerMcpBridge} from '../../examples/demo-app/src/kepler-mcp-bridge';
+import {
+  KeplerMcpBridge,
+  serializeBridgeResult
+} from '../../examples/demo-app/src/kepler-mcp-bridge';
 import {buildCatalog, buildKeplerContext} from '../../examples/demo-app/src/kepler-mcp-shared';
 
 jest.mock('../../examples/demo-app/src/kepler-mcp-shared', () => ({
@@ -40,6 +43,41 @@ function deferred() {
   });
   return {promise, resolve};
 }
+
+describe('MCP bridge project save results', () => {
+  it.each(['ASCII', 'quoted "text"', 'café', '東京', '🌍'])(
+    'measures the complete UTF-8 result envelope at the boundary: %s',
+    value => {
+      const callId = 'save';
+      const result = {
+        success: true,
+        commandId: 'map.save-project',
+        data: {
+          artifact: {
+            fileName: 'map.json',
+            mimeType: 'application/json',
+            text: JSON.stringify(value)
+          }
+        }
+      };
+      const message = JSON.stringify({type: 'result', callId, result});
+      const limit = Buffer.byteLength(message, 'utf8');
+      expect(serializeBridgeResult(callId, result, limit)).toBe(message);
+      const replacement = serializeBridgeResult(callId, result, limit - 1);
+      const response = JSON.parse(replacement);
+      expect(response).toMatchObject({
+        type: 'result',
+        callId,
+        result: {
+          success: false,
+          commandId: 'map.save-project',
+          error: expect.stringContaining('too large')
+        }
+      });
+      expect(response.result).not.toHaveProperty('data');
+    }
+  );
+});
 
 describe('MCP browser bridge', () => {
   let execute;
