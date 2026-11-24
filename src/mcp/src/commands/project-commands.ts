@@ -3,7 +3,11 @@
 
 import {z} from 'zod';
 import {addDataToMap, resetMapConfig} from '@kepler.gl/actions';
-import {processKeplerglJSON} from '@kepler.gl/processors';
+import {
+  hydrateExternallyHostedDataset,
+  needsExternallyHostedHydrate,
+  processKeplerglJSON
+} from '@kepler.gl/processors';
 import {serializeProject} from './project-export';
 import {prepareProjectMapStyles} from './project-map-styles';
 import type {KeplerContext, RoomCommand, VisState} from './types';
@@ -265,7 +269,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
       'Replace the current map with a saved kepler.gl JSON project, including datasets, layers, filters, effects, tooltips and camera bookmarks. ' +
       'Accepts a browser-accessible URL; the stdio bridge also accepts filePath for one selected local JSON file. ' +
       'Waits for dataset registration and reports failures or skipped effect animations. Remote source references must remain accessible. ' +
-      'A failed or cancelled load may leave a partially loaded map.',
+      'Unavailable or invalid remote dataset files leave the current map unchanged. Other failures or cancellation after replacement starts may leave a partially loaded map.',
     metadata: {readOnly: false, riskLevel: 'medium', requiresConfirmation: true},
     inputSchema: openSchema,
     execute: async (execution, input) => {
@@ -291,7 +295,7 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
         const schema = ctx.getVisState().schema;
         validateProject(raw, schema);
         const parsed = processKeplerglJSON(raw, schema);
-        if (!parsed?.config || parsed.datasets?.length !== raw.datasets.length) {
+        if (!parsed?.config || !parsed.datasets || parsed.datasets.length !== raw.datasets.length) {
           throw new Error(
             'The project could not be parsed completely. No map changes were applied.'
           );
@@ -307,10 +311,35 @@ export function getOpenProjectCommand(ctx: KeplerContext): RoomCommand {
             'This host must provide KeplerContext.getKeplerState to replace custom project basemaps.'
           );
         }
+        // Resolve references before changing any live state. Pass their loaded
+        // data to the normal reducer so a successful open does not download twice.
+        const datasets = parsed.datasets.some(needsExternallyHostedHydrate)
+          ? await Promise.all(
+              parsed.datasets.map(async dataset => {
+                try {
+                  return await hydrateExternallyHostedDataset(dataset, {signal: execution.signal});
+                } catch {
+                  if (execution.signal?.aborted) {
+                    throw new Error('Project import cancelled. No map changes were applied.');
+                  }
+                  // A loader error may contain authenticated URLs or raw data.
+                  throw new Error(
+                    `Project dataset "${dataset.info.id}" could not be loaded. ` +
+                      'Check source availability and data format. No map changes were applied.'
+                  );
+                }
+              })
+            )
+          : parsed.datasets;
+        execution.signal?.throwIfAborted();
+        if (ctx.getVisState().fileLoading || ctx.getVisState().loadingIndicatorValue > 0) {
+          throw new Error('Wait for the current dataset load to finish before opening a project.');
+        }
         dispatchCompletion = dispatchProject(
           ctx,
           {
             ...parsed,
+            datasets,
             options: {centerMap: false, autoCreateLayers: false, keepExistingConfig: false}
           },
           execution.signal

@@ -300,6 +300,81 @@ it('reports HTTP and malformed JSON errors without replacing the map', async () 
   expect(ctx.dispatch).not.toHaveBeenCalled();
 });
 
+it('preserves the current project when a replacement CSV reference returns 404', async () => {
+  const {ctx} = setup();
+  const open = getOpenProjectCommand(ctx);
+  expect(await execute(open, {url: '/current.json'})).toMatchObject({success: true});
+  const current = ctx.getKeplerState!()!;
+  expect(Object.keys(current.visState.datasets)).toEqual(['first', 'second']);
+
+  const replacement = fixture();
+  // A valid embedded table shares an ID with a live table. Neither its
+  // changed data nor the replacement camera may reach the live project.
+  replacement.datasets[0].data.allData = [[42, -73, 7]];
+  replacement.datasets[1].data.allData = [];
+  const missingUrl = 'https://example.com/second.csv?key=private';
+  replacement.datasets[1].data.metadata.source = missingUrl;
+  replacement.config.config.mapState = {...camera, zoom: 14};
+  serve(replacement);
+  const fetchOther = global.fetch;
+  global.fetch = jest.fn(async (url, options) =>
+    url === missingUrl
+      ? ({ok: false, status: 404, statusText: 'Not Found'} as Response)
+      : fetchOther(url, options)
+  );
+  jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+  const result = await execute(open, {url: '/replacement.json'});
+  expect(result).toMatchObject({success: false, error: expect.stringContaining('second')});
+  expect(result.error).not.toContain('private');
+  expect(global.fetch).toHaveBeenCalledWith(missingUrl, expect.any(Object));
+  expect(ctx.getKeplerState!()!).toBe(current);
+  expect(await execute(getProjectStatusCommand(ctx), {})).toMatchObject({
+    data: {state: 'failed'}
+  });
+});
+
+it('replaces the map with referenced data using one fetch per source', async () => {
+  const {ctx} = setup();
+  const open = getOpenProjectCommand(ctx);
+  expect(await execute(open, {url: '/current.json'})).toMatchObject({success: true});
+  const oldTable = ctx.getVisState().datasets.second;
+  const replacement = fixture();
+  replacement.datasets[1].data.allData = [];
+  const source = replacement.datasets[1].data.metadata.source;
+  serve(replacement);
+  const fetchOther = global.fetch;
+  global.fetch = jest.fn(async (url, options) =>
+    url === source
+      ? ({
+          ok: true,
+          headers: {get: key => (key === 'etag' ? 'loaded-etag' : null)},
+          blob: async () => new Blob(['lat,lng,value\n30,-77,5\n31,-78,20'])
+        } as Response)
+      : fetchOther(url, options)
+  );
+
+  // Node File implements stream() as expected by loaders.gl; jsdom File does not.
+  const {Blob: nodeBlob, File: nodeFile} = require('node:buffer');
+  const {Blob: testBlob, File: testFile, Response: testResponse} = global;
+  global.Blob = nodeBlob;
+  global.File = nodeFile;
+  global.Response = require('node-fetch').Response;
+  try {
+    expect(await execute(open, {url: '/replacement.json'})).toMatchObject({success: true});
+  } finally {
+    global.Blob = testBlob;
+    global.File = testFile;
+    global.Response = testResponse;
+  }
+
+  const table = ctx.getVisState().datasets.second;
+  expect(table).not.toBe(oldTable);
+  expect(table.dataContainer.valueAt(0, 0)).toBe(30);
+  expect(table.metadata).toMatchObject({source, etag: 'loaded-etag'});
+  expect((global.fetch as jest.Mock).mock.calls.filter(([url]) => url === source)).toHaveLength(1);
+});
+
 it('waits for delayed project data before ready and succeeds on the first layer lookup', async () => {
   const {ctx} = setup();
   const original = KeplerTable.prototype.importData;
