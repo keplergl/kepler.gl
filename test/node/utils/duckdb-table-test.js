@@ -301,8 +301,10 @@ test('KeplerGlDuckDbTable -> restores saved GeoJSON rows as spatial data and tim
   const timestamp = Date.parse('2024-03-15T12:00:00.123Z');
   const geometryHex = '0101000000000000000000f03f0000000000000040';
   const geometry = Uint8Array.from(Buffer.from(geometryHex, 'hex'));
+  const footprint = 'POLYGON ((0 0, 1 0, 1 1, 0 0))';
   const values = new arrow.Table({
     observed_at: arrow.vectorFromArray([timestamp], new arrow.TimestampMillisecond()),
+    footprint_wkt: arrow.vectorFromArray([footprint], new arrow.Utf8()),
     _geojson: arrow.vectorFromArray([geometry], new arrow.Binary())
   });
   let registered;
@@ -311,8 +313,8 @@ test('KeplerGlDuckDbTable -> restores saved GeoJSON rows as spatial data and tim
     query: async sql => {
       if (sql.startsWith('PRAGMA')) {
         return arrow.tableFromArrays({
-          name: ['observed_at', '_geojson'],
-          type: ['TIMESTAMP', 'GEOMETRY']
+          name: ['observed_at', 'footprint_wkt', '_geojson'],
+          type: ['TIMESTAMP', 'VARCHAR', 'GEOMETRY']
         });
       }
       if (sql.startsWith('SELECT')) return values;
@@ -337,15 +339,16 @@ test('KeplerGlDuckDbTable -> restores saved GeoJSON rows as spatial data and tim
         data: {
           fields: [
             {name: 'observed_at', type: 'timestamp', format: 'X', duckDBColumnType: 'VARCHAR'},
+            {name: 'footprint_wkt', type: 'geojson', analyzerType: 'GEOMETRY_FROM_STRING'},
             {name: '_geojson', type: 'geojson', analyzerType: 'GEOMETRY'}
           ],
-          rows: [['2024-03-15T12:00:00.123Z', geometryHex]]
+          rows: [['2024-03-15T12:00:00.123Z', footprint, geometryHex]]
         }
       })
   );
   t.deepEqual(
     registered,
-    [{observed_at: '2024-03-15T12:00:00.123Z', _geojson: geometryHex}],
+    [{observed_at: '2024-03-15T12:00:00.123Z', footprint_wkt: footprint, _geojson: geometryHex}],
     'restores row payload without interpreting the saved ISO value as epoch seconds'
   );
   t.ok(
@@ -366,12 +369,18 @@ test('KeplerGlDuckDbTable -> restores saved GeoJSON rows as spatial data and tim
   );
   t.equal(table.fields[0].type, 'timestamp', 'keeps the time filter field type');
   t.equal(table.dataContainer.valueAt(0, 0), timestamp, 'keeps the time filter timestamp');
-  t.equal(table.fields[1].type, 'geoarrow', 'restores the spatial field');
+  t.ok(
+    tableSql.some(sql => sql.includes('SELECT "observed_at", "footprint_wkt", CASE')),
+    'selects the WKT column unchanged instead of decoding it as hex'
+  );
+  t.equal(table.fields[1].type, 'geojson', 'keeps the WKT property available as geometry text');
+  t.equal(table.dataContainer.valueAt(0, 1), footprint, 'preserves the original WKT property');
+  t.equal(table.fields[2].type, 'geoarrow', 'restores the spatial field');
   t.equal(
-    table.fields[1].metadata.get('ARROW:extension:name'),
+    table.fields[2].metadata.get('ARROW:extension:name'),
     'geoarrow.wkb',
     'marks returned binary values as WKB'
   );
-  t.deepEqual(table.dataContainer.valueAt(0, 1), geometry, 'keeps binary geometry for rendering');
+  t.deepEqual(table.dataContainer.valueAt(0, 2), geometry, 'keeps binary geometry for rendering');
   t.end();
 });

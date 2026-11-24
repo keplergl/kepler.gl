@@ -126,7 +126,9 @@ export class KeplerGlDuckDbTable extends KeplerTable {
         const explicitDuckDBColumnType = (field as typeof field & {duckDBColumnType?: string})
           .duckDBColumnType;
         // Saved projects store geometry as hex WKB or GeoJSON, not DuckDB's binary representation.
-        const savedGeometry = restoreSavedGeoJson && field.type === ALL_FIELD_TYPES.geojson;
+        const savedGeometryColumn = restoreSavedGeoJson && field.type === ALL_FIELD_TYPES.geojson;
+        // An inferred WKT property was already stored as text, so keep it as text.
+        const savedGeometry = savedGeometryColumn && field.analyzerType !== 'GEOMETRY_FROM_STRING';
         // The project processor can sniff serialized Arrow timestamps as VARCHAR even though
         // the saved field still carries an epoch format. Restore the native timestamp column.
         const savedArrowTimestamp =
@@ -134,7 +136,7 @@ export class KeplerGlDuckDbTable extends KeplerTable {
           field.type === ALL_FIELD_TYPES.timestamp &&
           field.format === 'X' &&
           explicitDuckDBColumnType === 'VARCHAR';
-        const duckDBColumnType = savedGeometry
+        const duckDBColumnType = savedGeometryColumn
           ? 'VARCHAR'
           : savedArrowTimestamp
           ? 'TIMESTAMP'
