@@ -185,11 +185,36 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
 
   // Sampling uses names as object keys, so make them unique before inferring types.
   headerRow = renameDuplicateFields(headerRow).fieldByIndex;
-  cleanUpFalsyCsvValue(rows);
+  return processDelimitedRows(rows, headerRow, true);
+}
+
+function processDelimitedRows(
+  rows: unknown[][],
+  headerRow: string[],
+  preservePaddedDigits: boolean
+): ProcessorResult {
+  const paddedColumns = preservePaddedDigits ? new Set<number>() : undefined;
+  cleanUpFalsyCsvValue(rows, paddedColumns);
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
   const fields = getFieldsFromData(sample, headerRow);
+  // A padded identifier anywhere in the column must prevent numeric coercion,
+  // including rows beyond the inference sample. Leave recognized geometry and dates alone.
+  paddedColumns?.forEach(index => {
+    const field = fields[index];
+    if (
+      field &&
+      (field.type === ALL_FIELD_TYPES.integer ||
+        field.type === ALL_FIELD_TYPES.real ||
+        field.type === ALL_FIELD_TYPES.boolean ||
+        (field.type === ALL_FIELD_TYPES.timestamp && ['x', 'X'].includes(field.format)))
+    ) {
+      field.type = ALL_FIELD_TYPES.string;
+      field.analyzerType = AnalyzerDATA_TYPES.STRING;
+      field.format = '';
+    }
+  });
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
@@ -214,16 +239,26 @@ export function parseRowsByFields(rows: any[][], fields: Field[]) {
  *
  * @param rows
  */
-function cleanUpFalsyCsvValue(rows: unknown[][]): void {
-  const re = new RegExp(CSV_NULLS, 'g');
+function cleanUpFalsyCsvValue(rows: unknown[][], paddedColumns?: Set<number>): void {
+  const paddedDigits = /^0[0-9]+$/;
   for (let i = 0; i < rows.length; i++) {
     for (let j = 0; j < rows[i].length; j++) {
       // analyzer will set any fields to 'string' if there are empty values
       // which will be parsed as '' by d3.csv
       // here we parse empty data as null
       // TODO: create warning when deltect `CSV_NULLS` in the data
-      if (typeof rows[i][j] === 'string' && (rows[i][j] as string).match(re)) {
-        rows[i][j] = null;
+      const value = rows[i][j];
+      if (typeof value === 'string') {
+        if (CSV_NULLS.test(value)) {
+          rows[i][j] = null;
+        } else if (
+          paddedColumns &&
+          value[0] === '0' &&
+          !paddedColumns.has(j) &&
+          paddedDigits.test(value)
+        ) {
+          paddedColumns.add(j);
+        }
       }
     }
   }
@@ -292,7 +327,10 @@ export function parseCsvRowsByFieldType(
  *  }
  * }));
  */
-export function processRowObject(rawData: unknown[]): ProcessorResult {
+export function processRowObject(
+  rawData: unknown[],
+  preservePaddedDigits = false
+): ProcessorResult {
   if (!Array.isArray(rawData)) {
     return null;
   } else if (!rawData.length) {
@@ -307,10 +345,7 @@ export function processRowObject(rawData: unknown[]): ProcessorResult {
   const keys = Object.keys(firstRow); // [lat, lng, value]
   const rows = rawData.map(d => keys.map(key => (d as Record<string, unknown>)[key])); // [[31.27, 127.56, 3]]
 
-  // row object can still contain values like `Null` or `N/A`
-  cleanUpFalsyCsvValue(rows);
-
-  return processCsvData(rows, keys);
+  return processDelimitedRows(rows, keys, preservePaddedDigits);
 }
 
 /**

@@ -46,6 +46,7 @@ import {
 
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {getKeplerLoaders, isKeplerFileFormatAccepted} from './loader-registry';
+import {KeplerCSVLoader} from './kepler-csv-loader';
 import {
   createCompanionFetch,
   getDroppedFileExtension,
@@ -684,7 +685,9 @@ export async function readFileInBatches({
   const batchIterator = await parseInBatches(file, loaders, loadOptions);
   const progressIterator = makeProgressIterator(batchIterator, {size: file.size});
   const sourceUrl = (file as File & {keplerSourceUrl?: string}).keplerSourceUrl;
-  const keplerFormat = (file as File & {keplerFormat?: string}).keplerFormat;
+  const keplerFormat =
+    (file as File & {keplerFormat?: string}).keplerFormat ||
+    (!hasExtension && KeplerCSVLoader.mimeTypes?.includes(file.type) ? 'csv' : undefined);
   const refreshIntervalMs = (file as File & {keplerRefreshIntervalMs?: number})
     .keplerRefreshIntervalMs;
   const etag = (file as File & {keplerEtag?: string}).keplerEtag;
@@ -727,6 +730,9 @@ export async function processFileData({
   } else {
     // use default processors
     const geojsonData = getGeoJsonFromLoaderResult(data);
+    const isCsv =
+      content.keplerFormat === 'csv' ||
+      KeplerCSVLoader.extensions.includes(getDroppedFileExtension(fileName));
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
       processor = processArrowBatches;
@@ -739,7 +745,7 @@ export async function processFileData({
     } else if (isRowObject(data)) {
       // csv file goes here
       format = DATASET_FORMATS.row;
-      processor = processRowObject;
+      processor = rows => processRowObject(rows, isCsv);
     } else if (isPlainObject(data)) {
       const tableRows = data.data;
       if (
@@ -747,7 +753,7 @@ export async function processFileData({
         Array.isArray(tableRows)
       ) {
         format = DATASET_FORMATS.row;
-        processor = () => processRowObject(tableRows);
+        processor = () => processRowObject(tableRows, isCsv);
       }
     }
   }

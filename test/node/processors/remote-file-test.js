@@ -9,8 +9,40 @@ import {
   getFileNameForRemoteUrl,
   getMimeTypeForFormat,
   isRemoteDatasetUrl,
-  loadExternallyHostedDataset
+  loadExternallyHostedDataset,
+  processCsvData
 } from '@kepler.gl/processors';
+
+test('#CSV import preserves zero-padded identifiers past the inference sample', async t => {
+  const reportedCsv = 'a,b,d\n36,360610199004,06\n';
+  const reported = processCsvData(reportedCsv);
+  t.equal(reported.fields[2].type, 'string', 'reported identifier is a string');
+  t.equal(reported.rows[0][2], '06', 'reported identifier keeps its leading zero');
+
+  const csv = [
+    'code,count,amount',
+    ...Array.from({length: 51}, (_, i) => `${i + 100},${i + 10},${i + 0.5}`),
+    '"06",0,0.125',
+    ',2,0.5'
+  ].join('\n');
+  const originalFetch = global.fetch;
+  try {
+    global.fetch = async () => new Response(csv, {headers: {'content-type': 'text/csv'}});
+    const streamed = await loadExternallyHostedDataset({source: 'https://example.com/codes.csv'});
+    for (const data of [processCsvData(csv), streamed.data]) {
+      t.deepEqual(
+        data.fields.map(f => f.type),
+        ['string', 'integer', 'real']
+      );
+      t.deepEqual(data.rows[0], ['100', 10, 0.5]);
+      t.deepEqual(data.rows[51], ['06', 0, 0.125]);
+      t.deepEqual(data.rows[52], [null, 2, 0.5]);
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+  t.end();
+});
 
 test('#remote-file -> recognizes only the established CSV header', async t => {
   const originalFetch = global.fetch;
