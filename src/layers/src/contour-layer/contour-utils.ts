@@ -16,6 +16,8 @@ export type ScalarGrid = {
   values: Float64Array;
   /** Padding cells on each side of the samples, when the extent permits. */
   border?: number;
+  /** Wide extents use a rectangular world with a hard cut at the antimeridian. */
+  clipToWorld?: boolean;
 };
 export type ContourFeature = Feature<
   MultiPolygon,
@@ -40,7 +42,7 @@ function hasValidPosition(d: ScalarSample): boolean {
   );
 }
 
-function regionalBounds(samples: ScalarSample[]) {
+function sampleBounds(samples: ScalarSample[]) {
   let west = Infinity;
   let east = -Infinity;
   let south = Infinity;
@@ -50,11 +52,6 @@ function regionalBounds(samples: ScalarSample[]) {
     east = Math.max(east, d.longitude);
     south = Math.min(south, d.latitude);
     north = Math.max(north, d.latitude);
-  }
-  if (east - west > 180) {
-    throw new Error(
-      'This contour prototype requires regional samples that do not cross the antimeridian.'
-    );
   }
   return {west, east, south, north};
 }
@@ -81,7 +78,8 @@ export function buildContourGrid(
         (typeof sample.value === 'number' && Number.isFinite(sample.value)))
   );
   if (!located.length) return null;
-  const {west, east, south, north} = regionalBounds(located);
+  const {west, east, south, north} = sampleBounds(located);
+  const clipToWorld = east - west > 180;
   const metersPerDegreeLng =
     METERS_PER_DEGREE_LAT * Math.max(0.01, Math.cos((((south + north) / 2) * Math.PI) / 180));
   const axis = Math.min(MAX_GRID_AXIS, Math.round(resolution));
@@ -110,7 +108,8 @@ export function buildContourGrid(
       stepLat
     };
   };
-  const borderWidth = reserveBorder && axis >= 4 ? Math.max(1, Math.round(axis / 32)) : 0;
+  const borderWidth =
+    reserveBorder && !clipToWorld && axis >= 4 ? Math.max(1, Math.round(axis / 32)) : 0;
   let layout = gridLayout(borderWidth);
   // Don't make legacy near-pole or date-line extents wrap because of padding.
   if (
@@ -122,19 +121,41 @@ export function buildContourGrid(
   ) {
     layout = gridLayout(0);
   }
+  if (clipToWorld) {
+    // Fit the outer cell edges inside the world, rather than placing sample
+    // centers at +/-180 and letting their half-cells wrap to the opposite side.
+    // Keep both ends independent: neither aggregation nor smoothing is periodic.
+    const left = Math.max(-180, west - layout.stepLng / 2);
+    const right = Math.min(180, east + layout.stepLng / 2);
+    const bottom = Math.max(-90, south - layout.stepLat / 2);
+    const top = Math.min(90, north + layout.stepLat / 2);
+    layout.stepLng = (right - left) / layout.width;
+    layout.stepLat = (top - bottom) / layout.height;
+    layout.longitude = left + layout.stepLng / 2;
+    layout.latitude = bottom + layout.stepLat / 2;
+  }
   const {border, innerWidth, innerHeight, width, height, longitude, latitude, stepLng, stepLat} =
     layout;
+  const sampleWest = clipToWorld ? longitude : west;
+  const sampleNorth = clipToWorld ? latitude + (height - 1) * stepLat : north;
   const values = new Float64Array(width * height);
   const counts = new Uint32Array(values.length);
   for (const sample of located) {
     // Resolve half-cell ties consistently despite roundoff when rescaling an extent.
     const col =
-      border + Math.min(innerWidth - 1, Math.round((sample.longitude - west) / stepLng + 1e-10));
+      border +
+      Math.max(
+        0,
+        Math.min(innerWidth - 1, Math.round((sample.longitude - sampleWest) / stepLng + 1e-10))
+      );
     const row =
       border +
       innerHeight -
       1 -
-      Math.min(innerHeight - 1, Math.round((north - sample.latitude) / stepLat + 1e-10));
+      Math.max(
+        0,
+        Math.min(innerHeight - 1, Math.round((sampleNorth - sample.latitude) / stepLat + 1e-10))
+      );
     const index = row * width + col;
     const count = ++counts[index];
     // Incremental means avoid accumulating a large sum of weights.
@@ -153,7 +174,8 @@ export function buildContourGrid(
     stepLng,
     stepLat,
     values,
-    ...(border ? {border} : {})
+    ...(border ? {border} : {}),
+    ...(clipToWorld ? {clipToWorld} : {})
   };
 }
 
@@ -279,10 +301,18 @@ export function generateContours(
                 if (Number.isFinite(a) && Number.isFinite(b) && a !== b)
                   y += (geometry.value - a) / (b - a) - 0.5;
               }
-              return [
+              const position = [
                 grid.longitude + (x - 0.5) * grid.stepLng,
                 grid.latitude + (y - 0.5) * grid.stepLat
               ];
+              // Guard against roundoff at the exact world edges. Regional grids
+              // retain their existing padding and near-pole rendering behavior.
+              return grid.clipToWorld
+                ? [
+                    Math.max(-180, Math.min(180, position[0])),
+                    Math.max(-90, Math.min(90, position[1]))
+                  ]
+                : position;
             })
           )
         )
