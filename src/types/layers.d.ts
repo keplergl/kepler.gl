@@ -207,6 +207,8 @@ export type SizeRange = [number, number];
 
 export type LayerTextLabel = {
   field: Field | null;
+  /** Point labels: name of an optional numeric field containing rotation in degrees. */
+  angleField?: string | null;
   color: RGBColor;
   background: boolean;
   size: number;

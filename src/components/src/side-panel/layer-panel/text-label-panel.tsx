@@ -22,7 +22,7 @@ import LayerConfigGroupFactory, {
   ConfigGroupCollapsibleHeader
 } from './layer-config-group';
 
-import {LAYER_TEXT_CONFIGS, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, LAYER_TEXT_CONFIGS, DEFAULT_TEXT_LABEL} from '@kepler.gl/constants';
 import {Field, LayerTextLabel, RGBAColor, RGBColor} from '@kepler.gl/types';
 import FieldSelectorFactory from '../../common/field-selector';
 import ColorSelectorFactory from './color-selector';
@@ -37,6 +37,7 @@ const SwitchWrapper = styled.div`
 type TextLabelPanelProps = {
   id?: string;
   fields: Field[];
+  enableAngleField?: boolean;
   textLabel: LayerTextLabel[];
   updateLayerTextLabel: (idx: number | 'all', prop: string, value: any) => void;
 };
@@ -56,7 +57,12 @@ function TextLabelPanelFactory(
 ): React.ComponentType<TextLabelPanelProps> {
   class TextLabelPanel extends PureComponent<TextLabelPanelProps> {
     render() {
-      const {updateLayerTextLabel, textLabel, fields} = this.props;
+      const {updateLayerTextLabel, textLabel, fields, enableAngleField} = this.props;
+      const angleFields = enableAngleField
+        ? fields.filter(
+            ({type}) => type === ALL_FIELD_TYPES.integer || type === ALL_FIELD_TYPES.real
+          )
+        : [];
       const currentFields = textLabel.map(tl => tl.field && tl.field.name).filter(d => Boolean(d));
 
       return (
@@ -98,6 +104,25 @@ function TextLabelPanelFactory(
                     erasable
                   />
                 </SidePanelSection>
+                {tl.field && angleFields.length > 0 ? (
+                  <SidePanelSection>
+                    <PanelLabel>
+                      <FormattedMessage id="panel.text.angleField" />
+                    </PanelLabel>
+                    <FieldSelector
+                      fields={angleFields}
+                      value={tl.angleField || 'placeholder.selectField'}
+                      onSelect={field =>
+                        updateLayerTextLabel(
+                          idx,
+                          'angleField',
+                          (field as Field | null)?.name ?? null
+                        )
+                      }
+                      erasable
+                    />
+                  </SidePanelSection>
+                ) : null}
                 <SidePanelSection>
                   <PanelLabel>
                     <FormattedMessage id="panel.text.fontSize" />

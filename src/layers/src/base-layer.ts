@@ -1842,6 +1842,7 @@ class Layer implements KeplerLayer {
           : TextLayer;
         const getText = animationConfig ? f => d.getText(f, animationConfig) : d.getText;
         const background = userBackground || collisionEnabled;
+        const angle = data.textLabelAngles?.[i];
         // Distinct id when collision is on so deck.gl does not rematch the
         // previous TextLayer. Matching would keep a stale collisionPriorities
         // attribute after the extension is removed, and skip initializeState
@@ -1883,6 +1884,7 @@ class Layer implements KeplerLayer {
             data: data.data,
             visible,
             getText,
+            ...(angle ? {getAngle: angle.getAngle} : {}),
             getPosition,
             getFiltered,
             characterSet: d.characterSet,
@@ -1920,6 +1922,7 @@ class Layer implements KeplerLayer {
             getFilterValue: data.getFilterValue,
             updateTriggers: {
               ...updateTriggers,
+              ...(textLabel[i].angleField !== undefined ? {getAngle: angle?.trigger ?? null} : {}),
               getText: {
                 field: textLabel[i].field?.name,
                 displayFormat: textLabel[i].field?.displayFormat,

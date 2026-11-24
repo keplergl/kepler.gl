@@ -424,8 +424,9 @@ class ColumnSchemaV1 extends Schema {
 class TextLabelSchemaV1 extends Schema {
   save(textLabel) {
     return {
-      [this.key]: textLabel.map(tl => ({
+      [this.key]: textLabel.map(({angleField, ...tl}) => ({
         ...tl,
+        ...(angleField ? {angleField} : {}),
         field: tl.field ? pick(tl.field, ['name', 'type']) : null
       }))
     };

@@ -1208,7 +1208,11 @@ export function validateSavedTextLabel(
         // of false with the aggregation default of true.
         [key]: key === 'field' ? field : textLabel[key] ?? layerTextLabel[key]
       }),
-      {}
+      options.layerType === LAYER_TYPES.point &&
+        typeof textLabel.angleField === 'string' &&
+        textLabel.angleField
+        ? {angleField: textLabel.angleField}
+        : {}
     );
   });
 }
