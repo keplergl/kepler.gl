@@ -186,10 +186,97 @@ it('handles an empty map and a dataset with no remaining layers', async () => {
   expect(state().layerOrder).toEqual([]);
 });
 
+it('creates a group, moves layers without duplicates, and dissolves it without deleting layers', async () => {
+  const {state, dispatch, execute} = setup();
+  const {layers, layerData, datasets} = state();
+  const created = await execute('map.create-layer-group', {
+    label: ' Versions ',
+    layerIds: ['ripples', 'markers']
+  });
+  expect(created).toMatchObject({success: true, data: {layerIds: ['markers', 'ripples']}});
+  const {groupId} = created.data;
+  expect((await execute('map.get-layer-order')).data.layerOrder).toEqual([
+    {
+      id: groupId,
+      label: 'Versions',
+      isVisible: true,
+      isIncludedInLegend: true,
+      layerOrder: ['markers', 'ripples']
+    },
+    'labels'
+  ]);
+  await execute('map.move-layer-to-group', {layerId: 'labels', groupId});
+  expect(getFlatLayerOrder(state().layerOrder)).toEqual(['labels', 'markers', 'ripples']);
+  dispatch.mockClear();
+  expect(await execute('map.move-layer-to-group', {layerId: 'markers', groupId})).toMatchObject({
+    success: true
+  });
+  expect(dispatch).not.toHaveBeenCalled();
+  await execute('map.move-layer-to-group', {layerId: 'ripples', groupId: null});
+  expect(state().layerOrder[0]).toBe('ripples');
+  expect(await execute('map.ungroup-layers', {groupId})).toMatchObject({
+    success: true,
+    data: {layerIds: ['labels', 'markers']}
+  });
+  expect(state().layerOrder).toEqual(['ripples', 'labels', 'markers']);
+  expect(state().layers).toBe(layers);
+  expect(state().layerData).toBe(layerData);
+  expect(state().datasets).toBe(datasets);
+});
+
+it('moves across nested groups and preserves unrelated group settings and stack positions', async () => {
+  const inner = {
+    id: 'inner',
+    label: 'Inner',
+    isVisible: false,
+    isIncludedInLegend: false,
+    layerOrder: ['markers']
+  };
+  const outer = {
+    id: 'outer',
+    label: 'Outer',
+    isVisible: true,
+    isIncludedInLegend: true,
+    layerOrder: [inner, 'ripples']
+  };
+  const {state, execute} = setup(['labels', outer]);
+  expect(
+    await execute('map.move-layer-to-group', {layerId: 'ripples', groupId: 'inner'})
+  ).toMatchObject({success: true});
+  expect(state().layerOrder).toEqual([
+    'labels',
+    {
+      ...outer,
+      layerOrder: [{...inner, layerOrder: ['ripples', 'markers']}]
+    }
+  ]);
+  expect(await execute('map.ungroup-layers', {groupId: 'inner'})).toMatchObject({success: true});
+  expect(state().layerOrder).toEqual(['labels', {...outer, layerOrder: ['ripples', 'markers']}]);
+});
+
+it.each([
+  ['map.create-layer-group', {label: 'Versions', layerIds: ['missing']}],
+  ['map.create-layer-group', {label: 'Versions', layerIds: ['markers', 'markers']}],
+  ['map.create-layer-group', {label: 'Versions', layerIds: []}],
+  ['map.create-layer-group', {label: ' ', layerIds: ['markers']}],
+  ['map.move-layer-to-group', {layerId: 'markers', groupId: 'missing'}],
+  ['map.move-layer-to-group', {layerId: 'missing', groupId: null}],
+  ['map.ungroup-layers', {groupId: 'labels'}]
+])('rejects invalid group operation %s without dispatch: %j', async (id, input) => {
+  const {state, dispatch, execute} = setup();
+  const before = state();
+  expect(await execute(id as string, input)).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+  expect(state()).toBe(before);
+});
+
 it('includes the lifecycle commands in the public map tool catalog', () => {
   expect(MAP_TOOL_IDS).toEqual(
     expect.arrayContaining([
       'map.get-layer-order',
+      'map.create-layer-group',
+      'map.move-layer-to-group',
+      'map.ungroup-layers',
       'map.reorder-layers',
       'map.remove-layer',
       'map.remove-dataset'

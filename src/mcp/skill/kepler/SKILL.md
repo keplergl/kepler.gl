@@ -37,6 +37,9 @@ not this one.
 | ------------------------ | -------------------------------------------------------------- |
 | `map.add-layer`          | Add a layer (point, flow, flowField, h3, arc, trip, hexagon, grid, cluster, heatmap, geojson, line, s2) to the map. |
 | `map.get-layer-order`    | Read stable layer IDs in stacking order, topmost first, including hidden layers and group structure. |
+| `map.create-layer-group` | Group existing `layerIds` under a `label`, preserving their relative order; returns `groupId`. |
+| `map.move-layer-to-group` | Move one `layerId` to an existing `groupId`, or use `groupId:null` for the top level. |
+| `map.ungroup-layers` | Dissolve `groupId` without deleting its members. Read group IDs from `map.get-layer-order`. |
 | `map.reorder-layers`     | Set `layerIds` to every current layer ID exactly once, topmost first; keep each group contiguous. |
 | `map.remove-layer`       | Remove `layerId` with native cleanup, keeping its dataset and other layers. |
 | `map.remove-dataset`     | Remove `dataId` and its layers with native cleanup; `dryRun:true` previews `affectedLayerIds`. |
