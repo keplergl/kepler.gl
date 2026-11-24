@@ -15,13 +15,21 @@ import {
   SerializedTextNode
 } from 'lexical';
 
-function firstTextNode(node: SerializedLexicalNode): SerializedTextNode | undefined {
+function firstTextNode(
+  node: SerializedLexicalNode,
+  requireContent = false
+): SerializedTextNode | undefined {
   if (!node) return undefined;
-  if (node.type === 'text') return node as SerializedTextNode;
+  if (node.type === 'text') {
+    const text = node as SerializedTextNode;
+    return !requireContent || (typeof text.text === 'string' && text.text.trim())
+      ? text
+      : undefined;
+  }
   const children = (node as SerializedElementNode).children;
   if (!Array.isArray(children)) return undefined;
   for (const child of children) {
-    const text = firstTextNode(child);
+    const text = firstTextNode(child, requireContent);
     if (text) return text;
   }
   return undefined;
@@ -74,6 +82,7 @@ type StyledAnnotationTextProps = {
   $isDraggable?: boolean;
   $textVerticalAlign?: string;
   $isViewport?: boolean;
+  $hideEmptyLabel?: boolean;
 };
 
 const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
@@ -110,6 +119,12 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
     .editor-inner {
       cursor: text;
     }
+  `
+      : ''}
+  ${props =>
+    props.$hideEmptyLabel
+      ? `
+    > .editor-container > .editor-inner { display: none; }
   `
       : ''}
   .editor-inner {
@@ -187,6 +202,15 @@ const AnnotationText: FC<AnnotationTextProps> = ({
         : undefined,
     [hasReadout, annotation.editorState, readoutValue]
   );
+  const hasLabel = useMemo(() => {
+    if (!hasReadout) return true;
+    const blocks = (annotation.editorState as SerializedEditorState | undefined)?.root?.children;
+    return Array.isArray(blocks)
+      ? blocks.some(node => firstTextNode(node, true))
+      : Boolean(annotation.label?.trim());
+  }, [hasReadout, annotation.editorState, annotation.label]);
+  // Keep the hidden label editor mounted so its formatting toolbar still controls the readout.
+  const hideEmptyLabel = !hasLabel && !(isEditing && isEditingText);
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -229,6 +253,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       $isDraggable={isDraggable}
       $textVerticalAlign={textVerticalAlign}
       $isViewport={isViewport}
+      $hideEmptyLabel={hideEmptyLabel}
       data-annotation-id={annotation.id}
       data-annotation-part="text"
       style={{
@@ -311,6 +336,8 @@ const AnnotationText: FC<AnnotationTextProps> = ({
             key={readoutValue ?? '—'}
             isEditable={false}
             editorState={formattedReadout}
+            width={hideEmptyLabel && !annotation.autoSize ? textWidth || undefined : undefined}
+            height={hideEmptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
             initialText={readoutValue ?? '—'}
             onChange={ignoreReadoutChange}
           />

@@ -157,6 +157,42 @@ describe('AnnotationText readout formatting', () => {
       rerender(renderCaption({...annotation, editorState: undefined}, nextValue));
       await waitFor(() => expect(screen.getByText(nextValue).style.fontSize).toBe(''));
       expect(screen.getByText(nextValue).style.color).toBe('');
+
+      // Preserve an intentional blank line when the multiline caption has text,
+      // but remove the label's layout space when the caption is cleared.
+      const multiline = captionEditorState('Caption', '');
+      const paragraph = multiline.root.children[0];
+      multiline.root.children.unshift({...paragraph, children: []});
+      rerender(renderCaption({...annotation, editorState: multiline}, nextValue));
+      expect(screen.getByText('Caption')).toBeVisible();
+      expect(container.querySelector('.editor-inner')).toBeVisible();
+      rerender(renderCaption({...annotation, label: '', editorState: undefined}, nextValue));
+      expect(container.querySelector('.editor-inner')).not.toBeVisible();
+      expect(screen.getByText(nextValue)).toBeVisible();
+    }
+  );
+
+  test.each([{type: 'time'} as const, {type: 'count', dataId: 'points'} as const])(
+    'collapses the empty $type caption in view mode and keeps it editable',
+    readout => {
+      const annotation = makeRuler({
+        kind: AnnotationKind.TEXT,
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout,
+        label: '',
+        editorState: captionEditorState('', 'font-size: 36px;')
+      });
+      const view = renderRulerText(annotation);
+      expect(view.container.querySelector('.editor-inner')).not.toBeVisible();
+      expect(screen.getByText('—')).toBeVisible();
+      view.unmount();
+
+      const edit = renderRulerText(annotation, true);
+      expect(edit.container.querySelector('.editor-input')).toBeVisible();
+      expect(edit.container.querySelector('.editor-input')).toHaveAttribute(
+        'contenteditable',
+        'true'
+      );
     }
   );
 
