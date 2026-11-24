@@ -103,13 +103,11 @@ export class GlobeDepthDiskLayer extends SimpleMeshLayer<any> {
     const camPos = new Vector3((this.context.viewport as any).cameraPosition);
     const camDir = camPos.clone().normalize();
     const topDir = new Vector3(0, 0, 1);
-    const sideDir = camDir.clone().cross(topDir);
-    const sidePoint = sideDir.clone().scale(normalizedRadius);
 
-    const camToSide = sidePoint.clone().subtract(camPos).normalize();
-    const adjustedSidePoint = camToSide.cross(topDir).scale(-normalizedRadius);
-
-    const shiftToCamera = camDir.dot(adjustedSidePoint);
+    // Tangent points satisfy dot(point, camera) = R², so the silhouette circle
+    // lies R² / |camera| toward the camera. This depends only on camera distance;
+    // deriving it from a world-up cross product leaves a gap near the globe's rim.
+    const shiftToCamera = (normalizedRadius * normalizedRadius) / camPos.len();
     const adjustedDiskRadius = Math.sqrt(
       normalizedRadius * normalizedRadius - shiftToCamera * shiftToCamera
     );
