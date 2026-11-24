@@ -9,7 +9,7 @@ import {
   getGlobeAtmosphereSkyLayer,
   getGlobeHugeHaloLayer
 } from './atmosphere-layer';
-import {getGlobeDepthDiskLayer} from './globe-depth-disk-layer';
+import {getGlobeDepthDiskLayer, GLOBE_COMMON_RADIUS} from './globe-depth-disk-layer';
 
 // Exercise uniform delivery without creating a WebGL device.
 function draw(
@@ -128,6 +128,42 @@ describe('globe atmosphere and occlusion uniforms', () => {
     expect(Number.isFinite(uniforms.u_depthDiskShift)).toBe(true);
     expect(uniforms.existing).toBe(7);
   });
+
+  test.each([0, 30, 45, 60, 75, -45])(
+    'covers the horizon and occludes only hidden surface points at latitude %s',
+    latitude => {
+      const radius = GLOBE_COMMON_RADIUS;
+      const angle = (latitude * Math.PI) / 180;
+      const commonUnitsPerMeter = radius / 6.371e6;
+
+      for (const distance of [1.01, 2, 4, 16].map(scale => scale * radius)) {
+        const uniforms = draw(getGlobeDepthDiskLayer({}), [
+          0,
+          -distance * Math.cos(angle),
+          distance * Math.sin(angle)
+        ]);
+        const diskShift = uniforms.u_depthDiskShift * commonUnitsPerMeter;
+        const diskRadius = uniforms.u_depthDiskRadius * commonUnitsPerMeter;
+
+        // The projected disk must reach the ray tangent to the sphere, at every zoom.
+        expect(diskRadius / (distance - diskShift)).toBeCloseTo(
+          radius / Math.sqrt(distance * distance - radius * radius),
+          10
+        );
+
+        const cosHorizon = radius / distance;
+        for (const side of [-1, 1]) {
+          // Surface points immediately behind and in front of the visible horizon.
+          const cosAngle = cosHorizon + side * (1 - cosHorizon) * 0.01;
+          const pointDepth = radius * cosAngle;
+          const pointOffset = radius * Math.sqrt(1 - cosAngle * cosAngle);
+          const rayOffsetAtDisk = (pointOffset * (distance - diskShift)) / (distance - pointDepth);
+          const occluded = pointDepth < diskShift && rayOffsetAtDisk <= diskRadius;
+          expect(occluded).toBe(side === -1);
+        }
+      }
+    }
+  );
 
   test('keeps the depth disk drawable before its model exists and honors fill color', () => {
     const layer = getGlobeDepthDiskLayer({fillColor: [10, 20, 30]});
