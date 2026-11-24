@@ -50,6 +50,7 @@ export type SourceDataCatalogProps = {
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
   addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
+  renameDataset?: ActionHandler<typeof VisStateActions.renameDataset>;
   replaceDataset?: ReplaceDatasetHandler;
 };
 
@@ -72,6 +73,7 @@ function SourceDataCatalogFactory(
     addJoin,
     addSpatialJoin,
     addSuitability,
+    renameDataset,
     replaceDataset
   }: SourceDataCatalogProps) => {
     const [openRefreshSettingsId, setOpenRefreshSettingsId] = useState<string | null>(null);
@@ -100,6 +102,7 @@ function SourceDataCatalogFactory(
                 addJoin={addJoin}
                 addSpatialJoin={addSpatialJoin}
                 addSuitability={addSuitability}
+                renameDataset={renameDataset}
                 replaceDataset={replaceDataset}
                 refreshSettingsOpen={showRefreshSettings}
                 onToggleRefreshSettings={

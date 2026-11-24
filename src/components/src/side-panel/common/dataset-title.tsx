@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 import {FormattedMessage} from '@kepler.gl/localization';
 
 import {Table} from '@kepler.gl/layers';
-import {Tooltip} from '../../common/styled-components';
+import {InlineInput, Tooltip} from '../../common/styled-components';
 import {WarningSign} from '../../common/icons';
 import DatasetTagFactory from './dataset-tag';
 import CustomPicker from '../layer-panel/custom-picker';
@@ -113,6 +114,7 @@ export type DatasetTitleProps = {
   addJoin?: ActionHandler<typeof VisStateActions.addJoin>;
   addSpatialJoin?: ActionHandler<typeof VisStateActions.addSpatialJoin>;
   addSuitability?: ActionHandler<typeof VisStateActions.addSuitability>;
+  renameDataset?: ActionHandler<typeof VisStateActions.renameDataset>;
   replaceDataset?: ActionHandler<typeof openReplaceDatasetModal>;
 };
 
@@ -181,9 +183,16 @@ export default function DatasetTitleFactory(
     addJoin,
     addSpatialJoin,
     addSuitability,
+    renameDataset,
     replaceDataset
   }) => {
     const [displayColorPicker, setDisplayColorPicker] = useState(false);
+    const [renameDraft, setRenameDraft] = useState<string | null>(null);
+    const renameInput = useRef<HTMLInputElement>(null);
+    const menuToggle = useRef<HTMLButtonElement>(null);
+    const restoreMenuFocus = useRef(false);
+    const intl = useIntl();
+    const isRenaming = renameDraft !== null;
     const root = useRef(null);
     const datasetId = dataset.id;
     const _handleClick = useCallback(
@@ -217,6 +226,24 @@ export default function DatasetTitleFactory(
       [onTitleClick, showDatasetTable, datasetId, dataset.disableDataOperation]
     );
 
+    const startRename = () => setRenameDraft(dataset.label ?? '');
+    const finishRename = (value: string | null) => {
+      setRenameDraft(null);
+      const label = value?.trim();
+      if (label && label !== dataset.label) {
+        renameDataset?.(datasetId, label);
+      }
+    };
+    useEffect(() => {
+      if (isRenaming) {
+        renameInput.current?.focus();
+        renameInput.current?.select();
+      } else if (restoreMenuFocus.current) {
+        restoreMenuFocus.current = false;
+        menuToggle.current?.focus();
+      }
+    }, [isRenaming]);
+
     const refreshError = dataset.metadata?.refreshError;
 
     return (
@@ -226,12 +253,32 @@ export default function DatasetTitleFactory(
           $clickable={Boolean(showDatasetTable || onTitleClick)}
         >
           <DatasetTitleHeader $clickable={Boolean(showDatasetTable || onTitleClick)}>
-            <DatasetTag
-              dataset={dataset}
-              onClick={_onClickTitle}
-              updateTableColor={updateTableColor}
-              onClickSquare={_handleClick}
-            />
+            {isRenaming ? (
+              <InlineInput
+                ref={renameInput}
+                aria-label={intl.formatMessage({id: 'datasetTitle.renameDataset'})}
+                value={renameDraft}
+                onChange={event => setRenameDraft(event.target.value)}
+                onBlur={event => finishRename(event.currentTarget.value)}
+                onClick={event => event.stopPropagation()}
+                onKeyDown={event => {
+                  event.stopPropagation();
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key === 'Enter' || event.key === 'Escape') {
+                    event.preventDefault();
+                    restoreMenuFocus.current = true;
+                    finishRename(event.key === 'Enter' ? event.currentTarget.value : null);
+                  }
+                }}
+              />
+            ) : (
+              <DatasetTag
+                dataset={dataset}
+                onClick={_onClickTitle}
+                updateTableColor={updateTableColor}
+                onClickSquare={_handleClick}
+              />
+            )}
             {refreshError ? <RefreshErrorIcon id={datasetId} message={refreshError} /> : null}
           </DatasetTitleHeader>
           <Portaled
@@ -256,6 +303,8 @@ export default function DatasetTitleFactory(
               addSpatialJoin={addSpatialJoin}
               addSuitability={addSuitability}
               replaceDataset={replaceDataset}
+              onRename={renameDataset && !dataset.disableDataOperation ? startRename : undefined}
+              toggleRef={menuToggle}
               showDeleteDataset={showDeleteDataset}
               removeDataset={removeDataset}
               onToggleRefreshSettings={onToggleRefreshSettings}
