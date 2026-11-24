@@ -1535,7 +1535,9 @@ export default function MapContainerFactory(
                 ? {
                     doubleClickZoom:
                       !isEditorDrawingMode && deckGlProps?.controller?.doubleClickZoom !== false,
-                    dragRotate: this.props.mapState.dragRotate,
+                    // Globe panning already rotates the sphere. Keep the flat-map
+                    // modifier/secondary-button rotation exclusive to 3D.
+                    dragRotate: !isGlobeMode && this.props.mapState.dragRotate,
                     maxPitch: this.props.mapState.maxPitch ?? getApplicationConfig().maxPitch,
                     // In globe mode allow zooming out further than deck.gl's default
                     // of 0 so the whole globe can be pulled back on screen. Set on the
