@@ -56,6 +56,39 @@ const KeplerGl = injectComponents([
 const MapContainer = () => <KeplerGl id="foo"/>;
 ```
 
+## Display friendly values in the data table
+
+Use `DataTableFactory` and its `getRowCell` prop to change what users see without rewriting dataset values. In this example, a dataset with ID `regions` has a numeric `selected_flag` field. The table shows **Not selected** for `0` and **Selected** for `1`. The layer color, filters, sorting, and data exports still use the original numbers.
+
+```jsx
+import React from 'react';
+import {DataTable, DataTableFactory, injectComponents} from '@kepler.gl/components';
+import {parseFieldValue} from '@kepler.gl/utils';
+
+function getRegionCell({dataContainer, columns, column, colMeta, rowIndex, sortOrder}, formatter) {
+  const sourceRow = sortOrder?.length ? sortOrder[rowIndex] : rowIndex;
+  const {colIdx, type} = colMeta[column];
+  const value = dataContainer?.valueAt(sourceRow, colIdx ?? columns.indexOf(column));
+
+  if (column === 'selected_flag') {
+    if (value === 0) return 'Not selected';
+    if (value === 1) return 'Selected';
+  }
+  if (value == null || value === '') return '';
+
+  return formatter ? formatter(value) : parseFieldValue(value, type);
+}
+
+const RegionDataTableFactory = () => function RegionDataTable(props) {
+  if (props.dataId !== 'regions') return <DataTable {...props} />;
+  return <DataTable {...props} getRowCell={getRegionCell} />;
+};
+
+const KeplerGl = injectComponents([[DataTableFactory, RegionDataTableFactory]]);
+```
+
+Mount this `KeplerGl` in place of the default component in your existing Redux setup. The callback runs for every visible cell in the customized dataset, not just the mapped field. This example falls back to the column formatter for other scalar fields; if your dataset includes geometry or special-purpose columns, provide a fallback suitable for those values. The row index accounts for sorting, so a label follows its row when the order changes.
+
 ##  Pass custom component props
 `injectComponents` allows user to render custom component, however, they usually also want to pass additional props to the customized component which current component injector doesn’t support. To enable passing additional props, we implemented a `withState`helper that passes additional props to the customized component. `withState` takes 3 arguments: `lenses`, `mapStateToProps` and `actionCreators`,  They allows user to pass in kepler.gl instance state, state from other part of the app, and custom actions.
 
