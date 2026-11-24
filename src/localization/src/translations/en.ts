@@ -1136,6 +1136,8 @@ ${'```'}
       goToPage: 'Go to your Kepler.gl {displayName} page',
       storageMaps: 'Storage / Maps',
       noSavedMaps: 'No saved maps yet',
+      searchMaps: 'Search saved maps by title',
+      noMatchingMaps: 'No saved maps match your search',
       foursquareStorageMessage:
         'Only maps saved with Kepler.gl > Save > Foursquare Storage option are shown here'
     }
