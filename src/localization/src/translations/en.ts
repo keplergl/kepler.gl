@@ -514,7 +514,7 @@ export default {
     distanceFog:
       'Fades distant objects into a fog color based on their depth from the camera, enhancing the sense of depth. Control density, start distance, range, and fog color.',
     surfaceFog:
-      'Renders a fog layer at a specific elevation above the terrain surface. Adjust elevation, transition thickness, density, color, and an optional noise pattern.'
+      'Renders fog or reflective water at a set elevation. Adjust elevation, transition thickness, density, and color.'
   },
   layerConfiguration: {
     defaultDescription: 'Calculate {property} based on selected field',
