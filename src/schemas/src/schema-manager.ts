@@ -3,6 +3,7 @@
 
 import {console as Console} from 'global/window';
 
+import {ALL_FIELD_TYPES, DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {Datasets} from '@kepler.gl/table';
 import datasetSchema from './dataset-schema';
 import mapStyleSchema from './map-style-schema';
@@ -95,6 +96,49 @@ export type SavedMap = {
   };
 };
 
+// The dataset schema flattens embedded Arrow tables to rows and saves their
+// geometry as GeoJSON. Point layers must use the matching row geometry mode.
+function saveEmbeddedPointLayerColumns(
+  config: SavedConfigV1,
+  datasets: SavedDatasetV1[]
+): SavedConfigV1 {
+  const visState = config.config.visState;
+  if (
+    !visState?.layers?.some(
+      layer => layer.type === LAYER_TYPES.point && layer.config.columnMode === 'geoarrow'
+    )
+  ) {
+    return config;
+  }
+  const byId = new Map(datasets.map(({data}) => [data.id, data]));
+  const layers = visState.layers.map(layer => {
+    const {dataId, columnMode, columns} = layer.config;
+    if (layer.type !== LAYER_TYPES.point || columnMode !== 'geoarrow' || !columns?.geoarrow) {
+      return layer;
+    }
+    const dataset = byId.get(dataId);
+    if (
+      !dataset ||
+      (dataset.type === DatasetType.EXTERNALLY_HOSTED && dataset.metadata?.source) ||
+      !dataset.fields.some(
+        field => field.name === columns.geoarrow && field.type === ALL_FIELD_TYPES.geojson
+      )
+    ) {
+      return layer;
+    }
+    const {geoarrow, ...otherColumns} = columns;
+    return {
+      ...layer,
+      config: {
+        ...layer.config,
+        columnMode: 'geojson',
+        columns: {...otherColumns, geojson: geoarrow}
+      }
+    };
+  });
+  return {...config, config: {...config.config, visState: {...visState, layers}}};
+}
+
 export type LoadedMap = {
   datasets?: ParsedDataset[] | null;
   config?: ParsedConfig | null;
@@ -180,9 +224,10 @@ export class KeplerGLSchema {
    * @returns app state to save
    */
   save(state: any): SavedMap {
+    const datasets = this.getDatasetToSave(state);
     return {
-      datasets: this.getDatasetToSave(state),
-      config: this.getConfigToSave(state),
+      datasets,
+      config: saveEmbeddedPointLayerColumns(this.getConfigToSave(state), datasets),
       info: {
         app: 'kepler.gl',
         created_at: new Date().toString(),
