@@ -1563,11 +1563,21 @@ export default function MapContainerFactory(
                 onMouseMove: primaryMap
                   ? event => {
                       if (brush.enabled && brush.config.showBrush && !this.props.isExport) {
-                        const point =
-                          event.target instanceof HTMLCanvasElement
-                            ? normalizeEvent(event, brushViewport).point
-                            : null;
-                        this.setState({brushMousePosition: point || null});
+                        const {target, currentTarget, clientX, clientY} = event;
+                        // Deck places the basemap view above its canvas. The view itself
+                        // receives pointer events when the basemap is empty or transparent.
+                        const isMapSurface =
+                          target instanceof HTMLCanvasElement ||
+                          (target instanceof HTMLElement &&
+                            target.id.startsWith('view-') &&
+                            target.parentElement?.classList.contains('deck-events-root'));
+                        const bounds = isMapSurface
+                          ? currentTarget.querySelector('canvas')?.getBoundingClientRect()
+                          : null;
+                        const point: [number, number] | null = bounds
+                          ? [clientX - bounds.left, clientY - bounds.top]
+                          : null;
+                        this.setState({brushMousePosition: point});
                       }
                       onMouseMove?.(event);
                       this._onMouseMoveDebounced(event, viewport);

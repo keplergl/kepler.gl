@@ -68,7 +68,14 @@ describe('brush radius overlay', () => {
       const overlay = this._renderDeckOverlay([], {primaryMap: true, isInteractive: true});
       const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
       deckProps.set(this.props.index, deck.props);
-      return React.cloneElement(overlay, {'data-testid': `map-${this.props.index}`}, <canvas />);
+      return React.cloneElement(
+        overlay,
+        {'data-testid': `map-${this.props.index}`},
+        <div className="deck-events-root">
+          <canvas />
+          <div id="view-MapView" />
+        </div>
+      );
     });
     const ref = createRef<any>();
     const props = {
@@ -128,6 +135,17 @@ describe('brush radius overlay', () => {
     expect(circle().props.getRadius).toBe(5000);
     fireEvent.mouseLeave(canvas);
     expect(circle()).toBeUndefined();
+    ref.current._onMouseMoveDebounced.cancel();
+  });
+
+  test('tracks the Deck view surface above the overlay canvas', () => {
+    const {rendered, circle, props, ref} = setup({showBrush: true});
+    const surface = rendered.container.querySelector('#view-MapView')!;
+    fireEvent.mouseMove(surface, {clientX: 120, clientY: 100});
+    const position = circle().props.data[0];
+    const viewport = new WebMercatorViewport(props.mapState);
+    expect(viewport.project(position)[0]).toBeCloseTo(120);
+    expect(viewport.project(position)[1]).toBeCloseTo(100);
     ref.current._onMouseMoveDebounced.cancel();
   });
 
