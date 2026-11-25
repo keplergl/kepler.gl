@@ -51,7 +51,17 @@ Where tests go:
 - Jest: `*.spec.ts(x)` beside the source in `src/`. Auto-discovered. Use Testing Library for React components; Enzyme is banned by lint.
 - Tape: `*-test.js` under `test/node/` or `test/browser/`. A new file must be imported in the nearest `index.js`, or it silently never runs and the suite still reports green.
 
-Run from the repo root on Node >= 20 (Volta pin 24.21.0, same as Node.js CI).
+### Runtime and sandbox preflight
+
+Run checks from the task worktree's repo root. Before installing dependencies or running tests, select the exact Node and Yarn versions in `package.json` under `volta` (currently Node 24.21.0 and Yarn 4.4.0; `.nvmrc` also pins Node). `engines.node >=20` is a compatibility floor, not the test runtime. `scripts/assert-node-engine.js` only enforces that floor and does not detect Node 25 or native-addon ABI mismatches.
+
+- Activate the pinned runtime in the same shell invocation as each install/check. With nvm, source its initialization script and run `nvm use`; with Volta, use its shims or `volta run`. If using an installed Node binary directly, prepend its directory to `PATH` so Yarn and child processes use it too. Shell activation in an earlier tool call is not sufficient.
+- Verify `node --version` and `yarn --version` against the pins. Once dependencies are available, also run `yarn node -p 'process.version + " " + process.execPath + " ABI=" + process.versions.modules'` to verify the runtime Yarn actually launches. Do this once per environment setup, not before every targeted test; repeat only when the runtime or dependency setup changes.
+- Install and test with the same pinned runtime. When reusing dependencies from another checkout or diagnosing an ABI error, smoke-load the affected native dependency before starting a suite. Do not rebuild shared or symlinked `node_modules` in place; use compatible dependencies or install them locally in the task worktree.
+- Before running a suite that opens local listeners, check the current sandbox permissions. If binding is known to be blocked, request the necessary permission for that specific test command before launching it. If uncertain, use a short bind-and-close probe with the same host/address family as the suite. Skip this probe for tests that do not open listeners; a JSDOM `http://localhost` URL alone does not require a listener.
+- On a native ABI mismatch or a listener permission error (`listen EPERM`/`EACCES`), stop and correct the runtime or obtain the required permission before retrying. Do not change application code, rebuild dependencies for an unpinned Node version, or rerun an unchanged full suite to diagnose an environment failure. Validate the fix with the smallest affected check, then finish the required verification. If permission is unavailable, report the affected check as blocked/`NOT RUN` (or `FAILED` if attempted), never as passed.
+
+### Choosing checks
 
 - Targeted test: the default loop while iterating.
 - `yarn agent:check`: `tsc --noEmit` plus Jest (`--watchAll=false`). Use it when the edit can affect types or several suites.
