@@ -7,7 +7,14 @@ import {worldToPixels} from '@math.gl/web-mercator';
 
 import {ArrowHeadLayer, getArrowHeadGeometry, KeplerGlobeView} from '@kepler.gl/deckgl-layers';
 import {MAX_GPU_FILTERS, PROPERTY_GROUPS} from '@kepler.gl/constants';
-import {VisConfigBoolean, VisConfigNumber, VisConfigSelection} from '@kepler.gl/types';
+import {
+  BrushEndpoint,
+  VisConfigBoolean,
+  VisConfigNumber,
+  VisConfigSelection
+} from '@kepler.gl/types';
+
+import {getEndpointBrushingTarget} from '../brushing';
 
 export const TARGET_ARROW_SHAPES = ['chevron', 'triangle', 'stealth'] as const;
 
@@ -450,7 +457,9 @@ export function createTargetArrowLayer({
     globe?: {enabled?: boolean};
     layerParameters?: object;
   };
-  interactionConfig?: {brush?: {enabled?: boolean; config?: {size?: number}}};
+  interactionConfig?: {
+    brush?: {enabled?: boolean; config?: {size?: number; endpoint?: BrushEndpoint}};
+  };
   greatCircle: boolean;
   height: number;
   elevationScale: number;
@@ -553,7 +562,7 @@ export function createTargetArrowLayer({
           getFilterValue: formattedData.getFilterValue,
           brushingEnabled: Boolean(brush?.enabled),
           brushingRadius: (brush?.config?.size || 0) * 1000,
-          brushingTarget: 'source_target'
+          brushingTarget: getEndpointBrushingTarget(brush?.config?.endpoint)
         }),
     updateTriggers: {
       getAngle: [

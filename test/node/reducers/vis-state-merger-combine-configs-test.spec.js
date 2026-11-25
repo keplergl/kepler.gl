@@ -5,6 +5,16 @@ import {VIS_STATE_MERGERS} from '@kepler.gl/reducers';
 
 const TEST_CASES = [
   {
+    testMessage: 'interactionConfig preserves the first explicit brushing endpoint',
+    propName: 'interactionConfig',
+    configsToMerge: [
+      {brush: {enabled: true, size: 3}},
+      {brush: {enabled: true, size: 2, endpoint: 'target'}},
+      {brush: {enabled: true, size: 5, endpoint: 'source'}}
+    ],
+    expected: {brush: {enabled: true, size: 5, endpoint: 'target'}}
+  },
+  {
     testMessage: 'interactionConfig preserves the first explicit geocoder result focus',
     propName: 'interactionConfig',
     configsToMerge: [
