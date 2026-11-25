@@ -14,7 +14,7 @@ import React, {
 } from 'react';
 import styled, {withTheme} from 'styled-components';
 
-import {DndContext, useDraggable} from '@dnd-kit/core';
+import {DndContext, useDraggable, type Modifier} from '@dnd-kit/core';
 import {CSS} from '@dnd-kit/utilities';
 import {useMergeRefs} from '@floating-ui/react';
 
@@ -28,7 +28,7 @@ import {
   MapControls,
   MapState
 } from '@kepler.gl/types';
-import {hasPortableWidth} from '@kepler.gl/utils';
+import {getApplicationConfig, hasPortableWidth} from '@kepler.gl/utils';
 import {MapLegendControlSettings} from '@kepler.gl/types';
 
 import {Legend, HorizontalResizeHandle} from '../common/icons';
@@ -38,6 +38,7 @@ import useLegendPosition from '../hooks/use-legend-position';
 import MapControlPanelFactory, {MapControlPanelDragContext} from './map-control-panel';
 import MapControlTooltipFactory from './map-control-tooltip';
 import MapLegendFactory from './map-legend';
+import {snapToFloatingWidgets} from './floating-widget-snapping';
 import {restrictToWindowEdges} from '@dnd-kit/modifiers';
 
 const DRAG_RESIZE_ID = 'map-legend-resize';
@@ -284,13 +285,34 @@ export const DraggableLegend = withTheme(
       },
       [resize]
     );
+    const snapToWidgets = useCallback<Modifier>(
+      ({active, draggingNodeRect, transform}) => {
+        const element = legendContentRef.current;
+        if (
+          !getApplicationConfig().enableFloatingWidgetSnapping ||
+          active?.id !== DRAG_MOVE_ID ||
+          !element ||
+          !draggingNodeRect ||
+          (transform.x === 0 && transform.y === 0)
+        ) {
+          return transform;
+        }
+        return snapToFloatingWidgets(
+          element,
+          draggingNodeRect,
+          transform,
+          isSidePanelShown ? theme.sidePanel?.width || 0 : 0
+        );
+      },
+      [isSidePanelShown, theme.sidePanel?.width]
+    );
 
     return (
       <DndContext
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
-        modifiers={[restrictToWindowEdges]}
+        modifiers={[snapToWidgets, restrictToWindowEdges]}
       >
         <DraggableLegendContent
           ref={legendContentRef}
