@@ -12,6 +12,7 @@ import {Timeline} from '@luma.gl/engine';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 import {BitmapOverlayLayer, getEditorLayer} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
+import {isPointVisibleOnGlobe} from './annotations/annotation-utils';
 import {
   INITIAL_MAP_STATE,
   INITIAL_MAP_STYLE,
@@ -1180,6 +1181,26 @@ function setup(strictMode = false) {
   });
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
+
+test('uses the globe camera for elevated annotations after switching projections', () => {
+  const {ref} = setup();
+  const mapState = {
+    ...INITIAL_MAP_STATE,
+    longitude: 0,
+    latitude: 0,
+    zoom: 0,
+    width: 800,
+    height: 600,
+    globe: {...INITIAL_MAP_STATE.globe!, enabled: false}
+  };
+  ref.current._getAnnotationViewport(mapState, null);
+  const globe = ref.current._getAnnotationViewport(
+    {...mapState, globe: {...mapState.globe, enabled: true}},
+    null
+  );
+  expect(isPointVisibleOnGlobe([84.2, 0, 1000], globe)).toBe(true);
+  expect(isPointVisibleOnGlobe([91.2, 0, 1000], globe)).toBe(false);
+});
 
 test('applies async layer defaults to their originating layer after reordering', () => {
   const {props, layer, ref, rerender, getState} = setup();

@@ -918,7 +918,9 @@ export default function MapContainerFactory(
       const bearing = internalViewState?.bearing ?? mapState.bearing ?? 0;
       const width = mapState.width || 0;
       const height = mapState.height || 0;
-      const key = `${longitude},${latitude},${zoom},${pitch},${bearing},${width},${height}`;
+      const key = `${longitude},${latitude},${zoom},${pitch},${bearing},${width},${height},${Boolean(
+        mapState.globe?.enabled
+      )}`;
 
       if (this._annotationViewportCache?.key === key) {
         return this._annotationViewportCache.viewport;
@@ -929,6 +931,8 @@ export default function MapContainerFactory(
       const viewport = {
         project: (lngLat: ReadonlyArray<number>) => vp.project(lngLat),
         unproject: (xy: ReadonlyArray<number>) => vp.unproject(xy),
+        cameraPosition: vp.cameraPosition,
+        projectPosition: vp.projectPosition?.bind(vp),
         longitude,
         latitude,
         width,
