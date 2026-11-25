@@ -362,7 +362,7 @@ const ExportImageModalFactory = () => {
                   aria-pressed={ratio === op.id}
                   selected={ratio === op.id}
                   onClick={() => {
-                    if (op.id === ratio) return;
+                    if (op.id === ratio && op.id === EXPORT_IMG_RATIOS.CUSTOM) return;
 
                     onUpdateImageSetting(
                       op.id === EXPORT_IMG_RATIOS.CUSTOM
