@@ -165,9 +165,13 @@ test.each(modalVariants)(
     for (const item of cases) {
       const result = renderAddDataDialog(LoadData);
       fireEvent.click(result.getByText('Paste'));
-      expect(
-        result.getByText(/Supported formats: GeoJSON, CSV with headers, and H3/)
-      ).toBeInTheDocument();
+      const formatHelp: HTMLElement = result.getByText(/Supported formats:/);
+      expect(formatHelp).toHaveTextContent('Supported formats: GeoJSON, CSV with headers, and H3');
+      expect(Array.from(formatHelp.querySelectorAll('strong'), item => item.textContent)).toEqual([
+        'GeoJSON',
+        'CSV',
+        'H3 cell IDs'
+      ]);
       const input = result.getByRole('textbox', {name: 'Paste data'});
       const add = result.getByRole('button', {name: 'Add Data'});
       fireEvent.change(input, {target: {value: item.rejected}});

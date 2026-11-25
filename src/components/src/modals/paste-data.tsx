@@ -11,6 +11,7 @@ import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import type {FileLoading, ProtoDataset} from '@kepler.gl/types';
 
 import {Button, TextAreaLight} from '../common/styled-components';
+import {StyledActionLine, StyledUploadMessage} from '../common/file-uploader/file-upload';
 
 const INPUT_LIMIT = 250_000;
 const ERROR_EXAMPLES = 5;
@@ -165,12 +166,15 @@ export default function PasteData({onAddPastedData, fileLoading, supportsH3}: Pa
         if (canAdd) add();
       }}
     >
-      <label htmlFor={id}>{intl.formatMessage({id: 'modal.loadData.pasteLabel'})}</label>
-      <div id={helpId}>
-        {intl.formatMessage({
-          id: supportsH3 ? 'modal.loadData.pasteHelp' : 'modal.loadData.pasteHelpWithoutH3'
-        })}
-      </div>
+      <StyledActionLine as="label" htmlFor={id}>
+        {intl.formatMessage({id: 'modal.loadData.pasteLabel'})}
+      </StyledActionLine>
+      <StyledUploadMessage id={helpId}>
+        {intl.formatMessage(
+          {id: supportsH3 ? 'modal.loadData.pasteHelp' : 'modal.loadData.pasteHelpWithoutH3'},
+          {strong: chunks => <strong>{chunks}</strong>}
+        )}
+      </StyledUploadMessage>
       <TextAreaLight
         id={id}
         value={input}
