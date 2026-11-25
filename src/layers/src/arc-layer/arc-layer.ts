@@ -290,10 +290,11 @@ export default class ArcLayer extends Layer {
   constructor(props) {
     super(props);
 
-    this.registerVisConfig({...arcVisConfigs, ...targetArrowVisConfigs});
-    if (this.type === 'arc') {
-      this.registerVisConfig(endpointOpacityVisConfigs);
-    }
+    this.registerVisConfig({
+      ...arcVisConfigs,
+      ...targetArrowVisConfigs,
+      ...endpointOpacityVisConfigs
+    });
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       arcPosAccessor(this.config.columns, this.config.columnMode)(dataContainer);
   }
@@ -611,23 +612,27 @@ export default class ArcLayer extends Layer {
     this.updateMeta({bounds});
   }
 
-  renderLayer(opts) {
-    opts = this.getAgeStyledLayerProps(opts);
-    const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
+  protected getEndpointOpacityProps(
+    sourceColor: EndpointColorAccessor | undefined,
+    targetColor: EndpointColorAccessor | undefined
+  ) {
     const sourceOpacity = normalizeEndpointOpacity(this.config.visConfig.sourceOpacity);
     const targetOpacity = normalizeEndpointOpacity(this.config.visConfig.targetOpacity);
     // deck.gl already interpolates RGBA endpoint colors; keep the shared layer opacity
     // and multiply existing alpha (e.g. age styling) instead of replacing it.
-    const getSourceColor = withEndpointOpacity(
-      data.getSourceColor,
+    return {
       sourceOpacity,
-      sourceOpacityColors
-    );
-    const getTargetColor = withEndpointOpacity(
-      data.getTargetColor,
       targetOpacity,
-      targetOpacityColors
-    );
+      getSourceColor: withEndpointOpacity(sourceColor, sourceOpacity, sourceOpacityColors),
+      getTargetColor: withEndpointOpacity(targetColor, targetOpacity, targetOpacityColors)
+    };
+  }
+
+  renderLayer(opts) {
+    opts = this.getAgeStyledLayerProps(opts);
+    const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
+    const {sourceOpacity, targetOpacity, getSourceColor, getTargetColor} =
+      this.getEndpointOpacityProps(data.getSourceColor, data.getTargetColor);
     const colorTriggers = this.getVisualChannelUpdateTriggers(opts);
     const updateTriggers = {
       getPosition: this.config.columns,
