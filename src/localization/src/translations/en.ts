@@ -37,6 +37,7 @@ export default {
     valueEquals: 'Value equals',
     dataSource: 'Data Source',
     brushRadius: 'Brush Radius (km)',
+    showBrush: 'Show brush',
     brushArcLineEndpoints: 'Arc and line endpoints',
     brushEndpoints: {
       source_target: 'Both',
