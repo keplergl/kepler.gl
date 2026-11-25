@@ -4,7 +4,16 @@
 import React from 'react';
 import {DndContext} from '@dnd-kit/core';
 import {act, fireEvent, screen, waitFor} from '@testing-library/react';
-import {SerializedEditorState, SerializedElementNode, SerializedTextNode} from 'lexical';
+import {
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+  $isTextNode,
+  LexicalEditor,
+  SerializedEditorState,
+  SerializedElementNode,
+  SerializedTextNode
+} from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
@@ -157,6 +166,113 @@ describe('AnnotationText readout formatting', () => {
       rerender(renderCaption({...annotation, editorState: undefined}, nextValue));
       await waitFor(() => expect(screen.getByText(nextValue).style.fontSize).toBe(''));
       expect(screen.getByText(nextValue).style.color).toBe('');
+
+      // Preserve an intentional blank line when the multiline caption has text,
+      // but remove the label's layout space when the caption is cleared.
+      const multiline = captionEditorState('Caption', '');
+      const paragraph = multiline.root.children[0];
+      multiline.root.children.unshift({...paragraph, children: []});
+      rerender(renderCaption({...annotation, editorState: multiline}, nextValue));
+      expect(screen.getByText('Caption')).toBeVisible();
+      expect(container.querySelector('.editor-inner')).toBeVisible();
+      rerender(renderCaption({...annotation, label: '', editorState: undefined}, nextValue));
+      expect(container.querySelector('.editor-inner')).not.toBeVisible();
+      expect(screen.getByText(nextValue)).toBeVisible();
+    }
+  );
+
+  test.each([{type: 'time'} as const, {type: 'count', dataId: 'points'} as const])(
+    'collapses the empty $type caption in view mode and keeps it editable',
+    readout => {
+      const annotation = makeRuler({
+        kind: AnnotationKind.TEXT,
+        viewport: {anchor: 'top-left', margin: [24, 24]},
+        readout,
+        label: '',
+        editorState: captionEditorState('', 'font-size: 36px;')
+      });
+      const view = renderRulerText(annotation);
+      expect(view.container.querySelector('.editor-inner')).not.toBeVisible();
+      expect(screen.getByText('—')).toBeVisible();
+      view.unmount();
+
+      const edit = renderRulerText(annotation, true);
+      expect(edit.container.querySelector('.editor-input')).toBeVisible();
+      expect(edit.container.querySelector('.editor-input')).toHaveAttribute(
+        'contenteditable',
+        'true'
+      );
+    }
+  );
+
+  test.each([{type: 'time'} as const, {type: 'count', dataId: 'points'} as const])(
+    'removes the $type caption row immediately when deleting styled text',
+    async readout => {
+      function Caption() {
+        const [editing, setEditing] = React.useState(true);
+        const [annotation, setAnnotation] = React.useState(() =>
+          makeRuler({
+            kind: AnnotationKind.TEXT,
+            viewport: {anchor: 'top-left', margin: [24, 24]},
+            readout,
+            label: 'Caption',
+            editorState: captionEditorState('Caption', 'font-size: 36px;')
+          })
+        );
+        return (
+          <DndContext>
+            <button onClick={() => setEditing(false)}>Done editing</button>
+            <AnnotationText
+              annotation={annotation}
+              readoutValue="123"
+              viewport={viewport}
+              isEditing
+              isSelected
+              isEditingText={editing}
+              onSelect={jest.fn()}
+              onChangeText={(label, editorState) =>
+                setAnnotation(previous => ({...previous, label, editorState}))
+              }
+              onUpdateAnnotation={jest.fn()}
+            />
+          </DndContext>
+        );
+      }
+
+      const {container} = renderWithTheme(<Caption />);
+      const input = container.querySelector<HTMLElement>('[contenteditable="true"]')!;
+      const caption = input.parentElement!;
+      const editor = (input as HTMLElement & {__lexicalEditor: LexicalEditor}).__lexicalEditor;
+      expect(caption).not.toHaveStyle({height: '0px'});
+      input.focus();
+      const selectCaption = () => {
+        const text = $getRoot().getFirstDescendant();
+        if ($isTextNode(text)) text.select(0, 7);
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) selection.removeText();
+      };
+      await act(() => editor.update(selectCaption, {discrete: true, tag: 'skip-scroll-into-view'}));
+      expect(caption).toHaveStyle({height: '0px'});
+      expect(input).toHaveFocus();
+      expect(input).toHaveAttribute('contenteditable', 'true');
+      expect(screen.getByText('123')).toBeVisible();
+
+      await act(() =>
+        editor.update(
+          () => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) selection.insertText('Caption');
+          },
+          {discrete: true, tag: 'skip-scroll-into-view'}
+        )
+      );
+      expect(input).toHaveTextContent('Caption');
+      expect(caption).not.toHaveStyle({height: '0px'});
+
+      await act(() => editor.update(selectCaption, {discrete: true, tag: 'skip-scroll-into-view'}));
+      fireEvent.click(screen.getByText('Done editing'));
+      expect(caption).not.toBeVisible();
+      expect(screen.getByText('123')).toBeVisible();
     }
   );
 
