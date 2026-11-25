@@ -39,7 +39,7 @@ const PasteDataForm = styled.form`
 const H3_ID_PATTERN = /^[0-9a-f]{15}$/i;
 
 function detectFormat(input: string) {
-  if (/^[{\[]/.test(input)) return 'geojson';
+  if (input.startsWith('{') || input.startsWith('[')) return 'geojson';
   const lineBreak = input.search(/[\r\n]/);
   if (lineBreak < 0) return 'h3';
   const header = input.slice(0, lineBreak);
