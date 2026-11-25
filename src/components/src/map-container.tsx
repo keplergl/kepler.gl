@@ -8,11 +8,9 @@ import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
 import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
-import {ScatterplotLayer} from '@deck.gl/layers';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'es-toolkit/compat/debounce';
-import type {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -42,6 +40,7 @@ import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
 import {getAnnotationReadoutValues} from './annotations/annotation-readout';
 import {getCameraTourPathLayers} from './map/camera-tour-path';
+import {getBrushLayers} from './map/brush-overlay';
 import CameraTourZoomControl from './map/camera-tour-zoom-control';
 
 // utils
@@ -1472,42 +1471,13 @@ export default function MapContainerFactory(
             )
           : [];
       const {brush} = visState.interactionConfig;
-      const brushPosition = this.state.brushMousePosition;
-      const brushViewport = viewport as unknown as WebMercatorViewport;
       const brushLayers =
-        primaryMap &&
-        isInteractive &&
-        !this.props.isExport &&
-        brush.enabled &&
-        brush.config.showBrush &&
-        Number.isFinite(brush.config.size) &&
-        brush.config.size > 0 &&
-        brushPosition &&
-        brushPosition[0] >= 0 &&
-        brushPosition[0] < brushViewport.width &&
-        brushPosition[1] >= 0 &&
-        brushPosition[1] < brushViewport.height
-          ? [
-              new ScatterplotLayer({
-                id: 'brush-radius',
-                data: [brushViewport.unproject(brushPosition)],
-                getPosition: position => position,
-                getRadius: brush.config.size * 1000,
-                radiusUnits: 'meters',
-                // Keep a cursor indicator when the actual radius is smaller than a pixel.
-                // This only affects the preview; brushing still uses the radius in meters.
-                radiusMinPixels: 5,
-                stroked: true,
-                getFillColor: [27, 190, 220, 20],
-                getLineColor: [27, 190, 220, 230],
-                getLineWidth: 2,
-                lineWidthUnits: 'pixels',
-                pickable: false,
-                parameters: isGlobeMode
-                  ? undefined
-                  : {depthCompare: 'always', depthWriteEnabled: false}
-              })
-            ]
+        primaryMap && isInteractive && !this.props.isExport
+          ? getBrushLayers({
+              brush,
+              mousePosition: this.state.brushMousePosition,
+              mapState: internalMapState
+            })
           : [];
       const finalDeckGlLayers = isGlobeMode
         ? [

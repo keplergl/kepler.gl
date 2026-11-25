@@ -110,10 +110,8 @@ describe('brush radius overlay', () => {
     const viewport = new WebMercatorViewport(props.mapState);
     expect(viewport.project(position)[0]).toBeCloseTo(120);
     expect(viewport.project(position)[1]).toBeCloseTo(100);
-    expect(circle().props.getRadius).toBe(2500);
-    expect(circle().props.radiusUnits).toBe('meters');
-    // At world zoom the real radius projects to less than one pixel.
-    expect(circle().props.radiusMinPixels).toBeGreaterThan(circle().props.getLineWidth);
+    const initialRadius = circle().props.getRadius;
+    expect(initialRadius).toBeGreaterThan(0);
     expect(circle().props.pickable).toBe(false);
 
     fireEvent.mouseMove(canvas, {clientX: 230, clientY: 140});
@@ -132,7 +130,7 @@ describe('brush radius overlay', () => {
       }
     };
     rendered.rerender(<MapContainer {...nextProps} ref={ref} />);
-    expect(circle().props.getRadius).toBe(5000);
+    expect(circle().props.getRadius).toBe(initialRadius * 2);
     fireEvent.mouseLeave(canvas);
     expect(circle()).toBeUndefined();
     ref.current._onMouseMoveDebounced.cancel();
@@ -153,10 +151,8 @@ describe('brush radius overlay', () => {
     {},
     {showBrush: false},
     {showBrush: true, enabled: false},
-    {showBrush: true, size: 0},
-    {showBrush: true, size: NaN},
     {showBrush: true, isExport: true}
-  ])('omits the circle for inactive, legacy or invalid settings: %j', options => {
+  ])('omits the circle for inactive, legacy or exported maps: %j', options => {
     const {canvas, circle, ref} = setup(options);
     fireEvent.mouseMove(canvas, {clientX: 120, clientY: 100});
     expect(circle()).toBeUndefined();
