@@ -257,7 +257,11 @@ void main() {
     float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
     float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
                   0.025 * pow(sunAlignment, 8.0);
-    waterSurface += vec3(1.0, 0.96, 0.86) * glint;
+    // Add the local slope response of a fill light tracking the reflected
+    // view ray, slightly off the mirror axis for contrast. Use only the
+    // ripple contribution: a flat (or filtered-out) normal adds no light.
+    float rippleContrast = dot(N.xy, vec2(0.30, -0.34));
+    waterSurface += vec3(1.0, 0.96, 0.86) * glint + vec3(rippleContrast);
 
     // Only sample shoreline noise where its highlight can contribute. Basemap
     // depth is unknown, and invisible or unresolved contacts have no foam.

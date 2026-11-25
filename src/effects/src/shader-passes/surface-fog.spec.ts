@@ -484,6 +484,30 @@ describe('surface fog rendering', () => {
     expect(pixels).not.toEqual(smooth);
   });
 
+  test.each([
+    [0, 0],
+    [45, 45],
+    [45, 225]
+  ])('keeps resolved ripple contrast at pitch %s and bearing %s', (pitch, bearing) => {
+    const uniforms = viewportUniforms(croppedViewport({zoom: 19, pitch, bearing}));
+    uniforms.fogHeight = 0;
+    uniforms.fogThickness = 0;
+    const pixels = render({depth: 1, uniforms});
+    const smooth = render({
+      depth: 1,
+      uniforms: {
+        ...uniforms,
+        waveUnitsPerMeter: (uniforms.waveUnitsPerMeter as number) / 1024
+      }
+    });
+    // Compare spatial variation against the same view with unresolved waves,
+    // so overall brightness changes cannot satisfy the contrast check.
+    const blueContrast = pixels
+      .filter((_, i) => i % 4 === 2)
+      .map((value, i) => value - smooth[i * 4 + 2]);
+    expect(Math.max(...blueContrast) - Math.min(...blueContrast)).toBeGreaterThanOrEqual(8);
+  });
+
   test.each([14, 16, 18])(
     'keeps water sampling stable between 1x and 2x resolution at zoom %s',
     zoom => {
