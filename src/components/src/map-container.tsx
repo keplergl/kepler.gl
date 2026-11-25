@@ -8,9 +8,11 @@ import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
 import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
 import DeckGL from '@deck.gl/react';
+import {ScatterplotLayer} from '@deck.gl/layers';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'es-toolkit/compat/debounce';
+import type {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {VisStateActions, MapStateActions, UIStateActions} from '@kepler.gl/actions';
 
@@ -339,7 +341,8 @@ export default function MapContainerFactory(
       // OpenFreeMap).  Populated after TileJSON resolves.
       basemapAttributions: [] as string[],
       coordinateMenu: null as CoordinateMenuState | null,
-      cameraTourZoomStopId: null as string | null
+      cameraTourZoomStopId: null as string | null,
+      brushMousePosition: null as [number, number] | null
     };
 
     // Right-button press origin, used to ignore rotate/pitch drags.
@@ -1468,9 +1471,50 @@ export default function MapContainerFactory(
               Boolean(isGlobeMode)
             )
           : [];
+      const {brush} = visState.interactionConfig;
+      const brushPosition = this.state.brushMousePosition;
+      const brushViewport = viewport as unknown as WebMercatorViewport;
+      const brushLayers =
+        primaryMap &&
+        isInteractive &&
+        !this.props.isExport &&
+        brush.enabled &&
+        brush.config.showBrush &&
+        Number.isFinite(brush.config.size) &&
+        brush.config.size > 0 &&
+        brushPosition &&
+        brushPosition[0] >= 0 &&
+        brushPosition[0] < brushViewport.width &&
+        brushPosition[1] >= 0 &&
+        brushPosition[1] < brushViewport.height
+          ? [
+              new ScatterplotLayer({
+                id: 'brush-radius',
+                data: [brushViewport.unproject(brushPosition)],
+                getPosition: position => position,
+                getRadius: brush.config.size * 1000,
+                radiusUnits: 'meters',
+                stroked: true,
+                getFillColor: [27, 190, 220, 20],
+                getLineColor: [27, 190, 220, 230],
+                getLineWidth: 2,
+                lineWidthUnits: 'pixels',
+                pickable: false,
+                parameters: isGlobeMode
+                  ? undefined
+                  : {depthCompare: 'always', depthWriteEnabled: false}
+              })
+            ]
+          : [];
       const finalDeckGlLayers = isGlobeMode
-        ? [...globeBaseLayers, ...deckGlLayers, ...cameraPathLayers, ...globeTopLayers]
-        : [...deckGlLayers, ...cameraPathLayers];
+        ? [
+            ...globeBaseLayers,
+            ...deckGlLayers,
+            ...cameraPathLayers,
+            ...brushLayers,
+            ...globeTopLayers
+          ]
+        : [...deckGlLayers, ...cameraPathLayers, ...brushLayers];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
@@ -1515,8 +1559,22 @@ export default function MapContainerFactory(
             ? {
                 onMouseMove: primaryMap
                   ? event => {
+                      if (brush.enabled && brush.config.showBrush && !this.props.isExport) {
+                        const point =
+                          event.target instanceof HTMLCanvasElement
+                            ? normalizeEvent(event, brushViewport).point
+                            : null;
+                        this.setState({brushMousePosition: point || null});
+                      }
                       onMouseMove?.(event);
                       this._onMouseMoveDebounced(event, viewport);
+                    }
+                  : undefined,
+                onMouseLeave: primaryMap
+                  ? () => {
+                      if (this.state.brushMousePosition) {
+                        this.setState({brushMousePosition: null});
+                      }
                     }
                   : undefined
               }

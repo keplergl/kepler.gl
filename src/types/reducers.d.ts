@@ -443,6 +443,7 @@ export type Brush = BaseInteraction & {
   config: {
     size: number;
     endpoint?: BrushEndpoint;
+    showBrush?: boolean;
   };
 };
 export type Coordinate = BaseInteraction & {

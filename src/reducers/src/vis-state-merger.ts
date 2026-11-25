@@ -566,7 +566,7 @@ export function mergeInteractions<S extends VisState>(
                 [
                   ...Object.keys(currentConfig),
                   ...(key === 'geocoder' ? ['focusMode'] : []),
-                  ...(key === 'brush' ? ['endpoint'] : [])
+                  ...(key === 'brush' ? ['endpoint', 'showBrush'] : [])
                 ]
               )
             }
