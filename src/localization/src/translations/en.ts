@@ -1022,7 +1022,7 @@ export default {
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
-      pasteH3: 'Paste H3',
+      pasteH3: 'Paste',
       h3Label: 'H3 cell IDs',
       h3Help: 'Separate IDs with commas, spaces, or new lines. Duplicates are imported once.',
       h3Invalid:

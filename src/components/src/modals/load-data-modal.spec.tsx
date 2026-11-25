@@ -5,6 +5,9 @@ import React from 'react';
 import {fireEvent, waitFor} from '@testing-library/react';
 import {applyMiddleware, createStore} from 'redux';
 import {IntlProvider} from 'react-intl';
+import {Provider} from 'react-redux';
+
+import {replaceLoadDataModal} from '../../../../examples/demo-app/src/factories/load-data-modal';
 
 import {appInjector, LoadDataModalFactory, ModalContainerFactory} from '..';
 import {clearStagedLoadedFiles, toggleModal, updateVisData} from '@kepler.gl/actions';
@@ -37,7 +40,16 @@ function renderModal(props?: Partial<React.ComponentProps<typeof LoadDataModal>>
   );
 }
 
-test('Paste H3 validates the whole list before adding an H3 layer', async () => {
+const [, DemoLoadDataModalFactory] = replaceLoadDataModal();
+const DemoLoadDataModal = DemoLoadDataModalFactory(
+  ...DemoLoadDataModalFactory.deps.map(factory => appInjector.get(factory))
+);
+const demoStore = createStore(() => ({demo: {app: {}, keplerGl: {map: {uiState: {}}}}}));
+
+test.each([
+  ['default', LoadDataModal],
+  ['demo', DemoLoadDataModal]
+])('%s Add Data validates the Paste list before adding an H3 layer', async (_, LoadData) => {
   const store = createStore(keplerGlReducerCore, applyMiddleware(taskMiddleware));
   store.dispatch(toggleModal(ADD_DATA_ID));
   const addData = jest.fn((...args: Parameters<typeof updateVisData>) =>
@@ -46,7 +58,7 @@ test('Paste H3 validates the whole list before adding an H3 layer', async () => 
   const dependencies = ModalContainerFactory.deps.map(() => () => null) as unknown as Parameters<
     typeof ModalContainerFactory
   >;
-  dependencies[3] = LoadDataModal;
+  dependencies[3] = LoadData;
   // App chrome is not needed to exercise which import method/handler the dialog provides.
   dependencies[9] = (({children}: React.PropsWithChildren) =>
     children) as unknown as (typeof dependencies)[9];
@@ -54,18 +66,20 @@ test('Paste H3 validates the whole list before adding an H3 layer', async () => 
   const state = store.getState();
   const {getByRole, getByText, queryByRole} = renderWithTheme(
     <IntlProvider locale="en" messages={messages.en}>
-      {React.createElement(ModalContainer, {
-        ...state,
-        rootNode: document.body,
-        visStateActions: {
-          updateVisData: addData,
-          clearStagedLoadedFiles: () => store.dispatch(clearStagedLoadedFiles())
-        },
-        uiStateActions: {toggleModal: id => store.dispatch(toggleModal(id))}
-      } as React.ComponentProps<typeof ModalContainer>)}
+      <Provider store={demoStore}>
+        {React.createElement(ModalContainer, {
+          ...state,
+          rootNode: document.body,
+          visStateActions: {
+            updateVisData: addData,
+            clearStagedLoadedFiles: () => store.dispatch(clearStagedLoadedFiles())
+          },
+          uiStateActions: {toggleModal: id => store.dispatch(toggleModal(id))}
+        } as React.ComponentProps<typeof ModalContainer>)}
+      </Provider>
     </IntlProvider>
   );
-  fireEvent.click(getByText('Paste H3'));
+  fireEvent.click(getByText('Paste'));
 
   const input = getByRole('textbox', {name: 'H3 cell IDs'});
   const add = getByRole('button', {name: 'Add Data'});
@@ -106,8 +120,8 @@ test('Paste H3 validates the whole list before adding an H3 layer', async () => 
 
 test('Paste H3 is not offered when replacing another dataset or when the H3 layer is unavailable', () => {
   const replacement = renderModal({replaceDatasetId: 'existing', onAddH3: jest.fn()});
-  expect(replacement.queryByText('Paste H3')).not.toBeInTheDocument();
+  expect(replacement.queryByText('Paste')).not.toBeInTheDocument();
   replacement.unmount();
 
-  expect(renderModal().queryByText('Paste H3')).not.toBeInTheDocument();
+  expect(renderModal().queryByText('Paste')).not.toBeInTheDocument();
 });
