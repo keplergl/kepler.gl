@@ -1231,6 +1231,12 @@ export default function LayerConfiguratorFactory(
                   {...layer.visConfigSettings.fixedHeight}
                   {...visConfiguratorProps}
                 />
+                {layer.visConfigSettings.zeroCountHeight?.condition?.(layer.config) ? (
+                  <VisConfigSwitch
+                    {...layer.visConfigSettings.zeroCountHeight}
+                    {...visConfiguratorProps}
+                  />
+                ) : null}
                 {layer.visConfigSettings.elevationPercentile.condition(layer.config) ? (
                   <VisConfigSlider
                     {...layer.visConfigSettings.elevationPercentile}

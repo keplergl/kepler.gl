@@ -325,6 +325,8 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    zeroCountHeight: 'Start count heights at zero',
+    zeroCountHeightDescription: 'Make hexagon height proportional to point count.',
     invertHeight: 'Invert height',
     invertHeightDescription: 'Map the lowest values to the greatest height',
     fixedElevation: 'Fixed elevation',

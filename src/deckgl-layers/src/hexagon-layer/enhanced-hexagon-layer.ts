@@ -41,9 +41,12 @@ interface HexPickingObject {
  */
 // @ts-expect-error -- overriding private _onAggregationUpdate to enrich the onSetColorDomain callback
 export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
+  declare props: HexagonLayer<any>['props'] & {zeroCountHeight?: boolean};
+
   static defaultProps: DefaultProps = {
     ...HexagonLayer.defaultProps,
     gpuAggregation: false,
+    zeroCountHeight: false,
     // Supplied by kepler's AggregationLayer when a point-count label is on.
     // compare: false so a new callback identity does not re-aggregate.
     renderCountLabels: {type: 'function', value: null, compare: false, optional: true},
@@ -59,7 +62,16 @@ export default class ScaleEnhancedHexagonLayer extends HexagonLayer<any> {
   }
 
   renderLayers() {
-    return enrichedRenderLayers(this, HexagonLayer);
+    const rendered = enrichedRenderLayers(this, HexagonLayer);
+    if (!this.props.zeroCountHeight || !rendered) return rendered;
+
+    // The native layer has already resolved the dynamic maximum from its
+    // aggregation. Change only the cell scale, not the bin data or cutoff.
+    const cells = Array.isArray(rendered) ? rendered[0] : rendered;
+    const maxCount = cells?.props.elevationDomain?.[1];
+    if (!Number.isFinite(maxCount) || maxCount <= 0) return rendered;
+    const fromZero = cells.clone({elevationDomain: [0, maxCount]});
+    return Array.isArray(rendered) ? [fromZero, ...rendered.slice(1)] : fromZero;
   }
 
   // In globe mode, run deck.gl's bin/common-space setup under a WebMercatorViewport
