@@ -195,6 +195,40 @@ describe('createTargetArrowLayer', () => {
     expect(authoredConfig.visConfig.targetArrowEnabled).toBe(false);
   });
 
+  test.each([
+    ['legacy', undefined, 'source_target'],
+    ['both', 'source_target', 'source_target'],
+    ['start', 'source', 'source'],
+    ['end', 'target', 'target']
+  ])('matches the %s brush endpoint on Arc and Line strokes and arrows', (_, endpoint, target) => {
+    for (const LayerClass of [ArcLayer, LineLayer]) {
+      const layer = new LayerClass({id: 'brushed-stroke'});
+      layer.config.visConfig.targetArrowEnabled = true;
+      const interactionConfig = {brush: {enabled: true, config: {size: 1.5, endpoint}}};
+      for (const globe of [false, true]) {
+        const rendered = layer.renderLayer({
+          idx: 0,
+          visible: true,
+          data: {
+            data: [
+              {index: 0, sourcePosition: [-122.45, 37.75, 0], targetPosition: [-122.35, 37.85, 0]}
+            ],
+            getTargetColor: [70, 80, 90],
+            getWidth: 1
+          },
+          gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+          mapState: {...mapState, globe: {enabled: globe}},
+          interactionConfig,
+          layerCallbacks: {}
+        });
+        expect(rendered).toHaveLength(2);
+        expect(rendered.map(({props}) => props.brushingTarget)).toEqual([target, target]);
+        expect(rendered.map(({props}) => props.brushingRadius)).toEqual([1500, 1500]);
+      }
+      expect(layer.getBrushingExtensionProps(interactionConfig).brushingTarget).toBe('source');
+    }
+  });
+
   test('config replacement retains the original host record cache and earlier visuals', () => {
     const source = {length: 1, get: jest.fn(() => [-122.45, 37.75, 0])};
     const target = {length: 1, get: jest.fn(() => [-122.35, 37.85, 0])};

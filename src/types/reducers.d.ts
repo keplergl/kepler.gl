@@ -437,10 +437,12 @@ export type Geocoder = BaseInteraction & {
     focusMode?: GeocoderFocusMode;
   };
 };
+export type BrushEndpoint = 'source' | 'target' | 'source_target';
 export type Brush = BaseInteraction & {
   id: 'brush';
   config: {
     size: number;
+    endpoint?: BrushEndpoint;
   };
 };
 export type Coordinate = BaseInteraction & {
