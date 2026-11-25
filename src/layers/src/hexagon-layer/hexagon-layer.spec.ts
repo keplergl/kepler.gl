@@ -21,7 +21,7 @@ function renderCells(layer: HexagonLayer, latitudes: number[]) {
   const [deckLayer] = layer.renderLayer({
     data,
     gpuFilter: table.gpuFilter,
-    layerCallbacks: {onSetLayerDomain: () => {}},
+    layerCallbacks: {onSetLayerDomain: jest.fn()},
     mapState: {zoom: 4},
     idx: 0,
     visible: true
