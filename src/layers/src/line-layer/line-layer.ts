@@ -376,12 +376,12 @@ export default class LineLayer extends ArcLayer {
           // On a globe a "line" is drawn as a flat ArcLayer: getHeight 0 keeps the
           // geometry on the sphere surface (no raised paraboloid arc, which would
           // otherwise pop up as spikes sticking out perpendicular to the surface).
-          // Match the ArcLayer's globe params exactly (cull:false so the ribbon's
-          // back-facing triangles aren't culled by globe mode's global cull, and
+          // Match the ArcLayer's globe params exactly (disable both legacy cull
+          // and the view's modern cullMode so the whole ribbon renders, and
           // otherwise deck.gl defaults: depth test on + depth write on, so the
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
-          parameters: {cull: false, ...blendingParameters},
+          parameters: {cull: false, cullMode: 'none', ...blendingParameters},
           // The target end, including the arrowhead, uses the target color.
           getSourceColor: data.getColor,
           getTargetColor: this.config.visConfig.targetArrowEnabled
@@ -397,7 +397,7 @@ export default class LineLayer extends ArcLayer {
                 id: `${id}-hovered`,
                 data: [hoveredObject],
                 getHeight: 0,
-                parameters: {cull: false, ...blendingParameters},
+                parameters: {cull: false, cullMode: 'none', ...blendingParameters},
                 getSourceColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
                 getTargetColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
                 getWidth: data.getWidth,

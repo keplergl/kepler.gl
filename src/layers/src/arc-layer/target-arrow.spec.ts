@@ -3,6 +3,7 @@
 
 import {AttributeManager, Layer, MapView} from '@deck.gl/core';
 import {worldToPixels} from '@math.gl/web-mercator';
+import {Field, FixedSizeList, Float64, Table, vectorFromArray} from 'apache-arrow';
 
 import {KeplerGlobeView} from '@kepler.gl/deckgl-layers';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
@@ -145,6 +146,55 @@ describe('targetArrowAngle', () => {
 });
 
 describe('createTargetArrowLayer', () => {
+  test.each([
+    {name: 'Arc', LayerClass: ArcLayer, useArrow: false},
+    {name: 'Line', LayerClass: LineLayer, useArrow: false},
+    {name: 'GeoArrow Arc', LayerClass: ArcLayer, useArrow: true},
+    {name: 'GeoArrow Line', LayerClass: LineLayer, useArrow: true}
+  ])('$name strokes and highlights disable inherited globe culling', ({LayerClass, useArrow}) => {
+    const layer = new LayerClass({id: 'globe-stroke'});
+    const pointType = new FixedSizeList(3, new Field('coordinate', new Float64()));
+    const source = vectorFromArray([[-122.45, 37.75, 0]], pointType);
+    const target = vectorFromArray([[-122.35, 37.85, 0]], pointType);
+    const table = new Table({source, target});
+    if (useArrow) {
+      layer.geoArrowVector0 = source;
+      layer.geoArrowVector1 = target;
+    }
+    const row = {index: 0, position: [-122.45, 37.75, 0, -122.35, 37.85, 0]};
+    const view = new KeplerGlobeView();
+    expect(view.props.parameters.cullMode).toBe('back');
+
+    for (const globe of [false, true]) {
+      const [stroke, highlight] = layer.renderLayer({
+        idx: 0,
+        visible: true,
+        data: {data: [row], getWidth: 1, getColor: [70, 80, 90]},
+        dataset: {dataContainer: {getTable: () => table}},
+        objectHovered: {picked: true, object: row, layer: {props: {id: layer.id}}},
+        gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+        mapState: {...mapState, globe: {enabled: globe}, layerParameters: {blend: true}},
+        interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+        layerCallbacks: {}
+      });
+      const primitives = useArrow ? (stroke as any).renderLayers() : [stroke];
+      for (const primitive of [...primitives, highlight]) {
+        // LayersPass merges view parameters with each primitive's parameters.
+        // Checking only legacy cull:false misses the modern inherited cullMode.
+        const parameters = {
+          ...(globe ? view.props.parameters : {}),
+          ...primitive.props.parameters
+        };
+        expect(parameters.cullMode).toBe(globe ? 'none' : undefined);
+        if (globe) {
+          expect(parameters.blend).toBe(true);
+          expect(parameters.depthTest).not.toBe(false);
+          expect(parameters.depthCompare).not.toBe('always');
+        }
+      }
+    }
+  });
+
   test.each([
     {name: 'Arc', LayerClass: ArcLayer},
     {name: 'Line', LayerClass: LineLayer}
