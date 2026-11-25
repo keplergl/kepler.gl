@@ -39,7 +39,8 @@ export const CATEGORIES = {
   COLORBREWER: 'ColorBrewer',
   D3: 'D3',
   UBER: 'Uber',
-  COLORBLIND: 'ColorBlind'
+  COLORBLIND: 'ColorBlind',
+  KEPLER: 'Kepler.gl'
 };
 
 export const PALETTE_TYPES: {
@@ -588,10 +589,43 @@ const BRANDED_PALETTES: ColorPalette[] = [
   )
   .filter(Boolean) as ColorPalette[];
 
+// Preserve the original 20 stops from keplergl/kepler.gl#1605.
+const BLUE_TO_RED_SPECTRUM = buildCustomPalette({
+  name: 'Blue to Red Spectrum',
+  type: PALETTE_TYPES.DIV,
+  category: CATEGORIES.KEPLER,
+  colorBlindSafe: false,
+  correctLightness: false,
+  mode: 'rgb',
+  colors: [
+    '#000064',
+    '#0000A5',
+    '#0000E6',
+    '#0021FF',
+    '#0057FF',
+    '#008CFF',
+    '#00C2FF',
+    '#00F8FF',
+    '#2EFFD0',
+    '#64FF9A',
+    '#9AFF78',
+    '#D0FF2E',
+    '#FFF800',
+    '#FFC200',
+    '#FF8C00',
+    '#FF5700',
+    '#FF2100',
+    '#E60000',
+    '#A50000',
+    '#640000'
+  ]
+});
+
 export const KEPLER_COLOR_PALETTES: ColorPalette[] = [
   ...BRANDED_PALETTES,
   ...COLORBREWER_PALETTES,
-  ...D3_COLOR_PALETTES
+  ...D3_COLOR_PALETTES,
+  ...(BLUE_TO_RED_SPECTRUM ? [BLUE_TO_RED_SPECTRUM] : [])
 ];
 
 /**
