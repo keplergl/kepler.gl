@@ -571,7 +571,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         nullValue: 0,
         accessor: 'getLineWidth',
         condition: config => config.visConfig.stroked,
-        getAttributeValue: config => config.visConfig.strokeWidth || DEFAULT_STROKE_WIDTH
+        getAttributeValue: config => config.visConfig.strokeWidth ?? DEFAULT_STROKE_WIDTH
       },
       radius: {
         property: 'radius',

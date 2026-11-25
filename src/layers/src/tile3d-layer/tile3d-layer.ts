@@ -698,7 +698,7 @@ export default class Tile3DLayer extends Layer {
     if (center) {
       const lng = center[0];
       const lat = center[1];
-      const zoom = tileset3d.zoom || 14;
+      const zoom = tileset3d.zoom ?? 14;
       // Approximate half-span in degrees based on zoom level
       const span = 180 / Math.pow(2, zoom);
       this.updateMeta({

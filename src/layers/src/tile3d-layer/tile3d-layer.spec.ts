@@ -268,6 +268,12 @@ describe('3D tile metadata and material lifecycle', () => {
     expect(layer.meta.bounds).toEqual([-15, -5, 75, 85]);
   });
 
+  test('preserves zoom zero when estimating center-only bounds', () => {
+    const layer = new Tile3DLayer({dataId: 'tiles'});
+    layer._extractBoundsFromTileset(tileset({cartographicCenter: [0, 0], zoom: 0}));
+    expect(layer.meta.bounds).toEqual([-180, -180, 180, 180]);
+  });
+
   test('uses default zoom for center-only metadata and leaves missing bounds unset', () => {
     const layer = new Tile3DLayer({dataId: 'tiles'});
     layer._extractBoundsFromTileset(tileset());

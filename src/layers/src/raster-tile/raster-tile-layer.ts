@@ -979,7 +979,7 @@ export default class RasterTileLayer extends KeplerLayer {
     const showTileBorders = visConfig.showTileBorders;
     const showTileDebugInfo = visConfig.showTileDebugInfo;
     const minZoom = metadata.minZoom || 0;
-    const maxZoom = metadata.maxZoom || 30;
+    const maxZoom = metadata.maxZoom ?? 30;
 
     const shouldLoadTerrain = getShouldLoadTerrain(metadata, mapState, visConfig);
 
