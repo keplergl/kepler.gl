@@ -168,6 +168,22 @@ describe('AnnotationManager type icons', () => {
   });
 });
 
+test('text annotations do not offer unused line styling', () => {
+  const state = makeState(true, true);
+  Object.assign(state.visState.annotations[0], {kind: AnnotationKind.TEXT});
+  const store = mockStore(state);
+  renderWithTheme(
+    <IntlWrapper>
+      <Provider store={store}>
+        <AnnotationManager />
+      </Provider>
+    </IntlWrapper>
+  );
+
+  expect(screen.queryByRole('slider', {name: 'Line Width'})).not.toBeInTheDocument();
+  expect(screen.queryByText('Color', {exact: true})).not.toBeInTheDocument();
+});
+
 describe('AnnotationManager line width slider', () => {
   const renderSlider = (lineWidth = 2) => {
     const state = makeState(true, true);

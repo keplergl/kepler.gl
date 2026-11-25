@@ -946,52 +946,58 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           }
                         />
                       ) : null}
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.lineWidth',
-                            defaultMessage: 'Line Width'
-                          })}
-                        </StyledConfigLabel>
-                        <StyledLineWidthSlider
-                          role="slider"
-                          tabIndex={0}
-                          aria-label={intl.formatMessage({
-                            id: 'annotationManager.lineWidth',
-                            defaultMessage: 'Line Width'
-                          })}
-                          aria-valuemin={MIN_LINE_WIDTH}
-                          aria-valuemax={MAX_LINE_WIDTH}
-                          aria-valuenow={annotation.lineWidth}
-                          aria-valuetext={`${annotation.lineWidth}px`}
-                          onKeyDown={event => handleLineWidthKeyDown(event, annotation)}
-                        >
-                          <Slider
-                            minValue={MIN_LINE_WIDTH}
-                            maxValue={MAX_LINE_WIDTH}
-                            value0={MIN_LINE_WIDTH}
-                            value1={annotation.lineWidth}
-                            step={1}
-                            isRanged={false}
-                            onSlider1Change={width => handleChangeLineWidth(annotation.id, width)}
-                          />
-                          <span className="annotation-line-width-value">
-                            {annotation.lineWidth}px
-                          </span>
-                        </StyledLineWidthSlider>
-                      </StyledConfigRow>
-                      <StyledConfigRow>
-                        <StyledConfigLabel>
-                          {intl.formatMessage({
-                            id: 'annotationManager.color',
-                            defaultMessage: 'Color'
-                          })}
-                        </StyledConfigLabel>
-                        <InlineColorPicker
-                          color={hexToRgb(annotation.lineColor)}
-                          onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
-                        />
-                      </StyledConfigRow>
+                      {annotation.kind !== AnnotationKind.TEXT ? (
+                        <>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.lineWidth',
+                                defaultMessage: 'Line Width'
+                              })}
+                            </StyledConfigLabel>
+                            <StyledLineWidthSlider
+                              role="slider"
+                              tabIndex={0}
+                              aria-label={intl.formatMessage({
+                                id: 'annotationManager.lineWidth',
+                                defaultMessage: 'Line Width'
+                              })}
+                              aria-valuemin={MIN_LINE_WIDTH}
+                              aria-valuemax={MAX_LINE_WIDTH}
+                              aria-valuenow={annotation.lineWidth}
+                              aria-valuetext={`${annotation.lineWidth}px`}
+                              onKeyDown={event => handleLineWidthKeyDown(event, annotation)}
+                            >
+                              <Slider
+                                minValue={MIN_LINE_WIDTH}
+                                maxValue={MAX_LINE_WIDTH}
+                                value0={MIN_LINE_WIDTH}
+                                value1={annotation.lineWidth}
+                                step={1}
+                                isRanged={false}
+                                onSlider1Change={width =>
+                                  handleChangeLineWidth(annotation.id, width)
+                                }
+                              />
+                              <span className="annotation-line-width-value">
+                                {annotation.lineWidth}px
+                              </span>
+                            </StyledLineWidthSlider>
+                          </StyledConfigRow>
+                          <StyledConfigRow>
+                            <StyledConfigLabel>
+                              {intl.formatMessage({
+                                id: 'annotationManager.color',
+                                defaultMessage: 'Color'
+                              })}
+                            </StyledConfigLabel>
+                            <InlineColorPicker
+                              color={hexToRgb(annotation.lineColor)}
+                              onSetColor={rgb => handleChangeLineColor(annotation.id, rgb)}
+                            />
+                          </StyledConfigRow>
+                        </>
+                      ) : null}
                       {annotation.kind === AnnotationKind.RULER ? (
                         <>
                           <StyledConfigRow>
