@@ -105,6 +105,8 @@ describe('brush radius overlay', () => {
     expect(viewport.project(position)[1]).toBeCloseTo(100);
     expect(circle().props.getRadius).toBe(2500);
     expect(circle().props.radiusUnits).toBe('meters');
+    // At world zoom the real radius projects to less than one pixel.
+    expect(circle().props.radiusMinPixels).toBeGreaterThan(circle().props.getLineWidth);
     expect(circle().props.pickable).toBe(false);
 
     fireEvent.mouseMove(canvas, {clientX: 230, clientY: 140});

@@ -1494,6 +1494,9 @@ export default function MapContainerFactory(
                 getPosition: position => position,
                 getRadius: brush.config.size * 1000,
                 radiusUnits: 'meters',
+                // Keep a cursor indicator when the actual radius is smaller than a pixel.
+                // This only affects the preview; brushing still uses the radius in meters.
+                radiusMinPixels: 5,
                 stroked: true,
                 getFillColor: [27, 190, 220, 20],
                 getLineColor: [27, 190, 220, 230],
