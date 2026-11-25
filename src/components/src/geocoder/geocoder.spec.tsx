@@ -118,11 +118,37 @@ describe('Geocoder search and selection', () => {
     expect(forwardGeocode).not.toHaveBeenCalled();
   });
 
+  test('biases unrestricted place searches toward the current map center', async () => {
+    const mapState = {...INITIAL_MAP_STATE, ...viewport, longitude: -122.46, latitude: 37.75};
+    const {input} = setup({mapState});
+    type(input, 'Forest Hill');
+    await advance();
+
+    expect(forwardGeocode).toHaveBeenCalledTimes(1);
+    expect(forwardGeocode).toHaveBeenCalledWith({
+      query: 'Forest Hill',
+      limit: 5,
+      proximity: [-122.46, 37.75]
+    });
+  });
+
+  test.each([{longitude: Number.NaN}, {longitude: 181}, {latitude: 91}])(
+    'omits proximity for an invalid map center: %j',
+    async invalid => {
+      const {input} = setup({mapState: {...INITIAL_MAP_STATE, ...viewport, ...invalid}});
+      type(input, 'Address');
+      await advance();
+
+      expect(forwardGeocode).toHaveBeenCalledWith({query: 'Address', limit: 5});
+    }
+  );
+
   test('limits search to the visible viewport when enabled', async () => {
     const {input} = setup({limitSearch: true, mapState: {...INITIAL_MAP_STATE, ...viewport}});
     type(input, 'Address');
     await advance();
     const params = forwardGeocode.mock.calls[0][0];
+    expect(params).not.toHaveProperty('proximity');
     expect(params.bbox).toHaveLength(4);
     const [west, south, east, north] = params.bbox ?? [];
     expect(west).toBeLessThan(viewport.longitude);
@@ -134,7 +160,6 @@ describe('Geocoder search and selection', () => {
   });
 
   test.each([
-    ['disabled', false, {...INITIAL_MAP_STATE, ...viewport}],
     ['missing dimensions', true, {...INITIAL_MAP_STATE, ...viewport, width: 0}],
     ['world spanning', true, {...INITIAL_MAP_STATE, ...viewport, zoom: 0}],
     ['missing map state', true, undefined]

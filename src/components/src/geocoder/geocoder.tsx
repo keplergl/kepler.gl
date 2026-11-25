@@ -234,14 +234,27 @@ const GeoCoder: React.FC<GeocoderProps & IntlProps> = ({
                 query: string;
                 limit: number;
                 bbox?: [number, number, number, number];
+                proximity?: [number, number];
               } = {
                 query: queryString,
                 limit
               };
-              if (limitSearch && mapState) {
-                const bbox = getViewportBbox(mapState);
-                if (bbox) {
-                  geocodeParams.bbox = bbox;
+              if (mapState) {
+                if (limitSearch) {
+                  const bbox = getViewportBbox(mapState);
+                  if (bbox) {
+                    geocodeParams.bbox = bbox;
+                  }
+                } else {
+                  const {longitude, latitude} = mapState;
+                  if (
+                    Number.isFinite(longitude) &&
+                    Number.isFinite(latitude) &&
+                    Math.abs(longitude) <= EDGE_MERIDIAN &&
+                    Math.abs(latitude) <= 90
+                  ) {
+                    geocodeParams.proximity = [longitude, latitude];
+                  }
                 }
               }
               const response = await client.forwardGeocode(geocodeParams).send();
