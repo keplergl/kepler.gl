@@ -18,10 +18,11 @@ import LoadTilesetFactory from './tilesets-modals/load-tileset';
 import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 import AutoCreateLayersCheckbox from './auto-create-layers-checkbox';
+import PasteH3 from './paste-h3';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
-import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import {FileLoading, FileLoadingProgress, LoadFiles, ProtoDataset} from '@kepler.gl/types';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -204,6 +205,8 @@ const ProcessingStatus = styled.div.attrs({
   height: 32px;
 `;
 
+const PASTE_H3_METHOD = 'pasteH3';
+
 const noop = () => {
   return;
 };
@@ -282,6 +285,7 @@ function progressErrors(progress: FileLoadingProgress = {}): string[] {
 type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
+  onAddH3?: (dataset: ProtoDataset) => void;
   onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
   onConfirmAddData?: (options: LoadDataOptions) => void;
   stagedToAdd?: Array<{
@@ -343,6 +347,11 @@ export function LoadDataModalFactory(
       id: LOADING_METHODS.storage,
       label: 'modal.loadData.storage',
       elementType: LoadStorageMap
+    },
+    {
+      id: PASTE_H3_METHOD,
+      label: 'modal.loadData.pasteH3',
+      elementType: PasteH3
     }
   ];
 
@@ -350,6 +359,7 @@ export function LoadDataModalFactory(
     defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
   } = ({
     onFileUpload = noop,
+    onAddH3,
     onAddRemoteDataset = noop,
     onTilesetAdded = noop,
     onConfirmAddData = noop,
@@ -367,7 +377,7 @@ export function LoadDataModalFactory(
     const isReplace = Boolean(replaceDatasetId);
     const availableMethods = isReplace
       ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
-      : loadingMethods;
+      : loadingMethods.filter(method => method.id !== PASTE_H3_METHOD || onAddH3);
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
     const [preparingLayers, setPreparingLayers] = useState(false);
     const prepareFrames = useRef<number[]>([]);
@@ -478,7 +488,8 @@ export function LoadDataModalFactory(
             replaceDataset: isReplace
           }
         : {}),
-      ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {})
+      ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {}),
+      ...(currentMethod?.id === PASTE_H3_METHOD ? {onAddH3} : {})
     };
     const ElementType = currentMethod?.elementType;
 

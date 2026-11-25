@@ -1022,6 +1022,12 @@ export default {
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
+      pasteH3: 'Paste H3',
+      h3Label: 'H3 cell IDs',
+      h3Help: 'Separate IDs with commas, spaces, or new lines. Duplicates are imported once.',
+      h3Invalid:
+        '{count, plural, one {# invalid H3 cell ID} other {# invalid H3 cell IDs}}: {examples}',
+      h3TooLong: 'Paste at most {limit, number} characters at a time.',
       storage: 'Load from Storage',
       autoCreateLayers: 'Auto create layers',
       autoCreateLayersInfo:

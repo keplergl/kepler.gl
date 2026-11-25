@@ -6,7 +6,7 @@ import {css} from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import document from 'global/document';
 
-import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
 import {
   exportData,
   getFileFormatNames,
@@ -54,7 +54,13 @@ import {
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
 
-import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
+import {
+  MapState,
+  UiState,
+  OnSuccessCallBack,
+  OnErrorCallBack,
+  ProtoDataset
+} from '@kepler.gl/types';
 
 import {
   VisStateActions,
@@ -294,6 +300,14 @@ export default function ModalContainerFactory(
       });
     };
 
+    _onAddH3 = (dataset: ProtoDataset) => {
+      this.props.visStateActions.updateVisData(dataset, {
+        autoCreateLayers: true,
+        centerMap: true
+      });
+      this._closeModal();
+    };
+
     _onTilesetAdded = (
       tileset: {name: string; type: string; metadata: Record<string, any>},
       processedMetadata?: Record<string, any>,
@@ -531,6 +545,7 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onAddH3={visState.layerClasses[LAYER_TYPES.hexagonId] ? this._onAddH3 : undefined}
                 onAddRemoteDataset={this._onAddRemoteDataset}
                 onConfirmAddData={this._onConfirmAddData}
                 stagedToAdd={visState.stagedToAdd}
