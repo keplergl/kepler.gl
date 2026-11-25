@@ -15,6 +15,34 @@ Each version should:
 Ref: http://keepachangelog.com/en/0.3.0/
 -->
 
+## [3.3.0-alpha.29] - Nov 25 2026
+
+- 02aefa13f fix(annotations): collapse empty viewport captions (#4388)
+- feae42043 fix(effects): rename Surface Fog pattern to Water (#4392)
+- 7538bad46 fix(camera): wrap playback across the antimeridian (#4390)
+- 393bea79e feat(mcp): manage layer groups (#4391)
+- b3104a368 fix(globe): disable planar drag rotation (#4389)
+- 99ddf1e4a fix(globe): prevent inherited culling from discarding occluder (#4387)
+- 0cb227009 fix(globe): align occlusion disk with the horizon (#4386)
+- f30f3cef7 fix(contour): support global data with an antimeridian cut (#4385)
+- ca64f8b58 fix(layers): keep the dataset selector visible (#4378)
+- 26bc7343d fix(duckdb): reopen saved GeoJSON datasets (#4384)
+- 966fce8e6 feat(layers): rename datasets from the Layers panel (#4371)
+- 22e7b8db2 fix(map): honor double-click zoom opt-out (#4373)
+- 9209ddd2d feat(layers): rotate point labels using a numeric field (#4383)
+- f036149a6 feat(geocoder): choose how search results focus the map (#4382)
+- e1a20ae29 fix(sliders): honor fractional numeric input steps (#4374)
+- e96845b0d feat(cloud): search saved maps by title (#4376)
+- 1ad2b274c fix(filters): display valid 12-hour timeline ticks (#4369)
+- 636b43692 fix(schemas): preserve native GeoArrow points in embedded saves (#4367)
+- 8215f90cb fix(mcp): preserve the map when project sources fail (#4366)
+- 288451ea3 fix(mcp): keep the local bridge connected when a project save is too large (#4365)
+- 0121e333a docs(components): show friendly values in embedded data tables (#4380)
+- 3f5d90db4 docs(schemas): document saved filters (#4379)
+- 6d72aa164 docs(layers): add a custom icon example (#4381)
+- c7f10a9de docs(playback): add GeoJSON timestamp example (#4375)
+- b49e9571b docs(layers): explain vector tile metadata (#4370)
+
 ## [3.3.0-alpha.28] - Nov 24 2026
 
 - 54939bf43 feat(cluster): support radius in meters (#4364)

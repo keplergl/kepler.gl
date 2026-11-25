@@ -464,6 +464,22 @@ test('#visStateSchema -> v1 -> save and validate filters', t => {
   t.end();
 });
 
+test('#visStateSchema -> preserves the brushing endpoint', t => {
+  const state = cloneDeep(StateWFilesFiltersLayerColor);
+  const getReopenedBrush = () => {
+    const saved = SchemaManager.getConfigToSave(state);
+    const parsed = SchemaManager.parseSavedConfig(saved);
+    return mergeInteractions(INITIAL_VIS_STATE, parsed.visState.interactionConfig).interactionConfig
+      .brush.config;
+  };
+  t.notOk('endpoint' in getReopenedBrush(), 'older maps keep the implicit Both setting');
+  for (const endpoint of ['source', 'target', 'source_target']) {
+    state.visState.interactionConfig.brush.config.endpoint = endpoint;
+    t.equal(getReopenedBrush().endpoint, endpoint, 'reopens with the saved endpoint');
+  }
+  t.end();
+});
+
 test('#visStateSchema -> preserves the geocoder result focus', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   initialState.visState.interactionConfig.geocoder.config.focusMode = 'centerPin';
@@ -487,6 +503,24 @@ test('#visStateSchema -> preserves the geocoder result focus', t => {
     'focusMode' in older.interactionConfig.geocoder.config,
     'older maps keep the implicit fit setting'
   );
+  t.end();
+});
+
+test('#visStateSchema -> brush visibility round trips and preserves legacy maps', t => {
+  for (const showBrush of [true, false, undefined]) {
+    const state = cloneDeep(StateWFilesFiltersLayerColor);
+    state.visState.interactionConfig.brush = {
+      ...state.visState.interactionConfig.brush,
+      enabled: true,
+      config: {size: 4, ...(showBrush === undefined ? {} : {showBrush})}
+    };
+    const saved = SchemaManager.getConfigToSave(state);
+    const parsed = SchemaManager.parseSavedConfig(saved);
+    const reopened = mergeInteractions(INITIAL_VIS_STATE, parsed.visState.interactionConfig);
+    t.equal(reopened.interactionConfig.brush.config.showBrush, showBrush, 'preserves visibility');
+    t.equal(reopened.interactionConfig.brush.config.size, 4, 'preserves radius');
+    t.equal(reopened.interactionConfig.brush.enabled, true, 'preserves filtering');
+  }
   t.end();
 });
 

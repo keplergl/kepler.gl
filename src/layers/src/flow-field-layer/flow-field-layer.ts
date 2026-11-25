@@ -12,6 +12,7 @@
 // Not the origin–destination Flow layer, and not @deck.gl-community geo-layers
 // ParticleLayer / WindLayer (those take a station WindField).
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {WebMercatorViewport} from '@deck.gl/core';
 import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer, PolygonLayer} from '@deck.gl/layers';
@@ -1502,6 +1503,74 @@ export default class FlowFieldLayer extends Layer {
       clearTimeout(state.settleTimer);
     }
     this._viewportStates.clear();
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Trail color', type: 'color'},
+      {name: 'scenegraphColor', label: 'Model color', type: 'color'},
+      {
+        name: 'strokeWidth',
+        label: 'Stroke width',
+        range: this.visConfigSettings.strokeWidth.range,
+        step: this.visConfigSettings.strokeWidth.step
+      },
+      {
+        name: 'trailLength',
+        label: 'Trail length',
+        range: this.visConfigSettings.trailLength.range,
+        step: this.visConfigSettings.trailLength.step
+      },
+      {
+        name: 'elevationMultiplier',
+        label: 'Elevation multiplier',
+        range: this.visConfigSettings.elevationMultiplier.range,
+        step: this.visConfigSettings.elevationMultiplier.step
+      },
+      {
+        name: 'sizeScale',
+        label: 'Model size',
+        range: this.visConfigSettings.sizeScale.range,
+        step: this.visConfigSettings.sizeScale.step
+      },
+      {
+        name: 'adjustRoll',
+        label: 'Model roll',
+        range: this.visConfigSettings.adjustRoll.range,
+        step: this.visConfigSettings.adjustRoll.step
+      },
+      {
+        name: 'adjustPitch',
+        label: 'Model pitch',
+        range: this.visConfigSettings.adjustPitch.range,
+        step: this.visConfigSettings.adjustPitch.step
+      },
+      {
+        name: 'adjustYaw',
+        label: 'Model yaw',
+        range: this.visConfigSettings.adjustYaw.range,
+        step: this.visConfigSettings.adjustYaw.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' ||
+          (!this.config.visConfig.colorBySpeed &&
+            (this.config.visConfig.showTrails !== false ||
+              (this.config.visConfig.scenegraphEnabled &&
+                this.config.visConfig.scenegraphColorEnabled &&
+                this.config.visConfig.scenegraphUseTrailColor)))) &&
+        (!['strokeWidth', 'trailLength'].includes(prop.name) ||
+          this.config.visConfig.showTrails !== false) &&
+        (!['sizeScale', 'adjustRoll', 'adjustPitch', 'adjustYaw', 'scenegraphColor'].includes(
+          prop.name
+        ) ||
+          this.config.visConfig.scenegraphEnabled) &&
+        (prop.name !== 'scenegraphColor' ||
+          (this.config.visConfig.scenegraphColorEnabled &&
+            !this.config.visConfig.scenegraphUseTrailColor))
+    );
   }
 
   get type(): string {

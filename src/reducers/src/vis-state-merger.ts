@@ -562,10 +562,12 @@ export function mergeInteractions<S extends VisState>(
                   ...currentConfig,
                   ...configToMerge
                 },
-                // The optional geocoder mode is absent from legacy/default configs.
-                key === 'geocoder'
-                  ? [...Object.keys(currentConfig), 'focusMode']
-                  : Object.keys(currentConfig)
+                // These optional settings may be absent from legacy/default configs.
+                [
+                  ...Object.keys(currentConfig),
+                  ...(key === 'geocoder' ? ['focusMode'] : []),
+                  ...(key === 'brush' ? ['endpoint', 'showBrush'] : [])
+                ]
               )
             }
           : {})
@@ -657,6 +659,10 @@ function combineInteractionConfigs(configs: SavedInteractionConfig[]): SavedInte
       // keep the biggest brush size
       combined[key].size =
         aggregate(toBeCombinedProps, AGGREGATION_TYPES.maximum, p => p.size) ?? null;
+      const endpoint = toBeCombinedProps.find(p => p?.endpoint !== undefined)?.endpoint;
+      if (endpoint !== undefined) {
+        combined[key].endpoint = endpoint;
+      }
     }
 
     if (key === 'geocoder') {

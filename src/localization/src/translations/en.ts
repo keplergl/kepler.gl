@@ -37,6 +37,13 @@ export default {
     valueEquals: 'Value equals',
     dataSource: 'Data Source',
     brushRadius: 'Brush Radius (km)',
+    showBrush: 'Show brush',
+    brushArcLineEndpoints: 'Arc and line endpoints',
+    brushEndpoints: {
+      source_target: 'Both',
+      source: 'Start',
+      target: 'End'
+    },
     empty: ' '
   },
   mapLayers: {
@@ -327,6 +334,8 @@ export default {
     heightMultiplier: 'Height Multiplier',
     fixedHeight: 'Fixed height',
     fixedHeightDescription: 'Use height without modifications',
+    zeroCountHeight: 'Start count heights at zero',
+    zeroCountHeightDescription: 'Make hexagon height proportional to point count.',
     invertHeight: 'Invert height',
     invertHeightDescription: 'Map the lowest values to the greatest height',
     fixedElevation: 'Fixed elevation',
@@ -1024,6 +1033,21 @@ export default {
     loadData: {
       upload: 'Load Files',
       tileset: 'Tileset',
+      pasteData: 'Paste',
+      pasteLabel: 'Paste data',
+      pasteHelp:
+        'Supported formats: <strong>GeoJSON</strong>, <strong>CSV</strong> with headers, and <strong>H3 cell IDs</strong> separated by commas or whitespace.',
+      pasteHelpWithoutH3:
+        'Supported formats: <strong>GeoJSON</strong> and <strong>CSV</strong> with headers.',
+      pasteCsvLabel: 'Pasted CSV',
+      pasteGeojsonLabel: 'Pasted GeoJSON',
+      pasteInvalidCsv: 'Enter CSV with column headers and at least one data row.',
+      pasteInvalidGeojson: 'Enter valid GeoJSON with at least one geometry.',
+      pasteH3Unavailable: 'H3 cell ID lists are not enabled in this app.',
+      h3Label: 'H3 cell IDs',
+      h3Invalid:
+        '{count, plural, one {# invalid H3 cell ID} other {# invalid H3 cell IDs}}: {examples}',
+      pasteTooLong: 'Paste at most {limit, number} characters at a time.',
       storage: 'Load from Storage',
       autoCreateLayers: 'Auto create layers',
       autoCreateLayersInfo:

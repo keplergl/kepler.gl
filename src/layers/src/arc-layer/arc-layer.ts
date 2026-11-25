@@ -308,9 +308,19 @@ export default class ArcLayer extends Layer {
         label: 'Stroke width',
         range: this.visConfigSettings.thickness.range,
         step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'targetArrowSize',
+        label: 'Target arrow size',
+        range: this.visConfigSettings.targetArrowSize.range,
+        step: this.visConfigSettings.targetArrowSize.step
       }
     ];
-    return props.filter(prop => prop.type !== 'color' || !this.config.colorField);
+    return props.filter(
+      prop =>
+        (prop.type !== 'color' || !this.config.colorField) &&
+        (prop.name !== 'targetArrowSize' || this.config.visConfig.targetArrowEnabled)
+    );
   }
 
   get type() {
@@ -636,10 +646,13 @@ export default class ArcLayer extends Layer {
     // ribbon whose back-facing triangles then get culled too, making arcs partly
     // or fully invisible on the globe. Disable culling just for this layer so the
     // whole ribbon renders, without changing the global culling that the globe
-    // surface relies on.
+    // surface relies on. Override the view's modern cullMode too; cull:false
+    // alone is overwritten when luma applies the inherited cullMode:'back'.
     const isGlobeMode = Boolean(mapState?.globe?.enabled);
     const blendingParameters = mapState?.layerParameters ?? {};
-    const globeParameters = isGlobeMode ? {parameters: {cull: false, ...blendingParameters}} : {};
+    const globeParameters = isGlobeMode
+      ? {parameters: {cull: false, cullMode: 'none' as const, ...blendingParameters}}
+      : {};
 
     const useArrowLayer = Boolean(this.geoArrowVector0);
 

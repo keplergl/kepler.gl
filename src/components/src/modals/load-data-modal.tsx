@@ -18,10 +18,13 @@ import LoadTilesetFactory from './tilesets-modals/load-tileset';
 import ModalTabsFactory from './modal-tabs';
 import LoadingDialog from './loading-dialog';
 import AutoCreateLayersCheckbox from './auto-create-layers-checkbox';
+import PasteData from './paste-data';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
-import {FileLoading, FileLoadingProgress, LoadFiles} from '@kepler.gl/types';
+import type {LayerClassesType} from '@kepler.gl/layers';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import {FileLoading, FileLoadingProgress, LoadFiles, ProtoDataset} from '@kepler.gl/types';
 
 const StyledLoadDataModal = styled.div.attrs({
   className: 'load-data-modal'
@@ -204,6 +207,8 @@ const ProcessingStatus = styled.div.attrs({
   height: 32px;
 `;
 
+const PASTE_DATA_METHOD = 'pasteData';
+
 const noop = () => {
   return;
 };
@@ -282,6 +287,8 @@ function progressErrors(progress: FileLoadingProgress = {}): string[] {
 type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
+  onAddPastedData?: (dataset: ProtoDataset) => void;
+  layerClasses?: Partial<LayerClassesType>;
   onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
   onConfirmAddData?: (options: LoadDataOptions) => void;
   stagedToAdd?: Array<{
@@ -340,6 +347,11 @@ export function LoadDataModalFactory(
       elementType: LoadTileset
     },
     {
+      id: PASTE_DATA_METHOD,
+      label: 'modal.loadData.pasteData',
+      elementType: PasteData
+    },
+    {
       id: LOADING_METHODS.storage,
       label: 'modal.loadData.storage',
       elementType: LoadStorageMap
@@ -350,6 +362,8 @@ export function LoadDataModalFactory(
     defaultLoadingMethods: LoadDataModalProps['loadingMethods'];
   } = ({
     onFileUpload = noop,
+    onAddPastedData,
+    layerClasses,
     onAddRemoteDataset = noop,
     onTilesetAdded = noop,
     onConfirmAddData = noop,
@@ -365,9 +379,11 @@ export function LoadDataModalFactory(
   }) => {
     const intl = useIntl();
     const isReplace = Boolean(replaceDatasetId);
+    const canPasteData =
+      !isReplace && Boolean(onAddPastedData && getApplicationConfig().supportPaste);
     const availableMethods = isReplace
       ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
-      : loadingMethods;
+      : loadingMethods.filter(method => method.id !== PASTE_DATA_METHOD || canPasteData);
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
     const [preparingLayers, setPreparingLayers] = useState(false);
     const prepareFrames = useRef<number[]>([]);
@@ -404,7 +420,11 @@ export function LoadDataModalFactory(
     const onTilesetDraftChange = useCallback((draft: TilesetDraft) => {
       setTilesetDraft(draft);
     }, []);
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
+    const [selectedMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
+    const currentMethod =
+      selectedMethod?.id === PASTE_DATA_METHOD && !canPasteData
+        ? getDefaultMethod(availableMethods)
+        : selectedMethod;
     const selectMethod = useCallback((method: LoadingMethod) => {
       setTilesetDraft(null);
       toggleMethod(method);
@@ -478,7 +498,8 @@ export function LoadDataModalFactory(
             replaceDataset: isReplace
           }
         : {}),
-      ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {})
+      ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {}),
+      ...(currentMethod?.id === PASTE_DATA_METHOD ? {onAddPastedData, layerClasses} : {})
     };
     const ElementType = currentMethod?.elementType;
 

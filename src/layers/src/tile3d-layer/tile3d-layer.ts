@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
 import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
@@ -526,6 +527,20 @@ export default class Tile3DLayer extends Layer {
     };
   }
 
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Point color', type: 'color'},
+      {
+        name: 'pointSize',
+        label: 'Point size',
+        range: this.visConfigSettings.pointSize.range,
+        step: this.visConfigSettings.pointSize.step
+      }
+    ];
+    return props;
+  }
+
   get type(): string {
     return TILE3D_LAYER_TYPE;
   }
@@ -698,7 +713,7 @@ export default class Tile3DLayer extends Layer {
     if (center) {
       const lng = center[0];
       const lat = center[1];
-      const zoom = tileset3d.zoom || 14;
+      const zoom = tileset3d.zoom ?? 14;
       // Approximate half-span in degrees based on zoom level
       const span = 180 / Math.pow(2, zoom);
       this.updateMeta({

@@ -139,6 +139,21 @@ function categoricalFilterFixture() {
   return {layer, table, features, filter, render};
 }
 
+test('#VectorTileLayer -> preserves a zero stroke width', t => {
+  const {layer, render} = categoricalFilterFixture();
+  layer.config.visConfig.stroked = true;
+  for (const [strokeWidth, expected] of [
+    [0, 0],
+    [0.5, 0.5],
+    [undefined, 1]
+  ]) {
+    layer.config.visConfig.strokeWidth = strokeWidth;
+    const [rendered] = render([]);
+    t.equal(rendered.props.getLineWidth, expected, `preserves stroke width ${strokeWidth}`);
+  }
+  t.end();
+});
+
 test('#VectorTileLayer -> categorical filters refresh cached tile attributes', t => {
   const {layer, features, filter, render} = categoricalFilterFixture();
   const category = filter(0, ['病院']);

@@ -40,6 +40,7 @@ import FilterFeatureBadges from './editor/filter-feature-badges';
 import {AnnotationOverlay} from './annotations';
 import {getAnnotationReadoutValues} from './annotations/annotation-readout';
 import {getCameraTourPathLayers} from './map/camera-tour-path';
+import {getBrushLayers} from './map/brush-overlay';
 import CameraTourZoomControl from './map/camera-tour-zoom-control';
 
 // utils
@@ -339,7 +340,8 @@ export default function MapContainerFactory(
       // OpenFreeMap).  Populated after TileJSON resolves.
       basemapAttributions: [] as string[],
       coordinateMenu: null as CoordinateMenuState | null,
-      cameraTourZoomStopId: null as string | null
+      cameraTourZoomStopId: null as string | null,
+      brushMousePosition: null as [number, number] | null
     };
 
     // Right-button press origin, used to ignore rotate/pitch drags.
@@ -1468,9 +1470,24 @@ export default function MapContainerFactory(
               Boolean(isGlobeMode)
             )
           : [];
+      const {brush} = visState.interactionConfig;
+      const brushLayers =
+        primaryMap && isInteractive && !this.props.isExport
+          ? getBrushLayers({
+              brush,
+              mousePosition: this.state.brushMousePosition,
+              mapState: internalMapState
+            })
+          : [];
       const finalDeckGlLayers = isGlobeMode
-        ? [...globeBaseLayers, ...deckGlLayers, ...cameraPathLayers, ...globeTopLayers]
-        : [...deckGlLayers, ...cameraPathLayers];
+        ? [
+            ...globeBaseLayers,
+            ...deckGlLayers,
+            ...cameraPathLayers,
+            ...brushLayers,
+            ...globeTopLayers
+          ]
+        : [...deckGlLayers, ...cameraPathLayers, ...brushLayers];
 
       const views = deckGlProps?.views
         ? deckGlProps?.views()
@@ -1515,8 +1532,32 @@ export default function MapContainerFactory(
             ? {
                 onMouseMove: primaryMap
                   ? event => {
+                      if (brush.enabled && brush.config.showBrush && !this.props.isExport) {
+                        const {target, currentTarget, clientX, clientY} = event;
+                        // Deck places the basemap view above its canvas. The view itself
+                        // receives pointer events when the basemap is empty or transparent.
+                        const isMapSurface =
+                          target instanceof HTMLCanvasElement ||
+                          (target instanceof HTMLElement &&
+                            target.id.startsWith('view-') &&
+                            target.parentElement?.classList.contains('deck-events-root'));
+                        const bounds = isMapSurface
+                          ? currentTarget.querySelector('canvas')?.getBoundingClientRect()
+                          : null;
+                        const point: [number, number] | null = bounds
+                          ? [clientX - bounds.left, clientY - bounds.top]
+                          : null;
+                        this.setState({brushMousePosition: point});
+                      }
                       onMouseMove?.(event);
                       this._onMouseMoveDebounced(event, viewport);
+                    }
+                  : undefined,
+                onMouseLeave: primaryMap
+                  ? () => {
+                      if (this.state.brushMousePosition) {
+                        this.setState({brushMousePosition: null});
+                      }
                     }
                   : undefined
               }
@@ -1597,6 +1638,9 @@ export default function MapContainerFactory(
               if (res) return;
 
               visStateActions.onLayerClick(data);
+              if (isInteractive) {
+                allDeckGlProps.onClick?.(data, event);
+              }
             }}
             onError={this._onDeckError}
             ref={comp => {

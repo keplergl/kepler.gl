@@ -96,6 +96,23 @@ const createRenderOpts = (dataset, mapState = {dragRotate: false, bearing: 0, pi
   interactionConfig: {tooltip: {enabled: true}}
 });
 
+test('#RasterTileLayer -> preserves a zero PMTiles maximum zoom', t => {
+  const layer = new RasterTileLayer({id: 'pmtiles-zero-zoom'});
+  for (const [maxZoom, expected] of [
+    [0, 0],
+    [18, 18],
+    [undefined, 30]
+  ]) {
+    const dataset = {
+      ...MOCK_PMTILES_DATASET,
+      metadata: {...MOCK_PMTILES_METADATA, maxZoom}
+    };
+    const [rendered] = layer.renderLayer(createRenderOpts(dataset));
+    t.equal(rendered.props.maxZoom, expected, `preserves maximum zoom ${maxZoom}`);
+  }
+  t.end();
+});
+
 test('#RasterTileLayer -> tile requests carry the abort signal', async t => {
   // deck.gl aborts a tile that scrolls out of view by firing the AbortSignal it
   // puts in the request. The signal has to reach the fetch, or the browser keeps

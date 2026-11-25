@@ -25,6 +25,7 @@ import {
 import {diffUpdateTriggers} from './layer-update';
 import {textLabelDeckLayerId} from './layer-text-label';
 import {getVisualZoom, LayerZoomState} from './layer-zoom';
+import {getEndpointBrushingTarget} from './brushing';
 import {getSatisfiedColumnMode, FindDefaultLayerPropsReturnValue} from './layer-utils';
 
 import {
@@ -1734,7 +1735,10 @@ class Layer implements KeplerLayer {
       // brushing
       autoHighlight: !brush.enabled,
       brushingRadius: brush.config.size * 1000,
-      brushingTarget: brushingTarget || 'source',
+      brushingTarget:
+        brushingTarget === 'source_target'
+          ? getEndpointBrushingTarget(brush.config.endpoint)
+          : brushingTarget || 'source',
       brushingEnabled: brush.enabled
     };
   }

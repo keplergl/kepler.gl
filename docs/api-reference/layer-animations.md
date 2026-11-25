@@ -26,6 +26,34 @@ get animatableProps(): readonly LayerAnimatableProp[] {
 
 Only expose a property when the current renderer supports it. For example, a layer may omit a fixed radius or color when a data field controls that channel. Numeric descriptors retain their range and step; color descriptors use `type: 'color'` and show start/end color pickers. A color descriptor named `color` targets `config.color`; other supported properties target `config.visConfig`.
 
+## Built-in layer properties
+
+All layers support opacity. Additional properties appear when their corresponding feature is enabled:
+
+| Layers | Additional transitions |
+| --- | --- |
+| Point | Fill/stroke colors, radius, stroke width, glow extent/strength, pulse speed/expansion |
+| Arc / Line | Source/target colors, stroke width, target arrow size; Line also supports elevation scale |
+| Grid / Hexbin | Coverage and 3D elevation scale |
+| Polygon (GeoJSON) | Fill/stroke colors, radius, stroke width/opacity, elevation scale and offset |
+| H3 | Fill/stroke colors, stroke width/opacity, coverage and 3D elevation scale |
+| S2 / A5 / Geohash | Fill/stroke colors, stroke width and 3D elevation scale |
+| Icon / Donut | Radius; Icon also supports color |
+| Heatmap | Radius, intensity, threshold, surface height and surface contour step |
+| Contour | Fill/outline colors, fill opacity, outline width and 3D elevation multiplier |
+| Voronoi | Fill/stroke colors and stroke width |
+| Flow | Line thickness, curved-line curviness and fade amount |
+| Flow field | Trail color/width/length, elevation multiplier, model size/roll/pitch/yaw and model color |
+| Trip | Trail color/width/length, model size/roll/pitch/yaw and model color |
+| 3D model | Model size, X/Y/Z rotation and model color |
+| Vector tile | Fill/stroke colors, radius, stroke width/opacity and 3D elevation scale |
+| Raster tile (continuous STAC imagery) | Gamma contrast, sigmoidal contrast/bias and saturation, according to the rescaling mode |
+| 3D tiles / Bitmap | Point size/color for 3D tile point clouds; elevation offset for bitmaps |
+
+Fixed-color controls are omitted when a data field or palette controls that color. Model controls require models to be enabled, and extrusion controls require 3D rendering. Native property ranges and units match the layer configurator. Disabling a feature retains its saved transitions but makes them inactive until it is enabled again.
+
+Cluster, WMS and Zarr layers currently offer opacity only. Settings that change data generation or loading (such as contour resolution/levels, clustering, flow-field seeding, raster tile sources and Zarr slices), boolean switches, palettes and numeric ranges are not exposed as scalar transitions. Zarr slices retain their separate axis animation controls.
+
 ## Saved transitions
 
 Store blocks in `layer.config.propertyTransitions` or `annotation.propertyTransitions`, keyed by property name. Annotations currently support `opacity`; layers expose their supported properties through `animatableProps`:

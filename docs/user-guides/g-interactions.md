@@ -48,6 +48,8 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 ## Brushing
 - __Brush__: Brush allows you to highlight areas with the cursor. When brush is turned on, all layers darken. Only the portion you hover over with the cursor is illuminated. Brush works well with arc layers in particular.
 
+Under **Brushing**, expand the settings and choose **Arc and line endpoints**. **Both** highlights the connection when either endpoint is in the brush radius. **Start** or **End** matches only that endpoint. This also applies to arrowheads and does not change brushing on point layers.
+
 ![brush](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image12.png "brush")
 
 [Back to table of contents](README.md)

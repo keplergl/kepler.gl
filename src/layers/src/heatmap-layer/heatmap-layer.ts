@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {createSelector} from 'reselect';
 import KeplerHeatmapLayer from './deck-heatmap-layer';
 import {getVisualZoom} from '../layer-zoom';
@@ -324,6 +325,48 @@ class HeatmapLayer extends Layer {
           return pointPosAccessor(this.config.columns)(dataContainer);
       }
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      },
+      {
+        name: 'intensity',
+        label: 'Intensity',
+        range: this.visConfigSettings.intensity.range,
+        step: this.visConfigSettings.intensity.step
+      },
+      {
+        name: 'threshold',
+        label: 'Threshold',
+        range: this.visConfigSettings.threshold.range,
+        step: this.visConfigSettings.threshold.step
+      },
+      {
+        name: 'surfaceHeight',
+        label: 'Surface height',
+        range: this.visConfigSettings.surfaceHeight.range,
+        step: this.visConfigSettings.surfaceHeight.step
+      },
+      {
+        name: 'surfaceContourStep',
+        label: 'Surface contour step',
+        range: this.visConfigSettings.surfaceContourStep.range,
+        step: this.visConfigSettings.surfaceContourStep.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'surfaceHeight' || this.config.visConfig.surfaceEnabled) &&
+        (prop.name !== 'surfaceContourStep' ||
+          (this.config.visConfig.surfaceEnabled && this.config.visConfig.surfaceContours))
+    );
   }
 
   get type(): 'heatmap' {

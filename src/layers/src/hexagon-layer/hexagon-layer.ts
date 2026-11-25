@@ -16,7 +16,7 @@ import {
   VisConfigSelection,
   Merge
 } from '@kepler.gl/types';
-import {AggregationTypes} from '@kepler.gl/constants';
+import {AggregationTypes, PROPERTY_GROUPS, SCALE_TYPES} from '@kepler.gl/constants';
 
 export type HexagonLayerVisConfigSettings = {
   opacity: VisConfigNumber;
@@ -32,6 +32,7 @@ export type HexagonLayerVisConfigSettings = {
   colorAggregation: VisConfigSelection;
   sizeAggregation: VisConfigSelection;
   enable3d: VisConfigBoolean;
+  zeroCountHeight: VisConfigBoolean;
 };
 
 export type HexagonLayerVisConfig = {
@@ -48,6 +49,7 @@ export type HexagonLayerVisConfig = {
   colorAggregation: AggregationTypes;
   sizeAggregation: AggregationTypes;
   enable3d: boolean;
+  zeroCountHeight?: boolean;
 };
 
 export type HexagonLayerConfig = Merge<AggregationLayerConfig, {visConfig: HexagonLayerVisConfig}>;
@@ -67,6 +69,7 @@ export const hexagonVisConfigs: {
   colorAggregation: 'colorAggregation';
   sizeAggregation: 'sizeAggregation';
   enable3d: 'enable3d';
+  zeroCountHeight: VisConfigBoolean;
 } = {
   opacity: 'opacity',
   worldUnitSize: 'worldUnitSize',
@@ -81,7 +84,22 @@ export const hexagonVisConfigs: {
   fixedHeight: 'fixedHeight',
   colorAggregation: 'colorAggregation',
   sizeAggregation: 'sizeAggregation',
-  enable3d: 'enable3d'
+  enable3d: 'enable3d',
+  zeroCountHeight: {
+    defaultValue: false,
+    type: 'boolean',
+    label: 'layerVisConfigs.zeroCountHeight',
+    description: 'layerVisConfigs.zeroCountHeightDescription',
+    group: PROPERTY_GROUPS.height,
+    property: 'zeroCountHeight',
+    condition: config =>
+      config.visConfig.enable3d &&
+      !config.visConfig.fixedHeight &&
+      !config.sizeField &&
+      config.sizeScale === SCALE_TYPES.linear &&
+      config.visConfig.sizeRange[0] === 0 &&
+      config.visConfig.elevationPercentile[0] === 0
+  }
 };
 
 export default class HexagonLayer extends AggregationLayer {
@@ -93,6 +111,10 @@ export default class HexagonLayer extends AggregationLayer {
 
     this.registerVisConfig(hexagonVisConfigs);
     this.visConfigSettings.worldUnitSize.label = 'columns.hexagon.worldUnitSize';
+  }
+
+  get noneLayerDataAffectingProps() {
+    return [...super.noneLayerDataAffectingProps, 'zeroCountHeight'];
   }
 
   get animatableProps(): readonly LayerAnimatableProp[] {
@@ -146,6 +168,9 @@ export default class HexagonLayer extends AggregationLayer {
         ...data,
         wrapLongitude: false,
         radius,
+        zeroCountHeight:
+          visConfig.zeroCountHeight &&
+          this.visConfigSettings.zeroCountHeight.condition?.(this.config),
         ...countLabelProps
       }),
 

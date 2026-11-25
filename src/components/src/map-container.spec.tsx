@@ -51,6 +51,127 @@ beforeEach(() => {
 });
 afterEach(() => jest.restoreAllMocks());
 
+describe('brush radius overlay', () => {
+  function setup({
+    showBrush,
+    enabled = true,
+    size = 2.5,
+    isExport = false
+  }: {
+    showBrush?: boolean;
+    enabled?: boolean;
+    size?: number;
+    isExport?: boolean;
+  } = {}) {
+    const deckProps = new Map<number, any>();
+    (MapContainer.prototype._renderMap as jest.Mock).mockImplementation(function (this: any) {
+      const overlay = this._renderDeckOverlay([], {primaryMap: true, isInteractive: true});
+      const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
+      deckProps.set(this.props.index, deck.props);
+      return React.cloneElement(
+        overlay,
+        {'data-testid': `map-${this.props.index}`},
+        <div className="deck-events-root">
+          <canvas />
+          <div id="view-MapView" />
+        </div>
+      );
+    });
+    const ref = createRef<any>();
+    const props = {
+      index: 0,
+      theme,
+      isExport,
+      mapState: {...INITIAL_MAP_STATE, width: 400, height: 300, latitude: 0, longitude: 0, zoom: 0},
+      mapStyle: INITIAL_MAP_STYLE,
+      visState: {
+        ...INITIAL_VIS_STATE,
+        interactionConfig: {
+          ...INITIAL_VIS_STATE.interactionConfig,
+          brush: {...INITIAL_VIS_STATE.interactionConfig.brush, enabled, config: {size, showBrush}}
+        }
+      },
+      mapControls: INITIAL_UI_STATE.mapControls,
+      visStateActions: {onMouseMove: jest.fn()},
+      generateDeckGLLayers: () => []
+    };
+    const rendered = render(<MapContainer {...props} ref={ref} />);
+    const canvas = rendered.container.querySelector('canvas')!;
+    const circle = (index = 0) =>
+      deckProps.get(index)?.layers.find(layer => layer.id === 'brush-radius');
+    return {rendered, canvas, circle, ref, props};
+  }
+
+  test('follows the pointer and radius and clears when the pointer leaves the map', () => {
+    const {rendered, canvas, circle, props, ref} = setup({showBrush: true});
+    expect(circle()).toBeUndefined();
+    fireEvent.mouseMove(canvas, {clientX: 120, clientY: 100});
+    let position = circle().props.data[0];
+    const viewport = new WebMercatorViewport(props.mapState);
+    expect(viewport.project(position)[0]).toBeCloseTo(120);
+    expect(viewport.project(position)[1]).toBeCloseTo(100);
+    const initialRadius = circle().props.getRadius;
+    expect(initialRadius).toBeGreaterThan(0);
+    expect(circle().props.pickable).toBe(false);
+
+    fireEvent.mouseMove(canvas, {clientX: 230, clientY: 140});
+    position = circle().props.data[0];
+    expect(viewport.project(position)[0]).toBeCloseTo(230);
+    expect(viewport.project(position)[1]).toBeCloseTo(140);
+
+    const nextProps = {
+      ...props,
+      visState: {
+        ...props.visState,
+        interactionConfig: {
+          ...props.visState.interactionConfig,
+          brush: {...props.visState.interactionConfig.brush, config: {size: 5, showBrush: true}}
+        }
+      }
+    };
+    rendered.rerender(<MapContainer {...nextProps} ref={ref} />);
+    expect(circle().props.getRadius).toBe(initialRadius * 2);
+    fireEvent.mouseLeave(canvas);
+    expect(circle()).toBeUndefined();
+    ref.current._onMouseMoveDebounced.cancel();
+  });
+
+  test('tracks the Deck view surface above the overlay canvas', () => {
+    const {rendered, circle, props, ref} = setup({showBrush: true});
+    const surface = rendered.container.querySelector('#view-MapView')!;
+    fireEvent.mouseMove(surface, {clientX: 120, clientY: 100});
+    const position = circle().props.data[0];
+    const viewport = new WebMercatorViewport(props.mapState);
+    expect(viewport.project(position)[0]).toBeCloseTo(120);
+    expect(viewport.project(position)[1]).toBeCloseTo(100);
+    ref.current._onMouseMoveDebounced.cancel();
+  });
+
+  test.each([
+    {},
+    {showBrush: false},
+    {showBrush: true, enabled: false},
+    {showBrush: true, isExport: true}
+  ])('omits the circle for inactive, legacy or exported maps: %j', options => {
+    const {canvas, circle, ref} = setup(options);
+    fireEvent.mouseMove(canvas, {clientX: 120, clientY: 100});
+    expect(circle()).toBeUndefined();
+    ref.current._onMouseMoveDebounced.cancel();
+  });
+
+  test('keeps the circle local to the hovered split map and hides it over controls', () => {
+    const {canvas, circle, ref, props} = setup({showBrush: true});
+    const second = render(<MapContainer {...props} index={1} />);
+    fireEvent.mouseMove(canvas, {clientX: 120, clientY: 100});
+    expect(circle()).toBeDefined();
+    expect(circle(1)).toBeUndefined();
+    fireEvent.mouseMove(canvas.parentElement!, {clientX: 150, clientY: 100});
+    expect(circle()).toBeUndefined();
+    second.unmount();
+    ref.current._onMouseMoveDebounced.cancel();
+  });
+});
+
 describe('map coordinate copying', () => {
   const originalConfig = {...getApplicationConfig()};
 
@@ -266,6 +387,68 @@ describe('double-click zoom', () => {
 
   test('keeps passive maps non-interactive even when the embedder enables zoom', () => {
     expect(getController({doubleClickZoom: true}, false, false)).toBe(false);
+  });
+});
+
+describe('embedding app clicks', () => {
+  function setupClick(isDrawing = false, hostOnClick = jest.fn(), isInteractive = true) {
+    const onLayerClick = jest.fn();
+    const map = new MapContainer({
+      index: 0,
+      mapState: {...INITIAL_MAP_STATE, width: 400, height: 300},
+      mapStyle: INITIAL_MAP_STYLE,
+      visState: {
+        ...INITIAL_VIS_STATE,
+        editor: {...INITIAL_VIS_STATE.editor, mode: EDITOR_MODES.DRAW_POLYGON}
+      },
+      mapControls: {...INITIAL_UI_STATE.mapControls, mapDraw: {active: isDrawing}},
+      visStateActions: {onLayerClick},
+      generateDeckGLLayers: () => [],
+      deckGlProps: {onClick: hostOnClick}
+    });
+    const overlay = map._renderDeckOverlay([], {primaryMap: true, isInteractive});
+    const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
+    return {click: deck.props.onClick, onLayerClick, hostOnClick};
+  }
+
+  const feature = {
+    picked: true,
+    object: {type: 'Feature', geometry: {type: 'Point', coordinates: [10, 20]}}
+  };
+
+  test('forwards repeated feature clicks after Kepler handles selection', () => {
+    const calls: string[] = [];
+    const {click, hostOnClick, onLayerClick} = setupClick(
+      false,
+      jest.fn(() => calls.push('host'))
+    );
+    onLayerClick.mockImplementation(() => calls.push('selection'));
+    const firstEvent = {srcEvent: {}};
+    const repeatEvent = {srcEvent: {}};
+    click(feature, firstEvent);
+    click(feature, repeatEvent);
+
+    expect(calls).toEqual(['selection', 'host', 'selection', 'host']);
+    expect(onLayerClick.mock.calls).toEqual([[feature], [feature]]);
+    expect(hostOnClick.mock.calls).toEqual([
+      [feature, firstEvent],
+      [feature, repeatEvent]
+    ]);
+  });
+
+  test('keeps feature clicks consumed by drawing out of the embedder callback', () => {
+    const {click, hostOnClick, onLayerClick} = setupClick(true);
+    const event = {srcEvent: {}};
+    click(feature, event);
+
+    expect(onLayerClick).toHaveBeenCalledWith(null, event);
+    expect(hostOnClick).not.toHaveBeenCalled();
+  });
+
+  test('does not forward clicks from a non-interactive overlay', () => {
+    const {click, hostOnClick} = setupClick(false, jest.fn(), false);
+    click(feature, {srcEvent: {}});
+    expect(hostOnClick).not.toHaveBeenCalled();
   });
 });
 

@@ -23,6 +23,7 @@ import {
   VisConfigInput,
   VisConfigRange,
   VisConfigNumber,
+  LayerAnimatableProp,
   BindedLayerCallbacks
 } from '@kepler.gl/types';
 
@@ -70,7 +71,8 @@ import {
   filterAvailablePresets,
   getSingleBandPresetOptions,
   getImageMinMax,
-  getMinMaxFromTile2DHeaders
+  getMinMaxFromTile2DHeaders,
+  isRescalingAllowed
 } from './raster-tile-utils';
 import {
   GetTileDataCustomProps,
@@ -180,11 +182,43 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
 
 type RasterTileLayerMeta = {
   zRange: number[] | null;
+  isPMTiles?: boolean;
 };
 
 export default class RasterTileLayer extends KeplerLayer {
   declare visConfigSettings: RasterTileLayerVisConfigSettings;
   declare meta: RasterTileLayerMeta;
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const {visConfig} = this.config;
+    if (
+      this.meta.isPMTiles ||
+      visConfig.colorRange?.colorMap ||
+      !isRescalingAllowed(PRESET_OPTIONS[visConfig.preset]?.bandCombination)
+    ) {
+      return super.animatableProps;
+    }
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      ...[
+        ['gammaContrastFactor', 'Gamma contrast'],
+        ['sigmoidalContrastFactor', 'Sigmoidal contrast'],
+        ['sigmoidalBiasFactor', 'Sigmoidal bias'],
+        ['saturationValue', 'Saturation']
+      ].map(([name, label]) => ({
+        name,
+        label,
+        range: this.visConfigSettings[name].range,
+        step: this.visConfigSettings[name].step
+      }))
+    ];
+    return props.filter(
+      prop =>
+        !['gammaContrastFactor', 'sigmoidalContrastFactor', 'sigmoidalBiasFactor'].includes(
+          prop.name
+        ) || visConfig.nonLinearRescaling
+    );
+  }
 
   /** Min bands image data value, based on the current viewport */
   minViewportPixelValue = Infinity;
@@ -589,6 +623,7 @@ export default class RasterTileLayer extends KeplerLayer {
     }
 
     const stac = dataset.metadata;
+    this.updateMeta({isPMTiles: stac.pmtilesType === PMTilesType.RASTER});
     if (stac.pmtilesType === PMTilesType.RASTER) {
       const meta: Record<string, any> = {bounds: stac.bounds};
       const firstAttribution =
@@ -979,7 +1014,7 @@ export default class RasterTileLayer extends KeplerLayer {
     const showTileBorders = visConfig.showTileBorders;
     const showTileDebugInfo = visConfig.showTileDebugInfo;
     const minZoom = metadata.minZoom || 0;
-    const maxZoom = metadata.maxZoom || 30;
+    const maxZoom = metadata.maxZoom ?? 30;
 
     const shouldLoadTerrain = getShouldLoadTerrain(metadata, mapState, visConfig);
 
