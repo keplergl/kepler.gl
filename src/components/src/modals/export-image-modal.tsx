@@ -362,13 +362,16 @@ const ExportImageModalFactory = () => {
                   aria-pressed={ratio === op.id}
                   selected={ratio === op.id}
                   onClick={() => {
-                    if (op.id !== ratio) {
-                      const customDimensions =
-                        op.id === EXPORT_IMG_RATIOS.CUSTOM
-                          ? exportImage.customDimensions ?? initialDimensions
-                          : exportImage.customDimensions;
-                      onUpdateImageSetting({ratio: op.id, customDimensions});
-                    }
+                    if (op.id === ratio) return;
+
+                    onUpdateImageSetting(
+                      op.id === EXPORT_IMG_RATIOS.CUSTOM
+                        ? {
+                            ratio: op.id,
+                            customDimensions: exportImage.customDimensions ?? initialDimensions
+                          }
+                        : {ratio: op.id}
+                    );
                   }}
                 >
                   <FormattedMessage id={op.label} />

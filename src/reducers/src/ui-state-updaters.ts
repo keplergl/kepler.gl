@@ -694,18 +694,20 @@ export const setExportImageErrorUpdater = (
  * @memberof uiStateUpdaters
  * @public
  */
-export const cleanupExportImageUpdater = (state: UiState): UiState => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    exporting: false,
-    customDimensions: undefined,
-    imageDataUri: '',
-    error: false,
-    processing: false,
-    center: false
-  }
-});
+export const cleanupExportImageUpdater = (state: UiState): UiState => {
+  const {customDimensions, ...exportImage} = state.exportImage;
+  return {
+    ...state,
+    exportImage: {
+      ...exportImage,
+      exporting: false,
+      imageDataUri: '',
+      error: false,
+      processing: false,
+      center: false
+    }
+  };
+};
 
 /**
  * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs
