@@ -287,6 +287,8 @@ export default {
     strokeColor: 'Stroke Color',
     strokeColorRange: 'Stroke Color range',
     targetColor: 'Target Color',
+    sourceOpacity: 'Source Opacity',
+    targetOpacity: 'Target Opacity',
     targetArrow: 'Target Arrow',
     targetArrowDescription: 'Draw an arrowhead at the end of each arc or line',
     targetArrowShape: 'Arrow Shape',

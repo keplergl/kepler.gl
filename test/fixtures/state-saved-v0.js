@@ -1132,6 +1132,8 @@ mergedLayer1.config = {
   hidden: false,
   visConfig: {
     opacity: 0.41,
+    sourceOpacity: 1,
+    targetOpacity: 1,
     thickness: 2,
     targetColor: null,
     colorRange: {
