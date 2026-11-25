@@ -845,7 +845,8 @@ export const expectedSavedLayer0 = {
       fixedHeight: false,
       colorAggregation: 'count',
       sizeAggregation: 'count',
-      enable3d: false
+      enable3d: false,
+      zeroCountHeight: false
     },
     textLabel: [SAVED_AGGREGATION_COUNT_TEXT_LABEL]
   },
@@ -887,7 +888,8 @@ export const expectedLoadedLayer0 = {
       // LAYER_VIS_CONFIGS.aggregation.defaultValue is AGGREGATION_TYPES.average,
       colorAggregation: 'count',
       sizeAggregation: 'count',
-      enable3d: false
+      enable3d: false,
+      zeroCountHeight: false
     },
     colorField: null,
     colorScale: 'quantile',

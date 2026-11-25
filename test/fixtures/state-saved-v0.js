@@ -1302,6 +1302,7 @@ mergedLayer3.config = {
     enable3d: true,
     opacity: 0.8,
     worldUnitSize: 0.5,
+    zeroCountHeight: false,
     resolution: 8,
     colorRange: {
       name: 'Global Warming',

@@ -455,6 +455,7 @@ mergedLayer1.config = {
   visConfig: {
     opacity: 0.8,
     worldUnitSize: 2.73,
+    zeroCountHeight: false,
     resolution: 8,
     colorRange: {
       name: 'Uber Viz Diverging',
