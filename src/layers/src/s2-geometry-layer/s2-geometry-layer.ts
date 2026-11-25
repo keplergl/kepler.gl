@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {S2Layer} from '@deck.gl/geo-layers';
 import {
   HIGHLIGH_COLOR_3D,
@@ -166,6 +167,34 @@ export default class S2GeometryLayer extends Layer {
     this.registerVisConfig(S2VisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       S2TokenAccessor(this.config.columns)(dataContainer);
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.stroked && !this.config.strokeColorField)) &&
+        (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.config.visConfig.enable3d)
+    );
   }
 
   get type(): 's2' {

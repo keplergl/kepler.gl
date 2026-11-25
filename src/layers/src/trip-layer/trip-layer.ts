@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import memoize from 'es-toolkit/compat/memoize';
 import uniq from 'es-toolkit/compat/uniq';
 import {interpolateArray} from 'd3-interpolate';
@@ -70,6 +71,10 @@ export type TripLayerVisConfigSettings = {
   thickness: VisConfigNumber;
   colorRange: VisConfigColorRange;
   trailLength: VisConfigNumber;
+  sizeScale: VisConfigNumber;
+  adjustRoll: VisConfigNumber;
+  adjustPitch: VisConfigNumber;
+  adjustYaw: VisConfigNumber;
   sizeRange: VisConfigRange;
   scenegraphCustomModelUrl: VisConfigInput;
 };
@@ -333,6 +338,61 @@ export default class TripLayer extends Layer {
   static get type(): 'trip' {
     return 'trip';
   }
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Trail color', type: 'color'},
+      {name: 'scenegraphColor', label: 'Model color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'trailLength',
+        label: 'Trail length',
+        range: this.visConfigSettings.trailLength.range,
+        step: this.visConfigSettings.trailLength.step
+      },
+      {
+        name: 'sizeScale',
+        label: 'Model size',
+        range: this.visConfigSettings.sizeScale.range,
+        step: this.visConfigSettings.sizeScale.step
+      },
+      {
+        name: 'adjustRoll',
+        label: 'Model roll',
+        range: this.visConfigSettings.adjustRoll.range,
+        step: this.visConfigSettings.adjustRoll.step
+      },
+      {
+        name: 'adjustPitch',
+        label: 'Model pitch',
+        range: this.visConfigSettings.adjustPitch.range,
+        step: this.visConfigSettings.adjustPitch.step
+      },
+      {
+        name: 'adjustYaw',
+        label: 'Model yaw',
+        range: this.visConfigSettings.adjustYaw.range,
+        step: this.visConfigSettings.adjustYaw.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || !this.config.colorField) &&
+        (!['sizeScale', 'adjustRoll', 'adjustPitch', 'adjustYaw', 'scenegraphColor'].includes(
+          prop.name
+        ) ||
+          this.config.visConfig.scenegraphEnabled) &&
+        (prop.name !== 'scenegraphColor' ||
+          (this.config.visConfig.scenegraphColorEnabled &&
+            !this.config.visConfig.scenegraphUseTrailColor))
+    );
+  }
+
   get type() {
     return TripLayer.type;
   }

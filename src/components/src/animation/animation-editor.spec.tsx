@@ -10,6 +10,7 @@ import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
+import ContourLayer from '../../../layers/src/contour-layer/contour-layer';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
 import type {
   Annotation,
@@ -790,6 +791,45 @@ test('Add action closes even when an outside control stops click propagation', (
   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   expect(onOutsideClick).toHaveBeenCalledTimes(1);
   expect(outside).toHaveFocus();
+});
+
+test('adds and edits a contour elevation transition using its native range', () => {
+  const source = new ContourLayer({id: 'contours', label: 'Contours', dataId: 'survey'});
+  source.updateLayerVisConfig({enable3d: true, elevationScale: 2});
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    source.updateLayerConfig(config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Contours'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Elevation multiplier'}));
+  expect(source.config.propertyTransitions?.elevationScale[0]).toMatchObject({
+    startValue: 2,
+    endValue: 2
+  });
+  const end = screen.getByRole('spinbutton', {name: 'End elevation multiplier'});
+  expect(end).toHaveAttribute('min', '0');
+  expect(end).toHaveAttribute('max', '10');
+  expect(end).toHaveAttribute('step', '0.1');
+  fireEvent.change(end, {target: {value: '11'}});
+  expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'Start elevation multiplier'}), {
+    target: {value: '0'}
+  });
+  fireEvent.change(end, {target: {value: '4'}});
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  expect(source.config.propertyTransitions?.elevationScale[0]).toMatchObject({
+    startValue: 0,
+    endValue: 4
+  });
+  expect(source.config.visConfig.elevationScale).toBe(2);
+  source.updateLayerVisConfig({enable3d: false});
+  rerender(<Editor {...props} />);
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Contours'}));
+  expect(screen.queryByRole('menuitem', {name: 'Elevation multiplier'})).toBeNull();
+  expect(source.config.propertyTransitions?.elevationScale).toHaveLength(1);
 });
 
 test('choosing a native layer property creates its block and opens range-aware settings', () => {

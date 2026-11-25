@@ -225,7 +225,16 @@ export default class LineLayer extends ArcLayer {
 
   get animatableProps(): readonly LayerAnimatableProp[] {
     // Globe lines use the target color only when target arrows are enabled.
-    return super.animatableProps.filter(
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
       prop => prop.name !== 'targetColor' || this.config.visConfig.targetArrowEnabled
     );
   }
