@@ -34,7 +34,7 @@ const isRGBColor = (value: unknown): value is RGBColor =>
 function normalizeTransitions(
   value: unknown,
   range?: readonly [number, number],
-  type?: 'number' | 'color'
+  type?: 'number' | 'color' | 'toggle'
 ): LayerPropertyTransition[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const ids = new Set<string>();
@@ -46,7 +46,13 @@ function normalizeTransitions(
     const easing = candidate.easing === undefined ? 'easeInOut' : candidate.easing;
     const numeric = isFiniteNumber(startValue) && isFiniteNumber(endValue);
     const color = isRGBColor(startValue) && isRGBColor(endValue);
-    const valueType = numeric ? 'number' : color ? 'color' : undefined;
+    const valueType = numeric
+      ? trackType === 'toggle'
+        ? 'toggle'
+        : 'number'
+      : color
+      ? 'color'
+      : undefined;
     if (
       typeof id !== 'string' ||
       id.trim().length === 0 ||
@@ -55,6 +61,9 @@ function normalizeTransitions(
         time => typeof time === 'number' && Number.isFinite(time) && time >= 0
       ) ||
       endTimeMs < startTimeMs ||
+      (valueType === 'toggle' &&
+        (startTimeMs !== endTimeMs ||
+          ![startValue, endValue].every(endpoint => endpoint === 0 || endpoint === 1))) ||
       !valueType ||
       (trackType !== undefined && trackType !== valueType) ||
       (numeric &&
@@ -75,7 +84,10 @@ function normalizeTransitions(
   transitions.sort((a, b) => a.startTimeMs - b.startTimeMs || a.endTimeMs - b.endTimeMs);
   if (
     transitions.some(
-      (transition, index) => index > 0 && transition.startTimeMs < transitions[index - 1].endTimeMs
+      (transition, index) =>
+        index > 0 &&
+        (transition.startTimeMs < transitions[index - 1].endTimeMs ||
+          (type === 'toggle' && transition.startTimeMs === transitions[index - 1].startTimeMs))
     )
   ) {
     return undefined;
@@ -109,9 +121,9 @@ export function getLayerPropertyTransitions(
   definition?: LayerAnimatableProp
 ): LayerPropertyTransition[] {
   if (!isSafePropertyName(name)) return [];
-  if (name === 'opacity' && definition?.type === 'color') return [];
+  if (name === 'opacity' && definition?.type && definition.type !== 'number') return [];
   let range: readonly [number, number] | undefined =
-    definition?.type === 'color' ? undefined : definition?.range;
+    definition?.type === 'color' || definition?.type === 'toggle' ? undefined : definition?.range;
   const type = name === 'opacity' ? 'number' : definition ? definition.type ?? 'number' : undefined;
   if (
     range &&
@@ -176,10 +188,11 @@ export function getLayerAnimationTracks(
 export function getLayerAnimationDuration(layers: readonly AnimatableLayer[]): number {
   return layers.reduce((duration, layer) => {
     if (!layer.config.isVisible) return duration;
-    return getLayerAnimationTracks(layer).reduce(
-      (latest, {transitions}) => Math.max(latest, transitions[transitions.length - 1].endTimeMs),
-      duration
-    );
+    return getLayerAnimationTracks(layer).reduce((latest, {property, transitions}) => {
+      const end = transitions[transitions.length - 1].endTimeMs;
+      // Leave a visible frame after the last switch, including in looping/export playback.
+      return Math.max(latest, end + (property.type === 'toggle' ? 1000 : 0));
+    }, duration);
   }, 0);
 }
 
@@ -196,9 +209,9 @@ export function getLayerAnimationOpacityFactor(
 export function getLayerAnimatedConfig(
   layer: AnimatableLayer,
   timeMs?: number | null
-): {color?: RGBColor; visConfig?: Record<string, number | RGBColor>} {
+): {color?: RGBColor; visConfig?: Record<string, number | RGBColor | boolean>} {
   if (typeof timeMs !== 'number' || !Number.isFinite(timeMs)) return {};
-  const result: {color?: RGBColor; visConfig?: Record<string, number | RGBColor>} = {};
+  const result: {color?: RGBColor; visConfig?: Record<string, number | RGBColor | boolean>} = {};
   for (const {property, transitions} of getLayerAnimationTracks(layer)) {
     if (property.name !== 'opacity') {
       const value = evaluateTransitions(transitions, timeMs);
@@ -206,7 +219,7 @@ export function getLayerAnimatedConfig(
         if (Array.isArray(value)) result.color = value;
       } else {
         result.visConfig ??= {};
-        result.visConfig[property.name] = value;
+        result.visConfig[property.name] = property.type === 'toggle' ? value === 1 : value;
       }
     }
   }

@@ -10,7 +10,7 @@ initApplicationConfig({enableAnimationEditor: false});
 
 This flag only controls access to the editor; it does not disable playback or change saved animations.
 
-The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric and RGB color properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer supports.
+The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric, RGB color and toggle properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer supports.
 
 ```ts
 import type {LayerAnimatableProp} from '@kepler.gl/types';
@@ -32,7 +32,7 @@ All layers support opacity. Additional properties appear when their correspondin
 
 | Layers | Additional transitions |
 | --- | --- |
-| Point | Fill/stroke colors, radius, stroke width, glow extent/strength, pulse speed/expansion |
+| Point | Fill switch, fill/stroke colors, radius, stroke width, glow extent/strength, pulse speed/expansion |
 | Arc / Line | Source/target colors, stroke width, target arrow size; Line also supports elevation scale |
 | Grid / Hexbin | Coverage and 3D elevation scale |
 | Polygon (GeoJSON) | Fill/stroke colors, radius, stroke width/opacity, elevation scale and offset |
@@ -40,7 +40,7 @@ All layers support opacity. Additional properties appear when their correspondin
 | S2 / A5 / Geohash | Fill/stroke colors, stroke width and 3D elevation scale |
 | Icon / Donut | Radius; Icon also supports color |
 | Heatmap | Radius, intensity, threshold, surface height and surface contour step |
-| Contour | Fill/outline colors, fill opacity, outline width and 3D elevation multiplier |
+| Contour | Fill and 3D surface switches, fill/outline colors, fill opacity, outline width and 3D elevation multiplier |
 | Voronoi | Fill/stroke colors and stroke width |
 | Flow | Line thickness, curved-line curviness and fade amount |
 | Flow field | Trail color/width/length, elevation multiplier, model size/roll/pitch/yaw and model color |
@@ -52,7 +52,11 @@ All layers support opacity. Additional properties appear when their correspondin
 
 Fixed-color controls are omitted when a data field or palette controls that color. Model controls require models to be enabled, and extrusion controls require 3D rendering. Native property ranges and units match the layer configurator. Disabling a feature retains its saved transitions but makes them inactive until it is enabled again.
 
-Cluster, WMS and Zarr layers currently offer opacity only. Settings that change data generation or loading (such as contour resolution/levels, clustering, flow-field seeding, raster tile sources and Zarr slices), boolean switches, palettes and numeric ranges are not exposed as scalar transitions. Zarr slices retain their separate axis animation controls.
+Cluster, WMS and Zarr layers currently offer opacity only. Settings that change data generation or loading (such as contour resolution/levels, clustering, flow-field seeding, raster tile sources and Zarr slices), palettes and numeric ranges are not exposed as scalar transitions. Zarr slices retain their separate axis animation controls.
+
+## Instant switches
+
+In the Animation editor, choose **Add action**, a Point or Contour layer, and **Fill** or **3D surface** (Contour only). Set the switch time and whether the property should be on after it. Double-click the track to add another switch. Switches take effect at their specified time, hold until the next switch, and never change the layer's saved style. Playback and export include at least one second after the last switch.
 
 ## Saved transitions
 
@@ -79,6 +83,7 @@ Store blocks in `layer.config.propertyTransitions` or `annotation.propertyTransi
 - Numeric values must be finite and within the property's declared range. Color values are RGB triples such as `[255, 128, 0]`, with finite channels from 0 to 255. Both endpoints and every block on a property must use the same value type. Easing supports `linear` and `easeInOut`.
 - Each property supports multiple blocks with unique IDs. Blocks on the same property cannot overlap; different properties can animate concurrently.
 - Playback holds the first start value before the first block, interpolates during a block, and holds its end value until the next block and after the final block. Equal start and end times create an instantaneous change.
+- A `type: 'toggle'` property uses the same instantaneous block format: start and end time must match, with 0 for Off and 1 for On. The first block's start value sets the state before the first switch. Switches on the same property must have different times.
 - Numeric properties use native `visConfig` units. Opacity uses a multiplier from 0 to 1, combined with configured opacity and fade-on-zoom.
 - Color channels interpolate independently in RGB using the selected easing. Alpha stays controlled by opacity. Existing data-field colors and GeoJSON feature colors retain precedence over fixed-color animation.
 

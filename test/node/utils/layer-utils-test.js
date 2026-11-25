@@ -526,12 +526,21 @@ test('layerUtils -> point and line frame properties leave saved settings and dec
   };
   for (const LayerClass of [PointLayer, LineLayer, PrivatePointLayer]) {
     const layer = new LayerClass({id: 'animated', dataId: 'survey'});
-    layer.updateLayerVisConfig({radius: 10, thickness: 2, outline: true, opacity: 0.8});
+    layer.updateLayerVisConfig({
+      radius: 10,
+      thickness: 2,
+      outline: true,
+      filled: true,
+      opacity: 0.8
+    });
     layer.updateLayerConfig({
       propertyTransitions: {
         radius: propertyTrack('grow', 5, 25),
         thickness: propertyTrack('stroke', 2, 8),
         opacity: propertyTrack('fade', 0, 1),
+        ...(layer.type === 'point'
+          ? {filled: [{...propertyTrack('fill-off', 1, 0)[0], startTimeMs: 4000, endTimeMs: 4000}]}
+          : {}),
         unsupported: propertyTrack('unknown', 100, 200)
       }
     });
@@ -568,6 +577,13 @@ test('layerUtils -> point and line frame properties leave saved settings and dec
       `${layer.type} combines saved opacity, property opacity and zoom once`
     );
     if (layer.type === 'point') {
+      if (LayerClass === PointLayer) {
+        t.equal(render(3999).props.filled, true, 'point fill stays on before the switch');
+        const switched = render(4000);
+        t.equal(switched.props.filled, false, 'point fill switches off at the exact time');
+        t.equal(switched.props.stroked, true, 'point outline remains on');
+        t.equal(original.props.filled, true, 'static rendering retains the authored fill');
+      }
       t.equal(animated.props.lineWidthScale, 5, 'point stroke interpolates');
       t.equal(
         animated.props.radiusScale,

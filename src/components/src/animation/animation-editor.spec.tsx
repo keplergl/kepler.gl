@@ -2045,3 +2045,43 @@ describe('camera timeline segments', () => {
     expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
   });
 });
+
+test('adds and edits an instantaneous Fill switch without changing the layer default', () => {
+  const fill: LayerAnimatableProp = {name: 'filled', label: 'Fill', type: 'toggle'};
+  const source = propertyLayer([fill]);
+  source.config.visConfig.filled = true;
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    source.config = {...source.config, ...config};
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Fill'}));
+  const original = {
+    id: 'filled-1',
+    startTimeMs: 5000,
+    endTimeMs: 5000,
+    startValue: 1,
+    endValue: 0,
+    easing: 'linear'
+  };
+  expect(source.config.propertyTransitions).toEqual({filled: [original]});
+  const time = screen.getByRole('spinbutton', {name: 'Switch time (seconds)'});
+  expect(time).toHaveValue(5);
+  expect(screen.queryByRole('spinbutton', {name: 'End time (seconds)'})).not.toBeInTheDocument();
+  const switchInput = screen.getByLabelText('On after switch');
+  expect(switchInput).not.toBeChecked();
+  fireEvent.click(switchInput);
+  fireEvent.change(time, {target: {value: '7.5'}});
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  const edited = {...original, startTimeMs: 7500, endTimeMs: 7500, endValue: 1};
+  expect(source.config.propertyTransitions).toEqual({filled: [edited]});
+  const marker = screen.getByRole('button', {name: 'Fill 1 · Points'});
+  expect(screen.queryByRole('slider', {name: 'Start time for Fill 1 · Points'})).toBeNull();
+  fireEvent.keyDown(marker, {key: 'ArrowRight'});
+  expect(source.config.propertyTransitions).toEqual({
+    filled: [{...edited, startTimeMs: 7600, endTimeMs: 7600}]
+  });
+  expect(source.config.visConfig.filled).toBe(true);
+});

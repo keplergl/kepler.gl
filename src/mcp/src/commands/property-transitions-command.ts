@@ -93,6 +93,7 @@ export function getPropertyTransitionsCommand(ctx: KeplerContext): RoomCommand {
       'Discover eligible layer, annotation and effect properties; get saved tracks; add, update or remove a block by stable ID. ' +
       'Times are nonnegative elapsed milliseconds, independent of dataset time. Easing is linear or easeInOut. ' +
       'Blocks on the same property cannot overlap; adjacent blocks and instantaneous cuts are allowed. ' +
+      'Toggle properties use 0 (Off) or 1 (On), with equal start and end times. ' +
       'Use discovered value types/ranges (effect values clamp to native bounds). Edits pause playback and preserve unrelated tracks and camera stops. ' +
       'These are native Animation editor tracks shared by preview, saved projects and video export.',
     metadata: {readOnly: false, riskLevel: 'low'},
