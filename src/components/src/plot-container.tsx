@@ -17,7 +17,7 @@ import MapContainerFactory from './map-container';
 import MapsLayoutFactory from './maps-layout';
 import {MapViewStateContextProvider} from './map-view-state-context';
 
-import {EMPTY_MAPBOX_STYLE, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
+import {EMPTY_MAPBOX_STYLE, EXPORT_IMG_RATIOS, GEOCODER_LAYER_ID} from '@kepler.gl/constants';
 import {Effect, SplitMap, ExportImage} from '@kepler.gl/types';
 import {
   ActionHandler,
@@ -45,6 +45,7 @@ const DOM_FILTER_FUNC = node => {
   return !CLASS_FILTER.some(cls => classes.includes(cls));
 };
 const OUT_OF_SCREEN_POSITION = -9999;
+const PNG_EXPORT_LIMIT_ERROR = 'These dimensions exceed your browser’s image export limits.';
 
 /**
  * Calculates legend zoom based on export height
@@ -168,6 +169,19 @@ export default function PlotContainerFactory(
     logoComponent
   }: PlotContainerProps) {
     const plottingAreaRef = useRef<HTMLDivElement>(null);
+    const maxDeckRenderEdge = useRef(Infinity);
+    const hostOnDeckInitialized: ((deck: unknown, device: unknown) => void) | undefined =
+      mapFields.onDeckInitialized;
+    const onDeckInitialized = useCallback(
+      (deck: unknown, device?: {limits?: {maxTextureDimension2D?: number}}) => {
+        const maxEdge = device?.limits?.maxTextureDimension2D;
+        if (maxEdge && maxEdge > 0) {
+          maxDeckRenderEdge.current = Math.min(maxDeckRenderEdge.current, maxEdge);
+        }
+        hostOnDeckInitialized?.(deck, device);
+      },
+      [hostOnDeckInitialized]
+    );
     const [plotEffects] = useState<Effect[]>(() =>
       mapFields.visState.effects.map(effect => effect.clone())
     );
@@ -245,15 +259,22 @@ export default function PlotContainerFactory(
 
       captureGenerationRef.current += 1;
       screenshotTakenRef.current = false;
-      deckLayersLoadingRef.current = true;
       if (mapStyleChanged) {
+        deckLayersLoadingRef.current = true;
         mapStyleLoadedRef.current = false;
       }
       renderedMapStylesRef.current = {
         bottomMapStyle: effectiveBottomMapStyle,
         topMapStyle: effectiveTopMapStyle
       };
-    }, [effectiveBottomMapStyle, effectiveTopMapStyle, transparentBackground]);
+    }, [
+      effectiveBottomMapStyle,
+      effectiveTopMapStyle,
+      transparentBackground,
+      imageSize.imageW,
+      imageSize.imageH,
+      scale
+    ]);
 
     // Memoize the retrieveNewScreenshot callback
     const debouncedScreenshot = useMemo(
@@ -263,15 +284,25 @@ export default function PlotContainerFactory(
             return;
           }
           if (plottingAreaRef.current) {
-            convertToPng(plottingAreaRef.current, {
-              filter: DOM_FILTER_FUNC,
-              width: imageSize.imageW,
-              height: imageSize.imageH,
-              escapeXhtmlForWebpack,
-              ...(transparentBackground ? {style: {backgroundColor: 'transparent'}} : {})
-            })
+            const drawWidth = imageSize.imageW / (splitMaps.length > 1 ? 2 : 1);
+            const exceedsDeckLimit =
+              ratio === EXPORT_IMG_RATIOS.CUSTOM &&
+              Math.max(drawWidth, imageSize.imageH) > maxDeckRenderEdge.current;
+            const capture = exceedsDeckLimit
+              ? Promise.reject(new Error(PNG_EXPORT_LIMIT_ERROR))
+              : convertToPng(plottingAreaRef.current, {
+                  filter: DOM_FILTER_FUNC,
+                  width: imageSize.imageW,
+                  height: imageSize.imageH,
+                  escapeXhtmlForWebpack,
+                  ...(transparentBackground ? {style: {backgroundColor: 'transparent'}} : {})
+                });
+            capture
               .then(dataUri => {
                 if (captureGeneration === captureGenerationRef.current) {
+                  if (dataUri === 'data:,') {
+                    throw new Error(PNG_EXPORT_LIMIT_ERROR);
+                  }
                   setExportImageDataUri(dataUri);
                 }
               })
@@ -288,6 +319,8 @@ export default function PlotContainerFactory(
       [
         imageSize.imageW,
         imageSize.imageH,
+        ratio,
+        splitMaps.length,
         escapeXhtmlForWebpack,
         transparentBackground,
         setExportImageDataUri,
@@ -383,6 +416,7 @@ export default function PlotContainerFactory(
       legend,
       charts,
       transparentBackground,
+      scale,
       setExportImageSetting,
       tryScreenshot
     ]);
@@ -453,6 +487,7 @@ export default function PlotContainerFactory(
           }
         },
         onMapRender,
+        onDeckInitialized,
         isExport: true,
         deckGlProps: {
           ...mapFields.deckGlProps,
@@ -480,6 +515,7 @@ export default function PlotContainerFactory(
         charts,
         transparentBackground,
         onMapRender,
+        onDeckInitialized,
         deckRenderCallbacks,
         plotEffects,
         logoComponent

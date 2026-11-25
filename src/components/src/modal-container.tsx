@@ -328,11 +328,9 @@ export default function ModalContainerFactory(
     };
 
     _onExportImage = () => {
-      if (!this.props.uiState.exportImage.processing) {
-        exportImage(
-          this.props.uiState.exportImage,
-          this.props.uiState.exportImage.fileName || `${this.props.appName}.png`
-        );
+      const {exportImage: image} = this.props.uiState;
+      if (!image.processing && image.imageDataUri) {
+        exportImage(image, image.fileName || `${this.props.appName}.png`);
         this.props.uiStateActions.cleanupExportImage();
         this._closeModal();
       }
@@ -574,7 +572,7 @@ export default function ModalContainerFactory(
               onConfirm: this._onExportImage,
               confirmButton: {
                 large: true,
-                disabled: uiState.exportImage.processing,
+                disabled: uiState.exportImage.processing || !uiState.exportImage.imageDataUri,
                 children: 'modal.button.download'
               }
             };

@@ -875,6 +875,11 @@ export default {
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
+      customWidth: 'Width (px)',
+      customHeight: 'Height (px)',
+      applyDimensions: 'Update preview',
+      customResolutionLimits:
+        'Enter whole pixels, up to {edge, number} per side and {pixels, number} total.',
       optionsTitle: 'Options',
       transparentBackground: 'Transparent background',
       transparentBackgroundHelp: 'Hide basemap',

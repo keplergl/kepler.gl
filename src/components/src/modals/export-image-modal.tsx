@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useMemo} from 'react';
+import React, {useEffect, useId, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
@@ -22,12 +22,23 @@ import {
 } from '@kepler.gl/constants';
 import type {ExportResolutionOption} from '@kepler.gl/constants';
 import type {ExportImage} from '@kepler.gl/types';
-import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
+import {
+  StyledModalContent,
+  SelectionButton,
+  CheckMark,
+  InputLight,
+  Button
+} from '../common/styled-components';
 import Switch from '../common/switch';
 import TippyTooltip from '../common/tippy-tooltip';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {getApplicationConfig} from '@kepler.gl/utils';
+import {
+  getApplicationConfig,
+  isValidCustomPngSize,
+  MAX_CUSTOM_PNG_EDGE,
+  MAX_CUSTOM_PNG_PIXELS
+} from '@kepler.gl/utils';
 
 const ImageOptionList = styled.div`
   display: flex;
@@ -101,6 +112,23 @@ const ImageOptionList = styled.div`
     }
   }
 
+  .custom-dimensions {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+
+    label {
+      min-width: 0;
+      flex: 1;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+    }
+  }
+
   .resolution-dropdown {
     padding: 0px;
     margin-top: 8px;
@@ -159,6 +187,75 @@ const SIXTEEN_BY_NINE_RESOLUTION_OPTIONS = [
   Resolution2560x1440Option
 ];
 
+function CustomDimensions({
+  initialWidth,
+  initialHeight,
+  onApply
+}: {
+  initialWidth: number;
+  initialHeight: number;
+  onApply: (width: number, height: number) => void;
+}) {
+  const helpId = useId();
+  const [width, setWidth] = useState(String(initialWidth));
+  const [height, setHeight] = useState(String(initialHeight));
+  const valid = isValidCustomPngSize(Number(width), Number(height));
+  return (
+    <div className="image-option-section">
+      <div className="image-option-section-title">
+        <FormattedMessage id="modal.exportImage.resolutionTitle" />
+      </div>
+      <div className="custom-dimensions">
+        <label>
+          <FormattedMessage id="modal.exportImage.customWidth" />
+          <InputLight
+            type="number"
+            min={1}
+            max={MAX_CUSTOM_PNG_EDGE}
+            step={1}
+            value={width}
+            aria-describedby={helpId}
+            aria-invalid={!valid}
+            onChange={event => setWidth(event.target.value)}
+          />
+        </label>
+        <label>
+          <FormattedMessage id="modal.exportImage.customHeight" />
+          <InputLight
+            type="number"
+            min={1}
+            max={MAX_CUSTOM_PNG_EDGE}
+            step={1}
+            value={height}
+            aria-describedby={helpId}
+            aria-invalid={!valid}
+            onChange={event => setHeight(event.target.value)}
+          />
+        </label>
+      </div>
+      <div id={helpId}>
+        <FormattedMessage
+          id="modal.exportImage.customResolutionLimits"
+          values={{edge: MAX_CUSTOM_PNG_EDGE, pixels: MAX_CUSTOM_PNG_PIXELS}}
+        />
+      </div>
+      <div className="button-list">
+        <Button
+          type="button"
+          secondary
+          small
+          disabled={!valid}
+          onClick={() => {
+            if (valid) onApply(Number(width), Number(height));
+          }}
+        >
+          <FormattedMessage id="modal.exportImage.applyDimensions" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export interface ExportImageModalProps {
   exportImage: ExportImage;
   mapW: number;
@@ -178,6 +275,10 @@ const ExportImageModalFactory = () => {
     intl
   }) => {
     const {legend, charts, transparentBackground, ratio, resolution, fileName} = exportImage;
+    const {imageW, imageH} = exportImage.imageSize;
+    const initialDimensions = isValidCustomPngSize(imageW, imageH)
+      ? {width: imageW, height: imageH}
+      : {width: 1920, height: 1080};
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
     const transparentBackgroundHelp = intl.formatMessage({
       id: 'modal.exportImage.transparentBackgroundHelp'
@@ -256,8 +357,19 @@ const ExportImageModalFactory = () => {
               {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
                 <SelectionButton
                   key={op.id}
+                  as="button"
+                  type="button"
+                  aria-pressed={ratio === op.id}
                   selected={ratio === op.id}
-                  onClick={() => onUpdateImageSetting({ratio: op.id})}
+                  onClick={() => {
+                    if (op.id !== ratio) {
+                      const customDimensions =
+                        op.id === EXPORT_IMG_RATIOS.CUSTOM
+                          ? exportImage.customDimensions ?? initialDimensions
+                          : exportImage.customDimensions;
+                      onUpdateImageSetting({ratio: op.id, customDimensions});
+                    }
+                  }}
                 >
                   <FormattedMessage id={op.label} />
                   {ratio === op.id && <CheckMark />}
@@ -265,7 +377,13 @@ const ExportImageModalFactory = () => {
               ))}
             </div>
           </div>
-          {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
+          {ratio === EXPORT_IMG_RATIOS.CUSTOM ? (
+            <CustomDimensions
+              initialWidth={exportImage.customDimensions?.width ?? initialDimensions.width}
+              initialHeight={exportImage.customDimensions?.height ?? initialDimensions.height}
+              onApply={(width, height) => onUpdateImageSetting({customDimensions: {width, height}})}
+            />
+          ) : (
             <div className="image-option-section">
               <div className="image-option-section-title" id="export-image-modal__resolution-title">
                 <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
@@ -363,7 +481,10 @@ const ExportImageModalFactory = () => {
             </div>
           </div>
         </ImageOptionList>
-        <ImagePreview exportImage={exportImage} />
+        <ImagePreview
+          exportImage={exportImage}
+          showDimension={ratio === EXPORT_IMG_RATIOS.CUSTOM}
+        />
       </StyledModalContent>
     );
   };

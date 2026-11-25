@@ -36,19 +36,47 @@ export function getScaleFromImageSize(imageW = 0, imageH = 0, mapW = 0, mapH = 0
   return base / mapBase;
 }
 
+// Bound the allocations for the export canvas, WebGL drawing buffers and PNG encoding.
+export const MAX_CUSTOM_PNG_EDGE = 8192;
+export const MAX_CUSTOM_PNG_PIXELS = 25_000_000;
+
+export function isValidCustomPngSize(width: number, height: number) {
+  return (
+    Number.isInteger(width) &&
+    Number.isInteger(height) &&
+    width > 0 &&
+    height > 0 &&
+    width <= MAX_CUSTOM_PNG_EDGE &&
+    height <= MAX_CUSTOM_PNG_EDGE &&
+    width * height <= MAX_CUSTOM_PNG_PIXELS
+  );
+}
+
 export function calculateExportImageSize({
   mapW,
   mapH,
   ratio,
-  resolution
+  resolution,
+  customDimensions
 }: {
   mapW: number;
   mapH: number;
   ratio: keyof typeof EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
+  customDimensions?: ExportImage['customDimensions'];
 }) {
   if (mapW <= 0 || mapH <= 0) {
     return null;
+  }
+
+  if (ratio === EXPORT_IMG_RATIOS.CUSTOM && customDimensions) {
+    const {width, height} = customDimensions;
+    if (!isValidCustomPngSize(width, height)) {
+      return null;
+    }
+    // Match the original map framing along the tighter dimension.
+    const scale = Math.min(width / mapW, height / mapH);
+    return {imageW: width, imageH: height, scale, zoomOffset: Math.log2(scale)};
   }
 
   const ratioItem = EXPORT_IMG_RATIO_OPTIONS.find(op => op.id === ratio) || defaultRatio;
