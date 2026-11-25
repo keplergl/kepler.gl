@@ -1912,8 +1912,8 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {
         name: 'pattern',
         type: 'checkbox',
-        label: 'Pattern',
-        tooltip: 'Adds a noise pattern to the fog for a more natural, volumetric look.',
+        label: 'Water',
+        tooltip: 'Renders a reflective water surface instead of fog.',
         defaultValue: false,
         min: 0,
         max: 1
