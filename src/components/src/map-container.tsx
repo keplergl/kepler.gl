@@ -926,7 +926,8 @@ export default function MapContainerFactory(
         return this._annotationViewportCache.viewport;
       }
 
-      const mergedState = {...mapState, ...internalViewState, width, height};
+      // The live view owns the camera, but it can still carry the old map mode.
+      const mergedState = {...mapState, ...internalViewState, globe: mapState.globe, width, height};
       const vp = getViewportFromMapState(mergedState) as any;
       const viewport = {
         project: (lngLat: ReadonlyArray<number>) => vp.project(lngLat),

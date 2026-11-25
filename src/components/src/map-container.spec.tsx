@@ -1182,7 +1182,7 @@ function setup(strictMode = false) {
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
 
-test('uses the globe camera for elevated annotations after switching projections', () => {
+test('uses the selected annotation projection before the internal view state catches up', () => {
   const {ref} = setup();
   const mapState = {
     ...INITIAL_MAP_STATE,
@@ -1193,13 +1193,24 @@ test('uses the globe camera for elevated annotations after switching projections
     height: 600,
     globe: {...INITIAL_MAP_STATE.globe!, enabled: false}
   };
-  ref.current._getAnnotationViewport(mapState, null);
-  const globe = ref.current._getAnnotationViewport(
-    {...mapState, globe: {...mapState.globe, enabled: true}},
-    null
-  );
-  expect(isPointVisibleOnGlobe([84.2, 0, 1000], globe)).toBe(true);
+  const point = [84.2, 0, 1000];
+  const globeMapState = {...mapState, globe: {...mapState.globe, enabled: true}};
+  const flatProjection = ref.current._getAnnotationViewport(mapState, mapState).project(point);
+
+  // The context starts with full map state and can still carry the previous
+  // globe setting when the map first renders after a projection switch.
+  const globe = ref.current._getAnnotationViewport(globeMapState, mapState);
+  expect(isPointVisibleOnGlobe(point, globe)).toBe(true);
   expect(isPointVisibleOnGlobe([91.2, 0, 1000], globe)).toBe(false);
+  expect(ref.current._getAnnotationViewport(globeMapState, globeMapState).project(point)).toEqual(
+    globe.project(point)
+  );
+
+  const flat = ref.current._getAnnotationViewport(mapState, globeMapState);
+  expect(flat.project(point)).toEqual(flatProjection);
+  expect(ref.current._getAnnotationViewport(mapState, mapState).project(point)).toEqual(
+    flatProjection
+  );
 });
 
 test('applies async layer defaults to their originating layer after reordering', () => {
