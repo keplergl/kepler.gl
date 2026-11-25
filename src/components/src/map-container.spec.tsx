@@ -269,6 +269,68 @@ describe('double-click zoom', () => {
   });
 });
 
+describe('embedding app clicks', () => {
+  function setupClick(isDrawing = false, hostOnClick = jest.fn(), isInteractive = true) {
+    const onLayerClick = jest.fn();
+    const map = new MapContainer({
+      index: 0,
+      mapState: {...INITIAL_MAP_STATE, width: 400, height: 300},
+      mapStyle: INITIAL_MAP_STYLE,
+      visState: {
+        ...INITIAL_VIS_STATE,
+        editor: {...INITIAL_VIS_STATE.editor, mode: EDITOR_MODES.DRAW_POLYGON}
+      },
+      mapControls: {...INITIAL_UI_STATE.mapControls, mapDraw: {active: isDrawing}},
+      visStateActions: {onLayerClick},
+      generateDeckGLLayers: () => [],
+      deckGlProps: {onClick: hostOnClick}
+    });
+    const overlay = map._renderDeckOverlay([], {primaryMap: true, isInteractive});
+    const deck = React.Children.toArray(overlay.props.children)[0] as React.ReactElement<any>;
+    return {click: deck.props.onClick, onLayerClick, hostOnClick};
+  }
+
+  const feature = {
+    picked: true,
+    object: {type: 'Feature', geometry: {type: 'Point', coordinates: [10, 20]}}
+  };
+
+  test('forwards repeated feature clicks after Kepler handles selection', () => {
+    const calls: string[] = [];
+    const {click, hostOnClick, onLayerClick} = setupClick(
+      false,
+      jest.fn(() => calls.push('host'))
+    );
+    onLayerClick.mockImplementation(() => calls.push('selection'));
+    const firstEvent = {srcEvent: {}};
+    const repeatEvent = {srcEvent: {}};
+    click(feature, firstEvent);
+    click(feature, repeatEvent);
+
+    expect(calls).toEqual(['selection', 'host', 'selection', 'host']);
+    expect(onLayerClick.mock.calls).toEqual([[feature], [feature]]);
+    expect(hostOnClick.mock.calls).toEqual([
+      [feature, firstEvent],
+      [feature, repeatEvent]
+    ]);
+  });
+
+  test('keeps feature clicks consumed by drawing out of the embedder callback', () => {
+    const {click, hostOnClick, onLayerClick} = setupClick(true);
+    const event = {srcEvent: {}};
+    click(feature, event);
+
+    expect(onLayerClick).toHaveBeenCalledWith(null, event);
+    expect(hostOnClick).not.toHaveBeenCalled();
+  });
+
+  test('does not forward clicks from a non-interactive overlay', () => {
+    const {click, hostOnClick} = setupClick(false, jest.fn(), false);
+    click(feature, {srcEvent: {}});
+    expect(hostOnClick).not.toHaveBeenCalled();
+  });
+});
+
 describe('Draw on Map click timing', () => {
   const A = [1, 1];
   const B = [9, 1];
