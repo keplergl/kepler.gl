@@ -77,7 +77,7 @@ test('can change the data source without expanding the column settings', async (
   expect(updateLayerConfig).toHaveBeenCalledWith({dataId: alternative.id});
 });
 
-test('edits Arc endpoint opacity independently and preserves it in saved maps', async () => {
+test('expands Arc endpoint opacity controls, edits them independently and preserves saved values', async () => {
   const fields = ['lat0', 'lng0', 'lat1', 'lng1'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -119,6 +119,18 @@ test('edits Arc endpoint opacity independently and preserves it in saved maps', 
     );
   const source = inputFor('Source Opacity');
   const target = inputFor('Target Opacity');
+  const colorLabel = screen.getByText('Color');
+  const colorGroup = colorLabel.closest('.layer-config-group');
+  const collapsibleContent = source.closest('.layer-config-group__content__collapsible');
+  expect(colorGroup).toHaveClass('collapsed');
+  // jsdom does not apply the styled collapse animation; verify the controls are inside it.
+  expect(collapsibleContent).not.toBeNull();
+  expect(collapsibleContent?.closest('.layer-config-group')).toBe(colorGroup);
+  expect(target.closest('.layer-config-group__content__collapsible')).toBe(collapsibleContent);
+  expect(inputFor('Opacity').closest('.layer-config-group__content__collapsible')).toBeNull();
+
+  fireEvent.click(colorLabel);
+  expect(colorGroup).not.toHaveClass('collapsed');
   expect(source).toHaveValue(1);
   expect(target).toHaveValue(1);
   fireEvent.change(source, {target: {value: '0.2'}});
@@ -126,6 +138,13 @@ test('edits Arc endpoint opacity independently and preserves it in saved maps', 
   fireEvent.change(target, {target: {value: '0'}});
   fireEvent.blur(target);
   expect(updateLayerVisConfig.mock.calls).toEqual([[{sourceOpacity: 0.2}], [{targetOpacity: 0}]]);
+
+  fireEvent.click(colorLabel);
+  expect(colorGroup).toHaveClass('collapsed');
+  fireEvent.click(colorLabel);
+  expect(colorGroup).not.toHaveClass('collapsed');
+  expect(source).toHaveValue(0.2);
+  expect(target).toHaveValue(0);
 
   const savedConfig = SchemaManager.getConfigToSave({
     visState: {layers: [layer], layerOrder: [layer.id]}
