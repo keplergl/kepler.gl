@@ -19,6 +19,14 @@ import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {messages} from '@kepler.gl/localization';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
+// The real demo factory wires these unrelated actions for other tabs. Their file
+// loaders aren't needed to exercise tab wiring or the Paste import pipeline.
+jest.mock('../../../../examples/demo-app/src/actions', () => ({
+  loadRemoteMap: jest.fn(),
+  loadSample: jest.fn(),
+  loadSampleConfigurations: jest.fn()
+}));
+
 const LoadDataModal = appInjector.get(LoadDataModalFactory);
 const first = '8928308280fffff';
 const second = '8928308280bffff';
