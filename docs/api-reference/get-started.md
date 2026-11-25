@@ -151,6 +151,8 @@ const Map = props => (
 );
 ```
 
+To supply your own deck.gl layers, see [Add a custom deck.gl layer](./components/README.md#add-a-custom-deckgl-layer).
+
 #### 3. Add data to map
 
 In order to interact with a kepler.gl instance and add new data to it, you can dispatch the __`addDataToMap`__ action from anywhere inside your app. It adds dataset(s) to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
