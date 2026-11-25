@@ -6,7 +6,9 @@ import {useIntl} from 'react-intl';
 import styled from 'styled-components';
 
 import {h3IsValid} from '@kepler.gl/common-utils';
-import {ALL_FIELD_TYPES, DATASET_FORMATS} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DATASET_FORMATS, LAYER_TYPES} from '@kepler.gl/constants';
+import {LayerClasses} from '@kepler.gl/layers';
+import type {LayerClassesType} from '@kepler.gl/layers';
 import {processCsvData, processGeojson} from '@kepler.gl/processors';
 import type {FileLoading, ProtoDataset} from '@kepler.gl/types';
 
@@ -78,10 +80,15 @@ function parseH3Cells(input: string) {
 type PasteDataProps = {
   onAddPastedData: (dataset: ProtoDataset) => void;
   fileLoading: FileLoading | false;
-  supportsH3: boolean;
+  layerClasses?: Partial<LayerClassesType>;
 };
 
-export default function PasteData({onAddPastedData, fileLoading, supportsH3}: PasteDataProps) {
+export default function PasteData({
+  onAddPastedData,
+  fileLoading,
+  layerClasses = LayerClasses
+}: PasteDataProps) {
+  const h3LayerAvailable = Boolean(layerClasses[LAYER_TYPES.hexagonId]);
   const intl = useIntl();
   const id = useId();
   const [input, setInput] = useState('');
@@ -91,7 +98,7 @@ export default function PasteData({onAddPastedData, fileLoading, supportsH3}: Pa
   const format = useMemo(() => detectFormat(text), [text]);
   const h3 = useMemo(() => (text && format === 'h3' ? parseH3Cells(text) : null), [format, text]);
   const invalidH3 = Boolean(h3 && h3.invalidCount);
-  const unsupportedH3 = Boolean(h3?.ids.size && !supportsH3);
+  const unsupportedH3 = Boolean(h3?.ids.size && !h3LayerAvailable);
   const canAdd =
     Boolean(text && (format !== 'h3' || (h3?.ids.size && !invalidH3))) &&
     !unsupportedH3 &&
@@ -171,7 +178,7 @@ export default function PasteData({onAddPastedData, fileLoading, supportsH3}: Pa
       </StyledActionLine>
       <StyledUploadMessage id={helpId}>
         {intl.formatMessage(
-          {id: supportsH3 ? 'modal.loadData.pasteHelp' : 'modal.loadData.pasteHelpWithoutH3'},
+          {id: h3LayerAvailable ? 'modal.loadData.pasteHelp' : 'modal.loadData.pasteHelpWithoutH3'},
           {strong: chunks => <strong>{chunks}</strong>}
         )}
       </StyledUploadMessage>

@@ -22,7 +22,7 @@ The **Paste** tab is available by default. Embedding apps can hide it before mou
 ```ts
 import {initApplicationConfig} from '@kepler.gl/utils';
 
-initApplicationConfig({enablePasteData: false});
+initApplicationConfig({supportPaste: false});
 ```
 
 ## Supported Projection Coordinate System

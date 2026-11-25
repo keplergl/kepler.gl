@@ -22,6 +22,7 @@ import PasteData from './paste-data';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
+import type {LayerClassesType} from '@kepler.gl/layers';
 import {getApplicationConfig} from '@kepler.gl/utils';
 import {FileLoading, FileLoadingProgress, LoadFiles, ProtoDataset} from '@kepler.gl/types';
 
@@ -287,7 +288,7 @@ type LoadDataModalProps = {
   // call backs
   onFileUpload: (files: File[]) => void;
   onAddPastedData?: (dataset: ProtoDataset) => void;
-  supportsH3?: boolean;
+  layerClasses?: Partial<LayerClassesType>;
   onAddRemoteDataset?: (remote: {url: string; format?: string}) => void;
   onConfirmAddData?: (options: LoadDataOptions) => void;
   stagedToAdd?: Array<{
@@ -362,7 +363,7 @@ export function LoadDataModalFactory(
   } = ({
     onFileUpload = noop,
     onAddPastedData,
-    supportsH3 = true,
+    layerClasses,
     onAddRemoteDataset = noop,
     onTilesetAdded = noop,
     onConfirmAddData = noop,
@@ -379,7 +380,7 @@ export function LoadDataModalFactory(
     const intl = useIntl();
     const isReplace = Boolean(replaceDatasetId);
     const canPasteData =
-      !isReplace && Boolean(onAddPastedData && getApplicationConfig().enablePasteData);
+      !isReplace && Boolean(onAddPastedData && getApplicationConfig().supportPaste);
     const availableMethods = isReplace
       ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
       : loadingMethods.filter(method => method.id !== PASTE_DATA_METHOD || canPasteData);
@@ -498,7 +499,7 @@ export function LoadDataModalFactory(
           }
         : {}),
       ...(isTileset ? {confirmInParent: true, onTilesetDraftChange} : {}),
-      ...(currentMethod?.id === PASTE_DATA_METHOD ? {onAddPastedData, supportsH3} : {})
+      ...(currentMethod?.id === PASTE_DATA_METHOD ? {onAddPastedData, layerClasses} : {})
     };
     const ElementType = currentMethod?.elementType;
 

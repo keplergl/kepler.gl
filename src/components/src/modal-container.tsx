@@ -6,7 +6,7 @@ import {css} from 'styled-components';
 import get from 'es-toolkit/compat/get';
 import document from 'global/document';
 
-import {ALL_FIELD_TYPES, DatasetType, LAYER_TYPES} from '@kepler.gl/constants';
+import {ALL_FIELD_TYPES, DatasetType} from '@kepler.gl/constants';
 import {
   exportData,
   getFileFormatNames,
@@ -546,7 +546,7 @@ export default function ModalContainerFactory(
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
                 onAddPastedData={this._onAddPastedData}
-                supportsH3={Boolean(visState.layerClasses[LAYER_TYPES.hexagonId])}
+                layerClasses={visState.layerClasses}
                 onAddRemoteDataset={this._onAddRemoteDataset}
                 onConfirmAddData={this._onConfirmAddData}
                 stagedToAdd={visState.stagedToAdd}

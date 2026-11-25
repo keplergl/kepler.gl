@@ -61,7 +61,7 @@ const modalVariants = [
   ['demo', DemoLoadDataModal]
 ] as const;
 
-function renderAddDataDialog(LoadData: typeof LoadDataModal) {
+function renderAddDataDialog(LoadData: typeof LoadDataModal, withH3 = true) {
   const store = createStore(keplerGlReducerCore, applyMiddleware(taskMiddleware));
   store.dispatch(toggleModal(ADD_DATA_ID));
   const addData = jest.fn((...args: Parameters<typeof updateVisData>) =>
@@ -81,6 +81,12 @@ function renderAddDataDialog(LoadData: typeof LoadDataModal) {
       <Provider store={demoStore}>
         {React.createElement(ModalContainer, {
           ...state,
+          visState: withH3
+            ? state.visState
+            : {
+                ...state.visState,
+                layerClasses: {...state.visState.layerClasses, hexagonId: undefined}
+              },
           rootNode: document.body,
           visStateActions: {
             updateVisData: addData,
@@ -208,9 +214,9 @@ test.each(modalVariants)(
 test.each(modalVariants)(
   '%s Add Data can explicitly hide or enable Paste without affecting file imports',
   (_, LoadData) => {
-    const {enablePasteData} = getApplicationConfig();
+    const {supportPaste} = getApplicationConfig();
     try {
-      initApplicationConfig({enablePasteData: false});
+      initApplicationConfig({supportPaste: false});
       const disabled = renderAddDataDialog(LoadData);
       expect(disabled.queryByText('Paste')).not.toBeInTheDocument();
       expect(disabled.queryByRole('textbox', {name: 'Paste data'})).not.toBeInTheDocument();
@@ -219,15 +225,31 @@ test.each(modalVariants)(
       expect(disabled.addData).not.toHaveBeenCalled();
       disabled.unmount();
 
-      initApplicationConfig({enablePasteData: true});
+      initApplicationConfig({supportPaste: true});
       const enabled = renderAddDataDialog(LoadData);
       fireEvent.click(enabled.getByText('Paste'));
       expect(enabled.getByRole('textbox', {name: 'Paste data'})).toBeInTheDocument();
     } finally {
-      initApplicationConfig({enablePasteData});
+      initApplicationConfig({supportPaste});
     }
   }
 );
+
+test.each(modalVariants)('%s Paste still imports CSV when H3 is not registered', (_, LoadData) => {
+  const modal = renderAddDataDialog(LoadData, false);
+  fireEvent.click(modal.getByText('Paste'));
+  expect(modal.getByText(/Supported formats:/)).not.toHaveTextContent('H3 cell IDs');
+  const input = modal.getByRole('textbox', {name: 'Paste data'});
+  const add = modal.getByRole('button', {name: 'Add Data'});
+  fireEvent.change(input, {target: {value: first}});
+  expect(add).toBeDisabled();
+  expect(modal.getByRole('status')).toHaveTextContent('H3 cell ID lists are not enabled');
+  expect(modal.addData).not.toHaveBeenCalled();
+
+  fireEvent.change(input, {target: {value: 'longitude,latitude\n-122.42,37.77'}});
+  fireEvent.click(add);
+  expect(modal.addData).toHaveBeenCalledTimes(1);
+});
 
 test('Paste is not offered when replacing another dataset or when no paste handler is provided', () => {
   const replacement = renderModal({replaceDatasetId: 'existing', onAddPastedData: jest.fn()});

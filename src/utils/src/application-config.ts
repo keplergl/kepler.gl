@@ -125,7 +125,7 @@ export type KeplerApplicationConfig = {
    */
   enableCustomExportBranding?: boolean;
   /** Show the Paste tab for text data in Add Data. Enabled by default. */
-  enablePasteData?: boolean;
+  supportPaste?: boolean;
   baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
@@ -452,7 +452,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
     hasData: true
   },
   enableCustomExportBranding: true,
-  enablePasteData: true,
+  supportPaste: true,
 
   baseMapLibraryConfig: {
     maplibre: {
