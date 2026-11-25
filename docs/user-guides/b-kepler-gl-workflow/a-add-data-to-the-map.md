@@ -7,14 +7,23 @@
 
 **kepler.gl is a pure client side app. Data lives only in your machine/browser.  No information or maps is sent back up to our server.**
 
-- Choose one of three ways to add data to your map
+- Choose how to add data to your map
 
 |   |   |
 |---|---|
 | **Local files**  | <span style="font-weight:normal">Upload CSV, GeoJSON, GeoJSONL, KML, GPX, TCX, Shapefile, Excel, FlatGeobuf, Arrow, or Parquet files, or a zip of those files. Files are parsed in your browser, so available memory limits how large a file you can load. For data that does not fit in memory, use a tileset instead.<span>  |
+| **Paste** | Paste CSV text with a header row, GeoJSON, or a list of H3 cell IDs separated by commas or whitespace. Kepler.gl detects the format and reports invalid inputs before importing. |
 | **From URL**  | Directly load data or map json by pasting a remote URL. Supported extensions include `csv`, `geojson`, `json`, `geojsonl`, `kml`, `gpx`, `tcx`, `shp`, `xlsx`, `fgb`, `arrow`, and `parquet`. Make sure the url contains the file extension. CORS policy must be defined on your custom url domain. |
 | **Sample data**  | Load one of kepler.gl’s sample datasets. The sample map data and config are directly loaded from  [kepler.gl-data github][kepler.gl-data-github] repo  |
 
+
+The **Paste** tab is available by default. Embedding apps can hide it before mounting Kepler.gl without disabling file imports:
+
+```ts
+import {initApplicationConfig} from '@kepler.gl/utils';
+
+initApplicationConfig({enablePasteData: false});
+```
 
 ## Supported Projection Coordinate System
 kepler.gl only supports **[Web Mercator](https://en.wikipedia.org/wiki/Web_Mercator_projection) EPSG:3857 -- WGS84**.

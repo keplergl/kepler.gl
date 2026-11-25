@@ -300,7 +300,7 @@ export default function ModalContainerFactory(
       });
     };
 
-    _onAddH3 = (dataset: ProtoDataset) => {
+    _onAddPastedData = (dataset: ProtoDataset) => {
       this.props.visStateActions.updateVisData(dataset, {
         autoCreateLayers: true,
         centerMap: true
@@ -545,7 +545,8 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
-                onAddH3={visState.layerClasses[LAYER_TYPES.hexagonId] ? this._onAddH3 : undefined}
+                onAddPastedData={this._onAddPastedData}
+                supportsH3={Boolean(visState.layerClasses[LAYER_TYPES.hexagonId])}
                 onAddRemoteDataset={this._onAddRemoteDataset}
                 onConfirmAddData={this._onConfirmAddData}
                 stagedToAdd={visState.stagedToAdd}

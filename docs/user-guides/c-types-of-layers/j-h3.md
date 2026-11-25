@@ -10,15 +10,7 @@ To use H3 layer, you need a `hex_id` or `hexagon_id` in your dataset, which can 
 
 Select **Add Data → Paste** to import H3 cell IDs without creating a file. Separate IDs with commas, spaces, or new lines. Kepler.gl reports invalid IDs before importing and creates an H3 layer from the valid list.
 
-The tab is enabled by default. Embedding apps can hide it before mounting Kepler.gl:
-
-```ts
-import {initApplicationConfig} from '@kepler.gl/utils';
-
-initApplicationConfig({enablePasteH3: false});
-```
-
-This only hides the paste tab. H3 layers and file imports remain available.
+The tab also accepts CSV and GeoJSON. See [Add Data to the Map](../b-kepler-gl-workflow/a-add-data-to-the-map.md) for how to hide the tab in an embedding app.
 
 ### Naming Convention
 kepler.gl __auto generates__ H3 layer from column: `hex_id`, `hexagon_id`

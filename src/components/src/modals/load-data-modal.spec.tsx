@@ -14,6 +14,7 @@ import {clearStagedLoadedFiles, toggleModal, updateVisData} from '@kepler.gl/act
 import {ADD_DATA_ID} from '@kepler.gl/constants';
 import {keplerGlReducerCore} from '@kepler.gl/reducers';
 import {taskMiddleware} from '@kepler.gl/tasks';
+import type {Datasets} from '@kepler.gl/table';
 import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {messages} from '@kepler.gl/localization';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
@@ -89,7 +90,7 @@ test.each(modalVariants)('%s Add Data validates the default Paste tab', async (_
   const {store, addData, getByRole, getByText, queryByRole} = renderAddDataDialog(LoadData);
   fireEvent.click(getByText('Paste'));
 
-  const input = getByRole('textbox', {name: 'H3 cell IDs'});
+  const input = getByRole('textbox', {name: 'Paste data'});
   const add = getByRole('button', {name: 'Add Data'});
   expect(add).toBeDisabled();
 
@@ -127,31 +128,94 @@ test.each(modalVariants)('%s Add Data validates the default Paste tab', async (_
 });
 
 test.each(modalVariants)(
+  '%s Add Data imports CSV and GeoJSON using their existing processors',
+  async (_, LoadData) => {
+    const cases = [
+      {
+        input: 'longitude,latitude,name\n-122.42,37.77,"A, B"\n',
+        rejected: 'longitude,,name\n-122.42,37.77,x',
+        error: 'Enter CSV with column headers',
+        label: 'Pasted CSV',
+        layer: 'point',
+        field: 'name',
+        value: 'A, B'
+      },
+      {
+        input: JSON.stringify({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {type: 'Point', coordinates: [-122.42, 37.77]},
+              properties: {name: 'Test place'}
+            }
+          ]
+        }),
+        rejected: '{"type":"FeatureCollection","features":[]}',
+        error: 'Enter valid GeoJSON',
+        label: 'Pasted GeoJSON',
+        layer: 'geojson',
+        field: 'name',
+        value: 'Test place'
+      }
+    ];
+    for (const item of cases) {
+      const result = renderAddDataDialog(LoadData);
+      fireEvent.click(result.getByText('Paste'));
+      expect(
+        result.getByText(/Supported formats: GeoJSON, CSV with headers, and H3/)
+      ).toBeInTheDocument();
+      const input = result.getByRole('textbox', {name: 'Paste data'});
+      const add = result.getByRole('button', {name: 'Add Data'});
+      fireEvent.change(input, {target: {value: item.rejected}});
+      fireEvent.click(add);
+      expect(result.getByRole('status')).toHaveTextContent(item.error);
+      expect(result.addData).not.toHaveBeenCalled();
+      fireEvent.change(input, {target: {value: item.input}});
+      fireEvent.click(add);
+      await waitFor(() => {
+        const state = result.store.getState();
+        const [dataset] = Object.values(state.visState.datasets as Datasets);
+        expect(dataset.label).toBe(item.label);
+        expect(
+          dataset.dataContainer.valueAt(
+            0,
+            dataset.fields.findIndex(field => field.name === item.field)
+          )
+        ).toBe(item.value);
+        expect(state.visState.layers.some(layer => layer.type === item.layer)).toBe(true);
+      });
+      result.unmount();
+    }
+  }
+);
+
+test.each(modalVariants)(
   '%s Add Data can explicitly hide or enable Paste without affecting file imports',
   (_, LoadData) => {
-    const {enablePasteH3} = getApplicationConfig();
+    const {enablePasteData} = getApplicationConfig();
     try {
-      initApplicationConfig({enablePasteH3: false});
+      initApplicationConfig({enablePasteData: false});
       const disabled = renderAddDataDialog(LoadData);
       expect(disabled.queryByText('Paste')).not.toBeInTheDocument();
-      expect(disabled.queryByRole('textbox', {name: 'H3 cell IDs'})).not.toBeInTheDocument();
+      expect(disabled.queryByRole('textbox', {name: 'Paste data'})).not.toBeInTheDocument();
       expect(disabled.getByText('Load Files')).toBeInTheDocument();
       expect(disabled.container.querySelector('.file-uploader')).toBeInTheDocument();
       expect(disabled.addData).not.toHaveBeenCalled();
       disabled.unmount();
 
-      initApplicationConfig({enablePasteH3: true});
+      initApplicationConfig({enablePasteData: true});
       const enabled = renderAddDataDialog(LoadData);
       fireEvent.click(enabled.getByText('Paste'));
-      expect(enabled.getByRole('textbox', {name: 'H3 cell IDs'})).toBeInTheDocument();
+      expect(enabled.getByRole('textbox', {name: 'Paste data'})).toBeInTheDocument();
     } finally {
-      initApplicationConfig({enablePasteH3});
+      initApplicationConfig({enablePasteData});
     }
   }
 );
 
-test('Paste H3 is not offered when replacing another dataset or when the H3 layer is unavailable', () => {
-  const replacement = renderModal({replaceDatasetId: 'existing', onAddH3: jest.fn()});
+test('Paste is not offered when replacing another dataset or when no paste handler is provided', () => {
+  const replacement = renderModal({replaceDatasetId: 'existing', onAddPastedData: jest.fn()});
   expect(replacement.queryByText('Paste')).not.toBeInTheDocument();
   replacement.unmount();
 
