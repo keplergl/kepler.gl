@@ -88,6 +88,9 @@ function renderAddDataDialog(LoadData: typeof LoadDataModal) {
 
 test.each(modalVariants)('%s Add Data validates the default Paste tab', async (_, LoadData) => {
   const {store, addData, getByRole, getByText, queryByRole} = renderAddDataDialog(LoadData);
+  const tilesetTab = getByText('Tileset').closest('.load-data-modal__tab__item');
+  const pasteTab = getByText('Paste').closest('.load-data-modal__tab__item');
+  expect(tilesetTab?.nextElementSibling).toBe(pasteTab);
   fireEvent.click(getByText('Paste'));
 
   const input = getByRole('textbox', {name: 'Paste data'});

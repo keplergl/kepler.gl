@@ -346,14 +346,14 @@ export function LoadDataModalFactory(
       elementType: LoadTileset
     },
     {
-      id: LOADING_METHODS.storage,
-      label: 'modal.loadData.storage',
-      elementType: LoadStorageMap
-    },
-    {
       id: PASTE_DATA_METHOD,
       label: 'modal.loadData.pasteData',
       elementType: PasteData
+    },
+    {
+      id: LOADING_METHODS.storage,
+      label: 'modal.loadData.storage',
+      elementType: LoadStorageMap
     }
   ];
 
