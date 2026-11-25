@@ -14,6 +14,7 @@ import {clearStagedLoadedFiles, toggleModal, updateVisData} from '@kepler.gl/act
 import {ADD_DATA_ID} from '@kepler.gl/constants';
 import {keplerGlReducerCore} from '@kepler.gl/reducers';
 import {taskMiddleware} from '@kepler.gl/tasks';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {messages} from '@kepler.gl/localization';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -46,10 +47,12 @@ const DemoLoadDataModal = DemoLoadDataModalFactory(
 );
 const demoStore = createStore(() => ({demo: {app: {}, keplerGl: {map: {uiState: {}}}}}));
 
-test.each([
+const modalVariants = [
   ['default', LoadDataModal],
   ['demo', DemoLoadDataModal]
-])('%s Add Data validates the Paste list before adding an H3 layer', async (_, LoadData) => {
+] as const;
+
+function renderAddDataDialog(LoadData: typeof LoadDataModal) {
   const store = createStore(keplerGlReducerCore, applyMiddleware(taskMiddleware));
   store.dispatch(toggleModal(ADD_DATA_ID));
   const addData = jest.fn((...args: Parameters<typeof updateVisData>) =>
@@ -64,7 +67,7 @@ test.each([
     children) as unknown as (typeof dependencies)[9];
   const ModalContainer = ModalContainerFactory(...dependencies);
   const state = store.getState();
-  const {getByRole, getByText, queryByRole} = renderWithTheme(
+  const view = renderWithTheme(
     <IntlProvider locale="en" messages={messages.en}>
       <Provider store={demoStore}>
         {React.createElement(ModalContainer, {
@@ -79,6 +82,11 @@ test.each([
       </Provider>
     </IntlProvider>
   );
+  return {store, addData, ...view};
+}
+
+test.each(modalVariants)('%s Add Data validates the default Paste tab', async (_, LoadData) => {
+  const {store, addData, getByRole, getByText, queryByRole} = renderAddDataDialog(LoadData);
   fireEvent.click(getByText('Paste'));
 
   const input = getByRole('textbox', {name: 'H3 cell IDs'});
@@ -117,6 +125,30 @@ test.each([
     expect.objectContaining({id: second})
   ]);
 });
+
+test.each(modalVariants)(
+  '%s Add Data can explicitly hide or enable Paste without affecting file imports',
+  (_, LoadData) => {
+    const {enablePasteH3} = getApplicationConfig();
+    try {
+      initApplicationConfig({enablePasteH3: false});
+      const disabled = renderAddDataDialog(LoadData);
+      expect(disabled.queryByText('Paste')).not.toBeInTheDocument();
+      expect(disabled.queryByRole('textbox', {name: 'H3 cell IDs'})).not.toBeInTheDocument();
+      expect(disabled.getByText('Load Files')).toBeInTheDocument();
+      expect(disabled.container.querySelector('.file-uploader')).toBeInTheDocument();
+      expect(disabled.addData).not.toHaveBeenCalled();
+      disabled.unmount();
+
+      initApplicationConfig({enablePasteH3: true});
+      const enabled = renderAddDataDialog(LoadData);
+      fireEvent.click(enabled.getByText('Paste'));
+      expect(enabled.getByRole('textbox', {name: 'H3 cell IDs'})).toBeInTheDocument();
+    } finally {
+      initApplicationConfig({enablePasteH3});
+    }
+  }
+);
 
 test('Paste H3 is not offered when replacing another dataset or when the H3 layer is unavailable', () => {
   const replacement = renderModal({replaceDatasetId: 'existing', onAddH3: jest.fn()});

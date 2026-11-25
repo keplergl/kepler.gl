@@ -124,6 +124,8 @@ export type KeplerApplicationConfig = {
    * Enabled by default.
    */
   enableCustomExportBranding?: boolean;
+  /** Show the Paste tab for H3 cell IDs in Add Data. Enabled by default. */
+  enablePasteH3?: boolean;
   baseMapLibraryConfig?: Record<BaseMapLibraryType, BaseMapLibraryConfig>;
   plugins?: any[];
   // KeplerTable alternative
@@ -450,6 +452,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
     hasData: true
   },
   enableCustomExportBranding: true,
+  enablePasteH3: true,
 
   baseMapLibraryConfig: {
     maplibre: {

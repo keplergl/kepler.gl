@@ -22,6 +22,7 @@ import PasteH3 from './paste-h3';
 
 import {LOADING_METHODS} from '@kepler.gl/constants';
 import {media} from '@kepler.gl/styles';
+import {getApplicationConfig} from '@kepler.gl/utils';
 import {FileLoading, FileLoadingProgress, LoadFiles, ProtoDataset} from '@kepler.gl/types';
 
 const StyledLoadDataModal = styled.div.attrs({
@@ -375,9 +376,10 @@ export function LoadDataModalFactory(
   }) => {
     const intl = useIntl();
     const isReplace = Boolean(replaceDatasetId);
+    const canPasteH3 = !isReplace && Boolean(onAddH3 && getApplicationConfig().enablePasteH3);
     const availableMethods = isReplace
       ? loadingMethods.filter(method => method.id === LOADING_METHODS.upload)
-      : loadingMethods.filter(method => method.id !== PASTE_H3_METHOD || onAddH3);
+      : loadingMethods.filter(method => method.id !== PASTE_H3_METHOD || canPasteH3);
     const [autoCreateLayers, setAutoCreateLayers] = useState(true);
     const [preparingLayers, setPreparingLayers] = useState(false);
     const prepareFrames = useRef<number[]>([]);
@@ -414,7 +416,11 @@ export function LoadDataModalFactory(
     const onTilesetDraftChange = useCallback((draft: TilesetDraft) => {
       setTilesetDraft(draft);
     }, []);
-    const [currentMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
+    const [selectedMethod, toggleMethod] = useState(getDefaultMethod(availableMethods));
+    const currentMethod =
+      selectedMethod?.id === PASTE_H3_METHOD && !canPasteH3
+        ? getDefaultMethod(availableMethods)
+        : selectedMethod;
     const selectMethod = useCallback((method: LoadingMethod) => {
       setTilesetDraft(null);
       toggleMethod(method);
