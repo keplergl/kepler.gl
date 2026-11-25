@@ -942,14 +942,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           );
                         })}
                       </StyledAnnotationTypeGroup>
-                      <CaptionSettings
-                        annotation={annotation}
-                        datasets={visState.datasets}
-                        intl={intl}
-                        onChange={changes =>
-                          visStateActions.updateAnnotation(annotation.id, changes)
-                        }
-                      />
+                      {annotation.kind === AnnotationKind.TEXT ? (
+                        <CaptionSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
                       <StyledConfigRow>
                         <StyledConfigLabel>
                           {intl.formatMessage({
@@ -1095,6 +1097,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           </StyledConfigRow>
                         </>
                       )}
+                      {annotation.kind !== AnnotationKind.TEXT ? (
+                        <CaptionSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
                     </StyledConfigSection>
                   ) : null}
                 </StyledAnnotationItemWrapper>

@@ -438,8 +438,8 @@ describe('AnnotationManager selectors', () => {
 
       const labels =
         kind === AnnotationKind.RULER
-          ? ['Line Width', 'Color', 'Custom Text', 'Distance']
-          : ['Line Width', 'Color', 'Text Side', 'Placement'];
+          ? ['Line Width', 'Color', 'Custom Text', 'Distance', 'Content']
+          : ['Line Width', 'Color', 'Text Side', 'Placement', 'Content'];
       labels.forEach((label, index) => {
         expect(screen.getByText(label).parentElement).toHaveStyle({
           minHeight: theme.inputBoxHeightSmall,
