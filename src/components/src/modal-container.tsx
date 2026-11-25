@@ -54,7 +54,13 @@ import {
   OVERWRITE_MAP_ID
 } from '@kepler.gl/constants';
 
-import {MapState, UiState, OnSuccessCallBack, OnErrorCallBack} from '@kepler.gl/types';
+import {
+  MapState,
+  UiState,
+  OnSuccessCallBack,
+  OnErrorCallBack,
+  ProtoDataset
+} from '@kepler.gl/types';
 
 import {
   VisStateActions,
@@ -294,6 +300,14 @@ export default function ModalContainerFactory(
       });
     };
 
+    _onAddPastedData = (dataset: ProtoDataset) => {
+      this.props.visStateActions.updateVisData(dataset, {
+        autoCreateLayers: true,
+        centerMap: true
+      });
+      this._closeModal();
+    };
+
     _onTilesetAdded = (
       tileset: {name: string; type: string; metadata: Record<string, any>},
       processedMetadata?: Record<string, any>,
@@ -531,6 +545,8 @@ export default function ModalContainerFactory(
                 {...providerState}
                 onClose={this._closeModal}
                 onFileUpload={this._onFileUpload}
+                onAddPastedData={this._onAddPastedData}
+                layerClasses={visState.layerClasses}
                 onAddRemoteDataset={this._onAddRemoteDataset}
                 onConfirmAddData={this._onConfirmAddData}
                 stagedToAdd={visState.stagedToAdd}

@@ -25,7 +25,7 @@ import {Button, InputLight} from '../styled-components';
 import LinkRenderer from '../link-renderer';
 const fileIconColor = '#D3D8E0';
 
-const StyledUploadMessage = styled.div`
+export const StyledUploadMessage = styled.div`
   color: ${props => props.theme.textColorLT};
   font-size: 14px;
   margin-bottom: 12px;
@@ -84,7 +84,7 @@ const StyledDropBody = styled.div`
   justify-content: space-evenly;
 `;
 
-const StyledActionLine = styled.div`
+export const StyledActionLine = styled.div`
   color: ${props => props.theme.modalTitleColor};
   font-size: 14px;
   font-weight: 600;
