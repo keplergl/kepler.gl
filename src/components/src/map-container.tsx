@@ -1597,6 +1597,9 @@ export default function MapContainerFactory(
               if (res) return;
 
               visStateActions.onLayerClick(data);
+              if (isInteractive) {
+                allDeckGlProps.onClick?.(data, event);
+              }
             }}
             onError={this._onDeckError}
             ref={comp => {
