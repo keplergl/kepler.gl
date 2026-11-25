@@ -982,6 +982,7 @@ export class EffectsSchema extends Schema {
 const annotationPropsV1 = {
   viewport: null,
   readout: null,
+  geographicReadout: null,
   id: null,
   kind: null,
   isVisible: null,
@@ -1012,17 +1013,27 @@ export class AnnotationsSchema extends Schema {
 
   save(annotations) {
     return {
-      [this.key]: annotations.map(
-        annotation => this.savePropertiesOrApplySchema(annotation).annotations
-      )
+      [this.key]: annotations.map(annotation => {
+        const {viewport, readout} = annotation;
+        // Older loaders reject a geographic annotation containing the viewport-only readout key.
+        const compatible =
+          !viewport && readout
+            ? {...annotation, readout: undefined, geographicReadout: readout}
+            : annotation;
+        return this.savePropertiesOrApplySchema(compatible).annotations;
+      })
     };
   }
 
   load(annotations) {
     return {
-      [this.key]: annotations.map(
-        annotation => this.loadPropertiesOrApplySchema(annotation).annotations
-      )
+      [this.key]: annotations.map(annotation => {
+        const {geographicReadout, ...loaded} =
+          this.loadPropertiesOrApplySchema(annotation).annotations;
+        return !loaded.viewport && geographicReadout != null
+          ? {...loaded, readout: geographicReadout}
+          : loaded;
+      })
     };
   }
 }

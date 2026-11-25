@@ -140,7 +140,14 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
   const {canvas, frame} = setup({
     annotations: [
       annotation,
-      {...annotation, id: 'point', kind: 'POINT', armLength: 20, angle: 0},
+      {
+        ...annotation,
+        id: 'point',
+        kind: 'POINT',
+        armLength: 20,
+        angle: 0,
+        readout: {type: 'time'}
+      },
       {
         ...annotation,
         id: 'rich-text',
@@ -179,7 +186,7 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
       {...annotation, id: 'hidden', isVisible: false},
       {...annotation, id: 'other-map', mapIndex: 1}
     ],
-    readoutValues: {'rich-text': '123'}
+    readoutValues: {'rich-text': '123', point: '2026-01-01'}
   });
   jest.mocked(domtoimage.toPng).mockImplementation(async node => {
     expect(node.querySelectorAll('[data-annotation-part="text"]')).toHaveLength(3);
@@ -187,7 +194,12 @@ test('rasterizes the existing text and shape renderer at output resolution', asy
     expect(node.querySelector('[data-annotation-id="other-map"]')).toBeNull();
     expect(node.textContent).toContain(annotation.label);
     expect(node.querySelector('.lexical-text-bold')).toHaveTextContent('Bold export annotation');
-    const readout = node.querySelector('[data-annotation-part="readout"] [data-lexical-text]');
+    const readout = node.querySelector(
+      '[data-annotation-id="rich-text"] [data-annotation-part="readout"] [data-lexical-text]'
+    );
+    expect(
+      node.querySelector('[data-annotation-id="point"] [data-annotation-part="readout"]')
+    ).toHaveTextContent('2026-01-01');
     expect(readout).toHaveTextContent('123');
     expect(readout).toHaveStyle({fontSize: '32px', color: 'rgb(255, 0, 0)'});
     expect(node.querySelector('svg')).toBeTruthy();

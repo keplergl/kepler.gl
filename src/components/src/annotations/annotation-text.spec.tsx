@@ -51,11 +51,17 @@ const makeRuler = (overrides: Partial<Annotation> = {}): Annotation =>
     ...overrides
   } as Annotation);
 
-const renderRulerText = (annotation: Annotation, isEditing = false, opacity = 1) =>
+const renderRulerText = (
+  annotation: Annotation,
+  isEditing = false,
+  opacity = 1,
+  readoutValue?: string
+) =>
   renderWithTheme(
     <DndContext>
       <AnnotationText
         annotation={annotation}
+        readoutValue={readoutValue}
         opacity={opacity}
         viewport={viewport}
         isEditing={isEditing}
@@ -92,6 +98,14 @@ function captionEditorState(
     }
   };
 }
+
+test.each([true, false])('shows the ruler readout only with custom text (%s)', showCustomText => {
+  const annotation = makeRuler({showCustomText, readout: {type: 'time'}});
+  const {container} = renderRulerText(annotation, false, 1, '2026-01-01');
+  const readout = screen.queryByText('2026-01-01');
+  expect(readout?.textContent ?? null).toBe(showCustomText ? '2026-01-01' : null);
+  expect(container.querySelector('[data-annotation-part="distance"]')).toBeVisible();
+});
 
 describe('AnnotationText readout formatting', () => {
   test.each([

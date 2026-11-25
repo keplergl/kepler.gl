@@ -45,8 +45,7 @@ export function getAnnotationReadoutValues(
   for (const annotation of annotations) {
     if (
       !annotation.isVisible ||
-      annotation.kind !== AnnotationKind.TEXT ||
-      !annotation.viewport ||
+      (annotation.kind === AnnotationKind.RULER && !annotation.showCustomText) ||
       !annotation.readout
     ) {
       continue;
