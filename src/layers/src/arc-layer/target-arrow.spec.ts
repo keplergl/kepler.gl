@@ -190,9 +190,80 @@ describe('createTargetArrowLayer', () => {
         getFillColor: [70, 80, 90]
       })
     );
+    if (LayerClass === LineLayer) {
+      expect(layer.visConfigSettings).not.toHaveProperty('sourceOpacity');
+      expect(layer.visConfigSettings).not.toHaveProperty('targetOpacity');
+      expect(authoredConfig.visConfig).not.toHaveProperty('sourceOpacity');
+      expect(authoredConfig.visConfig).not.toHaveProperty('targetOpacity');
+    }
     expect(authoredConfig.visConfig.thickness).toBe(1);
     expect(authoredConfig.visConfig.opacity).toBe(0.8);
     expect(authoredConfig.visConfig.targetArrowEnabled).toBe(false);
+  });
+
+  test('Arc applies endpoint alpha to constant and mapped colors and matches the arrowhead', () => {
+    const layer = new ArcLayer({id: 'endpoint-opacity'});
+    const sourceColor = [100, 120, 140];
+    const targetColor = [10, 20, 30, 200];
+    const mappedTargetColor = jest.fn(() => targetColor);
+    const objectInfo = {index: 0};
+    const row = {
+      index: 0,
+      sourcePosition: [-122.45, 37.75, 0],
+      targetPosition: [-122.35, 37.85, 0]
+    };
+    const opts = {
+      idx: 0,
+      visible: true,
+      data: {
+        data: [row],
+        getSourceColor: sourceColor,
+        getTargetColor: mappedTargetColor,
+        getWidth: 1
+      },
+      gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+      mapState,
+      interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+      layerCallbacks: {}
+    };
+
+    // A legacy configuration may not supply endpoint settings.
+    delete layer.config.visConfig.sourceOpacity;
+    delete layer.config.visConfig.targetOpacity;
+    layer.config.visConfig.opacity = 0.6;
+    layer.config.visConfig.targetArrowEnabled = true;
+    const initial = layer.renderLayer(opts);
+    expect(initial[0]?.props.getSourceColor).toBe(sourceColor);
+    expect(initial[0]?.props.getTargetColor).toBe(mappedTargetColor);
+    expect(initial[1]?.props.getFillColor).toBe(mappedTargetColor);
+
+    layer.config.visConfig.sourceOpacity = 0;
+    layer.config.visConfig.targetOpacity = 0.5;
+    const [stroke, head] = layer.renderLayer(opts);
+    const getTargetColor = stroke?.props.getTargetColor as unknown as (object, info) => number[];
+    expect(stroke?.props.getSourceColor).toEqual([100, 120, 140, 0]);
+    expect(getTargetColor(row, objectInfo)).toEqual([10, 20, 30, 100]);
+    expect(mappedTargetColor).toHaveBeenCalledWith(row, objectInfo);
+    expect(head?.props.getFillColor).toBe(getTargetColor);
+    expect(stroke?.props.opacity).toBe(0.6);
+    expect(head?.props.opacity).toBe(0.6);
+    expect(sourceColor).toEqual([100, 120, 140]);
+    expect(targetColor).toEqual([10, 20, 30, 200]);
+
+    const [panned, pannedHead] = layer.renderLayer({
+      ...opts,
+      mapState: {...mapState, longitude: -122.41}
+    });
+    expect(panned?.props.getTargetColor).toBe(getTargetColor);
+    expect(pannedHead?.props.updateTriggers.getFillColor).toBe(getTargetColor);
+
+    layer.config.visConfig.targetOpacity = 1;
+    const [reset, resetHead] = layer.renderLayer(opts);
+    expect(reset?.props.getTargetColor).toBe(mappedTargetColor);
+    expect(reset?.props.updateTriggers.getTargetColor).not.toEqual(
+      stroke?.props.updateTriggers.getTargetColor
+    );
+    expect(resetHead?.props.getFillColor).toBe(mappedTargetColor);
   });
 
   test('config replacement retains the original host record cache and earlier visuals', () => {

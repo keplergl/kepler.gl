@@ -1416,6 +1416,18 @@ export default function LayerConfiguratorFactory(
               />
             )}
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            {layer.visConfigSettings.sourceOpacity && (
+              <VisConfigSlider
+                {...layer.visConfigSettings.sourceOpacity}
+                {...visConfiguratorProps}
+              />
+            )}
+            {layer.visConfigSettings.targetOpacity && (
+              <VisConfigSlider
+                {...layer.visConfigSettings.targetOpacity}
+                {...visConfiguratorProps}
+              />
+            )}
           </LayerConfigGroup>
 
           {/* thickness */}

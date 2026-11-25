@@ -29,7 +29,8 @@ import {isLayerHoveredFromArrow, createGeoArrowPointVector, getFilteredIndex} fr
 import {
   DEFAULT_LAYER_COLOR,
   PROJECTED_PIXEL_SIZE_MULTIPLIER,
-  ALL_FIELD_TYPES
+  ALL_FIELD_TYPES,
+  LAYER_VIS_CONFIGS
 } from '@kepler.gl/constants';
 
 import {
@@ -51,6 +52,8 @@ import {KeplerTable} from '@kepler.gl/table';
 
 export type ArcLayerVisConfigSettings = {
   opacity: VisConfigNumber;
+  sourceOpacity?: VisConfigNumber;
+  targetOpacity?: VisConfigNumber;
   thickness: VisConfigNumber;
   colorRange: VisConfigColorRange;
   sizeRange: VisConfigRange;
@@ -80,6 +83,8 @@ export type ArcLayerColumnsConfig = {
 export type ArcLayerVisConfig = {
   colorRange: ColorRange;
   opacity: number;
+  sourceOpacity?: number;
+  targetOpacity?: number;
   sizeRange: [number, number];
   targetColor: RGBColor;
   thickness: number;
@@ -131,6 +136,21 @@ export const arcVisConfigs: {
   targetColor: 'targetColor'
 };
 
+const endpointOpacityVisConfigs: Record<'sourceOpacity' | 'targetOpacity', VisConfigNumber> = {
+  sourceOpacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    defaultValue: 1,
+    label: 'layerVisConfigs.sourceOpacity',
+    property: 'sourceOpacity'
+  },
+  targetOpacity: {
+    ...LAYER_VIS_CONFIGS.opacity,
+    defaultValue: 1,
+    label: 'layerVisConfigs.targetOpacity',
+    property: 'targetOpacity'
+  }
+};
+
 export const COLUMN_MODE_POINTS = 'points';
 export const COLUMN_MODE_NEIGHBORS = 'neighbors';
 export const COLUMN_MODE_GEOARROW = 'geoarrow';
@@ -155,6 +175,48 @@ const DEFAULT_COLUMN_MODE = COLUMN_MODE_POINTS;
 
 const brushingExtension = new BrushingExtension();
 const arrowCPUFilterExtension = new FilterArrowExtension();
+
+type EndpointColor = RGBColor | [number, number, number, number];
+type EndpointColorAccessor = EndpointColor | ((...args: any[]) => EndpointColor);
+
+// Arrowheads use the color accessor itself as an update trigger. Reuse the
+// transformed accessor until the color or opacity changes, not on each pan.
+const sourceOpacityColors = new WeakMap<
+  EndpointColorAccessor,
+  {opacity: number; accessor: EndpointColorAccessor}
+>();
+const targetOpacityColors = new WeakMap<
+  EndpointColorAccessor,
+  {opacity: number; accessor: EndpointColorAccessor}
+>();
+
+function withEndpointOpacity(
+  color: EndpointColorAccessor | undefined,
+  opacity: number,
+  cache: typeof sourceOpacityColors
+): EndpointColorAccessor | undefined {
+  if (!color || opacity === 1) {
+    return color;
+  }
+  const previous = cache.get(color);
+  if (previous?.opacity === opacity) {
+    return previous.accessor;
+  }
+  const applyOpacity = ([r, g, b, a = 255]: EndpointColor): EndpointColor => [
+    r,
+    g,
+    b,
+    Math.round(a * opacity)
+  ];
+  const accessor: EndpointColorAccessor =
+    typeof color === 'function' ? (...args) => applyOpacity(color(...args)) : applyOpacity(color);
+  cache.set(color, {opacity, accessor});
+  return accessor;
+}
+
+function normalizeEndpointOpacity(value: number | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
+}
 
 function isH3Field(columns, allFields, key) {
   const field = allFields[columns[key].fieldIdx];
@@ -229,6 +291,9 @@ export default class ArcLayer extends Layer {
     super(props);
 
     this.registerVisConfig({...arcVisConfigs, ...targetArrowVisConfigs});
+    if (this.type === 'arc') {
+      this.registerVisConfig(endpointOpacityVisConfigs);
+    }
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       arcPosAccessor(this.config.columns, this.config.columnMode)(dataContainer);
   }
@@ -539,11 +604,28 @@ export default class ArcLayer extends Layer {
   renderLayer(opts) {
     opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
+    const sourceOpacity = normalizeEndpointOpacity(this.config.visConfig.sourceOpacity);
+    const targetOpacity = normalizeEndpointOpacity(this.config.visConfig.targetOpacity);
+    // deck.gl already interpolates RGBA endpoint colors; keep the shared layer opacity
+    // and multiply existing alpha (e.g. age styling) instead of replacing it.
+    const getSourceColor = withEndpointOpacity(
+      data.getSourceColor,
+      sourceOpacity,
+      sourceOpacityColors
+    );
+    const getTargetColor = withEndpointOpacity(
+      data.getTargetColor,
+      targetOpacity,
+      targetOpacityColors
+    );
+    const colorTriggers = this.getVisualChannelUpdateTriggers(opts);
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers(opts)
+      ...colorTriggers,
+      getSourceColor: {...colorTriggers.getSourceColor, sourceOpacity},
+      getTargetColor: {...colorTriggers.getTargetColor, targetOpacity}
     };
     const widthScale = this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER;
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
@@ -586,7 +668,7 @@ export default class ArcLayer extends Layer {
       greatCircle: isGlobeMode,
       height: 1,
       elevationScale: 1,
-      getColor: data.getTargetColor,
+      getColor: getTargetColor,
       hoveredObject,
       highlightColor: opts.ageStyleHighlightColor ?? this.config.highlightColor
     });
@@ -597,6 +679,8 @@ export default class ArcLayer extends Layer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
+        ...(getSourceColor ? {getSourceColor} : {}),
+        ...(getTargetColor ? {getTargetColor} : {}),
         ...experimentalPropOverrides,
         ...globeParameters,
         widthScale,
