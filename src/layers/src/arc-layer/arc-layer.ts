@@ -243,9 +243,19 @@ export default class ArcLayer extends Layer {
         label: 'Stroke width',
         range: this.visConfigSettings.thickness.range,
         step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'targetArrowSize',
+        label: 'Target arrow size',
+        range: this.visConfigSettings.targetArrowSize.range,
+        step: this.visConfigSettings.targetArrowSize.step
       }
     ];
-    return props.filter(prop => prop.type !== 'color' || !this.config.colorField);
+    return props.filter(
+      prop =>
+        (prop.type !== 'color' || !this.config.colorField) &&
+        (prop.name !== 'targetArrowSize' || this.config.visConfig.targetArrowEnabled)
+    );
   }
 
   get type() {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {PolygonLayer} from '@deck.gl/layers';
 import type {DataFilterExtensionProps} from '@deck.gl/extensions';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
@@ -74,6 +75,25 @@ export default class VoronoiLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(voronoiVisConfigs);
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (!['strokeColor', 'thickness'].includes(prop.name) || this.config.visConfig.stroked)
+    );
   }
 
   get type() {

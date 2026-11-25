@@ -3,7 +3,7 @@
 
 import Console from 'global/console';
 
-import {CHANNEL_SCALES, GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
+import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {Layer as DeckLayer} from '@deck.gl/core';
 type DeckLayerProps = any;
 import {
@@ -365,16 +365,13 @@ function renderLayerWithAnimation(
       }
     : authoredConfig;
   let frameData = data;
-  if (
-    isPlainObject(data) &&
-    (animatedConfig.color || Object.values(animatedConfig.visConfig ?? {}).some(Array.isArray))
-  ) {
-    // Static colors are cached by formatLayerData. Refresh only their accessors
+  if (isPlainObject(data) && renderConfig !== authoredConfig) {
+    // Fixed visual values are cached by formatLayerData. Refresh their accessors
     // against this frame, retaining field scales, geometry and feature styling.
     const accessors: Record<string, unknown> = {};
     for (const channel of Object.values(layer.visualChannels ?? {}) as VisualChannel[]) {
-      const {accessor, field, channelScaleType, getAttributeValue, defaultValue} = channel;
-      if (!accessor || channelScaleType !== CHANNEL_SCALES.color || renderConfig[field]) {
+      const {accessor, field, getAttributeValue, defaultValue} = channel;
+      if (!accessor || renderConfig[field]) {
         continue;
       }
       accessors[accessor] =

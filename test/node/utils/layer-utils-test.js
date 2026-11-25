@@ -36,6 +36,7 @@ import tripGeojson, {timeStampDomain, tripBounds} from 'test/fixtures/trip-geojs
 import {geoJsonWithStyle} from 'test/fixtures/geojson';
 import {KeplerTable, findPointFieldPairs} from '@kepler.gl/table';
 import {
+  getLayerAnimatedConfig,
   ArrowDataContainer,
   createDataContainer,
   findDefaultColorField,
@@ -103,6 +104,396 @@ test('layerUtils -> layer property declarations and normalized updates retain co
   t.notOk(layer.config.propertyTransitions?.radius, 'invalid values do not become live tracks');
   layer.updateLayerConfig({propertyTransitions: undefined});
   t.notOk(Object.hasOwn(layer.config, 'propertyTransitions'), 'supports removing the property map');
+  t.end();
+});
+
+test('layerUtils -> built-in layers expose usable scalar and color transitions', t => {
+  const enabled = {
+    filled: true,
+    stroked: true,
+    outline: true,
+    enable3d: true,
+    glowEnabled: true,
+    pulseEnabled: true,
+    targetArrowEnabled: true,
+    surfaceEnabled: true,
+    surfaceContours: true,
+    colorByLevel: false,
+    scenegraphEnabled: true,
+    scenegraphColorEnabled: true,
+    scenegraphUseTrailColor: false,
+    flowLinesRenderingMode: 'curved',
+    flowFadeEnabled: true
+  };
+  const expected = {
+    point: ['radius', 'thickness', 'glowExtent', 'glowStrength', 'pulseSpeed', 'pulseExpansion'],
+    arc: ['thickness', 'targetArrowSize'],
+    line: ['thickness', 'targetArrowSize', 'elevationScale'],
+    grid: ['coverage', 'elevationScale'],
+    hexagon: ['coverage', 'elevationScale'],
+    geojson: ['radius', 'thickness', 'elevationScale', 'strokeOpacity', 'elevationOffset'],
+    cluster: [],
+    donut: ['radius'],
+    icon: ['radius'],
+    heatmap: ['radius', 'intensity', 'threshold', 'surfaceHeight', 'surfaceContourStep'],
+    contour: ['fillOpacity', 'thickness', 'elevationScale', 'color', 'contourColor'],
+    voronoi: ['color', 'strokeColor', 'thickness'],
+    hexagonId: ['color', 'strokeColor', 'thickness', 'strokeOpacity', 'coverage', 'elevationScale'],
+    '3D': ['sizeScale', 'angleX', 'angleY', 'angleZ', 'scenegraphColor'],
+    trip: [
+      'color',
+      'thickness',
+      'trailLength',
+      'sizeScale',
+      'adjustRoll',
+      'adjustPitch',
+      'adjustYaw',
+      'scenegraphColor'
+    ],
+    s2: ['color', 'strokeColor', 'thickness', 'elevationScale'],
+    a5: ['color', 'strokeColor', 'thickness', 'elevationScale'],
+    geohash: ['color', 'strokeColor', 'thickness', 'elevationScale'],
+    flow: ['flowLineThicknessScale', 'flowLineCurviness', 'flowFadeAmount'],
+    flowField: [
+      'color',
+      'strokeWidth',
+      'trailLength',
+      'elevationMultiplier',
+      'sizeScale',
+      'adjustRoll',
+      'adjustPitch',
+      'adjustYaw',
+      'scenegraphColor'
+    ],
+    vectorTile: [
+      'color',
+      'strokeColor',
+      'radius',
+      'strokeWidth',
+      'strokeOpacity',
+      'elevationScale'
+    ],
+    rasterTile: [
+      'gammaContrastFactor',
+      'sigmoidalContrastFactor',
+      'sigmoidalBiasFactor',
+      'saturationValue'
+    ],
+    wms: [],
+    tile3d: ['pointSize', 'color'],
+    bitmap: ['elevationOffset'],
+    zarr: []
+  };
+  t.deepEqual(
+    Object.keys(expected).sort(),
+    Object.keys(LayerClasses).sort(),
+    'audits every built-in layer'
+  );
+  for (const [type, names] of Object.entries(expected)) {
+    const layer = new LayerClasses[type]({dataId: 'survey', svgIcons: []});
+    layer.updateLayerVisConfig(enabled);
+    const definitions = layer.animatableProps;
+    t.equal(
+      new Set(definitions.map(prop => prop.name)).size,
+      definitions.length,
+      `${type} has unique controls`
+    );
+    for (const name of ['opacity', ...names]) {
+      const prop = definitions.find(definition => definition.name === name);
+      t.ok(prop, `${type} offers ${name}`);
+      if (!prop) continue;
+      if (name === 'opacity') continue;
+      const isColor = prop.type === 'color';
+      if (!isColor) {
+        t.deepEqual(
+          prop.range,
+          layer.visConfigSettings[name].range,
+          `${type}.${name} uses native bounds`
+        );
+        t.equal(prop.step, layer.visConfigSettings[name].step, `${type}.${name} uses native units`);
+      }
+      const [start, end] = isColor
+        ? [
+            [0, 20, 40],
+            [200, 120, 80]
+          ]
+        : prop.range;
+      const middle = isColor ? [100, 70, 60] : (start + end) / 2;
+      layer.updateLayerConfig({
+        propertyTransitions: {[name]: propertyTrack('transition', start, end)}
+      });
+      const authored = cloneDeep(layer.config);
+      const read = time => {
+        const frame = getLayerAnimatedConfig(layer, time);
+        return name === 'color' ? frame.color : frame.visConfig?.[name];
+      };
+      t.deepEqual(read(0), start, `${type}.${name} starts at its first endpoint`);
+      t.deepEqual(read(2000), middle, `${type}.${name} interpolates`);
+      t.deepEqual(read(5000), end, `${type}.${name} holds its final endpoint`);
+      t.equal(read(null), undefined, `${type}.${name} stops overriding authored values`);
+      t.deepEqual(layer.config, authored, `${type}.${name} preserves saved settings`);
+      layer.config.propertyTransitions[name][0].endValue = isColor ? [256, 0, 0] : end + 1;
+      t.equal(read(2000), undefined, `${type}.${name} ignores invalid endpoints`);
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> new transitions exclude disabled and field-controlled channels', t => {
+  const cases = [
+    [
+      'point',
+      {glowEnabled: false, pulseEnabled: false},
+      {},
+      ['glowExtent', 'glowStrength', 'pulseSpeed', 'pulseExpansion']
+    ],
+    ['point', {pulseEnabled: true, pulseTrigger: 'event'}, {}, ['pulseSpeed']],
+    ['arc', {targetArrowEnabled: false}, {}, ['targetArrowSize']],
+    [
+      'contour',
+      {filled: false, stroked: false, enable3d: false},
+      {},
+      ['color', 'contourColor', 'fillOpacity', 'thickness', 'elevationScale']
+    ],
+    ['contour', {filled: true, colorByLevel: true}, {}, ['color']],
+    [
+      'heatmap',
+      {surfaceEnabled: false, surfaceContours: true},
+      {},
+      ['surfaceHeight', 'surfaceContourStep']
+    ],
+    ['heatmap', {surfaceEnabled: true, surfaceContours: false}, {}, ['surfaceContourStep']],
+    [
+      'hexagonId',
+      {outline: false, enable3d: false},
+      {coverageField: {}},
+      ['strokeColor', 'strokeOpacity', 'thickness', 'elevationScale', 'coverage']
+    ],
+    ...['s2', 'a5', 'geohash', 'voronoi'].map(type => [
+      type,
+      {filled: false, stroked: false, enable3d: false},
+      {},
+      ['color', 'strokeColor', 'thickness', 'elevationScale']
+    ]),
+    ...['s2', 'a5', 'geohash', 'hexagonId', 'vectorTile'].map(type => [
+      type,
+      {filled: true, stroked: true, outline: true},
+      {colorField: {}, strokeColorField: {}},
+      ['color', 'strokeColor']
+    ]),
+    ['geojson', {stroked: false}, {elevationOffsetField: {}}, ['strokeOpacity', 'elevationOffset']],
+    [
+      'flow',
+      {flowLinesRenderingMode: 'straight', flowFadeEnabled: false},
+      {},
+      ['flowLineCurviness', 'flowFadeAmount']
+    ],
+    ['3D', {scenegraphColorEnabled: false}, {}, ['scenegraphColor']],
+    ...['trip', 'flowField'].map(type => [
+      type,
+      {scenegraphEnabled: false},
+      {},
+      ['sizeScale', 'adjustRoll', 'adjustPitch', 'adjustYaw', 'scenegraphColor']
+    ]),
+    ...['trip', 'flowField'].map(type => [
+      type,
+      {scenegraphEnabled: true, scenegraphColorEnabled: true, scenegraphUseTrailColor: true},
+      {},
+      ['scenegraphColor']
+    ]),
+    ['trip', {}, {colorField: {}}, ['color']],
+    [
+      'flowField',
+      {showTrails: false, scenegraphEnabled: false},
+      {},
+      ['color', 'strokeWidth', 'trailLength']
+    ],
+    ['flowField', {colorBySpeed: true}, {}, ['color']],
+    ['vectorTile', {stroked: true}, {sizeField: {}}, ['strokeWidth']],
+    [
+      'rasterTile',
+      {nonLinearRescaling: false},
+      {},
+      ['gammaContrastFactor', 'sigmoidalContrastFactor', 'sigmoidalBiasFactor']
+    ]
+  ];
+  for (const [type, visConfig, config, excluded] of cases) {
+    const layer = new LayerClasses[type]({dataId: 'survey'});
+    layer.updateLayerVisConfig(visConfig);
+    layer.updateLayerConfig(config);
+    const names = layer.animatableProps.map(prop => prop.name);
+    t.deepEqual(
+      excluded.filter(name => names.includes(name)),
+      [],
+      `${type} excludes inactive ${excluded.join(', ')}`
+    );
+    layer.updateLayerConfig({
+      propertyTransitions: {[excluded[0]]: propertyTrack('inactive', 0, 1)}
+    });
+    t.deepEqual(
+      getLayerAnimatedConfig(layer, 2000),
+      {},
+      `${type} keeps unsupported saved tracks inactive`
+    );
+    t.ok(layer.config.propertyTransitions[excluded[0]], `${type} preserves inactive saved tracks`);
+  }
+  t.end();
+});
+
+test('layerUtils -> numeric frame accessors refresh without changing field or feature values', t => {
+  for (const type of ['geojson', 'vectorTile']) {
+    const layer = new LayerClasses[type]({id: type, dataId: 'survey'});
+    const property = type === 'geojson' ? 'elevationOffset' : 'strokeWidth';
+    const accessor = type === 'geojson' ? 'getElevationOffset' : 'getLineWidth';
+    layer.updateLayerVisConfig({[property]: 3, stroked: true});
+    layer.updateLayerConfig({propertyTransitions: {[property]: propertyTrack('numeric', 0, 10)}});
+    const data = {data: [], ...layer.getAttributeAccessors({dataContainer: {}})};
+    const fieldAccessor = () => 42;
+    data.getFillColor = fieldAccessor;
+    layer.config.colorField = {name: 'value', fieldIdx: 0};
+    const savedConfig = layer.config;
+    const savedAccessor = data[accessor];
+    // Inspect the render boundary with real built-in visual channels and cached accessors.
+    layer.renderLayer = options => options.data;
+    const render = time =>
+      renderDeckGlLayer({layer, datasets: {}, data, mapState: {}, animationTimeMs: time}, {});
+    const read = (frame, feature = {properties: {}}) =>
+      typeof frame[accessor] === 'function' ? frame[accessor](feature) : frame[accessor];
+    const middle = render(2000);
+    t.equal(read(render(1000)), 0, `${type} preserves a zero starting value`);
+    t.equal(read(middle), 5, `${type} refreshes its cached numeric accessor`);
+    t.equal(read(render(3000)), 10, `${type} reaches the endpoint`);
+    t.equal(read(middle), 5, `${type} retains the frame value in deferred accessors`);
+    t.equal(middle.getFillColor, fieldAccessor, `${type} preserves a data-driven accessor`);
+    t.equal(middle.data, data.data, `${type} retains geometry identity`);
+    t.equal(read(render(null)), 3, `${type} restores the authored value`);
+    if (type === 'geojson') {
+      t.equal(
+        read(middle, {properties: {elevationOffset: 17}}),
+        17,
+        'embedded elevation offsets keep precedence'
+      );
+    }
+    t.equal(layer.config, savedConfig, `${type} restores the config object`);
+    t.equal(data[accessor], savedAccessor, `${type} leaves the cached accessor untouched`);
+  }
+  t.end();
+});
+
+test('layerUtils -> added scalar transitions reach built-in deck renderers', t => {
+  const cases = [
+    ['point', 'glowStrength', 0.2, 0.8, {glowEnabled: true}, deck => deck.props.glowStrength],
+    ['heatmap', 'surfaceHeight', 0, 1000, {surfaceEnabled: true}, deck => deck.props.surfaceHeight],
+    ['hexagonId', 'coverage', 0.2, 1, {}, deck => deck.props.coverage],
+    ...['s2', 'a5', 'geohash'].map(type => [
+      type,
+      'elevationScale',
+      1,
+      3,
+      {enable3d: true, enableElevationZoomFactor: false},
+      deck => deck.props.elevationScale
+    ]),
+    ['voronoi', 'thickness', 1, 3, {stroked: true}, deck => deck.props.getLineWidth],
+    ['3D', 'angleX', 0, 90, {}, deck => deck.props.getOrientation[0]],
+    ['tile3d', 'pointSize', 1, 5, {}, deck => deck.props.pointSize],
+    ['bitmap', 'elevationOffset', 0, 100, {showBounds: false}, deck => deck.props.modelMatrix[14]],
+    [
+      'vectorTile',
+      'strokeWidth',
+      0,
+      10,
+      {stroked: true, showBounds: false},
+      deck => deck.props.getLineWidth
+    ],
+    ['flow', 'flowLineThicknessScale', 1, 3, {}, deck => deck.props.flowLineThicknessScale],
+    ['trip', 'trailLength', 10, 30, {}, deck => deck.props.trailLength / 1000],
+    ['donut', 'radius', 10, 30, {}, deck => deck.props.getRadius()]
+  ];
+  for (const [type, name, start, end, config, read] of cases) {
+    const layer = new LayerClasses[type]({id: `render-${type}`, dataId: 'survey'});
+    layer.updateLayerVisConfig({...config, [name]: start});
+    layer.updateLayerConfig({propertyTransitions: {[name]: propertyTrack('render', start, end)}});
+    const rows = [];
+    const data = {
+      data: rows,
+      textLabels: [],
+      textLabelData: [],
+      getPosition: d => d.position,
+      getFilterValue: () => [0, 0, 0, 0],
+      ...layer.getAttributeAccessors({dataContainer: {}}),
+      imageUrl: 'https://example.com/image.png',
+      bounds: [0, 0, 1, 1],
+      tile3dUrl: 'https://example.com/tileset.json',
+      tileSource: {getTileData: () => null},
+      layerData: {locations: [], flows: []}
+    };
+    const onLayerError = sinon.spy();
+    const render = time =>
+      renderDeckGlLayer(
+        {
+          layer,
+          layerIndex: 0,
+          data,
+          datasets: {
+            survey: {
+              gpuFilter: {
+                filterRange: [],
+                filterValueUpdateTriggers: {},
+                filterValueAccessor: () => () => () => [0, 0, 0, 0]
+              }
+            }
+          },
+          animationTimeMs: time,
+          mapState: {...INITIAL_MAP_STATE, zoom: 10, width: 800, height: 600},
+          animationConfig: {
+            ...INITIAL_VIS_STATE.animationConfig,
+            domain: [0, 1000],
+            currentTime: 500
+          },
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig
+        },
+        {onLayerError, onSetLayerDomain: () => {}, onLayerHover: () => {}}
+      )[0];
+    const authored = layer.config;
+    const original = render(null);
+    const middle = render(2000);
+    const final = render(3000);
+    const restored = render(null);
+    t.notOk(onLayerError.called, `${type}.${name} renders without errors`);
+    if (original && middle && final && restored) {
+      t.notEqual(read(middle), read(original), `${type}.${name} changes the rendered frame`);
+      t.ok(
+        Math.abs(read(middle) - (read(original) + read(final)) / 2) < 1e-8,
+        `${type}.${name} renders the midpoint`
+      );
+      t.equal(read(restored), read(original), `${type}.${name} restores the rendered setting`);
+      t.equal(layer.config, authored, `${type}.${name} restores the config object`);
+    } else {
+      t.fail(`${type}.${name} should produce a deck layer`);
+    }
+  }
+  t.end();
+});
+
+test('layerUtils -> raster transitions follow the source and rescaling mode', t => {
+  const layer = new KeplerGlLayers.RasterTileLayer({dataId: 'raster'});
+  const names = () => layer.animatableProps.map(prop => prop.name);
+  t.ok(names().includes('gammaContrastFactor'), 'continuous RGB imagery supports gamma');
+  layer.updateLayerMeta({
+    type: 'raster-tile',
+    metadata: {pmtilesType: 'raster', bounds: [0, 0, 1, 1]}
+  });
+  t.deepEqual(names(), ['opacity'], 'precolored PMTiles do not offer raster shader adjustments');
+  layer.updateLayerMeta({
+    type: 'raster-tile',
+    metadata: {type: 'Feature', bbox: [0, 0, 1, 1], properties: {}, assets: {}}
+  });
+  t.ok(
+    names().includes('gammaContrastFactor'),
+    'switching back to STAC restores color adjustments'
+  );
+  layer.updateLayerVisConfig({colorRange: {...layer.config.visConfig.colorRange, colorMap: []}});
+  t.deepEqual(names(), ['opacity'], 'categorical imagery does not offer inactive rescaling');
   t.end();
 });
 
