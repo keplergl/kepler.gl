@@ -74,6 +74,14 @@ const ImageOptionList = styled.div`
     }
   }
 
+  #export-image-modal__option_ratio button,
+  .custom-dimensions input,
+  .custom-dimensions button,
+  .custom-dimensions-help {
+    height: 28px;
+    box-sizing: border-box;
+  }
+
   .option-list {
     display: flex;
     flex-direction: column;
@@ -139,14 +147,11 @@ const ImageOptionList = styled.div`
 
     input {
       width: 100%;
-      box-sizing: border-box;
       margin: 0;
     }
 
     button,
     .custom-dimensions-help {
-      height: ${props => props.theme.inputBoxHeight};
-      box-sizing: border-box;
       flex-shrink: 0;
     }
 
@@ -263,11 +268,6 @@ function CustomDimensions({
             onChange={event => setHeight(event.target.value)}
           />
         </label>
-        <TippyTooltip placement="top" isLightTheme render={() => <div>{limitsHelp}</div>}>
-          <span className="custom-dimensions-help" tabIndex={0} aria-label={limitsHelp}>
-            (?)
-          </span>
-        </TippyTooltip>
         <Button
           type="button"
           secondary
@@ -279,6 +279,11 @@ function CustomDimensions({
         >
           <FormattedMessage id="modal.exportImage.applyDimensions" />
         </Button>
+        <TippyTooltip placement="top" isLightTheme render={() => <div>{limitsHelp}</div>}>
+          <span className="custom-dimensions-help" tabIndex={0} aria-label={limitsHelp}>
+            (?)
+          </span>
+        </TippyTooltip>
       </div>
       <span id={helpId} hidden>
         {limitsHelp}
