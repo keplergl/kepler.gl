@@ -39,34 +39,6 @@ function isRealNumberSample(value: unknown): boolean {
 }
 
 /**
- * The analyzer tolerates a few INT mismatches, which can hide valid fractional
- * values. Widen only fully numeric samples; do not reinterpret identifier text.
- */
-function hasRealSampleInIntegerColumn(
-  data: readonly Record<string, unknown>[],
-  field: string
-): boolean {
-  return (
-    data.some(row => {
-      const value = row[field];
-      return typeof value === 'string'
-        ? /[.e]/i.test(value)
-        : typeof value === 'number' && !Number.isInteger(value);
-    }) &&
-    data.every(row => {
-      const value = row[field];
-      if (typeof value === 'string') {
-        return !/^[+-]?0\d+$/.test(value) && isRealNumberSample(value);
-      }
-      if (typeof value === 'number') {
-        return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value));
-      }
-      return !notNullorUndefined(value);
-    })
-  );
-}
-
-/**
  * type-analyzer uses `isNaN(value)`, which throws on BigInt
  * ("Cannot convert a BigInt value to a number"). Arrow/Parquet Int64
  * columns yield BigInt in JS, so stringify those samples first.
@@ -576,11 +548,10 @@ export function getFieldsFromData(data: RowData, fieldOrder: string[]): Field[] 
       }
     }
 
-    // Keep fractional values when a numeric column was inferred as INT or NUMBER.
+    // read a column of numbers in scientific notation as real numbers instead of strings
     if (
-      (type === AnalyzerDATA_TYPES.NUMBER &&
-        analyzerData.every(row => isRealNumberSample(row[field]))) ||
-      (type === AnalyzerDATA_TYPES.INT && hasRealSampleInIntegerColumn(analyzerData, field))
+      type === AnalyzerDATA_TYPES.NUMBER &&
+      analyzerData.every(row => isRealNumberSample(row[field]))
     ) {
       type = AnalyzerDATA_TYPES.FLOAT;
     }

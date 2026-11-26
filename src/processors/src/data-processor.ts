@@ -126,6 +126,67 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   }
 };
 
+// Match complete decimal and scientific notation before considering a string
+// unsafe. Hex, identifiers, and arbitrary text keep their existing inference.
+const CSV_DECIMAL = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+
+function isUnsafeCsvDecimal(value: unknown): boolean {
+  if (typeof value !== 'string' || !/[.e]/i.test(value) || !CSV_DECIMAL.test(value)) {
+    return false;
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) return true;
+  if (!Number.isInteger(number)) return false;
+  if (!Number.isSafeInteger(number)) return true;
+
+  // Even a safe integer can be lossy if a decimal's nonzero fraction rounded
+  // away. Check the position of its last nonzero digit after the exponent.
+  const [mantissa, exponent = '0'] = value.toLowerCase().split('e');
+  const [whole, fraction = ''] = mantissa.split('.');
+  const digits = whole + fraction;
+  const significant = digits.replace(/0+$/, '');
+  return (
+    /[1-9]/.test(significant) &&
+    Number(exponent) + digits.length - significant.length < fraction.length
+  );
+}
+
+/** Inspect the existing sample only; never rescan the imported rows. */
+function getCsvNumericOverride(
+  sample: readonly Record<string, unknown>[],
+  field: Field
+): 'real' | 'string' | undefined {
+  const {name, type} = field;
+  if (
+    !sample.some(row => {
+      const value = row[name];
+      return typeof value === 'string'
+        ? /[.e]/i.test(value)
+        : typeof value === 'number' && !Number.isInteger(value);
+    })
+  ) {
+    return;
+  }
+
+  if (sample.some(row => isUnsafeCsvDecimal(row[name]))) return ALL_FIELD_TYPES.string;
+  if (type !== ALL_FIELD_TYPES.integer) return;
+
+  // The analyzer can tolerate a few INT mismatches. Widen only fully numeric
+  // samples that don't include padded or unsafe integer identifiers.
+  const acceptsReal = sample.every(row => {
+    const value = row[name];
+    if (typeof value === 'string' && (!CSV_DECIMAL.test(value) || /^[+-]?0\d+$/.test(value))) {
+      return false;
+    }
+    if (typeof value === 'number' || typeof value === 'string') {
+      const number = Number(value);
+      return Number.isFinite(number) && (!Number.isInteger(number) || Number.isSafeInteger(number));
+    }
+    return !notNullorUndefined(value);
+  });
+  return acceptsReal ? ALL_FIELD_TYPES.real : undefined;
+}
+
 /**
  * Process csv data, output a data object with `{fields: [], rows: []}`.
  * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
@@ -187,7 +248,7 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
 function processRowsWithHeader(
   rows: unknown[][],
   headerRow: string[],
-  strictDateInference: boolean
+  isCsv: boolean
 ): ProcessorResult {
   // Sampling uses names as object keys, so make them unique before inferring types.
   headerRow = renameDuplicateFields(headerRow).fieldByIndex;
@@ -195,23 +256,25 @@ function processRowsWithHeader(
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
-  const fields = getFieldsFromData(sample, headerRow).map(field => {
-    // The analyzer allows up to two non-date values. For date-only CSV
-    // columns, reject mixed reporting labels without scanning beyond the sample.
-    if (
-      strictDateInference &&
-      field.type === ALL_FIELD_TYPES.date &&
-      sample.some(row => isNonDateCsvSample(row[field.name]))
-    ) {
-      return {
-        ...field,
-        type: ALL_FIELD_TYPES.string,
-        analyzerType: AnalyzerDATA_TYPES.STRING,
-        format: ''
-      };
+  const fields = getFieldsFromData(sample, headerRow);
+  if (isCsv) {
+    for (const field of fields) {
+      // The analyzer tolerates some non-date samples; keep reporting labels as text.
+      const {name, type} = field;
+      const override =
+        type === ALL_FIELD_TYPES.integer || type === ALL_FIELD_TYPES.real
+          ? getCsvNumericOverride(sample, field)
+          : type === ALL_FIELD_TYPES.date && sample.some(row => isNonDateCsvSample(row[name]))
+          ? ALL_FIELD_TYPES.string
+          : undefined;
+      if (override) {
+        field.type = override;
+        field.analyzerType =
+          override === ALL_FIELD_TYPES.real ? AnalyzerDATA_TYPES.FLOAT : AnalyzerDATA_TYPES.STRING;
+        field.format = '';
+      }
     }
-    return field;
-  });
+  }
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};

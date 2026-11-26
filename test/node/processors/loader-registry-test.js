@@ -163,6 +163,55 @@ test('#loader-registry -> CSV imports keep mixed integer and fractional values',
   t.end();
 });
 
+test('#loader-registry -> CSV imports preserve unsafe decimal and scientific tokens', async t => {
+  const rows = [
+    ['1', '1', '1', '1001', '1', '1000e-2'],
+    ['2', '2', '2', '1002', '2', '2000e-2'],
+    ['9.007199254740993e15', '9007199254740993.0', '0.25', '1003', '9007199254740990.1', '3000e-2']
+  ];
+
+  for (const input of [rows, [...rows].reverse()]) {
+    const csv = [
+      'scientific,decimal,value,count,lost_fraction,exact_exponent',
+      ...input.map(row => row.join(','))
+    ].join('\n');
+    const direct = processCsvData(csv);
+    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+    const [streamed] = await processFileData({content: batch, fileCache: []});
+
+    for (const result of [direct, streamed.data]) {
+      t.deepEqual(
+        result.fields.map(field => field.type),
+        ['string', 'string', 'real', 'integer', 'string', 'real'],
+        'preserve unsafe values as text without changing ordinary measurements'
+      );
+      t.deepEqual(
+        result.rows,
+        input.map(([scientific, decimal, value, count, lostFraction, exactExponent]) => [
+          scientific,
+          decimal,
+          Number(value),
+          Number(count),
+          lostFraction,
+          Number(exactExponent)
+        ]),
+        'preserve unsafe tokens verbatim'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV number inference does not change JSON row imports', async t => {
+  const rows = [{value: '1.2'}, {value: '15.1419'}, {value: '100'}];
+  const file = new File([JSON.stringify(rows)], 'rows.json', {type: 'application/json'});
+  const batch = await readLastBatch(file);
+  const [streamed] = await processFileData({content: batch, fileCache: []});
+
+  t.equal(streamed.data.fields[0].type, 'integer', 'retain existing JSON inference');
+  t.end();
+});
+
 test('#loader-registry -> extensionless octet-stream Arrow is not parsed as FlatGeobuf', async t => {
   const bytes = tableToIPC(tableFromJSON([{name: 'alpha', value: 1}]), 'file');
   const file = new File([bytes], 'abc123', {type: 'application/octet-stream'});
