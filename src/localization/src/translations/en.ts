@@ -195,6 +195,10 @@ export default {
   },
   layerVisConfigs: {
     dashedLines: 'Dashed lines',
+    dashLength: 'Dash length',
+    dashLengthDescription: 'Length of each dash, as a multiple of half the stroke width.',
+    gapLength: 'Gap length',
+    gapLengthDescription: 'Space between dashes, as a multiple of half the stroke width.',
     donut: {
       composition: 'Composition',
       description:

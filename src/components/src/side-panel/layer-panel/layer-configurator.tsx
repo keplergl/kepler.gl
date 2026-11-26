@@ -1792,7 +1792,10 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
 
           {featureTypes.line ? (
-            <VisConfigSwitch {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps} />
+            <LayerConfigGroup {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps}>
+              <VisConfigSlider {...layer.visConfigSettings.dashLength} {...visConfiguratorProps} />
+              <VisConfigSlider {...layer.visConfigSettings.gapLength} {...visConfiguratorProps} />
+            </LayerConfigGroup>
           ) : null}
 
           {/* Elevation */}

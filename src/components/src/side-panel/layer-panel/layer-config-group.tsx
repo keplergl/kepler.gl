@@ -4,7 +4,7 @@
 import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 import classnames from 'classnames';
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage, useIntl} from 'react-intl';
 import Switch from '../../common/switch';
 import InfoHelperFactory from '../../common/info-helper';
 import {VertThreeDots} from '../../common/icons';
@@ -166,6 +166,7 @@ function LayerConfigGroupFactory(
     expanded = false,
     IconComponent = VertThreeDots
   }) => {
+    const intl = useIntl();
     const [collapsed, toggleCollapsed] = useState(!expanded);
     const onToggleCollapsed = useCallback(() => {
       collapsible && toggleCollapsed(!collapsed);
@@ -178,6 +179,7 @@ function LayerConfigGroupFactory(
           <StyledLayerConfigGroupAction className="layer-config-group__action">
             {property ? (
               <Switch
+                aria-label={intl.formatMessage({id: label, defaultMessage: label})}
                 checked={layer?.config.visConfig[property]}
                 id={`${layer?.id}-${property}`}
                 onChange={() => onChange?.({[property]: !layer?.config.visConfig[property]})}

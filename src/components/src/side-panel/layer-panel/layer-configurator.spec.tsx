@@ -167,7 +167,7 @@ test.each([
   ['line only', true, false, 0],
   ['mixed with polygon outlines off', true, true, 0],
   ['mixed with polygon elevation offset', true, true, 25]
-])('offers an enabled dash switch for GeoJSON lines: %s', async (_name, line, area, offset) => {
+])('groups editable dash lengths for GeoJSON lines: %s', async (_name, line, area, offset) => {
   const dataset = new KeplerTable({
     info: {id: 'geometry', label: 'Geometry'},
     color: [0, 0, 0]
@@ -224,9 +224,10 @@ test.each([
   });
   layer.setInitialLayerConfig(dataset);
   layer.updateLayerVisConfig({stroked: Boolean(offset), elevationOffset: offset});
-  const updateLayerVisConfig = jest.fn();
-  renderWithTheme(
-    <IntlWrapper>
+  const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
+  const Configurator = () => {
+    const [, refresh] = React.useReducer(count => count + 1, 0);
+    return (
       <LayerConfigurator
         layer={layer}
         datasets={{[dataset.id]: dataset}}
@@ -234,20 +235,59 @@ test.each([
         openModal={jest.fn()}
         updateLayerConfig={jest.fn()}
         updateLayerType={jest.fn()}
-        updateLayerVisConfig={updateLayerVisConfig}
+        updateLayerVisConfig={config => {
+          updateLayerVisConfig(config);
+          refresh();
+        }}
         updateLayerVisualChannelConfig={jest.fn()}
         updateLayerColorUI={jest.fn()}
         updateLayerTextLabel={jest.fn()}
       />
+    );
+  };
+  renderWithTheme(
+    <IntlWrapper>
+      <Configurator />
     </IntlWrapper>
   );
   const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed lines');
   expect(Boolean(toggle)).toBe(line);
   expect(toggle?.checked).not.toBe(true);
   if (toggle) {
-    // The polygon controls use a CSS-disabled group; the line switch must be outside it.
+    const group = toggle.closest('.layer-config-group') as HTMLElement;
+    const content = group.querySelector('.layer-config-group__content');
+    expect(content).toHaveClass('disabled');
+    // Polygon stroke settings must not disable the line group's switch.
     expect(toggle.closest('.disabled')).toBeNull();
     fireEvent.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(content).not.toHaveClass('disabled');
+    const inputFor = (label: string) =>
+      within(
+        within(group).getByText(label).closest('.side-panel-section') as HTMLElement
+      ).getByRole('spinbutton');
+    const dash = inputFor('Dash length');
+    const gap = inputFor('Gap length');
+    expect(dash).toHaveValue(3);
+    expect(gap).toHaveValue(2);
+    fireEvent.change(dash, {target: {value: '6'}});
+    fireEvent.blur(dash);
+    fireEvent.change(gap, {target: {value: '1.5'}});
+    fireEvent.blur(gap);
+    expect(updateLayerVisConfig.mock.calls).toEqual([
+      [{dashedLines: true}],
+      [{dashLength: 6}],
+      [{gapLength: 1.5}]
+    ]);
+    fireEvent.click(toggle);
+    expect(toggle).not.toBeChecked();
+    expect(content).toHaveClass('disabled');
+    fireEvent.click(toggle);
+    expect(dash).toHaveValue(6);
+    expect(gap).toHaveValue(1.5);
+  } else {
+    expect(screen.queryByText('Dash length')).toBeNull();
+    expect(screen.queryByText('Gap length')).toBeNull();
+    expect(updateLayerVisConfig).not.toHaveBeenCalled();
   }
-  expect(updateLayerVisConfig.mock.calls).toEqual(line ? [[{dashedLines: true}]] : []);
 });

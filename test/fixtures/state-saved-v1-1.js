@@ -981,6 +981,8 @@ mergedLayer0.config = {
     strokeColor: [181, 18, 65],
     strokeOpacity: 0.8,
     dashedLines: false,
+    dashLength: 3,
+    gapLength: 2,
     enable3d: true,
     wireframe: false,
     allowHover: true
@@ -2786,6 +2788,8 @@ mergedLayer1.config = {
     strokeColor: [221, 178, 124],
     strokeOpacity: 0.8,
     dashedLines: false,
+    dashLength: 3,
+    gapLength: 2,
     allowHover: true
   },
   animation: {enabled: false}

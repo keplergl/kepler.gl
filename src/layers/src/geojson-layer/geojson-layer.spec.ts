@@ -1317,7 +1317,7 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
       })
     );
 
-  test('keeps native GeoArrow line batches binary when dashing is enabled', async () => {
+  test('keeps native GeoArrow line batches binary with custom dash lengths', async () => {
     const first = lineVector(
       [
         [0, 0],
@@ -1353,7 +1353,7 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
       columns: {geojson: {value: 'geometry', fieldIdx: 0}}
     });
     layer.setInitialLayerConfig(dataset);
-    layer.updateLayerVisConfig({dashedLines: true});
+    layer.updateLayerVisConfig({dashedLines: true, dashLength: 6, gapLength: 1.5});
     const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as {data: unknown[]};
     const rendered = layer.renderLayer({
       data,
@@ -1374,7 +1374,7 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
       expect(props.extensions.some(extension => extension instanceof PathStyleExtension)).toBe(
         true
       );
-      expect(props.getDashArray).toEqual([3, 2]);
+      expect(props.getDashArray).toEqual([6, 1.5]);
     });
   });
 
@@ -1571,9 +1571,39 @@ describe('GeoJsonLayer numeric feature styles', () => {
     );
     expect(hasDash(getSublayerProps(dashed, 'polygons-stroke'))).toBe(false);
     expect(hasDash(getSublayerProps(dashed, 'points-circle'))).toBe(false);
+
+    layer.updateLayerVisConfig({dashLength: 6, gapLength: 1.5});
+    const adjusted = render(layer, dataset, data, 8);
+    expect(adjusted.props.data).toBe(solid.props.data);
+    expect(getSublayerProps(adjusted, 'linestrings').getDashArray).toEqual([6, 1.5]);
+    expect(getSublayerProps(adjusted, 'linestrings').id).toBe(lineProps.id);
+    const customSaved = JSON.parse(JSON.stringify(layerPropsV1.config.save(layer.config)));
+    const customRestored = layerPropsV1.config.load(customSaved.config, [layer]);
+    const reopened = new GeoJsonLayer({id: 'reopened'});
+    expect(reopened.copyLayerConfig(reopened.config, customRestored.config)).toMatchObject({
+      visConfig: {dashedLines: true, dashLength: 6, gapLength: 1.5}
+    });
+    // Maps saved before length controls retain the original 3:2 pattern.
+    expect(
+      reopened.copyLayerConfig(reopened.config, {visConfig: {dashedLines: true}})
+    ).toMatchObject({
+      visConfig: {dashedLines: true, dashLength: 3, gapLength: 2}
+    });
     layer.updateLayerVisConfig({dashedLines: false});
     expect(hasDash(getSublayerProps(render(layer, dataset, data, 8), 'linestrings'))).toBe(false);
   });
+
+  test.each([undefined, null, NaN, Infinity, -1, 0, '6'])(
+    'falls back to the original dash pattern for invalid lengths: %s',
+    async value => {
+      const {layer, dataset} = await initializeGeoJsonLayer([{geometry: line(0), properties: {}}]);
+      const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+      layer.updateLayerVisConfig({dashedLines: true, dashLength: value, gapLength: value});
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: false};
+      expect(deckLayer.getSubLayerProps({id: 'linestrings'}).getDashArray).toEqual([3, 2]);
+    }
+  );
 
   test('uses only the rendered path sublayer count when toggling dashes', async () => {
     const {layer, dataset} = await initializeGeoJsonLayer([

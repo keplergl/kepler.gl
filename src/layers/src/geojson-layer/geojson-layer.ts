@@ -79,6 +79,8 @@ export const geojsonVisConfigs: {
   opacity: 'opacity';
   strokeOpacity: VisConfigNumber;
   dashedLines: VisConfigBoolean;
+  dashLength: VisConfigNumber;
+  gapLength: VisConfigNumber;
   thickness: VisConfigNumber;
   strokeColor: 'strokeColor';
   colorRange: 'colorRange';
@@ -111,6 +113,28 @@ export const geojsonVisConfigs: {
     label: 'layerVisConfigs.dashedLines',
     group: 'stroke',
     property: 'dashedLines'
+  },
+  dashLength: {
+    type: 'number',
+    defaultValue: 3,
+    label: 'layerVisConfigs.dashLength',
+    description: 'layerVisConfigs.dashLengthDescription',
+    isRanged: false,
+    range: [0.1, 20],
+    step: 0.1,
+    group: 'stroke',
+    property: 'dashLength'
+  },
+  gapLength: {
+    type: 'number',
+    defaultValue: 2,
+    label: 'layerVisConfigs.gapLength',
+    description: 'layerVisConfigs.gapLengthDescription',
+    isRanged: false,
+    range: [0.1, 20],
+    step: 0.1,
+    group: 'stroke',
+    property: 'gapLength'
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
@@ -147,6 +171,8 @@ export type GeoJsonVisConfigSettings = {
   opacity: VisConfigNumber;
   strokeOpacity: VisConfigNumber;
   dashedLines: VisConfigBoolean;
+  dashLength: VisConfigNumber;
+  gapLength: VisConfigNumber;
   thickness: VisConfigNumber;
   strokeColor: VisConfigColorSelect;
   colorRange: VisConfigColorRange;
@@ -177,6 +203,8 @@ export type GeoJsonLayerVisConfig = {
   opacity: number;
   strokeOpacity: number;
   dashedLines: boolean;
+  dashLength: number;
+  gapLength: number;
   thickness: number;
   strokeColor: RGBColor;
   colorRange: ColorRange;
@@ -329,7 +357,6 @@ const SUPPORTED_COLUMN_MODES = [
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
 
 const geoJsonDashExtension = new PathStyleExtension({dash: true});
-const geoJsonDashPattern: [number, number] = [3, 2];
 const LINESTRING_SUBLAYER_ID = 'linestrings';
 const DASHED_LINESTRING_SUBLAYER_ID = 'dashed-linestrings';
 
@@ -1102,6 +1129,12 @@ export default class GeoJsonLayer extends Layer {
     };
 
     const dashedLines = this.usesDashedLines();
+    const dashPattern = (['dashLength', 'gapLength'] as const).map(property => {
+      const value = visConfig[property];
+      return Number.isFinite(value) && value > 0
+        ? value
+        : this.visConfigSettings[property].defaultValue;
+    });
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
@@ -1110,7 +1143,7 @@ export default class GeoJsonLayer extends Layer {
         ? {
             ...opaOverwrite,
             extensions: [...extensions, geoJsonDashExtension],
-            getDashArray: geoJsonDashPattern
+            getDashArray: dashPattern
           }
         : opaOverwrite;
       const GeoJsonLayerClass = dashedLines ? DashedGeoJsonLayer : DeckGLGeoJsonLayer;

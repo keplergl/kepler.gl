@@ -1071,6 +1071,8 @@ export const expectedSavedLayer2 = {
       wireframe: false,
       strokeOpacity: 0.8,
       dashedLines: false,
+      dashLength: 3,
+      gapLength: 2,
       allowHover: true
     },
     textLabel: [DEFAULT_TEXT_LABEL]
@@ -1113,6 +1115,8 @@ export const expectedLoadedLayer2 = {
       strokeColor: [11, 11, 11],
       strokeOpacity: 0.8,
       dashedLines: false,
+      dashLength: 3,
+      gapLength: 2,
       radius: 10,
       sizeRange: [0, 10],
       radiusRange: [0, 50],
