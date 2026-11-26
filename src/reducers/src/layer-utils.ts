@@ -55,6 +55,7 @@ export type LayersToRender = {
 
 export type AggregationLayerHoverData = {
   points: any[];
+  cellOutline?: number[][];
   colorValue?: any;
   elevationValue?: any;
   aggregatedData?: Record<
