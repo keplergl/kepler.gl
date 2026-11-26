@@ -7,16 +7,13 @@ import test from 'tape';
 
 const ROOT = path.resolve(__dirname, '../..');
 
+// Only committed lockfiles belong here. Other example lockfiles are ignored by
+// Git and may exist locally, but are absent from clean checkouts and CI.
 const LOCKFILES = [
   'yarn.lock',
   'website/yarn.lock',
   'examples/demo-app/yarn.lock',
-  'examples/demo-app-sqlrooms/yarn.lock',
-  'examples/custom-reducer/yarn.lock',
-  'examples/custom-theme/yarn.lock',
-  'examples/node-app/yarn.lock',
-  'examples/open-modal/yarn.lock',
-  'examples/replace-component/yarn.lock'
+  'examples/demo-app-sqlrooms/yarn.lock'
 ];
 
 // Minimum version on each release line. A 0.x line is major.minor because
@@ -172,8 +169,10 @@ test('Python widget npm lockfile resolves patched dependencies, including nested
   const rel = 'bindings/python/package-lock.json';
   const lockfile = JSON.parse(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
   const floors = {
+    'd3-color': FLOORS['d3-color'],
     fflate: FLOORS.fflate,
-    postcss: STANDALONE_FLOORS.postcss
+    postcss: STANDALONE_FLOORS.postcss,
+    thrift: FLOORS.thrift
   };
   const found = new Set();
 
