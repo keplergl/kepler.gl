@@ -350,6 +350,7 @@ export default function VisConfigSliderFactory(
               value0={isRanged ? value0 : range0}
               value1={value1}
               step={step}
+              preserveInputPrecision={property === 'opacity'}
               isRanged={Boolean(isRanged)}
               onChange={v => onChange({[property]: isRanged ? v : v[1]})}
               inputTheme={inputTheme}
