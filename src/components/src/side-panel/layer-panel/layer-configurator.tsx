@@ -1783,6 +1783,9 @@ export default function LayerConfiguratorFactory(
                 label={false}
               />
             )}
+            {featureTypes.line ? (
+              <VisConfigSwitch {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps} />
+            ) : null}
             <ConfigGroupCollapsibleContent>
               <ChannelByValueSelector
                 channel={layer.visualChannels.size}

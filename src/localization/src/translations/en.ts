@@ -194,6 +194,7 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    dashedLines: 'Dashed lines',
     donut: {
       composition: 'Composition',
       description:

@@ -23,6 +23,7 @@ import Layer, {
   LayerStrokeColorConfig,
   UpdateTriggers
 } from '../base-layer';
+import {PathStyleExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
   getGeojsonLayerMeta,
@@ -77,6 +78,7 @@ const SUPPORTED_ANALYZER_TYPES = {
 export const geojsonVisConfigs: {
   opacity: 'opacity';
   strokeOpacity: VisConfigNumber;
+  dashedLines: VisConfigBoolean;
   thickness: VisConfigNumber;
   strokeColor: 'strokeColor';
   colorRange: 'colorRange';
@@ -102,6 +104,13 @@ export const geojsonVisConfigs: {
   strokeOpacity: {
     ...LAYER_VIS_CONFIGS.opacity,
     property: 'strokeOpacity'
+  },
+  dashedLines: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.dashedLines',
+    group: 'stroke',
+    property: 'dashedLines'
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
@@ -137,6 +146,7 @@ export const geojsonVisConfigs: {
 export type GeoJsonVisConfigSettings = {
   opacity: VisConfigNumber;
   strokeOpacity: VisConfigNumber;
+  dashedLines: VisConfigBoolean;
   thickness: VisConfigNumber;
   strokeColor: VisConfigColorSelect;
   colorRange: VisConfigColorRange;
@@ -166,6 +176,7 @@ export type GeoJsonLayerColumnsConfig = {
 export type GeoJsonLayerVisConfig = {
   opacity: number;
   strokeOpacity: number;
+  dashedLines: boolean;
   thickness: number;
   strokeColor: RGBColor;
   colorRange: ColorRange;
@@ -316,6 +327,19 @@ const SUPPORTED_COLUMN_MODES = [
   }
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
+
+const geoJsonDashExtension = new PathStyleExtension({dash: true});
+const geoJsonDashPattern: [number, number] = [3, 2];
+
+class DashedGeoJsonLayer extends DeckGLGeoJsonLayer {
+  protected getSubLayerProps(props?: {id?: string; [key: string]: unknown}) {
+    const sublayer = super.getSubLayerProps(props);
+    // deck.gl transfers attributes between matching IDs. Keep the dashed path's
+    // buffers out of the solid path when the extension is removed.
+    if (props?.id === 'linestrings') sublayer.id = `${this.id}-dashed-linestrings`;
+    return sublayer;
+  }
+}
 
 export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
@@ -1060,10 +1084,20 @@ export default class GeoJsonLayer extends Layer {
       visible: defaultLayerProps.visible
     };
 
+    const dashedLines = featureTypes?.line && visConfig.dashedLines === true;
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
-      return new DeckGLGeoJsonLayer({
+      const extensions = [...defaultLayerProps.extensions, new FilterArrowExtension()];
+      const linestringProps = dashedLines
+        ? {
+            ...opaOverwrite,
+            extensions: [...extensions, geoJsonDashExtension],
+            getDashArray: geoJsonDashPattern
+          }
+        : opaOverwrite;
+      const GeoJsonLayerClass = dashedLines ? DashedGeoJsonLayer : DeckGLGeoJsonLayer;
+      return new GeoJsonLayerClass({
         ...defaultLayerProps,
         ...layerProps,
         ...props,
@@ -1082,7 +1116,7 @@ export default class GeoJsonLayer extends Layer {
         jointRounded: true,
         getElevation: offsetActive && !visConfig.enable3d ? 0 : props.getElevation,
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
+        extensions,
         _subLayerProps: {
           'polygons-fill': {
             type: OffsetSolidPolygonLayer,
@@ -1095,7 +1129,7 @@ export default class GeoJsonLayer extends Layer {
             }
           },
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
-          ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
+          ...(featureTypes?.line ? {linestrings: linestringProps} : {}),
           ...(featureTypes?.point
             ? {
                 points: {

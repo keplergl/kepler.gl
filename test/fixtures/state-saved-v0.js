@@ -1452,6 +1452,7 @@ mergedLayer4.config = {
     enable3d: false,
     wireframe: false,
     strokeOpacity: 0.8,
+    dashedLines: false,
     allowHover: true
   },
   animation: {enabled: false}

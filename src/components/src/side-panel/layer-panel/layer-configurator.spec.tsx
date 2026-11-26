@@ -161,3 +161,70 @@ test.each([
     });
   }
 );
+
+test.each([false, true])('offers a dash switch only for GeoJSON with lines (%s)', async line => {
+  const dataset = new KeplerTable({
+    info: {id: 'geometry', label: 'Geometry'},
+    color: [0, 0, 0]
+  });
+  await dataset.importData({
+    data: {
+      fields: [{name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}],
+      rows: [
+        [
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: line
+              ? {
+                  type: 'LineString',
+                  coordinates: [
+                    [0, 0],
+                    [1, 1]
+                  ]
+                }
+              : {
+                  type: 'Polygon',
+                  coordinates: [
+                    [
+                      [0, 0],
+                      [0, 1],
+                      [1, 1],
+                      [0, 0]
+                    ]
+                  ]
+                }
+          }
+        ]
+      ]
+    }
+  });
+  const layer = new KeplerGlLayers.GeojsonLayer({
+    id: 'geometry',
+    dataId: dataset.id,
+    columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+  });
+  layer.setInitialLayerConfig(dataset);
+  const updateLayerVisConfig = jest.fn();
+  renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        layer={layer}
+        datasets={{[dataset.id]: dataset}}
+        layerTypeOptions={[]}
+        openModal={jest.fn()}
+        updateLayerConfig={jest.fn()}
+        updateLayerType={jest.fn()}
+        updateLayerVisConfig={updateLayerVisConfig}
+        updateLayerVisualChannelConfig={jest.fn()}
+        updateLayerColorUI={jest.fn()}
+        updateLayerTextLabel={jest.fn()}
+      />
+    </IntlWrapper>
+  );
+  const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed lines');
+  expect(Boolean(toggle)).toBe(line);
+  expect(toggle?.checked).not.toBe(true);
+  if (toggle) fireEvent.click(toggle);
+  expect(updateLayerVisConfig.mock.calls).toEqual(line ? [[{dashedLines: true}]] : []);
+});
