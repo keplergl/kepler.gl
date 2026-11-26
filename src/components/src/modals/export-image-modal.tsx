@@ -143,13 +143,21 @@ const ImageOptionList = styled.div`
       margin: 0;
     }
 
-    button {
+    button,
+    .custom-dimensions-help {
+      height: ${props => props.theme.inputBoxHeight};
+      box-sizing: border-box;
       flex-shrink: 0;
+    }
+
+    button {
       white-space: nowrap;
     }
 
     .custom-dimensions-help {
-      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      margin-left: 0;
     }
   }
 
