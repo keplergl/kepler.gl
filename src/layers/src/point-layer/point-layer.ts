@@ -526,7 +526,7 @@ export default class PointLayer extends Layer {
   }
 
   static findDefaultLayerProps(dataset: KeplerTable) {
-    const {fieldPairs = [], type, label} = dataset;
+    const {fieldPairs = [], type, label, fields} = dataset;
 
     const props: FindDefaultLayerProps[] = [];
 
@@ -543,7 +543,9 @@ export default class PointLayer extends Layer {
         color?: RGBColor;
         isVisible?: boolean;
         columns?: PointLayerColumnsConfig;
+        sizeField?: PointLayerConfig['sizeField'];
       } = {
+        ...(pair.pair.radius ? {sizeField: fields[pair.pair.radius.fieldIdx]} : {}),
         label:
           // Skip the generic 'point' fallback from findPointFieldPairs and use the dataset label instead
           pair.defaultName && pair.defaultName !== 'point'
@@ -571,12 +573,15 @@ export default class PointLayer extends Layer {
     return {props, altProps};
   }
 
-  getDefaultLayerConfig(props: LayerBaseConfigPartial) {
+  getDefaultLayerConfig(
+    props: LayerBaseConfigPartial & Partial<Pick<PointLayerConfig, 'sizeField'>>
+  ) {
     const defaultLayerConfig = super.getDefaultLayerConfig(props ?? {});
     return {
       ...defaultLayerConfig,
 
       columnMode: props?.columnMode ?? DEFAULT_COLUMN_MODE,
+      sizeField: props?.sizeField ?? defaultLayerConfig.sizeField,
 
       // add stroke color visual channel
       strokeColorField: null,

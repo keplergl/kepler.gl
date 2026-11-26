@@ -196,6 +196,10 @@ export type FieldPair = {
       fieldIdx: number;
       value: string;
     };
+    radius?: {
+      fieldIdx: number;
+      value: string;
+    };
     altitude?: {
       fieldIdx: number;
       value: string;

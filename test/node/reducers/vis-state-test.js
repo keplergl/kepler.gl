@@ -341,6 +341,38 @@ function autoLayers(dataset, layerClasses = LayerClasses) {
   return addDefaultLayers({...INITIAL_VIS_STATE, layerClasses}, {[dataset.id]: dataset}).newLayers;
 }
 
+test('#visStateReducer -> CSV Point layers pair coordinates with their own altitude and radius', t => {
+  const data = processCsvData(
+    'fooLat,fooLng,fooRadius,bar_lat,bar_lng,bar_alt,bar_radius,bazLat,bazLng,bazAlt,bazRadius\n' +
+      '37,-122,10,40,-73,90,300,52,13,12,small\n' +
+      '38,-123,20,41,-74,100,600,53,14,34,large'
+  );
+  const state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [[{info: {id: 'points'}, data}]]}
+  ]);
+  const points = state.layers.filter(layer => layer.type === 'point');
+  t.deepEqual(
+    points.map(layer => layer.config.label),
+    ['foo', 'bar', 'baz']
+  );
+  if (points.length !== 3) return t.end();
+  const [foo, bar, baz] = points;
+  t.equal(foo.config.sizeField?.name, 'fooRadius');
+  t.equal(bar.config.sizeField?.name, 'bar_radius');
+  t.equal(bar.config.columns.altitude.value, 'bar_alt');
+  t.equal(baz.config.columns.altitude.value, 'bazAlt');
+  t.equal(baz.config.sizeField, null, 'does not bind nonnumeric radius');
+  for (const layer of [foo, bar]) {
+    const {data: rows, getRadius} = state.layerData[state.layers.indexOf(layer)];
+    t.deepEqual(
+      rows.map(getRadius),
+      layer.config.visConfig.radiusRange,
+      'radius drives rendered size'
+    );
+  }
+  t.end();
+});
+
 test('#visStateReducer -> addDefaultLayers: requires a complete icon token in the column name', t => {
   const cases = [
     {column: 'peak_temp_c', values: [37.4, 36.2], expectedType: 'point'},
