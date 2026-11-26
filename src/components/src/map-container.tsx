@@ -1110,7 +1110,8 @@ export default function MapContainerFactory(
           hoverInfo: clicked,
           layers,
           layersToRender,
-          datasets
+          datasets,
+          comparisonLayer: compareMode ? layerHoverProp : null
         });
         if (layerHoverProp && layerPinnedProp) {
           layerHoverProp.primaryData = layerPinnedProp.data;

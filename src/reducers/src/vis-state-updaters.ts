@@ -1026,7 +1026,8 @@ export function layerDataIdChangeUpdater(
   }
   const idx = state.layers.findIndex(l => l.id === oldLayer.id);
 
-  let newLayer = oldLayer.updateLayerConfig({dataId});
+  // A different data source should start with its own dataset tooltip settings.
+  let newLayer = oldLayer.updateLayerConfig({dataId, tooltipFields: undefined});
 
   // this may happen when a layer is new (type: null and no columns) but it's not ready to be saved
   if (newLayer.isValidToSave()) {
@@ -4835,6 +4836,12 @@ function reconcileLayerWithNewSchema(
   });
   if (columnsChanged) {
     configPatch.columns = {...layer.config.columns, ...columnsPatch};
+  }
+
+  if (layer.config.tooltipFields) {
+    configPatch.tooltipFields = layer.config.tooltipFields.map(name =>
+      Object.prototype.hasOwnProperty.call(renames, name) ? renames[name] : name
+    );
   }
 
   const {pulseTimeField} = layer.config.visConfig;

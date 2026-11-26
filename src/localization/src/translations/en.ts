@@ -120,6 +120,8 @@ export default {
     strokeWidth: 'Stroke Width',
     strokeColor: 'Stroke Color',
     basic: 'Basic',
+    tooltipFields: 'Tooltip fields',
+    customTooltipFields: 'Use layer-specific fields',
     trailLength: 'Trail Length',
     trailLengthDescription: 'Number of seconds for a path to completely fade out',
     newLayer: 'new layer',
@@ -1403,6 +1405,7 @@ ${'```'}
     }
   },
   fieldSelector: {
+    reorderField: 'Reorder {field}',
     clearAll: 'Clear All',
     formatting: 'Formatting'
   },

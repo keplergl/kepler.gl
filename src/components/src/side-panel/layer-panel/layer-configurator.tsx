@@ -73,7 +73,13 @@ import {
   formatZarrCoordinate
 } from '@kepler.gl/table';
 import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
-import {capitalizeFirstLetter, clamp, colorMaybeToRGB, getNumericStepSize} from '@kepler.gl/utils';
+import {
+  capitalizeFirstLetter,
+  clamp,
+  colorMaybeToRGB,
+  getApplicationConfig,
+  getNumericStepSize
+} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
@@ -522,6 +528,20 @@ export const getLayerChannelConfigProps = (props: LayerConfiguratorProps) => ({
   onChange: props.updateLayerVisualChannelConfig,
   setColorUI: props.updateLayerColorUI
 });
+
+// Specialized tooltips use picking metadata or composition rather than dataset fields.
+const NON_FIELD_TOOLTIP_LAYERS = new Set<string>([
+  LAYER_TYPES.bitmap,
+  LAYER_TYPES.contour,
+  LAYER_TYPES.donut,
+  LAYER_TYPES.flow,
+  LAYER_TYPES.flowField,
+  LAYER_TYPES.heatmap,
+  LAYER_TYPES.rasterTile,
+  LAYER_TYPES.tile3d,
+  LAYER_TYPES.wms,
+  LAYER_TYPES.zarr
+]);
 
 LayerConfiguratorFactory.deps = [
   SourceDataSelectorFactory,
@@ -2748,6 +2768,13 @@ export default function LayerConfiguratorFactory(
       updateLayerConfig({columnMode: key});
     };
 
+    setTooltipFields = (selected: unknown) => {
+      const {updateLayerConfig} = this.props;
+      if (Array.isArray(selected)) {
+        updateLayerConfig({tooltipFields: selected.map(field => field.name)});
+      }
+    };
+
     render() {
       const {
         layer,
@@ -2759,7 +2786,7 @@ export default function LayerConfiguratorFactory(
         disableTypeSelect = false
       } = this.props;
       const {fields = [], fieldPairs = undefined} = layer.config.dataId
-        ? datasets[layer.config.dataId]
+        ? datasets[layer.config.dataId] || {}
         : {};
       const {config} = layer;
       const sourceColumnModes =
@@ -2833,6 +2860,38 @@ export default function LayerConfiguratorFactory(
               layerChannelConfigProps,
               layerConfiguratorProps
             })}
+          {getApplicationConfig().enableLayerTooltipFields &&
+          layer.type &&
+          fields.length &&
+          !NON_FIELD_TOOLTIP_LAYERS.has(layer.type) ? (
+            <LayerConfigGroup label="layer.tooltipFields" collapsible>
+              <ConfigGroupCollapsibleContent>
+                <SidePanelSection>
+                  <Switch
+                    id={`layer-tooltip-${layer.id}`}
+                    label={<FormattedMessage id="layer.customTooltipFields" />}
+                    checked={config.tooltipFields !== undefined}
+                    onChange={event =>
+                      updateLayerConfig({tooltipFields: event.target.checked ? [] : undefined})
+                    }
+                  />
+                </SidePanelSection>
+                {config.tooltipFields !== undefined ? (
+                  <SidePanelSection>
+                    <FieldSelector
+                      fields={fields}
+                      value={config.tooltipFields}
+                      onSelect={this.setTooltipFields}
+                      reorderItems={this.setTooltipFields}
+                      multiSelect
+                      closeOnSelect={false}
+                      inputTheme="secondary"
+                    />
+                  </SidePanelSection>
+                ) : null}
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
         </StyledLayerConfigurator>
       );
     }

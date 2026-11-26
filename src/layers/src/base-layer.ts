@@ -358,7 +358,7 @@ class Layer implements KeplerLayer {
   }
 
   get noneLayerDataAffectingProps() {
-    return ['label', 'opacity', 'thickness', 'isVisible', 'hidden'];
+    return ['label', 'opacity', 'thickness', 'isVisible', 'hidden', 'tooltipFields'];
   }
 
   get visualChannels(): VisualChannels {
@@ -829,9 +829,9 @@ class Layer implements KeplerLayer {
 
     this.updateLayerConfig({
       ...copied,
-      // Optional animation fields are absent from a new layer's default keys.
-      // Preserve them independently of the destination's supported properties.
-      propertyTransitions: configToCopy.propertyTransitions
+      // Optional fields are absent from a new layer's default keys.
+      propertyTransitions: configToCopy.propertyTransitions,
+      tooltipFields: configToCopy.tooltipFields
     });
     // validate visualChannel field type and scale types
     Object.keys(this.visualChannels).forEach(channel => {

@@ -1,17 +1,30 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {MouseEventHandler, ReactNode, useMemo, useCallback} from 'react';
+import React, {MouseEventHandler, useMemo, useCallback} from 'react';
 
 import styled, {IStyledComponent} from 'styled-components';
-import {DndContext, DragOverlay, pointerWithin} from '@dnd-kit/core';
-import {SortableContext, useSortable} from '@dnd-kit/sortable';
+import {
+  closestCenter,
+  CollisionDetection,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import {SortableContext, sortableKeyboardCoordinates, useSortable} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
 import {restrictToParentElement} from '@dnd-kit/modifiers';
 
 import {FormattedMessage} from '@kepler.gl/localization';
+import {useIntl} from 'react-intl';
 import {arrayMove} from '@kepler.gl/common-utils';
 
 import Delete from '../icons/delete';
+import VertDots from '../icons/vert-dots';
 import {BaseComponentProps} from '../../types';
 import {shouldForwardProp} from '../styled-components';
 
@@ -55,15 +68,71 @@ export const ChickletTag: IStyledComponent<'web'> = styled.span`
   }
 `;
 
+const ChickletDragHandle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  margin-right: 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
+`;
+
+const getSelectedItemId = (item, displayOption, sortableDefault: boolean) =>
+  // Field display names need not be unique; keep the name as the identity when sorting.
+  sortableDefault && typeof item?.name === 'string' ? item.name : displayOption(item);
+
+const sortableCollision: CollisionDetection = args =>
+  args.pointerCoordinates ? pointerWithin(args) : closestCenter(args);
+
 interface ChickletProps {
   disabled?: boolean;
-  name: ReactNode;
+  name: string;
   remove?: MouseEventHandler<SVGSVGElement>;
   inputTheme?: string;
+  sortable?: ReturnType<typeof useSortable>;
 }
 
-const Chicklet = ({disabled, name, remove, inputTheme}: ChickletProps) => (
-  <ChickletButton $inputTheme={inputTheme}>
+const SortableChickletHandle = ({
+  name,
+  sortable
+}: {
+  name: string;
+  sortable: ReturnType<typeof useSortable>;
+}) => {
+  const intl = useIntl();
+  return (
+    <ChickletDragHandle
+      type="button"
+      ref={sortable.setActivatorNodeRef}
+      {...sortable.attributes}
+      {...sortable.listeners}
+      aria-label={intl.formatMessage({id: 'fieldSelector.reorderField'}, {field: name})}
+      onClick={event => event.stopPropagation()}
+    >
+      <VertDots height="12px" aria-hidden="true" />
+    </ChickletDragHandle>
+  );
+};
+
+const Chicklet = ({disabled, name, remove, inputTheme, sortable}: ChickletProps) => (
+  <ChickletButton
+    $inputTheme={inputTheme}
+    ref={sortable?.setNodeRef}
+    style={
+      sortable
+        ? {
+            transform: CSS.Translate.toString(sortable.transform),
+            transition: sortable.transition,
+            zIndex: sortable.isDragging ? 1 : undefined,
+            position: sortable.isDragging ? 'relative' : undefined
+          }
+        : undefined
+    }
+  >
+    {sortable && <SortableChickletHandle name={name} sortable={sortable} />}
     <ChickletTag>{name}</ChickletTag>
     <Delete height="16px" onClick={disabled ? undefined : remove} />
   </ChickletButton>
@@ -100,11 +169,11 @@ const ChickletedItem = ({
   CustomChickletComponent,
   inputTheme,
   disabled,
-  itemId
+  itemId,
+  sortableDefault
 }) => {
-  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({
-    id: itemId
-  });
+  const sortable = useSortable({id: itemId});
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} = sortable;
   const chickletProps = useMemo(
     () => ({
       inputTheme,
@@ -137,7 +206,7 @@ const ChickletedItem = ({
   return CustomChickletComponent ? (
     <CustomChickletComponent {...chickletProps} />
   ) : (
-    <Chicklet {...chickletProps} />
+    <Chicklet {...chickletProps} sortable={sortableDefault ? sortable : undefined} />
   );
 };
 
@@ -159,18 +228,23 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
   selectedItems = [],
   placeholder = '',
   removeItem,
-  reorderItems = d => d,
+  reorderItems,
   displayOption = d => String(d),
   inputTheme,
   CustomChickletComponent
 }) => {
+  const sortableDefault = Boolean(reorderItems && !CustomChickletComponent && !disabled);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates})
+  );
   const selectedItemIds = useMemo(
-    () => selectedItems.map(item => displayOption(item)),
-    [displayOption, selectedItems]
+    () => selectedItems.map(item => getSelectedItemId(item, displayOption, sortableDefault)),
+    [displayOption, selectedItems, sortableDefault]
   );
   const handleDragEnd = useCallback(
     ({active, over}) => {
-      if (!over) return;
+      if (!over || !reorderItems) return;
       if (active.id !== over.id) {
         const oldIndex = selectedItemIds.findIndex(itemId => itemId === active.id);
         const newIndex = selectedItemIds.findIndex(itemId => itemId === over.id);
@@ -190,7 +264,8 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
       <DndContext
         onDragEnd={handleDragEnd}
         modifiers={DND_MODIFIERS}
-        collisionDetection={pointerWithin}
+        collisionDetection={sortableDefault ? sortableCollision : pointerWithin}
+        sensors={sortableDefault ? sensors : undefined}
         autoScroll={false}
       >
         <SortableContext items={selectedItemIds}>
@@ -198,13 +273,16 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
             selectedItems.map((item, index) => (
               <ChickletedItem
                 item={item}
-                itemId={displayOption(item)}
+                itemId={selectedItemIds[index]}
                 removeItem={removeItem}
                 displayOption={displayOption}
                 CustomChickletComponent={CustomChickletComponent}
                 disabled={disabled}
+                sortableDefault={sortableDefault}
                 inputTheme={inputTheme}
-                key={`${displayOption(item)}_${index}`}
+                key={
+                  sortableDefault ? selectedItemIds[index] : `${selectedItemIds[index]}_${index}`
+                }
               />
             ))
           ) : (
@@ -213,7 +291,8 @@ const ChickletedInput: React.FC<ChickletedInputProps> = ({
             </span>
           )}
         </SortableContext>
-        <DragOverlay dropAnimation={null} />
+        {/* Default sortable chips move in place and use their own measured drag rectangle. */}
+        {!sortableDefault && <DragOverlay dropAnimation={null} />}
       </DndContext>
     </ChickletedInputContainer>
   );
