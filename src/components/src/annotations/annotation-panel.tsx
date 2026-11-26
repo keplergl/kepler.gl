@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useCallback} from 'react';
+import React, {useCallback, useContext} from 'react';
 import classnames from 'classnames';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
@@ -50,9 +50,10 @@ import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
-import {hexToRgb, rgbToHex} from '@kepler.gl/utils';
+import {getCameraSnapshot, hexToRgb, rgbToHex} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
+import {MapViewStateContext} from '../map-view-state-context';
 
 const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
   <Base viewBox="0 0 24 24" {...props}>
@@ -676,12 +677,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
     visStateActions
   }) => {
     const {annotations, selectedAnnotationId} = visState;
+    const {getInternalViewState} = useContext(MapViewStateContext);
 
     const handleAddAnnotation = useCallback(() => {
+      // Annotations default to map 0. Its live camera can be ahead of Redux
+      // while the debounced viewport update is still pending.
+      const camera = getCameraSnapshot(getInternalViewState(0)) ?? mapState;
       visStateActions.addAnnotation({
-        anchorPoint: [mapState.longitude, mapState.latitude]
+        anchorPoint: [camera.longitude, camera.latitude]
       });
-    }, [visStateActions, mapState.longitude, mapState.latitude]);
+    }, [visStateActions, getInternalViewState, mapState]);
 
     const handleSelectAnnotation = useCallback(
       (id: string) => {
