@@ -199,6 +199,7 @@ void main() {
   bool cameraAboveWater = surfaceFog.cameraHeight > surfaceFog.fogHeight;
   float waterDepth = max((surfaceFog.fogHeight - sceneZ) / surfaceFog.unitsPerMeter, 0.0);
 
+  vec3 waterPosition = vec3(0.0);
   vec2 worldMeters = vec2(0.0);
   float footprint = 0.0;
   float shoreWidth = 0.0;
@@ -210,7 +211,8 @@ void main() {
     float rayZ = abs(ray.z) > 1e-6 ? ray.z : (ray.z < 0.0 ? -1e-6 : 1e-6);
     float waterT = (surfaceFog.fogHeight - nearP.z) / rayZ;
     // The surface can lie between the camera and its near plane (negative t).
-    worldMeters = (nearP.xy + ray.xy * waterT) / surfaceFog.waveUnitsPerMeter;
+    waterPosition = vec3(nearP.xy + ray.xy * waterT, surfaceFog.fogHeight);
+    worldMeters = waterPosition.xy / surfaceFog.waveUnitsPerMeter;
 
     // Evaluate derivatives before any per-pixel early returns at the waterline.
     footprint = max(length(dFdx(worldMeters)), length(dFdy(worldMeters)));
@@ -251,12 +253,26 @@ void main() {
     vec3 cameraView = normalize(cross(cameraRight, invMat[1].xyz));
     cameraView *= cameraView.z < 0.0 ? -1.0 : 1.0;
     vec3 L = vec3(-cameraView.xy, cameraView.z);
+    float lightFalloff = 1.0;
+    if (abs(invMat[2].w) > 1e-8 && cameraView.z > 0.001) {
+      // The inverse depth column gives the perspective camera position. Mirror
+      // it around the central water intersection, then bring the light closer
+      // to that point so its reflection occupies a spot rather than the frame.
+      vec3 cameraPosition = invMat[2].xyz / invMat[2].w;
+      float focusDistance = (cameraPosition.z - surfaceFog.fogHeight) / cameraView.z;
+      vec3 focus = cameraPosition - cameraView * focusDistance;
+      float lightDistance = 0.1 * focusDistance;
+      vec3 lightPosition = focus + L * lightDistance;
+      vec3 toLight = lightPosition - waterPosition;
+      L = normalize(toLight);
+      lightFalloff = min(1.0, lightDistance * lightDistance / dot(toLight, toLight));
+    }
     float facing = clamp(dot(N, V), 0.0, 1.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
     vec3 reflectedSky = skyReflection(reflect(-V, N));
     waterSurface = mix(waterBody, reflectedSky, fresnel);
 
-    // A broad light sheen, filtered by normal variance. Narrow unfiltered lobes
+    // Filter the point light's reflection by normal variance. Narrow unfiltered lobes
     // turn subpixel ripples into isolated white pixels, even with filtered waves.
     float lightAlignment = max(dot(N, normalize(L + V)), 0.0);
     float shininess = 8.0 / (1.0 + 8.0 * normalVariance);
@@ -265,7 +281,7 @@ void main() {
     // Keep local slope contrast under the broad reflection. Flat or unresolved
     // water contributes no ripple shading.
     float rippleContrast = dot(N.xy, vec2(0.30, -0.34));
-    waterSurface += vec3(1.0, 0.96, 0.86) * glint + vec3(rippleContrast);
+    waterSurface += vec3(1.0, 0.96, 0.86) * glint * lightFalloff + vec3(rippleContrast);
 
     // Only sample shoreline noise where its highlight can contribute. Basemap
     // depth is unknown, and invisible or unresolved contacts have no foam.
@@ -358,7 +374,7 @@ const surfaceFogModule = {
  *
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
  * When `pattern` is true, a level water surface uses filtered wave normals,
- * sky reflections, a camera-following light, depth absorption and shoreline highlights.
+ * sky reflections, a camera-following point light, depth absorption and shoreline highlights.
  * In that mode `thickness` sets the underwater color and visibility transition.
  * Zero hides submerged geometry and disables depth shading at full density.
  * Geometry above the water surface is left unchanged.

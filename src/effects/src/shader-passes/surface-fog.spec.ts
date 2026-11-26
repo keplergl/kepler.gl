@@ -169,7 +169,9 @@ describe('surface fog rendering', () => {
     latitude = 50.45,
     bearing = 35,
     nearZMultiplier = 0.1,
-    size = SIZE
+    size = SIZE,
+    offsetX = 0,
+    offsetY = 0
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -184,7 +186,8 @@ describe('surface fog rendering', () => {
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
     for (let row = 0; row < 4; row++) {
-      matrix[12 + row] += matrix[row] * (512 - size / 2) + matrix[4 + row] * (384 - size / 2);
+      matrix[12 + row] +=
+        matrix[row] * (512 - size / 2 + offsetX) + matrix[4 + row] * (384 - size / 2 + offsetY);
     }
     return {
       width: size,
@@ -539,6 +542,35 @@ describe('surface fog rendering', () => {
       expect(maxPixelDifference(reflection, reflections[0])).toBeLessThanOrEqual(1);
       // Matching equally dark frames must not count as a visible reflection.
       expect(center(reflection)[0]).toBeGreaterThan(15);
+    }
+  });
+
+  test.each([0, 45, 65])('confines the reflection to a spot at pitch %s', pitch => {
+    const brightness = (offsetX: number, offsetY: number) => {
+      const uniforms = viewportUniforms(croppedViewport({zoom: 19, pitch, offsetX, offsetY}));
+      return center(
+        render({
+          depth: 1,
+          uniforms: {
+            ...uniforms,
+            fogHeight: 0,
+            fogThickness: 0,
+            fogColor: [0, 0, 0],
+            waveUnitsPerMeter: (uniforms.waveUnitsPerMeter as number) / 1024
+          }
+        })
+      )[0];
+    };
+    const highlight = brightness(0, 0);
+    // Sample both axes of the same view, not different camera orientations.
+    // A uniformly bright surface or a reflection band must not pass as a spot.
+    for (const [x, y] of [
+      [-384, 0],
+      [384, 0],
+      [0, -128],
+      [0, 128]
+    ]) {
+      expect(highlight - brightness(x, y)).toBeGreaterThan(20);
     }
   });
 
