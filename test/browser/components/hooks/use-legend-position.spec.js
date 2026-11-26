@@ -3,6 +3,7 @@
 
 import {renderHook, act} from '@testing-library/react';
 import {useLegendPosition} from '@kepler.gl/components';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 
 const THEME = {
   sidePanel: {width: 100}
@@ -274,7 +275,126 @@ describe('useLegendPosition', () => {
       position: {x: 20, y: 60, anchorX: 'left', anchorY: 'top'}
     });
   });
+  describe('resize snapping', () => {
+    const originalEnabled = getApplicationConfig().enableFloatingWidgetSnapping;
+    beforeEach(() => initApplicationConfig({enableFloatingWidgetSnapping: true}));
+    afterEach(() => initApplicationConfig({enableFloatingWidgetSnapping: originalEnabled}));
+
+    describe.each(['top', 'bottom'])('%s edge', edge => {
+      test.each([
+        ['top', false],
+        ['bottom', false],
+        ['top', true],
+        ['bottom', true]
+      ])(
+        'aligns with a neighbor, preserves the opposite edge and releases (%s anchor, auto=%s)',
+        (anchorY, autoHeight) => {
+          const fixture = setupSnappingResize({edge, anchorY, autoHeight});
+          const {result, onChangeSettings, settings, applyChange} = fixture;
+          const snapsHeight = edge === 'top' ? 172 : 178;
+          const shiftsAnchor = edge === anchorY;
+          act(() => {
+            result.current.startResize();
+            result.current.resize(edge === 'top' ? -25 : 25, edge);
+          });
+          expect(onChangeSettings).toHaveBeenLastCalledWith({
+            contentHeight: snapsHeight,
+            ...(shiftsAnchor
+              ? {position: {...settings.position, y: settings.position.y - (snapsHeight - 150)}}
+              : {})
+          });
+
+          // Rerender at the snapped geometry, then keep dragging from the original gesture.
+          applyChange(onChangeSettings.mock.calls.at(-1)[0]);
+          act(() => result.current.resize(edge === 'top' ? -50 : 50, edge));
+          expect(onChangeSettings).toHaveBeenLastCalledWith({
+            contentHeight: 200,
+            ...(shiftsAnchor ? {position: {...settings.position, y: settings.position.y - 50}} : {})
+          });
+        }
+      );
+
+      test.each([
+        ['minimum', 102, 98],
+        ['maximum', 224, 230]
+      ])('does not snap past the %s height', (_limit, proposedHeight, targetHeight) => {
+        const {result, onChangeSettings, neighbor} = setupSnappingResize({
+          edge,
+          anchorY: edge === 'top' ? 'bottom' : 'top',
+          mapHeight: 300
+        });
+        const level = edge === 'top' ? 386 - 36 - targetHeight : 200 + 36 + targetHeight;
+        neighbor.getBoundingClientRect = () =>
+          rect({
+            left: 398,
+            right: 498,
+            top: edge === 'top' ? level : level - 250,
+            bottom: edge === 'top' ? level + 250 : level
+          });
+        act(() => {
+          result.current.startResize();
+          result.current.resize((edge === 'top' ? -1 : 1) * (proposedHeight - 150), edge);
+        });
+        expect(onChangeSettings).toHaveBeenLastCalledWith({contentHeight: proposedHeight});
+      });
+    });
+  });
 });
+
+function setupSnappingResize({edge, anchorY, autoHeight = false, mapHeight = 800}) {
+  const legendContent = setupResizeFixture({
+    contentHeight: 150,
+    legendRect: {left: 200, top: 200, right: 390, bottom: 386},
+    rootRect: {left: 100, top: 100, right: 1100, bottom: 900}
+  });
+  const neighbor = document.createElement('div');
+  neighbor.className = 'draggable-legend';
+  legendContent.closest('.kepler-gl').appendChild(neighbor);
+  neighbor.getBoundingClientRect = () => rect({left: 398, top: 178, right: 498, bottom: 414});
+  const settings = {
+    ...(!autoHeight ? {contentHeight: 150} : {}),
+    position: {x: 20, y: anchorY === 'top' ? 100 : 514, anchorX: 'right', anchorY}
+  };
+  const onChangeSettings = jest.fn();
+  const hook = renderHook(
+    ({settings: nextSettings}) =>
+      useLegendPosition({
+        legendContentRef: {current: legendContent},
+        isSidePanelShown: false,
+        settings: nextSettings,
+        onChangeSettings,
+        theme: THEME,
+        mapHeight,
+        mapWidth: 1000
+      }),
+    {initialProps: {settings}}
+  );
+  return {
+    ...hook,
+    settings,
+    onChangeSettings,
+    neighbor,
+    applyChange(next) {
+      const top = edge === 'top' ? 386 - 36 - next.contentHeight : 200;
+      legendContent.getBoundingClientRect = () =>
+        rect({
+          left: 200,
+          right: 390,
+          top,
+          bottom: top + 36 + next.contentHeight
+        });
+      Object.defineProperty(
+        legendContent.querySelector('.map-control__panel-content'),
+        'offsetHeight',
+        {
+          configurable: true,
+          value: next.contentHeight
+        }
+      );
+      hook.rerender({settings: {...settings, ...next}});
+    }
+  };
+}
 
 function rect(values) {
   return {

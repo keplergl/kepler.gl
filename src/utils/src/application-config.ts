@@ -310,6 +310,16 @@ export type KeplerApplicationConfig = {
   enableAnimationEditor?: boolean;
 
   /**
+   * Snap floating legends, bookmarks/camera animation, and the animation editor
+   * to nearby widgets, the side panel, and right-side buttons while dragging.
+   * Resized top/bottom edges also align with nearby floating widget edges.
+   * Enabled by default. Uses an 8px tolerance and an 8px adjacent gap within
+   * the same map, respecting map margins and resize limits. Does not dock
+   * widgets or alter saved position formats.
+   */
+  enableFloatingWidgetSnapping?: boolean;
+
+  /**
    * Master switch for power-user JSON editors. When false, every section editor is hidden.
    * Defaults to true; each section also has its own flag.
    *
@@ -566,6 +576,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableCameraTour: true,
 
   enableAnimationEditor: true,
+
+  enableFloatingWidgetSnapping: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,

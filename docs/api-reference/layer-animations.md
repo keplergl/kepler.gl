@@ -10,6 +10,14 @@ initApplicationConfig({enableAnimationEditor: false});
 
 This flag only controls access to the editor; it does not disable playback or change saved animations.
 
+Floating widgets (legend, bookmarks/camera animation, and Animation editor) snap to each other, the visible side panel, and right-side map buttons by default. Disable all snapping before mounting Kepler:
+
+```ts
+initApplicationConfig({enableFloatingWidgetSnapping: false});
+```
+
+While dragging, nearby edges align within an 8px tolerance, with an 8px gap beside widgets and controls (or the existing map margin when larger). When resizing from the top or bottom, the dragged edge can align with the top or bottom of a nearby floating widget. The opposite edge stays fixed and minimum/maximum height limits still apply. Moving farther releases the snap. Targets are limited to the same Kepler instance. Widgets remain independently movable and saved position formats are unchanged.
+
 The Animation editor uses elapsed time independently of dataset time filters. Layer classes declare supported numeric, RGB color and toggle properties through `animatableProps`. The base layer exposes opacity; subclasses can extend this list with properties their renderer supports.
 
 ```ts

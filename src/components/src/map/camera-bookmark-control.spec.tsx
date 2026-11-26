@@ -14,6 +14,7 @@ import {
 } from '@kepler.gl/reducers';
 import {MapViewMode} from '@kepler.gl/constants';
 import {theme} from '@kepler.gl/styles';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {renderWithTheme, IntlWrapper} from 'test/helpers/component-jest-utils';
 import CameraBookmarkControl from './camera-bookmark-control';
 import {RootContext} from '../context';
@@ -547,7 +548,7 @@ test.each([
   }
 });
 
-function setupFloatingPanel(controlId: string, label: string) {
+function setupFloatingPanel(controlId: string, label: string, isSidePanelShown = false) {
   const MapControlPanel = MapControlPanelFactory();
   const root = document.createElement('div');
   root.className = 'kepler-gl';
@@ -572,7 +573,7 @@ function setupFloatingPanel(controlId: string, label: string) {
     <DraggableLegend
       controlId={controlId}
       label={label}
-      isSidePanelShown={false}
+      isSidePanelShown={isSidePanelShown}
       mapControls={enabledMapControls}
       setMapControlSettings={settings}
       mapState={{...INITIAL_MAP_STATE, width: 1000, height: 800}}
@@ -636,6 +637,165 @@ async function waitForPointerClickRelease() {
     expect(clickReleased).toHaveBeenCalledTimes(1);
   });
 }
+
+describe('floating widget snapping', () => {
+  const originalEnabled = getApplicationConfig().enableFloatingWidgetSnapping;
+  afterEach(() => initApplicationConfig({enableFloatingWidgetSnapping: originalEnabled}));
+
+  function addNeighbor(panel: HTMLElement) {
+    const neighbor = document.createElement('div');
+    neighbor.className = 'draggable-legend';
+    panel.parentElement!.appendChild(neighbor);
+    neighbor.getBoundingClientRect = () => ({
+      x: 630,
+      y: 281,
+      left: 630,
+      top: 281,
+      right: 830,
+      bottom: 381,
+      width: 200,
+      height: 100,
+      toJSON: () => ({})
+    });
+    return neighbor;
+  }
+
+  test('preserves free dragging when explicitly disabled', async () => {
+    initApplicationConfig({enableFloatingWidgetSnapping: false});
+    const {move, panel, settings} = setupFloatingPanel('mapLegend', 'legend');
+    addNeighbor(panel);
+    fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
+    await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+    fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
+    expect(panel).toHaveStyle({transform: 'translate3d(25px, 25px, 0)'});
+    fireEvent.pointerUp(document);
+    expect(settings).toHaveBeenLastCalledWith('mapLegend', {
+      position: {x: 75, y: 65, anchorX: 'right', anchorY: 'top'}
+    });
+    await waitForPointerClickRelease();
+  });
+
+  test.each([
+    ['mapLegend', 'legend'],
+    ['cameraBookmarks', 'Bookmarks'],
+    ['animation', 'Animation']
+  ])(
+    'snaps %s by default, releases freely, and persists the previewed position',
+    async (controlId, label) => {
+      expect(originalEnabled).toBe(true);
+      const {move, panel, settings} = setupFloatingPanel(controlId, label);
+      addNeighbor(panel);
+      fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
+      await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
+      expect(panel).toHaveStyle({transform: 'translate3d(30px, 19px, 0)'});
+      fireEvent.pointerMove(document, {clientX: 700, clientY: 115});
+      expect(panel).toHaveStyle({transform: 'translate3d(50px, 60px, 0)'});
+      fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
+      fireEvent.pointerUp(document);
+      expect(settings).toHaveBeenLastCalledWith(controlId, {
+        position: {x: 70, y: 59, anchorX: 'right', anchorY: 'top'}
+      });
+      expect(settings.mock.calls.every(([id]) => id === controlId)).toBe(true);
+      await waitForPointerClickRelease();
+    }
+  );
+
+  test('supports keyboard snapping and cancels without saving the snapped position', async () => {
+    initApplicationConfig({enableFloatingWidgetSnapping: true});
+    const {move, panel, settings} = setupFloatingPanel('mapLegend', 'legend');
+    const neighbor = addNeighbor(panel);
+    // A horizontally adjacent widget attracts the right edge at x=928.
+    neighbor.getBoundingClientRect = () => ({
+      x: 936,
+      y: 40,
+      left: 936,
+      top: 40,
+      right: 986,
+      bottom: 140,
+      width: 50,
+      height: 100,
+      toJSON: () => ({})
+    });
+    move.focus();
+    fireEvent.keyDown(move, {code: 'Space'});
+    await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+    settings.mockClear();
+    fireEvent.keyDown(document, {code: 'ArrowRight'});
+    expect(panel).toHaveStyle({transform: 'translate3d(28px, 0px, 0)'});
+    fireEvent.keyDown(document, {code: 'Escape'});
+    expect(move).not.toHaveAttribute('aria-pressed', 'true');
+    expect(panel.style.transform).toBe('');
+    expect(settings).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['sidebar', true],
+    ['sidebar', false],
+    ['buttons', true],
+    ['buttons', false]
+  ])(
+    'snaps beside %s and saves the visible position only when enabled (%s)',
+    async (kind, enabled) => {
+      initApplicationConfig({enableFloatingWidgetSnapping: enabled});
+      const {move, panel, settings} = setupFloatingPanel('mapLegend', 'legend', kind === 'sidebar');
+      const container = document.createElement('div');
+      container.className = kind === 'sidebar' ? 'side-panel--container' : 'map-control';
+      panel.parentElement?.appendChild(container);
+      const target = document.createElement('div');
+      target.className = kind === 'sidebar' ? 'side-bar__inner' : 'map-control-button';
+      container.appendChild(target);
+      const bounds =
+        kind === 'sidebar'
+          ? {left: 12, top: 12, width: 300, height: 776}
+          : {left: 936, top: 60, width: 32, height: 32};
+      target.getBoundingClientRect = () => ({
+        ...bounds,
+        x: bounds.left,
+        y: bounds.top,
+        right: bounds.left + bounds.width,
+        bottom: bounds.top + bounds.height,
+        toJSON: () => ({})
+      });
+      fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
+      await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.pointerMove(document, {clientX: kind === 'sidebar' ? 375 : 675, clientY: 80});
+      const x = kind === 'sidebar' ? (enabled ? -280 : -275) : enabled ? 28 : 25;
+      const y = kind === 'buttons' && enabled ? 20 : 25;
+      expect(panel).toHaveStyle({transform: `translate3d(${x}px, ${y}px, 0)`});
+      fireEvent.pointerUp(document);
+      expect(settings).toHaveBeenLastCalledWith('mapLegend', {
+        position: {
+          x: kind === 'sidebar' ? 600 + x : 100 - x,
+          y: 40 + y,
+          anchorX: kind === 'sidebar' ? 'left' : 'right',
+          anchorY: 'top'
+        }
+      });
+      await waitForPointerClickRelease();
+    }
+  );
+
+  test.each([true, false])(
+    'resizes to a neighbor level only when snapping is enabled (%s)',
+    async enabled => {
+      initApplicationConfig({enableFloatingWidgetSnapping: enabled});
+      const {panel, settings} = setupFloatingPanel('mapLegend', 'legend');
+      addNeighbor(panel);
+      const bottom = screen.getAllByRole('button', {name: 'Resize legend'})[1];
+      bottom.focus();
+      fireEvent.keyDown(bottom, {code: 'Space'});
+      await waitFor(() => expect(bottom).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.keyDown(document, {code: 'ArrowDown'});
+      expect(settings).toHaveBeenCalledWith(
+        'mapLegend',
+        expect.objectContaining({contentHeight: enabled ? 207 : 205})
+      );
+      expect(panel.style.transform).toBe('');
+      fireEvent.keyDown(document, {code: 'Space'});
+    }
+  );
+});
 
 test.each([
   ['mapLegend', 'legend'],
