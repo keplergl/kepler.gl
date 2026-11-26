@@ -61,7 +61,6 @@ const StyledCheckbox = styled.div.withConfig({shouldForwardProp})<StyledCheckbox
 `;
 
 interface CheckboxProps {
-  'aria-label'?: string;
   id: string;
   type?: string;
   label?: ReactNode;
@@ -81,7 +80,6 @@ interface CheckboxProps {
 }
 
 const Checkbox: FC<CheckboxProps> = ({
-  'aria-label': ariaLabel,
   id,
   type,
   label = '',
@@ -110,7 +108,6 @@ const Checkbox: FC<CheckboxProps> = ({
   );
 
   const inputProps = {
-    'aria-label': ariaLabel,
     checked,
     disabled,
     id,

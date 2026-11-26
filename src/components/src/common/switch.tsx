@@ -5,7 +5,6 @@ import React, {ChangeEventHandler, FocusEventHandler, ReactNode} from 'react';
 import Checkbox from './checkbox';
 
 interface SwitchProps {
-  'aria-label'?: string;
   checked?: boolean;
   type?: string;
   id: string;

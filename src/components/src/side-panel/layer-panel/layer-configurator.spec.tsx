@@ -250,7 +250,10 @@ test.each([
       <Configurator />
     </IntlWrapper>
   );
-  const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed strokes');
+  const dashGroup = screen.queryByText('Dashed strokes')?.closest('.layer-config-group');
+  const toggle = dashGroup
+    ? within(dashGroup as HTMLElement).getByRole<HTMLInputElement>('checkbox')
+    : null;
   expect(Boolean(toggle)).toBe(line);
   expect(toggle?.checked).not.toBe(true);
   if (toggle) {
