@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useMemo} from 'react';
+import React, {useEffect, useId, useMemo, useState} from 'react';
 import styled from 'styled-components';
 import ImagePreview from '../common/image-preview';
 import {SetExportImageSettingUpdaterAction} from '@kepler.gl/actions';
@@ -22,18 +22,30 @@ import {
 } from '@kepler.gl/constants';
 import type {ExportResolutionOption} from '@kepler.gl/constants';
 import type {ExportImage} from '@kepler.gl/types';
-import {StyledModalContent, SelectionButton, CheckMark} from '../common/styled-components';
+import {
+  StyledModalContent,
+  SelectionButton,
+  CheckMark,
+  InputLight,
+  Button
+} from '../common/styled-components';
 import Switch from '../common/switch';
 import TippyTooltip from '../common/tippy-tooltip';
 import {injectIntl, IntlShape} from 'react-intl';
 import {FormattedMessage} from '@kepler.gl/localization';
-import {getApplicationConfig} from '@kepler.gl/utils';
+import {
+  getApplicationConfig,
+  isValidCustomPngSize,
+  MAX_CUSTOM_PNG_EDGE,
+  MAX_CUSTOM_PNG_PIXELS
+} from '@kepler.gl/utils';
 
 const ImageOptionList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 250px;
+  flex-shrink: 0;
 
   .image-option-section {
     .image-option-section-title {
@@ -48,6 +60,26 @@ const ImageOptionList = styled.div`
     padding: 8px 0px;
     flex-wrap: wrap;
     gap: 4px;
+  }
+
+  #export-image-modal__option_ratio {
+    flex-wrap: nowrap;
+
+    button {
+      margin-right: 0;
+      padding: 6px 8px;
+      font: inherit;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+  }
+
+  #export-image-modal__option_ratio button,
+  .custom-dimensions input,
+  .custom-dimensions button,
+  .custom-dimensions-help {
+    height: 28px;
+    box-sizing: border-box;
   }
 
   .option-list {
@@ -66,7 +98,8 @@ const ImageOptionList = styled.div`
     align-items: center;
   }
 
-  .transparent-background-help {
+  .transparent-background-help,
+  .custom-dimensions-help {
     margin-left: 4px;
     color: ${props => props.theme.subtextColorLT};
     cursor: help;
@@ -98,6 +131,38 @@ const ImageOptionList = styled.div`
         border-color: #0066cc;
         box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
       }
+    }
+  }
+
+  .custom-dimensions {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin: 8px 0;
+
+    label {
+      min-width: 0;
+      flex: 1;
+    }
+
+    input {
+      width: 100%;
+      margin: 0;
+    }
+
+    button,
+    .custom-dimensions-help {
+      flex-shrink: 0;
+    }
+
+    button {
+      white-space: nowrap;
+    }
+
+    .custom-dimensions-help {
+      display: flex;
+      align-items: center;
+      margin-left: 0;
     }
   }
 
@@ -159,6 +224,74 @@ const SIXTEEN_BY_NINE_RESOLUTION_OPTIONS = [
   Resolution2560x1440Option
 ];
 
+function CustomDimensions({
+  initialWidth,
+  initialHeight,
+  limitsHelp,
+  onApply
+}: {
+  initialWidth: number;
+  initialHeight: number;
+  limitsHelp: string;
+  onApply: (width: number, height: number) => void;
+}) {
+  const helpId = useId();
+  const [width, setWidth] = useState(String(initialWidth));
+  const [height, setHeight] = useState(String(initialHeight));
+  const valid = isValidCustomPngSize(Number(width), Number(height));
+  return (
+    <>
+      <div className="custom-dimensions">
+        <label>
+          <FormattedMessage id="modal.exportImage.customWidth" />
+          <InputLight
+            type="number"
+            min={1}
+            max={MAX_CUSTOM_PNG_EDGE}
+            step={1}
+            value={width}
+            aria-describedby={helpId}
+            aria-invalid={!valid}
+            onChange={event => setWidth(event.target.value)}
+          />
+        </label>
+        <label>
+          <FormattedMessage id="modal.exportImage.customHeight" />
+          <InputLight
+            type="number"
+            min={1}
+            max={MAX_CUSTOM_PNG_EDGE}
+            step={1}
+            value={height}
+            aria-describedby={helpId}
+            aria-invalid={!valid}
+            onChange={event => setHeight(event.target.value)}
+          />
+        </label>
+        <Button
+          type="button"
+          secondary
+          small
+          disabled={!valid}
+          onClick={() => {
+            if (valid) onApply(Number(width), Number(height));
+          }}
+        >
+          <FormattedMessage id="modal.exportImage.applyDimensions" />
+        </Button>
+        <TippyTooltip placement="top" isLightTheme render={() => <div>{limitsHelp}</div>}>
+          <span className="custom-dimensions-help" tabIndex={0} aria-label={limitsHelp}>
+            (?)
+          </span>
+        </TippyTooltip>
+      </div>
+      <span id={helpId} hidden>
+        {limitsHelp}
+      </span>
+    </>
+  );
+}
+
 export interface ExportImageModalProps {
   exportImage: ExportImage;
   mapW: number;
@@ -178,6 +311,10 @@ const ExportImageModalFactory = () => {
     intl
   }) => {
     const {legend, charts, transparentBackground, ratio, resolution, fileName} = exportImage;
+    const {imageW, imageH} = exportImage.imageSize;
+    const initialDimensions = isValidCustomPngSize(imageW, imageH)
+      ? {width: imageW, height: imageH}
+      : {width: 1920, height: 1080};
     const chartsEnabled = Boolean(getApplicationConfig().enableChartsPanel);
     const transparentBackgroundHelp = intl.formatMessage({
       id: 'modal.exportImage.transparentBackgroundHelp'
@@ -204,13 +341,23 @@ const ExportImageModalFactory = () => {
     }, [onUpdateImageSetting, cleanupExportImage]);
 
     useEffect(() => {
-      if (mapH !== exportImage.mapH || mapW !== exportImage.mapW) {
+      const restoreCustomDimensions =
+        exportImage.ratio === EXPORT_IMG_RATIOS.CUSTOM && !exportImage.customDimensions;
+      if (mapH !== exportImage.mapH || mapW !== exportImage.mapW || restoreCustomDimensions) {
         onUpdateImageSetting({
           mapH,
-          mapW
+          mapW,
+          ...(restoreCustomDimensions ? {customDimensions: initialDimensions} : {})
         });
       }
-    }, [mapH, mapW, exportImage, onUpdateImageSetting]);
+    }, [
+      mapH,
+      mapW,
+      exportImage,
+      initialDimensions.width,
+      initialDimensions.height,
+      onUpdateImageSetting
+    ]);
 
     useEffect(() => {
       // Keep resolution in sync with the selected ratio and available options.
@@ -256,65 +403,87 @@ const ExportImageModalFactory = () => {
               {EXPORT_IMG_RATIO_OPTIONS.filter(op => !op.hidden).map(op => (
                 <SelectionButton
                   key={op.id}
+                  as="button"
+                  type="button"
+                  aria-pressed={ratio === op.id}
                   selected={ratio === op.id}
-                  onClick={() => onUpdateImageSetting({ratio: op.id})}
+                  onClick={() => {
+                    if (op.id === ratio && op.id === EXPORT_IMG_RATIOS.CUSTOM) return;
+
+                    onUpdateImageSetting(
+                      op.id === EXPORT_IMG_RATIOS.CUSTOM
+                        ? {
+                            ratio: op.id,
+                            customDimensions: exportImage.customDimensions ?? initialDimensions
+                          }
+                        : {ratio: op.id}
+                    );
+                  }}
                 >
                   <FormattedMessage id={op.label} />
                   {ratio === op.id && <CheckMark />}
                 </SelectionButton>
               ))}
             </div>
-          </div>
-          {ratio !== EXPORT_IMG_RATIOS.CUSTOM && (
-            <div className="image-option-section">
-              <div className="image-option-section-title" id="export-image-modal__resolution-title">
-                <FormattedMessage id={'modal.exportImage.resolutionTitle'} />
-              </div>
-              <FormattedMessage id={'modal.exportImage.resolutionDescription'} />
-              {ratio === EXPORT_IMG_RATIOS.SCREEN ? (
-                <div className="button-list" id="export-image-modal__option_resolution">
-                  {filteredResolutions.map(op => (
-                    <SelectionButton
-                      key={op.id}
-                      selected={resolution === op.id}
-                      onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
-                    >
-                      {op.label}
-                      {resolution === op.id && <CheckMark />}
-                    </SelectionButton>
-                  ))}
-                </div>
-              ) : (
-                <div className="resolution-dropdown" id="export-image-modal__option_resolution">
-                  <select
-                    value={resolution || ''}
-                    aria-labelledby="export-image-modal__resolution-title"
-                    onChange={e => {
-                      const value = e.target.value;
-                      // Only update if a valid resolution is selected
-                      if (value && filteredResolutions.some(op => op.id === value)) {
-                        // Type-safe: we've verified the value exists in filteredResolutions
-                        onUpdateImageSetting({resolution: value as ExportResolutionOption});
-                      }
-                      // If empty string selected, optionally reset to first available resolution
-                      else if (!value && filteredResolutions.length > 0) {
-                        onUpdateImageSetting({resolution: filteredResolutions[0].id});
-                      }
-                    }}
-                  >
-                    <option value="">
-                      {intl.formatMessage({id: 'modal.exportImage.resolutionPlaceholder'})}
-                    </option>
+            {ratio === EXPORT_IMG_RATIOS.CUSTOM ? (
+              <CustomDimensions
+                initialWidth={exportImage.customDimensions?.width ?? initialDimensions.width}
+                initialHeight={exportImage.customDimensions?.height ?? initialDimensions.height}
+                limitsHelp={intl.formatMessage(
+                  {id: 'modal.exportImage.customResolutionLimits'},
+                  {edge: MAX_CUSTOM_PNG_EDGE, pixels: MAX_CUSTOM_PNG_PIXELS}
+                )}
+                onApply={(width, height) =>
+                  onUpdateImageSetting({customDimensions: {width, height}})
+                }
+              />
+            ) : (
+              <>
+                {ratio === EXPORT_IMG_RATIOS.SCREEN ? (
+                  <div className="button-list" id="export-image-modal__option_resolution">
                     {filteredResolutions.map(op => (
-                      <option key={op.id} value={op.id} disabled={!op.available}>
+                      <SelectionButton
+                        key={op.id}
+                        selected={resolution === op.id}
+                        onClick={() => op.available && onUpdateImageSetting({resolution: op.id})}
+                      >
                         {op.label}
-                      </option>
+                        {resolution === op.id && <CheckMark />}
+                      </SelectionButton>
                     ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                ) : (
+                  <div className="resolution-dropdown" id="export-image-modal__option_resolution">
+                    <select
+                      value={resolution || ''}
+                      aria-label={intl.formatMessage({id: 'modal.exportImage.resolutionTitle'})}
+                      onChange={e => {
+                        const value = e.target.value;
+                        // Only update if a valid resolution is selected
+                        if (value && filteredResolutions.some(op => op.id === value)) {
+                          // Type-safe: we've verified the value exists in filteredResolutions
+                          onUpdateImageSetting({resolution: value as ExportResolutionOption});
+                        }
+                        // If empty string selected, optionally reset to first available resolution
+                        else if (!value && filteredResolutions.length > 0) {
+                          onUpdateImageSetting({resolution: filteredResolutions[0].id});
+                        }
+                      }}
+                    >
+                      <option value="">
+                        {intl.formatMessage({id: 'modal.exportImage.resolutionPlaceholder'})}
+                      </option>
+                      {filteredResolutions.map(op => (
+                        <option key={op.id} value={op.id} disabled={!op.available}>
+                          {op.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
           <div className="image-option-section">
             <div className="image-option-section-title">
               <FormattedMessage id={'modal.exportImage.optionsTitle'} />
@@ -363,7 +532,10 @@ const ExportImageModalFactory = () => {
             </div>
           </div>
         </ImageOptionList>
-        <ImagePreview exportImage={exportImage} />
+        <ImagePreview
+          exportImage={exportImage}
+          showDimension={ratio === EXPORT_IMG_RATIOS.CUSTOM}
+        />
       </StyledModalContent>
     );
   };

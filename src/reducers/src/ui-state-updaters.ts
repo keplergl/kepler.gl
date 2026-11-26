@@ -21,7 +21,8 @@ import {
   calculateExportImageSize,
   getApplicationConfig,
   getConfiguredThemes,
-  getDefaultUiTheme
+  getDefaultUiTheme,
+  isValidCustomPngSize
 } from '@kepler.gl/utils';
 import {payload_, apply_, compose_} from './composer-helpers';
 
@@ -619,12 +620,29 @@ export const setExportImageSettingUpdater = (
   {payload: newSetting}: UIStateActions.SetExportImageSettingUpdaterAction
 ): UiState => {
   const updated = {...state.exportImage, ...newSetting};
+  const {customDimensions} = updated;
+  if (
+    updated.ratio === EXPORT_IMG_RATIOS.CUSTOM &&
+    customDimensions &&
+    !isValidCustomPngSize(customDimensions.width, customDimensions.height)
+  ) {
+    return state;
+  }
   const imageSize = calculateExportImageSize(updated) || state.exportImage.imageSize;
+  const customSizeChanged =
+    ((updated.ratio === EXPORT_IMG_RATIOS.CUSTOM && customDimensions) ||
+      (state.exportImage.ratio === EXPORT_IMG_RATIOS.CUSTOM &&
+        state.exportImage.customDimensions)) &&
+    (updated.ratio !== state.exportImage.ratio ||
+      imageSize.imageW !== state.exportImage.imageSize.imageW ||
+      imageSize.imageH !== state.exportImage.imageSize.imageH ||
+      imageSize.scale !== state.exportImage.imageSize.scale);
 
   return {
     ...state,
     exportImage: {
       ...updated,
+      ...(customSizeChanged ? {processing: true, imageDataUri: '', error: false} : {}),
       imageSize
     }
   };
@@ -677,17 +695,20 @@ export const setExportImageErrorUpdater = (
  * @memberof uiStateUpdaters
  * @public
  */
-export const cleanupExportImageUpdater = (state: UiState): UiState => ({
-  ...state,
-  exportImage: {
-    ...state.exportImage,
-    exporting: false,
-    imageDataUri: '',
-    error: false,
-    processing: false,
-    center: false
-  }
-});
+export const cleanupExportImageUpdater = (state: UiState): UiState => {
+  const {customDimensions, ...exportImage} = state.exportImage;
+  return {
+    ...state,
+    exportImage: {
+      ...exportImage,
+      exporting: false,
+      imageDataUri: '',
+      error: false,
+      processing: false,
+      center: false
+    }
+  };
+};
 
 /**
  * Set `exportVideo` settings: mediaType, cameraPreset, fileName, resolution, durationMs

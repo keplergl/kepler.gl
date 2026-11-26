@@ -47,7 +47,11 @@ test('Components -> ExportImageModal.mount', t => {
     .find(SelectionButton)
     .map(c => c.text());
 
-  t.deepEqual(ratioOpts, ['Original Screen', '4:3', '16:9'], 'should render correct ratio options');
+  t.deepEqual(
+    ratioOpts,
+    ['Original Screen', '4:3', '16:9', 'Custom'],
+    'should render preset and custom ratio options'
+  );
 
   t.ok(
     wrapper

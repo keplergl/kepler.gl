@@ -1070,7 +1070,6 @@ export const ScreenRatioOption: ImageRatioOption = {
 };
 export const CustomRatioOption: ImageRatioOption = {
   id: EXPORT_IMG_RATIOS.CUSTOM,
-  hidden: true,
   label: 'modal.exportImage.ratioCustom',
   getSize: (mapW, mapH) => ({width: mapW, height: mapH})
 };

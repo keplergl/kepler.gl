@@ -46,7 +46,7 @@ const StyledImagePreview = styled.div.attrs({
     position: relative;
     width: 100%;
     height: 0;
-    padding-bottom: var(--aspect-ratio);
+    padding-bottom: min(var(--aspect-ratio), 400px);
     max-height: 400px;
   }
 
@@ -123,7 +123,11 @@ const ImagePreview = ({exportImage, showDimension = false}: ImagePreviewProps) =
               <span>{error.message || 'Generate map image failed!'}</span>
             </div>
           ) : (
-            <img className="preview-image-placeholder" src={imageDataUri} alt="Map preview" />
+            <img
+              className="preview-image-placeholder"
+              src={imageDataUri || undefined}
+              alt="Map preview"
+            />
           )}
         </div>
       </div>
