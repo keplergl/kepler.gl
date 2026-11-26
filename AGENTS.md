@@ -118,3 +118,12 @@ Keep PR descriptions short:
 Add a screenshot only when the task asked for browser work and a reviewer needs to see the result.
 
 Do not hide uncertainty. If product or architectural judgment is required, explicitly mark it for human review.
+
+### Addressing GitHub comments
+
+When asked to address GitHub PR comments, account for every comment in scope, including comments from automated reviewers.
+
+- For an addressed comment, reply on GitHub with a short explanation of the change and relevant verification, then resolve its review thread after the fix is pushed. A code change or reply alone does not resolve a thread.
+- For a comment you decline, defer, or cannot address, reply with the specific reason and any follow-up needed. Never silently ignore feedback.
+- Keep threads with outstanding work or unresolved disagreement open; do not mark them resolved just to clear the review queue.
+- General PR comments cannot be resolved as review threads; reply with their outcome. If permissions or tooling prevent replying or resolving, report the affected comments and the limitation instead of claiming they are handled.
