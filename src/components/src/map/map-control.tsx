@@ -21,6 +21,7 @@ import {
   CameraTour,
   Effect,
   Editor,
+  InteractionConfig,
   LayerVisConfig,
   LayerOrder,
   MapControls,
@@ -100,6 +101,7 @@ export type MapControlProps = {
   isExport?: boolean;
   cameraBookmarks?: CameraBookmark[];
   cameraTour?: CameraTour | null;
+  interactionConfig?: InteractionConfig;
   effects?: Effect[];
   annotations?: readonly Annotation[];
   onEditCamera?: (stopId?: string) => void;

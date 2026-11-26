@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {useEffect, useId, useMemo, useRef, useState} from 'react';
+import React, {useContext, useEffect, useId, useMemo, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components';
 import type {
   Annotation,
@@ -11,8 +11,10 @@ import type {
   Effect,
   EffectParameterAnimation,
   EffectUpdateProps,
+  InteractionConfig,
   LayerAnimatableProp,
   LayerPropertyTransition,
+  MapState,
   RGBColor
 } from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
@@ -20,6 +22,7 @@ import {
   getCameraTourDuration,
   normalizeCameraTour,
   DEFAULT_LAYER_ANIMATABLE_PROPS,
+  getLayerAnimationOpacityFactor,
   getLayerAnimationTracks,
   getLayerPropertyTransitions,
   isRgbColor,
@@ -27,6 +30,7 @@ import {
   roundValToStep,
   rgbToHex
 } from '@kepler.gl/utils';
+import {getLayerZoomOpacityFactor} from '@kepler.gl/reducers';
 import {getAnimatableEffectParameters} from '@kepler.gl/effects';
 import {Button, Input, PanelLabel} from '../common/styled-components';
 import {Add, ArrowDownSmall, Close, Pause, Play, Reset, Trash, ZoomOut} from '../common/icons';
@@ -34,6 +38,7 @@ import Switch from '../common/switch';
 import Portaled from '../common/portaled';
 import RangeSliderFactory from '../common/range-slider';
 import useOnClickOutside from '../hooks/use-on-click-outside';
+import {MapViewStateContext} from '../map-view-state-context';
 import {CameraTourActionButton} from '../side-panel/interaction-panel/camera-tour-playback-controls';
 import EffectAnimationControl from '../effects/effect-animation-control';
 import AnimationBlock from './animation-block';
@@ -60,6 +65,8 @@ export type AnimationEditorProps = {
   tour?: CameraTour | null;
   cameraEnabled?: boolean;
   layers?: readonly Layer[];
+  mapState?: MapState;
+  interactionConfig?: InteractionConfig;
   annotations?: readonly Annotation[];
   playback: AnimationEditorPlayback;
   updateEffectConfig: (
@@ -444,11 +451,65 @@ function nextBlockId(name: string, blocks: {id?: string}[]) {
   return `${name}-${suffix}`;
 }
 
+const OpacitySummary = styled.div`
+  margin-bottom: 12px;
+  color: ${props => props.theme.subtextColor};
+  font-variant-numeric: tabular-nums;
+`;
+
+const opacityPercent = new Intl.NumberFormat(undefined, {
+  style: 'percent',
+  maximumSignificantDigits: 4
+});
+
+function LayerOpacityReadout({
+  layer,
+  elapsed,
+  mapState,
+  interactionConfig
+}: {
+  layer: Layer;
+  elapsed: number;
+  mapState?: MapState;
+  interactionConfig?: InteractionConfig;
+}) {
+  const base = layer.config.visConfig?.opacity ?? 1;
+  const track = getLayerAnimationOpacityFactor(layer, elapsed);
+  const {getInternalViewState} = useContext(MapViewStateContext);
+  // Subscribe only while this inspector is open, and use the renderer's live zoom
+  // rather than the persisted camera (which can lag behind an in-progress interaction).
+  const independentPanes =
+    mapState?.isSplit && !mapState.isViewportSynced && mapState.splitMapViewports.length > 1;
+  const zoomFades = (independentPanes ? [0, 1] : [0]).map(index =>
+    getLayerZoomOpacityFactor(layer.id, getInternalViewState(index)?.zoom, interactionConfig)
+  );
+  const fadesDiffer = zoomFades.some(fade => fade !== zoomFades[0]);
+  return (
+    <OpacitySummary aria-label="Layer opacity at playhead">
+      <div>Base opacity: {opacityPercent.format(base)}</div>
+      <div>Track opacity at playhead: {opacityPercent.format(track)}</div>
+      {(fadesDiffer ? zoomFades : zoomFades.slice(0, 1)).map((fade, index) => (
+        <div key={index}>
+          {fadesDiffer ? (index === 0 ? 'Left map: ' : 'Right map: ') : ''}
+          Effective opacity: {opacityPercent.format(base * (track * fade))}
+          {fade !== 1 && ` (zoom fade: ${opacityPercent.format(fade)})`}
+        </div>
+      ))}
+      {base === 0 && track > 0 && (
+        <Alert>
+          Base opacity is 0%. Raise Opacity in the layer settings to make the fade visible.
+        </Alert>
+      )}
+    </OpacitySummary>
+  );
+}
+
 function PropertySettings({
   label,
   property,
   transition,
   transitions,
+  readout,
   onSave,
   onRemove,
   onClose
@@ -457,6 +518,7 @@ function PropertySettings({
   property: LayerAnimatableProp;
   transition: LayerPropertyTransition;
   transitions: LayerPropertyTransition[];
+  readout?: React.ReactNode;
   onSave: (transition: LayerPropertyTransition) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -541,6 +603,7 @@ function PropertySettings({
         </InspectorHeaderActions>
       </InspectorHeader>
       <InspectorBody>
+        {readout}
         <Fields>
           {property.type === 'color' &&
             colors &&
@@ -753,6 +816,8 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
     tour,
     cameraEnabled = true,
     layers = [],
+    mapState,
+    interactionConfig,
     annotations = [],
     playback,
     updateEffectConfig,
@@ -1855,6 +1920,16 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   property={selectedLayerTrack?.property ?? DEFAULT_LAYER_ANIMATABLE_PROPS[0]}
                   transition={selectedTransition}
                   transitions={selectedTransitions}
+                  readout={
+                    popup && selectedLayerTrack?.property.name === 'opacity' ? (
+                      <LayerOpacityReadout
+                        layer={selectedLayerTrack.layer}
+                        elapsed={playback.elapsed}
+                        mapState={mapState}
+                        interactionConfig={interactionConfig}
+                      />
+                    ) : undefined
+                  }
                   onClose={() => setPopup(null)}
                   onSave={transition => {
                     saveSelectedTransitions(

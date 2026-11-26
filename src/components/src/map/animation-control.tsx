@@ -8,6 +8,7 @@ import type {
   Annotation,
   CameraTour,
   Effect,
+  InteractionConfig,
   MapControls,
   MapLegendControlSettings,
   MapState
@@ -50,6 +51,7 @@ const Panel = styled.section<{$width: number}>`
 export type AnimationControlProps = {
   effects?: Effect[];
   cameraTour?: CameraTour | null;
+  interactionConfig?: InteractionConfig;
   layers?: readonly Layer[];
   annotations?: readonly Annotation[];
   mapControls?: MapControls;
@@ -79,6 +81,7 @@ export default function MapAnimationControlFactory(
   const AnimationControl = ({
     effects = [],
     cameraTour,
+    interactionConfig,
     layers = [],
     annotations = [],
     mapControls,
@@ -173,6 +176,8 @@ export default function MapAnimationControlFactory(
               tour={cameraTour}
               cameraEnabled={Boolean(mapControls?.cameraTour?.show)}
               layers={layers}
+              mapState={mapState}
+              interactionConfig={interactionConfig}
               annotations={annotations}
               playback={playback}
               updateEffectConfig={(_event, effectId, next) =>
