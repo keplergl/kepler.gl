@@ -48,6 +48,7 @@ import {getEffectAnimationTracks} from '../modals/effect-animation';
 
 export type AnimationEditorPlayback = {
   elapsed: number;
+  animationTimeMs?: number | null;
   duration: number;
   running: boolean;
   run: () => void;
@@ -451,8 +452,17 @@ function nextBlockId(name: string, blocks: {id?: string}[]) {
   return `${name}-${suffix}`;
 }
 
-const OpacitySummary = styled.div`
-  margin-bottom: 12px;
+const SelectedOpacitySummary = styled.div`
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-top: 1px solid ${props => props.theme.panelBorderColor};
+`;
+const OpacitySummary = styled.div<{$compact: boolean}>`
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: ${props => (props.$compact ? 'row' : 'column')};
+  gap: ${props => (props.$compact ? '2px 12px' : '0')};
+  margin-bottom: ${props => (props.$compact ? '0' : '12px')};
   color: ${props => props.theme.subtextColor};
   font-variant-numeric: tabular-nums;
 `;
@@ -465,18 +475,22 @@ const opacityPercent = new Intl.NumberFormat(undefined, {
 function LayerOpacityReadout({
   layer,
   elapsed,
+  previewActive,
+  compact = false,
   mapState,
   interactionConfig
 }: {
   layer: Layer;
   elapsed: number;
+  previewActive: boolean;
+  compact?: boolean;
   mapState?: MapState;
   interactionConfig?: InteractionConfig;
 }) {
   const base = layer.config.visConfig?.opacity ?? 1;
   const track = getLayerAnimationOpacityFactor(layer, elapsed);
   const {getInternalViewState} = useContext(MapViewStateContext);
-  // Subscribe only while this inspector is open, and use the renderer's live zoom
+  // Subscribe only while an opacity block is inspected, and use the renderer's live zoom
   // rather than the persisted camera (which can lag behind an in-progress interaction).
   const independentPanes =
     mapState?.isSplit && !mapState.isViewportSynced && mapState.splitMapViewports.length > 1;
@@ -485,20 +499,20 @@ function LayerOpacityReadout({
   );
   const fadesDiffer = zoomFades.some(fade => fade !== zoomFades[0]);
   return (
-    <OpacitySummary aria-label="Layer opacity at playhead">
+    <OpacitySummary $compact={compact} role="group" aria-label="Layer opacity at playhead">
       <div>Base opacity: {opacityPercent.format(base)}</div>
       <div>Track opacity at playhead: {opacityPercent.format(track)}</div>
       {(fadesDiffer ? zoomFades : zoomFades.slice(0, 1)).map((fade, index) => (
         <div key={index}>
           {fadesDiffer ? (index === 0 ? 'Left map: ' : 'Right map: ') : ''}
-          Effective opacity: {opacityPercent.format(base * (track * fade))}
+          {previewActive ? 'Effective opacity: ' : 'Effective opacity if previewed: '}
+          {opacityPercent.format(base * (track * fade))}
           {fade !== 1 && ` (zoom fade: ${opacityPercent.format(fade)})`}
         </div>
       ))}
+      {!previewActive && <div>Preview is off. The track is not applied to the map.</div>}
       {base === 0 && track > 0 && (
-        <Alert>
-          Base opacity is 0%. Raise Opacity in the layer settings to make the fade visible.
-        </Alert>
+        <div>Raise Opacity in the layer settings to animate the layer’s base opacity.</div>
       )}
     </OpacitySummary>
   );
@@ -949,6 +963,21 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       selected?.kind === 'layer' || selected?.kind === 'annotation'
         ? selectedTransitions?.find(transition => transition.id === selected.transitionId)
         : undefined;
+    const opacityLayer =
+      selectedTransition && selectedLayerTrack?.property.name === 'opacity'
+        ? selectedLayerTrack.layer
+        : undefined;
+    const opacityReadout = (compact = false) =>
+      opacityLayer ? (
+        <LayerOpacityReadout
+          layer={opacityLayer}
+          elapsed={playback.elapsed}
+          previewActive={playback.animationTimeMs !== null}
+          compact={compact}
+          mapState={mapState}
+          interactionConfig={interactionConfig}
+        />
+      ) : undefined;
     const select = (selection: Selection) => {
       setAdding(false);
       setAddTarget(null);
@@ -1811,6 +1840,9 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
               !cameraTour && <Empty>Add an action to begin.</Empty>}
           </Timeline>
         </Workspace>
+        {!popup && opacityLayer && (
+          <SelectedOpacitySummary>{opacityReadout(true)}</SelectedOpacitySummary>
+        )}
         <Portaled
           component={PopupAnchor}
           // Open at the selected block instead of tweening from the previous popup position.
@@ -1920,16 +1952,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   property={selectedLayerTrack?.property ?? DEFAULT_LAYER_ANIMATABLE_PROPS[0]}
                   transition={selectedTransition}
                   transitions={selectedTransitions}
-                  readout={
-                    popup && selectedLayerTrack?.property.name === 'opacity' ? (
-                      <LayerOpacityReadout
-                        layer={selectedLayerTrack.layer}
-                        elapsed={playback.elapsed}
-                        mapState={mapState}
-                        interactionConfig={interactionConfig}
-                      />
-                    ) : undefined
-                  }
+                  readout={popup ? opacityReadout() : undefined}
                   onClose={() => setPopup(null)}
                   onSave={transition => {
                     saveSelectedTransitions(

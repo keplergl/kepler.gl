@@ -13,6 +13,7 @@ import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
 import {INITIAL_VIS_STATE} from '../../../reducers/src/vis-state-updaters';
 import type {Layer} from '@kepler.gl/layers';
 import ContourLayer from '../../../layers/src/contour-layer/contour-layer';
+import GeoJsonLayer from '../../../layers/src/geojson-layer/geojson-layer';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
 import type {
   Annotation,
@@ -27,6 +28,9 @@ import AnimationEditorFactory, {
 } from './animation-editor';
 import RangeSliderFactory from '../common/range-slider';
 import {MapViewStateContextProvider} from '../map-view-state-context';
+import EffectAnimationPreviewProvider, {
+  EffectAnimationPreviewContext
+} from '../effects/effect-animation-preview';
 
 const Editor = AnimationEditorFactory(
   RangeSliderFactory(
@@ -1253,6 +1257,69 @@ test('shows authored, track and effective opacity at the playhead without editin
   expect(summary).toHaveTextContent('Track opacity at playhead: 0%');
   expect(summary).not.toHaveTextContent('Raise Opacity in the layer settings');
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
+});
+
+test('distinguishes idle opacity from a scrubbed frame and keeps the readout visible while seeking', () => {
+  const source = layer([opacityTransitions()[0]]);
+  source.config.visConfig = {opacity: 0.5};
+  const effects: AnimationEditorProps['effects'] = [];
+  const layers = [source];
+  const WithPlayback = () => {
+    const playback = React.useContext(EffectAnimationPreviewContext);
+    return playback ? (
+      <Editor
+        effects={effects}
+        layers={layers}
+        playback={playback}
+        updateEffectConfig={jest.fn()}
+        onLayerConfigChange={jest.fn()}
+      />
+    ) : null;
+  };
+  render(
+    <EffectAnimationPreviewProvider enabled effects={effects} layers={layers}>
+      <WithPlayback />
+    </EffectAnimationPreviewProvider>,
+    {wrapper: Wrapper}
+  );
+  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
+  const dialog = screen.getByRole('dialog', {name: 'Block settings'});
+  expect(within(dialog).getByLabelText('Layer opacity at playhead')).toHaveTextContent(
+    'Effective opacity if previewed: 0%'
+  );
+  expect(dialog).toHaveTextContent('Preview is off. The track is not applied to the map.');
+
+  fireEvent.click(within(dialog).getByRole('button', {name: 'Close block settings'}));
+  const summary = screen.getByLabelText('Layer opacity at playhead');
+  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
+  expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
+  fireEvent.keyDown(ruler, {key: 'End'});
+  expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
+  expect(summary).toHaveTextContent('Effective opacity: 50%');
+  expect(summary).not.toHaveTextContent('Preview is off');
+
+  fireEvent.keyDown(ruler, {key: 'Home'});
+  expect(summary).toHaveTextContent('Effective opacity: 0%');
+  fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
+  expect(summary).toHaveTextContent('Effective opacity if previewed: 0%');
+});
+
+test('zero-base hint only describes base opacity, not independently styled strokes', () => {
+  const source = new GeoJsonLayer({label: 'Polygons'});
+  source.config.visConfig = {
+    ...source.config.visConfig,
+    opacity: 0,
+    strokeOpacity: 0.8,
+    stroked: true
+  };
+  source.config.propertyTransitions = {opacity: opacityTransitions()};
+  setup({layers: [source]});
+  fireEvent.click(screen.getByRole('button', {name: 'Opacity 1 · Polygons'}));
+  const summary = screen.getByLabelText('Layer opacity at playhead');
+  expect(summary).toHaveTextContent('Base opacity: 0%');
+  expect(summary).toHaveTextContent(
+    'Raise Opacity in the layer settings to animate the layer’s base opacity.'
+  );
 });
 
 test('shows zoom fade for each independent split pane without blaming a positive base opacity', () => {
