@@ -8,7 +8,10 @@ import {
   getKeplerLoaders,
   isKeplerFileFormatAccepted,
   KeplerCSVLoader,
+  processCsvData,
   processFileData,
+  processGeojson,
+  processRowObject,
   readFileInBatches
 } from '@kepler.gl/processors';
 import {
@@ -389,6 +392,75 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
     t.equal(csvLoaders[0], KeplerCSVLoader, 'CSV still resolves when accepted');
   } finally {
     initApplicationConfig({acceptedFileFormats: null});
+  }
+  t.end();
+});
+
+test('#loader-registry -> direct and streamed CSV infer mixed reporting dates as text', async t => {
+  const reported = ['2025-03-18', '2024', '2024 launch'];
+  for (const [values, expectedType, expectedFormat, name = 'reporting.csv'] of [
+    [reported, 'string', ''],
+    [[...reported].reverse(), 'string', '', 'reporting'],
+    [['2025-03-18', '', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\N', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\\\N', '2024-02-29'], 'string', ''],
+    [['17/09/2016', 'NA', '05/06/2016'], 'string', ''],
+    [['05/06/2016', 'NULL', '17/09/2016'], 'date', 'D/M/YYYY']
+  ]) {
+    const csv = `Reported,Control\n${values.map(value => `${value},label`).join('\n')}`;
+    const file = new File([csv], name, {type: 'text/csv'});
+    const batch = await readLastBatch(file);
+    const processed = await processFileData({content: batch, fileCache: []});
+    for (const [path, {fields, rows}] of [
+      ['direct', processCsvData(csv)],
+      ['streamed', processed[0].data]
+    ]) {
+      const fixture = `${path}: ${JSON.stringify(values)}`;
+      t.equal(fields[0].type, expectedType, fixture);
+      t.equal(fields[0].format, expectedFormat, fixture);
+      t.deepEqual(
+        rows.map(row => row[0]),
+        values.map(value => (value === '' || value === 'NULL' ? null : value)),
+        fixture
+      );
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> JSON and GeoJSON keep their existing date inference', async t => {
+  const values = ['2025-03-18', '2024', '2024 launch'];
+  const rowObjects = values.map(Reported => ({Reported}));
+  const features = {
+    type: 'FeatureCollection',
+    features: rowObjects.map((properties, index) => ({
+      type: 'Feature',
+      geometry: {type: 'Point', coordinates: [index, index]},
+      properties
+    }))
+  };
+  const datasets = [
+    ['row objects', processRowObject(rowObjects)],
+    ['GeoJSON', processGeojson(features)]
+  ];
+  for (const [name, text, type] of [
+    ['reports.json', JSON.stringify(rowObjects), 'application/json'],
+    ['reports.ndjson', rowObjects.map(row => JSON.stringify(row)).join('\n'), 'application/ndjson'],
+    ['reports.geojson', JSON.stringify(features), 'application/geo+json']
+  ]) {
+    const batch = await readLastBatch(new File([text], name, {type}));
+    const [dataset] = await processFileData({content: batch, fileCache: []});
+    datasets.push([name, dataset.data]);
+  }
+  for (const [name, {fields, rows}] of datasets) {
+    const index = fields.findIndex(field => field.name === 'Reported');
+    t.equal(fields[index].type, 'date', `${name} keeps the previously inferred field type`);
+    t.equal(fields[index].format, 'YYYY-M-D', `${name} keeps the previous format`);
+    t.deepEqual(
+      rows.map(row => row[index]),
+      values,
+      `${name} preserves source values`
+    );
   }
   t.end();
 });

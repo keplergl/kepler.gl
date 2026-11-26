@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
-import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
+import {DATA_TYPES as AnalyzerDATA_TYPES, RegexList} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
 import {ArrowTable} from '@loaders.gl/schema';
@@ -37,6 +37,7 @@ import {
 } from '@kepler.gl/common-utils';
 import {KeplerGlSchema, ParsedDataset, SavedMap, LoadedMap} from '@kepler.gl/schemas';
 import {Feature} from '@deck.gl-community/editable-layers';
+import {processObjectRows} from './object-rows';
 
 // if any of these value occurs in csv, parse it to null;
 // const CSV_NULLS = ['', 'null', 'NULL', 'Null', 'NaN', '/N'];
@@ -180,19 +181,47 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
     throw new Error('invalid input passed to processCsvData');
   }
 
-  // here we assume the csv file that people uploaded will have first row
-  // as name of the column
+  return processRowsWithHeader(rows, headerRow, true);
+}
 
+function processRowsWithHeader(
+  rows: unknown[][],
+  headerRow: string[],
+  strictDateInference: boolean
+): ProcessorResult {
   // Sampling uses names as object keys, so make them unique before inferring types.
   headerRow = renameDuplicateFields(headerRow).fieldByIndex;
   cleanUpFalsyCsvValue(rows);
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
-  const fields = getFieldsFromData(sample, headerRow);
+  const fields = getFieldsFromData(sample, headerRow).map(field => {
+    // The analyzer allows up to two non-date values. For date-only CSV
+    // columns, reject mixed reporting labels without scanning beyond the sample.
+    if (
+      strictDateInference &&
+      field.type === ALL_FIELD_TYPES.date &&
+      sample.some(row => isNonDateCsvSample(row[field.name]))
+    ) {
+      return {
+        ...field,
+        type: ALL_FIELD_TYPES.string,
+        analyzerType: AnalyzerDATA_TYPES.STRING,
+        format: ''
+      };
+    }
+    return field;
+  });
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
+}
+
+function isNonDateCsvSample(value: unknown): boolean {
+  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\N') {
+    return false;
+  }
+  return typeof value !== 'string' || !RegexList.isDate.test(value);
 }
 
 /**
@@ -293,24 +322,7 @@ export function parseCsvRowsByFieldType(
  * }));
  */
 export function processRowObject(rawData: unknown[]): ProcessorResult {
-  if (!Array.isArray(rawData)) {
-    return null;
-  } else if (!rawData.length) {
-    // data is empty
-    return {
-      fields: [],
-      rows: []
-    };
-  }
-
-  const firstRow = rawData[0] as Record<string, unknown>;
-  const keys = Object.keys(firstRow); // [lat, lng, value]
-  const rows = rawData.map(d => keys.map(key => (d as Record<string, unknown>)[key])); // [[31.27, 127.56, 3]]
-
-  // row object can still contain values like `Null` or `N/A`
-  cleanUpFalsyCsvValue(rows);
-
-  return processCsvData(rows, keys);
+  return processObjectRows(rawData, (rows, keys) => processRowsWithHeader(rows, keys, false));
 }
 
 /**
