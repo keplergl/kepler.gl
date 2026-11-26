@@ -234,7 +234,8 @@ export function getLayerHoverProp({
   hoverInfo,
   layers,
   layersToRender,
-  datasets
+  datasets,
+  comparisonLayer
 }: {
   interactionConfig: VisState['interactionConfig'];
   animationConfig: VisState['animationConfig'];
@@ -242,6 +243,7 @@ export function getLayerHoverProp({
   layers: VisState['layers'];
   layersToRender: LayersToRender;
   datasets: VisState['datasets'];
+  comparisonLayer?: Pick<LayerHoverProp, 'layer' | 'fieldsToShow'> | null;
 }): LayerHoverProp | null {
   if (interactionConfig.tooltip.enabled && hoverInfo && hoverInfo.picked) {
     // if anything hovered
@@ -271,10 +273,22 @@ export function getLayerHoverProp({
             name => datasetFields?.find(field => field.name === name) ?? {name, format: null}
           )
         : datasetFields;
-      const requestedFields = new Set((fieldsToShow || []).map(field => field.name));
-      const hoverFields = layer.isAggregated
-        ? fields.filter(field => requestedFields.has(field.name))
-        : fields;
+      let hoverFields = fields;
+      if (layer.isAggregated) {
+        const requestedFields = new Set((fieldsToShow || []).map(field => field.name));
+        // Compute the pinned cell's comparison fields, but keep its visible rows unchanged.
+        if (
+          comparisonLayer?.layer.isAggregated &&
+          comparisonLayer.layer !== layer &&
+          comparisonLayer.fieldsToShow !== fieldsToShow &&
+          comparisonLayer.layer.config.dataId === dataId &&
+          comparisonLayer.layer.config.visConfig.colorAggregation ===
+            layer.config.visConfig.colorAggregation
+        ) {
+          comparisonLayer.fieldsToShow?.forEach(field => requestedFields.add(field.name));
+        }
+        hoverFields = fields.filter(field => requestedFields.has(field.name));
+      }
       const data: DataRow | null = layer.getHoverData(
         object || hoverInfo.index,
         dataContainer,

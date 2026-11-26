@@ -1395,6 +1395,7 @@ ${'```'}
     }
   },
   fieldSelector: {
+    reorderField: 'Reorder {field}',
     clearAll: 'Clear All',
     formatting: 'Formatting'
   },

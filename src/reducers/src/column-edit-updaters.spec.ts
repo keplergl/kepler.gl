@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {
+  AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
   ANIMATION_WINDOW,
   FILTER_TYPES,
@@ -836,6 +837,43 @@ describe('column edits', () => {
     expect(changeType(state, 'remote', 'pop', ALL_FIELD_TYPES.string)).toBe(state);
     expect(state.datasets.remote.fields[0].displayName).toBe('Region');
   });
+});
+
+test('same-dataset cell comparisons aggregate missing tooltip fields without showing them on pin', () => {
+  const state = withCities();
+  const pin = new state.layerClasses.hexagon({id: 'pinned', dataId: 'cities'});
+  const hover = new state.layerClasses.hexagon({id: 'hovered', dataId: 'cities'});
+  pin.updateLayerConfig({tooltipFields: ['lat']});
+  hover.updateLayerConfig({tooltipFields: ['pop']});
+  pin.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.sum});
+  hover.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.sum});
+  const getCell = (
+    idx: number,
+    indexes: number[],
+    comparisonLayer?: ReturnType<typeof getLayerHoverProp>
+  ) =>
+    getLayerHoverProp({
+      ...state,
+      layers: [pin, hover],
+      layersToRender: {pinned: true, hovered: true},
+      hoverInfo: {
+        picked: true,
+        object: {points: indexes.map(index => ({index}))},
+        layer: {props: {idx}}
+      } as unknown as VisState['hoverInfo'],
+      comparisonLayer
+    });
+
+  const compare = getCell(1, [1]);
+  expect(compare?.data).toHaveProperty('aggregatedData.pop.value', 40);
+  expect(getCell(0, [0])?.data).not.toHaveProperty('aggregatedData.pop');
+
+  const pinned = getCell(0, [0], compare);
+  expect(pinned?.fieldsToShow.map(field => field.name)).toEqual(['lat']);
+  expect(pinned?.data).toHaveProperty('aggregatedData.pop.value', 10);
+
+  pin.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.average});
+  expect(getCell(0, [0], compare)?.data).not.toHaveProperty('aggregatedData.pop');
 });
 
 test('layer tooltip fields are ordered, survive reload and follow column edits', () => {
