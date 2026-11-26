@@ -1792,9 +1792,18 @@ export default function LayerConfiguratorFactory(
           </LayerConfigGroup>
 
           {featureTypes.line ? (
-            <LayerConfigGroup {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps}>
-              <VisConfigSlider {...layer.visConfigSettings.dashLength} {...visConfiguratorProps} />
-              <VisConfigSlider {...layer.visConfigSettings.gapLength} {...visConfiguratorProps} />
+            <LayerConfigGroup
+              {...layer.visConfigSettings.dashedLines}
+              {...visConfiguratorProps}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSlider
+                  {...layer.visConfigSettings.dashLength}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider {...layer.visConfigSettings.gapLength} {...visConfiguratorProps} />
+              </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
 

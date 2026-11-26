@@ -250,17 +250,19 @@ test.each([
       <Configurator />
     </IntlWrapper>
   );
-  const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed lines');
+  const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed strokes');
   expect(Boolean(toggle)).toBe(line);
   expect(toggle?.checked).not.toBe(true);
   if (toggle) {
     const group = toggle.closest('.layer-config-group') as HTMLElement;
     const content = group.querySelector('.layer-config-group__content');
+    expect(group).toHaveClass('collapsed');
     expect(content).toHaveClass('disabled');
     // Polygon stroke settings must not disable the line group's switch.
     expect(toggle.closest('.disabled')).toBeNull();
     fireEvent.click(toggle);
     expect(toggle).toBeChecked();
+    expect(group).not.toHaveClass('collapsed');
     expect(content).not.toHaveClass('disabled');
     const inputFor = (label: string) =>
       within(
@@ -268,6 +270,11 @@ test.each([
       ).getByRole('spinbutton');
     const dash = inputFor('Dash length');
     const gap = inputFor('Gap length');
+    // JSDOM does not apply the collapse animation; verify both controls are inside it.
+    const collapsibleContent = dash.closest('.layer-config-group__content__collapsible');
+    expect(collapsibleContent).not.toBeNull();
+    expect(collapsibleContent?.closest('.layer-config-group')).toBe(group);
+    expect(gap.closest('.layer-config-group__content__collapsible')).toBe(collapsibleContent);
     expect(dash).toHaveValue(3);
     expect(gap).toHaveValue(2);
     fireEvent.change(dash, {target: {value: '6'}});
@@ -279,6 +286,15 @@ test.each([
       [{dashLength: 6}],
       [{gapLength: 1.5}]
     ]);
+    const label = within(group).getByText('Dashed strokes');
+    fireEvent.click(label);
+    expect(group).toHaveClass('collapsed');
+    expect(toggle).toBeChecked();
+    fireEvent.click(label);
+    expect(group).not.toHaveClass('collapsed');
+    expect(dash).toHaveValue(6);
+    expect(gap).toHaveValue(1.5);
+    expect(updateLayerVisConfig).toHaveBeenCalledTimes(3);
     fireEvent.click(toggle);
     expect(toggle).not.toBeChecked();
     expect(content).toHaveClass('disabled');

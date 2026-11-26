@@ -194,7 +194,7 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
-    dashedLines: 'Dashed lines',
+    dashedLines: 'Dashed strokes',
     dashLength: 'Dash length',
     dashLengthDescription: 'Length of each dash, as a multiple of half the stroke width.',
     gapLength: 'Gap length',
