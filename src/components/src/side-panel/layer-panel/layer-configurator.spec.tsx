@@ -191,3 +191,152 @@ test.each([
     });
   }
 );
+
+test.each([
+  ['polygon only', false, true, 0],
+  ['line only', true, false, 0],
+  ['mixed with polygon outlines off', true, true, 0],
+  ['mixed with polygon elevation offset', true, true, 25]
+])('groups editable dash lengths for GeoJSON lines: %s', async (_name, line, area, offset) => {
+  const dataset = new KeplerTable({
+    info: {id: 'geometry', label: 'Geometry'},
+    color: [0, 0, 0]
+  });
+  await dataset.importData({
+    data: {
+      fields: [{name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}],
+      rows: [
+        ...(line
+          ? [
+              [
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                      [0, 0],
+                      [1, 1]
+                    ]
+                  }
+                }
+              ]
+            ]
+          : []),
+        ...(area
+          ? [
+              [
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [0, 0],
+                        [0, 1],
+                        [1, 1],
+                        [0, 0]
+                      ]
+                    ]
+                  }
+                }
+              ]
+            ]
+          : [])
+      ]
+    }
+  });
+  const layer = new KeplerGlLayers.GeojsonLayer({
+    id: 'geometry',
+    dataId: dataset.id,
+    columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+  });
+  layer.setInitialLayerConfig(dataset);
+  layer.updateLayerVisConfig({stroked: Boolean(offset), elevationOffset: offset});
+  const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
+  const Configurator = () => {
+    const [, refresh] = React.useReducer(count => count + 1, 0);
+    return (
+      <LayerConfigurator
+        layer={layer}
+        datasets={{[dataset.id]: dataset}}
+        layerTypeOptions={[]}
+        openModal={jest.fn()}
+        updateLayerConfig={jest.fn()}
+        updateLayerType={jest.fn()}
+        updateLayerVisConfig={config => {
+          updateLayerVisConfig(config);
+          refresh();
+        }}
+        updateLayerVisualChannelConfig={jest.fn()}
+        updateLayerColorUI={jest.fn()}
+        updateLayerTextLabel={jest.fn()}
+      />
+    );
+  };
+  renderWithTheme(
+    <IntlWrapper>
+      <Configurator />
+    </IntlWrapper>
+  );
+  const dashGroup = screen.queryByText('Dashed strokes')?.closest('.layer-config-group');
+  const toggle = dashGroup
+    ? within(dashGroup as HTMLElement).getByRole<HTMLInputElement>('checkbox')
+    : null;
+  expect(Boolean(toggle)).toBe(line);
+  expect(toggle?.checked).not.toBe(true);
+  if (toggle) {
+    const group = toggle.closest('.layer-config-group') as HTMLElement;
+    const content = group.querySelector('.layer-config-group__content');
+    expect(group).toHaveClass('collapsed');
+    expect(content).toHaveClass('disabled');
+    // Polygon stroke settings must not disable the line group's switch.
+    expect(toggle.closest('.disabled')).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(group).not.toHaveClass('collapsed');
+    expect(content).not.toHaveClass('disabled');
+    const inputFor = (label: string) =>
+      within(
+        within(group).getByText(label).closest('.side-panel-section') as HTMLElement
+      ).getByRole('spinbutton');
+    const dash = inputFor('Dash length');
+    const gap = inputFor('Gap length');
+    // JSDOM does not apply the collapse animation; verify both controls are inside it.
+    const collapsibleContent = dash.closest('.layer-config-group__content__collapsible');
+    expect(collapsibleContent).not.toBeNull();
+    expect(collapsibleContent?.closest('.layer-config-group')).toBe(group);
+    expect(gap.closest('.layer-config-group__content__collapsible')).toBe(collapsibleContent);
+    expect(dash).toHaveValue(3);
+    expect(gap).toHaveValue(2);
+    fireEvent.change(dash, {target: {value: '6'}});
+    fireEvent.blur(dash);
+    fireEvent.change(gap, {target: {value: '1.5'}});
+    fireEvent.blur(gap);
+    expect(updateLayerVisConfig.mock.calls).toEqual([
+      [{dashedLines: true}],
+      [{dashLength: 6}],
+      [{gapLength: 1.5}]
+    ]);
+    const label = within(group).getByText('Dashed strokes');
+    fireEvent.click(label);
+    expect(group).toHaveClass('collapsed');
+    expect(toggle).toBeChecked();
+    fireEvent.click(label);
+    expect(group).not.toHaveClass('collapsed');
+    expect(dash).toHaveValue(6);
+    expect(gap).toHaveValue(1.5);
+    expect(updateLayerVisConfig).toHaveBeenCalledTimes(3);
+    fireEvent.click(toggle);
+    expect(toggle).not.toBeChecked();
+    expect(content).toHaveClass('disabled');
+    fireEvent.click(toggle);
+    expect(dash).toHaveValue(6);
+    expect(gap).toHaveValue(1.5);
+  } else {
+    expect(screen.queryByText('Dash length')).toBeNull();
+    expect(screen.queryByText('Gap length')).toBeNull();
+    expect(updateLayerVisConfig).not.toHaveBeenCalled();
+  }
+});
