@@ -728,13 +728,14 @@ function RasterTileLayerConfiguratorFactory(
               aria-label="Maximum band value in source units"
               title="Maximum band value in source units"
               step="any"
-              defaultValue={layer.config.visConfig.valueThreshold}
+              placeholder="No cutoff"
+              defaultValue={layer.config.visConfig.valueThreshold ?? undefined}
               onBlur={event => {
                 const value = event.currentTarget.valueAsNumber;
                 if (Number.isFinite(Math.fround(value))) {
                   onVisConfigChange({valueThreshold: value});
                 } else {
-                  event.currentTarget.value = String(layer.config.visConfig.valueThreshold);
+                  event.currentTarget.value = String(layer.config.visConfig.valueThreshold ?? '');
                 }
               }}
               onKeyDown={event => {

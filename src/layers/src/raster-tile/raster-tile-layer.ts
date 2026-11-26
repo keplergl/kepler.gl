@@ -174,7 +174,7 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   sigmoidalBiasFactor: VisConfigNumber;
   saturationValue: VisConfigNumber;
   valueThresholdEnabled: VisConfigBoolean;
-  valueThreshold: VisConfigNumber;
+  valueThreshold: VisConfigInput;
   filterEnabled: VisConfigBoolean;
   filterRange: VisConfigRange;
   _stacQuery: VisConfigInput;
@@ -195,14 +195,23 @@ export default class RasterTileLayer extends KeplerLayer {
     const {visConfig} = this.config;
     const bandCombination = PRESET_OPTIONS[visConfig.preset]?.bandCombination;
     if (this.meta.isPMTiles) return super.animatableProps;
-    const hasThreshold = bandCombination === 'single' && visConfig.valueThresholdEnabled;
+    const hasThreshold =
+      bandCombination === 'single' &&
+      visConfig.valueThresholdEnabled &&
+      typeof visConfig.valueThreshold === 'number' &&
+      Number.isFinite(Math.fround(visConfig.valueThreshold));
     const canRescale = !visConfig.colorRange?.colorMap && isRescalingAllowed(bandCombination);
     if (!hasThreshold && !canRescale) return super.animatableProps;
 
     const props: LayerAnimatableProp[] = [...super.animatableProps];
     if (hasThreshold) {
-      const {property: name, range, step} = this.visConfigSettings.valueThreshold;
-      props.push({name, label: 'Maximum band value', range, step});
+      props.push({
+        name: 'valueThreshold',
+        label: 'Maximum band value',
+        // The raw raster texture and the matching shader uniform use Float32.
+        range: [-3.4028234663852886e38, 3.4028234663852886e38],
+        step: 0.01
+      });
     }
     if (!canRescale) return props;
 
@@ -997,7 +1006,7 @@ export default class RasterTileLayer extends KeplerLayer {
       bandCombination,
       filterEnabled,
       filterRange,
-      valueThreshold: valueThresholdEnabled ? valueThreshold : undefined,
+      valueThreshold: valueThresholdEnabled ? valueThreshold ?? undefined : undefined,
       dataType,
       minCategoricalBandValue,
       maxCategoricalBandValue,

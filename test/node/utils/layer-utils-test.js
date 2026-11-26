@@ -3064,5 +3064,46 @@ test('layerUtils -> raw single-band raster cutoff follows the playhead without c
 
   layer.updateLayerVisConfig({valueThresholdEnabled: false});
   t.equal(render(3000)?.props.valueThreshold, undefined, 'off leaves the original raster unmasked');
+  const fresh = new RasterTileLayer({id: 'fresh-arrival', dataId: 'raster'});
+  fresh.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true
+  });
+  const firstRender = () =>
+    renderDeckGlLayer(
+      {
+        layer: fresh,
+        data,
+        datasets: {raster: data.dataset},
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    )[0];
+  t.equal(
+    firstRender()?.props.valueThreshold,
+    undefined,
+    'first enable leaves the raster unmasked'
+  );
+  t.notOk(
+    fresh.animatableProps.some(prop => prop.name === 'valueThreshold'),
+    'no track until a cutoff is chosen'
+  );
+  fresh.updateLayerVisConfig({valueThreshold: 0});
+  t.equal(firstRender()?.props.valueThreshold, 0, 'an authored zero is not treated as unset');
+  t.ok(
+    fresh.animatableProps.some(prop => prop.name === 'valueThreshold'),
+    'an authored zero can be animated'
+  );
+  fresh.updateLayerVisConfig({valueThresholdEnabled: false});
+  t.equal(
+    firstRender()?.props.valueThreshold,
+    undefined,
+    'disabling temporarily removes the cutoff'
+  );
+  fresh.updateLayerVisConfig({valueThresholdEnabled: true});
+  t.equal(firstRender()?.props.valueThreshold, 0, 're-enabling restores the authored cutoff');
+
   t.end();
 });

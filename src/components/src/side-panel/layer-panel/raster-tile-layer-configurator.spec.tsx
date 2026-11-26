@@ -169,3 +169,18 @@ test('edits a finite signed threshold only in Single Band mode', () => {
   expect(onChange).not.toHaveBeenCalled();
   expect(input).toHaveValue(1.8);
 });
+
+test('a newly enabled maximum band value starts empty and accepts an intentional zero', () => {
+  const {onChange} = renderConfigurator({
+    preset: 'singleBand',
+    singleBandName: 'B08',
+    valueThresholdEnabled: true
+  });
+  const input = screen.getByRole('spinbutton', {name: 'Maximum band value in source units'});
+  expect(input).toHaveValue(null);
+  fireEvent.blur(input);
+  expect(onChange).not.toHaveBeenCalled();
+  fireEvent.change(input, {target: {value: '0'}});
+  fireEvent.blur(input);
+  expect(onChange).toHaveBeenCalledWith({valueThreshold: 0});
+});
