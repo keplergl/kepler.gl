@@ -29,4 +29,8 @@ Kepler.gl **auto generates** an A5 layer from a column named `a5`, `a5_token`, o
 | 1ae29a8000000000 | 0.9218176408795662  |
 | 1ae2988000000000 | 0.23470692356446143 |
 
+## Copy a cell boundary
+
+With **Tooltip** enabled, click a cell to pin its tooltip and choose **Select Geometry**. Use **Copy Geometry** in the selected shape's action menu to copy its boundary as a GeoJSON Polygon. The boundary follows the rendered A5 cell, not its extrusion height. This copies one cell at a time.
+
 [Back to table of contents](../README.md)

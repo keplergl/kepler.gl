@@ -380,6 +380,10 @@ export default class GeohashGeometryLayer extends Layer {
     );
   }
 
+  getSelectionFeature(object: {token?: string}) {
+    return geohashToPolygonGeo(object, {isClosed: true});
+  }
+
   renderLayer(opts) {
     opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, mapState} = opts;

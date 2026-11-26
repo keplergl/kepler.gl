@@ -106,6 +106,11 @@ export class MVTLayer<ExtraProps> extends _MVTLayer<ExtraProps> {
 
   declare state: _MVTLayer<ExtraProps>['state'] & {isGlobeMode?: boolean};
 
+  protected _isWGS84(): boolean {
+    // MVTSource and PMTilesSource already decode geographic coordinates in every viewport.
+    return true;
+  }
+
   updateState(params: UpdateParameters<this>): void {
     const isGlobeMode = Boolean(params.context.viewport.resolution);
     if (this.state.isGlobeMode !== isGlobeMode) {

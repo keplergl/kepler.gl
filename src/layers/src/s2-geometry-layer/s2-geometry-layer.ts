@@ -3,6 +3,8 @@
 
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {S2Layer} from '@deck.gl/geo-layers';
+import type {Layer as DeckLayer} from '@deck.gl/core';
+import {polygonFromRing} from '../selection-utils';
 import {
   HIGHLIGH_COLOR_3D,
   CHANNEL_SCALES,
@@ -356,6 +358,26 @@ export default class S2GeometryLayer extends Layer {
       getFilterValue: gpuFilter.filterValueAccessor(dataContainer)(),
       ...accessors
     };
+  }
+
+  getSelectionFeature(object: S2GeometryLayerData | null, deckLayer?: DeckLayer) {
+    if (!object || !validS2Token(object.token) || !(deckLayer instanceof S2Layer)) {
+      return null;
+    }
+    // Use deck.gl's tessellated boundary, including curved edges and dateline handling.
+    const getPolygon = deckLayer.indexToBounds()?.getPolygon;
+    if (typeof getPolygon !== 'function') {
+      return null;
+    }
+    const positions = getPolygon(object, {index: object.index, data: [], target: []});
+    if (!(positions instanceof Float64Array)) {
+      return null;
+    }
+    const ring: number[][] = [];
+    for (let index = 0; index < positions.length; index += 2) {
+      ring.push([positions[index], positions[index + 1]]);
+    }
+    return polygonFromRing(ring);
   }
 
   renderLayer(opts) {

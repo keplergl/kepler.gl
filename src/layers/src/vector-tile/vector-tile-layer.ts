@@ -667,6 +667,17 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
     return fields.map(f => object.properties?.[f.name] ?? null);
   }
 
+  getSelectionFeature(object: Feature | null) {
+    // MVT picking provides geographic coordinates for the picked tile feature.
+    // Geometry collections are not supported by the drawing editor.
+    return object?.type === 'Feature' &&
+      object.geometry &&
+      'coordinates' in object.geometry &&
+      object.geometry.coordinates.length
+      ? object
+      : null;
+  }
+
   calculateLayerDomain(
     dataset: KeplerDataset,
     visualChannel: VisualChannel

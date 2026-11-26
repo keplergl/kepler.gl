@@ -56,4 +56,8 @@ initApplicationConfig({enableVoronoiLayer: false});
 
 Existing Voronoi layers in saved maps remain available for rendering and configuration.
 
+## Copy a cell boundary
+
+With **Tooltip** enabled, click a cell to pin its tooltip and choose **Select Geometry**. Use **Copy Geometry** in the selected shape's action menu to copy its boundary as a GeoJSON Polygon. The boundary is the displayed cell after filtering and bounds padding. This copies one cell at a time.
+
 [Back to layers](README.md)

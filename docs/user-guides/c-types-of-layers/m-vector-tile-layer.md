@@ -69,4 +69,8 @@ Here is a TileJSON template for a tileset with an `events` source layer. Replace
 
 MVT has no native date/time property type. An ordinary ISO 8601 property is a string, not a time-range field, and `date`, `time`, and `datetime` are not recognized types here. To filter raw timestamps numerically, store a numeric Unix timestamp in the tiles and declare it as `Number`, as above. Use the clock icon to expand the numeric range filter and play through its values. The slider displays numbers in your chosen unit (seconds in this example) rather than calendar dates, and it does not offer a date/time picker or time-zone controls.
 
+## Copy a picked feature
+
+With **Tooltip** enabled, click a feature to pin its tooltip and choose **Select Geometry**. Use **Copy Geometry** in the selected shape's action menu to copy its geometry as GeoJSON. This copies the picked tile feature; it may be clipped or simplified by the tileset and does not reconstruct the full source feature across tiles.
+
 [Back to layer overview](./README.md)

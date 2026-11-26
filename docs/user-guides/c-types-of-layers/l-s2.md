@@ -23,4 +23,8 @@ Kepler.gl **auto generates** S2 layer from column named `s2` or `s2_token`
 | 8085804c | 0.1580509670379684  |
 | 80858054 | 0.15992745628743954 |
 
+## Copy a cell boundary
+
+With **Tooltip** enabled, click a cell to pin its tooltip and choose **Select Geometry**. Use **Copy Geometry** in the selected shape's action menu to copy its boundary as a GeoJSON Polygon. The boundary follows the rendered S2 cell, including its curved edges. This copies one cell at a time.
+
 [Back to table of contents](../README.md)
