@@ -128,6 +128,7 @@ const ImageOptionList = styled.div`
 
   .custom-dimensions {
     display: flex;
+    align-items: flex-end;
     gap: 8px;
     margin: 8px 0;
 
@@ -140,6 +141,15 @@ const ImageOptionList = styled.div`
       width: 100%;
       box-sizing: border-box;
       margin: 0;
+    }
+
+    button {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .custom-dimensions-help {
+      align-self: flex-start;
     }
   }
 
@@ -250,11 +260,6 @@ function CustomDimensions({
             (?)
           </span>
         </TippyTooltip>
-      </div>
-      <span id={helpId} hidden>
-        {limitsHelp}
-      </span>
-      <div className="button-list">
         <Button
           type="button"
           secondary
@@ -267,6 +272,9 @@ function CustomDimensions({
           <FormattedMessage id="modal.exportImage.applyDimensions" />
         </Button>
       </div>
+      <span id={helpId} hidden>
+        {limitsHelp}
+      </span>
     </>
   );
 }
