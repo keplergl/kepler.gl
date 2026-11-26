@@ -36,7 +36,7 @@ When a COG URL is detected, kepler.gl automatically fetches STAC metadata from t
 
 ## Animate a single-band value cutoff
 
-In **Single Band** mode, turn on **Maximum band value** and enter a cutoff in the units stored in the raster. For example, if the band contains tide arrival levels in metres, a cutoff of `1.8` shows cells at or below 1.8 m. The existing NoData mask still applies. Use a COG or a STAC raster that serves numeric band tiles, not a pre-colored PMTiles or bitmap source.
+In **Single Band** mode, turn on **Maximum band value** and enter a cutoff in the units stored in the raster. For example, if the band contains tide arrival levels in metres, a cutoff of `1.8` shows cells at or below 1.8 m. The existing NoData mask still applies. Use a COG or a STAC raster that serves numeric band tiles, not a pre-colored PMTiles or bitmap source. The comparison uses Float32 precision, so it cannot distinguish all adjacent integer values above 16,777,216.
 
 In **Create Animation**, add a **Maximum band value** property track for the raster layer and enter the starting and ending levels. The animation changes which cells are visible without changing the color scale or requesting new tiles for each threshold.
 
