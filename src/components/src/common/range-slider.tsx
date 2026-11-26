@@ -65,6 +65,8 @@ interface RangeSliderProps {
   inputSize?: string;
   inputIdPrefix?: string;
   step?: number;
+  /** Commit typed values without snapping them to the slider step. */
+  preserveInputPrecision?: boolean;
   sliderHandleWidth?: number;
   xAxis?: ElementType;
   subAnimations?: any[];
@@ -270,8 +272,23 @@ export default function RangeSliderFactory(
     _renderInput(key) {
       const setRange = key === 'value0' ? this._setRangeVal0 : this._setRangeVal1;
       const ref = key === 'value0' ? this.inputValue0 : this.inputValue1;
-      const update = e => {
-        if (!setRange(e.target.value)) {
+      const update = (e: React.SyntheticEvent<HTMLInputElement>) => {
+        if (this.props.preserveInputPrecision) {
+          const {value0, value1, onChange = noop} = this.props;
+          const range = this._getDisplayRange();
+          const input = e.currentTarget.value;
+          const value = input.trim() ? Number(input) : NaN;
+          if (!range || !Number.isFinite(value)) {
+            this.setState({[key]: this.props[key]});
+            return;
+          }
+          const next =
+            key === 'value0' ? clamp([range[0], value1], value) : clamp([value0, range[1]], value);
+          this.setState({[key]: next});
+          onChange(key === 'value0' ? [next, value1] : [value0, next]);
+          return;
+        }
+        if (!setRange(e.currentTarget.value)) {
           this.setState({[key]: this.state[key]});
         }
       };
@@ -290,8 +307,8 @@ export default function RangeSliderFactory(
           onChange={onChange}
           onKeyPress={e => {
             if (e.key === 'Enter') {
-              update(e);
-              (ref.current as any).blur();
+              if (!this.props.preserveInputPrecision) update(e);
+              ref.current?.blur();
             }
           }}
           onBlur={update}

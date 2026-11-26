@@ -101,22 +101,29 @@ test.each([
     });
     const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
 
-    renderWithTheme(
-      <IntlWrapper>
-        <LayerConfigurator
-          layer={layer}
-          datasets={{[dataset.id]: dataset}}
-          layerTypeOptions={[]}
-          openModal={jest.fn()}
-          updateLayerConfig={jest.fn()}
-          updateLayerType={jest.fn()}
-          updateLayerVisConfig={updateLayerVisConfig}
-          updateLayerVisualChannelConfig={jest.fn()}
-          updateLayerColorUI={jest.fn()}
-          updateLayerTextLabel={jest.fn()}
-        />
-      </IntlWrapper>
-    );
+    function ControlledConfigurator() {
+      const [, update] = React.useReducer(value => value + 1, 0);
+      return (
+        <IntlWrapper>
+          <LayerConfigurator
+            layer={layer}
+            datasets={{[dataset.id]: dataset}}
+            layerTypeOptions={[]}
+            openModal={jest.fn()}
+            updateLayerConfig={jest.fn()}
+            updateLayerType={jest.fn()}
+            updateLayerVisConfig={config => {
+              updateLayerVisConfig(config);
+              update();
+            }}
+            updateLayerVisualChannelConfig={jest.fn()}
+            updateLayerColorUI={jest.fn()}
+            updateLayerTextLabel={jest.fn()}
+          />
+        </IntlWrapper>
+      );
+    }
+    renderWithTheme(<ControlledConfigurator />);
 
     const inputFor = (label: string) =>
       within(screen.getByText(label).closest('.side-panel-section') as HTMLElement).getByRole(
@@ -132,13 +139,36 @@ test.each([
     expect(collapsibleContent).not.toBeNull();
     expect(collapsibleContent?.closest('.layer-config-group')).toBe(colorGroup);
     expect(target.closest('.layer-config-group__content__collapsible')).toBe(collapsibleContent);
-    expect(inputFor('Opacity').closest('.layer-config-group__content__collapsible')).toBeNull();
+    const opacity = inputFor('Opacity');
+    expect(opacity.closest('.layer-config-group__content__collapsible')).toBeNull();
+    fireEvent.change(opacity, {target: {value: '0.00375'}});
+    fireEvent.blur(opacity);
+    expect(updateLayerVisConfig).toHaveBeenLastCalledWith({opacity: 0.00375});
+    fireEvent.change(opacity, {target: {value: '1.005'}});
+    fireEvent.blur(opacity);
+    expect(updateLayerVisConfig).toHaveBeenLastCalledWith({opacity: 1});
+    fireEvent.change(opacity, {target: {value: '2'}});
+    fireEvent.blur(opacity);
+    expect(opacity).toHaveValue(1);
+    fireEvent.change(opacity, {target: {value: ''}});
+    fireEvent.blur(opacity);
+    expect(opacity).toHaveValue(1);
+    const slider = opacity.closest('.kg-range-slider__slider')?.querySelector('.kg-slider');
+    const handle = slider?.querySelectorAll('.kg-range-slider__handle')[1];
+    expect(slider).not.toBeNull();
+    expect(handle).toBeDefined();
+    Object.defineProperty(slider, 'offsetWidth', {value: 1000});
+    fireEvent.mouseDown(handle!, {clientX: 1000});
+    fireEvent.mouseMove(document, {clientX: 234});
+    fireEvent.mouseUp(document);
+    expect(updateLayerVisConfig).toHaveBeenLastCalledWith({opacity: 0.23});
+    updateLayerVisConfig.mockClear();
 
     fireEvent.click(colorLabel);
     expect(colorGroup).not.toHaveClass('collapsed');
     expect(source).toHaveValue(1);
     expect(target).toHaveValue(1);
-    fireEvent.change(source, {target: {value: '0.2'}});
+    fireEvent.change(source, {target: {value: '0.20375'}});
     fireEvent.blur(source);
     fireEvent.change(target, {target: {value: '0'}});
     fireEvent.blur(target);
