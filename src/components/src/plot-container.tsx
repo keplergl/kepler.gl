@@ -259,8 +259,8 @@ export default function PlotContainerFactory(
 
       captureGenerationRef.current += 1;
       screenshotTakenRef.current = false;
+      deckLayersLoadingRef.current = true;
       if (mapStyleChanged) {
-        deckLayersLoadingRef.current = true;
         mapStyleLoadedRef.current = false;
       }
       renderedMapStylesRef.current = {

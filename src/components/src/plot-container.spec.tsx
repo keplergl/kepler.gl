@@ -68,8 +68,17 @@ test('PNG capture uses the requested size and discards an in-flight older image'
 
     rerender(plot(1234, 789));
     await act(async () => {
+      mapProps.deckRenderCallbacks?.onDeckAfterRender?.({
+        layers: [{internalState: {}, isLoaded: false}]
+      });
       jest.advanceTimersByTime(1000);
       resolveOldCapture('data:image/png;base64,AQ==');
+    });
+    expect(toPng).toHaveBeenCalledTimes(1);
+    expect(setImage).not.toHaveBeenCalled();
+    await act(async () => {
+      mapProps.deckRenderCallbacks?.onDeckAfterRender?.({layers: []});
+      jest.advanceTimersByTime(1000);
     });
     expect(toPng.mock.calls.map(([, options]) => [options.width, options.height])).toEqual([
       [1200, 800],
@@ -78,7 +87,10 @@ test('PNG capture uses the requested size and discards an in-flight older image'
     expect(setImage.mock.calls).toEqual([['data:image/png;base64,AA==']]);
 
     rerender(plot(5000, 5000));
-    await act(async () => jest.advanceTimersByTime(1000));
+    await act(async () => {
+      mapProps.deckRenderCallbacks?.onDeckAfterRender?.({layers: []});
+      jest.advanceTimersByTime(1000);
+    });
     expect(toPng).toHaveBeenLastCalledWith(
       expect.any(HTMLElement),
       expect.objectContaining({width: 5000, height: 5000})
@@ -87,7 +99,10 @@ test('PNG capture uses the requested size and discards an in-flight older image'
     expect(setImage).toHaveBeenCalledTimes(1);
 
     rerender(plot(6001, 1000));
-    await act(async () => jest.advanceTimersByTime(1000));
+    await act(async () => {
+      mapProps.deckRenderCallbacks?.onDeckAfterRender?.({layers: []});
+      jest.advanceTimersByTime(1000);
+    });
     expect(toPng).toHaveBeenCalledTimes(3);
     expect(setError).toHaveBeenCalledTimes(2);
   } finally {
@@ -95,3 +110,66 @@ test('PNG capture uses the requested size and discards an in-flight older image'
     jest.useRealTimers();
   }
 });
+
+test.each(['scale', 'transparentBackground'] as const)(
+  'PNG capture waits for a fresh Deck render after changing %s',
+  async setting => {
+    jest.useFakeTimers();
+    const toPng = jest.spyOn(domtoimage, 'toPng').mockResolvedValue('data:image/png;base64,AA==');
+    type MapProps = React.ComponentProps<Parameters<typeof PlotContainerFactory>[0]>;
+    let mapProps!: MapProps;
+    const Plot = PlotContainerFactory(
+      props => {
+        mapProps = props;
+        return <div />;
+      },
+      ({children}: React.PropsWithChildren) => <>{children}</>
+    );
+    const props = {
+      ...plotContainerSelector(mockKeplerProps),
+      imageSize: {imageW: 1200, imageH: 800, scale: 1, zoomOffset: 0},
+      transparentBackground: true,
+      setExportImageSetting: jest.fn(),
+      setExportImageDataUri: jest.fn(),
+      setExportImageError: jest.fn()
+    };
+    const renderMap = () =>
+      mapProps.onMapRender!({isStyleLoaded: () => true} as Parameters<
+        NonNullable<MapProps['onMapRender']>
+      >[0]);
+
+    try {
+      const {rerender} = render(<Plot {...props} />, {
+        wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      });
+      await act(async () => {
+        mapProps.deckRenderCallbacks?.onDeckAfterRender?.({layers: []});
+        renderMap();
+        jest.advanceTimersByTime(1000);
+      });
+      expect(toPng).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <Plot
+          {...props}
+          {...(setting === 'scale'
+            ? {imageSize: {...props.imageSize, scale: 2}}
+            : {transparentBackground: false})}
+        />
+      );
+      await act(async () => {
+        renderMap();
+        jest.advanceTimersByTime(1000);
+      });
+      expect(toPng).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        mapProps.deckRenderCallbacks?.onDeckAfterRender?.({layers: []});
+        jest.advanceTimersByTime(1000);
+      });
+      expect(toPng).toHaveBeenCalledTimes(2);
+    } finally {
+      toPng.mockRestore();
+      jest.useRealTimers();
+    }
+  }
+);

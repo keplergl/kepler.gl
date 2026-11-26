@@ -633,7 +633,8 @@ export const setExportImageSettingUpdater = (
     ((updated.ratio === EXPORT_IMG_RATIOS.CUSTOM && customDimensions) ||
       (state.exportImage.ratio === EXPORT_IMG_RATIOS.CUSTOM &&
         state.exportImage.customDimensions)) &&
-    (imageSize.imageW !== state.exportImage.imageSize.imageW ||
+    (updated.ratio !== state.exportImage.ratio ||
+      imageSize.imageW !== state.exportImage.imageSize.imageW ||
       imageSize.imageH !== state.exportImage.imageSize.imageH ||
       imageSize.scale !== state.exportImage.imageSize.scale);
 
