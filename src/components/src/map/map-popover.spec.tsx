@@ -6,6 +6,9 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {injectIntl, IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {KeplerGlLayers, Layer, LayerClasses} from '@kepler.gl/layers';
+import {Layer as DeckLayer, WebMercatorViewport} from '@deck.gl/core';
+// @ts-expect-error Experimental export is missing from the repository's deck.gl type augmentation.
+import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 import {S2Layer} from '@deck.gl/geo-layers';
 import {ScatterplotLayer} from '@deck.gl/layers';
 import {cellToBoundary, hexToU64} from 'a5-js';
@@ -14,10 +17,14 @@ import {
   getLayerHoverProp,
   getLayerHoverPropValue,
   INITIAL_VIS_STATE,
-  LayerHoverProp
+  LayerHoverProp,
+  setFeaturesUpdater
 } from '@kepler.gl/reducers';
+import {FILTER_TYPES} from '@kepler.gl/constants';
+import {getDefaultFilter} from '@kepler.gl/utils';
 import {KeplerTable} from '@kepler.gl/table';
 import {theme} from '@kepler.gl/styles';
+import {MVTLayer} from '../../../layers/src/vector-tile/mvt-layer';
 import MapPopoverFactory, {getSelectedFeature} from './map-popover';
 
 type PopoverContentProps = React.ComponentProps<
@@ -130,19 +137,57 @@ describe.each([
   });
 });
 
-async function pickedHover(type: keyof typeof LayerClasses, object: any) {
+async function pickedHover(
+  type: keyof typeof LayerClasses,
+  object: any,
+  {globe = false, fields = ['label']} = {}
+) {
   const dataset = new KeplerTable({info: {id: 'picked'}, color: [0, 0, 0]});
   await dataset.importData({
     data: {
-      fields: [{name: 'label', type: 'string'}],
-      rows: [['source row']]
+      fields: fields.map(name => ({name, type: 'string'})),
+      rows: [fields.map(() => 'source row')]
     }
   });
   const layer: Layer = new LayerClasses[type]({id: 'picked-layer', dataId: dataset.id});
-  const deckLayer =
+  let deckLayer: DeckLayer =
     type === 's2'
       ? new S2Layer({id: layer.id, ...{idx: 0}})
       : new ScatterplotLayer({id: layer.id, ...{idx: 0}});
+  if (type === 'vectorTile') {
+    const tileLayer = new MVTLayer({id: layer.id, ...{idx: 0}});
+    Object.assign(tileLayer, {
+      context: {
+        viewport: new (globe ? GlobeViewport : WebMercatorViewport)({
+          width: 800,
+          height: 600,
+          longitude: 0,
+          latitude: 0,
+          zoom: 2
+        })
+      },
+      state: {binary: false}
+    });
+    const sourceLayer = new ScatterplotLayer({
+      id: `${layer.id}-points`,
+      ...{tile: {bbox: {west: 0, south: 0, east: 90, north: 66.51326044311186}}}
+    });
+    object = tileLayer.getPickingInfo({
+      info: {
+        object,
+        layer: tileLayer,
+        picked: true,
+        index: 0,
+        x: 20,
+        y: 30,
+        color: null,
+        pixelRatio: 1
+      },
+      sourceLayer,
+      mode: 'query'
+    }).object;
+    deckLayer = tileLayer;
+  }
   const hover = getLayerHoverProp({
     animationConfig: INITIAL_VIS_STATE.animationConfig,
     interactionConfig: {
@@ -152,7 +197,7 @@ async function pickedHover(type: keyof typeof LayerClasses, object: any) {
         enabled: true,
         config: {
           ...INITIAL_VIS_STATE.interactionConfig.tooltip.config,
-          fieldsToShow: {[dataset.id]: [{name: 'label', format: null}]}
+          fieldsToShow: {[dataset.id]: fields.map(name => ({name, format: null}))}
         }
       }
     },
@@ -223,26 +268,88 @@ test.each(['80858004', '04', '6c'])('selects the rendered S2 boundary for %s', a
   expect(boundary.flat().every(Number.isFinite)).toBe(true);
 });
 
-test.each([
-  {type: 'Point', coordinates: [12, 34]},
-  {
-    type: 'LineString',
-    coordinates: [
-      [12, 34],
-      [13, 35]
-    ]
-  },
-  {type: 'Polygon', coordinates: [square]},
-  {type: 'MultiPolygon', coordinates: [[square]]}
-])('selects the picked vector tile $type with its properties', async geometry => {
-  const object = {id: 123, type: 'Feature', properties: {label: 'tile feature'}, geometry};
-  const {hover} = await pickedHover('vectorTile', object);
-  const {setSelectedFeature} = renderPopover(hover);
-  fireEvent.click(screen.getByText('Select Geometry'));
-  expect(setSelectedFeature.mock.calls[0][0]).toEqual({...object, id: expect.any(String)});
-  expect(object.id).toBe(123);
-  expect(hover?.data).toEqual(['tile feature']);
+describe.each([
+  {name: 'flat', globe: false},
+  {name: 'globe', globe: true}
+])('vector tile selection on $name maps', ({globe}) => {
+  test.each([
+    {type: 'Point', coordinates: [12, 34]},
+    {
+      type: 'LineString',
+      coordinates: [
+        [12, 34],
+        [13, 35]
+      ]
+    },
+    {type: 'Polygon', coordinates: [square]},
+    {type: 'MultiPolygon', coordinates: [[square]]}
+  ])('selects and serializes the picked $type in geographic coordinates', async geometry => {
+    const object = {id: 123, type: 'Feature', properties: {label: 'tile feature'}, geometry};
+    const {hover} = await pickedHover('vectorTile', object, {globe});
+    const {setSelectedFeature} = renderPopover(hover);
+    fireEvent.click(screen.getByText('Select Geometry'));
+    const selected = setSelectedFeature.mock.calls[0][0];
+    expect(selected).toEqual({...object, id: expect.any(String)});
+    expect(JSON.parse(JSON.stringify(selected.geometry))).toEqual(geometry);
+    expect(object.id).toBe(123);
+    expect(hover?.data).toEqual(['tile feature']);
+  });
 });
+
+test.each(['existing-filter', 'missing-filter'])(
+  'strips reserved source properties without changing filters or tooltip values (%s)',
+  async filterId => {
+    const properties = {
+      label: 'tile feature',
+      filterId,
+      isClosed: true,
+      bbox: [0, 0, 1, 1],
+      isVisible: false,
+      guideType: 'editHandle',
+      editHandleType: 'existing',
+      shape: 'Rectangle',
+      renderType: 'guide',
+      editProperties: {featureIndex: 0}
+    };
+    const object = {
+      id: 123,
+      type: 'Feature',
+      properties,
+      geometry: {type: 'Polygon', coordinates: [square]}
+    };
+    const original = JSON.parse(JSON.stringify(object));
+    const {hover} = await pickedHover('vectorTile', object, {fields: ['label', 'filterId']});
+    const {setSelectedFeature, onSetFeatures, existingFeature} = renderPopover(hover);
+    fireEvent.click(screen.getByText('Select Geometry'));
+    const selected = setSelectedFeature.mock.calls[0][0];
+    const filter = {
+      ...getDefaultFilter({id: 'existing-filter'}),
+      type: FILTER_TYPES.polygon,
+      value: {
+        id: 'filter-shape',
+        properties: {filterId: 'existing-filter'},
+        geometry: {type: 'Polygon', coordinates: [ring]}
+      }
+    };
+    const nextState = setFeaturesUpdater(
+      {
+        ...INITIAL_VIS_STATE,
+        filters: [filter],
+        editor: {
+          ...INITIAL_VIS_STATE.editor,
+          features: [existingFeature],
+          selectedFeature: selected
+        }
+      },
+      {features: onSetFeatures.mock.calls[0][0]}
+    );
+    expect(nextState.editor.features).toEqual([existingFeature, selected]);
+    expect(nextState.filters).toEqual([filter]);
+    expect(selected.properties).toEqual({label: 'tile feature'});
+    expect(object).toEqual(original);
+    expect(hover?.data).toEqual(['tile feature', filterId]);
+  }
+);
 
 test.each([
   ['voronoi', {index: 0}],

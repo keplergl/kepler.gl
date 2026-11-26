@@ -14,6 +14,7 @@ import {LAYER_TYPES} from '@kepler.gl/constants';
 import {LayerHoverProp, getLayerHoverPropValue} from '@kepler.gl/reducers';
 import {ChartConfig, Feature, FeatureSelectionContext} from '@kepler.gl/types';
 import {Datasets} from '@kepler.gl/table';
+import {sanitizeEditorFeature} from '@kepler.gl/utils';
 import {
   FloatingPortal,
   flip,
@@ -206,11 +207,11 @@ export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Featu
   }
 
   if (selectedFeature) {
-    return {
+    return sanitizeEditorFeature({
       ...selectedFeature,
       // unique id should be assigned to features in the editor
       id: generateHashId(8)
-    };
+    });
   } else {
     return null;
   }
