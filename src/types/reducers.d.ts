@@ -550,6 +550,7 @@ export type BaseMapStyle = {
 export declare type ExportImage = {
   ratio: EXPORT_IMG_RATIOS;
   resolution: ExportResolutionOption;
+  customDimensions?: {width: number; height: number};
   legend: boolean;
   /** When true, include the charts panel in the exported image. */
   charts: boolean;

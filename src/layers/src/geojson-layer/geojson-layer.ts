@@ -23,6 +23,7 @@ import Layer, {
   LayerStrokeColorConfig,
   UpdateTriggers
 } from '../base-layer';
+import {PathStyleExtension} from '@deck.gl/extensions';
 import {GeoJsonLayer as DeckGLGeoJsonLayer, GeoJsonLayerProps} from '@deck.gl/layers';
 import {
   getGeojsonLayerMeta,
@@ -77,6 +78,9 @@ const SUPPORTED_ANALYZER_TYPES = {
 export const geojsonVisConfigs: {
   opacity: 'opacity';
   strokeOpacity: VisConfigNumber;
+  dashedLines: VisConfigBoolean;
+  dashLength: VisConfigNumber;
+  gapLength: VisConfigNumber;
   thickness: VisConfigNumber;
   strokeColor: 'strokeColor';
   colorRange: 'colorRange';
@@ -102,6 +106,35 @@ export const geojsonVisConfigs: {
   strokeOpacity: {
     ...LAYER_VIS_CONFIGS.opacity,
     property: 'strokeOpacity'
+  },
+  dashedLines: {
+    type: 'boolean',
+    defaultValue: false,
+    label: 'layerVisConfigs.dashedLines',
+    group: 'stroke',
+    property: 'dashedLines'
+  },
+  dashLength: {
+    type: 'number',
+    defaultValue: 3,
+    label: 'layerVisConfigs.dashLength',
+    description: 'layerVisConfigs.dashLengthDescription',
+    isRanged: false,
+    range: [0.1, 20],
+    step: 0.1,
+    group: 'stroke',
+    property: 'dashLength'
+  },
+  gapLength: {
+    type: 'number',
+    defaultValue: 2,
+    label: 'layerVisConfigs.gapLength',
+    description: 'layerVisConfigs.gapLengthDescription',
+    isRanged: false,
+    range: [0.1, 20],
+    step: 0.1,
+    group: 'stroke',
+    property: 'gapLength'
   },
   thickness: {
     ...LAYER_VIS_CONFIGS.thickness,
@@ -137,6 +170,9 @@ export const geojsonVisConfigs: {
 export type GeoJsonVisConfigSettings = {
   opacity: VisConfigNumber;
   strokeOpacity: VisConfigNumber;
+  dashedLines: VisConfigBoolean;
+  dashLength: VisConfigNumber;
+  gapLength: VisConfigNumber;
   thickness: VisConfigNumber;
   strokeColor: VisConfigColorSelect;
   colorRange: VisConfigColorRange;
@@ -166,6 +202,9 @@ export type GeoJsonLayerColumnsConfig = {
 export type GeoJsonLayerVisConfig = {
   opacity: number;
   strokeOpacity: number;
+  dashedLines: boolean;
+  dashLength: number;
+  gapLength: number;
   thickness: number;
   strokeColor: RGBColor;
   colorRange: ColorRange;
@@ -316,6 +355,22 @@ const SUPPORTED_COLUMN_MODES = [
   }
 ];
 const DEFAULT_COLUMN_MODE = COLUMN_MODE_GEOJSON;
+
+const geoJsonDashExtension = new PathStyleExtension({dash: true});
+const LINESTRING_SUBLAYER_ID = 'linestrings';
+const DASHED_LINESTRING_SUBLAYER_ID = 'dashed-linestrings';
+
+class DashedGeoJsonLayer extends DeckGLGeoJsonLayer {
+  protected getSubLayerProps(props?: {id?: string; [key: string]: unknown}) {
+    const sublayer = super.getSubLayerProps(props);
+    // deck.gl transfers attributes between matching IDs. Keep the dashed path's
+    // buffers out of the solid path when the extension is removed.
+    if (props?.id === LINESTRING_SUBLAYER_ID) {
+      sublayer.id = `${this.id}-${DASHED_LINESTRING_SUBLAYER_ID}`;
+    }
+    return sublayer;
+  }
+}
 
 export default class GeoJsonLayer extends Layer {
   declare config: GeoJsonLayerConfig;
@@ -609,16 +664,23 @@ export default class GeoJsonLayer extends Layer {
     return null;
   }
 
+  private usesDashedLines() {
+    return Boolean(this.meta.featureTypes?.line && this.config.visConfig.dashedLines === true);
+  }
+
   getFilteredItemCount() {
     // return -polygons-fill or -polygons-stroke
-    // + -linestrings
+    // + the active path sublayer
     // + -points-circle
     if (Object.keys(this.filteredItemCount).length) {
       const polygonCount =
         this.filteredItemCount[`${this.id}-polygons-fill`] ||
         this.filteredItemCount[`${this.id}-polygons-stroke`] ||
         0;
-      const linestringCount = this.filteredItemCount[`${this.id}-linestrings`] || 0;
+      const lineId = this.usesDashedLines()
+        ? DASHED_LINESTRING_SUBLAYER_ID
+        : LINESTRING_SUBLAYER_ID;
+      const linestringCount = this.filteredItemCount[`${this.id}-${lineId}`] || 0;
       const pointCount = this.filteredItemCount[`${this.id}-points-circle`] || 0;
 
       return polygonCount + linestringCount + pointCount;
@@ -852,7 +914,13 @@ export default class GeoJsonLayer extends Layer {
                 ]
               : bounds || previousBounds,
           fixedRadius,
-          featureTypes
+          featureTypes: isIncrementalLoad
+            ? {
+                point: Boolean(this.meta.featureTypes?.point || featureTypes?.point),
+                line: Boolean(this.meta.featureTypes?.line || featureTypes?.line),
+                polygon: Boolean(this.meta.featureTypes?.polygon || featureTypes?.polygon)
+              }
+            : featureTypes
         });
       }
     } else if (this.dataToFeature.length === 0 || this.config.columnMode === COLUMN_MODE_TABLE) {
@@ -1060,10 +1128,26 @@ export default class GeoJsonLayer extends Layer {
       visible: defaultLayerProps.visible
     };
 
+    const dashedLines = this.usesDashedLines();
+    const dashPattern = (['dashLength', 'gapLength'] as const).map(property => {
+      const value = visConfig[property];
+      return Number.isFinite(value) && value > 0
+        ? value
+        : this.visConfigSettings[property].defaultValue;
+    });
     // arrow table can have multiple chunks, a deck.gl layer is created for each chunk
     const deckLayerData = this.geoArrowMode ? data : [data];
     const deckLayers = deckLayerData.map((d, i) => {
-      return new DeckGLGeoJsonLayer({
+      const extensions = [...defaultLayerProps.extensions, new FilterArrowExtension()];
+      const linestringProps = dashedLines
+        ? {
+            ...opaOverwrite,
+            extensions: [...extensions, geoJsonDashExtension],
+            getDashArray: dashPattern
+          }
+        : opaOverwrite;
+      const GeoJsonLayerClass = dashedLines ? DashedGeoJsonLayer : DeckGLGeoJsonLayer;
+      return new GeoJsonLayerClass({
         ...defaultLayerProps,
         ...layerProps,
         ...props,
@@ -1082,7 +1166,7 @@ export default class GeoJsonLayer extends Layer {
         jointRounded: true,
         getElevation: offsetActive && !visConfig.enable3d ? 0 : props.getElevation,
         updateTriggers,
-        extensions: [...defaultLayerProps.extensions, new FilterArrowExtension()],
+        extensions,
         _subLayerProps: {
           'polygons-fill': {
             type: OffsetSolidPolygonLayer,
@@ -1095,7 +1179,7 @@ export default class GeoJsonLayer extends Layer {
             }
           },
           ...(featureTypes?.polygon ? {'polygons-stroke': opaOverwrite} : {}),
-          ...(featureTypes?.line ? {linestrings: opaOverwrite} : {}),
+          ...(featureTypes?.line ? {linestrings: linestringProps} : {}),
           ...(featureTypes?.point
             ? {
                 points: {

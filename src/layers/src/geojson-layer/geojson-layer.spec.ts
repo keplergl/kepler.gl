@@ -15,7 +15,8 @@ import {
   processRowObject
 } from '@kepler.gl/processors';
 import {convertGeometryToWKB, getBinaryGeometriesFromArrow} from '@loaders.gl/gis';
-import {datasetSchema} from '@kepler.gl/schemas';
+import {datasetSchema, layerPropsV1} from '@kepler.gl/schemas';
+import {PathStyleExtension} from '@deck.gl/extensions';
 
 const point = (x: number) => ({type: 'Point', coordinates: [x, x]});
 const line = (x: number) => ({
@@ -1316,6 +1317,67 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
       })
     );
 
+  test('keeps native GeoArrow line batches binary with custom dash lengths', async () => {
+    const first = lineVector(
+      [
+        [0, 0],
+        [1, 1]
+      ],
+      [0, 2]
+    );
+    const second = lineVector(
+      [
+        [2, 2],
+        [3, 3]
+      ],
+      [0, 2]
+    );
+    const vector = first.concat(second);
+    const dataset = new KeplerTable({
+      info: {id: 'native-dashed-lines'},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields: [
+        {
+          name: 'geometry',
+          type: 'geoarrow',
+          metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.LINESTRING]])
+        }
+      ],
+      cols: [vector],
+      rows: []
+    });
+    await dataset.update({fields: dataset.fields, cols: [vector], rows: []});
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(dataset);
+    layer.updateLayerVisConfig({dashedLines: true, dashLength: 6, gapLength: 1.5});
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {}) as {data: unknown[]};
+    const rendered = layer.renderLayer({
+      data,
+      gpuFilter: dataset.gpuFilter,
+      idx: 0,
+      visible: true,
+      layerCallbacks: {},
+      interactionConfig: {tooltip: {enabled: false}},
+      mapState: {zoom: 8, width: 800, height: 600}
+    });
+
+    expect(rendered).toHaveLength(2);
+    rendered.forEach((deckLayer, chunkIndex) => {
+      const geojson = deckLayer as any;
+      expect(geojson.props.data).toBe(data.data[chunkIndex]);
+      geojson.state = {binary: true};
+      const props = geojson.getSubLayerProps({id: 'linestrings'});
+      expect(props.extensions.some(extension => extension instanceof PathStyleExtension)).toBe(
+        true
+      );
+      expect(props.getDashArray).toEqual([6, 1.5]);
+    });
+  });
+
   test.each(
     [GEOARROW_EXTENSIONS.LINESTRING, GEOARROW_EXTENSIONS.POLYGON].flatMap(encoding =>
       [false, true].map(cached => ({encoding, cached}))
@@ -1477,6 +1539,152 @@ describe('GeoJsonLayer numeric feature styles', () => {
       interactionConfig: {tooltip: {enabled: false}},
       mapState: {zoom, width: 800, height: 600}
     })[0];
+
+  test('dashes line features only when enabled, without replacing data or existing extensions', async () => {
+    const {layer, dataset} = await initializeGeoJsonLayer([
+      {geometry: line(0), properties: {}},
+      {geometry: polygon(1), properties: {}},
+      {geometry: point(2), properties: {}}
+    ]);
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    const getSublayerProps = (deckLayer, id) => {
+      deckLayer.state = {binary: false};
+      return deckLayer.getSubLayerProps({id});
+    };
+    const hasDash = props =>
+      props.extensions.some(extension => extension instanceof PathStyleExtension);
+    const solid = render(layer, dataset, data, 8);
+    expect(hasDash(getSublayerProps(solid, 'linestrings'))).toBe(false);
+    layer.updateLayerVisConfig({dashedLines: true});
+    const saved = JSON.parse(JSON.stringify(layerPropsV1.config.save(layer.config)));
+    const restored = layerPropsV1.config.load(saved.config, [layer]);
+    expect(restored.config.visConfig.dashedLines).toBe(true);
+    const dashed = render(layer, dataset, data, 8);
+    const lineProps = getSublayerProps(dashed, 'linestrings');
+    expect(dashed.props.data).toBe(solid.props.data);
+    expect(hasDash(lineProps)).toBe(true);
+    expect(lineProps.extensions.slice(0, -1)).toEqual(dashed.props.extensions);
+    expect(lineProps.getDashArray).toEqual([3, 2]);
+    expect(lineProps.id).not.toBe(getSublayerProps(solid, 'linestrings').id);
+    expect(getSublayerProps(dashed, 'polygons-stroke').id).toBe(
+      getSublayerProps(solid, 'polygons-stroke').id
+    );
+    expect(hasDash(getSublayerProps(dashed, 'polygons-stroke'))).toBe(false);
+    expect(hasDash(getSublayerProps(dashed, 'points-circle'))).toBe(false);
+
+    layer.updateLayerVisConfig({dashLength: 6, gapLength: 1.5});
+    const adjusted = render(layer, dataset, data, 8);
+    expect(adjusted.props.data).toBe(solid.props.data);
+    expect(getSublayerProps(adjusted, 'linestrings').getDashArray).toEqual([6, 1.5]);
+    expect(getSublayerProps(adjusted, 'linestrings').id).toBe(lineProps.id);
+    const customSaved = JSON.parse(JSON.stringify(layerPropsV1.config.save(layer.config)));
+    const customRestored = layerPropsV1.config.load(customSaved.config, [layer]);
+    const reopened = new GeoJsonLayer({id: 'reopened'});
+    expect(reopened.copyLayerConfig(reopened.config, customRestored.config)).toMatchObject({
+      visConfig: {dashedLines: true, dashLength: 6, gapLength: 1.5}
+    });
+    // Maps saved before length controls retain the original 3:2 pattern.
+    expect(
+      reopened.copyLayerConfig(reopened.config, {visConfig: {dashedLines: true}})
+    ).toMatchObject({
+      visConfig: {dashedLines: true, dashLength: 3, gapLength: 2}
+    });
+    layer.updateLayerVisConfig({dashedLines: false});
+    expect(hasDash(getSublayerProps(render(layer, dataset, data, 8), 'linestrings'))).toBe(false);
+  });
+
+  test.each([undefined, null, NaN, Infinity, -1, 0, '6'])(
+    'falls back to the original dash pattern for invalid lengths: %s',
+    async value => {
+      const {layer, dataset} = await initializeGeoJsonLayer([{geometry: line(0), properties: {}}]);
+      const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+      layer.updateLayerVisConfig({dashedLines: true, dashLength: value, gapLength: value});
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: false};
+      expect(deckLayer.getSubLayerProps({id: 'linestrings'}).getDashArray).toEqual([3, 2]);
+    }
+  );
+
+  test('uses only the rendered path sublayer count when toggling dashes', async () => {
+    const {layer, dataset} = await initializeGeoJsonLayer([
+      {geometry: line(0), properties: {}},
+      {geometry: polygon(1), properties: {}},
+      {geometry: point(2), properties: {}}
+    ]);
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    const pathId = () => {
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: false};
+      return deckLayer.getSubLayerProps({id: 'linestrings'}).id;
+    };
+
+    expect(layer.getFilteredItemCount()).toBeNull();
+    layer.filteredItemCount[`${layer.id}-polygons-fill`] = 2;
+    layer.filteredItemCount[`${layer.id}-points-circle`] = 3;
+    layer.filteredItemCount[pathId()] = 7;
+    expect(layer.getFilteredItemCount()).toBe(12);
+
+    layer.updateLayerVisConfig({dashedLines: true});
+    expect(layer.getFilteredItemCount()).toBe(5);
+    layer.filteredItemCount[pathId()] = 0;
+    expect(layer.getFilteredItemCount()).toBe(5);
+    layer.filteredItemCount[pathId()] = 11;
+    expect(layer.getFilteredItemCount()).toBe(16);
+
+    layer.updateLayerVisConfig({dashedLines: false});
+    expect(layer.getFilteredItemCount()).toBe(12);
+  });
+
+  test('retains dashed Arrow lines through a polygon append and clears them on replacement', async () => {
+    const wkb = geometries =>
+      arrow.vectorFromArray(
+        geometries.map(geometry => new Uint8Array(convertGeometryToWKB(geometry))),
+        new arrow.Binary()
+      );
+    const first = wkb([line(0)]);
+    const second = wkb([polygon(1)]);
+    const dataset = new KeplerTable({
+      info: {id: 'progressive-dashes'},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields: [
+        {
+          name: 'geometry',
+          type: 'geoarrow',
+          metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB]])
+        }
+      ],
+      cols: [first],
+      rows: []
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(dataset);
+    layer.updateLayerVisConfig({dashedLines: true});
+
+    const hasDash = () => {
+      const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: true};
+      return deckLayer
+        .getSubLayerProps({id: 'linestrings'})
+        .extensions.some(extension => extension instanceof PathStyleExtension);
+    };
+    expect(hasDash()).toBe(true);
+
+    await dataset.update({fields: dataset.fields, cols: [first.concat(second)], rows: []});
+    expect(hasDash()).toBe(true);
+    expect(layer.meta.featureTypes).toMatchObject({line: true, polygon: true});
+
+    await dataset.update({fields: dataset.fields, cols: [wkb([line(0), polygon(1)])], rows: []});
+    expect(hasDash()).toBe(true);
+
+    await dataset.update({fields: dataset.fields, cols: [second], rows: []});
+    expect(hasDash()).toBe(false);
+    expect(layer.meta.featureTypes).toMatchObject({line: false, polygon: true});
+  });
 
   test('config replacement updates numeric values and color triggers without rebuilding data', async () => {
     const {layer, dataset} = await initializeGeoJsonLayer([{geometry: point(0), properties: {}}]);

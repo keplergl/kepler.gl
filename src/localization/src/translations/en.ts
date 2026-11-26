@@ -194,6 +194,11 @@ export default {
     aggregation: 'Aggregation'
   },
   layerVisConfigs: {
+    dashedLines: 'Dashed strokes',
+    dashLength: 'Dash length',
+    dashLengthDescription: 'Length of each dash, as a multiple of half the stroke width.',
+    gapLength: 'Gap length',
+    gapLengthDescription: 'Space between dashes, as a multiple of half the stroke width.',
     donut: {
       composition: 'Composition',
       description:
@@ -886,6 +891,11 @@ export default {
       resolutionTitle: 'Resolution',
       resolutionDescription: 'High resolution is better for prints.',
       resolutionPlaceholder: 'Select resolution...',
+      customWidth: 'Width (px)',
+      customHeight: 'Height (px)',
+      applyDimensions: 'Update preview',
+      customResolutionLimits:
+        'Enter whole pixels, up to {edge, number} per side and {pixels, number} total.',
       optionsTitle: 'Options',
       transparentBackground: 'Transparent background',
       transparentBackgroundHelp: 'Hide basemap',

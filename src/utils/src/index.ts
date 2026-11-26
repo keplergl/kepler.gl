@@ -122,6 +122,9 @@ export {
 export {exportMapToHTML} from './export-map-html';
 export {
   calculateExportImageSize,
+  isValidCustomPngSize,
+  MAX_CUSTOM_PNG_EDGE,
+  MAX_CUSTOM_PNG_PIXELS,
   convertToPng,
   dataURItoBlob,
   downloadFile,

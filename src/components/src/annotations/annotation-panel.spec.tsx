@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React from 'react';
+import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
 import {fireEvent, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {Annotation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationManagerFactory from './annotation-panel';
+import {MapViewStateContext, MapViewStateContextProvider} from '../map-view-state-context';
 
 const mockStore = configureStore();
 const AnnotationManager = AnnotationManagerFactory();
@@ -41,6 +44,101 @@ const makeState = (showCustomText: boolean, showDistance: boolean) => ({
     selectedAnnotationId: 'ruler-1'
   },
   mapState: {longitude: 0, latitude: 0}
+});
+
+describe('AnnotationManager placement', () => {
+  test.each([
+    {longitude: -122.34679, latitude: 37.75043},
+    {longitude: 0, latitude: 0}
+  ])('adds at the live center before Redux catches up: %j', center => {
+    const live = {...INITIAL_MAP_STATE, ...center, width: 1000, height: 600};
+    const viewport = new WebMercatorViewport(live);
+    // The previous camera center is now near the upper-left corner.
+    const [longitude, latitude] = viewport.unproject([8, 8]);
+    const stale = {...live, longitude, latitude};
+    const store = mockStore({visState: INITIAL_VIS_STATE, mapState: stale});
+    function PanMap() {
+      const {setInternalViewState} = useContext(MapViewStateContext);
+      return <button onClick={() => setInternalViewState(live)}>Pan map</button>;
+    }
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <MapViewStateContextProvider mapState={stale}>
+            <PanMap />
+            <AnnotationManager />
+          </MapViewStateContextProvider>
+        </Provider>
+      </IntlWrapper>
+    );
+
+    fireEvent.click(screen.getByRole('button', {name: 'Pan map'}));
+    fireEvent.click(screen.getByText('Add'));
+
+    expect(store.getActions()).toEqual([
+      VisStateActions.addAnnotation({anchorPoint: [live.longitude, live.latitude]})
+    ]);
+    const [x, y] = viewport.project(store.getActions()[0].config.anchorPoint);
+    expect(x).toBeCloseTo(500);
+    expect(y).toBeCloseTo(300);
+  });
+
+  test('uses the first map center when independent split cameras differ', () => {
+    const left = {...INITIAL_MAP_STATE, longitude: 10, latitude: 20};
+    const right = {...INITIAL_MAP_STATE, longitude: 100, latitude: 30};
+    const mapState = {
+      ...right,
+      isSplit: true,
+      isViewportSynced: false,
+      splitMapViewports: [left, right]
+    };
+    const store = mockStore({visState: INITIAL_VIS_STATE, mapState});
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <MapViewStateContextProvider mapState={mapState}>
+            <AnnotationManager />
+          </MapViewStateContextProvider>
+        </Provider>
+      </IntlWrapper>
+    );
+
+    fireEvent.click(screen.getByText('Add'));
+
+    expect(store.getActions()).toEqual([
+      VisStateActions.addAnnotation({anchorPoint: [left.longitude, left.latitude]})
+    ]);
+  });
+
+  test.each(['missing', 'invalid'])('falls back to the Redux center for a %s live camera', kind => {
+    const store = mockStore({visState: INITIAL_VIS_STATE, mapState: INITIAL_MAP_STATE});
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          {kind === 'missing' ? (
+            <AnnotationManager />
+          ) : (
+            <MapViewStateContext.Provider
+              value={{
+                getInternalViewState: () => ({...INITIAL_MAP_STATE, longitude: NaN}),
+                setInternalViewState: jest.fn()
+              }}
+            >
+              <AnnotationManager />
+            </MapViewStateContext.Provider>
+          )}
+        </Provider>
+      </IntlWrapper>
+    );
+
+    fireEvent.click(screen.getByText('Add'));
+
+    expect(store.getActions()).toEqual([
+      VisStateActions.addAnnotation({
+        anchorPoint: [INITIAL_MAP_STATE.longitude, INITIAL_MAP_STATE.latitude]
+      })
+    ]);
+  });
 });
 
 describe('AnnotationManager ruler settings', () => {

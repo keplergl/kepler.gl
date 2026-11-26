@@ -1791,6 +1791,22 @@ export default function LayerConfiguratorFactory(
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
+          {featureTypes.line ? (
+            <LayerConfigGroup
+              {...layer.visConfigSettings.dashedLines}
+              {...visConfiguratorProps}
+              collapsible
+            >
+              <ConfigGroupCollapsibleContent>
+                <VisConfigSlider
+                  {...layer.visConfigSettings.dashLength}
+                  {...visConfiguratorProps}
+                />
+                <VisConfigSlider {...layer.visConfigSettings.gapLength} {...visConfiguratorProps} />
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
+
           {/* Elevation */}
           {featureTypes.polygon ? (
             <LayerConfigGroup

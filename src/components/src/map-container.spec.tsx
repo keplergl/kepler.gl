@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import React, {createRef, StrictMode} from 'react';
+import React, {createRef, StrictMode, useContext, useState} from 'react';
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {ThemeProvider} from 'styled-components';
 import {IntlProvider} from 'react-intl';
@@ -19,8 +19,12 @@ import {
   INITIAL_UI_STATE,
   INITIAL_VIS_STATE,
   layerClickUpdater,
+  mapStateUpdaters,
+  visStateUpdaters,
   wmsFeatureInfoUpdater
 } from '@kepler.gl/reducers';
+import {addAnnotation, updateMap} from '@kepler.gl/actions';
+import {MapViewStateContext, MapViewStateContextProvider} from './map-view-state-context';
 import type {CameraTour} from '@kepler.gl/types';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
@@ -34,7 +38,14 @@ jest.mock('styled-components', () => ({
 
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('@kepler.gl/utils'),
+  hasMobileWidth: jest.fn(() => false),
   patchDeckRendererForPostProcessing: jest.fn()
+}));
+
+jest.mock('./loading-indicator', () => ({
+  ...jest.requireActual('./loading-indicator'),
+  __esModule: true,
+  default: () => null
 }));
 
 const Empty = () => null;
@@ -51,6 +62,116 @@ beforeEach(() => {
   jest.spyOn(MapContainer.prototype, '_renderMap').mockReturnValue(null);
 });
 afterEach(() => jest.restoreAllMocks());
+
+describe('annotation placement during map initialization', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    (MapContainer.prototype._renderMap as jest.Mock).mockRestore();
+    jest.spyOn(MapContainer.prototype, '_renderDeckOverlay').mockReturnValue(<div />);
+  });
+  afterEach(() => jest.useRealTimers());
+
+  test.each([
+    [0, 0],
+    [1, 1],
+    [100, 100],
+    [300, 150]
+  ])(
+    'keeps annotations centered when a delayed camera update has a %s x %s viewport',
+    (width, height) => {
+      const ref = createRef<any>();
+      const onViewStateChange = jest.fn();
+      function AddAnnotation({onAdd}) {
+        const {getInternalViewState} = useContext(MapViewStateContext);
+        return (
+          <button
+            onClick={() => {
+              const {longitude, latitude} = getInternalViewState();
+              onAdd(addAnnotation({anchorPoint: [longitude, latitude]}));
+            }}
+          >
+            Add annotation
+          </button>
+        );
+      }
+      function App() {
+        const [mapState, setMapState] = useState(INITIAL_MAP_STATE);
+        const [visState, setVisState] = useState(INITIAL_VIS_STATE);
+        return (
+          <MapViewStateContextProvider mapState={mapState}>
+            <AddAnnotation
+              onAdd={action =>
+                setVisState(previous => visStateUpdaters.addAnnotationUpdater(previous, action))
+              }
+            />
+            <MapContainer
+              ref={ref}
+              mapState={mapState}
+              mapStyle={INITIAL_MAP_STYLE}
+              visState={visState}
+              mapControls={INITIAL_UI_STATE.mapControls}
+              visStateActions={{}}
+              uiStateActions={{}}
+              onViewStateChange={onViewStateChange}
+              mapStateActions={{
+                updateMap: (viewport, index) =>
+                  setMapState(previous =>
+                    mapStateUpdaters.updateMapUpdater(previous, updateMap(viewport, index))
+                  )
+              }}
+            />
+          </MapViewStateContextProvider>
+        );
+      }
+      const {container} = render(
+        <ThemeProvider theme={theme}>
+          <IntlProvider locale="en" messages={messages.en}>
+            <App />
+          </IntlProvider>
+        </ThemeProvider>
+      );
+      act(() => ref.current._handleResize({width: 1000, height: 600}));
+      act(() => {
+        // The renderer can initialize before the container is measured. Its
+        // delayed camera update must not overwrite the latest measurement.
+        ref.current._onViewportChange({
+          viewState: {...INITIAL_MAP_STATE, width, height}
+        });
+      });
+      act(() => jest.advanceTimersByTime(20));
+      fireEvent.click(screen.getByRole('button', {name: 'Add annotation'}));
+
+      const shape = container.querySelector('[data-annotation-part="shape"]');
+      const position = () => {
+        const coordinates = shape?.getAttribute('transform')?.match(/translate\(([^,]+),([^)]+)\)/);
+        return [Number(coordinates?.[1]), Number(coordinates?.[2])];
+      };
+      expect(position()[0]).toBeCloseTo(500);
+      expect(position()[1]).toBeCloseTo(300);
+      expect(onViewStateChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({width: 1000, height: 600})
+      );
+
+      // Panning must keep the annotation at its original geographic anchor,
+      // rather than moving it to the new camera center.
+      const panned = {
+        ...INITIAL_MAP_STATE,
+        width: 1000,
+        height: 600,
+        longitude: INITIAL_MAP_STATE.longitude + 0.05,
+        latitude: INITIAL_MAP_STATE.latitude + 0.05
+      };
+      act(() => ref.current._onViewportChange({viewState: panned}));
+      act(() => jest.advanceTimersByTime(20));
+      const expected = new WebMercatorViewport(panned).project([
+        INITIAL_MAP_STATE.longitude,
+        INITIAL_MAP_STATE.latitude
+      ]);
+      expect(position()[0]).toBeCloseTo(expected[0]);
+      expect(position()[1]).toBeCloseTo(expected[1]);
+    }
+  );
+});
 
 describe('brush radius overlay', () => {
   function setup({
