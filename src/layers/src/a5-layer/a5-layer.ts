@@ -390,6 +390,10 @@ export default class A5GeometryLayer extends Layer {
     );
   }
 
+  getSelectionFeature(object: {token?: string}) {
+    return a5TokenToPolygonGeo(object, {isClosed: true});
+  }
+
   renderLayer(opts) {
     opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, mapState} = opts;

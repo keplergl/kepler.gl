@@ -14,6 +14,7 @@ import {getCentroidFromGeometry, parseGeoJsonRawFeature} from '../geojson-layer/
 import {applyDefaultColorField} from '../layer-color-utils';
 import {assignPointPairToLayerColumn} from '../layer-utils';
 import VoronoiLayerIcon from './voronoi-layer-icon';
+import {polygonFromRing} from '../selection-utils';
 import {
   getVoronoiClip,
   prepareVoronoiSites,
@@ -248,6 +249,10 @@ export default class VoronoiLayer extends Layer {
       getFilterValue,
       ...this.getAttributeAccessors({dataContainer})
     };
+  }
+
+  getSelectionFeature(object: VoronoiCell | null) {
+    return polygonFromRing(object?.polygon);
   }
 
   renderLayer(opts) {

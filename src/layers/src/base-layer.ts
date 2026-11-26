@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
+import type {Feature as GeoJsonFeature} from 'geojson';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
 import {CollisionFilterExtension, DataFilterExtension} from '@deck.gl/extensions';
@@ -728,6 +729,16 @@ class Layer implements KeplerLayer {
     // By default, each entry of layerData should have an index of a row in the original data container.
     // Each layer can implement its own getHoverData method
     return dataContainer.row(object.index);
+  }
+
+  /** Return the picked feature for Select Geometry, or null when unsupported. */
+  getSelectionFeature(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    object: any,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    deckLayer?: DeckLayer
+  ): GeoJsonFeature | null {
+    return null;
   }
 
   getFilteredItemCount(): number | null {

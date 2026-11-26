@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import Console from 'global/console';
+import type {Feature as GeoJsonFeature} from 'geojson';
 
 import {GEOCODER_LAYER_ID, LIGHT_AND_SHADOW_EFFECT} from '@kepler.gl/constants';
 import {Layer as DeckLayer} from '@deck.gl/core';
@@ -72,6 +73,7 @@ export type LayerHoverProp = {
   fields: Field[];
   fieldsToShow: TooltipField[];
   layer: Layer;
+  selectionFeature?: GeoJsonFeature;
   primaryData?: DataRow | AggregationLayerHoverData | any[] | null;
   compareType?: CompareType;
   currentTime?: VisState['animationConfig']['currentTime'];
@@ -282,7 +284,9 @@ export function getLayerHoverProp({
         return null;
       }
 
+      const selectionFeature = layer.getSelectionFeature?.(object, overlay);
       return {
+        ...(selectionFeature ? {selectionFeature} : {}),
         data,
         fields,
         fieldsToShow,

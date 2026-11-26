@@ -151,12 +151,12 @@ const StyledSelectGeometry = styled.div`
 
 MapPopoverFactory.deps = [MapPopoverContentFactory];
 
-// AggregationLayer.getHoverData preserves the outline from deck.gl's Hexbin pick.
-function getHexbinRing(data: LayerHoverProp['data'] | undefined): number[][] | null {
+// AggregationLayer.getHoverData preserves the rendered cell outline from deck.gl.
+function getCellRing(data: LayerHoverProp['data'] | undefined): number[][] | null {
   const ring = data && 'cellOutline' in data ? data.cellOutline : undefined;
   if (
     !Array.isArray(ring) ||
-    ring.length !== 7 ||
+    ring.length < 4 ||
     !ring.every(point => Array.isArray(point) && point.length === 2 && point.every(Number.isFinite))
   ) {
     return null;
@@ -175,8 +175,9 @@ export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Featu
   let fieldIdx;
   let selectedFeature;
   switch (layer?.type) {
+    case LAYER_TYPES.grid:
     case LAYER_TYPES.hexagon: {
-      const ring = getHexbinRing(layerHoverProp?.data);
+      const ring = getCellRing(layerHoverProp?.data);
       if (ring) {
         selectedFeature = {
           type: 'Feature',
@@ -200,6 +201,7 @@ export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Featu
       );
       break;
     default:
+      selectedFeature = layerHoverProp?.selectionFeature;
       break;
   }
 
@@ -329,9 +331,11 @@ export default function MapPopoverFactory(
             />
           </PopoverContent>
           {frozen &&
-          (layerHoverProp?.layer?.type === LAYER_TYPES.hexagon
-            ? getHexbinRing(layerHoverProp.data)
-            : SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type ?? '')) ? (
+          (layerHoverProp?.selectionFeature ||
+            (layerHoverProp?.layer?.type === LAYER_TYPES.grid ||
+            layerHoverProp?.layer?.type === LAYER_TYPES.hexagon
+              ? getCellRing(layerHoverProp.data)
+              : SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type ?? ''))) ? (
             <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
               <CursorPoint />
               Select Geometry

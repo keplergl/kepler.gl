@@ -29,4 +29,8 @@ Kepler.gl **auto generates** a GeoHash layer from a column named `geohash`, `geo
 | 9q8ytx  | 0.9218176408795662  |
 | 9q8zp5  | 0.23470692356446143 |
 
+## Copy a cell boundary
+
+With **Tooltip** enabled, click a cell to pin its tooltip and choose **Select Geometry**. Use **Copy Geometry** in the selected shape's action menu to copy its boundary as a GeoJSON Polygon. The boundary is the geohash cell rectangle, not its extrusion height. This copies one cell at a time.
+
 [Back to table of contents](../README.md)
