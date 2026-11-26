@@ -508,6 +508,29 @@ describe('surface fog rendering', () => {
     expect(Math.max(...blueContrast) - Math.min(...blueContrast)).toBeGreaterThanOrEqual(8);
   });
 
+  test.each([45, 65])('keeps the reflection visible through a full rotation at pitch %s', pitch => {
+    const reflections = Array.from({length: 8}, (_, i) => {
+      const uniforms = viewportUniforms(croppedViewport({zoom: 19, pitch, bearing: i * 45}));
+      return render({
+        depth: 1,
+        uniforms: {
+          ...uniforms,
+          fogHeight: 0,
+          fogThickness: 0,
+          fogColor: [0, 0, 0],
+          // Remove ripple variation to isolate the reflection's position and
+          // brightness as the camera rotates around the same water surface.
+          waveUnitsPerMeter: (uniforms.waveUnitsPerMeter as number) / 1024
+        }
+      });
+    });
+    for (const reflection of reflections) {
+      expect(maxPixelDifference(reflection, reflections[0])).toBeLessThanOrEqual(1);
+      // Matching equally dark frames must not count as a visible reflection.
+      expect(center(reflection)[0]).toBeGreaterThan(15);
+    }
+  });
+
   test.each([14, 16, 18])(
     'keeps water sampling stable between 1x and 2x resolution at zoom %s',
     zoom => {

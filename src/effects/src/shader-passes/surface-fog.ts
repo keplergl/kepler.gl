@@ -245,21 +245,25 @@ void main() {
   vec3 waterSurface = waterBody;
 
   if (cameraAboveWater) {
-    vec3 L = normalize(vec3(0.35, -0.40, 0.85));
+    // Keep the light in the camera's reflection direction as the map rotates.
+    // These camera axes are unchanged by viewport crops, including export tiles.
+    vec3 cameraRight = normalize(invMat[0].xyz);
+    vec3 cameraView = normalize(cross(cameraRight, invMat[1].xyz));
+    cameraView *= cameraView.z < 0.0 ? -1.0 : 1.0;
+    vec3 L = vec3(-cameraView.xy, cameraView.z);
     float facing = clamp(dot(N, V), 0.0, 1.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
     vec3 reflectedSky = skyReflection(reflect(-V, N));
     waterSurface = mix(waterBody, reflectedSky, fresnel);
 
-    // A broad sun sheen, filtered by normal variance. Narrow unfiltered lobes
+    // A broad light sheen, filtered by normal variance. Narrow unfiltered lobes
     // turn subpixel ripples into isolated white pixels, even with filtered waves.
-    float sunAlignment = max(dot(N, normalize(L + V)), 0.0);
-    float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
-    float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
-                  0.025 * pow(sunAlignment, 8.0);
-    // Add the local slope response of a fill light tracking the reflected
-    // view ray, slightly off the mirror axis for contrast. Use only the
-    // ripple contribution: a flat (or filtered-out) normal adds no light.
+    float lightAlignment = max(dot(N, normalize(L + V)), 0.0);
+    float shininess = 8.0 / (1.0 + 8.0 * normalVariance);
+    float glint = 0.18 * (shininess / 8.0) * pow(lightAlignment, shininess) +
+                  0.025 * pow(lightAlignment, 8.0);
+    // Keep local slope contrast under the broad reflection. Flat or unresolved
+    // water contributes no ripple shading.
     float rippleContrast = dot(N.xy, vec2(0.30, -0.34));
     waterSurface += vec3(1.0, 0.96, 0.86) * glint + vec3(rippleContrast);
 
@@ -354,7 +358,7 @@ const surfaceFogModule = {
  *
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
  * When `pattern` is true, a level water surface uses filtered wave normals,
- * view-dependent sky/sun reflections, depth absorption and shoreline highlights.
+ * sky reflections, a camera-following light, depth absorption and shoreline highlights.
  * In that mode `thickness` sets the underwater color and visibility transition.
  * Zero hides submerged geometry and disables depth shading at full density.
  * Geometry above the water surface is left unchanged.
