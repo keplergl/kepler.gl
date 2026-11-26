@@ -26,6 +26,61 @@ beforeAll(() => {
   };
 });
 
+test('opts into layer tooltip fields and can restore dataset defaults', async () => {
+  const fields = ['lat', 'lng', 'value'].map((name, fieldIdx) => ({
+    name,
+    displayName: name,
+    type: 'real',
+    format: '',
+    fieldIdx
+  }));
+  const dataset = new KeplerTable({info: {id: 'points', label: 'Points'}, color: [0, 0, 0]});
+  await dataset.importData({data: {fields, rows: [[40, -70, 1]]}});
+  const layer = new KeplerGlLayers.PointLayer({dataId: dataset.id});
+  layer.config.columns.lat = {value: 'lat', fieldIdx: 0};
+  layer.config.columns.lng = {value: 'lng', fieldIdx: 1};
+  const updateLayerConfig = jest.fn(config => layer.updateLayerConfig(config));
+  const RenderLayer = () => {
+    const [, setRevision] = React.useState(0);
+    const onChange = (config: Parameters<typeof layer.updateLayerConfig>[0]) => {
+      updateLayerConfig(config);
+      setRevision(previous => previous + 1);
+    };
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          layer={layer}
+          datasets={{[dataset.id]: dataset}}
+          layerTypeOptions={[]}
+          openModal={jest.fn()}
+          updateLayerConfig={onChange}
+          updateLayerType={jest.fn()}
+          updateLayerVisConfig={jest.fn()}
+          updateLayerVisualChannelConfig={jest.fn()}
+          updateLayerColorUI={jest.fn()}
+          updateLayerTextLabel={jest.fn()}
+        />
+      </IntlWrapper>
+    );
+  };
+
+  renderWithTheme(<RenderLayer />);
+  const label = screen.getByText('Tooltip fields');
+  fireEvent.click(label);
+  const group = within(label.closest('.layer-config-group') as HTMLElement);
+  const toggle = group.getByLabelText('Use layer-specific fields');
+  expect(toggle).not.toBeChecked();
+  fireEvent.click(toggle);
+  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: []});
+
+  fireEvent.click(group.getByText('Select a field'));
+  fireEvent.click(screen.getByText('value'));
+  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: ['value']});
+
+  fireEvent.click(toggle);
+  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: undefined});
+});
+
 test('can change the data source without expanding the column settings', async () => {
   const fields = ['lat', 'lng'].map((name, fieldIdx) => ({
     name,
@@ -161,58 +216,3 @@ test.each([
     });
   }
 );
-
-test('opts into layer tooltip fields and can restore dataset defaults', async () => {
-  const fields = ['lat', 'lng', 'value'].map((name, fieldIdx) => ({
-    name,
-    displayName: name,
-    type: 'real',
-    format: '',
-    fieldIdx
-  }));
-  const dataset = new KeplerTable({info: {id: 'points', label: 'Points'}, color: [0, 0, 0]});
-  await dataset.importData({data: {fields, rows: [[40, -70, 1]]}});
-  const layer = new KeplerGlLayers.PointLayer({dataId: dataset.id});
-  layer.config.columns.lat = {value: 'lat', fieldIdx: 0};
-  layer.config.columns.lng = {value: 'lng', fieldIdx: 1};
-  const updateLayerConfig = jest.fn(config => layer.updateLayerConfig(config));
-  const RenderLayer = () => {
-    const [, setRevision] = React.useState(0);
-    const onChange = (config: Parameters<typeof layer.updateLayerConfig>[0]) => {
-      updateLayerConfig(config);
-      setRevision(previous => previous + 1);
-    };
-    return (
-      <IntlWrapper>
-        <LayerConfigurator
-          layer={layer}
-          datasets={{[dataset.id]: dataset}}
-          layerTypeOptions={[]}
-          openModal={jest.fn()}
-          updateLayerConfig={onChange}
-          updateLayerType={jest.fn()}
-          updateLayerVisConfig={jest.fn()}
-          updateLayerVisualChannelConfig={jest.fn()}
-          updateLayerColorUI={jest.fn()}
-          updateLayerTextLabel={jest.fn()}
-        />
-      </IntlWrapper>
-    );
-  };
-
-  renderWithTheme(<RenderLayer />);
-  const label = screen.getByText('Tooltip fields');
-  fireEvent.click(label);
-  const group = within(label.closest('.layer-config-group') as HTMLElement);
-  const toggle = group.getByLabelText('Use layer-specific fields');
-  expect(toggle).not.toBeChecked();
-  fireEvent.click(toggle);
-  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: []});
-
-  fireEvent.click(group.getByText('Select a field'));
-  fireEvent.click(screen.getByText('value'));
-  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: ['value']});
-
-  fireEvent.click(toggle);
-  expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: undefined});
-});
