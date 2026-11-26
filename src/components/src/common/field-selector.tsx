@@ -109,7 +109,7 @@ function FieldSelectorFactory(
       error: false,
       fields: [],
       onSelect: noop,
-      reorderItems: noop,
+      reorderItems: undefined,
       placement: 'bottom',
       value: null,
       multiSelect: false,

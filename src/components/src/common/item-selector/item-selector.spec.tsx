@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
@@ -80,64 +80,90 @@ describe('ItemSelector', () => {
     expect(screen.getByText(messages.en['placeholder.selectField'])).toBeInTheDocument();
   });
 
-  test.each(['keyboard', 'pointer'])(
-    'reorders default field chips with the %s only when opted in',
-    async input => {
-      const onChange = jest.fn();
-      const reorderItems = jest.fn();
-      const user = userEvent.setup();
-      const selector = (reorder?: typeof reorderItems, selected = ['Alpha', 'Beta']) => (
-        <IntlProvider locale="en" messages={messages.en}>
-          <ItemSelector
-            options={['Alpha', 'Beta']}
-            selectedItems={selected}
-            onChange={onChange}
-            reorderItems={reorder}
-          />
-        </IntlProvider>
-      );
-      const view = renderWithTheme(selector());
-      expect(screen.queryByRole('button', {name: 'Reorder Alpha'})).not.toBeInTheDocument();
+  describe('field chip reordering', () => {
+    beforeEach(() => jest.useFakeTimers());
 
-      view.rerender(selector(reorderItems));
-      const first = screen.getByRole('button', {name: 'Reorder Alpha'});
-      const second = screen.getByRole('button', {name: 'Reorder Beta'});
-      // JSDOM has no layout. Give dnd-kit distinct positions to measure.
-      for (const [i, handle] of [first, second].entries()) {
-        const box = {
-          x: i * 100,
-          y: 0,
-          top: 0,
-          bottom: 24,
-          left: i * 100,
-          right: i * 100 + 100,
-          width: 100,
-          height: 24
-        } as DOMRect;
-        handle.parentElement!.getBoundingClientRect = () => box;
+    afterEach(() => {
+      cleanup();
+      try {
+        // dnd-kit defers removing its document click blocker until after the drag.
+        act(() => jest.runOnlyPendingTimers());
+      } finally {
+        jest.useRealTimers();
       }
-      first.closest('.chickleted-input')!.getBoundingClientRect = () =>
-        ({x: 0, y: 0, left: 0, top: 0, right: 200, bottom: 24, width: 200, height: 24} as DOMRect);
-      if (input === 'keyboard') {
-        await user.tab();
-        expect(first).toHaveFocus();
-        await user.keyboard(' ');
-        await waitFor(() => expect(first).toHaveAttribute('aria-pressed', 'true'));
-        await user.keyboard('{ArrowRight} ');
-      } else {
-        await user.pointer([
-          {keys: '[MouseLeft>]', target: first, coords: {x: 10, y: 10, clientX: 10, clientY: 10}},
-          {target: second, coords: {x: 110, y: 10, clientX: 110, clientY: 10}},
-          {keys: '[/MouseLeft]', target: second}
-        ]);
-      }
+    });
 
-      expect(reorderItems).toHaveBeenCalledWith(['Beta', 'Alpha']);
-      view.rerender(selector(reorderItems, ['Beta', 'Alpha']));
-      if (input === 'keyboard') expect(first).toHaveFocus();
-      expect(onChange).not.toHaveBeenCalled();
-    }
-  );
+    test.each(['keyboard', 'pointer'])(
+      'reorders default field chips with the %s only when opted in',
+      async input => {
+        const onChange = jest.fn();
+        const reorderItems = jest.fn();
+        const user = userEvent.setup({advanceTimers: jest.advanceTimersByTime});
+        const FieldSelector = FieldSelectorFactory(() => ({value}) => <span>{value.name}</span>);
+        const fields = ['Alpha', 'Beta'].map(name => ({name, displayName: name, format: ''}));
+        const selector = (reorder?: typeof reorderItems, selected = ['Alpha', 'Beta']) => (
+          <IntlProvider locale="en" messages={messages.en}>
+            <FieldSelector
+              fields={fields}
+              value={selected}
+              onSelect={onChange}
+              reorderItems={reorder}
+              multiSelect
+            />
+          </IntlProvider>
+        );
+        const view = renderWithTheme(selector());
+        expect(screen.queryByRole('button', {name: 'Reorder Alpha'})).not.toBeInTheDocument();
+
+        view.rerender(selector(reorderItems));
+        const first = screen.getByRole('button', {name: 'Reorder Alpha'});
+        const second = screen.getByRole('button', {name: 'Reorder Beta'});
+        // JSDOM has no layout. Give dnd-kit distinct positions to measure.
+        for (const [i, handle] of [first, second].entries()) {
+          const box = {
+            x: i * 100,
+            y: 0,
+            top: 0,
+            bottom: 24,
+            left: i * 100,
+            right: i * 100 + 100,
+            width: 100,
+            height: 24
+          } as DOMRect;
+          handle.parentElement!.getBoundingClientRect = () => box;
+        }
+        first.closest('.chickleted-input')!.getBoundingClientRect = () =>
+          ({
+            x: 0,
+            y: 0,
+            left: 0,
+            top: 0,
+            right: 200,
+            bottom: 24,
+            width: 200,
+            height: 24
+          } as DOMRect);
+        if (input === 'keyboard') {
+          await user.tab();
+          expect(first).toHaveFocus();
+          await user.keyboard(' ');
+          await waitFor(() => expect(first).toHaveAttribute('aria-pressed', 'true'));
+          await user.keyboard('{ArrowRight} ');
+        } else {
+          await user.pointer([
+            {keys: '[MouseLeft>]', target: first, coords: {x: 10, y: 10, clientX: 10, clientY: 10}},
+            {target: second, coords: {x: 110, y: 10, clientX: 110, clientY: 10}},
+            {keys: '[/MouseLeft]', target: second}
+          ]);
+        }
+
+        expect(reorderItems).toHaveBeenCalledWith([fields[1], fields[0]]);
+        view.rerender(selector(reorderItems, ['Beta', 'Alpha']));
+        if (input === 'keyboard') expect(first).toHaveFocus();
+        expect(onChange).not.toHaveBeenCalled();
+      }
+    );
+  });
 
   test('keeps disabled single selectors out of the tab order and blocks keyboard opening', async () => {
     const user = userEvent.setup();
