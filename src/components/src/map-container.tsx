@@ -1667,8 +1667,11 @@ export default function MapContainerFactory(
     }
     _onViewportChangePropagateDebounced = debounce(() => {
       const viewState = this.context?.getInternalViewState(this.props.index);
+      // ResizeObserver owns the container size. A delayed initialization event
+      // from deck.gl can still carry a tiny viewport after the map was measured.
+      const {width, height} = this.props.mapState;
       onViewPortChange(
-        viewState,
+        {...viewState, width, height},
         this.props.mapStateActions.updateMap,
         this.props.onViewStateChange,
         this.props.primary,
