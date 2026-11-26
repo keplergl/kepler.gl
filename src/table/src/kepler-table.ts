@@ -884,74 +884,75 @@ export type Datasets = {
 // have to double excape
 const specialCharacterSet = `[#_&@\\.\\-\\ ]`;
 
-function foundMatchingFields(re, suffixPair, allNames, fieldName) {
-  const partnerIdx = allNames.findIndex(
-    d => d === fieldName.replace(re, match => match.replace(suffixPair[0], suffixPair[1]))
-  );
-  let altIdx = -1;
-  if (partnerIdx > -1) {
-    // if found partner, go on and look for altitude
-    ALTITUDE_FIELDS.some(alt => {
-      altIdx = allNames.findIndex(
-        d => d === fieldName.replace(re, match => match.replace(suffixPair[0], alt))
-      );
-      return altIdx > -1;
-    });
-  }
-  return {partnerIdx, altIdx};
-}
-/**
- * Find point fields pairs from fields
- *
- * @param fields
- * @returns found point fields
- */
+const pointFieldPatterns = [
+  ...TRIP_POINT_FIELDS.map(([lat, lng]) => ({
+    lat,
+    lng,
+    separated: new RegExp(`(^|${specialCharacterSet})${lat}(${specialCharacterSet}|$)`)
+  })),
+  ...TRIP_POINT_FIELDS.map(([lat, lng]) => ({
+    lat,
+    lng,
+    camelCase: lat[0].toUpperCase() + lat.slice(1)
+  }))
+];
+
+/** Find coordinate pairs and their matching altitude and numeric radius fields. */
 export function findPointFieldPairs(fields: Field[]): FieldPair[] {
-  const allNames = fields.map(f => f.name.toLowerCase());
+  const names = fields.map(field => field.name.toLowerCase());
+  const indexByName = new Map<string, number>();
+  names.forEach((name, index) => {
+    if (!indexByName.has(name)) indexByName.set(name, index);
+  });
 
-  // get list of all fields with matching suffixes
-  const acc: FieldPair[] = [];
-  return allNames.reduce((carry, fieldName, idx) => {
-    // This search for pairs will early exit if found.
-    for (const suffixPair of TRIP_POINT_FIELDS) {
-      // match first suffix
-      // (^|[#_&@\.\-\ ])lat([#_&@\.\-\ ]|$)
-      const re = new RegExp(`(^|${specialCharacterSet})${suffixPair[0]}(${specialCharacterSet}|$)`);
+  const reference = (fieldIdx: number) => ({fieldIdx, value: fields[fieldIdx].name});
+  const pairs: FieldPair[] = [];
+  const camelCasePairs: FieldPair[] = [];
 
-      if (re.test(fieldName)) {
-        const {partnerIdx, altIdx} = foundMatchingFields(re, suffixPair, allNames, fieldName);
+  names.forEach((name, idx) => {
+    for (const pattern of pointFieldPatterns) {
+      const {lat, lng} = pattern;
+      const separated = 'separated' in pattern ? pattern.separated : undefined;
+      const camelCase = 'camelCase' in pattern ? pattern.camelCase : undefined;
+      // Keep the existing delimiter matcher ahead of camelCase. Require a
+      // capitalized suffix so unrelated words ending in "lat" are not inferred.
+      const replace = separated?.test(name)
+        ? (suffix: string) => name.replace(separated, match => match.replace(lat, suffix))
+        : camelCase && fields[idx].name.endsWith(camelCase)
+        ? (suffix: string) => name.slice(0, -lat.length) + suffix
+        : null;
+      if (!replace) continue;
 
-        if (partnerIdx > -1) {
-          const trimName = fieldName.replace(re, '').trim();
+      const partnerIdx = indexByName.get(replace(lng));
+      if (partnerIdx === undefined) continue;
 
-          carry.push({
-            defaultName: trimName || 'point',
-            pair: {
-              lat: {
-                fieldIdx: idx,
-                value: fields[idx].name
-              },
-              lng: {
-                fieldIdx: partnerIdx,
-                value: fields[partnerIdx].name
-              },
-              ...(altIdx > -1
-                ? {
-                    altitude: {
-                      fieldIdx: altIdx,
-                      value: fields[altIdx].name
-                    }
-                  }
-                : {})
-            },
-            suffix: suffixPair
-          });
-          return carry;
-        }
-      }
+      const altIdx = ALTITUDE_FIELDS.map(alt => indexByName.get(replace(alt))).find(
+        index => index !== undefined
+      );
+      const radiusIdx = indexByName.get(replace('radius'));
+      const radiusType = radiusIdx === undefined ? undefined : fields[radiusIdx].type;
+      const trimName = separated ? name.replace(separated, '').trim() : replace('').trim();
+
+      // Some automatic layers use just the first one or two pairs. Keep
+      // the pairs recognized before camelCase support ahead of newly found pairs.
+      const matchedPairs = separated ? pairs : camelCasePairs;
+      matchedPairs.push({
+        defaultName: trimName || 'point',
+        pair: {
+          lat: reference(idx),
+          lng: reference(partnerIdx),
+          ...(altIdx === undefined ? {} : {altitude: reference(altIdx)}),
+          ...(radiusIdx !== undefined &&
+          (radiusType === ALL_FIELD_TYPES.integer || radiusType === ALL_FIELD_TYPES.real)
+            ? {radius: reference(radiusIdx)}
+            : {})
+        },
+        suffix: [lat, lng]
+      });
+      break;
     }
-    return carry;
-  }, acc);
+  });
+  return pairs.concat(camelCasePairs);
 }
 
 /**
