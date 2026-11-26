@@ -8,6 +8,7 @@ import {
   getKeplerLoaders,
   isKeplerFileFormatAccepted,
   KeplerCSVLoader,
+  processCsvData,
   processFileData,
   readFileInBatches
 } from '@kepler.gl/processors';
@@ -389,6 +390,36 @@ test('#loader-registry -> acceptedFileFormats restricts loaders and UI lists', a
     t.equal(csvLoaders[0], KeplerCSVLoader, 'CSV still resolves when accepted');
   } finally {
     initApplicationConfig({acceptedFileFormats: null});
+  }
+  t.end();
+});
+
+test('#loader-registry -> direct and streamed CSV infer mixed reporting dates as text', async t => {
+  const reported = ['2025-03-18', '2024', '2024 launch'];
+  for (const [values, expectedType, expectedFormat] of [
+    [reported, 'string', ''],
+    [[...reported].reverse(), 'string', ''],
+    [['2025-03-18', '', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['17/09/2016', 'NA', '05/06/2016'], 'string', ''],
+    [['05/06/2016', 'NULL', '17/09/2016'], 'date', 'D/M/YYYY']
+  ]) {
+    const csv = `Reported,Control\n${values.map(value => `${value},label`).join('\n')}`;
+    const file = new File([csv], 'reporting.csv', {type: 'text/csv'});
+    const batch = await readLastBatch(file);
+    const processed = await processFileData({content: batch, fileCache: []});
+    for (const [path, {fields, rows}] of [
+      ['direct', processCsvData(csv)],
+      ['streamed', processed[0].data]
+    ]) {
+      const fixture = `${path}: ${JSON.stringify(values)}`;
+      t.equal(fields[0].type, expectedType, fixture);
+      t.equal(fields[0].format, expectedFormat, fixture);
+      t.deepEqual(
+        rows.map(row => row[0]),
+        values.map(value => (value === '' || value === 'NULL' ? null : value)),
+        fixture
+      );
+    }
   }
   t.end();
 });

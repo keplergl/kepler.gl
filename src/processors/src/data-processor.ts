@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
-import {DATA_TYPES as AnalyzerDATA_TYPES} from 'type-analyzer';
+import {DATA_TYPES as AnalyzerDATA_TYPES, RegexList} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {parseSync} from '@loaders.gl/core';
 import {ArrowTable} from '@loaders.gl/schema';
@@ -189,10 +189,32 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
-  const fields = getFieldsFromData(sample, headerRow);
+  const fields = getFieldsFromData(sample, headerRow).map(field => {
+    // The analyzer allows up to two non-date values. For date-only CSV
+    // columns, reject mixed reporting labels without scanning beyond the sample.
+    if (
+      field.type === ALL_FIELD_TYPES.date &&
+      sample.some(row => isNonDateCsvSample(row[field.name]))
+    ) {
+      return {
+        ...field,
+        type: ALL_FIELD_TYPES.string,
+        analyzerType: AnalyzerDATA_TYPES.STRING,
+        format: ''
+      };
+    }
+    return field;
+  });
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};
+}
+
+function isNonDateCsvSample(value: unknown): boolean {
+  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\\\N') {
+    return false;
+  }
+  return typeof value !== 'string' || !RegexList.isDate.test(value);
 }
 
 /**
