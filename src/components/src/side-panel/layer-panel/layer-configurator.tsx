@@ -73,7 +73,13 @@ import {
   formatZarrCoordinate
 } from '@kepler.gl/table';
 import {ColorUI, Field, LayerVisConfig, NestedPartial} from '@kepler.gl/types';
-import {capitalizeFirstLetter, clamp, colorMaybeToRGB, getNumericStepSize} from '@kepler.gl/utils';
+import {
+  capitalizeFirstLetter,
+  clamp,
+  colorMaybeToRGB,
+  getApplicationConfig,
+  getNumericStepSize
+} from '@kepler.gl/utils';
 
 const FLOW_RENDERING_MODE_LABELS: Record<string, string> = {
   straight: 'Straight',
@@ -2838,7 +2844,10 @@ export default function LayerConfiguratorFactory(
               layerChannelConfigProps,
               layerConfiguratorProps
             })}
-          {layer.type && fields.length && !NON_FIELD_TOOLTIP_LAYERS.has(layer.type) ? (
+          {getApplicationConfig().enableLayerTooltipFields &&
+          layer.type &&
+          fields.length &&
+          !NON_FIELD_TOOLTIP_LAYERS.has(layer.type) ? (
             <LayerConfigGroup label="layer.tooltipFields" collapsible>
               <ConfigGroupCollapsibleContent>
                 <SidePanelSection>

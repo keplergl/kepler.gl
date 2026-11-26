@@ -2,11 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import React from 'react';
-import {fireEvent, screen, within} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
+import {ThemeProvider} from 'styled-components';
 import {appInjector} from '@kepler.gl/components';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import SchemaManager from '@kepler.gl/schemas';
 import {KeplerTable} from '@kepler.gl/table';
+import {theme} from '@kepler.gl/styles';
+import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 import LayerConfiguratorFactory from './layer-configurator';
 
@@ -27,6 +30,8 @@ beforeAll(() => {
 });
 
 test('opts into layer tooltip fields and can restore dataset defaults', async () => {
+  const {enableLayerTooltipFields} = getApplicationConfig();
+  expect(enableLayerTooltipFields).toBe(true);
   const fields = ['lat', 'lng', 'value'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -64,7 +69,9 @@ test('opts into layer tooltip fields and can restore dataset defaults', async ()
     );
   };
 
-  renderWithTheme(<RenderLayer />);
+  const view = render(<RenderLayer />, {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
   const label = screen.getByText('Tooltip fields');
   fireEvent.click(label);
   const group = within(label.closest('.layer-config-group') as HTMLElement);
@@ -77,7 +84,22 @@ test('opts into layer tooltip fields and can restore dataset defaults', async ()
   fireEvent.click(screen.getByText('value'));
   expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: ['value']});
 
-  fireEvent.click(toggle);
+  try {
+    initApplicationConfig({enableLayerTooltipFields: false});
+    view.rerender(<RenderLayer />);
+    expect(screen.queryByText('Tooltip fields')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Use layer-specific fields')).not.toBeInTheDocument();
+    expect(layer.config.tooltipFields).toEqual(['value']);
+
+    initApplicationConfig({enableLayerTooltipFields: true});
+    view.rerender(<RenderLayer />);
+    fireEvent.click(screen.getByText('Tooltip fields'));
+    expect(screen.getByLabelText('Use layer-specific fields')).toBeChecked();
+  } finally {
+    initApplicationConfig({enableLayerTooltipFields});
+  }
+
+  fireEvent.click(screen.getByLabelText('Use layer-specific fields'));
   expect(updateLayerConfig).toHaveBeenLastCalledWith({tooltipFields: undefined});
 });
 

@@ -274,6 +274,12 @@ export type KeplerApplicationConfig = {
   enableLayerGroups?: boolean;
 
   /**
+   * Whether to show per-layer tooltip field controls. Enabled by default.
+   * Existing tooltip field overrides still apply when the controls are hidden.
+   */
+  enableLayerTooltipFields?: boolean;
+
+  /**
    * Named UI themes to cycle (`dark`, `light`, `space`, `base`).
    * Empty (default): dark theme, no switcher.
    * One theme: that theme is used, no switcher.
@@ -560,6 +566,8 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
   enableGlobeView: true,
 
   enableLayerGroups: true,
+
+  enableLayerTooltipFields: true,
 
   themes: [],
 
