@@ -39,11 +39,13 @@ import type {Feature, FeatureCollection} from 'geojson';
 
 import {
   processArrowBatches,
+  processCsvData,
   processGeojson,
   processKeplerglJSON,
   processRowObject
 } from './data-processor';
 
+import {processObjectRows} from './object-rows';
 import {FileCacheItem, ValidKeplerGlMap} from './types';
 import {getKeplerLoaders, isKeplerFileFormatAccepted} from './loader-registry';
 import {
@@ -111,6 +113,7 @@ export type ProcessFileDataContent = {
   progress?: {rowCount?: number; rowCountInBatch?: number; percent?: number};
   /**  metadata e.g. for arrow data, metadata could be the schema.fields */
   metadata?: Map<string, string>;
+  schema?: {metadata?: Record<string, string>};
   /** Remote URL this file was fetched from, if any. */
   sourceUrl?: string;
   /** User-selected or inferred remote file format (csv, geojson, parquet, …). */
@@ -725,7 +728,12 @@ export async function processFileData({
     format = processorResult.format;
     processor = processorResult.processor;
   } else {
-    // use default processors
+    // The CSV loader supplies its format even for extensionless CSV or TSV.
+    // JSON and other tabular loaders retain their own inference behavior.
+    const processTable =
+      content.schema?.metadata?.['loaders.gl#format'] === 'csv'
+        ? rows => processObjectRows(rows, processCsvData)
+        : processRowObject;
     const geojsonData = getGeoJsonFromLoaderResult(data);
     if (isArrowData(data)) {
       format = DATASET_FORMATS.arrow;
@@ -737,9 +745,8 @@ export async function processFileData({
       format = DATASET_FORMATS.geojson;
       processor = () => processGeojson(geojsonData);
     } else if (isRowObject(data)) {
-      // csv file goes here
       format = DATASET_FORMATS.row;
-      processor = processRowObject;
+      processor = processTable;
     } else if (isPlainObject(data)) {
       const tableRows = data.data;
       if (
@@ -747,7 +754,7 @@ export async function processFileData({
         Array.isArray(tableRows)
       ) {
         format = DATASET_FORMATS.row;
-        processor = () => processRowObject(tableRows);
+        processor = () => processTable(tableRows);
       }
     }
   }
