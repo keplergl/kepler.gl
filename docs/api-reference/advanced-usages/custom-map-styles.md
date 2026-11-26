@@ -123,6 +123,20 @@ const customizedKeplerGlReducer = keplerGlReducer.initialState({
 
 __Which option is for me?__ If you want to replace all basemap styles, we recommends __Option 2__. So you can also set the initial style with `styleType`. If you are adding more options as basemaps, __Option 1__ is ideal.
 
+#### Disable incremental basemap style updates
+
+By default, the Mapbox and MapLibre adapters apply style changes incrementally. To replace the style instead, pass `styleDiffing: false` to the bottom basemap container. Use the same option on the top container if your map renders basemap layers above the data:
+
+```jsx
+<KeplerGl
+  id="map"
+  bottomMapContainerProps={{styleDiffing: false}}
+  topMapContainerProps={{styleDiffing: false}}
+/>
+```
+
+This passes `diff: false` to the corresponding map's `setStyle` call when the style changes. A full reload can take longer than an incremental update. Leave diffing enabled unless your integration needs a full reload, for example when it relies on Mapbox's `style.load` event after switching styles.
+
 ### 3. `mapboxApiAccessToken`
 If your map styles are not using Mapbox services, and you replaced all kepler.gl default map styles. `mapboxApiAccessToken` will not be required in `KeplerGl` component.
 
