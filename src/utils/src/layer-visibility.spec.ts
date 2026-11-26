@@ -574,3 +574,39 @@ describe('layer color property transitions', () => {
     }
   });
 });
+
+test('toggle cuts hold boolean states at exact times without changing the saved format', () => {
+  const fill: LayerAnimatableProp = {name: 'filled', label: 'Fill', type: 'toggle'};
+  const off = transition({
+    id: 'off',
+    startTimeMs: 2000,
+    endTimeMs: 2000,
+    startValue: 1,
+    endValue: 0
+  });
+  const on = {...off, id: 'on', startTimeMs: 4000, endTimeMs: 4000, startValue: 0, endValue: 1};
+  const propertyTransitions = normalizeLayerPropertyTransitions({filled: [on, off]});
+  expect(propertyTransitions).toEqual({filled: [off, on]});
+  const layer = {
+    config: {isVisible: true, propertyTransitions},
+    animatableProps: [fill]
+  };
+  expect(getLayerAnimatedConfig(layer, 1999).visConfig).toEqual({filled: true});
+  expect(getLayerAnimatedConfig(layer, 4000).visConfig).toEqual({filled: true});
+  expect(getLayerAnimatedConfig(layer, 2000).visConfig).toEqual({filled: false});
+  expect(getLayerAnimatedConfig(layer, 3999).visConfig).toEqual({filled: false});
+  expect(getLayerAnimatedConfig(layer, null)).toEqual({});
+  expect(getLayerAnimationDuration([layer])).toBe(5000);
+  expect(getLayerAnimationDuration([{...layer, config: {...layer.config, isVisible: false}}])).toBe(
+    0
+  );
+  for (const invalid of [
+    [{...off, endTimeMs: 2500}],
+    [{...off, endValue: 0.5}],
+    [off, {...on, startTimeMs: 2000, endTimeMs: 2000}]
+  ]) {
+    expect(
+      getLayerPropertyTransitions({propertyTransitions: {filled: invalid}}, 'filled', fill)
+    ).toEqual([]);
+  }
+});

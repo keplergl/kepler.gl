@@ -563,6 +563,54 @@ test('animates contour elevation, fill and outline without mutating authored set
   expect(onLayerError).not.toHaveBeenCalled();
 });
 
+test('saved Fill and 3D surface cuts switch only the rendered passes at their times', async () => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({filled: true, stroked: true, enable3d: false});
+  const cut = (id: string, time: number, startValue: number, endValue: number) => ({
+    id,
+    startTimeMs: time,
+    endTimeMs: time,
+    startValue,
+    endValue,
+    easing: 'linear' as const
+  });
+  const propertyTransitions = {
+    enable3d: [cut('raise', 1000, 0, 1)],
+    filled: [cut('hide', 2000, 1, 0), cut('show', 3000, 0, 1)]
+  };
+  layer.updateLayerConfig({propertyTransitions});
+  const saved = SchemaManager.getConfigToSave({
+    ...StateWFiles,
+    visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+  });
+  const parsed = SchemaManager.parseSavedConfig(saved);
+  const loaded = validateLayerWithData(dataset, parsed!.visState!.layers![0], LayerClasses)!;
+  expect(loaded.config.propertyTransitions).toEqual(propertyTransitions);
+  const authored = loaded.config;
+  const data = loaded.formatLayerData(datasets);
+  const onLayerError = jest.fn();
+  const render = (animationTimeMs: number | null) =>
+    renderDeckGlLayer(
+      {
+        layer: loaded,
+        datasets,
+        data,
+        animationTimeMs,
+        layerIndex: 0,
+        mapState: {zoom: 10},
+        animationConfig: StateWFiles.visState.animationConfig
+      },
+      {onLayerError}
+    ).map(pass => pass.id);
+  expect(render(999)).toEqual([`${loaded.id}-fill`, `${loaded.id}-outline`]);
+  expect(render(1000)).toContain(`${loaded.id}-surface-fill`);
+  expect(render(2000)).toEqual([`${loaded.id}-outline`]);
+  expect(render(3000)).toContain(`${loaded.id}-surface-fill`);
+  expect(render(null)).toEqual([`${loaded.id}-fill`, `${loaded.id}-outline`]);
+  expect(loaded.config).toBe(authored);
+  expect(onLayerError).not.toHaveBeenCalled();
+});
+
 test.each([true, false])(
   'globe depth disk occludes 3D contours with inherited culling and depth writes %s',
   async depthWritesEnabled => {

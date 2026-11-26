@@ -395,6 +395,7 @@ export default class PointLayer extends Layer {
   get animatableProps(): readonly LayerAnimatableProp[] {
     const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'filled', label: 'Fill', type: 'toggle'},
       {name: 'color', label: 'Fill color', type: 'color'},
       {name: 'strokeColor', label: 'Stroke color', type: 'color'},
       {

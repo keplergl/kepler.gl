@@ -141,6 +141,8 @@ export default class ContourLayer extends Layer {
   get animatableProps(): readonly LayerAnimatableProp[] {
     const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'filled', label: 'Fill', type: 'toggle'},
+      {name: 'enable3d', label: '3D surface', type: 'toggle'},
       {name: 'color', label: 'Fill color', type: 'color'},
       {name: 'contourColor', label: 'Outline color', type: 'color'},
       {
