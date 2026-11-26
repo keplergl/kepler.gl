@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {snapToFloatingWidgets} from './floating-widget-snapping';
+import {snapToFloatingWidgets, snapFloatingWidgetResize} from './floating-widget-snapping';
 
 function rect(left: number, top: number, width = 100, height = 100): DOMRect {
   return {
@@ -114,4 +114,95 @@ test('uses current target geometry and ignores removed widgets', () => {
   expect(snapToFloatingWidgets(moving, movingRect, transform, 0)).toEqual(transform);
   target.remove();
   expect(snapToFloatingWidgets(moving, movingRect, transform, 0)).toEqual(transform);
+});
+
+test.each([300, 350])('snaps beside the rendered %ipx side panel in an embedded map', width => {
+  const sidebar = document.createElement('div');
+  sidebar.className = 'side-panel--container';
+  root.appendChild(sidebar);
+  const inner = widget(sidebar, rect(112, 112, width, 576));
+  inner.className = 'side-bar__inner';
+  const dragRect = rect(width + 120, 200);
+  const drag = {...transform, x: -3};
+  expect(snapToFloatingWidgets(moving, dragRect, drag, 300)).toEqual({...drag, x: 0});
+  inner.remove(); // Closing the sidebar removes its inner content, leaving the container.
+  expect(snapToFloatingWidgets(moving, dragRect, drag, 300)).toEqual(drag);
+});
+
+test('respects map margins when the sidebar has no outer padding', () => {
+  const sidebar = document.createElement('div');
+  sidebar.className = 'side-panel--container';
+  root.appendChild(sidebar);
+  widget(sidebar, rect(100, 100, 300, 600)).className = 'side-bar__inner';
+  const drag = {...transform, x: 0};
+  expect(snapToFloatingWidgets(moving, rect(414, 200), drag, 300).x).toBe(-4);
+});
+
+test('snaps beside visible right-side buttons, ignoring toolbar padding and menus', () => {
+  const toolbar = widget(root, rect(700, 112, 188, 400));
+  toolbar.className = 'map-control';
+  const button = widget(toolbar, rect(850, 230, 32, 32));
+  button.className = 'map-control-button map-navigation-control__zoom-in';
+  const dragRect = rect(720, 200);
+  expect(snapToFloatingWidgets(moving, dragRect, transform, 0)).toEqual({
+    ...transform,
+    x: 22,
+    y: 30
+  });
+  button.style.visibility = 'hidden';
+  expect(snapToFloatingWidgets(moving, dragRect, transform, 0)).toEqual(transform);
+});
+
+test('does not align a widget over a right-side button', () => {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'map-control';
+  root.appendChild(toolbar);
+  widget(toolbar, rect(850, 230, 32, 32)).className = 'map-control-button';
+  // The right edges almost align, but this would cover the button.
+  expect(snapToFloatingWidgets(moving, rect(752, 200), transform, 0).x).toBe(25);
+});
+
+test.each(['hidden', 'nested', 'other map', 'distant'])('ignores %s fixed UI', kind => {
+  let parent = root;
+  if (kind === 'nested' || kind === 'other map') {
+    parent = document.createElement('div');
+    parent.className = 'kepler-gl';
+    (kind === 'nested' ? root : document.body).appendChild(parent);
+  }
+  const sidebar = document.createElement('div');
+  sidebar.className = 'side-panel--container';
+  parent.appendChild(sidebar);
+  const inner = widget(sidebar, rect(112, kind === 'distant' ? 500 : 112, 300, 100));
+  inner.className = 'side-bar__inner';
+  if (kind === 'hidden') inner.style.visibility = 'hidden';
+  const drag = {...transform, x: -3};
+  expect(snapToFloatingWidgets(moving, rect(420, 200), drag, 300)).toEqual(drag);
+});
+
+test.each([
+  ['top', rect(308, 234), 230, 234],
+  ['bottom', rect(308, 304), 400, 404]
+])('snaps a resized edge to a neighboring %s level', (_edge, target, proposed, expected) => {
+  widget(root, target);
+  expect(snapFloatingWidgetResize(moving, movingRect, proposed, 110, 670)).toBe(expected);
+});
+
+test('resize snapping picks the nearest level and releases beyond the tolerance', () => {
+  widget(root, rect(308, 306));
+  widget(root, rect(308, 304));
+  expect(snapFloatingWidgetResize(moving, movingRect, 400, 110, 670)).toBe(404);
+  expect(snapFloatingWidgetResize(moving, movingRect, 420, 110, 670)).toBe(420);
+});
+
+test('resize snapping ignores out-of-limit, distant, hidden, and removed targets', () => {
+  const target = widget(root, rect(308, 304));
+  expect(snapFloatingWidgetResize(moving, movingRect, 400, 110, 402)).toBe(400);
+  expect(snapFloatingWidgetResize(moving, movingRect, 308, 306, 670)).toBe(308);
+  target.getBoundingClientRect = () => rect(500, 304);
+  expect(snapFloatingWidgetResize(moving, movingRect, 400, 110, 670)).toBe(400);
+  target.getBoundingClientRect = () => rect(308, 304);
+  target.style.visibility = 'hidden';
+  expect(snapFloatingWidgetResize(moving, movingRect, 400, 110, 670)).toBe(400);
+  target.remove();
+  expect(snapFloatingWidgetResize(moving, movingRect, 400, 110, 670)).toBe(400);
 });

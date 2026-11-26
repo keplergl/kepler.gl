@@ -311,9 +311,11 @@ export type KeplerApplicationConfig = {
 
   /**
    * Snap floating legends, bookmarks/camera animation, and the animation editor
-   * to nearby widget edges while dragging. Enabled by default. Uses an 8px
-   * tolerance and an 8px gap between adjacent widgets within the same map.
-   * Does not dock widgets, change resizing, or alter saved position formats.
+   * to nearby widgets, the side panel, and right-side buttons while dragging.
+   * Resized top/bottom edges also align with nearby floating widget edges.
+   * Enabled by default. Uses an 8px tolerance and an 8px adjacent gap within
+   * the same map, respecting map margins and resize limits. Does not dock
+   * widgets or alter saved position formats.
    */
   enableFloatingWidgetSnapping?: boolean;
 

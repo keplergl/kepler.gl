@@ -4,6 +4,8 @@
 import {useMemo, useRef, useCallback, useEffect} from 'react';
 
 import {MapLegendControlSettings} from '@kepler.gl/types';
+import {getApplicationConfig} from '@kepler.gl/utils';
+import {snapFloatingWidgetResize} from '../map/floating-widget-snapping';
 
 type Params = {
   legendContentRef: React.MutableRefObject<HTMLElement | null>;
@@ -100,6 +102,7 @@ export default function useLegendPosition({
   const contentHeight = settings?.contentHeight ?? -1;
   const positionStyles = useMemo(() => ({[pos.anchorX]: pos.x, [pos.anchorY]: pos.y}), [pos]);
   const startHeightRef = useRef(0);
+  const frameHeightRef = useRef(MAP_CONTROL_HEADER_FULL_HEIGHT);
   const minHeightRef = useRef(MIN_CONTENT_HEIGHT);
   const sidePanelWidth = theme.sidePanel?.width || 0;
 
@@ -121,9 +124,12 @@ export default function useLegendPosition({
   );
 
   const startResize = useCallback(() => {
-    const content = legendContentRef.current?.querySelector('.map-control__panel-content');
-    if (content instanceof HTMLElement) {
+    const legendContent = legendContentRef.current;
+    const content = legendContent?.querySelector('.map-control__panel-content');
+    if (legendContent && content instanceof HTMLElement) {
       startHeightRef.current = content.offsetHeight;
+      // Include the rendered header and borders when aligning the outer edges.
+      frameHeightRef.current = legendContent.getBoundingClientRect().height - content.offsetHeight;
       // Keep resizing in sync with each panel's rendered minimum.
       const minHeight = parseFloat(window.getComputedStyle(content).minHeight);
       minHeightRef.current =
@@ -144,23 +150,42 @@ export default function useLegendPosition({
       // into space above the legend bottom so a cornered legend can still resize.
       const remainingHeight =
         edge === 'top'
-          ? legendRect.bottom - MAP_CONTROL_HEADER_FULL_HEIGHT - mapRootBounds.top - MARGIN.top
-          : mapRootBounds.bottom -
-            (legendRect.top + MAP_CONTROL_HEADER_FULL_HEIGHT + MARGIN.bottom);
+          ? legendRect.bottom - frameHeightRef.current - mapRootBounds.top - MARGIN.top
+          : mapRootBounds.bottom - (legendRect.top + frameHeightRef.current + MARGIN.bottom);
       // Use maxContentHeight if available, otherwise fall back to viewport-based calculation
       const maxHeight = maxContentHeight
         ? Math.min(maxContentHeight, remainingHeight)
         : remainingHeight;
       // Dragging the top handle up (negative deltaY) should grow the legend.
       const signedDelta = edge === 'top' ? -deltaY : deltaY;
-      const nextHeight = Math.min(
+      let nextHeight = Math.min(
         maxHeight,
         Math.max(minHeightRef.current, startHeightRef.current + signedDelta)
       );
+      if (
+        getApplicationConfig().enableFloatingWidgetSnapping &&
+        deltaY !== 0 &&
+        maxHeight >= minHeightRef.current
+      ) {
+        const direction = edge === 'top' ? -1 : 1;
+        const fixedEdge = edge === 'top' ? legendRect.bottom : legendRect.top;
+        const edgeAtHeight = height => fixedEdge + direction * (frameHeightRef.current + height);
+        const minEdge = edgeAtHeight(minHeightRef.current);
+        const maxEdge = edgeAtHeight(maxHeight);
+        const snappedEdge = snapFloatingWidgetResize(
+          legendContent,
+          legendRect,
+          edgeAtHeight(nextHeight),
+          Math.min(minEdge, maxEdge),
+          Math.max(minEdge, maxEdge)
+        );
+        nextHeight = direction * (snappedEdge - fixedEdge) - frameHeightRef.current;
+      }
       const nextSettings: Partial<MapLegendControlSettings> = {contentHeight: nextHeight};
       // Keep the opposite edge fixed when CSS anchoring would otherwise move it.
-      const heightDelta = nextHeight - contentHeight;
-      if (contentHeight > 0 && heightDelta !== 0) {
+      const currentHeight = contentHeight > 0 ? contentHeight : startHeightRef.current;
+      const heightDelta = nextHeight - currentHeight;
+      if (currentHeight > 0 && heightDelta !== 0) {
         const shouldShiftAnchor =
           (edge === 'bottom' && pos.anchorY === 'bottom') ||
           (edge === 'top' && pos.anchorY === 'top');

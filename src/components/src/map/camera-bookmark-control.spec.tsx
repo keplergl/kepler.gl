@@ -548,7 +548,7 @@ test.each([
   }
 });
 
-function setupFloatingPanel(controlId: string, label: string) {
+function setupFloatingPanel(controlId: string, label: string, isSidePanelShown = false) {
   const MapControlPanel = MapControlPanelFactory();
   const root = document.createElement('div');
   root.className = 'kepler-gl';
@@ -573,7 +573,7 @@ function setupFloatingPanel(controlId: string, label: string) {
     <DraggableLegend
       controlId={controlId}
       label={label}
-      isSidePanelShown={false}
+      isSidePanelShown={isSidePanelShown}
       mapControls={enabledMapControls}
       setMapControlSettings={settings}
       mapState={{...INITIAL_MAP_STATE, width: 1000, height: 800}}
@@ -729,19 +729,72 @@ describe('floating widget snapping', () => {
     expect(settings).not.toHaveBeenCalled();
   });
 
-  test('leaves resizing unsnapped when enabled', async () => {
-    initApplicationConfig({enableFloatingWidgetSnapping: true});
-    const {panel, settings} = setupFloatingPanel('mapLegend', 'legend');
-    addNeighbor(panel);
-    const bottom = screen.getAllByRole('button', {name: 'Resize legend'})[1];
-    bottom.focus();
-    fireEvent.keyDown(bottom, {code: 'Space'});
-    await waitFor(() => expect(bottom).toHaveAttribute('aria-pressed', 'true'));
-    fireEvent.keyDown(document, {code: 'ArrowDown'});
-    expect(settings).toHaveBeenCalledWith('mapLegend', {contentHeight: 205});
-    expect(panel.style.transform).toBe('');
-    fireEvent.keyDown(document, {code: 'Space'});
-  });
+  test.each([
+    ['sidebar', true],
+    ['sidebar', false],
+    ['buttons', true],
+    ['buttons', false]
+  ])(
+    'snaps beside %s and saves the visible position only when enabled (%s)',
+    async (kind, enabled) => {
+      initApplicationConfig({enableFloatingWidgetSnapping: enabled});
+      const {move, panel, settings} = setupFloatingPanel('mapLegend', 'legend', kind === 'sidebar');
+      const container = document.createElement('div');
+      container.className = kind === 'sidebar' ? 'side-panel--container' : 'map-control';
+      panel.parentElement?.appendChild(container);
+      const target = document.createElement('div');
+      target.className = kind === 'sidebar' ? 'side-bar__inner' : 'map-control-button';
+      container.appendChild(target);
+      const bounds =
+        kind === 'sidebar'
+          ? {left: 12, top: 12, width: 300, height: 776}
+          : {left: 936, top: 60, width: 32, height: 32};
+      target.getBoundingClientRect = () => ({
+        ...bounds,
+        x: bounds.left,
+        y: bounds.top,
+        right: bounds.left + bounds.width,
+        bottom: bounds.top + bounds.height,
+        toJSON: () => ({})
+      });
+      fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
+      await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.pointerMove(document, {clientX: kind === 'sidebar' ? 375 : 675, clientY: 80});
+      const x = kind === 'sidebar' ? (enabled ? -280 : -275) : enabled ? 28 : 25;
+      const y = kind === 'buttons' && enabled ? 20 : 25;
+      expect(panel).toHaveStyle({transform: `translate3d(${x}px, ${y}px, 0)`});
+      fireEvent.pointerUp(document);
+      expect(settings).toHaveBeenLastCalledWith('mapLegend', {
+        position: {
+          x: kind === 'sidebar' ? 600 + x : 100 - x,
+          y: 40 + y,
+          anchorX: kind === 'sidebar' ? 'left' : 'right',
+          anchorY: 'top'
+        }
+      });
+      await waitForPointerClickRelease();
+    }
+  );
+
+  test.each([true, false])(
+    'resizes to a neighbor level only when snapping is enabled (%s)',
+    async enabled => {
+      initApplicationConfig({enableFloatingWidgetSnapping: enabled});
+      const {panel, settings} = setupFloatingPanel('mapLegend', 'legend');
+      addNeighbor(panel);
+      const bottom = screen.getAllByRole('button', {name: 'Resize legend'})[1];
+      bottom.focus();
+      fireEvent.keyDown(bottom, {code: 'Space'});
+      await waitFor(() => expect(bottom).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.keyDown(document, {code: 'ArrowDown'});
+      expect(settings).toHaveBeenCalledWith(
+        'mapLegend',
+        expect.objectContaining({contentHeight: enabled ? 207 : 205})
+      );
+      expect(panel.style.transform).toBe('');
+      fireEvent.keyDown(document, {code: 'Space'});
+    }
+  );
 });
 
 test.each([
