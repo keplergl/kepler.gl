@@ -566,7 +566,7 @@ export function mergeInteractions<S extends VisState>(
                 [
                   ...Object.keys(currentConfig),
                   ...(key === 'geocoder' ? ['focusMode'] : []),
-                  ...(key === 'brush' ? ['endpoint'] : [])
+                  ...(key === 'brush' ? ['endpoint', 'showBrush'] : [])
                 ]
               )
             }
@@ -913,7 +913,7 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
         isAnnotationKind(a.kind) &&
         (a.viewport == null ||
           (a.kind === AnnotationKind.TEXT && normalizeAnnotationViewport(a.viewport))) &&
-        (a.readout == null || (a.viewport && normalizeAnnotationReadout(a.readout))) &&
+        (a.readout == null || normalizeAnnotationReadout(a.readout)) &&
         ((a.viewport && a.anchorPoint == null) ||
           (Array.isArray(a.anchorPoint) &&
             (a.anchorPoint.length === 2 || a.anchorPoint.length === 3) &&

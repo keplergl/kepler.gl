@@ -506,6 +506,24 @@ test('#visStateSchema -> preserves the geocoder result focus', t => {
   t.end();
 });
 
+test('#visStateSchema -> brush visibility round trips and preserves legacy maps', t => {
+  for (const showBrush of [true, false, undefined]) {
+    const state = cloneDeep(StateWFilesFiltersLayerColor);
+    state.visState.interactionConfig.brush = {
+      ...state.visState.interactionConfig.brush,
+      enabled: true,
+      config: {size: 4, ...(showBrush === undefined ? {} : {showBrush})}
+    };
+    const saved = SchemaManager.getConfigToSave(state);
+    const parsed = SchemaManager.parseSavedConfig(saved);
+    const reopened = mergeInteractions(INITIAL_VIS_STATE, parsed.visState.interactionConfig);
+    t.equal(reopened.interactionConfig.brush.config.showBrush, showBrush, 'preserves visibility');
+    t.equal(reopened.interactionConfig.brush.config.size, 4, 'preserves radius');
+    t.equal(reopened.interactionConfig.brush.enabled, true, 'preserves filtering');
+  }
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> save load interaction', t => {
   const initialState = cloneDeep(StateWFilesFiltersLayerColor);
   const savedState = SchemaManager.getConfigToSave(initialState);

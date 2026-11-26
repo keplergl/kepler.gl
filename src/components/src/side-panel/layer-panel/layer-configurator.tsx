@@ -1406,7 +1406,12 @@ export default function LayerConfiguratorFactory(
       return (
         <StyledLayerVisualConfigurator>
           {/* Color */}
-          <LayerConfigGroup label={'layer.color'}>
+          <LayerConfigGroup
+            label={'layer.color'}
+            collapsible={Boolean(
+              layer.visConfigSettings.sourceOpacity || layer.visConfigSettings.targetOpacity
+            )}
+          >
             <ChannelByValueSelector
               channel={layer.visualChannels.sourceColor}
               {...layerChannelConfigProps}
@@ -1422,6 +1427,20 @@ export default function LayerConfiguratorFactory(
               />
             )}
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            <ConfigGroupCollapsibleContent>
+              {layer.visConfigSettings.sourceOpacity && (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.sourceOpacity}
+                  {...visConfiguratorProps}
+                />
+              )}
+              {layer.visConfigSettings.targetOpacity && (
+                <VisConfigSlider
+                  {...layer.visConfigSettings.targetOpacity}
+                  {...visConfiguratorProps}
+                />
+              )}
+            </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
 
           {/* thickness */}

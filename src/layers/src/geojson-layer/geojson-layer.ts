@@ -374,6 +374,18 @@ export default class GeoJsonLayer extends Layer {
         label: 'Elevation scale',
         range: this.visConfigSettings.elevationScale.range,
         step: this.visConfigSettings.elevationScale.step
+      },
+      {
+        name: 'strokeOpacity',
+        label: 'Stroke opacity',
+        range: this.visConfigSettings.strokeOpacity.range,
+        step: this.visConfigSettings.strokeOpacity.step
+      },
+      {
+        name: 'elevationOffset',
+        label: 'Elevation offset',
+        range: this.visConfigSettings.elevationOffset.range,
+        step: this.visConfigSettings.elevationOffset.step
       }
     ];
     return props.filter(
@@ -386,7 +398,9 @@ export default class GeoJsonLayer extends Layer {
             !this.meta.fixedRadius &&
             (!this.meta.featureTypes || this.meta.featureTypes.point))) &&
         (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
-        (prop.name !== 'elevationScale' || this.isExtruded())
+        (prop.name !== 'elevationScale' || this.isExtruded()) &&
+        (prop.name !== 'strokeOpacity' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationOffset' || !this.config.elevationOffsetField)
     );
   }
 

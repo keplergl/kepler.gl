@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {ScatterplotLayer, TextLayer} from '@deck.gl/layers';
 import {DataFilterExtensionProps} from '@deck.gl/extensions';
 import {EnhancedMultiIconLayer} from '@kepler.gl/deckgl-layers';
@@ -91,6 +92,19 @@ export default class DonutLayer extends Layer {
         label: 'layerVisConfigs.donut.showTotal'
       }
     });
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      }
+    ];
+    return props;
   }
 
   get type() {

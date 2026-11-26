@@ -19,8 +19,8 @@ export type AnimationBlockProps = {
   selected?: boolean;
   disabled?: boolean;
   kind?: 'effect' | 'layer' | 'camera' | 'camera-hold';
-  /** Duration edits keep the start fixed and expose only the end handle. */
-  editMode?: 'interval' | 'duration';
+  /** Duration edits expose only the end handle; points move without changing duration. */
+  editMode?: 'interval' | 'duration' | 'point';
   /** Let connected intervals follow a local gesture without saving every pointer move. */
   onPreview?: (range: Range | null) => void;
   onSelect: () => void;
@@ -393,9 +393,9 @@ export default function AnimationBlock({
       $selected={selected}
       $dragging={draft !== null}
       $kind={kind}
-      title={`${label}: ${seconds(range[0])} – ${seconds(range[1])}${
-        onOpen ? ' · Double-click to edit' : ''
-      }`}
+      title={`${label}: ${seconds(range[0])}${
+        editMode === 'point' ? '' : ` – ${seconds(range[1])}`
+      }${onOpen ? ' · Double-click to edit' : ''}`}
       onDoubleClick={open}
     >
       <Body
@@ -412,7 +412,12 @@ export default function AnimationBlock({
       >
         {label}
       </Body>
-      {(editMode === 'duration' ? (['end'] as const) : (['start', 'end'] as const)).map(part => (
+      {(editMode === 'point'
+        ? []
+        : editMode === 'duration'
+        ? (['end'] as const)
+        : (['start', 'end'] as const)
+      ).map(part => (
         <Edge
           key={part}
           type="button"

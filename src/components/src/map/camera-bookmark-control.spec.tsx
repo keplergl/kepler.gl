@@ -638,7 +638,7 @@ async function waitForPointerClickRelease() {
   });
 }
 
-describe('optional floating widget snapping', () => {
+describe('floating widget snapping', () => {
   const originalEnabled = getApplicationConfig().enableFloatingWidgetSnapping;
   afterEach(() => initApplicationConfig({enableFloatingWidgetSnapping: originalEnabled}));
 
@@ -660,8 +660,8 @@ describe('optional floating widget snapping', () => {
     return neighbor;
   }
 
-  test('is disabled by default and preserves free dragging', async () => {
-    expect(originalEnabled).toBe(false);
+  test('preserves free dragging when explicitly disabled', async () => {
+    initApplicationConfig({enableFloatingWidgetSnapping: false});
     const {move, panel, settings} = setupFloatingPanel('mapLegend', 'legend');
     addNeighbor(panel);
     fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
@@ -679,24 +679,27 @@ describe('optional floating widget snapping', () => {
     ['mapLegend', 'legend'],
     ['cameraBookmarks', 'Bookmarks'],
     ['animation', 'Animation']
-  ])('snaps %s, releases freely, and persists the previewed position', async (controlId, label) => {
-    initApplicationConfig({enableFloatingWidgetSnapping: true});
-    const {move, panel, settings} = setupFloatingPanel(controlId, label);
-    addNeighbor(panel);
-    fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
-    await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
-    fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
-    expect(panel).toHaveStyle({transform: 'translate3d(30px, 19px, 0)'});
-    fireEvent.pointerMove(document, {clientX: 700, clientY: 115});
-    expect(panel).toHaveStyle({transform: 'translate3d(50px, 60px, 0)'});
-    fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
-    fireEvent.pointerUp(document);
-    expect(settings).toHaveBeenLastCalledWith(controlId, {
-      position: {x: 70, y: 59, anchorX: 'right', anchorY: 'top'}
-    });
-    expect(settings.mock.calls.every(([id]) => id === controlId)).toBe(true);
-    await waitForPointerClickRelease();
-  });
+  ])(
+    'snaps %s by default, releases freely, and persists the previewed position',
+    async (controlId, label) => {
+      expect(originalEnabled).toBe(true);
+      const {move, panel, settings} = setupFloatingPanel(controlId, label);
+      addNeighbor(panel);
+      fireEvent.pointerDown(move, {button: 0, clientX: 650, clientY: 55});
+      await waitFor(() => expect(move).toHaveAttribute('aria-pressed', 'true'));
+      fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
+      expect(panel).toHaveStyle({transform: 'translate3d(30px, 19px, 0)'});
+      fireEvent.pointerMove(document, {clientX: 700, clientY: 115});
+      expect(panel).toHaveStyle({transform: 'translate3d(50px, 60px, 0)'});
+      fireEvent.pointerMove(document, {clientX: 675, clientY: 80});
+      fireEvent.pointerUp(document);
+      expect(settings).toHaveBeenLastCalledWith(controlId, {
+        position: {x: 70, y: 59, anchorX: 'right', anchorY: 'top'}
+      });
+      expect(settings.mock.calls.every(([id]) => id === controlId)).toBe(true);
+      await waitForPointerClickRelease();
+    }
+  );
 
   test('supports keyboard snapping and cancels without saving the snapped position', async () => {
     initApplicationConfig({enableFloatingWidgetSnapping: true});

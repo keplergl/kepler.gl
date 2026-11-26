@@ -6,6 +6,7 @@ import {injectIntl, IntlShape} from 'react-intl';
 import type {Brush} from '@kepler.gl/types';
 import ItemSelector from '../../common/item-selector/item-selector';
 import RangeSliderFactory from '../../common/range-slider';
+import Switch from '../../common/switch';
 
 import {PanelLabel, SidePanelSection} from '../../common/styled-components';
 import {BRUSH_CONFIG} from '@kepler.gl/reducers';
@@ -24,6 +25,15 @@ const endpoints = ['source_target', 'source', 'target'] as const;
 function BrushConfigFactory(RangeSlider: ReturnType<typeof RangeSliderFactory>) {
   const BrushConfig = ({config, onChange, intl}: BrushConfigProps) => (
     <SidePanelSection>
+      <SidePanelSection>
+        <Switch
+          id="show-brush-toggle"
+          label={<FormattedMessage id="misc.showBrush" />}
+          checked={Boolean(config.showBrush)}
+          onChange={() => onChange({...config, showBrush: !config.showBrush})}
+          secondary
+        />
+      </SidePanelSection>
       <PanelLabel>
         <FormattedMessage id={'misc.brushRadius'} />
       </PanelLabel>

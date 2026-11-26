@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {FeatureCollection, Feature} from 'geojson';
 import {createSelector, lruMemoize} from 'reselect';
 import isEqual from 'es-toolkit/compat/isEqual';
@@ -517,6 +518,48 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       getRowCount: (features: Feature[]): number => features.length,
       getRowValue: this.accessRowValue
     });
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'radius',
+        label: 'Radius',
+        range: this.visConfigSettings.radius.range,
+        step: this.visConfigSettings.radius.step
+      },
+      {
+        name: 'strokeWidth',
+        label: 'Stroke width',
+        range: this.visConfigSettings.strokeWidth.range,
+        step: this.visConfigSettings.strokeWidth.step
+      },
+      {
+        name: 'strokeOpacity',
+        label: 'Stroke opacity',
+        range: this.visConfigSettings.strokeOpacity.range,
+        step: this.visConfigSettings.strokeOpacity.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || !this.config.colorField) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.stroked && !this.config.strokeColorField)) &&
+        (prop.name !== 'strokeWidth' ||
+          (this.config.visConfig.stroked && !this.config.sizeField)) &&
+        (prop.name !== 'strokeOpacity' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.config.visConfig.enable3d)
+    );
   }
 
   get type(): string {

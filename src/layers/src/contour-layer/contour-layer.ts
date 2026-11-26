@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
 import {GL} from '@luma.gl/constants';
@@ -135,6 +136,43 @@ export default class ContourLayer extends Layer {
   constructor(props) {
     super(props);
     this.registerVisConfig(contourVisConfigs);
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'filled', label: 'Fill', type: 'toggle'},
+      {name: 'enable3d', label: '3D surface', type: 'toggle'},
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'contourColor', label: 'Outline color', type: 'color'},
+      {
+        name: 'fillOpacity',
+        label: 'Fill opacity',
+        range: this.visConfigSettings.fillOpacity.range,
+        step: this.visConfigSettings.fillOpacity.step
+      },
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation multiplier',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' ||
+          (this.config.visConfig.filled && !this.config.visConfig.colorByLevel)) &&
+        (prop.name !== 'contourColor' || this.config.visConfig.stroked) &&
+        (prop.name !== 'fillOpacity' || this.config.visConfig.filled) &&
+        (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.config.visConfig.enable3d)
+    );
   }
 
   get type() {
@@ -451,6 +489,7 @@ export default class ContourLayer extends Layer {
       visConfig.below,
       data.data.length
     ];
+    const outlineColors = colors.map((_, rank) => this.getContourLevelColor(rank, colors, true));
     const defaultProps = this.getDefaultDeckLayerProps(opts);
     const shared = {
       ...defaultProps,
@@ -520,8 +559,7 @@ export default class ContourLayer extends Layer {
               ...(surface ? {getPolygonOffset: () => [-1, -1]} : {}),
               filled: false,
               stroked: true,
-              getLineColor: feature =>
-                this.getContourLevelColor(feature.properties.rank, colors, true),
+              getLineColor: feature => outlineColors[feature.properties.rank],
               getLineWidth: visConfig.thickness,
               lineWidthUnits: 'pixels',
               lineJointRounded: true,

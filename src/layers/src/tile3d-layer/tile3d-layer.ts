@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
 import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
@@ -524,6 +525,20 @@ export default class Tile3DLayer extends Layer {
         }
       ]
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Point color', type: 'color'},
+      {
+        name: 'pointSize',
+        label: 'Point size',
+        range: this.visConfigSettings.pointSize.range,
+        step: this.visConfigSettings.pointSize.step
+      }
+    ];
+    return props;
   }
 
   get type(): string {

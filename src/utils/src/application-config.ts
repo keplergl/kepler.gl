@@ -311,7 +311,7 @@ export type KeplerApplicationConfig = {
 
   /**
    * Snap floating legends, bookmarks/camera animation, and the animation editor
-   * to nearby widget edges while dragging. Disabled by default. Uses an 8px
+   * to nearby widget edges while dragging. Enabled by default. Uses an 8px
    * tolerance and an 8px gap between adjacent widgets within the same map.
    * Does not dock widgets, change resizing, or alter saved position formats.
    */
@@ -575,7 +575,7 @@ const DEFAULT_APPLICATION_CONFIG: Required<KeplerApplicationConfig> = {
 
   enableAnimationEditor: true,
 
-  enableFloatingWidgetSnapping: false,
+  enableFloatingWidgetSnapping: true,
 
   enableJsonEditors: true,
   enableLayerJsonEditor: true,
