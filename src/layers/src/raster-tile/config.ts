@@ -720,6 +720,22 @@ export const rasterVisConfigs = {
     step: 0.05,
     type: 'number'
   } as VisConfigNumber,
+  valueThresholdEnabled: {
+    type: 'boolean',
+    property: 'valueThresholdEnabled',
+    defaultValue: false,
+    label: 'Maximum band value'
+  } as VisConfigBoolean,
+  valueThreshold: {
+    type: 'number',
+    property: 'valueThreshold',
+    defaultValue: 0,
+    label: 'Maximum band value',
+    isRanged: false,
+    // The raw raster texture and the matching shader uniform use Float32.
+    range: [-3.4028234663852886e38, 3.4028234663852886e38],
+    step: 0.01
+  } as VisConfigNumber,
   filterEnabled: {
     type: 'boolean',
     property: 'filterEnabled',

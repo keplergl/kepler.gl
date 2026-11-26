@@ -11,6 +11,7 @@ import {
   getNeighbors,
   getGeojsonLayerMetaFromArrow,
   Layer,
+  RasterTileLayer,
   LayerClasses,
   KeplerGlLayers
 } from '@kepler.gl/layers';
@@ -25,6 +26,8 @@ import {
   INITIAL_VIS_STATE
 } from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
+
+import {visStateSchemaV1} from '../../../src/schemas/src/vis-state-schema';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 
@@ -2982,5 +2985,84 @@ test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbo
     );
     t.deepEqual(calls, indices, `${name} only resolves valid neighbor positions`);
   }
+  t.end();
+});
+
+test('layerUtils -> raw single-band raster cutoff follows the playhead without changing tile loads', t => {
+  const layer = new RasterTileLayer({id: 'arrival', dataId: 'raster'});
+  const propertyTransitions = {valueThreshold: propertyTrack('tide', 1, 1.8)};
+  layer.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true,
+    valueThreshold: -0.4
+  });
+  layer.updateLayerConfig({propertyTransitions});
+
+  const metadata = {
+    stac_version: '1.1.0',
+    type: 'Feature',
+    id: 'fixture',
+    bbox: [-1, -1, 1, 1],
+    assets: {
+      raster: {
+        href: 'https://example.com/arrival.tif',
+        type: 'image/tiff; application=geotiff; profile=cloud-optimized',
+        roles: ['data'],
+        bands: [{name: 'arrival', data_type: 'float32', statistics: {minimum: -0.4, maximum: 3}}]
+      }
+    }
+  };
+  const data = {dataset: {metadata}};
+  const render = animationTimeMs =>
+    renderDeckGlLayer(
+      {
+        layer,
+        data,
+        datasets: {raster: data.dataset},
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        animationTimeMs
+      },
+      {}
+    )[0];
+
+  const initial = render(1000);
+  const end = render(3000);
+  const rewind = render(1000);
+  t.equal(initial?.props.valueThreshold, 1, 'start uses source units');
+  t.equal(end?.props.valueThreshold, 1.8, 'end uses the inclusive cutoff');
+  t.equal(rewind?.props.valueThreshold, 1, 'seeking backward restores the earlier cutoff');
+  t.deepEqual(
+    initial?.props.updateTriggers,
+    end?.props.updateTriggers,
+    'tile load triggers are stable'
+  );
+  t.equal(
+    layer.config.visConfig.valueThreshold,
+    -0.4,
+    'playback does not change the authored cutoff'
+  );
+
+  const saved = JSON.parse(
+    JSON.stringify(
+      visStateSchemaV1.save({...INITIAL_VIS_STATE, layers: [layer], layerOrder: [layer.id]})
+    )
+  );
+  const reopened = visStateSchemaV1.load(saved.visState).visState.layers[0];
+  t.equal(
+    reopened.config.visConfig.valueThreshold,
+    -0.4,
+    'config round-trip keeps authored cutoff'
+  );
+  t.equal(reopened.config.visConfig.valueThresholdEnabled, true, 'config round-trip keeps opt-in');
+  t.deepEqual(
+    reopened.config.propertyTransitions,
+    propertyTransitions,
+    'config round-trip keeps the track'
+  );
+
+  layer.updateLayerVisConfig({valueThresholdEnabled: false});
+  t.equal(render(3000)?.props.valueThreshold, undefined, 'off leaves the original raster unmasked');
   t.end();
 });

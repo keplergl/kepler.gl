@@ -170,6 +170,7 @@ export type RenderSubLayersCustomProps = ColorRescaling &
     minPixelValue: number;
     maxPixelValue: number;
     bandCombination: BandCombination;
+    valueThreshold?: number;
     filterEnabled: boolean;
     filterRange: [number, number];
     currentTime: number;

@@ -173,6 +173,8 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   sigmoidalContrastFactor: VisConfigNumber;
   sigmoidalBiasFactor: VisConfigNumber;
   saturationValue: VisConfigNumber;
+  valueThresholdEnabled: VisConfigBoolean;
+  valueThreshold: VisConfigNumber;
   filterEnabled: VisConfigBoolean;
   filterRange: VisConfigRange;
   _stacQuery: VisConfigInput;
@@ -191,15 +193,20 @@ export default class RasterTileLayer extends KeplerLayer {
 
   get animatableProps(): readonly LayerAnimatableProp[] {
     const {visConfig} = this.config;
-    if (
-      this.meta.isPMTiles ||
-      visConfig.colorRange?.colorMap ||
-      !isRescalingAllowed(PRESET_OPTIONS[visConfig.preset]?.bandCombination)
-    ) {
-      return super.animatableProps;
+    const bandCombination = PRESET_OPTIONS[visConfig.preset]?.bandCombination;
+    if (this.meta.isPMTiles) return super.animatableProps;
+    const hasThreshold = bandCombination === 'single' && visConfig.valueThresholdEnabled;
+    const canRescale = !visConfig.colorRange?.colorMap && isRescalingAllowed(bandCombination);
+    if (!hasThreshold && !canRescale) return super.animatableProps;
+
+    const props: LayerAnimatableProp[] = [...super.animatableProps];
+    if (hasThreshold) {
+      const {property: name, range, step} = this.visConfigSettings.valueThreshold;
+      props.push({name, label: 'Maximum band value', range, step});
     }
-    const props: LayerAnimatableProp[] = [
-      ...super.animatableProps,
+    if (!canRescale) return props;
+
+    props.push(
       ...[
         ['gammaContrastFactor', 'Gamma contrast'],
         ['sigmoidalContrastFactor', 'Sigmoidal contrast'],
@@ -211,7 +218,7 @@ export default class RasterTileLayer extends KeplerLayer {
         range: this.visConfigSettings[name].range,
         step: this.visConfigSettings[name].step
       }))
-    ];
+    );
     return props.filter(
       prop =>
         !['gammaContrastFactor', 'sigmoidalContrastFactor', 'sigmoidalBiasFactor'].includes(
@@ -822,6 +829,8 @@ export default class RasterTileLayer extends KeplerLayer {
       saturationValue,
       filterEnabled,
       filterRange,
+      valueThresholdEnabled,
+      valueThreshold,
       useSTACSearching,
       stacSearchProvider,
       startDate,
@@ -988,6 +997,7 @@ export default class RasterTileLayer extends KeplerLayer {
       bandCombination,
       filterEnabled,
       filterRange,
+      valueThreshold: valueThresholdEnabled ? valueThreshold : undefined,
       dataType,
       minCategoricalBandValue,
       maxCategoricalBandValue,

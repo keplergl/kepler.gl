@@ -6,7 +6,8 @@ import {ImageLoader} from '@loaders.gl/images';
 import {NPYLoader} from '@loaders.gl/textures';
 // @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/constants';
-import {loadImage, loadNpyArray} from './gpu-utils';
+import {getModules, loadImage, loadNpyArray} from './gpu-utils';
+import {BandCombination, type RenderSubLayersProps} from './types';
 
 // Keep texture conversion, channel splitting, retry control and throttling real.
 // Only the network/decoder boundary is replaced: these tests do not render a GPU texture.
@@ -181,5 +182,65 @@ describe('image texture loading', () => {
     fetchMock.mockResolvedValueOnce({});
     parseMock.mockRejectedValueOnce(error);
     await expect(loadImage('https://tiles.example/broken.png')).rejects.toBe(error);
+  });
+});
+
+describe('single-band value threshold', () => {
+  const imageBands = [{format: GL.R32F}] as any;
+  const imageMask = {format: GL.R8UI} as any;
+  const props = {
+    bandCombination: BandCombination.Single,
+    renderBandIndexes: [0],
+    filterEnabled: true,
+    filterRange: [0, 1],
+    linearRescaling: true,
+    linearRescalingFactor: [0, 1],
+    minPixelValue: -4,
+    maxPixelValue: 4,
+    nonLinearRescaling: false
+  } as RenderSubLayersProps;
+
+  test('compares the selected raw band before rescaling and preserves the NoData mask', () => {
+    const output = getModules({
+      images: {imageBands, imageMask},
+      props: {...props, valueThreshold: 1.8}
+    });
+    const names = output.modules.map(module => module.name);
+    expect(names).toContain('mask_image_uint');
+    expect(names.indexOf('rawBandThreshold')).toBeGreaterThan(names.indexOf('reorder_bands'));
+    expect(names.indexOf('rawBandThreshold')).toBeLessThan(names.indexOf('linear_rescale'));
+    expect(output.moduleProps).toMatchObject({
+      rawBandMaximum: 1.8,
+      rawBandChannel: 0,
+      maskKeepMin: 1
+    });
+    expect(output.moduleProps).toMatchObject({filterMin1: 0, filterMax1: 1});
+
+    const rewind = getModules({
+      images: {imageBands, imageMask},
+      props: {...props, valueThreshold: 1}
+    });
+    expect(rewind.modules).toEqual(output.modules);
+    expect(rewind.moduleProps.rawBandMaximum).toBe(1);
+  });
+
+  test.each([undefined, NaN, Infinity, 1e39])(
+    'leaves the original shader pipeline alone for %s',
+    valueThreshold => {
+      const result = getModules({
+        images: {imageBands, imageMask},
+        props: {...props, valueThreshold}
+      });
+      expect(result.modules.map(module => module.name)).not.toContain('rawBandThreshold');
+      expect(result.moduleProps).not.toHaveProperty('rawBandMaximum');
+    }
+  );
+
+  test('ignores the cutoff for RGB data', () => {
+    const result = getModules({
+      images: {imageBands, imageMask},
+      props: {...props, bandCombination: BandCombination.Rgb, valueThreshold: 1.8}
+    });
+    expect(result.moduleProps).not.toHaveProperty('rawBandMaximum');
   });
 });

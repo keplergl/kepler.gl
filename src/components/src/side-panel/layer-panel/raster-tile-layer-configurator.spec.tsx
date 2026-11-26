@@ -146,3 +146,26 @@ test('renders nothing before metadata is available', () => {
   expect(view.container).toBeEmptyDOMElement();
   expect(onChange).not.toHaveBeenCalled();
 });
+
+test('edits a finite signed threshold only in Single Band mode', () => {
+  const rgb = renderConfigurator({valueThresholdEnabled: true});
+  expect(screen.queryByRole('spinbutton', {name: 'Maximum band value in source units'})).toBeNull();
+  rgb.view.unmount();
+
+  const {onChange} = renderConfigurator({
+    preset: 'singleBand',
+    singleBandName: 'B08',
+    valueThresholdEnabled: true,
+    valueThreshold: 1.8
+  });
+  const input = screen.getByRole('spinbutton', {name: 'Maximum band value in source units'});
+  expect(input).toHaveValue(1.8);
+  fireEvent.change(input, {target: {value: '-0.4'}});
+  fireEvent.blur(input);
+  expect(onChange).toHaveBeenLastCalledWith({valueThreshold: -0.4});
+  onChange.mockClear();
+  fireEvent.change(input, {target: {value: ''}});
+  fireEvent.blur(input);
+  expect(onChange).not.toHaveBeenCalled();
+  expect(input).toHaveValue(1.8);
+});

@@ -36,11 +36,17 @@ precision mediump int;
 precision mediump usampler2D;
 precision mediump isampler2D;
 
+#ifdef KEPLER_RAW_BAND_THRESHOLD
+  #define BAND_SAMPLE_PRECISION highp
+#else
+  #define BAND_SAMPLE_PRECISION
+#endif
+
 #ifdef SAMPLER_TYPE
-  uniform SAMPLER_TYPE bitmapTextureR;
-  uniform SAMPLER_TYPE bitmapTextureG;
-  uniform SAMPLER_TYPE bitmapTextureB;
-  uniform SAMPLER_TYPE bitmapTextureA;
+  uniform BAND_SAMPLE_PRECISION SAMPLER_TYPE bitmapTextureR;
+  uniform BAND_SAMPLE_PRECISION SAMPLER_TYPE bitmapTextureG;
+  uniform BAND_SAMPLE_PRECISION SAMPLER_TYPE bitmapTextureB;
+  uniform BAND_SAMPLE_PRECISION SAMPLER_TYPE bitmapTextureA;
 #else
   uniform sampler2D bitmapTextureR;
   uniform sampler2D bitmapTextureG;
@@ -59,12 +65,25 @@ const combineBands: ShaderModule = {
   },
   inject: {
     'fs:DECKGL_CREATE_COLOR': `
+    #ifdef KEPLER_RAW_BAND_THRESHOLD
+    highp vec4 rawBands = vec4(
+      texture2D(bitmapTextureR, coord).r,
+      texture2D(bitmapTextureG, coord).r,
+      texture2D(bitmapTextureB, coord).r,
+      texture2D(bitmapTextureA, coord).r
+    );
+    highp float rawValue = rawBands[rawBandThreshold_channel_ALIAS];
+    // Reject NaN as well as values above the cutoff. The data mask still handles NoData.
+    if (!(rawValue <= rawBandThreshold_maximum_ALIAS) || isinf(rawValue)) discard;
+    image = rawBands;
+    #else
     float channel1 = float(texture2D(bitmapTextureR, coord).r);
     float channel2 = float(texture2D(bitmapTextureG, coord).r);
     float channel3 = float(texture2D(bitmapTextureB, coord).r);
     float channel4 = float(texture2D(bitmapTextureA, coord).r);
 
     image = vec4(channel1, channel2, channel3, channel4);
+    #endif
     `
   }
 };

@@ -34,6 +34,12 @@ When a COG URL is detected, kepler.gl automatically fetches STAC metadata from t
 - The COG file must be publicly accessible over HTTPS. Extensionless URLs that are not a `/cog` path also need CORS so kepler.gl can read `Content-Type`.
 - If the "Raster tile servers" field is empty when you paste a COG URL, it will be auto-filled with `https://titiler.xyz`.
 
+## Animate a single-band value cutoff
+
+In **Single Band** mode, turn on **Maximum band value** and enter a cutoff in the units stored in the raster. For example, if the band contains tide arrival levels in metres, a cutoff of `1.8` shows cells at or below 1.8 m. The existing NoData mask still applies. Use a COG or a STAC raster that serves numeric band tiles, not a pre-colored PMTiles or bitmap source.
+
+In **Create Animation**, add a **Maximum band value** property track for the raster layer and enter the starting and ending levels. The animation changes which cells are visible without changing the color scale or requesting new tiles for each threshold.
+
 # Elevation
 
 To enable elevation rendering, you must provide one or more compatible raster tile servers when adding the tileset. Enter them in the "Raster tile servers" field of the Add Tileset form.
