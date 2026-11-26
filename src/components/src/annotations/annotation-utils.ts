@@ -22,6 +22,8 @@ export type LngLatAltitude = [number, number] | [number, number, number];
 export type MapViewport = {
   project: (lngLat: ReadonlyArray<number>) => number[];
   unproject: (xy: ReadonlyArray<number>) => number[];
+  projectPosition?: (lngLat: ReadonlyArray<number>) => number[];
+  cameraPosition?: ReadonlyArray<number>;
   longitude: number;
   latitude: number;
   width: number;
@@ -416,7 +418,9 @@ const GLOBE_VISIBILITY_TOLERANCE_DEG = 0.5;
  * the sphere along that ray. If the point comes back to (approximately) itself
  * it is on the visible hemisphere; otherwise the ray hit the front of the globe
  * first and the point is occluded. This uses the real projection math, so it
- * follows the true horizon and adapts to zoom/altitude automatically.
+ * follows the true horizon and adapts to zoom automatically. Elevated points
+ * instead need a segment test: their line of sight can miss the sphere, or hit
+ * the sphere at a different longitude/latitude behind the annotation.
  */
 export function isPointVisibleOnGlobe(
   point: ReadonlyArray<number>,
@@ -425,6 +429,27 @@ export function isPointVisibleOnGlobe(
   const projected = viewport.project(point);
   if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
     return false;
+  }
+  const [longitude, latitude, altitude = 0] = point;
+  if (altitude > 0 && viewport.cameraPosition && viewport.projectPosition) {
+    // Perspective projection can return finite screen coordinates behind the eye.
+    if (projected[2] > 1) return false;
+    const [cx, cy, cz] = viewport.cameraPosition;
+    const [x, y, z] = viewport.projectPosition(point);
+    const [sx, sy, sz] = viewport.projectPosition([longitude, latitude]);
+    const radiusSquared = sx * sx + sy * sy + sz * sz;
+    const dx = x - cx;
+    const dy = y - cy;
+    const dz = z - cz;
+    const lengthSquared = dx * dx + dy * dy + dz * dz;
+    if (lengthSquared === 0) return false;
+    // A ray intersection beyond the annotation cannot occlude it. Measure
+    // the closest point to Earth's center on the finite sightline instead.
+    const t = Math.min(1, Math.max(0, -(cx * dx + cy * dy + cz * dz) / lengthSquared));
+    const px = cx + t * dx;
+    const py = cy + t * dy;
+    const pz = cz + t * dz;
+    return px * px + py * py + pz * pz >= radiusSquared * (1 - 1e-12);
   }
   const roundTrip = viewport.unproject([projected[0], projected[1]]);
   if (!roundTrip || !Number.isFinite(roundTrip[0]) || !Number.isFinite(roundTrip[1])) {

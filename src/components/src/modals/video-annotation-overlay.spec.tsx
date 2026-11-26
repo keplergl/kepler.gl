@@ -326,6 +326,21 @@ test('cleans up annotation DOM if rasterization fails', async () => {
   expect(canvas.getContext('2d')!.drawImage).not.toHaveBeenCalled();
 });
 
+test('keeps elevated geographic text visible at the globe horizon in the video overlay', () => {
+  const {frame} = setup({
+    annotations: [{...annotation, anchorPoint: [84.2, 0, 1000]}],
+    mapState: {longitude: 0, latitude: 0, zoom: 0, pitch: 0, bearing: 0, globe: {enabled: true}},
+    width: 800,
+    height: 600
+  });
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  expect(view.getByText(annotation.label)).toBeInTheDocument();
+  view.rerender(
+    <VideoAnnotationOverlay frame={{...frame, mapState: {...frame.mapState, longitude: -7}}} />
+  );
+  expect(view.queryByText(annotation.label)).not.toBeInTheDocument();
+});
+
 test('renders live annotations at preview scale and updates camera, swipe and visibility without rasterization', () => {
   const {frame} = setup({
     annotations: [annotation, {...annotation, id: 'right', mapIndex: 1}],

@@ -12,6 +12,7 @@ import {Timeline} from '@luma.gl/engine';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 import {BitmapOverlayLayer, getEditorLayer} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
+import {isPointVisibleOnGlobe} from './annotations/annotation-utils';
 import {
   INITIAL_MAP_STATE,
   INITIAL_MAP_STYLE,
@@ -1180,6 +1181,37 @@ function setup(strictMode = false) {
   });
   return {props, layer, ref, view, response, rerender, getState: () => currentState};
 }
+
+test('uses the selected annotation projection before the internal view state catches up', () => {
+  const {ref} = setup();
+  const mapState = {
+    ...INITIAL_MAP_STATE,
+    longitude: 0,
+    latitude: 0,
+    zoom: 0,
+    width: 800,
+    height: 600,
+    globe: {...INITIAL_MAP_STATE.globe!, enabled: false}
+  };
+  const point = [84.2, 0, 1000];
+  const globeMapState = {...mapState, globe: {...mapState.globe, enabled: true}};
+  const flatProjection = ref.current._getAnnotationViewport(mapState, mapState).project(point);
+
+  // The context starts with full map state and can still carry the previous
+  // globe setting when the map first renders after a projection switch.
+  const globe = ref.current._getAnnotationViewport(globeMapState, mapState);
+  expect(isPointVisibleOnGlobe(point, globe)).toBe(true);
+  expect(isPointVisibleOnGlobe([91.2, 0, 1000], globe)).toBe(false);
+  expect(ref.current._getAnnotationViewport(globeMapState, globeMapState).project(point)).toEqual(
+    globe.project(point)
+  );
+
+  const flat = ref.current._getAnnotationViewport(mapState, globeMapState);
+  expect(flat.project(point)).toEqual(flatProjection);
+  expect(ref.current._getAnnotationViewport(mapState, mapState).project(point)).toEqual(
+    flatProjection
+  );
+});
 
 test('applies async layer defaults to their originating layer after reordering', () => {
   const {props, layer, ref, rerender, getState} = setup();
