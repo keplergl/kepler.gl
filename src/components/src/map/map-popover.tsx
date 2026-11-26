@@ -151,11 +151,41 @@ const StyledSelectGeometry = styled.div`
 
 MapPopoverFactory.deps = [MapPopoverContentFactory];
 
+// AggregationLayer.getHoverData preserves the outline from deck.gl's Hexbin pick.
+function getHexbinRing(data: LayerHoverProp['data'] | undefined): number[][] | null {
+  const ring = data && 'cellOutline' in data ? data.cellOutline : undefined;
+  if (
+    !Array.isArray(ring) ||
+    ring.length !== 7 ||
+    !ring.every(point => Array.isArray(point) && point.length === 2 && point.every(Number.isFinite))
+  ) {
+    return null;
+  }
+  const [first, second] = ring;
+  const last = ring[ring.length - 1];
+  return first[0] === last[0] &&
+    first[1] === last[1] &&
+    (first[0] !== second[0] || first[1] !== second[1])
+    ? ring
+    : null;
+}
+
 export function getSelectedFeature(layerHoverProp: LayerHoverProp | null): Feature | null {
   const layer = layerHoverProp?.layer;
   let fieldIdx;
   let selectedFeature;
   switch (layer?.type) {
+    case LAYER_TYPES.hexagon: {
+      const ring = getHexbinRing(layerHoverProp?.data);
+      if (ring) {
+        selectedFeature = {
+          type: 'Feature',
+          properties: {},
+          geometry: {type: 'Polygon', coordinates: [ring]}
+        };
+      }
+      break;
+    }
     case LAYER_TYPES.hexagonId:
       fieldIdx = layer.config?.columns?.hex_id?.fieldIdx;
       selectedFeature = idToPolygonGeo(
@@ -298,9 +328,10 @@ export default function MapPopoverFactory(
               datasets={datasets}
             />
           </PopoverContent>
-          {layerHoverProp?.layer?.type &&
-          SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type) &&
-          frozen ? (
+          {frozen &&
+          (layerHoverProp?.layer?.type === LAYER_TYPES.hexagon
+            ? getHexbinRing(layerHoverProp.data)
+            : SELECTABLE_LAYERS.includes(layerHoverProp?.layer?.type ?? '')) ? (
             <StyledSelectGeometry className="select-geometry" onClick={onSetSelectedFeature}>
               <CursorPoint />
               Select Geometry
