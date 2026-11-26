@@ -8,6 +8,7 @@ import {
   getKeplerLoaders,
   isKeplerFileFormatAccepted,
   KeplerCSVLoader,
+  processCsvData,
   processFileData,
   readFileInBatches
 } from '@kepler.gl/processors';
@@ -130,6 +131,35 @@ async function readLastBatch(file) {
   }
   return last;
 }
+
+test('#loader-registry -> CSV imports keep mixed integer and fractional values', async t => {
+  const rows = [
+    ['1.2', '10', '02108', '9007199254740993'],
+    ['15.1419', '11', '00601', '9007199254740995'],
+    ['100', '12', '02109', '9007199254740997']
+  ];
+
+  for (const input of [rows, [...rows].reverse()]) {
+    const csv = ['value,count,zipcode,large_id', ...input.map(row => row.join(','))].join('\n');
+    const direct = processCsvData(csv);
+    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+    const [streamed] = await processFileData({content: batch, fileCache: []});
+
+    for (const result of [direct, streamed.data]) {
+      t.deepEqual(
+        result.fields.map(field => field.type),
+        ['real', 'integer', 'integer', 'string'],
+        'infer real measurements without changing counts or identifiers'
+      );
+      t.deepEqual(
+        result.rows,
+        input.map(([value, count, zip, id]) => [Number(value), Number(count), Number(zip), id]),
+        'preserve fractional digits and existing count and identifier conversions'
+      );
+    }
+  }
+  t.end();
+});
 
 test('#loader-registry -> extensionless octet-stream Arrow is not parsed as FlatGeobuf', async t => {
   const bytes = tableToIPC(tableFromJSON([{name: 'alpha', value: 1}]), 'file');
