@@ -1,11 +1,42 @@
 # Using kepler.gl with basemap services other than Mapbox
 
-By default, kepler.gl uses mapbox-gl.js to render its base maps, displayed in [map style selection panel](https://github.com/keplergl/kepler.gl/blob/master/docs/user-guides/f-map-styles/1-base-map-styles.md).
+Kepler.gl renders its default basemaps with MapLibre GL JS. The initial style, CARTO Dark Matter (`dark-matter`), does not require a Mapbox token or a custom style.
+
+## Embed the default basemap
+
+After installing the [embedding dependencies](../get-started.md#installation), use the built-in style in your React app:
+
+```jsx
+import * as React from 'react';
+import {applyMiddleware, combineReducers, createStore} from 'redux';
+import {Provider} from 'react-redux';
+import KeplerGl from '@kepler.gl/components';
+import keplerGlReducer, {enhanceReduxMiddleware} from '@kepler.gl/reducers';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+const store = createStore(
+  combineReducers({
+    keplerGl: keplerGlReducer.initialState({mapStyle: {styleType: 'dark-matter'}})
+  }),
+  applyMiddleware(...enhanceReduxMiddleware([]))
+);
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <KeplerGl id="map" width={800} height={500} mapboxApiAccessToken="" />
+    </Provider>
+  );
+}
+```
+
+The empty token is intentional. Leave `mapStylesReplaceDefault` unset so the built-in style stays available. Self-hosting the app does not self-host the basemap: the browser still needs access to CARTO's style, tiles, and other assets. If a saved map uses a Mapbox style, switch it to Dark Matter or provide a token for that style.
 
 ![base map panel](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/f-map-styles-1.png "base map panel")
 
-You can custom kepler.gl to use other base map services, by passing in style.json written in [Mapbox GL Style Spec](https://docs.mapbox.com/mapbox-gl-js/style-spec/). With custom style.json kepler.gl can render base map independent of mapbox vector tile service.
+## Use a custom basemap
 
+You can use another basemap service by passing in a style JSON compatible with the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/). The style's sources determine where the tiles come from and whether another provider's key is needed.
 
 For instance. there is an example [style.json](https://raw.githubusercontent.com/heshan0131/kepler.gl-data/master/style/basic.json).  It points to the tile server described in the `sources` field.
 
@@ -76,7 +107,7 @@ const App = () => (
 
 - `mapStyles` (Array) array of custom map styles.
 - `mapStylesReplaceDefault` (Boolean) pass `true` if you want to replace all default kepler.gl base map options.
-- `mapboxApiAccessToken`. Optional if `mapStylesReplaceDefault` is `true` and your `mapStyles` does not use Mapbox services
+- `mapboxApiAccessToken`. Use an empty string if the styles and other features you use do not access Mapbox services.
 
 #### Option 2. Reducer `initialState`
 Pass custom `mapStyles` to kepler.gl `mapStyle` reducer using the `initialState` plugin. And set default style by passing `styleType`.
@@ -124,7 +155,7 @@ const customizedKeplerGlReducer = keplerGlReducer.initialState({
 __Which option is for me?__ If you want to replace all basemap styles, we recommends __Option 2__. So you can also set the initial style with `styleType`. If you are adding more options as basemaps, __Option 1__ is ideal.
 
 ### 3. `mapboxApiAccessToken`
-If your map styles are not using Mapbox services, and you replaced all kepler.gl default map styles. `mapboxApiAccessToken` will not be required in `KeplerGl` component.
+Supply a public Mapbox access token for Mapbox-hosted styles or sources (for example, a `mapbox://` URL) or when using Mapbox geocoding. You do not need to create a style in Mapbox to use one your token already has access to. Non-Mapbox styles such as Dark Matter do not require a Mapbox token, even when the default style list is retained. A different tile provider may still require its own key.
 
 
 #### 4. `DEFAULT_LAYER_GROUPS`
