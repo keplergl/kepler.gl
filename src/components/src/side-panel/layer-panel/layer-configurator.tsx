@@ -2850,7 +2850,9 @@ export default function LayerConfiguratorFactory(
                       updateLayerConfig({tooltipFields: event.target.checked ? [] : undefined})
                     }
                   />
-                  {config.tooltipFields !== undefined ? (
+                </SidePanelSection>
+                {config.tooltipFields !== undefined ? (
+                  <SidePanelSection>
                     <FieldSelector
                       fields={fields}
                       value={config.tooltipFields}
@@ -2860,8 +2862,8 @@ export default function LayerConfiguratorFactory(
                       closeOnSelect={false}
                       inputTheme="secondary"
                     />
-                  ) : null}
-                </SidePanelSection>
+                  </SidePanelSection>
+                ) : null}
               </ConfigGroupCollapsibleContent>
             </LayerConfigGroup>
           ) : null}
