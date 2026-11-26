@@ -155,6 +155,7 @@ import ExportVideoModalFactory from './export-video-modal';
 import {getEffectAnimationDuration, useEffectAnimation} from './effect-animation';
 import {DeckShadowCompositingEffect} from '@kepler.gl/effects';
 import LightingEffect from '../../../effects/src/lighting-effect';
+import SurfaceFogEffect from '../../../effects/src/surface-fog-effect';
 
 function renderWithThemeLocal(component) {
   return render(component, {
@@ -1053,6 +1054,37 @@ describe('ExportVideoModal', () => {
       );
       return {...hook, state: containerRef.current.state, draw: () => hook.result.current()};
     }
+
+    test.each(['capture', 'custom'])(
+      'keeps water on the %s export clock without parameter tracks and restores it after export',
+      clock => {
+        const water = new SurfaceFogEffect({type: 'surfaceFog', parameters: {pattern: true}});
+        const saved = {...water.parameters};
+        const clone = water.clone();
+        const {draw, state, unmount} = mountAnimation(
+          [clone],
+          clock === 'custom'
+            ? {currentTimeMs: 2500, durationMs: 10000}
+            : {adapter: {videoCapture: {timeMs: 7500, timecode: {start: 5000, duration: 10000}}}}
+        );
+        draw();
+        expect(clone.deckEffect.props.animationTimeMs).toBe(2500);
+        expect(water.deckEffect.props.animationTimeMs).toBe(0);
+        expect(clone.parameters).toEqual(saved);
+        if (clock === 'custom') state.currentTimeMs = 1000;
+        else state.adapter.videoCapture.timeMs = 6000;
+        draw();
+        expect(clone.deckEffect.props.animationTimeMs).toBe(1000);
+        state.previewing = false;
+        draw();
+        expect(clone.deckEffect.props.animationTimeMs).toBe(0);
+        state.rendering = true;
+        draw();
+        expect(clone.deckEffect.props.animationTimeMs).toBe(1000);
+        unmount();
+        expect(clone.deckEffect.props.animationTimeMs).toBe(0);
+      }
+    );
 
     test('wires a pre-render callback and animates export clones without changing live effects', async () => {
       const liveEffect = makeEffect(

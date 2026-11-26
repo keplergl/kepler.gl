@@ -21,6 +21,10 @@ export type SurfaceFogProps = {
   pattern: boolean;
 };
 
+// Render-only state, copied by deck.gl when it retains an effect instance.
+// This clock never becomes a saved effect parameter.
+type SurfaceFogRenderProps = SurfaceFogProps & {animationTimeMs?: number};
+
 const SURFACE_FOG_UNIFORM_BLOCK = /* glsl */ `\
 uniform surfaceFogUniforms {
   float density;
@@ -36,6 +40,7 @@ uniform surfaceFogUniforms {
   float unitsPerMeter;
   float waveUnitsPerMeter;
   vec2 waveOrigin;
+  float waveTime;
   float cameraHeight;
   float pattern;
 } surfaceFog;
@@ -100,12 +105,13 @@ float waveWeight(float cellSize, float footprint) {
   return 1.0 - smoothstep(0.15, 0.7, footprint / cellSize);
 }
 
-vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float footprint) {
+vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float footprint,
+               vec2 velocity) {
   float weight = waveWeight(cellSize, footprint);
   if (weight <= 0.0) {
     return vec2(0.0);
   }
-  vec2 gradient = waveNoise(meters, cellSize, frame).yz;
+  vec2 gradient = waveNoise(meters - velocity * surfaceFog.waveTime, cellSize, frame).yz;
   // Transform the gradient back to map coordinates, preserving stretched crests.
   return vec2(dot(frame[0], gradient), dot(frame[1], gradient)) *
          strength * weight;
@@ -119,15 +125,18 @@ vec3 waveNormal(vec2 meters, float footprint) {
   }
   // Broad noise bends the ripple field without contributing a large surface
   // slope. Otherwise city views read the broad lighting bands as giant swells.
-  vec3 bend = waveNoise(meters, 64.0, mat2(1.0));
+  vec3 bend = waveNoise(meters - vec2(0.18, -0.08) * surfaceFog.waveTime, 64.0, mat2(1.0));
   float bendWeight = waveWeight(64.0, footprint);
   vec2 p = meters + bend.yz * 4.0 * bendWeight;
   vec2 slope = vec2(0.0);
   // Modest slopes and meter-scale crests fit the surrounding buildings. Keep
   // their world scale fixed: unresolved ripples fade out as the map zooms out.
-  slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint);
-  slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint);
-  slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint);
+  // Longer waves travel faster; a small crosswind component lets the crests
+  // evolve instead of sliding a single frozen texture across the surface.
+  // Velocities are in map meters per playback second, independent of the camera.
+  slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint, vec2(1.6, -0.8));
+  slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint, vec2(1.0, -0.4));
+  slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint, vec2(0.55, 0.3));
   return normalize(vec3(-slope, 1.0));
 }
 
@@ -259,15 +268,14 @@ void main() {
                   0.025 * pow(sunAlignment, 8.0);
     waterSurface += vec3(1.0, 0.96, 0.86) * glint;
 
-    // Only sample shoreline noise where its highlight can contribute. Basemap
-    // depth is unknown, and invisible or unresolved contacts have no foam.
-    // This branch contains no derivatives.
+    // Thin water at a contact should retain a subtly darker substrate, not a
+    // pale foam halo. We have no material information, so preserve its color
+    // and texture rather than assuming concrete, vegetation, or breaking waves.
+    // Unknown basemap depth, opaque water and unresolved contacts get no band.
     if (!isBasemap && visibility > 0.0 && waterDepth < shoreWidth && footprint < 20.0) {
-      float shoreNoise = 0.5 + 0.5 * waveNoise(worldMeters, 8.0, mat2(1.0)).x;
-      float foam = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
-                   smoothstep(0.35, 0.65, shoreNoise) *
-                   (1.0 - smoothstep(5.0, 20.0, footprint));
-      waterSurface = mix(waterSurface, vec3(0.82, 0.92, 0.91), foam * 0.45);
+      float contact = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
+                      (1.0 - smoothstep(5.0, 20.0, footprint));
+      waterSurface = mix(waterSurface, waterBody * 0.85, contact);
     }
   }
 
@@ -306,6 +314,7 @@ const surfaceFogModule = {
     unitsPerMeter: 'f32',
     waveUnitsPerMeter: 'f32',
     waveOrigin: 'vec2<f32>',
+    waveTime: 'f32',
     cameraHeight: 'f32',
     pattern: 'f32'
   },
@@ -323,6 +332,7 @@ const surfaceFogModule = {
     unitsPerMeter: 1,
     waveUnitsPerMeter: 1,
     waveOrigin: [0, 0],
+    waveTime: 0,
     cameraHeight: 0,
     pattern: 0
   },
@@ -341,6 +351,7 @@ const surfaceFogModule = {
     unitsPerMeter: {value: 1, private: true},
     waveUnitsPerMeter: {value: 1, private: true},
     waveOrigin: {value: [0, 0], private: true},
+    waveTime: {value: 0, private: true},
     cameraHeight: {value: 0, private: true}
   }
 } as const satisfies ShaderModule;
@@ -350,15 +361,15 @@ const surfaceFogModule = {
  *
  * When `pattern` is false the effect behaves as a classic flat-colour fog layer.
  * When `pattern` is true, a level water surface uses filtered wave normals,
- * view-dependent sky/sun reflections, depth absorption and shoreline highlights.
+ * view-dependent sky/sun reflections, depth absorption and subtle contact darkening.
  * In that mode `thickness` sets the underwater color and visibility transition.
  * Zero hides submerged geometry and disables depth shading at full density.
  * Geometry above the water surface is left unchanged.
- * The surface is static so still images and tiled exports remain deterministic.
+ * Ripples follow the playback clock; paused frames and tiled exports are deterministic.
  */
 export class DeckSurfaceFogEffect {
   id = 'surface-fog-effect';
-  props: SurfaceFogProps;
+  props: SurfaceFogRenderProps;
   module = surfaceFogModule;
   isExportMode = false;
   private model: InstanceType<typeof ClipSpace> | null = null;
@@ -370,6 +381,7 @@ export class DeckSurfaceFogEffect {
       thickness: 50,
       fogColor: [230, 235, 242],
       pattern: false,
+      animationTimeMs: 0,
       ...props
     };
   }
@@ -393,7 +405,7 @@ export class DeckSurfaceFogEffect {
     });
   }
 
-  setProps(props: Partial<SurfaceFogProps>) {
+  setProps(props: Partial<SurfaceFogRenderProps>) {
     Object.assign(this.props, props);
   }
 
@@ -507,6 +519,9 @@ export class DeckSurfaceFogEffect {
         unitsPerMeter: unitsPerMeterZ,
         waveUnitsPerMeter,
         waveOrigin,
+        waveTime: Number.isFinite(this.props.animationTimeMs)
+          ? Math.max(0, this.props.animationTimeMs!) / 1000
+          : 0,
         cameraHeight,
         pattern: this.props.pattern ? 1.0 : 0.0
       }

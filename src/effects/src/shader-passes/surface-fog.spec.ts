@@ -80,6 +80,7 @@ describe('surface fog rendering', () => {
       unitsPerMeter: 1,
       waveUnitsPerMeter: 1,
       waveOrigin: [0, 0],
+      waveTime: 0,
       cameraHeight: 1000,
       pattern: 1
     };
@@ -421,6 +422,27 @@ describe('surface fog rendering', () => {
     expect(tilted).not.toEqual(overhead);
   });
 
+  test('evolves ripples smoothly with playback time and reproduces a sought frame', () => {
+    const view = {invCol2: [1000, 0, -1000, 0], invCol3: [290, 140, 0, 1]};
+    const start = render({uniforms: {...view, waveTime: 0}});
+    const later = render({uniforms: {...view, waveTime: 4}});
+    expect(maxPixelDifference(start, later)).toBeGreaterThan(1);
+    const nextFrame = render({uniforms: {...view, waveTime: 4 + 1 / 60}});
+    expect(maxPixelDifference(later, nextFrame)).toBeLessThanOrEqual(2);
+    expect(render({uniforms: {...view, waveTime: 4}})).toEqual(later);
+    expect(render({uniforms: {...view, waveTime: 0}})).toEqual(start);
+  });
+
+  test.each<Record<string, number | number[]>>([
+    {pattern: 0},
+    {cameraHeight: -1},
+    {density: 0},
+    {fogHeight: -500},
+    {invCol0: [1000, 0, 0, 0], invCol1: [0, 1000, 0, 0]}
+  ])('playback leaves non-surface or unresolved water unchanged: %j', uniforms => {
+    expect(render({uniforms: {...uniforms, waveTime: 10}})).toEqual(render({uniforms}));
+  });
+
   test('retains more of the scene in shallow water', () => {
     const dark = [0, 0, 0, 255];
     const light = [255, 255, 255, 255];
@@ -526,9 +548,9 @@ describe('surface fog rendering', () => {
     expect(shifted).not.toEqual(original);
   });
 
-  test('keeps water shading consistent when rendering an image in tiles', () => {
+  test.each([0, 4.25])('keeps water shading consistent across tiles at time %ss', waveTime => {
     const viewport = croppedViewport({zoom: 18, pitch: 65});
-    const surface = {fogHeight: 0, fogThickness: 0};
+    const surface = {fogHeight: 0, fogThickness: 0, waveTime};
     const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
     const tileSize = SIZE / 2;
     let maxError = 0;
@@ -606,6 +628,7 @@ describe('surface fog rendering', () => {
   ])('keeps waves continuous across a local origin at $longitude, $latitude', location => {
     const viewport = croppedViewport(location);
     const uniforms = viewportUniforms(viewport);
+    uniforms.waveTime = 7.5;
     const tile = 4096 * (uniforms.waveUnitsPerMeter as number);
     const originalMatrix = [...viewport.pixelUnprojectionMatrix];
     const current = render({depth: 1, uniforms: {...uniforms, fogHeight: 0, fogThickness: 0}});
@@ -616,6 +639,7 @@ describe('surface fog rendering', () => {
           ...viewport,
           center: [viewport.center[0] + tile, viewport.center[1] + tile, viewport.center[2]]
         }),
+        waveTime: uniforms.waveTime,
         fogHeight: 0,
         fogThickness: 0
       }
@@ -662,11 +686,28 @@ describe('surface fog rendering', () => {
     }
   );
 
-  test('shows contact highlights only for resolved geometry at the water surface', () => {
+  test.each([
+    [180, 140, 110, 255],
+    [55, 85, 40, 255],
+    [25, 30, 35, 255]
+  ])('darkens shallow contacts without bleaching the substrate (%s, %s, %s)', (r, g, b, a) => {
+    const source = [r, g, b, a];
+    for (const depth of [0.5, 0.500125]) {
+      const contact = center(render({depth, source, uniforms: {fogHeight: 0, fogThickness: 20}}));
+      for (let channel = 0; channel < 3; channel++) {
+        expect(contact[channel]).toBeLessThan(source[channel]);
+        expect(contact[channel]).toBeGreaterThan(source[channel] * 0.7);
+      }
+      expect(contact[3]).toBe(source[3]);
+    }
+  });
+
+  test('darkens contacts only for resolved geometry at the water surface', () => {
     const uniforms = {fogHeight: 0, fogThickness: 20};
     const geometry = render({depth: 0.5, uniforms});
     const basemap = render({depth: 1, uniforms});
     expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
+    expect(geometry.every((value, index) => value <= basemap[index])).toBe(true);
 
     const distant = {
       ...uniforms,

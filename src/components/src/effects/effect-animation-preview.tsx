@@ -14,6 +14,7 @@ import React, {
 import type {Annotation, CameraSnapshot, CameraTour, Effect} from '@kepler.gl/types';
 import type {Layer} from '@kepler.gl/layers';
 import type {MapStateActions} from '@kepler.gl/actions';
+import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import {
   cameraForMap,
   evaluateCameraTour,
@@ -26,7 +27,8 @@ import {RootContext} from '../context';
 import {
   applyEffectAnimation,
   getEffectAnimationTracks,
-  setAnimatedParameters
+  setAnimatedParameters,
+  setSurfaceWaterAnimationTime
 } from '../modals/effect-animation';
 
 export type AnimationPlayback = {
@@ -195,6 +197,7 @@ export default function EffectAnimationPreviewProvider({
   const restore = useCallback(() => {
     // Deck may retain an original effect instance while copying preview uniforms into it.
     session.current?.originals.forEach(effect => setAnimatedParameters(effect, effect.parameters));
+    if (session.current) setSurfaceWaterAnimationTime(session.current.originals, 0);
     session.current = null;
   }, []);
 
@@ -218,6 +221,7 @@ export default function EffectAnimationPreviewProvider({
       }
       const current = session.current;
       applyEffectAnimation(current.tracks, time);
+      setSurfaceWaterAnimationTime(current.effects, time);
       if (cameraEnabled && updateMap) {
         const position = camera ?? evaluateCameraTour(cameraTour, Math.min(time, cameraDuration));
         if (position) updateMap({...cameraForMap(position, globe), transitionDuration: 0});
@@ -411,8 +415,13 @@ export default function EffectAnimationPreviewProvider({
   const value = useMemo(() => {
     const current = enabled && preview?.source === effects ? preview : null;
     const playback = {elapsed, duration, playing: running, play: run, pause, seek};
+    const hasAnimatedEffects =
+      effectTracks.length > 0 ||
+      effects.some(
+        effect => effect.isEnabled && effect.type === SURFACE_FOG_TYPE && effect.parameters.pattern
+      );
     return {
-      effects: current && effectTracks.length ? current.effects : null,
+      effects: current && hasAnimatedEffects ? current.effects : null,
       animationTimeMs: current ? elapsed : null,
       hasAnimation,
       running,

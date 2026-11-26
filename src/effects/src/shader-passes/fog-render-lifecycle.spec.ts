@@ -154,6 +154,21 @@ describe('fog reconstruction uniforms', () => {
     invCol3: [13, 14, 15, 16]
   };
 
+  test.each([undefined, NaN, Infinity, -100, 0, 1250])(
+    'surface water uses a finite playback clock (%s ms) and keeps it across parameter updates',
+    animationTimeMs => {
+      const effect = new DeckSurfaceFogEffect({pattern: true});
+      const {device, model} = createRenderer();
+      effect.setup({device});
+      effect.setProps({animationTimeMs});
+      effect.setProps({height: 120});
+      effect.postRender(createBuffers());
+      expect(model.shaderInputs.setProps.mock.calls[0][0].surfaceFog.waveTime).toBe(
+        animationTimeMs === 1250 ? 1.25 : 0
+      );
+    }
+  );
+
   test('surface fog converts meter heights using the vertical scale and keeps partial prop updates', () => {
     const effect = new DeckSurfaceFogEffect({height: 100, thickness: 20, density: 0});
     const {device, model} = createRenderer();
