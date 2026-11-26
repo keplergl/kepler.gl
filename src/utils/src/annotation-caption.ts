@@ -52,13 +52,12 @@ export function normalizeAnnotationReadout(value: unknown): AnnotationReadout | 
   return undefined;
 }
 
-/** Own caption metadata and discard it when changing back to a geographic annotation. */
+/** Normalize annotation placement and its independent dynamic text source. */
 export function normalizeAnnotationCaption(
   config: AnnotationPropsPartial
 ): Pick<AnnotationPropsPartial, 'viewport' | 'readout'> {
   const viewport =
     config.kind === AnnotationKind.TEXT ? normalizeAnnotationViewport(config.viewport) : undefined;
-  if (!viewport) return {};
   const readout = normalizeAnnotationReadout(config.readout);
-  return {viewport, ...(readout ? {readout} : {})};
+  return {...(viewport ? {viewport} : {}), ...(readout ? {readout} : {})};
 }

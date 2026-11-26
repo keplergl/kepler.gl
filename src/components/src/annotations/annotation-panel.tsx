@@ -449,21 +449,23 @@ function CaptionSettings({
   const countDataId = annotation.readout?.type === 'count' ? annotation.readout.dataId : undefined;
   return (
     <>
-      <StyledConfigRow>
-        <StyledConfigLabel>{label('position', 'Position')}</StyledConfigLabel>
-        <StyledSelect
-          {...selectProps}
-          options={locations}
-          selectedItems={locations[viewport ? 1 : 0]}
-          onChange={value => {
-            if (value === 'viewport') {
-              onChange({viewport: {anchor: 'top-left', margin: [24, 24]}});
-            } else if (value === 'geographic') {
-              onChange({viewport: undefined, readout: undefined});
-            }
-          }}
-        />
-      </StyledConfigRow>
+      {annotation.kind === AnnotationKind.TEXT ? (
+        <StyledConfigRow>
+          <StyledConfigLabel>{label('position', 'Position')}</StyledConfigLabel>
+          <StyledSelect
+            {...selectProps}
+            options={locations}
+            selectedItems={locations[viewport ? 1 : 0]}
+            onChange={value => {
+              if (value === 'viewport') {
+                onChange({viewport: {anchor: 'top-left', margin: [24, 24]}});
+              } else if (value === 'geographic') {
+                onChange({viewport: undefined});
+              }
+            }}
+          />
+        </StyledConfigRow>
+      ) : null}
       {viewport ? (
         <>
           <StyledConfigRow>
@@ -496,6 +498,10 @@ function CaptionSettings({
               </StyledConfigRow>
             );
           })}
+        </>
+      ) : null}
+      {annotation.kind !== AnnotationKind.RULER || annotation.showCustomText ? (
+        <>
           <StyledConfigRow>
             <StyledConfigLabel>{label('content', 'Content')}</StyledConfigLabel>
             <StyledSelect
@@ -1097,6 +1103,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           </StyledConfigRow>
                         </>
                       )}
+                      {annotation.kind !== AnnotationKind.TEXT ? (
+                        <CaptionSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
                     </StyledConfigSection>
                   ) : null}
                 </StyledAnnotationItemWrapper>

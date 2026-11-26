@@ -547,6 +547,32 @@ test.each([
   expect(dispatch).not.toHaveBeenCalled();
 });
 
+test('adds and removes a point readout with its coordinates unchanged', async () => {
+  const {context} = setup();
+  const readout = {type: 'time', format: 'YYYY'};
+  const input = {id: 'point-readout', kind: 'point', anchorPoint: [1, 2], label: 'Time', readout};
+  const result = await execute(getAddAnnotationCommand(context), input);
+  expect(result.success).toBe(true);
+  expect(result.data).toMatchObject({anchorPoint: [1, 2], readout});
+  const cleared = await execute(getUpdateAnnotationCommand(context), {id: input.id, readout: null});
+  expect(cleared.success).toBe(true);
+  expect(cleared.data).toMatchObject({anchorPoint: [1, 2], label: 'Time'});
+  expect(cleared.data).not.toHaveProperty('readout');
+});
+
+test('moves a viewport readout to an explicit geographic anchor', async () => {
+  const {context} = setup();
+  await execute(getAddAnnotationCommand(context), caption);
+  const moved = await execute(getUpdateAnnotationCommand(context), {
+    id: caption.id,
+    viewport: null,
+    anchorPoint: [17, 24]
+  });
+  expect(moved.success).toBe(true);
+  expect(moved.data).toMatchObject({anchorPoint: [17, 24], readout: caption.readout});
+  expect(moved.data).not.toHaveProperty('viewport');
+});
+
 test('rejects invalid caption updates atomically and preserves authored content', async () => {
   const {context, dispatch} = setup();
   await execute(getAddAnnotationCommand(context), caption);

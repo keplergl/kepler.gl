@@ -257,10 +257,12 @@ test('#mergeAnnotations -> imports viewport captions and rejects malformed place
     {...caption, id: 'nonfinite-margin', viewport: {...viewport, margin: [Infinity, 4]}},
     {...caption, id: 'missing-margin', viewport: {anchor: 'top'}},
     {...caption, id: 'bad-readout', readout: {type: 'count'}},
-    {...caption, id: 'orphan-readout', viewport: undefined, anchorPoint: [0, 0]},
+    {...caption, id: 'geographic-readout', viewport: undefined, anchorPoint: [40, 0]},
     {...caption, id: 'point-caption', kind: AnnotationKind.POINT, anchorPoint: [0, 0]}
   ]);
-  t.equal(result.annotations.length, 1, 'only valid text caption is imported');
+  t.equal(result.annotations.length, 2, 'both valid placements are imported');
+  t.deepEqual(result.annotations[1].readout, readout, 'geographic text also restores its readout');
+  t.deepEqual(result.annotations[1].anchorPoint, [40, 0], 'preserves geographic location');
   t.deepEqual(result.annotations[0].viewport, viewport, 'placement is preserved');
   t.deepEqual(result.annotations[0].readout, readout, 'count source is preserved');
   t.deepEqual(result.annotations[0].anchorPoint, [0, 0], 'caption needs no geographic coordinates');

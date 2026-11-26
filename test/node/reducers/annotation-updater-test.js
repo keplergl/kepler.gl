@@ -551,7 +551,7 @@ test('#visStateReducer -> SET_SELECTED_ANNOTATION', t => {
   t.end();
 });
 
-test('#visStateReducer -> captions persist through edits and duplication, and clear when made geographic', t => {
+test('#visStateReducer -> captions preserve readouts across annotation kinds and placement changes', t => {
   const viewport = {anchor: 'top-left', margin: [24, 24]};
   const readout = {type: 'time', format: 'YYYY-MM-DD'};
   let state = reducer(
@@ -582,9 +582,12 @@ test('#visStateReducer -> captions persist through edits and duplication, and cl
   state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport: undefined}));
   t.notOk(state.annotations[1].viewport, 'can return to geographic text');
   state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport, readout}));
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport: undefined}));
+  t.deepEqual(state.annotations[1].readout, readout, 'geographic placement preserves readout');
+  state = reducer(state, VisStateActions.updateAnnotation('caption', {viewport}));
   state = reducer(state, VisStateActions.updateAnnotation('caption', {kind: AnnotationKind.POINT}));
   t.notOk(state.annotations[1].viewport, 'kind change clears viewport placement');
-  t.notOk(state.annotations[1].readout, 'kind change clears readout');
+  t.deepEqual(state.annotations[1].readout, readout, 'kind change preserves readout');
   state = reducer(state, VisStateActions.updateAnnotation('caption', {kind: AnnotationKind.TEXT}));
   t.notOk(state.annotations[1].viewport, 'switching back starts with geographic text');
   t.end();
@@ -607,7 +610,7 @@ test('#visStateReducer -> malformed caption fields never enter runtime state', t
       })
     );
     t.notOk(state.annotations[0].viewport, 'adding drops malformed placement');
-    t.notOk(state.annotations[0].readout, 'adding drops readout without placement');
+    t.deepEqual(state.annotations[0].readout, {type: 'time'}, 'readout remains geographic');
     state = reducer(
       state,
       VisStateActions.updateAnnotation('caption', {
