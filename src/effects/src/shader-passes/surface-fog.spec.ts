@@ -148,7 +148,12 @@ describe('surface fog rendering', () => {
     const effect = new DeckSurfaceFogEffect({pattern: true, density: 1, fogColor: [40, 120, 190]});
     effect.setup({device});
     effect.postRender({
-      inputBuffer: {width: SIZE, height: SIZE, colorAttachments: [{}], depthStencilAttachment: {}},
+      inputBuffer: {
+        width: viewport.width,
+        height: viewport.height,
+        colorAttachments: [{}],
+        depthStencilAttachment: {}
+      },
       swapBuffer: {},
       viewports: [viewport]
     });
@@ -163,7 +168,8 @@ describe('surface fog rendering', () => {
     longitude = 30.52,
     latitude = 50.45,
     bearing = 35,
-    nearZMultiplier = 0.1
+    nearZMultiplier = 0.1,
+    size = SIZE
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -178,11 +184,11 @@ describe('surface fog rendering', () => {
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
     for (let row = 0; row < 4; row++) {
-      matrix[12 + row] += matrix[row] * (512 - SIZE / 2) + matrix[4 + row] * (384 - SIZE / 2);
+      matrix[12 + row] += matrix[row] * (512 - size / 2) + matrix[4 + row] * (384 - size / 2);
     }
     return {
-      width: SIZE,
-      height: SIZE,
+      width: size,
+      height: size,
       center: [...viewport.center],
       cameraPosition: [...viewport.cameraPosition],
       latitude: viewport.latitude,
@@ -489,12 +495,17 @@ describe('surface fog rendering', () => {
     [45, 45],
     [45, 225]
   ])('keeps resolved ripple contrast at pitch %s and bearing %s', (pitch, bearing) => {
-    const uniforms = viewportUniforms(croppedViewport({zoom: 19, pitch, bearing}));
+    // Sample complete wave crests at native resolution. A 16px crop spans only
+    // 2.4m overhead here, so it can land on a gentle part of the 16m wave field;
+    // the noise phase also varies with the renderer's sin() implementation.
+    const size = 256;
+    const uniforms = viewportUniforms(croppedViewport({zoom: 19, pitch, bearing, size}));
     uniforms.fogHeight = 0;
     uniforms.fogThickness = 0;
-    const pixels = render({depth: 1, uniforms});
+    const pixels = render({depth: 1, uniforms, size});
     const smooth = render({
       depth: 1,
+      size,
       uniforms: {
         ...uniforms,
         waveUnitsPerMeter: (uniforms.waveUnitsPerMeter as number) / 1024
