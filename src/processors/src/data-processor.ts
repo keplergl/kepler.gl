@@ -218,7 +218,7 @@ function processRowsWithHeader(
 }
 
 function isNonDateCsvSample(value: unknown): boolean {
-  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\\\N') {
+  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\N') {
     return false;
   }
   return typeof value !== 'string' || !RegexList.isDate.test(value);

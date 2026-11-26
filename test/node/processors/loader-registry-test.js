@@ -402,6 +402,8 @@ test('#loader-registry -> direct and streamed CSV infer mixed reporting dates as
     [reported, 'string', ''],
     [[...reported].reverse(), 'string', '', 'reporting'],
     [['2025-03-18', '', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\N', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\\\N', '2024-02-29'], 'string', ''],
     [['17/09/2016', 'NA', '05/06/2016'], 'string', ''],
     [['05/06/2016', 'NULL', '17/09/2016'], 'date', 'D/M/YYYY']
   ]) {
