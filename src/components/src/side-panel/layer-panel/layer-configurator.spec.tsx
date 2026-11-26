@@ -162,7 +162,12 @@ test.each([
   }
 );
 
-test.each([false, true])('offers a dash switch only for GeoJSON with lines (%s)', async line => {
+test.each([
+  ['polygon only', false, true, 0],
+  ['line only', true, false, 0],
+  ['mixed with polygon outlines off', true, true, 0],
+  ['mixed with polygon elevation offset', true, true, 25]
+])('offers an enabled dash switch for GeoJSON lines: %s', async (_name, line, area, offset) => {
   const dataset = new KeplerTable({
     info: {id: 'geometry', label: 'Geometry'},
     color: [0, 0, 0]
@@ -171,31 +176,44 @@ test.each([false, true])('offers a dash switch only for GeoJSON with lines (%s)'
     data: {
       fields: [{name: 'geometry', type: 'geojson', analyzerType: 'GEOMETRY'}],
       rows: [
-        [
-          {
-            type: 'Feature',
-            properties: {},
-            geometry: line
-              ? {
-                  type: 'LineString',
-                  coordinates: [
-                    [0, 0],
-                    [1, 1]
-                  ]
-                }
-              : {
-                  type: 'Polygon',
-                  coordinates: [
-                    [
+        ...(line
+          ? [
+              [
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: [
                       [0, 0],
-                      [0, 1],
-                      [1, 1],
-                      [0, 0]
+                      [1, 1]
                     ]
-                  ]
+                  }
                 }
-          }
-        ]
+              ]
+            ]
+          : []),
+        ...(area
+          ? [
+              [
+                {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                      [
+                        [0, 0],
+                        [0, 1],
+                        [1, 1],
+                        [0, 0]
+                      ]
+                    ]
+                  }
+                }
+              ]
+            ]
+          : [])
       ]
     }
   });
@@ -205,6 +223,7 @@ test.each([false, true])('offers a dash switch only for GeoJSON with lines (%s)'
     columns: {geojson: {value: 'geometry', fieldIdx: 0}}
   });
   layer.setInitialLayerConfig(dataset);
+  layer.updateLayerVisConfig({stroked: Boolean(offset), elevationOffset: offset});
   const updateLayerVisConfig = jest.fn();
   renderWithTheme(
     <IntlWrapper>
@@ -225,6 +244,10 @@ test.each([false, true])('offers a dash switch only for GeoJSON with lines (%s)'
   const toggle = screen.queryByLabelText<HTMLInputElement>('Dashed lines');
   expect(Boolean(toggle)).toBe(line);
   expect(toggle?.checked).not.toBe(true);
-  if (toggle) fireEvent.click(toggle);
+  if (toggle) {
+    // The polygon controls use a CSS-disabled group; the line switch must be outside it.
+    expect(toggle.closest('.disabled')).toBeNull();
+    fireEvent.click(toggle);
+  }
   expect(updateLayerVisConfig.mock.calls).toEqual(line ? [[{dashedLines: true}]] : []);
 });

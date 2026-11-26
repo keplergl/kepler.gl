@@ -1783,9 +1783,6 @@ export default function LayerConfiguratorFactory(
                 label={false}
               />
             )}
-            {featureTypes.line ? (
-              <VisConfigSwitch {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps} />
-            ) : null}
             <ConfigGroupCollapsibleContent>
               <ChannelByValueSelector
                 channel={layer.visualChannels.size}
@@ -1793,6 +1790,10 @@ export default function LayerConfiguratorFactory(
               />
             </ConfigGroupCollapsibleContent>
           </LayerConfigGroup>
+
+          {featureTypes.line ? (
+            <VisConfigSwitch {...layer.visConfigSettings.dashedLines} {...visConfiguratorProps} />
+          ) : null}
 
           {/* Elevation */}
           {featureTypes.polygon ? (

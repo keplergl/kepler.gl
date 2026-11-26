@@ -13,7 +13,7 @@ You can load a GeoJSON file (with a single [`Feature`](https://tools.ietf.org/ht
 
 ![Polygon layer - buildings](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/layers-polygon-buildings.png "Grid layer")
 
-A path GeoJSON layer can display data like trip routes or contours. Stroke color can be set with a numerical field. Under **Stroke Width**, enable **Dashed lines** to apply a fixed dash pattern to LineString and MultiLineString features. Polygon outlines stay solid.
+A path GeoJSON layer can display data like trip routes or contours. Stroke color can be set with a numerical field. In the layer settings, below **Stroke Width**, enable **Dashed lines** to apply a fixed dash pattern to LineString and MultiLineString features. Polygon outlines stay solid.
 
 A polygon GeoJSON layer is essentially a [choropleth](https://en.wikipedia.org/wiki/Choropleth_map) layer and works best for rendering geofences. Fill color or height can be set with a numerical field. For example, it can display population by census tracts.
 

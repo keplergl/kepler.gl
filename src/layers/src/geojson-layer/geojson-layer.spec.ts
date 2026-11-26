@@ -1575,6 +1575,87 @@ describe('GeoJsonLayer numeric feature styles', () => {
     expect(hasDash(getSublayerProps(render(layer, dataset, data, 8), 'linestrings'))).toBe(false);
   });
 
+  test('uses only the rendered path sublayer count when toggling dashes', async () => {
+    const {layer, dataset} = await initializeGeoJsonLayer([
+      {geometry: line(0), properties: {}},
+      {geometry: polygon(1), properties: {}},
+      {geometry: point(2), properties: {}}
+    ]);
+    const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+    const pathId = () => {
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: false};
+      return deckLayer.getSubLayerProps({id: 'linestrings'}).id;
+    };
+
+    expect(layer.getFilteredItemCount()).toBeNull();
+    layer.filteredItemCount[`${layer.id}-polygons-fill`] = 2;
+    layer.filteredItemCount[`${layer.id}-points-circle`] = 3;
+    layer.filteredItemCount[pathId()] = 7;
+    expect(layer.getFilteredItemCount()).toBe(12);
+
+    layer.updateLayerVisConfig({dashedLines: true});
+    expect(layer.getFilteredItemCount()).toBe(5);
+    layer.filteredItemCount[pathId()] = 0;
+    expect(layer.getFilteredItemCount()).toBe(5);
+    layer.filteredItemCount[pathId()] = 11;
+    expect(layer.getFilteredItemCount()).toBe(16);
+
+    layer.updateLayerVisConfig({dashedLines: false});
+    expect(layer.getFilteredItemCount()).toBe(12);
+  });
+
+  test('retains dashed Arrow lines through a polygon append and clears them on replacement', async () => {
+    const wkb = geometries =>
+      arrow.vectorFromArray(
+        geometries.map(geometry => new Uint8Array(convertGeometryToWKB(geometry))),
+        new arrow.Binary()
+      );
+    const first = wkb([line(0)]);
+    const second = wkb([polygon(1)]);
+    const dataset = new KeplerTable({
+      info: {id: 'progressive-dashes'},
+      color: [0, 0, 0]
+    }).updateSchema({
+      fields: [
+        {
+          name: 'geometry',
+          type: 'geoarrow',
+          metadata: new Map([[GEOARROW_METADATA_KEY, GEOARROW_EXTENSIONS.WKB]])
+        }
+      ],
+      cols: [first],
+      rows: []
+    });
+    const layer = new GeoJsonLayer({
+      dataId: dataset.id,
+      columns: {geojson: {value: 'geometry', fieldIdx: 0}}
+    });
+    layer.setInitialLayerConfig(dataset);
+    layer.updateLayerVisConfig({dashedLines: true});
+
+    const hasDash = () => {
+      const data = layer.formatLayerData({[dataset.id]: dataset}, {});
+      const deckLayer = render(layer, dataset, data, 8);
+      deckLayer.state = {binary: true};
+      return deckLayer
+        .getSubLayerProps({id: 'linestrings'})
+        .extensions.some(extension => extension instanceof PathStyleExtension);
+    };
+    expect(hasDash()).toBe(true);
+
+    await dataset.update({fields: dataset.fields, cols: [first.concat(second)], rows: []});
+    expect(hasDash()).toBe(true);
+    expect(layer.meta.featureTypes).toMatchObject({line: true, polygon: true});
+
+    await dataset.update({fields: dataset.fields, cols: [wkb([line(0), polygon(1)])], rows: []});
+    expect(hasDash()).toBe(true);
+
+    await dataset.update({fields: dataset.fields, cols: [second], rows: []});
+    expect(hasDash()).toBe(false);
+    expect(layer.meta.featureTypes).toMatchObject({line: false, polygon: true});
+  });
+
   test('config replacement updates numeric values and color triggers without rebuilding data', async () => {
     const {layer, dataset} = await initializeGeoJsonLayer([{geometry: point(0), properties: {}}]);
     layer.updateLayerVisConfig({radius: 2, thickness: 1, elevationScale: 2});
