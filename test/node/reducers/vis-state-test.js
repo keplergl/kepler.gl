@@ -353,10 +353,11 @@ test('#visStateReducer -> CSV Point layers pair coordinates with their own altit
   const points = state.layers.filter(layer => layer.type === 'point');
   t.deepEqual(
     points.map(layer => layer.config.label),
-    ['foo', 'bar', 'baz']
+    ['bar', 'foo', 'baz']
   );
   if (points.length !== 3) return t.end();
-  const [foo, bar, baz] = points;
+  const [bar, foo, baz] = points;
+  t.equal(bar.config.isVisible, true, 'the original first point stays visible');
   t.equal(foo.config.sizeField?.name, 'fooRadius');
   t.equal(bar.config.sizeField?.name, 'bar_radius');
   t.equal(bar.config.columns.altitude.value, 'bar_alt');
@@ -370,6 +371,60 @@ test('#visStateReducer -> CSV Point layers pair coordinates with their own altit
       'radius drives rendered size'
     );
   }
+  t.end();
+});
+
+test('#visStateReducer -> CSV with only camelCase coordinate pairs keeps header order', t => {
+  const data = processCsvData(
+    'fooLat,fooLng,fooRadius,barLat,barLng,barRadius\n37,-122,10,40,-73,300\n38,-123,20,41,-74,600'
+  );
+  const state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [[{info: {id: 'camel-points'}, data}]]}
+  ]);
+  t.deepEqual(
+    state.layers
+      .filter(layer => layer.type === 'point')
+      .map(layer => [layer.config.columns.lat.value, layer.config.sizeField?.name]),
+    [
+      ['fooLat', 'fooRadius'],
+      ['barLat', 'barRadius']
+    ]
+  );
+  t.end();
+});
+
+test('#visStateReducer -> CSV camelCase pairs preserve existing automatic layer positions', t => {
+  const data = processCsvData(
+    'pickupLat,pickupLng,pickupRadius,origin_lat,origin_lng,destination_lat,destination_lng,icon\n' +
+      '37.71,-122.48,5,37.77,-122.44,37.82,-122.39,place\n' +
+      '37.72,-122.47,25,37.78,-122.43,37.83,-122.38,place'
+  );
+  const state = applyActions(reducer, INITIAL_VIS_STATE, [
+    {action: VisStateActions.updateVisData, payload: [[{info: {id: 'mixed-points'}, data}]]}
+  ]);
+  const {layers} = state;
+  const icon = layers.find(layer => layer.type === 'icon');
+  t.deepEqual(
+    [icon?.config.columns.lat.value, icon?.config.columns.lng.value],
+    ['origin_lat', 'origin_lng'],
+    'the automatic icon keeps its original coordinates'
+  );
+  for (const type of ['arc', 'line']) {
+    const route = layers.find(layer => layer.type === type);
+    t.deepEqual(
+      ['lat0', 'lng0', 'lat1', 'lng1'].map(key => route?.config.columns[key]?.value),
+      ['origin_lat', 'origin_lng', 'destination_lat', 'destination_lng'],
+      `the automatic ${type} keeps both original endpoints`
+    );
+  }
+  const points = layers.filter(layer => layer.type === 'point');
+  t.deepEqual(
+    points.map(layer => layer.config.columns.lat.value),
+    ['destination_lat', 'pickupLat'],
+    'only the point overlapping the icon is deduplicated'
+  );
+  const pickup = points.find(layer => layer.config.columns.lat.value === 'pickupLat');
+  t.equal(pickup?.config.sizeField?.name, 'pickupRadius', 'the extra point keeps its radius');
   t.end();
 });
 

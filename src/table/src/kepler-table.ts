@@ -907,6 +907,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
 
   const reference = (fieldIdx: number) => ({fieldIdx, value: fields[fieldIdx].name});
   const pairs: FieldPair[] = [];
+  const camelCasePairs: FieldPair[] = [];
 
   names.forEach((name, idx) => {
     for (const pattern of pointFieldPatterns) {
@@ -932,7 +933,10 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
       const radiusType = radiusIdx === undefined ? undefined : fields[radiusIdx].type;
       const trimName = separated ? name.replace(separated, '').trim() : replace('').trim();
 
-      pairs.push({
+      // Some automatic layers use just the first one or two pairs. Keep
+      // the pairs recognized before camelCase support ahead of newly found pairs.
+      const matchedPairs = separated ? pairs : camelCasePairs;
+      matchedPairs.push({
         defaultName: trimName || 'point',
         pair: {
           lat: reference(idx),
@@ -948,7 +952,7 @@ export function findPointFieldPairs(fields: Field[]): FieldPair[] {
       break;
     }
   });
-  return pairs;
+  return pairs.concat(camelCasePairs);
 }
 
 /**
