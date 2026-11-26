@@ -259,13 +259,18 @@ export function getLayerHoverProp({
     ) {
       // if layer is visible and have hovered data
       const {
-        config: {dataId}
+        config: {dataId, tooltipFields}
       } = layer;
       if (!dataId) {
         return null;
       }
       const {dataContainer, fields} = datasets[dataId];
-      const fieldsToShow = interactionConfig.tooltip.config.fieldsToShow[dataId];
+      const datasetFields = interactionConfig.tooltip.config.fieldsToShow[dataId];
+      const fieldsToShow = tooltipFields
+        ? tooltipFields.map(
+            name => datasetFields?.find(field => field.name === name) ?? {name, format: null}
+          )
+        : datasetFields;
       const requestedFields = new Set((fieldsToShow || []).map(field => field.name));
       const hoverFields = layer.isAggregated
         ? fields.filter(field => requestedFields.has(field.name))

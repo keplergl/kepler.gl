@@ -1472,9 +1472,15 @@ export function validateLayerWithData(
     ? newLayer.validateVisConfig(dataset, copiedVisConfig)
     : copiedVisConfig;
 
+  const savedTooltipFields = savedLayer.config.tooltipFields;
+  const tooltipFields = Array.isArray(savedTooltipFields)
+    ? [...new Set(savedTooltipFields)].filter(name => fields.some(field => field.name === name))
+    : undefined;
+
   newLayer.updateLayerConfig({
     visConfig,
     textLabel,
+    ...(tooltipFields ? {tooltipFields} : {}),
     // Tile properties may be absent from dataset metadata; retain the saved name.
     ...(type === LAYER_TYPES.vectorTile &&
     'uniqueIdField' in savedLayer.config &&
