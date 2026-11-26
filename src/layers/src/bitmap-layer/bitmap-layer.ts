@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {
   BitmapLayer as DeckBitmapLayer,
   IconLayer,
@@ -368,6 +369,19 @@ export default class BitmapOverlayLayer extends Layer {
         }
       ]
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'elevationOffset',
+        label: 'Elevation offset',
+        range: this.visConfigSettings.elevationOffset.range,
+        step: this.visConfigSettings.elevationOffset.step
+      }
+    ];
+    return props;
   }
 
   get type(): string {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
 import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
@@ -288,6 +289,40 @@ export default class ScenegraphLayer extends Layer {
 
     // prepare layer info modal
     this._layerInfoModal = ScenegraphInfoModalFactory();
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'scenegraphColor', label: 'Model color', type: 'color'},
+      {
+        name: 'sizeScale',
+        label: 'Model size',
+        range: this.visConfigSettings.sizeScale.range,
+        step: this.visConfigSettings.sizeScale.step
+      },
+      {
+        name: 'angleX',
+        label: 'Rotation X',
+        range: this.visConfigSettings.angleX.range,
+        step: this.visConfigSettings.angleX.step
+      },
+      {
+        name: 'angleY',
+        label: 'Rotation Y',
+        range: this.visConfigSettings.angleY.range,
+        step: this.visConfigSettings.angleY.step
+      },
+      {
+        name: 'angleZ',
+        label: 'Rotation Z',
+        range: this.visConfigSettings.angleZ.range,
+        step: this.visConfigSettings.angleZ.step
+      }
+    ];
+    return props.filter(
+      prop => prop.name !== 'scenegraphColor' || this.config.visConfig.scenegraphColorEnabled
+    );
   }
 
   get type(): '3D' {

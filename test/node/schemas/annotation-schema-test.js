@@ -35,7 +35,7 @@ const annotationPropsV1 = {
 
 const schema = new AnnotationsSchema({
   version: VERSIONS.v1,
-  properties: annotationPropsV1
+  properties: {...annotationPropsV1, geographicReadout: null}
 });
 
 const makePointAnnotation = (overrides = {}) => ({
@@ -306,9 +306,28 @@ test('#AnnotationsSchema -> viewport captions and readouts round-trip', t => {
       id: 'count',
       viewport: {anchor: 'left', margin: [20, 40]},
       readout: {type: 'count', dataId: 'observations'}
+    }),
+    makeTextAnnotation({
+      id: 'map-count',
+      readout: {type: 'count', dataId: 'observations'}
     })
   ];
-  const loaded = schema.load(schema.save(annotations).annotations).annotations;
+  const saved = schema.save(annotations).annotations;
+  t.notOk(
+    saved[3].readout,
+    'older loaders will not mistake geographic data for an invalid caption'
+  );
+  t.deepEqual(
+    saved[3].anchorPoint,
+    annotations[3].anchorPoint,
+    'older loaders still see its location'
+  );
+  const wire = JSON.parse(JSON.stringify(saved));
+  const oldSchema = new AnnotationsSchema({version: VERSIONS.v1, properties: annotationPropsV1});
+  const legacyReadout = oldSchema.load(wire).annotations[3];
+  t.notOk(legacyReadout.readout, 'the old schema treats the annotation as static');
+  t.equal(legacyReadout.label, annotations[3].label, 'the old schema keeps the authored label');
+  const loaded = schema.load(wire).annotations;
   loaded.forEach((annotation, index) => {
     t.deepEqual(annotation.viewport, annotations[index].viewport, 'preserves placement');
     t.deepEqual(annotation.readout, annotations[index].readout, 'preserves content source');

@@ -2799,6 +2799,33 @@ describe('authored export duration range', () => {
       }
     });
 
+  test('a toggle-only export holds after its final switch', async () => {
+    const layer = {
+      id: 'contours',
+      animatableProps: [{name: 'enable3d', label: '3D surface', type: 'toggle'}],
+      config: {
+        isVisible: true,
+        propertyTransitions: {
+          enable3d: [
+            {
+              id: 'raise',
+              startTimeMs: 2000,
+              endTimeMs: 2000,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
+      }
+    };
+    const visState = {...DEFAULT_PROPS.visState, layers: [layer], cameraTour: null, effects: []};
+    await renderAndWaitForPanel({...DEFAULT_PROPS, visState});
+    expect(mockExportVideoPanelContainer.mock.lastCall[0].initialState).toMatchObject({
+      durationMs: 3000
+    });
+  });
+
   test('declared layer properties set export duration while unsupported tracks stay inactive', async () => {
     const {getAnimationExportDuration} = require('./camera-tour-export');
     const layer = {

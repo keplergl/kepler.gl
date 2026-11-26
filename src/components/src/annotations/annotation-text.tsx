@@ -203,7 +203,9 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   onUpdateAnnotation
 }) => {
   const isViewport = annotation.kind === AnnotationKind.TEXT && Boolean(annotation.viewport);
-  const hasReadout = isViewport && Boolean(annotation.readout);
+  const isRuler = annotation.kind === AnnotationKind.RULER;
+  const showCustomText = !isRuler || annotation.showCustomText;
+  const hasReadout = showCustomText && Boolean(annotation.readout);
   const formattedReadout = useMemo(
     () =>
       hasReadout
@@ -223,8 +225,6 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   }, [hasReadout, annotation.editorState, annotation.label]);
   // Keep the editor mounted and focused when its empty caption no longer takes a row.
   const emptyLabel = !hasLabel;
-  const isRuler = annotation.kind === AnnotationKind.RULER;
-  const showCustomText = !isRuler || annotation.showCustomText;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
   const isDraggable = !isRuler;
   const {attributes, listeners, setNodeRef} = useDraggable({

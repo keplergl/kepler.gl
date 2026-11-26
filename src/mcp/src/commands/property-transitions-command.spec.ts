@@ -350,3 +350,21 @@ describe('timed property transition commands', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 });
+
+test('MCP discovers Fill cuts and rejects interpolation for a toggle', async () => {
+  const {run, state, dispatch} = setup();
+  const target = {type: 'layer', id: 'points'};
+  const property = 'filled';
+  const discovered = await run({action: 'discover', target});
+  expect(discovered.data.targets[0].properties).toContainEqual({
+    name: property,
+    label: 'Fill',
+    type: 'toggle'
+  });
+  const action = {action: 'add', target, property};
+  expect((await run({...action, block})).success).toBe(false);
+  expect(dispatch).not.toHaveBeenCalled();
+  const cut = {...block, endTimeMs: block.startTimeMs};
+  expect((await run({...action, block: cut})).success).toBe(true);
+  expect(state().layers[0].config.propertyTransitions?.filled).toEqual([cut]);
+});

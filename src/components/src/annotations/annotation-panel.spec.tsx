@@ -266,6 +266,22 @@ describe('AnnotationManager type icons', () => {
   });
 });
 
+test('text annotations do not offer unused line styling', () => {
+  const state = makeState(true, true);
+  Object.assign(state.visState.annotations[0], {kind: AnnotationKind.TEXT});
+  const store = mockStore(state);
+  renderWithTheme(
+    <IntlWrapper>
+      <Provider store={store}>
+        <AnnotationManager />
+      </Provider>
+    </IntlWrapper>
+  );
+
+  expect(screen.queryByRole('slider', {name: 'Line Width'})).not.toBeInTheDocument();
+  expect(screen.queryByText('Color', {exact: true})).not.toBeInTheDocument();
+});
+
 describe('AnnotationManager line width slider', () => {
   const renderSlider = (lineWidth = 2) => {
     const state = makeState(true, true);
@@ -398,12 +414,12 @@ describe('AnnotationManager selectors', () => {
     expect(store.getActions()).toEqual([VisStateActions.updateAnnotation('ruler-1', {viewport})]);
   });
 
-  test('returns a caption to geographic placement and clears its readout', () => {
+  test('returns a caption to geographic placement without clearing its readout', () => {
     const store = renderCaption({viewport, readout: {type: 'time'}});
     fireEvent.click(screen.getByText('Viewport'));
     fireEvent.click(screen.getByText('Geographic'));
     expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {viewport: undefined, readout: undefined})
+      VisStateActions.updateAnnotation('ruler-1', {viewport: undefined})
     ]);
   });
 
@@ -446,6 +462,25 @@ describe('AnnotationManager selectors', () => {
     expect(store.getActions()).toEqual([
       VisStateActions.updateAnnotation('ruler-1', {readout} as Partial<Annotation>)
     ]);
+  });
+
+  test.each([
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER
+  ])('sets dynamic content on a geographic %s annotation', kind => {
+    const store = renderCaption({kind});
+    fireEvent.click(screen.getByText('Static text'));
+    fireEvent.click(screen.getByText('Timeline date'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {readout: {type: 'time', format: 'YYYY-MM-DD'}})
+    ]);
+  });
+
+  test('does not offer dynamic content while a ruler caption is hidden', () => {
+    renderCaption({kind: AnnotationKind.RULER, showCustomText: false} as Partial<Annotation>);
+    expect(screen.queryByText('Static text')).not.toBeInTheDocument();
   });
 
   test('changes the date format and returns to static text', () => {
@@ -517,8 +552,8 @@ describe('AnnotationManager selectors', () => {
 
       const labels =
         kind === AnnotationKind.RULER
-          ? ['Line Width', 'Color', 'Custom Text', 'Distance']
-          : ['Line Width', 'Color', 'Text Side', 'Placement'];
+          ? ['Line Width', 'Color', 'Custom Text', 'Distance', 'Content']
+          : ['Line Width', 'Color', 'Text Side', 'Placement', 'Content'];
       labels.forEach((label, index) => {
         expect(screen.getByText(label).parentElement).toHaveStyle({
           minHeight: theme.inputBoxHeightSmall,

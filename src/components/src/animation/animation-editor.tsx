@@ -403,6 +403,10 @@ const formatTimeInput = (value: string) =>
 const formatPropertyValue = (value: number | RGBColor, property: LayerAnimatableProp) =>
   Array.isArray(value)
     ? rgbToHex(value)
+    : property.type === 'toggle'
+    ? value === 1
+      ? 'On'
+      : 'Off'
     : property.name === 'opacity'
     ? `${Math.round(value * 100)}%`
     : String(value);
@@ -460,7 +464,8 @@ function PropertySettings({
   const id = useId();
   const opacity = property.name === 'opacity';
   const multiplier = opacity ? 100 : 1;
-  const numericProperty = property.type === 'color' ? null : property;
+  const toggle = property.type === 'toggle';
+  const numericProperty = property.type === 'color' || toggle ? null : property;
   const [minValue, maxValue] = numericProperty?.range.map(value => value * multiplier) ?? [0, 0];
   const [draft, setDraft] = useState({
     start: String(transition.startTimeMs / 1000),
@@ -483,11 +488,12 @@ function PropertySettings({
       end: String(transition.endTimeMs / 1000)
     }));
   }, [transition.startTimeMs, transition.endTimeMs]);
+  const time = draft.start.trim() ? Number(draft.start) * 1000 : NaN;
   const timing: Pick<LayerPropertyTransition, 'id' | 'startTimeMs' | 'endTimeMs' | 'easing'> = {
     id: transition.id,
-    startTimeMs: draft.start.trim() ? Number(draft.start) * 1000 : NaN,
-    endTimeMs: draft.end.trim() ? Number(draft.end) * 1000 : NaN,
-    easing: linear ? 'linear' : 'easeInOut'
+    startTimeMs: time,
+    endTimeMs: toggle ? time : draft.end.trim() ? Number(draft.end) * 1000 : NaN,
+    easing: toggle || linear ? 'linear' : 'easeInOut'
   };
   const candidate: LayerPropertyTransition =
     property.type === 'color' && colors
@@ -566,8 +572,16 @@ function PropertySettings({
                   }
                 ]
               : []),
-            {key: 'start', label: 'Start time (seconds)', min: 0, max: undefined, step: 0.01},
-            {key: 'end', label: 'End time (seconds)', min: 0, max: undefined, step: 0.01}
+            {
+              key: 'start',
+              label: toggle ? 'Switch time (seconds)' : 'Start time (seconds)',
+              min: 0,
+              max: undefined,
+              step: 0.01
+            },
+            ...(toggle
+              ? []
+              : [{key: 'end', label: 'End time (seconds)', min: 0, max: undefined, step: 0.01}])
           ].map(({key, label, min, max, step}) => (
             <div key={key}>
               <PanelLabel htmlFor={`${id}-${key}`}>{label}</PanelLabel>
@@ -593,20 +607,37 @@ function PropertySettings({
             </div>
           ))}
         </Fields>
-        <ToggleRow>
-          <PanelLabel as="label" htmlFor={`${id}-linear`}>
-            Linear easing
-          </PanelLabel>
-          <Switch
-            id={`${id}-linear`}
-            checked={linear}
-            onChange={event => setLinear(event.target.checked)}
-          />
-        </ToggleRow>
+        {toggle ? (
+          <ToggleRow>
+            <PanelLabel as="label" htmlFor={`${id}-on`}>
+              On after switch
+            </PanelLabel>
+            <Switch
+              id={`${id}-on`}
+              checked={draft.endValue === '1'}
+              onChange={event => setDraft({...draft, endValue: event.target.checked ? '1' : '0'})}
+            />
+          </ToggleRow>
+        ) : (
+          <ToggleRow>
+            <PanelLabel as="label" htmlFor={`${id}-linear`}>
+              Linear easing
+            </PanelLabel>
+            <Switch
+              id={`${id}-linear`}
+              checked={linear}
+              onChange={event => setLinear(event.target.checked)}
+            />
+          </ToggleRow>
+        )}
         {!valid && (
           <Alert role="alert">
             {validValues
-              ? `${property.label} blocks on this item cannot overlap.`
+              ? toggle
+                ? 'Switches on this track must have different times.'
+                : `${property.label} blocks on this item cannot overlap.`
+              : toggle
+              ? 'Choose a non-negative switch time.'
               : property.type === 'color'
               ? 'Choose valid colors and non-negative times, with End at or after Start.'
               : `Use ${minValue}–${maxValue}${
@@ -880,7 +911,11 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       transitions: LayerPropertyTransition[]
     ) => {
       const normalized = normalizeLayerPropertyTransitions({[property.name]: transitions});
-      if (normalized) {
+      if (
+        normalized &&
+        getLayerPropertyTransitions({propertyTransitions: normalized}, property.name, property)
+          .length === transitions.length
+      ) {
         playback.pause();
         onLayerConfigChange?.(layer, {
           propertyTransitions: {...layer.config.propertyTransitions, ...normalized}
@@ -953,12 +988,13 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       const value = previous?.endValue ?? transitions[0].startValue;
       const common = {
         ...timing,
+        ...(property.type === 'toggle' ? {endTimeMs: timing.startTimeMs} : {}),
         id: nextBlockId(property.name, transitions),
         easing: 'linear' as const
       };
       return Array.isArray(value)
         ? {...common, startValue: [...value], endValue: [...value]}
-        : {...common, startValue: value, endValue: value};
+        : {...common, startValue: value, endValue: property.type === 'toggle' ? 1 - value : value};
     };
     const addEffectAt = (
       event: React.MouseEvent<HTMLDivElement>,
@@ -1004,7 +1040,10 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         ? getLayerPropertyTransitions(addLayer.config, property.name, property)
         : addAnnotation!.transitions;
       const last = transitions[transitions.length - 1];
-      const startTimeMs = Math.max(playback.elapsed, last?.endTimeMs ?? 0);
+      const startTimeMs = Math.max(
+        playback.elapsed,
+        last ? last.endTimeMs + (property.type === 'toggle' ? 1000 : 0) : 0
+      );
       let suffix = 1;
       while (transitions.some(item => item.id === `${property.name}-${suffix}`)) suffix++;
       const timing: Pick<LayerPropertyTransition, 'id' | 'startTimeMs' | 'endTimeMs' | 'easing'> = {
@@ -1014,7 +1053,18 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         easing: 'easeInOut'
       };
       let transition: LayerPropertyTransition;
-      if (property.type === 'color') {
+      if (property.type === 'toggle') {
+        const value =
+          last?.endValue ?? Number(addLayer?.config.visConfig?.[property.name] === true);
+        if (typeof value !== 'number') return;
+        transition = {
+          ...timing,
+          endTimeMs: startTimeMs,
+          easing: 'linear',
+          startValue: value,
+          endValue: 1 - value
+        };
+      } else if (property.type === 'color') {
         const current = Array.isArray(last?.endValue)
           ? last.endValue
           : property.name === 'color'
@@ -1424,10 +1474,15 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
                   {transitions.map((transition, index) => (
                     <AnimationBlock
                       key={transition.id}
-                      label={`${formatPropertyValue(
-                        transition.startValue,
-                        property
-                      )} → ${formatPropertyValue(transition.endValue, property)}`}
+                      label={
+                        property.type === 'toggle'
+                          ? formatPropertyValue(transition.endValue, property)
+                          : `${formatPropertyValue(
+                              transition.startValue,
+                              property
+                            )} → ${formatPropertyValue(transition.endValue, property)}`
+                      }
+                      editMode={property.type === 'toggle' ? 'point' : 'interval'}
                       ariaLabel={`${property.label} ${index + 1} · ${layer.config.label}`}
                       kind="layer"
                       startTimeMs={transition.startTimeMs}

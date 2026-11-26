@@ -35,14 +35,29 @@ test('follows the active data filter window before the layer time, in UTC, prese
   ).toEqual({caption: '1970-01-03'});
 });
 
-test('missing or invalid time is an em dash; static/geographic annotations need no readout', () => {
+test('missing or invalid time is an em dash; static annotations need no readout', () => {
   for (const currentTime of [undefined, null, NaN, Infinity, 9e15]) {
     expect(getAnnotationReadoutValues([caption], {animationConfig: {currentTime}})).toEqual({
       caption: '—'
     });
   }
   expect(getAnnotationReadoutValues([{...caption, readout: undefined}])).toEqual({});
-  expect(getAnnotationReadoutValues([{...caption, viewport: undefined}])).toEqual({});
+});
+
+test('geographic annotations resolve the same readout while hidden ruler text skips it', () => {
+  const options = {animationConfig: {currentTime: 0}};
+  const point = {...caption, kind: AnnotationKind.POINT, viewport: undefined} as Annotation;
+  const ruler = {
+    ...caption,
+    kind: AnnotationKind.RULER,
+    viewport: undefined,
+    showCustomText: false
+  } as Annotation;
+  expect(getAnnotationReadoutValues([point], options)).toEqual({caption: '1970-01-01'});
+  expect(getAnnotationReadoutValues([ruler], options)).toEqual({});
+  expect(
+    getAnnotationReadoutValues([{...ruler, showCustomText: true} as Annotation], options)
+  ).toEqual({caption: '1970-01-01'});
 });
 
 test('uses the synchronized start edge when the data timeline follows a filter window start', () => {
@@ -138,7 +153,16 @@ test('counts only dataset filters and reuses counts across unrelated timeline ch
   const context = {datasets: {[table.id]: table}, filters: [filter]};
   const filterCPU = jest.spyOn(KeplerTable.prototype, 'filterTableCPU');
   try {
-    expect(getAnnotationReadoutValues([annotation], context)).toEqual({caption: '3'});
+    const callout = {
+      ...annotation,
+      id: 'callout',
+      kind: AnnotationKind.POINT,
+      viewport: undefined
+    } as Annotation;
+    expect(getAnnotationReadoutValues([annotation, callout], context)).toEqual({
+      caption: '3',
+      callout: '3'
+    });
     expect(
       getAnnotationReadoutValues([annotation], {...context, filters: [{...filter, value: [2, 2]}]})
     ).toEqual({caption: '3'});

@@ -12,7 +12,8 @@ export type LayerAnimatableProp =
       range: [number, number];
       step: number;
     }
-  | {name: string; label: string; type: 'color'};
+  | {name: string; label: string; type: 'color'}
+  | {name: string; label: string; type: 'toggle'};
 
 /** Endpoint values are validated against the property's supported range at playback time. */
 export type LayerPropertyTransition = {

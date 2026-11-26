@@ -10,6 +10,7 @@ import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
 import type {Layer} from '@kepler.gl/layers';
+import ContourLayer from '../../../layers/src/contour-layer/contour-layer';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
 import type {
   Annotation,
@@ -790,6 +791,45 @@ test('Add action closes even when an outside control stops click propagation', (
   expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   expect(onOutsideClick).toHaveBeenCalledTimes(1);
   expect(outside).toHaveFocus();
+});
+
+test('adds and edits a contour elevation transition using its native range', () => {
+  const source = new ContourLayer({id: 'contours', label: 'Contours', dataId: 'survey'});
+  source.updateLayerVisConfig({enable3d: true, elevationScale: 2});
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    source.updateLayerConfig(config);
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Contours'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Elevation multiplier'}));
+  expect(source.config.propertyTransitions?.elevationScale[0]).toMatchObject({
+    startValue: 2,
+    endValue: 2
+  });
+  const end = screen.getByRole('spinbutton', {name: 'End elevation multiplier'});
+  expect(end).toHaveAttribute('min', '0');
+  expect(end).toHaveAttribute('max', '10');
+  expect(end).toHaveAttribute('step', '0.1');
+  fireEvent.change(end, {target: {value: '11'}});
+  expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
+  fireEvent.change(screen.getByRole('spinbutton', {name: 'Start elevation multiplier'}), {
+    target: {value: '0'}
+  });
+  fireEvent.change(end, {target: {value: '4'}});
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  expect(source.config.propertyTransitions?.elevationScale[0]).toMatchObject({
+    startValue: 0,
+    endValue: 4
+  });
+  expect(source.config.visConfig.elevationScale).toBe(2);
+  source.updateLayerVisConfig({enable3d: false});
+  rerender(<Editor {...props} />);
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Contours'}));
+  expect(screen.queryByRole('menuitem', {name: 'Elevation multiplier'})).toBeNull();
+  expect(source.config.propertyTransitions?.elevationScale).toHaveLength(1);
 });
 
 test('choosing a native layer property creates its block and opens range-aware settings', () => {
@@ -2004,4 +2044,44 @@ describe('camera timeline segments', () => {
     expect(screen.getByRole('spinbutton', {name: 'Duration (seconds)'})).toBeDisabled();
     expect(screen.getByRole('button', {name: 'Save'})).toBeDisabled();
   });
+});
+
+test('adds and edits an instantaneous Fill switch without changing the layer default', () => {
+  const fill: LayerAnimatableProp = {name: 'filled', label: 'Fill', type: 'toggle'};
+  const source = propertyLayer([fill]);
+  source.config.visConfig.filled = true;
+  const {props, rerender} = setup({layers: [source]});
+  (props.onLayerConfigChange as jest.Mock).mockImplementation((_layer, config) => {
+    source.config = {...source.config, ...config};
+    rerender(<Editor {...props} />);
+  });
+  fireEvent.click(screen.getByRole('button', {name: 'Add action'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Points'}));
+  fireEvent.click(screen.getByRole('menuitem', {name: 'Fill'}));
+  const original = {
+    id: 'filled-1',
+    startTimeMs: 5000,
+    endTimeMs: 5000,
+    startValue: 1,
+    endValue: 0,
+    easing: 'linear'
+  };
+  expect(source.config.propertyTransitions).toEqual({filled: [original]});
+  const time = screen.getByRole('spinbutton', {name: 'Switch time (seconds)'});
+  expect(time).toHaveValue(5);
+  expect(screen.queryByRole('spinbutton', {name: 'End time (seconds)'})).not.toBeInTheDocument();
+  const switchInput = screen.getByLabelText('On after switch');
+  expect(switchInput).not.toBeChecked();
+  fireEvent.click(switchInput);
+  fireEvent.change(time, {target: {value: '7.5'}});
+  fireEvent.click(screen.getByRole('button', {name: 'Save'}));
+  const edited = {...original, startTimeMs: 7500, endTimeMs: 7500, endValue: 1};
+  expect(source.config.propertyTransitions).toEqual({filled: [edited]});
+  const marker = screen.getByRole('button', {name: 'Fill 1 · Points'});
+  expect(screen.queryByRole('slider', {name: 'Start time for Fill 1 · Points'})).toBeNull();
+  fireEvent.keyDown(marker, {key: 'ArrowRight'});
+  expect(source.config.propertyTransitions).toEqual({
+    filled: [{...edited, startTimeMs: 7600, endTimeMs: 7600}]
+  });
+  expect(source.config.visConfig.filled).toBe(true);
 });

@@ -57,6 +57,39 @@ function dispatchPointer(target: Node, type: string, x: number, y: number) {
 const makeLegacyAnnotation = (kind: AnnotationKind): Annotation =>
   ({...ruler, id: 'legacy-1', kind, armLength: 20, angle: 0, radiusInMeters: 1000} as Annotation);
 
+test('keeps an elevated globe annotation visible near and just beyond the horizon', () => {
+  const annotation: Annotation = {
+    ...makeLegacyAnnotation(AnnotationKind.POINT),
+    anchorPoint: [84.2, 0, 1000]
+  };
+  const props = {
+    annotations: [annotation],
+    selectedAnnotationId: null,
+    isEditingAnnotationText: false,
+    isAnnotationMode: false,
+    mapIndex: 0,
+    isGlobeEnabled: true,
+    updateAnnotation: jest.fn(),
+    setSelectedAnnotation: jest.fn()
+  };
+  const globe = (longitude: number) =>
+    new GlobeViewport({longitude, latitude: 0, width: 800, height: 600, zoom: 0});
+  const {container, rerender} = renderWithTheme(
+    <AnnotationOverlay {...props} viewport={globe(20)} />
+  );
+  const shape = () => container.querySelector('[data-annotation-part="shape"]');
+
+  expect(shape()).toBeInTheDocument();
+  rerender(<AnnotationOverlay {...props} viewport={globe(0)} />);
+  expect(shape()).toBeInTheDocument();
+  // The sightline misses the sphere even though the corresponding sea-level point is hidden.
+  rerender(<AnnotationOverlay {...props} viewport={globe(-2)} />);
+  expect(shape()).toBeInTheDocument();
+  // Rotating farther puts the elevated point itself behind the opaque globe.
+  rerender(<AnnotationOverlay {...props} viewport={globe(-7)} />);
+  expect(shape()).not.toBeInTheDocument();
+});
+
 test.each([
   [640, 360],
   [1280, 720]

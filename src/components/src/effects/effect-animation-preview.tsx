@@ -19,6 +19,7 @@ import {
   evaluateCameraTour,
   getCameraTourDuration,
   normalizeCameraTour,
+  getLayerAnimationDuration,
   getLayerAnimationTracks,
   getLayerPropertyTransitions
 } from '@kepler.gl/utils';
@@ -122,17 +123,7 @@ export default function EffectAnimationPreviewProvider({
       }))
       .filter(layer => layer.tracks.length);
     return {
-      duration: tracks.reduce(
-        (latest, layer) =>
-          layer.visible
-            ? layer.tracks.reduce(
-                (end, {transitions}) =>
-                  Math.max(end, transitions[transitions.length - 1].endTimeMs),
-                latest
-              )
-            : latest,
-        0
-      ),
+      duration: getLayerAnimationDuration(layers),
       hasAnimation: tracks.some(layer => layer.visible),
       timingKey: JSON.stringify(tracks.map(layer => [layer.id, layer.visible, layer.tracks]))
     };

@@ -33,6 +33,8 @@ import {DataContainerInterface, maybeHexToGeo} from '@kepler.gl/utils';
 
 export type LineLayerVisConfigSettings = {
   opacity: VisConfigNumber;
+  sourceOpacity?: VisConfigNumber;
+  targetOpacity?: VisConfigNumber;
   thickness: VisConfigNumber;
   colorRange: VisConfigColorRange;
   sizeRange: VisConfigRange;
@@ -66,6 +68,8 @@ export type LineLayerColumnsConfig = {
 export type LineLayerVisConfig = {
   colorRange: ColorRange;
   opacity: number;
+  sourceOpacity?: number;
+  targetOpacity?: number;
   sizeRange: [number, number];
   targetColor: RGBColor;
   thickness: number;
@@ -225,7 +229,16 @@ export default class LineLayer extends ArcLayer {
 
   get animatableProps(): readonly LayerAnimatableProp[] {
     // Globe lines use the target color only when target arrows are enabled.
-    return super.animatableProps.filter(
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
       prop => prop.name !== 'targetColor' || this.config.visConfig.targetArrowEnabled
     );
   }
@@ -306,22 +319,36 @@ export default class LineLayer extends ArcLayer {
   renderLayer(opts) {
     opts = this.getAgeStyledLayerProps(opts);
     const {data, gpuFilter, objectHovered, interactionConfig, dataset, mapState} = opts;
+    const globeMode = mapState?.globe?.enabled;
+    const useSourceColorAtTarget = globeMode && !this.config.visConfig.targetArrowEnabled;
+    const {sourceOpacity, targetOpacity, getSourceColor, getTargetColor} =
+      this.getEndpointOpacityProps(
+        data.getColor,
+        useSourceColorAtTarget ? data.getColor : data.getTargetColor
+      );
 
     const layerProps = {
       widthScale: this.config.visConfig.thickness * PROJECTED_PIXEL_SIZE_MULTIPLIER,
       elevationScale: this.config.visConfig.elevationScale
     };
 
+    const colorTriggers = this.getVisualChannelUpdateTriggers(opts);
+    const sourceColorTrigger = {...colorTriggers.getColor, sourceOpacity};
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
       getFiltered: this.filteredIndexTrigger,
-      ...this.getVisualChannelUpdateTriggers(opts)
+      ...colorTriggers,
+      getColor: sourceColorTrigger,
+      ...(globeMode ? {getSourceColor: sourceColorTrigger} : {}),
+      getTargetColor: {
+        ...(useSourceColorAtTarget ? colorTriggers.getColor : colorTriggers.getTargetColor),
+        targetOpacity
+      }
     };
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    const globeMode = mapState?.globe?.enabled;
     const blendingParameters = mapState?.layerParameters ?? {};
     const arrowLayers = createTargetArrowLayers({
       layer: this,
@@ -334,7 +361,7 @@ export default class LineLayer extends ArcLayer {
       greatCircle: Boolean(globeMode),
       height: 0,
       elevationScale: globeMode ? 1 : this.config.visConfig.elevationScale,
-      getColor: data.getTargetColor,
+      getColor: getTargetColor,
       hoveredObject,
       highlightColor: opts.ageStyleHighlightColor ?? this.config.highlightColor
     });
@@ -376,17 +403,15 @@ export default class LineLayer extends ArcLayer {
           // On a globe a "line" is drawn as a flat ArcLayer: getHeight 0 keeps the
           // geometry on the sphere surface (no raised paraboloid arc, which would
           // otherwise pop up as spikes sticking out perpendicular to the surface).
-          // Match the ArcLayer's globe params exactly (cull:false so the ribbon's
-          // back-facing triangles aren't culled by globe mode's global cull, and
+          // Match the ArcLayer's globe params exactly (disable both legacy cull
+          // and the view's modern cullMode so the whole ribbon renders, and
           // otherwise deck.gl defaults: depth test on + depth write on, so the
           // depth disk occludes segments on the far side of the globe).
           getHeight: 0,
-          parameters: {cull: false, ...blendingParameters},
+          parameters: {cull: false, cullMode: 'none', ...blendingParameters},
           // The target end, including the arrowhead, uses the target color.
-          getSourceColor: data.getColor,
-          getTargetColor: this.config.visConfig.targetArrowEnabled
-            ? data.getTargetColor
-            : data.getColor,
+          getSourceColor,
+          getTargetColor,
           widthUnits: 'pixels' as const
         }),
         ...(hoveredObject
@@ -397,7 +422,7 @@ export default class LineLayer extends ArcLayer {
                 id: `${id}-hovered`,
                 data: [hoveredObject],
                 getHeight: 0,
-                parameters: {cull: false, ...blendingParameters},
+                parameters: {cull: false, cullMode: 'none', ...blendingParameters},
                 getSourceColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
                 getTargetColor: opts.ageStyleHighlightColor ?? this.config.highlightColor,
                 getWidth: data.getWidth,
@@ -417,6 +442,8 @@ export default class LineLayer extends ArcLayer {
         ...defaultLayerProps,
         ...this.getBrushingExtensionProps(interactionConfig, 'source_target'),
         ...data,
+        ...(getSourceColor ? {getColor: getSourceColor} : {}),
+        ...(getTargetColor ? {getTargetColor} : {}),
         ...experimentalPropOverrides,
         ...layerProps,
         updateTriggers,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {
   ClusterLevel,
   clusterLocations,
@@ -229,6 +230,36 @@ export default class FlowLayer extends Layer {
     this.registerVisConfig(flowVisConfigs);
     this._dataProvider = new LocalFlowmapDataProvider<LocationDatum, FlowDatum>(
       flowmapDataAccessors
+    );
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {
+        name: 'flowLineThicknessScale',
+        label: 'Line thickness',
+        range: this.visConfigSettings.flowLineThicknessScale.range,
+        step: this.visConfigSettings.flowLineThicknessScale.step
+      },
+      {
+        name: 'flowLineCurviness',
+        label: 'Line curviness',
+        range: this.visConfigSettings.flowLineCurviness.range,
+        step: this.visConfigSettings.flowLineCurviness.step
+      },
+      {
+        name: 'flowFadeAmount',
+        label: 'Fade amount',
+        range: this.visConfigSettings.flowFadeAmount.range,
+        step: this.visConfigSettings.flowFadeAmount.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'flowLineCurviness' ||
+          this.config.visConfig.flowLinesRenderingMode === 'curved') &&
+        (prop.name !== 'flowFadeAmount' || this.config.visConfig.flowFadeEnabled)
     );
   }
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import Layer, {
   LayerBaseConfig,
   LayerBaseConfigPartial,
@@ -230,6 +231,47 @@ export default class HexagonIdLayer extends Layer {
         ? hexIdAccessor(this.config.columns)(dataContainer)
         : hexIdExAccessor(this.config.columns)(dataContainer);
     };
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'strokeOpacity',
+        label: 'Stroke opacity',
+        range: this.visConfigSettings.strokeOpacity.range,
+        step: this.visConfigSettings.strokeOpacity.step
+      },
+      {
+        name: 'coverage',
+        label: 'Coverage',
+        range: this.visConfigSettings.coverage.range,
+        step: this.visConfigSettings.coverage.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.outline && !this.config[this.visualChannels.strokeColor.field])) &&
+        (!['thickness', 'strokeOpacity'].includes(prop.name) || this.config.visConfig.outline) &&
+        (prop.name !== 'coverage' || !this.config.coverageField) &&
+        (prop.name !== 'elevationScale' || this.config.visConfig.enable3d)
+    );
   }
 
   get type(): 'hexagonId' {

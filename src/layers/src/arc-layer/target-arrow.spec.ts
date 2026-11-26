@@ -3,6 +3,7 @@
 
 import {AttributeManager, Layer, MapView} from '@deck.gl/core';
 import {worldToPixels} from '@math.gl/web-mercator';
+import {Field, FixedSizeList, Float64, Table, vectorFromArray} from 'apache-arrow';
 
 import {KeplerGlobeView} from '@kepler.gl/deckgl-layers';
 import {PROJECTED_PIXEL_SIZE_MULTIPLIER} from '@kepler.gl/constants';
@@ -146,6 +147,55 @@ describe('targetArrowAngle', () => {
 
 describe('createTargetArrowLayer', () => {
   test.each([
+    {name: 'Arc', LayerClass: ArcLayer, useArrow: false},
+    {name: 'Line', LayerClass: LineLayer, useArrow: false},
+    {name: 'GeoArrow Arc', LayerClass: ArcLayer, useArrow: true},
+    {name: 'GeoArrow Line', LayerClass: LineLayer, useArrow: true}
+  ])('$name strokes and highlights disable inherited globe culling', ({LayerClass, useArrow}) => {
+    const layer = new LayerClass({id: 'globe-stroke'});
+    const pointType = new FixedSizeList(3, new Field('coordinate', new Float64()));
+    const source = vectorFromArray([[-122.45, 37.75, 0]], pointType);
+    const target = vectorFromArray([[-122.35, 37.85, 0]], pointType);
+    const table = new Table({source, target});
+    if (useArrow) {
+      layer.geoArrowVector0 = source;
+      layer.geoArrowVector1 = target;
+    }
+    const row = {index: 0, position: [-122.45, 37.75, 0, -122.35, 37.85, 0]};
+    const view = new KeplerGlobeView();
+    expect(view.props.parameters.cullMode).toBe('back');
+
+    for (const globe of [false, true]) {
+      const [stroke, highlight] = layer.renderLayer({
+        idx: 0,
+        visible: true,
+        data: {data: [row], getWidth: 1, getColor: [70, 80, 90]},
+        dataset: {dataContainer: {getTable: () => table}},
+        objectHovered: {picked: true, object: row, layer: {props: {id: layer.id}}},
+        gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+        mapState: {...mapState, globe: {enabled: globe}, layerParameters: {blend: true}},
+        interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+        layerCallbacks: {}
+      });
+      const primitives = useArrow ? (stroke as any).renderLayers() : [stroke];
+      for (const primitive of [...primitives, highlight]) {
+        // LayersPass merges view parameters with each primitive's parameters.
+        // Checking only legacy cull:false misses the modern inherited cullMode.
+        const parameters = {
+          ...(globe ? view.props.parameters : {}),
+          ...primitive.props.parameters
+        };
+        expect(parameters.cullMode).toBe(globe ? 'none' : undefined);
+        if (globe) {
+          expect(parameters.blend).toBe(true);
+          expect(parameters.depthTest).not.toBe(false);
+          expect(parameters.depthCompare).not.toBe('always');
+        }
+      }
+    }
+  });
+
+  test.each([
     {name: 'Arc', LayerClass: ArcLayer},
     {name: 'Line', LayerClass: LineLayer}
   ])('$name renders stroke and arrow visuals from the current config', ({LayerClass}) => {
@@ -190,9 +240,148 @@ describe('createTargetArrowLayer', () => {
         getFillColor: [70, 80, 90]
       })
     );
+    expect(authoredConfig.visConfig.sourceOpacity).toBe(1);
+    expect(authoredConfig.visConfig.targetOpacity).toBe(1);
     expect(authoredConfig.visConfig.thickness).toBe(1);
     expect(authoredConfig.visConfig.opacity).toBe(0.8);
     expect(authoredConfig.visConfig.targetArrowEnabled).toBe(false);
+  });
+
+  test.each(
+    [ArcLayer, LineLayer].flatMap(LayerClass =>
+      [false, true].flatMap(globe =>
+        [false, true].map(useArrow => ({
+          name: `${LayerClass.name} ${globe ? 'globe' : '2D'} ${useArrow ? 'GeoArrow' : 'rows'}`,
+          LayerClass,
+          globe,
+          useArrow
+        }))
+      )
+    )
+  )('$name applies endpoint alpha and matches the arrowhead', ({LayerClass, globe, useArrow}) => {
+    const layer = new LayerClass({id: 'endpoint-opacity'});
+    const inputSourceAccessor = LayerClass === LineLayer ? 'getColor' : 'getSourceColor';
+    const renderedSourceAccessor = globe ? 'getSourceColor' : inputSourceAccessor;
+    const pointType = new FixedSizeList(3, new Field('coordinate', new Float64()));
+    const source = vectorFromArray([[-122.45, 37.75, 0]], pointType);
+    const target = vectorFromArray([[-122.35, 37.85, 0]], pointType);
+    const table = new Table({source, target});
+    if (useArrow) {
+      layer.geoArrowVector0 = source;
+      layer.geoArrowVector1 = target;
+    }
+    const sourceColor = [100, 120, 140];
+    const targetColor = [10, 20, 30, 200];
+    const mappedTargetColor = jest.fn(() => targetColor);
+    const objectInfo = {index: 0};
+    const row = {
+      index: 0,
+      sourcePosition: [-122.45, 37.75, 0],
+      targetPosition: [-122.35, 37.85, 0]
+    };
+    const opts = {
+      idx: 0,
+      visible: true,
+      data: {
+        data: [row],
+        [inputSourceAccessor]: sourceColor,
+        getTargetColor: mappedTargetColor,
+        getWidth: 1
+      },
+      gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+      mapState: {...mapState, globe: {enabled: globe}},
+      dataset: {dataContainer: {getTable: () => table}},
+      interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+      layerCallbacks: {}
+    };
+
+    layer.config.visConfig.opacity = 0.6;
+    layer.config.visConfig.targetArrowEnabled = true;
+    // Default and legacy settings both preserve the original accessors without evaluating rows.
+    for (const opacity of [1, undefined, Number.NaN]) {
+      layer.config.visConfig.sourceOpacity = opacity;
+      layer.config.visConfig.targetOpacity = opacity;
+      const initial = layer.renderLayer(opts);
+      expect(initial[0]?.props[renderedSourceAccessor]).toBe(sourceColor);
+      expect(initial[0]?.props.getTargetColor).toBe(mappedTargetColor);
+      expect(initial[1]?.props.getFillColor).toBe(mappedTargetColor);
+      expect(mappedTargetColor).not.toHaveBeenCalled();
+    }
+
+    layer.config.visConfig.sourceOpacity = 0;
+    layer.config.visConfig.targetOpacity = 0.5;
+    const [stroke, head] = layer.renderLayer(opts);
+    const getTargetColor = stroke?.props.getTargetColor as unknown as (object, info) => number[];
+    expect(stroke?.props[renderedSourceAccessor]).toEqual([100, 120, 140, 0]);
+    expect(getTargetColor(row, objectInfo)).toEqual([10, 20, 30, 100]);
+    expect(mappedTargetColor).toHaveBeenCalledWith(row, objectInfo);
+    expect(head?.props.getFillColor).toBe(getTargetColor);
+    expect(stroke?.props.opacity).toBe(0.6);
+    expect(head?.props.opacity).toBe(0.6);
+    expect(sourceColor).toEqual([100, 120, 140]);
+    expect(targetColor).toEqual([10, 20, 30, 200]);
+    if (useArrow) {
+      const [primitive] = (stroke as any).renderLayers();
+      expect(primitive.props[renderedSourceAccessor]).toEqual([100, 120, 140, 0]);
+      expect(primitive.props.getTargetColor(null, {index: 0, data: primitive.props.data})).toEqual([
+        10, 20, 30, 100
+      ]);
+    }
+
+    const [panned, pannedHead] = layer.renderLayer({
+      ...opts,
+      mapState: {...opts.mapState, longitude: -122.41}
+    });
+    expect(panned?.props.getTargetColor).toBe(getTargetColor);
+    expect(panned?.props.updateTriggers).toEqual(stroke?.props.updateTriggers);
+    expect(pannedHead?.props.updateTriggers.getFillColor).toBe(getTargetColor);
+
+    layer.config.visConfig.sourceOpacity = 1;
+    layer.config.visConfig.targetOpacity = 1;
+    const [reset, resetHead] = layer.renderLayer(opts);
+    expect(reset?.props[renderedSourceAccessor]).toBe(sourceColor);
+    expect(reset?.props.getTargetColor).toBe(mappedTargetColor);
+    expect(reset?.props.updateTriggers.getTargetColor).not.toEqual(
+      stroke?.props.updateTriggers.getTargetColor
+    );
+    expect(resetHead?.props.getFillColor).toBe(mappedTargetColor);
+  });
+
+  test.each([false, true])('Line endpoint opacity works without arrowheads (globe=%s)', globe => {
+    const layer = new LineLayer({id: 'line-opacity'});
+    layer.config.visConfig.sourceOpacity = 0.25;
+    layer.config.visConfig.targetOpacity = 0.5;
+    const sourceColor = jest.fn(() => [50, 60, 70, 200]);
+    const targetColor = [10, 20, 30, 100];
+    const opts = {
+      idx: 0,
+      visible: true,
+      data: {data: [], getColor: sourceColor, getTargetColor: targetColor, getWidth: 1},
+      gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}},
+      mapState: {...mapState, globe: {enabled: globe}},
+      interactionConfig: {brush: {enabled: false, config: {size: 1}}},
+      layerCallbacks: {}
+    };
+    const rendered = layer.renderLayer(opts);
+    expect(rendered).toHaveLength(1);
+    const sourceAccessor = globe ? 'getSourceColor' : 'getColor';
+    const stroke = rendered[0];
+    expect(stroke.props[sourceAccessor]({index: 0})).toEqual([50, 60, 70, 50]);
+    const target = stroke.props.getTargetColor as any;
+    expect(typeof target === 'function' ? target({index: 0}) : target).toEqual(
+      globe ? [50, 60, 70, 100] : [10, 20, 30, 50]
+    );
+
+    layer.config.visConfig.targetOpacity = 0;
+    const [transparentTarget] = layer.renderLayer(opts);
+    const transparentColor = transparentTarget.props.getTargetColor as any;
+    expect(
+      typeof transparentColor === 'function' ? transparentColor({index: 0}) : transparentColor
+    ).toEqual(globe ? [50, 60, 70, 0] : [10, 20, 30, 0]);
+    expect(transparentTarget.props[sourceAccessor]).toBe(stroke.props[sourceAccessor]);
+    expect(transparentTarget.props.updateTriggers.getTargetColor).not.toEqual(
+      stroke.props.updateTriggers.getTargetColor
+    );
   });
 
   test.each([

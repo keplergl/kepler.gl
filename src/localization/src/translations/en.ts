@@ -37,6 +37,7 @@ export default {
     valueEquals: 'Value equals',
     dataSource: 'Data Source',
     brushRadius: 'Brush Radius (km)',
+    showBrush: 'Show brush',
     brushArcLineEndpoints: 'Arc and line endpoints',
     brushEndpoints: {
       source_target: 'Both',
@@ -286,6 +287,8 @@ export default {
     strokeColor: 'Stroke Color',
     strokeColorRange: 'Stroke Color range',
     targetColor: 'Target Color',
+    sourceOpacity: 'Source Opacity',
+    targetOpacity: 'Target Opacity',
     targetArrow: 'Target Arrow',
     targetArrowDescription: 'Draw an arrowhead at the end of each arc or line',
     targetArrowShape: 'Arrow Shape',

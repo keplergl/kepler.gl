@@ -395,6 +395,7 @@ export default class PointLayer extends Layer {
   get animatableProps(): readonly LayerAnimatableProp[] {
     const props: LayerAnimatableProp[] = [
       ...super.animatableProps,
+      {name: 'filled', label: 'Fill', type: 'toggle'},
       {name: 'color', label: 'Fill color', type: 'color'},
       {name: 'strokeColor', label: 'Stroke color', type: 'color'},
       {
@@ -408,6 +409,30 @@ export default class PointLayer extends Layer {
         label: 'Stroke width',
         range: this.visConfigSettings.thickness.range,
         step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'glowExtent',
+        label: 'Glow extent',
+        range: this.visConfigSettings.glowExtent.range,
+        step: this.visConfigSettings.glowExtent.step
+      },
+      {
+        name: 'glowStrength',
+        label: 'Glow strength',
+        range: this.visConfigSettings.glowStrength.range,
+        step: this.visConfigSettings.glowStrength.step
+      },
+      {
+        name: 'pulseSpeed',
+        label: 'Pulse speed',
+        range: this.visConfigSettings.pulseSpeed.range,
+        step: this.visConfigSettings.pulseSpeed.step
+      },
+      {
+        name: 'pulseExpansion',
+        label: 'Pulse expansion',
+        range: this.visConfigSettings.pulseExpansion.range,
+        step: this.visConfigSettings.pulseExpansion.step
       }
     ];
     return props.filter(
@@ -416,7 +441,13 @@ export default class PointLayer extends Layer {
         (prop.name !== 'strokeColor' ||
           (this.config.visConfig.outline && !this.config.strokeColorField)) &&
         (prop.name !== 'radius' || !this.config.sizeField) &&
-        (prop.name !== 'thickness' || this.config.visConfig.outline)
+        (prop.name !== 'thickness' || this.config.visConfig.outline) &&
+        (!['glowExtent', 'glowStrength'].includes(prop.name) ||
+          (this.config.visConfig.glowEnabled &&
+            (this.config.visConfig.filled || this.config.visConfig.outline))) &&
+        (prop.name !== 'pulseSpeed' ||
+          (this.config.visConfig.pulseEnabled && this.config.visConfig.pulseTrigger !== 'event')) &&
+        (prop.name !== 'pulseExpansion' || this.config.visConfig.pulseEnabled)
     );
   }
 

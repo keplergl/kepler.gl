@@ -902,7 +902,8 @@ The same composition is used in live maps, export previews and native recordings
 {"id":"credits","kind":"text","label":"Source: observations","viewport":{"anchor":"bottom-right","margin":[24,24]}}
 ```
 
-Optional `readout` shows a value below the label. Readouts inherit the label's
+Optional `readout` shows a value below the label, whether the annotation is placed
+geographically or pinned to the viewport. For rulers it follows `showCustomText`. Readouts inherit the label's
 first text style and its paragraph alignment, including font size, color and
 emphasis. Empty labels can also carry this formatting. Use `{ "type": "time", "format":
 "YYYY-MM-DD" }` for the current UTC data-timeline time. It follows the end of the
@@ -919,7 +920,7 @@ including GPU time filters. Missing timeline/data values display an em dash.
 Use `map.update-annotation` with an existing `id` and only the fields to change,
 for example `{ "id": "date", "viewport": { "anchor": "top-right", "margin":
 [32,24] } }`. Pass `readout: null` to return to static text; pass `viewport: null`
-and `readout: null` with geographic `anchorPoint` to return to map placement.
+with a geographic `anchorPoint` to return to map placement while retaining the readout.
 Label and style edits follow the same rules as geographic annotations; omitted
 settings are preserved. Existing ids are never replaced by `map.add-annotation`.
 

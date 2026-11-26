@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {A5Layer as DeckA5Layer} from '@deck.gl/geo-layers';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {cellToBoundary, hexToU64} from 'a5-js';
@@ -184,6 +185,34 @@ export default class A5GeometryLayer extends Layer {
     this.registerVisConfig(A5VisConfigs);
     this.getPositionAccessor = (dataContainer: DataContainerInterface) =>
       A5TokenAccessor(this.config.columns)(dataContainer);
+  }
+
+  get animatableProps(): readonly LayerAnimatableProp[] {
+    const props: LayerAnimatableProp[] = [
+      ...super.animatableProps,
+      {name: 'color', label: 'Fill color', type: 'color'},
+      {name: 'strokeColor', label: 'Stroke color', type: 'color'},
+      {
+        name: 'thickness',
+        label: 'Stroke width',
+        range: this.visConfigSettings.thickness.range,
+        step: this.visConfigSettings.thickness.step
+      },
+      {
+        name: 'elevationScale',
+        label: 'Elevation scale',
+        range: this.visConfigSettings.elevationScale.range,
+        step: this.visConfigSettings.elevationScale.step
+      }
+    ];
+    return props.filter(
+      prop =>
+        (prop.name !== 'color' || (this.config.visConfig.filled && !this.config.colorField)) &&
+        (prop.name !== 'strokeColor' ||
+          (this.config.visConfig.stroked && !this.config.strokeColorField)) &&
+        (prop.name !== 'thickness' || this.config.visConfig.stroked) &&
+        (prop.name !== 'elevationScale' || this.config.visConfig.enable3d)
+    );
   }
 
   get type(): 'a5' {

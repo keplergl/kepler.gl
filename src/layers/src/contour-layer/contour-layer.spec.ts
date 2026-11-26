@@ -37,6 +37,7 @@ import {buildContourMesh} from './contour-mesh';
 import SchemaManager from '@kepler.gl/schemas';
 import {
   calculateLayerData,
+  renderDeckGlLayer,
   INITIAL_VIS_STATE,
   layerTypeChangeUpdater,
   removeLayerUpdater,
@@ -501,6 +502,114 @@ function renderContourPasses(layer: ContourLayer, dataset: KeplerTable, data) {
     mapState: {zoom: 10}
   });
 }
+
+test('animates contour elevation, fill and outline without mutating authored settings', async () => {
+  const {layer, datasets} = await setup();
+  layer.updateLayerVisConfig({enable3d: true, elevationScale: 1, contourColor: [10, 20, 30]});
+  const track = (startValue, endValue) => [
+    {
+      id: 'transition',
+      startTimeMs: 1000,
+      endTimeMs: 3000,
+      startValue,
+      endValue,
+      easing: 'linear' as const
+    }
+  ];
+  layer.updateLayerConfig({
+    propertyTransitions: {
+      elevationScale: track(0, 4),
+      fillOpacity: track(0, 1),
+      thickness: track(1, 5),
+      color: track([0, 20, 40], [200, 120, 80]),
+      contourColor: track([20, 40, 60], [120, 140, 160])
+    }
+  });
+  const authored = layer.config;
+  const saved = JSON.parse(JSON.stringify(authored));
+  const data = layer.formatLayerData(datasets);
+  const onLayerError = jest.fn();
+  const render = animationTimeMs =>
+    renderDeckGlLayer(
+      {
+        layer,
+        datasets,
+        data,
+        animationTimeMs,
+        layerIndex: 0,
+        mapState: {zoom: 10},
+        animationConfig: StateWFiles.visState.animationConfig
+      },
+      {onLayerError}
+    );
+  const middle = render(2000);
+  const fill = middle.find(pass => pass.id === `${layer.id}-surface-fill`);
+  const outline = middle.find(pass => pass.id === `${layer.id}-outline`);
+  expect(fill.props.modelMatrix[10]).toBe(2);
+  expect(fill.props.getFillColor).toEqual([100, 70, 60, 128]);
+  expect(outline.props.getLineWidth).toBe(3);
+  const readOutline = () => outline.props.getLineColor(data.data[0]);
+  expect(readOutline().slice(0, 3)).toEqual([70, 90, 110]);
+  const end = render(5000).find(pass => pass.id === fill.id);
+  expect(end.props.modelMatrix[10]).toBe(4);
+  expect(end.props.getFillColor).toEqual([200, 120, 80, 255]);
+  const restored = render(null).find(pass => pass.id === fill.id);
+  expect(restored.props.modelMatrix[10]).toBe(1);
+  expect(readOutline().slice(0, 3)).toEqual([70, 90, 110]);
+  expect(fill.props.data).toBe(end.props.data);
+  expect(restored.props.data).toBe(fill.props.data);
+  expect(layer.config).toBe(authored);
+  expect(layer.config).toEqual(saved);
+  expect(onLayerError).not.toHaveBeenCalled();
+});
+
+test('saved Fill and 3D surface cuts switch only the rendered passes at their times', async () => {
+  const {layer, dataset, datasets} = await setup();
+  layer.updateLayerVisConfig({filled: true, stroked: true, enable3d: false});
+  const cut = (id: string, time: number, startValue: number, endValue: number) => ({
+    id,
+    startTimeMs: time,
+    endTimeMs: time,
+    startValue,
+    endValue,
+    easing: 'linear' as const
+  });
+  const propertyTransitions = {
+    enable3d: [cut('raise', 1000, 0, 1)],
+    filled: [cut('hide', 2000, 1, 0), cut('show', 3000, 0, 1)]
+  };
+  layer.updateLayerConfig({propertyTransitions});
+  const saved = SchemaManager.getConfigToSave({
+    ...StateWFiles,
+    visState: {...StateWFiles.visState, layers: [layer], layerOrder: [layer.id]}
+  });
+  const parsed = SchemaManager.parseSavedConfig(saved);
+  const loaded = validateLayerWithData(dataset, parsed!.visState!.layers![0], LayerClasses)!;
+  expect(loaded.config.propertyTransitions).toEqual(propertyTransitions);
+  const authored = loaded.config;
+  const data = loaded.formatLayerData(datasets);
+  const onLayerError = jest.fn();
+  const render = (animationTimeMs: number | null) =>
+    renderDeckGlLayer(
+      {
+        layer: loaded,
+        datasets,
+        data,
+        animationTimeMs,
+        layerIndex: 0,
+        mapState: {zoom: 10},
+        animationConfig: StateWFiles.visState.animationConfig
+      },
+      {onLayerError}
+    ).map(pass => pass.id);
+  expect(render(999)).toEqual([`${loaded.id}-fill`, `${loaded.id}-outline`]);
+  expect(render(1000)).toContain(`${loaded.id}-surface-fill`);
+  expect(render(2000)).toEqual([`${loaded.id}-outline`]);
+  expect(render(3000)).toContain(`${loaded.id}-surface-fill`);
+  expect(render(null)).toEqual([`${loaded.id}-fill`, `${loaded.id}-outline`]);
+  expect(loaded.config).toBe(authored);
+  expect(onLayerError).not.toHaveBeenCalled();
+});
 
 test.each([true, false])(
   'globe depth disk occludes 3D contours with inherited culling and depth writes %s',

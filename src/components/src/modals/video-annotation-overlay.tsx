@@ -43,10 +43,15 @@ export function VideoAnnotationOverlay({
     zoom: mapState.zoom - (mapState.zoomOffset || 0),
     width: width / displayScale,
     height: height / displayScale
-  }) as unknown as Pick<MapViewport, 'project' | 'unproject'>;
+  }) as unknown as Pick<
+    MapViewport,
+    'project' | 'unproject' | 'projectPosition' | 'cameraPosition'
+  >;
   const viewport = {
     project: (position: ReadonlyArray<number>) => projectedViewport.project(position),
     unproject: (position: ReadonlyArray<number>) => projectedViewport.unproject(position),
+    cameraPosition: projectedViewport.cameraPosition,
+    projectPosition: projectedViewport.projectPosition?.bind(projectedViewport),
     longitude: mapState.longitude,
     latitude: mapState.latitude,
     width: width / displayScale,

@@ -693,6 +693,42 @@ describe('effects panel animation preview', () => {
       }
     } as unknown as Layer);
 
+  test('the final switch is visible during looping playback', () => {
+    const layer = {
+      id: 'contours',
+      config: {
+        isVisible: true,
+        visConfig: {enable3d: false},
+        propertyTransitions: {
+          enable3d: [
+            {
+              id: 'raise',
+              startTimeMs: 2000,
+              endTimeMs: 2000,
+              startValue: 0,
+              endValue: 1,
+              easing: 'linear'
+            }
+          ]
+        }
+      },
+      animatableProps: [{name: 'enable3d', label: '3D surface', type: 'toggle'}]
+    } as unknown as Layer;
+    const view = setup([], true, {layers: [layer], managerOpen: false});
+    expect(view.playback().duration).toBe(3000);
+    act(() => view.playback().setLoop(true));
+    act(() => view.playback().run());
+    advanceFrame(1999);
+    expect(view.layerProperties()).toEqual([{enable3d: false}]);
+    advanceFrame(2000);
+    expect(view.layerProperties()).toEqual([{enable3d: true}]);
+    advanceFrame(2999);
+    expect(view.layerProperties()).toEqual([{enable3d: true}]);
+    advanceFrame(3000);
+    expect(view.layerProperties()).toEqual([{enable3d: false}]);
+    expect(layer.config.visConfig.enable3d).toBe(false);
+  });
+
   test('multiple layer opacity blocks set playback duration and hold their endpoints through gaps', () => {
     const layer = opacityLayer();
     const saved = JSON.stringify(layer.config);
