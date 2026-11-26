@@ -31,6 +31,54 @@ const configToSave = KeplerGlSchema.getConfigToSave(state.keplerGl.foo);
 // configToSave = {version: '', config: {}}
 ```
 
+### Observe saved configuration changes
+
+To react to changes such as hiding a layer or changing its color, subscribe to your embedding app's Redux store. Read the Kepler instance by its component ID and compare snapshots from `getConfigToSave()`, rather than checking whether the whole Redux state or a layer object changed.
+
+```js
+import KeplerGlSchema from '@kepler.gl/schemas';
+
+function observeSavedConfig(store, mapId, onChange) {
+  const readConfig = () => {
+    const map = store.getState().keplerGl?.[mapId];
+    return map ? JSON.stringify(KeplerGlSchema.getConfigToSave(map)) : undefined;
+  };
+
+  let previous = readConfig();
+  let timer;
+
+  const unsubscribe = store.subscribe(() => {
+    if (timer !== undefined) return;
+
+    // Read the latest state once per burst, not after every dispatched action.
+    timer = setTimeout(() => {
+      timer = undefined;
+      const next = readConfig();
+      if (next === previous) return;
+
+      const wasMounted = previous !== undefined;
+      previous = next;
+      if (wasMounted && next !== undefined) onChange(JSON.parse(next));
+    }, 100);
+  });
+
+  return () => {
+    unsubscribe();
+    clearTimeout(timer);
+  };
+}
+
+// Use the same ID as <KeplerGl id="foo" />.
+const stopObserving = observeSavedConfig(store, 'foo', config => {
+  // For example, a layer's visibility or color changed.
+  console.log('Saved map configuration changed', config);
+});
+
+// Call stopObserving() when the host no longer needs updates.
+```
+
+The first snapshot establishes a baseline. The callback reports the latest saved configuration, so it also sees programmatic edits and saved camera changes, not just gestures in the layer panel. If you only care about layer settings, compare `getConfigToSave(map).config.visState.layers` instead. The comparison does not serialize dataset rows; use `save()` separately when you need to persist datasets as well.
+
 ### Load map
 Pass saved data and config to `SchemaManager.load()`
 - `SchemaManager.load()` will parsed saved config and data, apply version control, the output can then be passed to `addDataToMap` directly.
