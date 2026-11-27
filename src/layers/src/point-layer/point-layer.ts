@@ -491,15 +491,24 @@ export default class PointLayer extends Layer {
     const copied = super.copyLayerConfig(...args);
     // The base copier skips keys absent from default config. Keep the setting
     // opt-in so existing Point layers keep their original config shape.
-    if (
-      current === this.config.visConfig &&
-      typeof source.fillOpacityField === 'string' &&
-      source.fillOpacityField &&
-      !options?.notToCopy?.includes('fillOpacityField')
-    ) {
-      return {...copied, fillOpacityField: source.fillOpacityField};
+    if (current === this.config.visConfig && !options?.notToCopy?.includes('fillOpacityField')) {
+      if (typeof source.fillOpacityField === 'string' && source.fillOpacityField) {
+        return {...copied, fillOpacityField: source.fillOpacityField};
+      }
+      delete copied['fillOpacityField'];
     }
     return copied;
+  }
+
+  validateVisConfig(dataset: KeplerTable, visConfig: PointLayerVisConfig): PointLayerVisConfig {
+    const {fillOpacityField, ...rest} = visConfig;
+    return dataset.fields.some(
+      field =>
+        field.name === fillOpacityField &&
+        (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+    )
+      ? visConfig
+      : rest;
   }
 
   get type(): 'point' {
@@ -871,7 +880,8 @@ export default class PointLayer extends Layer {
     }
   }
 
-  // Keep accessor identity stable across renders, including Arrow batch caches.
+  // Reuse the accessor while field and base color are unchanged. Animated base
+  // colors get a new accessor so previously rendered frames keep their own color.
   private getFillOpacityAccessor(
     key: 'fill' | 'highlight',
     field: Field,

@@ -12895,7 +12895,7 @@ test('#visStateReducer -> Point events follow timestamp filters without a layer 
   t.end();
 });
 
-test('#visStateReducer -> a Point fill opacity field follows column renames', async t => {
+test('#visStateReducer -> a Point fill opacity field follows schema changes', async t => {
   const dataset = new KeplerTable({info: {id: 'point-alpha'}, color: [0, 0, 0]});
   await dataset.importData({
     data: {
@@ -12934,5 +12934,45 @@ test('#visStateReducer -> a Point fill opacity field follows column renames', as
     'renderer receives renamed field'
   );
   t.equal(state.layers[0].config.visConfig.fillOpacityField, 'strength', 'old state is unchanged');
+
+  for (const replacement of [
+    {fields: dataset.fields.slice(0, 2), rows: [[1, 2]]},
+    {
+      fields: [...dataset.fields.slice(0, 2), {name: 'strength', type: 'string'}],
+      rows: [[1, 2, 'text']]
+    }
+  ]) {
+    const updated = reducer(state, VisStateActions.updateDataset(dataset.id, replacement));
+    t.equal(updated.layers.length, 1, 'schema changes preserve the Point layer');
+    t.notOk(
+      'fillOpacityField' in updated.layers[0].config.visConfig,
+      'missing or nonnumeric fields clear the selection'
+    );
+    t.notOk(updated.layerData[0].fillOpacityField, 'renderer no longer applies field opacity');
+    const saved = serializeLayer(updated.layers[0], updated.schema);
+    t.notOk('fillOpacityField' in saved.config.visConfig, 'saved maps omit the stale selection');
+    const restored = validateLayerWithData(
+      updated.datasets[dataset.id],
+      serializeLayer(state.layers[0], state.schema),
+      LayerClasses
+    );
+    t.notOk(
+      'fillOpacityField' in restored.config.visConfig,
+      'loading an older saved selection also validates against the current schema'
+    );
+    const addedBack = reducer(
+      updated,
+      VisStateActions.updateDataset(dataset.id, {fields: dataset.fields, rows: [[1, 2, 0]]})
+    );
+    t.notOk(
+      addedBack.layerData[0].fillOpacityField,
+      'readding the column does not reactivate opacity'
+    );
+    t.equal(
+      state.layers[0].config.visConfig.fillOpacityField,
+      'strength',
+      'prior state is preserved'
+    );
+  }
   t.end();
 });

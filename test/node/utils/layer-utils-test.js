@@ -1323,19 +1323,36 @@ test('layerUtils -> timed visibility composes with zoom fades without changing s
   t.end();
 });
 
+test('layerUtils -> copying Point fill opacity clears stale selections', t => {
+  const layer = new PointLayer({dataId: 'survey'});
+  layer.updateLayerVisConfig({fillOpacityField: 'strength'});
+  for (const source of [{}, {fillOpacityField: ''}]) {
+    const copied = layer.copyLayerConfig(layer.config, {visConfig: source});
+    t.notOk('fillOpacityField' in copied.visConfig, 'a config without a selection clears it');
+    t.equal(layer.config.visConfig.fillOpacityField, 'strength', 'copying preserves its input');
+  }
+  const excluded = layer.copyLayerConfig(
+    layer.config,
+    {visConfig: {}},
+    {notToCopy: ['fillOpacityField']}
+  );
+  t.equal(excluded.visConfig.fillOpacityField, 'strength', 'explicit copy exclusions are honored');
+  t.end();
+});
+
 test('layerUtils -> Point fill opacity field preserves zero, missing values, stroke and animation', async t => {
-  const fields = ['lat', 'lng', 'strength', 'label', 'other'].map((name, fieldIdx) => ({
+  const fields = ['lat', 'lng', 'strength', 'label', 'other', 'time'].map((name, fieldIdx) => ({
     name,
     fieldIdx,
-    type: name === 'label' ? 'string' : 'real',
+    type: name === 'label' ? 'string' : name === 'time' ? 'timestamp' : 'real',
     format: ''
   }));
   const rows = [
-    [1, 2, 0, 'zero', 1],
-    [2, 3, 0.5, 'half', 0],
-    [3, 4, null, 'missing', 1],
-    [4, 5, 2, 'above', 0],
-    [5, 6, -1, 'below', 1]
+    [1, 2, 0, 'zero', 1, 1000],
+    [2, 3, 0.5, 'half', 0, 1000],
+    [3, 4, null, 'missing', 1, 1000],
+    [4, 5, 2, 'above', 0, 1000],
+    [5, 6, -1, 'below', 1, 1000]
   ];
   for (const useArrow of [false, true]) {
     const dataset = new KeplerTable({info: {id: 'survey'}});
@@ -1363,7 +1380,7 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
     });
     layer.updateLayerVisConfig({filled: true, outline: true, opacity: 0.6});
     const datasets = {survey: dataset};
-    const renderLayers = (layerData, animationTimeMs, filters) =>
+    const renderLayers = (layerData, animationTimeMs, filters, hoverInfo) =>
       renderDeckGlLayer(
         {
           layer,
@@ -1372,7 +1389,8 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
           mapState: INITIAL_MAP_STATE,
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
           animationTimeMs,
-          filters
+          filters,
+          hoverInfo
         },
         {}
       );
@@ -1486,6 +1504,45 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
     }
     layer.updateLayerVisConfig({glowEnabled: false, pulseEnabled: false});
 
+    const renderHover = (layerData, index, filters) =>
+      renderLayers(layerData, undefined, filters, {
+        picked: true,
+        index,
+        object: useArrow ? dataset.dataContainer.getTable().get(index) : layerData.data[index],
+        layer: {props: {id: useArrow ? `${layer.id}-0` : layer.id}}
+      }).find(deckLayer => deckLayer.id === `${layer.id}-hovered`);
+    const hoverFill = hovered => {
+      const color = hovered.props.getFillColor(hovered.props.data[0]);
+      return [color[0], color[1], color[2], color[3] ?? 255];
+    };
+    layer.updateLayerConfig({highlightColor: [90, 120, 150]});
+    layer.updateLayerVisConfig({showHighlightColor: true});
+    for (const index of [0, 1, 2]) {
+      const hovered = renderHover(data, index);
+      t.equal(hovered.props.data[0].index, index, 'hover resolves the original row index');
+      t.deepEqual(
+        hoverFill(hovered),
+        [90, 120, 150, alpha[index]],
+        'hover highlight respects zero, partial and missing opacity'
+      );
+      t.deepEqual(hovered.props.getLineColor, [90, 120, 150], 'hover stroke stays independent');
+    }
+    layer.updateLayerConfig({highlightColor: [60, 70, 80]});
+    t.deepEqual(hoverFill(renderHover(data, 1)), [60, 70, 80, 128], 'highlight color refreshes');
+    layer.updateLayerVisConfig({
+      ageStyle: {timeField: 'time', stops: [{ageMs: 0, opacity: 0.5}]}
+    });
+    t.deepEqual(
+      hoverFill(
+        renderHover(data, 1, [
+          {type: FILTER_TYPES.timeRange, dataId: ['survey'], name: ['time'], value: [1000, 1500]}
+        ])
+      ),
+      [60, 70, 80, 64],
+      'hover multiplies age-style alpha by the selected field'
+    );
+    layer.updateLayerVisConfig({ageStyle: undefined});
+
     layer.updateLayerVisConfig({fillOpacityField: 'other'});
     const switched = layer.formatLayerData(datasets, data);
     const nextFrame = render(switched);
@@ -1501,6 +1558,11 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
         })()
       : nextFrame.props.getFillColor({index: 1});
     t.deepEqual(value, [10, 20, 30, 0], 'updated renderer uses the replacement field');
+    t.deepEqual(
+      hoverFill(renderHover(switched, 1)),
+      [60, 70, 80, 0],
+      'hover refreshes when the opacity field changes'
+    );
 
     layer.updateLayerVisConfig({fillOpacityField: ''});
     const cleared = layer.formatLayerData(datasets, switched);
