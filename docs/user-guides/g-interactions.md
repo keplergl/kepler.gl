@@ -2,6 +2,7 @@
 
 <!-- TOC -->
   - [Tooltips](#tooltips)
+    - [Charts in feature tooltips](#charts-in-feature-tooltips)
   - [Brushing](#brushing)
   - [Display Coordinates](#display-coordinates)
   - [Bookmarks](#bookmarks)
@@ -48,6 +49,27 @@ Tip: click a point to pin the tooltip info to the map. To unpin the tooltip, pre
 
 ![pin/unpin tooltip](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image15.png "pin/unpin tooltip")
 
+
+### Charts in feature tooltips
+
+Use a tooltip chart to show the history or category breakdown of one map feature, such as readings from a monitoring station. Unlike dataset charts, tooltip charts are tied to a layer and appear below the fields in that layer's tooltip.
+
+1. Turn on **Tooltip** in **Interactions**.
+2. Open **Charts** from the map controls (**Show charts**), then click **Add** and choose **Tooltip: Time Series** or **Tooltip: Category**.
+3. In the chart settings, choose the **Layer**. For a time series, set **X axis** to a timestamp and **Y axis** to the measure you want to plot, then choose an aggregation. For a category chart, choose the category under **Field**.
+4. Under **Feature id field**, choose a column whose value is the same on every row for a given feature, such as a station ID. Leave it unset to chart just the picked row.
+5. Hover over a feature in that layer to see its chart, or click to pin the tooltip.
+
+For example, load this CSV as a Point layer:
+
+```csv
+station_id,lat,lng,recorded_at,temperature
+north,37.79,-122.42,2026-01-01T12:00:00Z,12
+south,37.73,-122.41,2026-01-01T12:00:00Z,17
+north,37.79,-122.42,2026-01-02T12:00:00Z,14
+```
+
+For **Tooltip: Time Series**, set **Feature id field** to `station_id`, **X axis** to `recorded_at` with a daily **Period**, and **Y axis** to `temperature` with **Average** aggregation. Hovering over the north station charts 12 and 14 on separate days, without including the south station's reading. Matching readings come from the full layer dataset, even when map filters hide some of those readings.
 
 ## Brushing
 - __Brush__: Brush allows you to highlight areas with the cursor. When brush is turned on, all layers darken. Only the portion you hover over with the cursor is illuminated. Brush works well with arc layers in particular.
