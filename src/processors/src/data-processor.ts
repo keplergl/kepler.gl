@@ -126,66 +126,23 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   }
 };
 
-// Match complete decimal and scientific notation before considering a string
-// unsafe. Hex, identifiers, and arbitrary text keep their existing inference.
+// Require complete decimal/scientific values so parseFloat won't accept text prefixes or hex.
 const CSV_DECIMAL = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
 
-function isUnsafeCsvDecimal(value: unknown): boolean {
-  if (typeof value !== 'string' || !/[.e]/i.test(value) || !CSV_DECIMAL.test(value)) {
-    return false;
-  }
-  const number = Number(value);
-  if (!Number.isFinite(number)) return true;
-  if (!Number.isInteger(number)) return false;
-
-  // A decimal's fraction can round away even within the safe-integer range.
-  // Locate its last nonzero digit, then compare integer values exactly: some
-  // integers above 2^53 (such as 1e16) are still representable as doubles.
-  const [mantissa, exponent = '0'] = value.toLowerCase().split('e');
-  const [whole, fraction = ''] = mantissa.split('.');
-  const digits = whole + fraction;
-  const significant = digits.replace(/0+$/, '');
-  if (!/[1-9]/.test(significant)) return false;
-  const scale = Number(exponent) + digits.length - significant.length - fraction.length;
-  if (scale < 0) return true;
-  return BigInt(number) !== BigInt(significant + '0'.repeat(scale));
-}
-
 /** Inspect the existing sample only; never rescan the imported rows. */
-function getCsvNumericOverride(
-  sample: readonly Record<string, unknown>[],
-  field: Field
-): 'real' | 'string' | undefined {
-  const {name, type} = field;
-  if (
-    !sample.some(row => {
-      const value = row[name];
-      return typeof value === 'string'
-        ? /[.e]/i.test(value)
-        : typeof value === 'number' && !Number.isInteger(value);
-    })
-  ) {
-    return;
-  }
-
-  if (sample.some(row => isUnsafeCsvDecimal(row[name]))) return ALL_FIELD_TYPES.string;
-  if (type !== ALL_FIELD_TYPES.integer) return;
-
-  // The analyzer can tolerate a few INT mismatches. Widen only fully numeric
-  // samples that don't include padded or unsafe integer identifiers.
-  const acceptsReal = sample.every(row => {
+function hasFractionalCsvSample(sample: readonly Record<string, unknown>[], name: string): boolean {
+  let hasFraction = false;
+  for (const row of sample) {
     const value = row[name];
-    if (typeof value === 'string') {
-      if (!CSV_DECIMAL.test(value) || /^[+-]?0\d+$/.test(value)) return false;
-      // Decimal/scientific strings already passed the exactness check above.
-      return /[.e]/i.test(value) || Number.isSafeInteger(Number(value));
+    if (!notNullorUndefined(value)) continue;
+    if (typeof value !== 'number' && (typeof value !== 'string' || !CSV_DECIMAL.test(value))) {
+      return false;
     }
-    if (typeof value === 'number') {
-      return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value));
-    }
-    return !notNullorUndefined(value);
-  });
-  return acceptsReal ? ALL_FIELD_TYPES.real : undefined;
+    const number = Number(value);
+    if (!Number.isFinite(number)) return false;
+    hasFraction ||= !Number.isInteger(number);
+  }
+  return hasFraction;
 }
 
 /**
@@ -263,8 +220,8 @@ function processRowsWithHeader(
       // The analyzer tolerates some non-date samples; keep reporting labels as text.
       const {name, type} = field;
       const override =
-        type === ALL_FIELD_TYPES.integer || type === ALL_FIELD_TYPES.real
-          ? getCsvNumericOverride(sample, field)
+        type === ALL_FIELD_TYPES.integer && hasFractionalCsvSample(sample, name)
+          ? ALL_FIELD_TYPES.real
           : type === ALL_FIELD_TYPES.date && sample.some(row => isNonDateCsvSample(row[name]))
           ? ALL_FIELD_TYPES.string
           : undefined;

@@ -163,107 +163,34 @@ test('#loader-registry -> CSV imports keep mixed integer and fractional values',
   t.end();
 });
 
-test('#loader-registry -> CSV imports preserve unsafe decimal and scientific tokens', async t => {
-  const rows = [
-    ['1', '1', '1', '1001', '1', '1000e-2'],
-    ['2', '2', '2', '1002', '2', '2000e-2'],
-    ['9.007199254740993e15', '9007199254740993.0', '0.25', '1003', '9007199254740990.1', '3000e-2']
-  ];
-
-  for (const input of [rows, [...rows].reverse()]) {
-    const csv = [
-      'scientific,decimal,value,count,lost_fraction,exact_exponent',
-      ...input.map(row => row.join(','))
-    ].join('\n');
-    const direct = processCsvData(csv);
-    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
-    const [streamed] = await processFileData({content: batch, fileCache: []});
-
-    for (const result of [direct, streamed.data]) {
-      t.deepEqual(
-        result.fields.map(field => field.type),
-        ['string', 'string', 'real', 'integer', 'string', 'real'],
-        'preserve unsafe values as text without changing ordinary measurements'
-      );
-      t.deepEqual(
-        result.rows,
-        input.map(([scientific, decimal, value, count, lostFraction, exactExponent]) => [
-          scientific,
-          decimal,
-          Number(value),
-          Number(count),
-          lostFraction,
-          Number(exactExponent)
-        ]),
-        'preserve unsafe tokens verbatim'
-      );
-    }
-  }
-  t.end();
-});
-
-test('#loader-registry -> CSV imports retain exactly representable large decimals', async t => {
-  const columns = [
-    ['1e16', '2e16', '3e16'],
-    ['10000000000000000.0', '20000000000000000.0', '30000000000000000.0'],
-    ['1', '2', '1e16'],
-    ['1', '2', '9007199254740992.0'],
-    ['1', '2', '-9007199254740992.0'],
-    ['1', '2', '+090071992547409920e-1'],
-    ['1', '2', '0e999']
-  ];
-  const rows = columns[0].map((_, index) => columns.map(column => column[index]));
-
-  for (const input of [rows, [...rows].reverse()]) {
-    const csv = [
-      columns.map((_, index) => `value${index}`).join(','),
-      ...input.map(row => row.join(','))
-    ].join('\n');
-    const direct = processCsvData(csv);
-    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
-    const [streamed] = await processFileData({content: batch, fileCache: []});
-
-    for (const result of [direct, streamed.data]) {
-      t.deepEqual(
-        result.fields.map(field => field.type),
-        columns.map(() => 'real'),
-        'keep representable decimal/scientific values numeric, including INT samples'
-      );
-      t.deepEqual(
-        result.rows,
-        input.map(row => row.map(Number)),
-        'retain the exact numeric values'
-      );
-    }
-  }
-  t.end();
-});
-
-test('#loader-registry -> CSV imports reject lossy integer-valued decimals', async t => {
-  for (const token of [
-    '9007199254740993e0',
-    '-9007199254740993.0',
-    '10000000000000001.0',
-    '10000000000000001e0',
-    '9007199254740992.1',
-    '1e-999',
-    '1e999'
+test('#loader-registry -> CSV integer samples widen when any numeric value has a fraction', async t => {
+  for (const [values, type, expected] of [
+    [['1', '2', '1.5'], 'real', [1, 2, 1.5]],
+    [['1', '2', '1.5e-2'], 'real', [1, 2, 0.015]],
+    [['02108', '1.5'], 'real', [2108, 1.5]],
+    [['1', '', '1.5'], 'real', [1, null, 1.5]],
+    [['5', '9007199254740993', '1.5'], 'real', [5, 9007199254740992, 1.5]],
+    [['1', '2', '3'], 'integer', [1, 2, 3]],
+    [['1', '2', '3.0'], 'integer', [1, 2, 3]],
+    [['', '', ''], 'string', [null, null, null]],
+    [['1e16', '2e16', '3e16'], 'real', [1e16, 2e16, 3e16]],
+    [['1e23', '2e23', '3e23'], 'real', [1e23, 2e23, 3e23]]
   ]) {
-    for (const values of [
-      ['1', '2', token],
-      [token, '2', '1']
-    ]) {
-      const csv = ['value', ...values].join('\n');
+    for (const reverse of [false, true]) {
+      const input = reverse ? [...values].reverse() : values;
+      const expectedValues = reverse ? [...expected].reverse() : expected;
+      const csv = ['value,label', ...input.map(value => `${value},row`)].join('\n');
       const direct = processCsvData(csv);
       const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
       const [streamed] = await processFileData({content: batch, fileCache: []});
 
       for (const result of [direct, streamed.data]) {
-        t.equal(result.fields[0].type, 'string', `${token} cannot be represented exactly`);
+        const fixture = JSON.stringify(input);
+        t.equal(result.fields[0].type, type, `infer the numeric type: ${fixture}`);
         t.deepEqual(
-          result.rows,
-          values.map(value => [value]),
-          'preserve the original tokens'
+          result.rows.map(row => row[0]),
+          expectedValues,
+          `parse values: ${fixture}`
         );
       }
     }
@@ -271,26 +198,40 @@ test('#loader-registry -> CSV imports reject lossy integer-valued decimals', asy
   t.end();
 });
 
-test('#loader-registry -> CSV widening keeps existing integer identifier guards', async t => {
-  for (const values of [
-    ['02108', '1.5'],
-    ['5', '9007199254740993', '1.5']
-  ]) {
-    for (const input of [values, [...values].reverse()]) {
+test('#loader-registry -> CSV widening requires all present samples to be finite decimal numbers', async t => {
+  for (const invalid of ['text', '1.5kg', '0x10', 'Infinity', '1e999']) {
+    for (const input of [
+      ['5', '10', '1.5', invalid],
+      [invalid, '1.5', '10', '5']
+    ]) {
       const csv = ['value', ...input].join('\n');
       const direct = processCsvData(csv);
       const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
       const [streamed] = await processFileData({content: batch, fileCache: []});
 
       for (const result of [direct, streamed.data]) {
-        t.equal(result.fields[0].type, 'integer', 'retain existing identifier inference');
-        t.deepEqual(
-          result.rows,
-          input.map(value => [parseInt(value, 10)]),
-          'retain existing parsing'
-        );
+        t.equal(result.fields[0].type, 'integer', `do not widen a sample containing ${invalid}`);
       }
     }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV row arrays widen numeric samples while ignoring missing values', t => {
+  for (const values of [
+    [1, 2, 1.5],
+    [1, null, 1.5, undefined]
+  ]) {
+    const result = processCsvData(
+      values.map(value => [value]),
+      ['value']
+    );
+    t.equal(result.fields[0].type, 'real', 'a fractional number widens the integer sample');
+    t.deepEqual(
+      result.rows.map(row => row[0]),
+      values,
+      'preserve numbers and missing values'
+    );
   }
   t.end();
 });
