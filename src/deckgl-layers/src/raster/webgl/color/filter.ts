@@ -101,3 +101,19 @@ export const filter: ShaderModule = {
     `
   }
 };
+
+/** Uniforms used by the raw band sampler before color processing. */
+export const rawBandThreshold: ShaderModule = {
+  name: 'rawBandThreshold',
+  defines: {KEPLER_RAW_BAND_THRESHOLD: '1'},
+  fs: `uniform rawBandThresholdUniforms { highp float maximum; int channel; } rawBandThreshold;`,
+  uniformTypes: {maximum: 'f32', channel: 'i32'},
+  getUniforms: ({
+    rawBandMaximum,
+    rawBandChannel = 0
+  }: {
+    rawBandMaximum?: number;
+    rawBandChannel?: number;
+  } = {}) =>
+    Number.isFinite(rawBandMaximum) ? {maximum: rawBandMaximum, channel: rawBandChannel} : null
+};

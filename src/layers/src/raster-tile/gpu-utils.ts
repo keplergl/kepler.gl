@@ -39,6 +39,7 @@ const {
   modifiedSoilAdjustedVegetationIndex,
   colormap: colormapModule,
   filter,
+  rawBandThreshold,
   saturation,
   reorderBands,
   rgbaImage
@@ -449,6 +450,7 @@ export function getModules({
     bandCombination,
     filterEnabled,
     filterRange,
+    valueThreshold,
     dataType,
     minCategoricalBandValue,
     maxCategoricalBandValue,
@@ -470,6 +472,18 @@ export function getModules({
   if (Array.isArray(renderBandIndexes)) {
     modules.push(reorderBands);
     moduleProps.ordering = renderBandIndexes;
+  }
+
+  if (
+    bandCombination === 'single' &&
+    images.imageBands?.length &&
+    typeof valueThreshold === 'number' &&
+    Number.isFinite(Math.fround(valueThreshold))
+  ) {
+    // The sampler compares the selected channel before any stretch or contrast.
+    modules.push(rawBandThreshold);
+    moduleProps.rawBandMaximum = valueThreshold;
+    moduleProps.rawBandChannel = renderBandIndexes?.[0] ?? 0;
   }
 
   const globalRange = maxPixelValue - minPixelValue;

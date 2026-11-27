@@ -173,6 +173,8 @@ export type RasterTileLayerVisConfigSettings = RasterTileLayerVisConfigCommonSet
   sigmoidalContrastFactor: VisConfigNumber;
   sigmoidalBiasFactor: VisConfigNumber;
   saturationValue: VisConfigNumber;
+  valueThresholdEnabled: VisConfigBoolean;
+  valueThreshold: VisConfigInput;
   filterEnabled: VisConfigBoolean;
   filterRange: VisConfigRange;
   _stacQuery: VisConfigInput;
@@ -191,15 +193,52 @@ export default class RasterTileLayer extends KeplerLayer {
 
   get animatableProps(): readonly LayerAnimatableProp[] {
     const {visConfig} = this.config;
-    if (
-      this.meta.isPMTiles ||
-      visConfig.colorRange?.colorMap ||
-      !isRescalingAllowed(PRESET_OPTIONS[visConfig.preset]?.bandCombination)
-    ) {
-      return super.animatableProps;
+    const bandCombination = PRESET_OPTIONS[visConfig.preset]?.bandCombination;
+    if (this.meta.isPMTiles) return super.animatableProps;
+    const hasThreshold =
+      bandCombination === 'single' &&
+      visConfig.valueThresholdEnabled &&
+      typeof visConfig.valueThreshold === 'number' &&
+      Number.isFinite(Math.fround(visConfig.valueThreshold));
+    const canRescale = !visConfig.colorRange?.colorMap && isRescalingAllowed(bandCombination);
+    if (!hasThreshold && !canRescale) return super.animatableProps;
+
+    const props: LayerAnimatableProp[] = [...super.animatableProps];
+    if (hasThreshold) {
+      const band = this._stac
+        ? this.getDataSourceParams(this._stac, visConfig.preset, {
+            singleBand: getSingleBandPresetOptions(this._stac, visConfig.singleBandName),
+            useBandStatistics: true
+          })
+        : null;
+      const isSupportedValue = (value: unknown): value is number =>
+        typeof value === 'number' && Number.isFinite(Math.fround(value));
+      const hasBandRange =
+        isSupportedValue(band?.minPixelValue) &&
+        isSupportedValue(band?.maxPixelValue) &&
+        band.minPixelValue <= band.maxPixelValue;
+      // Bounds also validate playback. Retain authored values outside the data range,
+      // including tracks restored before metadata or tiles have loaded.
+      const values = [
+        visConfig.valueThreshold,
+        ...(this.config.propertyTransitions?.valueThreshold ?? []).flatMap(track => [
+          track.startValue,
+          track.endValue
+        ])
+      ].filter(isSupportedValue);
+      props.push({
+        name: 'valueThreshold',
+        label: 'Maximum band value',
+        range: [
+          Math.min(hasBandRange ? band.minPixelValue : 0, ...values),
+          Math.max(hasBandRange ? band.maxPixelValue : 1, ...values)
+        ],
+        step: 0.01
+      });
     }
-    const props: LayerAnimatableProp[] = [
-      ...super.animatableProps,
+    if (!canRescale) return props;
+
+    props.push(
       ...[
         ['gammaContrastFactor', 'Gamma contrast'],
         ['sigmoidalContrastFactor', 'Sigmoidal contrast'],
@@ -211,7 +250,7 @@ export default class RasterTileLayer extends KeplerLayer {
         range: this.visConfigSettings[name].range,
         step: this.visConfigSettings[name].step
       }))
-    ];
+    );
     return props.filter(
       prop =>
         !['gammaContrastFactor', 'sigmoidalContrastFactor', 'sigmoidalBiasFactor'].includes(
@@ -822,6 +861,8 @@ export default class RasterTileLayer extends KeplerLayer {
       saturationValue,
       filterEnabled,
       filterRange,
+      valueThresholdEnabled,
+      valueThreshold,
       useSTACSearching,
       stacSearchProvider,
       startDate,
@@ -988,6 +1029,7 @@ export default class RasterTileLayer extends KeplerLayer {
       bandCombination,
       filterEnabled,
       filterRange,
+      valueThreshold: valueThresholdEnabled ? valueThreshold ?? undefined : undefined,
       dataType,
       minCategoricalBandValue,
       maxCategoricalBandValue,

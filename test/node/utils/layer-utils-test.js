@@ -11,6 +11,7 @@ import {
   getNeighbors,
   getGeojsonLayerMetaFromArrow,
   Layer,
+  RasterTileLayer,
   LayerClasses,
   KeplerGlLayers
 } from '@kepler.gl/layers';
@@ -25,6 +26,8 @@ import {
   INITIAL_VIS_STATE
 } from '@kepler.gl/reducers';
 import {StateWTripGeojson, StateWFiles} from 'test/helpers/mock-state';
+
+import {visStateSchemaV1} from '../../../src/schemas/src/vis-state-schema';
 
 const {PointLayer, ArcLayer, GeojsonLayer, LineLayer} = KeplerGlLayers;
 
@@ -2982,5 +2985,199 @@ test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbo
     );
     t.deepEqual(calls, indices, `${name} only resolves valid neighbor positions`);
   }
+  t.end();
+});
+
+test('layerUtils -> raw single-band raster cutoff follows the playhead without changing tile loads', t => {
+  const layer = new RasterTileLayer({id: 'arrival', dataId: 'raster'});
+  const propertyTransitions = {valueThreshold: propertyTrack('tide', 1, 1.8)};
+  layer.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true,
+    valueThreshold: -0.4
+  });
+  layer.updateLayerConfig({propertyTransitions});
+
+  const metadata = {
+    stac_version: '1.1.0',
+    type: 'Feature',
+    id: 'fixture',
+    bbox: [-1, -1, 1, 1],
+    assets: {
+      raster: {
+        href: 'https://example.com/arrival.tif',
+        type: 'image/tiff; application=geotiff; profile=cloud-optimized',
+        roles: ['data'],
+        bands: [{name: 'arrival', data_type: 'float32', statistics: {minimum: -0.4, maximum: 3}}]
+      }
+    }
+  };
+  const data = {dataset: {metadata}};
+  const render = animationTimeMs =>
+    renderDeckGlLayer(
+      {
+        layer,
+        data,
+        datasets: {raster: data.dataset},
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+        animationTimeMs
+      },
+      {}
+    )[0];
+
+  const initial = render(1000);
+  const end = render(3000);
+  const rewind = render(1000);
+  t.equal(initial?.props.valueThreshold, 1, 'start uses source units');
+  t.equal(end?.props.valueThreshold, 1.8, 'end uses the inclusive cutoff');
+  t.equal(rewind?.props.valueThreshold, 1, 'seeking backward restores the earlier cutoff');
+  t.deepEqual(
+    initial?.props.updateTriggers,
+    end?.props.updateTriggers,
+    'tile load triggers are stable'
+  );
+  t.equal(
+    layer.config.visConfig.valueThreshold,
+    -0.4,
+    'playback does not change the authored cutoff'
+  );
+
+  const saved = JSON.parse(
+    JSON.stringify(
+      visStateSchemaV1.save({...INITIAL_VIS_STATE, layers: [layer], layerOrder: [layer.id]})
+    )
+  );
+  const reopened = visStateSchemaV1.load(saved.visState).visState.layers[0];
+  t.equal(
+    reopened.config.visConfig.valueThreshold,
+    -0.4,
+    'config round-trip keeps authored cutoff'
+  );
+  t.equal(reopened.config.visConfig.valueThresholdEnabled, true, 'config round-trip keeps opt-in');
+  t.deepEqual(
+    reopened.config.propertyTransitions,
+    propertyTransitions,
+    'config round-trip keeps the track'
+  );
+
+  layer.updateLayerVisConfig({valueThresholdEnabled: false});
+  t.equal(render(3000)?.props.valueThreshold, undefined, 'off leaves the original raster unmasked');
+  const fresh = new RasterTileLayer({id: 'fresh-arrival', dataId: 'raster'});
+  fresh.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true
+  });
+  const firstRender = () =>
+    renderDeckGlLayer(
+      {
+        layer: fresh,
+        data,
+        datasets: {raster: data.dataset},
+        mapState: INITIAL_MAP_STATE,
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    )[0];
+  t.equal(
+    firstRender()?.props.valueThreshold,
+    undefined,
+    'first enable leaves the raster unmasked'
+  );
+  t.notOk(
+    fresh.animatableProps.some(prop => prop.name === 'valueThreshold'),
+    'no track until a cutoff is chosen'
+  );
+  fresh.updateLayerVisConfig({valueThreshold: 0});
+  t.equal(firstRender()?.props.valueThreshold, 0, 'an authored zero is not treated as unset');
+  t.ok(
+    fresh.animatableProps.some(prop => prop.name === 'valueThreshold'),
+    'an authored zero can be animated'
+  );
+  fresh.updateLayerVisConfig({valueThresholdEnabled: false});
+  t.equal(
+    firstRender()?.props.valueThreshold,
+    undefined,
+    'disabling temporarily removes the cutoff'
+  );
+  fresh.updateLayerVisConfig({valueThresholdEnabled: true});
+  t.equal(firstRender()?.props.valueThreshold, 0, 're-enabling restores the authored cutoff');
+
+  t.end();
+});
+
+test('layerUtils -> raster cutoff animation bounds follow the selected band and retain authored values', t => {
+  const layer = new RasterTileLayer({id: 'cutoff-bounds', dataId: 'raster'});
+  layer.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true,
+    valueThreshold: 0,
+    useBandStatistics: true
+  });
+  const range = () => layer.animatableProps.find(prop => prop.name === 'valueThreshold')?.range;
+  t.deepEqual(range(), [0, 1], 'missing metadata has usable bounds around the authored cutoff');
+
+  const render = (statistics, dataType = 'float32') => {
+    const metadata = {
+      stac_version: '1.1.0',
+      type: 'Feature',
+      id: 'fixture',
+      bbox: [-1, -1, 1, 1],
+      assets: {
+        raster: {
+          href: 'https://example.com/arrival.tif',
+          type: 'image/tiff; application=geotiff; profile=cloud-optimized',
+          roles: ['data'],
+          bands: [
+            {name: 'arrival', data_type: dataType, statistics},
+            {name: 'depth', data_type: dataType, statistics: {minimum: -10, maximum: 0}}
+          ]
+        }
+      }
+    };
+    layer.renderLayer({
+      data: {dataset: {metadata}},
+      mapState: INITIAL_MAP_STATE,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig
+    });
+  };
+
+  render({minimum: 0, maximum: 3});
+  t.deepEqual(range(), [0, 3], 'uses band statistics, including a zero minimum');
+  layer.updateLayerVisConfig({singleBandName: 'depth'});
+  t.deepEqual(range(), [-10, 0], 'switching bands uses its signed range and zero maximum');
+  layer.updateLayerVisConfig({singleBandName: 'arrival'});
+  render({minimum: 0, maximum: 0});
+  t.deepEqual(range(), [0, 0], 'a constant band retains its finite bounds');
+
+  for (const statistics of [
+    undefined,
+    {minimum: 3, maximum: 1},
+    {minimum: NaN, maximum: 3},
+    {minimum: 0, maximum: Infinity},
+    {minimum: -1e39, maximum: 1e39}
+  ]) {
+    render(statistics);
+    t.deepEqual(range(), [0, 1], 'missing or invalid float statistics use finite fallback bounds');
+  }
+  render(undefined, 'int16');
+  t.deepEqual(
+    range(),
+    [-32768, 32767],
+    'missing integer statistics use the signed data-type range'
+  );
+
+  layer.updateLayerVisConfig({valueThreshold: -2});
+  layer.updateLayerConfig({propertyTransitions: {valueThreshold: propertyTrack('cutoff', -5, 8)}});
+  render({minimum: 0, maximum: 3});
+  t.deepEqual(range(), [-5, 8], 'includes the authored cutoff and existing track endpoints');
+  t.equal(
+    getLayerAnimatedConfig(layer, 3000).visConfig.valueThreshold,
+    8,
+    'narrower data bounds do not change saved track playback'
+  );
   t.end();
 });

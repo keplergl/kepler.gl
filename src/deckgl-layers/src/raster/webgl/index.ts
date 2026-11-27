@@ -13,7 +13,7 @@ export {linearRescale} from './color/linear-rescale';
 export {sigmoidalContrast} from './color/sigmoidal-contrast';
 export {gammaContrast} from './color/gamma-contrast';
 export {saturation} from './color/saturation';
-export {filter} from './color/filter';
+export {filter, rawBandThreshold} from './color/filter';
 
 // Pansharpening
 export {pansharpenBrovey} from './pansharpen/pansharpen-brovey';

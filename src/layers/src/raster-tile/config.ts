@@ -720,6 +720,18 @@ export const rasterVisConfigs = {
     step: 0.05,
     type: 'number'
   } as VisConfigNumber,
+  valueThresholdEnabled: {
+    type: 'boolean',
+    property: 'valueThresholdEnabled',
+    defaultValue: false,
+    label: 'Maximum band value'
+  } as VisConfigBoolean,
+  valueThreshold: {
+    type: 'input',
+    property: 'valueThreshold',
+    defaultValue: null,
+    label: 'Maximum band value'
+  } as VisConfigInput,
   filterEnabled: {
     type: 'boolean',
     property: 'filterEnabled',

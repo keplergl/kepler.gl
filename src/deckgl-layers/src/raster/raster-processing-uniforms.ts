@@ -54,6 +54,10 @@ uniform rasterProcessingUniforms {
   float bandFilter_min4;
   float bandFilter_max4;
 
+  // rawBandThreshold
+  highp float rawBandThreshold_maximum;
+  int rawBandThreshold_channel;
+
   // saturation
   float saturation_value;
 
@@ -99,6 +103,8 @@ const ALIAS_DEFINES = `\
 #define bandFilter_max3_ALIAS rasterProcessing.bandFilter_max3
 #define bandFilter_min4_ALIAS rasterProcessing.bandFilter_min4
 #define bandFilter_max4_ALIAS rasterProcessing.bandFilter_max4
+#define rawBandThreshold_maximum_ALIAS rasterProcessing.rawBandThreshold_maximum
+#define rawBandThreshold_channel_ALIAS rasterProcessing.rawBandThreshold_channel
 #define saturation_value_ALIAS rasterProcessing.saturation_value
 #define reorder_bands_ordering_ALIAS rasterProcessing.reorder_bands_ordering
 #define mask_keepMin_ALIAS rasterProcessing.mask_keepMin
@@ -138,6 +144,8 @@ export const rasterProcessingUniforms = {
     bandFilter_max3: 'f32',
     bandFilter_min4: 'f32',
     bandFilter_max4: 'f32',
+    rawBandThreshold_maximum: 'f32',
+    rawBandThreshold_channel: 'i32',
     saturation_value: 'f32',
     reorder_bands_ordering: 'mat4x4<f32>',
     mask_keepMin: 'f32',
@@ -176,6 +184,7 @@ export const UNIFORM_NAME_MAP: Record<string, Record<string, string>> = {
     inputScale: 'colormap_inputScale',
     inputOffset: 'colormap_inputOffset'
   },
+  rawBandThreshold: {maximum: 'rawBandThreshold_maximum', channel: 'rawBandThreshold_channel'},
   bandFilter: {
     min1: 'bandFilter_min1',
     max1: 'bandFilter_max1',

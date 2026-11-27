@@ -716,6 +716,38 @@ function RasterTileLayerConfiguratorFactory(
           </LayerConfigGroup>
         )}
 
+        {bandCombination === 'single' && (
+          <LayerConfigGroup
+            {...layer.visConfigSettings.valueThresholdEnabled}
+            {...visConfiguratorProps}
+            collapsible
+          >
+            <Input
+              key={layer.config.visConfig.valueThreshold}
+              type="number"
+              aria-label="Maximum band value in source units"
+              title="Maximum band value in source units"
+              step="any"
+              placeholder="No cutoff"
+              defaultValue={layer.config.visConfig.valueThreshold ?? undefined}
+              onBlur={event => {
+                const value = event.currentTarget.valueAsNumber;
+                if (Number.isFinite(Math.fround(value))) {
+                  onVisConfigChange({valueThreshold: value});
+                } else {
+                  event.currentTarget.value = String(layer.config.visConfig.valueThreshold ?? '');
+                }
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+          </LayerConfigGroup>
+        )}
+
         {elevationUI}
         {interactionUI}
 
