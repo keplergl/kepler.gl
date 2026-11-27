@@ -157,33 +157,44 @@ To supply your own deck.gl layers, see [Add a custom deck.gl layer](./components
 
 In order to interact with a kepler.gl instance and add new data to it, you can dispatch the __`addDataToMap`__ action from anywhere inside your app. It adds dataset(s) to a kepler.gl instance and updates the full configuration (mapState, mapStyle, visState).
 
-Read more about [addDataToMap](./actions/actions.md#adddatatomap)
-
+Give each new dataset a distinct `info.id`. If a follow-up call also supplies `config.visState`,
+set `options.keepExistingConfig: true` to merge that configuration without clearing the existing
+datasets and layers. Use the plural key `options`; `option` is ignored.
 
 ```js
 import {addDataToMap} from '@kepler.gl/actions';
 
-this.props.dispatch(
+const fields = [
+  {name: 'latitude', type: 'real'},
+  {name: 'longitude', type: 'real'}
+];
+
+// After mounting KeplerGl, add the first dataset.
+store.dispatch(
   addDataToMap({
-    // datasets
     datasets: {
-      info: {
-        label: 'Sample Taxi Trips in New York City',
-        id: 'test_trip_data'
-      },
-      data: sampleTripData
+      info: {id: 'pickup_locations', label: 'Pickup locations'},
+      data: {fields, rows: [[40.7501, -73.9939]]}
     },
-    // option
-    option: {
-      centerMap: true,
-      readOnly: false
+    options: {centerMap: true}
+  })
+);
+
+// Add a second dataset along with its visualization configuration.
+store.dispatch(
+  addDataToMap({
+    datasets: {
+      info: {id: 'dropoff_locations', label: 'Drop-off locations'},
+      data: {fields, rows: [[40.756, -73.987]]}
     },
-    // config
-    config: {
-      mapStyle: {styleType: 'light'}
-    }
+    options: {keepExistingConfig: true, centerMap: false},
+    config: {visState: {layers: [], filters: []}}
   })
 );
 ```
+
+The map now contains both **Pickup locations** and **Drop-off locations**. Replace the empty
+layer and filter lists with your own visualization settings, or omit `config` if you only need to
+add the data. See the [`addDataToMap` action reference](./actions/actions.md#adddatatomap) for more options.
 
 [basic-usage]: https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/api_basic-usage.png
