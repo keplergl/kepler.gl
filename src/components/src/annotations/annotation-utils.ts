@@ -6,6 +6,7 @@ import {Annotation, AnnotationWithArm, RulerAnnotation} from '@kepler.gl/types';
 import {formatLineLengthLabel} from '@kepler.gl/layers';
 import {point} from '@turf/helpers';
 import distance from '@turf/distance';
+import {normalizeRulerStyle} from '@kepler.gl/utils';
 import {
   AnnotationKind,
   AnnotationTextSide,
@@ -62,6 +63,22 @@ export type RulerAnnotationMarker = BaseAnnotationMarker & {
   labelAngle?: number;
   labelVisible?: boolean;
 };
+
+export function getRulerLabelAngle(marker: RulerAnnotationMarker): number {
+  const angle = marker.labelAngle ?? (Math.atan2(marker.ey, marker.ex) * 180) / Math.PI;
+  return angle >= 90 ? angle - 180 : angle < -90 ? angle + 180 : angle;
+}
+
+/** A screen-space translation of the projected line, including globe surface arcs. */
+export function getRulerDimensionOffset(
+  annotation: RulerAnnotation,
+  marker: RulerAnnotationMarker
+) {
+  const style = normalizeRulerStyle(annotation.rulerStyle);
+  const offset = style?.dimensionLine ? style.offset * (style.placement === 'below' ? 1 : -1) : 0;
+  const angle = degreesToRadians(getRulerLabelAngle(marker));
+  return {dx: -Math.sin(angle) * offset, dy: Math.cos(angle) * offset};
+}
 
 export type AnnotationMarker =
   | BaseAnnotationMarker
@@ -343,14 +360,16 @@ export function getAnnotationTextBoxStyle(
     if ((marker as RulerAnnotationMarker).labelVisible === false) style.display = 'none';
     style.left = px;
     style.top = py;
-    const {ex, ey, labelAngle} = marker as RulerAnnotationMarker;
     // Follow the projected line (including map bearing/pitch), but never turn
     // the label upside down when the endpoints are reversed.
-    const angle = labelAngle ?? (Math.atan2(ey, ex) * 180) / Math.PI;
-    const uprightAngle = angle >= 90 ? angle - 180 : angle < -90 ? angle + 180 : angle;
-    const gap = Math.max(0, lineWidth) / 2 + 4;
-    style.transformOrigin = '50% 100%';
-    style.transform = `translate(-50%, -100%) rotate(${uprightAngle}deg) translateY(-${gap}px)`;
+    const uprightAngle = getRulerLabelAngle(marker as RulerAnnotationMarker);
+    const rulerStyle = normalizeRulerStyle(annotation.rulerStyle);
+    const below = rulerStyle?.placement === 'below';
+    const gap = Math.max(0, lineWidth) / 2 + 4 + (rulerStyle?.offset ?? 0);
+    style.transformOrigin = below ? '50% 0%' : '50% 100%';
+    style.transform = `translate(-50%, ${
+      below ? '0%' : '-100%'
+    }) rotate(${uprightAngle}deg) translateY(${below ? '' : '-'}${gap}px)`;
     return style;
   }
 
@@ -526,10 +545,23 @@ export function moveRulerEndpoint(
   };
 }
 
-/** Existing editor convention: geodesic ground length in kilometers, rounded to 2 decimals. */
+/** Live horizontal geodesic distance; omitted style retains the legacy editor format. */
 export function getRulerDistanceLabel(annotation: Annotation): string {
   if (annotation.kind !== AnnotationKind.RULER) return '';
+  if (
+    ![annotation.anchorPoint, annotation.endPoint].every(
+      coordinate =>
+        Array.isArray(coordinate) && coordinate.length >= 2 && coordinate.every(Number.isFinite)
+    )
+  )
+    return '';
   const lengthKm = distance(point(annotation.anchorPoint), point(annotation.endPoint));
+  const style = normalizeRulerStyle(annotation.rulerStyle);
+  if (style) {
+    const unit = style.unit === 'auto' ? (lengthKm < 1 ? 'm' : 'km') : style.unit;
+    const value = unit === 'm' ? lengthKm * 1000 : lengthKm;
+    return `${style.prefix}${value.toFixed(style.precision)} ${unit}${style.suffix}`;
+  }
   return formatLineLengthLabel(lengthKm);
 }
 

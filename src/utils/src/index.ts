@@ -3,6 +3,11 @@
 
 // UTILS
 export {
+  DEFAULT_RULER_STYLE,
+  normalizeRulerStyle,
+  normalizeAnnotationLabelBackground
+} from './annotation-ruler';
+export {
   normalizeAnnotationViewport,
   normalizeAnnotationReadout,
   normalizeAnnotationCaption

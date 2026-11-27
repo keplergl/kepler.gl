@@ -77,11 +77,13 @@ test('builds native multiline rich text and describes its effective settings', (
   });
   expect(read(state).text).toBe(annotation.label);
   expect(describeAnnotationText({...annotation, editorState: state})).toEqual({
+    fontWeight: 'normal',
     fontSize: 48,
     textColor: '#80CAFF',
     textAlign: 'right'
   });
   expect(describeAnnotationText(annotation)).toEqual({
+    fontWeight: 'normal',
     fontSize: 14,
     textColor: '#FFFFFF',
     textAlign: 'left'
@@ -121,6 +123,7 @@ test('style edits preserve rich text, links and unrelated CSS without mutating t
     expect.stringContaining('font-size: 48px')
   ]);
   expect(describeAnnotationText({label: '', editorState: updated})).toEqual({
+    fontWeight: null,
     fontSize: 48,
     textColor: null,
     textAlign: 'center'
@@ -176,6 +179,7 @@ test('reports mixed sizes and alignment without claiming one effective value', (
     paragraph([textNode('Second', 'font-size: 36px;')], 'right')
   ]);
   expect(describeAnnotationText({label: '', editorState: saved})).toEqual({
+    fontWeight: 'normal',
     fontSize: null,
     textColor: '#FFFFFF',
     textAlign: null
@@ -199,6 +203,7 @@ test('styles empty paragraphs using native text nodes and reports their saved se
   const restored = editor.parseEditorState(updated as any).toJSON();
   expect(read(restored).text).toBe('');
   expect(describeAnnotationText({label: '', editorState: restored})).toEqual({
+    fontWeight: 'normal',
     fontSize: 36,
     textColor: '#80CAFF',
     textAlign: 'center'
@@ -211,6 +216,7 @@ test('styles empty paragraphs using native text nodes and reports their saved se
     paragraph([textNode('Hawaiʻi', 'font-size: 48px; color: #FFFFFF;')])
   ]);
   expect(describeAnnotationText({label: '', editorState: mixed})).toEqual({
+    fontWeight: 'normal',
     fontSize: null,
     textColor: null,
     textAlign: 'center'
@@ -223,6 +229,7 @@ test('reads saved empty paragraph styling and includes it when detecting mixed v
     paragraph([textNode('Hawaiʻi', 'font-size: 48px; color: #FFFFFF;')])
   ]);
   expect(describeAnnotationText({label: '', editorState: saved})).toEqual({
+    fontWeight: 'normal',
     fontSize: null,
     textColor: null,
     textAlign: 'center'
@@ -230,6 +237,7 @@ test('reads saved empty paragraph styling and includes it when detecting mixed v
   const updated = buildAnnotationEditorState({label: '', editorState: saved}, {fontSize: 48});
   expect(updated.root.children[0].textStyle).toBe(saved.root.children[0].textStyle);
   expect(describeAnnotationText({label: '', editorState: updated})).toEqual({
+    fontWeight: 'normal',
     fontSize: 48,
     textColor: null,
     textAlign: 'center'
@@ -391,4 +399,16 @@ test('reads displayed rich text, including linebreaks and empty paragraphs, inst
   expect(getAnnotationText({label: 'Stale label', editorState: editorState([paragraph([])])})).toBe(
     ''
   );
+});
+
+test('weight edits preserve text, italic formatting and links, and report mixed weights', () => {
+  const saved = editorState([paragraph([textNode('First', '', 3), linkNode('Second')])]);
+  expect(describeAnnotationText({label: '', editorState: saved}).fontWeight).toBeNull();
+  const bold = buildAnnotationEditorState({label: '', editorState: saved}, {fontWeight: 'bold'});
+  expect(read(bold).text).toBe('FirstSecond');
+  expect(read(bold).runs.every(run => run.format === 3)).toBe(true);
+  expect(describeAnnotationText({label: '', editorState: bold}).fontWeight).toBe('bold');
+  const normal = buildAnnotationEditorState({label: '', editorState: bold}, {fontWeight: 'normal'});
+  expect(read(normal).runs.every(run => run.format === 2)).toBe(true);
+  expect(describeAnnotationText({label: '', editorState: normal}).fontWeight).toBe('normal');
 });

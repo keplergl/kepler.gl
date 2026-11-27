@@ -411,3 +411,38 @@ test('#mergeAnnotations -> interleaved dataset replacements preserve caption ord
   );
   t.end();
 });
+
+test('#mergeAnnotations -> normalizes ruler presentation without changing legacy annotations', t => {
+  const source = makeAnnotation({
+    kind: AnnotationKind.RULER,
+    endPoint: [1, 0],
+    rulerStyle: {unit: 'm', precision: 0, offset: 24},
+    labelBackground: {color: '#112233', opacity: 0.5, padding: 6}
+  });
+  const result = mergeAnnotations(makeState(), [
+    source,
+    makeAnnotation({id: 'legacy', kind: AnnotationKind.RULER, endPoint: [1, 0]}),
+    makeAnnotation({
+      id: 'invalid',
+      kind: AnnotationKind.RULER,
+      endPoint: [1, 0],
+      rulerStyle: {precision: 100, offset: -1},
+      labelBackground: {color: '#112233', opacity: 2, padding: 6}
+    }),
+    makeAnnotation({id: 'point', rulerStyle: source.rulerStyle})
+  ]).annotations;
+  t.equal(result[0].rulerStyle.unit, 'm', 'explicit units survive import');
+  t.equal(result[0].rulerStyle.precision, 0, 'zero decimal places survive import');
+  t.notEqual(result[0].rulerStyle, source.rulerStyle, 'import does not share mutable settings');
+  t.notEqual(
+    result[0].labelBackground,
+    source.labelBackground,
+    'import clones background settings'
+  );
+  t.notOk('rulerStyle' in result[1], 'legacy rulers have no new settings');
+  t.equal(result[2].rulerStyle.precision, 1, 'invalid precision uses a safe default');
+  t.equal(result[2].rulerStyle.offset, 0, 'invalid offset uses a safe default');
+  t.notOk(result[2].labelBackground, 'invalid background is discarded');
+  t.notOk(result[3].rulerStyle, 'ruler style is ignored for other annotation kinds');
+  t.end();
+});

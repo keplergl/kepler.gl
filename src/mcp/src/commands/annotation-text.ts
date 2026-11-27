@@ -7,6 +7,7 @@ type TextAlignment = 'left' | 'center' | 'right' | 'justify';
 type TextChanges = {
   label?: string;
   fontSize?: number;
+  fontWeight?: 'normal' | 'bold';
   textColor?: string;
   textAlign?: TextAlignment;
 };
@@ -83,7 +84,7 @@ function patchStyle(style: string | undefined, changes: TextChanges): string {
   if (changes.textColor !== undefined) updates.color = changes.textColor;
   const kept = declarations(style).filter(entry => {
     const name = entry.slice(0, entry.indexOf(':')).trim().toLowerCase();
-    return !(name in updates);
+    return !(name in updates) && !(changes.fontWeight !== undefined && name === 'font-weight');
   });
   return `${[
     ...kept.filter(entry => entry.trim()),
@@ -302,7 +303,10 @@ export function buildAnnotationEditorState(
           children: [{...paragraph(), children: [plainText(annotation.label)]}]
         };
   if (changes.label !== undefined) root = replaceLabel(root, changes.label);
-  const hasStyle = changes.fontSize !== undefined || changes.textColor !== undefined;
+  const hasStyle =
+    changes.fontSize !== undefined ||
+    changes.textColor !== undefined ||
+    changes.fontWeight !== undefined;
   const containsText = (node: SerializedNode): boolean =>
     node.type === 'text' || Boolean(node.children?.some(containsText));
   function patch(node: SerializedNode): SerializedNode {
@@ -310,12 +314,24 @@ export function buildAnnotationEditorState(
     // The installed Lexical version stores styles on text nodes, including
     // empty ones, rather than importing paragraph.textStyle metadata.
     if (hasStyle && node.type === 'paragraph' && !containsText(node)) {
-      children?.push({...plainText(''), style: patchStyle(node.textStyle, changes)});
+      children?.push({
+        ...plainText(''),
+        style: patchStyle(node.textStyle, changes),
+        format: changes.fontWeight === 'bold' ? 1 : 0
+      });
     }
     return {
       ...node,
       ...(children ? {children} : {}),
       ...(hasStyle && node.type === 'text' ? {style: patchStyle(node.style, changes)} : {}),
+      ...(changes.fontWeight !== undefined && node.type === 'text'
+        ? {
+            format:
+              changes.fontWeight === 'bold'
+                ? Number(node.format || 0) | 1
+                : Number(node.format || 0) & ~1
+          }
+        : {}),
       ...(changes.textAlign !== undefined && node.type === 'paragraph'
         ? {format: changes.textAlign}
         : {})
@@ -335,6 +351,7 @@ export function getAnnotationText(annotation: TextAnnotation): string {
 
 export function describeAnnotationText(annotation: TextAnnotation): {
   fontSize: number | null;
+  fontWeight: 'normal' | 'bold' | null;
   textColor: string | null;
   textAlign: TextAlignment | null;
 } {
@@ -362,6 +379,19 @@ export function describeAnnotationText(annotation: TextAnnotation): {
   });
   return {
     fontSize: uniform(sizes, 14),
+    fontWeight: uniform<'normal' | 'bold'>(
+      runs.map(({node}) => {
+        const weight = cssValue(node.style, 'font-weight');
+        return weight
+          ? weight === 'bold' || Number(weight) >= 600
+            ? 'bold'
+            : 'normal'
+          : Number(node.format || 0) & 1
+          ? 'bold'
+          : 'normal';
+      }),
+      'normal'
+    ),
     textColor: uniform(
       styles.map(({color}) => color),
       '#FFFFFF'

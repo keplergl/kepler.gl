@@ -16,6 +16,7 @@ import {
 } from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
+import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import {Annotation} from '@kepler.gl/types';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -445,3 +446,82 @@ describe('AnnotationText ruler labels', () => {
     });
   });
 });
+
+test('styled distance inherits rich text and shares a background while endpoints remain geographically attached', () => {
+  const annotation = makeRuler({
+    anchorPoint: [-101.869545, 33.553131],
+    endPoint: [-101.742203, 33.412521],
+    editorState: captionEditorState('Measured span', 'font-size: 32px; color: #ffd700;'),
+    labelBackground: {color: '#123456', opacity: 0.7, padding: 8},
+    rulerStyle: {
+      ...DEFAULT_RULER_STYLE,
+      unit: 'km',
+      offset: 24,
+      placement: 'below',
+      startLabel: 'A',
+      endLabel: 'B'
+    }
+  });
+  const {container} = renderRulerText(annotation);
+  expect(screen.getByText('19.6 km')).toHaveStyle({fontSize: '32px', color: '#ffd700'});
+  expect(screen.getByText('19.6 km')).toHaveClass('lexical-text-bold');
+  expect(screen.getByText('19.6 km').closest('p')).toHaveStyle({textAlign: 'right'});
+  const label = container.querySelector('[data-annotation-part="text"]');
+  expect(label).toHaveTextContent('Measured span');
+  expect(label).toHaveTextContent('19.6 km');
+  expect(label).toHaveStyle({backgroundColor: 'rgba(18, 52, 86, 0.7)', padding: '8px'});
+  expect(label?.getAttribute('style')).toContain('translateY(29px)');
+  expect(screen.getByText('A').closest('[data-annotation-part="endpoint-label"]')).toHaveStyle({
+    left: `${500 - 101.869545 * 10}px`
+  });
+  expect(screen.getByText('B')).toHaveStyle({fontSize: '32px', color: '#ffd700'});
+});
+
+test.each(['', 'Hidden caption'])(
+  'styles a distance-only ruler without replacing its %j caption or storing the computed number',
+  async label => {
+    const changes = jest.fn();
+    let moveEndpoint!: () => void;
+    function Ruler() {
+      const [annotation, setAnnotation] = React.useState(() =>
+        makeRuler({label, showCustomText: false, rulerStyle: {...DEFAULT_RULER_STYLE, unit: 'km'}})
+      );
+      moveEndpoint = () =>
+        setAnnotation(previous => ({...previous, endPoint: [2, 0]} as Annotation));
+      return (
+        <DndContext>
+          <AnnotationText
+            annotation={annotation}
+            viewport={viewport}
+            isEditing
+            isSelected
+            isEditingText={false}
+            onSelect={jest.fn()}
+            onUpdateAnnotation={jest.fn()}
+            onChangeText={(label, editorState) => {
+              changes(label, editorState);
+              setAnnotation(previous => ({...previous, label, editorState}));
+            }}
+          />
+        </DndContext>
+      );
+    }
+    renderWithTheme(<Ruler />);
+    await act(async () => {
+      fireEvent.change(screen.getAllByRole('combobox')[1], {target: {value: '24px'}});
+    });
+    await waitFor(() => expect(screen.getByText('111.2 km')).toHaveStyle({fontSize: '24px'}));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', {name: 'Bold'}));
+    });
+    await waitFor(() => expect(screen.getByText('111.2 km')).toHaveClass('lexical-text-bold'));
+    expect(changes).toHaveBeenCalled();
+    expect(changes.mock.calls.every(([value]) => value === label)).toBe(true);
+    expect(JSON.stringify(changes.mock.calls)).not.toContain('111.2 km');
+    changes.mockClear();
+    act(() => moveEndpoint());
+    expect(screen.getByText('222.4 km')).toHaveStyle({fontSize: '24px'});
+    expect(screen.getByText('222.4 km')).toHaveClass('lexical-text-bold');
+    expect(changes).not.toHaveBeenCalled();
+  }
+);

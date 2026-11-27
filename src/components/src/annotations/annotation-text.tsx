@@ -6,7 +6,15 @@ import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {getAnnotationTextBoxStyle, getRulerDistanceLabel, MapViewport} from './annotation-utils';
+import {hexToRgb, normalizeAnnotationLabelBackground} from '@kepler.gl/utils';
+import {
+  getAnnotationTextBoxStyle,
+  getRulerDistanceLabel,
+  makeMarker,
+  RulerAnnotationMarker,
+  isPointVisibleOnGlobe,
+  MapViewport
+} from './annotation-utils';
 import {LexicalRichTextEditor, LexicalToolbar} from './lexical-editor';
 import {
   SerializedEditorState,
@@ -75,6 +83,28 @@ function readoutEditorState(
 
 const ignoreReadoutChange = () => undefined;
 
+// A distance-only ruler can have no caption at all. Initialize its hidden
+// formatting editor with a paragraph so Lexical reports the first style edit.
+const EMPTY_LABEL_STATE: SerializedEditorState = {
+  root: {
+    type: 'root',
+    version: 1,
+    direction: null,
+    format: '',
+    indent: 0,
+    children: [
+      {
+        type: 'paragraph',
+        version: 1,
+        direction: null,
+        format: '',
+        indent: 0,
+        children: []
+      } as SerializedElementNode
+    ]
+  }
+};
+
 type StyledAnnotationTextProps = {
   $isEditing?: boolean;
   $isSelected?: boolean;
@@ -83,6 +113,7 @@ type StyledAnnotationTextProps = {
   $textVerticalAlign?: string;
   $isViewport?: boolean;
   $emptyLabel?: boolean;
+  $hideCustomText?: boolean;
 };
 
 const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
@@ -139,6 +170,8 @@ const StyledAnnotationText = styled.div<StyledAnnotationTextProps>`
     > .editor-container > .editor-inner { display: none; }
   `
       : ''}
+  ${props =>
+    props.$hideCustomText ? `> .editor-container > .editor-inner { display: none; }` : ''}
   .editor-inner {
     justify-content: ${props =>
       props.$textVerticalAlign === 'top'
@@ -226,6 +259,24 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   // Keep the editor mounted and focused when its empty caption no longer takes a row.
   const emptyLabel = !hasLabel;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
+  const styledRuler = isRuler && Boolean(annotation.rulerStyle);
+  const formattedDistance = useMemo(
+    () =>
+      styledRuler
+        ? readoutEditorState(
+            annotation.editorState as SerializedEditorState | undefined,
+            distanceText
+          )
+        : undefined,
+    [styledRuler, annotation.editorState, distanceText]
+  );
+  const background = normalizeAnnotationLabelBackground(annotation.labelBackground);
+  const backgroundStyle = background
+    ? {
+        backgroundColor: `rgba(${hexToRgb(background.color).join(',')},${background.opacity})`,
+        padding: background.padding
+      }
+    : {};
   const isDraggable = !isRuler;
   const {attributes, listeners, setNodeRef} = useDraggable({
     id: `${annotation.id}:MOVE_TEXT`,
@@ -252,109 +303,178 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     }
   }, [isEditingText, isSelected, isEditing, showCustomText]);
 
-  if (!showCustomText && !distanceText) {
-    return null;
-  }
+  const endpoints =
+    isRuler && annotation.rulerStyle
+      ? (() => {
+          const marker = makeMarker(annotation, viewport) as RulerAnnotationMarker;
+          return [
+            {
+              name: annotation.rulerStyle.startLabel,
+              point: annotation.anchorPoint,
+              x: marker.x,
+              y: marker.y
+            },
+            {
+              name: annotation.rulerStyle.endLabel,
+              point: annotation.endPoint,
+              x: marker.x + marker.ex,
+              y: marker.y + marker.ey
+            }
+          ].filter(
+            endpoint =>
+              endpoint.name && (!isGlobeEnabled || isPointVisibleOnGlobe(endpoint.point, viewport))
+          );
+        })()
+      : [];
+  const hasMidpointText = showCustomText || Boolean(distanceText);
+  if (!hasMidpointText && !endpoints.length) return null;
 
   return (
-    <StyledAnnotationText
-      ref={setNodeRef}
-      $isEditing={isEditing}
-      $isEditingText={isEditingText}
-      $isSelected={isSelected}
-      $isDraggable={isDraggable}
-      $textVerticalAlign={textVerticalAlign}
-      $isViewport={isViewport}
-      $emptyLabel={emptyLabel}
-      data-annotation-id={annotation.id}
-      data-annotation-part="text"
-      style={{
-        ...style,
-        // Keep editing popovers reachable; view/export composition stays clipped to its margins.
-        ...(isViewport && isEditing && isSelected ? {overflow: 'visible'} : {}),
-        opacity,
-        visibility: opacity === 0 ? 'hidden' : undefined,
-        pointerEvents: opacity === 0 ? 'none' : undefined
-      }}
-      {...(isEditing && isDraggable
-        ? {
-            ...attributes,
-            ...listeners,
-            onPointerDown: (evt: React.PointerEvent) => {
-              const {target} = evt;
-              if (target instanceof Element && target.closest('.lexical-toolbar')) {
-                return;
-              }
-              if (isEditingText) {
-                if (target instanceof Element && target.closest('.editor-inner')) {
-                  return;
+    <>
+      {hasMidpointText ? (
+        <StyledAnnotationText
+          ref={setNodeRef}
+          $isEditing={isEditing}
+          $isEditingText={isEditingText}
+          $isSelected={isSelected}
+          $isDraggable={isDraggable}
+          $textVerticalAlign={textVerticalAlign}
+          $isViewport={isViewport}
+          $emptyLabel={emptyLabel}
+          $hideCustomText={!showCustomText}
+          data-annotation-id={annotation.id}
+          data-annotation-part="text"
+          style={{
+            ...style,
+            ...backgroundStyle,
+            // Keep editing popovers reachable; view/export composition stays clipped to its margins.
+            ...(isViewport && isEditing && isSelected ? {overflow: 'visible'} : {}),
+            opacity,
+            visibility: opacity === 0 ? 'hidden' : undefined,
+            pointerEvents: opacity === 0 ? 'none' : undefined
+          }}
+          {...(isEditing && isDraggable
+            ? {
+                ...attributes,
+                ...listeners,
+                onPointerDown: (evt: React.PointerEvent) => {
+                  const {target} = evt;
+                  if (target instanceof Element && target.closest('.lexical-toolbar')) {
+                    return;
+                  }
+                  if (isEditingText) {
+                    if (target instanceof Element && target.closest('.editor-inner')) {
+                      return;
+                    }
+                    listeners?.onPointerDown?.(evt as any);
+                    return;
+                  }
+                  listeners?.onPointerDown?.(evt as any);
+                  if (!isSelected) {
+                    onSelect(false);
+                  }
                 }
-                listeners?.onPointerDown?.(evt as any);
-                return;
               }
-              listeners?.onPointerDown?.(evt as any);
-              if (!isSelected) {
-                onSelect(false);
-              }
+            : {})}
+          onClick={evt => {
+            if (!isEditing) return;
+            const target = evt.target;
+            if (target instanceof Element && target.closest('.lexical-toolbar')) {
+              return;
             }
-          }
-        : {})}
-      onClick={evt => {
-        if (!isEditing) return;
-        const target = evt.target;
-        if (target instanceof Element && target.closest('.lexical-toolbar')) {
-          return;
-        }
-        evt.stopPropagation();
-        if (!isEditingText) {
-          onSelect(showCustomText);
-        }
-      }}
-      onDoubleClick={() => {
-        if (!isEditing) {
-          onSelect(true);
-        }
-      }}
-    >
-      {showCustomText ? (
-        <LexicalRichTextEditor
-          {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
-          {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
-          isEditable={isEditing && isEditingText}
-          editorState={annotation.editorState as SerializedEditorState | undefined}
-          initialText={annotation.label}
-          onChange={handleEditorChange}
+            evt.stopPropagation();
+            if (!isEditingText) {
+              onSelect(showCustomText);
+            }
+          }}
+          onDoubleClick={() => {
+            if (!isEditing) {
+              onSelect(true);
+            }
+          }}
         >
-          {isEditing && isSelected ? (
-            <StyledToolbarWrapper $isViewport={isViewport}>
-              <LexicalToolbar
-                isEditingText={isEditingText}
-                textVerticalAlign={textVerticalAlign}
-                onChangeTextVerticalAlign={value => {
-                  onUpdateAnnotation({textVerticalAlign: value});
-                }}
-              />
-            </StyledToolbarWrapper>
+          {showCustomText || (styledRuler && isEditing && isSelected) ? (
+            <LexicalRichTextEditor
+              {...(isEditingText && annotation.autoSize ? {} : {width: textWidth || undefined})}
+              {...(isEditingText && annotation.autoSizeY ? {} : {height: textHeight || undefined})}
+              isEditable={isEditing && isEditingText && showCustomText}
+              editorState={
+                (annotation.editorState as SerializedEditorState | undefined) ??
+                (styledRuler && !annotation.label ? EMPTY_LABEL_STATE : undefined)
+              }
+              initialText={annotation.label}
+              onChange={handleEditorChange}
+            >
+              {isEditing && isSelected ? (
+                <StyledToolbarWrapper $isViewport={isViewport}>
+                  <LexicalToolbar
+                    isEditingText={isEditingText && showCustomText}
+                    textVerticalAlign={textVerticalAlign}
+                    onChangeTextVerticalAlign={value => {
+                      onUpdateAnnotation({textVerticalAlign: value});
+                    }}
+                  />
+                </StyledToolbarWrapper>
+              ) : null}
+            </LexicalRichTextEditor>
           ) : null}
-        </LexicalRichTextEditor>
+          {distanceText ? (
+            <StyledRulerDistance data-annotation-part="distance">
+              {styledRuler ? (
+                <LexicalRichTextEditor
+                  key={JSON.stringify([distanceText, formattedDistance])}
+                  isEditable={false}
+                  editorState={formattedDistance}
+                  initialText={distanceText}
+                  onChange={ignoreReadoutChange}
+                />
+              ) : (
+                distanceText
+              )}
+            </StyledRulerDistance>
+          ) : null}
+          {hasReadout ? (
+            <div data-annotation-part="readout">
+              <LexicalRichTextEditor
+                // Initialize each value synchronously, before an export frame can capture it.
+                key={readoutValue ?? '—'}
+                isEditable={false}
+                editorState={formattedReadout}
+                height={emptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
+                initialText={readoutValue ?? '—'}
+                onChange={ignoreReadoutChange}
+              />
+            </div>
+          ) : null}
+        </StyledAnnotationText>
       ) : null}
-      {distanceText ? (
-        <StyledRulerDistance data-annotation-part="distance">{distanceText}</StyledRulerDistance>
-      ) : null}
-      {hasReadout ? (
-        <div data-annotation-part="readout">
+      {endpoints.map((endpoint, index) => (
+        <StyledAnnotationText
+          key={index}
+          data-annotation-id={annotation.id}
+          data-annotation-part="endpoint-label"
+          style={{
+            ...backgroundStyle,
+            left: endpoint.x,
+            top: endpoint.y - 10,
+            transform: 'translate(-50%, -100%)',
+            opacity,
+            visibility: opacity === 0 ? 'hidden' : undefined
+          }}
+        >
           <LexicalRichTextEditor
-            // Initialize each value synchronously, before an export frame can capture it.
-            key={readoutValue ?? '—'}
+            key={JSON.stringify([endpoint.name, annotation.editorState])}
             isEditable={false}
-            editorState={formattedReadout}
-            height={emptyLabel && !annotation.autoSizeY ? textHeight || undefined : undefined}
-            initialText={readoutValue ?? '—'}
+            editorState={readoutEditorState(
+              annotation.editorState as SerializedEditorState | undefined,
+              endpoint.name
+            )}
+            initialText={endpoint.name}
             onChange={ignoreReadoutChange}
           />
-        </div>
-      ) : null}
-    </StyledAnnotationText>
+        </StyledAnnotationText>
+      ))}
+    </>
   );
 };
 

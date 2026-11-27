@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {z} from 'zod';
+import {normalizeRulerStyle} from '@kepler.gl/utils';
 import {
   addAnnotation,
   removeAnnotation,
@@ -70,7 +71,45 @@ const readout = z.discriminatedUnion('type', [
     })
     .strict()
 ]);
+const rulerStyle = z
+  .object({
+    unit: z.enum(['auto', 'm', 'km']),
+    precision: z.number().int().min(0).max(6),
+    prefix: z.string().max(128),
+    suffix: z.string().max(128),
+    placement: z.enum(['above', 'below']),
+    offset: z
+      .number()
+      .min(0)
+      .max(1000)
+      .describe('Offset from the projected measurement in composition CSS pixels.'),
+    dimensionLine: z
+      .boolean()
+      .describe(
+        'Offset the measurement line with end ticks and extensions to the actual endpoints.'
+      ),
+    startLabel: z.string().max(128),
+    endLabel: z.string().max(128)
+  })
+  .partial()
+  .strict();
+const labelBackground = z
+  .object({
+    color,
+    opacity: z.number().min(0).max(1),
+    padding: z.number().min(0).max(100)
+  })
+  .strict();
 const annotationFields = z.object({
+  rulerStyle: rulerStyle.describe(
+    'Opt in to styled live distance. Defaults: auto metric units, one decimal, above, zero offset. Partial updates preserve other settings.'
+  ),
+  labelBackground: labelBackground.describe(
+    'Shared label background; opacity affects only the background. Padding is in composition CSS pixels.'
+  ),
+  fontWeight: z
+    .enum(['normal', 'bold'])
+    .describe('Text weight, also used by styled ruler distances and readouts.'),
   anchorPoint: coordinates.describe(
     '[longitude, latitude, optional altitude in meters]. Required for geographic annotations; omit for viewport captions.'
   ),
@@ -118,6 +157,14 @@ const updateSchema = annotationFields
   .partial()
   .extend({
     id: annotationId,
+    rulerStyle: rulerStyle
+      .nullable()
+      .optional()
+      .describe('Update ruler settings, or null to restore the legacy ruler presentation.'),
+    labelBackground: labelBackground
+      .nullable()
+      .optional()
+      .describe('Set the shared label background, or null to remove it.'),
     viewport: viewport
       .nullable()
       .optional()
@@ -189,6 +236,7 @@ function describeAnnotation(annotation: Annotation) {
     autoSize,
     autoSizeY,
     ...describeAnnotationText(annotation),
+    ...(annotation.labelBackground ? {labelBackground: annotation.labelBackground} : {}),
     ...(isAnnotationWithArm(annotation)
       ? {armLength: annotation.armLength, angle: annotation.angle}
       : {}),
@@ -199,7 +247,8 @@ function describeAnnotation(annotation: Annotation) {
       ? {
           endPoint: annotation.endPoint,
           showCustomText: annotation.showCustomText,
-          showDistance: annotation.showDistance
+          showDistance: annotation.showDistance,
+          ...(annotation.rulerStyle ? {rulerStyle: annotation.rulerStyle} : {})
         }
       : {})
   };
@@ -216,7 +265,18 @@ function annotationConfig(
   kind: AnnotationKind,
   previous?: Annotation
 ): AnnotationPropsPartial {
-  const {id: _id, fontSize, textColor, textAlign, viewport, readout, ...config} = changes;
+  const {
+    id: _id,
+    fontSize,
+    fontWeight,
+    textColor,
+    textAlign,
+    viewport,
+    readout,
+    rulerStyle,
+    labelBackground,
+    ...config
+  } = changes;
   const hasArm = [AnnotationKind.POINT, AnnotationKind.ARROW, AnnotationKind.CIRCLE].includes(kind);
   if (
     !hasArm &&
@@ -228,9 +288,12 @@ function annotationConfig(
   }
   if (
     kind !== AnnotationKind.RULER &&
-    ['endPoint', 'showCustomText', 'showDistance'].some(key => config[key] !== undefined)
+    (rulerStyle !== undefined ||
+      ['endPoint', 'showCustomText', 'showDistance'].some(key => config[key] !== undefined))
   ) {
-    throw new Error('endPoint, showCustomText and showDistance are only supported for rulers.');
+    throw new Error(
+      'endPoint, showCustomText, showDistance and rulerStyle are only supported for rulers.'
+    );
   }
   if (previous && hasArm) {
     if (config.angle !== undefined) {
@@ -245,11 +308,23 @@ function annotationConfig(
         ANNOTATION_ANGLE_BY_PLACEMENT[`${config.textSide}-${config.textVerticalPosition}`];
     }
   }
-  const needsEditorState = [config.label, fontSize, textColor, textAlign].some(
+  const needsEditorState = [config.label, fontSize, fontWeight, textColor, textAlign].some(
     value => value !== undefined
   );
   return {
     ...config,
+    ...(rulerStyle !== undefined
+      ? {
+          rulerStyle:
+            rulerStyle === null
+              ? undefined
+              : normalizeRulerStyle({
+                  ...(previous?.kind === AnnotationKind.RULER ? previous.rulerStyle : {}),
+                  ...rulerStyle
+                })
+        }
+      : {}),
+    ...(labelBackground !== undefined ? {labelBackground: labelBackground ?? undefined} : {}),
     ...(viewport !== undefined ? {viewport: viewport ?? undefined} : {}),
     ...(readout !== undefined ? {readout: readout ?? undefined} : {}),
     ...(needsEditorState
@@ -257,6 +332,7 @@ function annotationConfig(
           editorState: buildAnnotationEditorState(previous ?? {label: config.label ?? ''}, {
             label: config.label,
             fontSize,
+            fontWeight,
             textColor,
             textAlign
           })

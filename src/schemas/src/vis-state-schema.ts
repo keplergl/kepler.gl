@@ -981,6 +981,8 @@ export class EffectsSchema extends Schema {
 }
 
 const annotationPropsV1 = {
+  rulerStyle: null,
+  labelBackground: null,
   viewport: null,
   readout: null,
   geographicReadout: null,

@@ -11,6 +11,8 @@ import {
   normalizeAnnotationViewport,
   normalizeAnnotationReadout,
   normalizeAnnotationCaption,
+  normalizeAnnotationLabelBackground,
+  normalizeRulerStyle,
   normalizeCameraTour,
   combineSplitMapsByIndex,
   getInitialMapLayersForSplitMap,
@@ -941,6 +943,12 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
             }
           : {})
       };
+      delete annotation.labelBackground;
+      const background = normalizeAnnotationLabelBackground(a.labelBackground);
+      if (background) annotation.labelBackground = background;
+      delete annotation.rulerStyle;
+      const style = a.kind === AnnotationKind.RULER && normalizeRulerStyle(a.rulerStyle);
+      if (style) annotation.rulerStyle = style;
       annotation.anchorPoint = a.anchorPoint ?? [0, 0];
       delete annotation.viewport;
       delete annotation.readout;
