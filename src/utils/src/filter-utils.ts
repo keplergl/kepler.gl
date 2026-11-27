@@ -1398,7 +1398,10 @@ export function applyFilterFieldName<K extends KeplerTableModel<K, L>, L>(
     ...(filter.plotType ? {plotType: filter.plotType} : {})
   };
 
-  if (filter.type === FILTER_TYPES.range && newFilter.type === FILTER_TYPES.range) {
+  if (
+    filter.type === newFilter.type &&
+    (filter.type === FILTER_TYPES.range || filter.type === FILTER_TYPES.multiSelect)
+  ) {
     newFilter = {...newFilter, view: filter.view};
   }
 

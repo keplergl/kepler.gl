@@ -20,6 +20,8 @@ To add a column filter:
 
 To keep a categorical filter accessible with the Filters panel closed, click the **Toggle floating filter** icon beside its field. One filter at a time can use the space below the map. Close the floating filter to return it to the Filters panel without clearing its selected values.
 
+Floating a categorical filter pauses active filter playback. Switching between categorical fields keeps the filter in its current position.
+
 __Note__: column filters apply to all layers in the same dataset on your map.
 
 ## Filter by polygon or rectangle

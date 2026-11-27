@@ -67,7 +67,7 @@ beforeAll(() => {
   } as unknown as typeof IntersectionObserver;
 });
 
-test('moves a categorical selector out of the sidebar without disrupting a playing filter', async () => {
+test('pauses displaced playback when floating a category and preserves category selections on close', async () => {
   const user = userEvent.setup();
   const onValue = jest.fn();
   const onView = jest.fn();
@@ -107,6 +107,9 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
     };
     return (
       <>
+        <output aria-label="Time filter playback">
+          {currentFilters[0].isAnimating ? 'Playing' : 'Paused'}
+        </output>
         <button onClick={() => setSidebar(!sidebar)}>Toggle sidebar</button>
         {sidebar ? (
           <MultiSelectFilterPanel
@@ -149,6 +152,8 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
     </IntlProvider>
   );
   expect(screen.getByText('time timeline')).toBeInTheDocument();
+  expect(timelineController).toHaveBeenLastCalledWith(0);
+  expect(screen.getByLabelText('Time filter playback')).toHaveTextContent('Playing');
   expect(screen.getByText('Enter a value')).toBeInTheDocument();
   const toggle = screen.getByRole('button', {name: 'Toggle floating filter', pressed: false});
   await user.tab(); // Sidebar visibility control.
@@ -158,7 +163,7 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
   expect(toggle).toHaveAttribute('aria-pressed', 'true');
   expect(onView).toHaveBeenLastCalledWith(1, FILTER_VIEW_TYPES.enlarged);
   expect(screen.queryByText('time timeline')).not.toBeInTheDocument();
-  expect(timelineController).toHaveBeenLastCalledWith(0);
+  expect(screen.getByLabelText('Time filter playback')).toHaveTextContent('Paused');
   await user.click(screen.getByRole('button', {name: 'Toggle sidebar'}));
   const categoryWidget = screen.getByRole('group', {name: 'category'});
   await user.click(within(categoryWidget).getByText('Enter a value'));
@@ -170,4 +175,5 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
   expect(screen.queryByRole('group', {name: 'category'})).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', {name: 'Toggle sidebar'}));
   expect(screen.getByText('Alpha')).toBeInTheDocument();
+  expect(screen.getByLabelText('Time filter playback')).toHaveTextContent('Paused');
 });

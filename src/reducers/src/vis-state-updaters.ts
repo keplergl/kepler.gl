@@ -2294,7 +2294,7 @@ export const updateLayerAnimationSpeedUpdater = (
 };
 
 /**
- * Show larger time filter at bottom for time playback (apply to time filter only)
+ * Move a filter between the sidebar and the floating widget.
  * @memberof visStateUpdaters
  * @public
  */
@@ -2304,6 +2304,8 @@ export const setFilterViewUpdater = (
 ) => {
   const {view, idx} = action;
   const shouldResetOtherFiltersView = view === FILTER_VIEW_TYPES.enlarged;
+  const shouldPauseOtherFilters =
+    shouldResetOtherFiltersView && state.filters[idx]?.type === FILTER_TYPES.multiSelect;
   const filters = state.filters.map((f, i) =>
     i === idx
       ? {
@@ -2313,7 +2315,9 @@ export const setFilterViewUpdater = (
       : shouldResetOtherFiltersView
       ? {
           ...f,
-          view: FILTER_VIEW_TYPES.side
+          view: FILTER_VIEW_TYPES.side,
+          // A floating category replaces the timeline and its playback controls.
+          ...(shouldPauseOtherFilters && f.isAnimating ? {isAnimating: false} : {})
         }
       : f
   );

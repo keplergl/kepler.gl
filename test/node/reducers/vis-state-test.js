@@ -5347,6 +5347,67 @@ test('#visStateReducer -> SET_FILTER_VIEW', t => {
   t.end();
 });
 
+test('#visStateReducer -> floating a category pauses displaced filter playback', t => {
+  for (const type of ['timeRange', 'range']) {
+    const initialState = {
+      ...INITIAL_VIS_STATE,
+      filters: [
+        {
+          ...getDefaultFilter({dataId: 'dataset', id: 'playing'}),
+          type,
+          view: FILTER_VIEW_TYPES.enlarged,
+          domain: [0, 100],
+          value: [20, 40],
+          isAnimating: true
+        },
+        {
+          ...getDefaultFilter({dataId: 'dataset', id: 'category'}),
+          type: 'multiSelect',
+          domain: ['Alpha', 'Beta'],
+          value: ['Alpha']
+        }
+      ]
+    };
+    const sideState = reducer(
+      initialState,
+      VisStateActions.setFilterView(1, FILTER_VIEW_TYPES.side)
+    );
+    t.equal(
+      sideState.filters[0].isAnimating,
+      true,
+      `${type}: leaving a category in the sidebar does not pause playback`
+    );
+
+    const floated = reducer(
+      initialState,
+      VisStateActions.setFilterView(1, FILTER_VIEW_TYPES.enlarged)
+    );
+    t.equal(floated.filters[0].isAnimating, false, `${type}: pauses the displaced animation`);
+    t.equal(
+      floated.filters[0].view,
+      FILTER_VIEW_TYPES.side,
+      `${type}: returns the timeline to the sidebar`
+    );
+    t.deepEqual(floated.filters[0].value, [20, 40], `${type}: preserves the paused range`);
+    t.equal(floated.filters[1].view, FILTER_VIEW_TYPES.enlarged, `${type}: floats the category`);
+    t.deepEqual(floated.filters[1].value, ['Alpha'], `${type}: preserves selected categories`);
+    t.equal(
+      initialState.filters[0].isAnimating,
+      true,
+      `${type}: does not mutate the previous state`
+    );
+
+    const closed = reducer(floated, VisStateActions.setFilterView(1, FILTER_VIEW_TYPES.side));
+    t.equal(
+      closed.filters[0].isAnimating,
+      false,
+      `${type}: closing the category does not restart playback`
+    );
+    t.deepEqual(closed.filters[0].value, [20, 40], `${type}: closing retains the paused range`);
+  }
+  t.end();
+});
+
 test('#visStateReducer -> REMOVE_DATASET', t => {
   const initialState = CloneDeep(StateWFilters.visState);
   const nextState = reducer(initialState, VisStateActions.removeDataset('not_me'));
@@ -9690,6 +9751,53 @@ test('#visStateReducer -> applyFilterFieldName', t => {
     'Should not overwrite plotType (by the default empty object)'
   );
 
+  t.end();
+});
+
+test('#visStateReducer -> switching categorical fields preserves the filter view', async t => {
+  const datasets = await createNewDataEntryMock({
+    info: {id: 'categories', label: 'categories'},
+    data: {
+      fields: [
+        {name: 'category', type: ALL_FIELD_TYPES.string},
+        {name: 'region', type: ALL_FIELD_TYPES.string},
+        {name: 'active', type: ALL_FIELD_TYPES.boolean}
+      ],
+      rows: [
+        ['Alpha', 'North', true],
+        ['Beta', 'South', false]
+      ]
+    }
+  });
+  for (const view of [FILTER_VIEW_TYPES.side, FILTER_VIEW_TYPES.enlarged]) {
+    let state = {...INITIAL_VIS_STATE, datasets};
+    state = reducer(state, VisStateActions.addFilter('categories'));
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'category'));
+    state = reducer(state, VisStateActions.setFilter(0, 'value', ['Alpha']));
+    state = reducer(state, VisStateActions.setFilterView(0, view));
+    const id = state.filters[0].id;
+
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'region'));
+    t.equal(state.filters[0].view, view, `${view}: keeps the categorical filter in the same place`);
+    t.equal(state.filters[0].id, id, `${view}: preserves the filter identity`);
+    t.deepEqual(state.filters[0].name, ['region'], `${view}: selects the new field`);
+    t.deepEqual(
+      state.filters[0].domain,
+      ['North', 'South'],
+      `${view}: uses the new field's categories`
+    );
+    t.deepEqual(state.filters[0].value, [], `${view}: clears selections from the previous field`);
+    state = reducer(state, VisStateActions.setFilter(0, 'value', ['North']));
+    t.deepEqual(state.datasets.categories.filteredIndex, [0], `${view}: filters by the new field`);
+
+    state = reducer(state, VisStateActions.setFilter(0, 'name', 'active'));
+    t.equal(state.filters[0].type, 'select', `${view}: switches to the boolean filter`);
+    t.equal(
+      state.filters[0].view,
+      FILTER_VIEW_TYPES.side,
+      `${view}: returns a non-floating filter type to the sidebar`
+    );
+  }
   t.end();
 });
 
