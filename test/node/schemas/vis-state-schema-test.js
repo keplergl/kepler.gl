@@ -824,6 +824,66 @@ test('#visStateSchema -> v1 -> explicit shadow map resolution round trips', t =>
   t.end();
 });
 
+test('#visStateSchema -> v1 -> surface water ripple speed round trips', t => {
+  const state = cloneDeep(StateWEffects);
+  for (const rippleSpeed of [0, 0.5, 2, 5]) {
+    const effect = createEffect({
+      id: 'water-speed',
+      type: 'surfaceFog',
+      parameters: {pattern: true, rippleSpeed}
+    });
+    effect.deckEffect.setProps({animationTimeMs: 4000});
+    state.visState.effects = [effect];
+    state.visState.effectOrder = [effect.id];
+    const saved = SchemaManager.getConfigToSave(state);
+    const savedEffect = saved.config.visState.effects[0];
+    t.equal(
+      savedEffect.parameters.rippleSpeed,
+      rippleSpeed,
+      'saves the chosen speed, including zero'
+    );
+    t.notOk('animationTimeMs' in savedEffect.parameters, 'does not save the playback clock');
+    const restored = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
+    t.equal(restored.parameters.rippleSpeed, rippleSpeed, 'restores the chosen speed');
+    t.equal(
+      restored.deckEffect.props.rippleSpeed,
+      rippleSpeed,
+      'supplies the speed to the renderer'
+    );
+    t.equal(
+      restored.clone().deckEffect.props.rippleSpeed,
+      rippleSpeed,
+      'preview clones keep the speed'
+    );
+
+    delete savedEffect.parameters.rippleSpeed;
+    const legacy = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
+    t.equal(legacy.parameters.rippleSpeed, 1, 'older maps default to normal speed');
+    t.equal(legacy.deckEffect.props.rippleSpeed, 1, 'legacy renderers receive normal speed');
+  }
+  t.end();
+});
+
+test('#visStateSchema -> v1 -> invalid ripple speed is normalized on load', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = createEffect({id: 'water-speed', type: 'surfaceFog'});
+  state.visState.effects = [effect];
+  state.visState.effectOrder = [effect.id];
+  const saved = SchemaManager.getConfigToSave(state);
+  for (const [rippleSpeed, expected] of [
+    [null, 1],
+    ['2', 1],
+    [-1, 0],
+    [8, 5]
+  ]) {
+    saved.config.visState.effects[0].parameters.rippleSpeed = rippleSpeed;
+    const restored = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
+    t.equal(restored.parameters.rippleSpeed, expected, 'normalizes the saved parameter');
+    t.equal(restored.deckEffect.props.rippleSpeed, expected, 'normalizes the renderer speed');
+  }
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> optional effect animation round trips', t => {
   const state = cloneDeep(StateWEffects);
   const effect = state.visState.effects.find(item => item.type === 'sepia');

@@ -544,6 +544,38 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenCalledTimes(1);
   });
 
+  test('shows ripple speed only for water and preserves it when water is toggled', () => {
+    const effect = createEffect({type: 'surfaceFog', parameters: {height: 75}});
+    const {update, rerender} = setup(effect);
+    const applyUpdate = () => {
+      effect.setProps(update.mock.calls[update.mock.calls.length - 1][2]);
+      rerender(<Configurator effect={effect} updateEffectConfig={update} />);
+    };
+    const speedControl = () =>
+      within(screen.getByText('Ripple Speed (×)').parentElement!).getByRole('spinbutton');
+
+    expect(screen.queryByText('Ripple Speed (×)')).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(update).toHaveBeenLastCalledWith(null, effect.id, {parameters: {pattern: true}});
+    applyUpdate();
+    expect(speedControl()).toHaveValue(1);
+
+    for (const rippleSpeed of [0, 2.5]) {
+      fireEvent.change(speedControl(), {target: {value: String(rippleSpeed)}});
+      expect(update).toHaveBeenLastCalledWith(undefined, effect.id, {parameters: {rippleSpeed}});
+      applyUpdate();
+      expect(speedControl()).toHaveValue(rippleSpeed);
+    }
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    applyUpdate();
+    expect(screen.queryByText('Ripple Speed (×)')).toBeNull();
+    expect(effect.parameters).toMatchObject({height: 75, pattern: false, rippleSpeed: 2.5});
+    fireEvent.click(screen.getByRole('checkbox'));
+    applyUpdate();
+    expect(speedControl()).toHaveValue(2.5);
+  });
+
   test('elevation animation uses one specialized section instead of duplicate generic controls', () => {
     setup(
       makeEffect([

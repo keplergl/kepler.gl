@@ -19,6 +19,8 @@ export type SurfaceFogProps = {
   fogColor: [number, number, number];
   /** When true, render a reflective water surface instead of plain fog. */
   pattern: boolean;
+  /** Playback speed multiplier: 0 freezes ripples, 1 preserves their normal speed. */
+  rippleSpeed?: number;
 };
 
 // Render-only state, copied by deck.gl when it retains an effect instance.
@@ -392,6 +394,7 @@ export class DeckSurfaceFogEffect {
       thickness: 50,
       fogColor: [230, 235, 242],
       pattern: false,
+      rippleSpeed: 1,
       animationTimeMs: 0,
       ...props
     };
@@ -511,6 +514,9 @@ export class DeckSurfaceFogEffect {
 
     const fogHeightCommon = this.props.height * unitsPerMeterZ;
     const fogThicknessCommon = this.props.thickness * unitsPerMeterZ;
+    const rippleSpeed = Number.isFinite(this.props.rippleSpeed)
+      ? Math.max(0, Math.min(5, this.props.rippleSpeed!))
+      : 1;
 
     const texSize: [number, number] = [inputBuffer.width, inputBuffer.height];
 
@@ -536,7 +542,7 @@ export class DeckSurfaceFogEffect {
         waveUnitsPerMeter,
         waveOrigin,
         waveTime: Number.isFinite(this.props.animationTimeMs)
-          ? Math.max(0, this.props.animationTimeMs!) / 1000
+          ? (Math.max(0, this.props.animationTimeMs!) / 1000) * rippleSpeed
           : 0,
         cameraHeight,
         pattern: this.props.pattern ? 1.0 : 0.0

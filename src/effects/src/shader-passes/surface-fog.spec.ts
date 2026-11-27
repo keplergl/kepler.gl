@@ -133,21 +133,25 @@ describe('surface fog rendering', () => {
     return pixels.slice(offset, offset + 4);
   }
 
-  function viewportUniforms(viewport: {
-    width: number;
-    height: number;
-    center: number[];
-    cameraPosition: number[];
-    latitude?: number;
-    pixelUnprojectionMatrix: number[];
-    distanceScales: {unitsPerMeter: number[]};
-  }): Record<string, number | number[]> {
+  function viewportUniforms(
+    viewport: {
+      width: number;
+      height: number;
+      center: number[];
+      cameraPosition: number[];
+      latitude?: number;
+      pixelUnprojectionMatrix: number[];
+      distanceScales: {unitsPerMeter: number[]};
+    },
+    props: {rippleSpeed?: number; animationTimeMs?: number} = {}
+  ): Record<string, number | number[]> {
     const setProps = jest.fn();
     const device = {beginRenderPass: () => ({end: jest.fn()})};
     (ClipSpace as jest.MockedClass<typeof ClipSpace>).mockImplementationOnce(
       () => ({device, shaderInputs: {setProps}, draw: jest.fn()} as unknown as ClipSpace)
     );
     const effect = new DeckSurfaceFogEffect({pattern: true, density: 1, fogColor: [40, 120, 190]});
+    effect.setProps(props);
     effect.setup({device});
     effect.postRender({
       inputBuffer: {
@@ -438,6 +442,29 @@ describe('surface fog rendering', () => {
     expect(render({uniforms: {...view, waveTime: 4}})).toEqual(later);
     expect(render({uniforms: {...view, waveTime: 0}})).toEqual(start);
   });
+
+  test.each([0, 0.5, 2, 5])(
+    'ripple speed %s renders the corresponding playback frame',
+    rippleSpeed => {
+      const viewport = croppedViewport({zoom: 20, pitch: 65});
+      const pixelsAt = (animationTimeMs: number, speed = 1) =>
+        render({
+          depth: 1,
+          uniforms: {
+            ...viewportUniforms(viewport, {rippleSpeed: speed, animationTimeMs}),
+            fogHeight: 0,
+            fogThickness: 0
+          }
+        });
+      const pixels = pixelsAt(4000, rippleSpeed);
+      expect(pixels).toEqual(pixelsAt(4000 * rippleSpeed));
+      if (rippleSpeed === 0) {
+        expect(pixelsAt(12000, 0)).toEqual(pixels);
+      } else {
+        expect(pixels).not.toEqual(pixelsAt(0));
+      }
+    }
+  );
 
   test.each<Record<string, number | number[]>>([
     {pattern: 0},

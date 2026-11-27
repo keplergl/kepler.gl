@@ -12,7 +12,9 @@ const NON_ANIMATABLE_PARAMETERS = new Set([
   'animateHeight',
   'heightEnd',
   'linearEasing',
-  'shadowMapResolution'
+  'shadowMapResolution',
+  // This scales the playback clock; interpolating it would also shift the wave phase.
+  'rippleSpeed'
 ]);
 const MAX_DATE_TIMESTAMP = 8.64e15;
 

@@ -1917,6 +1917,13 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
         defaultValue: false,
         min: 0,
         max: 1
+      },
+      {
+        name: 'rippleSpeed',
+        label: 'Ripple Speed (×)',
+        defaultValue: 1,
+        min: 0,
+        max: 5
       }
     ]
   }

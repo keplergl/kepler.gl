@@ -5,7 +5,11 @@ import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components';
 import {injectIntl, IntlShape} from 'react-intl';
 
-import {LIGHT_AND_SHADOW_EFFECT, SHADOW_MAP_RESOLUTIONS} from '@kepler.gl/constants';
+import {
+  LIGHT_AND_SHADOW_EFFECT,
+  SHADOW_MAP_RESOLUTIONS,
+  SURFACE_FOG_TYPE
+} from '@kepler.gl/constants';
 import {isNumber} from '@kepler.gl/utils';
 import {Effect, EffectUpdateProps} from '@kepler.gl/types';
 
@@ -467,6 +471,14 @@ export default function EffectConfiguratorFactory(
 
     const controls = useMemo(() => {
       return flatParameterDescriptions.map(desc => {
+        if (
+          effect.type === SURFACE_FOG_TYPE &&
+          desc.name === 'rippleSpeed' &&
+          !parameters.pattern
+        ) {
+          return null;
+        }
+
         if ((desc.type as string) === ELEVATION_SECTION_TYPE) {
           return {isElevationSection: true as const};
         }
@@ -577,7 +589,7 @@ export default function EffectConfiguratorFactory(
         // ignore everything else for now
         return null;
       });
-    }, [flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms]);
+    }, [effect.type, flatParameterDescriptions, id, parameters, updateEffectConfig, uniforms]);
 
     return (
       <StyledEffectConfigurator key={effect.id}>
