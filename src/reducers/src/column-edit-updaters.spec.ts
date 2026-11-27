@@ -2,6 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {
+  AGGREGATION_TYPES,
   ALL_FIELD_TYPES,
   ANIMATION_WINDOW,
   FILTER_TYPES,
@@ -23,6 +24,8 @@ import {drainTasksForTesting, errorTaskInTest, succeedTaskInTest} from '@kepler.
 import type {PolygonFilter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
 
 import visStateReducer from './vis-state';
+import {getLayerHoverProp} from './layer-utils';
+import {validateLayerWithData} from './vis-state-merger';
 import {INITIAL_VIS_STATE} from './vis-state-updaters';
 
 const reduceVisState = visStateReducer as (state: VisState, action: unknown) => VisState;
@@ -152,9 +155,9 @@ function changeType(state: VisState, dataId: string, column: string, type: strin
   return reduceVisState(state, VisStateActions.changeTableColumnType(dataId, column, type));
 }
 
-function makeCities() {
+function makeCities(id = 'cities') {
   const table = new KeplerTable({
-    info: {id: 'cities', label: 'cities', type: 'local'},
+    info: {id, label: id, type: 'local'},
     color: [0, 0, 0]
   });
   table.updateSchema({
@@ -834,4 +837,100 @@ describe('column edits', () => {
     expect(changeType(state, 'remote', 'pop', ALL_FIELD_TYPES.string)).toBe(state);
     expect(state.datasets.remote.fields[0].displayName).toBe('Region');
   });
+});
+
+test('same-dataset cell comparisons aggregate missing tooltip fields without showing them on pin', () => {
+  const state = withCities();
+  const pin = new state.layerClasses.hexagon({id: 'pinned', dataId: 'cities'});
+  const hover = new state.layerClasses.hexagon({id: 'hovered', dataId: 'cities'});
+  pin.updateLayerConfig({tooltipFields: ['lat']});
+  hover.updateLayerConfig({tooltipFields: ['pop']});
+  pin.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.sum});
+  hover.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.sum});
+  const getCell = (
+    idx: number,
+    indexes: number[],
+    comparisonLayer?: ReturnType<typeof getLayerHoverProp>
+  ) =>
+    getLayerHoverProp({
+      ...state,
+      layers: [pin, hover],
+      layersToRender: {pinned: true, hovered: true},
+      hoverInfo: {
+        picked: true,
+        object: {points: indexes.map(index => ({index}))},
+        layer: {props: {idx}}
+      } as unknown as VisState['hoverInfo'],
+      comparisonLayer
+    });
+
+  const compare = getCell(1, [1]);
+  expect(compare?.data).toHaveProperty('aggregatedData.pop.value', 40);
+  expect(getCell(0, [0])?.data).not.toHaveProperty('aggregatedData.pop');
+
+  const pinned = getCell(0, [0], compare);
+  expect(pinned?.fieldsToShow.map(field => field.name)).toEqual(['lat']);
+  expect(pinned?.data).toHaveProperty('aggregatedData.pop.value', 10);
+
+  pin.updateLayerVisConfig({colorAggregation: AGGREGATION_TYPES.average});
+  expect(getCell(0, [0], compare)?.data).not.toHaveProperty('aggregatedData.pop');
+});
+
+test('layer tooltip fields are ordered, survive reload and follow column edits', () => {
+  let state = withCities();
+  const [first] = state.layers;
+  const layerData = state.layerData[0];
+  const save = () =>
+    SchemaManager.getConfigToSave({visState: state, mapState: {}, mapStyle: {}, uiState: {}});
+  expect(save().config.visState.layers?.[0].config).not.toHaveProperty('tooltipFields');
+  state = reduceVisState(
+    state,
+    VisStateActions.layerConfigChange(first, {tooltipFields: ['pop', 'region']})
+  );
+  expect(state.layerData[0]).toBe(layerData);
+  const second = new state.layerClasses.point({id: 'another', dataId: 'cities'});
+  second.updateLayerConfig({columns: state.layers[0].config.columns});
+  state = {
+    ...state,
+    layers: [...state.layers, second],
+    layerOrder: [...state.layerOrder, second.id]
+  };
+
+  const hoverFields = (index: number) =>
+    getLayerHoverProp({
+      ...state,
+      layersToRender: {[state.layers[index].id]: true},
+      hoverInfo: {
+        picked: true,
+        object: {index: 0},
+        layer: {props: {idx: index}}
+      } as unknown as VisState['hoverInfo']
+    })?.fieldsToShow.map(field => field.name);
+
+  expect(hoverFields(0)).toEqual(['pop', 'region']);
+  expect(hoverFields(1)).toEqual(['region']);
+  state = reduceVisState(state, VisStateActions.renameTableColumn('cities', 'region', 'area'));
+  expect(hoverFields(0)).toEqual(['pop', 'area']);
+  state = reduceVisState(state, VisStateActions.deleteTableColumn('cities', 'pop'));
+  expect(hoverFields(0)).toEqual(['area']);
+
+  state = reduceVisState(
+    state,
+    VisStateActions.layerConfigChange(state.layers[1], {tooltipFields: []})
+  );
+  expect(hoverFields(1)).toEqual([]);
+  const parsed = SchemaManager.parseSavedConfig(save());
+  const restored = parsed?.visState?.layers?.map(
+    layer =>
+      validateLayerWithData(state.datasets.cities, layer, state.layerClasses)?.config.tooltipFields
+  );
+  expect(restored).toEqual([['area'], []]);
+
+  const other = makeCities('other');
+  state = {...state, datasets: {...state.datasets, other}};
+  state = reduceVisState(
+    state,
+    VisStateActions.layerConfigChange(state.layers[0], {dataId: 'other'})
+  );
+  expect(state.layers[0].config.tooltipFields).toBeUndefined();
 });

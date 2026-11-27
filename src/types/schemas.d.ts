@@ -92,6 +92,7 @@ export type SavedLayer = {
     hidden: boolean;
     isIncludedInLegend?: boolean;
     propertyTransitions?: Record<string, LayerPropertyTransition[]>;
+    tooltipFields?: string[];
     textLabel: Merge<LayerTextLabel, {field: {name: string; type: string} | null}>;
   };
   visualChannels: SavedVisualChannels;

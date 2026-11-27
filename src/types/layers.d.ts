@@ -36,6 +36,8 @@ export type LayerBaseConfig = {
   /** Omit from the map legend when false. Missing or true keeps the layer in the legend. */
   isIncludedInLegend?: boolean;
   propertyTransitions?: Record<string, LayerPropertyTransition[]>;
+  /** Ordered tooltip field names. Omit to use the dataset's tooltip settings. */
+  tooltipFields?: string[];
 
   visConfig: LayerVisConfig;
   textLabel: LayerTextLabel[];

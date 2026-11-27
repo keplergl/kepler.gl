@@ -202,6 +202,99 @@ test('#loader-registry -> CSV imports preserve unsafe decimal and scientific tok
   t.end();
 });
 
+test('#loader-registry -> CSV imports retain exactly representable large decimals', async t => {
+  const columns = [
+    ['1e16', '2e16', '3e16'],
+    ['10000000000000000.0', '20000000000000000.0', '30000000000000000.0'],
+    ['1', '2', '1e16'],
+    ['1', '2', '9007199254740992.0'],
+    ['1', '2', '-9007199254740992.0'],
+    ['1', '2', '+090071992547409920e-1'],
+    ['1', '2', '0e999']
+  ];
+  const rows = columns[0].map((_, index) => columns.map(column => column[index]));
+
+  for (const input of [rows, [...rows].reverse()]) {
+    const csv = [
+      columns.map((_, index) => `value${index}`).join(','),
+      ...input.map(row => row.join(','))
+    ].join('\n');
+    const direct = processCsvData(csv);
+    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+    const [streamed] = await processFileData({content: batch, fileCache: []});
+
+    for (const result of [direct, streamed.data]) {
+      t.deepEqual(
+        result.fields.map(field => field.type),
+        columns.map(() => 'real'),
+        'keep representable decimal/scientific values numeric, including INT samples'
+      );
+      t.deepEqual(
+        result.rows,
+        input.map(row => row.map(Number)),
+        'retain the exact numeric values'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV imports reject lossy integer-valued decimals', async t => {
+  for (const token of [
+    '9007199254740993e0',
+    '-9007199254740993.0',
+    '10000000000000001.0',
+    '10000000000000001e0',
+    '9007199254740992.1',
+    '1e-999',
+    '1e999'
+  ]) {
+    for (const values of [
+      ['1', '2', token],
+      [token, '2', '1']
+    ]) {
+      const csv = ['value', ...values].join('\n');
+      const direct = processCsvData(csv);
+      const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+      const [streamed] = await processFileData({content: batch, fileCache: []});
+
+      for (const result of [direct, streamed.data]) {
+        t.equal(result.fields[0].type, 'string', `${token} cannot be represented exactly`);
+        t.deepEqual(
+          result.rows,
+          values.map(value => [value]),
+          'preserve the original tokens'
+        );
+      }
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV widening keeps existing integer identifier guards', async t => {
+  for (const values of [
+    ['02108', '1.5'],
+    ['5', '9007199254740993', '1.5']
+  ]) {
+    for (const input of [values, [...values].reverse()]) {
+      const csv = ['value', ...input].join('\n');
+      const direct = processCsvData(csv);
+      const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+      const [streamed] = await processFileData({content: batch, fileCache: []});
+
+      for (const result of [direct, streamed.data]) {
+        t.equal(result.fields[0].type, 'integer', 'retain existing identifier inference');
+        t.deepEqual(
+          result.rows,
+          input.map(value => [parseInt(value, 10)]),
+          'retain existing parsing'
+        );
+      }
+    }
+  }
+  t.end();
+});
+
 test('#loader-registry -> CSV number inference does not change JSON row imports', async t => {
   const rows = [{value: '1.2'}, {value: '15.1419'}, {value: '100'}];
   const file = new File([JSON.stringify(rows)], 'rows.json', {type: 'application/json'});
@@ -480,6 +573,8 @@ test('#loader-registry -> direct and streamed CSV infer mixed reporting dates as
     [reported, 'string', ''],
     [[...reported].reverse(), 'string', '', 'reporting'],
     [['2025-03-18', '', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\N', '2024-02-29'], 'date', 'YYYY-M-D'],
+    [['2025-03-18', '\\\\N', '2024-02-29'], 'string', ''],
     [['17/09/2016', 'NA', '05/06/2016'], 'string', ''],
     [['05/06/2016', 'NULL', '17/09/2016'], 'date', 'D/M/YYYY']
   ]) {

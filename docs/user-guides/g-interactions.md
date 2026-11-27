@@ -24,6 +24,10 @@ Alongside **Tooltip**, **Brushing**, and **Coordinate**, use **Bookmarks** to re
 ## Tooltips
 tooltip displays metrics when hovering over a data point. You can choose which fields are displayed from the tooltip config menu.
 
+If two layers use the same dataset, expand a layer’s **Tooltip fields** settings and turn on **Use layer-specific fields** to pick and reorder fields for that layer. Turn it off to use the dataset’s settings again. An empty layer-specific list hides dataset fields; any built-in summary still appears. Layers with specialized tooltips, such as Contour and Donut, do not offer this setting.
+
+Embedding applications can hide these controls with `initApplicationConfig({enableLayerTooltipFields: false})` from `@kepler.gl/utils`. The setting defaults to `true`; saved layer tooltip field overrides still apply when the controls are hidden.
+
 ![tooltips](https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/documentation/image25.png "tooltips")
 
   - __Image__ Image can be added to tooltip. If field name contains `<img>` and the field content contains `http` url

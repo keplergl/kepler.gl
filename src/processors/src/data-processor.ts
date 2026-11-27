@@ -137,18 +137,18 @@ function isUnsafeCsvDecimal(value: unknown): boolean {
   const number = Number(value);
   if (!Number.isFinite(number)) return true;
   if (!Number.isInteger(number)) return false;
-  if (!Number.isSafeInteger(number)) return true;
 
-  // Even a safe integer can be lossy if a decimal's nonzero fraction rounded
-  // away. Check the position of its last nonzero digit after the exponent.
+  // A decimal's fraction can round away even within the safe-integer range.
+  // Locate its last nonzero digit, then compare integer values exactly: some
+  // integers above 2^53 (such as 1e16) are still representable as doubles.
   const [mantissa, exponent = '0'] = value.toLowerCase().split('e');
   const [whole, fraction = ''] = mantissa.split('.');
   const digits = whole + fraction;
   const significant = digits.replace(/0+$/, '');
-  return (
-    /[1-9]/.test(significant) &&
-    Number(exponent) + digits.length - significant.length < fraction.length
-  );
+  if (!/[1-9]/.test(significant)) return false;
+  const scale = Number(exponent) + digits.length - significant.length - fraction.length;
+  if (scale < 0) return true;
+  return BigInt(number) !== BigInt(significant + '0'.repeat(scale));
 }
 
 /** Inspect the existing sample only; never rescan the imported rows. */
@@ -175,12 +175,13 @@ function getCsvNumericOverride(
   // samples that don't include padded or unsafe integer identifiers.
   const acceptsReal = sample.every(row => {
     const value = row[name];
-    if (typeof value === 'string' && (!CSV_DECIMAL.test(value) || /^[+-]?0\d+$/.test(value))) {
-      return false;
+    if (typeof value === 'string') {
+      if (!CSV_DECIMAL.test(value) || /^[+-]?0\d+$/.test(value)) return false;
+      // Decimal/scientific strings already passed the exactness check above.
+      return /[.e]/i.test(value) || Number.isSafeInteger(Number(value));
     }
-    if (typeof value === 'number' || typeof value === 'string') {
-      const number = Number(value);
-      return Number.isFinite(number) && (!Number.isInteger(number) || Number.isSafeInteger(number));
+    if (typeof value === 'number') {
+      return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value));
     }
     return !notNullorUndefined(value);
   });
@@ -281,7 +282,7 @@ function processRowsWithHeader(
 }
 
 function isNonDateCsvSample(value: unknown): boolean {
-  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\\\N') {
+  if (!notNullorUndefined(value) || value === '' || value === 'NULL' || value === '\\N') {
     return false;
   }
   return typeof value !== 'string' || !RegexList.isDate.test(value);
