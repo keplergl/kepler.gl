@@ -3107,3 +3107,77 @@ test('layerUtils -> raw single-band raster cutoff follows the playhead without c
 
   t.end();
 });
+
+test('layerUtils -> raster cutoff animation bounds follow the selected band and retain authored values', t => {
+  const layer = new RasterTileLayer({id: 'cutoff-bounds', dataId: 'raster'});
+  layer.updateLayerVisConfig({
+    preset: 'singleBand',
+    singleBandName: 'arrival',
+    valueThresholdEnabled: true,
+    valueThreshold: 0,
+    useBandStatistics: true
+  });
+  const range = () => layer.animatableProps.find(prop => prop.name === 'valueThreshold')?.range;
+  t.deepEqual(range(), [0, 1], 'missing metadata has usable bounds around the authored cutoff');
+
+  const render = (statistics, dataType = 'float32') => {
+    const metadata = {
+      stac_version: '1.1.0',
+      type: 'Feature',
+      id: 'fixture',
+      bbox: [-1, -1, 1, 1],
+      assets: {
+        raster: {
+          href: 'https://example.com/arrival.tif',
+          type: 'image/tiff; application=geotiff; profile=cloud-optimized',
+          roles: ['data'],
+          bands: [
+            {name: 'arrival', data_type: dataType, statistics},
+            {name: 'depth', data_type: dataType, statistics: {minimum: -10, maximum: 0}}
+          ]
+        }
+      }
+    };
+    layer.renderLayer({
+      data: {dataset: {metadata}},
+      mapState: INITIAL_MAP_STATE,
+      interactionConfig: INITIAL_VIS_STATE.interactionConfig
+    });
+  };
+
+  render({minimum: 0, maximum: 3});
+  t.deepEqual(range(), [0, 3], 'uses band statistics, including a zero minimum');
+  layer.updateLayerVisConfig({singleBandName: 'depth'});
+  t.deepEqual(range(), [-10, 0], 'switching bands uses its signed range and zero maximum');
+  layer.updateLayerVisConfig({singleBandName: 'arrival'});
+  render({minimum: 0, maximum: 0});
+  t.deepEqual(range(), [0, 0], 'a constant band retains its finite bounds');
+
+  for (const statistics of [
+    undefined,
+    {minimum: 3, maximum: 1},
+    {minimum: NaN, maximum: 3},
+    {minimum: 0, maximum: Infinity},
+    {minimum: -1e39, maximum: 1e39}
+  ]) {
+    render(statistics);
+    t.deepEqual(range(), [0, 1], 'missing or invalid float statistics use finite fallback bounds');
+  }
+  render(undefined, 'int16');
+  t.deepEqual(
+    range(),
+    [-32768, 32767],
+    'missing integer statistics use the signed data-type range'
+  );
+
+  layer.updateLayerVisConfig({valueThreshold: -2});
+  layer.updateLayerConfig({propertyTransitions: {valueThreshold: propertyTrack('cutoff', -5, 8)}});
+  render({minimum: 0, maximum: 3});
+  t.deepEqual(range(), [-5, 8], 'includes the authored cutoff and existing track endpoints');
+  t.equal(
+    getLayerAnimatedConfig(layer, 3000).visConfig.valueThreshold,
+    8,
+    'narrower data bounds do not change saved track playback'
+  );
+  t.end();
+});

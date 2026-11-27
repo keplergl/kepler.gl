@@ -205,11 +205,34 @@ export default class RasterTileLayer extends KeplerLayer {
 
     const props: LayerAnimatableProp[] = [...super.animatableProps];
     if (hasThreshold) {
+      const band = this._stac
+        ? this.getDataSourceParams(this._stac, visConfig.preset, {
+            singleBand: getSingleBandPresetOptions(this._stac, visConfig.singleBandName),
+            useBandStatistics: true
+          })
+        : null;
+      const isSupportedValue = (value: unknown): value is number =>
+        typeof value === 'number' && Number.isFinite(Math.fround(value));
+      const hasBandRange =
+        isSupportedValue(band?.minPixelValue) &&
+        isSupportedValue(band?.maxPixelValue) &&
+        band.minPixelValue <= band.maxPixelValue;
+      // Bounds also validate playback. Retain authored values outside the data range,
+      // including tracks restored before metadata or tiles have loaded.
+      const values = [
+        visConfig.valueThreshold,
+        ...(this.config.propertyTransitions?.valueThreshold ?? []).flatMap(track => [
+          track.startValue,
+          track.endValue
+        ])
+      ].filter(isSupportedValue);
       props.push({
         name: 'valueThreshold',
         label: 'Maximum band value',
-        // The raw raster texture and the matching shader uniform use Float32.
-        range: [-3.4028234663852886e38, 3.4028234663852886e38],
+        range: [
+          Math.min(hasBandRange ? band.minPixelValue : 0, ...values),
+          Math.max(hasBandRange ? band.maxPixelValue : 1, ...values)
+        ],
         step: 0.01
       });
     }
