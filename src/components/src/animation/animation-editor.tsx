@@ -452,17 +452,12 @@ function nextBlockId(name: string, blocks: {id?: string}[]) {
   return `${name}-${suffix}`;
 }
 
-const SelectedOpacitySummary = styled.div`
-  flex-shrink: 0;
-  padding: 4px 8px;
-  border-top: 1px solid ${props => props.theme.panelBorderColor};
-`;
-const OpacitySummary = styled.div<{$compact: boolean}>`
+const OpacitySummary = styled.div`
   display: flex;
   flex-wrap: wrap;
-  flex-direction: ${props => (props.$compact ? 'row' : 'column')};
-  gap: ${props => (props.$compact ? '2px 12px' : '0')};
-  margin-bottom: ${props => (props.$compact ? '0' : '12px')};
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 12px;
   color: ${props => props.theme.subtextColor};
   font-variant-numeric: tabular-nums;
 `;
@@ -476,14 +471,12 @@ function LayerOpacityReadout({
   layer,
   elapsed,
   previewActive,
-  compact = false,
   mapState,
   interactionConfig
 }: {
   layer: Layer;
   elapsed: number;
   previewActive: boolean;
-  compact?: boolean;
   mapState?: MapState;
   interactionConfig?: InteractionConfig;
 }) {
@@ -499,7 +492,7 @@ function LayerOpacityReadout({
   );
   const fadesDiffer = zoomFades.some(fade => fade !== zoomFades[0]);
   return (
-    <OpacitySummary $compact={compact} role="group" aria-label="Layer opacity at playhead">
+    <OpacitySummary role="group" aria-label="Layer opacity at playhead">
       <div>Base opacity: {opacityPercent.format(base)}</div>
       <div>Track opacity at playhead: {opacityPercent.format(track)}</div>
       {(fadesDiffer ? zoomFades : zoomFades.slice(0, 1)).map((fade, index) => (
@@ -967,7 +960,7 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
       selectedTransition && selectedLayerTrack?.property.name === 'opacity'
         ? selectedLayerTrack.layer
         : undefined;
-    const opacityReadout = (compact = false) =>
+    const opacityReadout = () =>
       opacityLayer ? (
         <LayerOpacityReadout
           layer={opacityLayer}
@@ -976,7 +969,6 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
             typeof playback.animationTimeMs === 'number' &&
             Number.isFinite(playback.animationTimeMs)
           }
-          compact={compact}
           mapState={mapState}
           interactionConfig={interactionConfig}
         />
@@ -1843,9 +1835,6 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
               !cameraTour && <Empty>Add an action to begin.</Empty>}
           </Timeline>
         </Workspace>
-        {!popup && opacityLayer && (
-          <SelectedOpacitySummary>{opacityReadout(true)}</SelectedOpacitySummary>
-        )}
         <Portaled
           component={PopupAnchor}
           // Open at the selected block instead of tweening from the previous popup position.

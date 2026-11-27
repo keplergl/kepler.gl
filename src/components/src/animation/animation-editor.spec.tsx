@@ -1269,7 +1269,7 @@ test.each([undefined, null, NaN, Infinity, -Infinity])(
     const playback = {...props.playback, elapsed: 3000, animationTimeMs};
     if (animationTimeMs === undefined) delete playback.animationTimeMs;
     rerender(<Editor {...props} playback={playback} />);
-    fireEvent.click(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
+    fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
     const summary = screen.getByLabelText('Layer opacity at playhead');
     expect(summary).toHaveTextContent('Preview is off. The track is not applied to the map.');
     expect(summary).toHaveTextContent('Base opacity: 50%');
@@ -1278,7 +1278,7 @@ test.each([undefined, null, NaN, Infinity, -Infinity])(
   }
 );
 
-test('distinguishes idle opacity from a scrubbed frame and keeps the readout visible while seeking', () => {
+test('shows opacity diagnostics only in block settings and reflects seeking and Stop', () => {
   const source = layer([opacityTransitions()[0]]);
   source.config.visConfig = {opacity: 0.5};
   const effects: AnimationEditorProps['effects'] = [];
@@ -1301,7 +1301,10 @@ test('distinguishes idle opacity from a scrubbed frame and keeps the readout vis
     </EffectAnimationPreviewProvider>,
     {wrapper: Wrapper}
   );
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
+  const block = screen.getByRole('button', {name: 'Opacity 1 · Points'});
+  fireEvent.click(block);
+  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
+  fireEvent.doubleClick(block);
   const dialog = screen.getByRole('dialog', {name: 'Block settings'});
   expect(within(dialog).getByLabelText('Layer opacity at playhead')).toHaveTextContent(
     'Effective base opacity if previewed: 0%'
@@ -1309,19 +1312,29 @@ test('distinguishes idle opacity from a scrubbed frame and keeps the readout vis
   expect(dialog).toHaveTextContent('Preview is off. The track is not applied to the map.');
 
   fireEvent.click(within(dialog).getByRole('button', {name: 'Close block settings'}));
-  const summary = screen.getByLabelText('Layer opacity at playhead');
+  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
   const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
   fireEvent.keyDown(ruler, {key: 'End'});
+  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
+  fireEvent.doubleClick(block);
+  const summary = screen.getByLabelText('Layer opacity at playhead');
   expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
   expect(summary).toHaveTextContent('Effective base opacity: 50%');
   expect(summary).not.toHaveTextContent('Preview is off');
 
+  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
   fireEvent.keyDown(ruler, {key: 'Home'});
-  expect(summary).toHaveTextContent('Effective base opacity: 0%');
-  expect(summary).not.toHaveTextContent('Preview is off');
+  fireEvent.doubleClick(block);
+  const startSummary = screen.getByLabelText('Layer opacity at playhead');
+  expect(startSummary).toHaveTextContent('Effective base opacity: 0%');
+  expect(startSummary).not.toHaveTextContent('Preview is off');
+  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
   fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
-  expect(summary).toHaveTextContent('Effective base opacity if previewed: 0%');
+  fireEvent.doubleClick(block);
+  expect(screen.getByLabelText('Layer opacity at playhead')).toHaveTextContent(
+    'Effective base opacity if previewed: 0%'
+  );
 });
 
 test('zero-base readout and hint only describe base opacity, not independently styled strokes', () => {
@@ -1334,7 +1347,7 @@ test('zero-base readout and hint only describe base opacity, not independently s
   };
   source.config.propertyTransitions = {opacity: opacityTransitions()};
   setup({layers: [source]});
-  fireEvent.click(screen.getByRole('button', {name: 'Opacity 1 · Polygons'}));
+  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Polygons'}));
   const summary = screen.getByLabelText('Layer opacity at playhead');
   expect(summary).toHaveTextContent('Base opacity: 0%');
   expect(summary).toHaveTextContent('Effective base opacity: 0%');
