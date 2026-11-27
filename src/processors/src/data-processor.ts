@@ -126,6 +126,25 @@ export const PARSE_FIELD_VALUE_FROM_STRING = {
   }
 };
 
+// Require complete decimal/scientific values so parseFloat won't accept text prefixes or hex.
+const CSV_DECIMAL = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+
+/** Inspect the existing sample only; never rescan the imported rows. */
+function hasFractionalCsvSample(sample: readonly Record<string, unknown>[], name: string): boolean {
+  let hasFraction = false;
+  for (const row of sample) {
+    const value = row[name];
+    if (!notNullorUndefined(value)) continue;
+    if (typeof value !== 'number' && (typeof value !== 'string' || !CSV_DECIMAL.test(value))) {
+      return false;
+    }
+    const number = Number(value);
+    if (!Number.isFinite(number)) return false;
+    hasFraction ||= !Number.isInteger(number);
+  }
+  return hasFraction;
+}
+
 /**
  * Process csv data, output a data object with `{fields: [], rows: []}`.
  * The data object can be wrapped in a `dataset` and pass to [`addDataToMap`](../actions/actions.md#adddatatomap)
@@ -187,7 +206,7 @@ export function processCsvData(rawData: unknown[][] | string, header?: string[])
 function processRowsWithHeader(
   rows: unknown[][],
   headerRow: string[],
-  strictDateInference: boolean
+  isCsv: boolean
 ): ProcessorResult {
   // Sampling uses names as object keys, so make them unique before inferring types.
   headerRow = renameDuplicateFields(headerRow).fieldByIndex;
@@ -195,23 +214,25 @@ function processRowsWithHeader(
   // No need to run type detection on every data point
   // here we get a list of none null values to run analyze on
   const sample = getSampleForTypeAnalyze({fields: headerRow, rows});
-  const fields = getFieldsFromData(sample, headerRow).map(field => {
-    // The analyzer allows up to two non-date values. For date-only CSV
-    // columns, reject mixed reporting labels without scanning beyond the sample.
-    if (
-      strictDateInference &&
-      field.type === ALL_FIELD_TYPES.date &&
-      sample.some(row => isNonDateCsvSample(row[field.name]))
-    ) {
-      return {
-        ...field,
-        type: ALL_FIELD_TYPES.string,
-        analyzerType: AnalyzerDATA_TYPES.STRING,
-        format: ''
-      };
+  const fields = getFieldsFromData(sample, headerRow);
+  if (isCsv) {
+    for (const field of fields) {
+      // The analyzer tolerates some non-date samples; keep reporting labels as text.
+      const {name, type} = field;
+      const override =
+        type === ALL_FIELD_TYPES.integer && hasFractionalCsvSample(sample, name)
+          ? ALL_FIELD_TYPES.real
+          : type === ALL_FIELD_TYPES.date && sample.some(row => isNonDateCsvSample(row[name]))
+          ? ALL_FIELD_TYPES.string
+          : undefined;
+      if (override) {
+        field.type = override;
+        field.analyzerType =
+          override === ALL_FIELD_TYPES.real ? AnalyzerDATA_TYPES.FLOAT : AnalyzerDATA_TYPES.STRING;
+        field.format = '';
+      }
     }
-    return field;
-  });
+  }
   const parsedRows = parseRowsByFields(rows, fields);
 
   return {fields, rows: parsedRows};

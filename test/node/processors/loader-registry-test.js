@@ -134,6 +134,118 @@ async function readLastBatch(file) {
   return last;
 }
 
+test('#loader-registry -> CSV imports keep mixed integer and fractional values', async t => {
+  const rows = [
+    ['1.2', '10', '02108', '9007199254740993'],
+    ['15.1419', '11', '00601', '9007199254740995'],
+    ['100', '12', '02109', '9007199254740997']
+  ];
+
+  for (const input of [rows, [...rows].reverse()]) {
+    const csv = ['value,count,zipcode,large_id', ...input.map(row => row.join(','))].join('\n');
+    const direct = processCsvData(csv);
+    const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+    const [streamed] = await processFileData({content: batch, fileCache: []});
+
+    for (const result of [direct, streamed.data]) {
+      t.deepEqual(
+        result.fields.map(field => field.type),
+        ['real', 'integer', 'integer', 'string'],
+        'infer real measurements without changing counts or identifiers'
+      );
+      t.deepEqual(
+        result.rows,
+        input.map(([value, count, zip, id]) => [Number(value), Number(count), Number(zip), id]),
+        'preserve fractional digits and existing count and identifier conversions'
+      );
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV integer samples widen when any numeric value has a fraction', async t => {
+  for (const [values, type, expected] of [
+    [['1', '2', '1.5'], 'real', [1, 2, 1.5]],
+    [['1', '2', '1.5e-2'], 'real', [1, 2, 0.015]],
+    [['02108', '1.5'], 'real', [2108, 1.5]],
+    [['1', '', '1.5'], 'real', [1, null, 1.5]],
+    [['5', '9007199254740993', '1.5'], 'real', [5, 9007199254740992, 1.5]],
+    [['1', '2', '3'], 'integer', [1, 2, 3]],
+    [['1', '2', '3.0'], 'integer', [1, 2, 3]],
+    [['', '', ''], 'string', [null, null, null]],
+    [['1e16', '2e16', '3e16'], 'real', [1e16, 2e16, 3e16]],
+    [['1e23', '2e23', '3e23'], 'real', [1e23, 2e23, 3e23]]
+  ]) {
+    for (const reverse of [false, true]) {
+      const input = reverse ? [...values].reverse() : values;
+      const expectedValues = reverse ? [...expected].reverse() : expected;
+      const csv = ['value,label', ...input.map(value => `${value},row`)].join('\n');
+      const direct = processCsvData(csv);
+      const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+      const [streamed] = await processFileData({content: batch, fileCache: []});
+
+      for (const result of [direct, streamed.data]) {
+        const fixture = JSON.stringify(input);
+        t.equal(result.fields[0].type, type, `infer the numeric type: ${fixture}`);
+        t.deepEqual(
+          result.rows.map(row => row[0]),
+          expectedValues,
+          `parse values: ${fixture}`
+        );
+      }
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV widening requires all present samples to be finite decimal numbers', async t => {
+  for (const invalid of ['text', '1.5kg', '0x10', 'Infinity', '1e999']) {
+    for (const input of [
+      ['5', '10', '1.5', invalid],
+      [invalid, '1.5', '10', '5']
+    ]) {
+      const csv = ['value', ...input].join('\n');
+      const direct = processCsvData(csv);
+      const batch = await readLastBatch(new File([csv], 'data.csv', {type: 'text/csv'}));
+      const [streamed] = await processFileData({content: batch, fileCache: []});
+
+      for (const result of [direct, streamed.data]) {
+        t.equal(result.fields[0].type, 'integer', `do not widen a sample containing ${invalid}`);
+      }
+    }
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV row arrays widen numeric samples while ignoring missing values', t => {
+  for (const values of [
+    [1, 2, 1.5],
+    [1, null, 1.5, undefined]
+  ]) {
+    const result = processCsvData(
+      values.map(value => [value]),
+      ['value']
+    );
+    t.equal(result.fields[0].type, 'real', 'a fractional number widens the integer sample');
+    t.deepEqual(
+      result.rows.map(row => row[0]),
+      values,
+      'preserve numbers and missing values'
+    );
+  }
+  t.end();
+});
+
+test('#loader-registry -> CSV number inference does not change JSON row imports', async t => {
+  const rows = [{value: '1.2'}, {value: '15.1419'}, {value: '100'}];
+  const file = new File([JSON.stringify(rows)], 'rows.json', {type: 'application/json'});
+  const batch = await readLastBatch(file);
+  const [streamed] = await processFileData({content: batch, fileCache: []});
+
+  t.equal(streamed.data.fields[0].type, 'integer', 'retain existing JSON inference');
+  t.end();
+});
+
 test('#loader-registry -> extensionless octet-stream Arrow is not parsed as FlatGeobuf', async t => {
   const bytes = tableToIPC(tableFromJSON([{name: 'alpha', value: 1}]), 'file');
   const file = new File([bytes], 'abc123', {type: 'application/octet-stream'});
