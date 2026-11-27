@@ -2984,3 +2984,142 @@ test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbo
   }
   t.end();
 });
+
+test('layerUtils -> Point fill opacity field preserves zero, missing values, stroke and animation', async t => {
+  const fields = ['lat', 'lng', 'strength', 'label', 'other'].map((name, fieldIdx) => ({
+    name,
+    fieldIdx,
+    type: name === 'label' ? 'string' : 'real',
+    format: ''
+  }));
+  const rows = [
+    [1, 2, 0, 'zero', 1],
+    [2, 3, 0.5, 'half', 0],
+    [3, 4, null, 'missing', 1],
+    [4, 5, 2, 'above', 0],
+    [5, 6, -1, 'below', 1]
+  ];
+  for (const useArrow of [false, true]) {
+    const dataset = new KeplerTable({info: {id: 'survey'}});
+    await dataset.importData({
+      data: {
+        fields,
+        ...(useArrow
+          ? {
+              cols: fields.map(({fieldIdx, type}) =>
+                arrow.vectorFromArray(
+                  rows.map(row => row[fieldIdx]),
+                  type === 'string' ? new arrow.Utf8() : new arrow.Float64()
+                )
+              )
+            }
+          : {rows})
+      }
+    });
+
+    const layer = new PointLayer({
+      id: 'field-alpha',
+      dataId: 'survey',
+      color: [10, 20, 30],
+      columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+    });
+    layer.updateLayerVisConfig({filled: true, outline: true, opacity: 0.6});
+    const datasets = {survey: dataset};
+    const render = (layerData, animationTimeMs) =>
+      renderDeckGlLayer(
+        {
+          layer,
+          data: layerData,
+          datasets,
+          mapState: INITIAL_MAP_STATE,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          animationTimeMs
+        },
+        {}
+      )[0];
+    const base = layer.formatLayerData(datasets);
+    t.equal(render(base).props.getFillColor, base.getFillColor, 'unconfigured uses original color');
+
+    layer.updateLayerVisConfig({fillOpacityField: 'strength'});
+    const data = layer.formatLayerData(datasets, base);
+    t.equal(data.data, base.data, 'switching opacity does not rebuild geometry');
+    const frame = render(data);
+    t.equal(frame instanceof GeoArrowScatterplotLayer, useArrow, 'tests each rendering path');
+    const props = frame.props;
+    const alpha = [0, 128, 255, 255, 0];
+    t.deepEqual(
+      rows.map((_, index) => props.getFillColor({index})[3] ?? 255),
+      alpha,
+      'opacity uses real 0–1 values, keeps missing values unmodified and clamps outliers'
+    );
+    t.equal(props.opacity, 0.6, 'layer opacity is left to Deck');
+    t.equal(props.getLineColor, base.getLineColor, 'stroke is independent');
+    t.equal(render(data).props.getFillColor, props.getFillColor, 'unchanged frame reuses accessor');
+
+    layer.updateLayerConfig({
+      propertyTransitions: {
+        color: propertyTrack('point-color', [20, 30, 40], [40, 50, 60]),
+        opacity: propertyTrack('point-opacity', 0, 1)
+      }
+    });
+    const animated = render(data, 2000).props;
+    t.equal(animated.opacity, 0.3, 'existing timed opacity applies on top of the per-fill alpha');
+    t.deepEqual(animated.getFillColor({index: 0}), [30, 40, 50, 0], 'animated fill stays masked');
+    t.deepEqual(
+      animated.getFillColor({index: 1}),
+      [30, 40, 50, 128],
+      'animated fill keeps the multiplier'
+    );
+
+    if (useArrow) {
+      const [subLayer] = frame.renderLayers();
+      t.deepEqual(
+        subLayer.props.getFillColor(null, {index: 1, data: subLayer.props.data}),
+        [10, 20, 30, 128],
+        'Arrow sublayer resolves the same original row'
+      );
+    }
+
+    const pointOpacityShader = props.extensions.find(
+      extension => extension.constructor.extensionName === 'PointFillOpacityExtension'
+    );
+    t.ok(pointOpacityShader, 'zero-opacity fragments do not write depth on the opt-in layer');
+    t.notOk(
+      render(base).props.extensions.includes(pointOpacityShader),
+      'default rendering does not add the opacity shader'
+    );
+
+    layer.updateLayerVisConfig({fillOpacityField: 'other'});
+    const switched = layer.formatLayerData(datasets, data);
+    const nextFrame = render(switched);
+    t.notEqual(
+      nextFrame.props.updateTriggers.getFillColor.opacityField,
+      props.updateTriggers.getFillColor.opacityField,
+      'changing the chosen field invalidates fill color'
+    );
+    const value = useArrow
+      ? (() => {
+          const [subLayer] = nextFrame.renderLayers();
+          return subLayer.props.getFillColor(null, {index: 1, data: subLayer.props.data});
+        })()
+      : nextFrame.props.getFillColor({index: 1});
+    t.deepEqual(value, [10, 20, 30, 0], 'updated renderer uses the replacement field');
+
+    layer.updateLayerVisConfig({fillOpacityField: ''});
+    const cleared = layer.formatLayerData(datasets, switched);
+    t.notOk(
+      render(cleared).props.updateTriggers.getFillColor.opacityField,
+      'clearing the field invalidates the color buffer and restores unchanged fill'
+    );
+    t.equal(
+      render(cleared).props.getFillColor,
+      base.getFillColor,
+      'clearing restores original color'
+    );
+
+    layer.updateLayerVisConfig({fillOpacityField: 'label'});
+    const invalid = layer.formatLayerData(datasets, cleared);
+    t.equal(render(invalid).props.getFillColor, invalid.getFillColor, 'ignores a nonnumeric field');
+  }
+  t.end();
+});

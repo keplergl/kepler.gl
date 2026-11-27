@@ -12894,3 +12894,45 @@ test('#visStateReducer -> Point events follow timestamp filters without a layer 
   );
   t.end();
 });
+
+test('#visStateReducer -> a Point fill opacity field follows column renames', async t => {
+  const dataset = new KeplerTable({info: {id: 'point-alpha'}, color: [0, 0, 0]});
+  await dataset.importData({
+    data: {
+      fields: [
+        {name: 'lat', type: 'real'},
+        {name: 'lng', type: 'real'},
+        {name: 'strength', type: 'real'}
+      ],
+      rows: [[1, 2, 0]]
+    }
+  });
+  const point = new PointLayer({
+    dataId: dataset.id,
+    columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+  });
+  const datasets = {[dataset.id]: dataset};
+  let state = {
+    ...INITIAL_VIS_STATE,
+    datasets,
+    layers: [point],
+    layerOrder: [point.id],
+    layerData: [point.formatLayerData(datasets)]
+  };
+  state = reducer(
+    state,
+    VisStateActions.layerVisConfigChange(point, {fillOpacityField: 'strength'})
+  );
+  const renamed = reducer(
+    state,
+    VisStateActions.renameTableColumn(dataset.id, 'strength', 'confidence')
+  );
+  t.equal(renamed.layers[0].config.visConfig.fillOpacityField, 'confidence', 'follows rename');
+  t.equal(
+    renamed.layerData[0].fillOpacityField.name,
+    'confidence',
+    'renderer receives renamed field'
+  );
+  t.equal(state.layers[0].config.visConfig.fillOpacityField, 'strength', 'old state is unchanged');
+  t.end();
+});

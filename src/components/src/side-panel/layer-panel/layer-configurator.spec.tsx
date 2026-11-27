@@ -417,3 +417,54 @@ test.each([
     expect(updateLayerVisConfig).not.toHaveBeenCalled();
   }
 });
+
+test('Point fill can select a numeric opacity field and preserve it in saved configs', async () => {
+  const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
+    name,
+    displayName: name,
+    type: name === 'point name' ? 'string' : 'real',
+    format: '',
+    fieldIdx
+  }));
+  const dataset = new KeplerTable({
+    info: {id: 'opacity-points', label: 'Opacity points'},
+    color: [0, 0, 0]
+  });
+  await dataset.importData({data: {fields, rows: [[40, -70, 0.5, 'city']]}});
+  const layer = new KeplerGlLayers.PointLayer({
+    id: 'opacity-points-layer',
+    dataId: dataset.id,
+    columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+  });
+  const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
+  renderWithTheme(
+    <IntlWrapper>
+      <LayerConfigurator
+        layer={layer}
+        datasets={{[dataset.id]: dataset}}
+        layerTypeOptions={[]}
+        openModal={jest.fn()}
+        updateLayerConfig={jest.fn()}
+        updateLayerType={jest.fn()}
+        updateLayerVisConfig={updateLayerVisConfig}
+        updateLayerVisualChannelConfig={jest.fn()}
+        updateLayerColorUI={jest.fn()}
+        updateLayerTextLabel={jest.fn()}
+      />
+    </IntlWrapper>
+  );
+  const field = screen.getByText('Fill opacity by value (0–1)');
+  const section = within(field.parentElement as HTMLElement);
+  fireEvent.click(section.getByText('Select a field'));
+  expect(screen.queryByText('point name')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByText('alpha value'));
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityField: 'alpha value'});
+  const savedConfig = SchemaManager.getConfigToSave({
+    visState: {layers: [layer], layerOrder: [layer.id]}
+  });
+  const [parsedLayer] = SchemaManager.parseSavedConfig(savedConfig)?.visState?.layers ?? [];
+  const reopened = new KeplerGlLayers.PointLayer({dataId: dataset.id});
+  expect(reopened.copyLayerConfig(reopened.config, parsedLayer.config)).toMatchObject({
+    visConfig: {fillOpacityField: 'alpha value'}
+  });
+});

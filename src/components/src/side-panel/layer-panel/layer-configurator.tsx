@@ -51,6 +51,7 @@ import DonutLayerConfiguratorFactory from './donut-layer-configurator';
 import {ActionHandler, toggleModal, updateDatasetProps} from '@kepler.gl/actions';
 import {
   AGGREGATION_TYPE_OPTIONS,
+  ALL_FIELD_TYPES,
   LAYER_TYPES,
   BitmapDatasetMetadata,
   Tile3DDatasetMetadata
@@ -738,6 +739,12 @@ export default function LayerConfiguratorFactory(
         id,
         label: <FormattedMessage id={`layerVisConfigs.point.${id}`} />
       }));
+      const opacityFields =
+        layer.type === LAYER_TYPES.point
+          ? (visConfiguratorProps.fields || []).filter(
+              ({type}) => type === ALL_FIELD_TYPES.integer || type === ALL_FIELD_TYPES.real
+            )
+          : [];
       const timestampFields = (visConfiguratorProps.fields || []).filter(
         f => f.type === 'timestamp'
       );
@@ -759,6 +766,23 @@ export default function LayerConfiguratorFactory(
             )}
 
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
+            {opacityFields.length ? (
+              <SidePanelSection>
+                <PanelLabel>
+                  <FormattedMessage id="layerVisConfigs.point.fillOpacityField" />
+                </PanelLabel>
+                <FieldSelector
+                  fields={opacityFields}
+                  value={layer.config.visConfig.fillOpacityField || 'placeholder.selectField'}
+                  onSelect={field =>
+                    visConfiguratorProps.onChange({
+                      fillOpacityField: (field as Field | null)?.name
+                    })
+                  }
+                  erasable
+                />
+              </SidePanelSection>
+            ) : null}
           </LayerConfigGroup>
 
           {/* outline color */}

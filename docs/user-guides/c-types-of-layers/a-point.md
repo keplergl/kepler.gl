@@ -15,6 +15,7 @@ __Layer Attributes__
   - Single color / color based on
   - Color scale
   - Opacity
+  - Fill opacity by value (optional numeric field)
 - Outline
   - Enable outline
   - Single color / color based on
@@ -27,6 +28,10 @@ __Layer Attributes__
  - Font Size
  - Font Color
  - Text Anchor
+
+## Fill opacity by value
+
+In **Fill**, select a numeric field under **Fill opacity by value**. A value of 0 makes the fill transparent, 1 keeps the full layer opacity, and 0.5 uses half. Values outside 0–1 are clamped, and missing values use the unmodified layer opacity. Outlines and labels are unaffected. Clear the field to use the same fill opacity for all points.
 
 ## Visual
 
