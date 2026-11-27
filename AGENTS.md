@@ -119,6 +119,12 @@ Add a screenshot only when the task asked for browser work and a reviewer needs 
 
 Do not hide uncertainty. If product or architectural judgment is required, explicitly mark it for human review.
 
+### Assessing whether a PR is safe to land
+
+When asked whether a PR is "safe to land" or "safe to merge", assess the changes for correctness, regressions, and newly introduced bugs. Review the diff, affected behavior, relevant tests, and edge cases.
+
+Lead with a clear safety assessment, concrete findings, and any remaining uncertainty. Do not focus on whether CI is passing or the PR is approved unless the user explicitly asks about merge-process readiness. Passing CI and approvals do not replace reviewing the changes; pending CI or missing approvals alone are not code-safety findings. Include relevant test failures when they expose a concrete bug or regression.
+
 ### Addressing GitHub comments
 
 When asked to address GitHub PR comments, account for every comment in scope, including comments from automated reviewers.
