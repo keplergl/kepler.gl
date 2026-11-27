@@ -418,7 +418,7 @@ test.each([
   }
 });
 
-test('Point fill opacity expands, preserves settings on collapse and restores saved configs', async () => {
+test('Point opacity nests under Fill Color and preserves settings when its field subgroup collapses', async () => {
   const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -464,6 +464,16 @@ test('Point fill opacity expands, preserves settings on collapse and restores sa
   });
   const field = screen.getByText('Fill opacity based on');
   const group = field.closest('.layer-config-group') as HTMLElement;
+  const fillGroup = screen.getByText('Fill Color').closest('.layer-config-group');
+  const opacityGroup = screen.getByText('Opacity').closest('.layer-config-group') as HTMLElement;
+  expect(opacityGroup.parentElement?.closest('.layer-config-group')).toBe(fillGroup);
+  expect(group.parentElement?.closest('.layer-config-group')).toBe(opacityGroup);
+  // Noncollapsible parents must stay expanded so their CSS cannot hide the subgroup.
+  expect(fillGroup).not.toHaveClass('collapsed');
+  expect(opacityGroup).not.toHaveClass('collapsed');
+  const opacityInput = within(opacityGroup).getByRole('spinbutton');
+  expect(opacityInput.closest('.layer-config-group')).toBe(opacityGroup);
+  expect(opacityInput.closest('.layer-config-group__content__collapsible')).toBeNull();
   const section = within(group);
   expect(group).toHaveClass('collapsed');
   const selector = section.getByText('Select a field');
