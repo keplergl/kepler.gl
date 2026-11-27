@@ -564,16 +564,24 @@ describe('compact timeline playback controls', () => {
   });
 
   test('can focus and activate Reset from the keyboard without hovering', async () => {
-    const user = userEvent.setup();
-    const {playbackControls} = setupPlayback();
-    for (let index = 0; index < 7; index++) {
-      await user.tab();
+    // Advance tooltip timers during keyboard traversal without waiting on the CI clock.
+    jest.useFakeTimers();
+    try {
+      const user = userEvent.setup({advanceTimers: jest.advanceTimersByTime});
+      const {playbackControls} = setupPlayback();
+      for (let index = 0; index < 7; index++) {
+        await user.tab();
+      }
+      const reset = screen.getByRole('button', {name: 'Reset'});
+      expect(reset).toHaveFocus();
+      await user.keyboard(' ');
+      expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
+      expect(reset).toHaveFocus();
+    } finally {
+      cleanup();
+      act(() => jest.runOnlyPendingTimers());
+      jest.useRealTimers();
     }
-    const reset = screen.getByRole('button', {name: 'Reset'});
-    expect(reset).toHaveFocus();
-    await user.keyboard(' ');
-    expect(playbackControls.resetAnimation).toHaveBeenCalledTimes(1);
-    expect(reset).toHaveFocus();
   });
 
   test.each(['Escape', 'outside click'])(
