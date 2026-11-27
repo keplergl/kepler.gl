@@ -551,6 +551,15 @@ test('layerUtils -> point labels follow the rendered radius cap at high zoom', t
     'normal zoom does not reach the cap'
   );
 
+  const bottomTextLabel = {...layer.config.textLabel[0], alignment: 'bottom', size: 18};
+  layer.updateLayerConfig({textLabel: [bottomTextLabel]});
+  const [, bottomLabel] = render(22, getRadius);
+  t.deepEqual(
+    bottomLabel.props.getPixelOffset(rows[1]),
+    [cap + 20, cap + 20 + bottomTextLabel.size],
+    'bottom-aligned labels include the capped radius, padding and text size'
+  );
+
   layer.updateLayerVisConfig({fixedRadius: true});
   const [, uncappedLabel] = render(22, getRadius);
   t.ok(
