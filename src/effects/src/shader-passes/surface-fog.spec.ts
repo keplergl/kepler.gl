@@ -170,8 +170,7 @@ describe('surface fog rendering', () => {
     longitude = 30.52,
     latitude = 50.45,
     bearing = 35,
-    nearZMultiplier = 0.1,
-    cropSize = SIZE
+    nearZMultiplier = 0.1
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -186,12 +185,11 @@ describe('surface fog rendering', () => {
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
     for (let row = 0; row < 4; row++) {
-      matrix[12 + row] +=
-        matrix[row] * (512 - cropSize / 2) + matrix[4 + row] * (384 - cropSize / 2);
+      matrix[12 + row] += matrix[row] * (512 - SIZE / 2) + matrix[4 + row] * (384 - SIZE / 2);
     }
     return {
-      width: cropSize,
-      height: cropSize,
+      width: SIZE,
+      height: SIZE,
       center: [...viewport.center],
       cameraPosition: [...viewport.cameraPosition],
       latitude: viewport.latitude,
@@ -441,34 +439,6 @@ describe('surface fog rendering', () => {
     expect(render({uniforms: {...view, waveTime: 0}})).toEqual(start);
   });
 
-  test.each(
-    [14, 16, 18].flatMap(zoom => [
-      {zoom, name: 'blue', fogColor: [40, 120, 190]},
-      {zoom, name: 'default', fogColor: [230, 235, 242]}
-    ])
-  )('shows visible water motion at map zoom $zoom with $name water', ({zoom, fogColor}) => {
-    const cropSize = 64;
-    const uniforms = {
-      ...viewportUniforms(croppedViewport({zoom, pitch: 55, cropSize})),
-      fogHeight: 0,
-      fogThickness: 0,
-      fogColor,
-      density: 0.6
-    };
-    const first = render({depth: 1, uniforms, size: cropSize});
-    const later = render({depth: 1, uniforms: {...uniforms, waveTime: 3}, size: cropSize});
-    const changes = first.flatMap((value, i) => (i % 4 === 3 ? [] : [value - later[i]]));
-    const differences = changes.map(Math.abs);
-    const mean = differences.reduce((sum, difference) => sum + difference, 0) / differences.length;
-    expect(mean).toBeGreaterThan(2);
-    if (zoom === 18) {
-      // Moving crests brighten some pixels and darken others, rather than just
-      // changing the tint uniformly over the entire water surface.
-      expect(Math.min(...changes)).toBeLessThan(-3);
-      expect(Math.max(...changes)).toBeGreaterThan(3);
-    }
-  });
-
   test.each<Record<string, number | number[]>>([
     {pattern: 0},
     {cameraHeight: -1},
@@ -507,28 +477,22 @@ describe('surface fog rendering', () => {
     [12, 55],
     [13, 0],
     [13, 55]
-  ])('retains broad, non-repeating wind patterns at city zoom %s and pitch %s', (zoom, pitch) => {
+  ])('keeps distant water free of broad patterns at city zoom %s and pitch %s', (zoom, pitch) => {
     const uniforms = viewportUniforms(croppedViewport({zoom, pitch}));
     uniforms.fogHeight = 0;
     uniforms.fogThickness = 0;
     const pixels = render({depth: 1, uniforms});
-    // Fine ripples are unresolved here, but a different 4km world tile must
-    // still show distinct wind patches rather than a repeated or flat fill.
+    // Fine ripples are unresolved here. Changing location and playback time
+    // must not introduce broad patches into the smooth water surface.
     const shifted = render({
       depth: 1,
       uniforms: {
         ...uniforms,
-        waveOrigin: (uniforms.waveOrigin as number[]).map(value => value + 1)
+        waveOrigin: (uniforms.waveOrigin as number[]).map(value => value + 1),
+        waveTime: 3
       }
     });
-    expect(maxPixelDifference(pixels, shifted)).toBeGreaterThan(4);
-    // Broad patterns stay smooth from pixel to pixel; no subpixel sparkle.
-    let adjacentDifference = 0;
-    for (let i = 0; i < pixels.length - 4; i++) {
-      if (Math.floor(i / 4) % SIZE === SIZE - 1) continue;
-      adjacentDifference = Math.max(adjacentDifference, Math.abs(pixels[i] - pixels[i + 4]));
-    }
-    expect(adjacentDifference).toBeLessThan(8);
+    expect(shifted).toEqual(pixels);
   });
 
   test('retains resolved ripples in a neighborhood view', () => {

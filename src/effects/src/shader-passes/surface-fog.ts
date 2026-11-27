@@ -121,7 +121,7 @@ vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float fo
 vec3 waveNormal(vec2 meters, float footprint) {
   float warpedFootprint = footprint * 1.5;
   // If even the largest ripples are unresolved, skip the bend noise as well.
-  if (waveWeight(32.0, footprint * 2.0) <= 0.0) {
+  if (waveWeight(16.0, warpedFootprint) <= 0.0) {
     return vec3(0.0, 0.0, 1.0);
   }
   // Broad noise bends the ripple field without contributing a large surface
@@ -130,35 +130,15 @@ vec3 waveNormal(vec2 meters, float footprint) {
   float bendWeight = waveWeight(64.0, footprint);
   vec2 p = meters + bend.yz * 4.0 * bendWeight;
   vec2 slope = vec2(0.0);
-  // Keep the crests at fixed world scales. The longer band carries the surface
-  // through neighborhood views; finer ripples fade out before they can shimmer.
+  // Modest slopes and meter-scale crests fit the surrounding buildings. Keep
+  // their world scale fixed: unresolved ripples fade out as the map zooms out.
   // Longer waves travel faster; a small crosswind component lets the crests
   // evolve instead of sliding a single frozen texture across the surface.
   // Velocities are in map meters per playback second, independent of the camera.
-  slope += waveSlope(p, 32.0, mat2(1.0, -0.25, 0.5, 0.5), 0.20, footprint * 2.0, vec2(2.4, -1.2));
-  slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.20, warpedFootprint, vec2(1.6, -0.8));
-  slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.12, warpedFootprint, vec2(1.0, -0.4));
-  slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.06, warpedFootprint, vec2(0.55, 0.3));
+  slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint, vec2(1.6, -0.8));
+  slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint, vec2(1.0, -0.4));
+  slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint, vec2(0.55, 0.3));
   return normalize(vec3(-slope, 1.0));
-}
-
-float windPattern(vec2 meters, float footprint) {
-  float weight = waveWeight(4096.0, footprint * 3.0);
-  if (weight <= 0.0) return 0.0;
-  // Broad wind patches change the aggregate reflection of unresolved ripples.
-  // They do not tilt the surface into enormous waves. Independent world-space
-  // scales and drift directions avoid a repeating tile or a sliding flat decal.
-  vec3 weights = vec3(0.55 * waveWeight(256.0, footprint * 3.0),
-                      0.30 * waveWeight(1024.0, footprint * 3.0), 0.15 * weight);
-  vec3 fine = waveNoise(meters - vec2(48.0, -18.0) * surfaceFog.waveTime, 256.0, mat2(1.0));
-  mat2 frame = mat2(0.5, -0.5, 0.5, 1.0);
-  vec3 medium = waveNoise(meters - vec2(28.0, 14.0) * surfaceFog.waveTime, 1024.0, frame);
-  vec3 broad = waveNoise(meters - vec2(32.0, -16.0) * surfaceFog.waveTime, 4096.0, mat2(1.0));
-  float total = weights.x + weights.y + weights.z;
-  float pattern = dot(weights, vec3(fine.x, medium.x, broad.x)) / total;
-  // Keep the filtered field's smooth gradients. Varying a contrast threshold
-  // with the local gradient creates new edges at the noise field's extrema.
-  return clamp(0.5 + 1.25 * pattern, 0.0, 1.0) * weight;
 }
 
 vec3 skyReflection(vec3 direction) {
@@ -271,7 +251,7 @@ void main() {
   float visibility = 1.0 - depthFactor;
   vec3 transmission = pow(vec3(visibility), vec3(3.6, 1.6, 1.0) / max(abs(V.z), 0.2));
   vec3 scattering = fogColorNorm * mix(vec3(0.85, 1.05, 1.1),
-                                      vec3(0.12, 0.20, 0.30),
+                                      vec3(0.32, 0.48, 0.62),
                                       depthFactor);
   vec3 waterBody = baseRgb * transmission + scattering * (1.0 - transmission);
   vec3 waterSurface = waterBody;
@@ -281,16 +261,14 @@ void main() {
     float facing = clamp(dot(N, V), 0.0, 1.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - facing, 5.0);
     vec3 reflectedSky = skyReflection(reflect(-V, N));
-    float wind = windPattern(worldMeters, footprint);
-    float reflection = fresnel + (1.0 - fresnel) * 0.4 * wind;
-    waterSurface = mix(waterBody, reflectedSky, reflection);
+    waterSurface = mix(waterBody, reflectedSky, fresnel);
 
     // A broad sun sheen, filtered by normal variance. Narrow unfiltered lobes
     // turn subpixel ripples into isolated white pixels, even with filtered waves.
     float sunAlignment = max(dot(N, normalize(L + V)), 0.0);
     float shininess = 64.0 / (1.0 + 64.0 * normalVariance);
-    float glint = 0.45 * (shininess / 64.0) * pow(sunAlignment, shininess) +
-                  0.04 * pow(sunAlignment, 8.0);
+    float glint = 0.18 * (shininess / 64.0) * pow(sunAlignment, shininess) +
+                  0.025 * pow(sunAlignment, 8.0);
     waterSurface += vec3(1.0, 0.96, 0.86) * glint;
 
     // Thin water at a contact should retain a subtly darker substrate, not a
