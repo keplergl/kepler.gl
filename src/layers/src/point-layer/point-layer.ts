@@ -855,7 +855,12 @@ export default class PointLayer extends Layer {
 
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const brushingProps = this.getBrushingExtensionProps(interactionConfig);
-    const getPixelOffset = getTextOffsetByRadius(radiusScale, data.getRadius, mapState);
+    const getPixelOffset = getTextOffsetByRadius(
+      radiusScale,
+      data.getRadius,
+      mapState,
+      layerProps.radiusMaxPixels
+    );
     const extensions = [
       ...defaultLayerProps.extensions,
       brushingExtension,
