@@ -196,7 +196,8 @@ describe('fog reconstruction uniforms', () => {
       pattern: 1,
       fogColor: [10, 20, 30],
       viewportWidth: 320,
-      viewportHeight: 240
+      viewportHeight: 240,
+      pixelRatio: 2
     });
     effect.setProps({pattern: false});
     effect.postRender({...createBuffers(), viewports: [{distanceScales: {unitsPerMeter: 2}}]});
