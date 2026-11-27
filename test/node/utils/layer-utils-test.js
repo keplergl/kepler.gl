@@ -2984,3 +2984,66 @@ test('layerUtils -> getNeighbors handles empty cells and preserves valid neighbo
   }
   t.end();
 });
+
+test('layerUtils -> point labels follow the rendered radius cap at high zoom', t => {
+  const layer = new PointLayer({id: 'label-radius', dataId: 'survey', isVisible: true});
+  layer.updateLayerConfig({
+    textLabel: [{...layer.config.textLabel[0], anchor: 'start', alignment: 'center'}]
+  });
+  layer.updateLayerVisConfig({radius: 50});
+  const rows = [
+    {position: [0, 0], radius: 1},
+    {position: [0, 0], radius: 50}
+  ];
+  const render = (zoom, getRadius) =>
+    renderDeckGlLayer(
+      {
+        layer,
+        data: {
+          data: rows,
+          textLabels: [{getText: () => 'Point'}],
+          getPosition: d => d.position,
+          getRadius
+        },
+        datasets: {survey: {gpuFilter: {filterRange: [], filterValueUpdateTriggers: {}}}},
+        mapState: {...INITIAL_MAP_STATE, latitude: 0, longitude: 0, zoom},
+        interactionConfig: INITIAL_VIS_STATE.interactionConfig
+      },
+      {}
+    );
+
+  const [marker, label] = render(22, 1);
+  const cap = marker.props.radiusMaxPixels;
+  t.equal(cap, 500, 'the marker uses the existing 500 px cap');
+  t.deepEqual(
+    label.props.getPixelOffset,
+    [cap + 20, 0],
+    'constant radius reaches the cap with padding'
+  );
+
+  layer.updateLayerConfig({sizeField: {name: 'radius', fieldIdx: 0}});
+  const getRadius = row => row.radius;
+  const [, sizedLabel] = render(22, getRadius);
+  t.ok(
+    sizedLabel.props.getPixelOffset(rows[0])[0] < cap + 20,
+    'a small radius stays below the cap'
+  );
+  t.deepEqual(
+    sizedLabel.props.getPixelOffset(rows[1]),
+    [cap + 20, 0],
+    'a large field radius is capped'
+  );
+  const [, lowZoomLabel] = render(14, getRadius);
+  t.ok(
+    lowZoomLabel.props.getPixelOffset(rows[1])[0] < cap + 20,
+    'normal zoom does not reach the cap'
+  );
+
+  layer.updateLayerVisConfig({fixedRadius: true});
+  const [, uncappedLabel] = render(22, getRadius);
+  t.ok(
+    uncappedLabel.props.getPixelOffset(rows[1])[0] > cap + 20,
+    'fixed-radius markers and labels stay uncapped'
+  );
+  t.end();
+});
