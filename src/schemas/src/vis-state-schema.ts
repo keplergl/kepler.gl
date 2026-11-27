@@ -981,6 +981,7 @@ export class EffectsSchema extends Schema {
 }
 
 const annotationPropsV1 = {
+  elevation: null,
   rulerStyle: null,
   labelBackground: null,
   viewport: null,

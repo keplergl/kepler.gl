@@ -294,3 +294,11 @@ export type {KeplerTableModel} from './types';
 
 export {valueToPosition, positionToValue, createSliderScale} from './slider-scale-utils';
 export type {SliderScaleConfig} from './slider-scale-utils';
+
+export {
+  DEFAULT_ANNOTATION_ELEVATION,
+  ELEVATION_UNIT_METERS,
+  normalizeAnnotationElevation,
+  getAnnotationElevationLabels,
+  getElevationReferenceStatus
+} from './annotation-elevation';

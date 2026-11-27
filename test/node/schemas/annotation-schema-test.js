@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+
 import test from 'tape';
 import {AnnotationsSchema} from '@kepler.gl/schemas';
 import {AnnotationKind} from '@kepler.gl/constants';
@@ -37,7 +39,7 @@ const annotationPropsV1 = {
 
 const schema = new AnnotationsSchema({
   version: VERSIONS.v1,
-  properties: {...annotationPropsV1, geographicReadout: null}
+  properties: {...annotationPropsV1, geographicReadout: null, elevation: null}
 });
 
 const makePointAnnotation = (overrides = {}) => ({
@@ -364,5 +366,29 @@ test('#AnnotationsSchema -> styled rulers preserve presentation and endpoints', 
   t.deepEqual(loaded[0].endPoint, ruler.endPoint, 'end endpoint round-trips');
   t.notOk(loaded[1].rulerStyle, 'legacy ruler does not opt in');
   t.notOk(loaded[1].labelBackground, 'legacy background stays transparent');
+  t.end();
+});
+
+test('#AnnotationsSchema -> point elevation round-trips independently from drawing altitude', t => {
+  const elevation = {
+    ...DEFAULT_ANNOTATION_ELEVATION,
+    value: -1000,
+    datum: 'MSL',
+    field: {dataId: 'data', name: 'elevation'},
+    reference: {value: 0, unit: 'm', datum: 'MSL', displayZ: 5900}
+  };
+  const annotation = makePointAnnotation({anchorPoint: [10, 20, 4900], elevation});
+  const saved = JSON.parse(
+    JSON.stringify(schema.save([annotation, makePointAnnotation({id: 'legacy'})]))
+  );
+  const loaded = schema.load(saved.annotations).annotations;
+  t.deepEqual(loaded[0].elevation, elevation, 'source, datum, format and guide round-trip');
+  t.deepEqual(loaded[0].anchorPoint, annotation.anchorPoint, 'drawing height stays separate');
+  t.notOk(loaded[1].elevation, 'legacy point stays unchanged');
+  const oldSchema = new AnnotationsSchema({version: VERSIONS.v1, properties: annotationPropsV1});
+  t.notOk(
+    oldSchema.load(saved.annotations).annotations[0].elevation,
+    'older schemas ignore optional settings'
+  );
   t.end();
 });

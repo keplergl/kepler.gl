@@ -6,7 +6,11 @@ import styled from 'styled-components';
 import {useDraggable} from '@dnd-kit/core';
 import {Annotation} from '@kepler.gl/types';
 import {AnnotationKind} from '@kepler.gl/constants';
-import {hexToRgb, normalizeAnnotationLabelBackground} from '@kepler.gl/utils';
+import {
+  hexToRgb,
+  normalizeAnnotationLabelBackground,
+  getAnnotationElevationLabels
+} from '@kepler.gl/utils';
 import {
   getAnnotationTextBoxStyle,
   getRulerDistanceLabel,
@@ -238,6 +242,11 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   const isViewport = annotation.kind === AnnotationKind.TEXT && Boolean(annotation.viewport);
   const isRuler = annotation.kind === AnnotationKind.RULER;
   const showCustomText = !isRuler || annotation.showCustomText;
+  const elevationLabels =
+    annotation.kind === AnnotationKind.POINT && annotation.elevation
+      ? getAnnotationElevationLabels(annotation.elevation)
+      : [];
+  const hasElevation = elevationLabels.length > 0;
   const hasReadout = showCustomText && Boolean(annotation.readout);
   const formattedReadout = useMemo(
     () =>
@@ -250,12 +259,12 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     [hasReadout, annotation.editorState, readoutValue]
   );
   const hasLabel = useMemo(() => {
-    if (!hasReadout) return true;
+    if (!hasReadout && !hasElevation) return true;
     const blocks = (annotation.editorState as SerializedEditorState | undefined)?.root?.children;
     return Array.isArray(blocks)
       ? blocks.some(node => firstTextNode(node, true))
       : Boolean(annotation.label?.trim());
-  }, [hasReadout, annotation.editorState, annotation.label]);
+  }, [hasReadout, hasElevation, annotation.editorState, annotation.label]);
   // Keep the editor mounted and focused when its empty caption no longer takes a row.
   const emptyLabel = !hasLabel;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -400,7 +409,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
               isEditable={isEditing && isEditingText && showCustomText}
               editorState={
                 (annotation.editorState as SerializedEditorState | undefined) ??
-                (styledRuler && !annotation.label ? EMPTY_LABEL_STATE : undefined)
+                ((styledRuler || hasElevation) && !annotation.label ? EMPTY_LABEL_STATE : undefined)
               }
               initialText={annotation.label}
               onChange={handleEditorChange}
@@ -433,6 +442,20 @@ const AnnotationText: FC<AnnotationTextProps> = ({
               )}
             </StyledRulerDistance>
           ) : null}
+          {elevationLabels.map((text, index) => (
+            <div data-annotation-part="elevation-label" key={index}>
+              <LexicalRichTextEditor
+                key={JSON.stringify([text, annotation.editorState])}
+                isEditable={false}
+                editorState={readoutEditorState(
+                  annotation.editorState as SerializedEditorState | undefined,
+                  text
+                )}
+                initialText={text}
+                onChange={ignoreReadoutChange}
+              />
+            </div>
+          ))}
           {hasReadout ? (
             <div data-annotation-part="readout">
               <LexicalRichTextEditor

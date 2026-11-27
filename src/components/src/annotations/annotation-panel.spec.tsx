@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+
 import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
@@ -10,7 +12,7 @@ import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
-import {Annotation} from '@kepler.gl/types';
+import {Annotation, AnnotationElevation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
@@ -45,6 +47,26 @@ const makeState = (showCustomText: boolean, showDistance: boolean) => ({
     selectedAnnotationId: 'ruler-1'
   },
   mapState: {longitude: 0, latitude: 0}
+});
+
+const originalIntersectionObserver = window.IntersectionObserver;
+
+beforeAll(() => {
+  window.IntersectionObserver = class {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  } as unknown as typeof IntersectionObserver;
+});
+
+afterAll(() => {
+  window.IntersectionObserver = originalIntersectionObserver;
 });
 
 describe('AnnotationManager placement', () => {
@@ -363,26 +385,6 @@ describe('AnnotationManager line width slider', () => {
 });
 
 describe('AnnotationManager selectors', () => {
-  const originalIntersectionObserver = window.IntersectionObserver;
-
-  beforeAll(() => {
-    window.IntersectionObserver = class {
-      observe() {
-        return undefined;
-      }
-      unobserve() {
-        return undefined;
-      }
-      disconnect() {
-        return undefined;
-      }
-    } as unknown as typeof IntersectionObserver;
-  });
-
-  afterAll(() => {
-    window.IntersectionObserver = originalIntersectionObserver;
-  });
-
   const renderCaption = (changes: Partial<Annotation> = {}, withDatasets = true) => {
     const state = makeState(true, true);
     const store = mockStore({
@@ -723,5 +725,107 @@ describe('AnnotationManager selectors', () => {
     fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '2'}});
     fireEvent.blur(screen.getByLabelText('Background opacity'));
     expect(store.getActions()).toEqual([]);
+  });
+});
+
+describe('Point elevation settings', () => {
+  function renderPoint(elevation?: AnnotationElevation) {
+    const state = makeState(true, true);
+    Object.assign(state.visState.annotations[0], {
+      kind: AnnotationKind.POINT,
+      anchorPoint: [1, 2, 7448.36],
+      elevation,
+      armLength: 40,
+      angle: 0
+    });
+    Object.assign(state.visState, {
+      datasets: {
+        detections: {
+          id: 'detections',
+          label: 'Detections',
+          fields: [
+            {name: 'altitude', type: 'real'},
+            {name: 'name', type: 'string'}
+          ]
+        }
+      }
+    });
+    const store = mockStore(state);
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    return store;
+  }
+  test('enables an elevation label without assuming a datum or ground height', () => {
+    const store = renderPoint();
+    fireEvent.click(screen.getByLabelText('Show elevation'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36}
+      })
+    ]);
+  });
+  test('keeps signed measurements independent from anchor and reference drawing heights', () => {
+    const elevation: AnnotationElevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      datum: 'MSL',
+      reference: {value: 990, unit: 'm', datum: 'MSL'}
+    };
+    const store = renderPoint(elevation);
+    for (const [name, value] of [
+      ['Source altitude', '-1000'],
+      ['Anchor height (m)', '4900'],
+      ['Reference draw height (m)', '5900']
+    ]) {
+      fireEvent.change(screen.getByLabelText(name), {target: {value}});
+      fireEvent.blur(screen.getByLabelText(name));
+    }
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, value: -1000}}),
+      VisStateActions.updateAnnotation('ruler-1', {anchorPoint: [1, 2, 4900]}),
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...elevation, reference: {...elevation.reference!, displayZ: 5900}}
+      })
+    ]);
+    store.clearActions();
+    fireEvent.change(screen.getByLabelText('Source altitude'), {target: {value: ''}});
+    fireEvent.blur(screen.getByLabelText('Source altitude'));
+    expect(store.getActions()).toEqual([]);
+    fireEvent.click(screen.getByLabelText('Show elevation'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {elevation: undefined})
+    ]);
+  });
+  test('selecting a numeric source requires a fresh capture instead of retaining a stale value', async () => {
+    const elevation: AnnotationElevation = {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36};
+    const store = renderPoint(elevation);
+    await userEvent.click(screen.getByText('Manual'));
+    await userEvent.click(screen.getByText('Numeric field'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...elevation, value: null, field: {dataId: 'detections', name: 'altitude'}}
+      })
+    ]);
+  });
+  test('manual missing values stay empty until entered and datum names preserve internal spaces', () => {
+    const elevation = {...DEFAULT_ANNOTATION_ELEVATION};
+    const store = renderPoint(elevation);
+    expect(screen.getByLabelText('Source altitude')).toHaveValue(null);
+    fireEvent.change(screen.getByLabelText('Source altitude'), {target: {value: '0'}});
+    fireEvent.blur(screen.getByLabelText('Source altitude'));
+    fireEvent.change(screen.getByLabelText('Source datum'), {target: {value: 'Local benchmark'}});
+    expect(store.getActions()).toHaveLength(1);
+    fireEvent.blur(screen.getByLabelText('Source datum'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, value: 0}}),
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...elevation, datum: 'Local benchmark'}
+      })
+    ]);
   });
 });

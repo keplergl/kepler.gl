@@ -14,7 +14,14 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 import {visStateLens, mapStateLens} from '@kepler.gl/reducers';
-import {Annotation, RulerAnnotation, RulerStyle} from '@kepler.gl/types';
+import {
+  Annotation,
+  RulerAnnotation,
+  RulerStyle,
+  PointAnnotation,
+  AnnotationElevation,
+  ElevationUnit
+} from '@kepler.gl/types';
 import {
   AnnotationKind,
   AnnotationTextSide,
@@ -50,7 +57,14 @@ import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
-import {getCameraSnapshot, hexToRgb, rgbToHex, DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
+import {
+  getCameraSnapshot,
+  hexToRgb,
+  rgbToHex,
+  DEFAULT_RULER_STYLE,
+  DEFAULT_ANNOTATION_ELEVATION,
+  ELEVATION_UNIT_METERS
+} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 import {MapViewStateContext} from '../map-view-state-context';
@@ -337,30 +351,37 @@ function CaptionMarginInput({
   label,
   value,
   max,
+  min = 0,
   step = 1,
   onChange
 }: {
   label: string;
-  value: number;
+  value: number | null;
   max?: number;
+  min?: number;
   step?: number;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = React.useState(String(value));
-  React.useEffect(() => setDraft(String(value)), [value]);
+  const [draft, setDraft] = React.useState(String(value ?? ''));
+  React.useEffect(() => setDraft(String(value ?? '')), [value]);
   const commit = () => {
     const next = Number(draft);
-    if (draft.trim() && Number.isFinite(next) && next >= 0 && (max === undefined || next <= max)) {
+    if (
+      draft.trim() &&
+      Number.isFinite(next) &&
+      next >= min &&
+      (max === undefined || next <= max)
+    ) {
       if (next !== value) onChange(next);
     } else {
-      setDraft(String(value));
+      setDraft(String(value ?? ''));
     }
   };
   return (
     <StyledCaptionInput
       aria-label={label}
       type="number"
-      min={0}
+      min={Number.isFinite(min) ? min : undefined}
       step={step}
       max={max}
       value={draft}
@@ -452,7 +473,6 @@ function RulerSettings({
         }}
       />
     ));
-  const background = annotation.labelBackground;
   return (
     <>
       {row('styledDistance', 'Styled distance', name => (
@@ -533,6 +553,31 @@ function RulerSettings({
           )}
         </>
       ) : null}
+      <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+    </>
+  );
+}
+
+function AnnotationBackgroundSettings({
+  annotation,
+  intl,
+  onChange
+}: {
+  annotation: Annotation;
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const background = annotation.labelBackground;
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
+    <StyledConfigRow key={id}>
+      <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-${id}`}>
+        {intl.formatMessage({id: `annotationManager.${id}`, defaultMessage: fallback})}
+      </StyledConfigLabel>
+      {control(intl.formatMessage({id: `annotationManager.${id}`, defaultMessage: fallback}))}
+    </StyledConfigRow>
+  );
+  return (
+    <>
       {row('labelBackground', 'Label background', name => (
         <StyledRulerSwitch
           id={`annotation-${annotation.id}-labelBackground`}
@@ -572,6 +617,272 @@ function RulerSettings({
               onChange={padding => onChange({labelBackground: {...background, padding}})}
             />
           ))}
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function ElevationDatumInput({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = React.useState(value);
+  React.useEffect(() => setDraft(value), [value]);
+  const commit = () => {
+    const next = draft.trim() || 'unknown';
+    setDraft(next);
+    if (next !== value) onChange(next);
+  };
+  return (
+    <StyledCaptionInput
+      aria-label={label}
+      value={draft}
+      maxLength={64}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+      }}
+    />
+  );
+}
+
+function ElevationSettings({
+  annotation,
+  datasets,
+  intl,
+  onChange
+}: {
+  annotation: PointAnnotation;
+  datasets: VisState['datasets'];
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const elevation = annotation.elevation;
+  const patch = (changes: Partial<AnnotationElevation>) =>
+    onChange({elevation: {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes}});
+  const label = (id: string, fallback: string) =>
+    intl.formatMessage({id: `annotationManager.elevation.${id}`, defaultMessage: fallback});
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
+    <StyledConfigRow key={id}>
+      <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-elevation-${id}`}>
+        {label(id, fallback)}
+      </StyledConfigLabel>
+      {control(label(id, fallback))}
+    </StyledConfigRow>
+  );
+  const select = (
+    id: string,
+    fallback: string,
+    value: string,
+    options: {id: string; label: string}[],
+    change: (value: string) => void
+  ) =>
+    row(id, fallback, name => (
+      <StyledSelect
+        aria-label={name}
+        options={options}
+        selectedItems={options.find(option => option.id === value)}
+        displayOption="label"
+        getOptionValue="id"
+        multiSelect={false}
+        searchable={false}
+        onChange={value => {
+          if (typeof value === 'string') change(value);
+        }}
+      />
+    ));
+  const units = ['m', 'km', 'ft'].map(unit => ({id: unit, label: unit}));
+  const numericInput = (
+    id: string,
+    fallback: string,
+    value: number | null,
+    change: (value: number) => void
+  ) =>
+    row(id, fallback, name => (
+      <CaptionMarginInput
+        label={name}
+        value={value}
+        min={-Infinity}
+        step={0.01}
+        onChange={change}
+      />
+    ));
+  const datumInput = (
+    id: string,
+    fallback: string,
+    value: string,
+    change: (value: string) => void
+  ) =>
+    row(id, fallback, name => <ElevationDatumInput label={name} value={value} onChange={change} />);
+  const reference = elevation?.reference;
+  const datasetOptions = Object.values(datasets || {}).filter(table =>
+    table.fields?.some(field => ['integer', 'real'].includes(field.type))
+  );
+  const table = datasetOptions.find(table => table.id === elevation?.field?.dataId);
+  const fields = table?.fields.filter(field => ['integer', 'real'].includes(field.type)) ?? [];
+  return (
+    <>
+      {row('show', 'Show elevation', name => (
+        <StyledRulerSwitch
+          id={`annotation-${annotation.id}-elevation-show`}
+          aria-label={name}
+          checked={Boolean(elevation)}
+          onChange={event =>
+            onChange({
+              elevation: event.target.checked
+                ? {
+                    ...DEFAULT_ANNOTATION_ELEVATION,
+                    value: annotation.anchorPoint[2] ?? 0
+                  }
+                : undefined
+            })
+          }
+        />
+      ))}
+      {elevation ? (
+        <>
+          {select(
+            'source',
+            'Elevation source',
+            elevation.field ? 'field' : 'manual',
+            [
+              {id: 'manual', label: label('manual', 'Manual')},
+              ...(datasetOptions.length || elevation.field
+                ? [{id: 'field', label: label('field', 'Numeric field')}]
+                : [])
+            ],
+            source => {
+              if (source === 'manual') patch({field: undefined});
+              else if (datasetOptions.length) {
+                const dataset = datasetOptions[0];
+                const field = dataset.fields.find(field =>
+                  ['integer', 'real'].includes(field.type)
+                )!;
+                patch({field: {dataId: dataset.id, name: field.name}, value: null});
+              }
+            }
+          )}
+          {elevation.field ? (
+            <>
+              {select(
+                'dataset',
+                'Source dataset',
+                elevation.field.dataId,
+                datasetOptions.map(table => ({id: table.id, label: table.label})),
+                dataId => {
+                  const table = datasetOptions.find(table => table.id === dataId)!;
+                  patch({
+                    field: {
+                      dataId,
+                      name: table.fields.find(field => ['integer', 'real'].includes(field.type))!
+                        .name
+                    },
+                    value: null
+                  });
+                }
+              )}
+              {select(
+                'fieldName',
+                'Source field',
+                elevation.field.name,
+                fields.map(field => ({id: field.name, label: field.name})),
+                name => patch({field: {...elevation.field!, name}, value: null})
+              )}
+              <StyledConfigLabel>
+                {label(
+                  'captureHelp',
+                  'Drag the anchor onto a feature to capture its value. Values stay fixed until picked again.'
+                )}
+              </StyledConfigLabel>
+              {row('captured', 'Captured value', () => (
+                <span>{elevation.value ?? '—'}</span>
+              ))}
+            </>
+          ) : (
+            numericInput('value', 'Source altitude', elevation.value, value => patch({value}))
+          )}
+          {select('sourceUnits', 'Source units', elevation.unit, units, unit =>
+            patch({unit: unit as ElevationUnit})
+          )}
+          {datumInput('datum', 'Source datum', elevation.datum, datum => patch({datum}))}
+          {numericInput('anchorHeight', 'Anchor height (m)', annotation.anchorPoint[2] ?? 0, z =>
+            onChange({anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]})
+          )}
+          {select(
+            'reference',
+            'Ground reference',
+            reference ? 'known' : 'unavailable',
+            [
+              {id: 'unavailable', label: label('unavailable', 'Unavailable')},
+              {id: 'known', label: label('known', 'Known elevation')}
+            ],
+            value =>
+              patch({
+                reference: value === 'known' ? {value: 0, unit: 'm', datum: elevation.datum} : null
+              })
+          )}
+          {reference ? (
+            <>
+              {numericInput('referenceValue', 'Reference altitude', reference.value, value =>
+                patch({reference: {...reference, value}})
+              )}
+              {select('referenceUnit', 'Reference units', reference.unit, units, unit =>
+                patch({reference: {...reference, unit: unit as ElevationUnit}})
+              )}
+              {datumInput('referenceDatum', 'Reference datum', reference.datum, datum =>
+                patch({reference: {...reference, datum}})
+              )}
+              {numericInput(
+                'referenceHeight',
+                'Reference draw height (m)',
+                reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit],
+                displayZ => patch({reference: {...reference, displayZ}})
+              )}
+            </>
+          ) : null}
+          {select(
+            'display',
+            'Display elevation',
+            elevation.display,
+            [
+              {id: 'altitude', label: label('altitude', 'Source altitude')},
+              {id: 'relative', label: label('relative', 'Above reference')},
+              {id: 'both', label: label('both', 'Both')}
+            ],
+            display => patch({display: display as AnnotationElevation['display']})
+          )}
+          {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
+            patch({outputUnit: outputUnit as ElevationUnit})
+          )}
+          {select(
+            'precision',
+            'Elevation decimals',
+            String(elevation.precision),
+            Array.from({length: 7}, (_, i) => ({id: String(i), label: String(i)})),
+            value => patch({precision: Number(value)})
+          )}
+          {select(
+            'guide',
+            'Vertical guide',
+            elevation.guide,
+            ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
+            guide => patch({guide: guide as AnnotationElevation['guide']})
+          )}
+          {select(
+            'marker',
+            'Endpoint marker',
+            elevation.marker,
+            ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
+            marker => patch({marker: marker as AnnotationElevation['marker']})
+          )}
+          <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
         </>
       ) : null}
     </>
@@ -1291,6 +1602,16 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           </StyledConfigRow>
                         </>
                       )}
+                      {annotation.kind === AnnotationKind.POINT ? (
+                        <ElevationSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
                       {annotation.kind !== AnnotationKind.TEXT ? (
                         <CaptionSettings
                           annotation={annotation}

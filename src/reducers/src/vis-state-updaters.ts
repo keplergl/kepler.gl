@@ -63,6 +63,7 @@ import {
   normalizeCameraBookmarks,
   normalizeAnnotationCaption,
   normalizeAnnotationLabelBackground,
+  normalizeAnnotationElevation,
   normalizeRulerStyle,
   normalizeCameraTour,
   addNewLayersToSplitMap,
@@ -3166,7 +3167,12 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     (kind === AnnotationKind.TEXT || kind === AnnotationKind.RULER
       ? undefined
       : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
+  const elevation =
+    kind === AnnotationKind.POINT
+      ? normalizeAnnotationElevation((config as any)?.elevation)
+      : undefined;
   const base = {
+    ...(elevation ? {elevation} : {}),
     id: config?.id ?? generateHashId(6),
     kind,
     ...normalizeAnnotationCaption({...config, kind}),
@@ -3323,6 +3329,13 @@ export const updateAnnotationUpdater = (
     if (style) nextAnnotation.rulerStyle = style;
     else delete nextAnnotation.rulerStyle;
   }
+  const elevation =
+    nextAnnotation.kind === AnnotationKind.POINT
+      ? normalizeAnnotationElevation(nextAnnotation.elevation)
+      : undefined;
+  delete (nextAnnotation as any).elevation;
+  if (elevation && nextAnnotation.kind === AnnotationKind.POINT)
+    nextAnnotation.elevation = elevation;
   const caption = normalizeAnnotationCaption(nextAnnotation);
   delete nextAnnotation.viewport;
   delete nextAnnotation.readout;

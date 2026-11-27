@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+
 import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import React from 'react';
 import {act, render} from '@testing-library/react';
@@ -15,6 +17,7 @@ import type {VideoAnnotationFrame} from './video-annotation-encoder';
 
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('../../../utils/src/annotation-ruler'),
+  ...jest.requireActual('../../../utils/src/annotation-elevation'),
   hexToRgb: jest.requireActual('../../../utils/src/color-utils').hexToRgb,
   getLayerOpacityFactor: jest.requireActual('../../../utils/src/layer-visibility')
     .getLayerOpacityFactor,
@@ -532,4 +535,51 @@ test('preview and recording compose the same styled live ruler after a saved-pro
   });
   await act(async () => compositeVideoAnnotations(canvas, frame));
   expect(domtoimage.toPng).toHaveBeenCalled();
+});
+
+test('native preview and capture reproduce the lightning elevation callout after a camera rotation', async () => {
+  const {canvas, frame} = setup({
+    annotations: [
+      {
+        ...annotation,
+        kind: 'POINT',
+        label: '',
+        armLength: 50,
+        angle: -45,
+        anchorPoint: [-101.830429, 33.518337, 7448.36],
+        elevation: {
+          ...DEFAULT_ANNOTATION_ELEVATION,
+          value: 7448.36,
+          datum: 'MSL',
+          display: 'both',
+          reference: {value: 990, unit: 'm', datum: 'MSL'}
+        }
+      }
+    ],
+    mapState: {longitude: -101.830429, latitude: 33.518337, zoom: 8, pitch: 62, bearing: 90}
+  });
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  const check = (node: HTMLElement) => {
+    expect(node).toHaveTextContent('7.45 km above sea level');
+    expect(node).toHaveTextContent('6.46 km above reference');
+    expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+      'stroke-dasharray',
+      '6 3'
+    );
+    expect(node.querySelector('[contenteditable="true"]')).toBeNull();
+  };
+  check(view.container);
+  const path = view.container
+    .querySelector('[data-annotation-part="elevation-guide"]')!
+    .getAttribute('d');
+  jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+    check(node);
+    expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+      'd',
+      path!
+    );
+    return 'data:image/png;base64,annotation';
+  });
+  await act(async () => compositeVideoAnnotations(canvas, frame));
+  expect(domtoimage.toPng).toHaveBeenCalledTimes(1);
 });

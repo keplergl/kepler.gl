@@ -1534,3 +1534,45 @@ test('keeps selection ownership through reducer updates and layer reordering', (
   ref.current._onWMSFeatureInfo(layer, response);
   expect(props.visStateActions.wmsFeatureInfo).not.toHaveBeenCalled();
 });
+
+test('elevation picking reads a numeric source field through the picked layer without substituting render Z', () => {
+  const row = [-1000, 'not an altitude'];
+  const getHoverData = jest.fn(() => row);
+  const layer = {config: {dataId: 'detections'}, hasHoveredObject: () => true, getHoverData};
+  const table = {
+    fields: [
+      {name: 'altitude', type: 'real', fieldIdx: 0},
+      {name: 'name', type: 'string', fieldIdx: 1}
+    ],
+    dataContainer: {}
+  };
+  const container = new MapContainer({
+    visState: {layers: [layer], datasets: {detections: table}, animationConfig: {}}
+  });
+  const info = {coordinate: [-101.830429, 33.518337, 9000], index: 4, object: {index: 7}};
+  const pickObject = jest.fn(() => info);
+  container._deck = {pickObject};
+  const field = {dataId: 'detections', name: 'altitude'};
+  expect(container._pickAnnotationElevation([10, 20], field)).toEqual({
+    coordinate: info.coordinate,
+    value: -1000
+  });
+  expect(getHoverData).toHaveBeenCalledWith(
+    info.object,
+    table.dataContainer,
+    table.fields,
+    {},
+    info
+  );
+  expect(pickObject).toHaveBeenCalledWith({x: 10, y: 20, radius: 0, unproject3D: true});
+  for (const value of [null, '', NaN, Infinity]) {
+    row[0] = value as any;
+    expect(container._pickAnnotationElevation([10, 20], field).value).toBeNull();
+  }
+  expect(
+    container._pickAnnotationElevation([10, 20], {...field, name: 'missing'}).value
+  ).toBeNull();
+  expect(
+    container._pickAnnotationElevation([10, 20], {...field, dataId: 'other'}).value
+  ).toBeNull();
+});

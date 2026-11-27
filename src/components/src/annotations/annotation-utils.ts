@@ -2,7 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import {addMetersToLngLat} from '@math.gl/web-mercator';
-import {Annotation, AnnotationWithArm, RulerAnnotation} from '@kepler.gl/types';
+import {
+  Annotation,
+  AnnotationWithArm,
+  RulerAnnotation,
+  AnnotationElevation,
+  PointAnnotation
+} from '@kepler.gl/types';
+import {ELEVATION_UNIT_METERS, getElevationReferenceStatus} from '@kepler.gl/utils';
 import {formatLineLengthLabel} from '@kepler.gl/layers';
 import {point} from '@turf/helpers';
 import distance from '@turf/distance';
@@ -36,6 +43,30 @@ export type MapViewport = {
 export type PickWorldPosition = (
   screen: [number, number]
 ) => ReadonlyArray<number> | null | undefined;
+
+export type PickElevation = (
+  screen: [number, number],
+  field: NonNullable<AnnotationElevation['field']>
+) => {coordinate: ReadonlyArray<number>; value: number | null} | null;
+
+/** A geographic vertical, not a screen-space line dropped straight down. */
+export function getElevationGuide(
+  annotation: PointAnnotation,
+  viewport: MapViewport,
+  globe = false
+) {
+  const elevation = annotation.elevation;
+  if (!elevation || elevation.guide === 'none' || getElevationReferenceStatus(elevation))
+    return null;
+  const reference = elevation.reference!;
+  const z = reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit];
+  if (!Number.isFinite(z)) return null;
+  const point: [number, number, number] = [annotation.anchorPoint[0], annotation.anchorPoint[1], z];
+  if (globe && !isPointVisibleOnGlobe(point, viewport)) return null;
+  const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
+  const [ex, ey] = viewport.project(onNearestWorldCopy(point, viewport));
+  return [x, y, ex, ey].every(Number.isFinite) ? {ex: ex - x, ey: ey - y} : null;
+}
 
 export type BaseAnnotationMarker = {
   kind: AnnotationKind;
@@ -513,8 +544,20 @@ export function movePoint(
   annotation: Annotation,
   delta: {x: number; y: number},
   viewport: MapViewport,
-  pickWorldPosition?: PickWorldPosition
+  pickWorldPosition?: PickWorldPosition,
+  pickElevation?: PickElevation
 ): Partial<Annotation> {
+  if (annotation.kind === AnnotationKind.POINT && annotation.elevation?.field) {
+    const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
+    const picked = pickElevation?.([x + delta.x, y + delta.y], annotation.elevation.field);
+    const anchorPoint =
+      normalizeAnchorPoint(picked?.coordinate) ??
+      moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition);
+    return {
+      anchorPoint,
+      elevation: {...annotation.elevation, value: picked?.value ?? null}
+    };
+  }
   return {
     anchorPoint: moveCoordinate(annotation.anchorPoint, delta, viewport, pickWorldPosition)
   };

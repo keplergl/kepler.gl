@@ -11,6 +11,7 @@ Annotations add text, points, arrows, circles, and rulers to your map. You can k
 - [Dateline and globe views](#dateline-and-globe-views)
 - [Manage annotations](#manage-annotations)
 - [Save and export](#save-and-export)
+- [Point elevation callouts](#point-elevation-callouts)
 <!-- /TOC -->
 
 ## Open the annotations panel
@@ -75,5 +76,22 @@ Use [Export Map](./k-save-and-export.md#export-map) to save or share your annota
 - **HTML** includes the ruler configuration. Editable exports support annotation editing; view-only exports display rulers with editing controls hidden.
 
 Use a kepler.gl version that supports ruler annotations when loading or sharing saved maps.
+
+## Point elevation callouts
+
+Select a **Point** annotation and enable **Show elevation**. The elevation label uses the same rich-text font, color, alignment, and optional background as the annotation caption. You can leave the caption empty.
+
+- **Manual** source: enter the source altitude, its units (`m`, `km`, or `ft`), and a named vertical datum such as `MSL`.
+- **Numeric field** source: choose the dataset and field, then drag the annotation anchor onto a pickable feature from that dataset. This captures the field value and the feature's drawing position separately. The value stays fixed when data or filters change; drag the anchor again to refresh it. Missing/non-numeric values and aggregated bins cannot supply an altitude.
+- **Anchor height (m)** controls where the marker is drawn. Changing the source value does not move the marker. This distinction preserves signed measurements when a layer uses shifted or exaggerated display heights.
+- **Known elevation** supplies the reference altitude, units, and datum. Both datums must match and be known before a relative height or guide is shown. A reference at zero must be entered explicitly. Automatic terrain lookup is not supported yet.
+- **Reference draw height (m)** defaults to the reference altitude converted to metres. Set it separately when the map uses a shifted display floor. An explicit draw height remains fixed when the measured reference changes.
+- Choose source altitude, height above the reference, or both; choose label units and decimal precision. The vertical guide can be hidden, solid, or dashed, and its endpoint marker can be hidden, a dot, or a ring.
+
+For the lightning example, set the anchor to `[-101.830429, 33.518337, 7448.36]`, source altitude to `7448.36 m MSL`, and reference to `990 m MSL`. With **Both**, kilometres, and two decimals, the labels read **7.45 km above sea level** and **6.46 km above reference**. The guide joins the two heights at the same longitude and latitude as the camera tilts or rotates.
+
+Unavailable references are reported explicitly; they are never treated as zero. Negative measurements retain their sign. Source and reference heights are subtracted before rounding. On a globe, a guide whose reference is hidden behind the planet is omitted while an elevated marker can remain visible.
+
+The captured value, source field, units, datum, reference, formatting, and guide settings survive JSON save/load and HTML export and use the shared annotation renderer in native video previews and recordings. Older versions ignore the optional elevation settings and retain the ordinary Point annotation. MCP's `map.add-annotation`, `map.update-annotation`, and `map.get-annotations` expose an `elevation` object with these settings. MCP values are captured values, not live dataset lookups; an update can change individual elevation settings, and `elevation: null` removes the callout.
 
 [Back to table of contents](README.md)

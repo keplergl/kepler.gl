@@ -21,6 +21,7 @@ import AnnotationText from './annotation-text';
 import {
   MapViewport,
   PickWorldPosition,
+  PickElevation,
   isAnnotationVisibleOnGlobe,
   movePoint,
   moveRulerEndpoint,
@@ -66,6 +67,7 @@ export type AnnotationOverlayProps = {
   viewport: MapViewport;
   isGlobeEnabled?: boolean;
   pickWorldPosition?: PickWorldPosition;
+  pickElevation?: PickElevation;
   updateAnnotation: ActionHandler<typeof updateAnnotation>;
   setSelectedAnnotation: ActionHandler<typeof setSelectedAnnotation>;
 };
@@ -82,6 +84,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
   viewport,
   isGlobeEnabled,
   pickWorldPosition,
+  pickElevation,
   updateAnnotation: onUpdateAnnotation,
   setSelectedAnnotation: onSetSelectedAnnotation
 }) => {
@@ -155,7 +158,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
       let changes: Partial<Annotation> = {};
       switch (handleKind) {
         case 'MOVE_POINT':
-          changes = movePoint(draggedAnn, ev.delta, viewport, pickWorldPosition);
+          changes = movePoint(draggedAnn, ev.delta, viewport, pickWorldPosition, pickElevation);
           break;
         case 'MOVE_RULER_START':
           changes = moveRulerEndpoint(draggedAnn, 'start', ev.delta, viewport, pickWorldPosition);
@@ -174,7 +177,7 @@ const AnnotationOverlay: FC<AnnotationOverlayProps> = ({
         onUpdateAnnotation(annId, changes);
       }
     },
-    [viewport, onUpdateAnnotation, pickWorldPosition]
+    [viewport, onUpdateAnnotation, pickWorldPosition, pickElevation]
   );
 
   const handleDragEnd = useCallback((_ev: DragEndEvent) => {

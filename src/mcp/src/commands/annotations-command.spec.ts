@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+
 import {
   addAnnotation,
   duplicateAnnotation,
@@ -861,4 +863,98 @@ test('rejects ruler-only presentation on a text annotation', async () => {
     await execute(getAddAnnotationCommand(context), {...text, rulerStyle: {unit: 'm'}})
   ).toMatchObject({success: false});
   expect(dispatch).not.toHaveBeenCalled();
+});
+
+test('creates, patches, duplicates and reopens a point elevation callout with a captured source', async () => {
+  const {context, dispatch} = setup();
+  const elevation = {
+    ...DEFAULT_ANNOTATION_ELEVATION,
+    value: 7448.36,
+    datum: 'MSL',
+    display: 'both' as const,
+    field: {dataId: 'detections', name: 'altitude'},
+    reference: {value: 990, unit: 'm' as const, datum: 'MSL'}
+  };
+  const input = {
+    id: 'lightning',
+    kind: 'point',
+    anchorPoint: [-101.830429, 33.518337, 9000],
+    elevation,
+    fontSize: 24
+  };
+  expect(await execute(getAddAnnotationCommand(context), input)).toMatchObject({
+    success: true,
+    data: {elevation, anchorPoint: input.anchorPoint}
+  });
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: input.id,
+      elevation: {guide: 'solid', precision: 3}
+    })
+  ).toMatchObject({success: true, data: {elevation: {...elevation, guide: 'solid', precision: 3}}});
+  const restored = roundTrip(context);
+  expect(
+    (await execute(getListAnnotationsCommand(restored.context))).data.annotations[0]
+  ).toMatchObject({
+    id: input.id,
+    anchorPoint: input.anchorPoint,
+    elevation: {...elevation, guide: 'solid', precision: 3}
+  });
+  dispatch(duplicateAnnotation(input.id));
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    elevation: {...elevation, guide: 'solid', precision: 3}
+  });
+  expect(context.getVisState().annotations[0].id).not.toBe(input.id);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: input.id,
+      elevation: {field: null, value: -1000}
+    })
+  ).toMatchObject({success: true, data: {elevation: {value: -1000}}});
+  const point = context.getVisState().annotations.find(a => a.id === input.id) as any;
+  expect(point.elevation).not.toHaveProperty('field');
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: input.id,
+      label: 'Static',
+      elevation: null
+    })
+  ).toMatchObject({success: true});
+  expect(
+    (await execute(getListAnnotationsCommand(context))).data.annotations.find(
+      a => a.id === input.id
+    )
+  ).not.toHaveProperty('elevation');
+});
+
+test.each([
+  {unit: 'yards'},
+  {field: {dataId: ' ', name: 'altitude'}},
+  {value: Infinity},
+  {precision: -1},
+  {precision: 1.5},
+  {datum: ''},
+  {reference: {value: null, unit: 'm', datum: 'MSL'}},
+  {reference: {value: 0, unit: 'm', datum: 'MSL', displayZ: NaN}}
+])('rejects invalid elevation settings without changing state: %j', async elevation => {
+  const {context, dispatch} = setup();
+  expect(
+    await execute(getAddAnnotationCommand(context), {...text, kind: 'point', elevation})
+  ).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+test('rejects elevation on other annotation types and clears the captured value when its source field changes', async () => {
+  const {context, dispatch} = setup();
+  expect(
+    await execute(getAddAnnotationCommand(context), {...text, elevation: {value: 10}})
+  ).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+  await execute(getAddAnnotationCommand(context), {...text, kind: 'point', elevation: {value: 10}});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: text.id,
+      elevation: {field: {dataId: 'data', name: 'height'}}
+    })
+  ).toMatchObject({success: true, data: {elevation: {value: null}}});
 });

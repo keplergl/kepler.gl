@@ -12,6 +12,7 @@ import {
   normalizeAnnotationReadout,
   normalizeAnnotationCaption,
   normalizeAnnotationLabelBackground,
+  normalizeAnnotationElevation,
   normalizeRulerStyle,
   normalizeCameraTour,
   combineSplitMapsByIndex,
@@ -887,14 +888,22 @@ function replaceAnnotationDatasetIds(
   dataId: string,
   dataIdToUse: string
 ): Annotation[] | null {
-  const replaced = annotations
-    ?.filter(
-      annotation => annotation.readout?.type === 'count' && annotation.readout.dataId === dataId
-    )
-    .map(annotation => ({
-      ...annotation,
-      readout: {type: 'count' as const, dataId: dataIdToUse}
-    }));
+  const replaced = annotations?.flatMap(annotation => {
+    const replaceReadout =
+      annotation.readout?.type === 'count' && annotation.readout.dataId === dataId;
+    const elevation = annotation.kind === AnnotationKind.POINT ? annotation.elevation : undefined;
+    const field = elevation?.field;
+    if (!replaceReadout && field?.dataId !== dataId) return [];
+    return [
+      {
+        ...annotation,
+        ...(replaceReadout ? {readout: {type: 'count' as const, dataId: dataIdToUse}} : {}),
+        ...(elevation && field?.dataId === dataId
+          ? {elevation: {...elevation, field: {...field, dataId: dataIdToUse}}}
+          : {})
+      }
+    ];
+  });
   return replaced?.length ? replaced : null;
 }
 
@@ -946,6 +955,10 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       delete annotation.labelBackground;
       const background = normalizeAnnotationLabelBackground(a.labelBackground);
       if (background) annotation.labelBackground = background;
+      delete annotation.elevation;
+      const elevation =
+        a.kind === AnnotationKind.POINT && normalizeAnnotationElevation(a.elevation);
+      if (elevation) annotation.elevation = elevation;
       delete annotation.rulerStyle;
       const style = a.kind === AnnotationKind.RULER && normalizeRulerStyle(a.rulerStyle);
       if (style) annotation.rulerStyle = style;
