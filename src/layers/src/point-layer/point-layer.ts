@@ -212,11 +212,18 @@ class PointFillOpacityExtension extends LayerExtension {
 
   getShaders() {
     return {
-      inject: {
-        // Test the composed fill/stroke alpha before the picking module can replace it.
-        // Otherwise a fully transparent fragment can still write depth at altitude.
-        'fs:DECKGL_FILTER_COLOR': {order: -1, injection: 'if (color.a <= 0.0) discard;'}
-      }
+      // deck.gl concatenates direct extension injections as strings. Keep the
+      // ordered hook in a module so it composes with Glow and Pulse/Ripple.
+      modules: [
+        {
+          name: 'pointFillOpacity',
+          inject: {
+            // Discard transparent fill after stroke composition, but before picking
+            // can replace its alpha. Otherwise it can still write depth at altitude.
+            'fs:DECKGL_FILTER_COLOR': {order: -1, injection: 'if (color.a <= 0.0) discard;'}
+          }
+        }
+      ]
     };
   }
 }
@@ -945,9 +952,10 @@ export default class PointLayer extends Layer {
     const extensions = [
       ...defaultLayerProps.extensions,
       brushingExtension,
-      ...(useArrowLayer ? [arrowCPUFilterExtension] : []),
-      ...(opacityField ? [pointFillOpacityExtension] : [])
+      ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
     ];
+    // Keep the mask off text glyphs and their collision pass.
+    const pointExtensions = opacityField ? [...extensions, pointFillOpacityExtension] : extensions;
 
     const sharedProps = {
       getFilterValue: data.getFilterValue,
@@ -1063,7 +1071,7 @@ export default class PointLayer extends Layer {
           lineWidthUnits: 'pixels',
           updateTriggers,
           ...pulseProps,
-          extensions: [...extensions, ...(continuous ? [pulseRippleExtension] : [])],
+          extensions: [...pointExtensions, ...(continuous ? [pulseRippleExtension] : [])],
           opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
           pickable: allowHover,
           autoHighlight: false
@@ -1093,7 +1101,7 @@ export default class PointLayer extends Layer {
               pulseDurationMs,
               pulseCurrentTime:
                 pulseCurrentTime !== null ? pulseCurrentTime - data.pulseTimeOrigin : null,
-              extensions: [...extensions, eventPulseRippleExtension],
+              extensions: [...pointExtensions, eventPulseRippleExtension],
               updateTriggers: {
                 ...updateTriggers,
                 getFillColor: updateTriggers[eventColorAccessor],

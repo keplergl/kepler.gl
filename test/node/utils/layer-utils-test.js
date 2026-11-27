@@ -14,7 +14,13 @@ import {
   LayerClasses,
   KeplerGlLayers
 } from '@kepler.gl/layers';
-import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY, GEOJSON_FIELDS} from '@kepler.gl/constants';
+import {
+  FILTER_TYPES,
+  GEOARROW_EXTENSIONS,
+  GEOARROW_METADATA_KEY,
+  GEOJSON_FIELDS
+} from '@kepler.gl/constants';
+import {getShaderAssembler} from '@deck.gl/core';
 import {
   findDefaultLayer,
   getLayerHoverProp,
@@ -1357,7 +1363,7 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
     });
     layer.updateLayerVisConfig({filled: true, outline: true, opacity: 0.6});
     const datasets = {survey: dataset};
-    const render = (layerData, animationTimeMs) =>
+    const renderLayers = (layerData, animationTimeMs, filters) =>
       renderDeckGlLayer(
         {
           layer,
@@ -1365,10 +1371,12 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
           datasets,
           mapState: INITIAL_MAP_STATE,
           interactionConfig: INITIAL_VIS_STATE.interactionConfig,
-          animationTimeMs
+          animationTimeMs,
+          filters
         },
         {}
-      )[0];
+      );
+    const render = (layerData, animationTimeMs) => renderLayers(layerData, animationTimeMs)[0];
     const base = layer.formatLayerData(datasets);
     t.equal(render(base).props.getFillColor, base.getFillColor, 'unconfigured uses original color');
 
@@ -1420,6 +1428,63 @@ test('layerUtils -> Point fill opacity field preserves zero, missing values, str
       render(base).props.extensions.includes(pointOpacityShader),
       'default rendering does not add the opacity shader'
     );
+
+    layer.updateLayerConfig({
+      textLabel: [{...layer.config.textLabel[0], field: dataset.fields[3], collisionEnabled: true}]
+    });
+    const withLabels = layer.formatLayerData(datasets, data);
+    layer.updateLayerVisConfig({glowEnabled: true, pulseEnabled: true, pulseMode: 'ripple'});
+    const continuousLayers = renderLayers(withLabels);
+    const label = continuousLayers.find(deckLayer => deckLayer.props.getText);
+    t.ok(label, 'the point fill does not remove text labels');
+    t.notOk(
+      label?.props.extensions.includes(pointOpacityShader),
+      'text labels and their collision geometry do not inherit the fill mask'
+    );
+    if (!useArrow) {
+      t.equal(label?.props.collisionEnabled, true, 'row labels retain collision filtering');
+    }
+
+    layer.updateLayerVisConfig({pulseTrigger: 'event', pulseTimeField: 'time'});
+    // Supply a live event frame at the renderer boundary; event-clock behavior has its own tests.
+    const event = renderLayers(
+      {...withLabels, pulseTimeDomain: [1000, 3000], pulseTimeOrigin: 1000, getPulseStartTime: 0},
+      undefined,
+      [{type: FILTER_TYPES.timeRange, dataId: ['survey'], name: ['time'], value: [1000, 1500]}]
+    ).find(deckLayer => deckLayer.id === `${layer.id}-event-pulse`);
+
+    for (const [effectFrame, effectCode] of [
+      [
+        continuousLayers.find(deckLayer => deckLayer.id === layer.id),
+        'color.a *= pulseRipple.opacity;'
+      ],
+      [
+        continuousLayers.find(deckLayer => deckLayer.id === `${layer.id}-glow`),
+        'color.a *= pointGlow.strength'
+      ],
+      [event, 'color.a *= pulseOpacity;']
+    ]) {
+      const scatter = useArrow ? effectFrame.renderLayers()[0] : effectFrame;
+      scatter.context = {device: {type: 'webgl'}, defaultShaderModules: []};
+      const {fs} = getShaderAssembler('glsl').assembleGLSLShaderPair({
+        ...scatter.getShaders(),
+        platformInfo: {
+          type: 'webgl',
+          shaderLanguage: 'glsl',
+          shaderLanguageVersion: 300,
+          gpu: 'unknown',
+          features: new Set()
+        }
+      });
+      const cut = fs.indexOf('if (color.a <= 0.0) discard;');
+      t.notOk(fs.includes('[object Object]'), `${effectFrame.id} composes valid shader snippets`);
+      t.ok(fs.includes(effectCode), `${effectFrame.id} retains the existing effect`);
+      t.ok(
+        cut >= 0 && cut < fs.indexOf('color = picking_filterPickingColor(color);'),
+        `${effectFrame.id} discards unpainted fragments before picking`
+      );
+    }
+    layer.updateLayerVisConfig({glowEnabled: false, pulseEnabled: false});
 
     layer.updateLayerVisConfig({fillOpacityField: 'other'});
     const switched = layer.formatLayerData(datasets, data);
