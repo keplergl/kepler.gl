@@ -14,9 +14,9 @@ __Layer Attributes__
   - Enable fill - enabled by default
   - Single color / color based on
   - Color scale
-  - Opacity
-    - Fill opacity based on (collapsible)
-      - Numeric field (optional)
+  - Opacity (slider always visible)
+    - Three-dot control reveals:
+      - Opacity based on (optional numeric field)
       - Opacity scale and range
 - Outline
   - Enable outline
@@ -31,9 +31,9 @@ __Layer Attributes__
  - Font Color
  - Text Anchor
 
-## Fill opacity based on a field
+## Opacity based on a field
 
-Under **Fill Color → Opacity**, expand **Fill opacity based on** to select a numeric field and adjust its scale and opacity range. The subgroup starts collapsed; collapsing it keeps your settings active. The overall opacity slider stays visible above it. New selections use a **Linear** scale: the column's minimum and maximum map to the **Opacity range**, which defaults to 0–100%. For example, values of 10, 30, and 50 produce 0%, 50%, and 100% fill opacity. Adjust the range to 20–80% to keep every point partly visible. Domain filtering follows the same rules as Color by. If all valid values are equal, they use the midpoint of the opacity range.
+In **Fill Color**, the **Opacity** row has a three-dot control. The opacity slider is always visible; click the dots to reveal **Opacity based on**, its scale, and its opacity range. These extra controls start collapsed, and collapsing them keeps your settings active. New selections use a **Linear** scale: the column's minimum and maximum map to the **Opacity range**, which defaults to 0–100%. For example, values of 10, 30, and 50 produce 0%, 50%, and 100% fill opacity. Adjust the range to 20–80% to keep every point partly visible. Domain filtering follows the same rules as Color by. If all valid values are equal, they use the midpoint of the opacity range.
 
 Choose **Raw (0–1)** for prepared opacity values: 0 makes the fill transparent, 1 keeps its existing opacity, and 0.5 uses half. Values outside 0–1 are clamped. Saved maps that used raw values retain this mode until you change the scale.
 

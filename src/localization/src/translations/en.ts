@@ -276,7 +276,7 @@ export default {
       continuous: 'Continuous',
       event: 'At event time',
       pulseTimeField: 'Event timestamp',
-      fillOpacityField: 'Fill opacity based on',
+      fillOpacityField: 'Opacity based on',
       fillOpacityScale: 'Opacity scale',
       fillOpacityLinear: 'Linear',
       fillOpacityRaw: 'Raw (0–1)',

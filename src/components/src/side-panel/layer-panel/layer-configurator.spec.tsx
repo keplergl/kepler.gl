@@ -418,7 +418,7 @@ test.each([
   }
 });
 
-test('Point opacity nests under Fill Color and preserves settings when its field subgroup collapses', async () => {
+test('Point opacity keeps its slider visible and reveals field settings from the three-dot control', async () => {
   const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -462,24 +462,29 @@ test('Point opacity nests under Fill Color and preserves settings when its field
   const view = render(<RenderLayer />, {
     wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
   });
-  const field = screen.getByText('Fill opacity based on');
+  const field = screen.getByText('Opacity based on');
   const group = field.closest('.layer-config-group') as HTMLElement;
   const fillGroup = screen.getByText('Fill Color').closest('.layer-config-group');
-  const opacityGroup = screen.getByText('Opacity').closest('.layer-config-group') as HTMLElement;
-  expect(opacityGroup.parentElement?.closest('.layer-config-group')).toBe(fillGroup);
-  expect(group.parentElement?.closest('.layer-config-group')).toBe(opacityGroup);
-  // Noncollapsible parents must stay expanded so their CSS cannot hide the subgroup.
+  const opacityLabel = screen.getByText('Opacity');
+  expect(opacityLabel.closest('.layer-config-group')).toBe(group);
+  expect(group.parentElement?.closest('.layer-config-group')).toBe(fillGroup);
   expect(fillGroup).not.toHaveClass('collapsed');
-  expect(opacityGroup).not.toHaveClass('collapsed');
-  const opacityInput = within(opacityGroup).getByRole('spinbutton');
-  expect(opacityInput.closest('.layer-config-group')).toBe(opacityGroup);
+  const opacityInput = within(group).getByRole('spinbutton');
+  expect(opacityInput.closest('.layer-config-group')).toBe(group);
+  expect(opacityInput).toBeVisible();
   expect(opacityInput.closest('.layer-config-group__content__collapsible')).toBeNull();
+  const more = group.querySelector('.layer-config-group__action svg') as SVGElement;
+  expect(more).not.toBeNull();
+  expect(more.closest('.layer-config-group__header')).toBe(
+    opacityLabel.closest('.layer-config-group__header')
+  );
   const section = within(group);
   expect(group).toHaveClass('collapsed');
   const selector = section.getByText('Select a field');
   const content = selector.closest('.layer-config-group__content__collapsible');
   expect(content?.closest('.layer-config-group')).toBe(group);
-  fireEvent.click(field);
+  expect(field.closest('.layer-config-group__content__collapsible')).toBe(content);
+  fireEvent.click(more);
   expect(group).not.toHaveClass('collapsed');
   expect(updateLayerVisConfig).not.toHaveBeenCalled();
   fireEvent.click(section.getByText('Select a field'));
@@ -499,9 +504,10 @@ test('Point opacity nests under Fill Color and preserves settings when its field
   expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityRange: [0.2, 0.8]});
   expect(minimum.closest('.layer-config-group__content__collapsible')).toBe(content);
   const updateCount = updateLayerVisConfig.mock.calls.length;
-  fireEvent.click(field);
+  fireEvent.click(more);
   expect(group).toHaveClass('collapsed');
-  fireEvent.click(field);
+  expect(opacityInput).toBeVisible();
+  fireEvent.click(more);
   expect(group).not.toHaveClass('collapsed');
   expect(updateLayerVisConfig).toHaveBeenCalledTimes(updateCount);
   expect(section.getByText('alpha value')).toBeInTheDocument();

@@ -775,81 +775,80 @@ export default function LayerConfiguratorFactory(
             )}
 
             {opacityFields.length ? (
-              <LayerConfigGroup label="layerVisConfigs.opacity" expanded>
+              <LayerConfigGroup
+                label="layerVisConfigs.opacity"
+                collapsible
+                disabled={!layer.config.visConfig.filled}
+              >
                 <VisConfigSlider
                   {...layer.visConfigSettings.opacity}
                   {...visConfiguratorProps}
                   label={false}
                 />
-                <LayerConfigGroup
-                  label="layerVisConfigs.point.fillOpacityField"
-                  collapsible
-                  disabled={!layer.config.visConfig.filled}
-                >
-                  <ConfigGroupCollapsibleContent>
+                <ConfigGroupCollapsibleContent>
+                  <SidePanelSection>
+                    <PanelLabel>
+                      <FormattedMessage id="layerVisConfigs.point.fillOpacityField" />
+                    </PanelLabel>
+                    <FieldSelector
+                      fields={opacityFields}
+                      value={layer.config.visConfig.fillOpacityField || 'placeholder.selectField'}
+                      onSelect={field => {
+                        const name = (field as Field | null)?.name;
+                        visConfiguratorProps.onChange({
+                          fillOpacityField: name,
+                          fillOpacityScale: name
+                            ? layer.config.visConfig.fillOpacityScale ??
+                              (layer.config.visConfig.fillOpacityField ? 'identity' : 'linear')
+                            : undefined,
+                          fillOpacityRange: name
+                            ? layer.config.visConfig.fillOpacityRange ?? [0, 1]
+                            : undefined
+                        });
+                      }}
+                      erasable
+                    />
+                  </SidePanelSection>
+                  {layer.config.visConfig.fillOpacityField ? (
                     <SidePanelSection>
-                      <FieldSelector
-                        fields={opacityFields}
-                        value={layer.config.visConfig.fillOpacityField || 'placeholder.selectField'}
-                        onSelect={field => {
-                          const name = (field as Field | null)?.name;
-                          visConfiguratorProps.onChange({
-                            fillOpacityField: name,
-                            fillOpacityScale: name
-                              ? layer.config.visConfig.fillOpacityScale ??
-                                (layer.config.visConfig.fillOpacityField ? 'identity' : 'linear')
-                              : undefined,
-                            fillOpacityRange: name
-                              ? layer.config.visConfig.fillOpacityRange ?? [0, 1]
-                              : undefined
-                          });
-                        }}
-                        erasable
+                      <PanelLabel>
+                        <FormattedMessage id="layerVisConfigs.point.fillOpacityScale" />
+                      </PanelLabel>
+                      <ItemSelector
+                        selectedItems={opacityScaleOptions.find(
+                          ({id}) => id === (layer.config.visConfig.fillOpacityScale || 'identity')
+                        )}
+                        options={opacityScaleOptions}
+                        displayOption="label"
+                        getOptionValue="id"
+                        multiSelect={false}
+                        searchable={false}
+                        onChange={value => visConfiguratorProps.onChange({fillOpacityScale: value})}
                       />
                     </SidePanelSection>
-                    {layer.config.visConfig.fillOpacityField ? (
-                      <SidePanelSection>
-                        <PanelLabel>
-                          <FormattedMessage id="layerVisConfigs.point.fillOpacityScale" />
-                        </PanelLabel>
-                        <ItemSelector
-                          selectedItems={opacityScaleOptions.find(
-                            ({id}) => id === (layer.config.visConfig.fillOpacityScale || 'identity')
-                          )}
-                          options={opacityScaleOptions}
-                          displayOption="label"
-                          getOptionValue="id"
-                          multiSelect={false}
-                          searchable={false}
-                          onChange={value =>
-                            visConfiguratorProps.onChange({fillOpacityScale: value})
-                          }
-                        />
-                      </SidePanelSection>
-                    ) : null}
-                    {layer.config.visConfig.fillOpacityField &&
-                    layer.config.visConfig.fillOpacityScale === 'linear' ? (
-                      <SidePanelSection>
-                        <PanelLabel>
-                          <FormattedMessage id="layerVisConfigs.point.fillOpacityRange" />
-                        </PanelLabel>
-                        <RangeSlider
-                          inputIdPrefix={`${layer.id}-fill-opacity`}
-                          range={[0, 100]}
-                          value0={(layer.config.visConfig.fillOpacityRange?.[0] ?? 0) * 100}
-                          value1={(layer.config.visConfig.fillOpacityRange?.[1] ?? 1) * 100}
-                          step={1}
-                          isRanged
-                          onChange={range =>
-                            visConfiguratorProps.onChange({
-                              fillOpacityRange: range.map(value => value / 100)
-                            })
-                          }
-                        />
-                      </SidePanelSection>
-                    ) : null}
-                  </ConfigGroupCollapsibleContent>
-                </LayerConfigGroup>
+                  ) : null}
+                  {layer.config.visConfig.fillOpacityField &&
+                  layer.config.visConfig.fillOpacityScale === 'linear' ? (
+                    <SidePanelSection>
+                      <PanelLabel>
+                        <FormattedMessage id="layerVisConfigs.point.fillOpacityRange" />
+                      </PanelLabel>
+                      <RangeSlider
+                        inputIdPrefix={`${layer.id}-fill-opacity`}
+                        range={[0, 100]}
+                        value0={(layer.config.visConfig.fillOpacityRange?.[0] ?? 0) * 100}
+                        value1={(layer.config.visConfig.fillOpacityRange?.[1] ?? 1) * 100}
+                        step={1}
+                        isRanged
+                        onChange={range =>
+                          visConfiguratorProps.onChange({
+                            fillOpacityRange: range.map(value => value / 100)
+                          })
+                        }
+                      />
+                    </SidePanelSection>
+                  ) : null}
+                </ConfigGroupCollapsibleContent>
               </LayerConfigGroup>
             ) : (
               <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
