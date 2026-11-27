@@ -774,12 +774,15 @@ export default function LayerConfiguratorFactory(
             )}
 
             <VisConfigSlider {...layer.visConfigSettings.opacity} {...visConfiguratorProps} />
-            {opacityFields.length ? (
-              <>
+          </LayerConfigGroup>
+          {opacityFields.length ? (
+            <LayerConfigGroup
+              label="layerVisConfigs.point.fillOpacityField"
+              collapsible
+              disabled={!layer.config.visConfig.filled}
+            >
+              <ConfigGroupCollapsibleContent>
                 <SidePanelSection>
-                  <PanelLabel>
-                    <FormattedMessage id="layerVisConfigs.point.fillOpacityField" />
-                  </PanelLabel>
                   <FieldSelector
                     fields={opacityFields}
                     value={layer.config.visConfig.fillOpacityField || 'placeholder.selectField'}
@@ -838,9 +841,9 @@ export default function LayerConfiguratorFactory(
                     />
                   </SidePanelSection>
                 ) : null}
-              </>
-            ) : null}
-          </LayerConfigGroup>
+              </ConfigGroupCollapsibleContent>
+            </LayerConfigGroup>
+          ) : null}
 
           {/* outline color */}
           {layer.type === LAYER_TYPES.point ? (

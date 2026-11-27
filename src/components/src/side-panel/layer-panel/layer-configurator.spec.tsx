@@ -418,7 +418,7 @@ test.each([
   }
 });
 
-test('Point fill normalizes new selections and preserves scale, range and older raw configs', async () => {
+test('Point fill opacity expands, preserves settings on collapse and restores saved configs', async () => {
   const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -463,7 +463,15 @@ test('Point fill normalizes new selections and preserves scale, range and older 
     wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
   });
   const field = screen.getByText('Fill opacity based on');
-  const section = within(field.parentElement as HTMLElement);
+  const group = field.closest('.layer-config-group') as HTMLElement;
+  const section = within(group);
+  expect(group).toHaveClass('collapsed');
+  const selector = section.getByText('Select a field');
+  const content = selector.closest('.layer-config-group__content__collapsible');
+  expect(content?.closest('.layer-config-group')).toBe(group);
+  fireEvent.click(field);
+  expect(group).not.toHaveClass('collapsed');
+  expect(updateLayerVisConfig).not.toHaveBeenCalled();
   fireEvent.click(section.getByText('Select a field'));
   expect(screen.queryByText('point name')).not.toBeInTheDocument();
   fireEvent.click(screen.getByText('alpha value'));
@@ -479,6 +487,16 @@ test('Point fill normalizes new selections and preserves scale, range and older 
   fireEvent.change(maximum, {target: {value: '80'}});
   fireEvent.blur(maximum);
   expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityRange: [0.2, 0.8]});
+  expect(minimum.closest('.layer-config-group__content__collapsible')).toBe(content);
+  const updateCount = updateLayerVisConfig.mock.calls.length;
+  fireEvent.click(field);
+  expect(group).toHaveClass('collapsed');
+  fireEvent.click(field);
+  expect(group).not.toHaveClass('collapsed');
+  expect(updateLayerVisConfig).toHaveBeenCalledTimes(updateCount);
+  expect(section.getByText('alpha value')).toBeInTheDocument();
+  expect(minimum).toHaveValue(20);
+  expect(maximum).toHaveValue(80);
   const savedConfig = SchemaManager.getConfigToSave({
     visState: {layers: [layer], layerOrder: [layer.id]}
   });
@@ -492,6 +510,7 @@ test('Point fill normalizes new selections and preserves scale, range and older 
     }
   });
   const scaleSection = within(screen.getByText('Opacity scale').parentElement as HTMLElement);
+  expect(screen.getByText('Opacity scale').closest('.layer-config-group')).toBe(group);
   fireEvent.click(scaleSection.getByText('Linear'));
   fireEvent.click(screen.getByText('Raw (0–1)'));
   expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityScale: 'identity'});
@@ -505,4 +524,7 @@ test('Point fill normalizes new selections and preserves scale, range and older 
   view.rerender(<RenderLayer />);
   expect(scaleSection.getByText('Raw (0–1)')).toBeInTheDocument();
   expect(screen.queryByText('Opacity range (%)')).not.toBeInTheDocument();
+  layer.updateLayerVisConfig({filled: false});
+  view.rerender(<RenderLayer />);
+  expect(group).toHaveClass('disabled');
 });
