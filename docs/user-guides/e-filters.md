@@ -22,6 +22,24 @@ __Note__: column filters apply to all layers in the same dataset on your map.
 
 ## Filter by polygon or rectangle
 
-Use [Draw on Map](./draw-on-map.md) to sketch a rectangle (applied as a filter when you finish drawing) or a polygon (right-click, then **Filter Layers**). Only features inside the shape stay visible. Points and lines cannot be used as filters.
+Use [Draw on Map](./draw-on-map.md) to sketch a rectangle (applied as a filter when you finish drawing) or a polygon (right-click, then **Filter Layers**). In the layers targeted by the shape, only features inside it stay visible. Other layers are unaffected by that spatial filter. Points and lines cannot be used as filters.
+
+### Filter only one layer from a shared dataset
+
+For example, use one Point layer to show all stops and a second Point layer to highlight stops in a neighborhood. Both layers can use the same dataset.
+
+1. Load this CSV as one dataset:
+
+   ```csv
+   name,latitude,longitude
+   Civic Center,37.779,-122.419
+   Ferry Building,37.795,-122.393
+   ```
+
+2. In **Layers**, rename the automatically created point layer (named after the dataset) to **All stops**. Open its **More options** menu (the three-dot button), choose **Duplicate layer**, and rename the copy **Neighborhood stops**. Give the copy a different color so you can distinguish the two layers.
+3. In **Draw on Map**, draw a polygon around Civic Center, leaving the Ferry Building outside. Right-click the shape, open **Filter Layers**, and select **Neighborhood stops** only.
+4. **Neighborhood stops** now shows only Civic Center. **All stops** still shows both stops. Since the Civic Center markers overlap, temporarily hide **Neighborhood stops** to confirm that **All stops** still shows both stops, then show **Neighborhood stops** again.
+
+You can change which layers a polygon, rectangle, or circle filter targets in the filter’s **Layers** picker in the **Filters** panel. Rectangles initially filter visible layers as soon as you finish drawing them; use the picker to narrow their targets. Column filters still affect every layer that uses the filtered dataset.
 
 [Back to table of contents](README.md)
