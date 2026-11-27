@@ -18,6 +18,7 @@ export interface PanelHeaderActionProps {
   hoverColor?: string;
   className?: string;
   active?: boolean;
+  pressed?: boolean;
   flush?: boolean;
   disabled?: boolean;
   onClick?: MouseEventHandler;
@@ -59,6 +60,21 @@ const HeaderActionWrapper = styled.div.attrs<HeaderActionWrapperCssProps>(props 
   }
 `;
 
+const HeaderActionButton = styled.button.attrs({type: 'button'})`
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: inherit;
+
+  &:focus-visible {
+    outline: 2px solid ${props => props.theme.activeColor};
+    outline-offset: -2px;
+  }
+`;
+
 PanelHeaderActionFactory.deps = [];
 // Need to use react class to access props.component
 export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionProps> {
@@ -67,6 +83,7 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
     tooltip,
     id,
     active = false,
+    pressed,
     flush,
     hoverColor,
     tooltipType,
@@ -85,7 +102,27 @@ export default function PanelHeaderActionFactory(): React.FC<PanelHeaderActionPr
         $hoverColor={hoverColor}
         $flush={flush}
       >
-        {IconComponent ? (
+        {IconComponent && pressed !== undefined && tooltip ? (
+          <FormattedMessage id={tooltip}>
+            {label => (
+              <HeaderActionButton
+                data-testid={testId}
+                data-tip
+                data-for={`${tooltip}_${id}`}
+                aria-label={String(label)}
+                aria-pressed={pressed}
+                disabled={disabled}
+                onClick={onClick}
+              >
+                <IconComponent
+                  className="panel--header__action__component"
+                  height="16px"
+                  aria-hidden="true"
+                />
+              </HeaderActionButton>
+            )}
+          </FormattedMessage>
+        ) : IconComponent ? (
           <IconComponent
             className="panel--header__action__component"
             data-testid={testId}

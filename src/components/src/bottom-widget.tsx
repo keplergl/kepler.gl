@@ -5,7 +5,8 @@ import React, {forwardRef, useMemo, useCallback, useRef, useState, useLayoutEffe
 import styled, {withTheme, IStyledComponent} from 'styled-components';
 import {useMergeRefs} from '@floating-ui/react';
 
-import {FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
+import {DatasetType, FILTER_TYPES, FILTER_VIEW_TYPES, EXPORT_VIDEO_ID} from '@kepler.gl/constants';
+import {FormattedMessage} from 'react-intl';
 import {
   hasPortableWidth,
   isSideFilter,
@@ -14,9 +15,17 @@ import {
   unobserveDimensions
 } from '@kepler.gl/utils';
 import {media, breakPointValues} from '@kepler.gl/styles';
-import {Filter, RangeFilter, TimeRangeFilter} from '@kepler.gl/types';
+import {
+  Filter,
+  MultiSelectFilter as CategoryFilter,
+  RangeFilter,
+  TimeRangeFilter
+} from '@kepler.gl/types';
 
 import TimeWidgetFactory from './filters/time-widget';
+import MultiSelectFilterFactory from './filters/multi-select-filter';
+import {Close} from './common/icons';
+import {IconRoundSmall, SelectTextBold} from './common/styled-components';
 import {bottomWidgetSelector} from './kepler-gl';
 import FilterAnimationControllerFactory from './filter-animation-controller';
 import LayerAnimationControllerFactory from './layer-animation-controller';
@@ -30,6 +39,14 @@ const allowedLegendOverlap = 30;
 
 function isChartFilter(filter?: Filter): filter is RangeFilter | TimeRangeFilter {
   return filter?.type === FILTER_TYPES.timeRange || filter?.type === FILTER_TYPES.range;
+}
+
+function isCategoryFilter(filter?: Filter): filter is CategoryFilter {
+  return (
+    filter?.type === FILTER_TYPES.multiSelect &&
+    Array.isArray(filter.domain) &&
+    Array.isArray(filter.value)
+  );
 }
 
 export type BottomWidgetContainerProps = BaseComponentProps & {
@@ -59,9 +76,32 @@ const BottomWidgetContainer: IStyledComponent<
   ${media.portable`padding: 0;`}
 `;
 
+const CategoryFilterBox = styled.div`
+  align-self: flex-end;
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  padding: 12px;
+  background-color: ${props => props.theme.sidePanelBg};
+`;
+
+const CategoryFilterHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const CategoryFilterTitle = styled(SelectTextBold)`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 export type BottomWidgetProps = {
   rootRef: React.ForwardedRef<HTMLDivElement>;
   containerW: number;
+  readOnly?: boolean;
 } & ReturnType<typeof bottomWidgetSelector>;
 type ThemeProp = {
   theme: any;
@@ -73,7 +113,8 @@ BottomWidgetFactory.deps = [
   AnimationControlFactory,
   FilterAnimationControllerFactory,
   LayerAnimationControllerFactory,
-  ZarrAxisAnimationFactory
+  ZarrAxisAnimationFactory,
+  MultiSelectFilterFactory
 ];
 
 /* eslint-disable complexity */
@@ -82,10 +123,18 @@ export default function BottomWidgetFactory(
   AnimationControl: ReturnType<typeof AnimationControlFactory>,
   FilterAnimationController: ReturnType<typeof FilterAnimationControllerFactory>,
   LayerAnimationController: ReturnType<typeof LayerAnimationControllerFactory>,
-  ZarrAxisAnimation: ReturnType<typeof ZarrAxisAnimationFactory>
+  ZarrAxisAnimation: ReturnType<typeof ZarrAxisAnimationFactory>,
+  MultiSelectFilter: ReturnType<typeof MultiSelectFilterFactory> = MultiSelectFilterFactory()
 ): React.FC<BottomWidgetThemedProps> {
   const LayerAnimationControl = styled(AnimationControl)`
     background-color: ${props => props.theme.sidePanelBg};
+  `;
+
+  const CloseButton = styled(IconRoundSmall)`
+    flex: none;
+    border: 0;
+    background: none;
+    color: ${props => props.theme.textColor};
   `;
 
   const BottomWidget: React.FC<BottomWidgetThemedProps> = (props: BottomWidgetThemedProps) => {
@@ -100,6 +149,7 @@ export default function BottomWidgetFactory(
       sidePanelWidth,
       layers,
       rootRef,
+      readOnly: readOnlyOverride,
       theme
     } = props;
 
@@ -171,13 +221,18 @@ export default function BottomWidgetFactory(
     const showFloatingTimeDisplay = !animatableLayer.length;
     const showAnimationControl =
       animatableLayer.length && readyToAnimation && !animationConfig.hideControl;
-    const showTimeWidget = enlargedFilterIdx > -1 && Object.keys(datasets).length > 0;
+    const enlargedFilter = filters[enlargedFilterIdx];
+    const categoryFilter =
+      isCategoryFilter(enlargedFilter) && datasets[enlargedFilter.dataId[0]]
+        ? enlargedFilter
+        : null;
+    const showTimeWidget = isChartFilter(enlargedFilter) && Object.keys(datasets).length > 0;
 
     // if filter is not animating, pass in enlarged filter here because
     // animation controller needs to call reset on it
     const filter = useMemo(
-      () => animatedFilter || filters[enlargedFilterIdx],
-      [animatedFilter, filters, enlargedFilterIdx]
+      () => animatedFilter || enlargedFilter,
+      [animatedFilter, enlargedFilter]
     );
     const chartFilter = isChartFilter(filter) ? filter : null;
 
@@ -197,6 +252,11 @@ export default function BottomWidgetFactory(
       [visStateActions, enlargedFilterIdx]
     );
 
+    const setCategoryValue = useCallback(
+      value => visStateActions.setFilter(enlargedFilterIdx, 'value', value),
+      [visStateActions, enlargedFilterIdx]
+    );
+
     const onToggleMinify = useCallback(
       () =>
         visStateActions.setFilterView(
@@ -213,7 +273,12 @@ export default function BottomWidgetFactory(
         width={Math.min(maxWidth, enlargedFilterWidth)}
         style={{marginRight: spaceForLegendWidth}}
         className="bottom-widget--container"
-        $hasPadding={showAnimationControl || showTimeWidget || dimensionLayers.length > 0}
+        $hasPadding={
+          showAnimationControl ||
+          showTimeWidget ||
+          Boolean(categoryFilter) ||
+          dimensionLayers.length > 0
+        }
         ref={mergedRef}
       >
         {dimensionLayers.map(layer => {
@@ -254,6 +319,40 @@ export default function BottomWidgetFactory(
               ) : null
             }
           </LayerAnimationController>
+        ) : null}
+        {categoryFilter ? (
+          <CategoryFilterBox
+            role="group"
+            aria-label={categoryFilter.name[0]}
+            key={categoryFilter.id}
+          >
+            <CategoryFilterHeader>
+              <CategoryFilterTitle title={categoryFilter.name[0]}>
+                {categoryFilter.name[0]}
+              </CategoryFilterTitle>
+              {readOnly || readOnlyOverride ? null : (
+                <FormattedMessage id="tooltip.closePanel">
+                  {label => (
+                    <CloseButton
+                      as="button"
+                      type="button"
+                      aria-label={String(label)}
+                      onClick={onClose}
+                    >
+                      <Close height="14px" />
+                    </CloseButton>
+                  )}
+                </FormattedMessage>
+              )}
+            </CategoryFilterHeader>
+            <MultiSelectFilter
+              filter={categoryFilter}
+              setFilter={setCategoryValue}
+              allowCustomValues={categoryFilter.dataId.some(
+                id => datasets[id]?.type === DatasetType.VECTOR_TILE
+              )}
+            />
+          </CategoryFilterBox>
         ) : null}
         {enhancedFilter ? (
           <FilterAnimationController

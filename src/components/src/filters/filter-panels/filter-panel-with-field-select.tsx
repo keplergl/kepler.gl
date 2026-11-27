@@ -87,6 +87,7 @@ function FieldPanelWithFieldSelectFactory(
                 tooltip={panelAction.tooltip}
                 IconComponent={panelAction.iconComponent}
                 active={panelAction.active}
+                pressed={panelAction.pressed}
               />
             ))}
           </FilterPanelHeader>
