@@ -2951,8 +2951,14 @@ test('Components -> LayerConfigurator -> opacity remains accessible with advance
         `${type}: opacity is outside hidden advanced content`
       );
       const group = label.closest('.layer-config-group');
-      const input = label.parentElement.parentElement.querySelector('.kg-range-slider__input');
+      const input = within(label.closest('.side-panel-section, .layer-config-group')).getByRole(
+        'spinbutton'
+      );
       t.ok(input, `${type}: opacity retains its editable slider`);
+      t.notOk(
+        input.closest('.layer-config-group__content__collapsible'),
+        `${type}: opacity slider is outside hidden advanced content`
+      );
       fireEvent.change(input, {target: {value: '0.4'}});
       fireEvent.blur(input);
       t.ok(
@@ -2962,7 +2968,7 @@ test('Components -> LayerConfigurator -> opacity remains accessible with advance
       fireEvent.click(group.querySelector('.layer-config-group__header'));
       fireEvent.click(group.querySelector('.layer-config-group__header'));
       t.notOk(
-        label.closest('.layer-config-group__content__collapsible'),
+        input.closest('.layer-config-group__content__collapsible'),
         `${type}: remains accessible after toggling advanced settings`
       );
     } finally {

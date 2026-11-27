@@ -10,11 +10,14 @@ __Layer Attributes__
     - Latitude
     - Longitude
     - Altitude (optional)
-- Fill
+- Fill Color
   - Enable fill - enabled by default
   - Single color / color based on
   - Color scale
-  - Opacity
+  - Opacity (slider always visible)
+    - Three-dot control reveals:
+      - Opacity based on (optional numeric field)
+      - Opacity scale and range
 - Outline
   - Enable outline
   - Single color / color based on
@@ -27,6 +30,14 @@ __Layer Attributes__
  - Font Size
  - Font Color
  - Text Anchor
+
+## Opacity based on a field
+
+In **Fill Color**, the **Opacity** row has a three-dot control. The opacity slider is always visible; click the dots to reveal **Opacity based on**, its scale, and its opacity range. These extra controls start collapsed, and collapsing them keeps your settings active. New selections use a **Linear** scale: the column's minimum and maximum map to the **Opacity range**, which defaults to 0–100%. For example, values of 10, 30, and 50 produce 0%, 50%, and 100% fill opacity. Adjust the range to 20–80% to keep every point partly visible. Domain filtering follows the same rules as Color by. If all valid values are equal, they use the midpoint of the opacity range.
+
+Choose **Raw (0–1)** for prepared opacity values: 0 makes the fill transparent, 1 keeps its existing opacity, and 0.5 uses half. Values outside 0–1 are clamped. Saved maps that used raw values retain this mode until you change the scale.
+
+Both modes multiply the fill's existing alpha and layer opacity. Missing or nonfinite values leave the fill opacity unchanged. Outlines and labels are unaffected. Clear the field to use the same fill opacity for all points.
 
 ## Visual
 

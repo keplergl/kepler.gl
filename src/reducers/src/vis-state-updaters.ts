@@ -4844,9 +4844,14 @@ function reconcileLayerWithNewSchema(
     );
   }
 
-  const {pulseTimeField} = layer.config.visConfig;
-  if (layer.type === LAYER_TYPES.point && pulseTimeField && renames[pulseTimeField]) {
-    configPatch.visConfig = {...layer.config.visConfig, pulseTimeField: renames[pulseTimeField]};
+  if (layer.type === LAYER_TYPES.point) {
+    for (const key of ['pulseTimeField', 'fillOpacityField']) {
+      const field = layer.config.visConfig[key];
+      if (field && Object.prototype.hasOwnProperty.call(renames, field)) {
+        configPatch.visConfig ??= {...layer.config.visConfig};
+        configPatch.visConfig[key] = renames[field];
+      }
+    }
   }
 
   // follow renamed visual-channel fields (colorField, sizeField, ...)

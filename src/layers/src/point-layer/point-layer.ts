@@ -4,7 +4,9 @@
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 
 import * as arrow from 'apache-arrow';
+import {scaleLinear} from 'd3-scale';
 
+import {LayerExtension} from '@deck.gl/core';
 import {BrushingExtension} from '@deck.gl/extensions';
 import {ScatterplotLayer} from '@deck.gl/layers';
 
@@ -108,6 +110,9 @@ export type PointLayerVisConfig = {
   radius: number;
   fixedRadius: boolean;
   opacity: number;
+  fillOpacityField?: string;
+  fillOpacityScale?: 'linear' | 'identity';
+  fillOpacityRange?: [number, number];
   outline: boolean;
   thickness: number;
   strokeColor: RGBColor;
@@ -204,6 +209,29 @@ const arrowCPUFilterExtension = new FilterArrowExtension();
 const pulseRippleExtension = new PulseRippleExtension();
 const eventPulseRippleExtension = new EventPulseRippleExtension();
 const pointGlowExtension = new PointGlowExtension();
+
+class PointFillOpacityExtension extends LayerExtension {
+  static extensionName = 'PointFillOpacityExtension';
+
+  getShaders() {
+    return {
+      // deck.gl concatenates direct extension injections as strings. Keep the
+      // ordered hook in a module so it composes with Glow and Pulse/Ripple.
+      modules: [
+        {
+          name: 'pointFillOpacity',
+          inject: {
+            // Discard transparent fill after stroke composition, but before picking
+            // can replace its alpha. Otherwise it can still write depth at altitude.
+            'fs:DECKGL_FILTER_COLOR': {order: -1, injection: 'if (color.a <= 0.0) discard;'}
+          }
+        }
+      ]
+    };
+  }
+}
+
+const pointFillOpacityExtension = new PointFillOpacityExtension();
 
 function pushPointPosition(data: any[], pos: number[], index: number, neighbors?: number[]) {
   if (pos.every(Number.isFinite)) {
@@ -345,6 +373,21 @@ export const pointVisConfigs: {
   showHighlightColor: 'showHighlightColor'
 };
 
+type PointRow = {index: number};
+type PointFillColor = number[] | ((row: PointRow) => number[]);
+type PointFillOpacityAccessor = (row: PointRow) => number[];
+
+function isFillOpacityRange(value: unknown): value is [number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every(Number.isFinite) &&
+    value[0] >= 0 &&
+    value[1] <= 1 &&
+    value[0] <= value[1]
+  );
+}
+
 export default class PointLayer extends Layer {
   declare config: PointLayerConfig;
   declare visConfigSettings: PointLayerVisConfigSettings;
@@ -356,6 +399,26 @@ export default class PointLayer extends Layer {
   private neighborHoverCache?: {
     dependencies: unknown[];
     data: ReturnType<typeof getNeighbors>;
+  };
+  private fillOpacityAccessors?: Partial<
+    Record<
+      'fill' | 'highlight',
+      {
+        field: Field;
+        base: PointFillColor;
+        domain?: [number, number];
+        range0: number;
+        range1: number;
+        accessor: PointFillOpacityAccessor;
+      }
+    >
+  >;
+  private fillOpacityDomainCache?: {
+    field: Field;
+    dataContainer: DataContainerInterface;
+    dataRevision: number;
+    filteredIndex: number[];
+    domain: [number, number];
   };
   private pulseTimeCache?: {
     dataContainer: DataContainerInterface;
@@ -449,6 +512,49 @@ export default class PointLayer extends Layer {
           (this.config.visConfig.pulseEnabled && this.config.visConfig.pulseTrigger !== 'event')) &&
         (prop.name !== 'pulseExpansion' || this.config.visConfig.pulseEnabled)
     );
+  }
+
+  copyLayerConfig(...args: Parameters<Layer['copyLayerConfig']>) {
+    const [current, source, options] = args;
+    const copied = super.copyLayerConfig(...args);
+    // The base copier skips keys absent from default config. Keep the setting
+    // opt-in so existing Point layers keep their original config shape.
+    if (current === this.config.visConfig) {
+      const settings = {
+        fillOpacityField:
+          typeof source.fillOpacityField === 'string' && source.fillOpacityField
+            ? source.fillOpacityField
+            : undefined,
+        fillOpacityScale: ['linear', 'identity'].includes(source.fillOpacityScale)
+          ? source.fillOpacityScale
+          : undefined,
+        fillOpacityRange: isFillOpacityRange(source.fillOpacityRange)
+          ? [...source.fillOpacityRange]
+          : undefined
+      };
+      for (const [key, value] of Object.entries(settings)) {
+        if (options?.notToCopy?.includes(key)) continue;
+        if (value === undefined) delete copied[key];
+        else copied[key] = value;
+      }
+    }
+    return copied;
+  }
+
+  validateVisConfig(dataset: KeplerTable, visConfig: PointLayerVisConfig): PointLayerVisConfig {
+    const {
+      fillOpacityField,
+      fillOpacityScale: _scale,
+      fillOpacityRange: _range,
+      ...rest
+    } = visConfig;
+    return dataset.fields.some(
+      field =>
+        field.name === fillOpacityField &&
+        (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+    )
+      ? visConfig
+      : rest;
   }
 
   get type(): 'point' {
@@ -701,6 +807,19 @@ export default class PointLayer extends Layer {
       : null;
 
     const accessors = this.getAttributeAccessors({dataContainer});
+    const fillOpacityFieldName = this.config.visConfig.fillOpacityField;
+    const fillOpacityField = fillOpacityFieldName
+      ? fields.find(
+          field =>
+            field.name === fillOpacityFieldName &&
+            (field.type === ALL_FIELD_TYPES.integer || field.type === ALL_FIELD_TYPES.real)
+        )
+      : undefined;
+    const fillOpacityDomain =
+      fillOpacityField && this.config.visConfig.fillOpacityScale === 'linear'
+        ? this.getFillOpacityDomain(datasets[this.config.dataId], fillOpacityField)
+        : undefined;
+    if (!fillOpacityDomain) this.fillOpacityDomainCache = undefined;
 
     const isFilteredAccessor = (data: {index: number}) => {
       return this.filteredIndex ? this.filteredIndex[data.index] : 1;
@@ -714,6 +833,8 @@ export default class PointLayer extends Layer {
       textLabels,
       ...(textLabelAngles ? {textLabelAngles} : {}),
       ...pulseData,
+      ...(fillOpacityField ? {fillOpacityField} : {}),
+      ...(fillOpacityDomain ? {fillOpacityDomain} : {}),
       ...accessors
     };
   }
@@ -811,6 +932,76 @@ export default class PointLayer extends Layer {
     }
   }
 
+  private getFillOpacityDomain(dataset: KeplerTable, field: Field): [number, number] {
+    const {dataContainer, dataRevision, filteredIndexForDomain} = dataset;
+    const cached = this.fillOpacityDomainCache;
+    if (
+      cached?.field === field &&
+      cached.dataContainer === dataContainer &&
+      cached.dataRevision === dataRevision &&
+      cached.filteredIndex === filteredIndexForDomain
+    ) {
+      return cached.domain;
+    }
+    // Follow the same domain-filtering policy as Color by. Invalid values do not
+    // contribute bounds, and changing the output range does not rescan the data.
+    const domain = dataset.getColumnLayerDomain(
+      {
+        ...field,
+        valueAccessor: row => {
+          const value = field.valueAccessor(row);
+          const number = typeof value === 'bigint' ? Number(value) : value;
+          return typeof number === 'number' && Number.isFinite(number) ? number : undefined;
+        }
+      },
+      'linear'
+    ) as [number, number];
+    this.fillOpacityDomainCache = {
+      field,
+      dataContainer,
+      dataRevision,
+      filteredIndex: filteredIndexForDomain,
+      domain
+    };
+    return domain;
+  }
+
+  // Reuse the accessor while field, scale and base color are unchanged. Animated base
+  // colors get a new accessor so previously rendered frames keep their own color.
+  private getFillOpacityAccessor(
+    key: 'fill' | 'highlight',
+    field: Field,
+    base: PointFillColor,
+    domain?: [number, number]
+  ): PointFillOpacityAccessor {
+    const cache = this.fillOpacityAccessors ?? (this.fillOpacityAccessors = {});
+    const previous = cache[key];
+    const range = this.config.visConfig.fillOpacityRange;
+    const [range0, range1] = isFillOpacityRange(range) ? range : [0, 1];
+    if (
+      previous &&
+      previous.field === field &&
+      previous.base === base &&
+      previous.domain === domain &&
+      previous.range0 === range0 &&
+      previous.range1 === range1
+    ) {
+      return previous.accessor;
+    }
+    const scale = domain ? scaleLinear().domain(domain).range([range0, range1]).clamp(true) : null;
+    const accessor = (row: PointRow) => {
+      const color = typeof base === 'function' ? base(row) : base;
+      const value = field.valueAccessor(row);
+      const number = typeof value === 'bigint' ? Number(value) : value;
+      if (typeof number !== 'number' || !Number.isFinite(number)) return color;
+      const opacity = scale ? scale(number) : Math.min(1, Math.max(number, 0));
+      if (opacity >= 1) return color;
+      return [color[0], color[1], color[2], Math.round((color[3] ?? 255) * opacity)];
+    };
+    cache[key] = {field, base, domain, range0, range1, accessor};
+    return accessor;
+  }
+
   // eslint-disable-next-line complexity
   renderLayer(opts) {
     opts = this.getAgeStyledLayerProps(opts);
@@ -844,6 +1035,26 @@ export default class PointLayer extends Layer {
     };
 
     const visualChannelUpdateTriggers = this.getVisualChannelUpdateTriggers(opts);
+    const opacityField: Field | undefined = layerProps.filled ? data.fillOpacityField : undefined;
+    const getFillColor = opacityField
+      ? this.getFillOpacityAccessor(
+          'fill',
+          opacityField,
+          data.getFillColor ?? this.config.color,
+          data.fillOpacityDomain
+        )
+      : data.getFillColor;
+    if (opacityField) {
+      visualChannelUpdateTriggers.getFillColor = {
+        ...visualChannelUpdateTriggers.getFillColor,
+        opacityField,
+        opacityDomain: data.fillOpacityDomain,
+        opacityRange: this.config.visConfig.fillOpacityRange,
+        opacityDataRevision: dataset?.dataRevision
+      };
+    } else {
+      this.fillOpacityAccessors = undefined;
+    }
     const updateTriggers = {
       getPosition: this.config.columns,
       getFilterValue: gpuFilter.filterValueUpdateTriggers,
@@ -866,6 +1077,8 @@ export default class PointLayer extends Layer {
       brushingExtension,
       ...(useArrowLayer ? [arrowCPUFilterExtension] : [])
     ];
+    // Keep the mask off text glyphs and their collision pass.
+    const pointExtensions = opacityField ? [...extensions, pointFillOpacityExtension] : extensions;
 
     const sharedProps = {
       getFilterValue: data.getFilterValue,
@@ -972,6 +1185,7 @@ export default class PointLayer extends Layer {
           ...data,
           data: deckLayerData,
           getPosition,
+          ...(opacityField ? {getFillColor} : {}),
           parameters: {
             // circles will be flat on the map when the altitude column is not used
             depthTest: (this.config.columns.altitude?.fieldIdx as number) > -1,
@@ -980,7 +1194,7 @@ export default class PointLayer extends Layer {
           lineWidthUnits: 'pixels',
           updateTriggers,
           ...pulseProps,
-          extensions: [...extensions, ...(continuous ? [pulseRippleExtension] : [])],
+          extensions: [...pointExtensions, ...(continuous ? [pulseRippleExtension] : [])],
           opacity: hoveredObject && showNeighborOnHover ? 0.2 : this.config.visConfig.opacity,
           pickable: allowHover,
           autoHighlight: false
@@ -999,7 +1213,8 @@ export default class PointLayer extends Layer {
               getPosition,
               // Only the ordinary point reports counts and owns picking and text labels.
               onFilteredItemsChange: null,
-              getFillColor: data[eventColorAccessor],
+              getFillColor:
+                eventColorAccessor === 'getFillColor' ? getFillColor : data.getLineColor,
               pickable: false,
               autoHighlight: false,
               filled: true,
@@ -1009,7 +1224,7 @@ export default class PointLayer extends Layer {
               pulseDurationMs,
               pulseCurrentTime:
                 pulseCurrentTime !== null ? pulseCurrentTime - data.pulseTimeOrigin : null,
-              extensions: [...extensions, eventPulseRippleExtension],
+              extensions: [...pointExtensions, eventPulseRippleExtension],
               updateTriggers: {
                 ...updateTriggers,
                 getFillColor: updateTriggers[eventColorAccessor],
@@ -1029,15 +1244,29 @@ export default class PointLayer extends Layer {
               ...this.getDefaultHoverLayerProps(),
               ...layerProps,
               ...pulseProps,
-              ...(continuous ? {extensions: [pulseRippleExtension]} : {}),
+              ...(continuous || opacityField
+                ? {
+                    extensions: [
+                      ...(opacityField ? [pointFillOpacityExtension] : []),
+                      ...(continuous ? [pulseRippleExtension] : [])
+                    ]
+                  }
+                : {}),
               visible: defaultLayerProps.visible,
               data: hoverData,
               getLineColor: this.config.visConfig.showHighlightColor
                 ? opts.ageStyleHighlightColor ?? this.config.highlightColor
                 : data.getLineColor,
               getFillColor: this.config.visConfig.showHighlightColor
-                ? opts.ageStyleHighlightColor ?? this.config.highlightColor
-                : data.getFillColor,
+                ? opacityField
+                  ? this.getFillOpacityAccessor(
+                      'highlight',
+                      opacityField,
+                      opts.ageStyleHighlightColor ?? this.config.highlightColor,
+                      data.fillOpacityDomain
+                    )
+                  : opts.ageStyleHighlightColor ?? this.config.highlightColor
+                : getFillColor,
               getRadius: data.getRadius,
               getPosition: data.getPosition,
               updateTriggers: {
@@ -1046,7 +1275,7 @@ export default class PointLayer extends Layer {
                       ...visualChannelUpdateTriggers.getFillColor,
                       highlight: this.config.highlightColor
                     }
-                  : {...visualChannelUpdateTriggers.getFillColor, accessor: data.getFillColor},
+                  : {...visualChannelUpdateTriggers.getFillColor, accessor: getFillColor},
                 getLineColor: this.config.visConfig.showHighlightColor
                   ? {
                       ...visualChannelUpdateTriggers.getLineColor,

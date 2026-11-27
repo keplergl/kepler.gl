@@ -276,6 +276,11 @@ export default {
       continuous: 'Continuous',
       event: 'At event time',
       pulseTimeField: 'Event timestamp',
+      fillOpacityField: 'Opacity based on',
+      fillOpacityScale: 'Opacity scale',
+      fillOpacityLinear: 'Linear',
+      fillOpacityRaw: 'Raw (0–1)',
+      fillOpacityRange: 'Opacity range (%)',
       pulseDuration: 'Duration (timeline seconds)',
       pulseFilterMissing:
         'Add an enabled timeline animation filter on the same timestamp column to play this effect.',

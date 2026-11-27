@@ -417,3 +417,130 @@ test.each([
     expect(updateLayerVisConfig).not.toHaveBeenCalled();
   }
 });
+
+test('Point opacity keeps its slider visible and reveals field settings from the three-dot control', async () => {
+  const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
+    name,
+    displayName: name,
+    type: name === 'point name' ? 'string' : 'real',
+    format: '',
+    fieldIdx
+  }));
+  const dataset = new KeplerTable({
+    info: {id: 'opacity-points', label: 'Opacity points'},
+    color: [0, 0, 0]
+  });
+  await dataset.importData({data: {fields, rows: [[40, -70, 0.5, 'city']]}});
+  const layer = new KeplerGlLayers.PointLayer({
+    id: 'opacity-points-layer',
+    dataId: dataset.id,
+    columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+  });
+  const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
+  const RenderLayer = () => {
+    const [, setRevision] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          layer={layer}
+          datasets={{[dataset.id]: dataset}}
+          layerTypeOptions={[]}
+          openModal={jest.fn()}
+          updateLayerConfig={jest.fn()}
+          updateLayerType={jest.fn()}
+          updateLayerVisConfig={config => {
+            updateLayerVisConfig(config);
+            setRevision(previous => previous + 1);
+          }}
+          updateLayerVisualChannelConfig={jest.fn()}
+          updateLayerColorUI={jest.fn()}
+          updateLayerTextLabel={jest.fn()}
+        />
+      </IntlWrapper>
+    );
+  };
+  const view = render(<RenderLayer />, {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
+  const field = screen.getByText('Opacity based on');
+  const group = field.closest('.layer-config-group') as HTMLElement;
+  const fillGroup = screen.getByText('Fill Color').closest('.layer-config-group');
+  const opacityLabel = screen.getByText('Opacity');
+  expect(opacityLabel.closest('.layer-config-group')).toBe(group);
+  expect(group.parentElement?.closest('.layer-config-group')).toBe(fillGroup);
+  expect(fillGroup).not.toHaveClass('collapsed');
+  const opacityInput = within(group).getByRole('spinbutton');
+  expect(opacityInput.closest('.layer-config-group')).toBe(group);
+  expect(opacityInput).toBeVisible();
+  expect(opacityInput.closest('.layer-config-group__content__collapsible')).toBeNull();
+  const more = group.querySelector('.layer-config-group__action svg') as SVGElement;
+  expect(more).not.toBeNull();
+  expect(more.closest('.layer-config-group__header')).toBe(
+    opacityLabel.closest('.layer-config-group__header')
+  );
+  const section = within(group);
+  expect(group).toHaveClass('collapsed');
+  const selector = section.getByText('Select a field');
+  const content = selector.closest('.layer-config-group__content__collapsible');
+  expect(content?.closest('.layer-config-group')).toBe(group);
+  expect(field.closest('.layer-config-group__content__collapsible')).toBe(content);
+  fireEvent.click(more);
+  expect(group).not.toHaveClass('collapsed');
+  expect(updateLayerVisConfig).not.toHaveBeenCalled();
+  fireEvent.click(section.getByText('Select a field'));
+  expect(screen.queryByText('point name')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByText('alpha value'));
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({
+    fillOpacityField: 'alpha value',
+    fillOpacityScale: 'linear',
+    fillOpacityRange: [0, 1]
+  });
+  const rangeSection = within(screen.getByText('Opacity range (%)').parentElement as HTMLElement);
+  const [minimum, maximum] = rangeSection.getAllByRole('spinbutton');
+  fireEvent.change(minimum, {target: {value: '20'}});
+  fireEvent.blur(minimum);
+  fireEvent.change(maximum, {target: {value: '80'}});
+  fireEvent.blur(maximum);
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityRange: [0.2, 0.8]});
+  expect(minimum.closest('.layer-config-group__content__collapsible')).toBe(content);
+  const updateCount = updateLayerVisConfig.mock.calls.length;
+  fireEvent.click(more);
+  expect(group).toHaveClass('collapsed');
+  expect(opacityInput).toBeVisible();
+  fireEvent.click(more);
+  expect(group).not.toHaveClass('collapsed');
+  expect(updateLayerVisConfig).toHaveBeenCalledTimes(updateCount);
+  expect(section.getByText('alpha value')).toBeInTheDocument();
+  expect(minimum).toHaveValue(20);
+  expect(maximum).toHaveValue(80);
+  const savedConfig = SchemaManager.getConfigToSave({
+    visState: {layers: [layer], layerOrder: [layer.id]}
+  });
+  const [parsedLayer] = SchemaManager.parseSavedConfig(savedConfig)?.visState?.layers ?? [];
+  const reopened = new KeplerGlLayers.PointLayer({dataId: dataset.id});
+  expect(reopened.copyLayerConfig(reopened.config, parsedLayer.config)).toMatchObject({
+    visConfig: {
+      fillOpacityField: 'alpha value',
+      fillOpacityScale: 'linear',
+      fillOpacityRange: [0.2, 0.8]
+    }
+  });
+  const scaleSection = within(screen.getByText('Opacity scale').parentElement as HTMLElement);
+  expect(screen.getByText('Opacity scale').closest('.layer-config-group')).toBe(group);
+  fireEvent.click(scaleSection.getByText('Linear'));
+  fireEvent.click(screen.getByText('Raw (0–1)'));
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityScale: 'identity'});
+  expect(screen.queryByText('Opacity range (%)')).not.toBeInTheDocument();
+  fireEvent.click(scaleSection.getByText('Raw (0–1)'));
+  fireEvent.click(screen.getByText('Linear'));
+  expect(layer.config.visConfig.fillOpacityRange).toEqual([0.2, 0.8]);
+
+  // A saved selection from before normalization has no scale or range keys.
+  layer.updateLayerVisConfig({fillOpacityScale: undefined, fillOpacityRange: undefined});
+  view.rerender(<RenderLayer />);
+  expect(scaleSection.getByText('Raw (0–1)')).toBeInTheDocument();
+  expect(screen.queryByText('Opacity range (%)')).not.toBeInTheDocument();
+  layer.updateLayerVisConfig({filled: false});
+  view.rerender(<RenderLayer />);
+  expect(group).toHaveClass('disabled');
+});
