@@ -300,7 +300,12 @@ void main() {
     if (!isBasemap && visibility > 0.0 && waterDepth < shoreWidth && footprint < 20.0) {
       float contact = visibility * (1.0 - smoothstep(0.0, shoreWidth, waterDepth)) *
                       (1.0 - smoothstep(5.0, 20.0, footprint));
-      waterSurface = mix(waterSurface, waterBody * 0.85, contact);
+      // Use the substrate before scattering and keep any darker reflections.
+      // Fade the reflected light quadratically near contact: a linear blend
+      // still lets bright glints bleach dark surfaces under very shallow water.
+      vec3 wetSurface = min(waterSurface, baseRgb * 0.85);
+      float reflectedLight = 1.0 - contact;
+      waterSurface = mix(wetSurface, waterSurface, reflectedLight * reflectedLight);
     }
   }
 

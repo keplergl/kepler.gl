@@ -726,14 +726,27 @@ describe('surface fog rendering', () => {
     }
   );
 
-  test.each([
-    [180, 140, 110, 255],
-    [55, 85, 40, 255],
-    [25, 30, 35, 255]
-  ])('darkens shallow contacts without bleaching the substrate (%s, %s, %s)', (r, g, b, a) => {
-    const source = [r, g, b, a];
+  const contactFrames = [0, 3, 9].flatMap(waveTime =>
+    [
+      [0, 0],
+      [7, 13],
+      [-71, 28]
+    ].map(waveOrigin => ({waveTime, waveOrigin}))
+  );
+
+  test.each(
+    contactFrames.flatMap(frame =>
+      [
+        [180, 140, 110, 255],
+        [55, 85, 40, 255],
+        [25, 30, 35, 255]
+      ].map(source => ({...frame, source}))
+    )
+  )('darkens shallow contacts for $source at $waveOrigin, time $waveTime', ({source, ...frame}) => {
     for (const depth of [0.5, 0.500125]) {
-      const contact = center(render({depth, source, uniforms: {fogHeight: 0, fogThickness: 20}}));
+      const contact = center(
+        render({depth, source, uniforms: {fogHeight: 0, fogThickness: 20, ...frame}})
+      );
       for (let channel = 0; channel < 3; channel++) {
         expect(contact[channel]).toBeLessThan(source[channel]);
         expect(contact[channel]).toBeGreaterThan(source[channel] * 0.7);
@@ -742,24 +755,33 @@ describe('surface fog rendering', () => {
     }
   });
 
-  test('darkens contacts only for resolved geometry at the water surface', () => {
-    const uniforms = {fogHeight: 0, fogThickness: 20};
-    const geometry = render({depth: 0.5, uniforms});
-    const basemap = render({depth: 1, uniforms});
-    expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
-    expect(geometry.every((value, index) => value <= basemap[index])).toBe(true);
+  test.each(
+    contactFrames.flatMap(frame =>
+      [SOURCE, [245, 240, 230, 255]].map(source => ({...frame, source}))
+    )
+  )(
+    'darkens resolved contacts for $source at $waveOrigin, time $waveTime',
+    ({source, ...frame}) => {
+      const uniforms = {fogHeight: 0, fogThickness: 20, ...frame};
+      const geometry = render({depth: 0.5, source, uniforms});
+      const basemap = render({depth: 1, source, uniforms});
+      expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
+      expect(geometry.every((value, index) => value <= basemap[index])).toBe(true);
 
-    const distant = {
-      ...uniforms,
-      invCol0: [1000, 0, 0, 0],
-      invCol1: [0, 1000, 0, 0]
-    };
-    expect(render({depth: 0.5, uniforms: distant})).toEqual(render({depth: 1, uniforms: distant}));
-    const underwater = {...uniforms, cameraHeight: -1};
-    expect(render({depth: 0.5, uniforms: underwater})).toEqual(
-      render({depth: 1, uniforms: underwater})
-    );
-  });
+      const distant = {
+        ...uniforms,
+        invCol0: [1000, 0, 0, 0],
+        invCol1: [0, 1000, 0, 0]
+      };
+      expect(render({depth: 0.5, source, uniforms: distant})).toEqual(
+        render({depth: 1, source, uniforms: distant})
+      );
+      const underwater = {...uniforms, cameraHeight: -1};
+      expect(render({depth: 0.5, source, uniforms: underwater})).toEqual(
+        render({depth: 1, source, uniforms: underwater})
+      );
+    }
+  );
 
   test('keeps reflections when an above-water camera has a near plane crossing the water', () => {
     const viewport = croppedViewport({zoom: 18, pitch: 65});
