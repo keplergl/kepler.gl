@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {AnnotationKind} from '@kepler.gl/constants';
+import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import {Annotation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
 import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
@@ -667,4 +668,60 @@ describe('AnnotationManager selectors', () => {
       expect(screen.queryByText(next)).not.toBeInTheDocument();
     }
   );
+
+  test('opts a legacy ruler into styled distance without changing its text or endpoints', () => {
+    const store = mockStore(makeState(false, true));
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    expect(screen.queryByLabelText('Offset (px)')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Styled distance'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {rulerStyle: {...DEFAULT_RULER_STYLE}})
+    ]);
+  });
+
+  test('edits ruler formatting, dimension geometry, endpoint names and shared background with native controls', async () => {
+    const state = makeState(false, true);
+    const rulerStyle = {...DEFAULT_RULER_STYLE, offset: 24, prefix: 'Span '};
+    const labelBackground = {color: '#000000', opacity: 0.7, padding: 8};
+    Object.assign(state.visState.annotations[0], {rulerStyle, labelBackground});
+    const store = mockStore(state);
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    fireEvent.change(screen.getByLabelText('Offset (px)'), {target: {value: '40'}});
+    fireEvent.blur(screen.getByLabelText('Offset (px)'));
+    fireEvent.click(screen.getByLabelText('Dimension line'));
+    fireEvent.change(screen.getByLabelText('Start name'), {target: {value: 'A'}});
+    fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '0.5'}});
+    fireEvent.blur(screen.getByLabelText('Background opacity'));
+    await userEvent.click(screen.getByText('Auto (metric)'));
+    await userEvent.click(screen.getByText('Kilometres'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {rulerStyle: {...rulerStyle, offset: 40}}),
+      VisStateActions.updateAnnotation('ruler-1', {
+        rulerStyle: {...rulerStyle, dimensionLine: true}
+      }),
+      VisStateActions.updateAnnotation('ruler-1', {rulerStyle: {...rulerStyle, startLabel: 'A'}}),
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {...labelBackground, opacity: 0.5}
+      }),
+      VisStateActions.updateAnnotation('ruler-1', {rulerStyle: {...rulerStyle, unit: 'km'}})
+    ]);
+    store.clearActions();
+    fireEvent.change(screen.getByLabelText('Offset (px)'), {target: {value: '-1'}});
+    fireEvent.blur(screen.getByLabelText('Offset (px)'));
+    fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '2'}});
+    fireEvent.blur(screen.getByLabelText('Background opacity'));
+    expect(store.getActions()).toEqual([]);
+  });
 });

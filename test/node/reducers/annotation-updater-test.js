@@ -627,3 +627,42 @@ test('#visStateReducer -> malformed caption fields never enter runtime state', t
   }
   t.end();
 });
+
+test('#visStateReducer -> ruler presentation survives endpoint updates and clears on kind changes', t => {
+  const source = {unit: 'km', precision: 1, offset: 24};
+  const background = {color: '#000000', opacity: 0.7, padding: 8};
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'styled',
+      kind: AnnotationKind.RULER,
+      anchorPoint: [0, 0],
+      endPoint: [1, 0],
+      rulerStyle: source,
+      labelBackground: background
+    })
+  );
+  const first = state.annotations[0];
+  state = reducer(state, VisStateActions.updateAnnotation('styled', {endPoint: [2, 0]}));
+  t.deepEqual(
+    state.annotations[0].rulerStyle,
+    first.rulerStyle,
+    'moving endpoints preserves presentation'
+  );
+  t.deepEqual(first.endPoint, [1, 0], 'previous ruler is unchanged');
+  state = reducer(state, VisStateActions.updateAnnotation('styled', {kind: AnnotationKind.POINT}));
+  t.notOk(state.annotations[0].rulerStyle, 'point annotations do not retain ruler settings');
+  t.deepEqual(
+    state.annotations[0].labelBackground,
+    background,
+    'shared background survives kind changes'
+  );
+  state = reducer(
+    state,
+    VisStateActions.updateAnnotation('styled', {
+      labelBackground: {color: 'invalid', opacity: 1, padding: 8}
+    })
+  );
+  t.notOk(state.annotations[0].labelBackground, 'invalid updates cannot enter runtime state');
+  t.end();
+});

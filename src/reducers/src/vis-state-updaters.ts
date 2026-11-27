@@ -62,6 +62,8 @@ import {
   FILTER_UPDATER_PROPS,
   normalizeCameraBookmarks,
   normalizeAnnotationCaption,
+  normalizeAnnotationLabelBackground,
+  normalizeRulerStyle,
   normalizeCameraTour,
   addNewLayersToSplitMap,
   snapToMarks,
@@ -203,6 +205,7 @@ import {
   TimeRangeFilter,
   Annotation,
   AnnotationPropsPartial,
+  RulerAnnotation,
   ProtoDataset,
   ChartConfig,
   LayerChartConfig
@@ -3145,6 +3148,7 @@ export const removeChartUpdater = (
 // ANNOTATION UPDATERS
 
 function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
+  const labelBackground = normalizeAnnotationLabelBackground(config?.labelBackground);
   const propertyTransitions = normalizeLayerPropertyTransitions(config?.propertyTransitions);
   const kind = config?.kind ?? INITIAL_ANNOTATION_KIND;
   const providedAngle = Number.isFinite((config as any)?.angle) ? (config as any).angle : undefined;
@@ -3172,6 +3176,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
     autoSizeY: config?.autoSizeY ?? true,
     anchorPoint: config?.anchorPoint ?? ([0, 0] as [number, number]),
     label: config?.label ?? 'New Annotation',
+    ...(labelBackground ? {labelBackground} : {}),
     ...(config?.editorState ? {editorState: config.editorState} : {}),
     lineColor: config?.lineColor ?? INITIAL_ANNOTATION_LINE_COLOR,
     lineWidth: config?.lineWidth ?? INITIAL_ANNOTATION_LINE_WIDTH,
@@ -3212,6 +3217,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         radiusInMeters: (config as any)?.radiusInMeters ?? 1000
       };
     case AnnotationKind.RULER: {
+      const rulerStyle = normalizeRulerStyle((config as Partial<RulerAnnotation>)?.rulerStyle);
       const anchorPoint = base.anchorPoint;
       const shifted = addMetersToLngLat(anchorPoint, [
         INITIAL_ANNOTATION_RULER_LENGTH_METERS,
@@ -3228,7 +3234,8 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
         kind: AnnotationKind.RULER,
         endPoint: (config as any)?.endPoint ?? defaultEndPoint,
         showCustomText: (config as any)?.showCustomText ?? true,
-        showDistance: (config as any)?.showDistance ?? true
+        showDistance: (config as any)?.showDistance ?? true,
+        ...(rulerStyle ? {rulerStyle} : {})
       };
     }
     case AnnotationKind.TEXT:
@@ -3308,6 +3315,14 @@ export const updateAnnotationUpdater = (
     else nextAnnotation.propertyTransitions = propertyTransitions;
   }
 
+  const background = normalizeAnnotationLabelBackground(nextAnnotation.labelBackground);
+  if (background) nextAnnotation.labelBackground = background;
+  else delete nextAnnotation.labelBackground;
+  if (nextAnnotation.kind === AnnotationKind.RULER) {
+    const style = normalizeRulerStyle(nextAnnotation.rulerStyle);
+    if (style) nextAnnotation.rulerStyle = style;
+    else delete nextAnnotation.rulerStyle;
+  }
   const caption = normalizeAnnotationCaption(nextAnnotation);
   delete nextAnnotation.viewport;
   delete nextAnnotation.readout;

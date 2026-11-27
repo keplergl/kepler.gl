@@ -773,3 +773,92 @@ test('captions remain editable after the referenced count dataset is removed', a
     dataId: 'observations'
   });
 });
+
+test('round-trips styled rulers and backgrounds, merges MCP patches and restores legacy mode', async () => {
+  let {context, dispatch} = setup();
+  const settings = {
+    unit: 'km',
+    precision: 1,
+    prefix: 'Span ',
+    offset: 24,
+    dimensionLine: true,
+    startLabel: 'A',
+    endLabel: 'B'
+  };
+  const background = {color: '#123456', opacity: 0.7, padding: 8};
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      ...text,
+      kind: 'ruler',
+      anchorPoint: [-101.869545, 33.553131],
+      endPoint: [-101.742203, 33.412521],
+      rulerStyle: settings,
+      labelBackground: background,
+      fontWeight: 'bold',
+      fontSize: 32,
+      textColor: '#FFD700',
+      showCustomText: false
+    })
+  ).toMatchObject({
+    success: true,
+    data: {rulerStyle: settings, labelBackground: background, fontWeight: 'bold'}
+  });
+  ({context, dispatch} = roundTrip(context));
+  expect((await execute(getListAnnotationsCommand(context))).data.annotations[0]).toMatchObject({
+    rulerStyle: settings,
+    labelBackground: background,
+    fontWeight: 'bold',
+    showCustomText: false
+  });
+  const original = context.getVisState().annotations[0];
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: text.id, rulerStyle: {precision: 0}})
+  ).toMatchObject({success: true, data: {rulerStyle: {...settings, precision: 0}}});
+  expect(original).toMatchObject({rulerStyle: settings});
+  dispatch(duplicateAnnotation(text.id));
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    rulerStyle: {...settings, precision: 0},
+    labelBackground: background
+  });
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id: text.id,
+      rulerStyle: null,
+      labelBackground: null
+    })
+  ).toMatchObject({success: true});
+  const legacy = context.getVisState().annotations.find(a => a.id === text.id)!;
+  expect(legacy).not.toHaveProperty('rulerStyle');
+  expect(legacy).not.toHaveProperty('labelBackground');
+});
+
+test.each([
+  {rulerStyle: {unit: 'yards'}},
+  {rulerStyle: {precision: -1}},
+  {rulerStyle: {precision: 1.5}},
+  {rulerStyle: {precision: 7}},
+  {rulerStyle: {offset: Infinity}},
+  {rulerStyle: {offset: -1}},
+  {rulerStyle: {placement: 'left'}},
+  {rulerStyle: {prefix: 'x'.repeat(129)}},
+  {labelBackground: {color: 'red', opacity: 1, padding: 8}},
+  {labelBackground: {color: '#000000', opacity: 2, padding: 8}},
+  {labelBackground: {color: '#000000', opacity: 1, padding: -1}},
+  {fontWeight: 'heavy'}
+])('rejects invalid ruler presentation settings without changing state: %j', async changes => {
+  const {context, dispatch} = setup();
+  await execute(getAddAnnotationCommand(context), {...text, kind: 'ruler', endPoint: [0, 0]});
+  dispatch.mockClear();
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id: text.id, ...changes})
+  ).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+});
+
+test('rejects ruler-only presentation on a text annotation', async () => {
+  const {context, dispatch} = setup();
+  expect(
+    await execute(getAddAnnotationCommand(context), {...text, rulerStyle: {unit: 'm'}})
+  ).toMatchObject({success: false});
+  expect(dispatch).not.toHaveBeenCalled();
+});

@@ -106,7 +106,11 @@ export const useLexicalTextFormat = ({
       editor.update(() => {
         const emptyText = selectEmptyText();
         let selection = emptyText?.selection ?? $getSelection();
-        if (!emptyText && (!$isRangeSelection(selection) || selection.isCollapsed())) {
+        // A hidden caption can retain a range; only honor it while editing text.
+        if (
+          !emptyText &&
+          (!isEditingText || !$isRangeSelection(selection) || selection.isCollapsed())
+        ) {
           const root = $getRoot();
           const newSelection = $createRangeSelection();
           newSelection.focus.set(root.getKey(), 0, 'element');
@@ -123,7 +127,7 @@ export const useLexicalTextFormat = ({
         setTimeout(() => editor.setEditable(false), 0);
       }
     },
-    [editor]
+    [editor, isEditingText]
   );
   return {isBold, isItalic, isUnderline, handleToggleTextFormat};
 };
@@ -209,7 +213,10 @@ export const useLexicalTextStyle = ({
         () => {
           const emptyText = selectEmptyText();
           let selection = emptyText?.selection ?? $getSelection();
-          if (!emptyText && (!$isRangeSelection(selection) || selection.isCollapsed())) {
+          if (
+            !emptyText &&
+            (!isEditingText || !$isRangeSelection(selection) || selection.isCollapsed())
+          ) {
             const root = $getRoot();
             const newSelection = $createRangeSelection();
             newSelection.focus.set(root.getKey(), 0, 'element');
@@ -231,7 +238,7 @@ export const useLexicalTextStyle = ({
         }
       );
     },
-    [editor]
+    [editor, isEditingText]
   );
 
   const handleAlignHorizontal = useCallback(

@@ -10,6 +10,8 @@ import {
   MapViewport,
   CircleAnnotationMarker,
   RulerAnnotationMarker,
+  getRulerDimensionOffset,
+  getRulerLabelAngle,
   isPointVisibleOnGlobe
 } from './annotation-utils';
 
@@ -237,14 +239,47 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
       break;
     case AnnotationKind.RULER: {
       const rulerMarker = marker as RulerAnnotationMarker;
+      const ruler = annotation as RulerAnnotation;
+      const {dx, dy} = getRulerDimensionOffset(ruler, rulerMarker);
+      const angle = (getRulerLabelAngle(rulerMarker) * Math.PI) / 180;
+      const tickX = -Math.sin(angle) * 5;
+      const tickY = Math.cos(angle) * 5;
+      const visibleEndpoints = [
+        {x: 0, y: 0, point: ruler.anchorPoint},
+        {x: rulerMarker.ex, y: rulerMarker.ey, point: ruler.endPoint}
+      ].filter(endpoint => !isGlobeEnabled || isPointVisibleOnGlobe(endpoint.point, viewport));
       body = (
-        <path
-          d={rulerMarker.path ?? `M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
-          stroke={lineColor}
-          fill="none"
-          strokeWidth={lineWidth}
-          strokeLinecap="round"
-        />
+        <>
+          {ruler.rulerStyle?.dimensionLine ? (
+            <path
+              data-annotation-part="dimension-extensions"
+              d={visibleEndpoints.map(({x, y}) => `M${x},${y} L${x + dx},${y + dy}`).join(' ')}
+              stroke={lineColor}
+              fill="none"
+              strokeWidth={lineWidth}
+            />
+          ) : null}
+          <g transform={`translate(${dx},${dy})`}>
+            <path
+              d={rulerMarker.path ?? `M0,0 L${rulerMarker.ex},${rulerMarker.ey}`}
+              stroke={lineColor}
+              fill="none"
+              strokeWidth={lineWidth}
+              strokeLinecap="round"
+            />
+            {ruler.rulerStyle?.dimensionLine ? (
+              <path
+                data-annotation-part="dimension-ticks"
+                d={visibleEndpoints
+                  .map(({x, y}) => `M${x - tickX},${y - tickY} L${x + tickX},${y + tickY}`)
+                  .join(' ')}
+                stroke={lineColor}
+                fill="none"
+                strokeWidth={lineWidth}
+              />
+            ) : null}
+          </g>
+        </>
       );
       break;
     }

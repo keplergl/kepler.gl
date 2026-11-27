@@ -14,7 +14,7 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 import {visStateLens, mapStateLens} from '@kepler.gl/reducers';
-import {Annotation} from '@kepler.gl/types';
+import {Annotation, RulerAnnotation, RulerStyle} from '@kepler.gl/types';
 import {
   AnnotationKind,
   AnnotationTextSide,
@@ -50,7 +50,7 @@ import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
-import {getCameraSnapshot, hexToRgb, rgbToHex} from '@kepler.gl/utils';
+import {getCameraSnapshot, hexToRgb, rgbToHex, DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 import {MapViewStateContext} from '../map-view-state-context';
@@ -336,17 +336,21 @@ const StyledCaptionInput = styled(Input)`
 function CaptionMarginInput({
   label,
   value,
+  max,
+  step = 1,
   onChange
 }: {
   label: string;
   value: number;
+  max?: number;
+  step?: number;
   onChange: (value: number) => void;
 }) {
   const [draft, setDraft] = React.useState(String(value));
   React.useEffect(() => setDraft(String(value)), [value]);
   const commit = () => {
     const next = Number(draft);
-    if (draft.trim() && Number.isFinite(next) && next >= 0) {
+    if (draft.trim() && Number.isFinite(next) && next >= 0 && (max === undefined || next <= max)) {
       if (next !== value) onChange(next);
     } else {
       setDraft(String(value));
@@ -357,7 +361,8 @@ function CaptionMarginInput({
       aria-label={label}
       type="number"
       min={0}
-      step={1}
+      step={step}
+      max={max}
       value={draft}
       onChange={event => setDraft(event.target.value)}
       onBlur={commit}
@@ -399,6 +404,177 @@ function CaptionDateFormatInput({
         if (event.key === 'Enter') event.currentTarget.blur();
       }}
     />
+  );
+}
+
+function RulerSettings({
+  annotation,
+  intl,
+  onChange
+}: {
+  annotation: RulerAnnotation;
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const label = (id: string, fallback: string) =>
+    intl.formatMessage({id: `annotationManager.${id}`, defaultMessage: fallback});
+  const style = annotation.rulerStyle;
+  const patch = (changes: Partial<RulerStyle>) =>
+    onChange({rulerStyle: {...DEFAULT_RULER_STYLE, ...style, ...changes}});
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => {
+    const name = label(id, fallback);
+    return (
+      <StyledConfigRow key={id}>
+        <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-${id}`}>
+          {name}
+        </StyledConfigLabel>
+        {control(name)}
+      </StyledConfigRow>
+    );
+  };
+  const select = (
+    id: string,
+    fallback: string,
+    value: string,
+    options: {id: string; label: string}[],
+    onSelect: (value: string) => void
+  ) =>
+    row(id, fallback, () => (
+      <StyledSelect
+        options={options}
+        selectedItems={options.find(option => option.id === value)}
+        displayOption="label"
+        getOptionValue="id"
+        multiSelect={false}
+        searchable={false}
+        onChange={value => {
+          if (typeof value === 'string') onSelect(value);
+        }}
+      />
+    ));
+  const background = annotation.labelBackground;
+  return (
+    <>
+      {row('styledDistance', 'Styled distance', name => (
+        <StyledRulerSwitch
+          id={`annotation-${annotation.id}-styledDistance`}
+          aria-label={name}
+          checked={Boolean(style)}
+          onChange={event =>
+            onChange({rulerStyle: event.target.checked ? {...DEFAULT_RULER_STYLE} : undefined})
+          }
+        />
+      ))}
+      {style ? (
+        <>
+          {select(
+            'distanceUnits',
+            'Units',
+            style.unit,
+            [
+              {id: 'auto', label: label('automaticMetric', 'Auto (metric)')},
+              {id: 'm', label: label('metres', 'Metres')},
+              {id: 'km', label: label('kilometres', 'Kilometres')}
+            ],
+            unit => patch({unit: unit as RulerStyle['unit']})
+          )}
+          {select(
+            'decimalPlaces',
+            'Decimals',
+            String(style.precision),
+            Array.from({length: 7}, (_, i) => ({id: String(i), label: String(i)})),
+            value => patch({precision: Number(value)})
+          )}
+          {(['prefix', 'suffix'] as const).map(key =>
+            row(`distance.${key}`, key === 'prefix' ? 'Prefix' : 'Suffix', name => (
+              <StyledCaptionInput
+                aria-label={name}
+                maxLength={128}
+                value={style[key]}
+                onChange={event => patch({[key]: event.target.value})}
+              />
+            ))
+          )}
+          {select(
+            'distancePlacement',
+            'Label placement',
+            style.placement,
+            [
+              {id: 'above', label: label('above', 'Above')},
+              {id: 'below', label: label('below', 'Below')}
+            ],
+            placement => patch({placement: placement as RulerStyle['placement']})
+          )}
+          {row('distanceOffset', 'Offset (px)', name => (
+            <CaptionMarginInput
+              label={name}
+              value={style.offset}
+              max={1000}
+              onChange={offset => patch({offset})}
+            />
+          ))}
+          {row('dimensionLine', 'Dimension line', name => (
+            <StyledRulerSwitch
+              id={`annotation-${annotation.id}-dimensionLine`}
+              aria-label={name}
+              checked={style.dimensionLine}
+              onChange={event => patch({dimensionLine: event.target.checked})}
+            />
+          ))}
+          {(['startLabel', 'endLabel'] as const).map(key =>
+            row(key, key === 'startLabel' ? 'Start name' : 'End name', name => (
+              <StyledCaptionInput
+                aria-label={name}
+                maxLength={128}
+                value={style[key]}
+                onChange={event => patch({[key]: event.target.value})}
+              />
+            ))
+          )}
+        </>
+      ) : null}
+      {row('labelBackground', 'Label background', name => (
+        <StyledRulerSwitch
+          id={`annotation-${annotation.id}-labelBackground`}
+          aria-label={name}
+          checked={Boolean(background)}
+          onChange={event =>
+            onChange({
+              labelBackground: event.target.checked
+                ? {color: '#000000', opacity: 0.7, padding: 8}
+                : undefined
+            })
+          }
+        />
+      ))}
+      {background ? (
+        <>
+          {row('backgroundColor', 'Background color', () => (
+            <InlineColorPicker
+              color={hexToRgb(background.color)}
+              onSetColor={rgb => onChange({labelBackground: {...background, color: rgbToHex(rgb)}})}
+            />
+          ))}
+          {row('backgroundOpacity', 'Background opacity', name => (
+            <CaptionMarginInput
+              label={name}
+              value={background.opacity}
+              max={1}
+              step={0.1}
+              onChange={opacity => onChange({labelBackground: {...background, opacity}})}
+            />
+          ))}
+          {row('labelPadding', 'Padding (px)', name => (
+            <CaptionMarginInput
+              label={name}
+              value={background.padding}
+              max={100}
+              onChange={padding => onChange({labelBackground: {...background, padding}})}
+            />
+          ))}
+        </>
+      ) : null}
+    </>
   );
 }
 
@@ -1055,6 +1231,13 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                               }
                             />
                           </StyledConfigRow>
+                          <RulerSettings
+                            annotation={annotation}
+                            intl={intl}
+                            onChange={changes =>
+                              visStateActions.updateAnnotation(annotation.id, changes)
+                            }
+                          />
                         </>
                       ) : annotation.kind === AnnotationKind.TEXT && annotation.viewport ? null : (
                         <>

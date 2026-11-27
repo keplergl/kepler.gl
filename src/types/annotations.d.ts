@@ -34,6 +34,27 @@ export type AnnotationReadout =
       /** Count rows passing the dataset's current filters, including GPU filters. */ dataId: string;
     };
 
+export type AnnotationLabelBackground = {
+  color: string;
+  opacity: number;
+  /** Padding on each side, in composition CSS pixels. */
+  padding: number;
+};
+
+/** Omitted settings preserve the legacy ruler appearance. */
+export type RulerStyle = {
+  unit: 'auto' | 'm' | 'km';
+  precision: number;
+  prefix: string;
+  suffix: string;
+  placement: 'above' | 'below';
+  /** Distance from the projected measurement, in composition CSS pixels. */
+  offset: number;
+  dimensionLine: boolean;
+  startLabel: string;
+  endLabel: string;
+};
+
 export type BaseAnnotation = {
   id: string;
   kind: AnnotationKind;
@@ -44,6 +65,7 @@ export type BaseAnnotation = {
   /** [lng, lat] or [lng, lat, altitudeMeters]. Missing altitude is treated as 0. */
   anchorPoint: [number, number] | [number, number, number];
   label: string;
+  labelBackground?: AnnotationLabelBackground;
   /** Present only on TEXT captions. Omitted means geographic placement. */
   viewport?: ViewportAnnotationPlacement;
   /** Rendered below the caption label. Missing values render an em dash. */
@@ -89,6 +111,7 @@ export type RulerAnnotation = BaseAnnotation & {
   showCustomText: boolean;
   /** Whether the computed geodesic length is rendered at the ruler midpoint. */
   showDistance: boolean;
+  rulerStyle?: RulerStyle;
 };
 
 export type Annotation =

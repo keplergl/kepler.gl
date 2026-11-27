@@ -7,6 +7,8 @@ import {AnnotationKind} from '@kepler.gl/constants';
 import {VERSIONS} from '@kepler.gl/schemas';
 
 const annotationPropsV1 = {
+  rulerStyle: null,
+  labelBackground: null,
   viewport: null,
   readout: null,
   id: null,
@@ -335,5 +337,32 @@ test('#AnnotationsSchema -> viewport captions and readouts round-trip', t => {
   const legacy = schema.load(schema.save([makeTextAnnotation()]).annotations).annotations[0];
   t.notOk(legacy.viewport, 'legacy text stays geographic');
   t.notOk(legacy.readout, 'legacy text remains static');
+  t.end();
+});
+
+test('#AnnotationsSchema -> styled rulers preserve presentation and endpoints', t => {
+  const rulerStyle = {
+    unit: 'km',
+    precision: 1,
+    prefix: 'Span ',
+    suffix: '',
+    placement: 'below',
+    offset: 24,
+    dimensionLine: true,
+    startLabel: 'A',
+    endLabel: 'B'
+  };
+  const labelBackground = {color: '#123456', opacity: 0.7, padding: 8};
+  const ruler = makeRulerAnnotation({rulerStyle, labelBackground});
+  const saved = JSON.parse(
+    JSON.stringify(schema.save([ruler, makeRulerAnnotation({id: 'legacy'})]))
+  );
+  const loaded = schema.load(saved.annotations).annotations;
+  t.deepEqual(loaded[0].rulerStyle, rulerStyle, 'presentation round-trips');
+  t.deepEqual(loaded[0].labelBackground, labelBackground, 'background round-trips');
+  t.deepEqual(loaded[0].anchorPoint, ruler.anchorPoint, 'start endpoint round-trips');
+  t.deepEqual(loaded[0].endPoint, ruler.endPoint, 'end endpoint round-trips');
+  t.notOk(loaded[1].rulerStyle, 'legacy ruler does not opt in');
+  t.notOk(loaded[1].labelBackground, 'legacy background stays transparent');
   t.end();
 });

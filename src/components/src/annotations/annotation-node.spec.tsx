@@ -6,6 +6,7 @@ import {DndContext} from '@dnd-kit/core';
 import {render} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
+import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import {Annotation} from '@kepler.gl/types';
 
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
@@ -272,4 +273,125 @@ describe('AnnotationNode', () => {
     expect(container.querySelector('path')).toBeInTheDocument();
     expect(container.querySelectorAll('circle')).toHaveLength(0);
   });
+});
+
+describe('styled ruler measurement', () => {
+  const ruler = {
+    ...rulerAnnotation,
+    anchorPoint: [-101.869545, 33.553131],
+    endPoint: [-101.742203, 33.412521],
+    rulerStyle: {...DEFAULT_RULER_STYLE, unit: 'km' as const}
+  } as typeof rulerAnnotation;
+  test('formats the acceptance example and recomputes after either endpoint moves', () => {
+    expect(getRulerDistanceLabel(ruler)).toBe('19.6 km');
+    expect(getRulerDistanceLabel({...ruler, anchorPoint: [-101.8, 33.5]})).not.toBe('19.6 km');
+    expect(getRulerDistanceLabel({...ruler, endPoint: [-101.7, 33.4]})).not.toBe('19.6 km');
+    expect(
+      getRulerDistanceLabel({
+        ...ruler,
+        rulerStyle: {...DEFAULT_RULER_STYLE, unit: 'km', prefix: 'Span ', suffix: ' wide'}
+      })
+    ).toBe('Span 19.6 km wide');
+  });
+  test.each([
+    [500, 'auto', 0, '500 m'],
+    [999, 'auto', 0, '999 m'],
+    [1001, 'auto', 1, '1.0 km'],
+    [500, 'km', 2, '0.50 km'],
+    [1001, 'm', 0, '1001 m'],
+    [0, 'auto', 0, '0 m']
+  ] as const)('formats %s metres in %s with precision %s', (meters, unit, precision, expected) => {
+    const longitude = ((meters / 6371008.8) * 180) / Math.PI;
+    expect(
+      getRulerDistanceLabel({
+        ...ruler,
+        anchorPoint: [0, 0],
+        endPoint: [longitude, 0],
+        rulerStyle: {...DEFAULT_RULER_STYLE, unit, precision}
+      })
+    ).toBe(expected);
+  });
+  test('keeps legacy formatting and safely handles invalid endpoints', () => {
+    expect(getRulerDistanceLabel({...ruler, rulerStyle: undefined})).toBe('Length: 19.59 km');
+    expect(getRulerDistanceLabel({...ruler, endPoint: [NaN, 0]})).toBe('');
+    expect(getRulerDistanceLabel({...ruler, endPoint: undefined} as any)).toBe('');
+  });
+  test.each(['above', 'below'] as const)(
+    'connects dimension lines to actual endpoints with %s placement',
+    placement => {
+      const projected: MapViewport = {...viewport, project: ([x, y]) => [x * 100, y * 100]};
+      const distance = placement === 'above' ? -30 : 30;
+      const {container, rerender} = render(
+        <svg>
+          <AnnotationNode
+            annotation={{
+              ...ruler,
+              anchorPoint: [0, 0],
+              endPoint: [1, 0],
+              rulerStyle: {...DEFAULT_RULER_STYLE, placement, offset: 30, dimensionLine: true}
+            }}
+            viewport={projected}
+            isEditing={false}
+            isSelected={false}
+          />
+        </svg>
+      );
+      expect(
+        container.querySelector('[data-annotation-part="dimension-extensions"]')
+      ).toHaveAttribute('d', `M0,0 L0,${distance} M100,0 L100,${distance}`);
+      expect(
+        container.querySelector('[data-annotation-part="dimension-ticks"]')
+      ).toBeInTheDocument();
+      rerender(
+        <svg>
+          <AnnotationNode
+            annotation={{
+              ...ruler,
+              anchorPoint: [0, 0],
+              endPoint: [2, 0],
+              rulerStyle: {...DEFAULT_RULER_STYLE, placement, offset: 30, dimensionLine: true}
+            }}
+            viewport={projected}
+            isEditing={false}
+            isSelected={false}
+          />
+        </svg>
+      );
+      expect(
+        container.querySelector('[data-annotation-part="dimension-extensions"]')
+      ).toHaveAttribute('d', `M0,0 L0,${distance} M200,0 L200,${distance}`);
+    }
+  );
+});
+
+test('globe dimension rulers retain clipped surface arcs and only decorate visible endpoints', () => {
+  const globe = new GlobeViewport({longitude: 0, latitude: 0, zoom: 0, width: 800, height: 600});
+  const ruler = {
+    ...rulerAnnotation,
+    anchorPoint: [0, 0],
+    endPoint: [150, 0],
+    rulerStyle: {...DEFAULT_RULER_STYLE, offset: 24, dimensionLine: true}
+  } as typeof rulerAnnotation;
+  const marker = makeMarker(ruler, globe, true) as RulerAnnotationMarker;
+  const {container} = render(
+    <svg>
+      <AnnotationNode
+        annotation={ruler}
+        viewport={globe}
+        isGlobeEnabled
+        isEditing={false}
+        isSelected={false}
+      />
+    </svg>
+  );
+  const extensions = container.querySelector('[data-annotation-part="dimension-extensions"]');
+  const ticks = container.querySelector('[data-annotation-part="dimension-ticks"]');
+  expect(extensions?.getAttribute('d')?.match(/M/g)).toHaveLength(1);
+  expect(ticks?.getAttribute('d')?.match(/M/g)).toHaveLength(1);
+  expect(
+    Array.from(container.querySelectorAll('path')).some(
+      path => path.getAttribute('d') === marker.path
+    )
+  ).toBe(true);
+  expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
 });

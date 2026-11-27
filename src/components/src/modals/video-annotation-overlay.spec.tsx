@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
 import React from 'react';
 import {act, render} from '@testing-library/react';
 import {domtoimage, getApplicationConfig, getViewportFromMapState} from '@kepler.gl/utils';
@@ -13,6 +14,8 @@ import {
 import type {VideoAnnotationFrame} from './video-annotation-encoder';
 
 jest.mock('@kepler.gl/utils', () => ({
+  ...jest.requireActual('../../../utils/src/annotation-ruler'),
+  hexToRgb: jest.requireActual('../../../utils/src/color-utils').hexToRgb,
   getLayerOpacityFactor: jest.requireActual('../../../utils/src/layer-visibility')
     .getLayerOpacityFactor,
   domtoimage: {toPng: jest.fn()},
@@ -486,3 +489,47 @@ test.each([1280, 1920])(
     expect(domtoimage.toPng).toHaveBeenCalledTimes(2);
   }
 );
+
+test('preview and recording compose the same styled live ruler after a saved-project reload', async () => {
+  const {canvas, frame} = setup({
+    annotations: JSON.parse(
+      JSON.stringify([
+        {
+          ...annotation,
+          kind: 'RULER',
+          anchorPoint: [-101.869545, 33.553131],
+          endPoint: [-101.742203, 33.412521],
+          showCustomText: false,
+          showDistance: true,
+          rulerStyle: {
+            ...DEFAULT_RULER_STYLE,
+            unit: 'km',
+            offset: 24,
+            dimensionLine: true,
+            startLabel: 'A',
+            endLabel: 'B'
+          },
+          labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
+        }
+      ])
+    )
+  });
+  const assertRuler = (node: HTMLElement) => {
+    expect(node.querySelector('[data-annotation-part="distance"]')).toHaveTextContent('19.6 km');
+    expect(node.querySelectorAll('[data-annotation-part="endpoint-label"]')).toHaveLength(2);
+    expect(node.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      padding: '8px'
+    });
+    expect(node.querySelector('[data-annotation-part="dimension-extensions"]')).toBeTruthy();
+    expect(node.querySelector('[data-annotation-part="dimension-ticks"]')).toBeTruthy();
+  };
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  assertRuler(view.container);
+  jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+    assertRuler(node);
+    return 'data:image/png;base64,annotation';
+  });
+  await act(async () => compositeVideoAnnotations(canvas, frame));
+  expect(domtoimage.toPng).toHaveBeenCalled();
+});
