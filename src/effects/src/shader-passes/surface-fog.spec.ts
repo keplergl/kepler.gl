@@ -174,7 +174,8 @@ describe('surface fog rendering', () => {
     longitude = 30.52,
     latitude = 50.45,
     bearing = 35,
-    nearZMultiplier = 0.1
+    nearZMultiplier = 0.1,
+    cropSize = SIZE
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -189,11 +190,12 @@ describe('surface fog rendering', () => {
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
     for (let row = 0; row < 4; row++) {
-      matrix[12 + row] += matrix[row] * (512 - SIZE / 2) + matrix[4 + row] * (384 - SIZE / 2);
+      matrix[12 + row] +=
+        matrix[row] * (512 - cropSize / 2) + matrix[4 + row] * (384 - cropSize / 2);
     }
     return {
-      width: SIZE,
-      height: SIZE,
+      width: cropSize,
+      height: cropSize,
       center: [...viewport.center],
       cameraPosition: [...viewport.cameraPosition],
       latitude: viewport.latitude,
@@ -537,7 +539,40 @@ describe('surface fog rendering', () => {
     expect(pixels).not.toEqual(smooth);
   });
 
-  test.each([14, 16, 18])(
+  test.each(
+    [19, 20, 21].flatMap(zoom => [
+      {zoom, name: 'blue', fogColor: [40, 120, 190]},
+      {zoom, name: 'default', fogColor: [230, 235, 242]}
+    ])
+  )('resolves fine ripple detail at zoom $zoom with $name water', ({zoom, fogColor}) => {
+    const size = 64;
+    const uniforms = {
+      ...viewportUniforms(croppedViewport({zoom, pitch: 65, cropSize: size})),
+      fogHeight: 0,
+      fogThickness: 0,
+      fogColor,
+      density: 0.6
+    };
+    const pixels = render({depth: 1, uniforms, size});
+    // Local curvature isolates small crests from broad lighting gradients.
+    let detail = 0;
+    for (let y = 2; y < size - 2; y++) {
+      for (let x = 2; x < size - 2; x++) {
+        for (let channel = 0; channel < 3; channel++) {
+          const at = (dx: number, dy: number) => pixels[((y + dy) * size + x + dx) * 4 + channel];
+          detail += Math.abs(at(0, 0) - (at(-2, 0) + at(2, 0) + at(0, -2) + at(0, 2)) / 4);
+        }
+      }
+    }
+    const meanDetail = detail / ((size - 4) * (size - 4) * 3);
+    expect(meanDetail).toBeGreaterThan(0.5);
+    const later = render({depth: 1, uniforms: {...uniforms, waveTime: 2}, size});
+    const nextFrame = render({depth: 1, uniforms: {...uniforms, waveTime: 2 + 1 / 60}, size});
+    expect(later).not.toEqual(pixels);
+    expect(maxPixelDifference(later, nextFrame)).toBeLessThanOrEqual(2);
+  });
+
+  test.each([14, 16, 18, 20, 22])(
     'keeps water sampling stable between 1x and 2x resolution at zoom %s',
     zoom => {
       const uniforms = viewportUniforms(croppedViewport({zoom, pitch: 55}));
@@ -575,58 +610,61 @@ describe('surface fog rendering', () => {
     [3, 7]
   ])('does not repeat ripples after a 4km tile offset (%s, %s)', (x, y) => {
     const original = render();
-    const shifted = render({uniforms: {waveOrigin: [x, y]}});
+    const shifted = render({uniforms: {waveOrigin: [x * 8, y * 8]}});
     expect(shifted).not.toEqual(original);
   });
 
-  test.each([0, 4.25])('keeps water shading consistent across tiles at time %ss', waveTime => {
-    const viewport = croppedViewport({zoom: 18, pitch: 65});
-    const surface = {fogHeight: 0, fogThickness: 0, waveTime};
-    const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
-    const tileSize = SIZE / 2;
-    let maxError = 0;
-    for (const y of [0, tileSize]) {
-      for (const x of [0, tileSize]) {
-        const matrix = [...viewport.pixelUnprojectionMatrix];
-        for (let row = 0; row < 4; row++) {
-          matrix[12 + row] += matrix[row] * x + matrix[4 + row] * y;
-        }
-        const tile = render({
-          depth: 1,
-          size: tileSize,
-          uniforms: {
-            ...viewportUniforms({
-              ...viewport,
-              width: tileSize,
-              height: tileSize,
-              pixelUnprojectionMatrix: matrix
-            }),
-            ...surface
+  test.each([18, 20, 22].flatMap(zoom => [0, 4.25].map(waveTime => ({zoom, waveTime}))))(
+    'keeps water shading consistent across tiles at zoom $zoom and time $waveTime',
+    ({zoom, waveTime}) => {
+      const viewport = croppedViewport({zoom, pitch: 65});
+      const surface = {fogHeight: 0, fogThickness: 0, waveTime};
+      const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
+      const tileSize = SIZE / 2;
+      let maxError = 0;
+      for (const y of [0, tileSize]) {
+        for (const x of [0, tileSize]) {
+          const matrix = [...viewport.pixelUnprojectionMatrix];
+          for (let row = 0; row < 4; row++) {
+            matrix[12 + row] += matrix[row] * x + matrix[4 + row] * y;
           }
-        });
-        // Projection Y is top-down; readPixels returns rows bottom-up.
-        for (let row = 0; row < tileSize; row++) {
-          for (let col = 0; col < tileSize; col++) {
-            const fullOffset = ((SIZE - y - tileSize + row) * SIZE + x + col) * 4;
-            const tileOffset = (row * tileSize + col) * 4;
-            for (let channel = 0; channel < 4; channel++) {
-              maxError = Math.max(
-                maxError,
-                Math.abs(full[fullOffset + channel] - tile[tileOffset + channel])
-              );
+          const tile = render({
+            depth: 1,
+            size: tileSize,
+            uniforms: {
+              ...viewportUniforms({
+                ...viewport,
+                width: tileSize,
+                height: tileSize,
+                pixelUnprojectionMatrix: matrix
+              }),
+              ...surface
+            }
+          });
+          // Projection Y is top-down; readPixels returns rows bottom-up.
+          for (let row = 0; row < tileSize; row++) {
+            for (let col = 0; col < tileSize; col++) {
+              const fullOffset = ((SIZE - y - tileSize + row) * SIZE + x + col) * 4;
+              const tileOffset = (row * tileSize + col) * 4;
+              for (let channel = 0; channel < 4; channel++) {
+                maxError = Math.max(
+                  maxError,
+                  Math.abs(full[fullOffset + channel] - tile[tileOffset + channel])
+                );
+              }
             }
           }
         }
       }
+      expect(maxError).toBeLessThanOrEqual(1);
     }
-    expect(maxError).toBeLessThanOrEqual(1);
-  });
+  );
 
   test('retains close-up wave detail at global Mercator coordinates', () => {
     const global = croppedViewport();
     const globalUniforms = viewportUniforms(global);
     const units = globalUniforms.waveUnitsPerMeter as number;
-    const tile = 4096 * units;
+    const tile = 512 * units;
     const offset = global.center.map(value => Math.floor(value / tile) * tile);
     const localMatrix = [...global.pixelUnprojectionMatrix];
     for (let column = 0; column < 4; column++) {
@@ -660,7 +698,7 @@ describe('surface fog rendering', () => {
     const viewport = croppedViewport(location);
     const uniforms = viewportUniforms(viewport);
     uniforms.waveTime = 7.5;
-    const tile = 4096 * (uniforms.waveUnitsPerMeter as number);
+    const tile = 512 * (uniforms.waveUnitsPerMeter as number);
     const originalMatrix = [...viewport.pixelUnprojectionMatrix];
     const current = render({depth: 1, uniforms: {...uniforms, fogHeight: 0, fogThickness: 0}});
     const nextOrigin = render({

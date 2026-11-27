@@ -8,7 +8,8 @@ import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 // Rebase the inverse matrix on the CPU before its doubles become GPU floats.
 // This is an origin interval, not a texture repeat: the noise also receives the
 // world lattice offset so neighboring origin tiles contain different waves.
-const WATER_ORIGIN_METERS = 4096;
+// Keep local coordinates small enough to resolve sub-meter ripples consistently.
+const WATER_ORIGIN_METERS = 512;
 
 export type SurfaceFogProps = {
   density: number;
@@ -99,8 +100,14 @@ vec3 waveNoise(vec2 meters, float cellSize, mat2 frame) {
   // Add the global offset only to integer cell IDs. Fractional positions stay
   // local and precise even on a zoomed-in map thousands of kilometers away.
   // Binary scales/frames keep the lattice offset integral when rebasing.
-  vec2 origin = frame * (surfaceFog.waveOrigin * (WATER_ORIGIN_METERS / cellSize));
-  origin = floor(mod(origin, vec2(4093.0, 4091.0)) + 0.5);
+  // Reduce the integer origin before scaling it to the fine-wave lattice.
+  // Otherwise sub-meter bands exceed float integer precision at global map
+  // coordinates. The frames use quarter increments, so both stages stay integral.
+  vec2 period = vec2(4093.0, 4091.0);
+  vec2 origin = frame * (surfaceFog.waveOrigin * 4.0);
+  origin = floor(mod(origin, period) + 0.5);
+  origin *= WATER_ORIGIN_METERS / (cellSize * 4.0);
+  origin = floor(mod(origin, period) + 0.5);
   return noiseGradient(frame * (meters / cellSize), origin);
 }
 
@@ -140,6 +147,11 @@ vec3 waveNormal(vec2 meters, float footprint) {
   slope += waveSlope(p, 16.0, mat2(1.0, -0.25, 0.5, 0.5), 0.075, warpedFootprint, vec2(1.6, -0.8));
   slope += waveSlope(p,  8.0, mat2(0.5, -0.5, 0.25, 1.0), 0.045, warpedFootprint, vec2(1.0, -0.4));
   slope += waveSlope(p,  4.0, mat2(1.0, -0.25, 0.5, 0.5), 0.025, warpedFootprint, vec2(0.55, 0.3));
+  // Fine surface ripples resolve only in close views. Fade each band before
+  // it becomes subpixel, retaining the same quiet surface farther away.
+  slope += waveSlope(p,  2.0, mat2(1.0, -0.25, 0.5, 0.5), 0.080, warpedFootprint, vec2(0.35, -0.15));
+  slope += waveSlope(p,  1.0, mat2(0.5, -0.5, 0.25, 1.0), 0.090, warpedFootprint, vec2(0.18, 0.09));
+  slope += waveSlope(p,  0.5, mat2(1.0, -0.25, 0.5, 0.5), 0.055, warpedFootprint, vec2(0.10, -0.04));
   return normalize(vec3(-slope, 1.0));
 }
 
