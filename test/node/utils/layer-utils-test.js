@@ -1325,10 +1325,16 @@ test('layerUtils -> timed visibility composes with zoom fades without changing s
 
 test('layerUtils -> copying Point fill opacity clears stale selections', t => {
   const layer = new PointLayer({dataId: 'survey'});
-  layer.updateLayerVisConfig({fillOpacityField: 'strength'});
+  layer.updateLayerVisConfig({
+    fillOpacityField: 'strength',
+    fillOpacityScale: 'linear',
+    fillOpacityRange: [0.2, 0.8]
+  });
   for (const source of [{}, {fillOpacityField: ''}]) {
     const copied = layer.copyLayerConfig(layer.config, {visConfig: source});
     t.notOk('fillOpacityField' in copied.visConfig, 'a config without a selection clears it');
+    t.notOk('fillOpacityScale' in copied.visConfig, 'copying an older config clears the scale');
+    t.notOk('fillOpacityRange' in copied.visConfig, 'copying an older config clears the range');
     t.equal(layer.config.visConfig.fillOpacityField, 'strength', 'copying preserves its input');
   }
   const excluded = layer.copyLayerConfig(
@@ -1337,6 +1343,127 @@ test('layerUtils -> copying Point fill opacity clears stale selections', t => {
     {notToCopy: ['fillOpacityField']}
   );
   t.equal(excluded.visConfig.fillOpacityField, 'strength', 'explicit copy exclusions are honored');
+  t.end();
+});
+
+test('layerUtils -> Point fill opacity normalizes numeric domains for row and Arrow points', async t => {
+  const fields = ['lat', 'lng', 'value', 'constant', 'empty'].map((name, fieldIdx) => ({
+    name,
+    fieldIdx,
+    type: 'real',
+    format: ''
+  }));
+  for (const useArrow of [false, true]) {
+    const dataset = new KeplerTable({info: {id: 'normalized-opacity'}});
+    const importValues = async values => {
+      const rows = values.map((value, index) => [index, index, value, 7, null]);
+      await dataset.importData({
+        data: {
+          fields,
+          ...(useArrow
+            ? {
+                cols: fields.map(({fieldIdx}) =>
+                  arrow.vectorFromArray(
+                    rows.map(row => row[fieldIdx]),
+                    new arrow.Float64()
+                  )
+                )
+              }
+            : {rows})
+        }
+      });
+    };
+    await importValues([10, 30, 50, null, NaN, Infinity, -Infinity]);
+    const layer = new PointLayer({
+      dataId: dataset.id,
+      color: [10, 20, 30],
+      highlightColor: [60, 70, 80],
+      columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
+    });
+    layer.updateLayerVisConfig({
+      fillOpacityField: 'value',
+      fillOpacityScale: 'linear',
+      showHighlightColor: true
+    });
+    const datasets = {[dataset.id]: dataset};
+    let previousData;
+    const render = () => {
+      const data = layer.formatLayerData(datasets, previousData);
+      previousData = data;
+      return renderDeckGlLayer(
+        {
+          layer,
+          data,
+          datasets,
+          mapState: INITIAL_MAP_STATE,
+          interactionConfig: INITIAL_VIS_STATE.interactionConfig,
+          hoverInfo: {
+            picked: true,
+            index: 1,
+            object: useArrow ? dataset.dataContainer.getTable().get(1) : data.data[1],
+            layer: {props: {id: useArrow ? `${layer.id}-0` : layer.id}}
+          }
+        },
+        {}
+      );
+    };
+    const alphas = frame => [0, 1, 2].map(index => frame.props.getFillColor({index})[3] ?? 255);
+    const [frame, hover] = render();
+    t.equal(frame instanceof GeoArrowScatterplotLayer, useArrow, 'exercises each point renderer');
+    t.deepEqual(alphas(frame), [0, 128, 255], 'maps 10–50 to the default opacity range');
+    t.deepEqual(
+      [3, 4, 5, 6].map(index => frame.props.getFillColor({index})),
+      Array(4).fill([10, 20, 30]),
+      'missing and nonfinite values neither affect bounds nor change their fill'
+    );
+    t.deepEqual(
+      hover.props.getFillColor(hover.props.data[0]),
+      [60, 70, 80, 128],
+      'hover highlights use the same normalized scale'
+    );
+    if (useArrow) {
+      const [subLayer] = frame.renderLayers();
+      t.deepEqual(
+        subLayer.props.getFillColor(null, {index: 1, data: subLayer.props.data}),
+        [10, 20, 30, 128],
+        'Arrow record batches receive normalized alpha'
+      );
+    }
+    layer.updateLayerVisConfig({fillOpacityRange: [0.2, 0.8]});
+    t.deepEqual(alphas(render()[0]), [51, 128, 204], 'maps the domain to a custom output range');
+    t.deepEqual(alphas(frame), [0, 128, 255], 'earlier frames retain their own scale');
+
+    dataset.filteredIndexForDomain = [1, 2];
+    t.deepEqual(
+      alphas(render()[0]),
+      [51, 51, 204],
+      'domain filters update bounds and clamp outliers'
+    );
+    layer.updateLayerVisConfig({fillOpacityScale: 'identity'});
+    t.deepEqual(alphas(render()[0]), [255, 255, 255], 'Raw mode uses the values directly');
+    layer.updateLayerVisConfig({fillOpacityScale: undefined});
+    t.deepEqual(alphas(render()[0]), [255, 255, 255], 'older configs retain raw semantics');
+
+    layer.updateLayerVisConfig({fillOpacityScale: 'linear', fillOpacityRange: [0, 1]});
+    await importValues([-20, 0, 20]);
+    t.deepEqual(
+      alphas(render()[0]),
+      [0, 128, 255],
+      'new data refreshes bounds and includes negatives'
+    );
+    layer.updateLayerVisConfig({fillOpacityField: 'constant'});
+    t.deepEqual(alphas(render()[0]), [128, 128, 128], 'constant columns use the range midpoint');
+    layer.updateLayerVisConfig({fillOpacityField: 'empty'});
+    t.deepEqual(alphas(render()[0]), [255, 255, 255], 'all-missing columns keep the original fill');
+    layer.updateLayerVisConfig({fillOpacityField: 'value', fillOpacityRange: [NaN, 2]});
+    t.deepEqual(alphas(render()[0]), [0, 128, 255], 'invalid saved ranges fall back to 0–100%');
+    await importValues([]);
+    t.equal(
+      render()[0].props.data[useArrow ? 'numRows' : 'length'],
+      0,
+      'empty tables render safely'
+    );
+  }
   t.end();
 });
 

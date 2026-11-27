@@ -418,7 +418,7 @@ test.each([
   }
 });
 
-test('Point fill can select a numeric opacity field and preserve it in saved configs', async () => {
+test('Point fill normalizes new selections and preserves scale, range and older raw configs', async () => {
   const fields = ['lat', 'lng', 'alpha value', 'point name'].map((name, fieldIdx) => ({
     name,
     displayName: name,
@@ -437,34 +437,72 @@ test('Point fill can select a numeric opacity field and preserve it in saved con
     columns: {lat: {value: 'lat', fieldIdx: 0}, lng: {value: 'lng', fieldIdx: 1}}
   });
   const updateLayerVisConfig = jest.fn(config => layer.updateLayerVisConfig(config));
-  renderWithTheme(
-    <IntlWrapper>
-      <LayerConfigurator
-        layer={layer}
-        datasets={{[dataset.id]: dataset}}
-        layerTypeOptions={[]}
-        openModal={jest.fn()}
-        updateLayerConfig={jest.fn()}
-        updateLayerType={jest.fn()}
-        updateLayerVisConfig={updateLayerVisConfig}
-        updateLayerVisualChannelConfig={jest.fn()}
-        updateLayerColorUI={jest.fn()}
-        updateLayerTextLabel={jest.fn()}
-      />
-    </IntlWrapper>
-  );
-  const field = screen.getByText('Fill opacity by value (0–1)');
+  const RenderLayer = () => {
+    const [, setRevision] = React.useState(0);
+    return (
+      <IntlWrapper>
+        <LayerConfigurator
+          layer={layer}
+          datasets={{[dataset.id]: dataset}}
+          layerTypeOptions={[]}
+          openModal={jest.fn()}
+          updateLayerConfig={jest.fn()}
+          updateLayerType={jest.fn()}
+          updateLayerVisConfig={config => {
+            updateLayerVisConfig(config);
+            setRevision(previous => previous + 1);
+          }}
+          updateLayerVisualChannelConfig={jest.fn()}
+          updateLayerColorUI={jest.fn()}
+          updateLayerTextLabel={jest.fn()}
+        />
+      </IntlWrapper>
+    );
+  };
+  const view = render(<RenderLayer />, {
+    wrapper: ({children}) => <ThemeProvider theme={theme}>{children}</ThemeProvider>
+  });
+  const field = screen.getByText('Fill opacity based on');
   const section = within(field.parentElement as HTMLElement);
   fireEvent.click(section.getByText('Select a field'));
   expect(screen.queryByText('point name')).not.toBeInTheDocument();
   fireEvent.click(screen.getByText('alpha value'));
-  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityField: 'alpha value'});
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({
+    fillOpacityField: 'alpha value',
+    fillOpacityScale: 'linear',
+    fillOpacityRange: [0, 1]
+  });
+  const rangeSection = within(screen.getByText('Opacity range (%)').parentElement as HTMLElement);
+  const [minimum, maximum] = rangeSection.getAllByRole('spinbutton');
+  fireEvent.change(minimum, {target: {value: '20'}});
+  fireEvent.blur(minimum);
+  fireEvent.change(maximum, {target: {value: '80'}});
+  fireEvent.blur(maximum);
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityRange: [0.2, 0.8]});
   const savedConfig = SchemaManager.getConfigToSave({
     visState: {layers: [layer], layerOrder: [layer.id]}
   });
   const [parsedLayer] = SchemaManager.parseSavedConfig(savedConfig)?.visState?.layers ?? [];
   const reopened = new KeplerGlLayers.PointLayer({dataId: dataset.id});
   expect(reopened.copyLayerConfig(reopened.config, parsedLayer.config)).toMatchObject({
-    visConfig: {fillOpacityField: 'alpha value'}
+    visConfig: {
+      fillOpacityField: 'alpha value',
+      fillOpacityScale: 'linear',
+      fillOpacityRange: [0.2, 0.8]
+    }
   });
+  const scaleSection = within(screen.getByText('Opacity scale').parentElement as HTMLElement);
+  fireEvent.click(scaleSection.getByText('Linear'));
+  fireEvent.click(screen.getByText('Raw (0–1)'));
+  expect(updateLayerVisConfig).toHaveBeenLastCalledWith({fillOpacityScale: 'identity'});
+  expect(screen.queryByText('Opacity range (%)')).not.toBeInTheDocument();
+  fireEvent.click(scaleSection.getByText('Raw (0–1)'));
+  fireEvent.click(screen.getByText('Linear'));
+  expect(layer.config.visConfig.fillOpacityRange).toEqual([0.2, 0.8]);
+
+  // A saved selection from before normalization has no scale or range keys.
+  layer.updateLayerVisConfig({fillOpacityScale: undefined, fillOpacityRange: undefined});
+  view.rerender(<RenderLayer />);
+  expect(scaleSection.getByText('Raw (0–1)')).toBeInTheDocument();
+  expect(screen.queryByText('Opacity range (%)')).not.toBeInTheDocument();
 });

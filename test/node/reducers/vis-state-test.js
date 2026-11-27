@@ -12921,13 +12921,23 @@ test('#visStateReducer -> a Point fill opacity field follows schema changes', as
   };
   state = reducer(
     state,
-    VisStateActions.layerVisConfigChange(point, {fillOpacityField: 'strength'})
+    VisStateActions.layerVisConfigChange(point, {
+      fillOpacityField: 'strength',
+      fillOpacityScale: 'linear',
+      fillOpacityRange: [0.25, 0.75]
+    })
   );
   const renamed = reducer(
     state,
     VisStateActions.renameTableColumn(dataset.id, 'strength', 'confidence')
   );
   t.equal(renamed.layers[0].config.visConfig.fillOpacityField, 'confidence', 'follows rename');
+  t.equal(renamed.layers[0].config.visConfig.fillOpacityScale, 'linear', 'rename retains scale');
+  t.deepEqual(
+    renamed.layers[0].config.visConfig.fillOpacityRange,
+    [0.25, 0.75],
+    'rename retains the opacity range'
+  );
   t.equal(
     renamed.layerData[0].fillOpacityField.name,
     'confidence',
@@ -12949,6 +12959,8 @@ test('#visStateReducer -> a Point fill opacity field follows schema changes', as
       'missing or nonnumeric fields clear the selection'
     );
     t.notOk(updated.layerData[0].fillOpacityField, 'renderer no longer applies field opacity');
+    t.notOk('fillOpacityScale' in updated.layers[0].config.visConfig, 'clears the obsolete scale');
+    t.notOk('fillOpacityRange' in updated.layers[0].config.visConfig, 'clears the obsolete range');
     const saved = serializeLayer(updated.layers[0], updated.schema);
     t.notOk('fillOpacityField' in saved.config.visConfig, 'saved maps omit the stale selection');
     const restored = validateLayerWithData(
