@@ -525,3 +525,89 @@ test.each(['', 'Hidden caption'])(
     expect(changes).not.toHaveBeenCalled();
   }
 );
+
+test.each([
+  {
+    formatting: 'font size',
+    applyFormatting: () =>
+      fireEvent.change(screen.getAllByRole('combobox')[1], {target: {value: '24px'}}),
+    assertFormatting: (element: Element) => expect(element).toHaveStyle({fontSize: '24px'})
+  },
+  {
+    formatting: 'bold',
+    applyFormatting: () => fireEvent.click(screen.getByRole('button', {name: 'Bold'})),
+    assertFormatting: (element: Element) => expect(element).toHaveClass('lexical-text-bold')
+  }
+])(
+  'applies $formatting to the distance after hiding a selected caption range',
+  async ({applyFormatting, assertFormatting}) => {
+    const changes = jest.fn();
+    let setShowCustomText!: (show: boolean) => void;
+    function Ruler() {
+      const [showCustomText, setShow] = React.useState(true);
+      setShowCustomText = setShow;
+      const [annotation, setAnnotation] = React.useState(() => {
+        const editorState = captionEditorState('First ', 'font-size: 32px;');
+        const first = editorState.root.children[0].children[0];
+        first.format = 0;
+        editorState.root.children[0].children.push({
+          ...first,
+          text: 'Second',
+          style: 'font-size: 12px;'
+        });
+        return makeRuler({
+          label: 'First Second',
+          editorState,
+          rulerStyle: {...DEFAULT_RULER_STYLE, unit: 'km'}
+        });
+      });
+      return (
+        <DndContext>
+          <AnnotationText
+            annotation={{...annotation, showCustomText} as Annotation}
+            viewport={viewport}
+            isEditing
+            isSelected
+            isEditingText={showCustomText}
+            onSelect={jest.fn()}
+            onUpdateAnnotation={jest.fn()}
+            onChangeText={(label, editorState) => {
+              changes(label, editorState);
+              setAnnotation(previous => ({...previous, label, editorState}));
+            }}
+          />
+        </DndContext>
+      );
+    }
+    const {container} = renderWithTheme(<Ruler />);
+    const input = container.querySelector<HTMLElement>('[contenteditable="true"]');
+    if (!input) throw new Error('Expected an editable ruler caption');
+    const editor = (input as HTMLElement & {__lexicalEditor: LexicalEditor}).__lexicalEditor;
+    input.focus();
+    await act(() =>
+      editor.update(() => $getRoot().getAllTextNodes()[1].select(0, 6), {
+        discrete: true,
+        tag: 'skip-scroll-into-view'
+      })
+    );
+    act(() => setShowCustomText(false));
+    await act(async () => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    changes.mockClear();
+    await act(async () => {
+      applyFormatting();
+    });
+    await waitFor(() => assertFormatting(screen.getByText('111.2 km')));
+    expect(changes).toHaveBeenCalled();
+    expect(changes.mock.calls.every(([label]) => label === 'First Second')).toBe(true);
+    expect(JSON.stringify(changes.mock.calls)).not.toContain('111.2 km');
+    act(() => setShowCustomText(true));
+    expect(input).toHaveTextContent('First Second');
+    const captionSpans = input.querySelectorAll('[data-lexical-text="true"]');
+    expect(captionSpans.length).toBeGreaterThan(0);
+    for (const span of captionSpans) {
+      assertFormatting(span);
+    }
+  }
+);
