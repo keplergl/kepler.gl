@@ -712,6 +712,7 @@ export default {
     moreOptions: 'More options',
     interactionSettings: 'Interaction settings',
     closePanel: 'Close current panel',
+    floatingFilter: 'Toggle floating filter',
     switchToDualView: 'Switch to dual map view',
     selectSplitMode: 'Select map view mode',
     singleView: 'Single',

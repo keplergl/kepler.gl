@@ -810,6 +810,7 @@ function KeplerGlFactory(
                           rootRef={this.bottomWidgetRef}
                           {...bottomWidgetFields}
                           containerW={dimensions.width}
+                          readOnly={readOnly}
                           theme={theme}
                         />
                       </BottomWidgetOuter>

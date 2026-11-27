@@ -18,6 +18,8 @@ To add a column filter:
 5. For timestamp fields, you can optionally choose an **End time** field so features stay visible for the whole `[start, end]` span during playback. End time is hidden while the filter is synced across datasets. See [Playback](./h-playback.md).
 6. Delete a filter anytime by clicking the __trashcan__ to the right of the filter you wish to delete.
 
+To keep a categorical filter accessible with the Filters panel closed, click the **Toggle floating filter** icon beside its field. One filter at a time can use the space below the map. Close the floating filter to return it to the Filters panel without clearing its selected values.
+
 __Note__: column filters apply to all layers in the same dataset on your map.
 
 ## Filter by polygon or rectangle
