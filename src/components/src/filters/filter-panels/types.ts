@@ -13,6 +13,7 @@ interface PanelAction {
   onClick: () => void;
   iconComponent: ComponentType;
   active: boolean;
+  pressed?: boolean;
 }
 
 export interface FilterPanelProps<F = Filter> {

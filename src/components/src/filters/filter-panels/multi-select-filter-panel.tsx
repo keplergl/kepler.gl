@@ -32,7 +32,8 @@ function MultiSelectFilterPanelFactory(
             onClick: enlargeFilter,
             tooltip: 'tooltip.floatingFilter',
             iconComponent: Expand,
-            active: isEnlarged
+            active: isEnlarged,
+            pressed: isEnlarged
           }
         ],
         [enlargeFilter, filter.id, isEnlarged]

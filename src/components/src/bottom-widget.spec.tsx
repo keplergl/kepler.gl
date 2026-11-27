@@ -15,21 +15,25 @@ import BottomWidgetFactory from './bottom-widget';
 import type TimeWidgetFactory from './filters/time-widget';
 import MultiSelectFilterFactory from './filters/multi-select-filter';
 import MultiSelectFilterPanelFactory from './filters/filter-panels/multi-select-filter-panel';
+import FieldPanelWithFieldSelectFactory from './filters/filter-panels/filter-panel-with-field-select';
+import PanelHeaderActionFactory from './side-panel/panel-header-action';
 
-// The panel's field editor is injected below; do not initialize the app-wide dependency graph.
-jest.mock('./filters/filter-panels/filter-panel-with-field-select', () => () => null);
+// Keep the filter and its actual header-action path, without loading unrelated sidebar editors.
+jest.mock('./side-panel/filter-panel/filter-panel-header', () => () => null);
+jest.mock('./filters/filter-panels/filter-synced-dataset-panel', () => () => null);
+jest.mock('./filters/filter-panels/time-synced-field-selector', () => () => null);
+jest.mock('./filters/filter-panels/new-filter-panel', () => ({
+  getSupportedFilterFields: (_types, fields) => fields
+}));
 
 const MultiSelectFilter = MultiSelectFilterFactory();
 const MultiSelectFilterPanel = MultiSelectFilterPanelFactory(
-  ({panelActions, children}) => (
-    <>
-      {panelActions?.map(action => (
-        <button key={action.id} onClick={action.onClick}>
-          Toggle floating filter
-        </button>
-      ))}
-      {children}
-    </>
+  FieldPanelWithFieldSelectFactory(
+    ({children}) => <>{children}</>,
+    () => null,
+    PanelHeaderActionFactory(),
+    Object.assign(() => <></>, {displayName: 'EmptySyncedDatasetPanel'}),
+    () => <></>
   ),
   MultiSelectFilter
 );
@@ -87,7 +91,7 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
   const Example = () => {
     const [currentFilters, setFilters] = useState<Filter[]>(filters as unknown as Filter[]);
     const [sidebar, setSidebar] = useState(true);
-    const datasets = {dataset: {type: 'csv'}} as any;
+    const datasets = {dataset: {type: 'csv', fields: []}} as any;
     const setFilter = (idx, prop, value) => {
       onValue(idx, prop, value);
       setFilters(current =>
@@ -146,7 +150,12 @@ test('moves a categorical selector out of the sidebar without disrupting a playi
   );
   expect(screen.getByText('time timeline')).toBeInTheDocument();
   expect(screen.getByText('Enter a value')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', {name: 'Toggle floating filter'}));
+  const toggle = screen.getByRole('button', {name: 'Toggle floating filter', pressed: false});
+  await user.tab(); // Sidebar visibility control.
+  await user.tab();
+  expect(toggle).toHaveFocus();
+  await user.keyboard('{Enter}');
+  expect(toggle).toHaveAttribute('aria-pressed', 'true');
   expect(onView).toHaveBeenLastCalledWith(1, FILTER_VIEW_TYPES.enlarged);
   expect(screen.queryByText('time timeline')).not.toBeInTheDocument();
   expect(timelineController).toHaveBeenLastCalledWith(0);
